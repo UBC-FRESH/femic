@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import csv
 from datetime import UTC, datetime
 from pathlib import Path
 import shutil
@@ -81,6 +82,7 @@ from femic.pipeline.tipsy_config import (
 from femic.vdyp.reporting import (
     VdypWarningBudget,
     evaluate_warning_budget,
+    summarize_curve_selection_rows,
     summarize_vdyp_logs,
 )
 from femic.ws3_smoke import run_ws3_smoke
@@ -658,6 +660,12 @@ VDYP_MIN_RUN_EVENTS_OPTION = typer.Option(
     None,
     "--min-run-events",
     help="Fail if run events are below this threshold.",
+    show_default=False,
+)
+VDYP_SELECTION_SUMMARY_OUT_OPTION = typer.Option(
+    None,
+    "--selection-summary-out",
+    help="Optional CSV output path for per-stratum curve-selection summary.",
     show_default=False,
 )
 
@@ -1870,6 +1878,7 @@ def vdyp_report(
     max_run_parse_errors: int | None = VDYP_MAX_RUN_PARSE_ERRORS_OPTION,
     min_curve_events: int | None = VDYP_MIN_CURVE_EVENTS_OPTION,
     min_run_events: int | None = VDYP_MIN_RUN_EVENTS_OPTION,
+    selection_summary_out: Path | None = VDYP_SELECTION_SUMMARY_OUT_OPTION,
 ) -> None:
     """Summarize VDYP logs and enforce warning/error budget thresholds."""
     summary = summarize_vdyp_logs(
@@ -1894,15 +1903,17 @@ def vdyp_report(
     )
     if summary.first_point_mismatch_rows:
         console.print("First-point mismatches (limited):")
-        for row in summary.first_point_mismatch_rows:
-            context = row.get("context")
+        for mismatch_row in summary.first_point_mismatch_rows:
+            context = mismatch_row.get("context")
             if not isinstance(context, dict):
                 context = {}
             console.print(
                 f"- tsa={context.get('tsa')} stratum={context.get('stratum_code')} "
                 f"si={context.get('si_level')} "
-                f"first_age={row.get('first_age')} first_volume={row.get('first_volume')} "
-                f"status={row.get('status')} stage={row.get('stage')}"
+                f"first_age={mismatch_row.get('first_age')} "
+                f"first_volume={mismatch_row.get('first_volume')} "
+                f"status={mismatch_row.get('status')} "
+                f"stage={mismatch_row.get('stage')}"
             )
 
     console.print(f"Run events: {summary.run_events} ({run_log})")
@@ -1910,6 +1921,49 @@ def vdyp_report(
     console.print(f"Run status counts: {summary.run_status_counts}")
     console.print(f"Run phase counts: {summary.run_phase_counts}")
     console.print(f"Run TSA counts: {summary.run_tsa_counts}")
+
+    selection_rows = summarize_curve_selection_rows(curve_log_path=curve_log)
+    selected_path_counts: dict[str, int] = {}
+    for selection_row in selection_rows:
+        selected_path_counts[selection_row.selected_path] = (
+            selected_path_counts.get(selection_row.selected_path, 0) + 1
+        )
+    console.print(f"Curve selection rows: {len(selection_rows)}")
+    if selected_path_counts:
+        console.print(
+            f"Selected-path counts: {dict(sorted(selected_path_counts.items()))}"
+        )
+    if selection_summary_out is not None:
+        selection_summary_out.parent.mkdir(parents=True, exist_ok=True)
+        with selection_summary_out.open("w", newline="", encoding="utf-8") as handle:
+            writer = csv.DictWriter(
+                handle,
+                fieldnames=[
+                    "tsa",
+                    "stratum_code",
+                    "si_level",
+                    "selected_path",
+                    "fit_quality_gate_failed",
+                    "left_toe_censor_selected",
+                    "merchantable_floor_selected",
+                    "tail_blend_selected",
+                ],
+            )
+            writer.writeheader()
+            for selection_row in selection_rows:
+                writer.writerow(
+                    {
+                        "tsa": selection_row.tsa,
+                        "stratum_code": selection_row.stratum_code,
+                        "si_level": selection_row.si_level,
+                        "selected_path": selection_row.selected_path,
+                        "fit_quality_gate_failed": selection_row.fit_quality_gate_failed,
+                        "left_toe_censor_selected": selection_row.left_toe_censor_selected,
+                        "merchantable_floor_selected": selection_row.merchantable_floor_selected,
+                        "tail_blend_selected": selection_row.tail_blend_selected,
+                    }
+                )
+        console.print(f"Selection summary CSV: {selection_summary_out}")
 
     budget = VdypWarningBudget(
         max_curve_warnings=max_curve_warnings,

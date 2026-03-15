@@ -4731,3 +4731,18 @@
     metadata is available.
 - Moved diagnostic plotting to run after fallback-path selection so each plot
   reflects the actual curve that will be carried forward.
+
+## 2026-03-15 - Completed P19.15b reviewer-facing strata/SI fit-status table
+- Added `summarize_curve_selection_rows(...)` in `src/femic/vdyp/reporting.py`
+  to parse `vdyp_curve_fit` events and produce per-stratum/SI selection rows
+  containing:
+  - selected path,
+  - fit-quality gate failure flag,
+  - left-toe censor selection flag,
+  - merchantable-floor selection flag,
+  - tail-blend selection flag.
+- Extended `femic vdyp report` in `src/femic/cli/main.py` with
+  `--selection-summary-out` to write this reviewer-facing summary table to CSV.
+- Added regression coverage in:
+  - `tests/test_vdyp_reporting.py` for row extraction/flagging logic,
+  - `tests/test_vdyp_report_cli.py` for CSV output generation.
