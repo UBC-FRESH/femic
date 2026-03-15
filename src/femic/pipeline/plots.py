@@ -52,6 +52,7 @@ class StrataDistributionPlotConfig:
     stripplot_max_points: int
     stripplot_min_points_per_stratum: int
     stripplot_random_seed: int
+    write_pdf: bool
 
 
 @dataclass(frozen=True)
@@ -88,6 +89,7 @@ def build_strata_distribution_plot_config(
     stripplot_max_points: int = 3000,
     stripplot_min_points_per_stratum: int = 1,
     stripplot_random_seed: int = 19,
+    write_pdf: bool = False,
 ) -> StrataDistributionPlotConfig:
     """Build defaults for 01a stratum abundance/SI violin diagnostics."""
     return StrataDistributionPlotConfig(
@@ -106,6 +108,7 @@ def build_strata_distribution_plot_config(
         stripplot_max_points=stripplot_max_points,
         stripplot_min_points_per_stratum=stripplot_min_points_per_stratum,
         stripplot_random_seed=stripplot_random_seed,
+        write_pdf=write_pdf,
     )
 
 
@@ -116,7 +119,7 @@ def _resolve_site_index_window(
     focus_quantiles: tuple[float, float],
     focus_padding: float,
 ) -> tuple[tuple[float, float], int, int]:
-    """Resolve a quantile-centered SITE_INDEX view window plus clipped-point counts."""
+    """Resolve SI view window with a fixed floor and quantile-based upper focus."""
     values = pd.to_numeric(site_index, errors="coerce").dropna()
     if values.empty:
         return (float(cap_xlim[0]), float(cap_xlim[1])), 0, 0
@@ -136,7 +139,8 @@ def _resolve_site_index_window(
     if not math.isfinite(core_lo) or not math.isfinite(core_hi):
         core_lo, core_hi = cap_lo, cap_hi
 
-    window_lo = max(cap_lo, math.floor(core_lo - pad))
+    # Keep the lower axis bound fixed so left-side violin tails remain visible.
+    window_lo = cap_lo
     window_hi = min(cap_hi, math.ceil(core_hi + pad))
     if window_hi <= window_lo:
         window_lo, window_hi = cap_lo, cap_hi
@@ -310,7 +314,8 @@ def render_strata_distribution_plot(
     ax.set_xlabel("Relative abundance of stratum (proportion of total area)")
     ax2.set_xlim(window_xlim)
     strata_pdf_path, strata_png_path = strata_plot_paths_fn(tsa_code)
-    plt_module.savefig(strata_pdf_path, bbox_inches="tight")
+    if plot_config.write_pdf:
+        plt_module.savefig(strata_pdf_path, bbox_inches="tight")
     plt_module.savefig(strata_png_path, facecolor="white", bbox_inches="tight")
     return StrataDistributionPlotMetadata(
         site_index_xlim=window_xlim,

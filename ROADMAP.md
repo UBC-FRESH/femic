@@ -514,6 +514,17 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-15 (Phase 19 `P19.12` follow-up): fixed strata SI diagnostic x-axis
+  floor to `0` so left violin tails are not visually clipped by quantile-based
+  windowing.
+  - Lower SI bound is now fixed at `site_index_xlim[0]` (default `0`) while
+    upper bound remains quantile-focused.
+  - Regenerated TSA29 strata diagnostics to confirm rendered SI axis starts at
+    `0`.
+- 2026-03-15 (Phase 19 `P19.12` follow-up): switched strata diagnostic output
+  to PNG-only by default to reduce plot-folder noise.
+  - `render_strata_distribution_plot(...)` now writes PDF only when explicitly
+    enabled in plot config (`write_pdf=True`).
 - 2026-03-15 (Phase 19 `P19.12` complete): improved stratum SI diagnostic
   plotting readability and added auditable clipping metadata.
   - Point overlays now use deterministic thinning and lower default opacity to

@@ -734,6 +734,7 @@ def test_build_strata_distribution_plot_config_defaults() -> None:
     assert cfg.stripplot_max_points == 3000
     assert cfg.stripplot_min_points_per_stratum == 1
     assert cfg.stripplot_random_seed == 19
+    assert cfg.write_pdf is False
 
 
 def test_resolve_strata_plot_ordering_abundance_and_lex_modes() -> None:
@@ -883,13 +884,13 @@ def test_render_strata_distribution_plot_uses_helper_config_and_paths() -> None:
     assert fake_sns.violin_rows == [1]
     assert fake_sns.strip_rows == [1]
     assert fake_plt.subplots_calls == [cfg.figsize]
-    assert fake_plt.savefig_calls[0][0] == Path("plots/strata-tsa08.pdf")
-    assert fake_plt.savefig_calls[1][0] == Path("plots/strata-tsa08.png")
+    assert len(fake_plt.savefig_calls) == 1
+    assert fake_plt.savefig_calls[0][0] == Path("plots/strata-tsa08.png")
     assert metadata.total_points == 1
     assert metadata.window_points == 1
     assert metadata.strip_points_plotted == 1
     assert metadata.clipped_total_count == 0
-    assert metadata.site_index_xlim == (19.0, 21.0)
+    assert metadata.site_index_xlim == (0.0, 21.0)
 
 
 def test_render_strata_distribution_plot_clips_outliers_and_thins_strip_points() -> (
@@ -966,8 +967,63 @@ def test_render_strata_distribution_plot_clips_outliers_and_thins_strip_points()
     assert metadata.clipped_total_count == 2
     assert metadata.window_points == 200
     assert metadata.strip_points_plotted <= 25
+    assert metadata.site_index_xlim[0] == 0.0
     assert fake_sns.violin_rows == 200
     assert fake_sns.strip_rows <= 25
+
+
+def test_render_strata_distribution_plot_can_optionally_write_pdf() -> None:
+    class _FakeAxis:
+        def twiny(self) -> "_FakeAxis":
+            return self
+
+        def set_xlabel(self, _value: str) -> None:
+            return None
+
+        def set_xlim(self, _value: tuple[float, float]) -> None:
+            return None
+
+    class _FakePlt:
+        def __init__(self) -> None:
+            self.savefig_calls: list[Path] = []
+
+        def subplots(self, *, figsize: tuple[float, float]) -> tuple[None, _FakeAxis]:
+            _ = figsize
+            return None, _FakeAxis()
+
+        def savefig(self, path: Path, **_kwargs: object) -> None:
+            self.savefig_calls.append(path)
+
+    class _FakeSns:
+        def barplot(self, **_kwargs: object) -> None:
+            return None
+
+        def violinplot(self, **_kwargs: object) -> None:
+            return None
+
+        def stripplot(self, **_kwargs: object) -> None:
+            return None
+
+    cfg = build_strata_distribution_plot_config(write_pdf=True)
+    fake_plt = _FakePlt()
+    render_strata_distribution_plot(
+        tsa_code="08",
+        f_table=pd.DataFrame({"stratum": ["S1"], "SITE_INDEX": [20.0]}),
+        stratum_col="stratum",
+        labels=["S1"],
+        stratum_props=[1.0],
+        plot_config=cfg,
+        sns_module=_FakeSns(),
+        plt_module=fake_plt,
+        strata_plot_paths_fn=lambda _tsa: (
+            Path("plots/strata-tsa08.pdf"),
+            Path("plots/strata-tsa08.png"),
+        ),
+    )
+    assert fake_plt.savefig_calls == [
+        Path("plots/strata-tsa08.pdf"),
+        Path("plots/strata-tsa08.png"),
+    ]
 
 
 def test_build_pipeline_run_config_normalizes_tsa_values() -> None:

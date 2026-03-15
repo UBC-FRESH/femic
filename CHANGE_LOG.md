@@ -4627,3 +4627,20 @@
   - config defaults cover new readability controls,
   - render helper returns metadata and expected SI window,
   - outlier clipping and strip-point thinning behavior is regression-tested.
+
+## 2026-03-15 - P19.12 follow-up: fixed strata SI plot lower bound at zero
+- Updated `src/femic/pipeline/plots.py` so strata diagnostic SI window keeps a
+  fixed lower bound at `site_index_xlim[0]` (default `0`), preventing left-tail
+  violin clipping caused by quantile-centered lower bounds.
+- Kept quantile-based upper bound behavior unchanged for focused readability.
+- Updated plot helper tests in `tests/test_pipeline_helpers.py` to assert SI
+  lower-bound behavior and prevent regression.
+- Regenerated TSA29 strata diagnostics to confirm rendered SI axis starts at
+  `0`.
+
+## 2026-03-15 - P19.12 follow-up: switched strata diagnostics to PNG-only default
+- Updated `src/femic/pipeline/plots.py` to stop writing `strata-tsaXX.pdf` by
+  default; only `strata-tsaXX.png` is written unless `write_pdf=True` is
+  explicitly set in `StrataDistributionPlotConfig`.
+- Updated `tests/test_pipeline_helpers.py` to assert PNG-only default behavior
+  and added regression coverage for optional PDF emission when requested.
