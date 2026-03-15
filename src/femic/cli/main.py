@@ -1659,6 +1659,7 @@ def run_all(
         vdyp_sampling_mode=effective.vdyp_sampling_mode,
         vdyp_two_pass_rebin=effective.vdyp_two_pass_rebin,
         vdyp_min_stands_per_si_bin=effective.vdyp_min_stands_per_si_bin,
+        vdyp_toe_shift_years=effective.vdyp_toe_shift_years,
         managed_curve_mode=effective.managed_curve_mode,
         managed_curve_x_scale=effective.managed_curve_x_scale,
         managed_curve_y_scale=effective.managed_curve_y_scale,

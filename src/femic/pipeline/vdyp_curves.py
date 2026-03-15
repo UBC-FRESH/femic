@@ -266,6 +266,7 @@ def process_vdyp_out(
     maxfev: int = 100000,
     max_skip_increase: int = 30,
     skip_step: int = 1,
+    toe_shift_years: float = 0.0,
     merchantable_floor_enabled: bool = False,
     merchantable_floor_age: float = 20.0,
     merchantable_floor_value: float = 0.0,
@@ -332,6 +333,14 @@ def process_vdyp_out(
         )
         return x_arr, shifted_curve
 
+    toe_shift = max(0.0, float(toe_shift_years))
+
+    def _model_age(age: np.ndarray | list[float]) -> np.ndarray:
+        age_arr = np.asarray(age, dtype=float)
+        if toe_shift <= 0.0:
+            return age_arr
+        return np.maximum(age_arr - toe_shift, 0.0)
+
     def fallback_curve(
         *,
         stage: str,
@@ -387,6 +396,7 @@ def process_vdyp_out(
     y = c.rolling(window=window, center=True).median().values
     x, y = x[y > 0], y[y > 0]
     x, y = x[skip1:], y[skip1:]
+    x_fit = _model_age(x)
     if len(x) < 4 or len(y) < 4:
         return fallback_curve(
             stage="body_input",
@@ -395,7 +405,7 @@ def process_vdyp_out(
             y_raw=c.values,
         )
 
-    y_mai = pd_mod.Series(y / x, x)
+    y_mai = pd_mod.Series(y / np.maximum(x_fit, 1.0), x)
     if y_mai.empty:
         return fallback_curve(
             stage="body_input",
@@ -418,9 +428,9 @@ def process_vdyp_out(
     try:
         popt, _ = curve_fit_fn(
             body_fit_func,
-            x,
+            x_fit,
             y,
-            bounds=body_fit_func_bounds_func(x),
+            bounds=body_fit_func_bounds_func(x_fit),
             maxfev=maxfev,
             sigma=sigma,
         )
@@ -444,7 +454,8 @@ def process_vdyp_out(
         )
 
     x = np.array(range(1, max_age), dtype=float)
-    y = body_fit_func(x, *popt)
+    x_model = _model_age(x)
+    y = body_fit_func(x_model, *popt)
     if not np.any(np.isfinite(y)):
         return fallback_curve(
             stage="body_fit_output",
@@ -460,7 +471,7 @@ def process_vdyp_out(
     for extra in range(0, max_skip_increase + 1, skip_step):
         try:
             x_, y_, (_, popt_toe) = fill_curve_left(
-                x.copy(),
+                x_model.copy(),
                 y.copy(),
                 curve_fit_fn=curve_fit_fn,
                 toe_fit_func=toe_fit_func,
@@ -475,7 +486,7 @@ def process_vdyp_out(
             emit(str(popt_toe))
             if tail_blend_enabled:
                 y_blend, tail_meta = _blend_right_tail_linear(
-                    x_curve=np.asarray(x_, dtype=float),
+                    x_curve=np.asarray(x, dtype=float),
                     y_curve=np.asarray(y_, dtype=float),
                     observed_age=np.asarray(c.index.values, dtype=float),
                     observed_volume=np.asarray(c.values, dtype=float),
@@ -498,7 +509,7 @@ def process_vdyp_out(
                         **tail_meta_payload,
                     )
             x_, y_ = _apply_merchantable_floor(
-                np.asarray(x_, dtype=float),
+                np.asarray(x, dtype=float),
                 np.asarray(y_, dtype=float),
             )
             x_, y_ = prepend_quasi_origin_point(x_, y_)
@@ -511,6 +522,7 @@ def process_vdyp_out(
                 skip2=int(skip2),
                 skip_used=int(used_skip),
                 dx=float(dx),
+                toe_shift_years=float(toe_shift),
                 first_age=float(x_[0]),
                 first_volume=float(y_[0]),
             )

@@ -4812,3 +4812,26 @@
 - Updated `tests/test_vdyp_curves.py` to verify that post-floor ages match a
   delayed baseline curve and that the curve begins rising immediately after the
   floor window (`age=21` for a 20-year floor).
+
+## 2026-03-15 - Applied toe-shift defaults to all fit paths with config override
+- Updated `src/femic/pipeline/vdyp_stage.py` so every smoothing run starts with
+  a default toe-shift (`toe_shift_years`) applied to baseline and candidate fit
+  kwargs, using `FEMIC_VDYP_TOE_SHIFT_YEARS` (default `20.0`) unless overridden.
+- Updated `src/femic/pipeline/vdyp_stage.py` to skip separate
+  merchantable-floor candidate evaluation when toe-shift is already active,
+  preventing mixed post-hoc-only behavior.
+- Updated `src/femic/pipeline/io.py` and `src/femic/cli/main.py` to add
+  run-profile/config support for `modes.vdyp_toe_shift_years`, wiring it into
+  legacy runtime env as `FEMIC_VDYP_TOE_SHIFT_YEARS`.
+- Updated config templates:
+  - `config/run_profile.example.yaml`
+  - `config/run_profile.case_template.yaml`
+  - `instances/reference/config/run_profile.case_template.yaml`
+  with documented `vdyp_toe_shift_years` guidance.
+- Added/updated regression coverage:
+  - `tests/test_vdyp_stage.py` (default/env toe-shift propagation; floor-candidate gate),
+  - `tests/test_vdyp_curves.py` (up-front toe-shift behavior),
+  - `tests/test_pipeline_helpers.py` (run-profile parsing + env export).
+- Validation gates run:
+  `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
+  `pre-commit run --all-files`, `.venv/bin/sphinx-build -b html docs _build/html -W`.

@@ -30,6 +30,7 @@ modes:
   # vdyp_sampling_mode: auto  # auto | all | positive integer
   # vdyp_two_pass_rebin: false
   # vdyp_min_stands_per_si_bin: 25
+  # vdyp_toe_shift_years: 20.0  # shift all fitted VDYP curve toes right by N years (0 disables)
 
   # Optional managed-curve synthesis controls:
   # managed_curve_mode: tipsy  # tipsy | vdyp_transform

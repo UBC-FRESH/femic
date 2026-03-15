@@ -1625,6 +1625,7 @@ def test_execute_curve_smoothing_runs_builds_output_and_logs_missing(
         assert isinstance(vdyp_out, dict)
         assert kwargs["curve_context"]["stratum_code"] == "S1"
         assert kwargs["custom_knob"] == 7
+        assert float(kwargs["toe_shift_years"]) == pytest.approx(20.0)
         return [1.0, 20.0, 40.0], [1e-6, 120.0, 180.0]
 
     smoothed_runs = execute_curve_smoothing_runs(
@@ -2146,7 +2147,7 @@ def test_execute_curve_smoothing_runs_selects_merchantable_floor_candidate(
         results_for_tsa=[(1, "SBPS_PL", {})],
         si_levels=["L"],
         vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
-        kwarg_overrides_for_tsa={},
+        kwarg_overrides_for_tsa={("SBPS_PL", "L"): {"toe_shift_years": 0.0}},
         process_vdyp_out_fn=fake_process,
         append_jsonl_fn=append_event,
         vdyp_curve_events_path="curve.jsonl",
@@ -2167,6 +2168,42 @@ def test_execute_curve_smoothing_runs_selects_merchantable_floor_candidate(
         and event.get("reason") == "merchantable_floor_selected"
     ]
     assert floor_events
+
+
+def test_execute_curve_smoothing_runs_applies_toe_shift_env_default(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("FEMIC_VDYP_TOE_SHIFT_YEARS", "12.5")
+    observed_kwargs: list[dict[str, object]] = []
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        observed_kwargs.append(dict(kwargs))
+        return [1.0, 20.0, 40.0], [1e-6, 120.0, 180.0]
+
+    execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-toe-shift-default",
+        results_for_tsa=[(1, "SBPS_PL", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: {"dummy": "ok"}}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=lambda *_args, **_kwargs: None,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert observed_kwargs
+    assert float(observed_kwargs[0]["toe_shift_years"]) == pytest.approx(12.5)
 
 
 def test_execute_curve_smoothing_runs_selects_reparameterized_candidate_in_policy_order(

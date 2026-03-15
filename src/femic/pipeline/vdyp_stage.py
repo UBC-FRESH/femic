@@ -2229,6 +2229,9 @@ def execute_curve_smoothing_runs(
     fit_gate_max_early_overshoot = 8.0
     merchantable_floor_age = 20.0
     merchantable_floor_value = 0.0
+    toe_shift_default_years = float(
+        os.environ.get("FEMIC_VDYP_TOE_SHIFT_YEARS", "20.0")
+    )
     tail_default_linear_min_points = int(
         os.environ.get("FEMIC_TAIL_LINEAR_MIN_POINTS", "4")
     )
@@ -2258,6 +2261,10 @@ def execute_curve_smoothing_runs(
         os.environ.get("FEMIC_TAIL_SELECT_CLOSE_TOLERANCE", "0.06")
     )
 
+    def _with_curve_defaults(params: dict[str, Any]) -> dict[str, Any]:
+        params.setdefault("toe_shift_years", toe_shift_default_years)
+        return params
+
     def _with_tail_defaults(params: dict[str, Any]) -> dict[str, Any]:
         params.setdefault("tail_linear_min_points", tail_default_linear_min_points)
         params.setdefault("tail_linear_min_r2", tail_default_linear_min_r2)
@@ -2268,6 +2275,17 @@ def execute_curve_smoothing_runs(
         params.setdefault("tail_linear_allow_quantile_fallback", False)
         params.setdefault("tail_blend_years", tail_default_blend_years)
         return params
+
+    def _toe_shift_years_for_kwargs(params: Mapping[str, Any]) -> float:
+        value = params.get("toe_shift_years", 0.0)
+        try:
+            years = float(value)
+        except (TypeError, ValueError):
+            years = 0.0
+        return max(0.0, years)
+
+    def _toe_shift_active(params: Mapping[str, Any]) -> bool:
+        return _toe_shift_years_for_kwargs(params) > 0.0
 
     def _build_observed_bins(vdyp_out: Mapping[Any, Any]) -> Any | None:
         pd_module = importlib.import_module("pandas")
@@ -2437,6 +2455,29 @@ def execute_curve_smoothing_runs(
                 curve_context=dict(curve_context, candidate=candidate_name),
                 **dict(kwargs),
             )
+            x_arr = np.asarray(x_c, dtype=float)
+            y_arr = np.asarray(y_c, dtype=float)
+            if (
+                x_arr.size == 0
+                or y_arr.size == 0
+                or x_arr.size != y_arr.size
+                or not np.all(np.isfinite(x_arr))
+                or not np.all(np.isfinite(y_arr))
+            ):
+                append_jsonl_fn(
+                    vdyp_curve_events_path,
+                    build_timestamped_event(
+                        event="vdyp_curve_fit",
+                        status="warning",
+                        stage="candidate_validation",
+                        reason="candidate_rejected_non_finite",
+                        context=curve_context,
+                        candidate_name=candidate_name,
+                        x_size=int(x_arr.size),
+                        y_size=int(y_arr.size),
+                    ),
+                )
+                return None
             return x_c, y_c
         except Exception:
             return None
@@ -2482,14 +2523,22 @@ def execute_curve_smoothing_runs(
         close_tail = abs(tail_tail - current_tail) <= (
             tail_select_close_tolerance * current_tail
         )
+        improve_global = (
+            (tail_rmse < current_rmse)
+            and (tail_mape <= (1.05 * current_mape))
+            and (tail_early <= (1.10 * current_early))
+        )
         tie_break = (
             close_tail and (tail_rmse < current_rmse) and (tail_mape <= current_mape)
         )
-        selected = bool((improve_tail and non_harm_guard) or tie_break)
+        selected = bool(
+            non_harm_guard and (improve_tail or improve_global or tie_break)
+        )
         decision = "selected" if selected else "rejected"
         return selected, {
             "decision": decision,
             "improve_tail": bool(improve_tail),
+            "improve_global": bool(improve_global),
             "non_harm_guard": bool(non_harm_guard),
             "tie_break": bool(tie_break),
             "close_tail": bool(close_tail),
@@ -2778,7 +2827,9 @@ def execute_curve_smoothing_runs(
     smoothed_runs: list[SmoothedCurveResult] = []
     for stratumi, sc, _result in results_for_tsa:
         for si_level in si_levels:
-            kwargs = dict(kwarg_overrides_for_tsa.get((sc, si_level), {}))
+            kwargs = _with_curve_defaults(
+                dict(kwarg_overrides_for_tsa.get((sc, si_level), {}))
+            )
             curve_context = {
                 "run_id": run_id,
                 "tsa": tsa,
@@ -2996,57 +3047,60 @@ def execute_curve_smoothing_runs(
                     if tail_selected:
                         floor_kwargs = _with_tail_defaults(floor_kwargs)
                         floor_kwargs["tail_blend_enabled"] = True
-                    floor_kwargs["merchantable_floor_enabled"] = True
-                    floor_kwargs["merchantable_floor_age"] = merchantable_floor_age
-                    floor_kwargs["merchantable_floor_value"] = merchantable_floor_value
-                    floor_curve = _run_candidate(
-                        vdyp_out=vdyp_out,
-                        curve_context=dict(
-                            curve_context,
-                            merchantable_floor_age=merchantable_floor_age,
-                        ),
-                        kwargs=floor_kwargs,
-                        candidate_name="merchantable_floor",
-                    )
-                    if floor_curve is not None:
-                        floor_metrics = _fit_quality(
-                            binned=binned_obs,
-                            x_curve=floor_curve[0],
-                            y_curve=floor_curve[1],
+                    if not _toe_shift_active(floor_kwargs):
+                        floor_kwargs["merchantable_floor_enabled"] = True
+                        floor_kwargs["merchantable_floor_age"] = merchantable_floor_age
+                        floor_kwargs["merchantable_floor_value"] = (
+                            merchantable_floor_value
                         )
-                        fit_metrics["merchantable_floor"] = floor_metrics
-                        floor_pre_merch = _max_pre_merchantable_volume(
-                            x_curve=floor_curve[0],
-                            y_curve=floor_curve[1],
-                            floor_age=merchantable_floor_age,
-                        )
-                        baseline = floor_baseline_metrics
-                        reduced_pre_merch = floor_pre_merch <= 0.5
-                        acceptable_rmse = floor_metrics["rmse"] <= (
-                            1.20 * baseline["rmse"]
-                        )
-                        accepted = reduced_pre_merch and acceptable_rmse
-                        append_jsonl_fn(
-                            vdyp_curve_events_path,
-                            build_timestamped_event(
-                                event="vdyp_curve_fit",
-                                status="info",
-                                stage="merchantable_floor",
-                                reason=(
-                                    "merchantable_floor_selected"
-                                    if accepted
-                                    else "merchantable_floor_rejected"
-                                ),
-                                context=curve_context,
-                                floor_age=float(merchantable_floor_age),
-                                baseline_pre_merch_volume=float(baseline_pre_merch),
-                                candidate_pre_merch_volume=float(floor_pre_merch),
-                                baseline_metrics=dict(baseline),
-                                candidate_metrics=dict(floor_metrics),
+                        floor_curve = _run_candidate(
+                            vdyp_out=vdyp_out,
+                            curve_context=dict(
+                                curve_context,
+                                merchantable_floor_age=merchantable_floor_age,
                             ),
+                            kwargs=floor_kwargs,
+                            candidate_name="merchantable_floor",
                         )
-                        if accepted:
-                            candidate_curves["merchantable_floor"] = floor_curve
+                        if floor_curve is not None:
+                            floor_metrics = _fit_quality(
+                                binned=binned_obs,
+                                x_curve=floor_curve[0],
+                                y_curve=floor_curve[1],
+                            )
+                            fit_metrics["merchantable_floor"] = floor_metrics
+                            floor_pre_merch = _max_pre_merchantable_volume(
+                                x_curve=floor_curve[0],
+                                y_curve=floor_curve[1],
+                                floor_age=merchantable_floor_age,
+                            )
+                            baseline = floor_baseline_metrics
+                            reduced_pre_merch = floor_pre_merch <= 0.5
+                            acceptable_rmse = floor_metrics["rmse"] <= (
+                                1.20 * baseline["rmse"]
+                            )
+                            accepted = reduced_pre_merch and acceptable_rmse
+                            append_jsonl_fn(
+                                vdyp_curve_events_path,
+                                build_timestamped_event(
+                                    event="vdyp_curve_fit",
+                                    status="info",
+                                    stage="merchantable_floor",
+                                    reason=(
+                                        "merchantable_floor_selected"
+                                        if accepted
+                                        else "merchantable_floor_rejected"
+                                    ),
+                                    context=curve_context,
+                                    floor_age=float(merchantable_floor_age),
+                                    baseline_pre_merch_volume=float(baseline_pre_merch),
+                                    candidate_pre_merch_volume=float(floor_pre_merch),
+                                    baseline_metrics=dict(baseline),
+                                    candidate_metrics=dict(floor_metrics),
+                                ),
+                            )
+                            if accepted:
+                                candidate_curves["merchantable_floor"] = floor_curve
 
             gate_fail_reasons = _evaluate_fit_quality_gate(
                 y_curve=y,

@@ -518,6 +518,20 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-15 (Phase 19 follow-up complete): moved toe-shift behavior to the
+  default fit path so all VDYP smoothing candidates use the same delayed-toe
+  shape unless explicitly overridden.
+  - `execute_curve_smoothing_runs(...)` now injects `toe_shift_years` into
+    baseline/candidate fit kwargs by default (env-backed via
+    `FEMIC_VDYP_TOE_SHIFT_YEARS`, default `20.0`).
+  - Merchantable-floor candidate generation is now skipped when a positive
+    toe-shift is already active, avoiding duplicate post-hoc flattening logic.
+  - Added run-profile support for `modes.vdyp_toe_shift_years` so users can set
+    per-run defaults in config files; value is exported to runtime env for
+    legacy stage execution.
+  - Added regression coverage in `tests/test_vdyp_stage.py`,
+    `tests/test_vdyp_curves.py`, and `tests/test_pipeline_helpers.py` for
+    default/env-config toe-shift behavior and config parsing/env wiring.
 - 2026-03-15 (Phase 19 `P19.13c` follow-up complete): corrected merchantable
   floor behavior to preserve smooth toe-ramp shape by shifting the fitted curve
   right (age-delay) instead of hard-clamping the first 20 years to zero.

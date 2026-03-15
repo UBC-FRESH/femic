@@ -1082,6 +1082,7 @@ def test_load_pipeline_run_profile_from_yaml(tmp_path: Path) -> None:
                 "  vdyp_sampling_mode: all",
                 "  vdyp_two_pass_rebin: true",
                 "  vdyp_min_stands_per_si_bin: 10",
+                "  vdyp_toe_shift_years: 15.0",
                 "  managed_curve_mode: vdyp_transform",
                 "  managed_curve_x_scale: 0.8",
                 "  managed_curve_y_scale: 1.2",
@@ -1115,6 +1116,7 @@ def test_load_pipeline_run_profile_from_yaml(tmp_path: Path) -> None:
     assert profile.vdyp_sampling_mode == "all"
     assert profile.vdyp_two_pass_rebin is True
     assert profile.vdyp_min_stands_per_si_bin == 10
+    assert profile.vdyp_toe_shift_years == pytest.approx(15.0)
     assert profile.managed_curve_mode == "vdyp_transform"
     assert profile.managed_curve_x_scale == pytest.approx(0.8)
     assert profile.managed_curve_y_scale == pytest.approx(1.2)
@@ -1154,6 +1156,7 @@ def test_resolve_effective_run_options_merges_profile_and_cli() -> None:
     assert resolved.vdyp_sampling_mode is None
     assert resolved.vdyp_two_pass_rebin is None
     assert resolved.vdyp_min_stands_per_si_bin is None
+    assert resolved.vdyp_toe_shift_years is None
     assert resolved.managed_curve_mode is None
     assert resolved.managed_curve_x_scale is None
     assert resolved.managed_curve_y_scale is None
@@ -1188,6 +1191,17 @@ def test_load_pipeline_run_profile_rejects_non_positive_vdyp_min_stands(
         load_pipeline_run_profile(profile_path)
 
 
+def test_load_pipeline_run_profile_rejects_invalid_vdyp_toe_shift_years(
+    tmp_path: Path,
+) -> None:
+    profile_path = tmp_path / "run_profile.yaml"
+    profile_path.write_text(
+        "modes:\n  vdyp_toe_shift_years: not-a-number\n", encoding="utf-8"
+    )
+    with pytest.raises(ValueError, match="modes.vdyp_toe_shift_years"):
+        load_pipeline_run_profile(profile_path)
+
+
 def test_load_pipeline_run_profile_rejects_invalid_managed_curve_mode(
     tmp_path: Path,
 ) -> None:
@@ -1219,6 +1233,7 @@ def test_build_legacy_execution_plan_resolves_env_and_paths(tmp_path: Path) -> N
         vdyp_sampling_mode="all",
         vdyp_two_pass_rebin=True,
         vdyp_min_stands_per_si_bin=10,
+        vdyp_toe_shift_years=15.0,
         managed_curve_mode="vdyp_transform",
         managed_curve_x_scale=0.8,
         managed_curve_y_scale=1.2,
@@ -1258,6 +1273,7 @@ def test_build_legacy_execution_plan_resolves_env_and_paths(tmp_path: Path) -> N
     assert plan.env["FEMIC_VDYP_SAMPLING_MODE"] == "all"
     assert plan.env["FEMIC_VDYP_TWO_PASS_REBIN"] == "1"
     assert plan.env["FEMIC_VDYP_MIN_STANDS_PER_SI_BIN"] == "10"
+    assert plan.env["FEMIC_VDYP_TOE_SHIFT_YEARS"] == "15.0"
     assert plan.env["FEMIC_MANAGED_CURVE_MODE"] == "vdyp_transform"
     assert plan.env["FEMIC_MANAGED_CURVE_X_SCALE"] == "0.8"
     assert plan.env["FEMIC_MANAGED_CURVE_Y_SCALE"] == "1.2"

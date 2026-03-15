@@ -280,6 +280,45 @@ def test_process_vdyp_out_applies_optional_merchantable_floor() -> None:
     assert any(event.get("stage") == "merchantable_floor" for event in events)
 
 
+def test_process_vdyp_out_applies_upfront_toe_shift() -> None:
+    ages = np.arange(30, 121, 10, dtype=float)
+    vols = np.array([20, 45, 80, 110, 135, 150, 155, 152, 149, 147], dtype=float)
+    vdyp_df = pd.DataFrame({"Age": ages, "Vdwb": vols}).set_index("Age")
+    common_kwargs = dict(
+        curve_fit_fn=lambda *args, **kwargs: (np.array([0.03, 2.0, 8.0, 6.0]), None),
+        body_fit_func=_fit_func1,
+        body_fit_func_bounds_func=_fit_bounds,
+        toe_fit_func=_fit_func1,
+        toe_fit_func_bounds_func=_fit_bounds,
+        min_age=30,
+        max_age=140,
+        window=2,
+    )
+    x_base, y_base = process_vdyp_out(
+        {1: vdyp_df},
+        log_event=lambda _event: None,
+        **common_kwargs,
+    )
+    x_shift, y_shift = process_vdyp_out(
+        {1: vdyp_df},
+        log_event=lambda _event: None,
+        toe_shift_years=20.0,
+        **common_kwargs,
+    )
+    assert np.array_equal(np.asarray(x_shift), np.asarray(x_base))
+    shifted_expected = np.interp(
+        np.asarray(x_shift, dtype=float) - 20.0,
+        np.asarray(x_base, dtype=float),
+        np.asarray(y_base, dtype=float),
+        left=0.0,
+        right=float(np.asarray(y_base, dtype=float)[-1]),
+    )
+    assert np.allclose(
+        np.asarray(y_shift)[x_shift > 21.0], shifted_expected[x_shift > 21.0]
+    )
+    assert float(np.asarray(y_shift)[np.where(x_shift == 21.0)[0][0]]) > 0.0
+
+
 def test_process_vdyp_out_tail_blend_skips_when_no_linear_tail_detected() -> None:
     ages = np.arange(30, 181, 10, dtype=float)
     # Strongly curved/oscillatory right tail to fail strict linearity gates.

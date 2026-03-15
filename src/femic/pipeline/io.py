@@ -101,6 +101,7 @@ class PipelineRunConfig:
     vdyp_sampling_mode: str | int | None = None
     vdyp_two_pass_rebin: bool | None = None
     vdyp_min_stands_per_si_bin: int | None = None
+    vdyp_toe_shift_years: float | None = None
     managed_curve_mode: str | None = None
     managed_curve_x_scale: float | None = None
     managed_curve_y_scale: float | None = None
@@ -132,6 +133,7 @@ class PipelineRunProfile:
     vdyp_sampling_mode: str | int | None = None
     vdyp_two_pass_rebin: bool | None = None
     vdyp_min_stands_per_si_bin: int | None = None
+    vdyp_toe_shift_years: float | None = None
     managed_curve_mode: str | None = None
     managed_curve_x_scale: float | None = None
     managed_curve_y_scale: float | None = None
@@ -162,6 +164,7 @@ class EffectiveRunOptions:
     vdyp_sampling_mode: str | int | None
     vdyp_two_pass_rebin: bool | None
     vdyp_min_stands_per_si_bin: int | None
+    vdyp_toe_shift_years: float | None
     managed_curve_mode: str | None
     managed_curve_x_scale: float | None
     managed_curve_y_scale: float | None
@@ -540,6 +543,10 @@ def load_pipeline_run_profile(config_path: Path) -> PipelineRunProfile:
             modes.get("vdyp_min_stands_per_si_bin"),
             field_name="modes.vdyp_min_stands_per_si_bin",
         ),
+        vdyp_toe_shift_years=_normalize_optional_float(
+            modes.get("vdyp_toe_shift_years"),
+            field_name="modes.vdyp_toe_shift_years",
+        ),
         managed_curve_mode=_normalize_optional_managed_curve_mode(
             modes.get("managed_curve_mode"),
             field_name="modes.managed_curve_mode",
@@ -633,6 +640,7 @@ def resolve_effective_run_options(
         vdyp_sampling_mode=active_profile.vdyp_sampling_mode,
         vdyp_two_pass_rebin=active_profile.vdyp_two_pass_rebin,
         vdyp_min_stands_per_si_bin=active_profile.vdyp_min_stands_per_si_bin,
+        vdyp_toe_shift_years=active_profile.vdyp_toe_shift_years,
         managed_curve_mode=active_profile.managed_curve_mode,
         managed_curve_x_scale=active_profile.managed_curve_x_scale,
         managed_curve_y_scale=active_profile.managed_curve_y_scale,
@@ -680,6 +688,7 @@ def build_pipeline_run_config(
     vdyp_sampling_mode: str | int | None = None,
     vdyp_two_pass_rebin: bool | None = None,
     vdyp_min_stands_per_si_bin: int | None = None,
+    vdyp_toe_shift_years: float | None = None,
     managed_curve_mode: str | None = None,
     managed_curve_x_scale: float | None = None,
     managed_curve_y_scale: float | None = None,
@@ -708,6 +717,7 @@ def build_pipeline_run_config(
         vdyp_sampling_mode=vdyp_sampling_mode,
         vdyp_two_pass_rebin=vdyp_two_pass_rebin,
         vdyp_min_stands_per_si_bin=vdyp_min_stands_per_si_bin,
+        vdyp_toe_shift_years=vdyp_toe_shift_years,
         managed_curve_mode=managed_curve_mode,
         managed_curve_x_scale=managed_curve_x_scale,
         managed_curve_y_scale=managed_curve_y_scale,
@@ -784,6 +794,8 @@ def build_legacy_execution_plan(
         env["FEMIC_VDYP_MIN_STANDS_PER_SI_BIN"] = str(
             int(run_config.vdyp_min_stands_per_si_bin)
         )
+    if run_config.vdyp_toe_shift_years is not None:
+        env["FEMIC_VDYP_TOE_SHIFT_YEARS"] = str(float(run_config.vdyp_toe_shift_years))
     if run_config.managed_curve_mode is not None:
         env["FEMIC_MANAGED_CURVE_MODE"] = str(run_config.managed_curve_mode)
     if run_config.managed_curve_x_scale is not None:
