@@ -727,6 +727,13 @@ def test_build_strata_distribution_plot_config_defaults() -> None:
     assert cfg.bw == "scott"
     assert cfg.cut == 0.0
     assert cfg.site_index_xlim == (0, 30)
+    assert cfg.site_index_focus_quantiles == (0.02, 0.98)
+    assert cfg.site_index_focus_padding == 0.75
+    assert cfg.stripplot_alpha == 0.15
+    assert cfg.stripplot_size == 1.4
+    assert cfg.stripplot_max_points == 3000
+    assert cfg.stripplot_min_points_per_stratum == 1
+    assert cfg.stripplot_random_seed == 19
 
 
 def test_resolve_strata_plot_ordering_abundance_and_lex_modes() -> None:
@@ -838,20 +845,24 @@ def test_render_strata_distribution_plot_uses_helper_config_and_paths() -> None:
             self.barplot_calls = 0
             self.violinplot_calls = 0
             self.stripplot_calls = 0
+            self.violin_rows: list[int] = []
+            self.strip_rows: list[int] = []
 
         def barplot(self, **_kwargs: object) -> None:
             self.barplot_calls += 1
 
-        def violinplot(self, **_kwargs: object) -> None:
+        def violinplot(self, **kwargs: object) -> None:
             self.violinplot_calls += 1
+            self.violin_rows.append(len(kwargs["data"]))  # type: ignore[arg-type]
 
-        def stripplot(self, **_kwargs: object) -> None:
+        def stripplot(self, **kwargs: object) -> None:
             self.stripplot_calls += 1
+            self.strip_rows.append(len(kwargs["data"]))  # type: ignore[arg-type]
 
     cfg = build_strata_distribution_plot_config()
     fake_plt = _FakePlt()
     fake_sns = _FakeSns()
-    render_strata_distribution_plot(
+    metadata = render_strata_distribution_plot(
         tsa_code="08",
         f_table=pd.DataFrame({"stratum": ["S1"], "SITE_INDEX": [20.0]}),
         stratum_col="stratum",
@@ -869,9 +880,94 @@ def test_render_strata_distribution_plot_uses_helper_config_and_paths() -> None:
     assert fake_sns.barplot_calls == 1
     assert fake_sns.violinplot_calls == 1
     assert fake_sns.stripplot_calls == 1
+    assert fake_sns.violin_rows == [1]
+    assert fake_sns.strip_rows == [1]
     assert fake_plt.subplots_calls == [cfg.figsize]
     assert fake_plt.savefig_calls[0][0] == Path("plots/strata-tsa08.pdf")
     assert fake_plt.savefig_calls[1][0] == Path("plots/strata-tsa08.png")
+    assert metadata.total_points == 1
+    assert metadata.window_points == 1
+    assert metadata.strip_points_plotted == 1
+    assert metadata.clipped_total_count == 0
+    assert metadata.site_index_xlim == (19.0, 21.0)
+
+
+def test_render_strata_distribution_plot_clips_outliers_and_thins_strip_points() -> (
+    None
+):
+    class _FakeAxis:
+        def __init__(self) -> None:
+            self.xlim_calls: list[tuple[float, float]] = []
+
+        def twiny(self) -> "_FakeAxis":
+            return self
+
+        def set_xlabel(self, _value: str) -> None:
+            return None
+
+        def set_xlim(self, value: tuple[float, float]) -> None:
+            self.xlim_calls.append(value)
+
+    class _FakePlt:
+        def subplots(self, *, figsize: tuple[float, float]) -> tuple[None, _FakeAxis]:
+            return None, _FakeAxis()
+
+        def savefig(self, _path: Path, **_kwargs: object) -> None:
+            return None
+
+    class _FakeSns:
+        def __init__(self) -> None:
+            self.violin_rows = 0
+            self.strip_rows = 0
+
+        def barplot(self, **_kwargs: object) -> None:
+            return None
+
+        def violinplot(self, **kwargs: object) -> None:
+            self.violin_rows = len(kwargs["data"])  # type: ignore[arg-type]
+
+        def stripplot(self, **kwargs: object) -> None:
+            self.strip_rows = len(kwargs["data"])  # type: ignore[arg-type]
+
+    cfg = build_strata_distribution_plot_config(
+        stripplot_max_points=25,
+        site_index_focus_quantiles=(0.05, 0.95),
+        site_index_focus_padding=0.5,
+        site_index_xlim=(0, 30),
+    )
+
+    core = np.linspace(10.0, 20.0, 200)
+    site_index = np.concatenate([core, np.array([45.0, 60.0])])
+    f_table = pd.DataFrame(
+        {
+            "stratum": ["S1"] * len(site_index),
+            "SITE_INDEX": site_index,
+        }
+    )
+    fake_sns = _FakeSns()
+    metadata = render_strata_distribution_plot(
+        tsa_code="29",
+        f_table=f_table,
+        stratum_col="stratum",
+        labels=["S1"],
+        stratum_props=[1.0],
+        plot_config=cfg,
+        sns_module=fake_sns,
+        plt_module=_FakePlt(),
+        strata_plot_paths_fn=lambda _tsa: (
+            Path("plots/strata-tsa29.pdf"),
+            Path("plots/strata-tsa29.png"),
+        ),
+    )
+
+    assert metadata.total_points == 202
+    assert metadata.clipped_high_count == 2
+    assert metadata.clipped_low_count == 0
+    assert metadata.clipped_total_count == 2
+    assert metadata.window_points == 200
+    assert metadata.strip_points_plotted <= 25
+    assert fake_sns.violin_rows == 200
+    assert fake_sns.strip_rows <= 25
 
 
 def test_build_pipeline_run_config_normalizes_tsa_values() -> None:

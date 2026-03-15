@@ -147,7 +147,7 @@ def run_tsa(
         sort_lex=False,
     )
 
-    render_strata_distribution_plot(
+    strata_plot_metadata = render_strata_distribution_plot(
         tsa_code=tsa,
         f_table=f_,
         stratum_col=stratum_col,
@@ -156,6 +156,21 @@ def run_tsa(
         plot_config=strata_plot_cfg,
         sns_module=sns,
         plt_module=plt,
+    )
+    print(
+        "strata plot SI window",
+        strata_plot_metadata.site_index_xlim,
+        "points total/window/overlay",
+        (
+            strata_plot_metadata.total_points,
+            strata_plot_metadata.window_points,
+            strata_plot_metadata.strip_points_plotted,
+        ),
+        "clipped low/high",
+        (
+            strata_plot_metadata.clipped_low_count,
+            strata_plot_metadata.clipped_high_count,
+        ),
     )
 
     # --- cell 16 ---

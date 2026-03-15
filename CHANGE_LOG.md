@@ -4610,3 +4610,20 @@
   - `P19.15` TSA29 rerun + curve-stability evidence publication.
 - Added a matching dated entry under `ROADMAP.md` "Detailed Next Steps Notes"
   to keep implementation sequencing anchored to this feedback.
+
+## 2026-03-15 - Completed P19.12 stratum SI diagnostic readability and auditability
+- Updated `src/femic/pipeline/plots.py` to improve plot interpretability:
+  - Added deterministic strip-point thinning (`stripplot_max_points` +
+    `stripplot_min_points_per_stratum`) and reduced default strip opacity/size.
+  - Replaced outlier-driven axis expansion with quantile-centered SI windowing
+    (`site_index_focus_quantiles`, `site_index_focus_padding`) constrained by a
+    configurable cap (`site_index_xlim`).
+  - Added `StrataDistributionPlotMetadata` return payload with SI window,
+    total/window/overlay point counts, and clipped low/high counts.
+- Updated legacy stage logging in
+  `src/femic/resources/legacy/01a_run-tsa.py` to emit plot metadata for
+  auditable trimming diagnostics.
+- Added/updated tests in `tests/test_pipeline_helpers.py`:
+  - config defaults cover new readability controls,
+  - render helper returns metadata and expected SI window,
+  - outlier clipping and strip-point thinning behavior is regression-tested.

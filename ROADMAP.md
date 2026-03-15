@@ -472,12 +472,12 @@ notes.
 - [x] P19.9 Add dual-output fork contract (Patchworks + Woodstock)
 - [x] P19.10 Add ws3 smoke-test integration and evidence gate
 - [x] P19.11 Harden resume checkpoint compatibility for strata-selection changes
-- [ ] P19.12 Improve stratum SI diagnostic plot readability and interpretability
-  - [ ] P19.12a Thin/sample SI point overlays and reduce point opacity so violin
+- [x] P19.12 Improve stratum SI diagnostic plot readability and interpretability
+  - [x] P19.12a Thin/sample SI point overlays and reduce point opacity so violin
     density remains visible.
-  - [ ] P19.12b Add zoomed SI-axis defaults centered on core distribution
+  - [x] P19.12b Add zoomed SI-axis defaults centered on core distribution
     (quantile-based window + configurable cap), with explicit outlier handling.
-  - [ ] P19.12c Record and report clipped/out-of-window point counts in plot
+  - [x] P19.12c Record and report clipped/out-of-window point counts in plot
     metadata/log output so visual trimming is auditable.
 - [ ] P19.13 Add VDYP NLLS failure detection and auto-reparameterization fallback
   sequence
@@ -514,6 +514,15 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-15 (Phase 19 `P19.12` complete): improved stratum SI diagnostic
+  plotting readability and added auditable clipping metadata.
+  - Point overlays now use deterministic thinning and lower default opacity to
+    keep violin density visible under heavy sample counts.
+  - Plot SI axis now uses quantile-centered windowing with configurable cap and
+    padding instead of expanding to extreme outliers.
+  - Plot helper now returns clipping/point-count metadata; legacy 01a run logs
+    report SI window, total/window/overlay point counts, and low/high clipped
+    counts for audit traceability.
 - 2026-03-15 (Phase 19 planning note): incorporated TSA29 curve-review feedback
   as new actionable tasks `P19.12`-`P19.15`.
   - Plot readability work (`P19.12`): reduce overplot darkness, thin point
