@@ -4746,3 +4746,15 @@
 - Added regression coverage in:
   - `tests/test_vdyp_reporting.py` for row extraction/flagging logic,
   - `tests/test_vdyp_report_cli.py` for CSV output generation.
+
+## 2026-03-15 - Completed P19.15a.1 THLB empty-slice guard for post-TIPSY stability
+- Patched `mean_thlb_for_geometry(...)` in `src/femic/pipeline/tsa.py` to avoid
+  calling `np.mean` on empty valid-cell masks; now returns the configured
+  fallback when no valid cells are present.
+- Added non-finite guard on computed THLB means so invalid numeric outputs also
+  fall back safely.
+- Added regression coverage in `tests/test_pipeline_helpers.py` to lock the
+  empty-valid-cell fallback behavior and prevent warning-flood regressions.
+- Updated `ROADMAP.md`:
+  - checked off Phase 19 subtask `P19.15a.1`,
+  - appended matching detail in "Detailed Next Steps Notes".

@@ -687,6 +687,23 @@ def test_mean_thlb_for_geometry_fallback_scope() -> None:
         )
 
 
+def test_mean_thlb_for_geometry_returns_default_when_no_valid_cells() -> None:
+    def _empty_valid_mask(
+        _src: object, _shapes: list[object], crop: bool
+    ) -> tuple[np.ndarray, None]:
+        assert crop is True
+        return np.array([[-1, -1, -1]]), None
+
+    value = mean_thlb_for_geometry(
+        geometry=object(),
+        raster_src=object(),
+        mask_fn=_empty_valid_mask,
+        np_module=np,
+        default_on_error=3.5,
+    )
+    assert value == 3.5
+
+
 def test_plot_path_helpers() -> None:
     pdf_path, png_path = strata_plot_paths("8")
     tipsy_path = tipsy_vdyp_plot_path(23005, "08")

@@ -551,7 +551,13 @@ def mean_thlb_for_geometry(
         array, _ = mask_fn(raster_src, [geometry], crop=True)
     except (ValueError, TypeError, RuntimeError, OSError):
         return float(default_on_error)
-    return float(np_module.mean(array[array >= 0]))
+    valid = array[array >= 0]
+    if getattr(valid, "size", 0) == 0:
+        return float(default_on_error)
+    mean_value = np_module.mean(valid)
+    if not np_module.isfinite(mean_value):
+        return float(default_on_error)
+    return float(mean_value)
 
 
 def assign_thlb_raw_from_raster(

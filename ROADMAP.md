@@ -500,6 +500,8 @@ notes.
 - [ ] P19.15 Re-run TSA29 curve QA and publish curve-stability evidence
   - [ ] P19.15a Rebuild TSA29 diagnostics with updated plotting and fitting
     policies.
+    - [x] P19.15a.1 Guard THLB raster mean for empty valid-cell slices to avoid
+      NumPy warning floods during post-TIPSY bundle assembly.
   - [x] P19.15b Produce reviewer-facing summary table of strata/SI fit status
     (accepted/fallback path/constraints applied).
   - [ ] P19.15c Update TSA29 instance docs/evidence with before/after curve
@@ -514,6 +516,12 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-15 (Phase 19 `P19.15a.1` complete): patched THLB raster sampling to
+  return fallback values when masked geometries have no valid cells.
+  - Updated `mean_thlb_for_geometry(...)` to avoid `np.mean` on empty slices
+    and to guard non-finite outputs.
+  - Added regression coverage in `tests/test_pipeline_helpers.py` for the
+    empty-valid-cell fallback path.
 - 2026-03-15 (Phase 19 `P19.15b` complete): added reviewer-facing curve
   selection summary output from VDYP curve-event logs.
   - Added `summarize_curve_selection_rows(...)` in `femic.vdyp.reporting` to
