@@ -4668,3 +4668,17 @@
   fit metrics for auditability.
 - Added regression test coverage in `tests/test_vdyp_stage.py` to verify left-toe
   censor candidate selection and output curve replacement behavior.
+
+## 2026-03-15 - Completed P19.13c merchantable-volume floor candidate
+- Updated `src/femic/pipeline/vdyp_curves.py` so `process_vdyp_out(...)` can
+  optionally apply a merchantable-volume floor (`merchantable_floor_enabled`,
+  `merchantable_floor_age`, `merchantable_floor_value`) and emit
+  `merchantable_floor` stage events.
+- Updated `src/femic/pipeline/vdyp_stage.py` to evaluate a merchantable-floor
+  candidate whenever baseline curves show non-trivial pre-age-20 volume, then
+  select/reject that candidate with structured event logging and RMSE
+  guardrails.
+- Added regression tests:
+  - `tests/test_vdyp_curves.py` verifies floor application through age 20.
+  - `tests/test_vdyp_stage.py` verifies stage-level merchantable-floor
+    selection and output substitution.

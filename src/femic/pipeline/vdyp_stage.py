@@ -2227,6 +2227,8 @@ def execute_curve_smoothing_runs(
 
     fit_gate_max_mape = 2.0
     fit_gate_max_early_overshoot = 8.0
+    merchantable_floor_age = 20.0
+    merchantable_floor_value = 0.0
 
     def _build_observed_bins(vdyp_out: Mapping[Any, Any]) -> Any | None:
         pd_module = importlib.import_module("pandas")
@@ -2400,6 +2402,21 @@ def execute_curve_smoothing_runs(
         except Exception:
             return None
 
+    def _max_pre_merchantable_volume(
+        *,
+        x_curve: Sequence[float],
+        y_curve: Sequence[float],
+        floor_age: float,
+    ) -> float:
+        x_vals = np.asarray(x_curve, dtype=float)
+        y_vals = np.asarray(y_curve, dtype=float)
+        if x_vals.size == 0 or y_vals.size == 0:
+            return 0.0
+        max_eval_age = int(max(1, round(float(floor_age))))
+        eval_ages = np.arange(1.0, float(max_eval_age) + 1.0, 1.0, dtype=float)
+        pred = np.interp(eval_ages, x_vals, y_vals)
+        return float(np.nanmax(pred))
+
     def _emit_fit_diagnostic_plot(
         *,
         tsa_code: str,
@@ -2477,6 +2494,7 @@ def execute_curve_smoothing_runs(
             ("tail_blend", "tab:orange", "Tail-blend fit"),
             ("auto_skip", "tab:purple", "Auto-skip fit"),
             ("left_toe_censor", "tab:brown", "Left-toe censor fit"),
+            ("merchantable_floor", "tab:olive", "Merch-floor fit"),
         ):
             curve = candidate_curves.get(key)
             if curve is None:
@@ -2503,7 +2521,13 @@ def execute_curve_smoothing_runs(
         ax.grid(alpha=0.25)
         ax.legend(fontsize=8)
         stats_lines: list[str] = []
-        for name in ("current", "tail_blend", "auto_skip", "left_toe_censor"):
+        for name in (
+            "current",
+            "tail_blend",
+            "auto_skip",
+            "left_toe_censor",
+            "merchantable_floor",
+        ):
             metric = fit_metrics.get(name)
             if not metric:
                 continue
@@ -2729,7 +2753,7 @@ def execute_curve_smoothing_runs(
                             vdyp_curve_events_path,
                             build_timestamped_event(
                                 event="vdyp_curve_fit",
-                                status="info" if accepted else "warning",
+                                status="info",
                                 stage="left_toe_censor",
                                 reason=(
                                     "left_toe_censor_selected"
@@ -2745,6 +2769,65 @@ def execute_curve_smoothing_runs(
                         )
                         if accepted:
                             candidate_curves["left_toe_censor"] = censor_curve
+
+                baseline_pre_merch = _max_pre_merchantable_volume(
+                    x_curve=x,
+                    y_curve=y,
+                    floor_age=merchantable_floor_age,
+                )
+                if baseline_pre_merch > 1.0:
+                    floor_kwargs = dict(kwargs)
+                    floor_kwargs["merchantable_floor_enabled"] = True
+                    floor_kwargs["merchantable_floor_age"] = merchantable_floor_age
+                    floor_kwargs["merchantable_floor_value"] = merchantable_floor_value
+                    floor_curve = _run_candidate(
+                        vdyp_out=vdyp_out,
+                        curve_context=dict(
+                            curve_context,
+                            merchantable_floor_age=merchantable_floor_age,
+                        ),
+                        kwargs=floor_kwargs,
+                        candidate_name="merchantable_floor",
+                    )
+                    if floor_curve is not None:
+                        floor_metrics = _fit_quality(
+                            binned=binned_obs,
+                            x_curve=floor_curve[0],
+                            y_curve=floor_curve[1],
+                        )
+                        fit_metrics["merchantable_floor"] = floor_metrics
+                        floor_pre_merch = _max_pre_merchantable_volume(
+                            x_curve=floor_curve[0],
+                            y_curve=floor_curve[1],
+                            floor_age=merchantable_floor_age,
+                        )
+                        baseline = fit_metrics["current"]
+                        reduced_pre_merch = floor_pre_merch <= 0.5
+                        acceptable_rmse = floor_metrics["rmse"] <= (
+                            1.20 * baseline["rmse"]
+                        )
+                        accepted = reduced_pre_merch and acceptable_rmse
+                        append_jsonl_fn(
+                            vdyp_curve_events_path,
+                            build_timestamped_event(
+                                event="vdyp_curve_fit",
+                                status="info",
+                                stage="merchantable_floor",
+                                reason=(
+                                    "merchantable_floor_selected"
+                                    if accepted
+                                    else "merchantable_floor_rejected"
+                                ),
+                                context=curve_context,
+                                floor_age=float(merchantable_floor_age),
+                                baseline_pre_merch_volume=float(baseline_pre_merch),
+                                candidate_pre_merch_volume=float(floor_pre_merch),
+                                baseline_metrics=dict(baseline),
+                                candidate_metrics=dict(floor_metrics),
+                            ),
+                        )
+                        if accepted:
+                            candidate_curves["merchantable_floor"] = floor_curve
 
             gate_fail_reasons = _evaluate_fit_quality_gate(
                 y_curve=y,
@@ -2786,6 +2869,9 @@ def execute_curve_smoothing_runs(
             left_toe_curve = candidate_curves.get("left_toe_censor")
             if left_toe_curve is not None:
                 output_x, output_y = left_toe_curve
+            floor_curve = candidate_curves.get("merchantable_floor")
+            if floor_curve is not None:
+                output_x, output_y = floor_curve
             # K3Z is currently using tail-blend-smoothed unmanaged curves for
             # TIPSY-vs-VDYP comparison plots.
             if str(tsa).strip().lower() == "k3z":

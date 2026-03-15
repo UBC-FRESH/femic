@@ -233,6 +233,33 @@ def test_process_vdyp_out_tail_blend_executes_without_error() -> None:
     assert np.all(np.isfinite(np.asarray(y_blend)))
 
 
+def test_process_vdyp_out_applies_optional_merchantable_floor() -> None:
+    ages = np.arange(30, 121, 10, dtype=float)
+    vols = np.array([20, 45, 80, 110, 135, 150, 155, 152, 149, 147], dtype=float)
+    vdyp_df = pd.DataFrame({"Age": ages, "Vdwb": vols}).set_index("Age")
+    events: list[dict[str, Any]] = []
+
+    x_floor, y_floor = process_vdyp_out(
+        {1: vdyp_df},
+        curve_fit_fn=lambda *args, **kwargs: (np.array([0.03, 2.0, 8.0, 6.0]), None),
+        body_fit_func=_fit_func1,
+        body_fit_func_bounds_func=_fit_bounds,
+        toe_fit_func=_fit_func1,
+        toe_fit_func_bounds_func=_fit_bounds,
+        log_event=events.append,
+        min_age=30,
+        max_age=140,
+        window=2,
+        merchantable_floor_enabled=True,
+        merchantable_floor_age=20.0,
+        merchantable_floor_value=0.0,
+    )
+
+    floor_band = (x_floor >= 2.0) & (x_floor <= 20.0)
+    assert np.allclose(np.asarray(y_floor)[floor_band], 0.0)
+    assert any(event.get("stage") == "merchantable_floor" for event in events)
+
+
 def test_process_vdyp_out_tail_blend_skips_when_no_linear_tail_detected() -> None:
     ages = np.arange(30, 181, 10, dtype=float)
     # Strongly curved/oscillatory right tail to fail strict linearity gates.

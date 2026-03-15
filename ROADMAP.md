@@ -485,7 +485,7 @@ notes.
     biophysically implausible NLLS curves before acceptance.
   - [x] P19.13b Add left-toe outlier censor pass for incoherent early-age points,
     then re-fit on censored vectors.
-  - [ ] P19.13c Add optional merchantable-volume floor constraint
+  - [x] P19.13c Add optional merchantable-volume floor constraint
     (default zero through age 20) via toe-shift/parameterized fit mode.
   - [ ] P19.13d Implement ordered fallback policy (primary NLLS ->
     reparameterized NLLS -> censored re-fit -> constrained fallback) with
@@ -514,6 +514,16 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-15 (Phase 19 `P19.13c` complete): added optional merchantable-volume
+  floor candidate (default zero through age 20) with selection diagnostics.
+  - `process_vdyp_out(...)` now supports
+    `merchantable_floor_enabled/age/value` and logs `merchantable_floor` stage
+    events when applied.
+  - Stage-level smoothing now evaluates a merchantable-floor candidate when
+    baseline pre-merchantable volume is non-trivial, then selects/rejects it
+    using pre-age-20 plausibility plus RMSE guardrails.
+  - Added regression tests covering both direct floor application in
+    `vdyp_curves` and stage-level candidate selection behavior.
 - 2026-03-15 (Phase 19 `P19.13b` complete): added left-toe outlier censor
   candidate fit path with deterministic selection logging.
   - Added observed-bin based left-toe outlier detection that proposes

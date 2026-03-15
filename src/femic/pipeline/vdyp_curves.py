@@ -263,6 +263,9 @@ def process_vdyp_out(
     maxfev: int = 100000,
     max_skip_increase: int = 30,
     skip_step: int = 1,
+    merchantable_floor_enabled: bool = False,
+    merchantable_floor_age: float = 20.0,
+    merchantable_floor_value: float = 0.0,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Build smoothed VDYP curve with toe splice and quasi-origin fallback behavior."""
     base_event = build_timestamped_event(
@@ -293,6 +296,26 @@ def process_vdyp_out(
                 **fields,
             )
         )
+
+    def _apply_merchantable_floor(
+        x_curve: np.ndarray,
+        y_curve: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        if not merchantable_floor_enabled:
+            return x_curve, y_curve
+        x_arr = np.asarray(x_curve, dtype=float)
+        y_arr = np.asarray(y_curve, dtype=float).copy()
+        floor_mask = x_arr <= float(merchantable_floor_age)
+        if np.any(floor_mask):
+            y_arr[floor_mask] = float(merchantable_floor_value)
+        emit_curve_event(
+            status="ok",
+            stage="merchantable_floor",
+            floor_age=float(merchantable_floor_age),
+            floor_value=float(merchantable_floor_value),
+            floor_point_count=int(np.count_nonzero(floor_mask)),
+        )
+        return x_arr, y_arr
 
     def fallback_curve(
         *,
@@ -451,6 +474,10 @@ def process_vdyp_out(
                         stage="tail_blend",
                         **tail_meta_payload,
                     )
+            x_, y_ = _apply_merchantable_floor(
+                np.asarray(x_, dtype=float),
+                np.asarray(y_, dtype=float),
+            )
             x_, y_ = prepend_quasi_origin_point(x_, y_)
             emit_curve_event(
                 status="ok",
@@ -508,6 +535,10 @@ def process_vdyp_out(
                 stage="tail_blend",
                 **tail_meta_payload,
             )
+    x, y = _apply_merchantable_floor(
+        np.asarray(x, dtype=float),
+        np.asarray(y, dtype=float),
+    )
     x, y = prepend_quasi_origin_point(x, y)
     emit_curve_event(
         event="vdyp_curve_anchor",
