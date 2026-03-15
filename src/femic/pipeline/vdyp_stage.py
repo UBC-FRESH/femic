@@ -469,8 +469,8 @@ def load_vdyp_input_tables(
     source_mask: Any | None = None,
     source_map_ids: Sequence[str] | None = None,
     source_feature_ids: Sequence[Any] | None = None,
-    source_map_id_chunk_size: int = 5,
-    source_feature_id_chunk_size: int = 400,
+    source_map_id_chunk_size: int | None = 5,
+    source_feature_id_chunk_size: int | None = None,
     gpd_module: Any | None = None,
     message_fn: Callable[..., Any] = print,
 ) -> tuple[Any, Any]:
@@ -499,35 +499,47 @@ def load_vdyp_input_tables(
                 return gpd_mod.read_file(
                     vdyp_input_pandl_path,
                     layer=layer,
-                    driver="FileGDB",
                     where="1=0",
                 )
             pd_mod = importlib.import_module("pandas")
-            chunks: list[Any] = []
-            chunk_size = max(int(source_feature_id_chunk_size), 1)
-            total_chunks = (len(feature_ids) + chunk_size - 1) // chunk_size
-            message_fn(
-                f"VDYP layer {layer}: loading {len(feature_ids)} feature_ids "
-                f"in {total_chunks} chunks (chunk_size={chunk_size})"
-            )
-            for start in range(0, len(feature_ids), chunk_size):
-                chunk_ids = feature_ids[start : start + chunk_size]
-                chunk_where = "FEATURE_ID IN (%s)" % ",".join(
-                    str(fid) for fid in chunk_ids
+            if source_feature_id_chunk_size and int(source_feature_id_chunk_size) > 0:
+                chunks: list[Any] = []
+                chunk_size = max(int(source_feature_id_chunk_size), 1)
+                total_chunks = (len(feature_ids) + chunk_size - 1) // chunk_size
+                message_fn(
+                    f"VDYP layer {layer}: loading {len(feature_ids)} feature_ids "
+                    f"in {total_chunks} chunks (chunk_size={chunk_size})"
                 )
-                chunk_i = (start // chunk_size) + 1
-                if chunk_i == 1 or chunk_i % 25 == 0 or chunk_i == total_chunks:
-                    message_fn(f"VDYP layer {layer}: chunk {chunk_i}/{total_chunks}")
-                chunks.append(
-                    gpd_mod.read_file(
-                        vdyp_input_pandl_path,
-                        layer=layer,
-                        driver="FileGDB",
-                        where=chunk_where,
-                        ignore_geometry=True,
+                for start in range(0, len(feature_ids), chunk_size):
+                    chunk_ids = feature_ids[start : start + chunk_size]
+                    chunk_where = "FEATURE_ID IN (%s)" % ",".join(
+                        str(fid) for fid in chunk_ids
                     )
-                )
-            return pd_mod.concat(chunks, ignore_index=True)
+                    chunk_i = (start // chunk_size) + 1
+                    if chunk_i == 1 or chunk_i % 25 == 0 or chunk_i == total_chunks:
+                        message_fn(
+                            f"VDYP layer {layer}: chunk {chunk_i}/{total_chunks}"
+                        )
+                    chunks.append(
+                        gpd_mod.read_file(
+                            vdyp_input_pandl_path,
+                            layer=layer,
+                            where=chunk_where,
+                            ignore_geometry=True,
+                        )
+                    )
+                return pd_mod.concat(chunks, ignore_index=True)
+
+            message_fn(
+                f"VDYP layer {layer}: full-layer read with in-memory FEATURE_ID "
+                f"filter (n={len(feature_ids)})"
+            )
+            table = gpd_mod.read_file(
+                vdyp_input_pandl_path,
+                layer=layer,
+                ignore_geometry=True,
+            )
+            return table[table.FEATURE_ID.isin(feature_ids)].copy()
 
         def _read_layer_by_map_ids(*, layer: int, map_ids: list[str]) -> Any:
             if not map_ids:
@@ -540,7 +552,7 @@ def load_vdyp_input_tables(
                 )
             pd_mod = importlib.import_module("pandas")
             chunks: list[Any] = []
-            chunk_size = max(int(source_map_id_chunk_size), 1)
+            chunk_size = max(int(source_map_id_chunk_size or 1), 1)
             total_chunks = (len(map_ids) + chunk_size - 1) // chunk_size
             message_fn(
                 f"VDYP layer {layer}: loading {len(map_ids)} map_ids "
@@ -601,7 +613,7 @@ def load_vdyp_input_tables(
             vdyp_lyr.to_feather(vdyp_lyr_feather_path)
             return vdyp_ply, vdyp_lyr
 
-        read_kwargs: dict[str, Any] = {"driver": "FileGDB"}
+        read_kwargs: dict[str, Any] = {}
         if source_where:
             read_kwargs["where"] = source_where
         if source_mask is not None:
@@ -609,7 +621,7 @@ def load_vdyp_input_tables(
         vdyp_ply = gpd_mod.read_file(vdyp_input_pandl_path, layer=0, **read_kwargs)
         vdyp_ply.to_feather(vdyp_ply_feather_path)
         # Layer 1 has no geometry; when loading by mask, fetch feature-id chunks.
-        lyr_kwargs = {"driver": "FileGDB"}
+        lyr_kwargs: dict[str, Any] = {}
         if source_where:
             lyr_kwargs["where"] = source_where
             vdyp_lyr = gpd_mod.read_file(vdyp_input_pandl_path, layer=1, **lyr_kwargs)

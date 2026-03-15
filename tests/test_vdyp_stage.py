@@ -2035,12 +2035,14 @@ def test_load_vdyp_input_tables_reads_feather_by_default() -> None:
             path: object,
             *,
             layer: object,
-            driver: object,
             where: object | None = None,
             mask: object | None = None,
             ignore_geometry: bool | None = None,
+            **kwargs: object,
         ) -> _FakeTable:
-            self.read_file_calls.append((path, driver, layer, where, mask))
+            self.read_file_calls.append(
+                (path, kwargs.get("driver"), layer, where, mask)
+            )
             return _FakeTable(f"file-{layer}", [1, 2])
 
         def read_feather(self, path: object) -> _FakeTable:
@@ -2097,12 +2099,14 @@ def test_load_vdyp_input_tables_reads_source_and_writes_feather() -> None:
             path: object,
             *,
             layer: int,
-            driver: object,
             where: object | None = None,
             mask: object | None = None,
             ignore_geometry: bool | None = None,
+            **kwargs: object,
         ) -> _FakeTable:
-            self.read_file_calls.append((path, driver, layer, where, mask))
+            self.read_file_calls.append(
+                (path, kwargs.get("driver"), layer, where, mask)
+            )
             table = _FakeTable(f"file-{layer}", [1, 2] if layer == 0 else [2, 3])
             self.tables[layer] = table
             return table
@@ -2123,8 +2127,8 @@ def test_load_vdyp_input_tables_reads_source_and_writes_feather() -> None:
     assert ply.name == "file-0"
     assert lyr.name == "file-1"
     assert fake_gpd.read_file_calls == [
-        ("input.gdb", "FileGDB", 0, None, None),
-        ("input.gdb", "FileGDB", 1, None, None),
+        ("input.gdb", None, 0, None, None),
+        ("input.gdb", None, 1, None, None),
     ]
     assert fake_gpd.read_feather_calls == []
     assert fake_gpd.tables[0].writes == [Path("ply.feather")]
@@ -2163,12 +2167,14 @@ def test_load_vdyp_input_tables_passes_source_where_filter() -> None:
             path: object,
             *,
             layer: int,
-            driver: object,
             where: object | None = None,
             mask: object | None = None,
             ignore_geometry: bool | None = None,
+            **kwargs: object,
         ) -> _FakeTable:
-            self.read_file_calls.append((path, driver, layer, where, mask))
+            self.read_file_calls.append(
+                (path, kwargs.get("driver"), layer, where, mask)
+            )
             return _FakeTable(f"file-{layer}", [1, 2] if layer == 0 else [2, 3])
 
     fake_gpd = _FakeGpd()
@@ -2182,8 +2188,8 @@ def test_load_vdyp_input_tables_passes_source_where_filter() -> None:
     )
 
     assert fake_gpd.read_file_calls == [
-        ("input.gdb", "FileGDB", 0, "TSA_NUMBER = 29", None),
-        ("input.gdb", "FileGDB", 1, "TSA_NUMBER = 29", None),
+        ("input.gdb", None, 0, "TSA_NUMBER = 29", None),
+        ("input.gdb", None, 1, "TSA_NUMBER = 29", None),
     ]
 
 
@@ -2199,15 +2205,17 @@ def test_load_vdyp_input_tables_applies_source_mask_and_filters_layer_rows() -> 
             path: object,
             *,
             layer: int,
-            driver: object,
             where: object | None = None,
             mask: object | None = None,
             ignore_geometry: bool | None = None,
+            **kwargs: object,
         ) -> pd.DataFrame:
-            self.read_file_calls.append((path, driver, layer, where, mask))
+            self.read_file_calls.append(
+                (path, kwargs.get("driver"), layer, where, mask)
+            )
             if layer == 0:
                 return pd.DataFrame({"FEATURE_ID": [1, 2]})
-            if where == "FEATURE_ID IN (1,2)":
+            if where is None:
                 return pd.DataFrame({"FEATURE_ID": [1, 2]})
             return pd.DataFrame({"FEATURE_ID": [2, 3]})
 
@@ -2223,8 +2231,8 @@ def test_load_vdyp_input_tables_applies_source_mask_and_filters_layer_rows() -> 
     )
 
     assert fake_gpd.read_file_calls == [
-        ("input.gdb", "FileGDB", 0, None, mask),
-        ("input.gdb", "FileGDB", 1, "FEATURE_ID IN (1,2)", None),
+        ("input.gdb", None, 0, None, mask),
+        ("input.gdb", None, 1, None, None),
     ]
     assert ply["FEATURE_ID"].tolist() == [1, 2]
     assert lyr["FEATURE_ID"].tolist() == [1, 2]
@@ -2242,12 +2250,14 @@ def test_load_vdyp_input_tables_reads_source_by_explicit_feature_ids() -> None:
             path: object,
             *,
             layer: int,
-            driver: object,
             where: object | None = None,
             mask: object | None = None,
             ignore_geometry: bool | None = None,
+            **kwargs: object,
         ) -> pd.DataFrame:
-            self.read_file_calls.append((path, driver, layer, where, mask))
+            self.read_file_calls.append(
+                (path, kwargs.get("driver"), layer, where, mask)
+            )
             if where == "FEATURE_ID IN (1,2)":
                 return pd.DataFrame({"FEATURE_ID": [1, 2], "layer": [layer, layer]})
             if where == "FEATURE_ID IN (3)":
@@ -2266,10 +2276,10 @@ def test_load_vdyp_input_tables_reads_source_by_explicit_feature_ids() -> None:
     )
 
     assert fake_gpd.read_file_calls == [
-        ("input.gdb", "FileGDB", 0, "FEATURE_ID IN (1,2)", None),
-        ("input.gdb", "FileGDB", 0, "FEATURE_ID IN (3)", None),
-        ("input.gdb", "FileGDB", 1, "FEATURE_ID IN (1,2)", None),
-        ("input.gdb", "FileGDB", 1, "FEATURE_ID IN (3)", None),
+        ("input.gdb", None, 0, "FEATURE_ID IN (1,2)", None),
+        ("input.gdb", None, 0, "FEATURE_ID IN (3)", None),
+        ("input.gdb", None, 1, "FEATURE_ID IN (1,2)", None),
+        ("input.gdb", None, 1, "FEATURE_ID IN (3)", None),
     ]
     assert ply["FEATURE_ID"].tolist() == [1, 2, 3]
     assert lyr["FEATURE_ID"].tolist() == [1, 2, 3]
