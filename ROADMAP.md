@@ -495,7 +495,7 @@ notes.
     (config-driven, TSA-overridable).
   - [x] P19.14b Rework tail-blend vs straight-NLLS selection criteria using
     explicit objective metrics and deterministic tie-breaks.
-  - [ ] P19.14c Add regression diagnostics/plots that expose selected fit path,
+  - [x] P19.14c Add regression diagnostics/plots that expose selected fit path,
     blend window, and residual behavior per stratum/SI level.
 - [ ] P19.15 Re-run TSA29 curve QA and publish curve-stability evidence
   - [ ] P19.15a Rebuild TSA29 diagnostics with updated plotting and fitting
@@ -514,6 +514,14 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-15 (Phase 19 `P19.14c` complete): upgraded VDYP fit diagnostics to
+  expose selected fit path, blend window context, and residual behavior.
+  - Fit diagnostic plot now renders the selected output curve explicitly
+    alongside current/candidate curves and prints the selected path in-figure.
+  - Added residual subplot (`selected - observed median`) over age bins for
+    per-stratum/SI visual QA of systematic fit bias.
+  - Added tail-blend window annotation support (anchor/end age estimates) so
+    reviewers can see where tail blending is expected to act.
 - 2026-03-15 (Phase 19 `P19.14b` complete): added explicit objective selection
   logic for tail-blend vs straight NLLS with deterministic tie-breaks.
   - Added metric-driven tail selection policy requiring strong tail-RMSE

@@ -2482,6 +2482,25 @@ def execute_curve_smoothing_runs(
         pred = np.interp(eval_ages, x_vals, y_vals)
         return float(np.nanmax(pred))
 
+    def _estimate_tail_blend_window(
+        *,
+        binned: Any | None,
+        anchor_quantile: float,
+        blend_years: float,
+    ) -> dict[str, float] | None:
+        if binned is None:
+            return None
+        ages = np.asarray(binned["age_bin"].values, dtype=float)
+        if ages.size == 0:
+            return None
+        anchor_age = float(
+            np.quantile(ages, float(np.clip(anchor_quantile, 0.5, 0.95)))
+        )
+        tail_end_age = float(
+            min(np.max(ages), anchor_age + max(1.0, float(blend_years)))
+        )
+        return {"anchor_age": anchor_age, "tail_end_age": tail_end_age}
+
     def _emit_fit_diagnostic_plot(
         *,
         tsa_code: str,
@@ -2492,6 +2511,10 @@ def execute_curve_smoothing_runs(
         binned: Any | None,
         x_fit: Sequence[float],
         y_fit: Sequence[float],
+        selected_x: Sequence[float],
+        selected_y: Sequence[float],
+        selected_path: str,
+        tail_blend_meta: Mapping[str, Any] | None,
         candidate_curves: Mapping[str, tuple[Sequence[float], Sequence[float]]],
         fit_metrics: Mapping[str, Mapping[str, float]],
     ) -> None:
@@ -2506,7 +2529,9 @@ def execute_curve_smoothing_runs(
             f"{str(stratumi).zfill(2)}-{stratum_code}-{si_level}.png"
         )
 
-        fig, ax = plt_module.subplots(1, 1, figsize=(8, 5))
+        fig, (ax, ax_resid) = plt_module.subplots(
+            2, 1, figsize=(8, 8), sharex=True, gridspec_kw={"height_ratios": [3, 1]}
+        )
         pd_module = importlib.import_module("pandas")
         raw_label_used = False
         for table in vdyp_out.values():
@@ -2554,6 +2579,14 @@ def execute_curve_smoothing_runs(
             )
         ax.plot(
             list(x_fit), list(y_fit), color="tab:red", linewidth=2, label="Current fit"
+        )
+        ax.plot(
+            list(selected_x),
+            list(selected_y),
+            color="black",
+            linewidth=2.3,
+            linestyle="-.",
+            label=f"Selected fit ({selected_path})",
         )
         for key, color, label in (
             ("tail_blend", "tab:orange", "Tail-blend fit"),
@@ -2611,6 +2644,45 @@ def execute_curve_smoothing_runs(
                 fontsize=7,
                 bbox={"facecolor": "white", "alpha": 0.75, "edgecolor": "none"},
             )
+        if tail_blend_meta:
+            anchor_age = tail_blend_meta.get("anchor_age")
+            tail_end_age = tail_blend_meta.get("tail_end_age")
+            if anchor_age is not None and tail_end_age is not None:
+                ax.axvspan(
+                    float(anchor_age),
+                    float(tail_end_age),
+                    color="orange",
+                    alpha=0.08,
+                    label="Tail blend window",
+                )
+                ax.text(
+                    0.99,
+                    0.01,
+                    f"blend [{float(anchor_age):.0f}, {float(tail_end_age):.0f}]",
+                    transform=ax.transAxes,
+                    ha="right",
+                    va="bottom",
+                    fontsize=7,
+                    bbox={"facecolor": "white", "alpha": 0.65, "edgecolor": "none"},
+                )
+
+        if binned is not None:
+            obs_age = np.asarray(binned["age_bin"].values, dtype=float)
+            obs_vol = np.asarray(binned["median_volume"].values, dtype=float)
+            pred_sel = np.interp(
+                obs_age,
+                np.asarray(selected_x, dtype=float),
+                np.asarray(selected_y, dtype=float),
+            )
+            residual = pred_sel - obs_vol
+            ax_resid.axhline(0.0, color="black", linewidth=1.0, alpha=0.6)
+            ax_resid.scatter(obs_age, residual, s=14, color="tab:gray", alpha=0.8)
+            ax_resid.plot(obs_age, residual, color="tab:gray", linewidth=1.2, alpha=0.7)
+            ax_resid.set_ylabel("Residual")
+        else:
+            ax_resid.set_ylabel("Residual")
+        ax_resid.set_xlabel("Age")
+        ax_resid.grid(alpha=0.25)
         fig.tight_layout()
         fig.savefig(plot_path, dpi=150)
         plt_module.close(fig)
@@ -2714,6 +2786,7 @@ def execute_curve_smoothing_runs(
             binned_obs = _build_observed_bins(vdyp_out)
             candidate_curves: dict[str, tuple[Sequence[float], Sequence[float]]] = {}
             fit_metrics: dict[str, dict[str, float]] = {}
+            tail_blend_meta_for_plot: dict[str, float] | None = None
             if binned_obs is not None:
                 fit_metrics["current"] = _fit_quality(
                     binned=binned_obs,
@@ -2748,6 +2821,13 @@ def execute_curve_smoothing_runs(
                         binned=binned_obs,
                         x_curve=tail_curve[0],
                         y_curve=tail_curve[1],
+                    )
+                    tail_blend_meta_for_plot = _estimate_tail_blend_window(
+                        binned=binned_obs,
+                        anchor_quantile=float(
+                            tail_kwargs.get("tail_anchor_quantile", 0.70)
+                        ),
+                        blend_years=float(tail_kwargs.get("tail_blend_years", 30.0)),
                     )
                     tail_selected, tail_decision = _select_tail_blend_candidate(
                         current_metrics=fit_metrics["current"],
@@ -2948,18 +3028,6 @@ def execute_curve_smoothing_runs(
                     ),
                 )
 
-            _emit_fit_diagnostic_plot(
-                tsa_code=tsa,
-                stratumi=int(stratumi),
-                stratum_code=sc,
-                si_level=si_level,
-                vdyp_out=vdyp_out,
-                binned=binned_obs,
-                x_fit=x,
-                y_fit=y,
-                candidate_curves=candidate_curves,
-                fit_metrics=fit_metrics,
-            )
             output_x, output_y = x, y
             selected_path = "primary_nlls"
             selected_metrics = dict(fit_metrics.get("current", {}))
@@ -3009,6 +3077,22 @@ def execute_curve_smoothing_runs(
                     available_candidates=sorted(candidate_curves.keys()),
                     selected_metrics=selected_metrics,
                 ),
+            )
+            _emit_fit_diagnostic_plot(
+                tsa_code=tsa,
+                stratumi=int(stratumi),
+                stratum_code=sc,
+                si_level=si_level,
+                vdyp_out=vdyp_out,
+                binned=binned_obs,
+                x_fit=x,
+                y_fit=y,
+                selected_x=output_x,
+                selected_y=output_y,
+                selected_path=selected_path,
+                tail_blend_meta=tail_blend_meta_for_plot,
+                candidate_curves=candidate_curves,
+                fit_metrics=fit_metrics,
             )
             smoothed_runs.append(
                 SmoothedCurveResult(

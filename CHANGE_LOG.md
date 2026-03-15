@@ -4722,3 +4722,12 @@
   tail-blend override behavior.
 - Added regression test in `tests/test_vdyp_stage.py` verifying tail-blend
   selection and fallback-policy selected path emission.
+
+## 2026-03-15 - Completed P19.14c fit diagnostics for selected path + residuals
+- Updated `src/femic/pipeline/vdyp_stage.py` fit diagnostic plotting to:
+  - overlay the final selected output curve and selected-path label,
+  - include a residual subplot (`selected - observed median` by age bin), and
+  - annotate estimated tail-blend window (anchor/end age) when tail-blend
+    metadata is available.
+- Moved diagnostic plotting to run after fallback-path selection so each plot
+  reflects the actual curve that will be carried forward.
