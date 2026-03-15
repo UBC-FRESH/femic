@@ -518,6 +518,17 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-15 (Phase 19 `P19.13c` follow-up complete): corrected merchantable
+  floor behavior to preserve smooth toe-ramp shape by shifting the fitted curve
+  right (age-delay) instead of hard-clamping the first 20 years to zero.
+  - Updated `process_vdyp_out(...)` merchantable-floor path to apply a
+    right-shift transform (`x -> x - floor_age`) with floor fill only for
+    `x <= floor_age`, preserving the fitted toe curvature after age 20.
+  - Added `mode=right_shift` and `shift_years` fields to
+    `stage=merchantable_floor` events for explicit audit visibility.
+  - Expanded regression coverage in `tests/test_vdyp_curves.py` to assert
+    post-floor ages follow the shifted baseline curve rather than flattened
+    clamping behavior.
 - 2026-03-15 (Phase 19 `P19.15d` complete): tightened curve-path branching and
   selected-curve quality gate behavior.
   - Left-toe censoring now composes with downstream candidates (including

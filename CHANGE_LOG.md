@@ -4798,3 +4798,17 @@
   - composable left-toe censor + tail-blend behavior,
   - selected-curve gate rescue selection, and
   - existing tail-blend/left-toe/floor policy interactions.
+
+## 2026-03-15 - Corrected merchantable-floor behavior to right-shifted toe ramp
+- Updated `src/femic/pipeline/vdyp_curves.py` merchantable-floor logic in
+  `process_vdyp_out(...)` to shift the fitted curve right by
+  `merchantable_floor_age` years instead of hard-clamping ages `<= floor_age`
+  to a flat value.
+- This preserves the fitted exponential toe-ramp shape (smooth onset after age
+  20 by default) while still enforcing the merchantable floor on the delayed
+  interval.
+- Added explicit event metadata for auditability:
+  `stage=merchantable_floor`, `mode=right_shift`, `shift_years=<floor_age>`.
+- Updated `tests/test_vdyp_curves.py` to verify that post-floor ages match a
+  delayed baseline curve and that the curve begins rising immediately after the
+  floor window (`age=21` for a 20-year floor).

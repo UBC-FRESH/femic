@@ -32,7 +32,10 @@ def legacy_fit_func1(
     x: np.ndarray, a: float, b: float, c: float, s: float
 ) -> np.ndarray:
     """Legacy body/toe fit function used in notebook-era curve smoothing."""
-    return s * (a * ((x - c) ** b)) * np.exp(-a * (x - c))
+    # Guard fractional powers against x<c domain issues by clipping to zero.
+    # This preserves the intended gamma-like form while avoiding NaN payloads.
+    delta = np.maximum(np.asarray(x, dtype=float) - float(c), 0.0)
+    return s * (a * (delta**b)) * np.exp(-a * delta)
 
 
 def legacy_fit_func1_bounds_func(x: np.ndarray) -> tuple[list[float], list[float]]:
@@ -304,18 +307,30 @@ def process_vdyp_out(
         if not merchantable_floor_enabled:
             return x_curve, y_curve
         x_arr = np.asarray(x_curve, dtype=float)
-        y_arr = np.asarray(y_curve, dtype=float).copy()
-        floor_mask = x_arr <= float(merchantable_floor_age)
+        y_arr = np.asarray(y_curve, dtype=float)
+        floor_age = float(merchantable_floor_age)
+        floor_value = float(merchantable_floor_value)
+        shifted_age = x_arr - floor_age
+        shifted_curve = np.interp(
+            shifted_age,
+            x_arr,
+            y_arr,
+            left=floor_value,
+            right=float(y_arr[-1]) if y_arr.size else floor_value,
+        )
+        floor_mask = x_arr <= floor_age
         if np.any(floor_mask):
-            y_arr[floor_mask] = float(merchantable_floor_value)
+            shifted_curve[floor_mask] = floor_value
         emit_curve_event(
             status="ok",
             stage="merchantable_floor",
-            floor_age=float(merchantable_floor_age),
-            floor_value=float(merchantable_floor_value),
+            floor_age=floor_age,
+            floor_value=floor_value,
+            mode="right_shift",
+            shift_years=floor_age,
             floor_point_count=int(np.count_nonzero(floor_mask)),
         )
-        return x_arr, y_arr
+        return x_arr, shifted_curve
 
     def fallback_curve(
         *,
@@ -430,6 +445,14 @@ def process_vdyp_out(
 
     x = np.array(range(1, max_age), dtype=float)
     y = body_fit_func(x, *popt)
+    if not np.any(np.isfinite(y)):
+        return fallback_curve(
+            stage="body_fit_output",
+            reason="non_finite_body_curve",
+            x_raw=x,
+            y_raw=np.asarray(c.values, dtype=float),
+        )
+    y = np.nan_to_num(y, nan=0.0, posinf=0.0, neginf=0.0)
     dx = max(0, dx_c1 * float(popt[2]) - dx_c2)
     emit(str(dx))
     used_skip: int | None = None
