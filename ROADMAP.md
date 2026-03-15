@@ -483,7 +483,7 @@ notes.
   sequence
   - [x] P19.13a Add fit-quality gate(s) to detect obviously failed or
     biophysically implausible NLLS curves before acceptance.
-  - [ ] P19.13b Add left-toe outlier censor pass for incoherent early-age points,
+  - [x] P19.13b Add left-toe outlier censor pass for incoherent early-age points,
     then re-fit on censored vectors.
   - [ ] P19.13c Add optional merchantable-volume floor constraint
     (default zero through age 20) via toe-shift/parameterized fit mode.
@@ -514,6 +514,14 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-15 (Phase 19 `P19.13b` complete): added left-toe outlier censor
+  candidate fit path with deterministic selection logging.
+  - Added observed-bin based left-toe outlier detection that proposes
+    `skip1` censoring for incoherent early-age points.
+  - Added a re-fit candidate using censored vectors and acceptance logic based
+    on early-overshoot reduction plus RMSE/MAPE improvement.
+  - Added structured `vdyp_curve_fit` events at stage `left_toe_censor`
+    indicating selected/rejected decisions with baseline vs candidate metrics.
 - 2026-03-15 (Phase 19 `P19.13a` complete): added fit-quality gate warnings for
   implausible VDYP NLLS outputs before downstream acceptance.
   - Added gate checks in curve smoothing for non-finite/negative outputs plus

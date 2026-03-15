@@ -4656,3 +4656,15 @@
     machine-readable `failure_reasons`.
 - Added `tests/test_vdyp_stage.py` regression coverage to force an implausible
   fit and verify fit-quality gate warnings are logged.
+
+## 2026-03-15 - Completed P19.13b left-toe outlier censor re-fit path
+- Updated `src/femic/pipeline/vdyp_stage.py` to add a left-toe outlier
+  detection pass from observed 5-year bins and generate a censored re-fit
+  candidate (`skip1` uplift) for incoherent early-age points.
+- Added deterministic selection criteria requiring improved early-age
+  overshoot plus RMSE or MAPE improvement before accepting the censored curve.
+- Added structured `vdyp_curve_fit` event logging for left-toe censor decisions
+  (`stage=left_toe_censor`, selected/rejected) including baseline and candidate
+  fit metrics for auditability.
+- Added regression test coverage in `tests/test_vdyp_stage.py` to verify left-toe
+  censor candidate selection and output curve replacement behavior.

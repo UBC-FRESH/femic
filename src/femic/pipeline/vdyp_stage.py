@@ -2338,6 +2338,42 @@ def execute_curve_smoothing_runs(
         suggested = int(np.count_nonzero(obs_age <= cutoff_age))
         return int(max(current_skip1, suggested))
 
+    def _infer_left_toe_censor_skip(
+        *,
+        binned: Any,
+        current_skip1: int,
+    ) -> int:
+        obs_age = np.asarray(binned["age_bin"].values, dtype=float)
+        obs_vol = np.asarray(binned["median_volume"].values, dtype=float)
+        if obs_age.size < 6 or obs_vol.size < 6:
+            return int(current_skip1)
+        early_limit = float(np.quantile(obs_age, 0.40))
+        early_idx = np.where(obs_age <= early_limit)[0]
+        if early_idx.size < 3:
+            return int(current_skip1)
+        suggested = int(current_skip1)
+        for idx in early_idx:
+            if idx + 2 >= obs_vol.size:
+                break
+            next_window = obs_vol[idx + 1 : idx + 4]
+            if next_window.size == 0:
+                break
+            next_median = float(np.median(next_window))
+            current = float(obs_vol[idx])
+            if next_median <= 0:
+                continue
+            ratio = current / next_median
+            abs_excess = current - next_median
+            if ratio >= 1.8 and abs_excess >= 5.0:
+                suggested = max(suggested, idx + 1)
+                continue
+            next_val = float(obs_vol[idx + 1])
+            if next_val > 0:
+                sharp_drop = current / next_val
+                if sharp_drop >= 1.6 and abs(current - next_val) >= 5.0:
+                    suggested = max(suggested, idx + 1)
+        return int(suggested)
+
     def _run_candidate(
         *,
         vdyp_out: Mapping[Any, Any],
@@ -2440,6 +2476,7 @@ def execute_curve_smoothing_runs(
         for key, color, label in (
             ("tail_blend", "tab:orange", "Tail-blend fit"),
             ("auto_skip", "tab:purple", "Auto-skip fit"),
+            ("left_toe_censor", "tab:brown", "Left-toe censor fit"),
         ):
             curve = candidate_curves.get(key)
             if curve is None:
@@ -2466,7 +2503,7 @@ def execute_curve_smoothing_runs(
         ax.grid(alpha=0.25)
         ax.legend(fontsize=8)
         stats_lines: list[str] = []
-        for name in ("current", "tail_blend", "auto_skip"):
+        for name in ("current", "tail_blend", "auto_skip", "left_toe_censor"):
             metric = fit_metrics.get(name)
             if not metric:
                 continue
@@ -2654,6 +2691,61 @@ def execute_curve_smoothing_runs(
                             candidate_curves["auto_skip"] = auto_curve
                             fit_metrics["auto_skip"] = auto_metrics
 
+                left_toe_skip = _infer_left_toe_censor_skip(
+                    binned=binned_obs,
+                    current_skip1=current_skip1,
+                )
+                if left_toe_skip > current_skip1:
+                    censor_kwargs = dict(kwargs)
+                    censor_kwargs["skip1"] = left_toe_skip
+                    censor_curve = _run_candidate(
+                        vdyp_out=vdyp_out,
+                        curve_context=dict(
+                            curve_context,
+                            left_toe_censor_skip1=left_toe_skip,
+                        ),
+                        kwargs=censor_kwargs,
+                        candidate_name="left_toe_censor",
+                    )
+                    if censor_curve is not None:
+                        censor_metrics = _fit_quality(
+                            binned=binned_obs,
+                            x_curve=censor_curve[0],
+                            y_curve=censor_curve[1],
+                        )
+                        fit_metrics["left_toe_censor"] = censor_metrics
+                        baseline = fit_metrics["current"]
+                        improved_overshoot = censor_metrics["early_overshoot"] <= (
+                            0.80 * baseline["early_overshoot"]
+                        )
+                        improved_rmse = censor_metrics["rmse"] <= (
+                            0.97 * baseline["rmse"]
+                        )
+                        improved_mape = censor_metrics["mape"] <= baseline["mape"]
+                        accepted = improved_overshoot and (
+                            improved_rmse or improved_mape
+                        )
+                        append_jsonl_fn(
+                            vdyp_curve_events_path,
+                            build_timestamped_event(
+                                event="vdyp_curve_fit",
+                                status="info" if accepted else "warning",
+                                stage="left_toe_censor",
+                                reason=(
+                                    "left_toe_censor_selected"
+                                    if accepted
+                                    else "left_toe_censor_rejected"
+                                ),
+                                context=curve_context,
+                                skip1_before=int(current_skip1),
+                                skip1_after=int(left_toe_skip),
+                                baseline_metrics=dict(baseline),
+                                candidate_metrics=dict(censor_metrics),
+                            ),
+                        )
+                        if accepted:
+                            candidate_curves["left_toe_censor"] = censor_curve
+
             gate_fail_reasons = _evaluate_fit_quality_gate(
                 y_curve=y,
                 metrics=fit_metrics.get("current"),
@@ -2691,6 +2783,9 @@ def execute_curve_smoothing_runs(
                 fit_metrics=fit_metrics,
             )
             output_x, output_y = x, y
+            left_toe_curve = candidate_curves.get("left_toe_censor")
+            if left_toe_curve is not None:
+                output_x, output_y = left_toe_curve
             # K3Z is currently using tail-blend-smoothed unmanaged curves for
             # TIPSY-vs-VDYP comparison plots.
             if str(tsa).strip().lower() == "k3z":
