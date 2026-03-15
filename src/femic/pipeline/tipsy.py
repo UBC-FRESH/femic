@@ -16,7 +16,9 @@ DEFAULT_TIPSY_BATCH_COLUMNS_1BASED: dict[str, tuple[int, int]] = {
     "AU": (1, 6),
     "TBLno": (7, 12),
     "BEC": (14, 17),
-    "Proportion": (31, 31),
+    # Keep proportion in a wider field so values like 0.3/0.85 fit while
+    # preserving the downstream BatchTIPSY column anchors in user runbooks.
+    "Proportion": (31, 39),
     "Regen_Delay": (40, 42),
     "Density": (47, 51),
     "PCT_1": (61, 63),
@@ -311,6 +313,16 @@ def tipsy_params_excel_path(
     return Path(f"{tipsy_params_path_prefix}{tsa}.xlsx")
 
 
+def tipsy_input_dat_path(
+    *,
+    tsa: str,
+    input_root: str | Path = "data",
+    filename_template: str = "02_input-tsa{tsa}.dat",
+) -> Path:
+    """Build legacy per-TSA BatchTIPSY DAT handoff path."""
+    return Path(input_root) / filename_template.format(tsa=tsa)
+
+
 def tipsy_stage_output_paths(
     *,
     tsa: str,
@@ -322,6 +334,53 @@ def tipsy_stage_output_paths(
         root / f"tipsy_curves_tsa{tsa}.csv",
         root / f"tipsy_sppcomp_tsa{tsa}.csv",
     )
+
+
+def validate_tipsy_output_is_fresh(
+    *,
+    tipsy_input_excel_path: str | Path,
+    tipsy_input_dat_path: str | Path | None = None,
+    tipsy_output_path: str | Path,
+    allow_stale: bool = False,
+) -> None:
+    """Fail fast when BatchTIPSY output is older than the current input workbook.
+
+    Canonical operator contract uses ``02_input-tsaXX.dat`` as the real
+    BatchTIPSY input; ``tipsy_params_tsaXX.xlsx`` is a human-readable mirror.
+    This catches stale-output scenarios that would silently yield mismatched
+    treated-curve overlays and downstream artifacts.
+    """
+    if allow_stale:
+        return
+    excel_path = Path(tipsy_input_excel_path)
+    dat_path = Path(tipsy_input_dat_path) if tipsy_input_dat_path else None
+    output_path = Path(tipsy_output_path)
+    if not output_path.is_file():
+        return
+    if dat_path is not None and not dat_path.is_file():
+        raise RuntimeError(
+            "Missing canonical BatchTIPSY input DAT file: "
+            f"{dat_path}. Generate 02_input-tsaXX.dat in Stage 01a before "
+            "running Stage 01b/post-TIPSY."
+        )
+    input_candidates = []
+    if dat_path is not None:
+        input_candidates.append(dat_path)
+    if excel_path.is_file():
+        input_candidates.append(excel_path)
+    if not input_candidates:
+        return
+    newest_input = max(input_candidates, key=lambda path: path.stat().st_mtime)
+    input_mtime = newest_input.stat().st_mtime
+    output_mtime = output_path.stat().st_mtime
+    if output_mtime < input_mtime:
+        raise RuntimeError(
+            "Stale BatchTIPSY output detected: "
+            f"{output_path} is older than {newest_input}. "
+            "Regenerate 04_output-tsaXX.out from the current "
+            "02_input-tsaXX.dat handoff (and matching workbook), then rerun "
+            "FEMIC stage 01b/post-TIPSY."
+        )
 
 
 def evaluate_tipsy_candidate(

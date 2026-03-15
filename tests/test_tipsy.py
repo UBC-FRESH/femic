@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -13,8 +14,10 @@ from femic.pipeline.tipsy import (
     compute_vdyp_oaf1,
     compute_vdyp_site_index,
     evaluate_tipsy_candidate,
+    tipsy_input_dat_path,
     tipsy_params_excel_path,
     tipsy_stage_output_paths,
+    validate_tipsy_output_is_fresh,
     write_tipsy_input_exports,
 )
 
@@ -199,26 +202,83 @@ def test_write_tipsy_input_exports_fails_fast_on_width_overflow(tmp_path: Path) 
         {
             "AU": [1001],
             "TBLno": [1001],
-            "Proportion": [10],  # width is 1 char by BatchTIPSY mapping
+            "Proportion": [0.85],
             "Regen_Delay": [2],
             "Density": [900],
             "Regen_Method": ["P"],
             "Util_DBH_cm": [12.5],
             "OAF1": [0.7],
             "OAF2": [0.95],
-            "FIZ": ["I"],
+            "FIZ": ["INVALID"],  # width is 1 char by BatchTIPSY mapping
             "SPP_1": ["PL"],
             "PCT_1": [100],
             "SI": [20.0],
         }
     )
-    with pytest.raises(ValueError, match="value overflow.*Proportion"):
+    with pytest.raises(ValueError, match="value overflow.*FIZ"):
         write_tipsy_input_exports(
             tipsy_table=table,
             tsa="08",
             tipsy_params_path_prefix=str(tmp_path / "tipsy_params_tsa"),
             dat_path_template=str(tmp_path / "02_input-tsa{tsa}.dat"),
         )
+
+
+def test_validate_tipsy_output_is_fresh_raises_on_stale_output(tmp_path: Path) -> None:
+    tipsy_input = tmp_path / "tipsy_params_tsa29.xlsx"
+    tipsy_dat = tmp_path / "02_input-tsa29.dat"
+    tipsy_output = tmp_path / "04_output-tsa29.out"
+    tipsy_output.write_text("old\n", encoding="utf-8")
+    tipsy_dat.write_text("newer-dat\n", encoding="utf-8")
+    tipsy_input.write_text("new\n", encoding="utf-8")
+    older = min(tipsy_input.stat().st_mtime, tipsy_dat.stat().st_mtime) - 10
+    os.utime(tipsy_output, (older, older))
+
+    with pytest.raises(RuntimeError, match="Stale BatchTIPSY output detected"):
+        validate_tipsy_output_is_fresh(
+            tipsy_input_excel_path=tipsy_input,
+            tipsy_input_dat_path=tipsy_dat,
+            tipsy_output_path=tipsy_output,
+        )
+
+
+def test_validate_tipsy_output_is_fresh_allows_override(tmp_path: Path) -> None:
+    tipsy_input = tmp_path / "tipsy_params_tsa29.xlsx"
+    tipsy_dat = tmp_path / "02_input-tsa29.dat"
+    tipsy_output = tmp_path / "04_output-tsa29.out"
+    tipsy_output.write_text("old\n", encoding="utf-8")
+    tipsy_dat.write_text("newer-dat\n", encoding="utf-8")
+    tipsy_input.write_text("new\n", encoding="utf-8")
+
+    validate_tipsy_output_is_fresh(
+        tipsy_input_excel_path=tipsy_input,
+        tipsy_input_dat_path=tipsy_dat,
+        tipsy_output_path=tipsy_output,
+        allow_stale=True,
+    )
+
+
+def test_validate_tipsy_output_is_fresh_requires_dat_when_provided(
+    tmp_path: Path,
+) -> None:
+    tipsy_input = tmp_path / "tipsy_params_tsa29.xlsx"
+    tipsy_output = tmp_path / "04_output-tsa29.out"
+    missing_dat = tmp_path / "02_input-tsa29.dat"
+    tipsy_output.write_text("old\n", encoding="utf-8")
+    tipsy_input.write_text("new\n", encoding="utf-8")
+
+    with pytest.raises(
+        RuntimeError, match="Missing canonical BatchTIPSY input DAT file"
+    ):
+        validate_tipsy_output_is_fresh(
+            tipsy_input_excel_path=tipsy_input,
+            tipsy_input_dat_path=missing_dat,
+            tipsy_output_path=tipsy_output,
+        )
+
+
+def test_tipsy_input_dat_path_default_layout() -> None:
+    assert tipsy_input_dat_path(tsa="29") == Path("data/02_input-tsa29.dat")
 
 
 def test_write_tipsy_input_exports_keeps_regen_method_column_aligned(

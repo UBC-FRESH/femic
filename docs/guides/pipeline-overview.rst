@@ -62,6 +62,8 @@ Key Assumptions
 - Inventory and growth model inputs are local and version-controlled by path,
   not fetched dynamically at runtime.
 - TIPSY is a manual Windows GUI boundary (human in the loop).
+- ``02_input-*.dat`` is the canonical BatchTIPSY handoff input; XLSX companions
+  are readability aids generated from the same payload.
 - Diagnostic plots are required QA artifacts, not optional cosmetics.
 
 Operator Interpretation Callouts
