@@ -491,7 +491,7 @@ notes.
     reparameterized NLLS -> censored re-fit -> constrained fallback) with
     per-stratum event logging.
 - [ ] P19.14 Revisit VDYP tail-blend heuristic and curve-selection policy
-  - [ ] P19.14a Relax/update tail-linearity definition and threshold parameters
+  - [x] P19.14a Relax/update tail-linearity definition and threshold parameters
     (config-driven, TSA-overridable).
   - [ ] P19.14b Rework tail-blend vs straight-NLLS selection criteria using
     explicit objective metrics and deterministic tie-breaks.
@@ -514,6 +514,15 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-15 (Phase 19 `P19.14a` complete): relaxed tail-linearity defaults and
+  moved threshold control to config/env + per-stratum overrides.
+  - Tail candidate no longer hard-overwrites threshold values in stage logic;
+    it now uses configurable defaults and preserves `kwarg_overrides_for_tsa`
+    when provided.
+  - Added env-backed defaults for tail thresholds (`FEMIC_TAIL_*`) to enable
+    runtime tuning without source edits.
+  - Added regression tests verifying both per-stratum override precedence and
+    env-default application for tail-blend candidate settings.
 - 2026-03-15 (Phase 19 `P19.13d` complete): wired explicit ordered fallback
   selection policy with per-stratum/SI selection events.
   - Selection order now executes as `primary_nlls -> reparameterized_nlls

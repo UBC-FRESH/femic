@@ -2229,6 +2229,19 @@ def execute_curve_smoothing_runs(
     fit_gate_max_early_overshoot = 8.0
     merchantable_floor_age = 20.0
     merchantable_floor_value = 0.0
+    tail_default_linear_min_points = int(
+        os.environ.get("FEMIC_TAIL_LINEAR_MIN_POINTS", "4")
+    )
+    tail_default_linear_min_r2 = float(
+        os.environ.get("FEMIC_TAIL_LINEAR_MIN_R2", "0.75")
+    )
+    tail_default_linear_max_nrmse = float(
+        os.environ.get("FEMIC_TAIL_LINEAR_MAX_NRMSE", "0.18")
+    )
+    tail_default_linear_prefer_min_age = float(
+        os.environ.get("FEMIC_TAIL_LINEAR_PREFER_MIN_AGE", "180.0")
+    )
+    tail_default_blend_years = float(os.environ.get("FEMIC_TAIL_BLEND_YEARS", "40.0"))
 
     def _build_observed_bins(vdyp_out: Mapping[Any, Any]) -> Any | None:
         pd_module = importlib.import_module("pandas")
@@ -2658,12 +2671,19 @@ def execute_curve_smoothing_runs(
 
                 tail_kwargs = dict(kwargs)
                 tail_kwargs["tail_blend_enabled"] = True
-                tail_kwargs["tail_linear_min_points"] = 4
-                tail_kwargs["tail_linear_min_r2"] = 0.82
-                tail_kwargs["tail_linear_max_nrmse"] = 0.12
-                tail_kwargs["tail_linear_prefer_min_age"] = 190.0
-                tail_kwargs["tail_linear_allow_quantile_fallback"] = False
-                tail_kwargs["tail_blend_years"] = 30.0
+                tail_kwargs.setdefault(
+                    "tail_linear_min_points", tail_default_linear_min_points
+                )
+                tail_kwargs.setdefault("tail_linear_min_r2", tail_default_linear_min_r2)
+                tail_kwargs.setdefault(
+                    "tail_linear_max_nrmse", tail_default_linear_max_nrmse
+                )
+                tail_kwargs.setdefault(
+                    "tail_linear_prefer_min_age",
+                    tail_default_linear_prefer_min_age,
+                )
+                tail_kwargs.setdefault("tail_linear_allow_quantile_fallback", False)
+                tail_kwargs.setdefault("tail_blend_years", tail_default_blend_years)
                 tail_curve = _run_candidate(
                     vdyp_out=vdyp_out,
                     curve_context=curve_context,

@@ -1715,6 +1715,101 @@ def test_execute_curve_smoothing_runs_prefers_tail_blend_for_k3z_output(
     assert not any(event.get("status") == "warning" for event in events)
 
 
+def test_execute_curve_smoothing_runs_tail_blend_respects_override_thresholds(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    captured_tail_kwargs: dict[str, object] = {}
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        if bool(kwargs.get("tail_blend_enabled", False)):
+            captured_tail_kwargs.update(kwargs)
+            return [0.0, 150.0, 300.0], [0.0, 220.0, 260.0]
+        return [0.0, 150.0, 300.0], [0.0, 140.0, 180.0]
+
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 200, 210, 220, 230],
+            "Vdwb": [10.0, 12.0, 14.0, 16.0, 80.0, 82.0, 83.0, 84.0],
+        }
+    )
+    execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-tail-override",
+        results_for_tsa=[(1, "CWH_HW", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={
+            ("CWH_HW", "L"): {
+                "tail_linear_min_r2": 0.61,
+                "tail_blend_years": 55.0,
+            }
+        },
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=lambda *_args, **_kwargs: None,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert captured_tail_kwargs
+    assert captured_tail_kwargs["tail_linear_min_r2"] == 0.61
+    assert captured_tail_kwargs["tail_blend_years"] == 55.0
+
+
+def test_execute_curve_smoothing_runs_tail_blend_uses_env_defaults(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("FEMIC_TAIL_LINEAR_MIN_R2", "0.66")
+    monkeypatch.setenv("FEMIC_TAIL_BLEND_YEARS", "44")
+    captured_tail_kwargs: dict[str, object] = {}
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        if bool(kwargs.get("tail_blend_enabled", False)):
+            captured_tail_kwargs.update(kwargs)
+            return [0.0, 150.0, 300.0], [0.0, 220.0, 260.0]
+        return [0.0, 150.0, 300.0], [0.0, 140.0, 180.0]
+
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 200, 210, 220, 230],
+            "Vdwb": [10.0, 12.0, 14.0, 16.0, 80.0, 82.0, 83.0, 84.0],
+        }
+    )
+    execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-tail-env",
+        results_for_tsa=[(1, "CWH_HW", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=lambda *_args, **_kwargs: None,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert captured_tail_kwargs
+    assert captured_tail_kwargs["tail_linear_min_r2"] == 0.66
+    assert captured_tail_kwargs["tail_blend_years"] == 44.0
+
+
 def test_execute_curve_smoothing_runs_logs_fit_quality_gate_failures(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

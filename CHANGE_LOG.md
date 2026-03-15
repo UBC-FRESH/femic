@@ -4693,3 +4693,17 @@
   available candidates, and selected metrics.
 - Added regression test in `tests/test_vdyp_stage.py` to verify policy-order
   selection and event emission.
+
+## 2026-03-15 - Completed P19.14a configurable/relaxed tail-linearity thresholds
+- Updated `src/femic/pipeline/vdyp_stage.py` so tail-blend candidate defaults are
+  no longer hard-coded per run and now come from:
+  - environment-backed defaults (`FEMIC_TAIL_LINEAR_MIN_POINTS`,
+    `FEMIC_TAIL_LINEAR_MIN_R2`, `FEMIC_TAIL_LINEAR_MAX_NRMSE`,
+    `FEMIC_TAIL_LINEAR_PREFER_MIN_AGE`, `FEMIC_TAIL_BLEND_YEARS`), and
+  - per-stratum/per-SI `kwarg_overrides_for_tsa` values when supplied.
+- Relaxed baseline tail defaults used by stage candidate generation to improve
+  eligibility of plausible late-linear tails while retaining deterministic
+  thresholds.
+- Added regression tests in `tests/test_vdyp_stage.py` confirming:
+  - per-stratum tail override values are respected, and
+  - env-provided defaults are applied when no explicit overrides are present.
