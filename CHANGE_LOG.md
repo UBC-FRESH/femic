@@ -4682,3 +4682,14 @@
   - `tests/test_vdyp_curves.py` verifies floor application through age 20.
   - `tests/test_vdyp_stage.py` verifies stage-level merchantable-floor
     selection and output substitution.
+
+## 2026-03-15 - Completed P19.13d ordered fallback policy + selection events
+- Updated `src/femic/pipeline/vdyp_stage.py` to apply explicit fallback-path
+  ordering for output curve selection:
+  `primary_nlls -> reparameterized_nlls -> censored_refit -> merchantable_floor`,
+  with existing K3Z tail-blend override retained.
+- Added per-stratum/SI `vdyp_curve_fit` selection events
+  (`stage=fallback_policy`, `reason=curve_selected`) with selected path,
+  available candidates, and selected metrics.
+- Added regression test in `tests/test_vdyp_stage.py` to verify policy-order
+  selection and event emission.

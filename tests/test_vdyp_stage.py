@@ -1654,9 +1654,15 @@ def test_execute_curve_smoothing_runs_builds_output_and_logs_missing(
     assert smoothed_runs[0].stratum_code == "S1"
     assert smoothed_runs[0].si_level == "L"
     assert list(smoothed_runs[0].y) == [1e-6, 120.0, 180.0]
-    assert len(events) == 1
-    assert events[0]["status"] == "warning"
-    assert events[0]["reason"] == "missing_vdyp_output"
+    missing_events = [
+        event for event in events if event.get("reason") == "missing_vdyp_output"
+    ]
+    assert len(missing_events) == 1
+    assert missing_events[0]["status"] == "warning"
+    fallback_events = [
+        event for event in events if event.get("stage") == "fallback_policy"
+    ]
+    assert len(fallback_events) == 1
 
 
 def test_execute_curve_smoothing_runs_prefers_tail_blend_for_k3z_output(
@@ -1868,6 +1874,60 @@ def test_execute_curve_smoothing_runs_selects_merchantable_floor_candidate(
         and event.get("reason") == "merchantable_floor_selected"
     ]
     assert floor_events
+
+
+def test_execute_curve_smoothing_runs_selects_reparameterized_candidate_in_policy_order(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    events: list[dict[str, object]] = []
+
+    def append_event(_path: str | Path, payload: object) -> None:
+        assert isinstance(payload, dict)
+        events.append(payload)
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        if int(kwargs.get("skip1", 0)) > 0:
+            return [0.0, 150.0, 300.0], [0.0, 30.0, 55.0]
+        return [0.0, 150.0, 300.0], [0.0, 260.0, 320.0]
+
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 200, 210, 220, 230],
+            "Vdwb": [10.0, 12.0, 14.0, 16.0, 80.0, 82.0, 83.0, 84.0],
+        }
+    )
+    smoothed_runs = execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-29-policy-order",
+        results_for_tsa=[(1, "SBPS_PL", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=append_event,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert len(smoothed_runs) == 1
+    assert list(smoothed_runs[0].y) == [0.0, 30.0, 55.0]
+    selection_events = [
+        event
+        for event in events
+        if event.get("stage") == "fallback_policy"
+        and event.get("reason") == "curve_selected"
+    ]
+    assert selection_events
+    assert selection_events[-1].get("selected_path") == "reparameterized_nlls"
 
 
 def test_build_curve_smoothing_plot_config_applies_defaults() -> None:

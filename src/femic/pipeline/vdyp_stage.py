@@ -2866,18 +2866,50 @@ def execute_curve_smoothing_runs(
                 fit_metrics=fit_metrics,
             )
             output_x, output_y = x, y
+            selected_path = "primary_nlls"
+            selected_metrics = dict(fit_metrics.get("current", {}))
+            auto_curve = candidate_curves.get("auto_skip")
+            if auto_curve is not None:
+                output_x, output_y = auto_curve
+                selected_path = "reparameterized_nlls"
+                selected_metrics = dict(fit_metrics.get("auto_skip", selected_metrics))
             left_toe_curve = candidate_curves.get("left_toe_censor")
             if left_toe_curve is not None:
                 output_x, output_y = left_toe_curve
+                selected_path = "censored_refit"
+                selected_metrics = dict(
+                    fit_metrics.get("left_toe_censor", selected_metrics)
+                )
             floor_curve = candidate_curves.get("merchantable_floor")
             if floor_curve is not None:
                 output_x, output_y = floor_curve
+                selected_path = "merchantable_floor"
+                selected_metrics = dict(
+                    fit_metrics.get("merchantable_floor", selected_metrics)
+                )
             # K3Z is currently using tail-blend-smoothed unmanaged curves for
             # TIPSY-vs-VDYP comparison plots.
             if str(tsa).strip().lower() == "k3z":
                 tail_curve = candidate_curves.get("tail_blend")
                 if tail_curve is not None:
                     output_x, output_y = tail_curve
+                    selected_path = "tail_blend_override_k3z"
+                    selected_metrics = dict(
+                        fit_metrics.get("tail_blend", selected_metrics)
+                    )
+            append_jsonl_fn(
+                vdyp_curve_events_path,
+                build_timestamped_event(
+                    event="vdyp_curve_fit",
+                    status="info",
+                    stage="fallback_policy",
+                    reason="curve_selected",
+                    context=curve_context,
+                    selected_path=selected_path,
+                    available_candidates=sorted(candidate_curves.keys()),
+                    selected_metrics=selected_metrics,
+                ),
+            )
             smoothed_runs.append(
                 SmoothedCurveResult(
                     stratumi=int(stratumi),

@@ -487,7 +487,7 @@ notes.
     then re-fit on censored vectors.
   - [x] P19.13c Add optional merchantable-volume floor constraint
     (default zero through age 20) via toe-shift/parameterized fit mode.
-  - [ ] P19.13d Implement ordered fallback policy (primary NLLS ->
+  - [x] P19.13d Implement ordered fallback policy (primary NLLS ->
     reparameterized NLLS -> censored re-fit -> constrained fallback) with
     per-stratum event logging.
 - [ ] P19.14 Revisit VDYP tail-blend heuristic and curve-selection policy
@@ -514,6 +514,16 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-15 (Phase 19 `P19.13d` complete): wired explicit ordered fallback
+  selection policy with per-stratum/SI selection events.
+  - Selection order now executes as `primary_nlls -> reparameterized_nlls
+    (auto-skip) -> censored_refit -> merchantable_floor`, with K3Z-specific
+    tail-blend override preserved.
+  - Added `vdyp_curve_fit` event `stage=fallback_policy`/`reason=curve_selected`
+    for each stratum/SI with selected path, available candidates, and selected
+    metrics to make fit-path decisions auditable.
+  - Added regression test to verify reparameterized candidate selection and
+    fallback-policy event emission.
 - 2026-03-15 (Phase 19 `P19.13c` complete): added optional merchantable-volume
   floor candidate (default zero through age 20) with selection diagnostics.
   - `process_vdyp_out(...)` now supports
