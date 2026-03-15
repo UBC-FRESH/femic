@@ -2415,6 +2415,58 @@ def execute_curve_smoothing_runs(
         except Exception:
             return None
 
+    def _select_tail_blend_candidate(
+        *,
+        current_metrics: Mapping[str, float],
+        tail_metrics: Mapping[str, float],
+    ) -> tuple[bool, dict[str, Any]]:
+        current_tail = float(current_metrics.get("tail_rmse", float("nan")))
+        current_rmse = float(current_metrics.get("rmse", float("nan")))
+        current_mape = float(current_metrics.get("mape", float("nan")))
+        current_early = float(current_metrics.get("early_overshoot", float("nan")))
+        tail_tail = float(tail_metrics.get("tail_rmse", float("nan")))
+        tail_rmse = float(tail_metrics.get("rmse", float("nan")))
+        tail_mape = float(tail_metrics.get("mape", float("nan")))
+        tail_early = float(tail_metrics.get("early_overshoot", float("nan")))
+
+        finite = all(
+            math.isfinite(v)
+            for v in (
+                current_tail,
+                current_rmse,
+                current_mape,
+                current_early,
+                tail_tail,
+                tail_rmse,
+                tail_mape,
+                tail_early,
+            )
+        )
+        if not finite:
+            return False, {"decision": "reject_non_finite_metrics"}
+        if current_tail <= 0 or current_rmse <= 0 or current_mape <= 0:
+            return False, {"decision": "reject_invalid_current_baseline"}
+
+        improve_tail = tail_tail <= (0.92 * current_tail)
+        non_harm_guard = (
+            tail_rmse <= (1.08 * current_rmse)
+            and tail_mape <= (1.10 * current_mape)
+            and tail_early <= (1.15 * current_early)
+        )
+        close_tail = abs(tail_tail - current_tail) <= (0.03 * current_tail)
+        tie_break = (
+            close_tail and (tail_rmse < current_rmse) and (tail_mape <= current_mape)
+        )
+        selected = bool((improve_tail and non_harm_guard) or tie_break)
+        decision = "selected" if selected else "rejected"
+        return selected, {
+            "decision": decision,
+            "improve_tail": bool(improve_tail),
+            "non_harm_guard": bool(non_harm_guard),
+            "tie_break": bool(tie_break),
+            "close_tail": bool(close_tail),
+        }
+
     def _max_pre_merchantable_volume(
         *,
         x_curve: Sequence[float],
@@ -2697,6 +2749,29 @@ def execute_curve_smoothing_runs(
                         x_curve=tail_curve[0],
                         y_curve=tail_curve[1],
                     )
+                    tail_selected, tail_decision = _select_tail_blend_candidate(
+                        current_metrics=fit_metrics["current"],
+                        tail_metrics=fit_metrics["tail_blend"],
+                    )
+                    append_jsonl_fn(
+                        vdyp_curve_events_path,
+                        build_timestamped_event(
+                            event="vdyp_curve_fit",
+                            status="info",
+                            stage="tail_blend_selection",
+                            reason=(
+                                "tail_blend_selected"
+                                if tail_selected
+                                else "tail_blend_rejected"
+                            ),
+                            context=curve_context,
+                            baseline_metrics=dict(fit_metrics["current"]),
+                            candidate_metrics=dict(fit_metrics["tail_blend"]),
+                            decision=tail_decision,
+                        ),
+                    )
+                    if tail_selected:
+                        candidate_curves["tail_blend_selected"] = tail_curve
 
                 current_skip1 = int(kwargs.get("skip1", 0))
                 suggested_skip = _infer_auto_skip1(
@@ -2888,6 +2963,11 @@ def execute_curve_smoothing_runs(
             output_x, output_y = x, y
             selected_path = "primary_nlls"
             selected_metrics = dict(fit_metrics.get("current", {}))
+            tail_selected_curve = candidate_curves.get("tail_blend_selected")
+            if tail_selected_curve is not None:
+                output_x, output_y = tail_selected_curve
+                selected_path = "tail_blend"
+                selected_metrics = dict(fit_metrics.get("tail_blend", selected_metrics))
             auto_curve = candidate_curves.get("auto_skip")
             if auto_curve is not None:
                 output_x, output_y = auto_curve

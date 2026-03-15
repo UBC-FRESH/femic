@@ -4707,3 +4707,18 @@
 - Added regression tests in `tests/test_vdyp_stage.py` confirming:
   - per-stratum tail override values are respected, and
   - env-provided defaults are applied when no explicit overrides are present.
+
+## 2026-03-15 - Completed P19.14b tail-blend selection criteria + tie-breaks
+- Updated `src/femic/pipeline/vdyp_stage.py` with explicit objective selection
+  criteria for tail-blend vs straight NLLS using:
+  - required tail-RMSE improvement with non-harm guardrails on RMSE/MAPE/early
+    overshoot, and
+  - deterministic tie-break behavior for near-equal tail fits.
+- Added structured decision logging (`vdyp_curve_fit`,
+  `stage=tail_blend_selection`) capturing selected/rejected outcomes, decision
+  predicates, and baseline/candidate metrics.
+- Integrated accepted tail-blend candidate into non-K3Z fallback output
+  selection path (`selected_path=tail_blend`) while preserving K3Z-specific
+  tail-blend override behavior.
+- Added regression test in `tests/test_vdyp_stage.py` verifying tail-blend
+  selection and fallback-policy selected path emission.

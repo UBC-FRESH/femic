@@ -1810,6 +1810,68 @@ def test_execute_curve_smoothing_runs_tail_blend_uses_env_defaults(
     assert captured_tail_kwargs["tail_blend_years"] == 44.0
 
 
+def test_execute_curve_smoothing_runs_selects_tail_blend_with_objective_metrics(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    events: list[dict[str, object]] = []
+
+    def append_event(_path: str | Path, payload: object) -> None:
+        assert isinstance(payload, dict)
+        events.append(payload)
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        if bool(kwargs.get("tail_blend_enabled", False)):
+            # Better late-tail alignment with little overall penalty.
+            return [0.0, 150.0, 300.0], [0.0, 85.0, 90.0]
+        return [0.0, 150.0, 300.0], [0.0, 150.0, 350.0]
+
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 200, 210, 220, 230],
+            "Vdwb": [10.0, 12.0, 14.0, 16.0, 80.0, 82.0, 83.0, 84.0],
+        }
+    )
+    smoothed_runs = execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-tail-selected",
+        results_for_tsa=[(1, "CWH_HW", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=append_event,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert len(smoothed_runs) == 1
+    assert list(smoothed_runs[0].y) == [0.0, 85.0, 90.0]
+    tail_decisions = [
+        event
+        for event in events
+        if event.get("stage") == "tail_blend_selection"
+        and event.get("reason") == "tail_blend_selected"
+    ]
+    assert tail_decisions
+    selected_events = [
+        event
+        for event in events
+        if event.get("stage") == "fallback_policy"
+        and event.get("reason") == "curve_selected"
+    ]
+    assert selected_events
+    assert selected_events[-1].get("selected_path") == "tail_blend"
+
+
 def test_execute_curve_smoothing_runs_logs_fit_quality_gate_failures(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

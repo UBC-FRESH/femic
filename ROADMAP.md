@@ -493,7 +493,7 @@ notes.
 - [ ] P19.14 Revisit VDYP tail-blend heuristic and curve-selection policy
   - [x] P19.14a Relax/update tail-linearity definition and threshold parameters
     (config-driven, TSA-overridable).
-  - [ ] P19.14b Rework tail-blend vs straight-NLLS selection criteria using
+  - [x] P19.14b Rework tail-blend vs straight-NLLS selection criteria using
     explicit objective metrics and deterministic tie-breaks.
   - [ ] P19.14c Add regression diagnostics/plots that expose selected fit path,
     blend window, and residual behavior per stratum/SI level.
@@ -514,6 +514,16 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-15 (Phase 19 `P19.14b` complete): added explicit objective selection
+  logic for tail-blend vs straight NLLS with deterministic tie-breaks.
+  - Added metric-driven tail selection policy requiring strong tail-RMSE
+    improvement under non-harm guardrails, with deterministic tie-break when
+    tails are near-equal.
+  - Added `vdyp_curve_fit` decision events at `stage=tail_blend_selection`
+    (selected/rejected) including baseline/candidate metrics and decision
+    predicates.
+  - Integrated tail selection into fallback output path as `selected_path=tail_blend`
+    for non-K3Z when criteria are met; K3Z override behavior remains intact.
 - 2026-03-15 (Phase 19 `P19.14a` complete): relaxed tail-linearity defaults and
   moved threshold control to config/env + per-stratum overrides.
   - Tail candidate no longer hard-overwrites threshold values in stage logic;
