@@ -1709,6 +1709,60 @@ def test_execute_curve_smoothing_runs_prefers_tail_blend_for_k3z_output(
     assert not any(event.get("status") == "warning" for event in events)
 
 
+def test_execute_curve_smoothing_runs_logs_fit_quality_gate_failures(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    events: list[dict[str, object]] = []
+
+    def append_event(_path: str | Path, payload: object) -> None:
+        assert isinstance(payload, dict)
+        events.append(payload)
+
+    def fake_process(
+        _vdyp_out: object, **_kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        # Intentionally implausible fit to trigger quality gate.
+        return [0.0, 150.0, 300.0], [0.0, 1200.0, 1400.0]
+
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 200, 210, 220, 230],
+            "Vdwb": [10.0, 12.0, 14.0, 16.0, 80.0, 82.0, 83.0, 84.0],
+        }
+    )
+    smoothed_runs = execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-29",
+        results_for_tsa=[(1, "SBPS_PL", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=append_event,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert len(smoothed_runs) == 1
+    warnings = [
+        event
+        for event in events
+        if event.get("stage") == "fit_quality_gate"
+        and event.get("reason") == "fit_quality_gate_failed"
+    ]
+    assert warnings
+    failure_reasons = warnings[-1].get("failure_reasons")
+    assert isinstance(failure_reasons, list)
+    assert "mape_exceeds_gate" in failure_reasons
+
+
 def test_build_curve_smoothing_plot_config_applies_defaults() -> None:
     class _FakeSns:
         def __init__(self) -> None:

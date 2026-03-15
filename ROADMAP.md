@@ -481,7 +481,7 @@ notes.
     metadata/log output so visual trimming is auditable.
 - [ ] P19.13 Add VDYP NLLS failure detection and auto-reparameterization fallback
   sequence
-  - [ ] P19.13a Add fit-quality gate(s) to detect obviously failed or
+  - [x] P19.13a Add fit-quality gate(s) to detect obviously failed or
     biophysically implausible NLLS curves before acceptance.
   - [ ] P19.13b Add left-toe outlier censor pass for incoherent early-age points,
     then re-fit on censored vectors.
@@ -514,6 +514,13 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-15 (Phase 19 `P19.13a` complete): added fit-quality gate warnings for
+  implausible VDYP NLLS outputs before downstream acceptance.
+  - Added gate checks in curve smoothing for non-finite/negative outputs plus
+    metric thresholds (`mape`, `early_overshoot`) and emits structured
+    `vdyp_curve_fit` warning events (`stage=fit_quality_gate`) when violated.
+  - Added regression coverage that forces an implausible fit and verifies
+    `fit_quality_gate_failed` diagnostics are recorded.
 - 2026-03-15 (Phase 19 `P19.12` follow-up): fixed strata SI diagnostic x-axis
   floor to `0` so left violin tails are not visually clipped by quantile-based
   windowing.

@@ -6,6 +6,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 import functools
 import importlib
+import math
 import os
 import pickle
 import shlex
@@ -2224,6 +2225,9 @@ def execute_curve_smoothing_runs(
 ) -> list[SmoothedCurveResult]:
     """Build smoothed VDYP curves for each stratum/SI combination."""
 
+    fit_gate_max_mape = 2.0
+    fit_gate_max_early_overshoot = 8.0
+
     def _build_observed_bins(vdyp_out: Mapping[Any, Any]) -> Any | None:
         pd_module = importlib.import_module("pandas")
         vdyp_tables = [
@@ -2281,6 +2285,34 @@ def execute_curve_smoothing_runs(
             "tail_rmse": tail_rmse,
             "early_overshoot": early_overshoot,
         }
+
+    def _evaluate_fit_quality_gate(
+        *,
+        y_curve: Sequence[float],
+        metrics: Mapping[str, float] | None,
+    ) -> list[str]:
+        reasons: list[str] = []
+        y_vals = np.asarray(y_curve, dtype=float)
+        if y_vals.size == 0:
+            reasons.append("empty_curve")
+            return reasons
+        if not np.all(np.isfinite(y_vals)):
+            reasons.append("non_finite_curve")
+        if float(np.nanmin(y_vals)) < -1e-6:
+            reasons.append("negative_volume")
+        if metrics is None:
+            return reasons
+        mape = float(metrics.get("mape", float("nan")))
+        early_overshoot = float(metrics.get("early_overshoot", float("nan")))
+        if not math.isfinite(mape):
+            reasons.append("non_finite_mape")
+        elif mape > fit_gate_max_mape:
+            reasons.append("mape_exceeds_gate")
+        if not math.isfinite(early_overshoot):
+            reasons.append("non_finite_early_overshoot")
+        elif early_overshoot > fit_gate_max_early_overshoot:
+            reasons.append("early_overshoot_exceeds_gate")
+        return reasons
 
     def _infer_auto_skip1(
         *,
@@ -2621,6 +2653,30 @@ def execute_curve_smoothing_runs(
                         if improved_rmse and improved_tail and reduced_overshoot:
                             candidate_curves["auto_skip"] = auto_curve
                             fit_metrics["auto_skip"] = auto_metrics
+
+            gate_fail_reasons = _evaluate_fit_quality_gate(
+                y_curve=y,
+                metrics=fit_metrics.get("current"),
+            )
+            if gate_fail_reasons:
+                message_fn(
+                    "  fit-quality gate warning",
+                    sc,
+                    si_level,
+                    ",".join(gate_fail_reasons),
+                )
+                append_jsonl_fn(
+                    vdyp_curve_events_path,
+                    build_timestamped_event(
+                        event="vdyp_curve_fit",
+                        status="warning",
+                        stage="fit_quality_gate",
+                        reason="fit_quality_gate_failed",
+                        context=curve_context,
+                        failure_reasons=gate_fail_reasons,
+                        metrics=dict(fit_metrics.get("current", {})),
+                    ),
+                )
 
             _emit_fit_diagnostic_plot(
                 tsa_code=tsa,

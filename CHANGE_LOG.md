@@ -4644,3 +4644,15 @@
   explicitly set in `StrataDistributionPlotConfig`.
 - Updated `tests/test_pipeline_helpers.py` to assert PNG-only default behavior
   and added regression coverage for optional PDF emission when requested.
+
+## 2026-03-15 - Completed P19.13a VDYP fit-quality gate warnings
+- Updated `src/femic/pipeline/vdyp_stage.py` to evaluate baseline NLLS curve
+  plausibility before downstream acceptance and emit structured warning events
+  when quality gates fail.
+  - Added checks for non-finite/negative curve outputs.
+  - Added metric-based gate thresholds for `mape` and early-age overshoot.
+  - Added `vdyp_curve_fit` warning events with
+    `stage=fit_quality_gate`, `reason=fit_quality_gate_failed`, and
+    machine-readable `failure_reasons`.
+- Added `tests/test_vdyp_stage.py` regression coverage to force an implausible
+  fit and verify fit-quality gate warnings are logged.
