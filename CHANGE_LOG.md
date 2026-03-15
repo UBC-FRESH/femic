@@ -4758,3 +4758,23 @@
 - Updated `ROADMAP.md`:
   - checked off Phase 19 subtask `P19.15a.1`,
   - appended matching detail in "Detailed Next Steps Notes".
+
+## 2026-03-15 - Completed P19.15 TSA29 curve-QA rerun + stability evidence publish
+- Re-ran TSA29 curve QA with updated policy stack and published stability evidence:
+  - stratum coverage run at `top_area_coverage=0.80` selected 18 strata
+    (`coverage=0.8061826878755755`),
+  - regenerated `plots/strata-tsa29.png`,
+  - regenerated all 54 AU overlays `plots/tipsy_vdyp_tsa29-*.png`.
+- Generated reviewer-facing selection summary CSV from curve-event logs:
+  `vdyp_io/logs/curve_selection_summary-tsa29-20260315T184955Z.csv`
+  (`primary_nlls=12`, `tail_blend=19`, `merchantable_floor=22`,
+  `censored_refit=1`).
+- Completed post-TIPSY finalize and refreshed model-input bundle outputs:
+  - `data/model_input_bundle/au_table.csv`
+  - `data/model_input_bundle/curve_table.csv`
+  - `data/model_input_bundle/curve_points_table.csv`
+  - manifest: `vdyp_io/logs/run_manifest-post_tipsy_20260315T190051Z.json`.
+- Published canonical instance evidence in `external/femic-tsa29-instance`:
+  - `evidence/curve_stability_report.20260315.md`
+  - `evidence/curve_selection_summary-tsa29-20260315T184955Z.csv`
+  - docs link update in `docs/rebuild-and-qa.rst`.

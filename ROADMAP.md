@@ -497,14 +497,14 @@ notes.
     explicit objective metrics and deterministic tie-breaks.
   - [x] P19.14c Add regression diagnostics/plots that expose selected fit path,
     blend window, and residual behavior per stratum/SI level.
-- [ ] P19.15 Re-run TSA29 curve QA and publish curve-stability evidence
-  - [ ] P19.15a Rebuild TSA29 diagnostics with updated plotting and fitting
+- [x] P19.15 Re-run TSA29 curve QA and publish curve-stability evidence
+  - [x] P19.15a Rebuild TSA29 diagnostics with updated plotting and fitting
     policies.
     - [x] P19.15a.1 Guard THLB raster mean for empty valid-cell slices to avoid
       NumPy warning floods during post-TIPSY bundle assembly.
   - [x] P19.15b Produce reviewer-facing summary table of strata/SI fit status
     (accepted/fallback path/constraints applied).
-  - [ ] P19.15c Update TSA29 instance docs/evidence with before/after curve
+  - [x] P19.15c Update TSA29 instance docs/evidence with before/after curve
     comparisons and acceptance sign-off notes.
 
 ## Phase 20: VDYP Parallelization and Runtime Observability (Non-Blocking)
@@ -516,6 +516,22 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-15 (Phase 19 `P19.15` complete): reran TSA29 curve QA with
+  updated plotting/fitting policy stack and published curve-stability evidence.
+  - Regenerated TSA29 diagnostics with `FEMIC_STRAT_TOP_AREA_COVERAGE=0.80`
+    (18 strata; coverage `0.8061826878755755`), including `plots/strata-tsa29.png`
+    and all `54` AU overlays (`plots/tipsy_vdyp_tsa29-*.png`).
+  - Produced reviewer CSV via `femic vdyp report --selection-summary-out`:
+    `vdyp_io/logs/curve_selection_summary-tsa29-20260315T184955Z.csv`
+    (`primary_nlls=12`, `tail_blend=19`, `merchantable_floor=22`,
+    `censored_refit=1`).
+  - Finalized post-TIPSY bundle via
+    `vdyp_io/logs/run_manifest-post_tipsy_20260315T190051Z.json`
+    and refreshed `data/model_input_bundle/{au_table,curve_table,curve_points_table}.csv`.
+  - Published instance evidence in submodule:
+    `external/femic-tsa29-instance/evidence/curve_stability_report.20260315.md`
+    and
+    `external/femic-tsa29-instance/evidence/curve_selection_summary-tsa29-20260315T184955Z.csv`.
 - 2026-03-15 (Phase 19 `P19.15a.1` complete): patched THLB raster sampling to
   return fallback values when masked geometries have no valid cells.
   - Updated `mean_thlb_for_geometry(...)` to avoid `np.mean` on empty slices
