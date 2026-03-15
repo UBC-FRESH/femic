@@ -4778,3 +4778,20 @@
   - `evidence/curve_stability_report.20260315.md`
   - `evidence/curve_selection_summary-tsa29-20260315T184955Z.csv`
   - docs link update in `docs/rebuild-and-qa.rst`.
+
+## 2026-03-15 - Completed P19.15d composable censoring + selected-curve gate rescue
+- Updated `src/femic/pipeline/vdyp_stage.py` branching logic so left-toe
+  censoring composes with downstream candidate generation (tail blend and
+  merchantable floor) instead of acting as an exclusive terminal override.
+- Added selected-curve gate rescue: when the initially selected curve still
+  fails fit-quality checks, FEMIC now evaluates available candidates and
+  reselects in ordered priority:
+  `tail_blend -> merchantable_floor -> reparameterized_nlls -> censored_refit -> primary_nlls`,
+  with explicit warning events for rescue or unresolved failures.
+- Preserved K3Z tail-blend override behavior while preventing non-K3Z runs from
+  silently carrying non-finite/failed primary selections when better candidates
+  exist.
+- Added/updated regression coverage in `tests/test_vdyp_stage.py` for:
+  - composable left-toe censor + tail-blend behavior,
+  - selected-curve gate rescue selection, and
+  - existing tail-blend/left-toe/floor policy interactions.

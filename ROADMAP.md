@@ -506,6 +506,8 @@ notes.
     (accepted/fallback path/constraints applied).
   - [x] P19.15c Update TSA29 instance docs/evidence with before/after curve
     comparisons and acceptance sign-off notes.
+  - [x] P19.15d Harden curve-path branching so censoring is composable and
+    selected-curve gate failures auto-rescue to best available candidates.
 
 ## Phase 20: VDYP Parallelization and Runtime Observability (Non-Blocking)
 - [ ] P20.1 Define VDYP parallelization contract and non-regression invariants
@@ -516,6 +518,17 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-15 (Phase 19 `P19.15d` complete): tightened curve-path branching and
+  selected-curve quality gate behavior.
+  - Left-toe censoring now composes with downstream candidates (including
+    tail-blend runs) instead of behaving as an exclusive final-path override.
+  - Added selected-curve gate rescue logic: if the initial selected curve fails
+    fit-quality gate checks, FEMIC now attempts ordered rescue candidates
+    (`tail_blend`, `merchantable_floor`, `reparameterized_nlls`,
+    `censored_refit`, `primary_nlls`) and emits explicit gate-rescue/unresolved
+    warning events.
+  - Added regression coverage in `tests/test_vdyp_stage.py` for composable
+    censor+tail behavior and selected-curve gate rescue selection.
 - 2026-03-15 (Phase 19 `P19.15` complete): reran TSA29 curve QA with
   updated plotting/fitting policy stack and published curve-stability evidence.
   - Regenerated TSA29 diagnostics with `FEMIC_STRAT_TOP_AREA_COVERAGE=0.80`

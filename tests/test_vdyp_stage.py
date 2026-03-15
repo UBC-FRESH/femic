@@ -1872,6 +1872,142 @@ def test_execute_curve_smoothing_runs_selects_tail_blend_with_objective_metrics(
     assert selected_events[-1].get("selected_path") == "tail_blend"
 
 
+def test_execute_curve_smoothing_runs_layers_tail_blend_after_left_toe_censor(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    events: list[dict[str, object]] = []
+    tail_kwargs_seen: list[dict[str, object]] = []
+
+    def append_event(_path: str | Path, payload: object) -> None:
+        assert isinstance(payload, dict)
+        events.append(payload)
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        if bool(kwargs.get("tail_blend_enabled", False)):
+            tail_kwargs_seen.append(dict(kwargs))
+            if int(kwargs.get("skip1", 0)) > 0:
+                return [0.0, 150.0, 300.0], [0.0, 70.0, 80.0]
+            return [0.0, 150.0, 300.0], [0.0, 400.0, 500.0]
+        if int(kwargs.get("skip1", 0)) > 0:
+            return [0.0, 150.0, 300.0], [0.0, 20.0, 35.0]
+        return [0.0, 150.0, 300.0], [0.0, 260.0, 320.0]
+
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 50, 55, 60, 65, 70, 200, 210, 220, 230],
+            "Vdwb": [
+                120.0,
+                10.0,
+                12.0,
+                14.0,
+                16.0,
+                18.0,
+                20.0,
+                22.0,
+                24.0,
+                80,
+                82,
+                83,
+                84,
+            ],
+        }
+    )
+    smoothed_runs = execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-layer-left-tail",
+        results_for_tsa=[(1, "SBPS_PL", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=append_event,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert len(smoothed_runs) == 1
+    assert tail_kwargs_seen
+    assert int(tail_kwargs_seen[-1].get("skip1", 0)) > 0
+    selection_events = [
+        event
+        for event in events
+        if event.get("stage") == "fallback_policy"
+        and event.get("reason") == "curve_selected"
+    ]
+    assert selection_events
+    assert selection_events[-1].get("selected_path") != "primary_nlls"
+
+
+def test_execute_curve_smoothing_runs_rescues_selected_curve_gate_failures(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    events: list[dict[str, object]] = []
+
+    def append_event(_path: str | Path, payload: object) -> None:
+        assert isinstance(payload, dict)
+        events.append(payload)
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        if bool(kwargs.get("tail_blend_enabled", False)):
+            return [0.0, 150.0, 300.0], [0.0, 85.0, 90.0]
+        # Non-finite primary fit should fail gate and trigger rescue.
+        return [0.0, 150.0, 300.0], [0.0, float("nan"), 350.0]
+
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 200, 210, 220, 230],
+            "Vdwb": [10.0, 12.0, 14.0, 16.0, 80.0, 82.0, 83.0, 84.0],
+        }
+    )
+    smoothed_runs = execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-selected-gate-rescue",
+        results_for_tsa=[(1, "CWH_HW", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=append_event,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert len(smoothed_runs) == 1
+    fallback_events = [
+        event
+        for event in events
+        if event.get("stage") == "fallback_policy"
+        and event.get("reason") == "curve_selected"
+    ]
+    assert fallback_events
+    assert fallback_events[-1].get("selected_path") == "tail_blend"
+    rescue_events = [
+        event
+        for event in events
+        if event.get("stage") == "fit_quality_gate"
+        and event.get("reason") == "selected_curve_gate_rescue"
+    ]
+    assert rescue_events
+
+
 def test_execute_curve_smoothing_runs_logs_fit_quality_gate_failures(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

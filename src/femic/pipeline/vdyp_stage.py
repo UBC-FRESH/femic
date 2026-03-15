@@ -2243,6 +2243,17 @@ def execute_curve_smoothing_runs(
     )
     tail_default_blend_years = float(os.environ.get("FEMIC_TAIL_BLEND_YEARS", "40.0"))
 
+    def _with_tail_defaults(params: dict[str, Any]) -> dict[str, Any]:
+        params.setdefault("tail_linear_min_points", tail_default_linear_min_points)
+        params.setdefault("tail_linear_min_r2", tail_default_linear_min_r2)
+        params.setdefault("tail_linear_max_nrmse", tail_default_linear_max_nrmse)
+        params.setdefault(
+            "tail_linear_prefer_min_age", tail_default_linear_prefer_min_age
+        )
+        params.setdefault("tail_linear_allow_quantile_fallback", False)
+        params.setdefault("tail_blend_years", tail_default_blend_years)
+        return params
+
     def _build_observed_bins(vdyp_out: Mapping[Any, Any]) -> Any | None:
         pd_module = importlib.import_module("pandas")
         vdyp_tables = [
@@ -2480,7 +2491,10 @@ def execute_curve_smoothing_runs(
         max_eval_age = int(max(1, round(float(floor_age))))
         eval_ages = np.arange(1.0, float(max_eval_age) + 1.0, 1.0, dtype=float)
         pred = np.interp(eval_ages, x_vals, y_vals)
-        return float(np.nanmax(pred))
+        finite_pred = pred[np.isfinite(pred)]
+        if finite_pred.size == 0:
+            return 0.0
+        return float(np.max(finite_pred))
 
     def _estimate_tail_blend_window(
         *,
@@ -2793,67 +2807,11 @@ def execute_curve_smoothing_runs(
                     x_curve=x,
                     y_curve=y,
                 )
+                active_kwargs = dict(kwargs)
+                active_curve: tuple[Sequence[float], Sequence[float]] = (x, y)
+                active_metrics = fit_metrics["current"]
 
-                tail_kwargs = dict(kwargs)
-                tail_kwargs["tail_blend_enabled"] = True
-                tail_kwargs.setdefault(
-                    "tail_linear_min_points", tail_default_linear_min_points
-                )
-                tail_kwargs.setdefault("tail_linear_min_r2", tail_default_linear_min_r2)
-                tail_kwargs.setdefault(
-                    "tail_linear_max_nrmse", tail_default_linear_max_nrmse
-                )
-                tail_kwargs.setdefault(
-                    "tail_linear_prefer_min_age",
-                    tail_default_linear_prefer_min_age,
-                )
-                tail_kwargs.setdefault("tail_linear_allow_quantile_fallback", False)
-                tail_kwargs.setdefault("tail_blend_years", tail_default_blend_years)
-                tail_curve = _run_candidate(
-                    vdyp_out=vdyp_out,
-                    curve_context=curve_context,
-                    kwargs=tail_kwargs,
-                    candidate_name="tail_blend",
-                )
-                if tail_curve is not None:
-                    candidate_curves["tail_blend"] = tail_curve
-                    fit_metrics["tail_blend"] = _fit_quality(
-                        binned=binned_obs,
-                        x_curve=tail_curve[0],
-                        y_curve=tail_curve[1],
-                    )
-                    tail_blend_meta_for_plot = _estimate_tail_blend_window(
-                        binned=binned_obs,
-                        anchor_quantile=float(
-                            tail_kwargs.get("tail_anchor_quantile", 0.70)
-                        ),
-                        blend_years=float(tail_kwargs.get("tail_blend_years", 30.0)),
-                    )
-                    tail_selected, tail_decision = _select_tail_blend_candidate(
-                        current_metrics=fit_metrics["current"],
-                        tail_metrics=fit_metrics["tail_blend"],
-                    )
-                    append_jsonl_fn(
-                        vdyp_curve_events_path,
-                        build_timestamped_event(
-                            event="vdyp_curve_fit",
-                            status="info",
-                            stage="tail_blend_selection",
-                            reason=(
-                                "tail_blend_selected"
-                                if tail_selected
-                                else "tail_blend_rejected"
-                            ),
-                            context=curve_context,
-                            baseline_metrics=dict(fit_metrics["current"]),
-                            candidate_metrics=dict(fit_metrics["tail_blend"]),
-                            decision=tail_decision,
-                        ),
-                    )
-                    if tail_selected:
-                        candidate_curves["tail_blend_selected"] = tail_curve
-
-                current_skip1 = int(kwargs.get("skip1", 0))
+                current_skip1 = int(active_kwargs.get("skip1", 0))
                 suggested_skip = _infer_auto_skip1(
                     binned=binned_obs,
                     x_curve=x,
@@ -2889,14 +2847,20 @@ def execute_curve_smoothing_runs(
                         if improved_rmse and improved_tail and reduced_overshoot:
                             candidate_curves["auto_skip"] = auto_curve
                             fit_metrics["auto_skip"] = auto_metrics
+                            active_kwargs["skip1"] = int(suggested_skip)
+                            active_curve = auto_curve
+                            active_metrics = auto_metrics
 
+                left_toe_base_skip = int(kwargs.get("skip1", 0))
                 left_toe_skip = _infer_left_toe_censor_skip(
                     binned=binned_obs,
-                    current_skip1=current_skip1,
+                    current_skip1=left_toe_base_skip,
                 )
-                if left_toe_skip > current_skip1:
-                    censor_kwargs = dict(kwargs)
-                    censor_kwargs["skip1"] = left_toe_skip
+                if left_toe_skip > left_toe_base_skip:
+                    prior_skip1 = int(active_kwargs.get("skip1", 0))
+                    censor_skip = int(max(prior_skip1, left_toe_skip))
+                    censor_kwargs = dict(active_kwargs)
+                    censor_kwargs["skip1"] = censor_skip
                     censor_curve = _run_candidate(
                         vdyp_out=vdyp_out,
                         curve_context=dict(
@@ -2913,7 +2877,7 @@ def execute_curve_smoothing_runs(
                             y_curve=censor_curve[1],
                         )
                         fit_metrics["left_toe_censor"] = censor_metrics
-                        baseline = fit_metrics["current"]
+                        baseline = active_metrics
                         improved_overshoot = censor_metrics["early_overshoot"] <= (
                             0.80 * baseline["early_overshoot"]
                         )
@@ -2921,8 +2885,11 @@ def execute_curve_smoothing_runs(
                             0.97 * baseline["rmse"]
                         )
                         improved_mape = censor_metrics["mape"] <= baseline["mape"]
-                        accepted = improved_overshoot and (
-                            improved_rmse or improved_mape
+                        already_applied = prior_skip1 >= int(
+                            left_toe_skip
+                        ) and prior_skip1 > int(left_toe_base_skip)
+                        accepted = already_applied or (
+                            improved_overshoot and (improved_rmse or improved_mape)
                         )
                         append_jsonl_fn(
                             vdyp_curve_events_path,
@@ -2936,22 +2903,82 @@ def execute_curve_smoothing_runs(
                                     else "left_toe_censor_rejected"
                                 ),
                                 context=curve_context,
-                                skip1_before=int(current_skip1),
-                                skip1_after=int(left_toe_skip),
+                                skip1_before=int(prior_skip1),
+                                skip1_after=int(censor_skip),
                                 baseline_metrics=dict(baseline),
                                 candidate_metrics=dict(censor_metrics),
                             ),
                         )
                         if accepted:
                             candidate_curves["left_toe_censor"] = censor_curve
+                            active_kwargs["skip1"] = int(censor_skip)
+                            active_curve = censor_curve
+                            active_metrics = censor_metrics
 
+                tail_kwargs = _with_tail_defaults(dict(active_kwargs))
+                tail_kwargs["tail_blend_enabled"] = True
+                tail_curve = _run_candidate(
+                    vdyp_out=vdyp_out,
+                    curve_context=curve_context,
+                    kwargs=tail_kwargs,
+                    candidate_name="tail_blend",
+                )
+                tail_selected = False
+                if tail_curve is not None:
+                    candidate_curves["tail_blend"] = tail_curve
+                    fit_metrics["tail_blend"] = _fit_quality(
+                        binned=binned_obs,
+                        x_curve=tail_curve[0],
+                        y_curve=tail_curve[1],
+                    )
+                    tail_blend_meta_for_plot = _estimate_tail_blend_window(
+                        binned=binned_obs,
+                        anchor_quantile=float(
+                            tail_kwargs.get("tail_anchor_quantile", 0.70)
+                        ),
+                        blend_years=float(tail_kwargs.get("tail_blend_years", 30.0)),
+                    )
+                    tail_selected, tail_decision = _select_tail_blend_candidate(
+                        current_metrics=active_metrics,
+                        tail_metrics=fit_metrics["tail_blend"],
+                    )
+                    append_jsonl_fn(
+                        vdyp_curve_events_path,
+                        build_timestamped_event(
+                            event="vdyp_curve_fit",
+                            status="info",
+                            stage="tail_blend_selection",
+                            reason=(
+                                "tail_blend_selected"
+                                if tail_selected
+                                else "tail_blend_rejected"
+                            ),
+                            context=curve_context,
+                            baseline_metrics=dict(active_metrics),
+                            candidate_metrics=dict(fit_metrics["tail_blend"]),
+                            decision=tail_decision,
+                        ),
+                    )
+                    if tail_selected:
+                        candidate_curves["tail_blend_selected"] = tail_curve
+
+                floor_base_curve = active_curve
+                floor_baseline_metrics = active_metrics
+                if tail_selected and tail_curve is not None:
+                    floor_base_curve = tail_curve
+                    floor_baseline_metrics = fit_metrics.get(
+                        "tail_blend", floor_baseline_metrics
+                    )
                 baseline_pre_merch = _max_pre_merchantable_volume(
-                    x_curve=x,
-                    y_curve=y,
+                    x_curve=floor_base_curve[0],
+                    y_curve=floor_base_curve[1],
                     floor_age=merchantable_floor_age,
                 )
                 if baseline_pre_merch > 1.0:
-                    floor_kwargs = dict(kwargs)
+                    floor_kwargs = dict(active_kwargs)
+                    if tail_selected:
+                        floor_kwargs = _with_tail_defaults(floor_kwargs)
+                        floor_kwargs["tail_blend_enabled"] = True
                     floor_kwargs["merchantable_floor_enabled"] = True
                     floor_kwargs["merchantable_floor_age"] = merchantable_floor_age
                     floor_kwargs["merchantable_floor_value"] = merchantable_floor_value
@@ -2976,7 +3003,7 @@ def execute_curve_smoothing_runs(
                             y_curve=floor_curve[1],
                             floor_age=merchantable_floor_age,
                         )
-                        baseline = fit_metrics["current"]
+                        baseline = floor_baseline_metrics
                         reduced_pre_merch = floor_pre_merch <= 0.5
                         acceptable_rmse = floor_metrics["rmse"] <= (
                             1.20 * baseline["rmse"]
@@ -3065,6 +3092,106 @@ def execute_curve_smoothing_runs(
                     selected_metrics = dict(
                         fit_metrics.get("tail_blend", selected_metrics)
                     )
+
+            # Guard against carrying forward obviously failed selected curves.
+            selected_gate_fail_reasons = _evaluate_fit_quality_gate(
+                y_curve=output_y,
+                metrics=selected_metrics,
+            )
+            path_candidates: dict[
+                str, tuple[tuple[Sequence[float], Sequence[float]], dict[str, float]]
+            ] = {
+                "primary_nlls": ((x, y), dict(fit_metrics.get("current", {}))),
+            }
+            auto_curve = candidate_curves.get("auto_skip")
+            if auto_curve is not None:
+                path_candidates["reparameterized_nlls"] = (
+                    auto_curve,
+                    dict(fit_metrics.get("auto_skip", {})),
+                )
+            left_toe_curve = candidate_curves.get("left_toe_censor")
+            if left_toe_curve is not None:
+                path_candidates["censored_refit"] = (
+                    left_toe_curve,
+                    dict(fit_metrics.get("left_toe_censor", {})),
+                )
+            tail_curve = candidate_curves.get("tail_blend")
+            if tail_curve is not None:
+                path_candidates["tail_blend"] = (
+                    tail_curve,
+                    dict(fit_metrics.get("tail_blend", {})),
+                )
+            floor_curve = candidate_curves.get("merchantable_floor")
+            if floor_curve is not None:
+                path_candidates["merchantable_floor"] = (
+                    floor_curve,
+                    dict(fit_metrics.get("merchantable_floor", {})),
+                )
+
+            if str(tsa).strip().lower() != "k3z" and selected_gate_fail_reasons:
+                gate_by_path: dict[str, list[str]] = {}
+                for path_name, (curve_xy, curve_metrics) in path_candidates.items():
+                    gate_by_path[path_name] = _evaluate_fit_quality_gate(
+                        y_curve=curve_xy[1],
+                        metrics=curve_metrics,
+                    )
+                rescue_order = (
+                    "tail_blend",
+                    "merchantable_floor",
+                    "reparameterized_nlls",
+                    "censored_refit",
+                    "primary_nlls",
+                )
+                rescue_path: str | None = None
+                for path_name in rescue_order:
+                    reasons = gate_by_path.get(path_name)
+                    if reasons is not None and not reasons:
+                        rescue_path = path_name
+                        break
+
+                if rescue_path is None:
+                    rescue_path = min(
+                        gate_by_path.keys(),
+                        key=lambda path_name: (
+                            len(gate_by_path[path_name]),
+                            float(
+                                path_candidates[path_name][1].get("rmse", float("inf"))
+                            ),
+                        ),
+                    )
+                if rescue_path != selected_path:
+                    prior_selected_path = str(selected_path)
+                    rescue_curve, rescue_metrics = path_candidates[rescue_path]
+                    output_x, output_y = rescue_curve
+                    selected_path = rescue_path
+                    selected_metrics = dict(rescue_metrics)
+                    selected_gate_fail_reasons = list(gate_by_path[rescue_path])
+                    append_jsonl_fn(
+                        vdyp_curve_events_path,
+                        build_timestamped_event(
+                            event="vdyp_curve_fit",
+                            status="warning",
+                            stage="fit_quality_gate",
+                            reason="selected_curve_gate_rescue",
+                            context=curve_context,
+                            prior_selected_path=prior_selected_path,
+                            rescue_selected_path=rescue_path,
+                            rescue_gate_fail_reasons=selected_gate_fail_reasons,
+                        ),
+                    )
+                elif selected_gate_fail_reasons:
+                    append_jsonl_fn(
+                        vdyp_curve_events_path,
+                        build_timestamped_event(
+                            event="vdyp_curve_fit",
+                            status="warning",
+                            stage="fit_quality_gate",
+                            reason="selected_curve_gate_unresolved",
+                            context=curve_context,
+                            selected_path=selected_path,
+                            selected_gate_fail_reasons=selected_gate_fail_reasons,
+                        ),
+                    )
             append_jsonl_fn(
                 vdyp_curve_events_path,
                 build_timestamped_event(
@@ -3076,6 +3203,7 @@ def execute_curve_smoothing_runs(
                     selected_path=selected_path,
                     available_candidates=sorted(candidate_curves.keys()),
                     selected_metrics=selected_metrics,
+                    selected_gate_fail_reasons=selected_gate_fail_reasons,
                 ),
             )
             _emit_fit_diagnostic_plot(
