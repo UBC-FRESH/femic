@@ -739,6 +739,9 @@ def build_legacy_execution_plan(
     env = dict(base_env)
     env["FEMIC_TSA_LIST"] = ",".join(run_config.tsa_list)
     env["FEMIC_RESUME"] = "1" if run_config.resume else "0"
+    # Stage 00 cache loading is controlled by FEMIC_NO_CACHE in the legacy script.
+    # For non-resume runs, force no-cache mode so a clean slate can rebuild end-to-end.
+    env["FEMIC_NO_CACHE"] = "0" if run_config.resume else "1"
     if run_config.debug_rows:
         env["FEMIC_DEBUG_ROWS"] = str(run_config.debug_rows)
     else:

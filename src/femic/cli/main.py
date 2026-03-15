@@ -671,11 +671,15 @@ def _preflight_checks(*, resume: bool, instance_context: InstanceContext) -> Non
     if not data_root.exists():
         errors.append(f"Missing data directory: {data_root}")
     else:
-        required_files = [
-            data_root / "tsa_boundaries.feather",
-            data_root / "ria_vri_vclr1p_checkpoint1.feather",
-            data_root / "tipsy_params_columns",
-        ]
+        # Clean runs can regenerate checkpoint/boundary caches from source inputs.
+        required_files = [data_root / "tipsy_params_columns"]
+        if resume:
+            required_files.extend(
+                [
+                    data_root / "tsa_boundaries.feather",
+                    data_root / "ria_vri_vclr1p_checkpoint1.feather",
+                ]
+            )
         for path in required_files:
             if not path.exists():
                 errors.append(f"Missing required file: {path}")

@@ -89,6 +89,7 @@ try:
         validate_nonempty_au_assignment,
     )
     from femic.pipeline.tipsy import (
+        tipsy_input_dat_path,
         tipsy_params_excel_path,
         tipsy_stage_output_paths,
     )
@@ -155,6 +156,7 @@ except ModuleNotFoundError:
         validate_nonempty_au_assignment,
     )
     from femic.pipeline.tipsy import (
+        tipsy_input_dat_path,
         tipsy_params_excel_path,
         tipsy_stage_output_paths,
     )
@@ -310,7 +312,10 @@ except ValueError:
 _femic_no_cache_env = _femic_no_cache_raw.strip().lower() in ("1", "true", "yes")
 _femic_custom_boundary = bool(_femic_boundary_path_raw)
 _femic_no_cache = (
-    _femic_no_cache_env or _femic_debug_rows is not None or _femic_custom_boundary
+    _femic_no_cache_env
+    or _femic_debug_rows is not None
+    or _femic_custom_boundary
+    or not _femic_resume
 )
 _femic_resume_effective = _femic_resume and not _femic_no_cache
 si_levels = ["L", "M", "H"]
@@ -650,6 +655,7 @@ def _should_skip_01a(tsa):
     return should_skip_if_outputs_exist(
         resume_effective=_femic_resume_effective,
         output_paths=(
+            tipsy_input_dat_path(tsa=tsa),
             tipsy_params_excel_path(
                 tsa=tsa,
                 tipsy_params_path_prefix=tipsy_params_path_prefix,
