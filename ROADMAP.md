@@ -527,6 +527,9 @@ notes.
     (`tail_blend`, `merchantable_floor`, `reparameterized_nlls`,
     `censored_refit`, `primary_nlls`) and emits explicit gate-rescue/unresolved
     warning events.
+  - Tail-blend selection thresholds are now env-tunable (`FEMIC_TAIL_SELECT_*`)
+    with relaxed defaults so tail blends are admitted more often when primary
+    curves are weak but still near non-harm bounds.
   - Added regression coverage in `tests/test_vdyp_stage.py` for composable
     censor+tail behavior and selected-curve gate rescue selection.
 - 2026-03-15 (Phase 19 `P19.15` complete): reran TSA29 curve QA with

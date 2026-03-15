@@ -2242,6 +2242,21 @@ def execute_curve_smoothing_runs(
         os.environ.get("FEMIC_TAIL_LINEAR_PREFER_MIN_AGE", "180.0")
     )
     tail_default_blend_years = float(os.environ.get("FEMIC_TAIL_BLEND_YEARS", "40.0"))
+    tail_select_min_tail_improvement = float(
+        os.environ.get("FEMIC_TAIL_SELECT_MIN_TAIL_IMPROVEMENT", "0.96")
+    )
+    tail_select_max_rmse_ratio = float(
+        os.environ.get("FEMIC_TAIL_SELECT_MAX_RMSE_RATIO", "1.12")
+    )
+    tail_select_max_mape_ratio = float(
+        os.environ.get("FEMIC_TAIL_SELECT_MAX_MAPE_RATIO", "1.15")
+    )
+    tail_select_max_early_overshoot_ratio = float(
+        os.environ.get("FEMIC_TAIL_SELECT_MAX_EARLY_OVERSHOOT_RATIO", "1.20")
+    )
+    tail_select_close_tolerance = float(
+        os.environ.get("FEMIC_TAIL_SELECT_CLOSE_TOLERANCE", "0.06")
+    )
 
     def _with_tail_defaults(params: dict[str, Any]) -> dict[str, Any]:
         params.setdefault("tail_linear_min_points", tail_default_linear_min_points)
@@ -2458,13 +2473,15 @@ def execute_curve_smoothing_runs(
         if current_tail <= 0 or current_rmse <= 0 or current_mape <= 0:
             return False, {"decision": "reject_invalid_current_baseline"}
 
-        improve_tail = tail_tail <= (0.92 * current_tail)
+        improve_tail = tail_tail <= (tail_select_min_tail_improvement * current_tail)
         non_harm_guard = (
-            tail_rmse <= (1.08 * current_rmse)
-            and tail_mape <= (1.10 * current_mape)
-            and tail_early <= (1.15 * current_early)
+            tail_rmse <= (tail_select_max_rmse_ratio * current_rmse)
+            and tail_mape <= (tail_select_max_mape_ratio * current_mape)
+            and tail_early <= (tail_select_max_early_overshoot_ratio * current_early)
         )
-        close_tail = abs(tail_tail - current_tail) <= (0.03 * current_tail)
+        close_tail = abs(tail_tail - current_tail) <= (
+            tail_select_close_tolerance * current_tail
+        )
         tie_break = (
             close_tail and (tail_rmse < current_rmse) and (tail_mape <= current_mape)
         )

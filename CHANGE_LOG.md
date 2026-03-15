@@ -4788,6 +4788,9 @@
   reselects in ordered priority:
   `tail_blend -> merchantable_floor -> reparameterized_nlls -> censored_refit -> primary_nlls`,
   with explicit warning events for rescue or unresolved failures.
+- Added env-configurable tail-blend selection thresholds (`FEMIC_TAIL_SELECT_*`)
+  and relaxed default ratios so tail-blend can be selected more often for
+  borderline but non-harmful candidates.
 - Preserved K3Z tail-blend override behavior while preventing non-K3Z runs from
   silently carrying non-finite/failed primary selections when better candidates
   exist.
