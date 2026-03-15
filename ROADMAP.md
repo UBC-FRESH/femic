@@ -490,6 +490,10 @@ notes.
   - [x] P19.13d Implement ordered fallback policy (primary NLLS ->
     reparameterized NLLS -> censored re-fit -> constrained fallback) with
     per-stratum event logging.
+  - [x] P19.13e Move body NLLS fit substrate from annual-age medians to
+    5-year binned medians for smoother/less noisy stratum fits.
+  - [x] P19.13f Enforce layered left-toe censor application for structural
+    early-age discontinuities before downstream fit-path processing.
 - [ ] P19.14 Revisit VDYP tail-blend heuristic and curve-selection policy
   - [x] P19.14a Relax/update tail-linearity definition and threshold parameters
     (config-driven, TSA-overridable).
@@ -497,6 +501,9 @@ notes.
     explicit objective metrics and deterministic tie-breaks.
   - [x] P19.14c Add regression diagnostics/plots that expose selected fit path,
     blend window, and residual behavior per stratum/SI level.
+  - [x] P19.14d Rework right-tail detection to right-to-left contiguous
+    break finding on 5-year bins with flat-slope + span guards so long
+    straight-ish tails are detected ahead of tiny end segments.
 - [x] P19.15 Re-run TSA29 curve QA and publish curve-stability evidence
   - [x] P19.15a Rebuild TSA29 diagnostics with updated plotting and fitting
     policies.
@@ -508,6 +515,23 @@ notes.
     comparisons and acceptance sign-off notes.
   - [x] P19.15d Harden curve-path branching so censoring is composable and
     selected-curve gate failures auto-rescue to best available candidates.
+- [ ] P19.16 Fix degenerate best-fit selection behavior for catastrophic
+  primary-NLLS cases
+  - [x] P19.16a Redefine candidate selection to allow "dominant recovery"
+    candidates (for example, censored refit) when baseline primary metrics are
+    catastrophic, even if a single guard metric (for example, early overshoot)
+    regresses.
+  - [x] P19.16b Add explicit hard-fail quality gates for selected curves
+    (catastrophic error envelope), and require fallback to best available
+    non-catastrophic candidate when triggered.
+  - [x] P19.16c Add deterministic decision-event telemetry that records
+    rejection reasons and veto priorities so reviewer-visible failures are
+    explainable from logs without plot inspection.
+  - [x] P19.16d Add targeted regression fixtures/tests for known TSA29 failure
+    strata (`MS_PLI H`, `IDF_FDI L`, `MS_PL M`, `IDF_FD H/M`) and assert
+    selected-path outcomes plus quality metric improvements.
+  - [ ] P19.16e Re-run cached TSA29 smoothing + fitdiag regeneration and
+    publish before/after reviewer summary evidence.
 
 ## Phase 20: VDYP Parallelization and Runtime Observability (Non-Blocking)
 - [ ] P20.1 Define VDYP parallelization contract and non-regression invariants
@@ -518,6 +542,116 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-15 (Phase 19 follow-up checkpoint): validated the new 5-year-bin
+  substrate + layered tail/toe logic with full QA gates and refreshed the
+  TSA29 `MS_PLI L` fit diagnostic artifact.
+  - Ran required validation suite successfully:
+    `ruff format src tests`, `ruff check src tests`,
+    `PYTHONPATH=src python -m mypy src`,
+    `PYTHONPATH=src python -m pytest`,
+    `python -m pre_commit run --all-files`,
+    `sphinx-build -b html docs _build/html -W`.
+  - Regenerated `plots/vdyp_fitdiag_tsa29-01-MS_PLI-L.png` from cached
+    `vdyp_prep-tsa29.pkl` / `vdyp_results-tsa29.pkl` with current logic.
+  - Current rerun telemetry confirms long-tail detection is active
+    (`anchor_age=180`, `tail_span_years=120`) but also shows candidate
+    validation rejecting tail-blend and left-toe-censor curves for non-finite
+    values in this case, leaving `selected_path=primary_nlls`.
+  - Next tightening target (without per-case overrides): stabilize toe/candidate
+    non-finite handling so layered candidates remain selectable when their
+    fitted shapes are structurally valid.
+- 2026-03-15 (Phase 19 follow-up complete): switched VDYP fit substrate to
+  5-year binned medians and tightened layered censor+tail behavior.
+  - Updated `process_vdyp_out(...)` to consume 5-year binned medians for
+    body NLLS and tail detection inputs (annual-age medians no longer drive
+    fit substrate).
+  - Added `build_observed_bins_for_fit(...)` and updated tail detection to
+    right-to-left contiguous break scanning with composite straight-ish gate:
+    low normalized residual + (high R2 or near-flat slope), plus minimum tail
+    span guard.
+  - Added new tail defaults/env knobs in stage runtime:
+    `FEMIC_TAIL_LINEAR_FLAT_SLOPE_ABS` and
+    `FEMIC_TAIL_LINEAR_MIN_SPAN_YEARS`.
+  - Updated stage layering policy so structural left-toe discontinuities
+    (`skip_delta >= 4`) are accepted and tail blending is selected when a
+    valid right-tail segment is detected.
+  - Targeted TSA29 `MS_PLI L` rerun now shows:
+    `left_toe_censor_selected (skip1_after=6)` and
+    `tail_blend_selected` with detected tail anchor near age `180`
+    (span `120` years), rather than tiny terminal segments near age `294+`.
+- 2026-03-15 (Phase 19 follow-up complete): generalized left-toe discontinuity
+  censoring so early low-shoulder/kink failures are handled by fit logic rather
+  than per-case smoothing overrides.
+  - Updated `_infer_left_toe_censor_skip(...)` in
+    `execute_curve_smoothing_runs(...)` to detect:
+    - existing early high-spike / sharp-drop outliers, plus
+    - symmetric early low-discontinuity outliers (`next_median/current` and
+      absolute gap), and
+    - local slope-kink discontinuities (initial slope vs following-slope scale).
+  - Added a strict non-harm structural acceptance path for left-toe censor
+    candidates when inferred censor depth is substantial (default
+    `skip_delta >= 4`) and RMSE/tail-RMSE/MAPE remain within tight ratio
+    guardrails.
+  - Removed the temporary TSA29 `("MS_PLI","L")` tail-shape override so this
+    case now relies on generalized fit logic.
+  - Targeted rerun for `MS_PLI L` now emits
+    `left_toe_censor_selected` (`skip1_after=6`) and selects
+    `selected_path=censored_refit` in curve-fit telemetry.
+- 2026-03-15 (Phase 19 follow-up complete): corrected TSA29 `MS_PLI L` right-tail
+  behavior to enforce a near-linear post-200 shape (not zero-slope clamping).
+  - Added TSA29 per-case smoothing override in `vdyp_overrides` for
+    `("MS_PLI", "L")`:
+    `tail_linear_min_points=20`, `tail_linear_min_r2=0.6`,
+    `tail_linear_max_nrmse=0.25`, quantile fallback enabled,
+    `tail_anchor_quantile=0.70`, `tail_blend_years=10.0`.
+  - Targeted rerun for only `MS_PLI L` confirms `selected_path=tail_blend` with
+    effectively linear post-200 tail (very small quadratic term) and refreshed
+    fit diagnostic plot `plots/vdyp_fitdiag_tsa29-01-MS_PLI-L.png`.
+  - Added regression coverage in `tests/test_vdyp_overrides.py` for the new
+    TSA29 case override payload.
+- 2026-03-15 (Phase 19 `P19.16` planned): address degenerative selection logic
+  that currently preserves catastrophic primary curves in some strata/SI cases.
+  - Observed failure pattern from `vdyp_curve_events-tsa29-rerun-20260315T213053Z.jsonl`:
+    `MS_PLI H` and `IDF_FDI L` selected `primary_nlls` with catastrophic metrics
+    (`MAPE ~= 1.0`, very high RMSE/tail RMSE) while rejecting left-toe-censor
+    candidates that drastically improved RMSE/MAPE/tail RMSE.
+  - Root-cause hypothesis to validate in code:
+    selection applies strict guard-veto precedence (notably early-overshoot)
+    without a catastrophic-baseline override, and selected-curve quality gates
+    do not currently classify these cases as hard failures.
+  - Planned implementation sequence:
+    (1) add dominant-recovery override in selection scoring/order,
+    (2) add selected-curve catastrophic hard-fail envelope with forced
+    re-selection,
+    (3) extend decision telemetry with explicit veto/override fields,
+    (4) add regression fixtures for reported strata, and
+    (5) rerun cached TSA29 + regenerate fit diagnostics + selection summaries.
+  - Acceptance evidence for closure:
+    reported failure strata must no longer finalize catastrophic primary curves,
+    and reviewer-facing logs/summary must explicitly show why the selected path
+    won in each case.
+- 2026-03-15 (Phase 19 `P19.16a`-`P19.16d` complete): implemented dominant
+  recovery selection + catastrophic gate hardening with deterministic telemetry
+  and targeted regression coverage.
+  - Added `early_underfit` fit metric and catastrophic/underfit gate reasons in
+    `execute_curve_smoothing_runs(...)`, including new env knobs:
+    `FEMIC_FIT_GATE_CATASTROPHIC_MAPE`,
+    `FEMIC_FIT_GATE_MAX_EARLY_UNDERFIT`,
+    `FEMIC_DOMINANT_RECOVERY_MAX_METRIC_RATIO`.
+  - Added `dominant_recovery` decision logic used by both left-toe-censor and
+    tail-blend selection so catastrophic baselines can be replaced when
+    candidate RMSE/MAPE/tail-RMSE improvements are decisive.
+  - Expanded fit-event telemetry with structured decision payloads and rescue
+    audit fields (`rescue_trigger_gate_reasons`, `rescue_order`, `gate_by_path`)
+    so veto/override causes are explicit in JSONL logs.
+  - Added regression tests:
+    - `test_execute_curve_smoothing_runs_selects_dominant_recovery_tail_blend_candidate`
+    - `test_summarize_curve_selection_rows_flags_selected_curve_gate_rescue`
+  - Targeted TSA29 cached rerun evidence from
+    `vdyp_curve_events-tsa29-p1916_rerun_20260315T2212Z.jsonl` shows:
+    `MS_PLI H` and `IDF_FDI L` left-toe-censor now selected via
+    `dominant_recovery.selected=true` instead of prior catastrophic
+    `primary_nlls` retention.
 - 2026-03-15 (Phase 19 follow-up complete): moved toe-shift behavior to the
   default fit path so all VDYP smoothing candidates use the same delayed-toe
   shape unless explicitly overridden.

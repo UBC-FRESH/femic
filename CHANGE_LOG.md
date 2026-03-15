@@ -4835,3 +4835,109 @@
 - Validation gates run:
   `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
   `pre-commit run --all-files`, `.venv/bin/sphinx-build -b html docs _build/html -W`.
+
+## 2026-03-15 - Completed P19.16a-d dominant-recovery selection hardening
+- Updated `src/femic/pipeline/vdyp_stage.py` to prevent catastrophic
+  baseline-curve retention by adding:
+  - dominant-recovery selection logic for both left-toe-censor and tail-blend
+    candidates (allows selection when baseline is catastrophic and candidate
+    improvements are decisive),
+  - catastrophic fit gate reason (`catastrophic_mape`) and new early
+    underfit metric (`early_underfit`) with gate threshold control, and
+  - expanded rescue telemetry fields (`rescue_trigger_gate_reasons`,
+    `rescue_order`, `gate_by_path`) plus detailed candidate decision payloads.
+- Added new environment knobs in `execute_curve_smoothing_runs(...)`:
+  `FEMIC_FIT_GATE_CATASTROPHIC_MAPE`,
+  `FEMIC_FIT_GATE_MAX_EARLY_UNDERFIT`,
+  `FEMIC_DOMINANT_RECOVERY_MAX_METRIC_RATIO`.
+- Updated reviewer-summary parsing in `src/femic/vdyp/reporting.py` so
+  `fit_quality_gate_failed` is flagged for selected-curve rescue/unresolved
+  fit-gate events as well as base fit-gate failures.
+- Added regression coverage:
+  - `tests/test_vdyp_stage.py::test_execute_curve_smoothing_runs_selects_dominant_recovery_tail_blend_candidate`
+  - `tests/test_vdyp_reporting.py::test_summarize_curve_selection_rows_flags_selected_curve_gate_rescue`
+- Targeted TSA29 cached rerun evidence from
+  `vdyp_io/logs/vdyp_curve_events-tsa29-p1916_rerun_20260315T2212Z.jsonl`
+  confirms prior catastrophic cases now route through dominant recovery:
+  - `MS_PLI H`: `left_toe_censor_selected` with
+    `dominant_recovery.selected=true` (previously catastrophic `primary_nlls`),
+  - `IDF_FDI L`: `left_toe_censor_selected` with
+    `dominant_recovery.selected=true` (previously catastrophic `primary_nlls`).
+- Validation gates run:
+  `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
+  `pre-commit run --all-files`,
+  `python -m sphinx -b html docs _build/html -W` (via `.venv/bin/python`).
+
+## 2026-03-15 - Tuned TSA29 `MS_PLI L` to a linear post-200 tail
+- Updated `src/femic/pipeline/vdyp_overrides.py` with a TSA29 case-specific
+  override for `("MS_PLI", "L")` to bias right-tail blending toward a
+  near-linear continuation after age ~200:
+  `tail_linear_min_points=20`, `tail_linear_min_r2=0.6`,
+  `tail_linear_max_nrmse=0.25`, `tail_linear_allow_quantile_fallback=1.0`,
+  `tail_anchor_quantile=0.70`, `tail_blend_years=10.0`.
+- Added `tests/test_vdyp_overrides.py` coverage to lock the new override
+  payload for this case.
+- Reran only the `MS_PLI L` smoothing case from cached TSA29 outputs and
+  regenerated `plots/vdyp_fitdiag_tsa29-01-MS_PLI-L.png`; selected path remains
+  `tail_blend` with an approximately linear tail after age 200 (no pronounced
+  curved decline).
+
+## 2026-03-15 - Generalized left-toe discontinuity censoring (no case-specific override)
+- Updated `src/femic/pipeline/vdyp_stage.py` left-toe censor detection to catch
+  additional early discontinuity classes without per-case tuning:
+  - symmetric early low-shoulder discontinuities (`next_median/current` + abs gap),
+  - local slope-kink discontinuities (first-step slope vs following-step scale).
+- Added strict structural non-harm acceptance for left-toe censor candidates
+  when inferred censor depth is substantial (default `skip_delta >= 4`) and
+  candidate RMSE/tail-RMSE/MAPE stay within tight ratio guardrails.
+- Removed the temporary TSA29 `("MS_PLI", "L")` override from
+  `src/femic/pipeline/vdyp_overrides.py` so this case now depends on generalized
+  fit logic.
+- Added regression coverage in `tests/test_vdyp_stage.py`:
+  `test_execute_curve_smoothing_runs_censors_early_low_discontinuity_points`.
+- Targeted `MS_PLI L` rerun from cached TSA29 outputs now logs
+  `left_toe_censor_selected` (`skip1_after=6`) and chooses
+  `selected_path=censored_refit`.
+
+## 2026-03-15 - Migrated VDYP body/tail fitting to 5-year bins + long-tail detection
+- Updated `src/femic/pipeline/vdyp_curves.py` so `process_vdyp_out(...)` now
+  builds and fits against 5-year binned median observations via
+  `build_observed_bins_for_fit(...)` instead of annual-age medians.
+- Reworked `detect_linear_tail_segment(...)` to use right-to-left contiguous
+  break detection with a composite straight-ish gate:
+  low `nrmse` and (`r2` threshold OR near-flat slope), plus minimum tail-span
+  requirement to avoid selecting tiny terminal segments.
+- Added new tail controls in runtime defaults (`src/femic/pipeline/vdyp_stage.py`):
+  `FEMIC_TAIL_LINEAR_FLAT_SLOPE_ABS` and
+  `FEMIC_TAIL_LINEAR_MIN_SPAN_YEARS`.
+- Updated layered curve-path behavior:
+  structural left-toe discontinuity censoring (`skip_delta >= 4`) is accepted,
+  and tail blend is selected when a valid straight-ish tail segment is detected.
+- Added regression coverage in `tests/test_vdyp_curves.py` for:
+  - 5-year bin aggregation correctness,
+  - long flat-tail detection with low-R2 acceptance via flat-slope gate,
+  - body-fit input ages using 5-year bins.
+- Targeted TSA29 `MS_PLI L` rerun now reports:
+  `left_toe_censor_selected` (`skip1_after=6`) and `tail_blend_selected`
+  with detected tail anchor near age `180` (span `120` years).
+
+## 2026-03-15 - Finalized Phase 19 follow-up validation + refreshed `MS_PLI L` fitdiag
+- Fixed a strict-typing regression in
+  `src/femic/pipeline/vdyp_curves.py` by replacing dynamic
+  `emit_curve_event(..., **tail_meta)` expansion with explicit numeric tail
+  fields, eliminating `mypy` kwargs incompatibility.
+- Updated `tests/test_vdyp_stage.py` expectations for the new
+  `tail_blend_selection` decision payload shape (`policy=layered_when_detected`
+  and `tail_detected` flags) and preserved quantile-fallback coverage.
+- Revalidated the repository gates:
+  `ruff format src tests`, `ruff check src tests`,
+  `PYTHONPATH=src python -m mypy src`, `PYTHONPATH=src python -m pytest`,
+  `python -m pre_commit run --all-files`,
+  `sphinx-build -b html docs _build/html -W`.
+- Re-ran only TSA29 `MS_PLI L` smoothing from cached VDYP inputs and refreshed
+  `plots/vdyp_fitdiag_tsa29-01-MS_PLI-L.png` plus
+  `tmp/vdyp_curve_events-tsa29-ms_pli_l-rerun.jsonl`.
+- Current telemetry confirms long straight-tail detection
+  (`anchor_age=180`, `tail_span_years=120`); remaining issue is candidate
+  non-finite rejection that still leaves `selected_path=primary_nlls` for this
+  case.
