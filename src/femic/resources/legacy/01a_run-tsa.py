@@ -27,6 +27,7 @@ def run_tsa(
     import seaborn as sns
 
     from femic.pipeline.pre_vdyp import (
+        build_vdyp_prep_signature,
         load_vdyp_prep_checkpoint,
         pre_vdyp_checkpoint_path,
         save_vdyp_prep_checkpoint,
@@ -60,6 +61,7 @@ def run_tsa(
         apply_stratum_alias_map,
         build_strata_summary,
         build_stratum_lexmatch_alias_map,
+        select_tsa_slice,
     )
     from femic.pipeline.plots import (
         build_strata_distribution_plot_config,
@@ -100,7 +102,7 @@ def run_tsa(
     print("processing tsa", tsa)
 
     # --- cell 2 ---
-    tsa_slice = f.loc[[tsa]]
+    tsa_slice = select_tsa_slice(f_table=f, tsa_value=tsa)
 
     if stratum_col in tsa_slice.columns:
         f_ = tsa_slice.reset_index(drop=True)
@@ -196,10 +198,18 @@ def run_tsa(
     )
 
     vdyp_prep_checkpoint_path = pre_vdyp_checkpoint_path(tsa_code=tsa)
+    prep_signature = build_vdyp_prep_signature(
+        selected_strata_codes=selected_strata_codes,
+        target_area_coverage=runtime_config.target_area_coverage,
+        min_stands_per_si_bin=runtime_config.min_stands_per_si_bin,
+    )
     prep_loaded = False
     if runtime_config.resume_effective and Path(vdyp_prep_checkpoint_path).is_file():
         try:
-            results[tsa] = load_vdyp_prep_checkpoint(vdyp_prep_checkpoint_path)
+            results[tsa] = load_vdyp_prep_checkpoint(
+                vdyp_prep_checkpoint_path,
+                expected_signature=prep_signature,
+            )
             prep_loaded = True
             print("resume: loaded pre-VDYP checkpoint (%s strata)" % len(results[tsa]))
         except (
@@ -244,7 +254,11 @@ def run_tsa(
             compile_one_fn=compile_one_fn,
             message_fn=print,
         )
-        saved_count = save_vdyp_prep_checkpoint(vdyp_prep_checkpoint_path, results[tsa])
+        saved_count = save_vdyp_prep_checkpoint(
+            vdyp_prep_checkpoint_path,
+            results[tsa],
+            signature=prep_signature,
+        )
         print(
             "saved pre-VDYP checkpoint with %s strata to %s"
             % (saved_count, vdyp_prep_checkpoint_path)
@@ -472,7 +486,11 @@ def run_tsa(
             f_table=f_rebin,
             stratum_si_stats_for_fit=stratum_si_stats_vdyp,
         )
-        saved_count = save_vdyp_prep_checkpoint(vdyp_prep_checkpoint_path, results[tsa])
+        saved_count = save_vdyp_prep_checkpoint(
+            vdyp_prep_checkpoint_path,
+            results[tsa],
+            signature=prep_signature,
+        )
         print(
             "saved pre-VDYP checkpoint (VDYP-SI rebin) with %s strata to %s"
             % (saved_count, vdyp_prep_checkpoint_path)

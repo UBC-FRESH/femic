@@ -26,6 +26,7 @@ from femic.pipeline.plots import (
     tipsy_vdyp_plot_path,
     tipsy_vdyp_ylim_for_tsa,
 )
+from femic.pipeline.stages import prepare_tsa_index
 from femic.pipeline.vdyp import build_vdyp_cache_paths
 import pytest
 import pandas as pd
@@ -49,6 +50,8 @@ from femic.pipeline.tsa import (
     resolve_si_level_quantiles_for_stratum,
     summarize_missing_au_mappings,
     target_nstrata_for,
+    normalize_tsa_code,
+    select_tsa_slice,
     validate_nonempty_au_assignment,
 )
 
@@ -193,6 +196,45 @@ def test_tsa_target_nstrata_lookup() -> None:
     assert target_nstrata_for("29") == DEFAULT_TARGET_NSTRATA
     assert target_nstrata_for("k3z") == 4
     assert MIN_STANDCOUNT == 1000
+
+
+def test_select_tsa_slice_handles_string_numeric_equivalence() -> None:
+    frame = pd.DataFrame({"value": [1.0, 2.0]}, index=pd.Index([29, 40], name="tsa"))
+
+    sliced = select_tsa_slice(f_table=frame, tsa_value="29")
+
+    assert list(sliced.index) == [29]
+    assert float(sliced.iloc[0]["value"]) == 1.0
+
+
+def test_select_tsa_slice_handles_numeric_against_string_index() -> None:
+    frame = pd.DataFrame(
+        {"value": [1.0, 2.0]}, index=pd.Index(["29", "40"], name="tsa")
+    )
+
+    sliced = select_tsa_slice(f_table=frame, tsa_value=29)
+
+    assert list(sliced.index) == ["29"]
+    assert float(sliced.iloc[0]["value"]) == 1.0
+
+
+def test_select_tsa_slice_handles_mixed_case_named_tsa() -> None:
+    frame = pd.DataFrame({"value": [1.0]}, index=pd.Index(["k3z"], name="tsa"))
+
+    sliced = select_tsa_slice(f_table=frame, tsa_value="K3Z")
+
+    assert list(sliced.index) == ["k3z"]
+    assert float(sliced.iloc[0]["value"]) == 1.0
+
+
+def test_prepare_tsa_index_normalizes_column_values() -> None:
+    frame = pd.DataFrame({"tsa_code": [29, "08", "K3Z"], "value": [1, 2, 3]})
+
+    prepared = prepare_tsa_index(f_table=frame, tsa_column="tsa_code")
+
+    assert prepared.index.name == "tsa_code"
+    assert list(prepared.index) == ["29", "08", "k3z"]
+    assert normalize_tsa_code("K3Z") == "k3z"
 
 
 def test_build_strata_summary_filters_and_computes_expected_fields() -> None:

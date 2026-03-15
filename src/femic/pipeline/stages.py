@@ -11,6 +11,7 @@ from types import ModuleType
 from typing import Any, Callable, Iterable, Mapping, Sequence
 
 from femic.pipeline.io import LegacyExecutionPlan
+from femic.pipeline.tsa import normalize_tsa_code
 
 
 @dataclass(frozen=True)
@@ -118,9 +119,20 @@ def prepare_tsa_index(
     tsa_column: str = "tsa_code",
 ) -> Any:
     """Ensure legacy table uses TSA code as index for downstream stage lookups."""
-    if getattr(f_table, "index", None) is not None and f_table.index.name == tsa_column:
-        return f_table
-    return f_table.set_index(tsa_column)
+    index = getattr(f_table, "index", None)
+    if index is not None and index.name == tsa_column:
+        normalized_index = index.map(normalize_tsa_code)
+        if list(normalized_index) == list(index):
+            return f_table
+        table = f_table.copy()
+        table.index = normalized_index
+        return table
+    table = f_table.copy()
+    if tsa_column in getattr(table, "columns", []):
+        table[tsa_column] = table[tsa_column].map(normalize_tsa_code)
+    table = table.set_index(tsa_column)
+    table.index = table.index.map(normalize_tsa_code)
+    return table
 
 
 def should_skip_if_outputs_exist(
