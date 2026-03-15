@@ -471,8 +471,104 @@ notes.
 - [x] P19.8 Add contract tests and release handoff (v0.1.0)
 - [x] P19.9 Add dual-output fork contract (Patchworks + Woodstock)
 - [x] P19.10 Add ws3 smoke-test integration and evidence gate
+- [x] P19.11 Harden resume checkpoint compatibility for strata-selection changes
+- [ ] P19.12 Improve stratum SI diagnostic plot readability and interpretability
+  - [ ] P19.12a Thin/sample SI point overlays and reduce point opacity so violin
+    density remains visible.
+  - [ ] P19.12b Add zoomed SI-axis defaults centered on core distribution
+    (quantile-based window + configurable cap), with explicit outlier handling.
+  - [ ] P19.12c Record and report clipped/out-of-window point counts in plot
+    metadata/log output so visual trimming is auditable.
+- [ ] P19.13 Add VDYP NLLS failure detection and auto-reparameterization fallback
+  sequence
+  - [ ] P19.13a Add fit-quality gate(s) to detect obviously failed or
+    biophysically implausible NLLS curves before acceptance.
+  - [ ] P19.13b Add left-toe outlier censor pass for incoherent early-age points,
+    then re-fit on censored vectors.
+  - [ ] P19.13c Add optional merchantable-volume floor constraint
+    (default zero through age 20) via toe-shift/parameterized fit mode.
+  - [ ] P19.13d Implement ordered fallback policy (primary NLLS ->
+    reparameterized NLLS -> censored re-fit -> constrained fallback) with
+    per-stratum event logging.
+- [ ] P19.14 Revisit VDYP tail-blend heuristic and curve-selection policy
+  - [ ] P19.14a Relax/update tail-linearity definition and threshold parameters
+    (config-driven, TSA-overridable).
+  - [ ] P19.14b Rework tail-blend vs straight-NLLS selection criteria using
+    explicit objective metrics and deterministic tie-breaks.
+  - [ ] P19.14c Add regression diagnostics/plots that expose selected fit path,
+    blend window, and residual behavior per stratum/SI level.
+- [ ] P19.15 Re-run TSA29 curve QA and publish curve-stability evidence
+  - [ ] P19.15a Rebuild TSA29 diagnostics with updated plotting and fitting
+    policies.
+  - [ ] P19.15b Produce reviewer-facing summary table of strata/SI fit status
+    (accepted/fallback path/constraints applied).
+  - [ ] P19.15c Update TSA29 instance docs/evidence with before/after curve
+    comparisons and acceptance sign-off notes.
+
+## Phase 20: VDYP Parallelization and Runtime Observability (Non-Blocking)
+- [ ] P20.1 Define VDYP parallelization contract and non-regression invariants
+- [ ] P20.2 Profile baseline serial VDYP runtime by TSA/AU workload shape
+- [ ] P20.3 Implement optional AU-level parallel execution path behind a feature flag
+- [ ] P20.4 Add deterministic merge/reduction logic and reproducibility checks
+- [ ] P20.5 Expand runtime progress logging/heartbeat for long VDYP stages
+- [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-15 (Phase 19 planning note): incorporated TSA29 curve-review feedback
+  as new actionable tasks `P19.12`-`P19.15`.
+  - Plot readability work (`P19.12`): reduce overplot darkness, thin point
+    overlays, and add quantile-focused SI zoom with auditable outlier clipping.
+  - NLLS robustness work (`P19.13`): detect failed fits and apply ordered
+    auto-reparameterization fallbacks, including left-toe point censoring and
+    merchantable-volume floor through age 20.
+  - Tail policy work (`P19.14`): relax/redefine tail-linearity and revise
+    tail-blend selection criteria against straight NLLS.
+  - Validation/evidence work (`P19.15`): rerun TSA29 diagnostics and publish
+    fit-path evidence for sign-off before phase closure.
+- 2026-03-15 (Phase 19 `P19.11` complete): fixed resume behavior so
+  `vdyp_prep-tsaXX.pkl` cannot be reused when pre-VDYP stratification settings
+  change (for example `FEMIC_STRAT_TOP_AREA_COVERAGE`).
+  - Added signature-aware pre-VDYP checkpoint persistence/validation.
+  - Resume now rebuilds pre-VDYP fit payload on signature mismatch instead of
+    silently loading stale strata payloads.
+- 2026-03-15 (Phase 19 runtime tuning): removed default explicit feature-id
+  chunked GDB reads in VDYP source loading to reduce per-query overhead on
+  high-memory hosts.
+  - New default for explicit feature-id mode is full-layer read + in-memory
+    `FEATURE_ID` filter.
+  - Chunked `FEATURE_ID IN (...)` reads remain available only when an explicit
+    `source_feature_id_chunk_size` is provided.
+  - Also removed explicit `driver=\"FileGDB\"` kwargs from these calls to avoid
+    `OpenFileGDB ... open option DRIVER` warning spam.
+- 2026-03-15 (Phase 19 in-flight run note): current clean TSA29 run is showing
+  stratum coverage around `0.656` with ~10 strata (current cutoff), which is
+  below preferred operating target.
+  - Queue for next run only: tune stratum inclusion/cutoff to target coverage
+    near `0.8`.
+  - Do not interrupt/restart the currently monitored run; first observe whether
+    this run completes with sane output.
+  - Keep Phase 20 deferred to a separate feature branch after TSA29 handoff
+    readiness is achieved.
+- 2026-03-15 (Phase 20 `P20.1` drafted): added execution-ready acceptance
+  checklist in `planning/TSA29_dataset_compile_plan.md` covering:
+  - scope boundary (VDYP-only),
+  - serial/parallel parity invariants + numeric tolerance policy,
+  - determinism/hash-repeatability requirements,
+  - worker-failure/fallback behavior,
+  - observability heartbeat minimums,
+  - performance and rollout gates (opt-in first).
+- 2026-03-15 (Phase 20 planning note): added a separate, explicitly
+  non-blocking phase for VDYP parallelization and long-run observability so
+  TSA29 Phase 19 delivery can proceed without waiting on concurrency work.
+  - Execution rule: do not block `P19.5`/instance delivery on Phase 20.
+  - Phase 20 focuses on opt-in first, with parity checks before any default
+    behavior change.
+- 2026-03-15 (Phase 19 planning note): added explicit TSA29 investigation task
+  on siteprod dependency in compile paths (strata/AU/VDYP/TIPSY/other) with
+  decision gate:
+  - if not required, disable siteprod in default path and keep it opt-in.
+  - if required, harden no-data handling so sparse no-data stands cannot crash
+    clean runs.
 - 2026-03-14 (Phase 19 `P19.10` complete): executed real TSA29 Woodstock export
   and ws3 smoke gate, then published evidence in the TSA29 instance repo.
   - Generated complete Woodstock package under
@@ -4286,3 +4382,87 @@ notes.
     Overlays" so student-facing docs match the actual curve mode.
   - Next step: publish refreshed submodule docs commit and update parent
     submodule pointer so GitHub Pages serves the regenerated overlays.
+- 2026-03-14 (TSA-key hardening): strengthened TSA selection/index seams so
+  stage 01a does not fail from TSA dtype/key-format drift.
+  - Added canonical TSA normalizer in `src/femic/pipeline/tsa.py` and
+    upgraded `select_tsa_slice(...)` to:
+    - try normalized candidates,
+    - fall back to normalized-index masking,
+    - emit clearer missing-key diagnostics with available normalized keys.
+  - Updated `src/femic/pipeline/stages.py::prepare_tsa_index(...)` to
+    normalize TSA values when indexing legacy tables (including stale cached
+    int/mixed-case TSA tokens).
+  - Added regression tests in `tests/test_pipeline_helpers.py` for
+    mixed-case named TSA (`K3Z`) and normalized index preparation behavior.
+  - Validation gates run:
+    `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
+    `pre-commit run --all-files`.
+- 2026-03-14 (TIPSY freshness guard): added fail-fast protection against stale
+  BatchTIPSY outputs to prevent mismatched VDYP-vs-TIPSY overlays.
+  - Added `validate_tipsy_output_is_fresh(...)` in
+    `src/femic/pipeline/tipsy.py`.
+  - Wired guard into both legacy 01b surfaces:
+    `01b_run-tsa.py` and `src/femic/resources/legacy/01b_run-tsa.py`.
+  - Default behavior now raises when `04_output-tsaXX.out` is older than
+    `tipsy_params_tsaXX.xlsx`; temporary bypass available via
+    `FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1`.
+  - Added regression tests in `tests/test_tipsy.py` for stale-detect and
+    explicit-override paths.
+  - Validation gates run:
+    `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
+    `pre-commit run --all-files`.
+- 2026-03-14 (BatchTIPSY input contract clarification): aligned docs + runtime
+  checks so `02_input-tsaXX.dat` is explicitly treated as the canonical
+  BatchTIPSY handoff input artifact.
+  - Added `tipsy_input_dat_path(...)` helper in
+    `src/femic/pipeline/tipsy.py`.
+  - Updated `validate_tipsy_output_is_fresh(...)` to:
+    - prioritize DAT freshness checks over workbook-only checks,
+    - fail fast if canonical DAT is missing when 01b is run,
+    - continue allowing explicit override via
+      `FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1`.
+  - Wired DAT-path freshness validation in both 01b runtime surfaces:
+    `01b_run-tsa.py`, `src/femic/resources/legacy/01b_run-tsa.py`.
+  - Clarified docs in:
+    `docs/guides/stage-01a-vdyp-tipsy-input.rst`,
+    `docs/guides/stage-01b-post-tipsy.rst`,
+    `docs/guides/pipeline-overview.rst`.
+  - Added tests for DAT-path helper + missing-DAT guard in
+    `tests/test_tipsy.py`.
+  - Validation gates run:
+    `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
+    `pre-commit run --all-files`, `.venv/bin/sphinx-build -b html docs _build/html -W`.
+- 2026-03-15 (resume-skip contract fix for missing DAT): patched 01a skip logic
+  to require canonical DAT output, preventing stale/missing handoff artifacts
+  from being silently skipped in resume mode.
+  - Root cause: `_should_skip_01a(...)` only required
+    `tipsy_params_tsaXX.xlsx` + `vdyp_curves_smooth-tsaXX.feather`, so
+    `02_input-tsaXX.dat` could be missing while 01a was still skipped.
+  - Fixed in both active legacy surfaces:
+    `00_data-prep.py`,
+    `src/femic/resources/legacy/00_data-prep.py`
+    by adding `tipsy_input_dat_path(tsa=...)` to required skip outputs.
+  - Updated AST wiring expectations in
+    `tests/test_legacy_orchestration_wiring.py`.
+  - Validation gates run:
+    `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
+    `pre-commit run --all-files`, `.venv/bin/sphinx-build -b html docs _build/html -W`.
+- 2026-03-15 (BatchTIPSY column alignment repair): fixed DAT writer mapping so
+  generated `02_input-tsaXX.dat` aligns with operator BatchTIPSY field ranges
+  (including species/regeneration columns) and no longer produces blank-species
+  parsing failures.
+  - Root cause: `src/femic/pipeline/tipsy.py` encoded
+    `Proportion: (31, 31)`, forcing one-character width and destabilizing
+    fixed-width export behavior for real `0.3`/`0.85` values.
+  - Fix applied in `src/femic/pipeline/tipsy.py`:
+    `Proportion` widened to `(31, 39)` while preserving screenshot-locked
+    BatchTIPSY anchors (`Regen_Method` 64, `SPP_1` 97-99, `SI` 108-111, etc.).
+  - Updated regression in `tests/test_tipsy.py` to keep overflow guard
+    behavior by asserting width overflow on `FIZ` (1-char field) instead of the
+    now-wider `Proportion` field.
+  - Regenerated `data/02_input-tsa29.dat` and mirrored
+    `external/femic-tsa29-instance/data/02_input-tsa29.dat` from the corrected
+    writer path.
+  - Validation gates run:
+    `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
+    `pre-commit run --all-files`, `.venv/bin/sphinx-build -b html docs _build/html -W`.

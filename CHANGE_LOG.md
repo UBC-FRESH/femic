@@ -4413,3 +4413,200 @@
 - Published TSA29 instance updates to
   `UBC-FRESH/femic-tsa29-instance` commit `afc5f8b` with evidence + Woodstock
   outputs + ws3 bridge section files.
+
+## 2026-03-14 - Hardened TSA key/index handling to prevent stage-01a key-format failures
+- Added canonical TSA normalizer in `src/femic/pipeline/tsa.py` and upgraded
+  `select_tsa_slice(...)` to:
+  - try normalized candidate keys,
+  - fall back to normalized-index masking when index dtype/tokens drift,
+  - raise clearer diagnostics including available normalized TSA keys.
+- Updated `src/femic/pipeline/stages.py::prepare_tsa_index(...)` to normalize
+  TSA values during index preparation so stale int/mixed-case checkpoint data
+  does not break downstream TSA selection.
+- Added regression coverage in `tests/test_pipeline_helpers.py` for:
+  - mixed-case named TSA lookup (`K3Z` -> `k3z`) via `select_tsa_slice(...)`,
+  - normalized `prepare_tsa_index(...)` output for numeric/string/named TSA
+    values.
+- Ran local validation gates successfully:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest` (`504 passed`)
+  - `pre-commit run --all-files`
+
+## 2026-03-14 - Added fail-fast stale BatchTIPSY output guard for 01b overlays
+- Added `validate_tipsy_output_is_fresh(...)` in
+  `src/femic/pipeline/tipsy.py` to detect when `04_output-tsaXX.out` is older
+  than the current `tipsy_params_tsaXX.xlsx`.
+- Wired the guard into both legacy 01b entry surfaces:
+  - `01b_run-tsa.py`
+  - `src/femic/resources/legacy/01b_run-tsa.py`
+- Default behavior now fails fast with a clear rerun instruction, preventing
+  silent mismatches in VDYP-vs-TIPSY plot generation and post-TIPSY artifacts.
+- Added opt-out env override for controlled debugging:
+  `FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1`.
+- Added regression coverage in `tests/test_tipsy.py`:
+  - stale-output error path
+  - override-allowed path
+- Validation gates run:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest` (`506 passed`)
+  - `pre-commit run --all-files`
+
+## 2026-03-14 - Clarified canonical BatchTIPSY DAT contract in docs and runtime checks
+- Clarified pipeline semantics:
+  - `02_input-tsaXX.dat` is the canonical BatchTIPSY input handoff,
+  - `tipsy_params_tsaXX.xlsx` is a human-readable companion.
+- Added `tipsy_input_dat_path(...)` helper in `src/femic/pipeline/tipsy.py`.
+- Tightened `validate_tipsy_output_is_fresh(...)` behavior:
+  - DAT freshness is now preferred when available,
+  - running 01b with a missing canonical DAT now fails fast with a clear error,
+  - stale-output checks continue to support explicit override via
+    `FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1`.
+- Wired DAT-aware freshness checks into both legacy 01b surfaces:
+  - `01b_run-tsa.py`
+  - `src/femic/resources/legacy/01b_run-tsa.py`
+- Updated user-facing workflow docs:
+  - `docs/guides/stage-01a-vdyp-tipsy-input.rst`
+  - `docs/guides/stage-01b-post-tipsy.rst`
+  - `docs/guides/pipeline-overview.rst`
+- Added tests in `tests/test_tipsy.py` for:
+  - DAT path helper,
+  - stale-output detection with DAT present,
+  - required-DAT failure path.
+- Validation gates run:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest` (`508 passed`)
+  - `pre-commit run --all-files`
+  - `.venv/bin/sphinx-build -b html docs _build/html -W`
+
+## 2026-03-15 - Fixed resume-skip contract gap that allowed missing `02_input-tsaXX.dat`
+- Root cause of missing DAT in resume workflows:
+  `_should_skip_01a(...)` only required
+  `tipsy_params_tsaXX.xlsx` and `vdyp_curves_smooth-tsaXX.feather`, so FEMIC
+  could skip 01a even when canonical BatchTIPSY handoff DAT was absent.
+- Patched both legacy stage-00 surfaces to include DAT in 01a skip gating:
+  - `00_data-prep.py`
+  - `src/femic/resources/legacy/00_data-prep.py`
+  by adding `tipsy_input_dat_path(tsa=...)` to required output paths.
+- Updated orchestration wiring regression expectations:
+  - `tests/test_legacy_orchestration_wiring.py`
+- Validation gates run:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest` (`508 passed`)
+  - `pre-commit run --all-files`
+  - `.venv/bin/sphinx-build -b html docs _build/html -W`
+
+## 2026-03-15 - Repaired BatchTIPSY DAT column alignment for TSA29 handoff
+- Fixed TIPSY DAT export mapping in `src/femic/pipeline/tipsy.py` by widening
+  `Proportion` from `(31, 31)` to `(31, 39)` so real values like `0.3` and
+  `0.85` serialize without column-map corruption.
+- Preserved operator screenshot-locked BatchTIPSY anchors (including
+  `Regen_Method` at column 64, species code fields at `97-99`/`129-131`/etc,
+  and SI at `108-111`) and regenerated `data/02_input-tsa29.dat` from the
+  corrected writer path.
+- Mirrored corrected DAT into TSA29 instance submodule:
+  `external/femic-tsa29-instance/data/02_input-tsa29.dat`.
+- Updated overflow regression in `tests/test_tipsy.py` to assert width-fail on
+  `FIZ` (1-char field), since `Proportion` is now intentionally wider.
+- Validation gates run:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest` (`508 passed`)
+  - `pre-commit run --all-files`
+  - `.venv/bin/sphinx-build -b html docs _build/html -W`
+
+## 2026-03-15 - Added explicit Phase 19 siteprod dependency investigation note
+- Added a planning decision gate to
+  `planning/TSA29_dataset_compile_plan.md` to answer whether siteprod raster SI
+  values are actually required in current default compile paths (strata/AU/VDYP/TIPSY/other).
+- Recorded matching roadmap note under `ROADMAP.md` "Detailed Next Steps Notes":
+  - if siteprod is not required, disable it in default path and make opt-in.
+  - if siteprod is required, harden no-data handling so sparse no-data stands
+    cannot destabilize clean runs.
+
+## 2026-03-15 - Split VDYP parallelization into a separate non-blocking phase
+- Added `Phase 20: VDYP Parallelization and Runtime Observability (Non-Blocking)`
+  to `ROADMAP.md` with scoped tasks (`P20.1`-`P20.6`) covering contract,
+  profiling, optional AU-level parallel path, deterministic merge checks, and
+  runtime heartbeat logging.
+- Added a matching `ROADMAP.md` detailed-notes guardrail that Phase 20 must
+  not block TSA29 Phase 19 completion (`P19.5`), and should ship opt-in first.
+- Extended `planning/TSA29_dataset_compile_plan.md` with a dedicated deferred
+  follow-on section that captures the same non-blocking rule and expected
+  parity/benchmark deliverables for future VDYP parallelization.
+
+## 2026-03-15 - Drafted Phase 20 P20.1 acceptance checklist
+- Added an execution-ready `P20.1` checklist in
+  `planning/TSA29_dataset_compile_plan.md` with concrete contract gates for:
+  - VDYP-only scope boundary,
+  - serial vs parallel parity invariants and float tolerance policy,
+  - deterministic merge/re-run hash stability,
+  - worker failure handling + serial fallback policy,
+  - runtime heartbeat/observability minimums,
+  - benchmark and rollout gates (opt-in first, default only after evidence).
+- Added a corresponding `ROADMAP.md` detailed next-step note marking `P20.1`
+  as drafted and ready for implementation sequencing.
+
+## 2026-03-15 - Queued Phase 19 strata-coverage tuning without interrupting active run
+- Added a Phase 19 in-flight planning note to keep the currently monitored
+  clean TSA29 run unchanged, while queuing a next-run tuning change to raise
+  stratum coverage from the observed ~`0.656` (~10 strata) toward the preferred
+  ~`0.8` target.
+- Recorded this in:
+  - `planning/TSA29_dataset_compile_plan.md` ("Active Run Follow-Up Notes"),
+  - `ROADMAP.md` ("Detailed Next Steps Notes").
+- Explicitly deferred Phase 20 execution to a separate branch after TSA29 is
+  stable enough for graduate-student handoff.
+
+## 2026-03-15 - Switched VDYP explicit feature-id source loads to full-read default
+- Updated `src/femic/pipeline/vdyp_stage.py` so explicit feature-id source mode
+  now defaults to full-layer `read_file(...)` + in-memory `FEATURE_ID` filter
+  (better fit for high-memory hosts), instead of mandatory chunked
+  `FEATURE_ID IN (...)` queries.
+- Kept chunked feature-id reads as an explicit fallback path by setting
+  `source_feature_id_chunk_size` to a positive value.
+- Removed explicit `driver=\"FileGDB\"` kwargs from VDYP source reads to avoid
+  repeated `OpenFileGDB ... does not support open option DRIVER` runtime
+  warnings.
+- Updated/validated affected tests in `tests/test_vdyp_stage.py`:
+  - `.venv/bin/pytest -q tests/test_vdyp_stage.py -k \"load_vdyp_input_tables\"`
+    (`7 passed`)
+  - `.venv/bin/ruff check src/femic/pipeline/vdyp_stage.py tests/test_vdyp_stage.py`
+    (`All checks passed`)
+
+## 2026-03-15 - Fixed stale pre-VDYP resume checkpoint reuse across strata config changes
+- Added signature-aware pre-VDYP checkpoint helpers in
+  `src/femic/pipeline/pre_vdyp.py`:
+  - `build_vdyp_prep_signature(...)`
+  - `save_vdyp_prep_checkpoint(..., signature=...)`
+  - `load_vdyp_prep_checkpoint(..., expected_signature=...)`
+- Patched both 01a surfaces to persist and validate checkpoint signatures:
+  - `01a_run-tsa.py`
+  - `src/femic/resources/legacy/01a_run-tsa.py`
+- Resume behavior now rejects stale pre-VDYP caches when strata-selection
+  parameters change (for example `FEMIC_STRAT_TOP_AREA_COVERAGE`), forcing a
+  rebuild instead of silently loading old 10-strata payloads.
+- Added tests in `tests/test_pre_vdyp.py` for:
+  - signature mismatch rejection,
+  - legacy list-payload backward compatibility.
+
+## 2026-03-15 - Added TSA29 curve-quality follow-up tasks to Phase 19 roadmap
+- Converted reviewer feedback on TSA29 diagnostics into explicit open Phase 19
+  tasks in `ROADMAP.md`:
+  - `P19.12` stratum SI plot readability/zoom/outlier-visibility controls.
+  - `P19.13` VDYP NLLS failure detection + ordered auto-reparameterization
+    fallback sequence (including early-age point censoring and age-20
+    merchantable floor option).
+  - `P19.14` tail-blend heuristic relaxation and selection-policy revision
+    against straight NLLS fits.
+  - `P19.15` TSA29 rerun + curve-stability evidence publication.
+- Added a matching dated entry under `ROADMAP.md` "Detailed Next Steps Notes"
+  to keep implementation sequencing anchored to this feedback.

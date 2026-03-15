@@ -109,6 +109,101 @@ Expected artifacts:
 - Control: add shared invariant checks at fork point and branch-specific
   contract checks.
 
+## Open Investigation: Site Productivity (siteprod) Dependency and Failure Policy
+
+Question to resolve in Phase 19 execution hardening:
+
+- Does FEMIC materially use siteprod raster SI values in any critical compile
+  path, specifically for:
+  - strata construction,
+  - AU assignment,
+  - VDYP curve generation,
+  - TIPSY curve generation,
+  - or another downstream component?
+
+Decision gate:
+
+1. If siteprod is not required for current default outputs:
+- disable siteprod compile/sampling steps in the default code path.
+- move siteprod work behind an explicit optional flag/path used only by
+  workflows that truly require it.
+
+2. If siteprod is required:
+- keep it enabled, but harden logic so sparse/no-data stands do not crash
+  full runs.
+- enforce robust no-data handling (row-level fallback/NA policy) and clear
+  diagnostics instead of runtime-warning storms or hard failures.
+
+## Deferred Follow-On: VDYP Parallelization (Separate Non-Blocking Phase)
+
+This work is intentionally split from TSA29 compile delivery so we do not delay
+student-usable instance publication while pursuing concurrency tuning.
+
+Scope for follow-on phase:
+
+1. Add AU-level (or stratum-bucket) parallel VDYP execution as an opt-in path.
+2. Preserve deterministic outputs versus serial baseline (contract tests
+   required before any default switch).
+3. Improve runtime observability for long runs (chunk/AU progress heartbeat,
+   elapsed timing, and completion summary in logs/manifests).
+4. Publish benchmark results comparing serial vs parallel wall-clock/runtime
+   resource use on at least one large TSA workload.
+
+Non-blocking rule:
+
+- TSA29 Phase 19 completion is not gated on this optimization phase.
+- Parallel mode can ship as experimental behind a feature flag first.
+
+### P20.1 Acceptance Checklist (Contract + Non-Regression Invariants)
+
+Parallelization work can proceed only after this checklist is locked:
+
+1. Scope boundary:
+- Parallel target is VDYP processing only (no behavior changes in strata, AU,
+  TIPSY, Patchworks, or Woodstock stages).
+- Initial granularity target is AU-level task partitioning; finer partitioning
+  is optional and must preserve deterministic merge order.
+
+2. Parity invariants (serial vs parallel):
+- For the same run config/seed/input bundle, serialized outputs must match on:
+  - `vdyp_curves_smooth-tsaXX.feather` row set and key columns,
+  - generated model input bundle tables used downstream,
+  - final export row counts for Patchworks/Woodstock.
+- Numeric tolerance policy:
+  - exact match for IDs/categorical fields,
+  - floating values within configured tolerance (`abs <= 1e-6`) unless a
+    tighter threshold is demonstrated stable.
+
+3. Determinism invariants:
+- Re-running parallel mode twice with identical inputs must produce equivalent
+  hashes for normalized VDYP-stage outputs.
+- Merge/reduction order must be explicit and stable (no nondeterministic
+  concatenate/group-by output ordering).
+
+4. Failure and fallback policy:
+- Any worker failure must be surfaced with AU context and full traceback.
+- Pipeline must support automatic fallback to serial mode (or explicit hard
+  fail) based on one documented switch; no silent partial-success behavior.
+
+5. Observability minimums:
+- Long-running VDYP stages must emit periodic progress heartbeats including:
+  - completed units / total units,
+  - elapsed wall time,
+  - current AU (or chunk identifier),
+  - failure count.
+- Manifest/log summary must include timing breakdown for serial vs parallel.
+
+6. Performance gate:
+- Demonstrate at least one meaningful speedup benchmark on a large TSA case
+  without violating parity invariants.
+- If speedup is negligible or unstable, keep feature opt-in and do not change
+  default mode.
+
+7. Rollout gate:
+- Ship behind a feature flag first.
+- Promote to default only after parity suite, benchmark evidence, and one full
+  clean-slate TSA instance compile pass in production-like conditions.
+
 ## Completion criteria
 
 Phase closes only when all are true:
@@ -117,3 +212,15 @@ Phase closes only when all are true:
 - Full compile + Patchworks branch validation is green in supported runtime.
 - Woodstock export is generated from same compile and validated.
 - ws3 smoke-test run is green with recorded evidence and sane output summary.
+
+## Active Run Follow-Up Notes (Do Not Interrupt Current Run)
+
+- Current monitored clean run reports stratum coverage near `0.656` with
+  approximately 10 strata in the active cutoff.
+- For the next TSA29 run, increase strata inclusion target to aim for coverage
+  near `0.8` (preferred operational target), then compare downstream output
+  sanity and runtime impact.
+- This is queued as a next-run tuning change only; do not mutate parameters or
+  restart the in-flight monitoring run.
+- Phase 20 work remains explicitly deferred until TSA29 is stable enough for
+  graduate-student handoff.
