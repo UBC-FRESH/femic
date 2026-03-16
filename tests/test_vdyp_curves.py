@@ -352,7 +352,7 @@ def test_process_vdyp_out_applies_optional_merchantable_floor() -> None:
     assert any(event.get("stage") == "merchantable_floor" for event in events)
 
 
-def test_process_vdyp_out_applies_upfront_toe_shift() -> None:
+def test_process_vdyp_out_applies_toe_location_shift_without_non_finite() -> None:
     ages = np.arange(30, 121, 10, dtype=float)
     vols = np.array([20, 45, 80, 110, 135, 150, 155, 152, 149, 147], dtype=float)
     vdyp_df = pd.DataFrame({"Age": ages, "Vdwb": vols}).set_index("Age")
@@ -378,17 +378,17 @@ def test_process_vdyp_out_applies_upfront_toe_shift() -> None:
         **common_kwargs,
     )
     assert np.array_equal(np.asarray(x_shift), np.asarray(x_base))
-    shifted_expected = np.interp(
-        np.asarray(x_shift, dtype=float) - 20.0,
-        np.asarray(x_base, dtype=float),
-        np.asarray(y_base, dtype=float),
-        left=0.0,
-        right=float(np.asarray(y_base, dtype=float)[-1]),
+    assert np.all(np.isfinite(np.asarray(y_shift, dtype=float)))
+    # Toe location shift should mainly perturb the left-end ramp and leave far-right
+    # body/tail values effectively unchanged.
+    assert not np.allclose(
+        np.asarray(y_shift)[x_shift <= 60.0], np.asarray(y_base)[x_base <= 60.0]
     )
     assert np.allclose(
-        np.asarray(y_shift)[x_shift > 21.0], shifted_expected[x_shift > 21.0]
+        np.asarray(y_shift)[x_shift >= 120.0],
+        np.asarray(y_base)[x_base >= 120.0],
+        atol=1e-6,
     )
-    assert float(np.asarray(y_shift)[np.where(x_shift == 21.0)[0][0]]) > 0.0
 
 
 def test_process_vdyp_out_tail_blend_skips_when_no_linear_tail_detected() -> None:

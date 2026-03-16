@@ -542,6 +542,19 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-16 (Phase 19 toe-shift correction): replaced clamp-based toe shift
+  with a location-parameter toe transform so the toe stage no longer injects
+  `NaN/Inf` values when `toe_shift_years > 0`.
+  - Root cause was `legacy_fit_func2` evaluation on `x=0` values created by
+    global age clamping (`x -> max(x-shift, 0)`), yielding `0**(-a)` in toe
+    evaluation for early ages.
+  - Updated `fill_curve_left(...)` to apply a toe-only location transform
+    (softplus shift) before toe fit/eval, and removed global body-age clamping
+    from `process_vdyp_out(...)`.
+  - Targeted TSA29 `MS_PLI L` rerun now shows no
+    `candidate_rejected_non_finite` events; layered candidates are valid and
+    fallback selection resolves to `reparameterized_nlls` after fit-gate rescue
+    (tail candidate rejected for overshoot, not non-finite values).
 - 2026-03-15 (Phase 19 follow-up checkpoint): validated the new 5-year-bin
   substrate + layered tail/toe logic with full QA gates and refreshed the
   TSA29 `MS_PLI L` fit diagnostic artifact.

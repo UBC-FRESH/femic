@@ -322,16 +322,37 @@ def fill_curve_left(
     dx: float = 0.0,
     di: int = 20,
     cy: float = 0.1,
+    toe_shift_years: float = 0.0,
 ) -> tuple[np.ndarray, np.ndarray, tuple[int, np.ndarray]]:
     """Fill left tail with a toe-fit curve and return fitted arrays plus toe metadata."""
+
+    def _toe_location_transform(age: np.ndarray, shift_years: float) -> np.ndarray:
+        """Shift toe domain by location parameter without hard clamping ages."""
+        x = np.asarray(age, dtype=float)
+        shift = max(0.0, float(shift_years))
+        if shift <= 0.0:
+            return x
+        # Softplus keeps domain strictly positive and approximates max(x-shift, 0)
+        # without introducing a hard clamp discontinuity at the shift point.
+        z = np.clip(x - shift, -60.0, 60.0)
+        return np.log1p(np.exp(z)) + 1e-6
+
     x_ = np.asarray(x, dtype=float).copy()
     y_ = np.asarray(y, dtype=float).copy()
     i1 = int(np.argmax(y_ > 0.0))
     x_fit = np.concatenate(([1 + dx, 2 + dx, 3 + dx], x_[i1 + skip : i1 + skip + di]))
     y_fit = np.concatenate(([1 * cy, 2 * cy, 3 * cy], y_[i1 + skip : i1 + skip + di]))
-    bounds = toe_fit_func_bounds_func(x_fit)
-    popt, _ = curve_fit_fn(toe_fit_func, x_fit, y_fit, maxfev=maxfev, bounds=bounds)
-    y_[: i1 + skip] = toe_fit_func(x_[: i1 + skip], *popt)
+    x_fit_toe = _toe_location_transform(x_fit, toe_shift_years)
+    bounds = toe_fit_func_bounds_func(x_fit_toe)
+    popt, _ = curve_fit_fn(
+        toe_fit_func,
+        x_fit_toe,
+        y_fit,
+        maxfev=maxfev,
+        bounds=bounds,
+    )
+    x_left_toe = _toe_location_transform(x_[: i1 + skip], toe_shift_years)
+    y_[: i1 + skip] = toe_fit_func(x_left_toe, *popt)
     return x_, y_, (i1 + skip, np.asarray(popt, dtype=float))
 
 
@@ -443,12 +464,6 @@ def process_vdyp_out(
 
     toe_shift = max(0.0, float(toe_shift_years))
 
-    def _model_age(age: np.ndarray | list[float]) -> np.ndarray:
-        age_arr = np.asarray(age, dtype=float)
-        if toe_shift <= 0.0:
-            return age_arr
-        return np.maximum(age_arr - toe_shift, 0.0)
-
     def fallback_curve(
         *,
         stage: str,
@@ -542,7 +557,7 @@ def process_vdyp_out(
     else:
         x_fit_base = x_obs_fit
         y_fit_base = y_obs_fit
-    x_fit = _model_age(x_fit_base)
+    x_fit = np.asarray(x_fit_base, dtype=float)
     if len(x_fit_base) < 4 or len(y_fit_base) < 4:
         return fallback_curve(
             stage="body_input",
@@ -600,8 +615,7 @@ def process_vdyp_out(
         )
 
     x = np.array(range(1, max_age), dtype=float)
-    x_model = _model_age(x)
-    y = body_fit_func(x_model, *popt)
+    y = body_fit_func(x, *popt)
     if not np.any(np.isfinite(y)):
         return fallback_curve(
             stage="body_fit_output",
@@ -650,7 +664,7 @@ def process_vdyp_out(
     for extra in range(0, max_skip_increase + 1, skip_step):
         try:
             x_, y_, (_, popt_toe) = fill_curve_left(
-                x_model.copy(),
+                x.copy(),
                 y.copy(),
                 curve_fit_fn=curve_fit_fn,
                 toe_fit_func=toe_fit_func,
@@ -658,6 +672,7 @@ def process_vdyp_out(
                 skip=skip2 + extra,
                 dx=dx,
                 maxfev=maxfev,
+                toe_shift_years=toe_shift,
             )
             used_skip = skip2 + extra
             if used_skip != skip2:

@@ -4941,3 +4941,17 @@
   (`anchor_age=180`, `tail_span_years=120`); remaining issue is candidate
   non-finite rejection that still leaves `selected_path=primary_nlls` for this
   case.
+
+## 2026-03-16 - Replaced clamp-based toe shift with toe location-parameter transform
+- Updated `src/femic/pipeline/vdyp_curves.py` so `toe_shift_years` is now
+  applied only in toe fitting/evaluation (`fill_curve_left(...)`) via a
+  location transform, rather than through global age clamping in
+  `process_vdyp_out(...)`.
+- This removes the `x=0` toe-domain artifact that previously caused
+  `legacy_fit_func2` (`a*x^b*x^-a`) to emit `NaN/Inf` on early ages under
+  positive toe shift.
+- Added regression update in `tests/test_vdyp_curves.py` to verify toe shift
+  keeps curve values finite while primarily affecting the left-end toe ramp.
+- Reran TSA29 `MS_PLI L` from cached inputs and regenerated
+  `plots/vdyp_fitdiag_tsa29-01-MS_PLI-L.png`; event log now has no
+  `candidate_rejected_non_finite` records for this case.
