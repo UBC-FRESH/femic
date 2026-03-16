@@ -479,7 +479,7 @@ notes.
     (quantile-based window + configurable cap), with explicit outlier handling.
   - [x] P19.12c Record and report clipped/out-of-window point counts in plot
     metadata/log output so visual trimming is auditable.
-- [ ] P19.13 Add VDYP NLLS failure detection and auto-reparameterization fallback
+- [x] P19.13 Add VDYP NLLS failure detection and auto-reparameterization fallback
   sequence
   - [x] P19.13a Add fit-quality gate(s) to detect obviously failed or
     biophysically implausible NLLS curves before acceptance.
@@ -494,7 +494,7 @@ notes.
     5-year binned medians for smoother/less noisy stratum fits.
   - [x] P19.13f Enforce layered left-toe censor application for structural
     early-age discontinuities before downstream fit-path processing.
-- [ ] P19.14 Revisit VDYP tail-blend heuristic and curve-selection policy
+- [x] P19.14 Revisit VDYP tail-blend heuristic and curve-selection policy
   - [x] P19.14a Relax/update tail-linearity definition and threshold parameters
     (config-driven, TSA-overridable).
   - [x] P19.14b Rework tail-blend vs straight-NLLS selection criteria using
@@ -515,7 +515,7 @@ notes.
     comparisons and acceptance sign-off notes.
   - [x] P19.15d Harden curve-path branching so censoring is composable and
     selected-curve gate failures auto-rescue to best available candidates.
-- [ ] P19.16 Fix degenerate best-fit selection behavior for catastrophic
+- [x] P19.16 Fix degenerate best-fit selection behavior for catastrophic
   primary-NLLS cases
   - [x] P19.16a Redefine candidate selection to allow "dominant recovery"
     candidates (for example, censored refit) when baseline primary metrics are
@@ -530,7 +530,7 @@ notes.
   - [x] P19.16d Add targeted regression fixtures/tests for known TSA29 failure
     strata (`MS_PLI H`, `IDF_FDI L`, `MS_PL M`, `IDF_FD H/M`) and assert
     selected-path outcomes plus quality metric improvements.
-  - [ ] P19.16e Re-run cached TSA29 smoothing + fitdiag regeneration and
+  - [x] P19.16e Re-run cached TSA29 smoothing + fitdiag regeneration and
     publish before/after reviewer summary evidence.
 
 ## Phase 20: VDYP Parallelization and Runtime Observability (Non-Blocking)
@@ -4815,3 +4815,14 @@ notes.
   - `ICH_CW H`, `IDF_FDI M`, `SBS_SX M`, `IDF_FD L`, `ICH_CW M`
 - Immediate sequence decision: continue now to ws3 smoke on freshly regenerated
   curve and AU outputs, then revisit these AU ratio outliers in a dedicated pass.
+
+## 2026-03-16 - Phase 19 checklist housekeeping reconciliation
+- Reconciled Phase 19 parent-task status against completed subtask notes and
+  changelog evidence:
+  - marked `P19.13` complete,
+  - marked `P19.14` complete,
+  - marked `P19.16`/`P19.16e` complete.
+- Active near-term Phase 19 open gate remains `P19.5` (full Patchworks-enabled
+  rebuild validation/evidence promotion in validated runtime host).
+- Phase 20 remains intentionally deferred to separate branch per current
+  execution priority.

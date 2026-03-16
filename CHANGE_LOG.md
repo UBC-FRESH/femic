@@ -5007,3 +5007,14 @@
     `Woodstock checks passed and ws3 smoke command exited cleanly.`
   - Evidence/report:
     `evidence/ws3_smoke_report.latest.json`
+
+## 2026-03-16 - Reconciled Phase 19 roadmap parent-task status with completed work
+- Updated `ROADMAP.md` Phase 19 checklist bookkeeping to match completed
+  subtask/evidence history:
+  - marked `P19.13` complete (all `P19.13a-f` complete),
+  - marked `P19.14` complete (all `P19.14a-d` complete),
+  - marked `P19.16` and `P19.16e` complete based on completed cached TSA29
+    smoothing reruns, regenerated fit diagnostics, and reviewer-facing notes.
+- Confirmed current near-term open Phase 19 gate remains `P19.5` (full
+  Patchworks-enabled rebuild validation/evidence promotion in validated host),
+  while Phase 20 remains deferred to a separate branch.
