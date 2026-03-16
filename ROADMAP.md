@@ -532,6 +532,13 @@ notes.
     selected-path outcomes plus quality metric improvements.
   - [x] P19.16e Re-run cached TSA29 smoothing + fitdiag regeneration and
     publish before/after reviewer summary evidence.
+- [ ] P19.17 Execute TSA29 instance Sphinx docs deep-dive and augmentation pass
+  - [ ] P19.17a Audit TSA29 instance Sphinx pages for thin/missing sections
+    (workflow steps, assumptions, artifact references, troubleshooting detail).
+  - [ ] P19.17b Expand weak sections with concrete procedural guidance and
+    explicit cross-links to current TSA29 compile/smoke evidence artifacts.
+  - [ ] P19.17c Rebuild docs with warnings-as-errors and publish a short
+    documentation-gap closure summary in roadmap/changelog notes.
 
 ## Phase 20: VDYP Parallelization and Runtime Observability (Non-Blocking)
 - [ ] P20.1 Define VDYP parallelization contract and non-regression invariants
@@ -4826,3 +4833,5 @@ notes.
   rebuild validation/evidence promotion in validated runtime host).
 - Phase 20 remains intentionally deferred to separate branch per current
   execution priority.
+- Added new open task `P19.17` to perform a full TSA29 instance Sphinx docs
+  deep-dive and augment thin/missing sections before Phase 19 closeout.

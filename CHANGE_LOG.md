@@ -5018,3 +5018,10 @@
 - Confirmed current near-term open Phase 19 gate remains `P19.5` (full
   Patchworks-enabled rebuild validation/evidence promotion in validated host),
   while Phase 20 remains deferred to a separate branch.
+
+## 2026-03-16 - Added Phase 19 TSA29 Sphinx docs deep-dive task (`P19.17`)
+- Added new open Phase 19 task in `ROADMAP.md` to run a full TSA29 instance
+  Sphinx documentation deep-dive and augmentation pass:
+  - `P19.17a` audit thin/missing sections across TSA29 instance docs,
+  - `P19.17b` expand weak sections with concrete guidance + artifact links,
+  - `P19.17c` rerun docs build with warnings-as-errors and publish closure note.
