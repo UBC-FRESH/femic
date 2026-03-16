@@ -5025,3 +5025,12 @@
   - `P19.17a` audit thin/missing sections across TSA29 instance docs,
   - `P19.17b` expand weak sections with concrete guidance + artifact links,
   - `P19.17c` rerun docs build with warnings-as-errors and publish closure note.
+
+## 2026-03-16 - Added Windows 11 Patchworks smoke handoff pack for `P19.5`
+- Added `planning/tsa29_patchworks_win11_smoke_handoff.md` with:
+  - exact TSA29 input artifact paths for Patchworks smoke execution,
+  - current ws3-validated companion counts/reports for reference,
+  - stepwise Windows 11 Patchworks smoke procedure,
+  - pass/fail checklist and required evidence-capture outputs.
+- Recorded matching roadmap note under Detailed Next Steps to keep immediate
+  Phase 19 execution sequence aligned around final `P19.5` closure.

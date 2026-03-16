@@ -4835,3 +4835,6 @@ notes.
   execution priority.
 - Added new open task `P19.17` to perform a full TSA29 instance Sphinx docs
   deep-dive and augment thin/missing sections before Phase 19 closeout.
+- Prepared Windows 11 Patchworks smoke handoff pack for the remaining `P19.5`
+  gate in `planning/tsa29_patchworks_win11_smoke_handoff.md`, including
+  exact input artifacts, pass/fail checklist, and evidence-capture targets.
