@@ -294,7 +294,9 @@ _femic_strat_species_combo_count_raw = os.environ.get(
 _femic_strat_include_tm_species2_raw = os.environ.get(
     "FEMIC_STRAT_INCLUDE_TM_SPECIES2_FOR_SINGLE", "1"
 )
-_femic_strat_top_area_coverage_raw = os.environ.get("FEMIC_STRAT_TOP_AREA_COVERAGE")
+_femic_strat_top_area_coverage_raw = os.environ.get(
+    "FEMIC_STRAT_TOP_AREA_COVERAGE", "0.8"
+)
 _femic_vdyp_sampling_mode_raw = os.environ.get("FEMIC_VDYP_SAMPLING_MODE", "auto")
 _femic_vdyp_two_pass_rebin_raw = os.environ.get("FEMIC_VDYP_TWO_PASS_REBIN", "0")
 _femic_vdyp_min_stands_per_si_bin_raw = os.environ.get(
