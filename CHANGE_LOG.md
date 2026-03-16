@@ -4955,3 +4955,17 @@
 - Reran TSA29 `MS_PLI L` from cached inputs and regenerated
   `plots/vdyp_fitdiag_tsa29-01-MS_PLI-L.png`; event log now has no
   `candidate_rejected_non_finite` records for this case.
+
+## 2026-03-16 - Removed accidental second toe shift on legacy location parameter
+- Updated `src/femic/pipeline/vdyp_curves.py` `fill_curve_left(...)` so
+  `toe_shift_years` is ignored for toe models with an explicit location
+  parameter (`popt.size >= 3`, legacy `fit_func1`) and no longer mutates `c`.
+- Updated splice blend-width logic to use effective shift (zero when location
+  already exists), preventing toe-shift configuration from implicitly widening
+  blend windows in legacy fits.
+- Updated regression in `tests/test_vdyp_curves.py` to assert that enabling
+  `toe_shift_years` does not apply a second shift for legacy location-parameter
+  toe models.
+- Reran TSA29 `MS_PLI L` from cached VDYP outputs and regenerated
+  `plots/vdyp_fitdiag_tsa29-01-MS_PLI-L.png`; telemetry confirms no non-finite
+  candidate rejection and no double-shift plateau behavior.

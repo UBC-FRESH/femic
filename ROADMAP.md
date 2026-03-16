@@ -542,6 +542,18 @@ notes.
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
 ## Detailed Next Steps Notes
+- 2026-03-16 (Phase 19 toe-shift correction follow-up): removed the accidental
+  second right-shift on toe `c` and confirmed no extended left plateau from
+  double-shifting.
+  - `fill_curve_left(...)` now treats `toe_shift_years` as inapplicable when
+    the toe model already has an explicit location parameter (`popt.size >= 3`,
+    as in legacy `fit_func1`); no `c += toe_shift` mutation is performed.
+  - Blend-window sizing now keys off the effective shift (zero when location
+    already exists), so `toe_shift_years` no longer distorts splice behavior in
+    legacy toe fits.
+  - Targeted TSA29 `MS_PLI L` rerun still detects the long tail segment and
+    selects `tail_blend`, with no `candidate_rejected_non_finite` or
+    `non_finite_curve` events.
 - 2026-03-16 (Phase 19 toe-shift correction): replaced clamp-based toe shift
   with a location-parameter toe transform so the toe stage no longer injects
   `NaN/Inf` values when `toe_shift_years > 0`.

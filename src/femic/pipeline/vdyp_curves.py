@@ -325,35 +325,52 @@ def fill_curve_left(
     toe_shift_years: float = 0.0,
 ) -> tuple[np.ndarray, np.ndarray, tuple[int, np.ndarray]]:
     """Fill left tail with a toe-fit curve and return fitted arrays plus toe metadata."""
-
-    def _toe_location_transform(age: np.ndarray, shift_years: float) -> np.ndarray:
-        """Shift toe domain by location parameter without hard clamping ages."""
-        x = np.asarray(age, dtype=float)
-        shift = max(0.0, float(shift_years))
-        if shift <= 0.0:
-            return x
-        # Softplus keeps domain strictly positive and approximates max(x-shift, 0)
-        # without introducing a hard clamp discontinuity at the shift point.
-        z = np.clip(x - shift, -60.0, 60.0)
-        return np.log1p(np.exp(z)) + 1e-6
-
     x_ = np.asarray(x, dtype=float).copy()
     y_ = np.asarray(y, dtype=float).copy()
     i1 = int(np.argmax(y_ > 0.0))
-    x_fit = np.concatenate(([1 + dx, 2 + dx, 3 + dx], x_[i1 + skip : i1 + skip + di]))
-    y_fit = np.concatenate(([1 * cy, 2 * cy, 3 * cy], y_[i1 + skip : i1 + skip + di]))
-    x_fit_toe = _toe_location_transform(x_fit, toe_shift_years)
-    bounds = toe_fit_func_bounds_func(x_fit_toe)
+    join_idx = int(min(max(i1 + skip, 0), max(y_.size - 1, 0)))
+    x_fit = np.concatenate(([1 + dx, 2 + dx, 3 + dx], x_[join_idx : join_idx + di]))
+    y_fit = np.concatenate(([1 * cy, 2 * cy, 3 * cy], y_[join_idx : join_idx + di]))
+    bounds = toe_fit_func_bounds_func(x_fit)
     popt, _ = curve_fit_fn(
         toe_fit_func,
-        x_fit_toe,
+        x_fit,
         y_fit,
         maxfev=maxfev,
         bounds=bounds,
     )
-    x_left_toe = _toe_location_transform(x_[: i1 + skip], toe_shift_years)
-    y_[: i1 + skip] = toe_fit_func(x_left_toe, *popt)
-    return x_, y_, (i1 + skip, np.asarray(popt, dtype=float))
+    x_left = np.asarray(x_[:join_idx], dtype=float)
+    body_left = np.asarray(y_[:join_idx], dtype=float)
+    shift = max(0.0, float(toe_shift_years))
+    popt_eval = np.asarray(popt, dtype=float).copy()
+    has_location_param = popt_eval.size >= 3
+    effective_shift = 0.0 if has_location_param else shift
+    if effective_shift > 0.0:
+        # No explicit location parameter available; shift x with an epsilon floor.
+        y_left = toe_fit_func(np.maximum(x_left - effective_shift, 1e-6), *popt_eval)
+    else:
+        y_left = toe_fit_func(x_left, *popt_eval)
+
+    y_left = np.nan_to_num(
+        np.asarray(y_left, dtype=float), nan=0.0, posinf=0.0, neginf=0.0
+    )
+    if y_left.size:
+        join_value = float(y_[join_idx])
+        y_left = np.clip(y_left, 0.0, max(join_value, 0.0))
+        y_left = np.maximum.accumulate(y_left)
+        # Force a smooth splice by blending toe into body over the final window.
+        blend_width = min(
+            int(y_left.size),
+            max(6, int(np.clip(effective_shift, 6.0, 20.0))),
+        )
+        if blend_width > 1:
+            blend_start = int(y_left.size - blend_width)
+            w = np.linspace(0.0, 1.0, blend_width)
+            y_left[blend_start:] = (1.0 - w) * y_left[blend_start:] + w * body_left[
+                blend_start:
+            ]
+    y_[:join_idx] = y_left
+    return x_, y_, (join_idx, np.asarray(popt, dtype=float))
 
 
 def process_vdyp_out(
