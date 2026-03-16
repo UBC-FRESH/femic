@@ -285,8 +285,8 @@ def _blend_right_tail_linear(
     anchor_age = float(tail_meta["anchor_age"])
     slope_raw = float(tail_meta["tail_slope_raw"])
     slope = float(np.clip(slope_raw, slope_min, slope_max))
-    y_anchor = float(np.interp(anchor_age, x_curve, y_curve))
-    intercept = y_anchor - slope * anchor_age
+    observed_anchor = float(np.interp(anchor_age, x_sorted, y_sorted))
+    intercept = observed_anchor - slope * anchor_age
     y_tail_line = slope * x_curve + intercept
     y_tail_line = np.maximum(y_tail_line, 0.0)
 
@@ -306,6 +306,7 @@ def _blend_right_tail_linear(
         "tail_nrmse": float(tail_meta["tail_nrmse"]),
         "tail_slope_raw": slope_raw,
         "tail_slope": slope,
+        "tail_anchor_observed": observed_anchor,
         "tail_end_age": end_age,
     }
 
@@ -392,6 +393,7 @@ def process_vdyp_out(
     sigma_right_scale: float = 1.0,
     sigma_right_offset: float = 0.0,
     sigma_min: float = 1e-6,
+    body_c_min: float = 20.0,
     dx_c1: float = 0.5,
     dx_c2: float = 10,
     window: int = 3,
@@ -604,11 +606,22 @@ def process_vdyp_out(
                 sigma[right_mask] * float(sigma_right_scale),
             )
     try:
+        bounds = body_fit_func_bounds_func(x_fit)
+        try:
+            lower_raw, upper_raw = bounds
+            lower = list(lower_raw)
+            upper = list(upper_raw)
+            if len(lower) >= 3 and len(upper) >= 3:
+                c_hi = float(upper[2])
+                lower[2] = min(max(float(lower[2]), float(body_c_min)), c_hi)
+                bounds = (lower, upper)
+        except Exception:
+            pass
         popt, _ = curve_fit_fn(
             body_fit_func,
             x_fit,
             y_fit_base,
-            bounds=body_fit_func_bounds_func(x_fit),
+            bounds=bounds,
             maxfev=maxfev,
             sigma=sigma,
         )

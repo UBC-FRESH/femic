@@ -2237,6 +2237,7 @@ def execute_curve_smoothing_runs(
     dominant_recovery_max_metric_ratio = float(
         os.environ.get("FEMIC_DOMINANT_RECOVERY_MAX_METRIC_RATIO", "0.40")
     )
+    body_c_min_default = float(os.environ.get("FEMIC_BODY_C_MIN", "20.0"))
     merchantable_floor_age = 20.0
     merchantable_floor_value = 0.0
     toe_shift_default_years = float(
@@ -2300,9 +2301,16 @@ def execute_curve_smoothing_runs(
     left_toe_structural_max_mape_ratio = float(
         os.environ.get("FEMIC_LEFT_TOE_STRUCTURAL_MAX_MAPE_RATIO", "1.03")
     )
+    auto_skip_head_drop_ratio_threshold = float(
+        os.environ.get("FEMIC_AUTO_SKIP_HEAD_DROP_RATIO_THRESHOLD", "1.8")
+    )
+    auto_skip_head_drop_abs_threshold = float(
+        os.environ.get("FEMIC_AUTO_SKIP_HEAD_DROP_ABS_THRESHOLD", "3.0")
+    )
 
     def _with_curve_defaults(params: dict[str, Any]) -> dict[str, Any]:
         params.setdefault("toe_shift_years", toe_shift_default_years)
+        params.setdefault("body_c_min", body_c_min_default)
         return params
 
     def _with_tail_defaults(params: dict[str, Any]) -> dict[str, Any]:
@@ -2523,10 +2531,32 @@ def execute_curve_smoothing_runs(
         ratio = pred[early] / np.maximum(obs_vol[early], 1e-6)
         bad = ratio > 1.8
         if not np.any(bad):
-            return int(current_skip1)
-        cutoff_age = float(np.max(obs_age[early][bad]))
-        suggested = int(np.count_nonzero(obs_age <= cutoff_age))
-        return int(max(current_skip1, suggested))
+            suggested_ratio = int(current_skip1)
+        else:
+            cutoff_age = float(np.max(obs_age[early][bad]))
+            suggested_ratio = int(np.count_nonzero(obs_age <= cutoff_age))
+
+        # Prefer minimal leading discontinuity censor when early bins show a
+        # clear high shoulder then abrupt drop.
+        suggested_head = int(current_skip1)
+        if obs_vol.size >= 5:
+            head = np.asarray(obs_vol[: min(8, obs_vol.size)], dtype=float)
+            if head.size >= 4:
+                head_diff = np.diff(head)
+                drop_idx = int(np.argmin(head_diff))
+                drop_val = float(head_diff[drop_idx])
+                if drop_val <= -auto_skip_head_drop_abs_threshold:
+                    left_med = float(np.median(head[: drop_idx + 1]))
+                    right_end = min(head.size, drop_idx + 3)
+                    right_med = float(np.median(head[drop_idx + 1 : right_end]))
+                    if (
+                        left_med / max(right_med, 1e-6)
+                        >= auto_skip_head_drop_ratio_threshold
+                    ):
+                        suggested_head = int(drop_idx + 1)
+        if suggested_head > int(current_skip1):
+            return int(suggested_head)
+        return int(max(current_skip1, suggested_ratio))
 
     def _infer_left_toe_censor_skip(
         *,
@@ -2543,6 +2573,8 @@ def execute_curve_smoothing_runs(
             return int(current_skip1)
         suggested = int(current_skip1)
         for idx in early_idx:
+            if idx < current_skip1:
+                continue
             if idx + 2 >= obs_vol.size:
                 break
             next_window = obs_vol[idx + 1 : idx + 4]
@@ -3030,6 +3062,7 @@ def execute_curve_smoothing_runs(
                     y_curve=y,
                 )
                 active_kwargs = dict(kwargs)
+                initial_skip1 = int(kwargs.get("skip1", 0))
                 active_curve: tuple[Sequence[float], Sequence[float]] = (x, y)
                 active_metrics = fit_metrics["current"]
 
@@ -3126,12 +3159,25 @@ def execute_curve_smoothing_runs(
                             baseline_metrics=baseline,
                             candidate_metrics=censor_metrics,
                         )
+                        additional_after_auto = prior_skip1 > int(initial_skip1)
+                        structural_additional_improvement = (
+                            improved_rmse or improved_overshoot
+                        )
+                        structural_accept = bool(
+                            structural_discontinuity_accept
+                            and structural_non_harm
+                            and (
+                                (not additional_after_auto)
+                                or structural_additional_improvement
+                            )
+                        )
                         already_applied = prior_skip1 >= int(
                             left_toe_skip
                         ) and prior_skip1 > int(left_toe_base_skip)
                         accepted = (
                             (improved_overshoot and (improved_rmse or improved_mape))
-                            or structural_discontinuity_accept
+                            or structural_accept
+                            or bool(already_applied)
                             or bool(dominant_recovery.get("selected", False))
                         )
                         append_jsonl_fn(
@@ -3160,15 +3206,23 @@ def execute_curve_smoothing_runs(
                                     "structural_discontinuity_accept": bool(
                                         structural_discontinuity_accept
                                     ),
+                                    "structural_accept": bool(structural_accept),
+                                    "additional_after_auto": bool(
+                                        additional_after_auto
+                                    ),
+                                    "structural_additional_improvement": bool(
+                                        structural_additional_improvement
+                                    ),
                                     "dominant_recovery": dominant_recovery,
                                 },
                             ),
                         )
                         if accepted:
-                            candidate_curves["left_toe_censor"] = censor_curve
-                            active_kwargs["skip1"] = int(censor_skip)
-                            active_curve = censor_curve
-                            active_metrics = censor_metrics
+                            if not already_applied:
+                                candidate_curves["left_toe_censor"] = censor_curve
+                                active_kwargs["skip1"] = int(censor_skip)
+                                active_curve = censor_curve
+                                active_metrics = censor_metrics
 
                 tail_kwargs = _with_tail_defaults(dict(active_kwargs))
                 tail_kwargs["tail_blend_enabled"] = True
@@ -3219,14 +3273,22 @@ def execute_curve_smoothing_runs(
                             tail_kwargs.get("tail_linear_min_span_years", 80.0)
                         ),
                     )
-                    tail_selected = tail_detected is not None or bool(
+                    tail_detect_gate = bool(tail_detected is not None) or bool(
                         tail_kwargs.get("tail_linear_allow_quantile_fallback", False)
                     )
+                    if tail_detect_gate:
+                        tail_selected, tail_decision = _select_tail_blend_candidate(
+                            current_metrics=active_metrics,
+                            tail_metrics=fit_metrics["tail_blend"],
+                        )
+                    else:
+                        tail_selected = False
+                        tail_decision = {"decision": "reject_not_detected"}
                     tail_decision = {
-                        "decision": "selected" if tail_selected else "rejected",
+                        **tail_decision,
                         "policy": "layered_when_detected",
-                        "non_finite_or_invalid": False,
                         "tail_detected": bool(tail_detected is not None),
+                        "tail_detect_gate": bool(tail_detect_gate),
                     }
                     append_jsonl_fn(
                         vdyp_curve_events_path,

@@ -225,7 +225,11 @@ def summarize_curve_selection_rows(
         )
         stage = str(event.get("stage", ""))
         reason = str(event.get("reason", ""))
-        if stage == "fit_quality_gate" and reason == "fit_quality_gate_failed":
+        if stage == "fit_quality_gate" and reason in {
+            "fit_quality_gate_failed",
+            "selected_curve_gate_unresolved",
+            "selected_curve_gate_rescue",
+        }:
             flags["fit_quality_gate_failed"] = True
         if stage == "left_toe_censor" and reason == "left_toe_censor_selected":
             flags["left_toe_censor_selected"] = True
