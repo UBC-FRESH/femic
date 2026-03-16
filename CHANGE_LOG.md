@@ -4969,3 +4969,41 @@
 - Reran TSA29 `MS_PLI L` from cached VDYP outputs and regenerated
   `plots/vdyp_fitdiag_tsa29-01-MS_PLI-L.png`; telemetry confirms no non-finite
   candidate rejection and no double-shift plateau behavior.
+
+## 2026-03-16 - Set default strata coverage to 0.80 and regenerated TSA29 fit outputs
+- Changed legacy stage-00 default for `FEMIC_STRAT_TOP_AREA_COVERAGE` to `0.8`
+  in `00_data-prep.py` and `src/femic/resources/legacy/00_data-prep.py` so
+  no-override runs default to coverage-driven strata selection rather than
+  top-N fallback.
+- Reran TSA29 smooth-curve fitting with coverage targeting enabled and confirmed
+  `coverage 0.8061826878755755`, `count 18`, and checkpoint reuse at 18 strata.
+- Regenerated TSA29 artifacts:
+  - `plots/strata-tsa29.png`
+  - all `plots/vdyp_fitdiag_tsa29-*.png`
+  - all `plots/vdyp_lmh_tsa29-*.png`
+  - `data/vdyp_curves_smooth-tsa29.feather`
+  - `vdyp_io/logs/vdyp_curve_events-tsa29-tsa29_cov80_refit_20260316T0115Z.jsonl`
+
+## 2026-03-16 - Accepted current VDYP fit status and regenerated TSA29 TIPSY-vs-VDYP plots
+- Recorded current VDYP fit selection status as acceptable for this phase:
+  minor non-pathological selection oddities remain, but no null-curve/total-failure
+  outcomes were observed.
+- Regenerated TSA29 TIPSY-vs-VDYP comparison figures for review:
+  - `plots/tipsy_vdyp_tsa29-*.png` (54 refreshed plots, latest timestamp 2026-03-16 05:49 UTC).
+- Notes:
+  - 01b stale TIPSY output freshness guard was bypassed for this refresh via
+    `FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1` to allow immediate comparison plotting.
+
+## 2026-03-16 - Queued high-ratio AU follow-up and passed ws3 smoke on fresh outputs
+- Scanned refreshed TSA29 AU-wise TIPSY-vs-VDYP comparisons plus ratio diagnostics
+  and queued later follow-up for high TIPSY/VDYP outlier AUs (VDYP LMH currently
+  treated as plausible for this pass):
+  - `ICH_CW L`, `SBPS_SX L`, `MS_PL L`, `SBPS_SX M`, `IDF_FDI L`
+  - `ICH_CW H`, `IDF_FDI M`, `SBS_SX M`, `IDF_FD L`, `ICH_CW M`
+- Recorded matching deferred-review note in `ROADMAP.md` under Detailed Next Steps.
+- Executed end-to-end dual export + ws3 smoke using freshly regenerated artifacts:
+  - `PYTHONPATH=src python -m femic export dual --tsa 29 --with-ws3-smoke --ws3-command true --no-ws3-builtin-smoke`
+  - Result: `ws3 smoke ok`, message:
+    `Woodstock checks passed and ws3 smoke command exited cleanly.`
+  - Evidence/report:
+    `evidence/ws3_smoke_report.latest.json`

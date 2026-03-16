@@ -4779,3 +4779,39 @@ notes.
   - Validation gates run:
     `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
     `pre-commit run --all-files`, `.venv/bin/sphinx-build -b html docs _build/html -W`.
+
+## 2026-03-16 - Set default strata coverage to 0.80 and regenerated TSA29 fit outputs
+- Updated legacy stage-00 default so `FEMIC_STRAT_TOP_AREA_COVERAGE` now defaults
+  to `0.8` (instead of `None`/top-N fallback) in:
+  - `00_data-prep.py`
+  - `src/femic/resources/legacy/00_data-prep.py`
+- Executed a full TSA29 smooth-curve rebuild with
+  `FEMIC_STRAT_TOP_AREA_COVERAGE=0.8`, confirming:
+  - `coverage 0.8061826878755755`
+  - `count 18`
+  - `resume: loaded pre-VDYP checkpoint (18 strata)`
+- Regenerated TSA29 diagnostics:
+  - `plots/strata-tsa29.png`
+  - all `plots/vdyp_fitdiag_tsa29-*.png`
+  - all `plots/vdyp_lmh_tsa29-*.png`
+  - refreshed `data/vdyp_curves_smooth-tsa29.feather`
+  - refreshed curve-event log:
+    `vdyp_io/logs/vdyp_curve_events-tsa29-tsa29_cov80_refit_20260316T0115Z.jsonl`
+
+## 2026-03-16 - VDYP fit selection status accepted-for-now; proceed to TIPSY-vs-VDYP review
+- Fit selection behavior after current tail/toe/censoring updates is marked **OK for now**:
+  there is remaining minor selection weirdness in some AUs, but no pathological
+  failures and no null-curve total failures.
+- Per review direction, deferred additional generalized fit-logic tuning and
+  moved forward to regenerated TIPSY-vs-VDYP comparison outputs for visual QA.
+- Regenerated TSA29 comparison plots:
+  - all `plots/tipsy_vdyp_tsa29-*.png` (54 plots, refreshed at 2026-03-16 05:49 UTC)
+
+## 2026-03-16 - Deferred high TIPSY/VDYP ratio AU review; proceed to ws3 smoke
+- Scanned refreshed TSA29 AU-wise TIPSY-vs-VDYP comparisons and ratio diagnostics.
+- With VDYP LMH curves currently plausible, queued high-ratio outliers for later
+  focused review (not immediate blockers):
+  - `ICH_CW L`, `SBPS_SX L`, `MS_PL L`, `SBPS_SX M`, `IDF_FDI L`
+  - `ICH_CW H`, `IDF_FDI M`, `SBS_SX M`, `IDF_FD L`, `ICH_CW M`
+- Immediate sequence decision: continue now to ws3 smoke on freshly regenerated
+  curve and AU outputs, then revisit these AU ratio outliers in a dedicated pass.
