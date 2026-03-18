@@ -5034,3 +5034,14 @@
   - pass/fail checklist and required evidence-capture outputs.
 - Recorded matching roadmap note under Detailed Next Steps to keep immediate
   Phase 19 execution sequence aligned around final `P19.5` closure.
+
+## 2026-03-18 - Generated and published K3Z checkpoint1 feature + shapefile export
+- Built a dedicated K3Z checkpoint1 feature artifact by masking the 2024 VRI
+  source (`data/bc/vri/2024/VEG_COMP_LYR_R1_POLY_2024.gdb`) with K3Z tenure
+  boundary (`data/bc/cfa/k3z/CFA K3Z Tenure.shp`), preserving `tsa_code='k3z'`.
+- Wrote local artifacts:
+  - `data/ria_vri_vclr1p_checkpoint1-tsak3z.feather`
+  - `data/shp/ria_vri_vclr1p_checkpoint1-tsak3z.{shp,shx,dbf,prj,cpg}`
+  - `data/shp/ria_vri_vclr1p_checkpoint1-tsak3z_fieldmap.csv`
+- Published equivalent artifacts into `external/femic-k3z-instance` and pushed
+  instance repo commit `a762076` on `main`.

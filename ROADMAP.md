@@ -4838,3 +4838,15 @@ notes.
 - Prepared Windows 11 Patchworks smoke handoff pack for the remaining `P19.5`
   gate in `planning/tsa29_patchworks_win11_smoke_handoff.md`, including
   exact input artifacts, pass/fail checklist, and evidence-capture targets.
+- 2026-03-18 (K3Z checkpoint1 feature export handoff): generated a dedicated
+  K3Z checkpoint1 feature artifact and exported it to shapefile, then published
+  into the K3Z instance repo for downstream use.
+  - Source extraction: masked 2024 VRI source
+    `data/bc/vri/2024/VEG_COMP_LYR_R1_POLY_2024.gdb` with K3Z tenure boundary
+    `data/bc/cfa/k3z/CFA K3Z Tenure.shp`.
+  - Generated artifacts:
+    `data/ria_vri_vclr1p_checkpoint1-tsak3z.feather`,
+    `data/shp/ria_vri_vclr1p_checkpoint1-tsak3z.{shp,shx,dbf,prj,cpg}`,
+    `data/shp/ria_vri_vclr1p_checkpoint1-tsak3z_fieldmap.csv`.
+  - Published same artifacts in `external/femic-k3z-instance` and pushed
+    submodule commit `a762076` to `origin/main`.
