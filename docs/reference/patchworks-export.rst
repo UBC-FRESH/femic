@@ -23,6 +23,8 @@ The exporter now enforces these required structure elements before writing XML:
 - ``<output>`` node
 - ``<define field="AU" column="AU">``
 - ``<define field="IFM" column="IFM">``
+- ``<define field="ORIGIN" column="ORIGIN">``
+- ``<define field="RETENTION" column="Number(column('RETENTION'))">``
 - ``<define field="treatment">``
 - A ``unity`` curve with at least one point
 - At least one ``<treatment label="CC" ...>``
@@ -115,6 +117,31 @@ Recognized token values for ``min_age``/``max_age`` are:
 ``cmai``, ``cmai_plus_1``, ``peak_yield_age``, ``min_peak_or_200``,
 ``mature_plus_1``.
 
+Retention modulator (optional per fragment)
+--------------------------------------------
+
+The exporter now supports a per-fragment retention scalar:
+
+- ``RETENTION = 0.0``: no retained area
+- ``RETENTION = 1.0``: fully retained fragment area
+- intermediate values: partial retained area
+
+Current export behavior:
+
+- fragments carry a numeric ``RETENTION`` field
+- managed select statements emit:
+  ``<retention factor="RETENTION">``
+- the retained share is reassigned to ``IFM='unmanaged'``
+- ``ORIGIN`` is left unchanged on the retained portion
+
+This keeps retention orthogonal to both:
+
+- ``IFM`` as the managed/unmanaged regime field, and
+- ``ORIGIN`` as the natural/planted composition field
+
+When ``RETENTION = 0.0`` everywhere, retention wiring is present but behavior is
+unchanged relative to the pre-retention model.
+
 Point formatting policy:
 
 - ``x``: integer age strings when integral (default case)
@@ -133,6 +160,8 @@ The exporter validates these required fields before writing:
 - ``F_AGE``: numeric forest age (non-negative)
 - ``AU``: numeric analysis-unit ID (non-negative)
 - ``IFM``: management mode, one of ``managed`` or ``unmanaged``
+- ``ORIGIN``: stand origin state, one of ``natural`` or ``planted``
+- ``RETENTION``: retention factor in ``[0.0, 1.0]``
 - ``TSA``: TSA code label
 - ``geometry``: non-null, non-empty geometry
 

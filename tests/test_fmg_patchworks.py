@@ -99,6 +99,43 @@ def test_build_forestmodel_xml_tree_contains_cc_and_curve_refs() -> None:
     assert "AU eq 985501000" in xml_text
 
 
+def test_build_forestmodel_xml_tree_adds_retention_to_managed_selects() -> None:
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985501000,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_HW+FDC",
+                "si_level": "L",
+                "managed_curve_id": 985521000,
+                "unmanaged_curve_id": 985501000,
+            }
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985501000, "curve_type": "unmanaged"},
+            {"curve_id": 985521000, "curve_type": "managed"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985501000, "x": 1, "y": 10.0},
+            {"curve_id": 985521000, "x": 1, "y": 12.0},
+        ]
+    )
+
+    root = build_forestmodel_xml_tree(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+    )
+    xml_text = et.tostring(root, encoding="unicode")
+    assert 'field="RETENTION" column="Number(column(\'RETENTION\'))"' in xml_text
+    assert '<retention factor="RETENTION">' in xml_text
+    assert '<assign field="IFM" value="\'unmanaged\'"' in xml_text
+
+
 def test_build_patchworks_forestmodel_definition_contains_treatment() -> None:
     au_table = pd.DataFrame(
         [
@@ -889,11 +926,12 @@ def test_export_patchworks_package_writes_xml_and_fragments(
     assert "feature.Yield.unmanaged.Total" in xml_text
     gdf = gpd.read_file(result.fragments_shapefile_path)
     assert set(
-        ["FRAGMENT_I", "BLOCK", "AREA_HA", "F_AGE", "AU", "IFM", "ORIGIN"]
+        ["FRAGMENT_I", "BLOCK", "AREA_HA", "F_AGE", "AU", "IFM", "ORIGIN", "RETENTION"]
     ).issubset(gdf.columns)
     assert int(gdf.loc[0, "AU"]) == 985501000
     assert gdf.loc[0, "IFM"] == "managed"
     assert gdf.loc[0, "ORIGIN"] == "natural"
+    assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.0)
 
 
 def test_export_patchworks_package_decodes_wkb_geometry(
@@ -931,6 +969,7 @@ def test_export_patchworks_package_decodes_wkb_geometry(
     assert gdf.shape[0] == 1
     assert gdf.loc[0, "IFM"] == "unmanaged"
     assert gdf.loc[0, "ORIGIN"] == "natural"
+    assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.0)
     assert gdf.geometry.iloc[0].geom_type == "Polygon"
 
 
@@ -979,8 +1018,10 @@ def test_validate_fragments_geodataframe_rejects_invalid_ifm() -> None:
             "AREA_HA": [1.0],
             "F_AGE": [10],
             "AU": [100],
+            "FRAGMENT_ID": [1],
             "IFM": ["bogus"],
             "ORIGIN": ["natural"],
+            "RETENTION": [0.0],
             "TSA": ["k3z"],
             "geometry": [Polygon([(0, 0), (10, 0), (10, 10), (0, 10), (0, 0)])],
         },
@@ -990,6 +1031,67 @@ def test_validate_fragments_geodataframe_rejects_invalid_ifm() -> None:
 
     with pytest.raises(ValueError, match="IFM contains invalid values"):
         validate_fragments_geodataframe(fragments_gdf=gdf)
+
+
+def test_validate_fragments_geodataframe_rejects_out_of_range_retention() -> None:
+    gdf = gpd.GeoDataFrame(
+        {
+            "FRAGMENT_ID": [1],
+            "BLOCK": [1],
+            "AREA_HA": [1.0],
+            "F_AGE": [10],
+            "AU": [100],
+            "IFM": ["managed"],
+            "ORIGIN": ["natural"],
+            "RETENTION": [1.2],
+            "TSA": ["k3z"],
+            "geometry": [Polygon([(0, 0), (10, 0), (10, 10), (0, 10), (0, 0)])],
+        },
+        geometry="geometry",
+        crs="EPSG:3005",
+    )
+
+    with pytest.raises(ValueError, match="RETENTION must be between 0.0 and 1.0"):
+        validate_fragments_geodataframe(fragments_gdf=gdf)
+
+
+def test_validate_forestmodel_xml_tree_rejects_retention_without_define() -> None:
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985501000,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_HW+FDC",
+                "si_level": "L",
+                "managed_curve_id": 985521000,
+                "unmanaged_curve_id": 985501000,
+            }
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985501000, "curve_type": "unmanaged"},
+            {"curve_id": 985521000, "curve_type": "managed"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985501000, "x": 1, "y": 10.0},
+            {"curve_id": 985521000, "x": 1, "y": 12.0},
+        ]
+    )
+
+    root = build_forestmodel_xml_tree(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+    )
+    retention_define = root.find('./define[@field="RETENTION"]')
+    assert retention_define is not None
+    root.remove(retention_define)
+
+    with pytest.raises(ValueError, match="RETENTION"):
+        validate_forestmodel_xml_tree(root=root)
 
 
 def test_build_fragments_geodataframe_emits_one_row_per_stand_fragment(
@@ -1024,6 +1126,7 @@ def test_build_fragments_geodataframe_emits_one_row_per_stand_fragment(
     assert gdf["BLOCK"].nunique() == 1
     assert gdf.loc[0, "IFM"] == "managed"
     assert gdf.loc[0, "ORIGIN"] == "natural"
+    assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.0)
     assert float(gdf.loc[0, "AREA_HA"]) == pytest.approx(10.0)
 
     validate_fragments_geodataframe(fragments_gdf=gdf)
@@ -1057,6 +1160,7 @@ def test_build_fragments_geodataframe_marks_age_60_as_planted(
     )
 
     assert gdf.loc[0, "ORIGIN"] == "planted"
+    assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.0)
 
 
 def test_build_fragments_geodataframe_interprets_thlb_raw_as_binary_signal(
@@ -1089,6 +1193,7 @@ def test_build_fragments_geodataframe_interprets_thlb_raw_as_binary_signal(
     assert gdf.shape[0] == 1
     assert gdf.loc[0, "IFM"] == "unmanaged"
     assert gdf.loc[0, "ORIGIN"] == "natural"
+    assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.0)
     assert float(gdf.loc[0, "AREA_HA"]) == pytest.approx(10.0)
 
 
