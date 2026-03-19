@@ -25,7 +25,7 @@ def test_collect_rebuild_metrics_extracts_known_risk_dimensions(
         "GROUP,ATTRIBUTE,ACCOUNT,SUM\n"
         "_MANAGED_,x,product.Yield.managed.CW,1\n"
         "_MANAGED_,x,product.Yield.managed.Total,1\n"
-        "_MANAGED_,x,feature.Seral.mature.AU1,1\n",
+        "_MANAGED_,x,feature.Seral.AU1.mature,1\n",
         encoding="utf-8",
     )
     (tracks_dir / "curves.csv").write_text(

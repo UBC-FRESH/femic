@@ -831,19 +831,23 @@ def build_patchworks_forestmodel_definition(
                     horizon_years=horizon_years,
                     managed_total_curve_points=seral_points,
                 )
-                feature_label = f"feature.Seral.{stage}"
-                unmanaged_attrs.append(
-                    AttributeBinding(
-                        label=feature_label,
-                        curve_idref=curve_ref,
-                    )
+                feature_labels = (
+                    f"feature.Seral.{stage}",
+                    f"feature.Seral.{int(au.au_id)}.{stage}",
                 )
-                managed_attrs.append(
-                    AttributeBinding(
-                        label=feature_label,
-                        curve_idref=curve_ref,
+                for feature_label in feature_labels:
+                    unmanaged_attrs.append(
+                        AttributeBinding(
+                            label=feature_label,
+                            curve_idref=curve_ref,
+                        )
                     )
-                )
+                    managed_attrs.append(
+                        AttributeBinding(
+                            label=feature_label,
+                            curve_idref=curve_ref,
+                        )
+                    )
                 product_attrs.append(
                     AttributeBinding(
                         label=(f"product.Seral.area.{stage}.{int(au.au_id)}.CC"),

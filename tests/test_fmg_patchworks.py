@@ -537,6 +537,8 @@ def test_build_forestmodel_xml_tree_adds_seral_curves_and_attributes() -> None:
     assert "feature.Seral.immature" in xml_text
     assert "feature.Seral.mature" in xml_text
     assert "feature.Seral.overmature" in xml_text
+    assert "feature.Seral.985501000.regenerating" in xml_text
+    assert "feature.Seral.985501000.mature" in xml_text
     assert "product.Seral.regenerating" not in xml_text
     assert "product.Seral.area.regenerating.985501000.CC" in xml_text
 
@@ -644,6 +646,7 @@ def test_build_forestmodel_xml_tree_clamps_invalid_seral_stage_bounds() -> None:
     )
     xml_text = et.tostring(root, encoding="unicode")
     assert "feature.Seral.immature" in xml_text
+    assert "feature.Seral.985501000.immature" in xml_text
 
     immature_curve = root.find("./curve[@id='au_985501000_seral_immature']")
     assert immature_curve is not None

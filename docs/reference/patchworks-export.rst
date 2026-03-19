@@ -76,8 +76,17 @@ seral curves and binds these attributes:
 - ``feature.Seral.immature``
 - ``feature.Seral.mature``
 - ``feature.Seral.overmature``
+- ``feature.Seral.<au_id>.regenerating``
+- ``feature.Seral.<au_id>.young``
+- ``feature.Seral.<au_id>.immature``
+- ``feature.Seral.<au_id>.mature``
+- ``feature.Seral.<au_id>.overmature``
 - CC-treatment consequence area accounts by stage/AU:
   ``product.Seral.area.<stage>.<au_id>.CC``
+
+The global ``feature.Seral.<stage>`` labels remain in place for compatibility
+and summary surfaces. The AU-specific ``feature.Seral.<au_id>.<stage>`` labels
+are the per-AU inventory-state surface.
 
 Default boundaries are derived per AU from managed total-yield CMAI and peak
 yield age:
