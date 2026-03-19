@@ -4435,3 +4435,14 @@
   - `checks_passed=true`
 - Advanced `external/femic-tsa29-instance` to submodule commit `0596665` (`Publish green TSA29 rebuild evidence`).
 - Phase 19 checklist is now fully complete.
+
+## 2026-03-19 - Fixed K3Z species-account sum consistency with origin-based state logic
+- Added `ORIGIN` as a Patchworks fragment/XML state field and initialize it from stand age (`planted` for `F_AGE <= 60`, `natural` otherwise).
+- Reworked Patchworks export logic so species composition is selected by `ORIGIN` rather than conflating it with `IFM`.
+- Added `CC` transition assignment `ORIGIN='planted'` so final-felling treatments regenerate into the planted-origin state.
+- Normalized treated/planted species-proportion maps during bundle assembly so exported planted shares sum to 1.0.
+- Regenerated the K3Z instance fragments/ForestModel/tracks and reran Patchworks matrix builder successfully.
+- Verified by test suite and direct XML checks that:
+  - `feature.Yield.managed.<species>` sums to `feature.Yield.managed.Total`,
+  - `product.Yield.managed.<species>` sums to `product.Yield.managed.Total`,
+  - `product.HarvestedVolume.managed.<species>.CC` sums to `product.HarvestedVolume.managed.Total.CC`.

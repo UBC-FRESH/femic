@@ -4340,3 +4340,24 @@ notes.
     publish coherent green TSA29 rebuild evidence (the current
     `evidence/reference_rebuild_report.latest.json` in the submodule is still a
     warning-state local working artifact and has not been promoted).
+
+
+- 2026-03-19 (K3Z species-account sum bugfix closure): corrected the K3Z Patchworks species-mix state model so species-wise managed/account families now sum coherently to their total-account counterparts.
+  - Root cause addressed:
+    managed/planted species composition had been inferred from `IFM`, which conflated management regime with stand origin and allowed mixed natural/planted species-proportion sourcing inside the same managed state.
+  - Implemented fixes:
+    - Added `ORIGIN` as a Patchworks state/fragment field with initialization rule:
+      `planted` for `F_AGE <= 60`, `natural` for `F_AGE > 60`.
+    - Updated `src/femic/fmg/patchworks.py` so Patchworks selects are keyed by
+      `IFM x ORIGIN` and species-proportion curves come from:
+      - natural/VRI mix when `ORIGIN='natural'`,
+      - planted/TIPSY mix when `ORIGIN='planted'`.
+    - Added `CC` treatment transition assignment `ORIGIN='planted'` so end-of-rotation harvests regenerate into the planted-origin state.
+    - Normalized treated/planted species-proportion maps upstream in `src/femic/pipeline/bundle.py` to guarantee finite positive shares sum to 1.0 before export.
+    - Regenerated K3Z fragments/ForestModel/tracks and reran matrix builder successfully (`run_id: k3z_origin_state_bugfix_20260318`).
+  - Validation status:
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `mypy src`
+    - `pytest` (`497 passed`)
+    - direct XML consistency check confirmed `feature.Yield.managed.*`, `product.Yield.managed.*`, and `product.HarvestedVolume.managed.*.CC` species-wise families sum to their respective `Total` curves with `max_diff=0.0`.
