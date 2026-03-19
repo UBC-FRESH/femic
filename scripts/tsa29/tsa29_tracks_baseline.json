@@ -1,23 +1,23 @@
 {
   "tracks_row_counts": {
-    "blocks.csv": -1,
-    "curves.csv": -1,
-    "treatments.csv": -1,
-    "features.csv": -1,
-    "products.csv": -1,
-    "tracknames.csv": -1,
-    "strata.csv": -1,
-    "accounts.csv": -1,
-    "protoaccounts.csv": -1
+    "blocks.csv": 198817,
+    "curves.csv": 4779,
+    "treatments.csv": 30,
+    "features.csv": 546,
+    "products.csv": 519,
+    "tracknames.csv": 30,
+    "strata.csv": 30,
+    "accounts.csv": 360,
+    "protoaccounts.csv": 360
   },
-  "account_count": 0,
+  "account_count": 360,
   "key_accounts_present": {
-    "product.Yield.managed.Total": false,
-    "product.HarvestedVolume.managed.Total.CC": false,
-    "feature.Seral.regenerating": false,
-    "feature.Seral.young": false,
-    "feature.Seral.immature": false,
-    "feature.Seral.mature": false,
-    "feature.Seral.overmature": false
+    "product.Yield.managed.Total": true,
+    "product.HarvestedVolume.managed.Total.CC": true,
+    "feature.Seral.regenerating": true,
+    "feature.Seral.young": true,
+    "feature.Seral.immature": true,
+    "feature.Seral.mature": true,
+    "feature.Seral.overmature": true
   }
 }

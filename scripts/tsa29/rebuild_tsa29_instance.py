@@ -138,6 +138,21 @@ def _collect_artifact_timestamps(*, instance_root: Path, run_id: str) -> dict[st
     return {name: _to_utc_iso(path) for name, path in artifacts.items()}
 
 
+
+
+def _validate_existing_block_artifacts(*, model_root: Path) -> list[str]:
+    failures: list[str] = []
+    required = (
+        model_root / "blocks" / "blocks.shp",
+        model_root / "blocks" / "blocks.dbf",
+        model_root / "blocks" / "topology_blocks_200r.csv",
+        model_root / "tracks" / "blocks.csv",
+    )
+    for path in required:
+        if not path.exists():
+            failures.append(f"missing required existing block artifact: {path}")
+    return failures
+
 def _compare_observed_with_baseline(
     *,
     observed_row_counts: dict[str, int],
@@ -176,6 +191,7 @@ def rebuild_tsa29_instance(
     run_id: str,
     baseline_path: Path | None,
     write_baseline: bool,
+    reuse_existing_blocks: bool,
 ) -> RebuildReport:
     modules = _import_femic_modules(repo_root=repo_root)
     build_forestmodel = modules["build_forestmodel_xml_tree"]
@@ -290,19 +306,24 @@ def rebuild_tsa29_instance(
             "--config",
             "config/patchworks.runtime.windows.yaml",
         ],
-        [
-            sys.executable,
-            "-m",
-            "femic",
-            "patchworks",
-            "build-blocks",
-            "--config",
-            "config/patchworks.runtime.windows.yaml",
-            "--with-topology",
-            "--topology-radius",
-            "200",
-        ],
     ]
+    if reuse_existing_blocks:
+        failures.extend(_validate_existing_block_artifacts(model_root=model_root))
+    else:
+        patchworks_steps.append(
+            [
+                sys.executable,
+                "-m",
+                "femic",
+                "patchworks",
+                "build-blocks",
+                "--config",
+                "config/patchworks.runtime.windows.yaml",
+                "--with-topology",
+                "--topology-radius",
+                "200",
+            ]
+        )
 
     for cmd in pre_steps + patchworks_steps:
         proc = subprocess.run(
@@ -499,6 +520,14 @@ def main() -> int:
         action="store_true",
         help="Write the baseline JSON from current observed tracks summary.",
     )
+    parser.add_argument(
+        "--reuse-existing-blocks",
+        action="store_true",
+        help=(
+            "Reuse existing TSA29 blocks/topology artifacts instead of rerunning "
+            "`femic patchworks build-blocks`."
+        ),
+    )
     args = parser.parse_args()
 
     repo_root = _repo_root_from_script()
@@ -515,6 +544,7 @@ def main() -> int:
         run_id=args.run_id,
         baseline_path=baseline_path,
         write_baseline=bool(args.write_baseline),
+        reuse_existing_blocks=bool(args.reuse_existing_blocks),
     )
 
     logs_dir = instance_root / "vdyp_io" / "logs"

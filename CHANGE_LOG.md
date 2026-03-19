@@ -4420,3 +4420,18 @@
   - `config/seral.tsa29.yaml`.
 - Kept the instance thin by externalizing Patchworks block geometry/topology artifacts; recorded their hashes in `metadata/large_artifacts.sha256` and added `models/tsa29_patchworks_model/blocks/README.md`.
 - Left the TSA29 warning-state evidence JSON uncommitted so Phase 19 remains honest about its remaining blocker: a coherent green rebuild/evidence pass on the validated Windows Patchworks host.
+
+
+## 2026-03-18 - Completed Phase 19: TSA29 green Patchworks rebuild evidence
+- Enhanced `scripts/tsa29/rebuild_tsa29_instance.py` with `--reuse-existing-blocks` so TSA29 rebuild validation can reuse already-validated local block/topology artifacts instead of forcing a repeat topology build.
+- Updated `scripts/tsa29/tsa29_tracks_baseline.json` to the current TSA29 Patchworks structure and reran the helper against the validated Windows/Patchworks host.
+- Green TSA29 rebuild result:
+  - `matrix_returncode=0`
+  - `managed_area_ha=2951604.057603803`
+  - `passive_area_ha=0.0`
+  - `block_join_csv_only=0`
+  - `block_join_shp_only=0`
+  - `baseline_match=true`
+  - `checks_passed=true`
+- Advanced `external/femic-tsa29-instance` to submodule commit `0596665` (`Publish green TSA29 rebuild evidence`).
+- Phase 19 checklist is now fully complete.

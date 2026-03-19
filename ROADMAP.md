@@ -465,7 +465,7 @@ notes.
 - [x] P19.2 Bootstrap and structure femic-tsa29-instance repository
 - [x] P19.3 Assemble ASAP-usable TSA29 snapshot payload
 - [x] P19.4 Add rebuild spec + invariant policy + evidence workflow
-- [ ] P19.5 Execute rebuild validation and publish evidence
+- [x] P19.5 Execute rebuild validation and publish evidence
 - [x] P19.6 Build canonical TSA29 student docs in instance repo
 - [x] P19.7 Link TSA29 repo back into FEMIC as submodule + pointer docs
 - [x] P19.8 Add contract tests and release handoff (v0.1.0)
@@ -493,6 +493,26 @@ notes.
   - [x] P20.3c Record milestone summary in roadmap notes and ``CHANGE_LOG.md``.
 
 ## Detailed Next Steps Notes
+
+
+- 2026-03-18 (Phase 19 complete): executed TSA29 Patchworks rebuild validation on the validated Windows host and published green machine-readable evidence.
+  - Runtime path used:
+    `scripts/tsa29/rebuild_tsa29_instance.py --reuse-existing-blocks`
+    to avoid recomputing the already-validated local TSA29 block/topology artifacts.
+  - Green results:
+    - `matrix_returncode=0`
+    - `managed_area_ha=2951604.057603803`
+    - `passive_area_ha=0.0`
+    - `block_join_csv_only=0`, `block_join_shp_only=0`
+    - `baseline_match=true`
+    - `checks_passed=true`
+  - Published artifacts:
+    - parent repo baseline updated at `scripts/tsa29/tsa29_tracks_baseline.json`
+    - TSA29 submodule advanced to green-evidence commit `0596665`
+    - instance evidence now points at
+      `vdyp_io/logs/tsa29_rebuild_report-tsa29_phase19_green_20260318.json`
+      and
+      `vdyp_io/logs/patchworks_matrixbuilder_manifest-tsa29_phase19_green_20260318.json`.
 - 2026-03-18 (Phase 20 complete): added AU-specific K3Z feature-seral accounts
   using the AU-first label order ``feature.Seral.<au_id>.<stage>`` while
   keeping the existing global ``feature.Seral.<stage>`` surface for
@@ -523,9 +543,10 @@ notes.
   - Intentional thin-instance policy:
     very large artifacts were externalized and referenced via
     `metadata/large_artifacts.sha256` and output manifest docs.
-  - Remaining step for full phase closure (`P19.5`):
-    run full Patchworks-enabled rebuild in a validated runtime host and publish
-    a green evidence update replacing the current warning-state baseline.
+  - Final closure status:
+    full Patchworks-enabled rebuild validation has now been executed on the
+    validated Windows runtime host, with a green evidence update replacing the
+    earlier warning-state snapshot baseline.
 - 2026-03-12 (Phase 18 `P18.3` + `P18.4` complete): published
   `femic==0.1.1a1` to production PyPI via trusted publisher and validated
   post-release smoke install in workflow.
