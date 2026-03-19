@@ -4407,3 +4407,16 @@
 - Validation:
   - `python scripts/tsa29/rebuild_tsa29_instance.py --help`
 - This is a Phase 19 `P19.5` support checkpoint, not full phase closure; the green runtime evidence still depends on executing the helper against the validated TSA29 Windows/Patchworks environment.
+
+
+## 2026-03-18 - Updated TSA29 submodule with thin Patchworks model skeleton
+- Advanced `external/femic-tsa29-instance` to submodule commit `c1a7b1b` (`Add TSA29 Patchworks model skeleton and runtime wiring`).
+- TSA29 instance repo now carries:
+  - `analysis/base.pin`,
+  - Patchworks Beanshell helpers under `models/tsa29_patchworks_model/scripts/`,
+  - tracked `tracks/*.csv` tables,
+  - rebuilt `yield/forestmodel.xml`,
+  - refreshed Windows Patchworks runtime + rebuild-spec wiring,
+  - `config/seral.tsa29.yaml`.
+- Kept the instance thin by externalizing Patchworks block geometry/topology artifacts; recorded their hashes in `metadata/large_artifacts.sha256` and added `models/tsa29_patchworks_model/blocks/README.md`.
+- Left the TSA29 warning-state evidence JSON uncommitted so Phase 19 remains honest about its remaining blocker: a coherent green rebuild/evidence pass on the validated Windows Patchworks host.

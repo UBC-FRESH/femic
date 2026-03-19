@@ -4296,3 +4296,26 @@ notes.
     run the helper against the validated TSA29 Windows runtime once the manual
     topology artifact and instance-side state are ready, then promote the
     resulting green evidence into the TSA29 instance repo.
+
+
+- 2026-03-18 (Phase 19 `P19.5` TSA29 thin Patchworks-model checkpoint): updated the TSA29 instance submodule with a tracked Patchworks model skeleton and thin-instance runtime wiring.
+  - TSA29 submodule commit:
+    `external/femic-tsa29-instance` -> `c1a7b1b`
+    (`Add TSA29 Patchworks model skeleton and runtime wiring`).
+  - Added in the instance repo:
+    - `analysis/base.pin`,
+    - `scripts/dataPrep/prepareBlocks.bsh`,
+    - `scripts/targets/{flowTargets,seralStages}.bsh`,
+    - tracked `tracks/*.csv` tables,
+    - rebuilt `yield/forestmodel.xml`,
+    - Windows Patchworks runtime/rebuild config updates,
+    - `config/seral.tsa29.yaml`.
+  - Thin-instance policy update:
+    Patchworks block geometry/topology artifacts are recorded in
+    `metadata/large_artifacts.sha256` and documented under
+    `models/tsa29_patchworks_model/blocks/README.md`, but remain externalized
+    rather than committed into normal git history.
+  - Remaining blocker for Phase 19 closure:
+    publish coherent green TSA29 rebuild evidence (the current
+    `evidence/reference_rebuild_report.latest.json` in the submodule is still a
+    warning-state local working artifact and has not been promoted).
