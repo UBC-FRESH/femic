@@ -685,10 +685,11 @@ def test_patchworks_build_blocks_emits_paths(
     monkeypatch.setattr(
         cli_main, "load_patchworks_runtime_config", lambda _path: runtime_cfg
     )
-    monkeypatch.setattr(
-        cli_main,
-        "build_patchworks_blocks_dataset",
-        lambda **_kwargs: SimpleNamespace(
+    called: dict[str, object] = {}
+
+    def _fake_build_patchworks_blocks_dataset(**kwargs):
+        called.update(kwargs)
+        return SimpleNamespace(
             model_dir=Path("C:/model"),
             blocks_shapefile_path=Path("C:/model/blocks/blocks.shp"),
             topology_csv_path=Path("C:/model/blocks/topology_blocks_200r.csv"),
@@ -696,7 +697,12 @@ def test_patchworks_build_blocks_emits_paths(
             stand_id_field="FEATURE_ID",
             topology_edge_count=1024,
             topology_radius_m=200.0,
-        ),
+        )
+
+    monkeypatch.setattr(
+        cli_main,
+        "build_patchworks_blocks_dataset",
+        _fake_build_patchworks_blocks_dataset,
     )
 
     cli_main.patchworks_build_blocks(
@@ -704,12 +710,14 @@ def test_patchworks_build_blocks_emits_paths(
         model_dir=None,
         fragments_shp=None,
         topology_radius=200.0,
+        topology_backend="patchworks-raster",
         with_topology=True,
     )
 
+    assert called["topology_backend"] == "patchworks-raster"
     assert any("Patchworks blocks build complete" in msg for msg in messages)
     assert any("blocks_shapefile:" in msg for msg in messages)
-    assert any("topology_csv:" in msg for msg in messages)
+    assert any("backend=patchworks-raster" in msg for msg in messages)
 
 
 def test_patchworks_build_blocks_reports_errors(
@@ -729,6 +737,7 @@ def test_patchworks_build_blocks_reports_errors(
             model_dir=None,
             fragments_shp=None,
             topology_radius=200.0,
+            topology_backend="python",
             with_topology=True,
         )
 

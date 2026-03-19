@@ -4248,3 +4248,28 @@ notes.
     Overlays" so student-facing docs match the actual curve mode.
   - Next step: publish refreshed submodule docs commit and update parent
     submodule pointer so GitHub Pages serves the regenerated overlays.
+
+- 2026-03-16 (Phase 19 `P19.5` topology backend checkpoint): validated a noninteractive Patchworks topology path for FEMIC and ruled out the shapefile-directed vector tool for current instance layouts.
+  - Findings:
+    - `ca.spatial.gis.vector.ProximalTopology` requires a coverage dataset and rejects `blocks.shp` with `... is not a coverage`.
+    - `ca.spatial.gis.raster.ProximalTopology` can be driven noninteractively from BeanShell against `blocks.shp` when instantiated with `GeoRelationalStore.open(input)` and `execute()`.
+  - Implemented FEMIC CLI/runtime support for `femic patchworks build-blocks --topology-backend patchworks-raster`.
+  - Validation status:
+    - K3Z succeeded end-to-end through the new backend (`blocks=218`, `edges=938`).
+    - TSA29 launched headlessly through the same backend, but did not finish within a 30-minute window and had not yet written topology rows before the orphaned Java processes were stopped.
+  - Next execution step for `P19.5`:
+    benchmark/tune the Patchworks raster topology run for TSA29 (cellsize/time budget/monitoring), then decide whether to keep Python topology as the default for large instances or promote `patchworks-raster` conditionally.
+
+- 2026-03-17 (Phase 19 `P19.5` fragments/topology correction): corrected the Patchworks topology backend to operate on fragments and separated fragment identity from downstream block identity in FEMIC exports.
+  - Runtime changes:
+    - `patchworks-raster` topology backend now runs on `fragments.shp` instead of `blocks.shp`.
+    - topology label-field selection now prefers fragment identifiers (`FRAGMENT_ID` / shapefile-safe `FRAGMENT_I`) before falling back to legacy `FEATURE_ID`/`BLOCK` fields.
+  - Fragments schema changes:
+    - FEMIC now emits canonical internal fragment IDs as `FRAGMENT_ID`.
+    - shapefile export writes the same identifier as `FRAGMENT_I` because ESRI Shapefile truncates DBF field names to 10 characters.
+    - `BLOCK` is still emitted for current Matrix Builder compatibility.
+  - Validation status:
+    - unit/integration coverage updated for fragments export + patchworks runtime/CLI wiring.
+    - K3Z `femic patchworks build-blocks --topology-backend patchworks-raster` completed successfully against the existing K3Z fragments shapefile.
+  - Next execution step for `P19.5`:
+    let the user-completed TSA29 Patchworks topology run finish externally, then compare its output against FEMIC expectations before deciding whether to keep `patchworks-raster` as an optional backend only or promote it further.

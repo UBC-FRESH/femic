@@ -4333,6 +4333,43 @@
 - Remaining Phase 19 item:
   `P19.5` (full Patchworks-enabled rebuild validation and evidence promotion to
   green status).
+
+## 2026-03-16 - Patchworks raster topology backend checkpoint for FEMIC CLI
+- Investigated Patchworks proximal-topology automation paths from the Windows runtime host.
+- Confirmed `ca.spatial.gis.vector.ProximalTopology` is not usable with FEMIC's `blocks.shp` workflow because it requires a coverage dataset and rejects shapefile input.
+- Added a new `femic patchworks build-blocks --topology-backend patchworks-raster` path that drives `ca.spatial.gis.raster.ProximalTopology` noninteractively through a temporary BeanShell script.
+- Added regression coverage in:
+  - `tests/test_patchworks_runtime.py`
+  - `tests/test_cli_main.py`
+- Validation:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files` failed in this shell because `git` is not on `PATH`.
+- Runtime verification:
+  - K3Z topology rebuild succeeded through the new backend (`edges=938`).
+  - TSA29 launched headlessly through the same backend but did not complete within 30 minutes, so the orphaned Java processes were stopped and the topology file remained incomplete.
+
+## 2026-03-17 - Fragments/topology contract correction for Patchworks backend
+- Corrected the noninteractive Patchworks raster topology backend so it runs on `fragments.shp` rather than `blocks.shp`.
+- Split fragment identity from block identity in FEMIC Patchworks exports:
+  - internal/export-build dataframe now includes canonical `FRAGMENT_ID`,
+  - shapefile export writes `FRAGMENT_I` because DBF field names are limited to 10 characters,
+  - `BLOCK` remains present for current Matrix Builder compatibility.
+- Updated topology identifier selection to prefer fragment identifiers (`FRAGMENT_ID` / `FRAGMENT_I`) while preserving fallback compatibility with existing K3Z fragments that still expose `FEATURE_ID`.
+- Added/updated regression coverage in:
+  - `tests/test_fmg_patchworks.py`
+  - `tests/test_patchworks_runtime.py`
+  - `tests/test_cli_main.py`
+- Runtime verification:
+  - K3Z `femic patchworks build-blocks --topology-backend patchworks-raster` completed successfully against the current fragments shapefile.
+- Validation:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files` failed in this shell because `git` is not on `PATH`.
 ## 2026-03-18 - Completed Phase 20: K3Z AU-specific feature-seral account surface
 - Added and completed a roadmap phase for K3Z AU-specific feature-seral accounts
   using the AU-first label contract `feature.Seral.<au_id>.<stage>`.

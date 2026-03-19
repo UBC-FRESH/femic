@@ -820,7 +820,9 @@ def test_export_patchworks_package_writes_xml_and_fragments(
     assert '<?xml-model href="https://www.spatial.ca/ForestModel.xsd"?>' in xml_text
     assert "feature.Yield.unmanaged.Total" in xml_text
     gdf = gpd.read_file(result.fragments_shapefile_path)
-    assert set(["BLOCK", "AREA_HA", "F_AGE", "AU", "IFM"]).issubset(gdf.columns)
+    assert set(["FRAGMENT_I", "BLOCK", "AREA_HA", "F_AGE", "AU", "IFM"]).issubset(
+        gdf.columns
+    )
     assert int(gdf.loc[0, "AU"]) == 985501000
     assert gdf.loc[0, "IFM"] == "managed"
 
@@ -947,6 +949,7 @@ def test_build_fragments_geodataframe_emits_one_row_per_stand_fragment(
     )
 
     assert gdf.shape[0] == 1
+    assert gdf["FRAGMENT_ID"].nunique() == 1
     assert gdf["BLOCK"].nunique() == 1
     assert gdf.loc[0, "IFM"] == "managed"
     assert float(gdf.loc[0, "AREA_HA"]) == pytest.approx(10.0)

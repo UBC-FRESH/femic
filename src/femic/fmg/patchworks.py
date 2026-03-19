@@ -41,7 +41,10 @@ DEFAULT_IFM_THRESHOLD: float | None = None
 DEFAULT_IFM_TARGET_MANAGED_SHARE: float | None = None
 DEFAULT_SERAL_STAGE_CONFIG_PATH: Path | None = None
 VALID_IFM_VALUES = {"managed", "unmanaged"}
+FRAGMENT_ID_COLUMN = "FRAGMENT_ID"
+FRAGMENT_ID_SHAPEFILE_COLUMN = "FRAGMENT_I"
 REQUIRED_FRAGMENT_COLUMNS = {
+    FRAGMENT_ID_COLUMN,
     "BLOCK",
     "AREA_HA",
     "F_AGE",
@@ -1177,9 +1180,11 @@ def build_fragments_geodataframe(
     )
 
     age = pd.to_numeric(scoped["PROJ_AGE_1"], errors="coerce").fillna(0).astype(int)
+    fragment_ids = np.arange(1, len(scoped) + 1, dtype=int)
     out = pd.DataFrame(
         {
-            "BLOCK": np.arange(1, len(scoped) + 1, dtype=int),
+            FRAGMENT_ID_COLUMN: fragment_ids,
+            "BLOCK": fragment_ids,
             "AREA_HA": total_area_ha.astype(float),
             "F_AGE": age,
             "AU": scoped["au"].astype(int),
@@ -1196,7 +1201,12 @@ def build_fragments_geodataframe(
 def write_fragments_shapefile(*, fragments_gdf: Any, path: Path) -> None:
     """Write fragments shapefile (directory + sidecar files)."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    fragments_gdf.to_file(path)
+    export_gdf = fragments_gdf.copy()
+    if FRAGMENT_ID_COLUMN in export_gdf.columns:
+        export_gdf = export_gdf.rename(
+            columns={FRAGMENT_ID_COLUMN: FRAGMENT_ID_SHAPEFILE_COLUMN}
+        )
+    export_gdf.to_file(path)
 
 
 def _resolve_ifm_signal_col(
@@ -1267,13 +1277,20 @@ def validate_fragments_geodataframe(*, fragments_gdf: Any) -> None:
         elif fragments_gdf.geometry.is_empty.any():
             issues.append("fragments contains empty geometry")
 
-    for col in ("BLOCK", "F_AGE", "AU"):
+    for col in (FRAGMENT_ID_COLUMN, "BLOCK", "F_AGE", "AU"):
         if col in fragments_gdf.columns:
             numeric = pd.to_numeric(fragments_gdf[col], errors="coerce")
             if numeric.isna().any():
                 issues.append(f"{col} contains non-numeric value(s)")
             elif (numeric < 0).any():
                 issues.append(f"{col} contains negative value(s)")
+
+    if FRAGMENT_ID_COLUMN in fragments_gdf.columns:
+        fragment_values = pd.to_numeric(
+            fragments_gdf[FRAGMENT_ID_COLUMN], errors="coerce"
+        )
+        if fragment_values.duplicated().any():
+            issues.append(f"{FRAGMENT_ID_COLUMN} values must be unique")
 
     if "BLOCK" in fragments_gdf.columns:
         block_values = pd.to_numeric(fragments_gdf["BLOCK"], errors="coerce")

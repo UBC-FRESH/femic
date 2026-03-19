@@ -42,6 +42,7 @@ from femic.patchworks_runtime import (
     DEFAULT_PATCHWORKS_CONFIG_PATH,
     DEFAULT_PATCHWORKS_LOG_DIR,
     PatchworksConfigError,
+    PatchworksTopologyBackend,
     build_patchworks_blocks_dataset,
     format_command_for_display,
     load_patchworks_runtime_config,
@@ -483,6 +484,14 @@ PATCHWORKS_TOPOLOGY_RADIUS_OPTION = typer.Option(
     help=(
         "Neighbour search radius (map units/metres) for generated "
         "topology_blocks_<radius>r.csv."
+    ),
+)
+PATCHWORKS_TOPOLOGY_BACKEND_OPTION = typer.Option(
+    "python",
+    "--topology-backend",
+    help=(
+        "Topology builder backend. Use `python` for FEMIC's native builder or "
+        "`patchworks-raster` for the noninteractive Patchworks raster builder on Windows."
     ),
 )
 VDYP_CURVE_LOG_OPTION = typer.Option(
@@ -2230,6 +2239,7 @@ def patchworks_build_blocks(
     model_dir: Path | None = PATCHWORKS_MODEL_DIR_OPTION,
     fragments_shp: Path | None = PATCHWORKS_FRAGMENTS_SHP_OPTION,
     topology_radius: float = PATCHWORKS_TOPOLOGY_RADIUS_OPTION,
+    topology_backend: PatchworksTopologyBackend = PATCHWORKS_TOPOLOGY_BACKEND_OPTION,
     with_topology: bool = typer.Option(
         True,
         "--with-topology/--no-topology",
@@ -2256,6 +2266,7 @@ def patchworks_build_blocks(
             fragments_shapefile_path=resolved_fragments_shp,
             topology_radius_m=topology_radius,
             build_topology=with_topology,
+            topology_backend=topology_backend,
         )
     except (
         FileNotFoundError,
@@ -2279,7 +2290,7 @@ def patchworks_build_blocks(
         console.print(
             "topology_csv: "
             f"{result.topology_csv_path} edges={result.topology_edge_count} "
-            f"radius={result.topology_radius_m}"
+            f"radius={result.topology_radius_m} backend={topology_backend}"
         )
 
 

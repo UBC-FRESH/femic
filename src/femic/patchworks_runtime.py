@@ -13,7 +13,8 @@ import re
 import shlex
 import shutil
 import subprocess
-from typing import Any
+import tempfile
+from typing import Any, Literal
 
 import yaml
 
@@ -95,6 +96,9 @@ class PatchworksBlocksBuildResult:
 
 class PatchworksConfigError(ValueError):
     """Invalid Patchworks runtime config."""
+
+
+PatchworksTopologyBackend = Literal["python", "patchworks-raster"]
 
 
 def _load_yaml_or_json(path: Path) -> dict[str, Any]:
@@ -498,6 +502,24 @@ def _build_windows_beanshell_command(
     )
 
 
+def _build_windows_raster_topology_command(
+    *,
+    launcher_executable: str,
+    config: PatchworksRuntimeConfig,
+    script_path: Path,
+) -> tuple[str, ...]:
+    lib_dir = f"{config.spshome}\\lib"
+    return (
+        launcher_executable,
+        f"-Djava.library.path={lib_dir}",
+        "-jar",
+        "patchworks.jar",
+        "ca.spatial.util.IProperties",
+        "BeanShell",
+        str(script_path),
+    )
+
+
 def _build_launch_command(
     *,
     launcher_executable: str,
@@ -546,6 +568,92 @@ def _resolve_accounts_backup_path(*, tracks_dir: Path) -> Path:
     raise PatchworksConfigError(
         "Unable to allocate unique accounts backup filename in tracks directory"
     )
+
+
+def _count_topology_edges(path: Path) -> int:
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        line_count = sum(1 for _ in handle)
+    return max(0, line_count - 1)
+
+
+def _run_patchworks_raster_topology(
+    *,
+    config: PatchworksRuntimeConfig,
+    fragments_shapefile_path: Path,
+    topology_id_field: str,
+    topology_csv_path: Path,
+    topology_radius_m: float,
+    cellsize_m: float = 10.0,
+) -> int:
+    if not is_windows_host():
+        raise PatchworksConfigError(
+            "topology_backend=patchworks-raster currently requires a native "
+            "Windows Patchworks install"
+        )
+
+    launcher_executable = shutil_which("java")
+    if launcher_executable is None:
+        raise PatchworksConfigError(
+            "java not found on PATH; required for Patchworks raster topology builder"
+        )
+
+    topology_csv_path.parent.mkdir(parents=True, exist_ok=True)
+    if topology_csv_path.exists():
+        topology_csv_path.unlink()
+
+    script_text = "\n".join(
+        (
+            f'input = "{fragments_shapefile_path.as_posix()}";',
+            f'output = "{topology_csv_path.as_posix()}";',
+            "store = ca.spatial.table.GeoRelationalStore.open(input);",
+            (
+                "pt = new ca.spatial.gis.raster.ProximalTopology("
+                f'input, store, {cellsize_m:g}f, "BLOCK", {topology_radius_m:g}f, output);'
+            ),
+            "pt.execute();",
+            "",
+        )
+    )
+
+    handle, script_name = tempfile.mkstemp(
+        prefix="femic_patchworks_topology_", suffix=".bsh"
+    )
+    script_path = Path(script_name)
+    try:
+        with os.fdopen(handle, "w", encoding="ascii", newline="\n") as script_handle:
+            script_handle.write(script_text)
+        command = _build_windows_raster_topology_command(
+            launcher_executable=launcher_executable,
+            config=config,
+            script_path=script_path,
+        )
+        result = subprocess.run(
+            command,
+            cwd=config.jar_path.parent,
+            env=_build_base_env(config),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    finally:
+        script_path.unlink(missing_ok=True)
+
+    combined_output = "\n".join(
+        part.strip() for part in (result.stdout, result.stderr) if part and part.strip()
+    )
+    if not topology_csv_path.exists():
+        detail = combined_output.strip()
+        raise PatchworksConfigError(
+            "Patchworks raster topology builder exited without writing topology CSV"
+            + (f": {detail}" if detail else "")
+        )
+    if "Successful completion" not in combined_output:
+        detail = combined_output.strip()
+        raise PatchworksConfigError(
+            "Patchworks raster topology builder wrote topology CSV but did not report "
+            "successful completion" + (f": {detail}" if detail else "")
+        )
+    return _count_topology_edges(topology_csv_path)
 
 
 def _promote_protoaccounts_to_accounts(
@@ -934,14 +1042,24 @@ def _resolve_blocks_model_dir(
 
 
 def _select_stand_id_field(columns: list[str]) -> str:
-    # Prefer existing BLOCK IDs when present so blocks.shp keys align with
-    # Matrix Builder outputs keyed on BLOCK.
-    for candidate in ("BLOCK", "FEATURE_ID", "FRAGS_ID"):
+    # Prefer the Matrix Builder block key when present so blocks.shp joins align
+    # with tracks/blocks.csv.
+    for candidate in ("BLOCK", "FEATURE_ID", "FRAGMENT_ID", "FRAGMENT_I", "FRAGS_ID"):
         if candidate in columns:
             return candidate
     raise PatchworksConfigError(
         "No stand identifier field found in fragments. "
-        "Expected BLOCK, FEATURE_ID, or FRAGS_ID."
+        "Expected BLOCK, FEATURE_ID, FRAGMENT_ID, FRAGMENT_I, or FRAGS_ID."
+    )
+
+
+def _select_topology_id_field(columns: list[str]) -> str:
+    for candidate in ("FRAGMENT_ID", "FRAGMENT_I", "FEATURE_ID", "BLOCK", "FRAGS_ID"):
+        if candidate in columns:
+            return candidate
+    raise PatchworksConfigError(
+        "No topology identifier field found in fragments. "
+        "Expected FRAGMENT_ID, FRAGMENT_I, FEATURE_ID, BLOCK, or FRAGS_ID."
     )
 
 
@@ -1012,6 +1130,7 @@ def build_patchworks_blocks_dataset(
     fragments_shapefile_path: Path | None = None,
     topology_radius_m: float = 200.0,
     build_topology: bool = True,
+    topology_backend: PatchworksTopologyBackend = "python",
 ) -> PatchworksBlocksBuildResult:
     """Build 1:1 stand:block `blocks.shp` (and optional topology CSV)."""
 
@@ -1064,16 +1183,34 @@ def build_patchworks_blocks_dataset(
         topology_path = (
             blocks_dir / f"topology_blocks_{rounded_radius}r.csv"
         ).resolve()
-        topology_rows = _build_topology_rows(
-            blocks_gdf=blocks_gdf,
-            topology_radius_m=topology_radius_m,
-        )
-        with topology_path.open("w", newline="", encoding="utf-8") as handle:
-            writer = csv.writer(handle)
-            writer.writerow(("BLOCK1", "BLOCK2", "DISTANCE", "LENGTH"))
-            for block1, block2, distance, length in topology_rows:
-                writer.writerow((block1, block2, f"{distance:.3f}", f"{length:.3f}"))
-        topology_edge_count = len(topology_rows)
+        if topology_backend == "python":
+            topology_rows = _build_topology_rows(
+                blocks_gdf=blocks_gdf,
+                topology_radius_m=topology_radius_m,
+            )
+            with topology_path.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.writer(handle)
+                writer.writerow(("BLOCK1", "BLOCK2", "DISTANCE", "LENGTH"))
+                for block1, block2, distance, length in topology_rows:
+                    writer.writerow(
+                        (block1, block2, f"{distance:.3f}", f"{length:.3f}")
+                    )
+            topology_edge_count = len(topology_rows)
+        elif topology_backend == "patchworks-raster":
+            topology_edge_count = _run_patchworks_raster_topology(
+                config=config,
+                fragments_shapefile_path=resolved_fragments_shp,
+                topology_id_field=_select_topology_id_field(
+                    list(fragments_gdf.columns)
+                ),
+                topology_csv_path=topology_path,
+                topology_radius_m=topology_radius_m,
+            )
+        else:
+            raise PatchworksConfigError(
+                "Unsupported topology backend: "
+                f"{topology_backend}. Expected 'python' or 'patchworks-raster'."
+            )
 
     return PatchworksBlocksBuildResult(
         model_dir=resolved_model_dir,

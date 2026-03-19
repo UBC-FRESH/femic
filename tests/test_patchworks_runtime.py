@@ -614,6 +614,71 @@ def test_infer_patchworks_model_dir_prefers_tracks_yield_pair(tmp_path: Path) ->
     assert infer_patchworks_model_dir(cfg) == expected_root
 
 
+def test_build_patchworks_blocks_dataset_dispatches_patchworks_raster_backend(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    gpd = pytest.importorskip("geopandas")
+    shapely_geometry = pytest.importorskip("shapely.geometry")
+
+    cfg_path = _write_runtime_config(tmp_path)
+    cfg = load_patchworks_runtime_config(cfg_path)
+
+    cfg.fragments_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.fragments_path.touch()
+    cfg.matrix_output_dir.mkdir(parents=True, exist_ok=True)
+    cfg.forestmodel_xml_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.forestmodel_xml_path.touch()
+
+    fragments = gpd.GeoDataFrame(
+        {
+            "FRAGMENT_I": [5001],
+            "FEATURE_ID": [101],
+            "BLOCK": [1],
+            "AREA_HA": [1.0],
+            "F_AGE": [60],
+            "AU": [1],
+            "IFM": ["managed"],
+            "TSA": ["k3z"],
+        },
+        geometry=[shapely_geometry.box(0.0, 0.0, 10.0, 10.0)],
+        crs="EPSG:3005",
+    )
+    fragments_path = cfg.fragments_path.with_suffix(".shp")
+    fragments.to_file(fragments_path, index=False)
+
+    called: dict[str, object] = {}
+
+    def _fake_raster_topology(**kwargs):
+        called.update(kwargs)
+        topology_path = kwargs["topology_csv_path"]
+        topology_path.write_text(
+            "BLOCK1,BLOCK2,DISTANCE,LENGTH\n-9999,1,0.0,10.0\n",
+            encoding="utf-8",
+        )
+        return 1
+
+    monkeypatch.setattr(
+        "femic.patchworks_runtime._run_patchworks_raster_topology",
+        _fake_raster_topology,
+    )
+
+    result = build_patchworks_blocks_dataset(
+        config=cfg,
+        topology_radius_m=200.0,
+        build_topology=True,
+        topology_backend="patchworks-raster",
+    )
+
+    assert result.topology_csv_path is not None
+    assert result.topology_csv_path.exists()
+    assert result.topology_edge_count == 1
+    assert called["config"] == cfg
+    assert called["fragments_shapefile_path"] == fragments_path.resolve()
+    assert called["topology_id_field"] == "FRAGMENT_I"
+    assert called["topology_radius_m"] == 200.0
+
+
 def test_build_patchworks_blocks_dataset_writes_blocks_and_topology(
     tmp_path: Path,
 ) -> None:
