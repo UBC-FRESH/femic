@@ -54,7 +54,7 @@ def test_build_current_snapshot_and_diff_detects_table_and_xml_drift(
     baseline = build_current_snapshot(patchworks_config_path=runtime_config)
     (tracks_dir / "accounts.csv").write_text(
         "GROUP,ATTRIBUTE,ACCOUNT,SUM\n_MANAGED_,x,feature.Area.managed,1\n"
-        "_MANAGED_,x,feature.Seral.mature.AU1,1\n",
+        "_MANAGED_,x,feature.Seral.AU1.mature,1\n",
         encoding="utf-8",
     )
     (yield_dir / "ForestModel.xml").write_text(

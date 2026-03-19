@@ -470,7 +470,42 @@ notes.
 - [x] P19.7 Link TSA29 repo back into FEMIC as submodule + pointer docs
 - [x] P19.8 Add contract tests and release handoff (v0.1.0)
 
+## Phase 20: K3Z AU-Specific Feature Seral Accounts
+- [x] P20.1 Add AU-specific feature-seral export surface to Patchworks XML
+  - [x] P20.1a Emit ``feature.Seral.<au_id>.<stage>`` alongside existing global
+    ``feature.Seral.<stage>`` labels.
+  - [x] P20.1b Bind AU-specific feature-seral labels to the already-generated
+    per-AU seral curves without changing product-side seral outputs.
+- [x] P20.2 Rebuild K3Z tracks/accounts with dual seral-account surfaces
+  - [x] P20.2a Rebuild ``forestmodel.xml`` for K3Z from current model-input
+    bundle + seral config.
+  - [x] P20.2b Rerun matrix builder so ``protoaccounts.csv`` and
+    ``accounts.csv`` contain both global and AU-specific feature-seral
+    accounts.
+  - [x] P20.2c Validate coexistence of
+    ``feature.Seral.<stage>``, ``feature.Seral.<au_id>.<stage>``, and
+    ``product.Seral.area.<stage>.<au_id>.CC``.
+- [x] P20.3 Update diagnostics/tests/docs to use AU-first feature-seral order
+  - [x] P20.3a Update account-surface parsing and regression tests for
+    ``feature.Seral.<au_id>.<stage>``.
+  - [x] P20.3b Update FEMIC and K3Z docs to describe the dual feature-seral
+    surfaces and their intended use.
+  - [x] P20.3c Record milestone summary in roadmap notes and ``CHANGE_LOG.md``.
+
 ## Detailed Next Steps Notes
+- 2026-03-18 (Phase 20 complete): added AU-specific K3Z feature-seral accounts
+  using the AU-first label order ``feature.Seral.<au_id>.<stage>`` while
+  keeping the existing global ``feature.Seral.<stage>`` surface for
+  compatibility.
+  - Results:
+    rebuilt K3Z ``forestmodel.xml`` + matrix tracks; ``tracks/accounts.csv`` now
+    includes both global ``feature.Seral.<stage>`` and AU-specific
+    ``feature.Seral.<au_id>.<stage>`` rows.
+  - Validation:
+    ``ruff format``, ``ruff check``, ``mypy``, ``pytest``, ``pre-commit``, and
+    standalone K3Z docs ``sphinx -W`` passed; parent FEMIC docs ``sphinx -W``
+    remains blocked by pre-existing API autosummary ``toc.not_included``
+    warnings outside Phase 20 scope.
 - 2026-03-14 (Phase 19 kickoff + initial delivery):
   published initial standalone TSA29 instance repository and linked it back into
   FEMIC.

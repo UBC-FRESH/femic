@@ -56,8 +56,8 @@ def summarize_account_surface(
 
         feature_seral_match = _FEATURE_SERAL_PATTERN.match(account)
         if feature_seral_match:
-            stage = feature_seral_match.group(1)
-            au = feature_seral_match.group(2)
+            au = feature_seral_match.group(1)
+            stage = feature_seral_match.group(2)
             item = au_summary.setdefault(
                 au,
                 {

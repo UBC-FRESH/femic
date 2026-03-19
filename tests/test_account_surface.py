@@ -14,8 +14,8 @@ def test_summarize_account_surface_extracts_species_and_au_coverage(
         "_MANAGED_,x,product.Yield.managed.CW,1\n"
         "_MANAGED_,x,product.HarvestedVolume.managed.CW.CC,1\n"
         "_MANAGED_,x,product.Yield.managed.PL,1\n"
-        "_MANAGED_,x,feature.Seral.regenerating.985501000,1\n"
-        "_MANAGED_,x,feature.Seral.mature.985501000,1\n"
+        "_MANAGED_,x,feature.Seral.985501000.regenerating,1\n"
+        "_MANAGED_,x,feature.Seral.985501000.mature,1\n"
         "_MANAGED_,x,product.Seral.area.regenerating.985501000.CC,1\n",
         encoding="utf-8",
     )

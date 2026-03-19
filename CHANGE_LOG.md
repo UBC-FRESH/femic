@@ -4333,3 +4333,27 @@
 - Remaining Phase 19 item:
   `P19.5` (full Patchworks-enabled rebuild validation and evidence promotion to
   green status).
+## 2026-03-18 - Completed Phase 20: K3Z AU-specific feature-seral account surface
+- Added and completed a roadmap phase for K3Z AU-specific feature-seral accounts
+  using the AU-first label contract `feature.Seral.<au_id>.<stage>`.
+- Updated the Patchworks exporter to emit AU-specific feature-seral labels
+  alongside the existing global `feature.Seral.<stage>` compatibility surface.
+- Updated account-surface parsing/tests/docs to treat
+  `feature.Seral.<au_id>.<stage>` as the per-AU inventory-state surface while
+  leaving `product.Seral.area.<stage>.<au_id>.CC` unchanged.
+- Rebuilt K3Z `forestmodel.xml` from the current model-input bundle +
+  `config/seral.k3z.yaml`, then reran Patchworks matrix builder successfully
+  (`returncode=0`).
+- Verified rebuilt K3Z account surfaces now include both:
+  - global `feature.Seral.<stage>` rows, and
+  - AU-specific `feature.Seral.<au_id>.<stage>` rows,
+  while preserving the existing product-side seral surface.
+- Validation:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest` (`494 passed`)
+  - `pre-commit run --all-files`
+  - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/_build/html -W`
+  - `python -m sphinx -b html docs _build/html -W` still fails on pre-existing
+    autosummary `toc.not_included` warnings outside Phase 20 scope.
