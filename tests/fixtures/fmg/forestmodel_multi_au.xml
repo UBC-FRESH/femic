@@ -4,37 +4,69 @@
   <curve id="unity">
     <point x="0" y="1.0" />
   </curve>
-  <curve id="au_1001_managed_yield_FD">
+  <curve id="au_1001_managed_natural_yield_FD">
+    <point x="1" y="2.4" />
+    <point x="10" y="19.5" />
+  </curve>
+  <curve id="au_1001_managed_natural_yield_PL">
+    <point x="1" y="5.6" />
+    <point x="10" y="45.5" />
+  </curve>
+  <curve id="au_1001_managed_planted_yield_FD">
     <point x="1" y="1.6" />
     <point x="10" y="13.0" />
   </curve>
-  <curve id="au_1001_managed_yield_PL">
+  <curve id="au_1001_managed_planted_yield_PL">
     <point x="1" y="6.4" />
     <point x="10" y="52.0" />
   </curve>
-  <curve id="au_1001_unmanaged_yield_FD">
+  <curve id="au_1001_unmanaged_natural_yield_FD">
     <point x="1" y="1.5" />
     <point x="10" y="12.0" />
   </curve>
-  <curve id="au_1001_unmanaged_yield_PL">
+  <curve id="au_1001_unmanaged_natural_yield_PL">
     <point x="1" y="3.5" />
     <point x="10" y="28.0" />
   </curve>
-  <curve id="au_1002_managed_yield_AT">
+  <curve id="au_1001_unmanaged_planted_yield_FD">
+    <point x="1" y="1.0" />
+    <point x="10" y="8.0" />
+  </curve>
+  <curve id="au_1001_unmanaged_planted_yield_PL">
+    <point x="1" y="4.0" />
+    <point x="10" y="32.0" />
+  </curve>
+  <curve id="au_1002_managed_natural_yield_AT">
+    <point x="1" y="4.0" />
+    <point x="10" y="32.4" />
+  </curve>
+  <curve id="au_1002_managed_natural_yield_SW">
+    <point x="1" y="5.0" />
+    <point x="10" y="39.6" />
+  </curve>
+  <curve id="au_1002_managed_planted_yield_AT">
     <point x="1" y="3.6" />
     <point x="10" y="28.8" />
   </curve>
-  <curve id="au_1002_managed_yield_SW">
+  <curve id="au_1002_managed_planted_yield_SW">
     <point x="1" y="5.4" />
     <point x="10" y="43.2" />
   </curve>
-  <curve id="au_1002_unmanaged_yield_AT">
+  <curve id="au_1002_unmanaged_natural_yield_AT">
     <point x="1" y="2.7" />
     <point x="10" y="22.5" />
   </curve>
-  <curve id="au_1002_unmanaged_yield_SW">
+  <curve id="au_1002_unmanaged_natural_yield_SW">
     <point x="1" y="3.3" />
     <point x="10" y="27.5" />
+  </curve>
+  <curve id="au_1002_unmanaged_planted_yield_AT">
+    <point x="1" y="2.4" />
+    <point x="10" y="20.0" />
+  </curve>
+  <curve id="au_1002_unmanaged_planted_yield_SW">
+    <point x="1" y="3.6" />
+    <point x="10" y="30.0" />
   </curve>
   <curve id="managed_prop_AT_21002002">
     <point x="1" y="0.4" />
@@ -78,10 +110,11 @@
   </curve>
   <define field="AU" column="AU" />
   <define field="IFM" column="IFM" />
+  <define field="ORIGIN" column="ORIGIN" />
   <define field="treatment" />
   <input block="BLOCK" area="AREA_HA" age="F_AGE" exclude="BLOCK=0" />
   <output messages="messages.csv" blocks="blocks.csv" features="features.csv" products="products.csv" treatments="treatments.csv" curves="curves.csv" tracknames="tracknames.csv" />
-  <select statement="AU eq 1001 and IFM eq 'unmanaged'">
+  <select statement="AU eq 1001 and IFM eq 'unmanaged' and ORIGIN eq 'natural'">
     <features>
       <attribute label="feature.Area.unmanaged">
         <curve idref="unity" />
@@ -90,13 +123,13 @@
         <curve idref="unmanaged_total_1001" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.FD">
-        <curve idref="au_1001_unmanaged_yield_FD" />
+        <curve idref="au_1001_unmanaged_natural_yield_FD" />
       </attribute>
       <attribute label="feature.SpeciesProp.unmanaged.FD">
         <curve idref="unmanaged_prop_FD_1001002" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.PL">
-        <curve idref="au_1001_unmanaged_yield_PL" />
+        <curve idref="au_1001_unmanaged_natural_yield_PL" />
       </attribute>
       <attribute label="feature.SpeciesProp.unmanaged.PL">
         <curve idref="unmanaged_prop_PL_1001001" />
@@ -104,7 +137,7 @@
     </features>
     <track />
   </select>
-  <select statement="AU eq 1001 and IFM eq 'managed'">
+  <select statement="AU eq 1001 and IFM eq 'managed' and ORIGIN eq 'natural'">
     <features>
       <attribute label="feature.Area.managed">
         <curve idref="unity" />
@@ -113,16 +146,16 @@
         <curve idref="managed_total_21001" />
       </attribute>
       <attribute label="feature.Yield.managed.FD">
-        <curve idref="au_1001_managed_yield_FD" />
+        <curve idref="au_1001_managed_natural_yield_FD" />
       </attribute>
       <attribute label="feature.SpeciesProp.managed.FD">
-        <curve idref="managed_prop_FD_21001002" />
+        <curve idref="unmanaged_prop_FD_1001002" />
       </attribute>
       <attribute label="feature.Yield.managed.PL">
-        <curve idref="au_1001_managed_yield_PL" />
+        <curve idref="au_1001_managed_natural_yield_PL" />
       </attribute>
       <attribute label="feature.SpeciesProp.managed.PL">
-        <curve idref="managed_prop_PL_21001001" />
+        <curve idref="unmanaged_prop_PL_1001001" />
       </attribute>
     </features>
     <track>
@@ -130,10 +163,13 @@
         <produce>
           <assign field="treatment" value="'CC'" />
         </produce>
+        <transition>
+          <assign field="ORIGIN" value="'planted'" />
+        </transition>
       </treatment>
     </track>
   </select>
-  <select statement="AU eq 1001 and IFM eq 'managed' and treatment eq 'CC'">
+  <select statement="AU eq 1001 and IFM eq 'managed' and ORIGIN eq 'natural' and treatment eq 'CC'">
     <products>
       <attribute label="product.Treated.managed.CC">
         <curve idref="unity" />
@@ -145,26 +181,112 @@
         <curve idref="managed_total_21001" />
       </attribute>
       <attribute label="product.Yield.managed.FD">
-        <curve idref="au_1001_managed_yield_FD" />
+        <curve idref="au_1001_managed_natural_yield_FD" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.FD.CC">
-        <curve idref="au_1001_managed_yield_FD" />
+        <curve idref="au_1001_managed_natural_yield_FD" />
+      </attribute>
+      <attribute label="product.SpeciesProp.managed.FD">
+        <curve idref="unmanaged_prop_FD_1001002" />
+      </attribute>
+      <attribute label="product.Yield.managed.PL">
+        <curve idref="au_1001_managed_natural_yield_PL" />
+      </attribute>
+      <attribute label="product.HarvestedVolume.managed.PL.CC">
+        <curve idref="au_1001_managed_natural_yield_PL" />
+      </attribute>
+      <attribute label="product.SpeciesProp.managed.PL">
+        <curve idref="unmanaged_prop_PL_1001001" />
+      </attribute>
+    </products>
+  </select>
+  <select statement="AU eq 1001 and IFM eq 'unmanaged' and ORIGIN eq 'planted'">
+    <features>
+      <attribute label="feature.Area.unmanaged">
+        <curve idref="unity" />
+      </attribute>
+      <attribute label="feature.Yield.unmanaged.Total">
+        <curve idref="unmanaged_total_1001" />
+      </attribute>
+      <attribute label="feature.Yield.unmanaged.FD">
+        <curve idref="au_1001_unmanaged_planted_yield_FD" />
+      </attribute>
+      <attribute label="feature.SpeciesProp.unmanaged.FD">
+        <curve idref="managed_prop_FD_21001002" />
+      </attribute>
+      <attribute label="feature.Yield.unmanaged.PL">
+        <curve idref="au_1001_unmanaged_planted_yield_PL" />
+      </attribute>
+      <attribute label="feature.SpeciesProp.unmanaged.PL">
+        <curve idref="managed_prop_PL_21001001" />
+      </attribute>
+    </features>
+    <track />
+  </select>
+  <select statement="AU eq 1001 and IFM eq 'managed' and ORIGIN eq 'planted'">
+    <features>
+      <attribute label="feature.Area.managed">
+        <curve idref="unity" />
+      </attribute>
+      <attribute label="feature.Yield.managed.Total">
+        <curve idref="managed_total_21001" />
+      </attribute>
+      <attribute label="feature.Yield.managed.FD">
+        <curve idref="au_1001_managed_planted_yield_FD" />
+      </attribute>
+      <attribute label="feature.SpeciesProp.managed.FD">
+        <curve idref="managed_prop_FD_21001002" />
+      </attribute>
+      <attribute label="feature.Yield.managed.PL">
+        <curve idref="au_1001_managed_planted_yield_PL" />
+      </attribute>
+      <attribute label="feature.SpeciesProp.managed.PL">
+        <curve idref="managed_prop_PL_21001001" />
+      </attribute>
+    </features>
+    <track>
+      <treatment label="CC" minage="0" maxage="1000">
+        <produce>
+          <assign field="treatment" value="'CC'" />
+        </produce>
+        <transition>
+          <assign field="ORIGIN" value="'planted'" />
+        </transition>
+      </treatment>
+    </track>
+  </select>
+  <select statement="AU eq 1001 and IFM eq 'managed' and ORIGIN eq 'planted' and treatment eq 'CC'">
+    <products>
+      <attribute label="product.Treated.managed.CC">
+        <curve idref="unity" />
+      </attribute>
+      <attribute label="product.Yield.managed.Total">
+        <curve idref="managed_total_21001" />
+      </attribute>
+      <attribute label="product.HarvestedVolume.managed.Total.CC">
+        <curve idref="managed_total_21001" />
+      </attribute>
+      <attribute label="product.Yield.managed.FD">
+        <curve idref="au_1001_managed_planted_yield_FD" />
+      </attribute>
+      <attribute label="product.HarvestedVolume.managed.FD.CC">
+        <curve idref="au_1001_managed_planted_yield_FD" />
       </attribute>
       <attribute label="product.SpeciesProp.managed.FD">
         <curve idref="managed_prop_FD_21001002" />
       </attribute>
       <attribute label="product.Yield.managed.PL">
-        <curve idref="au_1001_managed_yield_PL" />
+        <curve idref="au_1001_managed_planted_yield_PL" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.PL.CC">
-        <curve idref="au_1001_managed_yield_PL" />
+        <curve idref="au_1001_managed_planted_yield_PL" />
       </attribute>
       <attribute label="product.SpeciesProp.managed.PL">
         <curve idref="managed_prop_PL_21001001" />
       </attribute>
     </products>
   </select>
-  <select statement="AU eq 1002 and IFM eq 'unmanaged'">
+  <select statement="AU eq 1002 and IFM eq 'unmanaged' and ORIGIN eq 'natural'">
     <features>
       <attribute label="feature.Area.unmanaged">
         <curve idref="unity" />
@@ -173,13 +295,13 @@
         <curve idref="unmanaged_total_1002" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.AT">
-        <curve idref="au_1002_unmanaged_yield_AT" />
+        <curve idref="au_1002_unmanaged_natural_yield_AT" />
       </attribute>
       <attribute label="feature.SpeciesProp.unmanaged.AT">
         <curve idref="unmanaged_prop_AT_1002002" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.SW">
-        <curve idref="au_1002_unmanaged_yield_SW" />
+        <curve idref="au_1002_unmanaged_natural_yield_SW" />
       </attribute>
       <attribute label="feature.SpeciesProp.unmanaged.SW">
         <curve idref="unmanaged_prop_SW_1002001" />
@@ -187,7 +309,7 @@
     </features>
     <track />
   </select>
-  <select statement="AU eq 1002 and IFM eq 'managed'">
+  <select statement="AU eq 1002 and IFM eq 'managed' and ORIGIN eq 'natural'">
     <features>
       <attribute label="feature.Area.managed">
         <curve idref="unity" />
@@ -196,16 +318,16 @@
         <curve idref="managed_total_21002" />
       </attribute>
       <attribute label="feature.Yield.managed.AT">
-        <curve idref="au_1002_managed_yield_AT" />
+        <curve idref="au_1002_managed_natural_yield_AT" />
       </attribute>
       <attribute label="feature.SpeciesProp.managed.AT">
-        <curve idref="managed_prop_AT_21002002" />
+        <curve idref="unmanaged_prop_AT_1002002" />
       </attribute>
       <attribute label="feature.Yield.managed.SW">
-        <curve idref="au_1002_managed_yield_SW" />
+        <curve idref="au_1002_managed_natural_yield_SW" />
       </attribute>
       <attribute label="feature.SpeciesProp.managed.SW">
-        <curve idref="managed_prop_SW_21002001" />
+        <curve idref="unmanaged_prop_SW_1002001" />
       </attribute>
     </features>
     <track>
@@ -213,10 +335,13 @@
         <produce>
           <assign field="treatment" value="'CC'" />
         </produce>
+        <transition>
+          <assign field="ORIGIN" value="'planted'" />
+        </transition>
       </treatment>
     </track>
   </select>
-  <select statement="AU eq 1002 and IFM eq 'managed' and treatment eq 'CC'">
+  <select statement="AU eq 1002 and IFM eq 'managed' and ORIGIN eq 'natural' and treatment eq 'CC'">
     <products>
       <attribute label="product.Treated.managed.CC">
         <curve idref="unity" />
@@ -228,19 +353,105 @@
         <curve idref="managed_total_21002" />
       </attribute>
       <attribute label="product.Yield.managed.AT">
-        <curve idref="au_1002_managed_yield_AT" />
+        <curve idref="au_1002_managed_natural_yield_AT" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.AT.CC">
-        <curve idref="au_1002_managed_yield_AT" />
+        <curve idref="au_1002_managed_natural_yield_AT" />
+      </attribute>
+      <attribute label="product.SpeciesProp.managed.AT">
+        <curve idref="unmanaged_prop_AT_1002002" />
+      </attribute>
+      <attribute label="product.Yield.managed.SW">
+        <curve idref="au_1002_managed_natural_yield_SW" />
+      </attribute>
+      <attribute label="product.HarvestedVolume.managed.SW.CC">
+        <curve idref="au_1002_managed_natural_yield_SW" />
+      </attribute>
+      <attribute label="product.SpeciesProp.managed.SW">
+        <curve idref="unmanaged_prop_SW_1002001" />
+      </attribute>
+    </products>
+  </select>
+  <select statement="AU eq 1002 and IFM eq 'unmanaged' and ORIGIN eq 'planted'">
+    <features>
+      <attribute label="feature.Area.unmanaged">
+        <curve idref="unity" />
+      </attribute>
+      <attribute label="feature.Yield.unmanaged.Total">
+        <curve idref="unmanaged_total_1002" />
+      </attribute>
+      <attribute label="feature.Yield.unmanaged.AT">
+        <curve idref="au_1002_unmanaged_planted_yield_AT" />
+      </attribute>
+      <attribute label="feature.SpeciesProp.unmanaged.AT">
+        <curve idref="managed_prop_AT_21002002" />
+      </attribute>
+      <attribute label="feature.Yield.unmanaged.SW">
+        <curve idref="au_1002_unmanaged_planted_yield_SW" />
+      </attribute>
+      <attribute label="feature.SpeciesProp.unmanaged.SW">
+        <curve idref="managed_prop_SW_21002001" />
+      </attribute>
+    </features>
+    <track />
+  </select>
+  <select statement="AU eq 1002 and IFM eq 'managed' and ORIGIN eq 'planted'">
+    <features>
+      <attribute label="feature.Area.managed">
+        <curve idref="unity" />
+      </attribute>
+      <attribute label="feature.Yield.managed.Total">
+        <curve idref="managed_total_21002" />
+      </attribute>
+      <attribute label="feature.Yield.managed.AT">
+        <curve idref="au_1002_managed_planted_yield_AT" />
+      </attribute>
+      <attribute label="feature.SpeciesProp.managed.AT">
+        <curve idref="managed_prop_AT_21002002" />
+      </attribute>
+      <attribute label="feature.Yield.managed.SW">
+        <curve idref="au_1002_managed_planted_yield_SW" />
+      </attribute>
+      <attribute label="feature.SpeciesProp.managed.SW">
+        <curve idref="managed_prop_SW_21002001" />
+      </attribute>
+    </features>
+    <track>
+      <treatment label="CC" minage="0" maxage="1000">
+        <produce>
+          <assign field="treatment" value="'CC'" />
+        </produce>
+        <transition>
+          <assign field="ORIGIN" value="'planted'" />
+        </transition>
+      </treatment>
+    </track>
+  </select>
+  <select statement="AU eq 1002 and IFM eq 'managed' and ORIGIN eq 'planted' and treatment eq 'CC'">
+    <products>
+      <attribute label="product.Treated.managed.CC">
+        <curve idref="unity" />
+      </attribute>
+      <attribute label="product.Yield.managed.Total">
+        <curve idref="managed_total_21002" />
+      </attribute>
+      <attribute label="product.HarvestedVolume.managed.Total.CC">
+        <curve idref="managed_total_21002" />
+      </attribute>
+      <attribute label="product.Yield.managed.AT">
+        <curve idref="au_1002_managed_planted_yield_AT" />
+      </attribute>
+      <attribute label="product.HarvestedVolume.managed.AT.CC">
+        <curve idref="au_1002_managed_planted_yield_AT" />
       </attribute>
       <attribute label="product.SpeciesProp.managed.AT">
         <curve idref="managed_prop_AT_21002002" />
       </attribute>
       <attribute label="product.Yield.managed.SW">
-        <curve idref="au_1002_managed_yield_SW" />
+        <curve idref="au_1002_managed_planted_yield_SW" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.SW.CC">
-        <curve idref="au_1002_managed_yield_SW" />
+        <curve idref="au_1002_managed_planted_yield_SW" />
       </attribute>
       <attribute label="product.SpeciesProp.managed.SW">
         <curve idref="managed_prop_SW_21002001" />

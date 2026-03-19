@@ -41,6 +41,9 @@ DEFAULT_IFM_THRESHOLD: float | None = None
 DEFAULT_IFM_TARGET_MANAGED_SHARE: float | None = None
 DEFAULT_SERAL_STAGE_CONFIG_PATH: Path | None = None
 VALID_IFM_VALUES = {"managed", "unmanaged"}
+VALID_ORIGIN_VALUES = {"natural", "planted"}
+ORIGIN_ORDER = ("natural", "planted")
+ORIGIN_PLANTED_MAX_AGE = 60
 FRAGMENT_ID_COLUMN = "FRAGMENT_ID"
 FRAGMENT_ID_SHAPEFILE_COLUMN = "FRAGMENT_I"
 REQUIRED_FRAGMENT_COLUMNS = {
@@ -50,6 +53,7 @@ REQUIRED_FRAGMENT_COLUMNS = {
     "F_AGE",
     "AU",
     "IFM",
+    "ORIGIN",
     "TSA",
     "geometry",
 }
@@ -181,23 +185,61 @@ def _curve_value_at_x(*, points: tuple[CurvePoint, ...], x: float) -> float:
     )
 
 
-def _build_species_yield_curve(
+def _build_species_yield_curves(
     *,
     total_points: tuple[CurvePoint, ...],
-    species_prop_points: tuple[CurvePoint, ...],
-) -> tuple[CurvePoint, ...]:
-    """Derive species yield curve as total-volume curve times species-proportion curve."""
-    if not total_points or not species_prop_points:
-        return ()
-    derived: list[CurvePoint] = []
+    species_prop_points_by_species: dict[str, tuple[CurvePoint, ...]],
+) -> dict[str, tuple[CurvePoint, ...]]:
+    """Derive species-yield curves from total yield and species proportion curves.
+
+    Preserve authored species-proportion magnitudes as-is. When the available
+    species proportions already sum to ~1.0 at a knot age, adjust the largest
+    positive species by the rounding residual so the species-wise yields add back
+    to the rounded total exactly.
+    """
+    if not total_points or not species_prop_points_by_species:
+        return {}
+    species_list = sorted(species_prop_points_by_species)
+    derived: dict[str, list[CurvePoint]] = {species: [] for species in species_list}
     for point in total_points:
         total_y = max(0.0, float(point.y))
-        species_prop = _curve_value_at_x(points=species_prop_points, x=float(point.x))
-        if not math.isfinite(species_prop):
-            species_prop = 0.0
-        species_prop = max(0.0, min(1.0, species_prop))
-        derived.append(CurvePoint(x=float(point.x), y=total_y * species_prop))
-    return tuple(derived)
+        rounded_total_y = round(total_y, 1)
+        raw_props: dict[str, float] = {}
+        for species, species_prop_points in species_prop_points_by_species.items():
+            species_prop = _curve_value_at_x(
+                points=species_prop_points,
+                x=float(point.x),
+            )
+            if not math.isfinite(species_prop):
+                species_prop = 0.0
+            raw_props[species] = max(0.0, min(1.0, species_prop))
+        prop_total = sum(raw_props.values())
+        raw_yields = {species: total_y * raw_props[species] for species in species_list}
+        rounded_yields = {
+            species: round(raw_yields[species], 1) for species in species_list
+        }
+        if math.isclose(prop_total, 1.0, rel_tol=0.0, abs_tol=1e-6):
+            positive_species = [
+                species for species in species_list if raw_yields[species] > 1e-12
+            ]
+            residual_species = (
+                max(positive_species, key=lambda species: raw_yields[species])
+                if positive_species
+                else species_list[-1]
+            )
+            residual_value = rounded_total_y - sum(
+                rounded_yields[species]
+                for species in species_list
+                if species != residual_species
+            )
+            if residual_value < 0.0:
+                residual_value = 0.0
+            rounded_yields[residual_species] = residual_value
+
+        x_val = float(point.x)
+        for species in species_list:
+            derived[species].append(CurvePoint(x=x_val, y=rounded_yields[species]))
+    return {species: tuple(points) for species, points in derived.items()}
 
 
 def _curve_has_positive_signal(
@@ -211,11 +253,31 @@ def _curve_has_positive_signal(
     return False
 
 
-def _derived_species_yield_curve_ref(*, au_id: int, managed: bool, species: str) -> str:
+def _species_curve_points_by_species(
+    *,
+    context: BundleModelContext,
+    species_curve_map: dict[str, int],
+) -> dict[str, tuple[CurvePoint, ...]]:
+    """Return positive-signal species-proportion curves keyed by species."""
+    out: dict[str, tuple[CurvePoint, ...]] = {}
+    for species, species_curve_id in sorted(species_curve_map.items()):
+        curve_def = context.curves_by_id.get(species_curve_id)
+        if curve_def is None:
+            continue
+        if not _curve_has_positive_signal(curve_def.points):
+            continue
+        out[species] = curve_def.points
+    return out
+
+
+def _derived_species_yield_curve_ref(
+    *, au_id: int, managed: bool, origin: str, species: str
+) -> str:
     """Build readable deterministic XML id for derived species-yield curves."""
     mode = "managed" if managed else "unmanaged"
+    origin_token = _sanitize_id_component(origin)
     species_token = _sanitize_id_component(species)
-    return f"au_{int(au_id)}_{mode}_yield_{species_token}"
+    return f"au_{int(au_id)}_{mode}_{origin_token}_yield_{species_token}"
 
 
 def _seral_curve_ref(*, au_id: int, stage: str) -> str:
@@ -635,7 +697,9 @@ def build_patchworks_forestmodel_definition(
         curves[curve_ref] = curve_def.points
 
     selects: list[SelectDefinition] = []
-    transition_assignments: tuple[TreatmentAssignment, ...] = ()
+    transition_assignments_list: list[TreatmentAssignment] = [
+        TreatmentAssignment(field="ORIGIN", value=_as_quoted_literal("planted"))
+    ]
     if cc_transition_ifm is not None and str(cc_transition_ifm).strip():
         transition_ifm = str(cc_transition_ifm).strip().lower()
         if transition_ifm not in VALID_IFM_VALUES:
@@ -645,12 +709,13 @@ def build_patchworks_forestmodel_definition(
             )
         # IFM='managed' inside a managed-only select is redundant/noisy.
         if transition_ifm != "managed":
-            transition_assignments = (
+            transition_assignments_list.append(
                 TreatmentAssignment(
                     field="IFM",
                     value=_as_quoted_literal(transition_ifm),
-                ),
+                )
             )
+    transition_assignments = tuple(transition_assignments_list)
     for au in context.analysis_units:
         unmanaged_curve_id = au.unmanaged_curve_id
         managed_curve_id = au.managed_curve_id
@@ -667,148 +732,160 @@ def build_patchworks_forestmodel_definition(
             effective_cc_min_age = int(cmai_age - 20)
         effective_cc_min_age = max(0, min(effective_cc_min_age, int(cc_max_age)))
 
-        unmanaged_attrs = [
-            AttributeBinding(label="feature.Area.unmanaged", curve_idref="unity"),
-            AttributeBinding(
-                label="feature.Yield.unmanaged.Total",
-                curve_idref=unmanaged_curve_ref,
-            ),
-        ]
-        for species, species_curve_id in sorted(
-            context.unmanaged_species_curve_ids.get(unmanaged_curve_id, {}).items()
-        ):
-            species_curve_ref = source_curve_ref_by_id.get(species_curve_id)
-            species_prop_curve = context.curves_by_id.get(species_curve_id)
-            unmanaged_species_has_signal = (
-                species_prop_curve is not None
-                and _curve_has_positive_signal(species_prop_curve.points)
+        natural_species_curve_map = context.unmanaged_species_curve_ids.get(
+            unmanaged_curve_id, {}
+        )
+        planted_species_curve_map = context.managed_species_curve_ids.get(
+            managed_curve_id, {}
+        )
+        planted_species_has_any_signal = any(
+            (curve_def is not None and _curve_has_positive_signal(curve_def.points))
+            for curve_def in (
+                context.curves_by_id.get(curve_id)
+                for curve_id in planted_species_curve_map.values()
             )
-            if unmanaged_total_curve is not None:
-                if species_prop_curve is not None:
+        )
+        if not planted_species_has_any_signal:
+            planted_species_curve_map = natural_species_curve_map
+
+        species_curve_maps_by_origin = {
+            "natural": natural_species_curve_map,
+            "planted": planted_species_curve_map,
+        }
+        unmanaged_attrs_by_origin: dict[str, list[AttributeBinding]] = {}
+        managed_attrs_by_origin: dict[str, list[AttributeBinding]] = {}
+        product_attrs_by_origin: dict[str, list[AttributeBinding]] = {}
+
+        for origin in ORIGIN_ORDER:
+            species_curve_map = species_curve_maps_by_origin[origin]
+            species_prop_points_by_species = _species_curve_points_by_species(
+                context=context,
+                species_curve_map=species_curve_map,
+            )
+            unmanaged_derived_yield_curves = (
+                _build_species_yield_curves(
+                    total_points=unmanaged_total_curve.points,
+                    species_prop_points_by_species=species_prop_points_by_species,
+                )
+                if unmanaged_total_curve is not None
+                else {}
+            )
+            managed_derived_yield_curves = (
+                _build_species_yield_curves(
+                    total_points=managed_total_curve.points,
+                    species_prop_points_by_species=species_prop_points_by_species,
+                )
+                if managed_total_curve is not None
+                else {}
+            )
+
+            unmanaged_attrs = [
+                AttributeBinding(label="feature.Area.unmanaged", curve_idref="unity"),
+                AttributeBinding(
+                    label="feature.Yield.unmanaged.Total",
+                    curve_idref=unmanaged_curve_ref,
+                ),
+            ]
+            managed_attrs = [
+                AttributeBinding(label="feature.Area.managed", curve_idref="unity"),
+                AttributeBinding(
+                    label="feature.Yield.managed.Total",
+                    curve_idref=managed_curve_ref,
+                ),
+            ]
+            product_attrs = [
+                AttributeBinding(
+                    label="product.Treated.managed.CC", curve_idref="unity"
+                ),
+                AttributeBinding(
+                    label="product.Yield.managed.Total",
+                    curve_idref=managed_curve_ref,
+                ),
+                AttributeBinding(
+                    label="product.HarvestedVolume.managed.Total.CC",
+                    curve_idref=managed_curve_ref,
+                ),
+            ]
+
+            for species, species_curve_id in sorted(species_curve_map.items()):
+                species_prop_curve = context.curves_by_id.get(species_curve_id)
+                species_curve_ref = source_curve_ref_by_id.get(species_curve_id)
+                species_has_signal = (
+                    species_prop_curve is not None
+                    and _curve_has_positive_signal(species_prop_curve.points)
+                )
+
+                unmanaged_curve_points = unmanaged_derived_yield_curves.get(species, ())
+                if unmanaged_curve_points and _curve_has_positive_signal(
+                    unmanaged_curve_points
+                ):
                     derived_curve_ref = _derived_species_yield_curve_ref(
                         au_id=au.au_id,
                         managed=False,
+                        origin=origin,
                         species=species,
                     )
-                    derived_curve_points = _build_species_yield_curve(
-                        total_points=unmanaged_total_curve.points,
-                        species_prop_points=species_prop_curve.points,
-                    )
-                    if derived_curve_points and _curve_has_positive_signal(
-                        derived_curve_points
-                    ):
-                        curves[derived_curve_ref] = derived_curve_points
-                        unmanaged_attrs.append(
-                            AttributeBinding(
-                                label=f"feature.Yield.unmanaged.{species}",
-                                curve_idref=derived_curve_ref,
-                            )
+                    curves[derived_curve_ref] = unmanaged_curve_points
+                    unmanaged_attrs.append(
+                        AttributeBinding(
+                            label=f"feature.Yield.unmanaged.{species}",
+                            curve_idref=derived_curve_ref,
                         )
-            if species_curve_ref is not None and unmanaged_species_has_signal:
-                unmanaged_attrs.append(
-                    AttributeBinding(
-                        label=f"feature.SpeciesProp.unmanaged.{species}",
-                        curve_idref=species_curve_ref,
                     )
-                )
-        managed_attrs = [
-            AttributeBinding(label="feature.Area.managed", curve_idref="unity"),
-            AttributeBinding(
-                label="feature.Yield.managed.Total",
-                curve_idref=managed_curve_ref,
-            ),
-        ]
-        product_attrs = [
-            AttributeBinding(label="product.Treated.managed.CC", curve_idref="unity"),
-            AttributeBinding(
-                label="product.Yield.managed.Total",
-                curve_idref=managed_curve_ref,
-            ),
-            AttributeBinding(
-                label="product.HarvestedVolume.managed.Total.CC",
-                curve_idref=managed_curve_ref,
-            ),
-        ]
-        managed_species_curve_map = context.managed_species_curve_ids.get(
-            managed_curve_id, {}
-        )
-        unmanaged_species_curve_map = context.unmanaged_species_curve_ids.get(
-            unmanaged_curve_id, {}
-        )
-        if not managed_species_curve_map and managed_curve_id == unmanaged_curve_id:
-            # When managed curves fall back to unmanaged curves (no TIPSY AU curve),
-            # reuse unmanaged species-proportion curves so species-wise managed
-            # accounts remain available instead of collapsing to Total-only.
-            managed_species_curve_map = unmanaged_species_curve_map
-        for species, species_curve_id in sorted(managed_species_curve_map.items()):
-            effective_curve_id = species_curve_id
-            species_prop_curve = context.curves_by_id.get(effective_curve_id)
-            if species_prop_curve is not None and not _curve_has_positive_signal(
-                species_prop_curve.points
-            ):
-                fallback_curve_id = unmanaged_species_curve_map.get(species)
-                fallback_curve = (
-                    context.curves_by_id.get(fallback_curve_id)
-                    if fallback_curve_id is not None
-                    else None
-                )
-                if fallback_curve is not None and _curve_has_positive_signal(
-                    fallback_curve.points
+
+                managed_curve_points = managed_derived_yield_curves.get(species, ())
+                if managed_curve_points and _curve_has_positive_signal(
+                    managed_curve_points
                 ):
-                    assert fallback_curve_id is not None
-                    effective_curve_id = int(fallback_curve_id)
-                    species_prop_curve = fallback_curve
-            species_curve_ref = source_curve_ref_by_id.get(effective_curve_id)
-            managed_species_has_signal = (
-                species_prop_curve is not None
-                and _curve_has_positive_signal(species_prop_curve.points)
-            )
-            if managed_total_curve is not None:
-                if species_prop_curve is not None:
                     derived_curve_ref = _derived_species_yield_curve_ref(
                         au_id=au.au_id,
                         managed=True,
+                        origin=origin,
                         species=species,
                     )
-                    derived_curve_points = _build_species_yield_curve(
-                        total_points=managed_total_curve.points,
-                        species_prop_points=species_prop_curve.points,
-                    )
-                    if derived_curve_points and _curve_has_positive_signal(
-                        derived_curve_points
-                    ):
-                        curves[derived_curve_ref] = derived_curve_points
-                        managed_attrs.append(
-                            AttributeBinding(
-                                label=f"feature.Yield.managed.{species}",
-                                curve_idref=derived_curve_ref,
-                            )
+                    curves[derived_curve_ref] = managed_curve_points
+                    managed_attrs.append(
+                        AttributeBinding(
+                            label=f"feature.Yield.managed.{species}",
+                            curve_idref=derived_curve_ref,
                         )
-                        product_attrs.append(
-                            AttributeBinding(
-                                label=f"product.Yield.managed.{species}",
-                                curve_idref=derived_curve_ref,
-                            )
-                        )
-                        product_attrs.append(
-                            AttributeBinding(
-                                label=(f"product.HarvestedVolume.managed.{species}.CC"),
-                                curve_idref=derived_curve_ref,
-                            )
-                        )
-            if species_curve_ref is not None and managed_species_has_signal:
-                managed_attrs.append(
-                    AttributeBinding(
-                        label=f"feature.SpeciesProp.managed.{species}",
-                        curve_idref=species_curve_ref,
                     )
-                )
-                product_attrs.append(
-                    AttributeBinding(
-                        label=f"product.SpeciesProp.managed.{species}",
-                        curve_idref=species_curve_ref,
+                    product_attrs.append(
+                        AttributeBinding(
+                            label=f"product.Yield.managed.{species}",
+                            curve_idref=derived_curve_ref,
+                        )
                     )
-                )
+                    product_attrs.append(
+                        AttributeBinding(
+                            label=f"product.HarvestedVolume.managed.{species}.CC",
+                            curve_idref=derived_curve_ref,
+                        )
+                    )
+
+                if species_curve_ref is not None and species_has_signal:
+                    unmanaged_attrs.append(
+                        AttributeBinding(
+                            label=f"feature.SpeciesProp.unmanaged.{species}",
+                            curve_idref=species_curve_ref,
+                        )
+                    )
+                    managed_attrs.append(
+                        AttributeBinding(
+                            label=f"feature.SpeciesProp.managed.{species}",
+                            curve_idref=species_curve_ref,
+                        )
+                    )
+                    product_attrs.append(
+                        AttributeBinding(
+                            label=f"product.SpeciesProp.managed.{species}",
+                            curve_idref=species_curve_ref,
+                        )
+                    )
+
+            unmanaged_attrs_by_origin[origin] = unmanaged_attrs
+            managed_attrs_by_origin[origin] = managed_attrs
+            product_attrs_by_origin[origin] = product_attrs
 
         if seral_stage_config is not None:
             seral_source_curve = managed_total_curve
@@ -838,60 +915,67 @@ def build_patchworks_forestmodel_definition(
                     f"feature.Seral.{stage}",
                     f"feature.Seral.{int(au.au_id)}.{stage}",
                 )
-                for feature_label in feature_labels:
-                    unmanaged_attrs.append(
+                for origin in ORIGIN_ORDER:
+                    for feature_label in feature_labels:
+                        unmanaged_attrs_by_origin[origin].append(
+                            AttributeBinding(
+                                label=feature_label,
+                                curve_idref=curve_ref,
+                            )
+                        )
+                        managed_attrs_by_origin[origin].append(
+                            AttributeBinding(
+                                label=feature_label,
+                                curve_idref=curve_ref,
+                            )
+                        )
+                    product_attrs_by_origin[origin].append(
                         AttributeBinding(
-                            label=feature_label,
+                            label=(f"product.Seral.area.{stage}.{int(au.au_id)}.CC"),
                             curve_idref=curve_ref,
                         )
                     )
-                    managed_attrs.append(
-                        AttributeBinding(
-                            label=feature_label,
-                            curve_idref=curve_ref,
-                        )
-                    )
-                product_attrs.append(
-                    AttributeBinding(
-                        label=(f"product.Seral.area.{stage}.{int(au.au_id)}.CC"),
-                        curve_idref=curve_ref,
-                    )
-                )
 
-        selects.append(
-            SelectDefinition(
-                statement=f"{_au_eq_statement(au.au_id)} and IFM eq 'unmanaged'",
-                feature_attributes=tuple(unmanaged_attrs),
-                include_track=True,
-            )
-        )
-        selects.append(
-            SelectDefinition(
-                statement=f"{_au_eq_statement(au.au_id)} and IFM eq 'managed'",
-                feature_attributes=tuple(managed_attrs),
-                include_track=True,
-                track_treatment=TreatmentDefinition(
-                    label="CC",
-                    min_age=effective_cc_min_age,
-                    max_age=int(cc_max_age),
-                    assignments=(
-                        TreatmentAssignment(
-                            field="treatment",
-                            value=_as_quoted_literal("CC"),
-                        ),
+        for origin in ORIGIN_ORDER:
+            origin_literal = _as_quoted_literal(origin)
+            selects.append(
+                SelectDefinition(
+                    statement=(
+                        f"{_au_eq_statement(au.au_id)} and IFM eq 'unmanaged' and ORIGIN eq {origin_literal}"
                     ),
-                    transition_assignments=transition_assignments,
-                ),
+                    feature_attributes=tuple(unmanaged_attrs_by_origin[origin]),
+                    include_track=True,
+                )
             )
-        )
-        selects.append(
-            SelectDefinition(
-                statement=(
-                    f"{_au_eq_statement(au.au_id)} and IFM eq 'managed' and treatment eq 'CC'"
-                ),
-                product_attributes=tuple(product_attrs),
+            selects.append(
+                SelectDefinition(
+                    statement=(
+                        f"{_au_eq_statement(au.au_id)} and IFM eq 'managed' and ORIGIN eq {origin_literal}"
+                    ),
+                    feature_attributes=tuple(managed_attrs_by_origin[origin]),
+                    include_track=True,
+                    track_treatment=TreatmentDefinition(
+                        label="CC",
+                        min_age=effective_cc_min_age,
+                        max_age=int(cc_max_age),
+                        assignments=(
+                            TreatmentAssignment(
+                                field="treatment",
+                                value=_as_quoted_literal("CC"),
+                            ),
+                        ),
+                        transition_assignments=transition_assignments,
+                    ),
+                )
             )
-        )
+            selects.append(
+                SelectDefinition(
+                    statement=(
+                        f"{_au_eq_statement(au.au_id)} and IFM eq 'managed' and ORIGIN eq {origin_literal} and treatment eq 'CC'"
+                    ),
+                    product_attributes=tuple(product_attrs_by_origin[origin]),
+                )
+            )
 
     return ForestModelDefinition(
         description="FEMIC Patchworks export",
@@ -916,6 +1000,7 @@ def build_patchworks_forestmodel_definition(
         define_fields=(
             DefineFieldDefinition(field="AU", column="AU"),
             DefineFieldDefinition(field="IFM", column="IFM"),
+            DefineFieldDefinition(field="ORIGIN", column="ORIGIN"),
             DefineFieldDefinition(field="treatment"),
         ),
         curves=curves,
@@ -1087,7 +1172,7 @@ def validate_forestmodel_xml_tree(*, root: et.Element) -> None:
         for field in [node.get("field")]
         if field is not None
     }
-    for field in ("AU", "IFM", "treatment"):
+    for field in ("AU", "IFM", "ORIGIN", "treatment"):
         if field not in define_fields:
             issues.append(f"missing define field: {field}")
 
@@ -1189,6 +1274,7 @@ def build_fragments_geodataframe(
             "F_AGE": age,
             "AU": scoped["au"].astype(int),
             "IFM": np.where(managed_flag, "managed", "unmanaged"),
+            "ORIGIN": np.where(age <= ORIGIN_PLANTED_MAX_AGE, "planted", "natural"),
             "TSA": scoped["tsa_code"].astype(str),
             "geometry": scoped["geometry"],
         }
@@ -1311,6 +1397,14 @@ def validate_fragments_geodataframe(*, fragments_gdf: Any) -> None:
         invalid_ifm = sorted(ifm_values.difference(VALID_IFM_VALUES))
         if invalid_ifm:
             issues.append(f"IFM contains invalid values: {invalid_ifm}")
+
+    if "ORIGIN" in fragments_gdf.columns:
+        origin_values = set(
+            fragments_gdf["ORIGIN"].astype(str).str.strip().str.lower().unique()
+        )
+        invalid_origin = sorted(origin_values.difference(VALID_ORIGIN_VALUES))
+        if invalid_origin:
+            issues.append(f"ORIGIN contains invalid values: {invalid_origin}")
 
     if issues:
         raise ValueError("invalid fragments dataset: " + "; ".join(issues))

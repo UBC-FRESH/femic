@@ -140,7 +140,10 @@ def test_build_patchworks_forestmodel_definition_contains_treatment() -> None:
         for s in treatment_selects
     )
     assert all(
-        not s.track_treatment.transition_assignments
+        any(
+            a.field == "ORIGIN" and a.value == "'planted'"
+            for a in s.track_treatment.transition_assignments
+        )
         for s in treatment_selects
         if s.track_treatment is not None
     )
@@ -233,8 +236,10 @@ def test_build_forestmodel_xml_tree_adds_species_yield_curves() -> None:
         curve_points_table=curve_points,
     )
 
-    unmanaged_curve = root.find("./curve[@id='au_985501000_unmanaged_yield_HW']")
-    managed_curve = root.find("./curve[@id='au_985501000_managed_yield_HW']")
+    unmanaged_curve = root.find(
+        "./curve[@id='au_985501000_unmanaged_natural_yield_HW']"
+    )
+    managed_curve = root.find("./curve[@id='au_985501000_managed_planted_yield_HW']")
     assert unmanaged_curve is not None
     assert managed_curve is not None
     unmanaged_points = unmanaged_curve.findall("./point")
@@ -286,7 +291,7 @@ def test_build_forestmodel_xml_tree_reuses_unmanaged_species_props_for_managed_f
         curve_points_table=curve_points,
     )
 
-    managed_curve = root.find("./curve[@id='au_985501000_managed_yield_HW']")
+    managed_curve = root.find("./curve[@id='au_985501000_managed_planted_yield_HW']")
     assert managed_curve is not None
     points = managed_curve.findall("./point")
     assert points[0].attrib == {"x": "1", "y": "6.0"}
@@ -340,7 +345,7 @@ def test_build_forestmodel_xml_tree_reuses_unmanaged_species_when_managed_prop_i
         curve_points_table=curve_points,
     )
 
-    managed_curve = root.find("./curve[@id='au_985501000_managed_yield_HW']")
+    managed_curve = root.find("./curve[@id='au_985501000_managed_planted_yield_HW']")
     assert managed_curve is not None
     points = managed_curve.findall("./point")
     assert points[0].attrib == {"x": "1", "y": "7.2"}
@@ -350,6 +355,69 @@ def test_build_forestmodel_xml_tree_reuses_unmanaged_species_when_managed_prop_i
     assert "feature.SpeciesProp.managed.HW" in xml_text
     assert "product.SpeciesProp.managed.HW" in xml_text
     assert 'curve idref="unmanaged_prop_HW_985501000001"' in xml_text
+
+
+def test_build_forestmodel_xml_tree_does_not_mix_managed_and_unmanaged_species_props() -> (
+    None
+):
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985501000,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_HW+FDC",
+                "si_level": "L",
+                "managed_curve_id": 985521000,
+                "unmanaged_curve_id": 985501000,
+            }
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985501000, "curve_type": "unmanaged"},
+            {"curve_id": 985521000, "curve_type": "managed"},
+            {"curve_id": 985501000001, "curve_type": "unmanaged_species_prop_DR"},
+            {"curve_id": 985501000002, "curve_type": "unmanaged_species_prop_HW"},
+            {"curve_id": 985521000001, "curve_type": "managed_species_prop_CW"},
+            {"curve_id": 985521000002, "curve_type": "managed_species_prop_DR"},
+            {"curve_id": 985521000003, "curve_type": "managed_species_prop_HW"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985501000, "x": 1, "y": 10.0},
+            {"curve_id": 985501000, "x": 10, "y": 50.0},
+            {"curve_id": 985521000, "x": 1, "y": 12.0},
+            {"curve_id": 985521000, "x": 10, "y": 70.0},
+            {"curve_id": 985501000001, "x": 1, "y": 0.8},
+            {"curve_id": 985501000002, "x": 1, "y": 0.2},
+            {"curve_id": 985521000001, "x": 1, "y": 0.3},
+            {"curve_id": 985521000002, "x": 1, "y": 0.0},
+            {"curve_id": 985521000003, "x": 1, "y": 0.7},
+        ]
+    )
+
+    root = build_forestmodel_xml_tree(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+    )
+
+    managed_select = None
+    for select in root.findall(".//select"):
+        if (
+            select.get("statement")
+            == "AU eq 985501000 and IFM eq 'managed' and ORIGIN eq 'planted'"
+        ):
+            managed_select = select
+            break
+    assert managed_select is not None
+    managed_xml = et.tostring(managed_select, encoding="unicode")
+    assert "feature.Yield.managed.CW" in managed_xml
+    assert "feature.Yield.managed.HW" in managed_xml
+    assert "feature.Yield.managed.DR" not in managed_xml
+    assert "feature.SpeciesProp.managed.DR" not in managed_xml
+    assert 'curve idref="unmanaged_prop_DR_985501000001"' not in managed_xml
 
 
 def test_build_forestmodel_xml_tree_omits_zero_signal_species_accounts() -> None:
@@ -820,11 +888,12 @@ def test_export_patchworks_package_writes_xml_and_fragments(
     assert '<?xml-model href="https://www.spatial.ca/ForestModel.xsd"?>' in xml_text
     assert "feature.Yield.unmanaged.Total" in xml_text
     gdf = gpd.read_file(result.fragments_shapefile_path)
-    assert set(["FRAGMENT_I", "BLOCK", "AREA_HA", "F_AGE", "AU", "IFM"]).issubset(
-        gdf.columns
-    )
+    assert set(
+        ["FRAGMENT_I", "BLOCK", "AREA_HA", "F_AGE", "AU", "IFM", "ORIGIN"]
+    ).issubset(gdf.columns)
     assert int(gdf.loc[0, "AU"]) == 985501000
     assert gdf.loc[0, "IFM"] == "managed"
+    assert gdf.loc[0, "ORIGIN"] == "natural"
 
 
 def test_export_patchworks_package_decodes_wkb_geometry(
@@ -861,6 +930,7 @@ def test_export_patchworks_package_decodes_wkb_geometry(
     gdf = gpd.read_file(result.fragments_shapefile_path)
     assert gdf.shape[0] == 1
     assert gdf.loc[0, "IFM"] == "unmanaged"
+    assert gdf.loc[0, "ORIGIN"] == "natural"
     assert gdf.geometry.iloc[0].geom_type == "Polygon"
 
 
@@ -910,6 +980,7 @@ def test_validate_fragments_geodataframe_rejects_invalid_ifm() -> None:
             "F_AGE": [10],
             "AU": [100],
             "IFM": ["bogus"],
+            "ORIGIN": ["natural"],
             "TSA": ["k3z"],
             "geometry": [Polygon([(0, 0), (10, 0), (10, 10), (0, 10), (0, 0)])],
         },
@@ -952,9 +1023,40 @@ def test_build_fragments_geodataframe_emits_one_row_per_stand_fragment(
     assert gdf["FRAGMENT_ID"].nunique() == 1
     assert gdf["BLOCK"].nunique() == 1
     assert gdf.loc[0, "IFM"] == "managed"
+    assert gdf.loc[0, "ORIGIN"] == "natural"
     assert float(gdf.loc[0, "AREA_HA"]) == pytest.approx(10.0)
 
     validate_fragments_geodataframe(fragments_gdf=gdf)
+
+
+def test_build_fragments_geodataframe_marks_age_60_as_planted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    au_table = pd.DataFrame([{"au_id": 985501000}])
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "k3z",
+                "au": 985501000,
+                "PROJ_AGE_1": 60,
+                "FEATURE_AREA_SQM": 100000.0,
+                "thlb_raw": 1.0,
+                "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+            }
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    gdf = build_fragments_geodataframe(
+        checkpoint_path=checkpoint_path,
+        au_table=au_table,
+        tsa_list=["k3z"],
+    )
+
+    assert gdf.loc[0, "ORIGIN"] == "planted"
 
 
 def test_build_fragments_geodataframe_interprets_thlb_raw_as_binary_signal(
@@ -986,6 +1088,7 @@ def test_build_fragments_geodataframe_interprets_thlb_raw_as_binary_signal(
 
     assert gdf.shape[0] == 1
     assert gdf.loc[0, "IFM"] == "unmanaged"
+    assert gdf.loc[0, "ORIGIN"] == "natural"
     assert float(gdf.loc[0, "AREA_HA"]) == pytest.approx(10.0)
 
 

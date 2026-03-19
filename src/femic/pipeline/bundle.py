@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import math
 from pathlib import Path
 from typing import Any, Callable
 
@@ -11,6 +12,28 @@ from typing import Any, Callable
 TIPSY_SPECIES_CODE_ALIASES = {
     "FD": "FDC",
 }
+
+
+def _normalize_species_proportion_map(
+    proportions: dict[str, float],
+) -> dict[str, float]:
+    """Return a finite, non-negative species proportion map normalized to 1.0."""
+    cleaned: dict[str, float] = {}
+    for species_code, raw_value in proportions.items():
+        try:
+            value = float(raw_value)
+        except (TypeError, ValueError):
+            continue
+        if not math.isfinite(value) or value <= 0.0:
+            continue
+        cleaned[str(species_code).strip().upper()] = value
+    total = sum(cleaned.values())
+    if total <= 0.0:
+        return {}
+    return {
+        species_code: float(value) / float(total)
+        for species_code, value in cleaned.items()
+    }
 
 
 @dataclass(frozen=True)
@@ -249,6 +272,9 @@ def build_bundle_tables_from_curves(
                             tipsy_prop_map[canonical] = float(
                                 tipsy_prop_map.get(canonical, 0.0)
                             ) + float(proportion)
+                        tipsy_prop_map = _normalize_species_proportion_map(
+                            tipsy_prop_map
+                        )
                     for species_idx, species_code in enumerate(
                         ordered_species, start=1
                     ):
