@@ -1,0 +1,23 @@
+{
+  "tracks_row_counts": {
+    "blocks.csv": -1,
+    "curves.csv": -1,
+    "treatments.csv": -1,
+    "features.csv": -1,
+    "products.csv": -1,
+    "tracknames.csv": -1,
+    "strata.csv": -1,
+    "accounts.csv": -1,
+    "protoaccounts.csv": -1
+  },
+  "account_count": 0,
+  "key_accounts_present": {
+    "product.Yield.managed.Total": false,
+    "product.HarvestedVolume.managed.Total.CC": false,
+    "feature.Seral.regenerating": false,
+    "feature.Seral.young": false,
+    "feature.Seral.immature": false,
+    "feature.Seral.mature": false,
+    "feature.Seral.overmature": false
+  }
+}

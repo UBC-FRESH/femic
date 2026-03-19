@@ -4273,3 +4273,26 @@ notes.
     - K3Z `femic patchworks build-blocks --topology-backend patchworks-raster` completed successfully against the existing K3Z fragments shapefile.
   - Next execution step for `P19.5`:
     let the user-completed TSA29 Patchworks topology run finish externally, then compare its output against FEMIC expectations before deciding whether to keep `patchworks-raster` as an optional backend only or promote it further.
+
+
+- 2026-03-18 (Phase 19 `P19.5` TSA29 rebuild-helper checkpoint): added a
+  deterministic parent-repo rebuild helper for the TSA29 instance so validated
+  Windows/Patchworks reruns can be executed and compared without rebuilding the
+  orchestration logic by hand.
+  - Added:
+    - `scripts/tsa29/rebuild_tsa29_instance.py`
+    - `scripts/tsa29/tsa29_tracks_baseline.json`
+  - Current helper scope:
+    - rebuilds TSA29 `forestmodel.xml` from bundle tables + seral config,
+    - optionally reruns upstream FEMIC prep stages when cached upstream
+      artifacts are present,
+    - runs Patchworks preflight / build-blocks / matrix-build,
+    - writes machine-readable rebuild/evidence reports,
+    - compares observed tracks/account surfaces against a tracked baseline JSON.
+  - Validation:
+    helper CLI loads successfully via
+    `python scripts/tsa29/rebuild_tsa29_instance.py --help`.
+  - Next execution step for `P19.5`:
+    run the helper against the validated TSA29 Windows runtime once the manual
+    topology artifact and instance-side state are ready, then promote the
+    resulting green evidence into the TSA29 instance repo.

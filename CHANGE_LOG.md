@@ -4394,3 +4394,16 @@
   - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/_build/html -W`
   - `python -m sphinx -b html docs _build/html -W` still fails on pre-existing
     autosummary `toc.not_included` warnings outside Phase 20 scope.
+
+
+## 2026-03-18 - Added TSA29 deterministic rebuild helper scaffold
+- Added parent-repo helper script `scripts/tsa29/rebuild_tsa29_instance.py` to drive TSA29 Patchworks rebuild validation from the FEMIC checkout.
+- Added tracked baseline placeholder `scripts/tsa29/tsa29_tracks_baseline.json` for row-count/account-surface regression checks.
+- Helper behavior currently includes:
+  - rebuilding TSA29 `forestmodel.xml` from bundle tables + `config/seral.tsa29.yaml`,
+  - optionally rerunning upstream FEMIC stages when prerequisite cached inputs are available,
+  - running Patchworks preflight / build-blocks / matrix-build,
+  - writing rebuild/evidence JSON outputs under the TSA29 instance.
+- Validation:
+  - `python scripts/tsa29/rebuild_tsa29_instance.py --help`
+- This is a Phase 19 `P19.5` support checkpoint, not full phase closure; the green runtime evidence still depends on executing the helper against the validated TSA29 Windows/Patchworks environment.
