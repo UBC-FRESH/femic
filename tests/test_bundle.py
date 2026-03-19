@@ -206,6 +206,61 @@ def test_build_bundle_tables_from_curves_adds_species_proportion_curves() -> Non
     assert managed_sw_y == 0.6
 
 
+def test_build_bundle_tables_from_curves_normalizes_treated_species_mix_to_one() -> (
+    None
+):
+    vdyp_curves_smooth = {
+        "08": pd.DataFrame(
+            [
+                {"stratum_code": "BWBS_FD", "si_level": "L", "age": 10, "volume": 1.0},
+                {"stratum_code": "BWBS_FD", "si_level": "L", "age": 20, "volume": 2.0},
+            ]
+        )
+    }
+    tipsy_curves = {
+        "08": pd.DataFrame(
+            [
+                {"AU": 20005, "Age": 10, "Yield": 1.5},
+                {"AU": 20005, "Age": 20, "Yield": 2.5},
+            ]
+        )
+    }
+    # NaN columns should be ignored and the remaining finite shares normalized.
+    tipsy_spp = {
+        "08": pd.DataFrame(
+            [{"AU": 20005, "CW": 20.0, "FD": 10.0, "HW": 70.0, "PLC": float("nan")}]
+        )
+    }
+    vdyp_spp = {"08": {("BWBS_FD", "L"): {"FDC": 0.1, "HW": 0.9}}}
+    scsi_au = {"08": {("BWBS_FD", "L"): 5}}
+
+    out = build_bundle_tables_from_curves(
+        tsa_list=["08"],
+        vdyp_curves_smooth=vdyp_curves_smooth,
+        tipsy_curves=tipsy_curves,
+        scsi_au=scsi_au,
+        canfi_species_fn=lambda _s: 101,
+        species_universe=["CW", "FDC", "HW", "PLC"],
+        vdyp_species_proportions=vdyp_spp,
+        tipsy_species_proportions=tipsy_spp,
+        pd_module=pd,
+        message_fn=lambda _m: None,
+    )
+
+    managed_rows = out.curve_table[
+        out.curve_table["curve_type"].str.startswith("treated_species_prop_")
+    ].merge(out.curve_points_table, on="curve_id", how="left")
+    assert managed_rows["y"].sum() == 1.0
+
+    treated_fdc_id = out.curve_table.loc[
+        out.curve_table["curve_type"] == "treated_species_prop_FDC", "curve_id"
+    ].iloc[0]
+    treated_fdc_y = out.curve_points_table.loc[
+        out.curve_points_table["curve_id"] == treated_fdc_id, "y"
+    ].iloc[0]
+    assert treated_fdc_y == 0.1
+
+
 def test_build_bundle_tables_from_curves_maps_tipsy_fd_to_fdc() -> None:
     vdyp_curves_smooth = {
         "08": pd.DataFrame(
