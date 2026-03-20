@@ -4903,3 +4903,6 @@ notes.
     `Passive=0.0`.
   - Verified compiled OG feature-account surface in K3Z tracks and published
     refreshed track tables in `external/femic-k3z-instance` commit `69322b2`.
+  - Downstream Patchworks launch/UI smoke also passed: the revised K3Z model
+    opened successfully in Patchworks and the new `og1`/`og2` accounts were
+    visible and looked correct in the live model interface.
