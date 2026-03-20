@@ -251,6 +251,58 @@ def test_build_forestmodel_xml_tree_adds_species_yield_curves() -> None:
     assert "product.HarvestedVolume.managed.HW.CC" in xml_text
 
 
+def test_build_forestmodel_xml_tree_adds_old_growth_attributes_and_curves() -> None:
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985501000,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_HW+FDC",
+                "si_level": "L",
+                "managed_curve_id": 985521000,
+                "unmanaged_curve_id": 985501000,
+            }
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985501000, "curve_type": "unmanaged"},
+            {"curve_id": 985521000, "curve_type": "managed"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985501000, "x": 1, "y": 5.0},
+            {"curve_id": 985501000, "x": 40, "y": 200.0},
+            {"curve_id": 985501000, "x": 100, "y": 350.0},
+            {"curve_id": 985521000, "x": 1, "y": 8.0},
+            {"curve_id": 985521000, "x": 40, "y": 240.0},
+            {"curve_id": 985521000, "x": 100, "y": 380.0},
+        ]
+    )
+    root = build_forestmodel_xml_tree(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+    )
+
+    xml_text = et.tostring(root, encoding="unicode")
+    assert "feature.Area.og1.985501000" in xml_text
+    assert "feature.Area.og1.total" in xml_text
+    assert "feature.Area.og2.985501000" in xml_text
+    assert "feature.Area.og2.total" in xml_text
+
+    og1_curve = root.find("./curve[@id='au_985501000_og1']")
+    assert og1_curve is not None
+    og1_points = [point.attrib for point in og1_curve.findall("./point")]
+    assert og1_points == [{"x": "1", "y": "0.0"}, {"x": "100", "y": "1.0"}]
+
+    og2_curve = root.find("./curve[@id='au_985501000_og2']")
+    assert og2_curve is not None
+    og2_points = [point.attrib for point in og2_curve.findall("./point")]
+    assert og2_points == [{"x": "249", "y": "0.0"}, {"x": "250", "y": "1.0"}]
+
+
 def test_build_forestmodel_xml_tree_reuses_unmanaged_species_props_for_managed_fallback() -> (
     None
 ):
