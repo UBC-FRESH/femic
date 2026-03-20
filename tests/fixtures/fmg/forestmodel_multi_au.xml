@@ -20,6 +20,14 @@
     <point x="1" y="6.4" />
     <point x="10" y="52.0" />
   </curve>
+  <curve id="au_1001_og1">
+    <point x="1" y="0.0" />
+    <point x="10" y="1.0" />
+  </curve>
+  <curve id="au_1001_og2">
+    <point x="249" y="0.0" />
+    <point x="250" y="1.0" />
+  </curve>
   <curve id="au_1001_unmanaged_natural_yield_FD">
     <point x="1" y="1.5" />
     <point x="10" y="12.0" />
@@ -51,6 +59,14 @@
   <curve id="au_1002_managed_planted_yield_SW">
     <point x="1" y="5.4" />
     <point x="10" y="43.2" />
+  </curve>
+  <curve id="au_1002_og1">
+    <point x="1" y="0.0" />
+    <point x="10" y="1.0" />
+  </curve>
+  <curve id="au_1002_og2">
+    <point x="249" y="0.0" />
+    <point x="250" y="1.0" />
   </curve>
   <curve id="au_1002_unmanaged_natural_yield_AT">
     <point x="1" y="2.7" />
@@ -123,6 +139,18 @@
       <attribute label="feature.Yield.unmanaged.Total">
         <curve idref="unmanaged_total_1001" />
       </attribute>
+      <attribute label="feature.Area.og1.1001">
+        <curve idref="au_1001_og1" />
+      </attribute>
+      <attribute label="feature.Area.og1.total">
+        <curve idref="au_1001_og1" />
+      </attribute>
+      <attribute label="feature.Area.og2.1001">
+        <curve idref="au_1001_og2" />
+      </attribute>
+      <attribute label="feature.Area.og2.total">
+        <curve idref="au_1001_og2" />
+      </attribute>
       <attribute label="feature.Yield.unmanaged.FD">
         <curve idref="au_1001_unmanaged_natural_yield_FD" />
       </attribute>
@@ -145,6 +173,18 @@
       </attribute>
       <attribute label="feature.Yield.managed.Total">
         <curve idref="managed_total_21001" />
+      </attribute>
+      <attribute label="feature.Area.og1.1001">
+        <curve idref="au_1001_og1" />
+      </attribute>
+      <attribute label="feature.Area.og1.total">
+        <curve idref="au_1001_og1" />
+      </attribute>
+      <attribute label="feature.Area.og2.1001">
+        <curve idref="au_1001_og2" />
+      </attribute>
+      <attribute label="feature.Area.og2.total">
+        <curve idref="au_1001_og2" />
       </attribute>
       <attribute label="feature.Yield.managed.FD">
         <curve idref="au_1001_managed_natural_yield_FD" />
@@ -212,6 +252,18 @@
       <attribute label="feature.Yield.unmanaged.Total">
         <curve idref="unmanaged_total_1001" />
       </attribute>
+      <attribute label="feature.Area.og1.1001">
+        <curve idref="au_1001_og1" />
+      </attribute>
+      <attribute label="feature.Area.og1.total">
+        <curve idref="au_1001_og1" />
+      </attribute>
+      <attribute label="feature.Area.og2.1001">
+        <curve idref="au_1001_og2" />
+      </attribute>
+      <attribute label="feature.Area.og2.total">
+        <curve idref="au_1001_og2" />
+      </attribute>
       <attribute label="feature.Yield.unmanaged.FD">
         <curve idref="au_1001_unmanaged_planted_yield_FD" />
       </attribute>
@@ -234,6 +286,18 @@
       </attribute>
       <attribute label="feature.Yield.managed.Total">
         <curve idref="managed_total_21001" />
+      </attribute>
+      <attribute label="feature.Area.og1.1001">
+        <curve idref="au_1001_og1" />
+      </attribute>
+      <attribute label="feature.Area.og1.total">
+        <curve idref="au_1001_og1" />
+      </attribute>
+      <attribute label="feature.Area.og2.1001">
+        <curve idref="au_1001_og2" />
+      </attribute>
+      <attribute label="feature.Area.og2.total">
+        <curve idref="au_1001_og2" />
       </attribute>
       <attribute label="feature.Yield.managed.FD">
         <curve idref="au_1001_managed_planted_yield_FD" />
@@ -301,6 +365,18 @@
       <attribute label="feature.Yield.unmanaged.Total">
         <curve idref="unmanaged_total_1002" />
       </attribute>
+      <attribute label="feature.Area.og1.1002">
+        <curve idref="au_1002_og1" />
+      </attribute>
+      <attribute label="feature.Area.og1.total">
+        <curve idref="au_1002_og1" />
+      </attribute>
+      <attribute label="feature.Area.og2.1002">
+        <curve idref="au_1002_og2" />
+      </attribute>
+      <attribute label="feature.Area.og2.total">
+        <curve idref="au_1002_og2" />
+      </attribute>
       <attribute label="feature.Yield.unmanaged.AT">
         <curve idref="au_1002_unmanaged_natural_yield_AT" />
       </attribute>
@@ -323,6 +399,18 @@
       </attribute>
       <attribute label="feature.Yield.managed.Total">
         <curve idref="managed_total_21002" />
+      </attribute>
+      <attribute label="feature.Area.og1.1002">
+        <curve idref="au_1002_og1" />
+      </attribute>
+      <attribute label="feature.Area.og1.total">
+        <curve idref="au_1002_og1" />
+      </attribute>
+      <attribute label="feature.Area.og2.1002">
+        <curve idref="au_1002_og2" />
+      </attribute>
+      <attribute label="feature.Area.og2.total">
+        <curve idref="au_1002_og2" />
       </attribute>
       <attribute label="feature.Yield.managed.AT">
         <curve idref="au_1002_managed_natural_yield_AT" />
@@ -390,6 +478,18 @@
       <attribute label="feature.Yield.unmanaged.Total">
         <curve idref="unmanaged_total_1002" />
       </attribute>
+      <attribute label="feature.Area.og1.1002">
+        <curve idref="au_1002_og1" />
+      </attribute>
+      <attribute label="feature.Area.og1.total">
+        <curve idref="au_1002_og1" />
+      </attribute>
+      <attribute label="feature.Area.og2.1002">
+        <curve idref="au_1002_og2" />
+      </attribute>
+      <attribute label="feature.Area.og2.total">
+        <curve idref="au_1002_og2" />
+      </attribute>
       <attribute label="feature.Yield.unmanaged.AT">
         <curve idref="au_1002_unmanaged_planted_yield_AT" />
       </attribute>
@@ -412,6 +512,18 @@
       </attribute>
       <attribute label="feature.Yield.managed.Total">
         <curve idref="managed_total_21002" />
+      </attribute>
+      <attribute label="feature.Area.og1.1002">
+        <curve idref="au_1002_og1" />
+      </attribute>
+      <attribute label="feature.Area.og1.total">
+        <curve idref="au_1002_og1" />
+      </attribute>
+      <attribute label="feature.Area.og2.1002">
+        <curve idref="au_1002_og2" />
+      </attribute>
+      <attribute label="feature.Area.og2.total">
+        <curve idref="au_1002_og2" />
       </attribute>
       <attribute label="feature.Yield.managed.AT">
         <curve idref="au_1002_managed_planted_yield_AT" />

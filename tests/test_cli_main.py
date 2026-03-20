@@ -1554,3 +1554,112 @@ def test_prep_geospatial_preflight_strict_warnings_fails(
 
     assert exc_info.value.exit_code == 1
     assert any("gdal visibility warning" in msg for msg in messages)
+
+
+def test_export_dual_runs_patchworks_and_woodstock(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    instance_root = tmp_path / "instance"
+    instance_root.mkdir()
+    monkeypatch.setattr(
+        cli_main,
+        "_resolve_cli_instance_context",
+        lambda **_kwargs: SimpleNamespace(
+            root=instance_root,
+            resolve_path=lambda p: instance_root / p,
+            warnings=(),
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "export_patchworks_package",
+        lambda **_kwargs: SimpleNamespace(
+            tsa_list=["29"],
+            curve_count=10,
+            forestmodel_xml_path=instance_root / "output/patchworks/forestmodel.xml",
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "export_woodstock_package",
+        lambda **_kwargs: SimpleNamespace(
+            tsa_list=["29"],
+            yield_rows=20,
+            yields_csv_path=instance_root / "output/woodstock/woodstock_yields.csv",
+        ),
+    )
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    cli_main.export_dual(
+        tsa=["29"],
+        bundle_dir=Path("data/model_input_bundle"),
+        checkpoint=Path("data/ria_vri_vclr1p_checkpoint7.feather"),
+        patchworks_output_dir=Path("output/patchworks"),
+        woodstock_output_dir=Path("output/woodstock"),
+        start_year=2026,
+        horizon_years=300,
+        cc_min_age=0,
+        cc_max_age=1000,
+        cc_transition_ifm=None,
+        fragments_crs="EPSG:3005",
+        ifm_source_col=None,
+        ifm_threshold=None,
+        ifm_target_managed_share=None,
+        seral_stage_config=None,
+        with_ws3_smoke=False,
+        ws3_command=None,
+        ws3_workdir=None,
+        ws3_report=Path("evidence/ws3_smoke_report.latest.json"),
+        ws3_require_command=False,
+        ws3_timeout_seconds=600,
+        ws3_repo_path=None,
+        ws3_builtin_smoke=False,
+        ws3_bridge_dir=None,
+        instance_root=instance_root,
+    )
+
+    assert any("dual export completed" in msg for msg in messages)
+
+
+def test_instance_ws3_smoke_fails_on_failed_result(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    instance_root = tmp_path / "instance"
+    instance_root.mkdir()
+    monkeypatch.setattr(
+        cli_main,
+        "_resolve_cli_instance_context",
+        lambda **_kwargs: SimpleNamespace(
+            root=instance_root,
+            resolve_path=lambda p: instance_root / p,
+            warnings=(),
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "run_ws3_smoke",
+        lambda **_kwargs: SimpleNamespace(
+            status="failed",
+            yields_rows=0,
+            areas_rows=0,
+            actions_rows=0,
+            transitions_rows=0,
+            message="failed smoke",
+        ),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.instance_ws3_smoke(
+            woodstock_dir=Path("output/woodstock"),
+            output=Path("evidence/ws3_smoke_report.latest.json"),
+            ws3_command=None,
+            ws3_workdir=None,
+            require_command=False,
+            timeout_seconds=600,
+            ws3_repo_path=None,
+            builtin_model_smoke=True,
+            ws3_bridge_dir=None,
+            instance_root=instance_root,
+        )
+    assert exc_info.value.exit_code == 1

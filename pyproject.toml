@@ -53,3 +53,6 @@ extend-exclude = ["src/femic/resources/legacy/*.py"]
 
 [tool.mypy]
 exclude = ["^src/femic/resources/legacy/.*\\.py$"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

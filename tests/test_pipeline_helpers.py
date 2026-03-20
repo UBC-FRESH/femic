@@ -26,6 +26,7 @@ from femic.pipeline.plots import (
     tipsy_vdyp_plot_path,
     tipsy_vdyp_ylim_for_tsa,
 )
+from femic.pipeline.stages import prepare_tsa_index
 from femic.pipeline.vdyp import build_vdyp_cache_paths
 import pytest
 import pandas as pd
@@ -49,6 +50,8 @@ from femic.pipeline.tsa import (
     resolve_si_level_quantiles_for_stratum,
     summarize_missing_au_mappings,
     target_nstrata_for,
+    normalize_tsa_code,
+    select_tsa_slice,
     validate_nonempty_au_assignment,
 )
 
@@ -193,6 +196,45 @@ def test_tsa_target_nstrata_lookup() -> None:
     assert target_nstrata_for("29") == DEFAULT_TARGET_NSTRATA
     assert target_nstrata_for("k3z") == 4
     assert MIN_STANDCOUNT == 1000
+
+
+def test_select_tsa_slice_handles_string_numeric_equivalence() -> None:
+    frame = pd.DataFrame({"value": [1.0, 2.0]}, index=pd.Index([29, 40], name="tsa"))
+
+    sliced = select_tsa_slice(f_table=frame, tsa_value="29")
+
+    assert list(sliced.index) == [29]
+    assert float(sliced.iloc[0]["value"]) == 1.0
+
+
+def test_select_tsa_slice_handles_numeric_against_string_index() -> None:
+    frame = pd.DataFrame(
+        {"value": [1.0, 2.0]}, index=pd.Index(["29", "40"], name="tsa")
+    )
+
+    sliced = select_tsa_slice(f_table=frame, tsa_value=29)
+
+    assert list(sliced.index) == ["29"]
+    assert float(sliced.iloc[0]["value"]) == 1.0
+
+
+def test_select_tsa_slice_handles_mixed_case_named_tsa() -> None:
+    frame = pd.DataFrame({"value": [1.0]}, index=pd.Index(["k3z"], name="tsa"))
+
+    sliced = select_tsa_slice(f_table=frame, tsa_value="K3Z")
+
+    assert list(sliced.index) == ["k3z"]
+    assert float(sliced.iloc[0]["value"]) == 1.0
+
+
+def test_prepare_tsa_index_normalizes_column_values() -> None:
+    frame = pd.DataFrame({"tsa_code": [29, "08", "K3Z"], "value": [1, 2, 3]})
+
+    prepared = prepare_tsa_index(f_table=frame, tsa_column="tsa_code")
+
+    assert prepared.index.name == "tsa_code"
+    assert list(prepared.index) == ["29", "08", "k3z"]
+    assert normalize_tsa_code("K3Z") == "k3z"
 
 
 def test_build_strata_summary_filters_and_computes_expected_fields() -> None:
@@ -645,6 +687,23 @@ def test_mean_thlb_for_geometry_fallback_scope() -> None:
         )
 
 
+def test_mean_thlb_for_geometry_returns_default_when_no_valid_cells() -> None:
+    def _empty_valid_mask(
+        _src: object, _shapes: list[object], crop: bool
+    ) -> tuple[np.ndarray, None]:
+        assert crop is True
+        return np.array([[-1, -1, -1]]), None
+
+    value = mean_thlb_for_geometry(
+        geometry=object(),
+        raster_src=object(),
+        mask_fn=_empty_valid_mask,
+        np_module=np,
+        default_on_error=3.5,
+    )
+    assert value == 3.5
+
+
 def test_plot_path_helpers() -> None:
     pdf_path, png_path = strata_plot_paths("8")
     tipsy_path = tipsy_vdyp_plot_path(23005, "08")
@@ -685,6 +744,14 @@ def test_build_strata_distribution_plot_config_defaults() -> None:
     assert cfg.bw == "scott"
     assert cfg.cut == 0.0
     assert cfg.site_index_xlim == (0, 30)
+    assert cfg.site_index_focus_quantiles == (0.02, 0.98)
+    assert cfg.site_index_focus_padding == 0.75
+    assert cfg.stripplot_alpha == 0.15
+    assert cfg.stripplot_size == 1.4
+    assert cfg.stripplot_max_points == 3000
+    assert cfg.stripplot_min_points_per_stratum == 1
+    assert cfg.stripplot_random_seed == 19
+    assert cfg.write_pdf is False
 
 
 def test_resolve_strata_plot_ordering_abundance_and_lex_modes() -> None:
@@ -796,20 +863,24 @@ def test_render_strata_distribution_plot_uses_helper_config_and_paths() -> None:
             self.barplot_calls = 0
             self.violinplot_calls = 0
             self.stripplot_calls = 0
+            self.violin_rows: list[int] = []
+            self.strip_rows: list[int] = []
 
         def barplot(self, **_kwargs: object) -> None:
             self.barplot_calls += 1
 
-        def violinplot(self, **_kwargs: object) -> None:
+        def violinplot(self, **kwargs: object) -> None:
             self.violinplot_calls += 1
+            self.violin_rows.append(len(kwargs["data"]))  # type: ignore[arg-type]
 
-        def stripplot(self, **_kwargs: object) -> None:
+        def stripplot(self, **kwargs: object) -> None:
             self.stripplot_calls += 1
+            self.strip_rows.append(len(kwargs["data"]))  # type: ignore[arg-type]
 
     cfg = build_strata_distribution_plot_config()
     fake_plt = _FakePlt()
     fake_sns = _FakeSns()
-    render_strata_distribution_plot(
+    metadata = render_strata_distribution_plot(
         tsa_code="08",
         f_table=pd.DataFrame({"stratum": ["S1"], "SITE_INDEX": [20.0]}),
         stratum_col="stratum",
@@ -827,9 +898,149 @@ def test_render_strata_distribution_plot_uses_helper_config_and_paths() -> None:
     assert fake_sns.barplot_calls == 1
     assert fake_sns.violinplot_calls == 1
     assert fake_sns.stripplot_calls == 1
+    assert fake_sns.violin_rows == [1]
+    assert fake_sns.strip_rows == [1]
     assert fake_plt.subplots_calls == [cfg.figsize]
-    assert fake_plt.savefig_calls[0][0] == Path("plots/strata-tsa08.pdf")
-    assert fake_plt.savefig_calls[1][0] == Path("plots/strata-tsa08.png")
+    assert len(fake_plt.savefig_calls) == 1
+    assert fake_plt.savefig_calls[0][0] == Path("plots/strata-tsa08.png")
+    assert metadata.total_points == 1
+    assert metadata.window_points == 1
+    assert metadata.strip_points_plotted == 1
+    assert metadata.clipped_total_count == 0
+    assert metadata.site_index_xlim == (0.0, 21.0)
+
+
+def test_render_strata_distribution_plot_clips_outliers_and_thins_strip_points() -> (
+    None
+):
+    class _FakeAxis:
+        def __init__(self) -> None:
+            self.xlim_calls: list[tuple[float, float]] = []
+
+        def twiny(self) -> "_FakeAxis":
+            return self
+
+        def set_xlabel(self, _value: str) -> None:
+            return None
+
+        def set_xlim(self, value: tuple[float, float]) -> None:
+            self.xlim_calls.append(value)
+
+    class _FakePlt:
+        def subplots(self, *, figsize: tuple[float, float]) -> tuple[None, _FakeAxis]:
+            return None, _FakeAxis()
+
+        def savefig(self, _path: Path, **_kwargs: object) -> None:
+            return None
+
+    class _FakeSns:
+        def __init__(self) -> None:
+            self.violin_rows = 0
+            self.strip_rows = 0
+
+        def barplot(self, **_kwargs: object) -> None:
+            return None
+
+        def violinplot(self, **kwargs: object) -> None:
+            self.violin_rows = len(kwargs["data"])  # type: ignore[arg-type]
+
+        def stripplot(self, **kwargs: object) -> None:
+            self.strip_rows = len(kwargs["data"])  # type: ignore[arg-type]
+
+    cfg = build_strata_distribution_plot_config(
+        stripplot_max_points=25,
+        site_index_focus_quantiles=(0.05, 0.95),
+        site_index_focus_padding=0.5,
+        site_index_xlim=(0, 30),
+    )
+
+    core = np.linspace(10.0, 20.0, 200)
+    site_index = np.concatenate([core, np.array([45.0, 60.0])])
+    f_table = pd.DataFrame(
+        {
+            "stratum": ["S1"] * len(site_index),
+            "SITE_INDEX": site_index,
+        }
+    )
+    fake_sns = _FakeSns()
+    metadata = render_strata_distribution_plot(
+        tsa_code="29",
+        f_table=f_table,
+        stratum_col="stratum",
+        labels=["S1"],
+        stratum_props=[1.0],
+        plot_config=cfg,
+        sns_module=fake_sns,
+        plt_module=_FakePlt(),
+        strata_plot_paths_fn=lambda _tsa: (
+            Path("plots/strata-tsa29.pdf"),
+            Path("plots/strata-tsa29.png"),
+        ),
+    )
+
+    assert metadata.total_points == 202
+    assert metadata.clipped_high_count == 2
+    assert metadata.clipped_low_count == 0
+    assert metadata.clipped_total_count == 2
+    assert metadata.window_points == 200
+    assert metadata.strip_points_plotted <= 25
+    assert metadata.site_index_xlim[0] == 0.0
+    assert fake_sns.violin_rows == 200
+    assert fake_sns.strip_rows <= 25
+
+
+def test_render_strata_distribution_plot_can_optionally_write_pdf() -> None:
+    class _FakeAxis:
+        def twiny(self) -> "_FakeAxis":
+            return self
+
+        def set_xlabel(self, _value: str) -> None:
+            return None
+
+        def set_xlim(self, _value: tuple[float, float]) -> None:
+            return None
+
+    class _FakePlt:
+        def __init__(self) -> None:
+            self.savefig_calls: list[Path] = []
+
+        def subplots(self, *, figsize: tuple[float, float]) -> tuple[None, _FakeAxis]:
+            _ = figsize
+            return None, _FakeAxis()
+
+        def savefig(self, path: Path, **_kwargs: object) -> None:
+            self.savefig_calls.append(path)
+
+    class _FakeSns:
+        def barplot(self, **_kwargs: object) -> None:
+            return None
+
+        def violinplot(self, **_kwargs: object) -> None:
+            return None
+
+        def stripplot(self, **_kwargs: object) -> None:
+            return None
+
+    cfg = build_strata_distribution_plot_config(write_pdf=True)
+    fake_plt = _FakePlt()
+    render_strata_distribution_plot(
+        tsa_code="08",
+        f_table=pd.DataFrame({"stratum": ["S1"], "SITE_INDEX": [20.0]}),
+        stratum_col="stratum",
+        labels=["S1"],
+        stratum_props=[1.0],
+        plot_config=cfg,
+        sns_module=_FakeSns(),
+        plt_module=fake_plt,
+        strata_plot_paths_fn=lambda _tsa: (
+            Path("plots/strata-tsa08.pdf"),
+            Path("plots/strata-tsa08.png"),
+        ),
+    )
+    assert fake_plt.savefig_calls == [
+        Path("plots/strata-tsa08.pdf"),
+        Path("plots/strata-tsa08.png"),
+    ]
 
 
 def test_build_pipeline_run_config_normalizes_tsa_values() -> None:
@@ -871,6 +1082,7 @@ def test_load_pipeline_run_profile_from_yaml(tmp_path: Path) -> None:
                 "  vdyp_sampling_mode: all",
                 "  vdyp_two_pass_rebin: true",
                 "  vdyp_min_stands_per_si_bin: 10",
+                "  vdyp_toe_shift_years: 15.0",
                 "  managed_curve_mode: vdyp_transform",
                 "  managed_curve_x_scale: 0.8",
                 "  managed_curve_y_scale: 1.2",
@@ -904,6 +1116,7 @@ def test_load_pipeline_run_profile_from_yaml(tmp_path: Path) -> None:
     assert profile.vdyp_sampling_mode == "all"
     assert profile.vdyp_two_pass_rebin is True
     assert profile.vdyp_min_stands_per_si_bin == 10
+    assert profile.vdyp_toe_shift_years == pytest.approx(15.0)
     assert profile.managed_curve_mode == "vdyp_transform"
     assert profile.managed_curve_x_scale == pytest.approx(0.8)
     assert profile.managed_curve_y_scale == pytest.approx(1.2)
@@ -943,6 +1156,7 @@ def test_resolve_effective_run_options_merges_profile_and_cli() -> None:
     assert resolved.vdyp_sampling_mode is None
     assert resolved.vdyp_two_pass_rebin is None
     assert resolved.vdyp_min_stands_per_si_bin is None
+    assert resolved.vdyp_toe_shift_years is None
     assert resolved.managed_curve_mode is None
     assert resolved.managed_curve_x_scale is None
     assert resolved.managed_curve_y_scale is None
@@ -977,6 +1191,17 @@ def test_load_pipeline_run_profile_rejects_non_positive_vdyp_min_stands(
         load_pipeline_run_profile(profile_path)
 
 
+def test_load_pipeline_run_profile_rejects_invalid_vdyp_toe_shift_years(
+    tmp_path: Path,
+) -> None:
+    profile_path = tmp_path / "run_profile.yaml"
+    profile_path.write_text(
+        "modes:\n  vdyp_toe_shift_years: not-a-number\n", encoding="utf-8"
+    )
+    with pytest.raises(ValueError, match="modes.vdyp_toe_shift_years"):
+        load_pipeline_run_profile(profile_path)
+
+
 def test_load_pipeline_run_profile_rejects_invalid_managed_curve_mode(
     tmp_path: Path,
 ) -> None:
@@ -1008,6 +1233,7 @@ def test_build_legacy_execution_plan_resolves_env_and_paths(tmp_path: Path) -> N
         vdyp_sampling_mode="all",
         vdyp_two_pass_rebin=True,
         vdyp_min_stands_per_si_bin=10,
+        vdyp_toe_shift_years=15.0,
         managed_curve_mode="vdyp_transform",
         managed_curve_x_scale=0.8,
         managed_curve_y_scale=1.2,
@@ -1047,6 +1273,7 @@ def test_build_legacy_execution_plan_resolves_env_and_paths(tmp_path: Path) -> N
     assert plan.env["FEMIC_VDYP_SAMPLING_MODE"] == "all"
     assert plan.env["FEMIC_VDYP_TWO_PASS_REBIN"] == "1"
     assert plan.env["FEMIC_VDYP_MIN_STANDS_PER_SI_BIN"] == "10"
+    assert plan.env["FEMIC_VDYP_TOE_SHIFT_YEARS"] == "15.0"
     assert plan.env["FEMIC_MANAGED_CURVE_MODE"] == "vdyp_transform"
     assert plan.env["FEMIC_MANAGED_CURVE_X_SCALE"] == "0.8"
     assert plan.env["FEMIC_MANAGED_CURVE_Y_SCALE"] == "1.2"

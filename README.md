@@ -110,6 +110,14 @@ Patchworks XML now includes species-wise yield attributes derived as
 `TotalVolume(age) * SpeciesProportion(age)` for unmanaged and managed tracks.
 CC treatment minimum age is now resolved per AU as
 `CMAI(managed_total_curve)-20` (clamped to `0..--cc-max-age`).
+ForestModel feature attributes also include old-growth indicators for each AU
+and totals:
+- `feature.Area.og1.<au_id>` and `feature.Area.og1.total`
+- `feature.Area.og2.<au_id>` and `feature.Area.og2.total`
+
+`og1` ramps linearly from `0` at unmanaged-curve CMAI age to `1` at unmanaged
+peak-yield age. `og2` is a policy-step indicator that snaps from `0` at age
+`249` to `1` at age `250`.
 
 If your checkpoint carries continuous THLB signal values (for example `thlb_raw`
 in `[0, 1]`), you can tune managed/unmanaged assignment at export time:

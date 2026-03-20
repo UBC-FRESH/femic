@@ -175,6 +175,7 @@ Subcommands
 
 - ``patchworks``: ``python -m femic export patchworks [OPTIONS]``
 - ``woodstock``: ``python -m femic export woodstock [OPTIONS]``
+- ``dual``: ``python -m femic export dual [OPTIONS]``
 - ``release``: ``python -m femic export release [OPTIONS]``
 
 ``export patchworks`` options
@@ -204,6 +205,24 @@ Subcommands
 - ``--cc-min-age INTEGER`` (default: ``0``)
 - ``--cc-max-age INTEGER`` (default: ``1000``)
 - ``--fragments-crs TEXT`` (default: ``EPSG:3005``)
+- ``--instance-root PATH``
+
+``export dual`` options
+
+- ``--tsa TEXT`` (repeatable, required)
+- ``--bundle-dir PATH`` (default: ``data/model_input_bundle``)
+- ``--checkpoint PATH`` (default: ``data/ria_vri_vclr1p_checkpoint7.feather``)
+- ``--patchworks-output-dir PATH`` (default: ``output/patchworks``)
+- ``--woodstock-output-dir PATH`` (default: ``output/woodstock``)
+- ``--with-ws3-smoke / --no-ws3-smoke`` (default: ``--no-ws3-smoke``)
+- ``--ws3-command TEXT`` (optional shell command for ws3 simulation smoke)
+- ``--ws3-workdir PATH`` (optional command working directory)
+- ``--ws3-report PATH`` (default: ``evidence/ws3_smoke_report.latest.json``)
+- ``--ws3-require-command / --ws3-allow-no-command`` (default: allow no command)
+- ``--ws3-timeout-seconds INTEGER`` (default: ``600``)
+- ``--ws3-repo-path PATH`` (optional local ws3 checkout path for builtin smoke)
+- ``--ws3-builtin-smoke / --no-ws3-builtin-smoke`` (default: ``--no-ws3-builtin-smoke``)
+- ``--ws3-bridge-dir PATH`` (optional output directory for generated ws3 section files)
 - ``--instance-root PATH``
 
 ``export release`` options
@@ -268,6 +287,7 @@ Subcommands
 - ``promote-evidence``: ``python -m femic instance promote-evidence [OPTIONS]``
 - ``refresh-reference-evidence``: ``python -m femic instance refresh-reference-evidence [OPTIONS]``
 - ``account-surface``: ``python -m femic instance account-surface [OPTIONS]``
+- ``ws3-smoke``: ``python -m femic instance ws3-smoke [OPTIONS]``
 
 ``instance init`` options
 
@@ -350,3 +370,16 @@ When ``tracks/products.csv`` and ``tracks/curves.csv`` are available it also
 computes a deterministic diagnosis for the
 ``total OK, species-wise empty`` failure signature and prints recommended
 next-check steps.
+
+``instance ws3-smoke`` options
+
+- ``--woodstock-dir PATH`` (default: ``output/woodstock``)
+- ``--output PATH`` (default: ``evidence/ws3_smoke_report.latest.json``)
+- ``--ws3-command TEXT`` (optional shell command for ws3 simulation smoke)
+- ``--ws3-workdir PATH`` (optional command working directory)
+- ``--require-command / --allow-no-command`` (default: allow no command)
+- ``--timeout-seconds INTEGER`` (default: ``600``)
+- ``--ws3-repo-path PATH`` (optional local ws3 checkout path for builtin smoke)
+- ``--builtin-model-smoke / --no-builtin-model-smoke`` (default: ``--builtin-model-smoke``)
+- ``--ws3-bridge-dir PATH`` (optional output directory for generated ws3 section files)
+- ``--instance-root PATH``

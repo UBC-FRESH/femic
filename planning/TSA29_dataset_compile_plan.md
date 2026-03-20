@@ -1,106 +1,226 @@
-# TSA 29 Dataset Compile Plan
+# TSA29 Dataset Compile Plan (Dual Fork: Patchworks + Woodstock/ws3)
 
 ## Objective
 
-Compile a fresh model-input dataset for TSA `29` using the FEMIC CLI, with
-auditable manifests/logs and deterministic sampling controls.
+Compile and validate a TSA29 instance that serves two downstream targets from a
+single FEMIC pipeline run:
 
-## Current Readiness
+1. Patchworks-formatted outputs (teaching/training support).
+2. Woodstock-formatted outputs for ws3 model ingestion and simulation smoke
+   testing (research-critical path).
 
-- Core pipeline roadmap phases are closed (Phase 1/2/3 in `ROADMAP.md` are checked).
-- CLI/run-profile/manifest/reproducibility features are in place.
-- Critical TSA-29 gate remains:
-  `config/tipsy/tsa29.yaml` does not exist yet and must be created before a
-  production run.
+## Scope Lock
 
-## Preconditions
+- Primary success path: Woodstock/ws3 branch must run to a smoke-tested ws3
+  simulation without errors and with sane outputs.
+- Patchworks branch remains required, but secondary.
+- Validation does not stop at "Woodstock files emitted"; it extends to "ws3
+  model instance runs".
 
-1. Runtime/tooling
-- Activated project venv.
-- `PYTHONPATH=src python -m femic --help` succeeds.
-- `wine` available on `PATH` (or run with cache-only expectations plus `--resume`).
+## Current State
 
-2. Data/layout
-- Required data files exist under repo `data/` (or configured external root).
-- `vdyp_io/VDYP_CFG` and `VDYP7/VDYP7/VDYP7Console.exe` exist.
+- Standalone instance repo exists: `https://github.com/UBC-FRESH/femic-tsa29-instance`.
+- FEMIC parent repo links it as submodule:
+  `external/femic-tsa29-instance`.
+- Snapshot baseline is published (`v0.1.0`) for immediate student use.
+- Full rebuild remains open due to known Linux-side TSA index mismatch in 01a;
+  Patchworks-enabled host validation remains required.
 
-3. TIPSY config handoff
-- Add `config/tipsy/tsa29.yaml` using existing TSA configs as template.
-- Validate before run:
-  `PYTHONPATH=src python -m femic tipsy validate --config-dir config/tipsy --tsa 29`
+## End-to-End Pipeline Contract
 
-## Step-by-Step Execution
+### Stage A: Upstream FEMIC compile
 
-1. Create TSA 29 run profile (recommended)
-- Copy `config/run_profile.example.yaml` to `config/run_profile.tsa29.yaml`.
-- Set:
-  - `selection.tsa: ["29"]`
-  - desired `modes` values (`resume`, `verbose`, `skip_checks`, `debug_rows`)
-  - `run.run_id` (for traceability), `run.log_dir` if non-default.
+Required:
 
-2. Optional deterministic seed
-- Export a fixed seed for reproducible bootstrap sampling:
-  `export FEMIC_SAMPLING_SEED=42`
+- `femic prep validate-case --run-config config/run_profile.tsa29.yaml --tipsy-config-dir config/tipsy`
+- `femic run --run-config config/run_profile.tsa29.yaml`
+- `femic tsa post-tipsy --run-config config/run_profile.tsa29.yaml --tsa 29`
 
-3. Dry-run sanity check
-- `PYTHONPATH=src python -m femic run --run-config config/run_profile.tsa29.yaml --dry-run`
+Expected core artifacts:
 
-4. Execute compile
-- `PYTHONPATH=src python -m femic run --run-config config/run_profile.tsa29.yaml`
+- `data/model_input_bundle/{au_table,curve_table,curve_points_table}.csv`
+- run manifests in `vdyp_io/logs/`
 
-5. Post-run diagnostics
-- `PYTHONPATH=src python -m femic vdyp report`
-- Optional thresholded gate:
-  `PYTHONPATH=src python -m femic vdyp report --max-curve-warnings 5 --max-first-point-mismatches 0`
+### Stage B: Pipeline fork outputs
 
-## Outputs To Verify
+#### Branch B1 (Patchworks)
 
-1. Run manifest
-- `vdyp_io/logs/run_manifest-<run_id>.json`
-- Confirm:
-  - `status: "ok"`
-  - `config_provenance.run_config_path` / `run_config_sha256`
-  - `runtime_parameters` populated
-  - `outputs.version_tag` and `outputs.versioned_output_dir`
+Required:
 
-2. Run-scoped logs
-- `vdyp_io/logs/vdyp_runs-tsa29-<run_id>.jsonl`
-- `vdyp_io/logs/vdyp_curve_events-tsa29-<run_id>.jsonl`
-- `vdyp_io/logs/vdyp_stdout-tsa29-<run_id>.log`
-- `vdyp_io/logs/vdyp_stderr-tsa29-<run_id>.log`
+- `femic patchworks preflight --config config/patchworks.runtime.windows.yaml`
+- `femic patchworks build-blocks --config config/patchworks.runtime.windows.yaml --with-topology`
+- `femic patchworks matrix-build --config config/patchworks.runtime.windows.yaml`
 
-3. Model input bundle artifacts
-- Under `data/model_input_bundle/`:
-  - `au_table.feather`
-  - `curve_table.feather`
-  - `curve_points_table.feather`
+Expected artifacts:
 
-## Risk/Failure Checklist
+- `output/patchworks_tsa29_validated/forestmodel.xml`
+- fragment bundle (`fragments.*`, or externalized thin-instance equivalent +
+  checksums)
+- matrix builder manifest in `vdyp_io/logs/`
 
-1. Missing TSA29 TIPSY config
-- Symptom: fail-fast around TIPSY config discovery/validation.
-- Action: create/fix `config/tipsy/tsa29.yaml`, rerun `tipsy validate`.
+#### Branch B2 (Woodstock -> ws3)
 
-2. External data root mismatch
-- Symptom: missing source data warnings/errors.
-- Action: set `FEMIC_EXTERNAL_DATA_ROOT` to the correct base path.
+Required:
 
-3. VDYP tool availability
-- Symptom: preflight errors for `wine`/VDYP executable/config.
-- Action: fix environment, then rerun.
+- `femic export woodstock --bundle-dir data/model_input_bundle --output-dir output/woodstock_tsa29`
 
-## Suggested Run Modes
+Expected artifacts:
 
-1. First-pass debug
-- Use `debug_rows` in profile (e.g., 500-2000) to validate end-to-end wiring.
+- complete Woodstock-formatted dataset under `output/woodstock_tsa29/`
+- export manifest and checksums
 
-2. Full production compile
-- Remove `debug_rows`, keep `resume: true`, keep fixed `run_id` naming convention
-  (for example `tsa29_YYYYMMDD`).
+## ws3 Integration and Smoke-Test Contract
 
-## Completion Criteria
+### ws3 target repository
 
-- TSA29 run completes with exit code 0.
-- Manifest status is `ok` and provenance/runtime fields are populated.
-- VDYP report succeeds without unexpected parse-error spikes.
-- Bundle outputs and run-scoped logs for TSA29 are present.
+- `https://github.com/UBC-FRESH/ws3`
+
+### Required smoke-test path
+
+1. Create or reuse a TSA29 ws3 model instance scaffold.
+2. Link FEMIC Woodstock outputs into ws3 input ports.
+3. Run a minimal ws3 simulation.
+4. Capture run log and summary outputs.
+
+### Smoke-test acceptance criteria
+
+- ws3 run exits successfully (no parser/runtime errors).
+- input mappings resolve (no missing Woodstock tables/keys).
+- at least one planning result table/report is emitted.
+- sanity checks pass (non-empty schedules/volumes/areas; no all-zero collapse
+  unless explicitly expected and documented).
+
+### Evidence artifacts
+
+- `evidence/ws3_smoke_report.latest.json`
+- `evidence/ws3_smoke_logs/` (or referenced external log path with checksums)
+- mapping manifest documenting FEMIC Woodstock outputs -> ws3 inputs.
+
+## Risks and controls
+
+1. FEMIC upstream compile regression (current 01a TSA index issue):
+- Control: preserve snapshot baseline for immediate use; track full rebuild
+  blocker and fix before phase closure.
+
+2. Woodstock export appears valid but ws3 fails:
+- Control: ws3 smoke test is mandatory gate, not optional.
+
+3. Drift between Patchworks and Woodstock branches:
+- Control: add shared invariant checks at fork point and branch-specific
+  contract checks.
+
+## Open Investigation: Site Productivity (siteprod) Dependency and Failure Policy
+
+Question to resolve in Phase 19 execution hardening:
+
+- Does FEMIC materially use siteprod raster SI values in any critical compile
+  path, specifically for:
+  - strata construction,
+  - AU assignment,
+  - VDYP curve generation,
+  - TIPSY curve generation,
+  - or another downstream component?
+
+Decision gate:
+
+1. If siteprod is not required for current default outputs:
+- disable siteprod compile/sampling steps in the default code path.
+- move siteprod work behind an explicit optional flag/path used only by
+  workflows that truly require it.
+
+2. If siteprod is required:
+- keep it enabled, but harden logic so sparse/no-data stands do not crash
+  full runs.
+- enforce robust no-data handling (row-level fallback/NA policy) and clear
+  diagnostics instead of runtime-warning storms or hard failures.
+
+## Deferred Follow-On: VDYP Parallelization (Separate Non-Blocking Phase)
+
+This work is intentionally split from TSA29 compile delivery so we do not delay
+student-usable instance publication while pursuing concurrency tuning.
+
+Scope for follow-on phase:
+
+1. Add AU-level (or stratum-bucket) parallel VDYP execution as an opt-in path.
+2. Preserve deterministic outputs versus serial baseline (contract tests
+   required before any default switch).
+3. Improve runtime observability for long runs (chunk/AU progress heartbeat,
+   elapsed timing, and completion summary in logs/manifests).
+4. Publish benchmark results comparing serial vs parallel wall-clock/runtime
+   resource use on at least one large TSA workload.
+
+Non-blocking rule:
+
+- TSA29 Phase 19 completion is not gated on this optimization phase.
+- Parallel mode can ship as experimental behind a feature flag first.
+
+### P20.1 Acceptance Checklist (Contract + Non-Regression Invariants)
+
+Parallelization work can proceed only after this checklist is locked:
+
+1. Scope boundary:
+- Parallel target is VDYP processing only (no behavior changes in strata, AU,
+  TIPSY, Patchworks, or Woodstock stages).
+- Initial granularity target is AU-level task partitioning; finer partitioning
+  is optional and must preserve deterministic merge order.
+
+2. Parity invariants (serial vs parallel):
+- For the same run config/seed/input bundle, serialized outputs must match on:
+  - `vdyp_curves_smooth-tsaXX.feather` row set and key columns,
+  - generated model input bundle tables used downstream,
+  - final export row counts for Patchworks/Woodstock.
+- Numeric tolerance policy:
+  - exact match for IDs/categorical fields,
+  - floating values within configured tolerance (`abs <= 1e-6`) unless a
+    tighter threshold is demonstrated stable.
+
+3. Determinism invariants:
+- Re-running parallel mode twice with identical inputs must produce equivalent
+  hashes for normalized VDYP-stage outputs.
+- Merge/reduction order must be explicit and stable (no nondeterministic
+  concatenate/group-by output ordering).
+
+4. Failure and fallback policy:
+- Any worker failure must be surfaced with AU context and full traceback.
+- Pipeline must support automatic fallback to serial mode (or explicit hard
+  fail) based on one documented switch; no silent partial-success behavior.
+
+5. Observability minimums:
+- Long-running VDYP stages must emit periodic progress heartbeats including:
+  - completed units / total units,
+  - elapsed wall time,
+  - current AU (or chunk identifier),
+  - failure count.
+- Manifest/log summary must include timing breakdown for serial vs parallel.
+
+6. Performance gate:
+- Demonstrate at least one meaningful speedup benchmark on a large TSA case
+  without violating parity invariants.
+- If speedup is negligible or unstable, keep feature opt-in and do not change
+  default mode.
+
+7. Rollout gate:
+- Ship behind a feature flag first.
+- Promote to default only after parity suite, benchmark evidence, and one full
+  clean-slate TSA instance compile pass in production-like conditions.
+
+## Completion criteria
+
+Phase closes only when all are true:
+
+- Snapshot baseline remains student-usable.
+- Full compile + Patchworks branch validation is green in supported runtime.
+- Woodstock export is generated from same compile and validated.
+- ws3 smoke-test run is green with recorded evidence and sane output summary.
+
+## Active Run Follow-Up Notes (Do Not Interrupt Current Run)
+
+- Current monitored clean run reports stratum coverage near `0.656` with
+  approximately 10 strata in the active cutoff.
+- For the next TSA29 run, increase strata inclusion target to aim for coverage
+  near `0.8` (preferred operational target), then compare downstream output
+  sanity and runtime impact.
+- This is queued as a next-run tuning change only; do not mutate parameters or
+  restart the in-flight monitoring run.
+- Phase 20 work remains explicitly deferred until TSA29 is stable enough for
+  graduate-student handoff.

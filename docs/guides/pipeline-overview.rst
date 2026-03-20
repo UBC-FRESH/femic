@@ -44,6 +44,7 @@ For deterministic orchestration using the new rebuild runner abstraction, use:
 
       femic export patchworks --tsa <code>
       femic export woodstock --tsa <code>
+      femic export dual --tsa <code> --with-ws3-smoke --ws3-command "<ws3 smoke command>"
 
 Stage Boundaries
 ----------------
@@ -61,6 +62,8 @@ Key Assumptions
 - Inventory and growth model inputs are local and version-controlled by path,
   not fetched dynamically at runtime.
 - TIPSY is a manual Windows GUI boundary (human in the loop).
+- ``02_input-*.dat`` is the canonical BatchTIPSY handoff input; XLSX companions
+  are readability aids generated from the same payload.
 - Diagnostic plots are required QA artifacts, not optional cosmetics.
 
 Operator Interpretation Callouts

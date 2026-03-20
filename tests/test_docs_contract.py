@@ -180,6 +180,18 @@ def test_cli_reference_mentions_current_high_value_options() -> None:
             ],
         ),
         (
+            ["export", "dual", "--help"],
+            [
+                "--with-ws3-smoke",
+                "--ws3-command",
+                "--ws3-workdir",
+                "--ws3-report",
+                "--ws3-repo-path",
+                "--ws3-builtin-smoke",
+                "--ws3-bridge-dir",
+            ],
+        ),
+        (
             ["patchworks", "preflight", "--help"],
             ["--config"],
         ),
@@ -249,6 +261,19 @@ def test_cli_reference_mentions_current_high_value_options() -> None:
                 "--reference-root",
                 "--max-warn-increase",
                 "--max-baseline-diff-increase",
+            ],
+        ),
+        (
+            ["instance", "ws3-smoke", "--help"],
+            [
+                "--woodstock-dir",
+                "--output",
+                "--ws3-command",
+                "--ws3-workdir",
+                "--require-command",
+                "--timeout-seconds",
+                "--ws3-repo-path",
+                "--ws3-bridge-dir",
             ],
         ),
     ]

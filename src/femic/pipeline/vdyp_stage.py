@@ -6,6 +6,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 import functools
 import importlib
+import math
 import os
 import pickle
 import shlex
@@ -23,6 +24,7 @@ from femic.pipeline.diagnostics import (
     build_timestamped_event,
 )
 from femic.pipeline.tsa import resolve_si_level_quantiles_for_stratum
+from femic.pipeline.vdyp_curves import detect_linear_tail_segment
 
 
 @dataclass(frozen=True)
@@ -469,8 +471,8 @@ def load_vdyp_input_tables(
     source_mask: Any | None = None,
     source_map_ids: Sequence[str] | None = None,
     source_feature_ids: Sequence[Any] | None = None,
-    source_map_id_chunk_size: int = 5,
-    source_feature_id_chunk_size: int = 400,
+    source_map_id_chunk_size: int | None = 5,
+    source_feature_id_chunk_size: int | None = None,
     gpd_module: Any | None = None,
     message_fn: Callable[..., Any] = print,
 ) -> tuple[Any, Any]:
@@ -499,35 +501,47 @@ def load_vdyp_input_tables(
                 return gpd_mod.read_file(
                     vdyp_input_pandl_path,
                     layer=layer,
-                    driver="FileGDB",
                     where="1=0",
                 )
             pd_mod = importlib.import_module("pandas")
-            chunks: list[Any] = []
-            chunk_size = max(int(source_feature_id_chunk_size), 1)
-            total_chunks = (len(feature_ids) + chunk_size - 1) // chunk_size
-            message_fn(
-                f"VDYP layer {layer}: loading {len(feature_ids)} feature_ids "
-                f"in {total_chunks} chunks (chunk_size={chunk_size})"
-            )
-            for start in range(0, len(feature_ids), chunk_size):
-                chunk_ids = feature_ids[start : start + chunk_size]
-                chunk_where = "FEATURE_ID IN (%s)" % ",".join(
-                    str(fid) for fid in chunk_ids
+            if source_feature_id_chunk_size and int(source_feature_id_chunk_size) > 0:
+                chunks: list[Any] = []
+                chunk_size = max(int(source_feature_id_chunk_size), 1)
+                total_chunks = (len(feature_ids) + chunk_size - 1) // chunk_size
+                message_fn(
+                    f"VDYP layer {layer}: loading {len(feature_ids)} feature_ids "
+                    f"in {total_chunks} chunks (chunk_size={chunk_size})"
                 )
-                chunk_i = (start // chunk_size) + 1
-                if chunk_i == 1 or chunk_i % 25 == 0 or chunk_i == total_chunks:
-                    message_fn(f"VDYP layer {layer}: chunk {chunk_i}/{total_chunks}")
-                chunks.append(
-                    gpd_mod.read_file(
-                        vdyp_input_pandl_path,
-                        layer=layer,
-                        driver="FileGDB",
-                        where=chunk_where,
-                        ignore_geometry=True,
+                for start in range(0, len(feature_ids), chunk_size):
+                    chunk_ids = feature_ids[start : start + chunk_size]
+                    chunk_where = "FEATURE_ID IN (%s)" % ",".join(
+                        str(fid) for fid in chunk_ids
                     )
-                )
-            return pd_mod.concat(chunks, ignore_index=True)
+                    chunk_i = (start // chunk_size) + 1
+                    if chunk_i == 1 or chunk_i % 25 == 0 or chunk_i == total_chunks:
+                        message_fn(
+                            f"VDYP layer {layer}: chunk {chunk_i}/{total_chunks}"
+                        )
+                    chunks.append(
+                        gpd_mod.read_file(
+                            vdyp_input_pandl_path,
+                            layer=layer,
+                            where=chunk_where,
+                            ignore_geometry=True,
+                        )
+                    )
+                return pd_mod.concat(chunks, ignore_index=True)
+
+            message_fn(
+                f"VDYP layer {layer}: full-layer read with in-memory FEATURE_ID "
+                f"filter (n={len(feature_ids)})"
+            )
+            table = gpd_mod.read_file(
+                vdyp_input_pandl_path,
+                layer=layer,
+                ignore_geometry=True,
+            )
+            return table[table.FEATURE_ID.isin(feature_ids)].copy()
 
         def _read_layer_by_map_ids(*, layer: int, map_ids: list[str]) -> Any:
             if not map_ids:
@@ -540,7 +554,7 @@ def load_vdyp_input_tables(
                 )
             pd_mod = importlib.import_module("pandas")
             chunks: list[Any] = []
-            chunk_size = max(int(source_map_id_chunk_size), 1)
+            chunk_size = max(int(source_map_id_chunk_size or 1), 1)
             total_chunks = (len(map_ids) + chunk_size - 1) // chunk_size
             message_fn(
                 f"VDYP layer {layer}: loading {len(map_ids)} map_ids "
@@ -601,7 +615,7 @@ def load_vdyp_input_tables(
             vdyp_lyr.to_feather(vdyp_lyr_feather_path)
             return vdyp_ply, vdyp_lyr
 
-        read_kwargs: dict[str, Any] = {"driver": "FileGDB"}
+        read_kwargs: dict[str, Any] = {}
         if source_where:
             read_kwargs["where"] = source_where
         if source_mask is not None:
@@ -609,7 +623,7 @@ def load_vdyp_input_tables(
         vdyp_ply = gpd_mod.read_file(vdyp_input_pandl_path, layer=0, **read_kwargs)
         vdyp_ply.to_feather(vdyp_ply_feather_path)
         # Layer 1 has no geometry; when loading by mask, fetch feature-id chunks.
-        lyr_kwargs = {"driver": "FileGDB"}
+        lyr_kwargs: dict[str, Any] = {}
         if source_where:
             lyr_kwargs["where"] = source_where
             vdyp_lyr = gpd_mod.read_file(vdyp_input_pandl_path, layer=1, **lyr_kwargs)
@@ -2212,6 +2226,121 @@ def execute_curve_smoothing_runs(
 ) -> list[SmoothedCurveResult]:
     """Build smoothed VDYP curves for each stratum/SI combination."""
 
+    fit_gate_max_mape = 2.0
+    fit_gate_max_early_overshoot = 8.0
+    fit_gate_catastrophic_mape = float(
+        os.environ.get("FEMIC_FIT_GATE_CATASTROPHIC_MAPE", "0.90")
+    )
+    fit_gate_max_early_underfit = float(
+        os.environ.get("FEMIC_FIT_GATE_MAX_EARLY_UNDERFIT", "100000.0")
+    )
+    dominant_recovery_max_metric_ratio = float(
+        os.environ.get("FEMIC_DOMINANT_RECOVERY_MAX_METRIC_RATIO", "0.40")
+    )
+    body_c_min_default = float(os.environ.get("FEMIC_BODY_C_MIN", "20.0"))
+    merchantable_floor_age = 20.0
+    merchantable_floor_value = 0.0
+    toe_shift_default_years = float(
+        os.environ.get("FEMIC_VDYP_TOE_SHIFT_YEARS", "20.0")
+    )
+    tail_default_linear_min_points = int(
+        os.environ.get("FEMIC_TAIL_LINEAR_MIN_POINTS", "4")
+    )
+    tail_default_linear_min_r2 = float(
+        os.environ.get("FEMIC_TAIL_LINEAR_MIN_R2", "0.75")
+    )
+    tail_default_linear_max_nrmse = float(
+        os.environ.get("FEMIC_TAIL_LINEAR_MAX_NRMSE", "0.18")
+    )
+    tail_default_linear_prefer_min_age = float(
+        os.environ.get("FEMIC_TAIL_LINEAR_PREFER_MIN_AGE", "180.0")
+    )
+    tail_default_linear_flat_slope_abs = float(
+        os.environ.get("FEMIC_TAIL_LINEAR_FLAT_SLOPE_ABS", "0.04")
+    )
+    tail_default_linear_min_span_years = float(
+        os.environ.get("FEMIC_TAIL_LINEAR_MIN_SPAN_YEARS", "80.0")
+    )
+    tail_default_blend_years = float(os.environ.get("FEMIC_TAIL_BLEND_YEARS", "40.0"))
+    tail_select_min_tail_improvement = float(
+        os.environ.get("FEMIC_TAIL_SELECT_MIN_TAIL_IMPROVEMENT", "0.96")
+    )
+    tail_select_max_rmse_ratio = float(
+        os.environ.get("FEMIC_TAIL_SELECT_MAX_RMSE_RATIO", "1.12")
+    )
+    tail_select_max_mape_ratio = float(
+        os.environ.get("FEMIC_TAIL_SELECT_MAX_MAPE_RATIO", "1.15")
+    )
+    tail_select_max_early_overshoot_ratio = float(
+        os.environ.get("FEMIC_TAIL_SELECT_MAX_EARLY_OVERSHOOT_RATIO", "1.20")
+    )
+    tail_select_close_tolerance = float(
+        os.environ.get("FEMIC_TAIL_SELECT_CLOSE_TOLERANCE", "0.06")
+    )
+    left_toe_low_ratio_threshold = float(
+        os.environ.get("FEMIC_LEFT_TOE_LOW_RATIO_THRESHOLD", "1.8")
+    )
+    left_toe_low_abs_excess = float(
+        os.environ.get("FEMIC_LEFT_TOE_LOW_ABS_EXCESS", "4.0")
+    )
+    left_toe_slope_kink_ratio = float(
+        os.environ.get("FEMIC_LEFT_TOE_SLOPE_KINK_RATIO", "2.5")
+    )
+    left_toe_slope_kink_abs = float(
+        os.environ.get("FEMIC_LEFT_TOE_SLOPE_KINK_ABS", "4.0")
+    )
+    left_toe_structural_min_skip = int(
+        os.environ.get("FEMIC_LEFT_TOE_STRUCTURAL_MIN_SKIP", "4")
+    )
+    left_toe_structural_max_rmse_ratio = float(
+        os.environ.get("FEMIC_LEFT_TOE_STRUCTURAL_MAX_RMSE_RATIO", "1.02")
+    )
+    left_toe_structural_max_tail_rmse_ratio = float(
+        os.environ.get("FEMIC_LEFT_TOE_STRUCTURAL_MAX_TAIL_RMSE_RATIO", "1.03")
+    )
+    left_toe_structural_max_mape_ratio = float(
+        os.environ.get("FEMIC_LEFT_TOE_STRUCTURAL_MAX_MAPE_RATIO", "1.03")
+    )
+    auto_skip_head_drop_ratio_threshold = float(
+        os.environ.get("FEMIC_AUTO_SKIP_HEAD_DROP_RATIO_THRESHOLD", "1.8")
+    )
+    auto_skip_head_drop_abs_threshold = float(
+        os.environ.get("FEMIC_AUTO_SKIP_HEAD_DROP_ABS_THRESHOLD", "3.0")
+    )
+
+    def _with_curve_defaults(params: dict[str, Any]) -> dict[str, Any]:
+        params.setdefault("toe_shift_years", toe_shift_default_years)
+        params.setdefault("body_c_min", body_c_min_default)
+        return params
+
+    def _with_tail_defaults(params: dict[str, Any]) -> dict[str, Any]:
+        params.setdefault("tail_linear_min_points", tail_default_linear_min_points)
+        params.setdefault("tail_linear_min_r2", tail_default_linear_min_r2)
+        params.setdefault("tail_linear_max_nrmse", tail_default_linear_max_nrmse)
+        params.setdefault(
+            "tail_linear_prefer_min_age", tail_default_linear_prefer_min_age
+        )
+        params.setdefault(
+            "tail_linear_flat_slope_abs", tail_default_linear_flat_slope_abs
+        )
+        params.setdefault(
+            "tail_linear_min_span_years", tail_default_linear_min_span_years
+        )
+        params.setdefault("tail_linear_allow_quantile_fallback", False)
+        params.setdefault("tail_blend_years", tail_default_blend_years)
+        return params
+
+    def _toe_shift_years_for_kwargs(params: Mapping[str, Any]) -> float:
+        value = params.get("toe_shift_years", 0.0)
+        try:
+            years = float(value)
+        except (TypeError, ValueError):
+            years = 0.0
+        return max(0.0, years)
+
+    def _toe_shift_active(params: Mapping[str, Any]) -> bool:
+        return _toe_shift_years_for_kwargs(params) > 0.0
+
     def _build_observed_bins(vdyp_out: Mapping[Any, Any]) -> Any | None:
         pd_module = importlib.import_module("pandas")
         vdyp_tables = [
@@ -2263,11 +2392,124 @@ def execute_curve_smoothing_runs(
             if np.any(early)
             else 1.0
         )
+        early_underfit = (
+            float(np.max(obs_vol[early] / np.maximum(pred[early], 1e-6)))
+            if np.any(early)
+            else 1.0
+        )
         return {
             "rmse": rmse,
             "mape": mape,
             "tail_rmse": tail_rmse,
             "early_overshoot": early_overshoot,
+            "early_underfit": early_underfit,
+        }
+
+    def _evaluate_fit_quality_gate(
+        *,
+        y_curve: Sequence[float],
+        metrics: Mapping[str, float] | None,
+    ) -> list[str]:
+        reasons: list[str] = []
+        y_vals = np.asarray(y_curve, dtype=float)
+        if y_vals.size == 0:
+            reasons.append("empty_curve")
+            return reasons
+        if not np.all(np.isfinite(y_vals)):
+            reasons.append("non_finite_curve")
+        if float(np.nanmin(y_vals)) < -1e-6:
+            reasons.append("negative_volume")
+        if metrics is None:
+            return reasons
+        mape = float(metrics.get("mape", float("nan")))
+        early_overshoot = float(metrics.get("early_overshoot", float("nan")))
+        early_underfit = float(metrics.get("early_underfit", float("nan")))
+        if not math.isfinite(mape):
+            reasons.append("non_finite_mape")
+        elif mape > fit_gate_max_mape:
+            reasons.append("mape_exceeds_gate")
+        elif mape >= fit_gate_catastrophic_mape:
+            reasons.append("catastrophic_mape")
+        if not math.isfinite(early_overshoot):
+            reasons.append("non_finite_early_overshoot")
+        elif early_overshoot > fit_gate_max_early_overshoot:
+            reasons.append("early_overshoot_exceeds_gate")
+        if not math.isfinite(early_underfit):
+            reasons.append("non_finite_early_underfit")
+        elif early_underfit > fit_gate_max_early_underfit:
+            reasons.append("early_underfit_exceeds_gate")
+        return reasons
+
+    def _dominant_recovery_decision(
+        *,
+        baseline_metrics: Mapping[str, float],
+        candidate_metrics: Mapping[str, float],
+    ) -> dict[str, Any]:
+        baseline_rmse = float(baseline_metrics.get("rmse", float("nan")))
+        baseline_mape = float(baseline_metrics.get("mape", float("nan")))
+        baseline_tail_rmse = float(baseline_metrics.get("tail_rmse", float("nan")))
+        baseline_early_underfit = float(
+            baseline_metrics.get("early_underfit", float("nan"))
+        )
+        candidate_rmse = float(candidate_metrics.get("rmse", float("nan")))
+        candidate_mape = float(candidate_metrics.get("mape", float("nan")))
+        candidate_tail_rmse = float(candidate_metrics.get("tail_rmse", float("nan")))
+        candidate_early_overshoot = float(
+            candidate_metrics.get("early_overshoot", float("nan"))
+        )
+        finite = all(
+            math.isfinite(v)
+            for v in (
+                baseline_rmse,
+                baseline_mape,
+                baseline_tail_rmse,
+                baseline_early_underfit,
+                candidate_rmse,
+                candidate_mape,
+                candidate_tail_rmse,
+                candidate_early_overshoot,
+            )
+        )
+        if not finite:
+            return {
+                "selected": False,
+                "decision": "reject_non_finite_metrics",
+                "baseline_catastrophic": False,
+            }
+        if baseline_rmse <= 0 or baseline_mape <= 0 or baseline_tail_rmse <= 0:
+            return {
+                "selected": False,
+                "decision": "reject_invalid_baseline",
+                "baseline_catastrophic": False,
+            }
+
+        rmse_ratio = candidate_rmse / baseline_rmse
+        mape_ratio = candidate_mape / baseline_mape
+        tail_rmse_ratio = candidate_tail_rmse / baseline_tail_rmse
+        baseline_catastrophic = (
+            baseline_mape >= fit_gate_catastrophic_mape
+            or baseline_early_underfit > fit_gate_max_early_underfit
+        )
+        candidate_safe_overshoot = (
+            candidate_early_overshoot <= fit_gate_max_early_overshoot
+        )
+        dominant_improvement = (
+            rmse_ratio <= dominant_recovery_max_metric_ratio
+            and mape_ratio <= dominant_recovery_max_metric_ratio
+            and tail_rmse_ratio <= dominant_recovery_max_metric_ratio
+        )
+        selected = bool(
+            baseline_catastrophic and dominant_improvement and candidate_safe_overshoot
+        )
+        return {
+            "selected": selected,
+            "decision": "selected" if selected else "rejected",
+            "baseline_catastrophic": bool(baseline_catastrophic),
+            "dominant_improvement": bool(dominant_improvement),
+            "candidate_safe_overshoot": bool(candidate_safe_overshoot),
+            "rmse_ratio": float(rmse_ratio),
+            "mape_ratio": float(mape_ratio),
+            "tail_rmse_ratio": float(tail_rmse_ratio),
         }
 
     def _infer_auto_skip1(
@@ -2289,10 +2531,87 @@ def execute_curve_smoothing_runs(
         ratio = pred[early] / np.maximum(obs_vol[early], 1e-6)
         bad = ratio > 1.8
         if not np.any(bad):
+            suggested_ratio = int(current_skip1)
+        else:
+            cutoff_age = float(np.max(obs_age[early][bad]))
+            suggested_ratio = int(np.count_nonzero(obs_age <= cutoff_age))
+
+        # Prefer minimal leading discontinuity censor when early bins show a
+        # clear high shoulder then abrupt drop.
+        suggested_head = int(current_skip1)
+        if obs_vol.size >= 5:
+            head = np.asarray(obs_vol[: min(8, obs_vol.size)], dtype=float)
+            if head.size >= 4:
+                head_diff = np.diff(head)
+                drop_idx = int(np.argmin(head_diff))
+                drop_val = float(head_diff[drop_idx])
+                if drop_val <= -auto_skip_head_drop_abs_threshold:
+                    left_med = float(np.median(head[: drop_idx + 1]))
+                    right_end = min(head.size, drop_idx + 3)
+                    right_med = float(np.median(head[drop_idx + 1 : right_end]))
+                    if (
+                        left_med / max(right_med, 1e-6)
+                        >= auto_skip_head_drop_ratio_threshold
+                    ):
+                        suggested_head = int(drop_idx + 1)
+        if suggested_head > int(current_skip1):
+            return int(suggested_head)
+        return int(max(current_skip1, suggested_ratio))
+
+    def _infer_left_toe_censor_skip(
+        *,
+        binned: Any,
+        current_skip1: int,
+    ) -> int:
+        obs_age = np.asarray(binned["age_bin"].values, dtype=float)
+        obs_vol = np.asarray(binned["median_volume"].values, dtype=float)
+        if obs_age.size < 6 or obs_vol.size < 6:
             return int(current_skip1)
-        cutoff_age = float(np.max(obs_age[early][bad]))
-        suggested = int(np.count_nonzero(obs_age <= cutoff_age))
-        return int(max(current_skip1, suggested))
+        early_limit = float(np.quantile(obs_age, 0.40))
+        early_idx = np.where(obs_age <= early_limit)[0]
+        if early_idx.size < 3:
+            return int(current_skip1)
+        suggested = int(current_skip1)
+        for idx in early_idx:
+            if idx < current_skip1:
+                continue
+            if idx + 2 >= obs_vol.size:
+                break
+            next_window = obs_vol[idx + 1 : idx + 4]
+            if next_window.size == 0:
+                break
+            next_median = float(np.median(next_window))
+            current = float(obs_vol[idx])
+            if next_median <= 0:
+                continue
+            ratio = current / next_median
+            abs_excess = current - next_median
+            if ratio >= 1.8 and abs_excess >= 5.0:
+                suggested = max(suggested, idx + 1)
+                continue
+            low_ratio = next_median / max(current, 1e-6)
+            low_excess = next_median - current
+            if (
+                low_ratio >= left_toe_low_ratio_threshold
+                and low_excess >= left_toe_low_abs_excess
+            ):
+                suggested = max(suggested, idx + 1)
+                continue
+            next_val = float(obs_vol[idx + 1])
+            if next_val > 0:
+                sharp_drop = current / next_val
+                if sharp_drop >= 1.6 and abs(current - next_val) >= 5.0:
+                    suggested = max(suggested, idx + 1)
+            if idx + 3 < obs_vol.size:
+                initial_slope = float(obs_vol[idx + 1] - obs_vol[idx])
+                follow_slopes = np.diff(obs_vol[idx + 1 : idx + 4])
+                if follow_slopes.size > 0:
+                    follow_scale = float(np.median(np.abs(follow_slopes)))
+                    if abs(initial_slope) >= left_toe_slope_kink_abs and abs(
+                        initial_slope
+                    ) >= left_toe_slope_kink_ratio * max(follow_scale, 1e-6):
+                        suggested = max(suggested, idx + 1)
+        return int(suggested)
 
     def _run_candidate(
         *,
@@ -2316,9 +2635,137 @@ def execute_curve_smoothing_runs(
                 curve_context=dict(curve_context, candidate=candidate_name),
                 **dict(kwargs),
             )
+            x_arr = np.asarray(x_c, dtype=float)
+            y_arr = np.asarray(y_c, dtype=float)
+            if (
+                x_arr.size == 0
+                or y_arr.size == 0
+                or x_arr.size != y_arr.size
+                or not np.all(np.isfinite(x_arr))
+                or not np.all(np.isfinite(y_arr))
+            ):
+                append_jsonl_fn(
+                    vdyp_curve_events_path,
+                    build_timestamped_event(
+                        event="vdyp_curve_fit",
+                        status="warning",
+                        stage="candidate_validation",
+                        reason="candidate_rejected_non_finite",
+                        context=curve_context,
+                        candidate_name=candidate_name,
+                        x_size=int(x_arr.size),
+                        y_size=int(y_arr.size),
+                    ),
+                )
+                return None
             return x_c, y_c
         except Exception:
             return None
+
+    def _select_tail_blend_candidate(
+        *,
+        current_metrics: Mapping[str, float],
+        tail_metrics: Mapping[str, float],
+    ) -> tuple[bool, dict[str, Any]]:
+        current_tail = float(current_metrics.get("tail_rmse", float("nan")))
+        current_rmse = float(current_metrics.get("rmse", float("nan")))
+        current_mape = float(current_metrics.get("mape", float("nan")))
+        current_early = float(current_metrics.get("early_overshoot", float("nan")))
+        tail_tail = float(tail_metrics.get("tail_rmse", float("nan")))
+        tail_rmse = float(tail_metrics.get("rmse", float("nan")))
+        tail_mape = float(tail_metrics.get("mape", float("nan")))
+        tail_early = float(tail_metrics.get("early_overshoot", float("nan")))
+
+        finite = all(
+            math.isfinite(v)
+            for v in (
+                current_tail,
+                current_rmse,
+                current_mape,
+                current_early,
+                tail_tail,
+                tail_rmse,
+                tail_mape,
+                tail_early,
+            )
+        )
+        if not finite:
+            return False, {"decision": "reject_non_finite_metrics"}
+        if current_tail <= 0 or current_rmse <= 0 or current_mape <= 0:
+            return False, {"decision": "reject_invalid_current_baseline"}
+
+        improve_tail = tail_tail <= (tail_select_min_tail_improvement * current_tail)
+        non_harm_guard = (
+            tail_rmse <= (tail_select_max_rmse_ratio * current_rmse)
+            and tail_mape <= (tail_select_max_mape_ratio * current_mape)
+            and tail_early <= (tail_select_max_early_overshoot_ratio * current_early)
+        )
+        close_tail = abs(tail_tail - current_tail) <= (
+            tail_select_close_tolerance * current_tail
+        )
+        improve_global = (
+            (tail_rmse < current_rmse)
+            and (tail_mape <= (1.05 * current_mape))
+            and (tail_early <= (1.10 * current_early))
+        )
+        tie_break = (
+            close_tail and (tail_rmse < current_rmse) and (tail_mape <= current_mape)
+        )
+        dominant_recovery = _dominant_recovery_decision(
+            baseline_metrics=current_metrics,
+            candidate_metrics=tail_metrics,
+        )
+        selected = bool(
+            (non_harm_guard and (improve_tail or improve_global or tie_break))
+            or bool(dominant_recovery.get("selected", False))
+        )
+        decision = "selected" if selected else "rejected"
+        return selected, {
+            "decision": decision,
+            "improve_tail": bool(improve_tail),
+            "improve_global": bool(improve_global),
+            "non_harm_guard": bool(non_harm_guard),
+            "tie_break": bool(tie_break),
+            "close_tail": bool(close_tail),
+            "dominant_recovery": dominant_recovery,
+        }
+
+    def _max_pre_merchantable_volume(
+        *,
+        x_curve: Sequence[float],
+        y_curve: Sequence[float],
+        floor_age: float,
+    ) -> float:
+        x_vals = np.asarray(x_curve, dtype=float)
+        y_vals = np.asarray(y_curve, dtype=float)
+        if x_vals.size == 0 or y_vals.size == 0:
+            return 0.0
+        max_eval_age = int(max(1, round(float(floor_age))))
+        eval_ages = np.arange(1.0, float(max_eval_age) + 1.0, 1.0, dtype=float)
+        pred = np.interp(eval_ages, x_vals, y_vals)
+        finite_pred = pred[np.isfinite(pred)]
+        if finite_pred.size == 0:
+            return 0.0
+        return float(np.max(finite_pred))
+
+    def _estimate_tail_blend_window(
+        *,
+        binned: Any | None,
+        anchor_quantile: float,
+        blend_years: float,
+    ) -> dict[str, float] | None:
+        if binned is None:
+            return None
+        ages = np.asarray(binned["age_bin"].values, dtype=float)
+        if ages.size == 0:
+            return None
+        anchor_age = float(
+            np.quantile(ages, float(np.clip(anchor_quantile, 0.5, 0.95)))
+        )
+        tail_end_age = float(
+            min(np.max(ages), anchor_age + max(1.0, float(blend_years)))
+        )
+        return {"anchor_age": anchor_age, "tail_end_age": tail_end_age}
 
     def _emit_fit_diagnostic_plot(
         *,
@@ -2330,6 +2777,10 @@ def execute_curve_smoothing_runs(
         binned: Any | None,
         x_fit: Sequence[float],
         y_fit: Sequence[float],
+        selected_x: Sequence[float],
+        selected_y: Sequence[float],
+        selected_path: str,
+        tail_blend_meta: Mapping[str, Any] | None,
         candidate_curves: Mapping[str, tuple[Sequence[float], Sequence[float]]],
         fit_metrics: Mapping[str, Mapping[str, float]],
     ) -> None:
@@ -2344,7 +2795,9 @@ def execute_curve_smoothing_runs(
             f"{str(stratumi).zfill(2)}-{stratum_code}-{si_level}.png"
         )
 
-        fig, ax = plt_module.subplots(1, 1, figsize=(8, 5))
+        fig, (ax, ax_resid) = plt_module.subplots(
+            2, 1, figsize=(8, 8), sharex=True, gridspec_kw={"height_ratios": [3, 1]}
+        )
         pd_module = importlib.import_module("pandas")
         raw_label_used = False
         for table in vdyp_out.values():
@@ -2393,9 +2846,19 @@ def execute_curve_smoothing_runs(
         ax.plot(
             list(x_fit), list(y_fit), color="tab:red", linewidth=2, label="Current fit"
         )
+        ax.plot(
+            list(selected_x),
+            list(selected_y),
+            color="black",
+            linewidth=2.3,
+            linestyle="-.",
+            label=f"Selected fit ({selected_path})",
+        )
         for key, color, label in (
             ("tail_blend", "tab:orange", "Tail-blend fit"),
             ("auto_skip", "tab:purple", "Auto-skip fit"),
+            ("left_toe_censor", "tab:brown", "Left-toe censor fit"),
+            ("merchantable_floor", "tab:olive", "Merch-floor fit"),
         ):
             curve = candidate_curves.get(key)
             if curve is None:
@@ -2422,7 +2885,13 @@ def execute_curve_smoothing_runs(
         ax.grid(alpha=0.25)
         ax.legend(fontsize=8)
         stats_lines: list[str] = []
-        for name in ("current", "tail_blend", "auto_skip"):
+        for name in (
+            "current",
+            "tail_blend",
+            "auto_skip",
+            "left_toe_censor",
+            "merchantable_floor",
+        ):
             metric = fit_metrics.get(name)
             if not metric:
                 continue
@@ -2441,6 +2910,45 @@ def execute_curve_smoothing_runs(
                 fontsize=7,
                 bbox={"facecolor": "white", "alpha": 0.75, "edgecolor": "none"},
             )
+        if tail_blend_meta:
+            anchor_age = tail_blend_meta.get("anchor_age")
+            tail_end_age = tail_blend_meta.get("tail_end_age")
+            if anchor_age is not None and tail_end_age is not None:
+                ax.axvspan(
+                    float(anchor_age),
+                    float(tail_end_age),
+                    color="orange",
+                    alpha=0.08,
+                    label="Tail blend window",
+                )
+                ax.text(
+                    0.99,
+                    0.01,
+                    f"blend [{float(anchor_age):.0f}, {float(tail_end_age):.0f}]",
+                    transform=ax.transAxes,
+                    ha="right",
+                    va="bottom",
+                    fontsize=7,
+                    bbox={"facecolor": "white", "alpha": 0.65, "edgecolor": "none"},
+                )
+
+        if binned is not None:
+            obs_age = np.asarray(binned["age_bin"].values, dtype=float)
+            obs_vol = np.asarray(binned["median_volume"].values, dtype=float)
+            pred_sel = np.interp(
+                obs_age,
+                np.asarray(selected_x, dtype=float),
+                np.asarray(selected_y, dtype=float),
+            )
+            residual = pred_sel - obs_vol
+            ax_resid.axhline(0.0, color="black", linewidth=1.0, alpha=0.6)
+            ax_resid.scatter(obs_age, residual, s=14, color="tab:gray", alpha=0.8)
+            ax_resid.plot(obs_age, residual, color="tab:gray", linewidth=1.2, alpha=0.7)
+            ax_resid.set_ylabel("Residual")
+        else:
+            ax_resid.set_ylabel("Residual")
+        ax_resid.set_xlabel("Age")
+        ax_resid.grid(alpha=0.25)
         fig.tight_layout()
         fig.savefig(plot_path, dpi=150)
         plt_module.close(fig)
@@ -2505,7 +3013,9 @@ def execute_curve_smoothing_runs(
     smoothed_runs: list[SmoothedCurveResult] = []
     for stratumi, sc, _result in results_for_tsa:
         for si_level in si_levels:
-            kwargs = dict(kwarg_overrides_for_tsa.get((sc, si_level), {}))
+            kwargs = _with_curve_defaults(
+                dict(kwarg_overrides_for_tsa.get((sc, si_level), {}))
+            )
             curve_context = {
                 "run_id": run_id,
                 "tsa": tsa,
@@ -2544,36 +3054,19 @@ def execute_curve_smoothing_runs(
             binned_obs = _build_observed_bins(vdyp_out)
             candidate_curves: dict[str, tuple[Sequence[float], Sequence[float]]] = {}
             fit_metrics: dict[str, dict[str, float]] = {}
+            tail_blend_meta_for_plot: dict[str, float] | None = None
             if binned_obs is not None:
                 fit_metrics["current"] = _fit_quality(
                     binned=binned_obs,
                     x_curve=x,
                     y_curve=y,
                 )
+                active_kwargs = dict(kwargs)
+                initial_skip1 = int(kwargs.get("skip1", 0))
+                active_curve: tuple[Sequence[float], Sequence[float]] = (x, y)
+                active_metrics = fit_metrics["current"]
 
-                tail_kwargs = dict(kwargs)
-                tail_kwargs["tail_blend_enabled"] = True
-                tail_kwargs["tail_linear_min_points"] = 4
-                tail_kwargs["tail_linear_min_r2"] = 0.82
-                tail_kwargs["tail_linear_max_nrmse"] = 0.12
-                tail_kwargs["tail_linear_prefer_min_age"] = 190.0
-                tail_kwargs["tail_linear_allow_quantile_fallback"] = False
-                tail_kwargs["tail_blend_years"] = 30.0
-                tail_curve = _run_candidate(
-                    vdyp_out=vdyp_out,
-                    curve_context=curve_context,
-                    kwargs=tail_kwargs,
-                    candidate_name="tail_blend",
-                )
-                if tail_curve is not None:
-                    candidate_curves["tail_blend"] = tail_curve
-                    fit_metrics["tail_blend"] = _fit_quality(
-                        binned=binned_obs,
-                        x_curve=tail_curve[0],
-                        y_curve=tail_curve[1],
-                    )
-
-                current_skip1 = int(kwargs.get("skip1", 0))
+                current_skip1 = int(active_kwargs.get("skip1", 0))
                 suggested_skip = _infer_auto_skip1(
                     binned=binned_obs,
                     x_curve=x,
@@ -2609,7 +3102,468 @@ def execute_curve_smoothing_runs(
                         if improved_rmse and improved_tail and reduced_overshoot:
                             candidate_curves["auto_skip"] = auto_curve
                             fit_metrics["auto_skip"] = auto_metrics
+                            active_kwargs["skip1"] = int(suggested_skip)
+                            active_curve = auto_curve
+                            active_metrics = auto_metrics
 
+                left_toe_base_skip = int(kwargs.get("skip1", 0))
+                left_toe_skip = _infer_left_toe_censor_skip(
+                    binned=binned_obs,
+                    current_skip1=left_toe_base_skip,
+                )
+                if left_toe_skip > left_toe_base_skip:
+                    prior_skip1 = int(active_kwargs.get("skip1", 0))
+                    censor_skip = int(max(prior_skip1, left_toe_skip))
+                    censor_kwargs = dict(active_kwargs)
+                    censor_kwargs["skip1"] = censor_skip
+                    censor_curve = _run_candidate(
+                        vdyp_out=vdyp_out,
+                        curve_context=dict(
+                            curve_context,
+                            left_toe_censor_skip1=left_toe_skip,
+                        ),
+                        kwargs=censor_kwargs,
+                        candidate_name="left_toe_censor",
+                    )
+                    if censor_curve is not None:
+                        censor_metrics = _fit_quality(
+                            binned=binned_obs,
+                            x_curve=censor_curve[0],
+                            y_curve=censor_curve[1],
+                        )
+                        fit_metrics["left_toe_censor"] = censor_metrics
+                        baseline = active_metrics
+                        improved_overshoot = censor_metrics["early_overshoot"] <= (
+                            0.80 * baseline["early_overshoot"]
+                        )
+                        improved_rmse = censor_metrics["rmse"] <= (
+                            0.97 * baseline["rmse"]
+                        )
+                        improved_mape = censor_metrics["mape"] <= baseline["mape"]
+                        structural_skip_delta = int(censor_skip - left_toe_base_skip)
+                        structural_non_harm = (
+                            censor_metrics["rmse"]
+                            <= (left_toe_structural_max_rmse_ratio * baseline["rmse"])
+                            and censor_metrics["tail_rmse"]
+                            <= (
+                                left_toe_structural_max_tail_rmse_ratio
+                                * baseline["tail_rmse"]
+                            )
+                            and censor_metrics["mape"]
+                            <= (left_toe_structural_max_mape_ratio * baseline["mape"])
+                        )
+                        structural_discontinuity_accept = (
+                            structural_skip_delta >= left_toe_structural_min_skip
+                        )
+                        dominant_recovery = _dominant_recovery_decision(
+                            baseline_metrics=baseline,
+                            candidate_metrics=censor_metrics,
+                        )
+                        additional_after_auto = prior_skip1 > int(initial_skip1)
+                        structural_additional_improvement = (
+                            improved_rmse or improved_overshoot
+                        )
+                        structural_accept = bool(
+                            structural_discontinuity_accept
+                            and structural_non_harm
+                            and (
+                                (not additional_after_auto)
+                                or structural_additional_improvement
+                            )
+                        )
+                        already_applied = prior_skip1 >= int(
+                            left_toe_skip
+                        ) and prior_skip1 > int(left_toe_base_skip)
+                        accepted = (
+                            (improved_overshoot and (improved_rmse or improved_mape))
+                            or structural_accept
+                            or bool(already_applied)
+                            or bool(dominant_recovery.get("selected", False))
+                        )
+                        append_jsonl_fn(
+                            vdyp_curve_events_path,
+                            build_timestamped_event(
+                                event="vdyp_curve_fit",
+                                status="info",
+                                stage="left_toe_censor",
+                                reason=(
+                                    "left_toe_censor_selected"
+                                    if accepted
+                                    else "left_toe_censor_rejected"
+                                ),
+                                context=curve_context,
+                                skip1_before=int(prior_skip1),
+                                skip1_after=int(censor_skip),
+                                baseline_metrics=dict(baseline),
+                                candidate_metrics=dict(censor_metrics),
+                                decision={
+                                    "already_applied": bool(already_applied),
+                                    "improved_overshoot": bool(improved_overshoot),
+                                    "improved_rmse": bool(improved_rmse),
+                                    "improved_mape": bool(improved_mape),
+                                    "structural_skip_delta": int(structural_skip_delta),
+                                    "structural_non_harm": bool(structural_non_harm),
+                                    "structural_discontinuity_accept": bool(
+                                        structural_discontinuity_accept
+                                    ),
+                                    "structural_accept": bool(structural_accept),
+                                    "additional_after_auto": bool(
+                                        additional_after_auto
+                                    ),
+                                    "structural_additional_improvement": bool(
+                                        structural_additional_improvement
+                                    ),
+                                    "dominant_recovery": dominant_recovery,
+                                },
+                            ),
+                        )
+                        if accepted:
+                            if not already_applied:
+                                candidate_curves["left_toe_censor"] = censor_curve
+                                active_kwargs["skip1"] = int(censor_skip)
+                                active_curve = censor_curve
+                                active_metrics = censor_metrics
+
+                tail_kwargs = _with_tail_defaults(dict(active_kwargs))
+                tail_kwargs["tail_blend_enabled"] = True
+                tail_curve = _run_candidate(
+                    vdyp_out=vdyp_out,
+                    curve_context=curve_context,
+                    kwargs=tail_kwargs,
+                    candidate_name="tail_blend",
+                )
+                tail_selected = False
+                if tail_curve is not None:
+                    candidate_curves["tail_blend"] = tail_curve
+                    fit_metrics["tail_blend"] = _fit_quality(
+                        binned=binned_obs,
+                        x_curve=tail_curve[0],
+                        y_curve=tail_curve[1],
+                    )
+                    tail_blend_meta_for_plot = _estimate_tail_blend_window(
+                        binned=binned_obs,
+                        anchor_quantile=float(
+                            tail_kwargs.get("tail_anchor_quantile", 0.70)
+                        ),
+                        blend_years=float(tail_kwargs.get("tail_blend_years", 30.0)),
+                    )
+                    tail_detected = detect_linear_tail_segment(
+                        observed_age=np.asarray(
+                            binned_obs["age_bin"].values, dtype=float
+                        ),
+                        observed_volume=np.asarray(
+                            binned_obs["median_volume"].values, dtype=float
+                        ),
+                        linear_min_points=int(
+                            tail_kwargs.get("tail_linear_min_points", 4)
+                        ),
+                        linear_min_r2=float(
+                            tail_kwargs.get("tail_linear_min_r2", 0.75)
+                        ),
+                        linear_max_nrmse=float(
+                            tail_kwargs.get("tail_linear_max_nrmse", 0.18)
+                        ),
+                        linear_prefer_min_age=float(
+                            tail_kwargs.get("tail_linear_prefer_min_age", 180.0)
+                        ),
+                        linear_flat_slope_abs=float(
+                            tail_kwargs.get("tail_linear_flat_slope_abs", 0.04)
+                        ),
+                        linear_min_span_years=float(
+                            tail_kwargs.get("tail_linear_min_span_years", 80.0)
+                        ),
+                    )
+                    tail_detect_gate = bool(tail_detected is not None) or bool(
+                        tail_kwargs.get("tail_linear_allow_quantile_fallback", False)
+                    )
+                    if tail_detect_gate:
+                        tail_selected, tail_decision = _select_tail_blend_candidate(
+                            current_metrics=active_metrics,
+                            tail_metrics=fit_metrics["tail_blend"],
+                        )
+                    else:
+                        tail_selected = False
+                        tail_decision = {"decision": "reject_not_detected"}
+                    tail_decision = {
+                        **tail_decision,
+                        "policy": "layered_when_detected",
+                        "tail_detected": bool(tail_detected is not None),
+                        "tail_detect_gate": bool(tail_detect_gate),
+                    }
+                    append_jsonl_fn(
+                        vdyp_curve_events_path,
+                        build_timestamped_event(
+                            event="vdyp_curve_fit",
+                            status="info",
+                            stage="tail_blend_selection",
+                            reason=(
+                                "tail_blend_selected"
+                                if tail_selected
+                                else "tail_blend_rejected"
+                            ),
+                            context=curve_context,
+                            baseline_metrics=dict(active_metrics),
+                            candidate_metrics=dict(fit_metrics["tail_blend"]),
+                            decision=tail_decision,
+                        ),
+                    )
+                    if tail_selected:
+                        candidate_curves["tail_blend_selected"] = tail_curve
+                        active_curve = tail_curve
+                        active_metrics = fit_metrics["tail_blend"]
+
+                floor_base_curve = active_curve
+                floor_baseline_metrics = active_metrics
+                if tail_selected and tail_curve is not None:
+                    floor_base_curve = tail_curve
+                    floor_baseline_metrics = fit_metrics.get(
+                        "tail_blend", floor_baseline_metrics
+                    )
+                baseline_pre_merch = _max_pre_merchantable_volume(
+                    x_curve=floor_base_curve[0],
+                    y_curve=floor_base_curve[1],
+                    floor_age=merchantable_floor_age,
+                )
+                if baseline_pre_merch > 1.0:
+                    floor_kwargs = dict(active_kwargs)
+                    if tail_selected:
+                        floor_kwargs = _with_tail_defaults(floor_kwargs)
+                        floor_kwargs["tail_blend_enabled"] = True
+                    if not _toe_shift_active(floor_kwargs):
+                        floor_kwargs["merchantable_floor_enabled"] = True
+                        floor_kwargs["merchantable_floor_age"] = merchantable_floor_age
+                        floor_kwargs["merchantable_floor_value"] = (
+                            merchantable_floor_value
+                        )
+                        floor_curve = _run_candidate(
+                            vdyp_out=vdyp_out,
+                            curve_context=dict(
+                                curve_context,
+                                merchantable_floor_age=merchantable_floor_age,
+                            ),
+                            kwargs=floor_kwargs,
+                            candidate_name="merchantable_floor",
+                        )
+                        if floor_curve is not None:
+                            floor_metrics = _fit_quality(
+                                binned=binned_obs,
+                                x_curve=floor_curve[0],
+                                y_curve=floor_curve[1],
+                            )
+                            fit_metrics["merchantable_floor"] = floor_metrics
+                            floor_pre_merch = _max_pre_merchantable_volume(
+                                x_curve=floor_curve[0],
+                                y_curve=floor_curve[1],
+                                floor_age=merchantable_floor_age,
+                            )
+                            baseline = floor_baseline_metrics
+                            reduced_pre_merch = floor_pre_merch <= 0.5
+                            acceptable_rmse = floor_metrics["rmse"] <= (
+                                1.20 * baseline["rmse"]
+                            )
+                            accepted = reduced_pre_merch and acceptable_rmse
+                            append_jsonl_fn(
+                                vdyp_curve_events_path,
+                                build_timestamped_event(
+                                    event="vdyp_curve_fit",
+                                    status="info",
+                                    stage="merchantable_floor",
+                                    reason=(
+                                        "merchantable_floor_selected"
+                                        if accepted
+                                        else "merchantable_floor_rejected"
+                                    ),
+                                    context=curve_context,
+                                    floor_age=float(merchantable_floor_age),
+                                    baseline_pre_merch_volume=float(baseline_pre_merch),
+                                    candidate_pre_merch_volume=float(floor_pre_merch),
+                                    baseline_metrics=dict(baseline),
+                                    candidate_metrics=dict(floor_metrics),
+                                ),
+                            )
+                            if accepted:
+                                candidate_curves["merchantable_floor"] = floor_curve
+
+            gate_fail_reasons = _evaluate_fit_quality_gate(
+                y_curve=y,
+                metrics=fit_metrics.get("current"),
+            )
+            if gate_fail_reasons:
+                message_fn(
+                    "  fit-quality gate warning",
+                    sc,
+                    si_level,
+                    ",".join(gate_fail_reasons),
+                )
+                append_jsonl_fn(
+                    vdyp_curve_events_path,
+                    build_timestamped_event(
+                        event="vdyp_curve_fit",
+                        status="warning",
+                        stage="fit_quality_gate",
+                        reason="fit_quality_gate_failed",
+                        context=curve_context,
+                        failure_reasons=gate_fail_reasons,
+                        metrics=dict(fit_metrics.get("current", {})),
+                    ),
+                )
+
+            output_x, output_y = x, y
+            selected_path = "primary_nlls"
+            selected_metrics = dict(fit_metrics.get("current", {}))
+            auto_curve = candidate_curves.get("auto_skip")
+            if auto_curve is not None:
+                output_x, output_y = auto_curve
+                selected_path = "reparameterized_nlls"
+                selected_metrics = dict(fit_metrics.get("auto_skip", selected_metrics))
+            left_toe_curve = candidate_curves.get("left_toe_censor")
+            if left_toe_curve is not None:
+                output_x, output_y = left_toe_curve
+                selected_path = "censored_refit"
+                selected_metrics = dict(
+                    fit_metrics.get("left_toe_censor", selected_metrics)
+                )
+            tail_selected_curve = candidate_curves.get("tail_blend_selected")
+            if tail_selected_curve is not None:
+                output_x, output_y = tail_selected_curve
+                selected_path = "tail_blend"
+                selected_metrics = dict(fit_metrics.get("tail_blend", selected_metrics))
+            floor_curve = candidate_curves.get("merchantable_floor")
+            if floor_curve is not None:
+                output_x, output_y = floor_curve
+                selected_path = "merchantable_floor"
+                selected_metrics = dict(
+                    fit_metrics.get("merchantable_floor", selected_metrics)
+                )
+            # K3Z is currently using tail-blend-smoothed unmanaged curves for
+            # TIPSY-vs-VDYP comparison plots.
+            if str(tsa).strip().lower() == "k3z":
+                tail_curve = candidate_curves.get("tail_blend")
+                if tail_curve is not None:
+                    output_x, output_y = tail_curve
+                    selected_path = "tail_blend_override_k3z"
+                    selected_metrics = dict(
+                        fit_metrics.get("tail_blend", selected_metrics)
+                    )
+
+            # Guard against carrying forward obviously failed selected curves.
+            selected_gate_fail_reasons = _evaluate_fit_quality_gate(
+                y_curve=output_y,
+                metrics=selected_metrics,
+            )
+            path_candidates: dict[
+                str, tuple[tuple[Sequence[float], Sequence[float]], dict[str, float]]
+            ] = {
+                "primary_nlls": ((x, y), dict(fit_metrics.get("current", {}))),
+            }
+            auto_curve = candidate_curves.get("auto_skip")
+            if auto_curve is not None:
+                path_candidates["reparameterized_nlls"] = (
+                    auto_curve,
+                    dict(fit_metrics.get("auto_skip", {})),
+                )
+            left_toe_curve = candidate_curves.get("left_toe_censor")
+            if left_toe_curve is not None:
+                path_candidates["censored_refit"] = (
+                    left_toe_curve,
+                    dict(fit_metrics.get("left_toe_censor", {})),
+                )
+            tail_curve = candidate_curves.get("tail_blend")
+            if tail_curve is not None:
+                path_candidates["tail_blend"] = (
+                    tail_curve,
+                    dict(fit_metrics.get("tail_blend", {})),
+                )
+            floor_curve = candidate_curves.get("merchantable_floor")
+            if floor_curve is not None:
+                path_candidates["merchantable_floor"] = (
+                    floor_curve,
+                    dict(fit_metrics.get("merchantable_floor", {})),
+                )
+
+            if str(tsa).strip().lower() != "k3z" and selected_gate_fail_reasons:
+                gate_by_path: dict[str, list[str]] = {}
+                for path_name, (curve_xy, curve_metrics) in path_candidates.items():
+                    gate_by_path[path_name] = _evaluate_fit_quality_gate(
+                        y_curve=curve_xy[1],
+                        metrics=curve_metrics,
+                    )
+                rescue_order = (
+                    "tail_blend",
+                    "merchantable_floor",
+                    "reparameterized_nlls",
+                    "censored_refit",
+                    "primary_nlls",
+                )
+                rescue_path: str | None = None
+                for path_name in rescue_order:
+                    reasons = gate_by_path.get(path_name)
+                    if reasons is not None and not reasons:
+                        rescue_path = path_name
+                        break
+
+                if rescue_path is None:
+                    rescue_path = min(
+                        gate_by_path.keys(),
+                        key=lambda path_name: (
+                            len(gate_by_path[path_name]),
+                            float(
+                                path_candidates[path_name][1].get("rmse", float("inf"))
+                            ),
+                        ),
+                    )
+                if rescue_path != selected_path:
+                    prior_selected_path = str(selected_path)
+                    prior_selected_gate_fail_reasons = list(selected_gate_fail_reasons)
+                    rescue_curve, rescue_metrics = path_candidates[rescue_path]
+                    output_x, output_y = rescue_curve
+                    selected_path = rescue_path
+                    selected_metrics = dict(rescue_metrics)
+                    selected_gate_fail_reasons = list(gate_by_path[rescue_path])
+                    append_jsonl_fn(
+                        vdyp_curve_events_path,
+                        build_timestamped_event(
+                            event="vdyp_curve_fit",
+                            status="warning",
+                            stage="fit_quality_gate",
+                            reason="selected_curve_gate_rescue",
+                            context=curve_context,
+                            prior_selected_path=prior_selected_path,
+                            rescue_selected_path=rescue_path,
+                            rescue_gate_fail_reasons=selected_gate_fail_reasons,
+                            rescue_trigger_gate_reasons=prior_selected_gate_fail_reasons,
+                            rescue_order=list(rescue_order),
+                            gate_by_path=gate_by_path,
+                        ),
+                    )
+                elif selected_gate_fail_reasons:
+                    append_jsonl_fn(
+                        vdyp_curve_events_path,
+                        build_timestamped_event(
+                            event="vdyp_curve_fit",
+                            status="warning",
+                            stage="fit_quality_gate",
+                            reason="selected_curve_gate_unresolved",
+                            context=curve_context,
+                            selected_path=selected_path,
+                            selected_gate_fail_reasons=selected_gate_fail_reasons,
+                            gate_by_path=gate_by_path,
+                        ),
+                    )
+            append_jsonl_fn(
+                vdyp_curve_events_path,
+                build_timestamped_event(
+                    event="vdyp_curve_fit",
+                    status="info",
+                    stage="fallback_policy",
+                    reason="curve_selected",
+                    context=curve_context,
+                    selected_path=selected_path,
+                    available_candidates=sorted(candidate_curves.keys()),
+                    selected_metrics=selected_metrics,
+                    selected_gate_fail_reasons=selected_gate_fail_reasons,
+                ),
+            )
             _emit_fit_diagnostic_plot(
                 tsa_code=tsa,
                 stratumi=int(stratumi),
@@ -2619,16 +3573,13 @@ def execute_curve_smoothing_runs(
                 binned=binned_obs,
                 x_fit=x,
                 y_fit=y,
+                selected_x=output_x,
+                selected_y=output_y,
+                selected_path=selected_path,
+                tail_blend_meta=tail_blend_meta_for_plot,
                 candidate_curves=candidate_curves,
                 fit_metrics=fit_metrics,
             )
-            output_x, output_y = x, y
-            # K3Z is currently using tail-blend-smoothed unmanaged curves for
-            # TIPSY-vs-VDYP comparison plots.
-            if str(tsa).strip().lower() == "k3z":
-                tail_curve = candidate_curves.get("tail_blend")
-                if tail_curve is not None:
-                    output_x, output_y = tail_curve
             smoothed_runs.append(
                 SmoothedCurveResult(
                     stratumi=int(stratumi),

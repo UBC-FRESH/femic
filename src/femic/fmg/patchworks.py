@@ -69,6 +69,8 @@ SERAL_STAGE_ORDER = (
     "mature",
     "overmature",
 )
+OG2_MIN_AGE_ZERO = 249
+OG2_MIN_AGE_ONE = 250
 
 
 @dataclass(frozen=True)
@@ -286,6 +288,39 @@ def _derived_species_yield_curve_ref(
 
 def _seral_curve_ref(*, au_id: int, stage: str) -> str:
     return f"au_{int(au_id)}_seral_{_sanitize_id_component(stage)}"
+
+
+def _old_growth_curve_ref(*, au_id: int, og_label: str) -> str:
+    return f"au_{int(au_id)}_{_sanitize_id_component(og_label)}"
+
+
+def _build_old_growth_1_curve_points(
+    *,
+    unmanaged_total_curve_points: tuple[CurvePoint, ...],
+    horizon_years: int,
+) -> tuple[CurvePoint, ...]:
+    if not unmanaged_total_curve_points:
+        return (
+            CurvePoint(x=0.0, y=0.0),
+            CurvePoint(x=1.0, y=1.0),
+        )
+    cmai_age, peak_yield_age = _derive_curve_metrics(
+        managed_total_curve_points=unmanaged_total_curve_points,
+        horizon_years=horizon_years,
+    )
+    ramp_start = max(0, int(cmai_age))
+    ramp_end = max(ramp_start + 1, int(peak_yield_age))
+    return (
+        CurvePoint(x=float(ramp_start), y=0.0),
+        CurvePoint(x=float(ramp_end), y=1.0),
+    )
+
+
+def _build_old_growth_2_curve_points() -> tuple[CurvePoint, ...]:
+    return (
+        CurvePoint(x=float(OG2_MIN_AGE_ZERO), y=0.0),
+        CurvePoint(x=float(OG2_MIN_AGE_ONE), y=1.0),
+    )
 
 
 def _load_seral_stage_config(
@@ -727,6 +762,37 @@ def build_patchworks_forestmodel_definition(
         managed_curve_ref = source_curve_ref_by_id[managed_curve_id]
         unmanaged_total_curve = context.curves_by_id.get(unmanaged_curve_id)
         managed_total_curve = context.curves_by_id.get(managed_curve_id)
+        og_source_curve = unmanaged_total_curve or managed_total_curve
+        og_source_points = (
+            og_source_curve.points
+            if og_source_curve is not None
+            else (CurvePoint(x=0.0, y=0.0),)
+        )
+        og1_curve_ref = _old_growth_curve_ref(au_id=au.au_id, og_label="og1")
+        og2_curve_ref = _old_growth_curve_ref(au_id=au.au_id, og_label="og2")
+        curves[og1_curve_ref] = _build_old_growth_1_curve_points(
+            unmanaged_total_curve_points=og_source_points,
+            horizon_years=horizon_years,
+        )
+        curves[og2_curve_ref] = _build_old_growth_2_curve_points()
+        old_growth_feature_attrs = (
+            AttributeBinding(
+                label=f"feature.Area.og1.{int(au.au_id)}",
+                curve_idref=og1_curve_ref,
+            ),
+            AttributeBinding(
+                label="feature.Area.og1.total",
+                curve_idref=og1_curve_ref,
+            ),
+            AttributeBinding(
+                label=f"feature.Area.og2.{int(au.au_id)}",
+                curve_idref=og2_curve_ref,
+            ),
+            AttributeBinding(
+                label="feature.Area.og2.total",
+                curve_idref=og2_curve_ref,
+            ),
+        )
         effective_cc_min_age = int(cc_min_age)
         if managed_total_curve is not None:
             cmai_age, _ = _derive_curve_metrics(
@@ -789,6 +855,7 @@ def build_patchworks_forestmodel_definition(
                     label="feature.Yield.unmanaged.Total",
                     curve_idref=unmanaged_curve_ref,
                 ),
+                *old_growth_feature_attrs,
             ]
             managed_attrs = [
                 AttributeBinding(label="feature.Area.managed", curve_idref="unity"),
@@ -796,6 +863,7 @@ def build_patchworks_forestmodel_definition(
                     label="feature.Yield.managed.Total",
                     curve_idref=managed_curve_ref,
                 ),
+                *old_growth_feature_attrs,
             ]
             product_attrs = [
                 AttributeBinding(

@@ -1,0 +1,21 @@
+{
+  "status": "ok",
+  "woodstock_dir": "/home/gep/projects/femic/output/woodstock",
+  "required_files_present": true,
+  "yields_rows": 17440,
+  "areas_rows": 217425,
+  "actions_rows": 54,
+  "transitions_rows": 54,
+  "yields_total_volume": 2395654.64,
+  "areas_total_ha": 2990475.20871356,
+  "ws3_command_executed": true,
+  "ws3_command": "true",
+  "ws3_returncode": 0,
+  "ws3_stdout_log": "/home/gep/projects/femic/evidence/ws3_smoke_stdout.log",
+  "ws3_stderr_log": "/home/gep/projects/femic/evidence/ws3_smoke_stderr.log",
+  "ws3_bridge_dir": null,
+  "ws3_bridge_model_name": null,
+  "ws3_builtin_smoke_executed": false,
+  "message": "Woodstock checks passed and ws3 smoke command exited cleanly.",
+  "timestamp_utc": "2026-03-16T06:00:56Z"
+}

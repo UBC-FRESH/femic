@@ -7,6 +7,8 @@ import pandas as pd
 import pytest
 
 from femic.pipeline.vdyp_curves import (
+    build_observed_bins_for_fit,
+    detect_linear_tail_segment,
     legacy_fit_func1,
     legacy_fit_func1_bounds_func,
     legacy_fit_func2,
@@ -28,6 +30,76 @@ def test_prepend_quasi_origin_point_inserts_first_point() -> None:
     x, y = prepend_quasi_origin_point(np.array([10.0, 20.0]), np.array([5.0, 8.0]))
     assert x[0] == 1.0
     assert y[0] == 1e-6
+
+
+def test_build_observed_bins_for_fit_aggregates_to_five_year_medians() -> None:
+    vdyp_df = pd.DataFrame(
+        {
+            "Age": [160, 161, 164, 165, 166, 169, 170, 171],
+            "Vdwb": [70.0, 72.0, 74.0, 76.0, 77.0, 79.0, 80.0, 82.0],
+        }
+    ).set_index("Age")
+    binned = build_observed_bins_for_fit(
+        vdyp_out_concat=vdyp_df,
+        volume_flavour="Vdwb",
+        min_age=30,
+        max_age=300,
+        bin_years=5,
+    )
+    assert binned["age_bin"].tolist() == [160.0, 165.0, 170.0]
+    assert binned["median_volume"].tolist() == [72.0, 77.0, 81.0]
+
+
+def test_detect_linear_tail_segment_accepts_long_flat_tail_with_low_r2() -> None:
+    ages = np.arange(160.0, 301.0, 5.0)
+    vols = np.where(
+        ages < 200.0,
+        74.0 + 0.18 * (ages - 160.0),
+        81.0 + 0.01 * np.sin((ages - 200.0) / 5.0),
+    )
+    detected = detect_linear_tail_segment(
+        observed_age=ages,
+        observed_volume=vols,
+        linear_min_points=6,
+        linear_min_r2=0.80,
+        linear_max_nrmse=0.05,
+        linear_prefer_min_age=160.0,
+        linear_flat_slope_abs=0.04,
+        linear_min_span_years=80.0,
+    )
+    assert detected is not None
+    assert float(detected["anchor_age"]) <= 200.0
+    assert float(detected["tail_span_years"]) >= 80.0
+
+
+def test_process_vdyp_out_body_fit_uses_five_year_binned_ages() -> None:
+    ages = np.array([160, 161, 164, 165, 166, 169, 170, 171, 174, 175], dtype=float)
+    vols = np.array([70, 72, 74, 76, 77, 79, 80, 82, 83, 84], dtype=float)
+    vdyp_df = pd.DataFrame({"Age": ages, "Vdwb": vols}).set_index("Age")
+    captured_x: list[np.ndarray] = []
+
+    def curve_fit_capture(
+        func: Callable[..., np.ndarray], x: np.ndarray, y: np.ndarray, **kwargs: Any
+    ) -> tuple[np.ndarray, Any]:
+        _ = (func, y, kwargs)
+        captured_x.append(np.asarray(x, dtype=float))
+        return np.array([0.04, 2.0, 12.0, 7.0]), None
+
+    _ = process_vdyp_out(
+        {1: vdyp_df},
+        curve_fit_fn=curve_fit_capture,
+        body_fit_func=_fit_func1,
+        body_fit_func_bounds_func=_fit_bounds,
+        toe_fit_func=_fit_func1,
+        toe_fit_func_bounds_func=_fit_bounds,
+        log_event=lambda _event: None,
+        min_age=150,
+        max_age=200,
+        window=1,
+    )
+    assert captured_x
+    # Expected fitted ages are 5-year bins, not annual values.
+    assert set(captured_x[0].tolist()) <= {160.0, 165.0, 170.0, 175.0}
 
 
 def test_legacy_fit_func1_bounds_caps_c_parameter() -> None:
@@ -231,6 +303,92 @@ def test_process_vdyp_out_tail_blend_executes_without_error() -> None:
     )
     assert len(x_blend) == len(y_blend)
     assert np.all(np.isfinite(np.asarray(y_blend)))
+
+
+def test_process_vdyp_out_applies_optional_merchantable_floor() -> None:
+    ages = np.arange(30, 121, 10, dtype=float)
+    vols = np.array([20, 45, 80, 110, 135, 150, 155, 152, 149, 147], dtype=float)
+    vdyp_df = pd.DataFrame({"Age": ages, "Vdwb": vols}).set_index("Age")
+    events: list[dict[str, Any]] = []
+    common_kwargs = dict(
+        curve_fit_fn=lambda *args, **kwargs: (np.array([0.03, 2.0, 8.0, 6.0]), None),
+        body_fit_func=_fit_func1,
+        body_fit_func_bounds_func=_fit_bounds,
+        toe_fit_func=_fit_func1,
+        toe_fit_func_bounds_func=_fit_bounds,
+        min_age=30,
+        max_age=140,
+        window=2,
+    )
+
+    x_base, y_base = process_vdyp_out(
+        {1: vdyp_df},
+        log_event=lambda _event: None,
+        **common_kwargs,
+    )
+
+    x_floor, y_floor = process_vdyp_out(
+        {1: vdyp_df},
+        log_event=events.append,
+        **common_kwargs,
+        merchantable_floor_enabled=True,
+        merchantable_floor_age=20.0,
+        merchantable_floor_value=0.0,
+    )
+
+    floor_band = (x_floor >= 2.0) & (x_floor <= 20.0)
+    assert np.allclose(np.asarray(y_floor)[floor_band], 0.0)
+    shifted_expected = np.interp(
+        np.asarray(x_floor, dtype=float) - 20.0,
+        np.asarray(x_base, dtype=float),
+        np.asarray(y_base, dtype=float),
+        left=0.0,
+        right=float(np.asarray(y_base, dtype=float)[-1]),
+    )
+    assert np.allclose(
+        np.asarray(y_floor)[x_floor > 21.0], shifted_expected[x_floor > 21.0]
+    )
+    assert float(np.asarray(y_floor)[np.where(x_floor == 21.0)[0][0]]) > 0.0
+    assert any(event.get("stage") == "merchantable_floor" for event in events)
+
+
+def test_process_vdyp_out_does_not_double_shift_toe_when_location_exists() -> None:
+    ages = np.arange(30, 121, 10, dtype=float)
+    vols = np.array([20, 45, 80, 110, 135, 150, 155, 152, 149, 147], dtype=float)
+    vdyp_df = pd.DataFrame({"Age": ages, "Vdwb": vols}).set_index("Age")
+    common_kwargs = dict(
+        curve_fit_fn=lambda *args, **kwargs: (np.array([0.03, 2.0, 8.0, 6.0]), None),
+        body_fit_func=_fit_func1,
+        body_fit_func_bounds_func=_fit_bounds,
+        toe_fit_func=_fit_func1,
+        toe_fit_func_bounds_func=_fit_bounds,
+        min_age=30,
+        max_age=140,
+        window=2,
+    )
+    x_base, y_base = process_vdyp_out(
+        {1: vdyp_df},
+        log_event=lambda _event: None,
+        **common_kwargs,
+    )
+    x_shift, y_shift = process_vdyp_out(
+        {1: vdyp_df},
+        log_event=lambda _event: None,
+        toe_shift_years=20.0,
+        **common_kwargs,
+    )
+    assert np.array_equal(np.asarray(x_shift), np.asarray(x_base))
+    assert np.all(np.isfinite(np.asarray(y_shift, dtype=float)))
+    # Legacy toe/body form already carries a location parameter (`c`), so
+    # `toe_shift_years` must not apply any additional shift.
+    assert np.allclose(
+        np.asarray(y_shift)[x_shift <= 60.0], np.asarray(y_base)[x_base <= 60.0]
+    )
+    assert np.allclose(
+        np.asarray(y_shift)[x_shift >= 120.0],
+        np.asarray(y_base)[x_base >= 120.0],
+        atol=1e-6,
+    )
 
 
 def test_process_vdyp_out_tail_blend_skips_when_no_linear_tail_detected() -> None:

@@ -77,7 +77,10 @@ def mean_siteprod_for_row(
     )
     band_index = siteprod_specieslayer[species]
     band_values = values[band_index]
-    return float(np_module.mean(band_values[band_values > 0]))
+    positive_values = band_values[band_values > 0]
+    if positive_values.size == 0:
+        return float("nan")
+    return float(np_module.mean(positive_values))
 
 
 def assign_siteprod_from_raster(

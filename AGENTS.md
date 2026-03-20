@@ -23,5 +23,10 @@ When contributing to this repository as the coding agent:
 8. Before launching a new task or plan, review the latest entries in `CHANGE_LOG.md` alongside the
    roadmap notes to confirm the proposed work is consistent with recorded progress and avoids
    backtracking.
+9. Commit early and often using roadmap task/subtask granularity:
+   - prefer small, thematic commits over large mixed commits;
+   - create at least one commit per completed roadmap task (or tightly related subtask bundle);
+   - reference the phase/task ID in commit messages when applicable (for example, `P19.12`).
+   Do this continuously during implementation so progress is checkpointed without user prompting.
 
 Treat these steps as the minimum bar for every milestone so manual reminders are not required.

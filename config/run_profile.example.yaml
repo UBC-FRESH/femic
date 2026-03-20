@@ -25,6 +25,7 @@ modes:
   # vdyp_sampling_mode: auto  # auto | all | positive integer sample size
   # vdyp_two_pass_rebin: false  # re-bin L/M/H using stand-level SI from first-pass VDYP output
   # vdyp_min_stands_per_si_bin: 25  # collapse sparse SI bins below this stand count
+  # vdyp_toe_shift_years: 20.0  # shift all fitted VDYP curve toes right by N years (0 disables)
   # Optional managed-curve synthesis mode (bypasses raw TIPSY yield for managed curves):
   # managed_curve_mode: tipsy  # tipsy | vdyp_transform
   # managed_curve_x_scale: 0.8

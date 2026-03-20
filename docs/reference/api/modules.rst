@@ -48,6 +48,8 @@ FEMIC Modules
    femic.rebuild_runner
    femic.rebuild_spec
    femic.release_packaging
+   femic.ws3_bridge
+   femic.ws3_smoke
    femic.vdyp
    femic.vdyp.reporting
    femic.workflows.legacy

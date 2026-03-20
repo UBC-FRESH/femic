@@ -45,6 +45,20 @@ class VdypWarningBudget:
     min_run_events: int | None = None
 
 
+@dataclass(frozen=True)
+class VdypCurveSelectionRow:
+    """One stratum/SI curve-selection record derived from curve-event logs."""
+
+    tsa: str
+    stratum_code: str
+    si_level: str
+    selected_path: str
+    fit_quality_gate_failed: bool
+    left_toe_censor_selected: bool
+    merchantable_floor_selected: bool
+    tail_blend_selected: bool
+
+
 def _read_jsonl(path: Path) -> tuple[list[JsonMap], int]:
     if not path.exists():
         return [], 0
@@ -178,3 +192,60 @@ def evaluate_warning_budget(
                 f"run_events {summary.run_events} < {budget.min_run_events}"
             )
     return violations
+
+
+def summarize_curve_selection_rows(
+    *, curve_log_path: Path
+) -> list[VdypCurveSelectionRow]:
+    """Build reviewer-facing per-stratum curve-selection rows from curve JSONL logs."""
+    curve_rows, _parse_errors = _read_jsonl(curve_log_path)
+    by_key_flags: dict[tuple[str, str, str], dict[str, bool]] = {}
+    selection_rows: dict[tuple[str, str, str], VdypCurveSelectionRow] = {}
+
+    def _row_key(context: JsonMap) -> tuple[str, str, str]:
+        return (
+            str(context.get("tsa", "<unknown>")),
+            str(context.get("stratum_code", "<unknown>")),
+            str(context.get("si_level", "<unknown>")),
+        )
+
+    for event in curve_rows:
+        context = event.get("context")
+        if not isinstance(context, dict):
+            continue
+        key = _row_key(context)
+        flags = by_key_flags.setdefault(
+            key,
+            {
+                "fit_quality_gate_failed": False,
+                "left_toe_censor_selected": False,
+                "merchantable_floor_selected": False,
+                "tail_blend_selected": False,
+            },
+        )
+        stage = str(event.get("stage", ""))
+        reason = str(event.get("reason", ""))
+        if stage == "fit_quality_gate" and reason in {
+            "fit_quality_gate_failed",
+            "selected_curve_gate_unresolved",
+            "selected_curve_gate_rescue",
+        }:
+            flags["fit_quality_gate_failed"] = True
+        if stage == "left_toe_censor" and reason == "left_toe_censor_selected":
+            flags["left_toe_censor_selected"] = True
+        if stage == "merchantable_floor" and reason == "merchantable_floor_selected":
+            flags["merchantable_floor_selected"] = True
+        if stage == "tail_blend_selection" and reason == "tail_blend_selected":
+            flags["tail_blend_selected"] = True
+        if stage == "fallback_policy" and reason == "curve_selected":
+            selection_rows[key] = VdypCurveSelectionRow(
+                tsa=key[0],
+                stratum_code=key[1],
+                si_level=key[2],
+                selected_path=str(event.get("selected_path", "<unknown>")),
+                fit_quality_gate_failed=flags["fit_quality_gate_failed"],
+                left_toe_censor_selected=flags["left_toe_censor_selected"],
+                merchantable_floor_selected=flags["merchantable_floor_selected"],
+                tail_blend_selected=flags["tail_blend_selected"],
+            )
+    return [selection_rows[key] for key in sorted(selection_rows.keys())]

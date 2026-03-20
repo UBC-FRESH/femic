@@ -31,6 +31,9 @@ TIPSY Input Boundary
 --------------------
 
 - FEMIC writes fixed-schema DAT/XLSX handoff files.
+- ``02_input-*.dat`` is the canonical BatchTIPSY input artifact used by the
+  GUI run; ``tipsy_params_tsa*.xlsx`` is a human-readable mirror generated from
+  the same table payload.
 - BatchTIPSY field maps are GUI-configured and brittle; avoid changing column
   wizard mappings run-to-run.
 - Species code mapping and SI fallback behavior should be explicit in

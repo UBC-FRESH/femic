@@ -31,7 +31,12 @@ def run_tsa(
     from femic.pipeline.legacy_runtime import Legacy01BRuntimeConfig
     from femic.pipeline.managed_curves import build_transformed_managed_curves_for_tsa
     from femic.pipeline.plots import tipsy_vdyp_ylim_for_tsa
-    from femic.pipeline.tipsy import tipsy_params_excel_path, tipsy_stage_output_paths
+    from femic.pipeline.tipsy import (
+        tipsy_input_dat_path,
+        tipsy_params_excel_path,
+        tipsy_stage_output_paths,
+        validate_tipsy_output_is_fresh,
+    )
 
     if not isinstance(runtime_config, Legacy01BRuntimeConfig):
         raise TypeError(
@@ -51,6 +56,7 @@ def run_tsa(
         tipsy_output_root
         / runtime_config.tipsy_output_filename_template.format(tsa=tsa)
     )
+    tipsy_dat = str(tipsy_input_dat_path(tsa=tsa))
     outYield_path, outSPP_path = tipsy_stage_output_paths(
         tsa=tsa, output_root=runtime_config.tipsy_output_root
     )
@@ -72,6 +78,17 @@ def run_tsa(
         .strip()
         .lower()
         in {"1", "true", "yes"}
+    )
+    allow_stale_tipsy_output = (
+        os.environ.get("FEMIC_ALLOW_STALE_TIPSY_OUTPUT", "0").strip().lower()
+        in {"1", "true", "yes"}
+    )
+
+    validate_tipsy_output_is_fresh(
+        tipsy_input_excel_path=tipsy_excel,
+        tipsy_input_dat_path=tipsy_dat,
+        tipsy_output_path=tipsyout,
+        allow_stale=allow_stale_tipsy_output,
     )
 
     tipsy_input_df = pd.read_excel(tipsy_excel, sheet_name="TIPSY_inputTBL", usecols="A:AF")

@@ -20,6 +20,19 @@ DEFAULT_TARGET_NSTRATA = 10
 MIN_STANDCOUNT = 1000
 
 
+def normalize_tsa_code(tsa_code: Any) -> str:
+    """Return canonical TSA code token used across legacy stage tables.
+
+    Numeric values are normalized to zero-padded width-2 strings (for example
+    ``8`` -> ``"08"``). Non-numeric tokens are stripped and lower-cased so
+    named custom-boundary codes (for example ``K3Z``) remain stable.
+    """
+    text = str(tsa_code).strip()
+    if text.isdigit():
+        return f"{int(text):02d}"
+    return text.lower()
+
+
 def target_nstrata_for(tsa_code: str) -> int:
     """Return configured target number of strata for a TSA code.
 
@@ -28,6 +41,51 @@ def target_nstrata_for(tsa_code: str) -> int:
     """
     tsa = str(tsa_code).zfill(2)
     return TARGET_NSTRATA_BY_TSA.get(tsa, DEFAULT_TARGET_NSTRATA)
+
+
+def select_tsa_slice(*, f_table: Any, tsa_value: Any) -> Any:
+    """Return a TSA-filtered slice that is robust to index dtype drift.
+
+    Legacy stage-01a code historically selected TSA rows via ``f.loc[[tsa]]``.
+    That can fail when upstream data carries TSA keys as numeric values while the
+    run-profile TSA list is normalized as strings (for example ``"29"`` vs ``29``).
+    This helper tries equivalent string/int forms before failing.
+    """
+    candidates = [tsa_value]
+    tsa_str = str(tsa_value)
+    tsa_norm = normalize_tsa_code(tsa_value)
+    if tsa_str not in {str(v) for v in candidates}:
+        candidates.append(tsa_str)
+    if tsa_norm not in candidates:
+        candidates.append(tsa_norm)
+    if tsa_str.isdigit():
+        tsa_int = int(tsa_str)
+        if tsa_int not in candidates:
+            candidates.append(tsa_int)
+        tsa_zfill = tsa_str.zfill(2)
+        if tsa_zfill not in candidates:
+            candidates.append(tsa_zfill)
+    for candidate in candidates:
+        try:
+            return f_table.loc[[candidate]]
+        except KeyError:
+            continue
+    try:
+        normalized_index = f_table.index.map(normalize_tsa_code)
+        mask = normalized_index == tsa_norm
+        if bool(getattr(mask, "any", lambda: False)()):
+            return f_table.loc[mask]
+    except Exception:
+        pass
+    available_preview = sorted({normalize_tsa_code(v) for v in list(f_table.index)})[
+        :20
+    ]
+    raise KeyError(
+        f"TSA key {tsa_value!r} was not found in stage-01a table index "
+        f"(index_dtype={getattr(f_table.index, 'dtype', None)!r}). "
+        f"Tried candidates: {candidates!r}. "
+        f"Available normalized TSA keys (first 20): {available_preview!r}"
+    )
 
 
 def build_strata_summary(
@@ -493,7 +551,13 @@ def mean_thlb_for_geometry(
         array, _ = mask_fn(raster_src, [geometry], crop=True)
     except (ValueError, TypeError, RuntimeError, OSError):
         return float(default_on_error)
-    return float(np_module.mean(array[array >= 0]))
+    valid = array[array >= 0]
+    if getattr(valid, "size", 0) == 0:
+        return float(default_on_error)
+    mean_value = np_module.mean(valid)
+    if not np_module.isfinite(mean_value):
+        return float(default_on_error)
+    return float(mean_value)
 
 
 def assign_thlb_raw_from_raster(

@@ -7,6 +7,8 @@ import math
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
+
 
 def strata_plot_paths(tsa_code: str, root: Path = Path("plots")) -> tuple[Path, Path]:
     """Return PDF/PNG output paths for strata diagnostics for one TSA/case code."""
@@ -43,6 +45,31 @@ class StrataDistributionPlotConfig:
     bw: str
     cut: float
     site_index_xlim: tuple[float, float]
+    site_index_focus_quantiles: tuple[float, float]
+    site_index_focus_padding: float
+    stripplot_alpha: float
+    stripplot_size: float
+    stripplot_max_points: int
+    stripplot_min_points_per_stratum: int
+    stripplot_random_seed: int
+    write_pdf: bool
+
+
+@dataclass(frozen=True)
+class StrataDistributionPlotMetadata:
+    """Runtime metadata for one rendered stratum SI diagnostic plot."""
+
+    site_index_xlim: tuple[float, float]
+    total_points: int
+    window_points: int
+    strip_points_plotted: int
+    clipped_low_count: int
+    clipped_high_count: int
+
+    @property
+    def clipped_total_count(self) -> int:
+        """Return total number of SITE_INDEX points clipped from view window."""
+        return int(self.clipped_low_count + self.clipped_high_count)
 
 
 def build_strata_distribution_plot_config(
@@ -55,6 +82,14 @@ def build_strata_distribution_plot_config(
     bw: str = "scott",
     cut: float = 0.0,
     site_index_xlim: tuple[float, float] = (0, 30),
+    site_index_focus_quantiles: tuple[float, float] = (0.02, 0.98),
+    site_index_focus_padding: float = 0.75,
+    stripplot_alpha: float = 0.15,
+    stripplot_size: float = 1.4,
+    stripplot_max_points: int = 3000,
+    stripplot_min_points_per_stratum: int = 1,
+    stripplot_random_seed: int = 19,
+    write_pdf: bool = False,
 ) -> StrataDistributionPlotConfig:
     """Build defaults for 01a stratum abundance/SI violin diagnostics."""
     return StrataDistributionPlotConfig(
@@ -66,7 +101,94 @@ def build_strata_distribution_plot_config(
         bw=bw,
         cut=cut,
         site_index_xlim=site_index_xlim,
+        site_index_focus_quantiles=site_index_focus_quantiles,
+        site_index_focus_padding=site_index_focus_padding,
+        stripplot_alpha=stripplot_alpha,
+        stripplot_size=stripplot_size,
+        stripplot_max_points=stripplot_max_points,
+        stripplot_min_points_per_stratum=stripplot_min_points_per_stratum,
+        stripplot_random_seed=stripplot_random_seed,
+        write_pdf=write_pdf,
     )
+
+
+def _resolve_site_index_window(
+    *,
+    site_index: pd.Series,
+    cap_xlim: tuple[float, float],
+    focus_quantiles: tuple[float, float],
+    focus_padding: float,
+) -> tuple[tuple[float, float], int, int]:
+    """Resolve SI view window with a fixed floor and quantile-based upper focus."""
+    values = pd.to_numeric(site_index, errors="coerce").dropna()
+    if values.empty:
+        return (float(cap_xlim[0]), float(cap_xlim[1])), 0, 0
+
+    cap_lo = float(cap_xlim[0])
+    cap_hi = float(cap_xlim[1])
+    if not math.isfinite(cap_lo) or not math.isfinite(cap_hi) or cap_lo >= cap_hi:
+        cap_lo, cap_hi = 0.0, 30.0
+
+    q_lo, q_hi = focus_quantiles
+    if not (0.0 <= q_lo < q_hi <= 1.0):
+        q_lo, q_hi = 0.02, 0.98
+
+    pad = max(float(focus_padding), 0.0)
+    core_lo = float(values.quantile(q_lo))
+    core_hi = float(values.quantile(q_hi))
+    if not math.isfinite(core_lo) or not math.isfinite(core_hi):
+        core_lo, core_hi = cap_lo, cap_hi
+
+    # Keep the lower axis bound fixed so left-side violin tails remain visible.
+    window_lo = cap_lo
+    window_hi = min(cap_hi, math.ceil(core_hi + pad))
+    if window_hi <= window_lo:
+        window_lo, window_hi = cap_lo, cap_hi
+
+    clipped_low = int((values < window_lo).sum())
+    clipped_high = int((values > window_hi).sum())
+    return (float(window_lo), float(window_hi)), clipped_low, clipped_high
+
+
+def _thin_stripplot_points(
+    *,
+    plot_frame: pd.DataFrame,
+    stratum_col: str,
+    max_points: int,
+    min_points_per_stratum: int,
+    random_seed: int,
+) -> pd.DataFrame:
+    """Downsample stripplot points while retaining at least a small per-stratum sample."""
+    if max_points <= 0 or len(plot_frame) <= max_points:
+        return plot_frame
+
+    work = plot_frame.reset_index(drop=False).copy()
+    work["_femic_plot_row"] = range(len(work))
+    min_per = max(int(min_points_per_stratum), 0)
+
+    if min_per > 0:
+        keepers = work.groupby(stratum_col, sort=False, group_keys=False).head(min_per)
+    else:
+        keepers = work.iloc[0:0]
+
+    if len(keepers) >= max_points:
+        sampled = keepers.sample(n=max_points, random_state=random_seed)
+    else:
+        budget = max_points - len(keepers)
+        if budget > 0:
+            remaining = work.loc[
+                ~work["_femic_plot_row"].isin(keepers["_femic_plot_row"])
+            ]
+            sampled_rest = remaining.sample(
+                n=min(budget, len(remaining)),
+                random_state=random_seed,
+            )
+            sampled = pd.concat([keepers, sampled_rest], axis=0, ignore_index=False)
+        else:
+            sampled = keepers
+
+    sampled = sampled.drop(columns=["_femic_plot_row"])
+    return sampled
 
 
 def resolve_strata_plot_ordering(
@@ -127,8 +249,36 @@ def render_strata_distribution_plot(
     sns_module: Any,
     plt_module: Any,
     strata_plot_paths_fn: Any = strata_plot_paths,
-) -> None:
+) -> StrataDistributionPlotMetadata:
     """Render and save the 01a stratum distribution bar+violin diagnostic plot."""
+    plot_frame = f_table.reset_index().copy()
+    plot_frame["SITE_INDEX"] = pd.to_numeric(plot_frame["SITE_INDEX"], errors="coerce")
+    plot_frame = plot_frame.dropna(subset=["SITE_INDEX"])
+
+    window_xlim, clipped_low, clipped_high = _resolve_site_index_window(
+        site_index=plot_frame["SITE_INDEX"],
+        cap_xlim=plot_config.site_index_xlim,
+        focus_quantiles=plot_config.site_index_focus_quantiles,
+        focus_padding=plot_config.site_index_focus_padding,
+    )
+
+    window_mask = (plot_frame["SITE_INDEX"] >= window_xlim[0]) & (
+        plot_frame["SITE_INDEX"] <= window_xlim[1]
+    )
+    window_frame = plot_frame.loc[window_mask].copy()
+    if window_frame.empty:
+        window_frame = plot_frame.copy()
+        clipped_low = 0
+        clipped_high = 0
+
+    strip_frame = _thin_stripplot_points(
+        plot_frame=window_frame,
+        stratum_col=stratum_col,
+        max_points=plot_config.stripplot_max_points,
+        min_points_per_stratum=plot_config.stripplot_min_points_per_stratum,
+        random_seed=plot_config.stripplot_random_seed,
+    )
+
     _fig, ax = plt_module.subplots(figsize=plot_config.figsize)
     ax2 = ax.twiny()
     sns_module.barplot(
@@ -141,7 +291,7 @@ def render_strata_distribution_plot(
     sns_module.violinplot(
         y=stratum_col,
         x="SITE_INDEX",
-        data=f_table.reset_index(),
+        data=window_frame,
         ax=ax2,
         bw_method=plot_config.bw,
         order=labels,
@@ -154,29 +304,24 @@ def render_strata_distribution_plot(
     sns_module.stripplot(
         y=stratum_col,
         x="SITE_INDEX",
-        data=f_table.reset_index(),
+        data=strip_frame,
         ax=ax2,
         order=labels,
         color="black",
-        alpha=0.35,
-        size=2.2,
+        alpha=plot_config.stripplot_alpha,
+        size=plot_config.stripplot_size,
     )
     ax.set_xlabel("Relative abundance of stratum (proportion of total area)")
-    si_default_lo, si_default_hi = plot_config.site_index_xlim
-    site_index = f_table.reset_index().get("SITE_INDEX")
-    si_lo = float(si_default_lo)
-    si_hi = float(si_default_hi)
-    if site_index is not None and len(site_index) > 0:
-        try:
-            obs_min = float(site_index.min())
-            obs_max = float(site_index.max())
-        except (TypeError, ValueError):
-            obs_min, obs_max = si_lo, si_hi
-        if math.isfinite(obs_min):
-            si_lo = min(si_lo, math.floor(obs_min) - 1.0)
-        if math.isfinite(obs_max):
-            si_hi = max(si_hi, math.ceil(obs_max) + 1.0)
-    ax2.set_xlim((si_lo, si_hi))
+    ax2.set_xlim(window_xlim)
     strata_pdf_path, strata_png_path = strata_plot_paths_fn(tsa_code)
-    plt_module.savefig(strata_pdf_path, bbox_inches="tight")
+    if plot_config.write_pdf:
+        plt_module.savefig(strata_pdf_path, bbox_inches="tight")
     plt_module.savefig(strata_png_path, facecolor="white", bbox_inches="tight")
+    return StrataDistributionPlotMetadata(
+        site_index_xlim=window_xlim,
+        total_points=int(len(plot_frame)),
+        window_points=int(len(window_frame)),
+        strip_points_plotted=int(len(strip_frame)),
+        clipped_low_count=int(clipped_low),
+        clipped_high_count=int(clipped_high),
+    )

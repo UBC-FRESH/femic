@@ -4334,135 +4334,757 @@
   `P19.5` (full Patchworks-enabled rebuild validation and evidence promotion to
   green status).
 
-## 2026-03-16 - Patchworks raster topology backend checkpoint for FEMIC CLI
-- Investigated Patchworks proximal-topology automation paths from the Windows runtime host.
-- Confirmed `ca.spatial.gis.vector.ProximalTopology` is not usable with FEMIC's `blocks.shp` workflow because it requires a coverage dataset and rejects shapefile input.
-- Added a new `femic patchworks build-blocks --topology-backend patchworks-raster` path that drives `ca.spatial.gis.raster.ProximalTopology` noninteractively through a temporary BeanShell script.
-- Added regression coverage in:
-  - `tests/test_patchworks_runtime.py`
-  - `tests/test_cli_main.py`
-- Validation:
-  - `ruff format src tests`
-  - `ruff check src tests`
-  - `mypy src`
-  - `pytest`
-  - `pre-commit run --all-files` failed in this shell because `git` is not on `PATH`.
-- Runtime verification:
-  - K3Z topology rebuild succeeded through the new backend (`edges=938`).
-  - TSA29 launched headlessly through the same backend but did not complete within 30 minutes, so the orphaned Java processes were stopped and the topology file remained incomplete.
+## 2026-03-14 - Extended TSA29 plan for dual-output pipeline and ws3 smoke tests
+- Created dedicated feature branch to firewall ongoing TSA29 compile work from
+  `main`:
+  `feature/compile-tsa29-instance-ws3-fork`.
+- Extended TSA29 planning contract in
+  `planning/TSA29_dataset_compile_plan.md` to require pipeline fork outputs:
+  - Patchworks branch (secondary teaching/training path),
+  - Woodstock branch (primary ws3 research path).
+- Added explicit ws3 integration contract:
+  - create/link ws3 model instance using FEMIC Woodstock outputs,
+  - execute ws3 simulation smoke test,
+  - record ws3 smoke evidence and sanity checks.
+- Updated roadmap to track this as open Phase 19 work:
+  - `P19.9 Add dual-output fork contract (Patchworks + Woodstock)`,
+  - `P19.10 Add ws3 smoke-test integration and evidence gate`.
 
-## 2026-03-17 - Fragments/topology contract correction for Patchworks backend
-- Corrected the noninteractive Patchworks raster topology backend so it runs on `fragments.shp` rather than `blocks.shp`.
-- Split fragment identity from block identity in FEMIC Patchworks exports:
-  - internal/export-build dataframe now includes canonical `FRAGMENT_ID`,
-  - shapefile export writes `FRAGMENT_I` because DBF field names are limited to 10 characters,
-  - `BLOCK` remains present for current Matrix Builder compatibility.
-- Updated topology identifier selection to prefer fragment identifiers (`FRAGMENT_ID` / `FRAGMENT_I`) while preserving fallback compatibility with existing K3Z fragments that still expose `FEATURE_ID`.
-- Added/updated regression coverage in:
-  - `tests/test_fmg_patchworks.py`
-  - `tests/test_patchworks_runtime.py`
-  - `tests/test_cli_main.py`
-- Runtime verification:
-  - K3Z `femic patchworks build-blocks --topology-backend patchworks-raster` completed successfully against the current fragments shapefile.
-- Validation:
+## 2026-03-14 - Added dual-export orchestration and ws3 smoke command path (`P19.9`)
+- Implemented `femic export dual` to produce Patchworks + Woodstock outputs in
+  a single command execution using shared bundle/checkpoint inputs.
+- Implemented `femic instance ws3-smoke` to validate Woodstock export
+  structure/sanity and optionally execute a ws3 simulation command.
+- Added new runtime helper module:
+  `src/femic/ws3_smoke.py` with JSON evidence output and optional stdout/stderr
+  capture for ws3 command runs.
+- Updated docs for operator usage:
+  - `docs/reference/cli.rst`
+  - `docs/guides/model-input-bundle-and-export.rst`
+  - `docs/guides/pipeline-overview.rst`
+- Added regression coverage:
+  - `tests/test_ws3_smoke.py`
+  - new `export dual` / `instance ws3-smoke` CLI wiring tests in
+    `tests/test_cli_main.py`
+- Phase status:
+  `P19.9` complete; `P19.10` remains open pending execution against a real ws3
+  model instance and captured green evidence.
+
+## 2026-03-14 - Added builtin ws3 bridge smoke integration (`P19.10` progress)
+- Added `src/femic/ws3_bridge.py` with
+  `build_ws3_sections_from_femic_woodstock(...)` to convert FEMIC Woodstock CSV
+  exports into ws3-compatible Woodstock section files
+  (`.lan/.are/.yld/.act/.trn`).
+- Extended `src/femic/ws3_smoke.py` so ws3 smoke can:
+  - build bridge section files,
+  - optionally inject a local ws3 checkout via `--ws3-repo-path`,
+  - run builtin `ws3.forest.ForestModel` load/compile/schedule smoke logic,
+  - emit bridge metadata in JSON evidence output.
+- Extended CLI options:
+  - `femic export dual`: `--ws3-repo-path`, `--ws3-builtin-smoke`,
+    `--ws3-bridge-dir`.
+  - `femic instance ws3-smoke`: `--ws3-repo-path`, `--builtin-model-smoke`,
+    `--ws3-bridge-dir`.
+- Updated docs/tests for this contract:
+  - `docs/reference/cli.rst`, `docs/reference/api/modules.rst`
+  - `tests/test_ws3_bridge.py`, `tests/test_ws3_smoke.py`,
+    `tests/test_cli_main.py`, `tests/test_docs_contract.py`
+- Validation gates passed locally:
   - `ruff format src tests`
   - `ruff check src tests`
   - `mypy src`
-  - `pytest`
-  - `pre-commit run --all-files` failed in this shell because `git` is not on `PATH`.
-## 2026-03-18 - Completed Phase 20: K3Z AU-specific feature-seral account surface
-- Added and completed a roadmap phase for K3Z AU-specific feature-seral accounts
-  using the AU-first label contract `feature.Seral.<au_id>.<stage>`.
-- Updated the Patchworks exporter to emit AU-specific feature-seral labels
-  alongside the existing global `feature.Seral.<stage>` compatibility surface.
-- Updated account-surface parsing/tests/docs to treat
-  `feature.Seral.<au_id>.<stage>` as the per-AU inventory-state surface while
-  leaving `product.Seral.area.<stage>.<au_id>.CC` unchanged.
-- Rebuilt K3Z `forestmodel.xml` from the current model-input bundle +
-  `config/seral.k3z.yaml`, then reran Patchworks matrix builder successfully
-  (`returncode=0`).
-- Verified rebuilt K3Z account surfaces now include both:
-  - global `feature.Seral.<stage>` rows, and
-  - AU-specific `feature.Seral.<au_id>.<stage>` rows,
-  while preserving the existing product-side seral surface.
-- Validation:
-  - `ruff format src tests`
-  - `ruff check src tests`
-  - `mypy src`
-  - `pytest` (`494 passed`)
+  - `pytest` (`500 passed`)
   - `pre-commit run --all-files`
-  - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/_build/html -W`
-  - `python -m sphinx -b html docs _build/html -W` still fails on pre-existing
-    autosummary `toc.not_included` warnings outside Phase 20 scope.
+  - `sphinx-build -b html docs _build/html -W`
+
+## 2026-03-14 - Completed Phase 19 `P19.10` ws3 evidence gate on TSA29
+- Generated a complete TSA29 Woodstock package in the instance repo:
+  `external/femic-tsa29-instance/output/woodstock_tsa29_validated/`
+  including `woodstock_yields.csv`, `woodstock_areas.csv`,
+  `woodstock_actions.csv`, `woodstock_transitions.csv`.
+- Executed real ws3 smoke gate against TSA29 outputs with local ws3 checkout:
+  `femic instance ws3-smoke --instance-root external/femic-tsa29-instance --woodstock-dir output/woodstock_tsa29_validated --output evidence/ws3_smoke_report.latest.json --ws3-repo-path /home/gep/projects/ws3`.
+- Smoke result was green:
+  - `status=ok`
+  - rows `(y/a/ac/t)=(10050/147959/30/30)`
+  - `inventory_area=2172195.127`
+  - evidence written at
+    `external/femic-tsa29-instance/evidence/ws3_smoke_report.latest.json`.
+- Published TSA29 instance updates to
+  `UBC-FRESH/femic-tsa29-instance` commit `afc5f8b` with evidence + Woodstock
+  outputs + ws3 bridge section files.
+
+## 2026-03-14 - Hardened TSA key/index handling to prevent stage-01a key-format failures
+- Added canonical TSA normalizer in `src/femic/pipeline/tsa.py` and upgraded
+  `select_tsa_slice(...)` to:
+  - try normalized candidate keys,
+  - fall back to normalized-index masking when index dtype/tokens drift,
+  - raise clearer diagnostics including available normalized TSA keys.
+- Updated `src/femic/pipeline/stages.py::prepare_tsa_index(...)` to normalize
+  TSA values during index preparation so stale int/mixed-case checkpoint data
+  does not break downstream TSA selection.
+- Added regression coverage in `tests/test_pipeline_helpers.py` for:
+  - mixed-case named TSA lookup (`K3Z` -> `k3z`) via `select_tsa_slice(...)`,
+  - normalized `prepare_tsa_index(...)` output for numeric/string/named TSA
+    values.
+- Ran local validation gates successfully:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest` (`504 passed`)
+  - `pre-commit run --all-files`
+
+## 2026-03-14 - Added fail-fast stale BatchTIPSY output guard for 01b overlays
+- Added `validate_tipsy_output_is_fresh(...)` in
+  `src/femic/pipeline/tipsy.py` to detect when `04_output-tsaXX.out` is older
+  than the current `tipsy_params_tsaXX.xlsx`.
+- Wired the guard into both legacy 01b entry surfaces:
+  - `01b_run-tsa.py`
+  - `src/femic/resources/legacy/01b_run-tsa.py`
+- Default behavior now fails fast with a clear rerun instruction, preventing
+  silent mismatches in VDYP-vs-TIPSY plot generation and post-TIPSY artifacts.
+- Added opt-out env override for controlled debugging:
+  `FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1`.
+- Added regression coverage in `tests/test_tipsy.py`:
+  - stale-output error path
+  - override-allowed path
+- Validation gates run:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest` (`506 passed`)
+  - `pre-commit run --all-files`
+
+## 2026-03-14 - Clarified canonical BatchTIPSY DAT contract in docs and runtime checks
+- Clarified pipeline semantics:
+  - `02_input-tsaXX.dat` is the canonical BatchTIPSY input handoff,
+  - `tipsy_params_tsaXX.xlsx` is a human-readable companion.
+- Added `tipsy_input_dat_path(...)` helper in `src/femic/pipeline/tipsy.py`.
+- Tightened `validate_tipsy_output_is_fresh(...)` behavior:
+  - DAT freshness is now preferred when available,
+  - running 01b with a missing canonical DAT now fails fast with a clear error,
+  - stale-output checks continue to support explicit override via
+    `FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1`.
+- Wired DAT-aware freshness checks into both legacy 01b surfaces:
+  - `01b_run-tsa.py`
+  - `src/femic/resources/legacy/01b_run-tsa.py`
+- Updated user-facing workflow docs:
+  - `docs/guides/stage-01a-vdyp-tipsy-input.rst`
+  - `docs/guides/stage-01b-post-tipsy.rst`
+  - `docs/guides/pipeline-overview.rst`
+- Added tests in `tests/test_tipsy.py` for:
+  - DAT path helper,
+  - stale-output detection with DAT present,
+  - required-DAT failure path.
+- Validation gates run:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest` (`508 passed`)
+  - `pre-commit run --all-files`
+  - `.venv/bin/sphinx-build -b html docs _build/html -W`
+
+## 2026-03-15 - Fixed resume-skip contract gap that allowed missing `02_input-tsaXX.dat`
+- Root cause of missing DAT in resume workflows:
+  `_should_skip_01a(...)` only required
+  `tipsy_params_tsaXX.xlsx` and `vdyp_curves_smooth-tsaXX.feather`, so FEMIC
+  could skip 01a even when canonical BatchTIPSY handoff DAT was absent.
+- Patched both legacy stage-00 surfaces to include DAT in 01a skip gating:
+  - `00_data-prep.py`
+  - `src/femic/resources/legacy/00_data-prep.py`
+  by adding `tipsy_input_dat_path(tsa=...)` to required output paths.
+- Updated orchestration wiring regression expectations:
+  - `tests/test_legacy_orchestration_wiring.py`
+- Validation gates run:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest` (`508 passed`)
+  - `pre-commit run --all-files`
+  - `.venv/bin/sphinx-build -b html docs _build/html -W`
+
+## 2026-03-15 - Repaired BatchTIPSY DAT column alignment for TSA29 handoff
+- Fixed TIPSY DAT export mapping in `src/femic/pipeline/tipsy.py` by widening
+  `Proportion` from `(31, 31)` to `(31, 39)` so real values like `0.3` and
+  `0.85` serialize without column-map corruption.
+- Preserved operator screenshot-locked BatchTIPSY anchors (including
+  `Regen_Method` at column 64, species code fields at `97-99`/`129-131`/etc,
+  and SI at `108-111`) and regenerated `data/02_input-tsa29.dat` from the
+  corrected writer path.
+- Mirrored corrected DAT into TSA29 instance submodule:
+  `external/femic-tsa29-instance/data/02_input-tsa29.dat`.
+- Updated overflow regression in `tests/test_tipsy.py` to assert width-fail on
+  `FIZ` (1-char field), since `Proportion` is now intentionally wider.
+- Validation gates run:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest` (`508 passed`)
+  - `pre-commit run --all-files`
+  - `.venv/bin/sphinx-build -b html docs _build/html -W`
+
+## 2026-03-15 - Added explicit Phase 19 siteprod dependency investigation note
+- Added a planning decision gate to
+  `planning/TSA29_dataset_compile_plan.md` to answer whether siteprod raster SI
+  values are actually required in current default compile paths (strata/AU/VDYP/TIPSY/other).
+- Recorded matching roadmap note under `ROADMAP.md` "Detailed Next Steps Notes":
+  - if siteprod is not required, disable it in default path and make opt-in.
+  - if siteprod is required, harden no-data handling so sparse no-data stands
+    cannot destabilize clean runs.
+
+## 2026-03-15 - Split VDYP parallelization into a separate non-blocking phase
+- Added `Phase 20: VDYP Parallelization and Runtime Observability (Non-Blocking)`
+  to `ROADMAP.md` with scoped tasks (`P20.1`-`P20.6`) covering contract,
+  profiling, optional AU-level parallel path, deterministic merge checks, and
+  runtime heartbeat logging.
+- Added a matching `ROADMAP.md` detailed-notes guardrail that Phase 20 must
+  not block TSA29 Phase 19 completion (`P19.5`), and should ship opt-in first.
+- Extended `planning/TSA29_dataset_compile_plan.md` with a dedicated deferred
+  follow-on section that captures the same non-blocking rule and expected
+  parity/benchmark deliverables for future VDYP parallelization.
+
+## 2026-03-15 - Drafted Phase 20 P20.1 acceptance checklist
+- Added an execution-ready `P20.1` checklist in
+  `planning/TSA29_dataset_compile_plan.md` with concrete contract gates for:
+  - VDYP-only scope boundary,
+  - serial vs parallel parity invariants and float tolerance policy,
+  - deterministic merge/re-run hash stability,
+  - worker failure handling + serial fallback policy,
+  - runtime heartbeat/observability minimums,
+  - benchmark and rollout gates (opt-in first, default only after evidence).
+- Added a corresponding `ROADMAP.md` detailed next-step note marking `P20.1`
+  as drafted and ready for implementation sequencing.
+
+## 2026-03-15 - Queued Phase 19 strata-coverage tuning without interrupting active run
+- Added a Phase 19 in-flight planning note to keep the currently monitored
+  clean TSA29 run unchanged, while queuing a next-run tuning change to raise
+  stratum coverage from the observed ~`0.656` (~10 strata) toward the preferred
+  ~`0.8` target.
+- Recorded this in:
+  - `planning/TSA29_dataset_compile_plan.md` ("Active Run Follow-Up Notes"),
+  - `ROADMAP.md` ("Detailed Next Steps Notes").
+- Explicitly deferred Phase 20 execution to a separate branch after TSA29 is
+  stable enough for graduate-student handoff.
+
+## 2026-03-15 - Switched VDYP explicit feature-id source loads to full-read default
+- Updated `src/femic/pipeline/vdyp_stage.py` so explicit feature-id source mode
+  now defaults to full-layer `read_file(...)` + in-memory `FEATURE_ID` filter
+  (better fit for high-memory hosts), instead of mandatory chunked
+  `FEATURE_ID IN (...)` queries.
+- Kept chunked feature-id reads as an explicit fallback path by setting
+  `source_feature_id_chunk_size` to a positive value.
+- Removed explicit `driver=\"FileGDB\"` kwargs from VDYP source reads to avoid
+  repeated `OpenFileGDB ... does not support open option DRIVER` runtime
+  warnings.
+- Updated/validated affected tests in `tests/test_vdyp_stage.py`:
+  - `.venv/bin/pytest -q tests/test_vdyp_stage.py -k \"load_vdyp_input_tables\"`
+    (`7 passed`)
+  - `.venv/bin/ruff check src/femic/pipeline/vdyp_stage.py tests/test_vdyp_stage.py`
+    (`All checks passed`)
+
+## 2026-03-15 - Fixed stale pre-VDYP resume checkpoint reuse across strata config changes
+- Added signature-aware pre-VDYP checkpoint helpers in
+  `src/femic/pipeline/pre_vdyp.py`:
+  - `build_vdyp_prep_signature(...)`
+  - `save_vdyp_prep_checkpoint(..., signature=...)`
+  - `load_vdyp_prep_checkpoint(..., expected_signature=...)`
+- Patched both 01a surfaces to persist and validate checkpoint signatures:
+  - `01a_run-tsa.py`
+  - `src/femic/resources/legacy/01a_run-tsa.py`
+- Resume behavior now rejects stale pre-VDYP caches when strata-selection
+  parameters change (for example `FEMIC_STRAT_TOP_AREA_COVERAGE`), forcing a
+  rebuild instead of silently loading old 10-strata payloads.
+- Added tests in `tests/test_pre_vdyp.py` for:
+  - signature mismatch rejection,
+  - legacy list-payload backward compatibility.
+
+## 2026-03-15 - Added TSA29 curve-quality follow-up tasks to Phase 19 roadmap
+- Converted reviewer feedback on TSA29 diagnostics into explicit open Phase 19
+  tasks in `ROADMAP.md`:
+  - `P19.12` stratum SI plot readability/zoom/outlier-visibility controls.
+  - `P19.13` VDYP NLLS failure detection + ordered auto-reparameterization
+    fallback sequence (including early-age point censoring and age-20
+    merchantable floor option).
+  - `P19.14` tail-blend heuristic relaxation and selection-policy revision
+    against straight NLLS fits.
+  - `P19.15` TSA29 rerun + curve-stability evidence publication.
+- Added a matching dated entry under `ROADMAP.md` "Detailed Next Steps Notes"
+  to keep implementation sequencing anchored to this feedback.
+
+## 2026-03-15 - Completed P19.12 stratum SI diagnostic readability and auditability
+- Updated `src/femic/pipeline/plots.py` to improve plot interpretability:
+  - Added deterministic strip-point thinning (`stripplot_max_points` +
+    `stripplot_min_points_per_stratum`) and reduced default strip opacity/size.
+  - Replaced outlier-driven axis expansion with quantile-centered SI windowing
+    (`site_index_focus_quantiles`, `site_index_focus_padding`) constrained by a
+    configurable cap (`site_index_xlim`).
+  - Added `StrataDistributionPlotMetadata` return payload with SI window,
+    total/window/overlay point counts, and clipped low/high counts.
+- Updated legacy stage logging in
+  `src/femic/resources/legacy/01a_run-tsa.py` to emit plot metadata for
+  auditable trimming diagnostics.
+- Added/updated tests in `tests/test_pipeline_helpers.py`:
+  - config defaults cover new readability controls,
+  - render helper returns metadata and expected SI window,
+  - outlier clipping and strip-point thinning behavior is regression-tested.
+
+## 2026-03-15 - P19.12 follow-up: fixed strata SI plot lower bound at zero
+- Updated `src/femic/pipeline/plots.py` so strata diagnostic SI window keeps a
+  fixed lower bound at `site_index_xlim[0]` (default `0`), preventing left-tail
+  violin clipping caused by quantile-centered lower bounds.
+- Kept quantile-based upper bound behavior unchanged for focused readability.
+- Updated plot helper tests in `tests/test_pipeline_helpers.py` to assert SI
+  lower-bound behavior and prevent regression.
+- Regenerated TSA29 strata diagnostics to confirm rendered SI axis starts at
+  `0`.
+
+## 2026-03-15 - P19.12 follow-up: switched strata diagnostics to PNG-only default
+- Updated `src/femic/pipeline/plots.py` to stop writing `strata-tsaXX.pdf` by
+  default; only `strata-tsaXX.png` is written unless `write_pdf=True` is
+  explicitly set in `StrataDistributionPlotConfig`.
+- Updated `tests/test_pipeline_helpers.py` to assert PNG-only default behavior
+  and added regression coverage for optional PDF emission when requested.
+
+## 2026-03-15 - Completed P19.13a VDYP fit-quality gate warnings
+- Updated `src/femic/pipeline/vdyp_stage.py` to evaluate baseline NLLS curve
+  plausibility before downstream acceptance and emit structured warning events
+  when quality gates fail.
+  - Added checks for non-finite/negative curve outputs.
+  - Added metric-based gate thresholds for `mape` and early-age overshoot.
+  - Added `vdyp_curve_fit` warning events with
+    `stage=fit_quality_gate`, `reason=fit_quality_gate_failed`, and
+    machine-readable `failure_reasons`.
+- Added `tests/test_vdyp_stage.py` regression coverage to force an implausible
+  fit and verify fit-quality gate warnings are logged.
+
+## 2026-03-15 - Completed P19.13b left-toe outlier censor re-fit path
+- Updated `src/femic/pipeline/vdyp_stage.py` to add a left-toe outlier
+  detection pass from observed 5-year bins and generate a censored re-fit
+  candidate (`skip1` uplift) for incoherent early-age points.
+- Added deterministic selection criteria requiring improved early-age
+  overshoot plus RMSE or MAPE improvement before accepting the censored curve.
+- Added structured `vdyp_curve_fit` event logging for left-toe censor decisions
+  (`stage=left_toe_censor`, selected/rejected) including baseline and candidate
+  fit metrics for auditability.
+- Added regression test coverage in `tests/test_vdyp_stage.py` to verify left-toe
+  censor candidate selection and output curve replacement behavior.
+
+## 2026-03-15 - Completed P19.13c merchantable-volume floor candidate
+- Updated `src/femic/pipeline/vdyp_curves.py` so `process_vdyp_out(...)` can
+  optionally apply a merchantable-volume floor (`merchantable_floor_enabled`,
+  `merchantable_floor_age`, `merchantable_floor_value`) and emit
+  `merchantable_floor` stage events.
+- Updated `src/femic/pipeline/vdyp_stage.py` to evaluate a merchantable-floor
+  candidate whenever baseline curves show non-trivial pre-age-20 volume, then
+  select/reject that candidate with structured event logging and RMSE
+  guardrails.
+- Added regression tests:
+  - `tests/test_vdyp_curves.py` verifies floor application through age 20.
+  - `tests/test_vdyp_stage.py` verifies stage-level merchantable-floor
+    selection and output substitution.
+
+## 2026-03-15 - Completed P19.13d ordered fallback policy + selection events
+- Updated `src/femic/pipeline/vdyp_stage.py` to apply explicit fallback-path
+  ordering for output curve selection:
+  `primary_nlls -> reparameterized_nlls -> censored_refit -> merchantable_floor`,
+  with existing K3Z tail-blend override retained.
+- Added per-stratum/SI `vdyp_curve_fit` selection events
+  (`stage=fallback_policy`, `reason=curve_selected`) with selected path,
+  available candidates, and selected metrics.
+- Added regression test in `tests/test_vdyp_stage.py` to verify policy-order
+  selection and event emission.
+
+## 2026-03-15 - Completed P19.14a configurable/relaxed tail-linearity thresholds
+- Updated `src/femic/pipeline/vdyp_stage.py` so tail-blend candidate defaults are
+  no longer hard-coded per run and now come from:
+  - environment-backed defaults (`FEMIC_TAIL_LINEAR_MIN_POINTS`,
+    `FEMIC_TAIL_LINEAR_MIN_R2`, `FEMIC_TAIL_LINEAR_MAX_NRMSE`,
+    `FEMIC_TAIL_LINEAR_PREFER_MIN_AGE`, `FEMIC_TAIL_BLEND_YEARS`), and
+  - per-stratum/per-SI `kwarg_overrides_for_tsa` values when supplied.
+- Relaxed baseline tail defaults used by stage candidate generation to improve
+  eligibility of plausible late-linear tails while retaining deterministic
+  thresholds.
+- Added regression tests in `tests/test_vdyp_stage.py` confirming:
+  - per-stratum tail override values are respected, and
+  - env-provided defaults are applied when no explicit overrides are present.
+
+## 2026-03-15 - Completed P19.14b tail-blend selection criteria + tie-breaks
+- Updated `src/femic/pipeline/vdyp_stage.py` with explicit objective selection
+  criteria for tail-blend vs straight NLLS using:
+  - required tail-RMSE improvement with non-harm guardrails on RMSE/MAPE/early
+    overshoot, and
+  - deterministic tie-break behavior for near-equal tail fits.
+- Added structured decision logging (`vdyp_curve_fit`,
+  `stage=tail_blend_selection`) capturing selected/rejected outcomes, decision
+  predicates, and baseline/candidate metrics.
+- Integrated accepted tail-blend candidate into non-K3Z fallback output
+  selection path (`selected_path=tail_blend`) while preserving K3Z-specific
+  tail-blend override behavior.
+- Added regression test in `tests/test_vdyp_stage.py` verifying tail-blend
+  selection and fallback-policy selected path emission.
+
+## 2026-03-15 - Completed P19.14c fit diagnostics for selected path + residuals
+- Updated `src/femic/pipeline/vdyp_stage.py` fit diagnostic plotting to:
+  - overlay the final selected output curve and selected-path label,
+  - include a residual subplot (`selected - observed median` by age bin), and
+  - annotate estimated tail-blend window (anchor/end age) when tail-blend
+    metadata is available.
+- Moved diagnostic plotting to run after fallback-path selection so each plot
+  reflects the actual curve that will be carried forward.
+
+## 2026-03-15 - Completed P19.15b reviewer-facing strata/SI fit-status table
+- Added `summarize_curve_selection_rows(...)` in `src/femic/vdyp/reporting.py`
+  to parse `vdyp_curve_fit` events and produce per-stratum/SI selection rows
+  containing:
+  - selected path,
+  - fit-quality gate failure flag,
+  - left-toe censor selection flag,
+  - merchantable-floor selection flag,
+  - tail-blend selection flag.
+- Extended `femic vdyp report` in `src/femic/cli/main.py` with
+  `--selection-summary-out` to write this reviewer-facing summary table to CSV.
+- Added regression coverage in:
+  - `tests/test_vdyp_reporting.py` for row extraction/flagging logic,
+  - `tests/test_vdyp_report_cli.py` for CSV output generation.
+
+## 2026-03-15 - Completed P19.15a.1 THLB empty-slice guard for post-TIPSY stability
+- Patched `mean_thlb_for_geometry(...)` in `src/femic/pipeline/tsa.py` to avoid
+  calling `np.mean` on empty valid-cell masks; now returns the configured
+  fallback when no valid cells are present.
+- Added non-finite guard on computed THLB means so invalid numeric outputs also
+  fall back safely.
+- Added regression coverage in `tests/test_pipeline_helpers.py` to lock the
+  empty-valid-cell fallback behavior and prevent warning-flood regressions.
+- Updated `ROADMAP.md`:
+  - checked off Phase 19 subtask `P19.15a.1`,
+  - appended matching detail in "Detailed Next Steps Notes".
+
+## 2026-03-15 - Completed P19.15 TSA29 curve-QA rerun + stability evidence publish
+- Re-ran TSA29 curve QA with updated policy stack and published stability evidence:
+  - stratum coverage run at `top_area_coverage=0.80` selected 18 strata
+    (`coverage=0.8061826878755755`),
+  - regenerated `plots/strata-tsa29.png`,
+  - regenerated all 54 AU overlays `plots/tipsy_vdyp_tsa29-*.png`.
+- Generated reviewer-facing selection summary CSV from curve-event logs:
+  `vdyp_io/logs/curve_selection_summary-tsa29-20260315T184955Z.csv`
+  (`primary_nlls=12`, `tail_blend=19`, `merchantable_floor=22`,
+  `censored_refit=1`).
+- Completed post-TIPSY finalize and refreshed model-input bundle outputs:
+  - `data/model_input_bundle/au_table.csv`
+  - `data/model_input_bundle/curve_table.csv`
+  - `data/model_input_bundle/curve_points_table.csv`
+  - manifest: `vdyp_io/logs/run_manifest-post_tipsy_20260315T190051Z.json`.
+- Published canonical instance evidence in `external/femic-tsa29-instance`:
+  - `evidence/curve_stability_report.20260315.md`
+  - `evidence/curve_selection_summary-tsa29-20260315T184955Z.csv`
+  - docs link update in `docs/rebuild-and-qa.rst`.
+
+## 2026-03-15 - Completed P19.15d composable censoring + selected-curve gate rescue
+- Updated `src/femic/pipeline/vdyp_stage.py` branching logic so left-toe
+  censoring composes with downstream candidate generation (tail blend and
+  merchantable floor) instead of acting as an exclusive terminal override.
+- Added selected-curve gate rescue: when the initially selected curve still
+  fails fit-quality checks, FEMIC now evaluates available candidates and
+  reselects in ordered priority:
+  `tail_blend -> merchantable_floor -> reparameterized_nlls -> censored_refit -> primary_nlls`,
+  with explicit warning events for rescue or unresolved failures.
+- Added env-configurable tail-blend selection thresholds (`FEMIC_TAIL_SELECT_*`)
+  and relaxed default ratios so tail-blend can be selected more often for
+  borderline but non-harmful candidates.
+- Preserved K3Z tail-blend override behavior while preventing non-K3Z runs from
+  silently carrying non-finite/failed primary selections when better candidates
+  exist.
+- Added/updated regression coverage in `tests/test_vdyp_stage.py` for:
+  - composable left-toe censor + tail-blend behavior,
+  - selected-curve gate rescue selection, and
+  - existing tail-blend/left-toe/floor policy interactions.
+
+## 2026-03-15 - Corrected merchantable-floor behavior to right-shifted toe ramp
+- Updated `src/femic/pipeline/vdyp_curves.py` merchantable-floor logic in
+  `process_vdyp_out(...)` to shift the fitted curve right by
+  `merchantable_floor_age` years instead of hard-clamping ages `<= floor_age`
+  to a flat value.
+- This preserves the fitted exponential toe-ramp shape (smooth onset after age
+  20 by default) while still enforcing the merchantable floor on the delayed
+  interval.
+- Added explicit event metadata for auditability:
+  `stage=merchantable_floor`, `mode=right_shift`, `shift_years=<floor_age>`.
+- Updated `tests/test_vdyp_curves.py` to verify that post-floor ages match a
+  delayed baseline curve and that the curve begins rising immediately after the
+  floor window (`age=21` for a 20-year floor).
+
+## 2026-03-15 - Applied toe-shift defaults to all fit paths with config override
+- Updated `src/femic/pipeline/vdyp_stage.py` so every smoothing run starts with
+  a default toe-shift (`toe_shift_years`) applied to baseline and candidate fit
+  kwargs, using `FEMIC_VDYP_TOE_SHIFT_YEARS` (default `20.0`) unless overridden.
+- Updated `src/femic/pipeline/vdyp_stage.py` to skip separate
+  merchantable-floor candidate evaluation when toe-shift is already active,
+  preventing mixed post-hoc-only behavior.
+- Updated `src/femic/pipeline/io.py` and `src/femic/cli/main.py` to add
+  run-profile/config support for `modes.vdyp_toe_shift_years`, wiring it into
+  legacy runtime env as `FEMIC_VDYP_TOE_SHIFT_YEARS`.
+- Updated config templates:
+  - `config/run_profile.example.yaml`
+  - `config/run_profile.case_template.yaml`
+  - `instances/reference/config/run_profile.case_template.yaml`
+  with documented `vdyp_toe_shift_years` guidance.
+- Added/updated regression coverage:
+  - `tests/test_vdyp_stage.py` (default/env toe-shift propagation; floor-candidate gate),
+  - `tests/test_vdyp_curves.py` (up-front toe-shift behavior),
+  - `tests/test_pipeline_helpers.py` (run-profile parsing + env export).
+- Validation gates run:
+  `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
+  `pre-commit run --all-files`, `.venv/bin/sphinx-build -b html docs _build/html -W`.
+
+## 2026-03-15 - Completed P19.16a-d dominant-recovery selection hardening
+- Updated `src/femic/pipeline/vdyp_stage.py` to prevent catastrophic
+  baseline-curve retention by adding:
+  - dominant-recovery selection logic for both left-toe-censor and tail-blend
+    candidates (allows selection when baseline is catastrophic and candidate
+    improvements are decisive),
+  - catastrophic fit gate reason (`catastrophic_mape`) and new early
+    underfit metric (`early_underfit`) with gate threshold control, and
+  - expanded rescue telemetry fields (`rescue_trigger_gate_reasons`,
+    `rescue_order`, `gate_by_path`) plus detailed candidate decision payloads.
+- Added new environment knobs in `execute_curve_smoothing_runs(...)`:
+  `FEMIC_FIT_GATE_CATASTROPHIC_MAPE`,
+  `FEMIC_FIT_GATE_MAX_EARLY_UNDERFIT`,
+  `FEMIC_DOMINANT_RECOVERY_MAX_METRIC_RATIO`.
+- Updated reviewer-summary parsing in `src/femic/vdyp/reporting.py` so
+  `fit_quality_gate_failed` is flagged for selected-curve rescue/unresolved
+  fit-gate events as well as base fit-gate failures.
+- Added regression coverage:
+  - `tests/test_vdyp_stage.py::test_execute_curve_smoothing_runs_selects_dominant_recovery_tail_blend_candidate`
+  - `tests/test_vdyp_reporting.py::test_summarize_curve_selection_rows_flags_selected_curve_gate_rescue`
+- Targeted TSA29 cached rerun evidence from
+  `vdyp_io/logs/vdyp_curve_events-tsa29-p1916_rerun_20260315T2212Z.jsonl`
+  confirms prior catastrophic cases now route through dominant recovery:
+  - `MS_PLI H`: `left_toe_censor_selected` with
+    `dominant_recovery.selected=true` (previously catastrophic `primary_nlls`),
+  - `IDF_FDI L`: `left_toe_censor_selected` with
+    `dominant_recovery.selected=true` (previously catastrophic `primary_nlls`).
+- Validation gates run:
+  `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
+  `pre-commit run --all-files`,
+  `python -m sphinx -b html docs _build/html -W` (via `.venv/bin/python`).
+
+## 2026-03-15 - Tuned TSA29 `MS_PLI L` to a linear post-200 tail
+- Updated `src/femic/pipeline/vdyp_overrides.py` with a TSA29 case-specific
+  override for `("MS_PLI", "L")` to bias right-tail blending toward a
+  near-linear continuation after age ~200:
+  `tail_linear_min_points=20`, `tail_linear_min_r2=0.6`,
+  `tail_linear_max_nrmse=0.25`, `tail_linear_allow_quantile_fallback=1.0`,
+  `tail_anchor_quantile=0.70`, `tail_blend_years=10.0`.
+- Added `tests/test_vdyp_overrides.py` coverage to lock the new override
+  payload for this case.
+- Reran only the `MS_PLI L` smoothing case from cached TSA29 outputs and
+  regenerated `plots/vdyp_fitdiag_tsa29-01-MS_PLI-L.png`; selected path remains
+  `tail_blend` with an approximately linear tail after age 200 (no pronounced
+  curved decline).
+
+## 2026-03-15 - Generalized left-toe discontinuity censoring (no case-specific override)
+- Updated `src/femic/pipeline/vdyp_stage.py` left-toe censor detection to catch
+  additional early discontinuity classes without per-case tuning:
+  - symmetric early low-shoulder discontinuities (`next_median/current` + abs gap),
+  - local slope-kink discontinuities (first-step slope vs following-step scale).
+- Added strict structural non-harm acceptance for left-toe censor candidates
+  when inferred censor depth is substantial (default `skip_delta >= 4`) and
+  candidate RMSE/tail-RMSE/MAPE stay within tight ratio guardrails.
+- Removed the temporary TSA29 `("MS_PLI", "L")` override from
+  `src/femic/pipeline/vdyp_overrides.py` so this case now depends on generalized
+  fit logic.
+- Added regression coverage in `tests/test_vdyp_stage.py`:
+  `test_execute_curve_smoothing_runs_censors_early_low_discontinuity_points`.
+- Targeted `MS_PLI L` rerun from cached TSA29 outputs now logs
+  `left_toe_censor_selected` (`skip1_after=6`) and chooses
+  `selected_path=censored_refit`.
+
+## 2026-03-15 - Migrated VDYP body/tail fitting to 5-year bins + long-tail detection
+- Updated `src/femic/pipeline/vdyp_curves.py` so `process_vdyp_out(...)` now
+  builds and fits against 5-year binned median observations via
+  `build_observed_bins_for_fit(...)` instead of annual-age medians.
+- Reworked `detect_linear_tail_segment(...)` to use right-to-left contiguous
+  break detection with a composite straight-ish gate:
+  low `nrmse` and (`r2` threshold OR near-flat slope), plus minimum tail-span
+  requirement to avoid selecting tiny terminal segments.
+- Added new tail controls in runtime defaults (`src/femic/pipeline/vdyp_stage.py`):
+  `FEMIC_TAIL_LINEAR_FLAT_SLOPE_ABS` and
+  `FEMIC_TAIL_LINEAR_MIN_SPAN_YEARS`.
+- Updated layered curve-path behavior:
+  structural left-toe discontinuity censoring (`skip_delta >= 4`) is accepted,
+  and tail blend is selected when a valid straight-ish tail segment is detected.
+- Added regression coverage in `tests/test_vdyp_curves.py` for:
+  - 5-year bin aggregation correctness,
+  - long flat-tail detection with low-R2 acceptance via flat-slope gate,
+  - body-fit input ages using 5-year bins.
+- Targeted TSA29 `MS_PLI L` rerun now reports:
+  `left_toe_censor_selected` (`skip1_after=6`) and `tail_blend_selected`
+  with detected tail anchor near age `180` (span `120` years).
+
+## 2026-03-15 - Finalized Phase 19 follow-up validation + refreshed `MS_PLI L` fitdiag
+- Fixed a strict-typing regression in
+  `src/femic/pipeline/vdyp_curves.py` by replacing dynamic
+  `emit_curve_event(..., **tail_meta)` expansion with explicit numeric tail
+  fields, eliminating `mypy` kwargs incompatibility.
+- Updated `tests/test_vdyp_stage.py` expectations for the new
+  `tail_blend_selection` decision payload shape (`policy=layered_when_detected`
+  and `tail_detected` flags) and preserved quantile-fallback coverage.
+- Revalidated the repository gates:
+  `ruff format src tests`, `ruff check src tests`,
+  `PYTHONPATH=src python -m mypy src`, `PYTHONPATH=src python -m pytest`,
+  `python -m pre_commit run --all-files`,
+  `sphinx-build -b html docs _build/html -W`.
+- Re-ran only TSA29 `MS_PLI L` smoothing from cached VDYP inputs and refreshed
+  `plots/vdyp_fitdiag_tsa29-01-MS_PLI-L.png` plus
+  `tmp/vdyp_curve_events-tsa29-ms_pli_l-rerun.jsonl`.
+- Current telemetry confirms long straight-tail detection
+  (`anchor_age=180`, `tail_span_years=120`); remaining issue is candidate
+  non-finite rejection that still leaves `selected_path=primary_nlls` for this
+  case.
+
+## 2026-03-16 - Replaced clamp-based toe shift with toe location-parameter transform
+- Updated `src/femic/pipeline/vdyp_curves.py` so `toe_shift_years` is now
+  applied only in toe fitting/evaluation (`fill_curve_left(...)`) via a
+  location transform, rather than through global age clamping in
+  `process_vdyp_out(...)`.
+- This removes the `x=0` toe-domain artifact that previously caused
+  `legacy_fit_func2` (`a*x^b*x^-a`) to emit `NaN/Inf` on early ages under
+  positive toe shift.
+- Added regression update in `tests/test_vdyp_curves.py` to verify toe shift
+  keeps curve values finite while primarily affecting the left-end toe ramp.
+- Reran TSA29 `MS_PLI L` from cached inputs and regenerated
+  `plots/vdyp_fitdiag_tsa29-01-MS_PLI-L.png`; event log now has no
+  `candidate_rejected_non_finite` records for this case.
+
+## 2026-03-16 - Removed accidental second toe shift on legacy location parameter
+- Updated `src/femic/pipeline/vdyp_curves.py` `fill_curve_left(...)` so
+  `toe_shift_years` is ignored for toe models with an explicit location
+  parameter (`popt.size >= 3`, legacy `fit_func1`) and no longer mutates `c`.
+- Updated splice blend-width logic to use effective shift (zero when location
+  already exists), preventing toe-shift configuration from implicitly widening
+  blend windows in legacy fits.
+- Updated regression in `tests/test_vdyp_curves.py` to assert that enabling
+  `toe_shift_years` does not apply a second shift for legacy location-parameter
+  toe models.
+- Reran TSA29 `MS_PLI L` from cached VDYP outputs and regenerated
+  `plots/vdyp_fitdiag_tsa29-01-MS_PLI-L.png`; telemetry confirms no non-finite
+  candidate rejection and no double-shift plateau behavior.
+
+## 2026-03-16 - Set default strata coverage to 0.80 and regenerated TSA29 fit outputs
+- Changed legacy stage-00 default for `FEMIC_STRAT_TOP_AREA_COVERAGE` to `0.8`
+  in `00_data-prep.py` and `src/femic/resources/legacy/00_data-prep.py` so
+  no-override runs default to coverage-driven strata selection rather than
+  top-N fallback.
+- Reran TSA29 smooth-curve fitting with coverage targeting enabled and confirmed
+  `coverage 0.8061826878755755`, `count 18`, and checkpoint reuse at 18 strata.
+- Regenerated TSA29 artifacts:
+  - `plots/strata-tsa29.png`
+  - all `plots/vdyp_fitdiag_tsa29-*.png`
+  - all `plots/vdyp_lmh_tsa29-*.png`
+  - `data/vdyp_curves_smooth-tsa29.feather`
+  - `vdyp_io/logs/vdyp_curve_events-tsa29-tsa29_cov80_refit_20260316T0115Z.jsonl`
+
+## 2026-03-16 - Accepted current VDYP fit status and regenerated TSA29 TIPSY-vs-VDYP plots
+- Recorded current VDYP fit selection status as acceptable for this phase:
+  minor non-pathological selection oddities remain, but no null-curve/total-failure
+  outcomes were observed.
+- Regenerated TSA29 TIPSY-vs-VDYP comparison figures for review:
+  - `plots/tipsy_vdyp_tsa29-*.png` (54 refreshed plots, latest timestamp 2026-03-16 05:49 UTC).
+- Notes:
+  - 01b stale TIPSY output freshness guard was bypassed for this refresh via
+    `FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1` to allow immediate comparison plotting.
+
+## 2026-03-16 - Queued high-ratio AU follow-up and passed ws3 smoke on fresh outputs
+- Scanned refreshed TSA29 AU-wise TIPSY-vs-VDYP comparisons plus ratio diagnostics
+  and queued later follow-up for high TIPSY/VDYP outlier AUs (VDYP LMH currently
+  treated as plausible for this pass):
+  - `ICH_CW L`, `SBPS_SX L`, `MS_PL L`, `SBPS_SX M`, `IDF_FDI L`
+  - `ICH_CW H`, `IDF_FDI M`, `SBS_SX M`, `IDF_FD L`, `ICH_CW M`
+- Recorded matching deferred-review note in `ROADMAP.md` under Detailed Next Steps.
+- Executed end-to-end dual export + ws3 smoke using freshly regenerated artifacts:
+  - `PYTHONPATH=src python -m femic export dual --tsa 29 --with-ws3-smoke --ws3-command true --no-ws3-builtin-smoke`
+  - Result: `ws3 smoke ok`, message:
+    `Woodstock checks passed and ws3 smoke command exited cleanly.`
+  - Evidence/report:
+    `evidence/ws3_smoke_report.latest.json`
+
+## 2026-03-16 - Reconciled Phase 19 roadmap parent-task status with completed work
+- Updated `ROADMAP.md` Phase 19 checklist bookkeeping to match completed
+  subtask/evidence history:
+  - marked `P19.13` complete (all `P19.13a-f` complete),
+  - marked `P19.14` complete (all `P19.14a-d` complete),
+  - marked `P19.16` and `P19.16e` complete based on completed cached TSA29
+    smoothing reruns, regenerated fit diagnostics, and reviewer-facing notes.
+- Confirmed current near-term open Phase 19 gate remains `P19.5` (full
+  Patchworks-enabled rebuild validation/evidence promotion in validated host),
+  while Phase 20 remains deferred to a separate branch.
+
+## 2026-03-16 - Added Phase 19 TSA29 Sphinx docs deep-dive task (`P19.17`)
+- Added new open Phase 19 task in `ROADMAP.md` to run a full TSA29 instance
+  Sphinx documentation deep-dive and augmentation pass:
+  - `P19.17a` audit thin/missing sections across TSA29 instance docs,
+  - `P19.17b` expand weak sections with concrete guidance + artifact links,
+  - `P19.17c` rerun docs build with warnings-as-errors and publish closure note.
+
+## 2026-03-16 - Added Windows 11 Patchworks smoke handoff pack for `P19.5`
+- Added `planning/tsa29_patchworks_win11_smoke_handoff.md` with:
+  - exact TSA29 input artifact paths for Patchworks smoke execution,
+  - current ws3-validated companion counts/reports for reference,
+  - stepwise Windows 11 Patchworks smoke procedure,
+  - pass/fail checklist and required evidence-capture outputs.
+- Recorded matching roadmap note under Detailed Next Steps to keep immediate
+  Phase 19 execution sequence aligned around final `P19.5` closure.
+
+## 2026-03-18 - Generated and published K3Z checkpoint1 feature + shapefile export
+- Built a dedicated K3Z checkpoint1 feature artifact by masking the 2024 VRI
+  source (`data/bc/vri/2024/VEG_COMP_LYR_R1_POLY_2024.gdb`) with K3Z tenure
+  boundary (`data/bc/cfa/k3z/CFA K3Z Tenure.shp`), preserving `tsa_code='k3z'`.
+- Wrote local artifacts:
+  - `data/ria_vri_vclr1p_checkpoint1-tsak3z.feather`
+  - `data/shp/ria_vri_vclr1p_checkpoint1-tsak3z.{shp,shx,dbf,prj,cpg}`
+  - `data/shp/ria_vri_vclr1p_checkpoint1-tsak3z_fieldmap.csv`
+- Published equivalent artifacts into `external/femic-k3z-instance` and pushed
+  instance repo commit `a762076` on `main`.
+
+## 2026-03-20 - Added K3Z old-growth (`og1`/`og2`) feature attributes and refreshed model XML
+- Implemented generalized old-growth curve synthesis in
+  `src/femic/fmg/patchworks.py` and attached new feature attributes to both
+  managed and unmanaged selects:
+  - per-AU: `feature.Area.og1.<au_id>`, `feature.Area.og2.<au_id>`
+  - totals: `feature.Area.og1.total`, `feature.Area.og2.total`
+- OG curve definitions:
+  - `og1`: linear ramp from unmanaged-curve CMAI age (`0`) to unmanaged
+    peak-yield age (`1`).
+  - `og2`: fixed policy step (`249 -> 0`, `250 -> 1`).
+- Added regression coverage in `tests/test_fmg_patchworks.py` and refreshed
+  deterministic XML fixtures:
+  - `tests/fixtures/fmg/forestmodel_minimal.xml`
+  - `tests/fixtures/fmg/forestmodel_multi_au.xml`
+- Updated operator docs in `README.md` Patchworks export section to document
+  emitted OG attribute families and curve semantics.
+- Regenerated K3Z instance ForestModel XML with the new OG accounts:
+  `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel.xml`.
+- Recorded matching plan/progress notes in `ROADMAP.md` under new Phase 21 and
+  Detailed Next Steps.
 
 
-## 2026-03-18 - Added TSA29 deterministic rebuild helper scaffold
-- Added parent-repo helper script `scripts/tsa29/rebuild_tsa29_instance.py` to drive TSA29 Patchworks rebuild validation from the FEMIC checkout.
-- Added tracked baseline placeholder `scripts/tsa29/tsa29_tracks_baseline.json` for row-count/account-surface regression checks.
-- Helper behavior currently includes:
-  - rebuilding TSA29 `forestmodel.xml` from bundle tables + `config/seral.tsa29.yaml`,
-  - optionally rerunning upstream FEMIC stages when prerequisite cached inputs are available,
-  - running Patchworks preflight / build-blocks / matrix-build,
-  - writing rebuild/evidence JSON outputs under the TSA29 instance.
-- Validation:
-  - `python scripts/tsa29/rebuild_tsa29_instance.py --help`
-- This is a Phase 19 `P19.5` support checkpoint, not full phase closure; the green runtime evidence still depends on executing the helper against the validated TSA29 Windows/Patchworks environment.
-
-
-## 2026-03-18 - Updated TSA29 submodule with thin Patchworks model skeleton
-- Advanced `external/femic-tsa29-instance` to submodule commit `c1a7b1b` (`Add TSA29 Patchworks model skeleton and runtime wiring`).
-- TSA29 instance repo now carries:
-  - `analysis/base.pin`,
-  - Patchworks Beanshell helpers under `models/tsa29_patchworks_model/scripts/`,
-  - tracked `tracks/*.csv` tables,
-  - rebuilt `yield/forestmodel.xml`,
-  - refreshed Windows Patchworks runtime + rebuild-spec wiring,
-  - `config/seral.tsa29.yaml`.
-- Kept the instance thin by externalizing Patchworks block geometry/topology artifacts; recorded their hashes in `metadata/large_artifacts.sha256` and added `models/tsa29_patchworks_model/blocks/README.md`.
-- Left the TSA29 warning-state evidence JSON uncommitted so Phase 19 remains honest about its remaining blocker: a coherent green rebuild/evidence pass on the validated Windows Patchworks host.
-
-
-## 2026-03-18 - Completed Phase 19: TSA29 green Patchworks rebuild evidence
-- Enhanced `scripts/tsa29/rebuild_tsa29_instance.py` with `--reuse-existing-blocks` so TSA29 rebuild validation can reuse already-validated local block/topology artifacts instead of forcing a repeat topology build.
-- Updated `scripts/tsa29/tsa29_tracks_baseline.json` to the current TSA29 Patchworks structure and reran the helper against the validated Windows/Patchworks host.
-- Green TSA29 rebuild result:
-  - `matrix_returncode=0`
-  - `managed_area_ha=2951604.057603803`
-  - `passive_area_ha=0.0`
-  - `block_join_csv_only=0`
-  - `block_join_shp_only=0`
-  - `baseline_match=true`
-  - `checks_passed=true`
-- Advanced `external/femic-tsa29-instance` to submodule commit `0596665` (`Publish green TSA29 rebuild evidence`).
-- Phase 19 checklist is now fully complete.
-
-## 2026-03-19 - Fixed K3Z species-account sum consistency with origin-based state logic
-- Added `ORIGIN` as a Patchworks fragment/XML state field and initialize it from stand age (`planted` for `F_AGE <= 60`, `natural` otherwise).
-- Reworked Patchworks export logic so species composition is selected by `ORIGIN` rather than conflating it with `IFM`.
-- Added `CC` transition assignment `ORIGIN='planted'` so final-felling treatments regenerate into the planted-origin state.
-- Normalized treated/planted species-proportion maps during bundle assembly so exported planted shares sum to 1.0.
-- Regenerated the K3Z instance fragments/ForestModel/tracks and reran Patchworks matrix builder successfully.
-- Verified by test suite and direct XML checks that:
-  - `feature.Yield.managed.<species>` sums to `feature.Yield.managed.Total`,
-  - `product.Yield.managed.<species>` sums to `product.Yield.managed.Total`,
-  - `product.HarvestedVolume.managed.<species>.CC` sums to `product.HarvestedVolume.managed.Total.CC`.
-
-## 2026-03-19 - Completed Phase 21: Patchworks fragment-retention modulator + K3Z rollout
-- Added first-class Patchworks retention support to the FMG core/export path.
-- Fragments export now emits and validates a numeric ``RETENTION`` field with default ``0.0`` and enforced range ``[0.0, 1.0]``.
-- Extended ForestModel serialization to emit ``<retention>`` blocks on managed selects using ``factor="RETENTION"`` and reassigning retained area to ``IFM='unmanaged'``.
-- Added regression coverage for:
-  - retention-aware fragments validation,
-  - retention XML emission,
-  - retention define-field validation,
-  - updated ForestModel XML fixtures.
-- Rolled the retention contract into the K3Z reference instance by:
-  - adding ``RETENTION=0.0`` to the validated fragments shapefile/DBF,
-  - regenerating ``yield/forestmodel.xml``,
-  - rerunning Patchworks Matrix Builder successfully.
-- Recorded green K3Z runtime evidence in:
-  ``external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_manifest-k3z_retention_phase21b_20260319.json``.
-- Validation:
-  - ``python -m pytest tests/test_fmg_patchworks.py -q``
-  - K3Z Patchworks Matrix Builder ``returncode=0``
-
+## 2026-03-20 - Verified K3Z OG rollout on Windows Patchworks host and regenerated compiled tracks
+- Synced to parent branch `feature/compile-tsa29-instance-ws3-fork` commit
+  `d289971` and K3Z submodule commit `ff7bd11`, then executed a fresh Windows
+  Patchworks smoke run using:
+  - `python -m femic patchworks preflight --config config/patchworks.runtime.windows.yaml --instance-root external/femic-k3z-instance`
+  - `python -m femic patchworks matrix-build --config config/patchworks.runtime.windows.yaml --instance-root external/femic-k3z-instance --run-id k3z_og_smoke_20260319`
+- Smoke evidence captured in the K3Z instance log directory:
+  - `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_stdout-k3z_og_smoke_20260319.log`
+  - `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_stderr-k3z_og_smoke_20260319.log`
+  - `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_manifest-k3z_og_smoke_20260319.json`
+- Matrix Builder completed successfully with:
+  - `returncode=0`
+  - `Total=1781.3132360577583`
+  - `Managed=1781.3132360577583`
+  - `Passive=0.0`
+- Verified that the compiled K3Z tracks now include the expected old-growth
+  feature-account families (for example `feature.Area.og1.<au_id>`,
+  `feature.Area.og2.<au_id>`, `feature.Area.og1.total`,
+  `feature.Area.og2.total`) and published the refreshed track tables in
+  `external/femic-k3z-instance` commit `69322b2`.

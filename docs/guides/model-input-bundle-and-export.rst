@@ -41,6 +41,22 @@ Use:
 
 Outputs CSV compatibility tables for yield/area/action/transition ingestion.
 
+Dual-Fork Export (Patchworks + Woodstock + Optional ws3 Smoke)
+--------------------------------------------------------------
+
+Use:
+
+.. code-block:: bash
+
+   PYTHONPATH=src python -m femic export dual \
+     --tsa <code> \
+     --with-ws3-smoke \
+     --ws3-command "<ws3 smoke command>"
+
+This runs Patchworks and Woodstock exports from the same bundle/checkpoint
+inputs, then optionally executes a ws3 smoke command and writes evidence to
+``evidence/ws3_smoke_report.latest.json``.
+
 Release Packaging Export
 ------------------------
 

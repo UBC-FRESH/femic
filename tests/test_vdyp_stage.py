@@ -1625,6 +1625,7 @@ def test_execute_curve_smoothing_runs_builds_output_and_logs_missing(
         assert isinstance(vdyp_out, dict)
         assert kwargs["curve_context"]["stratum_code"] == "S1"
         assert kwargs["custom_knob"] == 7
+        assert float(kwargs["toe_shift_years"]) == pytest.approx(20.0)
         return [1.0, 20.0, 40.0], [1e-6, 120.0, 180.0]
 
     smoothed_runs = execute_curve_smoothing_runs(
@@ -1654,9 +1655,15 @@ def test_execute_curve_smoothing_runs_builds_output_and_logs_missing(
     assert smoothed_runs[0].stratum_code == "S1"
     assert smoothed_runs[0].si_level == "L"
     assert list(smoothed_runs[0].y) == [1e-6, 120.0, 180.0]
-    assert len(events) == 1
-    assert events[0]["status"] == "warning"
-    assert events[0]["reason"] == "missing_vdyp_output"
+    missing_events = [
+        event for event in events if event.get("reason") == "missing_vdyp_output"
+    ]
+    assert len(missing_events) == 1
+    assert missing_events[0]["status"] == "warning"
+    fallback_events = [
+        event for event in events if event.get("stage") == "fallback_policy"
+    ]
+    assert len(fallback_events) == 1
 
 
 def test_execute_curve_smoothing_runs_prefers_tail_blend_for_k3z_output(
@@ -1706,7 +1713,700 @@ def test_execute_curve_smoothing_runs_prefers_tail_blend_for_k3z_output(
     assert smoothed_runs[0].si_level == "L"
     # K3Z output curves should use the tail-blend candidate when available.
     assert list(smoothed_runs[0].y) == [0.0, 220.0, 260.0]
-    assert not any(event.get("status") == "warning" for event in events)
+    assert any(
+        event.get("stage") == "fit_quality_gate"
+        and event.get("reason") == "fit_quality_gate_failed"
+        for event in events
+    )
+
+
+def test_execute_curve_smoothing_runs_tail_blend_respects_override_thresholds(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    captured_tail_kwargs: dict[str, object] = {}
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        if bool(kwargs.get("tail_blend_enabled", False)):
+            captured_tail_kwargs.update(kwargs)
+            return [0.0, 150.0, 300.0], [0.0, 220.0, 260.0]
+        return [0.0, 150.0, 300.0], [0.0, 140.0, 180.0]
+
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 200, 210, 220, 230],
+            "Vdwb": [10.0, 12.0, 14.0, 16.0, 80.0, 82.0, 83.0, 84.0],
+        }
+    )
+    execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-tail-override",
+        results_for_tsa=[(1, "CWH_HW", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={
+            ("CWH_HW", "L"): {
+                "tail_linear_min_r2": 0.61,
+                "tail_blend_years": 55.0,
+            }
+        },
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=lambda *_args, **_kwargs: None,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert captured_tail_kwargs
+    assert captured_tail_kwargs["tail_linear_min_r2"] == 0.61
+    assert captured_tail_kwargs["tail_blend_years"] == 55.0
+
+
+def test_execute_curve_smoothing_runs_tail_blend_uses_env_defaults(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("FEMIC_TAIL_LINEAR_MIN_R2", "0.66")
+    monkeypatch.setenv("FEMIC_TAIL_BLEND_YEARS", "44")
+    captured_tail_kwargs: dict[str, object] = {}
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        if bool(kwargs.get("tail_blend_enabled", False)):
+            captured_tail_kwargs.update(kwargs)
+            return [0.0, 150.0, 300.0], [0.0, 220.0, 260.0]
+        return [0.0, 150.0, 300.0], [0.0, 140.0, 180.0]
+
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 200, 210, 220, 230],
+            "Vdwb": [10.0, 12.0, 14.0, 16.0, 80.0, 82.0, 83.0, 84.0],
+        }
+    )
+    execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-tail-env",
+        results_for_tsa=[(1, "CWH_HW", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=lambda *_args, **_kwargs: None,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert captured_tail_kwargs
+    assert captured_tail_kwargs["tail_linear_min_r2"] == 0.66
+    assert captured_tail_kwargs["tail_blend_years"] == 44.0
+
+
+def test_execute_curve_smoothing_runs_selects_tail_blend_with_objective_metrics(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    events: list[dict[str, object]] = []
+
+    def append_event(_path: str | Path, payload: object) -> None:
+        assert isinstance(payload, dict)
+        events.append(payload)
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        if bool(kwargs.get("tail_blend_enabled", False)):
+            # Better late-tail alignment with little overall penalty.
+            return [0.0, 150.0, 300.0], [0.0, 85.0, 90.0]
+        return [0.0, 150.0, 300.0], [0.0, 150.0, 350.0]
+
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 200, 210, 220, 230],
+            "Vdwb": [10.0, 12.0, 14.0, 16.0, 80.0, 82.0, 83.0, 84.0],
+        }
+    )
+    smoothed_runs = execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-tail-selected",
+        results_for_tsa=[(1, "CWH_HW", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={
+            ("CWH_HW", "L"): {"tail_linear_allow_quantile_fallback": True}
+        },
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=append_event,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert len(smoothed_runs) == 1
+    assert list(smoothed_runs[0].y) == [0.0, 85.0, 90.0]
+    tail_decisions = [
+        event
+        for event in events
+        if event.get("stage") == "tail_blend_selection"
+        and event.get("reason") == "tail_blend_selected"
+    ]
+    assert tail_decisions
+    selected_events = [
+        event
+        for event in events
+        if event.get("stage") == "fallback_policy"
+        and event.get("reason") == "curve_selected"
+    ]
+    assert selected_events
+    assert selected_events[-1].get("selected_path") == "tail_blend"
+
+
+def test_execute_curve_smoothing_runs_layers_tail_blend_after_left_toe_censor(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    events: list[dict[str, object]] = []
+    tail_kwargs_seen: list[dict[str, object]] = []
+
+    def append_event(_path: str | Path, payload: object) -> None:
+        assert isinstance(payload, dict)
+        events.append(payload)
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        if bool(kwargs.get("tail_blend_enabled", False)):
+            tail_kwargs_seen.append(dict(kwargs))
+            if int(kwargs.get("skip1", 0)) > 0:
+                return [0.0, 150.0, 300.0], [0.0, 70.0, 80.0]
+            return [0.0, 150.0, 300.0], [0.0, 400.0, 500.0]
+        if int(kwargs.get("skip1", 0)) > 0:
+            return [0.0, 150.0, 300.0], [0.0, 20.0, 35.0]
+        return [0.0, 150.0, 300.0], [0.0, 260.0, 320.0]
+
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 50, 55, 60, 65, 70, 200, 210, 220, 230],
+            "Vdwb": [
+                120.0,
+                10.0,
+                12.0,
+                14.0,
+                16.0,
+                18.0,
+                20.0,
+                22.0,
+                24.0,
+                80,
+                82,
+                83,
+                84,
+            ],
+        }
+    )
+    smoothed_runs = execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-layer-left-tail",
+        results_for_tsa=[(1, "SBPS_PL", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=append_event,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert len(smoothed_runs) == 1
+    assert tail_kwargs_seen
+    assert int(tail_kwargs_seen[-1].get("skip1", 0)) > 0
+    selection_events = [
+        event
+        for event in events
+        if event.get("stage") == "fallback_policy"
+        and event.get("reason") == "curve_selected"
+    ]
+    assert selection_events
+    assert selection_events[-1].get("selected_path") != "primary_nlls"
+
+
+def test_execute_curve_smoothing_runs_rescues_selected_curve_gate_failures(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    events: list[dict[str, object]] = []
+
+    def append_event(_path: str | Path, payload: object) -> None:
+        assert isinstance(payload, dict)
+        events.append(payload)
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        if bool(kwargs.get("tail_blend_enabled", False)):
+            return [0.0, 150.0, 300.0], [0.0, 85.0, 90.0]
+        # Non-finite primary fit should fail gate and trigger rescue.
+        return [0.0, 150.0, 300.0], [0.0, float("nan"), 350.0]
+
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 200, 210, 220, 230],
+            "Vdwb": [10.0, 12.0, 14.0, 16.0, 80.0, 82.0, 83.0, 84.0],
+        }
+    )
+    smoothed_runs = execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-selected-gate-rescue",
+        results_for_tsa=[(1, "CWH_HW", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=append_event,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert len(smoothed_runs) == 1
+    fallback_events = [
+        event
+        for event in events
+        if event.get("stage") == "fallback_policy"
+        and event.get("reason") == "curve_selected"
+    ]
+    assert fallback_events
+    assert fallback_events[-1].get("selected_path") == "tail_blend"
+    rescue_events = [
+        event
+        for event in events
+        if event.get("stage") == "fit_quality_gate"
+        and event.get("reason") == "selected_curve_gate_rescue"
+    ]
+    assert rescue_events
+
+
+def test_execute_curve_smoothing_runs_logs_fit_quality_gate_failures(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    events: list[dict[str, object]] = []
+
+    def append_event(_path: str | Path, payload: object) -> None:
+        assert isinstance(payload, dict)
+        events.append(payload)
+
+    def fake_process(
+        _vdyp_out: object, **_kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        # Intentionally implausible fit to trigger quality gate.
+        return [0.0, 150.0, 300.0], [0.0, 1200.0, 1400.0]
+
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 200, 210, 220, 230],
+            "Vdwb": [10.0, 12.0, 14.0, 16.0, 80.0, 82.0, 83.0, 84.0],
+        }
+    )
+    smoothed_runs = execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-29",
+        results_for_tsa=[(1, "SBPS_PL", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=append_event,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert len(smoothed_runs) == 1
+    warnings = [
+        event
+        for event in events
+        if event.get("stage") == "fit_quality_gate"
+        and event.get("reason") == "fit_quality_gate_failed"
+    ]
+    assert warnings
+    failure_reasons = warnings[-1].get("failure_reasons")
+    assert isinstance(failure_reasons, list)
+    assert "mape_exceeds_gate" in failure_reasons
+
+
+def test_execute_curve_smoothing_runs_selects_dominant_recovery_tail_blend_candidate(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    events: list[dict[str, object]] = []
+
+    def append_event(_path: str | Path, payload: object) -> None:
+        assert isinstance(payload, dict)
+        events.append(payload)
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        if bool(kwargs.get("tail_blend_enabled", False)):
+            # Better fit overall, but with much higher early overshoot ratio.
+            return [0.0, 50.0, 70.0, 300.0], [0.0, 18.0, 24.0, 24.0]
+        # Catastrophic primary baseline.
+        return [0.0, 50.0, 70.0, 300.0], [0.0, 0.0, 0.0, 0.0]
+
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 50, 55, 60, 65, 70],
+            "Vdwb": [10.0, 12.0, 14.0, 16.0, 16.0, 18.0, 20.0, 22.0, 24.0],
+        }
+    )
+    smoothed_runs = execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-29-dominant-recovery",
+        results_for_tsa=[(1, "MS_PLI", {})],
+        si_levels=["H"],
+        vdyp_results_for_tsa={1: {"H": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={
+            ("MS_PLI", "H"): {"tail_linear_allow_quantile_fallback": True}
+        },
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=append_event,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert len(smoothed_runs) == 1
+    assert list(smoothed_runs[0].y) == [0.0, 18.0, 24.0, 24.0]
+    tail_events = [
+        event
+        for event in events
+        if event.get("stage") == "tail_blend_selection"
+        and event.get("reason") == "tail_blend_selected"
+    ]
+    assert tail_events
+    decision = tail_events[-1].get("decision")
+    assert isinstance(decision, dict)
+    assert decision.get("decision") == "selected"
+    assert decision.get("policy") == "layered_when_detected"
+    assert decision.get("tail_detected") is False
+    selection_events = [
+        event
+        for event in events
+        if event.get("stage") == "fallback_policy"
+        and event.get("reason") == "curve_selected"
+    ]
+    assert selection_events
+    assert selection_events[-1].get("selected_path") == "tail_blend"
+
+
+def test_execute_curve_smoothing_runs_selects_left_toe_censor_candidate(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    events: list[dict[str, object]] = []
+
+    def append_event(_path: str | Path, payload: object) -> None:
+        assert isinstance(payload, dict)
+        events.append(payload)
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        if int(kwargs.get("skip1", 0)) > 0:
+            return [0.0, 150.0, 300.0], [0.0, 20.0, 35.0]
+        return [0.0, 150.0, 300.0], [0.0, 260.0, 320.0]
+
+    # First point is a clear left-toe outlier relative to following bins.
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 50, 55, 60, 65, 70],
+            "Vdwb": [120.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 24.0],
+        }
+    )
+    smoothed_runs = execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-29-left-toe",
+        results_for_tsa=[(1, "SBPS_PL", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=append_event,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert len(smoothed_runs) == 1
+    assert list(smoothed_runs[0].y) == [0.0, 20.0, 35.0]
+    left_toe_events = [
+        event
+        for event in events
+        if event.get("stage") == "left_toe_censor"
+        and event.get("reason") == "left_toe_censor_selected"
+    ]
+    assert left_toe_events
+
+
+def test_execute_curve_smoothing_runs_censors_early_low_discontinuity_points(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    events: list[dict[str, object]] = []
+
+    def append_event(_path: str | Path, payload: object) -> None:
+        assert isinstance(payload, dict)
+        events.append(payload)
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        if int(kwargs.get("skip1", 0)) > 0:
+            return [0.0, 150.0, 300.0], [0.0, 20.0, 35.0]
+        return [0.0, 150.0, 300.0], [0.0, 260.0, 320.0]
+
+    # First four bins sit on an implausibly low shoulder before a sharp rise.
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 50, 55, 60, 65, 70],
+            "Vdwb": [1.0, 1.5, 2.0, 2.5, 12.0, 18.0, 24.0, 30.0, 36.0],
+        }
+    )
+    smoothed_runs = execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-29-left-toe-low-discontinuity",
+        results_for_tsa=[(1, "MS_PLI", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=append_event,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert len(smoothed_runs) == 1
+    left_toe_events = [
+        event
+        for event in events
+        if event.get("stage") == "left_toe_censor"
+        and event.get("reason") == "left_toe_censor_selected"
+    ]
+    assert left_toe_events
+    skip1_after = left_toe_events[-1].get("skip1_after")
+    assert isinstance(skip1_after, int)
+    assert skip1_after >= 4
+
+
+def test_execute_curve_smoothing_runs_selects_merchantable_floor_candidate(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    events: list[dict[str, object]] = []
+
+    def append_event(_path: str | Path, payload: object) -> None:
+        assert isinstance(payload, dict)
+        events.append(payload)
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        if bool(kwargs.get("merchantable_floor_enabled", False)):
+            return [0.0, 150.0, 300.0], [0.0, 0.0, 35.0]
+        return [0.0, 150.0, 300.0], [0.0, 120.0, 180.0]
+
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 200, 210, 220, 230],
+            "Vdwb": [10.0, 12.0, 14.0, 16.0, 80.0, 82.0, 83.0, 84.0],
+        }
+    )
+    smoothed_runs = execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-29-floor",
+        results_for_tsa=[(1, "SBPS_PL", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={("SBPS_PL", "L"): {"toe_shift_years": 0.0}},
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=append_event,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert len(smoothed_runs) == 1
+    assert list(smoothed_runs[0].y) == [0.0, 120.0, 180.0]
+    floor_events = [
+        event
+        for event in events
+        if event.get("stage") == "merchantable_floor"
+        and event.get("reason") == "merchantable_floor_selected"
+    ]
+    assert floor_events
+    fallback_events = [
+        event
+        for event in events
+        if event.get("stage") == "fallback_policy"
+        and event.get("reason") == "curve_selected"
+    ]
+    assert fallback_events
+    assert fallback_events[-1].get("selected_path") == "primary_nlls"
+    rescue_events = [
+        event
+        for event in events
+        if event.get("stage") == "fit_quality_gate"
+        and event.get("reason") == "selected_curve_gate_rescue"
+    ]
+    assert rescue_events
+
+
+def test_execute_curve_smoothing_runs_applies_toe_shift_env_default(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("FEMIC_VDYP_TOE_SHIFT_YEARS", "12.5")
+    observed_kwargs: list[dict[str, object]] = []
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        observed_kwargs.append(dict(kwargs))
+        return [1.0, 20.0, 40.0], [1e-6, 120.0, 180.0]
+
+    execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-toe-shift-default",
+        results_for_tsa=[(1, "SBPS_PL", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: {"dummy": "ok"}}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=lambda *_args, **_kwargs: None,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert observed_kwargs
+    assert float(observed_kwargs[0]["toe_shift_years"]) == pytest.approx(12.5)
+
+
+def test_execute_curve_smoothing_runs_selects_reparameterized_candidate_in_policy_order(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    events: list[dict[str, object]] = []
+
+    def append_event(_path: str | Path, payload: object) -> None:
+        assert isinstance(payload, dict)
+        events.append(payload)
+
+    def fake_process(
+        _vdyp_out: object, **kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        if bool(kwargs.get("tail_blend_enabled", False)):
+            raise RuntimeError("disable tail candidate for this policy-order test")
+        if int(kwargs.get("skip1", 0)) > 0:
+            return [0.0, 150.0, 300.0], [0.0, 30.0, 55.0]
+        return [0.0, 150.0, 300.0], [0.0, 260.0, 320.0]
+
+    vdyp_obs = pd.DataFrame(
+        {
+            "Age": [30, 35, 40, 45, 200, 210, 220, 230],
+            "Vdwb": [10.0, 12.0, 14.0, 16.0, 80.0, 82.0, 83.0, 84.0],
+        }
+    )
+    smoothed_runs = execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-29-policy-order",
+        results_for_tsa=[(1, "SBPS_PL", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=fake_process,
+        append_jsonl_fn=append_event,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert len(smoothed_runs) == 1
+    assert list(smoothed_runs[0].y) == [0.0, 30.0, 55.0]
+    selection_events = [
+        event
+        for event in events
+        if event.get("stage") == "fallback_policy"
+        and event.get("reason") == "curve_selected"
+    ]
+    assert selection_events
+    assert selection_events[-1].get("selected_path") == "reparameterized_nlls"
 
 
 def test_build_curve_smoothing_plot_config_applies_defaults() -> None:
@@ -2035,12 +2735,14 @@ def test_load_vdyp_input_tables_reads_feather_by_default() -> None:
             path: object,
             *,
             layer: object,
-            driver: object,
             where: object | None = None,
             mask: object | None = None,
             ignore_geometry: bool | None = None,
+            **kwargs: object,
         ) -> _FakeTable:
-            self.read_file_calls.append((path, driver, layer, where, mask))
+            self.read_file_calls.append(
+                (path, kwargs.get("driver"), layer, where, mask)
+            )
             return _FakeTable(f"file-{layer}", [1, 2])
 
         def read_feather(self, path: object) -> _FakeTable:
@@ -2097,12 +2799,14 @@ def test_load_vdyp_input_tables_reads_source_and_writes_feather() -> None:
             path: object,
             *,
             layer: int,
-            driver: object,
             where: object | None = None,
             mask: object | None = None,
             ignore_geometry: bool | None = None,
+            **kwargs: object,
         ) -> _FakeTable:
-            self.read_file_calls.append((path, driver, layer, where, mask))
+            self.read_file_calls.append(
+                (path, kwargs.get("driver"), layer, where, mask)
+            )
             table = _FakeTable(f"file-{layer}", [1, 2] if layer == 0 else [2, 3])
             self.tables[layer] = table
             return table
@@ -2123,8 +2827,8 @@ def test_load_vdyp_input_tables_reads_source_and_writes_feather() -> None:
     assert ply.name == "file-0"
     assert lyr.name == "file-1"
     assert fake_gpd.read_file_calls == [
-        ("input.gdb", "FileGDB", 0, None, None),
-        ("input.gdb", "FileGDB", 1, None, None),
+        ("input.gdb", None, 0, None, None),
+        ("input.gdb", None, 1, None, None),
     ]
     assert fake_gpd.read_feather_calls == []
     assert fake_gpd.tables[0].writes == [Path("ply.feather")]
@@ -2163,12 +2867,14 @@ def test_load_vdyp_input_tables_passes_source_where_filter() -> None:
             path: object,
             *,
             layer: int,
-            driver: object,
             where: object | None = None,
             mask: object | None = None,
             ignore_geometry: bool | None = None,
+            **kwargs: object,
         ) -> _FakeTable:
-            self.read_file_calls.append((path, driver, layer, where, mask))
+            self.read_file_calls.append(
+                (path, kwargs.get("driver"), layer, where, mask)
+            )
             return _FakeTable(f"file-{layer}", [1, 2] if layer == 0 else [2, 3])
 
     fake_gpd = _FakeGpd()
@@ -2182,8 +2888,8 @@ def test_load_vdyp_input_tables_passes_source_where_filter() -> None:
     )
 
     assert fake_gpd.read_file_calls == [
-        ("input.gdb", "FileGDB", 0, "TSA_NUMBER = 29", None),
-        ("input.gdb", "FileGDB", 1, "TSA_NUMBER = 29", None),
+        ("input.gdb", None, 0, "TSA_NUMBER = 29", None),
+        ("input.gdb", None, 1, "TSA_NUMBER = 29", None),
     ]
 
 
@@ -2199,15 +2905,17 @@ def test_load_vdyp_input_tables_applies_source_mask_and_filters_layer_rows() -> 
             path: object,
             *,
             layer: int,
-            driver: object,
             where: object | None = None,
             mask: object | None = None,
             ignore_geometry: bool | None = None,
+            **kwargs: object,
         ) -> pd.DataFrame:
-            self.read_file_calls.append((path, driver, layer, where, mask))
+            self.read_file_calls.append(
+                (path, kwargs.get("driver"), layer, where, mask)
+            )
             if layer == 0:
                 return pd.DataFrame({"FEATURE_ID": [1, 2]})
-            if where == "FEATURE_ID IN (1,2)":
+            if where is None:
                 return pd.DataFrame({"FEATURE_ID": [1, 2]})
             return pd.DataFrame({"FEATURE_ID": [2, 3]})
 
@@ -2223,8 +2931,8 @@ def test_load_vdyp_input_tables_applies_source_mask_and_filters_layer_rows() -> 
     )
 
     assert fake_gpd.read_file_calls == [
-        ("input.gdb", "FileGDB", 0, None, mask),
-        ("input.gdb", "FileGDB", 1, "FEATURE_ID IN (1,2)", None),
+        ("input.gdb", None, 0, None, mask),
+        ("input.gdb", None, 1, None, None),
     ]
     assert ply["FEATURE_ID"].tolist() == [1, 2]
     assert lyr["FEATURE_ID"].tolist() == [1, 2]
@@ -2242,12 +2950,14 @@ def test_load_vdyp_input_tables_reads_source_by_explicit_feature_ids() -> None:
             path: object,
             *,
             layer: int,
-            driver: object,
             where: object | None = None,
             mask: object | None = None,
             ignore_geometry: bool | None = None,
+            **kwargs: object,
         ) -> pd.DataFrame:
-            self.read_file_calls.append((path, driver, layer, where, mask))
+            self.read_file_calls.append(
+                (path, kwargs.get("driver"), layer, where, mask)
+            )
             if where == "FEATURE_ID IN (1,2)":
                 return pd.DataFrame({"FEATURE_ID": [1, 2], "layer": [layer, layer]})
             if where == "FEATURE_ID IN (3)":
@@ -2266,10 +2976,10 @@ def test_load_vdyp_input_tables_reads_source_by_explicit_feature_ids() -> None:
     )
 
     assert fake_gpd.read_file_calls == [
-        ("input.gdb", "FileGDB", 0, "FEATURE_ID IN (1,2)", None),
-        ("input.gdb", "FileGDB", 0, "FEATURE_ID IN (3)", None),
-        ("input.gdb", "FileGDB", 1, "FEATURE_ID IN (1,2)", None),
-        ("input.gdb", "FileGDB", 1, "FEATURE_ID IN (3)", None),
+        ("input.gdb", None, 0, "FEATURE_ID IN (1,2)", None),
+        ("input.gdb", None, 0, "FEATURE_ID IN (3)", None),
+        ("input.gdb", None, 1, "FEATURE_ID IN (1,2)", None),
+        ("input.gdb", None, 1, "FEATURE_ID IN (3)", None),
     ]
     assert ply["FEATURE_ID"].tolist() == [1, 2, 3]
     assert lyr["FEATURE_ID"].tolist() == [1, 2, 3]
