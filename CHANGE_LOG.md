@@ -5105,3 +5105,36 @@
 - Kept behavior intentionally non-disruptive for this slice: no CT/fert
   treatments or curve synthesis are active yet; this change only establishes
   the config/state plumbing needed for the next implementation pass.
+
+## 2026-03-20 - Added Phase 22 CT/QMD treatment-mechanics slice for the optional K3Z variant
+- Pivoted treatment-path state semantics from atomic placeholders to stacked
+  path labels that match the current K3Z regeneration logic:
+  - `baseline`
+  - `cc_pl`
+  - `cc_pl_ct`
+  - `cc_pl_ct_f1`
+  - `cc_pl_ct_f1_f2`
+  - `cc_pl_ct_f1_f2_f3`
+- Added support for multiple track treatments on a single Patchworks select so
+  planted baseline tracks can expose both `CC` and `CT` where eligible.
+- Added provisional QMD curve synthesis and exported QMD feature-account
+  surface for K3Z: `feature.QMD.managed.<au_id>` and
+  `feature.QMD.unmanaged.<au_id>`.
+- Implemented the first commercial thinning treatment pass for the two initial
+  K3Z AUs (`985502001`, `985502002`):
+  - planted-only gating via `ORIGIN='planted'`,
+  - per-AU CT age (default 40),
+  - configurable BA-removal fraction and BA:volume conversion,
+  - CT product/account emission including species-wise and total harvested
+    volume outputs.
+- Added provisional post-CT residual-yield logic by subtracting CT harvested
+  volume at treatment age from the planted baseline total-yield curve, keeping
+  the no-CT endpoint approximately conserved.
+- Regenerated the K3Z variant ForestModel XML and patched the validated
+  fragments shapefile to include `SILV_STATE`, then verified a green Windows
+  Matrix Builder smoke on the optional instance branch:
+  - `python -m femic patchworks matrix-build --config config/patchworks.runtime.windows.yaml --instance-root external/femic-k3z-instance --run-id k3z_ct_qmd_smoke_20260320`
+  - result: `returncode=0`, `Managed=1692.2475729276887`,
+    `Passive=89.06566313006975`
+- Generated K3Z tracks now include `CT` treatment rows, CT harvested-volume
+  products, and the provisional QMD account surface.

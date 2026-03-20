@@ -132,7 +132,7 @@
   <define field="treatment" />
   <input block="BLOCK" area="AREA_HA" age="F_AGE" exclude="BLOCK=0" />
   <output messages="messages.csv" blocks="blocks.csv" features="features.csv" products="products.csv" treatments="treatments.csv" curves="curves.csv" tracknames="tracknames.csv" />
-  <select statement="AU eq 1001 and IFM eq 'unmanaged' and ORIGIN eq 'natural'">
+  <select statement="AU eq 1001 and IFM eq 'unmanaged' and ORIGIN eq 'natural' and SILV_STATE eq 'baseline'">
     <features>
       <attribute label="feature.Area.unmanaged">
         <curve idref="unity" />
@@ -167,7 +167,7 @@
     </features>
     <track />
   </select>
-  <select statement="AU eq 1001 and IFM eq 'managed' and ORIGIN eq 'natural'">
+  <select statement="AU eq 1001 and IFM eq 'managed' and ORIGIN eq 'natural' and SILV_STATE eq 'baseline'">
     <features>
       <attribute label="feature.Area.managed">
         <curve idref="unity" />
@@ -210,11 +210,12 @@
         </produce>
         <transition>
           <assign field="ORIGIN" value="'planted'" />
+          <assign field="SILV_STATE" value="'cc_pl'" />
         </transition>
       </treatment>
     </track>
   </select>
-  <select statement="AU eq 1001 and IFM eq 'managed' and ORIGIN eq 'natural' and treatment eq 'CC'">
+  <select statement="AU eq 1001 and IFM eq 'managed' and ORIGIN eq 'natural' and SILV_STATE eq 'baseline' and treatment eq 'CC'">
     <products>
       <attribute label="product.Treated.managed.CC">
         <curve idref="unity" />
@@ -245,7 +246,7 @@
       </attribute>
     </products>
   </select>
-  <select statement="AU eq 1001 and IFM eq 'unmanaged' and ORIGIN eq 'planted'">
+  <select statement="AU eq 1001 and IFM eq 'unmanaged' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl'">
     <features>
       <attribute label="feature.Area.unmanaged">
         <curve idref="unity" />
@@ -280,7 +281,7 @@
     </features>
     <track />
   </select>
-  <select statement="AU eq 1001 and IFM eq 'managed' and ORIGIN eq 'planted'">
+  <select statement="AU eq 1001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl'">
     <features>
       <attribute label="feature.Area.managed">
         <curve idref="unity" />
@@ -323,11 +324,12 @@
         </produce>
         <transition>
           <assign field="ORIGIN" value="'planted'" />
+          <assign field="SILV_STATE" value="'cc_pl'" />
         </transition>
       </treatment>
     </track>
   </select>
-  <select statement="AU eq 1001 and IFM eq 'managed' and ORIGIN eq 'planted' and treatment eq 'CC'">
+  <select statement="AU eq 1001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl' and treatment eq 'CC'">
     <products>
       <attribute label="product.Treated.managed.CC">
         <curve idref="unity" />
@@ -358,7 +360,7 @@
       </attribute>
     </products>
   </select>
-  <select statement="AU eq 1002 and IFM eq 'unmanaged' and ORIGIN eq 'natural'">
+  <select statement="AU eq 1002 and IFM eq 'unmanaged' and ORIGIN eq 'natural' and SILV_STATE eq 'baseline'">
     <features>
       <attribute label="feature.Area.unmanaged">
         <curve idref="unity" />
@@ -393,7 +395,7 @@
     </features>
     <track />
   </select>
-  <select statement="AU eq 1002 and IFM eq 'managed' and ORIGIN eq 'natural'">
+  <select statement="AU eq 1002 and IFM eq 'managed' and ORIGIN eq 'natural' and SILV_STATE eq 'baseline'">
     <features>
       <attribute label="feature.Area.managed">
         <curve idref="unity" />
@@ -436,11 +438,12 @@
         </produce>
         <transition>
           <assign field="ORIGIN" value="'planted'" />
+          <assign field="SILV_STATE" value="'cc_pl'" />
         </transition>
       </treatment>
     </track>
   </select>
-  <select statement="AU eq 1002 and IFM eq 'managed' and ORIGIN eq 'natural' and treatment eq 'CC'">
+  <select statement="AU eq 1002 and IFM eq 'managed' and ORIGIN eq 'natural' and SILV_STATE eq 'baseline' and treatment eq 'CC'">
     <products>
       <attribute label="product.Treated.managed.CC">
         <curve idref="unity" />
@@ -471,7 +474,7 @@
       </attribute>
     </products>
   </select>
-  <select statement="AU eq 1002 and IFM eq 'unmanaged' and ORIGIN eq 'planted'">
+  <select statement="AU eq 1002 and IFM eq 'unmanaged' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl'">
     <features>
       <attribute label="feature.Area.unmanaged">
         <curve idref="unity" />
@@ -506,7 +509,7 @@
     </features>
     <track />
   </select>
-  <select statement="AU eq 1002 and IFM eq 'managed' and ORIGIN eq 'planted'">
+  <select statement="AU eq 1002 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl'">
     <features>
       <attribute label="feature.Area.managed">
         <curve idref="unity" />
@@ -549,11 +552,12 @@
         </produce>
         <transition>
           <assign field="ORIGIN" value="'planted'" />
+          <assign field="SILV_STATE" value="'cc_pl'" />
         </transition>
       </treatment>
     </track>
   </select>
-  <select statement="AU eq 1002 and IFM eq 'managed' and ORIGIN eq 'planted' and treatment eq 'CC'">
+  <select statement="AU eq 1002 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl' and treatment eq 'CC'">
     <products>
       <attribute label="product.Treated.managed.CC">
         <curve idref="unity" />

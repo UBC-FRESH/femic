@@ -582,30 +582,30 @@ notes.
   - [x] P22.1c Limit the initial CT/fert scaffold to K3Z AUs
     `FDC+HW-M` and `CW+HW-M`, while keeping the YAML structure extensible to
     additional AUs later.
-- [ ] P22.2 Add explicit treatment-path state handling in Patchworks export
+- [x] P22.2 Add explicit treatment-path state handling in Patchworks export
   - [x] P22.2a Introduce a new stand-state field for treatment-path gating
     (for example `SILV_STATE`) instead of overloading `ORIGIN`, so
     `ORIGIN` retains its natural/planted semantics.
-  - [ ] P22.2b Define initial treatment-path state and XML `<assign>`
+  - [x] P22.2b Define initial treatment-path state and XML `<assign>`
     transitions for `CT`, `fert1`, `fert2`, and `fert3` eligibility gates.
-  - [ ] P22.2c Keep CT/fert eligibility constrained to `ORIGIN='planted'`
+  - [x] P22.2c Keep CT/fert eligibility constrained to `ORIGIN='planted'`
     where required while preserving current unmanaged/managed/origin logic.
-- [ ] P22.3 Add provisional QMD curve support to the K3Z model scaffold
-  - [ ] P22.3a Add AU-wise QMD curves/attributes to the Patchworks exporter.
-  - [ ] P22.3b Synthesize placeholder but plausible K3Z QMD curves for the
+- [x] P22.3 Add provisional QMD curve support to the K3Z model scaffold
+  - [x] P22.3a Add AU-wise QMD curves/attributes to the Patchworks exporter.
+  - [x] P22.3b Synthesize placeholder but plausible K3Z QMD curves for the
     initial rollout, with a documented replacement path for future nemora-based
     or externally supplied QMD curves.
-  - [ ] P22.3c Expose QMD curve assumptions/parameters in YAML so later
+  - [x] P22.3c Expose QMD curve assumptions/parameters in YAML so later
     real-curve replacement does not require exporter redesign.
-- [ ] P22.4 Implement commercial thinning (CT) treatment logic
-  - [ ] P22.4a Add a single CT treatment available only in planted stands and
+- [x] P22.4 Implement commercial thinning (CT) treatment logic
+  - [x] P22.4a Add a single CT treatment available only in planted stands and
     only in the initial target AUs (`FDC+HW-M`, `CW+HW-M`).
-  - [ ] P22.4b Parameterize CT age per AU (default age 40) and CT removal
+  - [x] P22.4b Parameterize CT age per AU (default age 40) and CT removal
     intensity (default 30% basal area removed from below).
-  - [ ] P22.4c Add temporary BA:volume conversion parameter (default 1.0) and
+  - [x] P22.4c Add temporary BA:volume conversion parameter (default 1.0) and
     use it to estimate CT harvested volume until a better DBH-distribution-based
     treatment response path is available.
-  - [ ] P22.4d Define post-CT total-volume trajectory so CT-harvested volume plus
+  - [x] P22.4d Define post-CT total-volume trajectory so CT-harvested volume plus
     final-harvest volume approximately conserves the no-CT total-yield endpoint.
 - [ ] P22.5 Implement fertilization treatment-chain logic (`fert1`/`fert2`/`fert3`)
   - [ ] P22.5a Make `fert1` available only after CT, using the treatment-path
@@ -627,19 +627,19 @@ notes.
     and tests so these provisional treatment-response heuristics can be swapped
     out later without changing the external YAML contract.
 - [ ] P22.7 Roll CT/fert scaffolding into an optional K3Z instance variant branch
-  - [ ] P22.7a Keep parent-repo implementation work on branch
+  - [x] P22.7a Keep parent-repo implementation work on branch
     `feature/k3z-ct-fert-treatment-scaffold`.
-  - [ ] P22.7b Land generated K3Z instance outputs on submodule branch
+  - [x] P22.7b Land generated K3Z instance outputs on submodule branch
     `feature/k3z-ct-fert-treatment-option`, so only student groups that want
     CT/fert can pull that variant into their forks.
-  - [ ] P22.7c Rebuild K3Z Patchworks XML/tracks on the variant branch and run
+  - [x] P22.7c Rebuild K3Z Patchworks XML/tracks on the variant branch and run
     Windows Patchworks smoke validation before any merge discussion.
 - [ ] P22.8 Add docs, evidence, and acceptance checks
   - [ ] P22.8a Document CT/fert YAML parameters, treatment-path state semantics,
     and provisional curve assumptions in FEMIC and K3Z docs.
-  - [ ] P22.8b Add regression tests for YAML parsing, treatment-state gating,
+  - [x] P22.8b Add regression tests for YAML parsing, treatment-state gating,
     CT/fert XML emission, QMD attribute export, and treatment-response curves.
-  - [ ] P22.8c Capture Patchworks smoke evidence showing CT/fert treatments,
+  - [x] P22.8c Capture Patchworks smoke evidence showing CT/fert treatments,
     accounts, and targets appear correctly in the optional K3Z variant.
 
 ## Detailed Next Steps Notes
@@ -5001,3 +5001,11 @@ notes.
     - K3Z instance config: `external/femic-k3z-instance/config/silviculture.k3z.yaml`
   - Updated deterministic XML fixtures and regression coverage so the new define-field / fragment-schema contract is enforced before CT/fert treatment logic lands.
   - Next execution target remains Phase 22 treatment mechanics: provisional QMD support, CT curve/treatment synthesis, then fert chain logic.
+- 2026-03-20 (Phase 22 CT/QMD slice): implemented the first treatment-mechanics pass on the active feature branches and verified that the optional K3Z variant compiles cleanly in Windows Patchworks Matrix Builder.
+  - Pivoted `SILV_STATE` semantics from atomic placeholders to stacked treatment-path states: `baseline`, `cc_pl`, `cc_pl_ct`, `cc_pl_ct_f1`, `cc_pl_ct_f1_f2`, `cc_pl_ct_f1_f2_f3`.
+  - Added provisional K3Z QMD feature curves and accounts (`feature.QMD.managed.<au_id>`, `feature.QMD.unmanaged.<au_id>`) with YAML-facing assumptions kept in the silviculture scaffold.
+  - Added commercial thinning (`CT`) treatment support for the two initial eligible AUs (`985502001`, `985502002`), planted-only via `ORIGIN='planted'`, with per-AU age/removal parameters and temporary BA:volume conversion.
+  - Added post-CT residual-volume curve synthesis so the CT path conserves the no-CT endpoint approximately by subtracting harvested volume at CT age from the planted baseline trajectory.
+  - Regenerated the K3Z variant ForestModel XML and patched the validated fragments shapefile to carry `SILV_STATE`, then ran Matrix Builder smoke: `python -m femic patchworks matrix-build --config config/patchworks.runtime.windows.yaml --instance-root external/femic-k3z-instance --run-id k3z_ct_qmd_smoke_20260320`.
+  - Smoke evidence: `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_{stdout,stderr,manifest}-k3z_ct_qmd_smoke_20260320.*`; result `returncode=0`, `Managed=1692.2475729276887`, `Passive=89.06566313006975` (retention still active at 5%).
+  - Generated tracks now include `CT` products (`product.HarvestedVolume.managed.Total.CT`, species-wise CT harvested volume) plus the provisional QMD account surface; next execution target is the fert1/fert2/fert3 chain.

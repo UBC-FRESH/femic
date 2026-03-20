@@ -1,8 +1,8 @@
 commercial_thinning:
   enabled: false
   state_field: "SILV_STATE"
-  from_state: "baseline"
-  to_state: "ct"
+  from_state: "cc_pl"
+  to_state: "cc_pl_ct"
   eligible_au_ids: []
   min_origin: "planted"
   age_by_au: {}
@@ -15,18 +15,18 @@ fertilization:
   response_years: 10
   growth_speedup_fraction: 0.10
   first_application:
-    from_state: "ct"
-    to_state: "fert1"
+    from_state: "cc_pl_ct"
+    to_state: "cc_pl_ct_f1"
     timing_rule: "cai_argmax"
   second_application:
     enabled: true
-    from_state: "fert1"
-    to_state: "fert2"
+    from_state: "cc_pl_ct_f1"
+    to_state: "cc_pl_ct_f1_f2"
     years_after_previous: 10
   third_application:
     enabled: true
-    from_state: "fert2"
-    to_state: "fert3"
+    from_state: "cc_pl_ct_f1_f2"
+    to_state: "cc_pl_ct_f1_f2_f3"
     years_after_previous: 10
 
 qmd:

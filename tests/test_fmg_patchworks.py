@@ -496,7 +496,7 @@ def test_build_forestmodel_xml_tree_does_not_mix_managed_and_unmanaged_species_p
     for select in root.findall(".//select"):
         if (
             select.get("statement")
-            == "AU eq 985501000 and IFM eq 'managed' and ORIGIN eq 'planted'"
+            == "AU eq 985501000 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl'"
         ):
             managed_select = select
             break
@@ -507,6 +507,88 @@ def test_build_forestmodel_xml_tree_does_not_mix_managed_and_unmanaged_species_p
     assert "feature.Yield.managed.DR" not in managed_xml
     assert "feature.SpeciesProp.managed.DR" not in managed_xml
     assert 'curve idref="unmanaged_prop_DR_985501000001"' not in managed_xml
+
+
+def test_build_forestmodel_xml_tree_adds_ct_track_and_qmd_when_configured() -> None:
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985502001,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_FDC+HW",
+                "si_level": "M",
+                "managed_curve_id": 985522001,
+                "unmanaged_curve_id": 985502001,
+            }
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "curve_type": "unmanaged"},
+            {"curve_id": 985522001, "curve_type": "managed"},
+            {"curve_id": 985522001001, "curve_type": "managed_species_prop_CW"},
+            {"curve_id": 985522001002, "curve_type": "managed_species_prop_HW"},
+            {"curve_id": 985502001001, "curve_type": "unmanaged_species_prop_CW"},
+            {"curve_id": 985502001002, "curve_type": "unmanaged_species_prop_HW"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "x": 1, "y": 8.0},
+            {"curve_id": 985502001, "x": 40, "y": 200.0},
+            {"curve_id": 985502001, "x": 100, "y": 320.0},
+            {"curve_id": 985522001, "x": 1, "y": 10.0},
+            {"curve_id": 985522001, "x": 40, "y": 260.0},
+            {"curve_id": 985522001, "x": 100, "y": 400.0},
+            {"curve_id": 985522001001, "x": 1, "y": 0.25},
+            {"curve_id": 985522001002, "x": 1, "y": 0.75},
+            {"curve_id": 985502001001, "x": 1, "y": 0.20},
+            {"curve_id": 985502001002, "x": 1, "y": 0.80},
+        ]
+    )
+    silviculture_config = {
+        "commercial_thinning": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "from_state": "cc_pl",
+            "to_state": "cc_pl_ct",
+            "ct_age": 40,
+            "age_by_au": {"985502001": 40},
+            "basal_area_removal_fraction": 0.30,
+            "basal_area_to_volume_ratio": 1.0,
+        },
+        "qmd": {"enabled": True},
+    }
+
+    root = build_forestmodel_xml_tree(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+        silviculture_config=silviculture_config,
+    )
+
+    managed_planted_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl'\"]"
+    )
+    assert managed_planted_select is not None
+    treatment_labels = [
+        node.attrib["label"]
+        for node in managed_planted_select.findall("./track/treatment")
+    ]
+    assert treatment_labels == ["CC", "CT"]
+
+    xml_text = et.tostring(root, encoding="unicode")
+    assert "feature.QMD.managed.985502001" in xml_text
+    assert "feature.QMD.unmanaged.985502001" in xml_text
+    assert "product.HarvestedVolume.managed.Total.CT" in xml_text
+    assert (
+        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl' and treatment eq 'CT'"
+        in xml_text
+    )
+    assert (
+        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_ct'"
+        in xml_text
+    )
 
 
 def test_build_forestmodel_xml_tree_omits_zero_signal_species_accounts() -> None:
@@ -1252,7 +1334,7 @@ def test_build_fragments_geodataframe_marks_age_60_as_planted(
     )
 
     assert gdf.loc[0, "ORIGIN"] == "planted"
-    assert gdf.loc[0, "SILV_STATE"] == "baseline"
+    assert gdf.loc[0, "SILV_STATE"] == "cc_pl"
     assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.0)
 
 
