@@ -5045,3 +5045,24 @@
   - `data/shp/ria_vri_vclr1p_checkpoint1-tsak3z_fieldmap.csv`
 - Published equivalent artifacts into `external/femic-k3z-instance` and pushed
   instance repo commit `a762076` on `main`.
+
+## 2026-03-20 - Added K3Z old-growth (`og1`/`og2`) feature attributes and refreshed model XML
+- Implemented generalized old-growth curve synthesis in
+  `src/femic/fmg/patchworks.py` and attached new feature attributes to both
+  managed and unmanaged selects:
+  - per-AU: `feature.Area.og1.<au_id>`, `feature.Area.og2.<au_id>`
+  - totals: `feature.Area.og1.total`, `feature.Area.og2.total`
+- OG curve definitions:
+  - `og1`: linear ramp from unmanaged-curve CMAI age (`0`) to unmanaged
+    peak-yield age (`1`).
+  - `og2`: fixed policy step (`249 -> 0`, `250 -> 1`).
+- Added regression coverage in `tests/test_fmg_patchworks.py` and refreshed
+  deterministic XML fixtures:
+  - `tests/fixtures/fmg/forestmodel_minimal.xml`
+  - `tests/fixtures/fmg/forestmodel_multi_au.xml`
+- Updated operator docs in `README.md` Patchworks export section to document
+  emitted OG attribute families and curve semantics.
+- Regenerated K3Z instance ForestModel XML with the new OG accounts:
+  `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel.xml`.
+- Recorded matching plan/progress notes in `ROADMAP.md` under new Phase 21 and
+  Detailed Next Steps.

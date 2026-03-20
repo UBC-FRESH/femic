@@ -548,7 +548,43 @@ notes.
 - [ ] P20.5 Expand runtime progress logging/heartbeat for long VDYP stages
 - [ ] P20.6 Validate parity and performance; decide default enablement policy
 
+## Phase 21: K3Z Old-Growth Attribute Rollout (`og1`/`og2`)
+- [x] P21.1 Define OG attribute/curve contract for Patchworks export
+  - [x] P21.1a Add per-AU feature attributes:
+    `feature.Area.og1.<au_id>`, `feature.Area.og2.<au_id>`.
+  - [x] P21.1b Add cross-AU total feature attributes:
+    `feature.Area.og1.total`, `feature.Area.og2.total`.
+  - [x] P21.1c Scope OG1 to unmanaged (untreated/VDYP) yield dynamics.
+- [x] P21.2 Implement OG curve synthesis in FEMIC Patchworks exporter
+  - [x] P21.2a OG1: linear ramp from CMAI age (`0.0`) to peak-yield age (`1.0`),
+    computed from unmanaged total-yield curve.
+  - [x] P21.2b OG2: policy-step curve (`0.0` at age 249, `1.0` at age 250).
+  - [x] P21.2c Bind OG attributes to both managed/unmanaged feature selects.
+- [x] P21.3 Add regression coverage and refresh XML fixtures
+  - [x] P21.3a Assert OG labels and OG curve point vectors in
+    `tests/test_fmg_patchworks.py`.
+  - [x] P21.3b Update ForestModel XML fixtures for deterministic output parity.
+- [x] P21.4 Regenerate K3Z instance ForestModel XML with OG attributes
+  - [x] P21.4a Rebuild
+    `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel.xml`
+    from K3Z bundle tables using current exporter logic.
+  - [x] P21.4b Verify emitted OG labels and curve IDs in generated XML.
+
 ## Detailed Next Steps Notes
+- 2026-03-20 (Phase 21 complete): added generalized K3Z old-growth feature
+  attributes and regenerated the tracked instance ForestModel XML.
+  - Implemented OG curve generation in `femic.fmg.patchworks`:
+    - `og1`: unmanaged-curve-driven linear ramp from CMAI age (`0.0`) to
+      peak-yield age (`1.0`).
+    - `og2`: fixed policy step at ages `249 -> 0.0`, `250 -> 1.0`.
+  - Added per-AU + total feature attributes on both IFM selects:
+    `feature.Area.og1.<au_id>`, `feature.Area.og1.total`,
+    `feature.Area.og2.<au_id>`, `feature.Area.og2.total`.
+  - Added regression test coverage and refreshed XML fixtures to include new
+    OG curves/attributes.
+  - Rewrote K3Z instance
+    `models/k3z_patchworks_model/yield/forestmodel.xml` from current bundle
+    tables and confirmed OG labels/curves are present.
 - 2026-03-16 (Phase 19 toe-shift correction follow-up): removed the accidental
   second right-shift on toe `c` and confirmed no extended left plateau from
   double-shifting.
