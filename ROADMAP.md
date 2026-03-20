@@ -626,7 +626,7 @@ notes.
   - [x] P22.6c Preserve transparent, auditable curve-generation logic in docs
     and tests so these provisional treatment-response heuristics can be swapped
     out later without changing the external YAML contract.
-- [ ] P22.7 Roll CT/fert scaffolding into an optional K3Z instance variant branch
+- [x] P22.7 Roll CT/fert scaffolding into an optional K3Z instance variant branch
   - [x] P22.7a Keep parent-repo implementation work on branch
     `feature/k3z-ct-fert-treatment-scaffold`.
   - [x] P22.7b Land generated K3Z instance outputs on submodule branch
@@ -634,8 +634,8 @@ notes.
     CT/fert can pull that variant into their forks.
   - [x] P22.7c Rebuild K3Z Patchworks XML/tracks on the variant branch and run
     Windows Patchworks smoke validation before any merge discussion.
-- [ ] P22.8 Add docs, evidence, and acceptance checks
-  - [ ] P22.8a Update FEMIC docs and standalone `femic-k3z-instance` Sphinx docs
+- [x] P22.8 Add docs, evidence, and acceptance checks
+  - [x] P22.8a Update FEMIC docs and standalone `femic-k3z-instance` Sphinx docs
     to cover the optional CT/fert variant end-to-end: YAML parameters,
     treatment-path state semantics, provisional QMD/curve assumptions, and the
     student-facing pull/use workflow for the optional instance branch.
@@ -643,7 +643,7 @@ notes.
     CT/fert XML emission, QMD attribute export, and treatment-response curves.
   - [x] P22.8c Capture Patchworks smoke evidence showing CT/fert treatments,
     accounts, and targets appear correctly in the optional K3Z variant.
-  - [ ] P22.8d Backfill standalone `femic-k3z-instance` docs with the earlier
+  - [x] P22.8d Backfill standalone `femic-k3z-instance` docs with the earlier
     Phase 21 old-growth rollout details (`og1`/`og2` area attributes, curve
     semantics, compiled-account expectations) so the K3Z docs reflect the full
     current model surface before or alongside CT/fert variant guidance.
@@ -5026,3 +5026,7 @@ notes.
   - Docs backlog now explicitly includes both:
     - Phase 21 OG rollout coverage (`feature.Area.og1.*`, `feature.Area.og2.*`, `og1`/`og2` curve semantics, and how those accounts appear in compiled Patchworks outputs), and
     - Phase 22 optional CT/QMD/fert variant coverage (YAML parameters, `SILV_STATE` path semantics, provisional curve heuristics, and how student groups pull the optional branch into their instance forks).
+- 2026-03-20 (Phase 22 standalone docs pass): updated the standalone `femic-k3z-instance` Sphinx docs to reflect the current full K3Z Patchworks surface, including both the Phase 21 OG rollout and the optional Phase 22 CT/QMD/fert variant.
+  - Updated K3Z docs pages: `getting-started.rst`, `model-anatomy.rst`, `assumptions-registry.rst`, `base-case-analysis.rst`, `operator-runbook.rst`, `edit-policy-and-scenarios.rst`, `rebuild-and-qa.rst`, and `metadata-and-lineage.rst`.
+  - Added explicit documentation for `og1` / `og2` feature-area accounts, current OG curve semantics, optional branch usage (`feature/k3z-ct-fert-treatment-option`), `SILV_STATE` treatment-path semantics, provisional QMD outputs, and CT/F1/F2/F3 operator expectations.
+  - Validation passed: `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`.

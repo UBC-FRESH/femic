@@ -5151,3 +5151,23 @@
   - `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_manifest-k3z_ct_f123_rerun_20260320.json`
 - Verified compiled K3Z outputs now materialize the full treatment chain in tracks/accounts/products, including `CT`, `F1`, `F2`, and `F3`.
 - Downstream live-Patchworks smoke also passed: pulling on the `F3` treated-area target induced the expected earlier treatment chain (`F2`, `F1`, `CT`, `CC`) across prior time steps.
+
+## 2026-03-20 - Updated standalone K3Z docs for OG and optional CT/fert variant
+- Expanded the standalone `femic-k3z-instance` Sphinx docs so they now describe both the current old-growth account surface and the optional CT/QMD/fertilization teaching variant.
+- Updated these K3Z docs pages:
+  - `docs/getting-started.rst`
+  - `docs/model-anatomy.rst`
+  - `docs/assumptions-registry.rst`
+  - `docs/base-case-analysis.rst`
+  - `docs/operator-runbook.rst`
+  - `docs/edit-policy-and-scenarios.rst`
+  - `docs/rebuild-and-qa.rst`
+  - `docs/metadata-and-lineage.rst`
+- Added explicit documentation for:
+  - Phase 21 old-growth surfaces (`feature.Area.og1.*`, `feature.Area.og2.*`) and current `og1`/`og2` curve semantics,
+  - optional branch workflow for `feature/k3z-ct-fert-treatment-option`,
+  - `SILV_STATE` treatment-path semantics,
+  - provisional QMD outputs,
+  - CT/F1/F2/F3 compiled-surface and live-Patchworks smoke expectations.
+- Validation passed:
+  - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
