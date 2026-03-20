@@ -5138,3 +5138,16 @@
     `Passive=89.06566313006975`
 - Generated K3Z tracks now include `CT` treatment rows, CT harvested-volume
   products, and the provisional QMD account surface.
+
+## 2026-03-20 - Completed Phase 22 fert-chain smoke on the optional K3Z CT/fert variant
+- Extended the Phase 22 optional K3Z silviculture variant so the CT path now carries the full provisional fertilization chain: `F1`, `F2`, and `F3`.
+- Added YAML-driven fertilization sequencing and temporary growth-response curve synthesis in `src/femic/fmg/patchworks.py`, keeping `ORIGIN` reserved for natural/planted semantics while `SILV_STATE` carries the stacked treatment path.
+- Added a CT timing guard so effective CT age is reduced to at most `F1_age - 10` when needed, ensuring there is enough room for the full CT -> F1 -> F2 -> F3 sequence within a rotation.
+- Regenerated the optional K3Z variant ForestModel XML and recompiled the Patchworks tracks with a fresh Windows Matrix Builder run:
+  - `python -m femic patchworks matrix-build --config config/patchworks.runtime.windows.yaml --instance-root external/femic-k3z-instance --run-id k3z_ct_f123_rerun_20260320`
+- Fresh smoke evidence captured in:
+  - `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_stdout-k3z_ct_f123_rerun_20260320.log`
+  - `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_stderr-k3z_ct_f123_rerun_20260320.log`
+  - `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_manifest-k3z_ct_f123_rerun_20260320.json`
+- Verified compiled K3Z outputs now materialize the full treatment chain in tracks/accounts/products, including `CT`, `F1`, `F2`, and `F3`.
+- Downstream live-Patchworks smoke also passed: pulling on the `F3` treated-area target induced the expected earlier treatment chain (`F2`, `F1`, `CT`, `CC`) across prior time steps.

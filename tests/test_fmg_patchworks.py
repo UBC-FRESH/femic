@@ -557,6 +557,28 @@ def test_build_forestmodel_xml_tree_adds_ct_track_and_qmd_when_configured() -> N
             "basal_area_removal_fraction": 0.30,
             "basal_area_to_volume_ratio": 1.0,
         },
+        "fertilization": {
+            "enabled": True,
+            "response_years": 10,
+            "growth_speedup_fraction": 0.10,
+            "first_application": {
+                "from_state": "cc_pl_ct",
+                "to_state": "cc_pl_ct_f1",
+                "timing_rule": "cai_argmax",
+            },
+            "second_application": {
+                "enabled": True,
+                "from_state": "cc_pl_ct_f1",
+                "to_state": "cc_pl_ct_f1_f2",
+                "years_after_previous": 10,
+            },
+            "third_application": {
+                "enabled": True,
+                "from_state": "cc_pl_ct_f1_f2",
+                "to_state": "cc_pl_ct_f1_f2_f3",
+                "years_after_previous": 10,
+            },
+        },
         "qmd": {"enabled": True},
     }
 
@@ -587,6 +609,49 @@ def test_build_forestmodel_xml_tree_adds_ct_track_and_qmd_when_configured() -> N
     )
     assert (
         "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_ct'"
+        in xml_text
+    )
+    ct_state_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_ct'\"]"
+    )
+    assert ct_state_select is not None
+    ct_treatment_labels = [
+        node.attrib["label"] for node in ct_state_select.findall("./track/treatment")
+    ]
+    assert ct_treatment_labels == ["CC", "F1"]
+    assert "product.Treated.managed.F1" in xml_text
+    assert (
+        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_ct' and treatment eq 'F1'"
+        in xml_text
+    )
+    assert (
+        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_ct_f1'"
+        in xml_text
+    )
+    f1_state_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_ct_f1'\"]"
+    )
+    assert f1_state_select is not None
+    f1_treatment_labels = [
+        node.attrib["label"] for node in f1_state_select.findall("./track/treatment")
+    ]
+    assert f1_treatment_labels == ["CC", "F2"]
+    assert "product.Treated.managed.F2" in xml_text
+    assert "product.Treated.managed.F3" in xml_text
+    assert (
+        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_ct_f1_f2'"
+        in xml_text
+    )
+    f2_state_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_ct_f1_f2'\"]"
+    )
+    assert f2_state_select is not None
+    f2_treatment_labels = [
+        node.attrib["label"] for node in f2_state_select.findall("./track/treatment")
+    ]
+    assert f2_treatment_labels == ["CC", "F3"]
+    assert (
+        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_ct_f1_f2_f3'"
         in xml_text
     )
 

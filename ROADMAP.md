@@ -607,23 +607,23 @@ notes.
     treatment response path is available.
   - [x] P22.4d Define post-CT total-volume trajectory so CT-harvested volume plus
     final-harvest volume approximately conserves the no-CT total-yield endpoint.
-- [ ] P22.5 Implement fertilization treatment-chain logic (`fert1`/`fert2`/`fert3`)
-  - [ ] P22.5a Make `fert1` available only after CT, using the treatment-path
+- [x] P22.5 Implement fertilization treatment-chain logic (`fert1`/`fert2`/`fert3`)
+  - [x] P22.5a Make `fert1` available only after CT, using the treatment-path
     state gate rather than `ORIGIN` mutation.
-  - [ ] P22.5b Schedule `fert1` at the age of maximal CAI on the planted total
+  - [x] P22.5b Schedule `fert1` at the age of maximal CAI on the planted total
     yield curve (argmax of first derivative), with YAML override support if we
     later need AU-specific exceptions.
-  - [ ] P22.5c Make `fert2` available only after `fert1` and schedule it 10
+  - [x] P22.5c Make `fert2` available only after `fert1` and schedule it 10
     years later by default; make `fert3` available only after `fert2` and
     schedule it another 10 years later by default.
-  - [ ] P22.5d Parameterize fertilization response as a growth-speedup fraction
+  - [x] P22.5d Parameterize fertilization response as a growth-speedup fraction
     (default 10%) for a finite response window (default 10 years).
-- [ ] P22.6 Add curve-synthesis rules for CT/fert treatment responses
-  - [ ] P22.6a Build post-CT treated total-yield curves by subtracting CT
+- [x] P22.6 Add curve-synthesis rules for CT/fert treatment responses
+  - [x] P22.6a Build post-CT treated total-yield curves by subtracting CT
     harvested volume at treatment age from the planted baseline curve.
-  - [ ] P22.6b Build fertilization-response curves by temporarily compressing the
+  - [x] P22.6b Build fertilization-response curves by temporarily compressing the
     planted post-treatment growth path over the configured response window.
-  - [ ] P22.6c Preserve transparent, auditable curve-generation logic in docs
+  - [x] P22.6c Preserve transparent, auditable curve-generation logic in docs
     and tests so these provisional treatment-response heuristics can be swapped
     out later without changing the external YAML contract.
 - [ ] P22.7 Roll CT/fert scaffolding into an optional K3Z instance variant branch
@@ -5009,3 +5009,10 @@ notes.
   - Regenerated the K3Z variant ForestModel XML and patched the validated fragments shapefile to carry `SILV_STATE`, then ran Matrix Builder smoke: `python -m femic patchworks matrix-build --config config/patchworks.runtime.windows.yaml --instance-root external/femic-k3z-instance --run-id k3z_ct_qmd_smoke_20260320`.
   - Smoke evidence: `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_{stdout,stderr,manifest}-k3z_ct_qmd_smoke_20260320.*`; result `returncode=0`, `Managed=1692.2475729276887`, `Passive=89.06566313006975` (retention still active at 5%).
   - Generated tracks now include `CT` products (`product.HarvestedVolume.managed.Total.CT`, species-wise CT harvested volume) plus the provisional QMD account surface; next execution target is the fert1/fert2/fert3 chain.
+- 2026-03-20 (Phase 22 fert-chain smoke): completed the first full CT + `fert1`/`fert2`/`fert3` compile pass on the optional K3Z variant and verified it downstream in live Patchworks.
+  - Added YAML-driven fertilization sequencing and response-curve synthesis so eligible K3Z CT tracks now expose `F1`, `F2`, and `F3` in addition to `CT`.
+  - Added a CT timing guard so effective CT age is pulled back to at most `F1_age - 10` when needed, ensuring there is space for the full fertilization chain.
+  - Fresh Matrix Builder rerun: `python -m femic patchworks matrix-build --config config/patchworks.runtime.windows.yaml --instance-root external/femic-k3z-instance --run-id k3z_ct_f123_rerun_20260320`.
+  - Fresh evidence/logs: `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_{stdout,stderr,manifest}-k3z_ct_f123_rerun_20260320.*`.
+  - Rerun result: `returncode=0`, with compiled tracks now materializing `CT`, `F1`, `F2`, and `F3` treatment rows plus the matching `product.Treated.managed.{CT,F1,F2,F3}` account/product surface.
+  - Downstream Patchworks smoke passed: pulling on the `F3` treated-area target induced the expected upstream treatment chain (`F2`, `F1`, `CT`, `CC`) in prior timesteps.
