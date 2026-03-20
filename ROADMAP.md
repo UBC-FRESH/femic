@@ -492,9 +492,41 @@ notes.
     surfaces and their intended use.
   - [x] P20.3c Record milestone summary in roadmap notes and ``CHANGE_LOG.md``.
 
+## Phase 21: Patchworks Fragment-Retention Modulator + K3Z Rollout
+- [x] **P21.1 Add retention state to FEMIC fragments schema**
+  - [x] P21.1a Add canonical ``RETENTION`` fragments column in Patchworks export/build logic.
+  - [x] P21.1b Default ``RETENTION`` to ``0.0`` in fragment generation.
+  - [x] P21.1c Validate domain/range (``0.0 <= RETENTION <= 1.0``) in fragment validators/tests.
+- [x] **P21.2 Add retention support to ForestModel core + XML serializer**
+  - [x] P21.2a Extend ``ForestModelDefinition`` / Patchworks core representation to carry retention definitions.
+  - [x] P21.2b Add XML serialization for Patchworks ``<retention>`` elements.
+  - [x] P21.2c Add XML validation checks requiring referenced fields/curves/select statements to resolve correctly.
+- [x] **P21.3 Implement generic Patchworks retention export behavior**
+  - [x] P21.3a Define the retention statement scope for managed stands using the ``RETENTION`` field.
+  - [x] P21.3b Emit retention factor wiring so retained area is withdrawn from managed area and rolls into unmanaged area during Matrix Builder compilation.
+  - [x] P21.3c Keep retention orthogonal to ``IFM`` and ``ORIGIN`` state logic.
+- [x] **P21.4 Apply retention support to K3Z as the reference instance**
+  - [x] P21.4a Regenerate K3Z fragments with tracked ``RETENTION`` column.
+  - [x] P21.4b Rebuild K3Z ``forestmodel.xml`` with retention elements enabled.
+  - [x] P21.4c Rerun K3Z Matrix Builder and confirm expected managed/unmanaged area behavior.
+- [x] **P21.5 Add tests, docs, and rollout guidance**
+  - [x] P21.5a Add regression tests for fragments schema, XML serialization, and retention validation.
+  - [x] P21.5b Add fixture coverage for ForestModel XML containing ``<retention>`` elements.
+  - [x] P21.5c Document ``RETENTION`` semantics in FEMIC docs and K3Z instance docs, including edit guidance and expected Matrix Builder effects.
+
 ## Detailed Next Steps Notes
 
 
+- 2026-03-19 (Phase 21 complete): added first-class Patchworks fragment-retention support and rolled it out to K3Z with a non-disruptive ``RETENTION=0.0`` baseline.
+  - Export contract changes:
+    - fragments now carry a validated ``RETENTION`` field constrained to ``[0.0, 1.0]``
+    - ForestModel XML now defines ``RETENTION`` and emits ``<retention factor="RETENTION">`` on managed selects, with retained area reassigned to ``IFM='unmanaged'``.
+  - K3Z rollout:
+    - updated validated fragments shapefile/DBF to include ``RETENTION=0.0`` for all fragments
+    - regenerated K3Z ``forestmodel.xml`` and reran Patchworks Matrix Builder successfully
+    - matrix manifest recorded at ``vdyp_io/logs/patchworks_matrixbuilder_manifest-k3z_retention_phase21b_20260319.json``.
+  - Validation:
+    ``pytest tests/test_fmg_patchworks.py -q`` passed (32 tests), and K3Z Matrix Builder completed with ``returncode=0`` after interactive window closeout.
 - 2026-03-18 (Phase 19 complete): executed TSA29 Patchworks rebuild validation on the validated Windows host and published green machine-readable evidence.
   - Runtime path used:
     `scripts/tsa29/rebuild_tsa29_instance.py --reuse-existing-blocks`

@@ -4446,3 +4446,23 @@
   - `feature.Yield.managed.<species>` sums to `feature.Yield.managed.Total`,
   - `product.Yield.managed.<species>` sums to `product.Yield.managed.Total`,
   - `product.HarvestedVolume.managed.<species>.CC` sums to `product.HarvestedVolume.managed.Total.CC`.
+
+## 2026-03-19 - Completed Phase 21: Patchworks fragment-retention modulator + K3Z rollout
+- Added first-class Patchworks retention support to the FMG core/export path.
+- Fragments export now emits and validates a numeric ``RETENTION`` field with default ``0.0`` and enforced range ``[0.0, 1.0]``.
+- Extended ForestModel serialization to emit ``<retention>`` blocks on managed selects using ``factor="RETENTION"`` and reassigning retained area to ``IFM='unmanaged'``.
+- Added regression coverage for:
+  - retention-aware fragments validation,
+  - retention XML emission,
+  - retention define-field validation,
+  - updated ForestModel XML fixtures.
+- Rolled the retention contract into the K3Z reference instance by:
+  - adding ``RETENTION=0.0`` to the validated fragments shapefile/DBF,
+  - regenerating ``yield/forestmodel.xml``,
+  - rerunning Patchworks Matrix Builder successfully.
+- Recorded green K3Z runtime evidence in:
+  ``external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_manifest-k3z_retention_phase21b_20260319.json``.
+- Validation:
+  - ``python -m pytest tests/test_fmg_patchworks.py -q``
+  - K3Z Patchworks Matrix Builder ``returncode=0``
+

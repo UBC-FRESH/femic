@@ -82,12 +82,22 @@ class TreatmentDefinition:
 
 
 @dataclass(frozen=True)
+class RetentionDefinition:
+    """One retention definition applied within a select statement."""
+
+    factor: str
+    assignments: tuple[TreatmentAssignment, ...] = ()
+    feature_attributes: tuple[AttributeBinding, ...] = ()
+
+
+@dataclass(frozen=True)
 class SelectDefinition:
     """One select statement plus optional features/products/track treatment."""
 
     statement: str
     feature_attributes: tuple[AttributeBinding, ...] = ()
     product_attributes: tuple[AttributeBinding, ...] = ()
+    retention_definitions: tuple[RetentionDefinition, ...] = ()
     include_track: bool = False
     track_treatment: TreatmentDefinition | None = None
 

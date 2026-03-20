@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import importlib
 import math
+import re
 from pathlib import Path
 from typing import Any, Iterable
 import xml.etree.ElementTree as et
@@ -24,6 +25,7 @@ from .core import (
     CurvePoint,
     DefineFieldDefinition,
     ForestModelDefinition,
+    RetentionDefinition,
     SelectDefinition,
     TreatmentAssignment,
     TreatmentDefinition,
@@ -40,6 +42,7 @@ DEFAULT_IFM_SOURCE_COL: str | None = None
 DEFAULT_IFM_THRESHOLD: float | None = None
 DEFAULT_IFM_TARGET_MANAGED_SHARE: float | None = None
 DEFAULT_SERAL_STAGE_CONFIG_PATH: Path | None = None
+DEFAULT_RETENTION_VALUE = 0.0
 VALID_IFM_VALUES = {"managed", "unmanaged"}
 VALID_ORIGIN_VALUES = {"natural", "planted"}
 ORIGIN_ORDER = ("natural", "planted")
@@ -54,6 +57,7 @@ REQUIRED_FRAGMENT_COLUMNS = {
     "AU",
     "IFM",
     "ORIGIN",
+    "RETENTION",
     "TSA",
     "geometry",
 }
@@ -953,6 +957,17 @@ def build_patchworks_forestmodel_definition(
                         f"{_au_eq_statement(au.au_id)} and IFM eq 'managed' and ORIGIN eq {origin_literal}"
                     ),
                     feature_attributes=tuple(managed_attrs_by_origin[origin]),
+                    retention_definitions=(
+                        RetentionDefinition(
+                            factor="RETENTION",
+                            assignments=(
+                                TreatmentAssignment(
+                                    field="IFM",
+                                    value=_as_quoted_literal("unmanaged"),
+                                ),
+                            ),
+                        ),
+                    ),
                     include_track=True,
                     track_treatment=TreatmentDefinition(
                         label="CC",
@@ -1001,6 +1016,7 @@ def build_patchworks_forestmodel_definition(
             DefineFieldDefinition(field="AU", column="AU"),
             DefineFieldDefinition(field="IFM", column="IFM"),
             DefineFieldDefinition(field="ORIGIN", column="ORIGIN"),
+            DefineFieldDefinition(field="RETENTION", column="Number(column('RETENTION'))"),
             DefineFieldDefinition(field="treatment"),
         ),
         curves=curves,
@@ -1018,6 +1034,31 @@ def _append_attribute_bindings(
     for binding in bindings:
         attr = et.SubElement(node, "attribute", {"label": binding.label})
         et.SubElement(attr, "curve", {"idref": binding.curve_idref})
+
+
+def _append_retention_definitions(
+    *,
+    parent: et.Element,
+    retention_definitions: tuple[RetentionDefinition, ...],
+) -> None:
+    for retention_definition in retention_definitions:
+        retention = et.SubElement(
+            parent,
+            "retention",
+            {"factor": retention_definition.factor},
+        )
+        for assignment in retention_definition.assignments:
+            et.SubElement(
+                retention,
+                "assign",
+                {"field": assignment.field, "value": assignment.value},
+            )
+        if retention_definition.feature_attributes:
+            _append_attribute_bindings(
+                parent=retention,
+                tag_name="features",
+                bindings=retention_definition.feature_attributes,
+            )
 
 
 def _append_track(
@@ -1114,6 +1155,11 @@ def forestmodel_definition_to_xml_tree(
                 tag_name="features",
                 bindings=select.feature_attributes,
             )
+        if select.retention_definitions:
+            _append_retention_definitions(
+                parent=select_node,
+                retention_definitions=select.retention_definitions,
+            )
         _append_track(
             parent=select_node,
             include_track=select.include_track,
@@ -1172,7 +1218,7 @@ def validate_forestmodel_xml_tree(*, root: et.Element) -> None:
         for field in [node.get("field")]
         if field is not None
     }
-    for field in ("AU", "IFM", "ORIGIN", "treatment"):
+    for field in ("AU", "IFM", "ORIGIN", "RETENTION", "treatment"):
         if field not in define_fields:
             issues.append(f"missing define field: {field}")
 
@@ -1198,6 +1244,20 @@ def validate_forestmodel_xml_tree(*, root: et.Element) -> None:
         issues.append(
             f"attribute curve idref(s) missing matching curve: {missing_idrefs}"
         )
+
+    for assign_node in root.findall(".//assign"):
+        field_name = assign_node.get("field")
+        if field_name and field_name not in define_fields:
+            issues.append(f"assign references undefined field: {field_name}")
+
+    identifier_pattern = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+    for retention_node in root.findall(".//retention"):
+        factor = retention_node.get("factor")
+        if not factor:
+            issues.append("retention element missing factor attribute")
+            continue
+        if identifier_pattern.fullmatch(factor) and factor not in define_fields:
+            issues.append(f"retention factor references undefined field: {factor}")
 
     if not root.findall(".//treatment[@label='CC']"):
         issues.append("missing required CC treatment definition")
@@ -1275,6 +1335,7 @@ def build_fragments_geodataframe(
             "AU": scoped["au"].astype(int),
             "IFM": np.where(managed_flag, "managed", "unmanaged"),
             "ORIGIN": np.where(age <= ORIGIN_PLANTED_MAX_AGE, "planted", "natural"),
+            "RETENTION": np.full(len(scoped), DEFAULT_RETENTION_VALUE, dtype=float),
             "TSA": scoped["tsa_code"].astype(str),
             "geometry": scoped["geometry"],
         }
@@ -1405,6 +1466,13 @@ def validate_fragments_geodataframe(*, fragments_gdf: Any) -> None:
         invalid_origin = sorted(origin_values.difference(VALID_ORIGIN_VALUES))
         if invalid_origin:
             issues.append(f"ORIGIN contains invalid values: {invalid_origin}")
+
+    if "RETENTION" in fragments_gdf.columns:
+        retention = pd.to_numeric(fragments_gdf["RETENTION"], errors="coerce")
+        if retention.isna().any():
+            issues.append("RETENTION contains non-numeric value(s)")
+        elif ((retention < 0.0) | (retention > 1.0)).any():
+            issues.append("RETENTION must be between 0.0 and 1.0")
 
     if issues:
         raise ValueError("invalid fragments dataset: " + "; ".join(issues))

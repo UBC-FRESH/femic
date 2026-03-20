@@ -111,6 +111,7 @@
   <define field="AU" column="AU" />
   <define field="IFM" column="IFM" />
   <define field="ORIGIN" column="ORIGIN" />
+  <define field="RETENTION" column="Number(column('RETENTION'))" />
   <define field="treatment" />
   <input block="BLOCK" area="AREA_HA" age="F_AGE" exclude="BLOCK=0" />
   <output messages="messages.csv" blocks="blocks.csv" features="features.csv" products="products.csv" treatments="treatments.csv" curves="curves.csv" tracknames="tracknames.csv" />
@@ -158,6 +159,9 @@
         <curve idref="unmanaged_prop_PL_1001001" />
       </attribute>
     </features>
+    <retention factor="RETENTION">
+      <assign field="IFM" value="'unmanaged'" />
+    </retention>
     <track>
       <treatment label="CC" minage="0" maxage="1000">
         <produce>
@@ -244,6 +248,9 @@
         <curve idref="managed_prop_PL_21001001" />
       </attribute>
     </features>
+    <retention factor="RETENTION">
+      <assign field="IFM" value="'unmanaged'" />
+    </retention>
     <track>
       <treatment label="CC" minage="0" maxage="1000">
         <produce>
@@ -330,6 +337,9 @@
         <curve idref="unmanaged_prop_SW_1002001" />
       </attribute>
     </features>
+    <retention factor="RETENTION">
+      <assign field="IFM" value="'unmanaged'" />
+    </retention>
     <track>
       <treatment label="CC" minage="0" maxage="1000">
         <produce>
@@ -416,6 +426,9 @@
         <curve idref="managed_prop_SW_21002001" />
       </attribute>
     </features>
+    <retention factor="RETENTION">
+      <assign field="IFM" value="'unmanaged'" />
+    </retention>
     <track>
       <treatment label="CC" minage="0" maxage="1000">
         <produce>

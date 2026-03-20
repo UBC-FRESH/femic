@@ -2,6 +2,8 @@
 
 [![DOI](https://zenodo.org/badge/430531073.svg)](https://zenodo.org/badge/latestdoi/430531073)
 
+Hello!
+
 ## Documentation
 
 Published docs (target URL): `https://ubc-fresh.github.io/femic/`
