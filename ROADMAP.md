@@ -570,7 +570,93 @@ notes.
     from K3Z bundle tables using current exporter logic.
   - [x] P21.4b Verify emitted OG labels and curve IDs in generated XML.
 
+
+## Phase 22: K3Z CT + Fert Treatment Scaffolding and Optional Instance Variant
+- [ ] P22.1 Define YAML-facing treatment scaffold contract for CT + fertilization
+  - [ ] P22.1a Add K3Z model-input schema for one CT treatment plus optional
+    `fert1` / `fert2` / `fert3` treatment chain.
+  - [ ] P22.1b Add per-AU treatment parameter support for:
+    CT age, CT basal-area removal fraction, BA:volume conversion ratio,
+    fertilization speedup fraction, fertilization response duration,
+    and fert spacing offsets.
+  - [ ] P22.1c Limit the initial CT/fert scaffold to K3Z AUs
+    `FDC+HW-M` and `CW+HW-M`, while keeping the YAML structure extensible to
+    additional AUs later.
+- [ ] P22.2 Add explicit treatment-path state handling in Patchworks export
+  - [ ] P22.2a Introduce a new stand-state field for treatment-path gating
+    (for example `SILV_STATE`) instead of overloading `ORIGIN`, so
+    `ORIGIN` retains its natural/planted semantics.
+  - [ ] P22.2b Define initial treatment-path state and XML `<assign>`
+    transitions for `CT`, `fert1`, `fert2`, and `fert3` eligibility gates.
+  - [ ] P22.2c Keep CT/fert eligibility constrained to `ORIGIN='planted'`
+    where required while preserving current unmanaged/managed/origin logic.
+- [ ] P22.3 Add provisional QMD curve support to the K3Z model scaffold
+  - [ ] P22.3a Add AU-wise QMD curves/attributes to the Patchworks exporter.
+  - [ ] P22.3b Synthesize placeholder but plausible K3Z QMD curves for the
+    initial rollout, with a documented replacement path for future nemora-based
+    or externally supplied QMD curves.
+  - [ ] P22.3c Expose QMD curve assumptions/parameters in YAML so later
+    real-curve replacement does not require exporter redesign.
+- [ ] P22.4 Implement commercial thinning (CT) treatment logic
+  - [ ] P22.4a Add a single CT treatment available only in planted stands and
+    only in the initial target AUs (`FDC+HW-M`, `CW+HW-M`).
+  - [ ] P22.4b Parameterize CT age per AU (default age 40) and CT removal
+    intensity (default 30% basal area removed from below).
+  - [ ] P22.4c Add temporary BA:volume conversion parameter (default 1.0) and
+    use it to estimate CT harvested volume until a better DBH-distribution-based
+    treatment response path is available.
+  - [ ] P22.4d Define post-CT total-volume trajectory so CT-harvested volume plus
+    final-harvest volume approximately conserves the no-CT total-yield endpoint.
+- [ ] P22.5 Implement fertilization treatment-chain logic (`fert1`/`fert2`/`fert3`)
+  - [ ] P22.5a Make `fert1` available only after CT, using the treatment-path
+    state gate rather than `ORIGIN` mutation.
+  - [ ] P22.5b Schedule `fert1` at the age of maximal CAI on the planted total
+    yield curve (argmax of first derivative), with YAML override support if we
+    later need AU-specific exceptions.
+  - [ ] P22.5c Make `fert2` available only after `fert1` and schedule it 10
+    years later by default; make `fert3` available only after `fert2` and
+    schedule it another 10 years later by default.
+  - [ ] P22.5d Parameterize fertilization response as a growth-speedup fraction
+    (default 10%) for a finite response window (default 10 years).
+- [ ] P22.6 Add curve-synthesis rules for CT/fert treatment responses
+  - [ ] P22.6a Build post-CT treated total-yield curves by subtracting CT
+    harvested volume at treatment age from the planted baseline curve.
+  - [ ] P22.6b Build fertilization-response curves by temporarily compressing the
+    planted post-treatment growth path over the configured response window.
+  - [ ] P22.6c Preserve transparent, auditable curve-generation logic in docs
+    and tests so these provisional treatment-response heuristics can be swapped
+    out later without changing the external YAML contract.
+- [ ] P22.7 Roll CT/fert scaffolding into an optional K3Z instance variant branch
+  - [ ] P22.7a Keep parent-repo implementation work on branch
+    `feature/k3z-ct-fert-treatment-scaffold`.
+  - [ ] P22.7b Land generated K3Z instance outputs on submodule branch
+    `feature/k3z-ct-fert-treatment-option`, so only student groups that want
+    CT/fert can pull that variant into their forks.
+  - [ ] P22.7c Rebuild K3Z Patchworks XML/tracks on the variant branch and run
+    Windows Patchworks smoke validation before any merge discussion.
+- [ ] P22.8 Add docs, evidence, and acceptance checks
+  - [ ] P22.8a Document CT/fert YAML parameters, treatment-path state semantics,
+    and provisional curve assumptions in FEMIC and K3Z docs.
+  - [ ] P22.8b Add regression tests for YAML parsing, treatment-state gating,
+    CT/fert XML emission, QMD attribute export, and treatment-response curves.
+  - [ ] P22.8c Capture Patchworks smoke evidence showing CT/fert treatments,
+    accounts, and targets appear correctly in the optional K3Z variant.
+
 ## Detailed Next Steps Notes
+- 2026-03-20 (Phase 22 kickoff): queued a new optional K3Z treatment-variant workstream for commercial thinning plus 1-3 fertilization treatments.
+  - Branches created:
+    - parent repo: `feature/k3z-ct-fert-treatment-scaffold`
+    - K3Z instance repo: `feature/k3z-ct-fert-treatment-option`
+  - Locked planning decision: do not overload `ORIGIN` with CT/fert gating
+    states; introduce a separate treatment-path state variable so natural vs
+    planted origin semantics remain intact.
+  - Initial scope:
+    CT only in `FDC+HW-M` and `CW+HW-M` AUs, planted-only eligibility,
+    provisional QMD curves, one CT plus optional `fert1`/`fert2`/`fert3`
+    treatment chain, all parameterized through K3Z YAML scaffolding.
+  - Immediate execution order for this phase:
+    YAML contract -> treatment-path state design -> QMD scaffold -> CT curves ->
+    fert curves -> K3Z variant rebuild/smoke.
 - 2026-03-20 (Phase 21 complete): added generalized K3Z old-growth feature
   attributes and regenerated the tracked instance ForestModel XML.
   - Implemented OG curve generation in `femic.fmg.patchworks`:
