@@ -4886,3 +4886,20 @@ notes.
     `data/shp/ria_vri_vclr1p_checkpoint1-tsak3z_fieldmap.csv`.
   - Published same artifacts in `external/femic-k3z-instance` and pushed
     submodule commit `a762076` to `origin/main`.
+
+- 2026-03-20 (Phase 21 Windows smoke verification): synced this branch to
+  parent commit `d289971` and K3Z submodule commit `ff7bd11`, then reran the
+  K3Z Patchworks preflight + Matrix Builder on the validated Windows host.
+  - Preflight passed with:
+    `python -m femic patchworks preflight --config config/patchworks.runtime.windows.yaml --instance-root external/femic-k3z-instance`
+  - Matrix Builder passed with:
+    `python -m femic patchworks matrix-build --config config/patchworks.runtime.windows.yaml --instance-root external/femic-k3z-instance --run-id k3z_og_smoke_20260319`
+  - Evidence/log paths:
+    `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_stdout-k3z_og_smoke_20260319.log`,
+    `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_stderr-k3z_og_smoke_20260319.log`,
+    `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_manifest-k3z_og_smoke_20260319.json`.
+  - Smoke result summary:
+    `returncode=0`, `Total=1781.3132360577583`, `Managed=1781.3132360577583`,
+    `Passive=0.0`.
+  - Verified compiled OG feature-account surface in K3Z tracks and published
+    refreshed track tables in `external/femic-k3z-instance` commit `69322b2`.

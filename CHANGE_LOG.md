@@ -5066,3 +5066,25 @@
   `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel.xml`.
 - Recorded matching plan/progress notes in `ROADMAP.md` under new Phase 21 and
   Detailed Next Steps.
+
+
+## 2026-03-20 - Verified K3Z OG rollout on Windows Patchworks host and regenerated compiled tracks
+- Synced to parent branch `feature/compile-tsa29-instance-ws3-fork` commit
+  `d289971` and K3Z submodule commit `ff7bd11`, then executed a fresh Windows
+  Patchworks smoke run using:
+  - `python -m femic patchworks preflight --config config/patchworks.runtime.windows.yaml --instance-root external/femic-k3z-instance`
+  - `python -m femic patchworks matrix-build --config config/patchworks.runtime.windows.yaml --instance-root external/femic-k3z-instance --run-id k3z_og_smoke_20260319`
+- Smoke evidence captured in the K3Z instance log directory:
+  - `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_stdout-k3z_og_smoke_20260319.log`
+  - `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_stderr-k3z_og_smoke_20260319.log`
+  - `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_manifest-k3z_og_smoke_20260319.json`
+- Matrix Builder completed successfully with:
+  - `returncode=0`
+  - `Total=1781.3132360577583`
+  - `Managed=1781.3132360577583`
+  - `Passive=0.0`
+- Verified that the compiled K3Z tracks now include the expected old-growth
+  feature-account families (for example `feature.Area.og1.<au_id>`,
+  `feature.Area.og2.<au_id>`, `feature.Area.og1.total`,
+  `feature.Area.og2.total`) and published the refreshed track tables in
+  `external/femic-k3z-instance` commit `69322b2`.
