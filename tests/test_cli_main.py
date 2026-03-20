@@ -406,6 +406,7 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
         ifm_threshold,
         ifm_target_managed_share,
         seral_stage_config_path,
+        silviculture_config_path,
     ):
         called.update(
             {
@@ -423,6 +424,7 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
                 "ifm_threshold": ifm_threshold,
                 "ifm_target_managed_share": ifm_target_managed_share,
                 "seral_stage_config_path": seral_stage_config_path,
+                "silviculture_config_path": silviculture_config_path,
             }
         )
         return SimpleNamespace(
@@ -453,6 +455,7 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
         ifm_threshold=0.2,
         ifm_target_managed_share=None,
         seral_stage_config=Path("config/seral.k3z.yaml"),
+        silviculture_config=Path("config/silviculture.k3z.yaml"),
     )
 
     assert called["tsa_list"] == ["k3z"]
@@ -464,6 +467,11 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
         Path(called["seral_stage_config_path"])
         .as_posix()
         .endswith("config/seral.k3z.yaml")
+    )
+    assert (
+        Path(called["silviculture_config_path"])
+        .as_posix()
+        .endswith("config/silviculture.k3z.yaml")
     )
     assert any("patchworks export completed" in msg for msg in messages)
 

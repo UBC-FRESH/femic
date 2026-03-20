@@ -127,6 +127,7 @@
   <define field="AU" column="AU" />
   <define field="IFM" column="IFM" />
   <define field="ORIGIN" column="ORIGIN" />
+  <define field="SILV_STATE" column="SILV_STATE" />
   <define field="RETENTION" column="Number(column('RETENTION'))" />
   <define field="treatment" />
   <input block="BLOCK" area="AREA_HA" age="F_AGE" exclude="BLOCK=0" />

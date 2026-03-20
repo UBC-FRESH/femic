@@ -5088,3 +5088,20 @@
   `feature.Area.og2.<au_id>`, `feature.Area.og1.total`,
   `feature.Area.og2.total`) and published the refreshed track tables in
   `external/femic-k3z-instance` commit `69322b2`.
+
+
+## 2026-03-20 - Added Phase 22 CT/fert silviculture scaffold foundation
+- Added a new Patchworks export silviculture-config contract and CLI option:
+  - `--silviculture-config` on `femic export patchworks`
+  - `--silviculture-config` on `femic export dual`
+- Introduced a dedicated treatment-path fragment/XML field `SILV_STATE` with
+  allowed values `baseline`, `ct`, `fert1`, `fert2`, `fert3`.
+- Updated Patchworks fragment validation and deterministic XML fixtures so
+  `SILV_STATE` is now part of the enforced export contract alongside `ORIGIN`
+  and `RETENTION`.
+- Added instance scaffolding templates for future CT/fert work:
+  - `src/femic/resources/instance/config/silviculture.case_template.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.yaml`
+- Kept behavior intentionally non-disruptive for this slice: no CT/fert
+  treatments or curve synthesis are active yet; this change only establishes
+  the config/state plumbing needed for the next implementation pass.

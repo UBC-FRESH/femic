@@ -42,9 +42,12 @@ DEFAULT_IFM_SOURCE_COL: str | None = None
 DEFAULT_IFM_THRESHOLD: float | None = None
 DEFAULT_IFM_TARGET_MANAGED_SHARE: float | None = None
 DEFAULT_SERAL_STAGE_CONFIG_PATH: Path | None = None
+DEFAULT_SILVICULTURE_CONFIG_PATH: Path | None = None
 DEFAULT_RETENTION_VALUE = 0.0
+DEFAULT_SILV_STATE = "baseline"
 VALID_IFM_VALUES = {"managed", "unmanaged"}
 VALID_ORIGIN_VALUES = {"natural", "planted"}
+VALID_SILV_STATE_VALUES = {"baseline", "ct", "fert1", "fert2", "fert3"}
 ORIGIN_ORDER = ("natural", "planted")
 ORIGIN_PLANTED_MAX_AGE = 60
 FRAGMENT_ID_COLUMN = "FRAGMENT_ID"
@@ -57,6 +60,7 @@ REQUIRED_FRAGMENT_COLUMNS = {
     "AU",
     "IFM",
     "ORIGIN",
+    "SILV_STATE",
     "RETENTION",
     "TSA",
     "geometry",
@@ -340,6 +344,32 @@ def _load_seral_stage_config(
             "Seral stage config must contain a top-level mapping/object "
             f"(found {type(payload).__name__})"
         )
+    return payload
+
+
+def _load_silviculture_config(
+    *,
+    silviculture_config_path: Path | None,
+) -> dict[str, Any] | None:
+    if silviculture_config_path is None:
+        return None
+    resolved = silviculture_config_path.expanduser().resolve()
+    if not resolved.exists():
+        raise FileNotFoundError(f"silviculture config not found: {resolved}")
+    payload = yaml.safe_load(resolved.read_text(encoding="utf-8"))
+    if payload is None:
+        return {}
+    if not isinstance(payload, dict):
+        raise ValueError(
+            "silviculture config must contain a top-level mapping/object "
+            f"(found {type(payload).__name__})"
+        )
+    ct = payload.get("commercial_thinning")
+    if ct is not None and not isinstance(ct, dict):
+        raise ValueError("commercial_thinning config must contain a mapping/object")
+    fert = payload.get("fertilization")
+    if fert is not None and not isinstance(fert, dict):
+        raise ValueError("fertilization config must contain a mapping/object")
     return payload
 
 
@@ -671,6 +701,7 @@ def build_forestmodel_xml_tree(
     cc_max_age: int = DEFAULT_CC_MAX_AGE,
     cc_transition_ifm: str | None = DEFAULT_CC_TRANSITION_IFM,
     seral_stage_config: dict[str, Any] | None = None,
+    silviculture_config: dict[str, Any] | None = None,
 ) -> et.Element:
     """Build a Patchworks ForestModel XML tree from FEMIC bundle tables."""
     context = build_bundle_model_context_from_tables(
@@ -687,6 +718,7 @@ def build_forestmodel_xml_tree(
         cc_max_age=cc_max_age,
         cc_transition_ifm=cc_transition_ifm,
         seral_stage_config=seral_stage_config,
+        silviculture_config=silviculture_config,
     )
 
 
@@ -699,6 +731,7 @@ def build_forestmodel_xml_tree_from_context(
     cc_max_age: int = DEFAULT_CC_MAX_AGE,
     cc_transition_ifm: str | None = DEFAULT_CC_TRANSITION_IFM,
     seral_stage_config: dict[str, Any] | None = None,
+    silviculture_config: dict[str, Any] | None = None,
 ) -> et.Element:
     """Build a Patchworks ForestModel XML tree from shared FMG context."""
     definition = build_patchworks_forestmodel_definition(
@@ -709,6 +742,7 @@ def build_forestmodel_xml_tree_from_context(
         cc_max_age=cc_max_age,
         cc_transition_ifm=cc_transition_ifm,
         seral_stage_config=seral_stage_config,
+        silviculture_config=silviculture_config,
     )
     return forestmodel_definition_to_xml_tree(definition=definition)
 
@@ -722,6 +756,7 @@ def build_patchworks_forestmodel_definition(
     cc_max_age: int = DEFAULT_CC_MAX_AGE,
     cc_transition_ifm: str | None = DEFAULT_CC_TRANSITION_IFM,
     seral_stage_config: dict[str, Any] | None = None,
+    silviculture_config: dict[str, Any] | None = None,
 ) -> ForestModelDefinition:
     """Build Patchworks ForestModel core definition from shared context."""
     curves: dict[str, tuple[CurvePoint, ...]] = {"unity": (CurvePoint(x=0.0, y=1.0),)}
@@ -1084,7 +1119,10 @@ def build_patchworks_forestmodel_definition(
             DefineFieldDefinition(field="AU", column="AU"),
             DefineFieldDefinition(field="IFM", column="IFM"),
             DefineFieldDefinition(field="ORIGIN", column="ORIGIN"),
-            DefineFieldDefinition(field="RETENTION", column="Number(column('RETENTION'))"),
+            DefineFieldDefinition(field="SILV_STATE", column="SILV_STATE"),
+            DefineFieldDefinition(
+                field="RETENTION", column="Number(column('RETENTION'))"
+            ),
             DefineFieldDefinition(field="treatment"),
         ),
         curves=curves,
@@ -1286,7 +1324,7 @@ def validate_forestmodel_xml_tree(*, root: et.Element) -> None:
         for field in [node.get("field")]
         if field is not None
     }
-    for field in ("AU", "IFM", "ORIGIN", "RETENTION", "treatment"):
+    for field in ("AU", "IFM", "ORIGIN", "SILV_STATE", "RETENTION", "treatment"):
         if field not in define_fields:
             issues.append(f"missing define field: {field}")
 
@@ -1403,6 +1441,7 @@ def build_fragments_geodataframe(
             "AU": scoped["au"].astype(int),
             "IFM": np.where(managed_flag, "managed", "unmanaged"),
             "ORIGIN": np.where(age <= ORIGIN_PLANTED_MAX_AGE, "planted", "natural"),
+            "SILV_STATE": np.full(len(scoped), DEFAULT_SILV_STATE, dtype=object),
             "RETENTION": np.full(len(scoped), DEFAULT_RETENTION_VALUE, dtype=float),
             "TSA": scoped["tsa_code"].astype(str),
             "geometry": scoped["geometry"],
@@ -1535,6 +1574,14 @@ def validate_fragments_geodataframe(*, fragments_gdf: Any) -> None:
         if invalid_origin:
             issues.append(f"ORIGIN contains invalid values: {invalid_origin}")
 
+    if "SILV_STATE" in fragments_gdf.columns:
+        silv_values = set(
+            fragments_gdf["SILV_STATE"].astype(str).str.strip().str.lower().unique()
+        )
+        invalid_silv = sorted(silv_values.difference(VALID_SILV_STATE_VALUES))
+        if invalid_silv:
+            issues.append(f"SILV_STATE contains invalid values: {invalid_silv}")
+
     if "RETENTION" in fragments_gdf.columns:
         retention = pd.to_numeric(fragments_gdf["RETENTION"], errors="coerce")
         if retention.isna().any():
@@ -1562,6 +1609,7 @@ def export_patchworks_package(
     ifm_threshold: float | None = DEFAULT_IFM_THRESHOLD,
     ifm_target_managed_share: float | None = DEFAULT_IFM_TARGET_MANAGED_SHARE,
     seral_stage_config_path: Path | None = DEFAULT_SERAL_STAGE_CONFIG_PATH,
+    silviculture_config_path: Path | None = DEFAULT_SILVICULTURE_CONFIG_PATH,
 ) -> PatchworksExportResult:
     """Export Patchworks package artifacts from FEMIC outputs."""
     normalized_tsa = sorted({normalize_tsa_code(tsa) for tsa in tsa_list})
@@ -1575,6 +1623,9 @@ def export_patchworks_package(
     seral_stage_config = _load_seral_stage_config(
         seral_stage_config_path=seral_stage_config_path,
     )
+    silviculture_config = _load_silviculture_config(
+        silviculture_config_path=silviculture_config_path,
+    )
 
     root = build_forestmodel_xml_tree_from_context(
         context=context,
@@ -1584,6 +1635,7 @@ def export_patchworks_package(
         cc_max_age=cc_max_age,
         cc_transition_ifm=cc_transition_ifm,
         seral_stage_config=seral_stage_config,
+        silviculture_config=silviculture_config,
     )
     validate_forestmodel_xml_tree(root=root)
     forestmodel_path = output_dir / "forestmodel.xml"

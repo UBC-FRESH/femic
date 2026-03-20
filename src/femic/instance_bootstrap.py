@@ -49,6 +49,7 @@ INSTANCE_TEMPLATE_FILES: tuple[Path, ...] = (
     Path(".gitignore"),
     Path("QUICKSTART.md"),
     Path("config/run_profile.case_template.yaml"),
+    Path("config/silviculture.case_template.yaml"),
     Path("config/rebuild.spec.yaml"),
     Path("config/rebuild.allowlist.yaml"),
     Path("runbooks/REBUILD_RUNBOOK.md"),

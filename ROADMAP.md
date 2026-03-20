@@ -572,18 +572,18 @@ notes.
 
 
 ## Phase 22: K3Z CT + Fert Treatment Scaffolding and Optional Instance Variant
-- [ ] P22.1 Define YAML-facing treatment scaffold contract for CT + fertilization
-  - [ ] P22.1a Add K3Z model-input schema for one CT treatment plus optional
+- [x] P22.1 Define YAML-facing treatment scaffold contract for CT + fertilization
+  - [x] P22.1a Add K3Z model-input schema for one CT treatment plus optional
     `fert1` / `fert2` / `fert3` treatment chain.
-  - [ ] P22.1b Add per-AU treatment parameter support for:
+  - [x] P22.1b Add per-AU treatment parameter support for:
     CT age, CT basal-area removal fraction, BA:volume conversion ratio,
     fertilization speedup fraction, fertilization response duration,
     and fert spacing offsets.
-  - [ ] P22.1c Limit the initial CT/fert scaffold to K3Z AUs
+  - [x] P22.1c Limit the initial CT/fert scaffold to K3Z AUs
     `FDC+HW-M` and `CW+HW-M`, while keeping the YAML structure extensible to
     additional AUs later.
 - [ ] P22.2 Add explicit treatment-path state handling in Patchworks export
-  - [ ] P22.2a Introduce a new stand-state field for treatment-path gating
+  - [x] P22.2a Introduce a new stand-state field for treatment-path gating
     (for example `SILV_STATE`) instead of overloading `ORIGIN`, so
     `ORIGIN` retains its natural/planted semantics.
   - [ ] P22.2b Define initial treatment-path state and XML `<assign>`
@@ -4992,3 +4992,12 @@ notes.
   - Downstream Patchworks launch/UI smoke also passed: the revised K3Z model
     opened successfully in Patchworks and the new `og1`/`og2` accounts were
     visible and looked correct in the live model interface.
+
+- 2026-03-20 (Phase 22 scaffold foundation): completed the first CT/fert scaffolding slice on branch `feature/k3z-ct-fert-treatment-scaffold` with matching K3Z instance branch `feature/k3z-ct-fert-treatment-option`.
+  - Added a new silviculture-config path contract to Patchworks export (`--silviculture-config`) and threaded it through parent CLI/export plumbing without changing current runtime behavior.
+  - Added a dedicated treatment-path fragment/XML field `SILV_STATE` with default value `baseline`, keeping `ORIGIN` reserved for natural/planted semantics.
+  - Added silviculture scaffold templates:
+    - parent bootstrap template: `src/femic/resources/instance/config/silviculture.case_template.yaml`
+    - K3Z instance config: `external/femic-k3z-instance/config/silviculture.k3z.yaml`
+  - Updated deterministic XML fixtures and regression coverage so the new define-field / fragment-schema contract is enforced before CT/fert treatment logic lands.
+  - Next execution target remains Phase 22 treatment mechanics: provisional QMD support, CT curve/treatment synthesis, then fert chain logic.

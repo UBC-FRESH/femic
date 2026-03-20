@@ -978,11 +978,22 @@ def test_export_patchworks_package_writes_xml_and_fragments(
     assert "feature.Yield.unmanaged.Total" in xml_text
     gdf = gpd.read_file(result.fragments_shapefile_path)
     assert set(
-        ["FRAGMENT_I", "BLOCK", "AREA_HA", "F_AGE", "AU", "IFM", "ORIGIN", "RETENTION"]
+        [
+            "FRAGMENT_I",
+            "BLOCK",
+            "AREA_HA",
+            "F_AGE",
+            "AU",
+            "IFM",
+            "ORIGIN",
+            "SILV_STATE",
+            "RETENTION",
+        ]
     ).issubset(gdf.columns)
     assert int(gdf.loc[0, "AU"]) == 985501000
     assert gdf.loc[0, "IFM"] == "managed"
     assert gdf.loc[0, "ORIGIN"] == "natural"
+    assert gdf.loc[0, "SILV_STATE"] == "baseline"
     assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.0)
 
 
@@ -1021,6 +1032,7 @@ def test_export_patchworks_package_decodes_wkb_geometry(
     assert gdf.shape[0] == 1
     assert gdf.loc[0, "IFM"] == "unmanaged"
     assert gdf.loc[0, "ORIGIN"] == "natural"
+    assert gdf.loc[0, "SILV_STATE"] == "baseline"
     assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.0)
     assert gdf.geometry.iloc[0].geom_type == "Polygon"
 
@@ -1073,6 +1085,7 @@ def test_validate_fragments_geodataframe_rejects_invalid_ifm() -> None:
             "FRAGMENT_ID": [1],
             "IFM": ["bogus"],
             "ORIGIN": ["natural"],
+            "SILV_STATE": ["baseline"],
             "RETENTION": [0.0],
             "TSA": ["k3z"],
             "geometry": [Polygon([(0, 0), (10, 0), (10, 10), (0, 10), (0, 0)])],
@@ -1082,6 +1095,29 @@ def test_validate_fragments_geodataframe_rejects_invalid_ifm() -> None:
     )
 
     with pytest.raises(ValueError, match="IFM contains invalid values"):
+        validate_fragments_geodataframe(fragments_gdf=gdf)
+
+
+def test_validate_fragments_geodataframe_rejects_invalid_silv_state() -> None:
+    gdf = gpd.GeoDataFrame(
+        {
+            "FRAGMENT_ID": [1],
+            "BLOCK": [1],
+            "AREA_HA": [1.0],
+            "F_AGE": [10],
+            "AU": [100],
+            "IFM": ["managed"],
+            "ORIGIN": ["natural"],
+            "SILV_STATE": ["sideways"],
+            "RETENTION": [0.0],
+            "TSA": ["k3z"],
+            "geometry": [Polygon([(0, 0), (10, 0), (10, 10), (0, 10), (0, 0)])],
+        },
+        geometry="geometry",
+        crs="EPSG:3005",
+    )
+
+    with pytest.raises(ValueError, match="SILV_STATE contains invalid values"):
         validate_fragments_geodataframe(fragments_gdf=gdf)
 
 
@@ -1095,6 +1131,7 @@ def test_validate_fragments_geodataframe_rejects_out_of_range_retention() -> Non
             "AU": [100],
             "IFM": ["managed"],
             "ORIGIN": ["natural"],
+            "SILV_STATE": ["baseline"],
             "RETENTION": [1.2],
             "TSA": ["k3z"],
             "geometry": [Polygon([(0, 0), (10, 0), (10, 10), (0, 10), (0, 0)])],
@@ -1139,6 +1176,8 @@ def test_validate_forestmodel_xml_tree_rejects_retention_without_define() -> Non
         curve_points_table=curve_points,
     )
     retention_define = root.find('./define[@field="RETENTION"]')
+    silv_define = root.find('./define[@field="SILV_STATE"]')
+    assert silv_define is not None
     assert retention_define is not None
     root.remove(retention_define)
 
@@ -1178,6 +1217,7 @@ def test_build_fragments_geodataframe_emits_one_row_per_stand_fragment(
     assert gdf["BLOCK"].nunique() == 1
     assert gdf.loc[0, "IFM"] == "managed"
     assert gdf.loc[0, "ORIGIN"] == "natural"
+    assert gdf.loc[0, "SILV_STATE"] == "baseline"
     assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.0)
     assert float(gdf.loc[0, "AREA_HA"]) == pytest.approx(10.0)
 
@@ -1212,6 +1252,7 @@ def test_build_fragments_geodataframe_marks_age_60_as_planted(
     )
 
     assert gdf.loc[0, "ORIGIN"] == "planted"
+    assert gdf.loc[0, "SILV_STATE"] == "baseline"
     assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.0)
 
 
@@ -1245,6 +1286,7 @@ def test_build_fragments_geodataframe_interprets_thlb_raw_as_binary_signal(
     assert gdf.shape[0] == 1
     assert gdf.loc[0, "IFM"] == "unmanaged"
     assert gdf.loc[0, "ORIGIN"] == "natural"
+    assert gdf.loc[0, "SILV_STATE"] == "baseline"
     assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.0)
     assert float(gdf.loc[0, "AREA_HA"]) == pytest.approx(10.0)
 
