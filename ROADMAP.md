@@ -714,8 +714,8 @@ notes.
   - [x] P23.2d Apply the K3Z low-yield treated-strata simplification cleanly in the canonical pipeline: exclude `CWHvm_CW+YC` and `CWHvm_CW+PLC` from BatchTIPSY generation, keep their unmanaged VDYP side, and force `RETENTION = 1.0` for matching fragments so they are fully netted out of THLB in the baseline model.
   - [x] P23.2e Replace the remaining K3Z TIPSY species-mix rules with the simplified teaching logic: FD-pair AUs -> `900 FD + 3100 HW`; CW-pair AUs -> `900 CW + 3100 HW`; all other remaining treated AUs -> `600 CW + 300 FD + 3100 HW`.
 - [ ] P23.3 Preserve and harden Linux execution parity
-  - [ ] P23.3a Keep Linux VDYP execution working via Wine and document the exact wrapper/runtime expectations. Needs execution and verification from the maintained Linux dev environment.
-  - [ ] P23.3b Verify Linux guidance still covers the full FEMIC pipeline when Patchworks is unavailable natively. Needs execution and verification from the maintained Linux dev environment.
+  - [ ] P23.3a Keep Linux VDYP execution working via Wine and document the exact wrapper/runtime expectations. Needs execution and verification from the maintained Linux dev environment. Current blocker (2026-03-21 Linux rerun): Stage 00 fails before VDYP launch with `FileNotFoundError: ArcRasterRescue executable not found: ../ArcRasterRescue/build/arc_raster_rescue.exe`.
+  - [ ] P23.3b Verify Linux guidance still covers the full FEMIC pipeline when Patchworks is unavailable natively. Needs execution and verification from the maintained Linux dev environment. Current blocker (2026-03-21 Linux rerun): `femic tsa post-tipsy` fails freshness guard because `04_output-tsak3z.out` is older than `tipsy_params_tsak3z.xlsx`.
   - [ ] P23.3c Add parity notes explaining what is expected to differ between Linux and Windows and what should remain identical. Final sign-off needs Linux-side verification, even though the draft docs now exist.
 - [x] P23.4 Stabilize DataLad / git-annex bootstrap on Windows
   - [x] P23.4a Document a known-good Windows install/bootstrap pattern for `git`, `git-annex`, and DataLad.
@@ -741,6 +741,28 @@ notes.
   - Linux sign-off portion of P23.3c
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
 ## Detailed Next Steps Notes
+- 2026-03-21 (Phase 23 Linux parity rerun after bootstrap hardening): verified Linux runtime bootstrap improvements and re-ran the remaining `P23.3` commands from a Linux host with real annex payload materialization; parity remains blocked by two concrete runtime boundaries.
+  - Linux runtime bootstrap recovery completed in-session:
+    - installed OS-level `git-annex` (`sudo apt-get install -y git-annex`),
+    - enabled DataLad special remote (`git -C external/femic-public-data annex enableremote arbutus-s3`),
+    - materialized annex-backed payloads (`datalad get -r external/femic-public-data/data`), including VRI/SiteProd/TSA GDB table files that were missing previously.
+  - `P23.3a` rerun evidence:
+    - command:
+      `femic run --instance-root <tmp_k3z_clone> --run-config config/run_profile.k3z.yaml --run-id k3z_linux_p233a_20260321_r2`
+    - preflight passed, but run failed before VDYP execution with:
+      `FileNotFoundError: ArcRasterRescue executable not found: ../ArcRasterRescue/build/arc_raster_rescue.exe`
+    - manifest:
+      `<tmp_k3z_clone>/vdyp_io/logs/run_manifest-k3z_linux_p233a_20260321_r2.json` (`status=failed`, `exit_code=1`).
+  - `P23.3b` rerun evidence:
+    - command:
+      `femic tsa post-tipsy --instance-root <tmp_k3z_clone> --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_p233b_20260321_r2`
+    - failed with expected freshness guard:
+      `Stale BatchTIPSY output detected: .../04_output-tsak3z.out is older than .../tipsy_params_tsak3z.xlsx`
+    - manifest:
+      `<tmp_k3z_clone>/vdyp_io/logs/run_manifest-k3z_linux_p233b_20260321_r2.json` (`status=failed`, `exit_code=1`).
+  - Phase 23 remains open pending:
+    - Linux-accessible SiteProd/ArcRasterRescue path resolution for clean Stage 00->01a execution,
+    - fresh BatchTIPSY `04_output-tsak3z.out` regenerated from current handoff before Linux post-TIPSY resume sign-off.
 - 2026-03-21 (Phase 23 `P23.6` complete): hardened fresh-clone developer bootstrap and DataLad materialization rituals across agent-facing and user-facing docs.
   - Added explicit agent startup checklist in `AGENTS.md` covering:
     - local `.venv` activation + editable dev install,

@@ -5254,3 +5254,24 @@
   - `pytest`
   - `pre-commit run --all-files`
   - `sphinx-build -b html docs _build/html -W`
+
+## 2026-03-21 - Re-ran Linux Phase 23 parity checks after restoring git-annex/DataLad runtime
+- Completed Linux-side runtime bootstrap recovery before parity rerun:
+  - installed OS-level `git-annex` (`sudo apt-get install -y git-annex`),
+  - enabled annex special remote in the linked public-data dataset (`git -C external/femic-public-data annex enableremote arbutus-s3`),
+  - materialized annex-backed payloads (`datalad get -r external/femic-public-data/data`) so VRI/SiteProd/TSA geodatabases are locally present.
+- Re-ran `P23.3a` on Linux using an isolated K3Z instance clone:
+  - `femic run --instance-root <tmp_k3z_clone> --run-config config/run_profile.k3z.yaml --run-id k3z_linux_p233a_20260321_r2`
+  - preflight passed, but Stage 00 failed before VDYP launch with:
+    - `FileNotFoundError: ArcRasterRescue executable not found: ../ArcRasterRescue/build/arc_raster_rescue.exe`
+  - run manifest captured at:
+    - `<tmp_k3z_clone>/vdyp_io/logs/run_manifest-k3z_linux_p233a_20260321_r2.json` (`status=failed`, `exit_code=1`).
+- Re-ran `P23.3b` on Linux using an isolated K3Z instance clone:
+  - `femic tsa post-tipsy --instance-root <tmp_k3z_clone> --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_p233b_20260321_r2`
+  - failed with the existing freshness guard:
+    - `Stale BatchTIPSY output detected: .../04_output-tsak3z.out is older than .../tipsy_params_tsak3z.xlsx`
+  - run manifest captured at:
+    - `<tmp_k3z_clone>/vdyp_io/logs/run_manifest-k3z_linux_p233b_20260321_r2.json` (`status=failed`, `exit_code=1`).
+- Phase 23 Linux parity remains open (`P23.3a`, `P23.3b`, `P23.3c`) with two explicit blockers now recorded in `ROADMAP.md`:
+  - missing Linux-usable ArcRasterRescue boundary for Stage 00 SiteProd processing,
+  - stale BatchTIPSY output relative to current handoff artifacts for post-TIPSY resume.
