@@ -134,7 +134,11 @@ def test_preflight_checks_uses_source_root_fallback_for_shared_assets(
     monkeypatch.setattr(
         cli_main.shutil,
         "which",
-        lambda name: "tool.exe" if name in {"git", "git-annex", "git-annex.exe", "git-annex.cmd"} else None,
+        lambda name: (
+            "tool.exe"
+            if name in {"git", "git-annex", "git-annex.exe", "git-annex.cmd"}
+            else None
+        ),
     )
 
     cli_main._preflight_checks(
@@ -246,7 +250,9 @@ def test_validate_windows_annex_runtime_reports_datalad_failures(
 
     calls: list[list[str]] = []
 
-    def _fake_run(command: list[str], cwd: Path, timeout_s: int = 15) -> tuple[bool, str]:
+    def _fake_run(
+        command: list[str], cwd: Path, timeout_s: int = 15
+    ) -> tuple[bool, str]:
         calls.append(command)
         if command[:4] == ["git", "-C", str(public_data_root), "annex"]:
             return True, ""

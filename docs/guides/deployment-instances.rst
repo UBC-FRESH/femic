@@ -102,6 +102,19 @@ For DataLad mirror clone/get/update workflow, see
 Mirror datasets are linked in-repo via submodule:
 ``external/femic-public-data``.
 
+For fresh-clone developer setup (local `.venv`, editable install, and annex
+materialization ritual), see
+``docs/guides/developer-environment-bootstrap.rst``.
+
+At minimum, materialize annex-backed payloads before case preflight:
+
+.. code-block:: bash
+
+   git submodule update --init --recursive
+   git -C external/femic-public-data annex enableremote arbutus-s3
+   datalad get -r external/femic-public-data/data
+   export FEMIC_EXTERNAL_DATA_ROOT=$PWD/external/femic-public-data/data
+
 Windows users should also follow `docs/guides/geospatial-runtime-bootstrap.rst`
 and use `.venv\Scripts\datalad.exe` explicitly if DataLad is not on `PATH`.
 

@@ -726,6 +726,11 @@ notes.
   - [x] P23.5b Add smoke workflows for a clean-start rerun on Windows and a parity rerun on Linux.
   - [x] P23.5c Define acceptance as: FEMIC can rerun a full canonical pipeline from a clean start on both platforms with documented, platform-appropriate runtime rituals.
   - [x] P23.5d Update user-facing K3Z docs and operator runbooks to explain the low-yield treated-strata netdown decision (`CWHvm_CW+YC`, `CWHvm_CW+PLC`), the resulting full-retention behavior, and the simplified TIPSY species-mix logic used for the remaining treated AUs.
+- [x] P23.6 Harden fresh-clone developer bootstrap and DataLad materialization rituals
+  - [x] P23.6a Add an explicit agent-facing "first steps in a fresh clone" checklist (venv activation, editable install, and required runtime smoke checks).
+  - [x] P23.6b Add a user-facing development-environment bootstrap path that standardizes `.venv` setup and `pip install -e .[dev]`.
+  - [x] P23.6c Make DataLad/git-annex/arbutus-s3 bootstrap and `datalad get` materialization expectations unambiguous for `external/femic-public-data`.
+  - [x] P23.6d Add packaging affordances (`requirements-dev.txt`, optional dependency extras) so fresh-clone setup is one command and reproducible.
 
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
@@ -736,6 +741,33 @@ notes.
   - Linux sign-off portion of P23.3c
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
 ## Detailed Next Steps Notes
+- 2026-03-21 (Phase 23 `P23.6` complete): hardened fresh-clone developer bootstrap and DataLad materialization rituals across agent-facing and user-facing docs.
+  - Added explicit agent startup checklist in `AGENTS.md` covering:
+    - local `.venv` activation + editable dev install,
+    - required runtime smoke commands,
+    - DataLad/git-annex + `arbutus-s3` enable + recursive `datalad get`,
+    - mandatory `FEMIC_EXTERNAL_DATA_ROOT` export before case preflight/runs.
+  - Added a dedicated user-facing guide:
+    `docs/guides/developer-environment-bootstrap.rst` and linked it in the guides index.
+  - Updated bootstrap/runbook guides to require explicit annex payload materialization:
+    - `docs/guides/geospatial-runtime-bootstrap.rst`
+    - `docs/guides/public-data-mirror-runbook.rst`
+    - `docs/guides/deployment-instances.rst`
+    - `docs/guides/cross-platform-runtime-smoke.rst`
+    - `docs/guides/stage-01a-vdyp-tipsy-input.rst`
+    - `docs/guides/stage-01b-post-tipsy.rst`
+    - `docs/guides/pipeline-overview.rst`
+  - Added packaging affordances for repeatable setup:
+    - new `requirements-dev.txt` (`-e .[dev]`)
+    - new `[project.optional-dependencies].dev` in `pyproject.toml`
+    - `requirements.txt` now includes `datalad[full]`.
+  - Validation passed in local `.venv`:
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `mypy src`
+    - `pytest`
+    - `pre-commit run --all-files`
+    - `sphinx-build -b html docs _build/html -W`
 - 2026-03-20 (Phase 22 kickoff): queued a new optional K3Z treatment-variant workstream for commercial thinning plus 1-3 fertilization treatments.
   - Branches created:
     - parent repo: `feature/k3z-ct-fert-treatment-scaffold`

@@ -102,19 +102,36 @@ The mirror repo is linked into FEMIC at
 
 .. code-block:: bash
 
+   python -m venv .venv
+   . .venv/bin/activate
+   python -m pip install --upgrade pip setuptools wheel
+   python -m pip install -r requirements-dev.txt
    git submodule update --init --recursive
+   git annex version
+   datalad --version
+   git -C external/femic-public-data annex enableremote arbutus-s3
+   datalad get -r external/femic-public-data/data
 
 On Windows, prefer the `.venv`-scoped executable explicitly:
 
 .. code-block:: powershell
 
-   .venv\Scripts\datalad.exe get external/femic-public-data/data/misc.thlb.tif
+   python -m venv .venv
+   .venv\Scripts\Activate.ps1
+   python -m pip install --upgrade pip setuptools wheel
+   python -m pip install -r requirements-dev.txt
+   git submodule update --init --recursive
+   git annex version
+   .venv\Scripts\datalad.exe --version
+   git -C external/femic-public-data annex enableremote arbutus-s3
+   .venv\Scripts\datalad.exe get -r external/femic-public-data/data
 
 On Linux/macOS:
 
 .. code-block:: bash
 
-   datalad get external/femic-public-data/data/misc.thlb.tif
+   git -C external/femic-public-data annex enableremote arbutus-s3
+   datalad get -r external/femic-public-data/data
 
 To refresh metadata and retrieve updated artifacts:
 
@@ -131,7 +148,7 @@ The known-good Windows bootstrap pattern is:
 
 - `git` on user `PATH`
 - `git-annex` on user `PATH`
-- DataLad installed inside `.venv`
+- DataLad installed inside `.venv` (`python -m pip install -r requirements-dev.txt`)
 - use `.venv\Scripts\datalad.exe` explicitly if `datalad` is not on `PATH`
 
 Recommended smoke checks on Windows:
@@ -141,7 +158,8 @@ Recommended smoke checks on Windows:
    git --version
    git annex version
    .venv\Scripts\datalad.exe --version
-   .venv\Scripts\datalad.exe get external/femic-public-data/data/misc.thlb.tif
+   git -C external/femic-public-data annex enableremote arbutus-s3
+   .venv\Scripts\datalad.exe get -r external/femic-public-data/data
    git -C external/femic-public-data annex version
 
 If a repo looks dirty because a GIS library touched internal sidecar files,
@@ -159,9 +177,12 @@ Acceptance Checks
 
 - ``metadata/required_datasets.yaml`` and mirror repo paths agree.
 - Every mirrored dataset has a populated ``checksum.value``.
-- Fresh-clone smoke test can retrieve ``misc.thlb.tif`` via ``datalad get``.
+- Fresh-clone smoke test can run:
+  - ``git annex version``
+  - ``git -C external/femic-public-data annex enableremote arbutus-s3``
+  - ``datalad get -r external/femic-public-data/data``
 - Windows collaborator smoke can run:
   - ``git annex version``
-  - ``.venv\Scripts\datalad.exe get external/femic-public-data/data/misc.thlb.tif``
+  - ``git -C external/femic-public-data annex enableremote arbutus-s3``
+  - ``.venv\Scripts\datalad.exe get -r external/femic-public-data/data``
   - ``git -C external/femic-public-data annex version``
-

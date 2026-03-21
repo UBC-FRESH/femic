@@ -28,10 +28,14 @@ def _find_arcgis_pro_python() -> Path | None:
     return None
 
 
-def _run_arcgis_python(*, code: str, args: list[str]) -> subprocess.CompletedProcess[str]:
+def _run_arcgis_python(
+    *, code: str, args: list[str]
+) -> subprocess.CompletedProcess[str]:
     python_path = _find_arcgis_pro_python()
     if python_path is None:
-        raise FileNotFoundError("ArcGIS Pro Python not found for Windows siteprod fallback")
+        raise FileNotFoundError(
+            "ArcGIS Pro Python not found for Windows siteprod fallback"
+        )
     if python_path.suffix.lower() == ".bat":
         with tempfile.NamedTemporaryFile(
             mode="w",
@@ -70,7 +74,9 @@ def _run_arcgis_python(*, code: str, args: list[str]) -> subprocess.CompletedPro
     )
 
 
-def _list_siteprod_layers_arcgis(*, siteprod_gdb_path: str | Path) -> tuple[dict[int, str], dict[str, int]]:
+def _list_siteprod_layers_arcgis(
+    *, siteprod_gdb_path: str | Path
+) -> tuple[dict[int, str], dict[str, int]]:
     code = (
         "import arcpy, json, sys; "
         "arcpy.env.workspace=sys.argv[1]; "
@@ -79,7 +85,10 @@ def _list_siteprod_layers_arcgis(*, siteprod_gdb_path: str | Path) -> tuple[dict
     )
     result = _run_arcgis_python(code=code, args=[str(siteprod_gdb_path)])
     rasters = json.loads(result.stdout.strip() or "[]")
-    layer_species = {idx: str(name).removeprefix("Site_Prod_").upper() for idx, name in enumerate(rasters)}
+    layer_species = {
+        idx: str(name).removeprefix("Site_Prod_").upper()
+        for idx, name in enumerate(rasters)
+    }
     species_layer = {species: idx for idx, species in layer_species.items()}
     return layer_species, species_layer
 
@@ -108,7 +117,9 @@ def _export_siteprod_layers_arcgis_batch(
     site_prod_bc_gdb_path: str | Path,
     destinations: Mapping[str, str | Path],
 ) -> None:
-    payload = json.dumps({str(species): str(path) for species, path in destinations.items()})
+    payload = json.dumps(
+        {str(species): str(path) for species, path in destinations.items()}
+    )
     code = (
         "import arcpy, json, sys; "
         "arcpy.env.workspace=sys.argv[1]; "

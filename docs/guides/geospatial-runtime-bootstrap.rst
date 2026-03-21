@@ -16,6 +16,9 @@ This guide records the currently known-good bootstrap rituals for both Windows
 and Linux, with Windows treated as the active reference host for end-to-end
 Patchworks validation.
 
+For the canonical source-checkout developer ritual, see
+``docs/guides/developer-environment-bootstrap.rst``.
+
 Authoritative Platform Runtime Surfaces
 ---------------------------------------
 
@@ -68,16 +71,17 @@ Windows Bootstrap Ritual
 
 1. Upgrade packaging tools:
 
-   .. code-block:: bash
+   .. code-block:: powershell
 
       python -m pip install --upgrade pip setuptools wheel
 
 2. Install/refresh the local virtual environment dependencies:
 
-   .. code-block:: bash
+   .. code-block:: powershell
 
       python -m venv .venv
-      .venv\Scripts\python.exe -m pip install -r requirements.txt
+      .venv\Scripts\Activate.ps1
+      python -m pip install -r requirements-dev.txt
 
 3. Confirm the Windows runtime baseline:
 
@@ -93,7 +97,8 @@ Windows Bootstrap Ritual
    .. code-block:: powershell
 
       git submodule update --init --recursive
-      .venv\Scripts\datalad.exe get external/femic-public-data
+      git -C external/femic-public-data annex enableremote arbutus-s3
+      .venv\Scripts\datalad.exe get -r external/femic-public-data/data
 
 5. Validate the case before long runs:
 
@@ -126,7 +131,7 @@ Linux Bootstrap Ritual
       python -m venv .venv
       . .venv/bin/activate
       python -m pip install --upgrade pip setuptools wheel
-      python -m pip install -r requirements.txt
+      python -m pip install -r requirements-dev.txt
 
 3. Confirm the Linux runtime baseline:
 
@@ -143,12 +148,14 @@ Linux Bootstrap Ritual
    .. code-block:: bash
 
       git submodule update --init --recursive
-      datalad get external/femic-public-data
+      git -C external/femic-public-data annex enableremote arbutus-s3
+      datalad get -r external/femic-public-data/data
 
 5. Validate the case before long runs:
 
    .. code-block:: bash
 
+      export FEMIC_EXTERNAL_DATA_ROOT=$PWD/external/femic-public-data/data
       femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
       femic prep geospatial-preflight
 
@@ -194,8 +201,9 @@ Troubleshooting
   restart the shell.
 - If `datalad` is available only in `.venv`, use `.venv\Scripts\datalad.exe`
   explicitly instead of relying on `PATH`.
-- If annex-backed payloads show only pointer files, rerun `datalad get` on the
-  specific path (or recursively on the data directory) before rerunning FEMIC.
+- If annex-backed payloads show only pointer files, run
+  `git -C external/femic-public-data annex enableremote arbutus-s3` and then
+  `datalad get -r external/femic-public-data/data` before rerunning FEMIC.
 - If Fiona imports but shapefile smoke fails, verify GDAL shared-library
   resolution and recreate the virtual environment.
 - If ArcGIS Pro fallback is required, treat `propy.bat` as a path-resolved tool,

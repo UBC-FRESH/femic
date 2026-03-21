@@ -260,6 +260,8 @@ def test_build_vdyp_batch_command_windows_uses_env_cfg_dir_when_not_provided(
     )
 
     assert "-c C:\\repo\\vdyp_io\\VDYP_CFG\\" in cmd
+
+
 def test_collect_vdyp_batch_run_metadata_captures_expected_fields(
     tmp_path: Path,
 ) -> None:

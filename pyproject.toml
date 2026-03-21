@@ -29,6 +29,18 @@ dependencies = [
     "PyYAML>=6",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "datalad[full]",
+    "mypy",
+    "pre-commit",
+    "pytest",
+    "ruff",
+    "sphinx>=7.0",
+    "sphinx-rtd-theme>=2.0",
+    "types-PyYAML",
+]
+
 [project.scripts]
 femic = "femic.cli.main:app"
 

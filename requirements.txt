@@ -11,6 +11,7 @@ mapply
 swifter
 fiona
 distance
+datalad[full]
 nbformat
 typer
 rich

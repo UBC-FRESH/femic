@@ -52,6 +52,7 @@ Use K3Z as the reference case.
    .. code-block:: powershell
 
       $env:FEMIC_EXTERNAL_DATA_ROOT='C:\Users\gep\projects\femic\external\femic-public-data\data'
+      .venv\Scripts\datalad.exe get -r external/femic-public-data/data
       python -m femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
       python -m femic prep geospatial-preflight
 
@@ -94,6 +95,9 @@ not native on Linux.
 
    .. code-block:: bash
 
+      export FEMIC_EXTERNAL_DATA_ROOT=$PWD/external/femic-public-data/data
+      git -C external/femic-public-data annex enableremote arbutus-s3
+      datalad get -r external/femic-public-data/data
       femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
       femic prep geospatial-preflight
 
@@ -182,4 +186,3 @@ Related Guides
 - `docs/guides/public-data-mirror-runbook.rst`
 - `docs/guides/stage-01a-vdyp-tipsy-input.rst`
 - `docs/guides/stage-01b-post-tipsy.rst`
-

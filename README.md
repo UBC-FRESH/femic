@@ -25,6 +25,47 @@ New case onboarding starters:
 - `instances/reference/config/run_profile.case_template.yaml`
 - `instances/reference/config/tipsy/template.case.yaml`
 
+## Developer Bootstrap (Fresh Clone)
+
+For source-checkout development, use a repo-local virtual environment and
+editable install:
+
+```bash
+python -m venv .venv
+. .venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements-dev.txt
+```
+
+This installs FEMIC in editable mode (`-e .`) plus development tools and
+DataLad (`datalad[full]`).
+
+Then bootstrap annex-backed submodules and materialize real file content:
+
+```bash
+git submodule update --init --recursive
+git annex version
+datalad --version
+git -C external/femic-public-data annex enableremote arbutus-s3
+datalad get -r external/femic-public-data/data
+```
+
+Set the external data root for case preflight/runs:
+
+```bash
+export FEMIC_EXTERNAL_DATA_ROOT=$PWD/external/femic-public-data/data
+```
+
+Preflight before long runs:
+
+```bash
+femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
+femic prep geospatial-preflight
+```
+
+If `git annex version` fails, install `git-annex` at the OS level and re-open
+the shell before retrying.
+
 ## CLI
 
 Run the legacy pipeline through the FEMIC CLI: 
@@ -174,8 +215,10 @@ This currently writes:
 - `output/woodstock/woodstock_actions.csv`
 - `output/woodstock/woodstock_transitions.csv`
 
-Developer note: from a source checkout without package install, use
-`PYTHONPATH=src python -m femic ...` as command equivalent.
+Developer note: the preferred source-checkout path is editable install
+(`python -m pip install -r requirements-dev.txt`) so `femic` and
+`python -m femic` work without `PYTHONPATH` hacks. If you intentionally skip
+editable install, use `PYTHONPATH=src python -m femic ...`.
 
 ### Config-Driven Runs
 

@@ -6,8 +6,9 @@ import json
 import os
 import csv
 import subprocess
+import sys
 from datetime import UTC, datetime
-from pathlib import Path
+from pathlib import Path, PosixPath, WindowsPath
 import shutil
 from typing import Any
 import zipfile
@@ -126,6 +127,8 @@ instance_app = typer.Typer(
     help="Initialize and manage deployment-instance workspaces.",
 )
 console = Console()
+
+_HostPath = WindowsPath if sys.platform.startswith("win") else PosixPath
 
 DATA_ROOT_OPTION = typer.Option(
     Path("data"),
@@ -710,8 +713,11 @@ def _preflight_checks(*, resume: bool, instance_context: InstanceContext) -> Non
         errors.append(f"Missing data directory: {data_root}")
     else:
         # Clean runs can regenerate checkpoint/boundary caches from source inputs.
-        required_files = [
-            (data_root / "tipsy_params_columns", source_data_root / "tipsy_params_columns"),
+        required_files: list[tuple[Path, Path | None]] = [
+            (
+                data_root / "tipsy_params_columns",
+                source_data_root / "tipsy_params_columns",
+            ),
         ]
         if resume:
             required_files.extend(
@@ -739,13 +745,22 @@ def _preflight_checks(*, resume: bool, instance_context: InstanceContext) -> Non
     if not maptiles_path.exists() and not source_maptiles_path.exists():
         warnings.append(f"Optional maptiles file missing: {maptiles_path}")
 
-    vdyp_cfg = _resolve_required(repo_root / "vdyp_io" / "VDYP_CFG", source_root / "vdyp_io" / "VDYP_CFG")
+    vdyp_cfg = _resolve_required(
+        repo_root / "vdyp_io" / "VDYP_CFG", source_root / "vdyp_io" / "VDYP_CFG"
+    )
     if vdyp_cfg is None:
-        errors.append(f"Missing VDYP configuration directory: {repo_root / 'vdyp_io' / 'VDYP_CFG'}")
+        errors.append(
+            f"Missing VDYP configuration directory: {repo_root / 'vdyp_io' / 'VDYP_CFG'}"
+        )
 
-    vdyp_exe = _resolve_required(repo_root / "VDYP7" / "VDYP7" / "VDYP7Console.exe", source_root / "VDYP7" / "VDYP7" / "VDYP7Console.exe")
+    vdyp_exe = _resolve_required(
+        repo_root / "VDYP7" / "VDYP7" / "VDYP7Console.exe",
+        source_root / "VDYP7" / "VDYP7" / "VDYP7Console.exe",
+    )
     if vdyp_exe is None:
-        errors.append(f"Missing VDYP executable: {repo_root / 'VDYP7' / 'VDYP7' / 'VDYP7Console.exe'}")
+        errors.append(
+            f"Missing VDYP executable: {repo_root / 'VDYP7' / 'VDYP7' / 'VDYP7Console.exe'}"
+        )
 
     windows_host = os.name == "nt"
     wine = shutil.which("wine")
@@ -755,10 +770,14 @@ def _preflight_checks(*, resume: bool, instance_context: InstanceContext) -> Non
                 "wine not found on PATH (resume may still work if caches exist)"
             )
         else:
-            errors.append("wine not found on PATH (required to run VDYP on non-Windows systems)")
+            errors.append(
+                "wine not found on PATH (required to run VDYP on non-Windows systems)"
+            )
     if windows_host:
         if shutil.which("git") is None:
-            errors.append("git not found on PATH (required for Windows FEMIC runtime workflows)")
+            errors.append(
+                "git not found on PATH (required for Windows FEMIC runtime workflows)"
+            )
         if (
             shutil.which("git-annex") is None
             and shutil.which("git-annex.exe") is None
@@ -779,7 +798,7 @@ def _preflight_checks(*, resume: bool, instance_context: InstanceContext) -> Non
 
 def _source_tree_root() -> Path:
     """Return the FEMIC source checkout root that owns this CLI module."""
-    return Path(__file__).resolve().parents[3]
+    return _HostPath(__file__).resolve().parents[3]
 
 
 def _resolve_datalad_executable(source_root: Path) -> str | None:
@@ -813,7 +832,9 @@ def _run_preflight_command(
         return False, str(exc)
     if result.returncode == 0:
         return True, ""
-    detail = result.stderr.strip() or result.stdout.strip() or f"exit={result.returncode}"
+    detail = (
+        result.stderr.strip() or result.stdout.strip() or f"exit={result.returncode}"
+    )
     return False, detail
 
 
@@ -836,7 +857,13 @@ def _validate_windows_annex_runtime(
         external_paths.tsa_boundaries_path,
         external_paths.site_prod_bc_gdb_path,
     ]
-    if not any(Path(path).resolve().is_relative_to(public_data_root) for path in required_paths):
+    resolved_required_paths = [
+        _HostPath(str(path_obj)).resolve() for path_obj in required_paths
+    ]
+    if not any(
+        path_obj.is_relative_to(public_data_root)
+        for path_obj in resolved_required_paths
+    ):
         return errors, warnings
 
     if shutil.which("git") is None:
@@ -851,8 +878,7 @@ def _validate_windows_annex_runtime(
     )
     if not annex_probe_ok:
         errors.append(
-            "git-annex is not usable in external/femic-public-data: "
-            f"{annex_detail}"
+            f"git-annex is not usable in external/femic-public-data: {annex_detail}"
         )
 
     datalad_exe = _resolve_datalad_executable(source_root)

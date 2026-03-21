@@ -210,7 +210,7 @@ def build_tipsy_warning_event(
     tsa: str,
     stratumi: int,
     sc: str,
-    si_level: str,
+    si_level: str | None,
     au: int | None,
     reason: str,
 ) -> dict[str, Any]:

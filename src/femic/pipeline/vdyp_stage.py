@@ -1,4 +1,4 @@
-﻿"""VDYP execution stage helpers for legacy notebook migration."""
+"""VDYP execution stage helpers for legacy notebook migration."""
 
 from __future__ import annotations
 
@@ -2266,9 +2266,7 @@ def execute_curve_smoothing_runs(
     body_c_min_default = float(os.environ.get("FEMIC_BODY_C_MIN", "-20.0"))
     merchantable_floor_age = 20.0
     merchantable_floor_value = 0.0
-    toe_shift_default_years = float(
-        os.environ.get("FEMIC_VDYP_TOE_SHIFT_YEARS", "0.0")
-    )
+    toe_shift_default_years = float(os.environ.get("FEMIC_VDYP_TOE_SHIFT_YEARS", "0.0"))
     tail_default_linear_min_points = int(
         os.environ.get("FEMIC_TAIL_LINEAR_MIN_POINTS", "4")
     )
@@ -3622,4 +3620,3 @@ def execute_curve_smoothing_runs(
             )
     _emit_lmh_overlay_plot(tsa_code=tsa, runs=smoothed_runs)
     return smoothed_runs
-

@@ -24,6 +24,17 @@ For deterministic orchestration using the new rebuild runner abstraction, use:
 
    femic instance rebuild --run-config config/run_profile.<case>.yaml --run-id <id>
 
+For fresh-clone source-checkout runs, bootstrap dependencies and annex payloads
+first:
+
+.. code-block:: bash
+
+   python -m pip install -r requirements-dev.txt
+   git submodule update --init --recursive
+   git -C external/femic-public-data annex enableremote arbutus-s3
+   datalad get -r external/femic-public-data/data
+   export FEMIC_EXTERNAL_DATA_ROOT=$PWD/external/femic-public-data/data
+
 1. Run upstream compilation:
 
    .. code-block:: bash

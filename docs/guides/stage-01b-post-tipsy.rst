@@ -52,6 +52,19 @@ Primary Legacy Notebook Coverage
 Derived from ``01b_run-tsa.ipynb`` plus parent orchestration notes in
 ``00_data-prep.ipynb``.
 
+Linux Source-Checkout Prerequisites
+-----------------------------------
+
+Before running Stage 01b from a fresh Linux source checkout, ensure:
+
+.. code-block:: bash
+
+   python -m pip install -r requirements-dev.txt
+   git submodule update --init --recursive
+   git -C external/femic-public-data annex enableremote arbutus-s3
+   datalad get -r external/femic-public-data/data
+   export FEMIC_EXTERNAL_DATA_ROOT=$PWD/external/femic-public-data/data
+
 Known-Good Windows K3Z Resume Path
 ----------------------------------
 
@@ -76,4 +89,3 @@ Then continue into Patchworks export/build as needed, for example:
 This is the intended Windows clean-start/restart boundary for K3Z: upstream
 Stage 01a writes the TIPSY handoff, BatchTIPSY runs manually, then ``tsa
 post-tipsy`` resumes downstream without rerunning the expensive GIS/VDYP work.
-

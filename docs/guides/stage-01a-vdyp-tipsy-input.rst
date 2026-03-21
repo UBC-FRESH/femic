@@ -77,6 +77,19 @@ K3Z Teaching Baseline Notes
   - CW-pair AUs: ``900 CW + 3100 HW``
   - all other remaining treated AUs: ``600 CW + 300 FD + 3100 HW``
 
+Linux Source-Checkout Prerequisites
+-----------------------------------
+
+Before running Stage 01a from a fresh Linux source checkout, ensure:
+
+.. code-block:: bash
+
+   python -m pip install -r requirements-dev.txt
+   git submodule update --init --recursive
+   git -C external/femic-public-data annex enableremote arbutus-s3
+   datalad get -r external/femic-public-data/data
+   export FEMIC_EXTERNAL_DATA_ROOT=$PWD/external/femic-public-data/data
+
 Known-Good Windows K3Z Hand-Off
 -------------------------------
 
@@ -98,4 +111,3 @@ Expected outcome:
 
 At that point, do **not** rerun Stage 01a unless the TIPSY handoff really needs
 to be regenerated, because doing so will make the previous ``04_output`` stale.
-

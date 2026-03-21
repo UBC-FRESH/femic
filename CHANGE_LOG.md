@@ -5222,3 +5222,35 @@
 - Wired the new guide into the guides index and deployment-instance docs so operators can find the cross-platform contract from the normal docs path.
 - Marked `P23.5a`, `P23.5b`, and `P23.5c` complete now that the smoke workflows and acceptance gate are written down explicitly.
 
+
+## 2026-03-21 - Hardened fresh-clone dev bootstrap and DataLad materialization guidance (P23.6)
+- Added an explicit agent startup checklist in `AGENTS.md` so fresh-clone work always begins with:
+  - local `.venv` activation,
+  - editable dev install (`python -m pip install -r requirements-dev.txt`),
+  - toolchain smoke checks,
+  - DataLad/git-annex/arbutus-s3 bootstrap,
+  - `FEMIC_EXTERNAL_DATA_ROOT` export before case preflight/runs.
+- Added a dedicated user-facing guide: `docs/guides/developer-environment-bootstrap.rst`, and linked it in `docs/guides/index.rst`.
+- Updated user-facing runtime/runbook docs to make annex payload materialization requirements explicit (`git annex enableremote arbutus-s3` + `datalad get -r external/femic-public-data/data`):
+  - `README.md`
+  - `docs/guides/geospatial-runtime-bootstrap.rst`
+  - `docs/guides/public-data-mirror-runbook.rst`
+  - `docs/guides/deployment-instances.rst`
+  - `docs/guides/cross-platform-runtime-smoke.rst`
+  - `docs/guides/stage-01a-vdyp-tipsy-input.rst`
+  - `docs/guides/stage-01b-post-tipsy.rst`
+  - `docs/guides/pipeline-overview.rst`
+- Added packaging affordances so fresh-clone setup is one command:
+  - new `requirements-dev.txt` (`-e .[dev]`)
+  - new `project.optional-dependencies.dev` in `pyproject.toml`
+  - `requirements.txt` now includes `datalad[full]`.
+- Fixed small gating regressions uncovered while running mandatory checks:
+  - typing fixes in `src/femic/pipeline/tipsy.py`, `src/femic/workflows/legacy.py`, and `src/femic/cli/main.py`
+  - docs-contract compatibility update in `tests/test_docs_contract.py` for the K3Z figure appendix treated-curve heading rename.
+- Validation passed in repo-local `.venv`:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+  - `sphinx-build -b html docs _build/html -W`

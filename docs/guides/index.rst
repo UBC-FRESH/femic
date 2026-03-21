@@ -10,6 +10,7 @@ export modules.
    :maxdepth: 2
 
    pipeline-overview
+   developer-environment-bootstrap
    deployment-instances
    rebuild-repro-contract
    author-instance-rebuild-spec
