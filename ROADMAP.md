@@ -661,12 +661,12 @@ notes.
     preserving the current teaching-baseline footprint (`THLB=1`, 218
     fragments, 14 AUs), then verify the resulting tracks surface is an additive
     extension of the baseline rather than a stale copied artifact.
-  - [ ] P22.9f Update standalone K3Z docs and runbooks to teach variant
+  - [x] P22.9f Update standalone K3Z docs and runbooks to teach variant
     selection by config/PIN instead of by Git branch.
-  - [ ] P22.9g Merge the coexistence layout to `main` in both repos only after
+  - [x] P22.9g Merge the coexistence layout to `main` in both repos only after
     baseline and CT/fert variants launch cleanly side-by-side from one branch.
 
-- [ ] P22.10 Add a third coexisting K3Z silviculture variant for PCT -> CT
+- [x] P22.10 Add a third coexisting K3Z silviculture variant for PCT -> CT
   - [x] P22.10a Extend the Phase 22 variant contract so K3Z supports three
     coexisting upstream-from-Matrix-Builder variants on one branch:
     baseline, ctfert, and pctct.
@@ -5167,5 +5167,7 @@ un_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance/
 
 
 
+
+- 2026-03-21 (Phase 22 closeout bookkeeping): roadmap status reconciled with the work that actually landed on main. `P22.9f`, `P22.9g`, and the parent `P22.10` checkbox are now marked complete because the standalone K3Z docs teach variant selection by config/PIN, the three-variant coexistence layout is merged to `main` in both repos, and `pctct.pin` smoke passed in live Patchworks. `P22.9e` remains open intentionally as the one unresolved canonical-rebuild cleanup item for the CT/fert variant.
 
 - 2026-03-21 (Phase 22 pctct scaffold): implemented the third coexisting K3Z variant as a real compile target rather than just a roadmap stub. Parent FEMIC now supports `pre_commercial_thinning` silviculture config, new `SILV_STATE` values (`cc_pl_pct`, `cc_pl_pct_ct`), and post-PCT conifer-only managed species surfaces. The K3Z instance now carries `config/patchworks.variant.pctct.yaml`, `config/patchworks.runtime.pctct.windows.yaml`, `config/silviculture.k3z.pctct.yaml`, `models/k3z_patchworks_model/analysis/pctct.pin`, `models/k3z_patchworks_model/yield/forestmodel_pctct.xml`, `models/k3z_patchworks_model/tracks_pctct/`, and `output/patchworks_k3z_pctct_validated/`. Windows Matrix Builder smoke passed with `run_id=k3z_pctct_smoke_20260321`; remaining open work is the user-facing docs/runbook update under `P22.10g`.
