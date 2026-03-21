@@ -90,6 +90,10 @@ Before running Stage 01a from a fresh Linux source checkout, ensure:
    datalad get -r external/femic-public-data/data
    export FEMIC_EXTERNAL_DATA_ROOT=$PWD/external/femic-public-data/data
 
+For isolated ``--instance-root`` clones, FEMIC falls back to source-root
+runtime assets when local copies are missing (for example
+``data/tipsy_params_columns``, ``vdyp_io/VDYP_CFG``, and ``vdyp_io/VDYP.INI``).
+
 Known-Good Windows K3Z Hand-Off
 -------------------------------
 

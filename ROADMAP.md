@@ -714,7 +714,7 @@ notes.
   - [x] P23.2d Apply the K3Z low-yield treated-strata simplification cleanly in the canonical pipeline: exclude `CWHvm_CW+YC` and `CWHvm_CW+PLC` from BatchTIPSY generation, keep their unmanaged VDYP side, and force `RETENTION = 1.0` for matching fragments so they are fully netted out of THLB in the baseline model.
   - [x] P23.2e Replace the remaining K3Z TIPSY species-mix rules with the simplified teaching logic: FD-pair AUs -> `900 FD + 3100 HW`; CW-pair AUs -> `900 CW + 3100 HW`; all other remaining treated AUs -> `600 CW + 300 FD + 3100 HW`.
 - [ ] P23.3 Preserve and harden Linux execution parity
-  - [ ] P23.3a Keep Linux VDYP execution working via Wine and document the exact wrapper/runtime expectations. Needs execution and verification from the maintained Linux dev environment. Current blocker (2026-03-21 Linux rerun): Stage 01a now clears ArcRasterRescue path resolution but still fails before parity sign-off; last hard failure was `RuntimeError: VDYP executable not found: /tmp/<instance>/VDYP7/VDYP7/VDYP7Console.exe` (fixed in source-root fallback code), and current resumed Linux rerun still requires a clean end-to-end confirmation to the BatchTIPSY handoff boundary.
+  - [ ] P23.3a Keep Linux VDYP execution working via Wine and document the exact wrapper/runtime expectations. Needs execution and verification from the maintained Linux dev environment. Current blocker (2026-03-21 Linux rerun): root cause narrowed to missing local `vdyp_io` runtime assets in fresh `/tmp` instance clones (`VDYP_CFG` + `VDYP.INI`) while `vdyp_params-landp` still references `./vdyp_io/*`; source-root fallback staging logic is now implemented in `run_vdyp_for_stratum(...)`, but a full clean-start Linux run still needs to reach the Stage 01a BatchTIPSY handoff boundary for final sign-off.
   - [x] P23.3b Verify Linux guidance still covers the full FEMIC pipeline when Patchworks is unavailable natively. Verified on Linux 2026-03-21 with `femic tsa post-tipsy --instance-root /tmp/femic_p23b_r5_dC7Rio --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_p233b_20260321_r8` (`status=ok`), after hardening 01b plotting to tolerate missing comparison keys.
   - [ ] P23.3c Add parity notes explaining what is expected to differ between Linux and Windows and what should remain identical. Final sign-off needs Linux-side verification, even though the draft docs now exist.
 - [x] P23.4 Stabilize DataLad / git-annex bootstrap on Windows
@@ -741,6 +741,21 @@ notes.
   - Linux sign-off portion of P23.3c
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
 ## Detailed Next Steps Notes
+- 2026-03-21 (Phase 23 Linux parity root-cause + runtime-asset staging): identified why Linux `P23.3a` reported missing VDYP output even though bootstrap dispatch calls were emitted.
+  - Root cause evidence:
+    - failing runs reached bootstrap dispatch, but each call logged `FATAL: VDYP7 Configuration Folder ('-c') has not been supplied.` in `vdyp_stderr-*.log`;
+    - all generated `vdyp_out_*.out` files were empty (`0` bytes), so two-pass SI rebin mapped `0/46` and downstream strata reported missing VDYP curves;
+    - direct replay of a captured VDYP command from `/tmp` instance root failed the same way, while replay from repo source root succeeded and produced non-empty `vdyp_out` output.
+  - Root cause interpretation:
+    - `vdyp_params-landp` still points to relative legacy paths (`./vdyp_io/VDYP_CFG`, `./vdyp_io/VDYP.INI`);
+    - clean `/tmp` instance clones did not carry those runtime assets, so Wine VDYP dispatch executed but produced no usable output.
+  - Corrective implementation:
+    - added `ensure_local_vdyp_runtime_assets(...)` in `src/femic/pipeline/vdyp_stage.py` and wired it into `run_vdyp_for_stratum(...)` so missing `vdyp_io/VDYP_CFG` and `vdyp_io/VDYP.INI` are staged from `FEMIC_SOURCE_ROOT` runtime assets before VDYP calls.
+    - added regression coverage in `tests/test_vdyp_stage.py` (`test_ensure_local_vdyp_runtime_assets_stages_cfg_and_ini`).
+  - Current status:
+    - targeted regression tests pass for the new staging seam;
+    - full clean-start Linux `P23.3a` confirmation to the Stage 01a BatchTIPSY boundary still pending (long Stage 00 extraction runs were interrupted in-session before the VDYP boundary was reached).
+
 - 2026-03-21 (Phase 23 Linux parity corrective rerun after ArcRasterRescue + TIPSY freshness fixes): advanced past prior blockers, but Linux parity is still not fully closed.
   - Implemented and validated in-repo fixes:
     - ArcRasterRescue executable path resolution now supports `FEMIC_ARC_RASTER_RESCUE_EXE` and source-root/instance-root fallback resolution.

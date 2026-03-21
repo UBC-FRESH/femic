@@ -30,6 +30,7 @@ from femic.pipeline.vdyp_stage import (
     execute_curve_smoothing_runs,
     execute_vdyp_batch,
     collect_vdyp_batch_run_metadata,
+    ensure_local_vdyp_runtime_assets,
     fit_stratum_curves,
     load_vdyp_input_tables,
     load_or_build_vdyp_results_tsa,
@@ -258,8 +259,46 @@ def test_build_vdyp_batch_command_windows_uses_env_cfg_dir_when_not_provided(
         vdyp_out_txt="vdyp_out_123.out",
         vdyp_err_txt="vdyp_err_123.err",
     )
-
     assert "-c C:\\repo\\vdyp_io\\VDYP_CFG\\" in cmd
+
+
+def test_ensure_local_vdyp_runtime_assets_stages_cfg_and_ini(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path / "source"
+    source_cfg = source_root / "vdyp_io" / "VDYP_CFG"
+    source_cfg.mkdir(parents=True)
+    (source_cfg / "VDYP.CTR").write_text("cfg", encoding="utf-8")
+    (source_root / "vdyp_io" / "Vdyp.ini").write_text("ini", encoding="utf-8")
+
+    local_vdyp_io = tmp_path / "instance" / "vdyp_io"
+    ensure_local_vdyp_runtime_assets(
+        vdyp_io_dir=local_vdyp_io,
+        source_root=source_root,
+    )
+
+    assert (local_vdyp_io / "VDYP_CFG" / "VDYP.CTR").read_text(
+        encoding="utf-8"
+    ) == "cfg"
+    assert (local_vdyp_io / "VDYP.INI").read_text(encoding="utf-8") == "ini"
+
+
+def test_build_vdyp_batch_command_posix_uses_cfg_dir(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(vdyp_stage.os, "name", "posix", raising=False)
+    cmd = build_vdyp_batch_command(
+        vdyp_binpath="/repo/VDYP7/VDYP7/VDYP7Console.exe",
+        vdyp_params_infile="/repo/vdyp_params-landp",
+        vdyp_io_dir=Path("tmp/vdyp_io"),
+        vdyp_ply_csv="vdyp_ply_123.csv",
+        vdyp_lyr_csv="vdyp_lyr_123.csv",
+        vdyp_out_txt="vdyp_out_123.out",
+        vdyp_err_txt="vdyp_err_123.err",
+        vdyp_cfg_dir="/repo/VDYP7/VDYP7/VDYP_CFG",
+    )
+    assert cmd.startswith("wine ")
+    assert "-c /repo/VDYP7/VDYP7/VDYP_CFG/" in cmd
 
 
 def test_collect_vdyp_batch_run_metadata_captures_expected_fields(
@@ -946,13 +985,21 @@ def test_run_vdyp_for_stratum_resolves_relative_binpath_from_source_root(
 ) -> None:
     sample_table = pd.DataFrame({"FEATURE_ID": [1]})
     source_root = tmp_path / "source"
-    bin_rel = Path("VDYP7/VDYP7/VDYP7Console.exe")
+    bin_rel = Path("source_only/VDYP7/VDYP7Console.exe")
     vdyp_bin = source_root / bin_rel
     vdyp_bin.parent.mkdir(parents=True, exist_ok=True)
     vdyp_bin.write_text("x", encoding="utf-8")
     vdyp_params = tmp_path / "vdyp_params-landp"
     vdyp_params.write_text("x", encoding="utf-8")
     monkeypatch.setenv("FEMIC_SOURCE_ROOT", str(source_root))
+
+    captured_binpaths: list[str] = []
+
+    def _capture_execute(**kwargs: object) -> dict[int, dict[str, object]]:
+        captured_binpaths.append(str(kwargs["vdyp_binpath"]))
+        feature_ids = kwargs["feature_ids"]
+        assert isinstance(feature_ids, list)
+        return {int(fid): {"phase": kwargs["phase"]} for fid in feature_ids}
 
     out = run_vdyp_for_stratum(
         sample_table=sample_table,
@@ -975,13 +1022,12 @@ def test_run_vdyp_for_stratum_resolves_relative_binpath_from_source_root(
         },
         append_jsonl_fn=lambda *_args: None,
         append_text_fn=lambda *_args: None,
-        execute_vdyp_batch_fn=lambda **kwargs: {
-            int(fid): {"phase": kwargs["phase"]} for fid in kwargs["feature_ids"]
-        },
+        execute_vdyp_batch_fn=_capture_execute,
         nsamples_from_curves_fn=lambda *_a, **_k: (0, None),
     )
 
     assert set(out) == {1}
+    assert captured_binpaths == [str(vdyp_bin.resolve())]
 
 
 def test_run_vdyp_for_stratum_maps_source_feature_ids_via_map_id(

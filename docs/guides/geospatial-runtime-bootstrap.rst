@@ -68,6 +68,15 @@ Linux workstation checklist:
 - `wine` / `wine64`
 - Linux geospatial runtime (`gdal-bin`, `libgdal-dev`, Fiona-compatible stack)
 
+Linux VDYP runtime note:
+
+- When running with ``--instance-root`` (including temporary `/tmp` clones),
+  FEMIC now stages missing legacy VDYP runtime assets
+  (``vdyp_io/VDYP_CFG`` and ``vdyp_io/VDYP.INI``) from ``FEMIC_SOURCE_ROOT``
+  before Wine dispatch.
+- Keep the source checkout runtime payloads intact under
+  ``$FEMIC_SOURCE_ROOT/vdyp_io`` (or ``$FEMIC_SOURCE_ROOT/VDYP7/VDYP7``).
+
 Windows Bootstrap Ritual
 ------------------------
 

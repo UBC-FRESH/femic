@@ -5321,3 +5321,25 @@
 - Additional bounded `P23.3a` check:
   - attempted `timeout 900 femic run --instance-root /tmp/femic_p23a_r6_KpHxKg --run-config config/run_profile.k3z.yaml --run-id k3z_linux_p233a_20260321_r6_resume --resume`,
   - run remained in long-running Stage 00 legacy execution and did not reach a terminal boundary within the timeout window; process was terminated and `P23.3a` remains open.
+
+## 2026-03-21 - Narrowed Linux P23.3a root cause and added source-root runtime-asset staging
+- Root cause from Linux `P23.3a` reruns was narrowed from generic “missing VDYP output” to a concrete runtime-path seam:
+  - bootstrap dispatch calls ran,
+  - `vdyp_stderr` repeatedly reported `FATAL: VDYP7 Configuration Folder ('-c') has not been supplied`,
+  - generated `vdyp_out_*.out` files were empty, so two-pass SI rebin mapped `0/46`.
+- Confirmed behavior by direct replay:
+  - same captured VDYP command failed from `/tmp` instance roots,
+  - replay succeeded from source root and produced non-empty `vdyp_out` output,
+  - indicating legacy relative runtime assets (`./vdyp_io/VDYP_CFG`, `./vdyp_io/VDYP.INI`) were missing in temp instance clones.
+- Implemented runtime hardening in `src/femic/pipeline/vdyp_stage.py`:
+  - added `ensure_local_vdyp_runtime_assets(...)`,
+  - wired `run_vdyp_for_stratum(...)` to stage missing `vdyp_io/VDYP_CFG` and `vdyp_io/VDYP.INI` from `FEMIC_SOURCE_ROOT` before Wine VDYP dispatch.
+- Added Linux clone resilience for Stage 00 in `src/femic/resources/legacy/00_data-prep.py`:
+  - when instance-local `data/tipsy_params_columns` is missing, fallback now resolves from `$FEMIC_SOURCE_ROOT/data/tipsy_params_columns`.
+- Added/updated regression/docs/roadmap artifacts:
+  - `tests/test_vdyp_stage.py`: `test_ensure_local_vdyp_runtime_assets_stages_cfg_and_ini`.
+  - docs updates: `docs/guides/geospatial-runtime-bootstrap.rst`, `docs/guides/cross-platform-runtime-smoke.rst`, `docs/guides/stage-01a-vdyp-tipsy-input.rst`.
+  - roadmap updates: `ROADMAP.md` (`P23.3a` blocker text + Detailed Next Steps evidence entry).
+- Status:
+  - targeted tests for the new staging seam pass,
+  - full clean-start Linux `P23.3a` run to the BatchTIPSY handoff boundary is still pending final confirmation.

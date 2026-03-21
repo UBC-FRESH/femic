@@ -107,6 +107,11 @@ not native on Linux.
 
       femic run --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --run-id k3z_linux_parity
 
+   Runtime note: for Linux ``--instance-root`` runs, FEMIC stages missing
+   legacy VDYP runtime assets (``vdyp_io/VDYP_CFG`` and ``vdyp_io/VDYP.INI``)
+   from ``FEMIC_SOURCE_ROOT`` when needed so Wine VDYP calls can resolve the
+   relative paths embedded in ``vdyp_params-landp``.
+
 3. Confirm fresh TIPSY handoff files exist:
 
 - `external/femic-k3z-instance/data/02_input-tsak3z.dat`

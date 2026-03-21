@@ -9,6 +9,7 @@ import importlib
 import math
 import os
 import pickle
+import shutil
 import shlex
 import subprocess
 import tempfile
@@ -227,16 +228,15 @@ def build_vdyp_batch_command(
     if os.name != "nt":
         parts.append("wine")
     parts.extend([vdyp_binpath, "-p", vdyp_params_infile])
-    if os.name == "nt":
-        resolved_cfg = None
-        if vdyp_cfg_dir is not None:
-            resolved_cfg = str(_as_path(vdyp_cfg_dir))
-        elif os.environ.get("FEMIC_VDYP_CFG_DIR"):
-            resolved_cfg = str(_as_path(os.environ["FEMIC_VDYP_CFG_DIR"]))
-        if resolved_cfg:
-            if not resolved_cfg.endswith(("\\", "/")):
-                resolved_cfg = resolved_cfg + "\\"
-            parts.extend(["-c", resolved_cfg])
+    resolved_cfg = None
+    if vdyp_cfg_dir is not None:
+        resolved_cfg = str(_as_path(vdyp_cfg_dir))
+    elif os.environ.get("FEMIC_VDYP_CFG_DIR"):
+        resolved_cfg = str(_as_path(os.environ["FEMIC_VDYP_CFG_DIR"]))
+    if resolved_cfg:
+        if not resolved_cfg.endswith(("\\", "/")):
+            resolved_cfg = resolved_cfg + ("\\" if os.name == "nt" else "/")
+        parts.extend(["-c", resolved_cfg])
     parts.extend(
         [
             "-ip",
@@ -250,6 +250,49 @@ def build_vdyp_batch_command(
         ]
     )
     return subprocess.list2cmdline(parts)
+
+
+def ensure_local_vdyp_runtime_assets(
+    *,
+    vdyp_io_dir: str | Path,
+    source_root: str | Path | None,
+    copytree_fn: Callable[..., Any] = shutil.copytree,
+    copy2_fn: Callable[..., Any] = shutil.copy2,
+) -> None:
+    """Ensure legacy relative VDYP runtime assets exist under local `vdyp_io/`."""
+    vdyp_io = _as_path(vdyp_io_dir)
+    vdyp_io.mkdir(parents=True, exist_ok=True)
+
+    local_cfg_dir = vdyp_io / "VDYP_CFG"
+    local_ini_path = vdyp_io / "VDYP.INI"
+    if local_cfg_dir.exists() and local_ini_path.exists():
+        return
+
+    if source_root is None:
+        return
+    source_root_path = _as_path(source_root)
+
+    cfg_candidates = (
+        source_root_path / "vdyp_io" / "VDYP_CFG",
+        source_root_path / "VDYP7" / "VDYP7" / "VDYP_CFG",
+    )
+    ini_candidates = (
+        source_root_path / "vdyp_io" / "VDYP.INI",
+        source_root_path / "vdyp_io" / "Vdyp.ini",
+        source_root_path / "VDYP7" / "VDYP7" / "VDYP.INI",
+        source_root_path / "VDYP7" / "VDYP7" / "Vdyp.ini",
+    )
+
+    if not local_cfg_dir.exists():
+        for candidate in cfg_candidates:
+            if candidate.is_dir():
+                copytree_fn(candidate, local_cfg_dir, dirs_exist_ok=True)
+                break
+    if not local_ini_path.exists():
+        for candidate in ini_candidates:
+            if candidate.exists():
+                copy2_fn(candidate, local_ini_path)
+                break
 
 
 def collect_vdyp_batch_run_metadata(
@@ -1434,8 +1477,6 @@ def run_vdyp_for_stratum(
     message_fn: Callable[..., Any] = print,
 ) -> dict[Any, Any]:
     """Run VDYP for one stratum sample table with logging and sampling orchestration."""
-    import shutil
-
     if which_fn is None:
         which_fn = shutil.which
     if build_tsa_vdyp_log_paths_fn is None:
@@ -1509,6 +1550,10 @@ def run_vdyp_for_stratum(
         raise RuntimeError(f"VDYP params path not found: {vdyp_params_path.resolve()}")
     vdyp_params_infile = str(vdyp_params_path)
     Path(vdyp_io_dirname).mkdir(parents=True, exist_ok=True)
+    ensure_local_vdyp_runtime_assets(
+        vdyp_io_dir=vdyp_io_dirname,
+        source_root=os.environ.get("FEMIC_SOURCE_ROOT"),
+    )
 
     tsa_paths = build_tsa_vdyp_log_paths_(
         tsa_code=tsa,
@@ -1735,7 +1780,7 @@ def run_vdyp_for_stratum(
             feature_ids=resolved_feature_ids,
             vdyp_ply=vdyp_ply,
             vdyp_lyr=vdyp_lyr,
-            vdyp_binpath=vdyp_binpath,
+            vdyp_binpath=str(vdyp_binpath_path),
             vdyp_params_infile=vdyp_params_infile,
             vdyp_io_dirname=vdyp_io_dirname,
             vdyp_log_path=vdyp_log_path,
