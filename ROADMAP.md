@@ -710,9 +710,9 @@ notes.
 - [ ] P23.2 Make Windows a first-class full-pipeline execution environment
   - [ ] P23.2a Validate native Windows VDYP invocation using the bundled local `VDYP7Console.exe` path instead of Linux/Wine assumptions.
   - [ ] P23.2b Add/verify Windows run-profile and helper wiring so `femic run` can execute end-to-end from a clean start in the Patchworks workstation environment.
-  - [ ] P23.2c Document the known-good Windows bootstrap sequence for local `.venv`, native VDYP, Patchworks, and Java.
-  - [ ] P23.2d Apply the K3Z low-yield treated-strata simplification cleanly in the canonical pipeline: exclude `CWHvm_CW+YC` and `CWHvm_CW+PLC` from BatchTIPSY generation, keep their unmanaged VDYP side, and force `RETENTION = 1.0` for matching fragments so they are fully netted out of THLB in the baseline model.
-  - [ ] P23.2e Replace the remaining K3Z TIPSY species-mix rules with the simplified teaching logic: FD-pair AUs -> `900 FD + 3100 HW`; CW-pair AUs -> `900 CW + 3100 HW`; all other remaining treated AUs -> `600 CW + 300 FD + 3100 HW`.
+  - [x] P23.2c Document the known-good Windows bootstrap sequence for local `.venv`, native VDYP, Patchworks, and Java.
+  - [x] P23.2d Apply the K3Z low-yield treated-strata simplification cleanly in the canonical pipeline: exclude `CWHvm_CW+YC` and `CWHvm_CW+PLC` from BatchTIPSY generation, keep their unmanaged VDYP side, and force `RETENTION = 1.0` for matching fragments so they are fully netted out of THLB in the baseline model.
+  - [x] P23.2e Replace the remaining K3Z TIPSY species-mix rules with the simplified teaching logic: FD-pair AUs -> `900 FD + 3100 HW`; CW-pair AUs -> `900 CW + 3100 HW`; all other remaining treated AUs -> `600 CW + 300 FD + 3100 HW`.
 - [ ] P23.3 Preserve and harden Linux execution parity
   - [ ] P23.3a Keep Linux VDYP execution working via Wine and document the exact wrapper/runtime expectations.
   - [ ] P23.3b Verify Linux guidance still covers the full FEMIC pipeline when Patchworks is unavailable natively.
@@ -725,7 +725,7 @@ notes.
   - [ ] P23.5a Add a user-facing guide describing how to run FEMIC cleanly in both Linux and Windows environments.
   - [ ] P23.5b Add smoke workflows for a clean-start rerun on Windows and a parity rerun on Linux.
   - [ ] P23.5c Define acceptance as: FEMIC can rerun a full canonical pipeline from a clean start on both platforms with documented, platform-appropriate runtime rituals.
-  - [ ] P23.5d Update user-facing K3Z docs and operator runbooks to explain the low-yield treated-strata netdown decision (`CWHvm_CW+YC`, `CWHvm_CW+PLC`), the resulting full-retention behavior, and the simplified TIPSY species-mix logic used for the remaining treated AUs.
+  - [x] P23.5d Update user-facing K3Z docs and operator runbooks to explain the low-yield treated-strata netdown decision (`CWHvm_CW+YC`, `CWHvm_CW+PLC`), the resulting full-retention behavior, and the simplified TIPSY species-mix logic used for the remaining treated AUs.
 
 ## Detailed Next Steps Notes
 - 2026-03-20 (Phase 22 kickoff): queued a new optional K3Z treatment-variant workstream for commercial thinning plus 1-3 fertilization treatments.
@@ -5171,3 +5171,8 @@ un_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance/
 - 2026-03-21 (Phase 22 closeout bookkeeping): roadmap status reconciled with the work that actually landed on main. `P22.9f`, `P22.9g`, and the parent `P22.10` checkbox are now marked complete because the standalone K3Z docs teach variant selection by config/PIN, the three-variant coexistence layout is merged to `main` in both repos, and `pctct.pin` smoke passed in live Patchworks. `P22.9e` remains open intentionally as the one unresolved canonical-rebuild cleanup item for the CT/fert variant.
 
 - 2026-03-21 (Phase 22 pctct scaffold): implemented the third coexisting K3Z variant as a real compile target rather than just a roadmap stub. Parent FEMIC now supports `pre_commercial_thinning` silviculture config, new `SILV_STATE` values (`cc_pl_pct`, `cc_pl_pct_ct`), and post-PCT conifer-only managed species surfaces. The K3Z instance now carries `config/patchworks.variant.pctct.yaml`, `config/patchworks.runtime.pctct.windows.yaml`, `config/silviculture.k3z.pctct.yaml`, `models/k3z_patchworks_model/analysis/pctct.pin`, `models/k3z_patchworks_model/yield/forestmodel_pctct.xml`, `models/k3z_patchworks_model/tracks_pctct/`, and `output/patchworks_k3z_pctct_validated/`. Windows Matrix Builder smoke passed with `run_id=k3z_pctct_smoke_20260321`; remaining open work is the user-facing docs/runbook update under `P22.10g`.
+
+- 2026-03-21 (Phase 23 docs sync): the standalone K3Z docs and the parent Phase 23 operator guides were reconciled with the accepted K3Z teaching baseline.
+  - `external/femic-k3z-instance/docs/figure-appendix.rst` now describes the treated overlay figures as real TIPSY-vs-VDYP comparisons instead of the old scaled-VDYP wording.
+  - The treated overlay appendix and plot inventory intentionally omit AUs `22006` and `22008`, because `CWHvm_CW+YC` and `CWHvm_CW+PLC` are now excluded from the treated/TIPSY pathway and retained out of THLB via `RETENTION = 1.0`.
+  - Parent/operator docs now document the known-good Windows bootstrap sequence, the low-yield treated-strata netdown decision, and the simplified K3Z treated species-mix logic as the current baseline rather than as temporary operator lore.

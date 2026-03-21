@@ -5195,3 +5195,12 @@
 - Regenerated the K3Z `tipsy_vdyp_tsak3z-*.png` comparison plots from the accepted real-TIPSY handoff.
 - Locked in the current relaxed unmanaged smoothing policy (looser toe/tail defaults plus stronger `CWHvm_DR+HW` overrides) as the working K3Z checkpoint for now.
 - Updated K3Z docs to reflect the real-TIPSY baseline and removed treated-curve figure references for the fully retained `CWHvm_CW+YC` and `CWHvm_CW+PLC` AUs.
+
+## 2026-03-21 - Codified the Phase 23 K3Z Windows/TIPSY teaching baseline
+- Documented the known-good Windows K3Z bootstrap path in the parent Phase 23 guides and marked `P23.2c`, `P23.2d`, `P23.2e`, and `P23.5d` complete in the roadmap.
+- Updated the parent Stage 01a guide so the accepted K3Z teaching baseline is explicit: real BatchTIPSY managed curves, `CWHvm_CW+YC` / `CWHvm_CW+PLC` excluded from the treated path, `RETENTION = 1.0` for those low-yield strata, and the simplified treated species-mix logic for the remaining AUs.
+- Synced the standalone K3Z instance config/docs to that same baseline by switching `config/run_profile.k3z.yaml` to `managed_curve_mode: tipsy`, updating `config/tipsy/tsak3z.yaml`, and refreshing the user-facing docs (`assumptions-registry.rst`, `getting-started.rst`, `operator-runbook.rst`, `rebuild-and-qa.rst`, and `figure-appendix.rst`).
+- Cleaned the K3Z figure appendix so treated overlays are described as real TIPSY-vs-VDYP comparisons and no longer list the excluded low-yield treated AUs `22006` and `22008`.
+- Validation passed:
+  - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
+
