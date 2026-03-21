@@ -41,6 +41,8 @@ Treat Linux as authoritative for:
 - normal Python/FEMIC development workflow
 - upstream FEMIC stages that do not require native Patchworks
 - Wine-wrapped VDYP execution where native Windows VDYP is unavailable
+- ArcRasterRescue executable invocation via the documented patched fork build
+  (or explicit ``FEMIC_ARC_RASTER_RESCUE_EXE`` override)
 
 Core Executables and Services
 -----------------------------
@@ -210,3 +212,6 @@ Troubleshooting
   not something guaranteed to be on `PATH`.
 - If Linux VDYP runs but Windows does not, check the Windows-native VDYP config
   directory and parameter-file resolution before rerunning the full pipeline.
+- If Stage 00 cannot find ArcRasterRescue, set
+  ``FEMIC_ARC_RASTER_RESCUE_EXE`` explicitly (or restore the documented
+  sibling-checkout layout) rather than changing SiteProd extraction design.

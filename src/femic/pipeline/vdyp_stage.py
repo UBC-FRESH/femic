@@ -1488,7 +1488,16 @@ def run_vdyp_for_stratum(
         )
     vdyp_binpath_path = Path(vdyp_binpath)
     if not vdyp_binpath_path.exists():
-        raise RuntimeError(f"VDYP executable not found: {vdyp_binpath_path.resolve()}")
+        if not vdyp_binpath_path.is_absolute():
+            source_root = os.environ.get("FEMIC_SOURCE_ROOT")
+            if source_root:
+                candidate = Path(source_root) / vdyp_binpath_path
+                if candidate.exists():
+                    vdyp_binpath_path = candidate
+        if not vdyp_binpath_path.exists():
+            raise RuntimeError(
+                f"VDYP executable not found: {vdyp_binpath_path.resolve()}"
+            )
     vdyp_params_path = Path(vdyp_params_infile)
     if not vdyp_params_path.exists() and not vdyp_params_path.is_absolute():
         source_root = os.environ.get("FEMIC_SOURCE_ROOT")

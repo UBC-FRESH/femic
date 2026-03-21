@@ -254,6 +254,42 @@ def parse_arc_raster_rescue_layer_mappings(
     return layer_species, species_layer
 
 
+def resolve_arc_raster_rescue_executable_path(
+    *,
+    configured_path: str | Path,
+    source_root_env: str | None = None,
+    instance_root_env: str | None = None,
+    env_override: str | None = None,
+) -> Path:
+    """Resolve ArcRasterRescue executable using override + source-root fallbacks."""
+    configured = Path(configured_path).expanduser()
+    candidates: list[Path] = []
+    if env_override:
+        candidates.append(Path(env_override).expanduser())
+    candidates.append(configured)
+    if not configured.is_absolute():
+        for base in [instance_root_env, source_root_env]:
+            if base:
+                candidates.append((Path(base).expanduser() / configured).resolve())
+    seen: set[Path] = set()
+    for candidate in candidates:
+        normalized = candidate.resolve()
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        if normalized.exists():
+            return normalized
+    return candidates[0].resolve()
+
+
+def _arc_raster_rescue_gdb_arg(siteprod_gdb_path: str | Path) -> str:
+    """Normalize FileGDB path syntax expected by ArcRasterRescue."""
+    text = str(siteprod_gdb_path)
+    if text.endswith(".gdb") and not text.endswith(".gdb/"):
+        return f"{text}/"
+    return text
+
+
 def list_siteprod_layers(
     *,
     arc_raster_rescue_exe_path: str | Path,
@@ -261,10 +297,16 @@ def list_siteprod_layers(
     run_fn: Callable[..., Any],
 ) -> tuple[dict[int, str], dict[str, int]]:
     """Run ArcRasterRescue layer listing and return parsed species mappings."""
-    arc_path = Path(arc_raster_rescue_exe_path)
+    arc_path = resolve_arc_raster_rescue_executable_path(
+        configured_path=arc_raster_rescue_exe_path,
+        source_root_env=os.environ.get("FEMIC_SOURCE_ROOT"),
+        instance_root_env=os.environ.get("FEMIC_INSTANCE_ROOT"),
+        env_override=os.environ.get("FEMIC_ARC_RASTER_RESCUE_EXE"),
+    )
     if arc_path.exists():
+        gdb_arg = _arc_raster_rescue_gdb_arg(siteprod_gdb_path)
         result = run_fn(
-            [arc_raster_rescue_exe_path, siteprod_gdb_path],
+            [str(arc_path), gdb_arg],
             capture_output=True,
         )
         return parse_arc_raster_rescue_layer_mappings(
@@ -307,7 +349,12 @@ def export_and_stack_siteprod_layers(
     message_fn: Callable[..., Any] = print,
 ) -> None:
     """Export per-species rasters, stack into one GeoTIFF, and clean temps."""
-    arc_path = Path(arc_raster_rescue_exe_path)
+    arc_path = resolve_arc_raster_rescue_executable_path(
+        configured_path=arc_raster_rescue_exe_path,
+        source_root_env=os.environ.get("FEMIC_SOURCE_ROOT"),
+        instance_root_env=os.environ.get("FEMIC_INSTANCE_ROOT"),
+        env_override=os.environ.get("FEMIC_ARC_RASTER_RESCUE_EXE"),
+    )
     destinations: dict[str, Path] = {}
     for layer_index, species in site_prod_bc_layerspecies.items():
         message_fn("... processing species", species)
@@ -319,10 +366,11 @@ def export_and_stack_siteprod_layers(
             existing.unlink(missing_ok=True)
         destinations[species] = destination
         if arc_path.exists():
+            gdb_arg = _arc_raster_rescue_gdb_arg(site_prod_bc_gdb_path)
             run_fn(
                 [
-                    arc_raster_rescue_exe_path,
-                    site_prod_bc_gdb_path,
+                    str(arc_path),
+                    gdb_arg,
                     str(layer_index),
                     destination,
                 ]

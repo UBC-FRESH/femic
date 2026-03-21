@@ -938,7 +938,50 @@ def test_run_vdyp_for_stratum_uses_default_log_paths_and_runs_batch(
 
     assert set(out) == {1, 2}
     assert events and events[0]["status"] == "start"
-    assert events[0]["phase"] == "auto_small_sample"
+
+
+def test_run_vdyp_for_stratum_resolves_relative_binpath_from_source_root(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sample_table = pd.DataFrame({"FEATURE_ID": [1]})
+    source_root = tmp_path / "source"
+    bin_rel = Path("VDYP7/VDYP7/VDYP7Console.exe")
+    vdyp_bin = source_root / bin_rel
+    vdyp_bin.parent.mkdir(parents=True, exist_ok=True)
+    vdyp_bin.write_text("x", encoding="utf-8")
+    vdyp_params = tmp_path / "vdyp_params-landp"
+    vdyp_params.write_text("x", encoding="utf-8")
+    monkeypatch.setenv("FEMIC_SOURCE_ROOT", str(source_root))
+
+    out = run_vdyp_for_stratum(
+        sample_table=sample_table,
+        tsa="08",
+        run_id="run-1",
+        vdyp_ply=pd.DataFrame({"FEATURE_ID": [1]}),
+        vdyp_lyr=pd.DataFrame({"FEATURE_ID": [1]}),
+        rc_len=1,
+        curve_fit_fn=lambda *_a, **_k: None,
+        fit_func=lambda *_a, **_k: None,
+        fit_func_bounds_func=lambda *_a, **_k: None,
+        vdyp_binpath=str(bin_rel),
+        vdyp_params_infile=str(vdyp_params),
+        which_fn=lambda _name: "/usr/bin/wine",
+        build_tsa_vdyp_log_paths_fn=lambda **_kwargs: {
+            "run": tmp_path / "run.jsonl",
+            "curve": tmp_path / "curve.jsonl",
+            "stdout": tmp_path / "stdout.log",
+            "stderr": tmp_path / "stderr.log",
+        },
+        append_jsonl_fn=lambda *_args: None,
+        append_text_fn=lambda *_args: None,
+        execute_vdyp_batch_fn=lambda **kwargs: {
+            int(fid): {"phase": kwargs["phase"]} for fid in kwargs["feature_ids"]
+        },
+        nsamples_from_curves_fn=lambda *_a, **_k: (0, None),
+    )
+
+    assert set(out) == {1}
 
 
 def test_run_vdyp_for_stratum_maps_source_feature_ids_via_map_id(

@@ -49,6 +49,30 @@ Outputs Consumed by Stage 01a
 - VDYP-ready polygon/layer extracts
 - Supporting lookup tables for AU assignment and curve linkage
 
+ArcRasterRescue Workflow Contract
+---------------------------------
+
+Do not reinvent SiteProd FileGDB extraction. FEMIC expects the existing
+patched ArcRasterRescue workflow documented from the original notebook lineage.
+
+- Preferred override: set ``FEMIC_ARC_RASTER_RESCUE_EXE`` to the compiled
+  executable path.
+- Default legacy configured path remains
+  ``../ArcRasterRescue/build/arc_raster_rescue.exe``.
+- When running from an instance root, FEMIC now resolves that relative path
+  against ``FEMIC_SOURCE_ROOT`` / ``FEMIC_INSTANCE_ROOT`` so the established
+  sibling-checkout layout still works.
+
+Linux example (source checkout + sibling ArcRasterRescue checkout):
+
+.. code-block:: bash
+
+   export FEMIC_SOURCE_ROOT=$PWD
+   export FEMIC_ARC_RASTER_RESCUE_EXE="$PWD/../ArcRasterRescue/build/arc_raster_rescue.exe"
+
+If ArcRasterRescue is unavailable on Linux, Windows ArcGIS Pro fallback is the
+documented alternative runtime boundary.
+
 Primary Legacy Notebook Coverage
 --------------------------------
 

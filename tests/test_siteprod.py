@@ -14,6 +14,7 @@ from femic.pipeline.siteprod import (
     list_siteprod_layers,
     mean_siteprod_for_row,
     parse_arc_raster_rescue_layer_mappings,
+    resolve_arc_raster_rescue_executable_path,
     siteprod_species_lookup,
 )
 
@@ -59,6 +60,7 @@ def test_list_siteprod_layers_uses_runner_output(tmp_path: Path) -> None:
     def _run(cmd: list[object], capture_output: bool) -> SimpleNamespace:
         assert capture_output is True
         assert len(cmd) == 2
+        assert str(cmd[1]).endswith(".gdb/")
         return SimpleNamespace(stdout=b"layer name\n0 site_prod_sw\n")
 
     layer_species, species_layer = list_siteprod_layers(
@@ -68,6 +70,33 @@ def test_list_siteprod_layers_uses_runner_output(tmp_path: Path) -> None:
     )
     assert layer_species == {0: "SW"}
     assert species_layer == {"SW": 0}
+
+
+def test_resolve_arc_raster_rescue_prefers_env_override(tmp_path: Path) -> None:
+    override = tmp_path / "override.exe"
+    override.write_text("", encoding="utf-8")
+    configured = tmp_path / "missing.exe"
+    resolved = resolve_arc_raster_rescue_executable_path(
+        configured_path=configured,
+        env_override=str(override),
+    )
+    assert resolved == override.resolve()
+
+
+def test_resolve_arc_raster_rescue_supports_source_root_fallback(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path / "source"
+    source_root.mkdir(parents=True, exist_ok=True)
+    configured = Path("ArcRasterRescue/build/arc_raster_rescue.exe")
+    fallback = source_root / configured
+    fallback.parent.mkdir(parents=True, exist_ok=True)
+    fallback.write_text("", encoding="utf-8")
+    resolved = resolve_arc_raster_rescue_executable_path(
+        configured_path=configured,
+        source_root_env=str(source_root),
+    )
+    assert resolved == fallback.resolve()
 
 
 def test_export_and_stack_siteprod_layers(tmp_path: Path) -> None:
