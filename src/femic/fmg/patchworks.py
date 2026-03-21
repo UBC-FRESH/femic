@@ -378,6 +378,9 @@ def _load_silviculture_config(
     fert = payload.get("fertilization")
     if fert is not None and not isinstance(fert, dict):
         raise ValueError("fertilization config must contain a mapping/object")
+    retention = payload.get("retention")
+    if retention is not None and not isinstance(retention, dict):
+        raise ValueError("retention config must contain a mapping/object")
     return payload
 
 
@@ -449,6 +452,38 @@ def _default_silv_state_for_origin(origin: str) -> str:
         if str(origin).strip().lower() == "planted"
         else DEFAULT_SILV_STATE_NATURAL
     )
+
+
+def _resolve_retention_overrides_by_au(
+    *,
+    au_table: pd.DataFrame,
+    silviculture_config: dict[str, Any] | None,
+) -> dict[int, float]:
+    if not silviculture_config:
+        return {}
+    retention_payload = silviculture_config.get("retention")
+    if not isinstance(retention_payload, dict):
+        return {}
+
+    overrides: dict[int, float] = {}
+    configured_au_ids = retention_payload.get("full_retention_au_ids")
+    if isinstance(configured_au_ids, list):
+        for raw_value in configured_au_ids:
+            try:
+                overrides[int(raw_value)] = 1.0
+            except (TypeError, ValueError):
+                continue
+
+    configured_strata = retention_payload.get("full_retention_stratum_codes")
+    if isinstance(configured_strata, list) and "stratum_code" in au_table.columns:
+        wanted = {str(value).strip() for value in configured_strata if str(value).strip()}
+        if wanted:
+            matched = au_table.loc[
+                au_table["stratum_code"].astype(str).isin(wanted), "au_id"
+            ]
+            for au_id in pd.to_numeric(matched, errors="coerce").dropna().astype(int):
+                overrides[int(au_id)] = 1.0
+    return overrides
 
 
 def _resolve_ct_config_for_au(
@@ -2166,6 +2201,7 @@ def build_fragments_geodataframe(
     ifm_source_col: str | None = DEFAULT_IFM_SOURCE_COL,
     ifm_threshold: float | None = DEFAULT_IFM_THRESHOLD,
     ifm_target_managed_share: float | None = DEFAULT_IFM_TARGET_MANAGED_SHARE,
+    silviculture_config: dict[str, Any] | None = None,
 ) -> Any:
     """Build Patchworks fragments GeoDataFrame from FEMIC checkpoint output."""
     df = pd.read_feather(checkpoint_path)
@@ -2217,13 +2253,21 @@ def build_fragments_geodataframe(
 
     age = pd.to_numeric(scoped["PROJ_AGE_1"], errors="coerce").fillna(0).astype(int)
     fragment_ids = np.arange(1, len(scoped) + 1, dtype=int)
+    au_values = scoped["au"].astype(int)
+    retention_overrides = _resolve_retention_overrides_by_au(
+        au_table=au_table,
+        silviculture_config=silviculture_config,
+    )
+    retention_values = np.full(len(scoped), DEFAULT_RETENTION_VALUE, dtype=float)
+    for au_id, factor in retention_overrides.items():
+        retention_values[au_values == int(au_id)] = float(factor)
     out = pd.DataFrame(
         {
             FRAGMENT_ID_COLUMN: fragment_ids,
             "BLOCK": fragment_ids,
             "AREA_HA": total_area_ha.astype(float),
             "F_AGE": age,
-            "AU": scoped["au"].astype(int),
+            "AU": au_values,
             "IFM": np.where(managed_flag, "managed", "unmanaged"),
             "ORIGIN": np.where(age <= ORIGIN_PLANTED_MAX_AGE, "planted", "natural"),
             "SILV_STATE": np.where(
@@ -2231,7 +2275,7 @@ def build_fragments_geodataframe(
                 DEFAULT_SILV_STATE_PLANTED,
                 DEFAULT_SILV_STATE_NATURAL,
             ),
-            "RETENTION": np.full(len(scoped), DEFAULT_RETENTION_VALUE, dtype=float),
+            "RETENTION": retention_values,
             "TSA": scoped["tsa_code"].astype(str),
             "geometry": scoped["geometry"],
         }
@@ -2438,6 +2482,7 @@ def export_patchworks_package(
         ifm_source_col=ifm_source_col,
         ifm_threshold=ifm_threshold,
         ifm_target_managed_share=ifm_target_managed_share,
+        silviculture_config=silviculture_config,
     )
     validate_fragments_geodataframe(fragments_gdf=fragments_gdf)
     fragments_path = output_dir / "fragments" / "fragments.shp"

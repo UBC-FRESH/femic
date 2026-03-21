@@ -33,3 +33,7 @@ qmd:
   enabled: false
   source: "synthetic"
   notes: "Replace provisional QMD curves with observed or Nemora-derived curves when available."
+
+retention:
+  full_retention_au_ids: []
+  full_retention_stratum_codes: []
