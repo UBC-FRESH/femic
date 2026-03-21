@@ -5172,6 +5172,24 @@
 - Validation passed:
   - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
 
+
+## 2026-03-21 - Added a coexisting K3Z PCT->CT variant scaffold
+- Extended the Phase 22 coexistence design so K3Z now supports a third upstream-distinct variant alongside `baseline` and `ctfert`: `pctct`.
+- Added parent-side `pre_commercial_thinning` silviculture support in `src/femic/fmg/patchworks.py`, including new `SILV_STATE` values (`cc_pl_pct`, `cc_pl_pct_ct`), PCT gating, and post-PCT conifer-only managed species surfaces that remove the HW ingress component before CT.
+- Added K3Z instance variant assets for `pctct`:
+  - `config/patchworks.variant.pctct.yaml`
+  - `config/patchworks.runtime.pctct.windows.yaml`
+  - `config/silviculture.k3z.pctct.yaml`
+  - `models/k3z_patchworks_model/analysis/pctct.pin`
+  - `models/k3z_patchworks_model/yield/forestmodel_pctct.xml`
+  - `models/k3z_patchworks_model/tracks_pctct/`
+  - `output/patchworks_k3z_pctct_validated/`
+- Windows Matrix Builder smoke passed for the new variant:
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml --run-id k3z_pctct_smoke_20260321`
+- Verified the compiled `tracks_pctct` surface contains the intended `PCT -> CT -> CC` path and does not materialize any fertilization treatments.
+- Hardened `pctct.pin` and `ctfert.pin` map-layer styling to use simple solid colors instead of unsupported patterned BeanShell symbol constants, then confirmed `pctct.pin` launches and a quick Patchworks smoke shows `CT` pulls on `PCT` and `CC` in earlier periods as expected.
+- Updated the standalone K3Z docs/runbook pages so baseline, `ctfert`, and `pctct` are all documented as coexisting config/PIN-driven variants inside one instance checkout.
+
 ## 2026-03-21 - Locked K3Z onto real TIPSY managed curves + relaxed VDYP smoothing policy
 - Switched both K3Z run-profile copies to `managed_curve_mode: tipsy`, replacing the previous `vdyp_transform` teaching baseline.
 - Regenerated the K3Z `tipsy_vdyp_tsak3z-*.png` comparison plots from the accepted real-TIPSY handoff.

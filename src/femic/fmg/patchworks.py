@@ -51,6 +51,8 @@ VALID_ORIGIN_VALUES = {"natural", "planted"}
 VALID_SILV_STATE_VALUES = {
     "baseline",
     "cc_pl",
+    "cc_pl_pct",
+    "cc_pl_pct_ct",
     "cc_pl_ct",
     "cc_pl_ct_f1",
     "cc_pl_ct_f1_f2",
@@ -260,6 +262,61 @@ def _build_species_yield_curves(
     return {species: tuple(points) for species, points in derived.items()}
 
 
+def _build_species_prop_points_without_species(
+    *,
+    species_prop_points_by_species: dict[str, tuple[CurvePoint, ...]],
+    excluded_species: tuple[str, ...],
+) -> dict[str, tuple[CurvePoint, ...]]:
+    """Return a post-treatment species-proportion surface with selected species removed."""
+    if not species_prop_points_by_species:
+        return {}
+
+    excluded = {species.upper() for species in excluded_species}
+    x_values = sorted(
+        {
+            float(point.x)
+            for curve_points in species_prop_points_by_species.values()
+            for point in curve_points
+            if math.isfinite(float(point.x)) and float(point.x) >= 0.0
+        }
+    )
+    if not x_values:
+        return dict(species_prop_points_by_species)
+
+    retained_species = sorted(
+        species
+        for species in species_prop_points_by_species
+        if species.upper() not in excluded
+    )
+    if not retained_species:
+        return dict(species_prop_points_by_species)
+
+    out: dict[str, list[CurvePoint]] = {
+        species: [] for species in species_prop_points_by_species
+    }
+    for x_val in x_values:
+        retained_raw = {
+            species: max(
+                0.0,
+                _curve_value_at_x(
+                    points=species_prop_points_by_species[species],
+                    x=float(x_val),
+                ),
+            )
+            for species in retained_species
+        }
+        retained_total = sum(retained_raw.values())
+        if retained_total <= 0.0:
+            return dict(species_prop_points_by_species)
+        for species in species_prop_points_by_species:
+            if species.upper() in excluded:
+                y_val = 0.0
+            else:
+                y_val = retained_raw[species] / retained_total
+            out[species].append(CurvePoint(x=float(x_val), y=round(y_val, 5)))
+    return {species: tuple(points) for species, points in out.items()}
+
+
 def _curve_has_positive_signal(
     points: tuple[CurvePoint, ...], *, abs_tol: float = 1e-12
 ) -> bool:
@@ -378,6 +435,9 @@ def _load_silviculture_config(
     fert = payload.get("fertilization")
     if fert is not None and not isinstance(fert, dict):
         raise ValueError("fertilization config must contain a mapping/object")
+    pct = payload.get("pre_commercial_thinning")
+    if pct is not None and not isinstance(pct, dict):
+        raise ValueError("pre_commercial_thinning config must contain a mapping/object")
     retention = payload.get("retention")
     if retention is not None and not isinstance(retention, dict):
         raise ValueError("retention config must contain a mapping/object")
@@ -476,7 +536,9 @@ def _resolve_retention_overrides_by_au(
 
     configured_strata = retention_payload.get("full_retention_stratum_codes")
     if isinstance(configured_strata, list) and "stratum_code" in au_table.columns:
-        wanted = {str(value).strip() for value in configured_strata if str(value).strip()}
+        wanted = {
+            str(value).strip() for value in configured_strata if str(value).strip()
+        }
         if wanted:
             matched = au_table.loc[
                 au_table["stratum_code"].astype(str).isin(wanted), "au_id"
@@ -484,6 +546,45 @@ def _resolve_retention_overrides_by_au(
             for au_id in pd.to_numeric(matched, errors="coerce").dropna().astype(int):
                 overrides[int(au_id)] = 1.0
     return overrides
+
+
+def _resolve_pct_config_for_au(
+    *,
+    silviculture_config: dict[str, Any] | None,
+    au_id: int,
+) -> dict[str, Any] | None:
+    if not silviculture_config:
+        return None
+    pct_payload = silviculture_config.get("pre_commercial_thinning")
+    if not isinstance(pct_payload, dict) or not bool(pct_payload.get("enabled", False)):
+        return None
+    eligible_raw = pct_payload.get("eligible_au_ids") or []
+    eligible_au_ids = {int(v) for v in eligible_raw}
+    if eligible_au_ids and int(au_id) not in eligible_au_ids:
+        return None
+    age_by_au = pct_payload.get("age_by_au") or {}
+    age_value = age_by_au.get(str(int(au_id)), age_by_au.get(int(au_id), 10))
+    try:
+        pct_age = int(float(age_value))
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Invalid PCT age for AU {au_id}: {age_value!r}") from exc
+    try:
+        residual_stems_per_ha = float(pct_payload.get("residual_stems_per_ha", 900.0))
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Invalid PCT residual stems/ha for AU {au_id}") from exc
+    remove_species = [
+        str(value).strip().upper()
+        for value in (pct_payload.get("remove_species") or ["HW"])
+        if str(value).strip()
+    ]
+    return {
+        "from_state": str(pct_payload.get("from_state", "cc_pl")).strip().lower(),
+        "to_state": str(pct_payload.get("to_state", "cc_pl_pct")).strip().lower(),
+        "min_origin": str(pct_payload.get("min_origin", "planted")).strip().lower(),
+        "pct_age": max(0, pct_age),
+        "residual_stems_per_ha": max(0.0, residual_stems_per_ha),
+        "remove_species": tuple(remove_species),
+    }
 
 
 def _resolve_ct_config_for_au(
@@ -658,19 +759,27 @@ def _resolve_fertilization_config_for_au(
     if not silviculture_config:
         return None
     fert_payload = silviculture_config.get("fertilization")
-    if not isinstance(fert_payload, dict) or not bool(fert_payload.get("enabled", False)):
+    if not isinstance(fert_payload, dict) or not bool(
+        fert_payload.get("enabled", False)
+    ):
         return None
     first_application = fert_payload.get("first_application") or {}
     if not isinstance(first_application, dict):
-        raise ValueError("fertilization.first_application config must contain a mapping/object")
-    timing_rule = str(first_application.get("timing_rule", "cai_argmax")).strip().lower()
+        raise ValueError(
+            "fertilization.first_application config must contain a mapping/object"
+        )
+    timing_rule = (
+        str(first_application.get("timing_rule", "cai_argmax")).strip().lower()
+    )
     age_by_au = first_application.get("age_by_au") or {}
     age_value = age_by_au.get(str(int(au_id)), age_by_au.get(int(au_id)))
     if age_value is not None:
         try:
             fert_age = int(float(age_value))
         except (TypeError, ValueError) as exc:
-            raise ValueError(f"Invalid fertilization age for AU {au_id}: {age_value!r}") from exc
+            raise ValueError(
+                f"Invalid fertilization age for AU {au_id}: {age_value!r}"
+            ) from exc
     elif timing_rule == "cai_argmax":
         fert_age = _derive_peak_cai_age(
             source_curve_points=planted_total_curve_points,
@@ -689,11 +798,17 @@ def _resolve_fertilization_config_for_au(
             fert_payload.get("qmd_response_fraction", speedup_fraction)
         )
     except (TypeError, ValueError) as exc:
-        raise ValueError(f"Invalid fertilization response parameters for AU {au_id}") from exc
+        raise ValueError(
+            f"Invalid fertilization response parameters for AU {au_id}"
+        ) from exc
     return {
         "label": str(first_application.get("label", "F1")).strip().upper() or "F1",
-        "from_state": str(first_application.get("from_state", "cc_pl_ct")).strip().lower(),
-        "to_state": str(first_application.get("to_state", "cc_pl_ct_f1")).strip().lower(),
+        "from_state": str(first_application.get("from_state", "cc_pl_ct"))
+        .strip()
+        .lower(),
+        "to_state": str(first_application.get("to_state", "cc_pl_ct_f1"))
+        .strip()
+        .lower(),
         "fert_age": fert_age,
         "timing_rule": timing_rule,
         "response_years": max(0, response_years),
@@ -734,7 +849,9 @@ def _resolve_fertilization_sequence_for_au(
         if payload is None:
             continue
         if not isinstance(payload, dict):
-            raise ValueError(f"fertilization.{key} config must contain a mapping/object")
+            raise ValueError(
+                f"fertilization.{key} config must contain a mapping/object"
+            )
         if not bool(payload.get("enabled", False)):
             continue
         age_by_au = payload.get("age_by_au") or {}
@@ -743,17 +860,26 @@ def _resolve_fertilization_sequence_for_au(
             try:
                 fert_age = int(float(age_value))
             except (TypeError, ValueError) as exc:
-                raise ValueError(f"Invalid fertilization age for AU {au_id}: {age_value!r}") from exc
+                raise ValueError(
+                    f"Invalid fertilization age for AU {au_id}: {age_value!r}"
+                ) from exc
         else:
             try:
-                years_after_previous = int(float(payload.get("years_after_previous", 10)))
+                years_after_previous = int(
+                    float(payload.get("years_after_previous", 10))
+                )
             except (TypeError, ValueError) as exc:
-                raise ValueError(f"Invalid fertilization spacing for AU {au_id}") from exc
+                raise ValueError(
+                    f"Invalid fertilization spacing for AU {au_id}"
+                ) from exc
             fert_age = int(previous["fert_age"]) + max(1, years_after_previous)
         fert_age = max(int(previous["fert_age"]) + 1, int(fert_age))
         config = {
-            "label": str(payload.get("label", default_label)).strip().upper() or default_label,
-            "from_state": str(payload.get("from_state", previous["to_state"])).strip().lower(),
+            "label": str(payload.get("label", default_label)).strip().upper()
+            or default_label,
+            "from_state": str(payload.get("from_state", previous["to_state"]))
+            .strip()
+            .lower(),
             "to_state": str(payload.get("to_state", default_to_state)).strip().lower(),
             "fert_age": fert_age,
             "timing_rule": "years_after_previous",
@@ -1168,6 +1294,10 @@ def build_patchworks_forestmodel_definition(
             )
             effective_cc_min_age = int(cmai_age - 20)
         effective_cc_min_age = max(0, min(effective_cc_min_age, int(cc_max_age)))
+        pct_config = _resolve_pct_config_for_au(
+            silviculture_config=silviculture_config,
+            au_id=au.au_id,
+        )
         ct_config = _resolve_ct_config_for_au(
             silviculture_config=silviculture_config,
             au_id=au.au_id,
@@ -1464,7 +1594,30 @@ def build_patchworks_forestmodel_definition(
                     include_track=True,
                 )
             )
-            track_treatments: tuple[TreatmentDefinition, ...] = (cc_treatment,)
+            track_treatments_list: list[TreatmentDefinition] = [cc_treatment]
+            if (
+                origin == "planted"
+                and pct_config is not None
+                and pct_config["from_state"] == default_silv_state
+            ):
+                pct_treatment = TreatmentDefinition(
+                    label="PCT",
+                    min_age=int(pct_config["pct_age"]),
+                    max_age=int(pct_config["pct_age"]),
+                    assignments=(
+                        TreatmentAssignment(
+                            field="treatment",
+                            value=_as_quoted_literal("PCT"),
+                        ),
+                    ),
+                    transition_assignments=(
+                        TreatmentAssignment(
+                            field="SILV_STATE",
+                            value=_as_quoted_literal(pct_config["to_state"]),
+                        ),
+                    ),
+                )
+                track_treatments_list.append(pct_treatment)
             if (
                 origin == "planted"
                 and ct_config is not None
@@ -1487,7 +1640,8 @@ def build_patchworks_forestmodel_definition(
                         ),
                     ),
                 )
-                track_treatments = (cc_treatment, ct_treatment)
+                track_treatments_list.append(ct_treatment)
+            track_treatments = tuple(track_treatments_list)
             selects.append(
                 SelectDefinition(
                     statement=(
@@ -1519,11 +1673,184 @@ def build_patchworks_forestmodel_definition(
                 )
             )
 
-        if ct_config is not None and managed_total_curve is not None:
-            planted_species_prop_points = _species_curve_points_by_species(
-                context=context,
-                species_curve_map=planted_species_curve_map,
+        planted_species_prop_points = _species_curve_points_by_species(
+            context=context,
+            species_curve_map=planted_species_curve_map,
+        )
+        pct_species_prop_points = planted_species_prop_points
+        pct_species_curve_refs: dict[str, str] = {}
+        if pct_config is not None and managed_total_curve is not None:
+            pct_species_prop_points = _build_species_prop_points_without_species(
+                species_prop_points_by_species=planted_species_prop_points,
+                excluded_species=tuple(pct_config["remove_species"]),
             )
+            pct_feature_attrs = [
+                AttributeBinding(label="feature.Area.managed", curve_idref="unity"),
+                AttributeBinding(
+                    label="feature.Yield.managed.Total",
+                    curve_idref=managed_curve_ref,
+                ),
+                *old_growth_feature_attrs,
+            ]
+            pct_product_attrs = [
+                AttributeBinding(
+                    label="product.Treated.managed.PCT", curve_idref="unity"
+                )
+            ]
+            pct_cc_product_attrs = [
+                AttributeBinding(
+                    label="product.Treated.managed.CC", curve_idref="unity"
+                ),
+                AttributeBinding(
+                    label="product.Yield.managed.Total",
+                    curve_idref=managed_curve_ref,
+                ),
+                AttributeBinding(
+                    label="product.HarvestedVolume.managed.Total.CC",
+                    curve_idref=managed_curve_ref,
+                ),
+            ]
+            pct_species_yield_curves = _build_species_yield_curves(
+                total_points=managed_total_curve.points,
+                species_prop_points_by_species=pct_species_prop_points,
+            )
+            for species, species_curve_points in sorted(
+                pct_species_yield_curves.items()
+            ):
+                if species_curve_points and _curve_has_positive_signal(
+                    species_curve_points
+                ):
+                    pct_yield_curve_ref = (
+                        f"au_{int(au.au_id)}_managed_{pct_config['to_state']}_yield_"
+                        f"{_sanitize_id_component(species)}"
+                    )
+                    curves[pct_yield_curve_ref] = species_curve_points
+                    pct_feature_attrs.append(
+                        AttributeBinding(
+                            label=f"feature.Yield.managed.{species}",
+                            curve_idref=pct_yield_curve_ref,
+                        )
+                    )
+                    pct_cc_product_attrs.append(
+                        AttributeBinding(
+                            label=f"product.Yield.managed.{species}",
+                            curve_idref=pct_yield_curve_ref,
+                        )
+                    )
+                    pct_cc_product_attrs.append(
+                        AttributeBinding(
+                            label=f"product.HarvestedVolume.managed.{species}.CC",
+                            curve_idref=pct_yield_curve_ref,
+                        )
+                    )
+            for species, species_prop_points in sorted(pct_species_prop_points.items()):
+                if not _curve_has_positive_signal(species_prop_points):
+                    continue
+                pct_prop_curve_ref = (
+                    f"au_{int(au.au_id)}_managed_{pct_config['to_state']}_species_prop_"
+                    f"{_sanitize_id_component(species)}"
+                )
+                curves[pct_prop_curve_ref] = species_prop_points
+                pct_species_curve_refs[species] = pct_prop_curve_ref
+                pct_feature_attrs.append(
+                    AttributeBinding(
+                        label=f"feature.SpeciesProp.managed.{species}",
+                        curve_idref=pct_prop_curve_ref,
+                    )
+                )
+                pct_cc_product_attrs.append(
+                    AttributeBinding(
+                        label=f"product.SpeciesProp.managed.{species}",
+                        curve_idref=pct_prop_curve_ref,
+                    )
+                )
+            pct_state_literal = _as_quoted_literal(pct_config["to_state"])
+            pct_state_track_treatments: tuple[TreatmentDefinition, ...] = (
+                cc_treatment,
+            )
+            if (
+                ct_config is not None
+                and ct_config["from_state"] == pct_config["to_state"]
+            ):
+                pct_to_ct_treatment = TreatmentDefinition(
+                    label="CT",
+                    min_age=int(ct_config["ct_age"]),
+                    max_age=int(ct_config["ct_age"]),
+                    assignments=(
+                        TreatmentAssignment(
+                            field="treatment",
+                            value=_as_quoted_literal("CT"),
+                        ),
+                    ),
+                    transition_assignments=(
+                        TreatmentAssignment(
+                            field="SILV_STATE",
+                            value=_as_quoted_literal(ct_config["to_state"]),
+                        ),
+                    ),
+                )
+                pct_state_track_treatments = (cc_treatment, pct_to_ct_treatment)
+            selects.append(
+                SelectDefinition(
+                    statement=(
+                        f"{_au_eq_statement(au.au_id)} and IFM eq 'unmanaged' and ORIGIN eq 'planted' and SILV_STATE eq {pct_state_literal}"
+                    ),
+                    feature_attributes=tuple(unmanaged_attrs_by_origin["planted"]),
+                    include_track=True,
+                )
+            )
+            selects.append(
+                SelectDefinition(
+                    statement=(
+                        f"{_au_eq_statement(au.au_id)} and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq {pct_state_literal}"
+                    ),
+                    feature_attributes=tuple(pct_feature_attrs),
+                    retention_definitions=(
+                        RetentionDefinition(
+                            factor="RETENTION",
+                            assignments=(
+                                TreatmentAssignment(
+                                    field="IFM",
+                                    value=_as_quoted_literal("unmanaged"),
+                                ),
+                            ),
+                        ),
+                    ),
+                    include_track=True,
+                    track_treatment=cc_treatment,
+                    track_treatments=pct_state_track_treatments,
+                )
+            )
+            selects.append(
+                SelectDefinition(
+                    statement=(
+                        f"{_au_eq_statement(au.au_id)} and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq {_as_quoted_literal(pct_config['from_state'])} and treatment eq 'PCT'"
+                    ),
+                    product_attributes=tuple(pct_product_attrs),
+                )
+            )
+            selects.append(
+                SelectDefinition(
+                    statement=(
+                        f"{_au_eq_statement(au.au_id)} and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq {pct_state_literal} and treatment eq 'CC'"
+                    ),
+                    product_attributes=tuple(pct_cc_product_attrs),
+                )
+            )
+
+        if ct_config is not None and managed_total_curve is not None:
+            ct_species_prop_points = planted_species_prop_points
+            ct_species_prop_curve_refs = {
+                species: source_curve_ref_by_id[curve_id]
+                for species, curve_id in planted_species_curve_map.items()
+                if curve_id in source_curve_ref_by_id
+            }
+            if (
+                pct_config is not None
+                and ct_config["from_state"] == pct_config["to_state"]
+            ):
+                ct_species_prop_points = pct_species_prop_points
+                ct_species_prop_curve_refs = dict(pct_species_curve_refs)
             ct_age = int(ct_config["ct_age"])
             fert1_config = fert_sequence[0] if fert_sequence else None
             ct_removed_volume = round(
@@ -1597,11 +1924,11 @@ def build_patchworks_forestmodel_definition(
                 )
             ct_species_product_curves = _build_species_yield_curves(
                 total_points=curves[ct_product_curve_ref],
-                species_prop_points_by_species=planted_species_prop_points,
+                species_prop_points_by_species=ct_species_prop_points,
             )
             ct_species_residual_curves = _build_species_yield_curves(
                 total_points=curves[ct_residual_curve_ref],
-                species_prop_points_by_species=planted_species_prop_points,
+                species_prop_points_by_species=ct_species_prop_points,
             )
             for species, species_curve_points in sorted(
                 ct_species_residual_curves.items()
@@ -1649,8 +1976,9 @@ def build_patchworks_forestmodel_definition(
                             curve_idref=product_curve_ref,
                         )
                     )
-            for species, species_curve_id in sorted(planted_species_curve_map.items()):
-                species_prop_curve_ref = source_curve_ref_by_id.get(species_curve_id)
+            for species, species_prop_curve_ref in sorted(
+                ct_species_prop_curve_refs.items()
+            ):
                 if species_prop_curve_ref is not None:
                     ct_residual_attrs.append(
                         AttributeBinding(
@@ -1672,7 +2000,10 @@ def build_patchworks_forestmodel_definition(
                     )
             ct_state_literal = _as_quoted_literal(ct_config["to_state"])
             ct_state_track_treatments: tuple[TreatmentDefinition, ...] = (cc_treatment,)
-            if fert1_config is not None and fert1_config["from_state"] == ct_config["to_state"]:
+            if (
+                fert1_config is not None
+                and fert1_config["from_state"] == ct_config["to_state"]
+            ):
                 fert1_treatment = TreatmentDefinition(
                     label=fert1_config["label"],
                     min_age=int(fert1_config["fert_age"]),
@@ -1750,7 +2081,9 @@ def build_patchworks_forestmodel_definition(
                         response_years=int(fert_config["response_years"]),
                     )
                     fert_feature_attrs = [
-                        AttributeBinding(label="feature.Area.managed", curve_idref="unity"),
+                        AttributeBinding(
+                            label="feature.Area.managed", curve_idref="unity"
+                        ),
                         AttributeBinding(
                             label="feature.Yield.managed.Total",
                             curve_idref=fert_curve_ref,
@@ -1777,12 +2110,16 @@ def build_patchworks_forestmodel_definition(
                         ),
                     ]
                     if qmd_enabled:
-                        fert_qmd_curve_ref = f"au_{int(au.au_id)}_managed_{fert_config['to_state']}_qmd"
+                        fert_qmd_curve_ref = (
+                            f"au_{int(au.au_id)}_managed_{fert_config['to_state']}_qmd"
+                        )
                         curves[fert_qmd_curve_ref] = _build_qmd_curve_points(
                             source_curve_points=current_source_points,
                             si_level=au.si_level,
                             response_age=int(fert_config["fert_age"]),
-                            response_fraction=float(fert_config["qmd_response_fraction"]),
+                            response_fraction=float(
+                                fert_config["qmd_response_fraction"]
+                            ),
                             response_years=int(fert_config["response_years"]),
                         )
                         fert_feature_attrs.append(
@@ -1793,10 +2130,14 @@ def build_patchworks_forestmodel_definition(
                         )
                     fert_species_curves = _build_species_yield_curves(
                         total_points=curves[fert_curve_ref],
-                        species_prop_points_by_species=planted_species_prop_points,
+                        species_prop_points_by_species=ct_species_prop_points,
                     )
-                    for species, species_curve_points in sorted(fert_species_curves.items()):
-                        if species_curve_points and _curve_has_positive_signal(species_curve_points):
+                    for species, species_curve_points in sorted(
+                        fert_species_curves.items()
+                    ):
+                        if species_curve_points and _curve_has_positive_signal(
+                            species_curve_points
+                        ):
                             fert_species_curve_ref = (
                                 f"au_{int(au.au_id)}_managed_{fert_config['to_state']}_yield_"
                                 f"{_sanitize_id_component(species)}"
@@ -1820,8 +2161,9 @@ def build_patchworks_forestmodel_definition(
                                     curve_idref=fert_species_curve_ref,
                                 )
                             )
-                    for species, species_curve_id in sorted(planted_species_curve_map.items()):
-                        species_prop_curve_ref = source_curve_ref_by_id.get(species_curve_id)
+                    for species, species_prop_curve_ref in sorted(
+                        ct_species_prop_curve_refs.items()
+                    ):
                         if species_prop_curve_ref is not None:
                             fert_feature_attrs.append(
                                 AttributeBinding(
@@ -1836,7 +2178,9 @@ def build_patchworks_forestmodel_definition(
                                 )
                             )
                     fert_state_literal = _as_quoted_literal(fert_config["to_state"])
-                    next_track_treatments: tuple[TreatmentDefinition, ...] = (cc_treatment,)
+                    next_track_treatments: tuple[TreatmentDefinition, ...] = (
+                        cc_treatment,
+                    )
                     if fert_index < len(fert_sequence):
                         next_fert = fert_sequence[fert_index]
                         if next_fert["from_state"] == fert_config["to_state"]:
@@ -1863,7 +2207,9 @@ def build_patchworks_forestmodel_definition(
                             statement=(
                                 f"{_au_eq_statement(au.au_id)} and IFM eq 'unmanaged' and ORIGIN eq 'planted' and SILV_STATE eq {fert_state_literal}"
                             ),
-                            feature_attributes=tuple(unmanaged_attrs_by_origin["planted"]),
+                            feature_attributes=tuple(
+                                unmanaged_attrs_by_origin["planted"]
+                            ),
                             include_track=True,
                         )
                     )
@@ -1906,7 +2252,6 @@ def build_patchworks_forestmodel_definition(
                         )
                     )
                     current_source_points = curves[fert_curve_ref]
-
 
     return ForestModelDefinition(
         description="FEMIC Patchworks export",

@@ -1,4 +1,4 @@
-﻿# Refactor Roadmap
+# Refactor Roadmap
 
 ## Phase 1: Stabilize Runtime + Inputs
 - [x] P1.1 Stand up Typer CLI entrypoint (FHOPS-style, nemora-compatible)
@@ -106,12 +106,12 @@
   - [x] P5.3d Bundle/export guide: `model_input_bundle` tables and
     Patchworks/Woodstock outputs
 - [x] P5.4 Add operator QA and troubleshooting guidance
-  - [x] P5.4a Add â€œwhat good looks likeâ€ checks for strata, fit diagnostics, and
+  - [x] P5.4a Add “what good looks like” checks for strata, fit diagnostics, and
     TIPSY-vs-VDYP overlays
   - [x] P5.4b Document common failure signatures and deterministic remedies
   - [x] P5.4c Add manual BatchTIPSY handoff checklist and fixed-width DAT caveats
 - [x] P5.5 Preserve traceability to legacy notebooks
-  - [x] P5.5a Add â€œLegacy Notebook Traceabilityâ€ docs page with cell-index mapping
+  - [x] P5.5a Add “Legacy Notebook Traceability” docs page with cell-index mapping
   - [x] P5.5b Record source notebook/cell provenance for major guide content
   - [x] P5.5c Mark intentionally retired legacy guidance explicitly
 - [x] P5.6 Keep docs current with code and CLI
@@ -163,8 +163,8 @@
   - [x] P7.4c Add troubleshooting for MFA suffixes (`@app`, `@phone`, optional pool)
   - [x] P7.4d Add fallback notes for in-container OpenConnect (only if tun/caps available)
 - [x] P7.5 Add docs and operator runbook
-  - [x] P7.5a Add step-by-step â€œPatchworks under Wineâ€ guide
-  - [x] P7.5b Add â€œVPN + licensing diagnosticsâ€ guide
+  - [x] P7.5a Add step-by-step “Patchworks under Wine” guide
+  - [x] P7.5b Add “VPN + licensing diagnostics” guide
   - [x] P7.5c Add known failure signatures and remedies
 - [x] P7.6 Add regression and acceptance tests
   - [x] P7.6a Unit-test command assembly and path mapping
@@ -248,7 +248,7 @@
 - [x] P10.5 Publish-readiness completion criteria (PyPI in scope)
   - [x] P10.5a Add package build/release checks (`build`, `twine check`, wheel install smoke).
   - [x] P10.5b Verify installed-package workflow in clean env (`pip install femic` + `femic instance init` + preflight).
-  - [x] P10.5c Final docs updates for â€œinstall package + create instance + runâ€.
+  - [x] P10.5c Final docs updates for “install package + create instance + run”.
 - [x] P10.6 Public-data accessibility mirror via DataLad + submodule linkage
   - [x] P10.6a Inventory all "public but not directly downloadable" required layers
     (including archived HectaresBC `misc*.tif` dependencies) with provenance notes.
@@ -666,6 +666,41 @@ notes.
   - [ ] P22.9g Merge the coexistence layout to `main` in both repos only after
     baseline and CT/fert variants launch cleanly side-by-side from one branch.
 
+- [ ] P22.10 Add a third coexisting K3Z silviculture variant for PCT -> CT
+  - [x] P22.10a Extend the Phase 22 variant contract so K3Z supports three
+    coexisting upstream-from-Matrix-Builder variants on one branch:
+    baseline, ctfert, and pctct.
+  - [x] P22.10b Add a dedicated variant YAML/runtime/PIN/output surface for the
+    new pctct path:
+    config/patchworks.variant.pctct.yaml,
+    config/patchworks.runtime.pctct.windows.yaml,
+    models/k3z_patchworks_model/analysis/pctct.pin,
+    models/k3z_patchworks_model/tracks_pctct/,
+    models/k3z_patchworks_model/yield/forestmodel_pctct.xml,
+    and output/patchworks_k3z_pctct_validated/.
+  - [x] P22.10c Add a pre-commercial thinning (PCT) treatment option that is
+    available on the planted pathway before CT and removes hardwood ingress
+    while retaining only the planted conifer component at a residual
+    900 stems/ha target.
+  - [x] P22.10d Parameterize PCT by AU in silviculture YAML, including at
+    default treatment age (10), eligible AU set, and the planted-species retention
+    rule so the current K3Z heuristic can be revised later without redesigning
+    the external config contract.
+  - [x] P22.10e Add treatment-path gating so CT is only available after
+    PCT in the new pctct variant, while preserving the existing ctfert
+    branch semantics unchanged.
+  - [x] P22.10f Synthesize post-PCT curves/products/accounts so the pctct
+    variant behaves as an additive extension of the baseline model rather than a
+    separate ad hoc compile, and verify that the residual conifer-only treated
+    state is reflected consistently in XML, tracks, and Patchworks accounts.
+  - [x] P22.10g Update standalone K3Z docs, runbooks, and student-facing
+    variant guidance so the three-way coexistence model is explicit:
+    baseline (base.pin), ctfert (ctfert.pin), and pctct
+    (pctct.pin), including what each variant changes upstream from Matrix
+    Builder and when students should choose one over another.
+  - [x] P22.10h Run Windows Patchworks smoke checks on the pctct variant and
+    only then consider merging the three-variant coexistence layout back to
+    main.
 
 ## Phase 23: Cross-Platform Runtime Parity (Linux + Windows)
 - [ ] P23.1 Inventory platform-specific runtime dependencies and current gaps
@@ -1163,7 +1198,7 @@ notes.
     - `femic-0.1.1a1.tar.gz`
       `sha256=10fb2e43abdecb0dcee5c40096230462aca9cab5e2cc7c28687a7bd8258154d7`
   - Release summary:
-    Phase 18 checklist is now fully complete (`P18.1`â€“`P18.4`).
+    Phase 18 checklist is now fully complete (`P18.1`–`P18.4`).
 - 2026-03-12 (Phase 18 `P18.2` complete): published pre-release
   `femic==0.1.1a1` to TestPyPI with successful end-to-end smoke install in
   GitHub Actions.
@@ -1285,7 +1320,7 @@ notes.
   - Updated `tests/test_docs_contract.py` K3Z sample-model assertions to
     enforce pointer-page contract (required sections + canonical links +
     submodule commands), replacing old deep narrative heading checks.
-  - Phase 17 checklist now fully complete (`P17.0`â€“`P17.5`).
+  - Phase 17 checklist now fully complete (`P17.0`–`P17.5`).
   - Validation gates passed:
     `ruff format`, `ruff check`, `mypy`, `pytest (490 passed)`,
     `pre-commit --all-files`,
@@ -3265,7 +3300,7 @@ notes.
 - Upgraded TSA29 TIPSY parameter rules to TSR-anchored assumptions using Williams Lake data
   package references:
   `reference/29ts_dpkg_2024-2.pdf` (Section 8.5) and
-  `reference/williams_lake_tsa_data_package-2.pdf` (Section 6.3 Tables 23â€“25).
+  `reference/williams_lake_tsa_data_package-2.pdf` (Section 6.3 Tables 23–25).
 - Updated `config/tipsy/tsa29.yaml` from provisional heuristics to ordered BEC/species pathways
   with explicit treated/untreated proportions, regeneration delays, species mixes, densities, and
   genetic-worth values aligned to TSR assumptions, while preserving catch-all coverage.
@@ -3369,7 +3404,7 @@ notes.
   tail-blend approach.
 - Updated `src/femic/pipeline/vdyp_curves.py` tail blend algorithm to detect a rightmost linear
   binned segment automatically (maximal contiguous tail from the right that meets
-  `RÂ² >= tail_linear_min_r2` and `NRMSE <= tail_linear_max_nrmse`), then blend the current NLLS
+  `R² >= tail_linear_min_r2` and `NRMSE <= tail_linear_max_nrmse`), then blend the current NLLS
   curve into that linear tail. If no credible linear tail exists, it naturally falls back to
   raw/current behavior (no tail override).
 - New tail controls in `process_vdyp_out(...)`:
@@ -3410,7 +3445,7 @@ notes.
 - Updated summary (`plots/vdyp_fitdiag_tsa29_metrics_tail_only.csv`) shows broader tail capture
   with controlled but non-zero tradeoff:
   `tail_better_rmse=15/30`, `tail_better_tail_rmse=15/30`;
-  worst remaining regression is moderate (`IDF_PL-H`, Î”RMSE ~ +0.67), with no catastrophic outliers.
+  worst remaining regression is moderate (`IDF_PL-H`, ΔRMSE ~ +0.67), with no catastrophic outliers.
 - Added a detailed planning summary of this entire curve-fit enhancement stream at:
   `planning/VDYP_curve_fit_enhancements_2026-03-05.md`, including explicit TODO notes to
   continue tuning tail-fit hyperparameters later.
@@ -5126,3 +5161,11 @@ un_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance/
   - `config/run_profile.k3z.yaml` now uses `managed_curve_mode: tipsy` in both FEMIC and the standalone K3Z instance.
   - Current K3Z treated-curve baseline is: real BatchTIPSY output, driven by VDYP-derived SI, with CW+YC / CW+PLC excluded from BatchTIPSY and retained out of THLB via `RETENTION = 1.0`.
   - Current unmanaged smoothing checkpoint is the 2026-03-21 relaxed toe/tail policy plus extra DR+HW overrides; refreshed `tipsy_vdyp_tsak3z-*.png` plots are the review artifact of record.
+
+
+- 2026-03-21 (Phase 22 coexistence expansion): added a third planned K3Z variant, pctct, so the single-branch coexistence model now targets three upstream-distinct variants on one mainline instance: baseline, ctfert, and pctct. The new variant will add a pre-commercial thinning (PCT) gate ahead of CT, apply it at age 10 by default, remove hardwood ingress while retaining the planted conifer component at a 900 stems/ha residual target, and require PCT before CT can fire. Follow-through requirement: extend the variant config/runtime/PIN surface (tracks_pctct, forestmodel_pctct.xml, analysis/pctct.pin, output/patchworks_k3z_pctct_validated/) and update standalone K3Z docs so students choose among the three variants by config/PIN rather than by Git branch.
+
+
+
+
+- 2026-03-21 (Phase 22 pctct scaffold): implemented the third coexisting K3Z variant as a real compile target rather than just a roadmap stub. Parent FEMIC now supports `pre_commercial_thinning` silviculture config, new `SILV_STATE` values (`cc_pl_pct`, `cc_pl_pct_ct`), and post-PCT conifer-only managed species surfaces. The K3Z instance now carries `config/patchworks.variant.pctct.yaml`, `config/patchworks.runtime.pctct.windows.yaml`, `config/silviculture.k3z.pctct.yaml`, `models/k3z_patchworks_model/analysis/pctct.pin`, `models/k3z_patchworks_model/yield/forestmodel_pctct.xml`, `models/k3z_patchworks_model/tracks_pctct/`, and `output/patchworks_k3z_pctct_validated/`. Windows Matrix Builder smoke passed with `run_id=k3z_pctct_smoke_20260321`; remaining open work is the user-facing docs/runbook update under `P22.10g`.

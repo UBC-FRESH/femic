@@ -656,6 +656,103 @@ def test_build_forestmodel_xml_tree_adds_ct_track_and_qmd_when_configured() -> N
     )
 
 
+def test_build_forestmodel_xml_tree_adds_pct_then_ct_variant_path() -> None:
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985502001,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_FDC+HW",
+                "si_level": "M",
+                "managed_curve_id": 985522001,
+                "unmanaged_curve_id": 985502001,
+            }
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "curve_type": "unmanaged"},
+            {"curve_id": 985522001, "curve_type": "managed"},
+            {"curve_id": 985522001001, "curve_type": "managed_species_prop_FD"},
+            {"curve_id": 985522001002, "curve_type": "managed_species_prop_HW"},
+            {"curve_id": 985502001001, "curve_type": "unmanaged_species_prop_FD"},
+            {"curve_id": 985502001002, "curve_type": "unmanaged_species_prop_HW"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "x": 1, "y": 8.0},
+            {"curve_id": 985502001, "x": 40, "y": 200.0},
+            {"curve_id": 985502001, "x": 100, "y": 320.0},
+            {"curve_id": 985522001, "x": 1, "y": 10.0},
+            {"curve_id": 985522001, "x": 40, "y": 260.0},
+            {"curve_id": 985522001, "x": 100, "y": 400.0},
+            {"curve_id": 985522001001, "x": 1, "y": 0.225},
+            {"curve_id": 985522001002, "x": 1, "y": 0.775},
+            {"curve_id": 985502001001, "x": 1, "y": 0.20},
+            {"curve_id": 985502001002, "x": 1, "y": 0.80},
+        ]
+    )
+    silviculture_config = {
+        "pre_commercial_thinning": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "from_state": "cc_pl",
+            "to_state": "cc_pl_pct",
+            "age_by_au": {"985502001": 10},
+            "remove_species": ["HW"],
+            "residual_stems_per_ha": 900,
+        },
+        "commercial_thinning": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "from_state": "cc_pl_pct",
+            "to_state": "cc_pl_pct_ct",
+            "age_by_au": {"985502001": 40},
+            "basal_area_removal_fraction": 0.30,
+            "basal_area_to_volume_ratio": 1.0,
+        },
+        "fertilization": {"enabled": False},
+        "qmd": {"enabled": True},
+    }
+
+    root = build_forestmodel_xml_tree(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+        silviculture_config=silviculture_config,
+    )
+
+    xml_text = et.tostring(root, encoding="unicode")
+    base_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl'\"]"
+    )
+    assert base_select is not None
+    assert [
+        node.attrib["label"] for node in base_select.findall("./track/treatment")
+    ] == ["CC", "PCT"]
+
+    pct_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_pct'\"]"
+    )
+    assert pct_select is not None
+    assert [
+        node.attrib["label"] for node in pct_select.findall("./track/treatment")
+    ] == ["CC", "CT"]
+    assert "product.Treated.managed.PCT" in xml_text
+    assert (
+        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl' and treatment eq 'PCT'"
+        in xml_text
+    )
+    assert (
+        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_pct_ct'"
+        in xml_text
+    )
+    assert "au_985502001_managed_cc_pl_pct_yield_HW" not in xml_text
+    assert "au_985502001_managed_cc_pl_pct_yield_FD" in xml_text
+    assert "product.Treated.managed.F1" not in xml_text
+
+
 def test_build_forestmodel_xml_tree_omits_zero_signal_species_accounts() -> None:
     au_table = pd.DataFrame(
         [
@@ -1522,8 +1619,6 @@ def test_build_fragments_geodataframe_allows_ifm_target_managed_share(
     assert (gdf["IFM"] == "unmanaged").sum() == 1
 
 
-
-
 def test_build_fragments_geodataframe_applies_full_retention_by_stratum_code(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1550,7 +1645,9 @@ def test_build_fragments_geodataframe_applies_full_retention_by_stratum_code(
                 "PROJ_AGE_1": 80,
                 "FEATURE_AREA_SQM": 100000.0,
                 "thlb_area": 4.0,
-                "geometry": Polygon([(200, 0), (300, 0), (300, 100), (200, 100), (200, 0)]),
+                "geometry": Polygon(
+                    [(200, 0), (300, 0), (300, 100), (200, 100), (200, 0)]
+                ),
             },
         ]
     )
@@ -1571,6 +1668,8 @@ def test_build_fragments_geodataframe_applies_full_retention_by_stratum_code(
     baseline = gdf.loc[gdf["AU"] == 985501000, "RETENTION"].iloc[0]
     assert float(retained) == pytest.approx(1.0)
     assert float(baseline) == pytest.approx(0.0)
+
+
 def test_build_fragments_geodataframe_rejects_conflicting_ifm_options(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

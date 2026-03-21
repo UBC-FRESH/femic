@@ -1,3 +1,15 @@
+pre_commercial_thinning:
+  enabled: false
+  state_field: "SILV_STATE"
+  from_state: "cc_pl"
+  to_state: "cc_pl_pct"
+  eligible_au_ids: []
+  min_origin: "planted"
+  age_by_au: {}
+  residual_stems_per_ha: 900
+  remove_species:
+    - "HW"
+
 commercial_thinning:
   enabled: false
   state_field: "SILV_STATE"
