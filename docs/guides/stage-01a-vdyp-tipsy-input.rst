@@ -110,4 +110,6 @@ Expected outcome:
   - ``external/femic-k3z-instance/data/tipsy_params_tsak3z.xlsx`` or a timestamped fallback workbook
 
 At that point, do **not** rerun Stage 01a unless the TIPSY handoff really needs
-to be regenerated, because doing so will make the previous ``04_output`` stale.
+to be regenerated. Stage 01b freshness is DAT-content based, so unchanged
+``02_input`` content can reuse existing BatchTIPSY output, but real DAT content
+changes require a refreshed ``04_output``.

@@ -11,13 +11,16 @@ from femic.pipeline.tipsy import (
     build_tipsy_params_for_tsa,
     build_tipsy_input_table,
     build_tipsy_warning_event,
+    compute_file_sha256,
     compute_vdyp_oaf1,
     compute_vdyp_site_index,
     evaluate_tipsy_candidate,
     tipsy_input_dat_path,
+    tipsy_output_input_fingerprint_path,
     tipsy_params_excel_path,
     tipsy_stage_output_paths,
     validate_tipsy_output_is_fresh,
+    write_tipsy_output_input_fingerprint,
     write_tipsy_input_exports,
 )
 
@@ -275,6 +278,63 @@ def test_validate_tipsy_output_is_fresh_requires_dat_when_provided(
             tipsy_input_dat_path=missing_dat,
             tipsy_output_path=tipsy_output,
         )
+
+
+def test_validate_tipsy_output_is_fresh_accepts_known_dat_fingerprint(
+    tmp_path: Path,
+) -> None:
+    tipsy_input = tmp_path / "tipsy_params_tsa29.xlsx"
+    tipsy_dat = tmp_path / "02_input-tsa29.dat"
+    tipsy_output = tmp_path / "04_output-tsa29.out"
+    tipsy_input.write_text("human-readable\n", encoding="utf-8")
+    tipsy_dat.write_text("same-dat-content\n", encoding="utf-8")
+    tipsy_output.write_text("old-output\n", encoding="utf-8")
+    older = tipsy_dat.stat().st_mtime - 10
+    os.utime(tipsy_output, (older, older))
+
+    fingerprint = tipsy_output_input_fingerprint_path(tipsy_output_path=tipsy_output)
+    fingerprint.write_text(f"{compute_file_sha256(tipsy_dat)}\n", encoding="utf-8")
+
+    validate_tipsy_output_is_fresh(
+        tipsy_input_excel_path=tipsy_input,
+        tipsy_input_dat_path=tipsy_dat,
+        tipsy_output_path=tipsy_output,
+    )
+
+
+def test_validate_tipsy_output_is_fresh_raises_on_dat_fingerprint_mismatch(
+    tmp_path: Path,
+) -> None:
+    tipsy_input = tmp_path / "tipsy_params_tsa29.xlsx"
+    tipsy_dat = tmp_path / "02_input-tsa29.dat"
+    tipsy_output = tmp_path / "04_output-tsa29.out"
+    tipsy_input.write_text("human-readable\n", encoding="utf-8")
+    tipsy_dat.write_text("new-dat-content\n", encoding="utf-8")
+    tipsy_output.write_text("some-output\n", encoding="utf-8")
+
+    fingerprint = tipsy_output_input_fingerprint_path(tipsy_output_path=tipsy_output)
+    fingerprint.write_text("badfingerprint\n", encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="different 02_input-tsaXX.dat fingerprint"):
+        validate_tipsy_output_is_fresh(
+            tipsy_input_excel_path=tipsy_input,
+            tipsy_input_dat_path=tipsy_dat,
+            tipsy_output_path=tipsy_output,
+        )
+
+
+def test_write_tipsy_output_input_fingerprint_writes_sidecar(tmp_path: Path) -> None:
+    tipsy_dat = tmp_path / "02_input-tsa29.dat"
+    tipsy_output = tmp_path / "04_output-tsa29.out"
+    tipsy_dat.write_text("dat-content\n", encoding="utf-8")
+    tipsy_output.write_text("output\n", encoding="utf-8")
+    path = write_tipsy_output_input_fingerprint(
+        tipsy_input_dat_path=tipsy_dat,
+        tipsy_output_path=tipsy_output,
+    )
+    assert path == tipsy_output_input_fingerprint_path(tipsy_output_path=tipsy_output)
+    assert path is not None
+    assert path.read_text(encoding="utf-8").strip() == compute_file_sha256(tipsy_dat)
 
 
 def test_tipsy_input_dat_path_default_layout() -> None:

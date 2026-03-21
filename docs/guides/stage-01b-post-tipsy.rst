@@ -18,10 +18,19 @@ Required Input
 Freshness guard
 ---------------
 
-Stage 01b fails fast if ``04_output-<unit>.out`` is older than the latest
-Stage 01a handoff input (DAT preferred, workbook fallback). This prevents
-silently combining stale BatchTIPSY output with newer FEMIC-generated inputs.
-Use ``FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1`` only for explicit debugging.
+Stage 01b treats ``02_input-<unit>.dat`` as canonical and uses DAT-content
+fingerprints for stale detection:
+
+- If the current DAT hash differs from the hash previously paired with
+  ``04_output-<unit>.out``, Stage 01b fails fast.
+- If no hash sidecar exists yet, Stage 01b falls back to DAT-vs-output mtime.
+- ``tipsy_params_tsa<unit>.xlsx`` is only a human-readable mirror and is not
+  authoritative for freshness.
+- Use ``FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1`` only for explicit debugging.
+
+Managed-curve mode note: when ``managed_curve_mode != tipsy`` (for example
+``vdyp_transform``), Stage 01b skips the BatchTIPSY freshness guard because the
+managed curve path does not depend on refreshed BatchTIPSY output.
 
 Core Responsibilities
 ---------------------

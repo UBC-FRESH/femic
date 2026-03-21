@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+import hashlib
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -357,12 +358,14 @@ def validate_tipsy_output_is_fresh(
     tipsy_output_path: str | Path,
     allow_stale: bool = False,
 ) -> None:
-    """Fail fast when BatchTIPSY output is older than the current input workbook.
+    """Fail fast when BatchTIPSY output is stale against canonical input DAT.
 
     Canonical operator contract uses ``02_input-tsaXX.dat`` as the real
     BatchTIPSY input; ``tipsy_params_tsaXX.xlsx`` is a human-readable mirror.
     This catches stale-output scenarios that would silently yield mismatched
-    treated-curve overlays and downstream artifacts.
+    treated-curve overlays and downstream artifacts, while allowing repeated
+    FEMIC reruns to reuse existing BatchTIPSY output when DAT content is
+    unchanged.
     """
     if allow_stale:
         return
@@ -377,24 +380,80 @@ def validate_tipsy_output_is_fresh(
             f"{dat_path}. Generate 02_input-tsaXX.dat in Stage 01a before "
             "running Stage 01b/post-TIPSY."
         )
-    input_candidates = []
+
     if dat_path is not None:
-        input_candidates.append(dat_path)
-    if excel_path.is_file():
-        input_candidates.append(excel_path)
-    if not input_candidates:
+        dat_sha256 = compute_file_sha256(dat_path)
+        fingerprint_path = tipsy_output_input_fingerprint_path(
+            tipsy_output_path=output_path
+        )
+        known_sha = (
+            fingerprint_path.read_text(encoding="utf-8").strip()
+            if fingerprint_path.is_file()
+            else None
+        )
+        if known_sha:
+            if known_sha != dat_sha256:
+                raise RuntimeError(
+                    "Stale BatchTIPSY output detected: "
+                    f"{output_path} was recorded against a different "
+                    f"02_input-tsaXX.dat fingerprint ({known_sha} != {dat_sha256}). "
+                    "Regenerate 04_output-tsaXX.out from the current "
+                    "02_input-tsaXX.dat handoff, then rerun FEMIC stage "
+                    "01b/post-TIPSY."
+                )
+            return
+        input_mtime = dat_path.stat().st_mtime
+    elif excel_path.is_file():
+        input_mtime = excel_path.stat().st_mtime
+    else:
         return
-    newest_input = max(input_candidates, key=lambda path: path.stat().st_mtime)
-    input_mtime = newest_input.stat().st_mtime
+
     output_mtime = output_path.stat().st_mtime
     if output_mtime < input_mtime:
         raise RuntimeError(
             "Stale BatchTIPSY output detected: "
-            f"{output_path} is older than {newest_input}. "
+            f"{output_path} is older than {dat_path or excel_path}. "
             "Regenerate 04_output-tsaXX.out from the current "
             "02_input-tsaXX.dat handoff (and matching workbook), then rerun "
-            "FEMIC stage 01b/post-TIPSY."
+            "FEMIC stage 01b/post-TIPSY. Future reruns can avoid repeated "
+            "manual prompts when DAT content is unchanged once a fingerprint "
+            "is recorded."
         )
+
+
+def tipsy_output_input_fingerprint_path(*, tipsy_output_path: str | Path) -> Path:
+    """Return sidecar path storing the DAT fingerprint paired with TIPSY output."""
+    output_path = Path(tipsy_output_path)
+    return output_path.with_name(f"{output_path.name}.input_sha256")
+
+
+def compute_file_sha256(path: str | Path) -> str:
+    """Compute deterministic SHA256 digest for file content."""
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def write_tipsy_output_input_fingerprint(
+    *,
+    tipsy_input_dat_path: str | Path | None,
+    tipsy_output_path: str | Path,
+) -> Path | None:
+    """Persist DAT SHA256 used for the accepted BatchTIPSY output."""
+    if tipsy_input_dat_path is None:
+        return None
+    dat_path = Path(tipsy_input_dat_path)
+    output_path = Path(tipsy_output_path)
+    if not dat_path.is_file() or not output_path.is_file():
+        return None
+    digest = compute_file_sha256(dat_path)
+    fingerprint_path = tipsy_output_input_fingerprint_path(
+        tipsy_output_path=output_path
+    )
+    fingerprint_path.write_text(f"{digest}\n", encoding="utf-8")
+    return fingerprint_path
 
 
 def evaluate_tipsy_candidate(

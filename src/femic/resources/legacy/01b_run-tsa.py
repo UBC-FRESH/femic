@@ -37,6 +37,7 @@ def run_tsa(
         tipsy_params_excel_path,
         tipsy_stage_output_paths,
         validate_tipsy_output_is_fresh,
+        write_tipsy_output_input_fingerprint,
     )
 
     if not isinstance(runtime_config, Legacy01BRuntimeConfig):
@@ -78,12 +79,19 @@ def run_tsa(
         in {"1", "true", "yes"}
     )
 
-    validate_tipsy_output_is_fresh(
-        tipsy_input_excel_path=tipsy_excel,
-        tipsy_input_dat_path=tipsy_dat,
-        tipsy_output_path=tipsyout,
-        allow_stale=allow_stale_tipsy_output,
-    )
+    requires_batch_tipsy = managed_curve_mode == "tipsy"
+    if requires_batch_tipsy:
+        validate_tipsy_output_is_fresh(
+            tipsy_input_excel_path=tipsy_excel,
+            tipsy_input_dat_path=tipsy_dat,
+            tipsy_output_path=tipsyout,
+            allow_stale=allow_stale_tipsy_output,
+        )
+    else:
+        print(
+            "managed curve mode %s: skipping BatchTIPSY freshness guard"
+            % managed_curve_mode
+        )
 
     tipsy_input_df = pd.read_excel(
         tipsy_excel, sheet_name="TIPSY_inputTBL", usecols="A:AF"
@@ -252,6 +260,12 @@ def run_tsa(
         plt.ylim(list(y_limits))
         plt.savefig("./plots/tipsy_vdyp_tsa%s-%s.png" % (tsa, au), facecolor="white")
         plt.close(fig)
+
+    if requires_batch_tipsy:
+        write_tipsy_output_input_fingerprint(
+            tipsy_input_dat_path=tipsy_dat,
+            tipsy_output_path=tipsyout,
+        )
 
 
 if __name__ == "__main__":
