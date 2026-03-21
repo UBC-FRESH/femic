@@ -5364,3 +5364,24 @@
 - Phase status impact:
   - `P23.3b` remains complete,
   - `P23.3a` and Linux sign-off for `P23.3c` remain open pending a clean run that reaches Stage 01a -> BatchTIPSY handoff.
+
+## 2026-03-21 - Added fail-fast Stage 00 ArcRasterRescue diagnostics and corrected SW-stall interpretation
+- Hardened `src/femic/pipeline/siteprod.py` ArcRasterRescue export behavior:
+  - added per-layer launch/completion diagnostics with elapsed time,
+  - added timeout-bounded execution (`FEMIC_ARC_RASTER_RESCUE_TIMEOUT_SEC`, default `900`),
+  - added explicit `RuntimeError` on timeout/non-zero returncode with species/layer and stderr context.
+- Improved legacy stage streaming observability:
+  - `src/femic/pipeline/io.py` now sets `PYTHONUNBUFFERED=1` by default in legacy execution env.
+- Added regression coverage:
+  - `tests/test_siteprod.py` now covers timeout and non-zero ArcRasterRescue failure diagnostics.
+  - `tests/test_pipeline_helpers.py` now asserts `PYTHONUNBUFFERED=1` in execution-plan env.
+- Validation:
+  - `ruff check` passed on touched files,
+  - targeted tests passed (`test_siteprod` export-stack diagnostics and execution-plan env assertion).
+- Linux diagnostic rerun outcome (`k3z_linux_p233a_20260321_r15_diag_unbuffered`, `/tmp/femic_p23a_diag2_P0qEiG`):
+  - corrected previous interpretation that Stage 00 was stuck at `species SW`;
+  - artifact evidence showed progression beyond ArcRasterRescue export:
+    - temp `site_prod_bc_*.tif` files dropped to zero,
+    - `data/siteprod.tif` grew to full stacked output,
+    - `data/ria_vri_vclr1p_checkpoint2.feather` and `...checkpoint3.feather` were created.
+  - run was manually interrupted before reaching VDYP/TIPSY handoff boundary to keep iteration bounded.

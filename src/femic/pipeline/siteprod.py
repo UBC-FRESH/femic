@@ -336,6 +336,25 @@ def enumerate_siteprod_layer_tif_paths(
     return sorted(prefix.parent.glob(f"{prefix.name}*.tif"))
 
 
+def _normalize_arc_raster_rescue_stream_text(value: object) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return str(value)
+
+
+def _resolve_arc_raster_rescue_timeout_seconds() -> float:
+    raw_value = os.environ.get("FEMIC_ARC_RASTER_RESCUE_TIMEOUT_SEC", "900")
+    try:
+        value = float(raw_value)
+    except ValueError:
+        return 900.0
+    if value <= 0:
+        return 900.0
+    return value
+
+
 def export_and_stack_siteprod_layers(
     *,
     arc_raster_rescue_exe_path: str | Path,
@@ -355,6 +374,7 @@ def export_and_stack_siteprod_layers(
         instance_root_env=os.environ.get("FEMIC_INSTANCE_ROOT"),
         env_override=os.environ.get("FEMIC_ARC_RASTER_RESCUE_EXE"),
     )
+    timeout_seconds = _resolve_arc_raster_rescue_timeout_seconds()
     destinations: dict[str, Path] = {}
     for layer_index, species in site_prod_bc_layerspecies.items():
         message_fn("... processing species", species)
@@ -367,13 +387,52 @@ def export_and_stack_siteprod_layers(
         destinations[species] = destination
         if arc_path.exists():
             gdb_arg = _arc_raster_rescue_gdb_arg(site_prod_bc_gdb_path)
-            run_fn(
-                [
-                    str(arc_path),
-                    gdb_arg,
-                    str(layer_index),
-                    destination,
-                ]
+            command = [
+                str(arc_path),
+                gdb_arg,
+                str(layer_index),
+                destination,
+            ]
+            message_fn(
+                "... ArcRasterRescue launch",
+                species,
+                f"layer={layer_index}",
+                f"timeout={timeout_seconds:.1f}s",
+            )
+            started = time.perf_counter()
+            try:
+                try:
+                    result = run_fn(
+                        command,
+                        capture_output=True,
+                        text=True,
+                        timeout=timeout_seconds,
+                        check=False,
+                    )
+                except TypeError:
+                    result = run_fn(command, capture_output=True)
+            except subprocess.TimeoutExpired as exc:
+                raise RuntimeError(
+                    "ArcRasterRescue timed out for species "
+                    f"{species} (layer={layer_index}, timeout_sec={timeout_seconds}): {command}"
+                ) from exc
+
+            returncode = getattr(result, "returncode", 0)
+            stderr_text = _normalize_arc_raster_rescue_stream_text(
+                getattr(result, "stderr", "")
+            )
+            if returncode not in (0, None):
+                raise RuntimeError(
+                    "ArcRasterRescue failed for species "
+                    f"{species} (layer={layer_index}, returncode={returncode}): "
+                    f"{stderr_text[:500]}"
+                )
+            elapsed = time.perf_counter() - started
+            message_fn(
+                "... ArcRasterRescue completed",
+                species,
+                f"layer={layer_index}",
+                f"sec={elapsed:.2f}",
             )
         elif os.name != "nt":
             raise FileNotFoundError(f"ArcRasterRescue executable not found: {arc_path}")

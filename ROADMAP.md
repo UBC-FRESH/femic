@@ -714,7 +714,7 @@ notes.
   - [x] P23.2d Apply the K3Z low-yield treated-strata simplification cleanly in the canonical pipeline: exclude `CWHvm_CW+YC` and `CWHvm_CW+PLC` from BatchTIPSY generation, keep their unmanaged VDYP side, and force `RETENTION = 1.0` for matching fragments so they are fully netted out of THLB in the baseline model.
   - [x] P23.2e Replace the remaining K3Z TIPSY species-mix rules with the simplified teaching logic: FD-pair AUs -> `900 FD + 3100 HW`; CW-pair AUs -> `900 CW + 3100 HW`; all other remaining treated AUs -> `600 CW + 300 FD + 3100 HW`.
 - [ ] P23.3 Preserve and harden Linux execution parity
-  - [ ] P23.3a Keep Linux VDYP execution working via Wine and document the exact wrapper/runtime expectations. Needs execution and verification from the maintained Linux dev environment. Current blocker (2026-03-21 Linux rerun): source-root fallback staging for local `vdyp_io` runtime assets (`VDYP_CFG` + `VDYP.INI`) is implemented, but the latest clean-start Linux run (`k3z_linux_p233a_20260321_r13_final`) stalled in Stage 00 after `... processing species SW` (no transition into VDYP log generation), so final Stage 01a->BatchTIPSY boundary sign-off is still pending.
+  - [ ] P23.3a Keep Linux VDYP execution working via Wine and document the exact wrapper/runtime expectations. Needs execution and verification from the maintained Linux dev environment. Current blocker (2026-03-21 Linux rerun): source-root fallback staging for local `vdyp_io` runtime assets (`VDYP_CFG` + `VDYP.INI`) is implemented, and follow-up diagnostics show Stage 00 does progress beyond ArcRasterRescue `SW` (stacked `siteprod.tif` plus checkpoint2/checkpoint3 artifacts), but final Stage 01a->BatchTIPSY boundary sign-off is still pending because clean runs remain long and were interrupted before reaching VDYP/TIPSY handoff completion.
   - [x] P23.3b Verify Linux guidance still covers the full FEMIC pipeline when Patchworks is unavailable natively. Verified on Linux 2026-03-21 with `femic tsa post-tipsy --instance-root /tmp/femic_p23b_r5_dC7Rio --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_p233b_20260321_r8` (`status=ok`), after hardening 01b plotting to tolerate missing comparison keys.
   - [ ] P23.3c Add parity notes explaining what is expected to differ between Linux and Windows and what should remain identical. Final sign-off needs Linux-side verification, even though the draft docs now exist.
 - [x] P23.4 Stabilize DataLad / git-annex bootstrap on Windows
@@ -741,6 +741,32 @@ notes.
   - Linux sign-off portion of P23.3c
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
 ## Detailed Next Steps Notes
+- 2026-03-21 (Phase 23 Linux parity fail-fast diagnostic plan for Stage 00): convert the ArcRasterRescue export seam from silent long-running behavior to explicit bounded failures.
+  - Add per-layer ArcRasterRescue instrumentation in `src/femic/pipeline/siteprod.py`:
+    - emit start/completion timing messages for each species/layer export,
+    - enforce timeout-bounded subprocess behavior (configurable),
+    - raise explicit `RuntimeError` on timeout/non-zero return with layer/species context and stderr summary.
+  - Add regression coverage in `tests/test_siteprod.py` for:
+    - timeout path emits a deterministic failure instead of indefinite wait,
+    - non-zero returncode path includes diagnostics.
+  - Re-run a Linux `P23.3a` clean-start check after instrumentation to capture the first concrete failing ArcRasterRescue layer or prove progression beyond Stage 00.
+- 2026-03-21 (Phase 23 Linux parity diagnostic outcome after Stage 00 instrumentation): prior "species SW stall" interpretation was corrected.
+  - Implemented fail-fast diagnostics in `src/femic/pipeline/siteprod.py`:
+    - per-layer ArcRasterRescue launch/completion messages with timing,
+    - timeout-bound execution via `FEMIC_ARC_RASTER_RESCUE_TIMEOUT_SEC` (default 900s),
+    - explicit `RuntimeError` on timeout/non-zero returncode with species/layer context and stderr summary.
+  - Added execution-stream visibility hardening:
+    - `build_legacy_execution_plan(...)` now sets `PYTHONUNBUFFERED=1` by default so long Stage 00 progress is not hidden by Python buffering.
+  - Added regression coverage:
+    - `tests/test_siteprod.py`: timeout and non-zero returncode diagnostics.
+    - `tests/test_pipeline_helpers.py`: asserts `PYTHONUNBUFFERED=1` in legacy execution env.
+  - Linux rerun evidence (`run-id: k3z_linux_p233a_20260321_r15_diag_unbuffered`, tmp `/tmp/femic_p23a_diag2_P0qEiG`):
+    - Stage 00 progressed beyond ArcRasterRescue export despite sparse streamed output:
+      - temp `site_prod_bc_*.tif` count dropped to zero,
+      - stacked `data/siteprod.tif` grew to full-size write,
+      - `data/ria_vri_vclr1p_checkpoint2.feather` and `data/ria_vri_vclr1p_checkpoint3.feather` were created.
+    - Run was manually interrupted before reaching VDYP/TIPSY boundary to keep iteration time bounded, so `P23.3a` remains open.
+
 - 2026-03-21 (Phase 23 Linux parity clean-start rerun, post runtime-asset staging): `P23.3a` remains open after a reproducible Stage 00 stall before VDYP boundary.
   - Clean rerun context:
     - tmp instance: `/tmp/femic_p23a_final_bF2EN4`
