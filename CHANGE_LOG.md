@@ -5385,3 +5385,22 @@
     - `data/siteprod.tif` grew to full stacked output,
     - `data/ria_vri_vclr1p_checkpoint2.feather` and `...checkpoint3.feather` were created.
   - run was manually interrupted before reaching VDYP/TIPSY handoff boundary to keep iteration bounded.
+
+## 2026-03-21 - Linux P23.3a converged to expected BatchTIPSY boundary; P23.3 parity closed
+- Executed a full uninterrupted Linux clean-start `P23.3a` rerun:
+  - tmp instance: `/tmp/femic_p23a_finalrun_rC45UW`
+  - run id: `k3z_linux_p233a_20260321_r16_full`
+  - log: `/tmp/femic_p23a_r16_full.log`
+  - manifest: `/tmp/femic_p23a_finalrun_rC45UW/vdyp_io/logs/run_manifest-k3z_linux_p233a_20260321_r16_full.json`
+- Observed terminal behavior confirms expected Stage 01a contract:
+  - ArcRasterRescue completed all species exports and stacking,
+  - Stage 00 checkpoints regenerated (`checkpoint2`, `checkpoint3`, `checkpoint4`, `vdyp_prep-tsak3z.pkl`),
+  - VDYP bootstrap + two-pass SI rebin completed (`mapped VDYP SI for 38/46 rows`, rebuilt bins `missing=0 of 114`),
+  - run terminated at expected BatchTIPSY freshness boundary:
+    `RuntimeError: Stale BatchTIPSY output detected: data/04_output-tsak3z.out is older than data/02_input-tsak3z.dat`.
+- Interpretation:
+  - this is the intended Stage 01a handoff boundary behavior, not a Linux runtime crash.
+- Phase status update:
+  - `P23.3a` marked complete with real Linux evidence,
+  - `P23.3c` Linux parity sign-off marked complete (with prior `P23.3b` pass),
+  - top-level `P23.3` parity work is now closed.
