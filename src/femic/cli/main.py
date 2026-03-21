@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import csv
+import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 import shutil
@@ -691,46 +692,60 @@ VDYP_SELECTION_SUMMARY_OUT_OPTION = typer.Option(
 
 def _preflight_checks(*, resume: bool, instance_context: InstanceContext) -> None:
     repo_root = instance_context.root
+    source_root = _source_tree_root()
     errors: list[str] = []
     warnings: list[str] = []
 
     data_root = repo_root / "data"
+    source_data_root = source_root / "data"
+
+    def _resolve_required(primary: Path, fallback: Path | None = None) -> Path | None:
+        if primary.exists():
+            return primary
+        if fallback is not None and fallback.exists():
+            return fallback
+        return None
+
     if not data_root.exists():
         errors.append(f"Missing data directory: {data_root}")
     else:
         # Clean runs can regenerate checkpoint/boundary caches from source inputs.
-        required_files = [data_root / "tipsy_params_columns"]
+        required_files = [
+            (data_root / "tipsy_params_columns", source_data_root / "tipsy_params_columns"),
+        ]
         if resume:
             required_files.extend(
                 [
-                    data_root / "tsa_boundaries.feather",
-                    data_root / "ria_vri_vclr1p_checkpoint1.feather",
+                    (data_root / "tsa_boundaries.feather", None),
+                    (data_root / "ria_vri_vclr1p_checkpoint1.feather", None),
                 ]
             )
-        for path in required_files:
-            if not path.exists():
-                errors.append(f"Missing required file: {path}")
+        for primary, fallback in required_files:
+            resolved = _resolve_required(primary, fallback)
+            if resolved is None:
+                errors.append(f"Missing required file: {primary}")
 
         optional_files = [
             data_root / "vdyp_ply.feather",
             data_root / "vdyp_lyr.feather",
             data_root / "vdyp_results.pkl",
         ]
-        for path in optional_files:
-            if not path.exists():
-                warnings.append(f"Optional cache missing: {path}")
+        for path_obj in optional_files:
+            if not path_obj.exists():
+                warnings.append(f"Optional cache missing: {path_obj}")
 
     maptiles_path = repo_root / "ria_maptiles.csv"
-    if not maptiles_path.exists():
+    source_maptiles_path = source_root / "ria_maptiles.csv"
+    if not maptiles_path.exists() and not source_maptiles_path.exists():
         warnings.append(f"Optional maptiles file missing: {maptiles_path}")
 
-    vdyp_cfg = repo_root / "vdyp_io" / "VDYP_CFG"
-    if not vdyp_cfg.exists():
-        errors.append(f"Missing VDYP configuration directory: {vdyp_cfg}")
+    vdyp_cfg = _resolve_required(repo_root / "vdyp_io" / "VDYP_CFG", source_root / "vdyp_io" / "VDYP_CFG")
+    if vdyp_cfg is None:
+        errors.append(f"Missing VDYP configuration directory: {repo_root / 'vdyp_io' / 'VDYP_CFG'}")
 
-    vdyp_exe = repo_root / "VDYP7" / "VDYP7" / "VDYP7Console.exe"
-    if not vdyp_exe.exists():
-        errors.append(f"Missing VDYP executable: {vdyp_exe}")
+    vdyp_exe = _resolve_required(repo_root / "VDYP7" / "VDYP7" / "VDYP7Console.exe", source_root / "VDYP7" / "VDYP7" / "VDYP7Console.exe")
+    if vdyp_exe is None:
+        errors.append(f"Missing VDYP executable: {repo_root / 'VDYP7' / 'VDYP7' / 'VDYP7Console.exe'}")
 
     windows_host = os.name == "nt"
     wine = shutil.which("wine")
@@ -741,6 +756,17 @@ def _preflight_checks(*, resume: bool, instance_context: InstanceContext) -> Non
             )
         else:
             errors.append("wine not found on PATH (required to run VDYP on non-Windows systems)")
+    if windows_host:
+        if shutil.which("git") is None:
+            errors.append("git not found on PATH (required for Windows FEMIC runtime workflows)")
+        if (
+            shutil.which("git-annex") is None
+            and shutil.which("git-annex.exe") is None
+            and shutil.which("git-annex.cmd") is None
+        ):
+            errors.append(
+                "git-annex not found on PATH (required for annex-backed Windows data workflows)"
+            )
 
     for message in warnings:
         console.print(f"[yellow]Warning:[/yellow] {message}")
@@ -749,6 +775,104 @@ def _preflight_checks(*, resume: bool, instance_context: InstanceContext) -> Non
         for message in errors:
             console.print(f"[red]Error:[/red] {message}")
         raise typer.Exit(code=1)
+
+
+def _source_tree_root() -> Path:
+    """Return the FEMIC source checkout root that owns this CLI module."""
+    return Path(__file__).resolve().parents[3]
+
+
+def _resolve_datalad_executable(source_root: Path) -> str | None:
+    """Resolve a usable DataLad executable, preferring PATH then the local .venv."""
+    path_tool = shutil.which("datalad")
+    if path_tool:
+        return path_tool
+    venv_tool = source_root / ".venv" / "Scripts" / "datalad.exe"
+    if venv_tool.exists():
+        return str(venv_tool)
+    return None
+
+
+def _run_preflight_command(
+    command: list[str],
+    *,
+    cwd: Path,
+    timeout_s: int = 15,
+) -> tuple[bool, str]:
+    """Run a small external command used for runtime preflight smoke checks."""
+    try:
+        result = subprocess.run(
+            command,
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            timeout=timeout_s,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return False, str(exc)
+    if result.returncode == 0:
+        return True, ""
+    detail = result.stderr.strip() or result.stdout.strip() or f"exit={result.returncode}"
+    return False, detail
+
+
+def _validate_windows_annex_runtime(
+    *,
+    source_root: Path,
+    external_paths: Any,
+) -> tuple[list[str], list[str]]:
+    """Return Windows annex/DataLad runtime findings for annex-backed public data."""
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    if os.name != "nt":
+        return errors, warnings
+
+    public_data_root = (source_root / "external" / "femic-public-data").resolve()
+    required_paths = [
+        external_paths.vri_vclr1p_path,
+        external_paths.vdyp_input_pandl_path,
+        external_paths.tsa_boundaries_path,
+        external_paths.site_prod_bc_gdb_path,
+    ]
+    if not any(Path(path).resolve().is_relative_to(public_data_root) for path in required_paths):
+        return errors, warnings
+
+    if shutil.which("git") is None:
+        errors.append(
+            "git not found on PATH (required to validate annex-backed public-data runtime)"
+        )
+        return errors, warnings
+
+    annex_probe_ok, annex_detail = _run_preflight_command(
+        ["git", "-C", str(public_data_root), "annex", "version"],
+        cwd=source_root,
+    )
+    if not annex_probe_ok:
+        errors.append(
+            "git-annex is not usable in external/femic-public-data: "
+            f"{annex_detail}"
+        )
+
+    datalad_exe = _resolve_datalad_executable(source_root)
+    if datalad_exe is None:
+        warnings.append(
+            "DataLad executable not found (looked on PATH and in .venv\\Scripts\\datalad.exe)"
+        )
+        return errors, warnings
+
+    datalad_ok, datalad_detail = _run_preflight_command(
+        [datalad_exe, "status", str(public_data_root)],
+        cwd=source_root,
+    )
+    if not datalad_ok:
+        errors.append(
+            "DataLad status check failed for external/femic-public-data: "
+            f"{datalad_detail}"
+        )
+
+    return errors, warnings
 
 
 def _enable_rich_tracebacks() -> None:
@@ -1794,6 +1918,7 @@ def prep_validate_case(
         repo_root=instance_context.root,
         env_override=os.environ.get("FEMIC_EXTERNAL_DATA_ROOT"),
     )
+    source_root = _source_tree_root()
     required_external_paths = {
         "VRI source": external_paths.vri_vclr1p_path,
         "VDYP polygon/layer source": external_paths.vdyp_input_pandl_path,
@@ -1806,6 +1931,13 @@ def prep_validate_case(
                 f"Missing {label}: {path} "
                 "(set FEMIC_EXTERNAL_DATA_ROOT or restore expected dataset path)."
             )
+
+    annex_errors, annex_warnings = _validate_windows_annex_runtime(
+        source_root=source_root,
+        external_paths=external_paths,
+    )
+    errors.extend(annex_errors)
+    warnings.extend(annex_warnings)
 
     if not resolved_tipsy_config_dir.exists():
         errors.append(

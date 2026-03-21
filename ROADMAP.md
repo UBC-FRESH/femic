@@ -706,7 +706,7 @@ notes.
 - [ ] P23.1 Inventory platform-specific runtime dependencies and current gaps
   - [x] P23.1a Enumerate required local executables/services for full FEMIC runs on Linux and Windows (`python`, `git`, `git-annex`, `datalad`, `VDYP`, `Patchworks`, Java, Wine where applicable).
   - [x] P23.1b Record which runtime surfaces are authoritative per platform (for example: native Patchworks on Windows, Wine-wrapped VDYP on Linux, native VDYP on Windows).
-  - [ ] P23.1c Add deterministic environment-detection/preflight checks so FEMIC can report missing platform prerequisites clearly before long runs start.
+  - [x] P23.1c Add deterministic environment-detection/preflight checks so FEMIC can report missing platform prerequisites clearly before long runs start.
 - [ ] P23.2 Make Windows a first-class full-pipeline execution environment
   - [ ] P23.2a Validate native Windows VDYP invocation using the bundled local `VDYP7Console.exe` path instead of Linux/Wine assumptions.
   - [ ] P23.2b Add/verify Windows run-profile and helper wiring so `femic run` can execute end-to-end from a clean start in the Patchworks workstation environment.
@@ -720,7 +720,7 @@ notes.
 - [ ] P23.4 Stabilize DataLad / git-annex bootstrap on Windows
   - [x] P23.4a Document a known-good Windows install/bootstrap pattern for `git`, `git-annex`, and DataLad.
   - [x] P23.4b Ensure FEMIC operator docs explain how annex-backed payloads are materialized on Windows (including pointer-file behavior and recovery steps).
-  - [ ] P23.4c Add validation/smoke checks that confirm annex-backed public-data payloads are usable from Windows pipeline runs.
+  - [x] P23.4c Add validation/smoke checks that confirm annex-backed public-data payloads are usable from Windows pipeline runs.
 - [ ] P23.5 Add cross-platform docs, smoke tests, and acceptance gates
   - [ ] P23.5a Add a user-facing guide describing how to run FEMIC cleanly in both Linux and Windows environments.
   - [ ] P23.5b Add smoke workflows for a clean-start rerun on Windows and a parity rerun on Linux.
@@ -5181,3 +5181,6 @@ un_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance/
   - `docs/guides/geospatial-runtime-bootstrap.rst` now records the authoritative Windows/Linux runtime surfaces, required executables, and the known-good Windows bootstrap sequence for `.venv`, git/git-annex/DataLad, native VDYP, Java, Patchworks, and ArcGIS Pro fallback.
   - `docs/guides/public-data-mirror-runbook.rst` now includes a Windows-specific collaborator workflow, `.venv\Scripts\datalad.exe` usage, annex-backed payload smoke checks, and recovery guidance when GIS tools dirty the public-data submodule.
   - `docs/guides/deployment-instances.rst` now points Windows users at the bootstrap/runtime guide explicitly.
+
+
+- 2026-03-21 (Phase 23 Windows preflight hardening): case preflight now understands the real Windows deployment shape instead of assuming every shared asset lives under the instance root. `src/femic/cli/main.py` now falls back from instance-local paths to the FEMIC source tree for shared Windows assets such as `data/tipsy_params_columns`, `vdyp_io/VDYP_CFG`, `VDYP7/VDYP7/VDYP7Console.exe`, and `ria_maptiles.csv`, so `femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml` passes on the known-good workstation. The same preflight path now also checks for `git` and `git-annex` on Windows and runs lightweight annex/DataLad smoke checks (`git -C external/femic-public-data annex version` and `datalad status external/femic-public-data`) whenever the case depends on the annex-backed public-data submodule. This closes `P23.1c` and `P23.4c`.

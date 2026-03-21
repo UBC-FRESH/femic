@@ -5204,3 +5204,10 @@
 - Validation passed:
   - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
 
+
+## 2026-03-21 - Hardened Windows case preflight for shared assets and annex-backed data
+- Updated `src/femic/cli/main.py` so Windows case preflight resolves shared runtime assets from the FEMIC source tree when they are not duplicated inside the instance root, matching the real K3Z workstation layout for `tipsy_params_columns`, `vdyp_io/VDYP_CFG`, `VDYP7Console.exe`, and `ria_maptiles.csv`.
+- Added Windows runtime prerequisite checks for `git` and `git-annex` in `_preflight_checks(...)`.
+- Added annex/DataLad smoke checks for annex-backed public data during `prep validate-case` whenever the active case depends on paths under `external/femic-public-data`.
+- Verified the real Windows K3Z command now passes again: `python -m femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml` (with `FEMIC_EXTERNAL_DATA_ROOT` pointing at `external/femic-public-data/data`).
+- Added focused regression coverage in `tests/test_cli_main.py` for source-root fallback, missing `git-annex`, and annex/DataLad smoke behavior.
