@@ -5318,3 +5318,6 @@
 - Phase status:
   - `P23.3b` can now be marked complete from Linux evidence.
   - `P23.3a` remains pending final clean-start Stage 01a->BatchTIPSY boundary confirmation.
+- Additional bounded `P23.3a` check:
+  - attempted `timeout 900 femic run --instance-root /tmp/femic_p23a_r6_KpHxKg --run-config config/run_profile.k3z.yaml --run-id k3z_linux_p233a_20260321_r6_resume --resume`,
+  - run remained in long-running Stage 00 legacy execution and did not reach a terminal boundary within the timeout window; process was terminated and `P23.3a` remains open.

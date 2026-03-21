@@ -783,6 +783,11 @@ notes.
         `/tmp/femic_p23b_r5_dC7Rio/vdyp_io/logs/run_manifest-k3z_linux_p233b_20260321_r8.json`.
     - `P23.3a` remains open:
       - attempted clean-start rerun (`run-id: k3z_linux_p233a_20260321_r6`) entered full Stage 00 extraction path and was still long-running at session cutoff, so final Stage 01a boundary sign-off remains pending.
+  - additional bounded rerun attempt:
+    - command:
+      `timeout 900 femic run --instance-root /tmp/femic_p23a_r6_KpHxKg --run-config config/run_profile.k3z.yaml --run-id k3z_linux_p233a_20260321_r6_resume --resume`
+    - observed behavior:
+      entered legacy Stage 00 path (`00_data-prep.py`) and remained long-running without reaching a terminal success/failure boundary within the allotted window; process was terminated to avoid indefinite resource consumption.
 - 2026-03-21 (Phase 23 Linux parity corrective implementation scope): execute a targeted parity fix pass before any additional Linux reruns.
   - ArcRasterRescue boundary:
     - Do not treat this as a new runtime design problem.
