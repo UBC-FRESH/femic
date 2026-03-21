@@ -5211,3 +5211,9 @@
 - Added annex/DataLad smoke checks for annex-backed public data during `prep validate-case` whenever the active case depends on paths under `external/femic-public-data`.
 - Verified the real Windows K3Z command now passes again: `python -m femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml` (with `FEMIC_EXTERNAL_DATA_ROOT` pointing at `external/femic-public-data/data`).
 - Added focused regression coverage in `tests/test_cli_main.py` for source-root fallback, missing `git-annex`, and annex/DataLad smoke behavior.
+
+## 2026-03-21 - Locked the Windows K3Z clean-start and resume boundary into tests and docs
+- Added explicit regression coverage in `tests/test_vdyp_stage.py` for native Windows VDYP command assembly, including `-c <VDYP_CFG>` injection and trailing-slash handling for the config directory.
+- Updated parent docs to show the exact known-good Windows K3Z clean-start path from the FEMIC checkout: `femic run` to the BatchTIPSY freshness boundary, then `femic tsa post-tipsy` as the intended downstream resume point.
+- Marked `P23.2a` and `P23.2b` complete now that the native-Windows command path is tested and the operator-facing clean-start/resume sequence is documented explicitly.
+

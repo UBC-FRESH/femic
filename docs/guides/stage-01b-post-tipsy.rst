@@ -51,3 +51,29 @@ Primary Legacy Notebook Coverage
 
 Derived from ``01b_run-tsa.ipynb`` plus parent orchestration notes in
 ``00_data-prep.ipynb``.
+
+Known-Good Windows K3Z Resume Path
+----------------------------------
+
+Once BatchTIPSY has refreshed the canonical output file:
+
+- ``external/femic-k3z-instance/data/04_output-tsak3z.out``
+
+resume **only** the downstream path:
+
+.. code-block:: powershell
+
+   $env:FEMIC_EXTERNAL_DATA_ROOT='C:\Users\gep\projects\femic\external\femic-public-data\data'
+   python -m femic tsa post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_windows_cleanstart
+
+Then continue into Patchworks export/build as needed, for example:
+
+.. code-block:: powershell
+
+   python -m femic patchworks build-blocks --instance-root external/femic-k3z-instance --config config/patchworks.runtime.windows.yaml
+   python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.windows.yaml --run-id k3z_windows_cleanstart
+
+This is the intended Windows clean-start/restart boundary for K3Z: upstream
+Stage 01a writes the TIPSY handoff, BatchTIPSY runs manually, then ``tsa
+post-tipsy`` resumes downstream without rerunning the expensive GIS/VDYP work.
+

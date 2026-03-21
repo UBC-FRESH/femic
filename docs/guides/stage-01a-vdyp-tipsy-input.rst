@@ -77,3 +77,25 @@ K3Z Teaching Baseline Notes
   - CW-pair AUs: ``900 CW + 3100 HW``
   - all other remaining treated AUs: ``600 CW + 300 FD + 3100 HW``
 
+Known-Good Windows K3Z Hand-Off
+-------------------------------
+
+On the validated Patchworks workstation, the intended K3Z Stage 01a path is:
+
+.. code-block:: powershell
+
+   $env:FEMIC_EXTERNAL_DATA_ROOT='C:\Users\gep\projects\femic\external\femic-public-data\data'
+   python -m femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
+   python -m femic run --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --run-id k3z_windows_cleanstart
+
+Expected outcome:
+
+- native Windows VDYP runs using the bundled ``VDYP7Console.exe``
+- SiteProd geoprocessing can fall back through ArcGIS Pro when needed
+- FEMIC stops intentionally at the BatchTIPSY freshness boundary after writing:
+  - ``external/femic-k3z-instance/data/02_input-tsak3z.dat``
+  - ``external/femic-k3z-instance/data/tipsy_params_tsak3z.xlsx`` or a timestamped fallback workbook
+
+At that point, do **not** rerun Stage 01a unless the TIPSY handoff really needs
+to be regenerated, because doing so will make the previous ``04_output`` stale.
+

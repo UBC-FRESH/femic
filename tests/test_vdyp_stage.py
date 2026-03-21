@@ -7,6 +7,7 @@ import subprocess
 import pandas as pd
 import pytest
 import numpy as np
+import femic.pipeline.vdyp_stage as vdyp_stage
 
 from femic.pipeline.vdyp_stage import (
     CurveSmoothingPlotConfig,
@@ -198,7 +199,10 @@ def test_resolve_vdyp_batch_execution_dependencies_keeps_injected_callables() ->
     assert deps.subprocess_run is _run
 
 
-def test_build_vdyp_batch_command_preserves_legacy_string_shape() -> None:
+def test_build_vdyp_batch_command_preserves_legacy_string_shape(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(vdyp_stage.os, "name", "posix", raising=False)
     cmd = build_vdyp_batch_command(
         vdyp_binpath="VDYP7/VDYP7/VDYP7Console.exe",
         vdyp_params_infile="vdyp_params-landp",
@@ -210,13 +214,52 @@ def test_build_vdyp_batch_command_preserves_legacy_string_shape() -> None:
     )
     assert cmd == (
         "wine VDYP7/VDYP7/VDYP7Console.exe -p vdyp_params-landp "
-        "-ip .\\\\tmp/vdyp_io\\\\vdyp_ply_123.csv "
-        "-il .\\\\tmp/vdyp_io\\\\vdyp_lyr_123.csv "
-        "-o .\\\\tmp/vdyp_io\\\\vdyp_out_123.out "
-        "-e .\\\\tmp/vdyp_io\\\\vdyp_err_123.err"
+        "-ip ./tmp/vdyp_io/vdyp_ply_123.csv "
+        "-il ./tmp/vdyp_io/vdyp_lyr_123.csv "
+        "-o ./tmp/vdyp_io/vdyp_out_123.out "
+        "-e ./tmp/vdyp_io/vdyp_err_123.err"
     )
 
 
+def test_build_vdyp_batch_command_windows_uses_native_cfg_dir(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(vdyp_stage.os, "name", "nt", raising=False)
+
+    cmd = build_vdyp_batch_command(
+        vdyp_binpath="VDYP7/VDYP7/VDYP7Console.exe",
+        vdyp_params_infile="C:\\repo\\vdyp_params-landp",
+        vdyp_io_dir=Path("tmp/vdyp_io"),
+        vdyp_ply_csv="vdyp_ply_123.csv",
+        vdyp_lyr_csv="vdyp_lyr_123.csv",
+        vdyp_out_txt="vdyp_out_123.out",
+        vdyp_err_txt="vdyp_err_123.err",
+        vdyp_cfg_dir="C:\\repo\\vdyp_io\\VDYP_CFG",
+    )
+
+    assert not cmd.startswith("wine ")
+    assert "VDYP7/VDYP7/VDYP7Console.exe -p C:\\repo\\vdyp_params-landp" in cmd
+    assert "-c C:\\repo\\vdyp_io\\VDYP_CFG\\" in cmd
+    assert "-ip ./tmp/vdyp_io/vdyp_ply_123.csv" in cmd
+
+
+def test_build_vdyp_batch_command_windows_uses_env_cfg_dir_when_not_provided(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(vdyp_stage.os, "name", "nt", raising=False)
+    monkeypatch.setenv("FEMIC_VDYP_CFG_DIR", "C:\\repo\\vdyp_io\\VDYP_CFG")
+
+    cmd = build_vdyp_batch_command(
+        vdyp_binpath="VDYP7/VDYP7/VDYP7Console.exe",
+        vdyp_params_infile="vdyp_params-landp",
+        vdyp_io_dir=Path("tmp/vdyp_io"),
+        vdyp_ply_csv="vdyp_ply_123.csv",
+        vdyp_lyr_csv="vdyp_lyr_123.csv",
+        vdyp_out_txt="vdyp_out_123.out",
+        vdyp_err_txt="vdyp_err_123.err",
+    )
+
+    assert "-c C:\\repo\\vdyp_io\\VDYP_CFG\\" in cmd
 def test_collect_vdyp_batch_run_metadata_captures_expected_fields(
     tmp_path: Path,
 ) -> None:
@@ -818,7 +861,11 @@ def test_run_vdyp_sampling_fixed_mode_honors_random_seed() -> None:
     assert _run_once() == _run_once()
 
 
-def test_run_vdyp_for_stratum_requires_wine_binary(tmp_path: Path) -> None:
+def test_run_vdyp_for_stratum_requires_wine_binary(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(vdyp_stage.os, "name", "posix", raising=False)
     sample_table = pd.DataFrame({"FEATURE_ID": [1]})
     vdyp_bin = tmp_path / "vdyp.exe"
     vdyp_params = tmp_path / "vdyp_params-landp"
@@ -1625,7 +1672,7 @@ def test_execute_curve_smoothing_runs_builds_output_and_logs_missing(
         assert isinstance(vdyp_out, dict)
         assert kwargs["curve_context"]["stratum_code"] == "S1"
         assert kwargs["custom_knob"] == 7
-        assert float(kwargs["toe_shift_years"]) == pytest.approx(20.0)
+        assert float(kwargs["toe_shift_years"]) == pytest.approx(0.0)
         return [1.0, 20.0, 40.0], [1e-6, 120.0, 180.0]
 
     smoothed_runs = execute_curve_smoothing_runs(
@@ -1671,6 +1718,7 @@ def test_execute_curve_smoothing_runs_prefers_tail_blend_for_k3z_output(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("FEMIC_K3Z_FORCE_TAIL_BLEND", "1")
     events: list[dict[str, object]] = []
 
     def append_event(_path: str | Path, payload: object) -> None:

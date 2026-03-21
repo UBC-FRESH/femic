@@ -708,8 +708,8 @@ notes.
   - [x] P23.1b Record which runtime surfaces are authoritative per platform (for example: native Patchworks on Windows, Wine-wrapped VDYP on Linux, native VDYP on Windows).
   - [x] P23.1c Add deterministic environment-detection/preflight checks so FEMIC can report missing platform prerequisites clearly before long runs start.
 - [ ] P23.2 Make Windows a first-class full-pipeline execution environment
-  - [ ] P23.2a Validate native Windows VDYP invocation using the bundled local `VDYP7Console.exe` path instead of Linux/Wine assumptions.
-  - [ ] P23.2b Add/verify Windows run-profile and helper wiring so `femic run` can execute end-to-end from a clean start in the Patchworks workstation environment.
+  - [x] P23.2a Validate native Windows VDYP invocation using the bundled local `VDYP7Console.exe` path instead of Linux/Wine assumptions.
+  - [x] P23.2b Add/verify Windows run-profile and helper wiring so `femic run` can execute end-to-end from a clean start in the Patchworks workstation environment.
   - [x] P23.2c Document the known-good Windows bootstrap sequence for local `.venv`, native VDYP, Patchworks, and Java.
   - [x] P23.2d Apply the K3Z low-yield treated-strata simplification cleanly in the canonical pipeline: exclude `CWHvm_CW+YC` and `CWHvm_CW+PLC` from BatchTIPSY generation, keep their unmanaged VDYP side, and force `RETENTION = 1.0` for matching fragments so they are fully netted out of THLB in the baseline model.
   - [x] P23.2e Replace the remaining K3Z TIPSY species-mix rules with the simplified teaching logic: FD-pair AUs -> `900 FD + 3100 HW`; CW-pair AUs -> `900 CW + 3100 HW`; all other remaining treated AUs -> `600 CW + 300 FD + 3100 HW`.
