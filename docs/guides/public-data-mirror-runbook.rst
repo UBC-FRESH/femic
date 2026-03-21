@@ -103,6 +103,17 @@ The mirror repo is linked into FEMIC at
 .. code-block:: bash
 
    git submodule update --init --recursive
+
+On Windows, prefer the `.venv`-scoped executable explicitly:
+
+.. code-block:: powershell
+
+   .venv\Scripts\datalad.exe get external/femic-public-data/data/misc.thlb.tif
+
+On Linux/macOS:
+
+.. code-block:: bash
+
    datalad get external/femic-public-data/data/misc.thlb.tif
 
 To refresh metadata and retrieve updated artifacts:
@@ -113,9 +124,44 @@ To refresh metadata and retrieve updated artifacts:
    datalad update --merge external/femic-public-data
    datalad get -r external/femic-public-data/data
 
+Windows Notes
+-------------
+
+The known-good Windows bootstrap pattern is:
+
+- `git` on user `PATH`
+- `git-annex` on user `PATH`
+- DataLad installed inside `.venv`
+- use `.venv\Scripts\datalad.exe` explicitly if `datalad` is not on `PATH`
+
+Recommended smoke checks on Windows:
+
+.. code-block:: powershell
+
+   git --version
+   git annex version
+   .venv\Scripts\datalad.exe --version
+   .venv\Scripts\datalad.exe get external/femic-public-data/data/misc.thlb.tif
+   git -C external/femic-public-data annex version
+
+If a repo looks dirty because a GIS library touched internal sidecar files,
+recover it before continuing with FEMIC work:
+
+.. code-block:: powershell
+
+   .venv\Scripts\datalad.exe status external/femic-public-data
+
+Then either rerun `datalad get` for missing payloads or restore the submodule to
+its recorded clean state before proceeding.
+
 Acceptance Checks
 -----------------
 
 - ``metadata/required_datasets.yaml`` and mirror repo paths agree.
 - Every mirrored dataset has a populated ``checksum.value``.
 - Fresh-clone smoke test can retrieve ``misc.thlb.tif`` via ``datalad get``.
+- Windows collaborator smoke can run:
+  - ``git annex version``
+  - ``.venv\Scripts\datalad.exe get external/femic-public-data/data/misc.thlb.tif``
+  - ``git -C external/femic-public-data annex version``
+

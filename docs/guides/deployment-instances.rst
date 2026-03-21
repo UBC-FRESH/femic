@@ -102,6 +102,9 @@ For DataLad mirror clone/get/update workflow, see
 Mirror datasets are linked in-repo via submodule:
 ``external/femic-public-data``.
 
+Windows users should also follow `docs/guides/geospatial-runtime-bootstrap.rst`
+and use `.venv\Scripts\datalad.exe` explicitly if DataLad is not on `PATH`.
+
 Canonical K3Z Example Instance Repository
 -----------------------------------------
 

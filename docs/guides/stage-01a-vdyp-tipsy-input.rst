@@ -65,7 +65,7 @@ See traceability mapping for markdown cells in ``01a_run-tsa.ipynb`` and
 cross-referenced driver cells in ``00_data-prep.ipynb``.
 
 K3Z Teaching Baseline Notes
---------------------------
+---------------------------
 
 - K3Z baseline managed curves now come from real BatchTIPSY output driven by
   VDYP-derived SI.
@@ -76,3 +76,4 @@ K3Z Teaching Baseline Notes
   - FD-pair AUs: ``900 FD + 3100 HW``
   - CW-pair AUs: ``900 CW + 3100 HW``
   - all other remaining treated AUs: ``600 CW + 300 FD + 3100 HW``
+
