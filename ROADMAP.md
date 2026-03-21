@@ -722,9 +722,9 @@ notes.
   - [x] P23.4b Ensure FEMIC operator docs explain how annex-backed payloads are materialized on Windows (including pointer-file behavior and recovery steps).
   - [x] P23.4c Add validation/smoke checks that confirm annex-backed public-data payloads are usable from Windows pipeline runs.
 - [ ] P23.5 Add cross-platform docs, smoke tests, and acceptance gates
-  - [ ] P23.5a Add a user-facing guide describing how to run FEMIC cleanly in both Linux and Windows environments.
-  - [ ] P23.5b Add smoke workflows for a clean-start rerun on Windows and a parity rerun on Linux.
-  - [ ] P23.5c Define acceptance as: FEMIC can rerun a full canonical pipeline from a clean start on both platforms with documented, platform-appropriate runtime rituals.
+  - [x] P23.5a Add a user-facing guide describing how to run FEMIC cleanly in both Linux and Windows environments.
+  - [x] P23.5b Add smoke workflows for a clean-start rerun on Windows and a parity rerun on Linux.
+  - [x] P23.5c Define acceptance as: FEMIC can rerun a full canonical pipeline from a clean start on both platforms with documented, platform-appropriate runtime rituals.
   - [x] P23.5d Update user-facing K3Z docs and operator runbooks to explain the low-yield treated-strata netdown decision (`CWHvm_CW+YC`, `CWHvm_CW+PLC`), the resulting full-retention behavior, and the simplified TIPSY species-mix logic used for the remaining treated AUs.
 
 ## Detailed Next Steps Notes

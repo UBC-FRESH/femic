@@ -5217,3 +5217,8 @@
 - Updated parent docs to show the exact known-good Windows K3Z clean-start path from the FEMIC checkout: `femic run` to the BatchTIPSY freshness boundary, then `femic tsa post-tipsy` as the intended downstream resume point.
 - Marked `P23.2a` and `P23.2b` complete now that the native-Windows command path is tested and the operator-facing clean-start/resume sequence is documented explicitly.
 
+## 2026-03-21 - Added a cross-platform smoke and acceptance guide for Phase 23
+- Added `docs/guides/cross-platform-runtime-smoke.rst` as the user-facing Phase 23 guide for Windows and Linux runtime rituals, smoke workflows, and acceptance criteria.
+- Wired the new guide into the guides index and deployment-instance docs so operators can find the cross-platform contract from the normal docs path.
+- Marked `P23.5a`, `P23.5b`, and `P23.5c` complete now that the smoke workflows and acceptance gate are written down explicitly.
+

@@ -105,6 +105,9 @@ Mirror datasets are linked in-repo via submodule:
 Windows users should also follow `docs/guides/geospatial-runtime-bootstrap.rst`
 and use `.venv\Scripts\datalad.exe` explicitly if DataLad is not on `PATH`.
 
+For the cross-platform smoke and acceptance contract, see
+`docs/guides/cross-platform-runtime-smoke.rst`.
+
 Canonical K3Z Example Instance Repository
 -----------------------------------------
 
