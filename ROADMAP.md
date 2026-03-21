@@ -714,8 +714,8 @@ notes.
   - [x] P23.2d Apply the K3Z low-yield treated-strata simplification cleanly in the canonical pipeline: exclude `CWHvm_CW+YC` and `CWHvm_CW+PLC` from BatchTIPSY generation, keep their unmanaged VDYP side, and force `RETENTION = 1.0` for matching fragments so they are fully netted out of THLB in the baseline model.
   - [x] P23.2e Replace the remaining K3Z TIPSY species-mix rules with the simplified teaching logic: FD-pair AUs -> `900 FD + 3100 HW`; CW-pair AUs -> `900 CW + 3100 HW`; all other remaining treated AUs -> `600 CW + 300 FD + 3100 HW`.
 - [ ] P23.3 Preserve and harden Linux execution parity
-  - [ ] P23.3a Keep Linux VDYP execution working via Wine and document the exact wrapper/runtime expectations. Needs execution and verification from the maintained Linux dev environment. Current blocker (2026-03-21 Linux rerun): Stage 00 fails before VDYP launch with `FileNotFoundError: ArcRasterRescue executable not found: ../ArcRasterRescue/build/arc_raster_rescue.exe`.
-  - [ ] P23.3b Verify Linux guidance still covers the full FEMIC pipeline when Patchworks is unavailable natively. Needs execution and verification from the maintained Linux dev environment. Current blocker (2026-03-21 Linux rerun): `femic tsa post-tipsy` fails freshness guard because `04_output-tsak3z.out` is older than `tipsy_params_tsak3z.xlsx`.
+  - [ ] P23.3a Keep Linux VDYP execution working via Wine and document the exact wrapper/runtime expectations. Needs execution and verification from the maintained Linux dev environment. Current blocker (2026-03-21 Linux rerun): Stage 01a now clears ArcRasterRescue path resolution but still fails before parity sign-off; last hard failure was `RuntimeError: VDYP executable not found: /tmp/<instance>/VDYP7/VDYP7/VDYP7Console.exe` (fixed in source-root fallback code), and current resumed Linux rerun still requires a clean end-to-end confirmation to the BatchTIPSY handoff boundary.
+  - [ ] P23.3b Verify Linux guidance still covers the full FEMIC pipeline when Patchworks is unavailable natively. Needs execution and verification from the maintained Linux dev environment. Current blocker (2026-03-21 Linux rerun): `femic tsa post-tipsy` now passes freshness checks but fails later in 01b plotting with `KeyError: 'L'` at `vdyp_curves_by_scsi.loc[sc, si_level]` for K3Z resume validation.
   - [ ] P23.3c Add parity notes explaining what is expected to differ between Linux and Windows and what should remain identical. Final sign-off needs Linux-side verification, even though the draft docs now exist.
 - [x] P23.4 Stabilize DataLad / git-annex bootstrap on Windows
   - [x] P23.4a Document a known-good Windows install/bootstrap pattern for `git`, `git-annex`, and DataLad.
@@ -741,6 +741,41 @@ notes.
   - Linux sign-off portion of P23.3c
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
 ## Detailed Next Steps Notes
+- 2026-03-21 (Phase 23 Linux parity corrective rerun after ArcRasterRescue + TIPSY freshness fixes): advanced past prior blockers, but Linux parity is still not fully closed.
+  - Implemented and validated in-repo fixes:
+    - ArcRasterRescue executable path resolution now supports `FEMIC_ARC_RASTER_RESCUE_EXE` and source-root/instance-root fallback resolution.
+    - ArcRasterRescue FileGDB invocation now normalizes `.gdb/` command-path form expected by the patched tool workflow.
+    - Stage 01b freshness now treats DAT as canonical and supports DAT-hash sidecars (`04_output-tsaXX.out.input_sha256`) so unchanged DAT content does not repeatedly force manual BatchTIPSY reruns.
+    - Stage 01b skips BatchTIPSY freshness gating when `managed_curve_mode != tipsy` (`vdyp_transform` path).
+    - `run_vdyp_for_stratum(...)` now resolves relative VDYP executable paths via `FEMIC_SOURCE_ROOT` fallback (matching existing params-path fallback semantics).
+  - Linux runtime verification evidence:
+    - `P23.3a` rerun (`run-id: k3z_linux_p233a_20260321_r4`) progressed through SiteProd extraction/stacking and pre-VDYP checkpoint generation, then failed at VDYP runtime boundary with:
+      `RuntimeError: VDYP executable not found: /tmp/femic_p23a_r4_Ch5Y9R/VDYP7/VDYP7/VDYP7Console.exe`
+      (manifest: `/tmp/femic_p23a_r4_Ch5Y9R/vdyp_io/logs/run_manifest-k3z_linux_p233a_20260321_r4.json`, `status=failed`, `exit_code=1`).
+    - After adding source-root fallback for VDYP executable resolution, resumed Linux rerun continued past this explicit error but did not yet complete to a clean BatchTIPSY handoff sign-off within this session.
+  - `P23.3b` rerun evidence:
+    - command:
+      `femic tsa post-tipsy --instance-root /tmp/femic_p23b_r5_dC7Rio --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_p233b_20260321_r5_only`
+    - freshness guard no longer blocked on DAT/XLSX timestamp mismatch; run advanced into plotting and then failed with:
+      `KeyError: 'L'` (from `vdyp_curves_by_scsi.loc[sc, si_level]` in `01b_run-tsa.py`).
+    - manifest:
+      `/tmp/femic_p23b_r5_dC7Rio/vdyp_io/logs/run_manifest-k3z_linux_p233b_20260321_r5_only.json` (`status=failed`, `exit_code=1`).
+  - Phase 23 remains open pending:
+    - final Linux run confirmation that Stage 01a reaches the expected BatchTIPSY handoff boundary with the corrected runtime fallbacks, and
+    - resolution/characterization of the `KeyError: 'L'` post-TIPSY plotting/indexing failure during Linux resume validation.
+- 2026-03-21 (Phase 23 Linux parity corrective implementation scope): execute a targeted parity fix pass before any additional Linux reruns.
+  - ArcRasterRescue boundary:
+    - Do not treat this as a new runtime design problem.
+    - Reuse and codify the existing documented workflow for the patched ArcRasterRescue fork/build used to extract SiteProd rasters from ESRI FileGDB sources.
+    - Update runtime path resolution/docs so Linux parity runs point at that existing executable workflow rather than assuming only a local `../ArcRasterRescue/build/arc_raster_rescue.exe` adjacency.
+  - BatchTIPSY freshness boundary:
+    - Treat `02_input-tsaXX.dat` as the canonical freshness input, not `tipsy_params_tsaXX.xlsx` (human-readable companion only).
+    - Replace timestamp-only stale detection with content-aware behavior so unchanged DAT content does not force repeated manual BatchTIPSY reruns.
+    - Ensure Stage 01b/post-TIPSY freshness blocking is mode-aware: when managed curves are not `tipsy` (for example `vdyp_transform`), do not require BatchTIPSY output freshness to proceed.
+  - Required outputs for this corrective pass:
+    - code + tests for ArcRasterRescue executable resolution aligned with documented workflow,
+    - code + tests for DAT-authoritative, mode-aware TIPSY freshness behavior,
+    - user-facing and agent-facing docs updated to match actual expected operator workflow on Linux and Windows.
 - 2026-03-21 (Phase 23 Linux parity rerun after bootstrap hardening): verified Linux runtime bootstrap improvements and re-ran the remaining `P23.3` commands from a Linux host with real annex payload materialization; parity remains blocked by two concrete runtime boundaries.
   - Linux runtime bootstrap recovery completed in-session:
     - installed OS-level `git-annex` (`sudo apt-get install -y git-annex`),

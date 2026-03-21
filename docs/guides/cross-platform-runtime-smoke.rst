@@ -168,6 +168,8 @@ These differences are currently expected and acceptable:
 - ArcGIS Pro fallback availability on Windows only
 - Patchworks validation on Windows only
 - exact operator steps around manual BatchTIPSY execution
+- ArcRasterRescue executable path resolution details (use
+  ``FEMIC_ARC_RASTER_RESCUE_EXE`` if the default sibling layout is absent)
 
 Evidence to Keep
 ----------------

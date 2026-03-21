@@ -5275,3 +5275,32 @@
 - Phase 23 Linux parity remains open (`P23.3a`, `P23.3b`, `P23.3c`) with two explicit blockers now recorded in `ROADMAP.md`:
   - missing Linux-usable ArcRasterRescue boundary for Stage 00 SiteProd processing,
   - stale BatchTIPSY output relative to current handoff artifacts for post-TIPSY resume.
+
+## 2026-03-21 - Applied ArcRasterRescue/TIPSY boundary fixes and reran Linux parity checks
+- Implemented runtime fixes to align with existing project workflow rather than inventing new behavior:
+  - ArcRasterRescue executable resolution now supports `FEMIC_ARC_RASTER_RESCUE_EXE` plus source-root/instance-root fallback resolution.
+  - ArcRasterRescue FileGDB invocation now normalizes the `.gdb/` argument form required by the patched fork tooling.
+  - `run_vdyp_for_stratum(...)` now resolves relative `vdyp_binpath` via `FEMIC_SOURCE_ROOT` fallback (matching existing params fallback behavior).
+- Implemented TIPSY freshness-policy corrections:
+  - `02_input-tsaXX.dat` is now authoritative for stale detection.
+  - freshness checks now support DAT-hash sidecars (`04_output-tsaXX.out.input_sha256`) so unchanged DAT content does not repeatedly force manual BatchTIPSY reruns.
+  - Stage 01b now skips BatchTIPSY freshness gating when `managed_curve_mode != tipsy` (`vdyp_transform` path).
+- Added/updated regression coverage:
+  - `tests/test_siteprod.py` for ArcRasterRescue source-root/env-override resolution and `.gdb/` invocation normalization.
+  - `tests/test_tipsy.py` for DAT fingerprint acceptance/mismatch behavior and sidecar write behavior.
+  - `tests/test_vdyp_stage.py` for `FEMIC_SOURCE_ROOT` fallback of relative VDYP executable paths.
+- Updated docs/agent guidance:
+  - `AGENTS.md`
+  - `docs/guides/stage-00-data-prep.rst`
+  - `docs/guides/stage-01a-vdyp-tipsy-input.rst`
+  - `docs/guides/stage-01b-post-tipsy.rst`
+  - `docs/guides/geospatial-runtime-bootstrap.rst`
+  - `docs/guides/cross-platform-runtime-smoke.rst`
+- Linux rerun evidence after these fixes:
+  - `P23.3a` command `femic run ... --run-id k3z_linux_p233a_20260321_r4` progressed through SiteProd extraction and pre-VDYP checkpointing, then failed with
+    `RuntimeError: VDYP executable not found: /tmp/femic_p23a_r4_Ch5Y9R/VDYP7/VDYP7/VDYP7Console.exe`
+    (manifest: `/tmp/femic_p23a_r4_Ch5Y9R/vdyp_io/logs/run_manifest-k3z_linux_p233a_20260321_r4.json`, `status=failed`, `exit_code=1`).
+  - `P23.3b` command `femic tsa post-tipsy ... --run-id k3z_linux_p233b_20260321_r5_only` no longer failed at stale-TIPSY freshness checks, but failed later in 01b plotting/indexing with
+    `KeyError: 'L'` from `vdyp_curves_by_scsi.loc[sc, si_level]`
+    (manifest: `/tmp/femic_p23b_r5_dC7Rio/vdyp_io/logs/run_manifest-k3z_linux_p233b_20260321_r5_only.json`, `status=failed`, `exit_code=1`).
+- Phase 23 remains open pending final Linux end-to-end confirmation for `P23.3a` and resolution/characterization of the new `P23.3b` plotting/index mismatch blocker.

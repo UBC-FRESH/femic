@@ -37,6 +37,12 @@ the repo root:
 5. Run preflight checks before long workflows:
    - `femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml`
    - `femic prep geospatial-preflight`
+6. Before Stage 00/01 runs, confirm external runtime boundaries are explicit:
+   - ArcRasterRescue: use the existing patched fork workflow; if auto-discovery
+     fails, set `FEMIC_ARC_RASTER_RESCUE_EXE` to the compiled executable path.
+   - BatchTIPSY freshness: treat `02_input-tsaXX.dat` as canonical; XLSX is a
+     mirror only. Do not assume a stale block means rerun is required without
+     checking whether DAT content actually changed.
 
 Do not treat symlinked pointer files in `external/femic-public-data` as usable
 inputs until `datalad get` has completed.
