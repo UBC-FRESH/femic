@@ -1,4 +1,4 @@
-"""Legacy workflow wrappers for FEMIC."""
+﻿"""Legacy workflow wrappers for FEMIC."""
 
 from __future__ import annotations
 
@@ -9,7 +9,6 @@ import time
 from datetime import datetime, timezone
 from dataclasses import dataclass
 from pathlib import Path
-import pickle
 from typing import Any, Callable, Mapping
 import uuid
 
@@ -22,6 +21,7 @@ from femic.pipeline.bundle import (
 )
 from femic.pipeline.io import PipelineRunConfig, build_legacy_execution_plan
 from femic.pipeline.legacy_runtime import build_legacy_01b_runtime_config
+from femic.pipeline.pre_vdyp import load_vdyp_prep_checkpoint
 from femic.pipeline.manifest import (
     build_run_manifest_payload,
     collect_runtime_versions,
@@ -188,6 +188,16 @@ def _temporary_env(overrides: Mapping[str, str]) -> Any:
                 os.environ[key] = prior
 
 
+@contextmanager
+def _temporary_cwd(path: Path) -> Any:
+    previous = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(previous)
+
+
 def _vdyp_species_proportions_for_tsa(
     *,
     results_for_tsa: list[tuple[int, str, Any]],
@@ -285,8 +295,7 @@ def run_post_tipsy_bundle(
             if not smooth_path.exists():
                 raise FileNotFoundError(f"Missing smoothed VDYP curves: {smooth_path}")
 
-            with prep_path.open("rb") as fh:
-                results_for_tsa = pickle.load(fh)
+            results_for_tsa = load_vdyp_prep_checkpoint(prep_path)
             results[tsa] = results_for_tsa
             vdyp_species_proportions[tsa] = _vdyp_species_proportions_for_tsa(
                 results_for_tsa=results_for_tsa
@@ -295,21 +304,21 @@ def run_post_tipsy_bundle(
             scsi_au[tsa], au_scsi[tsa] = _build_au_maps_from_results(
                 results_for_tsa=results_for_tsa
             )
-
             runtime_config = build_legacy_01b_runtime_config(
                 tipsy_params_path_prefix=data_root / "tipsy_params_tsa",
                 tipsy_output_root=data_root,
                 tipsy_output_filename_template="04_output-tsa{tsa}.out",
             )
             message_fn(f"running 01b for tsa {tsa}")
-            run_01b(
-                tsa=tsa,
-                results=results,
-                au_scsi=au_scsi,
-                tipsy_curves=tipsy_curves,
-                vdyp_curves_smooth=vdyp_curves_smooth,
-                runtime_config=runtime_config,
-            )
+            with _temporary_cwd(resolved_repo_root):
+                run_01b(
+                    tsa=tsa,
+                    results=results,
+                    au_scsi=au_scsi,
+                    tipsy_curves=tipsy_curves,
+                    vdyp_curves_smooth=vdyp_curves_smooth,
+                    runtime_config=runtime_config,
+                )
             tipsy_curves_paths.append(data_root / f"tipsy_curves_tsa{tsa}.csv")
             tipsy_sppcomp_paths.append(data_root / f"tipsy_sppcomp_tsa{tsa}.csv")
             tipsy_spp_path = tipsy_sppcomp_paths[-1]
@@ -598,3 +607,4 @@ def run_data_prep(
                 f"{stage_result.exit_code}: {' '.join(execution_plan.cmd)}"
             )
         return execution_plan.manifest_path
+

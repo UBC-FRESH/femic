@@ -1,4 +1,4 @@
-"""VDYP execution stage helpers for legacy notebook migration."""
+﻿"""VDYP execution stage helpers for legacy notebook migration."""
 
 from __future__ import annotations
 
@@ -215,24 +215,41 @@ def build_vdyp_batch_command(
     vdyp_lyr_csv: str,
     vdyp_out_txt: str,
     vdyp_err_txt: str,
+    vdyp_cfg_dir: str | Path | None = None,
 ) -> str:
     """Build legacy VDYP command text used for execution and logging metadata."""
     vdyp_io_dir_str = _as_path(vdyp_io_dir).as_posix()
-    args = "wine %s -p %s -ip .\\\\%s\\\\%s -il .\\\\%s\\\\%s" % (
-        vdyp_binpath,
-        vdyp_params_infile,
-        vdyp_io_dir_str,
-        vdyp_ply_csv,
-        vdyp_io_dir_str,
-        vdyp_lyr_csv,
+
+    def _rel_io_path(filename: str) -> str:
+        return f"./{vdyp_io_dir_str}/{filename}"
+
+    parts: list[str] = []
+    if os.name != "nt":
+        parts.append("wine")
+    parts.extend([vdyp_binpath, "-p", vdyp_params_infile])
+    if os.name == "nt":
+        resolved_cfg = None
+        if vdyp_cfg_dir is not None:
+            resolved_cfg = str(_as_path(vdyp_cfg_dir))
+        elif os.environ.get("FEMIC_VDYP_CFG_DIR"):
+            resolved_cfg = str(_as_path(os.environ["FEMIC_VDYP_CFG_DIR"]))
+        if resolved_cfg:
+            if not resolved_cfg.endswith(("\\", "/")):
+                resolved_cfg = resolved_cfg + "\\"
+            parts.extend(["-c", resolved_cfg])
+    parts.extend(
+        [
+            "-ip",
+            _rel_io_path(vdyp_ply_csv),
+            "-il",
+            _rel_io_path(vdyp_lyr_csv),
+            "-o",
+            _rel_io_path(vdyp_out_txt),
+            "-e",
+            _rel_io_path(vdyp_err_txt),
+        ]
     )
-    args += " -o .\\\\%s\\\\%s -e .\\\\%s\\\\%s" % (
-        vdyp_io_dir_str,
-        vdyp_out_txt,
-        vdyp_io_dir_str,
-        vdyp_err_txt,
-    )
-    return args
+    return subprocess.list2cmdline(parts)
 
 
 def collect_vdyp_batch_run_metadata(
@@ -1464,7 +1481,8 @@ def run_vdyp_for_stratum(
         Callable[..., tuple[int, Any]], nsamples_from_curves_fn
     )
 
-    if which_fn("wine") is None:
+    windows_host = os.name == "nt"
+    if not windows_host and which_fn("wine") is None:
         raise RuntimeError(
             "wine not found; VDYP7 requires wine to run on non-Windows systems"
         )
@@ -1472,8 +1490,15 @@ def run_vdyp_for_stratum(
     if not vdyp_binpath_path.exists():
         raise RuntimeError(f"VDYP executable not found: {vdyp_binpath_path.resolve()}")
     vdyp_params_path = Path(vdyp_params_infile)
+    if not vdyp_params_path.exists() and not vdyp_params_path.is_absolute():
+        source_root = os.environ.get("FEMIC_SOURCE_ROOT")
+        if source_root:
+            candidate = Path(source_root) / vdyp_params_path
+            if candidate.exists():
+                vdyp_params_path = candidate
     if not vdyp_params_path.exists():
         raise RuntimeError(f"VDYP params path not found: {vdyp_params_path.resolve()}")
+    vdyp_params_infile = str(vdyp_params_path)
     Path(vdyp_io_dirname).mkdir(parents=True, exist_ok=True)
 
     tsa_paths = build_tsa_vdyp_log_paths_(
@@ -2109,10 +2134,11 @@ def execute_vdyp_batch(
             vdyp_lyr_csv=temp_artifacts.vdyp_lyr_csv,
             vdyp_out_txt=temp_artifacts.vdyp_out_txt,
             vdyp_err_txt=temp_artifacts.vdyp_err_txt,
+            vdyp_cfg_dir=os.environ.get("FEMIC_VDYP_CFG_DIR"),
         )
         try:
             result = deps.subprocess_run(
-                shlex.split(args),
+                shlex.split(args, posix=os.name != "nt"),
                 timeout=timeout,
                 capture_output=True,
                 text=True,
@@ -2237,31 +2263,31 @@ def execute_curve_smoothing_runs(
     dominant_recovery_max_metric_ratio = float(
         os.environ.get("FEMIC_DOMINANT_RECOVERY_MAX_METRIC_RATIO", "0.40")
     )
-    body_c_min_default = float(os.environ.get("FEMIC_BODY_C_MIN", "20.0"))
+    body_c_min_default = float(os.environ.get("FEMIC_BODY_C_MIN", "-20.0"))
     merchantable_floor_age = 20.0
     merchantable_floor_value = 0.0
     toe_shift_default_years = float(
-        os.environ.get("FEMIC_VDYP_TOE_SHIFT_YEARS", "20.0")
+        os.environ.get("FEMIC_VDYP_TOE_SHIFT_YEARS", "0.0")
     )
     tail_default_linear_min_points = int(
         os.environ.get("FEMIC_TAIL_LINEAR_MIN_POINTS", "4")
     )
     tail_default_linear_min_r2 = float(
-        os.environ.get("FEMIC_TAIL_LINEAR_MIN_R2", "0.75")
+        os.environ.get("FEMIC_TAIL_LINEAR_MIN_R2", "0.10")
     )
     tail_default_linear_max_nrmse = float(
-        os.environ.get("FEMIC_TAIL_LINEAR_MAX_NRMSE", "0.18")
+        os.environ.get("FEMIC_TAIL_LINEAR_MAX_NRMSE", "0.65")
     )
     tail_default_linear_prefer_min_age = float(
-        os.environ.get("FEMIC_TAIL_LINEAR_PREFER_MIN_AGE", "180.0")
+        os.environ.get("FEMIC_TAIL_LINEAR_PREFER_MIN_AGE", "70.0")
     )
     tail_default_linear_flat_slope_abs = float(
-        os.environ.get("FEMIC_TAIL_LINEAR_FLAT_SLOPE_ABS", "0.04")
+        os.environ.get("FEMIC_TAIL_LINEAR_FLAT_SLOPE_ABS", "0.25")
     )
     tail_default_linear_min_span_years = float(
-        os.environ.get("FEMIC_TAIL_LINEAR_MIN_SPAN_YEARS", "80.0")
+        os.environ.get("FEMIC_TAIL_LINEAR_MIN_SPAN_YEARS", "10.0")
     )
-    tail_default_blend_years = float(os.environ.get("FEMIC_TAIL_BLEND_YEARS", "40.0"))
+    tail_default_blend_years = float(os.environ.get("FEMIC_TAIL_BLEND_YEARS", "120.0"))
     tail_select_min_tail_improvement = float(
         os.environ.get("FEMIC_TAIL_SELECT_MIN_TAIL_IMPROVEMENT", "0.96")
     )
@@ -2326,7 +2352,7 @@ def execute_curve_smoothing_runs(
         params.setdefault(
             "tail_linear_min_span_years", tail_default_linear_min_span_years
         )
-        params.setdefault("tail_linear_allow_quantile_fallback", False)
+        params.setdefault("tail_linear_allow_quantile_fallback", True)
         params.setdefault("tail_blend_years", tail_default_blend_years)
         return params
 
@@ -3435,9 +3461,13 @@ def execute_curve_smoothing_runs(
                 selected_metrics = dict(
                     fit_metrics.get("merchantable_floor", selected_metrics)
                 )
-            # K3Z is currently using tail-blend-smoothed unmanaged curves for
-            # TIPSY-vs-VDYP comparison plots.
-            if str(tsa).strip().lower() == "k3z":
+            # Preserve an escape hatch for the earlier K3Z tail-blend override,
+            # but keep it disabled by default so K3Z follows the same candidate
+            # selection policy as other cases unless explicitly requested.
+            force_k3z_tail_blend = os.environ.get(
+                "FEMIC_K3Z_FORCE_TAIL_BLEND", "0"
+            ).strip().lower() in ("1", "true", "yes", "on")
+            if force_k3z_tail_blend and str(tsa).strip().lower() == "k3z":
                 tail_curve = candidate_curves.get("tail_blend")
                 if tail_curve is not None:
                     output_x, output_y = tail_curve
@@ -3592,3 +3622,4 @@ def execute_curve_smoothing_runs(
             )
     _emit_lmh_overlay_plot(tsa_code=tsa, runs=smoothed_runs)
     return smoothed_runs
+

@@ -732,14 +732,15 @@ def _preflight_checks(*, resume: bool, instance_context: InstanceContext) -> Non
     if not vdyp_exe.exists():
         errors.append(f"Missing VDYP executable: {vdyp_exe}")
 
+    windows_host = os.name == "nt"
     wine = shutil.which("wine")
-    if not wine:
+    if not windows_host and not wine:
         if resume:
             warnings.append(
                 "wine not found on PATH (resume may still work if caches exist)"
             )
         else:
-            errors.append("wine not found on PATH (required to run VDYP)")
+            errors.append("wine not found on PATH (required to run VDYP on non-Windows systems)")
 
     for message in warnings:
         console.print(f"[yellow]Warning:[/yellow] {message}")

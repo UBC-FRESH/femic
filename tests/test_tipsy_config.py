@@ -63,6 +63,8 @@ def test_resolve_tipsy_param_builder_prefers_config_when_available(
         """
 schema_version: 1
 tsa_code: "08"
+exclude_stratum_codes:
+  - "SBS_SW+PL"
 defaults:
   e: {Proportion: 1}
   f: {Proportion: 1}
@@ -92,6 +94,7 @@ rules:
     )
     assert "using config-driven TIPSY rules from" in message
     assert getattr(builder, "siteprod_si_fallback_by_species", {}) == {}
+    assert getattr(builder, "excluded_stratum_codes", set()) == {"SBS_SW+PL"}
     out = builder(
         3001,
         {
@@ -621,3 +624,39 @@ def test_build_tipsy_params_from_config_unexpected_forest_type_error_propagates(
             vdyp_out=vdyp_out,
             config=cfg,
         )
+
+
+def test_build_tipsy_params_from_config_matches_on_stratum_code() -> None:
+    cfg = {
+        "schema_version": 1,
+        "tsa_code": "08",
+        "defaults": {
+            "e": {"Proportion": 1, "Regen_Method": "P"},
+            "f": {"Proportion": 1, "Regen_Method": "P"},
+        },
+        "rules": [
+            {
+                "id": "fd_pair",
+                "when": {"stratum_code_in": ["CWHvm_HW+FDC"]},
+                "assign": {
+                    "e": {"Density": 4000, "SPP_1": "HW", "PCT_1": 77.5, "SPP_2": "FD", "PCT_2": 22.5},
+                    "f": {"Density": 4000, "SPP_1": "HW", "PCT_1": 77.5, "SPP_2": "FD", "PCT_2": 22.5},
+                },
+            }
+        ],
+    }
+    au_data = {
+        "stratum_code": "CWHvm_HW+FDC",
+        "ss": pd.DataFrame({"SITE_INDEX": [15.0], "BEC_ZONE_CODE": ["CWH"]}),
+        "species": {"HW": {"pct": 70.0}, "FD": {"pct": 30.0}},
+    }
+    vdyp_out = {1: pd.DataFrame({"SI": [15.0], "% Stk": [90.0]})}
+    out = build_tipsy_params_from_config(
+        au_id=3002,
+        au_data=au_data,
+        vdyp_out=vdyp_out,
+        config=cfg,
+    )
+    assert out["e"]["Density"] == 4000
+    assert out["e"]["SPP_1"] == "HW"
+    assert out["e"]["SPP_2"] == "FD"

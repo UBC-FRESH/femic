@@ -5171,3 +5171,9 @@
   - CT/F1/F2/F3 compiled-surface and live-Patchworks smoke expectations.
 - Validation passed:
   - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
+
+## 2026-03-21 - Locked K3Z onto real TIPSY managed curves + relaxed VDYP smoothing policy
+- Switched both K3Z run-profile copies to `managed_curve_mode: tipsy`, replacing the previous `vdyp_transform` teaching baseline.
+- Regenerated the K3Z `tipsy_vdyp_tsak3z-*.png` comparison plots from the accepted real-TIPSY handoff.
+- Locked in the current relaxed unmanaged smoothing policy (looser toe/tail defaults plus stronger `CWHvm_DR+HW` overrides) as the working K3Z checkpoint for now.
+- Updated K3Z docs to reflect the real-TIPSY baseline and removed treated-curve figure references for the fully retained `CWHvm_CW+YC` and `CWHvm_CW+PLC` AUs.

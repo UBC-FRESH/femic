@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -210,7 +211,7 @@ def build_tipsy_warning_event(
     stratumi: int,
     sc: str,
     si_level: str,
-    au: int,
+    au: int | None,
     reason: str,
 ) -> dict[str, Any]:
     """Build standardized warning payload for TIPSY-input stage issues."""
@@ -224,7 +225,7 @@ def build_tipsy_warning_event(
             "stratum_index": int(stratumi),
             "stratum_code": sc,
             "si_level": si_level,
-            "au": int(au),
+            "au": (int(au) if au is not None else None),
         },
     )
 
@@ -265,11 +266,6 @@ def write_tipsy_input_exports(
 
     tipsy_excel_path = f"{tipsy_params_path_prefix}{tsa}.xlsx"
     tipsy_dat_path = dat_path_template.format(tsa=tsa)
-    table.to_excel(
-        tipsy_excel_path,
-        index=False,
-        sheet_name="TIPSY_inputTBL",
-    )
     ordered_cols = list(DEFAULT_TIPSY_DAT_ROW_STARTS.keys())
     for col in ordered_cols:
         if col not in table.columns:
@@ -301,6 +297,24 @@ def write_tipsy_input_exports(
         )
         lines.append(row_line)
     Path(tipsy_dat_path).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    try:
+        table.to_excel(
+            tipsy_excel_path,
+            index=False,
+            sheet_name="TIPSY_inputTBL",
+        )
+    except PermissionError:
+        fallback_path = str(
+            Path(tipsy_excel_path).with_name(
+                f"{Path(tipsy_excel_path).stem}-{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            )
+        )
+        table.to_excel(
+            fallback_path,
+            index=False,
+            sheet_name="TIPSY_inputTBL",
+        )
+        tipsy_excel_path = fallback_path
     return tipsy_excel_path, tipsy_dat_path
 
 
@@ -584,6 +598,18 @@ def build_tipsy_params_for_tsa(
     if not isinstance(siteprod_si_fallback_by_species, Mapping):
         siteprod_si_fallback_by_species = None
 
+    excluded_stratum_codes = getattr(
+        tipsy_param_builder,
+        "excluded_stratum_codes",
+        None,
+    )
+    if not isinstance(excluded_stratum_codes, (set, list, tuple)):
+        excluded_stratum_codes = set()
+    else:
+        excluded_stratum_codes = {
+            str(value).strip() for value in excluded_stratum_codes if str(value).strip()
+        }
+
     def _curve_df(sc_code: str, si_level: str) -> Any | None:
         try:
             df_ = vdyp_indexed.loc[sc_code, si_level]
@@ -621,6 +647,22 @@ def build_tipsy_params_for_tsa(
 
     for stratumi, sc, result in results_for_tsa:
         message_fn(sc)
+        if sc in excluded_stratum_codes:
+            if verbose:
+                message_fn("  excluded from TIPSY handoff", sc)
+            if append_jsonl_fn is not None and vdyp_curve_events_path is not None:
+                append_jsonl_fn(
+                    vdyp_curve_events_path,
+                    build_tipsy_warning_event(
+                        tsa=tsa,
+                        stratumi=int(stratumi),
+                        sc=sc,
+                        si_level=None,
+                        au=None,
+                        reason="excluded_stratum_code",
+                    ),
+                )
+            continue
         if sc not in vdyp_strata:
             if verbose:
                 message_fn("  missing vdyp curves for stratum", sc)
@@ -799,6 +841,8 @@ def build_tipsy_params_for_tsa(
             for level in group_levels:
                 scsi_au_tsa[(sc, level)] = au
             au_scsi_tsa[au] = (sc, rep_level)
-            tipsy_params_tsa[au] = tipsy_param_builder(au, result_si, vdyp_result)
+            builder_au_data = dict(result_si)
+            builder_au_data.setdefault("stratum_code", sc)
+            tipsy_params_tsa[au] = tipsy_param_builder(au, builder_au_data, vdyp_result)
             message_fn()
     return scsi_au_tsa, au_scsi_tsa, tipsy_params_tsa
