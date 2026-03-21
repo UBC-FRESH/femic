@@ -715,7 +715,7 @@ notes.
   - [x] P23.2e Replace the remaining K3Z TIPSY species-mix rules with the simplified teaching logic: FD-pair AUs -> `900 FD + 3100 HW`; CW-pair AUs -> `900 CW + 3100 HW`; all other remaining treated AUs -> `600 CW + 300 FD + 3100 HW`.
 - [ ] P23.3 Preserve and harden Linux execution parity
   - [ ] P23.3a Keep Linux VDYP execution working via Wine and document the exact wrapper/runtime expectations. Needs execution and verification from the maintained Linux dev environment. Current blocker (2026-03-21 Linux rerun): Stage 01a now clears ArcRasterRescue path resolution but still fails before parity sign-off; last hard failure was `RuntimeError: VDYP executable not found: /tmp/<instance>/VDYP7/VDYP7/VDYP7Console.exe` (fixed in source-root fallback code), and current resumed Linux rerun still requires a clean end-to-end confirmation to the BatchTIPSY handoff boundary.
-  - [ ] P23.3b Verify Linux guidance still covers the full FEMIC pipeline when Patchworks is unavailable natively. Needs execution and verification from the maintained Linux dev environment. Current blocker (2026-03-21 Linux rerun): `femic tsa post-tipsy` now passes freshness checks but fails later in 01b plotting with `KeyError: 'L'` at `vdyp_curves_by_scsi.loc[sc, si_level]` for K3Z resume validation.
+  - [x] P23.3b Verify Linux guidance still covers the full FEMIC pipeline when Patchworks is unavailable natively. Verified on Linux 2026-03-21 with `femic tsa post-tipsy --instance-root /tmp/femic_p23b_r5_dC7Rio --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_p233b_20260321_r8` (`status=ok`), after hardening 01b plotting to tolerate missing comparison keys.
   - [ ] P23.3c Add parity notes explaining what is expected to differ between Linux and Windows and what should remain identical. Final sign-off needs Linux-side verification, even though the draft docs now exist.
 - [x] P23.4 Stabilize DataLad / git-annex bootstrap on Windows
   - [x] P23.4a Document a known-good Windows install/bootstrap pattern for `git`, `git-annex`, and DataLad.
@@ -763,6 +763,26 @@ notes.
   - Phase 23 remains open pending:
     - final Linux run confirmation that Stage 01a reaches the expected BatchTIPSY handoff boundary with the corrected runtime fallbacks, and
     - resolution/characterization of the `KeyError: 'L'` post-TIPSY plotting/indexing failure during Linux resume validation.
+- 2026-03-21 (Phase 23 Linux parity follow-up): patch 01b post-TIPSY plotting to tolerate missing `(stratum_code, si_level)` VDYP overlays during resume validation.
+  - Scope:
+    - keep bundle/table generation behavior unchanged,
+    - when a VDYP comparison key is missing, emit a warning and continue plotting TIPSY-managed trajectory rather than raising and aborting.
+  - Validation target:
+    - rerun `femic tsa post-tipsy` on Linux tmp clone and confirm stale-output guard remains resolved and the previous `KeyError: 'L'` no longer aborts the run.
+- 2026-03-21 (Phase 23 Linux parity follow-up outcome): `P23.3b` now passes on Linux; `P23.3a` still pending final clean-start boundary confirmation.
+  - Implemented additional 01b resilience fixes after rerun evidence:
+    - missing `(stratum_code, si_level)` VDYP comparison keys now emit warnings and continue,
+    - missing AU->(stratum, SI) map entries now emit warnings and continue (no hard crash in plotting loop).
+  - Linux verification evidence:
+    - `P23.3b` pass:
+      - command:
+        `femic tsa post-tipsy --instance-root /tmp/femic_p23b_r5_dC7Rio --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_p233b_20260321_r8`
+      - result:
+        downstream bundle tables + plots regenerated; command completed with `status=ok`.
+      - manifest:
+        `/tmp/femic_p23b_r5_dC7Rio/vdyp_io/logs/run_manifest-k3z_linux_p233b_20260321_r8.json`.
+    - `P23.3a` remains open:
+      - attempted clean-start rerun (`run-id: k3z_linux_p233a_20260321_r6`) entered full Stage 00 extraction path and was still long-running at session cutoff, so final Stage 01a boundary sign-off remains pending.
 - 2026-03-21 (Phase 23 Linux parity corrective implementation scope): execute a targeted parity fix pass before any additional Linux reruns.
   - ArcRasterRescue boundary:
     - Do not treat this as a new runtime design problem.

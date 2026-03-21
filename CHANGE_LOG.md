@@ -5304,3 +5304,17 @@
     `KeyError: 'L'` from `vdyp_curves_by_scsi.loc[sc, si_level]`
     (manifest: `/tmp/femic_p23b_r5_dC7Rio/vdyp_io/logs/run_manifest-k3z_linux_p233b_20260321_r5_only.json`, `status=failed`, `exit_code=1`).
 - Phase 23 remains open pending final Linux end-to-end confirmation for `P23.3a` and resolution/characterization of the new `P23.3b` plotting/index mismatch blocker.
+
+## 2026-03-21 - Completed Linux P23.3b post-TIPSY parity rerun and hardened 01b plotting resilience
+- Added two additional 01b runtime guards in `src/femic/resources/legacy/01b_run-tsa.py`:
+  - missing `(stratum_code, si_level)` comparison keys in `vdyp_curves_by_scsi` now warn and continue,
+  - missing AU->(stratum, SI) map entries now warn and continue without aborting the whole post-TIPSY run.
+- Added regression coverage for 01b overlay guard behavior:
+  - `tests/test_legacy_01b_runtime.py`.
+- Linux verification:
+  - `femic tsa post-tipsy --instance-root /tmp/femic_p23b_r5_dC7Rio --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_p233b_20260321_r8`
+  - result: success (`post-tipsy completed`), bundle tables regenerated, comparison plots regenerated.
+  - manifest: `/tmp/femic_p23b_r5_dC7Rio/vdyp_io/logs/run_manifest-k3z_linux_p233b_20260321_r8.json`.
+- Phase status:
+  - `P23.3b` can now be marked complete from Linux evidence.
+  - `P23.3a` remains pending final clean-start Stage 01a->BatchTIPSY boundary confirmation.
