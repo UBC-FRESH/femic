@@ -18,11 +18,7 @@ modes:
   vdyp_sampling_mode: all
   vdyp_two_pass_rebin: true
   vdyp_min_stands_per_si_bin: 10
-  managed_curve_mode: vdyp_transform
-  managed_curve_x_scale: 0.8
-  managed_curve_y_scale: 1.2
-  managed_curve_truncate_at_culm: true
-  managed_curve_max_age: 300
+  managed_curve_mode: tipsy
 run:
   run_id: "k3z_20260304"
   log_dir: "vdyp_io/logs"

@@ -2,8 +2,124 @@
 
 from __future__ import annotations
 
+import json
+import os
+import subprocess
+import tempfile
+import time
 from pathlib import Path
 from typing import Any, Callable, Mapping
+
+
+def _find_arcgis_pro_python() -> Path | None:
+    candidates = [
+        Path(os.environ.get("ARCGIS_PRO_PYTHON", "")).expanduser()
+        if os.environ.get("ARCGIS_PRO_PYTHON")
+        else None,
+        Path(os.environ.get("ARCGIS_PRO_PYTHON_WRAPPER", "")).expanduser()
+        if os.environ.get("ARCGIS_PRO_PYTHON_WRAPPER")
+        else None,
+        Path(r"C:/Program Files/ArcGIS/Pro/bin/Python/Scripts/propy.bat"),
+        Path(r"C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/python.exe"),
+    ]
+    for candidate in candidates:
+        if candidate and candidate.exists():
+            return candidate
+    return None
+
+
+def _run_arcgis_python(*, code: str, args: list[str]) -> subprocess.CompletedProcess[str]:
+    python_path = _find_arcgis_pro_python()
+    if python_path is None:
+        raise FileNotFoundError("ArcGIS Pro Python not found for Windows siteprod fallback")
+    if python_path.suffix.lower() == ".bat":
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix=".py",
+            delete=False,
+            encoding="utf-8",
+        ) as script_file:
+            script_file.write(code)
+            script_path = Path(script_file.name)
+        cmd = [str(python_path), str(script_path), *args]
+        last_error: subprocess.CalledProcessError | None = None
+        try:
+            for attempt in range(3):
+                try:
+                    return subprocess.run(
+                        cmd,
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                    )
+                except subprocess.CalledProcessError as exc:
+                    last_error = exc
+                    if exc.returncode != 246 or attempt == 2:
+                        raise
+                    time.sleep(2.0 * (attempt + 1))
+            assert last_error is not None
+            raise last_error
+        finally:
+            script_path.unlink(missing_ok=True)
+    cmd = [str(python_path), "-c", code, *args]
+    return subprocess.run(
+        cmd,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+
+def _list_siteprod_layers_arcgis(*, siteprod_gdb_path: str | Path) -> tuple[dict[int, str], dict[str, int]]:
+    code = (
+        "import arcpy, json, sys; "
+        "arcpy.env.workspace=sys.argv[1]; "
+        "rasters=arcpy.ListRasters() or []; "
+        "print(json.dumps(rasters))"
+    )
+    result = _run_arcgis_python(code=code, args=[str(siteprod_gdb_path)])
+    rasters = json.loads(result.stdout.strip() or "[]")
+    layer_species = {idx: str(name).removeprefix("Site_Prod_").upper() for idx, name in enumerate(rasters)}
+    species_layer = {species: idx for idx, species in layer_species.items()}
+    return layer_species, species_layer
+
+
+def _export_siteprod_layer_arcgis(
+    *,
+    site_prod_bc_gdb_path: str | Path,
+    species: str,
+    destination: str | Path,
+) -> None:
+    code = (
+        "import arcpy, sys; "
+        "arcpy.env.workspace=sys.argv[1]; "
+        "arcpy.env.overwriteOutput=True; "
+        "raster='Site_Prod_' + sys.argv[2].title(); "
+        "arcpy.management.CopyRaster(raster, sys.argv[3])"
+    )
+    _run_arcgis_python(
+        code=code,
+        args=[str(site_prod_bc_gdb_path), str(species), str(destination)],
+    )
+
+
+def _export_siteprod_layers_arcgis_batch(
+    *,
+    site_prod_bc_gdb_path: str | Path,
+    destinations: Mapping[str, str | Path],
+) -> None:
+    payload = json.dumps({str(species): str(path) for species, path in destinations.items()})
+    code = (
+        "import arcpy, json, sys; "
+        "arcpy.env.workspace=sys.argv[1]; "
+        "arcpy.env.overwriteOutput=True; "
+        "mapping=json.loads(sys.argv[2]); "
+        "[arcpy.management.CopyRaster('Site_Prod_' + species.title(), dest) for species, dest in mapping.items()]"
+    )
+    _run_arcgis_python(
+        code=code,
+        args=[str(site_prod_bc_gdb_path), payload],
+    )
 
 
 DEFAULT_SITEPROD_SPECIES_LOOKUP: dict[str, str] = {
@@ -134,13 +250,18 @@ def list_siteprod_layers(
     run_fn: Callable[..., Any],
 ) -> tuple[dict[int, str], dict[str, int]]:
     """Run ArcRasterRescue layer listing and return parsed species mappings."""
-    result = run_fn(
-        [arc_raster_rescue_exe_path, siteprod_gdb_path],
-        capture_output=True,
-    )
-    return parse_arc_raster_rescue_layer_mappings(
-        stdout_text=result.stdout.decode(),
-    )
+    arc_path = Path(arc_raster_rescue_exe_path)
+    if arc_path.exists():
+        result = run_fn(
+            [arc_raster_rescue_exe_path, siteprod_gdb_path],
+            capture_output=True,
+        )
+        return parse_arc_raster_rescue_layer_mappings(
+            stdout_text=result.stdout.decode(),
+        )
+    if os.name == "nt":
+        return _list_siteprod_layers_arcgis(siteprod_gdb_path=siteprod_gdb_path)
+    raise FileNotFoundError(f"ArcRasterRescue executable not found: {arc_path}")
 
 
 def build_siteprod_layer_tif_path(
@@ -175,18 +296,33 @@ def export_and_stack_siteprod_layers(
     message_fn: Callable[..., Any] = print,
 ) -> None:
     """Export per-species rasters, stack into one GeoTIFF, and clean temps."""
+    arc_path = Path(arc_raster_rescue_exe_path)
+    destinations: dict[str, Path] = {}
     for layer_index, species in site_prod_bc_layerspecies.items():
         message_fn("... processing species", species)
-        run_fn(
-            [
-                arc_raster_rescue_exe_path,
-                site_prod_bc_gdb_path,
-                str(layer_index),
-                build_siteprod_layer_tif_path(
-                    siteprod_tmpexport_tif_path_prefix=siteprod_tmpexport_tif_path_prefix,
-                    species=species,
-                ),
-            ]
+        destination = build_siteprod_layer_tif_path(
+            siteprod_tmpexport_tif_path_prefix=siteprod_tmpexport_tif_path_prefix,
+            species=species,
+        )
+        for existing in destination.parent.glob(f"{destination.name}*"):
+            existing.unlink(missing_ok=True)
+        destinations[species] = destination
+        if arc_path.exists():
+            run_fn(
+                [
+                    arc_raster_rescue_exe_path,
+                    site_prod_bc_gdb_path,
+                    str(layer_index),
+                    destination,
+                ]
+            )
+        elif os.name != "nt":
+            raise FileNotFoundError(f"ArcRasterRescue executable not found: {arc_path}")
+
+    if (not arc_path.exists()) and os.name == "nt":
+        _export_siteprod_layers_arcgis_batch(
+            site_prod_bc_gdb_path=site_prod_bc_gdb_path,
+            destinations=destinations,
         )
 
     file_list = enumerate_siteprod_layer_tif_paths(

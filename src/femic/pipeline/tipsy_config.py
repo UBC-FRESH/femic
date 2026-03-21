@@ -141,6 +141,11 @@ def resolve_tipsy_param_builder(
             "species_code_overrides",
             _resolve_species_code_overrides(config=cfg),
         )
+        setattr(
+            _tipsy_params_from_config,
+            "excluded_stratum_codes",
+            _resolve_excluded_stratum_codes(config=cfg),
+        )
         return (
             _tipsy_params_from_config,
             f"using config-driven TIPSY rules from {cfg_path}",
@@ -221,6 +226,7 @@ def _rule_matches(
     leading_species: str,
     bec: str,
     forest_type: int | None,
+    stratum_code: str | None,
 ) -> bool:
     when = rule.get("when", {})
     if not isinstance(when, Mapping):
@@ -233,6 +239,9 @@ def _rule_matches(
         return False
     forest_allow = when.get("forest_type_in")
     if isinstance(forest_allow, list) and forest_type not in forest_allow:
+        return False
+    stratum_allow = when.get("stratum_code_in")
+    if isinstance(stratum_allow, list) and str(stratum_code or "") not in stratum_allow:
         return False
     return True
 
@@ -271,6 +280,16 @@ def _resolve_species_code_overrides(
         if key and value:
             overrides[key] = value
     return overrides
+
+
+def _resolve_excluded_stratum_codes(
+    *,
+    config: Mapping[str, Any],
+) -> set[str]:
+    configured = config.get("exclude_stratum_codes")
+    if not isinstance(configured, list):
+        return set()
+    return {str(value).strip() for value in configured if str(value).strip()}
 
 
 def _resolve_siteprod_si_fallback_by_species(
@@ -478,6 +497,12 @@ def build_tipsy_params_from_config(
         if isinstance(species[spp], Mapping) and "pct" in species[spp]
     ]
     bec = ss.BEC_ZONE_CODE.iloc[0]
+    stratum_code = str(au_data.get("stratum_code", "")).strip()
+    if (not stratum_code) and "stratum_code" in ss:
+        try:
+            stratum_code = str(ss["stratum_code"].mode().iloc[0]).strip()
+        except (ValueError, TypeError, IndexError, KeyError, AttributeError):
+            stratum_code = ""
     forest_type: int | None = None
     if "forest_type" in ss:
         try:
@@ -504,6 +529,7 @@ def build_tipsy_params_from_config(
             leading_species=leading_species,
             bec=bec,
             forest_type=forest_type,
+            stratum_code=stratum_code,
         ):
             for side in ("e", "f"):
                 tp[side].update(

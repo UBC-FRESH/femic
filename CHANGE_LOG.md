@@ -5088,3 +5088,110 @@
   `feature.Area.og2.<au_id>`, `feature.Area.og1.total`,
   `feature.Area.og2.total`) and published the refreshed track tables in
   `external/femic-k3z-instance` commit `69322b2`.
+
+
+## 2026-03-20 - Added Phase 22 CT/fert silviculture scaffold foundation
+- Added a new Patchworks export silviculture-config contract and CLI option:
+  - `--silviculture-config` on `femic export patchworks`
+  - `--silviculture-config` on `femic export dual`
+- Introduced a dedicated treatment-path fragment/XML field `SILV_STATE` with
+  allowed values `baseline`, `ct`, `fert1`, `fert2`, `fert3`.
+- Updated Patchworks fragment validation and deterministic XML fixtures so
+  `SILV_STATE` is now part of the enforced export contract alongside `ORIGIN`
+  and `RETENTION`.
+- Added instance scaffolding templates for future CT/fert work:
+  - `src/femic/resources/instance/config/silviculture.case_template.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.yaml`
+- Kept behavior intentionally non-disruptive for this slice: no CT/fert
+  treatments or curve synthesis are active yet; this change only establishes
+  the config/state plumbing needed for the next implementation pass.
+
+## 2026-03-20 - Added Phase 22 CT/QMD treatment-mechanics slice for the optional K3Z variant
+- Pivoted treatment-path state semantics from atomic placeholders to stacked
+  path labels that match the current K3Z regeneration logic:
+  - `baseline`
+  - `cc_pl`
+  - `cc_pl_ct`
+  - `cc_pl_ct_f1`
+  - `cc_pl_ct_f1_f2`
+  - `cc_pl_ct_f1_f2_f3`
+- Added support for multiple track treatments on a single Patchworks select so
+  planted baseline tracks can expose both `CC` and `CT` where eligible.
+- Added provisional QMD curve synthesis and exported QMD feature-account
+  surface for K3Z: `feature.QMD.managed.<au_id>` and
+  `feature.QMD.unmanaged.<au_id>`.
+- Implemented the first commercial thinning treatment pass for the two initial
+  K3Z AUs (`985502001`, `985502002`):
+  - planted-only gating via `ORIGIN='planted'`,
+  - per-AU CT age (default 40),
+  - configurable BA-removal fraction and BA:volume conversion,
+  - CT product/account emission including species-wise and total harvested
+    volume outputs.
+- Added provisional post-CT residual-yield logic by subtracting CT harvested
+  volume at treatment age from the planted baseline total-yield curve, keeping
+  the no-CT endpoint approximately conserved.
+- Regenerated the K3Z variant ForestModel XML and patched the validated
+  fragments shapefile to include `SILV_STATE`, then verified a green Windows
+  Matrix Builder smoke on the optional instance branch:
+  - `python -m femic patchworks matrix-build --config config/patchworks.runtime.windows.yaml --instance-root external/femic-k3z-instance --run-id k3z_ct_qmd_smoke_20260320`
+  - result: `returncode=0`, `Managed=1692.2475729276887`,
+    `Passive=89.06566313006975`
+- Generated K3Z tracks now include `CT` treatment rows, CT harvested-volume
+  products, and the provisional QMD account surface.
+
+## 2026-03-20 - Completed Phase 22 fert-chain smoke on the optional K3Z CT/fert variant
+- Extended the Phase 22 optional K3Z silviculture variant so the CT path now carries the full provisional fertilization chain: `F1`, `F2`, and `F3`.
+- Added YAML-driven fertilization sequencing and temporary growth-response curve synthesis in `src/femic/fmg/patchworks.py`, keeping `ORIGIN` reserved for natural/planted semantics while `SILV_STATE` carries the stacked treatment path.
+- Added a CT timing guard so effective CT age is reduced to at most `F1_age - 10` when needed, ensuring there is enough room for the full CT -> F1 -> F2 -> F3 sequence within a rotation.
+- Regenerated the optional K3Z variant ForestModel XML and recompiled the Patchworks tracks with a fresh Windows Matrix Builder run:
+  - `python -m femic patchworks matrix-build --config config/patchworks.runtime.windows.yaml --instance-root external/femic-k3z-instance --run-id k3z_ct_f123_rerun_20260320`
+- Fresh smoke evidence captured in:
+  - `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_stdout-k3z_ct_f123_rerun_20260320.log`
+  - `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_stderr-k3z_ct_f123_rerun_20260320.log`
+  - `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_manifest-k3z_ct_f123_rerun_20260320.json`
+- Verified compiled K3Z outputs now materialize the full treatment chain in tracks/accounts/products, including `CT`, `F1`, `F2`, and `F3`.
+- Downstream live-Patchworks smoke also passed: pulling on the `F3` treated-area target induced the expected earlier treatment chain (`F2`, `F1`, `CT`, `CC`) across prior time steps.
+
+## 2026-03-20 - Updated standalone K3Z docs for OG and optional CT/fert variant
+- Expanded the standalone `femic-k3z-instance` Sphinx docs so they now describe both the current old-growth account surface and the optional CT/QMD/fertilization teaching variant.
+- Updated these K3Z docs pages:
+  - `docs/getting-started.rst`
+  - `docs/model-anatomy.rst`
+  - `docs/assumptions-registry.rst`
+  - `docs/base-case-analysis.rst`
+  - `docs/operator-runbook.rst`
+  - `docs/edit-policy-and-scenarios.rst`
+  - `docs/rebuild-and-qa.rst`
+  - `docs/metadata-and-lineage.rst`
+- Added explicit documentation for:
+  - Phase 21 old-growth surfaces (`feature.Area.og1.*`, `feature.Area.og2.*`) and current `og1`/`og2` curve semantics,
+  - optional branch workflow for `feature/k3z-ct-fert-treatment-option`,
+  - `SILV_STATE` treatment-path semantics,
+  - provisional QMD outputs,
+  - CT/F1/F2/F3 compiled-surface and live-Patchworks smoke expectations.
+- Validation passed:
+  - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
+
+
+## 2026-03-21 - Added a coexisting K3Z PCT->CT variant scaffold
+- Extended the Phase 22 coexistence design so K3Z now supports a third upstream-distinct variant alongside `baseline` and `ctfert`: `pctct`.
+- Added parent-side `pre_commercial_thinning` silviculture support in `src/femic/fmg/patchworks.py`, including new `SILV_STATE` values (`cc_pl_pct`, `cc_pl_pct_ct`), PCT gating, and post-PCT conifer-only managed species surfaces that remove the HW ingress component before CT.
+- Added K3Z instance variant assets for `pctct`:
+  - `config/patchworks.variant.pctct.yaml`
+  - `config/patchworks.runtime.pctct.windows.yaml`
+  - `config/silviculture.k3z.pctct.yaml`
+  - `models/k3z_patchworks_model/analysis/pctct.pin`
+  - `models/k3z_patchworks_model/yield/forestmodel_pctct.xml`
+  - `models/k3z_patchworks_model/tracks_pctct/`
+  - `output/patchworks_k3z_pctct_validated/`
+- Windows Matrix Builder smoke passed for the new variant:
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml --run-id k3z_pctct_smoke_20260321`
+- Verified the compiled `tracks_pctct` surface contains the intended `PCT -> CT -> CC` path and does not materialize any fertilization treatments.
+- Hardened `pctct.pin` and `ctfert.pin` map-layer styling to use simple solid colors instead of unsupported patterned BeanShell symbol constants, then confirmed `pctct.pin` launches and a quick Patchworks smoke shows `CT` pulls on `PCT` and `CC` in earlier periods as expected.
+- Updated the standalone K3Z docs/runbook pages so baseline, `ctfert`, and `pctct` are all documented as coexisting config/PIN-driven variants inside one instance checkout.
+
+## 2026-03-21 - Locked K3Z onto real TIPSY managed curves + relaxed VDYP smoothing policy
+- Switched both K3Z run-profile copies to `managed_curve_mode: tipsy`, replacing the previous `vdyp_transform` teaching baseline.
+- Regenerated the K3Z `tipsy_vdyp_tsak3z-*.png` comparison plots from the accepted real-TIPSY handoff.
+- Locked in the current relaxed unmanaged smoothing policy (looser toe/tail defaults plus stronger `CWHvm_DR+HW` overrides) as the working K3Z checkpoint for now.
+- Updated K3Z docs to reflect the real-TIPSY baseline and removed treated-curve figure references for the fully retained `CWHvm_CW+YC` and `CWHvm_CW+PLC` AUs.

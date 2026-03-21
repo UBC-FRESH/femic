@@ -100,6 +100,7 @@ class SelectDefinition:
     retention_definitions: tuple[RetentionDefinition, ...] = ()
     include_track: bool = False
     track_treatment: TreatmentDefinition | None = None
+    track_treatments: tuple[TreatmentDefinition, ...] = ()
 
 
 @dataclass(frozen=True)

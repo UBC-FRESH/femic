@@ -52,14 +52,17 @@ def test_build_and_enumerate_siteprod_temp_paths(tmp_path: Path) -> None:
     assert found == sorted([p1, p2])
 
 
-def test_list_siteprod_layers_uses_runner_output() -> None:
+def test_list_siteprod_layers_uses_runner_output(tmp_path: Path) -> None:
+    exe_path = tmp_path / "arc_raster_rescue.exe"
+    exe_path.write_text("", encoding="utf-8")
+
     def _run(cmd: list[object], capture_output: bool) -> SimpleNamespace:
         assert capture_output is True
         assert len(cmd) == 2
         return SimpleNamespace(stdout=b"layer name\n0 site_prod_sw\n")
 
     layer_species, species_layer = list_siteprod_layers(
-        arc_raster_rescue_exe_path=Path("arc_raster_rescue.exe"),
+        arc_raster_rescue_exe_path=exe_path,
         siteprod_gdb_path=Path("Site_Prod_BC.gdb"),
         run_fn=_run,
     )
@@ -109,6 +112,8 @@ def test_export_and_stack_siteprod_layers(tmp_path: Path) -> None:
             return _FakeSrc(Path(path))
 
     commands: list[list[object]] = []
+    exe_path = tmp_path / "arc_raster_rescue.exe"
+    exe_path.write_text("", encoding="utf-8")
 
     def _run(cmd: list[object], capture_output: bool = False) -> SimpleNamespace:
         commands.append(cmd)
@@ -121,7 +126,7 @@ def test_export_and_stack_siteprod_layers(tmp_path: Path) -> None:
     fake_rio = _FakeRio()
 
     export_and_stack_siteprod_layers(
-        arc_raster_rescue_exe_path=Path("arc_raster_rescue.exe"),
+        arc_raster_rescue_exe_path=exe_path,
         site_prod_bc_gdb_path=Path("Site_Prod_BC.gdb"),
         site_prod_bc_layerspecies={1: "SW", 2: "PL"},
         siteprod_layerspecies={0: "SW", 1: "PL"},

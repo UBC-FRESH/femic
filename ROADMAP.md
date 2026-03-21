@@ -570,7 +570,178 @@ notes.
     from K3Z bundle tables using current exporter logic.
   - [x] P21.4b Verify emitted OG labels and curve IDs in generated XML.
 
+
+## Phase 22: K3Z CT + Fert Treatment Scaffolding and Optional Instance Variant
+- [x] P22.1 Define YAML-facing treatment scaffold contract for CT + fertilization
+  - [x] P22.1a Add K3Z model-input schema for one CT treatment plus optional
+    `fert1` / `fert2` / `fert3` treatment chain.
+  - [x] P22.1b Add per-AU treatment parameter support for:
+    CT age, CT basal-area removal fraction, BA:volume conversion ratio,
+    fertilization speedup fraction, fertilization response duration,
+    and fert spacing offsets.
+  - [x] P22.1c Limit the initial CT/fert scaffold to K3Z AUs
+    `FDC+HW-M` and `CW+HW-M`, while keeping the YAML structure extensible to
+    additional AUs later.
+- [x] P22.2 Add explicit treatment-path state handling in Patchworks export
+  - [x] P22.2a Introduce a new stand-state field for treatment-path gating
+    (for example `SILV_STATE`) instead of overloading `ORIGIN`, so
+    `ORIGIN` retains its natural/planted semantics.
+  - [x] P22.2b Define initial treatment-path state and XML `<assign>`
+    transitions for `CT`, `fert1`, `fert2`, and `fert3` eligibility gates.
+  - [x] P22.2c Keep CT/fert eligibility constrained to `ORIGIN='planted'`
+    where required while preserving current unmanaged/managed/origin logic.
+- [x] P22.3 Add provisional QMD curve support to the K3Z model scaffold
+  - [x] P22.3a Add AU-wise QMD curves/attributes to the Patchworks exporter.
+  - [x] P22.3b Synthesize placeholder but plausible K3Z QMD curves for the
+    initial rollout, with a documented replacement path for future nemora-based
+    or externally supplied QMD curves.
+  - [x] P22.3c Expose QMD curve assumptions/parameters in YAML so later
+    real-curve replacement does not require exporter redesign.
+- [x] P22.4 Implement commercial thinning (CT) treatment logic
+  - [x] P22.4a Add a single CT treatment available only in planted stands and
+    only in the initial target AUs (`FDC+HW-M`, `CW+HW-M`).
+  - [x] P22.4b Parameterize CT age per AU (default age 40) and CT removal
+    intensity (default 30% basal area removed from below).
+  - [x] P22.4c Add temporary BA:volume conversion parameter (default 1.0) and
+    use it to estimate CT harvested volume until a better DBH-distribution-based
+    treatment response path is available.
+  - [x] P22.4d Define post-CT total-volume trajectory so CT-harvested volume plus
+    final-harvest volume approximately conserves the no-CT total-yield endpoint.
+- [x] P22.5 Implement fertilization treatment-chain logic (`fert1`/`fert2`/`fert3`)
+  - [x] P22.5a Make `fert1` available only after CT, using the treatment-path
+    state gate rather than `ORIGIN` mutation.
+  - [x] P22.5b Schedule `fert1` at the age of maximal CAI on the planted total
+    yield curve (argmax of first derivative), with YAML override support if we
+    later need AU-specific exceptions.
+  - [x] P22.5c Make `fert2` available only after `fert1` and schedule it 10
+    years later by default; make `fert3` available only after `fert2` and
+    schedule it another 10 years later by default.
+  - [x] P22.5d Parameterize fertilization response as a growth-speedup fraction
+    (default 10%) for a finite response window (default 10 years).
+- [x] P22.6 Add curve-synthesis rules for CT/fert treatment responses
+  - [x] P22.6a Build post-CT treated total-yield curves by subtracting CT
+    harvested volume at treatment age from the planted baseline curve.
+  - [x] P22.6b Build fertilization-response curves by temporarily compressing the
+    planted post-treatment growth path over the configured response window.
+  - [x] P22.6c Preserve transparent, auditable curve-generation logic in docs
+    and tests so these provisional treatment-response heuristics can be swapped
+    out later without changing the external YAML contract.
+- [x] P22.7 Roll CT/fert scaffolding into an optional K3Z instance variant branch
+  - [x] P22.7a Keep parent-repo implementation work on branch
+    `feature/k3z-ct-fert-treatment-scaffold`.
+  - [x] P22.7b Land generated K3Z instance outputs on submodule branch
+    `feature/k3z-ct-fert-treatment-option`, so only student groups that want
+    CT/fert can pull that variant into their forks.
+  - [x] P22.7c Rebuild K3Z Patchworks XML/tracks on the variant branch and run
+    Windows Patchworks smoke validation before any merge discussion.
+- [x] P22.8 Add docs, evidence, and acceptance checks
+  - [x] P22.8a Update FEMIC docs and standalone `femic-k3z-instance` Sphinx docs
+    to cover the optional CT/fert variant end-to-end: YAML parameters,
+    treatment-path state semantics, provisional QMD/curve assumptions, and the
+    student-facing pull/use workflow for the optional instance branch.
+  - [x] P22.8b Add regression tests for YAML parsing, treatment-state gating,
+    CT/fert XML emission, QMD attribute export, and treatment-response curves.
+  - [x] P22.8c Capture Patchworks smoke evidence showing CT/fert treatments,
+    accounts, and targets appear correctly in the optional K3Z variant.
+  - [x] P22.8d Backfill standalone `femic-k3z-instance` docs with the earlier
+    Phase 21 old-growth rollout details (`og1`/`og2` area attributes, curve
+    semantics, compiled-account expectations) so the K3Z docs reflect the full
+    current model surface before or alongside CT/fert variant guidance.
+- [ ] P22.9 Co-locate baseline and CT/fert variants inside one K3Z instance on main
+  - [x] P22.9a Define the coexistence pattern: variant selection happens by
+    config/PIN/runtime target, not by Git branch.
+  - [x] P22.9b Add distinct K3Z variant config YAMLs documenting baseline and
+    CT/fert build instructions plus their variant-specific runtime targets.
+  - [x] P22.9c Add distinct CT/fert runtime/build surfaces (`tracks_ctfert`,
+    `forestmodel_ctfert.xml`, `output/patchworks_k3z_ctfert_validated/`,
+    `analysis/ctfert.pin`) so baseline and variant can coexist in one instance.
+  - [x] P22.9d Fix shared target-script path assumptions so each PIN resolves
+    accounts/validation against its own active tracks folder.
+  - [ ] P22.9e Rebuild the CT/fert variant from canonical K3Z inputs while
+    preserving the current teaching-baseline footprint (`THLB=1`, 218
+    fragments, 14 AUs), then verify the resulting tracks surface is an additive
+    extension of the baseline rather than a stale copied artifact.
+  - [ ] P22.9f Update standalone K3Z docs and runbooks to teach variant
+    selection by config/PIN instead of by Git branch.
+  - [ ] P22.9g Merge the coexistence layout to `main` in both repos only after
+    baseline and CT/fert variants launch cleanly side-by-side from one branch.
+
+- [ ] P22.10 Add a third coexisting K3Z silviculture variant for PCT -> CT
+  - [x] P22.10a Extend the Phase 22 variant contract so K3Z supports three
+    coexisting upstream-from-Matrix-Builder variants on one branch:
+    baseline, ctfert, and pctct.
+  - [x] P22.10b Add a dedicated variant YAML/runtime/PIN/output surface for the
+    new pctct path:
+    config/patchworks.variant.pctct.yaml,
+    config/patchworks.runtime.pctct.windows.yaml,
+    models/k3z_patchworks_model/analysis/pctct.pin,
+    models/k3z_patchworks_model/tracks_pctct/,
+    models/k3z_patchworks_model/yield/forestmodel_pctct.xml,
+    and output/patchworks_k3z_pctct_validated/.
+  - [x] P22.10c Add a pre-commercial thinning (PCT) treatment option that is
+    available on the planted pathway before CT and removes hardwood ingress
+    while retaining only the planted conifer component at a residual
+    900 stems/ha target.
+  - [x] P22.10d Parameterize PCT by AU in silviculture YAML, including at
+    default treatment age (10), eligible AU set, and the planted-species retention
+    rule so the current K3Z heuristic can be revised later without redesigning
+    the external config contract.
+  - [x] P22.10e Add treatment-path gating so CT is only available after
+    PCT in the new pctct variant, while preserving the existing ctfert
+    branch semantics unchanged.
+  - [x] P22.10f Synthesize post-PCT curves/products/accounts so the pctct
+    variant behaves as an additive extension of the baseline model rather than a
+    separate ad hoc compile, and verify that the residual conifer-only treated
+    state is reflected consistently in XML, tracks, and Patchworks accounts.
+  - [x] P22.10g Update standalone K3Z docs, runbooks, and student-facing
+    variant guidance so the three-way coexistence model is explicit:
+    baseline (base.pin), ctfert (ctfert.pin), and pctct
+    (pctct.pin), including what each variant changes upstream from Matrix
+    Builder and when students should choose one over another.
+  - [x] P22.10h Run Windows Patchworks smoke checks on the pctct variant and
+    only then consider merging the three-variant coexistence layout back to
+    main.
+
+## Phase 23: Cross-Platform Runtime Parity (Linux + Windows)
+- [ ] P23.1 Inventory platform-specific runtime dependencies and current gaps
+  - [ ] P23.1a Enumerate required local executables/services for full FEMIC runs on Linux and Windows (`python`, `git`, `git-annex`, `datalad`, `VDYP`, `Patchworks`, Java, Wine where applicable).
+  - [ ] P23.1b Record which runtime surfaces are authoritative per platform (for example: native Patchworks on Windows, Wine-wrapped VDYP on Linux, native VDYP on Windows).
+  - [ ] P23.1c Add deterministic environment-detection/preflight checks so FEMIC can report missing platform prerequisites clearly before long runs start.
+- [ ] P23.2 Make Windows a first-class full-pipeline execution environment
+  - [ ] P23.2a Validate native Windows VDYP invocation using the bundled local `VDYP7Console.exe` path instead of Linux/Wine assumptions.
+  - [ ] P23.2b Add/verify Windows run-profile and helper wiring so `femic run` can execute end-to-end from a clean start in the Patchworks workstation environment.
+  - [ ] P23.2c Document the known-good Windows bootstrap sequence for local `.venv`, native VDYP, Patchworks, and Java.
+  - [ ] P23.2d Apply the K3Z low-yield treated-strata simplification cleanly in the canonical pipeline: exclude `CWHvm_CW+YC` and `CWHvm_CW+PLC` from BatchTIPSY generation, keep their unmanaged VDYP side, and force `RETENTION = 1.0` for matching fragments so they are fully netted out of THLB in the baseline model.
+  - [ ] P23.2e Replace the remaining K3Z TIPSY species-mix rules with the simplified teaching logic: FD-pair AUs -> `900 FD + 3100 HW`; CW-pair AUs -> `900 CW + 3100 HW`; all other remaining treated AUs -> `600 CW + 300 FD + 3100 HW`.
+- [ ] P23.3 Preserve and harden Linux execution parity
+  - [ ] P23.3a Keep Linux VDYP execution working via Wine and document the exact wrapper/runtime expectations.
+  - [ ] P23.3b Verify Linux guidance still covers the full FEMIC pipeline when Patchworks is unavailable natively.
+  - [ ] P23.3c Add parity notes explaining what is expected to differ between Linux and Windows and what should remain identical.
+- [ ] P23.4 Stabilize DataLad / git-annex bootstrap on Windows
+  - [ ] P23.4a Document a known-good Windows install/bootstrap pattern for `git`, `git-annex`, and DataLad.
+  - [ ] P23.4b Ensure FEMIC operator docs explain how annex-backed payloads are materialized on Windows (including pointer-file behavior and recovery steps).
+  - [ ] P23.4c Add validation/smoke checks that confirm annex-backed public-data payloads are usable from Windows pipeline runs.
+- [ ] P23.5 Add cross-platform docs, smoke tests, and acceptance gates
+  - [ ] P23.5a Add a user-facing guide describing how to run FEMIC cleanly in both Linux and Windows environments.
+  - [ ] P23.5b Add smoke workflows for a clean-start rerun on Windows and a parity rerun on Linux.
+  - [ ] P23.5c Define acceptance as: FEMIC can rerun a full canonical pipeline from a clean start on both platforms with documented, platform-appropriate runtime rituals.
+  - [ ] P23.5d Update user-facing K3Z docs and operator runbooks to explain the low-yield treated-strata netdown decision (`CWHvm_CW+YC`, `CWHvm_CW+PLC`), the resulting full-retention behavior, and the simplified TIPSY species-mix logic used for the remaining treated AUs.
+
 ## Detailed Next Steps Notes
+- 2026-03-20 (Phase 22 kickoff): queued a new optional K3Z treatment-variant workstream for commercial thinning plus 1-3 fertilization treatments.
+  - Branches created:
+    - parent repo: `feature/k3z-ct-fert-treatment-scaffold`
+    - K3Z instance repo: `feature/k3z-ct-fert-treatment-option`
+  - Locked planning decision: do not overload `ORIGIN` with CT/fert gating
+    states; introduce a separate treatment-path state variable so natural vs
+    planted origin semantics remain intact.
+  - Initial scope:
+    CT only in `FDC+HW-M` and `CW+HW-M` AUs, planted-only eligibility,
+    provisional QMD curves, one CT plus optional `fert1`/`fert2`/`fert3`
+    treatment chain, all parameterized through K3Z YAML scaffolding.
+  - Immediate execution order for this phase:
+    YAML contract -> treatment-path state design -> QMD scaffold -> CT curves ->
+    fert curves -> K3Z variant rebuild/smoke.
 - 2026-03-20 (Phase 21 complete): added generalized K3Z old-growth feature
   attributes and regenerated the tracked instance ForestModel XML.
   - Implemented OG curve generation in `femic.fmg.patchworks`:
@@ -4906,3 +5077,95 @@ notes.
   - Downstream Patchworks launch/UI smoke also passed: the revised K3Z model
     opened successfully in Patchworks and the new `og1`/`og2` accounts were
     visible and looked correct in the live model interface.
+
+- 2026-03-20 (Phase 22 scaffold foundation): completed the first CT/fert scaffolding slice on branch `feature/k3z-ct-fert-treatment-scaffold` with matching K3Z instance branch `feature/k3z-ct-fert-treatment-option`.
+  - Added a new silviculture-config path contract to Patchworks export (`--silviculture-config`) and threaded it through parent CLI/export plumbing without changing current runtime behavior.
+  - Added a dedicated treatment-path fragment/XML field `SILV_STATE` with default value `baseline`, keeping `ORIGIN` reserved for natural/planted semantics.
+  - Added silviculture scaffold templates:
+    - parent bootstrap template: `src/femic/resources/instance/config/silviculture.case_template.yaml`
+    - K3Z instance config: `external/femic-k3z-instance/config/silviculture.k3z.yaml`
+  - Updated deterministic XML fixtures and regression coverage so the new define-field / fragment-schema contract is enforced before CT/fert treatment logic lands.
+  - Next execution target remains Phase 22 treatment mechanics: provisional QMD support, CT curve/treatment synthesis, then fert chain logic.
+- 2026-03-20 (Phase 22 CT/QMD slice): implemented the first treatment-mechanics pass on the active feature branches and verified that the optional K3Z variant compiles cleanly in Windows Patchworks Matrix Builder.
+  - Pivoted `SILV_STATE` semantics from atomic placeholders to stacked treatment-path states: `baseline`, `cc_pl`, `cc_pl_ct`, `cc_pl_ct_f1`, `cc_pl_ct_f1_f2`, `cc_pl_ct_f1_f2_f3`.
+  - Added provisional K3Z QMD feature curves and accounts (`feature.QMD.managed.<au_id>`, `feature.QMD.unmanaged.<au_id>`) with YAML-facing assumptions kept in the silviculture scaffold.
+  - Added commercial thinning (`CT`) treatment support for the two initial eligible AUs (`985502001`, `985502002`), planted-only via `ORIGIN='planted'`, with per-AU age/removal parameters and temporary BA:volume conversion.
+  - Added post-CT residual-volume curve synthesis so the CT path conserves the no-CT endpoint approximately by subtracting harvested volume at CT age from the planted baseline trajectory.
+  - Regenerated the K3Z variant ForestModel XML and patched the validated fragments shapefile to carry `SILV_STATE`, then ran Matrix Builder smoke: `python -m femic patchworks matrix-build --config config/patchworks.runtime.windows.yaml --instance-root external/femic-k3z-instance --run-id k3z_ct_qmd_smoke_20260320`.
+  - Smoke evidence: `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_{stdout,stderr,manifest}-k3z_ct_qmd_smoke_20260320.*`; result `returncode=0`, `Managed=1692.2475729276887`, `Passive=89.06566313006975` (retention still active at 5%).
+  - Generated tracks now include `CT` products (`product.HarvestedVolume.managed.Total.CT`, species-wise CT harvested volume) plus the provisional QMD account surface; next execution target is the fert1/fert2/fert3 chain.
+- 2026-03-20 (Phase 22 fert-chain smoke): completed the first full CT + `fert1`/`fert2`/`fert3` compile pass on the optional K3Z variant and verified it downstream in live Patchworks.
+  - Added YAML-driven fertilization sequencing and response-curve synthesis so eligible K3Z CT tracks now expose `F1`, `F2`, and `F3` in addition to `CT`.
+  - Added a CT timing guard so effective CT age is pulled back to at most `F1_age - 10` when needed, ensuring there is space for the full fertilization chain.
+  - Fresh Matrix Builder rerun: `python -m femic patchworks matrix-build --config config/patchworks.runtime.windows.yaml --instance-root external/femic-k3z-instance --run-id k3z_ct_f123_rerun_20260320`.
+  - Fresh evidence/logs: `external/femic-k3z-instance/vdyp_io/logs/patchworks_matrixbuilder_{stdout,stderr,manifest}-k3z_ct_f123_rerun_20260320.*`.
+  - Rerun result: `returncode=0`, with compiled tracks now materializing `CT`, `F1`, `F2`, and `F3` treatment rows plus the matching `product.Treated.managed.{CT,F1,F2,F3}` account/product surface.
+  - Downstream Patchworks smoke passed: pulling on the `F3` treated-area target induced the expected upstream treatment chain (`F2`, `F1`, `CT`, `CC`) in prior timesteps.
+- 2026-03-20 (Phase 22 docs follow-up queued): expand the standalone `femic-k3z-instance` Sphinx docs so they describe the full current K3Z Patchworks surface, not just the newest CT/fert slice.
+  - Docs backlog now explicitly includes both:
+    - Phase 21 OG rollout coverage (`feature.Area.og1.*`, `feature.Area.og2.*`, `og1`/`og2` curve semantics, and how those accounts appear in compiled Patchworks outputs), and
+    - Phase 22 optional CT/QMD/fert variant coverage (YAML parameters, `SILV_STATE` path semantics, provisional curve heuristics, and how student groups pull the optional branch into their instance forks).
+- 2026-03-20 (Phase 22 standalone docs pass): updated the standalone `femic-k3z-instance` Sphinx docs to reflect the current full K3Z Patchworks surface, including both the Phase 21 OG rollout and the optional Phase 22 CT/QMD/fert variant.
+  - Updated K3Z docs pages: `getting-started.rst`, `model-anatomy.rst`, `assumptions-registry.rst`, `base-case-analysis.rst`, `operator-runbook.rst`, `edit-policy-and-scenarios.rst`, `rebuild-and-qa.rst`, and `metadata-and-lineage.rst`.
+  - Added explicit documentation for `og1` / `og2` feature-area accounts, current OG curve semantics, optional branch usage (`feature/k3z-ct-fert-treatment-option`), `SILV_STATE` treatment-path semantics, provisional QMD outputs, and CT/F1/F2/F3 operator expectations.
+  - Validation passed: `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`.
+- 2026-03-20: CT/fert coexistence QA found that `ctfert.pin` now launches cleanly after fixing target-script account-path resolution. Follow-up on map layers is complete: `analysis/ctfert.pin` now includes `CT`, `F1`, `F2`, and `F3` in Current Treatments / Latest Treatments. Remaining open blocker for `P22.9e`: a clean variant rebuild from canonical K3Z inputs is currently blocked because the instance only carries `data/ria_vri_vclr1p_checkpoint1-tsak3z.feather`, while Patchworks export currently requires a later checkpoint that already includes `au`.
+- 2026-03-20: repository process tightened in `AGENTS.md`: all non-trivial implementation plans must be recorded in `ROADMAP.md` before execution proceeds. Phase 22 coexistence work is now explicitly tracked under `P22.9` so the single-branch / multi-variant K3Z strategy is visible and auditable outside of chat.
+- 2026-03-20 (Phase 23 Windows clean-start progress): the native Windows K3Z rerun now reaches the real VDYP handoff stage using the instance-local 2024 VRI stack, and the failure signature is narrowed enough to drive the next fixes deterministically.
+  - Confirmed instance-local 2024 inputs are in use when `femic run` is launched without `FEMIC_EXTERNAL_DATA_ROOT`: `data/bc/vri/2024/VEG_COMP_LYR_R1_POLY_2024.gdb`, `data/bc/vri/2024/VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2024.gdb`, plus local TSA/siteprod junctions under the K3Z instance.
+  - Added/validated Windows-specific runtime fixes already working: no Wine preflight requirement on Windows, ArcGIS Pro (`propy.bat`) fallback for SiteProd raster export/stack, and shared-root fallback for `vdyp_params-landp` existence checks.
+  - Fresh evidence from `k3z_windows_2024_native_20260320_i` shows the blocking seam is now the actual native VDYP command assembly, not source-data access: VDYP is launched, but the command still dispatches `-p vdyp_params-landp` without a `-c <VDYP_CFG>` argument, producing empty outputs and `proc_stderr_head` = `ERROR: Unable to open parameter file name: 'vdyp_params-landp'` + `FATAL: VDYP7 Configuration Folder ('-c') has not been supplied.`
+  - Downstream `01b` stale-BatchTIPSY failure is therefore currently interpreted as a secondary symptom of empty VDYP outputs, not the primary blocker.
+  - Immediate next execution order for `P23.2`: fix Windows VDYP command assembly (`-p` resolved path + `-c` config dir), rerun clean-start K3Z on 2024 VRI, then revisit fresh 01b/TIPSY regeneration only after non-empty VDYP tables are confirmed.
+- 2026-03-20: P22.9e corrective plan narrowed after the first canonical checkpoint7 regeneration succeeded mechanically but rebuilt the wrong K3Z landbase.
+  - The regenerated checkpoint7 currently produces `au=27`, `fragments=260`, and raw THLB-driven unmanaged area, whereas the live teaching baseline is intentionally `THLB=1` everywhere with `fragments=218` across 14 AUs.
+  - Corrective approach for the canonical rebuild: regenerate an AU-bearing checkpoint7 from `checkpoint1`, but preserve the current baseline footprint by using the tracked baseline fragment feature/AU mask as the authoritative K3Z teaching surface.
+  - Success condition for `P22.9e`: the rebuilt CT/fert variant compiles from canonical upstream inputs and still behaves as an additive extension of the live baseline rather than a broader raw landbase reintroduction.
+
+- 2026-03-20 (Phase 23 Windows native VDYP breakthrough): a clean-start K3Z rerun against the instance-local 2024 VRI stack (`run_id=k3z_windows_2024_native_20260320_l`) now succeeds through VRI load, ArcGIS Pro SiteProd export, VDYP bootstrap, two-pass SI rebin, and TIPSY-input generation on native Windows. The fixes that unlocked this were: (1) resolving `vdyp_params-landp` from FEMIC source root, (2) adding `-c <VDYP_CFG>` to the Windows VDYP command, (3) ensuring the `-c` path ends with a trailing slash so native VDYP can find `*.ctr` files, and (4) materializing `external/femic-k3z-instance/vdyp_io/VDYP.INI` so the parameter file's relative `-ini .\vdyp_io\VDYP.INI` reference resolves inside the instance. The remaining blocker is no longer Windows VDYP; it is the expected manual BatchTIPSY freshness boundary in Stage 01b (`external/femic-k3z-instance/data/04_output-tsak3z.out` is older than the newly generated `external/femic-k3z-instance/data/02_input-tsak3z.dat`). Treat the next execution order as: run BatchTIPSY manually on the fresh `02_input-tsak3z.dat`, replace `04_output-tsak3z.out`, rerun FEMIC Stage 01b/post-TIPSY, then decide whether to automate or explicitly preserve that GUI boundary in Phase 23 docs.
+
+- 2026-03-20 (Phase 23 K3Z Windows handoff simplification): during the native Windows rerun, the remaining BatchTIPSY friction narrowed to a small low-yield tail in the K3Z treated AU set. The next remediation path is now explicit:
+  - Exclude the `CWHvm_CW+YC` and `CWHvm_CW+PLC` K3Z strata from BatchTIPSY parameter generation altogether so Windows 01a no longer tries to produce treated TIPSY rows for those low-yield pathways.
+  - Treat those same strata as fully netted out of THLB in Patchworks export by forcing `RETENTION = 1.0` for all matching fragments, while keeping their unmanaged VDYP/state surface available in the baseline model.
+  - Immediate execution order: add config-driven TIPSY stratum exclusion + full-retention fragment overrides, rerun K3Z Stage 01a on instance-local 2024 VRI, confirm the regenerated `external/femic-k3z-instance/data/02_input-tsak3z.dat` no longer contains the problematic `PLC` treated row, then hand the fresh DAT to BatchTIPSY.
+
+- 2026-03-20: K3Z Windows/TIPSY remediation plan narrowed further after operator review.
+  - Accepted modeling simplification for the canonical K3Z rebuild: stop compiling BatchTIPSY rows for the low-yield `CWHvm_CW+YC` and `CWHvm_CW+PLC` strata, and instead net those strata out of THLB completely by forcing `RETENTION = 1.0` for matching fragments.
+  - Accepted replacement teaching logic for the remaining treated TIPSY species mixes:
+    - FD-pair AUs: `900 FD + 3100 HW`
+    - CW-pair AUs: `900 CW + 3100 HW`
+    - all other remaining treated AUs: `600 CW + 300 FD + 3100 HW`
+  - Follow-through requirement: the user-facing K3Z docs must state this explicitly so students understand why these strata no longer appear in the treated/TIPSY handoff and why their area shows up only in the retained/unmanaged side of the baseline model.
+
+- 2026-03-21 (Phase 23 true-TIPSY evaluation pass): after refreshing external/femic-k3z-instance/data/04_output-tsak3z.out, the downstream-only 	sa post-tipsy path was repaired to read schema-v2 dyp_prep-tsak3z.pkl checkpoints and to execute  1b_run-tsa.py from the instance root so relative ./data and ./plots paths resolve correctly. A true-TIPSY managed-curve rerun completed successfully with 
+un_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance/data/model_input_bundle/curve_table.csv and curve_points_table.csv, refreshed the current external/femic-k3z-instance/data/tipsy_curves_tsak3z.csv and 	ipsy_sppcomp_tsak3z.csv, and regenerated the current external/femic-k3z-instance/plots/tipsy_vdyp_tsak3z-*.png comparison set for the remaining treated AUs. The excluded low-yield strata (22006, 22008) no longer participate in BatchTIPSY and their stale comparison plots were removed so operator review now focuses only on the retained treated AU set. Next decision point: inspect the refreshed plots and decide whether K3Z should keep dyp_transform as the teaching baseline or switch the managed-curve baseline to true TIPSY output.
+
+- 2026-03-21 (Phase 23 VDYP smoothing triage): operator review of the refreshed K3Z TIPSY-vs-VDYP plots accepted the current true-TIPSY output for now, but flagged a new regression in some smoothed VDYP unmanaged curves: sharp post-peak drop-off followed by an implausible upward blend ramp into the flat tail. The next bounded experiment is to rerun only the cached K3Z smoothing plus downstream handoff from existing `vdyp_results-tsak3z.pkl` and `vdyp_prep-tsak3z.pkl` inputs while (1) removing the hard-coded `tail_blend_override_k3z` selection, (2) relaxing the default toe/right-shift policy away from the current global `body_c_min=20` and `toe_shift_years=20`, and then (3) regenerating downstream DAT/post-TIPSY comparison artifacts without rerunning raw VDYP.
+- 2026-03-21 (Phase 23 cached smoothing experiment): reran the K3Z VDYP smoothing stage and downstream post-TIPSY artifacts without rerunning raw VDYP, using cached `external/femic-k3z-instance/data/vdyp_results-tsak3z.pkl` plus `vdyp_prep-tsak3z.pkl`. For this bounded trial, the hard-coded `tail_blend_override_k3z` path was disabled by default in `src/femic/pipeline/vdyp_stage.py`, and the rerun used relaxed fit defaults (`FEMIC_BODY_C_MIN=5`, `FEMIC_VDYP_TOE_SHIFT_YEARS=5`). The smoothing rebuild completed with `run_id=k3z_vdyp_smooth_relax_20260321_b`, rewrote `external/femic-k3z-instance/data/vdyp_curves_smooth-tsak3z.feather`, and recorded events in `external/femic-k3z-instance/vdyp_io/logs/vdyp_curve_events-tsak3z-k3z_vdyp_smooth_relax_20260321_b.jsonl`. Selection counts in that event log were `tail_blend=14`, `primary_nlls=10`, `censored_refit=3`, and importantly there were no `tail_blend_override_k3z` selections. Then `python -m femic tsa post-tipsy --instance-root external/femic-k3z-instance --tsa k3z --run-id k3z_post_tipsy_smooth_relax_20260321_b` completed successfully, refreshing the current `tipsy_vdyp_tsak3z-*.png` comparison plots for the retained treated AUs (timestamps around 2026-03-21 00:50). Next operator step: visually compare these refreshed plots against the backup snapshot under `external/femic-k3z-instance/plots/backup_smoothing_20260321_004810` and decide whether the relaxed smoothing policy is a keeper.
+- 2026-03-21 (Phase 23 cached smoothing experiment, pass 2): a second bounded K3Z smoothing rerun pushed the toe and tail policy further in the same cached-results-only workflow. This pass kept `FEMIC_K3Z_FORCE_TAIL_BLEND=0` and used `FEMIC_BODY_C_MIN=0`, `FEMIC_VDYP_TOE_SHIFT_YEARS=0`, `FEMIC_TAIL_LINEAR_MIN_R2=0.45`, `FEMIC_TAIL_LINEAR_MAX_NRMSE=0.35`, `FEMIC_TAIL_LINEAR_PREFER_MIN_AGE=120`, `FEMIC_TAIL_LINEAR_FLAT_SLOPE_ABS=0.10`, `FEMIC_TAIL_LINEAR_MIN_SPAN_YEARS=40`, and `FEMIC_TAIL_BLEND_YEARS=60`. The smoothing rebuild completed with `run_id=k3z_vdyp_smooth_relax_20260321_c`, rewrote `external/femic-k3z-instance/data/vdyp_curves_smooth-tsak3z.feather`, and refreshed downstream post-TIPSY artifacts with `run_id=k3z_post_tipsy_smooth_relax_20260321_c`. The new event log is `external/femic-k3z-instance/vdyp_io/logs/vdyp_curve_events-tsak3z-k3z_vdyp_smooth_relax_20260321_c.jsonl`, and the refreshed `tipsy_vdyp_tsak3z-*.png` plots now carry timestamps around 2026-03-21 00:54. Selection counts in this pass were `tail_blend=20` and `primary_nlls=7`, so the longer-tail policy is materially more permissive than pass 1; operator review is needed to decide whether the visual result is better enough to keep.
+- 2026-03-21 (Phase 23 cached smoothing experiment, pass 3 planned): operator review judged pass 2 as moving in the right direction but still too constrained on both the toe and tail. The next bounded trial will keep the cached-results-only workflow and push the same knobs further: allow an earlier body shift (`body_c_min < 0` if tolerated), keep `toe_shift_years=0`, and relax tail-detection / tail-span preferences again so more curves can carry longer, gentler tails before blend selection is considered harmful.
+- 2026-03-21 (Phase 23 cached smoothing experiment, pass 3): pushed the toe/tail policy further with `FEMIC_BODY_C_MIN=-20`, `FEMIC_VDYP_TOE_SHIFT_YEARS=0`, `FEMIC_TAIL_LINEAR_MIN_R2=0.20`, `FEMIC_TAIL_LINEAR_MAX_NRMSE=0.50`, `FEMIC_TAIL_LINEAR_PREFER_MIN_AGE=90`, `FEMIC_TAIL_LINEAR_FLAT_SLOPE_ABS=0.20`, `FEMIC_TAIL_LINEAR_MIN_SPAN_YEARS=20`, and `FEMIC_TAIL_BLEND_YEARS=90`, still with `FEMIC_K3Z_FORCE_TAIL_BLEND=0`. Cached smoothing reran successfully with `run_id=k3z_vdyp_smooth_relax_20260321_d`, followed by downstream post-TIPSY refresh `run_id=k3z_post_tipsy_smooth_relax_20260321_d`. The new event log is `external/femic-k3z-instance/vdyp_io/logs/vdyp_curve_events-tsak3z-k3z_vdyp_smooth_relax_20260321_d.jsonl`; selection counts shifted to `tail_blend=15`, `primary_nlls=9`, `censored_refit=3` versus pass 2's `tail_blend=20`, `primary_nlls=7`. The refreshed `tipsy_vdyp_tsak3z-*.png` plots now carry timestamps around 2026-03-21 00:58 and should be compared against the previous pass backup under `external/femic-k3z-instance/plots/backup_smoothing_20260321_005744`.
+- 2026-03-21 (Phase 23 fit-override interface note): K3Z VDYP smoothing does not yet expose a user-facing YAML interface for per-stratum/per-SI fit-parameter overrides. Current override surfaces are (a) global run/env knobs such as `FEMIC_VDYP_TOE_SHIFT_YEARS` and tail-linearity env vars, and (b) the code-level per-TSA override map in `src/femic/pipeline/vdyp_overrides.py`. Immediate practical path: use the existing override map for the pathological `CWHvm_DR+HW` curves while continuing to relax the global tail policy; follow-up task remains to promote these per-curve fit overrides into a documented YAML/config surface for case-specific tuning.
+
+## Phase 23 Addendum: VDYP Fit Policy Config Surface (Nice-to-Have Later)
+- [ ] P23.6 Replace code-level VDYP fit overrides with a YAML-backed policy surface
+  - [ ] P23.6a Define FEMIC-level default VDYP fit/tail/toe parameters in a human-readable YAML config artifact instead of hard-coded Python defaults where practical.
+  - [ ] P23.6b Add per-instance YAML override support so case-specific fit rules (for example K3Z CWHvm_DR+HW tail relaxation) do not require editing src/femic/pipeline/vdyp_overrides.py.
+  - [ ] P23.6c Preserve a narrow code-level fallback seam only for exceptional cases that truly cannot be expressed cleanly in YAML.
+  - [ ] P23.6d Update developer/operator docs to explain the new config surface, override precedence, and when not to override fit behavior.
+  - [ ] P23.6e Open and link a dedicated GitHub feature-request issue before implementation so the design and tradeoffs are traceable outside the roadmap.
+
+- 2026-03-21 (Phase 23 fit-policy config follow-up): the current src/femic/pipeline/vdyp_overrides.py seam is acceptable as a short-term debugging lever, but it is too cludgey to remain the long-term user/deployment interface. Added low-priority P23.6 to migrate VDYP fit defaults and per-instance override rules into human-readable YAML, keep Python overrides as a narrow fallback only, and update user/developer docs when that interface lands. A dedicated GitHub feature-request issue should be opened when this moves from backlog to active work.
+
+- 2026-03-21 (Phase 23 K3Z lock-in): accepted the current K3Z managed-curve and smoothing policy as the working baseline for now.
+  - `config/run_profile.k3z.yaml` now uses `managed_curve_mode: tipsy` in both FEMIC and the standalone K3Z instance.
+  - Current K3Z treated-curve baseline is: real BatchTIPSY output, driven by VDYP-derived SI, with CW+YC / CW+PLC excluded from BatchTIPSY and retained out of THLB via `RETENTION = 1.0`.
+  - Current unmanaged smoothing checkpoint is the 2026-03-21 relaxed toe/tail policy plus extra DR+HW overrides; refreshed `tipsy_vdyp_tsak3z-*.png` plots are the review artifact of record.
+
+
+- 2026-03-21 (Phase 22 coexistence expansion): added a third planned K3Z variant, pctct, so the single-branch coexistence model now targets three upstream-distinct variants on one mainline instance: baseline, ctfert, and pctct. The new variant will add a pre-commercial thinning (PCT) gate ahead of CT, apply it at age 10 by default, remove hardwood ingress while retaining the planted conifer component at a 900 stems/ha residual target, and require PCT before CT can fire. Follow-through requirement: extend the variant config/runtime/PIN surface (tracks_pctct, forestmodel_pctct.xml, analysis/pctct.pin, output/patchworks_k3z_pctct_validated/) and update standalone K3Z docs so students choose among the three variants by config/PIN rather than by Git branch.
+
+
+
+
+- 2026-03-21 (Phase 22 pctct scaffold): implemented the third coexisting K3Z variant as a real compile target rather than just a roadmap stub. Parent FEMIC now supports `pre_commercial_thinning` silviculture config, new `SILV_STATE` values (`cc_pl_pct`, `cc_pl_pct_ct`), and post-PCT conifer-only managed species surfaces. The K3Z instance now carries `config/patchworks.variant.pctct.yaml`, `config/patchworks.runtime.pctct.windows.yaml`, `config/silviculture.k3z.pctct.yaml`, `models/k3z_patchworks_model/analysis/pctct.pin`, `models/k3z_patchworks_model/yield/forestmodel_pctct.xml`, `models/k3z_patchworks_model/tracks_pctct/`, and `output/patchworks_k3z_pctct_validated/`. Windows Matrix Builder smoke passed with `run_id=k3z_pctct_smoke_20260321`; remaining open work is the user-facing docs/runbook update under `P22.10g`.

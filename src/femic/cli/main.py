@@ -34,6 +34,7 @@ from femic.fmg import (
     DEFAULT_IFM_TARGET_MANAGED_SHARE,
     DEFAULT_IFM_THRESHOLD,
     DEFAULT_SERAL_STAGE_CONFIG_PATH,
+    DEFAULT_SILVICULTURE_CONFIG_PATH,
     DEFAULT_START_YEAR,
     DEFAULT_WOODSTOCK_OUTPUT_DIR,
     export_patchworks_package,
@@ -300,6 +301,15 @@ EXPORT_SERAL_STAGE_CONFIG_OPTION = typer.Option(
     help=(
         "Optional YAML file defining per-AU seral-stage age boundaries for "
         "ForestModel export."
+    ),
+    show_default=False,
+)
+EXPORT_SILVICULTURE_CONFIG_OPTION = typer.Option(
+    DEFAULT_SILVICULTURE_CONFIG_PATH,
+    "--silviculture-config",
+    help=(
+        "Optional YAML file defining silviculture treatment scaffold parameters "
+        "for ForestModel export."
     ),
     show_default=False,
 )
@@ -722,14 +732,15 @@ def _preflight_checks(*, resume: bool, instance_context: InstanceContext) -> Non
     if not vdyp_exe.exists():
         errors.append(f"Missing VDYP executable: {vdyp_exe}")
 
+    windows_host = os.name == "nt"
     wine = shutil.which("wine")
-    if not wine:
+    if not windows_host and not wine:
         if resume:
             warnings.append(
                 "wine not found on PATH (resume may still work if caches exist)"
             )
         else:
-            errors.append("wine not found on PATH (required to run VDYP)")
+            errors.append("wine not found on PATH (required to run VDYP on non-Windows systems)")
 
     for message in warnings:
         console.print(f"[yellow]Warning:[/yellow] {message}")
@@ -2144,6 +2155,7 @@ def export_patchworks(
     ifm_threshold: float | None = EXPORT_IFM_THRESHOLD_OPTION,
     ifm_target_managed_share: float | None = (EXPORT_IFM_TARGET_MANAGED_SHARE_OPTION),
     seral_stage_config: Path | None = EXPORT_SERAL_STAGE_CONFIG_OPTION,
+    silviculture_config: Path | None = EXPORT_SILVICULTURE_CONFIG_OPTION,
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
     """Export a Patchworks model package for the selected TSA/case targets."""
@@ -2154,6 +2166,11 @@ def export_patchworks(
     resolved_seral_stage_config = (
         instance_context.resolve_path(seral_stage_config)
         if isinstance(seral_stage_config, Path)
+        else None
+    )
+    resolved_silviculture_config = (
+        instance_context.resolve_path(silviculture_config)
+        if isinstance(silviculture_config, Path)
         else None
     )
     targets = (
@@ -2182,6 +2199,7 @@ def export_patchworks(
             ifm_threshold=ifm_threshold,
             ifm_target_managed_share=ifm_target_managed_share,
             seral_stage_config_path=resolved_seral_stage_config,
+            silviculture_config_path=resolved_silviculture_config,
         )
     except (FileNotFoundError, ValueError) as exc:
         console.print(f"[red]Patchworks export failed:[/red] {exc}")
@@ -2312,6 +2330,7 @@ def export_dual(
     ifm_threshold: float | None = EXPORT_IFM_THRESHOLD_OPTION,
     ifm_target_managed_share: float | None = (EXPORT_IFM_TARGET_MANAGED_SHARE_OPTION),
     seral_stage_config: Path | None = EXPORT_SERAL_STAGE_CONFIG_OPTION,
+    silviculture_config: Path | None = EXPORT_SILVICULTURE_CONFIG_OPTION,
     with_ws3_smoke: bool = EXPORT_DUAL_WITH_WS3_SMOKE_OPTION,
     ws3_command: str | None = EXPORT_DUAL_WS3_COMMAND_OPTION,
     ws3_workdir: Path | None = EXPORT_DUAL_WS3_WORKDIR_OPTION,
@@ -2334,6 +2353,11 @@ def export_dual(
     resolved_seral_stage_config = (
         instance_context.resolve_path(seral_stage_config)
         if isinstance(seral_stage_config, Path)
+        else None
+    )
+    resolved_silviculture_config = (
+        instance_context.resolve_path(silviculture_config)
+        if isinstance(silviculture_config, Path)
         else None
     )
     resolved_ws3_report = instance_context.resolve_path(ws3_report)
@@ -2377,6 +2401,7 @@ def export_dual(
             ifm_threshold=ifm_threshold,
             ifm_target_managed_share=ifm_target_managed_share,
             seral_stage_config_path=resolved_seral_stage_config,
+            silviculture_config_path=resolved_silviculture_config,
         )
         woodstock_result = export_woodstock_package(
             bundle_dir=resolved_bundle_dir,

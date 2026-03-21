@@ -18,6 +18,11 @@ metadata:
 species_code_overrides:
   SX: SW
   DR: FD
+  PLC: PLI
+
+exclude_stratum_codes:
+  - "CWHvm_CW+YC"
+  - "CWHvm_CW+PLC"
 
 siteprod_si_fallback_by_species:
   DR: 18.0
@@ -71,130 +76,68 @@ defaults:
     GW_age_5: null
 
 rules:
-  - id: "k3z_cwh_cedar_pathway"
+  - id: "k3z_fd_pair_pathway"
     when:
-      bec_in: ["CWH"]
-      leading_species_in: ["C", "CW", "YC"]
+      stratum_code_in: ["CWHvm_HW+FDC", "CWHvm_FDC+HW"]
     assign:
       e:
         Regen_Delay: 2
-        Density: 900
+        Density: 4000
         Util_DBH_cm: 12.5
-        SPP_1: "CW"
-        PCT_1: 60
-        SPP_2: "HW"
-        PCT_2: 25
-        SPP_3: "YC"
-        PCT_3: 15
+        SPP_1: "HW"
+        PCT_1: 77.5
+        SPP_2: "FD"
+        PCT_2: 22.5
       f:
         Regen_Delay: 2
-        Density: 900
+        Density: 4000
         Util_DBH_cm: 12.5
-        SPP_1: "CW"
-        PCT_1: 60
-        SPP_2: "HW"
-        PCT_2: 25
-        SPP_3: "YC"
-        PCT_3: 15
+        SPP_1: "HW"
+        PCT_1: 77.5
+        SPP_2: "FD"
+        PCT_2: 22.5
 
-  - id: "k3z_cwh_hemlock_pathway"
+  - id: "k3z_cw_pair_pathway"
     when:
-      bec_in: ["CWH"]
-      leading_species_in: ["HM", "HW", "HWI"]
+      stratum_code_in: ["CWHvm_CW+HW", "CWHvm_HW+CW"]
     assign:
       e:
         Regen_Delay: 2
-        Density: 900
+        Density: 4000
         Util_DBH_cm: 12.5
         SPP_1: "HW"
-        PCT_1: 70
+        PCT_1: 77.5
         SPP_2: "CW"
-        PCT_2: 20
-        SPP_3: "FD"
-        PCT_3: 10
+        PCT_2: 22.5
       f:
         Regen_Delay: 2
-        Density: 900
+        Density: 4000
         Util_DBH_cm: 12.5
         SPP_1: "HW"
-        PCT_1: 70
+        PCT_1: 77.5
         SPP_2: "CW"
-        PCT_2: 20
-        SPP_3: "FD"
-        PCT_3: 10
+        PCT_2: 22.5
 
-  - id: "k3z_cwh_douglasfir_pathway"
-    when:
-      bec_in: ["CWH"]
-      leading_species_in: ["F", "FD", "FDC", "FDI"]
-    assign:
-      e:
-        Regen_Delay: 2
-        Density: 900
-        Util_DBH_cm: 12.5
-        SPP_1: "FD"
-        PCT_1: 60
-        SPP_2: "HW"
-        PCT_2: 25
-        SPP_3: "CW"
-        PCT_3: 15
-      f:
-        Regen_Delay: 2
-        Density: 900
-        Util_DBH_cm: 12.5
-        SPP_1: "FD"
-        PCT_1: 60
-        SPP_2: "HW"
-        PCT_2: 25
-        SPP_3: "CW"
-        PCT_3: 15
-
-  - id: "k3z_cwh_spruce_pathway"
-    when:
-      bec_in: ["CWH"]
-      leading_species_in: ["S", "SB", "SE", "SN", "SS", "SW", "SX", "SXE", "SXL", "SXW"]
-    assign:
-      e:
-        Regen_Delay: 2
-        Density: 900
-        Util_DBH_cm: 12.5
-        SPP_1: "HW"
-        PCT_1: 45
-        SPP_2: "CW"
-        PCT_2: 30
-        SPP_3: "SS"
-        PCT_3: 25
-      f:
-        Regen_Delay: 2
-        Density: 900
-        Util_DBH_cm: 12.5
-        SPP_1: "HW"
-        PCT_1: 45
-        SPP_2: "CW"
-        PCT_2: 30
-        SPP_3: "SS"
-        PCT_3: 25
-
-  - id: "k3z_cwh_fsp_fallback"
+  - id: "k3z_cwh_fallback_pathway"
     when: {}
     assign:
       e:
         Regen_Delay: 2
-        Density: 900
+        Density: 4000
         Util_DBH_cm: 12.5
-        SPP_1: "$leading_species_tipsy"
-        PCT_1: 70
-        SPP_2: "HW"
-        PCT_2: 20
-        SPP_3: "CW"
-        PCT_3: 10
+        SPP_1: "HW"
+        PCT_1: 77.5
+        SPP_2: "CW"
+        PCT_2: 15.0
+        SPP_3: "FD"
+        PCT_3: 7.5
       f:
         Regen_Delay: 2
-        Density: 900
+        Density: 4000
         Util_DBH_cm: 12.5
-        SPP_1: "$leading_species_tipsy"
-        PCT_1: 70
-        SPP_2: "HW"
-        PCT_2: 20
-        SPP_3: "CW"
-        PCT_3: 10
+        SPP_1: "HW"
+        PCT_1: 77.5
+        SPP_2: "CW"
+        PCT_2: 15.0
+        SPP_3: "FD"
+        PCT_3: 7.5

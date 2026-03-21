@@ -28,7 +28,11 @@ from pympler import asizeof
 # import ipcmagic
 import ipyparallel as ipp
 import mapply
-import fiona
+try:
+    import fiona  # noqa: F401
+except ModuleNotFoundError:
+    fiona = None
+
 import affine
 
 # from osgeo import gdal
@@ -215,18 +219,23 @@ rc = _parallel_backend.rc
 lbview = _parallel_backend.lbview
 
 # --- cell 9 ---
-_repo_root = Path(__file__).resolve().parent
+_instance_root_env = os.environ.get("FEMIC_INSTANCE_ROOT")
+_repo_root = (
+    Path(_instance_root_env).expanduser().resolve()
+    if _instance_root_env
+    else Path(__file__).resolve().parent
+)
 _external_paths = resolve_legacy_external_data_paths(
     repo_root=_repo_root,
     env_override=os.environ.get("FEMIC_EXTERNAL_DATA_ROOT"),
 )
 vri_vclr1p_path = _external_paths.vri_vclr1p_path
-_legacy_data_paths = build_legacy_data_artifact_paths()
+_legacy_data_paths = build_legacy_data_artifact_paths(output_root=_repo_root / "data")
 ria_stands_path = _legacy_data_paths.ria_stands_path
 tsa_boundaries_path = _external_paths.tsa_boundaries_path
 print(f"using VRI source: {vri_vclr1p_path}")
 print(f"using TSA boundaries source: {tsa_boundaries_path}")
-ria_maptiles_path = "ria_maptiles.csv"
+ria_maptiles_path = str((_repo_root / "ria_maptiles.csv").resolve())
 vdyp_input_pandl_path = _external_paths.vdyp_input_pandl_path
 if not vdyp_input_pandl_path.exists():
     vdyp_input_pandl_path = _legacy_data_paths.vdyp_input_pandl_path
@@ -240,7 +249,7 @@ if not site_prod_bc_gdb_path.exists():
 print(f"using site productivity source: {site_prod_bc_gdb_path}")
 
 tsa_boundaries_feather_path = _legacy_data_paths.tsa_boundaries_feather_path
-_ria_vri_checkpoint_paths = build_ria_vri_checkpoint_paths()
+_ria_vri_checkpoint_paths = build_ria_vri_checkpoint_paths(output_root=_repo_root / "data")
 ria_vri_vclr1p_checkpoint1_feather_path = _ria_vri_checkpoint_paths[1]
 ria_vri_vclr1p_checkpoint2_feather_path = _ria_vri_checkpoint_paths[2]
 ria_vri_vclr1p_checkpoint3_feather_path = _ria_vri_checkpoint_paths[3]
