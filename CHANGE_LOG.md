@@ -5343,3 +5343,24 @@
 - Status:
   - targeted tests for the new staging seam pass,
   - full clean-start Linux `P23.3a` run to the BatchTIPSY handoff boundary is still pending final confirmation.
+
+## 2026-03-21 - Linux P23.3a clean-start rerun still blocked before VDYP boundary
+- Executed a fresh Linux `P23.3a` clean-start verification run after landing source-root runtime-asset staging fixes:
+  - tmp instance: `/tmp/femic_p23a_final_bF2EN4`
+  - run id: `k3z_linux_p233a_20260321_r13_final`
+  - command: `python -m femic run --instance-root /tmp/femic_p23a_final_bF2EN4 --run-config config/run_profile.k3z.yaml --run-id k3z_linux_p233a_20260321_r13_final`
+- Preflight checks passed:
+  - `python -m femic prep validate-case --instance-root /tmp/femic_p23a_final_bF2EN4 --run-config config/run_profile.k3z.yaml`
+  - `python -m femic prep geospatial-preflight`
+- Observed blocker:
+  - run advanced through ArcRasterRescue extraction logs up to `... processing species SW`,
+  - then produced no additional progress logs for multiple minutes,
+  - no `vdyp_runs-...jsonl` / `vdyp_stderr-...log` artifacts were created for the run id,
+  - no active ArcRasterRescue child process remained,
+  - process was manually interrupted to avoid indefinite runtime.
+- Evidence:
+  - shell log: `/tmp/femic_p23a_r13_final.log`
+  - manifest: `/tmp/femic_p23a_final_bF2EN4/vdyp_io/logs/run_manifest-k3z_linux_p233a_20260321_r13_final.json` (left in `status=started` after interruption).
+- Phase status impact:
+  - `P23.3b` remains complete,
+  - `P23.3a` and Linux sign-off for `P23.3c` remain open pending a clean run that reaches Stage 01a -> BatchTIPSY handoff.

@@ -714,7 +714,7 @@ notes.
   - [x] P23.2d Apply the K3Z low-yield treated-strata simplification cleanly in the canonical pipeline: exclude `CWHvm_CW+YC` and `CWHvm_CW+PLC` from BatchTIPSY generation, keep their unmanaged VDYP side, and force `RETENTION = 1.0` for matching fragments so they are fully netted out of THLB in the baseline model.
   - [x] P23.2e Replace the remaining K3Z TIPSY species-mix rules with the simplified teaching logic: FD-pair AUs -> `900 FD + 3100 HW`; CW-pair AUs -> `900 CW + 3100 HW`; all other remaining treated AUs -> `600 CW + 300 FD + 3100 HW`.
 - [ ] P23.3 Preserve and harden Linux execution parity
-  - [ ] P23.3a Keep Linux VDYP execution working via Wine and document the exact wrapper/runtime expectations. Needs execution and verification from the maintained Linux dev environment. Current blocker (2026-03-21 Linux rerun): root cause narrowed to missing local `vdyp_io` runtime assets in fresh `/tmp` instance clones (`VDYP_CFG` + `VDYP.INI`) while `vdyp_params-landp` still references `./vdyp_io/*`; source-root fallback staging logic is now implemented in `run_vdyp_for_stratum(...)`, but a full clean-start Linux run still needs to reach the Stage 01a BatchTIPSY handoff boundary for final sign-off.
+  - [ ] P23.3a Keep Linux VDYP execution working via Wine and document the exact wrapper/runtime expectations. Needs execution and verification from the maintained Linux dev environment. Current blocker (2026-03-21 Linux rerun): source-root fallback staging for local `vdyp_io` runtime assets (`VDYP_CFG` + `VDYP.INI`) is implemented, but the latest clean-start Linux run (`k3z_linux_p233a_20260321_r13_final`) stalled in Stage 00 after `... processing species SW` (no transition into VDYP log generation), so final Stage 01a->BatchTIPSY boundary sign-off is still pending.
   - [x] P23.3b Verify Linux guidance still covers the full FEMIC pipeline when Patchworks is unavailable natively. Verified on Linux 2026-03-21 with `femic tsa post-tipsy --instance-root /tmp/femic_p23b_r5_dC7Rio --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_p233b_20260321_r8` (`status=ok`), after hardening 01b plotting to tolerate missing comparison keys.
   - [ ] P23.3c Add parity notes explaining what is expected to differ between Linux and Windows and what should remain identical. Final sign-off needs Linux-side verification, even though the draft docs now exist.
 - [x] P23.4 Stabilize DataLad / git-annex bootstrap on Windows
@@ -741,6 +741,20 @@ notes.
   - Linux sign-off portion of P23.3c
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
 ## Detailed Next Steps Notes
+- 2026-03-21 (Phase 23 Linux parity clean-start rerun, post runtime-asset staging): `P23.3a` remains open after a reproducible Stage 00 stall before VDYP boundary.
+  - Clean rerun context:
+    - tmp instance: `/tmp/femic_p23a_final_bF2EN4`
+    - run id: `k3z_linux_p233a_20260321_r13_final`
+    - shell log: `/tmp/femic_p23a_r13_final.log`
+    - manifest: `/tmp/femic_p23a_final_bF2EN4/vdyp_io/logs/run_manifest-k3z_linux_p233a_20260321_r13_final.json`
+  - Observed behavior:
+    - preflight passed (`validate-case`, `geospatial-preflight`);
+    - run advanced through ArcRasterRescue species extraction logs up to `... processing species SW`;
+    - after that point, no new log lines were emitted for multiple minutes, no `vdyp_runs-...jsonl`/`vdyp_stderr-...log` files were created, and no active ArcRasterRescue child process remained;
+    - process was interrupted manually to avoid indefinite execution, leaving the run manifest in `status=started`.
+  - Interpretation:
+    - the prior missing-VDYP-runtime-asset seam is fixed in code, but this run did not reach the VDYP boundary, so `P23.3a` still lacks final Linux handoff confirmation.
+
 - 2026-03-21 (Phase 23 Linux parity root-cause + runtime-asset staging): identified why Linux `P23.3a` reported missing VDYP output even though bootstrap dispatch calls were emitted.
   - Root cause evidence:
     - failing runs reached bootstrap dispatch, but each call logged `FATAL: VDYP7 Configuration Folder ('-c') has not been supplied.` in `vdyp_stderr-*.log`;
