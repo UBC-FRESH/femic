@@ -94,10 +94,12 @@ def run_tsa(
     managed_curve_truncate_at_culm = os.environ.get(
         "FEMIC_MANAGED_CURVE_TRUNCATE_AT_CULM", "1"
     ).strip().lower() in {"1", "true", "yes"}
-    allow_stale_tipsy_output = (
-        os.environ.get("FEMIC_ALLOW_STALE_TIPSY_OUTPUT", "0").strip().lower()
-        in {"1", "true", "yes"}
-    )
+    allow_stale_tipsy_output = os.environ.get(
+        "FEMIC_ALLOW_STALE_TIPSY_OUTPUT", "0"
+    ).strip().lower() in {"1", "true", "yes"}
+    strict_timestamp_mismatch = os.environ.get(
+        "FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH", "0"
+    ).strip().lower() in {"1", "true", "yes"}
 
     requires_batch_tipsy = managed_curve_mode == "tipsy"
     if requires_batch_tipsy:
@@ -106,6 +108,7 @@ def run_tsa(
             tipsy_input_dat_path=tipsy_dat,
             tipsy_output_path=tipsyout,
             allow_stale=allow_stale_tipsy_output,
+            strict_timestamp_mismatch=strict_timestamp_mismatch,
         )
     else:
         print(

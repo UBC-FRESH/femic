@@ -5404,3 +5404,24 @@
   - `P23.3a` marked complete with real Linux evidence,
   - `P23.3c` Linux parity sign-off marked complete (with prior `P23.3b` pass),
   - top-level `P23.3` parity work is now closed.
+
+## 2026-03-22 - Added coherence-based TIPSY timestamp mismatch handling (warn-by-default, strict override available)
+- Implemented `P23.7` to reduce false-positive Stage 01b halts during dev/test loops when BatchTIPSY output is structurally coherent with current inputs.
+- Updated `src/femic/pipeline/tipsy.py` freshness behavior:
+  - added `assess_tipsy_input_output_coherence(...)` to compare input/output structure using:
+    - expected AUs/tables from `TIPSY_inputTBL` (`AU`, `TBLno`, `SI>0`),
+    - observed table IDs from `04_output-tsaXX.out`.
+  - when DAT is newer than output and no DAT fingerprint sidecar exists:
+    - coherent pair => default warning and continue,
+    - incoherent pair => hard error (existing fail-fast behavior).
+  - added strict override flag path in validator (`strict_timestamp_mismatch`) so coherent timestamp mismatch can still be treated as an error.
+- Wired strict override env switch through Stage 01b runtime:
+  - `FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH=1` in `src/femic/resources/legacy/01b_run-tsa.py`.
+- Kept existing explicit bypass intact:
+  - `FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1` still skips freshness gating for explicit debugging only.
+- Added regression coverage in `tests/test_tipsy.py`:
+  - coherent stale pair warns-and-continues by default,
+  - coherent stale pair raises in strict mode,
+  - missing table/AU coverage reports incoherent outcome.
+- Updated user-facing docs:
+  - `docs/guides/stage-01b-post-tipsy.rst` now documents coherence-based default behavior and strict override usage.

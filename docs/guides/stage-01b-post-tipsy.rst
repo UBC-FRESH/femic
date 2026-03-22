@@ -23,7 +23,12 @@ fingerprints for stale detection:
 
 - If the current DAT hash differs from the hash previously paired with
   ``04_output-<unit>.out``, Stage 01b fails fast.
-- If no hash sidecar exists yet, Stage 01b falls back to DAT-vs-output mtime.
+- If no hash sidecar exists yet, Stage 01b falls back to DAT-vs-output mtime
+  and then performs an input/output coherence check (AU/table coverage):
+  - coherent pairs warn-and-continue by default (development-friendly mode),
+  - incoherent pairs still fail fast.
+- Set ``FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH=1`` to escalate coherent
+  timestamp mismatch back to a hard error.
 - ``tipsy_params_tsa<unit>.xlsx`` is only a human-readable mirror and is not
   authoritative for freshness.
 - Use ``FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1`` only for explicit debugging.

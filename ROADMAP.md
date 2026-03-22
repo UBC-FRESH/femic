@@ -731,6 +731,11 @@ notes.
   - [x] P23.6b Add a user-facing development-environment bootstrap path that standardizes `.venv` setup and `pip install -e .[dev]`.
   - [x] P23.6c Make DataLad/git-annex/arbutus-s3 bootstrap and `datalad get` materialization expectations unambiguous for `external/femic-public-data`.
   - [x] P23.6d Add packaging affordances (`requirements-dev.txt`, optional dependency extras) so fresh-clone setup is one command and reproducible.
+- [x] P23.7 Reduce false-positive BatchTIPSY freshness halts during development loops
+  - [x] P23.7a When `02_input` is newer than `04_output` and DAT fingerprint sidecar is absent, perform a structural coherence check between TIPSY input parameters and output tables (AU/table coverage) before deciding to halt.
+  - [x] P23.7b Default behavior should warn-and-continue when coherence checks pass, rather than hard-failing on timestamp mismatch alone.
+  - [x] P23.7c Add a non-default strict override switch to escalate coherent timestamp mismatch back to an error for users who want hard freshness gating.
+  - [x] P23.7d Add regression tests and docs updates for the new default + strict override behavior.
 
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
@@ -742,6 +747,25 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 23 follow-up, P23.7 plan): implement coherence-based stale-TIPSY behavior for development ergonomics.
+  - Problem: timestamp-only stale checks still halt runs in cases where input/output look structurally coherent and the run goal is unrelated to regenerating BatchTIPSY.
+  - Planned implementation:
+    - extend `validate_tipsy_output_is_fresh(...)` to perform structural coherence checks (AU/table coverage) when DAT is newer than output and no DAT fingerprint sidecar is present;
+    - default to warning-and-continue on coherent in/out pairs;
+    - add a strict override env switch to restore hard-error behavior for coherent timestamp mismatches;
+    - add tests + docs notes so behavior is explicit and reproducible.
+- 2026-03-22 (Phase 23 follow-up, P23.7 complete): implemented coherence-based timestamp mismatch handling for BatchTIPSY freshness.
+  - Code behavior updates:
+    - `validate_tipsy_output_is_fresh(...)` now supports structural coherence checks when DAT is newer than output and no DAT hash sidecar exists.
+    - Coherence is assessed via AU/table coverage parsed from `TIPSY_inputTBL` (`AU`, `TBLno`, `SI>0`) and output table IDs from `04_output-tsaXX.out`.
+    - Coherent timestamp mismatches now warn-and-continue by default (`RuntimeWarning`) instead of hard failing.
+    - Non-default strict mode added: `FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH=1` escalates coherent timestamp mismatch back to `RuntimeError`.
+  - Wiring updates:
+    - `src/femic/resources/legacy/01b_run-tsa.py` now reads `FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH` and passes it into freshness validation.
+  - Regression/docs updates:
+    - added tests in `tests/test_tipsy.py` for warn-and-continue, strict override error, and incoherent coverage handling.
+    - updated `docs/guides/stage-01b-post-tipsy.rst` freshness guard guidance to document coherence default + strict override.
+
 - 2026-03-21 (Phase 23 Linux parity full clean-start convergence): obtained the first uninterrupted Linux `P23.3a` terminal outcome and closed parity sign-off items.
   - Run details:
     - tmp instance: `/tmp/femic_p23a_finalrun_rC45UW`
