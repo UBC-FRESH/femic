@@ -796,6 +796,13 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.pipeline.siteprod`` autosummary stub with a hand-authored narrative page.
+  - Motivation: ``femic.pipeline.siteprod`` owns one of FEMIC's most environment-sensitive geospatial seams, but the generated page does not explain the preferred canonical ``siteprod.tif`` + ``siteprod.bandmap.json`` path, the ArcRasterRescue/ArcGIS Pro fallback behavior, or the stand-level raster assignment contract clearly enough.
+  - Planned execution:
+    - document the module's role in SiteProd species mapping, band-map loading, fallback layer discovery/export, and per-stand mean site productivity assignment;
+    - explain the platform-sensitive runtime split between ArcRasterRescue and Windows ArcGIS Pro fallback, including executable resolution and timeout behavior;
+    - surface the main contract surfaces and failure seams around species-code normalization, missing band maps, FileGDB layer enumeration, and temporary export stacking;
+    - keep the generated autodoc page reachable through a curated page and rebuild Sphinx with warnings-as-errors.
 - 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.workflows.legacy`` autosummary stub with a hand-authored narrative page.
   - Motivation: ``femic.workflows.legacy`` is the bridge between FEMIC's newer CLI/path-resolution layer and the still-active legacy stage scripts, but the generated page does not explain the two distinct orchestration paths it owns: Stage 00 data-prep subprocess execution and the cached 01b-plus-bundle post-TIPSY assembly flow.
   - Planned execution:

@@ -5580,6 +5580,19 @@
 - Verification:
   - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
 
+## 2026-03-22 - Added curated API docs for femic.pipeline.siteprod (Phase 24 P24.1d/P24.1e)
+- Replaced the autosummary-only `femic.pipeline.siteprod` landing page with a hand-authored API page:
+  - `docs/reference/api/femic-pipeline-siteprod.rst`
+- Documented the module's:
+  - role as FEMIC's SiteProd species-mapping, band-map loading, fallback export, and stand-level raster-assignment seam
+  - preferred canonical `siteprod.tif` + `siteprod.bandmap.json` runtime path versus ArcRasterRescue and Windows ArcGIS Pro fallback behavior
+  - main contract surfaces around executable resolution, timeout behavior, FileGDB layer enumeration, temporary raster stacking, and per-stand masking
+  - main failure seams around species-code drift, invalid band maps, ArcRasterRescue resolution failures, and raster masking surprises
+- Updated `docs/reference/api/modules.rst` so the high-priority operational modules section is now fully curated instead of mixing curated pages with remaining autosummary-only stubs.
+- Refreshed `ROADMAP.md` Detailed Next Steps notes so the `femic.pipeline.siteprod` rewrite is tracked as active Phase 24 work.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
+
 
 
 
