@@ -5425,3 +5425,21 @@
   - missing table/AU coverage reports incoherent outcome.
 - Updated user-facing docs:
   - `docs/guides/stage-01b-post-tipsy.rst` now documents coherence-based default behavior and strict override usage.
+
+## 2026-03-22 - Fixed THLB raster fallback for Linux tmp-clone parity reruns (P23.8)
+- Added `resolve_legacy_thlb_raster_path(...)` in `src/femic/pipeline/io.py`:
+  - prefer instance-local `data/misc.thlb.tif`,
+  - fallback to `FEMIC_EXTERNAL_DATA_ROOT/misc.thlb.tif` when instance-local raster is absent.
+- Updated `src/femic/resources/legacy/00_data-prep.py`:
+  - now resolves THLB raster path through fallback helper,
+  - logs selected THLB source path and explicit fallback context,
+  - post-01b THLB assignment now uses resolved path rather than assuming instance-local raster is always present.
+- Added regression coverage in `tests/test_pipeline_io.py`:
+  - instance path precedence,
+  - external fallback when instance path is missing,
+  - deterministic behavior when both are missing.
+- Updated docs: `docs/guides/stage-00-data-prep.rst` now states THLB raster resolution order for tmp-clone workflows.
+- Verification evidence:
+  - `pytest -q tests/test_pipeline_io.py` -> `3 passed`.
+  - `femic tsa post-tipsy --instance-root /tmp/femic_p23a_live_session_ax08cp --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_p238_thlbfix_20260322` -> `RC=0` (`post-tipsy completed`).
+  - bounded full-run replay logs now show fallback path selection (`using THLB raster source (fallback): .../external/femic-public-data/data/misc.thlb.tif`) and no longer fail immediately at `misc.thlb.tif` missing-path boundary before timeout.

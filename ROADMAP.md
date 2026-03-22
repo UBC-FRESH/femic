@@ -736,6 +736,11 @@ notes.
   - [x] P23.7b Default behavior should warn-and-continue when coherence checks pass, rather than hard-failing on timestamp mismatch alone.
   - [x] P23.7c Add a non-default strict override switch to escalate coherent timestamp mismatch back to an error for users who want hard freshness gating.
   - [x] P23.7d Add regression tests and docs updates for the new default + strict override behavior.
+- [x] P23.8 Resolve Linux THLB raster path seam for clean tmp-clone reruns
+  - [x] P23.8a When instance-local `data/misc.thlb.tif` is absent, resolve THLB raster from `FEMIC_EXTERNAL_DATA_ROOT` (or other canonical external data root) instead of hard-failing late in post-TIPSY bundle assembly.
+  - [x] P23.8b Add diagnostics so logs show which THLB raster path was selected (instance-local vs external-root fallback).
+  - [x] P23.8c Add regression coverage for THLB path fallback and preserve existing behavior when instance-local raster is present.
+  - [x] P23.8d Update Linux parity notes/docs to reflect this runtime expectation explicitly.
 
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
@@ -747,6 +752,24 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 23 follow-up, P23.8 plan): fix THLB raster path resolution for tmp-clone Linux parity runs.
+  - Problem observed from full run `k3z_linux_p233a_20260322_live_session1`: pipeline progressed through Stage 00/01a + post-TIPSY resume but failed in bundle-stage THLB assignment with
+    `rasterio.errors.RasterioIOError: .../data/misc.thlb.tif: No such file or directory`.
+  - Root cause hypothesis: instance clone lacks `data/misc.thlb.tif`, while canonical payload exists under `external/femic-public-data/data/misc.thlb.tif`.
+  - Planned implementation:
+    - add fallback path resolution from external data root when instance-local THLB raster is absent;
+    - emit selected-path diagnostics for easier runtime triage;
+    - add focused regression tests for fallback + precedence behavior;
+    - rerun Linux parity command to confirm this seam no longer aborts progress.
+- 2026-03-22 (Phase 23 follow-up, P23.8 complete): fixed THLB raster path seam that caused late-stage Linux tmp-clone failures.
+  - Runtime behavior updates:
+    - added `resolve_legacy_thlb_raster_path(...)` in `src/femic/pipeline/io.py` to prefer instance-local `data/misc.thlb.tif`, then fall back to `FEMIC_EXTERNAL_DATA_ROOT/misc.thlb.tif`.
+    - `00_data-prep.py` now logs the selected THLB raster path and explicit fallback context when instance-local raster is absent.
+    - post-01b THLB assignment now uses the resolved path rather than assuming instance-local `data/misc.thlb.tif` is always present.
+  - Verification evidence:
+    - `pytest -q tests/test_pipeline_io.py` passed (`3 passed`) covering precedence + fallback behavior.
+    - replayed `femic tsa post-tipsy` on previously failing tmp instance (`/tmp/femic_p23a_live_session_ax08cp`) now succeeds (`RC=0`, `post-tipsy completed`).
+    - bounded full-run replay logs now show `using THLB raster source (fallback): .../external/femic-public-data/data/misc.thlb.tif` and no longer fail at `misc.thlb.tif` missing-path boundary before timeout.
 - 2026-03-22 (Phase 23 follow-up, P23.7 plan): implement coherence-based stale-TIPSY behavior for development ergonomics.
   - Problem: timestamp-only stale checks still halt runs in cases where input/output look structurally coherent and the run goal is unrelated to regenerating BatchTIPSY.
   - Planned implementation:

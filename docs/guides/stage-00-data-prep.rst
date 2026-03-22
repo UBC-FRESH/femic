@@ -15,6 +15,9 @@ Inputs
 - VRI polygon/layer datasets
 - Optional site productivity raster data (species-wise)
 - Existing checkpoint feathers when resume paths are enabled
+- THLB raster input (``misc.thlb.tif``), resolved from instance-local
+  ``data/misc.thlb.tif`` first, then from ``FEMIC_EXTERNAL_DATA_ROOT/misc.thlb.tif``
+  when running from tmp clones or other stripped instance copies
 
 Core Processing Responsibilities
 --------------------------------

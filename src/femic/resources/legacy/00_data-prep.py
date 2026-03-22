@@ -61,6 +61,7 @@ try:
         build_legacy_data_artifact_paths,
         build_ria_vri_checkpoint_paths,
         resolve_legacy_external_data_paths,
+        resolve_legacy_thlb_raster_path,
     )
     from femic.pipeline.vdyp import build_vdyp_cache_paths
     from femic.pipeline.vri import (
@@ -128,6 +129,7 @@ except ModuleNotFoundError:
         build_legacy_data_artifact_paths,
         build_ria_vri_checkpoint_paths,
         resolve_legacy_external_data_paths,
+        resolve_legacy_thlb_raster_path,
     )
     from femic.pipeline.vdyp import build_vdyp_cache_paths
     from femic.pipeline.vri import (
@@ -232,10 +234,22 @@ _external_paths = resolve_legacy_external_data_paths(
 )
 vri_vclr1p_path = _external_paths.vri_vclr1p_path
 _legacy_data_paths = build_legacy_data_artifact_paths(output_root=_repo_root / "data")
+_resolved_misc_thlb_tif_path = resolve_legacy_thlb_raster_path(
+    legacy_data_paths=_legacy_data_paths,
+    external_data_paths=_external_paths,
+)
 ria_stands_path = _legacy_data_paths.ria_stands_path
 tsa_boundaries_path = _external_paths.tsa_boundaries_path
 print(f"using VRI source: {vri_vclr1p_path}")
 print(f"using TSA boundaries source: {tsa_boundaries_path}")
+if _resolved_misc_thlb_tif_path == _legacy_data_paths.misc_thlb_tif_path:
+    print(f"using THLB raster source: {_resolved_misc_thlb_tif_path}")
+else:
+    print(
+        "using THLB raster source (fallback): "
+        f"{_resolved_misc_thlb_tif_path} "
+        f"(instance path missing: {_legacy_data_paths.misc_thlb_tif_path})"
+    )
 ria_maptiles_path = str((_repo_root / "ria_maptiles.csv").resolve())
 vdyp_input_pandl_path = _external_paths.vdyp_input_pandl_path
 if not vdyp_input_pandl_path.exists():
@@ -803,7 +817,7 @@ def _run_post_01b_bundle_and_curve_assignment_stage(
     checkpoint5_path,
     checkpoint6_path,
     checkpoint7_path,
-    legacy_data_paths,
+    thlb_raster_path,
     scsi_au,
     vdyp_curves_smooth,
     tipsy_curves,
@@ -864,7 +878,7 @@ def _run_post_01b_bundle_and_curve_assignment_stage(
 
     f_ = assign_thlb_raw_from_raster(
         f_table=f_,
-        thlb_raster_path=legacy_data_paths.misc_thlb_tif_path,
+        thlb_raster_path=thlb_raster_path,
         rio_module=rio,
         mask_fn=mask,
         np_module=np,
@@ -1006,7 +1020,7 @@ def _run_legacy_tsa_orchestration_stage(
         checkpoint5_path=ria_vri_vclr1p_checkpoint5_feather_path,
         checkpoint6_path=ria_vri_vclr1p_checkpoint6_feather_path,
         checkpoint7_path=ria_vri_vclr1p_checkpoint7_feather_path,
-        legacy_data_paths=legacy_data_paths,
+        thlb_raster_path=_resolved_misc_thlb_tif_path,
         scsi_au=scsi_au,
         vdyp_curves_smooth=vdyp_curves_smooth,
         tipsy_curves=tipsy_curves,

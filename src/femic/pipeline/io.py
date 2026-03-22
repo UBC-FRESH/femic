@@ -8,7 +8,7 @@ import hashlib
 import json
 from pathlib import Path
 import tomllib
-from typing import Iterable, Mapping, Sequence
+from typing import Callable, Iterable, Mapping, Sequence
 import uuid
 
 import yaml
@@ -360,6 +360,23 @@ def build_legacy_data_artifact_paths(
         misc_thlb_tif_path=root / "misc.thlb.tif",
         stands_shp_dir=root / "shp",
     )
+
+
+def resolve_legacy_thlb_raster_path(
+    *,
+    legacy_data_paths: LegacyDataArtifactPaths,
+    external_data_paths: LegacyExternalDataPaths,
+    exists_fn: Callable[[Path], bool] | None = None,
+) -> Path:
+    """Resolve THLB raster path with external-data fallback for instance clones."""
+    exists = exists_fn or Path.exists
+    instance_path = legacy_data_paths.misc_thlb_tif_path
+    if exists(instance_path):
+        return instance_path
+    fallback_path = external_data_paths.external_data_root / "misc.thlb.tif"
+    if exists(fallback_path):
+        return fallback_path
+    return instance_path
 
 
 def _normalize_optional_str_list(value: object, *, field_name: str) -> list[str] | None:
