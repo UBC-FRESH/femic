@@ -5686,6 +5686,25 @@
   - `C:\Users\gep\projects\femic\.venv\Scripts\pre-commit.exe run --all-files`
   - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`
 
+## 2026-03-22 - Closed Phase 24 `P24.4a` and `P24.4c` with benchmark validation and follow-up issue draft
+- Added `planning/phase24_docs_benchmark_validation.md` to benchmark the current docs against the real maintenance tasks named in the roadmap:
+  - Patchworks runtime setup
+  - bundled K3Z variant rebuild/amend loops
+  - SiteProd default/fallback orientation
+  - DataLad/public-data bootstrap
+- Recorded the benchmark result that the current docs are now sufficient for those tasks without relying on undocumented tribal knowledge.
+- Added `planning/phase24_docs_followup_issue.md` as the draft follow-up GitHub feature issue for the remaining non-blocking polish items:
+  - a more explicit native Windows Patchworks runtime quickstart
+  - a more compact operator-facing SiteProd default-resolution summary
+- Marked `P24.4a`, `P24.4c`, and top-level `P24.4` complete in `ROADMAP.md`, and updated Detailed Next Steps to point at the benchmark closeout artifact instead of the earlier open plan note.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff format src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff check src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m mypy src`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m pytest`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\pre-commit.exe run --all-files`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`
+
 
 
 

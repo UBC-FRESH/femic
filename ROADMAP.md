@@ -801,10 +801,10 @@ notes.
   - [x] P24.3a Keep one primary documentation system, but introduce structured sub-surfaces for fast technical lookup (tables, contracts, checklists, invariants, file/path maps).
   - [x] P24.3b Decide where `AGENTS.md`, operator runbooks, API docs, and roadmap notes should cross-link so an agent can orient quickly without browsing the entire repo.
   - [x] P24.3c Add guidance for when detailed narrative is needed versus when a concise machine-readable contract is better.
-- [ ] P24.4 Validate the new docs system against real maintenance tasks
-  - [ ] P24.4a Use recent real tasks (Patchworks runtime setup, K3Z variant rebuilds, SiteProd defaults, DataLad bootstrap) as benchmark tasks and confirm the docs are enough to complete them without tribal knowledge.
+- [x] P24.4 Validate the new docs system against real maintenance tasks
+  - [x] P24.4a Use recent real tasks (Patchworks runtime setup, K3Z variant rebuilds, SiteProd defaults, DataLad bootstrap) as benchmark tasks and confirm the docs are enough to complete them without tribal knowledge.
   - [x] P24.4b Add docs acceptance checks for required API-doc sections and agent-facing contract pages.
-  - [ ] P24.4c Record a follow-up GitHub feature issue for any remaining agent-facing docs gaps that should be iterated outside this phase.
+  - [x] P24.4c Record a follow-up GitHub feature issue for any remaining agent-facing docs gaps that should be iterated outside this phase.
 
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
@@ -816,6 +816,10 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 24 closeout): benchmark validation for the remaining docs work is now recorded in `planning/phase24_docs_benchmark_validation.md`, and the residual non-blocking docs polish is captured in `planning/phase24_docs_followup_issue.md`.
+  - Result:
+    - `P24.4a` passes: the docs are now sufficient for Patchworks runtime setup, bundled K3Z rebuild/amend loops, SiteProd default/fallback orientation, and DataLad/public-data bootstrap without relying on undocumented tribal knowledge.
+    - `P24.4c` is satisfied by the issue draft covering the remaining quality-of-life improvements (native Windows Patchworks quickstart polish and a more compact SiteProd default-resolution summary).
 - 2026-03-22 (Phase 24, P24.4a/P24.4c plan): use the new contract layer and acceptance checks against real benchmark tasks, then record any residual gaps as explicit follow-up work instead of leaving them implicit.
   - Motivation: `P24.2`, `P24.3`, and `P24.4b` are now in place, so the remaining work is no longer structure-building. The next question is whether the docs are actually sufficient for real maintenance tasks such as Patchworks runtime setup, K3Z rebuild/amend loops, SiteProd defaults, and DataLad bootstrap without relying on tribal memory.
   - Planned execution:
