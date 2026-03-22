@@ -796,6 +796,13 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.pipeline.io`` autosummary stub with a hand-authored narrative page.
+  - Motivation: ``femic.pipeline.io`` is the main source-of-truth seam for run-profile normalization, instance-root resolution, external-data fallback, canonical SiteProd/THLB artifact selection, and legacy subprocess execution planning.
+  - Planned execution:
+    - document the main dataclass payloads and how CLI/profile inputs become effective run options and execution plans;
+    - explain the artifact/path resolution order for instance-local data, ``FEMIC_EXTERNAL_DATA_ROOT``, and published canonical SiteProd/THLB assets;
+    - call out the main environment variables and failure seams that matter when debugging path/instance/bootstrap issues;
+    - keep the generated autodoc page reachable through a curated page and rebuild Sphinx with warnings-as-errors.
 - 2026-03-22 (Phase 24, P24.2b/P24.2d plan): add one explicit source-of-truth docs pass for the bundled example instances under ``external/`` plus the full scripted developer bootstrap path on both Linux and Windows.
   - Motivation: the current docs mention ``external/femic-k3z-instance`` and ``external/femic-tsa29-instance``, but they still make contributors assemble too much of the extend/amend/rebuild workflow from scattered pages and tribal knowledge.
   - Planned execution:
