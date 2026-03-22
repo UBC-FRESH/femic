@@ -245,24 +245,34 @@ def load_siteprod_bandmap(
     bandmap_path: str | Path,
 ) -> tuple[dict[int, str], dict[str, int]]:
     """Load canonical SiteProd species<->band mappings from JSON sidecar."""
-    payload = json.loads(Path(bandmap_path).read_text(encoding='utf-8'))
-    bands_0_based = payload.get('bands_0_based')
-    bands_1_based = payload.get('bands_1_based')
-    ordered_species = payload.get('ordered_species')
+    payload = json.loads(Path(bandmap_path).read_text(encoding="utf-8"))
+    bands_0_based = payload.get("bands_0_based")
+    bands_1_based = payload.get("bands_1_based")
+    ordered_species = payload.get("ordered_species")
     if isinstance(bands_0_based, dict) and bands_0_based:
-        species_layer = {str(species).upper(): int(index) for species, index in bands_0_based.items()}
-        layer_species = {int(index): str(species).upper() for species, index in species_layer.items()}
+        species_layer = {
+            str(species).upper(): int(index) for species, index in bands_0_based.items()
+        }
+        layer_species = {
+            int(index): str(species).upper() for species, index in species_layer.items()
+        }
         return layer_species, species_layer
     if isinstance(bands_1_based, dict) and bands_1_based:
-        species_layer = {str(species).upper(): int(index) - 1 for species, index in bands_1_based.items()}
-        layer_species = {int(index): str(species).upper() for species, index in species_layer.items()}
+        species_layer = {
+            str(species).upper(): int(index) - 1
+            for species, index in bands_1_based.items()
+        }
+        layer_species = {
+            int(index): str(species).upper() for species, index in species_layer.items()
+        }
         return layer_species, species_layer
     if isinstance(ordered_species, list) and ordered_species:
-        layer_species = {idx: str(species).upper() for idx, species in enumerate(ordered_species)}
+        layer_species = {
+            idx: str(species).upper() for idx, species in enumerate(ordered_species)
+        }
         species_layer = {species: idx for idx, species in layer_species.items()}
         return layer_species, species_layer
-    raise ValueError(f'Invalid SiteProd band map payload: {bandmap_path}')
-
+    raise ValueError(f"Invalid SiteProd band map payload: {bandmap_path}")
 
 
 def parse_arc_raster_rescue_layer_mappings(

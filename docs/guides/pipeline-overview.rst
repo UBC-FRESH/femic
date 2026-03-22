@@ -54,7 +54,7 @@ practical boundary is:
 
 .. code-block:: powershell
 
-   $env:FEMIC_EXTERNAL_DATA_ROOT='C:\Users\gep\projects\femic\external\femic-public-data\data'
+   $env:FEMIC_EXTERNAL_DATA_ROOT="$PWD\external\femic-public-data\data"
    python -m femic run --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --run-id k3z_windows_cleanstart
    # manual BatchTIPSY step happens here
    python -m femic tsa post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_windows_cleanstart

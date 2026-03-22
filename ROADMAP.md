@@ -106,12 +106,12 @@
   - [x] P5.3d Bundle/export guide: `model_input_bundle` tables and
     Patchworks/Woodstock outputs
 - [x] P5.4 Add operator QA and troubleshooting guidance
-  - [x] P5.4a Add “what good looks like” checks for strata, fit diagnostics, and
+  - [x] P5.4a Add "what good looks like" checks for strata, fit diagnostics, and
     TIPSY-vs-VDYP overlays
   - [x] P5.4b Document common failure signatures and deterministic remedies
   - [x] P5.4c Add manual BatchTIPSY handoff checklist and fixed-width DAT caveats
 - [x] P5.5 Preserve traceability to legacy notebooks
-  - [x] P5.5a Add “Legacy Notebook Traceability” docs page with cell-index mapping
+  - [x] P5.5a Add "Legacy Notebook Traceability" docs page with cell-index mapping
   - [x] P5.5b Record source notebook/cell provenance for major guide content
   - [x] P5.5c Mark intentionally retired legacy guidance explicitly
 - [x] P5.6 Keep docs current with code and CLI
@@ -163,8 +163,8 @@
   - [x] P7.4c Add troubleshooting for MFA suffixes (`@app`, `@phone`, optional pool)
   - [x] P7.4d Add fallback notes for in-container OpenConnect (only if tun/caps available)
 - [x] P7.5 Add docs and operator runbook
-  - [x] P7.5a Add step-by-step “Patchworks under Wine” guide
-  - [x] P7.5b Add “VPN + licensing diagnostics” guide
+  - [x] P7.5a Add step-by-step "Patchworks under Wine" guide
+  - [x] P7.5b Add "VPN + licensing diagnostics" guide
   - [x] P7.5c Add known failure signatures and remedies
 - [x] P7.6 Add regression and acceptance tests
   - [x] P7.6a Unit-test command assembly and path mapping
@@ -248,7 +248,7 @@
 - [x] P10.5 Publish-readiness completion criteria (PyPI in scope)
   - [x] P10.5a Add package build/release checks (`build`, `twine check`, wheel install smoke).
   - [x] P10.5b Verify installed-package workflow in clean env (`pip install femic` + `femic instance init` + preflight).
-  - [x] P10.5c Final docs updates for “install package + create instance + run”.
+  - [x] P10.5c Final docs updates for "install package + create instance + run".
 - [x] P10.6 Public-data accessibility mirror via DataLad + submodule linkage
   - [x] P10.6a Inventory all "public but not directly downloadable" required layers
     (including archived HectaresBC `misc*.tif` dependencies) with provenance notes.
@@ -532,12 +532,12 @@ notes.
     selected-path outcomes plus quality metric improvements.
   - [x] P19.16e Re-run cached TSA29 smoothing + fitdiag regeneration and
     publish before/after reviewer summary evidence.
-- [ ] P19.17 Execute TSA29 instance Sphinx docs deep-dive and augmentation pass
-  - [ ] P19.17a Audit TSA29 instance Sphinx pages for thin/missing sections
+- [x] P19.17 Execute TSA29 instance Sphinx docs deep-dive and augmentation pass
+  - [x] P19.17a Audit TSA29 instance Sphinx pages for thin/missing sections
     (workflow steps, assumptions, artifact references, troubleshooting detail).
-  - [ ] P19.17b Expand weak sections with concrete procedural guidance and
+  - [x] P19.17b Expand weak sections with concrete procedural guidance and
     explicit cross-links to current TSA29 compile/smoke evidence artifacts.
-  - [ ] P19.17c Rebuild docs with warnings-as-errors and publish a short
+  - [x] P19.17c Rebuild docs with warnings-as-errors and publish a short
     documentation-gap closure summary in roadmap/changelog notes.
 
 ## Phase 20: VDYP Parallelization and Runtime Observability (Non-Blocking)
@@ -756,6 +756,56 @@ notes.
   - [x] P23.10b Push `femic-public-data` dataset update to GitHub `main` and keep `git-annex` metadata branch synchronized.
   - [x] P23.10c Verify cloud distribution state: if sidecar is annexed, ensure `arbutus-s3` copy exists; if Git-tracked text, document that it is distributed via Git branch sync.
 
+## Phase 23 Addendum: VDYP Fit Policy Config Surface (Nice-to-Have Later)
+- [ ] P23.11 Replace code-level VDYP fit overrides with a YAML-backed policy surface
+  - [ ] P23.11a Define FEMIC-level default VDYP fit/tail/toe parameters in a human-readable YAML config artifact instead of hard-coded Python defaults where practical.
+  - [ ] P23.11b Add per-instance YAML override support so case-specific fit rules (for example K3Z CWHvm_DR+HW tail relaxation) do not require editing src/femic/pipeline/vdyp_overrides.py.
+  - [ ] P23.11c Preserve a narrow code-level fallback seam only for exceptional cases that truly cannot be expressed cleanly in YAML.
+  - [ ] P23.11d Update developer/operator docs to explain the new config surface, override precedence, and when not to override fit behavior.
+  - [ ] P23.11e Open and link a dedicated GitHub feature-request issue before implementation so the design and tradeoffs are traceable outside the roadmap.
+
+
+## Phase 24: FEMIC API Docs Rebuild + Agent-Friendly Technical Documentation
+- [x] P24.1 Rebuild FEMIC API docs to a usable depth/quality standard
+  - [x] P24.1a Audit the current API docs surface and identify modules/pages that are too terse, too dense, or effectively unusable.
+  - [x] P24.1b Define a target API-doc style guide using `ws3` and `fhops` as reference exemplars for depth, structure, and narrative density.
+  - [x] P24.1c Prioritize the first FEMIC modules/packages to rewrite (CLI, pipeline, fmg, instance/bootstrap, public-data/runtime helpers).
+  - [x] P24.1d Replace low-value autosummary-only pages with hand-authored API narrative that explains purpose, contracts, common call patterns, and failure modes.
+    - [x] P24.1d.1 Rewrite the first-wave high-priority operational module pages:
+      `femic.cli.main`, `femic.pipeline.vdyp_stage`, `femic.pipeline.io`,
+      `femic.pipeline.tipsy`, `femic.pipeline.siteprod`,
+      `femic.fmg.patchworks`, `femic.patchworks_runtime`, and
+      `femic.workflows.legacy`.
+    - [x] P24.1d.2 Add curated support-module pages for the remaining execution
+      seams that still carry important repo/runtime contracts:
+      `femic.instance_context`, `femic.instance_bootstrap`,
+      `femic.geospatial_preflight`, `femic.pipeline.bundle`,
+      `femic.pipeline.legacy_runtime`, and `femic.pipeline.manifest`.
+    - [x] P24.1d.3 Run a closure sweep across the remaining autosummary-only API
+      pages and classify each one as either:
+      acceptable generated-only surface, or still-needs-curated-page.
+    - [x] P24.1d.4 Promote any support modules from the closure sweep that still
+      block comprehension of real maintenance tasks into one final curated docs
+      pass, then update `docs/reference/api/modules.rst` and `docs/reference/api/index.rst`
+      to reflect the bounded curated set explicitly.
+    - [x] P24.1d.5 Mark `P24.1d` complete once every generated-only page left in
+      the API tree is explicitly considered acceptable as generated-only or has
+      been replaced by a curated narrative page.
+  - [x] P24.1e Add examples and "how this fits into the pipeline" notes for the most important public entrypoints.
+- [x] P24.2 Add a lightweight docs contract for coding-agent-friendly technical consumption
+  - [x] P24.2a Define what agent-friendly documentation means for FEMIC without creating a totally separate parallel docs universe.
+  - [x] P24.2b Add concise machine-friendly reference surfaces for repo invariants, runtime prerequisites, stage boundaries, canonical artifacts, and recovery workflows.
+  - [x] P24.2c Make sure those surfaces are generated from or embedded in the same human-facing docs tree wherever practical, so they do not drift.
+  - [x] P24.2d Add explicit "source of truth" pages for frequently confused seams (instance roots, external data roots, public-data/DataLad usage, BatchTIPSY boundary, Patchworks runtime assumptions).
+- [x] P24.3 Establish doc architecture that serves both humans and embedded coding agents
+  - [x] P24.3a Keep one primary documentation system, but introduce structured sub-surfaces for fast technical lookup (tables, contracts, checklists, invariants, file/path maps).
+  - [x] P24.3b Decide where `AGENTS.md`, operator runbooks, API docs, and roadmap notes should cross-link so an agent can orient quickly without browsing the entire repo.
+  - [x] P24.3c Add guidance for when detailed narrative is needed versus when a concise machine-readable contract is better.
+- [x] P24.4 Validate the new docs system against real maintenance tasks
+  - [x] P24.4a Use recent real tasks (Patchworks runtime setup, K3Z variant rebuilds, SiteProd defaults, DataLad bootstrap) as benchmark tasks and confirm the docs are enough to complete them without tribal knowledge.
+  - [x] P24.4b Add docs acceptance checks for required API-doc sections and agent-facing contract pages.
+  - [x] P24.4c Record a follow-up GitHub feature issue for any remaining agent-facing docs gaps that should be iterated outside this phase.
+
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
 - The remaining open work in Phase 23 is Linux-specific parity verification under P23.3.
@@ -766,6 +816,119 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 19 closeout note): `P19.17` is now complete in the TSA29 instance repo after a Sphinx deep-dive pass across the standalone docs set.
+  - Result:
+    - expanded the thin TSA29 pages (`getting-started`, `data-and-provenance`, `land-base-and-assumptions`, `rebuild-and-qa`, `troubleshooting`, and `docs-ownership-and-release`) with clearer workflow guidance, artifact references, evidence interpretation, and release/ownership notes;
+    - hardened the TSA29 docs build config so it falls back cleanly when `sphinx_rtd_theme` is absent, then rebuilt the standalone docs successfully with `-W`.
+- 2026-03-22 (Phase 19, P19.17 plan): execute the TSA29 instance Sphinx docs deep-dive and close the remaining documentation-gap pass in the linked instance repo.
+  - Motivation: after closing Phase 24 in the parent FEMIC docs, the oldest still-open docs milestone is `P19.17`. The TSA29 instance already has canonical student/docs structure, but the roadmap still calls out one unfinished pass to deepen thin sections, tighten workflow guidance, and make evidence/artifact references easier to follow.
+  - Planned execution:
+    - audit the TSA29 instance Sphinx pages for weak sections, missing assumptions, thin workflow steps, and poor evidence cross-linking;
+    - expand the weak spots with concrete procedural guidance and explicit references to current TSA29 compile/smoke evidence artifacts;
+    - rebuild the TSA29 docs with warnings-as-errors if the submodule toolchain allows it, then record the closure summary in `ROADMAP.md` and `CHANGE_LOG.md`.
+- 2026-03-22 (Phase 24 closeout): benchmark validation for the remaining docs work is now recorded in `planning/phase24_docs_benchmark_validation.md`, and the residual non-blocking docs polish is captured in `planning/phase24_docs_followup_issue.md`.
+  - Result:
+    - `P24.4a` passes: the docs are now sufficient for Patchworks runtime setup, bundled K3Z rebuild/amend loops, SiteProd default/fallback orientation, and DataLad/public-data bootstrap without relying on undocumented tribal knowledge.
+    - `P24.4c` is satisfied by the issue draft covering the remaining quality-of-life improvements (native Windows Patchworks quickstart polish and a more compact SiteProd default-resolution summary).
+- 2026-03-22 (Phase 24, P24.4a/P24.4c plan): use the new contract layer and acceptance checks against real benchmark tasks, then record any residual gaps as explicit follow-up work instead of leaving them implicit.
+  - Motivation: `P24.2`, `P24.3`, and `P24.4b` are now in place, so the remaining work is no longer structure-building. The next question is whether the docs are actually sufficient for real maintenance tasks such as Patchworks runtime setup, K3Z rebuild/amend loops, SiteProd defaults, and DataLad bootstrap without relying on tribal memory.
+  - Planned execution:
+    - walk the benchmark tasks named in `P24.4a` against the current Guides, API pages, and technical-contract pages;
+    - note where the current docs are now sufficient and where maintainers still have to infer missing details;
+    - record any remaining gaps as a bounded follow-up issue/documented backlog item under `P24.4c`;
+    - keep `ROADMAP.md` and `CHANGE_LOG.md` aligned with the benchmark results rather than leaving completion criteria only in chat.
+- 2026-03-22 (Phase 24, P24.4b plan): extend the existing docs-contract test suite so the new compact contract layer cannot silently disappear or lose its required sections.
+  - Motivation: `P24.2` adds the new technical-contract section, but it will drift unless the repo enforces both navigation and minimum content the same way it already does for guide and API-doc surfaces.
+  - Planned execution:
+    - extend `tests/test_docs_contract.py` with required-page coverage for `docs/reference/contracts/`;
+    - assert docs-home, README, API reference, and `AGENTS.md` navigation all keep pointing at the compact contract section;
+    - enforce the core headings/markers that make the contract pages useful for fast technical lookup;
+    - run Sphinx plus the standard validation suite and record the milestone in `CHANGE_LOG.md`.
+- 2026-03-22 (Phase 24, P24.2 plan): add a compact technical-contract section inside the main docs tree so contributors and coding agents can answer common repo/runtime questions without reverse-engineering multiple guides.
+  - Motivation: `P24.1` fixed the high-value API pages, but the most repeated maintenance confusion still lives across several workflow guides and `AGENTS.md`: which repo root is canonical, how instance-root resolution works, when `FEMIC_EXTERNAL_DATA_ROOT` matters, which artifacts are authoritative at each stage, and where FEMIC stops at external runtime boundaries.
+  - Planned execution:
+    - create one compact reference-contract section under `docs/reference/` rather than a parallel agent-only doc set;
+    - add concise source-of-truth pages for repo/runtime invariants, instance and external-data roots, stage boundaries/canonical artifacts, and recovery/runtime assumptions;
+    - express those pages as checklists, tables, and bounded contract notes that link back to the deeper guides instead of duplicating them wholesale;
+    - cross-link the new contract pages from top-level docs navigation plus contributor entrypoints such as `README.md` and `AGENTS.md`;
+    - rebuild docs with warnings-as-errors, run the full validation suite, and record the milestone in `CHANGE_LOG.md`.
+- 2026-03-22 (Phase 24, P24.1d.3/P24.1d.4 plan): finish the API-doc closure sweep by classifying the remaining generated-only pages and promoting the rebuild/release cluster that still blocks real maintenance work.
+  - Motivation: after the operational and support-contract rewrites, the remaining generated-only set is mostly acceptable helper/package surface area. The main cluster that still benefits from curated orientation is the rebuild/release path (`rebuild_spec`, `rebuild_baseline`, `rebuild_invariants`, `rebuild_runner`, `release_packaging`), because it underpins reproducible instance maintenance.
+  - Planned execution:
+    - write an explicit closure-sweep artifact that classifies every remaining generated-only API page as either acceptable generated-only or promoted for a final curated pass;
+    - add curated API pages for the rebuild/release cluster that still blocks comprehension of instance rebuild and release-maintenance tasks;
+    - update the API index/modules pages so the bounded curated set is explicit rather than implied;
+    - if the closure sweep leaves no unjustified generated-only pages, mark `P24.1d.3`, `P24.1d.4`, `P24.1d.5`, and top-level `P24.1d` complete.
+- 2026-03-22 (Phase 24, P24.1d.2 plan): execute the support-module rewrite bundle needed to close the remaining contract-heavy autosummary stubs.
+  - Motivation: the first-wave operational pages are done, but maintainers still have to reverse-engineer several smaller modules that carry core runtime contracts around instance resolution, bootstrap, preflight, bundle tables, runtime payload typing, and manifest capture.
+  - Planned execution:
+    - add curated API pages for ``femic.instance_context``, ``femic.instance_bootstrap``, ``femic.geospatial_preflight``, ``femic.pipeline.bundle``, ``femic.pipeline.legacy_runtime``, and ``femic.pipeline.manifest``;
+    - group those pages under a curated support-modules section in ``docs/reference/api/modules.rst`` while keeping generated autodoc pages reachable through hidden toctrees;
+    - document the contracts these modules own rather than leaving them implied: instance-root precedence, template/bootstrap payloads, geospatial readiness checks, canonical bundle-table surfaces, typed legacy runtime payloads, and run-manifest provenance;
+    - rebuild Sphinx with warnings-as-errors, run the full validation suite, and record the milestone in ``CHANGE_LOG.md``.
+- 2026-03-22 (Phase 24, P24.1d closure plan): convert `P24.1d` from an open-ended "rewrite docs forever" task into a bounded closure queue that can actually be checked off.
+  - Motivation: the original first-wave rewrite targets are now done, but the roadmap still treats `P24.1d` as one undifferentiated open item. We need an explicit finish line so the remaining support-module rewrites and closure sweep are trackable.
+  - Planned execution:
+    - treat the first-wave operational module rewrites as completed scope inside `P24.1d`;
+    - queue one support-module rewrite bundle covering `femic.instance_context`, `femic.instance_bootstrap`, `femic.geospatial_preflight`, `femic.pipeline.bundle`, `femic.pipeline.legacy_runtime`, and `femic.pipeline.manifest`;
+    - run one explicit classification sweep for the remaining autosummary-only pages so "acceptable generated-only" modules are documented as an intentional choice rather than forgotten work;
+    - only mark `P24.1d` complete after that queue is closed and the remaining generated pages are explicitly justified.
+- 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.pipeline.siteprod`` autosummary stub with a hand-authored narrative page.
+  - Motivation: ``femic.pipeline.siteprod`` owns one of FEMIC's most environment-sensitive geospatial seams, but the generated page does not explain the preferred canonical ``siteprod.tif`` + ``siteprod.bandmap.json`` path, the ArcRasterRescue/ArcGIS Pro fallback behavior, or the stand-level raster assignment contract clearly enough.
+  - Planned execution:
+    - document the module's role in SiteProd species mapping, band-map loading, fallback layer discovery/export, and per-stand mean site productivity assignment;
+    - explain the platform-sensitive runtime split between ArcRasterRescue and Windows ArcGIS Pro fallback, including executable resolution and timeout behavior;
+    - surface the main contract surfaces and failure seams around species-code normalization, missing band maps, FileGDB layer enumeration, and temporary export stacking;
+    - keep the generated autodoc page reachable through a curated page and rebuild Sphinx with warnings-as-errors.
+- 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.workflows.legacy`` autosummary stub with a hand-authored narrative page.
+  - Motivation: ``femic.workflows.legacy`` is the bridge between FEMIC's newer CLI/path-resolution layer and the still-active legacy stage scripts, but the generated page does not explain the two distinct orchestration paths it owns: Stage 00 data-prep subprocess execution and the cached 01b-plus-bundle post-TIPSY assembly flow.
+  - Planned execution:
+    - document the module's role as the orchestration seam that resolves the legacy script bundle, manages temporary env/cwd overrides, and writes manifests around legacy execution;
+    - explain the main public entry surfaces for ``run_data_prep`` and ``run_post_tipsy_bundle(_with_manifest)`` including their cached-artifact expectations and downstream bundle outputs;
+    - surface the main failure seams around missing 01a checkpoints, mis-resolved legacy script roots, manifest/log expectations, and managed-curve override drift;
+    - keep the generated autodoc page reachable through a curated page and rebuild Sphinx with warnings-as-errors.
+- 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.patchworks_runtime`` autosummary stub with a hand-authored narrative page.
+  - Motivation: ``femic.patchworks_runtime`` owns the operational seam after export synthesis: config loading, preflight, launcher selection, Matrix Builder/log manifest capture, and blocks/topology preparation. The current generated page does not explain that runtime contract clearly enough.
+  - Planned execution:
+    - document the main runtime flow from config file to preflight to command launch and manifest capture;
+    - explain the host-mode split between native Windows and Wine/Linux execution, including license/env expectations and `xvfb` behavior;
+    - surface the main artifacts and failure seams for matrix-build, beanshell, and block/topology preparation;
+    - keep the generated autodoc page reachable through a curated page and rebuild Sphinx with warnings-as-errors.
+- 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.fmg.patchworks`` autosummary stub with a hand-authored narrative page.
+  - Motivation: ``femic.fmg.patchworks`` is the central export synthesis seam for Patchworks package generation, but its generated page still does not explain the ForestModel/fragments contract, IFM/origin/silviculture state wiring, retention handling, or the distinction between export-time validation and later runtime execution.
+  - Planned execution:
+    - document the main export flow from bundle/checkpoint tables into ForestModel XML and fragments shapefile outputs;
+    - explain the most important contract surfaces: curve derivation, fragment field requirements, seral/retention wiring, and export result payloads;
+    - call out the main failure seams around invalid fragments geometry, XML structure drift, IFM assignment, and silviculture/seral config misuse;
+    - keep the generated autodoc page reachable through a curated page and rebuild Sphinx with warnings-as-errors.
+- 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.pipeline.tipsy`` autosummary stub with a hand-authored narrative page.
+  - Motivation: ``femic.pipeline.tipsy`` owns one of FEMIC's most brittle operator-facing seams: fixed-width BatchTIPSY handoff generation, candidate filtering, canonical DAT/output freshness validation, and the coherence-based stale-output policy.
+  - Planned execution:
+    - document the Stage 01a/01b boundary this module owns and clarify why ``02_input-*.dat`` is canonical while XLSX is only a mirror;
+    - explain the main functional surfaces for DAT export, candidate evaluation, fingerprinting, and coherence-based freshness checks;
+    - surface the main failure seams around fixed-width overflow, stale ``04_output`` reuse, and managed-curve mode differences;
+    - keep the generated autodoc page reachable through a curated page and rebuild Sphinx with warnings-as-errors.
+- 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.pipeline.io`` autosummary stub with a hand-authored narrative page.
+  - Motivation: ``femic.pipeline.io`` is the main source-of-truth seam for run-profile normalization, instance-root resolution, external-data fallback, canonical SiteProd/THLB artifact selection, and legacy subprocess execution planning.
+  - Planned execution:
+    - document the main dataclass payloads and how CLI/profile inputs become effective run options and execution plans;
+    - explain the artifact/path resolution order for instance-local data, ``FEMIC_EXTERNAL_DATA_ROOT``, and published canonical SiteProd/THLB assets;
+    - call out the main environment variables and failure seams that matter when debugging path/instance/bootstrap issues;
+    - keep the generated autodoc page reachable through a curated page and rebuild Sphinx with warnings-as-errors.
+- 2026-03-22 (Phase 24, P24.2b/P24.2d plan): add one explicit source-of-truth docs pass for the bundled example instances under ``external/`` plus the full scripted developer bootstrap path on both Linux and Windows.
+  - Motivation: the current docs mention ``external/femic-k3z-instance`` and ``external/femic-tsa29-instance``, but they still make contributors assemble too much of the extend/amend/rebuild workflow from scattered pages and tribal knowledge.
+  - Planned execution:
+    - document the complete fresh-clone bootstrap ritual as copy-paste command blocks for Linux/macOS and Windows PowerShell, including `.venv`, editable dev install, submodule/DataLad materialization, `FEMIC_EXTERNAL_DATA_ROOT`, and preflight checks;
+    - explain how maintainers should work with the bundled ``external/*`` example instances in this checkout versus the standalone upstream instance repositories;
+    - add a clear amend/rebuild loop for bundled example instances covering config edits, validation, rebuild/spec checks, and the boundary between local experimentation and submodule updates;
+    - cross-link those instructions from both the guides and the README so humans and coding agents hit the same source-of-truth path.
+- 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.pipeline.vdyp_stage`` autosummary stub with a hand-authored narrative page.
+  - Motivation: ``femic.pipeline.vdyp_stage`` is one of the largest and most failure-prone runtime seams in FEMIC, but its generated API page still provides almost no operational guidance for maintainers or coding agents.
+  - Planned execution:
+    - document module purpose, pipeline role, and the main sub-flows from input-table loading through batch execution, bootstrap orchestration, and curve smoothing;
+    - surface the most important contracts and artifacts (``vdyp_io/`` runtime assets, per-run logs, sampling/cache expectations, and common failure seams);
+    - keep the generated autodoc page reachable through the curated page with the same hidden-toctree + ``:noindex:`` pattern used for ``femic.cli.main``;
+    - rebuild Sphinx with warnings-as-errors and record the milestone in ``CHANGE_LOG.md``.
 - 2026-03-22 (Phase 23 follow-up, P23.10 plan): publish SiteProd band-map sidecar metadata alongside canonical stacked TIFF.
   - Motivation: default runtime use of pre-stacked `siteprod.tif` requires canonical species-to-band mapping without ArcRasterRescue/ArcPy discovery at runtime.
   - Planned execution:
@@ -779,7 +942,7 @@ notes.
     - src/femic/resources/legacy/00_data-prep.py now logs the selected SiteProd raster path, band-map path, and whether export fallback was used.
     - src/femic/pipeline/siteprod.py now loads canonical species-to-band mapping from siteprod.bandmap.json so per-stand SiteProd assignment works without runtime layer discovery.
   - Windows validation evidence:
-    - clean-start run k3z_p2310_siteprod_default_20260322_b selected external/femic-public-data/data/bc/siteprod/siteprod.tif, logged siteprod export fallback used: no, completed native VDYP successfully, regenerated  2_input-tsak3z.dat, and resumed through emic tsa post-tipsy after a refreshed BatchTIPSY handoff.
+    - clean-start run k3z_p2310_siteprod_default_20260322_b selected external/femic-public-data/data/bc/siteprod/siteprod.tif, logged siteprod export fallback used: no, completed native VDYP successfully, regenerated 02_input-tsak3z.dat, and resumed through femic tsa post-tipsy after a refreshed BatchTIPSY handoff.
   - Acceptance result:
     - P23.10a through P23.10e are now satisfied for the current K3Z Windows path.
   - Dataset artifact:
@@ -1498,7 +1661,7 @@ notes.
     - `femic-0.1.1a1.tar.gz`
       `sha256=10fb2e43abdecb0dcee5c40096230462aca9cab5e2cc7c28687a7bd8258154d7`
   - Release summary:
-    Phase 18 checklist is now fully complete (`P18.1`–`P18.4`).
+    Phase 18 checklist is now fully complete (`P18.1`-`P18.4`).
 - 2026-03-12 (Phase 18 `P18.2` complete): published pre-release
   `femic==0.1.1a1` to TestPyPI with successful end-to-end smoke install in
   GitHub Actions.
@@ -1620,7 +1783,7 @@ notes.
   - Updated `tests/test_docs_contract.py` K3Z sample-model assertions to
     enforce pointer-page contract (required sections + canonical links +
     submodule commands), replacing old deep narrative heading checks.
-  - Phase 17 checklist now fully complete (`P17.0`–`P17.5`).
+  - Phase 17 checklist now fully complete (`P17.0`-`P17.5`).
   - Validation gates passed:
     `ruff format`, `ruff check`, `mypy`, `pytest (490 passed)`,
     `pre-commit --all-files`,
@@ -3600,7 +3763,7 @@ notes.
 - Upgraded TSA29 TIPSY parameter rules to TSR-anchored assumptions using Williams Lake data
   package references:
   `reference/29ts_dpkg_2024-2.pdf` (Section 8.5) and
-  `reference/williams_lake_tsa_data_package-2.pdf` (Section 6.3 Tables 23–25).
+  `reference/williams_lake_tsa_data_package-2.pdf` (Section 6.3 Tables 23-25).
 - Updated `config/tipsy/tsa29.yaml` from provisional heuristics to ordered BEC/species pathways
   with explicit treated/untreated proportions, regeneration delays, species mixes, densities, and
   genetic-worth values aligned to TSR assumptions, while preserving catch-all coverage.
@@ -3704,7 +3867,7 @@ notes.
   tail-blend approach.
 - Updated `src/femic/pipeline/vdyp_curves.py` tail blend algorithm to detect a rightmost linear
   binned segment automatically (maximal contiguous tail from the right that meets
-  `R² >= tail_linear_min_r2` and `NRMSE <= tail_linear_max_nrmse`), then blend the current NLLS
+  `R^2 >= tail_linear_min_r2` and `NRMSE <= tail_linear_max_nrmse`), then blend the current NLLS
   curve into that linear tail. If no credible linear tail exists, it naturally falls back to
   raw/current behavior (no tail override).
 - New tail controls in `process_vdyp_out(...)`:
@@ -3745,7 +3908,7 @@ notes.
 - Updated summary (`plots/vdyp_fitdiag_tsa29_metrics_tail_only.csv`) shows broader tail capture
   with controlled but non-zero tradeoff:
   `tail_better_rmse=15/30`, `tail_better_tail_rmse=15/30`;
-  worst remaining regression is moderate (`IDF_PL-H`, ΔRMSE ~ +0.67), with no catastrophic outliers.
+  worst remaining regression is moderate (`IDF_PL-H`, delta RMSE ~ +0.67), with no catastrophic outliers.
 - Added a detailed planning summary of this entire curve-fit enhancement stream at:
   `planning/VDYP_curve_fit_enhancements_2026-03-05.md`, including explicit TODO notes to
   continue tuning tail-fit hyperparameters later.
@@ -5437,8 +5600,8 @@ notes.
     - all other remaining treated AUs: `600 CW + 300 FD + 3100 HW`
   - Follow-through requirement: the user-facing K3Z docs must state this explicitly so students understand why these strata no longer appear in the treated/TIPSY handoff and why their area shows up only in the retained/unmanaged side of the baseline model.
 
-- 2026-03-21 (Phase 23 true-TIPSY evaluation pass): after refreshing external/femic-k3z-instance/data/04_output-tsak3z.out, the downstream-only 	sa post-tipsy path was repaired to read schema-v2 dyp_prep-tsak3z.pkl checkpoints and to execute  1b_run-tsa.py from the instance root so relative ./data and ./plots paths resolve correctly. A true-TIPSY managed-curve rerun completed successfully with
-un_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance/data/model_input_bundle/curve_table.csv and curve_points_table.csv, refreshed the current external/femic-k3z-instance/data/tipsy_curves_tsak3z.csv and 	ipsy_sppcomp_tsak3z.csv, and regenerated the current external/femic-k3z-instance/plots/tipsy_vdyp_tsak3z-*.png comparison set for the remaining treated AUs. The excluded low-yield strata (22006, 22008) no longer participate in BatchTIPSY and their stale comparison plots were removed so operator review now focuses only on the retained treated AU set. Next decision point: inspect the refreshed plots and decide whether K3Z should keep dyp_transform as the teaching baseline or switch the managed-curve baseline to true TIPSY output.
+- 2026-03-21 (Phase 23 true-TIPSY evaluation pass): after refreshing external/femic-k3z-instance/data/04_output-tsak3z.out, the downstream-only tsa post-tipsy path was repaired to read schema-v2 vdyp_prep-tsak3z.pkl checkpoints and to execute 01b_run-tsa.py from the instance root so relative ./data and ./plots paths resolve correctly. A true-TIPSY managed-curve rerun completed successfully with
+run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance/data/model_input_bundle/curve_table.csv and curve_points_table.csv, refreshed the current external/femic-k3z-instance/data/tipsy_curves_tsak3z.csv and tipsy_sppcomp_tsak3z.csv, and regenerated the current external/femic-k3z-instance/plots/tipsy_vdyp_tsak3z-*.png comparison set for the remaining treated AUs. The excluded low-yield strata (22006, 22008) no longer participate in BatchTIPSY and their stale comparison plots were removed so operator review now focuses only on the retained treated AU set. Next decision point: inspect the refreshed plots and decide whether K3Z should keep vdyp_transform as the teaching baseline or switch the managed-curve baseline to true TIPSY output.
 
 - 2026-03-21 (Phase 23 VDYP smoothing triage): operator review of the refreshed K3Z TIPSY-vs-VDYP plots accepted the current true-TIPSY output for now, but flagged a new regression in some smoothed VDYP unmanaged curves: sharp post-peak drop-off followed by an implausible upward blend ramp into the flat tail. The next bounded experiment is to rerun only the cached K3Z smoothing plus downstream handoff from existing `vdyp_results-tsak3z.pkl` and `vdyp_prep-tsak3z.pkl` inputs while (1) removing the hard-coded `tail_blend_override_k3z` selection, (2) relaxing the default toe/right-shift policy away from the current global `body_c_min=20` and `toe_shift_years=20`, and then (3) regenerating downstream DAT/post-TIPSY comparison artifacts without rerunning raw VDYP.
 - 2026-03-21 (Phase 23 cached smoothing experiment): reran the K3Z VDYP smoothing stage and downstream post-TIPSY artifacts without rerunning raw VDYP, using cached `external/femic-k3z-instance/data/vdyp_results-tsak3z.pkl` plus `vdyp_prep-tsak3z.pkl`. For this bounded trial, the hard-coded `tail_blend_override_k3z` path was disabled by default in `src/femic/pipeline/vdyp_stage.py`, and the rerun used relaxed fit defaults (`FEMIC_BODY_C_MIN=5`, `FEMIC_VDYP_TOE_SHIFT_YEARS=5`). The smoothing rebuild completed with `run_id=k3z_vdyp_smooth_relax_20260321_b`, rewrote `external/femic-k3z-instance/data/vdyp_curves_smooth-tsak3z.feather`, and recorded events in `external/femic-k3z-instance/vdyp_io/logs/vdyp_curve_events-tsak3z-k3z_vdyp_smooth_relax_20260321_b.jsonl`. Selection counts in that event log were `tail_blend=14`, `primary_nlls=10`, `censored_refit=3`, and importantly there were no `tail_blend_override_k3z` selections. Then `python -m femic tsa post-tipsy --instance-root external/femic-k3z-instance --tsa k3z --run-id k3z_post_tipsy_smooth_relax_20260321_b` completed successfully, refreshing the current `tipsy_vdyp_tsak3z-*.png` comparison plots for the retained treated AUs (timestamps around 2026-03-21 00:50). Next operator step: visually compare these refreshed plots against the backup snapshot under `external/femic-k3z-instance/plots/backup_smoothing_20260321_004810` and decide whether the relaxed smoothing policy is a keeper.
@@ -5447,15 +5610,11 @@ un_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance/
 - 2026-03-21 (Phase 23 cached smoothing experiment, pass 3): pushed the toe/tail policy further with `FEMIC_BODY_C_MIN=-20`, `FEMIC_VDYP_TOE_SHIFT_YEARS=0`, `FEMIC_TAIL_LINEAR_MIN_R2=0.20`, `FEMIC_TAIL_LINEAR_MAX_NRMSE=0.50`, `FEMIC_TAIL_LINEAR_PREFER_MIN_AGE=90`, `FEMIC_TAIL_LINEAR_FLAT_SLOPE_ABS=0.20`, `FEMIC_TAIL_LINEAR_MIN_SPAN_YEARS=20`, and `FEMIC_TAIL_BLEND_YEARS=90`, still with `FEMIC_K3Z_FORCE_TAIL_BLEND=0`. Cached smoothing reran successfully with `run_id=k3z_vdyp_smooth_relax_20260321_d`, followed by downstream post-TIPSY refresh `run_id=k3z_post_tipsy_smooth_relax_20260321_d`. The new event log is `external/femic-k3z-instance/vdyp_io/logs/vdyp_curve_events-tsak3z-k3z_vdyp_smooth_relax_20260321_d.jsonl`; selection counts shifted to `tail_blend=15`, `primary_nlls=9`, `censored_refit=3` versus pass 2's `tail_blend=20`, `primary_nlls=7`. The refreshed `tipsy_vdyp_tsak3z-*.png` plots now carry timestamps around 2026-03-21 00:58 and should be compared against the previous pass backup under `external/femic-k3z-instance/plots/backup_smoothing_20260321_005744`.
 - 2026-03-21 (Phase 23 fit-override interface note): K3Z VDYP smoothing does not yet expose a user-facing YAML interface for per-stratum/per-SI fit-parameter overrides. Current override surfaces are (a) global run/env knobs such as `FEMIC_VDYP_TOE_SHIFT_YEARS` and tail-linearity env vars, and (b) the code-level per-TSA override map in `src/femic/pipeline/vdyp_overrides.py`. Immediate practical path: use the existing override map for the pathological `CWHvm_DR+HW` curves while continuing to relax the global tail policy; follow-up task remains to promote these per-curve fit overrides into a documented YAML/config surface for case-specific tuning.
 
-## Phase 23 Addendum: VDYP Fit Policy Config Surface (Nice-to-Have Later)
-- [ ] P23.6 Replace code-level VDYP fit overrides with a YAML-backed policy surface
-  - [ ] P23.6a Define FEMIC-level default VDYP fit/tail/toe parameters in a human-readable YAML config artifact instead of hard-coded Python defaults where practical.
-  - [ ] P23.6b Add per-instance YAML override support so case-specific fit rules (for example K3Z CWHvm_DR+HW tail relaxation) do not require editing src/femic/pipeline/vdyp_overrides.py.
-  - [ ] P23.6c Preserve a narrow code-level fallback seam only for exceptional cases that truly cannot be expressed cleanly in YAML.
-  - [ ] P23.6d Update developer/operator docs to explain the new config surface, override precedence, and when not to override fit behavior.
-  - [ ] P23.6e Open and link a dedicated GitHub feature-request issue before implementation so the design and tradeoffs are traceable outside the roadmap.
+- 2026-03-22 (Phase 24 kickoff planning): queued a new documentation-focused phase to rebuild FEMIC's API docs to the `ws3` / `fhops` quality bar and to add agent-friendly technical documentation without maintaining two distinct parallel doc systems. Working hypothesis: the right pattern is one primary human-facing docs tree, augmented with compact technical contract surfaces (repo invariants, runtime prerequisites, canonical artifacts, recovery workflows, stage boundaries, and file/path maps) that are also easy for an embedded coding agent to consume quickly. This is intended to solve a real problem, not create duplicate documentation work.
 
-- 2026-03-21 (Phase 23 fit-policy config follow-up): the current src/femic/pipeline/vdyp_overrides.py seam is acceptable as a short-term debugging lever, but it is too cludgey to remain the long-term user/deployment interface. Added low-priority P23.6 to migrate VDYP fit defaults and per-instance override rules into human-readable YAML, keep Python overrides as a narrow fallback only, and update user/developer docs when that interface lands. A dedicated GitHub feature-request issue should be opened when this moves from backlog to active work.
+- 2026-03-22 (Phase 24 audit checkpoint): completed the initial API-docs surface audit and style-reference pass. See planning/phase24_api_docs_audit.md for the concrete findings, rewrite target list, and proposed style rules. Bottom line: FEMIC's current API reference is dominated by autosummary stubs, while `fhops` demonstrates the stronger pattern we want (hand-authored package intros, typical usage, contract notes, then autodoc completeness). `ws3` is also useful as a module-oriented conceptual reference, though the local partial checkout is less polished as a direct API-doc exemplar. First rewrite targets remain `femic.cli.main`, `femic.pipeline.vdyp_stage`, `femic.fmg.patchworks`, `femic.pipeline.io`, `femic.pipeline.tipsy`, `femic.patchworks_runtime`, and `femic.workflows.legacy`.
+- 2026-03-22 (Phase 24 rewrite pass 1): promoted `femic.cli.main` from autosummary stub to the first hand-authored API page, establishing the working rewrite pattern for the rest of Phase 24: module purpose, start-here guidance, command structure, common entry surfaces, contract boundaries, and cross-links back to the Guides.
+- 2026-03-21 (Phase 23 fit-policy config follow-up): the current src/femic/pipeline/vdyp_overrides.py seam is acceptable as a short-term debugging lever, but it is too cludgey to remain the long-term user/deployment interface. Added low-priority P23.11 to migrate VDYP fit defaults and per-instance override rules into human-readable YAML, keep Python overrides as a narrow fallback only, and update user/developer docs when that interface lands. A dedicated GitHub feature-request issue should be opened when this moves from backlog to active work.
 
 - 2026-03-21 (Phase 23 K3Z lock-in): accepted the current K3Z managed-curve and smoothing policy as the working baseline for now.
   - `config/run_profile.k3z.yaml` now uses `managed_curve_mode: tipsy` in both FEMIC and the standalone K3Z instance.
@@ -5491,25 +5650,6 @@ un_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance/
 
 
 
-## Phase 24: FEMIC API Docs Rebuild + Agent-Friendly Technical Documentation
-- [ ] P24.1 Rebuild FEMIC API docs to a usable depth/quality standard
-  - [ ] P24.1a Audit the current API docs surface and identify modules/pages that are too terse, too dense, or effectively unusable.
-  - [ ] P24.1b Define a target API-doc style guide using `ws3` and `fhops` as reference exemplars for depth, structure, and narrative density.
-  - [ ] P24.1c Prioritize the first FEMIC modules/packages to rewrite (CLI, pipeline, fmg, instance/bootstrap, public-data/runtime helpers).
-  - [ ] P24.1d Replace low-value autosummary-only pages with hand-authored API narrative that explains purpose, contracts, common call patterns, and failure modes.
-  - [ ] P24.1e Add examples and �how this fits into the pipeline� notes for the most important public entrypoints.
-- [ ] P24.2 Add a lightweight docs contract for coding-agent-friendly technical consumption
-  - [ ] P24.2a Define what agent-friendly documentation means for FEMIC without creating a totally separate parallel docs universe.
-  - [ ] P24.2b Add concise machine-friendly reference surfaces for repo invariants, runtime prerequisites, stage boundaries, canonical artifacts, and recovery workflows.
-  - [ ] P24.2c Make sure those surfaces are generated from or embedded in the same human-facing docs tree wherever practical, so they do not drift.
-  - [ ] P24.2d Add explicit �source of truth� pages for frequently confused seams (instance roots, external data roots, public-data/DataLad usage, BatchTIPSY boundary, Patchworks runtime assumptions).
-- [ ] P24.3 Establish doc architecture that serves both humans and embedded coding agents
-  - [ ] P24.3a Keep one primary documentation system, but introduce structured sub-surfaces for fast technical lookup (tables, contracts, checklists, invariants, file/path maps).
-  - [ ] P24.3b Decide where `AGENTS.md`, operator runbooks, API docs, and roadmap notes should cross-link so an agent can orient quickly without browsing the entire repo.
-  - [ ] P24.3c Add guidance for when detailed narrative is needed versus when a concise machine-readable contract is better.
-- [ ] P24.4 Validate the new docs system against real maintenance tasks
-  - [ ] P24.4a Use recent real tasks (Patchworks runtime setup, K3Z variant rebuilds, SiteProd defaults, DataLad bootstrap) as benchmark tasks and confirm the docs are enough to complete them without tribal knowledge.
-  - [ ] P24.4b Add docs acceptance checks for required API-doc sections and agent-facing contract pages.
-  - [ ] P24.4c Record a follow-up GitHub feature issue for any remaining agent-facing docs gaps that should be iterated outside this phase.
 
-- 2026-03-22 (Phase 24 kickoff planning): queued a new documentation-focused phase to rebuild FEMIC�s API docs to the `ws3` / `fhops` quality bar and to add agent-friendly technical documentation without maintaining two distinct parallel doc systems. Working hypothesis: the right pattern is one primary human-facing docs tree, augmented with compact technical contract surfaces (repo invariants, runtime prerequisites, canonical artifacts, recovery workflows, stage boundaries, and file/path maps) that are also easy for an embedded coding agent to consume quickly. This is intended to solve a real problem, not create duplicate documentation work.
+
+

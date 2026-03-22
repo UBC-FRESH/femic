@@ -321,7 +321,6 @@ def test_mean_siteprod_for_row_and_assign_siteprod_from_raster() -> None:
     assert table.written["siteprod"] == [4.0]
 
 
-
 def test_load_siteprod_bandmap_prefers_bands_1_based(tmp_path: Path) -> None:
     path = tmp_path / "siteprod.bandmap.json"
     path.write_text(

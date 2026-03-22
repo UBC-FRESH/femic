@@ -44,8 +44,25 @@ the repo root:
      mirror only. Do not assume a stale block means rerun is required without
      checking whether DAT content actually changed.
 
+For the compact docs source of truth behind these operating notes, see:
+- `docs/reference/contracts/index.rst`
+- `docs/reference/contracts/repo-runtime-invariants.rst`
+- `docs/reference/contracts/instance-and-data-roots.rst`
+- `docs/reference/contracts/stage-boundaries-and-canonical-artifacts.rst`
+- `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
+
 Do not treat symlinked pointer files in `external/femic-public-data` as usable
 inputs until `datalad get` has completed.
+
+Canonical repository root for FEMIC work is the active checkout root.
+Use the repo you are actually in, not a machine-specific absolute path copied
+from another environment.
+
+If any tool/session metadata, stale terminal context, or editor integration
+mentions the legacy `wbi_ria_yield` path, treat that as stale context only.
+Do not use it for command execution, patch application, file references, or
+reasoning about the active repo. Always pin command working directories and
+file operations to the active FEMIC checkout explicitly.
 
 When contributing to this repository as the coding agent:
 

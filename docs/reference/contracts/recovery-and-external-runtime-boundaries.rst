@@ -1,0 +1,94 @@
+Recovery and External Runtime Boundaries
+========================================
+
+Purpose
+-------
+
+This page is the compact source of truth for restart paths, recovery workflow,
+and the runtime assumptions FEMIC makes about external tools.
+
+External Runtime Boundaries
+---------------------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 28 72
+
+   * - Runtime seam
+     - Contract
+   * - BatchTIPSY
+     - Manual GUI/runtime boundary. FEMIC writes the canonical DAT handoff,
+       then resumes only after the returned ``04_output-*.out`` is available.
+   * - Patchworks
+     - Proprietary runtime boundary. FEMIC can export packages, run preflight,
+       and launch commands, but users must supply the local Patchworks install,
+       license wiring, and host-ready runtime.
+   * - ArcRasterRescue
+     - Treat as an explicit external executable; if auto-discovery fails, set
+       ``FEMIC_ARC_RASTER_RESCUE_EXE`` to the compiled path.
+   * - ArcGIS Pro fallback
+     - Windows-only fallback path for SiteProd geoprocessing when canonical
+       SiteProd artifacts are unavailable.
+
+Recovery Workflows
+------------------
+
+When a run stops at a known boundary, prefer the narrow restart path instead of
+rerunning the entire pipeline.
+
+After Stage 01a / before BatchTIPSY:
+
+1. confirm ``02_input-*.dat`` exists and is the intended handoff payload
+2. run BatchTIPSY manually
+3. return ``04_output-*.out`` to the instance ``data/`` directory
+4. resume with ``femic tsa post-tipsy ...``
+
+After BatchTIPSY output refresh:
+
+.. code-block:: powershell
+
+   $env:FEMIC_EXTERNAL_DATA_ROOT="$PWD\external\femic-public-data\data"
+   python -m femic tsa post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_resume
+
+Before Patchworks runtime launch:
+
+1. run ``femic patchworks preflight ...``
+2. confirm Java or Wine + Java is available for the host mode
+3. confirm ``patchworks.jar``, ``SPSHOME``, and license values are wired
+4. launch ``build-blocks`` or ``matrix-build`` only after preflight is clean
+
+Host Assumptions
+----------------
+
+- Windows is the authoritative host for native Patchworks launch, native VDYP,
+  and ArcGIS Pro fallback workflows.
+- Linux is a supported development host and can run the non-proprietary FEMIC
+  path plus Wine-based Patchworks runtime where configured.
+- ``patchworks.use_xvfb: true`` requires ``xvfb-run`` on non-Windows hosts.
+- A successful FEMIC preflight validates config and environment shape, not the
+  entire proprietary runtime behavior of third-party tools.
+
+If Something Looks Wrong
+------------------------
+
+- Wrong files or configs resolved:
+  check :doc:`instance-and-data-roots`.
+- BatchTIPSY resume blocked unexpectedly:
+  check :doc:`stage-boundaries-and-canonical-artifacts`.
+- Patchworks launch fails after a correct export:
+  check Patchworks runtime prerequisites and host mode before changing export
+  logic.
+- Public-data fallback missing:
+  confirm ``datalad get`` completed and ``FEMIC_EXTERNAL_DATA_ROOT`` points at
+  real payloads.
+
+See Also
+--------
+
+- :doc:`../../guides/stage-01b-post-tipsy`
+- :doc:`../../guides/patchworks-wine-runtime`
+- :doc:`../../guides/geospatial-runtime-bootstrap`
+- :doc:`../../guides/cross-platform-runtime-smoke`
+- :doc:`../api/femic-pipeline-tipsy`
+- :doc:`../api/femic-patchworks-runtime`
+- :doc:`../api/femic-pipeline-siteprod`

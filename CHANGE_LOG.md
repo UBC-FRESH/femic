@@ -5480,6 +5480,251 @@
 - Distribution note:
   - `siteprod.bandmap.json` is Git-tracked text (not annexed), so it is distributed via GitHub branch sync rather than `arbutus-s3` annex object transfer.
 
+## 2026-03-22 - Added curated API docs for femic.pipeline.vdyp_stage (Phase 24 P24.1d/P24.1e)
+- Replaced the autosummary-only `femic.pipeline.vdyp_stage` landing page with a hand-authored API page:
+  - `docs/reference/api/femic-pipeline-vdyp-stage.rst`
+- Documented the module's:
+  - Stage 01a role and operational boundaries
+  - main sub-flows from input loading through batch execution, bootstrap orchestration, and curve smoothing
+  - key entrypoints, runtime contracts, artifacts, and common failure seams
+  - cross-links back to the relevant guides and supporting API modules
+- Updated `docs/reference/api/modules.rst` so the curated page is the visible high-priority module page while the generated autodoc page remains reachable through a hidden toctree.
+- Repaired `ROADMAP.md` encoding corruption and refreshed the Detailed Next Steps notes so Phase 24 is the active leading-edge plan again.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
+
+## 2026-03-22 - Clarified bundled example-instance maintenance and scripted bootstrap docs (Phase 24 P24.2b/P24.2d)
+- Expanded `docs/guides/developer-environment-bootstrap.rst` with copy-paste Linux/macOS and Windows PowerShell bootstrap scripts covering:
+  - local `.venv` creation/activation
+  - editable dev dependency install
+  - toolchain verification
+  - submodule and DataLad materialization
+  - `FEMIC_EXTERNAL_DATA_ROOT` export
+  - preflight checks against the bundled K3Z instance
+- Expanded `docs/guides/deployment-instances.rst` to document how the bundled example instances under `external/` should actually be maintained:
+  - clarified that `external/femic-k3z-instance` and `external/femic-tsa29-instance` are submodules, not ordinary sample folders
+  - documented the amend/rebuild loop for bundled instances
+  - explained the parent-repo vs submodule-repo commit boundary
+  - linked the bundled-instance release flow back to each instance-local rebuild runbook
+- Updated `README.md` so repo-root readers see the same Linux/Windows bootstrap commands and the same `external/` amend/rebuild workflow without needing to infer it from scattered docs pages.
+- Refreshed `ROADMAP.md` Detailed Next Steps notes so this bundled-instance/source-of-truth docs pass is tracked as active Phase 24 work.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
+
+## 2026-03-22 - Added curated API docs for femic.pipeline.io (Phase 24 P24.1d/P24.1e)
+- Replaced the autosummary-only `femic.pipeline.io` landing page with a hand-authored API page:
+  - `docs/reference/api/femic-pipeline-io.rst`
+- Documented the module's:
+  - role as FEMIC's path-resolution and run-configuration seam
+  - main dataclass contracts and profile-normalization flow
+  - external-data, SiteProd, and THLB artifact-selection rules
+  - legacy subprocess env/command handoff and the main path/bootstrap failure seams
+  - cross-links back to the deployment/bootstrap and run-config guides
+- Updated `docs/reference/api/modules.rst` so the curated `femic.pipeline.io` page is the visible high-priority module page while the generated autodoc page remains reachable through a hidden toctree.
+- Refreshed `ROADMAP.md` Detailed Next Steps notes so the `femic.pipeline.io` rewrite is tracked as active Phase 24 work.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
+
+## 2026-03-22 - Added curated API docs for femic.pipeline.tipsy (Phase 24 P24.1d/P24.1e)
+- Replaced the autosummary-only `femic.pipeline.tipsy` landing page with a hand-authored API page:
+  - `docs/reference/api/femic-pipeline-tipsy.rst`
+- Documented the module's:
+  - BatchTIPSY handoff role across the Stage 01a/01b boundary
+  - canonical DAT-vs-XLSX contract and fixed-width export rules
+  - candidate evaluation and per-AU parameter generation flow
+  - freshness, fingerprint, and coherence-based stale-output acceptance logic
+  - main operator/debugging failure seams around DAT layout and stale `04_output` reuse
+- Updated `docs/reference/api/modules.rst` so the curated `femic.pipeline.tipsy` page is the visible high-priority module page while the generated autodoc page remains reachable through a hidden toctree.
+- Refreshed `ROADMAP.md` Detailed Next Steps notes so the `femic.pipeline.tipsy` rewrite is tracked as active Phase 24 work.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
+
+## 2026-03-22 - Added curated API docs for femic.fmg.patchworks (Phase 24 P24.1d/P24.1e)
+- Replaced the autosummary-only `femic.fmg.patchworks` landing page with a hand-authored API page:
+  - `docs/reference/api/femic-fmg-patchworks.rst`
+- Documented the module's:
+  - role as FEMIC's Patchworks export synthesis layer
+  - top-level export flow from bundle/checkpoint surfaces into `forestmodel.xml` and fragments shapefile outputs
+  - main contract surfaces around curve derivation, fragment field requirements, IFM/origin/silviculture state wiring, and retention handling
+  - distinction between export-time validation here and later runtime launch in `femic.patchworks_runtime`
+  - main failure seams around fragments validation, XML structure drift, IFM assignment, and config misuse
+- Updated `docs/reference/api/modules.rst` so the curated `femic.fmg.patchworks` page is the visible high-priority module page while the generated autodoc page remains reachable through a hidden toctree.
+- Refreshed `ROADMAP.md` Detailed Next Steps notes so the `femic.fmg.patchworks` rewrite is tracked as active Phase 24 work.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
+
+## 2026-03-22 - Added curated API docs for femic.patchworks_runtime (Phase 24 P24.1d/P24.1e)
+- Replaced the autosummary-only `femic.patchworks_runtime` landing page with a hand-authored API page:
+  - `docs/reference/api/femic-patchworks-runtime.rst`
+- Documented the module's:
+  - role as FEMIC's Patchworks runtime/preflight/launch seam after export synthesis
+  - host-mode split between native Windows and Wine/Linux execution
+  - runtime config, preflight, command-launch, and manifest/log capture flow
+  - blocks/topology preparation path and the main runtime artifacts
+  - key failure seams around launcher prerequisites, license/env wiring, fatal stderr signatures, and output-not-ready conditions
+- Updated `docs/reference/api/modules.rst` so the curated `femic.patchworks_runtime` page is the visible high-priority module page while the generated autodoc page remains reachable through a hidden toctree.
+- Refreshed `ROADMAP.md` Detailed Next Steps notes so the `femic.patchworks_runtime` rewrite is tracked as active Phase 24 work.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
+
+## 2026-03-22 - Added curated API docs for femic.workflows.legacy (Phase 24 P24.1d/P24.1e)
+- Replaced the autosummary-only `femic.workflows.legacy` landing page with a hand-authored API page:
+  - `docs/reference/api/femic-workflows-legacy.rst`
+- Documented the module's:
+  - role as FEMIC's orchestration seam around the still-active legacy stage scripts
+  - two main execution paths: Stage 00 subprocess launch and cached post-TIPSY 01b-plus-bundle rebuild
+  - script-bundle resolution, temporary env/cwd overrides, manifest expectations, and bundle-output contracts
+  - main failure seams around missing cached 01a artifacts, mis-resolved legacy script roots, and managed-curve override drift
+- Updated `docs/reference/api/modules.rst` so the curated `femic.workflows.legacy` page is the visible high-priority module page while the generated autodoc page remains reachable through a hidden toctree.
+- Refreshed `ROADMAP.md` Detailed Next Steps notes so the `femic.workflows.legacy` rewrite is tracked as active Phase 24 work.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
+
+## 2026-03-22 - Added curated API docs for femic.pipeline.siteprod (Phase 24 P24.1d/P24.1e)
+- Replaced the autosummary-only `femic.pipeline.siteprod` landing page with a hand-authored API page:
+  - `docs/reference/api/femic-pipeline-siteprod.rst`
+- Documented the module's:
+  - role as FEMIC's SiteProd species-mapping, band-map loading, fallback export, and stand-level raster-assignment seam
+  - preferred canonical `siteprod.tif` + `siteprod.bandmap.json` runtime path versus ArcRasterRescue and Windows ArcGIS Pro fallback behavior
+  - main contract surfaces around executable resolution, timeout behavior, FileGDB layer enumeration, temporary raster stacking, and per-stand masking
+  - main failure seams around species-code drift, invalid band maps, ArcRasterRescue resolution failures, and raster masking surprises
+- Updated `docs/reference/api/modules.rst` so the high-priority operational modules section is now fully curated instead of mixing curated pages with remaining autosummary-only stubs.
+- Refreshed `ROADMAP.md` Detailed Next Steps notes so the `femic.pipeline.siteprod` rewrite is tracked as active Phase 24 work.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
+
+## 2026-03-22 - Queued bounded closure criteria for Phase 24 `P24.1d`
+- Refined `ROADMAP.md` so `P24.1d` now has an explicit closure queue instead of one open-ended rewrite bucket.
+- Recorded that the original first-wave high-priority operational module rewrites are already complete within `P24.1d`.
+- Queued the remaining support-module rewrite bundle needed before `P24.1d` can be checked off:
+  - `femic.instance_context`
+  - `femic.instance_bootstrap`
+  - `femic.geospatial_preflight`
+  - `femic.pipeline.bundle`
+  - `femic.pipeline.legacy_runtime`
+  - `femic.pipeline.manifest`
+- Added an explicit closure-sweep requirement so any API pages left as autosummary-only must be intentionally classified as acceptable generated-only surfaces rather than silently remaining unfinished.
+
+## 2026-03-22 - Added curated support-module API docs for `P24.1d.2`
+- Added hand-authored API pages for the remaining support modules that still carry important runtime/repo contracts:
+  - `docs/reference/api/femic-instance-context.rst`
+  - `docs/reference/api/femic-instance-bootstrap.rst`
+  - `docs/reference/api/femic-geospatial-preflight.rst`
+  - `docs/reference/api/femic-pipeline-bundle.rst`
+  - `docs/reference/api/femic-pipeline-legacy-runtime.rst`
+  - `docs/reference/api/femic-pipeline-manifest.rst`
+- Updated `docs/reference/api/modules.rst` to add a curated support-contract modules section so those pages are visible entrypoints instead of buried as generated-only stubs.
+- Marked `P24.1d.2` complete in `ROADMAP.md`; the remaining work to clear `P24.1d` is now the closure sweep and any final promotions that sweep identifies.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff format src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff check src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m mypy src`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m pytest`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\pre-commit.exe run --all-files`
+
+## 2026-03-22 - Closed Phase 24 `P24.1d` with final rebuild/release API docs and closure sweep
+- Added the final curated rebuild/release API pages needed to clear the remaining promoted blockers:
+  - `docs/reference/api/femic-rebuild-spec.rst`
+  - `docs/reference/api/femic-rebuild-baseline.rst`
+  - `docs/reference/api/femic-rebuild-invariants.rst`
+  - `docs/reference/api/femic-rebuild-runner.rst`
+  - `docs/reference/api/femic-release-packaging.rst`
+- Updated `docs/reference/api/modules.rst` and `docs/reference/api/index.rst` so the bounded curated set is explicit across operational, support-contract, and rebuild/release modules.
+- Added `planning/phase24_api_docs_closure_sweep.md` to classify every remaining generated-only API page as either intentionally acceptable generated-only or promoted-and-rewritten.
+- Marked `P24.1d.3`, `P24.1d.4`, `P24.1d.5`, and top-level `P24.1d` complete in `ROADMAP.md`.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff format src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff check src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m mypy src`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m pytest`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\pre-commit.exe run --all-files`
+
+## 2026-03-22 - Closed Phase 24 `P24.1e` and completed the API-doc rebuild milestone
+- Added concise "Typical Usage" example sections across the curated API pages so the rewritten docs now show realistic call shapes instead of only ownership/contract prose.
+- Updated the curated operational, support-contract, and rebuild/release API pages to pair:
+  - start-here orientation
+  - pipeline-role/boundary notes
+  - realistic CLI or Python entrypoint examples
+- Marked `P24.1e` complete in `ROADMAP.md` and, with `P24.1a` through `P24.1e` now complete, marked top-level `P24.1` complete as well.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff format src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff check src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m mypy src`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m pytest`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\pre-commit.exe run --all-files`
+
+## 2026-03-22 - Closed Phase 24 `P24.2`, `P24.3`, and `P24.4b` with contract docs, acceptance checks, and portability cleanup
+- Added a compact technical-contract section in the main docs tree:
+  - `docs/reference/contracts/index.rst`
+  - `docs/reference/contracts/repo-runtime-invariants.rst`
+  - `docs/reference/contracts/instance-and-data-roots.rst`
+  - `docs/reference/contracts/stage-boundaries-and-canonical-artifacts.rst`
+  - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
+- Kept the contract layer inside the same human-facing Sphinx tree rather than creating an agent-only parallel doc system, and cross-linked it from:
+  - `docs/index.rst`
+  - `docs/reference/api/index.rst`
+  - `README.md`
+  - `AGENTS.md`
+- Extended `tests/test_docs_contract.py` so the new contract pages, navigation links, and required section markers are enforced going forward.
+- Swept the live docs/contributor surfaces for machine-specific path leakage and replaced hard-coded examples with portable patterns such as `$PWD`, including:
+  - `AGENTS.md`
+  - `docs/guides/pipeline-overview.rst`
+  - `docs/guides/stage-01a-vdyp-tipsy-input.rst`
+  - `docs/guides/stage-01b-post-tipsy.rst`
+  - `docs/guides/cross-platform-runtime-smoke.rst`
+  - `docs/guides/patchworks-wine-runtime.rst`
+- Purged the remaining mojibake/garbled-text issues from `ROADMAP.md` so the Phase 24 section and older damaged lines are back to clean UTF-8 text.
+- Marked `P24.2`, `P24.3`, and `P24.4b` complete in `ROADMAP.md`, and updated Detailed Next Steps to point at the remaining benchmark/gap-closeout work under `P24.4a` and `P24.4c`.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff format src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff check src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m mypy src`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m pytest`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\pre-commit.exe run --all-files`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`
+
+## 2026-03-22 - Closed Phase 24 `P24.4a` and `P24.4c` with benchmark validation and follow-up issue draft
+- Added `planning/phase24_docs_benchmark_validation.md` to benchmark the current docs against the real maintenance tasks named in the roadmap:
+  - Patchworks runtime setup
+  - bundled K3Z variant rebuild/amend loops
+  - SiteProd default/fallback orientation
+  - DataLad/public-data bootstrap
+- Recorded the benchmark result that the current docs are now sufficient for those tasks without relying on undocumented tribal knowledge.
+- Added `planning/phase24_docs_followup_issue.md` as the draft follow-up GitHub feature issue for the remaining non-blocking polish items:
+  - a more explicit native Windows Patchworks runtime quickstart
+  - a more compact operator-facing SiteProd default-resolution summary
+- Marked `P24.4a`, `P24.4c`, and top-level `P24.4` complete in `ROADMAP.md`, and updated Detailed Next Steps to point at the benchmark closeout artifact instead of the earlier open plan note.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff format src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff check src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m mypy src`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m pytest`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\pre-commit.exe run --all-files`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`
+
+## 2026-03-22 - Closed Phase 19 `P19.17` with TSA29 instance docs deep-dive
+- Expanded the thin standalone TSA29 instance docs pages in `external/femic-tsa29-instance/docs/` so they now carry clearer workflow and evidence guidance:
+  - `getting-started.rst`
+  - `data-and-provenance.rst`
+  - `land-base-and-assumptions.rst`
+  - `rebuild-and-qa.rst`
+  - `troubleshooting.rst`
+  - `docs-ownership-and-release.rst`
+- Added concrete procedural guidance for:
+  - snapshot-first vs rebuild-capable use
+  - authoritative provenance/evidence files
+  - current published warning-state interpretation
+  - known TSA29 Stage 01a Linux rebuild limitation
+  - release/update ownership for the standalone TSA29 docs set
+- Hardened the TSA29 standalone Sphinx config (`external/femic-tsa29-instance/docs/conf.py`) so local docs builds no longer fail hard when `sphinx_rtd_theme` is missing.
+- Marked `P19.17`, `P19.17a`, `P19.17b`, and `P19.17c` complete in `ROADMAP.md`.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`
+    with `workdir=C:\Users\gep\projects\femic\external\femic-tsa29-instance`
+
 
 
 

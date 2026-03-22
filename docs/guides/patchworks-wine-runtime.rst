@@ -92,4 +92,4 @@ Notes
 - When running in headless Linux, set ``patchworks.use_xvfb: true`` to wrap
   Wine invocation in ``xvfb-run -a``.
 - Wine path translation uses the ``Z:`` drive mapping (for example
-  ``/home/gep/...`` -> ``Z:\\home\\gep\\...``).
+  ``/path/to/workspace/...`` -> ``Z:\\path\\to\\workspace\\...``).
