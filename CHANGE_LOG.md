@@ -1,5 +1,10 @@
 # Change Log
 
+## 2026-03-22
+- Made pre-stacked SiteProd the default Stage 00 runtime path when canonical `siteprod.tif` + `siteprod.bandmap.json` are present, falling back to ArcRasterRescue/ArcPy only when those artifacts are missing.
+- Added canonical SiteProd artifact resolution helpers and band-map loading so per-stand SiteProd assignment works without runtime layer discovery.
+- Verified the real Windows K3Z clean-start path now uses external 2024 VRI plus canonical SiteProd artifacts, skips ArcRasterRescue/ArcPy, runs native VDYP successfully, regenerates `02_input-tsak3z.dat`, and resumes cleanly through `femic tsa post-tipsy` after a refreshed BatchTIPSY handoff.
+
 ## 2026-02-24
 - Added the `femic` Typer CLI scaffold under `src/femic` with stub commands and module entry point.
 - Added `typer` and `rich` to `requirements.txt` to support the new CLI.
@@ -5425,3 +5430,56 @@
   - missing table/AU coverage reports incoherent outcome.
 - Updated user-facing docs:
   - `docs/guides/stage-01b-post-tipsy.rst` now documents coherence-based default behavior and strict override usage.
+
+## 2026-03-22 - Fixed THLB raster fallback for Linux tmp-clone parity reruns (P23.8)
+- Added `resolve_legacy_thlb_raster_path(...)` in `src/femic/pipeline/io.py`:
+  - prefer instance-local `data/misc.thlb.tif`,
+  - fallback to `FEMIC_EXTERNAL_DATA_ROOT/misc.thlb.tif` when instance-local raster is absent.
+- Updated `src/femic/resources/legacy/00_data-prep.py`:
+  - now resolves THLB raster path through fallback helper,
+  - logs selected THLB source path and explicit fallback context,
+  - post-01b THLB assignment now uses resolved path rather than assuming instance-local raster is always present.
+- Added regression coverage in `tests/test_pipeline_io.py`:
+  - instance path precedence,
+  - external fallback when instance path is missing,
+  - deterministic behavior when both are missing.
+- Updated docs: `docs/guides/stage-00-data-prep.rst` now states THLB raster resolution order for tmp-clone workflows.
+- Verification evidence:
+  - `pytest -q tests/test_pipeline_io.py` -> `3 passed`.
+  - `femic tsa post-tipsy --instance-root /tmp/femic_p23a_live_session_ax08cp --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_p238_thlbfix_20260322` -> `RC=0` (`post-tipsy completed`).
+  - bounded full-run replay logs now show fallback path selection (`using THLB raster source (fallback): .../external/femic-public-data/data/misc.thlb.tif`) and no longer fail immediately at `misc.thlb.tif` missing-path boundary before timeout.
+
+## 2026-03-22 - Published canonical SiteProd TIFF to femic-public-data (P23.9)
+- Copied known-good Linux parity SiteProd artifact into DataLad dataset:
+  - source: `/tmp/femic_p23a_finalrun_rC45UW/data/siteprod.tif`
+  - destination: `external/femic-public-data/data/bc/siteprod/siteprod.tif`
+  - SHA256 verified equal for source/destination:
+    `307c177608a93b57b8df6d743256651fc8e50399753cbbcf34f97b876b6f926d`.
+- Saved and pushed dataset history:
+  - `datalad save` commit in `femic-public-data`: `b73dba7290e28ae893cc13e9a1ecbacd15b39904`
+  - pushed to GitHub `UBC-FRESH/femic-public-data` `main`
+  - pushed `git-annex` metadata branch.
+- Uploaded annex payload to cloud special remote:
+  - `git annex copy --to arbutus-s3 data/bc/siteprod/siteprod.tif`
+  - verified `git annex whereis` includes `arbutus-s3`
+  - verified missing-copy check is zero:
+    `git annex find data/bc/siteprod/siteprod.tif --not --in arbutus-s3` -> none.
+
+## 2026-03-22 - Published SiteProd band-map sidecar for pre-stacked TIFF runtime (P23.10)
+- Added canonical machine-readable sidecar:
+  - `external/femic-public-data/data/bc/siteprod/siteprod.bandmap.json`
+  - includes `bands_1_based`, `bands_0_based`, and `ordered_species` for `siteprod.tif`.
+- Mapping derivation:
+  - species set from `list_siteprod_layers(...)` against `Site_Prod_BC.gdb`;
+  - order set to lexicographic species-code order, matching stacked TIFF assembly semantics (`site_prod_bc_<SPECIES>.tif` sorted glob order).
+  - validated against published `siteprod.tif` band count (`22`).
+- Saved and pushed DataLad dataset update:
+  - `femic-public-data` commit: `b23ce8290862915b518322cbf59f6c92f2d46654`
+  - pushed to GitHub `main`
+  - pushed `git-annex` metadata branch.
+- Distribution note:
+  - `siteprod.bandmap.json` is Git-tracked text (not annexed), so it is distributed via GitHub branch sync rather than `arbutus-s3` annex object transfer.
+
+
+
+

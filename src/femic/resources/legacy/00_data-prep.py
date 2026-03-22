@@ -61,6 +61,8 @@ try:
         build_legacy_data_artifact_paths,
         build_ria_vri_checkpoint_paths,
         resolve_legacy_external_data_paths,
+        resolve_legacy_siteprod_artifacts,
+        resolve_legacy_thlb_raster_path,
     )
     from femic.pipeline.vdyp import build_vdyp_cache_paths
     from femic.pipeline.vri import (
@@ -74,6 +76,7 @@ try:
         assign_siteprod_from_raster,
         export_and_stack_siteprod_layers,
         list_siteprod_layers,
+        load_siteprod_bandmap,
     )
     from femic.pipeline.species_volume import compile_species_volume_columns
     from femic.pipeline.stages import (
@@ -128,6 +131,8 @@ except ModuleNotFoundError:
         build_legacy_data_artifact_paths,
         build_ria_vri_checkpoint_paths,
         resolve_legacy_external_data_paths,
+        resolve_legacy_siteprod_artifacts,
+        resolve_legacy_thlb_raster_path,
     )
     from femic.pipeline.vdyp import build_vdyp_cache_paths
     from femic.pipeline.vri import (
@@ -141,6 +146,7 @@ except ModuleNotFoundError:
         assign_siteprod_from_raster,
         export_and_stack_siteprod_layers,
         list_siteprod_layers,
+        load_siteprod_bandmap,
     )
     from femic.pipeline.species_volume import compile_species_volume_columns
     from femic.pipeline.stages import (
@@ -232,10 +238,22 @@ _external_paths = resolve_legacy_external_data_paths(
 )
 vri_vclr1p_path = _external_paths.vri_vclr1p_path
 _legacy_data_paths = build_legacy_data_artifact_paths(output_root=_repo_root / "data")
+_resolved_misc_thlb_tif_path = resolve_legacy_thlb_raster_path(
+    legacy_data_paths=_legacy_data_paths,
+    external_data_paths=_external_paths,
+)
 ria_stands_path = _legacy_data_paths.ria_stands_path
 tsa_boundaries_path = _external_paths.tsa_boundaries_path
 print(f"using VRI source: {vri_vclr1p_path}")
 print(f"using TSA boundaries source: {tsa_boundaries_path}")
+if _resolved_misc_thlb_tif_path == _legacy_data_paths.misc_thlb_tif_path:
+    print(f"using THLB raster source: {_resolved_misc_thlb_tif_path}")
+else:
+    print(
+        "using THLB raster source (fallback): "
+        f"{_resolved_misc_thlb_tif_path} "
+        f"(instance path missing: {_legacy_data_paths.misc_thlb_tif_path})"
+    )
 ria_maptiles_path = str((_repo_root / "ria_maptiles.csv").resolve())
 vdyp_input_pandl_path = _external_paths.vdyp_input_pandl_path
 if not vdyp_input_pandl_path.exists():
@@ -271,7 +289,16 @@ siteprod_gdb_path = site_prod_bc_gdb_path
 siteprod_tmpexport_tif_path_prefix = (
     _legacy_data_paths.siteprod_tmpexport_tif_path_prefix
 )
-siteprod_tif_path = _legacy_data_paths.siteprod_tif_path
+_siteprod_artifacts = resolve_legacy_siteprod_artifacts(
+    legacy_data_paths=_legacy_data_paths,
+    external_data_paths=_external_paths,
+)
+siteprod_tif_path = _siteprod_artifacts.siteprod_tif_path
+siteprod_bandmap_path = _siteprod_artifacts.siteprod_bandmap_path
+print(f"using siteprod raster source: {siteprod_tif_path}")
+print(f"siteprod export fallback used: {'no' if _siteprod_artifacts.use_prestacked else 'yes'}")
+if _siteprod_artifacts.use_prestacked:
+    print(f"using siteprod band map: {siteprod_bandmap_path}")
 
 vdyp_ply_feather_path = _legacy_data_paths.vdyp_ply_feather_path
 vdyp_lyr_feather_path = _legacy_data_paths.vdyp_lyr_feather_path
@@ -553,25 +580,31 @@ f = _apply_debug_rows(f, "checkpoint1")
 
 # --- cell 19 ---
 # map layer indices to layer species codes
-siteprod_layerspecies, siteprod_specieslayer = list_siteprod_layers(
-    arc_raster_rescue_exe_path=arc_raster_rescue_exe_path,
-    siteprod_gdb_path=siteprod_gdb_path,
-    run_fn=subprocess.run,
-)
-
-if not siteprod_tif_path.is_file():
-    print("Extracting siteprod raster data from ESRI File Geodatabase...")
-    export_and_stack_siteprod_layers(
-        arc_raster_rescue_exe_path=arc_raster_rescue_exe_path,
-        site_prod_bc_gdb_path=site_prod_bc_gdb_path,
-        site_prod_bc_layerspecies=siteprod_layerspecies,
-        siteprod_layerspecies=siteprod_layerspecies,
-        siteprod_tmpexport_tif_path_prefix=siteprod_tmpexport_tif_path_prefix,
-        siteprod_tif_path=siteprod_tif_path,
-        run_fn=subprocess.run,
-        rio_module=rio,
-        message_fn=print,
+if _siteprod_artifacts.use_prestacked:
+    siteprod_layerspecies, siteprod_specieslayer = load_siteprod_bandmap(
+        bandmap_path=siteprod_bandmap_path,
     )
+    print("Using pre-stacked SiteProd TIFF + band map; skipping ArcRasterRescue/ArcPy layer listing and export.")
+else:
+    siteprod_layerspecies, siteprod_specieslayer = list_siteprod_layers(
+        arc_raster_rescue_exe_path=arc_raster_rescue_exe_path,
+        siteprod_gdb_path=siteprod_gdb_path,
+        run_fn=subprocess.run,
+    )
+
+    if not siteprod_tif_path.is_file():
+        print("Extracting siteprod raster data from ESRI File Geodatabase...")
+        export_and_stack_siteprod_layers(
+            arc_raster_rescue_exe_path=arc_raster_rescue_exe_path,
+            site_prod_bc_gdb_path=site_prod_bc_gdb_path,
+            site_prod_bc_layerspecies=siteprod_layerspecies,
+            siteprod_layerspecies=siteprod_layerspecies,
+            siteprod_tmpexport_tif_path_prefix=siteprod_tmpexport_tif_path_prefix,
+            siteprod_tif_path=siteprod_tif_path,
+            run_fn=subprocess.run,
+            rio_module=rio,
+            message_fn=print,
+        )
 
 
 species_list = derive_species_list_from_slots(f_table=ria_vri_vclr1p)
@@ -803,7 +836,7 @@ def _run_post_01b_bundle_and_curve_assignment_stage(
     checkpoint5_path,
     checkpoint6_path,
     checkpoint7_path,
-    legacy_data_paths,
+    thlb_raster_path,
     scsi_au,
     vdyp_curves_smooth,
     tipsy_curves,
@@ -864,7 +897,7 @@ def _run_post_01b_bundle_and_curve_assignment_stage(
 
     f_ = assign_thlb_raw_from_raster(
         f_table=f_,
-        thlb_raster_path=legacy_data_paths.misc_thlb_tif_path,
+        thlb_raster_path=thlb_raster_path,
         rio_module=rio,
         mask_fn=mask,
         np_module=np,
@@ -1006,7 +1039,7 @@ def _run_legacy_tsa_orchestration_stage(
         checkpoint5_path=ria_vri_vclr1p_checkpoint5_feather_path,
         checkpoint6_path=ria_vri_vclr1p_checkpoint6_feather_path,
         checkpoint7_path=ria_vri_vclr1p_checkpoint7_feather_path,
-        legacy_data_paths=legacy_data_paths,
+        thlb_raster_path=_resolved_misc_thlb_tif_path,
         scsi_au=scsi_au,
         vdyp_curves_smooth=vdyp_curves_smooth,
         tipsy_curves=tipsy_curves,
