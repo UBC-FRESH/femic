@@ -12,7 +12,7 @@ first targets in the Phase 24 API-docs rebuild.
 
 Current curated pages in this section include ``femic.cli.main``,
 ``femic.pipeline.vdyp_stage``, ``femic.pipeline.io``, and
-``femic.pipeline.tipsy``.
+``femic.pipeline.tipsy``, and ``femic.fmg.patchworks``.
 
 .. toctree::
    :maxdepth: 1
@@ -21,12 +21,12 @@ Current curated pages in this section include ``femic.cli.main``,
    femic-pipeline-vdyp-stage
    femic-pipeline-io
    femic-pipeline-tipsy
+   femic-fmg-patchworks
 
 .. autosummary::
    :toctree: generated
 
    femic.pipeline.siteprod
-   femic.fmg.patchworks
    femic.patchworks_runtime
    femic.workflows.legacy
 

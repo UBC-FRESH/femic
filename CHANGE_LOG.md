@@ -5539,6 +5539,20 @@
 - Verification:
   - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
 
+## 2026-03-22 - Added curated API docs for femic.fmg.patchworks (Phase 24 P24.1d/P24.1e)
+- Replaced the autosummary-only `femic.fmg.patchworks` landing page with a hand-authored API page:
+  - `docs/reference/api/femic-fmg-patchworks.rst`
+- Documented the module's:
+  - role as FEMIC's Patchworks export synthesis layer
+  - top-level export flow from bundle/checkpoint surfaces into `forestmodel.xml` and fragments shapefile outputs
+  - main contract surfaces around curve derivation, fragment field requirements, IFM/origin/silviculture state wiring, and retention handling
+  - distinction between export-time validation here and later runtime launch in `femic.patchworks_runtime`
+  - main failure seams around fragments validation, XML structure drift, IFM assignment, and config misuse
+- Updated `docs/reference/api/modules.rst` so the curated `femic.fmg.patchworks` page is the visible high-priority module page while the generated autodoc page remains reachable through a hidden toctree.
+- Refreshed `ROADMAP.md` Detailed Next Steps notes so the `femic.fmg.patchworks` rewrite is tracked as active Phase 24 work.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
+
 
 
 

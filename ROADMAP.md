@@ -796,6 +796,13 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.fmg.patchworks`` autosummary stub with a hand-authored narrative page.
+  - Motivation: ``femic.fmg.patchworks`` is the central export synthesis seam for Patchworks package generation, but its generated page still does not explain the ForestModel/fragments contract, IFM/origin/silviculture state wiring, retention handling, or the distinction between export-time validation and later runtime execution.
+  - Planned execution:
+    - document the main export flow from bundle/checkpoint tables into ForestModel XML and fragments shapefile outputs;
+    - explain the most important contract surfaces: curve derivation, fragment field requirements, seral/retention wiring, and export result payloads;
+    - call out the main failure seams around invalid fragments geometry, XML structure drift, IFM assignment, and silviculture/seral config misuse;
+    - keep the generated autodoc page reachable through a curated page and rebuild Sphinx with warnings-as-errors.
 - 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.pipeline.tipsy`` autosummary stub with a hand-authored narrative page.
   - Motivation: ``femic.pipeline.tipsy`` owns one of FEMIC's most brittle operator-facing seams: fixed-width BatchTIPSY handoff generation, candidate filtering, canonical DAT/output freshness validation, and the coherence-based stale-output policy.
   - Planned execution:
