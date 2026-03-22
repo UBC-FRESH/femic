@@ -10,6 +10,7 @@ export modules.
    :maxdepth: 2
 
    pipeline-overview
+   developer-environment-bootstrap
    deployment-instances
    rebuild-repro-contract
    author-instance-rebuild-spec
@@ -27,6 +28,7 @@ export modules.
    patchworks-wine-runtime
    ubc-vpn-license-connectivity
    geospatial-runtime-bootstrap
+   cross-platform-runtime-smoke
    pypi-release-runbook
    legacy-traceability
    sphinx-template-baseline

@@ -28,10 +28,14 @@ def _find_arcgis_pro_python() -> Path | None:
     return None
 
 
-def _run_arcgis_python(*, code: str, args: list[str]) -> subprocess.CompletedProcess[str]:
+def _run_arcgis_python(
+    *, code: str, args: list[str]
+) -> subprocess.CompletedProcess[str]:
     python_path = _find_arcgis_pro_python()
     if python_path is None:
-        raise FileNotFoundError("ArcGIS Pro Python not found for Windows siteprod fallback")
+        raise FileNotFoundError(
+            "ArcGIS Pro Python not found for Windows siteprod fallback"
+        )
     if python_path.suffix.lower() == ".bat":
         with tempfile.NamedTemporaryFile(
             mode="w",
@@ -70,7 +74,9 @@ def _run_arcgis_python(*, code: str, args: list[str]) -> subprocess.CompletedPro
     )
 
 
-def _list_siteprod_layers_arcgis(*, siteprod_gdb_path: str | Path) -> tuple[dict[int, str], dict[str, int]]:
+def _list_siteprod_layers_arcgis(
+    *, siteprod_gdb_path: str | Path
+) -> tuple[dict[int, str], dict[str, int]]:
     code = (
         "import arcpy, json, sys; "
         "arcpy.env.workspace=sys.argv[1]; "
@@ -79,7 +85,10 @@ def _list_siteprod_layers_arcgis(*, siteprod_gdb_path: str | Path) -> tuple[dict
     )
     result = _run_arcgis_python(code=code, args=[str(siteprod_gdb_path)])
     rasters = json.loads(result.stdout.strip() or "[]")
-    layer_species = {idx: str(name).removeprefix("Site_Prod_").upper() for idx, name in enumerate(rasters)}
+    layer_species = {
+        idx: str(name).removeprefix("Site_Prod_").upper()
+        for idx, name in enumerate(rasters)
+    }
     species_layer = {species: idx for idx, species in layer_species.items()}
     return layer_species, species_layer
 
@@ -108,7 +117,9 @@ def _export_siteprod_layers_arcgis_batch(
     site_prod_bc_gdb_path: str | Path,
     destinations: Mapping[str, str | Path],
 ) -> None:
-    payload = json.dumps({str(species): str(path) for species, path in destinations.items()})
+    payload = json.dumps(
+        {str(species): str(path) for species, path in destinations.items()}
+    )
     code = (
         "import arcpy, json, sys; "
         "arcpy.env.workspace=sys.argv[1]; "
@@ -243,6 +254,42 @@ def parse_arc_raster_rescue_layer_mappings(
     return layer_species, species_layer
 
 
+def resolve_arc_raster_rescue_executable_path(
+    *,
+    configured_path: str | Path,
+    source_root_env: str | None = None,
+    instance_root_env: str | None = None,
+    env_override: str | None = None,
+) -> Path:
+    """Resolve ArcRasterRescue executable using override + source-root fallbacks."""
+    configured = Path(configured_path).expanduser()
+    candidates: list[Path] = []
+    if env_override:
+        candidates.append(Path(env_override).expanduser())
+    candidates.append(configured)
+    if not configured.is_absolute():
+        for base in [instance_root_env, source_root_env]:
+            if base:
+                candidates.append((Path(base).expanduser() / configured).resolve())
+    seen: set[Path] = set()
+    for candidate in candidates:
+        normalized = candidate.resolve()
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        if normalized.exists():
+            return normalized
+    return candidates[0].resolve()
+
+
+def _arc_raster_rescue_gdb_arg(siteprod_gdb_path: str | Path) -> str:
+    """Normalize FileGDB path syntax expected by ArcRasterRescue."""
+    text = str(siteprod_gdb_path)
+    if text.endswith(".gdb") and not text.endswith(".gdb/"):
+        return f"{text}/"
+    return text
+
+
 def list_siteprod_layers(
     *,
     arc_raster_rescue_exe_path: str | Path,
@@ -250,10 +297,16 @@ def list_siteprod_layers(
     run_fn: Callable[..., Any],
 ) -> tuple[dict[int, str], dict[str, int]]:
     """Run ArcRasterRescue layer listing and return parsed species mappings."""
-    arc_path = Path(arc_raster_rescue_exe_path)
+    arc_path = resolve_arc_raster_rescue_executable_path(
+        configured_path=arc_raster_rescue_exe_path,
+        source_root_env=os.environ.get("FEMIC_SOURCE_ROOT"),
+        instance_root_env=os.environ.get("FEMIC_INSTANCE_ROOT"),
+        env_override=os.environ.get("FEMIC_ARC_RASTER_RESCUE_EXE"),
+    )
     if arc_path.exists():
+        gdb_arg = _arc_raster_rescue_gdb_arg(siteprod_gdb_path)
         result = run_fn(
-            [arc_raster_rescue_exe_path, siteprod_gdb_path],
+            [str(arc_path), gdb_arg],
             capture_output=True,
         )
         return parse_arc_raster_rescue_layer_mappings(
@@ -283,6 +336,25 @@ def enumerate_siteprod_layer_tif_paths(
     return sorted(prefix.parent.glob(f"{prefix.name}*.tif"))
 
 
+def _normalize_arc_raster_rescue_stream_text(value: object) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return str(value)
+
+
+def _resolve_arc_raster_rescue_timeout_seconds() -> float:
+    raw_value = os.environ.get("FEMIC_ARC_RASTER_RESCUE_TIMEOUT_SEC", "900")
+    try:
+        value = float(raw_value)
+    except ValueError:
+        return 900.0
+    if value <= 0:
+        return 900.0
+    return value
+
+
 def export_and_stack_siteprod_layers(
     *,
     arc_raster_rescue_exe_path: str | Path,
@@ -296,7 +368,13 @@ def export_and_stack_siteprod_layers(
     message_fn: Callable[..., Any] = print,
 ) -> None:
     """Export per-species rasters, stack into one GeoTIFF, and clean temps."""
-    arc_path = Path(arc_raster_rescue_exe_path)
+    arc_path = resolve_arc_raster_rescue_executable_path(
+        configured_path=arc_raster_rescue_exe_path,
+        source_root_env=os.environ.get("FEMIC_SOURCE_ROOT"),
+        instance_root_env=os.environ.get("FEMIC_INSTANCE_ROOT"),
+        env_override=os.environ.get("FEMIC_ARC_RASTER_RESCUE_EXE"),
+    )
+    timeout_seconds = _resolve_arc_raster_rescue_timeout_seconds()
     destinations: dict[str, Path] = {}
     for layer_index, species in site_prod_bc_layerspecies.items():
         message_fn("... processing species", species)
@@ -308,13 +386,53 @@ def export_and_stack_siteprod_layers(
             existing.unlink(missing_ok=True)
         destinations[species] = destination
         if arc_path.exists():
-            run_fn(
-                [
-                    arc_raster_rescue_exe_path,
-                    site_prod_bc_gdb_path,
-                    str(layer_index),
-                    destination,
-                ]
+            gdb_arg = _arc_raster_rescue_gdb_arg(site_prod_bc_gdb_path)
+            command = [
+                str(arc_path),
+                gdb_arg,
+                str(layer_index),
+                destination,
+            ]
+            message_fn(
+                "... ArcRasterRescue launch",
+                species,
+                f"layer={layer_index}",
+                f"timeout={timeout_seconds:.1f}s",
+            )
+            started = time.perf_counter()
+            try:
+                try:
+                    result = run_fn(
+                        command,
+                        capture_output=True,
+                        text=True,
+                        timeout=timeout_seconds,
+                        check=False,
+                    )
+                except TypeError:
+                    result = run_fn(command, capture_output=True)
+            except subprocess.TimeoutExpired as exc:
+                raise RuntimeError(
+                    "ArcRasterRescue timed out for species "
+                    f"{species} (layer={layer_index}, timeout_sec={timeout_seconds}): {command}"
+                ) from exc
+
+            returncode = getattr(result, "returncode", 0)
+            stderr_text = _normalize_arc_raster_rescue_stream_text(
+                getattr(result, "stderr", "")
+            )
+            if returncode not in (0, None):
+                raise RuntimeError(
+                    "ArcRasterRescue failed for species "
+                    f"{species} (layer={layer_index}, returncode={returncode}): "
+                    f"{stderr_text[:500]}"
+                )
+            elapsed = time.perf_counter() - started
+            message_fn(
+                "... ArcRasterRescue completed",
+                species,
+                f"layer={layer_index}",
+                f"sec={elapsed:.2f}",
             )
         elif os.name != "nt":
             raise FileNotFoundError(f"ArcRasterRescue executable not found: {arc_path}")

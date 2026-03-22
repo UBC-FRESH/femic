@@ -583,10 +583,13 @@ def test_k3z_instance_tsr_data_package_pages_exist_with_required_sections() -> N
         "Strata Distribution Figure",
         "VDYP Low/Medium/High Envelopes",
         "VDYP Fit Diagnostics",
-        "Treated \\(Scaled-VDYP\\) Curve Overlays",
         "Full Plot Inventory",
     ):
         assert heading in appendix_text
+    assert (
+        "Treated \\(Scaled-VDYP\\) Curve Overlays" in appendix_text
+        or "Treated (TIPSY vs VDYP) Curve Overlays" in appendix_text
+    )
     for snippet in (
         ".. _k3z-figure-appendix:",
         ".. figure:: _static/k3z_analysis_area_map.png",

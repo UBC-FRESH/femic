@@ -24,6 +24,17 @@ For deterministic orchestration using the new rebuild runner abstraction, use:
 
    femic instance rebuild --run-config config/run_profile.<case>.yaml --run-id <id>
 
+For fresh-clone source-checkout runs, bootstrap dependencies and annex payloads
+first:
+
+.. code-block:: bash
+
+   python -m pip install -r requirements-dev.txt
+   git submodule update --init --recursive
+   git -C external/femic-public-data annex enableremote arbutus-s3
+   datalad get -r external/femic-public-data/data
+   export FEMIC_EXTERNAL_DATA_ROOT=$PWD/external/femic-public-data/data
+
 1. Run upstream compilation:
 
    .. code-block:: bash
@@ -37,6 +48,16 @@ For deterministic orchestration using the new rebuild runner abstraction, use:
    .. code-block:: bash
 
       femic tsa post-tipsy --run-config config/run_profile.<case>.yaml --tsa <code> -v
+
+For the known-good K3Z Windows path from the parent FEMIC checkout, the
+practical boundary is:
+
+.. code-block:: powershell
+
+   $env:FEMIC_EXTERNAL_DATA_ROOT='C:\Users\gep\projects\femic\external\femic-public-data\data'
+   python -m femic run --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --run-id k3z_windows_cleanstart
+   # manual BatchTIPSY step happens here
+   python -m femic tsa post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_windows_cleanstart
 
 5. Export planning-system packages:
 

@@ -1,4 +1,4 @@
-﻿"""Legacy workflow wrappers for FEMIC."""
+"""Legacy workflow wrappers for FEMIC."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import time
 from datetime import datetime, timezone
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, cast
 import uuid
 
 import pandas as pd
@@ -295,7 +295,10 @@ def run_post_tipsy_bundle(
             if not smooth_path.exists():
                 raise FileNotFoundError(f"Missing smoothed VDYP curves: {smooth_path}")
 
-            results_for_tsa = load_vdyp_prep_checkpoint(prep_path)
+            results_for_tsa = cast(
+                list[tuple[int, str, Any]],
+                load_vdyp_prep_checkpoint(prep_path),
+            )
             results[tsa] = results_for_tsa
             vdyp_species_proportions[tsa] = _vdyp_species_proportions_for_tsa(
                 results_for_tsa=results_for_tsa
@@ -607,4 +610,3 @@ def run_data_prep(
                 f"{stage_result.exit_code}: {' '.join(execution_plan.cmd)}"
             )
         return execution_plan.manifest_path
-

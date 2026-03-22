@@ -1,5 +1,52 @@
 # Codex Agent Operating Notes
 
+## Fresh Clone Bootstrap (Read First)
+
+Before running FEMIC commands in a new clone, complete this baseline setup in
+the repo root:
+
+1. Create/activate local virtual environment and install editable dev deps:
+   - Linux/macOS:
+     - `python -m venv .venv`
+     - `. .venv/bin/activate`
+   - Windows PowerShell:
+     - `python -m venv .venv`
+     - `.venv\Scripts\Activate.ps1`
+   - then:
+     - `python -m pip install --upgrade pip setuptools wheel`
+     - `python -m pip install -r requirements-dev.txt`
+2. Confirm toolchain from the active `.venv`:
+   - `python -m femic --help`
+   - `ruff --version`
+   - `mypy --version`
+   - `pytest --version`
+   - `pre-commit --version`
+   - `sphinx-build --version`
+3. Initialize submodules and materialize annex-backed public data:
+   - `git submodule update --init --recursive`
+   - `git annex version` (must work from shell; install system package if missing)
+   - `datalad --version` (provided by `.venv` via `datalad[full]`)
+   - `git -C external/femic-public-data annex enableremote arbutus-s3`
+   - `datalad get -r external/femic-public-data/data`
+4. Export `FEMIC_EXTERNAL_DATA_ROOT` before case preflight/runs when using the
+   linked mirror:
+   - Linux/macOS:
+     - `export FEMIC_EXTERNAL_DATA_ROOT=$PWD/external/femic-public-data/data`
+   - Windows PowerShell:
+     - `$env:FEMIC_EXTERNAL_DATA_ROOT="$PWD\\external\\femic-public-data\\data"`
+5. Run preflight checks before long workflows:
+   - `femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml`
+   - `femic prep geospatial-preflight`
+6. Before Stage 00/01 runs, confirm external runtime boundaries are explicit:
+   - ArcRasterRescue: use the existing patched fork workflow; if auto-discovery
+     fails, set `FEMIC_ARC_RASTER_RESCUE_EXE` to the compiled executable path.
+   - BatchTIPSY freshness: treat `02_input-tsaXX.dat` as canonical; XLSX is a
+     mirror only. Do not assume a stale block means rerun is required without
+     checking whether DAT content actually changed.
+
+Do not treat symlinked pointer files in `external/femic-public-data` as usable
+inputs until `datalad get` has completed.
+
 When contributing to this repository as the coding agent:
 
 1. Before wrapping up a development milestone (feature, roadmap phase, or PR), run:

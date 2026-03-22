@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+import hashlib
 from pathlib import Path
 from typing import Any, Mapping, Sequence
+import warnings
 
 import numpy as np
 
@@ -210,7 +212,7 @@ def build_tipsy_warning_event(
     tsa: str,
     stratumi: int,
     sc: str,
-    si_level: str,
+    si_level: str | None,
     au: int | None,
     reason: str,
 ) -> dict[str, Any]:
@@ -356,13 +358,16 @@ def validate_tipsy_output_is_fresh(
     tipsy_input_dat_path: str | Path | None = None,
     tipsy_output_path: str | Path,
     allow_stale: bool = False,
+    strict_timestamp_mismatch: bool = False,
 ) -> None:
-    """Fail fast when BatchTIPSY output is older than the current input workbook.
+    """Fail fast when BatchTIPSY output is stale against canonical input DAT.
 
     Canonical operator contract uses ``02_input-tsaXX.dat`` as the real
     BatchTIPSY input; ``tipsy_params_tsaXX.xlsx`` is a human-readable mirror.
     This catches stale-output scenarios that would silently yield mismatched
-    treated-curve overlays and downstream artifacts.
+    treated-curve overlays and downstream artifacts, while allowing repeated
+    FEMIC reruns to reuse existing BatchTIPSY output when DAT content is
+    unchanged.
     """
     if allow_stale:
         return
@@ -377,24 +382,229 @@ def validate_tipsy_output_is_fresh(
             f"{dat_path}. Generate 02_input-tsaXX.dat in Stage 01a before "
             "running Stage 01b/post-TIPSY."
         )
-    input_candidates = []
+
     if dat_path is not None:
-        input_candidates.append(dat_path)
-    if excel_path.is_file():
-        input_candidates.append(excel_path)
-    if not input_candidates:
+        dat_sha256 = compute_file_sha256(dat_path)
+        fingerprint_path = tipsy_output_input_fingerprint_path(
+            tipsy_output_path=output_path
+        )
+        known_sha = (
+            fingerprint_path.read_text(encoding="utf-8").strip()
+            if fingerprint_path.is_file()
+            else None
+        )
+        if known_sha:
+            if known_sha != dat_sha256:
+                raise RuntimeError(
+                    "Stale BatchTIPSY output detected: "
+                    f"{output_path} was recorded against a different "
+                    f"02_input-tsaXX.dat fingerprint ({known_sha} != {dat_sha256}). "
+                    "Regenerate 04_output-tsaXX.out from the current "
+                    "02_input-tsaXX.dat handoff, then rerun FEMIC stage "
+                    "01b/post-TIPSY."
+                )
+            return
+        input_mtime = dat_path.stat().st_mtime
+    elif excel_path.is_file():
+        input_mtime = excel_path.stat().st_mtime
+    else:
         return
-    newest_input = max(input_candidates, key=lambda path: path.stat().st_mtime)
-    input_mtime = newest_input.stat().st_mtime
+
     output_mtime = output_path.stat().st_mtime
     if output_mtime < input_mtime:
+        coherence = assess_tipsy_input_output_coherence(
+            tipsy_input_excel_path=excel_path,
+            tipsy_output_path=output_path,
+        )
+        if coherence.coherent:
+            detail = (
+                "Timestamp mismatch detected but TIPSY input/output appear coherent: "
+                f"{coherence.summary}"
+            )
+            if strict_timestamp_mismatch:
+                raise RuntimeError(
+                    "Strict BatchTIPSY freshness is enabled and "
+                    f"{output_path} is older than {dat_path or excel_path}. "
+                    f"{detail} Regenerate 04_output-tsaXX.out from current "
+                    "02_input-tsaXX.dat before rerunning."
+                )
+            warnings.warn(
+                detail
+                + " Continuing with existing 04_output-tsaXX.out (default behavior). "
+                "Set FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH=1 to escalate this to an error.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            return
         raise RuntimeError(
             "Stale BatchTIPSY output detected: "
-            f"{output_path} is older than {newest_input}. "
+            f"{output_path} is older than {dat_path or excel_path}. "
+            f"Coherence check did not pass ({coherence.summary}). "
             "Regenerate 04_output-tsaXX.out from the current "
             "02_input-tsaXX.dat handoff (and matching workbook), then rerun "
-            "FEMIC stage 01b/post-TIPSY."
+            "FEMIC stage 01b/post-TIPSY. Future reruns can avoid repeated "
+            "manual prompts when DAT content is unchanged once a fingerprint "
+            "is recorded."
         )
+
+
+@dataclass(frozen=True)
+class TipsyInputOutputCoherence:
+    coherent: bool
+    summary: str
+    expected_au_count: int
+    expected_table_count: int
+    observed_table_count: int
+
+
+def assess_tipsy_input_output_coherence(
+    *,
+    tipsy_input_excel_path: str | Path,
+    tipsy_output_path: str | Path,
+) -> TipsyInputOutputCoherence:
+    """Assess whether TIPSY input and output look structurally coherent."""
+    excel_path = Path(tipsy_input_excel_path)
+    output_path = Path(tipsy_output_path)
+    try:
+        import pandas as pd
+    except ModuleNotFoundError:
+        return TipsyInputOutputCoherence(
+            coherent=False,
+            summary="pandas is unavailable for coherence parsing",
+            expected_au_count=0,
+            expected_table_count=0,
+            observed_table_count=0,
+        )
+
+    try:
+        input_df = pd.read_excel(
+            excel_path,
+            sheet_name="TIPSY_inputTBL",
+            usecols=["AU", "TBLno", "SI"],
+        )
+    except Exception as exc:  # pragma: no cover - defensive parse boundary
+        return TipsyInputOutputCoherence(
+            coherent=False,
+            summary=f"could not parse input workbook: {exc}",
+            expected_au_count=0,
+            expected_table_count=0,
+            observed_table_count=0,
+        )
+    if input_df.empty:
+        return TipsyInputOutputCoherence(
+            coherent=False,
+            summary="input workbook has no rows",
+            expected_au_count=0,
+            expected_table_count=0,
+            observed_table_count=0,
+        )
+    if "SI" in input_df.columns:
+        input_df = input_df[pd.to_numeric(input_df["SI"], errors="coerce") > 0]
+    input_df = input_df.dropna(subset=["AU", "TBLno"])
+    if input_df.empty:
+        return TipsyInputOutputCoherence(
+            coherent=False,
+            summary="input workbook has no valid AU/TBLno rows",
+            expected_au_count=0,
+            expected_table_count=0,
+            observed_table_count=0,
+        )
+
+    input_df["AU"] = pd.to_numeric(input_df["AU"], errors="coerce")
+    input_df["TBLno"] = pd.to_numeric(input_df["TBLno"], errors="coerce")
+    input_df = input_df.dropna(subset=["AU", "TBLno"])
+    input_df["AU"] = input_df["AU"].astype(int)
+    input_df["TBLno"] = input_df["TBLno"].astype(int)
+    expected_tables = set(input_df["TBLno"].tolist())
+    expected_aus = set(input_df["AU"].tolist())
+
+    try:
+        output_df = pd.read_csv(
+            output_path,
+            low_memory=False,
+            header=None,
+            skiprows=4,
+            sep=r"\s+",
+            usecols=[0],
+        )
+    except Exception as exc:  # pragma: no cover - defensive parse boundary
+        return TipsyInputOutputCoherence(
+            coherent=False,
+            summary=f"could not parse output tables: {exc}",
+            expected_au_count=len(expected_aus),
+            expected_table_count=len(expected_tables),
+            observed_table_count=0,
+        )
+    if output_df.empty:
+        return TipsyInputOutputCoherence(
+            coherent=False,
+            summary="output table list is empty",
+            expected_au_count=len(expected_aus),
+            expected_table_count=len(expected_tables),
+            observed_table_count=0,
+        )
+
+    observed_tables = set(
+        pd.to_numeric(output_df.iloc[:, 0], errors="coerce")
+        .dropna()
+        .astype(int)
+        .tolist()
+    )
+    missing_tables = sorted(expected_tables - observed_tables)
+    covered_aus = set(input_df[input_df["TBLno"].isin(observed_tables)]["AU"].tolist())
+    missing_aus = sorted(expected_aus - covered_aus)
+    coherent = (not missing_tables) and (not missing_aus)
+    summary = (
+        f"expected_aus={len(expected_aus)} expected_tables={len(expected_tables)} "
+        f"observed_tables={len(observed_tables)} missing_tables={len(missing_tables)} "
+        f"missing_aus={len(missing_aus)}"
+    )
+    if missing_tables:
+        summary += f" missing_table_ids={missing_tables[:8]}"
+    if missing_aus:
+        summary += f" missing_au_ids={missing_aus[:8]}"
+    return TipsyInputOutputCoherence(
+        coherent=coherent,
+        summary=summary,
+        expected_au_count=len(expected_aus),
+        expected_table_count=len(expected_tables),
+        observed_table_count=len(observed_tables),
+    )
+
+
+def tipsy_output_input_fingerprint_path(*, tipsy_output_path: str | Path) -> Path:
+    """Return sidecar path storing the DAT fingerprint paired with TIPSY output."""
+    output_path = Path(tipsy_output_path)
+    return output_path.with_name(f"{output_path.name}.input_sha256")
+
+
+def compute_file_sha256(path: str | Path) -> str:
+    """Compute deterministic SHA256 digest for file content."""
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def write_tipsy_output_input_fingerprint(
+    *,
+    tipsy_input_dat_path: str | Path | None,
+    tipsy_output_path: str | Path,
+) -> Path | None:
+    """Persist DAT SHA256 used for the accepted BatchTIPSY output."""
+    if tipsy_input_dat_path is None:
+        return None
+    dat_path = Path(tipsy_input_dat_path)
+    output_path = Path(tipsy_output_path)
+    if not dat_path.is_file() or not output_path.is_file():
+        return None
+    digest = compute_file_sha256(dat_path)
+    fingerprint_path = tipsy_output_input_fingerprint_path(
+        tipsy_output_path=output_path
+    )
+    fingerprint_path.write_text(f"{digest}\n", encoding="utf-8")
+    return fingerprint_path
 
 
 def evaluate_tipsy_candidate(

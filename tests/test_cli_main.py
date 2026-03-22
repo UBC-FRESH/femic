@@ -107,6 +107,8 @@ def test_preflight_checks_resume_warns_when_wine_missing(
 
     messages: list[str] = []
     monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(cli_main.os, "name", "posix", raising=False)
+    monkeypatch.setattr(cli_main, "_source_tree_root", lambda: repo_root)
     monkeypatch.setattr(cli_main.shutil, "which", lambda _: None)
 
     cli_main._preflight_checks(
@@ -116,6 +118,156 @@ def test_preflight_checks_resume_warns_when_wine_missing(
 
     assert any("wine not found on PATH" in msg for msg in messages)
     assert not any("[red]Error:" in msg for msg in messages)
+
+
+def test_preflight_checks_uses_source_root_fallback_for_shared_assets(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    source_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    _create_preflight_required_layout(source_root)
+    instance_root = source_root / "external" / "femic-k3z-instance"
+    (instance_root / "data").mkdir(parents=True, exist_ok=True)
+
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setattr(
+        cli_main.shutil,
+        "which",
+        lambda name: (
+            "tool.exe"
+            if name in {"git", "git-annex", "git-annex.exe", "git-annex.cmd"}
+            else None
+        ),
+    )
+
+    cli_main._preflight_checks(
+        resume=False,
+        instance_context=SimpleNamespace(root=instance_root),
+    )
+
+    assert not any("Missing required file" in msg for msg in messages)
+    assert not any("Missing VDYP configuration directory" in msg for msg in messages)
+    assert not any("Missing VDYP executable" in msg for msg in messages)
+
+
+def test_preflight_checks_windows_requires_git_annex(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    _create_preflight_required_layout(repo_root)
+
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+
+    def _which(name: str) -> str | None:
+        if name == "git":
+            return "C:/Program Files/Git/cmd/git.exe"
+        return None
+
+    monkeypatch.setattr(cli_main.shutil, "which", _which)
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main._preflight_checks(
+            resume=False,
+            instance_context=SimpleNamespace(root=repo_root),
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("git-annex not found on PATH" in msg for msg in messages)
+
+
+def test_validate_windows_annex_runtime_passes_when_tools_and_repo_are_healthy(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    source_root = tmp_path / "repo"
+    public_data_root = source_root / "external" / "femic-public-data"
+    public_data_root.mkdir(parents=True, exist_ok=True)
+    external_paths = SimpleNamespace(
+        vri_vclr1p_path=public_data_root / "data" / "bc" / "vri.gdb",
+        vdyp_input_pandl_path=public_data_root / "data" / "bc" / "vdyp.gdb",
+        tsa_boundaries_path=public_data_root / "data" / "bc" / "tsa.gdb",
+        site_prod_bc_gdb_path=public_data_root / "data" / "bc" / "siteprod.gdb",
+    )
+    for path_obj in (
+        external_paths.vri_vclr1p_path,
+        external_paths.vdyp_input_pandl_path,
+        external_paths.tsa_boundaries_path,
+        external_paths.site_prod_bc_gdb_path,
+    ):
+        path_obj.parent.mkdir(parents=True, exist_ok=True)
+        path_obj.touch()
+
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setattr(
+        cli_main.shutil,
+        "which",
+        lambda name: "tool.exe" if name in {"git", "datalad"} else None,
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_run_preflight_command",
+        lambda command, cwd, timeout_s=15: (True, ""),
+    )
+
+    errors, warnings = cli_main._validate_windows_annex_runtime(
+        source_root=source_root,
+        external_paths=external_paths,
+    )
+
+    assert errors == []
+    assert warnings == []
+
+
+def test_validate_windows_annex_runtime_reports_datalad_failures(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    source_root = tmp_path / "repo"
+    public_data_root = source_root / "external" / "femic-public-data"
+    public_data_root.mkdir(parents=True, exist_ok=True)
+    external_paths = SimpleNamespace(
+        vri_vclr1p_path=public_data_root / "data" / "bc" / "vri.gdb",
+        vdyp_input_pandl_path=public_data_root / "data" / "bc" / "vdyp.gdb",
+        tsa_boundaries_path=public_data_root / "data" / "bc" / "tsa.gdb",
+        site_prod_bc_gdb_path=public_data_root / "data" / "bc" / "siteprod.gdb",
+    )
+    for path_obj in (
+        external_paths.vri_vclr1p_path,
+        external_paths.vdyp_input_pandl_path,
+        external_paths.tsa_boundaries_path,
+        external_paths.site_prod_bc_gdb_path,
+    ):
+        path_obj.parent.mkdir(parents=True, exist_ok=True)
+        path_obj.touch()
+
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setattr(
+        cli_main.shutil,
+        "which",
+        lambda name: "tool.exe" if name in {"git", "datalad"} else None,
+    )
+
+    calls: list[list[str]] = []
+
+    def _fake_run(
+        command: list[str], cwd: Path, timeout_s: int = 15
+    ) -> tuple[bool, str]:
+        calls.append(command)
+        if command[:4] == ["git", "-C", str(public_data_root), "annex"]:
+            return True, ""
+        return False, "status failed"
+
+    monkeypatch.setattr(cli_main, "_run_preflight_command", _fake_run)
+
+    errors, warnings = cli_main._validate_windows_annex_runtime(
+        source_root=source_root,
+        external_paths=external_paths,
+    )
+
+    assert warnings == []
+    assert any("DataLad status check failed" in msg for msg in errors)
+    assert len(calls) == 2
 
 
 def test_preflight_checks_fails_for_specific_missing_required_file(

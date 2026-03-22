@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
+import subprocess
 
 import numpy as np
 
@@ -14,6 +15,7 @@ from femic.pipeline.siteprod import (
     list_siteprod_layers,
     mean_siteprod_for_row,
     parse_arc_raster_rescue_layer_mappings,
+    resolve_arc_raster_rescue_executable_path,
     siteprod_species_lookup,
 )
 
@@ -59,6 +61,7 @@ def test_list_siteprod_layers_uses_runner_output(tmp_path: Path) -> None:
     def _run(cmd: list[object], capture_output: bool) -> SimpleNamespace:
         assert capture_output is True
         assert len(cmd) == 2
+        assert str(cmd[1]).endswith(".gdb/")
         return SimpleNamespace(stdout=b"layer name\n0 site_prod_sw\n")
 
     layer_species, species_layer = list_siteprod_layers(
@@ -68,6 +71,33 @@ def test_list_siteprod_layers_uses_runner_output(tmp_path: Path) -> None:
     )
     assert layer_species == {0: "SW"}
     assert species_layer == {"SW": 0}
+
+
+def test_resolve_arc_raster_rescue_prefers_env_override(tmp_path: Path) -> None:
+    override = tmp_path / "override.exe"
+    override.write_text("", encoding="utf-8")
+    configured = tmp_path / "missing.exe"
+    resolved = resolve_arc_raster_rescue_executable_path(
+        configured_path=configured,
+        env_override=str(override),
+    )
+    assert resolved == override.resolve()
+
+
+def test_resolve_arc_raster_rescue_supports_source_root_fallback(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path / "source"
+    source_root.mkdir(parents=True, exist_ok=True)
+    configured = Path("ArcRasterRescue/build/arc_raster_rescue.exe")
+    fallback = source_root / configured
+    fallback.parent.mkdir(parents=True, exist_ok=True)
+    fallback.write_text("", encoding="utf-8")
+    resolved = resolve_arc_raster_rescue_executable_path(
+        configured_path=configured,
+        source_root_env=str(source_root),
+    )
+    assert resolved == fallback.resolve()
 
 
 def test_export_and_stack_siteprod_layers(tmp_path: Path) -> None:
@@ -145,6 +175,84 @@ def test_export_and_stack_siteprod_layers(tmp_path: Path) -> None:
         enumerate_siteprod_layer_tif_paths(siteprod_tmpexport_tif_path_prefix=prefix)
         == []
     )
+
+
+def test_export_and_stack_siteprod_layers_times_out_with_diagnostics(
+    tmp_path: Path,
+) -> None:
+    exe_path = tmp_path / "arc_raster_rescue.exe"
+    exe_path.write_text("", encoding="utf-8")
+    prefix = tmp_path / "site_prod_bc_"
+    out_tif = tmp_path / "siteprod.tif"
+
+    def _run(_cmd: list[object], **_kwargs: object) -> SimpleNamespace:
+        raise subprocess.TimeoutExpired(cmd="arc_raster_rescue", timeout=1)
+
+    class _FakeRio:
+        def __init__(self) -> None:
+            self.crs = SimpleNamespace(CRS=lambda payload: payload)
+
+        def open(self, *_args: object, **_kwargs: object) -> object:
+            raise AssertionError("stacking should not be reached on timeout")
+
+    try:
+        export_and_stack_siteprod_layers(
+            arc_raster_rescue_exe_path=exe_path,
+            site_prod_bc_gdb_path=Path("Site_Prod_BC.gdb"),
+            site_prod_bc_layerspecies={1: "SW"},
+            siteprod_layerspecies={0: "SW"},
+            siteprod_tmpexport_tif_path_prefix=prefix,
+            siteprod_tif_path=out_tif,
+            run_fn=_run,
+            rio_module=_FakeRio(),
+            message_fn=lambda *_args: None,
+        )
+    except RuntimeError as exc:
+        message = str(exc)
+        assert "timed out" in message
+        assert "species SW" in message
+        assert "layer=1" in message
+    else:
+        raise AssertionError("expected RuntimeError for timeout path")
+
+
+def test_export_and_stack_siteprod_layers_nonzero_returncode_raises(
+    tmp_path: Path,
+) -> None:
+    exe_path = tmp_path / "arc_raster_rescue.exe"
+    exe_path.write_text("", encoding="utf-8")
+    prefix = tmp_path / "site_prod_bc_"
+    out_tif = tmp_path / "siteprod.tif"
+
+    def _run(_cmd: list[object], **_kwargs: object) -> SimpleNamespace:
+        return SimpleNamespace(returncode=2, stderr="boom")
+
+    class _FakeRio:
+        def __init__(self) -> None:
+            self.crs = SimpleNamespace(CRS=lambda payload: payload)
+
+        def open(self, *_args: object, **_kwargs: object) -> object:
+            raise AssertionError("stacking should not be reached on failure")
+
+    try:
+        export_and_stack_siteprod_layers(
+            arc_raster_rescue_exe_path=exe_path,
+            site_prod_bc_gdb_path=Path("Site_Prod_BC.gdb"),
+            site_prod_bc_layerspecies={1: "SW"},
+            siteprod_layerspecies={0: "SW"},
+            siteprod_tmpexport_tif_path_prefix=prefix,
+            siteprod_tif_path=out_tif,
+            run_fn=_run,
+            rio_module=_FakeRio(),
+            message_fn=lambda *_args: None,
+        )
+    except RuntimeError as exc:
+        message = str(exc)
+        assert "failed for species SW" in message
+        assert "returncode=2" in message
+        assert "boom" in message
+    else:
+        raise AssertionError("expected RuntimeError for non-zero returncode path")
 
 
 def test_mean_siteprod_for_row_and_assign_siteprod_from_raster() -> None:

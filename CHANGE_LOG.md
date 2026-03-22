@@ -5195,3 +5195,233 @@
 - Regenerated the K3Z `tipsy_vdyp_tsak3z-*.png` comparison plots from the accepted real-TIPSY handoff.
 - Locked in the current relaxed unmanaged smoothing policy (looser toe/tail defaults plus stronger `CWHvm_DR+HW` overrides) as the working K3Z checkpoint for now.
 - Updated K3Z docs to reflect the real-TIPSY baseline and removed treated-curve figure references for the fully retained `CWHvm_CW+YC` and `CWHvm_CW+PLC` AUs.
+
+## 2026-03-21 - Codified the Phase 23 K3Z Windows/TIPSY teaching baseline
+- Documented the known-good Windows K3Z bootstrap path in the parent Phase 23 guides and marked `P23.2c`, `P23.2d`, `P23.2e`, and `P23.5d` complete in the roadmap.
+- Updated the parent Stage 01a guide so the accepted K3Z teaching baseline is explicit: real BatchTIPSY managed curves, `CWHvm_CW+YC` / `CWHvm_CW+PLC` excluded from the treated path, `RETENTION = 1.0` for those low-yield strata, and the simplified treated species-mix logic for the remaining AUs.
+- Synced the standalone K3Z instance config/docs to that same baseline by switching `config/run_profile.k3z.yaml` to `managed_curve_mode: tipsy`, updating `config/tipsy/tsak3z.yaml`, and refreshing the user-facing docs (`assumptions-registry.rst`, `getting-started.rst`, `operator-runbook.rst`, `rebuild-and-qa.rst`, and `figure-appendix.rst`).
+- Cleaned the K3Z figure appendix so treated overlays are described as real TIPSY-vs-VDYP comparisons and no longer list the excluded low-yield treated AUs `22006` and `22008`.
+- Validation passed:
+  - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
+
+
+## 2026-03-21 - Hardened Windows case preflight for shared assets and annex-backed data
+- Updated `src/femic/cli/main.py` so Windows case preflight resolves shared runtime assets from the FEMIC source tree when they are not duplicated inside the instance root, matching the real K3Z workstation layout for `tipsy_params_columns`, `vdyp_io/VDYP_CFG`, `VDYP7Console.exe`, and `ria_maptiles.csv`.
+- Added Windows runtime prerequisite checks for `git` and `git-annex` in `_preflight_checks(...)`.
+- Added annex/DataLad smoke checks for annex-backed public data during `prep validate-case` whenever the active case depends on paths under `external/femic-public-data`.
+- Verified the real Windows K3Z command now passes again: `python -m femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml` (with `FEMIC_EXTERNAL_DATA_ROOT` pointing at `external/femic-public-data/data`).
+- Added focused regression coverage in `tests/test_cli_main.py` for source-root fallback, missing `git-annex`, and annex/DataLad smoke behavior.
+
+## 2026-03-21 - Locked the Windows K3Z clean-start and resume boundary into tests and docs
+- Added explicit regression coverage in `tests/test_vdyp_stage.py` for native Windows VDYP command assembly, including `-c <VDYP_CFG>` injection and trailing-slash handling for the config directory.
+- Updated parent docs to show the exact known-good Windows K3Z clean-start path from the FEMIC checkout: `femic run` to the BatchTIPSY freshness boundary, then `femic tsa post-tipsy` as the intended downstream resume point.
+- Marked `P23.2a` and `P23.2b` complete now that the native-Windows command path is tested and the operator-facing clean-start/resume sequence is documented explicitly.
+
+## 2026-03-21 - Added a cross-platform smoke and acceptance guide for Phase 23
+- Added `docs/guides/cross-platform-runtime-smoke.rst` as the user-facing Phase 23 guide for Windows and Linux runtime rituals, smoke workflows, and acceptance criteria.
+- Wired the new guide into the guides index and deployment-instance docs so operators can find the cross-platform contract from the normal docs path.
+- Marked `P23.5a`, `P23.5b`, and `P23.5c` complete now that the smoke workflows and acceptance gate are written down explicitly.
+
+
+## 2026-03-21 - Hardened fresh-clone dev bootstrap and DataLad materialization guidance (P23.6)
+- Added an explicit agent startup checklist in `AGENTS.md` so fresh-clone work always begins with:
+  - local `.venv` activation,
+  - editable dev install (`python -m pip install -r requirements-dev.txt`),
+  - toolchain smoke checks,
+  - DataLad/git-annex/arbutus-s3 bootstrap,
+  - `FEMIC_EXTERNAL_DATA_ROOT` export before case preflight/runs.
+- Added a dedicated user-facing guide: `docs/guides/developer-environment-bootstrap.rst`, and linked it in `docs/guides/index.rst`.
+- Updated user-facing runtime/runbook docs to make annex payload materialization requirements explicit (`git annex enableremote arbutus-s3` + `datalad get -r external/femic-public-data/data`):
+  - `README.md`
+  - `docs/guides/geospatial-runtime-bootstrap.rst`
+  - `docs/guides/public-data-mirror-runbook.rst`
+  - `docs/guides/deployment-instances.rst`
+  - `docs/guides/cross-platform-runtime-smoke.rst`
+  - `docs/guides/stage-01a-vdyp-tipsy-input.rst`
+  - `docs/guides/stage-01b-post-tipsy.rst`
+  - `docs/guides/pipeline-overview.rst`
+- Added packaging affordances so fresh-clone setup is one command:
+  - new `requirements-dev.txt` (`-e .[dev]`)
+  - new `project.optional-dependencies.dev` in `pyproject.toml`
+  - `requirements.txt` now includes `datalad[full]`.
+- Fixed small gating regressions uncovered while running mandatory checks:
+  - typing fixes in `src/femic/pipeline/tipsy.py`, `src/femic/workflows/legacy.py`, and `src/femic/cli/main.py`
+  - docs-contract compatibility update in `tests/test_docs_contract.py` for the K3Z figure appendix treated-curve heading rename.
+- Validation passed in repo-local `.venv`:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+  - `sphinx-build -b html docs _build/html -W`
+
+## 2026-03-21 - Re-ran Linux Phase 23 parity checks after restoring git-annex/DataLad runtime
+- Completed Linux-side runtime bootstrap recovery before parity rerun:
+  - installed OS-level `git-annex` (`sudo apt-get install -y git-annex`),
+  - enabled annex special remote in the linked public-data dataset (`git -C external/femic-public-data annex enableremote arbutus-s3`),
+  - materialized annex-backed payloads (`datalad get -r external/femic-public-data/data`) so VRI/SiteProd/TSA geodatabases are locally present.
+- Re-ran `P23.3a` on Linux using an isolated K3Z instance clone:
+  - `femic run --instance-root <tmp_k3z_clone> --run-config config/run_profile.k3z.yaml --run-id k3z_linux_p233a_20260321_r2`
+  - preflight passed, but Stage 00 failed before VDYP launch with:
+    - `FileNotFoundError: ArcRasterRescue executable not found: ../ArcRasterRescue/build/arc_raster_rescue.exe`
+  - run manifest captured at:
+    - `<tmp_k3z_clone>/vdyp_io/logs/run_manifest-k3z_linux_p233a_20260321_r2.json` (`status=failed`, `exit_code=1`).
+- Re-ran `P23.3b` on Linux using an isolated K3Z instance clone:
+  - `femic tsa post-tipsy --instance-root <tmp_k3z_clone> --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_p233b_20260321_r2`
+  - failed with the existing freshness guard:
+    - `Stale BatchTIPSY output detected: .../04_output-tsak3z.out is older than .../tipsy_params_tsak3z.xlsx`
+  - run manifest captured at:
+    - `<tmp_k3z_clone>/vdyp_io/logs/run_manifest-k3z_linux_p233b_20260321_r2.json` (`status=failed`, `exit_code=1`).
+- Phase 23 Linux parity remains open (`P23.3a`, `P23.3b`, `P23.3c`) with two explicit blockers now recorded in `ROADMAP.md`:
+  - missing Linux-usable ArcRasterRescue boundary for Stage 00 SiteProd processing,
+  - stale BatchTIPSY output relative to current handoff artifacts for post-TIPSY resume.
+
+## 2026-03-21 - Applied ArcRasterRescue/TIPSY boundary fixes and reran Linux parity checks
+- Implemented runtime fixes to align with existing project workflow rather than inventing new behavior:
+  - ArcRasterRescue executable resolution now supports `FEMIC_ARC_RASTER_RESCUE_EXE` plus source-root/instance-root fallback resolution.
+  - ArcRasterRescue FileGDB invocation now normalizes the `.gdb/` argument form required by the patched fork tooling.
+  - `run_vdyp_for_stratum(...)` now resolves relative `vdyp_binpath` via `FEMIC_SOURCE_ROOT` fallback (matching existing params fallback behavior).
+- Implemented TIPSY freshness-policy corrections:
+  - `02_input-tsaXX.dat` is now authoritative for stale detection.
+  - freshness checks now support DAT-hash sidecars (`04_output-tsaXX.out.input_sha256`) so unchanged DAT content does not repeatedly force manual BatchTIPSY reruns.
+  - Stage 01b now skips BatchTIPSY freshness gating when `managed_curve_mode != tipsy` (`vdyp_transform` path).
+- Added/updated regression coverage:
+  - `tests/test_siteprod.py` for ArcRasterRescue source-root/env-override resolution and `.gdb/` invocation normalization.
+  - `tests/test_tipsy.py` for DAT fingerprint acceptance/mismatch behavior and sidecar write behavior.
+  - `tests/test_vdyp_stage.py` for `FEMIC_SOURCE_ROOT` fallback of relative VDYP executable paths.
+- Updated docs/agent guidance:
+  - `AGENTS.md`
+  - `docs/guides/stage-00-data-prep.rst`
+  - `docs/guides/stage-01a-vdyp-tipsy-input.rst`
+  - `docs/guides/stage-01b-post-tipsy.rst`
+  - `docs/guides/geospatial-runtime-bootstrap.rst`
+  - `docs/guides/cross-platform-runtime-smoke.rst`
+- Linux rerun evidence after these fixes:
+  - `P23.3a` command `femic run ... --run-id k3z_linux_p233a_20260321_r4` progressed through SiteProd extraction and pre-VDYP checkpointing, then failed with
+    `RuntimeError: VDYP executable not found: /tmp/femic_p23a_r4_Ch5Y9R/VDYP7/VDYP7/VDYP7Console.exe`
+    (manifest: `/tmp/femic_p23a_r4_Ch5Y9R/vdyp_io/logs/run_manifest-k3z_linux_p233a_20260321_r4.json`, `status=failed`, `exit_code=1`).
+  - `P23.3b` command `femic tsa post-tipsy ... --run-id k3z_linux_p233b_20260321_r5_only` no longer failed at stale-TIPSY freshness checks, but failed later in 01b plotting/indexing with
+    `KeyError: 'L'` from `vdyp_curves_by_scsi.loc[sc, si_level]`
+    (manifest: `/tmp/femic_p23b_r5_dC7Rio/vdyp_io/logs/run_manifest-k3z_linux_p233b_20260321_r5_only.json`, `status=failed`, `exit_code=1`).
+- Phase 23 remains open pending final Linux end-to-end confirmation for `P23.3a` and resolution/characterization of the new `P23.3b` plotting/index mismatch blocker.
+
+## 2026-03-21 - Completed Linux P23.3b post-TIPSY parity rerun and hardened 01b plotting resilience
+- Added two additional 01b runtime guards in `src/femic/resources/legacy/01b_run-tsa.py`:
+  - missing `(stratum_code, si_level)` comparison keys in `vdyp_curves_by_scsi` now warn and continue,
+  - missing AU->(stratum, SI) map entries now warn and continue without aborting the whole post-TIPSY run.
+- Added regression coverage for 01b overlay guard behavior:
+  - `tests/test_legacy_01b_runtime.py`.
+- Linux verification:
+  - `femic tsa post-tipsy --instance-root /tmp/femic_p23b_r5_dC7Rio --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_p233b_20260321_r8`
+  - result: success (`post-tipsy completed`), bundle tables regenerated, comparison plots regenerated.
+  - manifest: `/tmp/femic_p23b_r5_dC7Rio/vdyp_io/logs/run_manifest-k3z_linux_p233b_20260321_r8.json`.
+- Phase status:
+  - `P23.3b` can now be marked complete from Linux evidence.
+  - `P23.3a` remains pending final clean-start Stage 01a->BatchTIPSY boundary confirmation.
+- Additional bounded `P23.3a` check:
+  - attempted `timeout 900 femic run --instance-root /tmp/femic_p23a_r6_KpHxKg --run-config config/run_profile.k3z.yaml --run-id k3z_linux_p233a_20260321_r6_resume --resume`,
+  - run remained in long-running Stage 00 legacy execution and did not reach a terminal boundary within the timeout window; process was terminated and `P23.3a` remains open.
+
+## 2026-03-21 - Narrowed Linux P23.3a root cause and added source-root runtime-asset staging
+- Root cause from Linux `P23.3a` reruns was narrowed from generic “missing VDYP output” to a concrete runtime-path seam:
+  - bootstrap dispatch calls ran,
+  - `vdyp_stderr` repeatedly reported `FATAL: VDYP7 Configuration Folder ('-c') has not been supplied`,
+  - generated `vdyp_out_*.out` files were empty, so two-pass SI rebin mapped `0/46`.
+- Confirmed behavior by direct replay:
+  - same captured VDYP command failed from `/tmp` instance roots,
+  - replay succeeded from source root and produced non-empty `vdyp_out` output,
+  - indicating legacy relative runtime assets (`./vdyp_io/VDYP_CFG`, `./vdyp_io/VDYP.INI`) were missing in temp instance clones.
+- Implemented runtime hardening in `src/femic/pipeline/vdyp_stage.py`:
+  - added `ensure_local_vdyp_runtime_assets(...)`,
+  - wired `run_vdyp_for_stratum(...)` to stage missing `vdyp_io/VDYP_CFG` and `vdyp_io/VDYP.INI` from `FEMIC_SOURCE_ROOT` before Wine VDYP dispatch.
+- Added Linux clone resilience for Stage 00 in `src/femic/resources/legacy/00_data-prep.py`:
+  - when instance-local `data/tipsy_params_columns` is missing, fallback now resolves from `$FEMIC_SOURCE_ROOT/data/tipsy_params_columns`.
+- Added/updated regression/docs/roadmap artifacts:
+  - `tests/test_vdyp_stage.py`: `test_ensure_local_vdyp_runtime_assets_stages_cfg_and_ini`.
+  - docs updates: `docs/guides/geospatial-runtime-bootstrap.rst`, `docs/guides/cross-platform-runtime-smoke.rst`, `docs/guides/stage-01a-vdyp-tipsy-input.rst`.
+  - roadmap updates: `ROADMAP.md` (`P23.3a` blocker text + Detailed Next Steps evidence entry).
+- Status:
+  - targeted tests for the new staging seam pass,
+  - full clean-start Linux `P23.3a` run to the BatchTIPSY handoff boundary is still pending final confirmation.
+
+## 2026-03-21 - Linux P23.3a clean-start rerun still blocked before VDYP boundary
+- Executed a fresh Linux `P23.3a` clean-start verification run after landing source-root runtime-asset staging fixes:
+  - tmp instance: `/tmp/femic_p23a_final_bF2EN4`
+  - run id: `k3z_linux_p233a_20260321_r13_final`
+  - command: `python -m femic run --instance-root /tmp/femic_p23a_final_bF2EN4 --run-config config/run_profile.k3z.yaml --run-id k3z_linux_p233a_20260321_r13_final`
+- Preflight checks passed:
+  - `python -m femic prep validate-case --instance-root /tmp/femic_p23a_final_bF2EN4 --run-config config/run_profile.k3z.yaml`
+  - `python -m femic prep geospatial-preflight`
+- Observed blocker:
+  - run advanced through ArcRasterRescue extraction logs up to `... processing species SW`,
+  - then produced no additional progress logs for multiple minutes,
+  - no `vdyp_runs-...jsonl` / `vdyp_stderr-...log` artifacts were created for the run id,
+  - no active ArcRasterRescue child process remained,
+  - process was manually interrupted to avoid indefinite runtime.
+- Evidence:
+  - shell log: `/tmp/femic_p23a_r13_final.log`
+  - manifest: `/tmp/femic_p23a_final_bF2EN4/vdyp_io/logs/run_manifest-k3z_linux_p233a_20260321_r13_final.json` (left in `status=started` after interruption).
+- Phase status impact:
+  - `P23.3b` remains complete,
+  - `P23.3a` and Linux sign-off for `P23.3c` remain open pending a clean run that reaches Stage 01a -> BatchTIPSY handoff.
+
+## 2026-03-21 - Added fail-fast Stage 00 ArcRasterRescue diagnostics and corrected SW-stall interpretation
+- Hardened `src/femic/pipeline/siteprod.py` ArcRasterRescue export behavior:
+  - added per-layer launch/completion diagnostics with elapsed time,
+  - added timeout-bounded execution (`FEMIC_ARC_RASTER_RESCUE_TIMEOUT_SEC`, default `900`),
+  - added explicit `RuntimeError` on timeout/non-zero returncode with species/layer and stderr context.
+- Improved legacy stage streaming observability:
+  - `src/femic/pipeline/io.py` now sets `PYTHONUNBUFFERED=1` by default in legacy execution env.
+- Added regression coverage:
+  - `tests/test_siteprod.py` now covers timeout and non-zero ArcRasterRescue failure diagnostics.
+  - `tests/test_pipeline_helpers.py` now asserts `PYTHONUNBUFFERED=1` in execution-plan env.
+- Validation:
+  - `ruff check` passed on touched files,
+  - targeted tests passed (`test_siteprod` export-stack diagnostics and execution-plan env assertion).
+- Linux diagnostic rerun outcome (`k3z_linux_p233a_20260321_r15_diag_unbuffered`, `/tmp/femic_p23a_diag2_P0qEiG`):
+  - corrected previous interpretation that Stage 00 was stuck at `species SW`;
+  - artifact evidence showed progression beyond ArcRasterRescue export:
+    - temp `site_prod_bc_*.tif` files dropped to zero,
+    - `data/siteprod.tif` grew to full stacked output,
+    - `data/ria_vri_vclr1p_checkpoint2.feather` and `...checkpoint3.feather` were created.
+  - run was manually interrupted before reaching VDYP/TIPSY handoff boundary to keep iteration bounded.
+
+## 2026-03-21 - Linux P23.3a converged to expected BatchTIPSY boundary; P23.3 parity closed
+- Executed a full uninterrupted Linux clean-start `P23.3a` rerun:
+  - tmp instance: `/tmp/femic_p23a_finalrun_rC45UW`
+  - run id: `k3z_linux_p233a_20260321_r16_full`
+  - log: `/tmp/femic_p23a_r16_full.log`
+  - manifest: `/tmp/femic_p23a_finalrun_rC45UW/vdyp_io/logs/run_manifest-k3z_linux_p233a_20260321_r16_full.json`
+- Observed terminal behavior confirms expected Stage 01a contract:
+  - ArcRasterRescue completed all species exports and stacking,
+  - Stage 00 checkpoints regenerated (`checkpoint2`, `checkpoint3`, `checkpoint4`, `vdyp_prep-tsak3z.pkl`),
+  - VDYP bootstrap + two-pass SI rebin completed (`mapped VDYP SI for 38/46 rows`, rebuilt bins `missing=0 of 114`),
+  - run terminated at expected BatchTIPSY freshness boundary:
+    `RuntimeError: Stale BatchTIPSY output detected: data/04_output-tsak3z.out is older than data/02_input-tsak3z.dat`.
+- Interpretation:
+  - this is the intended Stage 01a handoff boundary behavior, not a Linux runtime crash.
+- Phase status update:
+  - `P23.3a` marked complete with real Linux evidence,
+  - `P23.3c` Linux parity sign-off marked complete (with prior `P23.3b` pass),
+  - top-level `P23.3` parity work is now closed.
+
+## 2026-03-22 - Added coherence-based TIPSY timestamp mismatch handling (warn-by-default, strict override available)
+- Implemented `P23.7` to reduce false-positive Stage 01b halts during dev/test loops when BatchTIPSY output is structurally coherent with current inputs.
+- Updated `src/femic/pipeline/tipsy.py` freshness behavior:
+  - added `assess_tipsy_input_output_coherence(...)` to compare input/output structure using:
+    - expected AUs/tables from `TIPSY_inputTBL` (`AU`, `TBLno`, `SI>0`),
+    - observed table IDs from `04_output-tsaXX.out`.
+  - when DAT is newer than output and no DAT fingerprint sidecar exists:
+    - coherent pair => default warning and continue,
+    - incoherent pair => hard error (existing fail-fast behavior).
+  - added strict override flag path in validator (`strict_timestamp_mismatch`) so coherent timestamp mismatch can still be treated as an error.
+- Wired strict override env switch through Stage 01b runtime:
+  - `FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH=1` in `src/femic/resources/legacy/01b_run-tsa.py`.
+- Kept existing explicit bypass intact:
+  - `FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1` still skips freshness gating for explicit debugging only.
+- Added regression coverage in `tests/test_tipsy.py`:
+  - coherent stale pair warns-and-continues by default,
+  - coherent stale pair raises in strict mode,
+  - missing table/AU coverage reports incoherent outcome.
+- Updated user-facing docs:
+  - `docs/guides/stage-01b-post-tipsy.rst` now documents coherence-based default behavior and strict override usage.

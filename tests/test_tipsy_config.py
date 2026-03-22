@@ -639,8 +639,20 @@ def test_build_tipsy_params_from_config_matches_on_stratum_code() -> None:
                 "id": "fd_pair",
                 "when": {"stratum_code_in": ["CWHvm_HW+FDC"]},
                 "assign": {
-                    "e": {"Density": 4000, "SPP_1": "HW", "PCT_1": 77.5, "SPP_2": "FD", "PCT_2": 22.5},
-                    "f": {"Density": 4000, "SPP_1": "HW", "PCT_1": 77.5, "SPP_2": "FD", "PCT_2": 22.5},
+                    "e": {
+                        "Density": 4000,
+                        "SPP_1": "HW",
+                        "PCT_1": 77.5,
+                        "SPP_2": "FD",
+                        "PCT_2": 22.5,
+                    },
+                    "f": {
+                        "Density": 4000,
+                        "SPP_1": "HW",
+                        "PCT_1": 77.5,
+                        "SPP_2": "FD",
+                        "PCT_2": 22.5,
+                    },
                 },
             }
         ],

@@ -3,6 +3,26 @@
 import os
 
 
+def _plot_vdyp_overlay(
+    *,
+    ax,
+    vdyp_curves_by_scsi,
+    stratum_code,
+    si_level,
+    message_fn=print,
+):
+    """Plot VDYP comparison curve when the expected stratum/SI key exists."""
+    key = (stratum_code, si_level)
+    if key not in vdyp_curves_by_scsi.index:
+        message_fn(
+            "warning: missing VDYP comparison curve for stratum=%s si_level=%s; "
+            "continuing without overlay" % (stratum_code, si_level)
+        )
+        return False
+    vdyp_curves_by_scsi.loc[key].set_index("age").volume.plot(label="VDYP", ax=ax)
+    return True
+
+
 def run_tsa(
     *,
     tsa,
@@ -37,6 +57,7 @@ def run_tsa(
         tipsy_params_excel_path,
         tipsy_stage_output_paths,
         validate_tipsy_output_is_fresh,
+        write_tipsy_output_input_fingerprint,
     )
 
     if not isinstance(runtime_config, Legacy01BRuntimeConfig):
@@ -73,17 +94,27 @@ def run_tsa(
     managed_curve_truncate_at_culm = os.environ.get(
         "FEMIC_MANAGED_CURVE_TRUNCATE_AT_CULM", "1"
     ).strip().lower() in {"1", "true", "yes"}
-    allow_stale_tipsy_output = (
-        os.environ.get("FEMIC_ALLOW_STALE_TIPSY_OUTPUT", "0").strip().lower()
-        in {"1", "true", "yes"}
-    )
+    allow_stale_tipsy_output = os.environ.get(
+        "FEMIC_ALLOW_STALE_TIPSY_OUTPUT", "0"
+    ).strip().lower() in {"1", "true", "yes"}
+    strict_timestamp_mismatch = os.environ.get(
+        "FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH", "0"
+    ).strip().lower() in {"1", "true", "yes"}
 
-    validate_tipsy_output_is_fresh(
-        tipsy_input_excel_path=tipsy_excel,
-        tipsy_input_dat_path=tipsy_dat,
-        tipsy_output_path=tipsyout,
-        allow_stale=allow_stale_tipsy_output,
-    )
+    requires_batch_tipsy = managed_curve_mode == "tipsy"
+    if requires_batch_tipsy:
+        validate_tipsy_output_is_fresh(
+            tipsy_input_excel_path=tipsy_excel,
+            tipsy_input_dat_path=tipsy_dat,
+            tipsy_output_path=tipsyout,
+            allow_stale=allow_stale_tipsy_output,
+            strict_timestamp_mismatch=strict_timestamp_mismatch,
+        )
+    else:
+        print(
+            "managed curve mode %s: skipping BatchTIPSY freshness guard"
+            % managed_curve_mode
+        )
 
     tipsy_input_df = pd.read_excel(
         tipsy_excel, sheet_name="TIPSY_inputTBL", usecols="A:AF"
@@ -235,14 +266,29 @@ def run_tsa(
     for i, au in enumerate(yield_df.index.unique(level=0)):
         print(i, au)
         fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-        au_ = int(str(au)[-4:])
-        stratumi = int(str(au)[-2:])
-        _, _, result = results[tsa][stratumi]
-        sc, si_level = au_scsi[tsa][au_]
-        print(au, sc, si_level)
+        au_full = int(au)
+        au_suffix = int(str(au)[-4:])
+        scsi = au_scsi[tsa].get(au_full) or au_scsi[tsa].get(au_suffix)
+        if scsi is None:
+            print(
+                f"warning: missing AU->(stratum,si) mapping for AU {au_full}; "
+                "continuing without VDYP overlay"
+            )
+            sc = f"AU {au_full}"
+            si_level = "?"
+        else:
+            sc, si_level = scsi
+            print(au, sc, si_level)
         # (df.loc[au].Yield * ss.CROWN_CLOSURE.median() * 0.01).plot(ax=ax, label='TIPSY (scaled by CC)', linestyle='--')
         (yield_df.loc[au].Yield * 1.00).plot(ax=ax, label="TIPSY (raw)", linestyle="--")
-        vdyp_curves_by_scsi.loc[sc, si_level].set_index("age").volume.plot(label="VDYP")
+        if scsi is not None:
+            _plot_vdyp_overlay(
+                ax=ax,
+                vdyp_curves_by_scsi=vdyp_curves_by_scsi,
+                stratum_code=sc,
+                si_level=si_level,
+                message_fn=print,
+            )
         # plt.plot(df.loc[au].Age, df.loc[au].Yield, linestyle='-', alpha=0.5, label=au, linewidth=2)s
         plt.xlabel("Age")
         plt.ylabel("Yield (m3/ha)")
@@ -252,6 +298,12 @@ def run_tsa(
         plt.ylim(list(y_limits))
         plt.savefig("./plots/tipsy_vdyp_tsa%s-%s.png" % (tsa, au), facecolor="white")
         plt.close(fig)
+
+    if requires_batch_tipsy:
+        write_tipsy_output_input_fingerprint(
+            tipsy_input_dat_path=tipsy_dat,
+            tipsy_output_path=tipsyout,
+        )
 
 
 if __name__ == "__main__":

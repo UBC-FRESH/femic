@@ -760,8 +760,16 @@ def build_legacy_execution_plan(
     env["FEMIC_LOG_DIR"] = str(run_paths.log_dir)
     env["FEMIC_OUTPUT_ROOT"] = str(Path(run_config.output_root))
     env["FEMIC_INSTANCE_ROOT"] = str(run_paths.repo_root)
+    # Keep legacy script stdout/stderr unbuffered so long Stage 00 work
+    # emits progress continuously (important for diagnosing long-running runs).
+    env.setdefault("PYTHONUNBUFFERED", "1")
     env.setdefault("FEMIC_SOURCE_ROOT", str(script_path.resolve().parents[4]))
-    env.setdefault("FEMIC_VDYP_CFG_DIR", str((Path(env["FEMIC_SOURCE_ROOT"]) / "VDYP7" / "VDYP7" / "VDYP_CFG").resolve()))
+    env.setdefault(
+        "FEMIC_VDYP_CFG_DIR",
+        str(
+            (Path(env["FEMIC_SOURCE_ROOT"]) / "VDYP7" / "VDYP7" / "VDYP_CFG").resolve()
+        ),
+    )
     if run_config.run_config_path is not None:
         env["FEMIC_RUN_CONFIG_PATH"] = str(run_config.run_config_path)
     if run_config.run_config_sha256 is not None:

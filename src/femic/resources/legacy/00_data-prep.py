@@ -28,6 +28,7 @@ from pympler import asizeof
 # import ipcmagic
 import ipyparallel as ipp
 import mapply
+
 try:
     import fiona  # noqa: F401
 except ModuleNotFoundError:
@@ -249,7 +250,9 @@ if not site_prod_bc_gdb_path.exists():
 print(f"using site productivity source: {site_prod_bc_gdb_path}")
 
 tsa_boundaries_feather_path = _legacy_data_paths.tsa_boundaries_feather_path
-_ria_vri_checkpoint_paths = build_ria_vri_checkpoint_paths(output_root=_repo_root / "data")
+_ria_vri_checkpoint_paths = build_ria_vri_checkpoint_paths(
+    output_root=_repo_root / "data"
+)
 ria_vri_vclr1p_checkpoint1_feather_path = _ria_vri_checkpoint_paths[1]
 ria_vri_vclr1p_checkpoint2_feather_path = _ria_vri_checkpoint_paths[2]
 ria_vri_vclr1p_checkpoint3_feather_path = _ria_vri_checkpoint_paths[3]
@@ -421,9 +424,15 @@ print(
 
 raster_pxw = raster_pxh = 100
 
+_tipsy_params_columns_path = _legacy_data_paths.tipsy_params_columns_path
+if not _tipsy_params_columns_path.exists():
+    _femic_source_root = os.environ.get("FEMIC_SOURCE_ROOT")
+    if _femic_source_root:
+        _source_candidate = Path(_femic_source_root) / "data" / "tipsy_params_columns"
+        if _source_candidate.exists():
+            _tipsy_params_columns_path = _source_candidate
 tipsy_params_columns = [
-    line.strip()
-    for line in _legacy_data_paths.tipsy_params_columns_path.read_text().splitlines()
+    line.strip() for line in _tipsy_params_columns_path.read_text().splitlines()
 ]
 
 # --- cell 11 ---

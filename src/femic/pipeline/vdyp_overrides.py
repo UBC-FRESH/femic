@@ -1,4 +1,4 @@
-﻿"""Shared default kwarg overrides for VDYP curve smoothing by TSA/stratum/SI."""
+"""Shared default kwarg overrides for VDYP curve smoothing by TSA/stratum/SI."""
 
 from __future__ import annotations
 
@@ -72,4 +72,3 @@ def vdyp_kwarg_overrides_for_tsa(
     source = defaults or DEFAULT_VDYP_KWARG_OVERRIDES
     raw = source.get(tsa, {})
     return {key: dict(kwargs) for key, kwargs in raw.items()}
-

@@ -1259,6 +1259,7 @@ def test_build_legacy_execution_plan_resolves_env_and_paths(tmp_path: Path) -> N
     assert plan.env["FEMIC_RUN_ID"] == "runabc"
     assert plan.env["FEMIC_OUTPUT_ROOT"] == str(tmp_path / "outputs")
     assert plan.env["FEMIC_INSTANCE_ROOT"] == str(script_path.parent.resolve())
+    assert plan.env["PYTHONUNBUFFERED"] == "1"
     assert plan.env["FEMIC_RUN_CONFIG_PATH"] == str(
         tmp_path / "config" / "run_profile.yaml"
     )

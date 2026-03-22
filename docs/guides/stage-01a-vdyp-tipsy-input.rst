@@ -63,3 +63,57 @@ Primary Legacy Notebook Coverage
 
 See traceability mapping for markdown cells in ``01a_run-tsa.ipynb`` and
 cross-referenced driver cells in ``00_data-prep.ipynb``.
+
+K3Z Teaching Baseline Notes
+---------------------------
+
+- K3Z baseline managed curves now come from real BatchTIPSY output driven by
+  VDYP-derived SI.
+- The low-yield ``CWHvm_CW+YC`` and ``CWHvm_CW+PLC`` strata are intentionally
+  excluded from the treated/TIPSY pathway and retained out of THLB via
+  ``RETENTION = 1.0``.
+- Remaining treated AUs use the simplified teaching planting logic:
+  - FD-pair AUs: ``900 FD + 3100 HW``
+  - CW-pair AUs: ``900 CW + 3100 HW``
+  - all other remaining treated AUs: ``600 CW + 300 FD + 3100 HW``
+
+Linux Source-Checkout Prerequisites
+-----------------------------------
+
+Before running Stage 01a from a fresh Linux source checkout, ensure:
+
+.. code-block:: bash
+
+   python -m pip install -r requirements-dev.txt
+   git submodule update --init --recursive
+   git -C external/femic-public-data annex enableremote arbutus-s3
+   datalad get -r external/femic-public-data/data
+   export FEMIC_EXTERNAL_DATA_ROOT=$PWD/external/femic-public-data/data
+
+For isolated ``--instance-root`` clones, FEMIC falls back to source-root
+runtime assets when local copies are missing (for example
+``data/tipsy_params_columns``, ``vdyp_io/VDYP_CFG``, and ``vdyp_io/VDYP.INI``).
+
+Known-Good Windows K3Z Hand-Off
+-------------------------------
+
+On the validated Patchworks workstation, the intended K3Z Stage 01a path is:
+
+.. code-block:: powershell
+
+   $env:FEMIC_EXTERNAL_DATA_ROOT='C:\Users\gep\projects\femic\external\femic-public-data\data'
+   python -m femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
+   python -m femic run --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --run-id k3z_windows_cleanstart
+
+Expected outcome:
+
+- native Windows VDYP runs using the bundled ``VDYP7Console.exe``
+- SiteProd geoprocessing can fall back through ArcGIS Pro when needed
+- FEMIC stops intentionally at the BatchTIPSY freshness boundary after writing:
+  - ``external/femic-k3z-instance/data/02_input-tsak3z.dat``
+  - ``external/femic-k3z-instance/data/tipsy_params_tsak3z.xlsx`` or a timestamped fallback workbook
+
+At that point, do **not** rerun Stage 01a unless the TIPSY handoff really needs
+to be regenerated. Stage 01b freshness is DAT-content based, so unchanged
+``02_input`` content can reuse existing BatchTIPSY output, but real DAT content
+changes require a refreshed ``04_output``.

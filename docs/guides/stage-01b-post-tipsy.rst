@@ -18,10 +18,24 @@ Required Input
 Freshness guard
 ---------------
 
-Stage 01b fails fast if ``04_output-<unit>.out`` is older than the latest
-Stage 01a handoff input (DAT preferred, workbook fallback). This prevents
-silently combining stale BatchTIPSY output with newer FEMIC-generated inputs.
-Use ``FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1`` only for explicit debugging.
+Stage 01b treats ``02_input-<unit>.dat`` as canonical and uses DAT-content
+fingerprints for stale detection:
+
+- If the current DAT hash differs from the hash previously paired with
+  ``04_output-<unit>.out``, Stage 01b fails fast.
+- If no hash sidecar exists yet, Stage 01b falls back to DAT-vs-output mtime
+  and then performs an input/output coherence check (AU/table coverage):
+  - coherent pairs warn-and-continue by default (development-friendly mode),
+  - incoherent pairs still fail fast.
+- Set ``FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH=1`` to escalate coherent
+  timestamp mismatch back to a hard error.
+- ``tipsy_params_tsa<unit>.xlsx`` is only a human-readable mirror and is not
+  authoritative for freshness.
+- Use ``FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1`` only for explicit debugging.
+
+Managed-curve mode note: when ``managed_curve_mode != tipsy`` (for example
+``vdyp_transform``), Stage 01b skips the BatchTIPSY freshness guard because the
+managed curve path does not depend on refreshed BatchTIPSY output.
 
 Core Responsibilities
 ---------------------
@@ -51,3 +65,41 @@ Primary Legacy Notebook Coverage
 
 Derived from ``01b_run-tsa.ipynb`` plus parent orchestration notes in
 ``00_data-prep.ipynb``.
+
+Linux Source-Checkout Prerequisites
+-----------------------------------
+
+Before running Stage 01b from a fresh Linux source checkout, ensure:
+
+.. code-block:: bash
+
+   python -m pip install -r requirements-dev.txt
+   git submodule update --init --recursive
+   git -C external/femic-public-data annex enableremote arbutus-s3
+   datalad get -r external/femic-public-data/data
+   export FEMIC_EXTERNAL_DATA_ROOT=$PWD/external/femic-public-data/data
+
+Known-Good Windows K3Z Resume Path
+----------------------------------
+
+Once BatchTIPSY has refreshed the canonical output file:
+
+- ``external/femic-k3z-instance/data/04_output-tsak3z.out``
+
+resume **only** the downstream path:
+
+.. code-block:: powershell
+
+   $env:FEMIC_EXTERNAL_DATA_ROOT='C:\Users\gep\projects\femic\external\femic-public-data\data'
+   python -m femic tsa post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_windows_cleanstart
+
+Then continue into Patchworks export/build as needed, for example:
+
+.. code-block:: powershell
+
+   python -m femic patchworks build-blocks --instance-root external/femic-k3z-instance --config config/patchworks.runtime.windows.yaml
+   python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.windows.yaml --run-id k3z_windows_cleanstart
+
+This is the intended Windows clean-start/restart boundary for K3Z: upstream
+Stage 01a writes the TIPSY handoff, BatchTIPSY runs manually, then ``tsa
+post-tipsy`` resumes downstream without rerunning the expensive GIS/VDYP work.
