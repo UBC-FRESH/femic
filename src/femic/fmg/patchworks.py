@@ -548,6 +548,26 @@ def _resolve_retention_overrides_by_au(
     return overrides
 
 
+def _resolve_default_retention_fraction(
+    *, silviculture_config: dict[str, Any] | None
+) -> float:
+    if not silviculture_config:
+        return DEFAULT_RETENTION_VALUE
+    retention_payload = silviculture_config.get("retention")
+    if not isinstance(retention_payload, dict):
+        return DEFAULT_RETENTION_VALUE
+    raw_value = retention_payload.get("default_retention_fraction")
+    if raw_value is None:
+        return DEFAULT_RETENTION_VALUE
+    try:
+        value = float(raw_value)
+    except (TypeError, ValueError):
+        return DEFAULT_RETENTION_VALUE
+    if value < 0.0 or value > 1.0:
+        return DEFAULT_RETENTION_VALUE
+    return value
+
+
 def _resolve_pct_config_for_au(
     *,
     silviculture_config: dict[str, Any] | None,
@@ -2603,7 +2623,10 @@ def build_fragments_geodataframe(
         au_table=au_table,
         silviculture_config=silviculture_config,
     )
-    retention_values = np.full(len(scoped), DEFAULT_RETENTION_VALUE, dtype=float)
+    default_retention_fraction = _resolve_default_retention_fraction(
+        silviculture_config=silviculture_config
+    )
+    retention_values = np.full(len(scoped), default_retention_fraction, dtype=float)
     for au_id, factor in retention_overrides.items():
         retention_values[au_values == int(au_id)] = float(factor)
     out = pd.DataFrame(

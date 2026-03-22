@@ -47,5 +47,6 @@ qmd:
   notes: "Replace provisional QMD curves with observed or Nemora-derived curves when available."
 
 retention:
+  default_retention_fraction: 0.0
   full_retention_au_ids: []
   full_retention_stratum_codes: []

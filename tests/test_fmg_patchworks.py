@@ -1670,6 +1670,60 @@ def test_build_fragments_geodataframe_applies_full_retention_by_stratum_code(
     assert float(baseline) == pytest.approx(0.0)
 
 
+def test_build_fragments_geodataframe_applies_default_retention_fraction(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    au_table = pd.DataFrame(
+        [
+            {"au_id": 985501006, "stratum_code": "CWHvm_CW+YC"},
+            {"au_id": 985501000, "stratum_code": "CWHvm_HW+FDC"},
+        ]
+    )
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "k3z",
+                "au": 985501006,
+                "PROJ_AGE_1": 80,
+                "FEATURE_AREA_SQM": 100000.0,
+                "thlb_area": 4.0,
+                "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+            },
+            {
+                "tsa_code": "k3z",
+                "au": 985501000,
+                "PROJ_AGE_1": 80,
+                "FEATURE_AREA_SQM": 100000.0,
+                "thlb_area": 4.0,
+                "geometry": Polygon(
+                    [(200, 0), (300, 0), (300, 100), (200, 100), (200, 0)]
+                ),
+            },
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    gdf = build_fragments_geodataframe(
+        checkpoint_path=checkpoint_path,
+        au_table=au_table,
+        tsa_list=["k3z"],
+        silviculture_config={
+            "retention": {
+                "default_retention_fraction": 0.05,
+                "full_retention_stratum_codes": ["CWHvm_CW+YC"],
+            }
+        },
+    )
+
+    retained = gdf.loc[gdf["AU"] == 985501006, "RETENTION"].iloc[0]
+    baseline = gdf.loc[gdf["AU"] == 985501000, "RETENTION"].iloc[0]
+    assert float(retained) == pytest.approx(1.0)
+    assert float(baseline) == pytest.approx(0.05)
+
+
 def test_build_fragments_geodataframe_rejects_conflicting_ifm_options(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

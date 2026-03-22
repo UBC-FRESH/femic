@@ -5383,6 +5383,7 @@ un_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance/
 
 
 - 2026-03-21 (Phase 22 closeout bookkeeping): roadmap status reconciled with the work that actually landed on main. `P22.9f`, `P22.9g`, and the parent `P22.10` checkbox are now marked complete because the standalone K3Z docs teach variant selection by config/PIN, the three-variant coexistence layout is merged to `main` in both repos, and `pctct.pin` smoke passed in live Patchworks. `P22.9e` remains open intentionally as the one unresolved canonical-rebuild cleanup item for the CT/fert variant.
+- 2026-03-22 (P22.9e recovery checkpoint): recovered the missing `ctfert` asset surface on a dedicated recovery branch, added config-level `retention.default_retention_fraction` support in FEMIC, created `config/silviculture.k3z.baseline.yaml`, and aligned the K3Z `ctfert` / `pctct` silviculture configs to the baseline retention policy (`0.05` default, `1.0` for `CWHvm_CW+YC` and `CWHvm_CW+PLC`). Matrix Builder now rebuilds the recovered `ctfert` surface with non-zero passive area again (`Managed 1622.3092129471195`, `Passive 159.00402311063843` in `patchworks_matrixbuilder_stderr-k3z_ctfert_recovery_smoke_20260321_c.log`). `P22.9e` remains open because a fully canonical export rebuild is still blocked by the missing AU-bearing `data/ria_vri_vclr1p_checkpoint7.feather`; the current recovery proves the additive retention semantics, but not yet the end-to-end canonical export path.
 
 - 2026-03-21 (Phase 22 pctct scaffold): implemented the third coexisting K3Z variant as a real compile target rather than just a roadmap stub. Parent FEMIC now supports `pre_commercial_thinning` silviculture config, new `SILV_STATE` values (`cc_pl_pct`, `cc_pl_pct_ct`), and post-PCT conifer-only managed species surfaces. The K3Z instance now carries `config/patchworks.variant.pctct.yaml`, `config/patchworks.runtime.pctct.windows.yaml`, `config/silviculture.k3z.pctct.yaml`, `models/k3z_patchworks_model/analysis/pctct.pin`, `models/k3z_patchworks_model/yield/forestmodel_pctct.xml`, `models/k3z_patchworks_model/tracks_pctct/`, and `output/patchworks_k3z_pctct_validated/`. Windows Matrix Builder smoke passed with `run_id=k3z_pctct_smoke_20260321`; remaining open work is the user-facing docs/runbook update under `P22.10g`.
 
@@ -5404,3 +5405,17 @@ un_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance/
 
 
 
+
+
+## Phase 24: FEMIC API Documentation Rebuild (ws3/FHOPS-Style Quality Bar)
+- [ ] P24.1 Define the new FEMIC API docs quality bar using both local exemplars:
+  - `C:\Users\gep\projects\fhops\docs`
+  - the Windows partial checkout of `C:\Users\gep\projects\ws3\docs`, which intentionally excludes the invalid-filename `papers/...` subtree while preserving the docs/API style reference we want to emulate.
+- [ ] P24.2 Audit the current FEMIC API reference for dense/terse/useless sections and rank modules by user-facing importance, confusion risk, and missing narrative context.
+- [ ] P24.3 Rebuild the public FEMIC API docs around task-oriented module overviews, parameter/return semantics, runtime assumptions, data contracts, side effects, and cross-links to the CLI/workflow guides.
+- [ ] P24.4 Add richer narrative API landing pages so Sphinx output is not just autosummary dumps; include architecture/context sections, common call patterns, and references to real-case workflows (K3Z, TSA29, Patchworks, Woodstock, runtime bootstrap).
+- [ ] P24.5 Upgrade docstring coverage/style across `src/femic` to match the target depth used in FHOPS/ws3: concrete units, data contracts, side effects, failure modes, reproducibility notes, and examples where they materially help.
+- [ ] P24.6 Add docs-contract checks/tests so future API pages cannot regress back into terse unusable stubs.
+- [ ] P24.7 Rebuild FEMIC docs with warnings-as-errors and publish a reviewer-facing before/after summary in roadmap/changelog notes.
+
+- 2026-03-21 (Phase 24 planning note): current FEMIC API docs are too dense and terse to be genuinely usable. The target quality bar is the current FHOPS API/docs set plus the readable portions of the ws3 docs tree now available on Windows via a partial checkout that intentionally excludes the invalid `papers/...` subtree. The next active work for this phase should start with an audit of the worst FEMIC API pages before any large docstring rewrite begins.
