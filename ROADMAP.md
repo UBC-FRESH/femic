@@ -741,6 +741,10 @@ notes.
   - [x] P23.8b Add diagnostics so logs show which THLB raster path was selected (instance-local vs external-root fallback).
   - [x] P23.8c Add regression coverage for THLB path fallback and preserve existing behavior when instance-local raster is present.
   - [x] P23.8d Update Linux parity notes/docs to reflect this runtime expectation explicitly.
+- [x] P23.9 Publish canonical stacked SiteProd TIFF artifact to `femic-public-data`
+  - [x] P23.9a Promote a known-good `siteprod.tif` artifact from Linux parity runs into `external/femic-public-data/data/bc/siteprod/`.
+  - [x] P23.9b `datalad save` the new artifact and push dataset history to GitHub (`UBC-FRESH/femic-public-data` main + git-annex metadata branch).
+  - [x] P23.9c Upload annex content to `arbutus-s3` and verify `git annex find ... --not --in arbutus-s3` returns zero for the new SiteProd TIFF.
 
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
@@ -752,6 +756,26 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 23 follow-up, P23.9 plan): publish canonical stacked SiteProd TIFF into the DataLad public-data mirror for cross-host reuse.
+  - Motivation: reduce repeated Stage 00 SiteProd export friction when ArcRasterRescue/ArcPy runtime surfaces are unavailable on a host, while preserving annex-backed distribution semantics.
+  - Planned execution:
+    - select a known-good Linux-generated `siteprod.tif` artifact from parity runs;
+    - copy to `external/femic-public-data/data/bc/siteprod/siteprod.tif`;
+    - `datalad save` + push `femic-public-data` to GitHub + git-annex metadata branch;
+    - upload annex payload to `arbutus-s3` and verify no missing copies for this artifact.
+- 2026-03-22 (Phase 23 follow-up, P23.9 complete): published canonical stacked SiteProd TIFF to `femic-public-data` and verified cloud availability.
+  - Artifact + provenance:
+    - source artifact copied from Linux parity run output:
+      `/tmp/femic_p23a_finalrun_rC45UW/data/siteprod.tif`
+    - destination in DataLad dataset:
+      `external/femic-public-data/data/bc/siteprod/siteprod.tif`
+    - SHA256 (source + destination match):
+      `307c177608a93b57b8df6d743256651fc8e50399753cbbcf34f97b876b6f926d`
+  - Dataset sync evidence:
+    - `datalad save` commit in `femic-public-data`: `b73dba7290e28ae893cc13e9a1ecbacd15b39904`
+    - pushed dataset history to GitHub `main` and `git-annex` metadata branch.
+    - uploaded annex payload to `arbutus-s3` with `git annex copy --to arbutus-s3 data/bc/siteprod/siteprod.tif`
+    - verification: `MISSING_ON_ARBUTUS_SITEPROD=0` and `git annex whereis data/bc/siteprod/siteprod.tif` includes `arbutus-s3`.
 - 2026-03-22 (Phase 23 follow-up, P23.8 plan): fix THLB raster path resolution for tmp-clone Linux parity runs.
   - Problem observed from full run `k3z_linux_p233a_20260322_live_session1`: pipeline progressed through Stage 00/01a + post-TIPSY resume but failed in bundle-stage THLB assignment with
     `rasterio.errors.RasterioIOError: .../data/misc.thlb.tif: No such file or directory`.

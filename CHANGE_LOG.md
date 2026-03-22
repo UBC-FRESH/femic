@@ -5443,3 +5443,19 @@
   - `pytest -q tests/test_pipeline_io.py` -> `3 passed`.
   - `femic tsa post-tipsy --instance-root /tmp/femic_p23a_live_session_ax08cp --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_p238_thlbfix_20260322` -> `RC=0` (`post-tipsy completed`).
   - bounded full-run replay logs now show fallback path selection (`using THLB raster source (fallback): .../external/femic-public-data/data/misc.thlb.tif`) and no longer fail immediately at `misc.thlb.tif` missing-path boundary before timeout.
+
+## 2026-03-22 - Published canonical SiteProd TIFF to femic-public-data (P23.9)
+- Copied known-good Linux parity SiteProd artifact into DataLad dataset:
+  - source: `/tmp/femic_p23a_finalrun_rC45UW/data/siteprod.tif`
+  - destination: `external/femic-public-data/data/bc/siteprod/siteprod.tif`
+  - SHA256 verified equal for source/destination:
+    `307c177608a93b57b8df6d743256651fc8e50399753cbbcf34f97b876b6f926d`.
+- Saved and pushed dataset history:
+  - `datalad save` commit in `femic-public-data`: `b73dba7290e28ae893cc13e9a1ecbacd15b39904`
+  - pushed to GitHub `UBC-FRESH/femic-public-data` `main`
+  - pushed `git-annex` metadata branch.
+- Uploaded annex payload to cloud special remote:
+  - `git annex copy --to arbutus-s3 data/bc/siteprod/siteprod.tif`
+  - verified `git annex whereis` includes `arbutus-s3`
+  - verified missing-copy check is zero:
+    `git annex find data/bc/siteprod/siteprod.tif --not --in arbutus-s3` -> none.
