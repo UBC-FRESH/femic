@@ -10,10 +10,14 @@ High-priority operational modules
 These are the first pages to consult for real runtime/debugging work and the
 first targets in the Phase 24 API-docs rebuild.
 
+.. toctree::
+   :maxdepth: 1
+
+   femic-cli-main
+
 .. autosummary::
    :toctree: generated
 
-   femic.cli.main
    femic.pipeline.vdyp_stage
    femic.pipeline.io
    femic.pipeline.tipsy
