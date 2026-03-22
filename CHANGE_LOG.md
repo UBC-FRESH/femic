@@ -5656,6 +5656,36 @@
   - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m pytest`
   - `C:\Users\gep\projects\femic\.venv\Scripts\pre-commit.exe run --all-files`
 
+## 2026-03-22 - Closed Phase 24 `P24.2`, `P24.3`, and `P24.4b` with contract docs, acceptance checks, and portability cleanup
+- Added a compact technical-contract section in the main docs tree:
+  - `docs/reference/contracts/index.rst`
+  - `docs/reference/contracts/repo-runtime-invariants.rst`
+  - `docs/reference/contracts/instance-and-data-roots.rst`
+  - `docs/reference/contracts/stage-boundaries-and-canonical-artifacts.rst`
+  - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
+- Kept the contract layer inside the same human-facing Sphinx tree rather than creating an agent-only parallel doc system, and cross-linked it from:
+  - `docs/index.rst`
+  - `docs/reference/api/index.rst`
+  - `README.md`
+  - `AGENTS.md`
+- Extended `tests/test_docs_contract.py` so the new contract pages, navigation links, and required section markers are enforced going forward.
+- Swept the live docs/contributor surfaces for machine-specific path leakage and replaced hard-coded examples with portable patterns such as `$PWD`, including:
+  - `AGENTS.md`
+  - `docs/guides/pipeline-overview.rst`
+  - `docs/guides/stage-01a-vdyp-tipsy-input.rst`
+  - `docs/guides/stage-01b-post-tipsy.rst`
+  - `docs/guides/cross-platform-runtime-smoke.rst`
+  - `docs/guides/patchworks-wine-runtime.rst`
+- Purged the remaining mojibake/garbled-text issues from `ROADMAP.md` so the Phase 24 section and older damaged lines are back to clean UTF-8 text.
+- Marked `P24.2`, `P24.3`, and `P24.4b` complete in `ROADMAP.md`, and updated Detailed Next Steps to point at the remaining benchmark/gap-closeout work under `P24.4a` and `P24.4c`.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff format src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff check src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m mypy src`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m pytest`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\pre-commit.exe run --all-files`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`
+
 
 
 

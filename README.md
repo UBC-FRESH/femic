@@ -12,7 +12,13 @@ The docs are now split into:
 
 - `Guides`: end-to-end workflow narrative recovered from legacy notebook text,
   with stage assumptions, QA interpretation, and troubleshooting playbooks.
-- `Reference`: CLI and export/run-profile contracts.
+- `Reference`: compact technical contracts plus CLI, API, and export/run-profile
+  contracts.
+
+If you want the shortest source-of-truth pages for repo invariants, instance
+roots, external data, stage boundaries, and restart behavior, start with:
+
+- `docs/reference/contracts/index.rst`
 
 Legacy notebook narrative provenance is preserved in:
 
@@ -116,6 +122,8 @@ femic prep geospatial-preflight
 
 The canonical guide version of this bootstrap ritual lives in
 `docs/guides/developer-environment-bootstrap.rst`.
+The compact companion contract page is
+`docs/reference/contracts/repo-runtime-invariants.rst`.
 
 ## Bundled Example Instances Under `external/`
 

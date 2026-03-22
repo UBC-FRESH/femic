@@ -12,6 +12,9 @@ and operator sequences. The API reference should explain what the code owns,
 how the main modules fit together, and where to start when you need to extend
 or debug a specific runtime seam.
 
+If you need the shortest source-of-truth answers for repo/runtime contracts
+rather than module ownership, start with :doc:`../contracts/index`.
+
 API contract
 ------------
 

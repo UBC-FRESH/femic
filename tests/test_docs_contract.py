@@ -13,6 +13,7 @@ DOCS_ROOT = Path("docs")
 GUIDES_ROOT = DOCS_ROOT / "guides"
 SAMPLE_MODELS_ROOT = DOCS_ROOT / "sample-models"
 API_ROOT = DOCS_ROOT / "reference" / "api"
+CONTRACT_ROOT = DOCS_ROOT / "reference" / "contracts"
 COVERAGE_CSV = GUIDES_ROOT / "legacy_notebook_coverage.csv"
 K3Z_INSTANCE_ROOT = Path("external/femic-k3z-instance")
 TSA29_INSTANCE_ROOT = Path("external/femic-tsa29-instance")
@@ -44,6 +45,12 @@ SAMPLE_MODEL_PAGES = [
     "k3z",
     "tsa29",
     "k3z-metadata-lineage",
+]
+CONTRACT_PAGES = [
+    "repo-runtime-invariants",
+    "instance-and-data-roots",
+    "stage-boundaries-and-canonical-artifacts",
+    "recovery-and-external-runtime-boundaries",
 ]
 
 NOTEBOOKS = [
@@ -340,6 +347,7 @@ def test_active_docs_and_config_avoid_repo_root_path_wording() -> None:
         "repo root",
         "relative to the repo root",
         "/home/gep/projects/",
+        "c:\\users\\gep\\projects\\",
     ]
 
     for path in contract_files:
@@ -722,6 +730,102 @@ def test_api_reference_pages_are_in_docs_tree_and_list_public_modules() -> None:
     ):
         assert module_name in modules_page
     assert "femic.resources" not in modules_page
+
+
+def test_reference_contract_pages_are_in_docs_tree_and_linked_from_entrypoints() -> (
+    None
+):
+    index_text = (DOCS_ROOT / "index.rst").read_text()
+    assert "reference/contracts/index" in index_text
+
+    contracts_index = (CONTRACT_ROOT / "index.rst").read_text()
+    assert "agent-only documentation universe" in contracts_index
+    for slug in CONTRACT_PAGES:
+        page_path = CONTRACT_ROOT / f"{slug}.rst"
+        assert page_path.exists(), f"missing contract page: {page_path}"
+        assert slug in contracts_index, f"missing toctree entry for {slug}"
+
+    readme_text = Path("README.md").read_text(encoding="utf-8")
+    assert "docs/reference/contracts/index.rst" in readme_text
+
+    agents_text = Path("AGENTS.md").read_text(encoding="utf-8")
+    for slug in CONTRACT_PAGES:
+        assert f"docs/reference/contracts/{slug}.rst" in agents_text
+
+    api_index = (API_ROOT / "index.rst").read_text()
+    assert "../contracts/index" in api_index
+
+
+def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
+    required_sections = {
+        "repo-runtime-invariants": [
+            "Purpose",
+            "Quick Contract",
+            "Fresh-Clone Baseline",
+            "Do Not Assume",
+            "See Also",
+        ],
+        "instance-and-data-roots": [
+            "Purpose",
+            "Instance Root Resolution",
+            "Bundled Example Instances",
+            "External Data Root",
+            "Fallback Behavior To Remember",
+            "Common Mistakes",
+        ],
+        "stage-boundaries-and-canonical-artifacts": [
+            "Purpose",
+            "Pipeline Boundary Map",
+            "Canonical Artifact Rules",
+            "Freshness and Resume Rules",
+            "Quick Decision Table",
+        ],
+        "recovery-and-external-runtime-boundaries": [
+            "Purpose",
+            "External Runtime Boundaries",
+            "Recovery Workflows",
+            "Host Assumptions",
+            "If Something Looks Wrong",
+        ],
+    }
+    required_markers = {
+        "repo-runtime-invariants": [
+            "active checkout root",
+            "machine-specific absolute paths",
+            "FEMIC_EXTERNAL_DATA_ROOT",
+            "femic prep validate-case",
+            "femic prep geospatial-preflight",
+        ],
+        "instance-and-data-roots": [
+            "--instance-root",
+            "FEMIC_INSTANCE_ROOT",
+            "external/femic-k3z-instance",
+            "external/femic-public-data",
+            "misc.thlb.tif",
+        ],
+        "stage-boundaries-and-canonical-artifacts": [
+            "02_input-<unit>.dat",
+            "tipsy_params_tsa",
+            "04_output-<unit>.out",
+            "FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH=1",
+            "FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1",
+        ],
+        "recovery-and-external-runtime-boundaries": [
+            "FEMIC_ARC_RASTER_RESCUE_EXE",
+            "femic tsa post-tipsy",
+            "femic patchworks preflight",
+            "$PWD\\external\\femic-public-data\\data",
+            "Patchworks",
+            "BatchTIPSY",
+        ],
+    }
+
+    for slug in CONTRACT_PAGES:
+        text = (CONTRACT_ROOT / f"{slug}.rst").read_text()
+        for section in required_sections[slug]:
+            assert section in text, f"{slug}.rst missing required section: {section}"
+        for marker in required_markers[slug]:
+            assert marker in text, f"{slug}.rst missing required marker: {marker}"
 
 
 def test_k3z_sample_model_docs_keep_required_sections() -> None:
