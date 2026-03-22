@@ -796,6 +796,13 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.patchworks_runtime`` autosummary stub with a hand-authored narrative page.
+  - Motivation: ``femic.patchworks_runtime`` owns the operational seam after export synthesis: config loading, preflight, launcher selection, Matrix Builder/log manifest capture, and blocks/topology preparation. The current generated page does not explain that runtime contract clearly enough.
+  - Planned execution:
+    - document the main runtime flow from config file to preflight to command launch and manifest capture;
+    - explain the host-mode split between native Windows and Wine/Linux execution, including license/env expectations and `xvfb` behavior;
+    - surface the main artifacts and failure seams for matrix-build, beanshell, and block/topology preparation;
+    - keep the generated autodoc page reachable through a curated page and rebuild Sphinx with warnings-as-errors.
 - 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.fmg.patchworks`` autosummary stub with a hand-authored narrative page.
   - Motivation: ``femic.fmg.patchworks`` is the central export synthesis seam for Patchworks package generation, but its generated page still does not explain the ForestModel/fragments contract, IFM/origin/silviculture state wiring, retention handling, or the distinction between export-time validation and later runtime execution.
   - Planned execution:

@@ -5553,6 +5553,20 @@
 - Verification:
   - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
 
+## 2026-03-22 - Added curated API docs for femic.patchworks_runtime (Phase 24 P24.1d/P24.1e)
+- Replaced the autosummary-only `femic.patchworks_runtime` landing page with a hand-authored API page:
+  - `docs/reference/api/femic-patchworks-runtime.rst`
+- Documented the module's:
+  - role as FEMIC's Patchworks runtime/preflight/launch seam after export synthesis
+  - host-mode split between native Windows and Wine/Linux execution
+  - runtime config, preflight, command-launch, and manifest/log capture flow
+  - blocks/topology preparation path and the main runtime artifacts
+  - key failure seams around launcher prerequisites, license/env wiring, fatal stderr signatures, and output-not-ready conditions
+- Updated `docs/reference/api/modules.rst` so the curated `femic.patchworks_runtime` page is the visible high-priority module page while the generated autodoc page remains reachable through a hidden toctree.
+- Refreshed `ROADMAP.md` Detailed Next Steps notes so the `femic.patchworks_runtime` rewrite is tracked as active Phase 24 work.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
+
 
 
 
