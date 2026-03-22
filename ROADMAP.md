@@ -737,15 +737,11 @@ notes.
   - [x] P23.7c Add a non-default strict override switch to escalate coherent timestamp mismatch back to an error for users who want hard freshness gating.
   - [x] P23.7d Add regression tests and docs updates for the new default + strict override behavior.
 
-### Phase 23 Windows Closeout Status
-- Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
-- The remaining open work in Phase 23 is Linux-specific parity verification under P23.3.
-- Treat the following tasks as **Linux dev environment required** before Phase 23 can be called fully closed:
-  - P23.3a
-  - P23.3b
-  - Linux sign-off portion of P23.3c
-- Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
-  - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
+### Phase 23 Closeout Status
+- Phase 23 is now complete on eature/phase23-windows-runtime-parity.
+- Windows-side runtime parity work is complete.
+- Linux-side runtime parity verification is complete.
+- The remaining follow-up work is outside Phase 23 and is tracked separately under later roadmap items such as P23.7 descendants or future feature requests.
 ## Detailed Next Steps Notes
 - 2026-03-22 (Phase 23 follow-up, P23.7 plan): implement coherence-based stale-TIPSY behavior for development ergonomics.
   - Problem: timestamp-only stale checks still halt runs in cases where input/output look structurally coherent and the run goal is unrelated to regenerating BatchTIPSY.
@@ -5402,6 +5398,7 @@ un_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance/
 
 
 - 2026-03-21 (Phase 23 Windows preflight hardening): case preflight now understands the real Windows deployment shape instead of assuming every shared asset lives under the instance root. `src/femic/cli/main.py` now falls back from instance-local paths to the FEMIC source tree for shared Windows assets such as `data/tipsy_params_columns`, `vdyp_io/VDYP_CFG`, `VDYP7/VDYP7/VDYP7Console.exe`, and `ria_maptiles.csv`, so `femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml` passes on the known-good workstation. The same preflight path now also checks for `git` and `git-annex` on Windows and runs lightweight annex/DataLad smoke checks (`git -C external/femic-public-data annex version` and `datalad status external/femic-public-data`) whenever the case depends on the annex-backed public-data submodule. This closes `P23.1c` and `P23.4c`.
+
 
 
 
