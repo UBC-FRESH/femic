@@ -771,6 +771,26 @@ notes.
   - [x] P24.1b Define a target API-doc style guide using `ws3` and `fhops` as reference exemplars for depth, structure, and narrative density.
   - [x] P24.1c Prioritize the first FEMIC modules/packages to rewrite (CLI, pipeline, fmg, instance/bootstrap, public-data/runtime helpers).
   - [ ] P24.1d Replace low-value autosummary-only pages with hand-authored API narrative that explains purpose, contracts, common call patterns, and failure modes.
+    - [x] P24.1d.1 Rewrite the first-wave high-priority operational module pages:
+      `femic.cli.main`, `femic.pipeline.vdyp_stage`, `femic.pipeline.io`,
+      `femic.pipeline.tipsy`, `femic.pipeline.siteprod`,
+      `femic.fmg.patchworks`, `femic.patchworks_runtime`, and
+      `femic.workflows.legacy`.
+    - [ ] P24.1d.2 Add curated support-module pages for the remaining execution
+      seams that still carry important repo/runtime contracts:
+      `femic.instance_context`, `femic.instance_bootstrap`,
+      `femic.geospatial_preflight`, `femic.pipeline.bundle`,
+      `femic.pipeline.legacy_runtime`, and `femic.pipeline.manifest`.
+    - [ ] P24.1d.3 Run a closure sweep across the remaining autosummary-only API
+      pages and classify each one as either:
+      acceptable generated-only surface, or still-needs-curated-page.
+    - [ ] P24.1d.4 Promote any support modules from the closure sweep that still
+      block comprehension of real maintenance tasks into one final curated docs
+      pass, then update `docs/reference/api/modules.rst` and `docs/reference/api/index.rst`
+      to reflect the bounded curated set explicitly.
+    - [ ] P24.1d.5 Mark `P24.1d` complete once every generated-only page left in
+      the API tree is explicitly considered acceptable as generated-only or has
+      been replaced by a curated narrative page.
   - [ ] P24.1e Add examples and â€œhow this fits into the pipelineâ€ notes for the most important public entrypoints.
 - [ ] P24.2 Add a lightweight docs contract for coding-agent-friendly technical consumption
   - [ ] P24.2a Define what agent-friendly documentation means for FEMIC without creating a totally separate parallel docs universe.
@@ -796,6 +816,13 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 24, P24.1d closure plan): convert `P24.1d` from an open-ended "rewrite docs forever" task into a bounded closure queue that can actually be checked off.
+  - Motivation: the original first-wave rewrite targets are now done, but the roadmap still treats `P24.1d` as one undifferentiated open item. We need an explicit finish line so the remaining support-module rewrites and closure sweep are trackable.
+  - Planned execution:
+    - treat the first-wave operational module rewrites as completed scope inside `P24.1d`;
+    - queue one support-module rewrite bundle covering `femic.instance_context`, `femic.instance_bootstrap`, `femic.geospatial_preflight`, `femic.pipeline.bundle`, `femic.pipeline.legacy_runtime`, and `femic.pipeline.manifest`;
+    - run one explicit classification sweep for the remaining autosummary-only pages so "acceptable generated-only" modules are documented as an intentional choice rather than forgotten work;
+    - only mark `P24.1d` complete after that queue is closed and the remaining generated pages are explicitly justified.
 - 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.pipeline.siteprod`` autosummary stub with a hand-authored narrative page.
   - Motivation: ``femic.pipeline.siteprod`` owns one of FEMIC's most environment-sensitive geospatial seams, but the generated page does not explain the preferred canonical ``siteprod.tif`` + ``siteprod.bandmap.json`` path, the ArcRasterRescue/ArcGIS Pro fallback behavior, or the stand-level raster assignment contract clearly enough.
   - Planned execution:

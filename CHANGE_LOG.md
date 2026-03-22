@@ -5593,6 +5593,18 @@
 - Verification:
   - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
 
+## 2026-03-22 - Queued bounded closure criteria for Phase 24 `P24.1d`
+- Refined `ROADMAP.md` so `P24.1d` now has an explicit closure queue instead of one open-ended rewrite bucket.
+- Recorded that the original first-wave high-priority operational module rewrites are already complete within `P24.1d`.
+- Queued the remaining support-module rewrite bundle needed before `P24.1d` can be checked off:
+  - `femic.instance_context`
+  - `femic.instance_bootstrap`
+  - `femic.geospatial_preflight`
+  - `femic.pipeline.bundle`
+  - `femic.pipeline.legacy_runtime`
+  - `femic.pipeline.manifest`
+- Added an explicit closure-sweep requirement so any API pages left as autosummary-only must be intentionally classified as acceptable generated-only surfaces rather than silently remaining unfinished.
+
 
 
 
