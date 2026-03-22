@@ -11,9 +11,9 @@ These are the first pages to consult for real runtime/debugging work and the
 first targets in the Phase 24 API-docs rebuild.
 
 Current curated pages in this section include ``femic.cli.main``,
-``femic.pipeline.vdyp_stage``, ``femic.pipeline.io``, and
-``femic.pipeline.tipsy``, ``femic.fmg.patchworks``, and
-``femic.patchworks_runtime``.
+``femic.pipeline.vdyp_stage``, ``femic.pipeline.io``,
+``femic.pipeline.tipsy``, ``femic.fmg.patchworks``,
+``femic.patchworks_runtime``, and ``femic.workflows.legacy``.
 
 .. toctree::
    :maxdepth: 1
@@ -24,12 +24,12 @@ Current curated pages in this section include ``femic.cli.main``,
    femic-pipeline-tipsy
    femic-fmg-patchworks
    femic-patchworks-runtime
+   femic-workflows-legacy
 
 .. autosummary::
    :toctree: generated
 
    femic.pipeline.siteprod
-   femic.workflows.legacy
 
 Package and support modules
 ---------------------------

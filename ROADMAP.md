@@ -796,6 +796,13 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.workflows.legacy`` autosummary stub with a hand-authored narrative page.
+  - Motivation: ``femic.workflows.legacy`` is the bridge between FEMIC's newer CLI/path-resolution layer and the still-active legacy stage scripts, but the generated page does not explain the two distinct orchestration paths it owns: Stage 00 data-prep subprocess execution and the cached 01b-plus-bundle post-TIPSY assembly flow.
+  - Planned execution:
+    - document the module's role as the orchestration seam that resolves the legacy script bundle, manages temporary env/cwd overrides, and writes manifests around legacy execution;
+    - explain the main public entry surfaces for ``run_data_prep`` and ``run_post_tipsy_bundle(_with_manifest)`` including their cached-artifact expectations and downstream bundle outputs;
+    - surface the main failure seams around missing 01a checkpoints, mis-resolved legacy script roots, manifest/log expectations, and managed-curve override drift;
+    - keep the generated autodoc page reachable through a curated page and rebuild Sphinx with warnings-as-errors.
 - 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.patchworks_runtime`` autosummary stub with a hand-authored narrative page.
   - Motivation: ``femic.patchworks_runtime`` owns the operational seam after export synthesis: config loading, preflight, launcher selection, Matrix Builder/log manifest capture, and blocks/topology preparation. The current generated page does not explain that runtime contract clearly enough.
   - Planned execution:
