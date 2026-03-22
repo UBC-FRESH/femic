@@ -5459,3 +5459,18 @@
   - verified `git annex whereis` includes `arbutus-s3`
   - verified missing-copy check is zero:
     `git annex find data/bc/siteprod/siteprod.tif --not --in arbutus-s3` -> none.
+
+## 2026-03-22 - Published SiteProd band-map sidecar for pre-stacked TIFF runtime (P23.10)
+- Added canonical machine-readable sidecar:
+  - `external/femic-public-data/data/bc/siteprod/siteprod.bandmap.json`
+  - includes `bands_1_based`, `bands_0_based`, and `ordered_species` for `siteprod.tif`.
+- Mapping derivation:
+  - species set from `list_siteprod_layers(...)` against `Site_Prod_BC.gdb`;
+  - order set to lexicographic species-code order, matching stacked TIFF assembly semantics (`site_prod_bc_<SPECIES>.tif` sorted glob order).
+  - validated against published `siteprod.tif` band count (`22`).
+- Saved and pushed DataLad dataset update:
+  - `femic-public-data` commit: `b23ce8290862915b518322cbf59f6c92f2d46654`
+  - pushed to GitHub `main`
+  - pushed `git-annex` metadata branch.
+- Distribution note:
+  - `siteprod.bandmap.json` is Git-tracked text (not annexed), so it is distributed via GitHub branch sync rather than `arbutus-s3` annex object transfer.

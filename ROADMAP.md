@@ -745,6 +745,10 @@ notes.
   - [x] P23.9a Promote a known-good `siteprod.tif` artifact from Linux parity runs into `external/femic-public-data/data/bc/siteprod/`.
   - [x] P23.9b `datalad save` the new artifact and push dataset history to GitHub (`UBC-FRESH/femic-public-data` main + git-annex metadata branch).
   - [x] P23.9c Upload annex content to `arbutus-s3` and verify `git annex find ... --not --in arbutus-s3` returns zero for the new SiteProd TIFF.
+- [x] P23.10 Publish canonical SiteProd band-map sidecar for pre-stacked TIFF runtime use
+  - [x] P23.10a Add `external/femic-public-data/data/bc/siteprod/siteprod.bandmap.json` with machine-readable species-to-band mapping for `siteprod.tif` (1-based + 0-based + ordered list).
+  - [x] P23.10b Push `femic-public-data` dataset update to GitHub `main` and keep `git-annex` metadata branch synchronized.
+  - [x] P23.10c Verify cloud distribution state: if sidecar is annexed, ensure `arbutus-s3` copy exists; if Git-tracked text, document that it is distributed via Git branch sync.
 
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
@@ -756,6 +760,22 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 23 follow-up, P23.10 plan): publish SiteProd band-map sidecar metadata alongside canonical stacked TIFF.
+  - Motivation: default runtime use of pre-stacked `siteprod.tif` requires canonical species-to-band mapping without ArcRasterRescue/ArcPy discovery at runtime.
+  - Planned execution:
+    - derive canonical species order matching stacked TIFF generation workflow for current published artifact;
+    - write `siteprod.bandmap.json` under `external/femic-public-data/data/bc/siteprod/` with `bands_1_based`, `bands_0_based`, and `ordered_species`;
+    - save/push dataset to GitHub and confirm distribution semantics (Git-tracked vs annexed) explicitly for downstream Windows agents.
+- 2026-03-22 (Phase 23 follow-up, P23.10 complete): published canonical SiteProd band-map sidecar for pre-stacked TIFF default runtime usage.
+  - Dataset artifact:
+    - path: `external/femic-public-data/data/bc/siteprod/siteprod.bandmap.json`
+    - dataset commit: `b23ce8290862915b518322cbf59f6c92f2d46654`
+  - Mapping derivation notes:
+    - species universe derived from `list_siteprod_layers(...)` against `Site_Prod_BC.gdb`;
+    - order set to lexicographic species-code order, matching stacked TIFF band assembly semantics (`enumerate_siteprod_layer_tif_paths(...)` sorted `site_prod_bc_<SPECIES>.tif` filenames);
+    - validated against published `siteprod.tif` band count (`22`).
+  - Distribution semantics:
+    - sidecar JSON is Git-tracked text (not annexed), so availability comes from Git branch sync (`main` on GitHub), not `arbutus-s3` annex object transfer.
 - 2026-03-22 (Phase 23 follow-up, P23.9 plan): publish canonical stacked SiteProd TIFF into the DataLad public-data mirror for cross-host reuse.
   - Motivation: reduce repeated Stage 00 SiteProd export friction when ArcRasterRescue/ArcPy runtime surfaces are unavailable on a host, while preserving annex-backed distribution semantics.
   - Planned execution:
