@@ -796,6 +796,13 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.pipeline.tipsy`` autosummary stub with a hand-authored narrative page.
+  - Motivation: ``femic.pipeline.tipsy`` owns one of FEMIC's most brittle operator-facing seams: fixed-width BatchTIPSY handoff generation, candidate filtering, canonical DAT/output freshness validation, and the coherence-based stale-output policy.
+  - Planned execution:
+    - document the Stage 01a/01b boundary this module owns and clarify why ``02_input-*.dat`` is canonical while XLSX is only a mirror;
+    - explain the main functional surfaces for DAT export, candidate evaluation, fingerprinting, and coherence-based freshness checks;
+    - surface the main failure seams around fixed-width overflow, stale ``04_output`` reuse, and managed-curve mode differences;
+    - keep the generated autodoc page reachable through a curated page and rebuild Sphinx with warnings-as-errors.
 - 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.pipeline.io`` autosummary stub with a hand-authored narrative page.
   - Motivation: ``femic.pipeline.io`` is the main source-of-truth seam for run-profile normalization, instance-root resolution, external-data fallback, canonical SiteProd/THLB artifact selection, and legacy subprocess execution planning.
   - Planned execution:
