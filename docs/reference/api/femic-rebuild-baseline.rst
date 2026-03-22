@@ -32,6 +32,22 @@ Typical maintenance path:
 2. Read :func:`build_current_snapshot` for snapshot content questions.
 3. Move to :func:`diff_snapshots` when debugging baseline mismatch output.
 
+Typical Usage
+-------------
+
+The common baseline workflow is:
+
+.. code-block:: python
+
+   from pathlib import Path
+   from femic.rebuild_baseline import build_current_snapshot, diff_snapshots, load_snapshot
+
+   baseline = load_snapshot(Path("config/rebuild.baseline.json"))
+   current = build_current_snapshot(
+       patchworks_config_path=Path("config/patchworks.runtime.windows.yaml"),
+   )
+   diff = diff_snapshots(baseline=baseline, current=current)
+
 How This Fits Into The Pipeline
 -------------------------------
 

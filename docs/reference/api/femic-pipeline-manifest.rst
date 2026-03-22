@@ -35,6 +35,27 @@ Typical maintenance path:
 3. Finish with :func:`write_manifest` if the problem is in persistence,
    directory creation, or JSON formatting.
 
+Typical Usage
+-------------
+
+The common pattern is to build the payload from a resolved execution plan and
+then write it at run start or finish:
+
+.. code-block:: python
+
+   from datetime import datetime
+   from femic.pipeline.manifest import build_run_manifest_payload, write_manifest
+
+   payload = build_run_manifest_payload(
+       execution_plan=execution_plan,
+       status="started",
+       started_at=datetime.now(),
+       finished_at=None,
+       duration_sec=None,
+       exit_code=None,
+   )
+   write_manifest(execution_plan.manifest_path, payload)
+
 How This Fits Into The Pipeline
 -------------------------------
 

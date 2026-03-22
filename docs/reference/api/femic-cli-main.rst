@@ -37,6 +37,26 @@ Typical navigation path:
    - :mod:`femic.rebuild_runner`
    - :mod:`femic.release_packaging`
 
+Typical Usage
+-------------
+
+For operator-driven work, the CLI is usually the narrowest stable entrypoint:
+
+.. code-block:: bash
+
+   femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
+   femic run --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --run-id k3z_docs_example
+   femic tsa post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_docs_example
+
+When you are extending the CLI itself, the common maintenance pattern is:
+
+.. code-block:: python
+
+   from femic.cli.main import app, export_app
+
+   # Existing sub-apps are registered near the bottom of the module.
+   app.add_typer(export_app, name="export")
+
 Command Structure
 -----------------
 

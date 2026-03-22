@@ -34,6 +34,28 @@ Typical maintenance path:
 3. Inspect ``BC_VRI_DOWNLOADS`` if the issue is about dataset URLs or extract
    locations.
 
+Typical Usage
+-------------
+
+The common operator-facing call is:
+
+.. code-block:: bash
+
+   femic instance init --instance-root instances/reference --no-download-bc-vri
+
+The matching Python entrypoint is:
+
+.. code-block:: python
+
+   from pathlib import Path
+   from femic.instance_bootstrap import bootstrap_instance_workspace
+
+   result = bootstrap_instance_workspace(
+       instance_root=Path("instances/reference"),
+       overwrite=False,
+       include_bc_vri_download=False,
+   )
+
 How This Fits Into The Pipeline
 -------------------------------
 

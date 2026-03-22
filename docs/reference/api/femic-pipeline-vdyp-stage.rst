@@ -44,6 +44,34 @@ Typical maintenance path:
    :func:`fit_stratum_curves` if the failure is visible in smoothed curves or
    downstream TIPSY overlays.
 
+Typical Usage
+-------------
+
+The common call pattern is to let higher-level orchestration prepare the inputs
+and then pass one TSA/runtime payload into the Stage 01a seam:
+
+.. code-block:: python
+
+   from femic.pipeline.legacy_runtime import build_legacy_01a_runtime_config
+   from femic.pipeline.vdyp_stage import load_or_build_vdyp_results_tsa
+
+   runtime_config = build_legacy_01a_runtime_config(
+       tsa_code="08",
+       resume_effective=True,
+       force_run_vdyp=False,
+       kwarg_overrides_for_tsa=None,
+       vdyp_results_pickle_path="data/vdyp_results.pkl",
+       vdyp_input_pandl_path="data/vdyp_input_pandl.feather",
+       vdyp_ply_feather_path="data/vdyp_ply.feather",
+       vdyp_lyr_feather_path="data/vdyp_lyr.feather",
+       tipsy_params_columns=[],
+       tipsy_params_path_prefix="data/tipsy_params_tsa",
+       vdyp_results_tsa_pickle_path_prefix="data/vdyp_prep-tsa",
+       vdyp_curves_smooth_tsa_feather_path_prefix="data/vdyp_curves_smooth-tsa",
+   )
+
+   # Higher-level callers then dispatch the TSA run through the Stage 01a seam.
+
 How This Fits Into The Pipeline
 -------------------------------
 

@@ -45,6 +45,27 @@ Typical maintenance path:
 4. Read :func:`build_patchworks_blocks_dataset` if the problem is in
    ``blocks.shp`` / topology generation rather than Matrix Builder launch.
 
+Typical Usage
+-------------
+
+The common operator-facing path is:
+
+.. code-block:: bash
+
+   femic patchworks preflight --instance-root external/femic-k3z-instance --config config/patchworks.runtime.windows.yaml
+   femic patchworks build-blocks --instance-root external/femic-k3z-instance --config config/patchworks.runtime.windows.yaml
+   femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.windows.yaml --run-id k3z_docs_example
+
+At the Python level, maintainers usually call preflight before launch:
+
+.. code-block:: python
+
+   from pathlib import Path
+   from femic.patchworks_runtime import load_patchworks_runtime_config, run_patchworks_preflight
+
+   config = load_patchworks_runtime_config(Path("config/patchworks.runtime.windows.yaml"))
+   result = run_patchworks_preflight(config)
+
 How This Fits Into The Pipeline
 -------------------------------
 

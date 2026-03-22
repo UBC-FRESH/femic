@@ -45,6 +45,25 @@ Typical maintenance path:
    :func:`write_tipsy_output_input_fingerprint` when the failure is visible at
    the manual Stage 01a/01b boundary.
 
+Typical Usage
+-------------
+
+The common operator-facing pattern is to let Stage 01a write the canonical DAT
+handoff, run BatchTIPSY externally, and then validate the returned output
+before Stage 01b resumes:
+
+.. code-block:: python
+
+   from pathlib import Path
+   from femic.pipeline.tipsy import validate_tipsy_output_is_fresh
+
+   validate_tipsy_output_is_fresh(
+       tipsy_input_excel_path=Path("data/tipsy_params_tsa08.xlsx"),
+       tipsy_input_dat_path=Path("data/02_input-tsa08.dat"),
+       tipsy_output_path=Path("data/04_output-tsa08.out"),
+       allow_stale=False,
+   )
+
 How This Fits Into The Pipeline
 -------------------------------
 

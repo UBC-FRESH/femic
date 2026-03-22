@@ -39,6 +39,20 @@ Typical maintenance path:
 3. Inspect the legacy workspace marker helpers if behavior differs between
    deployment-instance and source-checkout workflows.
 
+Typical Usage
+-------------
+
+The common pattern is to resolve the context once and then normalize all
+instance-relative paths through it:
+
+.. code-block:: python
+
+   from pathlib import Path
+   from femic.instance_context import resolve_instance_context
+
+   context = resolve_instance_context(instance_root=Path("external/femic-k3z-instance"))
+   run_config_path = context.resolve_path(Path("config/run_profile.k3z.yaml"))
+
 How This Fits Into The Pipeline
 -------------------------------
 

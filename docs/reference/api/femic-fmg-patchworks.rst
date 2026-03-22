@@ -46,6 +46,19 @@ Typical maintenance path:
    :func:`validate_fragments_geodataframe` if the export is failing fast on
    contract checks before runtime launch.
 
+Typical Usage
+-------------
+
+The common operator-facing path is to export from already-built bundle tables
+rather than rerunning upstream stages from inside the exporter:
+
+.. code-block:: bash
+
+   femic export patchworks --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z
+
+At the Python level, maintainers usually enter through the top-level export
+helpers after bundle tables already exist under ``data/model_input_bundle/``.
+
 How This Fits Into The Pipeline
 -------------------------------
 

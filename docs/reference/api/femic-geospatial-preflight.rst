@@ -36,6 +36,24 @@ Typical maintenance path:
 3. Inspect the shapefile smoke helper when Fiona imports but real shapefile I/O
    still fails.
 
+Typical Usage
+-------------
+
+The normal operator-facing check is:
+
+.. code-block:: bash
+
+   femic prep geospatial-preflight
+
+The matching Python call is small enough to use directly in bootstrap tests:
+
+.. code-block:: python
+
+   from femic.geospatial_preflight import run_geospatial_preflight
+
+   result = run_geospatial_preflight(run_shapefile_smoke=True)
+   assert result.ok, result.errors
+
 How This Fits Into The Pipeline
 -------------------------------
 

@@ -51,6 +51,21 @@ Typical maintenance path:
    :func:`mean_siteprod_for_row` if the problem is in the stand-level raster
    masking or species-band selection itself.
 
+Typical Usage
+-------------
+
+The preferred maintenance path is to load the canonical band map for a
+published ``siteprod.tif`` pair rather than re-exporting from the FileGDB:
+
+.. code-block:: python
+
+   from pathlib import Path
+   from femic.pipeline.siteprod import load_siteprod_bandmap
+
+   layer_species, species_layer = load_siteprod_bandmap(
+       bandmap_path=Path("external/femic-public-data/data/bc/siteprod/siteprod.bandmap.json")
+   )
+
 How This Fits Into The Pipeline
 -------------------------------
 

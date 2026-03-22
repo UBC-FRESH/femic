@@ -36,6 +36,22 @@ Typical maintenance path:
 3. Inspect the dataclasses directly when the issue is about field semantics or
    test fixtures rather than builder behavior.
 
+Typical Usage
+-------------
+
+The normal pattern is for orchestration code to build one typed payload per
+stage boundary instead of passing anonymous dictionaries into legacy code:
+
+.. code-block:: python
+
+   from femic.pipeline.legacy_runtime import build_legacy_01b_runtime_config
+
+   runtime_config = build_legacy_01b_runtime_config(
+       tipsy_params_path_prefix="data/tipsy_params_tsa",
+       tipsy_output_root="data",
+       tipsy_output_filename_template="04_output-tsa{tsa}.out",
+   )
+
 How This Fits Into The Pipeline
 -------------------------------
 

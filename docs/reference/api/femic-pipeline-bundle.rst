@@ -36,6 +36,23 @@ Typical maintenance path:
 3. Inspect :func:`assign_curve_ids_from_au_table` when downstream consumers are
    attaching curve IDs back onto stand tables.
 
+Typical Usage
+-------------
+
+The common maintenance pattern is to resolve canonical bundle paths first and
+then load the three-table surface as one unit:
+
+.. code-block:: python
+
+   import pandas as pd
+   from femic.pipeline.bundle import load_bundle_tables, resolve_bundle_paths
+
+   paths = resolve_bundle_paths(base_dir="data/model_input_bundle")
+   au_table, curve_table, curve_points_table = load_bundle_tables(
+       paths=paths,
+       pd_module=pd,
+   )
+
 How This Fits Into The Pipeline
 -------------------------------
 

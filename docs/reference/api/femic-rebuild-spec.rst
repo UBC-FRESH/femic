@@ -33,6 +33,21 @@ Typical maintenance path:
 2. Move to :func:`validate_rebuild_spec_payload` for schema and rule failures.
 3. Inspect the module-level constants when extending the allowed schema.
 
+Typical Usage
+-------------
+
+The usual maintenance flow is to validate the YAML payload before trying to run
+any rebuild steps:
+
+.. code-block:: python
+
+   from pathlib import Path
+   from femic.rebuild_spec import load_rebuild_spec, validate_rebuild_spec_payload
+
+   payload = load_rebuild_spec(Path("config/rebuild.spec.yaml"))
+   errors = validate_rebuild_spec_payload(payload)
+   assert not errors, errors
+
 How This Fits Into The Pipeline
 -------------------------------
 

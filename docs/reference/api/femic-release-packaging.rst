@@ -32,6 +32,33 @@ Typical maintenance path:
 2. Inspect :class:`ReleasePackageResult` for the returned package metadata.
 3. Read the required-file constants when changing release minimums.
 
+Typical Usage
+-------------
+
+The common operator-facing call is:
+
+.. code-block:: bash
+
+   femic export release --instance-root external/femic-k3z-instance --case-id k3z --run-id k3z_docs_example
+
+The matching Python entrypoint is:
+
+.. code-block:: python
+
+   from pathlib import Path
+   from femic.release_packaging import build_release_package
+
+   result = build_release_package(
+       case_id="k3z",
+       output_root=Path("output/releases"),
+       model_input_bundle_dir=Path("data/model_input_bundle"),
+       patchworks_output_dir=Path("output/patchworks"),
+       woodstock_output_dir=Path("output/woodstock"),
+       logs_dir=Path("vdyp_io/logs"),
+       run_id="docs_example",
+       strict=True,
+   )
+
 How This Fits Into The Pipeline
 -------------------------------
 

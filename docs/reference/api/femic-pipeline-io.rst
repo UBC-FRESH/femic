@@ -48,6 +48,24 @@ Typical maintenance path:
    subprocess env vars, working directory, manifest paths, or legacy command
    handoff.
 
+Typical Usage
+-------------
+
+The common pattern is to normalize CLI/profile input first and only then build
+the subprocess-ready execution payload:
+
+.. code-block:: python
+
+   from pathlib import Path
+   from femic.pipeline.io import build_pipeline_run_config
+
+   run_config = build_pipeline_run_config(
+       tsa_list=["k3z"],
+        resume=True,
+       run_id="docs_example",
+       instance_root=Path("external/femic-k3z-instance"),
+   )
+
 How This Fits Into The Pipeline
 -------------------------------
 

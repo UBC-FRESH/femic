@@ -766,7 +766,7 @@ notes.
 
 
 ## Phase 24: FEMIC API Docs Rebuild + Agent-Friendly Technical Documentation
-- [ ] P24.1 Rebuild FEMIC API docs to a usable depth/quality standard
+- [x] P24.1 Rebuild FEMIC API docs to a usable depth/quality standard
   - [x] P24.1a Audit the current API docs surface and identify modules/pages that are too terse, too dense, or effectively unusable.
   - [x] P24.1b Define a target API-doc style guide using `ws3` and `fhops` as reference exemplars for depth, structure, and narrative density.
   - [x] P24.1c Prioritize the first FEMIC modules/packages to rewrite (CLI, pipeline, fmg, instance/bootstrap, public-data/runtime helpers).
@@ -791,7 +791,7 @@ notes.
     - [x] P24.1d.5 Mark `P24.1d` complete once every generated-only page left in
       the API tree is explicitly considered acceptable as generated-only or has
       been replaced by a curated narrative page.
-  - [ ] P24.1e Add examples and â€œhow this fits into the pipelineâ€ notes for the most important public entrypoints.
+  - [x] P24.1e Add examples and â€œhow this fits into the pipelineâ€ notes for the most important public entrypoints.
 - [ ] P24.2 Add a lightweight docs contract for coding-agent-friendly technical consumption
   - [ ] P24.2a Define what agent-friendly documentation means for FEMIC without creating a totally separate parallel docs universe.
   - [ ] P24.2b Add concise machine-friendly reference surfaces for repo invariants, runtime prerequisites, stage boundaries, canonical artifacts, and recovery workflows.

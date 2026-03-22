@@ -5641,6 +5641,21 @@
   - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m pytest`
   - `C:\Users\gep\projects\femic\.venv\Scripts\pre-commit.exe run --all-files`
 
+## 2026-03-22 - Closed Phase 24 `P24.1e` and completed the API-doc rebuild milestone
+- Added concise "Typical Usage" example sections across the curated API pages so the rewritten docs now show realistic call shapes instead of only ownership/contract prose.
+- Updated the curated operational, support-contract, and rebuild/release API pages to pair:
+  - start-here orientation
+  - pipeline-role/boundary notes
+  - realistic CLI or Python entrypoint examples
+- Marked `P24.1e` complete in `ROADMAP.md` and, with `P24.1a` through `P24.1e` now complete, marked top-level `P24.1` complete as well.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff format src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff check src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m mypy src`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m pytest`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\pre-commit.exe run --all-files`
+
 
 
 

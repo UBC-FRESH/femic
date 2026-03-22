@@ -34,6 +34,25 @@ Typical maintenance path:
 3. Move to :func:`evaluate_invariants` when the question is about result status
    rather than raw metrics.
 
+Typical Usage
+-------------
+
+The common pattern is to measure runtime outputs first and then evaluate the
+configured invariant list against those metrics:
+
+.. code-block:: python
+
+   from pathlib import Path
+   from femic.rebuild_invariants import collect_rebuild_metrics, evaluate_invariants
+
+   metrics = collect_rebuild_metrics(
+       instance_root=Path("."),
+       log_dir=Path("vdyp_io/logs"),
+       run_id="docs_example",
+       patchworks_config_path=Path("config/patchworks.runtime.windows.yaml"),
+   )
+   results = evaluate_invariants(invariants=spec_payload["invariants"], metrics=metrics)
+
 How This Fits Into The Pipeline
 -------------------------------
 

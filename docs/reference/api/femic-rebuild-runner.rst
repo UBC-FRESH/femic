@@ -32,6 +32,26 @@ Typical maintenance path:
    :class:`RebuildExecutionReport` for payload semantics.
 3. Inspect :class:`JsonRebuildReportSink` if the issue is in report persistence.
 
+Typical Usage
+-------------
+
+The common pattern is to construct a small ordered step graph and let the
+runner handle execution order and report generation:
+
+.. code-block:: python
+
+   from pathlib import Path
+   from femic.rebuild_runner import JsonRebuildReportSink, RebuildRunner, RebuildStep
+
+   runner = RebuildRunner(
+       steps=[
+           RebuildStep(step_id="validate_case", action=lambda ctx: {"validated": True}),
+           RebuildStep(step_id="compile_upstream", action=lambda ctx: {}, depends_on=("validate_case",)),
+       ],
+       report_sink=JsonRebuildReportSink(path=Path("vdyp_io/logs/rebuild_report.json")),
+   )
+   report = runner.run(run_id="docs_example")
+
 How This Fits Into The Pipeline
 -------------------------------
 

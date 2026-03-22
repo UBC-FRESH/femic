@@ -53,6 +53,30 @@ Typical maintenance path:
    helpers when behavior differs between direct notebook-era expectations and
    the modern packaged runtime.
 
+Typical Usage
+-------------
+
+The most common high-level use is to let the CLI drive the subprocess path:
+
+.. code-block:: bash
+
+   femic run --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --run-id k3z_docs_example
+   femic tsa post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_docs_example
+
+When calling directly from Python, the manifest-wrapped post-TIPSY path is the
+safer maintenance seam:
+
+.. code-block:: python
+
+   from pathlib import Path
+   from femic.workflows.legacy import run_post_tipsy_bundle_with_manifest
+
+   result = run_post_tipsy_bundle_with_manifest(
+       tsa_list=["08"],
+       data_root=Path("data"),
+       log_dir=Path("vdyp_io/logs"),
+   )
+
 How This Fits Into The Pipeline
 -------------------------------
 
