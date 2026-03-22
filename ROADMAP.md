@@ -756,6 +756,36 @@ notes.
   - [x] P23.10b Push `femic-public-data` dataset update to GitHub `main` and keep `git-annex` metadata branch synchronized.
   - [x] P23.10c Verify cloud distribution state: if sidecar is annexed, ensure `arbutus-s3` copy exists; if Git-tracked text, document that it is distributed via Git branch sync.
 
+## Phase 23 Addendum: VDYP Fit Policy Config Surface (Nice-to-Have Later)
+- [ ] P23.11 Replace code-level VDYP fit overrides with a YAML-backed policy surface
+  - [ ] P23.11a Define FEMIC-level default VDYP fit/tail/toe parameters in a human-readable YAML config artifact instead of hard-coded Python defaults where practical.
+  - [ ] P23.11b Add per-instance YAML override support so case-specific fit rules (for example K3Z CWHvm_DR+HW tail relaxation) do not require editing src/femic/pipeline/vdyp_overrides.py.
+  - [ ] P23.11c Preserve a narrow code-level fallback seam only for exceptional cases that truly cannot be expressed cleanly in YAML.
+  - [ ] P23.11d Update developer/operator docs to explain the new config surface, override precedence, and when not to override fit behavior.
+  - [ ] P23.11e Open and link a dedicated GitHub feature-request issue before implementation so the design and tradeoffs are traceable outside the roadmap.
+
+
+## Phase 24: FEMIC API Docs Rebuild + Agent-Friendly Technical Documentation
+- [ ] P24.1 Rebuild FEMIC API docs to a usable depth/quality standard
+  - [x] P24.1a Audit the current API docs surface and identify modules/pages that are too terse, too dense, or effectively unusable.
+  - [x] P24.1b Define a target API-doc style guide using `ws3` and `fhops` as reference exemplars for depth, structure, and narrative density.
+  - [ ] P24.1c Prioritize the first FEMIC modules/packages to rewrite (CLI, pipeline, fmg, instance/bootstrap, public-data/runtime helpers).
+  - [ ] P24.1d Replace low-value autosummary-only pages with hand-authored API narrative that explains purpose, contracts, common call patterns, and failure modes.
+  - [ ] P24.1e Add examples and “how this fits into the pipeline” notes for the most important public entrypoints.
+- [ ] P24.2 Add a lightweight docs contract for coding-agent-friendly technical consumption
+  - [ ] P24.2a Define what agent-friendly documentation means for FEMIC without creating a totally separate parallel docs universe.
+  - [ ] P24.2b Add concise machine-friendly reference surfaces for repo invariants, runtime prerequisites, stage boundaries, canonical artifacts, and recovery workflows.
+  - [ ] P24.2c Make sure those surfaces are generated from or embedded in the same human-facing docs tree wherever practical, so they do not drift.
+  - [ ] P24.2d Add explicit “source of truth” pages for frequently confused seams (instance roots, external data roots, public-data/DataLad usage, BatchTIPSY boundary, Patchworks runtime assumptions).
+- [ ] P24.3 Establish doc architecture that serves both humans and embedded coding agents
+  - [ ] P24.3a Keep one primary documentation system, but introduce structured sub-surfaces for fast technical lookup (tables, contracts, checklists, invariants, file/path maps).
+  - [ ] P24.3b Decide where `AGENTS.md`, operator runbooks, API docs, and roadmap notes should cross-link so an agent can orient quickly without browsing the entire repo.
+  - [ ] P24.3c Add guidance for when detailed narrative is needed versus when a concise machine-readable contract is better.
+- [ ] P24.4 Validate the new docs system against real maintenance tasks
+  - [ ] P24.4a Use recent real tasks (Patchworks runtime setup, K3Z variant rebuilds, SiteProd defaults, DataLad bootstrap) as benchmark tasks and confirm the docs are enough to complete them without tribal knowledge.
+  - [ ] P24.4b Add docs acceptance checks for required API-doc sections and agent-facing contract pages.
+  - [ ] P24.4c Record a follow-up GitHub feature issue for any remaining agent-facing docs gaps that should be iterated outside this phase.
+
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
 - The remaining open work in Phase 23 is Linux-specific parity verification under P23.3.
@@ -5447,15 +5477,10 @@ un_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance/
 - 2026-03-21 (Phase 23 cached smoothing experiment, pass 3): pushed the toe/tail policy further with `FEMIC_BODY_C_MIN=-20`, `FEMIC_VDYP_TOE_SHIFT_YEARS=0`, `FEMIC_TAIL_LINEAR_MIN_R2=0.20`, `FEMIC_TAIL_LINEAR_MAX_NRMSE=0.50`, `FEMIC_TAIL_LINEAR_PREFER_MIN_AGE=90`, `FEMIC_TAIL_LINEAR_FLAT_SLOPE_ABS=0.20`, `FEMIC_TAIL_LINEAR_MIN_SPAN_YEARS=20`, and `FEMIC_TAIL_BLEND_YEARS=90`, still with `FEMIC_K3Z_FORCE_TAIL_BLEND=0`. Cached smoothing reran successfully with `run_id=k3z_vdyp_smooth_relax_20260321_d`, followed by downstream post-TIPSY refresh `run_id=k3z_post_tipsy_smooth_relax_20260321_d`. The new event log is `external/femic-k3z-instance/vdyp_io/logs/vdyp_curve_events-tsak3z-k3z_vdyp_smooth_relax_20260321_d.jsonl`; selection counts shifted to `tail_blend=15`, `primary_nlls=9`, `censored_refit=3` versus pass 2's `tail_blend=20`, `primary_nlls=7`. The refreshed `tipsy_vdyp_tsak3z-*.png` plots now carry timestamps around 2026-03-21 00:58 and should be compared against the previous pass backup under `external/femic-k3z-instance/plots/backup_smoothing_20260321_005744`.
 - 2026-03-21 (Phase 23 fit-override interface note): K3Z VDYP smoothing does not yet expose a user-facing YAML interface for per-stratum/per-SI fit-parameter overrides. Current override surfaces are (a) global run/env knobs such as `FEMIC_VDYP_TOE_SHIFT_YEARS` and tail-linearity env vars, and (b) the code-level per-TSA override map in `src/femic/pipeline/vdyp_overrides.py`. Immediate practical path: use the existing override map for the pathological `CWHvm_DR+HW` curves while continuing to relax the global tail policy; follow-up task remains to promote these per-curve fit overrides into a documented YAML/config surface for case-specific tuning.
 
-## Phase 23 Addendum: VDYP Fit Policy Config Surface (Nice-to-Have Later)
-- [ ] P23.6 Replace code-level VDYP fit overrides with a YAML-backed policy surface
-  - [ ] P23.6a Define FEMIC-level default VDYP fit/tail/toe parameters in a human-readable YAML config artifact instead of hard-coded Python defaults where practical.
-  - [ ] P23.6b Add per-instance YAML override support so case-specific fit rules (for example K3Z CWHvm_DR+HW tail relaxation) do not require editing src/femic/pipeline/vdyp_overrides.py.
-  - [ ] P23.6c Preserve a narrow code-level fallback seam only for exceptional cases that truly cannot be expressed cleanly in YAML.
-  - [ ] P23.6d Update developer/operator docs to explain the new config surface, override precedence, and when not to override fit behavior.
-  - [ ] P23.6e Open and link a dedicated GitHub feature-request issue before implementation so the design and tradeoffs are traceable outside the roadmap.
+- 2026-03-22 (Phase 24 kickoff planning): queued a new documentation-focused phase to rebuild FEMIC’s API docs to the `ws3` / `fhops` quality bar and to add agent-friendly technical documentation without maintaining two distinct parallel doc systems. Working hypothesis: the right pattern is one primary human-facing docs tree, augmented with compact technical contract surfaces (repo invariants, runtime prerequisites, canonical artifacts, recovery workflows, stage boundaries, and file/path maps) that are also easy for an embedded coding agent to consume quickly. This is intended to solve a real problem, not create duplicate documentation work.
 
-- 2026-03-21 (Phase 23 fit-policy config follow-up): the current src/femic/pipeline/vdyp_overrides.py seam is acceptable as a short-term debugging lever, but it is too cludgey to remain the long-term user/deployment interface. Added low-priority P23.6 to migrate VDYP fit defaults and per-instance override rules into human-readable YAML, keep Python overrides as a narrow fallback only, and update user/developer docs when that interface lands. A dedicated GitHub feature-request issue should be opened when this moves from backlog to active work.
+- 2026-03-22 (Phase 24 audit checkpoint): completed the initial API-docs surface audit and style-reference pass. See planning/phase24_api_docs_audit.md for the concrete findings, rewrite target list, and proposed style rules. Bottom line: FEMIC's current API reference is dominated by autosummary stubs, while `fhops` demonstrates the stronger pattern we want (hand-authored package intros, typical usage, contract notes, then autodoc completeness). `ws3` is also useful as a module-oriented conceptual reference, though the local partial checkout is less polished as a direct API-doc exemplar. First rewrite targets remain `femic.cli.main`, `femic.pipeline.vdyp_stage`, `femic.fmg.patchworks`, `femic.pipeline.io`, `femic.pipeline.tipsy`, `femic.patchworks_runtime`, and `femic.workflows.legacy`.
+- 2026-03-21 (Phase 23 fit-policy config follow-up): the current src/femic/pipeline/vdyp_overrides.py seam is acceptable as a short-term debugging lever, but it is too cludgey to remain the long-term user/deployment interface. Added low-priority P23.11 to migrate VDYP fit defaults and per-instance override rules into human-readable YAML, keep Python overrides as a narrow fallback only, and update user/developer docs when that interface lands. A dedicated GitHub feature-request issue should be opened when this moves from backlog to active work.
 
 - 2026-03-21 (Phase 23 K3Z lock-in): accepted the current K3Z managed-curve and smoothing policy as the working baseline for now.
   - `config/run_profile.k3z.yaml` now uses `managed_curve_mode: tipsy` in both FEMIC and the standalone K3Z instance.
@@ -5491,25 +5516,6 @@ un_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance/
 
 
 
-## Phase 24: FEMIC API Docs Rebuild + Agent-Friendly Technical Documentation
-- [ ] P24.1 Rebuild FEMIC API docs to a usable depth/quality standard
-  - [ ] P24.1a Audit the current API docs surface and identify modules/pages that are too terse, too dense, or effectively unusable.
-  - [ ] P24.1b Define a target API-doc style guide using `ws3` and `fhops` as reference exemplars for depth, structure, and narrative density.
-  - [ ] P24.1c Prioritize the first FEMIC modules/packages to rewrite (CLI, pipeline, fmg, instance/bootstrap, public-data/runtime helpers).
-  - [ ] P24.1d Replace low-value autosummary-only pages with hand-authored API narrative that explains purpose, contracts, common call patterns, and failure modes.
-  - [ ] P24.1e Add examples and “how this fits into the pipeline” notes for the most important public entrypoints.
-- [ ] P24.2 Add a lightweight docs contract for coding-agent-friendly technical consumption
-  - [ ] P24.2a Define what agent-friendly documentation means for FEMIC without creating a totally separate parallel docs universe.
-  - [ ] P24.2b Add concise machine-friendly reference surfaces for repo invariants, runtime prerequisites, stage boundaries, canonical artifacts, and recovery workflows.
-  - [ ] P24.2c Make sure those surfaces are generated from or embedded in the same human-facing docs tree wherever practical, so they do not drift.
-  - [ ] P24.2d Add explicit “source of truth” pages for frequently confused seams (instance roots, external data roots, public-data/DataLad usage, BatchTIPSY boundary, Patchworks runtime assumptions).
-- [ ] P24.3 Establish doc architecture that serves both humans and embedded coding agents
-  - [ ] P24.3a Keep one primary documentation system, but introduce structured sub-surfaces for fast technical lookup (tables, contracts, checklists, invariants, file/path maps).
-  - [ ] P24.3b Decide where `AGENTS.md`, operator runbooks, API docs, and roadmap notes should cross-link so an agent can orient quickly without browsing the entire repo.
-  - [ ] P24.3c Add guidance for when detailed narrative is needed versus when a concise machine-readable contract is better.
-- [ ] P24.4 Validate the new docs system against real maintenance tasks
-  - [ ] P24.4a Use recent real tasks (Patchworks runtime setup, K3Z variant rebuilds, SiteProd defaults, DataLad bootstrap) as benchmark tasks and confirm the docs are enough to complete them without tribal knowledge.
-  - [ ] P24.4b Add docs acceptance checks for required API-doc sections and agent-facing contract pages.
-  - [ ] P24.4c Record a follow-up GitHub feature issue for any remaining agent-facing docs gaps that should be iterated outside this phase.
 
-- 2026-03-22 (Phase 24 kickoff planning): queued a new documentation-focused phase to rebuild FEMIC’s API docs to the `ws3` / `fhops` quality bar and to add agent-friendly technical documentation without maintaining two distinct parallel doc systems. Working hypothesis: the right pattern is one primary human-facing docs tree, augmented with compact technical contract surfaces (repo invariants, runtime prerequisites, canonical artifacts, recovery workflows, stage boundaries, and file/path maps) that are also easy for an embedded coding agent to consume quickly. This is intended to solve a real problem, not create duplicate documentation work.
+
+
