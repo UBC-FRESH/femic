@@ -776,7 +776,7 @@ notes.
       `femic.pipeline.tipsy`, `femic.pipeline.siteprod`,
       `femic.fmg.patchworks`, `femic.patchworks_runtime`, and
       `femic.workflows.legacy`.
-    - [ ] P24.1d.2 Add curated support-module pages for the remaining execution
+    - [x] P24.1d.2 Add curated support-module pages for the remaining execution
       seams that still carry important repo/runtime contracts:
       `femic.instance_context`, `femic.instance_bootstrap`,
       `femic.geospatial_preflight`, `femic.pipeline.bundle`,
@@ -816,6 +816,13 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 24, P24.1d.2 plan): execute the support-module rewrite bundle needed to close the remaining contract-heavy autosummary stubs.
+  - Motivation: the first-wave operational pages are done, but maintainers still have to reverse-engineer several smaller modules that carry core runtime contracts around instance resolution, bootstrap, preflight, bundle tables, runtime payload typing, and manifest capture.
+  - Planned execution:
+    - add curated API pages for ``femic.instance_context``, ``femic.instance_bootstrap``, ``femic.geospatial_preflight``, ``femic.pipeline.bundle``, ``femic.pipeline.legacy_runtime``, and ``femic.pipeline.manifest``;
+    - group those pages under a curated support-modules section in ``docs/reference/api/modules.rst`` while keeping generated autodoc pages reachable through hidden toctrees;
+    - document the contracts these modules own rather than leaving them implied: instance-root precedence, template/bootstrap payloads, geospatial readiness checks, canonical bundle-table surfaces, typed legacy runtime payloads, and run-manifest provenance;
+    - rebuild Sphinx with warnings-as-errors, run the full validation suite, and record the milestone in ``CHANGE_LOG.md``.
 - 2026-03-22 (Phase 24, P24.1d closure plan): convert `P24.1d` from an open-ended "rewrite docs forever" task into a bounded closure queue that can actually be checked off.
   - Motivation: the original first-wave rewrite targets are now done, but the roadmap still treats `P24.1d` as one undifferentiated open item. We need an explicit finish line so the remaining support-module rewrites and closure sweep are trackable.
   - Planned execution:

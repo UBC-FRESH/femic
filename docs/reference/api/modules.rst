@@ -28,6 +28,28 @@ Current curated pages in this section include ``femic.cli.main``,
    femic-workflows-legacy
    femic-pipeline-siteprod
 
+Curated support-contract modules
+--------------------------------
+
+These smaller modules are not the first pages most users need, but they still
+own real runtime contracts that are easy to miss when left as generated-only
+stubs.
+
+Current curated pages in this section include ``femic.instance_context``,
+``femic.instance_bootstrap``, ``femic.geospatial_preflight``,
+``femic.pipeline.bundle``, ``femic.pipeline.legacy_runtime``, and
+``femic.pipeline.manifest``.
+
+.. toctree::
+   :maxdepth: 1
+
+   femic-instance-context
+   femic-instance-bootstrap
+   femic-geospatial-preflight
+   femic-pipeline-bundle
+   femic-pipeline-legacy-runtime
+   femic-pipeline-manifest
+
 Package and support modules
 ---------------------------
 
@@ -41,16 +63,10 @@ Package and support modules
    femic.fmg.adapters
    femic.fmg.core
    femic.fmg.woodstock
-   femic.geospatial_preflight
-   femic.instance_bootstrap
-   femic.instance_context
    femic.pipeline
-   femic.pipeline.bundle
    femic.pipeline.diagnostics
    femic.pipeline.legacy_context
-   femic.pipeline.legacy_runtime
    femic.pipeline.managed_curves
-   femic.pipeline.manifest
    femic.pipeline.plots
    femic.pipeline.pre_vdyp
    femic.pipeline.species_volume

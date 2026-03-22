@@ -5605,6 +5605,24 @@
   - `femic.pipeline.manifest`
 - Added an explicit closure-sweep requirement so any API pages left as autosummary-only must be intentionally classified as acceptable generated-only surfaces rather than silently remaining unfinished.
 
+## 2026-03-22 - Added curated support-module API docs for `P24.1d.2`
+- Added hand-authored API pages for the remaining support modules that still carry important runtime/repo contracts:
+  - `docs/reference/api/femic-instance-context.rst`
+  - `docs/reference/api/femic-instance-bootstrap.rst`
+  - `docs/reference/api/femic-geospatial-preflight.rst`
+  - `docs/reference/api/femic-pipeline-bundle.rst`
+  - `docs/reference/api/femic-pipeline-legacy-runtime.rst`
+  - `docs/reference/api/femic-pipeline-manifest.rst`
+- Updated `docs/reference/api/modules.rst` to add a curated support-contract modules section so those pages are visible entrypoints instead of buried as generated-only stubs.
+- Marked `P24.1d.2` complete in `ROADMAP.md`; the remaining work to clear `P24.1d` is now the closure sweep and any final promotions that sweep identifies.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff format src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff check src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m mypy src`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m pytest`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\pre-commit.exe run --all-files`
+
 
 
 
