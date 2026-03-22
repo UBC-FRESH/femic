@@ -13,6 +13,7 @@ from femic.pipeline.siteprod import (
     enumerate_siteprod_layer_tif_paths,
     export_and_stack_siteprod_layers,
     list_siteprod_layers,
+    load_siteprod_bandmap,
     mean_siteprod_for_row,
     parse_arc_raster_rescue_layer_mappings,
     resolve_arc_raster_rescue_executable_path,
@@ -318,3 +319,23 @@ def test_mean_siteprod_for_row_and_assign_siteprod_from_raster() -> None:
     )
     assert out is table
     assert table.written["siteprod"] == [4.0]
+
+
+
+def test_load_siteprod_bandmap_prefers_bands_1_based(tmp_path: Path) -> None:
+    path = tmp_path / "siteprod.bandmap.json"
+    path.write_text(
+        '{"bands_1_based": {"FD": 8, "HW": 10}, "ordered_species": ["FD", "HW"]}',
+        encoding="utf-8",
+    )
+    layer_species, species_layer = load_siteprod_bandmap(bandmap_path=path)
+    assert species_layer == {"FD": 7, "HW": 9}
+    assert layer_species == {7: "FD", 9: "HW"}
+
+
+def test_load_siteprod_bandmap_falls_back_to_ordered_species(tmp_path: Path) -> None:
+    path = tmp_path / "siteprod.bandmap.json"
+    path.write_text('{"ordered_species": ["AT", "BL", "CW"]}', encoding="utf-8")
+    layer_species, species_layer = load_siteprod_bandmap(bandmap_path=path)
+    assert layer_species == {0: "AT", 1: "BL", 2: "CW"}
+    assert species_layer == {"AT": 0, "BL": 1, "CW": 2}

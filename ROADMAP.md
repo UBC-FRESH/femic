@@ -743,6 +743,12 @@ notes.
   - [x] P23.8d Update Linux parity notes/docs to reflect this runtime expectation explicitly.
 - [x] P23.9 Publish canonical stacked SiteProd TIFF artifact to `femic-public-data`
   - [x] P23.9a Promote a known-good `siteprod.tif` artifact from Linux parity runs into `external/femic-public-data/data/bc/siteprod/`.
+  - [x] P23.10 Make pre-stacked SiteProd the default runtime path when `siteprod.tif` + `siteprod.bandmap.json` are present.
+    - [x] P23.10a Resolve preferred SiteProd source from canonical artifacts first (instance-local or external mirror), falling back to ArcRasterRescue/ArcPy only when the stacked TIFF or band-map sidecar is missing.
+    - [x] P23.10b Log the selected SiteProd source path and whether fallback export/stack was used.
+    - [x] P23.10c Ensure Windows K3Z runs proceed without ArcRasterRescue or ArcPy when canonical SiteProd TIFF + band-map artifacts are present.
+    - [x] P23.10d Preserve ArcRasterRescue/ArcPy fallback behavior for hosts/environments where canonical SiteProd artifacts are absent.
+    - [x] P23.10e Add tests, docs, and changelog coverage for the new default path.
   - [x] P23.9b `datalad save` the new artifact and push dataset history to GitHub (`UBC-FRESH/femic-public-data` main + git-annex metadata branch).
   - [x] P23.9c Upload annex content to `arbutus-s3` and verify `git annex find ... --not --in arbutus-s3` returns zero for the new SiteProd TIFF.
 - [x] P23.10 Publish canonical SiteProd band-map sidecar for pre-stacked TIFF runtime use
@@ -767,6 +773,15 @@ notes.
     - write `siteprod.bandmap.json` under `external/femic-public-data/data/bc/siteprod/` with `bands_1_based`, `bands_0_based`, and `ordered_species`;
     - save/push dataset to GitHub and confirm distribution semantics (Git-tracked vs annexed) explicitly for downstream Windows agents.
 - 2026-03-22 (Phase 23 follow-up, P23.10 complete): published canonical SiteProd band-map sidecar for pre-stacked TIFF default runtime usage.
+- 2026-03-22 (Phase 23 follow-up, P23.10 runtime default complete): the real Windows K3Z clean-start path now defaults to the published canonical SiteProd artifacts and no longer requires ArcRasterRescue/ArcPy when siteprod.tif + siteprod.bandmap.json are present.
+  - Runtime behavior updates:
+    - Stage 00 resolves SiteProd artifacts from instance-local or FEMIC_EXTERNAL_DATA_ROOT canonical paths before considering ArcRasterRescue/ArcPy export.
+    - src/femic/resources/legacy/00_data-prep.py now logs the selected SiteProd raster path, band-map path, and whether export fallback was used.
+    - src/femic/pipeline/siteprod.py now loads canonical species-to-band mapping from siteprod.bandmap.json so per-stand SiteProd assignment works without runtime layer discovery.
+  - Windows validation evidence:
+    - clean-start run k3z_p2310_siteprod_default_20260322_b selected external/femic-public-data/data/bc/siteprod/siteprod.tif, logged siteprod export fallback used: no, completed native VDYP successfully, regenerated  2_input-tsak3z.dat, and resumed through emic tsa post-tipsy after a refreshed BatchTIPSY handoff.
+  - Acceptance result:
+    - P23.10a through P23.10e are now satisfied for the current K3Z Windows path.
   - Dataset artifact:
     - path: `external/femic-public-data/data/bc/siteprod/siteprod.bandmap.json`
     - dataset commit: `b23ce8290862915b518322cbf59f6c92f2d46654`
@@ -5469,6 +5484,7 @@ un_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance/
 
 
 - 2026-03-21 (Phase 23 Windows preflight hardening): case preflight now understands the real Windows deployment shape instead of assuming every shared asset lives under the instance root. `src/femic/cli/main.py` now falls back from instance-local paths to the FEMIC source tree for shared Windows assets such as `data/tipsy_params_columns`, `vdyp_io/VDYP_CFG`, `VDYP7/VDYP7/VDYP7Console.exe`, and `ria_maptiles.csv`, so `femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml` passes on the known-good workstation. The same preflight path now also checks for `git` and `git-annex` on Windows and runs lightweight annex/DataLad smoke checks (`git -C external/femic-public-data annex version` and `datalad status external/femic-public-data`) whenever the case depends on the annex-backed public-data submodule. This closes `P23.1c` and `P23.4c`.
+
 
 
 

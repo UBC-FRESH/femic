@@ -30,7 +30,7 @@ Treat Windows as authoritative for:
 - native Patchworks launch and Matrix Builder
 - native Java runtime for Patchworks
 - native VDYP (`VDYP7Console.exe`)
-- ArcGIS Pro fallback for SiteProd geoprocessing
+- ArcGIS Pro fallback for SiteProd geoprocessing when canonical ``siteprod.tif`` + ``siteprod.bandmap.json`` are unavailable
 - Git + git-annex + DataLad access to `external/femic-public-data`
 
 Linux
@@ -121,7 +121,7 @@ Windows Bootstrap Ritual
 6. For the known-good K3Z Windows path, expect the following runtime pattern:
 
 - native VDYP
-- ArcGIS Pro fallback for SiteProd when needed
+- canonical pre-stacked SiteProd TIFF + band-map by default, with ArcGIS Pro fallback only when those artifacts are unavailable
 - manual BatchTIPSY handoff at the `02_input-*.dat` / `04_output-*.out` boundary
 - native Patchworks / Matrix Builder after post-TIPSY
 
@@ -224,3 +224,4 @@ Troubleshooting
 - If Stage 00 cannot find ArcRasterRescue, set
   ``FEMIC_ARC_RASTER_RESCUE_EXE`` explicitly (or restore the documented
   sibling-checkout layout) rather than changing SiteProd extraction design.
+

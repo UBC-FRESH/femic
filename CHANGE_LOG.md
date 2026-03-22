@@ -1,5 +1,10 @@
 # Change Log
 
+## 2026-03-22
+- Made pre-stacked SiteProd the default Stage 00 runtime path when canonical `siteprod.tif` + `siteprod.bandmap.json` are present, falling back to ArcRasterRescue/ArcPy only when those artifacts are missing.
+- Added canonical SiteProd artifact resolution helpers and band-map loading so per-stand SiteProd assignment works without runtime layer discovery.
+- Verified the real Windows K3Z clean-start path now uses external 2024 VRI plus canonical SiteProd artifacts, skips ArcRasterRescue/ArcPy, runs native VDYP successfully, regenerates `02_input-tsak3z.dat`, and resumes cleanly through `femic tsa post-tipsy` after a refreshed BatchTIPSY handoff.
+
 ## 2026-02-24
 - Added the `femic` Typer CLI scaffold under `src/femic` with stub commands and module entry point.
 - Added `typer` and `rich` to `requirements.txt` to support the new CLI.
@@ -5474,3 +5479,7 @@
   - pushed `git-annex` metadata branch.
 - Distribution note:
   - `siteprod.bandmap.json` is Git-tracked text (not annexed), so it is distributed via GitHub branch sync rather than `arbutus-s3` annex object transfer.
+
+
+
+

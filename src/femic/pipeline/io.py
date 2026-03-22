@@ -205,6 +205,7 @@ class LegacyDataArtifactPaths:
     siteprod_gdb_path: Path
     siteprod_tmpexport_tif_path_prefix: Path
     siteprod_tif_path: Path
+    siteprod_bandmap_path: Path
     vdyp_ply_feather_path: Path
     vdyp_lyr_feather_path: Path
     vdyp_results_tsa_pickle_path_prefix: Path
@@ -227,6 +228,18 @@ class LegacyExternalDataPaths:
     vdyp_input_pandl_path: Path
     tsa_boundaries_path: Path
     site_prod_bc_gdb_path: Path
+    siteprod_tif_path: Path
+    siteprod_bandmap_path: Path
+
+
+@dataclass(frozen=True)
+class LegacySiteProdArtifacts:
+    """Resolved SiteProd artifacts for Stage 00 runtime selection."""
+
+    siteprod_tif_path: Path
+    siteprod_bandmap_path: Path
+    use_prestacked: bool
+    source_label: str
 
 
 def resolve_legacy_external_data_paths(
@@ -329,6 +342,8 @@ def resolve_legacy_external_data_paths(
         vdyp_input_pandl_path=selected_vdyp_path,
         tsa_boundaries_path=external_data_root / required_tsa_path,
         site_prod_bc_gdb_path=selected_siteprod_path,
+        siteprod_tif_path=external_data_root / 'bc' / 'siteprod' / 'siteprod.tif',
+        siteprod_bandmap_path=external_data_root / 'bc' / 'siteprod' / 'siteprod.bandmap.json',
     )
 
 
@@ -348,6 +363,7 @@ def build_legacy_data_artifact_paths(
         siteprod_gdb_path=root / "bc" / "siteprod" / "Site_Prod_BC.gdb",
         siteprod_tmpexport_tif_path_prefix=root / "site_prod_bc_",
         siteprod_tif_path=root / "siteprod.tif",
+        siteprod_bandmap_path=root / "siteprod.bandmap.json",
         vdyp_ply_feather_path=root / "vdyp_ply.feather",
         vdyp_lyr_feather_path=root / "vdyp_lyr.feather",
         vdyp_results_tsa_pickle_path_prefix=root / "vdyp_results-tsa",
@@ -359,6 +375,40 @@ def build_legacy_data_artifact_paths(
         model_input_bundle_dir=root / "model_input_bundle",
         misc_thlb_tif_path=root / "misc.thlb.tif",
         stands_shp_dir=root / "shp",
+    )
+
+
+def resolve_legacy_siteprod_artifacts(
+    *,
+    legacy_data_paths: LegacyDataArtifactPaths,
+    external_data_paths: LegacyExternalDataPaths,
+) -> LegacySiteProdArtifacts:
+    """Prefer canonical pre-stacked SiteProd artifacts when both TIFF + band map exist."""
+    instance_tif = legacy_data_paths.siteprod_tif_path
+    instance_bandmap = legacy_data_paths.siteprod_bandmap_path
+    if instance_tif.exists() and instance_bandmap.exists():
+        return LegacySiteProdArtifacts(
+            siteprod_tif_path=instance_tif,
+            siteprod_bandmap_path=instance_bandmap,
+            use_prestacked=True,
+            source_label="instance-local pre-stacked SiteProd",
+        )
+
+    external_tif = external_data_paths.siteprod_tif_path
+    external_bandmap = external_data_paths.siteprod_bandmap_path
+    if external_tif.exists() and external_bandmap.exists():
+        return LegacySiteProdArtifacts(
+            siteprod_tif_path=external_tif,
+            siteprod_bandmap_path=external_bandmap,
+            use_prestacked=True,
+            source_label="external canonical pre-stacked SiteProd",
+        )
+
+    return LegacySiteProdArtifacts(
+        siteprod_tif_path=instance_tif,
+        siteprod_bandmap_path=instance_bandmap,
+        use_prestacked=False,
+        source_label="legacy export-and-stack fallback",
     )
 
 
