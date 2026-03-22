@@ -5705,6 +5705,26 @@
   - `C:\Users\gep\projects\femic\.venv\Scripts\pre-commit.exe run --all-files`
   - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`
 
+## 2026-03-22 - Closed Phase 19 `P19.17` with TSA29 instance docs deep-dive
+- Expanded the thin standalone TSA29 instance docs pages in `external/femic-tsa29-instance/docs/` so they now carry clearer workflow and evidence guidance:
+  - `getting-started.rst`
+  - `data-and-provenance.rst`
+  - `land-base-and-assumptions.rst`
+  - `rebuild-and-qa.rst`
+  - `troubleshooting.rst`
+  - `docs-ownership-and-release.rst`
+- Added concrete procedural guidance for:
+  - snapshot-first vs rebuild-capable use
+  - authoritative provenance/evidence files
+  - current published warning-state interpretation
+  - known TSA29 Stage 01a Linux rebuild limitation
+  - release/update ownership for the standalone TSA29 docs set
+- Hardened the TSA29 standalone Sphinx config (`external/femic-tsa29-instance/docs/conf.py`) so local docs builds no longer fail hard when `sphinx_rtd_theme` is missing.
+- Marked `P19.17`, `P19.17a`, `P19.17b`, and `P19.17c` complete in `ROADMAP.md`.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`
+    with `workdir=C:\Users\gep\projects\femic\external\femic-tsa29-instance`
+
 
 
 

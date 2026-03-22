@@ -532,12 +532,12 @@ notes.
     selected-path outcomes plus quality metric improvements.
   - [x] P19.16e Re-run cached TSA29 smoothing + fitdiag regeneration and
     publish before/after reviewer summary evidence.
-- [ ] P19.17 Execute TSA29 instance Sphinx docs deep-dive and augmentation pass
-  - [ ] P19.17a Audit TSA29 instance Sphinx pages for thin/missing sections
+- [x] P19.17 Execute TSA29 instance Sphinx docs deep-dive and augmentation pass
+  - [x] P19.17a Audit TSA29 instance Sphinx pages for thin/missing sections
     (workflow steps, assumptions, artifact references, troubleshooting detail).
-  - [ ] P19.17b Expand weak sections with concrete procedural guidance and
+  - [x] P19.17b Expand weak sections with concrete procedural guidance and
     explicit cross-links to current TSA29 compile/smoke evidence artifacts.
-  - [ ] P19.17c Rebuild docs with warnings-as-errors and publish a short
+  - [x] P19.17c Rebuild docs with warnings-as-errors and publish a short
     documentation-gap closure summary in roadmap/changelog notes.
 
 ## Phase 20: VDYP Parallelization and Runtime Observability (Non-Blocking)
@@ -816,6 +816,16 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 19 closeout note): `P19.17` is now complete in the TSA29 instance repo after a Sphinx deep-dive pass across the standalone docs set.
+  - Result:
+    - expanded the thin TSA29 pages (`getting-started`, `data-and-provenance`, `land-base-and-assumptions`, `rebuild-and-qa`, `troubleshooting`, and `docs-ownership-and-release`) with clearer workflow guidance, artifact references, evidence interpretation, and release/ownership notes;
+    - hardened the TSA29 docs build config so it falls back cleanly when `sphinx_rtd_theme` is absent, then rebuilt the standalone docs successfully with `-W`.
+- 2026-03-22 (Phase 19, P19.17 plan): execute the TSA29 instance Sphinx docs deep-dive and close the remaining documentation-gap pass in the linked instance repo.
+  - Motivation: after closing Phase 24 in the parent FEMIC docs, the oldest still-open docs milestone is `P19.17`. The TSA29 instance already has canonical student/docs structure, but the roadmap still calls out one unfinished pass to deepen thin sections, tighten workflow guidance, and make evidence/artifact references easier to follow.
+  - Planned execution:
+    - audit the TSA29 instance Sphinx pages for weak sections, missing assumptions, thin workflow steps, and poor evidence cross-linking;
+    - expand the weak spots with concrete procedural guidance and explicit references to current TSA29 compile/smoke evidence artifacts;
+    - rebuild the TSA29 docs with warnings-as-errors if the submodule toolchain allows it, then record the closure summary in `ROADMAP.md` and `CHANGE_LOG.md`.
 - 2026-03-22 (Phase 24 closeout): benchmark validation for the remaining docs work is now recorded in `planning/phase24_docs_benchmark_validation.md`, and the residual non-blocking docs polish is captured in `planning/phase24_docs_followup_issue.md`.
   - Result:
     - `P24.4a` passes: the docs are now sufficient for Patchworks runtime setup, bundled K3Z rebuild/amend loops, SiteProd default/fallback orientation, and DataLad/public-data bootstrap without relying on undocumented tribal knowledge.
