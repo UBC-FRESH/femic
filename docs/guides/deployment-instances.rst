@@ -163,6 +163,152 @@ Refresh the TSA29 example submodule to latest upstream commit:
 
    git submodule update --remote external/femic-tsa29-instance
 
+Working With Bundled Example Instances Under ``external/``
+----------------------------------------------------------
+
+The directories under ``external/`` are not just sample folders. In this
+checkout they are git submodules that mirror the standalone instance
+repositories.
+
+Treat them as follows:
+
+- use ``external/femic-k3z-instance`` and ``external/femic-tsa29-instance`` as
+  the canonical bundled runtime roots when you want to run the published
+  teaching examples from this FEMIC checkout;
+- make FEMIC code/docs/tooling changes in the parent repository;
+- make case-specific instance content changes inside the submodule working tree;
+- if an instance change should persist upstream, commit it in the submodule
+  repository first, then update the parent FEMIC submodule pointer in a
+  separate parent-repo commit.
+
+At minimum, start from a bootstrapped parent checkout first:
+
+Linux/macOS:
+
+.. code-block:: bash
+
+   git submodule update --init --recursive
+   git -C external/femic-public-data annex enableremote arbutus-s3
+   datalad get -r external/femic-public-data/data
+
+Windows PowerShell:
+
+.. code-block:: powershell
+
+   git submodule update --init --recursive
+   git -C external/femic-public-data annex enableremote arbutus-s3
+   .venv\Scripts\datalad.exe get -r external/femic-public-data/data
+
+Then export the public-data root before instance validation/runs:
+
+Linux/macOS:
+
+.. code-block:: bash
+
+   export FEMIC_EXTERNAL_DATA_ROOT=$PWD/external/femic-public-data/data
+
+Windows PowerShell:
+
+.. code-block:: powershell
+
+   $env:FEMIC_EXTERNAL_DATA_ROOT="$PWD\external\femic-public-data\data"
+
+Bundled Example Instance Amend/Rebuild Loop
+-------------------------------------------
+
+Use this loop whenever you want to extend or amend one of the bundled example
+instances under ``external/``.
+
+1. Pick the instance root you are changing.
+
+   K3Z:
+   ``external/femic-k3z-instance``
+
+   TSA29:
+   ``external/femic-tsa29-instance``
+
+2. Make your instance edits in the submodule tree.
+
+   Common edit surfaces include:
+
+   - ``config/run_profile.*.yaml``
+   - ``config/tipsy/*.yaml``
+   - ``config/rebuild.spec.yaml``
+   - ``config/rebuild.allowlist.yaml``
+   - tracked model/runbook/docs content inside the instance repo
+
+3. Validate the instance contract before a long rebuild.
+
+   Linux/macOS:
+
+   .. code-block:: bash
+
+      femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
+      femic prep geospatial-preflight
+      femic instance validate-spec --instance-root external/femic-k3z-instance --spec config/rebuild.spec.yaml
+
+   Windows PowerShell:
+
+   .. code-block:: powershell
+
+      femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
+      femic prep geospatial-preflight
+      femic instance validate-spec --instance-root external/femic-k3z-instance --spec config/rebuild.spec.yaml
+
+4. Run the deterministic rebuild/evidence path.
+
+   Linux/macOS:
+
+   .. code-block:: bash
+
+      femic instance rebuild --instance-root external/femic-k3z-instance --spec config/rebuild.spec.yaml --baseline config/rebuild.baseline.json --allowlist config/rebuild.allowlist.yaml --run-config config/run_profile.k3z.yaml --run-id <run-id>
+
+   Windows PowerShell:
+
+   .. code-block:: powershell
+
+      femic instance rebuild --instance-root external/femic-k3z-instance --spec config/rebuild.spec.yaml --baseline config/rebuild.baseline.json --allowlist config/rebuild.allowlist.yaml --run-config config/run_profile.k3z.yaml --run-id <run-id>
+
+   Review:
+
+   - ``external/femic-k3z-instance/vdyp_io/logs/instance_rebuild_report-<run-id>.json``
+   - any manifests/logs referenced by that report
+
+5. Refresh tracked evidence when the rebuild result is the new accepted
+   baseline.
+
+   .. code-block:: bash
+
+      femic instance refresh-reference-evidence --reference-root external/femic-k3z-instance
+
+6. Commit in the correct repository.
+
+   - If the change is only for local experimentation, keep it as an uncommitted
+     submodule working-tree change.
+   - If the change belongs to the example instance itself, commit inside
+     ``external/femic-k3z-instance`` or ``external/femic-tsa29-instance``.
+   - If FEMIC should now point at a new instance commit, return to the parent
+     FEMIC repo and commit the updated submodule pointer separately.
+   - For release-oriented instance updates, also follow the instance-local
+     runbook in ``external/femic-k3z-instance/runbooks/REBUILD_RUNBOOK.md`` or
+     ``external/femic-tsa29-instance/runbooks/REBUILD_RUNBOOK.md``.
+
+Parent Repo vs Submodule Repo
+-----------------------------
+
+A simple rule helps avoid messy history:
+
+- edit the parent FEMIC repo when you are changing shared Python code, shared
+  docs, CLI behavior, tests, or developer bootstrap workflow;
+- edit the submodule repo when you are changing example-instance configs,
+  tracked outputs, runbooks, example-model docs, or other case payloads under
+  ``external/femic-k3z-instance`` / ``external/femic-tsa29-instance``.
+
+If you are changing both, make two commits:
+
+- one commit in the submodule repository;
+- one commit in FEMIC updating code/docs and the submodule pointer.
+
 Contributor Baseline for New Instance Repositories
 --------------------------------------------------
 

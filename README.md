@@ -66,6 +66,112 @@ femic prep geospatial-preflight
 If `git annex version` fails, install `git-annex` at the OS level and re-open
 the shell before retrying.
 
+### Full Scripted Bootstrap
+
+Linux/macOS:
+
+```bash
+python -m venv .venv
+. .venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements-dev.txt
+python -m femic --help
+ruff --version
+mypy --version
+pytest --version
+pre-commit --version
+sphinx-build --version
+git annex version
+datalad --version
+git submodule update --init --recursive
+git -C external/femic-public-data annex enableremote arbutus-s3
+datalad get -r external/femic-public-data/data
+export FEMIC_EXTERNAL_DATA_ROOT=$PWD/external/femic-public-data/data
+femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
+femic prep geospatial-preflight
+```
+
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements-dev.txt
+python -m femic --help
+ruff --version
+mypy --version
+pytest --version
+pre-commit --version
+sphinx-build --version
+git annex version
+.venv\Scripts\datalad.exe --version
+git submodule update --init --recursive
+git -C external/femic-public-data annex enableremote arbutus-s3
+.venv\Scripts\datalad.exe get -r external/femic-public-data/data
+$env:FEMIC_EXTERNAL_DATA_ROOT="$PWD\external\femic-public-data\data"
+femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
+femic prep geospatial-preflight
+```
+
+The canonical guide version of this bootstrap ritual lives in
+`docs/guides/developer-environment-bootstrap.rst`.
+
+## Bundled Example Instances Under `external/`
+
+This checkout carries the published example instances as git submodules:
+
+- `external/femic-k3z-instance`
+- `external/femic-tsa29-instance`
+
+Use them as the bundled runtime roots when you want to run, amend, or rebuild
+the example cases from this FEMIC checkout.
+
+Important rule of thumb:
+
+- change FEMIC code/docs/tests in the parent repo;
+- change example-instance configs, runbooks, and tracked case artifacts inside
+  the submodule repo;
+- if the bundled submodule should move to a new upstream commit, commit inside
+  the submodule first, then commit the updated submodule pointer in FEMIC.
+
+Typical amend/rebuild loop for K3Z from the FEMIC checkout:
+
+Linux/macOS:
+
+```bash
+export FEMIC_EXTERNAL_DATA_ROOT=$PWD/external/femic-public-data/data
+femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
+femic prep geospatial-preflight
+femic instance validate-spec --instance-root external/femic-k3z-instance --spec config/rebuild.spec.yaml
+femic instance rebuild --instance-root external/femic-k3z-instance --spec config/rebuild.spec.yaml --baseline config/rebuild.baseline.json --allowlist config/rebuild.allowlist.yaml --run-config config/run_profile.k3z.yaml --run-id <run-id>
+```
+
+Windows PowerShell:
+
+```powershell
+$env:FEMIC_EXTERNAL_DATA_ROOT="$PWD\external\femic-public-data\data"
+femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
+femic prep geospatial-preflight
+femic instance validate-spec --instance-root external/femic-k3z-instance --spec config/rebuild.spec.yaml
+femic instance rebuild --instance-root external/femic-k3z-instance --spec config/rebuild.spec.yaml --baseline config/rebuild.baseline.json --allowlist config/rebuild.allowlist.yaml --run-config config/run_profile.k3z.yaml --run-id <run-id>
+```
+
+Review the rebuild report at:
+
+- `external/femic-k3z-instance/vdyp_io/logs/instance_rebuild_report-<run-id>.json`
+
+Then commit in the correct repository:
+
+- local experiment only: leave the submodule working tree dirty;
+- persistent instance change: commit inside `external/femic-k3z-instance` or
+  `external/femic-tsa29-instance`;
+- parent FEMIC update to a new bundled instance revision: commit the submodule
+  pointer change in FEMIC after the submodule commit exists.
+
+The source-of-truth guide for this workflow is
+`docs/guides/deployment-instances.rst`.
+
 ## CLI
 
 Run the legacy pipeline through the FEMIC CLI: 

@@ -5493,6 +5493,24 @@
 - Verification:
   - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
 
+## 2026-03-22 - Clarified bundled example-instance maintenance and scripted bootstrap docs (Phase 24 P24.2b/P24.2d)
+- Expanded `docs/guides/developer-environment-bootstrap.rst` with copy-paste Linux/macOS and Windows PowerShell bootstrap scripts covering:
+  - local `.venv` creation/activation
+  - editable dev dependency install
+  - toolchain verification
+  - submodule and DataLad materialization
+  - `FEMIC_EXTERNAL_DATA_ROOT` export
+  - preflight checks against the bundled K3Z instance
+- Expanded `docs/guides/deployment-instances.rst` to document how the bundled example instances under `external/` should actually be maintained:
+  - clarified that `external/femic-k3z-instance` and `external/femic-tsa29-instance` are submodules, not ordinary sample folders
+  - documented the amend/rebuild loop for bundled instances
+  - explained the parent-repo vs submodule-repo commit boundary
+  - linked the bundled-instance release flow back to each instance-local rebuild runbook
+- Updated `README.md` so repo-root readers see the same Linux/Windows bootstrap commands and the same `external/` amend/rebuild workflow without needing to infer it from scattered docs pages.
+- Refreshed `ROADMAP.md` Detailed Next Steps notes so this bundled-instance/source-of-truth docs pass is tracked as active Phase 24 work.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
+
 
 
 

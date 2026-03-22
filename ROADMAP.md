@@ -796,6 +796,13 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 24, P24.2b/P24.2d plan): add one explicit source-of-truth docs pass for the bundled example instances under ``external/`` plus the full scripted developer bootstrap path on both Linux and Windows.
+  - Motivation: the current docs mention ``external/femic-k3z-instance`` and ``external/femic-tsa29-instance``, but they still make contributors assemble too much of the extend/amend/rebuild workflow from scattered pages and tribal knowledge.
+  - Planned execution:
+    - document the complete fresh-clone bootstrap ritual as copy-paste command blocks for Linux/macOS and Windows PowerShell, including `.venv`, editable dev install, submodule/DataLad materialization, `FEMIC_EXTERNAL_DATA_ROOT`, and preflight checks;
+    - explain how maintainers should work with the bundled ``external/*`` example instances in this checkout versus the standalone upstream instance repositories;
+    - add a clear amend/rebuild loop for bundled example instances covering config edits, validation, rebuild/spec checks, and the boundary between local experimentation and submodule updates;
+    - cross-link those instructions from both the guides and the README so humans and coding agents hit the same source-of-truth path.
 - 2026-03-22 (Phase 24, P24.1d/P24.1e plan): continue the curated API-doc rewrite by replacing the ``femic.pipeline.vdyp_stage`` autosummary stub with a hand-authored narrative page.
   - Motivation: ``femic.pipeline.vdyp_stage`` is one of the largest and most failure-prone runtime seams in FEMIC, but its generated API page still provides almost no operational guidance for maintainers or coding agents.
   - Planned execution:
