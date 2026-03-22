@@ -5623,6 +5623,24 @@
   - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m pytest`
   - `C:\Users\gep\projects\femic\.venv\Scripts\pre-commit.exe run --all-files`
 
+## 2026-03-22 - Closed Phase 24 `P24.1d` with final rebuild/release API docs and closure sweep
+- Added the final curated rebuild/release API pages needed to clear the remaining promoted blockers:
+  - `docs/reference/api/femic-rebuild-spec.rst`
+  - `docs/reference/api/femic-rebuild-baseline.rst`
+  - `docs/reference/api/femic-rebuild-invariants.rst`
+  - `docs/reference/api/femic-rebuild-runner.rst`
+  - `docs/reference/api/femic-release-packaging.rst`
+- Updated `docs/reference/api/modules.rst` and `docs/reference/api/index.rst` so the bounded curated set is explicit across operational, support-contract, and rebuild/release modules.
+- Added `planning/phase24_api_docs_closure_sweep.md` to classify every remaining generated-only API page as either intentionally acceptable generated-only or promoted-and-rewritten.
+- Marked `P24.1d.3`, `P24.1d.4`, `P24.1d.5`, and top-level `P24.1d` complete in `ROADMAP.md`.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff format src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m ruff check src tests`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m mypy src`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m pytest`
+  - `C:\Users\gep\projects\femic\.venv\Scripts\pre-commit.exe run --all-files`
+
 
 
 

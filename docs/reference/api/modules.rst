@@ -50,6 +50,27 @@ Current curated pages in this section include ``femic.instance_context``,
    femic-pipeline-legacy-runtime
    femic-pipeline-manifest
 
+Curated rebuild and release modules
+-----------------------------------
+
+These modules support deterministic rebuild evidence, regression gating, and
+student-facing release packaging. They are not first-stop runtime pages, but
+they do carry enough policy and artifact-contract weight to justify curated
+introductions.
+
+Current curated pages in this section include ``femic.rebuild_spec``,
+``femic.rebuild_baseline``, ``femic.rebuild_invariants``,
+``femic.rebuild_runner``, and ``femic.release_packaging``.
+
+.. toctree::
+   :maxdepth: 1
+
+   femic-rebuild-spec
+   femic-rebuild-baseline
+   femic-rebuild-invariants
+   femic-rebuild-runner
+   femic-release-packaging
+
 Package and support modules
 ---------------------------
 
@@ -82,11 +103,6 @@ Package and support modules
    femic.pipeline.vdyp_overrides
    femic.pipeline.vdyp_sampling
    femic.pipeline.vri
-   femic.rebuild_baseline
-   femic.rebuild_invariants
-   femic.rebuild_runner
-   femic.rebuild_spec
-   femic.release_packaging
    femic.vdyp
    femic.vdyp.reporting
    femic.workflows.legacy_resources

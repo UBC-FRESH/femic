@@ -52,10 +52,20 @@ that matches the job you are trying to do:
 Current limitation
 ------------------
 
-Much of the API reference is still autosummary-driven and too terse for heavy
-maintenance work. Phase 24 is rebuilding the highest-value pages first by
-adding hand-authored module introductions, contracts, examples, and cross-links
-to the relevant Guides.
+Phase 24 has now curated the highest-value operational, support-contract, and
+rebuild/release pages. The remaining generated-only pages are intended to be
+leaf helpers, package namespace surfaces, or narrower integration modules
+unless the closure-sweep artifact identifies them as still needing promotion.
+
+For the explicit generated-only classification used to close the main rewrite
+pass, see ``planning/phase24_api_docs_closure_sweep.md``.
+
+The API reference is therefore mixed by design:
+
+- curated pages for the modules that own major runtime, contract, or
+  maintenance seams
+- generated pages for narrower helper/package surfaces where autodoc
+  completeness is enough
 
 .. toctree::
    :maxdepth: 2

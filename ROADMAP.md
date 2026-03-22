@@ -770,7 +770,7 @@ notes.
   - [x] P24.1a Audit the current API docs surface and identify modules/pages that are too terse, too dense, or effectively unusable.
   - [x] P24.1b Define a target API-doc style guide using `ws3` and `fhops` as reference exemplars for depth, structure, and narrative density.
   - [x] P24.1c Prioritize the first FEMIC modules/packages to rewrite (CLI, pipeline, fmg, instance/bootstrap, public-data/runtime helpers).
-  - [ ] P24.1d Replace low-value autosummary-only pages with hand-authored API narrative that explains purpose, contracts, common call patterns, and failure modes.
+  - [x] P24.1d Replace low-value autosummary-only pages with hand-authored API narrative that explains purpose, contracts, common call patterns, and failure modes.
     - [x] P24.1d.1 Rewrite the first-wave high-priority operational module pages:
       `femic.cli.main`, `femic.pipeline.vdyp_stage`, `femic.pipeline.io`,
       `femic.pipeline.tipsy`, `femic.pipeline.siteprod`,
@@ -781,14 +781,14 @@ notes.
       `femic.instance_context`, `femic.instance_bootstrap`,
       `femic.geospatial_preflight`, `femic.pipeline.bundle`,
       `femic.pipeline.legacy_runtime`, and `femic.pipeline.manifest`.
-    - [ ] P24.1d.3 Run a closure sweep across the remaining autosummary-only API
+    - [x] P24.1d.3 Run a closure sweep across the remaining autosummary-only API
       pages and classify each one as either:
       acceptable generated-only surface, or still-needs-curated-page.
-    - [ ] P24.1d.4 Promote any support modules from the closure sweep that still
+    - [x] P24.1d.4 Promote any support modules from the closure sweep that still
       block comprehension of real maintenance tasks into one final curated docs
       pass, then update `docs/reference/api/modules.rst` and `docs/reference/api/index.rst`
       to reflect the bounded curated set explicitly.
-    - [ ] P24.1d.5 Mark `P24.1d` complete once every generated-only page left in
+    - [x] P24.1d.5 Mark `P24.1d` complete once every generated-only page left in
       the API tree is explicitly considered acceptable as generated-only or has
       been replaced by a curated narrative page.
   - [ ] P24.1e Add examples and â€œhow this fits into the pipelineâ€ notes for the most important public entrypoints.
@@ -816,6 +816,13 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-22 (Phase 24, P24.1d.3/P24.1d.4 plan): finish the API-doc closure sweep by classifying the remaining generated-only pages and promoting the rebuild/release cluster that still blocks real maintenance work.
+  - Motivation: after the operational and support-contract rewrites, the remaining generated-only set is mostly acceptable helper/package surface area. The main cluster that still benefits from curated orientation is the rebuild/release path (`rebuild_spec`, `rebuild_baseline`, `rebuild_invariants`, `rebuild_runner`, `release_packaging`), because it underpins reproducible instance maintenance.
+  - Planned execution:
+    - write an explicit closure-sweep artifact that classifies every remaining generated-only API page as either acceptable generated-only or promoted for a final curated pass;
+    - add curated API pages for the rebuild/release cluster that still blocks comprehension of instance rebuild and release-maintenance tasks;
+    - update the API index/modules pages so the bounded curated set is explicit rather than implied;
+    - if the closure sweep leaves no unjustified generated-only pages, mark `P24.1d.3`, `P24.1d.4`, `P24.1d.5`, and top-level `P24.1d` complete.
 - 2026-03-22 (Phase 24, P24.1d.2 plan): execute the support-module rewrite bundle needed to close the remaining contract-heavy autosummary stubs.
   - Motivation: the first-wave operational pages are done, but maintainers still have to reverse-engineer several smaller modules that carry core runtime contracts around instance resolution, bootstrap, preflight, bundle tables, runtime payload typing, and manifest capture.
   - Planned execution:
