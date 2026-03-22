@@ -342,8 +342,11 @@ def resolve_legacy_external_data_paths(
         vdyp_input_pandl_path=selected_vdyp_path,
         tsa_boundaries_path=external_data_root / required_tsa_path,
         site_prod_bc_gdb_path=selected_siteprod_path,
-        siteprod_tif_path=external_data_root / 'bc' / 'siteprod' / 'siteprod.tif',
-        siteprod_bandmap_path=external_data_root / 'bc' / 'siteprod' / 'siteprod.bandmap.json',
+        siteprod_tif_path=external_data_root / "bc" / "siteprod" / "siteprod.tif",
+        siteprod_bandmap_path=external_data_root
+        / "bc"
+        / "siteprod"
+        / "siteprod.bandmap.json",
     )
 
 

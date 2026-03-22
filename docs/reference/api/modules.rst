@@ -10,15 +10,18 @@ High-priority operational modules
 These are the first pages to consult for real runtime/debugging work and the
 first targets in the Phase 24 API-docs rebuild.
 
+Current curated pages in this section include ``femic.cli.main`` and
+``femic.pipeline.vdyp_stage``.
+
 .. toctree::
    :maxdepth: 1
 
    femic-cli-main
+   femic-pipeline-vdyp-stage
 
 .. autosummary::
    :toctree: generated
 
-   femic.pipeline.vdyp_stage
    femic.pipeline.io
    femic.pipeline.tipsy
    femic.pipeline.siteprod

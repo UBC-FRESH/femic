@@ -5480,6 +5480,19 @@
 - Distribution note:
   - `siteprod.bandmap.json` is Git-tracked text (not annexed), so it is distributed via GitHub branch sync rather than `arbutus-s3` annex object transfer.
 
+## 2026-03-22 - Added curated API docs for femic.pipeline.vdyp_stage (Phase 24 P24.1d/P24.1e)
+- Replaced the autosummary-only `femic.pipeline.vdyp_stage` landing page with a hand-authored API page:
+  - `docs/reference/api/femic-pipeline-vdyp-stage.rst`
+- Documented the module's:
+  - Stage 01a role and operational boundaries
+  - main sub-flows from input loading through batch execution, bootstrap orchestration, and curve smoothing
+  - key entrypoints, runtime contracts, artifacts, and common failure seams
+  - cross-links back to the relevant guides and supporting API modules
+- Updated `docs/reference/api/modules.rst` so the curated page is the visible high-priority module page while the generated autodoc page remains reachable through a hidden toctree.
+- Repaired `ROADMAP.md` encoding corruption and refreshed the Detailed Next Steps notes so Phase 24 is the active leading-edge plan again.
+- Verification:
+  - `C:\Users\gep\projects\femic\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W` completed successfully.
+
 
 
 
