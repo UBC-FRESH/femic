@@ -47,6 +47,15 @@ the repo root:
 Do not treat symlinked pointer files in `external/femic-public-data` as usable
 inputs until `datalad get` has completed.
 
+Canonical repository root for all FEMIC work in this checkout is:
+- `C:\Users\gep\projects\femic`
+
+If any tool/session metadata, stale terminal context, or editor integration
+mentions the legacy `wbi_ria_yield` path, treat that as stale context only.
+Do not use it for command execution, patch application, file references, or
+reasoning about the active repo. Always pin command working directories and
+file operations to the canonical `femic` repo root explicitly.
+
 When contributing to this repository as the coding agent:
 
 1. Before wrapping up a development milestone (feature, roadmap phase, or PR), run:
