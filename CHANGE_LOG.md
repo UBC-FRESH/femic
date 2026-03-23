@@ -1723,7 +1723,7 @@
 - Relaxed thresholds increased detected blended tails from 22/30 to 26/30 curves.
   Resulting quality tradeoff remained bounded (no catastrophic regressions), with
   `tail_better_rmse=15/30`, `tail_better_tail_rmse=15/30`, and worst observed
-  `ΔRMSE ~ +0.67` (`IDF_PL-H`).
+  `?RMSE ~ +0.67` (`IDF_PL-H`).
 - Added detailed implementation summary document:
   `planning/VDYP_curve_fit_enhancements_2026-03-05.md`, including history, current controls,
   observed metrics, and explicit follow-up note to keep tuning tail-fit hyperparameters later.
@@ -5728,3 +5728,66 @@
 
 
 
+
+
+
+## 2026-03-23 - Started Phase 25 K3Z student-overlay planning for baseline-derived RETENTION subvariants
+- Created `planning/msfm-rec2group-k3z-overlay.md` to define the new K3Z-only overlay workflow on branch `feature/k3z-student-overlay`.
+- Added `Phase 25: K3Z Student Overlay RETENTION Subvariants` to `ROADMAP.md` so the work is tracked outside chat, with tasks covering:
+  - student-overlay source/import contract and `FEATURE_ID` join validation;
+  - repo-local `tmp/` import of the abandoned student GIS inventory;
+  - four baseline-derived K3Z subvariants driven by `basecase_riparian`, `basecase_sum`, `scenario1_sum`, and `scenario2_sum`;
+  - validation/doc follow-through for join coverage and managed/unmanaged area deltas.
+- Recorded the immediate tooling constraint that the uploaded `tmp/Fragments_Retention_HSmith.xls` cannot yet be inspected from the current venv because `.xls` support (`xlrd`) is missing, so schema verification is the first execution step before implementation starts.
+
+## 2026-03-23 - Executed Phase 25 K3Z student overlay import, join, and four baseline-derived subvariant compiles
+- Installed `xlrd` into the repo venv and verified the uploaded `tmp/Fragments_Retention_HSmith.xls` workbook directly from the active FEMIC environment.
+- Confirmed the real student workbook field names are:
+  - `FEATURE_ID1`
+  - `Basecase_Riparian`
+  - `BaseCase_Sum`
+  - `Scenario1_Sum`
+  - `Scenario2_Sum`
+- Normalized that workbook into repo-local audit artifacts:
+  - `tmp/k3z_student_overlay_retention_join.csv`
+  - `tmp/k3z_student_overlay_retention_join.feather`
+  - `tmp/k3z_overlay_retention_summary.csv`
+- Proved complete 218-row join coverage for the real K3Z teaching surface using the practical bridge:
+  - student `FEATURE_ID1`
+  - `models/k3z_patchworks_model/blocks/blocks.shp` `FEATURE_ID`
+  - shared `BLOCK`
+  - `output/patchworks_k3z_validated/fragments/fragments.shp`
+- Added four coexisting baseline-derived overlay runtime surfaces in the K3Z instance repo:
+  - runtime configs:
+    - `config/patchworks.runtime.overlay.basecase_riparian.windows.yaml`
+    - `config/patchworks.runtime.overlay.basecase_sum.windows.yaml`
+    - `config/patchworks.runtime.overlay.scenario1_sum.windows.yaml`
+    - `config/patchworks.runtime.overlay.scenario2_sum.windows.yaml`
+  - variant specs:
+    - `config/patchworks.variant.overlay.basecase_riparian.yaml`
+    - `config/patchworks.variant.overlay.basecase_sum.yaml`
+    - `config/patchworks.variant.overlay.scenario1_sum.yaml`
+    - `config/patchworks.variant.overlay.scenario2_sum.yaml`
+  - Patchworks PIN entrypoints:
+    - `models/k3z_patchworks_model/analysis/overlay_basecase_riparian.pin`
+    - `models/k3z_patchworks_model/analysis/overlay_basecase_sum.pin`
+    - `models/k3z_patchworks_model/analysis/overlay_scenario1_sum.pin`
+    - `models/k3z_patchworks_model/analysis/overlay_scenario2_sum.pin`
+- Refactored baseline PIN reuse so baseline-derived overlays share one common PIN body in `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/base_variant_common.bsh`.
+- Generated four overlay-specific fragments datasets:
+  - `output/patchworks_k3z_overlay_basecase_riparian_validated/fragments/fragments.shp`
+  - `output/patchworks_k3z_overlay_basecase_sum_validated/fragments/fragments.shp`
+  - `output/patchworks_k3z_overlay_scenario1_sum_validated/fragments/fragments.shp`
+  - `output/patchworks_k3z_overlay_scenario2_sum_validated/fragments/fragments.shp`
+- Ran Patchworks preflight successfully for all four overlay runtime configs.
+- Ran Patchworks matrix-builder successfully for all four overlay subvariants, producing:
+  - `models/k3z_patchworks_model/tracks_overlay_basecase_riparian/`
+  - `models/k3z_patchworks_model/tracks_overlay_basecase_sum/`
+  - `models/k3z_patchworks_model/tracks_overlay_scenario1_sum/`
+  - `models/k3z_patchworks_model/tracks_overlay_scenario2_sum/`
+- Validation snapshot from `tmp/k3z_overlay_retention_summary.csv`:
+  - baseline retained area: `89.065662 ha`
+  - `basecase_riparian`: `164.305456 ha` retained (`+75.239794 ha`)
+  - `basecase_sum`: `379.898530 ha` retained (`+290.832868 ha`)
+  - `scenario1_sum`: `546.841710 ha` retained (`+457.776048 ha`)
+  - `scenario2_sum`: `622.819694 ha` retained (`+533.754032 ha`)

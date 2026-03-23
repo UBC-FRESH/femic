@@ -806,6 +806,39 @@ notes.
   - [x] P24.4b Add docs acceptance checks for required API-doc sections and agent-facing contract pages.
   - [x] P24.4c Record a follow-up GitHub feature issue for any remaining agent-facing docs gaps that should be iterated outside this phase.
 
+## Phase 25: K3Z Student Overlay RETENTION Subvariants
+- [ ] P25.1 Capture the student-overlay import/join contract and execution plan
+  - [x] P25.1a Record the source/provenance handoff for the abandoned student GIS
+    inventory, the repo-local `tmp/` import target, and the required join key
+    contract (`FEATURE_ID` -> `FEATURE_ID`).
+  - [x] P25.1b Verify the student layer carries the four alternative RETENTION
+    fields (`basecase_riparian`, `basecase_sum`, `scenario1_sum`,
+    `scenario2_sum`) and document expected null/join-coverage checks against
+    the canonical K3Z fragments shapefile.
+  - [x] P25.1c Define the planning/execution workflow in
+    `planning/msfm-rec2group-k3z-overlay.md`, including the first-pass schema
+    validation step for the uploaded student export in `tmp/`.
+- [x] P25.2 Import and join the student GIS inventory to the canonical K3Z fragments
+  - [x] P25.2a Materialize a repo-local copy of the student inventory under
+    `tmp/` without depending on the abandoned fork at runtime.
+  - [x] P25.2b Join the imported student layer to the actual K3Z instance
+    fragments shapefile on `FEATURE_ID`.
+  - [x] P25.2c Preserve only the four alternative RETENTION columns plus the
+    key provenance fields needed to audit the overlay.
+- [x] P25.3 Compile four baseline-derived K3Z Patchworks subvariants from the joined overlay
+  - [x] P25.3a Treat the current baseline K3Z variant as the fixed starting
+    point and create one subvariant per alternative RETENTION field.
+  - [x] P25.3b Ensure each subvariant changes only fragment RETENTION / resulting
+    unmanaged-vs-managed area balance, leaving all other baseline inputs and
+    teaching assumptions unchanged.
+  - [x] P25.3c Add explicit config/runtime/PIN naming so students can launch the
+    overlay subvariants without ambiguity.
+- [ ] P25.4 Validate and document the overlay subvariant workflow
+  - [x] P25.4a Add checks for join coverage, null RETENTION values, and expected
+    managed/unmanaged area deltas across the four subvariants.
+  - [ ] P25.4b Update K3Z runbooks/student guidance so the overlay source,
+    subvariant meanings, and launch workflow are auditable and repeatable.
+
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
 - The remaining open work in Phase 23 is Linux-specific parity verification under P23.3.
@@ -816,6 +849,66 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-23 (Phase 25 execution checkpoint): the K3Z student overlay import,
+  join, and baseline-derived Patchworks subvariant compile path is now working
+  end to end.
+  - Result:
+    - installed `xlrd` into the repo venv and verified the uploaded workbook
+      `tmp/Fragments_Retention_HSmith.xls`;
+    - confirmed the real workbook field names are `FEATURE_ID1`,
+      `Basecase_Riparian`, `BaseCase_Sum`, `Scenario1_Sum`, and
+      `Scenario2_Sum`, then normalized them into repo-local artifacts at
+      `tmp/k3z_student_overlay_retention_join.csv` and `.feather`;
+    - proved full 218/218 join coverage through the actual K3Z bridge
+      `student FEATURE_ID1 -> models/k3z_patchworks_model/blocks/blocks.shp FEATURE_ID -> BLOCK -> output/patchworks_k3z_validated/fragments/fragments.shp`;
+    - generated four overlay-specific fragments datasets and compiled four
+      coexisting baseline-derived tracks surfaces:
+      `tracks_overlay_basecase_riparian`,
+      `tracks_overlay_basecase_sum`,
+      `tracks_overlay_scenario1_sum`,
+      and `tracks_overlay_scenario2_sum`;
+    - added explicit runtime config, variant spec, and PIN wrapper surfaces for
+      all four overlay subvariants;
+    - completed four successful Patchworks matrix-builder runs with run IDs
+      `k3z_overlay_basecase_riparian_20260323`,
+      `k3z_overlay_basecase_sum_20260323`,
+      `k3z_overlay_scenario1_sum_20260323`, and
+      `k3z_overlay_scenario2_sum_20260323`.
+  - Validation snapshot:
+    - all five fragments surfaces (baseline + 4 overlays) remain at 218 rows and
+      `1781.313237 ha` total area;
+    - retained-area deltas versus baseline are now quantified in
+      `tmp/k3z_overlay_retention_summary.csv`:
+      `+75.239794 ha` (`basecase_riparian`),
+      `+290.832868 ha` (`basecase_sum`),
+      `+457.776048 ha` (`scenario1_sum`),
+      and `+533.754032 ha` (`scenario2_sum`).
+  - Remaining next step:
+    - close `P25.4b` by updating the standalone K3Z student/operator docs so
+      the new overlay subvariants, source-table naming quirks, and launch
+      workflow are explicit.
+- 2026-03-23 (Phase 25, P25.1 plan): start a new K3Z student-overlay planning
+  pass in `planning/msfm-rec2group-k3z-overlay.md`.
+  - Motivation:
+    - the next K3Z task is a focused overlay workflow for teaching, not a return
+      to TSA29 or the broader K3Z variant backlog;
+    - we need to import a student GIS inventory from an abandoned fork, join it
+      to the canonical K3Z fragments on `FEATURE_ID`, and turn four alternative
+      RETENTION columns into four baseline-derived Patchworks subvariants;
+    - the uploaded workbook `tmp/Fragments_Retention_HSmith.xls` gives us a
+      first local artifact to validate the key/field contract before we wire the
+      full overlay import.
+  - Planned execution:
+    - inspect the uploaded student export and confirm `FEATURE_ID` plus the
+      target RETENTION columns are present;
+    - define the repo-local `tmp/` import pattern and provenance notes for the
+      abandoned student source;
+    - join the student overlay to the current K3Z fragments shapefile and
+      isolate the four alternative RETENTION fields;
+    - compile four baseline-derived K3Z subvariants whose only intended change
+      is the RETENTION-driven managed/unmanaged split;
+    - add validation and operator/student notes only after the import/join
+      contract is proven against the real K3Z fragments surface.
 - 2026-03-22 (Phase 19 closeout note): `P19.17` is now complete in the TSA29 instance repo after a Sphinx deep-dive pass across the standalone docs set.
   - Result:
     - expanded the thin TSA29 pages (`getting-started`, `data-and-provenance`, `land-base-and-assumptions`, `rebuild-and-qa`, `troubleshooting`, and `docs-ownership-and-release`) with clearer workflow guidance, artifact references, evidence interpretation, and release/ownership notes;
