@@ -902,6 +902,23 @@ notes.
   - Updated validation snapshot:
     - refreshed `scenario2_sum` retained area is `622.819837 ha`
       (`+533.754175 ha` vs baseline).
+- 2026-03-23 (Phase 25 / K3Z variant regression recovery): CT/fert launch
+  failure after the overlay flow-target fix traced back to a missing CT/fert
+  artifact family, not a bad overlay compile.
+  - Result:
+    - live `ctfert.pin` launch failed because `tracks_ctfert/accounts.csv` and
+      the rest of the CT/fert runtime surface were absent from the current K3Z
+      submodule checkout;
+    - the stricter active-tracks flow-target fix made that absence fail early
+      and explicitly, which is why the regression became visible now;
+    - restored the CT/fert artifact family from historical K3Z submodule commit
+      `5e11bfb` (`Recover K3Z ctfert variant with additive retention behavior`),
+      including runtime config, variant spec, silviculture config,
+      `tracks_ctfert/`, `forestmodel_ctfert.xml`, and
+      `output/patchworks_k3z_ctfert_validated/`.
+  - Recovery check:
+    - `femic patchworks preflight --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert.windows.yaml`
+      passes again after the restore.
 - 2026-03-23 (Phase 25 overlay launch bugfix): live Patchworks launch exposed a
   baseline-account leakage bug in the shared K3Z flow-target script.
   - Result:

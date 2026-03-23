@@ -294,3 +294,31 @@ Area summary relative to baseline (`tmp/k3z_overlay_retention_summary.csv`):
 - The prior Patchworks precision warning for the tiny managed remainder is
   therefore expected to disappear on the refreshed `overlay_scenario2_sum.pin`
   launch.
+
+## CT/Fert Regression Recovery
+
+- After the overlay flow-target bugfix, live launch of `ctfert.pin` failed with
+  a missing `tracks_ctfert/accounts.csv` error.
+- Root cause:
+  - the stricter active-tracks flow-target logic exposed that the entire
+    CT/fert artifact surface had disappeared from the current K3Z submodule
+    checkout;
+  - `ctfert.pin` itself was still pointing at `../tracks_ctfert/`, but the
+    following artifacts were absent on this branch:
+    - `config/patchworks.runtime.ctfert.windows.yaml`
+    - `config/patchworks.variant.ctfert.yaml`
+    - `config/silviculture.k3z.ctfert.yaml`
+    - `models/k3z_patchworks_model/tracks_ctfert/`
+    - `models/k3z_patchworks_model/yield/forestmodel_ctfert.xml`
+    - `output/patchworks_k3z_ctfert_validated/`
+- Recovery action:
+  - restored the CT/fert artifact family from the last K3Z submodule commit
+    that still carried it:
+    `5e11bfb` (`Recover K3Z ctfert variant with additive retention behavior`).
+- Recovery check:
+  - `femic patchworks preflight --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert.windows.yaml`
+    passes again after the restore.
+- Interpretation:
+  - the overlay work did not create the missing CT/fert directory;
+  - it did make the broken state fail earlier and more honestly, which is why
+    the regression became visible now.

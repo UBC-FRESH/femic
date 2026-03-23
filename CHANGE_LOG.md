@@ -5823,3 +5823,17 @@
   - retained area = `622.819837 ha`
   - managed area = `1158.493400 ha`
 - Live status after this rerun: all four overlay subvariants are now launching cleanly.
+
+## 2026-03-23 - Recovered missing K3Z CT/fert variant surface exposed during Phase 25 launch QA
+- Live launch of `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/ctfert.pin` failed after the overlay target-path hardening, but the deeper issue was not the overlay subvariants themselves.
+- `ctfert.pin` was still configured to load `../tracks_ctfert/`, while the checked-out K3Z instance no longer carried the full CT/fert artifact family:
+  - `config/patchworks.runtime.ctfert.windows.yaml`
+  - `config/patchworks.variant.ctfert.yaml`
+  - `config/silviculture.k3z.ctfert.yaml`
+  - `models/k3z_patchworks_model/tracks_ctfert/`
+  - `models/k3z_patchworks_model/yield/forestmodel_ctfert.xml`
+  - `output/patchworks_k3z_ctfert_validated/`
+- Restored that CT/fert surface from historical K3Z submodule commit `5e11bfb` (`Recover K3Z ctfert variant with additive retention behavior`) so the active instance once again matches what `ctfert.pin` expects to launch.
+- Verified the recovered surface with:
+  - `.\.venv\Scripts\python.exe -m femic patchworks preflight --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert.windows.yaml`
+- Result: CT/fert preflight now passes again, and the overlay flow-target fix is no longer blocked by missing CT/fert artifacts in the instance checkout.
