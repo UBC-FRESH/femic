@@ -5791,3 +5791,12 @@
   - `basecase_sum`: `379.898530 ha` retained (`+290.832868 ha`)
   - `scenario1_sum`: `546.841710 ha` retained (`+457.776048 ha`)
   - `scenario2_sum`: `622.819694 ha` retained (`+533.754032 ha`)
+
+## 2026-03-23 - Fixed Phase 25 overlay PIN launch to respect active overlay account surfaces
+- Live Patchworks testing showed `overlay_basecase_riparian.pin` launches cleanly and matches the expected retention math, but `overlay_basecase_sum.pin` failed while defining `flow.even.product.Yield.managed.PLC`.
+- Root cause was in `external/femic-k3z-instance/models/k3z_patchworks_model/scripts/targets/flowTargets.bsh`: the shared target script was still hard-wired to baseline `../tracks/accounts.csv`, so overlay wrapper PINs leaked baseline managed-species targets into overlay launches.
+- Confirmed the account-surface difference is real and expected:
+  - `tracks_overlay_basecase_riparian` still includes managed `PLC`;
+  - `tracks_overlay_basecase_sum`, `tracks_overlay_scenario1_sum`, and `tracks_overlay_scenario2_sum` do not.
+- Updated `flowTargets.bsh` so it resolves `accounts.csv` from the active wrapper PIN's `tracks_path_prefix` when present, falling back to baseline `../tracks/accounts.csv` only for the baseline surface.
+- Expected effect: overlay PINs now define even-flow / NDY targets only for the managed yield accounts that actually exist in their own compiled tracks surface, preventing launch-time failures when higher-retention overlays remove a species from the managed side.

@@ -210,6 +210,9 @@ fragments shapefile path that will serve as the canonical join target.
 - Pending:
   - user-facing docs/runbook updates for the new overlay subvariants
   - any follow-up naming/UX cleanup after student review
+  - confirm live Patchworks launch behavior after the shared flow-target script
+    is switched from baseline-only account discovery to active-overlay account
+    discovery
 
 ## Current Overlay Outputs
 
@@ -250,3 +253,29 @@ Area summary relative to baseline (`tmp/k3z_overlay_retention_summary.csv`):
 - `basecase_sum` retained area: `379.898530 ha` (`+290.832868 ha` vs baseline)
 - `scenario1_sum` retained area: `546.841710 ha` (`+457.776048 ha` vs baseline)
 - `scenario2_sum` retained area: `622.819694 ha` (`+533.754032 ha` vs baseline)
+
+## Follow-up Bugfix
+
+- Live Patchworks launch confirmed that `overlay_basecase_riparian.pin`
+  opens cleanly and respects the requested block-level retention behavior.
+- `overlay_basecase_sum.pin` exposed a shared-target wiring bug rather than a
+  bad overlay compile: Patchworks failed while defining
+  `flow.even.product.Yield.managed.PLC`.
+- Root cause:
+  - the shared target script
+    `models/k3z_patchworks_model/scripts/targets/flowTargets.bsh`
+    was still hard-wired to `../tracks/accounts.csv`;
+  - overlay wrapper PINs therefore read the baseline account list instead of the
+    active overlay tracks account list;
+  - `basecase_riparian` still carries managed `PLC`, so it launched by luck;
+  - `basecase_sum`, `scenario1_sum`, and `scenario2_sum` legitimately drop
+    managed `PLC`, so the stale baseline target list caused launch-time errors.
+- Implemented fix:
+  - `flowTargets.bsh` now resolves `accounts.csv` from the active
+    `tracks_path_prefix` when a wrapper PIN supplies one, and falls back to
+    baseline `../tracks/accounts.csv` only when no override is present.
+- Expected consequence:
+  - baseline and `basecase_riparian` behavior should remain unchanged;
+  - `basecase_sum`, `scenario1_sum`, and `scenario2_sum` should now define flow
+    targets only for the managed yield accounts that actually exist in their own
+    overlay tracks surfaces.

@@ -885,8 +885,32 @@ notes.
       and `+533.754032 ha` (`scenario2_sum`).
   - Remaining next step:
     - close `P25.4b` by updating the standalone K3Z student/operator docs so
-      the new overlay subvariants, source-table naming quirks, and launch
-      workflow are explicit.
+      the new overlay subvariants, source-table naming quirks, launch workflow,
+      and the species-account dropout behavior under high-retention overlays are
+      explicit.
+- 2026-03-23 (Phase 25 overlay launch bugfix): live Patchworks launch exposed a
+  baseline-account leakage bug in the shared K3Z flow-target script.
+  - Result:
+    - `overlay_basecase_riparian.pin` launches cleanly and matches the expected
+      block-level and landscape-level retained-area checks;
+    - `overlay_basecase_sum.pin` failed on launch because Patchworks tried to
+      define `flow.even.product.Yield.managed.PLC` even though that managed PLC
+      account no longer exists in the `basecase_sum` tracks surface;
+    - comparison of the compiled overlay account tables confirmed this is
+      legitimate surface variation, not a bad compile:
+      `basecase_riparian` still includes managed `PLC`, while
+      `basecase_sum`, `scenario1_sum`, and `scenario2_sum` do not.
+  - Fix:
+    - updated
+      `external/femic-k3z-instance/models/k3z_patchworks_model/scripts/targets/flowTargets.bsh`
+      so it resolves `accounts.csv` from the active `tracks_path_prefix` when a
+      wrapper PIN supplies one, instead of always reading baseline
+      `../tracks/accounts.csv`.
+  - Expected outcome:
+    - baseline and `basecase_riparian` behavior should stay unchanged;
+    - `basecase_sum`, `scenario1_sum`, and `scenario2_sum` should now launch
+      without trying to define flow targets for managed species accounts that
+      are absent from their own overlay tracks.
 - 2026-03-23 (Phase 25, P25.1 plan): start a new K3Z student-overlay planning
   pass in `planning/msfm-rec2group-k3z-overlay.md`.
   - Motivation:
