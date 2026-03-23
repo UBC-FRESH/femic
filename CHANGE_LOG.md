@@ -5809,3 +5809,17 @@
   - `models/k3z_patchworks_model/analysis/ctfert.pin`
   - `models/k3z_patchworks_model/analysis/pctct.pin`
 - Expected effect: baseline, overlay, CT/fert, and PCT->CT launches now all build flow targets from the accounts table that belongs to the active tracks surface, not whichever tracks folder the shared script would otherwise default to.
+
+## 2026-03-23 - Recompiled Phase 25 `scenario2_sum` after workbook edit removed the tiny managed sliver
+- The user manually edited `tmp/Fragments_Retention_HSmith.xls` for block `59`, changing the `Scenario2_Sum` value from the prior sliver-causing fraction to full retention (`1.0` in the edited workbook).
+- Rebuilt the normalized overlay join artifacts from the edited workbook and reran only the `scenario2_sum` overlay subvariant with run id `k3z_overlay_scenario2_sum_20260323_b`.
+- Post-rerun block `59` now has:
+  - `AREA_HA = 1.427842`
+  - `RETENTION = 1.0`
+  - managed remainder = `0.0 ha`
+  - unmanaged portion = `1.42784211 ha`
+- This removes the previous Patchworks small-block precision warning source, which had been caused by a managed remainder of only `0.0001427842 ha` under the earlier `0.9999` retention value.
+- Refreshed `scenario2_sum` landscape totals now read:
+  - retained area = `622.819837 ha`
+  - managed area = `1158.493400 ha`
+- Live status after this rerun: all four overlay subvariants are now launching cleanly.

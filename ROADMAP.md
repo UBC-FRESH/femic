@@ -888,6 +888,20 @@ notes.
       the new overlay subvariants, source-table naming quirks, launch workflow,
       and the species-account dropout behavior under high-retention overlays are
       explicit.
+- 2026-03-23 (Phase 25 scenario2 rerun): the last overlay launch warning was
+  resolved by re-running `scenario2_sum` from the user-edited workbook.
+  - Result:
+    - live Patchworks launches are now green for `basecase_riparian`,
+      `basecase_sum`, `scenario1_sum`, and `scenario2_sum`;
+    - the earlier `scenario2_sum` warning came from block `59`, where
+      `RETENTION = 0.9999` left a managed remainder of only
+      `0.0001427842 ha`, below Patchworks' internal `0.001 ha` precision limit;
+    - after the workbook edit, block `59` now carries `Scenario2_Sum = 1.0`,
+      so rerun `k3z_overlay_scenario2_sum_20260323_b` leaves no managed
+      remainder on that block and should eliminate the warning on launch.
+  - Updated validation snapshot:
+    - refreshed `scenario2_sum` retained area is `622.819837 ha`
+      (`+533.754175 ha` vs baseline).
 - 2026-03-23 (Phase 25 overlay launch bugfix): live Patchworks launch exposed a
   baseline-account leakage bug in the shared K3Z flow-target script.
   - Result:

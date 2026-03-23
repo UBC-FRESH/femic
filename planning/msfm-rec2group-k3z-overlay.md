@@ -207,12 +207,10 @@ fragments shapefile path that will serve as the canonical join target.
   - four overlay variant specs
   - four overlay PIN launch wrappers
   - four successful Patchworks matrix-builder runs
+  - live Patchworks launch validation for all four overlay subvariants
 - Pending:
   - user-facing docs/runbook updates for the new overlay subvariants
   - any follow-up naming/UX cleanup after student review
-  - confirm live Patchworks launch behavior after the shared flow-target script
-    is switched from baseline-only account discovery to active-overlay account
-    discovery
 
 ## Current Overlay Outputs
 
@@ -252,7 +250,7 @@ Area summary relative to baseline (`tmp/k3z_overlay_retention_summary.csv`):
 - `basecase_riparian` retained area: `164.305456 ha` (`+75.239794 ha` vs baseline)
 - `basecase_sum` retained area: `379.898530 ha` (`+290.832868 ha` vs baseline)
 - `scenario1_sum` retained area: `546.841710 ha` (`+457.776048 ha` vs baseline)
-- `scenario2_sum` retained area: `622.819694 ha` (`+533.754032 ha` vs baseline)
+- `scenario2_sum` retained area: `622.819837 ha` (`+533.754175 ha` vs baseline)
 
 ## Follow-up Bugfix
 
@@ -280,3 +278,19 @@ Area summary relative to baseline (`tmp/k3z_overlay_retention_summary.csv`):
   - `basecase_sum`, `scenario1_sum`, and `scenario2_sum` should now define flow
     targets only for the managed yield accounts that actually exist in their own
     overlay tracks surfaces.
+
+## Scenario2 Workbook Rerun
+
+- After live testing, the user manually adjusted the workbook value for block
+  `59` in `Scenario2_Sum`, replacing the prior sliver-causing retained fraction
+  with full retention (`1.0` in the edited workbook).
+- `scenario2_sum` was then recompiled from the edited workbook with run id
+  `k3z_overlay_scenario2_sum_20260323_b`.
+- Post-rerun block `59` state:
+  - `AREA_HA = 1.427842`
+  - `RETENTION = 1.0`
+  - managed remainder = `0.0 ha`
+  - unmanaged portion = `1.42784211 ha`
+- The prior Patchworks precision warning for the tiny managed remainder is
+  therefore expected to disappear on the refreshed `overlay_scenario2_sum.pin`
+  launch.
