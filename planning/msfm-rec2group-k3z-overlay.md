@@ -271,9 +271,10 @@ Area summary relative to baseline (`tmp/k3z_overlay_retention_summary.csv`):
   - `basecase_sum`, `scenario1_sum`, and `scenario2_sum` legitimately drop
     managed `PLC`, so the stale baseline target list caused launch-time errors.
 - Implemented fix:
-  - `flowTargets.bsh` now resolves `accounts.csv` from the active
-    `tracks_path_prefix` when a wrapper PIN supplies one, and falls back to
-    baseline `../tracks/accounts.csv` only when no override is present.
+  - `flowTargets.bsh` now accepts an explicit `tracksPathPrefix` argument for
+    account discovery, and the baseline/overlay/PCT/CT PIN entrypoints pass
+    their active `tracks_path_prefix` directly into
+    `setupYieldFlowTargets(...)`.
 - Expected consequence:
   - baseline and `basecase_riparian` behavior should remain unchanged;
   - `basecase_sum`, `scenario1_sum`, and `scenario2_sum` should now define flow

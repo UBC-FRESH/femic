@@ -5800,3 +5800,12 @@
   - `tracks_overlay_basecase_sum`, `tracks_overlay_scenario1_sum`, and `tracks_overlay_scenario2_sum` do not.
 - Updated `flowTargets.bsh` so it resolves `accounts.csv` from the active wrapper PIN's `tracks_path_prefix` when present, falling back to baseline `../tracks/accounts.csv` only for the baseline surface.
 - Expected effect: overlay PINs now define even-flow / NDY targets only for the managed yield accounts that actually exist in their own compiled tracks surface, preventing launch-time failures when higher-retention overlays remove a species from the managed side.
+
+## 2026-03-23 - Hardened Phase 25 overlay flow-target fix with explicit tracks-path wiring
+- The first overlay flow-target fix was still too indirect for BeanShell launch behavior.
+- Reworked `external/femic-k3z-instance/models/k3z_patchworks_model/scripts/targets/flowTargets.bsh` so account discovery accepts an explicit tracks-path prefix argument instead of trying to infer it from interpreter state.
+- Updated all active K3Z PIN call sites that use shared flow-target setup to pass their own `tracks_path_prefix` explicitly:
+  - `models/k3z_patchworks_model/analysis/base_variant_common.bsh`
+  - `models/k3z_patchworks_model/analysis/ctfert.pin`
+  - `models/k3z_patchworks_model/analysis/pctct.pin`
+- Expected effect: baseline, overlay, CT/fert, and PCT->CT launches now all build flow targets from the accounts table that belongs to the active tracks surface, not whichever tracks folder the shared script would otherwise default to.

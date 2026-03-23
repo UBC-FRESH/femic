@@ -903,9 +903,11 @@ notes.
   - Fix:
     - updated
       `external/femic-k3z-instance/models/k3z_patchworks_model/scripts/targets/flowTargets.bsh`
-      so it resolves `accounts.csv` from the active `tracks_path_prefix` when a
-      wrapper PIN supplies one, instead of always reading baseline
-      `../tracks/accounts.csv`.
+      so it accepts an explicit active tracks prefix for account discovery;
+    - updated the baseline/overlay wrapper flow plus `ctfert.pin` and
+      `pctct.pin` so they pass their own `tracks_path_prefix` directly into
+      `setupYieldFlowTargets(...)` instead of relying on BeanShell interpreter
+      state.
   - Expected outcome:
     - baseline and `basecase_riparian` behavior should stay unchanged;
     - `basecase_sum`, `scenario1_sum`, and `scenario2_sum` should now launch
