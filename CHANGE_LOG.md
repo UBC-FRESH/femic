@@ -6014,3 +6014,41 @@
   - link the governing issue back into `ROADMAP.md` when work becomes active;
   - reconcile the issue status as work progresses/closes so roadmap planning and
     GitHub tracking stay aligned and reduce tail-chasing / dropped-ball risk.
+
+## 2026-03-24 - Retargeted K3Z `pctct` to the updated Issue 14 AU cohort
+- Retargeted `external/femic-k3z-instance/config/silviculture.k3z.pctct.yaml`
+  so `PCT` and `CT` eligibility now applies only to `985502000`, `985503000`,
+  `985502001`, and `985503001`.
+- Updated `external/femic-k3z-instance/config/tipsy/tsak3z.yaml` so those four
+  Issue 14 AUs now use the requested `900 CW + 3100 HW` planted regeneration
+  mix.
+- Refreshed the standalone K3Z docs in:
+  - `external/femic-k3z-instance/docs/assumptions-registry.rst`
+  - `external/femic-k3z-instance/docs/getting-started.rst`
+  - `external/femic-k3z-instance/docs/model-anatomy.rst`
+  - `external/femic-k3z-instance/docs/rebuild-and-qa.rst`
+  - `external/femic-k3z-instance/docs/silviculture-logic.rst`
+  so the `pctct` variant now documents the correct four-AU footprint, the
+  matching regen assumption, and the current rebuild/validation contract.
+- Regenerated:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pctct.xml`
+  - `external/femic-k3z-instance/output/patchworks_k3z_pctct_validated/forestmodel.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pctct/`
+  from the updated config and verified that `PCT` / `CT` treatment states now
+  materialize only for the four Issue 14 AUs, while non-target AUs such as
+  `985502002` remain only in the baseline/CC land-base surface as expected.
+- Validation passed with:
+  - `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml --run-id k3z_pctct_issue14_20260324`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+- Filled the local `.venv` gaps that were blocking the repo-wide gates by
+  installing `openpyxl` and `pandas-stubs`.
+- Confirmed remaining boundary from Issue 14: light/moderate/heavy PCT
+  intensity options still require a deeper model design because the current
+  `pctct` implementation compiles only one post-PCT managed state
+  (`cc_pl_pct`), not multiple intensity-specific treatment paths.

@@ -864,6 +864,17 @@ notes.
   - [x] P27.3a Verify the repaired `pctct` surface in both compiled artifacts and live Patchworks expectations.
   - [x] P27.3b Update docs/runbooks only where operator-facing expectations materially change.
 
+## Phase 28: K3Z `pctct` Expanded Treatment Eligibility
+- [x] P28.1 Retarget the `pctct` eligible-AU set to the current Issue 14 cohort
+  - [x] P28.1a Confirm the active Issue 14 AU cohort is the medium/high SI `HW+FDC` / `FDC+HW` set only (`985502000`, `985503000`, `985502001`, `985503001`) and that it stays compatible with the existing `PCT remove_species = HW` teaching logic without pulling in the known low-yield/full-retention strata.
+  - [x] P28.1b Update the `pctct` silviculture config, regen/TIPSY assumptions, and checked-in compiled artifact surface so `PCT`/`CT` materialize only for the Issue 14 AU cohort.
+- [x] P28.2 Refresh operator-facing K3Z guidance for the broader `pctct` footprint
+  - [x] P28.2a Update the standalone K3Z docs anywhere they currently say the `pctct` path is limited to the original two eligible AUs or otherwise point at the wrong AU cohort.
+  - [x] P28.2b Keep the rebuild/runbook contract explicit about what should now appear in `forestmodel_pctct.xml` and `tracks_pctct`, and record separately that Issue 14's requested light/moderate/heavy PCT intensity knob is not yet representable in the current single-path `pctct` model surface.
+- [x] P28.3 Validate the broader `pctct` surface
+  - [x] P28.3a Re-run focused validation that proves the expanded AU set appears in the checked-in `pctct` ForestModel/tracks artifacts without regressing the `PCT -> CT` chain.
+  - [x] P28.3b Run the required parent-repo quality gates that are practical from this checkout and record any remaining blocked validation separately if local runtime prerequisites prevent a full `tracks_pctct` rebuild.
+
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
 - The remaining open work in Phase 23 is Linux-specific parity verification under P23.3.
@@ -994,6 +1005,66 @@ notes.
       reports `species=8` and `complete_species=8`;
     - `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
       and `pre-commit run --all-files` all pass.
+- 2026-03-24 (Phase 28 kickoff): start the broader `pctct` treatment-footprint
+  expansion on branch `feature/k3z-pctct-expand-treatment-aus`.
+  - Immediate execution order:
+    - retarget the `pctct` eligible AU set to the medium/high SI `HW+FDC` and
+      `FDC+HW` AUs only (`985502000`, `985503000`, `985502001`,
+      `985503001`), removing all other prior `pctct` eligibles;
+    - align the Issue 14 regen assumption for that AU cohort to
+      `900 CW + 3100 HW`;
+    - refresh the checked-in K3Z `pctct` ForestModel/tracks/docs surface so the
+      broader AU set is visible in canonical artifacts rather than only in YAML;
+    - run focused validation to prove the expanded AU list appears in the
+      compiled `PCT`/`CT` surface and then append the same closeout summary to
+      `CHANGE_LOG.md`.
+  - Updated issue-14 target:
+    - the active `pctct` cohort is now the medium/high SI `HW+FDC` and
+      `FDC+HW` AUs only (`985502000`, `985503000`, `985502001`,
+      `985503001`), with all other prior `pctct` eligibles removed.
+  - Tracking issue:
+    - GitHub feature request `#14`:
+      `PCT requests: change eligible AUs, change AU regen assumptions, add knob for changing PCT intensity`
+  - Known boundary to document during execution:
+    - Issue 14's requested light/moderate/heavy PCT intensity options are not
+      currently expressible as simple config-only variants because the current
+      `pctct` surface compiles one post-PCT path (`cc_pl_pct`) rather than
+      multiple intensity-specific treatment states/curve families.
+- 2026-03-24 (Phase 28 closeout): the K3Z `pctct` variant now matches the
+  updated Issue 14 AU cohort and regen assumption on branch
+  `feature/k3z-pctct-expand-treatment-aus`.
+  - Result:
+    - retargeted `config/silviculture.k3z.pctct.yaml` so `PCT` and `CT`
+      eligibility now applies only to `985502000`, `985503000`, `985502001`,
+      and `985503001`;
+    - updated `config/tipsy/tsak3z.yaml` so those four Issue 14 AUs now use
+      the requested `900 CW + 3100 HW` planted regeneration mix;
+    - refreshed the standalone K3Z docs so the `pctct` variant now documents
+      the correct four-AU footprint, the matching regen assumption, and the
+      current rebuild/validation contract;
+    - regenerated
+      `models/k3z_patchworks_model/yield/forestmodel_pctct.xml`,
+      `output/patchworks_k3z_pctct_validated/forestmodel.xml`, and
+      `models/k3z_patchworks_model/tracks_pctct/` from the updated config;
+    - verified that `PCT` / `CT` treatment states now materialize only for the
+      four Issue 14 AUs, while non-target AUs such as `985502002` remain only
+      in the baseline/CC land-base surface as expected.
+  - Validation evidence:
+    - standalone K3Z docs build passes with
+      `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`;
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml --run-id k3z_pctct_issue14_20260324`
+      completed successfully with `returncode=0`;
+    - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml`
+      reports `accounts=264`, `species=8`, `complete_species=8`, `au=14`;
+    - `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
+      and `pre-commit run --all-files` all pass in the current `.venv` after
+      installing the previously missing local dev dependencies
+      `openpyxl` and `pandas-stubs`.
+  - Remaining boundary:
+    - Issue 14's requested light/moderate/heavy PCT intensity options still
+      require a deeper design change to the `pctct` model surface, because the
+      current implementation only compiles one post-PCT managed state
+      (`cc_pl_pct`) rather than multiple intensity-specific treatment paths.
 - 2026-03-24 (Phase 25 P25.4b kickoff): close the overlay docs gap on branch
   `feature/k3z-overlay-guidance-closeout`.
   - Immediate execution order:

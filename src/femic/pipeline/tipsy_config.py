@@ -223,14 +223,26 @@ def validate_tipsy_tsa_config(
 def _rule_matches(
     rule: Mapping[str, Any],
     *,
+    au_id: int,
     leading_species: str,
     bec: str,
     forest_type: int | None,
     stratum_code: str | None,
+    si_level: str | None,
 ) -> bool:
     when = rule.get("when", {})
     if not isinstance(when, Mapping):
         return False
+    au_allow = when.get("au_id_in")
+    if isinstance(au_allow, list):
+        normalized_au_ids = set()
+        for raw_value in au_allow:
+            try:
+                normalized_au_ids.add(int(raw_value))
+            except (TypeError, ValueError):
+                continue
+        if normalized_au_ids and int(au_id) not in normalized_au_ids:
+            return False
     species_allow = when.get("leading_species_in")
     if isinstance(species_allow, list) and leading_species not in species_allow:
         return False
@@ -243,6 +255,14 @@ def _rule_matches(
     stratum_allow = when.get("stratum_code_in")
     if isinstance(stratum_allow, list) and str(stratum_code or "") not in stratum_allow:
         return False
+    si_allow = when.get("si_level_in")
+    normalized_si = str(si_level or "").strip().upper()
+    if isinstance(si_allow, list):
+        allowed_si = {
+            str(value).strip().upper() for value in si_allow if str(value).strip()
+        }
+        if allowed_si and normalized_si not in allowed_si:
+            return False
     return True
 
 
@@ -498,6 +518,7 @@ def build_tipsy_params_from_config(
     ]
     bec = ss.BEC_ZONE_CODE.iloc[0]
     stratum_code = str(au_data.get("stratum_code", "")).strip()
+    si_level = str(au_data.get("si_level", "")).strip().upper()
     if (not stratum_code) and "stratum_code" in ss:
         try:
             stratum_code = str(ss["stratum_code"].mode().iloc[0]).strip()
@@ -526,10 +547,12 @@ def build_tipsy_params_from_config(
     for rule in config["rules"]:
         if _rule_matches(
             rule,
+            au_id=au_id,
             leading_species=leading_species,
             bec=bec,
             forest_type=forest_type,
             stratum_code=stratum_code,
+            si_level=si_level,
         ):
             for side in ("e", "f"):
                 tp[side].update(
