@@ -34,6 +34,20 @@ Recovery:
 2. Increase SI-bin collapse aggressiveness or merge bins.
 3. Apply targeted fit overrides and compare diagnostics.
 
+VDYP fit-policy config surface
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- FEMIC-level default per-TSA smoothing exceptions live in
+  ``config/vdyp_fit_policy.yaml``.
+- Case-specific overrides can live beside the instance in
+  ``<instance_root>/config/vdyp_fit_policy.yaml``.
+- Normal precedence is:
+  explicit runtime override map -> instance-local YAML -> FEMIC default YAML ->
+  code fallback for missing/malformed shared defaults.
+- Use the instance-local overlay only for bounded, reviewable exceptions such
+  as accepted K3Z curve-specific tail handling. Do not treat it as a shortcut
+  for broad global smoothing-policy experiments.
+
 Unexpected cache/resume behavior
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

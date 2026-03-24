@@ -5966,3 +5966,38 @@
 - Added a parent regression test in `tests/test_docs_contract.py` that locks
   the `pctct` fragments contract to exact baseline geometry parity with no
   `AU` / `IFM` / `RETENTION` / `ORIGIN` / `SILV_STATE` drift.
+
+## 2026-03-24 - Closed `P23.11` with YAML-backed VDYP fit policy defaults and instance overlays
+- Opened GitHub feature issue `#9`, `Move VDYP fit overrides from code to a
+  YAML-backed policy surface`, before implementation so the design/tradeoffs
+  are traceable outside the roadmap.
+- Replaced the hard-coded TSA override map as the primary operator surface with
+  tracked YAML defaults in `config/vdyp_fit_policy.yaml`.
+- Added instance-local YAML overlay support in
+  `src/femic/pipeline/vdyp_overrides.py`, with auto-discovery from
+  `<instance_root>/config/vdyp_fit_policy.yaml` and merge precedence:
+  explicit runtime override map -> instance-local YAML -> FEMIC default YAML ->
+  narrow code fallback for missing/malformed shared defaults.
+- Landed the accepted K3Z-specific `CWHvm_DR+HW` smoothing exceptions in
+  `external/femic-k3z-instance/config/vdyp_fit_policy.yaml` so that case-level
+  tuning no longer requires editing parent FEMIC source code.
+- Updated operator/developer docs in:
+  - `docs/guides/stage-01a-vdyp-tipsy-input.rst`
+  - `docs/guides/troubleshooting.rst`
+  - `external/femic-k3z-instance/docs/getting-started.rst`
+  - `external/femic-k3z-instance/docs/edit-policy-and-scenarios.rst`
+  so the new config surface, precedence rules, and intended use are explicit.
+- Extended regression coverage in `tests/test_vdyp_overrides.py` for:
+  - default YAML reproduction of known TSA overrides;
+  - K3Z instance overlay loading;
+  - instance-overlay merge precedence;
+  - narrow fallback behavior;
+  - malformed instance-policy rejection.
+- Validation passed with:
+  - `.\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`
+  - `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`

@@ -1,0 +1,54 @@
+version: 1
+tsa_overrides:
+  "08":
+    - stratum: "BWBS_SB"
+      si: "H"
+      kwargs:
+        skip1: 30
+    - stratum: "BWBS_S"
+      si: "L"
+      kwargs:
+        skip1: 50
+    - stratum: "SWB_S"
+      si: "L"
+      kwargs:
+        skip1: 30
+    - stratum: "BWBS_AT"
+      si: "H"
+      kwargs:
+        skip1: 30
+  "16":
+    - stratum: "SWB_SX"
+      si: "L"
+      kwargs:
+        skip1: 30
+  "24":
+    - stratum: "ESSF_BL"
+      si: "L"
+      kwargs:
+        skip1: 30
+  "40":
+    - stratum: "BWBS_SX"
+      si: "L"
+      kwargs:
+        skip1: 30
+    - stratum: "SWB_SX"
+      si: "L"
+      kwargs:
+        skip1: 60
+        dx_c1: 1.0
+        dx_c2: 0.0
+  "41":
+    - stratum: "ESSF_BL"
+      si: "L"
+      kwargs:
+        skip1: 60
+    - stratum: "ESSF_SE"
+      si: "M"
+      kwargs:
+        skip1: 30
+  "29":
+    - stratum: "SBPS_PL"
+      si: "L"
+      kwargs:
+        skip1: 50

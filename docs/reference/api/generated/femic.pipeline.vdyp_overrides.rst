@@ -8,5 +8,6 @@
 
    .. autosummary::
    
+      load_vdyp_override_policy
       vdyp_kwarg_overrides_for_tsa
    

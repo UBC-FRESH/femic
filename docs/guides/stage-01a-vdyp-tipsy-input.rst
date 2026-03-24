@@ -26,6 +26,15 @@ VDYP Fitting and SI Splits
   unstable regressions.
 - Tail handling and outlier controls are needed when right-tail flattening or
   early-age anomalies appear in binned medians.
+- Default per-TSA smoothing exceptions now live in
+  ``config/vdyp_fit_policy.yaml``.
+- Instance-specific overlays can add or adjust those rules with
+  ``config/vdyp_fit_policy.yaml`` inside the active ``--instance-root``
+  checkout.
+- Override precedence is:
+  ``runtime kwarg_overrides_for_tsa`` -> instance-local YAML overlay ->
+  FEMIC-level YAML defaults -> narrow code fallback if the shared default YAML
+  is missing or malformed.
 
 TIPSY Input Boundary
 --------------------

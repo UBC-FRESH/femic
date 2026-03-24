@@ -757,12 +757,12 @@ notes.
   - [x] P23.10c Verify cloud distribution state: if sidecar is annexed, ensure `arbutus-s3` copy exists; if Git-tracked text, document that it is distributed via Git branch sync.
 
 ## Phase 23 Addendum: VDYP Fit Policy Config Surface (Nice-to-Have Later)
-- [ ] P23.11 Replace code-level VDYP fit overrides with a YAML-backed policy surface
-  - [ ] P23.11a Define FEMIC-level default VDYP fit/tail/toe parameters in a human-readable YAML config artifact instead of hard-coded Python defaults where practical.
-  - [ ] P23.11b Add per-instance YAML override support so case-specific fit rules (for example K3Z CWHvm_DR+HW tail relaxation) do not require editing src/femic/pipeline/vdyp_overrides.py.
-  - [ ] P23.11c Preserve a narrow code-level fallback seam only for exceptional cases that truly cannot be expressed cleanly in YAML.
-  - [ ] P23.11d Update developer/operator docs to explain the new config surface, override precedence, and when not to override fit behavior.
-  - [ ] P23.11e Open and link a dedicated GitHub feature-request issue before implementation so the design and tradeoffs are traceable outside the roadmap.
+- [x] P23.11 Replace code-level VDYP fit overrides with a YAML-backed policy surface
+  - [x] P23.11a Define FEMIC-level default VDYP fit/tail/toe parameters in a human-readable YAML config artifact instead of hard-coded Python defaults where practical.
+  - [x] P23.11b Add per-instance YAML override support so case-specific fit rules (for example K3Z CWHvm_DR+HW tail relaxation) do not require editing src/femic/pipeline/vdyp_overrides.py.
+  - [x] P23.11c Preserve a narrow code-level fallback seam only for exceptional cases that truly cannot be expressed cleanly in YAML.
+  - [x] P23.11d Update developer/operator docs to explain the new config surface, override precedence, and when not to override fit behavior.
+  - [x] P23.11e Open and link a dedicated GitHub feature-request issue before implementation so the design and tradeoffs are traceable outside the roadmap.
 
 
 ## Phase 24: FEMIC API Docs Rebuild + Agent-Friendly Technical Documentation
@@ -874,6 +874,47 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-24 (Phase 23 `P23.11` kickoff): start the VDYP fit-policy YAML
+  migration on branch `feature/vdyp-fit-policy-yaml`.
+  - Tracking issue:
+    - GitHub feature request `#9`:
+      `Move VDYP fit overrides from code to a YAML-backed policy surface`
+  - Immediate execution order:
+    - record the active design/tradeoffs in a dedicated issue artifact before
+      code changes so the planned YAML surface and fallback boundaries are
+      traceable outside chat;
+    - replace the hard-coded TSA/K3Z map in
+      `src/femic/pipeline/vdyp_overrides.py` with a repo-tracked human-readable
+      YAML policy surface for FEMIC defaults;
+    - add optional per-instance YAML overlay support so case-specific rules can
+      extend or override the defaults without editing Python;
+    - preserve only a narrow code-level fallback seam for malformed/missing
+      config or exceptional cases that cannot be expressed cleanly in YAML;
+    - update docs/tests so override precedence, expected file locations, and
+      operator usage are explicit and regression-covered.
+  - Success criterion:
+    - the current TSA and K3Z smoothing overrides can be reproduced from
+      tracked YAML artifacts, and operators no longer need to edit
+      `src/femic/pipeline/vdyp_overrides.py` for normal case-specific tuning.
+- 2026-03-24 (Phase 23 `P23.11` closeout): YAML-backed VDYP fit policy is now
+  the primary override surface in both parent FEMIC and the standalone K3Z
+  instance.
+  - Landed behavior:
+    - shared per-TSA defaults now live in `config/vdyp_fit_policy.yaml`;
+    - instance-local overlays now auto-resolve from
+      `<instance_root>/config/vdyp_fit_policy.yaml`;
+    - explicit runtime `kwarg_overrides_for_tsa` remains the highest-precedence
+      escape hatch;
+    - a narrow code fallback remains only for missing/malformed shared default
+      YAML.
+  - Validation and release evidence:
+    - GitHub issue `#9` was opened before implementation and linked above;
+    - parent docs build passes with
+      `.\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`;
+    - standalone K3Z docs build passes with
+      `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`;
+    - `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
+      and `pre-commit run --all-files` all pass.
 - 2026-03-23 (Phase 26 kickoff): the next K3Z milestone is a coordinated docs
   and CI repair pass, with the standalone K3Z docs treated as canonical and the
   parent FEMIC docs kept intentionally lightweight.

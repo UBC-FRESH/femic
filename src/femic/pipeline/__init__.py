@@ -52,6 +52,7 @@ from femic.pipeline.vdyp_curves import (
 )
 from femic.pipeline.vdyp_overrides import (
     DEFAULT_VDYP_KWARG_OVERRIDES,
+    load_vdyp_override_policy,
     vdyp_kwarg_overrides_for_tsa,
 )
 from femic.pipeline.stages import (
@@ -248,6 +249,7 @@ __all__ = [
     "prepend_quasi_origin_point",
     "process_vdyp_out",
     "DEFAULT_VDYP_KWARG_OVERRIDES",
+    "load_vdyp_override_policy",
     "vdyp_kwarg_overrides_for_tsa",
     "import_vdyp_tables",
     "write_vdyp_infiles_plylyr",
