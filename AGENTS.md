@@ -22,6 +22,8 @@ the repo root:
    - `pytest --version`
    - `pre-commit --version`
    - `sphinx-build --version`
+   - `gh --version`
+   - `gh auth status`
 3. Initialize submodules and materialize annex-backed public data:
    - `git submodule update --init --recursive`
    - `git annex version` (must work from shell; install system package if missing)
@@ -96,5 +98,15 @@ When contributing to this repository as the coding agent:
    - create at least one commit per completed roadmap task (or tightly related subtask bundle);
    - reference the phase/task ID in commit messages when applicable (for example, `P19.12`).
    Do this continuously during implementation so progress is checkpointed without user prompting.
+11. Treat GitHub issue hygiene as a required part of the development workflow:
+   - before starting a new feature, bug, docs push, or other non-trivial task, ensure `gh` is
+     available in the active shell and authenticated as the intended active GitHub user;
+   - use GitHub to find an existing relevant open issue first; if none exists, create a new issue
+     (`feature`, `bug`, `docs`, or similar as appropriate) before substantial implementation;
+   - link the governing GitHub issue in `ROADMAP.md` when the task becomes active so roadmap notes
+     and repo-hosted planning stay connected;
+   - when work status changes materially, update the issue accordingly (comment, retitle, relabel,
+     close on merge, or otherwise reconcile status) so the GitHub tracker reflects reality and does
+     not leave dropped or duplicated work behind.
 
 Treat these steps as the minimum bar for every milestone so manual reminders are not required.

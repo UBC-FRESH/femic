@@ -6001,3 +6001,16 @@
   - `mypy src`
   - `pytest`
   - `pre-commit run --all-files`
+
+## 2026-03-24 - Tightened `AGENTS.md` workflow contract around GitHub issue tracking
+- Updated `AGENTS.md` bootstrap expectations so fresh working shells now verify
+  both `gh --version` and `gh auth status` alongside the existing FEMIC toolchain
+  checks.
+- Added an explicit development-workflow rule that each new non-trivial
+  feature/bug/docs task must:
+  - confirm GitHub CLI availability/auth for the active user;
+  - search for an existing open GitHub issue first, or create one before
+    substantial implementation;
+  - link the governing issue back into `ROADMAP.md` when work becomes active;
+  - reconcile the issue status as work progresses/closes so roadmap planning and
+    GitHub tracking stay aligned and reduce tail-chasing / dropped-ball risk.
