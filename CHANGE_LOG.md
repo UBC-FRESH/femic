@@ -5854,3 +5854,16 @@
 - Diagnosed the parent `docs-pages` GitHub Actions failure to the clean-checkout API-doc surface: curated pages under `docs/reference/api/` were referencing `docs/reference/api/generated/*.rst` pages that existed locally but were not tracked in git.
 - Added the generated API `.rst` stubs to the repo and extended `tests/test_docs_contract.py` so curated API pages now fail tests if they reference missing or untracked generated docs.
 - Recorded the next urgent post-docs follow-up explicitly in the roadmap: `pctct` currently materializes only total managed yield/account surfaces in `forestmodel_pctct.xml` and `tracks_pctct`, so species-wise managed yield / harvested-volume accounts need to be restored in a separate bug-fix milestone.
+
+## 2026-03-23 - Polished and closed out the K3Z docs upgrade branch
+- Tightened the standalone K3Z docs with a more practical launch-selector layer in `getting-started.rst`, `variants-and-subvariants.rst`, and `operator-runbook.rst` so students/operators can choose the right surface quickly.
+- Corrected an accuracy nit in `model-anatomy.rst` (`config/silviculture.k3z.ctfert.yaml` is the CT/fert config path) and added a dedicated CT/fert QA section in `rebuild-and-qa.rst`.
+- Made the docs more operator-safe by documenting the currently known `pctct` limitation explicitly across the K3Z guide set and troubleshooting workflow: the `PCT -> CT` treatment path is real, but species-wise managed growing-stock / harvest-volume accounts still need a separate bug fix.
+- Revalidated the milestone after the polish pass with:
+  - parent docs build (`.\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`);
+  - standalone K3Z docs build (`..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`);
+  - `ruff format src tests`;
+  - `ruff check src tests`;
+  - `mypy src`;
+  - `pytest`;
+  - `pre-commit run --all-files`.

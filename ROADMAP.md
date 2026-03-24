@@ -840,18 +840,18 @@ notes.
     subvariant meanings, and launch workflow are auditable and repeatable.
 
 ## Phase 26: K3Z Variant Docs Upgrade + Parent Docs CI Repair
-- [ ] P26.1 Expand the canonical standalone K3Z docs for variants, subvariants, and old-growth semantics
-  - [ ] P26.1a Add dedicated standalone K3Z docs pages for variant/subvariant navigation, intensive-silviculture logic, and `og1` / `og2` semantics.
-  - [ ] P26.1b Update the existing standalone K3Z getting-started, model-anatomy, operator-runbook, rebuild/QA, and scenario pages so they summarize and link to the deeper variant/treatment/old-growth pages rather than holding fragmented partial detail.
-  - [ ] P26.1c Document the full K3Z runtime matrix for `base`, `ctfert`, `pctct`, and the four baseline-derived overlay subvariants (`basecase_riparian`, `basecase_sum`, `scenario1_sum`, `scenario2_sum`), including launch pairings, artifact families, intended teaching use, and expected account-surface consequences.
-- [ ] P26.2 Publish detailed treatment-logic and overlay provenance guidance
-  - [ ] P26.2a Document the exact `ctfert` treatment parameters, gating fields, sequencing, and assumptions from `config/silviculture.k3z.ctfert.yaml`, including CT/F1/F2/F3 timing and the retained low-yield strata policy.
-  - [ ] P26.2b Document the exact `pctct` treatment parameters, gating fields, sequencing, and assumptions from `config/silviculture.k3z.pctct.yaml`, including planted-only PCT, HW removal, and the `CC -> PCT -> CT` chain.
-  - [ ] P26.2c Record the student overlay provenance and join contract (`FEATURE_ID1` bridge, four workbook RETENTION columns, `blocks.shp` join path, and managed-species dropout behavior under high-retention overlays).
-- [ ] P26.3 Repair parent FEMIC docs Pages builds so clean-checkout Sphinx runs are reliable
-  - [ ] P26.3a Land the missing tracked `docs/reference/api/generated/*.rst` stubs referenced by the curated API pages so the parent docs build succeeds from a clean checkout, not just a warm working tree.
-  - [ ] P26.3b Add docs-contract coverage that fails when curated API pages reference untracked/nonexistent generated docs.
-  - [ ] P26.3c Refresh the lightweight parent `docs/sample-models/k3z.rst` pointer page so it explicitly routes readers to the standalone K3Z docs for variant selection, overlay subvariants, treatment sequencing, and old-growth semantics.
+- [x] P26.1 Expand the canonical standalone K3Z docs for variants, subvariants, and old-growth semantics
+  - [x] P26.1a Add dedicated standalone K3Z docs pages for variant/subvariant navigation, intensive-silviculture logic, and `og1` / `og2` semantics.
+  - [x] P26.1b Update the existing standalone K3Z getting-started, model-anatomy, operator-runbook, rebuild/QA, and scenario pages so they summarize and link to the deeper variant/treatment/old-growth pages rather than holding fragmented partial detail.
+  - [x] P26.1c Document the full K3Z runtime matrix for `base`, `ctfert`, `pctct`, and the four baseline-derived overlay subvariants (`basecase_riparian`, `basecase_sum`, `scenario1_sum`, `scenario2_sum`), including launch pairings, artifact families, intended teaching use, and expected account-surface consequences.
+- [x] P26.2 Publish detailed treatment-logic and overlay provenance guidance
+  - [x] P26.2a Document the exact `ctfert` treatment parameters, gating fields, sequencing, and assumptions from `config/silviculture.k3z.ctfert.yaml`, including CT/F1/F2/F3 timing and the retained low-yield strata policy.
+  - [x] P26.2b Document the exact `pctct` treatment parameters, gating fields, sequencing, and assumptions from `config/silviculture.k3z.pctct.yaml`, including planted-only PCT, HW removal, and the `CC -> PCT -> CT` chain.
+  - [x] P26.2c Record the student overlay provenance and join contract (`FEATURE_ID1` bridge, four workbook RETENTION columns, `blocks.shp` join path, and managed-species dropout behavior under high-retention overlays).
+- [x] P26.3 Repair parent FEMIC docs Pages builds so clean-checkout Sphinx runs are reliable
+  - [x] P26.3a Land the missing tracked `docs/reference/api/generated/*.rst` stubs referenced by the curated API pages so the parent docs build succeeds from a clean checkout, not just a warm working tree.
+  - [x] P26.3b Add docs-contract coverage that fails when curated API pages reference untracked/nonexistent generated docs.
+  - [x] P26.3c Refresh the lightweight parent `docs/sample-models/k3z.rst` pointer page so it explicitly routes readers to the standalone K3Z docs for variant selection, overlay subvariants, treatment sequencing, and old-growth semantics.
 
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
@@ -887,6 +887,22 @@ notes.
     - follow-up success criterion: restore species-wise managed yield and
       harvested-volume accounts in `pctct` without regressing the intended
       `PCT -> CT` treatment chain.
+- 2026-03-23 (Phase 26 closeout): the K3Z docs push and parent docs CI repair
+  are complete on `feature/k3z-docs-upgrade`.
+  - Closeout polish landed:
+    - a practical launch-selector layer across the standalone K3Z docs;
+    - corrected CT/fert config-path wording and tighter operator QA wording;
+    - explicit documentation that the current `pctct` species-wise managed
+      growing-stock / harvest-volume disappearance is a known bug, not
+      intended variant behavior.
+  - Validation and release evidence:
+    - parent docs build passes with `.\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`;
+    - standalone K3Z docs build passes with `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`;
+    - parent clean-checkout Sphinx simulation passes;
+    - `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
+      and `pre-commit run --all-files` all pass.
+  - Next task should start on a distinct bug-fix branch focused on restoring
+    species-wise managed yield / harvested-volume accounts for `pctct`.
 - 2026-03-23 (Phase 25 execution checkpoint): the K3Z student overlay import,
   join, and baseline-derived Patchworks subvariant compile path is now working
   end to end.
