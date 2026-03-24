@@ -835,6 +835,44 @@ def test_k3z_ctfert_checked_in_surface_preserves_baseline_geometry_footprint() -
     assert set(retention_diff["RETENTION_ctfert"]) == {1.0}
 
 
+def test_k3z_pctct_checked_in_surface_preserves_baseline_geometry_footprint() -> None:
+    gpd = pytest.importorskip("geopandas")
+
+    baseline_path = (
+        K3Z_INSTANCE_ROOT / "output/patchworks_k3z_validated/fragments/fragments.shp"
+    )
+    pctct_path = (
+        K3Z_INSTANCE_ROOT
+        / "output/patchworks_k3z_pctct_validated/fragments/fragments.shp"
+    )
+    baseline = gpd.read_file(baseline_path)[
+        ["AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE", "geometry"]
+    ].copy()
+    pctct = gpd.read_file(pctct_path)[
+        ["AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE", "geometry"]
+    ].copy()
+
+    baseline["geom_key"] = baseline.geometry.to_wkb(hex=True)
+    pctct["geom_key"] = pctct.geometry.to_wkb(hex=True)
+    merged = baseline.merge(
+        pctct.drop(columns="geometry"),
+        on="geom_key",
+        how="outer",
+        suffixes=("_baseline", "_pctct"),
+        indicator=True,
+    )
+
+    assert len(baseline) == 218
+    assert len(pctct) == 218
+    assert set(merged["_merge"]) == {"both"}
+
+    both = merged[merged["_merge"] == "both"]
+    for col in ("AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE"):
+        assert (both[f"{col}_baseline"] == both[f"{col}_pctct"]).all(), (
+            f"pctct differs from baseline in {col}"
+        )
+
+
 def test_fhops_aligned_sphinx_template_contract() -> None:
     parent_conf = Path("docs/conf.py").read_text()
     standalone_conf = (K3Z_INSTANCE_ROOT / "docs/conf.py").read_text()

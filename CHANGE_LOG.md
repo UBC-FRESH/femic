@@ -5951,3 +5951,18 @@
 - Added parent regression coverage in `tests/test_docs_contract.py` so future
   drift fails tests if the checked-in CT/fert fragments surface stops matching
   the baseline geometry footprint or the expected 9 full-retention overrides.
+
+## 2026-03-24 - Aligned `pctct` rebuild contract wording with `ctfert`
+- Tightened `external/femic-k3z-instance/config/patchworks.variant.pctct.yaml`
+  so it now mirrors the explicit `ctfert` rebuild-contract style: refresh the
+  canonical ForestModel from current bundle/checkpoint inputs, but keep the
+  accepted checked-in `pctct` fragments surface unless the
+  baseline-footprint invariants still hold.
+- Updated the standalone K3Z runbook/QA docs in:
+  - `external/femic-k3z-instance/docs/rebuild-and-qa.rst`
+  - `external/femic-k3z-instance/docs/operator-runbook.rst`
+  so the `pctct` guidance now matches `ctfert` structurally and differs only in
+  treatment-sequence expectations.
+- Added a parent regression test in `tests/test_docs_contract.py` that locks
+  the `pctct` fragments contract to exact baseline geometry parity with no
+  `AU` / `IFM` / `RETENTION` / `ORIGIN` / `SILV_STATE` drift.

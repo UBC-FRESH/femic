@@ -1060,6 +1060,20 @@ notes.
     - `femic patchworks matrix-build --instance-root external/femic-k3z-instance --config tmp_p229e_runtime_ctfert_probe.yaml --run-id k3z_ctfert_p229e_probe`
       completed successfully against the accepted CT/fert fragments surface
       (`218` fragment records; `CT/F1/F2/F3` tracks materialized).
+- 2026-03-24 (Phase 22 variant-contract symmetry pass): aligned `pctct` docs
+  and rebuild contract wording with the explicit `ctfert` contract so the two
+  intensive-silviculture variants now diverge only in treatment-path logic.
+  - Result:
+    - `config/patchworks.variant.pctct.yaml` now states the accepted `pctct`
+      fragments surface must preserve the baseline 218-fragment teaching
+      footprint exactly, mirroring the explicit contract style already used for
+      `ctfert`;
+    - standalone K3Z runbook/QA docs now say `pctct` rebuilds should refresh
+      the canonical ForestModel from current inputs but keep the checked-in
+      fragments surface unless the baseline-footprint invariants still hold;
+    - parent regression coverage now checks that baseline and `pctct`
+      fragments surfaces remain geometry-identical with no
+      `AU`/`IFM`/`RETENTION`/`ORIGIN`/`SILV_STATE` drift.
 - 2026-03-23 (Phase 25 execution checkpoint): the K3Z student overlay import,
   join, and baseline-derived Patchworks subvariant compile path is now working
   end to end.
