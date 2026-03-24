@@ -450,6 +450,7 @@ def test_k3z_instance_standalone_docs_scaffold_exists() -> None:
     for slug in (
         "getting-started",
         "variants-and-subvariants",
+        "overlay-subvariants-workflow",
         "silviculture-logic",
         "old-growth-attributes",
         "model-anatomy",
@@ -506,6 +507,27 @@ def test_k3z_instance_standalone_docs_required_sections_and_navigation() -> None
         "tracks_overlay_scenario2_sum",
     ):
         assert snippet in variants_text
+
+    overlay_text = (docs_root / "overlay-subvariants-workflow.rst").read_text()
+    for heading in (
+        "Purpose",
+        "Current Source Contract",
+        "Subvariant Meaning Map",
+        "Repeatable Student Workflow",
+        "Repeatable Launch Workflow",
+        "Current Validation Snapshot",
+        "Audit Checklist",
+    ):
+        assert heading in overlay_text
+    for snippet in (
+        "Fragments_Retention_HSmith.xls",
+        "FEATURE_ID1",
+        "Basecase_Riparian",
+        "config/patchworks.runtime.overlay.basecase_sum.windows.yaml",
+        "k3z_overlay_basecase_riparian",
+        "89.065662 ha",
+    ):
+        assert snippet in overlay_text
 
     silv_text = (docs_root / "silviculture-logic.rst").read_text()
     for heading in (

@@ -5899,3 +5899,21 @@
 - The "PCT->CT Variant Shows Total Managed Yield But Species Accounts Are Missing" section is now framed as a future-regression workflow, not as a current limitation.
 - Rebuilt the standalone K3Z docs with warnings-as-errors:
   - `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`
+
+## 2026-03-24 - Closed the K3Z overlay guidance gap for students and operators
+- Completed `P25.4b` by adding a dedicated standalone K3Z docs page,
+  `external/femic-k3z-instance/docs/overlay-subvariants-workflow.rst`, that
+  documents the overlay source contract, `FEATURE_ID1` key quirk, `blocks.shp`
+  bridge, subvariant meaning map, repeatable launch pairings, validation
+  totals, and an audit checklist in one place.
+- Updated the surrounding standalone K3Z guide pages so overlay guidance is now
+  easy to find from `getting-started.rst`, `variants-and-subvariants.rst`,
+  `operator-runbook.rst`, `rebuild-and-qa.rst`, and
+  `edit-policy-and-scenarios.rst`.
+- Extended `tests/test_docs_contract.py` so the overlay workflow page and its
+  required headings/snippets are checked in the parent repo contract tests.
+- Validation evidence:
+  - standalone K3Z docs build passed (`..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`);
+  - parent docs build passed (`.\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`);
+  - targeted docs contract coverage passed (`.\.venv\Scripts\python.exe -m pytest tests/test_docs_contract.py -k "k3z_instance_standalone_docs"`);
+  - `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`, and `pre-commit run --all-files` all passed.

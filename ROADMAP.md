@@ -807,7 +807,7 @@ notes.
   - [x] P24.4c Record a follow-up GitHub feature issue for any remaining agent-facing docs gaps that should be iterated outside this phase.
 
 ## Phase 25: K3Z Student Overlay RETENTION Subvariants
-- [ ] P25.1 Capture the student-overlay import/join contract and execution plan
+- [x] P25.1 Capture the student-overlay import/join contract and execution plan
   - [x] P25.1a Record the source/provenance handoff for the abandoned student GIS
     inventory, the repo-local `tmp/` import target, and the required join key
     contract (`FEATURE_ID` -> `FEATURE_ID`).
@@ -833,10 +833,10 @@ notes.
     teaching assumptions unchanged.
   - [x] P25.3c Add explicit config/runtime/PIN naming so students can launch the
     overlay subvariants without ambiguity.
-- [ ] P25.4 Validate and document the overlay subvariant workflow
+- [x] P25.4 Validate and document the overlay subvariant workflow
   - [x] P25.4a Add checks for join coverage, null RETENTION values, and expected
     managed/unmanaged area deltas across the four subvariants.
-  - [ ] P25.4b Update K3Z runbooks/student guidance so the overlay source,
+  - [x] P25.4b Update K3Z runbooks/student guidance so the overlay source,
     subvariant meanings, and launch workflow are auditable and repeatable.
 
 ## Phase 26: K3Z Variant Docs Upgrade + Parent Docs CI Repair
@@ -953,6 +953,49 @@ notes.
       reports `species=8` and `complete_species=8`;
     - `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
       and `pre-commit run --all-files` all pass.
+- 2026-03-24 (Phase 25 P25.4b kickoff): close the overlay docs gap on branch
+  `feature/k3z-overlay-guidance-closeout`.
+  - Immediate execution order:
+    - consolidate the existing overlay references into one explicit
+      student/operator workflow page in the standalone K3Z docs;
+    - document the source workbook provenance, `FEATURE_ID1` key quirk,
+      `blocks.shp` bridge, subvariant meanings, launch pairings, and QA checks
+      in one place;
+    - update the surrounding K3Z guide pages so the overlay workflow is easy
+      to find from getting-started, runbook, rebuild/QA, and scenario pages.
+  - Success criterion:
+    - `P25.4b` is complete when a student/operator can identify the four
+      overlay subvariants, understand what each one means, reproduce the
+      launch workflow, and audit the source/join contract without needing the
+      earlier planning note or chat history.
+- 2026-03-24 (Phase 25 P25.4b closeout): the K3Z overlay workflow is now
+  documented as a repeatable student/operator procedure rather than being
+  scattered across planning notes and variant docs.
+  - Result:
+    - added standalone K3Z page
+      `external/femic-k3z-instance/docs/overlay-subvariants-workflow.rst`
+      covering workbook provenance, the `FEATURE_ID1` key quirk, the
+      `blocks.shp` bridge, the four retention fields, subvariant meaning map,
+      repeatable launch pairings, validation totals, and an audit checklist;
+    - updated the surrounding standalone K3Z guide set so getting-started,
+      variants, operator-runbook, rebuild/QA, and scenario guidance all route
+      readers to the overlay workflow page from the places students/operators
+      already look first;
+    - extended `tests/test_docs_contract.py` so the overlay workflow page and
+      its critical sections cannot disappear silently in a future docs refactor.
+  - Validation evidence:
+    - standalone K3Z docs build passes with
+      `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`;
+    - parent docs build passes with
+      `.\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`;
+    - `pytest tests/test_docs_contract.py -k "k3z_instance_standalone_docs"`
+      passes;
+    - full milestone validation (`ruff format src tests`, `ruff check src tests`,
+      `mypy src`, `pytest`, `pre-commit run --all-files`) now passes.
+  - Leading edge after this closeout:
+    - Phase 25 is complete; the next K3Z backlog items remain the CT/fert
+      canonical rebuild follow-up (`P22.9e`) and the VDYP override policy
+      surface cleanup (`P23.11`) unless reprioritized.
 - 2026-03-23 (Phase 25 execution checkpoint): the K3Z student overlay import,
   join, and baseline-derived Patchworks subvariant compile path is now working
   end to end.
