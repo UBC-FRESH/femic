@@ -5867,3 +5867,13 @@
   - `mypy src`;
   - `pytest`;
   - `pre-commit run --all-files`.
+
+## 2026-03-24 - Corrected K3Z PCT docs terminology for `HW`
+- Updated the standalone K3Z docs so `HW` is described accurately as Western Hemlock rather than as "hardwood".
+- Corrected the affected `pctct` wording in:
+  - `external/femic-k3z-instance/docs/getting-started.rst`
+  - `external/femic-k3z-instance/docs/model-anatomy.rst`
+  - `external/femic-k3z-instance/docs/silviculture-logic.rst`
+- Removed the misleading "conifer-only" summary in favor of wording that simply states the `HW` species component is removed from the managed composition.
+- Rebuilt the standalone K3Z docs with warnings-as-errors:
+  - `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`
