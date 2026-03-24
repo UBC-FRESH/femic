@@ -5893,3 +5893,9 @@
   - standalone K3Z docs build passed (`..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`);
   - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml` reported `accounts=264`, `species=8`, and `complete_species=8`;
   - `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`, and `pre-commit run --all-files` all passed.
+
+## 2026-03-24 - Clarified that missing `pctct` species accounts is now only a regression playbook
+- Tightened `external/femic-k3z-instance/docs/troubleshooting.rst` so it explicitly says the checked-in `pctct` surface should now retain species-wise managed yield / harvest-volume accounts.
+- The "PCT->CT Variant Shows Total Managed Yield But Species Accounts Are Missing" section is now framed as a future-regression workflow, not as a current limitation.
+- Rebuilt the standalone K3Z docs with warnings-as-errors:
+  - `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`
