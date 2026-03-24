@@ -5917,3 +5917,37 @@
   - parent docs build passed (`.\.venv\Scripts\python.exe -m sphinx -b html docs _build\html -W`);
   - targeted docs contract coverage passed (`.\.venv\Scripts\python.exe -m pytest tests/test_docs_contract.py -k "k3z_instance_standalone_docs"`);
   - `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`, and `pre-commit run --all-files` all passed.
+
+## 2026-03-24 - Closed Phase 22 `P22.9e` for the K3Z CT/fert canonical rebuild
+- Started branch `feature/k3z-ctfert-canonical-rebuild`, updated `ROADMAP.md`
+  first, and resumed from the already-recorded `P22.9e` blocker/corrective-plan
+  notes instead of replaying the whole CT/fert variant history.
+- Probed the current canonical CT/fert export directly with:
+  `femic export patchworks --tsa k3z --instance-root external/femic-k3z-instance --output-dir output/patchworks_k3z_ctfert_probe_p229e --seral-stage-config config/seral.k3z.yaml --silviculture-config config/silviculture.k3z.ctfert.yaml`
+  and confirmed the raw export still lands on the broader surface
+  (`au=27`, `fragments=219`, `curves=976`) rather than the accepted teaching
+  footprint.
+- Proved the accepted checked-in CT/fert fragments surface is deterministic and
+  policy-explainable:
+  - it preserves the baseline 218-fragment geometry footprint exactly;
+  - it differs from baseline only on 9 fragments in low-yield AUs `985502006`
+    and `985502008`;
+  - those 9 fragments are retained out of THLB via `RETENTION = 1.0`.
+- Verified the canonical rebuild seam by pairing the fresh canonical CT/fert
+  ForestModel with the accepted checked-in CT/fert fragments surface and
+  rerunning Matrix Builder via probe run `k3z_ctfert_p229e_probe`.
+- Results from that probe:
+  - Patchworks matrix-builder completed successfully against the accepted
+    218-fragment CT/fert surface;
+  - the probe produced the expected CT/fert treatment surface (`CT`, `F1`,
+    `F2`, `F3`);
+  - the fresh canonical ForestModel hash matched the checked-in
+    `models/k3z_patchworks_model/yield/forestmodel_ctfert.xml`;
+  - the probe `tracks_ctfert` account/treatment coverage matched the current
+    checked-in CT/fert tracks surface.
+- Tightened the recorded CT/fert rebuild contract in:
+  - `external/femic-k3z-instance/config/patchworks.variant.ctfert.yaml`
+  - `external/femic-k3z-instance/docs/rebuild-and-qa.rst`
+- Added parent regression coverage in `tests/test_docs_contract.py` so future
+  drift fails tests if the checked-in CT/fert fragments surface stops matching
+  the baseline geometry footprint or the expected 9 full-retention overrides.

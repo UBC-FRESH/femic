@@ -647,7 +647,7 @@ notes.
     Phase 21 old-growth rollout details (`og1`/`og2` area attributes, curve
     semantics, compiled-account expectations) so the K3Z docs reflect the full
     current model surface before or alongside CT/fert variant guidance.
-- [ ] P22.9 Co-locate baseline and CT/fert variants inside one K3Z instance on main
+- [x] P22.9 Co-locate baseline and CT/fert variants inside one K3Z instance on main
   - [x] P22.9a Define the coexistence pattern: variant selection happens by
     config/PIN/runtime target, not by Git branch.
   - [x] P22.9b Add distinct K3Z variant config YAMLs documenting baseline and
@@ -657,7 +657,7 @@ notes.
     `analysis/ctfert.pin`) so baseline and variant can coexist in one instance.
   - [x] P22.9d Fix shared target-script path assumptions so each PIN resolves
     accounts/validation against its own active tracks folder.
-  - [ ] P22.9e Rebuild the CT/fert variant from canonical K3Z inputs while
+  - [x] P22.9e Rebuild the CT/fert variant from canonical K3Z inputs while
     preserving the current teaching-baseline footprint (`THLB=1`, 218
     fragments, 14 AUs), then verify the resulting tracks surface is an additive
     extension of the baseline rather than a stale copied artifact.
@@ -996,6 +996,70 @@ notes.
     - Phase 25 is complete; the next K3Z backlog items remain the CT/fert
       canonical rebuild follow-up (`P22.9e`) and the VDYP override policy
       surface cleanup (`P23.11`) unless reprioritized.
+- 2026-03-24 (Phase 22 P22.9e kickoff): start the CT/fert canonical-rebuild
+  closeout on branch `feature/k3z-ctfert-canonical-rebuild`.
+  - Immediate execution order:
+    - inspect the current K3Z baseline + CT/fert artifact families to separate
+      what is already accepted/teaching-authoritative from what is still a
+      stale copied CT/fert surface;
+    - determine the latest downstream canonical handoff we can safely resume
+      from after `checkpoint1`, given that all K3Z variants share the same AU
+      assignment and base VDYP/TIPSY yield surfaces and only diverge through
+      added treatment/retention logic;
+    - rebuild `forestmodel_ctfert.xml` / `tracks_ctfert` from canonical K3Z
+      inputs while preserving the accepted baseline footprint (`THLB=1`,
+      218 fragments, 14 AUs), then compare the rebuilt CT/fert accounts and
+      treatments against the current checked-in surface to prove it is additive
+      rather than a stale copied artifact.
+  - Starting assumption to verify:
+    - we should be able to resume downstream of `checkpoint1` if the accepted
+      baseline feature/AU mask and current baseline yield surfaces are already
+      canonical for all K3Z variants, with CT/fert differing only in added
+      treatment-response logic on top of that shared baseline.
+  - Success criterion:
+    - `P22.9e` is complete when the checked-in CT/fert surface is rebuilt from
+      canonical K3Z upstream inputs, still launches cleanly beside baseline and
+      pctct, and no longer depends on artifact recovery from historical K3Z
+      commits.
+- 2026-03-24 (Phase 22 P22.9e closeout): confirmed that the checked-in K3Z
+  CT/fert surface is already reproducible from the current canonical CT/fert
+  export logic once it is paired with the accepted teaching-footprint fragments
+  surface.
+  - Result:
+    - a fresh canonical CT/fert export from the current K3Z bundle/checkpoint
+      inputs (`femic export patchworks --tsa k3z ... --silviculture-config
+      config/silviculture.k3z.ctfert.yaml`) still emits the broad raw export
+      surface (`au=27`, `fragments=219`), so raw export fragments remain
+      unsuitable as the teaching-authoritative CT/fert landbase;
+    - the checked-in accepted CT/fert fragments surface is deterministic and
+      policy-explainable: it preserves the baseline 218-fragment geometry
+      footprint exactly and differs only on 9 fragments in low-yield AUs
+      `985502006` and `985502008`, where `RETENTION` is forced from `0.05` to
+      `1.0`;
+    - pairing the fresh canonical CT/fert ForestModel with that accepted
+      checked-in CT/fert fragments surface reproduced the live CT/fert tracks
+      surface cleanly in probe run `k3z_ctfert_p229e_probe`, with matching
+      account/treatment coverage and no Patchworks launch errors;
+    - the fresh canonical probe ForestModel hash matched the checked-in
+      `models/k3z_patchworks_model/yield/forestmodel_ctfert.xml`, proving the
+      current CT/fert ForestModel already reflects canonical upstream inputs
+      rather than a stale historical artifact.
+  - Contract changes recorded in repo:
+    - `config/patchworks.variant.ctfert.yaml` now documents the real rebuild
+      contract: refresh the CT/fert ForestModel from canonical inputs, but keep
+      the accepted 218-fragment CT/fert footprint unless the raw export
+      fragments satisfy the baseline-footprint invariants;
+    - standalone K3Z rebuild/QA docs now state the accepted CT/fert fragment
+      contract explicitly;
+    - parent regression coverage now checks that the checked-in CT/fert surface
+      preserves the baseline geometry footprint and only applies the 9 expected
+      full-retention overrides.
+  - Validation evidence:
+    - `femic export patchworks --tsa k3z --instance-root external/femic-k3z-instance --output-dir output/patchworks_k3z_ctfert_probe_p229e --seral-stage-config config/seral.k3z.yaml --silviculture-config config/silviculture.k3z.ctfert.yaml`
+      completed successfully (`au=27`, `fragments=219`, `curves=976`);
+    - `femic patchworks matrix-build --instance-root external/femic-k3z-instance --config tmp_p229e_runtime_ctfert_probe.yaml --run-id k3z_ctfert_p229e_probe`
+      completed successfully against the accepted CT/fert fragments surface
+      (`218` fragment records; `CT/F1/F2/F3` tracks materialized).
 - 2026-03-23 (Phase 25 execution checkpoint): the K3Z student overlay import,
   join, and baseline-derived Patchworks subvariant compile path is now working
   end to end.

@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 import subprocess
 
+import pytest
 from typer.testing import CliRunner
 import yaml
 
@@ -788,6 +789,50 @@ def test_k3z_pctct_checked_in_surface_keeps_species_wise_managed_accounts() -> N
     )
     assert "product.Treated.managed.PCT" in labels
     assert "product.Treated.managed.CT" in labels
+
+
+def test_k3z_ctfert_checked_in_surface_preserves_baseline_geometry_footprint() -> None:
+    gpd = pytest.importorskip("geopandas")
+
+    baseline_path = (
+        K3Z_INSTANCE_ROOT / "output/patchworks_k3z_validated/fragments/fragments.shp"
+    )
+    ctfert_path = (
+        K3Z_INSTANCE_ROOT
+        / "output/patchworks_k3z_ctfert_validated/fragments/fragments.shp"
+    )
+    baseline = gpd.read_file(baseline_path)[
+        ["AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE", "geometry"]
+    ].copy()
+    ctfert = gpd.read_file(ctfert_path)[
+        ["AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE", "geometry"]
+    ].copy()
+
+    baseline["geom_key"] = baseline.geometry.to_wkb(hex=True)
+    ctfert["geom_key"] = ctfert.geometry.to_wkb(hex=True)
+    merged = baseline.merge(
+        ctfert.drop(columns="geometry"),
+        on="geom_key",
+        how="outer",
+        suffixes=("_baseline", "_ctfert"),
+        indicator=True,
+    )
+
+    assert len(baseline) == 218
+    assert len(ctfert) == 218
+    assert set(merged["_merge"]) == {"both"}
+
+    both = merged[merged["_merge"] == "both"]
+    for col in ("AU", "IFM", "ORIGIN", "SILV_STATE"):
+        assert (both[f"{col}_baseline"] == both[f"{col}_ctfert"]).all(), (
+            f"ctfert differs from baseline in {col}"
+        )
+
+    retention_diff = both[both["RETENTION_baseline"] != both["RETENTION_ctfert"]]
+    assert len(retention_diff) == 9
+    assert set(retention_diff["AU_baseline"]) == {985502006, 985502008}
+    assert set(retention_diff["RETENTION_baseline"]) == {0.05}
+    assert set(retention_diff["RETENTION_ctfert"]) == {1.0}
 
 
 def test_fhops_aligned_sphinx_template_contract() -> None:
