@@ -723,6 +723,51 @@ def test_k3z_standalone_docs_do_not_reference_parent_repo_paths() -> None:
             assert snippet not in text, f"{path} references parent-repo path: {snippet}"
 
 
+def test_k3z_pctct_checked_in_surface_keeps_species_wise_managed_accounts() -> None:
+    forestmodel_path = (
+        K3Z_INSTANCE_ROOT / "models/k3z_patchworks_model/yield/forestmodel_pctct.xml"
+    )
+    forestmodel_text = forestmodel_path.read_text(encoding="utf-8")
+    assert re.search(r"feature\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", forestmodel_text)
+    assert re.search(r"product\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", forestmodel_text)
+    assert re.search(
+        r"product\.HarvestedVolume\.managed\.(?!Total\b)[A-Z0-9]+\.(CC|CT)",
+        forestmodel_text,
+    )
+
+    accounts_path = (
+        K3Z_INSTANCE_ROOT / "models/k3z_patchworks_model/tracks_pctct/accounts.csv"
+    )
+    products_path = (
+        K3Z_INSTANCE_ROOT / "models/k3z_patchworks_model/tracks_pctct/products.csv"
+    )
+    with accounts_path.open(newline="", encoding="utf-8") as fh:
+        account_rows = list(csv.DictReader(fh))
+    with products_path.open(newline="", encoding="utf-8") as fh:
+        product_rows = list(csv.DictReader(fh))
+
+    accounts = {row["ACCOUNT"] for row in account_rows}
+    labels = {row["LABEL"] for row in product_rows}
+
+    assert any(
+        re.fullmatch(r"feature\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", account)
+        for account in accounts
+    )
+    assert any(
+        re.fullmatch(r"product\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", account)
+        for account in accounts
+    )
+    assert any(
+        re.fullmatch(
+            r"product\.HarvestedVolume\.managed\.(?!Total\b)[A-Z0-9]+\.(CC|CT)",
+            account,
+        )
+        for account in accounts
+    )
+    assert "product.Treated.managed.PCT" in labels
+    assert "product.Treated.managed.CT" in labels
+
+
 def test_fhops_aligned_sphinx_template_contract() -> None:
     parent_conf = Path("docs/conf.py").read_text()
     standalone_conf = (K3Z_INSTANCE_ROOT / "docs/conf.py").read_text()

@@ -5877,3 +5877,19 @@
 - Removed the misleading "conifer-only" summary in favor of wording that simply states the `HW` species component is removed from the managed composition.
 - Rebuilt the standalone K3Z docs with warnings-as-errors:
   - `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`
+
+## 2026-03-24 - Restored species-wise managed accounts for the K3Z `pctct` variant
+- Started the distinct bug-fix branch `bugfix/k3z-pctct-species-accounts` and recorded Phase 27 in `ROADMAP.md` before implementation.
+- Diagnosed the regression all the way through the checked-in artifact surface:
+  - the parent FEMIC export path can still generate species-wise `pctct` managed yield / harvested-volume surfaces;
+  - the checked-in K3Z `pctct` ForestModel/tracks surface had gone stale and was the layer collapsed to `product.Yield.managed.Total` / `feature.Yield.managed.Total` only.
+- Repaired the checked-in K3Z `pctct` surface by:
+  - refreshing `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pctct.xml` from a current good species-wise export probe;
+  - rerunning Patchworks Matrix Builder for `config/patchworks.runtime.pctct.windows.yaml`;
+  - updating `tracks_pctct/{accounts,protoaccounts,products,features,curves,treatments}.csv` so species-wise managed yield / harvested-volume accounts are present again alongside `PCT` and `CT`.
+- Removed the now-stale `pctct` limitation notes from the standalone K3Z docs and updated the runbook/QA language to treat any future `Total`-only `pctct` surface as a regression, not expected behavior.
+- Added a parent repo contract test in `tests/test_docs_contract.py` that fails if the checked-in `pctct` ForestModel/tracks surface ever regresses back to `Total`-only managed accounts.
+- Validation evidence:
+  - standalone K3Z docs build passed (`..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`);
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml` reported `accounts=264`, `species=8`, and `complete_species=8`;
+  - `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`, and `pre-commit run --all-files` all passed.

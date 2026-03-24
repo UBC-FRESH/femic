@@ -853,6 +853,17 @@ notes.
   - [x] P26.3b Add docs-contract coverage that fails when curated API pages reference untracked/nonexistent generated docs.
   - [x] P26.3c Refresh the lightweight parent `docs/sample-models/k3z.rst` pointer page so it explicitly routes readers to the standalone K3Z docs for variant selection, overlay subvariants, treatment sequencing, and old-growth semantics.
 
+## Phase 27: K3Z `pctct` Species-Account Regression Fix
+- [x] P27.1 Diagnose why `pctct` drops species-wise managed yield / harvested-volume accounts
+  - [x] P27.1a Compare the `pctct` export/build path against baseline and `ctfert` from ForestModel XML through Matrix Builder outputs.
+  - [x] P27.1b Identify the exact seam where the checked-in `pctct` surface collapsed from species-wise managed outputs to `product.Yield.managed.Total` / `feature.Yield.managed.Total` only.
+- [x] P27.2 Restore species-wise managed surfaces for `pctct`
+  - [x] P27.2a Refresh the checked-in K3Z `pctct` ForestModel/tracks surface from the current good species-wise export path and add a regression guard so stale `Total`-only artifacts cannot ship again.
+  - [x] P27.2b Rebuild the checked-in K3Z `pctct` artifact surface (`forestmodel_pctct.xml`, `tracks_pctct`, and dependent tracked CSVs) so the instance matches the repaired logic.
+- [x] P27.3 Validate and document the repair
+  - [x] P27.3a Verify the repaired `pctct` surface in both compiled artifacts and live Patchworks expectations.
+  - [x] P27.3b Update docs/runbooks only where operator-facing expectations materially change.
+
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
 - The remaining open work in Phase 23 is Linux-specific parity verification under P23.3.
@@ -903,6 +914,45 @@ notes.
       and `pre-commit run --all-files` all pass.
   - Next task should start on a distinct bug-fix branch focused on restoring
     species-wise managed yield / harvested-volume accounts for `pctct`.
+- 2026-03-24 (Phase 27 kickoff): start the `pctct` species-account regression
+  fix on branch `bugfix/k3z-pctct-species-accounts`.
+  - Immediate execution order:
+    - compare baseline / `ctfert` / `pctct` from exported ForestModel XML into
+      `tracks_*.csv` artifacts so the collapse point is proven rather than
+      guessed;
+    - repair the upstream export/build seam in parent FEMIC, not just the
+      checked-in instance outputs, so regenerated `pctct` artifacts stay
+      correct;
+    - refresh the K3Z `pctct` checked-in artifact surface and rerun validation,
+      including live-launch expectations, before closing the branch.
+  - Success criterion:
+    - `pctct` once again materializes species-wise managed yield /
+      harvested-volume accounts alongside the intended `PCT -> CT` treatment
+      path, matching baseline / `ctfert` account granularity where appropriate.
+- 2026-03-24 (Phase 27 closeout): the `pctct` species-account regression is
+  repaired on `bugfix/k3z-pctct-species-accounts`.
+  - Diagnosis result:
+    - current parent export logic can still generate species-wise `pctct`
+      managed yield / harvested-volume surfaces;
+    - the checked-in K3Z `pctct` ForestModel/tracks surface had gone stale and
+      was the layer that had collapsed back to `Total`-only managed accounts.
+  - Repair delivered:
+    - refreshed `models/k3z_patchworks_model/yield/forestmodel_pctct.xml` from
+      a current good species-wise export probe;
+    - reran Patchworks Matrix Builder for `config/patchworks.runtime.pctct.windows.yaml`
+      so `tracks_pctct` once again carries species-wise managed yield /
+      harvested-volume accounts alongside `PCT` and `CT`;
+    - removed the now-stale docs caveats that described the missing
+      species-wise `pctct` surfaces as a current limitation;
+    - added a parent repo contract test that fails if the checked-in `pctct`
+      ForestModel/tracks surface ever regresses back to `Total`-only managed
+      accounts.
+  - Validation evidence:
+    - standalone K3Z docs build passes with `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`;
+    - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml`
+      reports `species=8` and `complete_species=8`;
+    - `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
+      and `pre-commit run --all-files` all pass.
 - 2026-03-23 (Phase 25 execution checkpoint): the K3Z student overlay import,
   join, and baseline-derived Patchworks subvariant compile path is now working
   end to end.
