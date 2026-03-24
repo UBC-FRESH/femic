@@ -5837,3 +5837,20 @@
 - Verified the recovered surface with:
   - `.\.venv\Scripts\python.exe -m femic patchworks preflight --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert.windows.yaml`
 - Result: CT/fert preflight now passes again, and the overlay flow-target fix is no longer blocked by missing CT/fert artifacts in the instance checkout.
+
+## 2026-03-23 - Expanded K3Z standalone docs for variants/subvariants and fixed parent docs clean-checkout CI
+- Added a new Phase 26 docs milestone in `ROADMAP.md` covering the K3Z docs push, parent `docs-pages` repair, and the urgent follow-up note for the `pctct` species-wise account regression.
+- Expanded the canonical standalone K3Z docs in `external/femic-k3z-instance/docs/` with new dedicated pages for:
+  - the full variant/subvariant launch matrix;
+  - intensive-silviculture treatment logic and sequencing;
+  - `og1` / `og2` old-growth attribute semantics.
+- Updated the existing standalone K3Z guide pages (`getting-started`, `model-anatomy`, `operator-runbook`, `rebuild-and-qa`, `edit-policy-and-scenarios`) so they now route readers to the deeper variant/treatment/old-growth pages instead of leaving that detail fragmented across multiple pages.
+- Documented the current overlay provenance and join contract in the standalone K3Z docs, including:
+  - workbook key quirk `FEATURE_ID1`;
+  - the four student retention columns `Basecase_Riparian`, `BaseCase_Sum`, `Scenario1_Sum`, and `Scenario2_Sum`;
+  - the bridge through `blocks.shp` into the canonical fragments surface;
+  - the fact that higher-retention overlays can legitimately drop managed species accounts when those species disappear from the managed side.
+- Refreshed the parent FEMIC pointer page `docs/sample-models/k3z.rst` so it now explicitly routes readers to the standalone K3Z docs for variant selection, overlay subvariants, treatment sequencing, and `og1` / `og2` semantics.
+- Diagnosed the parent `docs-pages` GitHub Actions failure to the clean-checkout API-doc surface: curated pages under `docs/reference/api/` were referencing `docs/reference/api/generated/*.rst` pages that existed locally but were not tracked in git.
+- Added the generated API `.rst` stubs to the repo and extended `tests/test_docs_contract.py` so curated API pages now fail tests if they reference missing or untracked generated docs.
+- Recorded the next urgent post-docs follow-up explicitly in the roadmap: `pctct` currently materializes only total managed yield/account surfaces in `forestmodel_pctct.xml` and `tracks_pctct`, so species-wise managed yield / harvested-volume accounts need to be restored in a separate bug-fix milestone.

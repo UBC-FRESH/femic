@@ -1,0 +1,6 @@
+﻿femic
+=====
+
+.. automodule:: femic
+
+   

@@ -3,6 +3,8 @@ from __future__ import annotations
 import csv
 import json
 from pathlib import Path
+import re
+import subprocess
 
 from typer.testing import CliRunner
 import yaml
@@ -13,6 +15,7 @@ DOCS_ROOT = Path("docs")
 GUIDES_ROOT = DOCS_ROOT / "guides"
 SAMPLE_MODELS_ROOT = DOCS_ROOT / "sample-models"
 API_ROOT = DOCS_ROOT / "reference" / "api"
+API_GENERATED_ROOT = API_ROOT / "generated"
 CONTRACT_ROOT = DOCS_ROOT / "reference" / "contracts"
 COVERAGE_CSV = GUIDES_ROOT / "legacy_notebook_coverage.csv"
 K3Z_INSTANCE_ROOT = Path("external/femic-k3z-instance")
@@ -446,6 +449,9 @@ def test_k3z_instance_standalone_docs_scaffold_exists() -> None:
     index_text = (docs_root / "index.rst").read_text()
     for slug in (
         "getting-started",
+        "variants-and-subvariants",
+        "silviculture-logic",
+        "old-growth-attributes",
         "model-anatomy",
         "data-package-crosswalk",
         "land-base-and-netdown",
@@ -482,6 +488,60 @@ def test_k3z_instance_standalone_docs_required_sections_and_navigation() -> None
         "femic patchworks matrix-build",
     ):
         assert snippet in getting_started_text
+
+    variants_text = (docs_root / "variants-and-subvariants.rst").read_text()
+    for heading in (
+        "Purpose",
+        "Variant Matrix",
+        "Overlay Provenance and Join Contract",
+        "Overlay Account-Surface Note",
+    ):
+        assert heading in variants_text
+    for snippet in (
+        "Basecase_Riparian",
+        "BaseCase_Sum",
+        "Scenario1_Sum",
+        "Scenario2_Sum",
+        "tracks_overlay_basecase_riparian",
+        "tracks_overlay_scenario2_sum",
+    ):
+        assert snippet in variants_text
+
+    silv_text = (docs_root / "silviculture-logic.rst").read_text()
+    for heading in (
+        "Control Fields",
+        "CT/Fert Variant",
+        "PCT->CT Variant",
+        "State Machines",
+    ):
+        assert heading in silv_text
+    for snippet in (
+        "985502001",
+        "985502002",
+        "growth_speedup_fraction = 0.10",
+        "remove_species = HW",
+        "cc_pl -> cc_pl_pct",
+        "cc_pl_ct -> cc_pl_ct_f1",
+    ):
+        assert snippet in silv_text
+
+    old_growth_text = (docs_root / "old-growth-attributes.rst").read_text()
+    for heading in (
+        "Attribute Labels",
+        "Current Implementation Contract",
+        "Why OG1 Uses the Unmanaged Curve",
+        "Where the Surfaces Appear",
+    ):
+        assert heading in old_growth_text
+    for snippet in (
+        "feature.Area.og1.<au_id>",
+        "feature.Area.og2.total",
+        "(249, 0.0)",
+        "(250, 1.0)",
+        "CMAI",
+        "peak_yield_age",
+    ):
+        assert snippet in old_growth_text
 
     model_anatomy_text = (docs_root / "model-anatomy.rst").read_text()
     for heading in ("Directory Map", "Generated vs Editable"):
@@ -833,6 +893,7 @@ def test_k3z_sample_model_docs_keep_required_sections() -> None:
     required_k3z_sections = [
         "Purpose",
         "Canonical Student Docs",
+        "Standalone K3Z Coverage Map",
         "Submodule Sync Commands",
         "FEMIC-Local Integration Notes",
     ]
@@ -847,6 +908,8 @@ def test_k3z_sample_model_docs_keep_required_sections() -> None:
     assert "config/rebuild.allowlist.yaml" in k3z_text
     assert "runbooks/REBUILD_RUNBOOK.md" in k3z_text
     assert "k3z-metadata-lineage.rst" in k3z_text
+    assert "scenario1_sum" in k3z_text
+    assert "og1" in k3z_text
 
     lineage_text = (SAMPLE_MODELS_ROOT / "k3z-metadata-lineage.rst").read_text()
     required_lineage_sections = [
@@ -878,6 +941,38 @@ def test_geospatial_runtime_bootstrap_guide_keeps_required_sections() -> None:
     ):
         assert heading in guide_text
     assert "femic prep geospatial-preflight" in guide_text
+
+
+def test_curated_api_pages_only_reference_tracked_generated_docs() -> None:
+    api_pages = list(API_ROOT.glob("*.rst"))
+    assert api_pages
+
+    referenced: set[str] = set()
+    for path in api_pages:
+        text = path.read_text(encoding="utf-8")
+        referenced.update(re.findall(r"generated/([A-Za-z0-9_.]+)", text))
+
+    assert referenced, "no generated-doc references found in curated API pages"
+
+    for slug in sorted(referenced):
+        generated_path = API_GENERATED_ROOT / f"{slug}.rst"
+        assert generated_path.exists(), (
+            f"curated API docs reference missing generated page: {generated_path}"
+        )
+        result = subprocess.run(
+            [
+                "git",
+                "ls-files",
+                "--error-unmatch",
+                str(generated_path).replace("\\", "/"),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, (
+            f"generated API doc is not tracked in git: {generated_path}"
+        )
 
 
 def test_instance_rebuild_contract_artifacts_are_present_and_complete() -> None:

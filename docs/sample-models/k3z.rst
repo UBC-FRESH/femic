@@ -21,6 +21,19 @@ Use the standalone docs as source of truth for:
 - base-case interpretation and troubleshooting playbooks,
 - operator runbook and rebuild/release checklists.
 
+Standalone K3Z Coverage Map
+---------------------------
+
+Use the standalone K3Z docs for:
+
+- variant selection across ``base``, ``ctfert``, and ``pctct``,
+- baseline-derived overlay subvariants
+  (``basecase_riparian``, ``basecase_sum``, ``scenario1_sum``,
+  ``scenario2_sum``),
+- treatment sequencing and parameter logic for the intensive silviculture
+  variants, and
+- ``og1`` / ``og2`` old-growth semantics.
+
 Submodule Sync Commands
 -----------------------
 
