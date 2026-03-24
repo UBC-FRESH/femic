@@ -875,6 +875,17 @@ notes.
   - [x] P28.3a Re-run focused validation that proves the expanded AU set appears in the checked-in `pctct` ForestModel/tracks artifacts without regressing the `PCT -> CT` chain.
   - [x] P28.3b Run the required parent-repo quality gates that are practical from this checkout and record any remaining blocked validation separately if local runtime prerequisites prevent a full `tracks_pctct` rebuild.
 
+## Phase 29: K3Z `pctct` Multi-Intensity PCT Paths
+- [x] P29.1 Teach parent FEMIC to compile multiple coexisting PCT paths in one variant
+  - [x] P29.1a Extend the silviculture config / export logic so `pre_commercial_thinning` can describe multiple labeled PCT treatments, each with its own post-PCT state and per-species stem-removal target.
+  - [x] P29.1b Generate matching post-PCT species-proportion / yield surfaces and CT follow-on states for each configured PCT treatment without regressing the existing `PCT -> CT` chain.
+- [x] P29.2 Rebuild K3Z `pctct` around light/moderate/heavy PCT choices
+  - [x] P29.2a Update the K3Z `pctct` silviculture config so the same four Issue 14 AUs expose three age-10 PCT treatments: remove `1000`, `2000`, and `3000` stems/ha of `HW`.
+  - [x] P29.2b Refresh the K3Z PIN/docs/runtime surface so the three PCT flavors are distinguishable in Patchworks and in the standalone operator docs.
+- [x] P29.3 Validate the coexisting multi-intensity surface
+  - [x] P29.3a Add/refresh parent regression coverage for the new multi-PCT export behavior.
+  - [x] P29.3b Rebuild the checked-in K3Z `pctct` ForestModel/tracks surface and rerun local matrix-build / QA checks so the variant is ready for live testing.
+
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
 - The remaining open work in Phase 23 is Linux-specific parity verification under P23.3.
@@ -1065,6 +1076,58 @@ notes.
       require a deeper design change to the `pctct` model surface, because the
       current implementation only compiles one post-PCT managed state
       (`cc_pl_pct`) rather than multiple intensity-specific treatment paths.
+- 2026-03-24 (Phase 29 kickoff): start the `pctct` multi-intensity PCT
+  expansion on the existing branch `feature/k3z-pctct-expand-treatment-aus`.
+  - Tracking issue:
+    - GitHub feature request `#14`:
+      `PCT requests: change eligible AUs, change AU regen assumptions, add knob for changing PCT intensity`
+  - Immediate execution order:
+    - extend parent Patchworks export logic so one `pctct` variant can compile
+      multiple labeled PCT treatments from the same planted starting state;
+    - model the three requested K3Z options as explicit post-PCT states:
+      light (`900 CW + 2100 HW`), moderate (`900 CW + 1100 HW`), and heavy
+      (`900 CW + 100 HW`), all available at age `10`;
+    - route `CT` forward from each post-PCT state into its own matching
+      post-CT state so all three paths coexist cleanly in the same
+      `forestmodel_pctct.xml` / `tracks_pctct` surface;
+    - refresh the K3Z PIN/docs/runtime artifacts and rerun matrix-build so the
+      resulting instance is immediately testable in Patchworks.
+  - Success criterion:
+    - the checked-in K3Z `pctct` variant exposes three distinct age-10 PCT
+      treatments for the Issue 14 AU cohort, each produces the intended
+      residual HW mix, each can still flow into `CT`, and the rebuilt instance
+      loads cleanly for live testing.
+- 2026-03-24 (Phase 29 closeout): the K3Z `pctct` variant now exposes three
+  coexisting age-10 PCT treatment choices on branch
+  `feature/k3z-pctct-expand-treatment-aus`.
+  - Result:
+    - extended parent Patchworks export logic so `pre_commercial_thinning`
+      can compile multiple labeled PCT treatments from one planted starting
+      state, each with its own post-PCT state and per-species stem-removal
+      target;
+    - added parent regression coverage proving one variant can materialize
+      `PCT_LIGHT`, `PCT_MODERATE`, and `PCT_HEAVY` in parallel while still
+      routing `CT` from each resulting PCT state;
+    - updated `config/silviculture.k3z.pctct.yaml` so the four Issue 14 AUs
+      now expose three age-10 PCT choices:
+      `PCT_LIGHT` (`900 CW + 2100 HW`), `PCT_MODERATE` (`900 CW + 1100 HW`),
+      and `PCT_HEAVY` (`900 CW + 100 HW`);
+    - refreshed the standalone K3Z docs and `analysis/pctct.pin` so the three
+      PCT flavors are explicit and visually distinguishable in Patchworks;
+    - regenerated
+      `models/k3z_patchworks_model/yield/forestmodel_pctct.xml`,
+      `output/patchworks_k3z_pctct_validated/forestmodel.xml`, and
+      `models/k3z_patchworks_model/tracks_pctct/` from the updated multi-PCT
+      config.
+  - Validation evidence:
+    - standalone K3Z docs build passes with
+      `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`;
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml --run-id k3z_pctct_multi_pct_20260324`
+      completed successfully with `returncode=0`;
+    - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml`
+      reports `accounts=267`, `species=8`, `complete_species=8`, `au=14`;
+    - `ruff check src tests`, `mypy src`, `pytest`, and
+      `pre-commit run --all-files` all pass in the current `.venv`.
 - 2026-03-24 (Phase 25 P25.4b kickoff): close the overlay docs gap on branch
   `feature/k3z-overlay-guidance-closeout`.
   - Immediate execution order:

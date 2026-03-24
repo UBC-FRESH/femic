@@ -6052,3 +6052,42 @@
   intensity options still require a deeper model design because the current
   `pctct` implementation compiles only one post-PCT managed state
   (`cc_pl_pct`), not multiple intensity-specific treatment paths.
+
+## 2026-03-24 - Added three coexisting age-10 PCT choices to K3Z `pctct`
+- Extended parent Patchworks export logic in
+  `src/femic/fmg/patchworks.py` so `pre_commercial_thinning` can now compile
+  multiple labeled PCT treatments from the same planted starting state, each
+  with its own post-PCT state and per-species stem-removal target.
+- Added parent regression coverage in:
+  - `tests/test_fmg_patchworks.py`
+  - `tests/test_docs_contract.py`
+  proving that one variant can materialize `PCT_LIGHT`, `PCT_MODERATE`, and
+  `PCT_HEAVY` in parallel while still routing `CT` from each resulting PCT
+  state.
+- Updated `external/femic-k3z-instance/config/silviculture.k3z.pctct.yaml` so
+  the four Issue 14 AUs now expose three age-10 PCT choices:
+  - `PCT_LIGHT` (`900 CW + 2100 HW`)
+  - `PCT_MODERATE` (`900 CW + 1100 HW`)
+  - `PCT_HEAVY` (`900 CW + 100 HW`)
+- Refreshed the standalone K3Z docs and Patchworks entrypoint in:
+  - `external/femic-k3z-instance/docs/getting-started.rst`
+  - `external/femic-k3z-instance/docs/model-anatomy.rst`
+  - `external/femic-k3z-instance/docs/operator-runbook.rst`
+  - `external/femic-k3z-instance/docs/rebuild-and-qa.rst`
+  - `external/femic-k3z-instance/docs/silviculture-logic.rst`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/pctct.pin`
+  so the three PCT flavors are explicit and visually distinguishable in
+  Patchworks.
+- Regenerated:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pctct.xml`
+  - `external/femic-k3z-instance/output/patchworks_k3z_pctct_validated/forestmodel.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pctct/`
+  from the updated multi-PCT config.
+- Validation passed with:
+  - `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml --run-id k3z_pctct_multi_pct_20260324`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`

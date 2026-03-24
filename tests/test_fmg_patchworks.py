@@ -753,6 +753,137 @@ def test_build_forestmodel_xml_tree_adds_pct_then_ct_variant_path() -> None:
     assert "product.Treated.managed.F1" not in xml_text
 
 
+def test_build_forestmodel_xml_tree_supports_multiple_pct_treatments() -> None:
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985502001,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_FDC+HW",
+                "si_level": "M",
+                "managed_curve_id": 985522001,
+                "unmanaged_curve_id": 985502001,
+            }
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "curve_type": "unmanaged"},
+            {"curve_id": 985522001, "curve_type": "managed"},
+            {"curve_id": 985522001001, "curve_type": "managed_species_prop_FD"},
+            {"curve_id": 985522001002, "curve_type": "managed_species_prop_HW"},
+            {"curve_id": 985502001001, "curve_type": "unmanaged_species_prop_FD"},
+            {"curve_id": 985502001002, "curve_type": "unmanaged_species_prop_HW"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "x": 1, "y": 8.0},
+            {"curve_id": 985502001, "x": 40, "y": 200.0},
+            {"curve_id": 985502001, "x": 100, "y": 320.0},
+            {"curve_id": 985522001, "x": 1, "y": 10.0},
+            {"curve_id": 985522001, "x": 40, "y": 260.0},
+            {"curve_id": 985522001, "x": 100, "y": 400.0},
+            {"curve_id": 985522001001, "x": 1, "y": 0.20},
+            {"curve_id": 985522001002, "x": 1, "y": 0.80},
+            {"curve_id": 985502001001, "x": 1, "y": 0.20},
+            {"curve_id": 985502001002, "x": 1, "y": 0.80},
+        ]
+    )
+    silviculture_config = {
+        "pre_commercial_thinning": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "source_total_stems_per_ha": 4000,
+            "treatments": [
+                {
+                    "label": "PCT_LIGHT",
+                    "from_state": "cc_pl",
+                    "to_state": "cc_pl_pct_light",
+                    "ct_to_state": "cc_pl_pct_light_ct",
+                    "age_by_au": {"985502001": 10},
+                    "remove_species": ["HW"],
+                    "remove_stems_per_ha": {"HW": 1000},
+                },
+                {
+                    "label": "PCT_MODERATE",
+                    "from_state": "cc_pl",
+                    "to_state": "cc_pl_pct_moderate",
+                    "ct_to_state": "cc_pl_pct_moderate_ct",
+                    "age_by_au": {"985502001": 10},
+                    "remove_species": ["HW"],
+                    "remove_stems_per_ha": {"HW": 2000},
+                },
+                {
+                    "label": "PCT_HEAVY",
+                    "from_state": "cc_pl",
+                    "to_state": "cc_pl_pct_heavy",
+                    "ct_to_state": "cc_pl_pct_heavy_ct",
+                    "age_by_au": {"985502001": 10},
+                    "remove_species": ["HW"],
+                    "remove_stems_per_ha": {"HW": 3000},
+                },
+            ],
+        },
+        "commercial_thinning": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "age_by_au": {"985502001": 40},
+            "basal_area_removal_fraction": 0.30,
+            "basal_area_to_volume_ratio": 1.0,
+        },
+        "fertilization": {"enabled": False},
+        "qmd": {"enabled": True},
+    }
+
+    root = build_forestmodel_xml_tree(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+        silviculture_config=silviculture_config,
+    )
+
+    xml_text = et.tostring(root, encoding="unicode")
+    base_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl'\"]"
+    )
+    assert base_select is not None
+    assert [
+        node.attrib["label"] for node in base_select.findall("./track/treatment")
+    ] == ["CC", "PCT_LIGHT", "PCT_MODERATE", "PCT_HEAVY"]
+
+    for state in ("cc_pl_pct_light", "cc_pl_pct_moderate", "cc_pl_pct_heavy"):
+        pct_select = root.find(
+            f"./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq '{state}'\"]"
+        )
+        assert pct_select is not None
+        assert [
+            node.attrib["label"] for node in pct_select.findall("./track/treatment")
+        ] == ["CC", "CT"]
+
+    assert "product.Treated.managed.PCT_LIGHT" in xml_text
+    assert "product.Treated.managed.PCT_MODERATE" in xml_text
+    assert "product.Treated.managed.PCT_HEAVY" in xml_text
+    assert "treatment eq 'PCT_LIGHT'" in xml_text
+    assert "treatment eq 'PCT_MODERATE'" in xml_text
+    assert "treatment eq 'PCT_HEAVY'" in xml_text
+    assert (
+        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_pct_light_ct'"
+        in xml_text
+    )
+    assert (
+        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_pct_moderate_ct'"
+        in xml_text
+    )
+    assert (
+        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_pct_heavy_ct'"
+        in xml_text
+    )
+    assert "au_985502001_managed_cc_pl_pct_light_yield_HW" in xml_text
+    assert "au_985502001_managed_cc_pl_pct_moderate_yield_HW" in xml_text
+    assert "au_985502001_managed_cc_pl_pct_heavy_yield_HW" in xml_text
+
+
 def test_build_forestmodel_xml_tree_omits_zero_signal_species_accounts() -> None:
     au_table = pd.DataFrame(
         [

@@ -542,8 +542,8 @@ def test_k3z_instance_standalone_docs_required_sections_and_navigation() -> None
         "985502001",
         "985502002",
         "growth_speedup_fraction = 0.10",
-        "remove_species = HW",
-        "cc_pl -> cc_pl_pct",
+        "PCT_LIGHT",
+        "cc_pl_pct_heavy",
         "cc_pl_ct -> cc_pl_ct_f1",
     ):
         assert snippet in silv_text
@@ -787,7 +787,9 @@ def test_k3z_pctct_checked_in_surface_keeps_species_wise_managed_accounts() -> N
         )
         for account in accounts
     )
-    assert "product.Treated.managed.PCT" in labels
+    assert "product.Treated.managed.PCT_LIGHT" in labels
+    assert "product.Treated.managed.PCT_MODERATE" in labels
+    assert "product.Treated.managed.PCT_HEAVY" in labels
     assert "product.Treated.managed.CT" in labels
 
 
