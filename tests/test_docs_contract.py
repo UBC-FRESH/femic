@@ -21,6 +21,7 @@ CONTRACT_ROOT = DOCS_ROOT / "reference" / "contracts"
 COVERAGE_CSV = GUIDES_ROOT / "legacy_notebook_coverage.csv"
 K3Z_INSTANCE_ROOT = Path("external/femic-k3z-instance")
 TSA29_INSTANCE_ROOT = Path("external/femic-tsa29-instance")
+PCTCT_SUBVARIANT_IDS = ("pctct_light", "pctct_moderate", "pctct_heavy")
 
 GUIDE_PAGES = [
     "pipeline-overview",
@@ -534,16 +535,16 @@ def test_k3z_instance_standalone_docs_required_sections_and_navigation() -> None
     for heading in (
         "Control Fields",
         "CT/Fert Variant",
-        "PCT->CT Variant",
+        "PCT->CT Subvariants",
         "State Machines",
     ):
         assert heading in silv_text
     for snippet in (
         "985502001",
-        "985502002",
+        "985503001",
         "growth_speedup_fraction = 0.10",
-        "PCT_LIGHT",
-        "cc_pl_pct_heavy",
+        "pctct_light",
+        "cc_pl_pct_ct",
         "cc_pl_ct -> cc_pl_ct_f1",
     ):
         assert snippet in silv_text
@@ -747,50 +748,61 @@ def test_k3z_standalone_docs_do_not_reference_parent_repo_paths() -> None:
 
 
 def test_k3z_pctct_checked_in_surface_keeps_species_wise_managed_accounts() -> None:
-    forestmodel_path = (
-        K3Z_INSTANCE_ROOT / "models/k3z_patchworks_model/yield/forestmodel_pctct.xml"
-    )
-    forestmodel_text = forestmodel_path.read_text(encoding="utf-8")
-    assert re.search(r"feature\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", forestmodel_text)
-    assert re.search(r"product\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", forestmodel_text)
-    assert re.search(
-        r"product\.HarvestedVolume\.managed\.(?!Total\b)[A-Z0-9]+\.(CC|CT)",
-        forestmodel_text,
-    )
-
-    accounts_path = (
-        K3Z_INSTANCE_ROOT / "models/k3z_patchworks_model/tracks_pctct/accounts.csv"
-    )
-    products_path = (
-        K3Z_INSTANCE_ROOT / "models/k3z_patchworks_model/tracks_pctct/products.csv"
-    )
-    with accounts_path.open(newline="", encoding="utf-8") as fh:
-        account_rows = list(csv.DictReader(fh))
-    with products_path.open(newline="", encoding="utf-8") as fh:
-        product_rows = list(csv.DictReader(fh))
-
-    accounts = {row["ACCOUNT"] for row in account_rows}
-    labels = {row["LABEL"] for row in product_rows}
-
-    assert any(
-        re.fullmatch(r"feature\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", account)
-        for account in accounts
-    )
-    assert any(
-        re.fullmatch(r"product\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", account)
-        for account in accounts
-    )
-    assert any(
-        re.fullmatch(
-            r"product\.HarvestedVolume\.managed\.(?!Total\b)[A-Z0-9]+\.(CC|CT)",
-            account,
+    for slug in PCTCT_SUBVARIANT_IDS:
+        forestmodel_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model/yield"
+            / f"forestmodel_{slug}.xml"
         )
-        for account in accounts
-    )
-    assert "product.Treated.managed.PCT_LIGHT" in labels
-    assert "product.Treated.managed.PCT_MODERATE" in labels
-    assert "product.Treated.managed.PCT_HEAVY" in labels
-    assert "product.Treated.managed.CT" in labels
+        forestmodel_text = forestmodel_path.read_text(encoding="utf-8")
+        assert re.search(
+            r"feature\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", forestmodel_text
+        )
+        assert re.search(
+            r"product\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", forestmodel_text
+        )
+        assert re.search(
+            r"product\.HarvestedVolume\.managed\.(?!Total\b)[A-Z0-9]+\.(CC|CT)",
+            forestmodel_text,
+        )
+
+        accounts_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model"
+            / f"tracks_{slug}"
+            / "accounts.csv"
+        )
+        products_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model"
+            / f"tracks_{slug}"
+            / "products.csv"
+        )
+        with accounts_path.open(newline="", encoding="utf-8") as fh:
+            account_rows = list(csv.DictReader(fh))
+        with products_path.open(newline="", encoding="utf-8") as fh:
+            product_rows = list(csv.DictReader(fh))
+
+        accounts = {row["ACCOUNT"] for row in account_rows}
+        labels = {row["LABEL"] for row in product_rows}
+
+        assert any(
+            re.fullmatch(r"feature\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", account)
+            for account in accounts
+        )
+        assert any(
+            re.fullmatch(r"product\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", account)
+            for account in accounts
+        )
+        assert any(
+            re.fullmatch(
+                r"product\.HarvestedVolume\.managed\.(?!Total\b)[A-Z0-9]+\.(CC|CT)",
+                account,
+            )
+            for account in accounts
+        )
+        assert "product.Treated.managed.PCT" in labels
+        assert "product.Treated.managed.CT" in labels
 
 
 def test_k3z_ctfert_checked_in_surface_preserves_baseline_geometry_footprint() -> None:
@@ -843,36 +855,36 @@ def test_k3z_pctct_checked_in_surface_preserves_baseline_geometry_footprint() ->
     baseline_path = (
         K3Z_INSTANCE_ROOT / "output/patchworks_k3z_validated/fragments/fragments.shp"
     )
-    pctct_path = (
-        K3Z_INSTANCE_ROOT
-        / "output/patchworks_k3z_pctct_validated/fragments/fragments.shp"
-    )
     baseline = gpd.read_file(baseline_path)[
         ["AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE", "geometry"]
     ].copy()
-    pctct = gpd.read_file(pctct_path)[
-        ["AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE", "geometry"]
-    ].copy()
-
     baseline["geom_key"] = baseline.geometry.to_wkb(hex=True)
-    pctct["geom_key"] = pctct.geometry.to_wkb(hex=True)
-    merged = baseline.merge(
-        pctct.drop(columns="geometry"),
-        on="geom_key",
-        how="outer",
-        suffixes=("_baseline", "_pctct"),
-        indicator=True,
-    )
-
-    assert len(baseline) == 218
-    assert len(pctct) == 218
-    assert set(merged["_merge"]) == {"both"}
-
-    both = merged[merged["_merge"] == "both"]
-    for col in ("AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE"):
-        assert (both[f"{col}_baseline"] == both[f"{col}_pctct"]).all(), (
-            f"pctct differs from baseline in {col}"
+    for slug in PCTCT_SUBVARIANT_IDS:
+        pctct_path = (
+            K3Z_INSTANCE_ROOT
+            / f"output/patchworks_k3z_{slug}_validated/fragments/fragments.shp"
         )
+        pctct = gpd.read_file(pctct_path)[
+            ["AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE", "geometry"]
+        ].copy()
+        pctct["geom_key"] = pctct.geometry.to_wkb(hex=True)
+        merged = baseline.merge(
+            pctct.drop(columns="geometry"),
+            on="geom_key",
+            how="outer",
+            suffixes=("_baseline", "_pctct"),
+            indicator=True,
+        )
+
+        assert len(baseline) == 218
+        assert len(pctct) == 218
+        assert set(merged["_merge"]) == {"both"}
+
+        both = merged[merged["_merge"] == "both"]
+        for col in ("AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE"):
+            assert (both[f"{col}_baseline"] == both[f"{col}_pctct"]).all(), (
+                f"{slug} differs from baseline in {col}"
+            )
 
 
 def test_fhops_aligned_sphinx_template_contract() -> None:

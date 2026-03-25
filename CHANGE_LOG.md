@@ -6091,3 +6091,54 @@
   - `mypy src`
   - `pytest`
   - `pre-commit run --all-files`
+
+## 2026-03-24 - Split K3Z `pctct` into light/moderate/heavy single-intensity subvariants
+- Replaced the stacked multi-PCT K3Z teaching surface with three explicit
+  single-intensity subvariants:
+  - `pctct_light`
+  - `pctct_moderate`
+  - `pctct_heavy`
+- Added tracked K3Z config/runtime/PIN surfaces for those subvariants in:
+  - `external/femic-k3z-instance/config/patchworks.variant.pctct_*.yaml`
+  - `external/femic-k3z-instance/config/patchworks.runtime.pctct_*.windows.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.pctct_*.yaml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/pctct_*.pin`
+- Kept the Issue 14 AU footprint and regen assumption constant across all three
+  subvariants:
+  - eligible AUs remain `985502000`, `985503000`, `985502001`, `985503001`
+  - planted regen mix remains `900 CW + 3100 HW`
+- Moved the PCT intensity choice out of one stacked tracks surface and into the
+  three subvariant configs:
+  - `pctct_light` removes `1000` HW stems/ha
+  - `pctct_moderate` removes `2000` HW stems/ha
+  - `pctct_heavy` removes `3000` HW stems/ha
+- Refreshed the standalone K3Z docs/contracts so they now describe the new
+  `pctct_*` launch matrix, generic `PCT`/`CT` labels, and the simplified state
+  machine `cc_pl -> cc_pl_pct -> cc_pl_pct_ct`.
+- Regenerated and checked in:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pctct_light.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pctct_moderate.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pctct_heavy.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pctct_light/`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pctct_moderate/`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pctct_heavy/`
+  - `external/femic-k3z-instance/output/patchworks_k3z_pctct_light_validated/`
+  - `external/femic-k3z-instance/output/patchworks_k3z_pctct_moderate_validated/`
+  - `external/femic-k3z-instance/output/patchworks_k3z_pctct_heavy_validated/`
+- Used the checked-in K3Z bundle tables to regenerate the three ForestModels,
+  then rebuilt all three tracks surfaces against copies of the accepted
+  baseline fragments surface so the 218-fragment teaching footprint stays
+  unchanged across the new subvariants.
+- Validation passed with:
+  - `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct_light.windows.yaml --run-id k3z_pctct_light_20260324`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct_moderate.windows.yaml --run-id k3z_pctct_moderate_20260324`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct_heavy.windows.yaml --run-id k3z_pctct_heavy_20260324`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct_light.windows.yaml` -> `accounts=265`, `species=8`, `complete_species=8`, `au=14`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct_moderate.windows.yaml` -> `accounts=265`, `species=8`, `complete_species=8`, `au=14`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct_heavy.windows.yaml` -> `accounts=264`, `species=8`, `complete_species=8`, `au=14`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
