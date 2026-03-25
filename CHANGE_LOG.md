@@ -6250,3 +6250,23 @@
   - `pre-commit run --all-files`
 - GitHub issue 13 now carries an explicit closeout note and is closed as
   implemented.
+
+## 2026-03-24 - Corrected K3Z treated overlay provenance back to raw BatchTIPSY
+- Opened GitHub issue 17 after operator review caught that the checked-in
+  `tipsy_vdyp_tsak3z-*.png` docs figures were not trustworthy.
+- Verified that `external/femic-k3z-instance/data/tipsy_curves_tsak3z.csv`
+  matches the old `vdyp_transform` scaled-VDYP synthesis path exactly, rather
+  than a curve table reconstructed from raw `04_output-tsak3z.out`.
+- Rebuilt the treated overlay figure family directly from:
+  - `external/femic-k3z-instance/data/04_output-tsak3z.out`
+  - `external/femic-k3z-instance/data/vdyp_curves_smooth-tsak3z.feather`
+  - `external/femic-k3z-instance/data/model_input_bundle/au_table.csv`
+- Replaced the tracked
+  `external/femic-k3z-instance/plots/tipsy_vdyp_tsak3z-*.png` files with the
+  regenerated raw-BatchTIPSY-vs-VDYP overlays.
+- Updated the standalone K3Z docs pages
+  `yield-curve-comparisons.rst` and `figure-appendix.rst` so they now describe
+  the treated overlay provenance explicitly as raw `04_output-tsak3z.out`
+  BatchTIPSY output against a VDYP reference curve, and restored AUs `22006`
+  and `22008` to the rendered gallery because they are present in the accepted
+  raw BatchTIPSY artifact used for this correction.
