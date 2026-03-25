@@ -927,6 +927,53 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-24 (Phase 33 closeout): the K3Z true-TIPSY provenance correction
+  now reaches all the way through the tracked managed-curve artifacts, not just
+  the docs plot surface.
+  - Tracking issue:
+    - GitHub issue #17 ("Regenerate K3Z true-TIPSY comparison plots and remove
+      stale scaled-VDYP docs artifacts")
+  - Result:
+    - proved that `data/tipsy_curves_tsak3z.csv` and the treated managed rows
+      in `data/model_input_bundle/curve_points_table.csv` were still carrying
+      the old scaled-VDYP lineage instead of raw BatchTIPSY output;
+    - regenerated both tracked artifacts directly from
+      `data/04_output-tsak3z.out`, restoring exact agreement between the
+      treated bundle curves and the raw BatchTIPSY output for all 14 treated
+      AUs;
+    - rebuilt the baseline, `ctfert`, and `pct_*` ForestModel XMLs from the
+      corrected bundle tables and synchronized the matching
+      `output/patchworks_k3z*_validated/forestmodel.xml` copies;
+    - reran Matrix Builder successfully for baseline, `ctfert`, the three
+      `pct_*` subvariants, and all four overlay runtime configs.
+  - Validation evidence:
+    - bundle-vs-raw comparison now reports `{'both': 504, 'left_only': 0,
+      'right_only': 0}` with `maxdiff=0.0` for the treated managed curves;
+    - treated managed yield curves in
+      `forestmodel.xml`, `forestmodel_ctfert.xml`,
+      `forestmodel_pct_light.xml`, `forestmodel_pct_moderate.xml`, and
+      `forestmodel_pct_heavy.xml` now all validate as raw-TIPSY-style decadal
+      point series for the treated AUs;
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.windows.yaml --run-id k3z_true_tipsy_baseline_20260324`
+      completed successfully with `returncode=0`;
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert.windows.yaml --run-id k3z_true_tipsy_ctfert_20260324`
+      completed successfully with `returncode=0`;
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_light.windows.yaml --run-id k3z_true_tipsy_pct_light_20260324`
+      completed successfully with `returncode=0`;
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_moderate.windows.yaml --run-id k3z_true_tipsy_pct_moderate_20260324`
+      completed successfully with `returncode=0`;
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_heavy.windows.yaml --run-id k3z_true_tipsy_pct_heavy_20260324`
+      completed successfully with `returncode=0`;
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.overlay.basecase_riparian.windows.yaml --run-id k3z_true_tipsy_overlay_basecase_riparian_20260324`
+      completed successfully with `returncode=0`;
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.overlay.basecase_sum.windows.yaml --run-id k3z_true_tipsy_overlay_basecase_sum_20260324`
+      completed successfully with `returncode=0`;
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.overlay.scenario1_sum.windows.yaml --run-id k3z_true_tipsy_overlay_scenario1_sum_20260324`
+      completed successfully with `returncode=0`;
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.overlay.scenario2_sum.windows.yaml --run-id k3z_true_tipsy_overlay_scenario2_sum_20260324`
+      completed successfully with `returncode=0`;
+    - `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
+      and `pre-commit run --all-files` all pass.
 - 2026-03-24 (Phase 31 kickoff): retarget the K3Z student silviculture
   surface from `pctct_*` to PCT-only `pct_*` subvariants on branch
   `feature/k3z-pctct-expand-treatment-aus`.
@@ -6410,6 +6457,86 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 
 - 2026-03-21 (Phase 23 Windows preflight hardening): case preflight now understands the real Windows deployment shape instead of assuming every shared asset lives under the instance root. `src/femic/cli/main.py` now falls back from instance-local paths to the FEMIC source tree for shared Windows assets such as `data/tipsy_params_columns`, `vdyp_io/VDYP_CFG`, `VDYP7/VDYP7/VDYP7Console.exe`, and `ria_maptiles.csv`, so `femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml` passes on the known-good workstation. The same preflight path now also checks for `git` and `git-annex` on Windows and runs lightweight annex/DataLad smoke checks (`git -C external/femic-public-data annex version` and `datalad status external/femic-public-data`) whenever the case depends on the annex-backed public-data submodule. This closes `P23.1c` and `P23.4c`.
+
+## Phase 33: K3Z True-TIPSY Plot Provenance Correction
+- [x] P33.1 Verify and regenerate the current K3Z comparison plot artifacts
+  - [x] P33.1a Re-run the K3Z post-TIPSY plotting path against the accepted cached inputs and confirm what legends/series the current pipeline actually emits.
+  - [x] P33.1b Compare the regenerated overlays against the currently checked-in `plots/tipsy_vdyp_tsak3z-*.png` set and identify whether the repository is carrying stale scaled-VDYP artifacts.
+- [x] P33.2 Reconcile docs and tracked plots with the verified true-TIPSY baseline
+  - [x] P33.2a Replace or withdraw any student-facing docs surface that points at stale comparison figures.
+  - [x] P33.2b Update standalone K3Z docs, roadmap/changelog, and GitHub issue tracking so the plot provenance is explicit and no scaled-VDYP confusion remains.
+- [x] P33.3 Validate the corrective fix
+  - [x] P33.3a Run the required K3Z docs build and any parent gates touched by the corrective change.
+  - [x] P33.3b Post the verification/closeout note back to GitHub issue 17.
+- [x] P33.4 Repair deeper managed-curve artifact provenance
+  - [x] P33.4a Trace whether the tracked managed-curve CSV and model-input bundle curve tables still derive from the old scaled-VDYP synthesis path.
+  - [x] P33.4b Regenerate any contaminated tracked managed-curve artifacts from raw `data/04_output-tsak3z.out` and update dependent docs/history accordingly.
+  - [x] P33.4c Run the affected validation/gates again and reconcile GitHub issue 17 with the deeper artifact-lineage result.
+
+- 2026-03-24 (Phase 33 kickoff): investigate the suspected mismatch between the
+  accepted K3Z true-TIPSY baseline and the currently checked-in
+  `plots/tipsy_vdyp_tsak3z-*.png` figures surfaced in the docs.
+  - Tracking issue:
+    - GitHub issue #17 ("Regenerate K3Z true-TIPSY comparison plots and remove
+      stale scaled-VDYP docs artifacts")
+  - Working problem statement:
+    - operator review indicates the checked-in comparison PNGs still show
+      `treated (scaled VDYP)` in the legend, which would make the recently
+      surfaced student docs page point at stale/wrong artifacts even though the
+      accepted K3Z managed-curve baseline is real BatchTIPSY output.
+  - Immediate execution order:
+    - run the actual K3Z post-TIPSY plotting path to regenerate the comparison
+      figures from current cached inputs;
+    - inspect the regenerated legend/series content directly;
+    - compare the regenerated files against the checked-in plot set before
+      making any additional docs claims.
+  - Early evidence:
+    - the plotting code in `src/femic/resources/legacy/01b_run-tsa.py`
+      currently emits `TIPSY (raw)` for the managed series and `VDYP` for the
+      comparison series, so the current pipeline should be able to generate the
+      right overlay semantics if the cached inputs are sound.
+  - Current result:
+    - the direct `python -m femic tsa post-tipsy ...` wrapper is blocked in
+      this clone by missing `external/femic-k3z-instance/data/vdyp_prep-tsak3z.pkl`,
+      so the corrective verification path rebuilt the treated overlay mapping
+      from `data/model_input_bundle/au_table.csv` and then generated proof
+      plots from the raw `data/04_output-tsak3z.out` BatchTIPSY output plus
+      `data/vdyp_curves_smooth-tsak3z.feather`;
+    - `external/femic-k3z-instance/data/tipsy_curves_tsak3z.csv` was proven to
+      match the old `vdyp_transform` synthesis path exactly, rather than raw
+      BatchTIPSY output;
+    - the tracked `plots/tipsy_vdyp_tsak3z-*.png` family has now been replaced
+      with overlays regenerated directly from `04_output-tsak3z.out`, and the
+      student-facing docs were updated to describe that provenance explicitly.
+  - Next correction slice:
+    - determine whether the stale scaled-VDYP lineage also contaminated
+      `data/tipsy_curves_tsak3z.csv` and
+      `data/model_input_bundle/{curve_table.csv,curve_points_table.csv}`;
+    - if so, replace those tracked artifacts from raw
+      `data/04_output-tsak3z.out` instead of leaving a mislabeled managed-curve
+      bundle behind the now-corrected docs plots.
+  - Final result:
+    - the stale scaled-VDYP lineage did extend into both
+      `data/tipsy_curves_tsak3z.csv` and the treated managed rows in
+      `data/model_input_bundle/curve_points_table.csv`;
+    - both tracked artifacts were regenerated directly from
+      `data/04_output-tsak3z.out`, and the repaired bundle now matches the raw
+      BatchTIPSY managed curves for all 14 treated AUs exactly;
+    - `models/k3z_patchworks_model/yield/forestmodel{,_ctfert,_pct_light,_pct_moderate,_pct_heavy}.xml`
+      were rebuilt from the corrected bundle tables, with synchronized copies
+      written back into the matching `output/patchworks_k3z*_validated/`
+      directories;
+    - Patchworks Matrix Builder was rerun successfully for the baseline,
+      `ctfert`, `pct_light`, `pct_moderate`, `pct_heavy`, and all four overlay
+      runtime configs, confirming the corrected XML family compiles cleanly
+      across the full K3Z variant surface;
+    - direct XML inspection now shows the treated managed yield curves in all
+      five ForestModel XMLs use the raw-TIPSY decadal point structure rather
+      than the old yearly transformed curve shape.
+  - Success criterion:
+    - we have direct evidence, from freshly regenerated plots, whether the
+      current pipeline now emits real TIPSY-vs-VDYP overlays or whether the
+      repo is still carrying stale scaled-VDYP artifacts.
 
 
 
