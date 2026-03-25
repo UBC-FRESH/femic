@@ -6014,3 +6014,215 @@
   - link the governing issue back into `ROADMAP.md` when work becomes active;
   - reconcile the issue status as work progresses/closes so roadmap planning and
     GitHub tracking stay aligned and reduce tail-chasing / dropped-ball risk.
+
+## 2026-03-24 - Retargeted K3Z `pctct` to the updated Issue 14 AU cohort
+- Retargeted `external/femic-k3z-instance/config/silviculture.k3z.pctct.yaml`
+  so `PCT` and `CT` eligibility now applies only to `985502000`, `985503000`,
+  `985502001`, and `985503001`.
+- Updated `external/femic-k3z-instance/config/tipsy/tsak3z.yaml` so those four
+  Issue 14 AUs now use the requested `900 CW + 3100 HW` planted regeneration
+  mix.
+- Refreshed the standalone K3Z docs in:
+  - `external/femic-k3z-instance/docs/assumptions-registry.rst`
+  - `external/femic-k3z-instance/docs/getting-started.rst`
+  - `external/femic-k3z-instance/docs/model-anatomy.rst`
+  - `external/femic-k3z-instance/docs/rebuild-and-qa.rst`
+  - `external/femic-k3z-instance/docs/silviculture-logic.rst`
+  so the `pctct` variant now documents the correct four-AU footprint, the
+  matching regen assumption, and the current rebuild/validation contract.
+- Regenerated:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pctct.xml`
+  - `external/femic-k3z-instance/output/patchworks_k3z_pctct_validated/forestmodel.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pctct/`
+  from the updated config and verified that `PCT` / `CT` treatment states now
+  materialize only for the four Issue 14 AUs, while non-target AUs such as
+  `985502002` remain only in the baseline/CC land-base surface as expected.
+- Validation passed with:
+  - `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml --run-id k3z_pctct_issue14_20260324`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+- Filled the local `.venv` gaps that were blocking the repo-wide gates by
+  installing `openpyxl` and `pandas-stubs`.
+- Confirmed remaining boundary from Issue 14: light/moderate/heavy PCT
+  intensity options still require a deeper model design because the current
+  `pctct` implementation compiles only one post-PCT managed state
+  (`cc_pl_pct`), not multiple intensity-specific treatment paths.
+
+## 2026-03-24 - Added three coexisting age-10 PCT choices to K3Z `pctct`
+- Extended parent Patchworks export logic in
+  `src/femic/fmg/patchworks.py` so `pre_commercial_thinning` can now compile
+  multiple labeled PCT treatments from the same planted starting state, each
+  with its own post-PCT state and per-species stem-removal target.
+- Added parent regression coverage in:
+  - `tests/test_fmg_patchworks.py`
+  - `tests/test_docs_contract.py`
+  proving that one variant can materialize `PCT_LIGHT`, `PCT_MODERATE`, and
+  `PCT_HEAVY` in parallel while still routing `CT` from each resulting PCT
+  state.
+- Updated `external/femic-k3z-instance/config/silviculture.k3z.pctct.yaml` so
+  the four Issue 14 AUs now expose three age-10 PCT choices:
+  - `PCT_LIGHT` (`900 CW + 2100 HW`)
+  - `PCT_MODERATE` (`900 CW + 1100 HW`)
+  - `PCT_HEAVY` (`900 CW + 100 HW`)
+- Refreshed the standalone K3Z docs and Patchworks entrypoint in:
+  - `external/femic-k3z-instance/docs/getting-started.rst`
+  - `external/femic-k3z-instance/docs/model-anatomy.rst`
+  - `external/femic-k3z-instance/docs/operator-runbook.rst`
+  - `external/femic-k3z-instance/docs/rebuild-and-qa.rst`
+  - `external/femic-k3z-instance/docs/silviculture-logic.rst`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/pctct.pin`
+  so the three PCT flavors are explicit and visually distinguishable in
+  Patchworks.
+- Regenerated:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pctct.xml`
+  - `external/femic-k3z-instance/output/patchworks_k3z_pctct_validated/forestmodel.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pctct/`
+  from the updated multi-PCT config.
+- Validation passed with:
+  - `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml --run-id k3z_pctct_multi_pct_20260324`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct.windows.yaml`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+
+## 2026-03-24 - Split K3Z `pctct` into light/moderate/heavy single-intensity subvariants
+- Replaced the stacked multi-PCT K3Z teaching surface with three explicit
+  single-intensity subvariants:
+  - `pctct_light`
+  - `pctct_moderate`
+  - `pctct_heavy`
+- Added tracked K3Z config/runtime/PIN surfaces for those subvariants in:
+  - `external/femic-k3z-instance/config/patchworks.variant.pctct_*.yaml`
+  - `external/femic-k3z-instance/config/patchworks.runtime.pctct_*.windows.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.pctct_*.yaml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/pctct_*.pin`
+- Kept the Issue 14 AU footprint and regen assumption constant across all three
+  subvariants:
+  - eligible AUs remain `985502000`, `985503000`, `985502001`, `985503001`
+  - planted regen mix remains `900 CW + 3100 HW`
+- Moved the PCT intensity choice out of one stacked tracks surface and into the
+  three subvariant configs:
+  - `pctct_light` removes `1000` HW stems/ha
+  - `pctct_moderate` removes `2000` HW stems/ha
+  - `pctct_heavy` removes `3000` HW stems/ha
+- Refreshed the standalone K3Z docs/contracts so they now describe the new
+  `pctct_*` launch matrix, generic `PCT`/`CT` labels, and the simplified state
+  machine `cc_pl -> cc_pl_pct -> cc_pl_pct_ct`.
+- Regenerated and checked in:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pctct_light.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pctct_moderate.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pctct_heavy.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pctct_light/`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pctct_moderate/`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pctct_heavy/`
+  - `external/femic-k3z-instance/output/patchworks_k3z_pctct_light_validated/`
+  - `external/femic-k3z-instance/output/patchworks_k3z_pctct_moderate_validated/`
+  - `external/femic-k3z-instance/output/patchworks_k3z_pctct_heavy_validated/`
+- Used the checked-in K3Z bundle tables to regenerate the three ForestModels,
+  then rebuilt all three tracks surfaces against copies of the accepted
+  baseline fragments surface so the 218-fragment teaching footprint stays
+  unchanged across the new subvariants.
+- Validation passed with:
+  - `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct_light.windows.yaml --run-id k3z_pctct_light_20260324`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct_moderate.windows.yaml --run-id k3z_pctct_moderate_20260324`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct_heavy.windows.yaml --run-id k3z_pctct_heavy_20260324`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct_light.windows.yaml` -> `accounts=265`, `species=8`, `complete_species=8`, `au=14`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct_moderate.windows.yaml` -> `accounts=265`, `species=8`, `complete_species=8`, `au=14`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pctct_heavy.windows.yaml` -> `accounts=264`, `species=8`, `complete_species=8`, `au=14`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+
+## 2026-03-24 - Removed the dead `residual_stems_per_ha` PCT knob
+- Removed `residual_stems_per_ha` from the active K3Z PCT config surfaces:
+  - `external/femic-k3z-instance/config/silviculture.k3z.pctct.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.pctct_light.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.pctct_moderate.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.pctct_heavy.yaml`
+- Removed the same dead setting from the instance template at
+  `src/femic/resources/instance/config/silviculture.case_template.yaml` so new
+  cases do not inherit a non-functional knob.
+- Simplified `src/femic/fmg/patchworks.py` so PCT config resolution no longer
+  parses or stores `residual_stems_per_ha`; the active fixed-stem-removal path
+  now reflects the real operative controls only:
+  `source_total_stems_per_ha` plus `remove_stems_per_ha`.
+- Updated `tests/test_fmg_patchworks.py` to remove the stale dead-setting
+  fixture input.
+- Validation passed with:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+
+## 2026-03-24 - Removed the retired single-surface `pctct` alias
+- Removed the now-redundant legacy K3Z `pctct` launch/config/build surface
+  after `pctct_light`, `pctct_moderate`, and `pctct_heavy` stuck the landing:
+  - `external/femic-k3z-instance/config/patchworks.variant.pctct.yaml`
+  - `external/femic-k3z-instance/config/patchworks.runtime.pctct.windows.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.pctct.yaml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/pctct.pin`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pctct.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pctct/`
+  - `external/femic-k3z-instance/output/patchworks_k3z_pctct_validated/`
+- Updated the remaining parent/K3Z docs so they point only at the supported
+  `pctct_light`, `pctct_moderate`, and `pctct_heavy` subvariants.
+- Added a parent docs-contract regression test that fails if the retired
+  single-surface `pctct` files reappear.
+
+## 2026-03-24 - Retargeted the K3Z student treatment family to PCT-only `pct_*`
+- Replaced the active K3Z `pctct_*` subvariant family with the renamed
+  PCT-only `pct_light`, `pct_moderate`, and `pct_heavy` surfaces:
+  - `external/femic-k3z-instance/config/patchworks.variant.pct_*.yaml`
+  - `external/femic-k3z-instance/config/patchworks.runtime.pct_*.windows.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.pct_*.yaml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/pct_*.pin`
+- Removed the `commercial_thinning` leg from the active PCT YAMLs so the
+  managed treatment path now ends at `cc_pl_pct`; the rebuilt PCT-only
+  ForestModels/tracks no longer materialize `CT` products or the
+  `cc_pl_pct_ct` state.
+- Regenerated and checked in the PCT-only artifact family:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_*.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pct_*/`
+  - `external/femic-k3z-instance/output/patchworks_k3z_pct_*_validated/`
+- Updated the remaining parent/K3Z docs and regression tests so they now
+  describe the `pct_*` launch matrix, PCT-only treatment chain, and removal of
+  the retired `pctct_*` paths.
+- Validation passed with:
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_light.windows.yaml --run-id k3z_pct_light_20260324_rebuild`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_moderate.windows.yaml --run-id k3z_pct_moderate_20260324_rebuild`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_heavy.windows.yaml --run-id k3z_pct_heavy_20260324_rebuild`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_light.windows.yaml` -> `accounts=232`, `species=8`, `complete_species=8`, `au=14`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_moderate.windows.yaml` -> `accounts=232`, `species=8`, `complete_species=8`, `au=14`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_heavy.windows.yaml` -> `accounts=232`, `species=8`, `complete_species=8`, `au=14`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `sphinx-build -b html docs _build/html -W`
+  - `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`
+  - `pre-commit run --all-files`
+
+## 2026-03-24 - Closed Issue 14 with an explicit closeout note
+- Added a final GitHub issue 14 closeout comment that:
+  - summarizes the delivered `pct_light`, `pct_moderate`, and `pct_heavy`
+    PCT-only scope;
+  - points readers to the primary standalone K3Z docs under
+    `external/femic-k3z-instance/docs/` and the parent pointer page at
+    `docs/sample-models/k3z.rst`;
+  - explains why the remaining checkpoint7/export caveat does not block the
+    user-facing Issue 14 deliverable.
+- Closed GitHub issue 14 after the explicit closeout note was posted.
+- Tightened `AGENTS.md` so future issue closures must include a final
+  closeout comment naming what shipped, where the docs live, the validation
+  result, and why any remaining caveats do not block closure.

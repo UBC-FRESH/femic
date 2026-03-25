@@ -672,3 +672,138 @@ def test_build_tipsy_params_from_config_matches_on_stratum_code() -> None:
     assert out["e"]["Density"] == 4000
     assert out["e"]["SPP_1"] == "HW"
     assert out["e"]["SPP_2"] == "FD"
+
+
+def test_build_tipsy_params_from_config_matches_on_au_id() -> None:
+    cfg = {
+        "schema_version": 1,
+        "tsa_code": "08",
+        "defaults": {
+            "e": {"Proportion": 1, "Regen_Method": "P"},
+            "f": {"Proportion": 1, "Regen_Method": "P"},
+        },
+        "rules": [
+            {
+                "id": "targeted_au",
+                "when": {"au_id_in": [985503000]},
+                "assign": {
+                    "e": {
+                        "Density": 4000,
+                        "SPP_1": "HW",
+                        "PCT_1": 78,
+                        "SPP_2": "CW",
+                        "PCT_2": 22,
+                    },
+                    "f": {
+                        "Density": 4000,
+                        "SPP_1": "HW",
+                        "PCT_1": 78,
+                        "SPP_2": "CW",
+                        "PCT_2": 22,
+                    },
+                },
+            },
+            {
+                "id": "fallback_fd_pair",
+                "when": {"stratum_code_in": ["CWHvm_HW+FDC"]},
+                "assign": {
+                    "e": {
+                        "Density": 4000,
+                        "SPP_1": "HW",
+                        "PCT_1": 78,
+                        "SPP_2": "FD",
+                        "PCT_2": 22,
+                    },
+                    "f": {
+                        "Density": 4000,
+                        "SPP_1": "HW",
+                        "PCT_1": 78,
+                        "SPP_2": "FD",
+                        "PCT_2": 22,
+                    },
+                },
+            },
+        ],
+    }
+    au_data = {
+        "stratum_code": "CWHvm_HW+FDC",
+        "si_level": "H",
+        "ss": pd.DataFrame({"SITE_INDEX": [15.0], "BEC_ZONE_CODE": ["CWH"]}),
+        "species": {"HW": {"pct": 70.0}, "FD": {"pct": 30.0}},
+    }
+    vdyp_out = {1: pd.DataFrame({"SI": [15.0], "% Stk": [90.0]})}
+    out = build_tipsy_params_from_config(
+        au_id=985503000,
+        au_data=au_data,
+        vdyp_out=vdyp_out,
+        config=cfg,
+    )
+    assert out["e"]["SPP_1"] == "HW"
+    assert out["e"]["SPP_2"] == "CW"
+
+
+def test_build_tipsy_params_from_config_matches_on_si_level() -> None:
+    cfg = {
+        "schema_version": 1,
+        "tsa_code": "08",
+        "defaults": {
+            "e": {"Proportion": 1, "Regen_Method": "P"},
+            "f": {"Proportion": 1, "Regen_Method": "P"},
+        },
+        "rules": [
+            {
+                "id": "high_si_fd_pair",
+                "when": {"stratum_code_in": ["CWHvm_FDC+HW"], "si_level_in": ["H"]},
+                "assign": {
+                    "e": {
+                        "Density": 4000,
+                        "SPP_1": "HW",
+                        "PCT_1": 78,
+                        "SPP_2": "CW",
+                        "PCT_2": 22,
+                    },
+                    "f": {
+                        "Density": 4000,
+                        "SPP_1": "HW",
+                        "PCT_1": 78,
+                        "SPP_2": "CW",
+                        "PCT_2": 22,
+                    },
+                },
+            },
+            {
+                "id": "fd_pair_fallback",
+                "when": {"stratum_code_in": ["CWHvm_FDC+HW"]},
+                "assign": {
+                    "e": {
+                        "Density": 4000,
+                        "SPP_1": "HW",
+                        "PCT_1": 78,
+                        "SPP_2": "FD",
+                        "PCT_2": 22,
+                    },
+                    "f": {
+                        "Density": 4000,
+                        "SPP_1": "HW",
+                        "PCT_1": 78,
+                        "SPP_2": "FD",
+                        "PCT_2": 22,
+                    },
+                },
+            },
+        ],
+    }
+    au_data = {
+        "stratum_code": "CWHvm_FDC+HW",
+        "si_level": "H",
+        "ss": pd.DataFrame({"SITE_INDEX": [15.0], "BEC_ZONE_CODE": ["CWH"]}),
+        "species": {"HW": {"pct": 70.0}, "FD": {"pct": 30.0}},
+    }
+    vdyp_out = {1: pd.DataFrame({"SI": [15.0], "% Stk": [90.0]})}
+    out = build_tipsy_params_from_config(
+        au_id=985503001,
+        au_data=au_data,
+        vdyp_out=vdyp_out,
+        config=cfg,
+    )
+    assert out["e"]["SPP_2"] == "CW"

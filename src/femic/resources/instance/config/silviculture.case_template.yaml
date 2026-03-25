@@ -6,7 +6,6 @@ pre_commercial_thinning:
   eligible_au_ids: []
   min_origin: "planted"
   age_by_au: {}
-  residual_stems_per_ha: 900
   remove_species:
     - "HW"
 

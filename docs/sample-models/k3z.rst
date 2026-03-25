@@ -26,7 +26,8 @@ Standalone K3Z Coverage Map
 
 Use the standalone K3Z docs for:
 
-- variant selection across ``base``, ``ctfert``, and ``pctct``,
+- variant selection across ``base``, ``ctfert``, ``pct_light``,
+  ``pct_moderate``, and ``pct_heavy``,
 - baseline-derived overlay subvariants
   (``basecase_riparian``, ``basecase_sum``, ``scenario1_sum``,
   ``scenario2_sum``),
