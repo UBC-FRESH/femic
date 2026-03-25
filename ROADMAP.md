@@ -1201,6 +1201,23 @@ notes.
       reports `accounts=264`, `species=8`, `complete_species=8`, `au=14`;
     - `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
       and `pre-commit run --all-files` all pass in the current `.venv`.
+- 2026-03-24 (Phase 30 legacy-surface cleanup): removed the now-redundant
+  single-surface `pctct` alias after the three `pctct_*` subvariants passed
+  live Patchworks smoke.
+  - Result:
+    - removed the orphaned legacy launch/config/build surface:
+      `config/patchworks.variant.pctct.yaml`,
+      `config/patchworks.runtime.pctct.windows.yaml`,
+      `config/silviculture.k3z.pctct.yaml`,
+      `models/k3z_patchworks_model/analysis/pctct.pin`,
+      `models/k3z_patchworks_model/yield/forestmodel_pctct.xml`,
+      `models/k3z_patchworks_model/tracks_pctct/`, and
+      `output/patchworks_k3z_pctct_validated/`;
+    - tightened the remaining parent/K3Z docs so they only point at the
+      supported `pctct_light`, `pctct_moderate`, and `pctct_heavy`
+      subvariants;
+    - added a parent contract test that fails if the retired single-surface
+      `pctct` files reappear beside the supported `pctct_*` surfaces.
 - 2026-03-24 (Phase 25 P25.4b kickoff): close the overlay docs gap on branch
   `feature/k3z-overlay-guidance-closeout`.
   - Immediate execution order:

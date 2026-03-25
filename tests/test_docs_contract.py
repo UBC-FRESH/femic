@@ -22,6 +22,15 @@ COVERAGE_CSV = GUIDES_ROOT / "legacy_notebook_coverage.csv"
 K3Z_INSTANCE_ROOT = Path("external/femic-k3z-instance")
 TSA29_INSTANCE_ROOT = Path("external/femic-tsa29-instance")
 PCTCT_SUBVARIANT_IDS = ("pctct_light", "pctct_moderate", "pctct_heavy")
+REMOVED_PCTCT_LEGACY_PATHS = (
+    K3Z_INSTANCE_ROOT / "config/patchworks.variant.pctct.yaml",
+    K3Z_INSTANCE_ROOT / "config/patchworks.runtime.pctct.windows.yaml",
+    K3Z_INSTANCE_ROOT / "config/silviculture.k3z.pctct.yaml",
+    K3Z_INSTANCE_ROOT / "models/k3z_patchworks_model/analysis/pctct.pin",
+    K3Z_INSTANCE_ROOT / "models/k3z_patchworks_model/yield/forestmodel_pctct.xml",
+    K3Z_INSTANCE_ROOT / "models/k3z_patchworks_model/tracks_pctct",
+    K3Z_INSTANCE_ROOT / "output/patchworks_k3z_pctct_validated",
+)
 
 GUIDE_PAGES = [
     "pipeline-overview",
@@ -803,6 +812,11 @@ def test_k3z_pctct_checked_in_surface_keeps_species_wise_managed_accounts() -> N
         )
         assert "product.Treated.managed.PCT" in labels
         assert "product.Treated.managed.CT" in labels
+
+
+def test_k3z_legacy_single_pctct_surface_has_been_removed() -> None:
+    for path in REMOVED_PCTCT_LEGACY_PATHS:
+        assert not path.exists(), f"legacy pctct path should be removed: {path}"
 
 
 def test_k3z_ctfert_checked_in_surface_preserves_baseline_geometry_footprint() -> None:

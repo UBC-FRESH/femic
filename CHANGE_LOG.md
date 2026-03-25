@@ -6164,3 +6164,18 @@
   - `mypy src`
   - `pytest`
   - `pre-commit run --all-files`
+
+## 2026-03-24 - Removed the retired single-surface `pctct` alias
+- Removed the now-redundant legacy K3Z `pctct` launch/config/build surface
+  after `pctct_light`, `pctct_moderate`, and `pctct_heavy` stuck the landing:
+  - `external/femic-k3z-instance/config/patchworks.variant.pctct.yaml`
+  - `external/femic-k3z-instance/config/patchworks.runtime.pctct.windows.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.pctct.yaml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/pctct.pin`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pctct.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pctct/`
+  - `external/femic-k3z-instance/output/patchworks_k3z_pctct_validated/`
+- Updated the remaining parent/K3Z docs so they point only at the supported
+  `pctct_light`, `pctct_moderate`, and `pctct_heavy` subvariants.
+- Added a parent docs-contract regression test that fails if the retired
+  single-surface `pctct` files reappear.
