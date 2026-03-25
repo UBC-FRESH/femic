@@ -6270,3 +6270,44 @@
   BatchTIPSY output against a VDYP reference curve, and restored AUs `22006`
   and `22008` to the rendered gallery because they are present in the accepted
   raw BatchTIPSY artifact used for this correction.
+
+## 2026-03-24 - Corrected K3Z managed-curve bundle lineage back to raw BatchTIPSY
+- Confirmed that the deeper stale lineage extended beyond the docs plots into:
+  - `external/femic-k3z-instance/data/tipsy_curves_tsak3z.csv`
+  - the treated managed rows in
+    `external/femic-k3z-instance/data/model_input_bundle/curve_points_table.csv`
+- Rebuilt both tracked managed-curve artifacts directly from
+  `external/femic-k3z-instance/data/04_output-tsak3z.out`, restoring exact
+  agreement between the tracked treated managed curves and raw BatchTIPSY
+  output for all 14 treated AUs.
+- Rebuilt the tracked K3Z ForestModel XML family from the corrected bundle:
+  - `models/k3z_patchworks_model/yield/forestmodel.xml`
+  - `models/k3z_patchworks_model/yield/forestmodel_ctfert.xml`
+  - `models/k3z_patchworks_model/yield/forestmodel_pct_light.xml`
+  - `models/k3z_patchworks_model/yield/forestmodel_pct_moderate.xml`
+  - `models/k3z_patchworks_model/yield/forestmodel_pct_heavy.xml`
+- Synchronized the matching `output/patchworks_k3z*_validated/forestmodel.xml`
+  copies so the tracked validated output surfaces stay aligned with the rebuilt
+  XMLs.
+- Reran Patchworks Matrix Builder successfully for the full K3Z runtime family:
+  baseline, `ctfert`, `pct_light`, `pct_moderate`, `pct_heavy`,
+  `overlay.basecase_riparian`, `overlay.basecase_sum`,
+  `overlay.scenario1_sum`, and `overlay.scenario2_sum`.
+- Verified by direct XML inspection that the treated managed yield curves in
+  all five ForestModel XMLs now use the raw-TIPSY decadal point structure
+  rather than the old yearly transformed curve shape.
+- Validation passed with:
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.windows.yaml --run-id k3z_true_tipsy_baseline_20260324`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert.windows.yaml --run-id k3z_true_tipsy_ctfert_20260324`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_light.windows.yaml --run-id k3z_true_tipsy_pct_light_20260324`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_moderate.windows.yaml --run-id k3z_true_tipsy_pct_moderate_20260324`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_heavy.windows.yaml --run-id k3z_true_tipsy_pct_heavy_20260324`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.overlay.basecase_riparian.windows.yaml --run-id k3z_true_tipsy_overlay_basecase_riparian_20260324`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.overlay.basecase_sum.windows.yaml --run-id k3z_true_tipsy_overlay_basecase_sum_20260324`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.overlay.scenario1_sum.windows.yaml --run-id k3z_true_tipsy_overlay_scenario1_sum_20260324`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.overlay.scenario2_sum.windows.yaml --run-id k3z_true_tipsy_overlay_scenario2_sum_20260324`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
