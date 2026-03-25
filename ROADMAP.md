@@ -927,6 +927,34 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-25 (Phase 36 kickoff): start Issue 21 on branch
+  `feature/k3z-ctfert-si-subvariants` in the parent repo and K3Z submodule to
+  expand the K3Z CT/fert teaching surface from the current medium-SI-only
+  `FDC+HW` / `CW+HW` cohort to the full low/medium/high-SI cohort and compile
+  two new SI-specific fert-response subvariants.
+  - Tracking issue:
+    - GitHub issue #21 ("Expand K3Z CT/fert to L/M/H SI classes and add two
+      SI-specific fert-response subvariants")
+  - Working implementation focus:
+    - keep the current single CT treatment unchanged (30% BA removal from
+      below);
+    - keep the three-step fert chain (`F1` / `F2` / `F3`) wherever fert remains
+      enabled;
+    - expand eligible AUs from 2 to 6 across the `L/M/H` SI classes of the
+      `FDC+HW` and `CW+HW` strata;
+    - add two new subvariants with these SI-specific fert boosts:
+      - profile A: `L=15%`, `M=10%`, `H=5%`
+      - profile B: `L=20%`, `M=10%`, `H=0%` interpreted as "do not enable fert
+        at all on H-class AUs" rather than compiling null-effect fert paths.
+  - Immediate execution order:
+    - audit the current `ctfert` silviculture/runtime/variant surface and
+      enumerate the six eligible AUs explicitly;
+    - decide whether the existing `ctfert` variant remains as-is while the two
+      new response-profile subvariants are added alongside it;
+    - teach the silviculture/export logic to express SI-specific fert boosts
+      without compiling explicit 0%-effect fert paths;
+    - regenerate the K3Z ForestModel/tracks/runtime/docs surfaces and validate
+      both new subvariants with Matrix Builder before closeout.
 - 2026-03-25 (Phase 35 kickoff): correct the human-readable AU naming rollout
   so the shipped K3Z runtime artifacts actually expose the readable labels in
   launched Patchworks sessions.
@@ -6669,6 +6697,17 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       tokens such as `CWHvm_HW_FDC_H`, not operator-bearing labels like
       `CWHvm-HW+FDC-H`, because Patchworks parses attribute labels as
       expressions.
+
+## Phase 36: K3Z CT/Fert SI-Class Expansion and Response-Profile Subvariants
+- [ ] P36.1 Expand the CT/fert eligible-AU cohort from medium-only to low/medium/high SI classes
+  - [ ] P36.1a Confirm the six target AUs covering the `L/M/H` SI classes of the `FDC+HW` and `CW+HW` strata.
+  - [ ] P36.1b Preserve the current single CT treatment parameters while extending the eligible-AU wiring.
+- [ ] P36.2 Add two SI-specific CT/fert response-profile subvariants
+  - [ ] P36.2a Compile one subvariant with fert boosts `L=15%`, `M=10%`, `H=5%`.
+  - [ ] P36.2b Compile one subvariant with fert boosts `L=20%`, `M=10%`, and no fert enabled on `H` SI AUs.
+- [ ] P36.3 Rebuild K3Z runtime surfaces and close out the tracker
+  - [ ] P36.3a Regenerate XML/tracks/runtime/PIN/docs surfaces for the new subvariants and validate them with Matrix Builder.
+  - [ ] P36.3b Update GitHub issue #21, docs, roadmap, and changelog with the final subvariant semantics and validation results.
 
 
 

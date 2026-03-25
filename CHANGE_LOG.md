@@ -6376,3 +6376,15 @@
   - `pre-commit run --all-files`
   - `sphinx-build -b html docs _build/html -W`
   - standalone K3Z `sphinx-build -b html docs docs\_build\html -W`
+
+## 2026-03-25 - Opened Issue 21 and branched the next K3Z CT/fert subvariant expansion
+- Created GitHub issue `#21` to track the next K3Z CT/fert feature:
+  expand eligibility from medium-SI-only `FDC+HW` / `CW+HW` AUs to the full
+  low/medium/high-SI cohort and add two SI-specific fert-response subvariants.
+- Cut matching feature branches in the parent repo and K3Z submodule:
+  `feature/k3z-ctfert-si-subvariants`.
+- Added Phase 36 kickoff notes to `ROADMAP.md` covering the requested boost
+  profiles:
+  - subvariant A: `L=15%`, `M=10%`, `H=5%`
+  - subvariant B: `L=20%`, `M=10%`, with fert disabled entirely on `H` SI AUs
+    instead of compiling a 0%-effect pass-through fert path.
