@@ -9,6 +9,8 @@ import pytest
 from shapely.geometry import Polygon
 
 from femic.fmg.patchworks import (
+    _au_base_display_label,
+    _sanitize_id_component,
     build_fragments_geodataframe,
     build_patchworks_forestmodel_definition,
     build_forestmodel_xml_tree,
@@ -17,6 +19,15 @@ from femic.fmg.patchworks import (
     validate_fragments_geodataframe,
     write_forestmodel_xml,
 )
+
+
+def _au_label(stratum_code: str, si_level: str, *, tsa: str | None = None) -> str:
+    base = _au_base_display_label(stratum_code=stratum_code, si_level=si_level)
+    return f"{tsa}-{base}" if tsa else base
+
+
+def _au_token(stratum_code: str, si_level: str, *, tsa: str | None = None) -> str:
+    return _sanitize_id_component(_au_label(stratum_code, si_level, tsa=tsa))
 
 
 def _write_bundle_tables(bundle_dir: Path) -> None:
@@ -186,6 +197,55 @@ def test_build_patchworks_forestmodel_definition_contains_treatment() -> None:
     )
 
 
+def test_build_forestmodel_xml_tree_disambiguates_duplicate_au_labels_by_tsa() -> None:
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985501000,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_HW+FDC",
+                "si_level": "L",
+                "managed_curve_id": 985521000,
+                "unmanaged_curve_id": 985501000,
+            },
+            {
+                "au_id": 801000,
+                "tsa": "08",
+                "stratum_code": "CWHvm_HW+FDC",
+                "si_level": "L",
+                "managed_curve_id": 821000,
+                "unmanaged_curve_id": 801000,
+            },
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985501000, "curve_type": "unmanaged"},
+            {"curve_id": 985521000, "curve_type": "managed"},
+            {"curve_id": 801000, "curve_type": "unmanaged"},
+            {"curve_id": 821000, "curve_type": "managed"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985501000, "x": 1, "y": 10.0},
+            {"curve_id": 985521000, "x": 1, "y": 12.0},
+            {"curve_id": 801000, "x": 1, "y": 9.0},
+            {"curve_id": 821000, "x": 1, "y": 11.0},
+        ]
+    )
+
+    root = build_forestmodel_xml_tree(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+    )
+    xml_text = et.tostring(root, encoding="unicode")
+
+    assert "feature.Area.og1.k3z-CWHvm-HW+FDC-L" in xml_text
+    assert "feature.Area.og1.08-CWHvm-HW+FDC-L" in xml_text
+
+
 def test_build_patchworks_forestmodel_definition_allows_unmanaged_transition_ifm() -> (
     None
 ):
@@ -272,11 +332,12 @@ def test_build_forestmodel_xml_tree_adds_species_yield_curves() -> None:
         curve_table=curve_table,
         curve_points_table=curve_points,
     )
+    au_token = _au_token("CWHvm_HW+FDC", "L")
 
     unmanaged_curve = root.find(
-        "./curve[@id='au_985501000_unmanaged_natural_yield_HW']"
+        f"./curve[@id='au_{au_token}_unmanaged_natural_yield_HW']"
     )
-    managed_curve = root.find("./curve[@id='au_985501000_managed_planted_yield_HW']")
+    managed_curve = root.find(f"./curve[@id='au_{au_token}_managed_planted_yield_HW']")
     assert unmanaged_curve is not None
     assert managed_curve is not None
     unmanaged_points = unmanaged_curve.findall("./point")
@@ -329,17 +390,17 @@ def test_build_forestmodel_xml_tree_adds_old_growth_attributes_and_curves() -> N
     )
 
     xml_text = et.tostring(root, encoding="unicode")
-    assert "feature.Area.og1.985501000" in xml_text
+    assert "feature.Area.og1.CWHvm-HW+FDC-L" in xml_text
     assert "feature.Area.og1.total" in xml_text
-    assert "feature.Area.og2.985501000" in xml_text
+    assert "feature.Area.og2.CWHvm-HW+FDC-L" in xml_text
     assert "feature.Area.og2.total" in xml_text
 
-    og1_curve = root.find("./curve[@id='au_985501000_og1']")
+    og1_curve = root.find("./curve[@id='au_CWHvm_HW_FDC_L_og1']")
     assert og1_curve is not None
     og1_points = [point.attrib for point in og1_curve.findall("./point")]
     assert og1_points == [{"x": "1", "y": "0.0"}, {"x": "100", "y": "1.0"}]
 
-    og2_curve = root.find("./curve[@id='au_985501000_og2']")
+    og2_curve = root.find("./curve[@id='au_CWHvm_HW_FDC_L_og2']")
     assert og2_curve is not None
     og2_points = [point.attrib for point in og2_curve.findall("./point")]
     assert og2_points == [{"x": "249", "y": "0.0"}, {"x": "250", "y": "1.0"}]
@@ -379,8 +440,9 @@ def test_build_forestmodel_xml_tree_reuses_unmanaged_species_props_for_managed_f
         curve_table=curve_table,
         curve_points_table=curve_points,
     )
+    au_token = _au_token("CWHvm_HW+FDC", "L")
 
-    managed_curve = root.find("./curve[@id='au_985501000_managed_planted_yield_HW']")
+    managed_curve = root.find(f"./curve[@id='au_{au_token}_managed_planted_yield_HW']")
     assert managed_curve is not None
     points = managed_curve.findall("./point")
     assert points[0].attrib == {"x": "1", "y": "6.0"}
@@ -433,8 +495,9 @@ def test_build_forestmodel_xml_tree_reuses_unmanaged_species_when_managed_prop_i
         curve_table=curve_table,
         curve_points_table=curve_points,
     )
+    au_token = _au_token("CWHvm_HW+FDC", "L")
 
-    managed_curve = root.find("./curve[@id='au_985501000_managed_planted_yield_HW']")
+    managed_curve = root.find(f"./curve[@id='au_{au_token}_managed_planted_yield_HW']")
     assert managed_curve is not None
     points = managed_curve.findall("./point")
     assert points[0].attrib == {"x": "1", "y": "7.2"}
@@ -443,7 +506,7 @@ def test_build_forestmodel_xml_tree_reuses_unmanaged_species_when_managed_prop_i
     xml_text = et.tostring(root, encoding="unicode")
     assert "feature.SpeciesProp.managed.HW" in xml_text
     assert "product.SpeciesProp.managed.HW" in xml_text
-    assert 'curve idref="unmanaged_prop_HW_985501000001"' in xml_text
+    assert 'curve idref="unmanaged_prop_HW_CWHvm_HW_FDC_L_985501000001"' in xml_text
 
 
 def test_build_forestmodel_xml_tree_does_not_mix_managed_and_unmanaged_species_props() -> (
@@ -600,8 +663,8 @@ def test_build_forestmodel_xml_tree_adds_ct_track_and_qmd_when_configured() -> N
     assert treatment_labels == ["CC", "CT"]
 
     xml_text = et.tostring(root, encoding="unicode")
-    assert "feature.QMD.managed.985502001" in xml_text
-    assert "feature.QMD.unmanaged.985502001" in xml_text
+    assert "feature.QMD.managed.CWHvm-FDC+HW-M" in xml_text
+    assert "feature.QMD.unmanaged.CWHvm-FDC+HW-M" in xml_text
     assert "product.HarvestedVolume.managed.Total.CT" in xml_text
     assert (
         "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl' and treatment eq 'CT'"
@@ -737,8 +800,8 @@ def test_build_forestmodel_xml_tree_adds_pct_then_ct_variant_path() -> None:
     )
     assert "product.Treated.managed.CT" not in xml_text
     assert "cc_pl_pct_ct" not in xml_text
-    assert "au_985502001_managed_cc_pl_pct_yield_HW" not in xml_text
-    assert "au_985502001_managed_cc_pl_pct_yield_FD" in xml_text
+    assert "au_CWHvm_FDC_HW_M_managed_cc_pl_pct_yield_HW" not in xml_text
+    assert "au_CWHvm_FDC_HW_M_managed_cc_pl_pct_yield_FD" in xml_text
     assert "product.Treated.managed.F1" not in xml_text
 
 
@@ -851,9 +914,9 @@ def test_build_forestmodel_xml_tree_supports_multiple_pct_treatments() -> None:
     assert "cc_pl_pct_light_ct" not in xml_text
     assert "cc_pl_pct_moderate_ct" not in xml_text
     assert "cc_pl_pct_heavy_ct" not in xml_text
-    assert "au_985502001_managed_cc_pl_pct_light_yield_HW" in xml_text
-    assert "au_985502001_managed_cc_pl_pct_moderate_yield_HW" in xml_text
-    assert "au_985502001_managed_cc_pl_pct_heavy_yield_HW" in xml_text
+    assert "au_CWHvm_FDC_HW_M_managed_cc_pl_pct_light_yield_HW" in xml_text
+    assert "au_CWHvm_FDC_HW_M_managed_cc_pl_pct_moderate_yield_HW" in xml_text
+    assert "au_CWHvm_FDC_HW_M_managed_cc_pl_pct_heavy_yield_HW" in xml_text
 
 
 def test_build_forestmodel_xml_tree_omits_zero_signal_species_accounts() -> None:
@@ -1041,12 +1104,12 @@ def test_build_forestmodel_xml_tree_adds_seral_curves_and_attributes() -> None:
     assert "feature.Seral.immature" in xml_text
     assert "feature.Seral.mature" in xml_text
     assert "feature.Seral.overmature" in xml_text
-    assert "feature.Seral.985501000.regenerating" in xml_text
-    assert "feature.Seral.985501000.mature" in xml_text
+    assert "feature.Seral.CWHvm-HW+FDC-L.regenerating" in xml_text
+    assert "feature.Seral.CWHvm-HW+FDC-L.mature" in xml_text
     assert "product.Seral.regenerating" not in xml_text
-    assert "product.Seral.area.regenerating.985501000.CC" in xml_text
+    assert "product.Seral.area.regenerating.CWHvm-HW+FDC-L.CC" in xml_text
 
-    mature_curve = root.find("./curve[@id='au_985501000_seral_mature']")
+    mature_curve = root.find("./curve[@id='au_CWHvm_HW_FDC_L_seral_mature']")
     assert mature_curve is not None
     mature_points = [point.attrib for point in mature_curve.findall("./point")]
     assert {"x": "60", "y": "0.0"} in mature_points
@@ -1098,7 +1161,7 @@ def test_build_forestmodel_xml_tree_respects_per_au_seral_overrides() -> None:
             }
         },
     )
-    mature_curve = root.find("./curve[@id='au_985501000_seral_mature']")
+    mature_curve = root.find("./curve[@id='au_CWHvm_HW_FDC_L_seral_mature']")
     assert mature_curve is not None
     mature_points = [point.attrib for point in mature_curve.findall("./point")]
     assert {"x": "70", "y": "1.0"} in mature_points
@@ -1150,9 +1213,9 @@ def test_build_forestmodel_xml_tree_clamps_invalid_seral_stage_bounds() -> None:
     )
     xml_text = et.tostring(root, encoding="unicode")
     assert "feature.Seral.immature" in xml_text
-    assert "feature.Seral.985501000.immature" in xml_text
+    assert "feature.Seral.CWHvm-HW+FDC-L.immature" in xml_text
 
-    immature_curve = root.find("./curve[@id='au_985501000_seral_immature']")
+    immature_curve = root.find("./curve[@id='au_CWHvm_HW_FDC_L_seral_immature']")
     assert immature_curve is not None
     points = [point.attrib for point in immature_curve.findall("./point")]
     assert {"x": "26", "y": "1.0"} in points
@@ -1197,8 +1260,10 @@ def test_forestmodel_xml_trims_repeated_curve_values_on_both_tails() -> None:
         curve_table=curve_table,
         curve_points_table=curve_points,
     )
-    unmanaged_points = root.findall("./curve[@id='unmanaged_total_1001']/point")
-    managed_points = root.findall("./curve[@id='managed_total_21001']/point")
+    unmanaged_points = root.findall(
+        "./curve[@id='unmanaged_total_SBPS_PLI_L_1001']/point"
+    )
+    managed_points = root.findall("./curve[@id='managed_total_SBPS_PLI_L_21001']/point")
     assert [p.attrib for p in unmanaged_points] == [
         {"x": "2", "y": "5.0"},
         {"x": "10", "y": "40.0"},
@@ -1244,8 +1309,10 @@ def test_forestmodel_xml_all_flat_curve_keeps_earliest_point() -> None:
         curve_table=curve_table,
         curve_points_table=curve_points,
     )
-    unmanaged_points = root.findall("./curve[@id='unmanaged_total_1001']/point")
-    managed_points = root.findall("./curve[@id='managed_total_21001']/point")
+    unmanaged_points = root.findall(
+        "./curve[@id='unmanaged_total_SBPS_PLI_L_1001']/point"
+    )
+    managed_points = root.findall("./curve[@id='managed_total_SBPS_PLI_L_21001']/point")
     assert [p.attrib for p in unmanaged_points] == [{"x": "1", "y": "0.0"}]
     assert [p.attrib for p in managed_points] == [{"x": "1", "y": "0.0"}]
 
@@ -1282,7 +1349,7 @@ def test_forestmodel_xml_sanitizes_nan_point_values() -> None:
         curve_table=curve_table,
         curve_points_table=curve_points,
     )
-    species_prop = root.find("./curve[@id='managed_prop_HW_21001001']/point")
+    species_prop = root.find("./curve[@id='managed_prop_HW_SBPS_PLI_L_21001001']/point")
     assert species_prop is not None
     assert species_prop.attrib == {"x": "1", "y": "0"}
 
@@ -1414,7 +1481,9 @@ def test_validate_forestmodel_xml_tree_rejects_missing_curve_ref() -> None:
         curve_table=curve_table,
         curve_points_table=curve_points,
     )
-    managed_curve_node = root.find("./curve[@id='managed_total_985521000']")
+    managed_curve_node = root.find(
+        "./curve[@id='managed_total_CWHvm_HW_FDC_L_985521000']"
+    )
     assert managed_curve_node is not None
     root.remove(managed_curve_node)
 

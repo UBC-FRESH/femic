@@ -56,8 +56,14 @@ points when a curve starts/ends with repeated y-values; Patchworks extends
 terminal points horizontally by default.
 
 Curve IDs are emitted as readable tokens (for example
-``managed_total_<id>``, ``managed_prop_<SPP>_<id>``,
-``au_<au_id>_managed_yield_<SPP>``) while remaining unique within the XML file.
+``managed_total_<au_label>_<id>``, ``managed_prop_<SPP>_<au_label>_<id>``,
+``au_<au_label>_managed_yield_<SPP>``) while remaining unique within the XML
+file.
+
+In these readable surfaces, ``<au_label>`` means the deterministic human-facing
+AU token derived from ``stratum_code`` + ``si_level`` (for example
+``CWHvm-HW+FDC-H``). When the same readable AU token would otherwise collide
+across TSAs, FEMIC prefixes the TSA code to keep the label unique.
 
 CC treatment minimum age is now resolved per AU as:
 
@@ -78,17 +84,17 @@ seral curves and binds these attributes:
 - ``feature.Seral.immature``
 - ``feature.Seral.mature``
 - ``feature.Seral.overmature``
-- ``feature.Seral.<au_id>.regenerating``
-- ``feature.Seral.<au_id>.young``
-- ``feature.Seral.<au_id>.immature``
-- ``feature.Seral.<au_id>.mature``
-- ``feature.Seral.<au_id>.overmature``
+- ``feature.Seral.<au_label>.regenerating``
+- ``feature.Seral.<au_label>.young``
+- ``feature.Seral.<au_label>.immature``
+- ``feature.Seral.<au_label>.mature``
+- ``feature.Seral.<au_label>.overmature``
 - CC-treatment consequence area accounts by stage/AU:
-  ``product.Seral.area.<stage>.<au_id>.CC``
+  ``product.Seral.area.<stage>.<au_label>.CC``
 
 The global ``feature.Seral.<stage>`` labels remain in place for compatibility
-and summary surfaces. The AU-specific ``feature.Seral.<au_id>.<stage>`` labels
-are the per-AU inventory-state surface.
+and summary surfaces. The AU-specific ``feature.Seral.<au_label>.<stage>``
+labels are the per-AU inventory-state surface.
 
 Default boundaries are derived per AU from managed total-yield CMAI and peak
 yield age:

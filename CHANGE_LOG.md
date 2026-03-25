@@ -6311,3 +6311,30 @@
   - `mypy src`
   - `pytest`
   - `pre-commit run --all-files`
+
+## 2026-03-24 - Replaced numeric AU ids with human-readable Patchworks labels
+- Reworked the Patchworks/ForestModel export naming seam in
+  `src/femic/fmg/patchworks.py` so user-facing AU labels are now derived from
+  `stratum_code` + `si_level` instead of exposing raw numeric AU ids.
+- Human-readable account names now read like
+  `feature.Seral.CWHvm-HW+FDC-H.mature` and
+  `feature.Area.og1.CWHvm-HW+FDC-H`, with a TSA-prefix fallback applied only
+  when duplicate readable AU labels would otherwise collide across TSAs.
+- Extended the same readable-token policy into adjacent exported curve ids and
+  readable XML ids where it improves operator readability, while intentionally
+  preserving numeric AU ids in internal `AU eq ...` select clauses and related
+  join semantics.
+- Updated the regression suite and XML fixtures to lock the new naming
+  behavior in place, including a duplicate-label test that verifies TSA-based
+  disambiguation.
+- Updated the parent Patchworks export docs plus the standalone K3Z operator
+  and analysis docs so the documented account names match the exported model
+  surface.
+- Validation passed with:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+  - `sphinx-build -b html docs _build/html -W`
+  - standalone K3Z `sphinx-build -b html docs docs\_build\html -W`

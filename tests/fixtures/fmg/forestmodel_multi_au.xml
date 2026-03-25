@@ -4,125 +4,125 @@
   <curve id="unity">
     <point x="0" y="1.0" />
   </curve>
-  <curve id="au_1001_managed_natural_yield_FD">
-    <point x="1" y="2.4" />
-    <point x="10" y="19.5" />
-  </curve>
-  <curve id="au_1001_managed_natural_yield_PL">
-    <point x="1" y="5.6" />
-    <point x="10" y="45.5" />
-  </curve>
-  <curve id="au_1001_managed_planted_yield_FD">
-    <point x="1" y="1.6" />
-    <point x="10" y="13.0" />
-  </curve>
-  <curve id="au_1001_managed_planted_yield_PL">
-    <point x="1" y="6.4" />
-    <point x="10" y="52.0" />
-  </curve>
-  <curve id="au_1001_og1">
-    <point x="1" y="0.0" />
-    <point x="10" y="1.0" />
-  </curve>
-  <curve id="au_1001_og2">
-    <point x="249" y="0.0" />
-    <point x="250" y="1.0" />
-  </curve>
-  <curve id="au_1001_unmanaged_natural_yield_FD">
-    <point x="1" y="1.5" />
-    <point x="10" y="12.0" />
-  </curve>
-  <curve id="au_1001_unmanaged_natural_yield_PL">
-    <point x="1" y="3.5" />
-    <point x="10" y="28.0" />
-  </curve>
-  <curve id="au_1001_unmanaged_planted_yield_FD">
-    <point x="1" y="1.0" />
-    <point x="10" y="8.0" />
-  </curve>
-  <curve id="au_1001_unmanaged_planted_yield_PL">
-    <point x="1" y="4.0" />
-    <point x="10" y="32.0" />
-  </curve>
-  <curve id="au_1002_managed_natural_yield_AT">
+  <curve id="au_IDF_FD_M_managed_natural_yield_AT">
     <point x="1" y="4.0" />
     <point x="10" y="32.4" />
   </curve>
-  <curve id="au_1002_managed_natural_yield_SW">
+  <curve id="au_IDF_FD_M_managed_natural_yield_SW">
     <point x="1" y="5.0" />
     <point x="10" y="39.6" />
   </curve>
-  <curve id="au_1002_managed_planted_yield_AT">
+  <curve id="au_IDF_FD_M_managed_planted_yield_AT">
     <point x="1" y="3.6" />
     <point x="10" y="28.8" />
   </curve>
-  <curve id="au_1002_managed_planted_yield_SW">
+  <curve id="au_IDF_FD_M_managed_planted_yield_SW">
     <point x="1" y="5.4" />
     <point x="10" y="43.2" />
   </curve>
-  <curve id="au_1002_og1">
+  <curve id="au_IDF_FD_M_og1">
     <point x="1" y="0.0" />
     <point x="10" y="1.0" />
   </curve>
-  <curve id="au_1002_og2">
+  <curve id="au_IDF_FD_M_og2">
     <point x="249" y="0.0" />
     <point x="250" y="1.0" />
   </curve>
-  <curve id="au_1002_unmanaged_natural_yield_AT">
+  <curve id="au_IDF_FD_M_unmanaged_natural_yield_AT">
     <point x="1" y="2.7" />
     <point x="10" y="22.5" />
   </curve>
-  <curve id="au_1002_unmanaged_natural_yield_SW">
+  <curve id="au_IDF_FD_M_unmanaged_natural_yield_SW">
     <point x="1" y="3.3" />
     <point x="10" y="27.5" />
   </curve>
-  <curve id="au_1002_unmanaged_planted_yield_AT">
+  <curve id="au_IDF_FD_M_unmanaged_planted_yield_AT">
     <point x="1" y="2.4" />
     <point x="10" y="20.0" />
   </curve>
-  <curve id="au_1002_unmanaged_planted_yield_SW">
+  <curve id="au_IDF_FD_M_unmanaged_planted_yield_SW">
     <point x="1" y="3.6" />
     <point x="10" y="30.0" />
   </curve>
-  <curve id="managed_prop_AT_21002002">
+  <curve id="au_SBPS_PLI_L_managed_natural_yield_FD">
+    <point x="1" y="2.4" />
+    <point x="10" y="19.5" />
+  </curve>
+  <curve id="au_SBPS_PLI_L_managed_natural_yield_PL">
+    <point x="1" y="5.6" />
+    <point x="10" y="45.5" />
+  </curve>
+  <curve id="au_SBPS_PLI_L_managed_planted_yield_FD">
+    <point x="1" y="1.6" />
+    <point x="10" y="13.0" />
+  </curve>
+  <curve id="au_SBPS_PLI_L_managed_planted_yield_PL">
+    <point x="1" y="6.4" />
+    <point x="10" y="52.0" />
+  </curve>
+  <curve id="au_SBPS_PLI_L_og1">
+    <point x="1" y="0.0" />
+    <point x="10" y="1.0" />
+  </curve>
+  <curve id="au_SBPS_PLI_L_og2">
+    <point x="249" y="0.0" />
+    <point x="250" y="1.0" />
+  </curve>
+  <curve id="au_SBPS_PLI_L_unmanaged_natural_yield_FD">
+    <point x="1" y="1.5" />
+    <point x="10" y="12.0" />
+  </curve>
+  <curve id="au_SBPS_PLI_L_unmanaged_natural_yield_PL">
+    <point x="1" y="3.5" />
+    <point x="10" y="28.0" />
+  </curve>
+  <curve id="au_SBPS_PLI_L_unmanaged_planted_yield_FD">
+    <point x="1" y="1.0" />
+    <point x="10" y="8.0" />
+  </curve>
+  <curve id="au_SBPS_PLI_L_unmanaged_planted_yield_PL">
+    <point x="1" y="4.0" />
+    <point x="10" y="32.0" />
+  </curve>
+  <curve id="managed_prop_AT_IDF_FD_M_21002002">
     <point x="1" y="0.4" />
   </curve>
-  <curve id="managed_prop_FD_21001002">
+  <curve id="managed_prop_FD_SBPS_PLI_L_21001002">
     <point x="1" y="0.2" />
   </curve>
-  <curve id="managed_prop_PL_21001001">
+  <curve id="managed_prop_PL_SBPS_PLI_L_21001001">
     <point x="1" y="0.8" />
   </curve>
-  <curve id="managed_prop_SW_21002001">
+  <curve id="managed_prop_SW_IDF_FD_M_21002001">
     <point x="1" y="0.6" />
   </curve>
-  <curve id="managed_total_21001">
-    <point x="1" y="8.0" />
-    <point x="10" y="65.0" />
-  </curve>
-  <curve id="managed_total_21002">
+  <curve id="managed_total_IDF_FD_M_21002">
     <point x="1" y="9.0" />
     <point x="10" y="72.0" />
   </curve>
-  <curve id="unmanaged_prop_AT_1002002">
+  <curve id="managed_total_SBPS_PLI_L_21001">
+    <point x="1" y="8.0" />
+    <point x="10" y="65.0" />
+  </curve>
+  <curve id="unmanaged_prop_AT_IDF_FD_M_1002002">
     <point x="1" y="0.45" />
   </curve>
-  <curve id="unmanaged_prop_FD_1001002">
+  <curve id="unmanaged_prop_FD_SBPS_PLI_L_1001002">
     <point x="1" y="0.3" />
   </curve>
-  <curve id="unmanaged_prop_PL_1001001">
+  <curve id="unmanaged_prop_PL_SBPS_PLI_L_1001001">
     <point x="1" y="0.7" />
   </curve>
-  <curve id="unmanaged_prop_SW_1002001">
+  <curve id="unmanaged_prop_SW_IDF_FD_M_1002001">
     <point x="1" y="0.55" />
   </curve>
-  <curve id="unmanaged_total_1001">
-    <point x="1" y="5.0" />
-    <point x="10" y="40.0" />
-  </curve>
-  <curve id="unmanaged_total_1002">
+  <curve id="unmanaged_total_IDF_FD_M_1002">
     <point x="1" y="6.0" />
     <point x="10" y="50.0" />
+  </curve>
+  <curve id="unmanaged_total_SBPS_PLI_L_1001">
+    <point x="1" y="5.0" />
+    <point x="10" y="40.0" />
   </curve>
   <define field="AU" column="AU" />
   <define field="IFM" column="IFM" />
@@ -138,31 +138,31 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.Total">
-        <curve idref="unmanaged_total_1001" />
+        <curve idref="unmanaged_total_SBPS_PLI_L_1001" />
       </attribute>
-      <attribute label="feature.Area.og1.1001">
-        <curve idref="au_1001_og1" />
+      <attribute label="feature.Area.og1.SBPS-PLI-L">
+        <curve idref="au_SBPS_PLI_L_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
-        <curve idref="au_1001_og1" />
+        <curve idref="au_SBPS_PLI_L_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.1001">
-        <curve idref="au_1001_og2" />
+      <attribute label="feature.Area.og2.SBPS-PLI-L">
+        <curve idref="au_SBPS_PLI_L_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
-        <curve idref="au_1001_og2" />
+        <curve idref="au_SBPS_PLI_L_og2" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.FD">
-        <curve idref="au_1001_unmanaged_natural_yield_FD" />
+        <curve idref="au_SBPS_PLI_L_unmanaged_natural_yield_FD" />
       </attribute>
       <attribute label="feature.SpeciesProp.unmanaged.FD">
-        <curve idref="unmanaged_prop_FD_1001002" />
+        <curve idref="unmanaged_prop_FD_SBPS_PLI_L_1001002" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.PL">
-        <curve idref="au_1001_unmanaged_natural_yield_PL" />
+        <curve idref="au_SBPS_PLI_L_unmanaged_natural_yield_PL" />
       </attribute>
       <attribute label="feature.SpeciesProp.unmanaged.PL">
-        <curve idref="unmanaged_prop_PL_1001001" />
+        <curve idref="unmanaged_prop_PL_SBPS_PLI_L_1001001" />
       </attribute>
     </features>
     <track />
@@ -173,31 +173,31 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="feature.Yield.managed.Total">
-        <curve idref="managed_total_21001" />
+        <curve idref="managed_total_SBPS_PLI_L_21001" />
       </attribute>
-      <attribute label="feature.Area.og1.1001">
-        <curve idref="au_1001_og1" />
+      <attribute label="feature.Area.og1.SBPS-PLI-L">
+        <curve idref="au_SBPS_PLI_L_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
-        <curve idref="au_1001_og1" />
+        <curve idref="au_SBPS_PLI_L_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.1001">
-        <curve idref="au_1001_og2" />
+      <attribute label="feature.Area.og2.SBPS-PLI-L">
+        <curve idref="au_SBPS_PLI_L_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
-        <curve idref="au_1001_og2" />
+        <curve idref="au_SBPS_PLI_L_og2" />
       </attribute>
       <attribute label="feature.Yield.managed.FD">
-        <curve idref="au_1001_managed_natural_yield_FD" />
+        <curve idref="au_SBPS_PLI_L_managed_natural_yield_FD" />
       </attribute>
       <attribute label="feature.SpeciesProp.managed.FD">
-        <curve idref="unmanaged_prop_FD_1001002" />
+        <curve idref="unmanaged_prop_FD_SBPS_PLI_L_1001002" />
       </attribute>
       <attribute label="feature.Yield.managed.PL">
-        <curve idref="au_1001_managed_natural_yield_PL" />
+        <curve idref="au_SBPS_PLI_L_managed_natural_yield_PL" />
       </attribute>
       <attribute label="feature.SpeciesProp.managed.PL">
-        <curve idref="unmanaged_prop_PL_1001001" />
+        <curve idref="unmanaged_prop_PL_SBPS_PLI_L_1001001" />
       </attribute>
     </features>
     <retention factor="RETENTION">
@@ -221,28 +221,28 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="product.Yield.managed.Total">
-        <curve idref="managed_total_21001" />
+        <curve idref="managed_total_SBPS_PLI_L_21001" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.Total.CC">
-        <curve idref="managed_total_21001" />
+        <curve idref="managed_total_SBPS_PLI_L_21001" />
       </attribute>
       <attribute label="product.Yield.managed.FD">
-        <curve idref="au_1001_managed_natural_yield_FD" />
+        <curve idref="au_SBPS_PLI_L_managed_natural_yield_FD" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.FD.CC">
-        <curve idref="au_1001_managed_natural_yield_FD" />
+        <curve idref="au_SBPS_PLI_L_managed_natural_yield_FD" />
       </attribute>
       <attribute label="product.SpeciesProp.managed.FD">
-        <curve idref="unmanaged_prop_FD_1001002" />
+        <curve idref="unmanaged_prop_FD_SBPS_PLI_L_1001002" />
       </attribute>
       <attribute label="product.Yield.managed.PL">
-        <curve idref="au_1001_managed_natural_yield_PL" />
+        <curve idref="au_SBPS_PLI_L_managed_natural_yield_PL" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.PL.CC">
-        <curve idref="au_1001_managed_natural_yield_PL" />
+        <curve idref="au_SBPS_PLI_L_managed_natural_yield_PL" />
       </attribute>
       <attribute label="product.SpeciesProp.managed.PL">
-        <curve idref="unmanaged_prop_PL_1001001" />
+        <curve idref="unmanaged_prop_PL_SBPS_PLI_L_1001001" />
       </attribute>
     </products>
   </select>
@@ -252,31 +252,31 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.Total">
-        <curve idref="unmanaged_total_1001" />
+        <curve idref="unmanaged_total_SBPS_PLI_L_1001" />
       </attribute>
-      <attribute label="feature.Area.og1.1001">
-        <curve idref="au_1001_og1" />
+      <attribute label="feature.Area.og1.SBPS-PLI-L">
+        <curve idref="au_SBPS_PLI_L_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
-        <curve idref="au_1001_og1" />
+        <curve idref="au_SBPS_PLI_L_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.1001">
-        <curve idref="au_1001_og2" />
+      <attribute label="feature.Area.og2.SBPS-PLI-L">
+        <curve idref="au_SBPS_PLI_L_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
-        <curve idref="au_1001_og2" />
+        <curve idref="au_SBPS_PLI_L_og2" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.FD">
-        <curve idref="au_1001_unmanaged_planted_yield_FD" />
+        <curve idref="au_SBPS_PLI_L_unmanaged_planted_yield_FD" />
       </attribute>
       <attribute label="feature.SpeciesProp.unmanaged.FD">
-        <curve idref="managed_prop_FD_21001002" />
+        <curve idref="managed_prop_FD_SBPS_PLI_L_21001002" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.PL">
-        <curve idref="au_1001_unmanaged_planted_yield_PL" />
+        <curve idref="au_SBPS_PLI_L_unmanaged_planted_yield_PL" />
       </attribute>
       <attribute label="feature.SpeciesProp.unmanaged.PL">
-        <curve idref="managed_prop_PL_21001001" />
+        <curve idref="managed_prop_PL_SBPS_PLI_L_21001001" />
       </attribute>
     </features>
     <track />
@@ -287,31 +287,31 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="feature.Yield.managed.Total">
-        <curve idref="managed_total_21001" />
+        <curve idref="managed_total_SBPS_PLI_L_21001" />
       </attribute>
-      <attribute label="feature.Area.og1.1001">
-        <curve idref="au_1001_og1" />
+      <attribute label="feature.Area.og1.SBPS-PLI-L">
+        <curve idref="au_SBPS_PLI_L_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
-        <curve idref="au_1001_og1" />
+        <curve idref="au_SBPS_PLI_L_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.1001">
-        <curve idref="au_1001_og2" />
+      <attribute label="feature.Area.og2.SBPS-PLI-L">
+        <curve idref="au_SBPS_PLI_L_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
-        <curve idref="au_1001_og2" />
+        <curve idref="au_SBPS_PLI_L_og2" />
       </attribute>
       <attribute label="feature.Yield.managed.FD">
-        <curve idref="au_1001_managed_planted_yield_FD" />
+        <curve idref="au_SBPS_PLI_L_managed_planted_yield_FD" />
       </attribute>
       <attribute label="feature.SpeciesProp.managed.FD">
-        <curve idref="managed_prop_FD_21001002" />
+        <curve idref="managed_prop_FD_SBPS_PLI_L_21001002" />
       </attribute>
       <attribute label="feature.Yield.managed.PL">
-        <curve idref="au_1001_managed_planted_yield_PL" />
+        <curve idref="au_SBPS_PLI_L_managed_planted_yield_PL" />
       </attribute>
       <attribute label="feature.SpeciesProp.managed.PL">
-        <curve idref="managed_prop_PL_21001001" />
+        <curve idref="managed_prop_PL_SBPS_PLI_L_21001001" />
       </attribute>
     </features>
     <retention factor="RETENTION">
@@ -335,28 +335,28 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="product.Yield.managed.Total">
-        <curve idref="managed_total_21001" />
+        <curve idref="managed_total_SBPS_PLI_L_21001" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.Total.CC">
-        <curve idref="managed_total_21001" />
+        <curve idref="managed_total_SBPS_PLI_L_21001" />
       </attribute>
       <attribute label="product.Yield.managed.FD">
-        <curve idref="au_1001_managed_planted_yield_FD" />
+        <curve idref="au_SBPS_PLI_L_managed_planted_yield_FD" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.FD.CC">
-        <curve idref="au_1001_managed_planted_yield_FD" />
+        <curve idref="au_SBPS_PLI_L_managed_planted_yield_FD" />
       </attribute>
       <attribute label="product.SpeciesProp.managed.FD">
-        <curve idref="managed_prop_FD_21001002" />
+        <curve idref="managed_prop_FD_SBPS_PLI_L_21001002" />
       </attribute>
       <attribute label="product.Yield.managed.PL">
-        <curve idref="au_1001_managed_planted_yield_PL" />
+        <curve idref="au_SBPS_PLI_L_managed_planted_yield_PL" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.PL.CC">
-        <curve idref="au_1001_managed_planted_yield_PL" />
+        <curve idref="au_SBPS_PLI_L_managed_planted_yield_PL" />
       </attribute>
       <attribute label="product.SpeciesProp.managed.PL">
-        <curve idref="managed_prop_PL_21001001" />
+        <curve idref="managed_prop_PL_SBPS_PLI_L_21001001" />
       </attribute>
     </products>
   </select>
@@ -366,31 +366,31 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.Total">
-        <curve idref="unmanaged_total_1002" />
+        <curve idref="unmanaged_total_IDF_FD_M_1002" />
       </attribute>
-      <attribute label="feature.Area.og1.1002">
-        <curve idref="au_1002_og1" />
+      <attribute label="feature.Area.og1.IDF-FD-M">
+        <curve idref="au_IDF_FD_M_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
-        <curve idref="au_1002_og1" />
+        <curve idref="au_IDF_FD_M_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.1002">
-        <curve idref="au_1002_og2" />
+      <attribute label="feature.Area.og2.IDF-FD-M">
+        <curve idref="au_IDF_FD_M_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
-        <curve idref="au_1002_og2" />
+        <curve idref="au_IDF_FD_M_og2" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.AT">
-        <curve idref="au_1002_unmanaged_natural_yield_AT" />
+        <curve idref="au_IDF_FD_M_unmanaged_natural_yield_AT" />
       </attribute>
       <attribute label="feature.SpeciesProp.unmanaged.AT">
-        <curve idref="unmanaged_prop_AT_1002002" />
+        <curve idref="unmanaged_prop_AT_IDF_FD_M_1002002" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.SW">
-        <curve idref="au_1002_unmanaged_natural_yield_SW" />
+        <curve idref="au_IDF_FD_M_unmanaged_natural_yield_SW" />
       </attribute>
       <attribute label="feature.SpeciesProp.unmanaged.SW">
-        <curve idref="unmanaged_prop_SW_1002001" />
+        <curve idref="unmanaged_prop_SW_IDF_FD_M_1002001" />
       </attribute>
     </features>
     <track />
@@ -401,31 +401,31 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="feature.Yield.managed.Total">
-        <curve idref="managed_total_21002" />
+        <curve idref="managed_total_IDF_FD_M_21002" />
       </attribute>
-      <attribute label="feature.Area.og1.1002">
-        <curve idref="au_1002_og1" />
+      <attribute label="feature.Area.og1.IDF-FD-M">
+        <curve idref="au_IDF_FD_M_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
-        <curve idref="au_1002_og1" />
+        <curve idref="au_IDF_FD_M_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.1002">
-        <curve idref="au_1002_og2" />
+      <attribute label="feature.Area.og2.IDF-FD-M">
+        <curve idref="au_IDF_FD_M_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
-        <curve idref="au_1002_og2" />
+        <curve idref="au_IDF_FD_M_og2" />
       </attribute>
       <attribute label="feature.Yield.managed.AT">
-        <curve idref="au_1002_managed_natural_yield_AT" />
+        <curve idref="au_IDF_FD_M_managed_natural_yield_AT" />
       </attribute>
       <attribute label="feature.SpeciesProp.managed.AT">
-        <curve idref="unmanaged_prop_AT_1002002" />
+        <curve idref="unmanaged_prop_AT_IDF_FD_M_1002002" />
       </attribute>
       <attribute label="feature.Yield.managed.SW">
-        <curve idref="au_1002_managed_natural_yield_SW" />
+        <curve idref="au_IDF_FD_M_managed_natural_yield_SW" />
       </attribute>
       <attribute label="feature.SpeciesProp.managed.SW">
-        <curve idref="unmanaged_prop_SW_1002001" />
+        <curve idref="unmanaged_prop_SW_IDF_FD_M_1002001" />
       </attribute>
     </features>
     <retention factor="RETENTION">
@@ -449,28 +449,28 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="product.Yield.managed.Total">
-        <curve idref="managed_total_21002" />
+        <curve idref="managed_total_IDF_FD_M_21002" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.Total.CC">
-        <curve idref="managed_total_21002" />
+        <curve idref="managed_total_IDF_FD_M_21002" />
       </attribute>
       <attribute label="product.Yield.managed.AT">
-        <curve idref="au_1002_managed_natural_yield_AT" />
+        <curve idref="au_IDF_FD_M_managed_natural_yield_AT" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.AT.CC">
-        <curve idref="au_1002_managed_natural_yield_AT" />
+        <curve idref="au_IDF_FD_M_managed_natural_yield_AT" />
       </attribute>
       <attribute label="product.SpeciesProp.managed.AT">
-        <curve idref="unmanaged_prop_AT_1002002" />
+        <curve idref="unmanaged_prop_AT_IDF_FD_M_1002002" />
       </attribute>
       <attribute label="product.Yield.managed.SW">
-        <curve idref="au_1002_managed_natural_yield_SW" />
+        <curve idref="au_IDF_FD_M_managed_natural_yield_SW" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.SW.CC">
-        <curve idref="au_1002_managed_natural_yield_SW" />
+        <curve idref="au_IDF_FD_M_managed_natural_yield_SW" />
       </attribute>
       <attribute label="product.SpeciesProp.managed.SW">
-        <curve idref="unmanaged_prop_SW_1002001" />
+        <curve idref="unmanaged_prop_SW_IDF_FD_M_1002001" />
       </attribute>
     </products>
   </select>
@@ -480,31 +480,31 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.Total">
-        <curve idref="unmanaged_total_1002" />
+        <curve idref="unmanaged_total_IDF_FD_M_1002" />
       </attribute>
-      <attribute label="feature.Area.og1.1002">
-        <curve idref="au_1002_og1" />
+      <attribute label="feature.Area.og1.IDF-FD-M">
+        <curve idref="au_IDF_FD_M_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
-        <curve idref="au_1002_og1" />
+        <curve idref="au_IDF_FD_M_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.1002">
-        <curve idref="au_1002_og2" />
+      <attribute label="feature.Area.og2.IDF-FD-M">
+        <curve idref="au_IDF_FD_M_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
-        <curve idref="au_1002_og2" />
+        <curve idref="au_IDF_FD_M_og2" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.AT">
-        <curve idref="au_1002_unmanaged_planted_yield_AT" />
+        <curve idref="au_IDF_FD_M_unmanaged_planted_yield_AT" />
       </attribute>
       <attribute label="feature.SpeciesProp.unmanaged.AT">
-        <curve idref="managed_prop_AT_21002002" />
+        <curve idref="managed_prop_AT_IDF_FD_M_21002002" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.SW">
-        <curve idref="au_1002_unmanaged_planted_yield_SW" />
+        <curve idref="au_IDF_FD_M_unmanaged_planted_yield_SW" />
       </attribute>
       <attribute label="feature.SpeciesProp.unmanaged.SW">
-        <curve idref="managed_prop_SW_21002001" />
+        <curve idref="managed_prop_SW_IDF_FD_M_21002001" />
       </attribute>
     </features>
     <track />
@@ -515,31 +515,31 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="feature.Yield.managed.Total">
-        <curve idref="managed_total_21002" />
+        <curve idref="managed_total_IDF_FD_M_21002" />
       </attribute>
-      <attribute label="feature.Area.og1.1002">
-        <curve idref="au_1002_og1" />
+      <attribute label="feature.Area.og1.IDF-FD-M">
+        <curve idref="au_IDF_FD_M_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
-        <curve idref="au_1002_og1" />
+        <curve idref="au_IDF_FD_M_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.1002">
-        <curve idref="au_1002_og2" />
+      <attribute label="feature.Area.og2.IDF-FD-M">
+        <curve idref="au_IDF_FD_M_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
-        <curve idref="au_1002_og2" />
+        <curve idref="au_IDF_FD_M_og2" />
       </attribute>
       <attribute label="feature.Yield.managed.AT">
-        <curve idref="au_1002_managed_planted_yield_AT" />
+        <curve idref="au_IDF_FD_M_managed_planted_yield_AT" />
       </attribute>
       <attribute label="feature.SpeciesProp.managed.AT">
-        <curve idref="managed_prop_AT_21002002" />
+        <curve idref="managed_prop_AT_IDF_FD_M_21002002" />
       </attribute>
       <attribute label="feature.Yield.managed.SW">
-        <curve idref="au_1002_managed_planted_yield_SW" />
+        <curve idref="au_IDF_FD_M_managed_planted_yield_SW" />
       </attribute>
       <attribute label="feature.SpeciesProp.managed.SW">
-        <curve idref="managed_prop_SW_21002001" />
+        <curve idref="managed_prop_SW_IDF_FD_M_21002001" />
       </attribute>
     </features>
     <retention factor="RETENTION">
@@ -563,28 +563,28 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="product.Yield.managed.Total">
-        <curve idref="managed_total_21002" />
+        <curve idref="managed_total_IDF_FD_M_21002" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.Total.CC">
-        <curve idref="managed_total_21002" />
+        <curve idref="managed_total_IDF_FD_M_21002" />
       </attribute>
       <attribute label="product.Yield.managed.AT">
-        <curve idref="au_1002_managed_planted_yield_AT" />
+        <curve idref="au_IDF_FD_M_managed_planted_yield_AT" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.AT.CC">
-        <curve idref="au_1002_managed_planted_yield_AT" />
+        <curve idref="au_IDF_FD_M_managed_planted_yield_AT" />
       </attribute>
       <attribute label="product.SpeciesProp.managed.AT">
-        <curve idref="managed_prop_AT_21002002" />
+        <curve idref="managed_prop_AT_IDF_FD_M_21002002" />
       </attribute>
       <attribute label="product.Yield.managed.SW">
-        <curve idref="au_1002_managed_planted_yield_SW" />
+        <curve idref="au_IDF_FD_M_managed_planted_yield_SW" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.SW.CC">
-        <curve idref="au_1002_managed_planted_yield_SW" />
+        <curve idref="au_IDF_FD_M_managed_planted_yield_SW" />
       </attribute>
       <attribute label="product.SpeciesProp.managed.SW">
-        <curve idref="managed_prop_SW_21002001" />
+        <curve idref="managed_prop_SW_IDF_FD_M_21002001" />
       </attribute>
     </products>
   </select>
