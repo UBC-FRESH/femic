@@ -6411,6 +6411,44 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 - 2026-03-21 (Phase 23 Windows preflight hardening): case preflight now understands the real Windows deployment shape instead of assuming every shared asset lives under the instance root. `src/femic/cli/main.py` now falls back from instance-local paths to the FEMIC source tree for shared Windows assets such as `data/tipsy_params_columns`, `vdyp_io/VDYP_CFG`, `VDYP7/VDYP7/VDYP7Console.exe`, and `ria_maptiles.csv`, so `femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml` passes on the known-good workstation. The same preflight path now also checks for `git` and `git-annex` on Windows and runs lightweight annex/DataLad smoke checks (`git -C external/femic-public-data annex version` and `datalad status external/femic-public-data`) whenever the case depends on the annex-backed public-data submodule. This closes `P23.1c` and `P23.4c`.
 
+## Phase 33: K3Z True-TIPSY Plot Provenance Correction
+- [ ] P33.1 Verify and regenerate the current K3Z comparison plot artifacts
+  - [ ] P33.1a Re-run the K3Z post-TIPSY plotting path against the accepted cached inputs and confirm what legends/series the current pipeline actually emits.
+  - [ ] P33.1b Compare the regenerated overlays against the currently checked-in `plots/tipsy_vdyp_tsak3z-*.png` set and identify whether the repository is carrying stale scaled-VDYP artifacts.
+- [ ] P33.2 Reconcile docs and tracked plots with the verified true-TIPSY baseline
+  - [ ] P33.2a Replace or withdraw any student-facing docs surface that points at stale comparison figures.
+  - [ ] P33.2b Update standalone K3Z docs, roadmap/changelog, and GitHub issue tracking so the plot provenance is explicit and no scaled-VDYP confusion remains.
+- [ ] P33.3 Validate the corrective fix
+  - [ ] P33.3a Run the required K3Z docs build and any parent gates touched by the corrective change.
+  - [ ] P33.3b Post the verification/closeout note back to GitHub issue 17.
+
+- 2026-03-24 (Phase 33 kickoff): investigate the suspected mismatch between the
+  accepted K3Z true-TIPSY baseline and the currently checked-in
+  `plots/tipsy_vdyp_tsak3z-*.png` figures surfaced in the docs.
+  - Tracking issue:
+    - GitHub issue #17 ("Regenerate K3Z true-TIPSY comparison plots and remove
+      stale scaled-VDYP docs artifacts")
+  - Working problem statement:
+    - operator review indicates the checked-in comparison PNGs still show
+      `treated (scaled VDYP)` in the legend, which would make the recently
+      surfaced student docs page point at stale/wrong artifacts even though the
+      accepted K3Z managed-curve baseline is real BatchTIPSY output.
+  - Immediate execution order:
+    - run the actual K3Z post-TIPSY plotting path to regenerate the comparison
+      figures from current cached inputs;
+    - inspect the regenerated legend/series content directly;
+    - compare the regenerated files against the checked-in plot set before
+      making any additional docs claims.
+  - Early evidence:
+    - the plotting code in `src/femic/resources/legacy/01b_run-tsa.py`
+      currently emits `TIPSY (raw)` for the managed series and `VDYP` for the
+      comparison series, so the current pipeline should be able to generate the
+      right overlay semantics if the cached inputs are sound.
+  - Success criterion:
+    - we have direct evidence, from freshly regenerated plots, whether the
+      current pipeline now emits real TIPSY-vs-VDYP overlays or whether the
+      repo is still carrying stale scaled-VDYP artifacts.
+
 
 
 
