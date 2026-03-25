@@ -6226,3 +6226,27 @@
 - Tightened `AGENTS.md` so future issue closures must include a final
   closeout comment naming what shipped, where the docs live, the validation
   result, and why any remaining caveats do not block closure.
+
+## 2026-03-24 - Surfaced K3Z TIPSY-vs-VDYP yield-curve plots in the user-facing docs
+- Added a dedicated standalone K3Z guide page at
+  `external/femic-k3z-instance/docs/yield-curve-comparisons.rst` so students
+  can find and interpret the treated TIPSY-vs-VDYP comparison plots directly
+  from the published docs.
+- Linked that page into the main K3Z navigation flow from
+  `index.rst`, `getting-started.rst`, `base-case-analysis.rst`,
+  `model-anatomy.rst`, and `data-package-crosswalk.rst`.
+- Kept `figure-appendix.rst` as the full figure catalog / filename-traceability
+  surface, but added a cross-link back to the new student-facing comparison
+  page.
+- Documented the current exclusion of AUs `22006` and `22008` from the treated
+  comparison set so students understand why those plots are absent.
+- Validation passed with standalone K3Z docs build:
+  - `sphinx-build -b html docs docs\_build\html -W`
+- Parent quality gates also passed:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+- GitHub issue 13 now carries an explicit closeout note and is closed as
+  implemented.
