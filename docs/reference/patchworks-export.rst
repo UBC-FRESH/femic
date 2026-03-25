@@ -56,13 +56,15 @@ points when a curve starts/ends with repeated y-values; Patchworks extends
 terminal points horizontally by default.
 
 Curve IDs are emitted as readable tokens (for example
-``managed_total_<au_label>_<id>``, ``managed_prop_<SPP>_<au_label>_<id>``,
-``au_<au_label>_managed_yield_<SPP>``) while remaining unique within the XML
+``managed_total_<au_token>_<id>``, ``managed_prop_<SPP>_<au_token>_<id>``,
+``au_<au_token>_managed_yield_<SPP>``) while remaining unique within the XML
 file.
 
-In these readable surfaces, ``<au_label>`` means the deterministic human-facing
-AU token derived from ``stratum_code`` + ``si_level`` (for example
-``CWHvm-HW+FDC-H``). When the same readable AU token would otherwise collide
+In these readable surfaces, ``<au_token>`` means the deterministic
+Patchworks-safe AU token derived from ``stratum_code`` + ``si_level`` (for
+example ``CWHvm_HW_FDC_H``). Operator characters such as ``+`` and ``-`` are
+sanitized because Patchworks parses account labels as expressions rather than
+free-text strings. When the same readable AU token would otherwise collide
 across TSAs, FEMIC prefixes the TSA code to keep the label unique.
 
 CC treatment minimum age is now resolved per AU as:
@@ -84,16 +86,16 @@ seral curves and binds these attributes:
 - ``feature.Seral.immature``
 - ``feature.Seral.mature``
 - ``feature.Seral.overmature``
-- ``feature.Seral.<au_label>.regenerating``
-- ``feature.Seral.<au_label>.young``
-- ``feature.Seral.<au_label>.immature``
-- ``feature.Seral.<au_label>.mature``
-- ``feature.Seral.<au_label>.overmature``
+- ``feature.Seral.<au_token>.regenerating``
+- ``feature.Seral.<au_token>.young``
+- ``feature.Seral.<au_token>.immature``
+- ``feature.Seral.<au_token>.mature``
+- ``feature.Seral.<au_token>.overmature``
 - CC-treatment consequence area accounts by stage/AU:
-  ``product.Seral.area.<stage>.<au_label>.CC``
+  ``product.Seral.area.<stage>.<au_token>.CC``
 
 The global ``feature.Seral.<stage>`` labels remain in place for compatibility
-and summary surfaces. The AU-specific ``feature.Seral.<au_label>.<stage>``
+and summary surfaces. The AU-specific ``feature.Seral.<au_token>.<stage>``
 labels are the per-AU inventory-state surface.
 
 Default boundaries are derived per AU from managed total-yield CMAI and peak

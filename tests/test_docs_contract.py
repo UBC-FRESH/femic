@@ -574,7 +574,7 @@ def test_k3z_instance_standalone_docs_required_sections_and_navigation() -> None
     ):
         assert heading in old_growth_text
     for snippet in (
-        "feature.Area.og1.<au_label>",
+        "feature.Area.og1.<au_token>",
         "feature.Area.og2.total",
         "(249, 0.0)",
         "(250, 1.0)",

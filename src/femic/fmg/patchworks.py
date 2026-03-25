@@ -1481,7 +1481,6 @@ def build_patchworks_forestmodel_definition(
             )
     transition_assignments = tuple(transition_assignments_list)
     for au in context.analysis_units:
-        au_display_label = au_label_by_id[int(au.au_id)]
         au_token = au_token_by_id[int(au.au_id)]
         unmanaged_curve_id = au.unmanaged_curve_id
         managed_curve_id = au.managed_curve_id
@@ -1504,7 +1503,7 @@ def build_patchworks_forestmodel_definition(
         curves[og2_curve_ref] = _build_old_growth_2_curve_points()
         old_growth_feature_attrs = (
             AttributeBinding(
-                label=f"feature.Area.og1.{au_display_label}",
+                label=f"feature.Area.og1.{au_token}",
                 curve_idref=og1_curve_ref,
             ),
             AttributeBinding(
@@ -1512,7 +1511,7 @@ def build_patchworks_forestmodel_definition(
                 curve_idref=og1_curve_ref,
             ),
             AttributeBinding(
-                label=f"feature.Area.og2.{au_display_label}",
+                label=f"feature.Area.og2.{au_token}",
                 curve_idref=og2_curve_ref,
             ),
             AttributeBinding(
@@ -1642,13 +1641,13 @@ def build_patchworks_forestmodel_definition(
                 )
                 unmanaged_attrs.append(
                     AttributeBinding(
-                        label=f"feature.QMD.unmanaged.{au_display_label}",
+                        label=f"feature.QMD.unmanaged.{au_token}",
                         curve_idref=unmanaged_qmd_curve_ref,
                     )
                 )
                 managed_attrs.append(
                     AttributeBinding(
-                        label=f"feature.QMD.managed.{au_display_label}",
+                        label=f"feature.QMD.managed.{au_token}",
                         curve_idref=managed_qmd_curve_ref,
                     )
                 )
@@ -1759,7 +1758,7 @@ def build_patchworks_forestmodel_definition(
                 )
                 feature_labels = (
                     f"feature.Seral.{stage}",
-                    f"feature.Seral.{au_display_label}.{stage}",
+                    f"feature.Seral.{au_token}.{stage}",
                 )
                 for origin in ORIGIN_ORDER:
                     for feature_label in feature_labels:
@@ -1777,7 +1776,7 @@ def build_patchworks_forestmodel_definition(
                         )
                     product_attrs_by_origin[origin].append(
                         AttributeBinding(
-                            label=(f"product.Seral.area.{stage}.{au_display_label}.CC"),
+                            label=(f"product.Seral.area.{stage}.{au_token}.CC"),
                             curve_idref=curve_ref,
                         )
                     )
@@ -2179,7 +2178,7 @@ def build_patchworks_forestmodel_definition(
                     )
                     ct_residual_attrs.append(
                         AttributeBinding(
-                            label=f"feature.QMD.managed.{au_display_label}",
+                            label=f"feature.QMD.managed.{au_token}",
                             curve_idref=ct_qmd_curve_ref,
                         )
                     )
@@ -2391,7 +2390,7 @@ def build_patchworks_forestmodel_definition(
                         )
                         fert_feature_attrs.append(
                             AttributeBinding(
-                                label=f"feature.QMD.managed.{au_display_label}",
+                                label=f"feature.QMD.managed.{au_token}",
                                 curve_idref=fert_qmd_curve_ref,
                             )
                         )

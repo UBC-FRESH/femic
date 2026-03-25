@@ -140,13 +140,13 @@
       <attribute label="feature.Yield.unmanaged.Total">
         <curve idref="unmanaged_total_SBPS_PLI_L_1001" />
       </attribute>
-      <attribute label="feature.Area.og1.SBPS-PLI-L">
+      <attribute label="feature.Area.og1.SBPS_PLI_L">
         <curve idref="au_SBPS_PLI_L_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
         <curve idref="au_SBPS_PLI_L_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.SBPS-PLI-L">
+      <attribute label="feature.Area.og2.SBPS_PLI_L">
         <curve idref="au_SBPS_PLI_L_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
@@ -175,13 +175,13 @@
       <attribute label="feature.Yield.managed.Total">
         <curve idref="managed_total_SBPS_PLI_L_21001" />
       </attribute>
-      <attribute label="feature.Area.og1.SBPS-PLI-L">
+      <attribute label="feature.Area.og1.SBPS_PLI_L">
         <curve idref="au_SBPS_PLI_L_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
         <curve idref="au_SBPS_PLI_L_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.SBPS-PLI-L">
+      <attribute label="feature.Area.og2.SBPS_PLI_L">
         <curve idref="au_SBPS_PLI_L_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
@@ -254,13 +254,13 @@
       <attribute label="feature.Yield.unmanaged.Total">
         <curve idref="unmanaged_total_SBPS_PLI_L_1001" />
       </attribute>
-      <attribute label="feature.Area.og1.SBPS-PLI-L">
+      <attribute label="feature.Area.og1.SBPS_PLI_L">
         <curve idref="au_SBPS_PLI_L_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
         <curve idref="au_SBPS_PLI_L_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.SBPS-PLI-L">
+      <attribute label="feature.Area.og2.SBPS_PLI_L">
         <curve idref="au_SBPS_PLI_L_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
@@ -289,13 +289,13 @@
       <attribute label="feature.Yield.managed.Total">
         <curve idref="managed_total_SBPS_PLI_L_21001" />
       </attribute>
-      <attribute label="feature.Area.og1.SBPS-PLI-L">
+      <attribute label="feature.Area.og1.SBPS_PLI_L">
         <curve idref="au_SBPS_PLI_L_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
         <curve idref="au_SBPS_PLI_L_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.SBPS-PLI-L">
+      <attribute label="feature.Area.og2.SBPS_PLI_L">
         <curve idref="au_SBPS_PLI_L_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
@@ -368,13 +368,13 @@
       <attribute label="feature.Yield.unmanaged.Total">
         <curve idref="unmanaged_total_IDF_FD_M_1002" />
       </attribute>
-      <attribute label="feature.Area.og1.IDF-FD-M">
+      <attribute label="feature.Area.og1.IDF_FD_M">
         <curve idref="au_IDF_FD_M_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
         <curve idref="au_IDF_FD_M_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.IDF-FD-M">
+      <attribute label="feature.Area.og2.IDF_FD_M">
         <curve idref="au_IDF_FD_M_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
@@ -403,13 +403,13 @@
       <attribute label="feature.Yield.managed.Total">
         <curve idref="managed_total_IDF_FD_M_21002" />
       </attribute>
-      <attribute label="feature.Area.og1.IDF-FD-M">
+      <attribute label="feature.Area.og1.IDF_FD_M">
         <curve idref="au_IDF_FD_M_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
         <curve idref="au_IDF_FD_M_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.IDF-FD-M">
+      <attribute label="feature.Area.og2.IDF_FD_M">
         <curve idref="au_IDF_FD_M_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
@@ -482,13 +482,13 @@
       <attribute label="feature.Yield.unmanaged.Total">
         <curve idref="unmanaged_total_IDF_FD_M_1002" />
       </attribute>
-      <attribute label="feature.Area.og1.IDF-FD-M">
+      <attribute label="feature.Area.og1.IDF_FD_M">
         <curve idref="au_IDF_FD_M_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
         <curve idref="au_IDF_FD_M_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.IDF-FD-M">
+      <attribute label="feature.Area.og2.IDF_FD_M">
         <curve idref="au_IDF_FD_M_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
@@ -517,13 +517,13 @@
       <attribute label="feature.Yield.managed.Total">
         <curve idref="managed_total_IDF_FD_M_21002" />
       </attribute>
-      <attribute label="feature.Area.og1.IDF-FD-M">
+      <attribute label="feature.Area.og1.IDF_FD_M">
         <curve idref="au_IDF_FD_M_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
         <curve idref="au_IDF_FD_M_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.IDF-FD-M">
+      <attribute label="feature.Area.og2.IDF_FD_M">
         <curve idref="au_IDF_FD_M_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
