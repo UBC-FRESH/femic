@@ -904,6 +904,7 @@ notes.
 - [x] P31.3 Reconcile docs, contracts, and issue tracking with the PCT-only scope
   - [x] P31.3a Update parent/K3Z docs and tests to remove `PCT -> CT` wording, remove retired `pctct_*` references, and describe the new PCT-only launch matrix.
   - [x] P31.3b Run the required validation gates, append the progress summary to `CHANGE_LOG.md`, and post the implementation status back to GitHub issue 14.
+  - [x] P31.3c Add the explicit issue-closeout note naming the doc locations, closure rationale, and non-blocking rebuild caveat; then close GitHub issue 14.
 
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
@@ -950,6 +951,10 @@ notes.
     - updated parent/K3Z docs and regression tests so the supported launch
       matrix, artifact names, and troubleshooting guidance all describe the
       new PCT-only family and explicitly reject retired `pctct_*` paths.
+    - posted a final GitHub issue closeout comment naming the primary doc
+      locations (`external/femic-k3z-instance/docs/` and
+      `docs/sample-models/k3z.rst`), explaining why the delivered scope
+      satisfies Issue 14, and then closed the issue.
   - Validation evidence:
     - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_light.windows.yaml --run-id k3z_pct_light_20260324_rebuild`
       completed successfully with `returncode=0`;

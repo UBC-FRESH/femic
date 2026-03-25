@@ -108,5 +108,9 @@ When contributing to this repository as the coding agent:
    - when work status changes materially, update the issue accordingly (comment, retitle, relabel,
      close on merge, or otherwise reconcile status) so the GitHub tracker reflects reality and does
      not leave dropped or duplicated work behind.
+   - when closing an issue, add a final closeout comment first that summarizes what was implemented,
+     points to the primary user-facing docs and relevant repo paths, states the validation outcome,
+     and explains why any remaining caveats do not block closure; do not close issues with only an
+     implicit or chat-only rationale.
 
 Treat these steps as the minimum bar for every milestone so manual reminders are not required.

@@ -6212,3 +6212,17 @@
   - `sphinx-build -b html docs _build/html -W`
   - `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`
   - `pre-commit run --all-files`
+
+## 2026-03-24 - Closed Issue 14 with an explicit closeout note
+- Added a final GitHub issue 14 closeout comment that:
+  - summarizes the delivered `pct_light`, `pct_moderate`, and `pct_heavy`
+    PCT-only scope;
+  - points readers to the primary standalone K3Z docs under
+    `external/femic-k3z-instance/docs/` and the parent pointer page at
+    `docs/sample-models/k3z.rst`;
+  - explains why the remaining checkpoint7/export caveat does not block the
+    user-facing Issue 14 deliverable.
+- Closed GitHub issue 14 after the explicit closeout note was posted.
+- Tightened `AGENTS.md` so future issue closures must include a final
+  closeout comment naming what shipped, where the docs live, the validation
+  result, and why any remaining caveats do not block closure.
