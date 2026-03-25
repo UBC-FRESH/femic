@@ -1530,7 +1530,7 @@ def test_instance_account_surface_writes_summary_json(
         "GROUP,ATTRIBUTE,ACCOUNT,SUM\n"
         "_MANAGED_,x,product.Yield.managed.CW,1\n"
         "_MANAGED_,x,product.HarvestedVolume.managed.CW.CC,1\n"
-        "_MANAGED_,x,feature.Seral.CWHvm-HW+FDC-L.mature,1\n",
+        "_MANAGED_,x,feature.Seral.CWHvm_HW_FDC_L.mature,1\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(

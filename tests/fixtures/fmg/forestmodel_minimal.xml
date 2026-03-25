@@ -36,13 +36,13 @@
       <attribute label="feature.Yield.unmanaged.Total">
         <curve idref="unmanaged_total_CWHvm_HW_FDC_L_985501000" />
       </attribute>
-      <attribute label="feature.Area.og1.CWHvm-HW+FDC-L">
+      <attribute label="feature.Area.og1.CWHvm_HW_FDC_L">
         <curve idref="au_CWHvm_HW_FDC_L_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
         <curve idref="au_CWHvm_HW_FDC_L_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.CWHvm-HW+FDC-L">
+      <attribute label="feature.Area.og2.CWHvm_HW_FDC_L">
         <curve idref="au_CWHvm_HW_FDC_L_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
@@ -59,13 +59,13 @@
       <attribute label="feature.Yield.managed.Total">
         <curve idref="managed_total_CWHvm_HW_FDC_L_985521000" />
       </attribute>
-      <attribute label="feature.Area.og1.CWHvm-HW+FDC-L">
+      <attribute label="feature.Area.og1.CWHvm_HW_FDC_L">
         <curve idref="au_CWHvm_HW_FDC_L_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
         <curve idref="au_CWHvm_HW_FDC_L_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.CWHvm-HW+FDC-L">
+      <attribute label="feature.Area.og2.CWHvm_HW_FDC_L">
         <curve idref="au_CWHvm_HW_FDC_L_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
@@ -108,13 +108,13 @@
       <attribute label="feature.Yield.unmanaged.Total">
         <curve idref="unmanaged_total_CWHvm_HW_FDC_L_985501000" />
       </attribute>
-      <attribute label="feature.Area.og1.CWHvm-HW+FDC-L">
+      <attribute label="feature.Area.og1.CWHvm_HW_FDC_L">
         <curve idref="au_CWHvm_HW_FDC_L_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
         <curve idref="au_CWHvm_HW_FDC_L_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.CWHvm-HW+FDC-L">
+      <attribute label="feature.Area.og2.CWHvm_HW_FDC_L">
         <curve idref="au_CWHvm_HW_FDC_L_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
@@ -131,13 +131,13 @@
       <attribute label="feature.Yield.managed.Total">
         <curve idref="managed_total_CWHvm_HW_FDC_L_985521000" />
       </attribute>
-      <attribute label="feature.Area.og1.CWHvm-HW+FDC-L">
+      <attribute label="feature.Area.og1.CWHvm_HW_FDC_L">
         <curve idref="au_CWHvm_HW_FDC_L_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
         <curve idref="au_CWHvm_HW_FDC_L_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.CWHvm-HW+FDC-L">
+      <attribute label="feature.Area.og2.CWHvm_HW_FDC_L">
         <curve idref="au_CWHvm_HW_FDC_L_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">

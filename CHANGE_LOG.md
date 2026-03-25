@@ -6338,3 +6338,41 @@
   - `pre-commit run --all-files`
   - `sphinx-build -b html docs _build/html -W`
   - standalone K3Z `sphinx-build -b html docs docs\_build\html -W`
+
+## 2026-03-25 - Corrected human-readable AU rollout to use Patchworks-safe tokens
+- Reopened GitHub issue `#2` after confirming the first rollout only updated
+  the generator/tests/docs while the shipped K3Z runtime XML and track surfaces
+  still exposed numeric AU labels.
+- Regenerated the tracked K3Z ForestModel XML family from the updated exporter:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_light.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_moderate.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_heavy.xml`
+- Found that Patchworks parses attribute `label=` values as expressions, so the
+  first human-readable format using `-` and `+` (for example
+  `CWHvm-HW+FDC-H`) was illegal and caused XML-load failure even though the XML
+  structure itself was otherwise valid.
+- Rebuilt the human-readable naming contract to use syntax-safe readable AU
+  tokens derived from the same metadata, for example `CWHvm_HW_FDC_H`.
+- Updated the exporter, regression tests, XML fixtures, and K3Z docs so the
+  shipped account-name contract now consistently uses the syntax-safe AU token
+  form for `feature.Area.og*`, `feature.Seral.*`, `product.Seral.area.*`, and
+  `feature.QMD.*` surfaces.
+- Reran Patchworks Matrix Builder successfully for the full K3Z runtime family:
+  baseline, `ctfert`, `pct_light`, `pct_moderate`, `pct_heavy`,
+  `overlay.basecase_riparian`, `overlay.basecase_sum`,
+  `overlay.scenario1_sum`, and `overlay.scenario2_sum`.
+- Verified directly from the synced `tracks*/accounts.csv` surfaces that the
+  shipped runtime accounts now expose syntax-safe readable AU tokens such as
+  `feature.Area.og1.CWHvm_HW_FDC_H` and
+  `feature.Seral.CWHvm_HW_FDC_H.mature`.
+- Validation passed with:
+  - focused `pytest tests/test_fmg_patchworks.py tests/test_account_surface.py tests/test_cli_main.py tests/test_docs_contract.py`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+  - `sphinx-build -b html docs _build/html -W`
+  - standalone K3Z `sphinx-build -b html docs docs\_build\html -W`

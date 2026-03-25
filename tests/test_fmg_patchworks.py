@@ -23,7 +23,8 @@ from femic.fmg.patchworks import (
 
 def _au_label(stratum_code: str, si_level: str, *, tsa: str | None = None) -> str:
     base = _au_base_display_label(stratum_code=stratum_code, si_level=si_level)
-    return f"{tsa}-{base}" if tsa else base
+    label = f"{tsa}-{base}" if tsa else base
+    return _sanitize_id_component(label)
 
 
 def _au_token(stratum_code: str, si_level: str, *, tsa: str | None = None) -> str:
@@ -242,8 +243,8 @@ def test_build_forestmodel_xml_tree_disambiguates_duplicate_au_labels_by_tsa() -
     )
     xml_text = et.tostring(root, encoding="unicode")
 
-    assert "feature.Area.og1.k3z-CWHvm-HW+FDC-L" in xml_text
-    assert "feature.Area.og1.08-CWHvm-HW+FDC-L" in xml_text
+    assert "feature.Area.og1.k3z_CWHvm_HW_FDC_L" in xml_text
+    assert "feature.Area.og1.08_CWHvm_HW_FDC_L" in xml_text
 
 
 def test_build_patchworks_forestmodel_definition_allows_unmanaged_transition_ifm() -> (
@@ -390,9 +391,9 @@ def test_build_forestmodel_xml_tree_adds_old_growth_attributes_and_curves() -> N
     )
 
     xml_text = et.tostring(root, encoding="unicode")
-    assert "feature.Area.og1.CWHvm-HW+FDC-L" in xml_text
+    assert "feature.Area.og1.CWHvm_HW_FDC_L" in xml_text
     assert "feature.Area.og1.total" in xml_text
-    assert "feature.Area.og2.CWHvm-HW+FDC-L" in xml_text
+    assert "feature.Area.og2.CWHvm_HW_FDC_L" in xml_text
     assert "feature.Area.og2.total" in xml_text
 
     og1_curve = root.find("./curve[@id='au_CWHvm_HW_FDC_L_og1']")
@@ -663,8 +664,8 @@ def test_build_forestmodel_xml_tree_adds_ct_track_and_qmd_when_configured() -> N
     assert treatment_labels == ["CC", "CT"]
 
     xml_text = et.tostring(root, encoding="unicode")
-    assert "feature.QMD.managed.CWHvm-FDC+HW-M" in xml_text
-    assert "feature.QMD.unmanaged.CWHvm-FDC+HW-M" in xml_text
+    assert "feature.QMD.managed.CWHvm_FDC_HW_M" in xml_text
+    assert "feature.QMD.unmanaged.CWHvm_FDC_HW_M" in xml_text
     assert "product.HarvestedVolume.managed.Total.CT" in xml_text
     assert (
         "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl' and treatment eq 'CT'"
@@ -1104,10 +1105,10 @@ def test_build_forestmodel_xml_tree_adds_seral_curves_and_attributes() -> None:
     assert "feature.Seral.immature" in xml_text
     assert "feature.Seral.mature" in xml_text
     assert "feature.Seral.overmature" in xml_text
-    assert "feature.Seral.CWHvm-HW+FDC-L.regenerating" in xml_text
-    assert "feature.Seral.CWHvm-HW+FDC-L.mature" in xml_text
+    assert "feature.Seral.CWHvm_HW_FDC_L.regenerating" in xml_text
+    assert "feature.Seral.CWHvm_HW_FDC_L.mature" in xml_text
     assert "product.Seral.regenerating" not in xml_text
-    assert "product.Seral.area.regenerating.CWHvm-HW+FDC-L.CC" in xml_text
+    assert "product.Seral.area.regenerating.CWHvm_HW_FDC_L.CC" in xml_text
 
     mature_curve = root.find("./curve[@id='au_CWHvm_HW_FDC_L_seral_mature']")
     assert mature_curve is not None
@@ -1213,7 +1214,7 @@ def test_build_forestmodel_xml_tree_clamps_invalid_seral_stage_bounds() -> None:
     )
     xml_text = et.tostring(root, encoding="unicode")
     assert "feature.Seral.immature" in xml_text
-    assert "feature.Seral.CWHvm-HW+FDC-L.immature" in xml_text
+    assert "feature.Seral.CWHvm_HW_FDC_L.immature" in xml_text
 
     immature_curve = root.find("./curve[@id='au_CWHvm_HW_FDC_L_seral_immature']")
     assert immature_curve is not None

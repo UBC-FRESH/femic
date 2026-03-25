@@ -927,6 +927,54 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-25 (Phase 35 kickoff): correct the human-readable AU naming rollout
+  so the shipped K3Z runtime artifacts actually expose the readable labels in
+  launched Patchworks sessions.
+  - Tracking issue:
+    - GitHub issue #2 (reopened because the exported generator/tests were
+      updated but the tracked K3Z runtime ForestModel XML family was not
+      regenerated before merge).
+  - Immediate repair scope:
+    - regenerate the tracked K3Z ForestModel XML family from the updated
+      exporter so `forestmodel.xml`, `forestmodel_ctfert.xml`, and the
+      `forestmodel_pct_*` variants use the new AU labels;
+    - verify the active launch surfaces (`analysis/base.pin` and related
+      variants) resolve those readable labels at runtime rather than the old
+      numeric AU ids;
+    - rerun Matrix Builder across the active K3Z runtime family to ensure the
+      regenerated XMLs are valid and actually ship through the runtime path;
+    - update docs/changelog/issue status with the correction and do not close
+      the issue again until the tracked runtime artifacts are verified.
+- 2026-03-25 (Phase 35 complete): shipped K3Z runtime artifacts now expose
+  syntax-safe readable AU tokens rather than numeric AU ids or illegal
+  operator-bearing labels.
+  - Root cause:
+    - Patchworks parses attribute ``label=`` values as expressions, so the
+      initial human-readable format using ``-`` and ``+`` (for example
+      ``CWHvm-HW+FDC-H``) was not legal and caused XML-load failure even
+      though the exported XML structure itself was otherwise valid.
+  - Corrective implementation:
+    - rebuilt the human-readable naming logic to use Patchworks-safe AU tokens
+      derived from the same metadata, for example ``CWHvm_HW_FDC_H``;
+    - regenerated the tracked K3Z ForestModel XML family
+      (baseline, ``ctfert``, ``pct_light``, ``pct_moderate``, ``pct_heavy``);
+    - reran Matrix Builder for baseline, ``ctfert``, all ``pct_*`` variants,
+      and all four overlay track families so the shipped ``tracks*/`` account
+      surfaces now match the syntax-safe naming contract.
+  - Validation:
+    - focused tests for Patchworks/account-surface/docs contracts;
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `mypy src`
+    - `pytest`
+    - `pre-commit run --all-files`
+    - `sphinx-build -b html docs _build/html -W`
+    - standalone K3Z `sphinx-build -b html docs docs\\_build\\html -W`
+    - Matrix Builder runs for baseline, ``ctfert``, ``pct_light``,
+      ``pct_moderate``, ``pct_heavy``, ``overlay.basecase_riparian``,
+      ``overlay.basecase_sum``, ``overlay.scenario1_sum``, and
+      ``overlay.scenario2_sum`` all completed successfully with syntax-safe AU
+      account names visible in the synced ``tracks*/accounts.csv`` surfaces.
 - 2026-03-24 (Phase 34 kickoff): start Issue 2 on branch
   `feature/human-readable-au-names` to replace opaque numeric AU codes in the
   primary Patchworks-facing naming surfaces.
@@ -6605,6 +6653,22 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       labels would otherwise collide.
     - Validation passed with the full repo quality gates plus parent and
       standalone K3Z Sphinx builds.
+
+## Phase 35: Correct Human-Readable AU Labels in Shipped K3Z Runtime Artifacts
+- [x] P35.1 Regenerate the tracked K3Z ForestModel XML family with readable AU labels
+  - [x] P35.1a Rebuild `forestmodel.xml`, `forestmodel_ctfert.xml`, and the `forestmodel_pct_*` family from the updated exporter.
+  - [x] P35.1b Verify the regenerated XMLs no longer expose numeric AU labels like `feature.Area.og1.985501000`.
+- [x] P35.2 Validate the actual runtime launch surfaces
+  - [x] P35.2a Confirm the active `analysis/*.pin` launch path resolves the regenerated readable labels in the shipped runtime outputs.
+  - [x] P35.2b Rerun Matrix Builder for the active K3Z runtime variants to ensure the corrected XML family is valid end-to-end.
+- [x] P35.3 Reconcile repo narrative and GitHub issue status
+  - [x] P35.3a Update docs/CHANGE_LOG/issue #2 with the corrective rollout details and validation evidence.
+  - [ ] P35.3b Close issue #2 only after the tracked runtime artifacts are verified, merged, and the closeout note explains the original gap and the repair.
+  - Notes:
+    - The final shipped account-name contract uses syntax-safe readable AU
+      tokens such as `CWHvm_HW_FDC_H`, not operator-bearing labels like
+      `CWHvm-HW+FDC-H`, because Patchworks parses attribute labels as
+      expressions.
 
 
 
