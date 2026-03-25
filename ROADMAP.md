@@ -894,6 +894,17 @@ notes.
   - [x] P30.2a Regenerate each checked-in ForestModel/tracks/output surface (`light`, `moderate`, `heavy`) and confirm each preserves the accepted 218-fragment baseline geometry footprint.
   - [x] P30.2b Run focused matrix-build/account-surface/docs/QA checks on all three subvariants so the user can test them directly in Patchworks without relying on the stacked-treatment path.
 
+## Phase 31: K3Z PCT-Only Subvariants
+- [x] P31.1 Replace the `pctct_*` family with PCT-only `pct_*` subvariants
+  - [x] P31.1a Rename the K3Z variant/runtime/PIN/silviculture/build surfaces from `pctct_light`, `pctct_moderate`, and `pctct_heavy` to `pct_light`, `pct_moderate`, and `pct_heavy`.
+  - [x] P31.1b Remove the `commercial_thinning` leg from those subvariants so the treatment path stops at `cc_pl_pct` and no `CT` products/states remain in the PCT-only family.
+- [x] P31.2 Rebuild the checked-in K3Z PCT-only artifact surface
+  - [x] P31.2a Regenerate `forestmodel_pct_*.xml`, `tracks_pct_*`, and `output/patchworks_k3z_pct_*_validated` against the accepted baseline fragments geometry.
+  - [x] P31.2b Refresh the PCT-only PINs and any runtime/build metadata so Patchworks launch pairings follow the renamed `pct_*` family cleanly.
+- [x] P31.3 Reconcile docs, contracts, and issue tracking with the PCT-only scope
+  - [x] P31.3a Update parent/K3Z docs and tests to remove `PCT -> CT` wording, remove retired `pctct_*` references, and describe the new PCT-only launch matrix.
+  - [x] P31.3b Run the required validation gates, append the progress summary to `CHANGE_LOG.md`, and post the implementation status back to GitHub issue 14.
+
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
 - The remaining open work in Phase 23 is Linux-specific parity verification under P23.3.
@@ -904,6 +915,60 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-24 (Phase 31 kickoff): retarget the K3Z student silviculture
+  surface from `pctct_*` to PCT-only `pct_*` subvariants on branch
+  `feature/k3z-pctct-expand-treatment-aus`.
+  - Tracking issue:
+    - GitHub issue #14 ("PCT-only requests: change eligible AUs, change AU
+      regen assumptions, remove CT, add knob for changing PCT intensity")
+  - Immediate execution order:
+    - rename the K3Z PCT subvariant files/artifacts from `pctct_*` to
+      `pct_*`;
+    - remove `commercial_thinning` from the three active PCT subvariant YAMLs
+      so the managed treatment path ends at `cc_pl_pct`;
+    - regenerate `forestmodel_pct_*.xml`, `tracks_pct_*`, and
+      `output/patchworks_k3z_pct_*_validated` from the PCT-only configs;
+    - update parent/K3Z docs and regression tests so the supported launch
+      matrix is `pct_light`, `pct_moderate`, and `pct_heavy`, with no `CT`
+      products or `cc_pl_pct_ct` state in that family.
+  - Success criterion:
+    - the checked-in K3Z PCT-only surfaces launch via `pct_*` config + PIN
+      pairs, materialize `PCT` without `CT`, preserve the accepted baseline
+      fragment geometry, and the docs/contracts no longer describe the family
+      as `PCT -> CT`.
+- 2026-03-24 (Phase 31 closeout): the K3Z student treatment family is now
+  PCT-only under `pct_light`, `pct_moderate`, and `pct_heavy`.
+  - Result:
+    - renamed the active K3Z runtime/spec/PIN/silviculture/build surfaces from
+      `pctct_*` to `pct_*`;
+    - removed `commercial_thinning`, `CT`, and the `cc_pl_pct_ct` leg from the
+      three active PCT subvariant YAMLs so the treatment path now ends at
+      `cc_pl_pct`;
+    - regenerated `forestmodel_pct_*.xml`, rebuilt `tracks_pct_*`, and
+      refreshed `output/patchworks_k3z_pct_*_validated` against copies of the
+      accepted baseline fragments surface;
+    - updated parent/K3Z docs and regression tests so the supported launch
+      matrix, artifact names, and troubleshooting guidance all describe the
+      new PCT-only family and explicitly reject retired `pctct_*` paths.
+  - Validation evidence:
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_light.windows.yaml --run-id k3z_pct_light_20260324_rebuild`
+      completed successfully with `returncode=0`;
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_moderate.windows.yaml --run-id k3z_pct_moderate_20260324_rebuild`
+      completed successfully with `returncode=0`;
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_heavy.windows.yaml --run-id k3z_pct_heavy_20260324_rebuild`
+      completed successfully with `returncode=0`;
+    - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_light.windows.yaml`
+      reports `accounts=232`, `species=8`, `complete_species=8`, `au=14`;
+    - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_moderate.windows.yaml`
+      reports `accounts=232`, `species=8`, `complete_species=8`, `au=14`;
+    - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_heavy.windows.yaml`
+      reports `accounts=232`, `species=8`, `complete_species=8`, `au=14`;
+    - active `tracks_pct_*` and `forestmodel_pct_*.xml` surfaces no longer
+      materialize `CT` or `cc_pl_pct_ct`;
+    - `ruff format src tests`, `ruff check src tests`, `mypy src`, `pytest`,
+      `sphinx-build -b html docs _build/html -W`,
+      `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`,
+      and `pre-commit run --all-files` all pass.
 - 2026-03-24 (Phase 23 `P23.11` kickoff): start the VDYP fit-policy YAML
   migration on branch `feature/vdyp-fit-policy-yaml`.
   - Tracking issue:

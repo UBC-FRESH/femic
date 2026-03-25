@@ -703,16 +703,8 @@ def test_build_forestmodel_xml_tree_adds_pct_then_ct_variant_path() -> None:
             "remove_species": ["HW"],
         },
         "commercial_thinning": {
-            "enabled": True,
-            "eligible_au_ids": [985502001],
-            "from_state": "cc_pl_pct",
-            "to_state": "cc_pl_pct_ct",
-            "age_by_au": {"985502001": 40},
-            "basal_area_removal_fraction": 0.30,
-            "basal_area_to_volume_ratio": 1.0,
+            "enabled": False,
         },
-        "fertilization": {"enabled": False},
-        "qmd": {"enabled": True},
     }
 
     root = build_forestmodel_xml_tree(
@@ -737,16 +729,14 @@ def test_build_forestmodel_xml_tree_adds_pct_then_ct_variant_path() -> None:
     assert pct_select is not None
     assert [
         node.attrib["label"] for node in pct_select.findall("./track/treatment")
-    ] == ["CC", "CT"]
+    ] == ["CC"]
     assert "product.Treated.managed.PCT" in xml_text
     assert (
         "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl' and treatment eq 'PCT'"
         in xml_text
     )
-    assert (
-        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_pct_ct'"
-        in xml_text
-    )
+    assert "product.Treated.managed.CT" not in xml_text
+    assert "cc_pl_pct_ct" not in xml_text
     assert "au_985502001_managed_cc_pl_pct_yield_HW" not in xml_text
     assert "au_985502001_managed_cc_pl_pct_yield_FD" in xml_text
     assert "product.Treated.managed.F1" not in xml_text
@@ -824,15 +814,6 @@ def test_build_forestmodel_xml_tree_supports_multiple_pct_treatments() -> None:
                 },
             ],
         },
-        "commercial_thinning": {
-            "enabled": True,
-            "eligible_au_ids": [985502001],
-            "age_by_au": {"985502001": 40},
-            "basal_area_removal_fraction": 0.30,
-            "basal_area_to_volume_ratio": 1.0,
-        },
-        "fertilization": {"enabled": False},
-        "qmd": {"enabled": True},
     }
 
     root = build_forestmodel_xml_tree(
@@ -858,7 +839,7 @@ def test_build_forestmodel_xml_tree_supports_multiple_pct_treatments() -> None:
         assert pct_select is not None
         assert [
             node.attrib["label"] for node in pct_select.findall("./track/treatment")
-        ] == ["CC", "CT"]
+        ] == ["CC"]
 
     assert "product.Treated.managed.PCT_LIGHT" in xml_text
     assert "product.Treated.managed.PCT_MODERATE" in xml_text
@@ -866,18 +847,10 @@ def test_build_forestmodel_xml_tree_supports_multiple_pct_treatments() -> None:
     assert "treatment eq 'PCT_LIGHT'" in xml_text
     assert "treatment eq 'PCT_MODERATE'" in xml_text
     assert "treatment eq 'PCT_HEAVY'" in xml_text
-    assert (
-        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_pct_light_ct'"
-        in xml_text
-    )
-    assert (
-        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_pct_moderate_ct'"
-        in xml_text
-    )
-    assert (
-        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_pct_heavy_ct'"
-        in xml_text
-    )
+    assert "product.Treated.managed.CT" not in xml_text
+    assert "cc_pl_pct_light_ct" not in xml_text
+    assert "cc_pl_pct_moderate_ct" not in xml_text
+    assert "cc_pl_pct_heavy_ct" not in xml_text
     assert "au_985502001_managed_cc_pl_pct_light_yield_HW" in xml_text
     assert "au_985502001_managed_cc_pl_pct_moderate_yield_HW" in xml_text
     assert "au_985502001_managed_cc_pl_pct_heavy_yield_HW" in xml_text

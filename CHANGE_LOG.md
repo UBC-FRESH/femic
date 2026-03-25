@@ -6179,3 +6179,36 @@
   `pctct_light`, `pctct_moderate`, and `pctct_heavy` subvariants.
 - Added a parent docs-contract regression test that fails if the retired
   single-surface `pctct` files reappear.
+
+## 2026-03-24 - Retargeted the K3Z student treatment family to PCT-only `pct_*`
+- Replaced the active K3Z `pctct_*` subvariant family with the renamed
+  PCT-only `pct_light`, `pct_moderate`, and `pct_heavy` surfaces:
+  - `external/femic-k3z-instance/config/patchworks.variant.pct_*.yaml`
+  - `external/femic-k3z-instance/config/patchworks.runtime.pct_*.windows.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.pct_*.yaml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/pct_*.pin`
+- Removed the `commercial_thinning` leg from the active PCT YAMLs so the
+  managed treatment path now ends at `cc_pl_pct`; the rebuilt PCT-only
+  ForestModels/tracks no longer materialize `CT` products or the
+  `cc_pl_pct_ct` state.
+- Regenerated and checked in the PCT-only artifact family:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_*.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pct_*/`
+  - `external/femic-k3z-instance/output/patchworks_k3z_pct_*_validated/`
+- Updated the remaining parent/K3Z docs and regression tests so they now
+  describe the `pct_*` launch matrix, PCT-only treatment chain, and removal of
+  the retired `pctct_*` paths.
+- Validation passed with:
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_light.windows.yaml --run-id k3z_pct_light_20260324_rebuild`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_moderate.windows.yaml --run-id k3z_pct_moderate_20260324_rebuild`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_heavy.windows.yaml --run-id k3z_pct_heavy_20260324_rebuild`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_light.windows.yaml` -> `accounts=232`, `species=8`, `complete_species=8`, `au=14`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_moderate.windows.yaml` -> `accounts=232`, `species=8`, `complete_species=8`, `au=14`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_heavy.windows.yaml` -> `accounts=232`, `species=8`, `complete_species=8`, `au=14`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `sphinx-build -b html docs _build/html -W`
+  - `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`
+  - `pre-commit run --all-files`

@@ -21,7 +21,7 @@ CONTRACT_ROOT = DOCS_ROOT / "reference" / "contracts"
 COVERAGE_CSV = GUIDES_ROOT / "legacy_notebook_coverage.csv"
 K3Z_INSTANCE_ROOT = Path("external/femic-k3z-instance")
 TSA29_INSTANCE_ROOT = Path("external/femic-tsa29-instance")
-PCTCT_SUBVARIANT_IDS = ("pctct_light", "pctct_moderate", "pctct_heavy")
+PCT_SUBVARIANT_IDS = ("pct_light", "pct_moderate", "pct_heavy")
 REMOVED_PCTCT_LEGACY_PATHS = (
     K3Z_INSTANCE_ROOT / "config/patchworks.variant.pctct.yaml",
     K3Z_INSTANCE_ROOT / "config/patchworks.runtime.pctct.windows.yaml",
@@ -30,6 +30,13 @@ REMOVED_PCTCT_LEGACY_PATHS = (
     K3Z_INSTANCE_ROOT / "models/k3z_patchworks_model/yield/forestmodel_pctct.xml",
     K3Z_INSTANCE_ROOT / "models/k3z_patchworks_model/tracks_pctct",
     K3Z_INSTANCE_ROOT / "output/patchworks_k3z_pctct_validated",
+)
+REMOVED_PCTCT_SUBVARIANT_GLOBS = (
+    "config/*pctct_*",
+    "models/k3z_patchworks_model/analysis/pctct_*",
+    "models/k3z_patchworks_model/yield/forestmodel_pctct_*",
+    "models/k3z_patchworks_model/tracks_pctct_*",
+    "output/patchworks_k3z_pctct_*",
 )
 
 GUIDE_PAGES = [
@@ -544,7 +551,7 @@ def test_k3z_instance_standalone_docs_required_sections_and_navigation() -> None
     for heading in (
         "Control Fields",
         "CT/Fert Variant",
-        "PCT->CT Subvariants",
+        "PCT-Only Subvariants",
         "State Machines",
     ):
         assert heading in silv_text
@@ -552,8 +559,8 @@ def test_k3z_instance_standalone_docs_required_sections_and_navigation() -> None
         "985502001",
         "985503001",
         "growth_speedup_fraction = 0.10",
-        "pctct_light",
-        "cc_pl_pct_ct",
+        "pct_light",
+        "cc_pl_pct",
         "cc_pl_ct -> cc_pl_ct_f1",
     ):
         assert snippet in silv_text
@@ -756,8 +763,8 @@ def test_k3z_standalone_docs_do_not_reference_parent_repo_paths() -> None:
             assert snippet not in text, f"{path} references parent-repo path: {snippet}"
 
 
-def test_k3z_pctct_checked_in_surface_keeps_species_wise_managed_accounts() -> None:
-    for slug in PCTCT_SUBVARIANT_IDS:
+def test_k3z_pct_checked_in_surface_keeps_species_wise_managed_accounts() -> None:
+    for slug in PCT_SUBVARIANT_IDS:
         forestmodel_path = (
             K3Z_INSTANCE_ROOT
             / "models/k3z_patchworks_model/yield"
@@ -771,7 +778,7 @@ def test_k3z_pctct_checked_in_surface_keeps_species_wise_managed_accounts() -> N
             r"product\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", forestmodel_text
         )
         assert re.search(
-            r"product\.HarvestedVolume\.managed\.(?!Total\b)[A-Z0-9]+\.(CC|CT)",
+            r"product\.HarvestedVolume\.managed\.(?!Total\b)[A-Z0-9]+\.CC",
             forestmodel_text,
         )
 
@@ -805,18 +812,24 @@ def test_k3z_pctct_checked_in_surface_keeps_species_wise_managed_accounts() -> N
         )
         assert any(
             re.fullmatch(
-                r"product\.HarvestedVolume\.managed\.(?!Total\b)[A-Z0-9]+\.(CC|CT)",
-                account,
+                r"product\.HarvestedVolume\.managed\.(?!Total\b)[A-Z0-9]+\.CC", account
             )
             for account in accounts
         )
         assert "product.Treated.managed.PCT" in labels
-        assert "product.Treated.managed.CT" in labels
+        assert "product.Treated.managed.CT" not in labels
 
 
 def test_k3z_legacy_single_pctct_surface_has_been_removed() -> None:
     for path in REMOVED_PCTCT_LEGACY_PATHS:
         assert not path.exists(), f"legacy pctct path should be removed: {path}"
+
+
+def test_k3z_pctct_subvariant_family_has_been_removed() -> None:
+    for pattern in REMOVED_PCTCT_SUBVARIANT_GLOBS:
+        assert not list(K3Z_INSTANCE_ROOT.glob(pattern)), (
+            f"retired pctct subvariant paths should be removed: {pattern}"
+        )
 
 
 def test_k3z_ctfert_checked_in_surface_preserves_baseline_geometry_footprint() -> None:
@@ -863,7 +876,7 @@ def test_k3z_ctfert_checked_in_surface_preserves_baseline_geometry_footprint() -
     assert set(retention_diff["RETENTION_ctfert"]) == {1.0}
 
 
-def test_k3z_pctct_checked_in_surface_preserves_baseline_geometry_footprint() -> None:
+def test_k3z_pct_checked_in_surface_preserves_baseline_geometry_footprint() -> None:
     gpd = pytest.importorskip("geopandas")
 
     baseline_path = (
@@ -873,30 +886,30 @@ def test_k3z_pctct_checked_in_surface_preserves_baseline_geometry_footprint() ->
         ["AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE", "geometry"]
     ].copy()
     baseline["geom_key"] = baseline.geometry.to_wkb(hex=True)
-    for slug in PCTCT_SUBVARIANT_IDS:
-        pctct_path = (
+    for slug in PCT_SUBVARIANT_IDS:
+        pct_path = (
             K3Z_INSTANCE_ROOT
             / f"output/patchworks_k3z_{slug}_validated/fragments/fragments.shp"
         )
-        pctct = gpd.read_file(pctct_path)[
+        pct = gpd.read_file(pct_path)[
             ["AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE", "geometry"]
         ].copy()
-        pctct["geom_key"] = pctct.geometry.to_wkb(hex=True)
+        pct["geom_key"] = pct.geometry.to_wkb(hex=True)
         merged = baseline.merge(
-            pctct.drop(columns="geometry"),
+            pct.drop(columns="geometry"),
             on="geom_key",
             how="outer",
-            suffixes=("_baseline", "_pctct"),
+            suffixes=("_baseline", "_pct"),
             indicator=True,
         )
 
         assert len(baseline) == 218
-        assert len(pctct) == 218
+        assert len(pct) == 218
         assert set(merged["_merge"]) == {"both"}
 
         both = merged[merged["_merge"] == "both"]
         for col in ("AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE"):
-            assert (both[f"{col}_baseline"] == both[f"{col}_pctct"]).all(), (
+            assert (both[f"{col}_baseline"] == both[f"{col}_pct"]).all(), (
                 f"{slug} differs from baseline in {col}"
             )
 
