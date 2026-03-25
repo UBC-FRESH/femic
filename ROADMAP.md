@@ -906,6 +906,17 @@ notes.
   - [x] P31.3b Run the required validation gates, append the progress summary to `CHANGE_LOG.md`, and post the implementation status back to GitHub issue 14.
   - [x] P31.3c Add the explicit issue-closeout note naming the doc locations, closure rationale, and non-blocking rebuild caveat; then close GitHub issue 14.
 
+## Phase 32: K3Z TIPSY-vs-VDYP Plot Docs Integration
+- [ ] P32.1 Audit the current K3Z docs and plot artifacts for TIPSY-vs-VDYP coverage
+  - [ ] P32.1a Identify the authoritative existing plot files, where they are generated, and which doc pages should surface them for students.
+  - [ ] P32.1b Confirm whether the right delivery shape is direct embedding in the standalone K3Z Sphinx docs, a gallery/index page, or both.
+- [ ] P32.2 Integrate the comparison plots into the user-facing K3Z docs
+  - [ ] P32.2a Add or update the relevant K3Z Sphinx pages so students can find and interpret the TIPSY-vs-VDYP yield-curve plots without leaving the docs.
+  - [ ] P32.2b Ensure figure paths/build rules are stable for the checked-in docs surface and update any supporting captions/runbook text.
+- [ ] P32.3 Validate the docs build and reconcile issue tracking
+  - [ ] P32.3a Run the required K3Z/parent docs checks for the changed pages.
+  - [ ] P32.3b Append the progress summary to `CHANGE_LOG.md` and update GitHub issue 13 with an implementation/closeout note as appropriate.
+
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
 - The remaining open work in Phase 23 is Linux-specific parity verification under P23.3.
@@ -974,6 +985,27 @@ notes.
       `sphinx-build -b html docs _build/html -W`,
       `..\..\.venv\Scripts\python.exe -m sphinx -b html docs docs\_build\html -W`,
       and `pre-commit run --all-files` all pass.
+- 2026-03-24 (Phase 32 kickoff): start Issue 13 on a fresh feature branch to
+  integrate TIPSY-vs-VDYP yield-curve plots into the user-facing K3Z Sphinx
+  docs.
+  - Tracking issue:
+    - GitHub issue #13 ("Upload new tipsy yield curves into guide")
+  - Working interpretation:
+    - the sparse issue title/body plus operator request mean the student-facing
+      standalone K3Z docs should expose the existing TIPSY-vs-VDYP comparison
+      plots more directly, rather than leaving them discoverable only as raw
+      generated files.
+  - Immediate execution order:
+    - audit the current K3Z docs and the checked-in plot inventory to find the
+      best student-facing landing page(s);
+    - decide whether the right surface is an existing guide page, a new figure
+      gallery page, or both;
+    - update the standalone K3Z docs and any parent pointer docs as needed so
+      students can find and interpret the comparison plots easily.
+  - Success criterion:
+    - a student using only the published K3Z docs can find the TIPSY-vs-VDYP
+      comparison figures, understand what they show, and reach them from the
+      normal getting-started / model-navigation flow.
 - 2026-03-24 (Phase 23 `P23.11` kickoff): start the VDYP fit-policy YAML
   migration on branch `feature/vdyp-fit-policy-yaml`.
   - Tracking issue:
