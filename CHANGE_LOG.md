@@ -6388,3 +6388,10 @@
   - subvariant A: `L=15%`, `M=10%`, `H=5%`
   - subvariant B: `L=20%`, `M=10%`, with fert disabled entirely on `H` SI AUs
     instead of compiling a 0%-effect pass-through fert path.
+
+## 2026-03-25 - Added CT/fert RETENTION overlay requirement to Phase 36
+- Updated `ROADMAP.md` so the Phase 36 CT/fert subvariant work explicitly
+  includes overlaying curated `RETENTION` values from
+  `tmp/CTFert_Fragments/fragments*.shp` onto both new CT/fert subvariants.
+- Recorded that this curated overlay should replace the current placeholder
+  `0.05` retention values before final Matrix Builder validation and closeout.

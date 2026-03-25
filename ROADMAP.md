@@ -951,6 +951,9 @@ notes.
       enumerate the six eligible AUs explicitly;
     - decide whether the existing `ctfert` variant remains as-is while the two
       new response-profile subvariants are added alongside it;
+    - overlay the `RETENTION` values from
+      `tmp/CTFert_Fragments/fragments*.shp` onto both new CT/fert subvariants
+      so they replace the current placeholder `0.05` retention values;
     - teach the silviculture/export logic to express SI-specific fert boosts
       without compiling explicit 0%-effect fert paths;
     - regenerate the K3Z ForestModel/tracks/runtime/docs surfaces and validate
@@ -6705,9 +6708,12 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 - [ ] P36.2 Add two SI-specific CT/fert response-profile subvariants
   - [ ] P36.2a Compile one subvariant with fert boosts `L=15%`, `M=10%`, `H=5%`.
   - [ ] P36.2b Compile one subvariant with fert boosts `L=20%`, `M=10%`, and no fert enabled on `H` SI AUs.
-- [ ] P36.3 Rebuild K3Z runtime surfaces and close out the tracker
-  - [ ] P36.3a Regenerate XML/tracks/runtime/PIN/docs surfaces for the new subvariants and validate them with Matrix Builder.
-  - [ ] P36.3b Update GitHub issue #21, docs, roadmap, and changelog with the final subvariant semantics and validation results.
+- [ ] P36.3 Overlay the curated CT/fert RETENTION surface onto both new subvariants
+  - [ ] P36.3a Load `RETENTION` values from `tmp/CTFert_Fragments/fragments*.shp` and apply them to both new CT/fert subvariant fragment surfaces.
+  - [ ] P36.3b Replace the current placeholder `0.05` retention values with the curated overlay values before final Matrix Builder validation.
+- [ ] P36.4 Rebuild K3Z runtime surfaces and close out the tracker
+  - [ ] P36.4a Regenerate XML/tracks/runtime/PIN/docs surfaces for the new subvariants and validate them with Matrix Builder.
+  - [ ] P36.4b Update GitHub issue #21, docs, roadmap, and changelog with the final subvariant semantics, RETENTION overlay provenance, and validation results.
 
 
 
