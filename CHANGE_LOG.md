@@ -6142,3 +6142,25 @@
   - `mypy src`
   - `pytest`
   - `pre-commit run --all-files`
+
+## 2026-03-24 - Removed the dead `residual_stems_per_ha` PCT knob
+- Removed `residual_stems_per_ha` from the active K3Z PCT config surfaces:
+  - `external/femic-k3z-instance/config/silviculture.k3z.pctct.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.pctct_light.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.pctct_moderate.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.pctct_heavy.yaml`
+- Removed the same dead setting from the instance template at
+  `src/femic/resources/instance/config/silviculture.case_template.yaml` so new
+  cases do not inherit a non-functional knob.
+- Simplified `src/femic/fmg/patchworks.py` so PCT config resolution no longer
+  parses or stores `residual_stems_per_ha`; the active fixed-stem-removal path
+  now reflects the real operative controls only:
+  `source_total_stems_per_ha` plus `remove_stems_per_ha`.
+- Updated `tests/test_fmg_patchworks.py` to remove the stale dead-setting
+  fixture input.
+- Validation passed with:
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`

@@ -701,7 +701,6 @@ def test_build_forestmodel_xml_tree_adds_pct_then_ct_variant_path() -> None:
             "to_state": "cc_pl_pct",
             "age_by_au": {"985502001": 10},
             "remove_species": ["HW"],
-            "residual_stems_per_ha": 900,
         },
         "commercial_thinning": {
             "enabled": True,

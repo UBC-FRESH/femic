@@ -692,10 +692,6 @@ def _resolve_pct_configs_for_au(
         eligible_au_ids = _resolve_eligible_au_ids(payload)
         if eligible_au_ids and int(au_id) not in eligible_au_ids:
             continue
-        try:
-            residual_stems_per_ha = float(payload.get("residual_stems_per_ha", 900.0))
-        except (TypeError, ValueError) as exc:
-            raise ValueError(f"Invalid PCT residual stems/ha for AU {au_id}") from exc
         remove_species = _resolve_remove_species(payload)
         remove_stems_per_ha_by_species = _resolve_remove_stems_per_ha_by_species(
             payload=payload,
@@ -730,7 +726,6 @@ def _resolve_pct_configs_for_au(
                 "pct_age": _resolve_pct_age_for_au(
                     payload=payload, au_id=au_id, default=10
                 ),
-                "residual_stems_per_ha": max(0.0, residual_stems_per_ha),
                 "remove_species": remove_species,
                 "remove_stems_per_ha_by_species": remove_stems_per_ha_by_species,
                 "source_total_stems_per_ha": max(0.0, source_total_stems_per_ha),
