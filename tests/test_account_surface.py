@@ -14,9 +14,9 @@ def test_summarize_account_surface_extracts_species_and_au_coverage(
         "_MANAGED_,x,product.Yield.managed.CW,1\n"
         "_MANAGED_,x,product.HarvestedVolume.managed.CW.CC,1\n"
         "_MANAGED_,x,product.Yield.managed.PL,1\n"
-        "_MANAGED_,x,feature.Seral.985501000.regenerating,1\n"
-        "_MANAGED_,x,feature.Seral.985501000.mature,1\n"
-        "_MANAGED_,x,product.Seral.area.regenerating.985501000.CC,1\n",
+        "_MANAGED_,x,feature.Seral.CWHvm-HW+FDC-L.regenerating,1\n"
+        "_MANAGED_,x,feature.Seral.CWHvm-HW+FDC-L.mature,1\n"
+        "_MANAGED_,x,product.Seral.area.regenerating.CWHvm-HW+FDC-L.CC,1\n",
         encoding="utf-8",
     )
 
@@ -30,8 +30,8 @@ def test_summarize_account_surface_extracts_species_and_au_coverage(
     assert summary["species"]["CW"]["yield_account_present"] is True
     assert summary["species"]["CW"]["harvest_cc_account_present"] is True
     assert summary["au_count"] == 1
-    assert summary["au"]["985501000"]["feature_seral_count"] == 2
-    assert summary["au"]["985501000"]["product_seral_cc_count"] == 1
+    assert summary["au"]["CWHvm-HW+FDC-L"]["feature_seral_count"] == 2
+    assert summary["au"]["CWHvm-HW+FDC-L"]["product_seral_cc_count"] == 1
 
 
 def test_summarize_account_surface_flags_total_ok_species_empty_signature(

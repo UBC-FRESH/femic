@@ -152,7 +152,46 @@ def _sanitize_id_component(value: str) -> str:
     return out or "na"
 
 
-def _source_curve_ref(*, curve_id: int, curve_type: str) -> str:
+def _au_base_display_label(*, stratum_code: str, si_level: str) -> str:
+    """Build human-readable AU label from stratum code + SI class."""
+    stratum = str(stratum_code).strip().replace("_", "-")
+    if not stratum:
+        stratum = "unknown-au"
+    si = str(si_level).strip().upper()
+    if si:
+        return f"{stratum}-{si}"
+    return stratum
+
+
+def _build_au_label_maps(
+    *, context: BundleModelContext
+) -> tuple[dict[int, str], dict[int, str]]:
+    """Return readable AU labels and sanitized AU-id tokens keyed by au_id."""
+    base_counts: dict[str, int] = {}
+    base_by_au_id: dict[int, str] = {}
+    for au in context.analysis_units:
+        base = _au_base_display_label(
+            stratum_code=au.stratum_code,
+            si_level=au.si_level,
+        )
+        base_by_au_id[int(au.au_id)] = base
+        base_counts[base] = int(base_counts.get(base, 0)) + 1
+
+    labels: dict[int, str] = {}
+    tokens: dict[int, str] = {}
+    for au in context.analysis_units:
+        base = base_by_au_id[int(au.au_id)]
+        label = base
+        if base_counts.get(base, 0) > 1:
+            label = f"{normalize_tsa_code(au.tsa)}-{base}"
+        labels[int(au.au_id)] = label
+        tokens[int(au.au_id)] = _sanitize_id_component(label)
+    return labels, tokens
+
+
+def _source_curve_ref(
+    *, curve_id: int, curve_type: str, au_token: str | None = None
+) -> str:
     """Build readable, deterministic XML curve id from source metadata."""
     ctype = str(curve_type or "").strip()
     if ctype in {"managed", "treated"}:
@@ -181,6 +220,8 @@ def _source_curve_ref(*, curve_id: int, curve_type: str) -> str:
         prefix = f"unmanaged_prop_{species}"
     else:
         prefix = _sanitize_id_component(ctype or "curve")
+    if au_token:
+        return f"{prefix}_{au_token}_{int(curve_id)}"
     return f"{prefix}_{int(curve_id)}"
 
 
@@ -397,21 +438,21 @@ def _species_curve_points_by_species(
 
 
 def _derived_species_yield_curve_ref(
-    *, au_id: int, managed: bool, origin: str, species: str
+    *, au_token: str, managed: bool, origin: str, species: str
 ) -> str:
     """Build readable deterministic XML id for derived species-yield curves."""
     mode = "managed" if managed else "unmanaged"
     origin_token = _sanitize_id_component(origin)
     species_token = _sanitize_id_component(species)
-    return f"au_{int(au_id)}_{mode}_{origin_token}_yield_{species_token}"
+    return f"au_{au_token}_{mode}_{origin_token}_yield_{species_token}"
 
 
-def _seral_curve_ref(*, au_id: int, stage: str) -> str:
-    return f"au_{int(au_id)}_seral_{_sanitize_id_component(stage)}"
+def _seral_curve_ref(*, au_token: str, stage: str) -> str:
+    return f"au_{au_token}_seral_{_sanitize_id_component(stage)}"
 
 
-def _old_growth_curve_ref(*, au_id: int, og_label: str) -> str:
-    return f"au_{int(au_id)}_{_sanitize_id_component(og_label)}"
+def _old_growth_curve_ref(*, au_token: str, og_label: str) -> str:
+    return f"au_{au_token}_{_sanitize_id_component(og_label)}"
 
 
 def _build_old_growth_1_curve_points(
@@ -1388,12 +1429,32 @@ def build_patchworks_forestmodel_definition(
 ) -> ForestModelDefinition:
     """Build Patchworks ForestModel core definition from shared context."""
     curves: dict[str, tuple[CurvePoint, ...]] = {"unity": (CurvePoint(x=0.0, y=1.0),)}
+    au_label_by_id, au_token_by_id = _build_au_label_maps(context=context)
+    curve_au_id_by_curve_id: dict[int, int] = {}
+    for au in context.analysis_units:
+        au_id = int(au.au_id)
+        curve_au_id_by_curve_id[int(au.unmanaged_curve_id)] = au_id
+        curve_au_id_by_curve_id[int(au.managed_curve_id)] = au_id
+        for curve_id in context.unmanaged_species_curve_ids.get(
+            int(au.unmanaged_curve_id), {}
+        ).values():
+            curve_au_id_by_curve_id[int(curve_id)] = au_id
+        for curve_id in context.managed_species_curve_ids.get(
+            int(au.managed_curve_id), {}
+        ).values():
+            curve_au_id_by_curve_id[int(curve_id)] = au_id
     source_curve_ref_by_id: dict[int, str] = {}
     for curve_id in sorted(context.curves_by_id):
         curve_def = context.curves_by_id[curve_id]
+        source_curve_au_id: int | None = curve_au_id_by_curve_id.get(int(curve_id))
         curve_ref = _source_curve_ref(
             curve_id=curve_def.curve_id,
             curve_type=curve_def.curve_type,
+            au_token=(
+                au_token_by_id.get(source_curve_au_id)
+                if source_curve_au_id is not None
+                else None
+            ),
         )
         source_curve_ref_by_id[curve_id] = curve_ref
         curves[curve_ref] = curve_def.points
@@ -1420,6 +1481,8 @@ def build_patchworks_forestmodel_definition(
             )
     transition_assignments = tuple(transition_assignments_list)
     for au in context.analysis_units:
+        au_display_label = au_label_by_id[int(au.au_id)]
+        au_token = au_token_by_id[int(au.au_id)]
         unmanaged_curve_id = au.unmanaged_curve_id
         managed_curve_id = au.managed_curve_id
         unmanaged_curve_ref = source_curve_ref_by_id[unmanaged_curve_id]
@@ -1432,8 +1495,8 @@ def build_patchworks_forestmodel_definition(
             if og_source_curve is not None
             else (CurvePoint(x=0.0, y=0.0),)
         )
-        og1_curve_ref = _old_growth_curve_ref(au_id=au.au_id, og_label="og1")
-        og2_curve_ref = _old_growth_curve_ref(au_id=au.au_id, og_label="og2")
+        og1_curve_ref = _old_growth_curve_ref(au_token=au_token, og_label="og1")
+        og2_curve_ref = _old_growth_curve_ref(au_token=au_token, og_label="og2")
         curves[og1_curve_ref] = _build_old_growth_1_curve_points(
             unmanaged_total_curve_points=og_source_points,
             horizon_years=horizon_years,
@@ -1441,7 +1504,7 @@ def build_patchworks_forestmodel_definition(
         curves[og2_curve_ref] = _build_old_growth_2_curve_points()
         old_growth_feature_attrs = (
             AttributeBinding(
-                label=f"feature.Area.og1.{int(au.au_id)}",
+                label=f"feature.Area.og1.{au_display_label}",
                 curve_idref=og1_curve_ref,
             ),
             AttributeBinding(
@@ -1449,7 +1512,7 @@ def build_patchworks_forestmodel_definition(
                 curve_idref=og1_curve_ref,
             ),
             AttributeBinding(
-                label=f"feature.Area.og2.{int(au.au_id)}",
+                label=f"feature.Area.og2.{au_display_label}",
                 curve_idref=og2_curve_ref,
             ),
             AttributeBinding(
@@ -1557,8 +1620,8 @@ def build_patchworks_forestmodel_definition(
             ]
 
             if qmd_enabled:
-                unmanaged_qmd_curve_ref = f"au_{int(au.au_id)}_unmanaged_qmd"
-                managed_qmd_curve_ref = f"au_{int(au.au_id)}_managed_qmd"
+                unmanaged_qmd_curve_ref = f"au_{au_token}_unmanaged_qmd"
+                managed_qmd_curve_ref = f"au_{au_token}_managed_qmd"
                 unmanaged_qmd_source = (
                     unmanaged_total_curve.points
                     if unmanaged_total_curve is not None
@@ -1579,13 +1642,13 @@ def build_patchworks_forestmodel_definition(
                 )
                 unmanaged_attrs.append(
                     AttributeBinding(
-                        label=f"feature.QMD.unmanaged.{int(au.au_id)}",
+                        label=f"feature.QMD.unmanaged.{au_display_label}",
                         curve_idref=unmanaged_qmd_curve_ref,
                     )
                 )
                 managed_attrs.append(
                     AttributeBinding(
-                        label=f"feature.QMD.managed.{int(au.au_id)}",
+                        label=f"feature.QMD.managed.{au_display_label}",
                         curve_idref=managed_qmd_curve_ref,
                     )
                 )
@@ -1603,7 +1666,7 @@ def build_patchworks_forestmodel_definition(
                     unmanaged_curve_points
                 ):
                     derived_curve_ref = _derived_species_yield_curve_ref(
-                        au_id=au.au_id,
+                        au_token=au_token,
                         managed=False,
                         origin=origin,
                         species=species,
@@ -1621,7 +1684,7 @@ def build_patchworks_forestmodel_definition(
                     managed_curve_points
                 ):
                     derived_curve_ref = _derived_species_yield_curve_ref(
-                        au_id=au.au_id,
+                        au_token=au_token,
                         managed=True,
                         origin=origin,
                         species=species,
@@ -1687,7 +1750,7 @@ def build_patchworks_forestmodel_definition(
             )
             for stage in SERAL_STAGE_ORDER:
                 stage_min, stage_max = seral_bounds[stage]
-                curve_ref = _seral_curve_ref(au_id=au.au_id, stage=stage)
+                curve_ref = _seral_curve_ref(au_token=au_token, stage=stage)
                 curves[curve_ref] = _build_seral_curve_points(
                     min_age=stage_min,
                     max_age=stage_max,
@@ -1696,7 +1759,7 @@ def build_patchworks_forestmodel_definition(
                 )
                 feature_labels = (
                     f"feature.Seral.{stage}",
-                    f"feature.Seral.{int(au.au_id)}.{stage}",
+                    f"feature.Seral.{au_display_label}.{stage}",
                 )
                 for origin in ORIGIN_ORDER:
                     for feature_label in feature_labels:
@@ -1714,7 +1777,7 @@ def build_patchworks_forestmodel_definition(
                         )
                     product_attrs_by_origin[origin].append(
                         AttributeBinding(
-                            label=(f"product.Seral.area.{stage}.{int(au.au_id)}.CC"),
+                            label=(f"product.Seral.area.{stage}.{au_display_label}.CC"),
                             curve_idref=curve_ref,
                         )
                     )
@@ -1887,7 +1950,7 @@ def build_patchworks_forestmodel_definition(
                         species_curve_points
                     ):
                         pct_yield_curve_ref = (
-                            f"au_{int(au.au_id)}_managed_{pct_config['to_state']}_yield_"
+                            f"au_{au_token}_managed_{_sanitize_id_component(str(pct_config['to_state']))}_yield_"
                             f"{_sanitize_id_component(species)}"
                         )
                         curves[pct_yield_curve_ref] = species_curve_points
@@ -1915,7 +1978,7 @@ def build_patchworks_forestmodel_definition(
                     if not _curve_has_positive_signal(species_prop_points):
                         continue
                     pct_prop_curve_ref = (
-                        f"au_{int(au.au_id)}_managed_{pct_config['to_state']}_species_prop_"
+                        f"au_{au_token}_managed_{_sanitize_id_component(str(pct_config['to_state']))}_species_prop_"
                         f"{_sanitize_id_component(species)}"
                     )
                     curves[pct_prop_curve_ref] = species_prop_points
@@ -2061,10 +2124,8 @@ def build_patchworks_forestmodel_definition(
                     ),
                     1,
                 )
-                ct_product_curve_ref = f"au_{int(au.au_id)}_{state_slug}_harvest_total"
-                ct_residual_curve_ref = (
-                    f"au_{int(au.au_id)}_{state_slug}_residual_total"
-                )
+                ct_product_curve_ref = f"au_{au_token}_{state_slug}_harvest_total"
+                ct_residual_curve_ref = f"au_{au_token}_{state_slug}_residual_total"
                 curves[ct_product_curve_ref] = _build_constant_curve_points_like(
                     source_curve_points=managed_total_curve.points,
                     value=ct_removed_volume,
@@ -2109,7 +2170,7 @@ def build_patchworks_forestmodel_definition(
                     *old_growth_feature_attrs,
                 ]
                 if qmd_enabled:
-                    ct_qmd_curve_ref = f"au_{int(au.au_id)}_managed_{state_slug}_qmd"
+                    ct_qmd_curve_ref = f"au_{au_token}_managed_{state_slug}_qmd"
                     curves[ct_qmd_curve_ref] = _build_qmd_curve_points(
                         source_curve_points=managed_total_curve.points,
                         si_level=au.si_level,
@@ -2118,7 +2179,7 @@ def build_patchworks_forestmodel_definition(
                     )
                     ct_residual_attrs.append(
                         AttributeBinding(
-                            label=f"feature.QMD.managed.{int(au.au_id)}",
+                            label=f"feature.QMD.managed.{au_display_label}",
                             curve_idref=ct_qmd_curve_ref,
                         )
                     )
@@ -2137,7 +2198,7 @@ def build_patchworks_forestmodel_definition(
                         species_curve_points
                     ):
                         residual_curve_ref = (
-                            f"au_{int(au.au_id)}_managed_{state_slug}_yield_"
+                            f"au_{au_token}_managed_{state_slug}_yield_"
                             f"{_sanitize_id_component(species)}"
                         )
                         curves[residual_curve_ref] = species_curve_points
@@ -2166,7 +2227,7 @@ def build_patchworks_forestmodel_definition(
                         species_curve_points
                     ):
                         product_curve_ref = (
-                            f"au_{int(au.au_id)}_{state_slug}_harvest_"
+                            f"au_{au_token}_{state_slug}_harvest_"
                             f"{_sanitize_id_component(species)}"
                         )
                         curves[product_curve_ref] = species_curve_points
@@ -2281,7 +2342,7 @@ def build_patchworks_forestmodel_definition(
             if fert_sequence:
                 current_source_points = curves[ct_residual_curve_ref]
                 for fert_index, fert_config in enumerate(fert_sequence, start=1):
-                    fert_curve_ref = f"au_{int(au.au_id)}_fert{fert_index}_total"
+                    fert_curve_ref = f"au_{au_token}_fert{fert_index}_total"
                     curves[fert_curve_ref] = _build_curve_with_temporary_speedup(
                         source_curve_points=current_source_points,
                         response_age=int(fert_config["fert_age"]),
@@ -2318,9 +2379,7 @@ def build_patchworks_forestmodel_definition(
                         ),
                     ]
                     if qmd_enabled:
-                        fert_qmd_curve_ref = (
-                            f"au_{int(au.au_id)}_managed_{fert_config['to_state']}_qmd"
-                        )
+                        fert_qmd_curve_ref = f"au_{au_token}_managed_{_sanitize_id_component(str(fert_config['to_state']))}_qmd"
                         curves[fert_qmd_curve_ref] = _build_qmd_curve_points(
                             source_curve_points=current_source_points,
                             si_level=au.si_level,
@@ -2332,7 +2391,7 @@ def build_patchworks_forestmodel_definition(
                         )
                         fert_feature_attrs.append(
                             AttributeBinding(
-                                label=f"feature.QMD.managed.{int(au.au_id)}",
+                                label=f"feature.QMD.managed.{au_display_label}",
                                 curve_idref=fert_qmd_curve_ref,
                             )
                         )
@@ -2347,7 +2406,7 @@ def build_patchworks_forestmodel_definition(
                             species_curve_points
                         ):
                             fert_species_curve_ref = (
-                                f"au_{int(au.au_id)}_managed_{fert_config['to_state']}_yield_"
+                                f"au_{au_token}_managed_{_sanitize_id_component(str(fert_config['to_state']))}_yield_"
                                 f"{_sanitize_id_component(species)}"
                             )
                             curves[fert_species_curve_ref] = species_curve_points

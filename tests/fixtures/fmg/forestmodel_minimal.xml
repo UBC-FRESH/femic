@@ -4,19 +4,19 @@
   <curve id="unity">
     <point x="0" y="1.0" />
   </curve>
-  <curve id="au_985501000_og1">
+  <curve id="au_CWHvm_HW_FDC_L_og1">
     <point x="1" y="0.0" />
     <point x="10" y="1.0" />
   </curve>
-  <curve id="au_985501000_og2">
+  <curve id="au_CWHvm_HW_FDC_L_og2">
     <point x="249" y="0.0" />
     <point x="250" y="1.0" />
   </curve>
-  <curve id="managed_total_985521000">
+  <curve id="managed_total_CWHvm_HW_FDC_L_985521000">
     <point x="1" y="12.0" />
     <point x="10" y="70.0" />
   </curve>
-  <curve id="unmanaged_total_985501000">
+  <curve id="unmanaged_total_CWHvm_HW_FDC_L_985501000">
     <point x="1" y="10.0" />
     <point x="10" y="55.0" />
   </curve>
@@ -34,19 +34,19 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.Total">
-        <curve idref="unmanaged_total_985501000" />
+        <curve idref="unmanaged_total_CWHvm_HW_FDC_L_985501000" />
       </attribute>
-      <attribute label="feature.Area.og1.985501000">
-        <curve idref="au_985501000_og1" />
+      <attribute label="feature.Area.og1.CWHvm-HW+FDC-L">
+        <curve idref="au_CWHvm_HW_FDC_L_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
-        <curve idref="au_985501000_og1" />
+        <curve idref="au_CWHvm_HW_FDC_L_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.985501000">
-        <curve idref="au_985501000_og2" />
+      <attribute label="feature.Area.og2.CWHvm-HW+FDC-L">
+        <curve idref="au_CWHvm_HW_FDC_L_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
-        <curve idref="au_985501000_og2" />
+        <curve idref="au_CWHvm_HW_FDC_L_og2" />
       </attribute>
     </features>
     <track />
@@ -57,19 +57,19 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="feature.Yield.managed.Total">
-        <curve idref="managed_total_985521000" />
+        <curve idref="managed_total_CWHvm_HW_FDC_L_985521000" />
       </attribute>
-      <attribute label="feature.Area.og1.985501000">
-        <curve idref="au_985501000_og1" />
+      <attribute label="feature.Area.og1.CWHvm-HW+FDC-L">
+        <curve idref="au_CWHvm_HW_FDC_L_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
-        <curve idref="au_985501000_og1" />
+        <curve idref="au_CWHvm_HW_FDC_L_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.985501000">
-        <curve idref="au_985501000_og2" />
+      <attribute label="feature.Area.og2.CWHvm-HW+FDC-L">
+        <curve idref="au_CWHvm_HW_FDC_L_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
-        <curve idref="au_985501000_og2" />
+        <curve idref="au_CWHvm_HW_FDC_L_og2" />
       </attribute>
     </features>
     <retention factor="RETENTION">
@@ -93,10 +93,10 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="product.Yield.managed.Total">
-        <curve idref="managed_total_985521000" />
+        <curve idref="managed_total_CWHvm_HW_FDC_L_985521000" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.Total.CC">
-        <curve idref="managed_total_985521000" />
+        <curve idref="managed_total_CWHvm_HW_FDC_L_985521000" />
       </attribute>
     </products>
   </select>
@@ -106,19 +106,19 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="feature.Yield.unmanaged.Total">
-        <curve idref="unmanaged_total_985501000" />
+        <curve idref="unmanaged_total_CWHvm_HW_FDC_L_985501000" />
       </attribute>
-      <attribute label="feature.Area.og1.985501000">
-        <curve idref="au_985501000_og1" />
+      <attribute label="feature.Area.og1.CWHvm-HW+FDC-L">
+        <curve idref="au_CWHvm_HW_FDC_L_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
-        <curve idref="au_985501000_og1" />
+        <curve idref="au_CWHvm_HW_FDC_L_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.985501000">
-        <curve idref="au_985501000_og2" />
+      <attribute label="feature.Area.og2.CWHvm-HW+FDC-L">
+        <curve idref="au_CWHvm_HW_FDC_L_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
-        <curve idref="au_985501000_og2" />
+        <curve idref="au_CWHvm_HW_FDC_L_og2" />
       </attribute>
     </features>
     <track />
@@ -129,19 +129,19 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="feature.Yield.managed.Total">
-        <curve idref="managed_total_985521000" />
+        <curve idref="managed_total_CWHvm_HW_FDC_L_985521000" />
       </attribute>
-      <attribute label="feature.Area.og1.985501000">
-        <curve idref="au_985501000_og1" />
+      <attribute label="feature.Area.og1.CWHvm-HW+FDC-L">
+        <curve idref="au_CWHvm_HW_FDC_L_og1" />
       </attribute>
       <attribute label="feature.Area.og1.total">
-        <curve idref="au_985501000_og1" />
+        <curve idref="au_CWHvm_HW_FDC_L_og1" />
       </attribute>
-      <attribute label="feature.Area.og2.985501000">
-        <curve idref="au_985501000_og2" />
+      <attribute label="feature.Area.og2.CWHvm-HW+FDC-L">
+        <curve idref="au_CWHvm_HW_FDC_L_og2" />
       </attribute>
       <attribute label="feature.Area.og2.total">
-        <curve idref="au_985501000_og2" />
+        <curve idref="au_CWHvm_HW_FDC_L_og2" />
       </attribute>
     </features>
     <retention factor="RETENTION">
@@ -165,10 +165,10 @@
         <curve idref="unity" />
       </attribute>
       <attribute label="product.Yield.managed.Total">
-        <curve idref="managed_total_985521000" />
+        <curve idref="managed_total_CWHvm_HW_FDC_L_985521000" />
       </attribute>
       <attribute label="product.HarvestedVolume.managed.Total.CC">
-        <curve idref="managed_total_985521000" />
+        <curve idref="managed_total_CWHvm_HW_FDC_L_985521000" />
       </attribute>
     </products>
   </select>
