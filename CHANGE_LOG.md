@@ -6396,3 +6396,67 @@
   CT/fert subvariants.
 - Recorded that this curated overlay should replace the current placeholder
   `0.05` retention values before final Matrix Builder validation and closeout.
+
+## 2026-03-25 - Implemented and validated the new K3Z CT/fert SI-profile subvariants
+- Added two new K3Z CT/fert subvariants in the K3Z instance:
+  - `ctfert_l15h5`
+  - `ctfert_l20h0`
+- Expanded CT eligibility from the original medium-SI-only cohort to the six
+  `L/M/H` analysis units in the `CWHvm_FDC+HW` / `CWHvm_CW+HW` strata:
+  `985501001`, `985502001`, `985503001`, `985501002`, `985502002`,
+  `985503002`.
+- Implemented per-AU fertilization gating and SI-specific response overrides in
+  `src/femic/fmg/patchworks.py`, so:
+  - `ctfert_l15h5` uses fert boosts `L=15%`, `M=10%`, `H=5%`;
+  - `ctfert_l20h0` uses fert boosts `L=20%`, `M=10%`, and disables fert
+    entirely on the `H` cohort while still keeping CT available there.
+- Added regression coverage in `tests/test_fmg_patchworks.py` for:
+  - per-AU fert response overrides,
+  - skipping the fert chain on ineligible AUs,
+  - preserving stand age across CT / `F1` / `F2` / `F3`.
+- Fixed the CT/fert age-reset bug by emitting the Patchworks-schema-legal
+  treatment attribute `adjust="R"` on CT / `F1` / `F2` / `F3`, after first
+  confirming that the earlier `adjusts="'R'"` form was rejected by
+  `ForestModel.xsd`.
+- Added the new K3Z runtime/config/PIN surfaces:
+  - `config/patchworks.variant.ctfert_l15h5.yaml`
+  - `config/patchworks.variant.ctfert_l20h0.yaml`
+  - `config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+  - `config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+  - `config/silviculture.k3z.ctfert_l15h5.yaml`
+  - `config/silviculture.k3z.ctfert_l20h0.yaml`
+  - `models/k3z_patchworks_model/analysis/ctfert_l15h5.pin`
+  - `models/k3z_patchworks_model/analysis/ctfert_l20h0.pin`
+- Rebuilt the new ForestModel XMLs:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l15h5.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l20h0.xml`
+- Replaced the placeholder retention surface on both new validated outputs with
+  the curated overlay from
+  `tmp/CTFert Fragments/fragments_updated3_Usedinbasecase.shp`, and verified
+  both resulting fragment surfaces match that source exactly across the
+  accepted 218-fragment geometry footprint.
+- Updated the standalone K3Z docs plus the parent K3Z pointer page so the new
+  CT/fert SI-profile subvariants are documented in the launch matrix, operator
+  runbook, rebuild/QA guide, model anatomy, scenario guidance, and
+  silviculture logic pages.
+- Reran Patchworks Matrix Builder successfully for:
+  - `config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+  - `config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+- Verified from the compiled tracks that:
+  - `ctfert_l15h5` materializes the full `CT -> F1 -> F2 -> F3` chain on the
+    eligible `L/M/H` cohort;
+  - `ctfert_l20h0` leaves the `H` cohort on `cc_pl_ct` only, while the `L/M`
+    cohort continues through `cc_pl_ct_f1`, `cc_pl_ct_f1_f2`, and
+    `cc_pl_ct_f1_f2_f3`.
+- Validation passed with:
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml --run-id k3z_ctfert_l15h5`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml --run-id k3z_ctfert_l20h0`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+  - `sphinx-build -b html docs _build/html -W`
+  - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`

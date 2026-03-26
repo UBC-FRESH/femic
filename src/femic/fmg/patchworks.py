@@ -664,6 +664,28 @@ def _resolve_eligible_au_ids(payload: dict[str, Any]) -> set[int]:
     return eligible_au_ids
 
 
+def _resolve_float_override_for_au(
+    *,
+    payload: dict[str, Any],
+    field: str,
+    au_id: int,
+    default: float,
+) -> float:
+    by_au = payload.get(f"{field}_by_au") or {}
+    if by_au:
+        if not isinstance(by_au, dict):
+            raise ValueError(f"{field}_by_au must contain a mapping/object")
+        raw_value = by_au.get(str(int(au_id)), by_au.get(int(au_id)))
+        if raw_value is not None:
+            try:
+                return float(raw_value)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid {field} override for AU {au_id}: {raw_value!r}"
+                ) from exc
+    return float(default)
+
+
 def _resolve_remove_species(payload: dict[str, Any]) -> tuple[str, ...]:
     return tuple(
         str(value).strip().upper()
@@ -975,6 +997,9 @@ def _resolve_fertilization_config_for_au(
         fert_payload.get("enabled", False)
     ):
         return None
+    eligible_au_ids = _resolve_eligible_au_ids(fert_payload)
+    if eligible_au_ids and int(au_id) not in eligible_au_ids:
+        return None
     first_application = fert_payload.get("first_application") or {}
     if not isinstance(first_application, dict):
         raise ValueError(
@@ -1005,9 +1030,17 @@ def _resolve_fertilization_config_for_au(
     fert_age = max(int(ct_age) + 1, int(fert_age))
     try:
         response_years = int(float(fert_payload.get("response_years", 10)))
-        speedup_fraction = float(fert_payload.get("growth_speedup_fraction", 0.10))
-        qmd_response_fraction = float(
-            fert_payload.get("qmd_response_fraction", speedup_fraction)
+        speedup_fraction = _resolve_float_override_for_au(
+            payload=fert_payload,
+            field="growth_speedup_fraction",
+            au_id=au_id,
+            default=float(fert_payload.get("growth_speedup_fraction", 0.10)),
+        )
+        qmd_response_fraction = _resolve_float_override_for_au(
+            payload=fert_payload,
+            field="qmd_response_fraction",
+            au_id=au_id,
+            default=float(fert_payload.get("qmd_response_fraction", speedup_fraction)),
         )
     except (TypeError, ValueError) as exc:
         raise ValueError(
@@ -1839,6 +1872,7 @@ def build_patchworks_forestmodel_definition(
                             label=str(ct_config["label"]),
                             min_age=int(ct_config["ct_age"]),
                             max_age=int(ct_config["ct_age"]),
+                            adjust="R",
                             assignments=(
                                 TreatmentAssignment(
                                     field="treatment",
@@ -2006,6 +2040,7 @@ def build_patchworks_forestmodel_definition(
                             label=str(ct_config["label"]),
                             min_age=int(ct_config["ct_age"]),
                             max_age=int(ct_config["ct_age"]),
+                            adjust="R",
                             assignments=(
                                 TreatmentAssignment(
                                     field="treatment",
@@ -2276,6 +2311,7 @@ def build_patchworks_forestmodel_definition(
                         label=fert1_config["label"],
                         min_age=int(fert1_config["fert_age"]),
                         max_age=int(fert1_config["fert_age"]),
+                        adjust="R",
                         assignments=(
                             TreatmentAssignment(
                                 field="treatment",
@@ -2454,6 +2490,7 @@ def build_patchworks_forestmodel_definition(
                                 label=next_fert["label"],
                                 min_age=int(next_fert["fert_age"]),
                                 max_age=int(next_fert["fert_age"]),
+                                adjust="R",
                                 assignments=(
                                     TreatmentAssignment(
                                         field="treatment",
@@ -2594,15 +2631,14 @@ def _append_retention_definitions(
 def _append_track_treatment(
     *, parent: et.Element, treatment_def: TreatmentDefinition
 ) -> None:
-    treatment = et.SubElement(
-        parent,
-        "treatment",
-        {
-            "label": treatment_def.label,
-            "minage": str(int(treatment_def.min_age)),
-            "maxage": str(int(treatment_def.max_age)),
-        },
-    )
+    attrs = {
+        "label": treatment_def.label,
+        "minage": str(int(treatment_def.min_age)),
+        "maxage": str(int(treatment_def.max_age)),
+    }
+    if treatment_def.adjust:
+        attrs["adjust"] = treatment_def.adjust
+    treatment = et.SubElement(parent, "treatment", attrs)
     if treatment_def.assignments:
         produce = et.SubElement(treatment, "produce")
         for assignment in treatment_def.assignments:

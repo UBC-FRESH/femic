@@ -959,6 +959,44 @@ notes.
       without compiling explicit 0%-effect fert paths;
     - regenerate the K3Z ForestModel/tracks/runtime/docs surfaces and validate
       both new subvariants with Matrix Builder before closeout.
+- 2026-03-25 (Phase 36 complete locally): the two new CT/fert SI-profile
+  subvariants are implemented and validated on
+  `feature/k3z-ctfert-si-subvariants`.
+  - New runtime surfaces:
+    - `ctfert_l15h5`
+    - `ctfert_l20h0`
+  - Final semantics:
+    - CT is now eligible on six `L/M/H` AUs:
+      `985501001`, `985502001`, `985503001`, `985501002`, `985502002`,
+      `985503002`;
+    - `ctfert_l15h5` applies fert boosts `L=15%`, `M=10%`, `H=5%` and keeps
+      the full `CT -> F1 -> F2 -> F3` chain on that eligible cohort;
+    - `ctfert_l20h0` applies fert boosts `L=20%`, `M=10%`, and disables fert
+      entirely on the `H` cohort while still compiling CT there.
+  - RETENTION overlay provenance:
+    - both validated fragment surfaces now match
+      `tmp/CTFert Fragments/fragments_updated3_Usedinbasecase.shp` exactly
+      across the accepted 218-fragment geometry footprint.
+  - Runtime bug fix:
+    - the CT / `F1` / `F2` / `F3` age-reset bug was fixed by emitting the
+      Patchworks-schema-legal treatment attribute `adjust="R"` after first
+      confirming that the earlier `adjusts="'R'"` form was invalid against
+      `ForestModel.xsd`.
+  - Validation:
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml --run-id k3z_ctfert_l15h5`
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml --run-id k3z_ctfert_l20h0`
+    - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+    - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `mypy src`
+    - `pytest`
+    - `pre-commit run --all-files`
+    - `sphinx-build -b html docs _build/html -W`
+    - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
+  - Next step:
+    - update GitHub issue #21 with the implementation/validation summary and
+      open the parent + K3Z PRs from `feature/k3z-ctfert-si-subvariants`.
 - 2026-03-25 (Phase 35 kickoff): correct the human-readable AU naming rollout
   so the shipped K3Z runtime artifacts actually expose the readable labels in
   launched Patchworks sessions.
@@ -6703,18 +6741,35 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       expressions.
 
 ## Phase 36: K3Z CT/Fert SI-Class Expansion and Response-Profile Subvariants
-- [ ] P36.1 Expand the CT/fert eligible-AU cohort from medium-only to low/medium/high SI classes
-  - [ ] P36.1a Confirm the six target AUs covering the `L/M/H` SI classes of the `FDC+HW` and `CW+HW` strata.
-  - [ ] P36.1b Preserve the current single CT treatment parameters while extending the eligible-AU wiring.
-- [ ] P36.2 Add two SI-specific CT/fert response-profile subvariants
-  - [ ] P36.2a Compile one subvariant with fert boosts `L=15%`, `M=10%`, `H=5%`.
-  - [ ] P36.2b Compile one subvariant with fert boosts `L=20%`, `M=10%`, and no fert enabled on `H` SI AUs.
-- [ ] P36.3 Overlay the curated CT/fert RETENTION surface onto both new subvariants
-  - [ ] P36.3a Load `RETENTION` values from `tmp/CTFert Fragments/fragments_updated3_Usedinbasecase.shp` and apply them to both new CT/fert subvariant fragment surfaces.
-  - [ ] P36.3b Replace the current placeholder `0.05` retention values with the curated overlay values before final Matrix Builder validation.
-- [ ] P36.4 Rebuild K3Z runtime surfaces and close out the tracker
-  - [ ] P36.4a Regenerate XML/tracks/runtime/PIN/docs surfaces for the new subvariants and validate them with Matrix Builder.
+- [x] P36.1 Expand the CT/fert eligible-AU cohort from medium-only to low/medium/high SI classes
+  - [x] P36.1a Confirm the six target AUs covering the `L/M/H` SI classes of the `FDC+HW` and `CW+HW` strata.
+  - [x] P36.1b Preserve the current single CT treatment parameters while extending the eligible-AU wiring.
+- [x] P36.2 Add two SI-specific CT/fert response-profile subvariants
+  - [x] P36.2a Compile one subvariant with fert boosts `L=15%`, `M=10%`, `H=5%`.
+  - [x] P36.2b Compile one subvariant with fert boosts `L=20%`, `M=10%`, and no fert enabled on `H` SI AUs.
+- [x] P36.3 Overlay the curated CT/fert RETENTION surface onto both new subvariants
+  - [x] P36.3a Load `RETENTION` values from `tmp/CTFert Fragments/fragments_updated3_Usedinbasecase.shp` and apply them to both new CT/fert subvariant fragment surfaces.
+  - [x] P36.3b Replace the current placeholder `0.05` retention values with the curated overlay values before final Matrix Builder validation.
+- [x] P36.4 Rebuild K3Z runtime surfaces and close out the tracker
+  - [x] P36.4a Regenerate XML/tracks/runtime/PIN/docs surfaces for the new subvariants and validate them with Matrix Builder.
   - [ ] P36.4b Update GitHub issue #21, docs, roadmap, and changelog with the final subvariant semantics, RETENTION overlay provenance, and validation results.
+  - Notes:
+    - New tracked subvariants:
+      - `ctfert_l15h5`
+      - `ctfert_l20h0`
+    - New tracked XMLs:
+      - `models/k3z_patchworks_model/yield/forestmodel_ctfert_l15h5.xml`
+      - `models/k3z_patchworks_model/yield/forestmodel_ctfert_l20h0.xml`
+    - New tracked tracks surfaces:
+      - `models/k3z_patchworks_model/tracks_ctfert_l15h5/`
+      - `models/k3z_patchworks_model/tracks_ctfert_l20h0/`
+    - New tracked validated fragment surfaces:
+      - `output/patchworks_k3z_ctfert_l15h5_validated/fragments/fragments.shp`
+      - `output/patchworks_k3z_ctfert_l20h0_validated/fragments/fragments.shp`
+    - Matrix Builder now compiles both new CT/fert subvariants successfully.
+    - The `ctfert_l20h0` tracks show the expected H-class CT-only behavior:
+      the `985503001` AU stops at `cc_pl_ct` while the `L/M` cohort continues
+      through `cc_pl_ct_f1`, `cc_pl_ct_f1_f2`, and `cc_pl_ct_f1_f2_f3`.
 
 
 

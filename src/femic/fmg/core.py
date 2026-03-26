@@ -77,6 +77,7 @@ class TreatmentDefinition:
     label: str
     min_age: int
     max_age: int
+    adjust: str | None = None
     assignments: tuple[TreatmentAssignment, ...] = ()
     transition_assignments: tuple[TreatmentAssignment, ...] = ()
 
