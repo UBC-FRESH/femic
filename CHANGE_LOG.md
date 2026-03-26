@@ -6460,3 +6460,39 @@
   - `pre-commit run --all-files`
   - `sphinx-build -b html docs _build/html -W`
   - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
+
+## 2026-03-26 - Phase 36 CT Final-Felling Gap Control Follow-Up
+
+- Added a configurable commercial-thinning `final_felling_gap_factor` control
+  in `src/femic/fmg/patchworks.py`.
+- Replaced the old flat post-CT residual-yield subtraction with a ramped
+  post-thinning final-felling gap:
+  - the gap is still `1.0 x CT harvest volume` at CT age;
+  - it now ramps linearly to the configured target factor at `cmai_argmax`;
+  - values below `0.0` are rejected.
+- Added focused regression coverage in `tests/test_fmg_patchworks.py` for the
+  ramp math and the compiled XML behavior.
+- Updated the K3Z SI-profile CT/fert subvariant configs:
+  - `external/femic-k3z-instance/config/silviculture.k3z.ctfert_l15h5.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.ctfert_l20h0.yaml`
+  Both now set `commercial_thinning.final_felling_gap_factor: 0.0`.
+- Regenerated the shipped ForestModel XMLs:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l15h5.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l20h0.xml`
+- Rebuilt the compiled `tracks_ctfert_l15h5` and `tracks_ctfert_l20h0`
+  surfaces with Matrix Builder against the accepted curated fragments overlay.
+- Updated the standalone K3Z docs in:
+  - `external/femic-k3z-instance/docs/silviculture-logic.rst`
+  - `external/femic-k3z-instance/docs/variants-and-subvariants.rst`
+- Validation passed with:
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml --run-id k3z_ctfert_l15h5_gap0_20260326`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml --run-id k3z_ctfert_l20h0_gap0_20260326`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+  - `sphinx-build -b html docs _build/html -W`
+  - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`

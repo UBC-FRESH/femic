@@ -987,6 +987,50 @@ notes.
     - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml --run-id k3z_ctfert_l20h0`
     - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml`
     - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+- 2026-03-26 (Phase 36 follow-up): add a configurable CT post-thinning
+  final-felling gap control after confirming the current implementation
+  subtracts a flat CT-removed volume from all later final-felling yields.
+  Next steps:
+    - patch the commercial-thinning exporter so the final-felling gap ramps
+      linearly from `1.0 x CT harvest volume` at CT age to a configurable
+      target factor at `cmai_argmax`;
+    - expose that target factor on the K3Z `ctfert_*` silviculture YAML
+      surface with a default of `1.0` to preserve existing behavior;
+    - rebuild `ctfert_l15h5` and `ctfert_l20h0` with the new target factor
+      set to `0.0`, then rerun Matrix Builder and the usual validation gates.
+- 2026-03-26 (Phase 36 follow-up complete locally): added a configurable
+  commercial-thinning `final_felling_gap_factor` knob and rebuilt the two K3Z
+  CT/fert SI-profile subvariants with that target set to `0.0`.
+  - Exporter change:
+    - the old CT residual-yield logic lived in
+      `src/femic/fmg/patchworks.py` and subtracted a flat
+      `ct_removed_volume` constant from all post-CT final-felling yields;
+    - the new logic ramps the post-CT final-felling gap linearly from
+      `1.0 x CT harvest volume` at CT age to the configured
+      `final_felling_gap_factor` at `cmai_argmax`, then holds that target
+      factor afterward.
+  - K3Z config/doc updates:
+    - `config/silviculture.k3z.ctfert_l15h5.yaml` and
+      `config/silviculture.k3z.ctfert_l20h0.yaml` now set
+      `commercial_thinning.final_felling_gap_factor: 0.0`;
+    - standalone docs now explain the new knob and the zero-gap setting in
+      `docs/silviculture-logic.rst` and
+      `docs/variants-and-subvariants.rst`.
+  - Runtime rebuild + QA:
+    - regenerated
+      `models/k3z_patchworks_model/yield/forestmodel_ctfert_l15h5.xml` and
+      `models/k3z_patchworks_model/yield/forestmodel_ctfert_l20h0.xml`
+      directly from the current bundle tables plus the updated silviculture
+      YAMLs because checkpoint-based export remains blocked by the missing
+      `data/ria_vri_vclr1p_checkpoint7.feather` / `au` handoff in this clone;
+    - recopied the curated fragments overlay from
+      `tmp/CTFert Fragments/fragments_updated3_Usedinbasecase.shp` onto both
+      validated CT/fert subvariant surfaces;
+    - reran Matrix Builder successfully for
+      `ctfert_l15h5_gap0_20260326` and `ctfert_l20h0_gap0_20260326`;
+    - confirmed from the rebuilt tracks that the post-CT final-felling gap now
+      tapers to zero by later ages instead of remaining equal to the CT
+      harvest volume indefinitely.
     - `ruff format src tests`
     - `ruff check src tests`
     - `mypy src`
@@ -6752,7 +6796,7 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P36.3b Replace the current placeholder `0.05` retention values with the curated overlay values before final Matrix Builder validation.
 - [x] P36.4 Rebuild K3Z runtime surfaces and close out the tracker
   - [x] P36.4a Regenerate XML/tracks/runtime/PIN/docs surfaces for the new subvariants and validate them with Matrix Builder.
-  - [ ] P36.4b Update GitHub issue #21, docs, roadmap, and changelog with the final subvariant semantics, RETENTION overlay provenance, and validation results.
+  - [x] P36.4b Update GitHub issue #21, docs, roadmap, and changelog with the final subvariant semantics, RETENTION overlay provenance, and validation results.
   - Notes:
     - New tracked subvariants:
       - `ctfert_l15h5`
@@ -6770,6 +6814,9 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - The `ctfert_l20h0` tracks show the expected H-class CT-only behavior:
       the `985503001` AU stops at `cc_pl_ct` while the `L/M` cohort continues
       through `cc_pl_ct_f1`, `cc_pl_ct_f1_f2`, and `cc_pl_ct_f1_f2_f3`.
+- [x] P36.5 Add configurable CT post-thinning final-felling gap control
+  - [x] P36.5a Add a commercial-thinning YAML knob that controls how much of the CT removal remains as a final-felling volume gap by `cmai_argmax`, with `1.0` preserving the current full-gap behavior and `0.0` closing the gap entirely by `cmai_argmax`.
+  - [x] P36.5b Rebuild `ctfert_l15h5` and `ctfert_l20h0` with the new CT gap control set to `0.0`, then rerun Matrix Builder and the standard validation gates.
 
 
 

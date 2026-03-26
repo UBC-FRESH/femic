@@ -817,8 +817,16 @@ def _resolve_ct_configs_for_au(
         basal_area_fraction = float(ct_payload.get("basal_area_removal_fraction", 0.30))
         ba_to_volume_ratio = float(ct_payload.get("basal_area_to_volume_ratio", 1.0))
         qmd_response_fraction = float(ct_payload.get("qmd_response_fraction", 0.10))
+        final_felling_gap_factor = _resolve_float_override_for_au(
+            payload=ct_payload,
+            field="final_felling_gap_factor",
+            au_id=au_id,
+            default=float(ct_payload.get("final_felling_gap_factor", 1.0)),
+        )
     except (TypeError, ValueError) as exc:
         raise ValueError(f"Invalid CT removal parameters for AU {au_id}") from exc
+    if final_felling_gap_factor < 0.0:
+        raise ValueError(f"final_felling_gap_factor must be >= 0.0 for AU {au_id}")
     removal_fraction = max(0.0, min(1.0, basal_area_fraction * ba_to_volume_ratio))
 
     transition_payloads = ct_payload.get("transitions")
@@ -855,6 +863,7 @@ def _resolve_ct_configs_for_au(
                 "ba_to_volume_ratio": ba_to_volume_ratio,
                 "removal_fraction": removal_fraction,
                 "qmd_response_fraction": max(0.0, qmd_response_fraction),
+                "final_felling_gap_factor": final_felling_gap_factor,
             }
         )
     return tuple(configs)
@@ -919,19 +928,36 @@ def _build_constant_curve_points_like(
     return tuple(CurvePoint(x=x_val, y=y_val) for x_val in x_values)
 
 
-def _build_curve_minus_constant_after_age(
+def _build_curve_with_post_thinning_gap(
     *,
     source_curve_points: tuple[CurvePoint, ...],
     transition_age: int,
-    subtract_value: float,
+    gap_at_transition_value: float,
+    final_gap_factor: float,
+    ramp_end_age: int,
 ) -> tuple[CurvePoint, ...]:
     out: list[CurvePoint] = []
-    subtract_value = max(0.0, float(subtract_value))
+    gap_at_transition_value = max(0.0, float(gap_at_transition_value))
+    final_gap_factor = max(0.0, float(final_gap_factor))
+    transition_age = int(transition_age)
+    ramp_end_age = int(ramp_end_age)
     for point in source_curve_points:
         x_val = float(point.x)
         y_val = float(point.y)
+        gap_factor = 0.0
         if x_val >= float(transition_age):
-            y_val -= subtract_value
+            gap_factor = 1.0
+            if ramp_end_age <= transition_age:
+                if x_val > float(transition_age):
+                    gap_factor = final_gap_factor
+            elif x_val >= float(ramp_end_age):
+                gap_factor = final_gap_factor
+            else:
+                ramp = (x_val - float(transition_age)) / float(
+                    ramp_end_age - transition_age
+                )
+                gap_factor = 1.0 + ((final_gap_factor - 1.0) * ramp)
+            y_val -= gap_at_transition_value * gap_factor
         out.append(CurvePoint(x=x_val, y=max(0.0, round(y_val, 1))))
     return tuple(out)
 
@@ -1552,12 +1578,14 @@ def build_patchworks_forestmodel_definition(
                 curve_idref=og2_curve_ref,
             ),
         )
+        managed_cmai_age = max(1, int(cc_max_age))
         effective_cc_min_age = int(cc_min_age)
         if managed_total_curve is not None:
             cmai_age, _ = _derive_curve_metrics(
                 managed_total_curve_points=managed_total_curve.points,
                 horizon_years=horizon_years,
             )
+            managed_cmai_age = int(cmai_age)
             effective_cc_min_age = int(cmai_age - 20)
         effective_cc_min_age = max(0, min(effective_cc_min_age, int(cc_max_age)))
         pct_configs = _resolve_pct_configs_for_au(
@@ -2164,10 +2192,12 @@ def build_patchworks_forestmodel_definition(
                     source_curve_points=managed_total_curve.points,
                     value=ct_removed_volume,
                 )
-                curves[ct_residual_curve_ref] = _build_curve_minus_constant_after_age(
+                curves[ct_residual_curve_ref] = _build_curve_with_post_thinning_gap(
                     source_curve_points=managed_total_curve.points,
                     transition_age=ct_age,
-                    subtract_value=ct_removed_volume,
+                    gap_at_transition_value=ct_removed_volume,
+                    final_gap_factor=float(ct_config["final_felling_gap_factor"]),
+                    ramp_end_age=managed_cmai_age,
                 )
                 ct_product_attrs = [
                     AttributeBinding(

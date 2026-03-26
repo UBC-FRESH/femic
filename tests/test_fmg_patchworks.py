@@ -8,8 +8,10 @@ import pandas as pd
 import pytest
 from shapely.geometry import Polygon
 
+from femic.fmg.core import CurvePoint
 from femic.fmg.patchworks import (
     _au_base_display_label,
+    _build_curve_with_post_thinning_gap,
     _sanitize_id_component,
     build_fragments_geodataframe,
     build_patchworks_forestmodel_definition,
@@ -908,6 +910,92 @@ def test_build_forestmodel_xml_tree_supports_per_au_fert_response_overrides() ->
     }
     assert float(low_points["60"]) > float(high_points["60"])
     assert float(low_points["70"]) == float(high_points["70"])
+
+
+def test_build_curve_with_post_thinning_gap_ramps_to_target_factor() -> None:
+    points = _build_curve_with_post_thinning_gap(
+        source_curve_points=(
+            CurvePoint(x=30.0, y=300.0),
+            CurvePoint(x=40.0, y=400.0),
+            CurvePoint(x=50.0, y=500.0),
+            CurvePoint(x=60.0, y=600.0),
+        ),
+        transition_age=40,
+        gap_at_transition_value=100.0,
+        final_gap_factor=0.0,
+        ramp_end_age=60,
+    )
+    point_map = {int(point.x): point.y for point in points}
+    assert point_map[30] == 300.0
+    assert point_map[40] == 300.0
+    assert point_map[50] == 450.0
+    assert point_map[60] == 600.0
+
+
+def test_build_forestmodel_xml_tree_supports_ct_final_felling_gap_factor() -> None:
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985502001,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_FDC+HW",
+                "si_level": "M",
+                "managed_curve_id": 985522001,
+                "unmanaged_curve_id": 985502001,
+            }
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "curve_type": "unmanaged"},
+            {"curve_id": 985522001, "curve_type": "managed"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "x": 1, "y": 5.0},
+            {"curve_id": 985502001, "x": 40, "y": 200.0},
+            {"curve_id": 985502001, "x": 50, "y": 320.0},
+            {"curve_id": 985502001, "x": 60, "y": 420.0},
+            {"curve_id": 985502001, "x": 70, "y": 470.0},
+            {"curve_id": 985522001, "x": 1, "y": 8.0},
+            {"curve_id": 985522001, "x": 40, "y": 240.0},
+            {"curve_id": 985522001, "x": 50, "y": 400.0},
+            {"curve_id": 985522001, "x": 60, "y": 480.0},
+            {"curve_id": 985522001, "x": 70, "y": 490.0},
+        ]
+    )
+    silviculture_config = {
+        "commercial_thinning": {
+            "enabled": True,
+            "from_state": "cc_pl",
+            "to_state": "cc_pl_ct",
+            "eligible_au_ids": [985502001],
+            "age_by_au": {"985502001": 40},
+            "basal_area_removal_fraction": 0.30,
+            "basal_area_to_volume_ratio": 1.0,
+            "final_felling_gap_factor": 0.0,
+        }
+    }
+
+    root = build_forestmodel_xml_tree(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+        silviculture_config=silviculture_config,
+    )
+
+    residual_curve = root.find(
+        "./curve[@id='au_CWHvm_FDC_HW_M_cc_pl_ct_residual_total']"
+    )
+    assert residual_curve is not None
+    point_map = {
+        int(float(point.attrib["x"])): float(point.attrib["y"])
+        for point in residual_curve.findall("./point")
+    }
+    assert point_map[40] == 168.0
+    assert point_map[50] == 400.0
+    assert point_map[60] == 480.0
 
 
 def test_build_forestmodel_xml_tree_marks_ct_and_fert_treatments_as_age_retaining() -> (
