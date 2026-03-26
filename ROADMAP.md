@@ -927,6 +927,180 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-25 (Phase 36 kickoff): start Issue 21 on branch
+  `feature/k3z-ctfert-si-subvariants` in the parent repo and K3Z submodule to
+  expand the K3Z CT/fert teaching surface from the current medium-SI-only
+  `FDC+HW` / `CW+HW` cohort to the full low/medium/high-SI cohort and compile
+  two new SI-specific fert-response subvariants.
+  - Tracking issue:
+    - GitHub issue #21 ("Expand K3Z CT/fert to L/M/H SI classes and add two
+      SI-specific fert-response subvariants")
+  - Working implementation focus:
+    - keep the current single CT treatment unchanged (30% BA removal from
+      below);
+    - keep the three-step fert chain (`F1` / `F2` / `F3`) wherever fert remains
+      enabled;
+    - expand eligible AUs from 2 to 6 across the `L/M/H` SI classes of the
+      `FDC+HW` and `CW+HW` strata;
+    - add two new subvariants with these SI-specific fert boosts:
+      - profile A: `L=15%`, `M=10%`, `H=5%`
+      - profile B: `L=20%`, `M=10%`, `H=0%` interpreted as "do not enable fert
+        at all on H-class AUs" rather than compiling null-effect fert paths.
+  - Immediate execution order:
+    - audit the current `ctfert` silviculture/runtime/variant surface and
+      enumerate the six eligible AUs explicitly;
+    - decide whether the existing `ctfert` variant remains as-is while the two
+      new response-profile subvariants are added alongside it;
+    - overlay the `RETENTION` values from
+      `tmp/CTFert Fragments/fragments_updated3_Usedinbasecase.shp` onto both
+      new CT/fert subvariants so they replace the current placeholder `0.05`
+      retention values;
+    - teach the silviculture/export logic to express SI-specific fert boosts
+      without compiling explicit 0%-effect fert paths;
+    - regenerate the K3Z ForestModel/tracks/runtime/docs surfaces and validate
+      both new subvariants with Matrix Builder before closeout.
+- 2026-03-25 (Phase 36 complete locally): the two new CT/fert SI-profile
+  subvariants are implemented and validated on
+  `feature/k3z-ctfert-si-subvariants`.
+  - New runtime surfaces:
+    - `ctfert_l15h5`
+    - `ctfert_l20h0`
+  - Final semantics:
+    - CT is now eligible on six `L/M/H` AUs:
+      `985501001`, `985502001`, `985503001`, `985501002`, `985502002`,
+      `985503002`;
+    - `ctfert_l15h5` applies fert boosts `L=15%`, `M=10%`, `H=5%` and keeps
+      the full `CT -> F1 -> F2 -> F3` chain on that eligible cohort;
+    - `ctfert_l20h0` applies fert boosts `L=20%`, `M=10%`, and disables fert
+      entirely on the `H` cohort while still compiling CT there.
+  - RETENTION overlay provenance:
+    - both validated fragment surfaces now match
+      `tmp/CTFert Fragments/fragments_updated3_Usedinbasecase.shp` exactly
+      across the accepted 218-fragment geometry footprint.
+  - Runtime bug fix:
+    - the CT / `F1` / `F2` / `F3` age-reset bug was fixed by emitting the
+      Patchworks-schema-legal treatment attribute `adjust="R"` after first
+      confirming that the earlier `adjusts="'R'"` form was invalid against
+      `ForestModel.xsd`.
+  - Validation:
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml --run-id k3z_ctfert_l15h5`
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml --run-id k3z_ctfert_l20h0`
+    - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+    - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+- 2026-03-26 (Phase 36 follow-up): add a configurable CT post-thinning
+  final-felling gap control after confirming the current implementation
+  subtracts a flat CT-removed volume from all later final-felling yields.
+  Next steps:
+    - patch the commercial-thinning exporter so the final-felling gap ramps
+      linearly from `1.0 x CT harvest volume` at CT age to a configurable
+      target factor at `cmai_argmax`;
+    - expose that target factor on the K3Z `ctfert_*` silviculture YAML
+      surface with a default of `1.0` to preserve existing behavior;
+    - rebuild `ctfert_l15h5` and `ctfert_l20h0` with the new target factor
+      set to `0.0`, then rerun Matrix Builder and the usual validation gates.
+- 2026-03-26 (Phase 36 follow-up complete locally): added a configurable
+  commercial-thinning `final_felling_gap_factor` knob and rebuilt the two K3Z
+  CT/fert SI-profile subvariants with that target set to `0.0`.
+  - Exporter change:
+    - the old CT residual-yield logic lived in
+      `src/femic/fmg/patchworks.py` and subtracted a flat
+      `ct_removed_volume` constant from all post-CT final-felling yields;
+    - the new logic ramps the post-CT final-felling gap linearly from
+      `1.0 x CT harvest volume` at CT age to the configured
+      `final_felling_gap_factor` at `cmai_argmax`, then holds that target
+      factor afterward.
+  - K3Z config/doc updates:
+    - `config/silviculture.k3z.ctfert_l15h5.yaml` and
+      `config/silviculture.k3z.ctfert_l20h0.yaml` now set
+      `commercial_thinning.final_felling_gap_factor: 0.0`;
+    - standalone docs now explain the new knob and the zero-gap setting in
+      `docs/silviculture-logic.rst` and
+      `docs/variants-and-subvariants.rst`.
+  - Runtime rebuild + QA:
+    - regenerated
+      `models/k3z_patchworks_model/yield/forestmodel_ctfert_l15h5.xml` and
+      `models/k3z_patchworks_model/yield/forestmodel_ctfert_l20h0.xml`
+      directly from the current bundle tables plus the updated silviculture
+      YAMLs because checkpoint-based export remains blocked by the missing
+      `data/ria_vri_vclr1p_checkpoint7.feather` / `au` handoff in this clone;
+    - recopied the curated fragments overlay from
+      `tmp/CTFert Fragments/fragments_updated3_Usedinbasecase.shp` onto both
+      validated CT/fert subvariant surfaces;
+    - reran Matrix Builder successfully for
+      `ctfert_l15h5_gap0_20260326` and `ctfert_l20h0_gap0_20260326`;
+    - confirmed from the rebuilt tracks that the post-CT final-felling gap now
+      tapers to zero by later ages instead of remaining equal to the CT
+      harvest volume indefinitely.
+- 2026-03-26 (Phase 36 XML cleanup follow-up): thin the K3Z VDYP-derived XML
+  yield curves to decadal knots so unmanaged curves no longer carry annual
+  point density into the shipped ForestModel XMLs while managed TIPSY curves
+  remain unchanged.
+  Completed locally:
+    - patched the exporter so unmanaged/VDYP total-yield curves now keep the
+      first point, every 10-year knot, and the final point;
+    - regenerated the shipped K3Z XML family from the updated exporter,
+      including the active baseline, `pct_*`, and `ctfert_*` surfaces;
+    - reran Matrix Builder successfully for the baseline, `ctfert_l15h5`, and
+      `ctfert_l20h0` runtime configs after the curve thinning change;
+    - retired the legacy single-surface `ctfert` launch surface so the active
+      K3Z CT/fert family is now only `ctfert_l15h5` and `ctfert_l20h0`;
+    - updated the standalone K3Z docs to explicitly record that the validated
+      CT/fert fragment surfaces use curated `RETENTION` values overlaid from
+      `tmp/CTFert Fragments/fragments_updated3_Usedinbasecase.shp`;
+    - validation passed with:
+      - `pytest tests/test_docs_contract.py tests/test_fmg_adapters.py tests/test_fmg_patchworks.py`
+      - `ruff check src tests`
+      - `mypy src`
+      - `sphinx-build -b html docs _build/html -W`
+      - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
+- 2026-03-26 (Phase 37 kickoff / Issue #22): replace the placeholder K3Z QMD
+  curves with a reverse-engineered approximation derived from accepted stand
+  yield, site-index height assumptions, and trees-per-hectare inputs rather
+  than the current hand-tuned age heuristic.
+  Completed locally:
+    - audited the current QMD export path and confirmed the shipped curves were
+      still coming from a hand-tuned age heuristic in
+      `src/femic/fmg/patchworks.py`;
+    - added per-AU QMD support loading in `src/femic/fmg/adapters.py`, using
+      accepted K3Z inputs from:
+      - `data/tipsy_curves_tsak3z.csv`
+      - `data/tipsy_params_tsak3z.xlsx`
+      - `data/ria_vri_vclr1p_checkpoint1-tsak3z.feather`
+      - `data/vdyp_lyr-tsak3z.feather`
+    - rebuilt the QMD exporter so managed curves use accepted BatchTIPSY
+      height/TPH support when available and unmanaged curves fall back to a
+      reverse-engineered approximation using stand yield, linear site-index
+      height, and VDYP-side stems-per-hectare proxies;
+    - preserved the existing CT/fert response multipliers on top of the
+      rebuilt base QMD curves instead of the older placeholder age formula;
+    - regenerated `forestmodel_ctfert_l15h5.xml` and
+      `forestmodel_ctfert_l20h0.xml`, then reran Matrix Builder successfully
+      for both CT/fert SI-profile subvariants;
+    - updated the standalone K3Z docs to describe the new approximate QMD
+      contract instead of the older placeholder wording;
+    - validation passed with:
+      - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml --run-id k3z_ctfert_l15h5_qmd_upgrade_retry_20260326`
+      - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml --run-id k3z_ctfert_l20h0_qmd_upgrade_retry_20260326`
+      - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+      - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+      - `ruff format src tests`
+      - `ruff check src tests`
+      - `mypy src`
+      - `pytest`
+      - `pre-commit run --all-files`
+      - `sphinx-build -b html docs _build/html -W`
+      - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
+- 2026-03-26 (Phase 37 cleanup): remove stale/dead QMD metadata knobs from the
+  active `ctfert_*` silviculture YAMLs now that the exporter no longer uses
+  the older `synthetic` / placeholder QMD path.
+  Completed locally:
+    - removed `qmd.source` and `qmd.notes` from:
+      - `external/femic-k3z-instance/config/silviculture.k3z.ctfert_l15h5.yaml`
+      - `external/femic-k3z-instance/config/silviculture.k3z.ctfert_l20h0.yaml`
+    - verified the active user-facing docs already describe the current
+      approximate QMD contract and no longer claim the shipped CT/fert QMD
+      surfaces are placeholder outputs.
+      open the parent + K3Z PRs from `feature/k3z-ctfert-si-subvariants`.
 - 2026-03-25 (Phase 35 kickoff): correct the human-readable AU naming rollout
   so the shipped K3Z runtime artifacts actually expose the readable labels in
   launched Patchworks sessions.
@@ -6669,6 +6843,95 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       tokens such as `CWHvm_HW_FDC_H`, not operator-bearing labels like
       `CWHvm-HW+FDC-H`, because Patchworks parses attribute labels as
       expressions.
+
+## Phase 36: K3Z CT/Fert SI-Class Expansion and Response-Profile Subvariants
+- [x] P36.1 Expand the CT/fert eligible-AU cohort from medium-only to low/medium/high SI classes
+  - [x] P36.1a Confirm the six target AUs covering the `L/M/H` SI classes of the `FDC+HW` and `CW+HW` strata.
+  - [x] P36.1b Preserve the current single CT treatment parameters while extending the eligible-AU wiring.
+- [x] P36.2 Add two SI-specific CT/fert response-profile subvariants
+  - [x] P36.2a Compile one subvariant with fert boosts `L=15%`, `M=10%`, `H=5%`.
+  - [x] P36.2b Compile one subvariant with fert boosts `L=20%`, `M=10%`, and no fert enabled on `H` SI AUs.
+- [x] P36.3 Overlay the curated CT/fert RETENTION surface onto both new subvariants
+  - [x] P36.3a Load `RETENTION` values from `tmp/CTFert Fragments/fragments_updated3_Usedinbasecase.shp` and apply them to both new CT/fert subvariant fragment surfaces.
+  - [x] P36.3b Replace the current placeholder `0.05` retention values with the curated overlay values before final Matrix Builder validation.
+- [x] P36.4 Rebuild K3Z runtime surfaces and close out the tracker
+  - [x] P36.4a Regenerate XML/tracks/runtime/PIN/docs surfaces for the new subvariants and validate them with Matrix Builder.
+  - [x] P36.4b Update GitHub issue #21, docs, roadmap, and changelog with the final subvariant semantics, RETENTION overlay provenance, and validation results.
+  - Notes:
+    - New tracked subvariants:
+      - `ctfert_l15h5`
+      - `ctfert_l20h0`
+    - New tracked XMLs:
+      - `models/k3z_patchworks_model/yield/forestmodel_ctfert_l15h5.xml`
+      - `models/k3z_patchworks_model/yield/forestmodel_ctfert_l20h0.xml`
+    - New tracked tracks surfaces:
+      - `models/k3z_patchworks_model/tracks_ctfert_l15h5/`
+      - `models/k3z_patchworks_model/tracks_ctfert_l20h0/`
+    - New tracked validated fragment surfaces:
+      - `output/patchworks_k3z_ctfert_l15h5_validated/fragments/fragments.shp`
+      - `output/patchworks_k3z_ctfert_l20h0_validated/fragments/fragments.shp`
+    - Matrix Builder now compiles both new CT/fert subvariants successfully.
+    - The `ctfert_l20h0` tracks show the expected H-class CT-only behavior:
+      the `985503001` AU stops at `cc_pl_ct` while the `L/M` cohort continues
+      through `cc_pl_ct_f1`, `cc_pl_ct_f1_f2`, and `cc_pl_ct_f1_f2_f3`.
+- [x] P36.5 Add configurable CT post-thinning final-felling gap control
+  - [x] P36.5a Add a commercial-thinning YAML knob that controls how much of the CT removal remains as a final-felling volume gap by `cmai_argmax`, with `1.0` preserving the current full-gap behavior and `0.0` closing the gap entirely by `cmai_argmax`.
+  - [x] P36.5b Rebuild `ctfert_l15h5` and `ctfert_l20h0` with the new CT gap control set to `0.0`, then rerun Matrix Builder and the standard validation gates.
+- [x] P36.6 Thin K3Z VDYP-derived XML yield curves to decadal knots
+  - [x] P36.6a Thin unmanaged/VDYP total-yield curves to one point per 10 years in the exporter while preserving boundary points.
+  - [x] P36.6b Regenerate the shipped K3Z ForestModel XML family from the updated exporter and rerun the relevant Matrix Builder checks.
+- [x] P36.7 Retire the legacy single-surface `ctfert` launch path
+  - [x] P36.7a Remove the superseded `ctfert` config, PIN, XML, tracks, and validated-output surfaces so only the SI-profile `ctfert_*` family remains active.
+  - [x] P36.7b Update docs/tests/contracts to document the curated RETENTION overlay provenance and prevent the retired legacy `ctfert` alias from returning unnoticed.
+  - Notes:
+    - The active shipped CT/fert family is now:
+      - `ctfert_l15h5`
+      - `ctfert_l20h0`
+    - The legacy single-surface `ctfert` runtime/config/PIN/XML/tracks/output
+      bundle has been removed from the tracked K3Z instance surface.
+    - The rebuilt baseline plus active CT/fert XML family now uses decadal
+      unmanaged/VDYP knots while preserving the denser managed/TIPSY curve
+      shapes.
+
+## Phase 37: Upgrade K3Z Placeholder QMD Curves (Issue #22)
+- [x] P37.1 Audit the accepted QMD input surface and current placeholder logic
+  - [x] P37.1a Trace the current QMD exporter path in `src/femic/fmg/patchworks.py` and document exactly which managed/unmanaged curve inputs it consumes today.
+  - [x] P37.1b Confirm the accepted K3Z inputs available for stand yield, site index, and trees per hectare from the BatchTIPSY and VDYP artifact surfaces.
+- [x] P37.2 Replace the placeholder age-heuristic QMD builder with a reverse-engineered approximation
+  - [x] P37.2a Derive unmanaged and managed baseline QMD curves from accepted stand yield, a linear height-by-site-index assumption, and trees-per-hectare inputs.
+  - [x] P37.2b Preserve the existing CT/fert QMD response wiring, but rebase it onto the rebuilt baseline QMD curves instead of the current hand-tuned placeholder formula.
+- [x] P37.3 Rebuild and validate the shipped K3Z runtime surfaces
+  - [x] P37.3a Regenerate the affected K3Z ForestModel XML family and rerun Matrix Builder on the active CT/fert `ctfert_l15h5` and `ctfert_l20h0` variants.
+  - [x] P37.3b Update docs/CHANGE_LOG/issue #22 with the approximation details, validation evidence, and any remaining caveats.
+  - Notes:
+    - Managed baseline QMD now follows accepted BatchTIPSY-supported yield,
+      height, and TPH inputs where those managed curves exist instead of the
+      old generic age heuristic.
+    - Unmanaged baseline QMD now uses accepted yield plus a linear site-index
+      height assumption and VDYP-side stems-per-hectare proxies reconstructed
+      from the accepted checkpoint/layer data.
+    - The rebuilt CT/fert XMLs still compile, but Matrix Builder now takes
+      roughly 2-3 minutes on these QMD-enabled surfaces instead of a few
+      seconds.
+- [x] P37.4 Normalize AU-wise QMD accounts to mean-diameter units
+  - [x] P37.4a Compute AU-wise managed and unmanaged area denominators from the
+    active validated fragments surface plus `RETENTION` values.
+  - [x] P37.4b Replace the default `SUM=1` multipliers on the AU-wise
+    `feature.QMD.{managed,unmanaged}.*` account rows so the compiled
+    `accounts.csv` reports mean QMD in `cm` rather than `cm*ha`.
+  - [x] P37.4c Rebuild the active CT/fert tracks and validate the normalized
+    QMD account surface end-to-end.
+  - Notes:
+    - `src/femic/patchworks_runtime.py` now derives AU-wise managed and
+      unmanaged areas from the validated fragments surface using `AREA_HA`,
+      `IFM`, and `RETENTION`, then rewrites the QMD rows during
+      `protoaccounts.csv -> accounts.csv` promotion.
+    - The shipped
+      `tracks_ctfert_l15h5/accounts.csv` and
+      `tracks_ctfert_l20h0/accounts.csv`
+      now carry reciprocal area multipliers on the QMD rows, so those
+      accounts behave as mean-QMD `cm` surfaces rather than raw `cm*ha`
+      aggregates.
 
 
 

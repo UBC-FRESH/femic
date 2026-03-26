@@ -8,8 +8,12 @@ import pandas as pd
 import pytest
 from shapely.geometry import Polygon
 
+from femic.fmg.core import CurvePoint
 from femic.fmg.patchworks import (
     _au_base_display_label,
+    _build_curve_with_post_thinning_gap,
+    _build_qmd_curve_points,
+    _estimate_qmd_cm_from_volume,
     _sanitize_id_component,
     build_fragments_geodataframe,
     build_patchworks_forestmodel_definition,
@@ -70,6 +74,35 @@ def _write_bundle_tables(bundle_dir: Path) -> None:
             {"curve_id": 985501000001, "x": 1, "y": 0.6},
         ]
     ).to_csv(bundle_dir / "curve_points_table.csv", index=False)
+
+
+def test_estimate_qmd_cm_from_volume_returns_plausible_positive_value() -> None:
+    qmd_cm = _estimate_qmd_cm_from_volume(
+        stand_volume_m3_per_ha=300.0,
+        height_m=20.0,
+        stems_per_ha=500.0,
+    )
+    assert qmd_cm == pytest.approx(32.284, rel=1e-3)
+
+
+def test_build_qmd_curve_points_uses_height_and_tph_inputs() -> None:
+    points = _build_qmd_curve_points(
+        source_curve_points=(
+            CurvePoint(x=10.0, y=40.0),
+            CurvePoint(x=20.0, y=120.0),
+        ),
+        si_level="M",
+        site_index=20.0,
+        height_curve_points=(
+            CurvePoint(x=10.0, y=5.0),
+            CurvePoint(x=20.0, y=10.0),
+        ),
+        tph_curve_points=(
+            CurvePoint(x=10.0, y=800.0),
+            CurvePoint(x=20.0, y=700.0),
+        ),
+    )
+    assert [point.y for point in points] == pytest.approx([18.6, 24.4], rel=1e-3)
 
 
 def test_build_forestmodel_xml_tree_contains_cc_and_curve_refs() -> None:
@@ -806,6 +839,390 @@ def test_build_forestmodel_xml_tree_adds_pct_then_ct_variant_path() -> None:
     assert "product.Treated.managed.F1" not in xml_text
 
 
+def test_build_forestmodel_xml_tree_supports_per_au_fert_response_overrides() -> None:
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985501001,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_FDC+HW",
+                "si_level": "L",
+                "managed_curve_id": 985521001,
+                "unmanaged_curve_id": 985501001,
+            },
+            {
+                "au_id": 985503001,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_FDC+HW",
+                "si_level": "H",
+                "managed_curve_id": 985523001,
+                "unmanaged_curve_id": 985503001,
+            },
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985501001, "curve_type": "unmanaged"},
+            {"curve_id": 985521001, "curve_type": "managed"},
+            {"curve_id": 985503001, "curve_type": "unmanaged"},
+            {"curve_id": 985523001, "curve_type": "managed"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985501001, "x": 1, "y": 5.0},
+            {"curve_id": 985501001, "x": 40, "y": 200.0},
+            {"curve_id": 985501001, "x": 50, "y": 280.0},
+            {"curve_id": 985501001, "x": 60, "y": 360.0},
+            {"curve_id": 985501001, "x": 70, "y": 430.0},
+            {"curve_id": 985521001, "x": 1, "y": 8.0},
+            {"curve_id": 985521001, "x": 40, "y": 240.0},
+            {"curve_id": 985521001, "x": 50, "y": 340.0},
+            {"curve_id": 985521001, "x": 60, "y": 450.0},
+            {"curve_id": 985521001, "x": 70, "y": 560.0},
+            {"curve_id": 985503001, "x": 1, "y": 5.0},
+            {"curve_id": 985503001, "x": 40, "y": 200.0},
+            {"curve_id": 985503001, "x": 50, "y": 280.0},
+            {"curve_id": 985503001, "x": 60, "y": 360.0},
+            {"curve_id": 985503001, "x": 70, "y": 430.0},
+            {"curve_id": 985523001, "x": 1, "y": 8.0},
+            {"curve_id": 985523001, "x": 40, "y": 240.0},
+            {"curve_id": 985523001, "x": 50, "y": 340.0},
+            {"curve_id": 985523001, "x": 60, "y": 450.0},
+            {"curve_id": 985523001, "x": 70, "y": 560.0},
+        ]
+    )
+    silviculture_config = {
+        "commercial_thinning": {
+            "enabled": True,
+            "from_state": "cc_pl",
+            "to_state": "cc_pl_ct",
+            "eligible_au_ids": [985501001, 985503001],
+            "age_by_au": {"985501001": 40, "985503001": 40},
+            "basal_area_removal_fraction": 0.30,
+            "basal_area_to_volume_ratio": 1.0,
+        },
+        "fertilization": {
+            "enabled": True,
+            "eligible_au_ids": [985501001, 985503001],
+            "response_years": 10,
+            "growth_speedup_fraction_by_au": {
+                "985501001": 0.15,
+                "985503001": 0.05,
+            },
+            "first_application": {
+                "from_state": "cc_pl_ct",
+                "to_state": "cc_pl_ct_f1",
+                "age_by_au": {"985501001": 50, "985503001": 50},
+            },
+            "second_application": {"enabled": False},
+            "third_application": {"enabled": False},
+        },
+        "qmd": {"enabled": True},
+    }
+
+    root = build_forestmodel_xml_tree(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+        silviculture_config=silviculture_config,
+    )
+
+    low_curve = root.find("./curve[@id='au_CWHvm_FDC_HW_L_fert1_total']")
+    high_curve = root.find("./curve[@id='au_CWHvm_FDC_HW_H_fert1_total']")
+    assert low_curve is not None
+    assert high_curve is not None
+
+    low_points = {
+        point.attrib["x"]: point.attrib["y"] for point in low_curve.findall("./point")
+    }
+    high_points = {
+        point.attrib["x"]: point.attrib["y"] for point in high_curve.findall("./point")
+    }
+    assert float(low_points["60"]) > float(high_points["60"])
+    assert float(low_points["70"]) == float(high_points["70"])
+
+
+def test_build_curve_with_post_thinning_gap_ramps_to_target_factor() -> None:
+    points = _build_curve_with_post_thinning_gap(
+        source_curve_points=(
+            CurvePoint(x=30.0, y=300.0),
+            CurvePoint(x=40.0, y=400.0),
+            CurvePoint(x=50.0, y=500.0),
+            CurvePoint(x=60.0, y=600.0),
+        ),
+        transition_age=40,
+        gap_at_transition_value=100.0,
+        final_gap_factor=0.0,
+        ramp_end_age=60,
+    )
+    point_map = {int(point.x): point.y for point in points}
+    assert point_map[30] == 300.0
+    assert point_map[40] == 300.0
+    assert point_map[50] == 450.0
+    assert point_map[60] == 600.0
+
+
+def test_build_forestmodel_xml_tree_supports_ct_final_felling_gap_factor() -> None:
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985502001,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_FDC+HW",
+                "si_level": "M",
+                "managed_curve_id": 985522001,
+                "unmanaged_curve_id": 985502001,
+            }
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "curve_type": "unmanaged"},
+            {"curve_id": 985522001, "curve_type": "managed"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "x": 1, "y": 5.0},
+            {"curve_id": 985502001, "x": 40, "y": 200.0},
+            {"curve_id": 985502001, "x": 50, "y": 320.0},
+            {"curve_id": 985502001, "x": 60, "y": 420.0},
+            {"curve_id": 985502001, "x": 70, "y": 470.0},
+            {"curve_id": 985522001, "x": 1, "y": 8.0},
+            {"curve_id": 985522001, "x": 40, "y": 240.0},
+            {"curve_id": 985522001, "x": 50, "y": 400.0},
+            {"curve_id": 985522001, "x": 60, "y": 480.0},
+            {"curve_id": 985522001, "x": 70, "y": 490.0},
+        ]
+    )
+    silviculture_config = {
+        "commercial_thinning": {
+            "enabled": True,
+            "from_state": "cc_pl",
+            "to_state": "cc_pl_ct",
+            "eligible_au_ids": [985502001],
+            "age_by_au": {"985502001": 40},
+            "basal_area_removal_fraction": 0.30,
+            "basal_area_to_volume_ratio": 1.0,
+            "final_felling_gap_factor": 0.0,
+        }
+    }
+
+    root = build_forestmodel_xml_tree(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+        silviculture_config=silviculture_config,
+    )
+
+    residual_curve = root.find(
+        "./curve[@id='au_CWHvm_FDC_HW_M_cc_pl_ct_residual_total']"
+    )
+    assert residual_curve is not None
+    point_map = {
+        int(float(point.attrib["x"])): float(point.attrib["y"])
+        for point in residual_curve.findall("./point")
+    }
+    assert point_map[40] == 168.0
+    assert point_map[50] == 400.0
+    assert point_map[60] == 480.0
+
+
+def test_build_forestmodel_xml_tree_marks_ct_and_fert_treatments_as_age_retaining() -> (
+    None
+):
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985502001,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_FDC+HW",
+                "si_level": "M",
+                "managed_curve_id": 985522001,
+                "unmanaged_curve_id": 985502001,
+            }
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "curve_type": "unmanaged"},
+            {"curve_id": 985522001, "curve_type": "managed"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "x": 1, "y": 5.0},
+            {"curve_id": 985502001, "x": 40, "y": 200.0},
+            {"curve_id": 985502001, "x": 50, "y": 280.0},
+            {"curve_id": 985502001, "x": 60, "y": 360.0},
+            {"curve_id": 985502001, "x": 70, "y": 430.0},
+            {"curve_id": 985522001, "x": 1, "y": 8.0},
+            {"curve_id": 985522001, "x": 40, "y": 240.0},
+            {"curve_id": 985522001, "x": 50, "y": 340.0},
+            {"curve_id": 985522001, "x": 60, "y": 450.0},
+            {"curve_id": 985522001, "x": 70, "y": 560.0},
+        ]
+    )
+    silviculture_config = {
+        "commercial_thinning": {
+            "enabled": True,
+            "from_state": "cc_pl",
+            "to_state": "cc_pl_ct",
+            "eligible_au_ids": [985502001],
+            "age_by_au": {"985502001": 40},
+            "basal_area_removal_fraction": 0.30,
+            "basal_area_to_volume_ratio": 1.0,
+        },
+        "fertilization": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "response_years": 10,
+            "growth_speedup_fraction": 0.10,
+            "first_application": {
+                "from_state": "cc_pl_ct",
+                "to_state": "cc_pl_ct_f1",
+                "age_by_au": {"985502001": 50},
+            },
+            "second_application": {
+                "enabled": True,
+                "from_state": "cc_pl_ct_f1",
+                "to_state": "cc_pl_ct_f1_f2",
+                "years_after_previous": 10,
+            },
+            "third_application": {
+                "enabled": True,
+                "from_state": "cc_pl_ct_f1_f2",
+                "to_state": "cc_pl_ct_f1_f2_f3",
+                "years_after_previous": 10,
+            },
+        },
+        "qmd": {"enabled": True},
+    }
+
+    root = build_forestmodel_xml_tree(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+        silviculture_config=silviculture_config,
+    )
+
+    ct_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq "
+        "'planted' and SILV_STATE eq 'cc_pl'\"]"
+    )
+    assert ct_select is not None
+    ct_node = ct_select.find("./track/treatment[@label='CT']")
+    assert ct_node is not None
+    assert ct_node.get("adjust") == "R"
+
+    fert1_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq "
+        "'planted' and SILV_STATE eq 'cc_pl_ct'\"]"
+    )
+    assert fert1_select is not None
+    fert1_node = fert1_select.find("./track/treatment[@label='F1']")
+    assert fert1_node is not None
+    assert fert1_node.get("adjust") == "R"
+
+    fert2_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq "
+        "'planted' and SILV_STATE eq 'cc_pl_ct_f1'\"]"
+    )
+    assert fert2_select is not None
+    fert2_node = fert2_select.find("./track/treatment[@label='F2']")
+    assert fert2_node is not None
+    assert fert2_node.get("adjust") == "R"
+
+    fert3_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq "
+        "'planted' and SILV_STATE eq 'cc_pl_ct_f1_f2'\"]"
+    )
+    assert fert3_select is not None
+    fert3_node = fert3_select.find("./track/treatment[@label='F3']")
+    assert fert3_node is not None
+    assert fert3_node.get("adjust") == "R"
+
+
+def test_build_forestmodel_xml_tree_skips_fert_chain_when_au_not_fert_eligible() -> (
+    None
+):
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985503001,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_FDC+HW",
+                "si_level": "H",
+                "managed_curve_id": 985523001,
+                "unmanaged_curve_id": 985503001,
+            }
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985503001, "curve_type": "unmanaged"},
+            {"curve_id": 985523001, "curve_type": "managed"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985503001, "x": 1, "y": 5.0},
+            {"curve_id": 985503001, "x": 40, "y": 200.0},
+            {"curve_id": 985503001, "x": 50, "y": 280.0},
+            {"curve_id": 985503001, "x": 60, "y": 360.0},
+            {"curve_id": 985523001, "x": 1, "y": 8.0},
+            {"curve_id": 985523001, "x": 40, "y": 240.0},
+            {"curve_id": 985523001, "x": 50, "y": 340.0},
+            {"curve_id": 985523001, "x": 60, "y": 450.0},
+        ]
+    )
+    silviculture_config = {
+        "commercial_thinning": {
+            "enabled": True,
+            "from_state": "cc_pl",
+            "to_state": "cc_pl_ct",
+            "eligible_au_ids": [985503001],
+            "age_by_au": {"985503001": 40},
+            "basal_area_removal_fraction": 0.30,
+            "basal_area_to_volume_ratio": 1.0,
+        },
+        "fertilization": {
+            "enabled": True,
+            "eligible_au_ids": [985501001, 985502001],
+            "response_years": 10,
+            "growth_speedup_fraction": 0.10,
+            "first_application": {
+                "from_state": "cc_pl_ct",
+                "to_state": "cc_pl_ct_f1",
+                "age_by_au": {"985503001": 50},
+            },
+            "second_application": {"enabled": True},
+            "third_application": {"enabled": True},
+        },
+        "qmd": {"enabled": True},
+    }
+
+    root = build_forestmodel_xml_tree(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+        silviculture_config=silviculture_config,
+    )
+    ct_state_select = root.find(
+        "./select[@statement=\"AU eq 985503001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_ct'\"]"
+    )
+    assert ct_state_select is not None
+    ct_treatment_labels = [
+        node.attrib["label"] for node in ct_state_select.findall("./track/treatment")
+    ]
+    assert ct_treatment_labels == ["CC"]
+
+    xml_text = et.tostring(root, encoding="unicode")
+    assert "product.Treated.managed.F1" not in xml_text
+    assert "cc_pl_ct_f1" not in xml_text
+
+
 def test_build_forestmodel_xml_tree_supports_multiple_pct_treatments() -> None:
     au_table = pd.DataFrame(
         [
@@ -1266,7 +1683,7 @@ def test_forestmodel_xml_trims_repeated_curve_values_on_both_tails() -> None:
     )
     managed_points = root.findall("./curve[@id='managed_total_SBPS_PLI_L_21001']/point")
     assert [p.attrib for p in unmanaged_points] == [
-        {"x": "2", "y": "5.0"},
+        {"x": "1", "y": "5.0"},
         {"x": "10", "y": "40.0"},
     ]
     assert [p.attrib for p in managed_points] == [

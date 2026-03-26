@@ -6376,3 +6376,238 @@
   - `pre-commit run --all-files`
   - `sphinx-build -b html docs _build/html -W`
   - standalone K3Z `sphinx-build -b html docs docs\_build\html -W`
+
+## 2026-03-25 - Opened Issue 21 and branched the next K3Z CT/fert subvariant expansion
+- Created GitHub issue `#21` to track the next K3Z CT/fert feature:
+  expand eligibility from medium-SI-only `FDC+HW` / `CW+HW` AUs to the full
+  low/medium/high-SI cohort and add two SI-specific fert-response subvariants.
+- Cut matching feature branches in the parent repo and K3Z submodule:
+  `feature/k3z-ctfert-si-subvariants`.
+- Added Phase 36 kickoff notes to `ROADMAP.md` covering the requested boost
+  profiles:
+  - subvariant A: `L=15%`, `M=10%`, `H=5%`
+  - subvariant B: `L=20%`, `M=10%`, with fert disabled entirely on `H` SI AUs
+    instead of compiling a 0%-effect pass-through fert path.
+
+## 2026-03-25 - Added CT/fert RETENTION overlay requirement to Phase 36
+- Updated `ROADMAP.md` so the Phase 36 CT/fert subvariant work explicitly
+  includes overlaying curated `RETENTION` values from
+  `tmp/CTFert Fragments/fragments_updated3_Usedinbasecase.shp` onto both new
+  CT/fert subvariants.
+- Recorded that this curated overlay should replace the current placeholder
+  `0.05` retention values before final Matrix Builder validation and closeout.
+
+## 2026-03-25 - Implemented and validated the new K3Z CT/fert SI-profile subvariants
+- Added two new K3Z CT/fert subvariants in the K3Z instance:
+  - `ctfert_l15h5`
+  - `ctfert_l20h0`
+- Expanded CT eligibility from the original medium-SI-only cohort to the six
+  `L/M/H` analysis units in the `CWHvm_FDC+HW` / `CWHvm_CW+HW` strata:
+  `985501001`, `985502001`, `985503001`, `985501002`, `985502002`,
+  `985503002`.
+- Implemented per-AU fertilization gating and SI-specific response overrides in
+  `src/femic/fmg/patchworks.py`, so:
+  - `ctfert_l15h5` uses fert boosts `L=15%`, `M=10%`, `H=5%`;
+  - `ctfert_l20h0` uses fert boosts `L=20%`, `M=10%`, and disables fert
+    entirely on the `H` cohort while still keeping CT available there.
+- Added regression coverage in `tests/test_fmg_patchworks.py` for:
+  - per-AU fert response overrides,
+  - skipping the fert chain on ineligible AUs,
+  - preserving stand age across CT / `F1` / `F2` / `F3`.
+- Fixed the CT/fert age-reset bug by emitting the Patchworks-schema-legal
+  treatment attribute `adjust="R"` on CT / `F1` / `F2` / `F3`, after first
+  confirming that the earlier `adjusts="'R'"` form was rejected by
+  `ForestModel.xsd`.
+- Added the new K3Z runtime/config/PIN surfaces:
+  - `config/patchworks.variant.ctfert_l15h5.yaml`
+  - `config/patchworks.variant.ctfert_l20h0.yaml`
+  - `config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+  - `config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+  - `config/silviculture.k3z.ctfert_l15h5.yaml`
+  - `config/silviculture.k3z.ctfert_l20h0.yaml`
+  - `models/k3z_patchworks_model/analysis/ctfert_l15h5.pin`
+  - `models/k3z_patchworks_model/analysis/ctfert_l20h0.pin`
+- Rebuilt the new ForestModel XMLs:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l15h5.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l20h0.xml`
+- Replaced the placeholder retention surface on both new validated outputs with
+  the curated overlay from
+  `tmp/CTFert Fragments/fragments_updated3_Usedinbasecase.shp`, and verified
+  both resulting fragment surfaces match that source exactly across the
+  accepted 218-fragment geometry footprint.
+- Updated the standalone K3Z docs plus the parent K3Z pointer page so the new
+  CT/fert SI-profile subvariants are documented in the launch matrix, operator
+  runbook, rebuild/QA guide, model anatomy, scenario guidance, and
+  silviculture logic pages.
+- Reran Patchworks Matrix Builder successfully for:
+  - `config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+  - `config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+- Verified from the compiled tracks that:
+  - `ctfert_l15h5` materializes the full `CT -> F1 -> F2 -> F3` chain on the
+    eligible `L/M/H` cohort;
+  - `ctfert_l20h0` leaves the `H` cohort on `cc_pl_ct` only, while the `L/M`
+    cohort continues through `cc_pl_ct_f1`, `cc_pl_ct_f1_f2`, and
+    `cc_pl_ct_f1_f2_f3`.
+- Validation passed with:
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml --run-id k3z_ctfert_l15h5`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml --run-id k3z_ctfert_l20h0`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+  - `sphinx-build -b html docs _build/html -W`
+  - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
+
+## 2026-03-26 - Phase 36 CT Final-Felling Gap Control Follow-Up
+
+- Added a configurable commercial-thinning `final_felling_gap_factor` control
+  in `src/femic/fmg/patchworks.py`.
+- Replaced the old flat post-CT residual-yield subtraction with a ramped
+  post-thinning final-felling gap:
+  - the gap is still `1.0 x CT harvest volume` at CT age;
+  - it now ramps linearly to the configured target factor at `cmai_argmax`;
+  - values below `0.0` are rejected.
+- Added focused regression coverage in `tests/test_fmg_patchworks.py` for the
+  ramp math and the compiled XML behavior.
+- Updated the K3Z SI-profile CT/fert subvariant configs:
+  - `external/femic-k3z-instance/config/silviculture.k3z.ctfert_l15h5.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.ctfert_l20h0.yaml`
+  Both now set `commercial_thinning.final_felling_gap_factor: 0.0`.
+- Regenerated the shipped ForestModel XMLs:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l15h5.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l20h0.xml`
+- Rebuilt the compiled `tracks_ctfert_l15h5` and `tracks_ctfert_l20h0`
+  surfaces with Matrix Builder against the accepted curated fragments overlay.
+- Updated the standalone K3Z docs in:
+  - `external/femic-k3z-instance/docs/silviculture-logic.rst`
+  - `external/femic-k3z-instance/docs/variants-and-subvariants.rst`
+- Validation passed with:
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml --run-id k3z_ctfert_l15h5_gap0_20260326`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml --run-id k3z_ctfert_l20h0_gap0_20260326`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+  - `sphinx-build -b html docs _build/html -W`
+  - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
+
+## 2026-03-26 - Phase 36 Legacy CT/Fert Retirement and XML Curve Thinning
+
+- Patched `src/femic/fmg/adapters.py` so unmanaged/VDYP total-yield curves are
+  thinned to decadal knots in the shipped ForestModel XML output while managed
+  TIPSY curves retain their original point density.
+- Added regression coverage in:
+  - `tests/test_fmg_adapters.py`
+  - `tests/test_fmg_patchworks.py`
+- Retired the legacy single-surface `ctfert` launch path from the standalone
+  K3Z instance by removing:
+  - `external/femic-k3z-instance/config/patchworks.runtime.ctfert.windows.yaml`
+  - `external/femic-k3z-instance/config/patchworks.variant.ctfert.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.ctfert.yaml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/ctfert.pin`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_ctfert/`
+  - `external/femic-k3z-instance/output/patchworks_k3z_ctfert_validated/`
+- Updated the active K3Z docs and contracts so only `ctfert_l15h5` and
+  `ctfert_l20h0` remain documented launch surfaces, and explicitly recorded
+  that their validated fragment outputs use curated `RETENTION` values
+  overlaid from
+  `tmp/CTFert Fragments/fragments_updated3_Usedinbasecase.shp` rather than the
+  older uniform `0.05` placeholder.
+- Regenerated the shipped K3Z ForestModel XML family:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l15h5.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l20h0.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_light.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_moderate.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_heavy.xml`
+- Rebuilt Matrix Builder successfully for:
+  - `config/patchworks.runtime.windows.yaml`
+  - `config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+  - `config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+- Validation passed with:
+  - `pytest tests/test_docs_contract.py tests/test_fmg_adapters.py tests/test_fmg_patchworks.py`
+  - `ruff check src tests`
+  - `mypy src`
+  - `sphinx-build -b html docs _build/html -W`
+  - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
+
+## 2026-03-26 - Phase 37 K3Z QMD Approximation Upgrade
+
+- Replaced the old placeholder K3Z QMD age heuristic in
+  `src/femic/fmg/patchworks.py` with a reverse-engineered approximation that
+  back-solves diameter from stand yield, height, and trees per hectare.
+- Added per-AU QMD support loading in `src/femic/fmg/adapters.py` using the
+  accepted K3Z artifact surfaces:
+  - `external/femic-k3z-instance/data/tipsy_curves_tsak3z.csv`
+  - `external/femic-k3z-instance/data/tipsy_params_tsak3z.xlsx`
+  - `external/femic-k3z-instance/data/ria_vri_vclr1p_checkpoint1-tsak3z.feather`
+  - `external/femic-k3z-instance/data/vdyp_lyr-tsak3z.feather`
+- Managed baseline QMD now uses accepted BatchTIPSY-supported yield, height,
+  and TPH inputs where those managed curves exist; unmanaged baseline QMD now
+  uses accepted yield plus a linear site-index height assumption and
+  VDYP-side stems-per-hectare proxies reconstructed from the accepted
+  checkpoint/layer data.
+- Preserved the existing CT/fert QMD response multipliers on top of the
+  rebuilt base QMD curves rather than the older hand-tuned placeholder.
+- Added focused regression coverage in `tests/test_fmg_patchworks.py` for the
+  new QMD volume backsolve path.
+- Regenerated the shipped K3Z CT/fert XMLs:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l15h5.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l20h0.xml`
+- Rebuilt the compiled `tracks_ctfert_l15h5` and `tracks_ctfert_l20h0`
+  surfaces with Matrix Builder against the accepted curated fragments overlay.
+- Updated the standalone K3Z docs to replace the old placeholder-QMD wording
+  with the new approximation contract in:
+  - `external/femic-k3z-instance/docs/model-anatomy.rst`
+  - `external/femic-k3z-instance/docs/operator-runbook.rst`
+  - `external/femic-k3z-instance/docs/silviculture-logic.rst`
+  - `external/femic-k3z-instance/docs/variants-and-subvariants.rst`
+- Validation passed with:
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml --run-id k3z_ctfert_l15h5_qmd_upgrade_retry_20260326`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml --run-id k3z_ctfert_l20h0_qmd_upgrade_retry_20260326`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+  - `sphinx-build -b html docs _build/html -W`
+  - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
+
+## 2026-03-26 - Phase 37 QMD Surface Cleanup
+
+- Removed stale dead QMD metadata knobs from the active CT/fert silviculture
+  YAMLs:
+  - `external/femic-k3z-instance/config/silviculture.k3z.ctfert_l15h5.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.ctfert_l20h0.yaml`
+- Deleted the old `qmd.source: "synthetic"` and placeholder-note fields so the
+  config surface no longer advertises a behavior that is no longer implemented.
+- Confirmed the active user-facing docs already describe the shipped CT/fert
+  QMD outputs as approximate reconstructed curves rather than placeholder
+  scaffolding.
+
+## 2026-03-26 - Phase 37 AU-Wise Mean-QMD Account Normalization
+
+- Updated `src/femic/patchworks_runtime.py` so the
+  `protoaccounts.csv -> accounts.csv` promotion step computes AU-wise managed
+  and unmanaged area denominators from the validated fragments surface using
+  `AREA_HA`, `IFM`, and `RETENTION`.
+- Replaced the default `SUM=1` multipliers on the AU-wise
+  `feature.QMD.{managed,unmanaged}.*` account rows with reciprocal area
+  multipliers, converting those surfaces from raw `cm*ha` aggregates into
+  mean-QMD `cm` accounts.
+- Added focused regression coverage in `tests/test_patchworks_runtime.py` for
+  the QMD-account normalization behavior.
+- Refreshed the shipped CT/fert account surfaces:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_ctfert_l15h5/accounts.csv`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_ctfert_l20h0/accounts.csv`
+- Validation passed with:
+  - `pytest tests/test_patchworks_runtime.py`

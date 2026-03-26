@@ -128,6 +128,43 @@ def test_build_bundle_model_context_reads_csv(tmp_path: Path) -> None:
     assert len(context.curves_by_id[1001].points) == 2
 
 
+def test_build_bundle_model_context_thins_unmanaged_curves_to_decadal_knots() -> None:
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 1001,
+                "tsa": "29",
+                "stratum_code": "SBPS_PLI",
+                "si_level": "L",
+                "treated_curve_id": 21001,
+                "untreated_curve_id": 1001,
+            }
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 1001, "curve_type": "untreated"},
+            {"curve_id": 21001, "curve_type": "treated"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [{"curve_id": 1001, "x": age, "y": float(age)} for age in range(1, 13)]
+        + [{"curve_id": 21001, "x": age, "y": float(age * 2)} for age in range(1, 13)]
+    )
+
+    context = build_bundle_model_context_from_tables(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+        tsa_list=["29"],
+    )
+
+    assert [point.x for point in context.curves_by_id[1001].points] == [1.0, 10.0, 12.0]
+    assert [point.x for point in context.curves_by_id[21001].points] == [
+        float(age) for age in range(1, 13)
+    ]
+
+
 def test_build_bundle_model_context_requires_tsa(tmp_path: Path) -> None:
     bundle_dir = tmp_path / "bundle"
     _write_bundle_tables(bundle_dir)

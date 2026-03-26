@@ -15,6 +15,7 @@
       CurvePoint
       DefineFieldDefinition
       ForestModelDefinition
+      QmdSupportDefinition
       RetentionDefinition
       SelectDefinition
       TreatmentAssignment

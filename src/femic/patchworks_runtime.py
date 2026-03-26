@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import tempfile
 from typing import Any, Literal
+import xml.etree.ElementTree as et
 
 import yaml
 
@@ -30,6 +31,8 @@ FATAL_MATRIX_STDERR_PATTERNS = (
     "sps home directory not found, installation not complete",
     "ip helper library getadaptersaddresses function failed",
 )
+QMD_ACCOUNT_PATTERN = re.compile(r"^feature\.QMD\.(managed|unmanaged)\.([A-Za-z0-9_.]+)$")
+AU_EQ_PATTERN = re.compile(r"\bAU eq (\d+)\b")
 
 
 @dataclass(frozen=True)
@@ -570,6 +573,109 @@ def _resolve_accounts_backup_path(*, tracks_dir: Path) -> Path:
     )
 
 
+def _format_account_sum_multiplier(value: float) -> str:
+    if not value or value <= 0.0:
+        return "1"
+    return f"{value:.12g}"
+
+
+def _load_qmd_au_id_by_token_from_forestmodel(
+    *, forestmodel_xml_path: Path
+) -> dict[str, int]:
+    resolved = forestmodel_xml_path.expanduser().resolve()
+    if not resolved.exists():
+        return {}
+    root = et.parse(resolved).getroot()
+    out: dict[str, int] = {}
+    for select_node in root.findall("./select"):
+        statement = str(select_node.get("statement", ""))
+        match = AU_EQ_PATTERN.search(statement)
+        if match is None:
+            continue
+        au_id = int(match.group(1))
+        for attribute_node in select_node.findall("./features/attribute"):
+            label = str(attribute_node.get("label", ""))
+            qmd_match = QMD_ACCOUNT_PATTERN.match(label)
+            if qmd_match is None:
+                continue
+            token = qmd_match.group(2)
+            prior = out.get(token)
+            if prior is None or prior == au_id:
+                out[token] = au_id
+    return out
+
+
+def _load_fragments_area_by_au_and_ifm(
+    *, fragments_path: Path
+) -> dict[tuple[str, int], float]:
+    resolved = fragments_path.expanduser().resolve()
+    if not resolved.exists():
+        return {}
+    gpd = _import_geopandas()
+    fragments = gpd.read_file(resolved)
+    required = {"AU", "AREA_HA", "IFM", "RETENTION"}
+    if fragments.empty or not required.issubset(fragments.columns):
+        return {}
+
+    out: dict[tuple[str, int], float] = {}
+    for row in fragments.itertuples(index=False):
+        au_raw = getattr(row, "AU", None)
+        area_raw = getattr(row, "AREA_HA", None)
+        ifm_raw = getattr(row, "IFM", None)
+        retention_raw = getattr(row, "RETENTION", 0.0)
+        try:
+            au_id = int(au_raw)
+            area_ha = float(area_raw)
+            retention = float(retention_raw)
+        except (TypeError, ValueError):
+            continue
+        if area_ha <= 0.0:
+            continue
+        retention = min(max(retention, 0.0), 1.0)
+        ifm = str(ifm_raw or "").strip().lower()
+        if ifm == "managed":
+            managed_area = area_ha * (1.0 - retention)
+            unmanaged_area = area_ha * retention
+            if managed_area > 0.0:
+                out[("managed", au_id)] = out.get(("managed", au_id), 0.0) + managed_area
+            if unmanaged_area > 0.0:
+                out[("unmanaged", au_id)] = (
+                    out.get(("unmanaged", au_id), 0.0) + unmanaged_area
+                )
+        elif ifm == "unmanaged":
+            out[("unmanaged", au_id)] = out.get(("unmanaged", au_id), 0.0) + area_ha
+    return out
+
+
+def _resolve_qmd_account_sum_overrides(
+    *,
+    fragments_path: Path,
+    forestmodel_xml_path: Path,
+) -> dict[str, str]:
+    au_id_by_token = _load_qmd_au_id_by_token_from_forestmodel(
+        forestmodel_xml_path=forestmodel_xml_path
+    )
+    if not au_id_by_token:
+        return {}
+    area_by_au_and_ifm = _load_fragments_area_by_au_and_ifm(fragments_path=fragments_path)
+    if not area_by_au_and_ifm:
+        return {}
+
+    overrides: dict[str, str] = {}
+    for token, au_id in au_id_by_token.items():
+        managed_area = area_by_au_and_ifm.get(("managed", au_id), 0.0)
+        unmanaged_area = area_by_au_and_ifm.get(("unmanaged", au_id), 0.0)
+        if managed_area > 0.0:
+            overrides[f"feature.QMD.managed.{token}"] = _format_account_sum_multiplier(
+                1.0 / managed_area
+            )
+        if unmanaged_area > 0.0:
+            overrides[
+                f"feature.QMD.unmanaged.{token}"
+            ] = _format_account_sum_multiplier(1.0 / unmanaged_area)
+    return overrides
+
+
 def _count_topology_edges(path: Path) -> int:
     with path.open("r", encoding="utf-8", newline="") as handle:
         line_count = sum(1 for _ in handle)
@@ -659,6 +765,8 @@ def _run_patchworks_raster_topology(
 def _promote_protoaccounts_to_accounts(
     *,
     matrix_output_dir: Path,
+    fragments_path: Path,
+    forestmodel_xml_path: Path,
     exclude_regex: tuple[str, ...] = (),
 ) -> tuple[Path | None, Path | None, Path, int]:
     tracks_dir = matrix_output_dir.expanduser().resolve()
@@ -672,21 +780,33 @@ def _promote_protoaccounts_to_accounts(
         backup_path = _resolve_accounts_backup_path(tracks_dir=tracks_dir)
         accounts_path.replace(backup_path)
 
-    if not exclude_regex:
+    patterns = tuple(re.compile(pattern) for pattern in exclude_regex)
+    with protoaccounts_path.open("r", encoding="utf-8", newline="") as src:
+        reader = csv.DictReader(src)
+        fieldnames = list(reader.fieldnames or ["GROUP", "ATTRIBUTE", "ACCOUNT", "SUM"])
+        rows = [{key: row.get(key, "") for key in fieldnames} for row in reader]
+
+    has_qmd_rows = any(
+        QMD_ACCOUNT_PATTERN.match(str(row.get("ATTRIBUTE", ""))) is not None
+        for row in rows
+    )
+    qmd_sum_overrides = (
+        _resolve_qmd_account_sum_overrides(
+            fragments_path=fragments_path,
+            forestmodel_xml_path=forestmodel_xml_path,
+        )
+        if has_qmd_rows
+        else {}
+    )
+    if not exclude_regex and not qmd_sum_overrides:
         shutil.copy2(protoaccounts_path, accounts_path)
         return accounts_path, backup_path, protoaccounts_path, 0
 
-    patterns = tuple(re.compile(pattern) for pattern in exclude_regex)
-    with (
-        protoaccounts_path.open("r", encoding="utf-8", newline="") as src,
-        accounts_path.open("w", encoding="utf-8", newline="") as dst,
-    ):
-        reader = csv.DictReader(src)
-        fieldnames = list(reader.fieldnames or ["GROUP", "ATTRIBUTE", "ACCOUNT", "SUM"])
+    with accounts_path.open("w", encoding="utf-8", newline="") as dst:
         writer = csv.DictWriter(dst, fieldnames=fieldnames)
         writer.writeheader()
         excluded_count = 0
-        for row in reader:
+        for row in rows:
             attribute = str(row.get("ATTRIBUTE", ""))
             account = str(row.get("ACCOUNT", ""))
             if any(
@@ -695,7 +815,9 @@ def _promote_protoaccounts_to_accounts(
             ):
                 excluded_count += 1
                 continue
-            writer.writerow({key: row.get(key, "") for key in fieldnames})
+            if attribute in qmd_sum_overrides:
+                row["SUM"] = qmd_sum_overrides[attribute]
+            writer.writerow(row)
     return accounts_path, backup_path, protoaccounts_path, excluded_count
 
 
@@ -790,6 +912,8 @@ def run_patchworks_command(
             accounts_excluded_row_count,
         ) = _promote_protoaccounts_to_accounts(
             matrix_output_dir=config.matrix_output_dir,
+            fragments_path=config.fragments_path,
+            forestmodel_xml_path=config.forestmodel_xml_path,
             exclude_regex=config.accounts_exclude_regex,
         )
         if accounts_synced_path is not None:

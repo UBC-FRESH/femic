@@ -38,6 +38,15 @@ REMOVED_PCTCT_SUBVARIANT_GLOBS = (
     "models/k3z_patchworks_model/tracks_pctct_*",
     "output/patchworks_k3z_pctct_*",
 )
+REMOVED_CTFERT_LEGACY_PATHS = (
+    K3Z_INSTANCE_ROOT / "config/patchworks.variant.ctfert.yaml",
+    K3Z_INSTANCE_ROOT / "config/patchworks.runtime.ctfert.windows.yaml",
+    K3Z_INSTANCE_ROOT / "config/silviculture.k3z.ctfert.yaml",
+    K3Z_INSTANCE_ROOT / "models/k3z_patchworks_model/analysis/ctfert.pin",
+    K3Z_INSTANCE_ROOT / "models/k3z_patchworks_model/yield/forestmodel_ctfert.xml",
+    K3Z_INSTANCE_ROOT / "models/k3z_patchworks_model/tracks_ctfert",
+    K3Z_INSTANCE_ROOT / "output/patchworks_k3z_ctfert_validated",
+)
 
 GUIDE_PAGES = [
     "pipeline-overview",
@@ -832,48 +841,9 @@ def test_k3z_pctct_subvariant_family_has_been_removed() -> None:
         )
 
 
-def test_k3z_ctfert_checked_in_surface_preserves_baseline_geometry_footprint() -> None:
-    gpd = pytest.importorskip("geopandas")
-
-    baseline_path = (
-        K3Z_INSTANCE_ROOT / "output/patchworks_k3z_validated/fragments/fragments.shp"
-    )
-    ctfert_path = (
-        K3Z_INSTANCE_ROOT
-        / "output/patchworks_k3z_ctfert_validated/fragments/fragments.shp"
-    )
-    baseline = gpd.read_file(baseline_path)[
-        ["AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE", "geometry"]
-    ].copy()
-    ctfert = gpd.read_file(ctfert_path)[
-        ["AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE", "geometry"]
-    ].copy()
-
-    baseline["geom_key"] = baseline.geometry.to_wkb(hex=True)
-    ctfert["geom_key"] = ctfert.geometry.to_wkb(hex=True)
-    merged = baseline.merge(
-        ctfert.drop(columns="geometry"),
-        on="geom_key",
-        how="outer",
-        suffixes=("_baseline", "_ctfert"),
-        indicator=True,
-    )
-
-    assert len(baseline) == 218
-    assert len(ctfert) == 218
-    assert set(merged["_merge"]) == {"both"}
-
-    both = merged[merged["_merge"] == "both"]
-    for col in ("AU", "IFM", "ORIGIN", "SILV_STATE"):
-        assert (both[f"{col}_baseline"] == both[f"{col}_ctfert"]).all(), (
-            f"ctfert differs from baseline in {col}"
-        )
-
-    retention_diff = both[both["RETENTION_baseline"] != both["RETENTION_ctfert"]]
-    assert len(retention_diff) == 9
-    assert set(retention_diff["AU_baseline"]) == {985502006, 985502008}
-    assert set(retention_diff["RETENTION_baseline"]) == {0.05}
-    assert set(retention_diff["RETENTION_ctfert"]) == {1.0}
+def test_k3z_legacy_single_ctfert_surface_has_been_removed() -> None:
+    for path in REMOVED_CTFERT_LEGACY_PATHS:
+        assert not path.exists(), f"legacy ctfert path should be removed: {path}"
 
 
 def test_k3z_pct_checked_in_surface_preserves_baseline_geometry_footprint() -> None:

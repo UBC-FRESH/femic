@@ -664,6 +664,28 @@ def _resolve_eligible_au_ids(payload: dict[str, Any]) -> set[int]:
     return eligible_au_ids
 
 
+def _resolve_float_override_for_au(
+    *,
+    payload: dict[str, Any],
+    field: str,
+    au_id: int,
+    default: float,
+) -> float:
+    by_au = payload.get(f"{field}_by_au") or {}
+    if by_au:
+        if not isinstance(by_au, dict):
+            raise ValueError(f"{field}_by_au must contain a mapping/object")
+        raw_value = by_au.get(str(int(au_id)), by_au.get(int(au_id)))
+        if raw_value is not None:
+            try:
+                return float(raw_value)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid {field} override for AU {au_id}: {raw_value!r}"
+                ) from exc
+    return float(default)
+
+
 def _resolve_remove_species(payload: dict[str, Any]) -> tuple[str, ...]:
     return tuple(
         str(value).strip().upper()
@@ -795,8 +817,16 @@ def _resolve_ct_configs_for_au(
         basal_area_fraction = float(ct_payload.get("basal_area_removal_fraction", 0.30))
         ba_to_volume_ratio = float(ct_payload.get("basal_area_to_volume_ratio", 1.0))
         qmd_response_fraction = float(ct_payload.get("qmd_response_fraction", 0.10))
+        final_felling_gap_factor = _resolve_float_override_for_au(
+            payload=ct_payload,
+            field="final_felling_gap_factor",
+            au_id=au_id,
+            default=float(ct_payload.get("final_felling_gap_factor", 1.0)),
+        )
     except (TypeError, ValueError) as exc:
         raise ValueError(f"Invalid CT removal parameters for AU {au_id}") from exc
+    if final_felling_gap_factor < 0.0:
+        raise ValueError(f"final_felling_gap_factor must be >= 0.0 for AU {au_id}")
     removal_fraction = max(0.0, min(1.0, basal_area_fraction * ba_to_volume_ratio))
 
     transition_payloads = ct_payload.get("transitions")
@@ -833,21 +863,105 @@ def _resolve_ct_configs_for_au(
                 "ba_to_volume_ratio": ba_to_volume_ratio,
                 "removal_fraction": removal_fraction,
                 "qmd_response_fraction": max(0.0, qmd_response_fraction),
+                "final_felling_gap_factor": final_felling_gap_factor,
             }
         )
     return tuple(configs)
 
 
-SI_LEVEL_QMD_OFFSET_CM = {"L": -2.0, "M": 0.0, "H": 2.0}
+DEFAULT_QMD_CONE_FORM_FACTOR = 1.1
+DEFAULT_QMD_SITE_INDEX_BY_LEVEL = {"L": 15.0, "M": 25.0, "H": 35.0}
+
+
+def _interpolate_curve_y(
+    *,
+    curve_points: tuple[CurvePoint, ...],
+    x_value: float,
+) -> float | None:
+    if not curve_points:
+        return None
+    if x_value <= float(curve_points[0].x):
+        return float(curve_points[0].y)
+    if x_value >= float(curve_points[-1].x):
+        return float(curve_points[-1].y)
+    for left, right in zip(curve_points, curve_points[1:]):
+        x0 = float(left.x)
+        x1 = float(right.x)
+        if x0 <= x_value <= x1 and x1 > x0:
+            y0 = float(left.y)
+            y1 = float(right.y)
+            fraction = (x_value - x0) / (x1 - x0)
+            return y0 + (fraction * (y1 - y0))
+    return None
+
+
+def _estimate_qmd_height_m(
+    *,
+    age: float,
+    site_index: float | None,
+    height_curve_points: tuple[CurvePoint, ...],
+) -> float:
+    height_from_curve = _interpolate_curve_y(
+        curve_points=height_curve_points,
+        x_value=age,
+    )
+    if height_from_curve is not None and height_from_curve > 0.0:
+        return float(height_from_curve)
+    if site_index is None or site_index <= 0.0:
+        return 0.0
+    return max(0.0, (float(site_index) / 50.0) * float(age))
+
+
+def _estimate_qmd_stems_per_ha(
+    *,
+    age: float,
+    tph_curve_points: tuple[CurvePoint, ...],
+    stems_per_ha: float | None,
+) -> float:
+    tph_from_curve = _interpolate_curve_y(
+        curve_points=tph_curve_points,
+        x_value=age,
+    )
+    if tph_from_curve is not None and tph_from_curve > 0.0:
+        return float(tph_from_curve)
+    if stems_per_ha is None:
+        return 0.0
+    return max(0.0, float(stems_per_ha))
+
+
+def _estimate_qmd_cm_from_volume(
+    *,
+    stand_volume_m3_per_ha: float,
+    height_m: float,
+    stems_per_ha: float,
+    cone_form_factor: float = DEFAULT_QMD_CONE_FORM_FACTOR,
+) -> float:
+    if (
+        stand_volume_m3_per_ha <= 0.0
+        or height_m <= 0.0
+        or stems_per_ha <= 0.0
+        or cone_form_factor <= 0.0
+    ):
+        return 0.0
+    tree_volume_m3 = float(stand_volume_m3_per_ha) / float(stems_per_ha)
+    diameter_m = math.sqrt(
+        (12.0 * tree_volume_m3) / (float(cone_form_factor) * math.pi * float(height_m))
+    )
+    return max(0.0, diameter_m * 100.0)
 
 
 def _build_qmd_curve_points(
     *,
     source_curve_points: tuple[CurvePoint, ...],
     si_level: str,
+    site_index: float | None = None,
+    height_curve_points: tuple[CurvePoint, ...] = (),
+    tph_curve_points: tuple[CurvePoint, ...] = (),
+    stems_per_ha: float | None = None,
     response_age: int | None = None,
     response_fraction: float = 0.0,
     response_years: int = 10,
+    cone_form_factor: float = DEFAULT_QMD_CONE_FORM_FACTOR,
 ) -> tuple[CurvePoint, ...]:
     x_values = sorted(
         {
@@ -858,11 +972,32 @@ def _build_qmd_curve_points(
     )
     if not x_values:
         x_values = [0.0, 100.0]
-    si_offset = SI_LEVEL_QMD_OFFSET_CM.get(str(si_level).strip().upper(), 0.0)
+    resolved_site_index = (
+        float(site_index)
+        if site_index is not None and math.isfinite(float(site_index))
+        else DEFAULT_QMD_SITE_INDEX_BY_LEVEL.get(str(si_level).strip().upper(), 25.0)
+    )
+    source_y_by_age = {float(point.x): float(point.y) for point in source_curve_points}
     out: list[CurvePoint] = []
     for x_val in x_values:
         age = max(0.0, float(x_val))
-        qmd = 6.0 + 1.2 * math.sqrt(age) + 0.12 * age + si_offset
+        stand_volume = max(0.0, float(source_y_by_age.get(x_val, 0.0)))
+        height_m = _estimate_qmd_height_m(
+            age=age,
+            site_index=resolved_site_index,
+            height_curve_points=height_curve_points,
+        )
+        tph = _estimate_qmd_stems_per_ha(
+            age=age,
+            tph_curve_points=tph_curve_points,
+            stems_per_ha=stems_per_ha,
+        )
+        qmd = _estimate_qmd_cm_from_volume(
+            stand_volume_m3_per_ha=stand_volume,
+            height_m=height_m,
+            stems_per_ha=tph,
+            cone_form_factor=cone_form_factor,
+        )
         if (
             response_age is not None
             and age >= float(response_age)
@@ -897,19 +1032,36 @@ def _build_constant_curve_points_like(
     return tuple(CurvePoint(x=x_val, y=y_val) for x_val in x_values)
 
 
-def _build_curve_minus_constant_after_age(
+def _build_curve_with_post_thinning_gap(
     *,
     source_curve_points: tuple[CurvePoint, ...],
     transition_age: int,
-    subtract_value: float,
+    gap_at_transition_value: float,
+    final_gap_factor: float,
+    ramp_end_age: int,
 ) -> tuple[CurvePoint, ...]:
     out: list[CurvePoint] = []
-    subtract_value = max(0.0, float(subtract_value))
+    gap_at_transition_value = max(0.0, float(gap_at_transition_value))
+    final_gap_factor = max(0.0, float(final_gap_factor))
+    transition_age = int(transition_age)
+    ramp_end_age = int(ramp_end_age)
     for point in source_curve_points:
         x_val = float(point.x)
         y_val = float(point.y)
+        gap_factor = 0.0
         if x_val >= float(transition_age):
-            y_val -= subtract_value
+            gap_factor = 1.0
+            if ramp_end_age <= transition_age:
+                if x_val > float(transition_age):
+                    gap_factor = final_gap_factor
+            elif x_val >= float(ramp_end_age):
+                gap_factor = final_gap_factor
+            else:
+                ramp = (x_val - float(transition_age)) / float(
+                    ramp_end_age - transition_age
+                )
+                gap_factor = 1.0 + ((final_gap_factor - 1.0) * ramp)
+            y_val -= gap_at_transition_value * gap_factor
         out.append(CurvePoint(x=x_val, y=max(0.0, round(y_val, 1))))
     return tuple(out)
 
@@ -975,6 +1127,9 @@ def _resolve_fertilization_config_for_au(
         fert_payload.get("enabled", False)
     ):
         return None
+    eligible_au_ids = _resolve_eligible_au_ids(fert_payload)
+    if eligible_au_ids and int(au_id) not in eligible_au_ids:
+        return None
     first_application = fert_payload.get("first_application") or {}
     if not isinstance(first_application, dict):
         raise ValueError(
@@ -1005,9 +1160,17 @@ def _resolve_fertilization_config_for_au(
     fert_age = max(int(ct_age) + 1, int(fert_age))
     try:
         response_years = int(float(fert_payload.get("response_years", 10)))
-        speedup_fraction = float(fert_payload.get("growth_speedup_fraction", 0.10))
-        qmd_response_fraction = float(
-            fert_payload.get("qmd_response_fraction", speedup_fraction)
+        speedup_fraction = _resolve_float_override_for_au(
+            payload=fert_payload,
+            field="growth_speedup_fraction",
+            au_id=au_id,
+            default=float(fert_payload.get("growth_speedup_fraction", 0.10)),
+        )
+        qmd_response_fraction = _resolve_float_override_for_au(
+            payload=fert_payload,
+            field="qmd_response_fraction",
+            au_id=au_id,
+            default=float(fert_payload.get("qmd_response_fraction", speedup_fraction)),
         )
     except (TypeError, ValueError) as exc:
         raise ValueError(
@@ -1519,12 +1682,14 @@ def build_patchworks_forestmodel_definition(
                 curve_idref=og2_curve_ref,
             ),
         )
+        managed_cmai_age = max(1, int(cc_max_age))
         effective_cc_min_age = int(cc_min_age)
         if managed_total_curve is not None:
             cmai_age, _ = _derive_curve_metrics(
                 managed_total_curve_points=managed_total_curve.points,
                 horizon_years=horizon_years,
             )
+            managed_cmai_age = int(cmai_age)
             effective_cc_min_age = int(cmai_age - 20)
         effective_cc_min_age = max(0, min(effective_cc_min_age, int(cc_max_age)))
         pct_configs = _resolve_pct_configs_for_au(
@@ -1540,6 +1705,7 @@ def build_patchworks_forestmodel_definition(
         qmd_enabled = isinstance(qmd_payload, dict) and bool(
             qmd_payload.get("enabled", False)
         )
+        qmd_support = context.qmd_support_by_au.get(int(au.au_id))
 
         natural_species_curve_map = context.unmanaged_species_curve_ids.get(
             unmanaged_curve_id, {}
@@ -1634,10 +1800,44 @@ def build_patchworks_forestmodel_definition(
                 curves[unmanaged_qmd_curve_ref] = _build_qmd_curve_points(
                     source_curve_points=unmanaged_qmd_source,
                     si_level=au.si_level,
+                    site_index=(
+                        float(qmd_support.site_index)
+                        if qmd_support is not None
+                        and qmd_support.site_index is not None
+                        else None
+                    ),
+                    stems_per_ha=(
+                        float(qmd_support.unmanaged_stems_per_ha)
+                        if qmd_support is not None
+                        and qmd_support.unmanaged_stems_per_ha is not None
+                        else None
+                    ),
                 )
                 curves[managed_qmd_curve_ref] = _build_qmd_curve_points(
                     source_curve_points=managed_qmd_source,
                     si_level=au.si_level,
+                    site_index=(
+                        float(qmd_support.site_index)
+                        if qmd_support is not None
+                        and qmd_support.site_index is not None
+                        else None
+                    ),
+                    height_curve_points=(
+                        tuple(qmd_support.managed_height_points)
+                        if qmd_support is not None
+                        else ()
+                    ),
+                    tph_curve_points=(
+                        tuple(qmd_support.managed_tph_points)
+                        if qmd_support is not None
+                        else ()
+                    ),
+                    stems_per_ha=(
+                        float(qmd_support.unmanaged_stems_per_ha)
+                        if qmd_support is not None
+                        and qmd_support.unmanaged_stems_per_ha is not None
+                        else None
+                    ),
                 )
                 unmanaged_attrs.append(
                     AttributeBinding(
@@ -1839,6 +2039,7 @@ def build_patchworks_forestmodel_definition(
                             label=str(ct_config["label"]),
                             min_age=int(ct_config["ct_age"]),
                             max_age=int(ct_config["ct_age"]),
+                            adjust="R",
                             assignments=(
                                 TreatmentAssignment(
                                     field="treatment",
@@ -2006,6 +2207,7 @@ def build_patchworks_forestmodel_definition(
                             label=str(ct_config["label"]),
                             min_age=int(ct_config["ct_age"]),
                             max_age=int(ct_config["ct_age"]),
+                            adjust="R",
                             assignments=(
                                 TreatmentAssignment(
                                     field="treatment",
@@ -2129,10 +2331,12 @@ def build_patchworks_forestmodel_definition(
                     source_curve_points=managed_total_curve.points,
                     value=ct_removed_volume,
                 )
-                curves[ct_residual_curve_ref] = _build_curve_minus_constant_after_age(
+                curves[ct_residual_curve_ref] = _build_curve_with_post_thinning_gap(
                     source_curve_points=managed_total_curve.points,
                     transition_age=ct_age,
-                    subtract_value=ct_removed_volume,
+                    gap_at_transition_value=ct_removed_volume,
+                    final_gap_factor=float(ct_config["final_felling_gap_factor"]),
+                    ramp_end_age=managed_cmai_age,
                 )
                 ct_product_attrs = [
                     AttributeBinding(
@@ -2173,6 +2377,28 @@ def build_patchworks_forestmodel_definition(
                     curves[ct_qmd_curve_ref] = _build_qmd_curve_points(
                         source_curve_points=managed_total_curve.points,
                         si_level=au.si_level,
+                        site_index=(
+                            float(qmd_support.site_index)
+                            if qmd_support is not None
+                            and qmd_support.site_index is not None
+                            else None
+                        ),
+                        height_curve_points=(
+                            tuple(qmd_support.managed_height_points)
+                            if qmd_support is not None
+                            else ()
+                        ),
+                        tph_curve_points=(
+                            tuple(qmd_support.managed_tph_points)
+                            if qmd_support is not None
+                            else ()
+                        ),
+                        stems_per_ha=(
+                            float(qmd_support.unmanaged_stems_per_ha)
+                            if qmd_support is not None
+                            and qmd_support.unmanaged_stems_per_ha is not None
+                            else None
+                        ),
                         response_age=ct_age,
                         response_fraction=float(ct_config["qmd_response_fraction"]),
                     )
@@ -2276,6 +2502,7 @@ def build_patchworks_forestmodel_definition(
                         label=fert1_config["label"],
                         min_age=int(fert1_config["fert_age"]),
                         max_age=int(fert1_config["fert_age"]),
+                        adjust="R",
                         assignments=(
                             TreatmentAssignment(
                                 field="treatment",
@@ -2382,6 +2609,28 @@ def build_patchworks_forestmodel_definition(
                         curves[fert_qmd_curve_ref] = _build_qmd_curve_points(
                             source_curve_points=current_source_points,
                             si_level=au.si_level,
+                            site_index=(
+                                float(qmd_support.site_index)
+                                if qmd_support is not None
+                                and qmd_support.site_index is not None
+                                else None
+                            ),
+                            height_curve_points=(
+                                tuple(qmd_support.managed_height_points)
+                                if qmd_support is not None
+                                else ()
+                            ),
+                            tph_curve_points=(
+                                tuple(qmd_support.managed_tph_points)
+                                if qmd_support is not None
+                                else ()
+                            ),
+                            stems_per_ha=(
+                                float(qmd_support.unmanaged_stems_per_ha)
+                                if qmd_support is not None
+                                and qmd_support.unmanaged_stems_per_ha is not None
+                                else None
+                            ),
                             response_age=int(fert_config["fert_age"]),
                             response_fraction=float(
                                 fert_config["qmd_response_fraction"]
@@ -2454,6 +2703,7 @@ def build_patchworks_forestmodel_definition(
                                 label=next_fert["label"],
                                 min_age=int(next_fert["fert_age"]),
                                 max_age=int(next_fert["fert_age"]),
+                                adjust="R",
                                 assignments=(
                                     TreatmentAssignment(
                                         field="treatment",
@@ -2594,15 +2844,14 @@ def _append_retention_definitions(
 def _append_track_treatment(
     *, parent: et.Element, treatment_def: TreatmentDefinition
 ) -> None:
-    treatment = et.SubElement(
-        parent,
-        "treatment",
-        {
-            "label": treatment_def.label,
-            "minage": str(int(treatment_def.min_age)),
-            "maxage": str(int(treatment_def.max_age)),
-        },
-    )
+    attrs = {
+        "label": treatment_def.label,
+        "minage": str(int(treatment_def.min_age)),
+        "maxage": str(int(treatment_def.max_age)),
+    }
+    if treatment_def.adjust:
+        attrs["adjust"] = treatment_def.adjust
+    treatment = et.SubElement(parent, "treatment", attrs)
     if treatment_def.assignments:
         produce = et.SubElement(treatment, "produce")
         for assignment in treatment_def.assignments:
