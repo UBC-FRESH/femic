@@ -1031,10 +1031,28 @@ notes.
     - confirmed from the rebuilt tracks that the post-CT final-felling gap now
       tapers to zero by later ages instead of remaining equal to the CT
       harvest volume indefinitely.
-    - `ruff format src tests`
-    - `ruff check src tests`
-    - `mypy src`
-    - `pytest`
+- 2026-03-26 (Phase 36 XML cleanup follow-up): thin the K3Z VDYP-derived XML
+  yield curves to decadal knots so unmanaged curves no longer carry annual
+  point density into the shipped ForestModel XMLs while managed TIPSY curves
+  remain unchanged.
+  Completed locally:
+    - patched the exporter so unmanaged/VDYP total-yield curves now keep the
+      first point, every 10-year knot, and the final point;
+    - regenerated the shipped K3Z XML family from the updated exporter,
+      including the active baseline, `pct_*`, and `ctfert_*` surfaces;
+    - reran Matrix Builder successfully for the baseline, `ctfert_l15h5`, and
+      `ctfert_l20h0` runtime configs after the curve thinning change;
+    - retired the legacy single-surface `ctfert` launch surface so the active
+      K3Z CT/fert family is now only `ctfert_l15h5` and `ctfert_l20h0`;
+    - updated the standalone K3Z docs to explicitly record that the validated
+      CT/fert fragment surfaces use curated `RETENTION` values overlaid from
+      `tmp/CTFert Fragments/fragments_updated3_Usedinbasecase.shp`;
+    - validation passed with:
+      - `pytest tests/test_docs_contract.py tests/test_fmg_adapters.py tests/test_fmg_patchworks.py`
+      - `ruff check src tests`
+      - `mypy src`
+      - `sphinx-build -b html docs _build/html -W`
+      - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
     - `pre-commit run --all-files`
     - `sphinx-build -b html docs _build/html -W`
     - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
@@ -6817,6 +6835,21 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 - [x] P36.5 Add configurable CT post-thinning final-felling gap control
   - [x] P36.5a Add a commercial-thinning YAML knob that controls how much of the CT removal remains as a final-felling volume gap by `cmai_argmax`, with `1.0` preserving the current full-gap behavior and `0.0` closing the gap entirely by `cmai_argmax`.
   - [x] P36.5b Rebuild `ctfert_l15h5` and `ctfert_l20h0` with the new CT gap control set to `0.0`, then rerun Matrix Builder and the standard validation gates.
+- [x] P36.6 Thin K3Z VDYP-derived XML yield curves to decadal knots
+  - [x] P36.6a Thin unmanaged/VDYP total-yield curves to one point per 10 years in the exporter while preserving boundary points.
+  - [x] P36.6b Regenerate the shipped K3Z ForestModel XML family from the updated exporter and rerun the relevant Matrix Builder checks.
+- [x] P36.7 Retire the legacy single-surface `ctfert` launch path
+  - [x] P36.7a Remove the superseded `ctfert` config, PIN, XML, tracks, and validated-output surfaces so only the SI-profile `ctfert_*` family remains active.
+  - [x] P36.7b Update docs/tests/contracts to document the curated RETENTION overlay provenance and prevent the retired legacy `ctfert` alias from returning unnoticed.
+  - Notes:
+    - The active shipped CT/fert family is now:
+      - `ctfert_l15h5`
+      - `ctfert_l20h0`
+    - The legacy single-surface `ctfert` runtime/config/PIN/XML/tracks/output
+      bundle has been removed from the tracked K3Z instance surface.
+    - The rebuilt baseline plus active CT/fert XML family now uses decadal
+      unmanaged/VDYP knots while preserving the denser managed/TIPSY curve
+      shapes.
 
 
 

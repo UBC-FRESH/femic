@@ -1652,7 +1652,7 @@ def test_forestmodel_xml_trims_repeated_curve_values_on_both_tails() -> None:
     )
     managed_points = root.findall("./curve[@id='managed_total_SBPS_PLI_L_21001']/point")
     assert [p.attrib for p in unmanaged_points] == [
-        {"x": "2", "y": "5.0"},
+        {"x": "1", "y": "5.0"},
         {"x": "10", "y": "40.0"},
     ]
     assert [p.attrib for p in managed_points] == [

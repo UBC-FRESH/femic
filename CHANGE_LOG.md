@@ -6496,3 +6496,44 @@
   - `pre-commit run --all-files`
   - `sphinx-build -b html docs _build/html -W`
   - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
+
+## 2026-03-26 - Phase 36 Legacy CT/Fert Retirement and XML Curve Thinning
+
+- Patched `src/femic/fmg/adapters.py` so unmanaged/VDYP total-yield curves are
+  thinned to decadal knots in the shipped ForestModel XML output while managed
+  TIPSY curves retain their original point density.
+- Added regression coverage in:
+  - `tests/test_fmg_adapters.py`
+  - `tests/test_fmg_patchworks.py`
+- Retired the legacy single-surface `ctfert` launch path from the standalone
+  K3Z instance by removing:
+  - `external/femic-k3z-instance/config/patchworks.runtime.ctfert.windows.yaml`
+  - `external/femic-k3z-instance/config/patchworks.variant.ctfert.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.ctfert.yaml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/ctfert.pin`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_ctfert/`
+  - `external/femic-k3z-instance/output/patchworks_k3z_ctfert_validated/`
+- Updated the active K3Z docs and contracts so only `ctfert_l15h5` and
+  `ctfert_l20h0` remain documented launch surfaces, and explicitly recorded
+  that their validated fragment outputs use curated `RETENTION` values
+  overlaid from
+  `tmp/CTFert Fragments/fragments_updated3_Usedinbasecase.shp` rather than the
+  older uniform `0.05` placeholder.
+- Regenerated the shipped K3Z ForestModel XML family:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l15h5.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l20h0.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_light.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_moderate.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_heavy.xml`
+- Rebuilt Matrix Builder successfully for:
+  - `config/patchworks.runtime.windows.yaml`
+  - `config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+  - `config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+- Validation passed with:
+  - `pytest tests/test_docs_contract.py tests/test_fmg_adapters.py tests/test_fmg_patchworks.py`
+  - `ruff check src tests`
+  - `mypy src`
+  - `sphinx-build -b html docs _build/html -W`
+  - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`

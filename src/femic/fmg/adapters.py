@@ -105,6 +105,29 @@ def _curve_points_by_id(
     return out
 
 
+def _thin_curve_points_to_decadal_knots(
+    points: tuple[CurvePoint, ...],
+) -> tuple[CurvePoint, ...]:
+    if len(points) <= 2:
+        return points
+    thinned: list[CurvePoint] = []
+    last_index = len(points) - 1
+    for idx, point in enumerate(points):
+        x_val = float(point.x)
+        rounded_x = int(round(x_val))
+        keep = (
+            idx == 0
+            or idx == last_index
+            or (float(rounded_x) == x_val and rounded_x >= 0 and rounded_x % 10 == 0)
+        )
+        if keep:
+            if not thinned or (
+                float(thinned[-1].x) != x_val or float(thinned[-1].y) != float(point.y)
+            ):
+                thinned.append(point)
+    return tuple(thinned)
+
+
 def _species_curve_maps(
     curve_table: pd.DataFrame,
 ) -> tuple[dict[int, dict[str, int]], dict[int, dict[str, int]]]:
@@ -182,7 +205,11 @@ def build_bundle_model_context_from_tables(
         curve_id: CurveDefinition(
             curve_id=curve_id,
             curve_type=curve_type_map.get(curve_id, ""),
-            points=tuple(points),
+            points=(
+                _thin_curve_points_to_decadal_knots(tuple(points))
+                if curve_type_map.get(curve_id, "") in {"unmanaged", "untreated"}
+                else tuple(points)
+            ),
         )
         for curve_id, points in points_by_id.items()
     }
