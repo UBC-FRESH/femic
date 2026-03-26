@@ -1090,6 +1090,16 @@ notes.
       - `pre-commit run --all-files`
       - `sphinx-build -b html docs _build/html -W`
       - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
+- 2026-03-26 (Phase 37 cleanup): remove stale/dead QMD metadata knobs from the
+  active `ctfert_*` silviculture YAMLs now that the exporter no longer uses
+  the older `synthetic` / placeholder QMD path.
+  Completed locally:
+    - removed `qmd.source` and `qmd.notes` from:
+      - `external/femic-k3z-instance/config/silviculture.k3z.ctfert_l15h5.yaml`
+      - `external/femic-k3z-instance/config/silviculture.k3z.ctfert_l20h0.yaml`
+    - verified the active user-facing docs already describe the current
+      approximate QMD contract and no longer claim the shipped CT/fert QMD
+      surfaces are placeholder outputs.
       open the parent + K3Z PRs from `feature/k3z-ctfert-si-subvariants`.
 - 2026-03-25 (Phase 35 kickoff): correct the human-readable AU naming rollout
   so the shipped K3Z runtime artifacts actually expose the readable labels in

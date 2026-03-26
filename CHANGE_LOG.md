@@ -6581,3 +6581,15 @@
   - `pre-commit run --all-files`
   - `sphinx-build -b html docs _build/html -W`
   - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
+
+## 2026-03-26 - Phase 37 QMD Surface Cleanup
+
+- Removed stale dead QMD metadata knobs from the active CT/fert silviculture
+  YAMLs:
+  - `external/femic-k3z-instance/config/silviculture.k3z.ctfert_l15h5.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.ctfert_l20h0.yaml`
+- Deleted the old `qmd.source: "synthetic"` and placeholder-note fields so the
+  config surface no longer advertises a behavior that is no longer implemented.
+- Confirmed the active user-facing docs already describe the shipped CT/fert
+  QMD outputs as approximate reconstructed curves rather than placeholder
+  scaffolding.
