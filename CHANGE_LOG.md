@@ -6593,3 +6593,21 @@
 - Confirmed the active user-facing docs already describe the shipped CT/fert
   QMD outputs as approximate reconstructed curves rather than placeholder
   scaffolding.
+
+## 2026-03-26 - Phase 37 AU-Wise Mean-QMD Account Normalization
+
+- Updated `src/femic/patchworks_runtime.py` so the
+  `protoaccounts.csv -> accounts.csv` promotion step computes AU-wise managed
+  and unmanaged area denominators from the validated fragments surface using
+  `AREA_HA`, `IFM`, and `RETENTION`.
+- Replaced the default `SUM=1` multipliers on the AU-wise
+  `feature.QMD.{managed,unmanaged}.*` account rows with reciprocal area
+  multipliers, converting those surfaces from raw `cm*ha` aggregates into
+  mean-QMD `cm` accounts.
+- Added focused regression coverage in `tests/test_patchworks_runtime.py` for
+  the QMD-account normalization behavior.
+- Refreshed the shipped CT/fert account surfaces:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_ctfert_l15h5/accounts.csv`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_ctfert_l20h0/accounts.csv`
+- Validation passed with:
+  - `pytest tests/test_patchworks_runtime.py`

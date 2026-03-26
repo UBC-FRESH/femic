@@ -456,6 +456,67 @@ def test_run_patchworks_command_excludes_accounts_by_regex(
     assert manifest["accounts_sync"]["excluded_row_count"] == 1
 
 
+def test_run_patchworks_command_normalizes_qmd_account_sums(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg_path = _write_runtime_config(tmp_path)
+    cfg = load_patchworks_runtime_config(cfg_path)
+
+    cfg.jar_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.jar_path.touch()
+    cfg.fragments_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.fragments_path.touch()
+    cfg.forestmodel_xml_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.forestmodel_xml_path.touch()
+    cfg.matrix_output_dir.mkdir(parents=True, exist_ok=True)
+    (cfg.matrix_output_dir / "protoaccounts.csv").write_text(
+        (
+            "GROUP,ATTRIBUTE,ACCOUNT,SUM\n"
+            "_MANAGED_,feature.QMD.managed.CWHvm_FDC_HW_M,"
+            "feature.QMD.managed.CWHvm_FDC_HW_M,1\n"
+            "_UNMANAGED_,feature.QMD.unmanaged.CWHvm_FDC_HW_M,"
+            "feature.QMD.unmanaged.CWHvm_FDC_HW_M,1\n"
+            "_MANAGED_,product.Yield.managed.Total,product.Yield.managed.Total,1\n"
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        "femic.patchworks_runtime._resolve_qmd_account_sum_overrides",
+        lambda **_kwargs: {
+            "feature.QMD.managed.CWHvm_FDC_HW_M": "0.25",
+            "feature.QMD.unmanaged.CWHvm_FDC_HW_M": "0.5",
+        },
+    )
+    monkeypatch.setattr(
+        "femic.patchworks_runtime.find_wine_executable", lambda: "/usr/bin/wine64"
+    )
+    monkeypatch.setattr("femic.patchworks_runtime.is_windows_host", lambda: False)
+    monkeypatch.setattr(
+        "femic.patchworks_runtime.subprocess.run",
+        lambda *_args, **_kwargs: SimpleNamespace(returncode=0, stdout="ok", stderr=""),
+    )
+
+    result = run_patchworks_command(
+        config=cfg,
+        interactive=False,
+        log_dir=tmp_path / "logs",
+        run_id="pwqmd",
+    )
+
+    assert result.returncode == 0
+    accounts_text = (cfg.matrix_output_dir / "accounts.csv").read_text(encoding="utf-8")
+    assert (
+        "feature.QMD.managed.CWHvm_FDC_HW_M,feature.QMD.managed.CWHvm_FDC_HW_M,0.25"
+        in accounts_text
+    )
+    assert (
+        "feature.QMD.unmanaged.CWHvm_FDC_HW_M,"
+        "feature.QMD.unmanaged.CWHvm_FDC_HW_M,0.5" in accounts_text
+    )
+    assert "product.Yield.managed.Total,product.Yield.managed.Total,1" in accounts_text
+
+
 def test_run_patchworks_command_fails_on_fatal_stderr_signature(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

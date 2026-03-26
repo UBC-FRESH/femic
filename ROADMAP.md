@@ -6913,6 +6913,25 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - The rebuilt CT/fert XMLs still compile, but Matrix Builder now takes
       roughly 2-3 minutes on these QMD-enabled surfaces instead of a few
       seconds.
+- [x] P37.4 Normalize AU-wise QMD accounts to mean-diameter units
+  - [x] P37.4a Compute AU-wise managed and unmanaged area denominators from the
+    active validated fragments surface plus `RETENTION` values.
+  - [x] P37.4b Replace the default `SUM=1` multipliers on the AU-wise
+    `feature.QMD.{managed,unmanaged}.*` account rows so the compiled
+    `accounts.csv` reports mean QMD in `cm` rather than `cm*ha`.
+  - [x] P37.4c Rebuild the active CT/fert tracks and validate the normalized
+    QMD account surface end-to-end.
+  - Notes:
+    - `src/femic/patchworks_runtime.py` now derives AU-wise managed and
+      unmanaged areas from the validated fragments surface using `AREA_HA`,
+      `IFM`, and `RETENTION`, then rewrites the QMD rows during
+      `protoaccounts.csv -> accounts.csv` promotion.
+    - The shipped
+      `tracks_ctfert_l15h5/accounts.csv` and
+      `tracks_ctfert_l20h0/accounts.csv`
+      now carry reciprocal area multipliers on the QMD rows, so those
+      accounts behave as mean-QMD `cm` surfaces rather than raw `cm*ha`
+      aggregates.
 
 
 
