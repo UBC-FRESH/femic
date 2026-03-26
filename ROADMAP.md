@@ -1053,11 +1053,43 @@ notes.
       - `mypy src`
       - `sphinx-build -b html docs _build/html -W`
       - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
-    - `pre-commit run --all-files`
-    - `sphinx-build -b html docs _build/html -W`
-    - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
-  - Next step:
-    - update GitHub issue #21 with the implementation/validation summary and
+- 2026-03-26 (Phase 37 kickoff / Issue #22): replace the placeholder K3Z QMD
+  curves with a reverse-engineered approximation derived from accepted stand
+  yield, site-index height assumptions, and trees-per-hectare inputs rather
+  than the current hand-tuned age heuristic.
+  Completed locally:
+    - audited the current QMD export path and confirmed the shipped curves were
+      still coming from a hand-tuned age heuristic in
+      `src/femic/fmg/patchworks.py`;
+    - added per-AU QMD support loading in `src/femic/fmg/adapters.py`, using
+      accepted K3Z inputs from:
+      - `data/tipsy_curves_tsak3z.csv`
+      - `data/tipsy_params_tsak3z.xlsx`
+      - `data/ria_vri_vclr1p_checkpoint1-tsak3z.feather`
+      - `data/vdyp_lyr-tsak3z.feather`
+    - rebuilt the QMD exporter so managed curves use accepted BatchTIPSY
+      height/TPH support when available and unmanaged curves fall back to a
+      reverse-engineered approximation using stand yield, linear site-index
+      height, and VDYP-side stems-per-hectare proxies;
+    - preserved the existing CT/fert response multipliers on top of the
+      rebuilt base QMD curves instead of the older placeholder age formula;
+    - regenerated `forestmodel_ctfert_l15h5.xml` and
+      `forestmodel_ctfert_l20h0.xml`, then reran Matrix Builder successfully
+      for both CT/fert SI-profile subvariants;
+    - updated the standalone K3Z docs to describe the new approximate QMD
+      contract instead of the older placeholder wording;
+    - validation passed with:
+      - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml --run-id k3z_ctfert_l15h5_qmd_upgrade_retry_20260326`
+      - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml --run-id k3z_ctfert_l20h0_qmd_upgrade_retry_20260326`
+      - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+      - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+      - `ruff format src tests`
+      - `ruff check src tests`
+      - `mypy src`
+      - `pytest`
+      - `pre-commit run --all-files`
+      - `sphinx-build -b html docs _build/html -W`
+      - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
       open the parent + K3Z PRs from `feature/k3z-ctfert-si-subvariants`.
 - 2026-03-25 (Phase 35 kickoff): correct the human-readable AU naming rollout
   so the shipped K3Z runtime artifacts actually expose the readable labels in
@@ -6850,6 +6882,27 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - The rebuilt baseline plus active CT/fert XML family now uses decadal
       unmanaged/VDYP knots while preserving the denser managed/TIPSY curve
       shapes.
+
+## Phase 37: Upgrade K3Z Placeholder QMD Curves (Issue #22)
+- [x] P37.1 Audit the accepted QMD input surface and current placeholder logic
+  - [x] P37.1a Trace the current QMD exporter path in `src/femic/fmg/patchworks.py` and document exactly which managed/unmanaged curve inputs it consumes today.
+  - [x] P37.1b Confirm the accepted K3Z inputs available for stand yield, site index, and trees per hectare from the BatchTIPSY and VDYP artifact surfaces.
+- [x] P37.2 Replace the placeholder age-heuristic QMD builder with a reverse-engineered approximation
+  - [x] P37.2a Derive unmanaged and managed baseline QMD curves from accepted stand yield, a linear height-by-site-index assumption, and trees-per-hectare inputs.
+  - [x] P37.2b Preserve the existing CT/fert QMD response wiring, but rebase it onto the rebuilt baseline QMD curves instead of the current hand-tuned placeholder formula.
+- [x] P37.3 Rebuild and validate the shipped K3Z runtime surfaces
+  - [x] P37.3a Regenerate the affected K3Z ForestModel XML family and rerun Matrix Builder on the active CT/fert `ctfert_l15h5` and `ctfert_l20h0` variants.
+  - [x] P37.3b Update docs/CHANGE_LOG/issue #22 with the approximation details, validation evidence, and any remaining caveats.
+  - Notes:
+    - Managed baseline QMD now follows accepted BatchTIPSY-supported yield,
+      height, and TPH inputs where those managed curves exist instead of the
+      old generic age heuristic.
+    - Unmanaged baseline QMD now uses accepted yield plus a linear site-index
+      height assumption and VDYP-side stems-per-hectare proxies reconstructed
+      from the accepted checkpoint/layer data.
+    - The rebuilt CT/fert XMLs still compile, but Matrix Builder now takes
+      roughly 2-3 minutes on these QMD-enabled surfaces instead of a few
+      seconds.
 
 
 

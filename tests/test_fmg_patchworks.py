@@ -12,6 +12,8 @@ from femic.fmg.core import CurvePoint
 from femic.fmg.patchworks import (
     _au_base_display_label,
     _build_curve_with_post_thinning_gap,
+    _build_qmd_curve_points,
+    _estimate_qmd_cm_from_volume,
     _sanitize_id_component,
     build_fragments_geodataframe,
     build_patchworks_forestmodel_definition,
@@ -72,6 +74,35 @@ def _write_bundle_tables(bundle_dir: Path) -> None:
             {"curve_id": 985501000001, "x": 1, "y": 0.6},
         ]
     ).to_csv(bundle_dir / "curve_points_table.csv", index=False)
+
+
+def test_estimate_qmd_cm_from_volume_returns_plausible_positive_value() -> None:
+    qmd_cm = _estimate_qmd_cm_from_volume(
+        stand_volume_m3_per_ha=300.0,
+        height_m=20.0,
+        stems_per_ha=500.0,
+    )
+    assert qmd_cm == pytest.approx(32.284, rel=1e-3)
+
+
+def test_build_qmd_curve_points_uses_height_and_tph_inputs() -> None:
+    points = _build_qmd_curve_points(
+        source_curve_points=(
+            CurvePoint(x=10.0, y=40.0),
+            CurvePoint(x=20.0, y=120.0),
+        ),
+        si_level="M",
+        site_index=20.0,
+        height_curve_points=(
+            CurvePoint(x=10.0, y=5.0),
+            CurvePoint(x=20.0, y=10.0),
+        ),
+        tph_curve_points=(
+            CurvePoint(x=10.0, y=800.0),
+            CurvePoint(x=20.0, y=700.0),
+        ),
+    )
+    assert [point.y for point in points] == pytest.approx([18.6, 24.4], rel=1e-3)
 
 
 def test_build_forestmodel_xml_tree_contains_cc_and_curve_refs() -> None:

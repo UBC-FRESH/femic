@@ -35,6 +35,16 @@ class AnalysisUnitDefinition:
 
 
 @dataclass(frozen=True)
+class QmdSupportDefinition:
+    """Optional per-AU support inputs for approximate QMD reconstruction."""
+
+    site_index: float | None = None
+    unmanaged_stems_per_ha: float | None = None
+    managed_height_points: tuple[CurvePoint, ...] = ()
+    managed_tph_points: tuple[CurvePoint, ...] = ()
+
+
+@dataclass(frozen=True)
 class BundleModelContext:
     """Shared parsed context from FEMIC bundle tables."""
 
@@ -43,6 +53,7 @@ class BundleModelContext:
     curves_by_id: dict[int, CurveDefinition]
     managed_species_curve_ids: dict[int, dict[str, int]]
     unmanaged_species_curve_ids: dict[int, dict[str, int]]
+    qmd_support_by_au: dict[int, QmdSupportDefinition]
     curve_row_count: int
 
 

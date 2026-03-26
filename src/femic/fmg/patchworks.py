@@ -869,16 +869,99 @@ def _resolve_ct_configs_for_au(
     return tuple(configs)
 
 
-SI_LEVEL_QMD_OFFSET_CM = {"L": -2.0, "M": 0.0, "H": 2.0}
+DEFAULT_QMD_CONE_FORM_FACTOR = 1.1
+DEFAULT_QMD_SITE_INDEX_BY_LEVEL = {"L": 15.0, "M": 25.0, "H": 35.0}
+
+
+def _interpolate_curve_y(
+    *,
+    curve_points: tuple[CurvePoint, ...],
+    x_value: float,
+) -> float | None:
+    if not curve_points:
+        return None
+    if x_value <= float(curve_points[0].x):
+        return float(curve_points[0].y)
+    if x_value >= float(curve_points[-1].x):
+        return float(curve_points[-1].y)
+    for left, right in zip(curve_points, curve_points[1:]):
+        x0 = float(left.x)
+        x1 = float(right.x)
+        if x0 <= x_value <= x1 and x1 > x0:
+            y0 = float(left.y)
+            y1 = float(right.y)
+            fraction = (x_value - x0) / (x1 - x0)
+            return y0 + (fraction * (y1 - y0))
+    return None
+
+
+def _estimate_qmd_height_m(
+    *,
+    age: float,
+    site_index: float | None,
+    height_curve_points: tuple[CurvePoint, ...],
+) -> float:
+    height_from_curve = _interpolate_curve_y(
+        curve_points=height_curve_points,
+        x_value=age,
+    )
+    if height_from_curve is not None and height_from_curve > 0.0:
+        return float(height_from_curve)
+    if site_index is None or site_index <= 0.0:
+        return 0.0
+    return max(0.0, (float(site_index) / 50.0) * float(age))
+
+
+def _estimate_qmd_stems_per_ha(
+    *,
+    age: float,
+    tph_curve_points: tuple[CurvePoint, ...],
+    stems_per_ha: float | None,
+) -> float:
+    tph_from_curve = _interpolate_curve_y(
+        curve_points=tph_curve_points,
+        x_value=age,
+    )
+    if tph_from_curve is not None and tph_from_curve > 0.0:
+        return float(tph_from_curve)
+    if stems_per_ha is None:
+        return 0.0
+    return max(0.0, float(stems_per_ha))
+
+
+def _estimate_qmd_cm_from_volume(
+    *,
+    stand_volume_m3_per_ha: float,
+    height_m: float,
+    stems_per_ha: float,
+    cone_form_factor: float = DEFAULT_QMD_CONE_FORM_FACTOR,
+) -> float:
+    if (
+        stand_volume_m3_per_ha <= 0.0
+        or height_m <= 0.0
+        or stems_per_ha <= 0.0
+        or cone_form_factor <= 0.0
+    ):
+        return 0.0
+    tree_volume_m3 = float(stand_volume_m3_per_ha) / float(stems_per_ha)
+    diameter_m = math.sqrt(
+        (12.0 * tree_volume_m3) / (float(cone_form_factor) * math.pi * float(height_m))
+    )
+    return max(0.0, diameter_m * 100.0)
 
 
 def _build_qmd_curve_points(
     *,
     source_curve_points: tuple[CurvePoint, ...],
     si_level: str,
+    site_index: float | None = None,
+    height_curve_points: tuple[CurvePoint, ...] = (),
+    tph_curve_points: tuple[CurvePoint, ...] = (),
+    stems_per_ha: float | None = None,
     response_age: int | None = None,
     response_fraction: float = 0.0,
     response_years: int = 10,
+    cone_form_factor: float = DEFAULT_QMD_CONE_FORM_FACTOR,
 ) -> tuple[CurvePoint, ...]:
     x_values = sorted(
         {
@@ -889,11 +972,32 @@ def _build_qmd_curve_points(
     )
     if not x_values:
         x_values = [0.0, 100.0]
-    si_offset = SI_LEVEL_QMD_OFFSET_CM.get(str(si_level).strip().upper(), 0.0)
+    resolved_site_index = (
+        float(site_index)
+        if site_index is not None and math.isfinite(float(site_index))
+        else DEFAULT_QMD_SITE_INDEX_BY_LEVEL.get(str(si_level).strip().upper(), 25.0)
+    )
+    source_y_by_age = {float(point.x): float(point.y) for point in source_curve_points}
     out: list[CurvePoint] = []
     for x_val in x_values:
         age = max(0.0, float(x_val))
-        qmd = 6.0 + 1.2 * math.sqrt(age) + 0.12 * age + si_offset
+        stand_volume = max(0.0, float(source_y_by_age.get(x_val, 0.0)))
+        height_m = _estimate_qmd_height_m(
+            age=age,
+            site_index=resolved_site_index,
+            height_curve_points=height_curve_points,
+        )
+        tph = _estimate_qmd_stems_per_ha(
+            age=age,
+            tph_curve_points=tph_curve_points,
+            stems_per_ha=stems_per_ha,
+        )
+        qmd = _estimate_qmd_cm_from_volume(
+            stand_volume_m3_per_ha=stand_volume,
+            height_m=height_m,
+            stems_per_ha=tph,
+            cone_form_factor=cone_form_factor,
+        )
         if (
             response_age is not None
             and age >= float(response_age)
@@ -1601,6 +1705,7 @@ def build_patchworks_forestmodel_definition(
         qmd_enabled = isinstance(qmd_payload, dict) and bool(
             qmd_payload.get("enabled", False)
         )
+        qmd_support = context.qmd_support_by_au.get(int(au.au_id))
 
         natural_species_curve_map = context.unmanaged_species_curve_ids.get(
             unmanaged_curve_id, {}
@@ -1695,10 +1800,44 @@ def build_patchworks_forestmodel_definition(
                 curves[unmanaged_qmd_curve_ref] = _build_qmd_curve_points(
                     source_curve_points=unmanaged_qmd_source,
                     si_level=au.si_level,
+                    site_index=(
+                        float(qmd_support.site_index)
+                        if qmd_support is not None
+                        and qmd_support.site_index is not None
+                        else None
+                    ),
+                    stems_per_ha=(
+                        float(qmd_support.unmanaged_stems_per_ha)
+                        if qmd_support is not None
+                        and qmd_support.unmanaged_stems_per_ha is not None
+                        else None
+                    ),
                 )
                 curves[managed_qmd_curve_ref] = _build_qmd_curve_points(
                     source_curve_points=managed_qmd_source,
                     si_level=au.si_level,
+                    site_index=(
+                        float(qmd_support.site_index)
+                        if qmd_support is not None
+                        and qmd_support.site_index is not None
+                        else None
+                    ),
+                    height_curve_points=(
+                        tuple(qmd_support.managed_height_points)
+                        if qmd_support is not None
+                        else ()
+                    ),
+                    tph_curve_points=(
+                        tuple(qmd_support.managed_tph_points)
+                        if qmd_support is not None
+                        else ()
+                    ),
+                    stems_per_ha=(
+                        float(qmd_support.unmanaged_stems_per_ha)
+                        if qmd_support is not None
+                        and qmd_support.unmanaged_stems_per_ha is not None
+                        else None
+                    ),
                 )
                 unmanaged_attrs.append(
                     AttributeBinding(
@@ -2238,6 +2377,28 @@ def build_patchworks_forestmodel_definition(
                     curves[ct_qmd_curve_ref] = _build_qmd_curve_points(
                         source_curve_points=managed_total_curve.points,
                         si_level=au.si_level,
+                        site_index=(
+                            float(qmd_support.site_index)
+                            if qmd_support is not None
+                            and qmd_support.site_index is not None
+                            else None
+                        ),
+                        height_curve_points=(
+                            tuple(qmd_support.managed_height_points)
+                            if qmd_support is not None
+                            else ()
+                        ),
+                        tph_curve_points=(
+                            tuple(qmd_support.managed_tph_points)
+                            if qmd_support is not None
+                            else ()
+                        ),
+                        stems_per_ha=(
+                            float(qmd_support.unmanaged_stems_per_ha)
+                            if qmd_support is not None
+                            and qmd_support.unmanaged_stems_per_ha is not None
+                            else None
+                        ),
                         response_age=ct_age,
                         response_fraction=float(ct_config["qmd_response_fraction"]),
                     )
@@ -2448,6 +2609,28 @@ def build_patchworks_forestmodel_definition(
                         curves[fert_qmd_curve_ref] = _build_qmd_curve_points(
                             source_curve_points=current_source_points,
                             si_level=au.si_level,
+                            site_index=(
+                                float(qmd_support.site_index)
+                                if qmd_support is not None
+                                and qmd_support.site_index is not None
+                                else None
+                            ),
+                            height_curve_points=(
+                                tuple(qmd_support.managed_height_points)
+                                if qmd_support is not None
+                                else ()
+                            ),
+                            tph_curve_points=(
+                                tuple(qmd_support.managed_tph_points)
+                                if qmd_support is not None
+                                else ()
+                            ),
+                            stems_per_ha=(
+                                float(qmd_support.unmanaged_stems_per_ha)
+                                if qmd_support is not None
+                                and qmd_support.unmanaged_stems_per_ha is not None
+                                else None
+                            ),
                             response_age=int(fert_config["fert_age"]),
                             response_fraction=float(
                                 fert_config["qmd_response_fraction"]

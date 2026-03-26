@@ -6537,3 +6537,47 @@
   - `mypy src`
   - `sphinx-build -b html docs _build/html -W`
   - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
+
+## 2026-03-26 - Phase 37 K3Z QMD Approximation Upgrade
+
+- Replaced the old placeholder K3Z QMD age heuristic in
+  `src/femic/fmg/patchworks.py` with a reverse-engineered approximation that
+  back-solves diameter from stand yield, height, and trees per hectare.
+- Added per-AU QMD support loading in `src/femic/fmg/adapters.py` using the
+  accepted K3Z artifact surfaces:
+  - `external/femic-k3z-instance/data/tipsy_curves_tsak3z.csv`
+  - `external/femic-k3z-instance/data/tipsy_params_tsak3z.xlsx`
+  - `external/femic-k3z-instance/data/ria_vri_vclr1p_checkpoint1-tsak3z.feather`
+  - `external/femic-k3z-instance/data/vdyp_lyr-tsak3z.feather`
+- Managed baseline QMD now uses accepted BatchTIPSY-supported yield, height,
+  and TPH inputs where those managed curves exist; unmanaged baseline QMD now
+  uses accepted yield plus a linear site-index height assumption and
+  VDYP-side stems-per-hectare proxies reconstructed from the accepted
+  checkpoint/layer data.
+- Preserved the existing CT/fert QMD response multipliers on top of the
+  rebuilt base QMD curves rather than the older hand-tuned placeholder.
+- Added focused regression coverage in `tests/test_fmg_patchworks.py` for the
+  new QMD volume backsolve path.
+- Regenerated the shipped K3Z CT/fert XMLs:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l15h5.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l20h0.xml`
+- Rebuilt the compiled `tracks_ctfert_l15h5` and `tracks_ctfert_l20h0`
+  surfaces with Matrix Builder against the accepted curated fragments overlay.
+- Updated the standalone K3Z docs to replace the old placeholder-QMD wording
+  with the new approximation contract in:
+  - `external/femic-k3z-instance/docs/model-anatomy.rst`
+  - `external/femic-k3z-instance/docs/operator-runbook.rst`
+  - `external/femic-k3z-instance/docs/silviculture-logic.rst`
+  - `external/femic-k3z-instance/docs/variants-and-subvariants.rst`
+- Validation passed with:
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml --run-id k3z_ctfert_l15h5_qmd_upgrade_retry_20260326`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml --run-id k3z_ctfert_l20h0_qmd_upgrade_retry_20260326`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+  - `sphinx-build -b html docs _build/html -W`
+  - standalone K3Z `python -m sphinx -b html docs docs/_build/html -W`
