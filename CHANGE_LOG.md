@@ -6860,3 +6860,50 @@
   contract already used by `ctfert_*`.
 - Issue `#27` remains open until the widened rollout validation and final
   closeout note are fully checkpointed on this branch.
+
+## 2026-03-26 - Phase 41 Harvest Utilization Factor Kickoff
+
+- Promoted the next K3Z teaching-assumption idea into the normal tracked
+  workflow under GitHub issue `#31`.
+- Initially staged this as a baseline-retention change, then pivoted the
+  branch/issue/roadmap to the better implementation path:
+  - keep fragment-level `RETENTION` unchanged
+  - add downstream harvested-volume utilization factors instead
+- Current governing tracker:
+  - `#31` `Add K3Z harvest utilization factor for recovered merchantable volume`
+- Current working branch:
+  - `feature/k3z-harvest-utilization-factor`
+- Current Phase 41 target behavior:
+  - apply harvested-volume utilization in the
+    `protoaccounts.csv -> accounts.csv` promotion layer
+  - use treatment-specific factors:
+    - `CC = 0.85`
+    - `CT = 0.75`
+  - leave standing growing-stock curves and fragment-level `RETENTION`
+    untouched
+
+## 2026-03-26 - Phase 41 Harvest Utilization Runtime Wiring
+
+- Implemented downstream harvested-volume utilization support in
+  `src/femic/patchworks_runtime.py` by extending the
+  `protoaccounts.csv -> accounts.csv` promotion step with a
+  treatment-specific `SUM` multiplier map.
+- Added runtime-config support for:
+  - `matrix_builder.harvested_volume_utilization_by_treatment`
+- Current active teaching assumptions:
+  - `CC = 0.85`
+  - `CT = 0.75`
+- Applied those runtime-config settings across the active K3Z launch surfaces:
+  - baseline `base`
+  - CT/fert `ctfert_l15h5` and `ctfert_l20h0`
+  - overlay `basecase_riparian`, `basecase_sum`, `scenario1_sum`,
+    and `scenario2_sum`
+  - PCT-only `pct_light`, `pct_moderate`, and `pct_heavy`
+- Kept the implementation intentionally downstream-only:
+  - ForestModel XML and standing yield curves are unchanged
+  - fragment-level `RETENTION` handling is unchanged
+  - only promoted harvested-volume accounts are scaled
+- Added runtime regression coverage in:
+  - `tests/test_patchworks_runtime.py`
+- Targeted validation passed:
+  - `python -m pytest tests/test_patchworks_runtime.py`

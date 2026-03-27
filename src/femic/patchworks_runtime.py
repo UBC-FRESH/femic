@@ -34,6 +34,9 @@ FATAL_MATRIX_STDERR_PATTERNS = (
 QMD_ACCOUNT_PATTERN = re.compile(
     r"^feature\.QMD\.(managed|unmanaged)\.([A-Za-z0-9_.]+)$"
 )
+HARVESTED_VOLUME_ACCOUNT_PATTERN = re.compile(
+    r"^product\.HarvestedVolume\.managed\..+\.([A-Z0-9_]+)$"
+)
 AU_EQ_PATTERN = re.compile(r"\bAU eq (\d+)\b")
 
 
@@ -52,6 +55,7 @@ class PatchworksRuntimeConfig:
     matrix_output_dir: Path
     forestmodel_xml_path: Path
     accounts_exclude_regex: tuple[str, ...]
+    harvested_volume_utilization_by_treatment: dict[str, float]
 
 
 @dataclass(frozen=True)
@@ -211,6 +215,38 @@ def load_patchworks_runtime_config(path: Path) -> PatchworksRuntimeConfig:
         raise PatchworksConfigError(
             "matrix_builder.accounts_exclude_regex must be a list of regex strings"
         )
+    raw_harvest_utilization = matrix_builder.get(
+        "harvested_volume_utilization_by_treatment", {}
+    )
+    harvested_volume_utilization_by_treatment: dict[str, float] = {}
+    if raw_harvest_utilization is None:
+        harvested_volume_utilization_by_treatment = {}
+    elif isinstance(raw_harvest_utilization, dict):
+        for raw_treatment, raw_factor in raw_harvest_utilization.items():
+            treatment = str(raw_treatment).strip().upper()
+            if not treatment:
+                raise PatchworksConfigError(
+                    "matrix_builder.harvested_volume_utilization_by_treatment keys "
+                    "must not be empty"
+                )
+            try:
+                factor = float(raw_factor)
+            except (TypeError, ValueError) as exc:
+                raise PatchworksConfigError(
+                    "matrix_builder.harvested_volume_utilization_by_treatment values "
+                    f"must be numeric (bad value for {treatment!r}: {raw_factor!r})"
+                ) from exc
+            if factor < 0.0:
+                raise PatchworksConfigError(
+                    "matrix_builder.harvested_volume_utilization_by_treatment values "
+                    f"must be >= 0.0 (bad value for {treatment!r}: {factor!r})"
+                )
+            harvested_volume_utilization_by_treatment[treatment] = factor
+    else:
+        raise PatchworksConfigError(
+            "matrix_builder.harvested_volume_utilization_by_treatment must be a "
+            "mapping/object"
+        )
 
     return PatchworksRuntimeConfig(
         config_path=resolved_path,
@@ -224,6 +260,9 @@ def load_patchworks_runtime_config(path: Path) -> PatchworksRuntimeConfig:
         matrix_output_dir=matrix_output_dir,
         forestmodel_xml_path=forestmodel_xml_path,
         accounts_exclude_regex=accounts_exclude_regex,
+        harvested_volume_utilization_by_treatment=(
+            harvested_volume_utilization_by_treatment
+        ),
     )
 
 
@@ -581,6 +620,16 @@ def _format_account_sum_multiplier(value: float) -> str:
     return f"{value:.12g}"
 
 
+def _parse_account_sum_multiplier(value: str) -> float:
+    text = str(value).strip()
+    if not text:
+        return 1.0
+    try:
+        return float(text)
+    except ValueError:
+        return 1.0
+
+
 def _load_qmd_au_id_by_token_from_forestmodel(
     *, forestmodel_xml_path: Path
 ) -> dict[str, int]:
@@ -684,6 +733,20 @@ def _resolve_qmd_account_sum_overrides(
     return overrides
 
 
+def _resolve_harvested_volume_sum_multiplier(
+    *,
+    attribute: str,
+    harvested_volume_utilization_by_treatment: dict[str, float],
+) -> float | None:
+    if not harvested_volume_utilization_by_treatment:
+        return None
+    match = HARVESTED_VOLUME_ACCOUNT_PATTERN.match(attribute)
+    if match is None:
+        return None
+    treatment = match.group(1).upper()
+    return harvested_volume_utilization_by_treatment.get(treatment)
+
+
 def _count_topology_edges(path: Path) -> int:
     with path.open("r", encoding="utf-8", newline="") as handle:
         line_count = sum(1 for _ in handle)
@@ -776,6 +839,7 @@ def _promote_protoaccounts_to_accounts(
     fragments_path: Path,
     forestmodel_xml_path: Path,
     exclude_regex: tuple[str, ...] = (),
+    harvested_volume_utilization_by_treatment: dict[str, float] | None = None,
 ) -> tuple[Path | None, Path | None, Path, int]:
     tracks_dir = matrix_output_dir.expanduser().resolve()
     protoaccounts_path = tracks_dir / "protoaccounts.csv"
@@ -798,6 +862,7 @@ def _promote_protoaccounts_to_accounts(
         QMD_ACCOUNT_PATTERN.match(str(row.get("ATTRIBUTE", ""))) is not None
         for row in rows
     )
+    utilization_by_treatment = harvested_volume_utilization_by_treatment or {}
     qmd_sum_overrides = (
         _resolve_qmd_account_sum_overrides(
             fragments_path=fragments_path,
@@ -806,7 +871,7 @@ def _promote_protoaccounts_to_accounts(
         if has_qmd_rows
         else {}
     )
-    if not exclude_regex and not qmd_sum_overrides:
+    if not exclude_regex and not qmd_sum_overrides and not utilization_by_treatment:
         shutil.copy2(protoaccounts_path, accounts_path)
         return accounts_path, backup_path, protoaccounts_path, 0
 
@@ -825,6 +890,15 @@ def _promote_protoaccounts_to_accounts(
                 continue
             if attribute in qmd_sum_overrides:
                 row["SUM"] = qmd_sum_overrides[attribute]
+            utilization_multiplier = _resolve_harvested_volume_sum_multiplier(
+                attribute=attribute,
+                harvested_volume_utilization_by_treatment=utilization_by_treatment,
+            )
+            if utilization_multiplier is not None:
+                base_multiplier = _parse_account_sum_multiplier(str(row.get("SUM", "")))
+                row["SUM"] = _format_account_sum_multiplier(
+                    base_multiplier * utilization_multiplier
+                )
             writer.writerow(row)
     return accounts_path, backup_path, protoaccounts_path, excluded_count
 
@@ -923,6 +997,9 @@ def run_patchworks_command(
             fragments_path=config.fragments_path,
             forestmodel_xml_path=config.forestmodel_xml_path,
             exclude_regex=config.accounts_exclude_regex,
+            harvested_volume_utilization_by_treatment=(
+                config.harvested_volume_utilization_by_treatment
+            ),
         )
         if accounts_synced_path is not None:
             accounts_sync_status = "synced"
@@ -973,6 +1050,9 @@ def run_patchworks_command(
             ),
             "excluded_patterns": list(config.accounts_exclude_regex),
             "excluded_row_count": accounts_excluded_row_count,
+            "harvested_volume_utilization_by_treatment": (
+                config.harvested_volume_utilization_by_treatment
+            ),
         },
         "logs": {
             "stdout": str(stdout_log),

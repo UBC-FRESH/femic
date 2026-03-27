@@ -124,6 +124,37 @@ def test_load_patchworks_runtime_config_parses_accounts_exclude_regex(
     assert cfg.accounts_exclude_regex == ("\\.PL(\\.|$)",)
 
 
+def test_load_patchworks_runtime_config_parses_harvest_utilization_mapping(
+    tmp_path: Path,
+) -> None:
+    cfg_path = tmp_path / "patchworks.runtime.yaml"
+    cfg_path.write_text(
+        "\n".join(
+            [
+                "patchworks:",
+                "  jar_path: patchworks/patchworks.jar",
+                "  license_env: SPS_LICENSE_SERVER",
+                "  license_value: sps_user@auth.spatial.ca",
+                "  spshome: Z:\\Patchworks",
+                "matrix_builder:",
+                "  fragments_path: data/fragments.dbf",
+                "  output_dir: output/tracks",
+                "  forestmodel_xml_path: output/forestmodel.xml",
+                "  harvested_volume_utilization_by_treatment:",
+                "    CC: 0.85",
+                "    CT: 0.75",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    cfg = load_patchworks_runtime_config(cfg_path)
+    assert cfg.harvested_volume_utilization_by_treatment == {
+        "CC": 0.85,
+        "CT": 0.75,
+    }
+
+
 def test_parse_license_server_requires_user_host_format() -> None:
     assert parse_license_server("sps_user@auth.spatial.ca") == (
         "sps_user",
@@ -521,6 +552,80 @@ def test_run_patchworks_command_normalizes_qmd_account_sums(
         "product.QMDNumerator.managed.CWHvm_FDC_HW_M.CT,1" in accounts_text
     )
     assert "product.Yield.managed.Total,product.Yield.managed.Total,1" in accounts_text
+
+
+def test_run_patchworks_command_applies_harvest_utilization_by_treatment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg_path = _write_runtime_config(tmp_path)
+    cfg_path.write_text(
+        cfg_path.read_text(encoding="utf-8")
+        + (
+            "\n"
+            "  harvested_volume_utilization_by_treatment:\n"
+            "    CC: 0.85\n"
+            "    CT: 0.75\n"
+        ),
+        encoding="utf-8",
+    )
+    cfg = load_patchworks_runtime_config(cfg_path)
+
+    cfg.jar_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.jar_path.touch()
+    cfg.fragments_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.fragments_path.touch()
+    cfg.forestmodel_xml_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.forestmodel_xml_path.touch()
+    cfg.matrix_output_dir.mkdir(parents=True, exist_ok=True)
+    (cfg.matrix_output_dir / "protoaccounts.csv").write_text(
+        (
+            "GROUP,ATTRIBUTE,ACCOUNT,SUM\n"
+            "_MANAGED_,product.HarvestedVolume.managed.Total.CC,"
+            "product.HarvestedVolume.managed.Total.CC,1\n"
+            "_MANAGED_,product.HarvestedVolume.managed.Total.CT,"
+            "product.HarvestedVolume.managed.Total.CT,1\n"
+            "_MANAGED_,product.HarvestedVolume.managed.Total.PCT,"
+            "product.HarvestedVolume.managed.Total.PCT,1\n"
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        "femic.patchworks_runtime.find_wine_executable", lambda: "/usr/bin/wine64"
+    )
+    monkeypatch.setattr("femic.patchworks_runtime.is_windows_host", lambda: False)
+    monkeypatch.setattr(
+        "femic.patchworks_runtime.subprocess.run",
+        lambda *_args, **_kwargs: SimpleNamespace(returncode=0, stdout="ok", stderr=""),
+    )
+
+    result = run_patchworks_command(
+        config=cfg,
+        interactive=False,
+        log_dir=tmp_path / "logs",
+        run_id="pwharvestutil",
+    )
+
+    assert result.returncode == 0
+    accounts_text = (cfg.matrix_output_dir / "accounts.csv").read_text(encoding="utf-8")
+    assert (
+        "product.HarvestedVolume.managed.Total.CC,"
+        "product.HarvestedVolume.managed.Total.CC,0.85" in accounts_text
+    )
+    assert (
+        "product.HarvestedVolume.managed.Total.CT,"
+        "product.HarvestedVolume.managed.Total.CT,0.75" in accounts_text
+    )
+    assert (
+        "product.HarvestedVolume.managed.Total.PCT,"
+        "product.HarvestedVolume.managed.Total.PCT,1" in accounts_text
+    )
+
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["accounts_sync"]["harvested_volume_utilization_by_treatment"] == {
+        "CC": 0.85,
+        "CT": 0.75,
+    }
 
 
 def test_run_patchworks_command_fails_on_fatal_stderr_signature(
