@@ -196,6 +196,17 @@ This review loop is especially important for:
 - Patchworks-facing changes;
 - generated artifact refreshes;
 - teaching-model assumptions;
+
+One Windows-specific improvement now helps with local agent-driven rebuilds:
+
+- when the shipped Windows Patchworks runtime configs have
+  ``matrix_builder.auto_close_window_on_success: true``, FEMIC will supervise
+  the noninteractive Matrix Builder launch, wait for fresh output activity to
+  stabilize, and then close the spawned Matrix Builder window automatically;
+- this is meant to remove the routine "human must notice and close the window"
+  interruption from the local coding-agent workflow;
+- it does **not** replace normal validation: you should still review the
+  manifest and logs if the runtime behavior seems suspicious.
 - docs intended for students or external users.
 
 FEMIC-Specific Things to Watch For

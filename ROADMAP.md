@@ -7573,6 +7573,87 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         and the minimum onboarding contract are written explicitly in this
         phase plan.
 
+## Phase 47: Automate Matrix Builder Window Closure In Local Windows Workflow
+- [x] P47.1 Trace the current Windows Matrix Builder launch seam and define the
+  automation contract
+  - [x] P47.1a Confirm exactly where the parent runtime launches Matrix Builder
+    on native Windows and how it currently decides success/failure.
+  - [x] P47.1b Decide the minimum safe closure contract for the GUI window so
+    automation does not hide real Patchworks failures or interfere with
+    unrelated user windows.
+  - [x] P47.1c Decide whether the automation should be always-on for native
+    Windows matrix-build runs or behind an explicit runtime config knob.
+- [x] P47.2 Implement supervised Windows Matrix Builder execution
+  - [x] P47.2a Replace the simple blocking Windows `subprocess.run(...)` path
+    with a supervised launch path that can detect the spawned Matrix Builder
+    process/window and observe output-directory readiness.
+  - [x] P47.2b Add the narrowest possible Windows-only close/terminate
+    automation so the local coding-agent workflow can finish without a human
+    manually dismissing the Matrix Builder window.
+  - [x] P47.2c Preserve run logs, manifest evidence, and explicit failure
+    reporting so a closed window is not mistaken for a successful build.
+- [x] P47.3 Validate, document, and close out the workflow automation
+  - [x] P47.3a Add targeted runtime tests for the supervised Windows launch and
+    auto-close behavior.
+  - [x] P47.3b Update operator/onboarding docs so users know the new Windows
+    matrix-build behavior and any caveats.
+  - [x] P47.3c Update `CHANGE_LOG.md` and GitHub issue #44 with the final
+    behavior, validation outcome, and any remaining limitations.
+  - Notes:
+    - Governing tracker:
+      - GitHub issue #44
+    - Initial design intent:
+      - remove the last routine human-in-the-loop step from the local Windows
+        Patchworks rebuild path by letting FEMIC close the Matrix Builder GUI
+        window once the build has actually finished.
+    - Guardrail:
+      - do not treat “window closed” as success; success must still be grounded
+        in output readiness, stderr/failure scanning, and manifest evidence.
+    - Likely implementation seam:
+      - `src/femic/patchworks_runtime.py`, specifically the native-Windows
+        `run_patchworks_command(...)` path for noninteractive matrix-builder
+        runs.
+    - Final implementation result:
+      - native-Windows noninteractive `matrix-build` now uses a supervised
+        `Popen`-based launch path instead of a simple blocking
+        `subprocess.run(...)` call;
+      - the runtime watches for fresh output activity in the target tracks
+        directory, then tries a narrow GUI close on matching Matrix Builder
+        process windows and falls back to force-stopping the lingering
+        Matrix Builder Java process when the window ignores normal close
+        messages;
+      - the behavior is controlled through the runtime config surface:
+        `matrix_builder.auto_close_window_on_success`,
+        `matrix_builder.auto_close_settle_seconds`, and
+        `matrix_builder.auto_close_timeout_seconds`;
+      - the parent Windows runtime template and all shipped K3Z Windows runtime
+        configs now opt into the auto-close behavior;
+      - the emitted matrix-build manifest now records Windows automation
+        details, including launched PID, baseline/remaining matching process
+        IDs, close method, and any force-stopped PIDs.
+    - Live validation result:
+      - a real native-Windows K3Z baseline matrix-build smoke run completed
+        without human window dismissal;
+      - the first live probe showed that `WM_CLOSE` / `.CloseMainWindow()` was
+        insufficient on this host, which is why the final implementation now
+        explicitly force-stops the lingering Matrix Builder Java process when
+        needed;
+      - the final live smoke recorded `close_method = force_stop` and left no
+        remaining `Matrix Builder` process/window.
+    - Validation result:
+      - `pytest tests/test_patchworks_runtime.py` passed during targeted
+        implementation checks;
+      - full repo validation passed: `ruff format src tests`,
+        `ruff check src tests`, `mypy src`, `pytest`,
+        `pre-commit run --all-files`, and both parent plus standalone K3Z
+        Sphinx builds.
+
+## Detailed Next Steps Notes
+
+- The next incoming-ideas candidate after Phase 47 is still the BatchTIPSY
+  automation feature. Treat the Matrix Builder auto-close result as a proven
+  local workflow pattern that may help shape that later automation work.
+
 
 
 

@@ -124,6 +124,36 @@ def test_load_patchworks_runtime_config_parses_accounts_exclude_regex(
     assert cfg.accounts_exclude_regex == ("\\.PL(\\.|$)",)
 
 
+def test_load_patchworks_runtime_config_parses_auto_close_settings(
+    tmp_path: Path,
+) -> None:
+    cfg_path = tmp_path / "patchworks.runtime.yaml"
+    cfg_path.write_text(
+        "\n".join(
+            [
+                "patchworks:",
+                "  jar_path: patchworks/patchworks.jar",
+                "  license_env: SPS_LICENSE_SERVER",
+                "  license_value: sps_user@auth.spatial.ca",
+                "  spshome: Z:\\Patchworks",
+                "matrix_builder:",
+                "  fragments_path: data/fragments.dbf",
+                "  output_dir: output/tracks",
+                "  forestmodel_xml_path: output/forestmodel.xml",
+                "  auto_close_window_on_success: true",
+                "  auto_close_settle_seconds: 0.5",
+                "  auto_close_timeout_seconds: 9",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    cfg = load_patchworks_runtime_config(cfg_path)
+    assert cfg.auto_close_window_on_success is True
+    assert cfg.auto_close_settle_seconds == pytest.approx(0.5)
+    assert cfg.auto_close_timeout_seconds == pytest.approx(9.0)
+
+
 def test_load_patchworks_runtime_config_parses_harvest_utilization_mapping(
     tmp_path: Path,
 ) -> None:
@@ -485,6 +515,120 @@ def test_run_patchworks_command_excludes_accounts_by_regex(
     manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
     assert manifest["accounts_sync"]["excluded_patterns"] == ["\\.PL(\\.|$)"]
     assert manifest["accounts_sync"]["excluded_row_count"] == 1
+
+
+def test_run_patchworks_command_windows_auto_closes_after_fresh_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg_path = _write_runtime_config(tmp_path)
+    cfg_path.write_text(
+        cfg_path.read_text(encoding="utf-8")
+        + "\n".join(
+            [
+                "  auto_close_window_on_success: true",
+                "  auto_close_settle_seconds: 0.0",
+                "  auto_close_timeout_seconds: 1.0",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    cfg = load_patchworks_runtime_config(cfg_path)
+    cfg.jar_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.jar_path.touch()
+    cfg.fragments_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.fragments_path.touch()
+    cfg.forestmodel_xml_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.forestmodel_xml_path.touch()
+    cfg.matrix_output_dir.mkdir(parents=True, exist_ok=True)
+    (cfg.matrix_output_dir / "protoaccounts.csv").write_text(
+        "GROUP,ATTRIBUTE,ACCOUNT,SUM\n_ALL_,a,a,1\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        "femic.patchworks_runtime.run_patchworks_preflight",
+        lambda **_kwargs: SimpleNamespace(
+            ok=True,
+            launcher_executable="java",
+            host_mode="windows",
+        ),
+    )
+    monkeypatch.setattr(
+        "femic.patchworks_runtime.format_command_for_display",
+        lambda command: " ".join(command),
+    )
+    monkeypatch.setattr(
+        "femic.patchworks_runtime._find_windows_matrix_builder_process_ids",
+        lambda **_kwargs: {4321},
+    )
+    monkeypatch.setattr(
+        "femic.patchworks_runtime._force_stop_windows_process",
+        lambda _pid: False,
+    )
+    state_iter = iter(
+        [
+            (True, 1, 100.0),
+            (True, 2, 101.0),
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.patchworks_runtime._matrix_output_state",
+        lambda _path: next(state_iter, (True, 2, 101.0)),
+    )
+    monkeypatch.setattr(
+        "femic.patchworks_runtime._close_windows_process_main_windows",
+        lambda _pid: 1,
+    )
+    monkeypatch.setattr("femic.patchworks_runtime.time.sleep", lambda _seconds: None)
+
+    class _FakePopen:
+        def __init__(
+            self,
+            _command,
+            *,
+            stdout,
+            stderr,
+            text,
+            env,
+            cwd,
+        ) -> None:
+            del text, env, cwd
+            self.pid = 4321
+            self._returncode: int | None = None
+            stdout.write("ok")
+            stdout.flush()
+            stderr.write("")
+            stderr.flush()
+
+        def poll(self) -> int | None:
+            return self._returncode
+
+        def wait(self, timeout=None) -> int:
+            del timeout
+            self._returncode = 0
+            return 0
+
+        def terminate(self) -> None:
+            self._returncode = 0
+
+        def kill(self) -> None:
+            self._returncode = 0
+
+    monkeypatch.setattr("femic.patchworks_runtime.subprocess.Popen", _FakePopen)
+
+    result = run_patchworks_command(
+        config=cfg,
+        interactive=False,
+        log_dir=tmp_path / "logs",
+        run_id="pwautoclose",
+    )
+
+    assert result.returncode == 0
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["windows_automation"]["close_attempted"] is True
+    assert manifest["windows_automation"]["closed_window_count"] == 1
+    assert manifest["windows_automation"]["close_method"] == "wm_close"
 
 
 def test_run_patchworks_command_normalizes_qmd_account_sums(
