@@ -6611,3 +6611,15 @@
   - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_ctfert_l20h0/accounts.csv`
 - Validation passed with:
   - `pytest tests/test_patchworks_runtime.py`
+
+## 2026-03-26 - Phase 38 PCT Age-Retention Bug Kickoff
+
+- Opened GitHub bug issue `#25`:
+  - `Fix possible PCT absolute-offset reset bug in K3Z pct subvariants`
+- Created the matching bug branch in both repos:
+  - parent repo: `bug/k3z-pct-adjust-r`
+  - K3Z submodule: `bug/k3z-pct-adjust-r`
+- Added Phase 38 roadmap tasks to audit the active `pct_light`,
+  `pct_moderate`, and `pct_heavy` treatment-age semantics, apply the same
+  age-retention fix used earlier for CT/fert if needed, and rerun Matrix
+  Builder plus targeted Patchworks validation before closeout.

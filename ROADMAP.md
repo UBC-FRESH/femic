@@ -6933,6 +6933,22 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       accounts behave as mean-QMD `cm` surfaces rather than raw `cm*ha`
       aggregates.
 
+## Phase 38: Audit and Repair K3Z PCT Treatment Age-Retention Semantics
+- [ ] P38.1 Confirm whether the active K3Z `pct_*` subvariants still reset stand age after PCT
+  - [ ] P38.1a Inspect the generated `forestmodel_pct_light.xml`, `forestmodel_pct_moderate.xml`, and `forestmodel_pct_heavy.xml` treatment definitions for the same age-retention omission previously found in the CT/fert family.
+  - [ ] P38.1b Verify the compiled `tracks_pct_* / treatments.csv` surfaces and live Patchworks behavior to confirm whether the suspected absolute-offset reset bug is real.
+- [ ] P38.2 Apply the PCT treatment-age retention fix if needed
+  - [ ] P38.2a Update the exporter so PCT treatments retain stand age after treatment using the same corrected Patchworks treatment attribute semantics used for CT/fert.
+  - [ ] P38.2b Regenerate the affected K3Z `forestmodel_pct_*` XML family and rebuild the shipped `tracks_pct_*` surfaces.
+- [ ] P38.3 Revalidate and close out the bug
+  - [ ] P38.3a Rerun Matrix Builder for `pct_light`, `pct_moderate`, and `pct_heavy`, plus any targeted live Patchworks checks needed to confirm the repair.
+  - [ ] P38.3b Update docs/CHANGE_LOG/GitHub issue #25 with the final repair details, validation evidence, and closeout rationale.
+  - Notes:
+    - Governing tracker:
+      - GitHub issue #25
+    - Working assumption at kickoff:
+      - the active `pct_light`, `pct_moderate`, and `pct_heavy` subvariants may still be missing the treatment-age retention fix that was required earlier for the CT and fert treatments in the `ctfert_*` family.
+
 
 
 
