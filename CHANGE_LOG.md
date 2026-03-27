@@ -7064,3 +7064,57 @@
     `intensive_*`, and `pct_*`;
   - how the new height-account family should align with the current QMD and
     stems-per-ha teaching surfaces.
+
+## 2026-03-27 - Patchworks XML Rebuild Guardrail
+
+- Added an explicit agent-facing guardrail to `AGENTS.md` for Patchworks-facing
+  work:
+  - regenerate the relevant `yield/forestmodel*.xml` files before running
+    `femic patchworks matrix-build` whenever exporter logic or silviculture /
+    seral config changes affect ForestModel semantics;
+  - do not treat matrix-build results from stale XML as validation of the new
+    change;
+  - if the full export path is blocked by a known checkpoint/fragments seam,
+    rebuild the XML through the lower-level bundle-table builder first, then
+    rerun matrix build against the refreshed XML.
+
+## 2026-03-27 - Phase 44 Stem Height Accounts Implemented
+
+- Implemented AU-wise standing stem-height support across the active K3Z
+  family under GitHub issue `#38`.
+- Added exporter/runtime support for:
+  - `feature.Height.managed.<au_token>`
+  - `feature.Height.unmanaged.<au_token>`
+- Reused the accepted QMD support logic rather than inventing a separate
+  height model:
+  - managed height uses the TIPSY managed-height handoff where available;
+  - unmanaged height uses the same site-index fallback path already used by
+    the approximate QMD builder.
+- Treatment-state height currently carries forward unchanged through `PCT`,
+  `CT`, and fertilization state chains unless the managed source curve itself
+  changes.
+- Normalized the downstream `feature.Height.*` accounts during
+  `protoaccounts.csv -> accounts.csv` promotion so live Patchworks values read
+  as mean standing height in `m`, not height-area totals.
+- Rebuilt the shipped K3Z ForestModel XML family and reran Matrix Builder for:
+  - baseline
+  - `ctfert_l15h5`
+  - `ctfert_l20h0`
+  - `pct_light`
+  - `pct_moderate`
+  - `pct_heavy`
+  - `intensive_light`
+  - `intensive_moderate`
+  - `intensive_heavy`
+  - `overlay.basecase_riparian`
+  - `overlay.basecase_sum`
+  - `overlay.scenario1_sum`
+  - `overlay.scenario2_sum`
+- Added regression coverage in the exporter/runtime tests plus docs-contract
+  assertions requiring checked-in `feature.Height.*` accounts on the active K3Z
+  family.
+- Updated the standalone K3Z docs so `feature.Height.*` is documented
+  alongside the existing standing QMD and standing stems-per-ha surfaces in:
+  - `docs/model-anatomy.rst`
+  - `docs/operator-runbook.rst`
+  - `docs/variants-and-subvariants.rst`

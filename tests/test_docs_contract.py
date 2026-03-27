@@ -846,6 +846,12 @@ def test_k3z_pct_checked_in_surface_keeps_species_wise_managed_accounts() -> Non
         )
         assert any(
             re.fullmatch(
+                r"feature\.Height\.(managed|unmanaged)\.[A-Za-z0-9_]+", account
+            )
+            for account in accounts
+        )
+        assert any(
+            re.fullmatch(
                 r"product\.QMDNumerator\.managed\.[A-Za-z0-9_]+\.(CC|PCT)", label
             )
             for label in labels
@@ -901,6 +907,12 @@ def test_k3z_baseline_and_overlay_surfaces_keep_harvested_qmd_cc_accounts() -> N
 
         assert any(
             re.fullmatch(r"product\.QMDNumerator\.managed\.[A-Za-z0-9_]+\.CC", account)
+            for account in accounts
+        )
+        assert any(
+            re.fullmatch(
+                r"feature\.Height\.(managed|unmanaged)\.[A-Za-z0-9_]+", account
+            )
             for account in accounts
         )
         assert any(
@@ -960,6 +972,12 @@ def test_k3z_ctfert_checked_in_surface_keeps_harvested_qmd_product_accounts() ->
             re.fullmatch(
                 r"product\.QMDNumerator\.managed\.[A-Za-z0-9_]+\.(CC|CT)",
                 account,
+            )
+            for account in accounts
+        )
+        assert any(
+            re.fullmatch(
+                r"feature\.Height\.(managed|unmanaged)\.[A-Za-z0-9_]+", account
             )
             for account in accounts
         )
@@ -1039,6 +1057,12 @@ def test_k3z_intensive_checked_in_surface_keeps_full_treatment_chain_accounts() 
             re.fullmatch(
                 r"product\.QMDNumerator\.managed\.[A-Za-z0-9_]+\.(CC|PCT|CT)",
                 account,
+            )
+            for account in accounts
+        )
+        assert any(
+            re.fullmatch(
+                r"feature\.Height\.(managed|unmanaged)\.[A-Za-z0-9_]+", account
             )
             for account in accounts
         )

@@ -129,5 +129,17 @@ When contributing to this repository as the coding agent:
    - once the developer explicitly green-lights running with an idea, edit
      `planning/incoming_ideas.md` to remove that idea from the queue or narrow it to the remaining
      unclaimed scope so the list stays current.
+13. When working on Patchworks-facing changes, preserve the rebuild order:
+   - if code or config changes affect ForestModel XML semantics in any way (for example exporter
+     logic, silviculture YAML, seral YAML, treatment/state attributes, feature/product/account
+     source labels, or curve construction), regenerate the relevant `yield/forestmodel*.xml`
+     files before running `femic patchworks matrix-build`;
+   - do not treat a successful matrix build against stale checked-in XML as validation of the new
+     exporter/config change;
+   - after regenerating XML, rerun matrix build so `features.csv`, `protoaccounts.csv`, and
+     `accounts.csv` are synced to the same contract;
+   - if the full `femic export patchworks` path is blocked by a known checkpoint/fragments seam,
+     regenerate the XML through the lower-level bundle-table builder first, then run matrix build
+     against the refreshed XML rather than skipping directly to matrix build.
 
 Treat these steps as the minimum bar for every milestone so manual reminders are not required.
