@@ -7046,3 +7046,21 @@
     `intensive_heavy`
 - Posted the implementation/validation status note to GitHub issue `#36`; the
   issue remains open pending PR merge.
+
+## 2026-03-27 - Phase 44 Stem-Height Account Kickoff
+
+- Promoted the next K3Z idea from `planning/incoming_ideas.md` into the normal
+  tracked workflow under GitHub issue `#38`.
+- Created the new working branch in the parent repo and K3Z submodule:
+  - `feature/k3z-height-accounts`
+- Defined the kickoff scope as a planning-first pass for AU-wise standing
+  stem-height curves, attributes, and downstream accounts across the active K3Z
+  launch family.
+- Recorded the immediate design questions that must be answered before code
+  changes begin:
+  - what height support data should be used on the managed and unmanaged sides;
+  - what AU-wise attribute/account naming contract should be used;
+  - how treatment-state height should behave across `ctfert_*`,
+    `intensive_*`, and `pct_*`;
+  - how the new height-account family should align with the current QMD and
+    stems-per-ha teaching surfaces.
