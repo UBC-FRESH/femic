@@ -5,8 +5,9 @@ Scope
 -----
 
 This page documents the current metadata inventory, build lineage, and
-provenance policy for the tracked K3Z sample model at
-``models/k3z_patchworks_model``.
+provenance policy for the tracked K3Z sample model package at
+``models/k3z_patchworks_model`` plus the validated export mirrors under
+``output/patchworks_k3z*_validated``.
 
 Machine-readable companion registry:
 
@@ -15,7 +16,7 @@ Machine-readable companion registry:
 Inventory: Upstream Sources -> Model Artifacts
 ----------------------------------------------
 
-The key dataset families feeding ``data/``, ``yield/``, and ``blocks/`` are:
+The key dataset families feeding ``output/``, ``tracks/``, and ``blocks/`` are:
 
 .. list-table::
    :header-rows: 1
@@ -25,12 +26,12 @@ The key dataset families feeding ``data/``, ``yield/``, and ``blocks/`` are:
      - Upstream source datasets
      - Primary compiler step
    * - Fragments shapefile
-     - ``models/k3z_patchworks_model/data/fragments.*``
+     - ``output/patchworks_k3z_validated/fragments/fragments.*``
      - ``data/model_input_bundle/au_table.csv`` plus stand checkpoint
        ``data/ria_vri_vclr1p_checkpoint7.feather`` (or explicit ``--checkpoint``)
      - ``femic export patchworks``
    * - ForestModel XML
-     - ``models/k3z_patchworks_model/yield/forestmodel.xml``
+     - ``output/patchworks_k3z_validated/forestmodel.xml``
      - ``data/model_input_bundle/{au_table,curve_table,curve_points_table}.csv``
        plus optional seral config
      - ``femic export patchworks``
@@ -54,10 +55,11 @@ Current canonical lineage for the tracked K3Z model:
    ``femic export patchworks --tsa k3z --seral-stage-config config/seral.k3z.yaml``.
    This produces ``output/patchworks/forestmodel.xml`` and
    ``output/patchworks/fragments/fragments.*``.
-3. Model-sync stage (copy into tracked model):
+3. Validated-export stage:
    ``output/patchworks/forestmodel.xml`` ->
-   ``models/k3z_patchworks_model/yield/forestmodel.xml`` and
-   ``output/patchworks/fragments/*`` -> ``models/k3z_patchworks_model/data/*``.
+   ``output/patchworks_k3z_validated/forestmodel.xml`` and
+   ``output/patchworks/fragments/*`` ->
+   ``output/patchworks_k3z_validated/fragments/*``.
 4. Blocks stage:
    ``femic patchworks build-blocks --config config/patchworks.runtime.windows.yaml``.
 5. Matrix stage:
@@ -107,7 +109,7 @@ Use this policy for each rebuild intended for teaching/collaboration release:
 Acceptance Checklist for Lineage Updates
 ----------------------------------------
 
-- Source inventory still maps all current ``data/``, ``yield/``, and
+- Source inventory still maps all current ``output/``, ``tracks/``, and
   ``blocks/`` artifacts.
 - Command chain and runtime config references remain accurate.
 - Registry file is updated for any path/command/schema changes.

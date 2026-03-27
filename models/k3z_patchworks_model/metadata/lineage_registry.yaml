@@ -6,12 +6,12 @@ runtime_config: config/patchworks.runtime.windows.yaml
 artifact_inventory:
   data:
     fragments_shapefile:
-      path: models/k3z_patchworks_model/data/fragments.shp
+      path: output/patchworks_k3z_validated/fragments/fragments.shp
       sidecars:
-        - models/k3z_patchworks_model/data/fragments.dbf
-        - models/k3z_patchworks_model/data/fragments.shx
-        - models/k3z_patchworks_model/data/fragments.prj
-        - models/k3z_patchworks_model/data/fragments.cpg
+        - output/patchworks_k3z_validated/fragments/fragments.dbf
+        - output/patchworks_k3z_validated/fragments/fragments.shx
+        - output/patchworks_k3z_validated/fragments/fragments.prj
+        - output/patchworks_k3z_validated/fragments/fragments.cpg
       built_by:
         command: >
           PYTHONPATH=src python -m femic export patchworks --tsa k3z
@@ -27,7 +27,7 @@ artifact_inventory:
 
   yield:
     forestmodel_xml:
-      path: models/k3z_patchworks_model/yield/forestmodel.xml
+      path: output/patchworks_k3z_validated/forestmodel.xml
       built_by:
         command: >
           PYTHONPATH=src python -m femic export patchworks --tsa k3z
@@ -38,7 +38,8 @@ artifact_inventory:
         - data/model_input_bundle/curve_points_table.csv
         - config/seral.k3z.yaml
       notes:
-        - export writes output/patchworks/forestmodel.xml, then model sync copies into yield/
+        - export writes output/patchworks/forestmodel.xml, then validation sync
+          copies it into the matching output/patchworks_k3z*_validated mirror
 
   blocks:
     blocks_shapefile:
@@ -53,7 +54,7 @@ artifact_inventory:
           PYTHONPATH=src python -m femic patchworks build-blocks
           --config config/patchworks.runtime.windows.yaml --topology-radius 200
       upstream_inputs:
-        - models/k3z_patchworks_model/data/fragments.shp
+        - output/patchworks_k3z_validated/fragments/fragments.shp
       notes:
         - stand:block identity mode, BLOCK copied from stand id field
 
@@ -76,8 +77,8 @@ artifact_inventory:
           PYTHONPATH=src python -m femic patchworks matrix-build
           --config config/patchworks.runtime.windows.yaml
       upstream_inputs:
-        - models/k3z_patchworks_model/data/fragments.dbf
-        - models/k3z_patchworks_model/yield/forestmodel.xml
+        - output/patchworks_k3z_validated/fragments/fragments.dbf
+        - output/patchworks_k3z_validated/forestmodel.xml
       notes:
         - completion is artifact-driven
         - protoaccounts.csv is promoted to accounts.csv with timestamped backup
@@ -98,8 +99,8 @@ lineage_chain:
       - output/patchworks/fragments/fragments.shp
   - step: sync export outputs into tracked model
     outputs:
-      - models/k3z_patchworks_model/yield/forestmodel.xml
-      - models/k3z_patchworks_model/data/fragments.shp
+      - output/patchworks_k3z_validated/forestmodel.xml
+      - output/patchworks_k3z_validated/fragments/fragments.shp
   - step: build blocks and topology
     command: >
       PYTHONPATH=src python -m femic patchworks build-blocks

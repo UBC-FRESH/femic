@@ -908,6 +908,31 @@ def test_infer_patchworks_model_dir_prefers_tracks_yield_pair(tmp_path: Path) ->
     assert infer_patchworks_model_dir(cfg) == expected_root
 
 
+def test_infer_patchworks_model_dir_prefers_tracks_with_output_validated_xml(
+    tmp_path: Path,
+) -> None:
+    cfg_path = tmp_path / "runtime.yaml"
+    cfg_path.write_text(
+        "\n".join(
+            [
+                "patchworks:",
+                "  jar_path: C:/Patchworks/patchworks.jar",
+                "  license_env: SPS_LICENSE_SERVER",
+                "  license_value: sps_user@auth.spatial.ca",
+                "  spshome: C:/Patchworks",
+                "matrix_builder:",
+                "  fragments_path: output/patchworks_k3z_validated/fragments/fragments.dbf",
+                "  output_dir: models/k3z_patchworks_model/tracks",
+                "  forestmodel_xml_path: output/patchworks_k3z_validated/forestmodel.xml",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    cfg = load_patchworks_runtime_config(cfg_path)
+    expected_root = (tmp_path / "models" / "k3z_patchworks_model").resolve()
+    assert infer_patchworks_model_dir(cfg) == expected_root
+
+
 def test_build_patchworks_blocks_dataset_dispatches_patchworks_raster_backend(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

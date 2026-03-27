@@ -347,6 +347,16 @@ def infer_patchworks_model_dir(config: PatchworksRuntimeConfig) -> Path:
         == config.forestmodel_xml_path.parent.parent.resolve()
     ):
         return config.matrix_output_dir.parent.resolve()
+    # K3Z validated layout: fragments and ForestModel XML live together under an
+    # `output/patchworks_k3z*_validated/` directory, while compiled tracks stay
+    # under `models/.../tracks*`.
+    if (
+        config.fragments_path.parent.name.lower() == "fragments"
+        and config.forestmodel_xml_path.parent.resolve()
+        == config.fragments_path.parent.parent.resolve()
+        and config.matrix_output_dir.name.lower().startswith("tracks")
+    ):
+        return config.matrix_output_dir.parent.resolve()
 
     candidates: list[Path] = []
     for candidate in (

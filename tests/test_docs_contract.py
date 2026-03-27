@@ -782,8 +782,7 @@ def test_k3z_pct_checked_in_surface_keeps_species_wise_managed_accounts() -> Non
     for slug in PCT_SUBVARIANT_IDS:
         forestmodel_path = (
             K3Z_INSTANCE_ROOT
-            / "models/k3z_patchworks_model/yield"
-            / f"forestmodel_{slug}.xml"
+            / f"output/patchworks_k3z_{slug}_validated/forestmodel.xml"
         )
         forestmodel_text = forestmodel_path.read_text(encoding="utf-8")
         assert re.search(
