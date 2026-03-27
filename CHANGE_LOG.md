@@ -6979,3 +6979,26 @@
     - baseline `accounts=311 species=7 complete_species=7 au=14`
     - `ctfert_l15h5` `accounts=308 species=6 complete_species=6 au=14`
     - `pct_light` `accounts=318 species=7 complete_species=7 au=14`
+
+## 2026-03-27 - Phase 43 Intensive-Silviculture Variant Kickoff
+
+- Promoted the next K3Z idea from `planning/incoming_ideas.md` into the normal
+  tracked workflow under GitHub issue `#36`.
+- Created the new working branch in the parent repo and K3Z submodule:
+  - `feature/k3z-all-intensive-silviculture`
+- Defined the kickoff scope as a planning-first pass for a new K3Z teaching
+  surface that combines the current intensive silviculture treatments:
+  - `PCT`
+  - `CT`
+  - `F1`
+  - `F2`
+  - `F3`
+- Recorded the immediate design questions that must be answered before code
+  changes begin:
+  - what AU coverage the combined surface should inherit from the current
+    `pct_*` and `ctfert_*` families;
+  - what exact state chain and treatment order the combined variant should use;
+  - whether the combined rollout should be one surface or a small subvariant
+    family;
+  - how the new surface should align with the current QMD, stems-per-ha,
+    harvested-QMD, and harvested-volume account contracts.

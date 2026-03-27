@@ -54,3 +54,9 @@ Good queue hygiene
 - Prefer fewer, clearer entries over long duplicated lists of similar ideas.
 
 ---
+
+[feature] Add stem height curves>attributes>accounts to the K3Z instance.
+
+[feature] Re-visit the QMD curves in the K3Z instance. The values still seem low for most of these BEC zones. Are we doing the math right when deriving these from volume per ha yield, stems per ha, SI-derived height, and stem form-factor assumptions? Also, if either VDYP or TIPSY (or both) already have literal stem diameter as a function of age curve outputs, then just grab those (obviously those will be higher quality).
+
+[task] The FEMIC pipeline currently builds K3Z instance such that the ForestModel XML files for the various variants live in the `model/k3z*/yields/*.xml` files, but that the matching fragments shapefiles live under `outputs/<variant-name>/fragments/` right next to stale `fragments.xml` files that any sane user is going to *think* is the one they need to use when compiling the matrix. Need to fix this urgently. Kill the stale XML files, and move the good XML files to the `outputs` folder next to their matching fragments shapefiles (and update docs so it is clear which XML/fragments pair users should push through the matrix builder when rebuilding the model).
