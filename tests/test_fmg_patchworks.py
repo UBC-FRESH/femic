@@ -702,8 +702,8 @@ def test_build_forestmodel_xml_tree_adds_ct_track_and_qmd_when_configured() -> N
     xml_text = et.tostring(root, encoding="unicode")
     assert "feature.QMD.managed.CWHvm_FDC_HW_M" in xml_text
     assert "feature.QMD.unmanaged.CWHvm_FDC_HW_M" in xml_text
-    assert "product.QMD.managed.CWHvm_FDC_HW_M.CC" in xml_text
-    assert "product.QMD.managed.CWHvm_FDC_HW_M.CT" in xml_text
+    assert "product.QMDNumerator.managed.CWHvm_FDC_HW_M.CC" in xml_text
+    assert "product.QMDNumerator.managed.CWHvm_FDC_HW_M.CT" in xml_text
     assert "product.Treated.managed.CWHvm_FDC_HW_M.CC" in xml_text
     assert "product.Treated.managed.CWHvm_FDC_HW_M.CT" in xml_text
     assert "product.HarvestedVolume.managed.Total.CT" in xml_text

@@ -476,8 +476,8 @@ def test_run_patchworks_command_normalizes_qmd_account_sums(
             "feature.QMD.managed.CWHvm_FDC_HW_M,1\n"
             "_UNMANAGED_,feature.QMD.unmanaged.CWHvm_FDC_HW_M,"
             "feature.QMD.unmanaged.CWHvm_FDC_HW_M,1\n"
-            "_MANAGED_,product.QMD.managed.CWHvm_FDC_HW_M.CT,"
-            "product.QMD.managed.CWHvm_FDC_HW_M.CT,1\n"
+            "_MANAGED_,product.QMDNumerator.managed.CWHvm_FDC_HW_M.CT,"
+            "product.QMDNumerator.managed.CWHvm_FDC_HW_M.CT,1\n"
             "_MANAGED_,product.Yield.managed.Total,product.Yield.managed.Total,1\n"
         ),
         encoding="utf-8",
@@ -517,8 +517,8 @@ def test_run_patchworks_command_normalizes_qmd_account_sums(
         "feature.QMD.unmanaged.CWHvm_FDC_HW_M,0.5" in accounts_text
     )
     assert (
-        "product.QMD.managed.CWHvm_FDC_HW_M.CT,"
-        "product.QMD.managed.CWHvm_FDC_HW_M.CT,1" in accounts_text
+        "product.QMDNumerator.managed.CWHvm_FDC_HW_M.CT,"
+        "product.QMDNumerator.managed.CWHvm_FDC_HW_M.CT,1" in accounts_text
     )
     assert "product.Yield.managed.Total,product.Yield.managed.Total,1" in accounts_text
 

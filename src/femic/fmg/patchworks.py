@@ -455,7 +455,14 @@ def _old_growth_curve_ref(*, au_token: str, og_label: str) -> str:
     return f"au_{au_token}_{_sanitize_id_component(og_label)}"
 
 
-def _harvested_qmd_product_label(*, au_token: str, treatment_label: str) -> str:
+def _harvested_qmd_numerator_product_label(
+    *, au_token: str, treatment_label: str
+) -> str:
+    treatment_token = _sanitize_id_component(treatment_label).upper()
+    return f"product.QMDNumerator.managed.{au_token}.{treatment_token}"
+
+
+def _harvested_qmd_ratio_account_label(*, au_token: str, treatment_label: str) -> str:
     treatment_token = _sanitize_id_component(treatment_label).upper()
     return f"product.QMD.managed.{au_token}.{treatment_token}"
 
@@ -1878,7 +1885,7 @@ def build_patchworks_forestmodel_definition(
                     )
                     product_attrs.append(
                         AttributeBinding(
-                            label=_harvested_qmd_product_label(
+                            label=_harvested_qmd_numerator_product_label(
                                 au_token=au_token,
                                 treatment_label="CC",
                             ),
@@ -2455,7 +2462,7 @@ def build_patchworks_forestmodel_definition(
                         )
                         ct_product_attrs.append(
                             AttributeBinding(
-                                label=_harvested_qmd_product_label(
+                                label=_harvested_qmd_numerator_product_label(
                                     au_token=au_token,
                                     treatment_label="CT",
                                 ),
@@ -2473,7 +2480,7 @@ def build_patchworks_forestmodel_definition(
                         )
                         ct_cc_product_attrs.append(
                             AttributeBinding(
-                                label=_harvested_qmd_product_label(
+                                label=_harvested_qmd_numerator_product_label(
                                     au_token=au_token,
                                     treatment_label="CC",
                                 ),
@@ -2727,7 +2734,7 @@ def build_patchworks_forestmodel_definition(
                             )
                             fert_cc_product_attrs.append(
                                 AttributeBinding(
-                                    label=_harvested_qmd_product_label(
+                                    label=_harvested_qmd_numerator_product_label(
                                         au_token=au_token,
                                         treatment_label="CC",
                                     ),

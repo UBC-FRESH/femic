@@ -6770,3 +6770,46 @@
 - The broader port across the remaining active K3Z variants is intentionally
   still pending on issue `#27`; this slice only completes the validated
   `ctfert_*` pilot.
+- 2026-03-26 (Phase 40 CT/fert ratio-account correction): converted the
+  launched `ctfert_*` harvested-stem QMD surface from raw numerator accounts to
+  live Patchworks `RatioAccount` registration so the public `product.QMD.*`
+  values resolve directly to mean harvested diameter in `cm`.
+  - Renamed the shipped harvested-QMD attribute/account inputs in
+    `src/femic/fmg/patchworks.py` from:
+    - `product.QMD.managed.<au_token>.<treatment>`
+    to:
+    - `product.QMDNumerator.managed.<au_token>.<treatment>`
+  - Added K3Z BeanShell helper:
+    - `external/femic-k3z-instance/models/k3z_patchworks_model/scripts/targets/qmdRatioAccounts.bsh`
+    which registers live:
+    - `product.QMD.managed.<au_token>.<treatment>`
+    via `control.addRatioAccount(...)` with scale `1`, using the matching
+    `product.QMDNumerator.*` numerator and `product.Treated.*` denominator.
+  - Wired that runtime ratio-account setup into:
+    - `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/ctfert_l15h5.pin`
+    - `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/ctfert_l20h0.pin`
+  - Rebuilt and revalidated:
+    - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l15h5.xml`
+    - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l20h0.xml`
+    - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_ctfert_l15h5/`
+    - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_ctfert_l20h0/`
+  - Updated regression coverage and docs in:
+    - `tests/test_fmg_patchworks.py`
+    - `tests/test_patchworks_runtime.py`
+    - `tests/test_docs_contract.py`
+    - `external/femic-k3z-instance/docs/model-anatomy.rst`
+    - `external/femic-k3z-instance/docs/operator-runbook.rst`
+  - Validation passed with:
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest`
+    - `python -m pre_commit run --all-files`
+    - `sphinx-build -b html docs _build/html -W`
+    - `sphinx-build -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml --run-id k3z_ctfert_l15h5_qmd_ratio_accounts_20260326`
+    - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml --run-id k3z_ctfert_l20h0_qmd_ratio_accounts_20260326`
+    - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+    - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+  - Issue `#27` remains open because the wider port across the other active K3Z
+    variants is still pending by design.

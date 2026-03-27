@@ -956,6 +956,21 @@ notes.
       surfaces;
     - only after the CT/fert pilot is stable, plan the port of the same
       product-QMD logic to the other active K3Z variants.
+- 2026-03-26 (Phase 40 correction): convert the first-pass harvested-stem QMD
+  pilot from raw numerator surfaces to live Patchworks `RatioAccount`
+  registration so the launched `product.QMD.*` values resolve directly to mean
+  harvested diameter in `cm`.
+  - Immediate execution order:
+    - rename the shipped AU/treatment harvested-QMD rows to an internal
+      numerator namespace;
+    - add BeanShell startup logic on the active `ctfert_*` `.pin` surfaces to
+      call `control.addRatioAccount(...)` with scale `1` for the user-facing
+      `product.QMD.*` accounts;
+    - rebuild the `ctfert_*` tracks and update tests/docs so they describe
+      `product.QMD.*` as runtime ratio accounts, not direct checked-in
+      `accounts.csv` rows;
+    - keep the current random-subset CT harvested-stem assumption for now, then
+      revisit it later when `nemora` stem-diameter distributions are available.
 - 2026-03-25 (Phase 36 kickoff): start Issue 21 on branch
   `feature/k3z-ctfert-si-subvariants` in the parent repo and K3Z submodule to
   expand the K3Z CT/fert teaching surface from the current medium-SI-only
@@ -7022,6 +7037,10 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 - [x] P40.4 Add regression coverage and document the new CT/fert pilot surface
   - [x] P40.4a Add tests covering the exporter/runtime logic and the shipped account names.
   - [x] P40.4b Update docs, `CHANGE_LOG.md`, and GitHub issue #27 with the CT/fert pilot implementation details and the follow-on porting plan.
+  - [ ] P40.4c Correct the CT/fert pilot to use live Patchworks RatioAccounts for harvested mean QMD.
+    - [ ] P40.4c.i Rename the shipped harvested-QMD export rows to an internal numerator surface so the public `product.QMD.*` names are no longer raw area-weighted totals.
+    - [ ] P40.4c.ii Add a BeanShell helper on the active `ctfert_*` launch surfaces that registers `product.QMD.*` as `control.addRatioAccount(...)` meta accounts with scale `1`.
+    - [ ] P40.4c.iii Rebuild the active `ctfert_*` tracks and update the docs/tests so they describe `product.QMD.*` as runtime ratio accounts rather than direct checked-in `accounts.csv` rows.
 - [ ] P40.5 Port the harvested-stem QMD product-account logic across the remaining active K3Z variants
   - [ ] P40.5a Decide which non-CT/fert variants should expose AU-wise harvested-stem QMD product rows and whether they need explicit opt-in config flags.
   - [ ] P40.5b Extend the validated account/docs surface beyond `ctfert_*` only after the CT/fert pilot contract has been accepted.
@@ -7036,14 +7055,25 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         intentionally deferred until the CT/fert pilot contract is accepted.
     - CT/fert pilot account contract:
       - AU-wise event-level QMD numerator rows:
-        `product.QMD.managed.<au_token>.CC` and
-        `product.QMD.managed.<au_token>.CT`
+        `product.QMDNumerator.managed.<au_token>.CC` and
+        `product.QMDNumerator.managed.<au_token>.CT`
       - matching AU-wise treated-area companion rows:
         `product.Treated.managed.<au_token>.CC` and
         `product.Treated.managed.<au_token>.CT`
+      - live Patchworks ratio accounts:
+        `product.QMD.managed.<au_token>.CC` and
+        `product.QMD.managed.<au_token>.CT`
       - mean harvested-stem diameter for a given AU/treatment combination is
-        read as the QMD product account divided by the matching AU/treatment
-        treated-area product account.
+        exposed directly through those live `product.QMD.*` ratio accounts in
+        `cm`, using the AU/treatment harvested-QMD numerator over the matching
+        AU/treatment treated-area denominator with scale `1`.
+    - Deferred refinement note:
+      - the current CT harvested-stem QMD logic still assumes the treatment
+        harvests a random subset of the standing stems because FEMIC does not
+        yet carry stem diameter distributions;
+      - when `nemora` integration lands, revisit this surface so CT can use a
+        diameter-distribution-aware thinning-from-below calculation rather than
+        the current random-subset simplification.
 
 
 

@@ -861,16 +861,26 @@ def test_k3z_ctfert_checked_in_surface_keeps_harvested_qmd_product_accounts() ->
             / f"tracks_{slug}"
             / "products.csv"
         )
+        pin_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model"
+            / "analysis"
+            / f"{slug}.pin"
+        )
         with accounts_path.open(newline="", encoding="utf-8") as fh:
             account_rows = list(csv.DictReader(fh))
         with products_path.open(newline="", encoding="utf-8") as fh:
             product_rows = list(csv.DictReader(fh))
+        pin_text = pin_path.read_text(encoding="utf-8")
 
         accounts = {row["ACCOUNT"] for row in account_rows}
         labels = {row["LABEL"] for row in product_rows}
 
         assert any(
-            re.fullmatch(r"product\.QMD\.managed\.[A-Za-z0-9_]+\.(CC|CT)", account)
+            re.fullmatch(
+                r"product\.QMDNumerator\.managed\.[A-Za-z0-9_]+\.(CC|CT)",
+                account,
+            )
             for account in accounts
         )
         assert any(
@@ -878,12 +888,19 @@ def test_k3z_ctfert_checked_in_surface_keeps_harvested_qmd_product_accounts() ->
             for account in accounts
         )
         assert any(
-            re.fullmatch(r"product\.QMD\.managed\.[A-Za-z0-9_]+\.(CC|CT)", label)
+            re.fullmatch(
+                r"product\.QMDNumerator\.managed\.[A-Za-z0-9_]+\.(CC|CT)",
+                label,
+            )
             for label in labels
         )
         assert any(
             re.fullmatch(r"product\.Treated\.managed\.[A-Za-z0-9_]+\.(CC|CT)", label)
             for label in labels
+        )
+        assert 'sourceRelative("../scripts/targets/qmdRatioAccounts.bsh");' in pin_text
+        assert (
+            "setupHarvestedQmdRatioAccounts(control, tracks_path_prefix);" in pin_text
         )
 
 
