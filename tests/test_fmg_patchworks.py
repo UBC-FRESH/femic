@@ -809,6 +809,10 @@ def test_build_forestmodel_xml_tree_adds_pct_then_ct_variant_path() -> None:
         "commercial_thinning": {
             "enabled": False,
         },
+        "qmd": {
+            "enabled": True,
+            "harvested_product_accounts_enabled": True,
+        },
     }
 
     root = build_forestmodel_xml_tree(
@@ -838,6 +842,8 @@ def test_build_forestmodel_xml_tree_adds_pct_then_ct_variant_path() -> None:
         node.attrib["label"] for node in pct_select.findall("./track/treatment")
     ] == ["CC"]
     assert "product.Treated.managed.PCT" in xml_text
+    assert "product.QMDNumerator.managed.CWHvm_FDC_HW_M.PCT" in xml_text
+    assert "product.QMDNumerator.managed.CWHvm_FDC_HW_M.CC" in xml_text
     assert (
         "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl' and treatment eq 'PCT'"
         in xml_text

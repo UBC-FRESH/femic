@@ -2181,6 +2181,50 @@ def build_patchworks_forestmodel_definition(
                         curve_idref=managed_curve_ref,
                     ),
                 ]
+                if qmd_enabled:
+                    pct_feature_attrs.append(
+                        AttributeBinding(
+                            label=f"feature.QMD.managed.{au_token}",
+                            curve_idref=managed_qmd_curve_ref,
+                        )
+                    )
+                    if qmd_harvested_product_accounts_enabled:
+                        pct_product_attrs.append(
+                            AttributeBinding(
+                                label=_harvested_treated_area_product_label(
+                                    au_token=au_token,
+                                    treatment_label=str(pct_config["label"]),
+                                ),
+                                curve_idref="unity",
+                            )
+                        )
+                        pct_product_attrs.append(
+                            AttributeBinding(
+                                label=_harvested_qmd_numerator_product_label(
+                                    au_token=au_token,
+                                    treatment_label=str(pct_config["label"]),
+                                ),
+                                curve_idref=managed_qmd_curve_ref,
+                            )
+                        )
+                        pct_cc_product_attrs.append(
+                            AttributeBinding(
+                                label=_harvested_treated_area_product_label(
+                                    au_token=au_token,
+                                    treatment_label="CC",
+                                ),
+                                curve_idref="unity",
+                            )
+                        )
+                        pct_cc_product_attrs.append(
+                            AttributeBinding(
+                                label=_harvested_qmd_numerator_product_label(
+                                    au_token=au_token,
+                                    treatment_label="CC",
+                                ),
+                                curve_idref=managed_qmd_curve_ref,
+                            )
+                        )
                 pct_species_yield_curves = _build_species_yield_curves(
                     total_points=managed_total_curve.points,
                     species_prop_points_by_species=pct_species_prop_points,

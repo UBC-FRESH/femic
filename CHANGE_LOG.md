@@ -6813,3 +6813,50 @@
     - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml`
   - Issue `#27` remains open because the wider port across the other active K3Z
     variants is still pending by design.
+
+## 2026-03-26 - Phase 40 Harvested-Stem QMD Rollout Across Baseline, Overlay, and PCT
+
+- Extended the harvested-stem QMD ratio-account contract from the validated
+  `ctfert_*` pilot across the remaining active K3Z launch surfaces:
+  - baseline `base`
+  - overlay subvariants `basecase_riparian`, `basecase_sum`,
+    `scenario1_sum`, and `scenario2_sum`
+  - PCT-only subvariants `pct_light`, `pct_moderate`, and `pct_heavy`
+- Added baseline silviculture opt-in:
+  - `external/femic-k3z-instance/config/silviculture.k3z.base.yaml`
+- Enabled the harvested-product QMD export path in:
+  - `external/femic-k3z-instance/config/silviculture.k3z.pct_light.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.pct_moderate.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.pct_heavy.yaml`
+- Extended `src/femic/fmg/patchworks.py` so the PCT family now exports:
+  - AU-wise standing QMD feature accounts:
+    - `feature.QMD.managed.<au_token>`
+  - AU-wise harvested-QMD numerator product attributes:
+    - `product.QMDNumerator.managed.<au_token>.PCT`
+    - `product.QMDNumerator.managed.<au_token>.CC`
+  - matching AU-wise treated-area denominator attributes:
+    - `product.Treated.managed.<au_token>.PCT`
+    - `product.Treated.managed.<au_token>.CC`
+- Wired the live Patchworks ratio-account helper into:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/base_variant_common.bsh`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/pct_light.pin`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/pct_moderate.pin`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/pct_heavy.pin`
+- Rebuilt the shipped baseline/overlay/PCT ForestModel XML and tracks surfaces:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_light.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_moderate.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_heavy.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks/`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_overlay_basecase_riparian/`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_overlay_basecase_sum/`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_overlay_scenario1_sum/`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_overlay_scenario2_sum/`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pct_light/`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pct_moderate/`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pct_heavy/`
+- Updated docs/tests so the shipped baseline, overlay, and PCT surfaces now
+  document the same harvested-QMD numerator / denominator / ratio-account
+  contract already used by `ctfert_*`.
+- Issue `#27` remains open until the widened rollout validation and final
+  closeout note are fully checkpointed on this branch.
