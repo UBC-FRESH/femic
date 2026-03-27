@@ -1059,6 +1059,38 @@ def _build_stems_per_ha_curve_points(
     return tuple(out)
 
 
+def _build_height_curve_points(
+    *,
+    source_curve_points: tuple[CurvePoint, ...],
+    si_level: str,
+    site_index: float | None = None,
+    height_curve_points: tuple[CurvePoint, ...] = (),
+) -> tuple[CurvePoint, ...]:
+    x_values = sorted(
+        {
+            float(point.x)
+            for point in source_curve_points
+            if math.isfinite(float(point.x)) and float(point.x) >= 0.0
+        }
+    )
+    if not x_values:
+        x_values = [0.0, 100.0]
+    resolved_site_index = (
+        float(site_index)
+        if site_index is not None and math.isfinite(float(site_index))
+        else DEFAULT_QMD_SITE_INDEX_BY_LEVEL.get(str(si_level).strip().upper(), 25.0)
+    )
+    out: list[CurvePoint] = []
+    for x_val in x_values:
+        height_m = _estimate_qmd_height_m(
+            age=float(x_val),
+            site_index=resolved_site_index,
+            height_curve_points=height_curve_points,
+        )
+        out.append(CurvePoint(x=float(x_val), y=round(max(0.0, height_m), 1)))
+    return tuple(out)
+
+
 def _build_constant_curve_points_like(
     *,
     source_curve_points: tuple[CurvePoint, ...],
@@ -1772,6 +1804,10 @@ def build_patchworks_forestmodel_definition(
             qmd_payload.get("harvested_product_accounts_enabled", False)
         )
         qmd_support = context.qmd_support_by_au.get(int(au.au_id))
+        height_payload = (silviculture_config or {}).get("height")
+        height_enabled = isinstance(height_payload, dict) and bool(
+            height_payload.get("enabled", False)
+        )
         stems_payload = (silviculture_config or {}).get("stems_per_ha")
         stems_per_ha_enabled = isinstance(stems_payload, dict) and bool(
             stems_payload.get("enabled", False)
@@ -1800,10 +1836,51 @@ def build_patchworks_forestmodel_definition(
         unmanaged_attrs_by_origin: dict[str, list[AttributeBinding]] = {}
         managed_attrs_by_origin: dict[str, list[AttributeBinding]] = {}
         product_attrs_by_origin: dict[str, list[AttributeBinding]] = {}
+        unmanaged_height_curve_ref: str | None = None
+        managed_height_curve_ref: str | None = None
         unmanaged_stems_curve_ref: str | None = None
         managed_stems_curve_ref: str | None = None
+        unmanaged_height_curve_points: tuple[CurvePoint, ...] = ()
+        managed_height_curve_points: tuple[CurvePoint, ...] = ()
         unmanaged_stems_curve_points: tuple[CurvePoint, ...] = ()
         managed_stems_curve_points: tuple[CurvePoint, ...] = ()
+
+        if height_enabled:
+            unmanaged_height_source = (
+                unmanaged_total_curve.points
+                if unmanaged_total_curve is not None
+                else og_source_points
+            )
+            managed_height_source = (
+                managed_total_curve.points
+                if managed_total_curve is not None
+                else unmanaged_height_source
+            )
+            site_index = (
+                float(qmd_support.site_index)
+                if qmd_support is not None and qmd_support.site_index is not None
+                else None
+            )
+            managed_height_support_points = (
+                tuple(qmd_support.managed_height_points)
+                if qmd_support is not None
+                else ()
+            )
+            unmanaged_height_curve_ref = f"au_{au_token}_unmanaged_height"
+            unmanaged_height_curve_points = _build_height_curve_points(
+                source_curve_points=unmanaged_height_source,
+                si_level=au.si_level,
+                site_index=site_index,
+            )
+            curves[unmanaged_height_curve_ref] = unmanaged_height_curve_points
+            managed_height_curve_ref = f"au_{au_token}_managed_height"
+            managed_height_curve_points = _build_height_curve_points(
+                source_curve_points=managed_height_source,
+                si_level=au.si_level,
+                site_index=site_index,
+                height_curve_points=managed_height_support_points,
+            )
+            curves[managed_height_curve_ref] = managed_height_curve_points
 
         if stems_per_ha_enabled:
             unmanaged_stems_source = (
@@ -1905,6 +1982,20 @@ def build_patchworks_forestmodel_definition(
                     AttributeBinding(
                         label=f"feature.StemsPerHa.managed.{au_token}",
                         curve_idref=managed_stems_curve_ref,
+                    )
+                )
+            if unmanaged_height_curve_ref is not None:
+                unmanaged_attrs.append(
+                    AttributeBinding(
+                        label=f"feature.Height.unmanaged.{au_token}",
+                        curve_idref=unmanaged_height_curve_ref,
+                    )
+                )
+            if managed_height_curve_ref is not None:
+                managed_attrs.append(
+                    AttributeBinding(
+                        label=f"feature.Height.managed.{au_token}",
+                        curve_idref=managed_height_curve_ref,
                     )
                 )
 
@@ -2366,6 +2457,13 @@ def build_patchworks_forestmodel_definition(
                                 curve_idref=managed_qmd_curve_ref,
                             )
                         )
+                if height_enabled and managed_height_curve_ref is not None:
+                    pct_feature_attrs.append(
+                        AttributeBinding(
+                            label=f"feature.Height.managed.{au_token}",
+                            curve_idref=managed_height_curve_ref,
+                        )
+                    )
                 pct_species_yield_curves = _build_species_yield_curves(
                     total_points=managed_total_curve.points,
                     species_prop_points_by_species=pct_species_prop_points,
@@ -2627,6 +2725,15 @@ def build_patchworks_forestmodel_definition(
                             curve_idref=ct_stems_curve_ref,
                         )
                     )
+                if height_enabled and managed_height_curve_points:
+                    ct_height_curve_ref = f"au_{au_token}_managed_{state_slug}_height"
+                    curves[ct_height_curve_ref] = tuple(managed_height_curve_points)
+                    ct_residual_attrs.append(
+                        AttributeBinding(
+                            label=f"feature.Height.managed.{au_token}",
+                            curve_idref=ct_height_curve_ref,
+                        )
+                    )
                 if qmd_enabled:
                     ct_qmd_curve_ref = f"au_{au_token}_managed_{state_slug}_qmd"
                     curves[ct_qmd_curve_ref] = _build_qmd_curve_points(
@@ -2860,6 +2967,7 @@ def build_patchworks_forestmodel_definition(
             if fert_sequence:
                 current_source_points = curves[ct_residual_curve_ref]
                 current_stems_points = ct_stems_curve_points
+                current_height_points = managed_height_curve_points
                 for fert_index, fert_config in enumerate(fert_sequence, start=1):
                     fert_curve_ref = f"au_{au_token}_fert{fert_index}_total"
                     curves[fert_curve_ref] = _build_curve_with_temporary_speedup(
@@ -2888,6 +2996,18 @@ def build_patchworks_forestmodel_definition(
                             AttributeBinding(
                                 label=f"feature.StemsPerHa.managed.{au_token}",
                                 curve_idref=fert_stems_curve_ref,
+                            )
+                        )
+                    if height_enabled and current_height_points:
+                        fert_height_curve_ref = (
+                            f"au_{au_token}_managed_"
+                            f"{_sanitize_id_component(str(fert_config['to_state']))}_height"
+                        )
+                        curves[fert_height_curve_ref] = tuple(current_height_points)
+                        fert_feature_attrs.append(
+                            AttributeBinding(
+                                label=f"feature.Height.managed.{au_token}",
+                                curve_idref=fert_height_curve_ref,
                             )
                         )
                     fert_product_attrs = [

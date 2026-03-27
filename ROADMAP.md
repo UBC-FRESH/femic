@@ -7380,6 +7380,67 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         state chain and AU/profile contract are written explicitly in this
         phase plan.
 
+## Phase 44: Add Stem Height Curves, Attributes, and Accounts to K3Z
+- [x] P44.1 Define the K3Z stem-height account contract before implementation
+  - [x] P44.1a Audit the currently available height support data on the managed
+    and unmanaged sides so the new standing-height surfaces reuse accepted
+    inputs instead of inventing a parallel approximation path unnecessarily.
+  - [x] P44.1b Decide the AU-wise naming contract for standing stem-height
+    attributes and downstream accounts so it stays parallel to the current QMD
+    and stems-per-ha families.
+  - [x] P44.1c Decide how treatment-state height should behave on the `ctfert_*`,
+    `intensive_*`, and `pct_*` families, including which state transitions
+    should carry height forward unchanged versus reusing a treatment-adjusted
+    surface.
+- [x] P44.2 Implement stem-height support across the active K3Z family
+  - [x] P44.2a Extend the exporter/runtime logic to emit AU-wise stem-height
+    feature attributes and normalized downstream accounts.
+  - [x] P44.2b Rebuild the shipped K3Z XML/tracks/account surfaces for the
+    active launch families that should expose the new accounts.
+  - [x] P44.2c Add regression coverage for the new height-account contract in
+    both exporter/runtime tests and docs-contract checks.
+- [ ] P44.3 Validate, document, and close out the K3Z stem-height rollout
+  - [ ] P44.3a Run the normal validation gates plus representative K3Z Matrix
+    Builder/account-surface checks.
+  - [x] P44.3b Update standalone K3Z docs, `CHANGE_LOG.md`, and GitHub issue
+    #38 with the final contract and validation results.
+  - Notes:
+    - Governing tracker:
+      - GitHub issue #38
+    - Initial design intent:
+      - add AU-wise standing stem-height support surfaces to the active K3Z
+        family so height can be interpreted alongside current yield,
+        harvested-volume, QMD, and stems-per-ha accounts
+    - Guardrail:
+      - keep the new height-account contract parallel to the accepted QMD and
+        stems-per-ha families unless the source data forces a documented
+        difference
+    - Implementation status:
+      - the exporter now emits AU-wise `feature.Height.managed.<au_token>` and
+        `feature.Height.unmanaged.<au_token>` attributes across the active K3Z
+        family;
+      - managed height uses the accepted TIPSY height handoff where available,
+        while unmanaged height falls back to the same site-index-driven height
+        approximation already used inside the QMD builder;
+      - treatment-state height currently carries forward unchanged through
+        `PCT`, `CT`, and fertilization state chains unless the managed source
+        curve itself changes;
+      - downstream `accounts.csv` promotion now normalizes `feature.Height.*`
+        the same way as `feature.StemsPerHa.*`, so live Patchworks values read
+        as mean standing height in `m` rather than height-area totals;
+      - the shipped K3Z ForestModel XML family and all active checked-in
+        Matrix Builder track/account surfaces have been rebuilt against the new
+        height contract;
+      - docs-contract coverage now requires checked-in `feature.Height.*`
+        accounts on baseline, overlay, `ctfert_*`, `pct_*`, and `intensive_*`
+        surfaces;
+      - next step is the final full validation-gate run, then checkpoint /
+        PR / merge / issue closeout.
+    - Planning-first rule:
+      - do not start exporter/runtime implementation until the managed/unmanaged
+        support-data path and downstream account naming contract are written
+        explicitly in this phase plan.
+
 
 
 

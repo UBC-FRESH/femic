@@ -34,6 +34,9 @@ FATAL_MATRIX_STDERR_PATTERNS = (
 QMD_ACCOUNT_PATTERN = re.compile(
     r"^feature\.QMD\.(managed|unmanaged)\.([A-Za-z0-9_.]+)$"
 )
+HEIGHT_ACCOUNT_PATTERN = re.compile(
+    r"^feature\.Height\.(managed|unmanaged)\.([A-Za-z0-9_.]+)$"
+)
 STEMS_PER_HA_ACCOUNT_PATTERN = re.compile(
     r"^feature\.StemsPerHa\.(managed|unmanaged)\.([A-Za-z0-9_.]+)$"
 )
@@ -754,6 +757,19 @@ def _resolve_qmd_account_sum_overrides(
     )
 
 
+def _resolve_height_account_sum_overrides(
+    *,
+    fragments_path: Path,
+    forestmodel_xml_path: Path,
+) -> dict[str, str]:
+    return _resolve_area_normalized_feature_account_sum_overrides(
+        fragments_path=fragments_path,
+        forestmodel_xml_path=forestmodel_xml_path,
+        pattern=HEIGHT_ACCOUNT_PATTERN,
+        label_prefix="feature.Height",
+    )
+
+
 def _resolve_stems_per_ha_account_sum_overrides(
     *,
     fragments_path: Path,
@@ -896,6 +912,10 @@ def _promote_protoaccounts_to_accounts(
         QMD_ACCOUNT_PATTERN.match(str(row.get("ATTRIBUTE", ""))) is not None
         for row in rows
     )
+    has_height_rows = any(
+        HEIGHT_ACCOUNT_PATTERN.match(str(row.get("ATTRIBUTE", ""))) is not None
+        for row in rows
+    )
     has_stems_per_ha_rows = any(
         STEMS_PER_HA_ACCOUNT_PATTERN.match(str(row.get("ATTRIBUTE", ""))) is not None
         for row in rows
@@ -909,6 +929,14 @@ def _promote_protoaccounts_to_accounts(
         if has_qmd_rows
         else {}
     )
+    height_sum_overrides = (
+        _resolve_height_account_sum_overrides(
+            fragments_path=fragments_path,
+            forestmodel_xml_path=forestmodel_xml_path,
+        )
+        if has_height_rows
+        else {}
+    )
     stems_per_ha_sum_overrides = (
         _resolve_stems_per_ha_account_sum_overrides(
             fragments_path=fragments_path,
@@ -917,7 +945,11 @@ def _promote_protoaccounts_to_accounts(
         if has_stems_per_ha_rows
         else {}
     )
-    feature_sum_overrides = {**qmd_sum_overrides, **stems_per_ha_sum_overrides}
+    feature_sum_overrides = {
+        **qmd_sum_overrides,
+        **height_sum_overrides,
+        **stems_per_ha_sum_overrides,
+    }
     if not exclude_regex and not feature_sum_overrides and not utilization_by_treatment:
         shutil.copy2(protoaccounts_path, accounts_path)
         return accounts_path, backup_path, protoaccounts_path, 0

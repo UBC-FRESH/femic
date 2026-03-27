@@ -18,6 +18,7 @@ from femic.fmg.core import (
 from femic.fmg.patchworks import (
     _au_base_display_label,
     _build_curve_with_post_thinning_gap,
+    _build_height_curve_points,
     _build_qmd_curve_points,
     _build_stems_per_ha_curve_points,
     _estimate_qmd_cm_from_volume,
@@ -182,6 +183,21 @@ def test_build_stems_per_ha_curve_points_uses_tph_inputs() -> None:
         ),
     )
     assert [point.y for point in points] == pytest.approx([800.0, 700.0], rel=1e-3)
+
+
+def test_build_height_curve_points_uses_managed_height_inputs() -> None:
+    points = _build_height_curve_points(
+        source_curve_points=(
+            CurvePoint(x=10.0, y=40.0),
+            CurvePoint(x=20.0, y=120.0),
+        ),
+        si_level="M",
+        height_curve_points=(
+            CurvePoint(x=10.0, y=5.0),
+            CurvePoint(x=20.0, y=10.0),
+        ),
+    )
+    assert [point.y for point in points] == pytest.approx([5.0, 10.0], rel=1e-3)
 
 
 def test_build_forestmodel_xml_tree_contains_cc_and_curve_refs() -> None:
@@ -1151,6 +1167,71 @@ def test_build_forestmodel_xml_tree_from_context_adds_stems_per_ha_features() ->
     assert "au_CWHvm_FDC_HW_M_managed_stems_per_ha" in xml_text
     assert "au_CWHvm_FDC_HW_M_unmanaged_stems_per_ha" in xml_text
     assert "au_CWHvm_FDC_HW_M_managed_cc_pl_ct_stems_per_ha" in xml_text
+
+
+def test_build_forestmodel_xml_tree_from_context_adds_height_features() -> None:
+    context = _build_single_au_context(
+        au_id=985502001,
+        stratum_code="CWHvm_FDC+HW",
+        si_level="M",
+        unmanaged_points=(
+            CurvePoint(x=1.0, y=8.0),
+            CurvePoint(x=40.0, y=200.0),
+            CurvePoint(x=100.0, y=320.0),
+        ),
+        managed_points=(
+            CurvePoint(x=1.0, y=10.0),
+            CurvePoint(x=40.0, y=260.0),
+            CurvePoint(x=100.0, y=400.0),
+        ),
+        managed_species_curve_ids={"CW": 985522001001, "HW": 985522001002},
+        unmanaged_species_curve_ids={"CW": 985502001001, "HW": 985502001002},
+        curve_points_by_id={
+            985522001001: (CurvePoint(x=1.0, y=0.25),),
+            985522001002: (CurvePoint(x=1.0, y=0.75),),
+            985502001001: (CurvePoint(x=1.0, y=0.20),),
+            985502001002: (CurvePoint(x=1.0, y=0.80),),
+        },
+        qmd_support=QmdSupportDefinition(
+            site_index=25.0,
+            managed_height_points=(
+                CurvePoint(x=1.0, y=0.4),
+                CurvePoint(x=40.0, y=20.0),
+                CurvePoint(x=100.0, y=32.0),
+            ),
+            managed_tph_points=(
+                CurvePoint(x=1.0, y=1200.0),
+                CurvePoint(x=40.0, y=800.0),
+                CurvePoint(x=100.0, y=500.0),
+            ),
+        ),
+    )
+    silviculture_config = {
+        "commercial_thinning": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "from_state": "cc_pl",
+            "to_state": "cc_pl_ct",
+            "ct_age": 40,
+            "age_by_au": {"985502001": 40},
+            "basal_area_removal_fraction": 0.30,
+            "basal_area_to_volume_ratio": 1.0,
+        },
+        "height": {
+            "enabled": True,
+        },
+    }
+
+    root = build_forestmodel_xml_tree_from_context(
+        context=context,
+        silviculture_config=silviculture_config,
+    )
+    xml_text = et.tostring(root, encoding="unicode")
+    assert "feature.Height.managed.CWHvm_FDC_HW_M" in xml_text
+    assert "feature.Height.unmanaged.CWHvm_FDC_HW_M" in xml_text
+    assert "au_CWHvm_FDC_HW_M_managed_height" in xml_text
+    assert "au_CWHvm_FDC_HW_M_unmanaged_height" in xml_text
+    assert "au_CWHvm_FDC_HW_M_managed_cc_pl_ct_height" in xml_text
 
 
 def test_build_forestmodel_xml_tree_from_context_adds_pct_stems_per_ha_features() -> (
