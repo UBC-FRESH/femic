@@ -31,7 +31,9 @@ FATAL_MATRIX_STDERR_PATTERNS = (
     "sps home directory not found, installation not complete",
     "ip helper library getadaptersaddresses function failed",
 )
-QMD_ACCOUNT_PATTERN = re.compile(r"^feature\.QMD\.(managed|unmanaged)\.([A-Za-z0-9_.]+)$")
+QMD_ACCOUNT_PATTERN = re.compile(
+    r"^feature\.QMD\.(managed|unmanaged)\.([A-Za-z0-9_.]+)$"
+)
 AU_EQ_PATTERN = re.compile(r"\bAU eq (\d+)\b")
 
 
@@ -623,6 +625,8 @@ def _load_fragments_area_by_au_and_ifm(
         area_raw = getattr(row, "AREA_HA", None)
         ifm_raw = getattr(row, "IFM", None)
         retention_raw = getattr(row, "RETENTION", 0.0)
+        if au_raw is None or area_raw is None or retention_raw is None:
+            continue
         try:
             au_id = int(au_raw)
             area_ha = float(area_raw)
@@ -637,7 +641,9 @@ def _load_fragments_area_by_au_and_ifm(
             managed_area = area_ha * (1.0 - retention)
             unmanaged_area = area_ha * retention
             if managed_area > 0.0:
-                out[("managed", au_id)] = out.get(("managed", au_id), 0.0) + managed_area
+                out[("managed", au_id)] = (
+                    out.get(("managed", au_id), 0.0) + managed_area
+                )
             if unmanaged_area > 0.0:
                 out[("unmanaged", au_id)] = (
                     out.get(("unmanaged", au_id), 0.0) + unmanaged_area
@@ -657,7 +663,9 @@ def _resolve_qmd_account_sum_overrides(
     )
     if not au_id_by_token:
         return {}
-    area_by_au_and_ifm = _load_fragments_area_by_au_and_ifm(fragments_path=fragments_path)
+    area_by_au_and_ifm = _load_fragments_area_by_au_and_ifm(
+        fragments_path=fragments_path
+    )
     if not area_by_au_and_ifm:
         return {}
 
@@ -670,9 +678,9 @@ def _resolve_qmd_account_sum_overrides(
                 1.0 / managed_area
             )
         if unmanaged_area > 0.0:
-            overrides[
-                f"feature.QMD.unmanaged.{token}"
-            ] = _format_account_sum_multiplier(1.0 / unmanaged_area)
+            overrides[f"feature.QMD.unmanaged.{token}"] = (
+                _format_account_sum_multiplier(1.0 / unmanaged_area)
+            )
     return overrides
 
 

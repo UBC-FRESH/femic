@@ -21,6 +21,7 @@ CONTRACT_ROOT = DOCS_ROOT / "reference" / "contracts"
 COVERAGE_CSV = GUIDES_ROOT / "legacy_notebook_coverage.csv"
 K3Z_INSTANCE_ROOT = Path("external/femic-k3z-instance")
 TSA29_INSTANCE_ROOT = Path("external/femic-tsa29-instance")
+CTFERT_SUBVARIANT_IDS = ("ctfert_l15h5", "ctfert_l20h0")
 PCT_SUBVARIANT_IDS = ("pct_light", "pct_moderate", "pct_heavy")
 REMOVED_PCTCT_LEGACY_PATHS = (
     K3Z_INSTANCE_ROOT / "config/patchworks.variant.pctct.yaml",
@@ -803,10 +804,17 @@ def test_k3z_pct_checked_in_surface_keeps_species_wise_managed_accounts() -> Non
             / f"tracks_{slug}"
             / "products.csv"
         )
+        pin_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model"
+            / "analysis"
+            / f"{slug}.pin"
+        )
         with accounts_path.open(newline="", encoding="utf-8") as fh:
             account_rows = list(csv.DictReader(fh))
         with products_path.open(newline="", encoding="utf-8") as fh:
             product_rows = list(csv.DictReader(fh))
+        pin_text = pin_path.read_text(encoding="utf-8")
 
         accounts = {row["ACCOUNT"] for row in account_rows}
         labels = {row["LABEL"] for row in product_rows}
@@ -825,8 +833,76 @@ def test_k3z_pct_checked_in_surface_keeps_species_wise_managed_accounts() -> Non
             )
             for account in accounts
         )
+        assert any(
+            re.fullmatch(
+                r"product\.QMDNumerator\.managed\.[A-Za-z0-9_]+\.(CC|PCT)", account
+            )
+            for account in accounts
+        )
+        assert any(
+            re.fullmatch(
+                r"product\.QMDNumerator\.managed\.[A-Za-z0-9_]+\.(CC|PCT)", label
+            )
+            for label in labels
+        )
         assert "product.Treated.managed.PCT" in labels
         assert "product.Treated.managed.CT" not in labels
+        assert 'sourceRelative("../scripts/targets/qmdRatioAccounts.bsh");' in pin_text
+        assert (
+            "setupHarvestedQmdRatioAccounts(control, tracks_path_prefix);" in pin_text
+        )
+
+
+def test_k3z_baseline_and_overlay_surfaces_keep_harvested_qmd_cc_accounts() -> None:
+    base_common_path = (
+        K3Z_INSTANCE_ROOT
+        / "models/k3z_patchworks_model/analysis/base_variant_common.bsh"
+    )
+    base_common_text = base_common_path.read_text(encoding="utf-8")
+    assert (
+        'sourceRelative("../scripts/targets/qmdRatioAccounts.bsh");' in base_common_text
+    )
+    assert (
+        "setupHarvestedQmdRatioAccounts(control, tracks_path_prefix);"
+        in base_common_text
+    )
+
+    for tracks_dir in (
+        "tracks",
+        "tracks_overlay_basecase_riparian",
+        "tracks_overlay_basecase_sum",
+        "tracks_overlay_scenario1_sum",
+        "tracks_overlay_scenario2_sum",
+    ):
+        accounts_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model"
+            / tracks_dir
+            / "accounts.csv"
+        )
+        products_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model"
+            / tracks_dir
+            / "products.csv"
+        )
+        with accounts_path.open(newline="", encoding="utf-8") as fh:
+            account_rows = list(csv.DictReader(fh))
+        with products_path.open(newline="", encoding="utf-8") as fh:
+            product_rows = list(csv.DictReader(fh))
+
+        accounts = {row["ACCOUNT"] for row in account_rows}
+        labels = {row["LABEL"] for row in product_rows}
+
+        assert any(
+            re.fullmatch(r"product\.QMDNumerator\.managed\.[A-Za-z0-9_]+\.CC", account)
+            for account in accounts
+        )
+        assert any(
+            re.fullmatch(r"product\.QMDNumerator\.managed\.[A-Za-z0-9_]+\.CC", label)
+            for label in labels
+        )
+        assert "product.Treated.managed.CC" in labels
 
 
 def test_k3z_legacy_single_pctct_surface_has_been_removed() -> None:
@@ -844,6 +920,63 @@ def test_k3z_pctct_subvariant_family_has_been_removed() -> None:
 def test_k3z_legacy_single_ctfert_surface_has_been_removed() -> None:
     for path in REMOVED_CTFERT_LEGACY_PATHS:
         assert not path.exists(), f"legacy ctfert path should be removed: {path}"
+
+
+def test_k3z_ctfert_checked_in_surface_keeps_harvested_qmd_product_accounts() -> None:
+    for slug in CTFERT_SUBVARIANT_IDS:
+        accounts_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model"
+            / f"tracks_{slug}"
+            / "accounts.csv"
+        )
+        products_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model"
+            / f"tracks_{slug}"
+            / "products.csv"
+        )
+        pin_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model"
+            / "analysis"
+            / f"{slug}.pin"
+        )
+        with accounts_path.open(newline="", encoding="utf-8") as fh:
+            account_rows = list(csv.DictReader(fh))
+        with products_path.open(newline="", encoding="utf-8") as fh:
+            product_rows = list(csv.DictReader(fh))
+        pin_text = pin_path.read_text(encoding="utf-8")
+
+        accounts = {row["ACCOUNT"] for row in account_rows}
+        labels = {row["LABEL"] for row in product_rows}
+
+        assert any(
+            re.fullmatch(
+                r"product\.QMDNumerator\.managed\.[A-Za-z0-9_]+\.(CC|CT)",
+                account,
+            )
+            for account in accounts
+        )
+        assert any(
+            re.fullmatch(r"product\.Treated\.managed\.[A-Za-z0-9_]+\.(CC|CT)", account)
+            for account in accounts
+        )
+        assert any(
+            re.fullmatch(
+                r"product\.QMDNumerator\.managed\.[A-Za-z0-9_]+\.(CC|CT)",
+                label,
+            )
+            for label in labels
+        )
+        assert any(
+            re.fullmatch(r"product\.Treated\.managed\.[A-Za-z0-9_]+\.(CC|CT)", label)
+            for label in labels
+        )
+        assert 'sourceRelative("../scripts/targets/qmdRatioAccounts.bsh");' in pin_text
+        assert (
+            "setupHarvestedQmdRatioAccounts(control, tracks_path_prefix);" in pin_text
+        )
 
 
 def test_k3z_pct_checked_in_surface_preserves_baseline_geometry_footprint() -> None:

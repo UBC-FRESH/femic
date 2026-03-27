@@ -927,6 +927,88 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-26 (Phase 40 widened rollout complete locally): the harvested-stem
+  QMD ratio-account contract now extends across all active K3Z launch surfaces
+  on branch `feature/k3z-qmd-product-accounts`.
+  - Current shipped surface coverage on this branch:
+    - baseline `base`
+    - overlay subvariants `basecase_riparian`, `basecase_sum`,
+      `scenario1_sum`, and `scenario2_sum`
+    - CT/fert subvariants `ctfert_l15h5` and `ctfert_l20h0`
+    - PCT-only subvariants `pct_light`, `pct_moderate`, and `pct_heavy`
+  - Account-contract summary:
+    - baseline and overlay surfaces now expose AU-wise harvested-QMD `CC`
+      numerator / denominator attributes plus live `product.QMD.*.CC`
+      Patchworks ratio accounts;
+    - the `pct_*` family now exposes AU-wise harvested-QMD `PCT` and `CC`
+      numerator / denominator attributes plus live
+      `product.QMD.*.(PCT|CC)` Patchworks ratio accounts;
+    - `ctfert_*` keeps the same AU-wise live ratio-account contract already
+      accepted during the pilot.
+  - Validation snapshot:
+    - parent gates passed:
+      - `python -m ruff format src tests`
+      - `python -m ruff check src tests`
+      - `python -m mypy src`
+      - `python -m pytest`
+      - `python -m pre_commit run --all-files`
+      - `python -m sphinx -b html docs _build/html -W`
+    - standalone K3Z docs build passed:
+      - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
+    - targeted account-surface checks passed:
+      - baseline: `accounts=284 species=7 complete_species=7 au=14`
+      - overlay `basecase_sum`: `accounts=261 species=6 complete_species=6 au=14`
+      - `pct_light`: `accounts=291 species=7 complete_species=7 au=14`
+      - `pct_moderate`: `accounts=291 species=7 complete_species=7 au=14`
+      - `pct_heavy`: `accounts=291 species=7 complete_species=7 au=14`
+  - Immediate next move:
+    - update GitHub issue `#27` with the widened rollout evidence, then
+      checkpoint parent + submodule commits before opening PRs or closing the
+      issue.
+- 2026-03-26 (Phase 40 kickoff): start Issue 27 on branch
+  `feature/k3z-qmd-product-accounts` in the parent repo and K3Z submodule to
+  add harvested-stem QMD `product` accounts to the active K3Z `ctfert_*`
+  family, then port the same logic across the remaining active K3Z variants.
+  - Tracking issue:
+    - GitHub issue #27 ("Add harvested-stem QMD product accounts to K3Z
+      CT/fert and port across variants")
+  - Working implementation focus:
+    - treat the active `ctfert_l15h5` and `ctfert_l20h0` surfaces as the pilot
+      family;
+    - add AU-wise harvested-stem mean-diameter `product` accounts that sit
+      alongside, but remain clearly distinct from, the existing standing-stock
+      `feature.QMD.*` surfaces;
+    - keep the first pass limited to the CT/fert family until the account
+      contract, normalization semantics, and runtime promotion behavior are
+      proven out cleanly.
+  - Immediate execution order:
+    - audit the current product-account export path in
+      `src/femic/fmg/patchworks.py` and the runtime
+      `protoaccounts.csv -> accounts.csv` promotion logic in
+      `src/femic/patchworks_runtime.py`;
+    - define the new harvested-stem QMD account naming contract so the account
+      surface makes the distinction between standing QMD and harvested-stem QMD
+      obvious;
+    - implement and validate the `ctfert_l15h5` / `ctfert_l20h0` pilot slice
+      end-to-end, including refreshed shipped `tracks_ctfert_* / accounts.csv`
+      surfaces;
+    - only after the CT/fert pilot is stable, plan the port of the same
+      product-QMD logic to the other active K3Z variants.
+- 2026-03-26 (Phase 40 correction): convert the first-pass harvested-stem QMD
+  pilot from raw numerator surfaces to live Patchworks `RatioAccount`
+  registration so the launched `product.QMD.*` values resolve directly to mean
+  harvested diameter in `cm`.
+  - Immediate execution order:
+    - rename the shipped AU/treatment harvested-QMD rows to an internal
+      numerator namespace;
+    - add BeanShell startup logic on the active `ctfert_*` `.pin` surfaces to
+      call `control.addRatioAccount(...)` with scale `1` for the user-facing
+      `product.QMD.*` accounts;
+    - rebuild the `ctfert_*` tracks and update tests/docs so they describe
+      `product.QMD.*` as runtime ratio accounts, not direct checked-in
+      `accounts.csv` rows;
+    - keep the current random-subset CT harvested-stem assumption for now, then
+      revisit it later when `nemora` stem-diameter distributions are available.
 - 2026-03-25 (Phase 36 kickoff): start Issue 21 on branch
   `feature/k3z-ctfert-si-subvariants` in the parent repo and K3Z submodule to
   expand the K3Z CT/fert teaching surface from the current medium-SI-only
@@ -6979,6 +7061,77 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - the open issue set now uses built-in `Type` for work kind;
       - orthogonal labels are limited to domain/platform/workflow metadata;
       - duplicate work-kind labels `bug` and `enhancement` have been deleted from the repo.
+
+## Phase 40: Add Harvested-Stem QMD Product Accounts to K3Z CT/Fert
+- [x] P40.1 Audit the current product-account export and runtime promotion path
+  - [x] P40.1a Trace how `product.*` labels and curves are exported for the active K3Z CT/fert family in `src/femic/fmg/patchworks.py`.
+  - [x] P40.1b Trace how `protoaccounts.csv -> accounts.csv` promotion currently handles `product` rows in `src/femic/patchworks_runtime.py`.
+- [x] P40.2 Add harvested-stem QMD product accounts for the active K3Z CT/fert family
+  - [x] P40.2a Define a naming contract for harvested-stem QMD `product` accounts that remains clearly distinct from the existing standing-stock `feature.QMD.*` surfaces.
+  - [x] P40.2b Export harvested-stem QMD product rows for `ctfert_l15h5` and `ctfert_l20h0` by AU and treatment type.
+- [x] P40.3 Validate the harvested-stem QMD product-account surface
+  - [x] P40.3a Add the matching AU/treatment treated-area companion rows needed to recover mean harvested diameter from the event-level QMD numerator surfaces.
+  - [x] P40.3b Regenerate the shipped `tracks_ctfert_l15h5/` and `tracks_ctfert_l20h0/` account surfaces and verify the new rows appear cleanly.
+- [x] P40.4 Add regression coverage and document the new CT/fert pilot surface
+  - [x] P40.4a Add tests covering the exporter/runtime logic and the shipped account names.
+  - [x] P40.4b Update docs, `CHANGE_LOG.md`, and GitHub issue #27 with the CT/fert pilot implementation details and the follow-on porting plan.
+  - [x] P40.4c Correct the CT/fert pilot to use live Patchworks RatioAccounts for harvested mean QMD.
+    - [x] P40.4c.i Rename the shipped harvested-QMD export rows to an internal numerator surface so the public `product.QMD.*` names are no longer raw area-weighted totals.
+    - [x] P40.4c.ii Add a BeanShell helper on the active `ctfert_*` launch surfaces that registers `product.QMD.*` as `control.addRatioAccount(...)` meta accounts with scale `1`.
+    - [x] P40.4c.iii Rebuild the active `ctfert_*` tracks and update the docs/tests so they describe `product.QMD.*` as runtime ratio accounts rather than direct checked-in `accounts.csv` rows.
+- [x] P40.5 Port the harvested-stem QMD product-account logic across the remaining active K3Z variants
+  - [x] P40.5a Decide which non-CT/fert variants should expose AU-wise harvested-stem QMD product rows and whether they need explicit opt-in config flags.
+  - [x] P40.5b Extend the validated account/docs surface beyond `ctfert_*` only after the CT/fert pilot contract has been accepted.
+  - Notes:
+    - Governing tracker:
+      - GitHub issue #27
+    - Final rollout boundary:
+      - the harvested-stem QMD product-account logic is now implemented for
+        all active K3Z launch surfaces:
+        - baseline `base`
+        - overlay subvariants `basecase_riparian`, `basecase_sum`,
+          `scenario1_sum`, and `scenario2_sum`
+        - CT/fert subvariants `ctfert_l15h5` and `ctfert_l20h0`
+        - PCT-only subvariants `pct_light`, `pct_moderate`, and
+          `pct_heavy`
+    - CT/fert pilot account contract:
+      - AU-wise event-level QMD numerator rows:
+        `product.QMDNumerator.managed.<au_token>.CC` and
+        `product.QMDNumerator.managed.<au_token>.CT`
+      - matching AU-wise treated-area companion rows:
+        `product.Treated.managed.<au_token>.CC` and
+        `product.Treated.managed.<au_token>.CT`
+      - live Patchworks ratio accounts:
+        `product.QMD.managed.<au_token>.CC` and
+        `product.QMD.managed.<au_token>.CT`
+      - mean harvested-stem diameter for a given AU/treatment combination is
+        exposed directly through those live `product.QMD.*` ratio accounts in
+        `cm`, using the AU/treatment harvested-QMD numerator over the matching
+        AU/treatment treated-area denominator with scale `1`.
+    - Baseline and overlay account contract:
+      - AU-wise harvested-QMD numerator rows:
+        `product.QMDNumerator.managed.<au_token>.CC`
+      - matching AU-wise treated-area rows:
+        `product.Treated.managed.<au_token>.CC`
+      - live Patchworks ratio accounts:
+        `product.QMD.managed.<au_token>.CC`
+    - PCT account contract:
+      - AU-wise harvested-QMD numerator rows:
+        `product.QMDNumerator.managed.<au_token>.PCT` and
+        `product.QMDNumerator.managed.<au_token>.CC`
+      - matching AU-wise treated-area rows:
+        `product.Treated.managed.<au_token>.PCT` and
+        `product.Treated.managed.<au_token>.CC`
+      - live Patchworks ratio accounts:
+        `product.QMD.managed.<au_token>.PCT` and
+        `product.QMD.managed.<au_token>.CC`
+    - Deferred refinement note:
+      - the current CT harvested-stem QMD logic still assumes the treatment
+        harvests a random subset of the standing stems because FEMIC does not
+        yet carry stem diameter distributions;
+      - when `nemora` integration lands, revisit this surface so CT can use a
+        diameter-distribution-aware thinning-from-below calculation rather than
+        the current random-subset simplification.
 
 
 
