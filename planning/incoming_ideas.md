@@ -54,5 +54,3 @@ Good queue hygiene
 - Prefer fewer, clearer entries over long duplicated lists of similar ideas.
 
 ---
-
-[feature] Extend QMD logic in the `ctfert_*` variant family of the K3Z instance to include `product` type Patchworks accounts (i.e., mean diameter of harvested stems, by AU and treatment type). Once that is done, port the QMD logic to all other variants in the K3Z instance.

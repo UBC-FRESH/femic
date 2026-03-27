@@ -101,6 +101,13 @@ When contributing to this repository as the coding agent:
 11. Treat GitHub issue hygiene as a required part of the development workflow:
    - before starting a new feature, bug, docs push, or other non-trivial task, ensure `gh` is
      available in the active shell and authenticated as the intended active GitHub user;
+   - use GitHub built-in issue `Type` as the canonical work-kind field for FEMIC issues:
+     `Bug`, `Feature`, or `Task`;
+   - do not mirror issue `Type` into duplicate work-kind labels such as `bug`, `enhancement`,
+     `feature`, or `task`;
+   - use labels only for orthogonal metadata that `Type` does not express, such as platform,
+     subsystem, or workflow tags (for example `documentation`, `windows`, `k3z`, `tsa29`,
+     `patchworks`, `data`, `good first issue`, `help wanted`);
    - use GitHub to find an existing relevant open issue first; if none exists, create a new issue
      (`feature`, `bug`, `docs`, or similar as appropriate) before substantial implementation;
    - link the governing GitHub issue in `ROADMAP.md` when the task becomes active so roadmap notes

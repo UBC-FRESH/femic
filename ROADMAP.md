@@ -6955,6 +6955,31 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - the regenerated `forestmodel_pct_light.xml`, `forestmodel_pct_moderate.xml`, and `forestmodel_pct_heavy.xml` all carry that attribute;
       - the rebuilt `tracks_pct_light`, `tracks_pct_moderate`, and `tracks_pct_heavy` surfaces now show `PCT ... ADJUST=R`.
 
+## Phase 39: Adopt GitHub Issue Type as FEMIC's Canonical Work-Kind Classifier
+- [x] P39.1 Publish the FEMIC issue metadata policy in repo maintainer docs
+  - [x] P39.1a Record that GitHub built-in `Type` is the canonical work-kind field using `Bug`, `Feature`, and `Task`.
+  - [x] P39.1b Record the small orthogonal label set that remains valid after the transition.
+- [x] P39.2 Normalize the live FEMIC GitHub label surface
+  - [x] P39.2a Add the orthogonal labels needed for current workflow coverage: `windows`, `k3z`, `tsa29`, `patchworks`, and `data`.
+  - [x] P39.2b Retire duplicate work-kind labels from active use, specifically `bug` and `enhancement`, once the open issue set has been backfilled with `Type`.
+- [x] P39.3 Backfill `Type` and orthogonal labels onto the open issue set
+  - [x] P39.3a Set built-in `Type` on the open FEMIC issue set, starting with `#11 -> Bug`, `#10 -> Task`, `#8 -> Task`, `#27 -> Feature`, and the governing rollout tracker `#28 -> Task`.
+  - [x] P39.3b Apply orthogonal labels only where they add domain or platform information, e.g. `windows`, `k3z`, `tsa29`, `patchworks`, `data`, and existing `documentation`.
+- [x] P39.4 Validate the new issue-metadata workflow and close out the tracker
+  - [x] P39.4a Confirm the repo can now answer `type:` and label-based queries cleanly without duplicate work-kind labels.
+  - [x] P39.4b Update `CHANGE_LOG.md` and GitHub issue `#28` with the completed rollout details and closeout rationale.
+  - Notes:
+    - Governing tracker:
+      - GitHub issue #28
+    - Confirmed live issue-type surface:
+      - `Task`
+      - `Bug`
+      - `Feature`
+    - Final rollout result:
+      - the open issue set now uses built-in `Type` for work kind;
+      - orthogonal labels are limited to domain/platform/workflow metadata;
+      - duplicate work-kind labels `bug` and `enhancement` have been deleted from the repo.
+
 
 
 
