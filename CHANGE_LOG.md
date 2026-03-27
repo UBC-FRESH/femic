@@ -7210,3 +7210,62 @@
 - Validation passed:
   - `python -m pytest tests/test_docs_contract.py`
   - `python -m sphinx -b html docs _build/html -W`
+
+## 2026-03-27 - Phase 47 Matrix Builder Window Automation Kickoff
+
+- Promoted the Matrix Builder window-automation idea from
+  `planning/incoming_ideas.md` into the normal tracked workflow under GitHub
+  issue `#44`.
+- Created the new working branch:
+  - `feature/matrix-builder-window-automation`
+- Defined the kickoff scope as automating closure of the Matrix Builder GUI
+  window for the local native-Windows coding-agent workflow, while preserving
+  log/manifest evidence and not masking real runtime failures.
+- Identified the likely implementation seam in the parent repo:
+  - `src/femic/patchworks_runtime.py`
+  - specifically the native-Windows noninteractive `run_patchworks_command(...)`
+    path used by `femic patchworks matrix-build`.
+
+## 2026-03-27 - Phase 47 Matrix Builder Window Automation Implemented
+
+- Added Windows-only supervised Matrix Builder execution in
+  `src/femic/patchworks_runtime.py` for noninteractive native-Windows
+  `femic patchworks matrix-build` runs.
+- Replaced the old simple blocking `subprocess.run(...)` behavior on that path
+  with a `Popen`-based supervisor that:
+  - watches for fresh output activity in the target tracks directory;
+  - attempts a narrow GUI close against matching Matrix Builder process
+    windows;
+  - force-stops the lingering Matrix Builder Java process if the visible window
+    ignores the normal close signal.
+- Added runtime-config control knobs:
+  - `matrix_builder.auto_close_window_on_success`
+  - `matrix_builder.auto_close_settle_seconds`
+  - `matrix_builder.auto_close_timeout_seconds`
+- Enabled those knobs in the parent Windows Patchworks runtime template and in
+  the shipped K3Z Windows runtime configs so the local coding-agent rebuild
+  workflow benefits immediately.
+- Expanded the emitted Matrix Builder manifest to record Windows automation
+  details, including launched PID, baseline/remaining matching process IDs,
+  close method, and any force-stopped PIDs.
+- Updated the parent onboarding/API docs plus the standalone K3Z operator
+  runbook so the new Windows behavior and its caveats are documented.
+- Validation passed:
+  - `pytest tests/test_patchworks_runtime.py`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - full `pytest`
+  - `pre-commit run --all-files`
+  - parent Sphinx build
+  - standalone K3Z Sphinx build
+- Live Windows proof:
+  - an initial smoke showed that `WM_CLOSE` / `.CloseMainWindow()` alone was
+    insufficient because the visible `Matrix Builder` window stayed open;
+  - the final smoke succeeded with `close_method = force_stop`, and the
+    `Matrix Builder` process/window disappeared without manual user
+    intervention;
+  - a residual follow-up then proved the lingering Patchworks launcher
+    `cmd.exe` shell tree can also be detected and cleaned up automatically, so
+    the local coding-agent workflow no longer depends on a human to dismiss
+    either visible window.

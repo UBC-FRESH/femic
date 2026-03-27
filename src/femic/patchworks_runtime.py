@@ -14,6 +14,7 @@ import shlex
 import shutil
 import subprocess
 import tempfile
+import time
 from typing import Any, Literal
 import xml.etree.ElementTree as et
 
@@ -62,6 +63,9 @@ class PatchworksRuntimeConfig:
     forestmodel_xml_path: Path
     accounts_exclude_regex: tuple[str, ...]
     harvested_volume_utilization_by_treatment: dict[str, float]
+    auto_close_window_on_success: bool
+    auto_close_settle_seconds: float
+    auto_close_timeout_seconds: float
 
 
 @dataclass(frozen=True)
@@ -253,6 +257,33 @@ def load_patchworks_runtime_config(path: Path) -> PatchworksRuntimeConfig:
             "matrix_builder.harvested_volume_utilization_by_treatment must be a "
             "mapping/object"
         )
+    auto_close_window_on_success = bool(
+        matrix_builder.get("auto_close_window_on_success", False)
+    )
+    try:
+        auto_close_settle_seconds = float(
+            matrix_builder.get("auto_close_settle_seconds", 2.0)
+        )
+    except (TypeError, ValueError) as exc:
+        raise PatchworksConfigError(
+            "matrix_builder.auto_close_settle_seconds must be numeric"
+        ) from exc
+    if auto_close_settle_seconds < 0.0:
+        raise PatchworksConfigError(
+            "matrix_builder.auto_close_settle_seconds must be >= 0.0"
+        )
+    try:
+        auto_close_timeout_seconds = float(
+            matrix_builder.get("auto_close_timeout_seconds", 10.0)
+        )
+    except (TypeError, ValueError) as exc:
+        raise PatchworksConfigError(
+            "matrix_builder.auto_close_timeout_seconds must be numeric"
+        ) from exc
+    if auto_close_timeout_seconds < 0.0:
+        raise PatchworksConfigError(
+            "matrix_builder.auto_close_timeout_seconds must be >= 0.0"
+        )
 
     return PatchworksRuntimeConfig(
         config_path=resolved_path,
@@ -269,6 +300,9 @@ def load_patchworks_runtime_config(path: Path) -> PatchworksRuntimeConfig:
         harvested_volume_utilization_by_treatment=(
             harvested_volume_utilization_by_treatment
         ),
+        auto_close_window_on_success=auto_close_window_on_success,
+        auto_close_settle_seconds=auto_close_settle_seconds,
+        auto_close_timeout_seconds=auto_close_timeout_seconds,
     )
 
 
@@ -602,6 +636,22 @@ def _matrix_output_ready(path: Path) -> bool:
     return path.exists() and any(path.iterdir())
 
 
+def _matrix_output_state(path: Path) -> tuple[bool, int, float]:
+    resolved = path.expanduser().resolve()
+    if not resolved.exists() or not resolved.is_dir():
+        return False, 0, 0.0
+    file_count = 0
+    latest_mtime = 0.0
+    for child in resolved.iterdir():
+        try:
+            stat = child.stat()
+        except FileNotFoundError:
+            continue
+        file_count += 1
+        latest_mtime = max(latest_mtime, float(stat.st_mtime))
+    return file_count > 0, file_count, latest_mtime
+
+
 def _detect_fatal_output(output_text: str) -> tuple[str, ...]:
     stderr_lower = output_text.lower()
     return tuple(
@@ -614,6 +664,336 @@ def _resolve_run_id(run_id: str | None) -> str:
         return run_id.strip()
     stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     return f"patchworks_{stamp}"
+
+
+def _close_windows_process_main_windows(process_id: int) -> int:
+    if not is_windows_host():
+        return 0
+
+    import ctypes
+    from ctypes import wintypes
+
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    WM_CLOSE = 0x0010
+    closed_count = 0
+
+    EnumWindowsProc = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+
+    def _callback(hwnd: int, _lparam: int) -> bool:
+        nonlocal closed_count
+        owner_pid = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner_pid))
+        if int(owner_pid.value) != int(process_id):
+            return True
+        if not user32.IsWindowVisible(hwnd):
+            return True
+        user32.PostMessageW(hwnd, WM_CLOSE, 0, 0)
+        closed_count += 1
+        return True
+
+    user32.EnumWindows(EnumWindowsProc(_callback), 0)
+    return closed_count
+
+
+def _load_windows_process_inventory() -> list[dict[str, Any]]:
+    if not is_windows_host():
+        return []
+    command = (
+        "Get-CimInstance Win32_Process | "
+        "ForEach-Object { "
+        "$gp = Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue; "
+        "[pscustomobject]@{ "
+        "ProcessId = $_.ProcessId; "
+        "ParentProcessId = $_.ParentProcessId; "
+        "Name = $_.Name; "
+        "CommandLine = $_.CommandLine; "
+        "MainWindowTitle = if ($gp) { $gp.MainWindowTitle } else { '' } "
+        "} "
+        "} | "
+        "ConvertTo-Json -Compress"
+    )
+    completed = subprocess.run(
+        ["powershell", "-NoProfile", "-Command", command],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if completed.returncode != 0 or not (completed.stdout or "").strip():
+        return []
+    payload = json.loads(completed.stdout)
+    if isinstance(payload, dict):
+        return [payload]
+    if isinstance(payload, list):
+        return payload
+    return []
+
+
+def _find_windows_matrix_builder_process_ids(
+    *, fragments_path: Path, matrix_output_dir: Path, forestmodel_xml_path: Path
+) -> set[int]:
+    if not is_windows_host():
+        return set()
+    required_substrings = (
+        "ca.spatial.tracks.builder.Process",
+        str(fragments_path),
+        str(matrix_output_dir),
+        str(forestmodel_xml_path),
+    )
+    out: set[int] = set()
+    for record in _load_windows_process_inventory():
+        name = str(record.get("Name", "")).lower()
+        if name not in {"java.exe", "javaw.exe", "java"}:
+            continue
+        command_line = str(record.get("CommandLine", "") or "")
+        if all(fragment in command_line for fragment in required_substrings):
+            try:
+                process_id = int(record["ProcessId"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            out.add(process_id)
+    return out
+
+
+def _find_windows_patchworks_shell_process_ids(
+    *, inventory: list[dict[str, Any]] | None = None
+) -> set[int]:
+    if not is_windows_host():
+        return set()
+    records = inventory if inventory is not None else _load_windows_process_inventory()
+    records_by_pid: dict[int, dict[str, Any]] = {}
+    children_by_parent: dict[int, set[int]] = {}
+    for record in records:
+        try:
+            pid = int(record["ProcessId"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        records_by_pid[pid] = record
+        try:
+            parent_pid = int(record["ParentProcessId"])
+        except (KeyError, TypeError, ValueError):
+            parent_pid = -1
+        children_by_parent.setdefault(parent_pid, set()).add(pid)
+
+    root_pids: set[int] = set()
+    for pid, record in records_by_pid.items():
+        name = str(record.get("Name", "")).lower()
+        if name not in {"cmd.exe", "cmd"}:
+            continue
+        command_line = str(record.get("CommandLine", "") or "")
+        main_window_title = str(record.get("MainWindowTitle", "") or "")
+        command_line_lower = command_line.lower()
+        main_window_title_lower = main_window_title.lower().strip()
+        if (
+            "ca.spatial.patchworks.patchworks" in command_line_lower
+            or main_window_title_lower == "ca.spatial.patchworks.patchworks"
+            or re.search(
+                r"[\\/](?:temp|tmp)[\\/]\s*sps\d+\.bat", command_line, re.IGNORECASE
+            )
+            or re.search(r"\bsps\d+\.bat\b", command_line, re.IGNORECASE)
+        ):
+            root_pids.add(pid)
+
+    matched: set[int] = set()
+    stack = list(root_pids)
+    while stack:
+        pid = stack.pop()
+        if pid in matched:
+            continue
+        matched.add(pid)
+        stack.extend(sorted(children_by_parent.get(pid, set())))
+    return matched
+
+
+def _force_stop_windows_process(process_id: int) -> bool:
+    if not is_windows_host():
+        return False
+    completed = subprocess.run(
+        ["taskkill", "/PID", str(process_id), "/T", "/F"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return completed.returncode == 0
+
+
+def _run_windows_matrix_builder_with_auto_close(
+    *,
+    command: tuple[str, ...],
+    env: dict[str, str],
+    cwd: Path,
+    stdout_log_path: Path,
+    stderr_log_path: Path,
+    fragments_path: Path,
+    matrix_output_dir: Path,
+    forestmodel_xml_path: Path,
+    auto_close_window_on_success: bool,
+    auto_close_settle_seconds: float,
+    auto_close_timeout_seconds: float,
+) -> tuple[int, dict[str, Any]]:
+    baseline_ready, baseline_file_count, baseline_latest_mtime = _matrix_output_state(
+        matrix_output_dir
+    )
+    baseline_state = (baseline_ready, baseline_file_count, baseline_latest_mtime)
+    baseline_process_ids = _find_windows_matrix_builder_process_ids(
+        fragments_path=fragments_path,
+        matrix_output_dir=matrix_output_dir,
+        forestmodel_xml_path=forestmodel_xml_path,
+    )
+    baseline_shell_process_ids = _find_windows_patchworks_shell_process_ids()
+    current_state = baseline_state
+    stable_since: float | None = None
+    close_attempted = False
+    close_method: str | None = None
+    closed_window_count = 0
+    force_stopped_pids: list[int] = []
+    shell_close_method: str | None = None
+    closed_shell_window_count = 0
+    force_stopped_shell_pids: list[int] = []
+    launched_pid: int | None = None
+
+    with (
+        stdout_log_path.open("w", encoding="utf-8") as stdout_handle,
+        stderr_log_path.open("w", encoding="utf-8") as stderr_handle,
+    ):
+        proc = subprocess.Popen(
+            list(command),
+            stdout=stdout_handle,
+            stderr=stderr_handle,
+            text=True,
+            env=env,
+            cwd=cwd,
+        )
+        launched_pid = int(proc.pid)
+        while True:
+            returncode = proc.poll()
+            if returncode is not None:
+                break
+
+            observed_state = _matrix_output_state(matrix_output_dir)
+            now = time.monotonic()
+            if observed_state != current_state:
+                current_state = observed_state
+                stable_since = now
+            elif stable_since is None:
+                stable_since = now
+
+            output_ready, _file_count, latest_mtime = observed_state
+            output_freshened = latest_mtime > baseline_latest_mtime
+            stable_long_enough = (
+                output_ready
+                and stable_since is not None
+                and (now - stable_since) >= auto_close_settle_seconds
+            )
+            if (
+                auto_close_window_on_success
+                and not close_attempted
+                and output_freshened
+                and stable_long_enough
+            ):
+                close_attempted = True
+                target_pids = (
+                    _find_windows_matrix_builder_process_ids(
+                        fragments_path=fragments_path,
+                        matrix_output_dir=matrix_output_dir,
+                        forestmodel_xml_path=forestmodel_xml_path,
+                    )
+                    - baseline_process_ids
+                )
+                if launched_pid is not None:
+                    target_pids.add(launched_pid)
+                target_pids = {pid for pid in target_pids if pid > 0}
+                for pid in sorted(target_pids):
+                    closed_window_count += _close_windows_process_main_windows(pid)
+                close_method = "wm_close" if closed_window_count else "force_stop"
+                try:
+                    returncode = proc.wait(timeout=auto_close_timeout_seconds)
+                except subprocess.TimeoutExpired:
+                    pass
+                lingering_pids = (
+                    _find_windows_matrix_builder_process_ids(
+                        fragments_path=fragments_path,
+                        matrix_output_dir=matrix_output_dir,
+                        forestmodel_xml_path=forestmodel_xml_path,
+                    )
+                    - baseline_process_ids
+                )
+                if launched_pid is not None:
+                    lingering_pids.add(launched_pid)
+                lingering_pids = {pid for pid in lingering_pids if pid > 0}
+                for pid in sorted(lingering_pids):
+                    if _force_stop_windows_process(pid):
+                        force_stopped_pids.append(pid)
+                if force_stopped_pids:
+                    close_method = "force_stop"
+                try:
+                    returncode = proc.wait(timeout=auto_close_timeout_seconds)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    close_method = "kill"
+                    returncode = proc.wait(timeout=auto_close_timeout_seconds)
+
+                current_shell_pids = (
+                    _find_windows_patchworks_shell_process_ids()
+                    - baseline_shell_process_ids
+                )
+                current_shell_pids = {pid for pid in current_shell_pids if pid > 0}
+                for pid in sorted(current_shell_pids):
+                    closed_shell_window_count += _close_windows_process_main_windows(
+                        pid
+                    )
+                if current_shell_pids:
+                    shell_close_method = (
+                        "wm_close" if closed_shell_window_count else "force_stop"
+                    )
+                time.sleep(0.25)
+                lingering_shell_pids = (
+                    _find_windows_patchworks_shell_process_ids()
+                    - baseline_shell_process_ids
+                )
+                lingering_shell_pids = {pid for pid in lingering_shell_pids if pid > 0}
+                for pid in sorted(lingering_shell_pids):
+                    if _force_stop_windows_process(pid):
+                        force_stopped_shell_pids.append(pid)
+                if force_stopped_shell_pids:
+                    shell_close_method = "force_stop"
+                break
+
+            time.sleep(0.25)
+
+    return returncode, {
+        "auto_close_window_on_success": auto_close_window_on_success,
+        "baseline_output_state": {
+            "ready": baseline_state[0],
+            "file_count": baseline_state[1],
+            "latest_mtime": baseline_state[2],
+        },
+        "baseline_process_ids": sorted(baseline_process_ids),
+        "baseline_shell_process_ids": sorted(baseline_shell_process_ids),
+        "launched_pid": launched_pid,
+        "final_output_state": {
+            "ready": current_state[0],
+            "file_count": current_state[1],
+            "latest_mtime": current_state[2],
+        },
+        "close_attempted": close_attempted,
+        "close_method": close_method,
+        "closed_window_count": closed_window_count,
+        "force_stopped_pids": force_stopped_pids,
+        "shell_close_method": shell_close_method,
+        "closed_shell_window_count": closed_shell_window_count,
+        "force_stopped_shell_pids": force_stopped_shell_pids,
+        "remaining_process_ids": sorted(
+            _find_windows_matrix_builder_process_ids(
+                fragments_path=fragments_path,
+                matrix_output_dir=matrix_output_dir,
+                forestmodel_xml_path=forestmodel_xml_path,
+            )
+            - baseline_process_ids
+        ),
+        "remaining_shell_process_ids": sorted(
+            _find_windows_patchworks_shell_process_ids() - baseline_shell_process_ids
+        ),
+    }
 
 
 def _resolve_accounts_backup_path(*, tracks_dir: Path) -> Path:
@@ -1047,17 +1427,39 @@ def run_patchworks_command(
     if preflight.host_mode == "windows":
         command_string = format_command_for_display(command)
 
-    proc = subprocess.run(
-        list(command),
-        capture_output=True,
-        text=True,
-        env=_build_base_env(config),
-        cwd=config.jar_path.parent if preflight.host_mode == "windows" else None,
-        check=False,
-    )
-
-    stdout_log.write_text(proc.stdout or "", encoding="utf-8")
-    stderr_log.write_text(proc.stderr or "", encoding="utf-8")
+    windows_automation: dict[str, Any] | None = None
+    if preflight.host_mode == "windows" and not interactive:
+        raw_returncode, windows_automation = (
+            _run_windows_matrix_builder_with_auto_close(
+                command=command,
+                env=_build_base_env(config),
+                cwd=config.jar_path.parent,
+                stdout_log_path=stdout_log,
+                stderr_log_path=stderr_log,
+                fragments_path=config.fragments_path,
+                matrix_output_dir=config.matrix_output_dir,
+                forestmodel_xml_path=config.forestmodel_xml_path,
+                auto_close_window_on_success=config.auto_close_window_on_success,
+                auto_close_settle_seconds=config.auto_close_settle_seconds,
+                auto_close_timeout_seconds=config.auto_close_timeout_seconds,
+            )
+        )
+        stdout_text = stdout_log.read_text(encoding="utf-8")
+        stderr_text = stderr_log.read_text(encoding="utf-8")
+    else:
+        proc = subprocess.run(
+            list(command),
+            capture_output=True,
+            text=True,
+            env=_build_base_env(config),
+            cwd=config.jar_path.parent if preflight.host_mode == "windows" else None,
+            check=False,
+        )
+        raw_returncode = proc.returncode
+        stdout_text = proc.stdout or ""
+        stderr_text = proc.stderr or ""
+        stdout_log.write_text(stdout_text, encoding="utf-8")
+        stderr_log.write_text(stderr_text, encoding="utf-8")
 
     failures: list[str] = []
     accounts_synced_path: Path | None = None
@@ -1065,7 +1467,7 @@ def run_patchworks_command(
     protoaccounts_path: Path | None = None
     accounts_sync_status = "not_requested"
     accounts_excluded_row_count = 0
-    output_for_scan = (proc.stderr or "") + "\n" + (proc.stdout or "")
+    output_for_scan = stderr_text + "\n" + stdout_text
     fatal_stderr_matches = _detect_fatal_output(output_for_scan)
     if fatal_stderr_matches:
         failures.append(
@@ -1101,7 +1503,7 @@ def run_patchworks_command(
         # Process.main(...) may dispatch background work and not return a stable process code.
         effective_returncode = 0
     else:
-        effective_returncode = proc.returncode
+        effective_returncode = raw_returncode
 
     manifest_payload = {
         "run_id": effective_run_id,
@@ -1109,7 +1511,7 @@ def run_patchworks_command(
         "interactive": interactive,
         "command": list(command),
         "command_string": command_string,
-        "raw_returncode": proc.returncode,
+        "raw_returncode": raw_returncode,
         "returncode": effective_returncode,
         "runtime": {
             "launcher_executable": preflight.launcher_executable,
@@ -1120,6 +1522,9 @@ def run_patchworks_command(
             "spshome": config.spshome,
             "use_xvfb": config.use_xvfb,
             "wine_prefix": str(config.wine_prefix) if config.wine_prefix else None,
+            "auto_close_window_on_success": config.auto_close_window_on_success,
+            "auto_close_settle_seconds": config.auto_close_settle_seconds,
+            "auto_close_timeout_seconds": config.auto_close_timeout_seconds,
         },
         "inputs": {
             "fragments_path": str(config.fragments_path),
@@ -1147,6 +1552,7 @@ def run_patchworks_command(
             "stdout": str(stdout_log),
             "stderr": str(stderr_log),
         },
+        "windows_automation": windows_automation,
         "failures": failures,
     }
     manifest_path.write_text(json.dumps(manifest_payload, indent=2), encoding="utf-8")

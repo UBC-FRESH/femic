@@ -10,3 +10,6 @@ matrix_builder:
   fragments_path: ../output/patchworks_k3z_validated/fragments/fragments.dbf
   output_dir: ../models/k3z_patchworks_model/tracks
   forestmodel_xml_path: ../output/patchworks_k3z_validated/forestmodel.xml
+  auto_close_window_on_success: true
+  auto_close_settle_seconds: 2.0
+  auto_close_timeout_seconds: 10.0
