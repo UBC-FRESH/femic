@@ -2301,16 +2301,19 @@ def build_patchworks_forestmodel_definition(
                     residual_fraction = 1.0
                     if source_total_stems > 0.0 and removed_stems > 0.0:
                         residual_fraction = max(
-                            0.0, (source_total_stems - removed_stems) / source_total_stems
+                            0.0,
+                            (source_total_stems - removed_stems) / source_total_stems,
                         )
                     pct_stems_curve_ref = (
                         f"au_{au_token}_managed_"
                         f"{_sanitize_id_component(str(pct_config['to_state']))}_stems_per_ha"
                     )
-                    pct_stems_curve_points = _build_curve_with_post_transition_multiplier(
-                        source_curve_points=managed_stems_curve_points,
-                        transition_age=int(pct_config["pct_age"]),
-                        multiplier=residual_fraction,
+                    pct_stems_curve_points = (
+                        _build_curve_with_post_transition_multiplier(
+                            source_curve_points=managed_stems_curve_points,
+                            transition_age=int(pct_config["pct_age"]),
+                            multiplier=residual_fraction,
+                        )
                     )
                     curves[pct_stems_curve_ref] = pct_stems_curve_points
                     pct_feature_attrs.append(
@@ -2608,10 +2611,14 @@ def build_patchworks_forestmodel_definition(
                     ct_stems_curve_ref = (
                         f"au_{au_token}_managed_{state_slug}_stems_per_ha"
                     )
-                    ct_stems_curve_points = _build_curve_with_post_transition_multiplier(
-                        source_curve_points=ct_stems_source_points,
-                        transition_age=ct_age,
-                        multiplier=max(0.0, 1.0 - float(ct_config["removal_fraction"])),
+                    ct_stems_curve_points = (
+                        _build_curve_with_post_transition_multiplier(
+                            source_curve_points=ct_stems_source_points,
+                            transition_age=ct_age,
+                            multiplier=max(
+                                0.0, 1.0 - float(ct_config["removal_fraction"])
+                            ),
+                        )
                     )
                     curves[ct_stems_curve_ref] = ct_stems_curve_points
                     ct_residual_attrs.append(

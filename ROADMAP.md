@@ -927,6 +927,26 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-27 (Phase 42 complete): Issue 33 on branch
+  `feature/k3z-stems-per-ha-accounts` now exports AU-wise standing
+  stems-per-ha surfaces across the active K3Z family.
+  - Outcome:
+    - added `feature.StemsPerHa.{managed,unmanaged}.<au_token>` surfaces to
+      baseline, `ctfert_*`, `pct_*`, and the baseline-derived overlays;
+    - rebuilt the K3Z ForestModel XML family and all shipped tracks/account
+      surfaces so `main` will deliver the new rows directly;
+    - normalized `feature.StemsPerHa.*` accounts downstream during
+      `protoaccounts.csv -> accounts.csv` promotion so they read as standing
+      stems per hectare instead of total stem counts.
+  - Validation completed:
+    - targeted exporter/runtime regression tests;
+    - full repo gates (`ruff format`, `ruff check`, `mypy`, `pytest`,
+      `pre-commit`);
+    - parent and standalone K3Z Sphinx builds;
+    - Matrix Builder reruns across baseline, CT/fert, PCT, and overlay
+      runtime configs;
+    - account-surface spot checks for baseline, `ctfert_l15h5`, and
+      `pct_light`.
 - 2026-03-27 (Phase 42 kickoff): start Issue 33 on branch
   `feature/k3z-stems-per-ha-accounts` to add standing stems-per-ha
   curves/attributes/accounts across the active K3Z launch surfaces.
@@ -7211,23 +7231,23 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - `python -m pytest tests/test_patchworks_runtime.py`
 
 ## Phase 42: Add Stems-Per-Ha Curves, Attributes, and Accounts to Active K3Z Variants
-- [ ] P42.1 Audit current stems-per-ha source data and exporter seams
-  - [ ] P42.1a Trace the best available managed and unmanaged stems-per-ha
+- [x] P42.1 Audit current stems-per-ha source data and exporter seams
+  - [x] P42.1a Trace the best available managed and unmanaged stems-per-ha
     support data already present in the K3Z handoff artifacts and
     `src/femic/fmg/adapters.py`.
-  - [ ] P42.1b Confirm where the Patchworks exporter should bind standing
+  - [x] P42.1b Confirm where the Patchworks exporter should bind standing
     stems-per-ha feature surfaces without colliding with the existing yield,
     harvested-volume, and QMD account contracts.
-- [ ] P42.2 Define and implement the standing stems-per-ha account contract
-  - [ ] P42.2a Add AU-wise `feature.StemsPerHa.managed.<au_token>` and
+- [x] P42.2 Define and implement the standing stems-per-ha account contract
+  - [x] P42.2a Add AU-wise `feature.StemsPerHa.managed.<au_token>` and
     `feature.StemsPerHa.unmanaged.<au_token>` surfaces for the active K3Z
     variants.
-  - [ ] P42.2b Extend the shipped baseline, CT/fert, PCT, and overlay K3Z
+  - [x] P42.2b Extend the shipped baseline, CT/fert, PCT, and overlay K3Z
     tracks/account surfaces so downstream users get the new rows from `main`.
-- [ ] P42.3 Validate and document the stems-per-ha rollout
-  - [ ] P42.3a Add regression coverage for the exporter/runtime/account-surface
+- [x] P42.3 Validate and document the stems-per-ha rollout
+  - [x] P42.3a Add regression coverage for the exporter/runtime/account-surface
     changes.
-  - [ ] P42.3b Update user-facing K3Z docs, `CHANGE_LOG.md`, and GitHub issue
+  - [x] P42.3b Update user-facing K3Z docs, `CHANGE_LOG.md`, and GitHub issue
     #33 with source provenance, meaning, and validation results.
   - Notes:
     - Governing tracker:
@@ -7243,6 +7263,16 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         QMD surfaces
     - Current branch:
       - `feature/k3z-stems-per-ha-accounts`
+    - Final rollout behavior:
+      - managed baseline/planted stems use accepted TIPSY `TPH` support where
+        available, falling back to checkpoint-derived AU stems/ha when needed;
+      - unmanaged stems use the checkpoint-derived AU median
+        `STEMS_PER_HA_75`;
+      - `PCT` states scale the planted stems surface by the configured
+        residual-stems fraction from age 10 onward;
+      - `CT` states scale the current planted stems surface by
+        `(1 - removal_fraction)` from CT age onward;
+      - fert states carry the same standing stems surface forward unchanged.
 
 
 

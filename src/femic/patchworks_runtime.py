@@ -731,8 +731,8 @@ def _resolve_area_normalized_feature_account_sum_overrides(
         managed_area = area_by_au_and_ifm.get(("managed", au_id), 0.0)
         unmanaged_area = area_by_au_and_ifm.get(("unmanaged", au_id), 0.0)
         if managed_area > 0.0:
-            overrides[f"{label_prefix}.managed.{token}"] = _format_account_sum_multiplier(
-                1.0 / managed_area
+            overrides[f"{label_prefix}.managed.{token}"] = (
+                _format_account_sum_multiplier(1.0 / managed_area)
             )
         if unmanaged_area > 0.0:
             overrides[f"{label_prefix}.unmanaged.{token}"] = (

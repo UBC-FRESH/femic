@@ -1000,7 +1000,9 @@ def test_build_forestmodel_xml_tree_from_context_adds_stems_per_ha_features() ->
     assert "au_CWHvm_FDC_HW_M_managed_cc_pl_ct_stems_per_ha" in xml_text
 
 
-def test_build_forestmodel_xml_tree_from_context_adds_pct_stems_per_ha_features() -> None:
+def test_build_forestmodel_xml_tree_from_context_adds_pct_stems_per_ha_features() -> (
+    None
+):
     context = _build_single_au_context(
         au_id=985502001,
         stratum_code="CWHvm_FDC+HW",
