@@ -6907,3 +6907,23 @@
   - `tests/test_patchworks_runtime.py`
 - Targeted validation passed:
   - `python -m pytest tests/test_patchworks_runtime.py`
+
+## 2026-03-27 - Phase 42 Stems-Per-Ha Kickoff
+
+- Promoted the next K3Z teaching-model idea into the normal tracked workflow
+  under GitHub issue `#33`.
+- Created the new working branch:
+  - `feature/k3z-stems-per-ha-accounts`
+- Defined the initial rollout target as standing stems-per-ha
+  curves/attributes/accounts across the active K3Z launch surfaces:
+  - baseline `base`
+  - CT/fert `ctfert_l15h5` and `ctfert_l20h0`
+  - PCT-only `pct_light`, `pct_moderate`, and `pct_heavy`
+  - baseline-derived overlays if the standing account contract is shared
+- Current implementation intent:
+  - reuse the best available managed/unmanaged stems-per-ha support data
+    already present in the K3Z handoff artifacts where possible
+  - add AU-wise `feature.StemsPerHa.managed.<au_token>` and
+    `feature.StemsPerHa.unmanaged.<au_token>` surfaces
+  - regenerate the shipped K3Z account surfaces so downstream users pulling
+    from `main` receive the new rows immediately after merge

@@ -34,6 +34,9 @@ FATAL_MATRIX_STDERR_PATTERNS = (
 QMD_ACCOUNT_PATTERN = re.compile(
     r"^feature\.QMD\.(managed|unmanaged)\.([A-Za-z0-9_.]+)$"
 )
+STEMS_PER_HA_ACCOUNT_PATTERN = re.compile(
+    r"^feature\.StemsPerHa\.(managed|unmanaged)\.([A-Za-z0-9_.]+)$"
+)
 HARVESTED_VOLUME_ACCOUNT_PATTERN = re.compile(
     r"^product\.HarvestedVolume\.managed\..+\.([A-Z0-9_]+)$"
 )
@@ -630,8 +633,10 @@ def _parse_account_sum_multiplier(value: str) -> float:
         return 1.0
 
 
-def _load_qmd_au_id_by_token_from_forestmodel(
-    *, forestmodel_xml_path: Path
+def _load_feature_account_au_id_by_token_from_forestmodel(
+    *,
+    forestmodel_xml_path: Path,
+    pattern: re.Pattern[str],
 ) -> dict[str, int]:
     resolved = forestmodel_xml_path.expanduser().resolve()
     if not resolved.exists():
@@ -646,10 +651,10 @@ def _load_qmd_au_id_by_token_from_forestmodel(
         au_id = int(match.group(1))
         for attribute_node in select_node.findall("./features/attribute"):
             label = str(attribute_node.get("label", ""))
-            qmd_match = QMD_ACCOUNT_PATTERN.match(label)
-            if qmd_match is None:
+            feature_match = pattern.match(label)
+            if feature_match is None:
                 continue
-            token = qmd_match.group(2)
+            token = feature_match.group(2)
             prior = out.get(token)
             if prior is None or prior == au_id:
                 out[token] = au_id
@@ -702,13 +707,16 @@ def _load_fragments_area_by_au_and_ifm(
     return out
 
 
-def _resolve_qmd_account_sum_overrides(
+def _resolve_area_normalized_feature_account_sum_overrides(
     *,
     fragments_path: Path,
     forestmodel_xml_path: Path,
+    pattern: re.Pattern[str],
+    label_prefix: str,
 ) -> dict[str, str]:
-    au_id_by_token = _load_qmd_au_id_by_token_from_forestmodel(
-        forestmodel_xml_path=forestmodel_xml_path
+    au_id_by_token = _load_feature_account_au_id_by_token_from_forestmodel(
+        forestmodel_xml_path=forestmodel_xml_path,
+        pattern=pattern,
     )
     if not au_id_by_token:
         return {}
@@ -723,14 +731,40 @@ def _resolve_qmd_account_sum_overrides(
         managed_area = area_by_au_and_ifm.get(("managed", au_id), 0.0)
         unmanaged_area = area_by_au_and_ifm.get(("unmanaged", au_id), 0.0)
         if managed_area > 0.0:
-            overrides[f"feature.QMD.managed.{token}"] = _format_account_sum_multiplier(
+            overrides[f"{label_prefix}.managed.{token}"] = _format_account_sum_multiplier(
                 1.0 / managed_area
             )
         if unmanaged_area > 0.0:
-            overrides[f"feature.QMD.unmanaged.{token}"] = (
+            overrides[f"{label_prefix}.unmanaged.{token}"] = (
                 _format_account_sum_multiplier(1.0 / unmanaged_area)
             )
     return overrides
+
+
+def _resolve_qmd_account_sum_overrides(
+    *,
+    fragments_path: Path,
+    forestmodel_xml_path: Path,
+) -> dict[str, str]:
+    return _resolve_area_normalized_feature_account_sum_overrides(
+        fragments_path=fragments_path,
+        forestmodel_xml_path=forestmodel_xml_path,
+        pattern=QMD_ACCOUNT_PATTERN,
+        label_prefix="feature.QMD",
+    )
+
+
+def _resolve_stems_per_ha_account_sum_overrides(
+    *,
+    fragments_path: Path,
+    forestmodel_xml_path: Path,
+) -> dict[str, str]:
+    return _resolve_area_normalized_feature_account_sum_overrides(
+        fragments_path=fragments_path,
+        forestmodel_xml_path=forestmodel_xml_path,
+        pattern=STEMS_PER_HA_ACCOUNT_PATTERN,
+        label_prefix="feature.StemsPerHa",
+    )
 
 
 def _resolve_harvested_volume_sum_multiplier(
@@ -862,6 +896,10 @@ def _promote_protoaccounts_to_accounts(
         QMD_ACCOUNT_PATTERN.match(str(row.get("ATTRIBUTE", ""))) is not None
         for row in rows
     )
+    has_stems_per_ha_rows = any(
+        STEMS_PER_HA_ACCOUNT_PATTERN.match(str(row.get("ATTRIBUTE", ""))) is not None
+        for row in rows
+    )
     utilization_by_treatment = harvested_volume_utilization_by_treatment or {}
     qmd_sum_overrides = (
         _resolve_qmd_account_sum_overrides(
@@ -871,7 +909,16 @@ def _promote_protoaccounts_to_accounts(
         if has_qmd_rows
         else {}
     )
-    if not exclude_regex and not qmd_sum_overrides and not utilization_by_treatment:
+    stems_per_ha_sum_overrides = (
+        _resolve_stems_per_ha_account_sum_overrides(
+            fragments_path=fragments_path,
+            forestmodel_xml_path=forestmodel_xml_path,
+        )
+        if has_stems_per_ha_rows
+        else {}
+    )
+    feature_sum_overrides = {**qmd_sum_overrides, **stems_per_ha_sum_overrides}
+    if not exclude_regex and not feature_sum_overrides and not utilization_by_treatment:
         shutil.copy2(protoaccounts_path, accounts_path)
         return accounts_path, backup_path, protoaccounts_path, 0
 
@@ -888,8 +935,8 @@ def _promote_protoaccounts_to_accounts(
             ):
                 excluded_count += 1
                 continue
-            if attribute in qmd_sum_overrides:
-                row["SUM"] = qmd_sum_overrides[attribute]
+            if attribute in feature_sum_overrides:
+                row["SUM"] = feature_sum_overrides[attribute]
             utilization_multiplier = _resolve_harvested_volume_sum_multiplier(
                 attribute=attribute,
                 harvested_volume_utilization_by_treatment=utilization_by_treatment,
