@@ -8,14 +8,22 @@ import pandas as pd
 import pytest
 from shapely.geometry import Polygon
 
-from femic.fmg.core import CurvePoint
+from femic.fmg.core import (
+    AnalysisUnitDefinition,
+    BundleModelContext,
+    CurveDefinition,
+    CurvePoint,
+    QmdSupportDefinition,
+)
 from femic.fmg.patchworks import (
     _au_base_display_label,
     _build_curve_with_post_thinning_gap,
     _build_qmd_curve_points,
+    _build_stems_per_ha_curve_points,
     _estimate_qmd_cm_from_volume,
     _sanitize_id_component,
     build_fragments_geodataframe,
+    build_forestmodel_xml_tree_from_context,
     build_patchworks_forestmodel_definition,
     build_forestmodel_xml_tree,
     export_patchworks_package,
@@ -76,6 +84,63 @@ def _write_bundle_tables(bundle_dir: Path) -> None:
     ).to_csv(bundle_dir / "curve_points_table.csv", index=False)
 
 
+def _build_single_au_context(
+    *,
+    au_id: int,
+    stratum_code: str,
+    si_level: str,
+    unmanaged_points: tuple[CurvePoint, ...],
+    managed_points: tuple[CurvePoint, ...],
+    managed_species_curve_ids: dict[str, int] | None = None,
+    unmanaged_species_curve_ids: dict[str, int] | None = None,
+    curve_points_by_id: dict[int, tuple[CurvePoint, ...]] | None = None,
+    qmd_support: QmdSupportDefinition | None = None,
+) -> BundleModelContext:
+    managed_curve_id = au_id + 20000
+    managed_species_curve_ids = managed_species_curve_ids or {}
+    unmanaged_species_curve_ids = unmanaged_species_curve_ids or {}
+    curve_points_by_id = curve_points_by_id or {}
+    curves_by_id: dict[int, CurveDefinition] = {
+        au_id: CurveDefinition(
+            curve_id=au_id,
+            curve_type="unmanaged",
+            points=unmanaged_points,
+        ),
+        managed_curve_id: CurveDefinition(
+            curve_id=managed_curve_id,
+            curve_type="managed",
+            points=managed_points,
+        ),
+    }
+    for curve_id, points in curve_points_by_id.items():
+        curve_type = "managed_species_prop_CW"
+        if curve_id in unmanaged_species_curve_ids.values():
+            curve_type = "unmanaged_species_prop_CW"
+        curves_by_id[curve_id] = CurveDefinition(
+            curve_id=curve_id,
+            curve_type=curve_type,
+            points=points,
+        )
+    return BundleModelContext(
+        tsa_list=["k3z"],
+        analysis_units=(
+            AnalysisUnitDefinition(
+                au_id=au_id,
+                tsa="k3z",
+                stratum_code=stratum_code,
+                si_level=si_level,
+                managed_curve_id=managed_curve_id,
+                unmanaged_curve_id=au_id,
+            ),
+        ),
+        curves_by_id=curves_by_id,
+        managed_species_curve_ids={managed_curve_id: managed_species_curve_ids},
+        unmanaged_species_curve_ids={au_id: unmanaged_species_curve_ids},
+        qmd_support_by_au={au_id: qmd_support or QmdSupportDefinition()},
+        curve_row_count=len(curves_by_id),
+    )
+
+
 def test_estimate_qmd_cm_from_volume_returns_plausible_positive_value() -> None:
     qmd_cm = _estimate_qmd_cm_from_volume(
         stand_volume_m3_per_ha=300.0,
@@ -103,6 +168,20 @@ def test_build_qmd_curve_points_uses_height_and_tph_inputs() -> None:
         ),
     )
     assert [point.y for point in points] == pytest.approx([18.6, 24.4], rel=1e-3)
+
+
+def test_build_stems_per_ha_curve_points_uses_tph_inputs() -> None:
+    points = _build_stems_per_ha_curve_points(
+        source_curve_points=(
+            CurvePoint(x=10.0, y=40.0),
+            CurvePoint(x=20.0, y=120.0),
+        ),
+        tph_curve_points=(
+            CurvePoint(x=10.0, y=800.0),
+            CurvePoint(x=20.0, y=700.0),
+        ),
+    )
+    assert [point.y for point in points] == pytest.approx([800.0, 700.0], rel=1e-3)
 
 
 def test_build_forestmodel_xml_tree_contains_cc_and_curve_refs() -> None:
@@ -680,6 +759,9 @@ def test_build_forestmodel_xml_tree_adds_ct_track_and_qmd_when_configured() -> N
             "enabled": True,
             "harvested_product_accounts_enabled": True,
         },
+        "stems_per_ha": {
+            "enabled": True,
+        },
     }
 
     root = build_forestmodel_xml_tree(
@@ -813,6 +895,9 @@ def test_build_forestmodel_xml_tree_adds_pct_then_ct_variant_path() -> None:
             "enabled": True,
             "harvested_product_accounts_enabled": True,
         },
+        "stems_per_ha": {
+            "enabled": True,
+        },
     }
 
     root = build_forestmodel_xml_tree(
@@ -853,6 +938,130 @@ def test_build_forestmodel_xml_tree_adds_pct_then_ct_variant_path() -> None:
     assert "au_CWHvm_FDC_HW_M_managed_cc_pl_pct_yield_HW" not in xml_text
     assert "au_CWHvm_FDC_HW_M_managed_cc_pl_pct_yield_FD" in xml_text
     assert "product.Treated.managed.F1" not in xml_text
+
+
+def test_build_forestmodel_xml_tree_from_context_adds_stems_per_ha_features() -> None:
+    context = _build_single_au_context(
+        au_id=985502001,
+        stratum_code="CWHvm_FDC+HW",
+        si_level="M",
+        unmanaged_points=(
+            CurvePoint(x=1.0, y=8.0),
+            CurvePoint(x=40.0, y=200.0),
+            CurvePoint(x=100.0, y=320.0),
+        ),
+        managed_points=(
+            CurvePoint(x=1.0, y=10.0),
+            CurvePoint(x=40.0, y=260.0),
+            CurvePoint(x=100.0, y=400.0),
+        ),
+        managed_species_curve_ids={"CW": 985522001001, "HW": 985522001002},
+        unmanaged_species_curve_ids={"CW": 985502001001, "HW": 985502001002},
+        curve_points_by_id={
+            985522001001: (CurvePoint(x=1.0, y=0.25),),
+            985522001002: (CurvePoint(x=1.0, y=0.75),),
+            985502001001: (CurvePoint(x=1.0, y=0.20),),
+            985502001002: (CurvePoint(x=1.0, y=0.80),),
+        },
+        qmd_support=QmdSupportDefinition(
+            unmanaged_stems_per_ha=500.0,
+            managed_tph_points=(
+                CurvePoint(x=1.0, y=1200.0),
+                CurvePoint(x=40.0, y=800.0),
+                CurvePoint(x=100.0, y=500.0),
+            ),
+        ),
+    )
+    silviculture_config = {
+        "commercial_thinning": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "from_state": "cc_pl",
+            "to_state": "cc_pl_ct",
+            "ct_age": 40,
+            "age_by_au": {"985502001": 40},
+            "basal_area_removal_fraction": 0.30,
+            "basal_area_to_volume_ratio": 1.0,
+        },
+        "stems_per_ha": {
+            "enabled": True,
+        },
+    }
+
+    root = build_forestmodel_xml_tree_from_context(
+        context=context,
+        silviculture_config=silviculture_config,
+    )
+    xml_text = et.tostring(root, encoding="unicode")
+    assert "feature.StemsPerHa.managed.CWHvm_FDC_HW_M" in xml_text
+    assert "feature.StemsPerHa.unmanaged.CWHvm_FDC_HW_M" in xml_text
+    assert "au_CWHvm_FDC_HW_M_managed_stems_per_ha" in xml_text
+    assert "au_CWHvm_FDC_HW_M_unmanaged_stems_per_ha" in xml_text
+    assert "au_CWHvm_FDC_HW_M_managed_cc_pl_ct_stems_per_ha" in xml_text
+
+
+def test_build_forestmodel_xml_tree_from_context_adds_pct_stems_per_ha_features() -> (
+    None
+):
+    context = _build_single_au_context(
+        au_id=985502001,
+        stratum_code="CWHvm_FDC+HW",
+        si_level="M",
+        unmanaged_points=(
+            CurvePoint(x=1.0, y=8.0),
+            CurvePoint(x=40.0, y=200.0),
+            CurvePoint(x=100.0, y=320.0),
+        ),
+        managed_points=(
+            CurvePoint(x=1.0, y=10.0),
+            CurvePoint(x=10.0, y=120.0),
+            CurvePoint(x=40.0, y=260.0),
+            CurvePoint(x=100.0, y=400.0),
+        ),
+        managed_species_curve_ids={"FD": 985522001001, "HW": 985522001002},
+        unmanaged_species_curve_ids={"FD": 985502001001, "HW": 985502001002},
+        curve_points_by_id={
+            985522001001: (CurvePoint(x=1.0, y=0.225),),
+            985522001002: (CurvePoint(x=1.0, y=0.775),),
+            985502001001: (CurvePoint(x=1.0, y=0.20),),
+            985502001002: (CurvePoint(x=1.0, y=0.80),),
+        },
+        qmd_support=QmdSupportDefinition(
+            unmanaged_stems_per_ha=500.0,
+            managed_tph_points=(
+                CurvePoint(x=1.0, y=4000.0),
+                CurvePoint(x=10.0, y=4000.0),
+                CurvePoint(x=40.0, y=2200.0),
+                CurvePoint(x=100.0, y=800.0),
+            ),
+        ),
+    )
+    silviculture_config = {
+        "pre_commercial_thinning": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "from_state": "cc_pl",
+            "to_state": "cc_pl_pct",
+            "age_by_au": {"985502001": 10},
+            "source_total_stems_per_ha": 4000,
+            "remove_species": ["HW"],
+            "remove_stems_per_ha": {"HW": 1000},
+        },
+        "commercial_thinning": {
+            "enabled": False,
+        },
+        "stems_per_ha": {
+            "enabled": True,
+        },
+    }
+
+    root = build_forestmodel_xml_tree_from_context(
+        context=context,
+        silviculture_config=silviculture_config,
+    )
+    xml_text = et.tostring(root, encoding="unicode")
+    assert "feature.StemsPerHa.managed.CWHvm_FDC_HW_M" in xml_text
+    assert "au_CWHvm_FDC_HW_M_managed_cc_pl_pct_stems_per_ha" in xml_text
 
 
 def test_build_forestmodel_xml_tree_supports_per_au_fert_response_overrides() -> None:

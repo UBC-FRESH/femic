@@ -6907,3 +6907,75 @@
   - `tests/test_patchworks_runtime.py`
 - Targeted validation passed:
   - `python -m pytest tests/test_patchworks_runtime.py`
+
+## 2026-03-27 - Phase 42 Stems-Per-Ha Kickoff
+
+- Promoted the next K3Z teaching-model idea into the normal tracked workflow
+  under GitHub issue `#33`.
+- Created the new working branch:
+  - `feature/k3z-stems-per-ha-accounts`
+- Defined the initial rollout target as standing stems-per-ha
+  curves/attributes/accounts across the active K3Z launch surfaces:
+  - baseline `base`
+  - CT/fert `ctfert_l15h5` and `ctfert_l20h0`
+  - PCT-only `pct_light`, `pct_moderate`, and `pct_heavy`
+  - baseline-derived overlays if the standing account contract is shared
+- Current implementation intent:
+  - reuse the best available managed/unmanaged stems-per-ha support data
+    already present in the K3Z handoff artifacts where possible
+  - add AU-wise `feature.StemsPerHa.managed.<au_token>` and
+    `feature.StemsPerHa.unmanaged.<au_token>` surfaces
+  - regenerate the shipped K3Z account surfaces so downstream users pulling
+    from `main` receive the new rows immediately after merge
+
+## 2026-03-27 - Phase 42 Stems-Per-Ha Rollout
+
+- Added AU-wise standing stems-per-ha support to the active K3Z family:
+  - baseline `base`
+  - `ctfert_l15h5`
+  - `ctfert_l20h0`
+  - `pct_light`
+  - `pct_moderate`
+  - `pct_heavy`
+  - baseline-derived overlays that reuse the baseline account contract
+- Exporter/runtime implementation:
+  - added `feature.StemsPerHa.managed.<au_token>` and
+    `feature.StemsPerHa.unmanaged.<au_token>` support in
+    `src/femic/fmg/patchworks.py`
+  - normalized `feature.StemsPerHa.*` rows during
+    `protoaccounts.csv -> accounts.csv` promotion in
+    `src/femic/patchworks_runtime.py` so the shipped accounts read as standing
+    stems/ha rather than total stem counts
+  - used accepted TIPSY `TPH` support for managed stems where available and
+    checkpoint-derived AU medians for unmanaged/fallback support
+  - carried treatment-state stems forward with simple teaching-model rules:
+    `PCT` scales by residual-stems fraction, `CT` scales by
+    `(1 - removal_fraction)`, and fert leaves standing stems unchanged
+- Rebuilt the shipped K3Z ForestModel XML family:
+  - `forestmodel.xml`
+  - `forestmodel_ctfert_l15h5.xml`
+  - `forestmodel_ctfert_l20h0.xml`
+  - `forestmodel_pct_light.xml`
+  - `forestmodel_pct_moderate.xml`
+  - `forestmodel_pct_heavy.xml`
+- Rebuilt Matrix Builder outputs for baseline, CT/fert, PCT, and all four
+  overlay surfaces so downstream users pulling from `main` get refreshed
+  `features.csv`, `protoaccounts.csv`, and `accounts.csv` files immediately
+- Updated user-facing K3Z docs:
+  - `external/femic-k3z-instance/docs/model-anatomy.rst`
+  - `external/femic-k3z-instance/docs/operator-runbook.rst`
+  - `external/femic-k3z-instance/docs/variants-and-subvariants.rst`
+- Validation completed:
+  - targeted regression checks for stems-per-ha exporter/runtime logic
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+  - parent Sphinx build
+  - standalone K3Z Sphinx build
+  - Matrix Builder reruns for all active K3Z runtime configs
+  - `femic instance account-surface` spot checks:
+    - baseline `accounts=311 species=7 complete_species=7 au=14`
+    - `ctfert_l15h5` `accounts=308 species=6 complete_species=6 au=14`
+    - `pct_light` `accounts=318 species=7 complete_species=7 au=14`

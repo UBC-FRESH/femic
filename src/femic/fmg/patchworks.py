@@ -1033,6 +1033,32 @@ def _build_qmd_curve_points(
     return tuple(out)
 
 
+def _build_stems_per_ha_curve_points(
+    *,
+    source_curve_points: tuple[CurvePoint, ...],
+    tph_curve_points: tuple[CurvePoint, ...] = (),
+    stems_per_ha: float | None = None,
+) -> tuple[CurvePoint, ...]:
+    x_values = sorted(
+        {
+            float(point.x)
+            for point in source_curve_points
+            if math.isfinite(float(point.x)) and float(point.x) >= 0.0
+        }
+    )
+    if not x_values:
+        x_values = [0.0, 100.0]
+    out: list[CurvePoint] = []
+    for x_val in x_values:
+        stems = _estimate_qmd_stems_per_ha(
+            age=float(x_val),
+            tph_curve_points=tph_curve_points,
+            stems_per_ha=stems_per_ha,
+        )
+        out.append(CurvePoint(x=float(x_val), y=round(max(0.0, stems), 1)))
+    return tuple(out)
+
+
 def _build_constant_curve_points_like(
     *,
     source_curve_points: tuple[CurvePoint, ...],
@@ -1049,6 +1075,24 @@ def _build_constant_curve_points_like(
         x_values = [0.0, 100.0]
     y_val = round(max(0.0, float(value)), 1)
     return tuple(CurvePoint(x=x_val, y=y_val) for x_val in x_values)
+
+
+def _build_curve_with_post_transition_multiplier(
+    *,
+    source_curve_points: tuple[CurvePoint, ...],
+    transition_age: int,
+    multiplier: float,
+) -> tuple[CurvePoint, ...]:
+    out: list[CurvePoint] = []
+    transition_age = int(transition_age)
+    multiplier = max(0.0, float(multiplier))
+    for point in source_curve_points:
+        x_val = float(point.x)
+        y_val = float(point.y)
+        if x_val >= float(transition_age):
+            y_val *= multiplier
+        out.append(CurvePoint(x=x_val, y=max(0.0, round(y_val, 1))))
+    return tuple(out)
 
 
 def _build_curve_with_post_thinning_gap(
@@ -1728,6 +1772,10 @@ def build_patchworks_forestmodel_definition(
             qmd_payload.get("harvested_product_accounts_enabled", False)
         )
         qmd_support = context.qmd_support_by_au.get(int(au.au_id))
+        stems_payload = (silviculture_config or {}).get("stems_per_ha")
+        stems_per_ha_enabled = isinstance(stems_payload, dict) and bool(
+            stems_payload.get("enabled", False)
+        )
 
         natural_species_curve_map = context.unmanaged_species_curve_ids.get(
             unmanaged_curve_id, {}
@@ -1752,6 +1800,46 @@ def build_patchworks_forestmodel_definition(
         unmanaged_attrs_by_origin: dict[str, list[AttributeBinding]] = {}
         managed_attrs_by_origin: dict[str, list[AttributeBinding]] = {}
         product_attrs_by_origin: dict[str, list[AttributeBinding]] = {}
+        unmanaged_stems_curve_ref: str | None = None
+        managed_stems_curve_ref: str | None = None
+        unmanaged_stems_curve_points: tuple[CurvePoint, ...] = ()
+        managed_stems_curve_points: tuple[CurvePoint, ...] = ()
+
+        if stems_per_ha_enabled:
+            unmanaged_stems_source = (
+                unmanaged_total_curve.points
+                if unmanaged_total_curve is not None
+                else og_source_points
+            )
+            managed_stems_source = (
+                managed_total_curve.points
+                if managed_total_curve is not None
+                else unmanaged_stems_source
+            )
+            fallback_stems_per_ha = (
+                float(qmd_support.unmanaged_stems_per_ha)
+                if qmd_support is not None
+                and qmd_support.unmanaged_stems_per_ha is not None
+                else None
+            )
+            managed_tph_points = (
+                tuple(qmd_support.managed_tph_points) if qmd_support is not None else ()
+            )
+            if fallback_stems_per_ha is not None:
+                unmanaged_stems_curve_ref = f"au_{au_token}_unmanaged_stems_per_ha"
+                unmanaged_stems_curve_points = _build_stems_per_ha_curve_points(
+                    source_curve_points=unmanaged_stems_source,
+                    stems_per_ha=fallback_stems_per_ha,
+                )
+                curves[unmanaged_stems_curve_ref] = unmanaged_stems_curve_points
+            if managed_tph_points or fallback_stems_per_ha is not None:
+                managed_stems_curve_ref = f"au_{au_token}_managed_stems_per_ha"
+                managed_stems_curve_points = _build_stems_per_ha_curve_points(
+                    source_curve_points=managed_stems_source,
+                    tph_curve_points=managed_tph_points,
+                    stems_per_ha=fallback_stems_per_ha,
+                )
+                curves[managed_stems_curve_ref] = managed_stems_curve_points
 
         for origin in ORIGIN_ORDER:
             species_curve_map = species_curve_maps_by_origin[origin]
@@ -1805,6 +1893,20 @@ def build_patchworks_forestmodel_definition(
                     curve_idref=managed_curve_ref,
                 ),
             ]
+            if unmanaged_stems_curve_ref is not None:
+                unmanaged_attrs.append(
+                    AttributeBinding(
+                        label=f"feature.StemsPerHa.unmanaged.{au_token}",
+                        curve_idref=unmanaged_stems_curve_ref,
+                    )
+                )
+            if managed_stems_curve_ref is not None:
+                managed_attrs.append(
+                    AttributeBinding(
+                        label=f"feature.StemsPerHa.managed.{au_token}",
+                        curve_idref=managed_stems_curve_ref,
+                    )
+                )
 
             if qmd_enabled:
                 unmanaged_qmd_curve_ref = f"au_{au_token}_unmanaged_qmd"
@@ -2181,6 +2283,45 @@ def build_patchworks_forestmodel_definition(
                         curve_idref=managed_curve_ref,
                     ),
                 ]
+                pct_stems_curve_ref: str | None = None
+                pct_stems_curve_points: tuple[CurvePoint, ...] = ()
+                if managed_stems_curve_points:
+                    source_total_stems = max(
+                        0.0, float(pct_config["source_total_stems_per_ha"])
+                    )
+                    removed_stems = max(
+                        0.0,
+                        sum(
+                            float(stems)
+                            for _species, stems in pct_config[
+                                "remove_stems_per_ha_by_species"
+                            ]
+                        ),
+                    )
+                    residual_fraction = 1.0
+                    if source_total_stems > 0.0 and removed_stems > 0.0:
+                        residual_fraction = max(
+                            0.0,
+                            (source_total_stems - removed_stems) / source_total_stems,
+                        )
+                    pct_stems_curve_ref = (
+                        f"au_{au_token}_managed_"
+                        f"{_sanitize_id_component(str(pct_config['to_state']))}_stems_per_ha"
+                    )
+                    pct_stems_curve_points = (
+                        _build_curve_with_post_transition_multiplier(
+                            source_curve_points=managed_stems_curve_points,
+                            transition_age=int(pct_config["pct_age"]),
+                            multiplier=residual_fraction,
+                        )
+                    )
+                    curves[pct_stems_curve_ref] = pct_stems_curve_points
+                    pct_feature_attrs.append(
+                        AttributeBinding(
+                            label=f"feature.StemsPerHa.managed.{au_token}",
+                            curve_idref=pct_stems_curve_ref,
+                        )
+                    )
                 if qmd_enabled:
                     pct_feature_attrs.append(
                         AttributeBinding(
@@ -2358,6 +2499,8 @@ def build_patchworks_forestmodel_definition(
                 pct_state_payload_by_to_state[str(pct_config["to_state"])] = {
                     "species_prop_points": pct_species_prop_points,
                     "species_curve_refs": dict(pct_species_curve_refs),
+                    "stems_curve_ref": pct_stems_curve_ref,
+                    "stems_curve_points": pct_stems_curve_points,
                 }
 
         if ct_configs and managed_total_curve is not None:
@@ -2368,6 +2511,7 @@ def build_patchworks_forestmodel_definition(
                     for species, curve_id in planted_species_curve_map.items()
                     if curve_id in source_curve_ref_by_id
                 }
+                ct_stems_source_points = managed_stems_curve_points
                 pct_state_payload = pct_state_payload_by_to_state.get(
                     str(ct_config["from_state"])
                 )
@@ -2375,6 +2519,9 @@ def build_patchworks_forestmodel_definition(
                     ct_species_prop_points = pct_state_payload["species_prop_points"]
                     ct_species_prop_curve_refs = dict(
                         pct_state_payload["species_curve_refs"]
+                    )
+                    ct_stems_source_points = tuple(
+                        pct_state_payload.get("stems_curve_points", ())
                     )
                 ct_age = int(ct_config["ct_age"])
                 fert_sequence: tuple[dict[str, Any], ...] = ()
@@ -2458,6 +2605,28 @@ def build_patchworks_forestmodel_definition(
                     ),
                     *old_growth_feature_attrs,
                 ]
+                ct_stems_curve_ref: str | None = None
+                ct_stems_curve_points: tuple[CurvePoint, ...] = ()
+                if ct_stems_source_points:
+                    ct_stems_curve_ref = (
+                        f"au_{au_token}_managed_{state_slug}_stems_per_ha"
+                    )
+                    ct_stems_curve_points = (
+                        _build_curve_with_post_transition_multiplier(
+                            source_curve_points=ct_stems_source_points,
+                            transition_age=ct_age,
+                            multiplier=max(
+                                0.0, 1.0 - float(ct_config["removal_fraction"])
+                            ),
+                        )
+                    )
+                    curves[ct_stems_curve_ref] = ct_stems_curve_points
+                    ct_residual_attrs.append(
+                        AttributeBinding(
+                            label=f"feature.StemsPerHa.managed.{au_token}",
+                            curve_idref=ct_stems_curve_ref,
+                        )
+                    )
                 if qmd_enabled:
                     ct_qmd_curve_ref = f"au_{au_token}_managed_{state_slug}_qmd"
                     curves[ct_qmd_curve_ref] = _build_qmd_curve_points(
@@ -2690,6 +2859,7 @@ def build_patchworks_forestmodel_definition(
 
             if fert_sequence:
                 current_source_points = curves[ct_residual_curve_ref]
+                current_stems_points = ct_stems_curve_points
                 for fert_index, fert_config in enumerate(fert_sequence, start=1):
                     fert_curve_ref = f"au_{au_token}_fert{fert_index}_total"
                     curves[fert_curve_ref] = _build_curve_with_temporary_speedup(
@@ -2708,6 +2878,18 @@ def build_patchworks_forestmodel_definition(
                         ),
                         *old_growth_feature_attrs,
                     ]
+                    if current_stems_points:
+                        fert_stems_curve_ref = (
+                            f"au_{au_token}_managed_"
+                            f"{_sanitize_id_component(str(fert_config['to_state']))}_stems_per_ha"
+                        )
+                        curves[fert_stems_curve_ref] = tuple(current_stems_points)
+                        fert_feature_attrs.append(
+                            AttributeBinding(
+                                label=f"feature.StemsPerHa.managed.{au_token}",
+                                curve_idref=fert_stems_curve_ref,
+                            )
+                        )
                     fert_product_attrs = [
                         AttributeBinding(
                             label=f"product.Treated.managed.{fert_config['label']}",
