@@ -927,6 +927,28 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-26 (Phase 41 pivot): repurpose Issue 31 on branch
+  `feature/k3z-harvest-utilization-factor` to add downstream harvested-volume
+  utilization factors instead of changing fragment-level baseline retention.
+  - Tracking issue:
+    - GitHub issue #31 ("Add K3Z harvest utilization factor for recovered
+      merchantable volume")
+  - Working implementation focus:
+    - keep fragment-level `RETENTION` unchanged;
+    - apply a downstream utilization assumption only to harvested-volume
+      accounts so standing growing-stock curves stay untouched;
+    - use treatment-specific factors:
+      - `CC = 0.85`
+      - `CT = 0.75`
+  - Immediate execution order:
+    - add treatment-specific harvested-volume `SUM` multipliers during
+      `protoaccounts.csv -> accounts.csv` promotion instead of changing XML or
+      fragment inputs;
+    - wire the utilization-factor config into the active K3Z runtime surfaces;
+    - validate that the base and optional K3Z variants launch cleanly and that
+      `product.HarvestedVolume.*.(CC|CT)` accounts reflect the intended
+      recovered-volume assumption;
+    - update docs / issue closeout evidence before landing.
 - 2026-03-26 (Phase 40 widened rollout complete locally): the harvested-stem
   QMD ratio-account contract now extends across all active K3Z launch surfaces
   on branch `feature/k3z-qmd-product-accounts`.
@@ -7132,6 +7154,44 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - when `nemora` integration lands, revisit this surface so CT can use a
         diameter-distribution-aware thinning-from-below calculation rather than
         the current random-subset simplification.
+
+## Phase 41: Add K3Z Harvest Utilization Factors for Recovered Merchantable Volume
+- [x] P41.1 Audit the downstream harvested-volume account promotion path
+  - [x] P41.1a Trace where `protoaccounts.csv -> accounts.csv` promotion already rewrites `SUM` multipliers so utilization can be applied without altering XML curves.
+  - [x] P41.1b Confirm which harvested-volume account names should receive treatment-specific utilization scaling across the active K3Z variants.
+- [x] P41.2 Apply treatment-specific utilization factors in the account-promotion layer
+  - [x] P41.2a Add runtime-config support for harvested-volume utilization factors by treatment type.
+  - [x] P41.2b Apply `CC = 0.85` and `CT = 0.75` to the active K3Z runtime surfaces while leaving standing yield curves and fragment-level `RETENTION` untouched.
+- [ ] P41.3 Revalidate, document, and close out the utilization change
+  - [x] P41.3a Rerun the relevant K3Z validation steps, including account-surface checks and any targeted live checks needed to confirm the recovered-volume contract.
+  - [x] P41.3b Update user-facing docs, `CHANGE_LOG.md`, and GitHub issue #31 with the final utilization-factor behavior and validation results.
+  - Notes:
+    - Governing tracker:
+      - GitHub issue #31
+    - Requested teaching assumption:
+      - treat harvested recovered merchantable volume as lower than standing
+        growing-stock merchantable volume due to breakage, waste, rot, and
+        related utilization losses
+    - Treatment-specific target factors:
+      - `CC = 0.85`
+      - `CT = 0.75`
+    - Guardrail:
+      - do not override user-defined fragment-level `RETENTION` inputs, since
+        those may already encode buffers, protected areas, visual-quality
+        constraints, or other landbase withdrawals.
+    - Current implementation status on branch `feature/k3z-harvest-utilization-factor`:
+      - `src/femic/patchworks_runtime.py` now supports
+        `matrix_builder.harvested_volume_utilization_by_treatment` and applies
+        the configured treatment-specific multiplier during
+        `protoaccounts.csv -> accounts.csv` promotion.
+      - Active K3Z runtime configs now carry:
+        - `CC = 0.85`
+        - `CT = 0.75`
+      - The implementation is intentionally downstream-only:
+        - standing yield curves and ForestModel XML remain unchanged
+        - only the promoted harvested-volume accounts are scaled
+      - Targeted parser + runtime regression validation passed:
+        - `python -m pytest tests/test_patchworks_runtime.py`
 
 
 
