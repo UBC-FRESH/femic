@@ -7496,13 +7496,14 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         `test_docs_contract.py` passed;
       - full repo gates passed: `ruff check`, `mypy`, `pytest`, and parent plus
         standalone K3Z Sphinx builds;
-      - representative Patchworks preflight and `femic instance account-surface`
-        checks passed for baseline, `ctfert_l15h5`, `pct_light`,
-        `intensive_light`, and `overlay.basecase_sum`;
-      - direct CLI `matrix-build` reruns in this shell were not used as the
-        final proof because they timed out without stable logs, so the final
-        path-contract validation rests on successful preflight plus the shipped
-        track/account surfaces.
+      - representative Patchworks `matrix-build` reruns now passed for
+        baseline, `ctfert_l15h5`, `pct_light`, `intensive_light`, and
+        `overlay.basecase_sum` against the refreshed output-local canonical
+        XML/fragments pairings;
+      - a follow-on regression test now verifies that the output-local
+        canonical XMLs for representative active variants still carry the
+        managed QMD and managed height feature families, so stale output-local
+        XML mirrors cannot silently pass this layout migration again.
     - Guardrail:
       - preserve a one-to-one runtime pairing between each validated fragments
         surface and the canonical XML that should be used with it.

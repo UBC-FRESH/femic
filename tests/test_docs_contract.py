@@ -863,6 +863,37 @@ def test_k3z_pct_checked_in_surface_keeps_species_wise_managed_accounts() -> Non
         )
 
 
+def test_k3z_output_local_xmls_keep_qmd_and_height_feature_families() -> None:
+    variant_to_xml = {
+        "base": K3Z_INSTANCE_ROOT / "output/patchworks_k3z_validated/forestmodel.xml",
+        "ctfert_l15h5": (
+            K3Z_INSTANCE_ROOT
+            / "output/patchworks_k3z_ctfert_l15h5_validated/forestmodel.xml"
+        ),
+        "pct_light": (
+            K3Z_INSTANCE_ROOT
+            / "output/patchworks_k3z_pct_light_validated/forestmodel.xml"
+        ),
+        "intensive_light": (
+            K3Z_INSTANCE_ROOT
+            / "output/patchworks_k3z_intensive_light_validated/forestmodel.xml"
+        ),
+        "overlay_basecase_sum": (
+            K3Z_INSTANCE_ROOT
+            / "output/patchworks_k3z_overlay_basecase_sum_validated/forestmodel.xml"
+        ),
+    }
+
+    for slug, forestmodel_path in variant_to_xml.items():
+        text = forestmodel_path.read_text(encoding="utf-8")
+        assert "feature.QMD.managed." in text, (
+            f"{slug} output-local forestmodel.xml is missing managed QMD features"
+        )
+        assert "feature.Height.managed." in text, (
+            f"{slug} output-local forestmodel.xml is missing managed height features"
+        )
+
+
 def test_k3z_baseline_and_overlay_surfaces_keep_harvested_qmd_cc_accounts() -> None:
     base_common_path = (
         K3Z_INSTANCE_ROOT

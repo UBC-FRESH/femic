@@ -7163,10 +7163,13 @@
   - full `pytest`
   - parent Sphinx build
   - standalone K3Z Sphinx build
-  - representative Patchworks preflight and `femic instance account-surface`
-    checks for baseline, `ctfert_l15h5`, `pct_light`, `intensive_light`, and
-    `overlay.basecase_sum`
-- Direct CLI `femic patchworks matrix-build` reruns in this shell were attempted
-  but not used as final proof because they timed out without stable logs; the
-  path-contract validation instead rests on successful preflight plus the
-  shipped track/account surfaces.
+  - representative Patchworks `matrix-build` reruns for baseline,
+    `ctfert_l15h5`, `pct_light`, `intensive_light`, and
+    `overlay.basecase_sum` after refreshing the output-local canonical XMLs
+- The first representative matrix-build reruns exposed a real follow-on seam:
+  some output-local canonical XMLs were stale relative to the latest height/QMD
+  feature work, so the branch now also refreshes those output-local XMLs from
+  the latest generated K3Z XML content before treating them as canonical.
+- Added docs-contract coverage that explicitly checks representative
+  output-local canonical XMLs still carry the managed QMD and managed height
+  feature families, so this stale-output-local-XML regression is now guarded.
