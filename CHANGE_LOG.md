@@ -7002,3 +7002,47 @@
     family;
   - how the new surface should align with the current QMD, stems-per-ha,
     harvested-QMD, and harvested-volume account contracts.
+
+## 2026-03-27 - Phase 43 Intensive-Silviculture Variant Implementation
+
+- Implemented a new K3Z full-intensive teaching family under GitHub issue
+  `#36`, using three launchable subvariants:
+  - `intensive_light`
+  - `intensive_moderate`
+  - `intensive_heavy`
+- Fixed the combined contract around the full 8-AU union of the current
+  `pct_*` and `ctfert_l15h5` families, while reusing the accepted
+  `ctfert_l15h5` SI-response profile on the CT/fert side.
+- Compiled the combined state chain:
+  - `cc_pl -> cc_pl_pct -> cc_pl_pct_ct -> cc_pl_ct_f1 -> cc_pl_ct_f1_f2 -> cc_pl_ct_f1_f2_f3`
+- Added the new K3Z variant/runtime/silviculture/PIN surfaces plus the common
+  analysis helper:
+  - `config/patchworks.variant.intensive_*.yaml`
+  - `config/patchworks.runtime.intensive_*.windows.yaml`
+  - `config/silviculture.k3z.intensive_*.yaml`
+  - `models/k3z_patchworks_model/analysis/intensive_*.pin`
+  - `models/k3z_patchworks_model/analysis/intensive_variant_common.bsh`
+- Rebuilt the shipped ForestModel XMLs, Matrix Builder tracks, and validated
+  fragment outputs for all three full-intensive subvariants.
+- Reused the accepted curated CT/fert retained-area overlay from
+  `tmp/CTFert Fragments/fragments_updated3_Usedinbasecase.shp` for the new
+  `intensive_*` family instead of inventing a separate retained-area policy.
+- Extended regression coverage so the parent exporter test suite now checks the
+  combined `PCT -> CT -> F1 -> F2 -> F3` path and the docs-contract suite
+  checks the new checked-in intensive surfaces.
+- Updated the user-facing docs and operator runbooks so the new
+  `intensive_light`, `intensive_moderate`, and `intensive_heavy` surfaces are
+  documented alongside baseline, `ctfert_*`, `pct_*`, and overlay launches.
+- Validation completed:
+  - `python -m pytest tests/test_fmg_patchworks.py tests/test_docs_contract.py`
+  - `ruff format src tests`
+  - `ruff check src tests`
+  - `mypy src`
+  - `pytest`
+  - `pre-commit run --all-files`
+  - parent Sphinx build
+  - standalone K3Z Sphinx build
+  - Matrix Builder reruns for `intensive_light`, `intensive_moderate`, and
+    `intensive_heavy`
+- Posted the implementation/validation status note to GitHub issue `#36`; the
+  issue remains open pending PR merge.
