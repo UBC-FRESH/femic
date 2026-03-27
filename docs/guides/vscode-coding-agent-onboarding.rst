@@ -203,6 +203,9 @@ One Windows-specific improvement now helps with local agent-driven rebuilds:
   ``matrix_builder.auto_close_window_on_success: true``, FEMIC will supervise
   the noninteractive Matrix Builder launch, wait for fresh output activity to
   stabilize, and then close the spawned Matrix Builder window automatically;
+- on this host, that supervised cleanup also tears down the matching
+  Patchworks launcher ``cmd.exe`` shell tree, so the coding agent does not
+  have to wait for a leftover console window after the Java process is done;
 - this is meant to remove the routine "human must notice and close the window"
   interruption from the local coding-agent workflow;
 - it does **not** replace normal validation: you should still review the

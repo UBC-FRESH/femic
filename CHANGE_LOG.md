@@ -7264,4 +7264,8 @@
     insufficient because the visible `Matrix Builder` window stayed open;
   - the final smoke succeeded with `close_method = force_stop`, and the
     `Matrix Builder` process/window disappeared without manual user
-    intervention.
+    intervention;
+  - a residual follow-up then proved the lingering Patchworks launcher
+    `cmd.exe` shell tree can also be detected and cleaned up automatically, so
+    the local coding-agent workflow no longer depends on a human to dismiss
+    either visible window.

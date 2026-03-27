@@ -700,7 +700,16 @@ def _load_windows_process_inventory() -> list[dict[str, Any]]:
         return []
     command = (
         "Get-CimInstance Win32_Process | "
-        "Select-Object ProcessId,Name,CommandLine | "
+        "ForEach-Object { "
+        "$gp = Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue; "
+        "[pscustomobject]@{ "
+        "ProcessId = $_.ProcessId; "
+        "ParentProcessId = $_.ParentProcessId; "
+        "Name = $_.Name; "
+        "CommandLine = $_.CommandLine; "
+        "MainWindowTitle = if ($gp) { $gp.MainWindowTitle } else { '' } "
+        "} "
+        "} | "
         "ConvertTo-Json -Compress"
     )
     completed = subprocess.run(
@@ -738,10 +747,61 @@ def _find_windows_matrix_builder_process_ids(
         command_line = str(record.get("CommandLine", "") or "")
         if all(fragment in command_line for fragment in required_substrings):
             try:
-                out.add(int(record.get("ProcessId")))
-            except (TypeError, ValueError):
+                process_id = int(record["ProcessId"])
+            except (KeyError, TypeError, ValueError):
                 continue
+            out.add(process_id)
     return out
+
+
+def _find_windows_patchworks_shell_process_ids(
+    *, inventory: list[dict[str, Any]] | None = None
+) -> set[int]:
+    if not is_windows_host():
+        return set()
+    records = inventory if inventory is not None else _load_windows_process_inventory()
+    records_by_pid: dict[int, dict[str, Any]] = {}
+    children_by_parent: dict[int, set[int]] = {}
+    for record in records:
+        try:
+            pid = int(record["ProcessId"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        records_by_pid[pid] = record
+        try:
+            parent_pid = int(record["ParentProcessId"])
+        except (KeyError, TypeError, ValueError):
+            parent_pid = -1
+        children_by_parent.setdefault(parent_pid, set()).add(pid)
+
+    root_pids: set[int] = set()
+    for pid, record in records_by_pid.items():
+        name = str(record.get("Name", "")).lower()
+        if name not in {"cmd.exe", "cmd"}:
+            continue
+        command_line = str(record.get("CommandLine", "") or "")
+        main_window_title = str(record.get("MainWindowTitle", "") or "")
+        command_line_lower = command_line.lower()
+        main_window_title_lower = main_window_title.lower().strip()
+        if (
+            "ca.spatial.patchworks.patchworks" in command_line_lower
+            or main_window_title_lower == "ca.spatial.patchworks.patchworks"
+            or re.search(
+                r"[\\/](?:temp|tmp)[\\/]\s*sps\d+\.bat", command_line, re.IGNORECASE
+            )
+            or re.search(r"\bsps\d+\.bat\b", command_line, re.IGNORECASE)
+        ):
+            root_pids.add(pid)
+
+    matched: set[int] = set()
+    stack = list(root_pids)
+    while stack:
+        pid = stack.pop()
+        if pid in matched:
+            continue
+        matched.add(pid)
+        stack.extend(sorted(children_by_parent.get(pid, set())))
+    return matched
 
 
 def _force_stop_windows_process(process_id: int) -> bool:
@@ -779,12 +839,16 @@ def _run_windows_matrix_builder_with_auto_close(
         matrix_output_dir=matrix_output_dir,
         forestmodel_xml_path=forestmodel_xml_path,
     )
+    baseline_shell_process_ids = _find_windows_patchworks_shell_process_ids()
     current_state = baseline_state
     stable_since: float | None = None
     close_attempted = False
     close_method: str | None = None
     closed_window_count = 0
     force_stopped_pids: list[int] = []
+    shell_close_method: str | None = None
+    closed_shell_window_count = 0
+    force_stopped_shell_pids: list[int] = []
     launched_pid: int | None = None
 
     with (
@@ -827,11 +891,14 @@ def _run_windows_matrix_builder_with_auto_close(
                 and stable_long_enough
             ):
                 close_attempted = True
-                target_pids = _find_windows_matrix_builder_process_ids(
-                    fragments_path=fragments_path,
-                    matrix_output_dir=matrix_output_dir,
-                    forestmodel_xml_path=forestmodel_xml_path,
-                ) - baseline_process_ids
+                target_pids = (
+                    _find_windows_matrix_builder_process_ids(
+                        fragments_path=fragments_path,
+                        matrix_output_dir=matrix_output_dir,
+                        forestmodel_xml_path=forestmodel_xml_path,
+                    )
+                    - baseline_process_ids
+                )
                 if launched_pid is not None:
                     target_pids.add(launched_pid)
                 target_pids = {pid for pid in target_pids if pid > 0}
@@ -842,11 +909,14 @@ def _run_windows_matrix_builder_with_auto_close(
                     returncode = proc.wait(timeout=auto_close_timeout_seconds)
                 except subprocess.TimeoutExpired:
                     pass
-                lingering_pids = _find_windows_matrix_builder_process_ids(
-                    fragments_path=fragments_path,
-                    matrix_output_dir=matrix_output_dir,
-                    forestmodel_xml_path=forestmodel_xml_path,
-                ) - baseline_process_ids
+                lingering_pids = (
+                    _find_windows_matrix_builder_process_ids(
+                        fragments_path=fragments_path,
+                        matrix_output_dir=matrix_output_dir,
+                        forestmodel_xml_path=forestmodel_xml_path,
+                    )
+                    - baseline_process_ids
+                )
                 if launched_pid is not None:
                     lingering_pids.add(launched_pid)
                 lingering_pids = {pid for pid in lingering_pids if pid > 0}
@@ -861,6 +931,31 @@ def _run_windows_matrix_builder_with_auto_close(
                     proc.kill()
                     close_method = "kill"
                     returncode = proc.wait(timeout=auto_close_timeout_seconds)
+
+                current_shell_pids = (
+                    _find_windows_patchworks_shell_process_ids()
+                    - baseline_shell_process_ids
+                )
+                current_shell_pids = {pid for pid in current_shell_pids if pid > 0}
+                for pid in sorted(current_shell_pids):
+                    closed_shell_window_count += _close_windows_process_main_windows(
+                        pid
+                    )
+                if current_shell_pids:
+                    shell_close_method = (
+                        "wm_close" if closed_shell_window_count else "force_stop"
+                    )
+                time.sleep(0.25)
+                lingering_shell_pids = (
+                    _find_windows_patchworks_shell_process_ids()
+                    - baseline_shell_process_ids
+                )
+                lingering_shell_pids = {pid for pid in lingering_shell_pids if pid > 0}
+                for pid in sorted(lingering_shell_pids):
+                    if _force_stop_windows_process(pid):
+                        force_stopped_shell_pids.append(pid)
+                if force_stopped_shell_pids:
+                    shell_close_method = "force_stop"
                 break
 
             time.sleep(0.25)
@@ -873,6 +968,7 @@ def _run_windows_matrix_builder_with_auto_close(
             "latest_mtime": baseline_state[2],
         },
         "baseline_process_ids": sorted(baseline_process_ids),
+        "baseline_shell_process_ids": sorted(baseline_shell_process_ids),
         "launched_pid": launched_pid,
         "final_output_state": {
             "ready": current_state[0],
@@ -883,6 +979,9 @@ def _run_windows_matrix_builder_with_auto_close(
         "close_method": close_method,
         "closed_window_count": closed_window_count,
         "force_stopped_pids": force_stopped_pids,
+        "shell_close_method": shell_close_method,
+        "closed_shell_window_count": closed_shell_window_count,
+        "force_stopped_shell_pids": force_stopped_shell_pids,
         "remaining_process_ids": sorted(
             _find_windows_matrix_builder_process_ids(
                 fragments_path=fragments_path,
@@ -890,6 +989,9 @@ def _run_windows_matrix_builder_with_auto_close(
                 forestmodel_xml_path=forestmodel_xml_path,
             )
             - baseline_process_ids
+        ),
+        "remaining_shell_process_ids": sorted(
+            _find_windows_patchworks_shell_process_ids() - baseline_shell_process_ids
         ),
     }
 

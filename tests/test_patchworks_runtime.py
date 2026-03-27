@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
+import femic.patchworks_runtime as patchworks_runtime
 from femic.patchworks_runtime import (
     PatchworksConfigError,
     build_patchworks_blocks_dataset,
@@ -563,6 +564,10 @@ def test_run_patchworks_command_windows_auto_closes_after_fresh_output(
         lambda **_kwargs: {4321},
     )
     monkeypatch.setattr(
+        "femic.patchworks_runtime._find_windows_patchworks_shell_process_ids",
+        lambda **_kwargs: set(),
+    )
+    monkeypatch.setattr(
         "femic.patchworks_runtime._force_stop_windows_process",
         lambda _pid: False,
     )
@@ -629,6 +634,175 @@ def test_run_patchworks_command_windows_auto_closes_after_fresh_output(
     assert manifest["windows_automation"]["close_attempted"] is True
     assert manifest["windows_automation"]["closed_window_count"] == 1
     assert manifest["windows_automation"]["close_method"] == "wm_close"
+    assert manifest["windows_automation"]["closed_shell_window_count"] == 0
+    assert manifest["windows_automation"]["shell_close_method"] is None
+
+
+def test_find_windows_patchworks_shell_process_ids_matches_shell_tree() -> None:
+    inventory = [
+        {
+            "ProcessId": 28652,
+            "ParentProcessId": 1,
+            "Name": "javaw.exe",
+            "CommandLine": 'javaw -jar "C:\\Program Files\\Spatial Planning Systems\\Patchworks\\patchworks.jar"',
+            "MainWindowTitle": "Spatial Planning Systems Application Launcher",
+        },
+        {
+            "ProcessId": 15000,
+            "ParentProcessId": 28652,
+            "Name": "cmd.exe",
+            "CommandLine": (
+                'cmd /c start "ca.spatial.patchworks.Patchworks" /wait '
+                "C:\\Users\\gep\\AppData\\Local\\Temp\\sps1063253604191606789.bat"
+            ),
+            "MainWindowTitle": "",
+        },
+        {
+            "ProcessId": 14000,
+            "ParentProcessId": 15000,
+            "Name": "cmd.exe",
+            "CommandLine": (
+                "C:\\WINDOWS\\system32\\cmd.exe /K "
+                "C:\\Users\\gep\\AppData\\Local\\Temp\\sps1063253604191606789.bat"
+            ),
+            "MainWindowTitle": "ca.spatial.patchworks.Patchworks",
+        },
+        {
+            "ProcessId": 99999,
+            "ParentProcessId": 1,
+            "Name": "cmd.exe",
+            "CommandLine": "cmd /k echo harmless",
+            "MainWindowTitle": "Windows PowerShell",
+        },
+    ]
+
+    result = patchworks_runtime._find_windows_patchworks_shell_process_ids(
+        inventory=inventory
+    )
+
+    assert result == {14000, 15000}
+
+
+def test_run_patchworks_command_windows_auto_closes_patchworks_shells(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg_path = _write_runtime_config(tmp_path)
+    cfg_path.write_text(
+        cfg_path.read_text(encoding="utf-8")
+        + "\n".join(
+            [
+                "  auto_close_window_on_success: true",
+                "  auto_close_settle_seconds: 0.0",
+                "  auto_close_timeout_seconds: 1.0",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    cfg = load_patchworks_runtime_config(cfg_path)
+    cfg.jar_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.jar_path.touch()
+    cfg.fragments_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.fragments_path.touch()
+    cfg.forestmodel_xml_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.forestmodel_xml_path.touch()
+    cfg.matrix_output_dir.mkdir(parents=True, exist_ok=True)
+    (cfg.matrix_output_dir / "protoaccounts.csv").write_text(
+        "GROUP,ATTRIBUTE,ACCOUNT,SUM\n_ALL_,a,a,1\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        "femic.patchworks_runtime.run_patchworks_preflight",
+        lambda **_kwargs: SimpleNamespace(
+            ok=True,
+            launcher_executable="java",
+            host_mode="windows",
+        ),
+    )
+    monkeypatch.setattr(
+        "femic.patchworks_runtime.format_command_for_display",
+        lambda command: " ".join(command),
+    )
+    builder_pid_iter = iter([set(), {4321}, {4321}, set()])
+    monkeypatch.setattr(
+        "femic.patchworks_runtime._find_windows_matrix_builder_process_ids",
+        lambda **_kwargs: next(builder_pid_iter),
+    )
+    shell_pid_iter = iter([set(), {14000, 15000}, {14000, 15000}, set()])
+    monkeypatch.setattr(
+        "femic.patchworks_runtime._find_windows_patchworks_shell_process_ids",
+        lambda **_kwargs: next(shell_pid_iter),
+    )
+    force_stop_calls: list[int] = []
+    monkeypatch.setattr(
+        "femic.patchworks_runtime._force_stop_windows_process",
+        lambda pid: force_stop_calls.append(pid) is None or True,
+    )
+    state_iter = iter(
+        [
+            (True, 1, 100.0),
+            (True, 2, 101.0),
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.patchworks_runtime._matrix_output_state",
+        lambda _path: next(state_iter, (True, 2, 101.0)),
+    )
+    monkeypatch.setattr(
+        "femic.patchworks_runtime._close_windows_process_main_windows",
+        lambda _pid: 0,
+    )
+    monkeypatch.setattr("femic.patchworks_runtime.time.sleep", lambda _seconds: None)
+
+    class _FakePopen:
+        def __init__(
+            self,
+            _command,
+            *,
+            stdout,
+            stderr,
+            text,
+            env,
+            cwd,
+        ) -> None:
+            del text, env, cwd
+            self.pid = 4321
+            self._returncode: int | None = None
+            stdout.write("ok")
+            stdout.flush()
+            stderr.write("")
+            stderr.flush()
+
+        def poll(self) -> int | None:
+            return self._returncode
+
+        def wait(self, timeout=None) -> int:
+            del timeout
+            self._returncode = 0
+            return 0
+
+        def kill(self) -> None:
+            self._returncode = 0
+
+    monkeypatch.setattr("femic.patchworks_runtime.subprocess.Popen", _FakePopen)
+
+    result = run_patchworks_command(
+        config=cfg,
+        interactive=False,
+        log_dir=tmp_path / "logs",
+        run_id="pwautoclose_shells",
+    )
+
+    assert result.returncode == 0
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["windows_automation"]["close_attempted"] is True
+    assert manifest["windows_automation"]["close_method"] == "force_stop"
+    assert manifest["windows_automation"]["force_stopped_pids"] == [4321]
+    assert manifest["windows_automation"]["shell_close_method"] == "force_stop"
+    assert manifest["windows_automation"]["force_stopped_shell_pids"] == [14000, 15000]
+    assert manifest["windows_automation"]["remaining_shell_process_ids"] == []
+    assert force_stop_calls == [4321, 14000, 15000]
 
 
 def test_run_patchworks_command_normalizes_qmd_account_sums(

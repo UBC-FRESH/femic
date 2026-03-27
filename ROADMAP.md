@@ -7638,8 +7638,10 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         insufficient on this host, which is why the final implementation now
         explicitly force-stops the lingering Matrix Builder Java process when
         needed;
-      - the final live smoke recorded `close_method = force_stop` and left no
-        remaining `Matrix Builder` process/window.
+      - the final live smoke recorded `close_method = force_stop`, left no
+        remaining `Matrix Builder` process/window, and after the residual-shell
+        follow-up also left no lingering Patchworks launcher `cmd.exe` shell
+        window.
     - Validation result:
       - `pytest tests/test_patchworks_runtime.py` passed during targeted
         implementation checks;

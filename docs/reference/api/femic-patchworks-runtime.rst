@@ -68,8 +68,10 @@ At the Python level, maintainers usually call preflight before launch:
 
 On native Windows, FEMIC can also supervise noninteractive Matrix Builder runs
 and close the spawned Matrix Builder GUI window automatically once fresh output
-activity has stabilized. This behavior is controlled through the runtime config
-surface:
+activity has stabilized. On hosts like the current FEMIC dev environment, the
+same supervised cleanup also tears down the matching Patchworks launcher
+``cmd.exe`` shell tree when it lingers after the Java process is done. This
+behavior is controlled through the runtime config surface:
 
 - ``matrix_builder.auto_close_window_on_success``
 - ``matrix_builder.auto_close_settle_seconds``
