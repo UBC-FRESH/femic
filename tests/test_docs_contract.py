@@ -21,6 +21,7 @@ CONTRACT_ROOT = DOCS_ROOT / "reference" / "contracts"
 COVERAGE_CSV = GUIDES_ROOT / "legacy_notebook_coverage.csv"
 K3Z_INSTANCE_ROOT = Path("external/femic-k3z-instance")
 TSA29_INSTANCE_ROOT = Path("external/femic-tsa29-instance")
+CTFERT_SUBVARIANT_IDS = ("ctfert_l15h5", "ctfert_l20h0")
 PCT_SUBVARIANT_IDS = ("pct_light", "pct_moderate", "pct_heavy")
 REMOVED_PCTCT_LEGACY_PATHS = (
     K3Z_INSTANCE_ROOT / "config/patchworks.variant.pctct.yaml",
@@ -844,6 +845,46 @@ def test_k3z_pctct_subvariant_family_has_been_removed() -> None:
 def test_k3z_legacy_single_ctfert_surface_has_been_removed() -> None:
     for path in REMOVED_CTFERT_LEGACY_PATHS:
         assert not path.exists(), f"legacy ctfert path should be removed: {path}"
+
+
+def test_k3z_ctfert_checked_in_surface_keeps_harvested_qmd_product_accounts() -> None:
+    for slug in CTFERT_SUBVARIANT_IDS:
+        accounts_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model"
+            / f"tracks_{slug}"
+            / "accounts.csv"
+        )
+        products_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model"
+            / f"tracks_{slug}"
+            / "products.csv"
+        )
+        with accounts_path.open(newline="", encoding="utf-8") as fh:
+            account_rows = list(csv.DictReader(fh))
+        with products_path.open(newline="", encoding="utf-8") as fh:
+            product_rows = list(csv.DictReader(fh))
+
+        accounts = {row["ACCOUNT"] for row in account_rows}
+        labels = {row["LABEL"] for row in product_rows}
+
+        assert any(
+            re.fullmatch(r"product\.QMD\.managed\.[A-Za-z0-9_]+\.(CC|CT)", account)
+            for account in accounts
+        )
+        assert any(
+            re.fullmatch(r"product\.Treated\.managed\.[A-Za-z0-9_]+\.(CC|CT)", account)
+            for account in accounts
+        )
+        assert any(
+            re.fullmatch(r"product\.QMD\.managed\.[A-Za-z0-9_]+\.(CC|CT)", label)
+            for label in labels
+        )
+        assert any(
+            re.fullmatch(r"product\.Treated\.managed\.[A-Za-z0-9_]+\.(CC|CT)", label)
+            for label in labels
+        )
 
 
 def test_k3z_pct_checked_in_surface_preserves_baseline_geometry_footprint() -> None:

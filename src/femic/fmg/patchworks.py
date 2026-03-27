@@ -460,7 +460,9 @@ def _harvested_qmd_product_label(*, au_token: str, treatment_label: str) -> str:
     return f"product.QMD.managed.{au_token}.{treatment_token}"
 
 
-def _harvested_treated_area_product_label(*, au_token: str, treatment_label: str) -> str:
+def _harvested_treated_area_product_label(
+    *, au_token: str, treatment_label: str
+) -> str:
     treatment_token = _sanitize_id_component(treatment_label).upper()
     return f"product.Treated.managed.{au_token}.{treatment_token}"
 

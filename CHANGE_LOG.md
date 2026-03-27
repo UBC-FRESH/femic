@@ -6714,3 +6714,59 @@
   - regression coverage, docs, and issue-closeout notes for the pilot.
 - Updated `ROADMAP.md` Detailed Next Steps Notes so the immediate execution
   order is pinned before implementation starts.
+
+## 2026-03-26 - Phase 40 CT/Fert Harvested-Stem QMD Pilot
+
+- Added harvested-stem QMD product-account support to
+  `src/femic/fmg/patchworks.py`, behind the new
+  `qmd.harvested_product_accounts_enabled` silviculture-config flag.
+- Enabled that flag in the active K3Z CT/fert pilot surfaces:
+  - `external/femic-k3z-instance/config/silviculture.k3z.ctfert_l15h5.yaml`
+  - `external/femic-k3z-instance/config/silviculture.k3z.ctfert_l20h0.yaml`
+- The active CT/fert pilot contract now exports these AU-wise event-level
+  product rows:
+  - `product.QMD.managed.<au_token>.CC`
+  - `product.QMD.managed.<au_token>.CT`
+  - `product.Treated.managed.<au_token>.CC`
+  - `product.Treated.managed.<au_token>.CT`
+- The QMD product rows are the harvested-stem numerator surfaces. Mean
+  harvested diameter for a given AU/treatment combination is read as:
+  - `product.QMD.managed.<au_token>.<treatment>`
+    divided by
+    `product.Treated.managed.<au_token>.<treatment>`
+- Regenerated the shipped CT/fert ForestModel XML family directly from the
+  current bundle tables plus the updated silviculture YAMLs:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l15h5.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_ctfert_l20h0.xml`
+- Rebuilt the shipped CT/fert tracks with Matrix Builder:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_ctfert_l15h5/`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_ctfert_l20h0/`
+- The refreshed shipped `accounts.csv` surfaces now expose the new AU-wise
+  harvested-QMD product rows cleanly, and
+  `femic instance account-surface` now reports:
+  - `accounts=283 species=6 complete_species=6 au=14`
+    for both active CT/fert subvariants.
+- Added regression coverage in:
+  - `tests/test_fmg_patchworks.py`
+  - `tests/test_patchworks_runtime.py`
+  - `tests/test_docs_contract.py`
+- Updated user-facing K3Z docs explaining the difference between standing
+  `feature.QMD.*` surfaces and harvested-stem `product.QMD.*` surfaces:
+  - `external/femic-k3z-instance/docs/model-anatomy.rst`
+  - `external/femic-k3z-instance/docs/operator-runbook.rst`
+  - `external/femic-k3z-instance/docs/variants-and-subvariants.rst`
+- Validation passed with:
+  - `python -m pytest`
+  - `python -m ruff format src tests`
+  - `python -m ruff check src tests`
+  - `python -m mypy src`
+  - `python -m pre_commit run --all-files`
+  - `python -m sphinx -b html docs _build/html -W`
+  - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml --run-id k3z_ctfert_l15h5_qmd_products_20260326`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml --run-id k3z_ctfert_l20h0_qmd_products_20260326`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+  - `python -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.ctfert_l20h0.windows.yaml`
+- The broader port across the remaining active K3Z variants is intentionally
+  still pending on issue `#27`; this slice only completes the validated
+  `ctfert_*` pilot.
