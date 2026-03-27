@@ -6702,3 +6702,15 @@
 - Removed the harvested-stem QMD product-account idea from
   `planning/incoming_ideas.md` because it has now been promoted into GitHub as
   issue `#27`.
+
+## 2026-03-26 - Phase 40 Harvested-Stem QMD Product Accounts Kickoff
+
+- Resumed GitHub issue `#27` as the next active K3Z QMD work item:
+  - `Add harvested-stem QMD product accounts to K3Z CT/fert and port across variants`
+- Added Phase 40 to `ROADMAP.md` covering:
+  - product-account export/runtime-path audit;
+  - harvested-stem QMD `product` accounts for the active `ctfert_*` family;
+  - normalization and shipped-track refresh for the CT/fert pilot slice;
+  - regression coverage, docs, and issue-closeout notes for the pilot.
+- Updated `ROADMAP.md` Detailed Next Steps Notes so the immediate execution
+  order is pinned before implementation starts.

@@ -927,6 +927,35 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-26 (Phase 40 kickoff): start Issue 27 on branch
+  `feature/k3z-qmd-product-accounts` in the parent repo and K3Z submodule to
+  add harvested-stem QMD `product` accounts to the active K3Z `ctfert_*`
+  family, then port the same logic across the remaining active K3Z variants.
+  - Tracking issue:
+    - GitHub issue #27 ("Add harvested-stem QMD product accounts to K3Z
+      CT/fert and port across variants")
+  - Working implementation focus:
+    - treat the active `ctfert_l15h5` and `ctfert_l20h0` surfaces as the pilot
+      family;
+    - add AU-wise harvested-stem mean-diameter `product` accounts that sit
+      alongside, but remain clearly distinct from, the existing standing-stock
+      `feature.QMD.*` surfaces;
+    - keep the first pass limited to the CT/fert family until the account
+      contract, normalization semantics, and runtime promotion behavior are
+      proven out cleanly.
+  - Immediate execution order:
+    - audit the current product-account export path in
+      `src/femic/fmg/patchworks.py` and the runtime
+      `protoaccounts.csv -> accounts.csv` promotion logic in
+      `src/femic/patchworks_runtime.py`;
+    - define the new harvested-stem QMD account naming contract so the account
+      surface makes the distinction between standing QMD and harvested-stem QMD
+      obvious;
+    - implement and validate the `ctfert_l15h5` / `ctfert_l20h0` pilot slice
+      end-to-end, including refreshed shipped `tracks_ctfert_* / accounts.csv`
+      surfaces;
+    - only after the CT/fert pilot is stable, plan the port of the same
+      product-QMD logic to the other active K3Z variants.
 - 2026-03-25 (Phase 36 kickoff): start Issue 21 on branch
   `feature/k3z-ctfert-si-subvariants` in the parent repo and K3Z submodule to
   expand the K3Z CT/fert teaching surface from the current medium-SI-only
@@ -6979,6 +7008,28 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - the open issue set now uses built-in `Type` for work kind;
       - orthogonal labels are limited to domain/platform/workflow metadata;
       - duplicate work-kind labels `bug` and `enhancement` have been deleted from the repo.
+
+## Phase 40: Add Harvested-Stem QMD Product Accounts to K3Z CT/Fert
+- [ ] P40.1 Audit the current product-account export and runtime promotion path
+  - [ ] P40.1a Trace how `product.*` labels and curves are exported for the active K3Z CT/fert family in `src/femic/fmg/patchworks.py`.
+  - [ ] P40.1b Trace how `protoaccounts.csv -> accounts.csv` promotion currently handles `product` rows in `src/femic/patchworks_runtime.py`.
+- [ ] P40.2 Add harvested-stem QMD product accounts for the active K3Z CT/fert family
+  - [ ] P40.2a Define a naming contract for harvested-stem QMD `product` accounts that remains clearly distinct from the existing standing-stock `feature.QMD.*` surfaces.
+  - [ ] P40.2b Export harvested-stem QMD product rows for `ctfert_l15h5` and `ctfert_l20h0` by AU and treatment type.
+- [ ] P40.3 Normalize and validate the harvested-stem QMD product-account surface
+  - [ ] P40.3a Ensure the new product accounts report interpretable mean-diameter `cm` values rather than opaque aggregate units.
+  - [ ] P40.3b Regenerate the shipped `tracks_ctfert_l15h5/` and `tracks_ctfert_l20h0/` account surfaces and verify the new rows appear cleanly.
+- [ ] P40.4 Add regression coverage and document the new account surface
+  - [ ] P40.4a Add tests covering the exporter/runtime logic and the shipped account names.
+  - [ ] P40.4b Update docs, `CHANGE_LOG.md`, and GitHub issue #27 with the CT/fert pilot implementation details and the follow-on porting plan.
+  - Notes:
+    - Governing tracker:
+      - GitHub issue #27
+    - First-pass scope boundary:
+      - implement the harvested-stem QMD product-account logic only for the
+        active `ctfert_l15h5` and `ctfert_l20h0` surfaces;
+      - defer the wider port across the remaining active K3Z variants until the
+        CT/fert pilot slice is validated and the account contract is proven out.
 
 
 
