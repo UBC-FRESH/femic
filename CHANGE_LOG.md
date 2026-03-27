@@ -7173,3 +7173,16 @@
 - Added docs-contract coverage that explicitly checks representative
   output-local canonical XMLs still carry the managed QMD and managed height
   feature families, so this stale-output-local-XML regression is now guarded.
+
+## 2026-03-27 - Phase 46 VS Code and Coding-Agent Onboarding Docs Kickoff
+
+- Promoted the VS Code plus coding-agent onboarding-docs idea from
+  `planning/incoming_ideas.md` into the normal tracked workflow under GitHub
+  issue `#42`.
+- Created the new working branch:
+  - `task/docs-vscode-coding-agent-onboarding`
+- Defined the kickoff scope as adding a FEMIC-specific Sphinx guide that
+  explains:
+  - how to set up the local VS Code development environment;
+  - how to work effectively with a local coding agent in this repo;
+  - what the human developer still needs to supervise, validate, and steer.

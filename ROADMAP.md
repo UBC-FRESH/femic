@@ -7512,6 +7512,51 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         and validation path that depends on K3Z ForestModel XML location has
         been redirected and checked.
 
+## Phase 46: Add VS Code and Coding-Agent Onboarding Guide
+- [ ] P46.1 Define the scope and contract for the onboarding guide
+  - [ ] P46.1a Decide where the new guide should live in the parent Sphinx docs
+    tree and how it should be linked from the current onboarding/developer
+    entry points.
+  - [ ] P46.1b Write down the minimum environment-setup contract for a new
+    contributor using VS Code plus a local coding agent in this repo.
+  - [ ] P46.1c Define the human/agent collaboration guidance that should be
+    taught explicitly, including prompt hygiene, planning expectations,
+    validation expectations, and supervision responsibilities.
+- [ ] P46.2 Author the new onboarding guide and integrate it into the docs tree
+  - [ ] P46.2a Add the new Sphinx guide page with FEMIC-specific setup
+    instructions for a local VS Code plus coding-agent workflow.
+  - [ ] P46.2b Link the guide from the relevant parent docs pages so new users
+    can discover it from normal onboarding entry points.
+  - [ ] P46.2c Keep the first pass FEMIC-specific, but note where the approach
+    could later generalize into a broader reusable template for similar FRESH
+    lab projects.
+- [ ] P46.3 Validate and close out the onboarding-docs addition
+  - [ ] P46.3a Run parent docs validation and any related docs-contract checks.
+  - [ ] P46.3b Update `CHANGE_LOG.md` and GitHub issue #42 with the final docs
+    scope, guidance areas, and validation outcome.
+  - Notes:
+    - Governing tracker:
+      - GitHub issue #42
+    - Initial design intent:
+      - add a practical FEMIC-specific guide for setting up a local VS Code dev
+        environment and working effectively with a local coding agent, aimed at
+        onboarding new users rather than only existing maintainers.
+    - Guide content should cover:
+      - local environment bootstrap and minimum toolchain checks;
+      - repo/runtime assumptions that matter in FEMIC;
+      - prompt style and scoping guidance for coding-agent collaboration;
+      - what the human developer still needs to watch for and validate;
+      - how this workflow might later be generalized into a more reusable
+        template for similar scientific-computing projects.
+    - Guardrail:
+      - keep the first pass grounded in the actual FEMIC repo/runtime contract
+        rather than drifting into generic AI-tooling advice that does not map
+        cleanly onto this project.
+    - Planning-first rule:
+      - do not start authoring the new guide until the intended docs location
+        and the minimum onboarding contract are written explicitly in this
+        phase plan.
+
 
 
 
