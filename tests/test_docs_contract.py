@@ -23,6 +23,11 @@ K3Z_INSTANCE_ROOT = Path("external/femic-k3z-instance")
 TSA29_INSTANCE_ROOT = Path("external/femic-tsa29-instance")
 CTFERT_SUBVARIANT_IDS = ("ctfert_l15h5", "ctfert_l20h0")
 PCT_SUBVARIANT_IDS = ("pct_light", "pct_moderate", "pct_heavy")
+INTENSIVE_SUBVARIANT_IDS = (
+    "intensive_light",
+    "intensive_moderate",
+    "intensive_heavy",
+)
 REMOVED_PCTCT_LEGACY_PATHS = (
     K3Z_INSTANCE_ROOT / "config/patchworks.variant.pctct.yaml",
     K3Z_INSTANCE_ROOT / "config/patchworks.runtime.pctct.windows.yaml",
@@ -976,6 +981,82 @@ def test_k3z_ctfert_checked_in_surface_keeps_harvested_qmd_product_accounts() ->
         assert 'sourceRelative("../scripts/targets/qmdRatioAccounts.bsh");' in pin_text
         assert (
             "setupHarvestedQmdRatioAccounts(control, tracks_path_prefix);" in pin_text
+        )
+
+
+def test_k3z_intensive_checked_in_surface_keeps_full_treatment_chain_accounts() -> None:
+    for slug in INTENSIVE_SUBVARIANT_IDS:
+        accounts_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model"
+            / f"tracks_{slug}"
+            / "accounts.csv"
+        )
+        products_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model"
+            / f"tracks_{slug}"
+            / "products.csv"
+        )
+        treatments_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model"
+            / f"tracks_{slug}"
+            / "treatments.csv"
+        )
+        pin_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model"
+            / "analysis"
+            / f"{slug}.pin"
+        )
+        common_pin_path = (
+            K3Z_INSTANCE_ROOT
+            / "models/k3z_patchworks_model"
+            / "analysis"
+            / "intensive_variant_common.bsh"
+        )
+        with accounts_path.open(newline="", encoding="utf-8") as fh:
+            account_rows = list(csv.DictReader(fh))
+        with products_path.open(newline="", encoding="utf-8") as fh:
+            product_rows = list(csv.DictReader(fh))
+        with treatments_path.open(newline="", encoding="utf-8") as fh:
+            treatment_rows = list(csv.DictReader(fh))
+        pin_text = pin_path.read_text(encoding="utf-8")
+        common_pin_text = common_pin_path.read_text(encoding="utf-8")
+
+        accounts = {row["ACCOUNT"] for row in account_rows}
+        labels = {row["LABEL"] for row in product_rows}
+        treatments = {row["TREATMENT"] for row in treatment_rows}
+
+        assert {"PCT", "CT", "F1", "F2", "F3"}.issubset(treatments)
+        assert "product.Treated.managed.PCT" in labels
+        assert "product.Treated.managed.CT" in labels
+        assert "product.Treated.managed.F1" in labels
+        assert "product.Treated.managed.F2" in labels
+        assert "product.Treated.managed.F3" in labels
+        assert any(
+            re.fullmatch(
+                r"product\.QMDNumerator\.managed\.[A-Za-z0-9_]+\.(CC|PCT|CT)",
+                account,
+            )
+            for account in accounts
+        )
+        assert any(
+            re.fullmatch(
+                r"product\.Treated\.managed\.[A-Za-z0-9_]+\.(CC|PCT|CT)",
+                account,
+            )
+            for account in accounts
+        )
+        assert 'sourceRelative("intensive_variant_common.bsh");' in pin_text
+        assert (
+            'sourceRelative("../scripts/targets/qmdRatioAccounts.bsh");'
+            in common_pin_text
+        )
+        assert (
+            "setupHarvestedQmdRatioAccounts(control, tracks_path_prefix);"
+            in common_pin_text
         )
 
 

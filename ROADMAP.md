@@ -927,6 +927,48 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-27 (Phase 43 kickoff): start Issue 36 on branch
+  `feature/k3z-all-intensive-silviculture` to design and implement a new K3Z
+  teaching variant that combines the currently separated intensive
+  silviculture paths (`PCT`, `CT`, `F1`, `F2`, `F3`) into one launchable
+  surface.
+  - Tracking issue:
+    - GitHub issue #36 ("Add K3Z variant with combined PCT, CT, and F1/F2/F3
+      treatment chain")
+  - Immediate planning questions to answer before implementation:
+    - which existing AU coverage should the combined variant inherit from the
+      current `pct_*` and `ctfert_*` families;
+    - what exact state chain should the combined surface use
+      (`cc_pl -> cc_pl_pct -> cc_pl_pct_ct -> ...` or equivalent);
+    - whether the combined family should ship as one canonical profile or as a
+      small subvariant family mirroring the current SI-profile and/or PCT
+      intensity choices;
+    - how the combined surface should interact with the current QMD,
+      stems-per-ha, harvested-QMD, and harvested-volume account contracts so it
+      stays parallel with the rest of K3Z.
+  - Immediate execution order:
+    - compare the current `pct_*` and `ctfert_*` silviculture YAMLs and
+      exported state naming so the combined contract reuses accepted behavior
+      instead of inventing a parallel treatment model;
+    - write the chosen combined treatment-path contract into this roadmap
+      before touching exporter/runtime code;
+    - only then implement the new variant family, rebuild artifacts, validate,
+      and update the standalone K3Z docs.
+  - Audit result so far:
+    - the exporter already supports `PCT -> CT` composition via config using
+      `ct_to_state` on the PCT side and `from_state`/`to_state` on the CT side;
+    - fertilization can then continue from the CT state if
+      `fertilization.first_application.from_state` matches that CT target
+      state;
+    - that means the lowest-risk rollout is likely a small combined subvariant
+      family with one PCT intensity per surface layered onto one CT/fert
+      profile per surface, rather than one giant surface carrying every PCT
+      intensity and every fert profile simultaneously.
+  - Developer-confirmed design choice:
+    - use the full 8-AU union of the current `pct_*` and `ctfert_l15h5`
+      families for the new combined rollout;
+    - use the existing `ctfert_l15h5` SI-response profile as the CT/fert side
+      of the combined family.
 - 2026-03-27 (Phase 42 complete): Issue 33 on branch
   `feature/k3z-stems-per-ha-accounts` now exports AU-wise standing
   stems-per-ha surfaces across the active K3Z family.
@@ -7273,6 +7315,70 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - `CT` states scale the current planted stems surface by
         `(1 - removal_fraction)` from CT age onward;
       - fert states carry the same standing stems surface forward unchanged.
+
+## Phase 43: Add a K3Z Variant with the Full Intensive Silviculture Chain
+- [x] P43.1 Design the combined treatment-path contract before implementation
+  - [x] P43.1a Audit the accepted `pct_*` and `ctfert_*` state chains, AU
+    coverage, and timing rules so the new variant can reuse the existing
+    teaching assumptions where they already work.
+  - [x] P43.1b Decide the canonical combined-state naming contract and
+    treatment order for the new surface, including how `PCT`, `CT`, `F1`,
+    `F2`, and `F3` compose on planted stands.
+  - [x] P43.1c Decide whether the combined surface should ship as one profile
+    or as a small family of subvariants if current SI-profile or PCT-intensity
+    choices cannot be collapsed cleanly.
+- [x] P43.2 Implement the combined intensive-silviculture variant surface
+  - [x] P43.2a Add the required K3Z silviculture/runtime/PIN config surfaces
+    for the new combined variant family.
+  - [x] P43.2b Extend the exporter/runtime logic only as needed to support the
+    chosen combined treatment chain without regressing the existing `pct_*` and
+    `ctfert_*` families.
+  - [x] P43.2c Rebuild the shipped ForestModel XML, tracks, and validated
+    fragment outputs for the new surface.
+- [x] P43.3 Validate, document, and close out the new intensive-silviculture surface
+  - [x] P43.3a Run the normal K3Z validation gates and Matrix Builder rebuilds
+    for the new surface.
+  - [x] P43.3b Update the standalone K3Z docs, `CHANGE_LOG.md`, and GitHub
+    issue #36 with the final launch contract and validation results.
+  - Notes:
+    - Governing tracker:
+      - GitHub issue #36
+    - Initial design intent:
+      - add one new launchable K3Z teaching surface that combines the current
+        PCT-only and CT/fert treatment families into a single intensive
+        silviculture scaffold
+    - Current working design from the kickoff audit:
+      - prefer a combined subvariant family, not one overstuffed surface;
+      - implement three new combined subvariants:
+        `intensive_light`, `intensive_moderate`, and `intensive_heavy`;
+      - each new surface should use the `ctfert_l15h5` fert-response profile
+        and the full 8-AU union from the current `pct_*` + `ctfert_l15h5`
+        coverage;
+      - reuse the accepted state-machine pattern:
+        `cc_pl -> cc_pl_pct -> cc_pl_pct_ct -> cc_pl_pct_ct_f1 -> cc_pl_pct_ct_f1_f2 -> cc_pl_pct_ct_f1_f2_f3`;
+      - keep each shipped combined subvariant to one PCT intensity and one
+        CT/fert SI-response profile so the existing exporter seams can be
+        reused cleanly
+    - Implementation status:
+      - new K3Z configs/PINs/runtime files exist for
+        `intensive_light`, `intensive_moderate`, and `intensive_heavy`;
+      - shipped XMLs, tracks, and validated fragment outputs have been rebuilt
+        for all three subvariants;
+      - regression coverage now checks the combined
+        `PCT -> CT -> F1 -> F2 -> F3` chain and docs-contract presence;
+      - docs, roadmap/changelog, and issue #36 are now aligned with the final
+        launch contract;
+      - full validation gates and Matrix Builder rebuilds for the new family
+        have passed;
+      - next step is PR / merge / issue closeout after checkpointing both
+        repos.
+    - Guardrail:
+      - preserve the current baseline, `pct_*`, and `ctfert_*` surfaces while
+        this new combined path is being introduced
+    - Planning-first rule:
+      - do not start exporter/runtime implementation until the chosen combined
+        state chain and AU/profile contract are written explicitly in this
+        phase plan.
 
 
 

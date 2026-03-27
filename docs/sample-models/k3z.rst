@@ -27,6 +27,7 @@ Standalone K3Z Coverage Map
 Use the standalone K3Z docs for:
 
 - variant selection across ``base``, ``ctfert_l15h5``, ``ctfert_l20h0``,
+  ``intensive_light``, ``intensive_moderate``, ``intensive_heavy``,
   ``pct_light``, ``pct_moderate``, and ``pct_heavy``,
 - baseline-derived overlay subvariants
   (``basecase_riparian``, ``basecase_sum``, ``scenario1_sum``,

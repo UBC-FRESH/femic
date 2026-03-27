@@ -940,6 +940,159 @@ def test_build_forestmodel_xml_tree_adds_pct_then_ct_variant_path() -> None:
     assert "product.Treated.managed.F1" not in xml_text
 
 
+def test_build_forestmodel_xml_tree_adds_pct_then_ct_then_fert_variant_path() -> None:
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985502001,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_FDC+HW",
+                "si_level": "M",
+                "managed_curve_id": 985522001,
+                "unmanaged_curve_id": 985502001,
+            }
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "curve_type": "unmanaged"},
+            {"curve_id": 985522001, "curve_type": "managed"},
+            {"curve_id": 985522001001, "curve_type": "managed_species_prop_FD"},
+            {"curve_id": 985522001002, "curve_type": "managed_species_prop_HW"},
+            {"curve_id": 985502001001, "curve_type": "unmanaged_species_prop_FD"},
+            {"curve_id": 985502001002, "curve_type": "unmanaged_species_prop_HW"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "x": 1, "y": 8.0},
+            {"curve_id": 985502001, "x": 40, "y": 200.0},
+            {"curve_id": 985502001, "x": 100, "y": 320.0},
+            {"curve_id": 985522001, "x": 1, "y": 10.0},
+            {"curve_id": 985522001, "x": 10, "y": 120.0},
+            {"curve_id": 985522001, "x": 40, "y": 260.0},
+            {"curve_id": 985522001, "x": 50, "y": 340.0},
+            {"curve_id": 985522001, "x": 60, "y": 450.0},
+            {"curve_id": 985522001, "x": 70, "y": 560.0},
+            {"curve_id": 985522001, "x": 100, "y": 700.0},
+            {"curve_id": 985522001001, "x": 1, "y": 0.225},
+            {"curve_id": 985522001002, "x": 1, "y": 0.775},
+            {"curve_id": 985502001001, "x": 1, "y": 0.20},
+            {"curve_id": 985502001002, "x": 1, "y": 0.80},
+        ]
+    )
+    silviculture_config = {
+        "pre_commercial_thinning": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "from_state": "cc_pl",
+            "to_state": "cc_pl_pct",
+            "ct_to_state": "cc_pl_pct_ct",
+            "age_by_au": {"985502001": 10},
+            "source_total_stems_per_ha": 4000,
+            "remove_species": ["HW"],
+            "remove_stems_per_ha": {"HW": 2000},
+        },
+        "commercial_thinning": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "age_by_au": {"985502001": 40},
+            "basal_area_removal_fraction": 0.30,
+            "basal_area_to_volume_ratio": 1.0,
+            "final_felling_gap_factor": 0.0,
+        },
+        "fertilization": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "response_years": 10,
+            "growth_speedup_fraction_by_au": {"985502001": 0.10},
+            "qmd_response_fraction_by_au": {"985502001": 0.10},
+            "first_application": {
+                "from_state": "cc_pl_pct_ct",
+                "to_state": "cc_pl_ct_f1",
+                "age_by_au": {"985502001": 50},
+            },
+            "second_application": {
+                "enabled": True,
+                "from_state": "cc_pl_ct_f1",
+                "to_state": "cc_pl_ct_f1_f2",
+                "years_after_previous": 10,
+            },
+            "third_application": {
+                "enabled": True,
+                "from_state": "cc_pl_ct_f1_f2",
+                "to_state": "cc_pl_ct_f1_f2_f3",
+                "years_after_previous": 10,
+            },
+        },
+        "qmd": {
+            "enabled": True,
+            "harvested_product_accounts_enabled": True,
+        },
+        "stems_per_ha": {
+            "enabled": True,
+        },
+    }
+
+    root = build_forestmodel_xml_tree(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+        silviculture_config=silviculture_config,
+    )
+
+    xml_text = et.tostring(root, encoding="unicode")
+    base_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl'\"]"
+    )
+    assert base_select is not None
+    assert [
+        node.attrib["label"] for node in base_select.findall("./track/treatment")
+    ] == ["CC", "PCT"]
+
+    pct_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_pct'\"]"
+    )
+    assert pct_select is not None
+    assert [
+        node.attrib["label"] for node in pct_select.findall("./track/treatment")
+    ] == ["CC", "CT"]
+
+    pct_ct_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_pct_ct'\"]"
+    )
+    assert pct_ct_select is not None
+    assert [
+        node.attrib["label"] for node in pct_ct_select.findall("./track/treatment")
+    ] == ["CC", "F1"]
+
+    f1_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_ct_f1'\"]"
+    )
+    assert f1_select is not None
+    assert [
+        node.attrib["label"] for node in f1_select.findall("./track/treatment")
+    ] == ["CC", "F2"]
+
+    f2_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_ct_f1_f2'\"]"
+    )
+    assert f2_select is not None
+    assert [
+        node.attrib["label"] for node in f2_select.findall("./track/treatment")
+    ] == ["CC", "F3"]
+
+    assert "product.Treated.managed.PCT" in xml_text
+    assert "product.Treated.managed.CT" in xml_text
+    assert "product.Treated.managed.F1" in xml_text
+    assert "product.Treated.managed.F2" in xml_text
+    assert "product.Treated.managed.F3" in xml_text
+    assert "cc_pl_pct_ct" in xml_text
+    assert "cc_pl_ct_f1" in xml_text
+    assert "cc_pl_ct_f1_f2" in xml_text
+    assert "cc_pl_ct_f1_f2_f3" in xml_text
+
+
 def test_build_forestmodel_xml_tree_from_context_adds_stems_per_ha_features() -> None:
     context = _build_single_au_context(
         au_id=985502001,
