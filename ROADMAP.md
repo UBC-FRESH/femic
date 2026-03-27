@@ -7513,26 +7513,26 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         been redirected and checked.
 
 ## Phase 46: Add VS Code and Coding-Agent Onboarding Guide
-- [ ] P46.1 Define the scope and contract for the onboarding guide
-  - [ ] P46.1a Decide where the new guide should live in the parent Sphinx docs
+- [x] P46.1 Define the scope and contract for the onboarding guide
+  - [x] P46.1a Decide where the new guide should live in the parent Sphinx docs
     tree and how it should be linked from the current onboarding/developer
     entry points.
-  - [ ] P46.1b Write down the minimum environment-setup contract for a new
+  - [x] P46.1b Write down the minimum environment-setup contract for a new
     contributor using VS Code plus a local coding agent in this repo.
-  - [ ] P46.1c Define the human/agent collaboration guidance that should be
+  - [x] P46.1c Define the human/agent collaboration guidance that should be
     taught explicitly, including prompt hygiene, planning expectations,
     validation expectations, and supervision responsibilities.
-- [ ] P46.2 Author the new onboarding guide and integrate it into the docs tree
-  - [ ] P46.2a Add the new Sphinx guide page with FEMIC-specific setup
+- [x] P46.2 Author the new onboarding guide and integrate it into the docs tree
+  - [x] P46.2a Add the new Sphinx guide page with FEMIC-specific setup
     instructions for a local VS Code plus coding-agent workflow.
-  - [ ] P46.2b Link the guide from the relevant parent docs pages so new users
+  - [x] P46.2b Link the guide from the relevant parent docs pages so new users
     can discover it from normal onboarding entry points.
-  - [ ] P46.2c Keep the first pass FEMIC-specific, but note where the approach
+  - [x] P46.2c Keep the first pass FEMIC-specific, but note where the approach
     could later generalize into a broader reusable template for similar FRESH
     lab projects.
-- [ ] P46.3 Validate and close out the onboarding-docs addition
-  - [ ] P46.3a Run parent docs validation and any related docs-contract checks.
-  - [ ] P46.3b Update `CHANGE_LOG.md` and GitHub issue #42 with the final docs
+- [x] P46.3 Validate and close out the onboarding-docs addition
+  - [x] P46.3a Run parent docs validation and any related docs-contract checks.
+  - [x] P46.3b Update `CHANGE_LOG.md` and GitHub issue #42 with the final docs
     scope, guidance areas, and validation outcome.
   - Notes:
     - Governing tracker:
@@ -7552,6 +7552,22 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - keep the first pass grounded in the actual FEMIC repo/runtime contract
         rather than drifting into generic AI-tooling advice that does not map
         cleanly onto this project.
+    - Final implementation result:
+      - added a new parent Sphinx guide,
+        `docs/guides/vscode-coding-agent-onboarding.rst`, covering local VS
+        Code setup, repo bootstrap expectations, prompt-scoping guidance,
+        human-supervision guidance, and FEMIC-specific failure modes to watch
+        for when collaborating with a local coding agent;
+      - linked that guide from `docs/guides/index.rst`,
+        `docs/guides/developer-environment-bootstrap.rst`,
+        `docs/guides/deployment-instances.rst`, and
+        `docs/guides/case-onboarding.rst` so new contributors can discover it
+        from the normal onboarding flow;
+      - added docs-contract coverage to require the new guide page plus its
+        core sections and key FEMIC-specific markers.
+    - Validation result:
+      - `pytest tests/test_docs_contract.py` passed;
+      - `sphinx-build -b html docs _build/html -W` passed.
     - Planning-first rule:
       - do not start authoring the new guide until the intended docs location
         and the minimum onboarding contract are written explicitly in this

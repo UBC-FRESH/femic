@@ -11,6 +11,7 @@ export modules.
 
    pipeline-overview
    developer-environment-bootstrap
+   vscode-coding-agent-onboarding
    deployment-instances
    rebuild-repro-contract
    author-instance-rebuild-spec

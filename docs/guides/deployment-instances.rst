@@ -106,6 +106,9 @@ For fresh-clone developer setup (local `.venv`, editable install, and annex
 materialization ritual), see
 ``docs/guides/developer-environment-bootstrap.rst``.
 
+For practical VS Code plus local coding-agent onboarding in this repo, see
+``docs/guides/vscode-coding-agent-onboarding.rst``.
+
 At minimum, materialize annex-backed payloads before case preflight:
 
 .. code-block:: bash
