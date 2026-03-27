@@ -112,5 +112,15 @@ When contributing to this repository as the coding agent:
      points to the primary user-facing docs and relevant repo paths, states the validation outcome,
      and explains why any remaining caveats do not block closure; do not close issues with only an
      implicit or chat-only rationale.
+12. Monitor the incoming issue ideas list in `planning/incoming_ideas.md` as part of normal task
+    triage:
+   - when the developer asks "what next" or otherwise invites the agent to propose follow-on work,
+     consult `planning/incoming_ideas.md` alongside `ROADMAP.md`, `CHANGE_LOG.md`, and open GitHub
+     issues;
+   - if an incoming idea is adopted, reflect it in the normal planning surfaces as appropriate
+     (`ROADMAP.md`, GitHub issue, branch creation, or similar);
+   - once the developer explicitly green-lights running with an idea, edit
+     `planning/incoming_ideas.md` to remove that idea from the queue or narrow it to the remaining
+     unclaimed scope so the list stays current.
 
 Treat these steps as the minimum bar for every milestone so manual reminders are not required.

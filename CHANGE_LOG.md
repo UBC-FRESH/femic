@@ -6650,3 +6650,12 @@
   - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_light.windows.yaml --run-id k3z_pct_light_adjust_r_xmlrefresh_20260326`
   - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_moderate.windows.yaml --run-id k3z_pct_moderate_adjust_r_xmlrefresh_20260326`
   - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_heavy.windows.yaml --run-id k3z_pct_heavy_adjust_r_xmlrefresh_20260326`
+
+## 2026-03-26 - Intake Queue Contract Update
+
+- Updated `AGENTS.md` so the coding-agent contract explicitly requires
+  monitoring `planning/incoming_ideas.md` during normal "what next" triage.
+- Expanded the header in `planning/incoming_ideas.md` so it now reads as a
+  clearer intake-policy document for both human developers and the coding
+  agent, including queue purpose, usage rules, removal rules, and basic queue
+  hygiene expectations.
