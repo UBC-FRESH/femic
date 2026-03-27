@@ -6623,3 +6623,30 @@
   `pct_moderate`, and `pct_heavy` treatment-age semantics, apply the same
   age-retention fix used earlier for CT/fert if needed, and rerun Matrix
   Builder plus targeted Patchworks validation before closeout.
+
+## 2026-03-26 - Phase 38 PCT Age-Retention Bug Fix
+
+- Confirmed the suspected PCT age-retention bug was real:
+  - the shipped `forestmodel_pct_light.xml`, `forestmodel_pct_moderate.xml`,
+    and `forestmodel_pct_heavy.xml` omitted `adjust="R"` on the `PCT`
+    treatment nodes;
+  - the compiled `tracks_pct_light/treatments.csv`,
+    `tracks_pct_moderate/treatments.csv`, and
+    `tracks_pct_heavy/treatments.csv` therefore showed `PCT ... ADJUST=A`.
+- Updated `src/femic/fmg/patchworks.py` so exported `PCT` treatments retain
+  stand age after treatment using `adjust="R"`.
+- Added regression coverage in `tests/test_fmg_patchworks.py` to assert that
+  the generated `PCT` treatment node carries `adjust="R"`.
+- Regenerated the shipped K3Z PCT ForestModel XML family:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_light.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_moderate.xml`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel_pct_heavy.xml`
+- Rebuilt the compiled PCT tracks:
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pct_light/`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pct_moderate/`
+  - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pct_heavy/`
+- Validation passed with:
+  - `pytest tests/test_fmg_patchworks.py`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_light.windows.yaml --run-id k3z_pct_light_adjust_r_xmlrefresh_20260326`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_moderate.windows.yaml --run-id k3z_pct_moderate_adjust_r_xmlrefresh_20260326`
+  - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_heavy.windows.yaml --run-id k3z_pct_heavy_adjust_r_xmlrefresh_20260326`

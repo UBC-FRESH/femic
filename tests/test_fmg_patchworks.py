@@ -819,6 +819,9 @@ def test_build_forestmodel_xml_tree_adds_pct_then_ct_variant_path() -> None:
     assert [
         node.attrib["label"] for node in base_select.findall("./track/treatment")
     ] == ["CC", "PCT"]
+    pct_node = base_select.find("./track/treatment[@label='PCT']")
+    assert pct_node is not None
+    assert pct_node.get("adjust") == "R"
 
     pct_select = root.find(
         "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_pct'\"]"

@@ -2017,6 +2017,7 @@ def build_patchworks_forestmodel_definition(
                             label=str(pct_config["label"]),
                             min_age=int(pct_config["pct_age"]),
                             max_age=int(pct_config["pct_age"]),
+                            adjust="R",
                             assignments=(
                                 TreatmentAssignment(
                                     field="treatment",
