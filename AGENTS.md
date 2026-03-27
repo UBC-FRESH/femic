@@ -101,6 +101,13 @@ When contributing to this repository as the coding agent:
 11. Treat GitHub issue hygiene as a required part of the development workflow:
    - before starting a new feature, bug, docs push, or other non-trivial task, ensure `gh` is
      available in the active shell and authenticated as the intended active GitHub user;
+   - use GitHub built-in issue `Type` as the canonical work-kind field for FEMIC issues:
+     `Bug`, `Feature`, or `Task`;
+   - do not mirror issue `Type` into duplicate work-kind labels such as `bug`, `enhancement`,
+     `feature`, or `task`;
+   - use labels only for orthogonal metadata that `Type` does not express, such as platform,
+     subsystem, or workflow tags (for example `documentation`, `windows`, `k3z`, `tsa29`,
+     `patchworks`, `data`, `good first issue`, `help wanted`);
    - use GitHub to find an existing relevant open issue first; if none exists, create a new issue
      (`feature`, `bug`, `docs`, or similar as appropriate) before substantial implementation;
    - link the governing GitHub issue in `ROADMAP.md` when the task becomes active so roadmap notes
@@ -112,5 +119,15 @@ When contributing to this repository as the coding agent:
      points to the primary user-facing docs and relevant repo paths, states the validation outcome,
      and explains why any remaining caveats do not block closure; do not close issues with only an
      implicit or chat-only rationale.
+12. Monitor the incoming issue ideas list in `planning/incoming_ideas.md` as part of normal task
+    triage:
+   - when the developer asks "what next" or otherwise invites the agent to propose follow-on work,
+     consult `planning/incoming_ideas.md` alongside `ROADMAP.md`, `CHANGE_LOG.md`, and open GitHub
+     issues;
+   - if an incoming idea is adopted, reflect it in the normal planning surfaces as appropriate
+     (`ROADMAP.md`, GitHub issue, branch creation, or similar);
+   - once the developer explicitly green-lights running with an idea, edit
+     `planning/incoming_ideas.md` to remove that idea from the queue or narrow it to the remaining
+     unclaimed scope so the list stays current.
 
 Treat these steps as the minimum bar for every milestone so manual reminders are not required.

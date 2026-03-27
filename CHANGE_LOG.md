@@ -6650,3 +6650,55 @@
   - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_light.windows.yaml --run-id k3z_pct_light_adjust_r_xmlrefresh_20260326`
   - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_moderate.windows.yaml --run-id k3z_pct_moderate_adjust_r_xmlrefresh_20260326`
   - `python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_heavy.windows.yaml --run-id k3z_pct_heavy_adjust_r_xmlrefresh_20260326`
+
+## 2026-03-26 - Intake Queue Contract Update
+
+- Updated `AGENTS.md` so the coding-agent contract explicitly requires
+  monitoring `planning/incoming_ideas.md` during normal "what next" triage.
+- Expanded the header in `planning/incoming_ideas.md` so it now reads as a
+  clearer intake-policy document for both human developers and the coding
+  agent, including queue purpose, usage rules, removal rules, and basic queue
+  hygiene expectations.
+
+## 2026-03-26 - Phase 39 GitHub Issue Type Policy Kickoff
+
+- Opened GitHub issue `#28`:
+  - `Adopt GitHub issue Type as FEMIC's canonical work-kind classifier`
+- Created the working branch:
+  - `feature/github-issue-type-policy`
+- Confirmed the live FEMIC GitHub issue-type surface already provides the three
+  built-in work kinds the new policy expects:
+  - `Task`
+  - `Bug`
+  - `Feature`
+- Added Phase 39 rollout tasks to `ROADMAP.md` covering maintainer-doc updates,
+  label normalization, open-issue backfill, and final validation/closeout.
+
+## 2026-03-26 - Phase 39 GitHub Issue Type Policy Rollout
+
+- Updated `AGENTS.md` so FEMIC issue hygiene now explicitly requires:
+  - built-in GitHub issue `Type` as the canonical work-kind field;
+  - no duplicate work-kind labels such as `bug`, `enhancement`, `feature`, or `task`;
+  - labels reserved for orthogonal metadata only.
+- Added the orthogonal FEMIC labels needed for the lightweight taxonomy:
+  - `windows`
+  - `k3z`
+  - `tsa29`
+  - `patchworks`
+  - `data`
+- Backfilled built-in issue `Type` on the open issue set:
+  - `#11 -> Bug`
+  - `#10 -> Task`
+  - `#8 -> Task`
+  - `#27 -> Feature`
+  - `#28 -> Task`
+- Backfilled orthogonal labels on the open issue set:
+  - `#11 -> windows, data`
+  - `#10 -> tsa29`
+  - `#8 -> documentation, windows, patchworks`
+  - `#27 -> k3z, patchworks`
+- Deleted the duplicate work-kind labels `bug` and `enhancement` from the FEMIC
+  repo after confirming the open issue set no longer depended on them.
+- Removed the harvested-stem QMD product-account idea from
+  `planning/incoming_ideas.md` because it has now been promoted into GitHub as
+  issue `#27`.
