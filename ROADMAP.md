@@ -7399,8 +7399,8 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     active launch families that should expose the new accounts.
   - [x] P44.2c Add regression coverage for the new height-account contract in
     both exporter/runtime tests and docs-contract checks.
-- [ ] P44.3 Validate, document, and close out the K3Z stem-height rollout
-  - [ ] P44.3a Run the normal validation gates plus representative K3Z Matrix
+ - [x] P44.3 Validate, document, and close out the K3Z stem-height rollout
+  - [x] P44.3a Run the normal validation gates plus representative K3Z Matrix
     Builder/account-surface checks.
   - [x] P44.3b Update standalone K3Z docs, `CHANGE_LOG.md`, and GitHub issue
     #38 with the final contract and validation results.
@@ -7440,6 +7440,77 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - do not start exporter/runtime implementation until the managed/unmanaged
         support-data path and downstream account naming contract are written
         explicitly in this phase plan.
+
+## Phase 45: Normalize K3Z ForestModel XML Location Beside Validated Fragments
+- [x] P45.1 Make the variant-local `output/.../forestmodel.xml` files the canonical K3Z runtime XMLs
+  - [x] P45.1a Audit the current baseline, overlay, `pct_*`, `ctfert_*`, and
+    `intensive_*` runtime configs and docs to identify every remaining
+    reference to `models/k3z_patchworks_model/yield/*.xml`.
+  - [x] P45.1b Update the K3Z runtime configs so each variant points to the
+    `forestmodel.xml` file living beside its matching validated fragments
+    surface under `output/patchworks_k3z*_validated/`.
+  - [x] P45.1c Remove the stale duplicate `models/k3z_patchworks_model/yield/*.xml`
+    family once all K3Z runtime references have been redirected.
+- [x] P45.2 Rebuild and validate the K3Z runtime package layout after the XML move
+  - [x] P45.2a Run representative Matrix Builder rebuilds against the new
+    output-local XML/fragments pairings.
+  - [x] P45.2b Run representative account-surface checks to confirm the runtime
+    path cleanup does not change the compiled K3Z account contract.
+- [x] P45.3 Document and close out the K3Z package-layout normalization
+  - [x] P45.3a Update the standalone K3Z docs and parent docs so users are told
+    unambiguously which XML/fragments pair belongs together for Matrix Builder
+    rebuilds.
+  - [x] P45.3b Update `CHANGE_LOG.md` and GitHub issue #40 with the final path
+    contract and validation results.
+  - Notes:
+    - Governing tracker:
+      - GitHub issue #40
+    - Initial design intent:
+      - eliminate the split source-of-truth where the K3Z runtime configs point
+        at `models/.../yield/*.xml` while the matching validated fragments live
+        under `output/patchworks_k3z*_validated/`.
+    - Current audit result:
+      - the active K3Z output directories already carry variant-local
+        `forestmodel.xml` files beside the validated fragments surfaces;
+      - the runtime confusion comes from configs/docs still pointing to the
+        duplicate `yield/*.xml` copies instead of those colocated output-local
+        XMLs.
+    - Final implementation result:
+      - all active K3Z runtime configs now point to the output-local canonical
+        `forestmodel.xml` files that live beside their matching validated
+        fragments surfaces;
+      - the stale duplicate `external/femic-k3z-instance/models/k3z_patchworks_model/yield/forestmodel*.xml`
+        family was deleted;
+      - missing output-local canonical XML mirrors for the active `ctfert_*`
+        and overlay variants were backfilled so every shipped validated
+        fragments surface now has the matching `forestmodel.xml` beside it;
+      - the parent runtime heuristic in `src/femic/patchworks_runtime.py`
+        now recognizes the K3Z validated-layout pairing of
+        `output/patchworks_k3z*_validated/forestmodel.xml` with
+        `output/patchworks_k3z*_validated/fragments/fragments.dbf`;
+      - parent docs, standalone K3Z docs, and both lineage registries now
+        describe the validated output-local XML/fragments pair as the canonical
+        Matrix Builder input contract.
+    - Validation result:
+      - targeted `pytest` for `test_patchworks_runtime.py` and
+        `test_docs_contract.py` passed;
+      - full repo gates passed: `ruff check`, `mypy`, `pytest`, and parent plus
+        standalone K3Z Sphinx builds;
+      - representative Patchworks `matrix-build` reruns now passed for
+        baseline, `ctfert_l15h5`, `pct_light`, `intensive_light`, and
+        `overlay.basecase_sum` against the refreshed output-local canonical
+        XML/fragments pairings;
+      - a follow-on regression test now verifies that the output-local
+        canonical XMLs for representative active variants still carry the
+        managed QMD and managed height feature families, so stale output-local
+        XML mirrors cannot silently pass this layout migration again.
+    - Guardrail:
+      - preserve a one-to-one runtime pairing between each validated fragments
+        surface and the canonical XML that should be used with it.
+    - Planning-first rule:
+      - do not delete the `yield/*.xml` family until every runtime config, doc,
+        and validation path that depends on K3Z ForestModel XML location has
+        been redirected and checked.
 
 
 

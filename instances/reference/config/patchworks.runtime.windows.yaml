@@ -7,6 +7,6 @@ patchworks:
   use_xvfb: false
 
 matrix_builder:
-  fragments_path: ../models/k3z_patchworks_model/data/fragments.dbf
+  fragments_path: ../output/patchworks_k3z_validated/fragments/fragments.dbf
   output_dir: ../models/k3z_patchworks_model/tracks
-  forestmodel_xml_path: ../models/k3z_patchworks_model/yield/forestmodel.xml
+  forestmodel_xml_path: ../output/patchworks_k3z_validated/forestmodel.xml
