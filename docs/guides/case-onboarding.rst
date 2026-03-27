@@ -160,3 +160,15 @@ To pull latest TSA29 baseline updates:
 .. code-block:: bash
 
    git submodule update --remote external/femic-tsa29-instance
+
+Working With a Local Coding Agent
+---------------------------------
+
+If the onboarding workflow will be driven from VS Code with a local coding
+agent in the same checkout, read this guide before assigning larger rebuild or
+instance-maintenance tasks:
+
+- ``docs/guides/vscode-coding-agent-onboarding.rst``
+
+That guide explains the expected planning, supervision, and validation loop for
+agent-assisted FEMIC work.

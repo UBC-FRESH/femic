@@ -57,6 +57,7 @@ REMOVED_CTFERT_LEGACY_PATHS = (
 GUIDE_PAGES = [
     "pipeline-overview",
     "deployment-instances",
+    "vscode-coding-agent-onboarding",
     "rebuild-repro-contract",
     "author-instance-rebuild-spec",
     "interpret-rebuild-reports",
@@ -353,6 +354,32 @@ def test_case_onboarding_guide_keeps_template_and_preflight_links() -> None:
     assert "config/tipsy/template.case.yaml" in guide_text
     assert "python -m femic prep validate-case" in guide_text
     assert "cd instances/reference" in guide_text
+    assert "vscode-coding-agent-onboarding.rst" in guide_text
+
+
+def test_vscode_coding_agent_onboarding_guide_keeps_required_sections() -> None:
+    guide_text = (GUIDES_ROOT / "vscode-coding-agent-onboarding.rst").read_text()
+    for heading in (
+        "Purpose",
+        "Minimum Local Setup",
+        "VS Code Workspace Basics",
+        "Prompting Style That Works Well",
+        "Recommended Human Review Loop",
+        "FEMIC-Specific Things to Watch For",
+        "Suggested First Session for a New Contributor",
+        "Looking Ahead",
+    ):
+        assert heading in guide_text
+
+    for marker in (
+        "developer-environment-bootstrap.rst",
+        "AGENTS.md",
+        "docs/reference/contracts/index.rst",
+        "ROADMAP.md",
+        "CHANGE_LOG.md",
+        "planning / validation / issue-hygiene workflow",
+    ):
+        assert marker in guide_text
 
 
 def test_reference_instance_location_is_defined_and_documented() -> None:
@@ -367,6 +394,7 @@ def test_reference_instance_location_is_defined_and_documented() -> None:
     assert "instances/reference/" in guide_text
     pipeline_text = (GUIDES_ROOT / "pipeline-overview.rst").read_text()
     assert "instances/reference/" in pipeline_text
+    assert "vscode-coding-agent-onboarding.rst" in guide_text
 
 
 def test_active_docs_and_config_avoid_repo_root_path_wording() -> None:

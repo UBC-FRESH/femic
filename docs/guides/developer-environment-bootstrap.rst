@@ -158,3 +158,4 @@ Related Guides
 - ``docs/guides/deployment-instances.rst``
 - ``docs/guides/public-data-mirror-runbook.rst``
 - ``docs/guides/cross-platform-runtime-smoke.rst``
+- ``docs/guides/vscode-coding-agent-onboarding.rst``

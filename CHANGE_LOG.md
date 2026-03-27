@@ -7173,3 +7173,40 @@
 - Added docs-contract coverage that explicitly checks representative
   output-local canonical XMLs still carry the managed QMD and managed height
   feature families, so this stale-output-local-XML regression is now guarded.
+
+## 2026-03-27 - Phase 46 VS Code and Coding-Agent Onboarding Docs Kickoff
+
+- Promoted the VS Code plus coding-agent onboarding-docs idea from
+  `planning/incoming_ideas.md` into the normal tracked workflow under GitHub
+  issue `#42`.
+- Created the new working branch:
+  - `task/docs-vscode-coding-agent-onboarding`
+- Defined the kickoff scope as adding a FEMIC-specific Sphinx guide that
+  explains:
+  - how to set up the local VS Code development environment;
+  - how to work effectively with a local coding agent in this repo;
+  - what the human developer still needs to supervise, validate, and steer.
+
+## 2026-03-27 - Phase 46 VS Code and Coding-Agent Onboarding Docs Implemented
+
+- Added a new parent Sphinx guide:
+  - `docs/guides/vscode-coding-agent-onboarding.rst`
+- The new guide covers:
+  - local VS Code workspace setup for a FEMIC checkout;
+  - minimum bootstrap/toolchain expectations before delegating work;
+  - practical prompt-scoping guidance for a local coding agent;
+  - the human review/supervision loop that still matters in FEMIC;
+  - FEMIC-specific seams to watch for, such as stale generated artifacts,
+    submodule drift, external runtime blockers, and issue-hygiene drift;
+  - how this repo-specific workflow might later generalize into a broader
+    reusable template for similar scientific-computing projects.
+- Linked the new guide into the normal onboarding flow from:
+  - `docs/guides/index.rst`
+  - `docs/guides/developer-environment-bootstrap.rst`
+  - `docs/guides/deployment-instances.rst`
+  - `docs/guides/case-onboarding.rst`
+- Added docs-contract coverage so the new guide page, core sections, and key
+  FEMIC-specific markers are now tested.
+- Validation passed:
+  - `python -m pytest tests/test_docs_contract.py`
+  - `python -m sphinx -b html docs _build/html -W`
