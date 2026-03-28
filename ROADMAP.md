@@ -7945,10 +7945,10 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - log-grade / lumber-grade outputs
         - a QMD-quality revisit using better diameter signals where available
     - Immediate next implementation edge:
-      - run the full validation set after the BTC-first docs/contract sweep,
-        then post the final issue `#46` closeout comment, open PRs, and land
-        the core unattended BTC cutover while keeping richer indicator banks
-        and installation deep-dive work deferred to follow-on tasks.
+      - triage the post-cutover K3Z QMD regression first, starting from the
+        shipped `base` and `ctfert_l15h5` launch surfaces and tracing the empty
+        QMD accounts back through tracks, XML, and the BTC-driven managed-curve
+        bundle path before taking up the richer optional indicator-bank tasks.
     - Guardrails:
       - the intended supported workflow is now BTC CSV in / BTC CSV out, not
         the old DAT/OUT seam;
@@ -7977,6 +7977,41 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - `src/femic/pipeline/tipsy.py`, legacy workflow wrappers, and any local
         Windows runtime launcher/helper that currently treats BatchTIPSY as a
         manual external boundary.
+
+- [ ] P48.4 Triage and repair the post-cutover K3Z QMD regression
+  - [ ] P48.4a Reproduce the current K3Z launch-time symptom on the shipped
+    `base` and `ctfert_l15h5` surfaces, and confirm whether the empty values
+    affect:
+    - standing `feature.QMD.*` accounts
+    - harvested `product.QMD.*` ratio accounts
+    - both managed and unmanaged AU-wise QMD families
+  - [ ] P48.4b Trace the failure upstream from Patchworks accounts through:
+    - `tracks/*/accounts.csv`
+    - `tracks/*/protoaccounts.csv`
+    - `tracks/*/features.csv`
+    - the active K3Z ForestModel XML
+    - the BTC-driven managed-curve bundle rebuild path
+    to determine whether the regression is caused by:
+    - null-valued QMD attributes in tracks
+    - broken account promotion / normalization
+    - valid attributes pointing at bad or empty curves
+    - or a deeper managed-curve bundle regression introduced during the BTC
+      cutover
+  - [ ] P48.4c Repair the broken QMD path without perturbing the other active
+    K3Z variants unnecessarily, then rebuild and validate the affected K3Z
+    surfaces.
+  - Notes:
+    - This is a post-cutover regression task, not a revisit of the broader
+      optional BTC diameter-bank ideas tracked on issues `#47`, `#48`, and
+      `#49`.
+    - Governing tracker:
+      - GitHub issue #51
+    - Primary proving-ground surfaces:
+      - `base`
+      - `ctfert_l15h5`
+    - The user report suggests Patchworks launches cleanly, which points more
+      toward null/empty attribute values than toward missing account names or
+      invalid XML syntax.
 
 
 

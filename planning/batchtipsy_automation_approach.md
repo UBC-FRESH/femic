@@ -161,6 +161,31 @@ So the intended closure shape is:
 - keep the richer-bank and deeper reverse-engineering work on their own
   follow-on trackers
 
+## Immediate Regression Follow-Up
+
+The core unattended BTC cutover is now landed, but the next active task is a
+post-cutover regression on the shipped K3Z Patchworks surfaces:
+
+- `feature.QMD.*` and `product.QMD.*` accounts appear empty at launch time on
+  at least the shipped `base` and `ctfert_l15h5` surfaces
+- Patchworks launches cleanly, which suggests the account names and XML syntax
+  still exist, but that the underlying QMD attribute values may now be null,
+  empty, or otherwise disconnected from their intended curves
+
+The immediate debugging order should therefore be:
+
+1. confirm the symptom on the shipped K3Z `base` and `ctfert_l15h5` launch
+   surfaces
+2. inspect the generated `tracks/*/accounts.csv`, `protoaccounts.csv`, and
+   `features.csv` surfaces for the QMD families
+3. inspect the active K3Z ForestModel XML for the matching QMD attributes and
+   curve references
+4. trace further upstream into the BTC-driven managed-curve rebuild path only
+   if the XML/track layer suggests the curves themselves are empty or broken
+
+This regression should be treated as a focused bug-fix task, not as part of
+the optional richer BTC indicator-bank expansion.
+
 ## Report-Coupled `/TSR` Breakthrough
 
 The recent copied-install probes strongly suggest that `/TSR` is not a fixed

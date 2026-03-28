@@ -7621,3 +7621,16 @@
     instead of teaching them as the normal operator path.
   - Updated the CLI/API reference pages and active K3Z runbooks to point at the
     new BTC-first resume flow.
+- 2026-03-28 (Phase 48 post-cutover regression triage kickoff): opened a new
+  bug track for the K3Z QMD-account regression discovered immediately after the
+  core unattended BTC cutover landed.
+  - Current symptom report:
+    - shipped K3Z `base` and `ctfert_l15h5` launch cleanly in Patchworks, but
+      both standing `feature.QMD.*` and harvested `product.QMD.*` accounts
+      appear empty
+  - Current leading hypothesis:
+    - the QMD account families still exist syntactically, but the upstream
+      attribute values or curve bindings may now be null/empty somewhere in the
+      track/XML/managed-curve path
+  - Planning surfaces now treat this as the next active Phase 48 bug task
+    rather than part of the richer optional BTC indicator-bank expansion

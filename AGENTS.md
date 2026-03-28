@@ -141,5 +141,24 @@ When contributing to this repository as the coding agent:
    - if the full `femic export patchworks` path is blocked by a known checkpoint/fragments seam,
      regenerate the XML through the lower-level bundle-table builder first, then run matrix build
      against the refreshed XML rather than skipping directly to matrix build.
+14. Treat smoke-testing of known-working behavior as a required validation step, not an optional
+   courtesy:
+   - after any Patchworks-facing rebuild, do not report "all clear", "green light", or equivalent
+     unless you have inspected the concrete rebuilt outputs that are most likely to reveal
+     regressions in the touched surface;
+   - "matrix build succeeded" is necessary but not sufficient when the changed surface already had
+     known-good behavior before the edit;
+   - choose a necessary-and-sufficient smoke test set for the actual change. This should usually
+     include some combination of:
+     - targeted inspection of regenerated `tracks/*/{features,protoaccounts,accounts}.csv`;
+     - targeted inspection of the rebuilt ForestModel XML or curve tables;
+     - checking representative known-good accounts, attributes, products, or targets that the
+       change could plausibly break;
+     - launching the most relevant representative Patchworks surfaces when the user-facing runtime
+       behavior is part of the claimed success signal;
+   - prefer a small number of representative, high-signal checks over rote exhaustive scanning, but
+     those checks must be capable of catching obvious regressions in the changed contract;
+   - if you did not inspect the relevant rebuilt outputs directly, say so explicitly and do not
+     present the result as verified.
 
 Treat these steps as the minimum bar for every milestone so manual reminders are not required.
