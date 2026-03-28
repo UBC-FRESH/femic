@@ -83,6 +83,13 @@ from femic.pipeline.tipsy_config import (
     discover_tipsy_config_tsas,
     load_tipsy_tsa_config,
 )
+from femic.pipeline.tipsy import (
+    BTCCustomReportColumn,
+    btc_report_template_preset,
+    build_btc_custom_report_template,
+    parse_btc_custom_report_template,
+    write_btc_custom_report_template,
+)
 from femic.vdyp.reporting import (
     VdypWarningBudget,
     evaluate_warning_budget,
@@ -2294,6 +2301,165 @@ def tipsy_validate(
     console.print(
         f"[green]Validated TIPSY configs:[/green] {', '.join(targets)} "
         f"(dir={resolved_config_dir})"
+    )
+
+
+def _parse_btc_report_header_flag_overrides(items: list[str] | None) -> dict[str, str]:
+    overrides: dict[str, str] = {}
+    for item in items or []:
+        if "=" not in item:
+            raise typer.BadParameter(
+                f"Invalid --header-flag value {item!r}; expected KEY=VALUE."
+            )
+        key, value = item.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if not key:
+            raise typer.BadParameter(
+                f"Invalid --header-flag value {item!r}; missing key before '='."
+            )
+        overrides[key] = value
+    return overrides
+
+
+@tipsy_app.command("write-btc-report-template")
+def tipsy_write_btc_report_template(
+    output: Path = typer.Argument(
+        ...,
+        help="Output .rpt path to write.",
+    ),
+    source_rpt: Path | None = typer.Option(
+        None,
+        "--source-rpt",
+        help="Existing BTC .rpt file to clone/adapt.",
+        show_default=False,
+    ),
+    preset: str | None = typer.Option(
+        None,
+        "--preset",
+        help=(
+            "Built-in preset name "
+            "(currently: tsr-unattended-default, timber-supply-sql)."
+        ),
+        show_default=False,
+    ),
+    name: str | None = typer.Option(
+        None,
+        "--name",
+        help="Report Name= value; defaults to preset/source/template stem.",
+        show_default=False,
+    ),
+    clear_columns: bool = typer.Option(
+        False,
+        "--clear-columns",
+        help="Start with an empty column list before applying --column entries.",
+    ),
+    column: list[str] | None = typer.Option(
+        None,
+        "--column",
+        help=(
+            "Append a BTC output column token. Repeat for multiple columns; "
+            "tokens come from vetted .rpt files / BTC output field lists."
+        ),
+        show_default=False,
+    ),
+    header_flag: list[str] | None = typer.Option(
+        None,
+        "--header-flag",
+        help="Override one [CustomReportHeader] setting using KEY=VALUE syntax.",
+        show_default=False,
+    ),
+    report_type: str | None = typer.Option(
+        None,
+        "--report-type",
+        help="Override [CustomReport] Type= value.",
+        show_default=False,
+    ),
+    identifier: str | None = typer.Option(
+        None,
+        "--identifier",
+        help="Override [CustomReport] Identifier= value.",
+        show_default=False,
+    ),
+    identifier_integer: bool | None = typer.Option(
+        None,
+        "--identifier-integer/--identifier-text",
+        help="Override IdentifierInteger (1 for integer IDs, 0 for text IDs).",
+        show_default=False,
+    ),
+    output_format: str | None = typer.Option(
+        None,
+        "--output-format",
+        help="Override [CustomReport] OutputFormat= value (for example TAB).",
+        show_default=False,
+    ),
+    icon_id: int | None = typer.Option(
+        None,
+        "--icon-id",
+        help="Override [CustomReport] IconID= value.",
+        show_default=False,
+    ),
+    border: int | None = typer.Option(
+        None,
+        "--border",
+        help="Override [CustomReport] Border= value.",
+        show_default=False,
+    ),
+    header_height: int | None = typer.Option(
+        None,
+        "--header-height",
+        help="Override [CustomReport] HeaderHeight= value.",
+        show_default=False,
+    ),
+    footer_height: int | None = typer.Option(
+        None,
+        "--footer-height",
+        help="Override [CustomReport] FooterHeight= value.",
+        show_default=False,
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Write a BTC custom-report template from a preset or existing .rpt file."""
+    if source_rpt and preset:
+        raise typer.BadParameter("Use either --source-rpt or --preset, not both.")
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_output = instance_context.resolve_path(output)
+    source_template = None
+    if source_rpt is not None:
+        source_template = parse_btc_custom_report_template(
+            instance_context.resolve_path(source_rpt)
+        )
+    elif preset is not None:
+        source_template = btc_report_template_preset(preset)
+    else:
+        source_template = btc_report_template_preset("tsr-unattended-default")
+
+    template_name = name or source_template.name or resolved_output.stem
+    columns = [] if clear_columns else list(source_template.columns)
+    for token in column or []:
+        columns.append(BTCCustomReportColumn(token=token))
+
+    template = build_btc_custom_report_template(
+        name=template_name,
+        source_template=source_template,
+        columns=columns,
+        header_flags=_parse_btc_report_header_flag_overrides(header_flag),
+        icon_id=icon_id,
+        identifier=identifier,
+        identifier_integer=identifier_integer,
+        report_type=report_type,
+        output_format=output_format,
+        border=border,
+        header_height=header_height,
+        footer_height=footer_height,
+    )
+    written_path = write_btc_custom_report_template(
+        output_path=resolved_output,
+        template=template,
+    )
+    console.print(
+        "[green]Wrote BTC report template[/green] "
+        f"path={written_path} columns={len(template.columns)} type={template.report_type}"
     )
 
 

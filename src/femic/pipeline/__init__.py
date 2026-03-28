@@ -90,15 +90,21 @@ from femic.pipeline.bundle import (
 from femic.pipeline.vdyp_sampling import nsamples_from_curves
 from femic.pipeline.vdyp_io import import_vdyp_tables, write_vdyp_infiles_plylyr
 from femic.pipeline.tipsy import (
+    BTCCustomReportColumn,
+    BTCCustomReportTemplate,
+    btc_report_template_preset,
     TIPSYCandidateEvaluation,
     build_tipsy_params_for_tsa,
     build_tipsy_input_table,
+    build_btc_custom_report_template,
     tipsy_params_excel_path,
     build_tipsy_warning_event,
     compute_vdyp_oaf1,
     compute_vdyp_site_index,
     evaluate_tipsy_candidate,
+    parse_btc_custom_report_template,
     tipsy_stage_output_paths,
+    write_btc_custom_report_template,
     write_tipsy_input_exports,
 )
 from femic.pipeline.tsa import (
@@ -256,9 +262,15 @@ __all__ = [
     "nsamples_from_curves",
     "compute_vdyp_oaf1",
     "compute_vdyp_site_index",
+    "BTCCustomReportColumn",
+    "BTCCustomReportTemplate",
+    "btc_report_template_preset",
+    "build_btc_custom_report_template",
     "build_tipsy_input_table",
     "tipsy_params_excel_path",
+    "parse_btc_custom_report_template",
     "tipsy_stage_output_paths",
+    "write_btc_custom_report_template",
     "write_tipsy_input_exports",
     "assign_stratum_matches_from_au_table",
     "assign_si_levels_from_stratum_quantiles",

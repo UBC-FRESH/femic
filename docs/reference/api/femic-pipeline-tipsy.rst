@@ -103,6 +103,37 @@ The highest-value entrypoints in this module are:
   current input workbook.
 - :func:`write_tipsy_output_input_fingerprint`
   Persist the DAT SHA256 sidecar paired with an accepted output file.
+- :func:`parse_btc_custom_report_template`
+  Read an existing BTC ``.rpt`` custom report into a structured template.
+- :func:`build_btc_custom_report_template`
+  Build a curated BTC report template from a preset or an existing template.
+- :func:`write_btc_custom_report_template`
+  Write a BTC ``.rpt`` report file back to disk.
+
+BTC Report Template Support
+---------------------------
+
+This module now also carries the first FEMIC-side utilities for BTC custom
+report templates. That work is still part of the broader Phase 48 BTC cutover,
+but it already supports a useful maintenance pattern:
+
+1. parse an existing BTC ``.rpt`` file,
+2. clone or extend its column list in Python, and
+3. write a vetted replacement template back out.
+
+The first built-in unattended preset is the transposed TSR mashup that safely
+combines:
+
+- merchantable volume
+- height
+- gross volume
+- crown closure
+
+That preset exists because live local probes showed that ``/TSR`` is
+report-coupled: replacing ``TimberSupply.rpt`` with a compatible transposed
+report template changes what ``/TSR`` emits. Not every report type is a safe
+drop-in replacement, so FEMIC should prefer vetted compatible templates over
+arbitrary all-fields output experiments.
 
 The small dataclasses in this module are also useful because they define the
 candidate/freshness contracts explicitly:

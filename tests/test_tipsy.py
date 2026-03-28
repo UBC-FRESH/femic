@@ -8,19 +8,24 @@ import pandas as pd
 import pytest
 
 from femic.pipeline.tipsy import (
+    BTCCustomReportColumn,
     assess_tipsy_input_output_coherence,
+    btc_report_template_preset,
     build_tipsy_params_for_tsa,
     build_tipsy_input_table,
+    build_btc_custom_report_template,
     build_tipsy_warning_event,
     compute_file_sha256,
     compute_vdyp_oaf1,
     compute_vdyp_site_index,
     evaluate_tipsy_candidate,
+    parse_btc_custom_report_template,
     tipsy_input_dat_path,
     tipsy_output_input_fingerprint_path,
     tipsy_params_excel_path,
     tipsy_stage_output_paths,
     validate_tipsy_output_is_fresh,
+    write_btc_custom_report_template,
     write_tipsy_output_input_fingerprint,
     write_tipsy_input_exports,
 )
@@ -199,6 +204,70 @@ def test_write_tipsy_input_exports_writes_excel_and_dat(tmp_path: Path) -> None:
     assert Path(excel_path).is_file()
     assert Path(dat_path).is_file()
     assert "AU" in Path(dat_path).read_text()
+
+
+def test_parse_btc_custom_report_template_reads_sql_style_template(tmp_path: Path) -> None:
+    rpt = tmp_path / "TimberSupply SQL.rpt"
+    rpt.write_text(
+        "[CustomReport]\n"
+        "Name=Timber Supply SQL\n"
+        "IconID=13\n"
+        "Identifier=FirstIDcolumn\n"
+        "IdentifierInteger=1\n"
+        "Type=databaseByStand\n"
+        "OutputFormat=TAB\n"
+        "Border=500\n"
+        "HeaderHeight=250\n"
+        "FooterHeight=250\n"
+        "\n"
+        "[CustomReportHeader]\n"
+        "ModelVersion=1\n"
+        "Species_GenWorth=1\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "'enum_db_column\tWidth\tHeader1Override\tHeader2Override\tUnitsOverride\n"
+        "Year\t0\tYear\t\t\n"
+        "Volume:Auto:Con\t0\tVolumeCon\t\t\n",
+        encoding="utf-8",
+    )
+    template = parse_btc_custom_report_template(rpt)
+    assert template.name == "Timber Supply SQL"
+    assert template.report_type == "databaseByStand"
+    assert template.identifier_integer is True
+    assert [col.token for col in template.columns] == ["Year", "Volume:Auto:Con"]
+    assert template.columns[1].header1_override == "VolumeCon"
+
+
+def test_btc_report_template_preset_tsr_unattended_default_has_mashup_columns() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    assert template.report_type == "transposed"
+    assert template.output_format == "CSV"
+    assert [col.token for col in template.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+    ]
+
+
+def test_build_and_write_btc_custom_report_template_round_trip(tmp_path: Path) -> None:
+    source = btc_report_template_preset("timber-supply-sql")
+    template = build_btc_custom_report_template(
+        name="Extended SQL",
+        source_template=source,
+        columns=[
+            *source.columns,
+            BTCCustomReportColumn(token="VolumeGross", width=0, header1_override="gVol"),
+        ],
+    )
+    out = tmp_path / "extended.rpt"
+    write_btc_custom_report_template(output_path=out, template=template)
+    reparsed = parse_btc_custom_report_template(out)
+    assert reparsed.name == "Extended SQL"
+    assert reparsed.columns[-1].token == "VolumeGross"
+    assert reparsed.columns[-1].header1_override == "gVol"
 
 
 def test_write_tipsy_input_exports_fails_fast_on_width_overflow(tmp_path: Path) -> None:

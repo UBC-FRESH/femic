@@ -6,12 +6,282 @@ from dataclasses import dataclass
 from datetime import datetime
 import hashlib
 from pathlib import Path
+import re
 from typing import Any, Mapping, Sequence
 import warnings
 
 import numpy as np
 
 from femic.pipeline.diagnostics import build_timestamped_event
+
+
+_BTC_REPORT_COLUMNS_COMMENT = (
+    "'enum_db_column\tWidth\tHeader1Override\tHeader2Override\tUnitsOverride"
+)
+DEFAULT_BTC_REPORT_HEADER_FLAGS: dict[str, str] = {
+    "ModelVersion": "1",
+    "TU_InitDensity": "1",
+    "TU_RegenType": "1",
+    "TU_RegenDelay": "1",
+    "TU_Treatments": "1",
+    "TU_Area": "1",
+    "Species_SiteCurve": "0",
+    "Species_TopHeight": "0",
+    "Species_InitDensity": "0",
+    "Species_StockHeight": "1",
+    "Species_GenWorth": "1",
+    "Species_Fertilization": "1",
+}
+_BTC_REPORT_PRESET_NAMES = (
+    "timber-supply-sql",
+    "tsr-unattended-default",
+)
+
+
+@dataclass(frozen=True)
+class BTCCustomReportColumn:
+    """One column entry in a BTC custom report template."""
+
+    token: str
+    width: int = 0
+    header1_override: str = ""
+    header2_override: str = ""
+    units_override: str = ""
+
+    def render(self) -> str:
+        return "\t".join(
+            [
+                self.token,
+                str(int(self.width)),
+                self.header1_override,
+                self.header2_override,
+                self.units_override,
+            ]
+        ).rstrip()
+
+
+@dataclass(frozen=True)
+class BTCCustomReportTemplate:
+    """Structured BTC custom report template."""
+
+    name: str
+    icon_id: int = 13
+    identifier: str = "FirstIDcolumn"
+    identifier_integer: bool = True
+    report_type: str = "databaseByStand"
+    output_format: str = "TAB"
+    border: int = 500
+    header_height: int = 250
+    footer_height: int = 250
+    header_flags: Mapping[str, str] | None = None
+    columns: Sequence[BTCCustomReportColumn] = ()
+
+    def render(self) -> str:
+        header_flags = dict(self.header_flags or DEFAULT_BTC_REPORT_HEADER_FLAGS)
+        lines = [
+            "[CustomReport]",
+            f"Name={self.name}",
+            f"IconID={int(self.icon_id)}",
+            f"Identifier={self.identifier}",
+            f"IdentifierInteger={1 if self.identifier_integer else 0}",
+            f"Type={self.report_type}",
+            f"OutputFormat={self.output_format}",
+            f"Border={int(self.border)}",
+            f"HeaderHeight={int(self.header_height)}",
+            f"FooterHeight={int(self.footer_height)}",
+            "",
+            "[CustomReportHeader]",
+        ]
+        lines.extend(f"{key}={value}" for key, value in header_flags.items())
+        lines.extend(["", "[CustomReportColumns]", _BTC_REPORT_COLUMNS_COMMENT])
+        lines.extend(column.render() for column in self.columns)
+        return "\n".join(lines) + "\n"
+
+
+def _parse_btc_column_line(raw_line: str) -> BTCCustomReportColumn:
+    parts = [
+        part.strip()
+        for part in re.split(r"\t+|\s{2,}", raw_line.rstrip())
+        if part.strip() != ""
+    ]
+    if not parts:
+        raise ValueError("BTC custom report column line is empty")
+    token = parts[0]
+    width = 0
+    header1_override = ""
+    header2_override = ""
+    units_override = ""
+    if len(parts) >= 2:
+        try:
+            width = int(parts[1])
+            if len(parts) >= 3:
+                header1_override = parts[2]
+            if len(parts) >= 4:
+                header2_override = parts[3]
+            if len(parts) >= 5:
+                units_override = parts[4]
+        except ValueError:
+            header1_override = parts[1]
+            if len(parts) >= 3:
+                header2_override = parts[2]
+            if len(parts) >= 4:
+                units_override = parts[3]
+    return BTCCustomReportColumn(
+        token=token,
+        width=width,
+        header1_override=header1_override,
+        header2_override=header2_override,
+        units_override=units_override,
+    )
+
+
+def parse_btc_custom_report_template(template_path: str | Path) -> BTCCustomReportTemplate:
+    """Parse a BTC ``.rpt`` custom report file into a structured template."""
+    path = Path(template_path)
+    text = path.read_text(encoding="utf-8")
+    current_section: str | None = None
+    report_values: dict[str, str] = {}
+    header_values: dict[str, str] = {}
+    columns: list[BTCCustomReportColumn] = []
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            current_section = line[1:-1]
+            continue
+        if current_section == "CustomReport":
+            if "=" not in raw_line:
+                continue
+            key, value = raw_line.split("=", 1)
+            report_values[key.strip()] = value.strip()
+            continue
+        if current_section == "CustomReportHeader":
+            if "=" not in raw_line:
+                continue
+            key, value = raw_line.split("=", 1)
+            header_values[key.strip()] = value.strip()
+            continue
+        if current_section == "CustomReportColumns":
+            if line.startswith("'"):
+                continue
+            columns.append(_parse_btc_column_line(raw_line))
+    if "Name" not in report_values:
+        raise ValueError(f"BTC report template missing Name in {path}")
+    return BTCCustomReportTemplate(
+        name=report_values["Name"],
+        icon_id=int(report_values.get("IconID", 13)),
+        identifier=report_values.get("Identifier", "FirstIDcolumn"),
+        identifier_integer=report_values.get("IdentifierInteger", "1") not in {"0", "false"},
+        report_type=report_values.get("Type", "databaseByStand"),
+        output_format=report_values.get("OutputFormat", "TAB"),
+        border=int(report_values.get("Border", 500)),
+        header_height=int(report_values.get("HeaderHeight", 250)),
+        footer_height=int(report_values.get("FooterHeight", 250)),
+        header_flags=header_values,
+        columns=columns,
+    )
+
+
+def build_btc_custom_report_template(
+    *,
+    name: str,
+    source_template: BTCCustomReportTemplate | None = None,
+    columns: Sequence[BTCCustomReportColumn] | None = None,
+    header_flags: Mapping[str, str] | None = None,
+    icon_id: int | None = None,
+    identifier: str | None = None,
+    identifier_integer: bool | None = None,
+    report_type: str | None = None,
+    output_format: str | None = None,
+    border: int | None = None,
+    header_height: int | None = None,
+    footer_height: int | None = None,
+) -> BTCCustomReportTemplate:
+    """Build a BTC custom report template from a preset or existing template."""
+    base = source_template or BTCCustomReportTemplate(name=name)
+    merged_header_flags = dict(base.header_flags or DEFAULT_BTC_REPORT_HEADER_FLAGS)
+    if header_flags:
+        merged_header_flags.update(header_flags)
+    return BTCCustomReportTemplate(
+        name=name,
+        icon_id=icon_id if icon_id is not None else base.icon_id,
+        identifier=identifier or base.identifier,
+        identifier_integer=(
+            identifier_integer
+            if identifier_integer is not None
+            else base.identifier_integer
+        ),
+        report_type=report_type or base.report_type,
+        output_format=output_format or base.output_format,
+        border=border if border is not None else base.border,
+        header_height=header_height if header_height is not None else base.header_height,
+        footer_height=footer_height if footer_height is not None else base.footer_height,
+        header_flags=merged_header_flags,
+        columns=list(columns if columns is not None else base.columns),
+    )
+
+
+def btc_report_template_preset(name: str) -> BTCCustomReportTemplate:
+    """Return a vetted built-in BTC custom report template preset."""
+    normalized = name.strip().lower().replace("_", "-")
+    if normalized == "timber-supply-sql":
+        return BTCCustomReportTemplate(
+            name="Timber Supply SQL",
+            icon_id=13,
+            identifier="FirstIDcolumn",
+            identifier_integer=True,
+            report_type="databaseByStand",
+            output_format="TAB",
+            border=500,
+            header_height=250,
+            footer_height=250,
+            header_flags=DEFAULT_BTC_REPORT_HEADER_FLAGS,
+            columns=[
+                BTCCustomReportColumn("Year", 0, "Year"),
+                BTCCustomReportColumn("Volume:Auto:Con", 0, "VolumeCon"),
+                BTCCustomReportColumn("Volume:Auto:Dec", 0, "VolumeDec"),
+                BTCCustomReportColumn("Height:Auto:Con", 0, "HeightCon"),
+                BTCCustomReportColumn("Height:Auto:Dec", 0, "HeightDec"),
+            ],
+        )
+    if normalized == "tsr-unattended-default":
+        return BTCCustomReportTemplate(
+            name="TSR Unattended Default",
+            icon_id=7,
+            identifier="FirstIDcolumn",
+            identifier_integer=False,
+            report_type="transposed",
+            output_format="CSV",
+            border=500,
+            header_height=250,
+            footer_height=250,
+            header_flags={},
+            columns=[
+                BTCCustomReportColumn("Volume:Auto:Con", 0, "MVcon", "{yr}"),
+                BTCCustomReportColumn("Volume:Auto:Dec", 0, "MVdec", "{yr}"),
+                BTCCustomReportColumn("Height:Con", 0, "HTcon", "{yr}"),
+                BTCCustomReportColumn("Height:Dec", 0, "HTdec", "{yr}"),
+                BTCCustomReportColumn("VolumeGross", 0, "gVol", "{yr}"),
+                BTCCustomReportColumn("CC", 0, "CC", "{yr}"),
+            ],
+        )
+    supported = ", ".join(_BTC_REPORT_PRESET_NAMES)
+    raise ValueError(
+        f"Unsupported BTC report template preset {name!r}. Supported presets: {supported}"
+    )
+
+
+def write_btc_custom_report_template(
+    *,
+    output_path: str | Path,
+    template: BTCCustomReportTemplate,
+) -> Path:
+    """Write a BTC custom report template to disk."""
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(template.render(), encoding="utf-8")
+    return path
 
 
 DEFAULT_TIPSY_BATCH_COLUMNS_1BASED: dict[str, tuple[int, int]] = {
