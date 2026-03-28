@@ -7500,3 +7500,28 @@
     - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
     - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/resources/legacy/01b_run-tsa.py src/femic/workflows/legacy.py src/femic/cli/main.py tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
     - `.venv\\Scripts\\python.exe -m mypy src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/workflows/legacy.py`
+- 2026-03-28 (Phase 48 K3Z BTC smoke follow-up): fixed the unattended BTC
+  parser identity rule for real K3Z managed-curve ids and proved the runner +
+  parser on the shipped K3Z instance data.
+  - Updated `parse_btc_tsr_transposed_output(...)` so returned BTC
+    `feature_id` values are preserved as-is when they are already in FEMIC
+    managed-curve-id space (`>= 20000`) and only lifted with `20000 + id`
+    for legacy/raw stand ids.
+  - Added regression coverage in `tests/test_tipsy.py` for both cases:
+    - raw `feature_id=1000 -> AU=21000`
+    - existing managed `feature_id=21000 -> AU=21000`
+  - Generated a real K3Z BTC input handoff at:
+    - `external/femic-k3z-instance/data/03_input-tsak3z.csv`
+  - Proved a real unattended BTC `/TSR` run succeeds against that K3Z input:
+    - run id: `k3z_btc_tsr_smoke_20260328`
+    - returned transposed CSV includes 14 stands and 79 columns
+    - parsed output preserves the expected K3Z managed ids `21000..23003`
+  - Proved the remaining blocker is now downstream legacy post-TIPSY resume,
+    not BTC:
+    - `femic tsa btc-post-tipsy --instance-root external/femic-k3z-instance --tsa k3z`
+      stops on missing
+      `external/femic-k3z-instance/data/vdyp_prep-tsak3z.pkl`
+  - Validation passed:
+    - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
+    - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/resources/legacy/01b_run-tsa.py src/femic/workflows/legacy.py src/femic/cli/main.py tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
+    - `.venv\\Scripts\\python.exe -m mypy src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/workflows/legacy.py`

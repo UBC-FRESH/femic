@@ -7795,8 +7795,10 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
           CSV into long-form FEMIC managed-curve rows
         - legacy `01b_run-tsa.py` now branches to the BTC CSV parser when the
           returned TIPSY artifact is `.csv`
-        - managed curve IDs are mapped back onto the existing `20000 + AU`
-          FEMIC convention
+        - returned BTC `feature_id` values are now interpreted more safely:
+          - if `feature_id >= 20000`, preserve it as an existing FEMIC
+            managed-curve id
+          - otherwise map it back onto the legacy `20000 + AU` convention
         - current first-cut replacements for not-yet-proven BTC fields are:
           - `DBHq = NaN`
           - `TPH = NaN`
@@ -7859,10 +7861,23 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         presets and age/increment expectations if FEMIC later needs to drive a
         richer BTC reporting mode, but not like a primary stand-parameter
         defaults source.
+    - Real K3Z smoke status:
+      - a real unattended BTC `/TSR` run against generated
+        `external/femic-k3z-instance/data/03_input-tsak3z.csv` now succeeds and
+        the returned transposed CSV parses cleanly back into the K3Z
+        `21000..23003` managed-curve-id space without the earlier
+        `20000 + feature_id` double-lift bug.
+      - the full `tsa btc-post-tipsy` resume path still stops on the K3Z
+        instance because the shipped checkout does not include
+        `external/femic-k3z-instance/data/vdyp_prep-tsak3z.pkl`, which the
+        legacy post-TIPSY bundle builder still requires.
     - Immediate next implementation edge:
-      - run a real instance-level smoke through `tsa btc-post-tipsy`, then
-        update operator/docs/contracts so BTC CSV is described as the default
-        supported BatchTIPSY seam and the old DAT/OUT wording is retired from
+      - decide whether to ship/fetch the missing `vdyp_prep-tsaXX.pkl`
+        checkpoint for instance-level `btc-post-tipsy` runs or broaden the
+        post-TIPSY bundle builder so it can resume from the currently shipped
+        K3Z artifact set without that checkpoint; only after that should we
+        update operator/docs/contracts to describe BTC CSV as the default
+        supported BatchTIPSY seam and retire the old DAT/OUT wording from
         user-facing guidance.
     - Guardrails:
       - the intended supported workflow is now BTC CSV in / BTC CSV out, not

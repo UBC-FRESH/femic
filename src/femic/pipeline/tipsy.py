@@ -1147,7 +1147,9 @@ def parse_btc_tsr_transposed_output(
     rows: list[dict[str, Any]] = []
     for record in df.to_dict(orient="records"):
         feature_id = int(float(record["feature_id"]))
-        managed_curve_id = 20000 + feature_id
+        # New BTC inputs may already carry FEMIC managed-curve ids (e.g. 21000,
+        # 22001). Preserve those as-is; only lift legacy/raw stand ids.
+        managed_curve_id = feature_id if feature_id >= 20000 else 20000 + feature_id
         for age in sorted(ages):
             mvcon = pd_module.to_numeric(record.get(f"MVcon_{age}"), errors="coerce")
             mvdec = pd_module.to_numeric(record.get(f"MVdec_{age}"), errors="coerce")

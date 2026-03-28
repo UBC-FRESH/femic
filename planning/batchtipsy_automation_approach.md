@@ -238,7 +238,9 @@ What it does:
 - converts those wide transposed rows into FEMIC's long-form managed-curve
   table structure
 - maps stand identity back onto FEMIC managed-curve ids using:
-  - `managed_curve_id = 20000 + feature_id`
+  - preserve `feature_id` as-is when it is already in managed-curve-id space
+    (`>= 20000`)
+  - otherwise map legacy/raw stand ids with `managed_curve_id = 20000 + feature_id`
 
 Current first-cut field decisions:
 
@@ -265,6 +267,16 @@ Current implementation implication:
   - new unattended BTC `.csv` files
 - the unattended BTC CSV path is now the preferred forward direction
 - the legacy `.out` path remains only as a temporary compatibility bridge
+
+K3Z smoke note:
+
+- a real unattended BTC `/TSR` run against generated
+  `external/femic-k3z-instance/data/03_input-tsak3z.csv` now succeeds and
+  parses cleanly with the preserved `21000..23003` managed ids
+- the remaining K3Z blocker is no longer BTC itself; it is the downstream
+  legacy post-TIPSY bundle builder, which still requires the unshipped
+  `external/femic-k3z-instance/data/vdyp_prep-tsak3z.pkl` checkpoint for full
+  `tsa btc-post-tipsy` resume
 
 ## First End-to-End Orchestration Slice
 

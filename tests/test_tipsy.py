@@ -309,6 +309,36 @@ def test_parse_btc_tsr_transposed_output_maps_feature_rows_to_managed_curve_ids(
     assert out["TPH"].isna().all()
 
 
+def test_parse_btc_tsr_transposed_output_preserves_existing_managed_curve_ids(
+    tmp_path: Path,
+) -> None:
+    output_csv = tmp_path / "MSYT_output.csv"
+    pd.DataFrame(
+        [
+            {
+                "feature_id": 21000,
+                "MVcon_0": 1.0,
+                "MVdec_0": 2.0,
+                "HTcon_0": 4.0,
+                "HTdec_0": 3.0,
+                "gVol_0": 5.0,
+                "CC_0": 0.6,
+            }
+        ]
+    ).to_csv(output_csv, index=False)
+
+    out = parse_btc_tsr_transposed_output(output_csv=output_csv, pd_module=pd)
+
+    assert list(out["AU"]) == [21000]
+    assert list(out["Age"]) == [0]
+    assert list(out["Yield"]) == [3.0]
+    assert list(out["Height"]) == [4.0]
+    assert list(out["GrossYield"]) == [5.0]
+    assert list(out["CrownCover"]) == [0.6]
+    assert out["DBHq"].isna().all()
+    assert out["TPH"].isna().all()
+
+
 def test_parse_btc_custom_report_template_reads_sql_style_template(tmp_path: Path) -> None:
     rpt = tmp_path / "TimberSupply SQL.rpt"
     rpt.write_text(
