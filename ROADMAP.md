@@ -8021,6 +8021,11 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - K3Z `base`, `ctfert_*`, `pct_*`, `intensive_*`, and overlay tracks were
         rebuilt and smoke-checked directly for non-empty standing/product QMD
         surfaces after the fix.
+      - closeout-level whole-family confirmation is now also complete:
+        - every active rebuilt K3Z track family was checked explicitly for
+          non-null `feature.QMD.managed.*` and
+          `product.QMDNumerator.managed.*` surfaces, not just the representative
+          `base` / `ctfert_l15h5` pair.
     - Confirmed follow-on boundary:
       - first attempts to restore a live BTC-native `TPH` signal through the
         unattended `/TSR` seam still fail, even using the exact stock

@@ -7671,3 +7671,12 @@
   - Tightened the agent contract again:
     - obvious low-cost, high-reward direct smoke checks must be done
       proactively, without waiting for the developer to prompt for them.
+  - Added the missing direct whole-family smoke pass before closeout:
+    - reran Matrix Builder across the full active K3Z variant family
+      (`base`, `ctfert_*`, `pct_*`, `intensive_*`, and overlay surfaces);
+    - then explicitly verified across every rebuilt track family that
+      `feature.QMD.managed.*` accounts/features and
+      `product.QMDNumerator.managed.*` product accounts are populated and
+      non-null in the runtime-facing CSV surfaces;
+    - user also confirmed live Patchworks launches of `base.pin` and
+      `ctfert_l15h5.pin` show QMD accounts back online.
