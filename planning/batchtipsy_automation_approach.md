@@ -182,9 +182,41 @@ Current planning implication:
 - the report-template seam is no longer speculative
 - the runner seam is no longer speculative
 - the next implementation edge is now:
-  - Stage 01a `MSYT.csv` generation
   - parsing the transposed unattended `/TSR` output into FEMIC downstream
     managed-curve structures
+
+## First Stage 01a `MSYT.csv` Writer Slice
+
+The first conservative BTC input writer slice is now in place in FEMIC.
+
+What it does:
+
+- builds canonical `03_input-tsaXX.csv` from the same current TIPSY `f`-table
+  payload already assembled in Stage 01a
+- uses AU as the stable stand key for:
+  - `feature_id`
+  - `opening_id`
+- fills the planted treatment unit from the current `f`-table fields:
+  - `SPP_n`
+  - `PCT_n`
+  - `Density`
+  - `Regen_Delay`
+  - `GW_n`
+  - `OAF1`
+  - `OAF2`
+  - `SI`
+- leaves the natural treatment unit empty in this first cut
+- maps BTC site-index columns from the same single current `SI` value using a
+  conservative species-code projection
+
+Current implementation choice:
+
+- this first slice is intentionally planted-path only
+- it does not yet attempt to reconstruct a richer natural treatment unit from
+  legacy DAT assumptions
+- the goal is to make the unattended BTC seam usable first, then widen the
+  fidelity of the input payload after the runner + parser path is proven end to
+  end
 
 ## Incompatible Report-Type Constraint
 

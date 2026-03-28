@@ -7783,6 +7783,13 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
           - `HTcon_*`, `HTdec_*`
           - `gVol_*`
           - `CC_*`
+      - the first Stage 01a BTC input writer slice is also now in place:
+        - canonical path helper:
+          - `03_input-tsaXX.csv`
+        - conservative planted-path writer derived from the existing TIPSY
+          `f`-table payload
+        - legacy `01a_run-tsa.py` now emits `03_input-tsaXX.csv` beside the
+          older artifacts
         - gross volume (`gVol`)
         - crown closure (`CC`)
     - Richer-output fallback note:
@@ -7845,6 +7852,10 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - FEMIC's new `femic tipsy run-btc` smoke now proves the copied-install
         runner plus patched-stock report path works end to end on the local
         Windows host when outputs are staged in writable scratch;
+      - Stage 01a now also has a low-level canonical `MSYT.csv` writer, so the
+        next edge is parsing BTC transposed output back into FEMIC managed-curve
+        structures rather than continuing to design the input seam from
+        scratch.
         - `TimberSupply SQL.rpt` loads but crashes during `BatchProcess()` when
           used as `TimberSupply.rpt`;
         - oversized `AllFieldsSQL.rpt` templates can crash even earlier during

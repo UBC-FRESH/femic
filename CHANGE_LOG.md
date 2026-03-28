@@ -7434,3 +7434,22 @@
   - Validation passed:
     - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py`
     - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/cli/main.py tests/test_tipsy.py tests/test_tipsy_report_cli.py`
+- 2026-03-28 (Phase 48 MSYT writer slice): added the first canonical Stage 01a
+  BTC input writer.
+  - Added a conservative `MSYT.csv` writer in `src/femic/pipeline/tipsy.py`
+    that maps the current TIPSY `f`-table payload onto BTC's sample-schema
+    columns.
+  - Added canonical path helper:
+    - `03_input-tsaXX.csv`
+  - The first slice uses:
+    - AU as `feature_id` / `opening_id`
+    - planted treatment-unit fields from `SPP_n`, `PCT_n`, `Density`,
+      `Regen_Delay`, `GW_n`, `OAF1`, `OAF2`, and `SI`
+    - empty natural treatment-unit fields for now
+  - Updated the legacy Stage 01a runner so `01a_run-tsa.py` now emits
+    `03_input-tsaXX.csv` beside the older artifacts using the same built
+    `f`-table payload.
+  - Validation passed:
+    - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py`
+    - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/resources/legacy/01a_run-tsa.py tests/test_tipsy.py tests/test_tipsy_report_cli.py`
+    - `.venv\\Scripts\\python.exe -m mypy src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py`

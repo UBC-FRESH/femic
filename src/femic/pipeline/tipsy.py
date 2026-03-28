@@ -41,6 +41,68 @@ _BTC_REPORT_PRESET_NAMES = (
     "timber-supply-sql",
     "tsr-unattended-default",
 )
+DEFAULT_BTC_MSYT_COLUMNS = (
+    "feature_id",
+    "bec_zone",
+    "bec_subzone",
+    "planted_species1",
+    "planted_species2",
+    "planted_species3",
+    "planted_species4",
+    "planted_species5",
+    "planted_density1",
+    "planted_density2",
+    "planted_density3",
+    "planted_density4",
+    "planted_density5",
+    "genetic_worth1",
+    "genetic_worth2",
+    "genetic_worth3",
+    "genetic_worth4",
+    "genetic_worth5",
+    "planting_delay",
+    "planted_percent",
+    "natural_species1",
+    "natural_species2",
+    "natural_species3",
+    "natural_species4",
+    "natural_species5",
+    "natural_density1",
+    "natural_density2",
+    "natural_density3",
+    "natural_density4",
+    "natural_density5",
+    "oaf1",
+    "oaf2",
+    "opening_id",
+    "vri_ref_age",
+    "vri_ref_sph",
+    "at_si",
+    "ba_si",
+    "bg_si",
+    "bl_si",
+    "cw_si",
+    "dr_si",
+    "ep_si",
+    "fd_si",
+    "hm_si",
+    "hw_si",
+    "lt_si",
+    "lw_si",
+    "pa_si",
+    "pl_si",
+    "pw_si",
+    "py_si",
+    "sb_si",
+    "se_si",
+    "ss_si",
+    "sw_si",
+    "sx_si",
+    "yc_si",
+)
+_BTC_MSYT_SITE_INDEX_COLUMNS = tuple(
+    column for column in DEFAULT_BTC_MSYT_COLUMNS if column.endswith("_si")
+)
 DEFAULT_BATCHTIPSY_EXE_ENV = "FEMIC_BATCHTIPSY_EXE"
 DEFAULT_BATCHTIPSY_WINDOWS_EXE = Path(r"C:\Program Files\TIPSY 4.7\BTC\TIPSYbtc.exe")
 _BTC_SUPPORTED_MODES = {"TSR", "FLP"}
@@ -927,6 +989,135 @@ def build_tipsy_input_table(
     return pd_module.concat(rows)[list(tipsy_params_columns)]
 
 
+def _btc_msyt_bec_fields(value: Any) -> tuple[str, str]:
+    text = "" if value is None else str(value).strip()
+    if not text:
+        return "", ""
+    match = re.match(r"^([A-Z]+)([a-z]+)", text)
+    if match:
+        return match.group(1), match.group(2)
+    return text, ""
+
+
+def _btc_species_code(value: Any) -> str:
+    text = "" if value is None else str(value).strip()
+    if not text or text.lower() == "nan":
+        return ""
+    lowered = text.lower()
+    return lowered[:1].upper() + lowered[1:]
+
+
+def _btc_site_index_column_for_species(species_code: str) -> str | None:
+    normalized = species_code.strip().lower()
+    if not normalized:
+        return None
+    key = f"{normalized[:2]}_si"
+    if key in _BTC_MSYT_SITE_INDEX_COLUMNS:
+        return key
+    return None
+
+
+def _btc_numeric_or_blank(value: Any) -> Any:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return ""
+        return stripped
+    try:
+        if value != value:  # NaN
+            return ""
+    except Exception:
+        return value
+    return value
+
+
+def _btc_density_from_percent(*, total_density: Any, percent: Any) -> Any:
+    total = _btc_numeric_or_blank(total_density)
+    pct = _btc_numeric_or_blank(percent)
+    if total == "" or pct == "":
+        return ""
+    total_float = float(total)
+    pct_float = float(pct)
+    return int(round(total_float * (pct_float / 100.0)))
+
+
+def build_btc_msyt_input_table(
+    *,
+    tipsy_table: Any,
+    pd_module: Any,
+) -> Any:
+    """Build BTC `MSYT.csv` input rows from the current TIPSY `f`-table payload."""
+    table = tipsy_table.copy()
+    unnamed_cols = [col for col in table.columns if str(col).startswith("Unnamed:")]
+    if unnamed_cols:
+        table = table.drop(columns=unnamed_cols)
+
+    rows: list[dict[str, Any]] = []
+    for record in table.to_dict(orient="records"):
+        bec_zone, bec_subzone = _btc_msyt_bec_fields(record.get("BEC"))
+        row: dict[str, Any] = {column: "" for column in DEFAULT_BTC_MSYT_COLUMNS}
+        for si_column in _BTC_MSYT_SITE_INDEX_COLUMNS:
+            row[si_column] = 0
+
+        au = record.get("AU")
+        feature_id = int(au) if _btc_numeric_or_blank(au) != "" else ""
+        row["feature_id"] = feature_id
+        row["bec_zone"] = bec_zone
+        row["bec_subzone"] = bec_subzone
+        row["planting_delay"] = _btc_numeric_or_blank(record.get("Regen_Delay"))
+        proportion = _btc_numeric_or_blank(record.get("Proportion"))
+        row["planted_percent"] = (
+            int(round(float(proportion) * 100.0)) if proportion != "" else ""
+        )
+        row["oaf1"] = _btc_numeric_or_blank(record.get("OAF1"))
+        row["oaf2"] = _btc_numeric_or_blank(record.get("OAF2"))
+        row["opening_id"] = feature_id
+        row["vri_ref_age"] = 0
+        row["vri_ref_sph"] = 0
+
+        for i in range(1, 6):
+            species_key = f"SPP_{i}"
+            percent_key = f"PCT_{i}"
+            gw_key = f"GW_{i}"
+            btc_species = _btc_species_code(record.get(species_key))
+            if not btc_species:
+                continue
+            planted_species_col = f"planted_species{i}"
+            planted_density_col = f"planted_density{i}"
+            genetic_worth_col = f"genetic_worth{i}"
+            row[planted_species_col] = btc_species
+            row[planted_density_col] = _btc_density_from_percent(
+                total_density=record.get("Density"),
+                percent=record.get(percent_key),
+            )
+            row[genetic_worth_col] = _btc_numeric_or_blank(record.get(gw_key))
+            site_column: str | None = _btc_site_index_column_for_species(btc_species)
+            if site_column is not None:
+                row[site_column] = _btc_numeric_or_blank(record.get("SI")) or 0
+
+        rows.append(row)
+
+    if not rows:
+        raise RuntimeError("No BTC MSYT input rows generated.")
+    return pd_module.DataFrame(rows)[list(DEFAULT_BTC_MSYT_COLUMNS)]
+
+
+def write_btc_msyt_input_csv(
+    *,
+    btc_msyt_table: Any,
+    tsa: str,
+    output_root: str | Path = "data",
+    filename_template: str = "03_input-tsa{tsa}.csv",
+) -> Path:
+    """Write the BTC canonical `MSYT.csv` handoff for one TSA."""
+    output_path = Path(output_root) / filename_template.format(tsa=tsa)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    btc_msyt_table.to_csv(output_path, index=False)
+    return output_path
+
+
 def write_tipsy_input_exports(
     *,
     tipsy_table: Any,
@@ -1010,6 +1201,16 @@ def tipsy_input_dat_path(
     filename_template: str = "02_input-tsa{tsa}.dat",
 ) -> Path:
     """Build legacy per-TSA BatchTIPSY DAT handoff path."""
+    return Path(input_root) / filename_template.format(tsa=tsa)
+
+
+def btc_msyt_input_csv_path(
+    *,
+    tsa: str,
+    input_root: str | Path = "data",
+    filename_template: str = "03_input-tsa{tsa}.csv",
+) -> Path:
+    """Build canonical per-TSA BTC `MSYT.csv` handoff path."""
     return Path(input_root) / filename_template.format(tsa=tsa)
 
 

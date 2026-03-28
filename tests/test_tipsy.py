@@ -10,14 +10,17 @@ import pytest
 
 from femic.pipeline.tipsy import (
     DEFAULT_BATCHTIPSY_EXE_ENV,
+    DEFAULT_BTC_MSYT_COLUMNS,
     BTCRunResult,
     BTCCustomReportColumn,
     assess_tipsy_input_output_coherence,
     btc_report_template_preset,
     build_btc_cli_command,
+    build_btc_msyt_input_table,
     build_tipsy_params_for_tsa,
     build_tipsy_input_table,
     build_btc_custom_report_template,
+    btc_msyt_input_csv_path,
     build_tipsy_warning_event,
     compute_file_sha256,
     compute_vdyp_oaf1,
@@ -32,6 +35,7 @@ from femic.pipeline.tipsy import (
     tipsy_params_excel_path,
     tipsy_stage_output_paths,
     validate_tipsy_output_is_fresh,
+    write_btc_msyt_input_csv,
     write_btc_custom_report_template,
     write_tipsy_output_input_fingerprint,
     write_tipsy_input_exports,
@@ -194,6 +198,61 @@ def test_build_tipsy_input_table_raises_when_no_rows() -> None:
             pd_module=pd,
             table_key="f",
         )
+
+
+def test_build_btc_msyt_input_table_maps_current_tipsy_payload() -> None:
+    tipsy_table = pd.DataFrame(
+        {
+            "AU": [985502001],
+            "BEC": ["CWHvm1"],
+            "Proportion": [1.0],
+            "Regen_Delay": [2],
+            "Density": [4000],
+            "SPP_1": ["HW"],
+            "PCT_1": [77.5],
+            "SPP_2": ["FD"],
+            "PCT_2": [22.5],
+            "GW_1": [4.0],
+            "GW_2": [""],
+            "OAF1": [0.85],
+            "OAF2": [0.95],
+            "SI": [20.6],
+        }
+    )
+
+    out = build_btc_msyt_input_table(tipsy_table=tipsy_table, pd_module=pd)
+
+    assert list(out.columns) == list(DEFAULT_BTC_MSYT_COLUMNS)
+    row = out.iloc[0].to_dict()
+    assert row["feature_id"] == 985502001
+    assert row["bec_zone"] == "CWH"
+    assert row["bec_subzone"] == "vm"
+    assert row["planted_species1"] == "Hw"
+    assert row["planted_species2"] == "Fd"
+    assert row["planted_density1"] == 3100
+    assert row["planted_density2"] == 900
+    assert row["genetic_worth1"] == 4.0
+    assert row["planting_delay"] == 2
+    assert row["planted_percent"] == 100
+    assert row["opening_id"] == 985502001
+    assert row["hw_si"] == 20.6
+    assert row["fd_si"] == 20.6
+    assert row["cw_si"] == 0
+
+
+def test_write_btc_msyt_input_csv_writes_canonical_path(tmp_path: Path) -> None:
+    row = {column: "" for column in DEFAULT_BTC_MSYT_COLUMNS}
+    row["feature_id"] = 1
+    table = pd.DataFrame([row])
+    output_path = write_btc_msyt_input_csv(
+        btc_msyt_table=table,
+        tsa="08",
+        output_root=tmp_path,
+    )
+    assert output_path == tmp_path / "03_input-tsa08.csv"
+    assert output_path.is_file()
+    assert btc_msyt_input_csv_path(tsa="08", input_root=tmp_path) == output_path
+    assert "feature_id" in output_path.read_text(encoding="utf-8")
 
 
 def test_write_tipsy_input_exports_writes_excel_and_dat(tmp_path: Path) -> None:
