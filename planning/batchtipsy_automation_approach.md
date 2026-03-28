@@ -161,6 +161,31 @@ So the intended closure shape is:
 - keep the richer-bank and deeper reverse-engineering work on their own
   follow-on trackers
 
+## Immediate Regression Follow-Up
+
+The core unattended BTC cutover is now landed, but the next active task is a
+post-cutover regression on the shipped K3Z Patchworks surfaces:
+
+- `feature.QMD.*` and `product.QMD.*` accounts appear empty at launch time on
+  at least the shipped `base` and `ctfert_l15h5` surfaces
+- Patchworks launches cleanly, which suggests the account names and XML syntax
+  still exist, but that the underlying QMD attribute values may now be null,
+  empty, or otherwise disconnected from their intended curves
+
+The immediate debugging order should therefore be:
+
+1. confirm the symptom on the shipped K3Z `base` and `ctfert_l15h5` launch
+   surfaces
+2. inspect the generated `tracks/*/accounts.csv`, `protoaccounts.csv`, and
+   `features.csv` surfaces for the QMD families
+3. inspect the active K3Z ForestModel XML for the matching QMD attributes and
+   curve references
+4. trace further upstream into the BTC-driven managed-curve rebuild path only
+   if the XML/track layer suggests the curves themselves are empty or broken
+
+This regression should be treated as a focused bug-fix task, not as part of
+the optional richer BTC indicator-bank expansion.
+
 ## Report-Coupled `/TSR` Breakthrough
 
 The recent copied-install probes strongly suggest that `/TSR` is not a fixed
@@ -689,6 +714,54 @@ Current planning implication:
   until a compatible template family or alternate BTC mode is proven
 - FEMIC should not assume that simply appending richer stand-table fields to the
   current unattended `TimberSupply.rpt` mashup will work
+
+## Post-Cutover K3Z QMD Regression and Repair
+
+The first core unattended BTC cutover landed with a real K3Z regression:
+
+- launched K3Z Patchworks surfaces still contained the expected QMD account
+  names and XML attributes;
+- but both standing `feature.QMD.*` and harvested `product.QMD.*` surfaces were
+  effectively empty at runtime.
+
+Confirmed root cause:
+
+- the unattended BTC seam now returns a conservative managed-curve bundle that
+  does not include live managed `TPH`;
+- `tipsy_curves_tsak3z.csv` therefore carried blank `TPH` for the managed side;
+- managed QMD generation in the Patchworks exporter was still assuming that a
+  managed `TPH` curve existed, so the managed QMD path collapsed even though
+  the accounts/features/attributes still existed syntactically.
+
+Repair that is now in place:
+
+- FEMIC now falls back to Stage 01a / BTC-input stand density for:
+  - managed standing stems-per-ha curves when managed `TPH` is absent;
+  - managed QMD generation when managed `TPH` is absent.
+- This restored non-empty QMD surfaces across the rebuilt K3Z family:
+  - `base`
+  - `ctfert_*`
+  - `pct_*`
+  - `intensive_*`
+  - overlays
+
+Important boundary learned during the same bugfix:
+
+- first attempts to restore a true BTC-native managed stand-structure signal in
+  the unattended `/TSR` seam still fail at runtime;
+- this includes probes using the exact stock `Yield.rpt` token forms:
+  - `SPH:000`
+  - `DBHg:000`
+  - `BasalArea:000`
+- these probes still crash BTC in `BatchProcess()`
+
+Current planning implication:
+
+- the K3Z QMD regression is repairable and can be closed on the managed-density
+  fallback path;
+- restoring richer live BTC-native stand-structure signals remains separate
+  seam-finding work under the optional indicator-bank tasks, especially issue
+  `#47`.
 
 ## First Implementation Slice
 

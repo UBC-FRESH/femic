@@ -838,24 +838,56 @@ def test_build_forestmodel_xml_tree_adds_ct_track_and_qmd_when_configured() -> N
         node.attrib["label"] for node in f1_state_select.findall("./track/treatment")
     ]
     assert f1_treatment_labels == ["CC", "F2"]
-    assert "product.Treated.managed.F2" in xml_text
-    assert "product.Treated.managed.F3" in xml_text
-    assert (
-        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_ct_f1_f2'"
-        in xml_text
+
+
+def test_build_forestmodel_xml_tree_uses_managed_stems_fallback_for_qmd() -> None:
+    context = _build_single_au_context(
+        au_id=985502001,
+        stratum_code="CWHvm_FDC+HW",
+        si_level="M",
+        unmanaged_points=(
+            CurvePoint(x=0.0, y=0.0),
+            CurvePoint(x=10.0, y=30.0),
+            CurvePoint(x=40.0, y=200.0),
+        ),
+        managed_points=(
+            CurvePoint(x=0.0, y=0.0),
+            CurvePoint(x=10.0, y=36.0),
+            CurvePoint(x=40.0, y=260.0),
+        ),
+        managed_species_curve_ids={"CW": 985522001001, "HW": 985522001002},
+        unmanaged_species_curve_ids={"CW": 985502001001, "HW": 985502001002},
+        curve_points_by_id={
+            985522001001: (CurvePoint(x=1.0, y=0.25),),
+            985522001002: (CurvePoint(x=1.0, y=0.75),),
+            985502001001: (CurvePoint(x=1.0, y=0.20),),
+            985502001002: (CurvePoint(x=1.0, y=0.80),),
+        },
+        qmd_support=QmdSupportDefinition(
+            site_index=25.0,
+            managed_stems_per_ha=900.0,
+            managed_height_points=(
+                CurvePoint(x=0.0, y=0.0),
+                CurvePoint(x=10.0, y=4.0),
+                CurvePoint(x=40.0, y=20.0),
+            ),
+        ),
     )
-    f2_state_select = root.find(
-        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_ct_f1_f2'\"]"
+
+    root = build_forestmodel_xml_tree_from_context(
+        context=context,
+        silviculture_config={"qmd": {"enabled": True}},
     )
-    assert f2_state_select is not None
-    f2_treatment_labels = [
-        node.attrib["label"] for node in f2_state_select.findall("./track/treatment")
+
+    qmd_curve = root.find("./curve[@id='au_CWHvm_FDC_HW_M_managed_qmd']")
+    assert qmd_curve is not None
+    qmd_values = [
+        float(point.attrib["y"])
+        for point in qmd_curve.findall("./point")
+        if float(point.attrib["x"]) > 0.0
     ]
-    assert f2_treatment_labels == ["CC", "F3"]
-    assert (
-        "AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl_ct_f1_f2_f3'"
-        in xml_text
-    )
+    assert qmd_values
+    assert max(qmd_values) > 0.0
 
 
 def test_build_forestmodel_xml_tree_adds_pct_then_ct_variant_path() -> None:

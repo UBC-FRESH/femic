@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, cast
 
 import numpy as np
 import pandas as pd
@@ -215,6 +215,47 @@ def _load_site_index_by_au_from_tipsy_input(data_dir: Path) -> dict[int, float]:
     }
 
 
+def _load_managed_stems_per_ha_by_au_from_btc_input(
+    data_dir: Path,
+) -> dict[int, float]:
+    input_path = data_dir / "03_input-tsak3z.csv"
+    if not input_path.is_file():
+        return {}
+    input_df = pd.read_csv(input_path)
+    if "feature_id" not in input_df.columns:
+        return {}
+    density_cols = [
+        column
+        for column in input_df.columns
+        if column.startswith("planted_density") or column.startswith("natural_density")
+    ]
+    if not density_cols:
+        return {}
+    input_df["feature_id"] = pd.to_numeric(input_df["feature_id"], errors="coerce")
+    for column in density_cols:
+        input_df[column] = pd.to_numeric(input_df[column], errors="coerce").fillna(0.0)
+    input_df = input_df.dropna(subset=["feature_id"])
+    if input_df.empty:
+        return {}
+    input_df["managed_stems_per_ha"] = input_df.loc[:, density_cols].sum(axis=1)
+    summary = (
+        input_df.groupby("feature_id", as_index=False)
+        .agg(managed_stems_per_ha=("managed_stems_per_ha", "median"))
+        .dropna(subset=["managed_stems_per_ha"])
+    )
+    summary["managed_stems_per_ha"] = pd.to_numeric(
+        summary["managed_stems_per_ha"], errors="coerce"
+    )
+    return {
+        _coerce_int(row.feature_id): float(cast(float, managed_stems_per_ha))
+        for row in summary.itertuples(index=False)
+        for managed_stems_per_ha in [row.managed_stems_per_ha]
+        if pd.notna(managed_stems_per_ha)
+        and np.isfinite(float(cast(float, managed_stems_per_ha)))
+        and float(cast(float, managed_stems_per_ha)) > 0.0
+    }
+
+
 def _load_managed_qmd_support_from_tipsy(
     *,
     data_dir: Path,
@@ -238,6 +279,9 @@ def _load_managed_qmd_support_from_tipsy(
         return {}
 
     site_index_by_local_au = _load_site_index_by_au_from_tipsy_input(data_dir=data_dir)
+    managed_stems_per_ha_by_local_au = _load_managed_stems_per_ha_by_au_from_btc_input(
+        data_dir=data_dir
+    )
     grouped = {_coerce_int(au): sub.copy() for au, sub in tipsy_df.groupby("AU")}
     out: dict[int, dict[str, Any]] = {}
     for au in analysis_units:
@@ -266,6 +310,9 @@ def _load_managed_qmd_support_from_tipsy(
         )
         out[int(au.au_id)] = {
             "site_index": site_index_by_local_au.get(matched_local_au),
+            "managed_stems_per_ha": managed_stems_per_ha_by_local_au.get(
+                matched_local_au
+            ),
             "managed_height_points": height_points,
             "managed_tph_points": tph_points,
         }
@@ -409,6 +456,11 @@ def _build_qmd_support_by_au(
             unmanaged_stems_per_ha=(
                 float(unmanaged_payload["unmanaged_stems_per_ha"])
                 if unmanaged_payload.get("unmanaged_stems_per_ha") is not None
+                else None
+            ),
+            managed_stems_per_ha=(
+                float(managed_payload["managed_stems_per_ha"])
+                if managed_payload.get("managed_stems_per_ha") is not None
                 else None
             ),
             managed_height_points=tuple(

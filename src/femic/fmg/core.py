@@ -40,6 +40,7 @@ class QmdSupportDefinition:
 
     site_index: float | None = None
     unmanaged_stems_per_ha: float | None = None
+    managed_stems_per_ha: float | None = None
     managed_height_points: tuple[CurvePoint, ...] = ()
     managed_tph_points: tuple[CurvePoint, ...] = ()
 

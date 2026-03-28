@@ -165,6 +165,71 @@ def test_build_bundle_model_context_thins_unmanaged_curves_to_decadal_knots() ->
     ]
 
 
+def test_build_bundle_model_context_loads_managed_stems_fallback_from_btc_input(
+    tmp_path: Path,
+) -> None:
+    bundle_dir = tmp_path / "data" / "model_input_bundle"
+    bundle_dir.mkdir(parents=True, exist_ok=True)
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985502001,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_FDC+HW",
+                "si_level": "M",
+                "treated_curve_id": 985522001,
+                "untreated_curve_id": 985502001,
+            }
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "curve_type": "untreated"},
+            {"curve_id": 985522001, "curve_type": "treated"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "x": 0, "y": 0.0},
+            {"curve_id": 985502001, "x": 10, "y": 30.0},
+            {"curve_id": 985522001, "x": 0, "y": 0.0},
+            {"curve_id": 985522001, "x": 10, "y": 36.0},
+        ]
+    )
+    au_table.to_csv(bundle_dir / "au_table.csv", index=False)
+    curve_table.to_csv(bundle_dir / "curve_table.csv", index=False)
+    curve_points.to_csv(bundle_dir / "curve_points_table.csv", index=False)
+    pd.DataFrame(
+        [
+            {"AU": 21001, "Age": 0, "Yield": 0.0, "Height": 0.0, "TPH": float("nan")},
+            {"AU": 21001, "Age": 10, "Yield": 36.0, "Height": 4.0, "TPH": float("nan")},
+        ]
+    ).to_csv(tmp_path / "data" / "tipsy_curves_tsak3z.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                "feature_id": 21001,
+                "planted_density1": 630,
+                "planted_density2": 180,
+                "planted_density3": 90,
+                "natural_density1": 0,
+            }
+        ]
+    ).to_csv(tmp_path / "data" / "03_input-tsak3z.csv", index=False)
+
+    context = build_bundle_model_context_from_tables(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+        tsa_list=["k3z"],
+        bundle_dir=bundle_dir,
+    )
+
+    support = context.qmd_support_by_au[985502001]
+    assert support.managed_stems_per_ha == pytest.approx(900.0)
+    assert support.managed_tph_points == ()
+
+
 def test_build_bundle_model_context_requires_tsa(tmp_path: Path) -> None:
     bundle_dir = tmp_path / "bundle"
     _write_bundle_tables(bundle_dir)

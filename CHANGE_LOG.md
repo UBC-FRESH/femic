@@ -7621,3 +7621,62 @@
     instead of teaching them as the normal operator path.
   - Updated the CLI/API reference pages and active K3Z runbooks to point at the
     new BTC-first resume flow.
+- 2026-03-28 (Phase 48 post-cutover regression triage kickoff): opened a new
+  bug track for the K3Z QMD-account regression discovered immediately after the
+  core unattended BTC cutover landed.
+  - Current symptom report:
+    - shipped K3Z `base` and `ctfert_l15h5` launch cleanly in Patchworks, but
+      both standing `feature.QMD.*` and harvested `product.QMD.*` accounts
+      appear empty
+  - Current leading hypothesis:
+    - the QMD account families still exist syntactically, but the upstream
+      attribute values or curve bindings may now be null/empty somewhere in the
+      track/XML/managed-curve path
+  - Planning surfaces now treat this as the next active Phase 48 bug task
+    rather than part of the richer optional BTC indicator-bank expansion
+- 2026-03-28 (Phase 48 K3Z QMD regression fix): repaired the post-cutover K3Z
+  QMD-account collapse on the working managed-density fallback path and recorded
+  the current BTC stand-structure seam boundary explicitly.
+  - Confirmed root cause:
+    - the core unattended BTC seam currently emits no live managed `TPH`
+      signal in `tipsy_curves_tsak3z.csv`;
+    - managed QMD generation in the Patchworks exporter was still expecting
+      managed `TPH` curve points, so managed QMD surfaces collapsed even though
+      the QMD feature/product account names still existed in XML and tracks.
+  - Repair that is now in place:
+    - managed standing stems-per-ha and managed QMD now fall back to Stage 01a
+      / BTC-input stand density when managed `TPH` is absent.
+  - Rebuilt and smoke-checked the active K3Z family directly:
+    - `base`
+    - `ctfert_*`
+    - `pct_*`
+    - `intensive_*`
+    - overlays
+  - Direct smoke evidence after rebuild:
+    - representative `feature.QMD.managed.*` rows are present again in
+      `features.csv`;
+    - representative `feature.QMD.managed.*` rows now have non-zero `SUM`
+      multipliers in `accounts.csv`;
+    - representative `product.QMDNumerator.managed.*` rows are present again on
+      the relevant treatment surfaces.
+  - Confirmed follow-on boundary:
+    - first attempts to restore a live BTC-native managed stand-structure
+      signal through unattended `/TSR` still fail, even using the exact stock
+      `Yield.rpt` token forms:
+      - `SPH:000`
+      - `DBHg:000`
+      - `BasalArea:000`
+    - those richer stand-table signals remain optional-bank seam work under
+      issue `#47`, not blockers to closing the K3Z QMD regression bug.
+  - Tightened the agent contract again:
+    - obvious low-cost, high-reward direct smoke checks must be done
+      proactively, without waiting for the developer to prompt for them.
+  - Added the missing direct whole-family smoke pass before closeout:
+    - reran Matrix Builder across the full active K3Z variant family
+      (`base`, `ctfert_*`, `pct_*`, `intensive_*`, and overlay surfaces);
+    - then explicitly verified across every rebuilt track family that
+      `feature.QMD.managed.*` accounts/features and
+      `product.QMDNumerator.managed.*` product accounts are populated and
+      non-null in the runtime-facing CSV surfaces;
+    - user also confirmed live Patchworks launches of `base.pin` and
+      `ctfert_l15h5.pin` show QMD accounts back online.
