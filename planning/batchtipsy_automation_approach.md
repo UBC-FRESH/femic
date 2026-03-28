@@ -31,6 +31,21 @@ CLI details:
 - the guide explicitly says the batch process obeys normal BTC configuration
   files such as `settings.txt`
 
+Another packaged clue now in scope:
+
+- `C:\Program Files\TIPSY 4.7\CBM\TIPSY-CBM.pdf`
+  - page 1 explicitly mentions a BatchTIPSY command-line switch `-RGM`
+  - described behavior: create one regime file per processed line for later
+    loading into the TIPSY-to-CBM workflow
+
+Current planning implication:
+
+- the wider `C:\Program Files\TIPSY 4.7\` tree should now be treated as an
+  active reverse-engineering surface, not just the `BTC\` subdirectory
+- the phase plan should include a full installation audit / "easter egg hunt"
+  for additional CLI/runtime seams, not just the already proven `/TSR` and
+  `/FLP` paths
+
 ## Evidence Already Collected
 
 - Local Windows host has BTC installed at:
@@ -571,6 +586,30 @@ Current planning implication:
   expectations
 - for now it should be treated as an output/reporting clue, not as a primary
   source for stand parameter defaults
+
+## Full Installation Deep-Dive Requirement
+
+The current reverse-engineering effort should no longer be limited to the most
+obvious BTC files.
+
+Required deep-dive scope:
+
+- all packaged PDFs under `C:\Program Files\TIPSY 4.7\`
+- BTC report/template/config/default files
+- Tcl scripts and helper metadata
+- CHM help files, extracted into a platform-independent human-readable and
+  machine-scannable format for later mining
+
+Why this is now explicit:
+
+- the `TIPSY-CBM.pdf` clue about `-RGM` shows there may still be meaningful
+  undocumented or under-documented command-line seams outside the main BTC
+  user guide
+- the current implementation work has already benefited from clues spread
+  across many packaged files (`OutputColumns.txt`, `gw.txt`, `oafs.txt`,
+  `FertRespMOF.txt`, `vriSpecies.txt`, report templates, Tcl files)
+- continuing this as an explicit tracked audit is better than relying on
+  opportunistic discoveries in chat
 
 ## First Stand-Table Bank Probe Result
 

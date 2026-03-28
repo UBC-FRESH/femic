@@ -7749,6 +7749,15 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [ ] P48.3c Update `CHANGE_LOG.md` and GitHub issue #46 with either the
     landed BTC CSV cutover result or the concrete blocker map if richer output
     requirements still prevent full adoption.
+  - [ ] P48.3d Perform a full deep-dive audit of the installed
+    `C:\Program Files\TIPSY 4.7\` tree as part of the ongoing BTC seam
+    reverse-engineering effort, including:
+    - mining all packaged PDFs for CLI/runtime/report clues;
+    - extracting Windows `.chm` help content into a platform-independent,
+      human-readable, machine-scannable format;
+    - scanning Tcl/report/config/default files for undocumented switches,
+      report coupling behavior, and other "easter egg" runtime seams such as
+      the newly surfaced `-RGM` regime-file clue from `TIPSY-CBM.pdf`.
   - Notes:
     - Governing tracker:
       - GitHub issue #46
@@ -7775,6 +7784,17 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         `.btc` project, `/TSR` (`TimberSupply.rpt`), or `/FLP`
         (`ForestLandscapePlan.rpt`), and documents standard exit codes `0`,
         `2`, and `5`.
+    - Deep-dive / easter-egg note:
+      - the installed `TIPSY-CBM.pdf` documentation adds another CLI clue:
+        `-RGM`, which reportedly emits one regime file per processed line for
+        later use in the TIPSY-to-CBM workflow.
+      - treat this as evidence that there may still be undocumented or
+        under-documented BTC/BatchTIPSY seams inside the wider
+        `C:\Program Files\TIPSY 4.7\` installation tree.
+      - the phase plan now explicitly includes a full installation audit
+        covering packaged PDFs, Tcl/report/config/default files, and CHM help
+        extraction so this easter-egg hunt is tracked in repo planning rather
+        than only in chat.
     - Default unattended mode note:
       - the first intended automated FEMIC BTC path is now a single `/TSR`
         run that uses a vetted compatible transposed `TimberSupply.rpt`

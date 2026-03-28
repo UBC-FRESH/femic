@@ -7589,3 +7589,15 @@
       bank;
     - richer stand-table outputs should be treated as exploratory seam-finding
       work until a compatible template family or alternate BTC mode is proven.
+- 2026-03-28 (Phase 48 full-installation easter-egg note): broadened the
+  BatchTIPSY reverse-engineering plan to cover the full installed
+  `C:\Program Files\TIPSY 4.7\` tree rather than only the obvious BTC files.
+  - Added the new clue from `CBM/TIPSY-CBM.pdf` page 1:
+    - BatchTIPSY command-line switch `-RGM`, described as creating one regime
+      file per processed line for later TIPSY-to-CBM loading.
+  - Updated the planning surfaces so Phase 48 now explicitly includes:
+    - mining all packaged PDFs for CLI/runtime/report clues;
+    - extracting `.chm` help content into a platform-independent,
+      human-readable, machine-scannable format;
+    - and continuing the broader "easter egg hunt" across Tcl/report/config
+      files for under-documented runtime seams.
