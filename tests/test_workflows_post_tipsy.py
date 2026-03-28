@@ -7,8 +7,12 @@ import pickle
 
 import pandas as pd
 
+from femic.pipeline.tipsy import BTCRunResult
 from femic.workflows.legacy import (
+    BTCPostTipsyRunResult,
     PostTipsyBundleResult,
+    PostTipsyBundleRunResult,
+    run_btc_and_post_tipsy_bundle_with_manifest,
     run_post_tipsy_bundle,
     run_post_tipsy_bundle_with_manifest,
 )
@@ -246,3 +250,157 @@ def test_run_post_tipsy_bundle_with_manifest_writes_manifest(
     assert payload["status"] == "ok"
     assert payload["workflow"] == "tsa_post_tipsy"
     assert payload["run_id"] == "post_tipsy_manifest_test"
+
+
+def test_run_post_tipsy_bundle_passes_custom_output_template_to_01b(
+    tmp_path: Path,
+) -> None:
+    data_root = tmp_path / "data"
+    data_root.mkdir(parents=True, exist_ok=True)
+    tsa = "29"
+
+    results_for_tsa = [
+        (0, "IDF_FD", {"L": {"ss": None}, "M": {"ss": None}, "H": {"ss": None}})
+    ]
+    with (data_root / f"vdyp_prep-tsa{tsa}.pkl").open("wb") as fh:
+        pickle.dump(results_for_tsa, fh)
+    pd.DataFrame(
+        {
+            "stratum_code": ["IDF_FD", "IDF_FD"],
+            "si_level": ["L", "L"],
+            "age": [0, 10],
+            "volume": [0.0, 10.0],
+        }
+    ).to_feather(data_root / f"vdyp_curves_smooth-tsa{tsa}.feather")
+    pd.DataFrame({"AU": [21000]}).to_excel(
+        data_root / f"tipsy_params_tsa{tsa}.xlsx",
+        index=False,
+        sheet_name="TIPSY_inputTBL",
+    )
+    (data_root / f"04_output-tsa{tsa}.csv").write_text("placeholder\n", encoding="utf-8")
+
+    seen_template: dict[str, str] = {}
+
+    def _fake_run_01b(
+        *,
+        tsa: str,
+        results,
+        au_scsi,
+        tipsy_curves,
+        vdyp_curves_smooth,
+        runtime_config,
+    ) -> None:
+        _ = (results, au_scsi, vdyp_curves_smooth)
+        seen_template["value"] = runtime_config.tipsy_output_filename_template
+        tipsy_df = pd.DataFrame(
+            {
+                "AU": [21000, 21000, 22000, 22000, 23000, 23000],
+                "Age": [0, 10, 0, 10, 0, 10],
+                "Yield": [0.0, 12.0, 0.0, 24.0, 0.0, 36.0],
+                "Height": [0.0, 2.0, 0.0, 3.0, 0.0, 4.0],
+                "DBHq": [0.0, 1.0, 0.0, 1.5, 0.0, 2.0],
+                "TPH": [1000, 900, 1000, 900, 1000, 900],
+            }
+        ).set_index(["AU", "Age"])
+        tipsy_curves[tsa] = tipsy_df
+        tipsy_df.reset_index().to_csv(
+            data_root / f"tipsy_curves_tsa{tsa}.csv",
+            index=False,
+        )
+        pd.DataFrame({"AU": [21000], "FD": [100.0]}).to_csv(
+            data_root / f"tipsy_sppcomp_tsa{tsa}.csv",
+            index=False,
+        )
+
+    run_post_tipsy_bundle(
+        tsa_list=[tsa],
+        repo_root=tmp_path,
+        data_root=data_root,
+        run_01b_fn=_fake_run_01b,
+        tipsy_output_filename_template="04_output-tsa{tsa}.csv",
+        message_fn=lambda _msg: None,
+    )
+
+    assert seen_template["value"] == "04_output-tsa{tsa}.csv"
+
+
+def test_run_btc_and_post_tipsy_bundle_with_manifest_orchestrates_paths(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    data_root = tmp_path / "data"
+    data_root.mkdir(parents=True, exist_ok=True)
+    (data_root / "03_input-tsa29.csv").write_text("feature_id\n1000\n", encoding="utf-8")
+
+    btc_calls: list[dict[str, object]] = []
+    post_tipsy_calls: list[dict[str, object]] = []
+
+    def _fake_run_btc_cli(**kwargs: object) -> BTCRunResult:
+        btc_calls.append(kwargs)
+        output_csv = Path(kwargs["output_csv"])
+        error_csv = Path(kwargs["error_csv"])
+        output_csv.write_text("feature_id,MVcon_0\n1000,0\n", encoding="utf-8")
+        error_csv.write_text("warnings,errors\n0,0\n", encoding="utf-8")
+        return BTCRunResult(
+            run_id=str(kwargs["run_id"]),
+            mode="TSR",
+            manifest_path=tmp_path / "logs" / "btc_manifest.json",
+            stdout_log_path=tmp_path / "logs" / "btc_stdout.log",
+            stderr_log_path=tmp_path / "logs" / "btc_stderr.log",
+            output_csv_path=output_csv,
+            error_csv_path=error_csv,
+            executable_path=tmp_path / "btc" / "TIPSYbtc.exe",
+            install_root=tmp_path / "btc",
+            working_dir=tmp_path / "scratch" / "work",
+            command=("btc.exe", "/TSR", "MSYT.csv"),
+            copied_install=True,
+            exit_code=0,
+            duration_sec=1.0,
+            report_template_path=tmp_path / "btc" / "TimberSupply.rpt",
+        )
+
+    def _fake_post_tipsy(**kwargs: object) -> PostTipsyBundleRunResult:
+        post_tipsy_calls.append(kwargs)
+        result = PostTipsyBundleResult(
+            tsa_list=["29"],
+            au_rows=1,
+            curve_rows=2,
+            curve_points_rows=4,
+            tipsy_curves_paths=[data_root / "tipsy_curves_tsa29.csv"],
+            tipsy_sppcomp_paths=[data_root / "tipsy_sppcomp_tsa29.csv"],
+            au_table_path=data_root / "model_input_bundle" / "au_table.csv",
+            curve_table_path=data_root / "model_input_bundle" / "curve_table.csv",
+            curve_points_table_path=data_root / "model_input_bundle" / "curve_points_table.csv",
+        )
+        return PostTipsyBundleRunResult(
+            manifest_path=tmp_path / "logs" / "run_manifest.json",
+            result=result,
+        )
+
+    monkeypatch.setattr("femic.workflows.legacy.run_btc_cli", _fake_run_btc_cli)
+    monkeypatch.setattr(
+        "femic.workflows.legacy.run_post_tipsy_bundle_with_manifest",
+        _fake_post_tipsy,
+    )
+
+    run_result = run_btc_and_post_tipsy_bundle_with_manifest(
+        tsa_list=["29"],
+        run_id="btc_post_tipsy_test",
+        log_dir=tmp_path / "logs",
+        repo_root=tmp_path,
+        data_root=data_root,
+        scratch_root=tmp_path / "scratch",
+        message_fn=lambda _msg: None,
+    )
+
+    assert isinstance(run_result, BTCPostTipsyRunResult)
+    assert len(run_result.btc_results) == 1
+    assert len(btc_calls) == 1
+    assert Path(btc_calls[0]["input_csv"]) == data_root / "03_input-tsa29.csv"
+    assert Path(btc_calls[0]["output_csv"]) == data_root / "04_output-tsa29.csv"
+    assert Path(btc_calls[0]["error_csv"]) == data_root / "04_error-tsa29.csv"
+    assert btc_calls[0]["report_preset_name"] == "tsr-unattended-default"
+    assert btc_calls[0]["copy_install"] is True
+    assert Path(btc_calls[0]["scratch_root"]) == tmp_path / "scratch" / "tsa29"
+    assert len(post_tipsy_calls) == 1
+    assert post_tipsy_calls[0]["tipsy_output_filename_template"] == "04_output-tsa{tsa}.csv"

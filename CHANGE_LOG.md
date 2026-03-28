@@ -7478,3 +7478,25 @@
     - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py`
     - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/resources/legacy/01b_run-tsa.py tests/test_tipsy.py tests/test_tipsy_report_cli.py`
     - `.venv\\Scripts\\python.exe -m mypy src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py`
+- 2026-03-28 (Phase 48 BTC orchestration slice): tied the new Stage 01a MSYT
+  writer, unattended BTC runner, and BTC CSV parser together into one actual
+  workflow surface.
+  - Added `run_btc_and_post_tipsy_bundle_with_manifest(...)` in
+    `src/femic/workflows/legacy.py`.
+  - Added the new CLI command:
+    - `femic tsa btc-post-tipsy`
+  - The new orchestration path now:
+    - reads `data/03_input-tsaXX.csv`
+    - runs unattended BTC `/TSR`
+    - writes `data/04_output-tsaXX.csv` / `data/04_error-tsaXX.csv`
+    - resumes the existing post-TIPSY bundle assembly against the returned CSV
+      seam
+  - Preserved the legacy `femic tsa post-tipsy` contract so it still defaults
+    to the old `.out` seam unless explicitly overridden by orchestration code.
+  - Added regression coverage in:
+    - `tests/test_workflows_post_tipsy.py`
+    - `tests/test_tipsy_report_cli.py`
+  - Validation passed:
+    - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
+    - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/resources/legacy/01b_run-tsa.py src/femic/workflows/legacy.py src/femic/cli/main.py tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
+    - `.venv\\Scripts\\python.exe -m mypy src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/workflows/legacy.py`

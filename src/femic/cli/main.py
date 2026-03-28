@@ -100,7 +100,11 @@ from femic.vdyp.reporting import (
     summarize_vdyp_logs,
 )
 from femic.ws3_smoke import run_ws3_smoke
-from femic.workflows.legacy import run_data_prep, run_post_tipsy_bundle_with_manifest
+from femic.workflows.legacy import (
+    run_btc_and_post_tipsy_bundle_with_manifest,
+    run_data_prep,
+    run_post_tipsy_bundle_with_manifest,
+)
 
 app = typer.Typer(
     add_completion=False,
@@ -2272,6 +2276,132 @@ def tsa_post_tipsy(
         f"curve_points={result.curve_points_rows}"
     )
     console.print(f"Run manifest: {run_result.manifest_path}")
+    console.print(f"au_table: {result.au_table_path}")
+    console.print(f"curve_table: {result.curve_table_path}")
+    console.print(f"curve_points_table: {result.curve_points_table_path}")
+
+
+@tsa_app.command("btc-post-tipsy")
+def tsa_btc_post_tipsy(
+    tsa: list[str] | None = TSA_OPTION,
+    verbose: bool = VERBOSE_OPTION,
+    run_id: str | None = RUN_ID_OPTION,
+    log_dir: Path = LOG_DIR_OPTION,
+    run_config: Path | None = RUN_CONFIG_OPTION,
+    btc_exe: Path | None = typer.Option(
+        None,
+        "--btc-exe",
+        help="Explicit TIPSYbtc.exe path; otherwise use env/default discovery.",
+        show_default=False,
+    ),
+    scratch_dir: Path | None = typer.Option(
+        None,
+        "--scratch-dir",
+        help="Optional scratch root for copied BTC installs and staged run files.",
+        show_default=False,
+    ),
+    report_preset: str = typer.Option(
+        "tsr-unattended-default",
+        "--report-preset",
+        help="Built-in BTC report preset to use for unattended /TSR runs.",
+        show_default=True,
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Run unattended BTC for selected TSAs, then resume post-TIPSY bundle assembly."""
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_log_dir = instance_context.resolve_path(Path(log_dir))
+    resolved_run_config = (
+        instance_context.resolve_path(run_config) if run_config is not None else None
+    )
+    run_profile = None
+    if resolved_run_config is not None:
+        try:
+            run_profile = load_pipeline_run_profile(resolved_run_config)
+        except (
+            FileNotFoundError,
+            ValueError,
+            json.JSONDecodeError,
+            yaml.YAMLError,
+        ) as exc:
+            console.print(f"[red]Invalid run config:[/red] {exc}")
+            raise typer.Exit(code=1) from exc
+
+    targets_raw = tsa if tsa else (run_profile.tsa_list if run_profile else [])
+    targets = [str(v).zfill(2) for v in targets_raw] if targets_raw else []
+    if not targets:
+        console.print(
+            "[red]Provide at least one TSA via --tsa or selection.tsa in --run-config "
+            "for btc-post-tipsy.[/red]"
+        )
+        raise typer.Exit(code=1)
+    effective_run_id = (
+        run_id
+        if run_id is not None
+        else (run_profile.run_id if run_profile is not None else None)
+    )
+    effective_verbose = verbose or (
+        run_profile.verbose if run_profile is not None else False
+    )
+    effective_log_dir = (
+        instance_context.resolve_path(run_profile.log_dir)
+        if (
+            run_profile is not None
+            and Path(log_dir) == Path("vdyp_io/logs")
+            and run_profile.log_dir is not None
+        )
+        else resolved_log_dir
+    )
+    run_result = run_btc_and_post_tipsy_bundle_with_manifest(
+        tsa_list=targets,
+        run_id=effective_run_id,
+        log_dir=effective_log_dir,
+        repo_root=instance_context.root,
+        data_root=(instance_context.root / "data"),
+        btc_executable_path=(
+            instance_context.resolve_path(btc_exe) if btc_exe is not None else None
+        ),
+        report_preset_name=report_preset,
+        scratch_root=(
+            instance_context.resolve_path(scratch_dir)
+            if scratch_dir is not None
+            else None
+        ),
+        message_fn=console.print
+        if effective_verbose
+        else (lambda *_args, **_kwargs: None),
+        managed_curve_mode=(
+            run_profile.managed_curve_mode if run_profile is not None else None
+        ),
+        managed_curve_x_scale=(
+            run_profile.managed_curve_x_scale if run_profile is not None else None
+        ),
+        managed_curve_y_scale=(
+            run_profile.managed_curve_y_scale if run_profile is not None else None
+        ),
+        managed_curve_truncate_at_culm=(
+            run_profile.managed_curve_truncate_at_culm
+            if run_profile is not None
+            else None
+        ),
+        managed_curve_max_age=(
+            run_profile.managed_curve_max_age if run_profile is not None else None
+        ),
+    )
+    for btc_result in run_result.btc_results:
+        console.print(
+            "[green]btc completed[/green] "
+            f"run_id={btc_result.run_id} mode={btc_result.mode} "
+            f"output={btc_result.output_csv_path}"
+        )
+    post_tipsy = run_result.post_tipsy_result
+    result = post_tipsy.result
+    console.print(
+        f"[green]btc-post-tipsy completed[/green] tsa={result.tsa_list} "
+        f"au_rows={result.au_rows} curves={result.curve_rows} "
+        f"curve_points={result.curve_points_rows}"
+    )
+    console.print(f"Run manifest: {post_tipsy.manifest_path}")
     console.print(f"au_table: {result.au_table_path}")
     console.print(f"curve_table: {result.curve_table_path}")
     console.print(f"curve_points_table: {result.curve_points_table_path}")

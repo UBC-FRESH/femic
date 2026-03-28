@@ -266,6 +266,41 @@ Current implementation implication:
 - the unattended BTC CSV path is now the preferred forward direction
 - the legacy `.out` path remains only as a temporary compatibility bridge
 
+## First End-to-End Orchestration Slice
+
+The first orchestration slice that ties the new BTC seams together is now in
+place.
+
+What it does:
+
+- adds `run_btc_and_post_tipsy_bundle_with_manifest(...)` in
+  `src/femic/workflows/legacy.py`
+- adds the new CLI surface:
+  - `femic tsa btc-post-tipsy`
+- for each selected TSA, the new workflow:
+  1. reads canonical Stage 01a input from `data/03_input-tsaXX.csv`
+  2. runs unattended BTC `/TSR`
+  3. writes returned artifacts to:
+     - `data/04_output-tsaXX.csv`
+     - `data/04_error-tsaXX.csv`
+  4. resumes the existing post-TIPSY bundle assembly against the new CSV
+     output seam
+
+Important compatibility choice:
+
+- the old `femic tsa post-tipsy` surface remains intact
+- it still defaults to the legacy `.out` seam unless explicitly given a
+  different output-template path by orchestration code
+- the new BTC orchestration path is additive for now, not yet a hard swap of
+  the user-facing legacy resume command
+
+Why this is the right intermediate shape:
+
+- it gives FEMIC one real unattended Stage 01a -> BTC -> post-TIPSY resume path
+  without destabilizing the long-lived manual `.out` resume surface
+- it creates a clean place to do instance-level smoke testing before the repo
+  docs and operator guidance are rewritten around BTC CSV as the default seam
+
 ## Incompatible Report-Type Constraint
 
 Not every report template is a safe drop-in replacement for `TimberSupply.rpt`.

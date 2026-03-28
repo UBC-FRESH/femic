@@ -7803,6 +7803,16 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - current first-cut extra retained fields are:
           - `GrossYield = gVol`
           - `CrownCover = CC`
+      - the first orchestration slice is now also in place:
+        - `src/femic/workflows/legacy.py` now has
+          `run_btc_and_post_tipsy_bundle_with_manifest(...)`
+        - `femic tsa btc-post-tipsy` now runs unattended BTC against
+          `data/03_input-tsaXX.csv`, writes `04_output-tsaXX.csv` /
+          `04_error-tsaXX.csv`, then resumes the existing post-TIPSY bundle
+          build against the new CSV output seam
+        - the old `tsa post-tipsy` path remains intact and still defaults to
+          the legacy `.out` handoff unless explicitly overridden by the new
+          orchestration helper
     - Richer-output fallback note:
       - a manual BTC GUI `Yield` report appears to provide a much richer CSV
         output surface including MAI, basal area, DBHg, stems/ha, crop-tree
@@ -7850,10 +7860,10 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         richer BTC reporting mode, but not like a primary stand-parameter
         defaults source.
     - Immediate next implementation edge:
-      - widen the new unattended BTC writer + runner + parser helpers into a
-        full Stage 01a -> BTC -> post-TIPSY resume path, then update
-        operator/docs/contracts so BTC CSV is described as the default
-        supported BatchTIPSY seam.
+      - run a real instance-level smoke through `tsa btc-post-tipsy`, then
+        update operator/docs/contracts so BTC CSV is described as the default
+        supported BatchTIPSY seam and the old DAT/OUT wording is retired from
+        user-facing guidance.
     - Guardrails:
       - the intended supported workflow is now BTC CSV in / BTC CSV out, not
         the old DAT/OUT seam;
