@@ -715,6 +715,54 @@ Current planning implication:
 - FEMIC should not assume that simply appending richer stand-table fields to the
   current unattended `TimberSupply.rpt` mashup will work
 
+## Post-Cutover K3Z QMD Regression and Repair
+
+The first core unattended BTC cutover landed with a real K3Z regression:
+
+- launched K3Z Patchworks surfaces still contained the expected QMD account
+  names and XML attributes;
+- but both standing `feature.QMD.*` and harvested `product.QMD.*` surfaces were
+  effectively empty at runtime.
+
+Confirmed root cause:
+
+- the unattended BTC seam now returns a conservative managed-curve bundle that
+  does not include live managed `TPH`;
+- `tipsy_curves_tsak3z.csv` therefore carried blank `TPH` for the managed side;
+- managed QMD generation in the Patchworks exporter was still assuming that a
+  managed `TPH` curve existed, so the managed QMD path collapsed even though
+  the accounts/features/attributes still existed syntactically.
+
+Repair that is now in place:
+
+- FEMIC now falls back to Stage 01a / BTC-input stand density for:
+  - managed standing stems-per-ha curves when managed `TPH` is absent;
+  - managed QMD generation when managed `TPH` is absent.
+- This restored non-empty QMD surfaces across the rebuilt K3Z family:
+  - `base`
+  - `ctfert_*`
+  - `pct_*`
+  - `intensive_*`
+  - overlays
+
+Important boundary learned during the same bugfix:
+
+- first attempts to restore a true BTC-native managed stand-structure signal in
+  the unattended `/TSR` seam still fail at runtime;
+- this includes probes using the exact stock `Yield.rpt` token forms:
+  - `SPH:000`
+  - `DBHg:000`
+  - `BasalArea:000`
+- these probes still crash BTC in `BatchProcess()`
+
+Current planning implication:
+
+- the K3Z QMD regression is repairable and can be closed on the managed-density
+  fallback path;
+- restoring richer live BTC-native stand-structure signals remains separate
+  seam-finding work under the optional indicator-bank tasks, especially issue
+  `#47`.
+
 ## First Implementation Slice
 
 1. Lock the new BTC seam into repo planning and contracts.

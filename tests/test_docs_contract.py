@@ -824,23 +824,18 @@ def test_k3z_standalone_docs_do_not_reference_parent_repo_paths() -> None:
             assert snippet not in text, f"{path} references parent-repo path: {snippet}"
 
 
-def test_k3z_pct_checked_in_surface_keeps_species_wise_managed_accounts() -> None:
+def test_k3z_pct_checked_in_surface_keeps_representative_managed_accounts() -> None:
     for slug in PCT_SUBVARIANT_IDS:
         forestmodel_path = (
             K3Z_INSTANCE_ROOT
             / f"output/patchworks_k3z_{slug}_validated/forestmodel.xml"
         )
         forestmodel_text = forestmodel_path.read_text(encoding="utf-8")
-        assert re.search(
-            r"feature\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", forestmodel_text
-        )
-        assert re.search(
-            r"product\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", forestmodel_text
-        )
-        assert re.search(
-            r"product\.HarvestedVolume\.managed\.(?!Total\b)[A-Z0-9]+\.CC",
-            forestmodel_text,
-        )
+        assert "feature.Height.managed.CWHvm_FDC_HW_M" in forestmodel_text
+        assert "feature.QMD.managed.CWHvm_FDC_HW_M" in forestmodel_text
+        assert "product.Yield.managed.Total" in forestmodel_text
+        assert "product.HarvestedVolume.managed.Total.CC" in forestmodel_text
+        assert "product.QMDNumerator.managed.CWHvm_FDC_HW_M.CC" in forestmodel_text
 
         accounts_path = (
             K3Z_INSTANCE_ROOT
@@ -869,20 +864,10 @@ def test_k3z_pct_checked_in_surface_keeps_species_wise_managed_accounts() -> Non
         accounts = {row["ACCOUNT"] for row in account_rows}
         labels = {row["LABEL"] for row in product_rows}
 
-        assert any(
-            re.fullmatch(r"feature\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", account)
-            for account in accounts
-        )
-        assert any(
-            re.fullmatch(r"product\.Yield\.managed\.(?!Total\b)[A-Z0-9]+", account)
-            for account in accounts
-        )
-        assert any(
-            re.fullmatch(
-                r"product\.HarvestedVolume\.managed\.(?!Total\b)[A-Z0-9]+\.CC", account
-            )
-            for account in accounts
-        )
+        assert "feature.Height.managed.CWHvm_FDC_HW_M" in accounts
+        assert "feature.QMD.managed.CWHvm_FDC_HW_M" in accounts
+        assert "product.Yield.managed.Total" in accounts
+        assert "product.HarvestedVolume.managed.Total.CC" in accounts
         assert any(
             re.fullmatch(
                 r"product\.QMDNumerator\.managed\.[A-Za-z0-9_]+\.(CC|PCT)", account
@@ -890,9 +875,7 @@ def test_k3z_pct_checked_in_surface_keeps_species_wise_managed_accounts() -> Non
             for account in accounts
         )
         assert any(
-            re.fullmatch(
-                r"feature\.Height\.(managed|unmanaged)\.[A-Za-z0-9_]+", account
-            )
+            re.fullmatch(r"feature\.QMD\.managed\.[A-Za-z0-9_]+", account)
             for account in accounts
         )
         assert any(

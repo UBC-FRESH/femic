@@ -1893,28 +1893,34 @@ def build_patchworks_forestmodel_definition(
                 if managed_total_curve is not None
                 else unmanaged_stems_source
             )
-            fallback_stems_per_ha = (
+            unmanaged_fallback_stems_per_ha = (
                 float(qmd_support.unmanaged_stems_per_ha)
                 if qmd_support is not None
                 and qmd_support.unmanaged_stems_per_ha is not None
                 else None
             )
+            managed_fallback_stems_per_ha = (
+                float(qmd_support.managed_stems_per_ha)
+                if qmd_support is not None
+                and qmd_support.managed_stems_per_ha is not None
+                else None
+            )
             managed_tph_points = (
                 tuple(qmd_support.managed_tph_points) if qmd_support is not None else ()
             )
-            if fallback_stems_per_ha is not None:
+            if unmanaged_fallback_stems_per_ha is not None:
                 unmanaged_stems_curve_ref = f"au_{au_token}_unmanaged_stems_per_ha"
                 unmanaged_stems_curve_points = _build_stems_per_ha_curve_points(
                     source_curve_points=unmanaged_stems_source,
-                    stems_per_ha=fallback_stems_per_ha,
+                    stems_per_ha=unmanaged_fallback_stems_per_ha,
                 )
                 curves[unmanaged_stems_curve_ref] = unmanaged_stems_curve_points
-            if managed_tph_points or fallback_stems_per_ha is not None:
+            if managed_tph_points or managed_fallback_stems_per_ha is not None:
                 managed_stems_curve_ref = f"au_{au_token}_managed_stems_per_ha"
                 managed_stems_curve_points = _build_stems_per_ha_curve_points(
                     source_curve_points=managed_stems_source,
                     tph_curve_points=managed_tph_points,
-                    stems_per_ha=fallback_stems_per_ha,
+                    stems_per_ha=managed_fallback_stems_per_ha,
                 )
                 curves[managed_stems_curve_ref] = managed_stems_curve_points
 
@@ -2048,9 +2054,9 @@ def build_patchworks_forestmodel_definition(
                         else ()
                     ),
                     stems_per_ha=(
-                        float(qmd_support.unmanaged_stems_per_ha)
+                        float(qmd_support.managed_stems_per_ha)
                         if qmd_support is not None
-                        and qmd_support.unmanaged_stems_per_ha is not None
+                        and qmd_support.managed_stems_per_ha is not None
                         else None
                     ),
                 )
@@ -2756,9 +2762,9 @@ def build_patchworks_forestmodel_definition(
                             else ()
                         ),
                         stems_per_ha=(
-                            float(qmd_support.unmanaged_stems_per_ha)
+                            float(qmd_support.managed_stems_per_ha)
                             if qmd_support is not None
-                            and qmd_support.unmanaged_stems_per_ha is not None
+                            and qmd_support.managed_stems_per_ha is not None
                             else None
                         ),
                         response_age=ct_age,
@@ -3051,9 +3057,9 @@ def build_patchworks_forestmodel_definition(
                                 else ()
                             ),
                             stems_per_ha=(
-                                float(qmd_support.unmanaged_stems_per_ha)
+                                float(qmd_support.managed_stems_per_ha)
                                 if qmd_support is not None
-                                and qmd_support.unmanaged_stems_per_ha is not None
+                                and qmd_support.managed_stems_per_ha is not None
                                 else None
                             ),
                             response_age=int(fert_config["fert_age"]),

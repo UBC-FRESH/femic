@@ -7634,3 +7634,37 @@
       track/XML/managed-curve path
   - Planning surfaces now treat this as the next active Phase 48 bug task
     rather than part of the richer optional BTC indicator-bank expansion
+- 2026-03-28 (Phase 48 K3Z QMD regression fix): repaired the post-cutover K3Z
+  QMD-account collapse on the working managed-density fallback path and recorded
+  the current BTC stand-structure seam boundary explicitly.
+  - Confirmed root cause:
+    - the core unattended BTC seam currently emits no live managed `TPH`
+      signal in `tipsy_curves_tsak3z.csv`;
+    - managed QMD generation in the Patchworks exporter was still expecting
+      managed `TPH` curve points, so managed QMD surfaces collapsed even though
+      the QMD feature/product account names still existed in XML and tracks.
+  - Repair that is now in place:
+    - managed standing stems-per-ha and managed QMD now fall back to Stage 01a
+      / BTC-input stand density when managed `TPH` is absent.
+  - Rebuilt and smoke-checked the active K3Z family directly:
+    - `base`
+    - `ctfert_*`
+    - `pct_*`
+    - `intensive_*`
+    - overlays
+  - Direct smoke evidence after rebuild:
+    - representative `feature.QMD.managed.*` rows are present again in
+      `features.csv`;
+    - representative `feature.QMD.managed.*` rows now have non-zero `SUM`
+      multipliers in `accounts.csv`;
+    - representative `product.QMDNumerator.managed.*` rows are present again on
+      the relevant treatment surfaces.
+  - Confirmed follow-on boundary:
+    - first attempts to restore a live BTC-native managed stand-structure
+      signal through unattended `/TSR` still fail, even using the exact stock
+      `Yield.rpt` token forms:
+      - `SPH:000`
+      - `DBHg:000`
+      - `BasalArea:000`
+    - those richer stand-table signals remain optional-bank seam work under
+      issue `#47`, not blockers to closing the K3Z QMD regression bug.
