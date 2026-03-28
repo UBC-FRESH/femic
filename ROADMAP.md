@@ -7688,26 +7688,26 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   volume/height CSV.
 
 ## Phase 48: Investigate And Automate BatchTIPSY In Local Windows Workflow
-- [ ] P48.1 Replace the legacy DAT/OUT BatchTIPSY seam with the BTC MSYT CSV seam
-  - [ ] P48.1a Confirm the supported Windows BTC CLI contract around
+- [x] P48.1 Replace the legacy DAT/OUT BatchTIPSY seam with the BTC MSYT CSV seam
+  - [x] P48.1a Confirm the supported Windows BTC CLI contract around
     `TIPSYbtc.exe /TSR <input_csv> <output_csv> <error_csv>`, including
     executable discovery, working-directory expectations, and manifest-worthy
     runtime details.
-  - [ ] P48.1b Treat `C:\Program Files\TIPSY 4.7\BTC\Samples\MSYT.csv` as the
+  - [x] P48.1b Treat `C:\Program Files\TIPSY 4.7\BTC\Samples\MSYT.csv` as the
     first reference schema for the new canonical Stage 01a handoff artifact.
-  - [ ] P48.1c Broaden the post-TIPSY contract so FEMIC consumes returned BTC
+  - [x] P48.1c Broaden the post-TIPSY contract so FEMIC consumes returned BTC
     CSV outputs directly instead of assuming legacy fixed-width `.out` output.
-- [ ] P48.2 Implement the first credible end-to-end BTC CSV slice
-  - [ ] P48.2a Add deterministic Stage 01a BTC `MSYT.csv` input generation from
+- [x] P48.2 Implement the first credible end-to-end BTC CSV slice
+  - [x] P48.2a Add deterministic Stage 01a BTC `MSYT.csv` input generation from
     the existing TIPSY payload, replacing the old DAT handoff as the active
     supported workflow.
-  - [ ] P48.2b Add Windows BTC executable discovery and a supervised CLI runner
+  - [x] P48.2b Add Windows BTC executable discovery and a supervised CLI runner
     around `TIPSYbtc.exe /TSR`, including:
     - writable scratch-dir staging,
     - copied BTC install/report-template override support,
     - output/error file validation,
     - and a manifest/log payload.
-  - [ ] P48.2c Add post-TIPSY parsing for returned BTC CSV outputs, including a
+  - [x] P48.2c Add post-TIPSY parsing for returned BTC CSV outputs, including a
     clear replacement plan for old `.out`-era support fields such as `TPH` and
     `DBHq` when richer non-GUI BTC outputs are not yet proven.
   - [ ] P48.2d If richer indicator output remains GUI-only, support it as an
@@ -7717,7 +7717,7 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     `.rpt` files can be authored from curated or user-specified output-column
     lists instead of hand-edited inside the BTC GUI.
 - [ ] P48.3 Validate, document, and close out the cutover
-  - [ ] P48.3a Add tests for BTC executable discovery, MSYT CSV writing, CLI
+  - [x] P48.3a Add tests for BTC executable discovery, MSYT CSV writing, CLI
     argument assembly, and returned BTC CSV parsing.
   - [ ] P48.3b Update operator/docs/contracts to describe BTC `MSYT.csv` input,
     BTC CLI `/TSR`, returned CSV outputs, and any remaining gaps in richer
@@ -7790,8 +7790,19 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
           `f`-table payload
         - legacy `01a_run-tsa.py` now emits `03_input-tsaXX.csv` beside the
           older artifacts
-        - gross volume (`gVol`)
-        - crown closure (`CC`)
+      - the first post-TIPSY BTC CSV parser slice is also now in place:
+        - `src/femic/pipeline/tipsy.py` now parses unattended transposed `/TSR`
+          CSV into long-form FEMIC managed-curve rows
+        - legacy `01b_run-tsa.py` now branches to the BTC CSV parser when the
+          returned TIPSY artifact is `.csv`
+        - managed curve IDs are mapped back onto the existing `20000 + AU`
+          FEMIC convention
+        - current first-cut replacements for not-yet-proven BTC fields are:
+          - `DBHq = NaN`
+          - `TPH = NaN`
+        - current first-cut extra retained fields are:
+          - `GrossYield = gVol`
+          - `CrownCover = CC`
     - Richer-output fallback note:
       - a manual BTC GUI `Yield` report appears to provide a much richer CSV
         output surface including MAI, basal area, DBHg, stems/ha, crop-tree
@@ -7838,6 +7849,11 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         presets and age/increment expectations if FEMIC later needs to drive a
         richer BTC reporting mode, but not like a primary stand-parameter
         defaults source.
+    - Immediate next implementation edge:
+      - widen the new unattended BTC writer + runner + parser helpers into a
+        full Stage 01a -> BTC -> post-TIPSY resume path, then update
+        operator/docs/contracts so BTC CSV is described as the default
+        supported BatchTIPSY seam.
     - Guardrails:
       - the intended supported workflow is now BTC CSV in / BTC CSV out, not
         the old DAT/OUT seam;

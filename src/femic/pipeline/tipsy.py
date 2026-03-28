@@ -1118,6 +1118,76 @@ def write_btc_msyt_input_csv(
     return output_path
 
 
+def parse_btc_tsr_transposed_output(
+    *,
+    output_csv: str | Path,
+    pd_module: Any,
+) -> Any:
+    """Parse unattended BTC `/TSR` transposed output into legacy long-curve rows."""
+    output_path = Path(output_csv).expanduser().resolve()
+    df = pd_module.read_csv(output_path)
+    if "feature_id" not in df.columns:
+        raise ValueError(
+            "BTC TSR output is missing required feature_id column: "
+            f"{output_path}"
+        )
+
+    age_pattern = re.compile(r"^(?P<prefix>MVcon|MVdec|HTcon|HTdec|gVol|CC)_(?P<age>\d+)$")
+    ages: set[int] = set()
+    for column in df.columns:
+        match = age_pattern.match(str(column))
+        if match:
+            ages.add(int(match.group("age")))
+    if not ages:
+        raise ValueError(
+            "BTC TSR output has no recognizable transposed age columns: "
+            f"{output_path}"
+        )
+
+    rows: list[dict[str, Any]] = []
+    for record in df.to_dict(orient="records"):
+        feature_id = int(float(record["feature_id"]))
+        managed_curve_id = 20000 + feature_id
+        for age in sorted(ages):
+            mvcon = pd_module.to_numeric(record.get(f"MVcon_{age}"), errors="coerce")
+            mvdec = pd_module.to_numeric(record.get(f"MVdec_{age}"), errors="coerce")
+            htcon = pd_module.to_numeric(record.get(f"HTcon_{age}"), errors="coerce")
+            htdec = pd_module.to_numeric(record.get(f"HTdec_{age}"), errors="coerce")
+            gross = pd_module.to_numeric(record.get(f"gVol_{age}"), errors="coerce")
+            crown_cover = pd_module.to_numeric(record.get(f"CC_{age}"), errors="coerce")
+            yield_total = float(
+                pd_module.Series([mvcon, mvdec]).fillna(0.0).sum()
+            )
+            height_max = pd_module.Series([htcon, htdec]).max(skipna=True)
+            rows.append(
+                {
+                    "AU": managed_curve_id,
+                    "Age": age,
+                    "Yield": yield_total,
+                    "Height": (
+                        float(height_max)
+                        if height_max == height_max  # NaN guard
+                        else np.nan
+                    ),
+                    "DBHq": np.nan,
+                    "TPH": np.nan,
+                    "GrossYield": (
+                        float(gross) if gross == gross else np.nan  # NaN guard
+                    ),
+                    "CrownCover": (
+                        float(crown_cover)
+                        if crown_cover == crown_cover
+                        else np.nan
+                    ),
+                }
+            )
+
+    out = pd_module.DataFrame(rows)
+    if out.empty:
+        raise RuntimeError(f"No BTC TSR curve rows parsed from {output_path}")
+    return out.sort_values(["AU", "Age"]).reset_index(drop=True)
+
+
 def write_tipsy_input_exports(
     *,
     tipsy_table: Any,

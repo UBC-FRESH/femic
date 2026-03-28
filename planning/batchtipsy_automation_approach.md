@@ -218,6 +218,54 @@ Current implementation choice:
   fidelity of the input payload after the runner + parser path is proven end to
   end
 
+## First Post-TIPSY BTC CSV Parser Slice
+
+The first conservative unattended BTC output parser slice is now in place in
+FEMIC.
+
+What it does:
+
+- parses the vetted transposed `/TSR` output returned by the unattended BTC
+  runner
+- requires explicit `feature_id` in the returned CSV
+- reads the safe proven age-series families:
+  - `MVcon_*`
+  - `MVdec_*`
+  - `HTcon_*`
+  - `HTdec_*`
+  - `gVol_*`
+  - `CC_*`
+- converts those wide transposed rows into FEMIC's long-form managed-curve
+  table structure
+- maps stand identity back onto FEMIC managed-curve ids using:
+  - `managed_curve_id = 20000 + feature_id`
+
+Current first-cut field decisions:
+
+- `Yield = MVcon + MVdec`
+- `Height = max(HTcon, HTdec)`
+- `GrossYield = gVol`
+- `CrownCover = CC`
+- `DBHq = NaN`
+- `TPH = NaN`
+
+Why the placeholders remain:
+
+- the unattended `/TSR` mashup currently gives us the proven safe four-indicator
+  set plus explicit `feature_id`
+- richer unattended DBHg / stems-per-ha output is not yet proven safe through
+  the same report template seam
+- so the first cut broadens Stage 01b to consume BTC CSV directly while making
+  the missing stock-level fields explicit rather than silently inventing them
+
+Current implementation implication:
+
+- legacy `01b_run-tsa.py` should accept either:
+  - legacy `.out` files, or
+  - new unattended BTC `.csv` files
+- the unattended BTC CSV path is now the preferred forward direction
+- the legacy `.out` path remains only as a temporary compatibility bridge
+
 ## Incompatible Report-Type Constraint
 
 Not every report template is a safe drop-in replacement for `TimberSupply.rpt`.

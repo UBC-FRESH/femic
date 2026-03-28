@@ -53,6 +53,7 @@ def run_tsa(
     from femic.pipeline.managed_curves import build_transformed_managed_curves_for_tsa
     from femic.pipeline.plots import tipsy_vdyp_ylim_for_tsa
     from femic.pipeline.tipsy import (
+        parse_btc_tsr_transposed_output,
         tipsy_input_dat_path,
         tipsy_params_excel_path,
         tipsy_stage_output_paths,
@@ -176,39 +177,50 @@ def run_tsa(
             ).to_csv(outYield, header=True, index=False)
         else:
             # consolidate yields
-            cols = [
-                "TABLE_NO",
-                "Empty",
-                "Age",
-                "Yield",
-                "Vol_gross",
-                "DBHq",
-                "Height",
-                "TPH",
-                "Crown_C",
-                "Crown_L",
-                "CWD_TPH",
-            ]
-            dy = pd.read_csv(
-                tipsyout,
-                low_memory=False,
-                header=None,
-                skiprows=4,
-                sep=r"\s+",
-            )
-            dy.columns = cols
-            dy.drop("Empty", axis=1, inplace=True)
-            dy.set_index("TABLE_NO", inplace=True)
-            dp = tipsy_input_df.groupby(["AU", "TBLno"], as_index=False)[
-                ["Proportion"]
-            ].sum()
-            dp.set_index("TBLno", inplace=True)
-            dy = dy.join(dp)
-            dy.reset_index(inplace=True)
-            dyf = dy.groupby(["AU", "Age"], as_index=False).agg(
-                {"Yield": ["sum"], "Height": ["max"], "DBHq": ["max"], "TPH": ["sum"]}
-            )
-            dyf.columns = dyf.columns.droplevel(1)  # drop the sum/max labels
+            if Path(tipsyout).suffix.lower() == ".csv":
+                dyf = parse_btc_tsr_transposed_output(
+                    output_csv=tipsyout,
+                    pd_module=pd,
+                )
+            else:
+                cols = [
+                    "TABLE_NO",
+                    "Empty",
+                    "Age",
+                    "Yield",
+                    "Vol_gross",
+                    "DBHq",
+                    "Height",
+                    "TPH",
+                    "Crown_C",
+                    "Crown_L",
+                    "CWD_TPH",
+                ]
+                dy = pd.read_csv(
+                    tipsyout,
+                    low_memory=False,
+                    header=None,
+                    skiprows=4,
+                    sep=r"\s+",
+                )
+                dy.columns = cols
+                dy.drop("Empty", axis=1, inplace=True)
+                dy.set_index("TABLE_NO", inplace=True)
+                dp = tipsy_input_df.groupby(["AU", "TBLno"], as_index=False)[
+                    ["Proportion"]
+                ].sum()
+                dp.set_index("TBLno", inplace=True)
+                dy = dy.join(dp)
+                dy.reset_index(inplace=True)
+                dyf = dy.groupby(["AU", "Age"], as_index=False).agg(
+                    {
+                        "Yield": ["sum"],
+                        "Height": ["max"],
+                        "DBHq": ["max"],
+                        "TPH": ["sum"],
+                    }
+                )
+                dyf.columns = dyf.columns.droplevel(1)  # drop the sum/max labels
 
             # export result to a CSV file
             dyf.to_csv(outYield, header=True, index=False)

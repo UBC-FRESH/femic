@@ -27,6 +27,7 @@ from femic.pipeline.tipsy import (
     compute_vdyp_site_index,
     evaluate_tipsy_candidate,
     parse_btc_custom_report_template,
+    parse_btc_tsr_transposed_output,
     prepare_btc_runtime,
     resolve_btc_executable,
     run_btc_cli,
@@ -270,6 +271,42 @@ def test_write_tipsy_input_exports_writes_excel_and_dat(tmp_path: Path) -> None:
     assert Path(excel_path).is_file()
     assert Path(dat_path).is_file()
     assert "AU" in Path(dat_path).read_text()
+
+
+def test_parse_btc_tsr_transposed_output_maps_feature_rows_to_managed_curve_ids(
+    tmp_path: Path,
+) -> None:
+    output_csv = tmp_path / "MSYT_output.csv"
+    pd.DataFrame(
+        [
+            {
+                "feature_id": 1000,
+                "MVcon_0": 0.0,
+                "MVdec_0": 0.0,
+                "HTcon_0": 0.0,
+                "HTdec_0": 0.0,
+                "gVol_0": 0.0,
+                "CC_0": 0.0,
+                "MVcon_10": 50.0,
+                "MVdec_10": 10.0,
+                "HTcon_10": 3.0,
+                "HTdec_10": 2.0,
+                "gVol_10": 70.0,
+                "CC_10": 0.4,
+            }
+        ]
+    ).to_csv(output_csv, index=False)
+
+    out = parse_btc_tsr_transposed_output(output_csv=output_csv, pd_module=pd)
+
+    assert list(out["AU"]) == [21000, 21000]
+    assert list(out["Age"]) == [0, 10]
+    assert list(out["Yield"]) == [0.0, 60.0]
+    assert list(out["Height"]) == [0.0, 3.0]
+    assert list(out["GrossYield"]) == [0.0, 70.0]
+    assert list(out["CrownCover"]) == [0.0, 0.4]
+    assert out["DBHq"].isna().all()
+    assert out["TPH"].isna().all()
 
 
 def test_parse_btc_custom_report_template_reads_sql_style_template(tmp_path: Path) -> None:

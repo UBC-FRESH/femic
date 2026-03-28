@@ -7453,3 +7453,28 @@
     - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py`
     - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/resources/legacy/01a_run-tsa.py tests/test_tipsy.py tests/test_tipsy_report_cli.py`
     - `.venv\\Scripts\\python.exe -m mypy src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py`
+- 2026-03-28 (Phase 48 BTC post-TIPSY parser slice): broadened the legacy
+  post-TIPSY seam so unattended BTC `/TSR` CSV output can flow back into FEMIC
+  managed-curve assembly.
+  - Added `parse_btc_tsr_transposed_output(...)` in
+    `src/femic/pipeline/tipsy.py` to convert the vetted transposed BTC output
+    into long-form FEMIC curve rows keyed by the existing `20000 + AU`
+    managed-curve convention.
+  - The first-cut parser currently maps:
+    - `Yield = MVcon + MVdec`
+    - `Height = max(HTcon, HTdec)`
+    - `GrossYield = gVol`
+    - `CrownCover = CC`
+    - `DBHq = NaN`
+    - `TPH = NaN`
+  - Updated the legacy `src/femic/resources/legacy/01b_run-tsa.py` path so it
+    now branches to the BTC CSV parser whenever the returned TIPSY artifact is
+    `.csv`, while preserving the old fixed-width `.out` parser as a temporary
+    compatibility path.
+  - Exported the new parser from `src/femic/pipeline/__init__.py` and added a
+    focused regression test in `tests/test_tipsy.py` that proves the returned
+    `feature_id` rows map back to FEMIC managed-curve ids correctly.
+  - Validation passed:
+    - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py`
+    - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/resources/legacy/01b_run-tsa.py tests/test_tipsy.py tests/test_tipsy_report_cli.py`
+    - `.venv\\Scripts\\python.exe -m mypy src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py`
