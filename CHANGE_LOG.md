@@ -7668,3 +7668,6 @@
       - `BasalArea:000`
     - those richer stand-table signals remain optional-bank seam work under
       issue `#47`, not blockers to closing the K3Z QMD regression bug.
+  - Tightened the agent contract again:
+    - obvious low-cost, high-reward direct smoke checks must be done
+      proactively, without waiting for the developer to prompt for them.

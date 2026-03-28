@@ -158,6 +158,10 @@ When contributing to this repository as the coding agent:
        behavior is part of the claimed success signal;
    - prefer a small number of representative, high-signal checks over rote exhaustive scanning, but
      those checks must be capable of catching obvious regressions in the changed contract;
+   - when there is an obvious low-cost, high-reward direct check of the exact thing users will
+     touch, do it proactively without waiting for the developer to remind or prompt you;
+   - do not make the developer manually discover obvious regressions that could have been caught by
+     a cheap direct inspection or launch smoke on the rebuilt output;
    - if you did not inspect the relevant rebuilt outputs directly, say so explicitly and do not
      present the result as verified.
 
