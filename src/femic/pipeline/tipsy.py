@@ -3,15 +3,764 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 import hashlib
+import json
+import os
 from pathlib import Path
+import re
+import shutil
+import subprocess
+import time
 from typing import Any, Mapping, Sequence
 import warnings
 
 import numpy as np
 
 from femic.pipeline.diagnostics import build_timestamped_event
+
+
+_BTC_REPORT_COLUMNS_COMMENT = (
+    "'enum_db_column\tWidth\tHeader1Override\tHeader2Override\tUnitsOverride"
+)
+DEFAULT_BTC_REPORT_HEADER_FLAGS: dict[str, str] = {
+    "ModelVersion": "1",
+    "TU_InitDensity": "1",
+    "TU_RegenType": "1",
+    "TU_RegenDelay": "1",
+    "TU_Treatments": "1",
+    "TU_Area": "1",
+    "Species_SiteCurve": "0",
+    "Species_TopHeight": "0",
+    "Species_InitDensity": "0",
+    "Species_StockHeight": "1",
+    "Species_GenWorth": "1",
+    "Species_Fertilization": "1",
+}
+_BTC_REPORT_PRESET_NAMES = (
+    "timber-supply-sql",
+    "tsr-unattended-default",
+)
+DEFAULT_BTC_MSYT_COLUMNS = (
+    "feature_id",
+    "bec_zone",
+    "bec_subzone",
+    "planted_species1",
+    "planted_species2",
+    "planted_species3",
+    "planted_species4",
+    "planted_species5",
+    "planted_density1",
+    "planted_density2",
+    "planted_density3",
+    "planted_density4",
+    "planted_density5",
+    "genetic_worth1",
+    "genetic_worth2",
+    "genetic_worth3",
+    "genetic_worth4",
+    "genetic_worth5",
+    "planting_delay",
+    "planted_percent",
+    "natural_species1",
+    "natural_species2",
+    "natural_species3",
+    "natural_species4",
+    "natural_species5",
+    "natural_density1",
+    "natural_density2",
+    "natural_density3",
+    "natural_density4",
+    "natural_density5",
+    "oaf1",
+    "oaf2",
+    "opening_id",
+    "vri_ref_age",
+    "vri_ref_sph",
+    "at_si",
+    "ba_si",
+    "bg_si",
+    "bl_si",
+    "cw_si",
+    "dr_si",
+    "ep_si",
+    "fd_si",
+    "hm_si",
+    "hw_si",
+    "lt_si",
+    "lw_si",
+    "pa_si",
+    "pl_si",
+    "pw_si",
+    "py_si",
+    "sb_si",
+    "se_si",
+    "ss_si",
+    "sw_si",
+    "sx_si",
+    "yc_si",
+)
+_BTC_MSYT_SITE_INDEX_COLUMNS = tuple(
+    column for column in DEFAULT_BTC_MSYT_COLUMNS if column.endswith("_si")
+)
+DEFAULT_BATCHTIPSY_EXE_ENV = "FEMIC_BATCHTIPSY_EXE"
+DEFAULT_BATCHTIPSY_WINDOWS_EXE = Path(r"C:\Program Files\TIPSY 4.7\BTC\TIPSYbtc.exe")
+_BTC_SUPPORTED_MODES = {"TSR", "FLP"}
+_BTC_REPORT_FILENAME_BY_MODE = {
+    "TSR": "TimberSupply.rpt",
+    "FLP": "ForestLandscapePlan.rpt",
+}
+
+
+@dataclass(frozen=True)
+class BTCRuntimeDiscovery:
+    """Resolved BTC executable discovery result."""
+
+    executable_path: Path
+    source: str
+
+
+@dataclass(frozen=True)
+class BTCRuntimePreparation:
+    """Prepared BTC runtime layout for one supervised CLI run."""
+
+    executable_path: Path
+    install_root: Path
+    working_dir: Path
+    staged_input_csv: Path
+    copied_install: bool
+    report_template_path: Path | None
+
+
+@dataclass(frozen=True)
+class BTCRunResult:
+    """Result payload for one supervised BTC CLI run."""
+
+    run_id: str
+    mode: str
+    command: tuple[str, ...]
+    manifest_path: Path
+    stdout_log_path: Path
+    stderr_log_path: Path
+    output_csv_path: Path
+    error_csv_path: Path
+    executable_path: Path
+    install_root: Path
+    working_dir: Path
+    copied_install: bool
+    exit_code: int
+    duration_sec: float
+    report_template_path: Path | None
+
+
+@dataclass(frozen=True)
+class BTCCustomReportColumn:
+    """One column entry in a BTC custom report template."""
+
+    token: str
+    width: int = 0
+    header1_override: str = ""
+    header2_override: str = ""
+    units_override: str = ""
+
+    def render(self) -> str:
+        return "\t".join(
+            [
+                self.token,
+                str(int(self.width)),
+                self.header1_override,
+                self.header2_override,
+                self.units_override,
+            ]
+        ).rstrip()
+
+
+@dataclass(frozen=True)
+class BTCCustomReportTemplate:
+    """Structured BTC custom report template."""
+
+    name: str
+    icon_id: int = 13
+    identifier: str = "FirstIDcolumn"
+    identifier_integer: bool = True
+    report_type: str = "databaseByStand"
+    output_format: str = "TAB"
+    border: int = 500
+    header_height: int = 250
+    footer_height: int = 250
+    header_flags: Mapping[str, str] | None = None
+    columns: Sequence[BTCCustomReportColumn] = ()
+
+    def render(self) -> str:
+        header_flags = dict(self.header_flags or DEFAULT_BTC_REPORT_HEADER_FLAGS)
+        lines = [
+            "[CustomReport]",
+            f"Name={self.name}",
+            f"IconID={int(self.icon_id)}",
+            f"Identifier={self.identifier}",
+            f"IdentifierInteger={1 if self.identifier_integer else 0}",
+            f"Type={self.report_type}",
+            f"OutputFormat={self.output_format}",
+            f"Border={int(self.border)}",
+            f"HeaderHeight={int(self.header_height)}",
+            f"FooterHeight={int(self.footer_height)}",
+            "",
+            "[CustomReportHeader]",
+        ]
+        lines.extend(f"{key}={value}" for key, value in header_flags.items())
+        lines.extend(["", "[CustomReportColumns]", _BTC_REPORT_COLUMNS_COMMENT])
+        lines.extend(column.render() for column in self.columns)
+        return "\n".join(lines) + "\n"
+
+
+def _parse_btc_column_line(raw_line: str) -> BTCCustomReportColumn:
+    parts = [
+        part.strip()
+        for part in re.split(r"\t+|\s{2,}", raw_line.rstrip())
+        if part.strip() != ""
+    ]
+    if not parts:
+        raise ValueError("BTC custom report column line is empty")
+    token = parts[0]
+    width = 0
+    header1_override = ""
+    header2_override = ""
+    units_override = ""
+    if len(parts) >= 2:
+        try:
+            width = int(parts[1])
+            if len(parts) >= 3:
+                header1_override = parts[2]
+            if len(parts) >= 4:
+                header2_override = parts[3]
+            if len(parts) >= 5:
+                units_override = parts[4]
+        except ValueError:
+            header1_override = parts[1]
+            if len(parts) >= 3:
+                header2_override = parts[2]
+            if len(parts) >= 4:
+                units_override = parts[3]
+    return BTCCustomReportColumn(
+        token=token,
+        width=width,
+        header1_override=header1_override,
+        header2_override=header2_override,
+        units_override=units_override,
+    )
+
+
+def parse_btc_custom_report_template(
+    template_path: str | Path,
+) -> BTCCustomReportTemplate:
+    """Parse a BTC ``.rpt`` custom report file into a structured template."""
+    path = Path(template_path)
+    text = path.read_text(encoding="utf-8")
+    current_section: str | None = None
+    report_values: dict[str, str] = {}
+    header_values: dict[str, str] = {}
+    columns: list[BTCCustomReportColumn] = []
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            current_section = line[1:-1]
+            continue
+        if current_section == "CustomReport":
+            if "=" not in raw_line:
+                continue
+            key, value = raw_line.split("=", 1)
+            report_values[key.strip()] = value.strip()
+            continue
+        if current_section == "CustomReportHeader":
+            if "=" not in raw_line:
+                continue
+            key, value = raw_line.split("=", 1)
+            header_values[key.strip()] = value.strip()
+            continue
+        if current_section == "CustomReportColumns":
+            if line.startswith("'"):
+                continue
+            columns.append(_parse_btc_column_line(raw_line))
+    if "Name" not in report_values:
+        raise ValueError(f"BTC report template missing Name in {path}")
+    return BTCCustomReportTemplate(
+        name=report_values["Name"],
+        icon_id=int(report_values.get("IconID", 13)),
+        identifier=report_values.get("Identifier", "FirstIDcolumn"),
+        identifier_integer=report_values.get("IdentifierInteger", "1")
+        not in {"0", "false"},
+        report_type=report_values.get("Type", "databaseByStand"),
+        output_format=report_values.get("OutputFormat", "TAB"),
+        border=int(report_values.get("Border", 500)),
+        header_height=int(report_values.get("HeaderHeight", 250)),
+        footer_height=int(report_values.get("FooterHeight", 250)),
+        header_flags=header_values,
+        columns=columns,
+    )
+
+
+def build_btc_custom_report_template(
+    *,
+    name: str,
+    source_template: BTCCustomReportTemplate | None = None,
+    columns: Sequence[BTCCustomReportColumn] | None = None,
+    header_flags: Mapping[str, str] | None = None,
+    icon_id: int | None = None,
+    identifier: str | None = None,
+    identifier_integer: bool | None = None,
+    report_type: str | None = None,
+    output_format: str | None = None,
+    border: int | None = None,
+    header_height: int | None = None,
+    footer_height: int | None = None,
+) -> BTCCustomReportTemplate:
+    """Build a BTC custom report template from a preset or existing template."""
+    base = source_template or BTCCustomReportTemplate(name=name)
+    merged_header_flags = dict(base.header_flags or DEFAULT_BTC_REPORT_HEADER_FLAGS)
+    if header_flags:
+        merged_header_flags.update(header_flags)
+    return BTCCustomReportTemplate(
+        name=name,
+        icon_id=icon_id if icon_id is not None else base.icon_id,
+        identifier=identifier or base.identifier,
+        identifier_integer=(
+            identifier_integer
+            if identifier_integer is not None
+            else base.identifier_integer
+        ),
+        report_type=report_type or base.report_type,
+        output_format=output_format or base.output_format,
+        border=border if border is not None else base.border,
+        header_height=header_height
+        if header_height is not None
+        else base.header_height,
+        footer_height=footer_height
+        if footer_height is not None
+        else base.footer_height,
+        header_flags=merged_header_flags,
+        columns=list(columns if columns is not None else base.columns),
+    )
+
+
+def btc_report_template_preset(name: str) -> BTCCustomReportTemplate:
+    """Return a vetted built-in BTC custom report template preset."""
+    normalized = name.strip().lower().replace("_", "-")
+    if normalized == "timber-supply-sql":
+        return BTCCustomReportTemplate(
+            name="Timber Supply SQL",
+            icon_id=13,
+            identifier="FirstIDcolumn",
+            identifier_integer=True,
+            report_type="databaseByStand",
+            output_format="TAB",
+            border=500,
+            header_height=250,
+            footer_height=250,
+            header_flags=DEFAULT_BTC_REPORT_HEADER_FLAGS,
+            columns=[
+                BTCCustomReportColumn("Year", 0, "Year"),
+                BTCCustomReportColumn("Volume:Auto:Con", 0, "VolumeCon"),
+                BTCCustomReportColumn("Volume:Auto:Dec", 0, "VolumeDec"),
+                BTCCustomReportColumn("Height:Auto:Con", 0, "HeightCon"),
+                BTCCustomReportColumn("Height:Auto:Dec", 0, "HeightDec"),
+            ],
+        )
+    if normalized == "tsr-unattended-default":
+        return BTCCustomReportTemplate(
+            name="TSR Unattended Default",
+            icon_id=7,
+            identifier="FirstIDcolumn",
+            identifier_integer=False,
+            report_type="transposed",
+            output_format="CSV",
+            border=500,
+            header_height=250,
+            footer_height=250,
+            header_flags={},
+            columns=[
+                BTCCustomReportColumn("Volume:Auto:Con", 0, "MVcon", "{yr}"),
+                BTCCustomReportColumn("Volume:Auto:Dec", 0, "MVdec", "{yr}"),
+                BTCCustomReportColumn("Height:Con", 0, "HTcon", "{yr}"),
+                BTCCustomReportColumn("Height:Dec", 0, "HTdec", "{yr}"),
+                BTCCustomReportColumn("VolumeGross", 0, "gVol", "{yr}"),
+                BTCCustomReportColumn("CC", 0, "CC", "{yr}"),
+            ],
+        )
+    supported = ", ".join(_BTC_REPORT_PRESET_NAMES)
+    raise ValueError(
+        f"Unsupported BTC report template preset {name!r}. Supported presets: {supported}"
+    )
+
+
+def write_btc_custom_report_template(
+    *,
+    output_path: str | Path,
+    template: BTCCustomReportTemplate,
+) -> Path:
+    """Write a BTC custom report template to disk."""
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(template.render(), encoding="utf-8")
+    return path
+
+
+def _write_tsr_unattended_runtime_template_from_stock(*, install_root: Path) -> Path:
+    """Patch stock `TimberSupply.rpt` in place with the proven safe mashup columns."""
+    template_path = install_root / _BTC_REPORT_FILENAME_BY_MODE["TSR"]
+    text = template_path.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    additions = [
+        "VolumeGross\t\tgVol\t{yr}",
+        "CC\t\tCC\t{yr}",
+    ]
+    for addition in additions:
+        token = addition.split("\t", 1)[0]
+        if any(line.startswith(token) for line in lines):
+            continue
+        lines.append(addition)
+    template_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return template_path
+
+
+def resolve_btc_executable(
+    *,
+    executable_path: str | Path | None = None,
+    env: Mapping[str, str] | None = None,
+) -> BTCRuntimeDiscovery:
+    """Resolve the BatchTIPSY BTC executable path on Windows-first hosts."""
+    candidates: list[tuple[Path | None, str]] = [
+        (Path(executable_path) if executable_path is not None else None, "explicit"),
+        (
+            Path((env or os.environ)[DEFAULT_BATCHTIPSY_EXE_ENV])
+            if (env or os.environ).get(DEFAULT_BATCHTIPSY_EXE_ENV)
+            else None,
+            f"env:{DEFAULT_BATCHTIPSY_EXE_ENV}",
+        ),
+        (DEFAULT_BATCHTIPSY_WINDOWS_EXE, "default"),
+    ]
+    for candidate, source in candidates:
+        if candidate is None:
+            continue
+        resolved = candidate.expanduser()
+        if resolved.exists():
+            return BTCRuntimeDiscovery(
+                executable_path=resolved.resolve(),
+                source=source,
+            )
+    searched = ", ".join(str(path) for path, _source in candidates if path is not None)
+    raise FileNotFoundError(
+        "Could not resolve BatchTIPSY BTC executable. Checked: "
+        f"{searched}. Set {DEFAULT_BATCHTIPSY_EXE_ENV} or pass an explicit path."
+    )
+
+
+def build_btc_cli_command(
+    *,
+    executable_path: str | Path,
+    mode: str,
+    input_csv: str | Path,
+    output_csv: str | Path,
+    error_csv: str | Path,
+    extra_executable_args: Sequence[str | Path] = (),
+) -> list[str]:
+    """Build the concrete BTC CLI command for `/TSR` or `/FLP` execution."""
+    normalized_mode = str(mode).strip().upper()
+    if normalized_mode not in _BTC_SUPPORTED_MODES:
+        supported = ", ".join(sorted(_BTC_SUPPORTED_MODES))
+        raise ValueError(f"Unsupported BTC mode {mode!r}. Supported modes: {supported}")
+    command = [str(Path(executable_path))]
+    command.extend(str(arg) for arg in extra_executable_args)
+    command.extend(
+        [
+            f"/{normalized_mode}",
+            str(input_csv),
+            str(output_csv),
+            str(error_csv),
+        ]
+    )
+    return command
+
+
+def _write_btc_manifest(path: Path, payload: Mapping[str, object]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(dict(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+
+def prepare_btc_runtime(
+    *,
+    executable_path: str | Path,
+    input_csv: str | Path,
+    scratch_root: str | Path,
+    mode: str,
+    report_template: BTCCustomReportTemplate | str | Path | None = None,
+    report_preset_name: str | None = None,
+    copy_install: bool = False,
+) -> BTCRuntimePreparation:
+    """Stage a writable BTC runtime root and input CSV for one run."""
+    resolved_exe = Path(executable_path).expanduser().resolve()
+    install_root = resolved_exe.parent
+    resolved_scratch_root = Path(scratch_root).expanduser().resolve()
+    resolved_scratch_root.mkdir(parents=True, exist_ok=True)
+    effective_install_root = install_root
+    effective_executable = resolved_exe
+    copied = False
+    report_target_path: Path | None = None
+    if copy_install or report_template is not None:
+        effective_install_root = resolved_scratch_root / "btc_install"
+        if effective_install_root.exists():
+            shutil.rmtree(effective_install_root)
+        shutil.copytree(install_root, effective_install_root)
+        effective_executable = effective_install_root / resolved_exe.name
+        copied = True
+    normalized_mode = str(mode).upper()
+    if report_preset_name == "tsr-unattended-default":
+        if normalized_mode != "TSR":
+            raise ValueError(
+                "The tsr-unattended-default runtime preset only supports mode=TSR."
+            )
+        report_target_path = _write_tsr_unattended_runtime_template_from_stock(
+            install_root=effective_install_root
+        )
+    elif report_template is not None:
+        report_target_path = (
+            effective_install_root / _BTC_REPORT_FILENAME_BY_MODE[normalized_mode]
+        )
+        if isinstance(report_template, BTCCustomReportTemplate):
+            write_btc_custom_report_template(
+                output_path=report_target_path,
+                template=report_template,
+            )
+        else:
+            source_text = Path(report_template).read_text(encoding="utf-8")
+            report_target_path.write_text(source_text, encoding="utf-8")
+    working_dir = resolved_scratch_root / "work"
+    working_dir.mkdir(parents=True, exist_ok=True)
+    staged_input = working_dir / Path(input_csv).name
+    shutil.copy2(Path(input_csv), staged_input)
+    return BTCRuntimePreparation(
+        executable_path=effective_executable,
+        install_root=effective_install_root,
+        working_dir=working_dir,
+        staged_input_csv=staged_input,
+        copied_install=copied,
+        report_template_path=report_target_path,
+    )
+
+
+def run_btc_cli(
+    *,
+    input_csv: str | Path,
+    mode: str = "TSR",
+    output_csv: str | Path | None = None,
+    error_csv: str | Path | None = None,
+    executable_path: str | Path | None = None,
+    report_template: BTCCustomReportTemplate | str | Path | None = None,
+    report_preset_name: str | None = None,
+    copy_install: bool | None = None,
+    scratch_root: str | Path | None = None,
+    log_dir: str | Path = Path("vdyp_io/logs"),
+    run_id: str | None = None,
+    env: Mapping[str, str] | None = None,
+    extra_executable_args: Sequence[str | Path] = (),
+) -> BTCRunResult:
+    """Run BTC `/TSR` or `/FLP` in a supervised writable scratch environment."""
+    discovery = resolve_btc_executable(executable_path=executable_path, env=env)
+    normalized_mode = str(mode).strip().upper()
+    if normalized_mode not in _BTC_SUPPORTED_MODES:
+        supported = ", ".join(sorted(_BTC_SUPPORTED_MODES))
+        raise ValueError(f"Unsupported BTC mode {mode!r}. Supported modes: {supported}")
+    resolved_log_dir = Path(log_dir).expanduser().resolve()
+    resolved_log_dir.mkdir(parents=True, exist_ok=True)
+    effective_run_id = run_id or datetime.now(UTC).strftime("btc_%Y%m%dT%H%M%SZ")
+    resolved_scratch_root = (
+        Path(scratch_root).expanduser().resolve()
+        if scratch_root is not None
+        else (resolved_log_dir / f"btc_scratch-{effective_run_id}").resolve()
+    )
+    should_copy_install = (
+        bool(copy_install)
+        if copy_install is not None
+        else (report_template is not None or report_preset_name is not None)
+    )
+    prep = prepare_btc_runtime(
+        executable_path=discovery.executable_path,
+        input_csv=input_csv,
+        scratch_root=resolved_scratch_root,
+        mode=normalized_mode,
+        report_template=report_template,
+        report_preset_name=report_preset_name,
+        copy_install=should_copy_install,
+    )
+    input_path = Path(input_csv).expanduser().resolve()
+    if output_csv is not None:
+        requested_output = Path(output_csv).expanduser().resolve()
+        staged_output = prep.working_dir / requested_output.name
+    else:
+        staged_output = prep.working_dir / f"{input_path.stem}_output.csv"
+        requested_output = staged_output
+    if error_csv is not None:
+        requested_error = Path(error_csv).expanduser().resolve()
+        staged_error = prep.working_dir / requested_error.name
+    else:
+        staged_error = prep.working_dir / f"{input_path.stem}_error.csv"
+        requested_error = staged_error
+    command = build_btc_cli_command(
+        executable_path=prep.executable_path,
+        mode=normalized_mode,
+        input_csv=prep.staged_input_csv.name,
+        output_csv=staged_output.name,
+        error_csv=staged_error.name,
+        extra_executable_args=extra_executable_args,
+    )
+    stdout_log_path = resolved_log_dir / f"btc_stdout-{effective_run_id}.log"
+    stderr_log_path = resolved_log_dir / f"btc_stderr-{effective_run_id}.log"
+    manifest_path = resolved_log_dir / f"btc_manifest-{effective_run_id}.json"
+    started_at = datetime.now(UTC)
+    manifest_started = {
+        "run_id": effective_run_id,
+        "status": "started",
+        "mode": normalized_mode,
+        "started_at_utc": started_at.isoformat(),
+        "command": command,
+        "log_dir": str(resolved_log_dir),
+        "input_csv": str(Path(input_csv).expanduser().resolve()),
+        "staged_input_csv": str(prep.staged_input_csv),
+        "output_csv": str(requested_output),
+        "error_csv": str(requested_error),
+        "staged_output_csv": str(staged_output),
+        "staged_error_csv": str(staged_error),
+        "executable_path": str(prep.executable_path),
+        "install_root": str(prep.install_root),
+        "copied_install": prep.copied_install,
+        "report_template_path": (
+            str(prep.report_template_path) if prep.report_template_path else None
+        ),
+        "discovery_source": discovery.source,
+    }
+    _write_btc_manifest(manifest_path, manifest_started)
+    started_monotonic = time.monotonic()
+    merged_env = dict(os.environ)
+    merged_env.update(env or {})
+    completed = subprocess.run(
+        command,
+        cwd=prep.working_dir,
+        env=merged_env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    duration_sec = round(time.monotonic() - started_monotonic, 3)
+    stdout_log_path.write_text(completed.stdout, encoding="utf-8")
+    stderr_log_path.write_text(completed.stderr, encoding="utf-8")
+    finished_at = datetime.now(UTC)
+    error_message = None
+    try:
+        if not staged_output.exists():
+            raise RuntimeError(
+                f"BTC did not create expected output file: {staged_output} "
+                f"(exit_code={completed.returncode})"
+            )
+        if not staged_error.exists():
+            raise RuntimeError(
+                f"BTC did not create expected error file: {staged_error} "
+                f"(exit_code={completed.returncode})"
+            )
+        if requested_output != staged_output:
+            requested_output.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(staged_output, requested_output)
+        if requested_error != staged_error:
+            requested_error.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(staged_error, requested_error)
+    except Exception as exc:
+        error_message = str(exc)
+        from femic.pipeline.manifest import collect_runtime_versions
+
+        _write_btc_manifest(
+            manifest_path,
+            {
+                **manifest_started,
+                "status": "failed",
+                "finished_at_utc": finished_at.isoformat(),
+                "duration_sec": duration_sec,
+                "exit_code": completed.returncode,
+                "error_message": error_message,
+                "stdout_log_path": str(stdout_log_path),
+                "stderr_log_path": str(stderr_log_path),
+                "runtime_versions": collect_runtime_versions(),
+                "artifacts": {
+                    "output_csv": {
+                        "path": str(requested_output),
+                        "exists": requested_output.exists(),
+                    },
+                    "error_csv": {
+                        "path": str(requested_error),
+                        "exists": requested_error.exists(),
+                    },
+                    "stdout_log": {
+                        "path": str(stdout_log_path),
+                        "exists": stdout_log_path.exists(),
+                    },
+                    "stderr_log": {
+                        "path": str(stderr_log_path),
+                        "exists": stderr_log_path.exists(),
+                    },
+                },
+            },
+        )
+        raise
+    from femic.pipeline.manifest import collect_runtime_versions
+
+    manifest_finished = {
+        **manifest_started,
+        "status": "ok" if completed.returncode == 0 else "failed",
+        "finished_at_utc": finished_at.isoformat(),
+        "duration_sec": duration_sec,
+        "exit_code": completed.returncode,
+        "error_message": error_message,
+        "stdout_log_path": str(stdout_log_path),
+        "stderr_log_path": str(stderr_log_path),
+        "runtime_versions": collect_runtime_versions(),
+        "artifacts": {
+            "output_csv": {
+                "path": str(requested_output),
+                "exists": requested_output.exists(),
+            },
+            "error_csv": {
+                "path": str(requested_error),
+                "exists": requested_error.exists(),
+            },
+            "stdout_log": {
+                "path": str(stdout_log_path),
+                "exists": stdout_log_path.exists(),
+            },
+            "stderr_log": {
+                "path": str(stderr_log_path),
+                "exists": stderr_log_path.exists(),
+            },
+        },
+    }
+    _write_btc_manifest(manifest_path, manifest_finished)
+    return BTCRunResult(
+        run_id=effective_run_id,
+        mode=normalized_mode,
+        command=tuple(command),
+        manifest_path=manifest_path,
+        stdout_log_path=stdout_log_path,
+        stderr_log_path=stderr_log_path,
+        output_csv_path=requested_output,
+        error_csv_path=requested_error,
+        executable_path=prep.executable_path,
+        install_root=prep.install_root,
+        working_dir=prep.working_dir,
+        copied_install=prep.copied_install,
+        exit_code=completed.returncode,
+        duration_sec=duration_sec,
+        report_template_path=prep.report_template_path,
+    )
 
 
 DEFAULT_TIPSY_BATCH_COLUMNS_1BASED: dict[str, tuple[int, int]] = {
@@ -253,6 +1002,203 @@ def build_tipsy_input_table(
     return pd_module.concat(rows)[list(tipsy_params_columns)]
 
 
+def _btc_msyt_bec_fields(value: Any) -> tuple[str, str]:
+    text = "" if value is None else str(value).strip()
+    if not text:
+        return "", ""
+    match = re.match(r"^([A-Z]+)([a-z]+)", text)
+    if match:
+        return match.group(1), match.group(2)
+    return text, ""
+
+
+def _btc_species_code(value: Any) -> str:
+    text = "" if value is None else str(value).strip()
+    if not text or text.lower() == "nan":
+        return ""
+    lowered = text.lower()
+    return lowered[:1].upper() + lowered[1:]
+
+
+def _btc_site_index_column_for_species(species_code: str) -> str | None:
+    normalized = species_code.strip().lower()
+    if not normalized:
+        return None
+    key = f"{normalized[:2]}_si"
+    if key in _BTC_MSYT_SITE_INDEX_COLUMNS:
+        return key
+    return None
+
+
+def _btc_numeric_or_blank(value: Any) -> Any:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return ""
+        return stripped
+    try:
+        if value != value:  # NaN
+            return ""
+    except Exception:
+        return value
+    return value
+
+
+def _btc_density_from_percent(*, total_density: Any, percent: Any) -> Any:
+    total = _btc_numeric_or_blank(total_density)
+    pct = _btc_numeric_or_blank(percent)
+    if total == "" or pct == "":
+        return ""
+    total_float = float(total)
+    pct_float = float(pct)
+    return int(round(total_float * (pct_float / 100.0)))
+
+
+def build_btc_msyt_input_table(
+    *,
+    tipsy_table: Any,
+    pd_module: Any,
+) -> Any:
+    """Build BTC `MSYT.csv` input rows from the current TIPSY `f`-table payload."""
+    table = tipsy_table.copy()
+    unnamed_cols = [col for col in table.columns if str(col).startswith("Unnamed:")]
+    if unnamed_cols:
+        table = table.drop(columns=unnamed_cols)
+
+    rows: list[dict[str, Any]] = []
+    for record in table.to_dict(orient="records"):
+        bec_zone, bec_subzone = _btc_msyt_bec_fields(record.get("BEC"))
+        row: dict[str, Any] = {column: "" for column in DEFAULT_BTC_MSYT_COLUMNS}
+        for si_column in _BTC_MSYT_SITE_INDEX_COLUMNS:
+            row[si_column] = 0
+
+        au = record.get("AU")
+        feature_id = int(au) if _btc_numeric_or_blank(au) != "" else ""
+        row["feature_id"] = feature_id
+        row["bec_zone"] = bec_zone
+        row["bec_subzone"] = bec_subzone
+        row["planting_delay"] = _btc_numeric_or_blank(record.get("Regen_Delay"))
+        proportion = _btc_numeric_or_blank(record.get("Proportion"))
+        row["planted_percent"] = (
+            int(round(float(proportion) * 100.0)) if proportion != "" else ""
+        )
+        row["oaf1"] = _btc_numeric_or_blank(record.get("OAF1"))
+        row["oaf2"] = _btc_numeric_or_blank(record.get("OAF2"))
+        row["opening_id"] = feature_id
+        row["vri_ref_age"] = 0
+        row["vri_ref_sph"] = 0
+
+        for i in range(1, 6):
+            species_key = f"SPP_{i}"
+            percent_key = f"PCT_{i}"
+            gw_key = f"GW_{i}"
+            btc_species = _btc_species_code(record.get(species_key))
+            if not btc_species:
+                continue
+            planted_species_col = f"planted_species{i}"
+            planted_density_col = f"planted_density{i}"
+            genetic_worth_col = f"genetic_worth{i}"
+            row[planted_species_col] = btc_species
+            row[planted_density_col] = _btc_density_from_percent(
+                total_density=record.get("Density"),
+                percent=record.get(percent_key),
+            )
+            row[genetic_worth_col] = _btc_numeric_or_blank(record.get(gw_key))
+            site_column: str | None = _btc_site_index_column_for_species(btc_species)
+            if site_column is not None:
+                row[site_column] = _btc_numeric_or_blank(record.get("SI")) or 0
+
+        rows.append(row)
+
+    if not rows:
+        raise RuntimeError("No BTC MSYT input rows generated.")
+    return pd_module.DataFrame(rows)[list(DEFAULT_BTC_MSYT_COLUMNS)]
+
+
+def write_btc_msyt_input_csv(
+    *,
+    btc_msyt_table: Any,
+    tsa: str,
+    output_root: str | Path = "data",
+    filename_template: str = "03_input-tsa{tsa}.csv",
+) -> Path:
+    """Write the BTC canonical `MSYT.csv` handoff for one TSA."""
+    output_path = Path(output_root) / filename_template.format(tsa=tsa)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    btc_msyt_table.to_csv(output_path, index=False)
+    return output_path
+
+
+def parse_btc_tsr_transposed_output(
+    *,
+    output_csv: str | Path,
+    pd_module: Any,
+) -> Any:
+    """Parse unattended BTC `/TSR` transposed output into legacy long-curve rows."""
+    output_path = Path(output_csv).expanduser().resolve()
+    df = pd_module.read_csv(output_path)
+    if "feature_id" not in df.columns:
+        raise ValueError(
+            f"BTC TSR output is missing required feature_id column: {output_path}"
+        )
+
+    age_pattern = re.compile(
+        r"^(?P<prefix>MVcon|MVdec|HTcon|HTdec|gVol|CC)_(?P<age>\d+)$"
+    )
+    ages: set[int] = set()
+    for column in df.columns:
+        match = age_pattern.match(str(column))
+        if match:
+            ages.add(int(match.group("age")))
+    if not ages:
+        raise ValueError(
+            f"BTC TSR output has no recognizable transposed age columns: {output_path}"
+        )
+
+    rows: list[dict[str, Any]] = []
+    for record in df.to_dict(orient="records"):
+        feature_id = int(float(record["feature_id"]))
+        # New BTC inputs may already carry FEMIC managed-curve ids (e.g. 21000,
+        # 22001). Preserve those as-is; only lift legacy/raw stand ids.
+        managed_curve_id = feature_id if feature_id >= 20000 else 20000 + feature_id
+        for age in sorted(ages):
+            mvcon = pd_module.to_numeric(record.get(f"MVcon_{age}"), errors="coerce")
+            mvdec = pd_module.to_numeric(record.get(f"MVdec_{age}"), errors="coerce")
+            htcon = pd_module.to_numeric(record.get(f"HTcon_{age}"), errors="coerce")
+            htdec = pd_module.to_numeric(record.get(f"HTdec_{age}"), errors="coerce")
+            gross = pd_module.to_numeric(record.get(f"gVol_{age}"), errors="coerce")
+            crown_cover = pd_module.to_numeric(record.get(f"CC_{age}"), errors="coerce")
+            yield_total = float(pd_module.Series([mvcon, mvdec]).fillna(0.0).sum())
+            height_max = pd_module.Series([htcon, htdec]).max(skipna=True)
+            rows.append(
+                {
+                    "AU": managed_curve_id,
+                    "Age": age,
+                    "Yield": yield_total,
+                    "Height": (
+                        float(height_max)
+                        if height_max == height_max  # NaN guard
+                        else np.nan
+                    ),
+                    "DBHq": np.nan,
+                    "TPH": np.nan,
+                    "GrossYield": (
+                        float(gross) if gross == gross else np.nan  # NaN guard
+                    ),
+                    "CrownCover": (
+                        float(crown_cover) if crown_cover == crown_cover else np.nan
+                    ),
+                }
+            )
+
+    out = pd_module.DataFrame(rows)
+    if out.empty:
+        raise RuntimeError(f"No BTC TSR curve rows parsed from {output_path}")
+    return out.sort_values(["AU", "Age"]).reset_index(drop=True)
+
+
 def write_tipsy_input_exports(
     *,
     tipsy_table: Any,
@@ -336,6 +1282,16 @@ def tipsy_input_dat_path(
     filename_template: str = "02_input-tsa{tsa}.dat",
 ) -> Path:
     """Build legacy per-TSA BatchTIPSY DAT handoff path."""
+    return Path(input_root) / filename_template.format(tsa=tsa)
+
+
+def btc_msyt_input_csv_path(
+    *,
+    tsa: str,
+    input_root: str | Path = "data",
+    filename_template: str = "03_input-tsa{tsa}.csv",
+) -> Path:
+    """Build canonical per-TSA BTC `MSYT.csv` handoff path."""
     return Path(input_root) / filename_template.format(tsa=tsa)
 
 

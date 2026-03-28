@@ -83,6 +83,16 @@ from femic.pipeline.tipsy_config import (
     discover_tipsy_config_tsas,
     load_tipsy_tsa_config,
 )
+from femic.pipeline.tipsy import (
+    BTCRunResult,
+    BTCCustomReportColumn,
+    BTCCustomReportTemplate,
+    btc_report_template_preset,
+    build_btc_custom_report_template,
+    parse_btc_custom_report_template,
+    run_btc_cli,
+    write_btc_custom_report_template,
+)
 from femic.vdyp.reporting import (
     VdypWarningBudget,
     evaluate_warning_budget,
@@ -90,7 +100,11 @@ from femic.vdyp.reporting import (
     summarize_vdyp_logs,
 )
 from femic.ws3_smoke import run_ws3_smoke
-from femic.workflows.legacy import run_data_prep, run_post_tipsy_bundle_with_manifest
+from femic.workflows.legacy import (
+    run_btc_and_post_tipsy_bundle_with_manifest,
+    run_data_prep,
+    run_post_tipsy_bundle_with_manifest,
+)
 
 app = typer.Typer(
     add_completion=False,
@@ -2267,6 +2281,132 @@ def tsa_post_tipsy(
     console.print(f"curve_points_table: {result.curve_points_table_path}")
 
 
+@tsa_app.command("btc-post-tipsy")
+def tsa_btc_post_tipsy(
+    tsa: list[str] | None = TSA_OPTION,
+    verbose: bool = VERBOSE_OPTION,
+    run_id: str | None = RUN_ID_OPTION,
+    log_dir: Path = LOG_DIR_OPTION,
+    run_config: Path | None = RUN_CONFIG_OPTION,
+    btc_exe: Path | None = typer.Option(
+        None,
+        "--btc-exe",
+        help="Explicit TIPSYbtc.exe path; otherwise use env/default discovery.",
+        show_default=False,
+    ),
+    scratch_dir: Path | None = typer.Option(
+        None,
+        "--scratch-dir",
+        help="Optional scratch root for copied BTC installs and staged run files.",
+        show_default=False,
+    ),
+    report_preset: str = typer.Option(
+        "tsr-unattended-default",
+        "--report-preset",
+        help="Built-in BTC report preset to use for unattended /TSR runs.",
+        show_default=True,
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Run unattended BTC for selected TSAs, then resume post-TIPSY bundle assembly."""
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_log_dir = instance_context.resolve_path(Path(log_dir))
+    resolved_run_config = (
+        instance_context.resolve_path(run_config) if run_config is not None else None
+    )
+    run_profile = None
+    if resolved_run_config is not None:
+        try:
+            run_profile = load_pipeline_run_profile(resolved_run_config)
+        except (
+            FileNotFoundError,
+            ValueError,
+            json.JSONDecodeError,
+            yaml.YAMLError,
+        ) as exc:
+            console.print(f"[red]Invalid run config:[/red] {exc}")
+            raise typer.Exit(code=1) from exc
+
+    targets_raw = tsa if tsa else (run_profile.tsa_list if run_profile else [])
+    targets = [str(v).zfill(2) for v in targets_raw] if targets_raw else []
+    if not targets:
+        console.print(
+            "[red]Provide at least one TSA via --tsa or selection.tsa in --run-config "
+            "for btc-post-tipsy.[/red]"
+        )
+        raise typer.Exit(code=1)
+    effective_run_id = (
+        run_id
+        if run_id is not None
+        else (run_profile.run_id if run_profile is not None else None)
+    )
+    effective_verbose = verbose or (
+        run_profile.verbose if run_profile is not None else False
+    )
+    effective_log_dir = (
+        instance_context.resolve_path(run_profile.log_dir)
+        if (
+            run_profile is not None
+            and Path(log_dir) == Path("vdyp_io/logs")
+            and run_profile.log_dir is not None
+        )
+        else resolved_log_dir
+    )
+    run_result = run_btc_and_post_tipsy_bundle_with_manifest(
+        tsa_list=targets,
+        run_id=effective_run_id,
+        log_dir=effective_log_dir,
+        repo_root=instance_context.root,
+        data_root=(instance_context.root / "data"),
+        btc_executable_path=(
+            instance_context.resolve_path(btc_exe) if btc_exe is not None else None
+        ),
+        report_preset_name=report_preset,
+        scratch_root=(
+            instance_context.resolve_path(scratch_dir)
+            if scratch_dir is not None
+            else None
+        ),
+        message_fn=console.print
+        if effective_verbose
+        else (lambda *_args, **_kwargs: None),
+        managed_curve_mode=(
+            run_profile.managed_curve_mode if run_profile is not None else None
+        ),
+        managed_curve_x_scale=(
+            run_profile.managed_curve_x_scale if run_profile is not None else None
+        ),
+        managed_curve_y_scale=(
+            run_profile.managed_curve_y_scale if run_profile is not None else None
+        ),
+        managed_curve_truncate_at_culm=(
+            run_profile.managed_curve_truncate_at_culm
+            if run_profile is not None
+            else None
+        ),
+        managed_curve_max_age=(
+            run_profile.managed_curve_max_age if run_profile is not None else None
+        ),
+    )
+    for btc_result in run_result.btc_results:
+        console.print(
+            "[green]btc completed[/green] "
+            f"run_id={btc_result.run_id} mode={btc_result.mode} "
+            f"output={btc_result.output_csv_path}"
+        )
+    post_tipsy = run_result.post_tipsy_result
+    result = post_tipsy.result
+    console.print(
+        f"[green]btc-post-tipsy completed[/green] tsa={result.tsa_list} "
+        f"au_rows={result.au_rows} curves={result.curve_rows} "
+        f"curve_points={result.curve_points_rows}"
+    )
+    console.print(f"Run manifest: {post_tipsy.manifest_path}")
+    console.print(f"au_table: {result.au_table_path}")
+    console.print(f"curve_table: {result.curve_table_path}")
+    console.print(f"curve_points_table: {result.curve_points_table_path}")
+
+
 @tipsy_app.command("validate")
 def tipsy_validate(
     config_dir: Path = typer.Option(
@@ -2295,6 +2435,295 @@ def tipsy_validate(
         f"[green]Validated TIPSY configs:[/green] {', '.join(targets)} "
         f"(dir={resolved_config_dir})"
     )
+
+
+def _parse_btc_report_header_flag_overrides(items: list[str] | None) -> dict[str, str]:
+    overrides: dict[str, str] = {}
+    for item in items or []:
+        if "=" not in item:
+            raise typer.BadParameter(
+                f"Invalid --header-flag value {item!r}; expected KEY=VALUE."
+            )
+        key, value = item.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if not key:
+            raise typer.BadParameter(
+                f"Invalid --header-flag value {item!r}; missing key before '='."
+            )
+        overrides[key] = value
+    return overrides
+
+
+@tipsy_app.command("write-btc-report-template")
+def tipsy_write_btc_report_template(
+    output: Path = typer.Argument(
+        ...,
+        help="Output .rpt path to write.",
+    ),
+    source_rpt: Path | None = typer.Option(
+        None,
+        "--source-rpt",
+        help="Existing BTC .rpt file to clone/adapt.",
+        show_default=False,
+    ),
+    preset: str | None = typer.Option(
+        None,
+        "--preset",
+        help=(
+            "Built-in preset name "
+            "(currently: tsr-unattended-default, timber-supply-sql)."
+        ),
+        show_default=False,
+    ),
+    name: str | None = typer.Option(
+        None,
+        "--name",
+        help="Report Name= value; defaults to preset/source/template stem.",
+        show_default=False,
+    ),
+    clear_columns: bool = typer.Option(
+        False,
+        "--clear-columns",
+        help="Start with an empty column list before applying --column entries.",
+    ),
+    column: list[str] | None = typer.Option(
+        None,
+        "--column",
+        help=(
+            "Append a BTC output column token. Repeat for multiple columns; "
+            "tokens come from vetted .rpt files / BTC output field lists."
+        ),
+        show_default=False,
+    ),
+    header_flag: list[str] | None = typer.Option(
+        None,
+        "--header-flag",
+        help="Override one [CustomReportHeader] setting using KEY=VALUE syntax.",
+        show_default=False,
+    ),
+    report_type: str | None = typer.Option(
+        None,
+        "--report-type",
+        help="Override [CustomReport] Type= value.",
+        show_default=False,
+    ),
+    identifier: str | None = typer.Option(
+        None,
+        "--identifier",
+        help="Override [CustomReport] Identifier= value.",
+        show_default=False,
+    ),
+    identifier_integer: bool | None = typer.Option(
+        None,
+        "--identifier-integer/--identifier-text",
+        help="Override IdentifierInteger (1 for integer IDs, 0 for text IDs).",
+        show_default=False,
+    ),
+    output_format: str | None = typer.Option(
+        None,
+        "--output-format",
+        help="Override [CustomReport] OutputFormat= value (for example TAB).",
+        show_default=False,
+    ),
+    icon_id: int | None = typer.Option(
+        None,
+        "--icon-id",
+        help="Override [CustomReport] IconID= value.",
+        show_default=False,
+    ),
+    border: int | None = typer.Option(
+        None,
+        "--border",
+        help="Override [CustomReport] Border= value.",
+        show_default=False,
+    ),
+    header_height: int | None = typer.Option(
+        None,
+        "--header-height",
+        help="Override [CustomReport] HeaderHeight= value.",
+        show_default=False,
+    ),
+    footer_height: int | None = typer.Option(
+        None,
+        "--footer-height",
+        help="Override [CustomReport] FooterHeight= value.",
+        show_default=False,
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Write a BTC custom-report template from a preset or existing .rpt file."""
+    if source_rpt and preset:
+        raise typer.BadParameter("Use either --source-rpt or --preset, not both.")
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_output = instance_context.resolve_path(output)
+    source_template = None
+    if source_rpt is not None:
+        source_template = parse_btc_custom_report_template(
+            instance_context.resolve_path(source_rpt)
+        )
+    elif preset is not None:
+        source_template = btc_report_template_preset(preset)
+    else:
+        source_template = btc_report_template_preset("tsr-unattended-default")
+
+    template_name = name or source_template.name or resolved_output.stem
+    columns = [] if clear_columns else list(source_template.columns)
+    for token in column or []:
+        columns.append(BTCCustomReportColumn(token=token))
+
+    template = build_btc_custom_report_template(
+        name=template_name,
+        source_template=source_template,
+        columns=columns,
+        header_flags=_parse_btc_report_header_flag_overrides(header_flag),
+        icon_id=icon_id,
+        identifier=identifier,
+        identifier_integer=identifier_integer,
+        report_type=report_type,
+        output_format=output_format,
+        border=border,
+        header_height=header_height,
+        footer_height=footer_height,
+    )
+    written_path = write_btc_custom_report_template(
+        output_path=resolved_output,
+        template=template,
+    )
+    console.print(
+        "[green]Wrote BTC report template[/green] "
+        f"path={written_path} columns={len(template.columns)} type={template.report_type}"
+    )
+
+
+@tipsy_app.command("run-btc")
+def tipsy_run_btc(
+    input_csv: Path = typer.Argument(
+        ...,
+        help="BTC MSYT.csv-style input file to run.",
+    ),
+    mode: str = typer.Option(
+        "TSR",
+        "--mode",
+        help="BTC CLI mode to run (TSR or FLP).",
+        show_default=True,
+    ),
+    output_csv: Path | None = typer.Option(
+        None,
+        "--output-csv",
+        help="Optional explicit output CSV path; defaults beside the input file.",
+        show_default=False,
+    ),
+    error_csv: Path | None = typer.Option(
+        None,
+        "--error-csv",
+        help="Optional explicit error CSV path; defaults beside the input file.",
+        show_default=False,
+    ),
+    btc_exe: Path | None = typer.Option(
+        None,
+        "--btc-exe",
+        help="Explicit TIPSYbtc.exe path; otherwise use env/default discovery.",
+        show_default=False,
+    ),
+    report_template: Path | None = typer.Option(
+        None,
+        "--report-template",
+        help="Existing .rpt template file to stage into the copied BTC install.",
+        show_default=False,
+    ),
+    report_preset: str | None = typer.Option(
+        None,
+        "--report-preset",
+        help=(
+            "Built-in report preset to stage into the copied BTC install. "
+            "Defaults to tsr-unattended-default for mode=TSR."
+        ),
+        show_default=False,
+    ),
+    copy_install: bool = typer.Option(
+        False,
+        "--copy-install/--use-installed-btc",
+        help="Stage a writable copied BTC install before execution.",
+    ),
+    scratch_dir: Path | None = typer.Option(
+        None,
+        "--scratch-dir",
+        help="Scratch directory for staged install/input/output files.",
+        show_default=False,
+    ),
+    log_dir: Path = typer.Option(
+        Path("vdyp_io/logs"),
+        "--log-dir",
+        help="Directory for BTC stdout/stderr logs and manifest.",
+        show_default=True,
+    ),
+    run_id: str | None = typer.Option(
+        None,
+        "--run-id",
+        help="Optional run identifier for log/manifest naming.",
+        show_default=False,
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Run BTC in supervised CLI mode with optional copied-install report override."""
+    if report_template is not None and report_preset is not None:
+        raise typer.BadParameter(
+            "Use either --report-template or --report-preset, not both."
+        )
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_input = instance_context.resolve_path(input_csv)
+    resolved_output = (
+        instance_context.resolve_path(output_csv) if output_csv is not None else None
+    )
+    resolved_error = (
+        instance_context.resolve_path(error_csv) if error_csv is not None else None
+    )
+    resolved_btc_exe = (
+        instance_context.resolve_path(btc_exe) if btc_exe is not None else None
+    )
+    resolved_template = (
+        instance_context.resolve_path(report_template)
+        if report_template is not None
+        else None
+    )
+    effective_preset = report_preset
+    if effective_preset is None and mode.strip().upper() == "TSR":
+        effective_preset = "tsr-unattended-default"
+    report_template_payload: BTCCustomReportTemplate | Path | None = None
+    report_preset_name: str | None = None
+    if resolved_template is not None:
+        report_template_payload = resolved_template
+    elif effective_preset is not None:
+        report_preset_name = effective_preset
+    result: BTCRunResult = run_btc_cli(
+        input_csv=resolved_input,
+        mode=mode,
+        output_csv=resolved_output,
+        error_csv=resolved_error,
+        executable_path=resolved_btc_exe,
+        report_template=report_template_payload,
+        report_preset_name=report_preset_name,
+        copy_install=(
+            copy_install
+            or report_template_payload is not None
+            or report_preset_name is not None
+        ),
+        scratch_root=(
+            instance_context.resolve_path(scratch_dir)
+            if scratch_dir is not None
+            else None
+        ),
+        log_dir=instance_context.resolve_path(log_dir),
+        run_id=run_id,
+    )
+    console.print(
+        "[green]BTC run completed[/green] "
+        f"mode={result.mode} exit_code={result.exit_code} "
+        f"output={result.output_csv_path}"
+    )
+    console.print(f"error: {result.error_csv_path}")
+    console.print(f"manifest: {result.manifest_path}")
 
 
 @export_app.command("patchworks")

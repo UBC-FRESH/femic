@@ -71,8 +71,11 @@ def run_tsa(
     )
     from femic.pipeline.vdyp_overrides import vdyp_kwarg_overrides_for_tsa
     from femic.pipeline.tipsy import (
+        DEFAULT_BTC_MSYT_COLUMNS,
+        build_btc_msyt_input_table,
         build_tipsy_params_for_tsa,
         build_tipsy_input_table,
+        write_btc_msyt_input_csv,
         write_tipsy_input_exports,
     )
     from femic.pipeline.tipsy_legacy import (
@@ -658,6 +661,23 @@ def run_tsa(
         tipsy_table=df,
         tsa=tsa,
         tipsy_params_path_prefix=runtime_config.tipsy_params_path_prefix,
+    )
+    try:
+        btc_msyt_df = build_btc_msyt_input_table(
+            tipsy_table=df,
+            pd_module=pd,
+        )
+    except RuntimeError:
+        print(
+            "warning: no BTC MSYT input rows generated for TSA %s; writing empty "
+            "03_input export."
+            % tsa
+        )
+        btc_msyt_df = pd.DataFrame(columns=list(DEFAULT_BTC_MSYT_COLUMNS))
+    write_btc_msyt_input_csv(
+        btc_msyt_table=btc_msyt_df,
+        tsa=tsa,
+        output_root=Path(runtime_config.tipsy_params_path_prefix).parent,
     )
 
 

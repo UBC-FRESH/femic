@@ -46,7 +46,7 @@ For operator-driven work, the CLI is usually the narrowest stable entrypoint:
 
    femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
    femic run --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --run-id k3z_docs_example
-   femic tsa post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_docs_example
+   femic tsa btc-post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_docs_example
 
 When you are extending the CLI itself, the common maintenance pattern is:
 
@@ -65,8 +65,8 @@ The module defines one root Typer app and several sub-apps:
 - ``app``: top-level ``femic`` command
 - ``prep_app``: input preparation and preflight commands
 - ``vdyp_app``: VDYP execution and reporting commands
-- ``tsa_app``: TSA-specific stage commands, especially post-TIPSY resume
-- ``tipsy_app``: TIPSY config/handoff validation
+- ``tsa_app``: TSA-specific stage commands, especially BTC/post-TIPSY resume
+- ``tipsy_app``: TIPSY/BTC config, report-template, and runtime helpers
 - ``export_app``: Patchworks, Woodstock, dual-export, and release packaging
 - ``patchworks_app``: proprietary Patchworks runtime helpers
 - ``instance_app``: instance bootstrap, rebuild, evidence, and ws3 smoke tools
@@ -85,8 +85,8 @@ The highest-value command functions in this module are:
   - case/runtime prerequisite validation
 - :func:`prep_geospatial_preflight`
   - geospatial toolchain and dataset readiness checks
-- :func:`tsa_post_tipsy`
-  - resume path after manual BatchTIPSY output refresh
+- :func:`tsa_btc_post_tipsy`
+  - resume path after unattended BTC output refresh
 - :func:`export_patchworks`
   - Patchworks package generation
 - :func:`patchworks_preflight`

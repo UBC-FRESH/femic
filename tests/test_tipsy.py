@@ -3,24 +3,41 @@ from __future__ import annotations
 import math
 import os
 from pathlib import Path
+import sys
 
 import pandas as pd
 import pytest
 
 from femic.pipeline.tipsy import (
+    DEFAULT_BATCHTIPSY_EXE_ENV,
+    DEFAULT_BTC_MSYT_COLUMNS,
+    BTCRunResult,
+    BTCCustomReportColumn,
     assess_tipsy_input_output_coherence,
+    btc_report_template_preset,
+    build_btc_cli_command,
+    build_btc_msyt_input_table,
     build_tipsy_params_for_tsa,
     build_tipsy_input_table,
+    build_btc_custom_report_template,
+    btc_msyt_input_csv_path,
     build_tipsy_warning_event,
     compute_file_sha256,
     compute_vdyp_oaf1,
     compute_vdyp_site_index,
     evaluate_tipsy_candidate,
+    parse_btc_custom_report_template,
+    parse_btc_tsr_transposed_output,
+    prepare_btc_runtime,
+    resolve_btc_executable,
+    run_btc_cli,
     tipsy_input_dat_path,
     tipsy_output_input_fingerprint_path,
     tipsy_params_excel_path,
     tipsy_stage_output_paths,
     validate_tipsy_output_is_fresh,
+    write_btc_msyt_input_csv,
+    write_btc_custom_report_template,
     write_tipsy_output_input_fingerprint,
     write_tipsy_input_exports,
 )
@@ -184,6 +201,61 @@ def test_build_tipsy_input_table_raises_when_no_rows() -> None:
         )
 
 
+def test_build_btc_msyt_input_table_maps_current_tipsy_payload() -> None:
+    tipsy_table = pd.DataFrame(
+        {
+            "AU": [985502001],
+            "BEC": ["CWHvm1"],
+            "Proportion": [1.0],
+            "Regen_Delay": [2],
+            "Density": [4000],
+            "SPP_1": ["HW"],
+            "PCT_1": [77.5],
+            "SPP_2": ["FD"],
+            "PCT_2": [22.5],
+            "GW_1": [4.0],
+            "GW_2": [""],
+            "OAF1": [0.85],
+            "OAF2": [0.95],
+            "SI": [20.6],
+        }
+    )
+
+    out = build_btc_msyt_input_table(tipsy_table=tipsy_table, pd_module=pd)
+
+    assert list(out.columns) == list(DEFAULT_BTC_MSYT_COLUMNS)
+    row = out.iloc[0].to_dict()
+    assert row["feature_id"] == 985502001
+    assert row["bec_zone"] == "CWH"
+    assert row["bec_subzone"] == "vm"
+    assert row["planted_species1"] == "Hw"
+    assert row["planted_species2"] == "Fd"
+    assert row["planted_density1"] == 3100
+    assert row["planted_density2"] == 900
+    assert row["genetic_worth1"] == 4.0
+    assert row["planting_delay"] == 2
+    assert row["planted_percent"] == 100
+    assert row["opening_id"] == 985502001
+    assert row["hw_si"] == 20.6
+    assert row["fd_si"] == 20.6
+    assert row["cw_si"] == 0
+
+
+def test_write_btc_msyt_input_csv_writes_canonical_path(tmp_path: Path) -> None:
+    row = {column: "" for column in DEFAULT_BTC_MSYT_COLUMNS}
+    row["feature_id"] = 1
+    table = pd.DataFrame([row])
+    output_path = write_btc_msyt_input_csv(
+        btc_msyt_table=table,
+        tsa="08",
+        output_root=tmp_path,
+    )
+    assert output_path == tmp_path / "03_input-tsa08.csv"
+    assert output_path.is_file()
+    assert btc_msyt_input_csv_path(tsa="08", input_root=tmp_path) == output_path
+    assert "feature_id" in output_path.read_text(encoding="utf-8")
+
+
 def test_write_tipsy_input_exports_writes_excel_and_dat(tmp_path: Path) -> None:
     table = pd.DataFrame({"AU": [1001], "SI": [18.0]})
     prefix = str(tmp_path / "tipsy_params_tsa")
@@ -199,6 +271,233 @@ def test_write_tipsy_input_exports_writes_excel_and_dat(tmp_path: Path) -> None:
     assert Path(excel_path).is_file()
     assert Path(dat_path).is_file()
     assert "AU" in Path(dat_path).read_text()
+
+
+def test_parse_btc_tsr_transposed_output_maps_feature_rows_to_managed_curve_ids(
+    tmp_path: Path,
+) -> None:
+    output_csv = tmp_path / "MSYT_output.csv"
+    pd.DataFrame(
+        [
+            {
+                "feature_id": 1000,
+                "MVcon_0": 0.0,
+                "MVdec_0": 0.0,
+                "HTcon_0": 0.0,
+                "HTdec_0": 0.0,
+                "gVol_0": 0.0,
+                "CC_0": 0.0,
+                "MVcon_10": 50.0,
+                "MVdec_10": 10.0,
+                "HTcon_10": 3.0,
+                "HTdec_10": 2.0,
+                "gVol_10": 70.0,
+                "CC_10": 0.4,
+            }
+        ]
+    ).to_csv(output_csv, index=False)
+
+    out = parse_btc_tsr_transposed_output(output_csv=output_csv, pd_module=pd)
+
+    assert list(out["AU"]) == [21000, 21000]
+    assert list(out["Age"]) == [0, 10]
+    assert list(out["Yield"]) == [0.0, 60.0]
+    assert list(out["Height"]) == [0.0, 3.0]
+    assert list(out["GrossYield"]) == [0.0, 70.0]
+    assert list(out["CrownCover"]) == [0.0, 0.4]
+    assert out["DBHq"].isna().all()
+    assert out["TPH"].isna().all()
+
+
+def test_parse_btc_tsr_transposed_output_preserves_existing_managed_curve_ids(
+    tmp_path: Path,
+) -> None:
+    output_csv = tmp_path / "MSYT_output.csv"
+    pd.DataFrame(
+        [
+            {
+                "feature_id": 21000,
+                "MVcon_0": 1.0,
+                "MVdec_0": 2.0,
+                "HTcon_0": 4.0,
+                "HTdec_0": 3.0,
+                "gVol_0": 5.0,
+                "CC_0": 0.6,
+            }
+        ]
+    ).to_csv(output_csv, index=False)
+
+    out = parse_btc_tsr_transposed_output(output_csv=output_csv, pd_module=pd)
+
+    assert list(out["AU"]) == [21000]
+    assert list(out["Age"]) == [0]
+    assert list(out["Yield"]) == [3.0]
+    assert list(out["Height"]) == [4.0]
+    assert list(out["GrossYield"]) == [5.0]
+    assert list(out["CrownCover"]) == [0.6]
+    assert out["DBHq"].isna().all()
+    assert out["TPH"].isna().all()
+
+
+def test_parse_btc_custom_report_template_reads_sql_style_template(
+    tmp_path: Path,
+) -> None:
+    rpt = tmp_path / "TimberSupply SQL.rpt"
+    rpt.write_text(
+        "[CustomReport]\n"
+        "Name=Timber Supply SQL\n"
+        "IconID=13\n"
+        "Identifier=FirstIDcolumn\n"
+        "IdentifierInteger=1\n"
+        "Type=databaseByStand\n"
+        "OutputFormat=TAB\n"
+        "Border=500\n"
+        "HeaderHeight=250\n"
+        "FooterHeight=250\n"
+        "\n"
+        "[CustomReportHeader]\n"
+        "ModelVersion=1\n"
+        "Species_GenWorth=1\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "'enum_db_column\tWidth\tHeader1Override\tHeader2Override\tUnitsOverride\n"
+        "Year\t0\tYear\t\t\n"
+        "Volume:Auto:Con\t0\tVolumeCon\t\t\n",
+        encoding="utf-8",
+    )
+    template = parse_btc_custom_report_template(rpt)
+    assert template.name == "Timber Supply SQL"
+    assert template.report_type == "databaseByStand"
+    assert template.identifier_integer is True
+    assert [col.token for col in template.columns] == ["Year", "Volume:Auto:Con"]
+    assert template.columns[1].header1_override == "VolumeCon"
+
+
+def test_btc_report_template_preset_tsr_unattended_default_has_mashup_columns() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    assert template.report_type == "transposed"
+    assert template.output_format == "CSV"
+    assert [col.token for col in template.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+    ]
+
+
+def test_build_and_write_btc_custom_report_template_round_trip(tmp_path: Path) -> None:
+    source = btc_report_template_preset("timber-supply-sql")
+    template = build_btc_custom_report_template(
+        name="Extended SQL",
+        source_template=source,
+        columns=[
+            *source.columns,
+            BTCCustomReportColumn(
+                token="VolumeGross", width=0, header1_override="gVol"
+            ),
+        ],
+    )
+    out = tmp_path / "extended.rpt"
+    write_btc_custom_report_template(output_path=out, template=template)
+    reparsed = parse_btc_custom_report_template(out)
+    assert reparsed.name == "Extended SQL"
+    assert reparsed.columns[-1].token == "VolumeGross"
+    assert reparsed.columns[-1].header1_override == "gVol"
+
+
+def test_resolve_btc_executable_prefers_explicit_path(tmp_path: Path) -> None:
+    explicit = tmp_path / "TIPSYbtc.exe"
+    explicit.write_text("stub", encoding="utf-8")
+    env_path = tmp_path / "other.exe"
+    env_path.write_text("stub", encoding="utf-8")
+    discovered = resolve_btc_executable(
+        executable_path=explicit,
+        env={DEFAULT_BATCHTIPSY_EXE_ENV: str(env_path)},
+    )
+    assert discovered.executable_path == explicit.resolve()
+    assert discovered.source == "explicit"
+
+
+def test_build_btc_cli_command_renders_expected_sequence(tmp_path: Path) -> None:
+    command = build_btc_cli_command(
+        executable_path=tmp_path / "TIPSYbtc.exe",
+        mode="TSR",
+        input_csv="MSYT.csv",
+        output_csv="MSYT_output.csv",
+        error_csv="MSYT_error.csv",
+        extra_executable_args=("probe.py",),
+    )
+    assert command == [
+        str(tmp_path / "TIPSYbtc.exe"),
+        "probe.py",
+        "/TSR",
+        "MSYT.csv",
+        "MSYT_output.csv",
+        "MSYT_error.csv",
+    ]
+
+
+def test_run_btc_cli_supervised_writes_outputs_and_manifest(tmp_path: Path) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    helper = tmp_path / "fake_btc.py"
+    helper.write_text(
+        "from pathlib import Path\n"
+        "import sys\n"
+        "mode, input_name, output_name, error_name = sys.argv[1:5]\n"
+        "Path(output_name).write_text('feature_id,MVcon_0,gVol_0,CC_0\\n1,2,3,4\\n', encoding='utf-8')\n"
+        "Path(error_name).write_text('warnings,errors\\n0,0\\n', encoding='utf-8')\n"
+        "sys.exit(0)\n",
+        encoding="utf-8",
+    )
+    result: BTCRunResult = run_btc_cli(
+        input_csv=input_csv,
+        mode="TSR",
+        executable_path=sys.executable,
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id="btc_test",
+        env={},
+        extra_executable_args=(helper,),
+    )
+    assert result.exit_code == 0
+    assert result.copied_install is False
+    assert result.output_csv_path.is_file()
+    assert result.error_csv_path.is_file()
+    assert result.output_csv_path.parent == tmp_path / "scratch" / "work"
+    assert result.error_csv_path.parent == tmp_path / "scratch" / "work"
+    assert result.manifest_path.is_file()
+    assert "feature_id,MVcon_0,gVol_0,CC_0" in result.output_csv_path.read_text(
+        encoding="utf-8"
+    )
+
+
+def test_prepare_btc_runtime_copies_install_and_writes_report_template(
+    tmp_path: Path,
+) -> None:
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    fake_exe = install_root / "TIPSYbtc.exe"
+    fake_exe.write_text("stub", encoding="utf-8")
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    prep = prepare_btc_runtime(
+        executable_path=fake_exe,
+        input_csv=input_csv,
+        scratch_root=tmp_path / "scratch",
+        mode="TSR",
+        report_template=btc_report_template_preset("tsr-unattended-default"),
+        copy_install=True,
+    )
+    assert prep.copied_install is True
+    assert prep.executable_path.is_file()
+    assert prep.staged_input_csv.is_file()
+    assert prep.report_template_path is not None
+    assert "TSR Unattended Default" in prep.report_template_path.read_text(
+        encoding="utf-8"
+    )
 
 
 def test_write_tipsy_input_exports_fails_fast_on_width_overflow(tmp_path: Path) -> None:

@@ -203,6 +203,24 @@ def test_cli_reference_mentions_current_high_value_options() -> None:
             ["--tsa", "--run-id", "--log-dir", "--run-config"],
         ),
         (
+            ["tsa", "btc-post-tipsy", "--help"],
+            ["--tsa", "--run-id", "--log-dir", "--run-config"],
+        ),
+        (
+            ["tipsy", "write-btc-report-template", "--help"],
+            ["--preset", "--source-rpt", "--column", "--instance-root"],
+        ),
+        (
+            ["tipsy", "run-btc", "--help"],
+            [
+                "--output-csv",
+                "--error-csv",
+                "--btc-exe",
+                "--report-template",
+                "--report-preset",
+            ],
+        ),
+        (
             ["export", "patchworks", "--help"],
             [
                 "--bundle-dir",
@@ -1321,15 +1339,15 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "misc.thlb.tif",
         ],
         "stage-boundaries-and-canonical-artifacts": [
-            "02_input-<unit>.dat",
+            "03_input-<unit>.csv",
             "tipsy_params_tsa",
-            "04_output-<unit>.out",
+            "04_output-<unit>.csv",
             "FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH=1",
             "FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1",
         ],
         "recovery-and-external-runtime-boundaries": [
             "FEMIC_ARC_RASTER_RESCUE_EXE",
-            "femic tsa post-tipsy",
+            "femic tsa btc-post-tipsy",
             "femic patchworks preflight",
             "$PWD\\external\\femic-public-data\\data",
             "Patchworks",

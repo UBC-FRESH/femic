@@ -14,7 +14,7 @@ platform-specific boundaries that currently exist:
 - Windows is authoritative for native Patchworks and native VDYP.
 - Linux is authoritative for the normal Python development workflow and the
   Wine-wrapped VDYP path when Windows-only tools are unavailable.
-- BatchTIPSY remains a manual GUI boundary in both cases.
+- BTC provides the default unattended TIPSY seam in both cases.
 
 Platform-Specific Runtime Rituals
 ---------------------------------
@@ -29,7 +29,7 @@ Expected runtime shape:
 - native `VDYP7Console.exe`
 - ArcGIS Pro fallback for SiteProd geoprocessing when required
 - native Java + Patchworks
-- manual BatchTIPSY handoff between Stage 01a and Stage 01b
+- unattended BTC ``/TSR`` handoff between Stage 01a and Stage 01b
 
 Linux
 ^^^^^
@@ -40,7 +40,7 @@ Expected runtime shape:
 - native `git`, `git-annex`, and DataLad
 - Wine-wrapped VDYP
 - no expectation of native Patchworks execution
-- manual BatchTIPSY handoff between Stage 01a and Stage 01b
+- unattended BTC ``/TSR`` handoff between Stage 01a and Stage 01b
 
 Windows Smoke Workflow
 ----------------------
@@ -56,27 +56,28 @@ Use K3Z as the reference case.
       python -m femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
       python -m femic prep geospatial-preflight
 
-2. Run Stage 01a / upstream compile through the BatchTIPSY boundary:
+2. Run Stage 01a / upstream compile through the BTC boundary:
 
    .. code-block:: powershell
 
       python -m femic run --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --run-id k3z_windows_cleanstart
 
-3. Confirm FEMIC produced fresh TIPSY handoff files:
+3. Confirm FEMIC produced fresh BTC handoff files:
 
-- `external/femic-k3z-instance/data/02_input-tsak3z.dat`
+- `external/femic-k3z-instance/data/03_input-tsak3z.csv`
 - `external/femic-k3z-instance/data/tipsy_params_tsak3z.xlsx`
   or the latest timestamped fallback workbook
 
-4. Run BatchTIPSY manually and refresh:
+4. Let FEMIC run unattended BTC and refresh:
 
-- `external/femic-k3z-instance/data/04_output-tsak3z.out`
+- `external/femic-k3z-instance/data/04_output-tsak3z.csv`
+- `external/femic-k3z-instance/data/04_error-tsak3z.csv`
 
 5. Resume only downstream work:
 
    .. code-block:: powershell
 
-      python -m femic tsa post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_windows_cleanstart
+      python -m femic tsa btc-post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_windows_cleanstart
       python -m femic patchworks build-blocks --instance-root external/femic-k3z-instance --config config/patchworks.runtime.windows.yaml
       python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.windows.yaml --run-id k3z_windows_cleanstart
 
@@ -101,7 +102,7 @@ not native on Linux.
       femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
       femic prep geospatial-preflight
 
-2. Run Stage 01a / upstream compile through the BatchTIPSY boundary:
+2. Run Stage 01a / upstream compile through the BTC boundary:
 
    .. code-block:: bash
 
@@ -112,21 +113,22 @@ not native on Linux.
    from ``FEMIC_SOURCE_ROOT`` when needed so Wine VDYP calls can resolve the
    relative paths embedded in ``vdyp_params-landp``.
 
-3. Confirm fresh TIPSY handoff files exist:
+3. Confirm fresh BTC handoff files exist:
 
-- `external/femic-k3z-instance/data/02_input-tsak3z.dat`
+- `external/femic-k3z-instance/data/03_input-tsak3z.csv`
 - `external/femic-k3z-instance/data/tipsy_params_tsak3z.xlsx`
   or the current timestamped fallback workbook
 
-4. Run BatchTIPSY manually on a suitable Windows host and copy back:
+4. Run unattended BTC on a suitable Windows host and copy back:
 
-- `external/femic-k3z-instance/data/04_output-tsak3z.out`
+- `external/femic-k3z-instance/data/04_output-tsak3z.csv`
+- `external/femic-k3z-instance/data/04_error-tsak3z.csv`
 
 5. Resume downstream work on Linux:
 
    .. code-block:: bash
 
-      femic tsa post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_parity
+      femic tsa btc-post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_parity
 
 6. Verify downstream artifacts match the expected contract:
 
@@ -143,10 +145,10 @@ true:
 1. Windows preflight passes on the validated workstation.
 2. Linux preflight passes on the maintained Linux environment.
 3. Both platforms can produce a fresh K3Z Stage 01a handoff:
-   - `02_input-tsak3z.dat`
+   - `03_input-tsak3z.csv`
    - workbook companion
 4. Both platforms can resume Stage 01b/post-TIPSY cleanly from a fresh
-   `04_output-tsak3z.out`.
+   `04_output-tsak3z.csv`.
 5. Windows can continue through Patchworks block build + Matrix Builder.
 6. The documented runtime rituals are platform-appropriate and explicit, rather
    than assuming Windows and Linux use the same tool chain.
@@ -158,7 +160,7 @@ What Should Match Across Platforms
 Even though the runtime rituals differ, the following should remain equivalent:
 
 - selected case boundary and stratification policy
-- TIPSY handoff schema
+- BTC handoff schema
 - managed/unmanaged curve bundle contract
 - K3Z low-yield treated-strata exclusion policy
 - K3Z treated species-mix teaching logic
@@ -172,7 +174,7 @@ These differences are currently expected and acceptable:
 - native Windows VDYP vs Wine-wrapped Linux VDYP
 - ArcGIS Pro fallback availability on Windows only
 - Patchworks validation on Windows only
-- exact operator steps around manual BatchTIPSY execution
+- exact operator steps around unattended BTC execution
 - ArcRasterRescue executable path resolution details (use
   ``FEMIC_ARC_RASTER_RESCUE_EXE`` if the default sibling layout is absent)
 

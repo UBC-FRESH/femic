@@ -122,7 +122,8 @@ Windows Bootstrap Ritual
 
 - native VDYP
 - canonical pre-stacked SiteProd TIFF + band-map by default, with ArcGIS Pro fallback only when those artifacts are unavailable
-- manual BatchTIPSY handoff at the `02_input-*.dat` / `04_output-*.out` boundary
+- default unattended BTC handoff at the `03_input-*.csv` / `04_output-*.csv`
+  boundary
 - native Patchworks / Matrix Builder after post-TIPSY
 
 Linux Bootstrap Ritual

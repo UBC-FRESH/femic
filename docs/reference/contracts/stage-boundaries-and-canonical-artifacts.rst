@@ -24,14 +24,14 @@ Pipeline Boundary Map
      - Can depend on canonical public-data fallback when instance-local copies
        are absent.
    * - Stage 01a
-     - top strata, SI splits, VDYP fitting, BatchTIPSY handoff generation
-     - ``02_input-<unit>.dat`` and the related Stage 01a outputs
-     - Stops intentionally at the manual BatchTIPSY boundary.
-   * - BatchTIPSY
-     - external manual GUI/runtime step
-     - returned ``04_output-<unit>.out``
-     - FEMIC does not run BatchTIPSY; it defines the handoff contract and
-       validates freshness/coherence on resume.
+     - top strata, SI splits, VDYP fitting, BTC/BatchTIPSY handoff generation
+     - ``03_input-<unit>.csv`` and the related Stage 01a outputs
+     - Stops intentionally at the BTC runtime boundary.
+   * - BTC / BatchTIPSY
+     - external Windows runtime step launched unattended by FEMIC
+     - returned ``04_output-<unit>.csv`` and ``04_error-<unit>.csv``
+     - FEMIC owns the handoff/output contract and validates
+       freshness/coherence on resume.
    * - Stage 01b
      - post-TIPSY parsing, managed-vs-untreated comparison, bundle tables
      - bundle tables, QA plots, refreshed downstream tables
@@ -49,10 +49,13 @@ Pipeline Boundary Map
 Canonical Artifact Rules
 ------------------------
 
-- ``02_input-*.dat`` is the canonical BatchTIPSY input artifact.
+- ``03_input-*.csv`` is the canonical BTC/BatchTIPSY input artifact.
 - ``tipsy_params_tsa*.xlsx`` is a human-readable mirror only, not the
   authoritative freshness artifact.
-- ``04_output-*.out`` is the required returned BatchTIPSY output for Stage 01b.
+- ``04_output-*.csv`` is the required returned BTC output for Stage 01b, paired
+  with ``04_error-*.csv``.
+- Legacy ``02_input-*.dat`` / ``04_output-*.out`` files remain compatibility
+  artifacts only and are no longer the default supported seam.
 - Canonical SiteProd mode prefers a paired ``siteprod.tif`` +
   ``siteprod.bandmap.json``.
 - Export-time Patchworks artifacts prove package synthesis, not runtime
@@ -61,15 +64,16 @@ Canonical Artifact Rules
 Freshness and Resume Rules
 --------------------------
 
-- Stage 01b treats DAT content as authoritative when deciding whether returned
-  BatchTIPSY output is stale.
-- If DAT content has not changed and the output remains coherent, FEMIC can
+- Stage 01b treats canonical BTC input CSV content as authoritative when
+  deciding whether returned BTC output is stale.
+- If CSV content has not changed and the output remains coherent, FEMIC can
   resume without regenerating Stage 01a inputs.
-- If DAT content has changed, refresh the BatchTIPSY output before rerunning
+- If CSV content has changed, refresh the BTC output before rerunning
   post-TIPSY stages.
 - Use ``FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH=1`` only when you want coherent
   timestamp mismatch to fail hard.
-- Use ``FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1`` only for explicit debugging.
+- Use ``FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1`` only for explicit debugging on the
+  legacy DAT/OUT seam.
 
 Quick Decision Table
 --------------------
@@ -80,11 +84,11 @@ Quick Decision Table
 
    * - Question
      - Answer
-   * - Which file is authoritative for the BatchTIPSY input boundary?
-     - ``02_input-*.dat``
+   * - Which file is authoritative for the BTC/BatchTIPSY input boundary?
+     - ``03_input-*.csv``
    * - Does changing the XLSX mirror alone require a rerun?
      - No. The XLSX is not the authoritative freshness contract.
-   * - Can FEMIC continue into Stage 01b without ``04_output-*.out``?
+   * - Can FEMIC continue into Stage 01b without ``04_output-*.csv``?
      - No.
    * - Does a successful Patchworks export mean Matrix Builder will run?
      - No. Runtime prerequisites are a separate boundary.

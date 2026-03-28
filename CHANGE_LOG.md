@@ -7226,6 +7226,67 @@
   - specifically the native-Windows noninteractive `run_patchworks_command(...)`
     path used by `femic patchworks matrix-build`.
 
+## 2026-03-27 - Phase 48 BatchTIPSY automation investigation kicked off
+
+- Adopted the incoming-ideas BatchTIPSY automation feature into the normal
+  workflow.
+- Created GitHub issue `#46`: `Investigate and automate BatchTIPSY in local
+  Windows rebuild workflow`.
+- Created working branch `feature/batchtipsy-automation` in the parent repo and
+  matching branch `feature/batchtipsy-automation` in the K3Z submodule.
+- Added Phase 48 planning to `ROADMAP.md` with an explicit feasibility-first
+  structure:
+  - trace the real Windows BatchTIPSY seam;
+  - implement the narrowest credible automation slice;
+  - if full automation is not feasible, capture the blocker map cleanly so a
+    later attempt has a much better starting point.
+
+## 2026-03-27 - Phase 48 notes updated with BTC genetic-gain defaults clue
+
+- Added `planning/batchtipsy_automation_approach.md` to capture the current
+  BatchTIPSY cutover direction, the proven BTC CLI seam, and the remaining
+  output-format uncertainty.
+- Recorded the installed BTC defaults file
+  `C:\Program Files\TIPSY 4.7\BTC\gw.txt` as a likely first source for default
+  FEMIC genetic gain settings when generating BTC-compatible input.
+- Noted in the roadmap/planning surface that the `gw.txt` defaults are framed
+  by BTC itself as exploratory / educational rather than operational.
+
+## 2026-03-27 - Phase 48 notes updated with BTC OAF defaults clue
+
+- Recorded the installed BTC defaults file
+  `C:\Program Files\TIPSY 4.7\BTC\oafs.txt` as a likely first source for
+  default FEMIC OAF settings during the BTC cutover.
+- Captured that `oafs.txt` appears to define packaged defaults and response
+  metadata for:
+  - `OAF1`
+  - `OAF2`
+  - `DR`
+  - `AT`
+  - `ArmV`
+  - `ArmM`
+  - `DSG`
+  - `DSC`
+- Added the OAF-default clue to the repo planning surfaces so it is part of the
+  implementation plan rather than a chat-only observation.
+
+## 2026-03-27 - Phase 48 notes updated with BTC output-field map clue
+
+- Recorded the installed BTC field map
+  `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt` as the likely first
+  output-field mapping reference if FEMIC can unlock a richer supported BTC
+  non-GUI output mode.
+- Captured that the file appears to expose stable BTC keys for many indicators
+  we care about, including:
+  - `Volume*`
+  - `BasalArea*`
+  - `MeanDBHg*`
+  - `StemCount*`
+  - diameter-class stock and mortality outputs
+- Noted in the planning surfaces that `OutputColumns.txt` is a valuable clue
+  and probable mapping layer, but not yet a proven live parser contract until a
+  richer CLI/project output mode is demonstrated.
+
 ## 2026-03-27 - Phase 47 Matrix Builder Window Automation Implemented
 
 - Added Windows-only supervised Matrix Builder execution in
@@ -7269,3 +7330,294 @@
     `cmd.exe` shell tree can also be detected and cleaned up automatically, so
     the local coding-agent workflow no longer depends on a human to dismiss
     either visible window.
+- Extended the Phase 48 BatchTIPSY automation planning notes toward the BTC
+  cutover path by recording:
+  - `C:\Program Files\TIPSY 4.7\BTC\gw.txt` as the best current candidate clue
+    for default FEMIC genetic-gain settings;
+  - `C:\Program Files\TIPSY 4.7\BTC\oafs.txt` as the best current candidate
+    clue for default FEMIC OAF settings and packaged response metadata;
+  - `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt` as the likely first
+    output-field map if FEMIC can unlock a richer supported BTC output mode
+    beyond the default TSR volume/height CSV;
+  - `C:\Program Files\TIPSY 4.7\BTC\TableRange.txt` as a likely BTC
+    report/output range preset clue rather than a primary stand-parameter
+    defaults source.
+  - `C:\Program Files\TIPSY 4.7\BTC\FertRespMOF.txt` as the best current
+    candidate clue for default FEMIC fertilizer-response settings during the
+    BTC cutover.
+  - `C:\Program Files\TIPSY 4.7\BTC\vriSpecies.txt` as the best current
+    candidate clue for mapping VRI species codes into BTC / TIPSY species
+    handling during the BTC CSV cutover.
+  - confirmed from `userguide1.4.pdf` that BTC CLI supports:
+    - `/TSR` using `TimberSupply.rpt`
+    - `/FLP` using `ForestLandscapePlan.rpt`
+    - direct `.btc` project loading from the command line
+    - standard exit codes `0`, `2`, and `5`
+  - confirmed a second unattended BTC CLI seam:
+    - `/FLP` works from a writable local scratch directory and returns gross
+      volume plus crown closure in CSV form.
+  - shifted the preferred first automation target to a default unattended
+    `/TSR + /FLP` mode so FEMIC can recover merchantable volume, height, gross
+    volume, and crown closure without a human in the loop.
+  - recorded the richer manual BTC `Yield` report as the best current optional
+    fallback for extra indicators such as MAI, basal area, DBHg, stems/ha, and
+    crop-tree fields.
+  - documented the current stand-block parsing rule for richer `Yield` CSV
+    outputs:
+    - preserve input stand order
+    - split output blocks whenever age decreases
+    - fail fast if block count mismatches input stand count or if ages are not
+      strictly increasing within a block
+  - found a stronger rich-output clue via the manual BTC `Timber Supply SQL`
+    report:
+    - `MSYT_output.sql` / `MSYT_error.sql` include explicit `BTC_STAND` /
+      `BTC_ERROR` schemas
+    - rows carry `StandID`, `RowID`, and `feature_id`
+    - this removes the stand-ID ambiguity of the plain `Yield` CSV and is now
+      the preferred rich optional-mode output contract when available
+- 2026-03-28 (Phase 48 BTC report-template tooling): added the first FEMIC-side
+  BTC custom-report generator and validated the `/TSR` report-coupling seam.
+  - Added parser/writer utilities in `src/femic/pipeline/tipsy.py` for:
+    - reading existing BTC `.rpt` templates
+    - cloning/extending curated column sets
+    - writing vetted replacement report files
+  - Added CLI surface:
+    - `femic tipsy write-btc-report-template`
+  - Added built-in presets:
+    - `tsr-unattended-default`
+    - `timber-supply-sql`
+  - Live reverse-engineering results on the copied BTC install:
+    - stock `TimberSupply.rpt` under `/TSR` still works cleanly
+    - swapping in `ForestLandscapePlan.rpt` as `TimberSupply.rpt` makes `/TSR`
+      emit FLP-style `gVol_*` and `CC_*` output cleanly
+    - a small transposed TSR+FLP mashup also runs cleanly and yields all four
+      unattended indicators in one `/TSR` output file:
+      - merchantable volume
+      - height
+      - gross volume
+      - crown closure
+  - Important constraints learned:
+    - `TimberSupply SQL.rpt` is not a safe drop-in `/TSR` replacement; it
+      loads but crashes during `BatchProcess()`
+    - oversized `AllFieldsSQL.rpt`-style templates can crash even earlier
+      during report load/startup
+    - unattended FEMIC BTC mode should therefore target vetted compatible
+      transposed templates, not arbitrary SQL/database/all-fields report swaps
+  - Validation passed:
+    - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py`
+    - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/cli/main.py tests/test_tipsy.py tests/test_tipsy_report_cli.py`
+- 2026-03-28 (Phase 48 BTC runner smoke): proved the first end-to-end
+  unattended `/TSR` runner seam on the local Windows host.
+  - Added supervised BTC runtime preparation and CLI execution support in
+    `src/femic/pipeline/tipsy.py` plus the new
+    `femic tipsy run-btc` surface in `src/femic/cli/main.py`.
+  - Fixed a CLI handoff bug so `--report-preset tsr-unattended-default`
+    preserves the preset identity all the way into the runtime layer instead of
+    being flattened into a generic custom-template render.
+  - Fixed default output/error destination handling so runs against read-only
+    sample inputs keep returned files in writable scratch rather than trying to
+    copy them back into `Program Files`.
+  - Live proof:
+    - copied BTC install staged under `tmp/btc_runner_smoke`
+    - stock `TimberSupply.rpt` patched in place with the vetted transposed
+      unattended mashup
+    - supervised `/TSR` run completed with exit code `0`
+    - no lingering `TIPSYbtc.exe` process remained
+    - manifest `btc_manifest-btc_runner_smoke_20260328_d.json` recorded
+      status `ok`
+    - returned output columns include:
+      - `feature_id`
+      - `MVcon_*`, `MVdec_*`
+      - `HTcon_*`, `HTdec_*`
+      - `gVol_*`
+      - `CC_*`
+  - Validation passed:
+    - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py`
+    - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/cli/main.py tests/test_tipsy.py tests/test_tipsy_report_cli.py`
+- 2026-03-28 (Phase 48 MSYT writer slice): added the first canonical Stage 01a
+  BTC input writer.
+  - Added a conservative `MSYT.csv` writer in `src/femic/pipeline/tipsy.py`
+    that maps the current TIPSY `f`-table payload onto BTC's sample-schema
+    columns.
+  - Added canonical path helper:
+    - `03_input-tsaXX.csv`
+  - The first slice uses:
+    - AU as `feature_id` / `opening_id`
+    - planted treatment-unit fields from `SPP_n`, `PCT_n`, `Density`,
+      `Regen_Delay`, `GW_n`, `OAF1`, `OAF2`, and `SI`
+    - empty natural treatment-unit fields for now
+  - Updated the legacy Stage 01a runner so `01a_run-tsa.py` now emits
+    `03_input-tsaXX.csv` beside the older artifacts using the same built
+    `f`-table payload.
+  - Validation passed:
+    - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py`
+    - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/resources/legacy/01a_run-tsa.py tests/test_tipsy.py tests/test_tipsy_report_cli.py`
+    - `.venv\\Scripts\\python.exe -m mypy src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py`
+- 2026-03-28 (Phase 48 BTC post-TIPSY parser slice): broadened the legacy
+  post-TIPSY seam so unattended BTC `/TSR` CSV output can flow back into FEMIC
+  managed-curve assembly.
+  - Added `parse_btc_tsr_transposed_output(...)` in
+    `src/femic/pipeline/tipsy.py` to convert the vetted transposed BTC output
+    into long-form FEMIC curve rows keyed by the existing `20000 + AU`
+    managed-curve convention.
+  - The first-cut parser currently maps:
+    - `Yield = MVcon + MVdec`
+    - `Height = max(HTcon, HTdec)`
+    - `GrossYield = gVol`
+    - `CrownCover = CC`
+    - `DBHq = NaN`
+    - `TPH = NaN`
+  - Updated the legacy `src/femic/resources/legacy/01b_run-tsa.py` path so it
+    now branches to the BTC CSV parser whenever the returned TIPSY artifact is
+    `.csv`, while preserving the old fixed-width `.out` parser as a temporary
+    compatibility path.
+  - Exported the new parser from `src/femic/pipeline/__init__.py` and added a
+    focused regression test in `tests/test_tipsy.py` that proves the returned
+    `feature_id` rows map back to FEMIC managed-curve ids correctly.
+  - Validation passed:
+    - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py`
+    - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/resources/legacy/01b_run-tsa.py tests/test_tipsy.py tests/test_tipsy_report_cli.py`
+    - `.venv\\Scripts\\python.exe -m mypy src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py`
+- 2026-03-28 (Phase 48 BTC orchestration slice): tied the new Stage 01a MSYT
+  writer, unattended BTC runner, and BTC CSV parser together into one actual
+  workflow surface.
+  - Added `run_btc_and_post_tipsy_bundle_with_manifest(...)` in
+    `src/femic/workflows/legacy.py`.
+  - Added the new CLI command:
+    - `femic tsa btc-post-tipsy`
+  - The new orchestration path now:
+    - reads `data/03_input-tsaXX.csv`
+    - runs unattended BTC `/TSR`
+    - writes `data/04_output-tsaXX.csv` / `data/04_error-tsaXX.csv`
+    - resumes the existing post-TIPSY bundle assembly against the returned CSV
+      seam
+  - Preserved the legacy `femic tsa post-tipsy` contract so it still defaults
+    to the old `.out` seam unless explicitly overridden by orchestration code.
+  - Added regression coverage in:
+    - `tests/test_workflows_post_tipsy.py`
+    - `tests/test_tipsy_report_cli.py`
+  - Validation passed:
+    - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
+    - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/resources/legacy/01b_run-tsa.py src/femic/workflows/legacy.py src/femic/cli/main.py tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
+    - `.venv\\Scripts\\python.exe -m mypy src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/workflows/legacy.py`
+- 2026-03-28 (Phase 48 K3Z BTC smoke follow-up): fixed the unattended BTC
+  parser identity rule for real K3Z managed-curve ids and proved the runner +
+  parser on the shipped K3Z instance data.
+  - Updated `parse_btc_tsr_transposed_output(...)` so returned BTC
+    `feature_id` values are preserved as-is when they are already in FEMIC
+    managed-curve-id space (`>= 20000`) and only lifted with `20000 + id`
+    for legacy/raw stand ids.
+  - Added regression coverage in `tests/test_tipsy.py` for both cases:
+    - raw `feature_id=1000 -> AU=21000`
+    - existing managed `feature_id=21000 -> AU=21000`
+  - Generated a real K3Z BTC input handoff at:
+    - `external/femic-k3z-instance/data/03_input-tsak3z.csv`
+  - Proved a real unattended BTC `/TSR` run succeeds against that K3Z input:
+    - run id: `k3z_btc_tsr_smoke_20260328`
+    - returned transposed CSV includes 14 stands and 79 columns
+    - parsed output preserves the expected K3Z managed ids `21000..23003`
+  - Proved the remaining blocker is now downstream legacy post-TIPSY resume,
+    not BTC:
+    - `femic tsa btc-post-tipsy --instance-root external/femic-k3z-instance --tsa k3z`
+      stops on missing
+      `external/femic-k3z-instance/data/vdyp_prep-tsak3z.pkl`
+  - Validation passed:
+    - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
+    - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/resources/legacy/01b_run-tsa.py src/femic/workflows/legacy.py src/femic/cli/main.py tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
+    - `.venv\\Scripts\\python.exe -m mypy src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/workflows/legacy.py`
+- 2026-03-28 (Phase 48 K3Z downstream rebuild fallback): stopped fighting the
+  missing `vdyp_prep-tsak3z.pkl` seam and taught the downstream post-TIPSY
+  bundle builder to resume from the shipped cached artifact set instead.
+  - Added a new fallback in `src/femic/workflows/legacy.py`:
+    - when `vdyp_prep-tsaXX.pkl` is missing but `data/model_input_bundle/au_table.csv`
+      exists, FEMIC now reconstructs the legacy AU<->(stratum, SI) maps from
+      the persisted AU table instead of failing immediately.
+  - Added regression coverage in `tests/test_workflows_post_tipsy.py`.
+  - Real K3Z smoke now succeeds end to end:
+    - generated `external/femic-k3z-instance/data/03_input-tsak3z.csv`
+    - ran `femic tsa btc-post-tipsy --instance-root external/femic-k3z-instance --tsa k3z`
+    - completed with `au_rows=27`, `curve_rows=41`, `curve_points=8244`
+  - The successful downstream rebuild refreshed the shipped K3Z artifacts:
+    - `data/tipsy_curves_tsak3z.csv`
+    - `data/model_input_bundle/{au_table,curve_table,curve_points_table}.csv`
+    - `plots/tipsy_vdyp_tsak3z-*.png`
+    - and the new BTC seam files:
+      - `data/03_input-tsak3z.csv`
+      - `data/04_output-tsak3z.csv`
+      - `data/04_error-tsak3z.csv`
+  - Validation passed:
+    - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
+    - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/resources/legacy/01b_run-tsa.py src/femic/workflows/legacy.py tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
+    - `.venv\\Scripts\\python.exe -m mypy src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/workflows/legacy.py`
+- 2026-03-28 (Phase 48 next-bank planning): pulled the top three BTC-rich-output
+  ideas from `planning/incoming_ideas.md` into tracked Phase 48 tasks.
+  - Added roadmap subtasks:
+    - `P48.2d1` stand-table / DBH-class stem-count indicator bank
+    - `P48.2d2` log-grade / lumber-grade product-output bank
+    - `P48.2d3` QMD revisit against richer BTC-native diameter signals
+  - Tightened the plan so these are explicitly FEMIC-level optional
+    indicator-bank activation switches, with a dedicated K3Z
+    intensive-silviculture proving-ground subvariant as the safe first
+    full-pipeline test surface rather than the active student-facing variants.
+  - Opened the matching GitHub task issues:
+    - `#47`
+    - `#48`
+    - `#49`
+  - Removed those adopted ideas from the incoming queue so the inbox now
+    reflects only still-unclaimed work.
+- 2026-03-28 (Phase 48 first stand-table bank probe reality check): tested the
+  first richer stand-table fields against the unattended `/TSR` seam and
+  confirmed that this bank is still exploratory rather than near-trivial.
+  - Starting from the proven safe unattended transposed `/TSR` mashup
+    (`MVcon`, `MVdec`, `HTcon`, `HTdec`, `gVol`, `CC`), probed these richer
+    additions one at a time:
+    - `DBHg`
+    - `SPH`
+    - `StemCount000`
+    - `StemCount125`
+    - `StemCount175`
+    - `Crop250VolUtil125`
+    - `Crop250DBHgMean`
+    - `Crop250LiveCrown`
+  - Every first-cut stand-table probe failed at BTC execution time with stacked
+    `.NET` modal crash dialogs.
+  - Representative failure was a `System.NullReferenceException` in
+    `TIPSY.frmTIPSY.BatchProcess()`.
+  - Updated `ROADMAP.md`, `planning/batchtipsy_automation_approach.md`, and
+    GitHub issue `#46` so the current contract is explicit:
+    - the unattended `/TSR` seam is proven only for the conservative default
+      bank;
+    - richer stand-table outputs should be treated as exploratory seam-finding
+      work until a compatible template family or alternate BTC mode is proven.
+- 2026-03-28 (Phase 48 full-installation easter-egg note): broadened the
+  BatchTIPSY reverse-engineering plan to cover the full installed
+  `C:\Program Files\TIPSY 4.7\` tree rather than only the obvious BTC files.
+  - Added the new clue from `CBM/TIPSY-CBM.pdf` page 1:
+    - BatchTIPSY command-line switch `-RGM`, described as creating one regime
+      file per processed line for later TIPSY-to-CBM loading.
+  - Updated the planning surfaces so Phase 48 now explicitly includes:
+    - mining all packaged PDFs for CLI/runtime/report clues;
+    - extracting `.chm` help content into a platform-independent,
+      human-readable, machine-scannable format;
+    - and continuing the broader "easter egg hunt" across Tcl/report/config
+      files for under-documented runtime seams.
+  - Also recorded the more strategic interpretation of the same clue:
+    - although `-RGM` was surfaced from the TIPSY-CBM context, regime-file
+      export may also be the missing seam needed to unlock batch FANSIER
+      workflows in FEMIC.
+    - future planning should therefore consider both:
+      - FEMIC -> BTC/BatchTIPSY -> regime files -> TIPSY-CBM
+      - FEMIC -> BTC/BatchTIPSY -> regime files -> FANSIER
+- 2026-03-28 (Phase 48 docs/contract sweep): switched the current-facing
+  parent and K3Z docs from the old DAT/OUT BatchTIPSY seam to the new
+  BTC-first contract.
+  - Updated the contract pages and Stage 01 guides so the default supported
+    seam is now:
+    - `03_input-tsaXX.csv`
+    - unattended `TIPSYbtc.exe /TSR`
+    - returned `04_output-tsaXX.csv` / `04_error-tsaXX.csv`
+    - `femic tsa btc-post-tipsy`
+  - Demoted `02_input-*.dat` / `04_output-*.out` to legacy compatibility notes
+    instead of teaching them as the normal operator path.
+  - Updated the CLI/API reference pages and active K3Z runbooks to point at the
+    new BTC-first resume flow.

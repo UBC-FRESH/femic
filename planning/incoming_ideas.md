@@ -55,6 +55,3 @@ Good queue hygiene
 
 ---
 
-[feature] Re-visit the QMD curves in the K3Z instance. The values still seem low for most of these BEC zones. Are we doing the math right when deriving these from volume per ha yield, stems per ha, SI-derived height, and stem form-factor assumptions? Also, if either VDYP or TIPSY (or both) already have literal stem diameter as a function of age curve outputs, then just grab those (obviously those will be higher quality).
-
-[feature] Automate running batchTIPSY so my GPT coding agent running on a codex extension in my vscode dev env does not have to stop processing in the middle of the pipeline every time it does a full instance rebuild and wait for me to do the thing.

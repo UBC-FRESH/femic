@@ -27,6 +27,7 @@ from femic.pipeline.manifest import (
     collect_runtime_versions,
     write_manifest,
 )
+from femic.pipeline.tipsy import BTCRunResult, run_btc_cli
 from femic.pipeline.stages import load_legacy_module, run_legacy_subprocess
 from femic.workflows.legacy_resources import (
     LEGACY_SCRIPT_FILENAMES,
@@ -81,6 +82,14 @@ class PostTipsyBundleRunResult:
     result: PostTipsyBundleResult
 
 
+@dataclass(frozen=True)
+class BTCPostTipsyRunResult:
+    """Combined unattended BTC run results plus downstream post-TIPSY bundle result."""
+
+    btc_results: list[BTCRunResult]
+    post_tipsy_result: PostTipsyBundleRunResult
+
+
 def _default_canfi_species(stratum_code: str) -> int:
     species = str(stratum_code).split("_")[-1].split("+")[0]
     if species in _CANFI_MAP:
@@ -101,6 +110,24 @@ def _build_au_maps_from_results(
             key = (str(stratum_code), str(si_level))
             scsi_au_tsa[key] = au_base
             au_scsi_tsa[au_base] = key
+    return scsi_au_tsa, au_scsi_tsa
+
+
+def _build_au_maps_from_bundle_au_table(
+    *,
+    au_table: Any,
+) -> tuple[dict[tuple[str, str], int], dict[int, tuple[str, str]]]:
+    """Rebuild legacy AU<->(stratum, SI) maps from a persisted bundle AU table."""
+    scsi_au_tsa: dict[tuple[str, str], int] = {}
+    au_scsi_tsa: dict[int, tuple[str, str]] = {}
+    for row in au_table.itertuples(index=False):
+        stratum_code = str(getattr(row, "stratum_code"))
+        si_level = str(getattr(row, "si_level"))
+        managed_curve_id = int(getattr(row, "managed_curve_id"))
+        au_base = int(str(managed_curve_id)[-4:])
+        key = (stratum_code, si_level)
+        scsi_au_tsa[key] = au_base
+        au_scsi_tsa[au_base] = key
     return scsi_au_tsa, au_scsi_tsa
 
 
@@ -242,6 +269,7 @@ def run_post_tipsy_bundle(
     managed_curve_y_scale: float | None = None,
     managed_curve_truncate_at_culm: bool | None = None,
     managed_curve_max_age: int | None = None,
+    tipsy_output_filename_template: str = "04_output-tsa{tsa}.out",
 ) -> PostTipsyBundleResult:
     """Run downstream 01b + bundle assembly from cached TSA artifacts only."""
     normalized_tsa_list = [str(tsa).zfill(2) for tsa in tsa_list]
@@ -290,27 +318,56 @@ def run_post_tipsy_bundle(
         for tsa in normalized_tsa_list:
             prep_path = data_root / f"vdyp_prep-tsa{tsa}.pkl"
             smooth_path = data_root / f"vdyp_curves_smooth-tsa{tsa}.feather"
-            if not prep_path.exists():
-                raise FileNotFoundError(f"Missing 01a prep checkpoint: {prep_path}")
             if not smooth_path.exists():
                 raise FileNotFoundError(f"Missing smoothed VDYP curves: {smooth_path}")
 
-            results_for_tsa = cast(
-                list[tuple[int, str, Any]],
-                load_vdyp_prep_checkpoint(prep_path),
+            bundle_dir = (
+                model_input_bundle_dir
+                if model_input_bundle_dir is not None
+                else (data_root / "model_input_bundle")
             )
-            results[tsa] = results_for_tsa
-            vdyp_species_proportions[tsa] = _vdyp_species_proportions_for_tsa(
-                results_for_tsa=results_for_tsa
-            )
+            bundle_au_table_path = bundle_dir / "au_table.csv"
+
+            if prep_path.exists():
+                results_for_tsa = cast(
+                    list[tuple[int, str, Any]],
+                    load_vdyp_prep_checkpoint(prep_path),
+                )
+                results[tsa] = results_for_tsa
+                vdyp_species_proportions[tsa] = _vdyp_species_proportions_for_tsa(
+                    results_for_tsa=results_for_tsa
+                )
+                scsi_au[tsa], au_scsi[tsa] = _build_au_maps_from_results(
+                    results_for_tsa=results_for_tsa
+                )
+            elif bundle_au_table_path.exists():
+                bundle_au_table = pd.read_csv(bundle_au_table_path)
+                bundle_tsa = bundle_au_table.loc[
+                    bundle_au_table["tsa"].astype(str).str.lower() == str(tsa).lower()
+                ].copy()
+                if bundle_tsa.empty:
+                    raise FileNotFoundError(
+                        "Missing 01a prep checkpoint and no AU table rows for tsa "
+                        f"{tsa}: {prep_path}"
+                    )
+                results_for_tsa = []
+                results[tsa] = results_for_tsa
+                vdyp_species_proportions[tsa] = {}
+                scsi_au[tsa], au_scsi[tsa] = _build_au_maps_from_bundle_au_table(
+                    au_table=bundle_tsa
+                )
+                message_fn(
+                    "warning: missing 01a prep checkpoint for tsa %s; rebuilding AU "
+                    "maps from persisted bundle au_table.csv" % tsa
+                )
+            else:
+                raise FileNotFoundError(f"Missing 01a prep checkpoint: {prep_path}")
+
             vdyp_curves_smooth[tsa] = pd.read_feather(smooth_path)
-            scsi_au[tsa], au_scsi[tsa] = _build_au_maps_from_results(
-                results_for_tsa=results_for_tsa
-            )
             runtime_config = build_legacy_01b_runtime_config(
                 tipsy_params_path_prefix=data_root / "tipsy_params_tsa",
                 tipsy_output_root=data_root,
-                tipsy_output_filename_template="04_output-tsa{tsa}.out",
+                tipsy_output_filename_template=tipsy_output_filename_template,
             )
             message_fn(f"running 01b for tsa {tsa}")
             with _temporary_cwd(resolved_repo_root):
@@ -465,6 +522,7 @@ def run_post_tipsy_bundle_with_manifest(
     managed_curve_y_scale: float | None = None,
     managed_curve_truncate_at_culm: bool | None = None,
     managed_curve_max_age: int | None = None,
+    tipsy_output_filename_template: str = "04_output-tsa{tsa}.out",
 ) -> PostTipsyBundleRunResult:
     """Run post-TIPSY downstream assembly and emit run-manifest metadata."""
     normalized_tsa_list = [str(tsa).zfill(2) for tsa in tsa_list]
@@ -507,6 +565,7 @@ def run_post_tipsy_bundle_with_manifest(
             managed_curve_y_scale=managed_curve_y_scale,
             managed_curve_truncate_at_culm=managed_curve_truncate_at_culm,
             managed_curve_max_age=managed_curve_max_age,
+            tipsy_output_filename_template=tipsy_output_filename_template,
         )
     except Exception as exc:
         finished_at = datetime.now(timezone.utc)
@@ -547,6 +606,85 @@ def run_post_tipsy_bundle_with_manifest(
         ),
     )
     return PostTipsyBundleRunResult(manifest_path=manifest_path, result=bundle_result)
+
+
+def run_btc_and_post_tipsy_bundle_with_manifest(
+    *,
+    tsa_list: list[str],
+    run_id: str | None = None,
+    log_dir: Path = Path("vdyp_io/logs"),
+    repo_root: Path | None = None,
+    data_root: Path = Path("data"),
+    model_input_bundle_dir: Path | None = None,
+    btc_mode: str = "TSR",
+    btc_executable_path: Path | None = None,
+    report_preset_name: str | None = "tsr-unattended-default",
+    report_template: Path | None = None,
+    scratch_root: Path | None = None,
+    canfi_species_fn: Callable[[str], int] = _default_canfi_species,
+    message_fn: Callable[[str], Any] = print,
+    managed_curve_mode: str | None = None,
+    managed_curve_x_scale: float | None = None,
+    managed_curve_y_scale: float | None = None,
+    managed_curve_truncate_at_culm: bool | None = None,
+    managed_curve_max_age: int | None = None,
+) -> BTCPostTipsyRunResult:
+    """Run unattended BTC for selected TSAs, then resume downstream post-TIPSY bundling."""
+    normalized_tsa_list = [str(tsa).zfill(2) for tsa in tsa_list]
+    effective_run_id = run_id or datetime.now(timezone.utc).strftime(
+        "btc_post_tipsy_%Y%m%dT%H%M%SZ"
+    )
+    resolved_log_dir = Path(log_dir)
+    resolved_data_root = Path(data_root)
+    btc_results: list[BTCRunResult] = []
+    for tsa in normalized_tsa_list:
+        input_csv = resolved_data_root / f"03_input-tsa{tsa}.csv"
+        if not input_csv.exists():
+            raise FileNotFoundError(f"Missing BTC Stage 01a input CSV: {input_csv}")
+        output_csv = resolved_data_root / f"04_output-tsa{tsa}.csv"
+        error_csv = resolved_data_root / f"04_error-tsa{tsa}.csv"
+        tsa_run_id = f"{effective_run_id}_tsa{tsa}"
+        result = run_btc_cli(
+            input_csv=input_csv,
+            mode=btc_mode,
+            output_csv=output_csv,
+            error_csv=error_csv,
+            executable_path=btc_executable_path,
+            report_template=report_template,
+            report_preset_name=report_preset_name,
+            copy_install=True,
+            scratch_root=(
+                (scratch_root / f"tsa{tsa}") if scratch_root is not None else None
+            ),
+            log_dir=resolved_log_dir,
+            run_id=tsa_run_id,
+        )
+        btc_results.append(result)
+        message_fn(
+            "btc completed tsa=%s mode=%s output=%s"
+            % (tsa, result.mode, result.output_csv_path)
+        )
+
+    post_tipsy_result = run_post_tipsy_bundle_with_manifest(
+        tsa_list=normalized_tsa_list,
+        run_id=effective_run_id,
+        log_dir=resolved_log_dir,
+        repo_root=repo_root,
+        data_root=resolved_data_root,
+        model_input_bundle_dir=model_input_bundle_dir,
+        canfi_species_fn=canfi_species_fn,
+        message_fn=message_fn,
+        managed_curve_mode=managed_curve_mode,
+        managed_curve_x_scale=managed_curve_x_scale,
+        managed_curve_y_scale=managed_curve_y_scale,
+        managed_curve_truncate_at_culm=managed_curve_truncate_at_culm,
+        managed_curve_max_age=managed_curve_max_age,
+        tipsy_output_filename_template="04_output-tsa{tsa}.csv",
+    )
+    return BTCPostTipsyRunResult(
+        btc_results=btc_results,
+        post_tipsy_result=post_tipsy_result,
+    )
 
 
 def run_data_prep(

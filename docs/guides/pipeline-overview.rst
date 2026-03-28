@@ -41,13 +41,13 @@ first:
 
       femic run --run-config config/run_profile.<case>.yaml
 
-2. Execute manual BatchTIPSY handoff using generated ``02_input-*.dat``.
-3. Upload ``04_output-*.out`` back into ``data/``.
+2. Let FEMIC launch unattended BTC using generated ``03_input-*.csv``.
+3. FEMIC captures ``04_output-*.csv`` / ``04_error-*.csv`` back into ``data/``.
 4. Run downstream post-TIPSY stages:
 
    .. code-block:: bash
 
-      femic tsa post-tipsy --run-config config/run_profile.<case>.yaml --tsa <code> -v
+      femic tsa btc-post-tipsy --run-config config/run_profile.<case>.yaml --tsa <code> -v
 
 For the known-good K3Z Windows path from the parent FEMIC checkout, the
 practical boundary is:
@@ -56,8 +56,7 @@ practical boundary is:
 
    $env:FEMIC_EXTERNAL_DATA_ROOT="$PWD\external\femic-public-data\data"
    python -m femic run --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --run-id k3z_windows_cleanstart
-   # manual BatchTIPSY step happens here
-   python -m femic tsa post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_windows_cleanstart
+   python -m femic tsa btc-post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_windows_cleanstart
 
 5. Export planning-system packages:
 
@@ -73,18 +72,20 @@ Stage Boundaries
 - **Stage 00 (data prep):** ingest/filter inventory, derive strata inputs,
   compile stand attributes and checkpoints.
 - **Stage 01a (per TSA):** build strata/AUs, run VDYP, smooth curves,
-  generate BatchTIPSY input tables.
-- **Stage 01b (post-TIPSY):** parse TIPSY outputs, compare against VDYP,
-  publish bundle tables and diagnostics.
+  generate canonical BTC ``MSYT.csv`` input tables.
+- **Stage 01b (post-TIPSY):** parse returned BTC/TIPSY outputs, compare
+  against VDYP, publish bundle tables and diagnostics.
 
 Key Assumptions
 ---------------
 
 - Inventory and growth model inputs are local and version-controlled by path,
   not fetched dynamically at runtime.
-- TIPSY is a manual Windows GUI boundary (human in the loop).
-- ``02_input-*.dat`` is the canonical BatchTIPSY handoff input; XLSX companions
-  are readability aids generated from the same payload.
+- BTC is the default unattended Windows BatchTIPSY seam.
+- ``03_input-*.csv`` is the canonical BTC/BatchTIPSY handoff input; XLSX
+  companions are readability aids generated from the same payload.
+- Legacy ``02_input-*.dat`` / ``04_output-*.out`` remain compatibility
+  artifacts only.
 - Diagnostic plots are required QA artifacts, not optional cosmetics.
 
 Operator Interpretation Callouts
