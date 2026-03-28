@@ -7788,6 +7788,14 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - the installed `TIPSY-CBM.pdf` documentation adds another CLI clue:
         `-RGM`, which reportedly emits one regime file per processed line for
         later use in the TIPSY-to-CBM workflow.
+      - treat `-RGM` as strategically interesting beyond the immediate CBM
+        context:
+        - regime-file export may be the missing seam needed to unlock batch
+          FANSIER workflows as well, since FANSIER appears to depend on regime
+          files in addition to the ordinary TIPSY inputs.
+      - future linkage work should explicitly consider:
+        - FEMIC -> BTC/BatchTIPSY -> regime files -> TIPSY-CBM, and
+        - FEMIC -> BTC/BatchTIPSY -> regime files -> FANSIER
       - treat this as evidence that there may still be undocumented or
         under-documented BTC/BatchTIPSY seams inside the wider
         `C:\Program Files\TIPSY 4.7\` installation tree.
@@ -7795,6 +7803,9 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         covering packaged PDFs, Tcl/report/config/default files, and CHM help
         extraction so this easter-egg hunt is tracked in repo planning rather
         than only in chat.
+    - Future extension note:
+      - once the core BTC CSV seam is stable, open a follow-on task to evaluate
+        regime-file-based FEMIC linkage into TIPSY-CBM and FANSIER.
     - Default unattended mode note:
       - the first intended automated FEMIC BTC path is now a single `/TSR`
         run that uses a vetted compatible transposed `TimberSupply.rpt`

@@ -7601,3 +7601,10 @@
       human-readable, machine-scannable format;
     - and continuing the broader "easter egg hunt" across Tcl/report/config
       files for under-documented runtime seams.
+  - Also recorded the more strategic interpretation of the same clue:
+    - although `-RGM` was surfaced from the TIPSY-CBM context, regime-file
+      export may also be the missing seam needed to unlock batch FANSIER
+      workflows in FEMIC.
+    - future planning should therefore consider both:
+      - FEMIC -> BTC/BatchTIPSY -> regime files -> TIPSY-CBM
+      - FEMIC -> BTC/BatchTIPSY -> regime files -> FANSIER

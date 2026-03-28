@@ -45,6 +45,15 @@ Current planning implication:
 - the phase plan should include a full installation audit / "easter egg hunt"
   for additional CLI/runtime seams, not just the already proven `/TSR` and
   `/FLP` paths
+- the `-RGM` clue should be treated as strategically important beyond carbon
+  linkage alone:
+  - regime-file export may be the missing seam needed to unlock batch FANSIER
+    workflows as well, because FANSIER appears to rely on regime files in
+    addition to the ordinary TIPSY inputs
+- future FEMIC planning should therefore consider two follow-on linkage paths
+  once the core BTC seam is stable:
+  - FEMIC -> BTC/BatchTIPSY -> regime files -> TIPSY-CBM
+  - FEMIC -> BTC/BatchTIPSY -> regime files -> FANSIER
 
 ## Evidence Already Collected
 
