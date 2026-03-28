@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 import hashlib
+import json
+import os
 from pathlib import Path
 import re
+import shutil
+import subprocess
+import time
 from typing import Any, Mapping, Sequence
 import warnings
 
@@ -36,6 +41,54 @@ _BTC_REPORT_PRESET_NAMES = (
     "timber-supply-sql",
     "tsr-unattended-default",
 )
+DEFAULT_BATCHTIPSY_EXE_ENV = "FEMIC_BATCHTIPSY_EXE"
+DEFAULT_BATCHTIPSY_WINDOWS_EXE = Path(r"C:\Program Files\TIPSY 4.7\BTC\TIPSYbtc.exe")
+_BTC_SUPPORTED_MODES = {"TSR", "FLP"}
+_BTC_REPORT_FILENAME_BY_MODE = {
+    "TSR": "TimberSupply.rpt",
+    "FLP": "ForestLandscapePlan.rpt",
+}
+
+
+@dataclass(frozen=True)
+class BTCRuntimeDiscovery:
+    """Resolved BTC executable discovery result."""
+
+    executable_path: Path
+    source: str
+
+
+@dataclass(frozen=True)
+class BTCRuntimePreparation:
+    """Prepared BTC runtime layout for one supervised CLI run."""
+
+    executable_path: Path
+    install_root: Path
+    working_dir: Path
+    staged_input_csv: Path
+    copied_install: bool
+    report_template_path: Path | None
+
+
+@dataclass(frozen=True)
+class BTCRunResult:
+    """Result payload for one supervised BTC CLI run."""
+
+    run_id: str
+    mode: str
+    command: tuple[str, ...]
+    manifest_path: Path
+    stdout_log_path: Path
+    stderr_log_path: Path
+    output_csv_path: Path
+    error_csv_path: Path
+    executable_path: Path
+    install_root: Path
+    working_dir: Path
+    copied_install: bool
+    exit_code: int
+    duration_sec: float
+    report_template_path: Path | None
 
 
 @dataclass(frozen=True)
@@ -282,6 +335,357 @@ def write_btc_custom_report_template(
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(template.render(), encoding="utf-8")
     return path
+
+
+def _write_tsr_unattended_runtime_template_from_stock(*, install_root: Path) -> Path:
+    """Patch stock `TimberSupply.rpt` in place with the proven safe mashup columns."""
+    template_path = install_root / _BTC_REPORT_FILENAME_BY_MODE["TSR"]
+    text = template_path.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    additions = [
+        "VolumeGross\t\tgVol\t{yr}",
+        "CC\t\tCC\t{yr}",
+    ]
+    for addition in additions:
+        token = addition.split("\t", 1)[0]
+        if any(line.startswith(token) for line in lines):
+            continue
+        lines.append(addition)
+    template_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return template_path
+
+
+def resolve_btc_executable(
+    *,
+    executable_path: str | Path | None = None,
+    env: Mapping[str, str] | None = None,
+) -> BTCRuntimeDiscovery:
+    """Resolve the BatchTIPSY BTC executable path on Windows-first hosts."""
+    candidates: list[tuple[Path | None, str]] = [
+        (Path(executable_path) if executable_path is not None else None, "explicit"),
+        (
+            Path((env or os.environ)[DEFAULT_BATCHTIPSY_EXE_ENV])
+            if (env or os.environ).get(DEFAULT_BATCHTIPSY_EXE_ENV)
+            else None,
+            f"env:{DEFAULT_BATCHTIPSY_EXE_ENV}",
+        ),
+        (DEFAULT_BATCHTIPSY_WINDOWS_EXE, "default"),
+    ]
+    for candidate, source in candidates:
+        if candidate is None:
+            continue
+        resolved = candidate.expanduser()
+        if resolved.exists():
+            return BTCRuntimeDiscovery(
+                executable_path=resolved.resolve(),
+                source=source,
+            )
+    searched = ", ".join(str(path) for path, _source in candidates if path is not None)
+    raise FileNotFoundError(
+        "Could not resolve BatchTIPSY BTC executable. Checked: "
+        f"{searched}. Set {DEFAULT_BATCHTIPSY_EXE_ENV} or pass an explicit path."
+    )
+
+
+def build_btc_cli_command(
+    *,
+    executable_path: str | Path,
+    mode: str,
+    input_csv: str | Path,
+    output_csv: str | Path,
+    error_csv: str | Path,
+    extra_executable_args: Sequence[str | Path] = (),
+) -> list[str]:
+    """Build the concrete BTC CLI command for `/TSR` or `/FLP` execution."""
+    normalized_mode = str(mode).strip().upper()
+    if normalized_mode not in _BTC_SUPPORTED_MODES:
+        supported = ", ".join(sorted(_BTC_SUPPORTED_MODES))
+        raise ValueError(f"Unsupported BTC mode {mode!r}. Supported modes: {supported}")
+    command = [str(Path(executable_path))]
+    command.extend(str(arg) for arg in extra_executable_args)
+    command.extend(
+        [
+            f"/{normalized_mode}",
+            str(input_csv),
+            str(output_csv),
+            str(error_csv),
+        ]
+    )
+    return command
+
+
+def _write_btc_manifest(path: Path, payload: Mapping[str, object]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(dict(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def prepare_btc_runtime(
+    *,
+    executable_path: str | Path,
+    input_csv: str | Path,
+    scratch_root: str | Path,
+    mode: str,
+    report_template: BTCCustomReportTemplate | str | Path | None = None,
+    report_preset_name: str | None = None,
+    copy_install: bool = False,
+) -> BTCRuntimePreparation:
+    """Stage a writable BTC runtime root and input CSV for one run."""
+    resolved_exe = Path(executable_path).expanduser().resolve()
+    install_root = resolved_exe.parent
+    resolved_scratch_root = Path(scratch_root).expanduser().resolve()
+    resolved_scratch_root.mkdir(parents=True, exist_ok=True)
+    effective_install_root = install_root
+    effective_executable = resolved_exe
+    copied = False
+    report_target_path: Path | None = None
+    if copy_install or report_template is not None:
+        effective_install_root = resolved_scratch_root / "btc_install"
+        if effective_install_root.exists():
+            shutil.rmtree(effective_install_root)
+        shutil.copytree(install_root, effective_install_root)
+        effective_executable = effective_install_root / resolved_exe.name
+        copied = True
+    normalized_mode = str(mode).upper()
+    if report_preset_name == "tsr-unattended-default":
+        if normalized_mode != "TSR":
+            raise ValueError(
+                "The tsr-unattended-default runtime preset only supports mode=TSR."
+            )
+        report_target_path = _write_tsr_unattended_runtime_template_from_stock(
+            install_root=effective_install_root
+        )
+    elif report_template is not None:
+        report_target_path = effective_install_root / _BTC_REPORT_FILENAME_BY_MODE[normalized_mode]
+        if isinstance(report_template, BTCCustomReportTemplate):
+            write_btc_custom_report_template(
+                output_path=report_target_path,
+                template=report_template,
+            )
+        else:
+            source_text = Path(report_template).read_text(encoding="utf-8")
+            report_target_path.write_text(source_text, encoding="utf-8")
+    working_dir = resolved_scratch_root / "work"
+    working_dir.mkdir(parents=True, exist_ok=True)
+    staged_input = working_dir / Path(input_csv).name
+    shutil.copy2(Path(input_csv), staged_input)
+    return BTCRuntimePreparation(
+        executable_path=effective_executable,
+        install_root=effective_install_root,
+        working_dir=working_dir,
+        staged_input_csv=staged_input,
+        copied_install=copied,
+        report_template_path=report_target_path,
+    )
+
+
+def run_btc_cli(
+    *,
+    input_csv: str | Path,
+    mode: str = "TSR",
+    output_csv: str | Path | None = None,
+    error_csv: str | Path | None = None,
+    executable_path: str | Path | None = None,
+    report_template: BTCCustomReportTemplate | str | Path | None = None,
+    report_preset_name: str | None = None,
+    copy_install: bool | None = None,
+    scratch_root: str | Path | None = None,
+    log_dir: str | Path = Path("vdyp_io/logs"),
+    run_id: str | None = None,
+    env: Mapping[str, str] | None = None,
+    extra_executable_args: Sequence[str | Path] = (),
+) -> BTCRunResult:
+    """Run BTC `/TSR` or `/FLP` in a supervised writable scratch environment."""
+    discovery = resolve_btc_executable(executable_path=executable_path, env=env)
+    normalized_mode = str(mode).strip().upper()
+    if normalized_mode not in _BTC_SUPPORTED_MODES:
+        supported = ", ".join(sorted(_BTC_SUPPORTED_MODES))
+        raise ValueError(f"Unsupported BTC mode {mode!r}. Supported modes: {supported}")
+    resolved_log_dir = Path(log_dir).expanduser().resolve()
+    resolved_log_dir.mkdir(parents=True, exist_ok=True)
+    effective_run_id = run_id or datetime.now(UTC).strftime("btc_%Y%m%dT%H%M%SZ")
+    resolved_scratch_root = (
+        Path(scratch_root).expanduser().resolve()
+        if scratch_root is not None
+        else (resolved_log_dir / f"btc_scratch-{effective_run_id}").resolve()
+    )
+    should_copy_install = bool(copy_install) if copy_install is not None else (
+        report_template is not None or report_preset_name is not None
+    )
+    prep = prepare_btc_runtime(
+        executable_path=discovery.executable_path,
+        input_csv=input_csv,
+        scratch_root=resolved_scratch_root,
+        mode=normalized_mode,
+        report_template=report_template,
+        report_preset_name=report_preset_name,
+        copy_install=should_copy_install,
+    )
+    input_path = Path(input_csv).expanduser().resolve()
+    if output_csv is not None:
+        requested_output = Path(output_csv).expanduser().resolve()
+        staged_output = prep.working_dir / requested_output.name
+    else:
+        staged_output = prep.working_dir / f"{input_path.stem}_output.csv"
+        requested_output = staged_output
+    if error_csv is not None:
+        requested_error = Path(error_csv).expanduser().resolve()
+        staged_error = prep.working_dir / requested_error.name
+    else:
+        staged_error = prep.working_dir / f"{input_path.stem}_error.csv"
+        requested_error = staged_error
+    command = build_btc_cli_command(
+        executable_path=prep.executable_path,
+        mode=normalized_mode,
+        input_csv=prep.staged_input_csv.name,
+        output_csv=staged_output.name,
+        error_csv=staged_error.name,
+        extra_executable_args=extra_executable_args,
+    )
+    stdout_log_path = resolved_log_dir / f"btc_stdout-{effective_run_id}.log"
+    stderr_log_path = resolved_log_dir / f"btc_stderr-{effective_run_id}.log"
+    manifest_path = resolved_log_dir / f"btc_manifest-{effective_run_id}.json"
+    started_at = datetime.now(UTC)
+    manifest_started = {
+        "run_id": effective_run_id,
+        "status": "started",
+        "mode": normalized_mode,
+        "started_at_utc": started_at.isoformat(),
+        "command": command,
+        "log_dir": str(resolved_log_dir),
+        "input_csv": str(Path(input_csv).expanduser().resolve()),
+        "staged_input_csv": str(prep.staged_input_csv),
+        "output_csv": str(requested_output),
+        "error_csv": str(requested_error),
+        "staged_output_csv": str(staged_output),
+        "staged_error_csv": str(staged_error),
+        "executable_path": str(prep.executable_path),
+        "install_root": str(prep.install_root),
+        "copied_install": prep.copied_install,
+        "report_template_path": (
+            str(prep.report_template_path) if prep.report_template_path else None
+        ),
+        "discovery_source": discovery.source,
+    }
+    _write_btc_manifest(manifest_path, manifest_started)
+    started_monotonic = time.monotonic()
+    merged_env = dict(os.environ)
+    merged_env.update(env or {})
+    completed = subprocess.run(
+        command,
+        cwd=prep.working_dir,
+        env=merged_env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    duration_sec = round(time.monotonic() - started_monotonic, 3)
+    stdout_log_path.write_text(completed.stdout, encoding="utf-8")
+    stderr_log_path.write_text(completed.stderr, encoding="utf-8")
+    finished_at = datetime.now(UTC)
+    error_message = None
+    try:
+        if not staged_output.exists():
+            raise RuntimeError(
+                f"BTC did not create expected output file: {staged_output} "
+                f"(exit_code={completed.returncode})"
+            )
+        if not staged_error.exists():
+            raise RuntimeError(
+                f"BTC did not create expected error file: {staged_error} "
+                f"(exit_code={completed.returncode})"
+            )
+        if requested_output != staged_output:
+            requested_output.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(staged_output, requested_output)
+        if requested_error != staged_error:
+            requested_error.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(staged_error, requested_error)
+    except Exception as exc:
+        error_message = str(exc)
+        from femic.pipeline.manifest import collect_runtime_versions
+
+        _write_btc_manifest(
+            manifest_path,
+            {
+                **manifest_started,
+                "status": "failed",
+                "finished_at_utc": finished_at.isoformat(),
+                "duration_sec": duration_sec,
+                "exit_code": completed.returncode,
+                "error_message": error_message,
+                "stdout_log_path": str(stdout_log_path),
+                "stderr_log_path": str(stderr_log_path),
+                "runtime_versions": collect_runtime_versions(),
+                "artifacts": {
+                    "output_csv": {
+                        "path": str(requested_output),
+                        "exists": requested_output.exists(),
+                    },
+                    "error_csv": {
+                        "path": str(requested_error),
+                        "exists": requested_error.exists(),
+                    },
+                    "stdout_log": {
+                        "path": str(stdout_log_path),
+                        "exists": stdout_log_path.exists(),
+                    },
+                    "stderr_log": {
+                        "path": str(stderr_log_path),
+                        "exists": stderr_log_path.exists(),
+                    },
+                },
+            },
+        )
+        raise
+    from femic.pipeline.manifest import collect_runtime_versions
+
+    manifest_finished = {
+        **manifest_started,
+        "status": "ok" if completed.returncode == 0 else "failed",
+        "finished_at_utc": finished_at.isoformat(),
+        "duration_sec": duration_sec,
+        "exit_code": completed.returncode,
+        "error_message": error_message,
+        "stdout_log_path": str(stdout_log_path),
+        "stderr_log_path": str(stderr_log_path),
+        "runtime_versions": collect_runtime_versions(),
+        "artifacts": {
+            "output_csv": {
+                "path": str(requested_output),
+                "exists": requested_output.exists(),
+            },
+            "error_csv": {
+                "path": str(requested_error),
+                "exists": requested_error.exists(),
+            },
+            "stdout_log": {
+                "path": str(stdout_log_path),
+                "exists": stdout_log_path.exists(),
+            },
+            "stderr_log": {
+                "path": str(stderr_log_path),
+                "exists": stderr_log_path.exists(),
+            },
+        },
+    }
+    _write_btc_manifest(manifest_path, manifest_finished)
+    return BTCRunResult(
+        run_id=effective_run_id,
+        mode=normalized_mode,
+        command=tuple(command),
+        manifest_path=manifest_path,
+        stdout_log_path=stdout_log_path,
+        stderr_log_path=stderr_log_path,
+        output_csv_path=requested_output,
+        error_csv_path=requested_error,
+        executable_path=prep.executable_path,
+        install_root=prep.install_root,
+        working_dir=prep.working_dir,
+        copied_install=prep.copied_install,
+        exit_code=completed.returncode,
+        duration_sec=duration_sec,
+        report_template_path=prep.report_template_path,
+    )
 
 
 DEFAULT_TIPSY_BATCH_COLUMNS_1BASED: dict[str, tuple[int, int]] = {

@@ -7657,13 +7657,24 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   local workflow pattern that may help shape that later automation work.
 - New local evidence now points to the BTC `MSYT.csv` CLI seam as the real
   first automation target, not the older DAT/OUT workflow.
-- The preferred first unattended BatchTIPSY automation slice is now the
-  combined BTC `/TSR + /FLP` seam so FEMIC can recover merchantable volume,
-  height, gross volume, and crown closure without a human in the loop.
+- The preferred first unattended BatchTIPSY automation slice is now a single
+  supervised BTC `/TSR` run with a vetted transposed `TimberSupply.rpt`
+  mashup, because local copied-install probes proved that `/TSR` is
+  report-coupled and can safely emit merchantable volume, height, gross
+  volume, and crown closure in one file when the replacement report template
+  stays within the compatible transposed report family.
 - The strongest current optional rich-output seam is BTC SQL-style report
   output with explicit `feature_id`, and the next implementation edge now
   includes a FEMIC-side `.rpt` template generator so vetted BTC report files
   can be authored outside the GUI.
+- The next concrete implementation edge is:
+  - add Windows BTC executable discovery and preflight,
+  - stage a writable scratch directory,
+  - write the vetted unattended `TimberSupply.rpt` template into that scratch
+    install,
+  - run supervised `/TSR`,
+  - validate output/error files,
+  - and record a manifest before widening to Stage 01a/01b CSV cutover work.
 - The installed BTC defaults file `C:\Program Files\TIPSY 4.7\BTC\gw.txt`
   should be treated as a likely first source for default FEMIC genetic gain
   settings in the cutover, with explicit documentation that those defaults are
@@ -7691,14 +7702,17 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     the existing TIPSY payload, replacing the old DAT handoff as the active
     supported workflow.
   - [ ] P48.2b Add Windows BTC executable discovery and a supervised CLI runner
-    around `TIPSYbtc.exe /TSR` and `TIPSYbtc.exe /FLP`, including output/error
-    file validation and a manifest/log payload.
+    around `TIPSYbtc.exe /TSR`, including:
+    - writable scratch-dir staging,
+    - copied BTC install/report-template override support,
+    - output/error file validation,
+    - and a manifest/log payload.
   - [ ] P48.2c Add post-TIPSY parsing for returned BTC CSV outputs, including a
     clear replacement plan for old `.out`-era support fields such as `TPH` and
     `DBHq` when richer non-GUI BTC outputs are not yet proven.
   - [ ] P48.2d If richer indicator output remains GUI-only, support it as an
     optional manual BTC mode instead of blocking the default unattended
-    `/TSR + /FLP` rollout.
+    `/TSR` mashup rollout.
   - [x] P48.2e Add a FEMIC-side BTC custom-report template generator so vetted
     `.rpt` files can be authored from curated or user-specified output-column
     lists instead of hand-edited inside the BTC GUI.
@@ -7738,9 +7752,9 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         (`ForestLandscapePlan.rpt`), and documents standard exit codes `0`,
         `2`, and `5`.
     - Default unattended mode note:
-      - the first intended automated FEMIC BTC path is now the combined
-        `/TSR + /FLP` seam so default unsupervised runs can recover
-        merchantable volume, height, gross volume, and crown closure.
+      - the first intended automated FEMIC BTC path is now a single `/TSR`
+        run that uses a vetted compatible transposed `TimberSupply.rpt`
+        replacement, not separate `/TSR + /FLP` invocations.
       - a FEMIC-side BTC `.rpt` generator now exists behind
         `femic tipsy write-btc-report-template`.
       - the first vetted built-in unattended preset is
@@ -7748,6 +7762,27 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         carrying:
         - merchantable volume (`MVcon`, `MVdec`)
         - height (`HTcon`, `HTdec`)
+        - gross volume (`gVol`)
+        - crown closure (`CC`)
+      - copied-install probes also showed that:
+        - `ForestLandscapePlan.rpt` swapped into `TimberSupply.rpt` works
+          cleanly under `/TSR`,
+        - `TimberSupply SQL.rpt` is not a safe `/TSR` drop-in,
+        - and oversized all-fields SQL templates can crash BTC during report
+          load/startup.
+      - the first end-to-end supervised runner smoke now also works with that
+        preset:
+        - copied BTC install in writable scratch
+        - patched stock `TimberSupply.rpt`
+        - supervised `/TSR`
+        - emitted output/error CSVs in scratch
+        - manifest status `ok`
+        - returned columns:
+          - `feature_id`
+          - `MVcon_*`, `MVdec_*`
+          - `HTcon_*`, `HTdec_*`
+          - `gVol_*`
+          - `CC_*`
         - gross volume (`gVol`)
         - crown closure (`CC`)
     - Richer-output fallback note:
@@ -7805,8 +7840,11 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         replacement for `TimberSupply.rpt`:
         - swapping in `ForestLandscapePlan.rpt` as `TimberSupply.rpt` works and
           makes `/TSR` emit `gVol_*` and `CC_*`;
-        - a small transposed TSR+FLP mashup also works cleanly and yields all
-          four unattended indicators in one `/TSR` output;
+      - a small transposed TSR+FLP mashup also works cleanly and yields all
+        four unattended indicators in one `/TSR` output;
+      - FEMIC's new `femic tipsy run-btc` smoke now proves the copied-install
+        runner plus patched-stock report path works end to end on the local
+        Windows host when outputs are staged in writable scratch;
         - `TimberSupply SQL.rpt` loads but crashes during `BatchProcess()` when
           used as `TimberSupply.rpt`;
         - oversized `AllFieldsSQL.rpt` templates can crash even earlier during

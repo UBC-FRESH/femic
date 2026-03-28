@@ -7406,3 +7406,31 @@
   - Validation passed:
     - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py`
     - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/cli/main.py tests/test_tipsy.py tests/test_tipsy_report_cli.py`
+- 2026-03-28 (Phase 48 BTC runner smoke): proved the first end-to-end
+  unattended `/TSR` runner seam on the local Windows host.
+  - Added supervised BTC runtime preparation and CLI execution support in
+    `src/femic/pipeline/tipsy.py` plus the new
+    `femic tipsy run-btc` surface in `src/femic/cli/main.py`.
+  - Fixed a CLI handoff bug so `--report-preset tsr-unattended-default`
+    preserves the preset identity all the way into the runtime layer instead of
+    being flattened into a generic custom-template render.
+  - Fixed default output/error destination handling so runs against read-only
+    sample inputs keep returned files in writable scratch rather than trying to
+    copy them back into `Program Files`.
+  - Live proof:
+    - copied BTC install staged under `tmp/btc_runner_smoke`
+    - stock `TimberSupply.rpt` patched in place with the vetted transposed
+      unattended mashup
+    - supervised `/TSR` run completed with exit code `0`
+    - no lingering `TIPSYbtc.exe` process remained
+    - manifest `btc_manifest-btc_runner_smoke_20260328_d.json` recorded
+      status `ok`
+    - returned output columns include:
+      - `feature_id`
+      - `MVcon_*`, `MVdec_*`
+      - `HTcon_*`, `HTdec_*`
+      - `gVol_*`
+      - `CC_*`
+  - Validation passed:
+    - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py`
+    - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/cli/main.py tests/test_tipsy.py tests/test_tipsy_report_cli.py`

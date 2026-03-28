@@ -3,14 +3,18 @@ from __future__ import annotations
 import math
 import os
 from pathlib import Path
+import sys
 
 import pandas as pd
 import pytest
 
 from femic.pipeline.tipsy import (
+    DEFAULT_BATCHTIPSY_EXE_ENV,
+    BTCRunResult,
     BTCCustomReportColumn,
     assess_tipsy_input_output_coherence,
     btc_report_template_preset,
+    build_btc_cli_command,
     build_tipsy_params_for_tsa,
     build_tipsy_input_table,
     build_btc_custom_report_template,
@@ -20,6 +24,9 @@ from femic.pipeline.tipsy import (
     compute_vdyp_site_index,
     evaluate_tipsy_candidate,
     parse_btc_custom_report_template,
+    prepare_btc_runtime,
+    resolve_btc_executable,
+    run_btc_cli,
     tipsy_input_dat_path,
     tipsy_output_input_fingerprint_path,
     tipsy_params_excel_path,
@@ -268,6 +275,99 @@ def test_build_and_write_btc_custom_report_template_round_trip(tmp_path: Path) -
     assert reparsed.name == "Extended SQL"
     assert reparsed.columns[-1].token == "VolumeGross"
     assert reparsed.columns[-1].header1_override == "gVol"
+
+
+def test_resolve_btc_executable_prefers_explicit_path(tmp_path: Path) -> None:
+    explicit = tmp_path / "TIPSYbtc.exe"
+    explicit.write_text("stub", encoding="utf-8")
+    env_path = tmp_path / "other.exe"
+    env_path.write_text("stub", encoding="utf-8")
+    discovered = resolve_btc_executable(
+        executable_path=explicit,
+        env={DEFAULT_BATCHTIPSY_EXE_ENV: str(env_path)},
+    )
+    assert discovered.executable_path == explicit.resolve()
+    assert discovered.source == "explicit"
+
+
+def test_build_btc_cli_command_renders_expected_sequence(tmp_path: Path) -> None:
+    command = build_btc_cli_command(
+        executable_path=tmp_path / "TIPSYbtc.exe",
+        mode="TSR",
+        input_csv="MSYT.csv",
+        output_csv="MSYT_output.csv",
+        error_csv="MSYT_error.csv",
+        extra_executable_args=("probe.py",),
+    )
+    assert command == [
+        str(tmp_path / "TIPSYbtc.exe"),
+        "probe.py",
+        "/TSR",
+        "MSYT.csv",
+        "MSYT_output.csv",
+        "MSYT_error.csv",
+    ]
+
+
+def test_run_btc_cli_supervised_writes_outputs_and_manifest(tmp_path: Path) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    helper = tmp_path / "fake_btc.py"
+    helper.write_text(
+        "from pathlib import Path\n"
+        "import sys\n"
+        "mode, input_name, output_name, error_name = sys.argv[1:5]\n"
+        "Path(output_name).write_text('feature_id,MVcon_0,gVol_0,CC_0\\n1,2,3,4\\n', encoding='utf-8')\n"
+        "Path(error_name).write_text('warnings,errors\\n0,0\\n', encoding='utf-8')\n"
+        "sys.exit(0)\n",
+        encoding="utf-8",
+    )
+    result: BTCRunResult = run_btc_cli(
+        input_csv=input_csv,
+        mode="TSR",
+        executable_path=sys.executable,
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id="btc_test",
+        env={},
+        extra_executable_args=(helper,),
+    )
+    assert result.exit_code == 0
+    assert result.copied_install is False
+    assert result.output_csv_path.is_file()
+    assert result.error_csv_path.is_file()
+    assert result.output_csv_path.parent == tmp_path / "scratch" / "work"
+    assert result.error_csv_path.parent == tmp_path / "scratch" / "work"
+    assert result.manifest_path.is_file()
+    assert "feature_id,MVcon_0,gVol_0,CC_0" in result.output_csv_path.read_text(
+        encoding="utf-8"
+    )
+
+
+def test_prepare_btc_runtime_copies_install_and_writes_report_template(
+    tmp_path: Path,
+) -> None:
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    fake_exe = install_root / "TIPSYbtc.exe"
+    fake_exe.write_text("stub", encoding="utf-8")
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    prep = prepare_btc_runtime(
+        executable_path=fake_exe,
+        input_csv=input_csv,
+        scratch_root=tmp_path / "scratch",
+        mode="TSR",
+        report_template=btc_report_template_preset("tsr-unattended-default"),
+        copy_install=True,
+    )
+    assert prep.copied_install is True
+    assert prep.executable_path.is_file()
+    assert prep.staged_input_csv.is_file()
+    assert prep.report_template_path is not None
+    assert "TSR Unattended Default" in prep.report_template_path.read_text(
+        encoding="utf-8"
+    )
 
 
 def test_write_tipsy_input_exports_fails_fast_on_width_overflow(tmp_path: Path) -> None:

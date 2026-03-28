@@ -84,10 +84,13 @@ from femic.pipeline.tipsy_config import (
     load_tipsy_tsa_config,
 )
 from femic.pipeline.tipsy import (
+    BTCRunResult,
     BTCCustomReportColumn,
+    BTCCustomReportTemplate,
     btc_report_template_preset,
     build_btc_custom_report_template,
     parse_btc_custom_report_template,
+    run_btc_cli,
     write_btc_custom_report_template,
 )
 from femic.vdyp.reporting import (
@@ -2461,6 +2464,136 @@ def tipsy_write_btc_report_template(
         "[green]Wrote BTC report template[/green] "
         f"path={written_path} columns={len(template.columns)} type={template.report_type}"
     )
+
+
+@tipsy_app.command("run-btc")
+def tipsy_run_btc(
+    input_csv: Path = typer.Argument(
+        ...,
+        help="BTC MSYT.csv-style input file to run.",
+    ),
+    mode: str = typer.Option(
+        "TSR",
+        "--mode",
+        help="BTC CLI mode to run (TSR or FLP).",
+        show_default=True,
+    ),
+    output_csv: Path | None = typer.Option(
+        None,
+        "--output-csv",
+        help="Optional explicit output CSV path; defaults beside the input file.",
+        show_default=False,
+    ),
+    error_csv: Path | None = typer.Option(
+        None,
+        "--error-csv",
+        help="Optional explicit error CSV path; defaults beside the input file.",
+        show_default=False,
+    ),
+    btc_exe: Path | None = typer.Option(
+        None,
+        "--btc-exe",
+        help="Explicit TIPSYbtc.exe path; otherwise use env/default discovery.",
+        show_default=False,
+    ),
+    report_template: Path | None = typer.Option(
+        None,
+        "--report-template",
+        help="Existing .rpt template file to stage into the copied BTC install.",
+        show_default=False,
+    ),
+    report_preset: str | None = typer.Option(
+        None,
+        "--report-preset",
+        help=(
+            "Built-in report preset to stage into the copied BTC install. "
+            "Defaults to tsr-unattended-default for mode=TSR."
+        ),
+        show_default=False,
+    ),
+    copy_install: bool = typer.Option(
+        False,
+        "--copy-install/--use-installed-btc",
+        help="Stage a writable copied BTC install before execution.",
+    ),
+    scratch_dir: Path | None = typer.Option(
+        None,
+        "--scratch-dir",
+        help="Scratch directory for staged install/input/output files.",
+        show_default=False,
+    ),
+    log_dir: Path = typer.Option(
+        Path("vdyp_io/logs"),
+        "--log-dir",
+        help="Directory for BTC stdout/stderr logs and manifest.",
+        show_default=True,
+    ),
+    run_id: str | None = typer.Option(
+        None,
+        "--run-id",
+        help="Optional run identifier for log/manifest naming.",
+        show_default=False,
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Run BTC in supervised CLI mode with optional copied-install report override."""
+    if report_template is not None and report_preset is not None:
+        raise typer.BadParameter(
+            "Use either --report-template or --report-preset, not both."
+        )
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_input = instance_context.resolve_path(input_csv)
+    resolved_output = (
+        instance_context.resolve_path(output_csv) if output_csv is not None else None
+    )
+    resolved_error = (
+        instance_context.resolve_path(error_csv) if error_csv is not None else None
+    )
+    resolved_btc_exe = (
+        instance_context.resolve_path(btc_exe) if btc_exe is not None else None
+    )
+    resolved_template = (
+        instance_context.resolve_path(report_template)
+        if report_template is not None
+        else None
+    )
+    effective_preset = report_preset
+    if effective_preset is None and mode.strip().upper() == "TSR":
+        effective_preset = "tsr-unattended-default"
+    report_template_payload: BTCCustomReportTemplate | Path | None = None
+    report_preset_name: str | None = None
+    if resolved_template is not None:
+        report_template_payload = resolved_template
+    elif effective_preset is not None:
+        report_preset_name = effective_preset
+    result: BTCRunResult = run_btc_cli(
+        input_csv=resolved_input,
+        mode=mode,
+        output_csv=resolved_output,
+        error_csv=resolved_error,
+        executable_path=resolved_btc_exe,
+        report_template=report_template_payload,
+        report_preset_name=report_preset_name,
+        copy_install=(
+            copy_install
+            or report_template_payload is not None
+            or report_preset_name is not None
+        ),
+        scratch_root=(
+            instance_context.resolve_path(scratch_dir)
+            if scratch_dir is not None
+            else None
+        ),
+        log_dir=instance_context.resolve_path(log_dir),
+        run_id=run_id,
+    )
+    console.print(
+        "[green]BTC run completed[/green] "
+        f"mode={result.mode} exit_code={result.exit_code} "
+        f"output={result.output_csv_path}"
+    )
+    console.print(f"error: {result.error_csv_path}")
+    console.print(f"manifest: {result.manifest_path}")
 
 
 @export_app.command("patchworks")

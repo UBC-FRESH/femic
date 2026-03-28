@@ -78,23 +78,33 @@ CLI details:
 
 ## Default Unattended Mode Decision
 
-The current default implementation target should be a fully unattended BTC mode
-that combines the two proven CLI report seams:
+The current default implementation target is now a fully unattended BTC mode
+that uses a single supervised `/TSR` run with a vetted transposed
+`TimberSupply.rpt` mashup.
 
-- `/TSR` for:
-  - merchantable volume
-  - height
-- `/FLP` for:
-  - gross volume
-  - crown closure
+The canonical unattended indicator set is:
+
+- merchantable volume:
+  - `MVcon_*`
+  - `MVdec_*`
+- height:
+  - `HTcon_*`
+  - `HTdec_*`
+- gross volume:
+  - `gVol_*`
+- crown closure:
+  - `CC_*`
 
 Current planning implication:
 
-- this combined `/TSR + /FLP` mode is now the preferred first implementation
-  slice because it is already proven unattended when run from a writable local
-  directory
-- this should become FEMIC's default BTC automation mode even if richer
-  indicators remain unavailable in unattended mode
+- FEMIC should no longer treat separate `/TSR + /FLP` invocations as the
+  preferred unattended path
+- the supported unattended seam is:
+  - writable scratch directory
+  - copied BTC install
+  - patched stock `TimberSupply.rpt`
+  - supervised `/TSR`
+  - returned CSV output/error files
 - richer BTC outputs should be treated as an optional enhancement tier, not as
   a blocker for landing the first automated BTC pipeline slice
 
@@ -135,6 +145,46 @@ Current planning implication:
   transposed TSR+FLP mashup
 - the new FEMIC-side BTC report-template generator should treat that mashup as
   a first-class preset
+
+## First End-to-End Runner Success
+
+The first real end-to-end unattended BTC runner smoke is now proven on the
+local Windows host.
+
+Working path:
+
+- copied BTC install staged under writable scratch
+- stock `TimberSupply.rpt` patched in place with the vetted transposed mashup
+- supervised `/TSR` launch
+- returned output/error CSVs kept in writable scratch working directory
+- manifest/log capture written by FEMIC
+
+Live proof summary:
+
+- command surface:
+  - `femic tipsy run-btc ... --mode TSR`
+- result:
+  - exit code `0`
+  - no lingering `TIPSYbtc.exe` process
+  - manifest status `ok`
+  - output file emitted successfully
+- returned output columns include:
+  - `feature_id`
+  - `MVcon_*`
+  - `MVdec_*`
+  - `HTcon_*`
+  - `HTdec_*`
+  - `gVol_*`
+  - `CC_*`
+
+Current planning implication:
+
+- the report-template seam is no longer speculative
+- the runner seam is no longer speculative
+- the next implementation edge is now:
+  - Stage 01a `MSYT.csv` generation
+  - parsing the transposed unattended `/TSR` output into FEMIC downstream
+    managed-curve structures
 
 ## Incompatible Report-Type Constraint
 
