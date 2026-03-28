@@ -339,7 +339,9 @@ def test_parse_btc_tsr_transposed_output_preserves_existing_managed_curve_ids(
     assert out["TPH"].isna().all()
 
 
-def test_parse_btc_custom_report_template_reads_sql_style_template(tmp_path: Path) -> None:
+def test_parse_btc_custom_report_template_reads_sql_style_template(
+    tmp_path: Path,
+) -> None:
     rpt = tmp_path / "TimberSupply SQL.rpt"
     rpt.write_text(
         "[CustomReport]\n"
@@ -392,7 +394,9 @@ def test_build_and_write_btc_custom_report_template_round_trip(tmp_path: Path) -
         source_template=source,
         columns=[
             *source.columns,
-            BTCCustomReportColumn(token="VolumeGross", width=0, header1_override="gVol"),
+            BTCCustomReportColumn(
+                token="VolumeGross", width=0, header1_override="gVol"
+            ),
         ],
     )
     out = tmp_path / "extended.rpt"

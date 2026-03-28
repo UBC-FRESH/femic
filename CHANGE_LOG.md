@@ -7608,3 +7608,16 @@
     - future planning should therefore consider both:
       - FEMIC -> BTC/BatchTIPSY -> regime files -> TIPSY-CBM
       - FEMIC -> BTC/BatchTIPSY -> regime files -> FANSIER
+- 2026-03-28 (Phase 48 docs/contract sweep): switched the current-facing
+  parent and K3Z docs from the old DAT/OUT BatchTIPSY seam to the new
+  BTC-first contract.
+  - Updated the contract pages and Stage 01 guides so the default supported
+    seam is now:
+    - `03_input-tsaXX.csv`
+    - unattended `TIPSYbtc.exe /TSR`
+    - returned `04_output-tsaXX.csv` / `04_error-tsaXX.csv`
+    - `femic tsa btc-post-tipsy`
+  - Demoted `02_input-*.dat` / `04_output-*.out` to legacy compatibility notes
+    instead of teaching them as the normal operator path.
+  - Updated the CLI/API reference pages and active K3Z runbooks to point at the
+    new BTC-first resume flow.

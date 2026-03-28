@@ -16,7 +16,7 @@ Key Workflow Steps
 3. Define SI bins (L/M/H) and collapse sparse bins when thresholds demand it.
 4. Run VDYP (sampling mode: ``auto``/``all``/fixed-N).
 5. Smooth fitted curves and publish fit diagnostics.
-6. Generate ``02_input-*.dat`` + spreadsheet handoff for BatchTIPSY.
+6. Generate ``03_input-*.csv`` + workbook handoff for unattended BTC/BatchTIPSY.
 
 VDYP Fitting and SI Splits
 --------------------------
@@ -39,12 +39,11 @@ VDYP Fitting and SI Splits
 TIPSY Input Boundary
 --------------------
 
-- FEMIC writes fixed-schema DAT/XLSX handoff files.
-- ``02_input-*.dat`` is the canonical BatchTIPSY input artifact used by the
-  GUI run; ``tipsy_params_tsa*.xlsx`` is a human-readable mirror generated from
-  the same table payload.
-- BatchTIPSY field maps are GUI-configured and brittle; avoid changing column
-  wizard mappings run-to-run.
+- FEMIC writes canonical BTC ``MSYT.csv`` handoff files plus workbook mirrors.
+- ``03_input-*.csv`` is the canonical BTC/BatchTIPSY input artifact used by
+  the unattended ``/TSR`` seam; ``tipsy_params_tsa*.xlsx`` is a human-readable
+  mirror generated from the same table payload.
+- Legacy ``02_input-*.dat`` remains a compatibility artifact only.
 - Species code mapping and SI fallback behavior should be explicit in
   ``config/tipsy/tsa*.yaml``.
 
@@ -54,8 +53,8 @@ Operator QA Checklist
 - Confirm non-empty top strata with expected abundance coverage.
 - Confirm SI distribution plots are plausible before VDYP fitting.
 - Confirm AU count and labels are stable and interpretable.
-- Confirm ``02_input-*.dat`` aligns with known-good fixed-width schema before
-  exporting across systems.
+- Confirm ``03_input-*.csv`` aligns with the expected BTC ``MSYT.csv`` schema
+  before exporting across systems.
 
 Known Failure Signatures
 ------------------------
@@ -64,8 +63,8 @@ Known Failure Signatures
   collapse thresholds.
 - Flat/degenerate or wildly oscillating VDYP curves: inspect bin medians,
   sample size, and fit overrides.
-- BatchTIPSY parse failures: usually fixed-width misalignment or unsupported
-  species/FIZ combinations.
+- BTC / BatchTIPSY parse failures: usually input-schema mismatch, unsupported
+  species/FIZ combinations, or incompatible report-template seams.
 
 Primary Legacy Notebook Coverage
 --------------------------------
@@ -118,11 +117,12 @@ Expected outcome:
 
 - native Windows VDYP runs using the bundled ``VDYP7Console.exe``
 - SiteProd geoprocessing can fall back through ArcGIS Pro when needed
-- FEMIC stops intentionally at the BatchTIPSY freshness boundary after writing:
-  - ``external/femic-k3z-instance/data/02_input-tsak3z.dat``
+- FEMIC stops intentionally at the BTC freshness boundary after writing:
+  - ``external/femic-k3z-instance/data/03_input-tsak3z.csv``
   - ``external/femic-k3z-instance/data/tipsy_params_tsak3z.xlsx`` or a timestamped fallback workbook
+  - optionally ``external/femic-k3z-instance/data/02_input-tsak3z.dat`` as a legacy mirror
 
 At that point, do **not** rerun Stage 01a unless the TIPSY handoff really needs
-to be regenerated. Stage 01b freshness is DAT-content based, so unchanged
-``02_input`` content can reuse existing BatchTIPSY output, but real DAT content
+to be regenerated. Stage 01b freshness is BTC-CSV-content based, so unchanged
+``03_input`` content can reuse existing BTC output, but real canonical input
 changes require a refreshed ``04_output``.

@@ -7743,7 +7743,7 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 - [ ] P48.3 Validate, document, and close out the cutover
   - [x] P48.3a Add tests for BTC executable discovery, MSYT CSV writing, CLI
     argument assembly, and returned BTC CSV parsing.
-  - [ ] P48.3b Update operator/docs/contracts to describe BTC `MSYT.csv` input,
+  - [x] P48.3b Update operator/docs/contracts to describe BTC `MSYT.csv` input,
     BTC CLI `/TSR`, returned CSV outputs, and any remaining gaps in richer
     stock-level indicator support.
   - [ ] P48.3c Update `CHANGE_LOG.md` and GitHub issue #46 with either the
@@ -7945,11 +7945,10 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - log-grade / lumber-grade outputs
         - a QMD-quality revisit using better diameter signals where available
     - Immediate next implementation edge:
-      - inspect the rebuilt K3Z BTC artifacts (`03_input`, `04_output`,
-        `tipsy_curves_tsak3z.csv`, bundle tables, and plots), then update
-        operator/docs/contracts so BTC CSV can be described as the default
-        supported BatchTIPSY seam and the old DAT/OUT wording can be retired
-        from user-facing guidance.
+      - run the full validation set after the BTC-first docs/contract sweep,
+        then post the final issue `#46` closeout comment, open PRs, and land
+        the core unattended BTC cutover while keeping richer indicator banks
+        and installation deep-dive work deferred to follow-on tasks.
     - Guardrails:
       - the intended supported workflow is now BTC CSV in / BTC CSV out, not
         the old DAT/OUT seam;

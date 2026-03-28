@@ -15,8 +15,8 @@ this is the first module to read. In practice it owns:
 
 - Stage 00 subprocess execution through the normalized
   :class:`femic.pipeline.io.PipelineRunConfig` contract
-- post-TIPSY orchestration that reuses cached 01a artifacts plus manual
-  BatchTIPSY output to rebuild bundle tables
+- post-TIPSY orchestration that reuses cached 01a artifacts plus returned
+  BTC/TIPSY output to rebuild bundle tables
 - packaged legacy-script bundle resolution for repo-root and installed-package
   contexts
 - temporary env and working-directory overrides around legacy execution
@@ -61,7 +61,7 @@ The most common high-level use is to let the CLI drive the subprocess path:
 .. code-block:: bash
 
    femic run --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --run-id k3z_docs_example
-   femic tsa post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_docs_example
+   femic tsa btc-post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_docs_example
 
 When calling directly from Python, the manifest-wrapped post-TIPSY path is the
 safer maintenance seam:
@@ -88,7 +88,7 @@ legacy execution assets:
    payload
 2. :func:`run_data_prep` launches the packaged legacy Stage 00 workflow with
    that normalized execution plan and writes its manifest
-3. Stage 01a outputs and manual BatchTIPSY output accumulate under the active
+3. Stage 01a outputs and returned BTC/TIPSY output accumulate under the active
    data root
 4. :func:`run_post_tipsy_bundle` or
    :func:`run_post_tipsy_bundle_with_manifest` reload those cached artifacts,
@@ -134,7 +134,7 @@ The most important contracts in this module are:
   :func:`femic.workflows.legacy_resources.resolve_legacy_script_bundle`
 - post-TIPSY rebuilds require cached ``vdyp_prep-tsa*.pkl`` and
   ``vdyp_curves_smooth-tsa*.feather`` inputs for every selected TSA
-- the post-TIPSY path expects manual BatchTIPSY outputs under the active data
+- the post-TIPSY path expects returned BTC/TIPSY outputs under the active data
   root through :mod:`femic.pipeline.legacy_runtime` configuration
 - bundle rebuild outputs are written into the resolved ``model_input_bundle``
   directory through :mod:`femic.pipeline.bundle`
@@ -149,8 +149,9 @@ Cached Post-TIPSY Rebuild Flow
 ------------------------------
 
 The post-TIPSY path is the main behavior in this module that is easy to miss.
-It is designed for the workflow where Stage 01a has already completed, manual
-BatchTIPSY has returned ``04_output-tsa*.out``, and FEMIC needs to rebuild the
+It is designed for the workflow where Stage 01a has already completed,
+unattended BTC or legacy manual BatchTIPSY has returned output, and FEMIC
+needs to rebuild the
 downstream bundle tables without rerunning the whole pipeline.
 
 That flow:

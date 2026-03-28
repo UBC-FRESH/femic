@@ -1,21 +1,24 @@
 ``femic.pipeline.tipsy`` Module
 ===============================
 
-The :mod:`femic.pipeline.tipsy` module owns FEMIC's BatchTIPSY handoff seam. It
-translates smoothed VDYP outputs into per-AU TIPSY parameter tables, writes the
-canonical fixed-width ``02_input-*.dat`` handoff and its XLSX mirror, and
-validates whether a returned ``04_output-*.out`` is still safe to reuse during
-Stage 01b.
+The :mod:`femic.pipeline.tipsy` module owns FEMIC's BTC/BatchTIPSY handoff
+seam. It translates smoothed VDYP outputs into per-AU TIPSY parameter tables,
+writes the canonical ``03_input-*.csv`` handoff plus workbook mirrors, manages
+BTC report templates and unattended ``/TSR`` execution, and validates or parses
+returned BTC/TIPSY outputs during Stage 01b.
 
-If you are debugging why FEMIC generated the wrong TIPSY input rows, why a DAT
-export no longer matches the expected BatchTIPSY column layout, or why Stage 01b
-is refusing to accept an existing ``04_output`` file, this is the first module
-to read. In practice it owns:
+If you are debugging why FEMIC generated the wrong BTC input rows, why a report
+template or unattended BTC run produced the wrong output, or why Stage 01b is
+refusing to accept an existing returned file, this is the first module to read.
+In practice it owns:
 
-- the fixed-width DAT schema and rendering/validation rules
+- the BTC ``MSYT.csv`` input schema and writer
 - candidate evaluation and AU/SI selection for TIPSY parameter generation
-- writing the canonical DAT handoff plus the human-readable XLSX mirror
-- fingerprinting and freshness validation for returned BatchTIPSY output
+- writing the canonical BTC handoff plus the human-readable XLSX mirror
+- BTC custom report template parsing/building/writing
+- unattended BTC runner argument assembly and manifest support
+- fingerprinting and freshness validation for returned BTC or legacy BatchTIPSY
+  output
 - coherence-based stale-output acceptance logic for repeated dev/test reruns
 
 Start Here If...
@@ -23,14 +26,14 @@ Start Here If...
 
 Use this page first if you are trying to:
 
-- understand why ``02_input-*.dat`` is treated as canonical while
+- understand why ``03_input-*.csv`` is treated as canonical while
   ``tipsy_params_tsa*.xlsx`` is only a mirror
-- debug BatchTIPSY parse failures caused by field overflow or misaligned fixed
-  columns
+- debug BTC parse failures caused by input-schema mismatch or unsafe report
+  templates
 - inspect why a stratum/SI candidate was excluded from TIPSY parameter
   generation
-- trace why Stage 01b accepted or rejected an older ``04_output-*.out`` file
-- understand how ``managed_curve_mode=vdyp_transform`` changes the BatchTIPSY
+- trace why Stage 01b accepted or rejected an older returned BTC/TIPSY output
+- understand how ``managed_curve_mode=vdyp_transform`` changes the BTC/TIPSY
   boundary behavior
 
 Typical maintenance path:
@@ -38,36 +41,41 @@ Typical maintenance path:
 1. Start with :func:`build_tipsy_params_for_tsa` and
    :func:`evaluate_tipsy_candidate` if the issue is about which AU/SI/species
    combinations make it into the handoff.
-2. Move to :func:`build_tipsy_input_table` and
-   :func:`write_tipsy_input_exports` if the problem is about DAT/XLSX output.
-3. Read :func:`validate_tipsy_output_is_fresh`,
-   :func:`assess_tipsy_input_output_coherence`, and
-   :func:`write_tipsy_output_input_fingerprint` when the failure is visible at
-   the manual Stage 01a/01b boundary.
+2. Move to :func:`build_tipsy_input_table`,
+   :func:`write_tipsy_input_exports`, and :func:`write_btc_input_csv` if the
+   problem is about canonical handoff generation.
+3. Read :func:`run_btc_cli`, :func:`parse_btc_custom_report_template`, and
+   :func:`write_btc_custom_report_template` when the failure is visible at the
+   unattended BTC runtime boundary.
+4. Read :func:`validate_tipsy_output_is_fresh`,
+   :func:`assess_tipsy_input_output_coherence`,
+   :func:`write_tipsy_output_input_fingerprint`, and
+   :func:`parse_btc_tsr_transposed_output` when the failure is visible at
+   Stage 01b resume.
 
 Typical Usage
 -------------
 
-The common operator-facing pattern is to let Stage 01a write the canonical DAT
-handoff, run BatchTIPSY externally, and then validate the returned output
-before Stage 01b resumes:
+The common operator-facing pattern is to let Stage 01a write the canonical BTC
+handoff, run unattended BTC, and then parse the returned output before Stage
+01b resumes:
 
 .. code-block:: python
 
    from pathlib import Path
-   from femic.pipeline.tipsy import validate_tipsy_output_is_fresh
+   from femic.pipeline.tipsy import run_btc_cli
 
-   validate_tipsy_output_is_fresh(
-       tipsy_input_excel_path=Path("data/tipsy_params_tsa08.xlsx"),
-       tipsy_input_dat_path=Path("data/02_input-tsa08.dat"),
-       tipsy_output_path=Path("data/04_output-tsa08.out"),
-       allow_stale=False,
+   run_btc_cli(
+       input_csv_path=Path("data/03_input-tsa08.csv"),
+       output_path=Path("data/04_output-tsa08.csv"),
+       error_path=Path("data/04_error-tsa08.csv"),
    )
 
 How This Fits Into The Pipeline
 -------------------------------
 
-This module owns the manual BatchTIPSY boundary described in:
+This module owns the default unattended BTC seam plus the remaining legacy
+BatchTIPSY compatibility boundary described in:
 
 - :doc:`../../guides/stage-01a-vdyp-tipsy-input`
 - :doc:`../../guides/stage-01b-post-tipsy`
@@ -75,13 +83,15 @@ This module owns the manual BatchTIPSY boundary described in:
 At a high level, the owning sequence is:
 
 1. Stage 01a selects eligible AU/SI candidates and builds TIPSY parameter rows
-2. FEMIC writes ``02_input-*.dat`` and ``tipsy_params_tsa*.xlsx``
-3. BatchTIPSY runs manually outside FEMIC and returns ``04_output-*.out``
-4. Stage 01b validates that output against the current canonical DAT handoff
+2. FEMIC writes ``03_input-*.csv`` and ``tipsy_params_tsa*.xlsx``
+3. BTC runs unattended under FEMIC and returns ``04_output-*.csv`` /
+   ``04_error-*.csv``
+4. Stage 01b validates/parses that output against the current canonical BTC
+   handoff
 
 That means this module is both a data-shaping layer and a workflow boundary
-guard. It does not run BatchTIPSY itself, but it defines the file contracts and
-freshness rules that make the manual GUI boundary auditable.
+guard. It now runs BTC directly, while still carrying the older DAT/OUT
+freshness rules as a compatibility seam.
 
 Key Entry Surfaces
 ------------------
@@ -95,20 +105,28 @@ The highest-value entrypoints in this module are:
 - :func:`build_tipsy_input_table`
   Turn per-AU parameter payloads into the tabular export surface.
 - :func:`write_tipsy_input_exports`
-  Write the canonical DAT handoff and workbook mirror for one TSA.
+  Write the canonical BTC handoff and workbook mirror for one TSA.
+- :func:`write_btc_input_csv`
+  Write the canonical ``MSYT.csv``-style BTC input file for one TSA.
+- :func:`run_btc_cli`
+  Launch unattended ``TIPSYbtc.exe /TSR`` against a canonical BTC handoff.
 - :func:`validate_tipsy_output_is_fresh`
-  Enforce the Stage 01b freshness guard against the canonical input DAT.
+  Enforce the Stage 01b freshness guard against the canonical input seam.
 - :func:`assess_tipsy_input_output_coherence`
   Decide whether an older output still looks structurally coherent with the
   current input workbook.
 - :func:`write_tipsy_output_input_fingerprint`
-  Persist the DAT SHA256 sidecar paired with an accepted output file.
+  Persist the canonical input SHA256 sidecar paired with an accepted output
+  file.
 - :func:`parse_btc_custom_report_template`
   Read an existing BTC ``.rpt`` custom report into a structured template.
 - :func:`build_btc_custom_report_template`
   Build a curated BTC report template from a preset or an existing template.
 - :func:`write_btc_custom_report_template`
   Write a BTC ``.rpt`` report file back to disk.
+- :func:`parse_btc_tsr_transposed_output`
+  Parse the vetted unattended ``/TSR`` transposed CSV output back into FEMIC
+  managed-curve rows.
 
 BTC Report Template Support
 ---------------------------
@@ -146,15 +164,15 @@ Canonical Artifacts And Contracts
 
 The most important operator/runtime contracts in this module are:
 
-- ``02_input-*.dat`` is the canonical BatchTIPSY input artifact
+- ``03_input-*.csv`` is the canonical BTC/BatchTIPSY input artifact
 - ``tipsy_params_tsa*.xlsx`` is a human-readable mirror of the same content,
   not the authoritative freshness source
-- ``04_output-*.out`` must match the current DAT handoff or pass the coherence
-  policy before Stage 01b should continue
-- DAT rows must match the fixed-width schema encoded by
-  ``DEFAULT_TIPSY_BATCH_COLUMNS_1BASED`` and the derived row/header offsets
-- when a returned output is accepted, FEMIC can store a DAT SHA256 sidecar so
-  later reruns know which exact handoff produced that output
+- ``04_output-*.csv`` / ``04_error-*.csv`` are the default returned BTC
+  artifacts for Stage 01b
+- legacy ``02_input-*.dat`` / ``04_output-*.out`` remain supported only for
+  compatibility with older manual BatchTIPSY workflows
+- when a returned output is accepted, FEMIC can store an input SHA256 sidecar
+  so later reruns know which exact handoff produced that output
 
 These rules are why this module is so sensitive: a seemingly small field-width
 change or a misunderstood stale-output policy can silently distort downstream
@@ -166,9 +184,10 @@ Freshness And Coherence Policy
 The key freshness behavior in this module is:
 
 - if ``allow_stale`` is enabled, the hard freshness guard is bypassed entirely
-- otherwise FEMIC prefers DAT-based validation over workbook timestamp checks
-- if a fingerprint sidecar exists and its stored DAT SHA256 differs from the
-  current DAT SHA256, Stage 01b fails fast
+- otherwise FEMIC prefers canonical-input-based validation over workbook
+  timestamp checks
+- if a fingerprint sidecar exists and its stored canonical input SHA256 differs
+  from the current canonical input SHA256, Stage 01b fails fast
 - if output timestamps are older than the current canonical input, FEMIC now
   performs a structural coherence check using AU/table coverage before deciding
   whether to stop
@@ -187,22 +206,22 @@ Failure Seams To Watch
 
 The common failure boundaries in this module are:
 
-- DAT layout regressions
-  field overflow, wrong alignment, or wrong slice widths can make BatchTIPSY
-  reject the handoff or parse the wrong values silently
+- BTC handoff/report regressions
+  schema drift, unsafe report columns, or report-template mismatches can make
+  BTC reject the handoff or crash during batch processing
 - candidate exclusion surprises
   low-volume, low-SI, excluded-leading-species, or no-species-candidate paths
   can remove rows operators expected to see in the handoff
 - stale output confusion
   the most common Stage 01b operator error is reusing an old ``04_output`` file
-  after the canonical ``02_input`` content changed materially
+  after the canonical input content changed materially
 - coherence false assumptions
   timestamp mismatch does not always mean the output is invalid; this module
   explicitly distinguishes structurally coherent reruns from real stale-output
   drift
 - workbook-only reasoning
   code or docs that treat the XLSX mirror as canonical will eventually disagree
-  with Stage 01b's DAT-first logic
+  with Stage 01b's canonical-input-first logic
 
 Cross-References
 ----------------

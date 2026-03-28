@@ -17,8 +17,9 @@ External Runtime Boundaries
    * - Runtime seam
      - Contract
    * - BatchTIPSY
-     - Manual GUI/runtime boundary. FEMIC writes the canonical DAT handoff,
-       then resumes only after the returned ``04_output-*.out`` is available.
+     - Default unattended BTC runtime boundary. FEMIC writes the canonical
+       ``03_input-*.csv`` handoff, runs ``TIPSYbtc.exe /TSR`` on Windows, and
+       resumes from returned ``04_output-*.csv`` / ``04_error-*.csv`` files.
    * - Patchworks
      - Proprietary runtime boundary. FEMIC can export packages, run preflight,
        and launch commands, but users must supply the local Patchworks install,
@@ -36,19 +37,18 @@ Recovery Workflows
 When a run stops at a known boundary, prefer the narrow restart path instead of
 rerunning the entire pipeline.
 
-After Stage 01a / before BatchTIPSY:
+After Stage 01a / before BTC:
 
-1. confirm ``02_input-*.dat`` exists and is the intended handoff payload
-2. run BatchTIPSY manually
-3. return ``04_output-*.out`` to the instance ``data/`` directory
-4. resume with ``femic tsa post-tipsy ...``
+1. confirm ``03_input-*.csv`` exists and is the intended handoff payload
+2. run ``femic tsa btc-post-tipsy ...`` to launch unattended BTC and resume
+3. inspect ``04_output-*.csv`` / ``04_error-*.csv`` if the run fails
 
-After BatchTIPSY output refresh:
+After BTC output refresh:
 
 .. code-block:: powershell
 
    $env:FEMIC_EXTERNAL_DATA_ROOT="$PWD\external\femic-public-data\data"
-   python -m femic tsa post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_resume
+   python -m femic tsa btc-post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_resume
 
 Before Patchworks runtime launch:
 
@@ -73,7 +73,7 @@ If Something Looks Wrong
 
 - Wrong files or configs resolved:
   check :doc:`instance-and-data-roots`.
-- BatchTIPSY resume blocked unexpectedly:
+- BTC / BatchTIPSY resume blocked unexpectedly:
   check :doc:`stage-boundaries-and-canonical-artifacts`.
 - Patchworks launch fails after a correct export:
   check Patchworks runtime prerequisites and host mode before changing export

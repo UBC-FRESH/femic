@@ -250,7 +250,9 @@ def _parse_btc_column_line(raw_line: str) -> BTCCustomReportColumn:
     )
 
 
-def parse_btc_custom_report_template(template_path: str | Path) -> BTCCustomReportTemplate:
+def parse_btc_custom_report_template(
+    template_path: str | Path,
+) -> BTCCustomReportTemplate:
     """Parse a BTC ``.rpt`` custom report file into a structured template."""
     path = Path(template_path)
     text = path.read_text(encoding="utf-8")
@@ -287,7 +289,8 @@ def parse_btc_custom_report_template(template_path: str | Path) -> BTCCustomRepo
         name=report_values["Name"],
         icon_id=int(report_values.get("IconID", 13)),
         identifier=report_values.get("Identifier", "FirstIDcolumn"),
-        identifier_integer=report_values.get("IdentifierInteger", "1") not in {"0", "false"},
+        identifier_integer=report_values.get("IdentifierInteger", "1")
+        not in {"0", "false"},
         report_type=report_values.get("Type", "databaseByStand"),
         output_format=report_values.get("OutputFormat", "TAB"),
         border=int(report_values.get("Border", 500)),
@@ -330,8 +333,12 @@ def build_btc_custom_report_template(
         report_type=report_type or base.report_type,
         output_format=output_format or base.output_format,
         border=border if border is not None else base.border,
-        header_height=header_height if header_height is not None else base.header_height,
-        footer_height=footer_height if footer_height is not None else base.footer_height,
+        header_height=header_height
+        if header_height is not None
+        else base.header_height,
+        footer_height=footer_height
+        if footer_height is not None
+        else base.footer_height,
         header_flags=merged_header_flags,
         columns=list(columns if columns is not None else base.columns),
     )
@@ -478,7 +485,9 @@ def build_btc_cli_command(
 
 def _write_btc_manifest(path: Path, payload: Mapping[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(dict(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(dict(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
 def prepare_btc_runtime(
@@ -517,7 +526,9 @@ def prepare_btc_runtime(
             install_root=effective_install_root
         )
     elif report_template is not None:
-        report_target_path = effective_install_root / _BTC_REPORT_FILENAME_BY_MODE[normalized_mode]
+        report_target_path = (
+            effective_install_root / _BTC_REPORT_FILENAME_BY_MODE[normalized_mode]
+        )
         if isinstance(report_template, BTCCustomReportTemplate):
             write_btc_custom_report_template(
                 output_path=report_target_path,
@@ -570,8 +581,10 @@ def run_btc_cli(
         if scratch_root is not None
         else (resolved_log_dir / f"btc_scratch-{effective_run_id}").resolve()
     )
-    should_copy_install = bool(copy_install) if copy_install is not None else (
-        report_template is not None or report_preset_name is not None
+    should_copy_install = (
+        bool(copy_install)
+        if copy_install is not None
+        else (report_template is not None or report_preset_name is not None)
     )
     prep = prepare_btc_runtime(
         executable_path=discovery.executable_path,
@@ -1128,11 +1141,12 @@ def parse_btc_tsr_transposed_output(
     df = pd_module.read_csv(output_path)
     if "feature_id" not in df.columns:
         raise ValueError(
-            "BTC TSR output is missing required feature_id column: "
-            f"{output_path}"
+            f"BTC TSR output is missing required feature_id column: {output_path}"
         )
 
-    age_pattern = re.compile(r"^(?P<prefix>MVcon|MVdec|HTcon|HTdec|gVol|CC)_(?P<age>\d+)$")
+    age_pattern = re.compile(
+        r"^(?P<prefix>MVcon|MVdec|HTcon|HTdec|gVol|CC)_(?P<age>\d+)$"
+    )
     ages: set[int] = set()
     for column in df.columns:
         match = age_pattern.match(str(column))
@@ -1140,8 +1154,7 @@ def parse_btc_tsr_transposed_output(
             ages.add(int(match.group("age")))
     if not ages:
         raise ValueError(
-            "BTC TSR output has no recognizable transposed age columns: "
-            f"{output_path}"
+            f"BTC TSR output has no recognizable transposed age columns: {output_path}"
         )
 
     rows: list[dict[str, Any]] = []
@@ -1157,9 +1170,7 @@ def parse_btc_tsr_transposed_output(
             htdec = pd_module.to_numeric(record.get(f"HTdec_{age}"), errors="coerce")
             gross = pd_module.to_numeric(record.get(f"gVol_{age}"), errors="coerce")
             crown_cover = pd_module.to_numeric(record.get(f"CC_{age}"), errors="coerce")
-            yield_total = float(
-                pd_module.Series([mvcon, mvdec]).fillna(0.0).sum()
-            )
+            yield_total = float(pd_module.Series([mvcon, mvdec]).fillna(0.0).sum())
             height_max = pd_module.Series([htcon, htdec]).max(skipna=True)
             rows.append(
                 {
@@ -1177,9 +1188,7 @@ def parse_btc_tsr_transposed_output(
                         float(gross) if gross == gross else np.nan  # NaN guard
                     ),
                     "CrownCover": (
-                        float(crown_cover)
-                        if crown_cover == crown_cover
-                        else np.nan
+                        float(crown_cover) if crown_cover == crown_cover else np.nan
                     ),
                 }
             )

@@ -22,7 +22,7 @@ Start Here If...
 
 Use this page first if you are trying to:
 
-- debug a Stage 01a failure before the manual BatchTIPSY boundary
+- debug a Stage 01a failure before the BTC/BatchTIPSY boundary
 - understand why a host cannot find ``VDYP7Console.exe``, ``vdyp_params-landp``,
   ``wine``, or the local ``vdyp_io/VDYP_CFG`` runtime assets
 - trace how FEMIC maps sample-table feature IDs to VDYP polygon output tables

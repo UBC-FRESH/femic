@@ -132,6 +132,35 @@ Current planning implication:
 - richer BTC outputs should be treated as an optional enhancement tier, not as
   a blocker for landing the first automated BTC pipeline slice
 
+## Current Closeout Scope
+
+The bird currently being landed is the **core unattended BTC cutover**, not
+the entire universe of richer BTC indicators.
+
+What is in scope for closeout:
+
+- canonical Stage 01a `03_input-tsaXX.csv` generation
+- unattended `TIPSYbtc.exe /TSR` execution under FEMIC
+- returned `04_output-tsaXX.csv` / `04_error-tsaXX.csv`
+- Stage 01b/post-TIPSY resume from the returned BTC CSV
+- real K3Z downstream proof
+- user/operator/contract docs that now describe BTC CSV as the default seam
+
+What is explicitly out of scope for this closeout:
+
+- richer optional indicator banks tracked separately on:
+  - issue `#47`
+  - issue `#48`
+  - issue `#49`
+- the full `C:\Program Files\TIPSY 4.7\` installation audit / CHM extraction
+- regime-file / TIPSY-CBM / FANSIER linkage work
+
+So the intended closure shape is:
+
+- close issue `#46` for the core unattended BTC seam
+- keep the richer-bank and deeper reverse-engineering work on their own
+  follow-on trackers
+
 ## Report-Coupled `/TSR` Breakthrough
 
 The recent copied-install probes strongly suggest that `/TSR` is not a fixed

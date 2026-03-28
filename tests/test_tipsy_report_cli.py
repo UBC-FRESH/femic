@@ -121,7 +121,9 @@ def test_tsa_btc_post_tipsy_cli_uses_default_report_preset(
 ) -> None:
     data_root = tmp_path / "data"
     data_root.mkdir()
-    (data_root / "03_input-tsa29.csv").write_text("feature_id\n1000\n", encoding="utf-8")
+    (data_root / "03_input-tsa29.csv").write_text(
+        "feature_id\n1000\n", encoding="utf-8"
+    )
 
     captured: dict[str, object] = {}
 
@@ -153,7 +155,9 @@ def test_tsa_btc_post_tipsy_cli_uses_default_report_preset(
             tipsy_sppcomp_paths=[data_root / "tipsy_sppcomp_tsa29.csv"],
             au_table_path=data_root / "model_input_bundle" / "au_table.csv",
             curve_table_path=data_root / "model_input_bundle" / "curve_table.csv",
-            curve_points_table_path=data_root / "model_input_bundle" / "curve_points_table.csv",
+            curve_points_table_path=data_root
+            / "model_input_bundle"
+            / "curve_points_table.csv",
         )
         post_tipsy = PostTipsyBundleRunResult(
             manifest_path=tmp_path / "logs" / "run_manifest.json",

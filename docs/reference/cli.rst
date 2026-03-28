@@ -128,6 +128,7 @@ Subcommands
 
 - ``run``: ``python -m femic tsa run [OPTIONS]``
 - ``post-tipsy``: ``python -m femic tsa post-tipsy [OPTIONS]``
+- ``btc-post-tipsy``: ``python -m femic tsa btc-post-tipsy [OPTIONS]``
 
 ``tsa run`` options
 
@@ -147,6 +148,18 @@ Subcommands
 - ``--run-config PATH`` (optional; load TSA and managed-curve mode defaults)
 - ``--instance-root PATH``
 
+``tsa btc-post-tipsy`` options
+
+- ``--tsa TEXT`` (repeatable, required)
+- ``--verbose`` / ``-v``
+- ``--run-id TEXT``
+- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--run-config PATH`` (optional; load TSA and managed-curve mode defaults)
+- ``--btc-exe PATH`` (optional explicit ``TIPSYbtc.exe`` override)
+- ``--scratch-dir PATH`` (optional scratch root for copied BTC installs and staged run files)
+- ``--report-preset TEXT`` (default: ``tsr-unattended-default``)
+- ``--instance-root PATH``
+
 TIPSY
 -----
 
@@ -157,11 +170,36 @@ TIPSY
 Subcommands
 
 - ``validate``: ``python -m femic tipsy validate [OPTIONS]``
+- ``write-btc-report-template``: ``python -m femic tipsy write-btc-report-template [OPTIONS]``
+- ``run-btc``: ``python -m femic tipsy run-btc [OPTIONS]``
 
 ``tipsy validate`` options
 
 - ``--config-dir PATH`` (default: ``config/tipsy``)
 - ``--tsa TEXT`` (repeatable)
+- ``--instance-root PATH``
+
+``tipsy write-btc-report-template`` options
+
+- ``--preset TEXT`` (required; built-in report-template preset)
+- ``OUTPUT`` argument (required)
+- ``--source-rpt PATH`` (optional existing ``.rpt`` template to clone/adapt)
+- ``--column TEXT`` (repeatable additional BTC output column token)
+- ``--instance-root PATH``
+
+``tipsy run-btc`` options
+
+- ``INPUT_CSV`` argument (required)
+- ``--output-csv PATH`` (optional; defaults beside input)
+- ``--error-csv PATH`` (optional; defaults beside input)
+- ``--btc-exe PATH`` (optional explicit ``TIPSYbtc.exe`` override)
+- ``--mode TEXT`` (default: ``TSR``)
+- ``--report-template PATH`` (optional vetted ``TimberSupply.rpt`` override)
+- ``--report-preset TEXT`` (default: ``tsr-unattended-default`` for ``TSR``)
+- ``--copy-install`` / ``--use-installed-btc``
+- ``--scratch-dir PATH`` (optional writable scratch directory)
+- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--run-id TEXT``
 - ``--instance-root PATH``
 
 Export

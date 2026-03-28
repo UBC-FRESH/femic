@@ -366,7 +366,9 @@ def test_run_post_tipsy_bundle_passes_custom_output_template_to_01b(
         index=False,
         sheet_name="TIPSY_inputTBL",
     )
-    (data_root / f"04_output-tsa{tsa}.csv").write_text("placeholder\n", encoding="utf-8")
+    (data_root / f"04_output-tsa{tsa}.csv").write_text(
+        "placeholder\n", encoding="utf-8"
+    )
 
     seen_template: dict[str, str] = {}
 
@@ -419,7 +421,9 @@ def test_run_btc_and_post_tipsy_bundle_with_manifest_orchestrates_paths(
 ) -> None:
     data_root = tmp_path / "data"
     data_root.mkdir(parents=True, exist_ok=True)
-    (data_root / "03_input-tsa29.csv").write_text("feature_id\n1000\n", encoding="utf-8")
+    (data_root / "03_input-tsa29.csv").write_text(
+        "feature_id\n1000\n", encoding="utf-8"
+    )
 
     btc_calls: list[dict[str, object]] = []
     post_tipsy_calls: list[dict[str, object]] = []
@@ -459,7 +463,9 @@ def test_run_btc_and_post_tipsy_bundle_with_manifest_orchestrates_paths(
             tipsy_sppcomp_paths=[data_root / "tipsy_sppcomp_tsa29.csv"],
             au_table_path=data_root / "model_input_bundle" / "au_table.csv",
             curve_table_path=data_root / "model_input_bundle" / "curve_table.csv",
-            curve_points_table_path=data_root / "model_input_bundle" / "curve_points_table.csv",
+            curve_points_table_path=data_root
+            / "model_input_bundle"
+            / "curve_points_table.csv",
         )
         return PostTipsyBundleRunResult(
             manifest_path=tmp_path / "logs" / "run_manifest.json",
@@ -492,4 +498,7 @@ def test_run_btc_and_post_tipsy_bundle_with_manifest_orchestrates_paths(
     assert btc_calls[0]["copy_install"] is True
     assert Path(btc_calls[0]["scratch_root"]) == tmp_path / "scratch" / "tsa29"
     assert len(post_tipsy_calls) == 1
-    assert post_tipsy_calls[0]["tipsy_output_filename_template"] == "04_output-tsa{tsa}.csv"
+    assert (
+        post_tipsy_calls[0]["tipsy_output_filename_template"]
+        == "04_output-tsa{tsa}.csv"
+    )
