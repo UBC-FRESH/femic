@@ -7680,3 +7680,39 @@
       non-null in the runtime-facing CSV surfaces;
     - user also confirmed live Patchworks launches of `base.pin` and
       `ctfert_l15h5.pin` show QMD accounts back online.
+## 2026-03-28 - Phase 48 stand-table bank ratchet plan tightened
+
+- Reframed issue `#47` around a strict one-column-at-a-time unattended `/TSR`
+  ratchet from the current known-good template instead of large speculative
+  report-template jumps.
+- Added the parallel seam-detection mission: every failing BTC report token
+  should now be recorded as a clue about the hidden `/TSR` compatibility
+  pattern, not just as a rejection.
+- Updated `ROADMAP.md` and `planning/batchtipsy_automation_approach.md` to make
+  the two-track method explicit before starting the next stand-table bank probe
+  loop.
+
+## 2026-03-28 - Phase 48 unattended BTC stand-table probe now leaves a compatibility ledger
+
+- Extended `femic tipsy probe-btc-columns` so each probe result now records:
+  - output/error artifact existence,
+  - BTC modal auto-close behavior,
+  - a failure classification,
+  - and clue hits from stock reports, `OutputColumns.txt`, and BTC Tcl files.
+- Added an always-written machine-readable compatibility ledger for issue `#47`
+  probe runs.
+- Proved the first unattended seven-column stand-table batch can now run
+  without any user dialog-clicking.
+- First batch result:
+  - `MAI`
+  - `BasalArea:000`
+  - `DBHg:000`
+  - `SPH:000`
+  - `StemCount000`
+  - `StemCount125`
+  - `StemCount175`
+  all failed cleanly in the current transposed unattended `/TSR` seam with:
+  - exit code `1`,
+  - no output CSV,
+  - FEMIC auto-closing the BTC/.NET modal path,
+  - and failure classification `missing_output_exit_1`.

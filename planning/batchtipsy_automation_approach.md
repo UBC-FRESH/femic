@@ -715,6 +715,77 @@ Current planning implication:
 - FEMIC should not assume that simply appending richer stand-table fields to the
   current unattended `TimberSupply.rpt` mashup will work
 
+Current working method for issue `#47`:
+
+- keep unattended `/TSR` as the priority path
+- start from the current known-good unattended transposed template
+- add one new stand-table indicator column at a time
+- if a probe passes, keep that column in the candidate bank
+- if a probe crashes, immediately revert that one column and record the failure
+  as a seam-detection clue
+- build the first bank with two outputs in parallel:
+  - the largest proven-safe unattended template subset
+  - an evidence map explaining what seems to separate `/TSR`-compatible columns
+    from `/TSR`-incompatible ones
+- use FEMIC-managed BTC modal cleanup as part of the normal probe loop so
+  failed probes do not leave a human blocked behind stacked `.NET` dialogs
+- write a machine-readable compatibility ledger after every probe so the seam
+  evidence survives beyond console output
+
+That second output is important. Every failing column should now trigger a
+high-priority parallel clue-collection step, including:
+
+- exact report token syntax
+- whether the token appears in stock `Yield.rpt`, `Stand.rpt`, or SQL-style
+  templates
+- whether the token is utilization-qualified (`:000`, `:125`, `:Auto`)
+- whether it looks like a stand-table, crop-tree, or aggregated stand metric
+- whether a similar field is available through a different report family
+- whether the failure pattern suggests a structural rule that could later
+  support a workaround or hack
+
+## First Unattended Ratchet Batch with Auto-Close
+
+The first full seven-column unattended stand-table batch now completed under
+FEMIC control with no human dialog-clicking required.
+
+Candidate batch:
+
+- `MAI`
+- `BasalArea:000`
+- `DBHg:000`
+- `SPH:000`
+- `StemCount000`
+- `StemCount125`
+- `StemCount175`
+
+Observed result:
+
+- every candidate failed in the current transposed unattended `/TSR` seam
+- every failure was normalized into the same machine-readable pattern:
+  - BTC exit code `1`
+  - no output CSV produced
+  - BTC/.NET modal dialog auto-closed by FEMIC
+  - failure classified as `missing_output_exit_1`
+- the compatibility ledger was written to:
+  - `tmp/btc_probe_sweep/first_batch/compatibility.json`
+
+Current evidence pattern:
+
+- `MAI`, `BasalArea:000`, `DBHg:000`, and `SPH:000` all appear in stock
+  `Yield.rpt`, but still fail in the unattended transposed `/TSR` seam
+- `StemCount000/125/175` appear in `OutputColumns.txt` and BTC Tcl metadata,
+  but do not appear in stock `Yield.rpt`, and they also fail in the same seam
+
+Current planning implication:
+
+- the incompatibility boundary is likely not just about token spelling; it is
+  probably tied to the report family/shape of the transposed unattended `/TSR`
+  template itself
+- the next probes should continue one column at a time, but with higher
+  attention to structural families and adjacent variants rather than assuming
+  any stock `Yield.rpt` token is safe in unattended `/TSR`
+
 ## Post-Cutover K3Z QMD Regression and Repair
 
 The first core unattended BTC cutover landed with a real K3Z regression:

@@ -7721,8 +7721,28 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - first unattended `/TSR` probes with `DBHg`, `SPH`,
         `StemCount000/125/175`, and crop-tree stand-table fields all failed in
         `BatchProcess()` with stacked BTC `.NET` crash dialogs;
-      - treat this task as exploratory seam-finding work, not as a near-trivial
-        extension of the current safe unattended default bank.
+      - continue from the current known-good unattended `/TSR` template and
+        ratchet forward one new column at a time so each failure has a single,
+        obvious cause;
+      - BTC modal/.NET failure dialogs are now auto-closed by FEMIC during
+        probe runs, so unattended sweeps no longer require a human click-loop;
+      - the first full seven-column ratchet batch
+        (`MAI`, `BasalArea:000`, `DBHg:000`, `SPH:000`,
+        `StemCount000/125/175`) completed unattended and every candidate
+        failed cleanly with:
+        - no output CSV produced,
+        - BTC exit code `1`,
+        - auto-closed BTC/.NET modal dialogs,
+        - a machine-readable compatibility ledger written to the probe scratch
+          directory;
+      - treat this as a two-track task:
+        - forward ratchet: grow the maximal safe unattended stand-table bank
+          incrementally and wire it behind a FEMIC switch;
+        - seam detection: for every failing column, collect clues that might
+          explain why some report tokens are `/TSR`-compatible and others are
+          not, so later hacks/workarounds have better evidence;
+      - do not touch the active student-facing K3Z variants while proving the
+        first bank; use a dedicated `intensive_*` proving-ground subvariant.
       Track on GitHub issue #47.
     - [ ] P48.2d2 Add a log-grade / lumber-grade output bank from BTC bindings
       and wire those behind a FEMIC-level optional activation switch, again

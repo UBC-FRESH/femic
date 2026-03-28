@@ -6,7 +6,7 @@ from typer.testing import CliRunner
 
 from femic.cli import main as cli_main
 from femic.cli.main import app
-from femic.pipeline.tipsy import BTCRunResult
+from femic.pipeline.tipsy import BTCRunResult, BTCColumnProbeResult
 from femic.workflows.legacy import (
     BTCPostTipsyRunResult,
     PostTipsyBundleResult,
@@ -114,6 +114,63 @@ def test_tipsy_run_btc_cli_preserves_preset_name(monkeypatch, tmp_path: Path) ->
     assert captured["report_template"] is None
     assert captured["report_preset_name"] == "tsr-unattended-default"
     assert captured["copy_install"] is True
+
+
+def test_tipsy_probe_btc_columns_cli_writes_summary(monkeypatch, tmp_path: Path) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    summary = tmp_path / "summary.json"
+    captured: dict[str, object] = {}
+
+    def fake_probe_btc_report_columns(**kwargs: object):
+        captured.update(kwargs)
+        template = cli_main.btc_report_template_preset("tsr-unattended-default")
+        return (
+            [
+                BTCColumnProbeResult(
+                    candidate_token="VolumeGross",
+                    status="accepted",
+                    accepted_column_tokens=("Year", "VolumeGross"),
+                    run_id="probe_01_VolumeGross",
+                    exit_code=0,
+                    manifest_path=tmp_path / "probe.json",
+                    output_csv_path=tmp_path / "out.csv",
+                    error_csv_path=tmp_path / "err.csv",
+                ),
+                BTCColumnProbeResult(
+                    candidate_token="SPH:000",
+                    status="failed",
+                    accepted_column_tokens=("Year", "VolumeGross"),
+                    run_id="probe_02_SPH_000",
+                    error_message="BTC crashed in BatchProcess()",
+                ),
+            ],
+            template,
+        )
+
+    monkeypatch.setattr(cli_main, "probe_btc_report_columns", fake_probe_btc_report_columns)
+
+    result = runner.invoke(
+        app,
+        [
+            "tipsy",
+            "probe-btc-columns",
+            str(input_csv),
+            "--column",
+            "VolumeGross",
+            "--column",
+            "SPH:000",
+            "--summary-json",
+            str(summary),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["source_preset_name"] is None
+    assert captured["candidate_tokens"] == ["VolumeGross", "SPH:000"]
+    payload = cli_main.json.loads(summary.read_text(encoding="utf-8"))
+    assert payload["accepted_tokens"] == ["VolumeGross"]
+    assert payload["failed_tokens"] == ["SPH:000"]
 
 
 def test_tsa_btc_post_tipsy_cli_uses_default_report_preset(

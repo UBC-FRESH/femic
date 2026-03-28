@@ -7,6 +7,7 @@ import sys
 
 import pandas as pd
 import pytest
+import femic.pipeline.tipsy as tipsy_module
 
 from femic.pipeline.tipsy import (
     DEFAULT_BATCHTIPSY_EXE_ENV,
@@ -28,6 +29,7 @@ from femic.pipeline.tipsy import (
     evaluate_tipsy_candidate,
     parse_btc_custom_report_template,
     parse_btc_tsr_transposed_output,
+    probe_btc_report_columns,
     prepare_btc_runtime,
     resolve_btc_executable,
     run_btc_cli,
@@ -472,6 +474,160 @@ def test_run_btc_cli_supervised_writes_outputs_and_manifest(tmp_path: Path) -> N
     assert "feature_id,MVcon_0,gVol_0,CC_0" in result.output_csv_path.read_text(
         encoding="utf-8"
     )
+
+
+def test_run_btc_cli_windows_missing_output_raises_with_exit_code(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    fake_btc = tmp_path / "TIPSYbtc.exe"
+    fake_btc.write_text("stub", encoding="utf-8")
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: True)
+    monkeypatch.setattr(
+        tipsy_module,
+        "_run_windows_btc_with_dialog_cleanup",
+        lambda **kwargs: (7, "", "", {"close_attempted": False}),
+    )
+
+    with pytest.raises(RuntimeError, match=r"exit_code=7"):
+        run_btc_cli(
+            input_csv=input_csv,
+            mode="TSR",
+            executable_path=fake_btc,
+            scratch_root=tmp_path / "scratch",
+            log_dir=tmp_path / "logs",
+            run_id="btc_windows_missing_output",
+            env={},
+        )
+
+
+def test_probe_btc_report_columns_ratchets_forward(monkeypatch, tmp_path: Path) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    (install_root / "TIPSYbtc.exe").write_text("stub", encoding="utf-8")
+    (install_root / "Yield.rpt").write_text("SPH:000\n", encoding="utf-8")
+    (install_root / "OutputColumns.txt").write_text("SPH:000\n", encoding="utf-8")
+    seen_tokens: list[str] = []
+
+    def fake_run_btc_cli(**kwargs: object) -> BTCRunResult:
+        template = kwargs["report_template"]
+        assert template is not None
+        tokens = [column.token for column in template.columns]
+        seen_tokens.append(tokens[-1])
+        if tokens[-1] == "SPH:000":
+            raise RuntimeError("BTC crashed in BatchProcess()")
+        run_id = str(kwargs["run_id"])
+        return BTCRunResult(
+            run_id=run_id,
+            mode="TSR",
+            manifest_path=tmp_path / f"{run_id}.json",
+            stdout_log_path=tmp_path / f"{run_id}.stdout.log",
+            stderr_log_path=tmp_path / f"{run_id}.stderr.log",
+            output_csv_path=tmp_path / f"{run_id}_output.csv",
+            error_csv_path=tmp_path / f"{run_id}_error.csv",
+            executable_path=tmp_path / "TIPSYbtc.exe",
+            install_root=tmp_path / "btc_install",
+            working_dir=tmp_path / "work",
+            command=("btc.exe", "/TSR", "MSYT.csv"),
+            copied_install=True,
+            exit_code=0,
+            duration_sec=1.0,
+            report_template_path=tmp_path / "btc_install" / "TimberSupply.rpt",
+        )
+
+    monkeypatch.setattr("femic.pipeline.tipsy.run_btc_cli", fake_run_btc_cli)
+
+    results, final_template = probe_btc_report_columns(
+        input_csv=input_csv,
+        candidate_tokens=["VolumeGross", "SPH:000", "CC"],
+        executable_path=install_root / "TIPSYbtc.exe",
+        source_preset_name="tsr-unattended-default",
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id_prefix="probe",
+        compatibility_json=tmp_path / "compatibility.json",
+    )
+
+    assert [result.status for result in results] == ["accepted", "failed", "accepted"]
+    assert results[1].error_message == "BTC crashed in BatchProcess()"
+    final_tokens = [column.token for column in final_template.columns]
+    assert "VolumeGross" in final_tokens
+    assert "SPH:000" not in final_tokens
+    assert "CC" in final_tokens
+    assert seen_tokens == ["VolumeGross", "SPH:000", "CC"]
+    assert results[1].failure_classification is None
+    assert results[1].clues is not None
+    assert results[1].clues["present_in_yield_rpt"] is True
+    assert (tmp_path / "compatibility.json").is_file()
+
+
+def test_run_windows_btc_with_dialog_cleanup_force_stops_dialog_tree(
+    monkeypatch, tmp_path: Path
+) -> None:
+    class _FakeProc:
+        def __init__(self) -> None:
+            self.pid = 4321
+            self.returncode: int | None = None
+
+        def poll(self) -> int | None:
+            return self.returncode
+
+        def communicate(self, timeout: float | None = None) -> tuple[str, str]:
+            self.returncode = self.returncode if self.returncode is not None else -9
+            return ("", "")
+
+        def kill(self) -> None:
+            self.returncode = -9
+
+    fake_proc = _FakeProc()
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: True)
+    monkeypatch.setattr(
+        tipsy_module.subprocess,
+        "Popen",
+        lambda *args, **kwargs: fake_proc,
+    )
+    monkeypatch.setattr(
+        tipsy_module,
+        "_find_windows_btc_dialog_process_ids",
+        lambda **kwargs: {4321},
+    )
+    monkeypatch.setattr(
+        tipsy_module,
+        "_find_windows_process_tree_ids",
+        lambda **kwargs: {4321, 5000},
+    )
+    closed: list[int] = []
+    stopped: list[int] = []
+    monkeypatch.setattr(
+        tipsy_module,
+        "_close_windows_process_main_windows",
+        lambda pid: closed.append(pid) is None or 1,
+    )
+    monkeypatch.setattr(
+        tipsy_module,
+        "_force_stop_windows_process",
+        lambda pid: stopped.append(pid) is None or True,
+    )
+    monkeypatch.setattr(tipsy_module.time, "sleep", lambda _seconds: None)
+
+    exit_code, stdout_text, stderr_text, automation = (
+        tipsy_module._run_windows_btc_with_dialog_cleanup(
+            command=("btc.exe", "/TSR", "MSYT.csv"),
+            env={},
+            cwd=tmp_path,
+        )
+    )
+
+    assert exit_code == -9
+    assert stdout_text == ""
+    assert stderr_text == ""
+    assert automation["close_attempted"] is True
+    assert automation["matched_dialog_pids"] == [4321]
+    assert automation["closed_window_count"] == 1
+    assert stopped == [4321, 5000]
 
 
 def test_prepare_btc_runtime_copies_install_and_writes_report_template(

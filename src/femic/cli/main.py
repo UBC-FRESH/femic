@@ -84,6 +84,7 @@ from femic.pipeline.tipsy_config import (
     load_tipsy_tsa_config,
 )
 from femic.pipeline.tipsy import (
+    probe_btc_report_columns,
     BTCRunResult,
     BTCCustomReportColumn,
     BTCCustomReportTemplate,
@@ -2724,6 +2725,156 @@ def tipsy_run_btc(
     )
     console.print(f"error: {result.error_csv_path}")
     console.print(f"manifest: {result.manifest_path}")
+
+
+@tipsy_app.command("probe-btc-columns")
+def tipsy_probe_btc_columns(
+    input_csv: Path = typer.Argument(
+        ...,
+        help="BTC MSYT.csv-style input file to probe against.",
+    ),
+    column: list[str] = typer.Option(
+        ...,
+        "--column",
+        help="Candidate BTC report token to probe; repeat for multiple columns.",
+        show_default=False,
+    ),
+    source_rpt: Path | None = typer.Option(
+        None,
+        "--source-rpt",
+        help="Existing BTC .rpt template to ratchet forward from.",
+        show_default=False,
+    ),
+    preset: str | None = typer.Option(
+        None,
+        "--preset",
+        help="Built-in report preset to ratchet forward from.",
+        show_default=False,
+    ),
+    btc_exe: Path | None = typer.Option(
+        None,
+        "--btc-exe",
+        help="Explicit TIPSYbtc.exe path; otherwise use env/default discovery.",
+        show_default=False,
+    ),
+    scratch_dir: Path | None = typer.Option(
+        None,
+        "--scratch-dir",
+        help="Scratch directory root for staged probe installs.",
+        show_default=False,
+    ),
+    log_dir: Path = typer.Option(
+        Path("vdyp_io/logs"),
+        "--log-dir",
+        help="Directory for BTC probe manifests/logs.",
+        show_default=True,
+    ),
+    run_id_prefix: str = typer.Option(
+        "btc_probe",
+        "--run-id-prefix",
+        help="Prefix used for per-column probe run IDs.",
+        show_default=True,
+    ),
+    summary_json: Path | None = typer.Option(
+        None,
+        "--summary-json",
+        help="Optional JSON summary path for the probe ledger.",
+        show_default=False,
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Probe BTC report-column compatibility one token at a time."""
+    if source_rpt is not None and preset is not None:
+        raise typer.BadParameter("Use either --source-rpt or --preset, not both.")
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_input = instance_context.resolve_path(input_csv)
+    resolved_source_rpt = (
+        instance_context.resolve_path(source_rpt) if source_rpt is not None else None
+    )
+    resolved_btc_exe = (
+        instance_context.resolve_path(btc_exe) if btc_exe is not None else None
+    )
+    resolved_scratch = (
+        instance_context.resolve_path(scratch_dir) if scratch_dir is not None else None
+    )
+    resolved_log_dir = instance_context.resolve_path(log_dir)
+    resolved_summary_json = (
+        instance_context.resolve_path(summary_json)
+        if summary_json is not None
+        else None
+    )
+    results, final_template = probe_btc_report_columns(
+        input_csv=resolved_input,
+        candidate_tokens=column,
+        executable_path=resolved_btc_exe,
+        source_template=resolved_source_rpt,
+        source_preset_name=(preset if resolved_source_rpt is None else None),
+        copy_install=True,
+        scratch_root=resolved_scratch,
+        log_dir=resolved_log_dir,
+        run_id_prefix=run_id_prefix,
+    )
+    accepted = [result.candidate_token for result in results if result.status == "accepted"]
+    failed = [result for result in results if result.status != "accepted"]
+    for result in results:
+        if result.status == "accepted":
+            console.print(
+                "[green]accepted[/green] "
+                f"token={result.candidate_token} run_id={result.run_id}"
+            )
+        else:
+            console.print(
+                "[red]failed[/red] "
+                f"token={result.candidate_token} run_id={result.run_id} "
+                f"error={result.error_message}"
+            )
+    payload = {
+        "accepted_tokens": accepted,
+        "failed_tokens": [result.candidate_token for result in failed],
+        "results": [
+            {
+                "candidate_token": result.candidate_token,
+                "status": result.status,
+                "accepted_column_tokens": list(result.accepted_column_tokens),
+                "run_id": result.run_id,
+                "exit_code": result.exit_code,
+                "error_message": result.error_message,
+                "manifest_path": (
+                    str(result.manifest_path) if result.manifest_path is not None else None
+                ),
+                "output_csv_path": (
+                    str(result.output_csv_path)
+                    if result.output_csv_path is not None
+                    else None
+                ),
+                "error_csv_path": (
+                    str(result.error_csv_path) if result.error_csv_path is not None else None
+                ),
+                "output_created": result.output_created,
+                "error_created": result.error_created,
+                "dialog_auto_closed": result.dialog_auto_closed,
+                "dialog_close_attempted": result.dialog_close_attempted,
+                "failure_classification": result.failure_classification,
+                "report_context": {
+                    "report_type": result.report_type,
+                    "identifier_mode": result.identifier_mode,
+                    "output_format": result.output_format,
+                },
+                "clues": dict(result.clues or {}),
+            }
+            for result in results
+        ],
+        "final_template_name": final_template.name,
+        "final_template_columns": [column.token for column in final_template.columns],
+    }
+    if resolved_summary_json is not None:
+        resolved_summary_json.parent.mkdir(parents=True, exist_ok=True)
+        resolved_summary_json.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        console.print(f"summary: {resolved_summary_json}")
+    console.print(
+        "[green]BTC column probe completed[/green] "
+        f"accepted={len(accepted)} failed={len(failed)}"
+    )
 
 
 @export_app.command("patchworks")
