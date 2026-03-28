@@ -7867,18 +7867,21 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         the returned transposed CSV parses cleanly back into the K3Z
         `21000..23003` managed-curve-id space without the earlier
         `20000 + feature_id` double-lift bug.
-      - the full `tsa btc-post-tipsy` resume path still stops on the K3Z
-        instance because the shipped checkout does not include
-        `external/femic-k3z-instance/data/vdyp_prep-tsak3z.pkl`, which the
-        legacy post-TIPSY bundle builder still requires.
+      - the full `tsa btc-post-tipsy` resume path now also works on K3Z after
+        broadening the downstream fallback:
+        - when `vdyp_prep-tsaXX.pkl` is missing but
+          `data/model_input_bundle/au_table.csv` exists, FEMIC now rebuilds the
+          legacy AU<->(stratum, SI) maps from that persisted AU table instead
+          of failing immediately.
+        - this was enough for K3Z because the shipped cached artifact set
+          already contains the smoothed VDYP curves and the persisted bundle AU
+          table needed for the downstream rebuild.
     - Immediate next implementation edge:
-      - decide whether to ship/fetch the missing `vdyp_prep-tsaXX.pkl`
-        checkpoint for instance-level `btc-post-tipsy` runs or broaden the
-        post-TIPSY bundle builder so it can resume from the currently shipped
-        K3Z artifact set without that checkpoint; only after that should we
-        update operator/docs/contracts to describe BTC CSV as the default
-        supported BatchTIPSY seam and retire the old DAT/OUT wording from
-        user-facing guidance.
+      - inspect the rebuilt K3Z BTC artifacts (`03_input`, `04_output`,
+        `tipsy_curves_tsak3z.csv`, bundle tables, and plots), then update
+        operator/docs/contracts so BTC CSV can be described as the default
+        supported BatchTIPSY seam and the old DAT/OUT wording can be retired
+        from user-facing guidance.
     - Guardrails:
       - the intended supported workflow is now BTC CSV in / BTC CSV out, not
         the old DAT/OUT seam;

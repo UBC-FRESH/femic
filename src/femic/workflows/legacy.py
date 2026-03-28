@@ -113,6 +113,24 @@ def _build_au_maps_from_results(
     return scsi_au_tsa, au_scsi_tsa
 
 
+def _build_au_maps_from_bundle_au_table(
+    *,
+    au_table: Any,
+) -> tuple[dict[tuple[str, str], int], dict[int, tuple[str, str]]]:
+    """Rebuild legacy AU<->(stratum, SI) maps from a persisted bundle AU table."""
+    scsi_au_tsa: dict[tuple[str, str], int] = {}
+    au_scsi_tsa: dict[int, tuple[str, str]] = {}
+    for row in au_table.itertuples(index=False):
+        stratum_code = str(getattr(row, "stratum_code"))
+        si_level = str(getattr(row, "si_level"))
+        managed_curve_id = int(getattr(row, "managed_curve_id"))
+        au_base = int(str(managed_curve_id)[-4:])
+        key = (stratum_code, si_level)
+        scsi_au_tsa[key] = au_base
+        au_scsi_tsa[au_base] = key
+    return scsi_au_tsa, au_scsi_tsa
+
+
 def _normalize_species_code(value: object) -> str:
     code = str(value).strip().upper()
     if not code or code in {"NAN", "NONE", "X", "XX"}:
@@ -300,23 +318,52 @@ def run_post_tipsy_bundle(
         for tsa in normalized_tsa_list:
             prep_path = data_root / f"vdyp_prep-tsa{tsa}.pkl"
             smooth_path = data_root / f"vdyp_curves_smooth-tsa{tsa}.feather"
-            if not prep_path.exists():
-                raise FileNotFoundError(f"Missing 01a prep checkpoint: {prep_path}")
             if not smooth_path.exists():
                 raise FileNotFoundError(f"Missing smoothed VDYP curves: {smooth_path}")
 
-            results_for_tsa = cast(
-                list[tuple[int, str, Any]],
-                load_vdyp_prep_checkpoint(prep_path),
+            bundle_dir = (
+                model_input_bundle_dir
+                if model_input_bundle_dir is not None
+                else (data_root / "model_input_bundle")
             )
-            results[tsa] = results_for_tsa
-            vdyp_species_proportions[tsa] = _vdyp_species_proportions_for_tsa(
-                results_for_tsa=results_for_tsa
-            )
+            bundle_au_table_path = bundle_dir / "au_table.csv"
+
+            if prep_path.exists():
+                results_for_tsa = cast(
+                    list[tuple[int, str, Any]],
+                    load_vdyp_prep_checkpoint(prep_path),
+                )
+                results[tsa] = results_for_tsa
+                vdyp_species_proportions[tsa] = _vdyp_species_proportions_for_tsa(
+                    results_for_tsa=results_for_tsa
+                )
+                scsi_au[tsa], au_scsi[tsa] = _build_au_maps_from_results(
+                    results_for_tsa=results_for_tsa
+                )
+            elif bundle_au_table_path.exists():
+                bundle_au_table = pd.read_csv(bundle_au_table_path)
+                bundle_tsa = bundle_au_table.loc[
+                    bundle_au_table["tsa"].astype(str).str.lower() == str(tsa).lower()
+                ].copy()
+                if bundle_tsa.empty:
+                    raise FileNotFoundError(
+                        "Missing 01a prep checkpoint and no AU table rows for tsa "
+                        f"{tsa}: {prep_path}"
+                    )
+                results_for_tsa = []
+                results[tsa] = results_for_tsa
+                vdyp_species_proportions[tsa] = {}
+                scsi_au[tsa], au_scsi[tsa] = _build_au_maps_from_bundle_au_table(
+                    au_table=bundle_tsa
+                )
+                message_fn(
+                    "warning: missing 01a prep checkpoint for tsa %s; rebuilding AU "
+                    "maps from persisted bundle au_table.csv" % tsa
+                )
+            else:
+                raise FileNotFoundError(f"Missing 01a prep checkpoint: {prep_path}")
+
             vdyp_curves_smooth[tsa] = pd.read_feather(smooth_path)
-            scsi_au[tsa], au_scsi[tsa] = _build_au_maps_from_results(
-                results_for_tsa=results_for_tsa
-            )
             runtime_config = build_legacy_01b_runtime_config(
                 tipsy_params_path_prefix=data_root / "tipsy_params_tsa",
                 tipsy_output_root=data_root,

@@ -104,6 +104,95 @@ def test_run_post_tipsy_bundle_builds_bundle_from_cached_artifacts(
     assert result.curve_points_table_path.is_file()
 
 
+def test_run_post_tipsy_bundle_can_fallback_to_persisted_au_table_when_prep_missing(
+    tmp_path: Path,
+) -> None:
+    data_root = tmp_path / "data"
+    bundle_root = data_root / "model_input_bundle"
+    data_root.mkdir(parents=True, exist_ok=True)
+    bundle_root.mkdir(parents=True, exist_ok=True)
+    tsa = "k3z"
+
+    pd.DataFrame(
+        {
+            "stratum_code": [
+                "CWHvm_HW+FDC",
+                "CWHvm_HW+FDC",
+                "CWHvm_HW+FDC",
+                "CWHvm_HW+FDC",
+            ],
+            "si_level": ["L", "L", "M", "M"],
+            "age": [0, 10, 0, 10],
+            "volume": [0.0, 10.0, 0.0, 12.0],
+        }
+    ).to_feather(data_root / f"vdyp_curves_smooth-tsa{tsa}.feather")
+    pd.DataFrame({"AU": [21000]}).to_excel(
+        data_root / f"tipsy_params_tsa{tsa}.xlsx",
+        index=False,
+        sheet_name="TIPSY_inputTBL",
+    )
+    (data_root / f"04_output-tsa{tsa}.csv").write_text(
+        "feature_id,MVcon_0,MVdec_0,HTcon_0,HTdec_0,gVol_0,CC_0\n21000,0,0,0,0,0,0\n",
+        encoding="utf-8",
+    )
+    pd.DataFrame(
+        {
+            "au_id": [985501000],
+            "tsa": [tsa],
+            "stratum_code": ["CWHvm_HW+FDC"],
+            "si_level": ["L"],
+            "canfi_species": [402],
+            "unmanaged_curve_id": [985501000],
+            "managed_curve_id": [985521000],
+        }
+    ).to_csv(bundle_root / "au_table.csv", index=False)
+
+    seen_au_scsi: dict[int, tuple[str, str]] = {}
+
+    def _fake_run_01b(
+        *,
+        tsa: str,
+        results,
+        au_scsi,
+        tipsy_curves,
+        vdyp_curves_smooth,
+        runtime_config,
+    ) -> None:
+        _ = (results, vdyp_curves_smooth, runtime_config)
+        seen_au_scsi.update(au_scsi[tsa])
+        tipsy_df = pd.DataFrame(
+            {
+                "AU": [21000, 21000],
+                "Age": [0, 10],
+                "Yield": [0.0, 5.0],
+                "Height": [0.0, 2.0],
+                "DBHq": [0.0, 1.0],
+                "TPH": [0.0, 900.0],
+            }
+        ).set_index(["AU", "Age"])
+        tipsy_curves[tsa] = tipsy_df
+        tipsy_df.reset_index().to_csv(
+            data_root / f"tipsy_curves_tsa{tsa}.csv",
+            index=False,
+        )
+        pd.DataFrame({"AU": [21000], "HW": [100.0]}).to_csv(
+            data_root / f"tipsy_sppcomp_tsa{tsa}.csv",
+            index=False,
+        )
+
+    result = run_post_tipsy_bundle(
+        tsa_list=[tsa],
+        repo_root=tmp_path,
+        data_root=data_root,
+        run_01b_fn=_fake_run_01b,
+        message_fn=lambda _msg: None,
+    )
+
+    assert seen_au_scsi == {1000: ("CWHvm_HW+FDC", "L")}
+    assert result.tsa_list == [tsa]
+    assert result.au_table_path.is_file()
+
+
 def test_run_post_tipsy_bundle_sets_managed_curve_env_for_01b(
     tmp_path: Path,
     monkeypatch,

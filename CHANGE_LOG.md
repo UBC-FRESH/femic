@@ -7525,3 +7525,27 @@
     - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
     - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/resources/legacy/01b_run-tsa.py src/femic/workflows/legacy.py src/femic/cli/main.py tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
     - `.venv\\Scripts\\python.exe -m mypy src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/workflows/legacy.py`
+- 2026-03-28 (Phase 48 K3Z downstream rebuild fallback): stopped fighting the
+  missing `vdyp_prep-tsak3z.pkl` seam and taught the downstream post-TIPSY
+  bundle builder to resume from the shipped cached artifact set instead.
+  - Added a new fallback in `src/femic/workflows/legacy.py`:
+    - when `vdyp_prep-tsaXX.pkl` is missing but `data/model_input_bundle/au_table.csv`
+      exists, FEMIC now reconstructs the legacy AU<->(stratum, SI) maps from
+      the persisted AU table instead of failing immediately.
+  - Added regression coverage in `tests/test_workflows_post_tipsy.py`.
+  - Real K3Z smoke now succeeds end to end:
+    - generated `external/femic-k3z-instance/data/03_input-tsak3z.csv`
+    - ran `femic tsa btc-post-tipsy --instance-root external/femic-k3z-instance --tsa k3z`
+    - completed with `au_rows=27`, `curve_rows=41`, `curve_points=8244`
+  - The successful downstream rebuild refreshed the shipped K3Z artifacts:
+    - `data/tipsy_curves_tsak3z.csv`
+    - `data/model_input_bundle/{au_table,curve_table,curve_points_table}.csv`
+    - `plots/tipsy_vdyp_tsak3z-*.png`
+    - and the new BTC seam files:
+      - `data/03_input-tsak3z.csv`
+      - `data/04_output-tsak3z.csv`
+      - `data/04_error-tsak3z.csv`
+  - Validation passed:
+    - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
+    - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/resources/legacy/01b_run-tsa.py src/femic/workflows/legacy.py tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
+    - `.venv\\Scripts\\python.exe -m mypy src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/workflows/legacy.py`
