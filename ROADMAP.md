@@ -7717,6 +7717,12 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       DBH-class stem counts behind a FEMIC-level optional activation switch,
       piloting first on a dedicated K3Z intensive-silviculture proving-ground
       subvariant rather than modifying the active student-facing variants.
+      Current status:
+      - first unattended `/TSR` probes with `DBHg`, `SPH`,
+        `StemCount000/125/175`, and crop-tree stand-table fields all failed in
+        `BatchProcess()` with stacked BTC `.NET` crash dialogs;
+      - treat this task as exploratory seam-finding work, not as a near-trivial
+        extension of the current safe unattended default bank.
       Track on GitHub issue #47.
     - [ ] P48.2d2 Add a log-grade / lumber-grade output bank from BTC bindings
       and wire those behind a FEMIC-level optional activation switch, again

@@ -7565,3 +7565,27 @@
     - `#49`
   - Removed those adopted ideas from the incoming queue so the inbox now
     reflects only still-unclaimed work.
+- 2026-03-28 (Phase 48 first stand-table bank probe reality check): tested the
+  first richer stand-table fields against the unattended `/TSR` seam and
+  confirmed that this bank is still exploratory rather than near-trivial.
+  - Starting from the proven safe unattended transposed `/TSR` mashup
+    (`MVcon`, `MVdec`, `HTcon`, `HTdec`, `gVol`, `CC`), probed these richer
+    additions one at a time:
+    - `DBHg`
+    - `SPH`
+    - `StemCount000`
+    - `StemCount125`
+    - `StemCount175`
+    - `Crop250VolUtil125`
+    - `Crop250DBHgMean`
+    - `Crop250LiveCrown`
+  - Every first-cut stand-table probe failed at BTC execution time with stacked
+    `.NET` modal crash dialogs.
+  - Representative failure was a `System.NullReferenceException` in
+    `TIPSY.frmTIPSY.BatchProcess()`.
+  - Updated `ROADMAP.md`, `planning/batchtipsy_automation_approach.md`, and
+    GitHub issue `#46` so the current contract is explicit:
+    - the unattended `/TSR` seam is proven only for the conservative default
+      bank;
+    - richer stand-table outputs should be treated as exploratory seam-finding
+      work until a compatible template family or alternate BTC mode is proven.

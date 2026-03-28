@@ -572,6 +572,47 @@ Current planning implication:
 - for now it should be treated as an output/reporting clue, not as a primary
   source for stand parameter defaults
 
+## First Stand-Table Bank Probe Result
+
+The first richer unattended stand-table bank probes were not successful through
+the current `/TSR` seam.
+
+What was tested:
+
+- starting from the proven safe transposed unattended `/TSR` mashup that emits:
+  - `MVcon_*`
+  - `MVdec_*`
+  - `HTcon_*`
+  - `HTdec_*`
+  - `gVol_*`
+  - `CC_*`
+- then adding one richer stand-table style column at a time, including:
+  - `DBHg`
+  - `SPH`
+  - `StemCount000`
+  - `StemCount125`
+  - `StemCount175`
+  - `Crop250VolUtil125`
+  - `Crop250DBHgMean`
+  - `Crop250LiveCrown`
+
+Observed result:
+
+- these probes did not complete cleanly
+- on-screen BTC behavior was stacked `.NET` modal crash dialogs
+- representative failure mode was:
+  - `System.NullReferenceException`
+  - in `TIPSY.frmTIPSY.BatchProcess()`
+
+Current planning implication:
+
+- the unattended `/TSR` seam is only proven safe for the current conservative
+  default bank
+- richer stand-table outputs should be treated as exploratory seam-finding work
+  until a compatible template family or alternate BTC mode is proven
+- FEMIC should not assume that simply appending richer stand-table fields to the
+  current unattended `TimberSupply.rpt` mashup will work
+
 ## First Implementation Slice
 
 1. Lock the new BTC seam into repo planning and contracts.
