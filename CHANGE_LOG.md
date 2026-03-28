@@ -7549,3 +7549,19 @@
     - `.venv\\Scripts\\python.exe -m pytest tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
     - `.venv\\Scripts\\python.exe -m ruff check src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/resources/legacy/01b_run-tsa.py src/femic/workflows/legacy.py tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
     - `.venv\\Scripts\\python.exe -m mypy src/femic/pipeline/tipsy.py src/femic/pipeline/__init__.py src/femic/workflows/legacy.py`
+- 2026-03-28 (Phase 48 next-bank planning): pulled the top three BTC-rich-output
+  ideas from `planning/incoming_ideas.md` into tracked Phase 48 tasks.
+  - Added roadmap subtasks:
+    - `P48.2d1` stand-table / DBH-class stem-count indicator bank
+    - `P48.2d2` log-grade / lumber-grade product-output bank
+    - `P48.2d3` QMD revisit against richer BTC-native diameter signals
+  - Tightened the plan so these are explicitly FEMIC-level optional
+    indicator-bank activation switches, with a dedicated K3Z
+    intensive-silviculture proving-ground subvariant as the safe first
+    full-pipeline test surface rather than the active student-facing variants.
+  - Opened the matching GitHub task issues:
+    - `#47`
+    - `#48`
+    - `#49`
+  - Removed those adopted ideas from the incoming queue so the inbox now
+    reflects only still-unclaimed work.

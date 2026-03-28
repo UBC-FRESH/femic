@@ -7713,6 +7713,24 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [ ] P48.2d If richer indicator output remains GUI-only, support it as an
     optional manual BTC mode instead of blocking the default unattended
     `/TSR` mashup rollout.
+    - [ ] P48.2d1 Add a stand-table indicator bank from BTC bindings and wire
+      DBH-class stem counts behind a FEMIC-level optional activation switch,
+      piloting first on a dedicated K3Z intensive-silviculture proving-ground
+      subvariant rather than modifying the active student-facing variants.
+      Track on GitHub issue #47.
+    - [ ] P48.2d2 Add a log-grade / lumber-grade output bank from BTC bindings
+      and wire those behind a FEMIC-level optional activation switch, again
+      piloting first on a dedicated K3Z intensive-silviculture proving-ground
+      subvariant rather than the active student-facing variants. Track on
+      GitHub issue #48.
+    - [ ] P48.2d3 Revisit the current K3Z QMD curves and either:
+      - validate the current derived math more rigorously against BTC-native
+        diameter signals, or
+      - replace the current approximation with literal BTC/VDYP/TIPSY diameter
+        outputs where those are available, with the improved diameter signals
+        exposed behind the same optional-bank pattern and first tested on a
+        dedicated K3Z intensive-silviculture proving-ground subvariant. Track
+        on GitHub issue #49.
   - [x] P48.2e Add a FEMIC-side BTC custom-report template generator so vetted
     `.rpt` files can be authored from curated or user-specified output-column
     lists instead of hand-edited inside the BTC GUI.
@@ -7876,6 +7894,19 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - this was enough for K3Z because the shipped cached artifact set
           already contains the smoothed VDYP curves and the persisted bundle AU
           table needed for the downstream rebuild.
+    - Optional indicator-bank direction:
+      - now that FEMIC can author vetted BTC report templates, run unattended
+        BTC, and parse returned transposed CSVs, the next likely expansion path
+        is to add optional FEMIC-level banks of richer indicators rather than
+        force every model to carry every available BTC output by default.
+      - the intended proving ground for those bank-activation switches is a new
+        K3Z intensive-silviculture subvariant family, because that variant
+        already exercises all treatments and is less likely to break active
+        student project surfaces while we harden the richer indicator banks.
+      - current first three planned bank-oriented follow-ons are:
+        - stand-table stem-count outputs by DBH class
+        - log-grade / lumber-grade outputs
+        - a QMD-quality revisit using better diameter signals where available
     - Immediate next implementation edge:
       - inspect the rebuilt K3Z BTC artifacts (`03_input`, `04_output`,
         `tipsy_curves_tsak3z.csv`, bundle tables, and plots), then update
