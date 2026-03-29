@@ -7806,3 +7806,13 @@
     - `pytest tests/test_patchworks_runtime.py tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
     - `ruff check src/femic/patchworks_runtime.py src/femic/pipeline/tipsy.py src/femic/fmg/core.py src/femic/fmg/adapters.py src/femic/fmg/patchworks.py tests/test_patchworks_runtime.py tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
     - `mypy src/femic/patchworks_runtime.py src/femic/pipeline/tipsy.py src/femic/fmg/core.py src/femic/fmg/adapters.py src/femic/fmg/patchworks.py`
+- 2026-03-29 (Phase 48 proving-ground manual validation note): recorded the
+  developer's quick manual Patchworks check after launching
+  `intensive_light_standstructure`.
+  - Developer summary: the new bank "looks pretty good".
+  - Interpretation:
+    - the first unattended BTC stand-structure bank is broadly working end to
+      end in the intended proving-ground runtime;
+    - later slower indicator-by-indicator interpretation, validation, and
+      possible pruning of bank contents is still expected, but that follow-on
+      review is not a blocker to the initial proving-ground landing.

@@ -7817,6 +7817,15 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
             rows with area-normalized `SUM` multipliers, while the ordinary
             `base` and `ctfert_l15h5` tracks still show zero rows for this bank.
           - with the extended 350-year timeline still intact;
+        - quick developer-facing manual validation checkpoint:
+          - the developer manually launched the proving-ground Patchworks
+            surface and reported that it "looks pretty good";
+          - the bank is therefore considered broadly landed end to end for this
+            first rollout;
+          - slower indicator-by-indicator interpretation, validation, and
+            possible pruning of bank contents is still expected later, but that
+            follow-on review is not a blocker to this initial proving-ground
+            landing;
       - immediate next step:
         - pilot this first bank only on a dedicated K3Z `intensive_*`
           proving-ground subvariant before touching any student-facing
