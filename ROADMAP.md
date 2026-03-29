@@ -7710,8 +7710,19 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       `Volume000/125/175`, `BasalArea000/125/175`, `MeanDBHg000/125/175`,
       `MAI000/125/175`, `VPT000/125/175`, `Juvenille_Volume000/125/175`, and
       `Juvenille_Percent000/125/175`;
-    - the only unresolved canonical family left under issue `#48` is now
-      `yield-and-age-core`.
+  - the final `yield-and-age-core` closeout slice is now also in hand:
+    - live overlay one-token isolation plus a combined candidate run showed a
+      coherent shipped subset:
+      `Year`, `TotalAge`, `BHAge`, `StandAge`, `HeightSindex`, `Height`,
+      `Volume`, `VPT`, `HeightTassTop`, `HeightTassMean`,
+      `HeightTassPredom`;
+    - `CC` and `VolumeGross` remain part of the unattended TSR base preset
+      rather than the optional bank;
+    - only the non-threshold `Juvenille_Volume` and `Juvenille_Percent` totals
+      still modal-crash through the real live overlay seam, while their
+      threshold-specific variants are already shipped in
+      `stand-structure-threshold-raw`;
+    - Issue `#48` now has no remaining unshipped logical banks.
   - operator-supervision cleanup to land alongside this work:
     - move BTC/TIPSY CLI default runtime artifacts from `vdyp_io/logs` into
       `tipsy_io/logs`, with default scratch under `tipsy_io/scratch`, so
@@ -8065,11 +8076,27 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
               `stand-structure-threshold-raw` as a full threshold-triplet bank
               (`Volume`, `BasalArea`, `MeanDBHg`, `MAI`, `VPT`,
               `Juvenille_Volume`, `Juvenille_Percent`);
-            - the only remaining unresolved family is now:
-              - `yield-and-age-core`
+            - the live-overlay seam has also now proven a coherent
+              `yield-and-age-core` bank subset:
+              - `Year`
+              - `TotalAge`
+              - `BHAge`
+              - `StandAge`
+              - `HeightSindex`
+              - `Height`
+              - `Volume`
+              - `VPT`
+              - `HeightTassTop`
+              - `HeightTassMean`
+              - `HeightTassPredom`
+            - only the non-threshold `Juvenille_Volume` and
+              `Juvenille_Percent` totals remain blocked through live overlay,
+              while `CC` and `VolumeGross` are already covered by the base TSR
+              preset.
           - recommended next remaining slice:
-              - keep `yield-and-age-core` last unless a stronger structural
-                clue appears.
+              - reconcile and close Issue `#48` once the shipped bank/docs state
+                and the two blocked juvenile-total caveats are reflected in the
+                tracker.
           - threshold-family design rule going forward:
             - when BTC exposes a metric at `{000,125,175}` top-diameter
               merchantable cutoffs, FEMIC should treat that triplet as an

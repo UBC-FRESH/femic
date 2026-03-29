@@ -74,6 +74,7 @@ _BTC_DIAMETER_CLASS_SUFFIXES = (
 _BTC_INDICATOR_BANK_NAMES = (
     "stand-structure-basic",
     "stand-structure-threshold-raw",
+    "yield-and-age-core",
     "log-grades",
     "lumber-2-or-better",
     "lumber-graded",
@@ -128,6 +129,19 @@ _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
             "Juvenille_Percent",
             _BTC_TOP_DIAMETER_CUTOFF_SUFFIXES,
         )
+    ),
+    "yield-and-age-core": (
+        ("Year", "Year"),
+        ("TotalAge", "TotalAge"),
+        ("BHAge", "BHAge"),
+        ("StandAge", "StandAge"),
+        ("HeightSindex", "HeightSindex"),
+        ("Height", "Height"),
+        ("Volume", "Volume"),
+        ("VPT", "VPT"),
+        ("HeightTassTop", "HeightTassTop"),
+        ("HeightTassMean", "HeightTassMean"),
+        ("HeightTassPredom", "HeightTassPredom"),
     ),
     "genetics-fertilization-and-oaf": (
         ("GWgain", "GWgain"),

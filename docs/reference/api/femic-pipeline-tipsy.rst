@@ -226,6 +226,7 @@ core unattended `/TSR` seam:
 
 - ``--indicator-bank stand-structure-basic``
 - ``--indicator-bank stand-structure-threshold-raw``
+- ``--indicator-bank yield-and-age-core``
 - ``--indicator-bank genetics-fertilization-and-oaf``
 - ``--indicator-bank tass-and-site-index-raw``
 - ``--indicator-bank log-grades``
@@ -278,6 +279,18 @@ Current bank contents:
   - ``Juvenille_Percent000``
   - ``Juvenille_Percent125``
   - ``Juvenille_Percent175``
+- ``yield-and-age-core``:
+  - ``Year``
+  - ``TotalAge``
+  - ``BHAge``
+  - ``StandAge``
+  - ``HeightSindex``
+  - ``Height``
+  - ``Volume``
+  - ``VPT``
+  - ``HeightTassTop``
+  - ``HeightTassMean``
+  - ``HeightTassPredom``
 - ``genetics-fertilization-and-oaf``:
   - ``GWgain``
   - ``FertGain``
@@ -471,6 +484,7 @@ Live smoke proof now exists for:
 
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-basic``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-threshold-raw``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank yield-and-age-core``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank genetics-fertilization-and-oaf``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank tass-and-site-index-raw``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank log-grades``
@@ -492,6 +506,12 @@ Live smoke proof now exists for:
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank diameter-class-vpt``
 
 That returned a single unattended output CSV with:
+
+The only remaining canonical BTC outputs that do not currently fit cleanly into
+the optional-bank rollout are the non-threshold ``Juvenille_Volume`` and
+``Juvenille_Percent`` totals, which still trigger live-overlay BTC modal
+failures. Their threshold-specific ``000/125/175`` variants are already shipped
+through ``stand-structure-threshold-raw``.
 
 - the default conservative families:
   - ``MVcon_*``

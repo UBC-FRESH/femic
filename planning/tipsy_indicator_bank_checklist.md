@@ -29,21 +29,27 @@ Canonical source inventory: `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt`.
   - [x] StemCount125
   - [x] StemCount175
 - yield-and-age-core
-  - [ ] Year
-  - [ ] TotalAge
-  - [ ] BHAge
-  - [ ] StandAge
-  - [ ] HeightSindex
-  - [ ] Height
-  - [ ] Volume
-  - [ ] VPT
+  - [x] Year
+  - [x] TotalAge
+  - [x] BHAge
+  - [x] StandAge
+  - [x] HeightSindex
+  - [x] Height
+  - [x] Volume
+  - [x] VPT
   - [ ] CC
   - [ ] Juvenille_Volume
   - [ ] Juvenille_Percent
   - [ ] VolumeGross
-  - [ ] HeightTassTop
-  - [ ] HeightTassMean
-  - [ ] HeightTassPredom
+  - [x] HeightTassTop
+  - [x] HeightTassMean
+  - [x] HeightTassPredom
+
+`CC` and `VolumeGross` already ship in the unattended TSR base preset rather
+than needing a separate optional bank column. `Juvenille_Volume` and
+`Juvenille_Percent` still trigger BTC modal failures on the live overlay seam,
+while their threshold-specific `000/125/175` variants are shipped through
+`stand-structure-threshold-raw`.
 - genetics-fertilization-and-oaf
   - [x] GWgain
   - [x] FertGain

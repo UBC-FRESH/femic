@@ -494,6 +494,36 @@ def test_btc_indicator_bank_columns_returns_threshold_raw_triplet_bank() -> None
     ]
 
 
+def test_btc_indicator_bank_columns_returns_yield_and_age_core_bank() -> None:
+    columns = btc_indicator_bank_columns("yield-and-age-core")
+    assert [column.token for column in columns] == [
+        "Year",
+        "TotalAge",
+        "BHAge",
+        "StandAge",
+        "HeightSindex",
+        "Height",
+        "Volume",
+        "VPT",
+        "HeightTassTop",
+        "HeightTassMean",
+        "HeightTassPredom",
+    ]
+    assert [column.header1_override for column in columns] == [
+        "Year",
+        "TotalAge",
+        "BHAge",
+        "StandAge",
+        "HeightSindex",
+        "Height",
+        "Volume",
+        "VPT",
+        "HeightTassTop",
+        "HeightTassMean",
+        "HeightTassPredom",
+    ]
+
+
 def test_btc_indicator_bank_columns_returns_genetics_fertilization_oaf_bank() -> None:
     columns = btc_indicator_bank_columns("genetics-fertilization-and-oaf")
     assert [column.token for column in columns] == [

@@ -559,19 +559,42 @@ Current practical reading:
   `runtime_layout=live-overlay`, `variant_strategy=stock-matrix`, and the
   generic transposed line winning immediately before any alias/stock fallback
   was needed.
-- the only remaining unresolved canonical family is now:
-  - `yield-and-age-core`
+- the live overlay seam also unlocked a coherent reduced `yield-and-age-core`
+  bank on the simple generic transposed line:
+  - accepted and now shippable:
+    - `Year`
+    - `TotalAge`
+    - `BHAge`
+    - `StandAge`
+    - `HeightSindex`
+    - `Height`
+    - `Volume`
+    - `VPT`
+    - `HeightTassTop`
+    - `HeightTassMean`
+    - `HeightTassPredom`
+  - already present in the unattended TSR base preset rather than needing the
+    optional bank:
+    - `CC`
+    - `VolumeGross`
+  - still live-overlay blocked with modal BTC exceptions:
+    - `Juvenille_Volume`
+    - `Juvenille_Percent`
+- there are no remaining unresolved optional-bank families under Issue `#48`;
+  only the two blocked non-threshold juvenile totals remain as documented
+  live-overlay exceptions.
 
 ## Remaining Unresolved Families
 
 Recommended order:
 
-1. `yield-and-age-core`
+1. No remaining unshipped logical banks
 
 Why this order:
 
-- `yield-and-age-core` is the only family still unresolved, and it remains the
-  high-friction exception cluster from the earlier live overlay sweep.
+- the remaining work is no longer bank expansion; it is closeout hygiene around
+  the two blocked non-threshold juvenile totals and final Issue `#48`
+  reconciliation.
 
 Threshold-triplet design rule:
 

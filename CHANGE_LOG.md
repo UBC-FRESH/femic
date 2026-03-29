@@ -8342,3 +8342,16 @@
     `planning/tipsy_tsr_variant_probe_ledger.md`, `docs/reference/api/femic-pipeline-tipsy.rst`,
     and `ROADMAP.md` were updated to reflect that the only unresolved canonical
     family left under Issue `#48` is now `yield-and-age-core`.
+- 2026-03-29 (Issue #48 yield-and-age bank closeout): live-overlay-only
+  isolation recovered a coherent shipped `yield-and-age-core` bank while also
+  clarifying the remaining non-bank caveats.
+  - The new bank now ships `Year`, `TotalAge`, `BHAge`, `StandAge`,
+    `HeightSindex`, `Height`, `Volume`, `VPT`, `HeightTassTop`,
+    `HeightTassMean`, and `HeightTassPredom`.
+  - `CC` and `VolumeGross` were not added to the bank because they are already
+    part of the unattended TSR base preset.
+  - `Juvenille_Volume` and `Juvenille_Percent` still trigger live-overlay BTC
+    modal failures as non-threshold totals, while their `000/125/175` variants
+    remain shipped through `stand-structure-threshold-raw`.
+  - This leaves Issue `#48` with no remaining unshipped logical banks, only the
+    documented juvenile-total caveat.
