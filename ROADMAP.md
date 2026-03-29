@@ -8503,6 +8503,20 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - `/FLP` and `/No_GUI /FLP` produced equivalent useful output in prior
         probes, so `/No_GUI` does not currently look like a report-selector
         seam;
+      - direct decompilation of the managed `TIPSYbtc.exe` assembly now
+        confirms the runtime reading:
+        - `frmTIPSY.PreviewCommandLine()` recognizes `/FLP`, `/TSR`,
+          `/NO_GUI`, and `.btc`;
+        - non-switch non-`.btc` arguments are treated generically as
+          `sInputFilename`, then optional output/error filenames;
+        - `.btp` is not a special command-line branch in the current parser;
+        - the timer-driven startup path loads `.btc` files with
+          `LoadBTC(...)` and `setScreenForBTC()`, but only calls
+          `BatchProcess()` automatically inside the hidden `/TSR` or `/FLP`
+          branch;
+        - the decompiled `chkProcess` control is only the per-column
+          "Process Column" checkbox in the BTP/template editor, not a global
+          hidden-run flag.
       - the only known-valid unattended `/TSR` seam remains the live user
         overlay
         `C:\Users\gep\OneDrive - UBC\Documents\BatchTIPSY Composer\TimberSupply.rpt`;
@@ -8521,10 +8535,25 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - inspect the modern BTC user guide, extracted legacy BatchTIPSY help,
         and `TIPSYbtc.exe` string surface together for any clue that separates
         `LoadBTC` from `ProcessBTC`;
-      - specifically follow the legacy `.btp` pathway, because the extracted
+    - specifically follow the legacy `.btp` pathway, because the extracted
         help says opening an existing `.btp` file processes it immediately and
         the binary still exposes `LoadBTP`, `PreviewInputFileBTP`, and
         `CreateTemplateBTP`;
+      - because `TIPSYbtc.exe` is a managed .NET assembly, add direct
+        decompiler-assisted inspection of the installed binary as the next
+        evidence source rather than relying only on runtime poking:
+        - install a practical local .NET decompiler;
+        - inspect the modules and forms already surfaced by reflection:
+          `TIPSY.modBTCfile`, `TIPSY.modBTP`, `TIPSY.modInputBTP`,
+          `TIPSY.modOutput`, `TIPSY.modTSR`, and `TIPSY.frmTIPSY`;
+        - search specifically for the symbols and parser seams most likely to
+          explain the missing action trigger:
+          `No_GUI`, `/TSR`, `/FLP`, `LoadBTC`, `ProcessBTC`, `LoadBTP`,
+          `CreateTemplateBTP`, `PreviewInputFileBTP`, `chkProcess`,
+          `BatchProcess`, `SaveReport`, and `SaveRegime`;
+        - treat the recovered decompiled control flow as the next best source
+          of truth for whether a hidden process trigger exists beyond the
+          already-proven `/TSR` and `/FLP` modes.
       - probe the smallest evidence-backed hidden-run candidates next:
         - `/No_GUI <project>.btc` plus any discovered execution trigger;
         - direct `.btp` launch forms if the docs/binary imply they still

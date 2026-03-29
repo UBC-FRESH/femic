@@ -8435,3 +8435,32 @@
     - remaining reverse-engineering targets are a possible legacy DOS/BTP
       processing seam or an unexposed GUI-side "process" state that ordinary
       `.btc` saves do not serialize.
+- 2026-03-29 (Issue #58 managed decompilation pass): installed a real .NET
+  decompiler toolchain and used it to inspect the installed `TIPSYbtc.exe`
+  assembly directly.
+  - Installed local tooling:
+    - ILSpy
+    - .NET 8 SDK
+    - `ilspycmd`
+  - Decompiled the high-value types:
+    - `TIPSY.modBTCfile`
+    - `TIPSY.modBTP`
+    - `TIPSY.frmTIPSY`
+  - The recovered startup/control-flow logic now confirms:
+    - `PreviewCommandLine()` only special-cases `/FLP`, `/TSR`, `/NO_GUI`,
+      and `.btc`;
+    - non-switch non-`.btc` command-line tokens are treated generically as
+      `sInputFilename`, then output/error filenames;
+    - `.btp` is not a special startup command-line branch in the current BTC
+      parser;
+    - the timer-driven startup path loads `.btc` files with `LoadBTC(...)`
+      and updates the screen, but only auto-calls `BatchProcess()` inside the
+      hidden `/TSR` or `/FLP` path;
+    - the decompiled `chkProcess` control is only the per-column "Process
+      Column" checkbox in the BTP/template editor, not a hidden global run
+      flag.
+  - This materially strengthens the current conclusion:
+    - `/No_GUI` is a visibility modifier;
+    - `.btc` is passive saved state;
+    - `/TSR` and `/FLP` are still the only proven command-line execution
+      triggers surfaced so far.
