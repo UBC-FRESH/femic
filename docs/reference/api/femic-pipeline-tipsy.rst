@@ -173,6 +173,19 @@ For unattended FEMIC BTC work, this live user-overlay path is the **only
 known-valid `/TSR` seam**. Treat that as an operating constraint, not as a soft
 preference.
 
+One adjacent negative result is also now important enough to document here:
+
+- the undocumented BTC ``/No_GUI`` switch is **not** a proven FEMIC runtime
+  seam
+- runtime probes and direct decompilation both indicate that ``/No_GUI`` acts
+  as a visibility toggle rather than a useful execution trigger
+- plain ``/No_GUI <project>.btc`` loads passive project state into a hidden
+  BTC session but does not automatically process or export anything
+- ``/TSR`` and ``/FLP`` remain the only proven useful command-line execution
+  triggers for unattended FEMIC BTC work
+- if another hidden execution seam exists, it is more likely to be another
+  startup trigger than a post-launch control channel
+
 This matters because early copied-install/generated-template probes were too
 pessimistic. They were useful clues, but they were not exercising the most
 faithful live `/TSR` seam. The safest unattended extension path is now:

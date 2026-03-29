@@ -41,6 +41,19 @@ CLI details:
 - the guide explicitly says the batch process obeys normal BTC configuration
   files such as `settings.txt`
 
+One important negative result is now also established:
+
+- the undocumented ``/No_GUI`` switch is currently a **reverse-engineering dead
+  end** for FEMIC automation
+- decompilation plus runtime probes show that ``/No_GUI`` acts as a visibility
+  toggle, not a useful execution trigger
+- plain ``/No_GUI <project>.btc`` loads project state into a hidden session but
+  does not auto-run work
+- ``/TSR`` and ``/FLP`` remain the only proven useful BTC command-line
+  execution triggers
+- if another hidden BTC execution seam exists, it is more likely to be another
+  startup trigger than a post-launch control channel
+
 Another packaged clue now in scope:
 
 - `C:\Program Files\TIPSY 4.7\CBM\TIPSY-CBM.pdf`

@@ -8467,8 +8467,8 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         under a short, no-space path such as `C:\chm\...`.
     - Tracked archive location:
       - `reference/tipsy/chm_extracted/`
-- [ ] P48.5 Reverse-engineer the undocumented BTC `/No_GUI` seam
-  - [ ] P48.5a Probe the installed BTC executable with a real saved `.btc`
+- [x] P48.5 Reverse-engineer the undocumented BTC `/No_GUI` seam
+  - [x] P48.5a Probe the installed BTC executable with a real saved `.btc`
     project and compare:
     - plain project launch;
     - `/No_GUI <project>.btc`;
@@ -8477,12 +8477,12 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `/FLP <input.csv>`;
     - `/No_GUI /FLP <input.csv>`;
     - any other minimal argument forms that show a real behavioral delta.
-  - [ ] P48.5b Record concrete runtime evidence:
+  - [x] P48.5b Record concrete runtime evidence:
     - exit codes;
     - visible-window behavior;
     - output/error file creation;
     - manifestable clues about whether BTC actually loads and runs the project.
-  - [ ] P48.5c Update planning/docs/changelog/GitHub tracking with the proven
+  - [x] P48.5c Update planning/docs/changelog/GitHub tracking with the proven
     seam or a blocker map if `/No_GUI` remains under-documented after probing.
   - Notes:
     - Governing tracker:
@@ -8536,48 +8536,16 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         `C:\Users\gep\OneDrive - UBC\Documents\BatchTIPSY Composer\TimberSupply.rpt`;
         copied-install or stock-report-only `/TSR` experiments are not valid
         substitutes for FEMIC runtime proof.
-    - Refined hypothesis:
+    - Closeout conclusion:
+      - treat ``/No_GUI`` as a reverse-engineering dead end for FEMIC's
+        unattended BTC automation unless new contrary evidence appears;
       - `/No_GUI` controls visibility only;
-      - a second startup trigger likely tells BTC to actually
-        process/export after loading saved state;
+      - plain `.btc` startup loads passive saved state and does not auto-run;
       - once hidden BTC is running, there is currently no evidence of a live
         interactive command channel beyond startup arguments and the emitted
         output/error/log files plus process exit code;
-      - the most plausible missing execution seam is either:
-        - a separate undocumented command-line flag;
-        - a legacy `.btp`/DOS-style batch pathway that still survives in BTC;
-        - or a saved-project state contract that differs from ordinary `.btc`
-          files produced by the GUI.
-    - Next line of inquiry:
-      - inspect the modern BTC user guide, extracted legacy BatchTIPSY help,
-        and `TIPSYbtc.exe` string surface together for any clue that separates
-        `LoadBTC` from `ProcessBTC`;
-    - specifically follow the legacy `.btp` pathway, because the extracted
-        help says opening an existing `.btp` file processes it immediately and
-        the binary still exposes `LoadBTP`, `PreviewInputFileBTP`, and
-        `CreateTemplateBTP`;
-      - because `TIPSYbtc.exe` is a managed .NET assembly, add direct
-        decompiler-assisted inspection of the installed binary as the next
-        evidence source rather than relying only on runtime poking:
-        - install a practical local .NET decompiler;
-        - inspect the modules and forms already surfaced by reflection:
-          `TIPSY.modBTCfile`, `TIPSY.modBTP`, `TIPSY.modInputBTP`,
-          `TIPSY.modOutput`, `TIPSY.modTSR`, and `TIPSY.frmTIPSY`;
-        - search specifically for the symbols and parser seams most likely to
-          explain the missing action trigger:
-          `No_GUI`, `/TSR`, `/FLP`, `LoadBTC`, `ProcessBTC`, `LoadBTP`,
-          `CreateTemplateBTP`, `PreviewInputFileBTP`, `chkProcess`,
-          `BatchProcess`, `SaveReport`, and `SaveRegime`;
-        - treat the recovered decompiled control flow as the next best source
-          of truth for whether a hidden process trigger exists beyond the
-          already-proven `/TSR` and `/FLP` modes.
-      - probe the smallest evidence-backed hidden-run candidates next:
-        - `/No_GUI <project>.btc` plus any discovered execution trigger;
-        - direct `.btp` launch forms if the docs/binary imply they still
-          exist;
-        - any command-line form near saved output/report state or regime-file
-          export (`cRGM`, `WriteCBM`, `WritePlotsy45`) if a concrete parser
-          clue surfaces first.
+      - `/TSR` and `/FLP` remain the only proven useful BTC command-line
+        execution triggers.
     - Validation rule:
       - do not claim a hidden execution seam exists unless a real hidden BTC
         session creates concrete output artifacts or logs that prove work was

@@ -8487,3 +8487,13 @@
       a hidden job runner;
     - if there is another useful hidden execution seam, it is most likely a
       startup trigger rather than a post-launch control channel.
+- 2026-03-29 (Issue #58 closeout): documented the `/No_GUI` investigation as a
+  reverse-engineering dead end for FEMIC's unattended BTC seam and closed the
+  tracker on that basis.
+  - Durable repo docs now say explicitly:
+    - `/No_GUI` acts as a visibility toggle rather than a useful execution
+      trigger;
+    - plain `/No_GUI <project>.btc` loads passive project state into a hidden
+      BTC session but does not process or export anything;
+    - `/TSR` and `/FLP` remain the only proven useful BTC command-line
+      execution triggers for unattended FEMIC work.
