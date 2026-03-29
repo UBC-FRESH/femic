@@ -112,6 +112,24 @@ Current best read
 - this matches the product's own TIPSY/TASS integration story better than any
   supposed CLI batch seam found so far.
 
+Live validation
+
+- Confirmed on 2026-03-29 with a live manual-supervised probe:
+  - launched one clean FAN$IER GUI session;
+  - extracted the first standalone regime block from the shipped sample
+    `sample.fns` into:
+    - `tipsy_io/logs/fansier_probe/TFL44 u 200.rgm`
+  - copied that file into:
+    - `%TEMP%\\Fansier\\probe_TFL44_u_200.rgm`
+  - FAN$IER immediately loaded the regime into the running session.
+
+Interpretation
+
+- the `%TEMP%\\Fansier\\` watcher seam is not just a decompiled hypothesis; it
+  is a live confirmed integration path.
+- This means FEMIC can plausibly stage `.rgm` files for a running FAN$IER
+  session without navigating the GUI import path manually.
+
 ### 3. FAN$IER batch mode is real, but GUI-driven
 
 From `Fansier.frmBatch`:
@@ -214,6 +232,9 @@ Current best read
   - synthesizing or exporting `.rgm`
   - synthesizing or exporting `.eco` where needed
   - staging those files in deterministic folders
+- FEMIC can now be more specific about one confirmed handoff:
+  - dropping a valid `.rgm` into `%TEMP%\\Fansier\\` will load it into a live
+    FAN$IER session.
 - FEMIC can likely harvest batch outputs deterministically once produced,
   because report naming is explicit and machine-friendly.
 
@@ -237,9 +258,10 @@ Current best read
 ## Next High-Value Experiments
 
 1. Live-validate the temp-folder watcher seam.
-   - Launch FAN$IER normally.
-   - Drop a valid `.rgm` into `%TEMP%\\Fansier\\`.
-   - Confirm that the regime auto-imports.
+   - Done:
+     - Launch FAN$IER normally.
+     - Drop a valid `.rgm` into `%TEMP%\\Fansier\\`.
+     - Confirmed that the regime auto-imports.
 2. Build a minimal FEMIC-readable `.rgm` schema note.
    - Capture exact required sections and field ordering from `WriteRGM(...)`.
    - Distinguish hard-required vs optional keys.

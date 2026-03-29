@@ -8699,6 +8699,11 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         seam, not an unattended execution seam;
       - the strongest concrete integration seam found so far is FAN$IER's
         `%TEMP%\\Fansier\\` watcher/import path for incoming `.rgm` files;
+      - this `%TEMP%\\Fansier\\` seam is now live-validated, not just inferred
+        from decompiled code:
+        - a standalone `.rgm` extracted from the shipped sample `.fns` was
+          copied into `%TEMP%\\Fansier\\` and FAN$IER loaded it into the live
+          running session;
       - FAN$IER batch reporting is real and substantial, but the decompiled
         logic inspected so far still presents it as a GUI-triggered
         `Start Batch` workflow rather than a true CLI batch path;

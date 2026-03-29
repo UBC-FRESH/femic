@@ -8535,3 +8535,13 @@
   - Added the preferred economics posture for this seam:
     - if extraction becomes viable, target raw/null-discount FAN$IER outputs
       first and leave discounting to downstream FEMIC-side analysis.
+- 2026-03-29 (Issue #59): live-validated the first real FAN$IER handoff seam.
+  - Extracted a standalone `.rgm` probe from the shipped FAN$IER sample
+    project and staged it at:
+    - `tipsy_io/logs/fansier_probe/TFL44 u 200.rgm`
+  - Copied that regime into:
+    - `%TEMP%\\Fansier\\probe_TFL44_u_200.rgm`
+  - Confirmed in a clean live FAN$IER session that the regime loaded via the
+    watcher/import path.
+  - This upgrades the `%TEMP%\\Fansier\\` watcher seam from a decompiled clue
+    to a real validated integration path for FEMIC-staged regime delivery.
