@@ -617,7 +617,8 @@ PATCHWORKS_HEADLESS_ITERATIONS_OPTION = typer.Option(
     min=0,
     help=(
         "Number of scheduler iterations to execute before saving the headless "
-        "stage. Use 0 for report-only save."
+        "stage. Use 0 for report-only save. For max-even-flow-smoke, FEMIC "
+        "defaults to 100000 iterations when this is left at 1."
     ),
 )
 PATCHWORKS_HEADLESS_IMPROVEMENT_OPTION = typer.Option(
@@ -3436,6 +3437,21 @@ def patchworks_run_headless(
     stage_label: str | None = PATCHWORKS_HEADLESS_STAGE_LABEL_OPTION,
     iterations: int = PATCHWORKS_HEADLESS_ITERATIONS_OPTION,
     improvement: float = PATCHWORKS_HEADLESS_IMPROVEMENT_OPTION,
+    scenario_mode: str = typer.Option(
+        "none",
+        "--scenario-mode",
+        help="Optional headless scenario helper mode (for example max-even-flow-smoke).",
+    ),
+    scenario_target: str | None = typer.Option(
+        None,
+        "--scenario-target",
+        help="Optional target label to configure for the selected scenario mode.",
+    ),
+    scenario_min_annual: float | None = typer.Option(
+        None,
+        "--scenario-min-annual",
+        help="Optional annual minimum target level for the selected scenario mode.",
+    ),
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
     """Run a Patchworks PIN unattended via the no-GUI BeanShell/AppChooser seam."""
@@ -3454,6 +3470,9 @@ def patchworks_run_headless(
             stage_label=stage_label,
             iterations=iterations,
             improvement=improvement,
+            scenario_mode=scenario_mode,
+            scenario_target=scenario_target,
+            scenario_min_annual=scenario_min_annual,
         )
     except (
         FileNotFoundError,
@@ -3471,6 +3490,7 @@ def patchworks_run_headless(
     )
     console.print(f"pin: {result.pin_path}")
     console.print(f"stage_dir: {result.stage_dir}")
+    console.print(f"scenario_mode: {result.scenario_mode}")
     console.print(f"stdout_log: {result.execution.stdout_log_path}")
     console.print(f"stderr_log: {result.execution.stderr_log_path}")
     console.print(f"manifest: {result.manifest_path}")

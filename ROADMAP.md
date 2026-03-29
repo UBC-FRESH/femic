@@ -8178,10 +8178,15 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - run at least one unattended scenario to completion
     - write output/report artifacts to disk
     - return control cleanly without human interaction
-  - [ ] P49.3 Add a first proving-ground scenario-definition path so FEMIC can
+  - [x] P49.3 Add a first proving-ground scenario-definition path so FEMIC can
     inject run parameters and report destinations into a generated BeanShell
     control script instead of depending on manual Patchworks interaction.
-  - [ ] P49.4 Prove the full lifecycle on a representative K3Z proving-ground
+    - completed proof:
+      - FEMIC now supports a minimal headless scenario mode,
+        `max-even-flow-smoke`, with optional target/minimum-annual controls;
+      - the proving-ground helper activates a target before the bounded wait
+        and saves the resulting stage/report bundle automatically.
+  - [x] P49.4 Prove the full lifecycle on a representative K3Z proving-ground
     surface by:
     - launching the scenario unattended
     - running a quick max-even-flow style smoke
@@ -8198,9 +8203,8 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - teach the proving-ground K3Z analysis surface to parse `args`, skip
       `classic_GUI(control)` when headless mode is requested, still register
       reports, and then run a bounded analyze/save cycle before returning;
-    - prove the first slice only on
-      `analysis/intensive_light_standstructure.pin`, then widen only after the
-      run/save artifact contract is real.
+    - prove the first slice only on `analysis/base.pin`, then widen only after
+      the run/save artifact contract is real.
     - current edge:
       - Windows headless runs are now actively supervised by FEMIC instead of
         being launched and forgotten;
@@ -8214,6 +8218,44 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         `Control.waitForIterations(...)` should own scheduler startup; calling
         `control.resume()` first causes the `Not suspended` seam we were
         seeing.
+      - the saved proving-ground stage currently has an empty
+        `scenario/schedule.csv`, so the next headless milestone is not another
+        launch proof but a tiny target-activation scenario proof.
+      - latest proving-ground smoke (`p49_smoke_20260328q`) now proves the
+        real two-phase even-flow seam:
+        - the helper seeds the underlying
+          `product.Yield.managed.Total` target first, then suspends, then
+          activates `flow.even.product.Yield.managed.Total` for the second
+          wait phase;
+        - the saved stage records both targets as active in
+          `scenario/targetStatus.csv`;
+        - `scenario/targetSummary.csv` shows non-zero currents for both the
+          underlying harvest target and the even-flow companion;
+        - `scenario/schedule.csv` is non-empty (677 lines) and contains real
+          managed treatments (`CC`, `PCT`, `CT`, `F1`, `F2`, `F3`);
+        - FEMIC still returned control cleanly and self-terminated the Java
+          tree after the success marker.
+      - default-target usability is also now proven:
+        - proving-ground smoke `p49_smoke_20260328r` omitted an explicit
+          scenario target and relied on FEMIC's default
+          `product.Yield.managed.Total` resolution;
+        - both the underlying harvest target and the
+          `flow.even.product.Yield.managed.Total` companion still ended up
+          active in `scenario/targetStatus.csv`; and
+        - `scenario/schedule.csv` remained non-empty (788 lines).
+      - closeout-level base-K3Z proof is now in hand:
+        - proving-ground smoke `p49_base_closeout_20260328a` ran against
+          `analysis/base.pin`;
+        - the helper used the current documented useful-default recipe:
+          seed the base harvest target first, then activate the even-flow
+          companion with min=max=`0` and min=max weight=`100` across periods;
+        - `targetStatus.csv` recorded both
+          `product.Yield.managed.Total` and
+          `flow.even.product.Yield.managed.Total` active, with the even-flow
+          target in both min/max mode;
+        - `targetSummary.csv` showed nearly level even-flow deviations around
+          zero and strong non-zero underlying managed-yield currents;
+        - `schedule.csv` was non-empty (341 lines).
   - Notes:
     - Governing tracker:
       - GitHub issue #54

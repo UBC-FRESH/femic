@@ -39,6 +39,12 @@ PATCHWORKS_HEADLESS_FAILURE_MARKERS = (
     "java.lang.IllegalStateException: Exception while running scenario",
     "Exception while running scenario",
 )
+DEFAULT_PATCHWORKS_HEADLESS_SCENARIO_TARGETS: dict[str, str] = {
+    "max-even-flow-smoke": "product.Yield.managed.Total",
+}
+DEFAULT_PATCHWORKS_HEADLESS_SCENARIO_ITERATIONS: dict[str, int] = {
+    "max-even-flow-smoke": 100000,
+}
 QMD_ACCOUNT_PATTERN = re.compile(
     r"^feature\.QMD\.(managed|unmanaged)\.([A-Za-z0-9_.]+)$"
 )
@@ -119,6 +125,9 @@ class PatchworksHeadlessRunResult:
     stage_dir: Path
     iterations: int
     improvement: float
+    scenario_mode: str
+    scenario_target: str | None
+    scenario_min_annual: float | None
     launcher_script_path: Path
     trace_log_path: Path
     execution: PatchworksExecutionResult
@@ -716,10 +725,18 @@ def _render_patchworks_headless_launcher_script(
     stage_label: str,
     iterations: int,
     improvement: float,
+    scenario_mode: str,
+    scenario_target: str | None,
+    scenario_min_annual: float | None,
     trace_log_path: Path,
 ) -> str:
     pin_literal = json.dumps(str(pin_path))
     stage_literal = json.dumps(stage_label)
+    scenario_mode_literal = json.dumps(scenario_mode)
+    scenario_target_literal = json.dumps(scenario_target or "")
+    scenario_min_annual_literal = json.dumps(
+        "" if scenario_min_annual is None else str(scenario_min_annual)
+    )
     trace_literal = json.dumps(str(trace_log_path))
     return "\n".join(
         [
@@ -729,6 +746,9 @@ def _render_patchworks_headless_launcher_script(
             f"String stageLabel = {stage_literal};",
             f"int iterations = {iterations};",
             f"double improvement = {improvement};",
+            f"String scenarioMode = {scenario_mode_literal};",
+            f"String scenarioTarget = {scenario_target_literal};",
+            f"String scenarioMinAnnual = {scenario_min_annual_literal};",
             f"String traceLogPath = {trace_literal};",
             "",
             "String[] patchworksArgs = new String[] {",
@@ -737,7 +757,10 @@ def _render_patchworks_headless_launcher_script(
             "   stageLabel,",
             "   Integer.toString(iterations),",
             "   Double.toString(improvement),",
-            "   traceLogPath",
+            "   traceLogPath,",
+            "   scenarioMode,",
+            "   scenarioTarget,",
+            "   scenarioMinAnnual",
             "};",
             "",
             'print("Launching Patchworks headless PIN: " + pinPath);',
@@ -1985,6 +2008,9 @@ def run_patchworks_headless_pin(
     stage_label: str | None = None,
     iterations: int = 1,
     improvement: float = 0.0,
+    scenario_mode: str = "none",
+    scenario_target: str | None = None,
+    scenario_min_annual: float | None = None,
 ) -> PatchworksHeadlessRunResult:
     """Run a Patchworks PIN unattended via the documented Patchworks seams."""
 
@@ -1999,6 +2025,22 @@ def run_patchworks_headless_pin(
         raise PatchworksConfigError("iterations must be >= 0")
     if improvement < 0.0:
         raise PatchworksConfigError("improvement must be >= 0.0")
+    normalized_scenario_mode = scenario_mode.strip() or "none"
+    effective_scenario_target = scenario_target
+    if effective_scenario_target is None:
+        effective_scenario_target = DEFAULT_PATCHWORKS_HEADLESS_SCENARIO_TARGETS.get(
+            normalized_scenario_mode
+        )
+    effective_iterations = iterations
+    if (
+        normalized_scenario_mode in DEFAULT_PATCHWORKS_HEADLESS_SCENARIO_ITERATIONS
+        and iterations <= 1
+    ):
+        effective_iterations = DEFAULT_PATCHWORKS_HEADLESS_SCENARIO_ITERATIONS[
+            normalized_scenario_mode
+        ]
+    if scenario_min_annual is not None and scenario_min_annual < 0.0:
+        raise PatchworksConfigError("scenario_min_annual must be >= 0.0")
 
     effective_run_id = _resolve_run_id(run_id)
     normalized_stage_label = _normalize_patchworks_stage_label(
@@ -2021,8 +2063,11 @@ def run_patchworks_headless_pin(
         _render_patchworks_headless_launcher_script(
             pin_path=resolved_pin_path,
             stage_label=normalized_stage_label,
-            iterations=iterations,
+            iterations=effective_iterations,
             improvement=improvement,
+            scenario_mode=normalized_scenario_mode,
+            scenario_target=effective_scenario_target,
+            scenario_min_annual=scenario_min_annual,
             trace_log_path=trace_log_path,
         ),
         encoding="utf-8",
@@ -2094,8 +2139,11 @@ def run_patchworks_headless_pin(
             "inputs": {
                 "pin_path": str(resolved_pin_path),
                 "stage_label": normalized_stage_label,
-                "iterations": iterations,
+                "iterations": effective_iterations,
                 "improvement": improvement,
+                "scenario_mode": normalized_scenario_mode,
+                "scenario_target": effective_scenario_target,
+                "scenario_min_annual": scenario_min_annual,
                 "launcher_script_path": str(launcher_script_path),
                 "trace_log_path": str(trace_log_path),
             },
@@ -2141,8 +2189,11 @@ def run_patchworks_headless_pin(
     manifest_payload["inputs"] = {
         "pin_path": str(resolved_pin_path),
         "stage_label": normalized_stage_label,
-        "iterations": iterations,
+        "iterations": effective_iterations,
         "improvement": improvement,
+        "scenario_mode": normalized_scenario_mode,
+        "scenario_target": effective_scenario_target,
+        "scenario_min_annual": scenario_min_annual,
         "launcher_script_path": str(launcher_script_path),
         "trace_log_path": str(trace_log_path),
     }
@@ -2162,8 +2213,11 @@ def run_patchworks_headless_pin(
         pin_path=resolved_pin_path,
         stage_label=normalized_stage_label,
         stage_dir=stage_dir,
-        iterations=iterations,
+        iterations=effective_iterations,
         improvement=improvement,
+        scenario_mode=normalized_scenario_mode,
+        scenario_target=effective_scenario_target,
+        scenario_min_annual=scenario_min_annual,
         launcher_script_path=launcher_script_path,
         trace_log_path=trace_log_path,
         execution=execution,

@@ -115,6 +115,57 @@ FEMIC now also supervises these Windows headless runs directly:
 - successful runs are also terminated cleanly after the success marker and
   saved-stage verification
 
+The proving-ground seam has now advanced one step further:
+
+- a minimal headless scenario mode can activate
+  ``product.Yield.managed.Total`` with a modest annual minimum before the
+  bounded wait/save cycle;
+- the saved proving-ground stage now records that target as active in
+  ``scenario/targetStatus.csv``;
+- ``scenario/targetSummary.csv`` contains non-zero managed-yield currents and
+  derived ``flow.even.product.Yield.managed.Total`` values; and
+- ``scenario/schedule.csv`` is non-empty and contains real managed treatments.
+
+One useful reverse-engineering nuance is now established too:
+
+- directly activating ``flow.even.product.Yield.managed.Total`` changed target
+  state but still left the saved schedule empty;
+- activating the underlying ``product.Yield.managed.Total`` target produced
+  the first useful saved headless schedule on the K3Z proving ground.
+
+The next proving-ground refinement is now also established:
+
+- a real ``flow.even.*`` headless smoke works when FEMIC treats it as a
+  two-phase scheduler problem instead of a one-shot target toggle;
+- the helper must first seed the underlying
+  ``product.Yield.managed.Total`` target so there is harvest pressure in the
+  final period, then suspend, then activate the companion
+  ``flow.even.product.Yield.managed.Total`` target for the second wait phase;
+- proving-ground smoke ``p49_smoke_20260328q`` saved a stage where both the
+  underlying harvest target and the even-flow companion were active in
+  ``scenario/targetStatus.csv``, both had non-zero currents in
+  ``scenario/targetSummary.csv``, and ``scenario/schedule.csv`` remained
+  non-empty with real managed treatments.
+- the normal CLI/default-target path now proves the same seam too:
+  ``p49_smoke_20260328r`` omitted an explicit scenario target and relied on
+  FEMIC's default ``product.Yield.managed.Total`` resolution; the saved stage
+  still recorded both targets as active, and ``scenario/schedule.csv``
+  remained non-empty.
+
+The current closeout-level proving-ground contract is now anchored on the real
+base K3Z variant:
+
+- FEMIC's ``max-even-flow-smoke`` mode now defaults to a useful K3Z recipe:
+  default target ``product.Yield.managed.Total``, default iteration budget
+  ``100000``, seed harvest first on the underlying target, then activate
+  ``flow.even.product.Yield.managed.Total`` with minimum = maximum = ``0`` and
+  minimum = maximum weight = ``100`` across periods.
+- proving-ground smoke ``p49_base_closeout_20260328a`` ran against
+  ``analysis/base.pin`` and saved a stage where both the underlying harvest
+  target and the even-flow companion were active, the even-flow summary values
+  stayed clustered near zero, and ``scenario/schedule.csv`` remained non-empty
+  with real treatments.
+
 Host Assumptions
 ----------------
 

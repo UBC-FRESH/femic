@@ -7853,3 +7853,68 @@
       `terminal_state=success`, and `saved_file_count=1695`;
     - returns control without any human cleanup because FEMIC terminates the
       Patchworks Java tree automatically after the success marker.
+- 2026-03-28 (Phase 49 target-activation edge clarified): after inspecting the
+  first successful saved proving-ground stage, confirmed that the current
+  no-GUI seam is still saving a passive default state.
+  - `scenario/schedule.csv` was empty in the first successful saved stage,
+    so the next Patchworks headless milestone is now explicit:
+    activate one existing flow target, set a modest minimum annual value, run
+    a bounded wait/save cycle, and inspect `targetStatus.csv`,
+    `targetSummary.csv`, and `schedule.csv` directly to prove a real scenario
+    action occurred.
+- 2026-03-28 (Phase 49 first real headless scenario smoke): extended the
+  proving-ground no-GUI Patchworks seam from passive save-stage proof to a
+  real saved scheduling smoke.
+  - FEMIC now supports a minimal headless scenario mode,
+    `max-even-flow-smoke`, with optional target and minimum-annual controls.
+  - Direct activation of `flow.even.product.Yield.managed.Total` proved that
+    target activation changed objective state but still left `schedule.csv`
+    empty.
+  - Switching the smoke to the underlying
+    `product.Yield.managed.Total` target produced the first fully useful
+    proving-ground result (`p49_smoke_20260328p`):
+    - `targetStatus.csv` shows `product.Yield.managed.Total` active;
+    - `targetSummary.csv` shows non-zero managed-yield currents and derived
+      `flow.even.product.Yield.managed.Total` values;
+    - `schedule.csv` is non-empty and contains real managed treatments;
+    - FEMIC saved the stage and self-terminated the Patchworks Java tree
+      cleanly after the success marker.
+- 2026-03-28 (Phase 49 two-phase even-flow headless smoke): proved the real
+  seed-then-even-flow scheduler pattern on the K3Z proving ground.
+  - the proving-ground BeanShell helper now treats
+    `max-even-flow-smoke` as a two-phase headless scenario:
+    1. seed the underlying `product.Yield.managed.Total` target so the final
+       period is not mathematically empty;
+    2. suspend;
+    3. activate the companion
+       `flow.even.product.Yield.managed.Total` target; and
+    4. run the second wait phase before saving the stage.
+  - real proving-ground smoke `p49_smoke_20260328q` now shows both targets
+    active in `scenario/targetStatus.csv`, non-zero currents for both in
+    `scenario/targetSummary.csv`, and a non-empty `schedule.csv` (677 lines)
+    with real managed treatments.
+- 2026-03-28 (Phase 49 default-target headless usability proof): confirmed the
+  same two-phase even-flow seam works through the normal CLI/default-target
+  path, not just a hand-crafted target override.
+  - real proving-ground smoke `p49_smoke_20260328r` omitted
+    `--scenario-target` and relied on FEMIC's default
+    `product.Yield.managed.Total` resolution;
+  - the saved stage still recorded both
+    `product.Yield.managed.Total` and
+    `flow.even.product.Yield.managed.Total` as active; and
+  - `schedule.csv` remained non-empty (788 lines).
+- 2026-03-28 (Phase 49 base-K3Z closeout proof): shifted the authoritative
+  proving-ground smoke from the intensive variant to the real base K3Z surface
+  and baked in useful scheduler defaults for `max-even-flow-smoke`.
+  - FEMIC now defaults `max-even-flow-smoke` to `100000` iterations when the
+    user leaves `--iterations` at its placeholder value.
+  - The headless helper now configures the even-flow companion target with:
+    - minimum = maximum = `0` for all periods
+    - minimum weight = maximum weight = `100` for all periods
+  - Real base-K3Z smoke `p49_base_closeout_20260328a` proved the full seam on
+    `analysis/base.pin`:
+    - both `product.Yield.managed.Total` and
+      `flow.even.product.Yield.managed.Total` were active;
+    - `targetSummary.csv` showed nearly level even-flow deviations around zero
+      and strong non-zero underlying managed-yield currents;
+    - `schedule.csv` was non-empty (341 lines).

@@ -399,6 +399,9 @@ def test_run_patchworks_headless_pin_updates_manifest_and_stage_outputs(
         assert "__femic_headless__" in script_text
         assert json.dumps("headless_runs/demo") in script_text
         assert "traceLogPath" in script_text
+        assert json.dumps("max-even-flow-smoke") in script_text
+        assert json.dumps("flow.even.product.Yield.managed.Total") in script_text
+        assert json.dumps("1234.5") in script_text
         stage_dir = pin_path.parent / "headless_runs/demo"
         stage_dir.mkdir(parents=True, exist_ok=True)
         (stage_dir / "summary.csv").write_text("ok\n", encoding="utf-8")
@@ -448,6 +451,9 @@ def test_run_patchworks_headless_pin_updates_manifest_and_stage_outputs(
         stage_label="headless_runs/demo",
         iterations=5,
         improvement=0.25,
+        scenario_mode="max-even-flow-smoke",
+        scenario_target="flow.even.product.Yield.managed.Total",
+        scenario_min_annual=1234.5,
     )
 
     assert result.returncode == 0
@@ -461,6 +467,9 @@ def test_run_patchworks_headless_pin_updates_manifest_and_stage_outputs(
     assert manifest["mode"] == "headless_pin"
     assert manifest["inputs"]["stage_label"] == "headless_runs/demo"
     assert manifest["inputs"]["iterations"] == 5
+    assert manifest["inputs"]["scenario_mode"] == "max-even-flow-smoke"
+    assert manifest["inputs"]["scenario_target"] == "flow.even.product.Yield.managed.Total"
+    assert manifest["inputs"]["scenario_min_annual"] == 1234.5
     assert manifest["inputs"]["trace_log_path"].endswith(
         "patchworks_headless_trace-headless.log"
     )
@@ -488,6 +497,7 @@ def test_run_patchworks_headless_pin_fails_when_stage_dir_missing(
         assert json.dumps(str(pin_path.resolve())) in script_text
         assert "__femic_headless__" in script_text
         assert "traceLogPath" in script_text
+        assert "scenarioMode" in script_text
         manifest_path = (
             tmp_path / "logs/patchworks_beanshell_manifest-headless_missing.json"
         )
@@ -539,6 +549,82 @@ def test_run_patchworks_headless_pin_fails_when_stage_dir_missing(
     assert any("headless stage directory not created" in msg for msg in result.failures)
     manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
     assert manifest["returncode"] == 1
+
+
+def test_run_patchworks_headless_pin_resolves_default_scenario_target(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg_path = _write_runtime_config(tmp_path)
+    cfg = load_patchworks_runtime_config(cfg_path)
+    pin_path = tmp_path / "analysis/base.pin"
+    pin_path.parent.mkdir(parents=True, exist_ok=True)
+    pin_path.write_text('sourceRelative("base_variant_common.bsh");\n', encoding="utf-8")
+
+    def _fake_run_patchworks_beanshell_script(
+        *, script_path: Path, script_args: tuple[str, ...], **_kwargs
+    ):
+        script_text = script_path.read_text(encoding="utf-8")
+        assert json.dumps("max-even-flow-smoke") in script_text
+        assert json.dumps("product.Yield.managed.Total") in script_text
+        assert "__femic_headless__" in script_text
+        assert "100000" in script_text
+        stage_dir = pin_path.parent / "headless_runs/default_target"
+        stage_dir.mkdir(parents=True, exist_ok=True)
+        (stage_dir / "summary.csv").write_text("ok\n", encoding="utf-8")
+        manifest_path = tmp_path / "logs/patchworks_beanshell_manifest-default_target.json"
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest_path.write_text(
+            json.dumps(
+                {
+                    "run_id": "default_target",
+                    "returncode": 0,
+                    "failures": [],
+                }
+            ),
+            encoding="utf-8",
+        )
+        return patchworks_runtime.PatchworksExecutionResult(
+            run_id="default_target",
+            command=("java", "Patchworks"),
+            command_string="java Patchworks",
+            returncode=0,
+            stdout_log_path=tmp_path / "logs/stdout.log",
+            stderr_log_path=tmp_path / "logs/stderr.log",
+            manifest_path=manifest_path,
+            failures=(),
+        )
+
+    monkeypatch.setattr(
+        patchworks_runtime,
+        "run_patchworks_beanshell_script",
+        _fake_run_patchworks_beanshell_script,
+    )
+    monkeypatch.setattr(
+        patchworks_runtime,
+        "run_patchworks_preflight",
+        lambda **_kwargs: SimpleNamespace(
+            ok=True,
+            launcher_executable="/usr/bin/wine64",
+            host_mode="wine",
+        ),
+    )
+
+    result = run_patchworks_headless_pin(
+        config=cfg,
+        pin_path=pin_path,
+        log_dir=tmp_path / "logs",
+        run_id="default_target",
+        stage_label="headless_runs/default_target",
+        scenario_mode="max-even-flow-smoke",
+        scenario_min_annual=1000.0,
+    )
+
+    assert result.returncode == 0
+    assert result.scenario_target == "product.Yield.managed.Total"
+    assert result.iterations == 100000
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["inputs"]["scenario_target"] == "product.Yield.managed.Total"
+    assert manifest["inputs"]["iterations"] == 100000
 
 
 def test_run_patchworks_headless_pin_windows_monitor_records_failure(

@@ -49,12 +49,75 @@ Current implementation order:
    register reports, and then run a bounded analyze/save cycle before
    returning.
 4. Prove the first slice only on
-   `analysis/intensive_light_standstructure.pin`.
+   `analysis/base.pin`.
 
 The first slice should not attempt to solve the whole scenario-definition
 problem. A bounded analyze/save cycle with real reports on disk is enough to
 prove the no-GUI seam before broadening into richer headless scheduling
 helpers.
+
+Current status after the latest proving-ground smokes:
+
+- the first successful save-stage proof (`p49_smoke_20260328k`) turned out to
+  be a passive default-state save because `scenario/schedule.csv` was empty;
+- FEMIC now supports a tiny headless scenario mode,
+  `max-even-flow-smoke`, that activates one existing target and applies a
+  modest minimum annual value before the bounded wait/save cycle;
+- direct targeting of `flow.even.product.Yield.managed.Total` did not produce a
+  useful schedule, but activating the underlying
+  `product.Yield.managed.Total` target did;
+- real proving-ground smoke `p49_smoke_20260328p` now proves a full
+  no-GUI scenario step:
+  - `targetStatus.csv` records `product.Yield.managed.Total` as active;
+  - `targetSummary.csv` shows non-zero managed-yield currents plus derived
+    `flow.even.product.Yield.managed.Total` values;
+  - `schedule.csv` is non-empty and contains real managed treatments;
+  - FEMIC still saves the stage and returns control cleanly without human
+    cleanup.
+- one more headless scheduler insight is now confirmed:
+  - to activate the real `flow.even.*` companion safely, the proving-ground
+    helper must first seed the underlying harvest target for an initial wait
+    phase, then suspend, then activate the companion target, and only then run
+    the second wait phase;
+  - real proving-ground smoke `p49_smoke_20260328q` proves that two-phase
+    pattern:
+    - both `product.Yield.managed.Total` and
+      `flow.even.product.Yield.managed.Total` are active in
+      `scenario/targetStatus.csv`;
+    - `targetSummary.csv` shows non-zero currents for both targets;
+    - `schedule.csv` remains non-empty (677 lines) with real managed
+      treatments; and
+    - FEMIC still saves the stage and self-terminates Patchworks cleanly.
+- the normal CLI/default-target path is also now proven:
+  - real proving-ground smoke `p49_smoke_20260328r` omitted an explicit
+    scenario target and relied on FEMIC's default
+    `product.Yield.managed.Total` resolution;
+  - both the underlying harvest target and the `flow.even.*` companion still
+  ended up active in `scenario/targetStatus.csv`; and
+  - `schedule.csv` stayed non-empty (788 lines), so the working seam is not
+    limited to a hand-crafted target override.
+- the authoritative closeout proof now comes from the real base K3Z variant:
+  - proving-ground smoke `p49_base_closeout_20260328a` used `analysis/base.pin`
+    with the useful default recipe:
+    - seed harvest first via `product.Yield.managed.Total`;
+    - set the even-flow companion target to min=max=`0` with
+      min=max weight=`100` in all periods;
+    - let `waitForIterations(...)` run `50000 + 50000` iterations across the
+      seed and even-flow phases;
+  - `targetStatus.csv` recorded:
+    - `product.Yield.managed.Total` active; and
+    - `flow.even.product.Yield.managed.Total` active with both min/max mode
+      enabled;
+  - `targetSummary.csv` showed:
+    - nearly level even-flow deviations around zero; and
+    - strong non-zero underlying managed-yield currents around 69,000 by
+      period;
+  - `schedule.csv` remained non-empty (341 lines), so the seam now has a real
+    useful base-K3Z proof, not just an intensive proving-ground surrogate.
+
+That means the proving-ground headless seam is no longer just a save-stage
+novelty; it can now execute a small real scheduling smoke and persist the
+results for downstream inspection.
 
 Most recent high-value proof point:
 
