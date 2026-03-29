@@ -7967,6 +7967,115 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - probe those fields incrementally against the real live overlay seam
           so we preserve the hidden stock `TimberSupply.rpt` contract and avoid
           false negatives from oversized all-fields replacements;
+        - next active slice:
+          - `yield-and-age-core` now appears incompatible with the unattended
+            transposed `/TSR` seam:
+            - the whole-bank batch probe failed; and
+            - fallback one-token probes also failed for `Year`, then again for
+              the reduced post-`Year` set (`TotalAge`, `BHAge`, `StandAge`,
+              `HeightSindex`, `Height`, `Volume`, `VPT`,
+              `Juvenille_Volume`, `Juvenille_Percent`, `HeightTassTop`,
+              `HeightTassMean`, `HeightTassPredom`);
+            - those failures all showed the same BTC exception signature:
+              `exit_code=1`, no output file, and auto-closed modal dialog.
+          - move on to `crop250-stand-quality` as the next compact candidate
+            bank after the failed `yield-and-age-core` probe cluster;
+          - current sweep result across the remaining canonical
+            `OutputColumns.txt` banks:
+            - `crop250-stand-quality`, `mortality-summary`,
+              `genetics-fertilization-and-oaf`, `tass-and-site-index-raw`,
+              `crown-and-fire`, `biomass-live`, `biomass-dead`, `carbon`,
+              `co2e`, `mortality-size-classes`, `diameter-class-stems`,
+              `diameter-class-volume`, and `diameter-class-vpt` all completed
+              BTC `/TSR` runs with output files present, but the requested
+              columns were silently omitted from the returned CSVs;
+            - `stand-structure-threshold-raw` also omitted all canonical raw
+              `OutputColumns.txt` names, while the previously landed stand
+              structure bank still works through the older report-token layer
+              (`BasalArea:000`, `DBHg:000`, `SPH:000`), so that family now
+              looks like a naming-layer mismatch rather than a broken seam;
+            - sanity-check reprobe:
+              - the current probe harness still cleanly reprobes `log-grades`
+                end to end, so these failures should be treated as real seam
+                selectivity, not as evidence that the probe logic itself has
+                regressed.
+          - the next productive step after this sweep is no longer "probe more
+            canonical banks blindly"; it is to add a depth-first variant probe
+            matrix for a smaller number of representative high-value tokens:
+            - current generic TSR transposed line;
+            - exact stock report line copied from matching `.rpt` files when
+              available;
+            - minimally adapted stock report line for the TSR/transposed seam;
+            - explicit alias-token overrides for known naming-layer cases such
+              as:
+              - `BasalArea000` -> `BasalArea:000`
+              - `MeanDBHg000` -> `DBHg:000`
+              - `StemCount000` -> `SPH:000`
+          - reverse-engineering anchor for that variant work:
+            - `TimberSupply.rpt` and `ForestLandscapePlan.rpt` are the only
+              obvious shipped transposed CSV templates, while the other stock
+              `.rpt` files are mostly custom table/database reports that still
+              reference many of the omitted tokens;
+            - therefore variant probing should compare:
+              - the stock transposed grammar;
+              - exact non-transposed stock report lines copied as-is; and
+              - minimally adapted transposed forms of those same stock lines.
+          - the durable reasoning/triage ledger for this work is now:
+            - `planning/tipsy_tsr_variant_probe_ledger.md`
+            - keep that file current with per-family outcome class
+              (`accepted`, `silent omission`, `exception`, `naming mismatch`),
+              stock report membership, and next candidate variant syntax.
+          - initial depth-first target order:
+            - `crop250-stand-quality`
+            - `mortality-summary`
+            - `crown-and-fire`
+            - `stand-structure-threshold-raw` via alias candidates first
+            - representative biomass/carbon/CO2e totals
+            - `yield-and-age-core` last, one token at a time, because it is
+              the exception cluster
+          - exact next live representative fields to run, in order:
+            - `Mortality_Height_Mean`
+            - `Mortality_DBHg_Mean`
+            - `Mortality_Basal_Area`
+            - `BasalArea000`
+            - `MeanDBHg000`
+            - `StemCount000`
+          - variant matrix to use for those probes:
+            - mortality width-bearing representatives:
+              - generic transposed line;
+              - exact stock `Mortality.rpt` line; and
+              - stock-transposed adapted line preserving width=`750`
+            - threshold-raw naming-mismatch representatives:
+              - generic transposed canonical token;
+              - alias-transposed report token (`BasalArea:000`, `DBHg:000`,
+                `SPH:000`);
+              - exact stock `Yield.rpt` line; and
+              - stock-transposed adapted line
+          - implementation rule for this slice:
+            - use short ASCII header overrides on probe variants and kill the
+              attempt immediately when a BTC modal exception dialog appears;
+            - keep the per-attempt timeout short for silent hangs only.
+          - latest representative live results:
+            - `Mortality_Height_Mean`, `Mortality_DBHg_Mean`, and
+              `Mortality_Basal_Area` all failed across all three tested
+              variants (generic transposed, exact stock `Mortality.rpt`,
+              stock-transposed adapted) with the same modal-signature failure:
+              `exit_code=1`, no output CSV, no error CSV;
+            - `BasalArea000`, `MeanDBHg000`, and `StemCount000` likewise failed
+              across the generic canonical, alias-transposed, and exact stock
+              `Yield.rpt` variants with the same modal-signature failure;
+            - inference:
+              - width-bearing stock syntax does not rescue the mortality family
+                through copied-install `/TSR`; and
+              - the known-good report-token spellings
+                (`BasalArea:000`, `DBHg:000`, `SPH:000`) appear to depend on
+                the live user-overlay seam rather than working generically in
+                copied-install stock-matrix probes.
+          - do not ship any new optional banks until one representative family
+            proves clean under a stable variant pattern and a known-good bank
+            still reprobes cleanly afterward.
+          - keep those live `/TSR` smokes sequential-only and save the
+            supervised artifacts under `tipsy_io/logs`.
         - land each safe bank behind a named `--indicator-bank` switch as it is
           proven, instead of waiting for the whole universe of fields to be
           solved at once;

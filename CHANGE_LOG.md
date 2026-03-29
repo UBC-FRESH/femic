@@ -8112,3 +8112,76 @@
   - Added focused test coverage for:
     - bank column expansion; and
     - runtime TSR template injection for the new product-bank cluster.
+- 2026-03-29 (Issue #48 remaining canonical bank sweep): pushed the current
+  unattended `/TSR` probe harness across the remaining unshipped canonical
+  `OutputColumns.txt` bank families and confirmed that the failures are real
+  seam selectivity, not a broken probe harness.
+  - Sanity check:
+    - re-probed the previously clean `log-grades` bank with the current
+      bank-probe logic and got `accepted=9`, `failed=0`, with the expected
+      `Logs_Grade_*` headers present in the returned CSV.
+  - Exception cluster:
+    - `yield-and-age-core` failed both as a whole-bank batch probe and as
+      one-token fallback probes (`Year`, then the reduced post-`Year` set),
+      all with the same BTC signature:
+      - `exit_code=1`
+      - no output CSV
+      - no error CSV
+      - auto-closed BTC modal dialog
+  - Silent-omission cluster:
+    - the following families completed BTC `/TSR` runs successfully, but every
+      requested token was omitted from the returned transposed CSV:
+      - `crop250-stand-quality`
+      - `mortality-summary`
+      - `genetics-fertilization-and-oaf`
+      - `tass-and-site-index-raw`
+      - `crown-and-fire`
+      - `biomass-live`
+      - `biomass-dead`
+      - `carbon`
+      - `co2e`
+      - `mortality-size-classes`
+      - `diameter-class-stems`
+      - `diameter-class-volume`
+      - `diameter-class-vpt`
+  - Naming-layer mismatch clue:
+    - `stand-structure-threshold-raw` also omitted all canonical raw names
+      such as `BasalArea000` and `MeanDBHg000`, while the already landed stand
+      structure bank still works with the older report-token forms
+      `BasalArea:000`, `DBHg:000`, and `SPH:000`.
+    - That family now looks more like a report-token alias problem than a
+      broken unattended seam.
+- 2026-03-29 (Issue #48 depth-first stock-matrix probe slice): added
+  variant-aware BTC probing and ran the first representative stock-syntax
+  experiments against the copied-install `/TSR` seam.
+  - The probe harness now supports a stock-matrix variant mode that can try:
+    - the generic transposed TSR line;
+    - exact stock report lines copied from shipped `.rpt` files;
+    - stock-transposed adapted lines; and
+    - explicit alias-token variants for naming-mismatch cases.
+  - The parser/runtime path was tightened to:
+    - read shipped BTC `.rpt` files with UTF-8 BOM handling;
+    - preserve exact stock column lines verbatim when probing;
+    - use short ASCII header overrides on generated transposed variants; and
+    - kill probe attempts immediately once a BTC modal exception dialog is
+      detected.
+  - New in-repo planning ledger:
+    - `planning/tipsy_tsr_variant_probe_ledger.md`
+  - Live representative results:
+    - `Mortality_Height_Mean`, `Mortality_DBHg_Mean`, and
+      `Mortality_Basal_Area` all failed across generic transposed, exact stock
+      `Mortality.rpt`, and stock-transposed adapted variants with the same
+      signature:
+      - `exit_code=1`
+      - no output CSV
+      - no error CSV
+      - auto-closed BTC modal dialog
+    - `BasalArea000`, `MeanDBHg000`, and `StemCount000` all failed across
+      generic canonical, alias-transposed, and exact stock `Yield.rpt`
+      variants with that same modal-signature failure.
+  - Current inference:
+    - width-bearing stock syntax does not rescue the mortality family through
+      copied-install `/TSR`; and
+    - the known-good threshold report-token spellings (`BasalArea:000`,
+      `DBHg:000`, `SPH:000`) appear to depend on the live user-overlay seam
+      rather than working generically in copied-install stock-matrix probes.

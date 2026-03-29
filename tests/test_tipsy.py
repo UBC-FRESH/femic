@@ -31,6 +31,7 @@ from femic.pipeline.tipsy import (
     evaluate_tipsy_candidate,
     parse_btc_custom_report_template,
     parse_btc_tsr_transposed_output,
+    probe_btc_indicator_banks,
     probe_btc_report_columns,
     prepare_btc_runtime,
     resolve_btc_executable,
@@ -1171,6 +1172,312 @@ def test_probe_btc_report_columns_defaults_compatibility_ledger_under_tipsy_logs
     ).is_file()
 
 
+def test_probe_btc_indicator_banks_accepts_whole_bank_in_one_run(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    run_ids: list[str] = []
+
+    def fake_run_btc_cli(**kwargs: object) -> BTCRunResult:
+        run_id = str(kwargs["run_id"])
+        run_ids.append(run_id)
+        output_path = tmp_path / f"{run_id}_output.csv"
+        error_path = tmp_path / f"{run_id}_error.csv"
+        report_template = kwargs["report_template"]
+        columns = list(report_template.columns)
+        headers = ["feature_id"]
+        for column in columns:
+            prefix = column.header1_override or column.token.replace(":", "")
+            headers.append(f"{prefix}_10")
+        output_path.write_text(",".join(headers) + "\n1," + ",".join("1" for _ in headers[1:]) + "\n", encoding="utf-8")
+        error_path.write_text("", encoding="utf-8")
+        return BTCRunResult(
+            run_id=run_id,
+            mode="TSR",
+            manifest_path=tmp_path / f"{run_id}.json",
+            stdout_log_path=tmp_path / f"{run_id}.stdout.log",
+            stderr_log_path=tmp_path / f"{run_id}.stderr.log",
+            output_csv_path=output_path,
+            error_csv_path=error_path,
+            executable_path=tmp_path / "TIPSYbtc.exe",
+            install_root=tmp_path / "btc_install",
+            working_dir=tmp_path / "work",
+            command=("btc.exe", "/TSR", "MSYT.csv"),
+            copied_install=True,
+            exit_code=0,
+            duration_sec=1.0,
+            report_template_path=tmp_path / "btc_install" / "TimberSupply.rpt",
+        )
+
+    monkeypatch.setattr("femic.pipeline.tipsy.run_btc_cli", fake_run_btc_cli)
+
+    results, final_template = probe_btc_indicator_banks(
+        input_csv=input_csv,
+        indicator_bank_names=["log-grades"],
+        source_preset_name="tsr-unattended-default",
+        copy_install=True,
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id_prefix="bankprobe",
+        env={},
+    )
+
+    assert run_ids == ["bankprobe_log_grades"]
+    assert all(result.status == "accepted" for result in results)
+    assert len(results) == 9
+    final_tokens = [column.token for column in final_template.columns]
+    assert "Logs_Grade_D" in final_tokens
+    assert "Logs_Grade_All" in final_tokens
+
+
+def test_probe_btc_indicator_banks_falls_back_to_ratchet_when_batch_run_misses_output(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    run_ids: list[str] = []
+
+    def fake_run_btc_cli(**kwargs: object) -> BTCRunResult:
+        run_id = str(kwargs["run_id"])
+        run_ids.append(run_id)
+        output_path = tmp_path / f"{run_id}_output.csv"
+        error_path = tmp_path / f"{run_id}_error.csv"
+        report_template = kwargs["report_template"]
+        columns = list(report_template.columns)
+        headers = ["feature_id"]
+        include_last = run_id != "bankprobe_log_grades"
+        for column in columns:
+            prefix = column.header1_override or column.token.replace(":", "")
+            if not include_last and prefix == "Logs_Grade_All":
+                continue
+            headers.append(f"{prefix}_10")
+        output_path.write_text(",".join(headers) + "\n1," + ",".join("1" for _ in headers[1:]) + "\n", encoding="utf-8")
+        error_path.write_text("", encoding="utf-8")
+        return BTCRunResult(
+            run_id=run_id,
+            mode="TSR",
+            manifest_path=tmp_path / f"{run_id}.json",
+            stdout_log_path=tmp_path / f"{run_id}.stdout.log",
+            stderr_log_path=tmp_path / f"{run_id}.stderr.log",
+            output_csv_path=output_path,
+            error_csv_path=error_path,
+            executable_path=tmp_path / "TIPSYbtc.exe",
+            install_root=tmp_path / "btc_install",
+            working_dir=tmp_path / "work",
+            command=("btc.exe", "/TSR", "MSYT.csv"),
+            copied_install=True,
+            exit_code=0,
+            duration_sec=1.0,
+            report_template_path=tmp_path / "btc_install" / "TimberSupply.rpt",
+        )
+
+    monkeypatch.setattr("femic.pipeline.tipsy.run_btc_cli", fake_run_btc_cli)
+
+    results, final_template = probe_btc_indicator_banks(
+        input_csv=input_csv,
+        indicator_bank_names=["log-grades"],
+        source_preset_name="tsr-unattended-default",
+        copy_install=True,
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id_prefix="bankprobe",
+        env={},
+    )
+
+    assert run_ids[0] == "bankprobe_log_grades"
+    assert any(run_id.startswith("bankprobe_log_grades_01_") for run_id in run_ids[1:])
+    assert len(results) == 9
+    assert all(result.status == "accepted" for result in results)
+    final_tokens = [column.token for column in final_template.columns]
+    assert "Logs_Grade_All" in final_tokens
+
+
+def test_build_btc_probe_variants_includes_alias_and_stock_forms(tmp_path: Path) -> None:
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    (install_root / "Yield.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Yield\n"
+        "Type=databaseByStand\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "BasalArea:000\t750\n",
+        encoding="utf-8",
+    )
+
+    variants = tipsy_module._btc_build_probe_variants(
+        candidate_column=BTCCustomReportColumn(token="BasalArea000"),
+        install_root=install_root,
+        variant_strategy="stock-matrix",
+    )
+
+    variant_ids = {variant.variant_id for variant in variants}
+    variant_tokens = {variant.column.token for variant in variants}
+    short_alias = tipsy_module._btc_preferred_probe_alias(
+        BTCCustomReportColumn(token="BasalArea000")
+    )
+    assert "generic-transposed" in variant_ids
+    assert "alias-transposed-BasalArea_000" in variant_ids
+    assert "stock-exact-Yield" in variant_ids
+    assert "stock-transposed-Yield" in variant_ids
+    assert "BasalArea000" in variant_tokens
+    assert "BasalArea:000" in variant_tokens
+    assert any(
+        variant.variant_id == "generic-transposed"
+        and variant.column.render() == f"BasalArea000\t\t{short_alias}\t{{yr}}"
+        for variant in variants
+    )
+
+
+def test_parse_btc_custom_report_template_handles_utf8_bom(tmp_path: Path) -> None:
+    template_path = tmp_path / "Yield.rpt"
+    template_path.write_text(
+        "[CustomReport]\n"
+        "Name=Yield\n"
+        "Type=databaseByStand\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Crop250VolUtil125\n",
+        encoding="utf-8-sig",
+    )
+
+    template = parse_btc_custom_report_template(template_path)
+
+    assert template.name == "Yield"
+    assert [column.token for column in template.columns] == ["Crop250VolUtil125"]
+
+
+def test_probe_btc_report_columns_stock_matrix_tries_later_variant(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    (install_root / "TIPSYbtc.exe").write_text("stub", encoding="utf-8")
+    (install_root / "Yield.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Yield\n"
+        "Type=databaseByStand\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Crop250VolUtil125\t750\n",
+        encoding="utf-8",
+    )
+    run_ids: list[str] = []
+
+    def fake_run_btc_cli(**kwargs: object) -> BTCRunResult:
+        run_id = str(kwargs["run_id"])
+        run_ids.append(run_id)
+        output_path = tmp_path / f"{run_id}_output.csv"
+        error_path = tmp_path / f"{run_id}_error.csv"
+        trial_column = list(kwargs["report_template"].columns)[-1]
+        headers = ["feature_id"]
+        if (
+            trial_column.width == 750
+            and trial_column.header2_override == "{yr}"
+            and trial_column.token == "Crop250VolUtil125"
+        ):
+            headers.append("Crop250VolUtil125_10")
+        output_path.write_text(
+            ",".join(headers) + "\n1," + ",".join("1" for _ in headers[1:]) + "\n",
+            encoding="utf-8",
+        )
+        error_path.write_text("", encoding="utf-8")
+        return BTCRunResult(
+            run_id=run_id,
+            mode="TSR",
+            manifest_path=tmp_path / f"{run_id}.json",
+            stdout_log_path=tmp_path / f"{run_id}.stdout.log",
+            stderr_log_path=tmp_path / f"{run_id}.stderr.log",
+            output_csv_path=output_path,
+            error_csv_path=error_path,
+            executable_path=install_root / "TIPSYbtc.exe",
+            install_root=install_root,
+            working_dir=tmp_path / "work",
+            command=("btc.exe", "/TSR", "MSYT.csv"),
+            copied_install=True,
+            exit_code=0,
+            duration_sec=1.0,
+            report_template_path=install_root / "TimberSupply.rpt",
+        )
+
+    monkeypatch.setattr("femic.pipeline.tipsy.run_btc_cli", fake_run_btc_cli)
+
+    results, final_template = probe_btc_report_columns(
+        input_csv=input_csv,
+        candidate_tokens=["Crop250VolUtil125"],
+        executable_path=install_root / "TIPSYbtc.exe",
+        source_preset_name="tsr-unattended-default",
+        copy_install=True,
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id_prefix="variantprobe",
+        variant_strategy="stock-matrix",
+    )
+
+    assert len(run_ids) >= 2
+    assert run_ids[0].endswith("generic_transposed")
+    assert results[0].status == "accepted"
+    assert results[0].variant_id == "stock-transposed-Yield"
+    assert results[0].probe_token == "Crop250VolUtil125"
+    assert "stock-transposed-Yield" in results[0].attempted_variants
+    assert final_template.columns[-1].header2_override == "{yr}"
+
+
+def test_probe_btc_report_columns_stock_matrix_preserves_failure_classification(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    (install_root / "TIPSYbtc.exe").write_text("stub", encoding="utf-8")
+    (install_root / "Yield.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Yield\n"
+        "Type=databaseByStand\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "BasalArea:000\n",
+        encoding="utf-8",
+    )
+
+    def fake_run_btc_cli(**kwargs: object) -> BTCRunResult:
+        run_id = str(kwargs["run_id"])
+        manifest_path = tmp_path / "logs" / f"btc_manifest-{run_id}.json"
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest_path.write_text(
+            '{"exit_code": 1, "artifacts": {"output_csv": {"exists": false}, '
+            '"error_csv": {"exists": false}}, "windows_dialog_cleanup": '
+            '{"close_attempted": true, "closed_window_count": 1}}',
+            encoding="utf-8",
+        )
+        raise RuntimeError("BTC output is missing requested probe columns: BasalArea000")
+
+    monkeypatch.setattr("femic.pipeline.tipsy.run_btc_cli", fake_run_btc_cli)
+
+    results, _final_template = probe_btc_report_columns(
+        input_csv=input_csv,
+        candidate_tokens=["BasalArea000"],
+        executable_path=install_root / "TIPSYbtc.exe",
+        source_preset_name="tsr-unattended-default",
+        copy_install=True,
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id_prefix="variantprobe",
+        variant_strategy="stock-matrix",
+    )
+
+    assert results[0].status == "failed"
+    assert results[0].failure_classification == "missing_output_exit_1"
+    assert results[0].attempted_variants[-1] in {
+        "stock-exact-Yield",
+        "stock-transposed-Yield",
+    }
+
+
 def test_run_windows_btc_with_dialog_cleanup_force_stops_dialog_tree(
     monkeypatch, tmp_path: Path
 ) -> None:
@@ -1218,7 +1525,10 @@ def test_run_windows_btc_with_dialog_cleanup_force_stops_dialog_tree(
         "_force_stop_windows_process",
         lambda pid: stopped.append(pid) is None or True,
     )
-    monkeypatch.setattr(tipsy_module.time, "sleep", lambda _seconds: None)
+    sleep_calls: list[float] = []
+    monkeypatch.setattr(
+        tipsy_module.time, "sleep", lambda seconds: sleep_calls.append(seconds)
+    )
 
     exit_code, stdout_text, stderr_text, automation = (
         tipsy_module._run_windows_btc_with_dialog_cleanup(
@@ -1235,6 +1545,7 @@ def test_run_windows_btc_with_dialog_cleanup_force_stops_dialog_tree(
     assert automation["matched_dialog_pids"] == [4321]
     assert automation["closed_window_count"] == 1
     assert stopped == [4321, 5000]
+    assert sleep_calls == []
 
 
 def test_prepare_btc_runtime_copies_install_and_writes_report_template(

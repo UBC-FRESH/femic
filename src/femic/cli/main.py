@@ -88,6 +88,7 @@ from femic.pipeline.tipsy import (
     DEFAULT_BTC_LOG_DIR,
     apply_btc_indicator_banks,
     probe_btc_report_columns,
+    probe_btc_indicator_banks,
     BTCRunResult,
     BTCCustomReportColumn,
     BTCCustomReportTemplate,
@@ -2794,6 +2795,22 @@ def tipsy_run_btc(
     console.print(f"manifest: {result.manifest_path}")
 
 
+def _parse_btc_probe_alias_overrides(values: list[str]) -> dict[str, tuple[str, ...]]:
+    mapping: dict[str, list[str]] = {}
+    for raw in values:
+        candidate, separator, alias = raw.partition("=")
+        candidate = candidate.strip()
+        alias = alias.strip()
+        if separator != "=" or not candidate or not alias:
+            raise typer.BadParameter(
+                "Alias overrides must use CANDIDATE=PROBE_TOKEN form."
+            )
+        mapping.setdefault(candidate, [])
+        if alias not in mapping[candidate]:
+            mapping[candidate].append(alias)
+    return {key: tuple(value) for key, value in mapping.items()}
+
+
 @tipsy_app.command("probe-btc-columns")
 def tipsy_probe_btc_columns(
     input_csv: Path = typer.Argument(
@@ -2801,9 +2818,15 @@ def tipsy_probe_btc_columns(
         help="BTC MSYT.csv-style input file to probe against.",
     ),
     column: list[str] = typer.Option(
-        ...,
+        None,
         "--column",
         help="Candidate BTC report token to probe; repeat for multiple columns.",
+        show_default=False,
+    ),
+    indicator_bank: list[str] = typer.Option(
+        None,
+        "--indicator-bank",
+        help="Named BTC indicator bank to probe in one batch run; repeat for multiple banks.",
         show_default=False,
     ),
     source_rpt: Path | None = typer.Option(
@@ -2851,11 +2874,56 @@ def tipsy_probe_btc_columns(
         help="Optional JSON summary path for the probe ledger.",
         show_default=False,
     ),
+    variant_strategy: str = typer.Option(
+        "default",
+        "--variant-strategy",
+        help=(
+            "Probe-line strategy: 'default' keeps the current single-line path; "
+            "'stock-matrix' tries stock-report and alias variants."
+        ),
+        show_default=True,
+    ),
+    runtime_layout: str = typer.Option(
+        "auto",
+        "--runtime-layout",
+        help=(
+            "BTC runtime layout for probing: 'auto', 'live-overlay', or "
+            "'copied-install'."
+        ),
+        show_default=True,
+    ),
+    alias_override: list[str] = typer.Option(
+        None,
+        "--alias-override",
+        help=(
+            "Explicit probe-token override in CANDIDATE=PROBE_TOKEN form; "
+            "repeat for multiple overrides."
+        ),
+        show_default=False,
+    ),
+    attempt_timeout_seconds: float = typer.Option(
+        6.0,
+        "--attempt-timeout-seconds",
+        help="Maximum wall-clock seconds per BTC probe attempt before FEMIC aborts it.",
+        show_default=True,
+    ),
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
-    """Probe BTC report-column compatibility one token at a time."""
+    """Probe BTC report-column compatibility token-by-token or bank-by-bank."""
     if source_rpt is not None and preset is not None:
         raise typer.BadParameter("Use either --source-rpt or --preset, not both.")
+    if not column and not indicator_bank:
+        raise typer.BadParameter("Provide at least one --column or --indicator-bank.")
+    normalized_variant_strategy = variant_strategy.strip().lower().replace("_", "-")
+    if normalized_variant_strategy not in {"default", "stock-matrix"}:
+        raise typer.BadParameter(
+            "Use --variant-strategy default or --variant-strategy stock-matrix."
+        )
+    normalized_runtime_layout = runtime_layout.strip().lower().replace("_", "-")
+    if normalized_runtime_layout not in {"auto", "live-overlay", "copied-install"}:
+        raise typer.BadParameter(
+            "Use --runtime-layout auto, live-overlay, or copied-install."
+        )
     instance_context = _resolve_cli_instance_context(instance_root=instance_root)
     resolved_input = instance_context.resolve_path(input_csv)
     resolved_source_rpt = (
@@ -2873,17 +2941,57 @@ def tipsy_probe_btc_columns(
         if summary_json is not None
         else None
     )
-    results, final_template = probe_btc_report_columns(
-        input_csv=resolved_input,
-        candidate_tokens=column,
-        executable_path=resolved_btc_exe,
-        source_template=resolved_source_rpt,
-        source_preset_name=(preset if resolved_source_rpt is None else None),
-        copy_install=False,
-        scratch_root=resolved_scratch,
-        log_dir=resolved_log_dir,
-        run_id_prefix=run_id_prefix,
+    copy_install_for_probe = (
+        normalized_variant_strategy != "default"
+        if normalized_runtime_layout == "auto"
+        else normalized_runtime_layout == "copied-install"
     )
+    alias_overrides = _parse_btc_probe_alias_overrides(alias_override or [])
+    results: list = []
+    source_template_for_columns = resolved_source_rpt
+    source_preset_name_for_columns = preset if resolved_source_rpt is None else None
+
+    if indicator_bank:
+        bank_results, final_template = probe_btc_indicator_banks(
+            input_csv=resolved_input,
+            indicator_bank_names=indicator_bank,
+            executable_path=resolved_btc_exe,
+            source_template=source_template_for_columns,
+            source_preset_name=source_preset_name_for_columns,
+            copy_install=copy_install_for_probe,
+            scratch_root=resolved_scratch,
+            log_dir=resolved_log_dir,
+            run_id_prefix=run_id_prefix,
+            variant_strategy=normalized_variant_strategy,
+            alias_overrides=alias_overrides,
+            attempt_timeout_seconds=attempt_timeout_seconds,
+        )
+        results.extend(bank_results)
+        source_template_for_columns = final_template
+        source_preset_name_for_columns = None
+    else:
+        final_template = btc_report_template_preset(
+            source_preset_name_for_columns or "tsr-unattended-default"
+        )
+        if source_template_for_columns is not None:
+            final_template = parse_btc_custom_report_template(source_template_for_columns)
+
+    if column:
+        column_results, final_template = probe_btc_report_columns(
+            input_csv=resolved_input,
+            candidate_tokens=column,
+            executable_path=resolved_btc_exe,
+            source_template=source_template_for_columns,
+            source_preset_name=source_preset_name_for_columns,
+            copy_install=copy_install_for_probe,
+            scratch_root=resolved_scratch,
+            log_dir=resolved_log_dir,
+            run_id_prefix=(f"{run_id_prefix}_columns" if indicator_bank else run_id_prefix),
+            variant_strategy=normalized_variant_strategy,
+            alias_overrides=alias_overrides,
+            attempt_timeout_seconds=attempt_timeout_seconds,
+        )
+        results.extend(column_results)
     accepted = [
         result.candidate_token for result in results if result.status == "accepted"
     ]
@@ -2931,6 +3039,15 @@ def tipsy_probe_btc_columns(
                 "dialog_auto_closed": result.dialog_auto_closed,
                 "dialog_close_attempted": result.dialog_close_attempted,
                 "failure_classification": result.failure_classification,
+                "probe_token": result.probe_token,
+                "probe_header1_override": result.probe_header1_override,
+                "probe_header2_override": result.probe_header2_override,
+                "probe_units_override": result.probe_units_override,
+                "variant_id": result.variant_id,
+                "variant_label": result.variant_label,
+                "variant_source_report": result.variant_source_report,
+                "variant_source_kind": result.variant_source_kind,
+                "attempted_variants": list(result.attempted_variants),
                 "report_context": {
                     "report_type": result.report_type,
                     "identifier_mode": result.identifier_mode,
@@ -2940,6 +3057,11 @@ def tipsy_probe_btc_columns(
             }
             for result in results
         ],
+        "variant_strategy": normalized_variant_strategy,
+        "runtime_layout": (
+            "copied-install" if copy_install_for_probe else "live-overlay"
+        ),
+        "attempt_timeout_seconds": attempt_timeout_seconds,
         "final_template_name": final_template.name,
         "final_template_columns": [column.token for column in final_template.columns],
     }

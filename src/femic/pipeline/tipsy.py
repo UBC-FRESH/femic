@@ -16,6 +16,7 @@ from typing import Any, Mapping, Sequence
 import warnings
 
 import numpy as np
+import pandas as pd
 
 from femic.pipeline.diagnostics import build_timestamped_event
 
@@ -40,6 +41,10 @@ DEFAULT_BTC_REPORT_HEADER_FLAGS: dict[str, str] = {
 _BTC_REPORT_PRESET_NAMES = (
     "timber-supply-sql",
     "tsr-unattended-default",
+)
+_BTC_PROBE_VARIANT_STRATEGIES = (
+    "default",
+    "stock-matrix",
 )
 DEFAULT_BTC_LOG_DIR = Path("tipsy_io/logs")
 DEFAULT_BTC_SCRATCH_ROOT = Path("tipsy_io/scratch")
@@ -161,6 +166,12 @@ _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
 }
 _BTC_OUTPUT_ALIAS_TO_TABLE_COLUMN: dict[str, str] = {
     alias: alias for bank in _BTC_INDICATOR_BANK_SPECS.values() for _, alias in bank
+}
+_BTC_OUTPUT_ALIAS_TO_REPORT_TOKEN: dict[str, str] = {
+    alias: token
+    for bank in _BTC_INDICATOR_BANK_SPECS.values()
+    for token, alias in bank
+    if alias != token
 }
 DEFAULT_BTC_MSYT_COLUMNS = (
     "feature_id",
@@ -299,7 +310,28 @@ class BTCColumnProbeResult:
     report_type: str | None = None
     identifier_mode: str | None = None
     output_format: str | None = None
+    probe_token: str | None = None
+    probe_header1_override: str | None = None
+    probe_header2_override: str | None = None
+    probe_units_override: str | None = None
+    variant_id: str | None = None
+    variant_label: str | None = None
+    variant_source_report: str | None = None
+    variant_source_kind: str | None = None
+    attempted_variants: tuple[str, ...] = ()
     clues: Mapping[str, Any] | None = None
+
+
+@dataclass(frozen=True)
+class BTCProbeColumnVariant:
+    """One concrete report-line variant for probing a candidate BTC token."""
+
+    variant_id: str
+    label: str
+    column: BTCCustomReportColumn
+    source_report: str | None = None
+    source_report_type: str | None = None
+    source_kind: str = "generic"
 
 
 def _tipsy_is_windows_host() -> bool:
@@ -315,8 +347,11 @@ class BTCCustomReportColumn:
     header1_override: str = ""
     header2_override: str = ""
     units_override: str = ""
+    raw_line: str = ""
 
     def render(self) -> str:
+        if self.raw_line:
+            return self.raw_line.rstrip()
         return "\t".join(
             [
                 self.token,
@@ -400,7 +435,32 @@ def _parse_btc_column_line(raw_line: str) -> BTCCustomReportColumn:
         header1_override=header1_override,
         header2_override=header2_override,
         units_override=units_override,
+        raw_line=raw_line.rstrip(),
     )
+
+
+def _read_btc_text(path: str | Path) -> str:
+    return Path(path).read_text(encoding="utf-8-sig")
+
+
+def _render_btc_report_column_line(
+    *,
+    token: str,
+    width: int | None = None,
+    header1_override: str = "",
+    header2_override: str = "",
+    units_override: str = "",
+) -> str:
+    width_text = "" if width is None else str(int(width))
+    return "\t".join(
+        [
+            token,
+            width_text,
+            header1_override,
+            header2_override,
+            units_override,
+        ]
+    ).rstrip()
 
 
 def parse_btc_custom_report_template(
@@ -408,7 +468,7 @@ def parse_btc_custom_report_template(
 ) -> BTCCustomReportTemplate:
     """Parse a BTC ``.rpt`` custom report file into a structured template."""
     path = Path(template_path)
-    text = path.read_text(encoding="utf-8")
+    text = _read_btc_text(path)
     current_section: str | None = None
     report_values: dict[str, str] = {}
     header_values: dict[str, str] = {}
@@ -602,10 +662,23 @@ def write_btc_custom_report_template(
 
 
 _BTC_STOCK_REPORT_FILES = (
-    "Yield.rpt",
-    "Stand.rpt",
-    "VolHtMai.rpt",
     "TimberSupply.rpt",
+    "ForestLandscapePlan.rpt",
+    "Yield.rpt",
+    "Logs.rpt",
+    "Mortality.rpt",
+    "Biomass.rpt",
+    "Carbon.rpt",
+    "CO2e.rpt",
+    "Industrial.rpt",
+    "Lumber.rpt",
+    "Stand.rpt",
+    "Stock.rpt",
+    "VolHtMai.rpt",
+    "Volume.rpt",
+    "VPT.rpt",
+    "Wildlife.rpt",
+    "TimberSupply SQL.rpt",
 )
 _BTC_TCL_CLUE_FILES = (
     "BatchTIPSY45.tcl",
@@ -618,7 +691,7 @@ _BTC_TCL_CLUE_FILES = (
 
 def _btc_stock_report_type(path: Path) -> str | None:
     try:
-        text = path.read_text(encoding="utf-8")
+        text = _read_btc_text(path)
     except OSError:
         return None
     match = re.search(r"(?mi)^Type=(.+)$", text)
@@ -629,9 +702,219 @@ def _btc_stock_report_type(path: Path) -> str | None:
 
 def _btc_file_contains_token(path: Path, token: str) -> bool:
     try:
-        return token in path.read_text(encoding="utf-8")
+        return token in _read_btc_text(path)
     except OSError:
         return False
+
+
+def _btc_variant_slug(text: str) -> str:
+    return re.sub(r"[^A-Za-z0-9]+", "_", text).strip("_") or "variant"
+
+
+def _btc_alias_candidates(token: str) -> tuple[str, ...]:
+    candidates: list[str] = []
+    direct_alias = _BTC_OUTPUT_ALIAS_TO_REPORT_TOKEN.get(token)
+    if direct_alias:
+        candidates.append(direct_alias)
+    threshold_patterns = (
+        (r"^BasalArea(?P<suffix>\d+)$", "BasalArea:{suffix}"),
+        (r"^MeanDBHg(?P<suffix>\d+)$", "DBHg:{suffix}"),
+        (r"^StemCount(?P<suffix>\d+)$", "SPH:{suffix}"),
+        (r"^VPT(?P<suffix>\d+)$", "VPT:{suffix}"),
+        (r"^Volume(?P<suffix>\d+)$", "Volume:{suffix}"),
+    )
+    for pattern, replacement in threshold_patterns:
+        match = re.match(pattern, token)
+        if match:
+            candidate = replacement.format(**match.groupdict())
+            if candidate not in candidates:
+                candidates.append(candidate)
+    return tuple(candidates)
+
+
+def _btc_short_probe_alias(token: str) -> str:
+    compact = re.sub(r"[^A-Za-z0-9]+", "", token)
+    if not compact:
+        compact = "Probe"
+    if len(compact) <= 8:
+        return compact
+    digest = hashlib.sha1(token.encode("utf-8")).hexdigest()[:2].upper()
+    return f"{compact[:6]}{digest}"
+
+
+def _btc_preferred_probe_alias(column: BTCCustomReportColumn) -> str:
+    if column.header1_override and re.fullmatch(r"[A-Za-z0-9]{1,8}", column.header1_override):
+        return column.header1_override
+    return _btc_short_probe_alias(column.token)
+
+
+def _btc_iter_stock_report_templates(
+    install_root: Path,
+) -> tuple[tuple[str, BTCCustomReportTemplate], ...]:
+    templates: list[tuple[str, BTCCustomReportTemplate]] = []
+    for filename in _BTC_STOCK_REPORT_FILES:
+        path = install_root / filename
+        if not path.is_file():
+            continue
+        try:
+            templates.append((filename, parse_btc_custom_report_template(path)))
+        except ValueError:
+            continue
+    return tuple(templates)
+
+
+def _btc_find_stock_report_columns(
+    *,
+    install_root: Path,
+    tokens: Sequence[str],
+) -> tuple[tuple[str, BTCCustomReportTemplate, BTCCustomReportColumn], ...]:
+    token_set = {token for token in tokens if token}
+    matches: list[tuple[str, BTCCustomReportTemplate, BTCCustomReportColumn]] = []
+    for filename, template in _btc_iter_stock_report_templates(install_root):
+        for column in template.columns:
+            if column.token in token_set:
+                matches.append((filename, template, column))
+    return tuple(matches)
+
+
+def _btc_probe_variant_signature(
+    variant: BTCProbeColumnVariant,
+) -> tuple[str, int, str, str, str]:
+    column = variant.column
+    return (
+        column.token,
+        int(column.width),
+        column.header1_override,
+        column.header2_override,
+        column.units_override,
+    )
+
+
+def _btc_build_probe_variants(
+    *,
+    candidate_column: BTCCustomReportColumn,
+    install_root: Path,
+    variant_strategy: str,
+    explicit_alias_tokens: Sequence[str] = (),
+) -> tuple[BTCProbeColumnVariant, ...]:
+    normalized_strategy = variant_strategy.strip().lower().replace("_", "-")
+    if normalized_strategy not in _BTC_PROBE_VARIANT_STRATEGIES:
+        supported = ", ".join(_BTC_PROBE_VARIANT_STRATEGIES)
+        raise ValueError(
+            "Unsupported BTC probe variant strategy "
+            f"{variant_strategy!r}. Supported strategies: {supported}"
+        )
+    if normalized_strategy == "default":
+        return (
+            BTCProbeColumnVariant(
+                variant_id="default",
+                label="Generic current probe line",
+                column=candidate_column,
+            ),
+        )
+
+    alias_tokens: list[str] = []
+    for alias_token in (*explicit_alias_tokens, *_btc_alias_candidates(candidate_column.token)):
+        if alias_token and alias_token not in alias_tokens:
+            alias_tokens.append(alias_token)
+    short_alias = _btc_preferred_probe_alias(candidate_column)
+
+    variants: list[BTCProbeColumnVariant] = [
+        BTCProbeColumnVariant(
+            variant_id="generic-transposed",
+            label="Generic transposed TSR line",
+            column=BTCCustomReportColumn(
+                token=candidate_column.token,
+                width=candidate_column.width,
+                header1_override=short_alias,
+                header2_override=candidate_column.header2_override or "{yr}",
+                units_override=candidate_column.units_override,
+                raw_line=_render_btc_report_column_line(
+                    token=candidate_column.token,
+                    width=None,
+                    header1_override=short_alias,
+                    header2_override=candidate_column.header2_override or "{yr}",
+                    units_override=candidate_column.units_override,
+                ),
+            ),
+        )
+    ]
+
+    for alias_token in alias_tokens:
+        variants.append(
+            BTCProbeColumnVariant(
+                variant_id=f"alias-transposed-{_btc_variant_slug(alias_token)}",
+                label=f"Alias transposed line via {alias_token}",
+                column=BTCCustomReportColumn(
+                    token=alias_token,
+                    width=candidate_column.width,
+                    header1_override=short_alias,
+                    header2_override=candidate_column.header2_override or "{yr}",
+                    units_override=candidate_column.units_override,
+                    raw_line=_render_btc_report_column_line(
+                        token=alias_token,
+                        width=None,
+                        header1_override=short_alias,
+                        header2_override=candidate_column.header2_override or "{yr}",
+                        units_override=candidate_column.units_override,
+                    ),
+                ),
+                source_kind="alias-transposed",
+            )
+        )
+
+    stock_matches = _btc_find_stock_report_columns(
+        install_root=install_root,
+        tokens=(candidate_column.token, *alias_tokens),
+    )
+    for report_name, template, stock_column in stock_matches:
+        report_slug = _btc_variant_slug(report_name.removesuffix(".rpt"))
+        variants.append(
+            BTCProbeColumnVariant(
+                variant_id=f"stock-exact-{report_slug}",
+                label=f"Exact stock line from {report_name}",
+                column=stock_column,
+                source_report=report_name,
+                source_report_type=template.report_type,
+                source_kind="stock-exact",
+            )
+        )
+        adapted_header1 = short_alias
+        variants.append(
+            BTCProbeColumnVariant(
+                variant_id=f"stock-transposed-{report_slug}",
+                label=f"Stock line adapted for transposed TSR from {report_name}",
+                column=BTCCustomReportColumn(
+                    token=stock_column.token,
+                    width=stock_column.width,
+                    header1_override=adapted_header1,
+                    header2_override=stock_column.header2_override or "{yr}",
+                    units_override=stock_column.units_override,
+                    raw_line=_render_btc_report_column_line(
+                        token=stock_column.token,
+                        width=(
+                            stock_column.width if stock_column.width > 0 else None
+                        ),
+                        header1_override=adapted_header1,
+                        header2_override=stock_column.header2_override or "{yr}",
+                        units_override=stock_column.units_override,
+                    ),
+                ),
+                source_report=report_name,
+                source_report_type=template.report_type,
+                source_kind="stock-transposed",
+            )
+        )
+
+    deduped: list[BTCProbeColumnVariant] = []
+    seen_signatures: set[tuple[str, int, str, str, str]] = set()
+    for variant in variants:
+        signature = _btc_probe_variant_signature(variant)
+        if signature in seen_signatures:
+            continue
+        deduped.append(variant)
+        seen_signatures.add(signature)
+    return tuple(deduped)
 
 
 def _btc_token_clues(
@@ -639,29 +922,40 @@ def _btc_token_clues(
     token: str,
     install_root: Path,
 ) -> dict[str, Any]:
+    alias_candidates = _btc_alias_candidates(token)
     report_hits: list[dict[str, Any]] = []
     for filename in _BTC_STOCK_REPORT_FILES:
         path = install_root / filename
         if not path.is_file():
             continue
-        if _btc_file_contains_token(path, token):
+        matched_token: str | None = None
+        for candidate in (token, *alias_candidates):
+            if _btc_file_contains_token(path, candidate):
+                matched_token = candidate
+                break
+        if matched_token is not None:
             report_hits.append(
                 {
                     "report": filename,
                     "report_type": _btc_stock_report_type(path),
+                    "matched_token": matched_token,
                 }
             )
 
     tcl_hits: list[str] = []
     for filename in _BTC_TCL_CLUE_FILES:
         path = install_root / filename
-        if path.is_file() and _btc_file_contains_token(path, token):
+        if path.is_file() and any(
+            _btc_file_contains_token(path, candidate)
+            for candidate in (token, *alias_candidates)
+        ):
             tcl_hits.append(filename)
 
     output_columns_path = install_root / "OutputColumns.txt"
     output_columns_hit = _btc_file_contains_token(output_columns_path, token)
 
     return {
+        "alias_candidates": list(alias_candidates),
         "present_in_reports": report_hits,
         "present_in_yield_rpt": any(
             hit["report"] == "Yield.rpt" for hit in report_hits
@@ -691,12 +985,16 @@ def _classify_btc_probe_failure(
         return "loadreport_indexerror"
     if "batchprocess" in message and "nullreference" in message:
         return "batchprocess_nullref"
+    if "timed out" in message:
+        return "timed_out"
     if manifest_payload:
         exit_code = manifest_payload.get("exit_code")
         windows_cleanup = manifest_payload.get("windows_dialog_cleanup", {})
         output_exists = (
             manifest_payload.get("artifacts", {}).get("output_csv", {}).get("exists")
         )
+        if isinstance(windows_cleanup, Mapping) and bool(windows_cleanup.get("timed_out")):
+            return "timed_out"
         if (
             exit_code == 1
             and output_exists is False
@@ -731,6 +1029,15 @@ def _btc_probe_payload(
         "dialog_auto_closed": result.dialog_auto_closed,
         "dialog_close_attempted": result.dialog_close_attempted,
         "failure_classification": result.failure_classification,
+        "probe_token": result.probe_token,
+        "probe_header1_override": result.probe_header1_override,
+        "probe_header2_override": result.probe_header2_override,
+        "probe_units_override": result.probe_units_override,
+        "variant_id": result.variant_id,
+        "variant_label": result.variant_label,
+        "variant_source_report": result.variant_source_report,
+        "variant_source_kind": result.variant_source_kind,
+        "attempted_variants": list(result.attempted_variants),
         "report_context": {
             "report_type": result.report_type or base_template.report_type,
             "identifier_mode": result.identifier_mode or base_template.identifier,
@@ -763,6 +1070,80 @@ def _write_btc_probe_compatibility_ledger(
         "final_template_columns": [column.token for column in final_template.columns],
     }
     compatibility_json.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def _normalize_btc_probe_columns(
+    candidates: Sequence[str | BTCCustomReportColumn],
+) -> tuple[BTCCustomReportColumn, ...]:
+    columns: list[BTCCustomReportColumn] = []
+    seen_tokens: set[str] = set()
+    for candidate in candidates:
+        column = (
+            candidate
+            if isinstance(candidate, BTCCustomReportColumn)
+            else BTCCustomReportColumn(token=str(candidate))
+        )
+        if column.token in seen_tokens:
+            continue
+        columns.append(column)
+        seen_tokens.add(column.token)
+    return tuple(columns)
+
+
+def _btc_probe_expected_output_prefixes(
+    column: BTCCustomReportColumn,
+) -> tuple[str, ...]:
+    prefixes: list[str] = []
+    for raw in (column.header1_override, column.token):
+        text = str(raw).strip()
+        if not text:
+            continue
+        for candidate in (text, text.replace(":", ""), text.replace(":", "_")):
+            if candidate and candidate not in prefixes:
+                prefixes.append(candidate)
+    return tuple(prefixes)
+
+
+def _btc_probe_output_present(
+    *,
+    output_csv: str | Path,
+    candidate_column: BTCCustomReportColumn,
+    probe_column: BTCCustomReportColumn,
+) -> bool:
+    prefixes_present = _btc_tsr_output_prefixes(output_csv)
+    expected_prefixes: list[str] = []
+    for column in (candidate_column, probe_column):
+        for prefix in _btc_probe_expected_output_prefixes(column):
+            if prefix not in expected_prefixes:
+                expected_prefixes.append(prefix)
+    return bool(prefixes_present.intersection(expected_prefixes))
+
+
+def _btc_tsr_output_prefixes(output_csv: str | Path) -> set[str]:
+    output_path = Path(output_csv).expanduser().resolve()
+    df = pd.read_csv(output_path, nrows=1)
+    age_pattern = re.compile(r"^(?P<prefix>[A-Za-z0-9_:]+)_(?P<age>\d+)$")
+    prefixes: set[str] = set()
+    for column in df.columns:
+        match = age_pattern.match(str(column))
+        if match:
+            prefixes.add(match.group("prefix"))
+    return prefixes
+
+
+def _btc_missing_output_probe_columns(
+    *,
+    output_csv: str | Path,
+    requested_columns: Sequence[BTCCustomReportColumn],
+) -> tuple[str, ...]:
+    prefixes_present = _btc_tsr_output_prefixes(output_csv)
+    missing: list[str] = []
+    for column in requested_columns:
+        expected_prefixes = _btc_probe_expected_output_prefixes(column)
+        if expected_prefixes and prefixes_present.intersection(expected_prefixes):
+            continue
+        missing.append(column.token)
+    return tuple(missing)
 
 
 def _write_tsr_unattended_runtime_template_from_stock(
@@ -820,8 +1201,12 @@ def _build_tsr_unattended_runtime_report_lines(
 
 def _render_tsr_overlay_probe_line(token: str, *, alias: str | None = None) -> str:
     """Render one conservative stock-shaped transposed TSR probe line."""
-    header_alias = alias or ""
-    return f"{token}\t\t{header_alias}\t{{yr}}"
+    return _render_btc_report_column_line(
+        token=token,
+        width=None,
+        header1_override=alias or "",
+        header2_override="{yr}",
+    )
 
 
 def _resolve_windows_documents_dir() -> Path | None:
@@ -1063,6 +1448,7 @@ def _run_windows_btc_with_dialog_cleanup(
     cwd: Path,
     dialog_poll_seconds: float = 0.25,
     dialog_close_timeout_seconds: float = 1.0,
+    max_runtime_seconds: float | None = None,
 ) -> tuple[int, str, str, dict[str, Any]]:
     proc = subprocess.Popen(
         list(command),
@@ -1077,10 +1463,22 @@ def _run_windows_btc_with_dialog_cleanup(
     matched_dialog_pids: list[int] = []
     closed_window_count = 0
     force_stopped_pids: list[int] = []
+    timed_out = False
+    started_monotonic = time.monotonic()
 
     while True:
         returncode = proc.poll()
         if returncode is not None:
+            break
+        if (
+            max_runtime_seconds is not None
+            and (time.monotonic() - started_monotonic) >= max_runtime_seconds
+        ):
+            timed_out = True
+            close_attempted = True
+            for pid in sorted(_find_windows_process_tree_ids(root_pid=launched_pid)):
+                if _force_stop_windows_process(pid):
+                    force_stopped_pids.append(pid)
             break
         dialog_pids = sorted(
             _find_windows_btc_dialog_process_ids(root_pid=launched_pid)
@@ -1090,7 +1488,6 @@ def _run_windows_btc_with_dialog_cleanup(
             matched_dialog_pids = dialog_pids
             for pid in dialog_pids:
                 closed_window_count += _close_windows_process_main_windows(pid)
-            time.sleep(dialog_close_timeout_seconds)
             for pid in sorted(_find_windows_process_tree_ids(root_pid=launched_pid)):
                 if _force_stop_windows_process(pid):
                     force_stopped_pids.append(pid)
@@ -1112,6 +1509,7 @@ def _run_windows_btc_with_dialog_cleanup(
             "matched_dialog_pids": matched_dialog_pids,
             "closed_window_count": closed_window_count,
             "force_stopped_pids": force_stopped_pids,
+            "timed_out": timed_out,
             "remaining_process_ids": sorted(
                 _find_windows_process_tree_ids(root_pid=launched_pid)
             ),
@@ -1211,6 +1609,7 @@ def run_btc_cli(
     run_id: str | None = None,
     env: Mapping[str, str] | None = None,
     extra_executable_args: Sequence[str | Path] = (),
+    timeout_seconds: float | None = None,
 ) -> BTCRunResult:
     """Run BTC `/TSR` or `/FLP` in a supervised writable scratch environment."""
     discovery = resolve_btc_executable(executable_path=executable_path, env=env)
@@ -1331,6 +1730,7 @@ def run_btc_cli(
                     command=command,
                     cwd=prep.working_dir,
                     env=merged_env,
+                    max_runtime_seconds=timeout_seconds,
                 )
             )
         else:
@@ -1341,10 +1741,23 @@ def run_btc_cli(
                 capture_output=True,
                 text=True,
                 check=False,
+                timeout=timeout_seconds,
             )
             exit_code = completed.returncode
             stdout_text = completed.stdout
             stderr_text = completed.stderr
+    except subprocess.TimeoutExpired as exc:
+        exit_code = -9
+        stdout_text = str(exc.stdout or "")
+        stderr_text = str(exc.stderr or "")
+        windows_dialog_cleanup = {
+            "close_attempted": True,
+            "matched_dialog_pids": [],
+            "closed_window_count": 0,
+            "force_stopped_pids": [],
+            "timed_out": True,
+            "remaining_process_ids": [],
+        }
     finally:
         if prep.uses_live_overlay and prep.report_template_path is not None:
             overlay_path = prep.report_template_path
@@ -1468,7 +1881,7 @@ def run_btc_cli(
 def probe_btc_report_columns(
     *,
     input_csv: str | Path,
-    candidate_tokens: Sequence[str],
+    candidate_tokens: Sequence[str | BTCCustomReportColumn],
     mode: str = "TSR",
     executable_path: str | Path | None = None,
     source_template: BTCCustomReportTemplate | str | Path | None = None,
@@ -1479,6 +1892,9 @@ def probe_btc_report_columns(
     run_id_prefix: str = "btc_probe",
     env: Mapping[str, str] | None = None,
     compatibility_json: str | Path | None = None,
+    variant_strategy: str = "default",
+    alias_overrides: Mapping[str, Sequence[str]] | None = None,
+    attempt_timeout_seconds: float = 6.0,
 ) -> tuple[list[BTCColumnProbeResult], BTCCustomReportTemplate]:
     """Probe BTC report-column compatibility one candidate token at a time.
 
@@ -1486,6 +1902,330 @@ def probe_btc_report_columns(
     only the additions that survive a real BTC run. Failures are recorded but
     not retained in the rolling accepted template.
     """
+
+    if source_template is not None and source_preset_name is not None:
+        raise ValueError("Use either source_template or source_preset_name, not both.")
+    if source_template is None and source_preset_name is None:
+        source_preset_name = "tsr-unattended-default"
+
+    normalized_candidates = _normalize_btc_probe_columns(candidate_tokens)
+
+    if isinstance(source_template, BTCCustomReportTemplate):
+        base_template = source_template
+    elif source_template is not None:
+        base_template = parse_btc_custom_report_template(source_template)
+    else:
+        base_template = btc_report_template_preset(str(source_preset_name))
+
+    accepted_columns = list(base_template.columns)
+    results: list[BTCColumnProbeResult] = []
+    resolved_log_dir = Path(log_dir).expanduser().resolve()
+    resolved_scratch_root = (
+        Path(scratch_root).expanduser().resolve() if scratch_root is not None else None
+    )
+    resolved_compatibility_json = (
+        Path(compatibility_json).expanduser().resolve()
+        if compatibility_json is not None
+        else (
+            (resolved_scratch_root / "compatibility.json")
+            if resolved_scratch_root is not None
+            else (resolved_log_dir / f"{run_id_prefix}_compatibility.json")
+        )
+    )
+    install_root = (
+        Path(executable_path).expanduser().resolve().parent
+        if executable_path is not None
+        else DEFAULT_BATCHTIPSY_WINDOWS_EXE.parent
+    )
+    use_live_overlay = (
+        not copy_install
+        and str(mode).strip().upper() == "TSR"
+        and source_template is None
+        and str(source_preset_name or "").strip().lower().replace("_", "-")
+        == "tsr-unattended-default"
+    )
+    overlay_path: Path | None = None
+    original_overlay_text: str | None = None
+    original_overlay_exists = False
+    base_overlay_text: str | None = None
+    if use_live_overlay:
+        overlay_path = _resolve_btc_user_overlay_report_path(mode=mode)
+        original_overlay_exists = overlay_path.exists()
+        if original_overlay_exists:
+            original_overlay_text = overlay_path.read_text(encoding="utf-8")
+        stock_report_path = install_root / _BTC_REPORT_FILENAME_BY_MODE["TSR"]
+        base_overlay_text = (
+            "\n".join(
+                _build_tsr_unattended_runtime_report_lines(
+                    text=stock_report_path.read_text(encoding="utf-8")
+                )
+            )
+            + "\n"
+        )
+
+    try:
+        for index, candidate_column in enumerate(normalized_candidates, start=1):
+            candidate_token = candidate_column.token
+            token_slug = (
+                re.sub(r"[^A-Za-z0-9]+", "_", candidate_token).strip("_") or "token"
+            )
+            explicit_alias_tokens = tuple(
+                alias_overrides.get(candidate_token, ()) if alias_overrides else ()
+            )
+            probe_variants = _btc_build_probe_variants(
+                candidate_column=candidate_column,
+                install_root=install_root,
+                variant_strategy=variant_strategy,
+                explicit_alias_tokens=explicit_alias_tokens,
+            )
+            attempted_variant_ids: list[str] = []
+            accepted_result: BTCColumnProbeResult | None = None
+            last_failed_result: BTCColumnProbeResult | None = None
+            for variant in probe_variants:
+                attempted_variant_ids.append(variant.variant_id)
+                variant_slug = _btc_variant_slug(variant.variant_id)
+                trial_run_id = f"{run_id_prefix}_{index:02d}_{token_slug}"
+                if len(probe_variants) > 1:
+                    trial_run_id = f"{trial_run_id}_{variant_slug}"
+                trial_columns = [*accepted_columns, variant.column]
+                trial_template = build_btc_custom_report_template(
+                    name=base_template.name,
+                    source_template=base_template,
+                    columns=trial_columns,
+                )
+                if (
+                    use_live_overlay
+                    and overlay_path is not None
+                    and base_overlay_text is not None
+                ):
+                    overlay_path.write_text(
+                        "\n".join(
+                            _build_tsr_unattended_runtime_report_lines(
+                                text=base_overlay_text,
+                                extra_lines=(variant.column.render(),),
+                            )
+                        )
+                        + "\n",
+                        encoding="utf-8",
+                    )
+                try:
+                    run_result = run_btc_cli(
+                        input_csv=input_csv,
+                        mode=mode,
+                        executable_path=executable_path,
+                        report_template=(None if use_live_overlay else trial_template),
+                        report_preset_name=None,
+                        copy_install=copy_install,
+                        scratch_root=(
+                            resolved_scratch_root / token_slug / variant_slug
+                            if resolved_scratch_root is not None
+                            else None
+                        ),
+                        log_dir=resolved_log_dir,
+                        run_id=trial_run_id,
+                        env=env,
+                        timeout_seconds=attempt_timeout_seconds,
+                    )
+                    if run_result.output_csv_path.is_file():
+                        if not _btc_probe_output_present(
+                            output_csv=run_result.output_csv_path,
+                            candidate_column=candidate_column,
+                            probe_column=variant.column,
+                        ):
+                            raise RuntimeError(
+                                "BTC output is missing requested probe columns: "
+                                f"{candidate_token}"
+                            )
+                except Exception as exc:
+                    manifest_path = resolved_log_dir / f"btc_manifest-{trial_run_id}.json"
+                    manifest_payload = (
+                        _load_btc_manifest(manifest_path)
+                        if manifest_path.is_file()
+                        else None
+                    )
+                    output_created = (
+                        manifest_payload.get("artifacts", {})
+                        .get("output_csv", {})
+                        .get("exists")
+                        if manifest_payload
+                        else None
+                    )
+                    error_created = (
+                        manifest_payload.get("artifacts", {})
+                        .get("error_csv", {})
+                        .get("exists")
+                        if manifest_payload
+                        else None
+                    )
+                    windows_cleanup = (
+                        manifest_payload.get("windows_dialog_cleanup", {})
+                        if manifest_payload
+                        else {}
+                    )
+                    last_failed_result = BTCColumnProbeResult(
+                        candidate_token=candidate_token,
+                        status="failed",
+                        accepted_column_tokens=tuple(
+                            column.token for column in accepted_columns
+                        ),
+                        run_id=trial_run_id,
+                        exit_code=(
+                            manifest_payload.get("exit_code")
+                            if manifest_payload
+                            else None
+                        ),
+                        error_message=str(exc),
+                        manifest_path=(
+                            manifest_path if manifest_path.is_file() else None
+                        ),
+                        output_created=output_created,
+                        error_created=error_created,
+                        dialog_auto_closed=(
+                            bool(windows_cleanup.get("closed_window_count", 0))
+                            if isinstance(windows_cleanup, Mapping)
+                            else None
+                        ),
+                        dialog_close_attempted=(
+                            bool(windows_cleanup.get("close_attempted"))
+                            if isinstance(windows_cleanup, Mapping)
+                            else None
+                        ),
+                        failure_classification=_classify_btc_probe_failure(
+                            error_message=str(exc),
+                            manifest_payload=manifest_payload,
+                        ),
+                        report_type=trial_template.report_type,
+                        identifier_mode=trial_template.identifier,
+                        output_format=trial_template.output_format,
+                        probe_token=variant.column.token,
+                        probe_header1_override=variant.column.header1_override,
+                        probe_header2_override=variant.column.header2_override,
+                        probe_units_override=variant.column.units_override,
+                        variant_id=variant.variant_id,
+                        variant_label=variant.label,
+                        variant_source_report=variant.source_report,
+                        variant_source_kind=variant.source_kind,
+                        attempted_variants=tuple(attempted_variant_ids),
+                        clues=_btc_token_clues(
+                            token=candidate_token, install_root=install_root
+                        ),
+                    )
+                    continue
+
+                accepted_columns.append(variant.column)
+                manifest_payload = _load_btc_manifest(run_result.manifest_path)
+                windows_cleanup = (
+                    manifest_payload.get("windows_dialog_cleanup", {})
+                    if manifest_payload
+                    else {}
+                )
+                accepted_result = BTCColumnProbeResult(
+                    candidate_token=candidate_token,
+                    status="accepted",
+                    accepted_column_tokens=tuple(
+                        column.token for column in accepted_columns
+                    ),
+                    run_id=trial_run_id,
+                    exit_code=run_result.exit_code,
+                    manifest_path=run_result.manifest_path,
+                    output_csv_path=run_result.output_csv_path,
+                    error_csv_path=run_result.error_csv_path,
+                    output_created=run_result.output_csv_path.is_file(),
+                    error_created=run_result.error_csv_path.is_file(),
+                    dialog_auto_closed=(
+                        bool(windows_cleanup.get("closed_window_count", 0))
+                        if isinstance(windows_cleanup, Mapping)
+                        else None
+                    ),
+                    dialog_close_attempted=(
+                        bool(windows_cleanup.get("close_attempted"))
+                        if isinstance(windows_cleanup, Mapping)
+                        else None
+                    ),
+                    report_type=trial_template.report_type,
+                    identifier_mode=trial_template.identifier,
+                    output_format=trial_template.output_format,
+                    probe_token=variant.column.token,
+                    probe_header1_override=variant.column.header1_override,
+                    probe_header2_override=variant.column.header2_override,
+                    probe_units_override=variant.column.units_override,
+                    variant_id=variant.variant_id,
+                    variant_label=variant.label,
+                    variant_source_report=variant.source_report,
+                    variant_source_kind=variant.source_kind,
+                    attempted_variants=tuple(attempted_variant_ids),
+                    clues=_btc_token_clues(
+                        token=candidate_token, install_root=install_root
+                    ),
+                )
+                break
+
+            if accepted_result is None:
+                if last_failed_result is None:
+                    raise RuntimeError(
+                        f"BTC probe produced no result for candidate {candidate_token!r}."
+                    )
+                results.append(last_failed_result)
+                final_template = build_btc_custom_report_template(
+                    name=base_template.name,
+                    source_template=base_template,
+                    columns=accepted_columns,
+                )
+                _write_btc_probe_compatibility_ledger(
+                    compatibility_json=resolved_compatibility_json,
+                    results=results,
+                    final_template=final_template,
+                    source_template=base_template,
+                )
+                continue
+
+            results.append(accepted_result)
+            final_template = build_btc_custom_report_template(
+                name=base_template.name,
+                source_template=base_template,
+                columns=accepted_columns,
+            )
+            _write_btc_probe_compatibility_ledger(
+                compatibility_json=resolved_compatibility_json,
+                results=results,
+                final_template=final_template,
+                source_template=base_template,
+            )
+    finally:
+        if use_live_overlay and overlay_path is not None:
+            if original_overlay_exists and original_overlay_text is not None:
+                overlay_path.write_text(original_overlay_text, encoding="utf-8")
+            elif overlay_path.exists():
+                overlay_path.unlink()
+
+    final_template = build_btc_custom_report_template(
+        name=base_template.name,
+        source_template=base_template,
+        columns=accepted_columns,
+    )
+    return results, final_template
+
+
+def probe_btc_indicator_banks(
+    *,
+    input_csv: str | Path,
+    indicator_bank_names: Sequence[str],
+    mode: str = "TSR",
+    executable_path: str | Path | None = None,
+    source_template: BTCCustomReportTemplate | str | Path | None = None,
+    source_preset_name: str | None = "tsr-unattended-default",
+    copy_install: bool = False,
+    scratch_root: str | Path | None = None,
+    log_dir: str | Path = DEFAULT_BTC_LOG_DIR,
+    run_id_prefix: str = "btc_bank_probe",
+    env: Mapping[str, str] | None = None,
+    compatibility_json: str | Path | None = None,
+    fallback_to_column_ratchet: bool = True,
+    variant_strategy: str = "default",
+    alias_overrides: Mapping[str, Sequence[str]] | None = None,
+    attempt_timeout_seconds: float = 6.0,
+) -> tuple[list[BTCColumnProbeResult], BTCCustomReportTemplate]:
+    """Probe whole BTC indicator banks in single runs, with ratchet fallback."""
 
     if source_template is not None and source_preset_name is not None:
         raise ValueError("Use either source_template or source_preset_name, not both.")
@@ -1546,38 +2286,45 @@ def probe_btc_report_columns(
         )
 
     try:
-        for index, candidate_token in enumerate(candidate_tokens, start=1):
-            trial_columns = [
-                *accepted_columns,
-                BTCCustomReportColumn(token=candidate_token),
+        for bank_name in indicator_bank_names:
+            normalized_bank_name = bank_name.strip().lower().replace("_", "-")
+            bank_columns = list(btc_indicator_bank_columns(bank_name))
+            existing_tokens = {column.token for column in accepted_columns}
+            pending_columns = [
+                column for column in bank_columns if column.token not in existing_tokens
             ]
+            if not pending_columns:
+                continue
+            bank_slug = re.sub(r"[^A-Za-z0-9]+", "_", normalized_bank_name).strip("_")
+            trial_run_id = f"{run_id_prefix}_{bank_slug}"
+            trial_columns = [*accepted_columns, *pending_columns]
             trial_template = build_btc_custom_report_template(
                 name=base_template.name,
                 source_template=base_template,
                 columns=trial_columns,
             )
-            token_slug = (
-                re.sub(r"[^A-Za-z0-9]+", "_", candidate_token).strip("_") or "token"
-            )
-            trial_run_id = f"{run_id_prefix}_{index:02d}_{token_slug}"
-            if (
-                use_live_overlay
-                and overlay_path is not None
-                and base_overlay_text is not None
-            ):
-                overlay_path.write_text(
-                    "\n".join(
-                        _build_tsr_unattended_runtime_report_lines(
-                            text=base_overlay_text,
-                            extra_lines=(
-                                _render_tsr_overlay_probe_line(candidate_token),
-                            ),
-                        )
-                    )
-                    + "\n",
-                    encoding="utf-8",
-                )
             try:
+                if (
+                    use_live_overlay
+                    and overlay_path is not None
+                    and base_overlay_text is not None
+                ):
+                    overlay_path.write_text(
+                        "\n".join(
+                            _build_tsr_unattended_runtime_report_lines(
+                                text=base_overlay_text,
+                                extra_lines=tuple(
+                                    _render_tsr_overlay_probe_line(
+                                        column.token,
+                                        alias=(column.header1_override or None),
+                                    )
+                                    for column in pending_columns
+                                ),
+                            )
+                        )
+                        + "\n",
+                        encoding="utf-8",
+                    )
                 run_result = run_btc_cli(
                     input_csv=input_csv,
                     mode=mode,
@@ -1586,7 +2333,7 @@ def probe_btc_report_columns(
                     report_preset_name=None,
                     copy_install=copy_install,
                     scratch_root=(
-                        resolved_scratch_root / token_slug
+                        resolved_scratch_root / bank_slug
                         if resolved_scratch_root is not None
                         else None
                     ),
@@ -1594,51 +2341,76 @@ def probe_btc_report_columns(
                     run_id=trial_run_id,
                     env=env,
                 )
-            except Exception as exc:
-                manifest_path = resolved_log_dir / f"btc_manifest-{trial_run_id}.json"
-                manifest_payload = (
-                    _load_btc_manifest(manifest_path)
-                    if manifest_path.is_file()
-                    else None
+                if run_result.output_csv_path.is_file():
+                    missing_columns = _btc_missing_output_probe_columns(
+                        output_csv=run_result.output_csv_path,
+                        requested_columns=pending_columns,
+                    )
+                    if missing_columns:
+                        missing_display = ", ".join(missing_columns)
+                        raise RuntimeError(
+                            "BTC output is missing requested bank columns: "
+                            f"{missing_display}"
+                        )
+            except Exception:
+                if not fallback_to_column_ratchet:
+                    raise
+                fallback_results, fallback_template = probe_btc_report_columns(
+                    input_csv=input_csv,
+                    candidate_tokens=pending_columns,
+                    mode=mode,
+                    executable_path=executable_path,
+                    source_template=build_btc_custom_report_template(
+                        name=base_template.name,
+                        source_template=base_template,
+                        columns=accepted_columns,
+                    ),
+                    source_preset_name=None,
+                    copy_install=copy_install,
+                    scratch_root=(
+                        resolved_scratch_root / bank_slug
+                        if resolved_scratch_root is not None
+                        else None
+                    ),
+                    log_dir=resolved_log_dir,
+                    run_id_prefix=trial_run_id,
+                    env=env,
+                    compatibility_json=resolved_compatibility_json,
+                    variant_strategy=variant_strategy,
+                    alias_overrides=alias_overrides,
+                    attempt_timeout_seconds=attempt_timeout_seconds,
                 )
-                output_created = (
-                    manifest_payload.get("artifacts", {})
-                    .get("output_csv", {})
-                    .get("exists")
-                    if manifest_payload
-                    else None
+                results.extend(fallback_results)
+                accepted_columns = list(fallback_template.columns)
+                _write_btc_probe_compatibility_ledger(
+                    compatibility_json=resolved_compatibility_json,
+                    results=results,
+                    final_template=fallback_template,
+                    source_template=base_template,
                 )
-                error_created = (
-                    manifest_payload.get("artifacts", {})
-                    .get("error_csv", {})
-                    .get("exists")
-                    if manifest_payload
-                    else None
-                )
-                windows_cleanup = (
-                    manifest_payload.get("windows_dialog_cleanup", {})
-                    if manifest_payload
-                    else {}
-                )
+                continue
+
+            accepted_columns.extend(pending_columns)
+            manifest_payload = _load_btc_manifest(run_result.manifest_path)
+            windows_cleanup = (
+                manifest_payload.get("windows_dialog_cleanup", {})
+                if manifest_payload
+                else {}
+            )
+            accepted_column_tokens = tuple(column.token for column in accepted_columns)
+            for column in pending_columns:
                 results.append(
                     BTCColumnProbeResult(
-                        candidate_token=candidate_token,
-                        status="failed",
-                        accepted_column_tokens=tuple(
-                            column.token for column in accepted_columns
-                        ),
+                        candidate_token=column.token,
+                        status="accepted",
+                        accepted_column_tokens=accepted_column_tokens,
                         run_id=trial_run_id,
-                        exit_code=(
-                            manifest_payload.get("exit_code")
-                            if manifest_payload
-                            else None
-                        ),
-                        error_message=str(exc),
-                        manifest_path=(
-                            manifest_path if manifest_path.is_file() else None
-                        ),
-                        output_created=output_created,
-                        error_created=error_created,
+                        exit_code=run_result.exit_code,
+                        manifest_path=run_result.manifest_path,
+                        output_csv_path=run_result.output_csv_path,
+                        error_csv_path=run_result.error_csv_path,
+                        output_created=run_result.output_csv_path.is_file(),
+                        error_created=run_result.error_csv_path.is_file(),
                         dialog_auto_closed=(
                             bool(windows_cleanup.get("closed_window_count", 0))
                             if isinstance(windows_cleanup, Mapping)
@@ -1649,70 +2421,14 @@ def probe_btc_report_columns(
                             if isinstance(windows_cleanup, Mapping)
                             else None
                         ),
-                        failure_classification=_classify_btc_probe_failure(
-                            error_message=str(exc),
-                            manifest_payload=manifest_payload,
-                        ),
                         report_type=trial_template.report_type,
                         identifier_mode=trial_template.identifier,
                         output_format=trial_template.output_format,
                         clues=_btc_token_clues(
-                            token=candidate_token, install_root=install_root
+                            token=column.token, install_root=install_root
                         ),
                     )
                 )
-                final_template = build_btc_custom_report_template(
-                    name=base_template.name,
-                    source_template=base_template,
-                    columns=accepted_columns,
-                )
-                _write_btc_probe_compatibility_ledger(
-                    compatibility_json=resolved_compatibility_json,
-                    results=results,
-                    final_template=final_template,
-                    source_template=base_template,
-                )
-                continue
-
-            accepted_columns.append(BTCCustomReportColumn(token=candidate_token))
-            manifest_payload = _load_btc_manifest(run_result.manifest_path)
-            windows_cleanup = (
-                manifest_payload.get("windows_dialog_cleanup", {})
-                if manifest_payload
-                else {}
-            )
-            results.append(
-                BTCColumnProbeResult(
-                    candidate_token=candidate_token,
-                    status="accepted",
-                    accepted_column_tokens=tuple(
-                        column.token for column in accepted_columns
-                    ),
-                    run_id=trial_run_id,
-                    exit_code=run_result.exit_code,
-                    manifest_path=run_result.manifest_path,
-                    output_csv_path=run_result.output_csv_path,
-                    error_csv_path=run_result.error_csv_path,
-                    output_created=run_result.output_csv_path.is_file(),
-                    error_created=run_result.error_csv_path.is_file(),
-                    dialog_auto_closed=(
-                        bool(windows_cleanup.get("closed_window_count", 0))
-                        if isinstance(windows_cleanup, Mapping)
-                        else None
-                    ),
-                    dialog_close_attempted=(
-                        bool(windows_cleanup.get("close_attempted"))
-                        if isinstance(windows_cleanup, Mapping)
-                        else None
-                    ),
-                    report_type=trial_template.report_type,
-                    identifier_mode=trial_template.identifier,
-                    output_format=trial_template.output_format,
-                    clues=_btc_token_clues(
-                        token=candidate_token, install_root=install_root
-                    ),
-                )
-            )
             final_template = build_btc_custom_report_template(
                 name=base_template.name,
                 source_template=base_template,
