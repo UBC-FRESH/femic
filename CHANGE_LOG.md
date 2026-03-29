@@ -7918,3 +7918,19 @@
     - `targetSummary.csv` showed nearly level even-flow deviations around zero
       and strong non-zero underlying managed-yield currents;
     - `schedule.csv` was non-empty (341 lines).
+- 2026-03-28 (Phase 49 upgraded base-K3Z proving-ground recipe): strengthened
+  the same headless seam from live K3Z operator guidance and verified the
+  stronger target recipe on the real base surface.
+  - The headless helper now also:
+    - forces `product.Yield.managed.Total` into linear penalty mode;
+    - sets a generous maximum of `200000` in every period at default weight;
+    - seeds a `10000` minimum before the even-flow companion is activated.
+  - Real base-K3Z smoke `p49_base_closeout_20260328b` against `analysis/base.pin`
+    completed cleanly with both targets active.
+  - `targetStatus.csv` showed:
+    - `product.Yield.managed.Total` active with `LINEAR=true`; and
+    - `flow.even.product.Yield.managed.Total` active in min/max mode.
+  - `targetSummary.csv` showed the base target stabilized around `122200` per
+    period inside the `100000..200000` band, while even-flow deviations stayed
+    tightly clustered near zero.
+  - `schedule.csv` remained non-empty (480 lines).

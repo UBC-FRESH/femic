@@ -289,18 +289,21 @@ The current closeout-level proving ground is now the real base K3Z surface:
 
 - ``max-even-flow-smoke`` defaults to a useful K3Z recipe when the caller
   leaves ``--iterations`` at the placeholder value:
-  - target defaults to ``product.Yield.managed.Total``
-  - iterations default to ``100000``
-- the BeanShell helper seeds the underlying harvest target first, then
-  activates ``flow.even.product.Yield.managed.Total`` with:
-  - minimum = maximum = ``0``
-  - minimum weight = maximum weight = ``100``
-  across all periods
-- proving-ground smoke ``p49_base_closeout_20260328a`` ran against
-  ``analysis/base.pin`` and saved a stage where:
-  - both the underlying target and the even-flow companion were active;
-  - the even-flow target summary stayed clustered close to zero; and
-  - ``schedule.csv`` remained non-empty (341 lines).
+  target defaults to ``product.Yield.managed.Total`` and iterations default to
+  ``100000``.
+- the BeanShell helper now seeds the underlying harvest target first and
+  configures that base target with ``LINEAR=true``, maximum = ``200000`` in
+  all periods at default weight, and minimum = ``10000`` per period.
+- after the seed phase, the helper activates
+  ``flow.even.product.Yield.managed.Total`` with minimum = maximum = ``0`` and
+  minimum weight = maximum weight = ``100`` across all periods.
+- proving-ground smoke ``p49_base_closeout_20260328b`` ran against
+  ``analysis/base.pin`` and saved a stage where both the underlying target and
+  the even-flow companion were active, ``targetStatus.csv`` showed the base
+  target with ``LINEAR=true``, the base target summary stabilized around
+  ``122200`` per period inside the ``100000..200000`` band, the even-flow
+  target summary stayed tightly clustered near zero, and ``schedule.csv``
+  remained non-empty (480 lines).
 
 That means this module now owns a real unattended Patchworks launch/analyze/
 save/exit seam instead of a launch-only experiment.

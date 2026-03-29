@@ -157,14 +157,17 @@ base K3Z variant:
 
 - FEMIC's ``max-even-flow-smoke`` mode now defaults to a useful K3Z recipe:
   default target ``product.Yield.managed.Total``, default iteration budget
-  ``100000``, seed harvest first on the underlying target, then activate
-  ``flow.even.product.Yield.managed.Total`` with minimum = maximum = ``0`` and
-  minimum = maximum weight = ``100`` across periods.
-- proving-ground smoke ``p49_base_closeout_20260328a`` ran against
+  ``100000``, seed harvest first on the underlying target, force that base
+  target into linear penalty mode, set its maximum to ``200000`` in every
+  period at default weight, seed its minimum to ``10000`` per period, then
+  activate ``flow.even.product.Yield.managed.Total`` with minimum = maximum =
+  ``0`` and minimum = maximum weight = ``100`` across periods.
+- proving-ground smoke ``p49_base_closeout_20260328b`` ran against
   ``analysis/base.pin`` and saved a stage where both the underlying harvest
-  target and the even-flow companion were active, the even-flow summary values
-  stayed clustered near zero, and ``scenario/schedule.csv`` remained non-empty
-  with real treatments.
+  target and the even-flow companion were active, the base target stabilized at
+  roughly ``122200`` per period inside the ``100000..200000`` band, the
+  even-flow summary values stayed tightly clustered near zero, and
+  ``scenario/schedule.csv`` remained non-empty with real treatments.
 
 Host Assumptions
 ----------------

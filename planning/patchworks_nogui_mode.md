@@ -114,6 +114,28 @@ Current status after the latest proving-ground smokes:
       period;
   - `schedule.csv` remained non-empty (341 lines), so the seam now has a real
     useful base-K3Z proof, not just an intensive proving-ground surrogate.
+- the upgraded closeout proof now uses the stronger even-flow recipe from live
+  K3Z operator guidance:
+  - proving-ground smoke `p49_base_closeout_20260328b` used `analysis/base.pin`
+    with:
+    - seed harvest first via `product.Yield.managed.Total`;
+    - linear penalty on the base target;
+    - base-target maximum set to `200000` in every period at default weight;
+    - base-target minimum seeded at `10000` per period;
+    - even-flow companion target min=max=`0` with min=max weight=`100`; and
+    - `waitForIterations(...)` run for `50000 + 50000` iterations across the
+      seed and even-flow phases;
+  - `targetStatus.csv` recorded:
+    - `product.Yield.managed.Total` active in min/max mode with
+      `LINEAR=true`; and
+    - `flow.even.product.Yield.managed.Total` active in min/max mode;
+  - `targetSummary.csv` showed:
+    - `product.Yield.managed.Total` stabilized around `122200` per period
+      against the `100000..200000` target band; and
+    - even-flow deviations clustered tightly around zero;
+  - `schedule.csv` remained non-empty (480 lines), so the headless proving
+    ground now produces a clearly flatter and more useful base-K3Z yield
+    profile than the earlier closeout run.
 
 That means the proving-ground headless seam is no longer just a save-stage
 novelty; it can now execute a small real scheduling smoke and persist the

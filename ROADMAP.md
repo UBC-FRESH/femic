@@ -8256,6 +8256,21 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - `targetSummary.csv` showed nearly level even-flow deviations around
           zero and strong non-zero underlying managed-yield currents;
         - `schedule.csv` was non-empty (341 lines).
+        - upgraded proving-ground smoke `p49_base_closeout_20260328b` improved
+          that base recipe further:
+          - the helper now forces `product.Yield.managed.Total` into linear
+            penalty mode and sets a generous maximum=`200000` in every period
+            at default weight;
+          - the seeded base-target minimum was `10000` per period;
+          - the even-flow companion still used min=max=`0` and min=max
+            weight=`100`;
+          - `targetStatus.csv` showed:
+            - `product.Yield.managed.Total` active with `LINEAR=true`; and
+            - `flow.even.product.Yield.managed.Total` active in min/max mode;
+          - `targetSummary.csv` showed the base target stabilized around
+            `122200` per period inside the `100000..200000` band, while
+            even-flow deviations clustered tightly around zero;
+          - `schedule.csv` remained non-empty (480 lines).
   - Notes:
     - Governing tracker:
       - GitHub issue #54
