@@ -8508,3 +8508,30 @@
       FAN$IER execution seams.
   - Removed the now-adopted FAN$IER idea from
     `planning/incoming_ideas.md` so the intake queue stays current.
+- 2026-03-29 (Issue #59): established the first concrete FAN$IER linkage map
+  from the extracted help, installed runtime surface, and decompiled code.
+  - Added `planning/fansier_linkage_investigation.md` to capture the durable
+    findings.
+  - Confirmed FAN$IER file surfaces:
+    - `.fns` is a plain-text project container;
+    - `.rgm` and `.eco` are plain-text batch-mode regime/economics inputs.
+  - Confirmed FAN$IER startup behavior:
+    - startup command-line args only feed an existing file path to
+      `LoadProject(...)`;
+    - no inspected startup branch yet auto-opens batch mode or auto-starts
+      report generation.
+  - Confirmed the strongest practical handoff seam found so far:
+    - FAN$IER creates and watches `%TEMP%\\Fansier\\` for incoming `.rgm`
+      files and can auto-import regimes from that temp folder.
+  - Confirmed batch output contract:
+    - long reports are written with deterministic filenames keyed by run ID,
+      regime name, economics name, discount assumptions, product selection,
+      and harvest label;
+    - short reports are written as `<RunID>.{txt|csv|pdf}` in the selected
+      batch output folder.
+  - Current best automation direction:
+    - prioritize FEMIC-side `.rgm` / `.eco` preparation and temp-folder
+      handoff experiments ahead of more speculative FAN$IER CLI hunting.
+  - Added the preferred economics posture for this seam:
+    - if extraction becomes viable, target raw/null-discount FAN$IER outputs
+      first and leave discounting to downstream FEMIC-side analysis.

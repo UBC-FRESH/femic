@@ -8660,13 +8660,13 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         Windows runtime launcher/helper that currently treats BatchTIPSY as a
         manual external boundary.
 - [ ] P48.6 Investigate BTC-to-FAN$IER linkage seams
-  - [ ] P48.6a Mine the extracted FAN$IER help corpus and adjacent BTC/TIPSY
+  - [x] P48.6a Mine the extracted FAN$IER help corpus and adjacent BTC/TIPSY
     docs for concrete handoff artifacts:
     - batch-mode inputs;
     - regime files;
     - product-based yield tables;
     - costs/prices/default files that may matter to FEMIC preparation.
-  - [ ] P48.6b Inspect the installed BTC/FAN$IER runtime surface for file
+  - [x] P48.6b Inspect the installed BTC/FAN$IER runtime surface for file
     formats, sample assets, and CLI or batch clues that refine the likely
     FEMIC handoff contract.
   - [ ] P48.6c Record a concrete linkage map:
@@ -8692,6 +8692,22 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - the installed BTC/CBM docs explicitly document `-RGM` regime-file
         export, which is the strongest adjacent clue for a BTC-driven
         FAN$IER-preparation seam.
+    - Confirmed findings now recorded in:
+      - `planning/fansier_linkage_investigation.md`
+    - Current best read:
+      - FAN$IER command-line startup is currently only proven as a project-load
+        seam, not an unattended execution seam;
+      - the strongest concrete integration seam found so far is FAN$IER's
+        `%TEMP%\\Fansier\\` watcher/import path for incoming `.rgm` files;
+      - FAN$IER batch reporting is real and substantial, but the decompiled
+        logic inspected so far still presents it as a GUI-triggered
+        `Start Batch` workflow rather than a true CLI batch path;
+      - direct FEMIC-side `.rgm` / `.eco` synthesis now looks like a more
+        credible automation target than continued blind CLI hunting.
+      - if FAN$IER output extraction becomes viable, prefer null-rate
+        (`0` discount) report generation so FEMIC can own any downstream
+        discounting logic instead of depending on FAN$IER's built-in
+        constant-rate economic assumptions.
     - Guardrails:
       - do not assume unsupervised FAN$IER runtime automation exists just
         because the help says "batch mode";
@@ -8699,6 +8715,8 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - data-preparation seams FEMIC can automate;
         - fully unattended execution seams;
         - and human-in-the-loop workflows that FEMIC can only stage.
+      - unless new code evidence appears, treat FAN$IER startup args as a
+        project-load convenience only, not as a hidden batch contract.
 
 - [ ] P48.4 Triage and repair the post-cutover K3Z QMD regression
   - [x] P48.4a Reproduce the current K3Z launch-time symptom on the shipped
