@@ -8545,3 +8545,21 @@
     watcher/import path.
   - This upgrades the `%TEMP%\\Fansier\\` watcher seam from a decompiled clue
     to a real validated integration path for FEMIC-staged regime delivery.
+- 2026-03-29 (Issue #59): narrowed the minimum viable FAN$IER regime-file load
+  contract using live reduced-file probes against the temp-folder watcher seam.
+  - Switched the reduction baseline to the shipped standalone sample:
+    - `C:\Program Files\TIPSY 4.7\BTC\Samples\TIPSY45 Sample.rgm`
+  - Confirmed that a reduced regime keeping:
+    - `*AppType`
+    - `*Run`
+    - `*FansierVars`
+    - `*FansierData`
+    - `*Product`
+    still loads cleanly into a live FAN$IER session.
+  - Confirmed that removing all `*Product` blocks is not UI-safe:
+    - FAN$IER throws a `SelectedIndex` exception after watcher import because
+      the regime-change path assumes at least one product group exists.
+  - Current best minimum-loadable regime hypothesis:
+    - `*ShortHeader`, `*Header`, `*Activities`, and trailing `*Data` are
+      load-optional;
+    - at least one valid `*Product` block is load-critical.

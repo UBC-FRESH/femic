@@ -8709,6 +8709,13 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         `Start Batch` workflow rather than a true CLI batch path;
       - direct FEMIC-side `.rgm` / `.eco` synthesis now looks like a more
         credible automation target than continued blind CLI hunting.
+      - first minimum-contract reduction findings now suggest that a regime can
+        still load cleanly without:
+        - `*ShortHeader`
+        - `*Header`
+        - `*Activities`
+        - trailing `*Data`
+        but not without at least one valid `*Product` block.
       - if FAN$IER output extraction becomes viable, prefer null-rate
         (`0` discount) report generation so FEMIC can own any downstream
         discounting logic instead of depending on FAN$IER's built-in

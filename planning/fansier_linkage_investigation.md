@@ -208,6 +208,31 @@ Current best read
 - and may be a more promising automation seam than hunting for a nonexistent
   FAN$IER batch CLI
 
+Minimum viable `.rgm` load findings so far
+
+- Known-good shipped standalone sample:
+  - `C:\Program Files\TIPSY 4.7\BTC\Samples\TIPSY45 Sample.rgm`
+- Live reduction tests against the temp-folder watcher seam now show:
+  - `*AppType + *Run + *FansierVars + *FansierData + *Product`
+    is sufficient for a clean live regime load
+  - `*ShortHeader` and `*Header` are not required just to load a regime
+  - `*Activities` and trailing `*Data` are not required just to load a regime
+  - dropping all `*Product` sections is not safe for UI loading:
+    - FAN$IER throws a `SelectedIndex` / `cProductGroups[0]`-style regime UI
+      exception after the watcher import
+
+Current best read
+
+- For a FEMIC-generated regime whose first goal is to load cleanly into a live
+  FAN$IER session, the current minimum viable contract looks like:
+  - `*AppType`
+  - `*Run`
+  - `*FansierVars`
+  - `*FansierData`
+  - at least one valid `*Product` block
+- Everything else should currently be treated as optional for loadability until
+  proven otherwise.
+
 ### 6. BTC-specific linkage clue is real
 
 From `Fansier.modRegime.LoadRegVars(...)` and installed changelog/help:
@@ -263,8 +288,15 @@ Current best read
      - Drop a valid `.rgm` into `%TEMP%\\Fansier\\`.
      - Confirmed that the regime auto-imports.
 2. Build a minimal FEMIC-readable `.rgm` schema note.
-   - Capture exact required sections and field ordering from `WriteRGM(...)`.
-   - Distinguish hard-required vs optional keys.
+   - In progress:
+     - `*AppType`, `*Run`, `*FansierVars`, `*FansierData`, and at least one
+       `*Product` block now look load-critical.
+     - `*ShortHeader`, `*Header`, `*Activities`, and trailing `*Data` are
+       currently load-optional.
+   - Next:
+     - probe whether `*FansierVars` itself can be reduced further
+     - probe how small a single valid `*Product` block can become before
+       FAN$IER stops loading the regime cleanly
 3. Probe whether registry-preseeded batch settings reduce the GUI boundary.
    - `RunIdentifier`
    - `BatchPath`
