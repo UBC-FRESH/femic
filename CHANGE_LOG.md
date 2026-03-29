@@ -7716,3 +7716,25 @@
   - no output CSV,
   - FEMIC auto-closing the BTC/.NET modal path,
   - and failure classification `missing_output_exit_1`.
+- 2026-03-28 (Phase 48 critical `/TSR` overlay breakthrough): confirmed that
+  plain installed `TIPSYbtc.exe /TSR` consults the per-user
+  `Documents\\BatchTIPSY Composer\\TimberSupply.rpt` overlay before falling
+  back to the stock installed report, and that preserving the stock TSR report
+  structure is the key to safe unattended extension.
+  - With the broken user overlay present, plain installed `/TSR` failed.
+  - With the overlay removed, stock `/TSR` succeeded again.
+  - With the overlay replaced by a stock-based safe enhanced TSR template,
+    plain installed `/TSR` also succeeded again.
+  - Re-running the first stand-table batch against that real overlay seam then
+    showed that all seven previously “failing” candidates actually pass:
+    - `MAI`
+    - `BasalArea:000`
+    - `DBHg:000`
+    - `SPH:000`
+    - `StemCount000`
+    - `StemCount125`
+    - `StemCount175`
+  - This means the copied-install/generated-template seam was too pessimistic:
+    the real `/TSR` game is about preserving the hidden stock
+    `TimberSupply.rpt` contract and extending it conservatively through the
+    live overlay path.

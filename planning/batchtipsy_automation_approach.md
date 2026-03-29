@@ -786,6 +786,67 @@ Current planning implication:
   attention to structural families and adjacent variants rather than assuming
   any stock `Yield.rpt` token is safe in unattended `/TSR`
 
+## Critical `/TSR` Overlay Precedence Breakthrough
+
+One of the most important Phase 48 reverse-engineering results is that plain
+installed ``TIPSYbtc.exe /TSR`` does **not** behave as if it were bound only to
+the stock report under ``C:\Program Files\TIPSY 4.7\BTC``.
+
+Live behavior proved the following:
+
+- installed ``/TSR`` consults the per-user overlay report at:
+  - ``C:\Users\gep\OneDrive - UBC\Documents\BatchTIPSY Composer\TimberSupply.rpt``
+  before falling back to the stock installed ``TimberSupply.rpt``
+- with the user overlay present and broken, plain installed ``/TSR`` fails
+- when the user overlay is moved out of the way, plain installed stock
+  ``/TSR`` succeeds again
+- when the user overlay is replaced with a **stock-based safe enhanced TSR
+  template**, plain installed ``/TSR`` also succeeds
+
+This means the true unattended seam is:
+
+- preserve the hidden stock ``TimberSupply.rpt`` structure
+- extend that structure conservatively through the live overlay path
+- test plain installed ``/TSR`` against that overlay
+
+It also means the earlier copied-install/generated-template probes were too
+pessimistic as a general seam detector. They were useful clues, but they were
+not testing the most faithful `/TSR` contract.
+
+Current rule going forward:
+
+- when probing new unattended `/TSR` columns, prefer the **real overlay seam**
+  over a clean-room generated replacement template
+- preserve the stock report shape whenever possible
+- treat failures from stand-alone replacement templates as seam clues, not as
+  proof that a token is impossible through `/TSR`
+
+## Overlay-Seam Ratchet Correction
+
+After restoring a stock-based safe enhanced overlay and probing the same first
+stand-table batch against the real overlay seam, the earlier “all seven fail”
+conclusion was overturned.
+
+The following columns all passed cleanly through plain installed ``/TSR``:
+
+- ``MAI``
+- ``BasalArea:000``
+- ``DBHg:000``
+- ``SPH:000``
+- ``StemCount000``
+- ``StemCount125``
+- ``StemCount175``
+
+This is the strongest current evidence that:
+
+- the key compatibility boundary is structural to the stock TSR report
+  contract, not merely the output tokens themselves
+- preserving and extending the stock/user-overlay ``TimberSupply.rpt`` path is
+  the correct ratchet for issue ``#47``
+- future optional indicator-bank work should continue to use the overlay seam
+  as the primary reverse-engineering surface unless new evidence proves a
+  better boundary
+
 ## Post-Cutover K3Z QMD Regression and Repair
 
 The first core unattended BTC cutover landed with a real K3Z regression:

@@ -31,6 +31,30 @@ External Runtime Boundaries
      - Windows-only fallback path for SiteProd geoprocessing when canonical
        SiteProd artifacts are unavailable.
 
+Critical BTC `/TSR` Runtime Note
+--------------------------------
+
+The unattended BTC seam has one especially important hidden rule:
+
+- plain installed ``TIPSYbtc.exe /TSR`` consults the per-user overlay report
+  at:
+  - ``C:\Users\gep\OneDrive - UBC\Documents\BatchTIPSY Composer\TimberSupply.rpt``
+  before falling back to the stock installed report under
+  ``C:\Program Files\TIPSY 4.7\BTC``
+
+Operational consequences:
+
+- a broken user-overlay ``TimberSupply.rpt`` can make apparently normal stock
+  ``/TSR`` runs fail
+- moving the overlay out of the way restores stock fallback behavior
+- the safest unattended customization path is to preserve the stock TSR report
+  structure and extend it conservatively through that overlay seam
+- do not assume that replacing ``TimberSupply.rpt`` wholesale with a
+  clean-room generated template is equivalent to the stock report contract
+
+This is now a critical FEMIC development invariant for BTC reverse-engineering
+and unattended report-template probing.
+
 Recovery Workflows
 ------------------
 

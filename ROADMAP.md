@@ -7741,6 +7741,33 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - seam detection: for every failing column, collect clues that might
           explain why some report tokens are `/TSR`-compatible and others are
           not, so later hacks/workarounds have better evidence;
+      - critical later breakthrough:
+        - those first copied-install/generated-template failures were too
+          pessimistic because they were testing a clean-room replacement of
+          `TimberSupply.rpt`, not the real live `/TSR` runtime seam;
+        - plain installed `TIPSYbtc.exe /TSR` consults the user-overlay report
+          at:
+          - `C:\Users\gep\OneDrive - UBC\Documents\BatchTIPSY Composer\TimberSupply.rpt`
+          before falling back to the stock installed report;
+        - when that overlay was removed, stock `/TSR` started working again;
+        - when that overlay was replaced with a stock-based safe enhanced TSR
+          template, plain installed `/TSR` also worked again;
+        - resumed one-column probes against the real overlay seam then showed
+          that all of the first-batch stand-structure candidates actually pass:
+          - `MAI`
+          - `BasalArea:000`
+          - `DBHg:000`
+          - `SPH:000`
+          - `StemCount000`
+          - `StemCount125`
+          - `StemCount175`
+        - working inference:
+          - `/TSR` compatibility is governed heavily by preserving the hidden
+            stock `TimberSupply.rpt` contract and extending it conservatively,
+            not just by whether an output token exists;
+          - do not backslide into probing only with generated stand-alone
+            replacement templates, because that can create false-negative seam
+            conclusions.
       - do not touch the active student-facing K3Z variants while proving the
         first bank; use a dedicated `intensive_*` proving-ground subvariant.
       Track on GitHub issue #47.

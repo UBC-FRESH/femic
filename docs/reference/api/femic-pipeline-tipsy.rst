@@ -153,6 +153,55 @@ report template changes what ``/TSR`` emits. Not every report type is a safe
 drop-in replacement, so FEMIC should prefer vetted compatible templates over
 arbitrary all-fields output experiments.
 
+Critical `/TSR` Overlay Precedence Insight
+------------------------------------------
+
+One critical reverse-engineering result must not be lost:
+
+- plain installed ``TIPSYbtc.exe /TSR`` consults the user-overlay report at:
+  - ``C:\Users\gep\OneDrive - UBC\Documents\BatchTIPSY Composer\TimberSupply.rpt``
+  before falling back to the stock installed ``TimberSupply.rpt``
+- a broken overlay can therefore make stock-looking ``/TSR`` runs fail even
+  when the installed BTC report under ``Program Files`` is fine
+- removing the overlay restores stock fallback behavior
+- replacing the overlay with a **stock-based safe enhanced TSR template** lets
+  plain installed ``/TSR`` run successfully while still extending the output
+  surface
+
+This matters because early copied-install/generated-template probes were too
+pessimistic. They were useful clues, but they were not exercising the most
+faithful live `/TSR` seam. The safest unattended extension path is now:
+
+1. start from the actual stock ``TimberSupply.rpt`` structure
+2. extend it conservatively through the live user-overlay seam
+3. test plain installed ``/TSR``
+
+Do not assume a clean-room generated replacement template is equivalent to the
+stock report contract just because the visible fields look similar.
+
+Why This Matters For Richer Indicator Probing
+---------------------------------------------
+
+This same overlay insight overturned the first bleak stand-table conclusion.
+When the first-batch candidates were re-probed through the **real** overlay
+seam instead of a stand-alone generated replacement template, all of these
+columns passed cleanly:
+
+- ``MAI``
+- ``BasalArea:000``
+- ``DBHg:000``
+- ``SPH:000``
+- ``StemCount000``
+- ``StemCount125``
+- ``StemCount175``
+
+So the main compatibility rule appears to be structural:
+
+- preserving the hidden stock ``TimberSupply.rpt`` contract matters a great
+  deal
+- some earlier failures were seam-mismatch artifacts, not proof that the
+  columns were impossible through unattended ``/TSR``
+
 The small dataclasses in this module are also useful because they define the
 candidate/freshness contracts explicitly:
 
