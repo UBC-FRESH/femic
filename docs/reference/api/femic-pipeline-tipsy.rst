@@ -214,6 +214,58 @@ So the main compatibility rule appears to be structural:
 - some earlier failures were seam-mismatch artifacts, not proof that the
   columns were impossible through unattended ``/TSR``
 
+First Optional Unattended Indicator Bank
+----------------------------------------
+
+FEMIC now has a first real optional BTC indicator-bank switch on top of the
+core unattended `/TSR` seam:
+
+- ``--indicator-bank stand-structure-basic``
+
+Current bank contents:
+
+- ``MAI``
+- ``BasalArea:000``
+- ``DBHg:000``
+- ``SPH:000``
+- ``StemCount000``
+- ``StemCount125``
+- ``StemCount175``
+
+Important runtime detail:
+
+- the working implementation patches the real per-user overlay report path
+  under ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt`` with
+  backup/restore;
+- relying only on a copied-install-local ``TimberSupply.rpt`` is not enough,
+  because the live overlay can silently shadow that local file and make the
+  run appear successful while dropping the requested bank columns from the
+  returned output.
+
+Live smoke proof now exists for:
+
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-basic``
+
+That returned a single unattended output CSV with:
+
+- the default conservative families:
+  - ``MVcon_*``
+  - ``MVdec_*``
+  - ``HTcon_*``
+  - ``HTdec_*``
+  - ``gVol_*``
+  - ``CC_*``
+- plus the first stand-structure bank:
+  - ``MAI_*``
+  - ``BasalArea000_*``
+  - ``DBHg000_*``
+  - ``SPH000_*``
+  - ``StemCount000_*``
+  - ``StemCount125_*``
+  - ``StemCount175_*``
+
+while still honoring the 350-year unattended TSR timeline.
+
 The small dataclasses in this module are also useful because they define the
 candidate/freshness contracts explicitly:
 

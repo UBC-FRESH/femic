@@ -14,7 +14,9 @@ from femic.pipeline.tipsy import (
     DEFAULT_BTC_MSYT_COLUMNS,
     BTCRunResult,
     BTCCustomReportColumn,
+    apply_btc_indicator_banks,
     assess_tipsy_input_output_coherence,
+    btc_indicator_bank_columns,
     btc_report_template_preset,
     build_btc_cli_command,
     build_btc_msyt_input_table,
@@ -389,6 +391,51 @@ def test_btc_report_template_preset_tsr_unattended_default_has_mashup_columns() 
     ]
 
 
+def test_btc_indicator_bank_columns_returns_first_safe_bank() -> None:
+    columns = btc_indicator_bank_columns("stand-structure-basic")
+    assert [column.token for column in columns] == [
+        "MAI",
+        "BasalArea:000",
+        "DBHg:000",
+        "SPH:000",
+        "StemCount000",
+        "StemCount125",
+        "StemCount175",
+    ]
+    assert [column.header1_override for column in columns] == [
+        "MAI",
+        "BasalArea000",
+        "DBHg000",
+        "SPH000",
+        "StemCount000",
+        "StemCount125",
+        "StemCount175",
+    ]
+
+
+def test_apply_btc_indicator_banks_appends_without_duplicates() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["stand-structure-basic", "stand-structure-basic"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "MAI",
+        "BasalArea:000",
+        "DBHg:000",
+        "SPH:000",
+        "StemCount000",
+        "StemCount125",
+        "StemCount175",
+    ]
+
+
 def test_build_and_write_btc_custom_report_template_round_trip(tmp_path: Path) -> None:
     source = btc_report_template_preset("timber-supply-sql")
     template = build_btc_custom_report_template(
@@ -500,6 +547,70 @@ def test_run_btc_cli_windows_missing_output_raises_with_exit_code(
             run_id="btc_windows_missing_output",
             env={},
         )
+
+
+def test_run_btc_cli_tsr_preset_uses_overlay_with_backup_restore(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    fake_btc = install_root / "TIPSYbtc.exe"
+    fake_btc.write_text("stub", encoding="utf-8")
+    (install_root / "TimberSupply.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Timber Supply\n"
+        "TableRange=0-120:10|#\tMAX=120\tINC=10\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Volume:Auto:Con\t\tMVcon\t{yr}\n",
+        encoding="utf-8",
+    )
+    overlay_path = tmp_path / "Docs" / "BatchTIPSY Composer" / "TimberSupply.rpt"
+    overlay_path.parent.mkdir(parents=True, exist_ok=True)
+    overlay_path.write_text("ORIGINAL OVERLAY\n", encoding="utf-8")
+    seen_overlay_text: dict[str, str] = {}
+
+    def fake_windows_run(**kwargs: object):
+        seen_overlay_text["text"] = overlay_path.read_text(encoding="utf-8")
+        cwd = Path(kwargs["cwd"])
+        (cwd / "MSYT_output.csv").write_text(
+            "feature_id,MVcon_0,MAI_0\n1,2,3\n", encoding="utf-8"
+        )
+        (cwd / "MSYT_error.csv").write_text("warnings,errors\n0,0\n", encoding="utf-8")
+        return 0, "", "", {"close_attempted": False, "closed_window_count": 0}
+
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: True)
+    monkeypatch.setattr(
+        tipsy_module,
+        "_resolve_btc_user_overlay_report_path",
+        lambda **kwargs: overlay_path,
+    )
+    monkeypatch.setattr(
+        tipsy_module,
+        "_run_windows_btc_with_dialog_cleanup",
+        fake_windows_run,
+    )
+
+    result = run_btc_cli(
+        input_csv=input_csv,
+        mode="TSR",
+        executable_path=fake_btc,
+        report_preset_name="tsr-unattended-default",
+        indicator_bank_names=["stand-structure-basic"],
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id="btc_overlay_bank",
+        env={},
+    )
+
+    assert result.exit_code == 0
+    assert result.uses_live_overlay is True
+    assert result.report_template_path == overlay_path
+    assert "MAI\t\tMAI\t{yr}" in seen_overlay_text["text"]
+    assert "SPH:000\t\tSPH000\t{yr}" in seen_overlay_text["text"]
+    assert overlay_path.read_text(encoding="utf-8") == "ORIGINAL OVERLAY\n"
 
 
 def test_resolve_windows_documents_dir_uses_user_shell_folders(
@@ -733,6 +844,42 @@ def test_prepare_btc_runtime_copies_install_and_writes_report_template(
     assert "TableRange=0-350:10|#\tMAX=350\tINC=10" in rendered
     assert "VolumeGross\t\tgVol\t{yr}" in rendered
     assert "CC\t\tCC\t{yr}" in rendered
+
+
+def test_prepare_btc_runtime_tsr_preset_applies_indicator_bank(
+    tmp_path: Path,
+) -> None:
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    fake_exe = install_root / "TIPSYbtc.exe"
+    fake_exe.write_text("stub", encoding="utf-8")
+    (install_root / "TimberSupply.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Timber Supply\n"
+        "TableRange=0-120:10|#\tMAX=120\tINC=10\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Volume:Auto:Con\t0\tMVcon\t{yr}\n",
+        encoding="utf-8",
+    )
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+
+    prep = prepare_btc_runtime(
+        executable_path=fake_exe,
+        input_csv=input_csv,
+        scratch_root=tmp_path / "scratch",
+        mode="TSR",
+        report_preset_name="tsr-unattended-default",
+        indicator_bank_names=["stand-structure-basic"],
+        copy_install=True,
+    )
+
+    assert prep.report_template_path is not None
+    rendered = prep.report_template_path.read_text(encoding="utf-8")
+    assert "MAI\t\tMAI\t{yr}" in rendered
+    assert "BasalArea:000\t\tBasalArea000\t{yr}" in rendered
+    assert "StemCount175\t\tStemCount175\t{yr}" in rendered
 
 
 def test_write_tipsy_input_exports_fails_fast_on_width_overflow(tmp_path: Path) -> None:

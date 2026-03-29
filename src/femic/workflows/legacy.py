@@ -9,7 +9,7 @@ import time
 from datetime import datetime, timezone
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Mapping, cast
+from typing import Any, Callable, Mapping, Sequence, cast
 import uuid
 
 import pandas as pd
@@ -620,6 +620,7 @@ def run_btc_and_post_tipsy_bundle_with_manifest(
     btc_executable_path: Path | None = None,
     report_preset_name: str | None = "tsr-unattended-default",
     report_template: Path | None = None,
+    indicator_bank_names: Sequence[str] = (),
     scratch_root: Path | None = None,
     canfi_species_fn: Callable[[str], int] = _default_canfi_species,
     message_fn: Callable[[str], Any] = print,
@@ -652,6 +653,7 @@ def run_btc_and_post_tipsy_bundle_with_manifest(
             executable_path=btc_executable_path,
             report_template=report_template,
             report_preset_name=report_preset_name,
+            indicator_bank_names=indicator_bank_names,
             copy_install=True,
             scratch_root=(
                 (scratch_root / f"tsa{tsa}") if scratch_root is not None else None

@@ -495,6 +495,7 @@ def test_run_btc_and_post_tipsy_bundle_with_manifest_orchestrates_paths(
     assert Path(btc_calls[0]["output_csv"]) == data_root / "04_output-tsa29.csv"
     assert Path(btc_calls[0]["error_csv"]) == data_root / "04_error-tsa29.csv"
     assert btc_calls[0]["report_preset_name"] == "tsr-unattended-default"
+    assert btc_calls[0]["indicator_bank_names"] == ()
     assert btc_calls[0]["copy_install"] is True
     assert Path(btc_calls[0]["scratch_root"]) == tmp_path / "scratch" / "tsa29"
     assert len(post_tipsy_calls) == 1
@@ -502,3 +503,69 @@ def test_run_btc_and_post_tipsy_bundle_with_manifest_orchestrates_paths(
         post_tipsy_calls[0]["tipsy_output_filename_template"]
         == "04_output-tsa{tsa}.csv"
     )
+
+
+def test_run_btc_and_post_tipsy_bundle_with_manifest_passes_indicator_banks(
+    monkeypatch, tmp_path: Path
+) -> None:
+    data_root = tmp_path / "data"
+    data_root.mkdir()
+    (data_root / "03_input-tsa29.csv").write_text("feature_id\n1000\n", encoding="utf-8")
+    btc_calls: list[dict[str, object]] = []
+
+    def _fake_run_btc_cli(**kwargs: object) -> BTCRunResult:
+        btc_calls.append(kwargs)
+        return BTCRunResult(
+            run_id="btc_post_tipsy_test_tsa29",
+            mode="TSR",
+            manifest_path=tmp_path / "logs" / "btc_manifest.json",
+            stdout_log_path=tmp_path / "logs" / "btc_stdout.log",
+            stderr_log_path=tmp_path / "logs" / "btc_stderr.log",
+            output_csv_path=data_root / "04_output-tsa29.csv",
+            error_csv_path=data_root / "04_error-tsa29.csv",
+            executable_path=tmp_path / "btc" / "TIPSYbtc.exe",
+            install_root=tmp_path / "btc",
+            working_dir=tmp_path / "scratch" / "work",
+            command=("btc.exe", "/TSR", "MSYT.csv"),
+            copied_install=True,
+            exit_code=0,
+            duration_sec=1.0,
+            report_template_path=tmp_path / "btc" / "TimberSupply.rpt",
+        )
+
+    def _fake_post_tipsy(**kwargs: object) -> PostTipsyBundleRunResult:
+        result = PostTipsyBundleResult(
+            tsa_list=["29"],
+            au_rows=1,
+            curve_rows=2,
+            curve_points_rows=4,
+            tipsy_curves_paths=[data_root / "tipsy_curves_tsa29.csv"],
+            tipsy_sppcomp_paths=[data_root / "tipsy_sppcomp_tsa29.csv"],
+            au_table_path=data_root / "model_input_bundle" / "au_table.csv",
+            curve_table_path=data_root / "model_input_bundle" / "curve_table.csv",
+            curve_points_table_path=data_root / "model_input_bundle" / "curve_points_table.csv",
+        )
+        return PostTipsyBundleRunResult(
+            manifest_path=tmp_path / "logs" / "run_manifest.json",
+            result=result,
+        )
+
+    monkeypatch.setattr("femic.workflows.legacy.run_btc_cli", _fake_run_btc_cli)
+    monkeypatch.setattr(
+        "femic.workflows.legacy.run_post_tipsy_bundle_with_manifest",
+        _fake_post_tipsy,
+    )
+
+    run_btc_and_post_tipsy_bundle_with_manifest(
+        tsa_list=["29"],
+        run_id="btc_post_tipsy_test",
+        log_dir=tmp_path / "logs",
+        repo_root=tmp_path,
+        data_root=data_root,
+        scratch_root=tmp_path / "scratch",
+        indicator_bank_names=("stand-structure-basic",),
+        message_fn=lambda _msg: None,
+    )
+
+    assert len(btc_calls) == 1
+    assert btc_calls[0]["indicator_bank_names"] == ("stand-structure-basic",)

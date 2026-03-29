@@ -84,6 +84,7 @@ from femic.pipeline.tipsy_config import (
     load_tipsy_tsa_config,
 )
 from femic.pipeline.tipsy import (
+    apply_btc_indicator_banks,
     probe_btc_report_columns,
     BTCRunResult,
     BTCCustomReportColumn,
@@ -2307,6 +2308,15 @@ def tsa_btc_post_tipsy(
         help="Built-in BTC report preset to use for unattended /TSR runs.",
         show_default=True,
     ),
+    indicator_bank: list[str] | None = typer.Option(
+        None,
+        "--indicator-bank",
+        help=(
+            "Activate a vetted optional BTC indicator bank "
+            "(for example stand-structure-basic). Repeat for multiple banks."
+        ),
+        show_default=False,
+    ),
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
     """Run unattended BTC for selected TSAs, then resume post-TIPSY bundle assembly."""
@@ -2363,6 +2373,7 @@ def tsa_btc_post_tipsy(
             instance_context.resolve_path(btc_exe) if btc_exe is not None else None
         ),
         report_preset_name=report_preset,
+        indicator_bank_names=indicator_bank or [],
         scratch_root=(
             instance_context.resolve_path(scratch_dir)
             if scratch_dir is not None
@@ -2497,6 +2508,15 @@ def tipsy_write_btc_report_template(
         ),
         show_default=False,
     ),
+    indicator_bank: list[str] | None = typer.Option(
+        None,
+        "--indicator-bank",
+        help=(
+            "Append a vetted optional BTC indicator bank "
+            "(for example stand-structure-basic). Repeat for multiple banks."
+        ),
+        show_default=False,
+    ),
     header_flag: list[str] | None = typer.Option(
         None,
         "--header-flag",
@@ -2587,6 +2607,10 @@ def tipsy_write_btc_report_template(
         header_height=header_height,
         footer_height=footer_height,
     )
+    template = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=indicator_bank or [],
+    )
     written_path = write_btc_custom_report_template(
         output_path=resolved_output,
         template=template,
@@ -2639,6 +2663,15 @@ def tipsy_run_btc(
         help=(
             "Built-in report preset to stage into the copied BTC install. "
             "Defaults to tsr-unattended-default for mode=TSR."
+        ),
+        show_default=False,
+    ),
+    indicator_bank: list[str] | None = typer.Option(
+        None,
+        "--indicator-bank",
+        help=(
+            "Activate a vetted optional BTC indicator bank "
+            "(for example stand-structure-basic). Repeat for multiple banks."
         ),
         show_default=False,
     ),
@@ -2705,6 +2738,7 @@ def tipsy_run_btc(
         executable_path=resolved_btc_exe,
         report_template=report_template_payload,
         report_preset_name=report_preset_name,
+        indicator_bank_names=indicator_bank or [],
         copy_install=(
             copy_install
             or report_template_payload is not None

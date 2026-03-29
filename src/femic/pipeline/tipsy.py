@@ -41,6 +41,18 @@ _BTC_REPORT_PRESET_NAMES = (
     "timber-supply-sql",
     "tsr-unattended-default",
 )
+_BTC_INDICATOR_BANK_NAMES = ("stand-structure-basic",)
+_BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
+    "stand-structure-basic": (
+        ("MAI", "MAI"),
+        ("BasalArea:000", "BasalArea000"),
+        ("DBHg:000", "DBHg000"),
+        ("SPH:000", "SPH000"),
+        ("StemCount000", "StemCount000"),
+        ("StemCount125", "StemCount125"),
+        ("StemCount175", "StemCount175"),
+    ),
+}
 DEFAULT_BTC_MSYT_COLUMNS = (
     "feature_id",
     "bec_zone",
@@ -132,6 +144,7 @@ class BTCRuntimePreparation:
     staged_input_csv: Path
     copied_install: bool
     report_template_path: Path | None
+    uses_live_overlay: bool = False
 
 
 @dataclass(frozen=True)
@@ -153,6 +166,7 @@ class BTCRunResult:
     exit_code: int
     duration_sec: float
     report_template_path: Path | None
+    uses_live_overlay: bool = False
 
 
 @dataclass(frozen=True)
@@ -374,6 +388,48 @@ def build_btc_custom_report_template(
     )
 
 
+def btc_indicator_bank_columns(name: str) -> tuple[BTCCustomReportColumn, ...]:
+    """Return the vetted column set for one optional BTC indicator bank."""
+    normalized = name.strip().lower().replace("_", "-")
+    specs = _BTC_INDICATOR_BANK_SPECS.get(normalized)
+    if specs is None:
+        supported = ", ".join(_BTC_INDICATOR_BANK_NAMES)
+        raise ValueError(
+            f"Unsupported BTC indicator bank {name!r}. Supported banks: {supported}"
+        )
+    return tuple(
+        BTCCustomReportColumn(
+            token=token,
+            header1_override=alias,
+            header2_override="{yr}",
+        )
+        for token, alias in specs
+    )
+
+
+def apply_btc_indicator_banks(
+    *,
+    template: BTCCustomReportTemplate,
+    indicator_bank_names: Sequence[str],
+) -> BTCCustomReportTemplate:
+    """Append vetted indicator-bank columns to an existing BTC report template."""
+    if not indicator_bank_names:
+        return template
+    columns = list(template.columns)
+    existing_tokens = {column.token for column in columns}
+    for bank_name in indicator_bank_names:
+        for column in btc_indicator_bank_columns(bank_name):
+            if column.token in existing_tokens:
+                continue
+            columns.append(column)
+            existing_tokens.add(column.token)
+    return build_btc_custom_report_template(
+        name=template.name,
+        source_template=template,
+        columns=columns,
+    )
+
+
 def btc_report_template_preset(name: str) -> BTCCustomReportTemplate:
     """Return a vetted built-in BTC custom report template preset."""
     normalized = name.strip().lower().replace("_", "-")
@@ -498,7 +554,9 @@ def _btc_token_clues(
 
     return {
         "present_in_reports": report_hits,
-        "present_in_yield_rpt": any(hit["report"] == "Yield.rpt" for hit in report_hits),
+        "present_in_yield_rpt": any(
+            hit["report"] == "Yield.rpt" for hit in report_hits
+        ),
         "present_in_timber_supply_rpt": any(
             hit["report"] == "TimberSupply.rpt" for hit in report_hits
         ),
@@ -528,9 +586,7 @@ def _classify_btc_probe_failure(
         exit_code = manifest_payload.get("exit_code")
         windows_cleanup = manifest_payload.get("windows_dialog_cleanup", {})
         output_exists = (
-            manifest_payload.get("artifacts", {})
-            .get("output_csv", {})
-            .get("exists")
+            manifest_payload.get("artifacts", {}).get("output_csv", {}).get("exists")
         )
         if (
             exit_code == 1
@@ -600,11 +656,18 @@ def _write_btc_probe_compatibility_ledger(
     compatibility_json.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
-def _write_tsr_unattended_runtime_template_from_stock(*, install_root: Path) -> Path:
+def _write_tsr_unattended_runtime_template_from_stock(
+    *,
+    install_root: Path,
+    indicator_bank_names: Sequence[str] = (),
+) -> Path:
     """Patch stock `TimberSupply.rpt` in place with the proven safe mashup columns."""
     template_path = install_root / _BTC_REPORT_FILENAME_BY_MODE["TSR"]
     text = template_path.read_text(encoding="utf-8")
-    lines = _build_tsr_unattended_runtime_report_lines(text=text)
+    lines = _build_tsr_unattended_runtime_report_lines(
+        text=text,
+        indicator_bank_names=indicator_bank_names,
+    )
     template_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return template_path
 
@@ -612,6 +675,7 @@ def _write_tsr_unattended_runtime_template_from_stock(*, install_root: Path) -> 
 def _build_tsr_unattended_runtime_report_lines(
     *,
     text: str,
+    indicator_bank_names: Sequence[str] = (),
     extra_lines: Sequence[str] = (),
 ) -> list[str]:
     """Return stock-based TSR report lines patched for FEMIC's unattended seam."""
@@ -627,6 +691,14 @@ def _build_tsr_unattended_runtime_report_lines(
     additions = [
         "VolumeGross\t\tgVol\t{yr}",
         "CC\t\tCC\t{yr}",
+        *(
+            _render_tsr_overlay_probe_line(
+                column.token,
+                alias=column.header1_override or None,
+            )
+            for bank_name in indicator_bank_names
+            for column in btc_indicator_bank_columns(bank_name)
+        ),
         *extra_lines,
     ]
     for addition in additions:
@@ -637,9 +709,10 @@ def _build_tsr_unattended_runtime_report_lines(
     return lines
 
 
-def _render_tsr_overlay_probe_line(token: str) -> str:
+def _render_tsr_overlay_probe_line(token: str, *, alias: str | None = None) -> str:
     """Render one conservative stock-shaped transposed TSR probe line."""
-    return f"{token}\t\t\t{{yr}}"
+    header_alias = alias or ""
+    return f"{token}\t\t{header_alias}\t{{yr}}"
 
 
 def _resolve_windows_documents_dir() -> Path | None:
@@ -900,7 +973,9 @@ def _run_windows_btc_with_dialog_cleanup(
         returncode = proc.poll()
         if returncode is not None:
             break
-        dialog_pids = sorted(_find_windows_btc_dialog_process_ids(root_pid=launched_pid))
+        dialog_pids = sorted(
+            _find_windows_btc_dialog_process_ids(root_pid=launched_pid)
+        )
         if dialog_pids:
             close_attempted = True
             matched_dialog_pids = dialog_pids
@@ -919,13 +994,20 @@ def _run_windows_btc_with_dialog_cleanup(
         proc.kill()
         stdout, stderr = proc.communicate()
 
-    return int(proc.returncode or 0), stdout, stderr, {
-        "close_attempted": close_attempted,
-        "matched_dialog_pids": matched_dialog_pids,
-        "closed_window_count": closed_window_count,
-        "force_stopped_pids": force_stopped_pids,
-        "remaining_process_ids": sorted(_find_windows_process_tree_ids(root_pid=launched_pid)),
-    }
+    return (
+        int(proc.returncode or 0),
+        stdout,
+        stderr,
+        {
+            "close_attempted": close_attempted,
+            "matched_dialog_pids": matched_dialog_pids,
+            "closed_window_count": closed_window_count,
+            "force_stopped_pids": force_stopped_pids,
+            "remaining_process_ids": sorted(
+                _find_windows_process_tree_ids(root_pid=launched_pid)
+            ),
+        },
+    )
 
 
 def prepare_btc_runtime(
@@ -936,7 +1018,9 @@ def prepare_btc_runtime(
     mode: str,
     report_template: BTCCustomReportTemplate | str | Path | None = None,
     report_preset_name: str | None = None,
+    indicator_bank_names: Sequence[str] = (),
     copy_install: bool = False,
+    prefer_user_overlay: bool = False,
 ) -> BTCRuntimePreparation:
     """Stage a writable BTC runtime root and input CSV for one run."""
     resolved_exe = Path(executable_path).expanduser().resolve()
@@ -947,22 +1031,34 @@ def prepare_btc_runtime(
     effective_executable = resolved_exe
     copied = False
     report_target_path: Path | None = None
-    if copy_install or report_template is not None:
+    normalized_mode = str(mode).upper()
+    use_live_overlay = (
+        prefer_user_overlay
+        and normalized_mode == "TSR"
+        and report_preset_name == "tsr-unattended-default"
+        and report_template is None
+    )
+    if copy_install or (report_template is not None and not use_live_overlay):
         effective_install_root = resolved_scratch_root / "btc_install"
         if effective_install_root.exists():
             shutil.rmtree(effective_install_root)
         shutil.copytree(install_root, effective_install_root)
         effective_executable = effective_install_root / resolved_exe.name
         copied = True
-    normalized_mode = str(mode).upper()
     if report_preset_name == "tsr-unattended-default":
         if normalized_mode != "TSR":
             raise ValueError(
                 "The tsr-unattended-default runtime preset only supports mode=TSR."
             )
-        report_target_path = _write_tsr_unattended_runtime_template_from_stock(
-            install_root=effective_install_root
-        )
+        if use_live_overlay:
+            report_target_path = _resolve_btc_user_overlay_report_path(
+                mode=normalized_mode
+            )
+        else:
+            report_target_path = _write_tsr_unattended_runtime_template_from_stock(
+                install_root=effective_install_root,
+                indicator_bank_names=indicator_bank_names,
+            )
     elif report_template is not None:
         report_target_path = (
             effective_install_root / _BTC_REPORT_FILENAME_BY_MODE[normalized_mode]
@@ -986,6 +1082,7 @@ def prepare_btc_runtime(
         staged_input_csv=staged_input,
         copied_install=copied,
         report_template_path=report_target_path,
+        uses_live_overlay=use_live_overlay,
     )
 
 
@@ -998,6 +1095,7 @@ def run_btc_cli(
     executable_path: str | Path | None = None,
     report_template: BTCCustomReportTemplate | str | Path | None = None,
     report_preset_name: str | None = None,
+    indicator_bank_names: Sequence[str] = (),
     copy_install: bool | None = None,
     scratch_root: str | Path | None = None,
     log_dir: str | Path = Path("vdyp_io/logs"),
@@ -1024,6 +1122,12 @@ def run_btc_cli(
         if copy_install is not None
         else (report_template is not None or report_preset_name is not None)
     )
+    use_live_overlay = (
+        _tipsy_is_windows_host()
+        and normalized_mode == "TSR"
+        and report_preset_name == "tsr-unattended-default"
+        and report_template is None
+    )
     prep = prepare_btc_runtime(
         executable_path=discovery.executable_path,
         input_csv=input_csv,
@@ -1031,7 +1135,9 @@ def run_btc_cli(
         mode=normalized_mode,
         report_template=report_template,
         report_preset_name=report_preset_name,
+        indicator_bank_names=indicator_bank_names,
         copy_install=should_copy_install,
+        prefer_user_overlay=use_live_overlay,
     )
     input_path = Path(input_csv).expanduser().resolve()
     if output_csv is not None:
@@ -1074,9 +1180,11 @@ def run_btc_cli(
         "executable_path": str(prep.executable_path),
         "install_root": str(prep.install_root),
         "copied_install": prep.copied_install,
+        "uses_live_overlay": prep.uses_live_overlay,
         "report_template_path": (
             str(prep.report_template_path) if prep.report_template_path else None
         ),
+        "indicator_bank_names": list(indicator_bank_names),
         "discovery_source": discovery.source,
     }
     _write_btc_manifest(manifest_path, manifest_started)
@@ -1084,26 +1192,55 @@ def run_btc_cli(
     merged_env = dict(os.environ)
     merged_env.update(env or {})
     windows_dialog_cleanup: dict[str, Any] | None = None
-    if _tipsy_is_windows_host():
-        exit_code, stdout_text, stderr_text, windows_dialog_cleanup = (
-            _run_windows_btc_with_dialog_cleanup(
-                command=command,
+    original_overlay_text: str | None = None
+    original_overlay_exists = False
+    if prep.uses_live_overlay and prep.report_template_path is not None:
+        overlay_path = prep.report_template_path
+        original_overlay_exists = overlay_path.exists()
+        if original_overlay_exists:
+            original_overlay_text = overlay_path.read_text(encoding="utf-8")
+        stock_report_path = (
+            discovery.executable_path.parent / _BTC_REPORT_FILENAME_BY_MODE["TSR"]
+        )
+        overlay_text = (
+            "\n".join(
+                _build_tsr_unattended_runtime_report_lines(
+                    text=stock_report_path.read_text(encoding="utf-8"),
+                    indicator_bank_names=indicator_bank_names,
+                )
+            )
+            + "\n"
+        )
+        overlay_path.parent.mkdir(parents=True, exist_ok=True)
+        overlay_path.write_text(overlay_text, encoding="utf-8")
+    try:
+        if _tipsy_is_windows_host():
+            exit_code, stdout_text, stderr_text, windows_dialog_cleanup = (
+                _run_windows_btc_with_dialog_cleanup(
+                    command=command,
+                    cwd=prep.working_dir,
+                    env=merged_env,
+                )
+            )
+        else:
+            completed = subprocess.run(
+                command,
                 cwd=prep.working_dir,
                 env=merged_env,
+                capture_output=True,
+                text=True,
+                check=False,
             )
-        )
-    else:
-        completed = subprocess.run(
-            command,
-            cwd=prep.working_dir,
-            env=merged_env,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        exit_code = completed.returncode
-        stdout_text = completed.stdout
-        stderr_text = completed.stderr
+            exit_code = completed.returncode
+            stdout_text = completed.stdout
+            stderr_text = completed.stderr
+    finally:
+        if prep.uses_live_overlay and prep.report_template_path is not None:
+            overlay_path = prep.report_template_path
+            if original_overlay_exists and original_overlay_text is not None:
+                overlay_path.write_text(original_overlay_text, encoding="utf-8")
+            elif overlay_path.exists():
+                overlay_path.unlink()
     duration_sec = round(time.monotonic() - started_monotonic, 3)
     stdout_log_path.write_text(stdout_text, encoding="utf-8")
     stderr_log_path.write_text(stderr_text, encoding="utf-8")
@@ -1213,6 +1350,7 @@ def run_btc_cli(
         exit_code=exit_code,
         duration_sec=duration_sec,
         report_template_path=prep.report_template_path,
+        uses_live_overlay=prep.uses_live_overlay,
     )
 
 
@@ -1298,20 +1436,31 @@ def probe_btc_report_columns(
 
     try:
         for index, candidate_token in enumerate(candidate_tokens, start=1):
-            trial_columns = [*accepted_columns, BTCCustomReportColumn(token=candidate_token)]
+            trial_columns = [
+                *accepted_columns,
+                BTCCustomReportColumn(token=candidate_token),
+            ]
             trial_template = build_btc_custom_report_template(
                 name=base_template.name,
                 source_template=base_template,
                 columns=trial_columns,
             )
-            token_slug = re.sub(r"[^A-Za-z0-9]+", "_", candidate_token).strip("_") or "token"
+            token_slug = (
+                re.sub(r"[^A-Za-z0-9]+", "_", candidate_token).strip("_") or "token"
+            )
             trial_run_id = f"{run_id_prefix}_{index:02d}_{token_slug}"
-            if use_live_overlay and overlay_path is not None and base_overlay_text is not None:
+            if (
+                use_live_overlay
+                and overlay_path is not None
+                and base_overlay_text is not None
+            ):
                 overlay_path.write_text(
                     "\n".join(
                         _build_tsr_unattended_runtime_report_lines(
                             text=base_overlay_text,
-                            extra_lines=(_render_tsr_overlay_probe_line(candidate_token),),
+                            extra_lines=(
+                                _render_tsr_overlay_probe_line(candidate_token),
+                            ),
                         )
                     )
                     + "\n",
@@ -1337,7 +1486,9 @@ def probe_btc_report_columns(
             except Exception as exc:
                 manifest_path = resolved_log_dir / f"btc_manifest-{trial_run_id}.json"
                 manifest_payload = (
-                    _load_btc_manifest(manifest_path) if manifest_path.is_file() else None
+                    _load_btc_manifest(manifest_path)
+                    if manifest_path.is_file()
+                    else None
                 )
                 output_created = (
                     manifest_payload.get("artifacts", {})
@@ -1362,13 +1513,19 @@ def probe_btc_report_columns(
                     BTCColumnProbeResult(
                         candidate_token=candidate_token,
                         status="failed",
-                        accepted_column_tokens=tuple(column.token for column in accepted_columns),
+                        accepted_column_tokens=tuple(
+                            column.token for column in accepted_columns
+                        ),
                         run_id=trial_run_id,
                         exit_code=(
-                            manifest_payload.get("exit_code") if manifest_payload else None
+                            manifest_payload.get("exit_code")
+                            if manifest_payload
+                            else None
                         ),
                         error_message=str(exc),
-                        manifest_path=(manifest_path if manifest_path.is_file() else None),
+                        manifest_path=(
+                            manifest_path if manifest_path.is_file() else None
+                        ),
                         output_created=output_created,
                         error_created=error_created,
                         dialog_auto_closed=(
@@ -1417,7 +1574,9 @@ def probe_btc_report_columns(
                 BTCColumnProbeResult(
                     candidate_token=candidate_token,
                     status="accepted",
-                    accepted_column_tokens=tuple(column.token for column in accepted_columns),
+                    accepted_column_tokens=tuple(
+                        column.token for column in accepted_columns
+                    ),
                     run_id=trial_run_id,
                     exit_code=run_result.exit_code,
                     manifest_path=run_result.manifest_path,
@@ -1438,7 +1597,9 @@ def probe_btc_report_columns(
                     report_type=trial_template.report_type,
                     identifier_mode=trial_template.identifier,
                     output_format=trial_template.output_format,
-                    clues=_btc_token_clues(token=candidate_token, install_root=install_root),
+                    clues=_btc_token_clues(
+                        token=candidate_token, install_root=install_root
+                    ),
                 )
             )
             final_template = build_btc_custom_report_template(

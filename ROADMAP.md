@@ -7652,29 +7652,35 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 ## Detailed Next Steps Notes
 
-- The next incoming-ideas candidate after Phase 47 is still the BatchTIPSY
-  automation feature. Treat the Matrix Builder auto-close result as a proven
-  local workflow pattern that may help shape that later automation work.
-- New local evidence now points to the BTC `MSYT.csv` CLI seam as the real
-  first automation target, not the older DAT/OUT workflow.
-- The preferred first unattended BatchTIPSY automation slice is now a single
-  supervised BTC `/TSR` run with a vetted transposed `TimberSupply.rpt`
-  mashup, because local copied-install probes proved that `/TSR` is
-  report-coupled and can safely emit merchantable volume, height, gross
-  volume, and crown closure in one file when the replacement report template
-  stays within the compatible transposed report family.
-- The strongest current optional rich-output seam is BTC SQL-style report
-  output with explicit `feature_id`, and the next implementation edge now
-  includes a FEMIC-side `.rpt` template generator so vetted BTC report files
-  can be authored outside the GUI.
+- The core unattended BTC cutover bird is landed; the current leading edge is
+  Phase `48.2d1` under GitHub issue `#47`.
+- The first optional unattended BTC indicator-bank switch is now wired through
+  the live user-overlay TSR seam:
+  - `--indicator-bank stand-structure-basic`
+  - current safe contents:
+    - `MAI`
+    - `BasalArea:000`
+    - `DBHg:000`
+    - `SPH:000`
+    - `StemCount000`
+    - `StemCount125`
+    - `StemCount175`
+- The critical runtime rule is now:
+  - preserve and extend the hidden stock `TimberSupply.rpt` contract through
+    the real per-user overlay path under the current user's Documents folder;
+  - do not rely on copied-install-local `TimberSupply.rpt` overrides alone
+    when validating optional-bank output, because the live overlay can shadow
+    them and create false conclusions.
 - The next concrete implementation edge is:
-  - add Windows BTC executable discovery and preflight,
-  - stage a writable scratch directory,
-  - write the vetted unattended `TimberSupply.rpt` template into that scratch
-    install,
-  - run supervised `/TSR`,
-  - validate output/error files,
-  - and record a manifest before widening to Stage 01a/01b CSV cutover work.
+  - pilot `stand-structure-basic` only on a dedicated K3Z `intensive_*`
+    proving-ground subvariant,
+  - verify the extra banked outputs flow through the end-to-end FEMIC/TIPSY
+    workflow without touching student-facing variants,
+  - then continue the one-column ratchet to define the next safe bank frontier.
+- Keep the parallel seam-detection mission alive:
+  - for any future failing column, collect clues about report family, token
+    syntax, stock report membership, and `OutputColumns.txt`/Tcl references so
+    we can infer why some `/TSR` columns pass and others fail.
 - The installed BTC defaults file `C:\Program Files\TIPSY 4.7\BTC\gw.txt`
   should be treated as a likely first source for default FEMIC genetic gain
   settings in the cutover, with explicit documentation that those defaults are
@@ -7718,23 +7724,25 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       piloting first on a dedicated K3Z intensive-silviculture proving-ground
       subvariant rather than modifying the active student-facing variants.
       Current status:
-      - first unattended `/TSR` probes with `DBHg`, `SPH`,
-        `StemCount000/125/175`, and crop-tree stand-table fields all failed in
-        `BatchProcess()` with stacked BTC `.NET` crash dialogs;
-      - continue from the current known-good unattended `/TSR` template and
-        ratchet forward one new column at a time so each failure has a single,
-        obvious cause;
+      - the first safe unattended stand-structure bank has now been proven
+        through the real live `/TSR` overlay seam:
+        - `MAI`
+        - `BasalArea:000`
+        - `DBHg:000`
+        - `SPH:000`
+        - `StemCount000`
+        - `StemCount125`
+        - `StemCount175`
+      - the next implementation step is to stop treating those columns as a
+        probe-only result and wire them into FEMIC as the first explicit
+        optional BTC indicator-bank activation switch;
+      - after that switch exists, pilot it only on a dedicated K3Z
+        `intensive_*` proving-ground subvariant, not on active student-facing
+        variants;
+      - keep the one-column ratchet and compatibility-ledger loop alive for
+        later banks and for explaining any future failures;
       - BTC modal/.NET failure dialogs are now auto-closed by FEMIC during
         probe runs, so unattended sweeps no longer require a human click-loop;
-      - the first full seven-column ratchet batch
-        (`MAI`, `BasalArea:000`, `DBHg:000`, `SPH:000`,
-        `StemCount000/125/175`) completed unattended and every candidate
-        failed cleanly with:
-        - no output CSV produced,
-        - BTC exit code `1`,
-        - auto-closed BTC/.NET modal dialogs,
-        - a machine-readable compatibility ledger written to the probe scratch
-          directory;
       - treat this as a two-track task:
         - forward ratchet: grow the maximal safe unattended stand-table bank
           incrementally and wire it behind a FEMIC switch;
@@ -7768,6 +7776,38 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
           - do not backslide into probing only with generated stand-alone
             replacement templates, because that can create false-negative seam
             conclusions.
+      - the first FEMIC-level optional bank switch is now wired end to end:
+        - CLI/runtime surface:
+          - `--indicator-bank stand-structure-basic`
+        - current bank contents:
+          - `MAI`
+          - `BasalArea:000`
+          - `DBHg:000`
+          - `SPH:000`
+          - `StemCount000`
+          - `StemCount125`
+          - `StemCount175`
+        - critical runtime implementation detail:
+          - the bank is applied by patching the real per-user BTC overlay
+            report path under the current user's Documents folder with
+            backup/restore, not by relying on a copied-install-local
+            `TimberSupply.rpt` override that the live overlay can silently
+            shadow;
+        - real smoke proof:
+          - `femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-basic`
+            now returns the base unattended families plus:
+            - `MAI_*`
+            - `BasalArea000_*`
+            - `DBHg000_*`
+            - `SPH000_*`
+            - `StemCount000_*`
+            - `StemCount125_*`
+            - `StemCount175_*`
+          - with the extended 350-year timeline still intact;
+      - immediate next step:
+        - pilot this first bank only on a dedicated K3Z `intensive_*`
+          proving-ground subvariant before touching any student-facing
+          variants.
       - do not touch the active student-facing K3Z variants while proving the
         first bank; use a dedicated `intensive_*` proving-ground subvariant.
       Track on GitHub issue #47.

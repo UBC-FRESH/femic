@@ -7747,3 +7747,30 @@
   machine-specific BTC overlay lookup in FEMIC source code with a generic
   Windows Documents-folder resolver so unattended `/TSR` probing and runtime
   patching no longer assume a user-specific OneDrive directory name.
+- 2026-03-29 (Phase 48 first optional BTC bank switch): wired the first FEMIC
+  optional unattended BTC indicator-bank switch,
+  `--indicator-bank stand-structure-basic`, through the real per-user TSR
+  overlay seam with backup/restore.
+  - The bank now carries:
+    - `MAI`
+    - `BasalArea:000`
+    - `DBHg:000`
+    - `SPH:000`
+    - `StemCount000`
+    - `StemCount125`
+    - `StemCount175`
+  - The key implementation fix was to stop treating the copied-install-local
+    `TimberSupply.rpt` as authoritative when a live user overlay exists;
+    FEMIC now patches the real user-overlay report path for the TSR preset so
+    requested bank columns actually appear in returned output.
+  - Real smoke proof now exists for:
+    - `femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-basic`
+    which returns the conservative default families plus:
+    - `MAI_*`
+    - `BasalArea000_*`
+    - `DBHg000_*`
+    - `SPH000_*`
+    - `StemCount000_*`
+    - `StemCount125_*`
+    - `StemCount175_*`
+    while preserving the 350-year TSR horizon.

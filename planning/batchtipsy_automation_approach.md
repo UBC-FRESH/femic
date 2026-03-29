@@ -854,6 +854,60 @@ This is the strongest current evidence that:
   as the primary reverse-engineering surface unless new evidence proves a
   better boundary
 
+## First Optional Unattended Indicator Bank
+
+The first FEMIC-level optional BTC indicator-bank switch is now wired through
+the real unattended `/TSR` overlay seam.
+
+Current switch:
+
+- ``--indicator-bank stand-structure-basic``
+
+Current bank contents:
+
+- ``MAI``
+- ``BasalArea:000``
+- ``DBHg:000``
+- ``SPH:000``
+- ``StemCount000``
+- ``StemCount125``
+- ``StemCount175``
+
+Critical runtime implementation detail:
+
+- the runtime must patch the real per-user overlay report path
+  ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt`` with backup/restore;
+- relying only on a copied-install-local ``TimberSupply.rpt`` is not
+  sufficient, because the live user overlay can silently shadow that local
+  file and make a run appear successful while dropping the bank columns from
+  the returned output.
+
+Real smoke proof:
+
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-basic``
+  now returns, in one unattended output CSV:
+  - the base conservative families:
+    - ``MVcon_*``
+    - ``MVdec_*``
+    - ``HTcon_*``
+    - ``HTdec_*``
+    - ``gVol_*``
+    - ``CC_*``
+  - plus the first stand-structure bank:
+    - ``MAI_*``
+    - ``BasalArea000_*``
+    - ``DBHg000_*``
+    - ``SPH000_*``
+    - ``StemCount000_*``
+    - ``StemCount125_*``
+    - ``StemCount175_*``
+- the 350-year TSR horizon remains intact at the same time.
+
+Immediate next step:
+
+- pilot this first bank only on a dedicated K3Z ``intensive_*`` proving-ground
+  subvariant before touching any student-facing variants.
+
 ## Post-Cutover K3Z QMD Regression and Repair
 
 The first core unattended BTC cutover landed with a real K3Z regression:
