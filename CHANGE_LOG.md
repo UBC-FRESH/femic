@@ -8559,7 +8559,23 @@
   - Confirmed that removing all `*Product` blocks is not UI-safe:
     - FAN$IER throws a `SelectedIndex` exception after watcher import because
       the regime-change path assumes at least one product group exists.
+  - Confirmed that one valid `*Product` block is enough for a clean load:
+    - the reduced probe
+      `tipsy_io/logs/fansier_probe/TIPSY45 Sample_one_product.rgm`
+      imported cleanly into a live FAN$IER session.
+  - Confirmed that `*AppType`, `*Run`, and `*FansierVars` are all optional for
+    live watcher import:
+    - reduced probes still loaded cleanly with those sections removed.
+  - Confirmed the current lowest clean live watcher floor:
+    - one `*FansierData` header plus one real data row;
+    - one aligned `*Product` block with one subtype column and one real data
+      row.
+  - Confirmed that a corrected zero-row regime is below the UI floor:
+    - FAN$IER reaches regime selection, then throws an
+      `IndexOutOfRangeException` in `cmbHarvAge_SelectedIndexChanged(...)`
+      because there are no usable harvest-age rows.
   - Current best minimum-loadable regime hypothesis:
-    - `*ShortHeader`, `*Header`, `*Activities`, and trailing `*Data` are
-      load-optional;
-    - at least one valid `*Product` block is load-critical.
+    - for live watcher import, only aligned `*FansierData` and `*Product`
+      rows currently look truly load-critical;
+    - the other major sections tested so far are optional for basic regime
+      loading.

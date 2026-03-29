@@ -8715,7 +8715,21 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - `*Header`
         - `*Activities`
         - trailing `*Data`
-        but not without at least one valid `*Product` block.
+        and even without:
+        - `*AppType`
+        - `*Run`
+        - `*FansierVars`
+        but not without:
+        - at least one valid `*FansierData` row
+        - at least one valid aligned `*Product` block row;
+      - the product-side minimum has already narrowed further:
+        - one valid `*Product` block is enough for a clean live load, so the
+          full shipped product catalog is not required just to import a regime.
+      - current lowest proven live watcher regime is essentially:
+        - one `*FansierData` header plus one real row
+        - one `*Product` block with one subtype column and one aligned row
+      - a zero-row regime is below FAN$IER's UI floor and crashes later in the
+        harvest-age selector path.
       - if FAN$IER output extraction becomes viable, prefer null-rate
         (`0` discount) report generation so FEMIC can own any downstream
         discounting logic instead of depending on FAN$IER's built-in

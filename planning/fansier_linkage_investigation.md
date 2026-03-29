@@ -220,18 +220,33 @@ Minimum viable `.rgm` load findings so far
   - dropping all `*Product` sections is not safe for UI loading:
     - FAN$IER throws a `SelectedIndex` / `cProductGroups[0]`-style regime UI
       exception after the watcher import
+  - one valid `*Product` block is enough for a clean live load:
+    - the full shipped product catalog is not required just to import a regime
+    - current reduced known-good probe:
+      - `tipsy_io/logs/fansier_probe/TIPSY45 Sample_one_product.rgm`
+  - `*FansierVars`, `*Run`, and `*AppType` are all load-optional in the
+    watcher-import path:
+    - probes with only `*FansierData + one valid *Product block` still loaded
+      cleanly as long as row alignment was preserved
+  - one aligned `*FansierData` row plus one aligned `*Product` data row is
+    sufficient for a clean live load:
+    - current reduced known-good probe:
+      - `tipsy_io/logs/fansier_probe/TIPSY45 Sample_ultramin_clean_1row.rgm`
+  - zero-row regimes are not UI-safe even when the section grammar is valid:
+    - the corrected zero-row probe reached regime selection, then FAN$IER threw
+      an `IndexOutOfRangeException` in `cmbHarvAge_SelectedIndexChanged(...)`
+      because no usable harvest-age rows existed
 
 Current best read
 
 - For a FEMIC-generated regime whose first goal is to load cleanly into a live
   FAN$IER session, the current minimum viable contract looks like:
-  - `*AppType`
-  - `*Run`
-  - `*FansierVars`
   - `*FansierData`
+    - with at least one real data row
   - at least one valid `*Product` block
-- Everything else should currently be treated as optional for loadability until
-  proven otherwise.
+    - with matching row count and at least one real data row
+- Everything else should currently be treated as optional for live watcher
+  loadability until proven otherwise.
 
 ### 6. BTC-specific linkage clue is real
 
@@ -289,14 +304,17 @@ Current best read
      - Confirmed that the regime auto-imports.
 2. Build a minimal FEMIC-readable `.rgm` schema note.
    - In progress:
-     - `*AppType`, `*Run`, `*FansierVars`, `*FansierData`, and at least one
-       `*Product` block now look load-critical.
-     - `*ShortHeader`, `*Header`, `*Activities`, and trailing `*Data` are
-       currently load-optional.
+     - current live watcher floor appears to be:
+       - `*FansierData` with at least one row
+       - one valid aligned `*Product` block with at least one row
+     - `*AppType`, `*Run`, `*FansierVars`, `*ShortHeader`, `*Header`,
+       `*Activities`, and trailing `*Data` are currently load-optional.
    - Next:
-     - probe whether `*FansierVars` itself can be reduced further
-     - probe how small a single valid `*Product` block can become before
-       FAN$IER stops loading the regime cleanly
+     - probe whether the single-row floor can be synthesized with different
+       species/product labels or whether it depends on shipped product catalog
+       names
+     - probe whether a minimal `.eco` sidecar or embedded ECO content changes
+       anything for batch/report preparation beyond pure regime import
 3. Probe whether registry-preseeded batch settings reduce the GUI boundary.
    - `RunIdentifier`
    - `BatchPath`
