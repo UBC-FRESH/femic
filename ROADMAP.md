@@ -7671,16 +7671,17 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 - The core unattended BTC cutover bird is landed through Phase `48.2d3`.
 - Phase `48.3` is now complete under GitHub issue `#56`.
 - Phase `48.4` is now complete under GitHub issue `#57`.
-- The next BTC reverse-engineering edge is GitHub issue `#58`:
-  - probe the undocumented `/No_GUI` command-line seam against the installed
-    BTC executable using a real saved `.btc` project plus known-working CSV
-    inputs;
-  - distinguish documented behavior, experimentally proven behavior, and
-    remaining inference for `/No_GUI`, `/TSR`, `/FLP`, and `.btc` project
-    launches;
-  - specifically test whether `/No_GUI` is a useful execution-mode flag for
-    saved-project workflows rather than just a redundant companion to `/TSR`
-    or `/FLP`.
+- Phase `48.5` is now complete under GitHub issue `#58`.
+- The next BTC/TIPSY adjacency edge is GitHub issue `#59`:
+  - mine the extracted `Fansier.chm` help plus adjacent BTC/TIPSY docs for the
+    concrete file seams that couple BTC outputs or regime exports into
+    FAN$IER;
+  - determine whether the likely FEMIC value surface is:
+    - unattended BTC-side preparation only,
+    - a human-in-the-loop FAN$IER handoff,
+    - or a harder blocker map that should stay documented but unimplemented;
+  - treat `-RGM` regime-file export, product-yield tables, and FAN$IER batch
+    mode topics as the first evidence-bearing surfaces.
 - Do not regress the repo's documented BTC seam understanding while doing that:
   - the live user-overlay
     ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt`` path is the only
@@ -8658,6 +8659,46 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - `src/femic/pipeline/tipsy.py`, legacy workflow wrappers, and any local
         Windows runtime launcher/helper that currently treats BatchTIPSY as a
         manual external boundary.
+- [ ] P48.6 Investigate BTC-to-FAN$IER linkage seams
+  - [ ] P48.6a Mine the extracted FAN$IER help corpus and adjacent BTC/TIPSY
+    docs for concrete handoff artifacts:
+    - batch-mode inputs;
+    - regime files;
+    - product-based yield tables;
+    - costs/prices/default files that may matter to FEMIC preparation.
+  - [ ] P48.6b Inspect the installed BTC/FAN$IER runtime surface for file
+    formats, sample assets, and CLI or batch clues that refine the likely
+    FEMIC handoff contract.
+  - [ ] P48.6c Record a concrete linkage map:
+    - what BTC can already emit;
+    - what FAN$IER appears to ingest;
+    - which parts look automatable by FEMIC;
+    - which parts remain human-in-the-loop or blocked.
+  - Notes:
+    - Governing tracker:
+      - GitHub issue #59
+    - Primary source surfaces:
+      - `reference/tipsy/chm_extracted/Fansier/`
+      - `planning/tipsy_install_tree_audit_20260329.md`
+      - `planning/batchtipsy_automation_approach.md`
+      - `C:\Program Files\TIPSY 4.7\Fansier\`
+      - `C:\Program Files\TIPSY 4.7\BTC\`
+      - `C:\Program Files\TIPSY 4.7\CBM\TIPSY-CBM.pdf`
+    - Current starting clues:
+      - FAN$IER help explicitly says the program operates in both interactive
+        and batch modes;
+      - the packaged help says FAN$IER imports specially formatted
+        product-based yield tables from TIPSY/TASS;
+      - the installed BTC/CBM docs explicitly document `-RGM` regime-file
+        export, which is the strongest adjacent clue for a BTC-driven
+        FAN$IER-preparation seam.
+    - Guardrails:
+      - do not assume unsupervised FAN$IER runtime automation exists just
+        because the help says "batch mode";
+      - distinguish carefully between:
+        - data-preparation seams FEMIC can automate;
+        - fully unattended execution seams;
+        - and human-in-the-loop workflows that FEMIC can only stage.
 
 - [ ] P48.4 Triage and repair the post-cutover K3Z QMD regression
   - [x] P48.4a Reproduce the current K3Z launch-time symptom on the shipped

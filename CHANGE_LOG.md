@@ -8497,3 +8497,14 @@
       BTC session but does not process or export anything;
     - `/TSR` and `/FLP` remain the only proven useful BTC command-line
       execution triggers for unattended FEMIC work.
+- 2026-03-29 (Issue #59 kickoff): opened the next BTC adjacency slice for
+  FAN$IER linkage discovery.
+  - Created GitHub issue `#59` and branch
+    `feature/issue-59-fansier-btc-extraction`.
+  - Updated `ROADMAP.md` under `P48.6` to track the next work as:
+    - mining the extracted FAN$IER help corpus and adjacent BTC/TIPSY docs;
+    - inspecting installed runtime files for real handoff artifacts; and
+    - separating automatable BTC-side preparation from manual-only or blocked
+      FAN$IER execution seams.
+  - Removed the now-adopted FAN$IER idea from
+    `planning/incoming_ideas.md` so the intake queue stays current.

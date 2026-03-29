@@ -57,11 +57,11 @@ Good queue hygiene
 
 [feature] Do a full scan of FEMIC code and docs, to replace all hard-coded references to "TSA" as a forest management unit prefix with the more generic "FMU". TSA references "Timber Supply Area" in British Columbia public forest management tenure jargon. But even just in BC there are other management unit designations (tree farm licences, community forests, first-nations woodlot licenses, etc.), and the intent is for FEMIC to be eventually usable (and ASAP deployed) for Canadian national-scale modelling projects, and eventually (if there is demand and interest) to be deployed in other-than-BC Canadian provincial- and regional-scale analyses (in both research, teaching, and professional contexts), and eventually to non-Canada contexts (again, if there is interest and demand---I am not planning on doing the "hard sell" on anyone).
 
-[feature] Implement an optional "DataLad wrapper mode" that enables tracking of all FEMIC filesystem changes within a templated and guardrailed DataLad workflow, wherein the full lifecycle of data artifacts is traceable and version-controlled---from download and local archiving of raw VRI and other inputs through ready-to-run forest estate modelling input datasets, through to forest estate model run-scenario scripts and forest estate model scenario output datasets, through to post-hoc forest estate scenario output analysis and reporting. Every data transformation along the way could ALSO be datalad-tracked (using the `datalad run` data-transformation-process-tracking functions built into datalad), such that the ENTIRE LIFECYCLE of a forest estate modelling workflow, from raw source data through to final analysis reporting is FULLY REPRODUCIBLE (and version controlled). Datalad works great, but is finnicky AF... however if we can find safe, proven-valid datalad interaction patterns that we burn into FEMIC in a way that can be reliably invoked by human or coding-agent users, then we can basically define a NEW FRONTIER IN FOREST RESOURCE ANALYSIS. Seriously. We HAVE to at least try to get there.  
+[feature] Implement an optional "DataLad wrapper mode" that enables tracking of all FEMIC filesystem changes within a templated and guardrailed DataLad workflow, wherein the full lifecycle of data artifacts is traceable and version-controlled---from download and local archiving of raw VRI and other inputs through ready-to-run forest estate modelling input datasets, through to forest estate model run-scenario scripts and forest estate model scenario output datasets, through to post-hoc forest estate scenario output analysis and reporting. Every data transformation along the way could ALSO be datalad-tracked (using the `datalad run` data-transformation-process-tracking functions built into datalad), such that the ENTIRE LIFECYCLE of a forest estate modelling workflow, from raw source data through to final analysis reporting is FULLY REPRODUCIBLE (and version controlled). Datalad works great, but is finnicky AF... however if we can find safe, proven-valid datalad interaction patterns that we burn into FEMIC in a way that can be reliably invoked by human or coding-agent users, then we can basically define a NEW FRONTIER IN FOREST RESOURCE ANALYSIS. Seriously. We HAVE to at least try to get there.
 
 [feature] Extend FEMIC to be able to "send FEM run-ws3-scenario jobs" to remote worker nodes in a distributed linux cluster. I suppose that would involve involve defining and implementing the notion of "client mode" versus "server mode" in FEMIC, and possibly allowing FEMIC to be installed and run as a linux system service (as opposed to an on-demand bash CLI command or via ad hoc calls to the public Python API).
 
-[feature] Similarly to the Patchworks-running idea: add ws3-runner module to FEMIC and make sure this is LLM-coding-agent friendly, so a coding agent can build and run and analyses full-lifecycle forest estate modelling workflows using a fully open-source ws3-based modelling pipeline (that can run in any OS environment, thereby breaking through the Windows-only barrier of our current prototypes that rely on having a valid Patchworks software installation and matching active SPS license availabing in the local environment). This would allow deploying massively parallelized analyses in multi-core high-RAM Ubuntu linux server containerized dev environments, which would be a "FEM workflow game-changer".  
+[feature] Similarly to the Patchworks-running idea: add ws3-runner module to FEMIC and make sure this is LLM-coding-agent friendly, so a coding agent can build and run and analyses full-lifecycle forest estate modelling workflows using a fully open-source ws3-based modelling pipeline (that can run in any OS environment, thereby breaking through the Windows-only barrier of our current prototypes that rely on having a valid Patchworks software installation and matching active SPS license availabing in the local environment). This would allow deploying massively parallelized analyses in multi-core high-RAM Ubuntu linux server containerized dev environments, which would be a "FEM workflow game-changer".
 
 [feature] Add a new femic API (and CLI hook) for easily launching a given patchcworks model instance variant from a named pin (or even maybe for an unnamed default variant pin if you only name the instance).
 
@@ -76,44 +76,3 @@ Good queue hygiene
 [feature] Extend BTC/TIPSY functionality to include explicit simulation of various combinations of optional mid-rotation treatments (pre-commercial thinning, multiple fertilization treatment applications, commercial thinning, variable retention harvesting, final felling at different ages [and impact on logs/products/economic outputs produced at end of rotation], etc)
 
 [feature] Modify TISPY rpt input template to request 200 years of output instead of 120.
-
-[feature] Extent BTC to include optional calling FANSIER in batch mode as a more advanced optional mode (I am pretty sure that there is NO unsupervised CLI mode, so this would break the full-automatic FEMIC pipeline... need to warn users that they are added a human-in-the-middle dependency to their modelling pipeline when they activate this). See if you can hack into `C:\Program Files\TIPSY 4.7\Fansier\Fansier.chm` to extract FANSIER help docs including the batch mode stuff. See text below for extract from FANSIER help intro.
-
-```
-What is FAN$IER?
-Financial ANalyis of $ilviculture Investment and Economic Return (FAN$IER) is a software program for conducting stand-level silvicultural investment analyses.
-
-FAN$IER helps forest managers analyze the economic benefits of silviculture investments based on stand-level growth and yield predictions.  It calculates the costs and benefits for individual silviculture regimes and reports Net Present Value (NPV), Site Value (SV) and Internal Rate of Return (IRR%) for each regime.  These help forest managers weigh the cost of silviculture investments against the expected benefits.
-
-FAN$IER:
-
-is a standalone program, currently packaged and distributed with TIPSY (beginning with ver.4.3) and the latest version of TASS, TASS III.  It replaces the TIPSY Economist in TIPSY (prior to ver.4.3) and FAN$Y (Financial ANalysis $Ystem) within SYLVER.
-
-imports specially-formatted product-based yield tables (e.g., logs and lumber) from TIPSY and TASS, which reflect the simulated outcomes of individual silviculture regimes.  Product-based yield data can also be imported from other growth and yield models.
-
-performs and reports common financial analysis techniques including:
-
-Net Present Value (NPV);
-
-Site Value (SV, also known as soil expectation value or land rent);
-
-Internal Rate of Return (IRR);
-
-and enables side-by-side comparison of multiple silvicultural regimes (e.g., treated and untreated).
-
-incorporates BC-based default values for:
-
-Costs:  silviculture, harvesting, transportation, and milling;
-
-Prices:  logs and lumber by grade, biomass, and CO2e;
-
-All defaults are standardized to 2006 constant dollars (i.e., adjusted for inflation).
-
-Users can override any of these defaults.
-
-operates in both interactive and batch modes.
-
-includes special features supporting return-on-investment (ROI) analyses for the Ministry’s Forests for Tomorrow and Land Based Investment Strategy Programs.  Refer to the Forests For Tomorrow ROI website for more information.
-
-Economics Background is provided for key concepts, and for anyone needing a little refresher
-```
