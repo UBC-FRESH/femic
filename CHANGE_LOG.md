@@ -8464,3 +8464,26 @@
     - `.btc` is passive saved state;
     - `/TSR` and `/FLP` are still the only proven command-line execution
       triggers surfaced so far.
+- 2026-03-29 (Issue #58 hidden-session communication surface): narrowed what a
+  hidden BTC process can currently be "told" to do from the decompiled code.
+  - New code-backed findings:
+    - when a `.btc` filename is present on the command line, startup takes the
+      `LoadBTC(...)` branch first and never reaches the hidden
+      auto-`BatchProcess()` path, even if extra input/output/error filenames
+      were also supplied after the project path;
+    - the hidden processing path communicates through startup arguments plus
+      emitted files:
+      - requested output file;
+      - requested error file;
+      - timestamped `LogYYYYMMDDTHHMMSS.txt` status file beside the input;
+      - process exit code (`2` for missing input, `5` for hidden
+        read/write-check failure);
+    - the inspected decompiled type surface does not currently show any named
+      pipe, socket, remoting, console stdin/stdout, or custom Windows-message
+      seam that would allow live interactive control of an already-running
+      `/No_GUI` BTC process.
+  - Current best read:
+    - `/No_GUI` plus ordinary `.btc` load gives a hidden passive session, not
+      a hidden job runner;
+    - if there is another useful hidden execution seam, it is most likely a
+      startup trigger rather than a post-launch control channel.

@@ -8514,18 +8514,35 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
           `LoadBTC(...)` and `setScreenForBTC()`, but only calls
           `BatchProcess()` automatically inside the hidden `/TSR` or `/FLP`
           branch;
+        - if a `.btc` filename is present, startup takes that `LoadBTC(...)`
+          branch first and never reaches the hidden auto-`BatchProcess()`
+          path, even if extra input/output/error filenames were also supplied
+          on the same command line;
         - the decompiled `chkProcess` control is only the per-column
           "Process Column" checkbox in the BTP/template editor, not a global
           hidden-run flag.
-      - the only known-valid unattended `/TSR` seam remains the live user
+      - decompiled processing/status code now narrows the remaining
+        communication surface:
+        - `PreviewCommandLine()` is the only obvious startup argument parser;
+        - hidden processing writes to explicit output and error files plus a
+          timestamped `LogYYYYMMDDTHHMMSS.txt` status file beside the input;
+        - hidden startup sets `Environment.ExitCode = 2` for missing input and
+          `Environment.ExitCode = 5` for hidden read/write-check failures;
+        - no named-pipe, socket, remoting, console-stdin/stdout, or custom
+          Windows-message seam has been found in the decompiled type surface
+          inspected so far.
+    - the only known-valid unattended `/TSR` seam remains the live user
         overlay
         `C:\Users\gep\OneDrive - UBC\Documents\BatchTIPSY Composer\TimberSupply.rpt`;
         copied-install or stock-report-only `/TSR` experiments are not valid
         substitutes for FEMIC runtime proof.
     - Refined hypothesis:
       - `/No_GUI` controls visibility only;
-      - a second trigger likely tells BTC to actually process/export after
-        loading saved state;
+      - a second startup trigger likely tells BTC to actually
+        process/export after loading saved state;
+      - once hidden BTC is running, there is currently no evidence of a live
+        interactive command channel beyond startup arguments and the emitted
+        output/error/log files plus process exit code;
       - the most plausible missing execution seam is either:
         - a separate undocumented command-line flag;
         - a legacy `.btp`/DOS-style batch pathway that still survives in BTC;
