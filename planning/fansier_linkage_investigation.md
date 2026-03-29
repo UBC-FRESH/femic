@@ -417,6 +417,61 @@ Interpretation
     thousands separators (for example `"4,056.43"`), so downstream FEMIC CSV
     normalization still needs to treat those fields cautiously.
 
+## Current Format Lane
+
+- `txt` is currently the better machine-ingest export format than `csv`.
+- Live unattended A/B results:
+  - `CompareCSV.csv` preserved the same economics columns, but still required
+    CSV quoting around some comma-formatted activity-cost fields.
+  - `CompareTXT.txt` emitted the same short-report payload as a tab-delimited
+    text file, which avoids the CSV quoting fight entirely.
+- Additional format-cleaning result:
+  - disabling activity columns (`ShortReportActivityCols = False`) removes the
+    remaining comma-heavy activity-detail tail while preserving the core row:
+    - regime/economics/discount/product/age identifiers
+    - major standing-yield and product metrics
+    - total treatment/harvest/road/manufacturing cost summaries
+    - discounted benefits/costs, NPV, SV, IRR, and B/C
+- Current preferred machine-ingest lane:
+  - report type: `txt`
+  - short report: `True`
+  - product columns: `True`
+  - activity columns: `False`
+
+## Discount-Assumptions File Seam
+
+- FAN$IER has a native discount-assumptions file contract:
+  - extension: `.dis`
+  - main-window menu path:
+    - `Discount Assumptions -> Load Discount Assumptions...`
+    - `Discount Assumptions -> Save Discount Assumptions...`
+- Decompiled parser/writer surfaces:
+  - `modFANSIER.LoadDiscountAssumptions(...)`
+  - `modFANSIER.AddDiscountAssumptions(...)`
+- Confirmed file format fields include:
+  - `DiscountRate`
+  - `RealPriceInc`
+  - `RealCostInc`
+  - `RealIncDuration`
+  - `DeflationRate`
+  - `ReinvestmentRate`
+  - `IncludeSunkCosts`
+  - `FinancialAnalysis`
+  - `RegenCostAtHarvest`
+  - `OverrideName`
+  - `UserOverride`
+- A synthesized file now exists at:
+  - `tipsy_io/logs/fansier_probe/FEMIC Raw 0%.dis`
+- Live proof:
+  - loading that `.dis` through FAN$IER's own menu adds `FEMIC Raw 0%` to the
+    batch form's discount-assumptions list in a fresh session.
+- This means GUI-side profile creation is no longer the only known seam.
+- What is still open:
+  - the combined unattended path is already stable when it creates
+    `FEMIC Raw 0%` via the editor;
+  - the `.dis` load seam works, but it is not yet the default unattended path
+    because the menu/dialog sequence still needs one more round of hardening.
+
 ## Next High-Value Experiments
 
 1. Live-validate the temp-folder watcher seam.
@@ -445,7 +500,9 @@ Interpretation
      - `ThousandSeparator = False`
    - Next:
      - determine whether any additional registry state can remove the need to
-       create `FEMIC Raw 0%` through GUI automation on each fresh session.
+       create `FEMIC Raw 0%` through GUI automation on each fresh session;
+     - harden the new `.dis` load seam enough to replace editor-driven profile
+       creation in the unattended batch smoke.
 4. Inspect whether any remaining decompiled startup branch can auto-open
     batch mode or consume temp `.rgm` files without manual navigation.
 5. If batch extraction becomes reachable, validate whether a null-discount
@@ -463,10 +520,15 @@ Interpretation
        `FEMIC Raw 0%` and emits materially populated economics in
        `tipsy_io/logs/fansier_probe/batch_auto/AutoSmoke.csv`.
    - Next:
-     - compare whether remaining formatting artifacts are limited to the
-       activity-cost columns;
-     - inspect whether short-report option combinations reduce those artifacts
-       without losing useful economics content.
+     - Done:
+       - compared `csv` vs `txt` on the same unattended richer run;
+       - confirmed `txt` is tab-delimited and cleaner for machine ingest;
+       - confirmed disabling activity columns removes the remaining
+         comma-heavy activity-detail tail.
+     - Next:
+       - validate whether the chosen lean lane
+         (`txt` + no activity columns) remains sufficient across additional
+         known-good `.rgm` examples.
 7. Preserve deterministic decompile notes while this issue is active.
    - Treat `tmp/ilspy_fansier/` and `tmp/ilspy_btc/` as the canonical local
      scratch locations for managed-source inspection on this machine.

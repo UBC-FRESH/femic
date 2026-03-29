@@ -8768,10 +8768,27 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
           without user clicks.
         - this is a real unsupervised seam even though it is not a native CLI
           batch contract.
+      - current preferred machine-ingest lane:
+        - report type: `txt`
+        - short report: `True`
+        - product columns: `True`
+        - activity columns: `False`
+      - format comparison result:
+        - `txt` preserves the same useful short-report payload as the current
+          `csv` proof, but as a tab-delimited file without the CSV quoting
+          fight;
+        - disabling activity columns removes the remaining comma-heavy
+          activity-detail tail while retaining the core economics row.
       - current extraction caveat:
-        - forcing `ThousandSeparator = False` is necessary for cleaner CSV,
-          but some activity-cost columns still emerge as quoted values with
-          thousands separators, so downstream normalization is still needed.
+        - forcing `ThousandSeparator = False` is still necessary;
+        - even then, richer formats that keep activity columns can still emit
+          comma-formatted activity-cost strings, so downstream normalization is
+          still needed unless we stay on the lean `txt` lane.
+      - new promising discount-profile seam:
+        - FAN$IER supports loading/saving `.dis` discount-assumptions files;
+        - a synthesized `FEMIC Raw 0%.dis` now live-loads into a fresh
+          session's batch settings list, though that seam is not yet the
+          default unattended path.
       - null-rate economics is not blocked by FAN$IER:
         - the shipped discount-assumptions editor explicitly allows
           `0%` discount and `0%` reinvestment rates.
@@ -8786,6 +8803,8 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         seam":
         - the former is still unproven;
         - the latter is now real via scripted GUI automation.
+      - prefer the lean tab-delimited batch lane for current FEMIC ingestion
+        work until we prove a cleaner richer-output alternative.
       - distinguish carefully between:
         - data-preparation seams FEMIC can automate;
         - fully unattended execution seams;

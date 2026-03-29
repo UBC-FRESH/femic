@@ -8642,3 +8642,26 @@
       of the automation path, but some activity-cost columns still arrive as
       quoted comma-formatted values, so downstream FEMIC normalization is still
       needed for a perfectly machine-clean ingest.
+- 2026-03-29 (Issue #59): chose the current FAN$IER machine-ingest lane and
+  opened a new discount-profile seam.
+  - Compared unattended richer-output `csv` vs `txt` directly:
+    - `tipsy_io/logs/fansier_probe/format_compare/CompareCSV.csv`
+    - `tipsy_io/logs/fansier_probe/format_compare/CompareTXT.txt`
+  - Current lane choice:
+    - prefer tab-delimited `txt` over `csv` for machine ingest.
+  - Confirmed that disabling activity columns removes the remaining
+    comma-heavy activity-detail tail while preserving the core economics row:
+    - `tipsy_io/logs/fansier_probe/format_compare/CompareTXT_NoActivity.txt`
+  - The current lean unattended default is now:
+    - `txt`
+    - short report
+    - product columns on
+    - activity columns off
+  - Fresh unattended proof for that lane:
+    - `tipsy_io/logs/fansier_probe/batch_lane_default/AutoSmokeTXTLean.txt`
+  - Also confirmed a new FAN$IER discount-profile file seam:
+    - extension `.dis`
+    - synthesized proof file:
+      `tipsy_io/logs/fansier_probe/FEMIC Raw 0%.dis`
+    - loading that file through FAN$IER's own `Load Discount Assumptions...`
+      path adds `FEMIC Raw 0%` to a fresh session's batch settings list.
