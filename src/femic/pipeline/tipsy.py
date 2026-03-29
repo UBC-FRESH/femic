@@ -56,6 +56,9 @@ _BTC_INDICATOR_BANK_NAMES = (
     "lumber-degraded",
     "industrial-logs",
     "residual-fibre",
+    "mortality-summary",
+    "crop250-stand-quality",
+    "crown-and-fire",
 )
 _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
     "stand-structure-basic": (
@@ -162,6 +165,22 @@ _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
         ("Residual_Shavings", "Residual_Shavings"),
         ("Residual_Trim", "Residual_Trim"),
         ("Residual_Bark", "Residual_Bark"),
+    ),
+    "mortality-summary": (
+        ("Mortality_Stems", "Mortality_Stems"),
+        ("Mortality_DBHg_Mean", "Mortality_DBHg_Mean"),
+        ("Mortality_Height_Mean", "Mortality_Height_Mean"),
+        ("Mortality_Basal_Area", "Mortality_Basal_Area"),
+        ("Mortality_Volume_Total", "Mortality_Volume_Total"),
+    ),
+    "crop250-stand-quality": (
+        ("Crop250VolUtil125", "Crop250VolUtil125"),
+        ("Crop250DBHgMean", "Crop250DBHgMean"),
+        ("Crop250LiveCrown", "Crop250LiveCrown"),
+    ),
+    "crown-and-fire": (
+        ("CrownCover", "CrownCover"),
+        ("Crown_Bulk_Density", "Crown_Bulk_Density"),
     ),
 }
 _BTC_OUTPUT_ALIAS_TO_TABLE_COLUMN: dict[str, str] = {
@@ -743,7 +762,9 @@ def _btc_short_probe_alias(token: str) -> str:
 
 
 def _btc_preferred_probe_alias(column: BTCCustomReportColumn) -> str:
-    if column.header1_override and re.fullmatch(r"[A-Za-z0-9]{1,8}", column.header1_override):
+    if column.header1_override and re.fullmatch(
+        r"[A-Za-z0-9]{1,8}", column.header1_override
+    ):
         return column.header1_override
     return _btc_short_probe_alias(column.token)
 
@@ -814,7 +835,10 @@ def _btc_build_probe_variants(
         )
 
     alias_tokens: list[str] = []
-    for alias_token in (*explicit_alias_tokens, *_btc_alias_candidates(candidate_column.token)):
+    for alias_token in (
+        *explicit_alias_tokens,
+        *_btc_alias_candidates(candidate_column.token),
+    ):
         if alias_token and alias_token not in alias_tokens:
             alias_tokens.append(alias_token)
     short_alias = _btc_preferred_probe_alias(candidate_column)
@@ -892,9 +916,7 @@ def _btc_build_probe_variants(
                     units_override=stock_column.units_override,
                     raw_line=_render_btc_report_column_line(
                         token=stock_column.token,
-                        width=(
-                            stock_column.width if stock_column.width > 0 else None
-                        ),
+                        width=(stock_column.width if stock_column.width > 0 else None),
                         header1_override=adapted_header1,
                         header2_override=stock_column.header2_override or "{yr}",
                         units_override=stock_column.units_override,
@@ -993,7 +1015,9 @@ def _classify_btc_probe_failure(
         output_exists = (
             manifest_payload.get("artifacts", {}).get("output_csv", {}).get("exists")
         )
-        if isinstance(windows_cleanup, Mapping) and bool(windows_cleanup.get("timed_out")):
+        if isinstance(windows_cleanup, Mapping) and bool(
+            windows_cleanup.get("timed_out")
+        ):
             return "timed_out"
         if (
             exit_code == 1
@@ -2037,7 +2061,9 @@ def probe_btc_report_columns(
                                 f"{candidate_token}"
                             )
                 except Exception as exc:
-                    manifest_path = resolved_log_dir / f"btc_manifest-{trial_run_id}.json"
+                    manifest_path = (
+                        resolved_log_dir / f"btc_manifest-{trial_run_id}.json"
+                    )
                     manifest_payload = (
                         _load_btc_manifest(manifest_path)
                         if manifest_path.is_file()

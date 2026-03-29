@@ -8185,3 +8185,35 @@
     - the known-good threshold report-token spellings (`BasalArea:000`,
       `DBHg:000`, `SPH:000`) appear to depend on the live user-overlay seam
       rather than working generically in copied-install stock-matrix probes.
+- 2026-03-29 (Issue #48 live-overlay correction and next bank tranche): moved
+  the active probe workflow back onto the real user-overlay
+  `TimberSupply.rpt` seam and proved three more optional bank families there.
+  - Overlay-only differential probes passed cleanly for:
+    - control:
+      - `Logs_Grade_D`
+    - representative omitted-family tokens:
+      - `Mortality_Height_Mean`
+      - `Crop250VolUtil125`
+      - `CrownCover`
+    - sibling follow-up tokens:
+      - `Mortality_Stems`
+      - `Mortality_DBHg_Mean`
+      - `Mortality_Basal_Area`
+      - `Mortality_Volume_Total`
+      - `Crop250DBHgMean`
+      - `Crop250LiveCrown`
+      - `Crown_Bulk_Density`
+  - Direct header inspection confirmed returned age-series columns for all of
+    those fields on the real overlay seam.
+  - `src/femic/pipeline/tipsy.py` now ships three additional optional banks:
+    - `mortality-summary`
+    - `crop250-stand-quality`
+    - `crown-and-fire`
+  - Whole-bank live overlay smokes also passed for all three new switches:
+    - `--indicator-bank mortality-summary`
+    - `--indicator-bank crop250-stand-quality`
+    - `--indicator-bank crown-and-fire`
+  - Planning/docs surfaces updated:
+    - `planning/tipsy_indicator_bank_checklist.md`
+    - `planning/tipsy_tsr_variant_probe_ledger.md`
+    - `docs/reference/api/femic-pipeline-tipsy.rst`

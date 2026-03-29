@@ -3,6 +3,16 @@
 This note tracks the structural clues behind FEMIC's depth-first BTC
 `/TSR` probe work for Issue `#48`.
 
+## Active Rule
+
+- Treat the live user-overlay
+  `Documents\BatchTIPSY Composer\TimberSupply.rpt` seam as the only active
+  decision-making probe path for BTC field eligibility.
+- Do not keep using copied-install stock-matrix experiments to decide whether
+  a field is shippable. That path has already proven too misleading.
+- Use copied-install/template-structure experiments only if we later need a
+  narrow reverse-engineering side test, not as the main eligibility workflow.
+
 ## Stock Report Syntax Classes
 
 - `TimberSupply.rpt`
@@ -251,6 +261,71 @@ negative result.
     dialogs typically do not appear until roughly 17-20 seconds into the run,
     so the wall-clock cost is still dominated by BTC's own pre-dialog stall
     rather than FEMIC waiting after detection
+
+## Next Active Overlay-Only Differential Probe Set
+
+Retire copied-install stock-matrix probing as the main path. The next live
+decision-making slice should use only the real user-overlay TSR seam, run
+sequentially, with stock-TSR-style overlay lines and direct header inspection.
+
+Control first:
+
+1. `Logs_Grade_D`
+
+Representative omitted-family tokens next:
+
+2. `Mortality_Height_Mean`
+3. `Crop250VolUtil125`
+4. `CrownCover`
+
+Overlay line shape to use:
+
+- `Token<TAB><TAB><shortascii><TAB>{yr}`
+
+Why this slice:
+
+- `Logs_Grade_D` is a known-good control on the actual seam.
+- `Mortality_Height_Mean`, `Crop250VolUtil125`, and `CrownCover` each
+  represent a different omitted family without depending on the threshold-raw
+  alias confusion.
+- The real question now is not copied-install syntax; it is whether these
+  exact tokens are honored, silently omitted, or exception-triggering through
+  the actual live overlay seam.
+
+## Overlay-Only Differential Result (2026-03-29)
+
+The real live overlay seam answered the question much more cleanly than the
+copied-install experiments.
+
+- known-good control:
+  - `Logs_Grade_D`
+  - passed cleanly with returned `LGD_*` age-series headers
+- first representative omitted-family tokens:
+  - `Mortality_Height_Mean`
+  - `Crop250VolUtil125`
+  - `CrownCover`
+  - all three passed cleanly with returned age-series headers
+- sibling follow-up tokens:
+  - mortality:
+    - `Mortality_Stems`
+    - `Mortality_DBHg_Mean`
+    - `Mortality_Basal_Area`
+    - `Mortality_Volume_Total`
+  - crop250:
+    - `Crop250DBHgMean`
+    - `Crop250LiveCrown`
+  - crown/fire:
+    - `Crown_Bulk_Density`
+  - all of these also passed cleanly on the live overlay seam
+
+Current practical reading:
+
+- the earlier "silent omission" families were not fundamentally impossible
+  through unattended `/TSR`
+- the live user-overlay seam is the correct place to prove eligibility
+- `mortality-summary`, `crop250-stand-quality`, and `crown-and-fire` are now
+  strong shipped-bank candidates and should be validated at whole-bank level
+  and then rolled forward as real FEMIC optional banks
 
 ## Variant Rules
 

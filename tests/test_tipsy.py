@@ -574,6 +574,34 @@ def test_btc_indicator_bank_columns_returns_industrial_logs_bank() -> None:
     ]
 
 
+def test_btc_indicator_bank_columns_returns_mortality_summary_bank() -> None:
+    columns = btc_indicator_bank_columns("mortality-summary")
+    assert [column.token for column in columns] == [
+        "Mortality_Stems",
+        "Mortality_DBHg_Mean",
+        "Mortality_Height_Mean",
+        "Mortality_Basal_Area",
+        "Mortality_Volume_Total",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_crop250_stand_quality_bank() -> None:
+    columns = btc_indicator_bank_columns("crop250-stand-quality")
+    assert [column.token for column in columns] == [
+        "Crop250VolUtil125",
+        "Crop250DBHgMean",
+        "Crop250LiveCrown",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_crown_and_fire_bank() -> None:
+    columns = btc_indicator_bank_columns("crown-and-fire")
+    assert [column.token for column in columns] == [
+        "CrownCover",
+        "Crown_Bulk_Density",
+    ]
+
+
 def test_apply_btc_indicator_banks_appends_without_duplicates() -> None:
     template = btc_report_template_preset("tsr-unattended-default")
     extended = apply_btc_indicator_banks(
@@ -774,6 +802,64 @@ def test_apply_btc_indicator_banks_supports_industrial_logs_bank() -> None:
         "Industrial_Logs_D203",
         "Industrial_Logs_D178",
         "Industrial_Logs_D152",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_mortality_summary_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["mortality-summary"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Mortality_Stems",
+        "Mortality_DBHg_Mean",
+        "Mortality_Height_Mean",
+        "Mortality_Basal_Area",
+        "Mortality_Volume_Total",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_crop250_stand_quality_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["crop250-stand-quality"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Crop250VolUtil125",
+        "Crop250DBHgMean",
+        "Crop250LiveCrown",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_crown_and_fire_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["crown-and-fire"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "CrownCover",
+        "Crown_Bulk_Density",
     ]
 
 
@@ -1190,7 +1276,10 @@ def test_probe_btc_indicator_banks_accepts_whole_bank_in_one_run(
         for column in columns:
             prefix = column.header1_override or column.token.replace(":", "")
             headers.append(f"{prefix}_10")
-        output_path.write_text(",".join(headers) + "\n1," + ",".join("1" for _ in headers[1:]) + "\n", encoding="utf-8")
+        output_path.write_text(
+            ",".join(headers) + "\n1," + ",".join("1" for _ in headers[1:]) + "\n",
+            encoding="utf-8",
+        )
         error_path.write_text("", encoding="utf-8")
         return BTCRunResult(
             run_id=run_id,
@@ -1252,7 +1341,10 @@ def test_probe_btc_indicator_banks_falls_back_to_ratchet_when_batch_run_misses_o
             if not include_last and prefix == "Logs_Grade_All":
                 continue
             headers.append(f"{prefix}_10")
-        output_path.write_text(",".join(headers) + "\n1," + ",".join("1" for _ in headers[1:]) + "\n", encoding="utf-8")
+        output_path.write_text(
+            ",".join(headers) + "\n1," + ",".join("1" for _ in headers[1:]) + "\n",
+            encoding="utf-8",
+        )
         error_path.write_text("", encoding="utf-8")
         return BTCRunResult(
             run_id=run_id,
@@ -1293,7 +1385,9 @@ def test_probe_btc_indicator_banks_falls_back_to_ratchet_when_batch_run_misses_o
     assert "Logs_Grade_All" in final_tokens
 
 
-def test_build_btc_probe_variants_includes_alias_and_stock_forms(tmp_path: Path) -> None:
+def test_build_btc_probe_variants_includes_alias_and_stock_forms(
+    tmp_path: Path,
+) -> None:
     install_root = tmp_path / "btc"
     install_root.mkdir()
     (install_root / "Yield.rpt").write_text(
@@ -1454,7 +1548,9 @@ def test_probe_btc_report_columns_stock_matrix_preserves_failure_classification(
             '{"close_attempted": true, "closed_window_count": 1}}',
             encoding="utf-8",
         )
-        raise RuntimeError("BTC output is missing requested probe columns: BasalArea000")
+        raise RuntimeError(
+            "BTC output is missing requested probe columns: BasalArea000"
+        )
 
     monkeypatch.setattr("femic.pipeline.tipsy.run_btc_cli", fake_run_btc_cli)
 

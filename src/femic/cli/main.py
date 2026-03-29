@@ -2948,7 +2948,9 @@ def tipsy_probe_btc_columns(
     )
     alias_overrides = _parse_btc_probe_alias_overrides(alias_override or [])
     results: list = []
-    source_template_for_columns = resolved_source_rpt
+    source_template_for_columns: BTCCustomReportTemplate | Path | None = (
+        resolved_source_rpt
+    )
     source_preset_name_for_columns = preset if resolved_source_rpt is None else None
 
     if indicator_bank:
@@ -2973,8 +2975,12 @@ def tipsy_probe_btc_columns(
         final_template = btc_report_template_preset(
             source_preset_name_for_columns or "tsr-unattended-default"
         )
-        if source_template_for_columns is not None:
-            final_template = parse_btc_custom_report_template(source_template_for_columns)
+        if isinstance(source_template_for_columns, BTCCustomReportTemplate):
+            final_template = source_template_for_columns
+        elif source_template_for_columns is not None:
+            final_template = parse_btc_custom_report_template(
+                source_template_for_columns
+            )
 
     if column:
         column_results, final_template = probe_btc_report_columns(
@@ -2986,7 +2992,9 @@ def tipsy_probe_btc_columns(
             copy_install=copy_install_for_probe,
             scratch_root=resolved_scratch,
             log_dir=resolved_log_dir,
-            run_id_prefix=(f"{run_id_prefix}_columns" if indicator_bank else run_id_prefix),
+            run_id_prefix=(
+                f"{run_id_prefix}_columns" if indicator_bank else run_id_prefix
+            ),
             variant_strategy=normalized_variant_strategy,
             alias_overrides=alias_overrides,
             attempt_timeout_seconds=attempt_timeout_seconds,

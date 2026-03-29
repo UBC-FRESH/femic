@@ -75,9 +75,9 @@ Canonical source inventory: `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt`.
   - [ ] YearTASS_Full
   - [ ] HeightSindex_Full
 - crop250-stand-quality
-  - [ ] Crop250VolUtil125
-  - [ ] Crop250DBHgMean
-  - [ ] Crop250LiveCrown
+  - [x] Crop250VolUtil125
+  - [x] Crop250DBHgMean
+  - [x] Crop250LiveCrown
 - log-grades
   - [x] Logs_Grade_D
   - [x] Logs_Grade_F
@@ -169,11 +169,11 @@ Canonical source inventory: `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt`.
   - [x] Residual_Trim
   - [x] Residual_Bark
 - mortality-summary
-  - [ ] Mortality_Stems
-  - [ ] Mortality_DBHg_Mean
-  - [ ] Mortality_Height_Mean
-  - [ ] Mortality_Basal_Area
-  - [ ] Mortality_Volume_Total
+  - [x] Mortality_Stems
+  - [x] Mortality_DBHg_Mean
+  - [x] Mortality_Height_Mean
+  - [x] Mortality_Basal_Area
+  - [x] Mortality_Volume_Total
 - mortality-size-classes
   - [ ] Mortality_Stems_Size_Class_5
   - [ ] Mortality_Stems_Size_Class_15
@@ -303,10 +303,10 @@ Canonical source inventory: `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt`.
   - [ ] CO2e_Dead_Total
   - [ ] CO2e_Dead_Above
 - crown-and-fire
-  - [ ] CrownCover
+  - [x] CrownCover
   - [ ] mean_height_to_crown_base
   - [ ] mean_crown_length
-  - [ ] Crown_Bulk_Density
+  - [x] Crown_Bulk_Density
 - allfields-only-aliases-or-noncanonical-gui-names
   - [ ] Volume:Auto:Con
   - [ ] Volume:Auto:Dec

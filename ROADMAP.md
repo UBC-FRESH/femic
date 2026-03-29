@@ -8071,6 +8071,60 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
                 (`BasalArea:000`, `DBHg:000`, `SPH:000`) appear to depend on
                 the live user-overlay seam rather than working generically in
                 copied-install stock-matrix probes.
+          - active correction:
+            - stop using copied-install stock-matrix probing as the main
+              decision path for field eligibility;
+            - the only seam that has actually produced good BTC indicator-bank
+              results is the live user-overlay `TimberSupply.rpt` path under
+              the current user's Documents directory;
+            - from here, the active workflow is overlay-only differential
+              probing, run sequentially.
+          - exact next overlay-only differential set:
+            - known-good control:
+              - `Logs_Grade_D`
+            - representative omitted-family tokens:
+              - `Mortality_Height_Mean`
+              - `Crop250VolUtil125`
+              - `CrownCover`
+            - syntax to use:
+              - stock-TSR-style overlay line
+                `Token<TAB><TAB><shortascii><TAB>{yr}`
+            - decision question:
+              - through the real live overlay seam, is each token honored,
+                silently omitted, or exception-triggering?
+          - latest overlay-only differential result:
+            - the known-good control `Logs_Grade_D` still passes cleanly on the
+              live user-overlay seam;
+            - representative omitted-family tokens now also pass cleanly on
+              that same seam with real returned age-series headers:
+              - `Mortality_Height_Mean`
+              - `Crop250VolUtil125`
+              - `CrownCover`
+            - sibling overlay-only follow-up tokens also passed:
+              - `Mortality_Stems`
+              - `Mortality_DBHg_Mean`
+              - `Mortality_Basal_Area`
+              - `Mortality_Volume_Total`
+              - `Crop250DBHgMean`
+              - `Crop250LiveCrown`
+              - `Crown_Bulk_Density`
+            - the real next implementation move is therefore:
+              - ship `mortality-summary`,
+                `crop250-stand-quality`, and `crown-and-fire` as new optional
+                BTC indicator banks behind normal FEMIC switches, then rerun
+                live bank-level overlay smokes.
+          - bank-shipping result now in hand:
+            - `mortality-summary`, `crop250-stand-quality`, and
+              `crown-and-fire` are now wired as real optional FEMIC BTC banks;
+            - live whole-bank overlay smokes passed for all three switches, and
+              direct header inspection confirmed the returned age-series
+              columns:
+              - `Mortality_Stems_*`, `Mortality_DBHg_Mean_*`,
+                `Mortality_Height_Mean_*`, `Mortality_Basal_Area_*`,
+                `Mortality_Volume_Total_*`
+              - `Crop250VolUtil125_*`, `Crop250DBHgMean_*`,
+                `Crop250LiveCrown_*`
+              - `CrownCover_*`, `Crown_Bulk_Density_*`
           - do not ship any new optional banks until one representative family
             proves clean under a stable variant pattern and a known-good bank
             still reprobes cleanly afterward.

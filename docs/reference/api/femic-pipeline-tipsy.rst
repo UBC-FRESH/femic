@@ -227,6 +227,9 @@ core unattended `/TSR` seam:
 - ``--indicator-bank lumber-degraded``
 - ``--indicator-bank industrial-logs``
 - ``--indicator-bank residual-fibre``
+- ``--indicator-bank mortality-summary``
+- ``--indicator-bank crop250-stand-quality``
+- ``--indicator-bank crown-and-fire``
 
 Current bank contents:
 
@@ -328,6 +331,19 @@ Current bank contents:
   - ``Residual_Shavings``
   - ``Residual_Trim``
   - ``Residual_Bark``
+- ``mortality-summary``:
+  - ``Mortality_Stems``
+  - ``Mortality_DBHg_Mean``
+  - ``Mortality_Height_Mean``
+  - ``Mortality_Basal_Area``
+  - ``Mortality_Volume_Total``
+- ``crop250-stand-quality``:
+  - ``Crop250VolUtil125``
+  - ``Crop250DBHgMean``
+  - ``Crop250LiveCrown``
+- ``crown-and-fire``:
+  - ``CrownCover``
+  - ``Crown_Bulk_Density``
 
 Important runtime detail:
 
@@ -353,6 +369,9 @@ Live smoke proof now exists for:
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank lumber-degraded``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank industrial-logs``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank residual-fibre``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank mortality-summary``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank crop250-stand-quality``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank crown-and-fire``
 
 That returned a single unattended output CSV with:
 
@@ -388,6 +407,19 @@ That returned a single unattended output CSV with:
   - ``Lumber_2_or_Better_2x10_*``
   - ``Lumber_2_or_Better_All_*``
   - ``LRF_2_or_Better_All_*``
+- plus the mortality-summary bank:
+  - ``Mortality_Stems_*``
+  - ``Mortality_DBHg_Mean_*``
+  - ``Mortality_Height_Mean_*``
+  - ``Mortality_Basal_Area_*``
+  - ``Mortality_Volume_Total_*``
+- plus the crop250-stand-quality bank:
+  - ``Crop250VolUtil125_*``
+  - ``Crop250DBHgMean_*``
+  - ``Crop250LiveCrown_*``
+- plus the crown-and-fire bank:
+  - ``CrownCover_*``
+  - ``Crown_Bulk_Density_*``
 - plus the lumber-graded bank:
   - ``Lumber_Graded_SS_2x4_*``
   - ``Lumber_Graded_1_2x4_*``
