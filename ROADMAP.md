@@ -927,6 +927,22 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-28 (Phase 49 kickoff): start issue `#54` on branch
+  `feature/patchworks-headless-runner` to turn the documented
+  `classic_GUI(control);` seam into a real FEMIC-controlled unattended
+  Patchworks runner.
+  - Immediate execution order:
+    - extract and inspect the local `patchworks-201901` API docs, with first
+      focus on `Control`, `Patchworks`, `ScenarioDescription`, `ClassicGui`,
+      and `AppChooser`;
+    - confirm the smallest real no-GUI launch path from shipped BeanShell and
+      sample PIN surfaces before adding any FEMIC API/CLI surface;
+    - implement a minimal proving-ground unattended launch/run/report/exit
+      helper first, then broaden into richer scenario-definition automation.
+  - Success bar for the first slice:
+    - FEMIC launches one real Patchworks scenario headlessly,
+    - outputs are written to disk,
+    - control returns without a human click loop.
 - 2026-03-27 (Phase 43 kickoff): start Issue 36 on branch
   `feature/k3z-all-intensive-silviculture` to design and implement a new K3Z
   teaching variant that combines the currently separated intensive
@@ -8152,6 +8168,49 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         `Yield.rpt` token forms (`SPH:000`, `DBHg:000`, `BasalArea:000`);
       - treat that as optional-bank seam work under issue `#47`, not as a
         blocker to closing this regression bug.
+
+- [ ] P49 Add a headless Patchworks runner and scenario orchestration layer
+  - [ ] P49.1 Confirm and document the real no-GUI Patchworks seam from the
+    shipped BeanShell/runtime surfaces and local API docs.
+  - [ ] P49.2 Add a FEMIC-side headless Patchworks runner API/CLI that can:
+    - launch Patchworks against a target `.pin`
+    - suppress the classic GUI path
+    - run at least one unattended scenario to completion
+    - write output/report artifacts to disk
+    - return control cleanly without human interaction
+  - [ ] P49.3 Add a first proving-ground scenario-definition path so FEMIC can
+    inject run parameters and report destinations into a generated BeanShell
+    control script instead of depending on manual Patchworks interaction.
+  - [ ] P49.4 Prove the full lifecycle on a representative K3Z proving-ground
+    surface by:
+    - launching the scenario unattended
+    - running a quick max-even-flow style smoke
+    - writing the standard Patchworks target/report outputs to disk
+    - checking those outputs directly for obvious regressions before declaring
+      the seam landed
+  - Notes:
+    - Governing tracker:
+      - GitHub issue #54
+    - Primary local evidence:
+      - `planning/patchworks_nogui_mode.md`
+      - `tmp/patchworks-201901.doc.tar.gz`
+      - `C:\Program Files\Spatial Planning Systems\Patchworks\scripts\BeanShell\00_startup.bsh`
+      - `C:\Program Files\Spatial Planning Systems\Patchworks\sample_2024\analysis\C5.pin`
+    - Critical documented seam already surfaced:
+      - `classic_GUI(control);` is the optional GUI activation call within the
+        Patchworks initialization path;
+      - the Patchworks docs explicitly state that if that call is removed or
+        omitted, Patchworks can run in unattended batch mode and exit when the
+        initialization script completes.
+    - Implementation priority:
+      - land the minimal unattended launch/run/report/exit seam first;
+      - only then broaden into richer scenario-definition helpers and
+        comparative analysis/report automation.
+    - Validation rule:
+      - cheap direct full-lifecycle smoke beats assumptions here; do not claim
+        headless success until FEMIC has actually launched a real Patchworks
+        scenario, written outputs to disk, and returned control without human
+        clicks.
 
 
 

@@ -7816,3 +7816,12 @@
     - later slower indicator-by-indicator interpretation, validation, and
       possible pruning of bank contents is still expected, but that follow-on
       review is not a blocker to the initial proving-ground landing.
+- 2026-03-28 (Phase 49 headless Patchworks kickoff): promoted the no-GUI
+  Patchworks runner idea out of the inbox and into the active tracked workflow.
+  - Opened GitHub issue `#54` for the headless Patchworks runner and scenario
+    orchestration seam.
+  - Added Phase 49 to `ROADMAP.md` and wired the new governing tracker into
+    the implementation notes.
+  - Promoted `planning/patchworks_nogui_mode.md` from an inbox note into an
+    active planning surface for the first minimal unattended
+    launch/run/report/exit slice.

@@ -1,0 +1,94 @@
+# Implementation notes for a no-GUI Patchworks interface in FEMIC
+
+This is now an active tracked task:
+
+- Governing GitHub issue: `#54`
+- Governing roadmap phase: `P49`
+- Working branch: `feature/patchworks-headless-runner`
+
+Immediate implementation target:
+
+- prove the smallest real FEMIC-controlled headless Patchworks seam:
+  - launch Patchworks against a target `.pin`
+  - suppress the classic GUI path
+  - run one unattended scenario to completion
+  - write output/report artifacts to disk
+  - return control cleanly without a human click loop
+
+Do not over-scope the first slice. A minimal unattended run/report/exit proof
+is enough to land the seam before broader scenario-definition helpers are
+added.
+
+From Patchworks API docs:
+
+"""
+User interface
+
+You may be surprised to know that the Patchworks user interface is optional and is activated by a method call within the PatchWorks_Init function:
+
+classic_GUI(control);
+The classic_GUI function takes one parameter, which is the global variable control, a reference to the Control object. This function builds the menus, toolbars, and lays out all of the components that are visible in the Patchworks main window. If you remove or comment out this line, the user interface will not be displayed.
+
+Displaying the user interface seems like a good thing; why would you ever choose not to do this? Well, there are a few situations where you might take a different approach:
+
+You could build your own user interface using the Java Swing toolkit and the Patchworks API components. This is a possibility, but for most people, it would be a heroic undertaking.
+
+Without the user interface, you can run Patchworks in unattended batch mode: the PatchWorks_Init function will run to completion, and then the application will exit. In this case, the function can contain commands to start an analysis, let it run until convergence, and perform any post-analysis wrap-up tasks.
+
+Again, why would you want to do this? This approach would be a nice automation if you need to carry out pre-processing steps before running Patchworks. We will take a look at this in the section called “Invoke Patchworks from a script”.
+"""
+
+which references this section:
+
+"""
+Invoke Patchworks from a script
+
+So far, we have only tried using the Application Launcher to start Patchworks. There may be situations where you would want to start Patchworks under program control, perhaps to automate the generation of custom input datasets. The BeanShell and Java platforms make it easy to launch and control other applications, and the Patchwork API has a tool that makes this even easier.
+
+AppChooser.invoke("ca.spatial.patchworks.Patchworks",  1
+   new String[] {                                      2
+      basename+"/analysis/rangeAssessment.pin",        3
+      "highYield",
+      15                                               4
+   },
+   true
+);
+In this example:
+
+1
+
+The Appchooser.invoke method is called to start the Patchworks application in a new process. The first argument to the invoke method is the name of the class that will be invoked.
+
+2
+
+The list of arguments to the Patchworks model is passed as an array of string variables. The string array constructor prepares the space for this list.
+
+3
+
+The arguments to the Patchworks program are provided as the elements of the array. The first argument must be the fully qualified name of the PIN file that will be loaded.
+
+4
+
+The final argument to the invoke method is a boolean flag to indicate if the calling script should wait until the application has finished running. In this case, we have selected true, and the calling application will not proceed until the Patchworks process has exited.
+
+This command will start a new instance of the Patchworks program. The first argument that is passed in must be the fully qualified name of the PIN file to use to load the model. At this stage, any relative path would be relative to the default working directory of the application.
+
+When Patchworks is invoked, all of the passed-in arguments are available in a global variable named args, which is an array of strings, the same as those passed into the invoke method. The first value in the argument list will be used as the name of the PIN file to load. Within the PIN, file the other values in the args array may be extracted and used to adjust file names and other parameters.
+
+It is possible to use conditional tests to set up a PIN file that is suitable for batch mode and interactive use. The following code fragment shows how to test if values are available in the args array, and if not, then use a default or prompt for a replacement:
+
+useBatch = false;
+scenarioName = "default";
+ageDelay = 0;
+if (args.length == 3) {
+   useBatch = true;
+   scenarioName = args[1];
+   ageDelay = Integer.parseInt(args[2]);
+}
+In the above code, the helper variables are first set to default values. Then, if the args array has the required number of parameters, the helper values are overridden with the passed-in arguments.
+
+The Appchooser.invoke method is used to launch programs from the Patchworks toolkit. Java has a general purpose process-launching tool that can be used for external programs.
+
+"""
+
+So there is *already a clear documented path* to run patchworks in unsupervised headless mode. We just need to wire this into FEMIC and Bob is our uncle once again.
