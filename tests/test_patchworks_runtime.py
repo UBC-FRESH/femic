@@ -15,6 +15,7 @@ from femic.patchworks_runtime import (
     infer_patchworks_model_dir,
     load_patchworks_runtime_config,
     parse_license_server,
+    run_patchworks_headless_pin,
     run_patchworks_command,
     run_patchworks_preflight,
     to_wine_windows_path,
@@ -375,6 +376,230 @@ def test_run_patchworks_command_writes_logs_and_manifest(
     assert observed_env["SPS_LICENSE_SERVER"] == "sps_user@auth.spatial.ca"
     assert observed_env["SPSHOME"] == "Z:\\Patchworks"
     assert not result.failures
+
+
+def test_run_patchworks_headless_pin_updates_manifest_and_stage_outputs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg_path = _write_runtime_config(tmp_path)
+    cfg = load_patchworks_runtime_config(cfg_path)
+    pin_path = tmp_path / "analysis/intensive_light_standstructure.pin"
+    pin_path.parent.mkdir(parents=True, exist_ok=True)
+    pin_path.write_text(
+        'sourceRelative("intensive_variant_common.bsh");\n', encoding="utf-8"
+    )
+
+    def _fake_run_patchworks_beanshell_script(
+        *, script_path: Path, script_args: tuple[str, ...], **_kwargs
+    ):
+        assert script_path.exists()
+        assert script_args == ()
+        script_text = script_path.read_text(encoding="utf-8")
+        assert json.dumps(str(pin_path.resolve())) in script_text
+        assert "__femic_headless__" in script_text
+        assert json.dumps("headless_runs/demo") in script_text
+        assert "traceLogPath" in script_text
+        stage_dir = pin_path.parent / "headless_runs/demo"
+        stage_dir.mkdir(parents=True, exist_ok=True)
+        (stage_dir / "summary.csv").write_text("ok\n", encoding="utf-8")
+        manifest_path = tmp_path / "logs/patchworks_beanshell_manifest-headless.json"
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest_path.write_text(
+            json.dumps(
+                {
+                    "run_id": "headless",
+                    "returncode": 0,
+                    "failures": [],
+                }
+            ),
+            encoding="utf-8",
+        )
+        return patchworks_runtime.PatchworksExecutionResult(
+            run_id="headless",
+            command=("java", "Patchworks"),
+            command_string="java Patchworks",
+            returncode=0,
+            stdout_log_path=tmp_path / "logs/stdout.log",
+            stderr_log_path=tmp_path / "logs/stderr.log",
+            manifest_path=manifest_path,
+            failures=(),
+        )
+
+    monkeypatch.setattr(
+        patchworks_runtime,
+        "run_patchworks_beanshell_script",
+        _fake_run_patchworks_beanshell_script,
+    )
+    monkeypatch.setattr(
+        patchworks_runtime,
+        "run_patchworks_preflight",
+        lambda **_kwargs: SimpleNamespace(
+            ok=True,
+            launcher_executable="/usr/bin/wine64",
+            host_mode="wine",
+        ),
+    )
+
+    result = run_patchworks_headless_pin(
+        config=cfg,
+        pin_path=pin_path,
+        log_dir=tmp_path / "logs",
+        run_id="headless",
+        stage_label="headless_runs/demo",
+        iterations=5,
+        improvement=0.25,
+    )
+
+    assert result.returncode == 0
+    assert result.stage_dir == (pin_path.parent / "headless_runs/demo").resolve()
+    assert (
+        result.trace_log_path
+        == (tmp_path / "logs/patchworks_headless_trace-headless.log").resolve()
+    )
+    assert result.saved_file_count == 1
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["mode"] == "headless_pin"
+    assert manifest["inputs"]["stage_label"] == "headless_runs/demo"
+    assert manifest["inputs"]["iterations"] == 5
+    assert manifest["inputs"]["trace_log_path"].endswith(
+        "patchworks_headless_trace-headless.log"
+    )
+    assert manifest["outputs"]["saved_file_count"] == 1
+    assert manifest["failures"] == []
+
+
+def test_run_patchworks_headless_pin_fails_when_stage_dir_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg_path = _write_runtime_config(tmp_path)
+    cfg = load_patchworks_runtime_config(cfg_path)
+    pin_path = tmp_path / "analysis/base.pin"
+    pin_path.parent.mkdir(parents=True, exist_ok=True)
+    pin_path.write_text(
+        'sourceRelative("base_variant_common.bsh");\n', encoding="utf-8"
+    )
+
+    def _fake_run_patchworks_beanshell_script(
+        *, script_path: Path, script_args: tuple[str, ...], **_kwargs
+    ):
+        assert script_path.exists()
+        assert script_args == ()
+        script_text = script_path.read_text(encoding="utf-8")
+        assert json.dumps(str(pin_path.resolve())) in script_text
+        assert "__femic_headless__" in script_text
+        assert "traceLogPath" in script_text
+        manifest_path = (
+            tmp_path / "logs/patchworks_beanshell_manifest-headless_missing.json"
+        )
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest_path.write_text(
+            json.dumps(
+                {
+                    "run_id": "headless_missing",
+                    "returncode": 0,
+                    "failures": [],
+                }
+            ),
+            encoding="utf-8",
+        )
+        return patchworks_runtime.PatchworksExecutionResult(
+            run_id="headless_missing",
+            command=("java", "Patchworks"),
+            command_string="java Patchworks",
+            returncode=0,
+            stdout_log_path=tmp_path / "logs/stdout.log",
+            stderr_log_path=tmp_path / "logs/stderr.log",
+            manifest_path=manifest_path,
+            failures=(),
+        )
+
+    monkeypatch.setattr(
+        patchworks_runtime,
+        "run_patchworks_beanshell_script",
+        _fake_run_patchworks_beanshell_script,
+    )
+    monkeypatch.setattr(
+        patchworks_runtime,
+        "run_patchworks_preflight",
+        lambda **_kwargs: SimpleNamespace(
+            ok=True,
+            launcher_executable="/usr/bin/wine64",
+            host_mode="wine",
+        ),
+    )
+
+    result = run_patchworks_headless_pin(
+        config=cfg,
+        pin_path=pin_path,
+        log_dir=tmp_path / "logs",
+        run_id="headless_missing",
+    )
+
+    assert result.returncode == 1
+    assert any("headless stage directory not created" in msg for msg in result.failures)
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["returncode"] == 1
+
+
+def test_run_patchworks_headless_pin_windows_monitor_records_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg_path = _write_runtime_config(tmp_path)
+    cfg = load_patchworks_runtime_config(cfg_path)
+    pin_path = tmp_path / "analysis/base.pin"
+    pin_path.parent.mkdir(parents=True, exist_ok=True)
+    pin_path.write_text('sourceRelative("base_variant_common.bsh");\n', encoding="utf-8")
+
+    monkeypatch.setattr(
+        patchworks_runtime,
+        "run_patchworks_preflight",
+        lambda **_kwargs: SimpleNamespace(
+            ok=True,
+            launcher_executable="java",
+            host_mode="windows",
+        ),
+    )
+    monkeypatch.setattr(
+        patchworks_runtime,
+        "_build_windows_beanshell_command",
+        lambda **_kwargs: ("java", "Patchworks"),
+    )
+    monkeypatch.setattr(
+        patchworks_runtime,
+        "format_command_for_display",
+        lambda command: " ".join(command),
+    )
+
+    def _fake_monitor(**_kwargs):
+        return 1, {
+            "launched_pid": 1234,
+            "terminal_state": "failure",
+            "detected_marker": "[FEMIC headless] stage failed:",
+            "monitor_killed_process_tree": True,
+            "trace_log_path": str(tmp_path / "logs/trace.log"),
+        }, ("headless failure marker detected: [FEMIC headless] stage failed:",)
+
+    monkeypatch.setattr(
+        patchworks_runtime,
+        "_run_windows_headless_beanshell_with_monitor",
+        _fake_monitor,
+    )
+
+    result = run_patchworks_headless_pin(
+        config=cfg,
+        pin_path=pin_path,
+        log_dir=tmp_path / "logs",
+        run_id="headless_windows_fail",
+    )
+
+    assert result.returncode == 1
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["headless_automation"]["terminal_state"] == "failure"
+    assert manifest["headless_automation"]["monitor_killed_process_tree"] is True
+    assert any(
+        "headless failure marker detected" in failure
+        for failure in manifest["failures"]
+    )
 
 
 def test_run_patchworks_command_promotes_protoaccounts_and_backs_up_accounts(

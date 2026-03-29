@@ -19,6 +19,53 @@ Do not over-scope the first slice. A minimal unattended run/report/exit proof
 is enough to land the seam before broader scenario-definition helpers are
 added.
 
+Current status after the latest proving-ground smokes:
+
+- the no-GUI launch seam is real and FEMIC can drive it;
+- the proving-ground model loads fully and `PatchWorks_Init` completes in
+  headless mode;
+- FEMIC now supervises Windows headless runs directly instead of launching them
+  blindly and waiting forever;
+- FEMIC watches the headless trace/log outputs for explicit success/failure
+  markers and self-terminates failed Patchworks Java trees automatically;
+- this removes the human babysitting problem for dead failed runs;
+- the remaining blocker is inside Patchworks scheduler lifecycle control:
+  the proving-ground analyze step still fails with
+  `java.lang.IllegalStateException: Not suspended` during the
+  `resume()/waitForIterations()` path.
+
+Current implementation order:
+
+1. Reuse FEMIC's existing BeanShell launcher in
+   `src/femic/patchworks_runtime.py`.
+2. Generate a tiny BeanShell wrapper that calls
+   `AppChooser.invoke("ca.spatial.patchworks.Patchworks", ..., true)` with the
+   target `.pin` and a small FEMIC headless argument contract.
+3. Teach the proving-ground K3Z analysis surface to parse `args`, skip
+   `classic_GUI(control)` when FEMIC headless mode is requested, still
+   register reports, and then run a bounded analyze/save cycle before
+   returning.
+4. Prove the first slice only on
+   `analysis/intensive_light_standstructure.pin`.
+
+The first slice should not attempt to solve the whole scenario-definition
+problem. A bounded analyze/save cycle with real reports on disk is enough to
+prove the no-GUI seam before broadening into richer headless scheduling
+helpers.
+
+Most recent high-value proof point:
+
+- run id: `p49_smoke_20260328i`
+- target:
+  `analysis/intensive_light_standstructure.pin`
+- result:
+  - launch/load/init succeeded in headless mode;
+  - FEMIC trace reached the headless worker/analyze path;
+  - Patchworks failed in the known scheduler seam;
+  - FEMIC detected the failure marker, wrote a manifest + trace, and killed the
+    Java process tree automatically;
+  - no manual console-shell cleanup was required.
+
 From Patchworks API docs:
 
 """

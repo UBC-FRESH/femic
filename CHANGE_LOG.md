@@ -7825,3 +7825,15 @@
   - Promoted `planning/patchworks_nogui_mode.md` from an inbox note into an
     active planning surface for the first minimal unattended
     launch/run/report/exit slice.
+- 2026-03-28 (Phase 49 headless Patchworks failure supervision): taught the
+  Windows headless Patchworks runner to supervise the proving-ground launch
+  actively instead of launching and waiting forever.
+  - FEMIC now watches the headless trace/log outputs for explicit success and
+    failure markers.
+  - On failure, FEMIC now kills the Patchworks Java process tree itself and
+    returns a normal CLI failure result with trace/manifest evidence instead of
+    leaving dead console shells for the human to close.
+  - Real proving-ground smoke `p49_smoke_20260328i` still fails in the known
+    Patchworks scheduler seam (`Not suspended` during
+    `resume()/waitForIterations()`), but the human babysitting problem for dead
+    failed runs is now removed.

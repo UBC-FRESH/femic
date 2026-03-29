@@ -8188,6 +8188,30 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - writing the standard Patchworks target/report outputs to disk
     - checking those outputs directly for obvious regressions before declaring
       the seam landed
+  - Current implementation order:
+    - reuse FEMIC's existing BeanShell launcher in
+      `src/femic/patchworks_runtime.py` rather than inventing a second
+      Patchworks process runner;
+    - generate a tiny BeanShell wrapper that calls
+      `AppChooser.invoke("ca.spatial.patchworks.Patchworks", ..., true)` with
+      the target `.pin` plus a FEMIC headless argument contract;
+    - teach the proving-ground K3Z analysis surface to parse `args`, skip
+      `classic_GUI(control)` when headless mode is requested, still register
+      reports, and then run a bounded analyze/save cycle before returning;
+    - prove the first slice only on
+      `analysis/intensive_light_standstructure.pin`, then widen only after the
+      run/save artifact contract is real.
+    - current edge:
+      - Windows headless runs are now actively supervised by FEMIC instead of
+        being launched and forgotten;
+      - FEMIC watches the headless trace/log outputs for explicit success and
+        failure markers;
+      - on failure, FEMIC now self-terminates the Patchworks Java process tree
+        and returns a normal CLI failure result instead of leaving dead shells
+        for the human to close manually;
+      - this means the remaining blocker is the Patchworks scheduler lifecycle
+        (`Control.waitForIterations(...)` still fails with `Not suspended` in
+        the proving-ground model), not headless failure cleanup.
   - Notes:
     - Governing tracker:
       - GitHub issue #54
@@ -8211,6 +8235,15 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         headless success until FEMIC has actually launched a real Patchworks
         scenario, written outputs to disk, and returned control without human
         clicks.
+    - Latest proving-ground smoke (`p49_smoke_20260328i`):
+      - headless launch/load/init succeeded;
+      - `PatchWorks_Init` completed and FEMIC trace logging reached the worker
+        analyze step;
+      - the run failed in the known scheduler seam
+        (`java.lang.IllegalStateException: Not suspended`);
+      - FEMIC detected the failure marker, killed the Java process tree
+        automatically, wrote a headless manifest/trace, and returned control
+        without human cleanup.
 
 
 

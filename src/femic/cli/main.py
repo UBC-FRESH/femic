@@ -50,6 +50,7 @@ from femic.patchworks_runtime import (
     build_patchworks_blocks_dataset,
     format_command_for_display,
     load_patchworks_runtime_config,
+    run_patchworks_headless_pin,
     run_patchworks_command,
     run_patchworks_preflight,
 )
@@ -600,6 +601,33 @@ PATCHWORKS_RUN_ID_OPTION = typer.Option(
     "--run-id",
     help="Optional run identifier for Patchworks runtime logs.",
     show_default=False,
+)
+PATCHWORKS_HEADLESS_STAGE_LABEL_OPTION = typer.Option(
+    None,
+    "--stage-label",
+    help=(
+        "Relative output folder passed to reportWriter.saveStage(...). "
+        "Defaults to headless_runs/<run_id> beside the PIN."
+    ),
+    show_default=False,
+)
+PATCHWORKS_HEADLESS_ITERATIONS_OPTION = typer.Option(
+    1,
+    "--iterations",
+    min=0,
+    help=(
+        "Number of scheduler iterations to execute before saving the headless "
+        "stage. Use 0 for report-only save."
+    ),
+)
+PATCHWORKS_HEADLESS_IMPROVEMENT_OPTION = typer.Option(
+    0.0,
+    "--improvement",
+    min=0.0,
+    help=(
+        "Objective improvement threshold passed into the headless analyze "
+        "cycle. Use 0.0 to wait for a fixed iteration count."
+    ),
 )
 PATCHWORKS_MODEL_DIR_OPTION = typer.Option(
     None,
@@ -3390,6 +3418,62 @@ def patchworks_matrix_build(
                     console.print(f"accounts_sync: {status}")
         except (OSError, json.JSONDecodeError):
             pass
+    for failure in result.failures:
+        console.print(f"[red]Runtime failure:[/red] {failure}")
+    if result.returncode != 0:
+        raise typer.Exit(code=result.returncode)
+
+
+@patchworks_app.command("run-headless")
+def patchworks_run_headless(
+    pin: Path = typer.Argument(
+        ...,
+        help="Target Patchworks .pin file to launch through the headless seam.",
+    ),
+    config: Path = PATCHWORKS_CONFIG_OPTION,
+    log_dir: Path = PATCHWORKS_LOG_DIR_OPTION,
+    run_id: str | None = PATCHWORKS_RUN_ID_OPTION,
+    stage_label: str | None = PATCHWORKS_HEADLESS_STAGE_LABEL_OPTION,
+    iterations: int = PATCHWORKS_HEADLESS_ITERATIONS_OPTION,
+    improvement: float = PATCHWORKS_HEADLESS_IMPROVEMENT_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Run a Patchworks PIN unattended via the no-GUI BeanShell/AppChooser seam."""
+
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_config = instance_context.resolve_path(config)
+    resolved_log_dir = instance_context.resolve_path(log_dir)
+    resolved_pin = instance_context.resolve_path(pin)
+    try:
+        runtime_config = load_patchworks_runtime_config(resolved_config)
+        result = run_patchworks_headless_pin(
+            config=runtime_config,
+            pin_path=resolved_pin,
+            log_dir=resolved_log_dir,
+            run_id=run_id,
+            stage_label=stage_label,
+            iterations=iterations,
+            improvement=improvement,
+        )
+    except (
+        FileNotFoundError,
+        PatchworksConfigError,
+        json.JSONDecodeError,
+        yaml.YAMLError,
+    ) as exc:
+        console.print(f"[red]Patchworks headless run failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    color = "green" if result.returncode == 0 else "red"
+    console.print(
+        f"[{color}]Patchworks headless run complete[/{color}] "
+        f"run_id={result.run_id} returncode={result.returncode}"
+    )
+    console.print(f"pin: {result.pin_path}")
+    console.print(f"stage_dir: {result.stage_dir}")
+    console.print(f"stdout_log: {result.execution.stdout_log_path}")
+    console.print(f"stderr_log: {result.execution.stderr_log_path}")
+    console.print(f"manifest: {result.manifest_path}")
     for failure in result.failures:
         console.print(f"[red]Runtime failure:[/red] {failure}")
     if result.returncode != 0:
