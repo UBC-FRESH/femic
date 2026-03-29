@@ -510,7 +510,9 @@ def test_run_btc_and_post_tipsy_bundle_with_manifest_passes_indicator_banks(
 ) -> None:
     data_root = tmp_path / "data"
     data_root.mkdir()
-    (data_root / "03_input-tsa29.csv").write_text("feature_id\n1000\n", encoding="utf-8")
+    (data_root / "03_input-tsa29.csv").write_text(
+        "feature_id\n1000\n", encoding="utf-8"
+    )
     btc_calls: list[dict[str, object]] = []
 
     def _fake_run_btc_cli(**kwargs: object) -> BTCRunResult:
@@ -543,7 +545,9 @@ def test_run_btc_and_post_tipsy_bundle_with_manifest_passes_indicator_banks(
             tipsy_sppcomp_paths=[data_root / "tipsy_sppcomp_tsa29.csv"],
             au_table_path=data_root / "model_input_bundle" / "au_table.csv",
             curve_table_path=data_root / "model_input_bundle" / "curve_table.csv",
-            curve_points_table_path=data_root / "model_input_bundle" / "curve_points_table.csv",
+            curve_points_table_path=data_root
+            / "model_input_bundle"
+            / "curve_points_table.csv",
         )
         return PostTipsyBundleRunResult(
             manifest_path=tmp_path / "logs" / "run_manifest.json",

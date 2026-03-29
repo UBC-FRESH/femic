@@ -994,6 +994,45 @@ def test_run_patchworks_command_normalizes_height_account_sums(
     assert "product.Yield.managed.Total,product.Yield.managed.Total,1" in accounts_text
 
 
+def test_resolve_stand_structure_basic_account_sum_overrides_preserves_metric_labels(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    forestmodel_xml = tmp_path / "forestmodel.xml"
+    forestmodel_xml.write_text(
+        "\n".join(
+            [
+                "<forestmodel>",
+                "  <select statement=\"AU eq 985502001 and IFM eq 'managed'\">",
+                "    <features>",
+                '      <attribute label="feature.MAI.managed.CWHvm_FDC_HW_M" />',
+                '      <attribute label="feature.SPH000.managed.CWHvm_FDC_HW_M" />',
+                "    </features>",
+                "  </select>",
+                "</forestmodel>",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    fragments_path = tmp_path / "fragments.shp"
+    fragments_path.write_text("", encoding="utf-8")
+
+    monkeypatch.setattr(
+        patchworks_runtime,
+        "_load_fragments_area_by_au_and_ifm",
+        lambda **_kwargs: {("managed", 985502001): 200.0},
+    )
+
+    overrides = patchworks_runtime._resolve_stand_structure_basic_account_sum_overrides(
+        fragments_path=fragments_path,
+        forestmodel_xml_path=forestmodel_xml,
+    )
+
+    assert overrides == {
+        "feature.MAI.managed.CWHvm_FDC_HW_M": "0.005",
+        "feature.SPH000.managed.CWHvm_FDC_HW_M": "0.005",
+    }
+
+
 def test_run_patchworks_command_applies_harvest_utilization_by_treatment(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

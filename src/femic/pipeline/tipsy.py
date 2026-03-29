@@ -53,6 +53,9 @@ _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
         ("StemCount175", "StemCount175"),
     ),
 }
+_BTC_OUTPUT_ALIAS_TO_TABLE_COLUMN: dict[str, str] = {
+    alias: alias for bank in _BTC_INDICATOR_BANK_SPECS.values() for _, alias in bank
+}
 DEFAULT_BTC_MSYT_COLUMNS = (
     "feature_id",
     "bec_zone",
@@ -2009,14 +2012,23 @@ def parse_btc_tsr_transposed_output(
             f"BTC TSR output is missing required feature_id column: {output_path}"
         )
 
-    age_pattern = re.compile(
-        r"^(?P<prefix>MVcon|MVdec|HTcon|HTdec|gVol|CC)_(?P<age>\d+)$"
-    )
+    supported_prefixes = {
+        "MVcon",
+        "MVdec",
+        "HTcon",
+        "HTdec",
+        "gVol",
+        "CC",
+        *_BTC_OUTPUT_ALIAS_TO_TABLE_COLUMN.keys(),
+    }
+    age_pattern = re.compile(r"^(?P<prefix>[A-Za-z0-9]+)_(?P<age>\d+)$")
     ages: set[int] = set()
+    prefixes_present: set[str] = set()
     for column in df.columns:
         match = age_pattern.match(str(column))
-        if match:
+        if match and match.group("prefix") in supported_prefixes:
             ages.add(int(match.group("age")))
+            prefixes_present.add(match.group("prefix"))
     if not ages:
         raise ValueError(
             f"BTC TSR output has no recognizable transposed age columns: {output_path}"
@@ -2037,6 +2049,16 @@ def parse_btc_tsr_transposed_output(
             crown_cover = pd_module.to_numeric(record.get(f"CC_{age}"), errors="coerce")
             yield_total = float(pd_module.Series([mvcon, mvdec]).fillna(0.0).sum())
             height_max = pd_module.Series([htcon, htdec]).max(skipna=True)
+            extra_values = {
+                table_column: (
+                    float(value) if value == value else np.nan  # NaN guard
+                )
+                for alias, table_column in _BTC_OUTPUT_ALIAS_TO_TABLE_COLUMN.items()
+                if alias in prefixes_present
+                for value in [
+                    pd_module.to_numeric(record.get(f"{alias}_{age}"), errors="coerce")
+                ]
+            }
             rows.append(
                 {
                     "AU": managed_curve_id,
@@ -2055,6 +2077,7 @@ def parse_btc_tsr_transposed_output(
                     "CrownCover": (
                         float(crown_cover) if crown_cover == crown_cover else np.nan
                     ),
+                    **extra_values,
                 }
             )
 

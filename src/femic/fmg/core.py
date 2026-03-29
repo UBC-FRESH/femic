@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
@@ -56,6 +56,9 @@ class BundleModelContext:
     unmanaged_species_curve_ids: dict[int, dict[str, int]]
     qmd_support_by_au: dict[int, QmdSupportDefinition]
     curve_row_count: int
+    managed_indicator_curves_by_au: dict[int, dict[str, tuple[CurvePoint, ...]]] = (
+        field(default_factory=dict)
+    )
 
 
 @dataclass(frozen=True)

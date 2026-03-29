@@ -181,7 +181,9 @@ def test_tipsy_run_btc_cli_passes_indicator_banks(monkeypatch, tmp_path: Path) -
     assert captured["indicator_bank_names"] == ["stand-structure-basic"]
 
 
-def test_tipsy_probe_btc_columns_cli_writes_summary(monkeypatch, tmp_path: Path) -> None:
+def test_tipsy_probe_btc_columns_cli_writes_summary(
+    monkeypatch, tmp_path: Path
+) -> None:
     input_csv = tmp_path / "MSYT.csv"
     input_csv.write_text("feature_id\n1\n", encoding="utf-8")
     summary = tmp_path / "summary.json"
@@ -213,7 +215,9 @@ def test_tipsy_probe_btc_columns_cli_writes_summary(monkeypatch, tmp_path: Path)
             template,
         )
 
-    monkeypatch.setattr(cli_main, "probe_btc_report_columns", fake_probe_btc_report_columns)
+    monkeypatch.setattr(
+        cli_main, "probe_btc_report_columns", fake_probe_btc_report_columns
+    )
 
     result = runner.invoke(
         app,
@@ -319,7 +323,9 @@ def test_tsa_btc_post_tipsy_cli_passes_indicator_bank(
 ) -> None:
     data_root = tmp_path / "data"
     data_root.mkdir()
-    (data_root / "03_input-tsa29.csv").write_text("feature_id\n1000\n", encoding="utf-8")
+    (data_root / "03_input-tsa29.csv").write_text(
+        "feature_id\n1000\n", encoding="utf-8"
+    )
 
     captured: dict[str, object] = {}
 
@@ -351,7 +357,9 @@ def test_tsa_btc_post_tipsy_cli_passes_indicator_bank(
             tipsy_sppcomp_paths=[data_root / "tipsy_sppcomp_tsa29.csv"],
             au_table_path=data_root / "model_input_bundle" / "au_table.csv",
             curve_table_path=data_root / "model_input_bundle" / "curve_table.csv",
-            curve_points_table_path=data_root / "model_input_bundle" / "curve_points_table.csv",
+            curve_points_table_path=data_root
+            / "model_input_bundle"
+            / "curve_points_table.csv",
         )
         post_tipsy = PostTipsyBundleRunResult(
             manifest_path=tmp_path / "logs" / "run_manifest.json",

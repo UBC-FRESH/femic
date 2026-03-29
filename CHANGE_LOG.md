@@ -7774,3 +7774,35 @@
     - `StemCount125_*`
     - `StemCount175_*`
     while preserving the 350-year TSR horizon.
+- 2026-03-29 (Phase 48 proving-ground rollout rule): tightened the plan for
+  issue `#47` so the first stand-structure bank rollout uses a dedicated K3Z
+  `intensive_*` proving-ground surface rather than modifying any current
+  student-facing variants.
+  - The bank-enabled BTC/TIPSY managed-curve bundle can exist at the shared
+    K3Z data layer.
+  - But the new Patchworks feature/account bindings should first be surfaced
+    only on a dedicated pilot surface, so the full FEMIC -> BTC -> Patchworks
+    lifecycle can be validated without risking active class projects.
+- 2026-03-29 (Phase 48 first K3Z stand-structure proving ground): completed the
+  first bank rollout on the dedicated K3Z proving-ground surface
+  `intensive_light_standstructure`.
+  - Added the dedicated K3Z proving-ground configs and launch entrypoint:
+    - `config/silviculture.k3z.intensive_light_standstructure.yaml`
+    - `config/patchworks.variant.intensive_light_standstructure.yaml`
+    - `config/patchworks.runtime.intensive_light_standstructure.windows.yaml`
+    - `models/k3z_patchworks_model/analysis/intensive_light_standstructure.pin`
+  - Fixed the Patchworks `protoaccounts -> accounts` promotion bug where the
+    new stand-structure bank rows were collapsing to token-only keys and
+    therefore missing their area-normalized `SUM` overrides.
+  - Rebuilt the proving-ground Matrix Builder surface and confirmed:
+    - the new managed feature bindings exist in the validated `forestmodel.xml`
+    - `tracks_intensive_light_standstructure/accounts.csv` now carries 84
+      managed stand-structure rows with nontrivial reciprocal-area `SUM`
+      multipliers
+    - ordinary `base` and `ctfert_l15h5` tracks remain at zero rows for the
+      new bank, so the first Patchworks rollout stayed quarantined to the
+      proving-ground surface
+  - Targeted validation passed:
+    - `pytest tests/test_patchworks_runtime.py tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
+    - `ruff check src/femic/patchworks_runtime.py src/femic/pipeline/tipsy.py src/femic/fmg/core.py src/femic/fmg/adapters.py src/femic/fmg/patchworks.py tests/test_patchworks_runtime.py tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
+    - `mypy src/femic/patchworks_runtime.py src/femic/pipeline/tipsy.py src/femic/fmg/core.py src/femic/fmg/adapters.py src/femic/fmg/patchworks.py`

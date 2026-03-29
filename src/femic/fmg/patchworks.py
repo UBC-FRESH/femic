@@ -46,6 +46,16 @@ DEFAULT_SILVICULTURE_CONFIG_PATH: Path | None = None
 DEFAULT_RETENTION_VALUE = 0.0
 DEFAULT_SILV_STATE_NATURAL = "baseline"
 DEFAULT_SILV_STATE_PLANTED = "cc_pl"
+SUPPORTED_BTC_INDICATOR_BANKS = {"stand-structure-basic"}
+STAND_STRUCTURE_BASIC_FEATURE_COLUMNS = (
+    ("MAI", "feature.MAI.managed.{au_token}"),
+    ("BasalArea000", "feature.BasalArea000.managed.{au_token}"),
+    ("DBHg000", "feature.DBHg000.managed.{au_token}"),
+    ("SPH000", "feature.SPH000.managed.{au_token}"),
+    ("StemCount000", "feature.StemCount000.managed.{au_token}"),
+    ("StemCount125", "feature.StemCount125.managed.{au_token}"),
+    ("StemCount175", "feature.StemCount175.managed.{au_token}"),
+)
 VALID_IFM_VALUES = {"managed", "unmanaged"}
 VALID_ORIGIN_VALUES = {"natural", "planted"}
 VALID_SILV_STATE_VALUES = {
@@ -888,6 +898,33 @@ def _resolve_ct_configs_for_au(
     return tuple(configs)
 
 
+def _resolve_btc_indicator_bank_names(
+    *, silviculture_config: dict[str, Any] | None
+) -> tuple[str, ...]:
+    if not silviculture_config:
+        return ()
+    raw_value = silviculture_config.get("btc_indicator_banks", ())
+    if raw_value is None:
+        return ()
+    if not isinstance(raw_value, (list, tuple)):
+        raise ValueError("btc_indicator_banks must be a list/tuple of bank names")
+    seen: set[str] = set()
+    out: list[str] = []
+    for item in raw_value:
+        bank = str(item).strip()
+        if not bank:
+            continue
+        if bank not in SUPPORTED_BTC_INDICATOR_BANKS:
+            raise ValueError(
+                "Unsupported btc_indicator_banks entry "
+                f"{bank!r}; expected one of {sorted(SUPPORTED_BTC_INDICATOR_BANKS)}"
+            )
+        if bank not in seen:
+            seen.add(bank)
+            out.append(bank)
+    return tuple(out)
+
+
 DEFAULT_QMD_CONE_FORM_FACTOR = 1.1
 DEFAULT_QMD_SITE_INDEX_BY_LEVEL = {"L": 15.0, "M": 25.0, "H": 35.0}
 
@@ -1718,6 +1755,9 @@ def build_patchworks_forestmodel_definition(
         curves[curve_ref] = curve_def.points
 
     selects: list[SelectDefinition] = []
+    btc_indicator_bank_names = _resolve_btc_indicator_bank_names(
+        silviculture_config=silviculture_config
+    )
     transition_assignments_list: list[TreatmentAssignment] = [
         TreatmentAssignment(field="ORIGIN", value=_as_quoted_literal("planted")),
         TreatmentAssignment(field="SILV_STATE", value=_as_quoted_literal("cc_pl")),
@@ -1811,6 +1851,9 @@ def build_patchworks_forestmodel_definition(
         stems_payload = (silviculture_config or {}).get("stems_per_ha")
         stems_per_ha_enabled = isinstance(stems_payload, dict) and bool(
             stems_payload.get("enabled", False)
+        )
+        managed_indicator_curves = context.managed_indicator_curves_by_au.get(
+            int(au.au_id), {}
         )
 
         natural_species_curve_map = context.unmanaged_species_curve_ids.get(
@@ -1963,6 +2006,27 @@ def build_patchworks_forestmodel_definition(
                 ),
                 *old_growth_feature_attrs,
             ]
+            if (
+                origin == "planted"
+                and "stand-structure-basic" in btc_indicator_bank_names
+            ):
+                for (
+                    indicator_key,
+                    label_template,
+                ) in STAND_STRUCTURE_BASIC_FEATURE_COLUMNS:
+                    curve_points = managed_indicator_curves.get(indicator_key)
+                    if not curve_points:
+                        continue
+                    curve_ref = (
+                        f"au_{au_token}_managed_{_sanitize_id_component(indicator_key)}"
+                    )
+                    curves[curve_ref] = tuple(curve_points)
+                    managed_attrs.append(
+                        AttributeBinding(
+                            label=label_template.format(au_token=au_token),
+                            curve_idref=curve_ref,
+                        )
+                    )
             product_attrs = [
                 AttributeBinding(
                     label="product.Treated.managed.CC", curve_idref="unity"

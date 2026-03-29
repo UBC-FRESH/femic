@@ -7719,7 +7719,7 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [ ] P48.2d If richer indicator output remains GUI-only, support it as an
     optional manual BTC mode instead of blocking the default unattended
     `/TSR` mashup rollout.
-    - [ ] P48.2d1 Add a stand-table indicator bank from BTC bindings and wire
+    - [x] P48.2d1 Add a stand-table indicator bank from BTC bindings and wire
       DBH-class stem counts behind a FEMIC-level optional activation switch,
       piloting first on a dedicated K3Z intensive-silviculture proving-ground
       subvariant rather than modifying the active student-facing variants.
@@ -7733,12 +7733,14 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - `StemCount000`
         - `StemCount125`
         - `StemCount175`
-      - the next implementation step is to stop treating those columns as a
-        probe-only result and wire them into FEMIC as the first explicit
-        optional BTC indicator-bank activation switch;
-      - after that switch exists, pilot it only on a dedicated K3Z
-        `intensive_*` proving-ground subvariant, not on active student-facing
-        variants;
+      - this now exists as the first explicit optional BTC indicator-bank
+        activation switch:
+        - `--indicator-bank stand-structure-basic`
+      - the first proving-ground rollout is now also live on:
+        - `intensive_light_standstructure`
+      - the ordinary `base`, `ctfert_*`, `pct_*`, `intensive_*`, and overlay
+        surfaces remain untouched by the new Patchworks feature/account
+        bindings during this first rollout;
       - keep the one-column ratchet and compatibility-ledger loop alive for
         later banks and for explaining any future failures;
       - BTC modal/.NET failure dialogs are now auto-closed by FEMIC during
@@ -7776,9 +7778,9 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
           - do not backslide into probing only with generated stand-alone
             replacement templates, because that can create false-negative seam
             conclusions.
-      - the first FEMIC-level optional bank switch is now wired end to end:
-        - CLI/runtime surface:
-          - `--indicator-bank stand-structure-basic`
+        - the first FEMIC-level optional bank switch is now wired end to end:
+          - CLI/runtime surface:
+            - `--indicator-bank stand-structure-basic`
         - current bank contents:
           - `MAI`
           - `BasalArea:000`
@@ -7803,11 +7805,33 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
             - `StemCount000_*`
             - `StemCount125_*`
             - `StemCount175_*`
+        - the proving-ground K3Z Patchworks rollout is now rebuilt and
+          smoke-checked:
+          - runtime config:
+            - `config/patchworks.runtime.intensive_light_standstructure.windows.yaml`
+          - launch entrypoint:
+            - `models/k3z_patchworks_model/analysis/intensive_light_standstructure.pin`
+          - tracks surface:
+            - `models/k3z_patchworks_model/tracks_intensive_light_standstructure/`
+          - direct smoke confirms 84 managed stand-structure feature-account
+            rows with area-normalized `SUM` multipliers, while the ordinary
+            `base` and `ctfert_l15h5` tracks still show zero rows for this bank.
           - with the extended 350-year timeline still intact;
       - immediate next step:
         - pilot this first bank only on a dedicated K3Z `intensive_*`
           proving-ground subvariant before touching any student-facing
           variants.
+      - proving-ground rollout rule:
+        - the bank-enabled BTC/TIPSY managed-curve bundle may exist at the
+          shared K3Z data layer, but only a dedicated proving-ground variant
+          should surface the new Patchworks feature/account bindings during the
+          first rollout;
+        - keep the existing student-facing `base`, `ctfert_*`, `pct_*`,
+          `intensive_*`, and overlay surfaces behaviorally unchanged while the
+          first bank is being validated end to end;
+        - use a dedicated `intensive_light_*`-style pilot surface as the first
+          landing zone so the bank can be tested through a full FEMIC ->
+          BTC -> Patchworks lifecycle without risking active class projects.
       - do not touch the active student-facing K3Z variants while proving the
         first bank; use a dedicated `intensive_*` proving-ground subvariant.
       Track on GitHub issue #47.

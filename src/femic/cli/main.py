@@ -2848,7 +2848,9 @@ def tipsy_probe_btc_columns(
         log_dir=resolved_log_dir,
         run_id_prefix=run_id_prefix,
     )
-    accepted = [result.candidate_token for result in results if result.status == "accepted"]
+    accepted = [
+        result.candidate_token for result in results if result.status == "accepted"
+    ]
     failed = [result for result in results if result.status != "accepted"]
     for result in results:
         if result.status == "accepted":
@@ -2874,7 +2876,9 @@ def tipsy_probe_btc_columns(
                 "exit_code": result.exit_code,
                 "error_message": result.error_message,
                 "manifest_path": (
-                    str(result.manifest_path) if result.manifest_path is not None else None
+                    str(result.manifest_path)
+                    if result.manifest_path is not None
+                    else None
                 ),
                 "output_csv_path": (
                     str(result.output_csv_path)
@@ -2882,7 +2886,9 @@ def tipsy_probe_btc_columns(
                     else None
                 ),
                 "error_csv_path": (
-                    str(result.error_csv_path) if result.error_csv_path is not None else None
+                    str(result.error_csv_path)
+                    if result.error_csv_path is not None
+                    else None
                 ),
                 "output_created": result.output_created,
                 "error_created": result.error_created,
@@ -2903,7 +2909,9 @@ def tipsy_probe_btc_columns(
     }
     if resolved_summary_json is not None:
         resolved_summary_json.parent.mkdir(parents=True, exist_ok=True)
-        resolved_summary_json.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        resolved_summary_json.write_text(
+            json.dumps(payload, indent=2), encoding="utf-8"
+        )
         console.print(f"summary: {resolved_summary_json}")
     console.print(
         "[green]BTC column probe completed[/green] "

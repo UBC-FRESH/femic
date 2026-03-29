@@ -907,6 +907,36 @@ Immediate next step:
 
 - pilot this first bank only on a dedicated K3Z ``intensive_*`` proving-ground
   subvariant before touching any student-facing variants.
+- keep the bank-enabled BTC/TIPSY managed-curve bundle at the shared K3Z data
+  layer if needed, but surface the new Patchworks feature/account bindings only
+  on that proving-ground surface during the first rollout.
+
+That first proving-ground rollout is now live:
+
+- runtime config:
+  - ``config/patchworks.runtime.intensive_light_standstructure.windows.yaml``
+- launch entrypoint:
+  - ``models/k3z_patchworks_model/analysis/intensive_light_standstructure.pin``
+- tracks surface:
+  - ``models/k3z_patchworks_model/tracks_intensive_light_standstructure/``
+
+What was smoke-verified after the rollout:
+
+- the rebuilt proving-ground ``forestmodel.xml`` contains the new managed
+  feature bindings:
+  - ``feature.MAI.managed.*``
+  - ``feature.BasalArea000.managed.*``
+  - ``feature.DBHg000.managed.*``
+  - ``feature.SPH000.managed.*``
+  - ``feature.StemCount000.managed.*``
+  - ``feature.StemCount125.managed.*``
+  - ``feature.StemCount175.managed.*``
+- the rebuilt proving-ground ``tracks_intensive_light_standstructure`` surface
+  contains 84 managed stand-structure feature-account rows with area-normalized
+  ``SUM`` multipliers in ``accounts.csv``;
+- the ordinary ``base`` and ``ctfert_l15h5`` tracks remain at zero rows for
+  this bank, confirming that the first Patchworks rollout stayed quarantined to
+  the dedicated proving-ground surface.
 
 ## Post-Cutover K3Z QMD Regression and Repair
 
