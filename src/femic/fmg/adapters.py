@@ -167,6 +167,15 @@ def _species_curve_maps(
 
 
 _DEFAULT_QMD_SITE_INDEX_BY_LEVEL = {"L": 15.0, "M": 25.0, "H": 35.0}
+_MANAGED_BANK_INDICATOR_COLUMNS = (
+    "MAI",
+    "BasalArea000",
+    "DBHg000",
+    "SPH000",
+    "StemCount000",
+    "StemCount125",
+    "StemCount175",
+)
 
 
 def _curve_matches_points(
@@ -319,6 +328,66 @@ def _load_managed_qmd_support_from_tipsy(
     return out
 
 
+def _load_managed_indicator_curves_from_tipsy(
+    *,
+    data_dir: Path,
+    analysis_units: tuple[AnalysisUnitDefinition, ...],
+    points_by_id: dict[int, list[CurvePoint]],
+) -> dict[int, dict[str, tuple[CurvePoint, ...]]]:
+    tipsy_path = data_dir / "tipsy_curves_tsak3z.csv"
+    if not tipsy_path.is_file():
+        return {}
+    tipsy_df = pd.read_csv(tipsy_path)
+    required = {"AU", "Age", *_MANAGED_BANK_INDICATOR_COLUMNS}
+    available = required.intersection(set(tipsy_df.columns))
+    if not {"AU", "Age"}.issubset(tipsy_df.columns) or len(available) <= 2:
+        return {}
+    tipsy_df["AU"] = pd.to_numeric(tipsy_df["AU"], errors="coerce")
+    tipsy_df["Age"] = pd.to_numeric(tipsy_df["Age"], errors="coerce")
+    for column in _MANAGED_BANK_INDICATOR_COLUMNS:
+        if column in tipsy_df.columns:
+            tipsy_df[column] = pd.to_numeric(tipsy_df[column], errors="coerce")
+    tipsy_df = tipsy_df.dropna(subset=["AU", "Age"])
+    if tipsy_df.empty:
+        return {}
+
+    rows_by_local_au = {
+        _coerce_int(au): subdf.sort_values("Age").copy()
+        for au, subdf in tipsy_df.groupby("AU")
+    }
+    out: dict[int, dict[str, tuple[CurvePoint, ...]]] = {}
+    for au in analysis_units:
+        managed_curve_points = tuple(points_by_id.get(int(au.managed_curve_id), []))
+        matched_local_au: int | None = None
+        for local_au, subdf in rows_by_local_au.items():
+            if _curve_matches_points(managed_curve_points, subdf):
+                matched_local_au = int(local_au)
+                break
+        if matched_local_au is None:
+            continue
+        managed_rows = rows_by_local_au.get(matched_local_au)
+        if managed_rows is None or managed_rows.empty:
+            continue
+        curves_by_name: dict[str, tuple[CurvePoint, ...]] = {}
+        for column in _MANAGED_BANK_INDICATOR_COLUMNS:
+            if column not in managed_rows.columns:
+                continue
+            points = tuple(
+                CurvePoint(x=float(age), y=float(value))
+                for age, value in zip(
+                    managed_rows["Age"].tolist(), managed_rows[column].tolist()
+                )
+                if np.isfinite(float(age))
+                and pd.notna(value)
+                and np.isfinite(float(value))
+            )
+            if points:
+                curves_by_name[column] = points
+        if curves_by_name:
+            out[int(au.au_id)] = curves_by_name
+    return out
+
+
 def _load_unmanaged_qmd_support_from_checkpoint(
     *,
     data_dir: Path,
@@ -430,13 +499,20 @@ def _build_qmd_support_by_au(
     analysis_units: tuple[AnalysisUnitDefinition, ...],
     au_table: pd.DataFrame,
     points_by_id: dict[int, list[CurvePoint]],
-) -> dict[int, QmdSupportDefinition]:
+) -> tuple[
+    dict[int, QmdSupportDefinition], dict[int, dict[str, tuple[CurvePoint, ...]]]
+]:
     data_dir = bundle_dir.parent
     unmanaged_support = _load_unmanaged_qmd_support_from_checkpoint(
         data_dir=data_dir,
         au_table=au_table,
     )
     managed_support = _load_managed_qmd_support_from_tipsy(
+        data_dir=data_dir,
+        analysis_units=analysis_units,
+        points_by_id=points_by_id,
+    )
+    managed_indicator_curves_by_au = _load_managed_indicator_curves_from_tipsy(
         data_dir=data_dir,
         analysis_units=analysis_units,
         points_by_id=points_by_id,
@@ -468,7 +544,7 @@ def _build_qmd_support_by_au(
             ),
             managed_tph_points=tuple(managed_payload.get("managed_tph_points", ())),
         )
-    return out
+    return out, managed_indicator_curves_by_au
 
 
 def build_bundle_model_context_from_tables(
@@ -531,7 +607,7 @@ def build_bundle_model_context_from_tables(
     managed_species_curve_ids, unmanaged_species_curve_ids = _species_curve_maps(
         curve_table=curve_table
     )
-    qmd_support_by_au = (
+    qmd_support_by_au, managed_indicator_curves_by_au = (
         _build_qmd_support_by_au(
             bundle_dir=bundle_dir,
             analysis_units=analysis_units,
@@ -539,7 +615,7 @@ def build_bundle_model_context_from_tables(
             points_by_id=points_by_id,
         )
         if bundle_dir is not None
-        else {}
+        else ({}, {})
     )
     return BundleModelContext(
         tsa_list=normalized_tsa,
@@ -548,6 +624,7 @@ def build_bundle_model_context_from_tables(
         managed_species_curve_ids=managed_species_curve_ids,
         unmanaged_species_curve_ids=unmanaged_species_curve_ids,
         qmd_support_by_au=qmd_support_by_au,
+        managed_indicator_curves_by_au=managed_indicator_curves_by_au,
         curve_row_count=int(curve_table.shape[0]),
     )
 

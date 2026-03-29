@@ -715,6 +715,229 @@ Current planning implication:
 - FEMIC should not assume that simply appending richer stand-table fields to the
   current unattended `TimberSupply.rpt` mashup will work
 
+Current working method for issue `#47`:
+
+- keep unattended `/TSR` as the priority path
+- start from the current known-good unattended transposed template
+- add one new stand-table indicator column at a time
+- if a probe passes, keep that column in the candidate bank
+- if a probe crashes, immediately revert that one column and record the failure
+  as a seam-detection clue
+- build the first bank with two outputs in parallel:
+  - the largest proven-safe unattended template subset
+  - an evidence map explaining what seems to separate `/TSR`-compatible columns
+    from `/TSR`-incompatible ones
+- use FEMIC-managed BTC modal cleanup as part of the normal probe loop so
+  failed probes do not leave a human blocked behind stacked `.NET` dialogs
+- write a machine-readable compatibility ledger after every probe so the seam
+  evidence survives beyond console output
+
+That second output is important. Every failing column should now trigger a
+high-priority parallel clue-collection step, including:
+
+- exact report token syntax
+- whether the token appears in stock `Yield.rpt`, `Stand.rpt`, or SQL-style
+  templates
+- whether the token is utilization-qualified (`:000`, `:125`, `:Auto`)
+- whether it looks like a stand-table, crop-tree, or aggregated stand metric
+- whether a similar field is available through a different report family
+- whether the failure pattern suggests a structural rule that could later
+  support a workaround or hack
+
+## First Unattended Ratchet Batch with Auto-Close
+
+The first full seven-column unattended stand-table batch now completed under
+FEMIC control with no human dialog-clicking required.
+
+Candidate batch:
+
+- `MAI`
+- `BasalArea:000`
+- `DBHg:000`
+- `SPH:000`
+- `StemCount000`
+- `StemCount125`
+- `StemCount175`
+
+Observed result:
+
+- every candidate failed in the current transposed unattended `/TSR` seam
+- every failure was normalized into the same machine-readable pattern:
+  - BTC exit code `1`
+  - no output CSV produced
+  - BTC/.NET modal dialog auto-closed by FEMIC
+  - failure classified as `missing_output_exit_1`
+- the compatibility ledger was written to:
+  - `tmp/btc_probe_sweep/first_batch/compatibility.json`
+
+Current evidence pattern:
+
+- `MAI`, `BasalArea:000`, `DBHg:000`, and `SPH:000` all appear in stock
+  `Yield.rpt`, but still fail in the unattended transposed `/TSR` seam
+- `StemCount000/125/175` appear in `OutputColumns.txt` and BTC Tcl metadata,
+  but do not appear in stock `Yield.rpt`, and they also fail in the same seam
+
+Current planning implication:
+
+- the incompatibility boundary is likely not just about token spelling; it is
+  probably tied to the report family/shape of the transposed unattended `/TSR`
+  template itself
+- the next probes should continue one column at a time, but with higher
+  attention to structural families and adjacent variants rather than assuming
+  any stock `Yield.rpt` token is safe in unattended `/TSR`
+
+## Critical `/TSR` Overlay Precedence Breakthrough
+
+One of the most important Phase 48 reverse-engineering results is that plain
+installed ``TIPSYbtc.exe /TSR`` does **not** behave as if it were bound only to
+the stock report under ``C:\Program Files\TIPSY 4.7\BTC``.
+
+Live behavior proved the following:
+
+- installed ``/TSR`` consults the per-user overlay report under the current
+  user's Windows Documents folder:
+  - ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt``
+  before falling back to the stock installed ``TimberSupply.rpt``
+- with the user overlay present and broken, plain installed ``/TSR`` fails
+- when the user overlay is moved out of the way, plain installed stock
+  ``/TSR`` succeeds again
+- when the user overlay is replaced with a **stock-based safe enhanced TSR
+  template**, plain installed ``/TSR`` also succeeds
+
+This means the true unattended seam is:
+
+- preserve the hidden stock ``TimberSupply.rpt`` structure
+- extend that structure conservatively through the live overlay path
+- test plain installed ``/TSR`` against that overlay
+- force the live TSR overlay horizon to:
+  - ``TableRange=0-350:10|# MAX=350 INC=10``
+- resolve the overlay path generically from the current user's Windows
+  Documents directory rather than assuming a machine-specific OneDrive path
+  so unattended BTC output lines up with FEMIC's longer VDYP curve timeline
+  instead of stopping at the stock 120-year range
+
+It also means the earlier copied-install/generated-template probes were too
+pessimistic as a general seam detector. They were useful clues, but they were
+not testing the most faithful `/TSR` contract.
+
+Current rule going forward:
+
+- when probing new unattended `/TSR` columns, prefer the **real overlay seam**
+  over a clean-room generated replacement template
+- preserve the stock report shape whenever possible
+- treat failures from stand-alone replacement templates as seam clues, not as
+  proof that a token is impossible through `/TSR`
+
+## Overlay-Seam Ratchet Correction
+
+After restoring a stock-based safe enhanced overlay and probing the same first
+stand-table batch against the real overlay seam, the earlier “all seven fail”
+conclusion was overturned.
+
+The following columns all passed cleanly through plain installed ``/TSR``:
+
+- ``MAI``
+- ``BasalArea:000``
+- ``DBHg:000``
+- ``SPH:000``
+- ``StemCount000``
+- ``StemCount125``
+- ``StemCount175``
+
+This is the strongest current evidence that:
+
+- the key compatibility boundary is structural to the stock TSR report
+  contract, not merely the output tokens themselves
+- preserving and extending the stock/user-overlay ``TimberSupply.rpt`` path is
+  the correct ratchet for issue ``#47``
+- future optional indicator-bank work should continue to use the overlay seam
+  as the primary reverse-engineering surface unless new evidence proves a
+  better boundary
+
+## First Optional Unattended Indicator Bank
+
+The first FEMIC-level optional BTC indicator-bank switch is now wired through
+the real unattended `/TSR` overlay seam.
+
+Current switch:
+
+- ``--indicator-bank stand-structure-basic``
+
+Current bank contents:
+
+- ``MAI``
+- ``BasalArea:000``
+- ``DBHg:000``
+- ``SPH:000``
+- ``StemCount000``
+- ``StemCount125``
+- ``StemCount175``
+
+Critical runtime implementation detail:
+
+- the runtime must patch the real per-user overlay report path
+  ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt`` with backup/restore;
+- relying only on a copied-install-local ``TimberSupply.rpt`` is not
+  sufficient, because the live user overlay can silently shadow that local
+  file and make a run appear successful while dropping the bank columns from
+  the returned output.
+
+Real smoke proof:
+
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-basic``
+  now returns, in one unattended output CSV:
+  - the base conservative families:
+    - ``MVcon_*``
+    - ``MVdec_*``
+    - ``HTcon_*``
+    - ``HTdec_*``
+    - ``gVol_*``
+    - ``CC_*``
+  - plus the first stand-structure bank:
+    - ``MAI_*``
+    - ``BasalArea000_*``
+    - ``DBHg000_*``
+    - ``SPH000_*``
+    - ``StemCount000_*``
+    - ``StemCount125_*``
+    - ``StemCount175_*``
+- the 350-year TSR horizon remains intact at the same time.
+
+Immediate next step:
+
+- pilot this first bank only on a dedicated K3Z ``intensive_*`` proving-ground
+  subvariant before touching any student-facing variants.
+- keep the bank-enabled BTC/TIPSY managed-curve bundle at the shared K3Z data
+  layer if needed, but surface the new Patchworks feature/account bindings only
+  on that proving-ground surface during the first rollout.
+
+That first proving-ground rollout is now live:
+
+- runtime config:
+  - ``config/patchworks.runtime.intensive_light_standstructure.windows.yaml``
+- launch entrypoint:
+  - ``models/k3z_patchworks_model/analysis/intensive_light_standstructure.pin``
+- tracks surface:
+  - ``models/k3z_patchworks_model/tracks_intensive_light_standstructure/``
+
+What was smoke-verified after the rollout:
+
+- the rebuilt proving-ground ``forestmodel.xml`` contains the new managed
+  feature bindings:
+  - ``feature.MAI.managed.*``
+  - ``feature.BasalArea000.managed.*``
+  - ``feature.DBHg000.managed.*``
+  - ``feature.SPH000.managed.*``
+  - ``feature.StemCount000.managed.*``
+  - ``feature.StemCount125.managed.*``
+  - ``feature.StemCount175.managed.*``
+- the rebuilt proving-ground ``tracks_intensive_light_standstructure`` surface
+  contains 84 managed stand-structure feature-account rows with area-normalized
+  ``SUM`` multipliers in ``accounts.csv``;
+- the ordinary ``base`` and ``ctfert_l15h5`` tracks remain at zero rows for
+  this bank, confirming that the first Patchworks rollout stayed quarantined to
+  the dedicated proving-ground surface.
+
 ## Post-Cutover K3Z QMD Regression and Repair
 
 The first core unattended BTC cutover landed with a real K3Z regression:

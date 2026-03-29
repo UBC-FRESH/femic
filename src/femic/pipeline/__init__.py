@@ -90,6 +90,7 @@ from femic.pipeline.bundle import (
 from femic.pipeline.vdyp_sampling import nsamples_from_curves
 from femic.pipeline.vdyp_io import import_vdyp_tables, write_vdyp_infiles_plylyr
 from femic.pipeline.tipsy import (
+    BTCColumnProbeResult,
     BTCRunResult,
     BTCRuntimeDiscovery,
     BTCRuntimePreparation,
@@ -114,6 +115,7 @@ from femic.pipeline.tipsy import (
     evaluate_tipsy_candidate,
     parse_btc_custom_report_template,
     parse_btc_tsr_transposed_output,
+    probe_btc_report_columns,
     tipsy_stage_output_paths,
     write_btc_msyt_input_csv,
     write_btc_custom_report_template,
@@ -274,6 +276,7 @@ __all__ = [
     "nsamples_from_curves",
     "compute_vdyp_oaf1",
     "compute_vdyp_site_index",
+    "BTCColumnProbeResult",
     "BTCRunResult",
     "BTCRuntimeDiscovery",
     "BTCRuntimePreparation",
@@ -292,6 +295,7 @@ __all__ = [
     "tipsy_params_excel_path",
     "parse_btc_custom_report_template",
     "parse_btc_tsr_transposed_output",
+    "probe_btc_report_columns",
     "tipsy_stage_output_paths",
     "write_btc_msyt_input_csv",
     "write_btc_custom_report_template",

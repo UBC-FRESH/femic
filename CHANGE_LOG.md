@@ -7680,3 +7680,129 @@
       non-null in the runtime-facing CSV surfaces;
     - user also confirmed live Patchworks launches of `base.pin` and
       `ctfert_l15h5.pin` show QMD accounts back online.
+## 2026-03-28 - Phase 48 stand-table bank ratchet plan tightened
+
+- Reframed issue `#47` around a strict one-column-at-a-time unattended `/TSR`
+  ratchet from the current known-good template instead of large speculative
+  report-template jumps.
+- Added the parallel seam-detection mission: every failing BTC report token
+  should now be recorded as a clue about the hidden `/TSR` compatibility
+  pattern, not just as a rejection.
+- Updated `ROADMAP.md` and `planning/batchtipsy_automation_approach.md` to make
+  the two-track method explicit before starting the next stand-table bank probe
+  loop.
+
+## 2026-03-28 - Phase 48 unattended BTC stand-table probe now leaves a compatibility ledger
+
+- Extended `femic tipsy probe-btc-columns` so each probe result now records:
+  - output/error artifact existence,
+  - BTC modal auto-close behavior,
+  - a failure classification,
+  - and clue hits from stock reports, `OutputColumns.txt`, and BTC Tcl files.
+- Added an always-written machine-readable compatibility ledger for issue `#47`
+  probe runs.
+- Proved the first unattended seven-column stand-table batch can now run
+  without any user dialog-clicking.
+- First batch result:
+  - `MAI`
+  - `BasalArea:000`
+  - `DBHg:000`
+  - `SPH:000`
+  - `StemCount000`
+  - `StemCount125`
+  - `StemCount175`
+  all failed cleanly in the current transposed unattended `/TSR` seam with:
+  - exit code `1`,
+  - no output CSV,
+  - FEMIC auto-closing the BTC/.NET modal path,
+  - and failure classification `missing_output_exit_1`.
+- 2026-03-28 (Phase 48 TSR horizon alignment): updated FEMIC's stock-based
+  unattended `TimberSupply.rpt` patch path so the default TSR overlay uses:
+  - `TableRange=0-350:10|#	MAX=350	INC=10`
+  instead of the older 120-year range, aligning the BTC unattended output
+  horizon with FEMIC's longer VDYP curve timeline.
+- 2026-03-28 (Phase 48 critical `/TSR` overlay breakthrough): confirmed that
+  plain installed `TIPSYbtc.exe /TSR` consults the per-user
+  `Documents\\BatchTIPSY Composer\\TimberSupply.rpt` overlay before falling
+  back to the stock installed report, and that preserving the stock TSR report
+  structure is the key to safe unattended extension.
+  - With the broken user overlay present, plain installed `/TSR` failed.
+  - With the overlay removed, stock `/TSR` succeeded again.
+  - With the overlay replaced by a stock-based safe enhanced TSR template,
+    plain installed `/TSR` also succeeded again.
+  - Re-running the first stand-table batch against that real overlay seam then
+    showed that all seven previously “failing” candidates actually pass:
+    - `MAI`
+    - `BasalArea:000`
+    - `DBHg:000`
+    - `SPH:000`
+    - `StemCount000`
+    - `StemCount125`
+    - `StemCount175`
+  - This means the copied-install/generated-template seam was too pessimistic:
+    the real `/TSR` game is about preserving the hidden stock
+    `TimberSupply.rpt` contract and extending it conservatively through the
+    live overlay path.
+- 2026-03-28 (Phase 48 Windows overlay path portability): replaced the
+  machine-specific BTC overlay lookup in FEMIC source code with a generic
+  Windows Documents-folder resolver so unattended `/TSR` probing and runtime
+  patching no longer assume a user-specific OneDrive directory name.
+- 2026-03-29 (Phase 48 first optional BTC bank switch): wired the first FEMIC
+  optional unattended BTC indicator-bank switch,
+  `--indicator-bank stand-structure-basic`, through the real per-user TSR
+  overlay seam with backup/restore.
+  - The bank now carries:
+    - `MAI`
+    - `BasalArea:000`
+    - `DBHg:000`
+    - `SPH:000`
+    - `StemCount000`
+    - `StemCount125`
+    - `StemCount175`
+  - The key implementation fix was to stop treating the copied-install-local
+    `TimberSupply.rpt` as authoritative when a live user overlay exists;
+    FEMIC now patches the real user-overlay report path for the TSR preset so
+    requested bank columns actually appear in returned output.
+  - Real smoke proof now exists for:
+    - `femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-basic`
+    which returns the conservative default families plus:
+    - `MAI_*`
+    - `BasalArea000_*`
+    - `DBHg000_*`
+    - `SPH000_*`
+    - `StemCount000_*`
+    - `StemCount125_*`
+    - `StemCount175_*`
+    while preserving the 350-year TSR horizon.
+- 2026-03-29 (Phase 48 proving-ground rollout rule): tightened the plan for
+  issue `#47` so the first stand-structure bank rollout uses a dedicated K3Z
+  `intensive_*` proving-ground surface rather than modifying any current
+  student-facing variants.
+  - The bank-enabled BTC/TIPSY managed-curve bundle can exist at the shared
+    K3Z data layer.
+  - But the new Patchworks feature/account bindings should first be surfaced
+    only on a dedicated pilot surface, so the full FEMIC -> BTC -> Patchworks
+    lifecycle can be validated without risking active class projects.
+- 2026-03-29 (Phase 48 first K3Z stand-structure proving ground): completed the
+  first bank rollout on the dedicated K3Z proving-ground surface
+  `intensive_light_standstructure`.
+  - Added the dedicated K3Z proving-ground configs and launch entrypoint:
+    - `config/silviculture.k3z.intensive_light_standstructure.yaml`
+    - `config/patchworks.variant.intensive_light_standstructure.yaml`
+    - `config/patchworks.runtime.intensive_light_standstructure.windows.yaml`
+    - `models/k3z_patchworks_model/analysis/intensive_light_standstructure.pin`
+  - Fixed the Patchworks `protoaccounts -> accounts` promotion bug where the
+    new stand-structure bank rows were collapsing to token-only keys and
+    therefore missing their area-normalized `SUM` overrides.
+  - Rebuilt the proving-ground Matrix Builder surface and confirmed:
+    - the new managed feature bindings exist in the validated `forestmodel.xml`
+    - `tracks_intensive_light_standstructure/accounts.csv` now carries 84
+      managed stand-structure rows with nontrivial reciprocal-area `SUM`
+      multipliers
+    - ordinary `base` and `ctfert_l15h5` tracks remain at zero rows for the
+      new bank, so the first Patchworks rollout stayed quarantined to the
+      proving-ground surface
+  - Targeted validation passed:
+    - `pytest tests/test_patchworks_runtime.py tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
+    - `ruff check src/femic/patchworks_runtime.py src/femic/pipeline/tipsy.py src/femic/fmg/core.py src/femic/fmg/adapters.py src/femic/fmg/patchworks.py tests/test_patchworks_runtime.py tests/test_tipsy.py tests/test_tipsy_report_cli.py tests/test_workflows_post_tipsy.py`
+    - `mypy src/femic/patchworks_runtime.py src/femic/pipeline/tipsy.py src/femic/fmg/core.py src/femic/fmg/adapters.py src/femic/fmg/patchworks.py`

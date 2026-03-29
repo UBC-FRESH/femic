@@ -41,6 +41,9 @@ HEIGHT_ACCOUNT_PATTERN = re.compile(
 STEMS_PER_HA_ACCOUNT_PATTERN = re.compile(
     r"^feature\.StemsPerHa\.(managed|unmanaged)\.([A-Za-z0-9_.]+)$"
 )
+STAND_STRUCTURE_BASIC_ACCOUNT_PATTERN = re.compile(
+    r"^feature\.(MAI|BasalArea000|DBHg000|SPH000|StemCount000|StemCount125|StemCount175)\.managed\.([A-Za-z0-9_.]+)$"
+)
 HARVESTED_VOLUME_ACCOUNT_PATTERN = re.compile(
     r"^product\.HarvestedVolume\.managed\..+\.([A-Z0-9_]+)$"
 )
@@ -1054,6 +1057,33 @@ def _load_feature_account_au_id_by_token_from_forestmodel(
     return out
 
 
+def _load_feature_account_au_id_by_label_from_forestmodel(
+    *,
+    forestmodel_xml_path: Path,
+    pattern: re.Pattern[str],
+) -> dict[str, int]:
+    resolved = forestmodel_xml_path.expanduser().resolve()
+    if not resolved.exists():
+        return {}
+    root = et.parse(resolved).getroot()
+    out: dict[str, int] = {}
+    for select_node in root.findall("./select"):
+        statement = str(select_node.get("statement", ""))
+        match = AU_EQ_PATTERN.search(statement)
+        if match is None:
+            continue
+        au_id = int(match.group(1))
+        for attribute_node in select_node.findall("./features/attribute"):
+            label = str(attribute_node.get("label", ""))
+            feature_match = pattern.match(label)
+            if feature_match is None:
+                continue
+            prior = out.get(label)
+            if prior is None or prior == au_id:
+                out[label] = au_id
+    return out
+
+
 def _load_fragments_area_by_au_and_ifm(
     *, fragments_path: Path
 ) -> dict[tuple[str, int], float]:
@@ -1170,6 +1200,44 @@ def _resolve_stems_per_ha_account_sum_overrides(
         forestmodel_xml_path=forestmodel_xml_path,
         pattern=STEMS_PER_HA_ACCOUNT_PATTERN,
         label_prefix="feature.StemsPerHa",
+    )
+
+
+def _resolve_managed_only_feature_account_sum_overrides(
+    *,
+    fragments_path: Path,
+    forestmodel_xml_path: Path,
+    pattern: re.Pattern[str],
+) -> dict[str, str]:
+    au_id_by_label = _load_feature_account_au_id_by_label_from_forestmodel(
+        forestmodel_xml_path=forestmodel_xml_path,
+        pattern=pattern,
+    )
+    if not au_id_by_label:
+        return {}
+    area_by_au_and_ifm = _load_fragments_area_by_au_and_ifm(
+        fragments_path=fragments_path
+    )
+    if not area_by_au_and_ifm:
+        return {}
+
+    overrides: dict[str, str] = {}
+    for attribute, au_id in au_id_by_label.items():
+        managed_area = area_by_au_and_ifm.get(("managed", au_id), 0.0)
+        if managed_area > 0.0:
+            overrides[attribute] = _format_account_sum_multiplier(1.0 / managed_area)
+    return overrides
+
+
+def _resolve_stand_structure_basic_account_sum_overrides(
+    *,
+    fragments_path: Path,
+    forestmodel_xml_path: Path,
+) -> dict[str, str]:
+    return _resolve_managed_only_feature_account_sum_overrides(
+        fragments_path=fragments_path,
+        forestmodel_xml_path=forestmodel_xml_path,
+        pattern=STAND_STRUCTURE_BASIC_ACCOUNT_PATTERN,
     )
 
 
@@ -1310,6 +1378,11 @@ def _promote_protoaccounts_to_accounts(
         STEMS_PER_HA_ACCOUNT_PATTERN.match(str(row.get("ATTRIBUTE", ""))) is not None
         for row in rows
     )
+    has_stand_structure_basic_rows = any(
+        STAND_STRUCTURE_BASIC_ACCOUNT_PATTERN.match(str(row.get("ATTRIBUTE", "")))
+        is not None
+        for row in rows
+    )
     utilization_by_treatment = harvested_volume_utilization_by_treatment or {}
     qmd_sum_overrides = (
         _resolve_qmd_account_sum_overrides(
@@ -1335,10 +1408,19 @@ def _promote_protoaccounts_to_accounts(
         if has_stems_per_ha_rows
         else {}
     )
+    stand_structure_basic_sum_overrides = (
+        _resolve_stand_structure_basic_account_sum_overrides(
+            fragments_path=fragments_path,
+            forestmodel_xml_path=forestmodel_xml_path,
+        )
+        if has_stand_structure_basic_rows
+        else {}
+    )
     feature_sum_overrides = {
         **qmd_sum_overrides,
         **height_sum_overrides,
         **stems_per_ha_sum_overrides,
+        **stand_structure_basic_sum_overrides,
     }
     if not exclude_regex and not feature_sum_overrides and not utilization_by_treatment:
         shutil.copy2(protoaccounts_path, accounts_path)

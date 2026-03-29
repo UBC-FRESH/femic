@@ -153,6 +153,119 @@ report template changes what ``/TSR`` emits. Not every report type is a safe
 drop-in replacement, so FEMIC should prefer vetted compatible templates over
 arbitrary all-fields output experiments.
 
+Critical `/TSR` Overlay Precedence Insight
+------------------------------------------
+
+One critical reverse-engineering result must not be lost:
+
+- plain installed ``TIPSYbtc.exe /TSR`` consults the user-overlay report under
+  the current user's Windows Documents folder:
+  - ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt``
+  before falling back to the stock installed ``TimberSupply.rpt``
+- a broken overlay can therefore make stock-looking ``/TSR`` runs fail even
+  when the installed BTC report under ``Program Files`` is fine
+- removing the overlay restores stock fallback behavior
+- replacing the overlay with a **stock-based safe enhanced TSR template** lets
+  plain installed ``/TSR`` run successfully while still extending the output
+  surface
+
+This matters because early copied-install/generated-template probes were too
+pessimistic. They were useful clues, but they were not exercising the most
+faithful live `/TSR` seam. The safest unattended extension path is now:
+
+1. start from the actual stock ``TimberSupply.rpt`` structure
+2. extend it conservatively through the live user-overlay seam
+3. test plain installed ``/TSR``
+
+Do not assume a clean-room generated replacement template is equivalent to the
+stock report contract just because the visible fields look similar.
+
+FEMIC now resolves that overlay path generically from the current user's
+Windows Documents directory instead of relying on a machine-specific OneDrive
+path assumption.
+
+The current stock-based unattended patch path also forces the TSR horizon to:
+
+- ``TableRange=0-350:10|# MAX=350 INC=10``
+
+so the unattended BTC output timeline lines up with FEMIC's longer VDYP curve
+timeline instead of stopping at the stock 120-year range.
+
+Why This Matters For Richer Indicator Probing
+---------------------------------------------
+
+This same overlay insight overturned the first bleak stand-table conclusion.
+When the first-batch candidates were re-probed through the **real** overlay
+seam instead of a stand-alone generated replacement template, all of these
+columns passed cleanly:
+
+- ``MAI``
+- ``BasalArea:000``
+- ``DBHg:000``
+- ``SPH:000``
+- ``StemCount000``
+- ``StemCount125``
+- ``StemCount175``
+
+So the main compatibility rule appears to be structural:
+
+- preserving the hidden stock ``TimberSupply.rpt`` contract matters a great
+  deal
+- some earlier failures were seam-mismatch artifacts, not proof that the
+  columns were impossible through unattended ``/TSR``
+
+First Optional Unattended Indicator Bank
+----------------------------------------
+
+FEMIC now has a first real optional BTC indicator-bank switch on top of the
+core unattended `/TSR` seam:
+
+- ``--indicator-bank stand-structure-basic``
+
+Current bank contents:
+
+- ``MAI``
+- ``BasalArea:000``
+- ``DBHg:000``
+- ``SPH:000``
+- ``StemCount000``
+- ``StemCount125``
+- ``StemCount175``
+
+Important runtime detail:
+
+- the working implementation patches the real per-user overlay report path
+  under ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt`` with
+  backup/restore;
+- relying only on a copied-install-local ``TimberSupply.rpt`` is not enough,
+  because the live overlay can silently shadow that local file and make the
+  run appear successful while dropping the requested bank columns from the
+  returned output.
+
+Live smoke proof now exists for:
+
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-basic``
+
+That returned a single unattended output CSV with:
+
+- the default conservative families:
+  - ``MVcon_*``
+  - ``MVdec_*``
+  - ``HTcon_*``
+  - ``HTdec_*``
+  - ``gVol_*``
+  - ``CC_*``
+- plus the first stand-structure bank:
+  - ``MAI_*``
+  - ``BasalArea000_*``
+  - ``DBHg000_*``
+  - ``SPH000_*``
+  - ``StemCount000_*``
+  - ``StemCount125_*``
+  - ``StemCount175_*``
+
+while still honoring the 350-year unattended TSR timeline.
+
 The small dataclasses in this module are also useful because they define the
 candidate/freshness contracts explicitly:
 
