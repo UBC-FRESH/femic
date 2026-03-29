@@ -80,6 +80,57 @@ behavior is controlled through the runtime config surface:
 This automation is intended for the local rebuild workflow and does not replace
 manifest/log review when something looks wrong.
 
+Critical Headless Scheduling Insight
+------------------------------------
+
+The current proving-ground no-GUI Patchworks seam has one especially important
+runtime rule:
+
+- in the headless BeanShell path, let
+  :meth:`ca.spatial.patchworks.Control.waitForIterations` own scheduler startup
+- do **not** call ``control.resume()`` immediately before that wait
+
+Live proving-ground smokes showed that the explicit pre-``resume()`` path was
+the source of the earlier ``java.lang.IllegalStateException: Not suspended``
+failure. Once that call was removed, the K3Z proving-ground helper could:
+
+1. reach ``PatchWorks_Init`` completion,
+2. wait one unattended iteration,
+3. suspend after the wait,
+4. call ``saveStage(...)``, and
+5. return control with a success manifest and saved stage directory.
+
+FEMIC now supervises these Windows headless runs directly:
+
+- success and failure are detected from explicit trace/log markers
+- failed runs are killed automatically instead of leaving dead shells behind
+- successful runs are also torn down automatically after the success marker and
+  saved-stage verification
+
+First Real Headless Scenario Smoke
+----------------------------------
+
+The proving-ground seam is now beyond a passive ``saveStage(...)`` proof.
+FEMIC supports a minimal headless scenario mode,
+``max-even-flow-smoke``, that activates one target before the bounded wait/save
+cycle. The first fully useful proving-ground smoke on
+``analysis/intensive_light_standstructure.pin`` showed that:
+
+1. ``product.Yield.managed.Total`` can be activated headlessly with a modest
+   annual minimum,
+2. the saved ``scenario/targetStatus.csv`` records that target as active,
+3. the saved ``scenario/targetSummary.csv`` contains non-zero managed-yield
+   currents and derived ``flow.even.product.Yield.managed.Total`` values, and
+4. the saved ``scenario/schedule.csv`` is non-empty and contains real managed
+   treatments.
+
+One important nuance from the proving-ground evidence:
+
+- directly activating ``flow.even.product.Yield.managed.Total`` changed target
+  state and objective values but still left the saved schedule empty;
+- activating the underlying ``product.Yield.managed.Total`` target produced
+  the first useful no-GUI scheduling smoke.
+
 How This Fits Into The Pipeline
 -------------------------------
 
@@ -199,6 +250,63 @@ The common failure boundaries in this module are:
 - block/topology preparation problems
   missing fragments geometry, no usable stand/block id field, or backend misuse
   can break the `build-blocks` path before Matrix Builder ever runs
+
+Headless Proving Ground
+-----------------------
+
+The native-Windows no-GUI proving-ground seam is now real in this module.
+
+Current documented runtime rules:
+
+- let ``Control.waitForIterations(...)`` own scheduler startup in the
+  BeanShell helper;
+- do **not** pre-issue ``control.resume()`` in the headless path or Patchworks
+  can fail with ``java.lang.IllegalStateException: Not suspended``;
+- FEMIC supervises the run by watching explicit headless trace/log markers and
+  self-terminates the Patchworks Java tree on both success and failure.
+
+The first useful headless scheduling proof used a tiny scenario mode,
+``max-even-flow-smoke``, on the K3Z proving-ground surface. The current best
+proof point is run ``p49_smoke_20260328q``:
+
+- phase 1 seeds ``product.Yield.managed.Total`` with a modest annual minimum;
+- phase 2 suspends, activates
+  ``flow.even.product.Yield.managed.Total``, and runs a second bounded wait;
+- the saved stage records both targets as active in ``targetStatus.csv``;
+- ``targetSummary.csv`` shows non-zero currents for both targets; and
+- ``schedule.csv`` remains non-empty (677 lines) with real managed treatments.
+
+The normal CLI/default-target path is also now proven:
+
+- proving-ground smoke ``p49_smoke_20260328r`` omitted an explicit scenario
+  target and relied on FEMIC's default
+  ``product.Yield.managed.Total`` resolution;
+- both the underlying target and the ``flow.even.*`` companion still ended up
+  active in ``targetStatus.csv``; and
+- ``schedule.csv`` remained non-empty (788 lines).
+
+The current closeout-level proving ground is now the real base K3Z surface:
+
+- ``max-even-flow-smoke`` defaults to a useful K3Z recipe when the caller
+  leaves ``--iterations`` at the placeholder value:
+  target defaults to ``product.Yield.managed.Total`` and iterations default to
+  ``100000``.
+- the BeanShell helper now seeds the underlying harvest target first and
+  configures that base target with ``LINEAR=true``, maximum = ``200000`` in
+  all periods at default weight, and minimum = ``10000`` per period.
+- after the seed phase, the helper activates
+  ``flow.even.product.Yield.managed.Total`` with minimum = maximum = ``0`` and
+  minimum weight = maximum weight = ``100`` across all periods.
+- proving-ground smoke ``p49_base_closeout_20260328b`` ran against
+  ``analysis/base.pin`` and saved a stage where both the underlying target and
+  the even-flow companion were active, ``targetStatus.csv`` showed the base
+  target with ``LINEAR=true``, the base target summary stabilized around
+  ``122200`` per period inside the ``100000..200000`` band, the even-flow
+  target summary stayed tightly clustered near zero, and ``schedule.csv``
+  remained non-empty (480 lines).
+
+That means this module now owns a real unattended Patchworks launch/analyze/
+save/exit seam instead of a launch-only experiment.
 
 Cross-References
 ----------------

@@ -927,6 +927,22 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-03-28 (Phase 49 kickoff): start issue `#54` on branch
+  `feature/patchworks-headless-runner` to turn the documented
+  `classic_GUI(control);` seam into a real FEMIC-controlled unattended
+  Patchworks runner.
+  - Immediate execution order:
+    - extract and inspect the local `patchworks-201901` API docs, with first
+      focus on `Control`, `Patchworks`, `ScenarioDescription`, `ClassicGui`,
+      and `AppChooser`;
+    - confirm the smallest real no-GUI launch path from shipped BeanShell and
+      sample PIN surfaces before adding any FEMIC API/CLI surface;
+    - implement a minimal proving-ground unattended launch/run/report/exit
+      helper first, then broaden into richer scenario-definition automation.
+  - Success bar for the first slice:
+    - FEMIC launches one real Patchworks scenario headlessly,
+    - outputs are written to disk,
+    - control returns without a human click loop.
 - 2026-03-27 (Phase 43 kickoff): start Issue 36 on branch
   `feature/k3z-all-intensive-silviculture` to design and implement a new K3Z
   teaching variant that combines the currently separated intensive
@@ -7817,6 +7833,15 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
             rows with area-normalized `SUM` multipliers, while the ordinary
             `base` and `ctfert_l15h5` tracks still show zero rows for this bank.
           - with the extended 350-year timeline still intact;
+        - quick developer-facing manual validation checkpoint:
+          - the developer manually launched the proving-ground Patchworks
+            surface and reported that it "looks pretty good";
+          - the bank is therefore considered broadly landed end to end for this
+            first rollout;
+          - slower indicator-by-indicator interpretation, validation, and
+            possible pruning of bank contents is still expected later, but that
+            follow-on review is not a blocker to this initial proving-ground
+            landing;
       - immediate next step:
         - pilot this first bank only on a dedicated K3Z `intensive_*`
           proving-ground subvariant before touching any student-facing
@@ -8143,6 +8168,144 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         `Yield.rpt` token forms (`SPH:000`, `DBHg:000`, `BasalArea:000`);
       - treat that as optional-bank seam work under issue `#47`, not as a
         blocker to closing this regression bug.
+
+- [ ] P49 Add a headless Patchworks runner and scenario orchestration layer
+  - [x] P49.1 Confirm and document the real no-GUI Patchworks seam from the
+    shipped BeanShell/runtime surfaces and local API docs.
+  - [x] P49.2 Add a FEMIC-side headless Patchworks runner API/CLI that can:
+    - launch Patchworks against a target `.pin`
+    - suppress the classic GUI path
+    - run at least one unattended scenario to completion
+    - write output/report artifacts to disk
+    - return control cleanly without human interaction
+  - [x] P49.3 Add a first proving-ground scenario-definition path so FEMIC can
+    inject run parameters and report destinations into a generated BeanShell
+    control script instead of depending on manual Patchworks interaction.
+    - completed proof:
+      - FEMIC now supports a minimal headless scenario mode,
+        `max-even-flow-smoke`, with optional target/minimum-annual controls;
+      - the proving-ground helper activates a target before the bounded wait
+        and saves the resulting stage/report bundle automatically.
+  - [x] P49.4 Prove the full lifecycle on a representative K3Z proving-ground
+    surface by:
+    - launching the scenario unattended
+    - running a quick max-even-flow style smoke
+    - writing the standard Patchworks target/report outputs to disk
+    - checking those outputs directly for obvious regressions before declaring
+      the seam landed
+  - Current implementation order:
+    - reuse FEMIC's existing BeanShell launcher in
+      `src/femic/patchworks_runtime.py` rather than inventing a second
+      Patchworks process runner;
+    - generate a tiny BeanShell wrapper that calls
+      `AppChooser.invoke("ca.spatial.patchworks.Patchworks", ..., true)` with
+      the target `.pin` plus a FEMIC headless argument contract;
+    - teach the proving-ground K3Z analysis surface to parse `args`, skip
+      `classic_GUI(control)` when headless mode is requested, still register
+      reports, and then run a bounded analyze/save cycle before returning;
+    - prove the first slice only on `analysis/base.pin`, then widen only after
+      the run/save artifact contract is real.
+    - current edge:
+      - Windows headless runs are now actively supervised by FEMIC instead of
+        being launched and forgotten;
+      - FEMIC watches the headless trace/log outputs for explicit success and
+        failure markers;
+      - on both success and failure, FEMIC now self-terminates the Patchworks
+        Java process tree and returns a normal CLI result instead of leaving
+        dead shells for the human to close manually;
+      - the key scheduler insight is now documented and implemented:
+        in the proving-ground headless BeanShell path,
+        `Control.waitForIterations(...)` should own scheduler startup; calling
+        `control.resume()` first causes the `Not suspended` seam we were
+        seeing.
+      - the saved proving-ground stage currently has an empty
+        `scenario/schedule.csv`, so the next headless milestone is not another
+        launch proof but a tiny target-activation scenario proof.
+      - latest proving-ground smoke (`p49_smoke_20260328q`) now proves the
+        real two-phase even-flow seam:
+        - the helper seeds the underlying
+          `product.Yield.managed.Total` target first, then suspends, then
+          activates `flow.even.product.Yield.managed.Total` for the second
+          wait phase;
+        - the saved stage records both targets as active in
+          `scenario/targetStatus.csv`;
+        - `scenario/targetSummary.csv` shows non-zero currents for both the
+          underlying harvest target and the even-flow companion;
+        - `scenario/schedule.csv` is non-empty (677 lines) and contains real
+          managed treatments (`CC`, `PCT`, `CT`, `F1`, `F2`, `F3`);
+        - FEMIC still returned control cleanly and self-terminated the Java
+          tree after the success marker.
+      - default-target usability is also now proven:
+        - proving-ground smoke `p49_smoke_20260328r` omitted an explicit
+          scenario target and relied on FEMIC's default
+          `product.Yield.managed.Total` resolution;
+        - both the underlying harvest target and the
+          `flow.even.product.Yield.managed.Total` companion still ended up
+          active in `scenario/targetStatus.csv`; and
+        - `scenario/schedule.csv` remained non-empty (788 lines).
+      - closeout-level base-K3Z proof is now in hand:
+        - proving-ground smoke `p49_base_closeout_20260328a` ran against
+          `analysis/base.pin`;
+        - the helper used the current documented useful-default recipe:
+          seed the base harvest target first, then activate the even-flow
+          companion with min=max=`0` and min=max weight=`100` across periods;
+        - `targetStatus.csv` recorded both
+          `product.Yield.managed.Total` and
+          `flow.even.product.Yield.managed.Total` active, with the even-flow
+          target in both min/max mode;
+        - `targetSummary.csv` showed nearly level even-flow deviations around
+          zero and strong non-zero underlying managed-yield currents;
+        - `schedule.csv` was non-empty (341 lines).
+        - upgraded proving-ground smoke `p49_base_closeout_20260328b` improved
+          that base recipe further:
+          - the helper now forces `product.Yield.managed.Total` into linear
+            penalty mode and sets a generous maximum=`200000` in every period
+            at default weight;
+          - the seeded base-target minimum was `10000` per period;
+          - the even-flow companion still used min=max=`0` and min=max
+            weight=`100`;
+          - `targetStatus.csv` showed:
+            - `product.Yield.managed.Total` active with `LINEAR=true`; and
+            - `flow.even.product.Yield.managed.Total` active in min/max mode;
+          - `targetSummary.csv` showed the base target stabilized around
+            `122200` per period inside the `100000..200000` band, while
+            even-flow deviations clustered tightly around zero;
+          - `schedule.csv` remained non-empty (480 lines).
+  - Notes:
+    - Governing tracker:
+      - GitHub issue #54
+    - Primary local evidence:
+      - `planning/patchworks_nogui_mode.md`
+      - `tmp/patchworks-201901.doc.tar.gz`
+      - `C:\Program Files\Spatial Planning Systems\Patchworks\scripts\BeanShell\00_startup.bsh`
+      - `C:\Program Files\Spatial Planning Systems\Patchworks\sample_2024\analysis\C5.pin`
+    - Critical documented seam already surfaced:
+      - `classic_GUI(control);` is the optional GUI activation call within the
+        Patchworks initialization path;
+      - the Patchworks docs explicitly state that if that call is removed or
+        omitted, Patchworks can run in unattended batch mode and exit when the
+        initialization script completes.
+    - Implementation priority:
+      - land the minimal unattended launch/run/report/exit seam first;
+      - only then broaden into richer scenario-definition helpers and
+        comparative analysis/report automation.
+    - Validation rule:
+      - cheap direct full-lifecycle smoke beats assumptions here; do not claim
+        headless success until FEMIC has actually launched a real Patchworks
+        scenario, written outputs to disk, and returned control without human
+        clicks.
+    - Latest proving-ground smoke (`p49_smoke_20260328j`):
+      - headless launch/load/init succeeded;
+      - `PatchWorks_Init` completed and FEMIC trace logging reached the worker
+        analyze step;
+      - `control.waitForIterations(1)` completed without the old
+        `Not suspended` failure once explicit `control.resume()` was removed;
+      - FEMIC suspended the scheduler after the wait, saved the stage to:
+        `analysis/headless_runs/p49_smoke_20260328j`
+      - the returned manifest reported `returncode=0`,
+        `terminal_state=success`, and `saved_file_count=1695`;
+      - FEMIC then terminated the Patchworks Java tree automatically after the
+        success marker, so no human cleanup was required.
 
 
 

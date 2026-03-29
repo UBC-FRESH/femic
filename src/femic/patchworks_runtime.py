@@ -32,6 +32,19 @@ FATAL_MATRIX_STDERR_PATTERNS = (
     "sps home directory not found, installation not complete",
     "ip helper library getadaptersaddresses function failed",
 )
+PATCHWORKS_HEADLESS_SUCCESS_MARKER = "[FEMIC headless] saveStage completed"
+PATCHWORKS_HEADLESS_FAILURE_MARKERS = (
+    "[FEMIC headless] stage failed:",
+    "FEMIC headless stage failed:",
+    "java.lang.IllegalStateException: Exception while running scenario",
+    "Exception while running scenario",
+)
+DEFAULT_PATCHWORKS_HEADLESS_SCENARIO_TARGETS: dict[str, str] = {
+    "max-even-flow-smoke": "product.Yield.managed.Total",
+}
+DEFAULT_PATCHWORKS_HEADLESS_SCENARIO_ITERATIONS: dict[str, int] = {
+    "max-even-flow-smoke": 100000,
+}
 QMD_ACCOUNT_PATTERN = re.compile(
     r"^feature\.QMD\.(managed|unmanaged)\.([A-Za-z0-9_.]+)$"
 )
@@ -100,6 +113,36 @@ class PatchworksExecutionResult:
     stderr_log_path: Path
     manifest_path: Path
     failures: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class PatchworksHeadlessRunResult:
+    """Execution outputs for an unattended Patchworks PIN run."""
+
+    run_id: str
+    pin_path: Path
+    stage_label: str
+    stage_dir: Path
+    iterations: int
+    improvement: float
+    scenario_mode: str
+    scenario_target: str | None
+    scenario_min_annual: float | None
+    launcher_script_path: Path
+    trace_log_path: Path
+    execution: PatchworksExecutionResult
+    saved_file_count: int
+    failures: tuple[str, ...]
+
+    @property
+    def returncode(self) -> int:
+        """Return the effective run status code."""
+        return 0 if not self.failures and self.execution.returncode == 0 else 1
+
+    @property
+    def manifest_path(self) -> Path:
+        """Return the headless-run manifest path."""
+        return self.execution.manifest_path
 
 
 @dataclass(frozen=True)
@@ -667,6 +710,184 @@ def _resolve_run_id(run_id: str | None) -> str:
         return run_id.strip()
     stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     return f"patchworks_{stamp}"
+
+
+def _normalize_patchworks_stage_label(value: str | None, *, run_id: str) -> str:
+    raw = (value or "").strip().replace("\\", "/").strip("/")
+    if not raw:
+        raw = f"headless_runs/{run_id}"
+    return raw
+
+
+def _render_patchworks_headless_launcher_script(
+    *,
+    pin_path: Path,
+    stage_label: str,
+    iterations: int,
+    improvement: float,
+    scenario_mode: str,
+    scenario_target: str | None,
+    scenario_min_annual: float | None,
+    trace_log_path: Path,
+) -> str:
+    pin_literal = json.dumps(str(pin_path))
+    stage_literal = json.dumps(stage_label)
+    scenario_mode_literal = json.dumps(scenario_mode)
+    scenario_target_literal = json.dumps(scenario_target or "")
+    scenario_min_annual_literal = json.dumps(
+        "" if scenario_min_annual is None else str(scenario_min_annual)
+    )
+    trace_literal = json.dumps(str(trace_log_path))
+    return "\n".join(
+        [
+            "import ca.spatial.util.AppChooser;",
+            "",
+            f"String pinPath = {pin_literal};",
+            f"String stageLabel = {stage_literal};",
+            f"int iterations = {iterations};",
+            f"double improvement = {improvement};",
+            f"String scenarioMode = {scenario_mode_literal};",
+            f"String scenarioTarget = {scenario_target_literal};",
+            f"String scenarioMinAnnual = {scenario_min_annual_literal};",
+            f"String traceLogPath = {trace_literal};",
+            "",
+            "String[] patchworksArgs = new String[] {",
+            "   pinPath,",
+            '   "__femic_headless__",',
+            "   stageLabel,",
+            "   Integer.toString(iterations),",
+            "   Double.toString(improvement),",
+            "   traceLogPath,",
+            "   scenarioMode,",
+            "   scenarioTarget,",
+            "   scenarioMinAnnual",
+            "};",
+            "",
+            'print("Launching Patchworks headless PIN: " + pinPath);',
+            'AppChooser.invoke("ca.spatial.patchworks.Patchworks", patchworksArgs, true);',
+            "",
+        ]
+    )
+
+
+def _read_text_if_exists(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return ""
+    except OSError:
+        return ""
+
+
+def _detect_patchworks_headless_terminal_state(
+    *,
+    trace_text: str,
+    stdout_text: str,
+    stderr_text: str,
+) -> tuple[Literal["pending", "success", "failure"], str | None]:
+    if PATCHWORKS_HEADLESS_SUCCESS_MARKER in trace_text:
+        return "success", PATCHWORKS_HEADLESS_SUCCESS_MARKER
+
+    combined_text = "\n".join((trace_text, stdout_text, stderr_text))
+    for marker in PATCHWORKS_HEADLESS_FAILURE_MARKERS:
+        if marker in combined_text:
+            return "failure", marker
+
+    return "pending", None
+
+
+def _run_windows_headless_beanshell_with_monitor(
+    *,
+    command: tuple[str, ...],
+    env: dict[str, str],
+    cwd: Path,
+    stdout_log_path: Path,
+    stderr_log_path: Path,
+    trace_log_path: Path,
+) -> tuple[int, dict[str, Any], tuple[str, ...]]:
+    launched_pid: int | None = None
+    terminal_state: Literal["pending", "success", "failure"] = "pending"
+    detected_marker: str | None = None
+    monitor_killed_process_tree = False
+    final_trace_text = ""
+    final_stdout_text = ""
+    final_stderr_text = ""
+    failures: list[str] = []
+
+    with (
+        stdout_log_path.open("w", encoding="utf-8") as stdout_handle,
+        stderr_log_path.open("w", encoding="utf-8") as stderr_handle,
+    ):
+        proc = subprocess.Popen(
+            list(command),
+            stdout=stdout_handle,
+            stderr=stderr_handle,
+            text=True,
+            env=env,
+            cwd=cwd,
+        )
+        launched_pid = int(proc.pid)
+        while True:
+            returncode = proc.poll()
+            final_trace_text = _read_text_if_exists(trace_log_path)
+            final_stdout_text = _read_text_if_exists(stdout_log_path)
+            final_stderr_text = _read_text_if_exists(stderr_log_path)
+            terminal_state, detected_marker = _detect_patchworks_headless_terminal_state(
+                trace_text=final_trace_text,
+                stdout_text=final_stdout_text,
+                stderr_text=final_stderr_text,
+            )
+
+            if terminal_state == "success":
+                try:
+                    returncode = proc.wait(timeout=2.0)
+                except subprocess.TimeoutExpired:
+                    monitor_killed_process_tree = _force_stop_windows_process(launched_pid)
+                    returncode = 0
+                break
+
+            if terminal_state == "failure":
+                if proc.poll() is None:
+                    monitor_killed_process_tree = _force_stop_windows_process(launched_pid)
+                    try:
+                        proc.wait(timeout=2.0)
+                    except subprocess.TimeoutExpired:
+                        proc.kill()
+                        proc.wait(timeout=2.0)
+                returncode = 1
+                failures.append(
+                    f"headless failure marker detected: {detected_marker or '<unknown>'}"
+                )
+                break
+
+            if returncode is not None:
+                break
+
+            time.sleep(0.25)
+
+    final_trace_text = _read_text_if_exists(trace_log_path)
+    final_stdout_text = _read_text_if_exists(stdout_log_path)
+    final_stderr_text = _read_text_if_exists(stderr_log_path)
+    terminal_state, detected_marker = _detect_patchworks_headless_terminal_state(
+        trace_text=final_trace_text,
+        stdout_text=final_stdout_text,
+        stderr_text=final_stderr_text,
+    )
+
+    effective_returncode = 0 if terminal_state == "success" else int(returncode or 0)
+    if terminal_state == "failure":
+        effective_returncode = 1
+    elif terminal_state == "pending" and effective_returncode != 0:
+        failures.append("headless process exited without success marker")
+
+    automation = {
+        "launched_pid": launched_pid,
+        "terminal_state": terminal_state,
+        "detected_marker": detected_marker,
+        "monitor_killed_process_tree": monitor_killed_process_tree,
+        "trace_log_path": str(trace_log_path),
+    }
+    return effective_returncode, automation, tuple(failures)
 
 
 def _close_windows_process_main_windows(process_id: int) -> int:
@@ -1774,6 +1995,233 @@ def run_patchworks_beanshell_script(
         stdout_log_path=stdout_log,
         stderr_log_path=stderr_log,
         manifest_path=manifest_path,
+        failures=tuple(failures),
+    )
+
+
+def run_patchworks_headless_pin(
+    *,
+    config: PatchworksRuntimeConfig,
+    pin_path: Path,
+    log_dir: Path,
+    run_id: str | None = None,
+    stage_label: str | None = None,
+    iterations: int = 1,
+    improvement: float = 0.0,
+    scenario_mode: str = "none",
+    scenario_target: str | None = None,
+    scenario_min_annual: float | None = None,
+) -> PatchworksHeadlessRunResult:
+    """Run a Patchworks PIN unattended via the documented Patchworks seams."""
+
+    resolved_pin_path = pin_path.expanduser().resolve()
+    if not resolved_pin_path.exists():
+        raise FileNotFoundError(f"Patchworks PIN not found: {resolved_pin_path}")
+    if resolved_pin_path.suffix.lower() != ".pin":
+        raise PatchworksConfigError(
+            f"Patchworks headless runner expects a .pin file: {resolved_pin_path}"
+        )
+    if iterations < 0:
+        raise PatchworksConfigError("iterations must be >= 0")
+    if improvement < 0.0:
+        raise PatchworksConfigError("improvement must be >= 0.0")
+    normalized_scenario_mode = scenario_mode.strip() or "none"
+    effective_scenario_target = scenario_target
+    if effective_scenario_target is None:
+        effective_scenario_target = DEFAULT_PATCHWORKS_HEADLESS_SCENARIO_TARGETS.get(
+            normalized_scenario_mode
+        )
+    effective_iterations = iterations
+    if (
+        normalized_scenario_mode in DEFAULT_PATCHWORKS_HEADLESS_SCENARIO_ITERATIONS
+        and iterations <= 1
+    ):
+        effective_iterations = DEFAULT_PATCHWORKS_HEADLESS_SCENARIO_ITERATIONS[
+            normalized_scenario_mode
+        ]
+    if scenario_min_annual is not None and scenario_min_annual < 0.0:
+        raise PatchworksConfigError("scenario_min_annual must be >= 0.0")
+
+    effective_run_id = _resolve_run_id(run_id)
+    normalized_stage_label = _normalize_patchworks_stage_label(
+        stage_label,
+        run_id=effective_run_id,
+    )
+    stage_dir = (resolved_pin_path.parent / normalized_stage_label).resolve()
+    resolved_log_dir = log_dir.expanduser().resolve()
+    resolved_log_dir.mkdir(parents=True, exist_ok=True)
+    trace_log_path = (
+        resolved_log_dir / f"patchworks_headless_trace-{effective_run_id}.log"
+    )
+    launcher_dir = Path(
+        tempfile.mkdtemp(prefix="patchworks_headless_", dir=resolved_log_dir)
+    )
+    launcher_script_path = (
+        launcher_dir / f"patchworks_headless_launcher_{effective_run_id}.bsh"
+    )
+    launcher_script_path.write_text(
+        _render_patchworks_headless_launcher_script(
+            pin_path=resolved_pin_path,
+            stage_label=normalized_stage_label,
+            iterations=effective_iterations,
+            improvement=improvement,
+            scenario_mode=normalized_scenario_mode,
+            scenario_target=effective_scenario_target,
+            scenario_min_annual=scenario_min_annual,
+            trace_log_path=trace_log_path,
+        ),
+        encoding="utf-8",
+    )
+
+    preflight = run_patchworks_preflight(config=config, require_matrix_inputs=False)
+    if not preflight.ok:
+        raise PatchworksConfigError(
+            "Patchworks preflight failed prior to headless execution: "
+            + "; ".join(preflight.errors)
+        )
+    assert preflight.launcher_executable is not None
+
+    if preflight.host_mode == "windows":
+        stdout_log = resolved_log_dir / f"patchworks_headless_stdout-{effective_run_id}.log"
+        stderr_log = resolved_log_dir / f"patchworks_headless_stderr-{effective_run_id}.log"
+        manifest_path = (
+            resolved_log_dir / f"patchworks_headless_manifest-{effective_run_id}.json"
+        )
+        command = _build_windows_beanshell_command(
+            launcher_executable=preflight.launcher_executable,
+            config=config,
+            script_path=launcher_script_path,
+            script_args=(),
+        )
+        command_string = format_command_for_display(command)
+        returncode, headless_automation, monitor_failures = (
+            _run_windows_headless_beanshell_with_monitor(
+                command=command,
+                env=_build_base_env(config),
+                cwd=config.jar_path.parent,
+                stdout_log_path=stdout_log,
+                stderr_log_path=stderr_log,
+                trace_log_path=trace_log_path,
+            )
+        )
+        execution_failures = list(monitor_failures)
+        output_for_scan = (
+            _read_text_if_exists(trace_log_path)
+            + "\n"
+            + _read_text_if_exists(stdout_log)
+            + "\n"
+            + _read_text_if_exists(stderr_log)
+        )
+        fatal_matches = _detect_fatal_output(output_for_scan)
+        if fatal_matches:
+            execution_failures.append(
+                "fatal stderr signatures detected: " + ", ".join(fatal_matches)
+            )
+        execution_manifest = {
+            "run_id": effective_run_id,
+            "timestamp_utc": datetime.now(UTC).isoformat(),
+            "interactive": False,
+            "mode": "headless_pin",
+            "command": list(command),
+            "command_string": command_string,
+            "raw_returncode": returncode,
+            "returncode": 0 if not execution_failures else 1,
+            "runtime": {
+                "launcher_executable": preflight.launcher_executable,
+                "host_mode": preflight.host_mode,
+                "jar_path": str(config.jar_path),
+                "license_env": config.license_env,
+                "license_value": config.license_value,
+                "spshome": config.spshome,
+                "use_xvfb": config.use_xvfb,
+                "wine_prefix": str(config.wine_prefix) if config.wine_prefix else None,
+            },
+            "inputs": {
+                "pin_path": str(resolved_pin_path),
+                "stage_label": normalized_stage_label,
+                "iterations": effective_iterations,
+                "improvement": improvement,
+                "scenario_mode": normalized_scenario_mode,
+                "scenario_target": effective_scenario_target,
+                "scenario_min_annual": scenario_min_annual,
+                "launcher_script_path": str(launcher_script_path),
+                "trace_log_path": str(trace_log_path),
+            },
+            "logs": {
+                "stdout": str(stdout_log),
+                "stderr": str(stderr_log),
+                "trace": str(trace_log_path),
+            },
+            "headless_automation": headless_automation,
+            "failures": execution_failures,
+        }
+        manifest_path.write_text(json.dumps(execution_manifest, indent=2), encoding="utf-8")
+        execution = PatchworksExecutionResult(
+            run_id=effective_run_id,
+            command=command,
+            command_string=command_string,
+            returncode=0 if not execution_failures else 1,
+            stdout_log_path=stdout_log,
+            stderr_log_path=stderr_log,
+            manifest_path=manifest_path,
+            failures=tuple(execution_failures),
+        )
+    else:
+        execution = run_patchworks_beanshell_script(
+            config=config,
+            script_path=launcher_script_path,
+            script_args=(),
+            log_dir=resolved_log_dir,
+            run_id=effective_run_id,
+        )
+
+    stage_files = tuple(stage_dir.rglob("*")) if stage_dir.exists() else ()
+    failures = list(execution.failures)
+    if execution.returncode != 0:
+        failures.append("Patchworks headless launcher returned non-zero status")
+    if not stage_dir.exists():
+        failures.append(f"headless stage directory not created: {stage_dir}")
+    elif not any(path.is_file() for path in stage_files):
+        failures.append(f"headless stage directory contained no files: {stage_dir}")
+
+    manifest_payload = json.loads(execution.manifest_path.read_text(encoding="utf-8"))
+    manifest_payload["mode"] = "headless_pin"
+    manifest_payload["inputs"] = {
+        "pin_path": str(resolved_pin_path),
+        "stage_label": normalized_stage_label,
+        "iterations": effective_iterations,
+        "improvement": improvement,
+        "scenario_mode": normalized_scenario_mode,
+        "scenario_target": effective_scenario_target,
+        "scenario_min_annual": scenario_min_annual,
+        "launcher_script_path": str(launcher_script_path),
+        "trace_log_path": str(trace_log_path),
+    }
+    manifest_payload["outputs"] = {
+        "stage_dir": str(stage_dir),
+        "saved_file_count": sum(1 for path in stage_files if path.is_file()),
+    }
+    manifest_payload["failures"] = failures
+    manifest_payload["returncode"] = 0 if not failures else 1
+    execution.manifest_path.write_text(
+        json.dumps(manifest_payload, indent=2),
+        encoding="utf-8",
+    )
+
+    return PatchworksHeadlessRunResult(
+        run_id=effective_run_id,
+        pin_path=resolved_pin_path,
+        stage_label=normalized_stage_label,
+        stage_dir=stage_dir,
+        iterations=effective_iterations,
+        improvement=improvement,
+        scenario_mode=normalized_scenario_mode,
+        scenario_target=effective_scenario_target,
+        scenario_min_annual=scenario_min_annual,
+        launcher_script_path=launcher_script_path,
+        trace_log_path=trace_log_path,
+        execution=execution,
+        saved_file_count=sum(1 for path in stage_files if path.is_file()),
         failures=tuple(failures),
     )
 

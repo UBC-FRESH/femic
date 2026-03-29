@@ -938,6 +938,18 @@ What was smoke-verified after the rollout:
   this bank, confirming that the first Patchworks rollout stayed quarantined to
   the dedicated proving-ground surface.
 
+Quick manual developer validation checkpoint:
+
+- the developer manually launched the proving-ground Patchworks surface and
+  reported that it "looks pretty good";
+- treat that as positive end-to-end confirmation that the first unattended BTC
+  stand-structure bank is broadly working in the intended proving-ground
+  runtime;
+- however, slower indicator-by-indicator interpretation, validation, and
+  possible pruning of the bank contents is still expected later and should be
+  treated as follow-on refinement work rather than a blocker to this first
+  rollout.
+
 ## Post-Cutover K3Z QMD Regression and Repair
 
 The first core unattended BTC cutover landed with a real K3Z regression:

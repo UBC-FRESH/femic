@@ -23,7 +23,10 @@ External Runtime Boundaries
    * - Patchworks
      - Proprietary runtime boundary. FEMIC can export packages, run preflight,
        and launch commands, but users must supply the local Patchworks install,
-       license wiring, and host-ready runtime.
+       license wiring, and host-ready runtime. The current proving-ground
+       headless seam is now real on native Windows:
+       FEMIC can launch a `.pin` without `classic_GUI(control)`, wait one
+       unattended iteration, save a stage, and return control cleanly.
    * - ArcRasterRescue
      - Treat as an explicit external executable; if auto-discovery fails, set
        ``FEMIC_ARC_RASTER_RESCUE_EXE`` to the compiled path.
@@ -82,6 +85,89 @@ Before Patchworks runtime launch:
 2. confirm Java or Wine + Java is available for the host mode
 3. confirm ``patchworks.jar``, ``SPSHOME``, and license values are wired
 4. launch ``build-blocks`` or ``matrix-build`` only after preflight is clean
+
+Patchworks Headless Runtime Note
+--------------------------------
+
+The first successful FEMIC-controlled no-GUI Patchworks seam now has one
+critical scheduler rule:
+
+- in the proving-ground BeanShell helper, let
+  ``Control.waitForIterations(...)`` own scheduler startup
+- do **not** call ``control.resume()`` immediately before the wait in this
+  headless path
+
+In the current native-Windows proving ground, the explicit ``resume()`` caused
+the old ``java.lang.IllegalStateException: Not suspended`` failure. Removing
+that pre-resume step allows the headless helper to:
+
+1. load the proving-ground ``.pin``
+2. reach ``PatchWorks_Init`` completion
+3. wait one unattended iteration
+4. suspend after the wait
+5. call ``saveStage(...)``
+6. return control cleanly while FEMIC tears down the Patchworks Java tree
+
+FEMIC now also supervises these Windows headless runs directly:
+
+- success and failure are detected from explicit headless trace/log markers
+- failed runs no longer leave dead console shells for the human to close
+- successful runs are also terminated cleanly after the success marker and
+  saved-stage verification
+
+The proving-ground seam has now advanced one step further:
+
+- a minimal headless scenario mode can activate
+  ``product.Yield.managed.Total`` with a modest annual minimum before the
+  bounded wait/save cycle;
+- the saved proving-ground stage now records that target as active in
+  ``scenario/targetStatus.csv``;
+- ``scenario/targetSummary.csv`` contains non-zero managed-yield currents and
+  derived ``flow.even.product.Yield.managed.Total`` values; and
+- ``scenario/schedule.csv`` is non-empty and contains real managed treatments.
+
+One useful reverse-engineering nuance is now established too:
+
+- directly activating ``flow.even.product.Yield.managed.Total`` changed target
+  state but still left the saved schedule empty;
+- activating the underlying ``product.Yield.managed.Total`` target produced
+  the first useful saved headless schedule on the K3Z proving ground.
+
+The next proving-ground refinement is now also established:
+
+- a real ``flow.even.*`` headless smoke works when FEMIC treats it as a
+  two-phase scheduler problem instead of a one-shot target toggle;
+- the helper must first seed the underlying
+  ``product.Yield.managed.Total`` target so there is harvest pressure in the
+  final period, then suspend, then activate the companion
+  ``flow.even.product.Yield.managed.Total`` target for the second wait phase;
+- proving-ground smoke ``p49_smoke_20260328q`` saved a stage where both the
+  underlying harvest target and the even-flow companion were active in
+  ``scenario/targetStatus.csv``, both had non-zero currents in
+  ``scenario/targetSummary.csv``, and ``scenario/schedule.csv`` remained
+  non-empty with real managed treatments.
+- the normal CLI/default-target path now proves the same seam too:
+  ``p49_smoke_20260328r`` omitted an explicit scenario target and relied on
+  FEMIC's default ``product.Yield.managed.Total`` resolution; the saved stage
+  still recorded both targets as active, and ``scenario/schedule.csv``
+  remained non-empty.
+
+The current closeout-level proving-ground contract is now anchored on the real
+base K3Z variant:
+
+- FEMIC's ``max-even-flow-smoke`` mode now defaults to a useful K3Z recipe:
+  default target ``product.Yield.managed.Total``, default iteration budget
+  ``100000``, seed harvest first on the underlying target, force that base
+  target into linear penalty mode, set its maximum to ``200000`` in every
+  period at default weight, seed its minimum to ``10000`` per period, then
+  activate ``flow.even.product.Yield.managed.Total`` with minimum = maximum =
+  ``0`` and minimum = maximum weight = ``100`` across periods.
+- proving-ground smoke ``p49_base_closeout_20260328b`` ran against
+  ``analysis/base.pin`` and saved a stage where both the underlying harvest
+  target and the even-flow companion were active, the base target stabilized at
+  roughly ``122200`` per period inside the ``100000..200000`` band, the
+  even-flow summary values stayed tightly clustered near zero, and
+  ``scenario/schedule.csv`` remained non-empty with real treatments.
 
 Host Assumptions
 ----------------
