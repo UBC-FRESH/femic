@@ -8394,3 +8394,13 @@
   - Added repo-local provenance notes in:
     - `reference/tipsy/README.md`
     - `reference/tipsy/chm_extracted/README.md`
+- 2026-03-29 (Issue #58 doc hardening): tightened the BTC seam docs so the
+  repo now says the critical `/TSR` rule explicitly.
+  - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`,
+    `docs/reference/api/femic-pipeline-tipsy.rst`, `ROADMAP.md`, and
+    `planning/batchtipsy_automation_approach.md` now explicitly state that the
+    live user-overlay `Documents\\BatchTIPSY Composer\\TimberSupply.rpt` path
+    is the **only known-valid** unattended FEMIC `/TSR` seam.
+  - The same notes now explicitly warn that copied-install-local or
+    stock-report-only `/TSR` probes are clue-gathering at best, not equivalent
+    validation of the live unattended FEMIC seam.

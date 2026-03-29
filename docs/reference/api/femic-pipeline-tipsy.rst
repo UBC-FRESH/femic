@@ -169,6 +169,10 @@ One critical reverse-engineering result must not be lost:
   plain installed ``/TSR`` run successfully while still extending the output
   surface
 
+For unattended FEMIC BTC work, this live user-overlay path is the **only
+known-valid `/TSR` seam**. Treat that as an operating constraint, not as a soft
+preference.
+
 This matters because early copied-install/generated-template probes were too
 pessimistic. They were useful clues, but they were not exercising the most
 faithful live `/TSR` seam. The safest unattended extension path is now:
@@ -179,6 +183,14 @@ faithful live `/TSR` seam. The safest unattended extension path is now:
 
 Do not assume a clean-room generated replacement template is equivalent to the
 stock report contract just because the visible fields look similar.
+
+Do not treat the following as decision-making proof for unattended FEMIC
+``/TSR`` behavior:
+
+- copied-install-local ``TimberSupply.rpt`` overrides
+- stock-report swaps done outside the live user Documents overlay
+- probes that do not explicitly pass through
+  ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt``
 
 FEMIC now resolves that overlay path generically from the current user's
 Windows Documents directory instead of relying on a machine-specific OneDrive

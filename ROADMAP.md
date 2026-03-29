@@ -7670,15 +7670,24 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 - The core unattended BTC cutover bird is landed through Phase `48.2d3`.
 - Phase `48.3` is now complete under GitHub issue `#56`.
-- The next installed-help follow-on edge is now GitHub issue `#57`:
-  - this archive pass is now in progress on the current branch;
-  - archive the fully extracted `.chm` help trees from the installed
-    `C:\Program Files\TIPSY 4.7\` product set into tracked repo files;
-  - preserve provenance plus the working short-path `hh.exe -decompile`
-    extraction recipe so future reverse-engineering work can reuse the help
-    corpus without repeating the extraction hunt;
-  - treat this as reference-corpus hygiene for future TIPSY, BTC, FANSIER,
-    SiteTools, and Plotsy reverse-engineering, not as a new runtime seam.
+- Phase `48.4` is now complete under GitHub issue `#57`.
+- The next BTC reverse-engineering edge is GitHub issue `#58`:
+  - probe the undocumented `/No_GUI` command-line seam against the installed
+    BTC executable using a real saved `.btc` project plus known-working CSV
+    inputs;
+  - distinguish documented behavior, experimentally proven behavior, and
+    remaining inference for `/No_GUI`, `/TSR`, `/FLP`, and `.btc` project
+    launches;
+  - specifically test whether `/No_GUI` is a useful execution-mode flag for
+    saved-project workflows rather than just a redundant companion to `/TSR`
+    or `/FLP`.
+- Do not regress the repo's documented BTC seam understanding while doing that:
+  - the live user-overlay
+    ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt`` path is the only
+    known-valid unattended FEMIC ``/TSR`` seam;
+  - copied-install or stock-report ``/TSR`` probes may still be used as clue
+    gathering, but they are not equivalent validation surfaces and should not
+    displace the live overlay seam in docs, planning, or conclusions.
 - The BTC cutover track now carries:
   - the landed unattended `MSYT.csv` + returned CSV seam;
   - the full optional indicator-bank rollout from the canonical BTC ledger;
@@ -8458,6 +8467,33 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         under a short, no-space path such as `C:\chm\...`.
     - Tracked archive location:
       - `reference/tipsy/chm_extracted/`
+- [ ] P48.5 Reverse-engineer the undocumented BTC `/No_GUI` seam
+  - [ ] P48.5a Probe the installed BTC executable with a real saved `.btc`
+    project and compare:
+    - plain project launch;
+    - `/No_GUI <project>.btc`;
+    - `/TSR <input.csv>`;
+    - `/No_GUI /TSR <input.csv>`;
+    - `/FLP <input.csv>`;
+    - `/No_GUI /FLP <input.csv>`;
+    - any other minimal argument forms that show a real behavioral delta.
+  - [ ] P48.5b Record concrete runtime evidence:
+    - exit codes;
+    - visible-window behavior;
+    - output/error file creation;
+    - manifestable clues about whether BTC actually loads and runs the project.
+  - [ ] P48.5c Update planning/docs/changelog/GitHub tracking with the proven
+    seam or a blocker map if `/No_GUI` remains under-documented after probing.
+  - Notes:
+    - Governing tracker:
+      - GitHub issue #58
+    - Primary local probe assets:
+      - `C:\Program Files\TIPSY 4.7\BTC\TIPSYbtc.exe`
+      - `C:\Users\gep\OneDrive - UBC\Documents\BatchTIPSY Composer\test1.btc`
+      - `external/femic-k3z-instance/data/03_input-tsak3z.csv`
+    - Current hypothesis:
+      - `/No_GUI` is more likely to control execution mode for saved-project
+        runs than to define a new output contract by itself.
         - supervised `/TSR`
         - emitted output/error CSVs in scratch
         - manifest status `ok`

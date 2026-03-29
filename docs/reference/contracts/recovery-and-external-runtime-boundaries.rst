@@ -45,6 +45,9 @@ The unattended BTC seam has one especially important hidden rule:
   before falling back to the stock installed report under
   ``C:\Program Files\TIPSY 4.7\BTC``
 
+For unattended FEMIC BTC ``/TSR`` work, this live user-overlay path is the
+**only known-valid runtime seam**.
+
 Operational consequences:
 
 - a broken user-overlay ``TimberSupply.rpt`` can make apparently normal stock
@@ -52,6 +55,9 @@ Operational consequences:
 - moving the overlay out of the way restores stock fallback behavior
 - the safest unattended customization path is to preserve the stock TSR report
   structure and extend it conservatively through that overlay seam
+- copied-install-local ``TimberSupply.rpt`` overrides and stock-report-only
+  ``/TSR`` probes are useful clue-gathering at best; they are not equivalent
+  validation of the live unattended FEMIC seam
 - do not assume that replacing ``TimberSupply.rpt`` wholesale with a
   clean-room generated template is equivalent to the stock report contract
 - FEMIC should resolve the overlay path from the current user's Windows

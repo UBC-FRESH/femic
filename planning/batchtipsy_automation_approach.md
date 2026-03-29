@@ -13,6 +13,16 @@ The intended target workflow is:
 3. BTC returns CSV output and CSV error files.
 4. Stage 01b / post-TIPSY consumes the returned CSV directly.
 
+Before anything else, preserve this invariant:
+
+- for unattended BTC ``/TSR`` automation, the live user-overlay
+  ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt`` path is the **only
+  known-valid seam**
+- copied-install-only or stock-report-only ``/TSR`` experiments are not
+  equivalent runtime evidence for FEMIC's unattended seam
+- those experiments may still be useful for clues, but they should not
+  displace the live overlay path in planning, validation, or conclusions
+
 The installed BTC user guide (`userguide1.4.pdf`) now confirms these additional
 CLI details:
 
@@ -858,6 +868,12 @@ This means the true unattended seam is:
   Documents directory rather than assuming a machine-specific OneDrive path
   so unattended BTC output lines up with FEMIC's longer VDYP curve timeline
   instead of stopping at the stock 120-year range
+
+This is now stronger than a useful clue. For FEMIC unattended BTC ``/TSR``
+work, this live user-overlay path is the only known-valid runtime seam. If a
+future note, probe, or experiment starts treating copied-install or stock-only
+``/TSR`` behavior as equivalent evidence, that note is regressing the repo's
+actual reverse-engineering state.
 
 It also means the earlier copied-install/generated-template probes were too
 pessimistic as a general seam detector. They were useful clues, but they were
