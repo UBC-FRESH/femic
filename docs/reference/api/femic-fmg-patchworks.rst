@@ -141,6 +141,18 @@ That means a bug in exported Patchworks semantics often does not come from a
 single raw source table. It may come from how this module derives and rebinds
 curves during export.
 
+One current high-value example is managed QMD. When the optional BTC
+``stand-structure-basic`` bank is present, this module now prefers richer
+BTC-native managed diameter evidence in this order:
+
+- direct ``DBHg000`` curve points
+- QMD reconstructed from ``BasalArea000`` plus ``SPH000`` / ``StemCount000``
+- the older volume/height/stems approximation
+
+That keeps the newer K3Z proving-ground QMD surfaces coherent with the richer
+BTC-managed stand-structure outputs without forcing every non-bank surface to
+carry the same dependency.
+
 Fragments And State Wiring
 --------------------------
 

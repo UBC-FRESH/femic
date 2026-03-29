@@ -1006,6 +1006,19 @@ def _estimate_qmd_cm_from_volume(
     return max(0.0, diameter_m * 100.0)
 
 
+def _estimate_qmd_cm_from_basal_area(
+    *,
+    basal_area_m2_per_ha: float,
+    stems_per_ha: float,
+) -> float:
+    if basal_area_m2_per_ha <= 0.0 or stems_per_ha <= 0.0:
+        return 0.0
+    diameter_cm = math.sqrt(
+        (float(basal_area_m2_per_ha) * 40000.0) / (math.pi * float(stems_per_ha))
+    )
+    return max(0.0, diameter_cm)
+
+
 def _build_qmd_curve_points(
     *,
     source_curve_points: tuple[CurvePoint, ...],
@@ -1014,6 +1027,9 @@ def _build_qmd_curve_points(
     height_curve_points: tuple[CurvePoint, ...] = (),
     tph_curve_points: tuple[CurvePoint, ...] = (),
     stems_per_ha: float | None = None,
+    direct_diameter_curve_points: tuple[CurvePoint, ...] = (),
+    basal_area_curve_points: tuple[CurvePoint, ...] = (),
+    stand_structure_stems_curve_points: tuple[CurvePoint, ...] = (),
     response_age: int | None = None,
     response_fraction: float = 0.0,
     response_years: int = 10,
@@ -1038,22 +1054,46 @@ def _build_qmd_curve_points(
     for x_val in x_values:
         age = max(0.0, float(x_val))
         stand_volume = max(0.0, float(source_y_by_age.get(x_val, 0.0)))
-        height_m = _estimate_qmd_height_m(
-            age=age,
-            site_index=resolved_site_index,
-            height_curve_points=height_curve_points,
+        qmd = _interpolate_curve_y(
+            curve_points=direct_diameter_curve_points,
+            x_value=age,
         )
-        tph = _estimate_qmd_stems_per_ha(
-            age=age,
-            tph_curve_points=tph_curve_points,
-            stems_per_ha=stems_per_ha,
-        )
-        qmd = _estimate_qmd_cm_from_volume(
-            stand_volume_m3_per_ha=stand_volume,
-            height_m=height_m,
-            stems_per_ha=tph,
-            cone_form_factor=cone_form_factor,
-        )
+        if qmd is None or qmd <= 0.0:
+            basal_area = _interpolate_curve_y(
+                curve_points=basal_area_curve_points,
+                x_value=age,
+            )
+            stand_structure_stems = _interpolate_curve_y(
+                curve_points=stand_structure_stems_curve_points,
+                x_value=age,
+            )
+            if (
+                basal_area is not None
+                and basal_area > 0.0
+                and stand_structure_stems is not None
+                and stand_structure_stems > 0.0
+            ):
+                qmd = _estimate_qmd_cm_from_basal_area(
+                    basal_area_m2_per_ha=basal_area,
+                    stems_per_ha=stand_structure_stems,
+                )
+            else:
+                height_m = _estimate_qmd_height_m(
+                    age=age,
+                    site_index=resolved_site_index,
+                    height_curve_points=height_curve_points,
+                )
+                tph = _estimate_qmd_stems_per_ha(
+                    age=age,
+                    tph_curve_points=tph_curve_points,
+                    stems_per_ha=stems_per_ha,
+                )
+                qmd = _estimate_qmd_cm_from_volume(
+                    stand_volume_m3_per_ha=stand_volume,
+                    height_m=height_m,
+                    stems_per_ha=tph,
+                    cone_form_factor=cone_form_factor,
+                )
         if (
             response_age is not None
             and age >= float(response_age)
@@ -1855,6 +1895,17 @@ def build_patchworks_forestmodel_definition(
         managed_indicator_curves = context.managed_indicator_curves_by_au.get(
             int(au.au_id), {}
         )
+        managed_native_qmd_curve_points = tuple(
+            managed_indicator_curves.get("DBHg000", ())
+        )
+        managed_native_basal_area_curve_points = tuple(
+            managed_indicator_curves.get("BasalArea000", ())
+        )
+        managed_native_stems_curve_points = tuple(
+            managed_indicator_curves.get("SPH000")
+            or managed_indicator_curves.get("StemCount000")
+            or ()
+        )
 
         natural_species_curve_map = context.unmanaged_species_curve_ids.get(
             unmanaged_curve_id, {}
@@ -2122,6 +2173,11 @@ def build_patchworks_forestmodel_definition(
                         if qmd_support is not None
                         and qmd_support.managed_stems_per_ha is not None
                         else None
+                    ),
+                    direct_diameter_curve_points=managed_native_qmd_curve_points,
+                    basal_area_curve_points=managed_native_basal_area_curve_points,
+                    stand_structure_stems_curve_points=(
+                        managed_native_stems_curve_points
                     ),
                 )
                 unmanaged_attrs.append(
@@ -2831,6 +2887,13 @@ def build_patchworks_forestmodel_definition(
                             and qmd_support.managed_stems_per_ha is not None
                             else None
                         ),
+                        direct_diameter_curve_points=managed_native_qmd_curve_points,
+                        basal_area_curve_points=(
+                            managed_native_basal_area_curve_points
+                        ),
+                        stand_structure_stems_curve_points=(
+                            managed_native_stems_curve_points
+                        ),
                         response_age=ct_age,
                         response_fraction=float(ct_config["qmd_response_fraction"]),
                     )
@@ -3125,6 +3188,15 @@ def build_patchworks_forestmodel_definition(
                                 if qmd_support is not None
                                 and qmd_support.managed_stems_per_ha is not None
                                 else None
+                            ),
+                            direct_diameter_curve_points=(
+                                managed_native_qmd_curve_points
+                            ),
+                            basal_area_curve_points=(
+                                managed_native_basal_area_curve_points
+                            ),
+                            stand_structure_stems_curve_points=(
+                                managed_native_stems_curve_points
                             ),
                             response_age=int(fert_config["fert_age"]),
                             response_fraction=float(

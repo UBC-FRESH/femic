@@ -712,11 +712,26 @@ def _resolve_run_id(run_id: str | None) -> str:
     return f"patchworks_{stamp}"
 
 
-def _normalize_patchworks_stage_label(value: str | None, *, run_id: str) -> str:
-    raw = (value or "").strip().replace("\\", "/").strip("/")
-    if not raw:
-        raw = f"headless_runs/{run_id}"
-    return raw
+def _resolve_patchworks_stage_output(
+    value: str | None,
+    *,
+    run_id: str,
+    pin_parent: Path,
+    log_dir: Path,
+) -> tuple[str, Path]:
+    raw = (value or "").strip()
+    if raw:
+        normalized = raw.replace("\\", "/")
+        candidate = Path(normalized).expanduser()
+        if candidate.is_absolute():
+            resolved = candidate.resolve()
+            return resolved.as_posix(), resolved
+        relative_label = normalized.strip("/")
+        resolved = (pin_parent / relative_label).resolve()
+        return relative_label, resolved
+
+    resolved = (log_dir / "headless_stage" / run_id).resolve()
+    return resolved.as_posix(), resolved
 
 
 def _render_patchworks_headless_launcher_script(
@@ -832,23 +847,29 @@ def _run_windows_headless_beanshell_with_monitor(
             final_trace_text = _read_text_if_exists(trace_log_path)
             final_stdout_text = _read_text_if_exists(stdout_log_path)
             final_stderr_text = _read_text_if_exists(stderr_log_path)
-            terminal_state, detected_marker = _detect_patchworks_headless_terminal_state(
-                trace_text=final_trace_text,
-                stdout_text=final_stdout_text,
-                stderr_text=final_stderr_text,
+            terminal_state, detected_marker = (
+                _detect_patchworks_headless_terminal_state(
+                    trace_text=final_trace_text,
+                    stdout_text=final_stdout_text,
+                    stderr_text=final_stderr_text,
+                )
             )
 
             if terminal_state == "success":
                 try:
                     returncode = proc.wait(timeout=2.0)
                 except subprocess.TimeoutExpired:
-                    monitor_killed_process_tree = _force_stop_windows_process(launched_pid)
+                    monitor_killed_process_tree = _force_stop_windows_process(
+                        launched_pid
+                    )
                     returncode = 0
                 break
 
             if terminal_state == "failure":
                 if proc.poll() is None:
-                    monitor_killed_process_tree = _force_stop_windows_process(launched_pid)
+                    monitor_killed_process_tree = _force_stop_windows_process(
+                        launched_pid
+                    )
                     try:
                         proc.wait(timeout=2.0)
                     except subprocess.TimeoutExpired:
@@ -2043,13 +2064,14 @@ def run_patchworks_headless_pin(
         raise PatchworksConfigError("scenario_min_annual must be >= 0.0")
 
     effective_run_id = _resolve_run_id(run_id)
-    normalized_stage_label = _normalize_patchworks_stage_label(
-        stage_label,
-        run_id=effective_run_id,
-    )
-    stage_dir = (resolved_pin_path.parent / normalized_stage_label).resolve()
     resolved_log_dir = log_dir.expanduser().resolve()
     resolved_log_dir.mkdir(parents=True, exist_ok=True)
+    normalized_stage_label, stage_dir = _resolve_patchworks_stage_output(
+        stage_label,
+        run_id=effective_run_id,
+        pin_parent=resolved_pin_path.parent,
+        log_dir=resolved_log_dir,
+    )
     trace_log_path = (
         resolved_log_dir / f"patchworks_headless_trace-{effective_run_id}.log"
     )
@@ -2082,8 +2104,12 @@ def run_patchworks_headless_pin(
     assert preflight.launcher_executable is not None
 
     if preflight.host_mode == "windows":
-        stdout_log = resolved_log_dir / f"patchworks_headless_stdout-{effective_run_id}.log"
-        stderr_log = resolved_log_dir / f"patchworks_headless_stderr-{effective_run_id}.log"
+        stdout_log = (
+            resolved_log_dir / f"patchworks_headless_stdout-{effective_run_id}.log"
+        )
+        stderr_log = (
+            resolved_log_dir / f"patchworks_headless_stderr-{effective_run_id}.log"
+        )
         manifest_path = (
             resolved_log_dir / f"patchworks_headless_manifest-{effective_run_id}.json"
         )
@@ -2155,7 +2181,9 @@ def run_patchworks_headless_pin(
             "headless_automation": headless_automation,
             "failures": execution_failures,
         }
-        manifest_path.write_text(json.dumps(execution_manifest, indent=2), encoding="utf-8")
+        manifest_path.write_text(
+            json.dumps(execution_manifest, indent=2), encoding="utf-8"
+        )
         execution = PatchworksExecutionResult(
             run_id=effective_run_id,
             command=command,

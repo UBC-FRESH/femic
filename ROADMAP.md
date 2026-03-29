@@ -7668,8 +7668,8 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 ## Detailed Next Steps Notes
 
-- The core unattended BTC cutover bird is landed; the current leading edge is
-  Phase `48.2d1` under GitHub issue `#47`.
+- The core unattended BTC cutover bird is landed through Phase `48.2d3`
+  under GitHub issue `#49`; the next cutover-wide closeout edge is `P48.3`.
 - The first optional unattended BTC indicator-bank switch is now wired through
   the live user-overlay TSR seam:
   - `--indicator-bank stand-structure-basic`
@@ -7688,11 +7688,24 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     when validating optional-bank output, because the live overlay can shadow
     them and create false conclusions.
 - The next concrete implementation edge is:
-  - pilot `stand-structure-basic` only on a dedicated K3Z `intensive_*`
-    proving-ground subvariant,
-  - verify the extra banked outputs flow through the end-to-end FEMIC/TIPSY
-    workflow without touching student-facing variants,
-  - then continue the one-column ratchet to define the next safe bank frontier.
+  - revisit managed K3Z QMD using the live BTC-native diameter signals already
+    present in the first stand-structure bank;
+  - current evidence from `tipsy_curves_tsak3z.csv` is that `DBHg000` closely
+    matches the QMD implied by BTC `BasalArea000` + `SPH000`, while FEMIC's
+    older volume/height/stems approximation tends to run lower on the same
+    live K3Z outputs;
+  - so the first intended change is to prefer BTC-native managed diameter
+    curves where available and retain the older approximation only as a
+    fallback;
+  - prove that revised contract first on
+    `intensive_light_standstructure`, inspect rebuilt XML/tracks directly, and
+    run the relevant Patchworks smoke before widening anything else.
+- The headless Patchworks runtime guardrail is now:
+  - let FEMIC default unattended `saveStage(...)` output to
+    `vdyp_io/logs/headless_stage/<run_id>` so report bundles do not spill into
+    tracked `analysis/` paths;
+  - only use `--stage-label` for a custom destination when that different save
+    location is intentional and reviewed.
 - Keep the parallel seam-detection mission alive:
   - for any future failing column, collect clues about report family, token
     syntax, stock report membership, and `OutputColumns.txt`/Tcl references so
@@ -7865,7 +7878,7 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       piloting first on a dedicated K3Z intensive-silviculture proving-ground
       subvariant rather than the active student-facing variants. Track on
       GitHub issue #48.
-    - [ ] P48.2d3 Revisit the current K3Z QMD curves and either:
+    - [x] P48.2d3 Revisit the current K3Z QMD curves and either:
       - validate the current derived math more rigorously against BTC-native
         diameter signals, or
       - replace the current approximation with literal BTC/VDYP/TIPSY diameter
@@ -7873,6 +7886,30 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         exposed behind the same optional-bank pattern and first tested on a
         dedicated K3Z intensive-silviculture proving-ground subvariant. Track
         on GitHub issue #49.
+      - Current implementation order:
+        - treat GitHub issue `#49` as the governing tracker for this task;
+        - keep the separate headless Patchworks `P49` numbering unchanged, and
+          treat this QMD revisit as `P48.2d3`;
+        - use the live `stand-structure-basic` bank as the first evidence set
+          for richer managed diameter signals, especially:
+          - `DBHg000`
+          - `SPH000`
+          - `BasalArea000`
+          - `StemCount000`
+          - `StemCount125`
+          - `StemCount175`
+        - if those BTC-native signals stay coherent on the shipped K3Z bundle,
+          prefer them for managed QMD construction instead of continuing to
+          derive managed QMD only from the older volume/height/stems
+          approximation;
+        - keep the older approximation as a fallback when richer BTC-native
+          diameter signals are absent, so non-bank and non-K3Z surfaces do not
+          regress;
+        - prove the revised managed-QMD contract first on the dedicated K3Z
+          proving-ground surface `intensive_light_standstructure`;
+        - inspect rebuilt `forestmodel.xml` plus
+          `tracks/*/{features,protoaccounts,accounts}.csv` directly, then run
+          the obvious Patchworks smoke before calling the seam landed.
   - [x] P48.2e Add a FEMIC-side BTC custom-report template generator so vetted
     `.rpt` files can be authored from curated or user-specified output-column
     lists instead of hand-edited inside the BTC GUI.

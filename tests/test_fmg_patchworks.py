@@ -96,6 +96,7 @@ def _build_single_au_context(
     unmanaged_species_curve_ids: dict[str, int] | None = None,
     curve_points_by_id: dict[int, tuple[CurvePoint, ...]] | None = None,
     qmd_support: QmdSupportDefinition | None = None,
+    managed_indicator_curves: dict[str, tuple[CurvePoint, ...]] | None = None,
 ) -> BundleModelContext:
     managed_curve_id = au_id + 20000
     managed_species_curve_ids = managed_species_curve_ids or {}
@@ -139,6 +140,9 @@ def _build_single_au_context(
         unmanaged_species_curve_ids={au_id: unmanaged_species_curve_ids},
         qmd_support_by_au={au_id: qmd_support or QmdSupportDefinition()},
         curve_row_count=len(curves_by_id),
+        managed_indicator_curves_by_au=(
+            {au_id: managed_indicator_curves} if managed_indicator_curves else {}
+        ),
     )
 
 
@@ -169,6 +173,49 @@ def test_build_qmd_curve_points_uses_height_and_tph_inputs() -> None:
         ),
     )
     assert [point.y for point in points] == pytest.approx([18.6, 24.4], rel=1e-3)
+
+
+def test_build_qmd_curve_points_prefers_native_diameter_curve_points() -> None:
+    points = _build_qmd_curve_points(
+        source_curve_points=(
+            CurvePoint(x=10.0, y=40.0),
+            CurvePoint(x=20.0, y=120.0),
+        ),
+        si_level="M",
+        site_index=20.0,
+        height_curve_points=(
+            CurvePoint(x=10.0, y=5.0),
+            CurvePoint(x=20.0, y=10.0),
+        ),
+        tph_curve_points=(
+            CurvePoint(x=10.0, y=800.0),
+            CurvePoint(x=20.0, y=700.0),
+        ),
+        direct_diameter_curve_points=(
+            CurvePoint(x=10.0, y=9.0),
+            CurvePoint(x=20.0, y=17.0),
+        ),
+    )
+    assert [point.y for point in points] == [9.0, 17.0]
+
+
+def test_build_qmd_curve_points_derives_from_basal_area_and_stems() -> None:
+    points = _build_qmd_curve_points(
+        source_curve_points=(
+            CurvePoint(x=10.0, y=40.0),
+            CurvePoint(x=20.0, y=120.0),
+        ),
+        si_level="M",
+        basal_area_curve_points=(
+            CurvePoint(x=10.0, y=5.026548),
+            CurvePoint(x=20.0, y=15.904313),
+        ),
+        stand_structure_stems_curve_points=(
+            CurvePoint(x=10.0, y=800.0),
+            CurvePoint(x=20.0, y=700.0),
+        ),
+    )
+    assert [point.y for point in points] == pytest.approx([8.9, 17.0], rel=1e-3)
 
 
 def test_build_stems_per_ha_curve_points_uses_tph_inputs() -> None:
@@ -838,6 +885,52 @@ def test_build_forestmodel_xml_tree_adds_ct_track_and_qmd_when_configured() -> N
         node.attrib["label"] for node in f1_state_select.findall("./track/treatment")
     ]
     assert f1_treatment_labels == ["CC", "F2"]
+
+
+def test_build_patchworks_definition_prefers_btc_native_qmd_curve_when_available() -> (
+    None
+):
+    context = _build_single_au_context(
+        au_id=985502001,
+        stratum_code="CWHvm_HW+FDC",
+        si_level="M",
+        unmanaged_points=(
+            CurvePoint(x=10.0, y=30.0),
+            CurvePoint(x=20.0, y=80.0),
+        ),
+        managed_points=(
+            CurvePoint(x=10.0, y=40.0),
+            CurvePoint(x=20.0, y=120.0),
+        ),
+        qmd_support=QmdSupportDefinition(
+            site_index=20.0,
+            managed_height_points=(
+                CurvePoint(x=10.0, y=5.0),
+                CurvePoint(x=20.0, y=10.0),
+            ),
+            managed_tph_points=(
+                CurvePoint(x=10.0, y=800.0),
+                CurvePoint(x=20.0, y=700.0),
+            ),
+        ),
+        managed_indicator_curves={
+            "DBHg000": (
+                CurvePoint(x=10.0, y=9.0),
+                CurvePoint(x=20.0, y=17.0),
+            )
+        },
+    )
+
+    definition = build_patchworks_forestmodel_definition(
+        context=context,
+        silviculture_config={"qmd": {"enabled": True}},
+    )
+
+    au_token = _au_token("CWHvm_HW+FDC", "M")
+    assert definition.curves[f"au_{au_token}_managed_qmd"] == (
+        CurvePoint(x=10.0, y=9.0),
+        CurvePoint(x=20.0, y=17.0),
+    )
 
 
 def test_build_forestmodel_xml_tree_uses_managed_stems_fallback_for_qmd() -> None:

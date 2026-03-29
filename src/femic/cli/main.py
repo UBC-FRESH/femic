@@ -607,7 +607,7 @@ PATCHWORKS_HEADLESS_STAGE_LABEL_OPTION = typer.Option(
     "--stage-label",
     help=(
         "Relative output folder passed to reportWriter.saveStage(...). "
-        "Defaults to headless_runs/<run_id> beside the PIN."
+        "Defaults to <log_dir>/headless_stage/<run_id> outside the tracked model tree."
     ),
     show_default=False,
 )

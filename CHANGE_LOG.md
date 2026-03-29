@@ -7934,3 +7934,64 @@
     period inside the `100000..200000` band, while even-flow deviations stayed
     tightly clustered near zero.
   - `schedule.csv` remained non-empty (480 lines).
+- 2026-03-29 (Issue #49 BTC-native managed QMD preference on the K3Z proving
+  ground): revised the managed QMD exporter so the stand-structure proving
+  ground now prefers richer BTC-native diameter signals instead of relying only
+  on the older volume/height/stems approximation.
+  - Exporter change:
+    - `src/femic/fmg/patchworks.py` now builds managed QMD in this order when
+      the first BTC stand-structure bank is present:
+      - direct `DBHg000`
+      - QMD reconstructed from `BasalArea000` plus `SPH000` /
+        `StemCount000`
+      - fallback to the older approximation
+    - the existing CT/fert QMD response multipliers remain in place on top of
+      that revised managed baseline.
+  - Focused validation:
+    - `pytest tests/test_fmg_patchworks.py -q`
+    - `ruff check src/femic/fmg/patchworks.py tests/test_fmg_patchworks.py`
+  - Proving-ground rebuild evidence:
+    - checkpoint-based full export remains blocked on the known K3Z
+      `checkpoint1` vs `checkpoint7/au` seam, so the refreshed
+      `output/patchworks_k3z_intensive_light_standstructure_validated/forestmodel.xml`
+      was regenerated through the lower-level bundle-table builder first;
+    - `femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.intensive_light_standstructure.windows.yaml --run-id k3z_intensive_light_standstructure_qmd_20260329a`
+      then completed successfully against that refreshed XML.
+  - Direct output inspection:
+    - in the rebuilt ForestModel XML, representative managed QMD curves now
+      match the corresponding BTC-native `DBHg000` curve directly (for example
+      `au_CWHvm_FDC_HW_M_managed_qmd` matches
+      `au_CWHvm_FDC_HW_M_managed_DBHg000` on the refreshed proving ground);
+    - rebuilt `tracks_intensive_light_standstructure/{protoaccounts,accounts}.csv`
+      still carry the managed standing and harvested-QMD surfaces, including
+      `feature.QMD.managed.CWHvm_FDC_HW_M`,
+      `product.QMDNumerator.managed.CWHvm_FDC_HW_M.{PCT,CT,CC}`, and their
+      live ratio-account surfaces.
+  - Headless Patchworks smoke:
+    - `femic patchworks run-headless models/k3z_patchworks_model/analysis/intensive_light_standstructure.pin --instance-root external/femic-k3z-instance --config config/patchworks.runtime.intensive_light_standstructure.windows.yaml --run-id k3z_intensive_light_standstructure_qmd_smoke_20260329a --scenario-mode max-even-flow-smoke --scenario-min-annual 10000`
+      completed cleanly and initially saved a full report bundle under the
+      tracked `analysis/headless_runs/...` tree, which prompted a follow-up
+      runtime cleanup/guardrail pass;
+    - `scenario/targetStatus.csv` shows both
+      `product.Yield.managed.Total` and
+      `flow.even.product.Yield.managed.Total` active;
+    - `scenario/schedule.csv` is non-empty and includes real managed
+      `PCT`, `CT`, and `CC` actions;
+    - saved target reports confirm the QMD surfaces are live in runtime-facing
+      outputs, for example:
+      - `targets/feature_QMD_managed_CWHvm_FDC_HW_M.csv`
+      - `targets/product_QMD_managed_CWHvm_FDC_HW_M_CT.csv`
+      - `targets/product_QMDNumerator_managed_CWHvm_FDC_HW_M_CT.csv`
+  - Documentation updates:
+    - updated the parent API docs plus the standalone K3Z docs to describe the
+      revised managed-QMD preference order and the proving-ground headless QA
+      path.
+  - Follow-up runtime hygiene:
+    - `src/femic/patchworks_runtime.py` now defaults unattended
+      `reportWriter.saveStage(...)` output to
+      `vdyp_io/logs/headless_stage/<run_id>` instead of the tracked
+      `analysis/` tree when `--stage-label` is omitted;
+    - the standalone K3Z `.gitignore` now ignores `vdyp_io/logs/`,
+      `models/k3z_patchworks_model/analysis/headless_runs/`, and
+      variant-track `accounts_backup_*.csv` spill files so future runtime
+      save-outs stay out of Git status by default.
