@@ -8375,3 +8375,22 @@
     environment, but machine-readable topic inventories were still extracted
     from the compiled help files and saved under
     `tipsy_io/logs/p48_3_install_audit/chm/`.
+- 2026-03-29 (Issue #57 tracked CHM archive): archived the installed TIPSY help
+  corpus into tracked repo files for future reverse-engineering work.
+  - Fully extracted the installed `.chm` files for:
+    - `TIPSY45`
+    - `Fansier`
+    - `SiteTools`
+    - `Plotsy2`
+  - The working seam was path-sensitive:
+    - `hh.exe -decompile` failed from long paths with spaces;
+    - the same command succeeded once both input and output lived under a
+      short, no-space path such as `C:\chm\...`.
+  - The extracted help trees are now tracked under:
+    - `reference/tipsy/chm_extracted/TIPSY45/`
+    - `reference/tipsy/chm_extracted/Fansier/`
+    - `reference/tipsy/chm_extracted/SiteTools/`
+    - `reference/tipsy/chm_extracted/Plotsy2/`
+  - Added repo-local provenance notes in:
+    - `reference/tipsy/README.md`
+    - `reference/tipsy/chm_extracted/README.md`

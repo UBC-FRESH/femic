@@ -1,0 +1,168 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="Variable retention">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Variable Retention:  Programmer's Perspective</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+tr.hcp1 { vertical-align:top; }
+b.hcp2 { font-weight:bold; }
+p.hcp3 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1>Variable Retention:  Programmer's Perspective</h1>
+<p>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="1508"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="See Also"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="Variable retention$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My RoboHelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\How_TIPSY_applies_variab00000249.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:See Also">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="Variable retention">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </p>
+<p>There is variable retention data in TIPSY and BatchTIPSY for four species: 
+ coastal Douglas-fir, western hemlock (both coastal and interior), lodgepole 
+ pine and white spruce. An internal calculation is performed using a pre-defined 
+ formula with <a href="Data_behind_the_variable_retenti.htm">coefficients 
+ based on the species</a>. This results in a reduction factor which is 
+ then applied to the stand.</p>
+<p>Application of variable retention in TIPSY is done as follows. The reduction 
+ factor for any given row is split into three sub-factors which, when multiplied 
+ together, will yield the original factor.</p>
+<table >
+	<tr class="hcp1">
+		<td><p class="TableText">________________________________________________________________________</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 136px; height: 23px;" width="581">
+	<col width="44">
+	<col width="293">
+	<col>
+	<tr class="hcp1">
+		<td width="44"><p class="TableText"><b class="hcp2">Factor</b></p></td>
+		<td width="293"><p class="TableText"><b class="hcp2">Definition</b></p></td>
+		<td><p class="TableText"><b class="hcp2">Calculation</b></p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td><p class="TableText">________________________________________________________________________</p></td>
+	</tr>
+</table>
+<table >
+	<col width="43">
+	<col width="295">
+	<col width="228">
+	<tr class="hcp1">
+		<td width="43"><p class="TableText">fo</p></td>
+		<td width="295"><p class="TableText">the original reduction factor</p></td>
+		<td width="228"><p class="TableText">&#160;</p></td>
+	</tr>
+	<tr class="hcp1">
+		<td width="43"><p class="TableText">f1</p></td>
+		<td width="295"><p class="TableText">plantable area</p></td>
+		<td width="228"><p>1 - crown cover percentage of the retained overstorey</p></td>
+	</tr>
+	<tr class="hcp1">
+		<td width="43"><p class="TableText">f2</p></td>
+		<td width="295"><p class="TableText">trees that die due to overtopping 
+		 by the retained portion of the stand</p></td>
+		<td width="228"><p class="TableText">(fo + (f1- fo)/2) / f1</p></td>
+	</tr>
+	<tr class="hcp1">
+		<td width="43"><p class="TableText">f3</p></td>
+		<td width="295"><p class="TableText">trees that grow more poorly 
+		 than the rest of the stand due to shading from the retained portion 
+		 of the stand</p></td>
+		<td width="228"><p class="TableText">fo / (fo + (f1 - fo)/2)</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td><p class="TableText">________________________________________________________________________</p></td>
+	</tr>
+</table>
+<p>As an example, if fo was .5 and the crown cover percentage of the retained 
+ understorey was 30%, the sub-factors would be .7, .857 and .833 respectively.</p>
+<p>These sub-factors are applied in a three-step process. First, the factor 
+ f1 is uniformly applied to the stand at all ages. This reduction is applied 
+ irrespective of the species in the stand. The reduction will affect the 
+ volume/age curve but not its shape, as curves are affected by the same 
+ percentage over all ages. It will not affect prime tree statistics or 
+ lumber recovery factors.</p>
+<p>Second, to model the loss of trees due to overtopping, the tables are 
+ reduced by multiplying all statistics by f2 except prime tree statistics, 
+ lumber recovery factors and mortality. The resultant loss in stem counts 
+ and volume are reflected in an increase to the mortality figures.</p>
+<p>Last, all volume data is multiplied by f3 to simulate an overall volume 
+ loss without a loss in the actual number of trees (poor growing conditions). 
+ This will affect total volumes (0.0+ and 7.5+), all stock values (see 
+ <a href="Stock_Vol.htm">Stock Tables</a>), and all <a href="Log_Tables.htm">log</a> 
+ and <a href="Lumber_Table.htm">lumber</a>. Stand mortality is unaffected 
+ by this step.</p>
+<p>The cumulative reduction factor (fo) applied at age 100 is displayed 
+ on the <a href="Stand_Description.htm">Stand Description</a>.</p>
+<p>Note that application of variable retention will reduce the initial 
+ number of trees present in the stand, and that this number will differ 
+ from the initial density value you set.</p>
+<p>In the case of a mixed-species stand, variable retention will be calculated 
+ on a species-by-species basis. For each species, the program will treat 
+ that species as the overstorey and understorey species for the purposes 
+ of calculation. If you want to calculate edge length using the formula, 
+ the leading species will be used for those calculations.</p>
+<p>We have developed VR coefficients for only four species in TIPSY. If 
+ you use variable retention for any other species, the program automatically 
+ makes substitutions. See <a href="Table_of_VR_Species_Substitution.htm">Table 
+ of VR species substitutions</a>.</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp3">_______________________________________________</p>
+	<p class="hcp3">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

@@ -1,0 +1,378 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="Snag">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Snags: Model</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<script type="text/javascript" language="JavaScript1.2" src="../ehlpdhtm.js"></script>
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+p.hcp2 { text-align:center;
+font-weight:bold; }
+p.hcp3 { text-align:center; }
+tr.hcp4 { vertical-align:top; }
+td.hcp5 { vertical-align:bottom; }
+-->
+</style>
+</head>
+
+<body>
+
+
+
+<h1><a name="MiniTOCBookMark1"></a>Snags: Model</h1>
+<p align="left" style="font-family:Arial;font-size:12pt;font-weight: normal;font-style: normal;text-decoration: none;" >In&#160;this&#160;Topic&#160;<a class="dropspot" href="javascript:TextPopup(this)" id="MTHotSpot26232" ><span class="MTText" style="display: none;" >Show</span><span class="MTText" >Hide</span></a></p>
+<script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('MTHotSpot26232', 'MTPOPUP26232');
+//]]></script>
+<div align="left" class="droptext" id="MTPOPUP26232" >
+ <div style="background: #ffff00;float: none;width: 100% ;" >
+  <p align="left"  ><a href="#MiniTOCBookMark2" >Model Description</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark3" >Application in TIPSY</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark4" >Model Equations</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark5" >Model Coefficients</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark6" >About the Data</a></p>
+ </div>
+</div>
+<h2>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="1508"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="See Also"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="Snag$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My RoboHelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\Standing_Dead_Tree_Snag_Model.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:See Also">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="Snag">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </h2>
+<h2><a name="MiniTOCBookMark2"></a>Model Description</h2>
+<p>The snag (standing dead tree) model simply determines the number of 
+ trees that are still standing, from those that have died since stand establishment. 
+ A dead tree is considered standing if it is greater than 1.3 m in height 
+ and self supported. We chose a logistic model to describe the binary data 
+ (i.e., standing or fallen) associated with the fall of standing dead trees. 
+ The logistic model is preferable because predictions are limited between 
+ 0 and 1, and linearizing the model via a logit transformation (i.e., log(p/1-p)) 
+ allows the use of linear regression methods.</p>
+<p>The standing dead tree model is limited to the two independent variables, 
+ years since death and DBH, that are known to be related to the fall rate. 
+ Other variables which may be important are cause of death, wind conditions, 
+ and density of surrounding standing dead trees. These variables are excluded, 
+ however, because of either the lack of data, or because <span class="hcp1">TIPSY</span> 
+ isn't able to generate this data.</p>
+<p><a href="Standing_Dead_Tree_Snag_Model.htm">Back to Top</a></p>
+<h2><a name="MiniTOCBookMark3"></a>Application in TIPSY</h2>
+<p>To generate a <a href="Standing_Dead_Tree_Snag_Table.htm">Snag Table</a>, 
+ mortality tables in the <span class="hcp1">TIPSY</span> 
+ database are first transformed from their original height steps to age 
+ steps. The <span class="hcp1">Snag Model</span> is applied 
+ directly to these age-based mortality tables, and then interpolated.</p>
+<p>This sequence of model application and interpolation results in consistent 
+ estimates between model runs for identical stands, but of different age 
+ steps (e.g., between 1 year and 10 year steps). You would, however, notice 
+ slight differences if you compared the <a href="Standing_Dead_Tree_Snag_Table.htm">Snag 
+ Table</a> to a manual calculation of the model applied directly to the 
+ data in the interpolated <a href="Mortality_Table.htm">Mortality Table</a>.</p>
+<p><span style="background-color: #ffff00;">NOTE:</span> &#160;To apply 
+ the OAF2 Operational 
+ Adjustment Factor, <span class="hcp1">TIPSY's</span> programmers 
+ had to adjust the mortality table to account for increasing mortality. 
+ To do this, they applied OAF2 and then compared the changes in the live 
+ tree stand tables to the non-adjusted mortality tables. But they weren't 
+ able to determine the exact diameter class of the trees that had died 
+ at each age step. As a result, the adjustments are slightly biased (e.g., 
+ mean dead tree height is biased upwards). Considering the large variation 
+ already inherent within the statistics, you should view these biases as 
+ insignificant.</p>
+<h2><a name="MiniTOCBookMark4"></a><a name="Model_Equations"></a>Model Equations</h2>
+<p>Specifically, the deterministic component of the model can be described 
+ as:</p>
+<p class="Indent">ln (probfallen/1-probfallen) = b0 + b1*(YearsDead) + 
+ b2*(DBH) + b3*(YearsDead*DBH)</p>
+<p class="Indent">or</p>
+<p class="Indent">probfallen = EXP(b0 + b1*(YearsDead) + b2*(DBH) + b3*(YearsDead*DBH)<br>
+1+ EXP(b0 + b1*(YearsDead) + b2*(DBH) + b3*(YearsDead*DBH)</p>
+<p class="Indent">or</p>
+<p class="Indent">probstanding = 1/(1+ EXP(b0 + b1*(YearsDead) + b2*(DBH) 
+ + b3*(YearsDead*DBH)))</p>
+<p class="Indent">where <i>ln</i> is the natural logarithm, <i>probfallen</i> 
+ is the probability that a standing dead tree has fallen and <i>probstanding</i> 
+ is the probability that a standing dead tree is still standing (i.e., 
+ 1-probfallen), <i>YearsDead</i> is the number of years since the tree 
+ died, <i>DBH</i> is the diameter at breast height, and b0, b1, b2, and 
+ b3 are coefficients.</p>
+<p>For a description of logistic regression see the <a href="http://www.for.gov.bc.ca/hfd/pubs/Docs/Wp/Wp26.htm">Biometrics 
+ Information Handbook No. 7</a> , <a href="Literature_Cited.htm#Cox_Snell_1989">Cox 
+ and Snell (1989)</a>, or <a href="Literature_Cited.htm#Hosmer_Lemeshow_1989">Hosmer 
+ and Lemeshow (1989)</a>.</p>
+<p><a href="Standing_Dead_Tree_Snag_Model.htm">Back to Top</a></p>
+<h2><a name="MiniTOCBookMark5"></a><a name="Model_Coefficients"></a>Model Coefficients</h2>
+<p>The table below lists the default coefficients used to predict dead 
+ tree fall rates. &#160;<span class="hcp1">TIPSY</span> has 
+ limited stand conditions and treatments. &#160;&#160;As such, the data 
+ used to parameterize the default models were limited to permanent sample 
+ plots with no silvicultural treatments. &#160;&#160;There were insufficient 
+ data for pre-commercial thinning.</p>
+<table style="border-collapse: separate; border-collapse: separate;" cellspacing="0" 
+		 width="51.341%" border="1">
+	<col style="width: 20.808%;">
+	<col style="width: 20.333%;">
+	<col style="width: 20.331%;">
+	<col style="width: 19.62%;">
+	<col style="width: 18.907%;">
+	<tr>
+		<td bgcolor="#C0C0C0"><p class="hcp2">Species</p></td>
+		<td bgcolor="#C0C0C0"><p class="hcp2">b0</p></td>
+		<td bgcolor="#C0C0C0"><p class="hcp2">b1</p></td>
+		<td bgcolor="#C0C0C0"><p class="hcp2">b2</p></td>
+		<td bgcolor="#C0C0C0"><p class="hcp2">b3</p></td>
+	</tr>
+	<tr>
+		<td><p class="hcp3">Fdc</p></td>
+		<td><p class="hcp3">-1.369</p></td>
+		<td><p class="hcp3">0.132</p></td>
+		<td><p class="hcp3">-0.063</p></td>
+		<td><p class="hcp3">0.000</p></td>
+	</tr>
+	<tr>
+		<td><p class="hcp3">Hwc,Hwi</p></td>
+		<td><p class="hcp3">-2.094</p></td>
+		<td><p class="hcp3">0.169</p></td>
+		<td><p class="hcp3">-0.057</p></td>
+		<td><p class="hcp3">0.000</p></td>
+	</tr>
+	<tr>
+		<td><p class="hcp3">Pl</p></td>
+		<td><p class="hcp3">0.662</p></td>
+		<td><p class="hcp3">0.146</p></td>
+		<td><p class="hcp3">-0.074</p></td>
+		<td><p class="hcp3">0.000</p></td>
+	</tr>
+	<tr>
+		<td><p class="hcp3">Cw</p></td>
+		<td><p class="hcp3">-1.5</p></td>
+		<td><p class="hcp3">0.14</p></td>
+		<td><p class="hcp3">-0.12</p></td>
+		<td><p class="hcp3">0.000</p></td>
+	</tr>
+	<tr>
+		<td><p class="hcp3">Ss,Sw,<br>
+		Fdi, Dr</p></td>
+		<td><p class="hcp3">-1.37</p></td>
+		<td><p class="hcp3">0.13</p></td>
+		<td><p class="hcp3">-0.06</p></td>
+		<td><p class="hcp3">0.000</p></td>
+	</tr>
+</table>
+<p><a href="Standing_Dead_Tree_Snag_Model.htm">Back to Top</a></p>
+<h2><a name="MiniTOCBookMark6"></a>About the Data</h2>
+<p>The default coefficients for the standing dead tree model are based, 
+ where possible, on data from British Columbia. Data on standing dead trees 
+ were obtained/collected from existing growth and yield permanent sample 
+ plots. We asked these basic questions in model development:</p>
+<ul>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet">Is 
+	 a dead tree currently standing or fallen?</p></li>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet">How 
+	 long has the tree been dead?</p></li>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet">What 
+	 was its DBH at death?</p></li>
+</ul>
+<p>Growth and yield records provide information about when the tree died 
+ and its DBH. In order to discover whether a tree that died is currently 
+ standing or fallen, however, we have to revisit the permanent sample plot. 
+ There we can learn whether a tree is standing or fallen, but not when 
+ it fell. This results in the data being cohort based (i.e., information 
+ on the cohort of trees in the 1st, 2nd, 3rd, ... measurement).</p>
+<p>If there was no B.C. data for a species in <span class="hcp1">TIPSY's</span> 
+ database, we based estimates for default coefficients on literature or 
+ on perceived fall rates relative to other species. Further data are being 
+ collected during the remeasurement of permanent sample plots under the 
+ growth and yield programs of the Research Branch (<a href="http://www.dir.gov.bc.ca/gtds.cgi?esearch=&amp;view=detailed&amp;for=people&amp;attribute=name&amp;matchMethod=is&amp;searchString=Louise+de+Montigny">contact 
+ Louise de Montigny</a>). &#160;As the data become available, they'll be 
+ incorporated into the existing (or modified) model.</p>
+<p><span class="hcp1">TIPSY</span> contains some species 
+ for which there is no database. These species use site index equations 
+ that were developed for that particular species, but <span class="hcp1">TIPSY</span> 
+ substitutes a database and many other default values. For example, western 
+ larch uses most default values for interior Douglas-fir. As a result of 
+ this 'blanket' substitution, some defaults are not based on the best available 
+ information. Replace the defaults with localized information whenever 
+ possible. The substitutions are displayed at the top of each printed table, 
+ or in the <a href="Stand_Description.htm">Stand Description</a>.</p>
+<p>Here is a summary of the data used to parameterize the logistic regression 
+ models, and determine the default coefficients for species in <span class="hcp1">TIPSY's</span> 
+ database. See species notes below for more information on the data used 
+ for each species.</p>
+<table style="height: 73px; left: 0px; top: 563px;" width="490">
+	<tr class="hcp4">
+		<td bgcolor="#C0C0C0" class="hcp5"><p class="TableText" 
+			 style="font-weight: bold;">Species</p></td>
+		<td bgcolor="#C0C0C0" class="hcp5"><p class="TableText" 
+			 style="font-weight: bold;">No. Locations</p></td>
+		<td bgcolor="#C0C0C0" class="hcp5"><p class="TableText" 
+			 style="font-weight: bold;">No. Plots</p></td>
+		<td bgcolor="#C0C0C0" class="hcp5"><p class="TableText" 
+			 style="font-weight: bold;">Max Yrs Since Death</p></td>
+		<td bgcolor="#C0C0C0" class="hcp5"><p class="TableText" 
+			 style="font-weight: bold;">Min DBH (cm)</p></td>
+		<td bgcolor="#C0C0C0" class="hcp5"><p class="TableText" 
+			 style="font-weight: bold;">Mean DBH (cm)</p></td>
+		<td bgcolor="#C0C0C0" class="hcp5"><p class="TableText" 
+			 style="font-weight: bold;">Max DBH (cm)</p></td>
+		<td bgcolor="#C0C0C0" class="hcp5"><p class="TableText" 
+			 style="font-weight: bold;">Trees Up</p></td>
+		<td bgcolor="#C0C0C0" class="hcp5"><p class="TableText" 
+			 style="font-weight: bold;">Trees Down</p></td>
+	</tr>
+	<tr class="hcp4">
+		<td><p>Fdc</p></td>
+		<td><p class="hcp3">23</p></td>
+		<td><p class="hcp3">46</p></td>
+		<td><p class="hcp3">22</p></td>
+		<td><p class="hcp3">4.2</p></td>
+		<td><p class="hcp3">10.4</p></td>
+		<td><p class="hcp3">54.6</p></td>
+		<td><p class="hcp3">1518</p></td>
+		<td><p class="hcp3">2468</p></td>
+	</tr>
+	<tr class="hcp4">
+		<td><p>Hwc</p></td>
+		<td><p class="hcp3">8</p></td>
+		<td><p class="hcp3">16</p></td>
+		<td><p class="hcp3">21</p></td>
+		<td><p class="hcp3">4.9</p></td>
+		<td><p class="hcp3">9.0</p></td>
+		<td><p class="hcp3">48.8</p></td>
+		<td><p class="hcp3">1063</p></td>
+		<td><p class="hcp3">1074</p></td>
+	</tr>
+	<tr class="hcp4">
+		<td width="63"><p>Pl</p></td>
+		<td width="78"><p class="hcp3">1</p></td>
+		<td width="39"><p class="hcp3">2</p></td>
+		<td width="50"><p class="hcp3">41</p></td>
+		<td width="49"><p class="hcp3">3.3</p></td>
+		<td width="43"><p class="hcp3">9.4</p></td>
+		<td width="36"><p class="hcp3">26.9</p></td>
+		<td width="47"><p class="hcp3">28</p></td>
+		<td width="48"><p class="hcp3">255</p></td>
+	</tr>
+	<tr class="hcp4">
+		<td colspan="2" width="63"><p>Hwi = Hwc</p></td>
+		<td colspan="7" width="39"><p>No data available</p></td>
+		
+	</tr>
+	<tr class="hcp4">
+		<td colspan="2" width="63"><p>Cw ~ Fdc, Hwc</p></td>
+		<td colspan="7" width="39"><p>No data available</p></td>
+		
+	</tr>
+	<tr class="hcp4">
+		<td colspan="2" width="63"><p>Sw, Fdi, Dr, At = Fdc</p></td>
+		<td colspan="7" width="39"><p>No data available</p></td>
+		
+	</tr>
+</table>
+<p><a href="Standing_Dead_Tree_Snag_Model.htm">Back to Top</a></p>
+<h3><a name="MiniTOCBookMark7"></a>Fdc Notes</h3>
+<p>Douglas-fir installations of EP703 provided the information on Douglas-fir 
+ fall rates. EP703 is a large thinning and fertilization experiment in 
+ pure Douglas-fir, pure western hemlock, and mixed Douglas-fir/western 
+ hemlock stands covering a range of site conditions. This experiment has 
+ over 940 plots (0.05 to 0.10 ha in size) located on 85 installations. 
+ The installations were established from 1971-1974 and measured every 3 
+ years for the first 12 years, and at least every 6 years thereafter. See 
+ <a href="Literature_Cited.htm#Darling_Omule_1989">Darling and Omule (1989)</a> 
+ and <a href="Literature_Cited.htm#Stone_J_1994">Stone (1994)</a> for more 
+ details.</p>
+<p>The data set for Douglas-fir in <span class="hcp1">TIPSY</span> 
+ was limited to the control plots of pure (&gt;80% by basal area) Douglas-fir 
+ stands which did not exhibit signs of <i>Phellinus weirii</i> in a 1994 
+ survey for root rots.</p>
+<p>Comparison of the model results with literature sources indicates that 
+ dead Douglas-fir, particularly larger DBH trees, might stand longer than 
+ suggested by the default model (e.g., <a href="Literature_Cited.htm#Harmon_et_al_1986">Harmon 
+ et al. 1986</a>, <a href="Literature_Cited.htm#Cline_et_al_1980">Cline 
+ et al. 1980</a>, and <a href="Literature_Cited.htm#Graham_1982">Graham 
+ 1982</a>).</p>
+<h3><a name="MiniTOCBookMark8"></a>Hwc Notes</h3>
+<p>The control plots of 8 pure (&gt;80% by basal area) western hemlock 
+ installations of EP703 were used for model parameterization. (See coastal 
+ Douglas-fir for a description of EP703). These installations are on 
+ northern Vancouver Island. &#160;Similar fall rates are found in <a href="Literature_Cited.htm#Graham_1982">Graham 
+ (1982)</a> for the Cascades in Washington State.</p>
+<h3><a name="MiniTOCBookMark9"></a>Pl Notes</h3>
+<p>Lodgepole pine fall rates are based on information collected from EP384 
+ and EP385 located near Canal Flats, B.C. These experimental plots were 
+ established in 1953 and have been measured regularly at 5 year intervals. 
+ During 1980 to 1983, a mountain pine beetle infestation occurred in the 
+ stand. &#160;&#160;Similar fall rates were found in the literature (e.g., 
+ <a href="Literature_Cited.htm#Lyon_1977">Lyon 1977</a>, <a href="Literature_Cited.htm#Raphael_Morrison_1987">Raphael 
+ and Morrison 1987</a>).</p>
+<h3><a name="MiniTOCBookMark10"></a>Hwi Notes</h3>
+<p>Since no data were available for the fall rates of western hemlock growing 
+ in the interior, the default coefficients were set to the rates for coastal 
+ western hemlock.</p>
+<h3><a name="MiniTOCBookMark11"></a>Cw Notes</h3>
+<p>Western red-cedar is generally felt to be a long standing species, particularly 
+ for larger stems. We chose parameters that reflect a fall rate slower 
+ than fall rates of Douglas-fir or western hemlock for larger DBHs.</p>
+<p>We had limited data on western red-cedar fall rates for small trees 
+ (&lt;10cm) as a tertiary species in EP703 installations. These trees tended 
+ to fall at rates similar to Douglas-fir and western hemlock.</p>
+<h3><a name="MiniTOCBookMark12"></a>Sw Notes</h3>
+<p>Little information is available on white spruce. The default parameters 
+ were set to those of coastal Douglas-fir.</p>
+<h3><a name="MiniTOCBookMark13"></a>Ss Notes</h3>
+<p>Little information is available on Sitka Spruce. It was felt to be as 
+ long standing as Douglas-fir, and so the default parameters were set to 
+ those of coastal Douglas-fir.</p>
+<h3><a name="MiniTOCBookMark14"></a>Fdi Notes</h3>
+<p>Since no data were available for the fall rates of interior Douglas-fir, 
+ the default coefficients were set to the rates for coastal Douglas-fir.</p>
+<p><a href="Standing_Dead_Tree_Snag_Model.htm">Back to Top</a></p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp3">_______________________________________________</p>
+	<p class="hcp3">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

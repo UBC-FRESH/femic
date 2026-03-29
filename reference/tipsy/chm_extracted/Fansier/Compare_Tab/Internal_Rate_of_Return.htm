@@ -1,0 +1,172 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Internal Rate of Return</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<script type="text/javascript" language="JavaScript1.2" src="../ehlpdhtm.js"></script>
+<style title="hcp" type="text/css">
+<!--
+p.hcp1 { margin-left:20px; }
+p.hcp2 { background-color:Transparent; }
+span.hcp3 { font-weight:bold; }
+p.hcp4 { margin-left:0px; }
+span.hcp5 { text-decoration:underline; }
+ul.hcp6 { list-style:disc; }
+p.hcp7 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+
+
+
+
+<h1><a name="MiniTOCBookMark1"></a>Internal Rate of Return</h1>
+<p align="left" style="font-family:Arial;font-size:12pt;font-weight: normal;font-style: normal;text-decoration: none;" >In&#160;this&#160;Topic&#160;<a class="dropspot" href="javascript:TextPopup(this)" id="MTHotSpot39474" ><span class="MTText" style="display: none;" >Show</span><span class="MTText" >Hide</span></a></p>
+<script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('MTHotSpot39474', 'MTPOPUP39474');
+//]]></script>
+<div align="left" class="droptext" id="MTPOPUP39474" >
+ <div style="background: #ffffc6;float: none;width: 100% ;" >
+  <p align="left"  ><a href="#MiniTOCBookMark2" >IRR (%)</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark3" >Incremental IRR (%)</a></p>
+  <p align="left" class="hcp1"><a href="#MiniTOCBookMark4" >FFT 
+ Incremental IRR (%)</a></p>
+  <p align="left" class="hcp1"><a href="#MiniTOCBookMark5" >Incremental 
+ IRR (Reinvestment method, FFT alternative)</a></p>
+ </div>
+</div>
+<p class="hcp2"><span class="hcp3">Internal 
+ Rate of Return (IRR)</span> is one of several methods for evaluating return 
+ on investment (ROI). &#160;Simply put, IRR represents the interest rate 
+ returned on an investment. &#160;It is also the discount rate that produces 
+ a NPV equal to zero. &#160;<span class="hcp3">FAN$IER</span> 
+ calculates and reports three forms of <span class="hcp3">Internal 
+ Rate of Return (IRR):</span></p>
+<h2><a name="MiniTOCBookMark2"></a>IRR (%)</h2>
+<p class="hcp2">IRR refers to simple IRR calculated 
+ independently for each regime. &#160;It is reported in the <a href="../Results_Tab.htm">Results</a>, 
+ <a href="../Report_Tab.htm">Report</a>, and <a href="Compare_Tab.htm">Compare 
+ Tabs</a>. &#160;It cannot be calculated for regimes with no treatment 
+ costs, e.g., base case (untreated) regimes when sunk costs are ignored.</p>
+<p class="hcp4"><a href="Internal_Rate_of_Return.htm">Back 
+ to Top</a></p>
+<h2><a name="MiniTOCBookMark3"></a><a name="Incremental_IRR____"></a>Incremental IRR (%)</h2>
+<p class="hcp2"><span class="hcp3">Incremental 
+ IRR</span> is IRR calculated from the <span class="hcp5">differences 
+ in costs and benefits</span> between two mutually-exclusive investment 
+ options, ideally of equal length. &#160;&#160;<span class="hcp3">FAN$IER</span> 
+ can display two forms of incremental-IRR in the <a href="Compare_Tab.htm">Compare 
+ Tab</a>, &#160;Both are toggled on and off independently within the <a 
+	 href="../Getting_Started/Main_Menu.htm#Edit_menu">EDIT</a> menu. &#160;&#160;Both 
+ support return on investment (ROI) calculations specific to the Ministry’s 
+ Forests for Tomorrow Program (FFT).</p>
+<p style="background-color: #ffffc6;">FFT users are directed to <a href="http://lbis.forestpracticesbranch.com/LBIS/node/874" 
+	 style="background-color: #ffffc6;">FFT’s online documentation and 
+ training materials</a> for a detailed explanation and instructions for 
+ FFT business use.</p>
+<p class="hcp4"><a href="Internal_Rate_of_Return.htm">Back 
+ to Top</a></p>
+<h3><a name="MiniTOCBookMark4"></a><a name="FFT_Incremental_IRR____" id="FFT_Incremental_IRR____"></a>FFT 
+ Incremental IRR (%)</h3>
+<p class="hcp2"><span class="hcp3">FFT 
+ Incremental IRR (%)</span> is reported when comparing two regimes <span class="hcp5">only if</span> the <a href="../Regime_Tab.htm#Age_at_base_year">age 
+ at base year</a> for the base-case is greater than zero and no treatment 
+ costs were incurred afterward (i.e., the typical FFT base-case regime 
+ ignoring sunk costs). &#160;The calculation method closely approximates 
+ the one used in FFT’s previous economic analysis software, the IRR-Workbook 
+ (an MS-Excel application). &#160;Consistent with the IRR-Workbook method, 
+ the treated regime <a href="javascript:TextPopup(this)" id="HotSpot25484" class="glossterm">Site Value</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot25484', 'POPUP25484');
+//]]></script><span class="glosstext" id="POPUP25484" style="display: none;"> the discounted net value of the summation of discounted benefits and costs which would result from an infinite series of rotations of the same given length. Also known as soil rent, bare land value and soil expectation value.</span> 
+ (SV) is added to the revenue stream of both regimes, before cost/revenue 
+ subtractions, such that the SVs cancel each other out when rotation lengths 
+ are equal.</p>
+<p class="hcp2"><span class="hcp3">FFT 
+ incremental IRR (2nd root) (%)</span> this second value is only reported 
+ when the rotation length of the treated-case is shorter than that of the 
+ base-case. &#160;&#160;Mathematically, this scenario always produces two 
+ IRR solutions (roots). &#160;Due to MS-Excel limitations the IRR-Workbook 
+ only reported one of them. There is no consensus among economists as to 
+ which, if either, root is correct. &#160;By reporting the second root, 
+ <span class="hcp3">FAN$IER</span> alerts the user to this 
+ issue.</p>
+<p class="hcp4"><a href="Internal_Rate_of_Return.htm">Back 
+ to Top</a></p>
+<h3><a name="MiniTOCBookMark5"></a><a name="Reinvestment_Incremental_IRR" id="Reinvestment_Incremental_IRR"></a>Incremental 
+ IRR (Reinvestment method, FFT alternative)</h3>
+<p class="hcp2">To address IRR problems associated 
+ with different rotation lengths, FAN$IER developers introduced this alternative 
+ method for computing incremental-IRR. &#160;Although the method has theoretical 
+ problems of its own, it provides an alternate comparison when <span class="hcp3">FFT 
+ Incremental IRR</span> is suspect. &#160;In this method, net harvest revenues 
+ from the shorter of the two rotations are “reinvested” (discounted forward) 
+ at a fixed-interest rate (2% default) to the longer regime’s harvest date, 
+ in effect, equalizing the two investment periods (rotation lengths).</p>
+<p class="hcp2"><span style="background-color: #ffffc1;">NOTE: 
+ When rotation lengths are equal, the two incremental-IRR methods produce 
+ the same (correct) answer. &#160;In all other situations, incremental-IRR 
+ warrants a cautious, conservative interpretation</span>.</p>
+<p class="hcp2">A number of values are reported 
+ when the Reinvestment method is selected.:</p>
+<ul class="hcp6">
+	<li><p class="hcp4"><span class="hcp3">Incremental 
+	 IRR (%)</span> - The IRR calculated using the reinvestment method.</p></li>
+</ul>
+<p class="hcp2">The remaining rows in the section 
+ document the calculation:</p>
+<ul class="hcp6">
+	<li><p class="hcp4"><span class="hcp3">Discount 
+	 Period (yrs)</span> - The larger of the two discount periods is applied 
+	 to both stands.</p></li>
+	<li><p class="hcp4"><span class="hcp3">Discount 
+	 Rate (%)</span> - The discount rate used in this calculation is equal 
+	 to the calculated reinvestment IRR.</p></li>
+	<li><p class="hcp4"><span class="hcp3">Reinvestment 
+	 Interest Rate (%)</span> - This is the opportunity cost of capital. 
+	 &#160;In this case, it is the assumed interest rate returned on the 
+	 reinvested net benefit received from the shorter rotation. &#160;The 
+	 default is 2% (the FFT IRR threshold); but it can be changed in the 
+	 <a href="../Getting_Started/Discount_Assumptions.htm">Discount Assumptions 
+	 definition</a>.</p></li>
+	<li><p class="hcp4"><span class="hcp3">Final 
+	 Harvest Reinvestment Period (yrs)</span> - The number of years the 
+	 net harvest benefits from the shorter rotation are being reinvested.</p></li>
+	<li><p class="hcp4"><span class="hcp3">Non-discounted 
+	 Interest ($/ha)</span> - The total interest before being discounted 
+	 to 2006 dollars.</p></li>
+	<li><p class="hcp4"><span class="hcp3">Discounted 
+	 Interest ($/ha)</span> - The total interest after being discounted 
+	 to 2006 dollars.</p></li>
+	<li><p class="hcp4"><span class="hcp3">Discounted 
+	 Harvest Benefits ($/ha)</span> - The total harvest benefits after 
+	 being discounted to 2006 dollars.</p></li>
+	<li><p class="hcp4"><span class="hcp3">Total 
+	 Discounted Benefits ($/ha)</span> - Sum of &#160;discounted interest 
+	 and discounted benefits.</p></li>
+	<li><p class="hcp4"><span class="hcp3">Discounted 
+	 Treatment Costs ($/ha)</span> - Sum of treatment costs in 2006 dollars.</p></li>
+	<li><p class="hcp4"><span class="hcp3">Discounted 
+	 Harvesting Costs ($/ha)</span> - Sum of harvesting costs in 2006 dollars.</p></li>
+	<li><p class="hcp4"><span class="hcp3">Total 
+	 Discounted Costs ($/ha)</span> - Sum of all costs in 2006 dollars.</p></li>
+	<li><p class="hcp4"><span class="hcp3">NPV 
+	 ($/ha)</span> - Total Discounted Benefits minus Total Discounted Costs 
+	 (B-C).</p></li>
+</ul>
+<p class="hcp4"><a href="Internal_Rate_of_Return.htm">Back 
+ to Top</a></p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp7">_______________________________________________</p>
+	<p class="hcp7">Copyright © 
+	 2016 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif; font-size: 10pt;">Forests, 
+ Lands, and Natural Resource Operations</span></p>
+</div>
+</body>
+</html>

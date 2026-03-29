@@ -1,0 +1,406 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="Armillaria">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Armillaria OAF: How it's applied</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style type="text/css">
+<!--
+td ol { margin-top:0;
+margin-bottom:0; }
+td ul { margin-top:0;
+margin-bottom:0; }
+-->
+</style>
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+span.hcp2 { font-weight:bold;
+font-style:italic; }
+tr.hcp3 { vertical-align:top; }
+p.hcp4 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1>Armillaria OAF: How it's applied</h1>
+<p>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="1508"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="See Also"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="Armillaria$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My RoboHelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\How_TIPSY_applies_Armillaria.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:See Also">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="Armillaria">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </p>
+<p>The <span class="hcp1">Armillaria OAF</span> has two distinct 
+ components within <span class="hcp1">TIPSY</span>: &#160;mortality 
+ and volume loss of the remaining trees. The combined effect is displayed 
+ on the <a href="Stand_Description.htm">Stand Description</a> and in the 
+ OAF Impact variable within the <a href="Custom_Table_in_TIPSY.htm">Custom 
+ table</a>.</p>
+<p>The mortality component is applied evenly for a given age across all 
+ diameter classes, and trees are moved to the <a href="Mortality_Table.htm">Mortality 
+ table</a>.</p>
+<p>The volume component reduces total and merchantable volumes, as well 
+ as the <a href="Log_Tables.htm">log</a> and <a href="Lumber_Table.htm">lumber</a> 
+ volumes, by a constant factor at a given age.</p>
+<p>Removing volume from the stand implies that individual trees are becoming 
+ thinner, as the height growth of the stand is unaffected. &#160;When <span class="hcp2">Armillaria</span> affects 
+ a healthy stand and volume decreases, <span class="hcp1">TIPSY</span> 
+ shifts trees to smaller diameter classes. A simple model of the relationship 
+ between diameter and volume was created using a cone, which approximates 
+ the shape of a tree.</p>
+<p>The equation for a cone (V = <img src="../TIPSY3200090007.gif" alt="TIPSY3200090007.gif" title="TIPSY3200090007.gif" width="8" height="16" border="0">r2h / 3) 
+ is used to determine the decrease in diameter due to volume loss. Volume 
+ loss for a given age is constant across all diameter classes. For each 
+ diameter class, a diameter value d is calculated (with the conical equation) 
+ using the unadjusted volume. The adjusted volume is then used to calculate 
+ an adjusted diameter value d’. Then, d and d’ are used to calculate a 
+ class shift parameter (d - d’). This indicates how the trees in a particular 
+ class have decreased in size.</p>
+<p>For example, consider a stand where, at a height of 12m, there are 576 
+ trees at the diameter class of 15cm with a combined volume of 36m/ha. 
+ Assume a 10% volume loss due to <span class="hcp2">Armillaria</span>. 
+ d is calculated as 14.105, d’ is 13.381, and d - d’ 0.724. This indicates 
+ a downward shift of .724 cm of the mean diameter for the trees in this 
+ diameter class.</p>
+<p>Thus, trees on <span class="hcp1">TIPSY’s</span> stand 
+ table are moved down from higher diameter classes. The stock and mortality 
+ tables are then adjusted to be consistent with the new stand values.</p>
+<p>Here is an example of a naturally-growing stand with an OAF 1 of 0.50, 
+ OAF 2 of 0.80 and a high level of <span class="hcp2">Armillaria</span> 
+ applied to it.</p>
+<table >
+	<tr class="hcp3">
+		<td><p class="TableText">______________________________________</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 444px; height: 37px;" width="309">
+	<col style="width: 10.774%;">
+	<col style="width: 16.498%;">
+	<col style="width: 16.162%;">
+	<col style="width: 22.222%;">
+	<col width="102">
+	<tr class="hcp3">
+		<td style="width: 10.774%;"><p class="TableText">Age<br>
+		(yr)</p></td>
+		<td style="width: 16.498%;"><p class="TableText">OAF 1<br>
+		.50</p></td>
+		<td style="width: 16.162%;"><p class="TableText">OAF 2<br>
+		.80</p></td>
+		<td style="width: 22.222%;"><p class="TableText">Armillaria<br>
+		High</p></td>
+		<td width="102"><p class="TableText">Combined</p>
+		<p class="TableText">&#160;&#160;OAF</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp3">
+		<td><p class="TableText">______________________________________</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 504px; height: 213px;" width="305">
+	<col style="width: 10.922%;">
+	<col style="width: 16.724%;">
+	<col style="width: 16.382%;">
+	<col style="width: 22.526%;">
+	<col width="98">
+	<tr class="hcp3">
+		<td style="width: 10.922%;"><p class="TableText">0</p></td>
+		<td style="width: 16.724%;"><p class="TableText">0.50</p></td>
+		<td style="width: 16.382%;"><p>1.00</p></td>
+		<td style="width: 22.526%;"><p>1.00</p></td>
+		<td width="98"><p class="TableText">0.50</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 10.922%;"><p class="TableText">10</p></td>
+		<td style="width: 16.724%;"><p class="TableText">0.50</p></td>
+		<td style="width: 16.382%;"><p class="TableText">0.98</p></td>
+		<td style="width: 22.526%;"><p class="TableText">0.90</p></td>
+		<td width="98"><p class="TableText">0.44</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 10.922%;"><p class="TableText">20</p></td>
+		<td style="width: 16.724%;"><p class="TableText">0.50</p></td>
+		<td style="width: 16.382%;"><p class="TableText">0.96</p></td>
+		<td style="width: 22.526%;"><p class="TableText">0.79</p></td>
+		<td width="98"><p class="TableText">0.38</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 10.922%;"><p class="TableText">30</p></td>
+		<td style="width: 16.724%;"><p class="TableText">0.50</p></td>
+		<td style="width: 16.382%;"><p class="TableText">0.94</p></td>
+		<td style="width: 22.526%;"><p class="TableText">0.73</p></td>
+		<td width="98"><p class="TableText">0.34</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 10.922%;"><p class="TableText">40</p></td>
+		<td style="width: 16.724%;"><p class="TableText">0.50</p></td>
+		<td style="width: 16.382%;"><p class="TableText">0.92</p></td>
+		<td style="width: 22.526%;"><p class="TableText">0.68</p></td>
+		<td width="98"><p class="TableText">0.31</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 10.922%;"><p class="TableText">50</p></td>
+		<td style="width: 16.724%;"><p class="TableText">0.50</p></td>
+		<td style="width: 16.382%;"><p class="TableText">0.90</p></td>
+		<td style="width: 22.526%;"><p class="TableText">0.62</p></td>
+		<td width="98"><p class="TableText">0.28</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 10.922%;"><p class="TableText">:</p></td>
+		<td style="width: 16.724%;"><p class="TableText">:</p></td>
+		<td style="width: 16.382%;"><p class="TableText">:</p></td>
+		<td style="width: 22.526%;"><p class="TableText">:</p></td>
+		<td width="98"><p class="TableText">:</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 10.922%;"><p class="TableText">100</p></td>
+		<td style="width: 16.724%;"><p class="TableText">0.50</p></td>
+		<td style="width: 16.382%;"><p class="TableText">0.80*</p></td>
+		<td style="width: 22.526%;"><p class="TableText">0.37</p></td>
+		<td width="98"><p class="TableText">0.15</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 10.922%;"><p class="TableText">:</p></td>
+		<td style="width: 16.724%;"><p class="TableText">:</p></td>
+		<td style="width: 16.382%;"><p class="TableText">:</p></td>
+		<td style="width: 22.526%;"><p class="TableText">:</p></td>
+		<td width="98"><p class="TableText">:</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 10.922%;"><p class="TableText">150</p></td>
+		<td style="width: 16.724%;"><p class="TableText">0.50</p></td>
+		<td style="width: 16.382%;"><p class="TableText">0.70</p></td>
+		<td style="width: 22.526%;"><p class="TableText">0.29</p></td>
+		<td width="98"><p class="TableText">0.10</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp3">
+		<td><p class="TableText">______________________________________</p></td>
+	</tr>
+</table>
+<p class="Bullet">*Index age for OAF2 reductions</p>
+<p>Notice that, as with the combination of other <span class="hcp1">TIPSY</span> 
+ OAFs (see Combining OAFs), the OAFs are 
+ applied sequentially. Above at age 100, OAF 1 is 0.50, OAF 2 is 0.80, 
+ and the effect of <span class="hcp2">Armillaria</span> 
+ is 0.37, then the combined OAF is 0.15.</p>
+<p>Combined OAF = 0.50 x 0.80 x 0.37 = 0.15</p>
+<p>When using <span class="hcp2">Armillaria</span> 
+ in a mixed-species stand, the effect of <span class="hcp2">Armillaria</span> 
+ will reduce only the interior Douglas-fir portion of the stand. Using 
+ the above example and making 50% of the stand lodgepole pine, we see the 
+ following difference in the results:</p>
+<table >
+	<tr class="hcp3">
+		<td><p class="TableText">____________________________________________________</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 892px; height: 37px;" width="424">
+	<col style="width: 7.485%;">
+	<col width="45">
+	<col width="47">
+	<col width="64">
+	<col width="72">
+	<col style="width: 18.574%;">
+	<col width="64">
+	<tr class="hcp3">
+		<td style="width: 7.485%;"><p class="TableText" style="text-align: center;">Age<br>
+		(yr)</p></td>
+		<td width="45"><p class="TableText" style="text-align: center;">OAF 
+		 1<br>
+		.50</p></td>
+		<td width="47"><p class="TableText" style="text-align: center;">OAF 
+		 2<br>
+		.80</p></td>
+		<td width="64"><p class="TableText" style="text-align: center;">Armillaria<br>
+		High</p></td>
+		<td width="72"><p class="TableText" style="text-align: center;">OAF 
+		 for</p>
+		<p class="TableText" style="text-align: center;">Fdi</p></td>
+		<td style="width: 18.574%;"><p class="TableText" style="text-align: center;">OAF 
+		 for</p>
+		<p class="TableText" style="text-align: center;">Pli</p></td>
+		<td width="64"><p class="TableText" style="text-align: center;">Combined 
+		 OAF</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp3">
+		<td><p class="TableText">____________________________________________________</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 956px; height: 213px;" width="422">
+	<col style="width: 7.613%;">
+	<col style="width: 11.051%;">
+	<col style="width: 12.534%;">
+	<col style="width: 15.974%;">
+	<col style="width: 18.186%;">
+	<col style="width: 18.911%;">
+	<col style="width: 15.73%;">
+	<tr class="hcp3">
+		<td style="width: 7.613%;"><p class="TableText">0</p></td>
+		<td style="width: 11.051%;"><p class="TableText" style="text-align: center;">0.50</p></td>
+		<td style="width: 12.534%;"><p class="hcp4">1.00</p></td>
+		<td style="width: 15.974%;"><p class="hcp4">1.00</p></td>
+		<td style="width: 18.186%;"><p class="TableText" style="text-align: center;">0.50</p></td>
+		<td style="width: 18.911%;"><p class="TableText" style="text-align: center;">0.50</p></td>
+		<td style="width: 15.73%;"><p class="TableText" style="text-align: center;">0.50</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 7.613%;"><p class="TableText">10</p></td>
+		<td style="width: 11.051%;"><p class="TableText" style="text-align: center;">0.50</p></td>
+		<td style="width: 12.534%;"><p class="TableText" style="text-align: center;">0.98</p></td>
+		<td style="width: 15.974%;"><p class="TableText" style="text-align: center;">0.90</p></td>
+		<td style="width: 18.186%;"><p class="TableText" style="text-align: center;">0.44</p></td>
+		<td style="width: 18.911%;"><p class="TableText" style="text-align: center;">0.49</p></td>
+		<td style="width: 15.73%;"><p class="TableText" style="text-align: center;">0.47</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 7.613%;"><p class="TableText">20</p></td>
+		<td style="width: 11.051%;"><p class="TableText" style="text-align: center;">0.50</p></td>
+		<td style="width: 12.534%;"><p class="TableText" style="text-align: center;">0.96</p></td>
+		<td style="width: 15.974%;"><p class="TableText" style="text-align: center;">0.79</p></td>
+		<td style="width: 18.186%;"><p class="TableText" style="text-align: center;">0.38</p></td>
+		<td style="width: 18.911%;"><p class="TableText" style="text-align: center;">0.48</p></td>
+		<td style="width: 15.73%;"><p class="TableText" style="text-align: center;">0.43</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 7.613%;"><p class="TableText">30</p></td>
+		<td style="width: 11.051%;"><p class="TableText" style="text-align: center;">0.50</p></td>
+		<td style="width: 12.534%;"><p class="TableText" style="text-align: center;">0.94</p></td>
+		<td style="width: 15.974%;"><p class="TableText" style="text-align: center;">0.73</p></td>
+		<td style="width: 18.186%;"><p class="TableText" style="text-align: center;">0.34</p></td>
+		<td style="width: 18.911%;"><p class="TableText" style="text-align: center;">0.47</p></td>
+		<td style="width: 15.73%;"><p class="TableText" style="text-align: center;">0.41</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 7.613%;"><p class="TableText">40</p></td>
+		<td style="width: 11.051%;"><p class="TableText" style="text-align: center;">0.50</p></td>
+		<td style="width: 12.534%;"><p class="TableText" style="text-align: center;">0.92</p></td>
+		<td style="width: 15.974%;"><p class="TableText" style="text-align: center;">0.68</p></td>
+		<td style="width: 18.186%;"><p class="TableText" style="text-align: center;">0.31</p></td>
+		<td style="width: 18.911%;"><p class="TableText" style="text-align: center;">0.46</p></td>
+		<td style="width: 15.73%;"><p class="TableText" style="text-align: center;">0.39</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 7.613%;"><p class="TableText">50</p></td>
+		<td style="width: 11.051%;"><p class="TableText" style="text-align: center;">0.50</p></td>
+		<td style="width: 12.534%;"><p class="TableText" style="text-align: center;">0.90</p></td>
+		<td style="width: 15.974%;"><p class="TableText" style="text-align: center;">0.62</p></td>
+		<td style="width: 18.186%;"><p class="TableText" style="text-align: center;">0.28</p></td>
+		<td style="width: 18.911%;"><p class="TableText" style="text-align: center;">0.45</p></td>
+		<td style="width: 15.73%;"><p class="TableText" style="text-align: center;">0.37</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 7.613%;"><p class="TableText">:</p></td>
+		<td style="width: 11.051%;"><p class="TableText" style="text-align: center;">:</p></td>
+		<td style="width: 12.534%;"><p class="TableText" style="text-align: center;">:</p></td>
+		<td style="width: 15.974%;"><p class="TableText" style="text-align: center;">:</p></td>
+		<td style="width: 18.186%;"><p class="TableText" style="text-align: center;">:</p></td>
+		<td style="width: 18.911%;"><p class="TableText" style="text-align: center;">:</p></td>
+		<td style="width: 15.73%;"><p class="TableText" style="text-align: center;">:</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 7.613%;"><p class="TableText">100</p></td>
+		<td style="width: 11.051%;"><p class="TableText" style="text-align: center;">0.50</p></td>
+		<td style="width: 12.534%;"><p class="TableText" style="text-align: center;">0.80</p></td>
+		<td style="width: 15.974%;"><p class="TableText" style="text-align: center;">0.37</p></td>
+		<td style="width: 18.186%;"><p class="TableText" style="text-align: center;">0.15</p></td>
+		<td style="width: 18.911%;"><p class="TableText" style="text-align: center;">0.40</p></td>
+		<td style="width: 15.73%;"><p class="TableText" style="text-align: center;">0.28</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 7.613%;"><p class="TableText">:</p></td>
+		<td style="width: 11.051%;"><p class="TableText" style="text-align: center;">:</p></td>
+		<td style="width: 12.534%;"><p class="TableText" style="text-align: center;">:</p></td>
+		<td style="width: 15.974%;"><p class="TableText" style="text-align: center;">:</p></td>
+		<td style="width: 18.186%;"><p class="TableText" style="text-align: center;">:</p></td>
+		<td style="width: 18.911%;"><p class="TableText" style="text-align: center;">:</p></td>
+		<td style="width: 15.73%;"><p class="TableText" style="text-align: center;">:</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 7.613%;"><p class="TableText">150</p></td>
+		<td style="width: 11.051%;"><p class="TableText" style="text-align: center;">0.50</p></td>
+		<td style="width: 12.534%;"><p class="TableText" style="text-align: center;">0.70</p></td>
+		<td style="width: 15.974%;"><p class="TableText" style="text-align: center;">0.29</p></td>
+		<td style="width: 18.186%;"><p class="TableText" style="text-align: center;">0.10</p></td>
+		<td style="width: 18.911%;"><p class="TableText" style="text-align: center;">0.35</p></td>
+		<td style="width: 15.73%;"><p class="TableText" style="text-align: center;">0.23</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp3">
+		<td>______________________________________________</td>
+	</tr>
+</table>
+<p>In this example, the combined OAF (or overall effect on your stand) 
+ is calculated by taking 50% of the Fdi OAF and 50% of the Pli OAF. Above 
+ at age 100, OAF 1 is 0.50, OAF 2 is 0.80, and the effect of a High <span class="hcp2">Armillaria</span> OAF 
+ is 0.37. The total OAF for Fdi is 0.15, for Pli is 0.40, and the combined 
+ OAF is 0.28.</p>
+<p class="Indent">OAF for Fdi = 0.50 x 0.80 x 0.37 = 0.15</p>
+<p class="Indent">OAF for Pli = 0.50 x 0.80 = 0.40</p>
+<p class="Indent">Combined OAF = (0.15 x 0.5) + (0.40 x 0.5) = 0.28</p>
+<p><span class="hcp1">Note</span>: The apparent impact of 
+ <span class="hcp2">Armillaria</span> 
+ on the lumber recovery factor and on average revenue is not real. It is 
+ an artifact that occurs when an agent alters the distribution of trees 
+ in the diameter classes without affecting the log and lumber tables as 
+ one would expect. Consequently, log and lumber volumes will be slightly 
+ high, and economic analyses will understate losses accordingly. In effect, 
+ we’ve added a model (i.e., <span class="hcp2">Armillaria</span>) 
+ to <span class="hcp1">TIPSY</span> that can't be applied 
+ consistently to every dependent variable and table.</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp4">_______________________________________________</p>
+	<p class="hcp4">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

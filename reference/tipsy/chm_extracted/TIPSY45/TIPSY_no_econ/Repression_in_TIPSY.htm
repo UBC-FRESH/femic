@@ -1,0 +1,425 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="Repression">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Repression in Pine</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<script type="text/javascript" language="JavaScript1.2" src="../ehlpdhtm.js"></script>
+<style title="hcp" type="text/css">
+<!--
+p.hcp1 { margin-left:20px; }
+span.hcp2 { font-weight:bold; }
+span.hcp3 { text-decoration:underline; }
+tr.hcp4 { vertical-align:top; }
+p.hcp5 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+
+
+
+
+<h1><a name="MiniTOCBookMark1"></a>Repression in Pine</h1>
+<p align="left" style="font-family:Arial;font-size:12pt;font-weight: normal;font-style: normal;text-decoration: none;" >In&#160;this&#160;Topic&#160;<a class="dropspot" href="javascript:TextPopup(this)" id="MTHotSpot55387" ><span class="MTText" style="display: none;" >Show</span><span class="MTText" >Hide</span></a></p>
+<script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('MTHotSpot55387', 'MTPOPUP55387');
+//]]></script>
+<div align="left" class="droptext" id="MTPOPUP55387" >
+ <div style="background: #ffff00;float: none;width: 100% ;" >
+  <p align="left"  ><a href="#MiniTOCBookMark2" >What is Repression?</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark3" >Repression in TIPSY</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark4" >Repression Modelling</a></p>
+  <p align="left" class="hcp1"><a href="#MiniTOCBookMark5" >Critical Height</a></p>
+  <p align="left" class="hcp1"><a href="#MiniTOCBookMark6" >Site Index</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark7" >Example Yield Effects</a></p>
+ </div>
+</div>
+<h2><a name="MiniTOCBookMark2"></a>What is Repression?</h2>
+<p>Repression is defined as a reduction in height growth due to excessive 
+ establishment density. It affects all trees in the stand, including dominants.</p>
+<p>Height repression has been documented in fire-origin stands of lodgepole 
+ pine, which have been observed to regenerate at up to 800,000 stems per 
+ ha. &#160;Although suspected in other species, such as coastal hemlock, 
+ it is only well documented in lodgepole pine. &#160;&#160;In extremely 
+ dense pine stands, height growth repression begins before trees reach 
+ 1m in height. &#160;The onset of repression occurs later at lower densities.</p>
+<p><a href="Repression_in_TIPSY.htm">Back to Top</a></p>
+<h2><a name="MiniTOCBookMark3"></a>Repression in TIPSY</h2>
+<p><span class="hcp2">TIPSY</span> applies its repression 
+ model only to natural stands (<a href="Stand_Specifications_Options.htm#Natural">regen 
+ method = Natural, but not Clumped</a>) lodgepole pine with initial <a 
+	 href="Stand_Specifications_Options.htm#Density">Densities</a> greater 
+ than 13,825 trees/ha (average inter-tree spacing less than 0.8505 m). 
+ &#160;&#160;At 250,000 trees/ha, the maximum initial <a href="Stand_Specifications_Options.htm#Density">Density</a> 
+ supported by <span class="hcp2">TIPSY</span>, repression 
+ begins when the stand reaches 0.74 m in height. &#160;&#160;At lower densities, 
+ repression begins later.</p>
+<p>The repression effect in <span class="hcp2">TIPSY</span> 
+ is avoided only if the stand is pre-commercially thinned (<a href="Stand_Specifications_Options.htm#PCT">PCT</a>) 
+ <span class="hcp3">before</span> the onset of 
+ repression, at the density-dependent &quot;critical height&quot;. &#160;&#160;After 
+ this point, <a href="Stand_Specifications_Options.htm#PCT">PCT</a> will 
+ not avoid repression.</p>
+<p>When <a href="Stand_Specifications_Options.htm#PCT">PCT</a> is selected, 
+ the <a href="Stand_Specifications_Options.htm#PCT">Residual <b><i style="font-weight: normal; 
+	 font-style: normal;">Density</i></b></a> dialog box offers the option 
+ to thin before or after the &quot;critical height&quot;. &#160;&#160;For 
+ stands spaced later, or left unthinned, the actual (repressed) growth 
+ falls short of the potential (unrepressed) growth.</p>
+<p>A special repression summary appears in the <b><i><a href="Site_Index_dialog_box.htm">Site 
+ Index</a></i></b> dialog box when repression is activated. It reports 
+ the base (unrepressed) and actual (repressed) top heights projected to 
+ breast-height age 50, as well as the loss of top height due to repression. 
+ If you make changes to density that effect the repressed top height, this 
+ dialogue box will reappear each time just to let you know that top height 
+ has been revised.</p>
+<p><span style="font-weight: bold; background-color: #ffff00;">NOTE:</span> 
+ &#160;Repression is not applied in <span class="hcp2">TIPSY</span> 
+ to multiple species stand. Also note that it is possible to enter an unreasonably 
+ high top height at 50 years (e.g. 30m) for a repressed stand. <span class="hcp2">TIPSY</span> 
+ will then display an unreasonably high site index (e.g. 35m) which exceeds 
+ the normal upper limit of 30m for lodgepole pine.</p>
+<h2><a name="MiniTOCBookMark4"></a>Repression Modelling</h2>
+<h3><a name="MiniTOCBookMark5"></a>Critical Height</h3>
+<p>Stem analysis and plot reconstruction data show that response of <a href="javascript:TextPopup(this)" id="HotSpot15748" class="glossterm">dominant</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot15748', 'POPUP15748');
+//]]></script><span class="glosstext" id="POPUP15748" style="display: none;"> trees with crowns extending above the general level of the canopy and receiving full light from above and partly from the side; taller than the average trees in the stand with crowns well developed</span> height growth to thinning is 
+ very difficult to predict. &#160;There are few long-term permanent plots 
+ in thinned pine stands available for model development. &#160;&#160;Based 
+ on our available data <a href="Literature_Cited.htm#Mitchell_Goudie_1980">(Mitchell 
+ and Goudie 1980)</a> we therefore assume that repression is avoided only 
+ if stands are thinned before the onset of repression.</p>
+<p>We used the <a href="Literature_Cited.htm#Carlson_Johnstone_1983">Barnes 
+ Creek</a> data to develop a model to predict the critical top height (THcrit.) 
+ at which repression starts.</p>
+<p class="Indent">THcrit = 1.3777*exp(-0.000002468*Density)</p>
+<p class="Indent">where</p>
+<p class="Indent">Density = number of trees established/ha.</p>
+<p>For example, if establishment density is 250 000/ha, repression begins 
+ at a top height of 0.74m. &#160;In <span class="hcp2">TIPSY</span>, 
+ you can choose to thin before or after THcrit. The stand proceeds on the 
+ reduced height growth path if the height at time of thinning is greater 
+ than Thcrit. and does not respond in height growth (but diameter growth 
+ is greater). The stand grows unrepressed if enough trees are removed before 
+ it reaches the critical height. &#160;&#160;&#160;The fact that <span class="hcp2">TIPSY</span> actually applies <a href="Stand_Specifications_Options.htm#PCT">PCT</a> 
+ in yield tables at a height of 4m is not a problem since stand statistics 
+ themselves are relatively insensitive to the age of thinning. &#160;For 
+ repression, <span class="hcp2">TIPSY</span> does not display 
+ output data prior to its thinning height of 4m.</p>
+<p><a href="Repression_in_TIPSY.htm">Back to Top</a></p>
+<h3><a name="MiniTOCBookMark6"></a>Site Index</h3>
+<p><a href="Literature_Cited.htm#Carlson_Johnstone_1983">Carlson and Johnstone 
+ (1983</a><i>)</i> established the only known experiment in B.C. that specifically 
+ addresses repression. They planted from 2500 to 160 000 stems/ha at Barnes 
+ Creek. Fourteen year remeasurement data were used in conjunction with 
+ growth intercept relationships developed by <a href="Literature_Cited.htm#Nigh_1995c">Nigh 
+ (1995c)</a> to derive an adjustment for <a href="javascript:TextPopup(this)" id="HotSpot30306" class="glossterm">dominant</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot30306', 'POPUP30306');
+//]]></script><span class="glosstext" id="POPUP30306" style="display: none;"> trees with crowns extending above the general level of the canopy and receiving full light from above and partly from the side; taller than the average trees in the stand with crowns well developed</span> 
+ height at breast height achieved at age 50.</p>
+<p>Each plot was evaluated using the equivalent of the largest 100 trees/ha 
+ by diameter (top height). For the smallest plots, this equated to the 
+ height of the single largest tree. The following segmented regression 
+ model was fit to the data:</p>
+<table >
+	<tr class="hcp4">
+		<td><p>TH50 =</p></td>
+		<td><p>16.5142 + 12.7919*Spacing - 7.5201*Spacing*Spacing</p></td>
+		<td><p>[spacing&lt;0.8505]</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp4">
+		<td><p>or</p></td>
+		<td><p>&#160;</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp4">
+		<td><p>TH50 =</p></td>
+		<td><p>21.954</p></td>
+		<td><p>[otherwise].</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp4">
+		<td><p>where TH50 =</p></td>
+		<td><p>estimated top height at breast height age 50</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp4">
+		<td><p>Spacing =</p></td>
+		<td><p>average rectangular inter-tree spacing (m) at establishment</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp4">
+		<td><p>=</p></td>
+		<td><p>SQRT (10 000/TPH )</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp4">
+		<td><p>TPH =</p></td>
+		<td><p>trees per ha established</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+</table>
+<p>The data indicated that on this site, TH50 increases for initial spacings 
+ less than the predicted join-point spacing of 0.8505m, (13 825 stems/ha) 
+ and remained constant for wider spacings. The join-point coefficient was 
+ solved simultaneously with the regression coefficients and the function 
+ is continuous and differentiable at that point.</p>
+<p>We have no controlled data from other locations. We used an interim 
+ measure to translate the results of the Barnes Creek data to other sites. 
+ We converted the results from absolute TH50 to relative (TH50r) by dividing 
+ the data by the plateau (21.954m). This results in:</p>
+<table >
+	<tr class="hcp4">
+		<td><p>TH50r =</p></td>
+		<td><p>0.7522 + 0.5827*Spacing - 0.3425*Spacing*Spacing</p></td>
+		<td><p>[Spacing&lt;0.8505]</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp4">
+		<td><p>TH50r =</p></td>
+		<td><ol>
+			<li class="p"><p>.000</p></li>
+		</ol></td>
+		<td><p>&#160;</p></td>
+		<td><p>[otherwise]</p></td>
+	</tr>
+</table>
+<p>In <span class="hcp2">TIPSY</span>, if the average inter-tree 
+ spacing is below 0.8505m and no thinning is scheduled, then the potential 
+ top height at age 50 (site index) will increase by the predicted proportion. 
+ This is because, operationally, we can measure or calculate the actual 
+ top height, but not usually the potential top height of old stands or 
+ recently-regenerated stands. For example, if a stand with a projected 
+ or actual top height at age 50 of 20m regenerates to 250 000 stems per 
+ ha, the potential top height (site index) increases to 20/0.8550 = 23.39 
+ (an increase of 3.3m). This is the site index that would be used for stands 
+ that are thinned before repression occurs. This example was created using 
+ <span class="hcp2">TIPSY 3.0</span>.</p>
+<p>Thinning the stand early avoids repression. The model's inherent assumption 
+ that the absolute reduction is lower on poorer sites is supported by available 
+ literature on repression <a href="Literature_Cited.htm#Udell_Dempster_1987">(Udell 
+ and Dempster 1987,</a> <a href="Literature_Cited.htm#Goudie_1996">Goudie 
+ 1996)</a>. We assume that the results from these extremely dense plantations 
+ also apply to natural stands of unknown spatial distribution.</p>
+<p><a href="Repression_in_TIPSY.htm">Back to Top</a></p>
+<h2><a name="MiniTOCBookMark7"></a><a name="Effects_in_TIPSY"></a>Example Yield Effects</h2>
+<p>Increase the initial density above the repression threshold in separate 
+ <span class="hcp2">TIPSY</span> runs, and you'll see a decline 
+ in yield (e.g. volume, DBH), reflecting the impact of repression. To illustrate, 
+ assume you want to see how initial density and repression affect top height, 
+ merchantable volume (12.5+) and DBH on site 20. The examples below were 
+ created with <span class="hcp2">TIPSY 3.0</span>.</p>
+<table >
+	<tr class="hcp4">
+		<td><p>______________________________________________________________</p></td>
+	</tr>
+</table>
+<table >
+	<col width="129">
+	<col width="57">
+	<col width="171">
+	<col width="6">
+	<col>
+	<col>
+	<tr class="hcp4">
+		<td width="129"><p>Top height<br>
+		@ bh age 50</p></td>
+		<td width="57"><p>Initial<br>
+		density</p></td>
+		<td width="171"><p>Yield @ TIPSY age 75</p></td>
+		<td width="6"><p>&#160;</p></td>
+		<td><p>&#160;</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 263px; height: 37px;" width="450">
+	<col width="51">
+	<col width="74">
+	<col width="57">
+	<col width="63">
+	<col width="67">
+	<col width="62">
+	<col width="46">
+	<tr class="hcp4">
+		<td width="51"><p>Base</p></td>
+		<td width="74"><p>Actual</p></td>
+		<td width="57"><p>&#160;</p></td>
+		<td width="63"><p>Top<br>
+		height</p></td>
+		<td width="67"><p>Volume<br>
+		(12.5+)</p></td>
+		<td width="62"><p>DBH</p></td>
+		<td width="46"><p>&#160;</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp4">
+		<td><p>______________________________________________________________</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 327px; height: 113px;" width="503">
+	<col>
+	<col width="66">
+	<col width="57">
+	<col width="63">
+	<col width="66">
+	<col width="63">
+	<col width="99">
+	<tr class="hcp4">
+		<td><p>[20.0</p></td>
+		<td width="66"><p>20.0</p></td>
+		<td width="57"><p>10 000</p></td>
+		<td width="63"><p>23.2</p></td>
+		<td width="66"><p>394</p></td>
+		<td width="63"><p>20.0]</p></td>
+		<td width="99"><p>Unrepressed</p></td>
+	</tr>
+	<tr class="hcp4">
+		<td><p>19.9</p></td>
+		<td width="66"><p>19.9</p></td>
+		<td width="57"><p>20 000</p></td>
+		<td width="63"><p>23.0</p></td>
+		<td width="66"><p>393</p></td>
+		<td width="63"><p>19.8</p></td>
+		<td width="99"><p>Repressed</p></td>
+	</tr>
+	<tr class="hcp4">
+		<td><p>18.0</p></td>
+		<td width="66"><p>18.0</p></td>
+		<td width="57"><p>100 000</p></td>
+		<td width="63"><p>21.0</p></td>
+		<td width="66"><p>333</p></td>
+		<td width="63"><p>17.1</p></td>
+		<td width="99"><p>&#160;</p></td>
+	</tr>
+	<tr class="hcp4">
+		<td><p>17.1</p></td>
+		<td width="66"><p>17.1</p></td>
+		<td width="57"><p>250 000</p></td>
+		<td width="63"><p>20.0</p></td>
+		<td width="66"><p>294</p></td>
+		<td width="63"><p>15.6</p></td>
+		<td width="99"><p>&#160;</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp4">
+		<td><p>______________________________________________________________</p></td>
+	</tr>
+</table>
+<p>The next approach assumes that you know the breast-height age, top height 
+ and initial density of a repressed stand, but not the site index. Inventory 
+ foresters who collect data from existing stands will find it particularly 
+ relevant.</p>
+<p>Choose the <b><i>Actual Top Height</i></b> (repressed) option, then 
+ enter breast-height age and actual top height in the dialog box. Notice 
+ that <span class="hcp2">TIPSY</span> calculates the site 
+ index and base top height.</p>
+<p>The second method holds top height constant as you change initial density 
+ in a series of runs. <span class="hcp2">TIPSY</span> adjusts 
+ site index to conform to each initial density. It uses breast-height age, 
+ actual top height and initial density to project the actual top height 
+ to breast-height age 50. <span class="hcp2">TIPSY</span> 
+ grows the repressed stand along the site curve which conforms with actual 
+ top height - not potential top height. It also calculates the base, or 
+ unrepressed, top height at breast-height age 50 (site index) for your 
+ information. To illustrate, assume you have three separate stands of the 
+ same height and age but different densities as shown in columns 1-3 below:</p>
+<table >
+	<tr class="hcp4">
+		<td><p>____________________________________________________________</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 627px; height: 37px;" width="484">
+	<col width="114">
+	<col width="88">
+	<col width="85">
+	<col>
+	<tr class="hcp4">
+		<td width="114"><p>Actual top height</p></td>
+		<td width="88"><p>Breast-height<br>
+		age</p></td>
+		<td width="85"><p>Initial<br>
+		density</p></td>
+		<td><p><span class="hcp3">Top height @ 
+		 bh age 50</span><br>
+		Base &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Actual</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp4">
+		<td><p>____________________________________________________________</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 694px;" width="484">
+	<col style="width: 24.642%;">
+	<col style="width: 19.068%;">
+	<col style="width: 18.585%;">
+	<col style="width: 19.909%;">
+	<col width="84">
+	<tr style="height:16px;" class="hcp4">
+		<td style="width: 24.642%;"><p>9.1</p></td>
+		<td style="width: 19.068%;"><p>30</p></td>
+		<td style="width: 18.585%;"><p>20 000</p></td>
+		<td style="width: 19.909%;"><p>13.2</p></td>
+		<td width="84"><p>13.1</p></td>
+	</tr>
+	<tr style="height:19px;" class="hcp4">
+		<td style="width: 24.642%;"><p>9.2</p></td>
+		<td style="width: 19.068%;"><p>30</p></td>
+		<td style="width: 18.585%;"><p>100 000</p></td>
+		<td style="width: 19.909%;"><p>14.4</p></td>
+		<td width="84"><p>13.1</p></td>
+	</tr>
+	<tr style="height:19px;" class="hcp4">
+		<td style="width: 24.642%;"><p>9.2</p></td>
+		<td style="width: 19.068%;"><p>30</p></td>
+		<td style="width: 18.585%;"><p>250 000</p></td>
+		<td style="width: 19.909%;"><p>15.3</p></td>
+		<td width="84"><p>13.1</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp4">
+		<td><p>____________________________________________________________</p></td>
+	</tr>
+</table>
+<p><span class="hcp2">TIPSY</span> calculates base and actual 
+ top height at age 50 in columns 4 and 5. The densest stand reached the 
+ same height as the others, even though the higher density caused a greater 
+ reduction in height growth. Therefore, it must be growing on a site of 
+ higher productivity (15.3 vs. 14.4 and 13.2 m). A comparison of base and 
+ actual top heights at age 50 (columns 4 and 5) shows that all stands grew 
+ below their potential because repression impaired their height to some 
+ degree. In this contrived example, all three stands perform roughly the 
+ same as an unrepressed stand growing on site 15.4. In other words, the 
+ volume/age curves generated by <span class="hcp2">TIPSY</span> 
+ are quite similar.</p>
+<p><a href="Repression_in_TIPSY.htm">Back to Top</a></p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp5">_______________________________________________</p>
+	<p class="hcp5">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

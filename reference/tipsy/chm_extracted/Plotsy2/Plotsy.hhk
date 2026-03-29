@@ -1,0 +1,741 @@
+<html>
+<!-- Sitemap 1.0 -->
+<object type="text/site properties">
+  <param name="SiteType" value="index">
+</object>
+<ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Edit Graph">
+    <param name="Name" value="Edit Graph">
+    <param name="Local" value="EditGraph/Edit_Graph.htm">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+    <param name="Name" value="Toolbar">
+    <param name="Local" value="UsingPlotsy/Toolbar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Columns">
+    <param name="Name" value="Columns">
+    <param name="Local" value="EditGraph/Columns.htm">
+    <param name="Name" value="Data Source File (.tdt)">
+    <param name="Local" value="Glossary/TDT.htm">
+    <param name="Name" value="Graph File (.gph)">
+    <param name="Local" value="Glossary/GPH.htm">
+    <param name="Name" value="Themes">
+    <param name="Local" value="EditGraph/Themes.htm">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+    <param name="Name" value="Application Type / Column File (.tcl)">
+    <param name="Local" value="Glossary/TCL.htm">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Series">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+    <param name="Name" value="Columns">
+    <param name="Local" value="EditGraph/Columns.htm">
+    <param name="Name" value="Graph Template File (.grt)">
+    <param name="Local" value="Glossary/GRT.htm">
+    <param name="Name" value="Toolbar">
+    <param name="Local" value="UsingPlotsy/Toolbar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Axes">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Graph">
+    <param name="Name" value="Graph">
+    <param name="Local" value="EditGraph/Graph.htm">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+    <param name="Name" value="Graph File (.gph)">
+    <param name="Local" value="Glossary/GPH.htm">
+    <param name="Name" value="Themes">
+    <param name="Local" value="EditGraph/Themes.htm">
+    <param name="Name" value="Introduction">
+    <param name="Local" value="GettingStarted/Introduction.htm">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+    <param name="Name" value="Page Layout File (.lay)">
+    <param name="Local" value="Glossary/LAY.htm">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+    <param name="Name" value="Columns">
+    <param name="Local" value="EditGraph/Columns.htm">
+    <param name="Name" value="Graph Template File (.grt)">
+    <param name="Local" value="Glossary/GRT.htm">
+    <param name="Name" value="ScreenLayout">
+    <param name="Local" value="GettingStarted/ScreenLayout.htm">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+    <param name="Name" value="Toolbar">
+    <param name="Local" value="UsingPlotsy/Toolbar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Measurements">
+    <param name="Name" value="Measurements">
+    <param name="Local" value="Glossary/Measurements.htm">
+    <param name="Name" value="Page Layout File (.lay)">
+    <param name="Local" value="Glossary/LAY.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Graph Template File (.grt)">
+    <param name="Name" value="Graph Template File (.grt)">
+    <param name="Local" value="Glossary/GRT.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Graph File (.gph)">
+    <param name="Name" value="Graph File (.gph)">
+    <param name="Local" value="Glossary/GPH.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Data Source File (.tdt)">
+    <param name="Name" value="Data Source File (.tdt)">
+    <param name="Local" value="Glossary/TDT.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Page Layout File (.lay)">
+    <param name="Name" value="Page Layout File (.lay)">
+    <param name="Local" value="Glossary/LAY.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Application Type / Column File (.tcl)">
+    <param name="Name" value="Application Type / Column File (.tcl)">
+    <param name="Local" value="Glossary/TCL.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Edit Styles">
+    <param name="Name" value="EditStyles">
+    <param name="Local" value="UsingPlotsy/EditStyles.htm">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+    <param name="Name" value="Toolbar">
+    <param name="Local" value="UsingPlotsy/Toolbar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="View Data Source">
+    <param name="Name" value="View Data Source">
+    <param name="Local" value="UsingPlotsy/ViewRunData.htm">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+    <param name="Name" value="Toolbar">
+    <param name="Local" value="UsingPlotsy/Toolbar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Side Bar">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Tool Bar">
+    <param name="Name" value="Toolbar">
+    <param name="Local" value="UsingPlotsy/Toolbar.htm">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Menu">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+    <param name="Name" value="Toolbar">
+    <param name="Local" value="UsingPlotsy/Toolbar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Screen Layout">
+    <param name="Name" value="ScreenLayout">
+    <param name="Local" value="GettingStarted/ScreenLayout.htm">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Dot Net Framework">
+    <param name="Name" value="DotNetFramework">
+    <param name="Local" value="GettingStarted/DotNetFramework.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Software Requirements">
+    <param name="Name" value="SoftwareRequirements">
+    <param name="Local" value="GettingStarted/SoftwareRequirements.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Data columns">
+    <param name="Name" value="Data Source File (.tdt)">
+    <param name="Local" value="Glossary/TDT.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Data Source">
+    <param name="Name" value="Data Source File (.tdt)">
+    <param name="Local" value="Glossary/TDT.htm">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+    <param name="Name" value="Graph">
+    <param name="Local" value="EditGraph/Graph.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="View – Information">
+    <param name="Name" value="Data Source File (.tdt)">
+    <param name="Local" value="Glossary/TDT.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Lock Scale">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Grid Lines">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Automatic">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Width / Height">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Scale Labels">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Override Scale">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Axes Tab">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Y1Series">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Tick Size">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Minimum">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Y2Series">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Maximum">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Axis Title">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+    <param name="Name" value="Graph">
+    <param name="Local" value="EditGraph/Graph.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="XUnit">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Promote">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Colour / Line Style">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Colour / Font">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+    <param name="Name" value="Graph">
+    <param name="Local" value="EditGraph/Graph.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Series linked">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Scale Limits">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Y3 axes">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Y2">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Y2 axes">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Y2Unit">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="XSeries">
+    <param name="Name" value="Axes">
+    <param name="Local" value="EditGraph/Axes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Tabloid">
+    <param name="Name" value="Measurements">
+    <param name="Local" value="Glossary/Measurements.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Excel">
+    <param name="Name" value="View Data Source">
+    <param name="Local" value="UsingPlotsy/ViewRunData.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Export ASCII">
+    <param name="Name" value="View Data Source">
+    <param name="Local" value="UsingPlotsy/ViewRunData.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Header">
+    <param name="Name" value="View Data Source">
+    <param name="Local" value="UsingPlotsy/ViewRunData.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Using Windows Update">
+    <param name="Name" value="DotNetFramework">
+    <param name="Local" value="GettingStarted/DotNetFramework.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Remove Themes">
+    <param name="Name" value="Themes">
+    <param name="Local" value="EditGraph/Themes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Add All">
+    <param name="Name" value="Themes">
+    <param name="Local" value="EditGraph/Themes.htm">
+    <param name="Name" value="Columns">
+    <param name="Local" value="EditGraph/Columns.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Selected Themes">
+    <param name="Name" value="Themes">
+    <param name="Local" value="EditGraph/Themes.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Remove All">
+    <param name="Name" value="Themes">
+    <param name="Local" value="EditGraph/Themes.htm">
+    <param name="Name" value="Columns">
+    <param name="Local" value="EditGraph/Columns.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="TASS">
+    <param name="Name" value="Introduction">
+    <param name="Local" value="GettingStarted/Introduction.htm">
+    <param name="Name" value="Application Type / Column File (.tcl)">
+    <param name="Local" value="Glossary/TCL.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Plot32">
+    <param name="Name" value="Introduction">
+    <param name="Local" value="GettingStarted/Introduction.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Export Data Source">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Recent Files">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Print Graph / Print Preview">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Open Data Source">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Graph Template">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="TEMP">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Page Setup">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+    <param name="Name" value="Toolbar">
+    <param name="Local" value="UsingPlotsy/Toolbar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="EMF file">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Page Layout">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Graph Image">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Exporting">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Enhanced Metafile">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Graphics Interchange Format">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Contents / Index">
+    <param name="Name" value="Menu">
+    <param name="Local" value="UsingPlotsy/Menu.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Header / Footer">
+    <param name="Name" value="Page Layout File (.lay)">
+    <param name="Local" value="Glossary/LAY.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Column Id">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Overlay Method">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Graph Only">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Colours">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+    <param name="Name" value="EditStyles">
+    <param name="Local" value="UsingPlotsy/EditStyles.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Delete Data Source">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Data Source Section">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Tile Horizontally">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Then Plotsy">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Data">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Tile Vertically">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Screen Layout Section">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Line Types">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Edit Graph Template">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Menu includes">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Rename Data Source Description">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Graph Template Section">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Edit Graph Template dialog">
+    <param name="Name" value="SideBar">
+    <param name="Local" value="UsingPlotsy/SideBar.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Selected Columns">
+    <param name="Name" value="Columns">
+    <param name="Local" value="EditGraph/Columns.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Column Group">
+    <param name="Name" value="Columns">
+    <param name="Local" value="EditGraph/Columns.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Sort Alphabetically">
+    <param name="Name" value="Columns">
+    <param name="Local" value="EditGraph/Columns.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Custom View">
+    <param name="Name" value="Columns">
+    <param name="Local" value="EditGraph/Columns.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Remove Series">
+    <param name="Name" value="Columns">
+    <param name="Local" value="EditGraph/Columns.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Line Styles">
+    <param name="Name" value="EditStyles">
+    <param name="Local" value="UsingPlotsy/EditStyles.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Column File">
+    <param name="Name" value="Application Type / Column File (.tcl)">
+    <param name="Local" value="Glossary/TCL.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Type">
+    <param name="Name" value="Application Type / Column File (.tcl)">
+    <param name="Local" value="Glossary/TCL.htm">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Parent Application">
+    <param name="Name" value="Application Type / Column File (.tcl)">
+    <param name="Local" value="Glossary/TCL.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Application Type">
+    <param name="Name" value="Application Type / Column File (.tcl)">
+    <param name="Local" value="Glossary/TCL.htm">
+    <param name="Name" value="Graph Template File (.grt)">
+    <param name="Local" value="Glossary/GRT.htm">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Scroll Bar">
+    <param name="Name" value="ScreenLayout">
+    <param name="Local" value="GettingStarted/ScreenLayout.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Position column">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Cluster">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Series/Theme">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Graph Type">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Filter">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Record ID">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Y Position">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Theme Properties">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Y Axis">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Points / Lines">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="ThemeStr">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Lines">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Units">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Series Tab">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Bars / Points">
+    <param name="Name" value="Series">
+    <param name="Local" value="EditGraph/Series.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="XAxis">
+    <param name="Name" value="Graph">
+    <param name="Local" value="EditGraph/Graph.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Template Name">
+    <param name="Name" value="Graph">
+    <param name="Local" value="EditGraph/Graph.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Graph Title Text">
+    <param name="Name" value="Graph">
+    <param name="Local" value="EditGraph/Graph.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Y1Axis">
+    <param name="Name" value="Graph">
+    <param name="Local" value="EditGraph/Graph.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Y2Axis">
+    <param name="Name" value="Graph">
+    <param name="Local" value="EditGraph/Graph.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Square Brackets">
+    <param name="Name" value="Graph">
+    <param name="Local" value="EditGraph/Graph.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Graph Template Information">
+    <param name="Name" value="Graph">
+    <param name="Local" value="EditGraph/Graph.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Graph Template list">
+    <param name="Name" value="Graph">
+    <param name="Local" value="EditGraph/Graph.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Graph Tab">
+    <param name="Name" value="Graph">
+    <param name="Local" value="EditGraph/Graph.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Print Preview">
+    <param name="Name" value="Toolbar">
+    <param name="Local" value="UsingPlotsy/Toolbar.htm">
+  </object>
+</ul>
+</html>

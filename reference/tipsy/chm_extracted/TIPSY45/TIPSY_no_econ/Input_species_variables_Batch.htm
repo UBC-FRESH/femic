@@ -1,0 +1,139 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="BatchTIPSY">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Input species variables, Batch</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+p.hcp2 { margin-left:40px; }
+p.hcp3 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+
+<h1>Input species variables, Batch</h1>
+<p>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="2302"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="Related topics"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="BatchTIPSY$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\steve\Documents\My Robohelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\Input_species_variables_Batch.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:Related topics">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="BatchTIPSY">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </p>
+<p>In this dialog box, you specify the column numbers in your input data 
+ file for all species related information, including:</p>
+<ul>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet">Each 
+	 <a href="Species_Selection.htm">species</a> in your input file. Once 
+	 you have entered start and end column numbers for one species, another 
+	 field becomes available. The first species doesn't need to be the 
+	 leading species. You'll have a chance to change site index curve and 
+	 volume curve mappings later. Only five species are possible.</p></li>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet"><span class="hcp1">Percent Composition</span>: for each species 
+	 in the stand, if more than one species.</p></li>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet"><span class="hcp1">Genetic worth </span>information for planted 
+	 stock consists of expected <span class="hcp1">Gain</span> 
+	 (%) and <span class="hcp1">Index Age</span>. The default 
+	 is zero percent gain. &#160;See <a href="Genetic_Gain_in_TIPSY.htm">Genetic 
+	 Gain in TIPSY</a> for more information.</p></li>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet"><span class="hcp1">Custom Stock Height.</span> If you don't 
+	 enter a custom stock height, TIPSY uses the defaults listed in <a 
+	 href="Planting_Stock_Height.htm">Planting Stock Height</a>. These 
+	 defaults are for the height of one-year old stock grown in the nursery. 
+	 See Implementing Size 
+	 of Planting Stock for more information on this.</p></li>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet"><span class="hcp1">Site index</span>. You must specify a site 
+	 index for the leading species. If you have only one site index, but 
+	 more than one species, BatchTIPSY will calculate the unspecified site 
+	 index using the known site index, using site index conversion equations. 
+	 If conversion equations don't exist between those species, then it 
+	 just uses the site index of the leading species. See <a href="About_site_index_conversion.htm">Site 
+	 Index Conversion</a> for more information.</p></li>
+</ul>
+<p class="hcp2">BatchTIPSY will also calculate site index 
+ using <b><i>Height</i></b> and <b><i>Total Age</i></b>. If the total age 
+ is less than 30, BatchTIPSY automatically uses <b><i>Site Index Class</i></b> 
+ to determine site index. Use G, M, P, and L for good, medium, poor and 
+ low classes, respectively. BatchTIPSY will automatically convert these 
+ <a href="javascript:TextPopup(this)" id="HotSpot39291" class="glossterm">site class</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot39291', 'POPUP39291');
+//]]></script><span class="glosstext" id="POPUP39291" style="display: none;"> the measure of the relative productive capacity of a site for a particular crop or stand, generally based on tree height at a given age and expressed as either good, medium, poor or low</span> values to 
+ site index values using <a href="Site_class_conversion_table.htm">site 
+ class conversion table</a>. Otherwise, site index is calculated using 
+ the height and total age.</p>
+<ul style="list-style: disc;">
+	<li><p><span class="hcp1">Fertilization Response. </span>&#160;Unless 
+	 <span class="hcp1">Use custom response data</span> is 
+	 checked, the <a href="Ministry_Recommended_Fertilizati.htm">Ministry 
+	 default response models</a> will be applied to all species.</p></li>
+</ul>
+<p class="hcp2">When <span class="hcp1">Use 
+ custom response data</span> is checked, BatchTIPSY looks for a <a href="Input_file_for_fertilization_response.htm">Custom 
+ Fertilization Response file</a> and reads two columns in the input file 
+ to determine how custom responses are applied to each species:</p>
+<p class="hcp2"><span class="hcp1">Custom response 
+ data</span> column: &#160;U = apply custom response from file<br>
+ &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;blank 
+ or any character except U = apply ministry default</p>
+<p class="hcp2"><span class="hcp1">Response 
+ type</span> column: &#160;&#160;A = apply absolute response<br>
+ &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;blank 
+ or any character except A = apply percent response (default) <br>
+</p>
+<p>You can also input species-specific coefficients for <a href="Standing_Dead_Tree_Snag_Model.htm">snags</a> 
+ and <a href="Coarse_Woody_Debris_CWD_Introduc.htm">coarse woody debris</a>, 
+ but these options are available from the Edit menu only, whenever a batch 
+ file is open. All species are listed.</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp3">_______________________________________________</p>
+	<p class="hcp3">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

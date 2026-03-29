@@ -1,0 +1,370 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Trembling aspen in TIPSY</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<script type="text/javascript" language="JavaScript1.2" src="../ehlpdhtm.js"></script>
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+span.hcp2 { font-style:italic; }
+ol.hcp3 { list-style:decimal; }
+ul.hcp4 { list-style:disc; }
+tr.hcp5 { vertical-align:top; }
+b.hcp6 { font-weight:bold; }
+p.hcp7 { margin-left:0px; }
+p.hcp8 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+
+
+
+<h1><a name="MiniTOCBookMark1"></a>Trembling aspen in TIPSY</h1>
+<p align="left" style="font-family:Arial;font-size:12pt;font-weight: normal;font-style: normal;text-decoration: none;" >In&#160;this&#160;Topic&#160;<a class="dropspot" href="javascript:TextPopup(this)" id="MTHotSpot7347" ><span class="MTText" style="display: none;" >Show</span><span class="MTText" >Hide</span></a></p>
+<script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('MTHotSpot7347', 'MTPOPUP7347');
+//]]></script>
+<div align="left" class="droptext" id="MTPOPUP7347" >
+ <div style="background: #ffff00;float: none;width: 100% ;" >
+  <p align="left"  ><a href="#MiniTOCBookMark2" >TASS Aspen</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark3" >TIPSY Aspen</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark4" >TASS / TIPSY parameters for aspen</a></p>
+ </div>
+</div>
+<p><span class="hcp1">Trembling aspen</span> (<span class="hcp2">Populus 
+ tremuloides</span> Michx.) is the second broadleaf hardwood species to 
+ be incorporated into both <a href="https://www2.gov.bc.ca/gov/content/industry/forestry/managing-our-forest-resources/forest-inventory/growth-and-yield-modelling/tree-and-stand-simulator-tass">TASS</a> 
+ and <span class="hcp1">TIPSY</span> (the first being <a 
+	 href="Red_Alder_in_TIPSY.htm">red alder</a> (<span class="hcp2">Alnus 
+ rubra</span> Bong.)). &#160;As with the use of any model where the results 
+ may guide important decisions, the user has a responsibility to be aware 
+ of the inherent strengths and weaknesses of the support tool. &#160;It 
+ is also the responsibility of the developer to make available information 
+ to allow for informed decision making. &#160;Due diligence on both sides 
+ will ensure an awareness of the levels of inherent risk and confidence 
+ associated with model output. &#160;This will allow for reasonable expectations 
+ in model output interpretation and in the decision making process. &#160;To 
+ this end, a number of issues require the user to be aware of the inherent 
+ TASS and <span class="hcp1">TIPSY</span> aspen model limitations 
+ (see below). You should be aware that growth and yield information may 
+ be either incomplete or missing for specific areas of interest. &#160;Confidence 
+ in model results, as always, is directly related to the quality and quantity 
+ of available data.</p>
+<h2><a name="MiniTOCBookMark2"></a>TASS Aspen</h2>
+<ol class="hcp3">
+	<li class="p-Bullet"><p>Yields for all <a href="Stand_Specifications_Options.htm#Regen_Type">three 
+	 regeneration types (planted, natural, clumped)</a> reflect the growth 
+	 of natural aspen. &#160;The planted option is merely a work-around 
+	 to enable <a href="Prorating_Multiple_Species.htm">pro-rating of multiple-species 
+	 yields</a> involving natural aspen and planted conifers. &#160;However, 
+	 planted yields will vary slightly from natural yields due to the effect 
+	 of seedling height on the height/age relationship.</p></li>
+	<li class="p-Bullet"><p>The PSP (permanent sample plot) &amp; EP (experimental 
+	 plots) datasets used to calibrate TASS for aspen do not exceed site 
+	 index (SI) 32 m @ BHAge 50 (<a href="Literature_Cited.htm#Nigh_et_al_2002">Nigh 
+	 et al. 2002</a>). &#160;</p></li>
+	<li class="p-Bullet"><p>The test of “reasonableness&quot; is always 
+	 recommended in applying model output to operational scenarios.</p></li>
+	<li class="p-Bullet"><p>Calibration efforts focused on fitting TASS 
+	 tree level growth relationships to primarily British Columbia and 
+	 Alberta data. &#160;Stand level model calibration was based on approximately 
+	 440 PSP data summaries from British Columbia, Alberta, Saskatchewan 
+	 and Manitoba. &#160;<a href="Literature_Cited.htm#Nigh_et_al_2002">Nigh 
+	 et al. 2002</a> site index curves were used during model calibration 
+	 (the Ministry recommended curves).</p></li>
+	<li class="p-Bullet"><p>During aspen tree level model calibration, 
+	 TASS crown form was changed to a dynamic crown profile model where 
+	 changes in shape were dependent upon tree height. &#160;This is unique 
+	 to aspen crowns and allows model crown development to more closely 
+	 predict observed changes in tree profiles. &#160;For TASS model behaviour 
+	 this is important since crown form or shape determines crown volume. 
+	 &#160;This in turn affects diameter growth and allows spatial interaction 
+	 between trees, crown competition or tree occupancy. &#160;</p></li>
+	<li class="p-Bullet"><p>Aspen is a relatively short lived species. 
+	 Temporary sample plot (TSP) data from BC and Alberta suggest that 
+	 aspen stand age rarely exceeds 160 years, though older stand and tree 
+	 ages are possible. &#160;For the purposes of TASS stand level calibration, 
+	 however, we significantly increased stand mortality or induced stand 
+	 break-up at ages &gt;120 years. &#160;To simulate age related stand 
+	 break-up, TASS random mortality was increased after stand age 140 
+	 years, resulting in complete stand mortality by 160 years. &#160;We 
+	 have defined this as “age decline”.</p></li>
+	<li class="p-Bullet"><p>TASS defines top height as the average height 
+	 of the 100 largest diameter trees per hectare. &#160;It can be shown 
+	 that, statistically, top height of a given stand will increase with 
+	 increasing initial density. &#160;This is sometimes referred to as 
+	 “genetic upgrade”. &#160;Within normal managed stand densities the 
+	 increase in top height is small. &#160;However, the difference between 
+	 a stand density of for example, 20,000 sph and one with 2,000 sph 
+	 can result in a significant top height and concurrent volume increase. 
+	 &#160;This affect is difficult to document without rigorous long term 
+	 field research. &#160;Increases in top height with density have not 
+	 been documented in aspen. &#160;In response to this observation, a 
+	 height vigour adjustment (HVA) was developed which forces TASS top 
+	 height trees to follow the site index curve regardless of initial 
+	 density. This simplifying convenience allows TASS growth and yield 
+	 information to be easily interpolated across all top heights in the 
+	 <span class="hcp1">TIPSY</span> database. &#160;For 
+	 TASS runs, it is important to specify whether the HVA is turned ON 
+	 or OFF and to understand the implications of the choice.</p></li>
+	<li class="p-Bullet"><p>Aspen PSP data from young stands where all 
+	 trees were measured for height and DBH indicated a wider DBH and height 
+	 distribution than expected. The data suggested that aspen height growth 
+	 variation is significantly larger than that found in conifer species 
+	 such as lodgepole pine and Douglas-fir. &#160;Twenty-one TASS equation 
+	 coefficients (<a href="Literature_Cited.htm#Mitchell_1975">Mitchell 
+	 1975</a>) are used to set and control the initial tree population 
+	 variation through the assignment of individual tree height growth 
+	 vigour coefficients (HVC). &#160;One of the underlying assumptions 
+	 of TASS is the requirement of a normal distribution of HVC’s with 
+	 a relatively narrow tree to tree variation. &#160;A narrow variation 
+	 is necessary to ensure that crowns compete.<br>
+	<br>
+	Analysis of aspen PSP data from various sources (BC and Manitoba) indicated 
+	 the average aspen stand has a height growth distribution that is not 
+	 well represented by a normal distribution. &#160;On first approximation 
+	 the Poisson distribution may more accurately predict the height growth 
+	 frequency of an average aspen stand. &#160;This divergence from the 
+	 normal distribution may be related to height growth suppression at 
+	 the relatively high initial densities found in most aspen stands. 
+	 &#160;For the present, TASS aspen HVC’s are determined using the normal 
+	 distribution (t- distribution) with no allowance for a significantly 
+	 wider variation than previously seen (m aspen=0.4799, compared to 
+	 m lodgepole pine=0.8).<br>
+	<br>
+	TASS aspen tends to consistently underestimate the average DBH by 1-2 
+	 cm at maturity (in comparison with PSP data). &#160;This might be 
+	 a result of a number of contributing factors such as poor fit with 
+	 observed field DBH and height distributions, and unresponsive tree 
+	 DBH growth at very young ages. &#160;&#160;At present, these issues 
+	 appear to be irresolvable.</p></li>
+	<li class="p-Indent2"><p>TASS / <span class="hcp1">TIPSY</span> 
+	 volume over age curves are comparable to known PSP datasets across 
+	 the range of SI (site index). &#160;TASS simulates mortality for medium 
+	 to high sites well but is less accurate as site quality declines. 
+	 &#160;&#160;Aspen PSP data suggests that TASS progressively overestimates 
+	 density and underestimates DBH as site class declines and stands age. 
+	 &#160;Also, observed aspen density does not follow the model assumption 
+	 of similar densities at similar top heights across sites. &#160;For 
+	 example, at stand age 60 on SI 12, TASS density may be 50% higher 
+	 than the PSP data shows, with a concomitant reduction in DBH of up 
+	 to 50%. At stand age 120, TASS density may be up to 3 times that in 
+	 the PSP data. &#160;This model behaviour should be considered for 
+	 all aspen sites where SI &#8804; 15 m. &#160;</p></li>
+	<li class="p-Bullet"><p>Aspen stand regeneration relies heavily on 
+	 the initiation and growth of root suckers. &#160;Although aspen will 
+	 regenerate from seed, the primary source of new stems is from root 
+	 suckers which initiate and grow after a disturbance removes or kills 
+	 the aboveground stem. &#160;The review paper by <a href="Literature_Cited.htm#Frey_et_al_2003">Frey 
+	 et al. (2003)</a> provides a summary of the available knowledge on 
+	 aspen sucker regeneration. &#160;It has been found that the initiation 
+	 and growth of young aspen stands is dependent upon a number of physiological, 
+	 environmental and disturbance regime factors. &#160;Events that impact 
+	 the distribution and abundance of healthy aspen roots after harvesting 
+	 may also impact stand regeneration success (initial sucker density, 
+	 spatial distribution and growth) (<a href="Literature_Cited.htm#Frey_et_al_2003">Frey 
+	 et al. 2003</a>). &#160;For the <span class="hcp1">TIPSY</span> 
+	 user, it is important to be aware that TASS model calibration was 
+	 based upon data from natural stands where root sucker regeneration 
+	 occurred primarily after disturbance by fire. &#160;As a result, the 
+	 model doesn't account for impacts on aspen stand regeneration that 
+	 are related to harvesting. &#160;</p></li>
+	<li class="p-Bullet"><p>Simulations of young, low density aspen stands 
+	 (&lt; ~2500 sph??) are outside the range of available data. &#160;Information 
+	 suggests that, at low densities where crown closure is not reached 
+	 early, these stands may suffer from poor growth and higher mortality 
+	 due to vegetation competition from grass such as <span class="hcp2">Calamagrostis 
+	 canadensis</span> and shrub species. &#160;A number of studies have 
+	 indicated the need for high aspen densities to facilitate rapid crown 
+	 closure and the shading of competing grasses and shrubs (<a href="Literature_Cited.htm#Frey_et_al_2003">Frey 
+	 et al. 2003</a>).</p></li>
+</ol>
+<h2><a name="MiniTOCBookMark3"></a>TIPSY Aspen</h2>
+<ol class="hcp3">
+	<li class="p-Bullet"><p><span class="hcp1">TIPSY</span> 
+	 pre-commercial thinning (PCT) simulations are available only at top 
+	 height 4.0m, which is consistent with other interior species. <a href="https://www2.gov.bc.ca/gov/content/industry/forestry/managing-our-forest-resources/forest-inventory/growth-and-yield-modelling/tree-and-stand-simulator-tass">TASS</a> 
+	 projections should be requested for greater flexibility in PCT and 
+	 CT simulations. &#160;Pruning is only available through TASS. &#160;</p></li>
+	<li class="p-Bullet"><p>The <span class="hcp1">TIPSY</span> 
+	 database does not simulate planted aspen. &#160;The spatial distributions 
+	 available are random and clumped only. &#160;The planting of aspen 
+	 is usually only attempted when reclaiming cleared farm land or establishing 
+	 research installations (for example, genetic provenance trials). &#160;Special 
+	 requests can be made for TASS runs of aspen plantations.</p></li>
+	<li class="p-Bullet"><p><span class="hcp1">TIPSY</span> 
+	 allows the user to create a mixed species stand composition for all 
+	 conifer species. &#160;This option is not allowed with aspen and red 
+	 alder because they are short-lived species and both TASS and <span class="hcp1">TIPSY</span> are unable to simulate species 
+	 interaction as a stand breaks-up. &#160;</p></li>
+	<li class="p-Bullet"><p><span class="hcp1">TIPSY</span> 
+	 does not provide aspen lumber recovery information. &#160;Aspen logs 
+	 are manufactured into OSB (oriented strand board), LVL (laminated 
+	 veneer lumber), LSL (laminated strand lumber), and plywood as well 
+	 as into pallet and container lumber. &#160;In recent years, there 
+	 has been interest in the primary manufacture of aspen lumber into 
+	 1” and 2” material for the European and Japanese export market. &#160;Hardwood 
+	 log and lumber grading rules are extremely complex (USFS hardwood 
+	 log grading rules and National Hardwood Lumber Association (NHLA) 
+	 hardwood lumber grades).</p></li>
+	<li class="p-Bullet"><p>Accurate log values and lumber recovery statistics 
+	 for aspen are presently unavailable. &#160;As a result, please be 
+	 aware that <a href="https://www2.gov.bc.ca/gov/content/industry/forestry/managing-our-forest-resources/forest-inventory/growth-and-yield-modelling/financial-analysis-of-silviculture-investment-economic-returns-fansier">FAN$IER</a> 
+	 default economic values are based on softwoods.</p></li>
+	<li class="p-Bullet"><p>To facilitate <span class="hcp1">TIPSY</span> 
+	 database interpolation routines TASS runs were configured with a specific 
+	 set of parameters. &#160;The parameters are:</p></li>
+</ol>
+<ul class="hcp4">
+	<ul class="hcp4">
+		<li><p>HVA turned ON</p></li>
+		<li><p>age decline turned OFF, and</p></li>
+		<li><p>regeneration delay set to zero.</p></li>
+	</ul>
+</ul>
+<ol start="7" class="hcp3">
+	<li><p><span class="hcp1">TIPSY</span> routines adjust 
+	 for age decline and regeneration delay. &#160;As a result, TASS and 
+	 <span class="hcp1">TIPSY</span> output may be similar 
+	 but not identical.</p></li>
+	<li><p>In <span class="hcp1">TIPSY</span> an <span class="hcp1">Age 
+	 Decline</span> Custom OAF is enabled 
+	 as the default. &#160;The user can easily turn it off and create a 
+	 new Custom OAF to replace it.</p></li>
+</ol>
+<h2><a name="MiniTOCBookMark4"></a><b>TASS / TIPSY parameters for aspen</b></h2>
+<table >
+	<tr class="hcp5">
+		<td><p><b class="hcp6">____________________________________________________________________________________</b></p></td>
+	</tr>
+</table>
+<table width="114.035%">
+	<col width="166">
+	<col width="134">
+	<col width="135">
+	<col width="111">
+	<tr class="hcp5">
+		<td width="166"><p><b class="hcp6">Model parameter</b></p></td>
+		<td width="134"><p><b class="hcp6">TASS</b></p></td>
+		<td width="135"><p class="hcp7"><b class="hcp6">TIPSY</b></p></td>
+		<td width="111"><p class="hcp7"><b class="hcp6">Comments</b></p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp5">
+		<td><p><b class="hcp6">____________________________________________________________________________________</b></p></td>
+	</tr>
+</table>
+<table >
+	<col width="182">
+	<col width="184">
+	<col width="147">
+	<col>
+	<tr class="hcp5">
+		<td width="182"><p>HVA (height vigour adjustment)</p></td>
+		<td width="184"><p>ON / OFF</p></td>
+		<td width="147"><p>ON</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+	<tr class="hcp5">
+		<td width="182"><p>Age decline (&gt; 140 years)</p></td>
+		<td width="184"><p>ON / OFF</p></td>
+		<td width="147"><p>Age decline OAF, default is ON</p></td>
+		<td><p>Users can change age decline Custom 
+		 OAF</p></td>
+	</tr>
+	<tr class="hcp5">
+		<td width="182"><p>Site index curves</p></td>
+		<td width="184"><p>User choice</p></td>
+		<td width="147"><p>User choice</p></td>
+		<td><p>Default: <a href="Literature_Cited.htm#Nigh_et_al_2002">Nigh 
+		 et al. 2002</a></p></td>
+	</tr>
+	<tr class="hcp5">
+		<td width="182"><p>Planting stock age</p></td>
+		<td width="184"><p>User choice</p></td>
+		<td width="147"><p>NA</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+	<tr class="hcp5">
+		<td width="182"><p><a href="Planting_Stock_Height.htm">Planting 
+		 stock height</a></p></td>
+		<td width="184"><p>User choice</p></td>
+		<td width="147"><p>NA</p></td>
+		<td><p>Planted aspen not available in TIPSY</p></td>
+	</tr>
+	<tr class="hcp5">
+		<td width="182"><p style="background-color: Transparent;">Regeneration 
+		 delay</p></td>
+		<td width="184"><p>User choice<br>
+		(Default:1yr ±0.5 = 2yr)</p></td>
+		<td width="147"><p>User choice</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+	<tr class="hcp5">
+		<td width="182"><p><a href="Prorating_Multiple_Species.htm">Multiple 
+		 species composition</a></p></td>
+		<td width="184"><p>User Choice</p></td>
+		<td width="147"><p>N/A</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+	<tr class="hcp5">
+		<td width="182"><p><a href="Log_Tables.htm">Logs</a> / <a href="Lumber_Table.htm">Lumber</a></p></td>
+		<td width="184"><p>Lumber not without additional sawmill simulations</p></td>
+		<td width="147"><p>No aspen lumber</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+	<tr class="hcp5">
+		<td width="182"><p>Pruning</p></td>
+		<td width="184"><p>User choice</p></td>
+		<td width="147"><p>NA</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+	<tr class="hcp5">
+		<td width="182"><p><a href="Precommercial_Thinning_how_it_wo.htm">PCT</a></p></td>
+		<td width="184"><p>User choice</p></td>
+		<td width="147"><p>@ 4.0m top height only</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+	<tr class="hcp5">
+		<td width="182"><p><a href="Precommercial_Thinning_how_it_wo.htm">CT</a></p></td>
+		<td width="184"><p>User choice</p></td>
+		<td width="147"><p>NA</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+	<tr class="hcp5">
+		<td width="182"><p>Fertilization</p></td>
+		<td width="184"><p>No</p></td>
+		<td width="147"><p>User choice</p></td>
+		<td><p>No TIPSY default response</p></td>
+	</tr>
+	<tr class="hcp5">
+		<td width="182"><p><a href="Genetic_Gain_in_TIPSY.htm">Genetic 
+		 gain</a></p></td>
+		<td width="184"><p>No</p></td>
+		<td width="147"><p>No</p></td>
+		<td><p>Planted aspen not available in TIPSY</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp5">
+		<td><p><b class="hcp6">____________________________________________________________________________________</b></p></td>
+	</tr>
+</table>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp8">_______________________________________________</p>
+	<p class="hcp8">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

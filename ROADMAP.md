@@ -7670,6 +7670,15 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 - The core unattended BTC cutover bird is landed through Phase `48.2d3`.
 - Phase `48.3` is now complete under GitHub issue `#56`.
+- The next installed-help follow-on edge is now GitHub issue `#57`:
+  - this archive pass is now in progress on the current branch;
+  - archive the fully extracted `.chm` help trees from the installed
+    `C:\Program Files\TIPSY 4.7\` product set into tracked repo files;
+  - preserve provenance plus the working short-path `hh.exe -decompile`
+    extraction recipe so future reverse-engineering work can reuse the help
+    corpus without repeating the extraction hunt;
+  - treat this as reference-corpus hygiene for future TIPSY, BTC, FANSIER,
+    SiteTools, and Plotsy reverse-engineering, not as a new runtime seam.
 - The BTC cutover track now carries:
   - the landed unattended `MSYT.csv` + returned CSV seam;
   - the full optional indicator-bank rollout from the canonical BTC ledger;
@@ -7678,11 +7687,10 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - runtime audit artifacts under `tipsy_io/logs/p48_3_install_audit/`,
     including PDF text extracts and machine-readable CHM topic inventories.
 - The remaining notable caveat from the install-tree audit is narrow:
-  - local `hh.exe -decompile` did not yield full CHM HTML extraction in this
-    environment;
-  - however, the compiled help files were still mined into topic inventories,
-    which was sufficient to record the adjacent help/report/runtime surfaces for
-    future follow-on work.
+  - local `hh.exe -decompile` needs a short, no-space path such as `C:\chm\...`
+    to work reliably here;
+  - once that seam is respected, full HTML extraction succeeds and can be
+    archived into tracked repo reference files.
 - The optional-bank rollout under GitHub issue `#48` is now complete:
   - treat the remaining missing optional BTC/TIPSY indicators as one umbrella
     rollout track, grouped into logical banks rather than split across a large
@@ -8429,6 +8437,27 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         preset:
         - copied BTC install in writable scratch
         - patched stock `TimberSupply.rpt`
+- [x] P48.4 Archive extracted installed-help trees for future reverse-engineering
+  - [x] P48.4a Use the working short-path `hh.exe -decompile` workaround to
+    extract every installed `.chm` under `C:\Program Files\TIPSY 4.7\`.
+  - [x] P48.4b Stage the extracted help trees into a tracked repo reference
+    location with provenance notes and lightweight indexing.
+  - [x] P48.4c Update planning/docs/changelog/GitHub tracking so the archived
+    help corpus becomes part of FEMIC's durable TIPSY reverse-engineering
+    reference set.
+  - Notes:
+    - Governing tracker:
+      - GitHub issue #57
+    - Expected source files:
+      - `C:\Program Files\TIPSY 4.7\TIPSY\TIPSY45.chm`
+      - `C:\Program Files\TIPSY 4.7\Fansier\Fansier.chm`
+      - `C:\Program Files\TIPSY 4.7\SiteTools\SiteTools.chm`
+      - `C:\Program Files\TIPSY 4.7\Plotsy2\Plotsy2.chm`
+    - Working extraction seam:
+      - `hh.exe -decompile` succeeds when the `.chm` file and destination live
+        under a short, no-space path such as `C:\chm\...`.
+    - Tracked archive location:
+      - `reference/tipsy/chm_extracted/`
         - supervised `/TSR`
         - emitted output/error CSVs in scratch
         - manifest status `ok`

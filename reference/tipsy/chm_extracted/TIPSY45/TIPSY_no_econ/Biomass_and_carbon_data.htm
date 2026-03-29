@@ -1,0 +1,766 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Biomass and carbon: models</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<script type="text/javascript" language="JavaScript1.2" src="../ehlpdhtm.js"></script>
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+td.hcp2 { vertical-align:bottom;
+border-left:none;
+border-right:none;
+border-top:solid #000000 1.0px;
+border-bottom:solid #000000 1.0px;
+padding:0cm 5.4pt 0cm 5.4pt; }
+p.hcp3 { font-weight:bold; }
+td.hcp4 { vertical-align:bottom;
+padding:0cm 5.4pt 0cm 5.4pt;
+padding-left:0px;
+padding-top:0px;
+padding-right:0px;
+padding-bottom:0px; }
+p.hcp5 { font-size:12pt; }
+td.hcp6 { vertical-align:bottom;
+border-left:none;
+border-right:none;
+border-top:none;
+border-bottom:solid #000000 1.0px;
+padding:0cm 5.4pt 0cm 5.4pt;
+padding-left:0px;
+padding-top:0px;
+padding-right:0px;
+padding-bottom:0px; }
+span.hcp7 { font-style:italic; }
+span.hcp8 { font-style:italic;
+vertical-align:Sub;
+font-size:xx-small; }
+span.hcp9 { font-style:italic;
+vertical-align:Super;
+font-size:xx-small; }
+td.hcp10 { border-top:solid 4px #000000;
+border-right:Solid 4px #000000;
+border-bottom:Solid 4px #000000;
+vertical-align:bottom;
+padding:.75pt .75pt 0cm .75pt; }
+td.hcp11 { border-left:Solid 4px #000000;
+border-right:Solid 4px #000000;
+border-bottom:Solid 4px #000000;
+vertical-align:bottom;
+padding:.75pt .75pt 0cm .75pt; }
+td.hcp12 { border-right:Solid 4px #000000;
+border-bottom:Solid 4px #000000;
+vertical-align:bottom;
+padding:.75pt .75pt 0cm .75pt; }
+td.hcp13 { vertical-align:bottom;
+padding:.75pt .75pt 0cm .75pt;
+padding-left:0px;
+padding-top:0px;
+padding-right:0px;
+padding-bottom:0px; }
+td.hcp14 { vertical-align:bottom;
+border-bottom:solid 1px #000000;
+padding:.75pt .75pt 0cm .75pt;
+padding-left:0px;
+padding-top:0px;
+padding-right:0px;
+padding-bottom:0px; }
+p.hcp15 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+
+
+
+<h1><a name="MiniTOCBookMark1"></a>Biomass and carbon: models</h1>
+<p align="left" style="font-family:Arial;font-size:12pt;font-weight: normal;font-style: normal;text-decoration: none;" >In&#160;this&#160;Topic&#160;<a class="dropspot" href="javascript:TextPopup(this)" id="MTHotSpot47647" ><span class="MTText" style="display: none;" >Show</span><span class="MTText" >Hide</span></a></p>
+<script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('MTHotSpot47647', 'MTPOPUP47647');
+//]]></script>
+<div align="left" class="droptext" id="MTPOPUP47647" >
+ <div style="background: #ffff00;float: none;width: 100% ;" >
+  <p align="left"  ><a href="#MiniTOCBookMark2" >Biomass models</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark3" >Carbon Model</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark4" >TIPSY Assumptions and Reporting</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark5" >OAF effects</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark6" >TIPSY vs. CBM Model</a></p>
+ </div>
+</div>
+<p><span class="hcp1">Also See:</span> &#160;&#160;<a href="biomass_and_carbon_introduction.htm">Biomass 
+ and Carbon</a> </p>
+<h2><a name="MiniTOCBookMark2"></a>Biomass models</h2>
+<p>To incorporate the biomass and carbon prediction capabilities into <span class="hcp1">TIPSY</span>, a new yield table database 
+ was generated with TASS. &#160;The growth of approximately 12 million 
+ individual trees was simulated to generate a total of 1659 yield tables 
+ counting all the species, treatments and different site indices. &#160;It 
+ took about 2500 hours to generate these runs. &#160;</p>
+<p>The above-ground biomass for each live and dead tree was calculated 
+ using the existing DBH- and height-based individual tree biomass equations 
+ developed by <a href="Literature_Cited.htm#Ung_et_al_2008">Ung et al. 
+ (2008)</a>. &#160;In this project, we use Ung's model for a total of 14 
+ species as shown in Table 1.</p>
+<p class="InlineNormal1" style="font-weight: bold; text-decoration: underline; ">Table 
+ 1. Descriptive statistics for DBH, height and total biomass by tree species 
+ (Ung et al. 2008)</p>
+<table class="NormalTable" style="margin-left: 4.65pt;" cellspacing="0" 
+		 width="759">
+	<col style="width: 24.312%;">
+	<col style="width: 10.09%;">
+	<col style="width: 11.094%;">
+	<col style="width: 9.755%;">
+	<col style="width: 11.93%;">
+	<col style="width: 12.6%;">
+	<col width="153">
+	<tr style="height: 12.75pt;">
+		<td nowrap="nowrap" style="width:24.312%;" height="17" bgcolor="#C0C0C0" class="hcp2"><p class="hcp3">Species</p></td>
+		<td nowrap="nowrap" style="width:10.09%;" height="17" bgcolor="#C0C0C0" class="hcp2"><p class="hcp3">BC 
+		 Trees</p></td>
+		<td nowrap="nowrap" style="width:11.094%;" height="17" bgcolor="#C0C0C0" class="hcp2"><p class="hcp3">Other 
+		 Prov.</p></td>
+		<td nowrap="nowrap" style="width:9.755%;" height="17" bgcolor="#C0C0C0" class="hcp2"><p class="hcp3">Total</p></td>
+		<td nowrap="nowrap" style="width:11.93%;" height="17" bgcolor="#C0C0C0" class="hcp2"><p class="hcp3">DBH 
+		 (cm)</p></td>
+		<td nowrap="nowrap" style="width:12.6%;" height="17" bgcolor="#C0C0C0" class="hcp2"><p class="hcp3">Height 
+		 (m)</p></td>
+		<td nowrap="nowrap" height="17" width="153" bgcolor="#C0C0C0" class="hcp2"><p class="hcp3">Total Biomass (kg)</p></td>
+	</tr>
+	<tr style="height: 12.75pt;">
+		<td nowrap="nowrap" style="width:24.312%;" height="17" class="hcp4"><p>Trembling 
+		 aspen</p></td>
+		<td nowrap="nowrap" style="width:10.09%;" height="17" class="hcp4"><p>26</p></td>
+		<td nowrap="nowrap" style="width:11.094%;" height="17" class="hcp4"><p>773</p></td>
+		<td nowrap="nowrap" style="width:9.755%;" height="17" class="hcp4"><p>799</p></td>
+		<td nowrap="nowrap" style="width:11.93%;" height="17" class="hcp4"><p>17.7 
+		 ± 0.3</p></td>
+		<td nowrap="nowrap" style="width:12.6%;" height="17" class="hcp4"><p>15.8 
+		 ± 0.2</p></td>
+		<td nowrap="nowrap" height="17" width="153" class="hcp4"><p>161 ± 7.0</p></td>
+	</tr>
+	<tr style="height: 12.75pt;">
+		<td nowrap="nowrap" style="width:24.312%;" height="17" class="hcp4"><p>Abies 
+		 amabilis</p></td>
+		<td nowrap="nowrap" style="width:10.09%;" height="17" class="hcp4"><p>28</p></td>
+		<td nowrap="nowrap" style="width:11.094%;" height="17" class="hcp4"><p>0</p></td>
+		<td nowrap="nowrap" style="width:9.755%;" height="17" class="hcp4"><p>28</p></td>
+		<td nowrap="nowrap" style="width:11.93%;" height="17" class="hcp4"><p>14.3 
+		 ± 1.1</p></td>
+		<td nowrap="nowrap" style="width:12.6%;" height="17" class="hcp4"><p>10.3 
+		 ± 0.7</p></td>
+		<td nowrap="nowrap" height="17" width="153" class="hcp4"><p>64.2 ± 11.9</p></td>
+	</tr>
+	<tr style="height: 12.75pt;">
+		<td nowrap="nowrap" style="width:24.312%;" height="17" class="hcp4"><p>Abies 
+		 lasiocarpa</p></td>
+		<td nowrap="nowrap" style="width:10.09%;" height="17" class="hcp4"><p>73</p></td>
+		<td nowrap="nowrap" style="width:11.094%;" height="17" class="hcp4"><p>60</p></td>
+		<td nowrap="nowrap" style="width:9.755%;" height="17" class="hcp4"><p>133</p></td>
+		<td nowrap="nowrap" style="width:11.93%;" height="17" class="hcp4"><p>17.9 
+		 ± 0.9</p></td>
+		<td nowrap="nowrap" style="width:12.6%;" height="17" class="hcp4"><p>12.5 
+		 ± 0.6</p></td>
+		<td nowrap="nowrap" height="17" width="153" class="hcp4"><p>149.2 ± 16.0</p></td>
+	</tr>
+	<tr style="height: 12.75pt;">
+		<td nowrap="nowrap" style="width:24.312%;" height="17" class="hcp4"><p>Western 
+		 redcedar</p></td>
+		<td nowrap="nowrap" style="width:10.09%;" height="17" class="hcp4"><p>47</p></td>
+		<td nowrap="nowrap" style="width:11.094%;" height="17" class="hcp4"><p>0</p></td>
+		<td nowrap="nowrap" style="width:9.755%;" height="17" class="hcp4"><p>47</p></td>
+		<td nowrap="nowrap" style="width:11.93%;" height="17" class="hcp4"><p>19.0 
+		 ± 1.6</p></td>
+		<td nowrap="nowrap" style="width:12.6%;" height="17" class="hcp4"><p>12.4 
+		 ± 0.9</p></td>
+		<td nowrap="nowrap" height="17" width="153" class="hcp4"><p>130.1 ± 29.0</p></td>
+	</tr>
+	<tr style="height: 12.75pt;">
+		<td nowrap="nowrap" style="width:24.312%;" height="17" class="hcp4"><p>Red 
+		 alder</p></td>
+		<td nowrap="nowrap" style="width:10.09%;" height="17" class="hcp4"><p>11</p></td>
+		<td nowrap="nowrap" style="width:11.094%;" height="17" class="hcp4"><p>0</p></td>
+		<td nowrap="nowrap" style="width:9.755%;" height="17" class="hcp4"><p>11</p></td>
+		<td nowrap="nowrap" style="width:11.93%;" height="17" class="hcp4"><p>12.2 
+		 ± 0.9</p></td>
+		<td nowrap="nowrap" style="width:12.6%;" height="17" class="hcp4"><p>11.8 
+		 ± 0.6</p></td>
+		<td nowrap="nowrap" height="17" width="153" class="hcp4"><p>36.7 ± 9.3</p></td>
+	</tr>
+	<tr style="height: 12.75pt;">
+		<td nowrap="nowrap" style="width:24.312%;" height="17" class="hcp4"><p>Paper 
+		 birch</p></td>
+		<td nowrap="nowrap" style="width:10.09%;" height="17" class="hcp4"><p>23</p></td>
+		<td nowrap="nowrap" style="width:11.094%;" height="17" class="hcp4"><p>606</p></td>
+		<td nowrap="nowrap" style="width:9.755%;" height="17" class="hcp4"><p>629</p></td>
+		<td nowrap="nowrap" style="width:11.93%;" height="17" class="hcp4"><p>16.4 
+		 ± 0.3</p></td>
+		<td nowrap="nowrap" style="width:12.6%;" height="17" class="hcp4"><p>13.3 
+		 ± 0.2</p></td>
+		<td nowrap="nowrap" height="17" width="153" class="hcp4"><p>149.9 ± 6.9</p></td>
+	</tr>
+	<tr style="height: 12.75pt;">
+		<td nowrap="nowrap" style="width:24.312%;" height="17" class="hcp4"><p>coastal 
+		 Douglas-fir</p></td>
+		<td nowrap="nowrap" style="width:10.09%;" height="17" class="hcp4"><p>14</p></td>
+		<td nowrap="nowrap" style="width:11.094%;" height="17" class="hcp4"><p>0</p></td>
+		<td nowrap="nowrap" style="width:9.755%;" height="17" class="hcp4"><p>14</p></td>
+		<td nowrap="nowrap" style="width:11.93%;" height="17" class="hcp4"><p>15.6 
+		 ± 3.5</p></td>
+		<td nowrap="nowrap" style="width:12.6%;" height="17" class="hcp4"><p>10.8 
+		 ± 2.3</p></td>
+		<td nowrap="nowrap" height="17" width="153" class="hcp4"><p>193.0 ± 81.9</p></td>
+	</tr>
+	<tr style="height: 12.75pt;">
+		<td nowrap="nowrap" style="width:24.312%;" height="17" class="hcp4"><p>interior 
+		 Douglas-fir</p></td>
+		<td nowrap="nowrap" style="width:10.09%;" height="17" class="hcp4"><p>11</p></td>
+		<td nowrap="nowrap" style="width:11.094%;" height="17" class="hcp4"><p>0</p></td>
+		<td nowrap="nowrap" style="width:9.755%;" height="17" class="hcp4"><p>11</p></td>
+		<td nowrap="nowrap" style="width:11.93%;" height="17" class="hcp4"><p>17.6 
+		 ± 4.0</p></td>
+		<td nowrap="nowrap" style="width:12.6%;" height="17" class="hcp4"><p>10.8 
+		 ± 2.1</p></td>
+		<td nowrap="nowrap" height="17" width="153" class="hcp4"><p>193.0 ± 81.9</p></td>
+	</tr>
+	<tr style="height: 12.75pt;">
+		<td nowrap="nowrap" style="width:24.312%;" height="17" class="hcp4"><p>coastal 
+		 w. hemlock</p></td>
+		<td nowrap="nowrap" style="width:10.09%;" height="17" class="hcp4"><p>48</p></td>
+		<td nowrap="nowrap" style="width:11.094%;" height="17" class="hcp4"><p>0</p></td>
+		<td nowrap="nowrap" style="width:9.755%;" height="17" class="hcp4"><p>48</p></td>
+		<td nowrap="nowrap" style="width:11.93%;" height="17" class="hcp4"><p>16.3 
+		 ± 1.2</p></td>
+		<td nowrap="nowrap" style="width:12.6%;" height="17" class="hcp4"><p>12.3 
+		 ± 1.0</p></td>
+		<td nowrap="nowrap" height="17" width="153" class="hcp4"><p>113.8 ± 22.9</p></td>
+	</tr>
+	<tr style="height: 12.75pt;">
+		<td nowrap="nowrap" style="width:24.312%;" height="17" class="hcp4"><p>Lodgepole 
+		 pine</p></td>
+		<td nowrap="nowrap" style="width:10.09%;" height="17" class="hcp4"><p>79</p></td>
+		<td nowrap="nowrap" style="width:11.094%;" height="17" class="hcp4"><p>201</p></td>
+		<td nowrap="nowrap" style="width:9.755%;" height="17" class="hcp4"><p>280</p></td>
+		<td nowrap="nowrap" style="width:11.93%;" height="17" class="hcp4"><p>16.1 
+		 ± 0.5</p></td>
+		<td nowrap="nowrap" style="width:12.6%;" height="17" class="hcp4"><p>13.5 
+		 ± 0.4</p></td>
+		<td nowrap="nowrap" height="17" width="153" class="hcp4"><p>128.5 ± 10.0</p></td>
+	</tr>
+	<tr style="height: 12.75pt;">
+		<td nowrap="nowrap" style="width:24.312%;" height="17" class="hcp4"><p>Black 
+		 spruce</p></td>
+		<td nowrap="nowrap" style="width:10.09%;" height="17" class="hcp4"><p>57</p></td>
+		<td nowrap="nowrap" style="width:11.094%;" height="17" class="hcp4"><p>1534</p></td>
+		<td nowrap="nowrap" style="width:9.755%;" height="17" class="hcp4"><p>1591</p></td>
+		<td nowrap="nowrap" style="width:11.93%;" height="17" class="hcp4"><p>14.0 
+		 ± 0.2</p></td>
+		<td nowrap="nowrap" style="width:12.6%;" height="17" class="hcp4"><p>11.7 
+		 ± 0.1</p></td>
+		<td nowrap="nowrap" height="17" width="153" class="hcp4"><p>74.5 ± 1.9</p></td>
+	</tr>
+	<tr style="height: 12.75pt;">
+		<td nowrap="nowrap" style="width:24.312%;" height="17" class="hcp4"><p>Engelmann 
+		 spruce</p></td>
+		<td nowrap="nowrap" style="width:10.09%;" height="17" class="hcp4"><p>26</p></td>
+		<td nowrap="nowrap" style="width:11.094%;" height="17" class="hcp4"><p>0</p></td>
+		<td nowrap="nowrap" style="width:9.755%;" height="17" class="hcp4"><p>26</p></td>
+		<td nowrap="nowrap" style="width:11.93%;" height="17" class="hcp4"><p>24.2 
+		 ± 2.6</p></td>
+		<td nowrap="nowrap" style="width:12.6%;" height="17" class="hcp4"><p>17.5 
+		 ± 1.7</p></td>
+		<td nowrap="nowrap" height="17" width="153" class="hcp4"><p>319.7 ± 82.7</p></td>
+	</tr>
+	<tr style="height: 12.75pt;">
+		<td nowrap="nowrap" style="width:24.312%;" height="17" class="hcp4"><p class="hcp5"><span 
+		 lang="EN-US" xml:lang="EN-US">Sitka</span> <span lang="EN-US" 
+															 xml:lang="EN-US">spruce</span></p></td>
+		<td nowrap="nowrap" style="width:10.09%;" height="17" class="hcp4"><p>12</p></td>
+		<td nowrap="nowrap" style="width:11.094%;" height="17" class="hcp4"><p>0</p></td>
+		<td nowrap="nowrap" style="width:9.755%;" height="17" class="hcp4"><p>12</p></td>
+		<td nowrap="nowrap" style="width:11.93%;" height="17" class="hcp4"><p>14.5 
+		 ± 2.2</p></td>
+		<td nowrap="nowrap" style="width:12.6%;" height="17" class="hcp4"><p>10.5 
+		 ± 1.4</p></td>
+		<td nowrap="nowrap" height="17" width="153" class="hcp4"><p>73.6 ± 24.4</p></td>
+	</tr>
+	<tr style="height: 12.75pt;">
+		<td nowrap="nowrap" style="width:24.312%;" height="17" class="hcp4"><p>White 
+		 spruce</p></td>
+		<td nowrap="nowrap" style="width:10.09%;" height="17" class="hcp4"><p>99</p></td>
+		<td nowrap="nowrap" style="width:11.094%;" height="17" class="hcp4"><p>832</p></td>
+		<td nowrap="nowrap" style="width:9.755%;" height="17" class="hcp4"><p>931</p></td>
+		<td nowrap="nowrap" style="width:11.93%;" height="17" class="hcp4"><p>16.8 
+		 ± 0.3</p></td>
+		<td nowrap="nowrap" style="width:12.6%;" height="17" class="hcp4"><p>12.9 
+		 ± 0.2</p></td>
+		<td nowrap="nowrap" height="17" width="153" class="hcp4"><p>133.1 ± 6.3</p></td>
+	</tr>
+	<tr style="height: 12.75pt;">
+		<td nowrap="nowrap" style="width:24.312%;" height="17" class="hcp6"><p class="hcp3">Total</p></td>
+		<td nowrap="nowrap" style="width:10.09%;" height="17" class="hcp6"><p class="hcp3">554</p></td>
+		<td nowrap="nowrap" style="width:11.094%;" height="17" class="hcp6"><p class="hcp3">4006</p></td>
+		<td nowrap="nowrap" style="width:9.755%;" height="17" class="hcp6"><p class="hcp3">4560</p></td>
+		<td nowrap="nowrap" style="width:11.93%;" height="17" class="hcp6"><p>&#160;</p></td>
+		<td nowrap="nowrap" style="width:12.6%;" height="17" class="hcp6"><p>&#160;</p></td>
+		<td nowrap="nowrap" height="17" width="153" class="hcp6"><p>&#160;</p></td>
+	</tr>
+</table>
+<p class="InlineNormal">&#160;</p>
+<p>&#160;The equation form is:</p>
+<p><span class="hcp1">(1)</span> &#160;<span class="hcp7">y</span><span class="hcp8">i</span> 
+ <span class="hcp7">= &#946;</span><span class="hcp8">ik</span> 
+ <span class="hcp7">D</span> <span class="hcp9">&#946;ik</span> 
+ <span class="hcp7">H</span> <span class="hcp9">&#946;ik</span> 
+ <span class="hcp7">+ &#949;</span><span class="hcp8">i</span></p>
+<p>where <span class="hcp7">y</span><span style="vertical-align: Sub; 
+														 font-size: xx-small;">i</span> 
+ is the dry biomass of component <span class="hcp7">i</span> 
+ for either: stem wood, stem bark, foliage or branches (kg), <span class="hcp7">D</span> 
+ is diameter at breast height (DBH, cm), <span class="hcp7">H</span> 
+ &#160;is total tree height (m), <span class="hcp7">&#946;</span><span class="hcp8">ik</span> 
+ are the parameter estimates ( <span class="hcp7">i</span> 
+ is as above, <span class="hcp7">k</span> = 0, 1 or 2), 
+ and <span class="hcp7">&#949;</span><span class="hcp8">i</span> 
+ is the error term for the component <span class="hcp7">i</span>. 
+ Total stem dry biomass was calculated as the sum of the stem wood and 
+ stem bark, while the total above-ground biomass was calculated as the 
+ sum of the total stem, foliage and branches biomass.</p>
+<p>The total below-ground root biomass for each tree was calculated as 
+ a function of the total above-ground biomass using the equations developed 
+ by <a href="Literature_Cited.htm#Li_et_al_2003.">Li et al. (2003)</a> 
+ for all softwoods and hardwoods. &#160;The equations forms are:</p>
+<p><span class="hcp1">(2)</span> &#160;<span class="hcp7">RB</span><span class="hcp8">s</span>= 
+ 0.222<span class="hcp7">AB</span><span class="hcp8">s</span></p>
+<p><span class="hcp1">(3)</span> &#160;<span class="hcp7">RB</span><span class="hcp8">h</span> 
+ = 1.576<span class="hcp7">AB</span><span class="hcp8">h</span><span 
+	 style="vertical-align: Super; font-size: xx-small;">0.615</span></p>
+<p>where <span class="hcp7">RB</span> and <span class="hcp7">AB</span> 
+ are root and above-ground biomass (kg) respectively, <span class="hcp7">s</span> 
+ is the softwood species group, and <span class="hcp7">h</span> 
+ is the hardwood species group respectively. &#160;The parameter estimates 
+ for these models by species and for all softwoods and all hardwoods are 
+ included in Table 2.</p>
+<p style="text-decoration: underline; "><span class="hcp1">Table 
+ 2. Model parameter estimates for the DBH- and height-based for each species, 
+ for all softwoods and all hardwoods</span> (<a href="Literature_Cited.htm#Ung_et_al_2008">Ung 
+ et al 2008</a>).</p>
+
+<table class="NormalTable" style="margin-left: 6.75pt; margin-right: 6.75pt;" 
+		 cellspacing="0">
+	<col width="152">
+	<col width="54">
+	<col width="83">
+	<col width="83">
+	<col width="83">
+	<col width="83">
+	<col width="83">
+	<col width="83">
+	<col width="83">
+	<col width="83">
+	<col width="83">
+	<col width="83">
+	<col width="83">
+	<col width="83">
+	<col width="83">
+	<col width="83">
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" style="border: solid 4px #000000; vertical-align: bottom; 
+			 padding: .75pt .75pt 0cm .75pt;" bgcolor="#C0C0C0"><p class="hcp5">Species</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp10"><p class="hcp5">&#160;</p></td>
+		<td nowrap="nowrap" colspan="14" bgcolor="#C0C0C0" class="hcp10"><p class="hcp5">Parameters</p></td>
+		
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp11"><p class="hcp5">Common 
+		 name</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">Symbol</p></td>
+		<td nowrap="nowrap" colspan="3" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">Bark</p></td>
+		<td nowrap="nowrap" colspan="3" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">Branches</p></td>
+		<td nowrap="nowrap" colspan="3" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">Foliage</p></td>
+		<td nowrap="nowrap" colspan="3" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">Wood&#160;</p></td>
+		<td nowrap="nowrap" colspan="2" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">Roots&#160;</p></td>
+		
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp11"><p class="hcp5">&#160;</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">&#160;</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">ß0</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">ß1</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">ß2</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">ß0</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">ß1</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">ß2</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">ß0</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">ß1</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">ß2</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">ß0</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">ß1</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">ß2</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">ß0</p></td>
+		<td nowrap="nowrap" bgcolor="#C0C0C0" class="hcp12"><p class="hcp5">ß1</p></td>
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Trembling aspen</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">At&#160;</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0063</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.0744</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.6691</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0150</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.9068</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-0.6306</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0284</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.6020</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0000</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0143</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.9369</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0579</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.5760</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.6150</p></td>
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Abies amabilis</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Ba&#160;</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0067</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.6970</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-0.3105</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0420</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.0313</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0000</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0453</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.4867</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-0.4982</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0315</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.8297</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.8056</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.2220</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0000</p></td>
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Abies lasiocarpa</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Bl&#160;</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0072</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.0902</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.4278</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0310</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.9507</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-0.7050</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0564</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.6230</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-0.7766</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0211</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.7258</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0902</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.2220</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0000</p></td>
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Western redcedar</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Cw&#160;</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0002</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.4369</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.1315</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0611</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.9208</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0000</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.1097</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.5530</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0000</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0188</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.3376</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.5293</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.2220</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0000</p></td>
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Red alder</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Dr&#160;</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0009</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.3061</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.0709</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0131</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.5760</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0000</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0224</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.8368</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0000</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0051</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0697</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.2748</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.5760</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.6150</p></td>
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Paper birch</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Ep&#160;</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0079</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.9905</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.6553</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0253</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">3.1518</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-0.9083</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.1361</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.2978</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-1.0934</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0333</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.0794</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.6811</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.5760</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.6150</p></td>
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">coastal Douglas-fir</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Fdc</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0083</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.4811</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0000</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0351</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.2421</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0000</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0718</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.2935</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-0.4744</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0191</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.5365</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.3634</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.2220</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0000</p></td>
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">interior Douglas-fir</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Fdi</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0083</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.4811</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0000</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0351</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.2421</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0000</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0718</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.2935</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-0.4744</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0191</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.5365</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.3634</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.2220</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0000</p></td>
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">coastal w. hemlock</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Hwc</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0019</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.3356</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.6371</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0609</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.0021</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0000</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.2656</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.0107</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-0.7963</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0113</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.9332</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.1125</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.2220</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0000</p></td>
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Lodgepole pine</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Pl&#160;</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0117</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.6398</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.6524</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0285</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">3.3764</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-1.4395</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0769</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.6834</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-1.2484</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0239</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.6827</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.1878</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.2220</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0000</p></td>
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Black spruce</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Sb&#160;</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0132</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.7657</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.5775</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0405</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">3.1917</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-1.3674</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.2078</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.5517</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-1.3453</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0335</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.7389</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.9835</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.2220</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0000</p></td>
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Engelmann spruce</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Se &#160;</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0086</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.6216</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.8192</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0428</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.7965</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-0.7328</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0854</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.4388</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-0.7630</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0133</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.3303</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.6877</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.2220</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0000</p></td>
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5"><span lang="EN-US" xml:lang="EN-US">Sitka</span> 
+		 <span lang="EN-US" xml:lang="EN-US">spruce</span></p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Ss&#160;</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0045</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.2275</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.5190</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0498</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.9671</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0000</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0140</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">3.1305</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-0.9070</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0237</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.5873</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0822</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.2220</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0000</p></td>
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">White spruce</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">Sw&#160;</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0096</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.6901</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.7393</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0322</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.8961</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-0.9203</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.1832</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.4144</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-1.0948</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0252</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.7819</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0022</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.2220</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0000</p></td>
+	</tr>
+	<tr style="height: 12.8pt;">
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">All softwoods</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">SOFT</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0101</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.8486</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.5525</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0313</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.9974</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-1.0383</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.1379</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">2.3981</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">-1.0418</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.0276</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.6868</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0953</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">0.2220</p></td>
+		<td nowrap="nowrap" class="hcp13"><p class="hcp5">1.0000</p></td>
+	</tr>
+	<tr style="height: 13.5pt;">
+		<td nowrap="nowrap" class="hcp14"><p class="hcp5">All 
+		 hardwoods</p></td>
+		<td nowrap="nowrap" class="hcp14"><p class="hcp5">HARD</p></td>
+		<td nowrap="nowrap" class="hcp14"><p class="hcp5">0.0090</p></td>
+		<td nowrap="nowrap" class="hcp14"><p class="hcp5">1.8677</p></td>
+		<td nowrap="nowrap" class="hcp14"><p class="hcp5">0.7144</p></td>
+		<td nowrap="nowrap" class="hcp14"><p class="hcp5">0.0448</p></td>
+		<td nowrap="nowrap" class="hcp14"><p class="hcp5">2.6855</p></td>
+		<td nowrap="nowrap" class="hcp14"><p class="hcp5">-0.5911</p></td>
+		<td nowrap="nowrap" class="hcp14"><p class="hcp5">0.0869</p></td>
+		<td nowrap="nowrap" class="hcp14"><p class="hcp5">1.8541</p></td>
+		<td nowrap="nowrap" class="hcp14"><p class="hcp5">-0.5491</p></td>
+		<td nowrap="nowrap" class="hcp14"><p class="hcp5">0.0353</p></td>
+		<td nowrap="nowrap" class="hcp14"><p class="hcp5">2.0249</p></td>
+		<td nowrap="nowrap" class="hcp14"><p class="hcp5">0.7048</p></td>
+		<td nowrap="nowrap" class="hcp14"><p class="hcp5">1.5760</p></td>
+		<td nowrap="nowrap" class="hcp14"><p class="hcp5">0.6150</p></td>
+	</tr>
+</table>
+
+<p><a href="Biomass_and_carbon_data.htm">Back to Top</a></p>
+<h2><a name="MiniTOCBookMark3"></a><a name="Carbon_Model"></a>Carbon Model</h2>
+<p>To convert biomass to carbon stocks for each individual tree component 
+ a conversion factor for temperate zones of 0.5 g C/g (<a href="Literature_Cited.htm#Matthews_1993">Matthews, 
+ 1993</a>; <a href="Literature_Cited.htm#Lamlom_Savidge_2003">Lamlom and 
+ Savidge, 2003</a>) was used as follows:</p>
+<p><span class="hcp1">(4)</span> Carbon stock = biomass * 
+ 0.5 </p>
+<p><a href="Biomass_and_carbon_data.htm">Back to Top</a>&#160;</p>
+<h2><a name="MiniTOCBookMark4"></a>TIPSY Assumptions and Reporting</h2>
+<p>When a stand is fertilized, <span class="hcp1">TIPSY</span> 
+ uses a height 'bump' to achieve the specified fertilizer response. &#160;All 
+ variables, including biomass, are bumped to the same point on the yield 
+ curve.</p>
+<p>Dead tree values are calculated from the mortality table in <span class="hcp1">TIPSY</span>. 
+ &#160;Snags and coarse woody debris are not considered.</p>
+<p>The carbon content of minor vegetation, soil, dead organic matter, and 
+ litter are not considered.</p>
+<p>Live and dead tree biomass values for wood, bark, foliar, branch, and 
+ roots are interpolated from values the <span class="hcp1">TIPSY</span> 
+ database, which were generated with <a href="Biomass_and_carbon_data.htm">biomass 
+ models in TASS</a>. &#160;&#160;Above-ground and total biomass values 
+ are summed by <span class="hcp1">TIPSY</span>. &#160;Carbon 
+ values are all calculated by <span class="hcp1">TIPSY</span> 
+ <a href="Biomass_and_carbon_data.htm#Carbon_Model">by multiplying biomass 
+ X 0.5.</a></p>
+<p><a href="Biomass_and_carbon_data.htm">Back to Top</a></p>
+<h2><a name="MiniTOCBookMark5"></a>OAF effects</h2>
+<p>Mortality is partially affected when operational 
+ adjustments factors (OAFs) are used. &#160;For instance, when an OAF2 
+ or a custom OAF is selected, the OAF reduces all biomass including the 
+ dead biomass, then the dead biomass and carbon will increase by the same 
+ amount lost in live biomass and carbon columns. &#160;In other words, 
+ the dead trees that are moved to the mortality table are also reported 
+ as dead biomass and carbon stock. &#160;The exception is when the custom 
+ OAF is set to 'remove' the volume as in a salvage operation. &#160;This 
+ 'removal' OAF removes only wood and bark; other components are moved into 
+ dead biomass.</p>
+<p>In the topic <a href="Impacts_of_Adjustment_Factors.htm">Impact of Adjustment 
+ Factors</a> there is a table that lists which <span class="hcp1">TIPSY</span> 
+ output variables are affected by OAFs, 
+ including <a href="How_to_use_the_Armillaria_OAF_in.htm">Armillaria</a>, 
+ and custom OAFs. &#160;When using custom 
+ OAFs, pay attention to the option to either 'Move trees to the mortality 
+ table' or 'Remove trees from the stand completely'. &#160;These options 
+ are described <a href="Using_Custom_OAFs.htm">here</a>. &#160;</p>
+<p><a href="Biomass_and_carbon_data.htm">Back to Top</a></p>
+<h2><a name="MiniTOCBookMark6"></a>TIPSY vs. CBM Model</h2>
+<p>Differences between <span class="hcp1">TIPSY/TASS</span> 
+ and the <a href="http://www.nrcan.gc.ca/forests/climate-change/carbon-accounting/13107">Carbon 
+ Budget Model</a> 
+ of the Canadian Forest Service include:</p>
+<p>- merchantable trees vs whole stand including non-merchantable and small 
+ trees</p>
+<p>- individual tree dbh &amp; ht used to calculate biomass vs. net merch 
+ volume</p>
+<p>- age-dependant mortality vs. consistent mortality rate</p>
+<p>- deadwood doesn't decay vs decays</p>
+<p>- snag fall down rates are probably different</p>
+<p><a href="Biomass_and_carbon_data.htm">Back to Top</a></p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp15">_______________________________________________</p>
+	<p class="hcp15">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

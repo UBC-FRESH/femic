@@ -23,6 +23,10 @@ Runtime audit artifacts were saved under the ignored workspace:
 - `tipsy_io/logs/p48_3_install_audit/pdf_text/`
 - `tipsy_io/logs/p48_3_install_audit/chm/`
 
+The extracted help trees were later archived into tracked repo files under:
+
+- `reference/tipsy/chm_extracted/`
+
 Those artifacts now include:
 
 - PDF text extracts for:
@@ -142,10 +146,13 @@ Planning implication:
 
 The `.chm` audit produced mixed but still useful results:
 
-- full HTML decompile with local `hh.exe -decompile` did not yield extracted
-  files in this environment;
-- however, the compiled help files do expose machine-readable topic paths, which
-  were recovered by scanning embedded path strings directly from the `.chm`
+- initial `hh.exe -decompile` attempts against long paths with spaces did not
+  yield extracted files in this environment;
+- the working seam turned out to be path-sensitive: once the `.chm` files and
+  output directories were moved under a short, no-space path such as
+  `C:\chm\...`, full HTML decompile worked cleanly;
+- before that seam was found, the compiled help files were still useful because
+  their machine-readable topic paths could be recovered directly from the `.chm`
   binaries.
 
 Recovered topic inventories now live at:
@@ -154,6 +161,13 @@ Recovered topic inventories now live at:
 - `tipsy_io/logs/p48_3_install_audit/chm/Fansier_topics.txt`
 - `tipsy_io/logs/p48_3_install_audit/chm/SiteTools_topics.txt`
 - `tipsy_io/logs/p48_3_install_audit/chm/Plotsy2_topics.txt`
+
+Fully extracted tracked help trees now live at:
+
+- `reference/tipsy/chm_extracted/TIPSY45/`
+- `reference/tipsy/chm_extracted/Fansier/`
+- `reference/tipsy/chm_extracted/SiteTools/`
+- `reference/tipsy/chm_extracted/Plotsy2/`
 
 Useful examples surfaced from those topic inventories include:
 
@@ -174,9 +188,10 @@ Useful examples surfaced from those topic inventories include:
 
 Planning implication:
 
-- the local environment did not deliver full CHM HTML extraction, but the audit
-  still recovered a platform-independent topic map that is good enough to guide
-  future targeted digging without reopening the whole install-tree hunt.
+- the local environment does support full CHM extraction, but only through the
+  short-path workaround;
+- FEMIC now carries both the ignored runtime audit artifacts and a tracked
+  extracted-help corpus, so future digging can start directly from the repo.
 
 ## Overall Conclusion
 

@@ -1,0 +1,456 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="windthrow">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Windthrow:  Programmer's perspective</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+p.hcp1 { font-weight:bold;
+margin-bottom:6px; }
+table.hcp2 { margin-bottom:6px; }
+tr.hcp3 { vertical-align:top; }
+td.hcp4 { border:Solid 1px #000000;
+padding-right:10px;
+padding-left:10px; }
+td.hcp5 { border-top:Solid 1px #000000;
+border-right:Solid 1px #000000;
+border-bottom:Solid 1px #000000;
+padding-right:10px;
+padding-left:10px; }
+p.hcp6 { text-align:center; }
+td.hcp7 { border-left:Solid 1px #000000;
+border-right:Solid 1px #000000;
+border-bottom:Solid 1px #000000;
+padding-right:10px;
+padding-left:10px; }
+td.hcp8 { border-right:Solid 1px #000000;
+border-bottom:Solid 1px #000000;
+padding-right:10px;
+padding-left:10px; }
+p.hcp9 { text-align:right; }
+span.hcp10 { margin-left:40px; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1>Windthrow:  Programmer's perspective</h1>
+<p>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="2302"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="Related topics"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="windthrow$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My RoboHelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\Windthrow_programmers_perspective.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:Related topics">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="windthrow">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </p>
+<p>Windthrow calculations adjust the crown cover % and edge length used 
+ in subsequent variable retention calculations. &#160;To do this, the crown 
+ cover loss factor (CCWT) first must be calculated. &#160;CCWT is the percentage 
+ of retained crown cover lost to windthrow. &#160;You can enter the CCWT 
+ value directly by selecting the &quot;User Specified&quot; location model.</p>
+<p>If you select a geographic location model to calculate CCWT, a logistic 
+ regression model value (LOGIT) is computed. &#160;This is based on the 
+ values entered on the Windthrow dialog and on the specific model chosen. 
+ &#160;The computation is as follows:</p>
+<p>LOGIT = b0 + (Bearing * b1) + (Mean Wind Speed * b2) + (Directional 
+ Exposure * b3) + (Topographical Exposure * b4) + (Elevation * b5) + (Time 
+ Since Harvest * b6) + (Top Height of the Retained Group * b7).</p>
+<p>The geography, climate and of the study areas for the derivation of 
+ these logistic regression models are documented in <a href="Literature_Cited.htm#Lanquaye_Mitchell_2005">Lanquaye 
+ and Mitchell 2005</a>. &#160;The models coefficients are hard-coded into 
+ TIPSY and cannot be changed. &#160;These coefficients and the mean values 
+ for the key variables and locations are listed below:</p>
+<p class="hcp1">Logistic regression models 
+ coefficients for each location and pooled models</p>
+<table cellspacing="0" width="98.842%" class="hcp2">
+	<col style="width: 11.111%;">
+	<col style="width: 12.117%;">
+	<col style="width: 11.598%;">
+	<col style="width: 10.826%;">
+	<col style="width: 10.346%;">
+	<col style="width: 11.951%;">
+	<col style="width: 11.719%;">
+	<col style="width: 9.841%;">
+	<col style="width: 10.067%;">
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp4"><p>Location Model</p></td>
+		<td style="width:12.117%;" class="hcp5"><p class="hcp6">b0</p></td>
+		<td style="width:11.598%;" class="hcp5"><p class="hcp6">b1</p></td>
+		<td style="width:10.826%;" class="hcp5"><p class="hcp6">b2</p></td>
+		<td style="width:10.346%;" class="hcp5"><p class="hcp6">b3</p></td>
+		<td style="width:11.951%;" class="hcp5"><p class="hcp6">b4</p></td>
+		<td style="width:11.719%;" class="hcp5"><p class="hcp6">b5</p></td>
+		<td style="width:9.841%;" class="hcp5"><p class="hcp6">b6</p></td>
+		<td style="width:10.067%;" class="hcp5"><p class="hcp6">b7</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>McG</p></td>
+		<td style="width:12.117%;" class="hcp8"><p class="hcp9">-4.411</p></td>
+		<td style="width:11.598%;" class="hcp8"><p class="hcp9">0.00851</p></td>
+		<td style="width:10.826%;" class="hcp8"><p class="hcp9">0.5596</p></td>
+		<td style="width:10.346%;" class="hcp8"><p class="hcp9">0.3144</p></td>
+		<td style="width:11.951%;" class="hcp8"><p class="hcp9">-0.011</p></td>
+		<td style="width:11.719%;" class="hcp8"><p class="hcp9">-0.00369</p></td>
+		<td style="width:9.841%;" class="hcp8"><p class="hcp9">0.0422</p></td>
+		<td style="width:10.067%;" class="hcp8"><p class="hcp9">0.0492</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>NIT</p></td>
+		<td style="width:12.117%;" class="hcp8"><p class="hcp9">-6.7569</p></td>
+		<td style="width:11.598%;" class="hcp8"><p class="hcp9">0.00964</p></td>
+		<td style="width:10.826%;" class="hcp8"><p class="hcp9">0.5085</p></td>
+		<td style="width:10.346%;" class="hcp8"><p class="hcp9">0.2358</p></td>
+		<td style="width:11.951%;" class="hcp8"><p class="hcp9">-0.00242</p></td>
+		<td style="width:11.719%;" class="hcp8"><p class="hcp9">0</p></td>
+		<td style="width:9.841%;" class="hcp8"><p class="hcp9">0.059</p></td>
+		<td style="width:10.067%;" class="hcp8"><p class="hcp9">0.0157</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>QCI</p></td>
+		<td style="width:12.117%;" class="hcp8"><p class="hcp9">-5.1443</p></td>
+		<td style="width:11.598%;" class="hcp8"><p class="hcp9">0.00903</p></td>
+		<td style="width:10.826%;" class="hcp8"><p class="hcp9">0.1942</p></td>
+		<td style="width:10.346%;" class="hcp8"><p class="hcp9">0.1112</p></td>
+		<td style="width:11.951%;" class="hcp8"><p class="hcp9">-0.00268</p></td>
+		<td style="width:11.719%;" class="hcp8"><p class="hcp9">0</p></td>
+		<td style="width:9.841%;" class="hcp8"><p class="hcp9">0.1322</p></td>
+		<td style="width:10.067%;" class="hcp8"><p class="hcp9">0.0295</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>Tem</p></td>
+		<td style="width:12.117%;" class="hcp8"><p class="hcp9">-10.9368</p></td>
+		<td style="width:11.598%;" class="hcp8"><p class="hcp9">0.00626</p></td>
+		<td style="width:10.826%;" class="hcp8"><p class="hcp9">-0.2576</p></td>
+		<td style="width:10.346%;" class="hcp8"><p class="hcp9">0.2465</p></td>
+		<td style="width:11.951%;" class="hcp8"><p class="hcp9">0.0109</p></td>
+		<td style="width:11.719%;" class="hcp8"><p class="hcp9">0.00228</p></td>
+		<td style="width:9.841%;" class="hcp8"><p class="hcp9">0.1571</p></td>
+		<td style="width:10.067%;" class="hcp8"><p class="hcp9">0.088</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>WIT</p></td>
+		<td style="width:12.117%;" class="hcp8"><p class="hcp9">-5.9113</p></td>
+		<td style="width:11.598%;" class="hcp8"><p class="hcp9">0.00893</p></td>
+		<td style="width:10.826%;" class="hcp8"><p class="hcp9">0.3682</p></td>
+		<td style="width:10.346%;" class="hcp8"><p class="hcp9">0.3326</p></td>
+		<td style="width:11.951%;" class="hcp8"><p class="hcp9">-0.0073</p></td>
+		<td style="width:11.719%;" class="hcp8"><p class="hcp9">-0.00080</p></td>
+		<td style="width:9.841%;" class="hcp8"><p class="hcp9">0.1583</p></td>
+		<td style="width:10.067%;" class="hcp8"><p class="hcp9">0.0265</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>Lemon</p></td>
+		<td style="width:12.117%;" class="hcp8"><p class="hcp9">-9.7716</p></td>
+		<td style="width:11.598%;" class="hcp8"><p class="hcp9">0.02</p></td>
+		<td style="width:10.826%;" class="hcp8"><p class="hcp9">0</p></td>
+		<td style="width:10.346%;" class="hcp8"><p class="hcp9">0</p></td>
+		<td style="width:11.951%;" class="hcp8"><p class="hcp9">-0.00852</p></td>
+		<td style="width:11.719%;" class="hcp8"><p class="hcp9">0.00295</p></td>
+		<td style="width:9.841%;" class="hcp8"><p class="hcp9">0</p></td>
+		<td style="width:10.067%;" class="hcp8"><p class="hcp9">0.0335</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>Coast</p></td>
+		<td style="width:12.117%;" class="hcp8"><p class="hcp9">-5.9034</p></td>
+		<td style="width:11.598%;" class="hcp8"><p class="hcp9">0.00917</p></td>
+		<td style="width:10.826%;" class="hcp8"><p class="hcp9">0.3175</p></td>
+		<td style="width:10.346%;" class="hcp8"><p class="hcp9">0.1756</p></td>
+		<td style="width:11.951%;" class="hcp8"><p class="hcp9">-0.00402</p></td>
+		<td style="width:11.719%;" class="hcp8"><p class="hcp9">-0.00026</p></td>
+		<td style="width:9.841%;" class="hcp8"><p class="hcp9">0.1484</p></td>
+		<td style="width:10.067%;" class="hcp8"><p class="hcp9">0.0267</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>Interior</p></td>
+		<td style="width:12.117%;" class="hcp8"><p class="hcp9">-6.3604</p></td>
+		<td style="width:11.598%;" class="hcp8"><p class="hcp9">0.00948</p></td>
+		<td style="width:10.826%;" class="hcp8"><p class="hcp9">&#160;0.353</p></td>
+		<td style="width:10.346%;" class="hcp8"><p class="hcp9">0.1992</p></td>
+		<td style="width:11.951%;" class="hcp8"><p class="hcp9">-0.0114</p></td>
+		<td style="width:11.719%;" class="hcp8"><p class="hcp9">-0.00055</p></td>
+		<td style="width:9.841%;" class="hcp8"><p class="hcp9">0.1063</p></td>
+		<td style="width:10.067%;" class="hcp8"><p class="hcp9">0.0577</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>Province</p></td>
+		<td style="width:12.117%;" class="hcp8"><p class="hcp9">-6.0006</p></td>
+		<td style="width:11.598%;" class="hcp8"><p class="hcp9">0.00929</p></td>
+		<td style="width:10.826%;" class="hcp8"><p class="hcp9">0.3294</p></td>
+		<td style="width:10.346%;" class="hcp8"><p class="hcp9">0.1862</p></td>
+		<td style="width:11.951%;" class="hcp8"><p class="hcp9">-0.00614</p></td>
+		<td style="width:11.719%;" class="hcp8"><p class="hcp9">-0.00045</p></td>
+		<td style="width:9.841%;" class="hcp8"><p class="hcp9">0.1385</p></td>
+		<td style="width:10.067%;" class="hcp8"><p class="hcp9">0.0326</p></td>
+	</tr>
+</table>
+<p style="font-weight: bold;">&#160;</p>
+<p class="hcp1">Mean values of key variables 
+ for the study areas</p>
+<table cellspacing="0" width="100%" class="hcp2">
+	<col style="width: 11.111%;">
+	<col style="width: 11.111%;">
+	<col style="width: 11.111%;">
+	<col style="width: 11.111%;">
+	<col style="width: 11.111%;">
+	<col style="width: 11.111%;">
+	<col style="width: 11.111%;">
+	<col style="width: 11.111%;">
+	<col style="width: 11.111%;">
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp4"><p class="hcp6">Location 
+		 Model</p></td>
+		<td style="width:11.111%;" class="hcp5"><p class="hcp6">Number 
+		 of Observ.</p></td>
+		<td style="width:11.111%;" class="hcp5"><p class="hcp6">Bearing</p></td>
+		<td style="width:11.111%;" class="hcp5"><p class="hcp6">Mean Wind 
+		 Speed</p></td>
+		<td style="width:11.111%;" class="hcp5"><p class="hcp6">Directional 
+		 Exposure</p></td>
+		<td style="width:11.111%;" class="hcp5"><p class="hcp6">Topograph-ical 
+		 Exposure</p></td>
+		<td style="width:11.111%;" class="hcp5"><p class="hcp6">Elevation</p></td>
+		<td style="width:11.111%;" class="hcp5"><p class="hcp6">Time Since 
+		 Harvest</p></td>
+		<td style="width:11.111%;" class="hcp5"><p class="hcp6">Top Height</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>McG</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">5334</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">89</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">4.1</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">4</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">23</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">809</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">4</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">&#160;29</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>NIT</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">5346</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">88</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">4.3</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">4</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">80</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">515</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">3</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">49</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>QCI</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">5373</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">89</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">5.7</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">4</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">46</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">185</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">4</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">36</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>Tem</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">5329</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">91</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">3.4</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">3</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">56</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">1438</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">4</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">26</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>WIT</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">5315</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">91</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">4.6</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">3</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">86</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">426</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">5</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">44</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>Lemon</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">5338</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">91</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">3.5</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">3</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">92</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">1369</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">5</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">28</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>Coast</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">16034</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">89</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">5</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">4</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">71</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">375</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">4</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">43</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p>Interior</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">16001</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">90</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">4</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">3</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">57</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">1205</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">4</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">28</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:11.111%;" class="hcp7"><p class="hcp9">Province</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">32035</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">90</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">4</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">4</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">64</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">790</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">4</p></td>
+		<td style="width:11.111%;" class="hcp8"><p class="hcp9">35</p></td>
+	</tr>
+</table>
+<p>The mean values are the default values in TIPSY for each model and can 
+ be changed. &#160;Note that Time since Harvest is the same as the years 
+ since disturbance, or TIPSY age. &#160;Also - as with variable retention 
+ - in all windthrow calculations the residual stand top height value will 
+ be adjusted for regeneration delay. &#160;That is to say that the trees 
+ continue to increase in height during any regeneration delay.</p>
+<p>From this, the predicted windthrow probability is computed as:</p>
+<p>WTPROB = exp(LOGIT)/(1 + exp(LOGIT))</p>
+<p>Derivation of CCWT from WTPROB is dependant upon the methodology chosen 
+ for calculation of variable retention. &#160;If the user has chosen the 
+ formula method of calculation and has specified that 100% of the area 
+ is dispersed trees, CCWT is calculated as:</p>
+<p>CCWT = WTPROB * Crown Loss * Area Loss * Spacing Factor/ 0.2</p>
+<p>where the Spacing Factor is the square root of:</p>
+<p><span class="hcp10">10000 / (crown cover % / 100 / avg. 
+ crown area) / (residual stand top height)</span></p>
+<p>For every other variable retention calculation method, an unadjusted 
+ CCWT value is first computed:</p>
+<p><span class="hcp10">CCWT = (WTPROB + 0.1) * Crown Loss 
+ * Area Loss</span></p>
+<p>This value must then be adjusted by group shape, as only the outer 25 
+ metres of the area are subject to windthrow calculations. &#160;If the 
+ variable retention methodology is User Specified, group size determination 
+ is not possible and the computed CCWT value is left unadjusted. &#160;Otherwise, 
+ the area of the group in the outer 25m is calculated as follows.</p>
+<p>For all but the circular shaped groups, an aspect ratio is determined 
+ as follows:</p>
+<p>Square group: aspect ratio = 1</p>
+<p>Rectangular group: aspect ratio = rectangle dimension (e.g., if the 
+ rectangle is 8x1 then the aspect ratio is 8).</p>
+<p>Irregular group: aspect ratio = 12</p>
+<p>Formula methodology; aggregate group: aspect ratio = 2.5</p>
+<p>Then, the length and width of the group are calculated as:</p>
+<p><span class="hcp10">Side A = square root of group area 
+ &#160;* aspect ratio</span></p>
+<p><span class="hcp10">Side B = square root of group area 
+ &#160;/ aspect ratio</span></p>
+<p>From both sides, 50m is subtracted (i.e., 25m from both ends). &#160;The 
+ new side length is that portion of the original side that is 25m in from 
+ both ends &#160;If either new side is less than 0, it is made equal to 
+ 0. &#160;Then the inner-area is calculated as:</p>
+<p>Inner Area = New Side A * New Side B</p>
+<p>This Inner Area represents the original area with a 25m strip cut away 
+ on all 4 sides.</p>
+<p>For circular groups, the radius of the circle is calculated as:</p>
+<p>r = square root of group area / pi</p>
+<p>Then r is modified to strip off the outer 25m (if r &lt; 25m then r 
+ = 0) and calculate the new inner area:</p>
+<p>Inner Area = pi (r 25)2</p>
+<p>Once we have calculated the Inner Area, the proportion of the original 
+ area that lies outside this inner area is calculated as:</p>
+<p>Outer Area Proportion = (Original Area Inner Area)/Original Area</p>
+<p>With this proportion, we can then adjust the computed CCWT as follows:</p>
+<p>Amended CCWT = Original CCWT * Outer Area Proportion</p>
+<p>This is the value that will be shown on the TIPSY dialog as Crown Cover 
+ Loss Factor.</p>
+<p>Now that a CCWT value has been computed, we can then go on to compute 
+ the adjusted crown cover % and edge.</p>
+<p>Adjusted crown cover % = orig. crown cover % - (orig. crown cover % 
+ * amended CCWT)</p>
+<p>Adjusted group size (area) = orig. group size (orig. group size * amended 
+ CCWT)</p>
+<p>The edge length calculation will be done as in the original variable 
+ retention model, but using the adjusted crown cover % and group size. 
+ &#160;For more information on edge length calculation, see <a href="Data_behind_the_variable_retenti.htm">Variable 
+ Retention</a>.</p>
+<p>Because there is no stand volume prior to planting, the algorithm does 
+ not have to concern itself with modifying the stand before delay age. 
+ &#160;After delay age, the change to crown cover % is a constant. &#160;Therefore 
+ adjustments to the crown cover % are computed at delay age and then applied 
+ the same way for every row. &#160;The edge length is calculated for each 
+ row in the table up to age 10 at which point it becomes a static value.</p>
+<p>We have developed VR coefficients for only four species in TIPSY. If 
+ you use variable retention with windthrow for any other species, the program 
+ automatically makes substitutions. See <a href="Table_of_VR_Species_Substitution.htm">Table 
+ of VR species substitutions</a>.</p>
+<h2>Format file additions for DOS interface</h2>
+<p>Several keyword additions have been made to the format file used with 
+ BatchTIPSY’s DOS interface in order to accommodate windthrow. &#160;Each 
+ keyword is followed by two numbers which signify the start and end columns 
+ for that input parameter on each line of the input file. &#160;For example, 
+ AGE 72 - 73 means that the age will be read in between columns 72 and 
+ 73, inclusive. &#160;The new windthrow additions are:</p>
+<p>WT_MODEL n1 model</p>
+<p>WT_BEARING &#160;n1 - n2 bearing / CCWT</p>
+<p>WT_MWS &#160;n1 - n2 mean wind speed</p>
+<p>WT_DIREX &#160;n1 - n2 directional exposure</p>
+<p>WT_TOPEX &#160;n1 - n2 topographical exposure</p>
+<p>WT_EVEL &#160;n1 - n2 elevation</p>
+<p>WT_CL &#160;n1 - n2 crown loss</p>
+<p>WT_AL &#160;n1 - n2 area loss</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp6">_______________________________________________</p>
+	<p class="hcp6">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

@@ -1,0 +1,90 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="Jobs">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Jobs: Calculating Total</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+p.hcp1 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1>Jobs: Calculating Total</h1>
+<p>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="1640"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="More jobs"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="Jobs$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My RoboHelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\Total_Jobs.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:More jobs">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="Jobs">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </p>
+<p>Total jobs for any row of the Jobs table is the sum of the silviculture 
+ jobs and the harvesting/manufacturing jobs in that row.</p>
+<p>In the Jobs dialog box, the units are displayed as person years per 
+ thousand cubic metres. These units are the industry standard. For simplicity, 
+ TIPSY converts these values to person days per 1000 m3 using the following 
+ formulation:</p>
+<p class="Indent">PD/1000 m3 = PY/1000 m3 x 200 days</p>
+<p class="Indent">where:</p>
+<p class="Indent">200 days represents the number of working days per year.</p>
+<p>In the summary at the top of the jobs table, harvesting and manufacturing 
+ jobs are expressed as PD/1000 m3.</p>
+<p>TIPSY then translates PD/1000 m³ to PD/ha as follows:</p>
+<p>JOBS<i>(PD/ha)</i> = JOBS<i>(PD/1000 m³)</i> * Merchantable volume<i>(m³/ha 
+ 12.5+)</i> / 1000</p>
+<p>This is so TIPSY can display all jobs in the same units in its output, 
+ including the total number of jobs. To better understand these calculations, 
+ see <a href="Jobs_Table_a_Detailed_Example.htm">Jobs Table, a Detailed 
+ Example</a>.</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp1">_______________________________________________</p>
+	<p class="hcp1">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+﻿NAME=Age, breast height
+age at breast height (1.3m), the age used in most site index equations
+NAME=Age, total
+Years since germination.   Equals breast-height age plus years to breast-height.
+NAME=ASCII
+refers to characters from the ASCII (American Standard Code for Information Interchange)  character set.   The standard format of simple text and data files.
+NAME=Aspect
+The direction that a slope faces.
+NAME=BEC site unit
+An individual ecosystem classification unit within the BEC system.
+NAME=BEC, Biogeoclimatic Ecosystem Classification
+A hierarchical classification system of BC ecosystems that integrates regional, local and chronological factors and combines climatic, vegetation and site factors.
+NAME=Breast Height (BH)
+The standard height, 1.3 m above ground level, at which the diameter of a standing tree is measured. On sloping ground, breast height must be measured on the uphill side of the tree.
+NAME=British Columbia (BC)
+The Canadian province on the west coast of Canada.
+NAME=Codominant
+In stands with a closed canopy, those trees whose crowns form the general level of  the canopy and receive full light from above, but comparatively little from the sides.  In young stands, those trees with above average height growth.
+NAME=Commercial thinning
+Silviculture treatment that 'thins' out an overstocked stand by removing trees that  are large enough to be sold as products such as poles or fence posts.
+NAME=DBH (diameter at breast height)
+The stem diameter of a tree measured at breast height (1.3 metres above the ground  on the uphill side of the tree).
+NAME=Dominant
+Trees with crowns extending above the general level of the canopy and receiving full  light from above and partly from the side; taller than the average trees in the stand  with crowns well developed.
+NAME=Even-aged
+A forest stand or forest type in which relatively small (20 year) age differences  exist between individual trees. Even-aged stands are often the result of fire, or  a harvesting method such as clearcutting or the shelterwood method.
+NAME=Greened-up
+A cut block that supports a stand of trees that has attained the green-up height  specified in a higher level plan for the area, or in the absence of a higher level  plan for the area, has attained a height that is 3 m or greater, and if under a silviculture  prescription, meets the stocking requirements of that prescription, or if not under  a silviculture prescription, meets the stocking specifications for that biogeoclimatic  ecosystem classification specified by the regional manager.
+NAME=Growth Intercept
+An alternative to conventional site index functions for estimating site index from breast-height age and height in young stands.
+NAME=Height
+In SiteTools, height generally refers to site height.
+NAME=Juvenile Height Growth
+Models focused on early height growth below BH.   They can be used standalone, or integrated with Site Index models.
+NAME=Juvenile spacing
+A silvicultural treatment in young stands whereby the least desirable trees are removed,  but not utilized. Also known as 'precommercial thinning' and 'spacing.'
+NAME=Polygon
+A closed geometric entity used to graphically represent area features with associated  attributes.
+NAME=SIBEC
+a database of site index estimates for tree species according to site units of BC's BEC (Biogeoclimatic Ecosystem Classification) system
+NAME=Silviculture
+Art and science of controlling the establishment, growth, composition, health and  quality of forests, and woodlands. Silviculture entails the manipulation of forest  and woodland vegetation in stands and on landscapes to meet the diverse needs and  values of landowners and society on a sustainable basis .
+NAME=Silviculture prescription
+A site-specific operational plan that describes the forest management objectives  for an area. It prescribes the method for harvesting the existing forest stand, and  a series of silviculture treatments that will be carried out to establish a free  growing stand in a manner that accommodates other resource values as identified.
+NAME=Site
+An area described or defined by its biotic, climatic, and soil conditions in relation to its management implications or productive capacity.
+NAME=Site class
+The measure of the relative productive capacity of a site for a particular crop or  stand, generally based on tree height at a given age and expressed as either good,  medium, poor, or low.
+NAME=Site Height
+[m] height of the largest dbh tree of the target species in a 0.01 ha plot. The tree must be healthy, vigorous, dominant or co-dominant, undamaged and unsuppressed.
+NAME=Site Index (SI)
+A measure of site productivity based on site height [meters] of a stand at breast-height age 50.
+NAME=Site Productivity
+The capacity of land to grow trees governed by climatic and edaphic characteristics.
+NAME=Site tree
+a tree meeting all the criteria to obtain a measure of site height.
+NAME=Top Height
+See Site Height
+NAME=Uneven-aged
+A stand of trees containing three or more age classes. In a balanced uneven-aged stand, each age class is represented by approximately equal areas, providing a balanced distribution of diameter classes.
+NAME=Veteran
+A tree that is at least 30 years older than the age of the main stand. In multi-layered  or complex-layered stands, a tree that is at least 100 years older than the oldest  sample tree of the main stand.
+NAME=Wolf tree
+A large conspicuous tree characterized by a broad, irregular crown and unusually large limbs.  Most often they are remnants from a previous stand,
+NAME=Years to breast height (YTBH)
+Years to grow from seed to breast height.

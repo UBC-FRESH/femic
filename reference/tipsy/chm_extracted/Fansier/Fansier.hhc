@@ -1,0 +1,189 @@
+<html>
+<!-- Sitemap 1.0 -->
+<object type="text/site properties">
+  <param name="WindowName" value="CHM">
+  <param name="SiteType" value="toc">
+  <param name="ImageType" value="folder">
+  <param name="Image Width" value="16">
+  <param name="Window Styles" value="0x800407">
+  <param name="ExWindow Styles" value="0x100">
+</object>
+<ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="What is FAN$IER?">
+    <param name="Local" value="Introduction/What_is_FANSIER.htm">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="What's New?">
+      <param name="Local" value="Introduction/What_s_New.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="System Requirements">
+      <param name="Local" value="Introduction/System_Requirements.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Acknowledgements">
+      <param name="Local" value="Introduction/Acknowledgements.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="User Support">
+      <param name="Local" value="Support/User_Support.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Getting Started">
+    <param name="Local" value="Getting_Started/Getting_Started.htm">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Basic Navigation">
+      <param name="Local" value="Support/Basic_Navigation.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="How to Use Help">
+      <param name="Local" value="Support/How_to_Use_Help.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Viewing Costs &amp; Prices">
+      <param name="Local" value="Viewing_Costs_Prices.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="File Types">
+      <param name="Local" value="Getting_Started/File_Types.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Save &amp; Print Results">
+      <param name="Local" value="Getting_Started/Save_Print_Results.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="FAN$IER's Main Screen">
+    <param name="Local" value="Getting_Started/Main_Screen.htm">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Main Menu">
+      <param name="Local" value="Getting_Started/Main_Menu.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Tool Bar">
+      <param name="Local" value="Getting_Started/Tool_Bar.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Main Settings">
+      <param name="Local" value="Getting_Started/Main_Settings.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Discount Assumptions">
+      <param name="Local" value="Getting_Started/Discount_Assumptions.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Regime Tab">
+    <param name="Local" value="Regime_Tab.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Costs Tab">
+    <param name="Local" value="Costs_Tab/Costs_Tab.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Benefits Tab">
+    <param name="Local" value="Benefits_Tab/Benefits_Tab.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Products &amp; Prices">
+    <param name="Local" value="Benefits_Tab/Products_and_Prices/Products_and_Prices.htm">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Biomass, Carbon, and CO2e">
+      <param name="Local" value="Benefits_Tab/Products_and_Prices/Biomass_Carbon_CO2e/Biomass_Carbon_CO2e.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Biomass &amp; CO2e Prices">
+      <param name="Local" value="Benefits_Tab/Products_and_Prices/Biomass_Carbon_CO2e/Biomass_and_CO2e_Prices.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Logs">
+      <param name="Local" value="Benefits_Tab/Products_and_Prices/Logs/Logs.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Log Prices">
+      <param name="Local" value="Benefits_Tab/Products_and_Prices/Logs/Log_Prices.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Lumber and Mill Residues">
+      <param name="Local" value="Benefits_Tab/Products_and_Prices/Lumber_and_Mill_Residues/Lumber_and_Mill_Residues.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Lumber and Mill Residue Prices">
+      <param name="Local" value="Benefits_Tab/Products_and_Prices/Lumber_and_Mill_Residues/Lumber_and_Mill_Residue_Prices.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Results Tab">
+    <param name="Local" value="Results_Tab.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Report Tab">
+    <param name="Local" value="Report_Tab.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Compare Tab">
+    <param name="Local" value="Compare_Tab/Compare_Tab.htm">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Early Stand Replacement">
+      <param name="Local" value="Compare_Tab/Early_Stand_Replacement.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Internal Rate of Return">
+      <param name="Local" value="Compare_Tab/Internal_Rate_of_Return.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Sensitivity Analysis Tab">
+    <param name="Local" value="Sensitivity_Analysis_Tab.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Batch Mode">
+    <param name="Local" value="Batch_Mode.htm">
+  </object>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Economics Background">
+    <param name="Local" value="Economics_Background/Economics_Background.htm">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="FAN$IER: Background &amp; Limitations">
+      <param name="Local" value="Economics_Background/Background_and_Limitations.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Forest Economics Primer">
+      <param name="Local" value="Economics_Background/Forest_Economics_Primer.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Net Present Value &amp; Site Value">
+      <param name="Local" value="Economics_Background/Net_Present_Value_and_Site_Value.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Forecasting Future Economic Conditions">
+      <param name="Local" value="Economics_Background/Forecasting_Future_Economic_Conditions.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Value of Standing Timber">
+      <param name="Local" value="Economics_Background/Value_of_Standing_Timber.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Financial Analyses on Private Lands">
+      <param name="Local" value="Economics_Background/Financial_Analyses_on_Private_Lands.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Hardwood Economics">
+      <param name="Local" value="Economics_Background/Hardwood_Economics.htm">
+    </object>
+    </ul>
+</ul>
+</html>

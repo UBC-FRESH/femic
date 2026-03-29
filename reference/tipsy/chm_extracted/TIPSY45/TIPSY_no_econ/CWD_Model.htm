@@ -1,0 +1,123 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="CWD">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>CWD: Model</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+tr.hcp2 { vertical-align:top; }
+p.hcp3 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1>CWD: Model</h1>
+<p>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="1508"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="See Also"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="CWD$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My RoboHelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\CWD_Model.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:See Also">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="CWD">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </p>
+<p>Coarse woody debris (CWD) decomposition is a process of fragmentation 
+ and mineralization. Most CWD studies use a single-exponential model to 
+ estimate CWD, which neglects most of this complexity. <span class="hcp1">TIPSY</span> 
+ also uses the single-exponential model to report cumulative volume. The 
+ model is</p>
+<img src="../TIPSY3200000074.gif" alt="TIPSY3200000074.gif" title="TIPSY3200000074.gif" width="71" height="28" border="0"> 
+<p>where <img src="../TIPSY3200000075.gif" alt="TIPSY3200000075.gif" title="TIPSY3200000075.gif" width="22" height="21" border="0"> is the amount of 
+ new CWD at the start of the period, <img src="../TIPSY3200000076.gif" alt="TIPSY3200000076.gif" title="TIPSY3200000076.gif" width="18" height="22" border="0"> 
+ is the amount of CWD after <i>t</i> years, and <i>k</i> is the annual 
+ decay rate constant. You can enter the decay rate constant for the model 
+ or use the default provided.</p>
+<p><span class="hcp1">TIPSY</span> assumes that all new CWD 
+ comes in at the beginning of the period, which creates cohorts of CWD. 
+ The equation is applied to each cohort and the sum of the cohorts equals 
+ the amount of CWD at that age.</p>
+<p>In the example below, <i>k</i>=0.02 and the total CWD volume at age 
+ 15 is 56.1m3.</p>
+<table >
+	<tr class="hcp2">
+		<td><p class="TableText">Age<br>
+		(yrs)</p></td>
+		<td><p class="TableText">New CWD Input<br>
+		(m3/ha)</p></td>
+		<td><p class="TableText">CWD present<br>
+		(m3/ha)</p></td>
+	</tr>
+	<tr class="hcp2">
+		<td><p class="TableText">5</p></td>
+		<td><p class="TableText">11</p></td>
+		<td><p class="TableText">11=11</p></td>
+	</tr>
+	<tr class="hcp2">
+		<td><p class="TableText">10</p></td>
+		<td><p class="TableText">30</p></td>
+		<td><p class="TableText"><img src="../TIPSY3200000077.gif" alt="TIPSY3200000077.gif" title="TIPSY3200000077.gif" width="114" height="26" border="0"></p></td>
+	</tr>
+	<tr class="hcp2">
+		<td><p class="TableText">15</p></td>
+		<td><p class="TableText">20</p></td>
+		<td><p class="TableText"><img src="../TIPSY3200000078.gif" alt="TIPSY3200000078.gif" title="TIPSY3200000078.gif" width="185" height="24" border="0"><br>
+		&#160;</p></td>
+	</tr>
+</table>
+<p>Note that this example assumes no aging of CWD that fell between ages 
+ 10 and 15.</p>
+<p>Unfortunately, <span class="hcp1">TIPSY</span> ignores 
+ the thinnings from precommercial thinning in its coarse woody debris model, 
+ but we may include thinnings in future releases. Commercial thinning will 
+ reduce the number of trees 'eligible' to become CWD.</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp3">_______________________________________________</p>
+	<p class="hcp3">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

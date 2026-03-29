@@ -1,0 +1,195 @@
+<html>
+<!-- Sitemap 1.0 -->
+<object type="text/site properties">
+  <param name="SiteType" value="toc">
+  <param name="ImageType" value="folder">
+  <param name="Image Width" value="16">
+  <param name="Window Styles" value="0x800407">
+  <param name="ExWindow Styles" value="0x100">
+</object>
+<ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="What is SiteTools?">
+    <param name="Local" value="SiteTools/Background/What_is_SiteTools.htm">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="What's New?">
+      <param name="Local" value="SiteTools/Background/Whats_New.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="User Support">
+      <param name="Local" value="SiteTools/Background/User_Support.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Acknowledgements">
+      <param name="Local" value="SiteTools/Background/Acknowledgements.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Getting Started">
+    <param name="Local" value="SiteTools/Getting_Started/Getting_Started.htm">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Main Screen">
+      <param name="Local" value="SiteTools/Getting_Started/Main_Screen_Overview.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Main Menu">
+      <param name="Local" value="SiteTools/Getting_Started/Main_Menu.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Preferences">
+      <param name="Local" value="SiteTools/Getting_Started/Preferences.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Toolbar">
+      <param name="Local" value="SiteTools/Getting_Started/Toolbar.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Graphing with PLOTSY">
+      <param name="Local" value="SiteTools/Getting_Started/Graphing_with_PLOTSY.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="*Calculator &amp; Table Modes">
+    <param name="Local" value="SiteTools/Interactive/Calculator_Table_Modes.htm">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Species &amp; Curve Selection">
+      <param name="Local" value="SiteTools/Interactive/Species_Selection.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Calculation Settings">
+      <param name="Local" value="SiteTools/Interactive/Calculation_Settings.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Method">
+      <param name="Local" value="SiteTools/Interactive/Method.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Calculator Mode">
+      <param name="Local" value="SiteTools/Interactive/Calculator_mode.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Table Mode">
+      <param name="Local" value="SiteTools/Interactive/Table_Mode.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Add Row/Column">
+      <param name="Local" value="SiteTools/Interactive/Add_Row_Column.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="OnScreen Reports, Interactive">
+      <param name="Local" value="SiteTools/Interactive/OnScreen_Reports_Interactive.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="*Species Assignment Table">
+    <param name="Local" value="SiteTools/Species_Assignment/Species_Substitution.htm">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Select Curves">
+      <param name="Local" value="SiteTools/Species_Assignment/Select_Curves.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="*Batch Mode">
+    <param name="Local" value="SiteTools/Batch/Batch_Mode.htm">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="How to Import Data">
+      <param name="Local" value="How_to_Import_Data.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Multiple files">
+      <param name="Local" value="SiteTools/Batch/Multiple_files.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Files to Process ">
+      <param name="Local" value="SiteTools/Batch/Batch_Input_Data.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Import Text File Format">
+      <param name="Local" value="SiteTools/Batch/Input_File_Template.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Edit Input Column">
+      <param name="Local" value="SiteTools/Batch/Edit_Input_Column.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Output filename">
+      <param name="Local" value="SiteTools/Batch/Output_filename.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Calculation Settings, Batch">
+      <param name="Local" value="SiteTools/Batch/Calculation_Settings_Batch.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Output Columns">
+      <param name="Local" value="SiteTools/Batch/Output_Columns_Batch.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Edit Output Column">
+      <param name="Local" value="SiteTools/Batch/Edit_Output_Column.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="OnScreen Reports, Batch">
+      <param name="Local" value="SiteTools/Batch/OnScreen_Reports_Batch.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="More about Site Index">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Questions and Answers about Site Index">
+      <param name="Local" value="SiteTools/SI_Info/Q_and_A_Site_Index.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Methods for Estimating SI">
+      <param name="Local" value="SiteTools/SI_Info/Methods_to_estimate_site_index.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Site Index Models">
+      <param name="Local" value="SiteTools/SI_Info/Site_Index_Models.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Site Tree Concept">
+      <param name="Local" value="SiteTools/SI_Info/Site_Tree_Concept.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Growth Intercept Models">
+      <param name="Local" value="SiteTools/SI_Info/Growth_Intercept_Models.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Juvenile Height Growth models ">
+      <param name="Local" value="SiteTools/SI_Info/Juvenile_Height_Growth.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Years to Breast Height Models">
+      <param name="Local" value="SiteTools/SI_Info/Years_to_Breast_Height.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Species Conversion Models">
+      <param name="Local" value="SiteTools/SI_Info/Species_Conversion.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="SIBEC estimates">
+      <param name="Local" value="SiteTools/SI_Info/SIBEC_estimates.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Ministry Recommended Curves">
+      <param name="Local" value="SiteTools/SI_Info/Ministry_Recommended_Curves.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Age Correction, SI models">
+      <param name="Local" value="SiteTools/SI_Info/age_correction_SI.htm">
+    </object>
+    </ul>
+</ul>
+</html>

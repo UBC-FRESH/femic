@@ -1,0 +1,87 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="batch">
+<meta name="MS-HAID" content="Variable retention">
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Variable Retention: Batch</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+p.hcp1 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1>Variable Retention: Batch</h1>
+<p>In BatchTIPSY, you will find the VR option in the <a href="Input_variables.htm">Input 
+ Variables</a> dialog. Select this checkbox to activate the VR dialog. 
+ Once VR has been activated, you can access this same dialog through the 
+ Edit menu. &#160;&#160;<a href="Windthrow_how_to_apply.htm">Click here 
+ for information on activating the windthrow model in conjunction with 
+ VR.</a></p>
+<p><span style="font-weight: bold;">Note:</span> &#160;There has been some 
+ confusion about how to enter % aggregate area and % dispersed area in 
+ the VR dialog. &#160;Just enter the % aggregate and BatchTIPSY will calculate 
+ the percent dispersed. &#160;This is similar to how interactive TIPSY 
+ works, though much less intuitive when you can't actually see the percent 
+ dispersed change as you change the percent of aggregated retention.</p>
+<p>Following the release of version 3.2, we changed the Variable Retention 
+ dialog in BatchTIPSY to make it less 'interactive'. &#160;This was necessary 
+ so that BatchTIPSY could be incorporated into other programs such as Woodlot, 
+ where the interface is stripped away from the BatchTIPSY executable. &#160;The 
+ radio buttons in the dialog were removed and now users will specify all 
+ VR inputs at one time, instead of being forced (or able) to select a particular 
+ edge length calculation methodology in the dialog. &#160;If you open an 
+ older BatchTIPSY file with variable retention, you'll be alerted to the 
+ change. &#160;Variable retention will be disabled until you go to the 
+ new dialog and fill in missing data. &#160;The new input required is the 
+ location (in the input file) for edge length calculation methodology and 
+ for crown cover calculation methodology (U for user specified, F for formula 
+ (basal area) -- only used for the formula methodology of edge length calculation). 
+ &#160;It's necessary to specify column locations for all variable retention 
+ variables, even if the columns aren't used in the input file.</p>
+<p>Initial edge length can be given in three ways:</p>
+<ul>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet">using 
+	 a pre-determined formula &#160;(F)</p></li>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet">user 
+	 specified (U), and</p></li>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet">geometric 
+	 (G)</p></li>
+</ul>
+<p>For the geometry option, your input file must indicate average group 
+ size and shape. Use one case-insensitive character in the input file as 
+ follows:</p>
+<p class="Indent">C: circle</p>
+<p class="Indent">S: square</p>
+<p class="Indent">1-9: rectangle ratio (where the number is the width of 
+ a rectangle with a height of 1 unit)</p>
+<p class="Indent">I: irregular (12x1 rectangle)</p>
+<p>If BatchTIPSY doesn’t recognize the character in your input file, it 
+ will use a circular shape for its calculations.</p>
+<p>Crown cover percentage retained is typically input directly from the 
+ file. However, if you are using the formula to calculate edge length, 
+ you can choose to input the retained basal area instead. In this case, 
+ the program will calculate the crown cover using an internal formula based 
+ on the species.</p>
+<p>Your input file should also include the retained top height. As with 
+ TIPSY, the top height may be modified if the stand has a regeneration 
+ delay (see <a href="Operational_examples_using_varia.htm#57ad6aa7">Example 
+ 2</a>). &#160;</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp1">_______________________________________________</p>
+	<p class="hcp1">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

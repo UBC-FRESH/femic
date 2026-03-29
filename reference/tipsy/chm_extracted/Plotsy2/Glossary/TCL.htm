@@ -1,0 +1,47 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+ <meta name="generator" content="Adobe RoboHelp 8">
+<title>Application Type / Column File (.tcl)</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+</head>
+
+<body>
+<h1>Application Type / Column File (.tcl)</h1>
+<p>The Application Type / Column File describes the format of the data 
+ exported from an application. &#160;Applications with data in one table 
+ may export all data in a single format. &#160;Some applications including 
+ TIPSY and TASS require multiple formats. &#160;Some reasons for having 
+ multiple tables:</p>
+<ol type="1">
+	<li>The rows in one table don’t match the rows in another table. (i.e. 
+	 a stem map and a yield table)</li>
+	<li>The data is calculated separately from the original data (i.e. 
+	 snags are calculated using a separate model after &#160;the main database 
+	 has been calculated)</li>
+</ol>
+<p>&#160;</p>
+<p>The &#160;Application Type / Column file specifies what columns are 
+ to be expected from the parent application, including titles, units and 
+ formatting. &#160;&#160;This file only needs to be created once for each 
+ Type. &#160;It can be created by the Parent Application, or just included 
+ in applications folder. &#160;A Parent Application is a program like TIPSY 
+ or TASS that automatically launches Plotsy and sends data to it.</p>
+<p>&#160;</p>
+<p>The format of this file is a tab delimited text file. &#160;Lines that 
+ start with a single quote are comments and ignored by the program. &#160;Lines 
+ that start with an asterisk are section headers. &#160;Descriptions that 
+ span multiple lines should be separated by the pipe symbol “|”.</p>
+<p>&#160;</p>
+<p>The file can contain these sections: </p>
+<ol type="1">
+	<li>Columns – details about the columns including: name, units, number 
+	 of decimal places and width.</li>
+	<li>Headers – used to span titles above like columns</li>
+	<li>Groups – used to filter like columns in the user interface.</li>
+</ol>
+</body>
+</html>

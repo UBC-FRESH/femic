@@ -1,0 +1,86 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+ 
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Questions and Answers about Site Index</title>
+<link rel="StyleSheet" href="../../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+p.hcp1 { font-family:Arial, sans-serif; }
+h2.hcp2 { font-family:Arial, sans-serif; }
+span.hcp3 { font-family:Arial, sans-serif; }
+span.hcp4 { font-weight:bold; }
+span.hcp5 { font-weight:normal; }
+p.hcp6 { text-align:center; }
+-->
+</style>
+</head>
+<body>
+<script type="text/javascript" src="../../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+
+<h1 style="font-family: Arial, sans-serif;">Questions and Answers about Site Index</h1>
+<h2 style="font-size: 12pt;">What is site index (SI) and what is it used for?</h2>
+<p class="hcp1">SI is a measure of a site's productive potential for a particular tree species. SI in British Columbia represents potential (<a href="Site_Tree_Concept.htm">site tree</a>) height at 50 years breast height age. SI enables standardized comparisons of potential site productivity, across a broad range of existing stand conditions. &#160;As such, SI is used as a silvicultural tool to prescribe treatments and analyze investments. SI is a main driver (input) within many growth and yield models, which predict future forest growth and timber yields.</p>
+<h2><b>Why is SI so widely used in forestry?</b></h2>
+<ul style="list-style: disc; font-family: Arial, sans-serif;">
+<li>
+<p>Stand height is closely related to stand volume. &#160;Therefore, it is a good proxy for productivity in terms of timber volume.</p>
+</li>
+<li>
+<p>Compared to other measures (diameter, volume, basal area, etc.), stand height is relatively independent of stocking density, except at the extremes for some species.</p>
+</li>
+</ul>
+<h2 class="hcp2"><span class="hcp3"><b>What factors determine SI?</b></span></h2>
+<p>SI is species specific. &#160;It reflects inherent physical site factors, such as climate (solar input, precipitation, temperature, growing season, etc.) and soil (moisture, nutrients, geology, etc.). SI is generally assumed to be independent of current stand conditions and management.</p>
+<h2>What is needed to make an SI calculation using SiteTools?</h2>
+<p>Given any two of following values, <span class="hcp4">SiteTools</span> can calculate the third:</p>
+<ol style="list-style: decimal;">
+<li><a href="javascript:TextPopup(this)" id="HotSpot27558" class="glossterm">Age, breast height</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot27558', 'POPUP27558');
+//]]></script><span class="glosstext" id="POPUP27558" style="display: none;"> age at breast height (1.3m), the age used in most site index equations</span> (BH) or <a class="glossterm">total</a></li>
+<li><a href="javascript:TextPopup(this)" id="HotSpot51596" class="glossterm">Height</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot51596', 'POPUP51596');
+//]]></script><span class="glosstext" id="POPUP51596" style="display: none;"> In SiteTools, height generally refers to site height.</span></li>
+<li><a href="javascript:TextPopup(this)" id="HotSpot12529" class="glossterm">Site index (SI)</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot12529', 'POPUP12529');
+//]]></script><span class="glosstext" id="POPUP12529" style="display: none;"> A measure of site productivity based on site height [meters] of a stand at breast-height age 50.</span></li>
+</ol>
+<p>with age and height representing a sample of <a href="Site_Tree_Concept.htm">site trees</a>.</p>
+<h2>What about inventory SI?</h2>
+<p>Forest inventories in <a class="glossterm">BC</a>, and other Canadian provinces, commonly derive <a class="glossterm">Site Index</a> from stand-level height and age estimates obtained via aerial-photo interpretation, because intensive ground sampling is prohibitively expensive at large scales. &#160;&#160;Consequently, the lack of <a href="Site_Tree_Concept.htm" style="font-weight: normal;">site tree</a> selection means forest inventories often underestimate <a class="glossterm">Site Index</a>. &#160;This lead to the development of <span class="hcp4">indirect</span> <a class="glossterm">Site Index</a> estimation methods, such as <a href="SIBEC_estimates.htm">SIBEC</a>.</p>
+<h2 class="hcp2"><b>How are SI estimation functions derived?</b></h2>
+<p class="hcp1">Modern SI functions are derived from historical height growth data gathered through extensive stem analysis (sectioning) of carefully selected <a href="Site_Tree_Concept.htm">site trees</a>. &#160;&#160;Each SI function is calibrated across a specific age range determined by the original data. &#160;&#160;Exercise caution when making extrapolations outside this range.</p>
+<h2 class="hcp2"><b>What is Site Height?</b></h2>
+<p><b><span class="hcp5"><a href="javascript:TextPopup(this)" id="HotSpot19460" class="glossterm">Site Height</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot19460', 'POPUP19460');
+//]]></script><span class="glosstext" id="POPUP19460" style="display: none;"> [m] height of the largest dbh tree of the target species in a 0.01 ha plot. The tree must be healthy, vigorous, dominant or co-dominant, undamaged and unsuppressed.</span></span></b> is the height used by <a class="glossterm">Site Index</a> functions in <span class="hcp4">SiteTools</span>. &#160;<a href="javascript:TextPopup(this)" id="HotSpot16570" class="glossterm">Site Height</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot16570', 'POPUP16570');
+//]]></script><span class="glosstext" id="POPUP16570" style="display: none;"> [m] height of the largest dbh tree of the target species in a 0.01 ha plot. The tree must be healthy, vigorous, dominant or co-dominant, undamaged and unsuppressed.</span> is obtained from <a class="glossterm">Site Trees</a>, which have a plot- and DBH-based definition that supports field sampling. &#160;<b><span class="hcp5">It is different from <a href="javascript:TextPopup(this)" id="HotSpot29522" class="glossterm">Top Height</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot29522', 'POPUP29522');
+//]]></script><span class="glosstext" id="POPUP29522" style="display: none;"> See Site Height</span>. &#160;</span></b></p>
+<h2><b>W</b>hat is Top Height?</h2>
+<p style="font-weight: normal;"><b><span class="hcp5">While <a class="glossterm" style="font-weight: normal;">Site Index</a> and</span></b> <b><span class="hcp5"><a href="javascript:TextPopup(this)" id="HotSpot41627" class="glossterm">Site Height</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot41627', 'POPUP41627');
+//]]></script><span class="glosstext" id="POPUP41627" style="display: none;"> [m] height of the largest dbh tree of the target species in a 0.01 ha plot. The tree must be healthy, vigorous, dominant or co-dominant, undamaged and unsuppressed.</span></span></b> <b><span class="hcp5">are key</span> <span class="hcp4">inputs</span> <span class="hcp5">of growth and yield models, such as <a href="http://www.for.gov.bc.ca/hts/growth/index.html">TASS and TIPSY</a>, these same models compute and report</span></b> <b><span class="hcp5"><a href="javascript:TextPopup(this)" id="HotSpot38658" class="glossterm">Top Height</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot38658', 'POPUP38658');
+//]]></script><span class="glosstext" id="POPUP38658" style="display: none;"> See Site Height</span></span></b> <b><span class="hcp5">in their</span> <span class="hcp4">output</span><span class="hcp5">. &#160;&#160;</span></b><b><span class="hcp5"><a href="javascript:TextPopup(this)" id="HotSpot26938" class="glossterm">Top Height</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot26938', 'POPUP26938');
+//]]></script><span class="glosstext" id="POPUP26938" style="display: none;"> See Site Height</span> is the average height of the 100 tallest trees per ha. &#160;It is different from <a href="javascript:TextPopup(this)" id="HotSpot38743" class="glossterm">Site Height</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot38743', 'POPUP38743');
+//]]></script><span class="glosstext" id="POPUP38743" style="display: none;"> [m] height of the largest dbh tree of the target species in a 0.01 ha plot. The tree must be healthy, vigorous, dominant or co-dominant, undamaged and unsuppressed.</span>.</span></b></p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp6">_______________________________________________</p>
+	<p class="hcp6">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span class="hcp3">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span><br><span class="hcp3">Forest Analysis and Inventory</span> 
+	 Branch</p>
+</div>
+</body>
+</html>

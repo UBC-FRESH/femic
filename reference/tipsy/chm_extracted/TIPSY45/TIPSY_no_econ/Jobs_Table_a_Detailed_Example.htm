@@ -1,0 +1,620 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="Jobs">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Jobs: Understanding the Output</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style type="text/css">
+<!--
+td ol { margin-top:0;
+margin-bottom:0; }
+td ul { margin-top:0;
+margin-bottom:0; }
+-->
+</style>
+<style title="hcp" type="text/css">
+<!--
+tr.hcp1 { vertical-align:top; }
+i.hcp2 { font-style:italic; }
+b.hcp3 { font-weight:bold; }
+p.hcp4 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+
+<h1>Jobs: Understanding the Output</h1>
+<p>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="2302"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="Related topics"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="Jobs$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My RoboHelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\Jobs_Table_a_Detailed_Example.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:Related topics">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="Jobs">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </p>
+<p>The following contrived TIPSY run illustrates many of the silviculture 
+ and harvesting options that create employment. Notice that silviculture 
+ jobs are calculated at the time of treatment and accumulated. Harvesting 
+ and manufacturing jobs are calculated at each entry and are not accumulated 
+ with the exception of jobs created by commercial thinning (CT). These 
+ jobs are determined in the year of CT and added to all future calculations 
+ of the number of jobs created by the final harvest. Potentially, the final 
+ harvest could occur in any year – even if there is no merchantable wood!</p>
+<p>TIPSY estimates the number of harvesting and manufacturing jobs created 
+ at each age even though the information is rather meaningless until a 
+ reasonable harvest volume is available.</p>
+<p>If a stand is to be commercially thinned in a particular year, TIPSY 
+ will calculate the number of jobs created under two different scenarios:</p>
+<ul>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet">The 
+	 stand is harvested before the scheduled entry thereby removing the 
+	 CT opportunity.</p></li>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet">The 
+	 stand is commercially thinned - and then the residual stand is immediately 
+	 harvested independently. This option is not realistic. The sum of 
+	 the jobs created by both operations is reported but is of little interest 
+	 except as noted in the next paragraph. The number of jobs attributed 
+	 to CT is reported in the final line of the table along with the merchantable 
+	 volume removed. If it doesn't appear in your table, check to see that 
+	 you have the <b><i>Display CT Values</i></b> and <b><i>CT pre/post 
+	 data</i></b> options selected.</p></li>
+</ul>
+<p>It is important to note that very few of the person days (PD/ha) required 
+ for commercial thinning contribute to the creation of extra employment. 
+ This is because CT reduces the labour requirements of future harvests. 
+ To calculate the extra work, repeat the run without treatment and look 
+ at the difference in the PD/ha assigned to harvesting and manufacturing 
+ at a particular harvest age. This difference will vary a little over the 
+ range of potential harvest ages. In TIPSY, the extra jobs created by CT 
+ are calculated at the time of treatment as follows:</p>
+<p class="Indent">PD/ha required if the stand is not commercially thinned</p>
+<p class="Indent">- PD/ha required to CT the stand</p>
+<p class="Indent">+ PD/ha required to harvest the residual stand</p>
+<p>This net PD/ha (extra CT work) is added to all future jobs reported 
+ for harvesting and manufacturing. Details are illustrated below.</p>
+<p>In this example, the CT entry occurs at a ‘fractional’ age (64.8 years) 
+ because TIPSY thins the stand when it reaches a height of 33 m, and then 
+ determines the corresponding age. You can't specify the age at which the 
+ stand is to be thinned - only the height.</p>
+<p>Note that this output was created with a previous version of TIPSY.</p>
+<table >
+	<tr class="hcp1">
+		<td><p class="TableText">FILE</p></td>
+		<td><p class="TableText">: jobstble.tip</p></td>
+		<td><p class="TableText">Mar 09/2000</p></td>
+	</tr>
+	<tr class="hcp1">
+		<td><p class="TableText">AGENCY</p></td>
+		<td><p class="TableText">: MOF Research Branch</p></td>
+		<td><p class="TableText">TIPSY Version 2.5 Alpha O</p></td>
+	</tr>
+	<tr class="hcp1">
+		<td><p class="TableText">PROJECT</p></td>
+		<td><p class="TableText">: Experimental</p></td>
+		<td><p class="TableText">SINDEX Version 1.12</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">&#160;</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td><p class="TableText">REGEN.</p></td>
+		<td><p class="TableText">: Planted</p></td>
+		<td><p class="TableText">DELAY : 0 years (Regeneration)</p></td>
+	</tr>
+	<tr class="hcp1">
+		<td><p class="TableText">DENSITY</p></td>
+		<td><p class="TableText">: 1600 trees/ha</p></td>
+		<td><p class="TableText">: Plant 1 year old stock</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td><p class="TableText">TREAT.</p></td>
+		<td><p class="TableText">: Precommercial thinning to 1000 trees/ha</p></td>
+	</tr>
+	<tr class="hcp1">
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">: Commercial thinning at 33m to 500 trees/ha</p></td>
+	</tr>
+	<tr class="hcp1">
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">&#160;</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td><p class="TableText">Operational Adjustment Factors: OAF1: 
+		 1.00 OAF2: 1.00 Combined OAF: 1.00</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td><p class="TableText">SPECIES</p></td>
+		<td><p class="TableText">&#160;</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td><p class="TableText">100% Coastal Douglas-fir, site curve *Bruce 
+		 (1981)</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td>------------------------------------------------------------------------------------------------- 
+		 
+		<table >
+			<tr class="hcp1">
+				<td><p class="TableText">TOP HEIGHT (m @ BH AGE 50)</p></td>
+				<td><p class="TableText">: 30.00 (site index)</p></td>
+			</tr>
+			<tr class="hcp1">
+				<td><p class="TableText">TABLE SOURCE</p></td>
+				<td><p class="TableText">: TASS v2.05.24b 97-OCT-09</p></td>
+			</tr>
+		</table></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td><p class="TableText">JOBS</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td><p class="TableText">STAND GEOGRAPHY<br>
+		Forest Region: Vancouver<br>
+		Forest District: Campbell River <br>
+		Biogeoclimatic Zone : CWH<br>
+		Average <a href="javascript:TextPopup(this)" id="HotSpot19888">Slope</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot19888', 'POPUP19888');
+//]]></script><span class="glosstext" id="POPUP19888" style="display: none;"> [%] average slope of the stand's terrain</span> : 10%<br>
+		<br>
+		SILVICULTURE<br>
+		Surveys: 0.10 PD/ha<br>
+		Site Preparation: 0.30 PD/ha<br>
+		Planting: 2.00 PD/ha<br>
+		Pre-commercial Thinning<br>
+		Jobs: 2.74 PD/ha<br>
+		Brush Removal<br>
+		Jobs: 2.63 PD/ha<br>
+		Pruning<br>
+		1st Lift: 8.25 PD/ha<br>
+		&#160;</p></td>
+		<td><p class="TableText">&#160;</p>
+		<p class="TableText">&#160;</p>
+		<p class="TableText">&#160;</p>
+		<p class="TableText">&#160;</p>
+		<p class="TableText">&#160;</p>
+		<p class="TableText">&#160;</p>
+		<p class="TableText">HARVESTING/MANUFACTURING<br>
+		Commercial Thinning (Harvesting): 94.0 PD/1000m3<br>
+		Commercial Thinning (Manufacturing): 220.0 PD/1000m3<br>
+		Harvesting: 82.0 PD/1000m3<br>
+		Manufacturing: 192.0 PD/1000m3<br>
+		<br>
+		<br>
+		&#160;</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td><p class="TableText">JOBS SUMMARY<br>
+		Physical Rotation Age: 90.0 years<br>
+		Total Labour at Physical Rotation Age: 276.7 PD/ha</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 1151px; height: 55px;" width="323">
+	<col style="width: 11.251%;">
+	<col width="24">
+	<col width="43">
+	<col width="49">
+	<col style="width: 17.869%;">
+	<col style="width: 31.413%;">
+	<tr class="hcp1">
+		<td style="width: 11.251%;"><p class="TableText">&#160;</p>
+		<p class="TableText">Age<br>
+		(yr)</p></td>
+		<td width="24"><p class="TableText">Top<br>
+		Ht<br>
+		(m)</p></td>
+		<td width="43"><p class="TableText">M. Vol<br>
+		12.5+)<br>
+		(m³ /ha)</p></td>
+		<td width="49"><p class="TableText">Silv<br>
+		Jobs<br>
+		(PD/ha)</p></td>
+		<td style="width: 17.869%;"><p class="TableText">Harv./<br>
+		Manuf<br>
+		(PD/ha)</p></td>
+		<td style="width: 31.413%;"><p class="TableText">Total<br>
+		Jobs<br>
+		(PD/ha)</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 1212px;" width="655">
+	<col width="302">
+	<col width="343">
+	<tr style="height:29px;" class="hcp1">
+		<td width="302"><p class="TableText">------------------------------------------------------------</p></td>
+		<td width="343"><p class="TableText"><i class="hcp2">Jobs 
+		 events (see details following table)</i></p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 1233px;" width="595">
+	<col width="34">
+	<col width="21">
+	<col width="42">
+	<col width="52">
+	<col width="50">
+	<col width="84">
+	<col width="282">
+	<tr class="hcp1">
+		<td width="34"><p class="TableText">0.0</p></td>
+		<td width="21"><p class="TableText">0.0</p></td>
+		<td width="42"><p class="TableText" style="text-align: center;">0</p></td>
+		<td width="52"><p style="text-align: center; font-weight: bold;">2.4</p></td>
+		<td width="50"><p class="TableText" style="text-align: center;">0.0</p></td>
+		<td width="84"><p class="TableText" style="text-align: center;">2.4</p></td>
+		<td width="282"><p class="TableText"><b class="hcp3"><i class="hcp2">Survey (0.1) + site prep. (0.3) + 
+		 planting (2.0) = 2.4</i></b></p></td>
+	</tr>
+	<tr class="hcp1">
+		<td width="34"><p class="TableText">5.0</p></td>
+		<td width="21"><p class="TableText">0.4</p></td>
+		<td width="42"><p class="TableText" style="text-align: center;">0</p></td>
+		<td width="52"><p class="TableText" style="text-align: center;"><b class="hcp3">5.0</b></p></td>
+		<td width="50"><p class="TableText" style="text-align: center;">0.0</p></td>
+		<td width="84"><p class="TableText" style="text-align: center;">5.0</p></td>
+		<td width="282"><p class="TableText"><b class="hcp3"><i class="hcp2">Previous events + brushing (2.6) = 
+		 5.0 jobs</i></b></p></td>
+	</tr>
+	<tr class="hcp1">
+		<td width="34"><p class="TableText">10.0</p></td>
+		<td width="21"><p class="TableText">2.9</p></td>
+		<td width="42"><p class="TableText" style="text-align: center;">0</p></td>
+		<td width="52"><p class="TableText" style="text-align: center;"><b class="hcp3">5.0</b></p></td>
+		<td width="50"><p class="TableText" style="text-align: center;">0.0</p></td>
+		<td width="84"><p class="TableText" style="text-align: center;">5.0</p></td>
+		<td width="282"><p class="TableText">&#160;</p></td>
+	</tr>
+	<tr class="hcp1">
+		<td width="34"><p class="TableText">14.3</p></td>
+		<td width="21"><p class="TableText">6.0</p></td>
+		<td width="42"><p class="TableText" style="text-align: center;">0</p></td>
+		<td width="52"><p class="TableText" style="text-align: center;"><b class="hcp3">5.0</b></p></td>
+		<td width="50"><p class="TableText" style="text-align: center;">0.0</p></td>
+		<td width="84"><p class="TableText" style="text-align: center;">5.0</p></td>
+		<td width="282"><p class="TableText">&#160;</p></td>
+	</tr>
+	<tr class="hcp1">
+		<td width="34"><p class="TableText">14.3</p></td>
+		<td width="21"><p class="TableText">6.0</p></td>
+		<td width="42"><p class="TableText" style="text-align: center;">0</p></td>
+		<td width="52"><p class="TableText" style="text-align: center;"><b class="hcp3">7.8</b></p></td>
+		<td width="50"><p class="TableText" style="text-align: center;">0.0</p></td>
+		<td width="84"><p class="TableText" style="text-align: center;">7.8</p></td>
+		<td width="282"><p class="TableText"><b class="hcp3"><i class="hcp2">Previous events + PCT (2.7) = 7.8</i></b> 
+		 <i>[rounding discrep’cy]</i></p></td>
+	</tr>
+	<tr class="hcp1">
+		<td width="34"><p class="TableText">15.0</p></td>
+		<td width="21"><p class="TableText">7.6</p></td>
+		<td width="42"><p class="TableText" style="text-align: center;">0</p></td>
+		<td width="52"><p class="TableText" style="text-align: center;"><b class="hcp3">16.0</b></p></td>
+		<td width="50"><p class="TableText" style="text-align: center;">0.3</p></td>
+		<td width="84"><p class="TableText" style="text-align: center;">16.0</p></td>
+		<td width="282"><p class="TableText"><b class="hcp3"><i class="hcp2">Previous events</i></b> <i>+ p<b>runing 
+		 (8.2) = 16.0</b></i></p></td>
+	</tr>
+</table>
+<table width="36.396%">
+	<col width="265">
+	<tr class="hcp1">
+		<td width="265"><p class="TableText"><i class="hcp2">Data 
+		 omitted for brevity</i></p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 1441px; height: 106px;" width="595">
+	<col width="37">
+	<col width="29">
+	<col width="32">
+	<col width="50">
+	<col width="51">
+	<col width="83">
+	<col width="283">
+	<tr class="hcp1">
+		<td width="37"><p class="TableText">65.0</p></td>
+		<td width="29"><p class="TableText">32.6</p></td>
+		<td width="32"><p class="TableText" style="text-align: center;">648</p></td>
+		<td width="50"><p class="TableText" style="text-align: center;">16.0</p></td>
+		<td width="51"><p class="TableText" style="text-align: center;"><b class="hcp3">177.6</b></p></td>
+		<td width="83"><p class="TableText" style="text-align: center;">193.6</p></td>
+		<td width="283"><p class="TableText"><b class="hcp3"><i class="hcp2">Potential harvest jobs = 177.6 @ age 
+		 65</i></b></p></td>
+	</tr>
+	<tr class="hcp1">
+		<td width="37"><p class="TableText">66.4*</p></td>
+		<td width="29"><p class="TableText">33.0</p></td>
+		<td width="32"><p class="TableText" style="text-align: center;">665</p></td>
+		<td width="50"><p class="TableText" style="text-align: center;">16.0</p></td>
+		<td width="51"><p class="TableText" style="text-align: center;"><b class="hcp3">182.2</b></p></td>
+		<td width="83"><p class="TableText" style="text-align: center;">198.2</p></td>
+		<td width="283"><p class="TableText"><b class="hcp3"><i class="hcp2">Potential harvest jobs = 182.2 @ age 
+		 66.4 before CT</i></b></p></td>
+	</tr>
+	<tr class="hcp1">
+		<td width="37"><p class="TableText">66.4*</p></td>
+		<td width="29"><p class="TableText">33.0</p></td>
+		<td width="32"><p class="TableText">532</p></td>
+		<td width="50"><p class="TableText">16.0</p></td>
+		<td width="51"><p class="TableText"><b class="hcp3">187.5</b></p></td>
+		<td width="83"><p class="TableText">203.5</p></td>
+		<td width="283"><p class="TableText"><b class="hcp3"><i class="hcp2">Commercial thinning (41.8) @ age 66.4 
+		 + potential</i></b></p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td><ul>
+			<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet"><i class="hcp2">optional display – see Preferences:'CT 
+			 pre/post data' <b>harvest (145.7) @ age 64.8 after CT = 187.5</b></i></p></li>
+		</ul></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td><p><i class="hcp2">Data omitted for brevity</i></p></td>
+		<td>&#160;</td>
+	</tr>
+</table>
+<table >
+	<col>
+	<col>
+	<col>
+	<col>
+	<col>
+	<col width="128">
+	<col width="267">
+	<tr class="hcp1">
+		<td><p class="TableText">90.0</p></td>
+		<td><p class="TableText">39.0</p></td>
+		<td><p class="TableText">799</p></td>
+		<td><p class="TableText">16.0</p></td>
+		<td><p class="TableText"><b class="hcp3">260.7</b></p></td>
+		<td width="128"><p class="TableText">276.7</p></td>
+		<td width="267"><p class="TableText"><b class="hcp3"><i class="hcp2">CT @ 66.4 (41.8) + p. harvest @ 85 
+		 (218.9) = 260.7</i></b></p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td>-------------------------------------------------------------</td>
+		<td>&#160;</td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td><p class="TableText">Commercial Thinning Harvest <i>(optional 
+		 display – see Preferences:'Display CT Values')</i></p></td>
+	</tr>
+</table>
+<table width="77.342%">
+	<col>
+	<col>
+	<col>
+	<col>
+	<col>
+	<col width="158">
+	<col width="265">
+	<tr class="hcp1">
+		<td><p class="TableText">66.4</p></td>
+		<td><p class="TableText">33.0</p></td>
+		<td><p class="TableText"><b class="hcp3">133</b></p></td>
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">41.8</p></td>
+		<td width="158"><p class="TableText">&#160;</p></td>
+		<td width="265"><p class="TableText"><b class="hcp3"><i class="hcp2">CT volume cut @ age 66.4 (665 – 532 
+		 = 133m3/ha)</i></b></p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td>--------------------------------------------------------------------------</td>
+		<td>&#160;</td>
+	</tr>
+</table>
+<p>Here is more detail on each 'job event'.</p>
+<table >
+	<tr class="hcp1">
+		<td>----------------------------------------------------------------------------------------------------------</td>
+	</tr>
+</table>
+<table style="left: 0px; top: 1775px; height: 37px;" width="569">
+	<col>
+	<col width="84">
+	<col width="284">
+	<col width="116">
+	<tr class="hcp1">
+		<td><p class="TableText"><b class="hcp3">Age</b></p></td>
+		<td width="84"><p class="TableText"><b class="hcp3">Jobs 
+		 Event</b></p></td>
+		<td width="284"><p class="TableText"><b class="hcp3">Category</b></p></td>
+		<td width="116"><p class="TableText"><b class="hcp3"># 
+		 of jobs<br>
+		(PD/ha)</b></p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td><p class="TableText">----------------------------------------------------------------------------------------------------------</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 1839px; height: 319px;" width="524">
+	<col style="width: 13.619%;">
+	<col style="width: 16.342%;">
+	<col style="width: 56.031%;">
+	<col width="72">
+	<tr style="height:20px;" class="hcp1">
+		<td style="width: 13.619%;"><p class="TableText">0.0</p></td>
+		<td style="width: 16.342%;"><p class="TableText">Survey</p></td>
+		<td style="width: 56.031%;"><p class="TableText">Silviculture = 
+		 0.1 PD/ha (district default)</p></td>
+		<td width="72"><p class="TableText" style="text-align: right;">0.1</p></td>
+	</tr>
+	<tr style="height:20px;" class="hcp1">
+		<td style="width: 13.619%;"><p class="TableText">0.0</p></td>
+		<td style="width: 16.342%;"><p class="TableText">Site preparation</p></td>
+		<td style="width: 56.031%;"><p class="TableText">Silviculture = 
+		 0.3 PD/ha (district default)</p></td>
+		<td width="72"><p class="TableText" style="text-align: right;">0.3</p></td>
+	</tr>
+	<tr style="height:20px;" class="hcp1">
+		<td style="width: 13.619%;"><p class="TableText">0.0</p></td>
+		<td style="width: 16.342%;"><p class="TableText">Planting</p></td>
+		<td style="width: 56.031%;"><p class="TableText">Silviculture = 
+		 2.0 PD/ha (district default)</p></td>
+		<td width="72"><p class="TableText" style="text-align: right;">2.0</p></td>
+	</tr>
+	<tr style="height:20px;" class="hcp1">
+		<td style="width: 13.619%;"><p class="TableText">5.0</p></td>
+		<td style="width: 16.342%;"><p class="TableText">Brushing</p></td>
+		<td style="width: 56.031%;"><p class="TableText">Silviculture = 
+		 2.6 PD/ha (district default)</p></td>
+		<td width="72"><p class="TableText" style="text-align: right;">2.6</p></td>
+	</tr>
+	<tr style="height:20px;" class="hcp1">
+		<td style="width: 13.619%;"><p class="TableText">14.3</p></td>
+		<td style="width: 16.342%;"><p class="TableText">PCT</p></td>
+		<td style="width: 56.031%;"><p class="TableText">Silviculture = 
+		 2.7 PD/ha (district def. - manual option)</p></td>
+		<td width="72"><p class="TableText" style="text-align: right;">2.7</p></td>
+	</tr>
+	<tr style="height:20px;" class="hcp1">
+		<td style="width: 13.619%;"><p class="TableText">15.0</p></td>
+		<td style="width: 16.342%;"><p class="TableText">Pruning</p></td>
+		<td style="width: 56.031%;"><p class="TableText">Silviculture = 
+		 8.2 PD/ha (district default)</p></td>
+		<td width="72"><p class="TableText" style="text-align: right;">8.2</p></td>
+	</tr>
+	<tr style="height:21px;" class="hcp1">
+		<td style="width: 13.619%;"><p class="TableText">65.0</p></td>
+		<td style="width: 16.342%;"><p class="TableText">Potential harvest</p></td>
+		<td style="width: 56.031%;"><p class="TableText">Harv. + man. = 
+		 ((82 + 192)<i>[PD/m3]</i> * 648<i>[m3]</i>)/1000</p></td>
+		<td width="72"><p class="TableText" style="text-align: right;">= 
+		 177.6</p></td>
+	</tr>
+	<tr style="height:21px;" class="hcp1">
+		<td style="width: 13.619%;"><p class="TableText">66.4</p></td>
+		<td style="width: 16.342%;"><p class="TableText">Potential harvest</p></td>
+		<td style="width: 56.031%;"><p class="TableText">Harv. + man. = 
+		 ((82 + 192)<i>[PD/m3]</i> * 665<i>[m3]</i>)/1000</p></td>
+		<td width="72"><p class="TableText" style="text-align: right;">= 
+		 182.2</p></td>
+	</tr>
+	<tr style="height:58px;" class="hcp1">
+		<td style="width: 13.619%;"><p class="TableText">66.4<br>
+		<br>
+		[66.4</p></td>
+		<td style="width: 16.342%;"><p class="TableText">&#160;</p>
+		<p class="TableText">&#160;</p></td>
+		<td style="width: 56.031%;"><p class="TableText">Harv. + man. = 
+		 ((94 + 220)<i>[PD/m3]</i> * 133<i>[m3]</i>)/1000<br>
+		Harv. + man. = ((82 + 192)<i>[PD/m3]</i> * 532<i>[m3]</i>)/1000<br>
+		Extra CT = 187.5 - 1822 = 5.3 PD/ha]</p></td>
+		<td width="72"><p class="TableText" style="text-align: right;">= 
+		 41.8<br>
+		= 145.7<br>
+		187.5</p></td>
+	</tr>
+	<tr style="height:56px;" class="hcp1">
+		<td style="width: 13.619%;"><p class="TableText">90.0<br>
+		90.0</p></td>
+		<td style="width: 16.342%;"><p class="TableText">Commercial thin<br>
+		Final harvest</p></td>
+		<td style="width: 56.031%;"><p class="TableText">Harv. + man. = 
+		 (carried forward)<br>
+		Harv. + man. = ((82 + 192)<i>[PD/m3]</i> * 799<i>[m3]</i>)/1000</p></td>
+		<td width="72"><p class="TableText" style="text-align: right;">= 
+		 41.8<br>
+		= 218.9<br>
+		260.7</p></td>
+	</tr>
+	<tr style="height:5px;" class="hcp1">
+		<td style="width: 13.619%;"><p class="TableText">[85.0</p></td>
+		<td style="width: 16.342%;"><p class="TableText">&#160;</p></td>
+		<td style="width: 56.031%;"><p class="TableText">Extra CT = 260.7 
+		 - 254.7* = 6.0 PD/ha]</p></td>
+		<td width="72"><p class="TableText">&#160;</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td>----------------------------------------------------------------------------------------------------------</td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp1">
+		<td><ul>
+			<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet">This 
+			 number comes from the same run without CT.</p></li>
+		</ul></td>
+		<td>&#160;</td>
+	</tr>
+</table>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp4">_______________________________________________</p>
+	<p class="hcp4">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

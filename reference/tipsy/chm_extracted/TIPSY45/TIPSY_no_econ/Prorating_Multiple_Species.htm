@@ -1,0 +1,279 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="Site index">
+<meta name="MS-HAID" content="species">
+
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Pro-rating Multiple Species</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style type="text/css">
+<!--
+td ol { margin-top:0;
+margin-bottom:0; }
+td ul { margin-top:0;
+margin-bottom:0; }
+-->
+</style>
+<script type="text/javascript" language="JavaScript1.2" src="../ehlpdhtm.js"></script>
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+tr.hcp2 { vertical-align:top; }
+p.hcp3 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+
+
+
+
+<h1><a name="MiniTOCBookMark1"></a>Pro-rating Multiple Species</h1>
+<p align="left" style="font-family:Arial;font-size:12pt;font-weight: normal;font-style: normal;text-decoration: none;" >In&#160;this&#160;Topic&#160;<a class="dropspot" href="javascript:TextPopup(this)" id="MTHotSpot57654" ><span class="MTText" style="display: none;" >Show</span><span class="MTText" >Hide</span></a></p>
+<script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('MTHotSpot57654', 'MTPOPUP57654');
+//]]></script>
+<div align="left" class="droptext" id="MTPOPUP57654" >
+ <div style="background: #ffff00;float: none;width: 100% ;" >
+  <p align="left"  ><a href="#MiniTOCBookMark2" >How it Works</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark3" >Limitations and Implications</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark4" >Yield Table Calculations</a></p>
+ </div>
+</div>
+<p>When stands containing multiple species are defined in <a href="Species_Specifications_Options.htm">Species 
+ Specification</a> or <a href="BatchTIPSY.htm">BatchTIPSY</a>, the resulting 
+ yields are pro-rated. &#160;&#160;This feature was originally added at 
+ the request of timber supply analysts so they could easily aggregate several 
+ stand types into fewer analysis units.</p>
+<h2><a name="MiniTOCBookMark2"></a>How it Works</h2>
+<p><span class="hcp1">TIPSY</span> adopted a simple pro-rating 
+ method for calculating multiple species yields similar to the one used 
+ by <a href="https://www2.gov.bc.ca/gov/content/industry/forestry/managing-our-forest-resources/forest-inventory/growth-and-yield-modelling/variable-density-yield-projection-vdyp">VDYP</a>. 
+ &#160;&#160;Multiple-species yield tables are constructed by pro-rating 
+ independent single-species yield tables based on <a href="Percent_Composition.htm">Percent 
+ Composition</a> values. &#160;&#160;In other words, area-weighted averaging 
+ of single species yields. &#160;The following simplified diagram illustrates 
+ this area-weighting. &#160;&#160;It shows how two species, with <a href="Percent_Composition.htm">Percent 
+ Composition</a> values of 25% &#160;and 75%, share one specified <a href="Stand_Specifications_Options.htm#Density">initial 
+ density</a> (1600 stems/ha). &#160;&#160;However, the two species do not 
+ actually share the same physical hectare. &#160;Therefore, they do not 
+ interact biologically and no species dynamics or succession occurs.</p>
+<p><img src="../TIPSY%20multi-spp%20map.jpg" alt="" style="border: none;" width="369" height="372" border="0"></p>
+<p>Like VDYP, this method also incorporates <a href="About_site_index_conversion.htm">site 
+ index conversion</a> to predict the <a href="javascript:TextPopup(this)" id="HotSpot19120" class="glossterm">Site 
+ index (SI)</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot19120', 'POPUP19120');
+//]]></script><span class="glosstext" id="POPUP19120" style="display: none;"> a measure of site productivity based on the top height [meters] of a stand at breast-heightage 50. It does not apply to stands in which the height growth of top height trees has been affected by treatment (fertilization, tree improvement) or stand density (repression).</span> of one species from that of another. &#160;Although, 
+ predicted site index values can be over-written when better information 
+ exists.</p>
+<p><span class="hcp1">TIPSY</span> can pro-rate a maximum 
+ of 5 species. Coast and interior species can be combined even though it 
+ may not be practical. &#160;Deciduous (aspen and alder) can be combined 
+ with conifers (note implications below). &#160;<span class="hcp1">TIPSY</span> 
+ can only pro-rate yield tables that are <a href="Table_Specifications_Options.htm">based 
+ on age</a>.</p>
+<p>When pre-commercially thinning a multiple species stand, be aware that 
+ thinning takes place at different ages for each species. This is because 
+ <span class="hcp1">TIPSY</span> thins at a fixed height 
+ (4m or 6m), which translates into different ages for each species. Note, 
+ pro-rated yield tables will not display pre- and post-PCT data in this 
+ case.</p>
+<h2><a name="MiniTOCBookMark3"></a>Limitations and Implications</h2>
+<p>As noted above, this simple aggregation of single-species yields assumes 
+ species composition is fixed over time. &#160;This does not reflect real-world 
+ species dynamics or succession, which may preclude its use in some stand-level 
+ silviculture applications. &#160;Within broad-scale forest-level applications, 
+ it may still be useful especially when species have comparable life spans 
+ (e.g., most conifers in <span class="hcp1">TIPSY</span>). 
+ &#160;However, extra caution is warranted when combining dissimilar species 
+ such as alder and aspen with longer-lived conifer species. &#160;Note, 
+ <span class="hcp1">TIPSY</span> applies pre-defined <a href="Using_Custom_OAFs.htm">Age 
+ Decline Custom OAFs</a> to both alder and aspen by default.</p>
+<p>The limitations of this method are illustrated below with reference 
+ to the total volume of stands of lodgepole pine (site index = 20), and 
+ white spruce (converted site index = 19.59) planted with 750 or 1500 trees 
+ per hectare. This example was created with a previous version of <span class="hcp1">TIPSY</span>.</p>
+<table >
+	<tr class="hcp2">
+		<td><p>-----------------------------------------------------------------------------------</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 300px; height: 43px;" width="420">
+	<col width="116">
+	<col width="81">
+	<col width="79">
+	<col>
+	<tr class="hcp2">
+		<td width="116"><p>Species</p></td>
+		<td width="81"><p>Total trees</p></td>
+		<td width="79"><p>Composition</p></td>
+		<td><p>Volume 0.0+</p></td>
+	</tr>
+	<tr class="hcp2">
+		<td width="116"><p>&#160;</p></td>
+		<td width="81"><p>(#)</p></td>
+		<td width="79"><p>(%)</p></td>
+		<td><p>(m3 @age 80)</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp2">
+		<td><p>-----------------------------------------------------------------------------------</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 366px; height: 85px;" width="419">
+	<col width="115">
+	<col width="81">
+	<col width="79">
+	<col width="126">
+	<tr class="hcp2">
+		<td width="115"><p>Pure pine (Pl)</p></td>
+		<td width="81"><p>750</p></td>
+		<td width="79"><p>100</p></td>
+		<td width="126"><p>395</p></td>
+	</tr>
+	<tr class="hcp2">
+		<td width="115"><p>Pure spruce (Sw)</p></td>
+		<td width="81"><p>750</p></td>
+		<td width="79"><p>100</p></td>
+		<td width="126"><p>425</p></td>
+	</tr>
+	<tr class="hcp2">
+		<td width="115"><p>‘Mixed’ PlSw</p></td>
+		<td width="81"><p>750</p></td>
+		<td width="79"><p>50:50</p></td>
+		<td width="126"><p>410</p></td>
+	</tr>
+	<tr class="hcp2">
+		<td width="115"><p>‘Mixed’ PlSw</p></td>
+		<td width="81"><p>1500</p></td>
+		<td width="79"><p>50:50</p></td>
+		<td width="126"><p>486</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp2">
+		<td><p>----------------------------------------------------------------------------------</p></td>
+	</tr>
+</table>
+<p>Pure stands of pine and spruce planted with 750 trees yield 395 and 
+ 425 m³ respectively at age 80. The &quot;mixed&quot; stand (PlSw<img src="../TIPSY3200090004.gif" alt="TIPSY3200090004.gif" title="TIPSY3200090004.gif" width="3" height="16" border="0">750) with 375 trees of each species produces 410 m³ which 
+ is exactly midway between the volumes of the pure stands. There is no 
+ opportunity for the mixed stand to exhibit synergism in <span class="hcp1">TIPSY</span>. 
+ It’s not surprising that the mixed stand with 750 trees of each species 
+ produces more volume than a pure stand of either species planted with 
+ 750 trees (486 vs. 395 and 425 m³ at 80 years). This simply shows that 
+ dense stands (e.g. 1500 trees/ha) produce more volume than widely spaced 
+ stands (e.g. 750 trees/ha). The difference is even more pronounced at 
+ young ages.</p>
+<p>It is important that silviculturists understand <span class="hcp1">TIPSY</span> 
+ does not simulate the growth of mixed species stands biologically. Consequently, 
+ we recommend that the multiple species feature not be used in the preparation 
+ of silvicultural prescriptions, or at least only with a full understanding 
+ of the limitations and risks involved.</p>
+<p>Continuing research may show that <span class="hcp1">TIPSY's</span> 
+ multiple species feature can be used at the stand level for:</p>
+<ul>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet">species 
+	 with similar growth habits that compete equally for aerial and subterraneous 
+	 resources. At present, this is a very tenuous assumption since changes 
+	 in species composition and other important variables are likely to 
+	 occur as the stand develops.</p></li>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet">&quot;coarse-grained&quot; 
+	 mixtures where trees of a particular species tend to be aggregated 
+	 in very small clumps throughout the stand - as opposed to a &quot;fine-grained&quot; 
+	 composition where the species are intimately mixed.</p></li>
+</ul>
+<h2><a name="MiniTOCBookMark4"></a>Yield Table Calculations</h2>
+<p>Here is an explanation of how <span class="hcp1">TIPSY</span> 
+ builds a multiple species yield table internally. This example was created 
+ with a previous version of <span class="hcp1">TIPSY</span>.</p>
+<p>Assume you have a stand of 5000 trees regenerated naturally, composed 
+ of 60% lodgepole pine and 40% white spruce. Height and age measurements 
+ of pine indicate a site index of 13 m. Corresponding data are not available 
+ for spruce.</p>
+<p class="Numbers">1. <span class="hcp1">TIPSY</span> generates 
+ a yield table internally for the reference species, pine.</p>
+<p class="Numbers">2. Next, it calculates the corresponding site index 
+ for spruce (i.e. 11.99 m), and then produces a second table internally.</p>
+<p class="Numbers">3. Lastly, <span class="hcp1">TIPSY</span> 
+ takes 60 % of the yield of pine, and adds 40 % of the yield of spruce 
+ to generate the yield table that appears on your screen.</p>
+<p>How did <span class="hcp1">TIPSY</span> prorate the data 
+ from the tables for pure pine and spruce to derive the pine/spruce table? 
+ Consider the merchantable yield 17.5+ at 80 years.</p>
+<table >
+	<col>
+	<col>
+	<col>
+	<col>
+	<col>
+	<tr class="hcp2">
+		<td><p>pine x 60%</p></td>
+		<td><p>+</p></td>
+		<td><p>spruce x 40%</p></td>
+		<td><p>=</p></td>
+		<td><p>pine/spruce</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp2">
+		<td><p>e.g.</p></td>
+		<td><p>100 x 0.60</p></td>
+		<td><p>+</p></td>
+		<td><p>52 x 0.40</p></td>
+		<td><p>=</p></td>
+		<td><p>81 m³/ha</p></td>
+	</tr>
+</table>
+<p>The same procedure applies to all entries in the table except for MAI 
+ and MEAN DBHg which are calculated from other weighted statistics in the 
+ same table as follows:</p>
+<table >
+	<tr class="hcp2">
+		<td><p>&#160;</p></td>
+		<td><p>MAI</p></td>
+		<td><p>=</p></td>
+		<td><p>volume/total age</p></td>
+		<td>&#160;</td>
+		<td>&#160;</td>
+	</tr>
+	<tr class="hcp2">
+		<td><p>e.g.</p></td>
+		<td><p>MAI 17.5</p></td>
+		<td><p>=</p></td>
+		<td><p>81/80</p></td>
+		<td>=</td>
+		<td><p>1.01 m3/ha</p></td>
+	</tr>
+	<tr class="hcp2">
+		<td><p>&#160;</p></td>
+		<td><p>MEAN DBHg</p></td>
+		<td><p>=</p></td>
+		<td><p>sqrt[(BA/STEM COUNT x 12732.4]</p></td>
+		<td>&#160;</td>
+		<td>&#160;</td>
+	</tr>
+	<tr class="hcp2">
+		<td><p>e.g.</p></td>
+		<td><p>MEAN DBHg</p></td>
+		<td><p>=</p></td>
+		<td><p>sqrt[(37/2804) x 12732.4]</p></td>
+		<td>=</td>
+		<td><p>13.0 cm</p></td>
+	</tr>
+</table>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp3">_______________________________________________</p>
+	<p class="hcp3">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

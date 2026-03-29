@@ -1,0 +1,110 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="Fertilization">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Fertilization: Input File Format</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+p.hcp2 { margin-left:120px; }
+p.hcp3 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1>Fertilization: Input File Format</h1>
+<p>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="1508"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="15790320"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="See Also"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="Fertilization$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\steve\Documents\My Robohelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\Input_file_for_fertilization_response.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="-1"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:See Also">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Flags" value=",,1">
+  <param name="Item1" value="">
+  <param name="Item2" value="Fertilization">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </p>
+<p>The same basic <span class="hcp1">Custom Fertilization 
+ Response File</span> format applies to both <a href="Fertilization_in_TIPSY.htm#Species-level_response_settings__custom_">Interactive</a> 
+ and <a href="Fertilization_in_BatchTIPSY.htm">Batch TIPSY</a>. &#160;&#160;Response 
+ files must first be <a href="Edit_Menu_Commands.htm#Import_Fert._Response_...">imported 
+ through the Edit Menu</a> before this option can be used in Interactive 
+ <span class="hcp1">TIPSY</span>.</p>
+<p>A <span class="hcp1">Fertilization Response File</span> 
+ is a CSV text file with the following format:</p>
+<p><span class="hcp1">Line 1:</span> &#160;&#160;Interactive 
+ <span class="hcp1">TIPSY</span> always skips this line. 
+ &#160;&#160;It can be used for descriptive text (comments). &#160;&#160;<a 
+	 href="Fertilization_in_BatchTIPSY.htm">Batch TIPSY</a> expects data 
+ in line 1, unless told otherwise.</p>
+<p><span class="hcp1">Line 2+:</span> &#160;species code, 
+ site index, age, % response, absolute response (m3, optional)<br>
+ &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;– 
+ <span class="hcp1">comma delimited required</span></p>
+<p style="margin-left: 40px;">Example: &#160;&#160;&#160;&#160;&#160;SW, 
+ 20, 0, 0, 0</p>
+<p class="hcp2">SW, 20, 17.5, 25, 4</p>
+<p class="hcp2">: : :</p>
+<p class="hcp2">SW, 20, 98.9, 29, 10</p>
+<p class="hcp2">SW, 20, 141.7, 0, 0</p>
+<p class="hcp2">SW, 20, 400, 0, 0</p>
+<p>Responses will automatically be capped at 200% of the species default. 
+ &#160;&#160;When errors are encountered, the file is rejected and Ministry 
+ defaults are used.</p>
+<p><span style="background-color: #ffff00; font-weight: bold;">NOTE:</span><span 
+	 style="background-color: #ffff00;"> &#160;absolute response models 
+ only apply to one specific initial density. &#160;For ministry default 
+ models, this is 1100 stems per ha. &#160;For custom user-defined models, 
+ this density is determined by the model creator. &#160;Model creators 
+ are encouraged to document this density in the Line 1 comments for the 
+ benefit of other users.</span> &#160;&#160;</p>
+<p>Contact <a href="User_Support_1.htm">TIPSY User Support</a> for more 
+ information.</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp3">_______________________________________________</p>
+	<p class="hcp3">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

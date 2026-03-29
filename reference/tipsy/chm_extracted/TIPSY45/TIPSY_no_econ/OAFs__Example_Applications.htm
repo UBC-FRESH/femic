@@ -1,0 +1,150 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="OAFs">
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>OAFs: Example Applications</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+b.hcp2 { font-weight:bold; }
+span.hcp3 { background-color:Note yellow; }
+span.hcp4 { mso-fareast-font-family:Calibri;
+mso-fareast-theme-font:minor-latin;
+background-color:Note yellow; }
+span.hcp5 { mso-fareast-font-family:Calibri;
+mso-fareast-theme-font:minor-latin;
+background-color:Note yellow;
+font-weight:bold; }
+p.hcp6 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1>OAFs: Example Applications</h1>
+<p style="mso-ansi-language: EN-CA; mso-fareast-language: EN-CA;"><span 
+	 style="mso-bidi-language: AR-SA;">
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="1508"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="See Also"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="OAFs$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My Robohelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\OAFs__Example_Applications.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:See Also">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="OAFs">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </span></p>
+<p>The application of <span class="hcp1">OAFs</span> requires 
+ both experience and judgment, as illustrated with the following hypothetical 
+ cases. &#160;Note, with better information, Custom 
+ OAFs might be a better choice in cases 2 to 5.</p>
+<p><b class="hcp2">Case 1 (many small openings: crown occupation)</b></p>
+<p>You’ve planted trees 2.5 m apart over a large area. Theoretically, you 
+ should be able to plant 1600 trees/ha. However, past experience or an 
+ entomologist tells you that the root collar weevil will kill about 40% 
+ of the trees before the crowns close. You also know that mortality is 
+ likely to be randomly distributed throughout the plantation. Since we 
+ are concerned about many small dispersed holes rather than a few large 
+ ones, it would be better to have <span class="hcp1">TIPSY</span> 
+ plant 960 (1600 - 640) trees/ha and ignore <span class="hcp1">OAF1</span>. 
+ In doing so, we assume the holes are small and uniformly distributed. 
+ This is a little optimistic because <span class="hcp1">TIPSY</span> 
+ will assume the crowns close faster than in the operational world. The 
+ volume impact of reducing the number of trees from 1600 to 960 is small.</p>
+<p>To specify 1600 trees/ha and an <span class="hcp1">OAF1</span> 
+ of 40% is far too pessimistic because it assumes that 40% of the site 
+ is out of production for the life of the stand as is illustrated in Case 
+ 2.</p>
+<p><b class="hcp2">Case 2 (few large openings: no crown occupation)</b></p>
+<p>Now assume you observe, on average, one hole per hectare that reduces 
+ the available growing space by 40%. Here it’s appropriate to tell <span class="hcp1">TIPSY</span> that you intended to plant 
+ 1600 trees/ha (prescribed spacing of 2.5 m) but fell short by 40% due 
+ to rock outcrops. Simply set the plantation establishment density to 1600 
+ and OAF 1 to 0.60. Notice the warning about prime tree statistics. The 
+ impact on yield is severe in this rather extreme example.</p>
+<p><b class="hcp2">Case 3 (moderate openings: limited crown 
+ occupation)</b></p>
+<p>Now imagine a forest in which 40% of the area is covered by many brush 
+ pockets of moderate size. However, you believe that the surrounding crowns 
+ will expand into these openings and benefit from the extra growing space. 
+ This situation can be addressed by an <span class="hcp1">OAF2</span> 
+ greater than 1.00. Simply leave <span class="hcp1">OAF1</span> 
+ set to 0.60, as in Case 2, and supplement it with an <span class="hcp1">OAF2</span> 
+ of 1.10. It elevates the volume in the later years relative to the previous 
+ curve.</p>
+<p><span style="background-color: #ffff00; font-weight: bold;">NOTE:</span><span 
+	 style="font-size: 12pt; background-color: 'Note yellow';"> &#160;</span><span class="hcp3">While individual </span><span 
+	 style="background-color: 'Note yellow'; font-weight: bold;">OAFs</span><span class="hcp3"> may be greater than 1.00, 
+ but they cannot be combined to increase </span><span class="hcp4">yield 
+ above 1.00. &#160;&#160;Therefore, if the net </span><span class="hcp5">OAF</span><span class="hcp4"> exceeds 1.00 at any age, </span><span class="hcp5">TIPSY</span><span class="hcp4"> will ‘cap’ it at 1.00 for that 
+ particular age. &#160;&#160;A message appears when that occurs.</span><span 
+	 style="mso-ansi-language: EN-CA; mso-fareast-language: EN-CA; mso-bidi-language: AR-SA;"> 
+ </span></p>
+<p><b class="hcp2">Case 4 (pest impact: crown occupation)</b></p>
+<p>Assume the growth of your stands is impaired by pests, or possibly snow 
+ press, sometime after crown closure. Many holes are created which decrease 
+ in size as the crowns of neighbouring trees invade the vacant growing 
+ space. The growth rate (<a class="glossterm">MAI</a>) 
+ increases and achieves that of the unaffected stand by age 135, although 
+ stand volume is still considerably less. This example is basically the 
+ same as Case 3. Try changing <span class="hcp1">OAF2</span> 
+ to 1.20 in the preceding example and you’ll likely find that the volume 
+ is down by about 25% by age 135, but the growth rates (<a class="glossterm">MAI</a>) are almost identical.</p>
+<p><b class="hcp2">Case 5 (expanding pockets of root rot)</b></p>
+<p>Now for a very common application of <span class="hcp1">OAFs</span>. 
+ You have a plantation of coastal Douglas-fir in which patches of root 
+ rot appear about age 50 and increase in size for the remainder of the 
+ rotation. Set <span class="hcp1">OAF1</span> to 1.10 and 
+ <span class="hcp1">OAF2</span> to 0.80 and compare the volume 
+ with an uninfected plantation. You’ll see that the curves are almost identical 
+ until age 50, but diverge rapidly thereafter. You can adjust the <span class="hcp1">OAFs</span> to achieve a reduction in standing 
+ volume if the stand is held beyond 110 years. Then combine an <span class="hcp1">OAF1</span> 
+ of 1.25 and an <span class="hcp1">OAF2</span> of 0.60. It’s 
+ up to you and your pathologist to decide if the impact approximates the 
+ conditions expected in the field.</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp6">_______________________________________________</p>
+	<p class="hcp6">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

@@ -1,0 +1,169 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+ <meta name="generator" content="Adobe RoboHelp 8">
+<title>Axes</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+</head>
+
+<body>
+<h1>Axes Tab</h1>
+<p>Currently 3 axes (scale and titles) can be displayed around the graph; 
+ X (below the graph), Y1 (to the left of the graph) and Y2 (to the right 
+ of the graph). &#160;Series on Y3 axes and higher will be shown on the 
+ graph and legend, but without the scale or titles.</p>
+<p>&#160;</p>
+<h3>Axis</h3>
+<p>The Axes for your current graph are displayed in this list box. &#160;The 
+ settings for the selected Axis will be displayed below, where they can 
+ be edited.</p>
+<p>&#160;</p>
+<h3>[Add Y Axis]</h3>
+<p>Axes are usually added automatically when the series are selected (one 
+ axis is added for each type of unit displayed on the graph. &#160;Sometimes 
+ two series share the same units but require a different scale. &#160;In 
+ this case, press [Add Y Axis], go to the &quot;Series&quot; tab, select 
+ the series to switch to this axis and then adjust the &quot;Y Axis&quot; 
+ to the one you just created. &#160;This new axis will now have its own 
+ scale.</p>
+<p>&#160;</p>
+<h2>Size</h2>
+<h3>Width / Height</h3>
+<p>This adjusts the distance of the current axis (displayed above next 
+ to Axis) from the margin of the graph display. &#160;Click up or down 
+ arrows to modify the location of the X or Y axis, which will compress 
+ or expand the viewable area.</p>
+<p>&#160;</p>
+<h2>Axis Title</h2>
+<h3>Text</h3>
+<p>This adjusts the text in the current axis title (displayed above next 
+ to Axis).</p>
+<p>&#160;</p>
+<p>The text here is a single line, it can contain the following items which 
+ will be automatically replaced with series information:</p>
+<p>&#160;</p>
+<p>&#160;</p>
+<table style="border-collapse: separate;" cellspacing="0" width="39.402%" 
+		 border="1">
+	<col style="width: 20.69%;">
+	<col style="width: 79.31%;">
+	<tr>
+		<td>[XSeries]</td>
+		<td>The series title associated with the X axis</td>
+	</tr>
+	<tr>
+		<td>[Y1Series]</td>
+		<td>The series title associated with the Y1 axis</td>
+	</tr>
+	<tr>
+		<td>[Y2Series]</td>
+		<td>The series title associated with the Y2 axis</td>
+	</tr>
+	<tr>
+		<td>[XUnit]</td>
+		<td>The units associated with the X axis</td>
+	</tr>
+	<tr>
+		<td>[Y2Unit]</td>
+		<td>The units associated with the Y1 axis</td>
+	</tr>
+	<tr>
+		<td>[Y2Unit]</td>
+		<td>The units associated with the Y2 axis</td>
+	</tr>
+</table>
+<p>&#160;</p>
+<p>The series titles are created by combining the names of all series linked 
+ to the axis. &#160;The titles are matched word by word starting from the 
+ beginning. &#160;The matched words become the series title. </p>
+<h3>Colour</h3>
+<p>See <a href="../UsingPlotsy/EditStyles.htm">Styles</a></p>
+<p>&#160;</p>
+<h3>Font</h3>
+<p>See <a href="../UsingPlotsy/EditStyles.htm">Styles</a></p>
+<p>&#160;</p>
+<h2>Scale Labels</h2>
+<h3>Format</h3>
+<p>The format list contains &quot;Automatic&quot; and some predefined number 
+ formats. &#160;The predefined formats are made up of the following symbols:</p>
+<p>&#160;</p>
+<table style="left: 0px; top: 1078px; border-collapse: separate;" cellspacing="0" 
+		 width="439" border="1">
+	<col style="width: 10.617%;">
+	<col style="width: 89.383%;">
+	<tr>
+		<td><p align="center">#</p></td>
+		<td><p>Digit placeholder. Display a digit or nothing.</p></td>
+	</tr>
+	<tr>
+		<td><p align="center">0</p></td>
+		<td>Digit placeholder. Display a digit or a zero.</td>
+	</tr>
+	<tr>
+		<td><p align="center">.</p></td>
+		<td><p>Decimal placeholder.</p></td>
+	</tr>
+	<tr>
+		<td><p align="center">,</p></td>
+		<td><p>Thousand separator.</p></td>
+	</tr>
+	<tr>
+		<td><p align="center">$</p></td>
+		<td><p>Prefix number with a dollar sign.</p></td>
+	</tr>
+</table>
+<p>&#160;</p>
+<h3>Colour</h3>
+<p>See <a href="../UsingPlotsy/EditStyles.htm">Styles</a></p>
+<p>&#160;</p>
+<h3>Font</h3>
+<p>See <a href="../UsingPlotsy/EditStyles.htm">Styles</a></p>
+<p>&#160;</p>
+<h3>Increment</h3>
+<p>The increment is used to specify the space between scale labels and 
+ grid lines. &#160;Entering 0 will cause Plotsy to automatically choose 
+ an increment value.</p>
+<p>&#160;</p>
+<h3>Divisor</h3>
+<p>The divisor can be used to simplify graphs with very large or very small 
+ units. &#160;It adjusts the magnitude of the scale labels and then updates 
+ the axis units labels accordingly. &#160;Plotsy defaults to &quot;Automatic&quot; 
+ which will start scaling labels when they can all be divided by 100. &#160;Set 
+ divisor to 1 to disable this feature.</p>
+<p>&#160;</p>
+<p>&#160;</p>
+<h2>Grid Lines</h2>
+<p>Tick marks and grid lines can be configured and displayed for the X, 
+ Y1 and Y2 axes. &#160;They are placed at the increment spaced by the step 
+ value.</p>
+<p>&#160;</p>
+<h3>Colour / Line Style</h3>
+<p>See <a href="../UsingPlotsy/EditStyles.htm">styles</a></p>
+<p>&#160;</p>
+<h3>Tick Size</h3>
+<p>See <a href="../Glossary/Measurements.htm">measurements</a></p>
+<p>&#160;</p>
+<h3>Minor</h3>
+<p>Additional tick marks can be added between the normal tick marks. &#160;The 
+ only choices are none, halves., fifths and tenths.</p>
+<p>&#160;</p>
+<p>&#160;</p>
+<h2>Scale Limits</h2>
+<h3>[x] Override Scale check box / Minimum / Maximum</h3>
+<p>Usually a graph automatically adjust the scale so all values on the 
+ graph fit. &#160;The scale can be customized by checking on the override 
+ scale check box and then adjusting the minimum and maximum settings.</p>
+<p>&#160;</p>
+<h3>[x] Lock Scale with X Axis</h3>
+<p>This feature is used for displaying maps, it causes the current y axis 
+ to have the same printed scale as the x axis scale.</p>
+<p>&#160;</p>
+<p>&#160;</p>
+<h3>[Promote to Y1 / Y2]</h3>
+<p>As only axis Y1 and Y2 are displayed on the graph, other Y axis can 
+ be promoted to these positions.</p>
+</body>
+</html>

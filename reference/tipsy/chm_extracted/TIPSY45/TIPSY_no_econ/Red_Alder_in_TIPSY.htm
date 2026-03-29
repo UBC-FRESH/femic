@@ -1,0 +1,358 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Red Alder in TIPSY</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<script type="text/javascript" language="JavaScript1.2" src="../ehlpdhtm.js"></script>
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+b.hcp2 { font-weight:bold; }
+ol.hcp3 { list-style:decimal; }
+b.hcp4 { font-weight:normal; }
+ul.hcp5 { list-style:disc; }
+tr.hcp6 { vertical-align:top; }
+p.hcp7 { color:Transparent;
+background-color:Transparent; }
+p.hcp8 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+
+
+
+
+<h1><a name="MiniTOCBookMark1"></a>Red Alder in TIPSY</h1>
+<p align="left" style="font-family:Arial;font-size:12pt;font-weight: normal;font-style: normal;text-decoration: none;" >In&#160;this&#160;Topic&#160;<a class="dropspot" href="javascript:TextPopup(this)" id="MTHotSpot33172" ><span class="MTText" style="display: none;" >Show</span><span class="MTText" >Hide</span></a></p>
+<script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('MTHotSpot33172', 'MTPOPUP33172');
+//]]></script>
+<div align="left" class="droptext" id="MTPOPUP33172" >
+ <div style="background: #ffff00;float: none;width: 100% ;" >
+  <p align="left"  ><a href="#MiniTOCBookMark2" >TASS red alder</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark3" >TIPSY red alder</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark4" >TASS / TIPSY parameters for red alder</a></p>
+ </div>
+</div>
+<p><span class="hcp1">Red alder</span> was the first broadleaf 
+ (hardwood) species to be incorporated into both <a href="https://www2.gov.bc.ca/gov/content/industry/forestry/managing-our-forest-resources/forest-inventory/growth-and-yield-modelling/tree-and-stand-simulator-tass">TASS</a> 
+ and <span class="hcp1">TIPSY</span>. &#160;&#160;A number 
+ of unique issues resulted in inherent model limitations (outlined below). 
+ &#160;Key red alder growth and yield information is either incomplete 
+ or missing, and the confidence in specific model results directly relates 
+ to the quality of the available data.</p>
+<h2><a name="MiniTOCBookMark2"></a><b class="hcp2">TASS red alder</b></h2>
+<ol class="hcp3">
+	<li><p class="Numbers">The PSP (permanent sample plot) &amp; EP (experimental 
+	 plots) datasets used to calibrate TASS for red alder do not exceed 
+	 site index (SI) 32 m @ BHAge 50 (<a href="Literature_Cited.htm#Nigh_Courtin_1998">Nigh 
+	 and Courtin 1998</a>). Projections of SI&gt;32m are outside the range 
+	 of the data. Projections for better sites default to 32 m Site Index 
+	 Grouping (SIG) relationships (see Figure 1) because mortality and 
+	 bole increment relationships do not exist.</p></li>
+	<li><p class="Numbers">There are enough red alder PSP &amp; EP data 
+	 to show trends and relationships, but insufficient data to provide 
+	 precise statistical relationships. The test of &quot;reasonable&quot; 
+	 model behaviour is recommended in applying model output.</p></li>
+	<li><p class="Numbers">Red alder calibration focused on fitting TASS 
+	 tree &amp; stand level relationships to primarily British Columbia 
+	 data. <a href="Literature_Cited.htm#Nigh_Courtin_1998">Nigh and Courtin 
+	 1998</a> site index curves were used during calibration (approved 
+	 BC MOF curves). Select the Notes feature in TIPSY's <a href="Curve_Specifications_Options.htm">Curve 
+	 Specifications dialog</a> to see more information on these site index 
+	 curves.</p></li>
+	<li><p class="Numbers">For red alder calibration, TASS top height relationships 
+	 were modified to account for stand age, and changes in mortality with 
+	 site productivity. Analysis of the PSP and EP dataset suggested:</p></li>
+</ol>
+<ul>
+	<ul>
+		<li class="p-Bullet"><p class="Bullet">Unlike most coniferous data, 
+		 red alder stand mortality was found to be affected by age and 
+		 site quality. To simulate age-related stand break-up, TASS random 
+		 mortality was increased after stand age 70 year, resulting in 
+		 complete stand mortality by 85-90 years depending on site productivity. 
+		 We term this 'age decline'. We established four site index groups 
+		 (SIGs) to simulate observed mortality relationships across sites 
+		 (SIGs: 20m, 24m, 28m, 32m ±2m range, see Figure 1).</p></li>
+		<li class="p-Bullet"><p class="Bullet">Bole increment (BI) was 
+		 also affected by age in interaction with site quality. After increasing 
+		 TASS stand mortality at stand ages &gt; 70, TASS still over-predicted 
+		 volumes in older stands. Our individual tree stem analysis data 
+		 ranged from <b class="hcp4">4 to 70</b> years 
+		 and an interim calibration scalar was needed to mimic available 
+		 PSP data trends until additional tree data can be collected. This 
+		 assumes that efficiency of alder BI declines with age. Field observations 
+		 of alder leaf area index (LAI) indicate an inherent LAI sensitivity 
+		 to stress (drought and disease) and old age. LAI is directly correlated 
+		 with BI.</p>
+		<p class="Bullet"><img src="../TIPSY3200000072.gif" alt="TIPSY3200000072.gif" title="TIPSY3200000072.gif" width="600" height="437" border="0"></p></li>
+	</ul>
+</ul>
+<p class="Indent" style="font-weight: bold; margin-left: 80px;">FIGURE 
+ 1. TASS Site Index Groupings (SIGs) - Red Alder Density</p>
+<ol start="5" class="hcp3">
+	<li><p class="Numbers"><a href="https://www2.gov.bc.ca/gov/content/industry/forestry/managing-our-forest-resources/forest-inventory/growth-and-yield-modelling/tree-and-stand-simulator-tass">TASS</a> 
+	 allows for only one static estimate of crown form. Our data suggest 
+	 that red alder has a changing crown form related to age and competitive 
+	 status. Vigorous young alder usually have a conical crown shape or 
+	 profile which changes to more of a spherical form as height growth 
+	 declines and stands thin at older ages. In other words, crown form 
+	 is dynamic and analogous to that of an opening umbrella. For TASS 
+	 model behaviour this is extremely important since crown form or shape 
+	 determines crown volume that in turn affects diameter growth and allows 
+	 spatial interaction between trees, crown competition or tree occupancy.</p></li>
+	<ul>
+		<li class="p-Bullet"><p class="Bullet">A TASS crown form for alder 
+		 was chosen that simulated the average red alder in the tree level 
+		 dataset. The TASS static crown profile represents an average naturally 
+		 regenerated red alder of 35-45 years of age. The implications 
+		 are that TASS likely over-estimates crown volume at young ages 
+		 and under-estimates crown volume at older ages. The development 
+		 of an algorithm for more realistic and dynamic crown forms is 
+		 in progress.</p></li>
+	</ul>
+</ol>
+<ol start="6" class="hcp3">
+	<li><p class="Numbers">TASS defines top height as the average height 
+	 of the 100 largest diameter trees per hectare. It can be shown that 
+	 statistically top height of a given stand will increase with increasing 
+	 initial density. This is sometimes referred to as &quot;genetic upgrade&quot;. 
+	 Within normal managed stand densities the increase in top height is 
+	 small. However, the difference between a naturally regenerated stand 
+	 density of for example, 20,000 sph and a plantation with 1200 sph 
+	 can result in a significant top height and concurrent volume increase. 
+	 This affect is difficult to document without rigorous long term field 
+	 research. Increases in top height with density have been observed 
+	 in red alder (Dave Hibbs pers. com. 2000) and some conifers (Jim Goudie 
+	 pers. com. 2003). However, a height vigor adjustment (HVA) was developed 
+	 which forces TASS top height trees to follow the site index curve 
+	 regardless of initial density. This simplifying convenience allows 
+	 TASS growth and yield information to be easily interpolated across 
+	 all top heights in the <span class="hcp1">TIPSY</span> 
+	 database. For a TASS user, it is important to specify whether the 
+	 HVA is turned ON or OFF and to understand the implications of the 
+	 choice.</p></li>
+</ol>
+<h2><a name="MiniTOCBookMark3"></a><b class="hcp2">TIPSY red alder</b></h2>
+<p>Unique changes in <a href="https://www2.gov.bc.ca/gov/content/industry/forestry/managing-our-forest-resources/forest-inventory/growth-and-yield-modelling/tree-and-stand-simulator-tass">TASS</a> 
+ architecture were required for red alder calibration. Changes to <span class="hcp1">TIPSY</span> were also necessary to allow 
+ interpolation across SIGs for density and BI relationships. A number of 
+ economic issues have also been encountered that require discussion. Be 
+ aware that, in order to allow maximum flexibility in <span class="hcp1">TIPSY</span>, 
+ alder uses many default values of other species.</p>
+<ol class="hcp3">
+	<li><p>The <span class="hcp1">TIPSY</span> database was 
+	 restricted to SI 20-32m due to the TASS red alder SIGs. An interpolation 
+	 routine was developed allowing a seamless transition between the four 
+	 SIGs. The existence of the SIGs is transparent to the user.</p></li>
+	<li><p><span class="hcp1">TIPSY</span> pre-commercial 
+	 thinning (PCT) simulations are available only at top height 6.0m, 
+	 which is consistent with other coastal species. TASS projections should 
+	 be requested for greater flexibility in PCT and CT simulations. Pruning 
+	 is available only through TASS.</p></li>
+	<li><p><span class="hcp1">TIPSY</span> allows you to 
+	 create a <a href="Prorating_Multiple_Species.htm">multiple species 
+	 stand</a> composition for all conifer species. This option is not 
+	 allowed with red alder because alder is a short-lived species. Both 
+	 TASS and <span class="hcp1">TIPSY</span> are unable 
+	 to simulate species interaction as an alder stand breaks up.</p></li>
+	<li><p>Since red alder decays very quickly, the default <a href="javascript:TextPopup(this)" id="HotSpot28044" class="glossterm" style="font-style: normal; background-color: Transparent; 
+	 color: #0000ff;">decay</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot28044', 'POPUP28044');
+//]]></script><span class="glosstext" id="POPUP28044" style="display: none;"> Soundwood losses due to physical and chemical processes caused by wood-rotting fungi.</span> rates for <a href="Coarse_Woody_Debris_CWD_Introduc.htm">coarse 
+	 woody debris</a> should be adjusted.</p></li>
+	<li><p>Conifer <a href="Lumber_Table.htm">lumber recovery information</a> 
+	 is based on 2-inch lumber grades. However, hardwood-grading rules 
+	 are extremely complex and normally based on 1-inch material. Therefore, 
+	 <span class="hcp1">TIPSY</span> red alder contains a 
+	 1-inch database. However, a 2-inch database from similar TASS log 
+	 sawmill simulations is available upon request. This allows you to 
+	 compare alder product yields with conifers or other hardwoods.</p></li>
+	<li><p>Since about 1996, accurate log values and lumber recovery statistics 
+	 for alder have been unavailable. The Vancouver log market lists alder 
+	 as only U, X, and Y grades which are low value logs. There appears 
+	 to be limited competition in BC for alder logs since there is only 
+	 one alder sawmill in the province (as of 2003). Some alder log prices 
+	 are available from Washington and Oregon. However, similar limited 
+	 competition concerns have been voiced in the US as well. &#160;<b class="hcp4">As a result, <a href="https://www2.gov.bc.ca/gov/content/industry/forestry/managing-our-forest-resources/forest-inventory/growth-and-yield-modelling/financial-analysis-of-silviculture-investment-economic-returns-fansier">FAN$IER</a> 
+	 default economic values are presently based on softwoods (white spruce).</b></p></li>
+	<li><p><span class="hcp1">TIPSY's</span> red alder log 
+	 tables are based on 2.5 m sawlog length. Any log that doesn't meet 
+	 the criteria is put in the pulp category.</p></li>
+	<li><p>To facilitate <span class="hcp1">TIPSY</span> 
+	 database interpolation routines, TASS runs were configured with a 
+	 specific set of parameters. The parameters are:</p></li>
+</ol>
+<ul class="hcp5">
+	<ul class="hcp5">
+		<li><p>HVA turned ON</p></li>
+		<li style="background-color: Transparent;"><p>Age decline turned 
+		 OFF</p></li>
+		<li><p>Planted age set to zero</p></li>
+		<li><p>Regeneration delay set to zero.</p></li>
+	</ul>
+</ul>
+<ol start="9" class="hcp3">
+	<li><p>Internal <span class="hcp1">TIPSY</span> routines 
+	 interpolate across site indices and adjust for age decline, planted 
+	 age, and regeneration delay. As a result, TASS and <span class="hcp1">TIPSY</span> 
+	 output may be similar but not identical.</p></li>
+	<li><p>In <span class="hcp1">TIPSY,</span> an <span class="hcp1">Age 
+	 Decline</span> Custom OAF is enabled 
+	 as the default. &#160;The user can easily turn it off and create a 
+	 new Custom OAF to replace it.</p></li>
+</ol>
+<p>&#160; </p>
+<h2><a name="MiniTOCBookMark4"></a><b class="hcp2">TASS / TIPSY parameters for red alder</b></h2>
+<table >
+	<tr class="hcp6">
+		<td><p><b class="hcp2">____________________________________________________________________________________</b></p></td>
+	</tr>
+</table>
+<table width="99.556%">
+	<col width="182">
+	<col width="185">
+	<col width="148">
+	<col width="108">
+	<tr class="hcp6">
+		<td width="182"><p><b class="hcp2">Model parameter</b></p></td>
+		<td width="185"><p><b class="hcp2">TASS</b></p></td>
+		<td width="148"><p><b class="hcp2">TIPSY</b></p></td>
+		<td width="108"><p><b class="hcp2">Comments</b></p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp6">
+		<td><p><b class="hcp2">____________________________________________________________________________________</b></p></td>
+	</tr>
+</table>
+<table >
+	<col width="182">
+	<col width="184">
+	<col width="147">
+	<col>
+	<tr class="hcp6">
+		<td width="182"><p>HVA (height vigour adjustment)</p></td>
+		<td width="184"><p>ON / OFF</p></td>
+		<td width="147"><p>ON (in TASS)</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+	<tr class="hcp6">
+		<td width="182"><p>Age decline (&gt; 70 years)</p></td>
+		<td width="184"><p>ON / OFF</p></td>
+		<td width="147"><p style="background-color: Transparent;">Age decline 
+		 OAF, default is ON</p></td>
+		<td><p>Users can change age decline Custom 
+		 OAF</p></td>
+	</tr>
+	<tr class="hcp6">
+		<td width="182"><p>SIG (site index group)</p></td>
+		<td width="184"><p>USER CHOICE<br>
+		(20, 24, 28, 32M SIGS)</p></td>
+		<td width="147"><p>SEAMLESS INTERPOLATION</p></td>
+		<td><p>SIGs invisible to TIPSY users</p></td>
+	</tr>
+	<tr class="hcp6">
+		<td width="182"><p>SI curves</p></td>
+		<td width="184"><p>USER CHOICE</p></td>
+		<td width="147"><p>USER CHOICE<br>
+		20 - 32M SI ONLY</p></td>
+		<td><p>Default: &#160;<a href="Literature_Cited.htm#Nigh_Courtin_1998">Nigh 
+		 &amp; Courtin 1998</a></p></td>
+	</tr>
+	<tr class="hcp6">
+		<td width="182"><p>Planting stock age</p></td>
+		<td width="184"><p>USER CHOICE</p></td>
+		<td width="147"><p>N/A</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+	<tr class="hcp6">
+		<td width="182"><p><a href="Planting_Stock_Height.htm">Planting 
+		 stock height</a></p></td>
+		<td width="184"><p>USER CHOICE</p></td>
+		<td width="147"><p>USER CHOICE</p></td>
+		<td><p>TIPSY Default: 26 cm (1 yr-old stock)</p></td>
+	</tr>
+	<tr class="hcp6">
+		<td width="182"><p class="hcp7"><a 
+		 href="Stand_Specifications_Options.htm#Delay">Regeneration delay</a></p></td>
+		<td width="184"><p>USER CHOICE<br>
+		(DEFAULT:1YR ±0.5 = 2YRS)</p></td>
+		<td width="147"><p>USER CHOICE</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+	<tr class="hcp6">
+		<td width="182"><p><a href="Prorating_Multiple_Species.htm">Multiple 
+		 species composition</a></p></td>
+		<td width="184"><p>USER CHOICE</p></td>
+		<td width="147"><p>N/A</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+	<tr class="hcp6">
+		<td width="182"><p class="hcp7">Economics 
+		 (<a href="https://www2.gov.bc.ca/gov/content/industry/forestry/managing-our-forest-resources/forest-inventory/growth-and-yield-modelling/financial-analysis-of-silviculture-investment-economic-returns-fansier">FAN$IER</a>)</p></td>
+		<td width="184"><p>NO</p></td>
+		<td width="147"><p>N/A</p></td>
+		<td><p>Limited data, see Red Alder in <span style="color: Transparent;">FAN$IER</span> 
+		 Help</p></td>
+	</tr>
+	<tr class="hcp6">
+		<td width="182"><p><a href="Log_Tables.htm">Logs</a> / <a href="Lumber_Table.htm">Lumber</a></p></td>
+		<td width="184"><p>LUMBER NOT WITHOUT ADDITIONAL SAWMILL SIMULATIONS</p></td>
+		<td width="147"><p>YES</p></td>
+		<td><p>TIPSY reports 1-inch lumber</p></td>
+	</tr>
+	<tr class="hcp6">
+		<td width="182"><p>Pruning</p></td>
+		<td width="184"><p>USER CHOICE</p></td>
+		<td width="147"><p>N/A</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+	<tr class="hcp6">
+		<td width="182"><p><a href="Precommercial_Thinning_how_it_wo.htm">PCT</a></p></td>
+		<td width="184"><p>USER CHOICE</p></td>
+		<td width="147"><p>@ 6.0 m top ht only</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+	<tr class="hcp6">
+		<td width="182"><p><a href="Commercial_thinning_options_and_.htm">CT</a></p></td>
+		<td width="184"><p>USER CHOICE</p></td>
+		<td width="147"><p>N/A</p></td>
+		<td><p>&#160;</p></td>
+	</tr>
+	<tr class="hcp6">
+		<td width="182"><p><a href="Fertilization_in_TIPSY.htm">Fertilization</a></p></td>
+		<td width="184"><p>NO</p></td>
+		<td width="147"><p>USER DEFINED</p></td>
+		<td><p>No TIPSY default response</p></td>
+	</tr>
+	<tr class="hcp6">
+		<td width="182"><p><a href="Genetic_Gain_in_TIPSY.htm">Genetic 
+		 gain</a></p></td>
+		<td width="184"><p>NO</p></td>
+		<td width="147"><p>USER DEFINED</p></td>
+		<td><p>No TIPSY default</p></td>
+	</tr>
+</table>
+<table >
+	<tr class="hcp6">
+		<td><p><b class="hcp2">____________________________________________________________________________________</b></p></td>
+	</tr>
+</table>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp8">_______________________________________________</p>
+	<p class="hcp8">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

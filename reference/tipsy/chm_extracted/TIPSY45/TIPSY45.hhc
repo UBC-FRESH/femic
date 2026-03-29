@@ -1,0 +1,774 @@
+<html>
+<!-- Sitemap 1.0 -->
+<object type="text/site properties">
+  <param name="SiteType" value="toc">
+  <param name="ImageType" value="folder">
+  <param name="Image Width" value="16">
+  <param name="Window Styles" value="0x800407">
+  <param name="ExWindow Styles" value="0x100">
+</object>
+<ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="What is TIPSY?">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="What is TIPSY?">
+      <param name="Local" value="TIPSY_no_econ/What_is_TIPSY.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*What's New?">
+      <param name="Local" value="TIPSY_no_econ/Whats_New.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="User Support">
+      <param name="Local" value="TIPSY_no_econ/User_Support_1.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Acknowledgements">
+      <param name="Local" value="TIPSY_no_econ/Acknowledgements.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="TIPSY System Background">
+      <param name="Local" value="TIPSY_no_econ/TIPSY_System_Background.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*TIPSY Program Files and Versions">
+      <param name="Local" value="TIPSY_no_econ/TIPSY_Program_Files_and_Versions.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Beyond TIPSY">
+      <param name="Local" value="TIPSY_no_econ/Beyond_TIPSY.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Important Definitions">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Ages in TIPSY">
+      <param name="Local" value="TIPSY_no_econ/Ages_defined_in_TIPSY.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Years to breast height (YTBH)">
+      <param name="Local" value="TIPSY_no_econ/Years_from_germination_to_breast.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Crop &amp; PrimeTrees">
+      <param name="Local" value="TIPSY_no_econ/Crop_Trees.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Getting Started">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Quick Start Guide">
+      <param name="Local" value="TIPSY_no_econ/Quick_Start_Guide.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Selecting the Right Model">
+      <param name="Local" value="TIPSY_no_econ/Selecting_the_Right_Model.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="TIPSY vs VDYP">
+      <param name="Local" value="TIPSY_no_econ/VDYP_or_TIPSY_TASS.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="How to Use TIPSY Help">
+      <param name="Local" value="TIPSY_no_econ/How_to_Use_TIPSY_Help.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Menu Commands, Overview">
+      <param name="Local" value="TIPSY_no_econ/Overview_of_Menu_Commands.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="File Menu Commands">
+      <param name="Local" value="TIPSY_no_econ/File_Menu_Commands.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Edit Menu Commands">
+      <param name="Local" value="TIPSY_no_econ/Edit_Menu_Commands.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Window Menu Commands">
+      <param name="Local" value="TIPSY_no_econ/Window_Menu_Commands.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Help Menu Commands">
+      <param name="Local" value="TIPSY_no_econ/Help_Menu_Commands.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Preferences....">
+      <param name="Local" value="TIPSY_no_econ/Preferences.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Table Specs Precision">
+      <param name="Local" value="TIPSY_no_econ/Table_Specifications_Preferences.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Toolbar, Interactive TIPSY">
+      <param name="Local" value="TIPSY_no_econ/Toolbar,_Interactive_TIPSY.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Start-up Box">
+      <param name="Local" value="TIPSY_no_econ/Startup_Box.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Export Table">
+      <param name="Local" value="TIPSY_no_econ/Exporting_TIPSY_data_to_other_pr.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Input Settings, Interactive">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Project Title and Stand Geography">
+      <param name="Local" value="TIPSY_no_econ/Project_Title_and_Stand_Geograph.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Species Specifications">
+      <param name="Local" value="TIPSY_no_econ/Species_Specifications_Options.htm">
+    </object>
+    <ul>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*Species Specifications">
+        <param name="Local" value="TIPSY_no_econ/Species_Specifications_Options.htm#642b3b9347ca42c9b00b820c00c373fa=1">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*Species Selection">
+        <param name="Local" value="TIPSY_no_econ/Species_Selection.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*Percent Composition">
+        <param name="Local" value="TIPSY_no_econ/Percent_Composition.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*Site Index">
+        <param name="Local" value="TIPSY_no_econ/Site_Index_dialog_box.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*Curve Specifications">
+        <param name="Local" value="TIPSY_no_econ/Curve_Specifications_Options.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*Age/Height (SI)">
+        <param name="Local" value="TIPSY_no_econ/AgeHeight_Dialog_Box_Options.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*Planting Stock Height">
+        <param name="Local" value="TIPSY_no_econ/Planting_Stock_Height.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*Genetic Worth">
+        <param name="Local" value="TIPSY_no_econ/Genetic_Gain_in_TIPSY.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*Fertilization">
+        <param name="Local" value="TIPSY_no_econ/Fertilization_in_TIPSY.htm">
+      </object>
+      </ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Stand Specifications">
+      <param name="Local" value="TIPSY_no_econ/Stand_Specifications_Options.htm">
+    </object>
+    <ul>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*Initial Density settings">
+        <param name="Local" value="TIPSY_no_econ/Stand_Regeneration_options.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*Existing Stand Option">
+        <param name="Local" value="TIPSY_no_econ/Existing_Stand_Dialog_Box_Options.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*PCT Residual Density">
+        <param name="Local" value="TIPSY_no_econ/Residual_Density_Dialog_Box.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*Commercial thinning">
+        <param name="Local" value="TIPSY_no_econ/Commercial_thinning_options_and_.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*Variable Retention: Settings">
+        <param name="Local" value="TIPSY_no_econ/How_to_use_Variable_Retention_in.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*Windthrow, how to apply in TIPSY/BatchTIPSY">
+        <param name="Local" value="TIPSY_no_econ/Windthrow_how_to_apply.htm">
+      </object>
+      </ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Table Specifications">
+      <param name="Local" value="TIPSY_no_econ/Table_Specifications_Options.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Output Tables, Interactive">
+    <param name="Local" value="TIPSY_no_econ/Tables_now_available_in_TIPSY.htm">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Output Tables">
+      <param name="Local" value="TIPSY_no_econ/Tables_now_available_in_TIPSY.htm#642b3b9347ca42c9b00b820c00c373fa=1">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Variables in Output Tables">
+      <param name="Local" value="TIPSY_no_econ/Summary_Variables_in_Each_Table.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Custom Table">
+      <param name="Local" value="TIPSY_no_econ/Custom_Table_in_TIPSY.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Log Grades, industrial, interior">
+      <param name="Local" value="TIPSY_no_econ/Log_Grades_industrial_interior.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="CWD Table">
+      <param name="Local" value="TIPSY_no_econ/Cumulative_Volume_of_CWD_less_de.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*CWD Table Options">
+      <param name="Local" value="TIPSY_no_econ/CWD_Table_Options_Dialog_Box.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*CWD Volume Decay Function">
+      <param name="Local" value="TIPSY_no_econ/CWD_Volume_Decay_Function.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Jobs Table">
+      <param name="Local" value="TIPSY_no_econ/Jobs_main_topic.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Log Table">
+      <param name="Local" value="TIPSY_no_econ/Log_Tables.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Log Grades, Coastal">
+      <param name="Local" value="TIPSY_no_econ/Coastal_Log_Grades.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Lumber Table">
+      <param name="Local" value="TIPSY_no_econ/Lumber_Table.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Lumber: Volume and Grade">
+      <param name="Local" value="TIPSY_no_econ/Lumber_Yields.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Mortality Table">
+      <param name="Local" value="TIPSY_no_econ/Mortality_Table.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Snag Table">
+      <param name="Local" value="TIPSY_no_econ/Standing_Dead_Tree_Snag_Table.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Stand Description Display">
+      <param name="Local" value="TIPSY_no_econ/Stand_Description.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Stand Table (# Trees)">
+      <param name="Local" value="TIPSY_no_econ/Stand_Table__Trees.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Stock Table (Vol)">
+      <param name="Local" value="TIPSY_no_econ/Stock_Vol.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Volume per Tree Table">
+      <param name="Local" value="TIPSY_no_econ/Volume_per_Tree_Table.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Stand, Stock and VPT View Options">
+      <param name="Local" value="TIPSY_no_econ/Stand_Stock_and_Volume_Per_Tree_.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Timber Supply Format Table">
+      <param name="Local" value="TIPSY_no_econ/Timber_Supply_Format_Table.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="VDYP Format Table">
+      <param name="Local" value="TIPSY_no_econ/VDYP_Format_Table.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Yield Table">
+      <param name="Local" value="TIPSY_no_econ/YieldMax_MAI_Table.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Merchantability Limits">
+      <param name="Local" value="TIPSY_no_econ/Merchantability_Limits.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Mean annual increment">
+      <param name="Local" value="TIPSY_no_econ/Mean_annual_increment.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Graphing Output">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Graphing Output with Plotsy">
+      <param name="Local" value="TIPSY_no_econ/Plot_Program_an_Introduction.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Stem Maps">
+      <param name="Local" value="TIPSY_no_econ/Stem_Maps.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="BatchTIPSY">
+    <param name="Local" value="TIPSY_no_econ/BatchTIPSY.htm">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Toolbar, Batch">
+      <param name="Local" value="TIPSY_no_econ/Toolbar_options_Batch.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Custom Table Format, Batch">
+      <param name="Local" value="TIPSY_no_econ/Custom_Format_Table_Batch.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Custom Output Values, Batch">
+      <param name="Local" value="TIPSY_no_econ/Custom_Output_Values_Batch.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Custom OutputTable Specifications, Batch">
+      <param name="Local" value="TIPSY_no_econ/Custom_Output_Table_Specifications_BatchTIPSY.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Custom Output Description, Batch">
+      <param name="Local" value="TIPSY_no_econ/Format_Custom_Table.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Standard Format Table, Batch">
+      <param name="Local" value="TIPSY_no_econ/Standard_Format_Table_Batch.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Timber Supply Format Table, Batch">
+      <param name="Local" value="TIPSY_no_econ/Timber_Supply_Format_Table_Batch.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Fertilizer Applications, Batch">
+      <param name="Local" value="TIPSY_no_econ/Fertilization_in_BatchTIPSY.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Site index curve mappings, Batch">
+      <param name="Local" value="TIPSY_no_econ/Site_index_curve_mappings_Batch.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Default Species Mappings, Batch">
+      <param name="Local" value="TIPSY_no_econ/Default%20Mappings%20in%20BTP%20file.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Commercial thinning, Batch">
+      <param name="Local" value="TIPSY_no_econ/Commercial_thinning_in_BatchTIPS.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Input data file, Batch">
+      <param name="Local" value="TIPSY_no_econ/Input_data_file.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Input species variables, Batch">
+      <param name="Local" value="TIPSY_no_econ/Input_species_variables_Batch.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Input variables, Batch">
+      <param name="Local" value="TIPSY_no_econ/Input_variables.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Output data file, Batch">
+      <param name="Local" value="TIPSY_no_econ/Output_data_file.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Output Table Format, Batch">
+      <param name="Local" value="TIPSY_no_econ/Output_table_format_Batch.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Volume curve mappings, Batch">
+      <param name="Local" value="TIPSY_no_econ/Volume_curve_mappings_Batch.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Processing Errors, Batch">
+      <param name="Local" value="TIPSY_no_econ/Processing_Errors_Batch.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Custom OAFs: Batch">
+      <param name="Local" value="TIPSY_no_econ/Custom_OAFs_in_BatchTIPSY.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="*Variable Retention: Batch">
+      <param name="Local" value="TIPSY_no_econ/Variable_Retention_Batch.htm">
+    </object>
+    </ul>
+  <li><object type="text/sitemap">
+    <param name="Name" value="Further Information">
+  </object>
+  <ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Biomass and Carbon (book not in 4.3)">
+    </object>
+    <ul>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Biomass and Carbon">
+        <param name="Local" value="TIPSY_no_econ/biomass_and_carbon_introduction.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Biomass and carbon: models">
+        <param name="Local" value="TIPSY_no_econ/Biomass_and_carbon_data.htm">
+      </object>
+      </ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Broadleaf species">
+      <param name="Local" value="TIPSY_no_econ/Broadleaf_species.htm">
+    </object>
+    <ul>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Red Alder">
+        <param name="Local" value="TIPSY_no_econ/Red_Alder_in_TIPSY.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Trembling aspen">
+        <param name="Local" value="TIPSY_no_econ/Trembling_aspen_in_TASS_and_TIPSY.htm">
+      </object>
+      </ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Brushing Effects">
+      <param name="Local" value="TIPSY_no_econ/Brushing.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Dead Trees: Mortality, Snags, CWD">
+    </object>
+    <ul>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Dead Tree Introduction">
+        <param name="Local" value="TIPSY_no_econ/Dead_Tree_Introduction.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="CWD: Introduction">
+        <param name="Local" value="TIPSY_no_econ/Coarse_Woody_Debris_CWD_Introduc.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="CWD: Model">
+        <param name="Local" value="TIPSY_no_econ/CWD_Model.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="CWD: Cumulative Volume Table">
+        <param name="Local" value="TIPSY_no_econ/Cumulative_Volume_of_CWD_less_de.htm#642b3b9347ca42c9b00b820c00c373fa=1">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="CWD: Periodic Recruitment Table">
+        <param name="Local" value="TIPSY_no_econ/CWD_Periodic_Recruitment_Table.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="CWD: Data behind defaults">
+        <param name="Local" value="TIPSY_no_econ/Data_behind_the_CWD_default_para.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="CWD: Integration with Snag Model">
+        <param name="Local" value="TIPSY_no_econ/Integration_of__CWD_Input_with_t.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*Snag Specifications">
+        <param name="Local" value="TIPSY_no_econ/Snag_Specifications__Changing.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Snags: Model">
+        <param name="Local" value="TIPSY_no_econ/Standing_Dead_Tree_Snag_Model.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Snags: Model Uses">
+        <param name="Local" value="TIPSY_no_econ/Suggested_Use_for_Snag_Model.htm">
+      </object>
+      </ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Existing Stand Option">
+    </object>
+    <ul>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Existing Stand Option: Introduction">
+        <param name="Local" value="TIPSY_no_econ/Existing_Stand_Option_Introducti.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Existing Stand Option: How it Works">
+        <param name="Local" value="TIPSY_no_econ/How_the_Existing_Stand_Option_Op.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Existing Stand Option: Example Applications">
+        <param name="Local" value="TIPSY_no_econ/Example_of_how_you_might_Apply_t.htm">
+      </object>
+      </ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Fertilization">
+    </object>
+    <ul>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Fertilization: Ministry Default Responses">
+        <param name="Local" value="TIPSY_no_econ/Ministry_Recommended_Fertilizati.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Fertilization: TIPSY Implementation">
+        <param name="Local" value="TIPSY_no_econ/Implementation_of_Fertilizer_Res.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Fertilization: Input File Format">
+        <param name="Local" value="TIPSY_no_econ/Input_file_for_fertilization_response.htm">
+      </object>
+      </ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Genetic Gain">
+    </object>
+    <ul>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Genetic Gain: How Stands Respond">
+        <param name="Local" value="TIPSY_no_econ/How_Stands_Respond.htm">
+      </object>
+      </ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Jobs">
+    </object>
+    <ul>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Jobs: Understanding the Output">
+        <param name="Local" value="TIPSY_no_econ/Jobs_Table_a_Detailed_Example.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Jobs: Brushing">
+        <param name="Local" value="TIPSY_no_econ/Brushing_Jobs.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Jobs: Fertilization">
+        <param name="Local" value="TIPSY_no_econ/Fertilization_Jobs.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Jobs: Harvesting and Manufacturing">
+        <param name="Local" value="TIPSY_no_econ/Harvesting_and_Manufacturing_Job.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Jobs: Other">
+        <param name="Local" value="TIPSY_no_econ/Other_Jobs.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Jobs: Planting">
+        <param name="Local" value="TIPSY_no_econ/Planting_Jobs.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Jobs: Pre-commercial Thinning">
+        <param name="Local" value="TIPSY_no_econ/Precommercial_Thinning_Juvenile_.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Jobs: Pruning">
+        <param name="Local" value="TIPSY_no_econ/Pruning_Jobs.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Jobs: Surveys">
+        <param name="Local" value="TIPSY_no_econ/Survey_Jobs.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Jobs: Site Preparation">
+        <param name="Local" value="TIPSY_no_econ/Site_Preparation_Jobs.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Jobs: Calculating Total">
+        <param name="Local" value="TIPSY_no_econ/Total_Jobs.htm">
+      </object>
+      </ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Juvenile Wood">
+    </object>
+    <ul>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Juvenile wood in TIPSY">
+        <param name="Local" value="TIPSY_no_econ/Juvenile_Wood_how_to_access_TIPSY.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Juvenile wood: Example Management Effects">
+        <param name="Local" value="TIPSY_no_econ/Juvenile_wood,_examples_of_management_effects_on.htm">
+      </object>
+      </ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="OAFs - Armillaria">
+    </object>
+    <ul>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Armillaria OAF, Interactive and Batch">
+        <param name="Local" value="TIPSY_no_econ/How_to_use_the_Armillaria_OAF_in.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Armillaria OAF: How it's applied">
+        <param name="Local" value="TIPSY_no_econ/How_TIPSY_applies_Armillaria.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Armillaria OAF: Underlying Model">
+        <param name="Local" value="TIPSY_no_econ/Data_behind_the_Armillaria_OAF.htm">
+      </object>
+      </ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="OAFs - Operational Adjustment Factors">
+    </object>
+    <ul>
+      <li><object type="text/sitemap">
+        <param name="Name" value="OAFs: Operational Adjustment Factors">
+        <param name="Local" value="TIPSY_no_econ/OAFs_-_Operational_Adjustment_Factors.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="OAFs: History">
+        <param name="Local" value="TIPSY_no_econ/OAFs_History.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="OAFs: Example Applications">
+        <param name="Local" value="TIPSY_no_econ/OAFs__Example_Applications.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="OAFs: Combining">
+        <param name="Local" value="TIPSY_no_econ/combining_oafs_copy.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Impacts of Adjustment Factors">
+        <param name="Local" value="TIPSY_no_econ/Impacts_of_Adjustment_Factors.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="*Custom OAFs: Interactive">
+        <param name="Local" value="TIPSY_no_econ/Using_Custom_OAFs.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Custom OAFs, Batch">
+        <param name="Local" value="TIPSY_no_econ/Custom_OAFs_in_BatchTIPSY.htm#642b3b9347ca42c9b00b820c00c373fa=1">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Custom OAFs: Development">
+        <param name="Local" value="TIPSY_no_econ/Development_of_Custom_OAFs.htm">
+      </object>
+      </ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Repression in Pine">
+      <param name="Local" value="TIPSY_no_econ/Repression_in_TIPSY.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Pre-commercial Thinning in TIPSY">
+      <param name="Local" value="TIPSY_no_econ/Precommercial_Thinning_how_it_wo.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Pro-rating Multiple Species">
+      <param name="Local" value="TIPSY_no_econ/Prorating_Multiple_Species.htm">
+    </object>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Site Index">
+    </object>
+    <ul>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Site Index: About">
+        <param name="Local" value="TIPSY_no_econ/Site_Index_About.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Site Index Conversion">
+        <param name="Local" value="TIPSY_no_econ/About_site_index_conversion.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Site Index: Total age and YTBH">
+        <param name="Local" value="TIPSY_no_econ/Breastheight_Age_and_Total_Age_C.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Site class conversion table">
+        <param name="Local" value="TIPSY_no_econ/Site_class_conversion_table.htm">
+      </object>
+      </ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="TIPSY's Database">
+    </object>
+    <ul>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Density Ranges">
+        <param name="Local" value="TIPSY_no_econ/Initial_Density_PCTand_CT_Densit.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Height, site and age limits">
+        <param name="Local" value="TIPSY_no_econ/Height_site_and_age_limits.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Species substitution">
+        <param name="Local" value="TIPSY_no_econ/Species_and_species_substitution.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Permanent Plot Database">
+        <param name="Local" value="TIPSY_no_econ/Permanent_Sample_Plots_Data_Base.htm">
+      </object>
+      </ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Variable Retention">
+      <param name="Local" value="TIPSY_no_econ/Introduction_to_Variable_Retenti.htm">
+    </object>
+    <ul>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Variable Retention: Introduction">
+        <param name="Local" value="TIPSY_no_econ/Introduction_to_Variable_Retenti.htm#642b3b9347ca42c9b00b820c00c373fa=1">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Variable Retention: Assumptions &amp; Limitations">
+        <param name="Local" value="TIPSY_no_econ/Assumptions_used_in_the_variable.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Variable Retention: Interactive">
+        <param name="Local" value="TIPSY_no_econ/How_to_use_Variable_Retention_in(2).htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Variable Retention: Operational Examples">
+        <param name="Local" value="TIPSY_no_econ/Operational_examples_using_varia.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Variable Retention: Model">
+        <param name="Local" value="TIPSY_no_econ/Data_behind_the_variable_retenti.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Variable Retention: Programmer's Perspective">
+        <param name="Local" value="TIPSY_no_econ/How_TIPSY_applies_variab00000249.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Variable Retention: User's Perspective">
+        <param name="Local" value="TIPSY_no_econ/How_TIPSY_applies_variab00000248.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Table of VR Species Substitutions">
+        <param name="Local" value="TIPSY_no_econ/Table_of_VR_Species_Substitution.htm">
+      </object>
+      </ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Windthrow within VR">
+    </object>
+    <ul>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Windthrow: Introduction">
+        <param name="Local" value="TIPSY_no_econ/Windthrow_intro.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Windthrow: How it's applied with VR">
+        <param name="Local" value="TIPSY_no_econ/Windthrow_how_tipsy_applies.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Windthrow: Background">
+        <param name="Local" value="TIPSY_no_econ/Windthrow_Prediction_Background.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Windthrow: Programmer's perspective">
+        <param name="Local" value="TIPSY_no_econ/Windthrow_programmers_perspective.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Windthrow: Defaults and constraints">
+        <param name="Local" value="TIPSY_no_econ/Windthrow_defaults_and_contraints_in_TIPSY.htm">
+      </object>
+      <li><object type="text/sitemap">
+        <param name="Name" value="Windthrow: Example">
+        <param name="Local" value="TIPSY_no_econ/Windthrow_example.htm">
+      </object>
+      </ul>
+    <li><object type="text/sitemap">
+      <param name="Name" value="Literature Cited">
+      <param name="Local" value="TIPSY_no_econ/Literature_Cited.htm">
+    </object>
+    </ul>
+</ul>
+</html>

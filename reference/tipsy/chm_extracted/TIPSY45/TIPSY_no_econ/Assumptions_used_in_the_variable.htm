@@ -1,0 +1,155 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="Variable retention">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Variable Retention: Assumptions &amp; Limitations</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+span.hcp2 { font-weight:normal; }
+span.hcp3 { vertical-align:Super; }
+p.hcp4 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+
+<h1>Variable Retention: Assumptions & Limitations</h1>
+<p>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="1508"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="See Also"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="Variable retention$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My Robohelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\Assumptions_used_in_the_variable.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:See Also">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="Variable retention">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </p>
+<p><span class="hcp1">TIPSY's VR</span> <span class="hcp1">adjustment 
+ factors</span> (<span class="hcp1">VRAFs</span>) reflect 
+ several <span class="hcp1">VR</span> modelling assumptions 
+ that affect yield projections and their interpretation.</p>
+<h2><span class="hcp1">TIPSY's VRAFs</span> reflect:</h2>
+<ul>
+	<li class="p-Bullet"><p>only the harvested and regenerated portions 
+	 of the stand, based on the standard <span class="hcp1">VR</span> 
+	 assumption that trees are retained for other values and will not be 
+	 harvested. &#160;&#160;<span class="hcp1">VRAFs</span> 
+	 (&lt;1.0) reflect regenerated (i.e. understorey) yields relative to 
+	 a clearcut (no overstorey retained).</p></li>
+	<li class="p-Bullet"><p>a reduction in the initial <a href="javascript:TextPopup(this)" id="HotSpot53223" class="glossterm">number 
+	 of trees</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot53223', 'POPUP53223');
+//]]></script><span class="glosstext" id="POPUP53223" style="display: none;"> In TIPSY, it refers to the number of living trees in an even-aged stand composed of a single cohort. This includes all trees that regenerate naturally over a short period of less than 5 years, or all trees planted in a particular year. It does not include those which seed in later. All trees start as dominants and later progress to lower crown classes and die in response to intertree crowding. Dead trees are not counted. The number of trees can be reduced by thinning.</span> present in the stand, which will differ from 
+	 the initial <a href="Stand_Specifications_Options.htm#Density">density</a> 
+	 value specified by the user.</p></li>
+	<li class="p-Bullet"><p>single-species stands with the same retained 
+	 and regenerated species and site indices. &#160;&#160;For multiple 
+	 species stands, <span class="hcp1">VRAF</span> is <a 
+	 href="Prorating_Multiple_Species.htm">pro-rated based on species composition</a>. 
+	 &#160;&#160;The leading species is used to calculate edge length. 
+	 </p></li>
+	<li class="p-Bullet"><p>model coefficients for only four species: Hw, 
+	 Sw, Fdc, Pl. &#160;<span class="hcp1">TIPSY</span> automatically 
+	 makes <a href="Table_of_VR_Species_Substitution.htm">species substitutions</a> 
+	 for others.</p></li>
+	<li class="p-Bullet"><p>systematically planted regeneration with random 
+	 ingress.</p></li>
+	<li class="p-Bullet"><p>the <a href="http://www.for.gov.bc.ca/hts/growth/tass/tass_overview.html">TASS 
+	 II</a> assumption that the sun is always directly overhead and that 
+	 shorter trees do not survive within the vertical canopy shadow of 
+	 taller trees. &#160;In effect, <span class="hcp1">TIPSY 
+	 VRAFs</span> remove the vertical crown shadow of the retained trees 
+	 from production. For dispersed retention in particular, you might 
+	 consider this effect too extreme and adjust inputs accordingly.</p></li>
+	<li class="p-Bullet"><p>defaults which can be overridden by the users. 
+	 &#160;&#160;Default edge-length is calculated based on 40% crown cover. 
+	 &#160;&#160;Other defaults include a residual top height at entry 
+	 of 30m, an aggregated retention of 100% (no dispersed retention), 
+	 and an average retained group size of 500m<span style="vertical-align: Super; 
+													 font-size: 10pt;">2</span>.</p></li>
+</ul>
+<h2><span class="hcp1">TIPSY's VRAFs</span><span class="hcp2"> 
+ </span><span style="font-weight: normal; text-decoration: underline; ">do 
+ not</span><span class="hcp2"> reflect:</span></h2>
+<ul>
+	<li class="p-Bullet"><p>pest (e.g., mistletoe) interactions that sometimes 
+	 accompany <span class="hcp1">variable retention</span> 
+	 practices.</p></li>
+	<li class="p-Bullet"><p>modifications such as topping or pruning for 
+	 wind firmness. &#160;However, the effect would likely be quite small, 
+	 since retained tree crown growth accounts for less than five percent 
+	 of the total yield adjustment due to <span class="hcp1">variable 
+	 retention</span>.</p></li>
+	<li class="p-Bullet"><p>change in overstory crown cover during the 
+	 <a href="javascript:TextPopup(this)" id="HotSpot15397" class="glossterm">regeneration delay</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot15397', 'POPUP15397');
+//]]></script><span class="glosstext" id="POPUP15397" style="display: none;"> Natural stands: years from disturbance (fire, logging) until the first successful seed year.  Plantations: years from disturbance (fire, logging) until planting</span> 
+	 period (if any), but this is normally negligible.</p></li>
+	<li class="p-Bullet"><p>retention already included in existing allowances 
+	 for riparian zones, wildlife tree patches, etc. &#160;&#160;E.g., 
+	 timber supply analyses.</p></li>
+	<li class="p-Bullet"><p>values outside <span class="hcp1">TIPSY's</span> 
+	 minimums and maximums for top height, CC%, retained height and edge 
+	 length. &#160;&#160;When these limits are exceeded, <span class="hcp1">TIPSY</span> 
+	 adjusts values to within acceptable species ranges, and notes this 
+	 in the <a href="Stand_Description.htm">Stand Description</a>.</p></li>
+</ul>
+<h2>Cost considerations for FAN$IER</h2>
+<p>The Appraisal Manual used to derive <a href="https://www2.gov.bc.ca/gov/content/industry/forestry/managing-our-forest-resources/forest-inventory/growth-and-yield-modelling/financial-analysis-of-silviculture-investment-economic-returns-fansier">FAN$IER</a>'s 
+ default tree-to-truck costs also contains 'loose' estimates for partial-cut 
+ harvesting that add $2.71/m<span class="hcp3">3</span> 
+ for skidders and $3.62/m<span class="hcp3">3</span> 
+ for highlead or grapple yarders. &#160;&#160;&#160;User may wish to apply 
+ these additives to FAN$IER's tree-to-trunk defaults in the absence of 
+ better local information. &#160;But remember, these are harvesting costs 
+ for the regenerated portion of the stand.</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp4">_______________________________________________</p>
+	<p class="hcp4">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>
