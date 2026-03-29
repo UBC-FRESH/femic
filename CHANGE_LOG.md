@@ -8101,3 +8101,14 @@
   - `ROADMAP.md` and issue `#48` were widened accordingly so the active task is
     now “finish the remaining logical banks from the canonical ledger,” not
     only the earlier first-wave product families.
+- 2026-03-29 (Issue #48 second-wave product banks): added the `lumber-graded`,
+  `lumber-degraded`, and `industrial-logs` optional BTC indicator banks after
+  all three full families probed cleanly through the live unattended `/TSR`
+  overlay seam.
+  - `src/femic/pipeline/tipsy.py` now also ships:
+    - `lumber-graded`
+    - `lumber-degraded`
+    - `industrial-logs`
+  - Added focused test coverage for:
+    - bank column expansion; and
+    - runtime TSR template injection for the new product-bank cluster.

@@ -7695,6 +7695,9 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - the `lumber-2-or-better` family and `residual-fibre` family also probe
       cleanly through that same seam, so the first product-oriented rollout can
       land as a small cluster of proven banks rather than a one-bank bottleneck.
+    - the `lumber-graded`, `lumber-degraded`, and `industrial-logs` families
+      also probe cleanly through that seam, so the full product-output bank
+      block can be rolled forward as one cohesive second-wave slice.
   - issue `#48` should now be treated as the umbrella tracker for finishing all
     remaining logical banks from the canonical ledger, not just the earlier
     first-wave product families.

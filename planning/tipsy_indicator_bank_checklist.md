@@ -96,72 +96,72 @@ Canonical source inventory: `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt`.
   - [x] Lumber_2_or_Better_All
   - [x] LRF_2_or_Better_All
 - lumber-graded
-  - [ ] Lumber_Graded_SS_2x4
-  - [ ] Lumber_Graded_SS_2x6
-  - [ ] Lumber_Graded_SS_2x8
-  - [ ] Lumber_Graded_SS_2x10
-  - [ ] Lumber_Graded_1_2x4
-  - [ ] Lumber_Graded_1_2x6
-  - [ ] Lumber_Graded_1_2x8
-  - [ ] Lumber_Graded_1_2x10
-  - [ ] Lumber_Graded_2_2x4
-  - [ ] Lumber_Graded_2_2x6
-  - [ ] Lumber_Graded_2_2x8
-  - [ ] Lumber_Graded_2_2x10
-  - [ ] Lumber_Graded_3_2x4
-  - [ ] Lumber_Graded_3_2x6
-  - [ ] Lumber_Graded_3_2x8
-  - [ ] Lumber_Graded_3_2x10
-  - [ ] Lumber_Graded_4_2x4
-  - [ ] Lumber_Graded_4_2x6
-  - [ ] Lumber_Graded_4_2x8
-  - [ ] Lumber_Graded_4_2x10
-  - [ ] Lumber_Graded_All
-  - [ ] LRF_Graded_All
+  - [x] Lumber_Graded_SS_2x4
+  - [x] Lumber_Graded_SS_2x6
+  - [x] Lumber_Graded_SS_2x8
+  - [x] Lumber_Graded_SS_2x10
+  - [x] Lumber_Graded_1_2x4
+  - [x] Lumber_Graded_1_2x6
+  - [x] Lumber_Graded_1_2x8
+  - [x] Lumber_Graded_1_2x10
+  - [x] Lumber_Graded_2_2x4
+  - [x] Lumber_Graded_2_2x6
+  - [x] Lumber_Graded_2_2x8
+  - [x] Lumber_Graded_2_2x10
+  - [x] Lumber_Graded_3_2x4
+  - [x] Lumber_Graded_3_2x6
+  - [x] Lumber_Graded_3_2x8
+  - [x] Lumber_Graded_3_2x10
+  - [x] Lumber_Graded_4_2x4
+  - [x] Lumber_Graded_4_2x6
+  - [x] Lumber_Graded_4_2x8
+  - [x] Lumber_Graded_4_2x10
+  - [x] Lumber_Graded_All
+  - [x] LRF_Graded_All
 - lumber-degraded
-  - [ ] Lumber_Degraded_SS_2x4
-  - [ ] Lumber_Degraded_SS_2x6
-  - [ ] Lumber_Degraded_SS_2x8
-  - [ ] Lumber_Degraded_SS_2x10
-  - [ ] Lumber_Degraded_1_2x4
-  - [ ] Lumber_Degraded_1_2x6
-  - [ ] Lumber_Degraded_1_2x8
-  - [ ] Lumber_Degraded_1_2x10
-  - [ ] Lumber_Degraded_2_2x4
-  - [ ] Lumber_Degraded_2_2x6
-  - [ ] Lumber_Degraded_2_2x8
-  - [ ] Lumber_Degraded_2_2x10
-  - [ ] Lumber_Degraded_3_2x4
-  - [ ] Lumber_Degraded_3_2x6
-  - [ ] Lumber_Degraded_3_2x8
-  - [ ] Lumber_Degraded_3_2x10
-  - [ ] Lumber_Degraded_4_2x4
-  - [ ] Lumber_Degraded_4_2x6
-  - [ ] Lumber_Degraded_4_2x8
-  - [ ] Lumber_Degraded_4_2x10
-  - [ ] Lumber_Degraded_All
-  - [ ] LRF_Degraded_All
+  - [x] Lumber_Degraded_SS_2x4
+  - [x] Lumber_Degraded_SS_2x6
+  - [x] Lumber_Degraded_SS_2x8
+  - [x] Lumber_Degraded_SS_2x10
+  - [x] Lumber_Degraded_1_2x4
+  - [x] Lumber_Degraded_1_2x6
+  - [x] Lumber_Degraded_1_2x8
+  - [x] Lumber_Degraded_1_2x10
+  - [x] Lumber_Degraded_2_2x4
+  - [x] Lumber_Degraded_2_2x6
+  - [x] Lumber_Degraded_2_2x8
+  - [x] Lumber_Degraded_2_2x10
+  - [x] Lumber_Degraded_3_2x4
+  - [x] Lumber_Degraded_3_2x6
+  - [x] Lumber_Degraded_3_2x8
+  - [x] Lumber_Degraded_3_2x10
+  - [x] Lumber_Degraded_4_2x4
+  - [x] Lumber_Degraded_4_2x6
+  - [x] Lumber_Degraded_4_2x8
+  - [x] Lumber_Degraded_4_2x10
+  - [x] Lumber_Degraded_All
+  - [x] LRF_Degraded_All
 - industrial-logs
-  - [ ] Industrial_Logs_D38L13
-  - [ ] Industrial_Logs_D38L11
-  - [ ] Industrial_Logs_D38L8
-  - [ ] Industrial_Logs_D30L13
-  - [ ] Industrial_Logs_D30L11
-  - [ ] Industrial_Logs_D30L8
-  - [ ] Industrial_Logs_D20L13
-  - [ ] Industrial_Logs_D20L11
-  - [ ] Industrial_Logs_D20L8
-  - [ ] Industrial_Logs_D125L13
-  - [ ] Industrial_Logs_D125L11
-  - [ ] Industrial_Logs_D125L8
-  - [ ] Industrial_Logs_D125L63
-  - [ ] Industrial_Logs_D125L51
-  - [ ] Industrial_Logs_D125L5
-  - [ ] Industrial_Logs_D305
-  - [ ] Industrial_Logs_D254
-  - [ ] Industrial_Logs_D203
-  - [ ] Industrial_Logs_D178
-  - [ ] Industrial_Logs_D152
+  - [x] Industrial_Logs_D38L13
+  - [x] Industrial_Logs_D38L11
+  - [x] Industrial_Logs_D38L8
+  - [x] Industrial_Logs_D30L13
+  - [x] Industrial_Logs_D30L11
+  - [x] Industrial_Logs_D30L8
+  - [x] Industrial_Logs_D20L13
+  - [x] Industrial_Logs_D20L11
+  - [x] Industrial_Logs_D20L8
+  - [x] Industrial_Logs_D125L13
+  - [x] Industrial_Logs_D125L11
+  - [x] Industrial_Logs_D125L8
+  - [x] Industrial_Logs_D125L63
+  - [x] Industrial_Logs_D125L51
+  - [x] Industrial_Logs_D125L5
+  - [x] Industrial_Logs_D305
+  - [x] Industrial_Logs_D254
+  - [x] Industrial_Logs_D203
+  - [x] Industrial_Logs_D178
+  - [x] Industrial_Logs_D152
 - residual-fibre
   - [x] Residual_Chips
   - [x] Residual_Sawdust

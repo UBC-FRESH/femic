@@ -223,6 +223,9 @@ core unattended `/TSR` seam:
 - ``--indicator-bank stand-structure-basic``
 - ``--indicator-bank log-grades``
 - ``--indicator-bank lumber-2-or-better``
+- ``--indicator-bank lumber-graded``
+- ``--indicator-bank lumber-degraded``
+- ``--indicator-bank industrial-logs``
 - ``--indicator-bank residual-fibre``
 
 Current bank contents:
@@ -252,6 +255,73 @@ Current bank contents:
   - ``Lumber_2_or_Better_2x10``
   - ``Lumber_2_or_Better_All``
   - ``LRF_2_or_Better_All``
+- ``lumber-graded``:
+  - ``Lumber_Graded_SS_2x4``
+  - ``Lumber_Graded_SS_2x6``
+  - ``Lumber_Graded_SS_2x8``
+  - ``Lumber_Graded_SS_2x10``
+  - ``Lumber_Graded_1_2x4``
+  - ``Lumber_Graded_1_2x6``
+  - ``Lumber_Graded_1_2x8``
+  - ``Lumber_Graded_1_2x10``
+  - ``Lumber_Graded_2_2x4``
+  - ``Lumber_Graded_2_2x6``
+  - ``Lumber_Graded_2_2x8``
+  - ``Lumber_Graded_2_2x10``
+  - ``Lumber_Graded_3_2x4``
+  - ``Lumber_Graded_3_2x6``
+  - ``Lumber_Graded_3_2x8``
+  - ``Lumber_Graded_3_2x10``
+  - ``Lumber_Graded_4_2x4``
+  - ``Lumber_Graded_4_2x6``
+  - ``Lumber_Graded_4_2x8``
+  - ``Lumber_Graded_4_2x10``
+  - ``Lumber_Graded_All``
+  - ``LRF_Graded_All``
+- ``lumber-degraded``:
+  - ``Lumber_Degraded_SS_2x4``
+  - ``Lumber_Degraded_SS_2x6``
+  - ``Lumber_Degraded_SS_2x8``
+  - ``Lumber_Degraded_SS_2x10``
+  - ``Lumber_Degraded_1_2x4``
+  - ``Lumber_Degraded_1_2x6``
+  - ``Lumber_Degraded_1_2x8``
+  - ``Lumber_Degraded_1_2x10``
+  - ``Lumber_Degraded_2_2x4``
+  - ``Lumber_Degraded_2_2x6``
+  - ``Lumber_Degraded_2_2x8``
+  - ``Lumber_Degraded_2_2x10``
+  - ``Lumber_Degraded_3_2x4``
+  - ``Lumber_Degraded_3_2x6``
+  - ``Lumber_Degraded_3_2x8``
+  - ``Lumber_Degraded_3_2x10``
+  - ``Lumber_Degraded_4_2x4``
+  - ``Lumber_Degraded_4_2x6``
+  - ``Lumber_Degraded_4_2x8``
+  - ``Lumber_Degraded_4_2x10``
+  - ``Lumber_Degraded_All``
+  - ``LRF_Degraded_All``
+- ``industrial-logs``:
+  - ``Industrial_Logs_D38L13``
+  - ``Industrial_Logs_D38L11``
+  - ``Industrial_Logs_D38L8``
+  - ``Industrial_Logs_D30L13``
+  - ``Industrial_Logs_D30L11``
+  - ``Industrial_Logs_D30L8``
+  - ``Industrial_Logs_D20L13``
+  - ``Industrial_Logs_D20L11``
+  - ``Industrial_Logs_D20L8``
+  - ``Industrial_Logs_D125L13``
+  - ``Industrial_Logs_D125L11``
+  - ``Industrial_Logs_D125L8``
+  - ``Industrial_Logs_D125L63``
+  - ``Industrial_Logs_D125L51``
+  - ``Industrial_Logs_D125L5``
+  - ``Industrial_Logs_D305``
+  - ``Industrial_Logs_D254``
+  - ``Industrial_Logs_D203``
+  - ``Industrial_Logs_D178``
+  - ``Industrial_Logs_D152``
 - ``residual-fibre``:
   - ``Residual_Chips``
   - ``Residual_Sawdust``
@@ -279,6 +349,9 @@ Live smoke proof now exists for:
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-basic``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank log-grades``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank lumber-2-or-better``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank lumber-graded``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank lumber-degraded``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank industrial-logs``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank residual-fibre``
 
 That returned a single unattended output CSV with:
@@ -315,6 +388,30 @@ That returned a single unattended output CSV with:
   - ``Lumber_2_or_Better_2x10_*``
   - ``Lumber_2_or_Better_All_*``
   - ``LRF_2_or_Better_All_*``
+- plus the lumber-graded bank:
+  - ``Lumber_Graded_SS_2x4_*``
+  - ``Lumber_Graded_1_2x4_*``
+  - ``Lumber_Graded_2_2x4_*``
+  - ``Lumber_Graded_3_2x4_*``
+  - ``Lumber_Graded_4_2x4_*``
+  - ``Lumber_Graded_All_*``
+  - ``LRF_Graded_All_*``
+- plus the lumber-degraded bank:
+  - ``Lumber_Degraded_SS_2x4_*``
+  - ``Lumber_Degraded_1_2x4_*``
+  - ``Lumber_Degraded_2_2x4_*``
+  - ``Lumber_Degraded_3_2x4_*``
+  - ``Lumber_Degraded_4_2x4_*``
+  - ``Lumber_Degraded_All_*``
+  - ``LRF_Degraded_All_*``
+- plus the industrial-logs bank:
+  - ``Industrial_Logs_D38L13_*``
+  - ``Industrial_Logs_D30L13_*``
+  - ``Industrial_Logs_D20L13_*``
+  - ``Industrial_Logs_D125L13_*``
+  - ``Industrial_Logs_D125L5_*``
+  - ``Industrial_Logs_D305_*``
+  - ``Industrial_Logs_D152_*``
 - plus the residual-fibre bank:
   - ``Residual_Chips_*``
   - ``Residual_Sawdust_*``
