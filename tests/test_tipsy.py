@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import os
 from pathlib import Path
+import re
 import sys
 
 import pandas as pd
@@ -667,6 +668,45 @@ def test_btc_indicator_bank_columns_returns_co2e_bank() -> None:
         "CO2e_Dead_Roots",
         "CO2e_Dead_Total",
         "CO2e_Dead_Above",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_mortality_size_classes_bank() -> None:
+    columns = btc_indicator_bank_columns("mortality-size-classes")
+    assert [column.token for column in columns] == [
+        *(
+            f"Mortality_Stems_Size_Class_{suffix}"
+            for suffix in (5, 15, 25, 35, 45, 55, 65)
+        ),
+        *(
+            f"Mortality_Volume_Size_Class_{suffix}"
+            for suffix in (5, 15, 25, 35, 45, 55, 65)
+        ),
+        *(
+            f"Mortality_VPT_Size_Class_{suffix}"
+            for suffix in (5, 15, 25, 35, 45, 55, 65)
+        ),
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_diameter_class_stems_bank() -> None:
+    columns = btc_indicator_bank_columns("diameter-class-stems")
+    assert [column.token for column in columns] == [
+        *(f"Stems_Diameter_Class_{suffix}" for suffix in range(0, 95, 5))
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_diameter_class_volume_bank() -> None:
+    columns = btc_indicator_bank_columns("diameter-class-volume")
+    assert [column.token for column in columns] == [
+        *(f"Volume_Diameter_Class_{suffix}" for suffix in range(0, 95, 5))
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_diameter_class_vpt_bank() -> None:
+    columns = btc_indicator_bank_columns("diameter-class-vpt")
+    assert [column.token for column in columns] == [
+        *(f"VPT_Diameter_Class_{suffix}" for suffix in range(0, 95, 5))
     ]
 
 
@@ -1388,6 +1428,21 @@ def test_probe_btc_report_columns_ratchets_forward(monkeypatch, tmp_path: Path) 
     assert overlay_path.read_text(encoding="utf-8") == "ORIGINAL OVERLAY\n"
 
 
+def test_btc_build_probe_variants_default_uses_short_ascii_alias() -> None:
+    variants = tipsy_module._btc_build_probe_variants(
+        candidate_column=BTCCustomReportColumn(token="Logs_Grade_D"),
+        install_root=Path("C:/Program Files/TIPSY 4.7/BTC"),
+        variant_strategy="default",
+    )
+
+    assert len(variants) == 1
+    assert variants[0].variant_id == "default"
+    assert re.fullmatch(r"[A-Za-z0-9]{1,8}", variants[0].column.header1_override)
+    assert variants[0].column.header2_override == "{yr}"
+    assert variants[0].column.render().startswith("Logs_Grade_D\t\t")
+    assert variants[0].column.render().endswith("\t{yr}")
+
+
 def test_probe_btc_report_columns_defaults_compatibility_ledger_under_tipsy_logs(
     monkeypatch, tmp_path: Path
 ) -> None:
@@ -1432,6 +1487,19 @@ def test_probe_btc_report_columns_defaults_compatibility_ledger_under_tipsy_logs
     assert (
         tmp_path / "tipsy_io" / "logs" / "probe_defaults_compatibility.json"
     ).is_file()
+
+
+def test_btc_tsr_output_prefixes_accepts_stock_display_headers(tmp_path: Path) -> None:
+    output_csv = tmp_path / "output.csv"
+    output_csv.write_text(
+        "feature_id,Logs (Grade)_10,Mortality Stems (Size Class)_20\n1,2,3\n",
+        encoding="utf-8",
+    )
+
+    prefixes = tipsy_module._btc_tsr_output_prefixes(output_csv)
+
+    assert "Logs (Grade)" in prefixes
+    assert "Mortality Stems (Size Class)" in prefixes
 
 
 def test_probe_btc_indicator_banks_accepts_whole_bank_in_one_run(

@@ -8252,3 +8252,37 @@
     - `planning/tipsy_indicator_bank_checklist.md`
     - `planning/tipsy_tsr_variant_probe_ledger.md`
     - `docs/reference/api/femic-pipeline-tipsy.rst`
+- 2026-03-29 (Issue #48 histogram/class overlay tranche): fixed one real
+  false-negative bug in the live probe harness, then shipped the remaining
+  histogram/class banks through the real user-overlay seam.
+  - Probe harness fix:
+    - default one-token probes now force short ASCII header aliases; and
+    - returned-header detection no longer assumes alnum-only prefixes, so
+      stock BTC headers like `Logs (Grade)_10` are no longer misclassified as
+      missing.
+  - Representative live overlay probes passed for:
+    - `Logs_Grade_D`
+    - `Mortality_Stems_Size_Class_5`
+    - `Mortality_Volume_Size_Class_5`
+    - `Mortality_VPT_Size_Class_5`
+    - `Stems_Diameter_Class_0`
+    - `Volume_Diameter_Class_0`
+    - `VPT_Diameter_Class_0`
+  - Whole-bank live overlay smokes then passed for:
+    - `mortality-size-classes`
+    - `diameter-class-stems`
+    - `diameter-class-volume`
+    - `diameter-class-vpt`
+  - `src/femic/pipeline/tipsy.py` now ships those four additional optional
+    banks, and direct header inspection confirmed returned columns such as:
+    - `Mortality_Stems_Size_Class_5_*`
+    - `Mortality_Volume_Size_Class_5_*`
+    - `Mortality_VPT_Size_Class_5_*`
+    - `Stems_Diameter_Class_0_*`
+    - `Volume_Diameter_Class_0_*`
+    - `VPT_Diameter_Class_0_*`
+  - Planning/docs/checklist surfaces updated:
+    - `planning/tipsy_indicator_bank_checklist.md`
+    - `planning/tipsy_tsr_variant_probe_ledger.md`
+    - `docs/reference/api/femic-pipeline-tipsy.rst`
+    - `ROADMAP.md`

@@ -234,6 +234,10 @@ core unattended `/TSR` seam:
 - ``--indicator-bank biomass-dead``
 - ``--indicator-bank carbon``
 - ``--indicator-bank co2e``
+- ``--indicator-bank mortality-size-classes``
+- ``--indicator-bank diameter-class-stems``
+- ``--indicator-bank diameter-class-volume``
+- ``--indicator-bank diameter-class-vpt``
 
 Current bank contents:
 
@@ -396,6 +400,16 @@ Current bank contents:
   - ``CO2e_Dead_Roots``
   - ``CO2e_Dead_Total``
   - ``CO2e_Dead_Above``
+- ``mortality-size-classes``:
+  - ``Mortality_Stems_Size_Class_{5,15,25,35,45,55,65}``
+  - ``Mortality_Volume_Size_Class_{5,15,25,35,45,55,65}``
+  - ``Mortality_VPT_Size_Class_{5,15,25,35,45,55,65}``
+- ``diameter-class-stems``:
+  - ``Stems_Diameter_Class_{0,5,10,...,90}``
+- ``diameter-class-volume``:
+  - ``Volume_Diameter_Class_{0,5,10,...,90}``
+- ``diameter-class-vpt``:
+  - ``VPT_Diameter_Class_{0,5,10,...,90}``
 
 Important runtime detail:
 
@@ -428,6 +442,10 @@ Live smoke proof now exists for:
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank biomass-dead``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank carbon``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank co2e``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank mortality-size-classes``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank diameter-class-stems``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank diameter-class-volume``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank diameter-class-vpt``
 
 That returned a single unattended output CSV with:
 

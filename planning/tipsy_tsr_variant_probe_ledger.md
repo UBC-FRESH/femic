@@ -408,12 +408,115 @@ Current practical reading:
   `mortality-size-classes`, `diameter-class-stems`,
   `diameter-class-volume`, and `diameter-class-vpt`
 
+## Next Active Histogram / Class Overlay Slice
+
+Retire copied-install probing from the decision path entirely. The only seam
+that matters for shipping eligibility is the real user overlay
+`Documents\BatchTIPSY Composer\TimberSupply.rpt` seam under unattended `/TSR`,
+run sequentially with direct returned-header inspection.
+
+Control first:
+
+1. `Logs_Grade_D`
+
+Representative histogram/class tokens next:
+
+2. `Mortality_Stems_Size_Class_5`
+3. `Mortality_Volume_Size_Class_5`
+4. `Mortality_VPT_Size_Class_5`
+5. `Stems_Diameter_Class_0`
+6. `Volume_Diameter_Class_0`
+7. `VPT_Diameter_Class_0`
+
+Overlay line shape:
+
+- `Token<TAB><TAB><shortascii><TAB>{yr}`
+
+Why this slice:
+
+- it stays on the only proven seam for unattended BTC field discovery;
+- it tests one mortality histogram representative from each major size-class
+  family before trying every sibling field; and
+- it tests one diameter-class representative from each major class family
+  before shipping the four bulky remaining banks.
+
+Decision rule:
+
+- if the representatives pass with real returned age-series headers, expand to
+  whole-bank live overlay smokes for:
+  - `mortality-size-classes`
+  - `diameter-class-stems`
+  - `diameter-class-volume`
+  - `diameter-class-vpt`
+- if they fail, record the exact failure class (`exception` vs `omitted`) and
+  stop broadening that family until the live seam yields a stronger clue.
+
+## Histogram / Class Overlay Result (2026-03-29)
+
+The live overlay seam also unlocked the remaining class/histogram families.
+
+- representative control and reps all passed with real returned age-series
+  headers:
+  - `Logs_Grade_D`
+  - `Mortality_Stems_Size_Class_5`
+  - `Mortality_Volume_Size_Class_5`
+  - `Mortality_VPT_Size_Class_5`
+  - `Stems_Diameter_Class_0`
+  - `Volume_Diameter_Class_0`
+  - `VPT_Diameter_Class_0`
+- while tightening that slice, the probe harness also got one important fix:
+  - default one-token probes now force short ASCII header aliases; and
+  - returned-header detection no longer assumes alnum-only prefixes, so stock
+    BTC headers like `Logs (Grade)_10` are no longer misclassified as missing.
+- based on those representative passes, whole-bank live overlay smokes also
+  passed cleanly for:
+  - `mortality-size-classes`
+  - `diameter-class-stems`
+  - `diameter-class-volume`
+  - `diameter-class-vpt`
+- direct header inspection confirmed returned columns such as:
+  - `Mortality_Stems_Size_Class_5_*`
+  - `Mortality_Volume_Size_Class_5_*`
+  - `Mortality_VPT_Size_Class_5_*`
+  - `Stems_Diameter_Class_0_*`
+  - `Volume_Diameter_Class_0_*`
+  - `VPT_Diameter_Class_0_*`
+
+Current practical reading:
+
+- the live overlay seam is now proven for the bulky histogram/class families
+  too, not just the compact summary/product/ecological banks; and
+- the remaining unresolved canonical families are now the smaller
+  `genetics-fertilization-and-oaf`, `tass-and-site-index-raw`,
+  `stand-structure-threshold-raw`, and the exception-prone `yield-and-age-core`
+  cluster.
+
+## Next Remaining Live-Overlay Slice
+
+The next candidate family should be the compact scalar status banks again, not
+another large class family.
+
+Recommended order:
+
+1. `genetics-fertilization-and-oaf`
+2. `tass-and-site-index-raw`
+3. `stand-structure-threshold-raw`
+4. `yield-and-age-core` last, one token at a time
+
+Representative next tokens to run first:
+
+1. `Genetic_Worth_Mean`
+2. `Fertilization`
+3. `OAF`
+4. `HeightTassMean`
+5. `HeightSindex`
+6. `BasalArea000` / `DBHg:000` only if the threshold-raw alias question is
+   reopened deliberately
+
 ## Variant Rules
 
 - Keep `log-grades` as the standing sanity reprobe before and after major
-  variant-search rounds.
-- For variant exploration, prefer copied-install probing over the live user
-  overlay unless the test specifically needs the real overlay seam.
+  live-overlay probe rounds.
 - Do not ship a new optional bank until a representative token succeeds under
-  a stable variant pattern and siblings in the same family confirm that same
+  the real live overlay seam and siblings in the same family confirm that same
   pattern.

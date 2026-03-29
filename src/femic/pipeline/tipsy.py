@@ -48,6 +48,28 @@ _BTC_PROBE_VARIANT_STRATEGIES = (
 )
 DEFAULT_BTC_LOG_DIR = Path("tipsy_io/logs")
 DEFAULT_BTC_SCRATCH_ROOT = Path("tipsy_io/scratch")
+_BTC_MORTALITY_SIZE_CLASS_SUFFIXES = ("5", "15", "25", "35", "45", "55", "65")
+_BTC_DIAMETER_CLASS_SUFFIXES = (
+    "0",
+    "5",
+    "10",
+    "15",
+    "20",
+    "25",
+    "30",
+    "35",
+    "40",
+    "45",
+    "50",
+    "55",
+    "60",
+    "65",
+    "70",
+    "75",
+    "80",
+    "85",
+    "90",
+)
 _BTC_INDICATOR_BANK_NAMES = (
     "stand-structure-basic",
     "log-grades",
@@ -63,6 +85,10 @@ _BTC_INDICATOR_BANK_NAMES = (
     "biomass-dead",
     "carbon",
     "co2e",
+    "mortality-size-classes",
+    "diameter-class-stems",
+    "diameter-class-volume",
+    "diameter-class-vpt",
 )
 _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
     "stand-structure-basic": (
@@ -237,6 +263,33 @@ _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
         ("CO2e_Dead_Roots", "CO2e_Dead_Roots"),
         ("CO2e_Dead_Total", "CO2e_Dead_Total"),
         ("CO2e_Dead_Above", "CO2e_Dead_Above"),
+    ),
+    "mortality-size-classes": tuple(
+        (f"Mortality_Stems_Size_Class_{suffix}", f"Mortality_Stems_Size_Class_{suffix}")
+        for suffix in _BTC_MORTALITY_SIZE_CLASS_SUFFIXES
+    )
+    + tuple(
+        (
+            f"Mortality_Volume_Size_Class_{suffix}",
+            f"Mortality_Volume_Size_Class_{suffix}",
+        )
+        for suffix in _BTC_MORTALITY_SIZE_CLASS_SUFFIXES
+    )
+    + tuple(
+        (f"Mortality_VPT_Size_Class_{suffix}", f"Mortality_VPT_Size_Class_{suffix}")
+        for suffix in _BTC_MORTALITY_SIZE_CLASS_SUFFIXES
+    ),
+    "diameter-class-stems": tuple(
+        (f"Stems_Diameter_Class_{suffix}", f"Stems_Diameter_Class_{suffix}")
+        for suffix in _BTC_DIAMETER_CLASS_SUFFIXES
+    ),
+    "diameter-class-volume": tuple(
+        (f"Volume_Diameter_Class_{suffix}", f"Volume_Diameter_Class_{suffix}")
+        for suffix in _BTC_DIAMETER_CLASS_SUFFIXES
+    ),
+    "diameter-class-vpt": tuple(
+        (f"VPT_Diameter_Class_{suffix}", f"VPT_Diameter_Class_{suffix}")
+        for suffix in _BTC_DIAMETER_CLASS_SUFFIXES
     ),
 }
 _BTC_OUTPUT_ALIAS_TO_TABLE_COLUMN: dict[str, str] = {
@@ -881,12 +934,26 @@ def _btc_build_probe_variants(
             "Unsupported BTC probe variant strategy "
             f"{variant_strategy!r}. Supported strategies: {supported}"
         )
+    short_alias = _btc_preferred_probe_alias(candidate_column)
     if normalized_strategy == "default":
         return (
             BTCProbeColumnVariant(
                 variant_id="default",
                 label="Generic current probe line",
-                column=candidate_column,
+                column=BTCCustomReportColumn(
+                    token=candidate_column.token,
+                    width=candidate_column.width,
+                    header1_override=short_alias,
+                    header2_override=candidate_column.header2_override or "{yr}",
+                    units_override=candidate_column.units_override,
+                    raw_line=_render_btc_report_column_line(
+                        token=candidate_column.token,
+                        width=None,
+                        header1_override=short_alias,
+                        header2_override=candidate_column.header2_override or "{yr}",
+                        units_override=candidate_column.units_override,
+                    ),
+                ),
             ),
         )
 
@@ -897,8 +964,6 @@ def _btc_build_probe_variants(
     ):
         if alias_token and alias_token not in alias_tokens:
             alias_tokens.append(alias_token)
-    short_alias = _btc_preferred_probe_alias(candidate_column)
-
     variants: list[BTCProbeColumnVariant] = [
         BTCProbeColumnVariant(
             variant_id="generic-transposed",
@@ -1202,12 +1267,12 @@ def _btc_probe_output_present(
 def _btc_tsr_output_prefixes(output_csv: str | Path) -> set[str]:
     output_path = Path(output_csv).expanduser().resolve()
     df = pd.read_csv(output_path, nrows=1)
-    age_pattern = re.compile(r"^(?P<prefix>[A-Za-z0-9_:]+)_(?P<age>\d+)$")
+    age_pattern = re.compile(r"^(?P<prefix>.+)_(?P<age>\d+)$")
     prefixes: set[str] = set()
     for column in df.columns:
         match = age_pattern.match(str(column))
         if match:
-            prefixes.add(match.group("prefix"))
+            prefixes.add(match.group("prefix").strip())
     return prefixes
 
 

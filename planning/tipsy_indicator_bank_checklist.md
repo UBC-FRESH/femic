@@ -175,87 +175,87 @@ Canonical source inventory: `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt`.
   - [x] Mortality_Basal_Area
   - [x] Mortality_Volume_Total
 - mortality-size-classes
-  - [ ] Mortality_Stems_Size_Class_5
-  - [ ] Mortality_Stems_Size_Class_15
-  - [ ] Mortality_Stems_Size_Class_25
-  - [ ] Mortality_Stems_Size_Class_35
-  - [ ] Mortality_Stems_Size_Class_45
-  - [ ] Mortality_Stems_Size_Class_55
-  - [ ] Mortality_Stems_Size_Class_65
-  - [ ] Mortality_Volume_Size_Class_5
-  - [ ] Mortality_Volume_Size_Class_15
-  - [ ] Mortality_Volume_Size_Class_25
-  - [ ] Mortality_Volume_Size_Class_35
-  - [ ] Mortality_Volume_Size_Class_45
-  - [ ] Mortality_Volume_Size_Class_55
-  - [ ] Mortality_Volume_Size_Class_65
-  - [ ] Mortality_VPT_Size_Class_5
-  - [ ] Mortality_VPT_Size_Class_15
-  - [ ] Mortality_VPT_Size_Class_25
-  - [ ] Mortality_VPT_Size_Class_35
-  - [ ] Mortality_VPT_Size_Class_45
-  - [ ] Mortality_VPT_Size_Class_55
-  - [ ] Mortality_VPT_Size_Class_65
+  - [x] Mortality_Stems_Size_Class_5
+  - [x] Mortality_Stems_Size_Class_15
+  - [x] Mortality_Stems_Size_Class_25
+  - [x] Mortality_Stems_Size_Class_35
+  - [x] Mortality_Stems_Size_Class_45
+  - [x] Mortality_Stems_Size_Class_55
+  - [x] Mortality_Stems_Size_Class_65
+  - [x] Mortality_Volume_Size_Class_5
+  - [x] Mortality_Volume_Size_Class_15
+  - [x] Mortality_Volume_Size_Class_25
+  - [x] Mortality_Volume_Size_Class_35
+  - [x] Mortality_Volume_Size_Class_45
+  - [x] Mortality_Volume_Size_Class_55
+  - [x] Mortality_Volume_Size_Class_65
+  - [x] Mortality_VPT_Size_Class_5
+  - [x] Mortality_VPT_Size_Class_15
+  - [x] Mortality_VPT_Size_Class_25
+  - [x] Mortality_VPT_Size_Class_35
+  - [x] Mortality_VPT_Size_Class_45
+  - [x] Mortality_VPT_Size_Class_55
+  - [x] Mortality_VPT_Size_Class_65
 - diameter-class-stems
-  - [ ] Stems_Diameter_Class_0
-  - [ ] Stems_Diameter_Class_5
-  - [ ] Stems_Diameter_Class_10
-  - [ ] Stems_Diameter_Class_15
-  - [ ] Stems_Diameter_Class_20
-  - [ ] Stems_Diameter_Class_25
-  - [ ] Stems_Diameter_Class_30
-  - [ ] Stems_Diameter_Class_35
-  - [ ] Stems_Diameter_Class_40
-  - [ ] Stems_Diameter_Class_45
-  - [ ] Stems_Diameter_Class_50
-  - [ ] Stems_Diameter_Class_55
-  - [ ] Stems_Diameter_Class_60
-  - [ ] Stems_Diameter_Class_65
-  - [ ] Stems_Diameter_Class_70
-  - [ ] Stems_Diameter_Class_75
-  - [ ] Stems_Diameter_Class_80
-  - [ ] Stems_Diameter_Class_85
-  - [ ] Stems_Diameter_Class_90
+  - [x] Stems_Diameter_Class_0
+  - [x] Stems_Diameter_Class_5
+  - [x] Stems_Diameter_Class_10
+  - [x] Stems_Diameter_Class_15
+  - [x] Stems_Diameter_Class_20
+  - [x] Stems_Diameter_Class_25
+  - [x] Stems_Diameter_Class_30
+  - [x] Stems_Diameter_Class_35
+  - [x] Stems_Diameter_Class_40
+  - [x] Stems_Diameter_Class_45
+  - [x] Stems_Diameter_Class_50
+  - [x] Stems_Diameter_Class_55
+  - [x] Stems_Diameter_Class_60
+  - [x] Stems_Diameter_Class_65
+  - [x] Stems_Diameter_Class_70
+  - [x] Stems_Diameter_Class_75
+  - [x] Stems_Diameter_Class_80
+  - [x] Stems_Diameter_Class_85
+  - [x] Stems_Diameter_Class_90
 - diameter-class-volume
-  - [ ] Volume_Diameter_Class_0
-  - [ ] Volume_Diameter_Class_5
-  - [ ] Volume_Diameter_Class_10
-  - [ ] Volume_Diameter_Class_15
-  - [ ] Volume_Diameter_Class_20
-  - [ ] Volume_Diameter_Class_25
-  - [ ] Volume_Diameter_Class_30
-  - [ ] Volume_Diameter_Class_35
-  - [ ] Volume_Diameter_Class_40
-  - [ ] Volume_Diameter_Class_45
-  - [ ] Volume_Diameter_Class_50
-  - [ ] Volume_Diameter_Class_55
-  - [ ] Volume_Diameter_Class_60
-  - [ ] Volume_Diameter_Class_65
-  - [ ] Volume_Diameter_Class_70
-  - [ ] Volume_Diameter_Class_75
-  - [ ] Volume_Diameter_Class_80
-  - [ ] Volume_Diameter_Class_85
-  - [ ] Volume_Diameter_Class_90
+  - [x] Volume_Diameter_Class_0
+  - [x] Volume_Diameter_Class_5
+  - [x] Volume_Diameter_Class_10
+  - [x] Volume_Diameter_Class_15
+  - [x] Volume_Diameter_Class_20
+  - [x] Volume_Diameter_Class_25
+  - [x] Volume_Diameter_Class_30
+  - [x] Volume_Diameter_Class_35
+  - [x] Volume_Diameter_Class_40
+  - [x] Volume_Diameter_Class_45
+  - [x] Volume_Diameter_Class_50
+  - [x] Volume_Diameter_Class_55
+  - [x] Volume_Diameter_Class_60
+  - [x] Volume_Diameter_Class_65
+  - [x] Volume_Diameter_Class_70
+  - [x] Volume_Diameter_Class_75
+  - [x] Volume_Diameter_Class_80
+  - [x] Volume_Diameter_Class_85
+  - [x] Volume_Diameter_Class_90
 - diameter-class-vpt
-  - [ ] VPT_Diameter_Class_0
-  - [ ] VPT_Diameter_Class_5
-  - [ ] VPT_Diameter_Class_10
-  - [ ] VPT_Diameter_Class_15
-  - [ ] VPT_Diameter_Class_20
-  - [ ] VPT_Diameter_Class_25
-  - [ ] VPT_Diameter_Class_30
-  - [ ] VPT_Diameter_Class_35
-  - [ ] VPT_Diameter_Class_40
-  - [ ] VPT_Diameter_Class_45
-  - [ ] VPT_Diameter_Class_50
-  - [ ] VPT_Diameter_Class_55
-  - [ ] VPT_Diameter_Class_60
-  - [ ] VPT_Diameter_Class_65
-  - [ ] VPT_Diameter_Class_70
-  - [ ] VPT_Diameter_Class_75
-  - [ ] VPT_Diameter_Class_80
-  - [ ] VPT_Diameter_Class_85
-  - [ ] VPT_Diameter_Class_90
+  - [x] VPT_Diameter_Class_0
+  - [x] VPT_Diameter_Class_5
+  - [x] VPT_Diameter_Class_10
+  - [x] VPT_Diameter_Class_15
+  - [x] VPT_Diameter_Class_20
+  - [x] VPT_Diameter_Class_25
+  - [x] VPT_Diameter_Class_30
+  - [x] VPT_Diameter_Class_35
+  - [x] VPT_Diameter_Class_40
+  - [x] VPT_Diameter_Class_45
+  - [x] VPT_Diameter_Class_50
+  - [x] VPT_Diameter_Class_55
+  - [x] VPT_Diameter_Class_60
+  - [x] VPT_Diameter_Class_65
+  - [x] VPT_Diameter_Class_70
+  - [x] VPT_Diameter_Class_75
+  - [x] VPT_Diameter_Class_80
+  - [x] VPT_Diameter_Class_85
+  - [x] VPT_Diameter_Class_90
 - biomass-live
   - [x] Biomass_Live_Wood
   - [x] Biomass_Live_Bark

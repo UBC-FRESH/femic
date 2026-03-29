@@ -7967,8 +7967,14 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - probe those fields incrementally against the real live overlay seam
           so we preserve the hidden stock `TimberSupply.rpt` contract and avoid
           false negatives from oversized all-fields replacements;
-        - next active slice:
-          - `yield-and-age-core` now appears incompatible with the unattended
+        - current live-overlay rule:
+          - only the real user-overlay
+            `Documents\BatchTIPSY Composer\TimberSupply.rpt` seam counts as
+            decision-making evidence for unattended `/TSR` eligibility;
+          - run those probes sequentially and inspect the returned output
+            headers directly before shipping a bank.
+        - prior evidence still worth keeping in view:
+          - `yield-and-age-core` appears incompatible with the unattended
             transposed `/TSR` seam:
             - the whole-bank batch probe failed; and
             - fallback one-token probes also failed for `Year`, then again for
@@ -7978,27 +7984,60 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
               `HeightTassMean`, `HeightTassPredom`);
             - those failures all showed the same BTC exception signature:
               `exit_code=1`, no output file, and auto-closed modal dialog.
-          - move on to `crop250-stand-quality` as the next compact candidate
-            bank after the failed `yield-and-age-core` probe cluster;
-          - current sweep result across the remaining canonical
-            `OutputColumns.txt` banks:
-            - `crop250-stand-quality`, `mortality-summary`,
-              `genetics-fertilization-and-oaf`, `tass-and-site-index-raw`,
-              `crown-and-fire`, `biomass-live`, `biomass-dead`, `carbon`,
-              `co2e`, `mortality-size-classes`, `diameter-class-stems`,
-              `diameter-class-volume`, and `diameter-class-vpt` all completed
-              BTC `/TSR` runs with output files present, but the requested
-              columns were silently omitted from the returned CSVs;
-            - `stand-structure-threshold-raw` also omitted all canonical raw
-              `OutputColumns.txt` names, while the previously landed stand
-              structure bank still works through the older report-token layer
-              (`BasalArea:000`, `DBHg:000`, `SPH:000`), so that family now
-              looks like a naming-layer mismatch rather than a broken seam;
-            - sanity-check reprobe:
-              - the current probe harness still cleanly reprobes `log-grades`
-                end to end, so these failures should be treated as real seam
-                selectivity, not as evidence that the probe logic itself has
-                regressed.
+          - the live user-overlay seam has now cleanly shipped:
+            - `log-grades`
+            - `lumber-2-or-better`
+            - `residual-fibre`
+            - `lumber-graded`
+            - `lumber-degraded`
+            - `industrial-logs`
+            - `mortality-summary`
+            - `crop250-stand-quality`
+            - `crown-and-fire`
+            - `biomass-live`
+            - `biomass-dead`
+            - `carbon`
+            - `co2e`
+        - next active slice:
+          - the histogram/class tranche is now shipped too:
+            - representative live overlay probes passed for:
+              - `Logs_Grade_D`
+              - `Mortality_Stems_Size_Class_5`
+              - `Mortality_Volume_Size_Class_5`
+              - `Mortality_VPT_Size_Class_5`
+              - `Stems_Diameter_Class_0`
+              - `Volume_Diameter_Class_0`
+              - `VPT_Diameter_Class_0`
+            - whole-bank live overlay smokes then passed for:
+              - `mortality-size-classes`
+              - `diameter-class-stems`
+              - `diameter-class-volume`
+              - `diameter-class-vpt`
+            - direct header inspection confirmed returned canonical bank aliases
+              such as:
+              - `Mortality_Stems_Size_Class_5_*`
+              - `Stems_Diameter_Class_0_*`
+              - `Volume_Diameter_Class_0_*`
+              - `VPT_Diameter_Class_0_*`
+          - the probe harness also needed one real fix during this slice:
+            - default one-token probes now force short ASCII header aliases; and
+            - output-header detection no longer assumes alnum-only prefixes,
+              which was falsely classifying stock BTC headers like
+              `Logs (Grade)_10` as missing.
+          - current remaining unresolved families:
+            - `genetics-fertilization-and-oaf`
+            - `tass-and-site-index-raw`
+            - `stand-structure-threshold-raw`
+            - `yield-and-age-core`
+          - next remaining live-overlay slice:
+            - start with compact scalar/status tokens, not another bulky bank:
+              - `Genetic_Worth_Mean`
+              - `Fertilization`
+              - `OAF`
+            - `HeightTassMean`
+            - `HeightSindex`
+            - only reopen `stand-structure-threshold-raw` deliberately through
+              alias/report-token comparisons if the smaller scalar banks stall.
           - the next productive step after this sweep is no longer "probe more
             canonical banks blindly"; it is to add a depth-first variant probe
             matrix for a smaller number of representative high-value tokens:
