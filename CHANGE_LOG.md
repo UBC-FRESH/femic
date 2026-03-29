@@ -8579,3 +8579,21 @@
       rows currently look truly load-critical;
     - the other major sections tested so far are optional for basic regime
       loading.
+- 2026-03-29 (Issue #59): clarified the minimum FAN$IER batch-report contract
+  beyond mere regime import.
+  - Confirmed from `frmBatch.UpdateStatus(...)` and `cmdBatch_Click(...)` that
+    batch mode can run without separate `.eco` files when `Use defaults` is
+    selected.
+  - Confirmed the practical regime-only batch minimums are:
+    - one loaded regime
+    - one checked discount-assumptions set
+    - one selected product
+    - one selected age
+    - valid report path / report type
+  - Confirmed the built-in default discount set is:
+    - `Fansier Defaults   (Discount Rate = 2%)`
+  - Confirmed from `frmDiscountAssumptions` that FAN$IER explicitly allows:
+    - `0%` discount rate
+    - `0%` reinvestment rate
+  - This keeps the preferred FEMIC null-discount extraction posture viable even
+    if FAN$IER remains part of the reporting path.

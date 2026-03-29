@@ -8730,6 +8730,17 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - one `*Product` block with one subtype column and one aligned row
       - a zero-row regime is below FAN$IER's UI floor and crashes later in the
         harvest-age selector path.
+      - batch mode is now confirmed to have a regime-only path:
+        - `Use defaults` allows batch execution without separate `.eco` files
+        - practical batch minimums are:
+          - one regime
+          - one checked discount-assumptions set
+          - one product selection
+          - one age selection
+          - valid output path and report type
+      - null-rate economics is not blocked by FAN$IER:
+        - the shipped discount-assumptions editor explicitly allows
+          `0%` discount and `0%` reinvestment rates.
       - if FAN$IER output extraction becomes viable, prefer null-rate
         (`0` discount) report generation so FEMIC can own any downstream
         discounting logic instead of depending on FAN$IER's built-in

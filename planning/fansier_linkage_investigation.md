@@ -278,6 +278,44 @@ Current best read
 - FEMIC can likely harvest batch outputs deterministically once produced,
   because report naming is explicit and machine-friendly.
 
+## Batch Report Minimums (Code-Backed)
+
+From `Fansier.frmBatch.UpdateStatus(...)` and `cmdBatch_Click(...)`:
+
+- Batch mode can run with no `.eco` files if `Use defaults` is selected.
+- In that mode, the practical minimum report prerequisites are:
+  - at least one loaded regime in `lstRegime`
+  - at least one checked discount-assumptions set in `lstSettings`
+  - at least one selected product group / product view
+  - at least one selected harvest-age option
+  - a valid writable report path
+  - one selected report type (`txt`, `csv`, or `pdf`)
+- The built-in default discount assumptions set is:
+  - `Fansier Defaults   (Discount Rate = 2%)`
+
+Interpretation
+
+- A separate `.eco` file is not inherently required for batch reporting.
+- That makes regime-only batch experiments plausible once we move from import
+  testing to useful output testing.
+
+### Null-discount feasibility
+
+From `Fansier.frmDiscountAssumptions`:
+
+- discount rate is editable and clamped to:
+  - minimum `0%`
+  - maximum `30%`
+- reinvestment rate is editable and clamped to:
+  - minimum `0%`
+  - maximum `10%`
+
+Interpretation
+
+- FAN$IER explicitly allows a `0%` discount rate and a `0%` reinvestment rate.
+- So the preferred FEMIC posture of extracting raw/null-discount outputs is
+  compatible with the shipped FAN$IER discount-assumptions editor.
+
 ## What Is Still Unproven
 
 - fully unattended headless FAN$IER batch execution
@@ -320,7 +358,13 @@ Current best read
    - `BatchPath`
    - report type / short/long toggles
 4. Inspect whether any remaining decompiled startup branch can auto-open
-   batch mode or consume temp `.rgm` files without manual navigation.
+    batch mode or consume temp `.rgm` files without manual navigation.
 5. If batch extraction becomes reachable, validate whether a null-discount
    configuration is sufficient to treat FAN$IER as a raw economics extractor
    while leaving discounting entirely to downstream FEMIC analysis.
+6. Shift the next live probe from importability to report usefulness:
+   - load the current ultramin one-row regime
+   - open batch mode with `Use defaults`
+   - add or edit a `0%` discount-assumptions set
+   - see whether FAN$IER can emit short/long reports from that minimal regime
+     without requiring a separate `.eco`
