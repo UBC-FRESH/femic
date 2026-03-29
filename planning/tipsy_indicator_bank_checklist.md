@@ -1,38 +1,31 @@
 # TIPSY Indicator Bank Checklist
 
-Source inventory: `planning/AllFieldsSQL.rpt`.
+Canonical source inventory: `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt`.
 
-- `[x]` means the indicator family is already surfaced in FEMIC through a
-  shipped BTC path.
-- `[ ]` means the indicator is still only in the planning inventory.
-- This checklist is grouped into candidate bank names for rollout planning; the
-  bank names are planning buckets, not proof that every column in that bucket
-  is `/TSR` safe yet.
-- The current `stand-structure-basic` bank is represented here at the family
-  level from `AllFieldsSQL.rpt`; the shipped bank uses the richer BTC tokens
-  `BasalArea:000`, `DBHg:000`, `SPH:000`, `StemCount000`, `StemCount125`, and
-  `StemCount175` in code.
-- Cross-reference note:
-  - installed BTC field maps checked on 2026-03-29:
-    - `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt`
-    - `C:\Program Files\TIPSY 4.7\BTC\btpfields.txt`
-  - `btpfields.txt` appears to be an input/BTP field map, not an output-column
-    inventory.
-  - `OutputColumns.txt` includes additional output names that are not present in
-    `AllFieldsSQL.rpt`; those are captured in the supplemental section at the
-    end of this file so they do not get lost.
+- `[x]` means the indicator is already surfaced in FEMIC through a shipped BTC
+  path.
+- `[ ]` means the indicator is still only in planning inventory.
+- This checklist is now grouped from the installed BTC `OutputColumns.txt`
+  field map, not from the older GUI-built `AllFieldsSQL.rpt` report template
+  attempt.
+- `planning/AllFieldsSQL.rpt` is still useful as a secondary reference for
+  GUI-visible aliases and report-template experimentation, but it is not the
+  canonical output-field ledger.
+- The current shipped `stand-structure-basic` bank still uses the richer BTC
+  report tokens `BasalArea:000`, `DBHg:000`, and `SPH:000` in code; the
+  canonical checklist below tracks the underlying BTC output families they map
+  onto.
 
 - stand-structure-basic
   - [x] MAI
   - [x] BasalArea
   - [x] DBHg
   - [x] SPH
+  - [x] StemCount000
+  - [x] StemCount125
+  - [x] StemCount175
 - yield-and-age-core
   - [ ] Year
-  - [ ] Volume:Auto:Con
-  - [ ] Volume:Auto:Dec
-  - [ ] Height:Auto:Con
-  - [ ] Height:Auto:Dec
   - [ ] TotalAge
   - [ ] BHAge
   - [ ] StandAge
@@ -54,23 +47,37 @@ Source inventory: `planning/AllFieldsSQL.rpt`.
   - [ ] OAFmortality
   - [ ] OAFimpact
   - [ ] OAF
+- stand-structure-threshold-raw
+  - [ ] Volume000
+  - [ ] Volume125
+  - [ ] Volume175
+  - [ ] BasalArea000
+  - [ ] BasalArea125
+  - [ ] BasalArea175
+  - [ ] MeanDBHg000
+  - [ ] MeanDBHg125
+  - [ ] MeanDBHg175
+  - [ ] MAI000
+  - [ ] MAI125
+  - [ ] MAI175
+  - [ ] VPT000
+  - [ ] VPT125
+  - [ ] VPT175
+  - [ ] Juvenille_Volume000
+  - [ ] Juvenille_Volume125
+  - [ ] Juvenille_Volume175
+  - [ ] Juvenille_Percent000
+  - [ ] Juvenille_Percent125
+  - [ ] Juvenille_Percent175
+- tass-and-site-index-raw
+  - [ ] YearTASS_Base
+  - [ ] HeightSindex_Base
+  - [ ] YearTASS_Full
+  - [ ] HeightSindex_Full
 - crop250-stand-quality
   - [ ] Crop250VolUtil125
   - [ ] Crop250DBHgMean
   - [ ] Crop250LiveCrown
-- lumber-2-or-better
-  - [x] Lumber_2_or_Better_2x4
-  - [x] Lumber_2_or_Better_2x6
-  - [x] Lumber_2_or_Better_2x8
-  - [x] Lumber_2_or_Better_2x10
-  - [x] Lumber_2_or_Better_All
-  - [x] LRF_2_or_Better_All
-- residual-fibre
-  - [x] Residual_Chips
-  - [x] Residual_Sawdust
-  - [x] Residual_Shavings
-  - [x] Residual_Trim
-  - [x] Residual_Bark
 - log-grades
   - [x] Logs_Grade_D
   - [x] Logs_Grade_F
@@ -81,6 +88,86 @@ Source inventory: `planning/AllFieldsSQL.rpt`.
   - [x] Logs_Grade_X
   - [x] Logs_Grade_Y
   - [x] Logs_Grade_All
+- lumber-2-or-better
+  - [x] Lumber_2_or_Better_2x4
+  - [x] Lumber_2_or_Better_2x6
+  - [x] Lumber_2_or_Better_2x8
+  - [x] Lumber_2_or_Better_2x10
+  - [x] Lumber_2_or_Better_All
+  - [x] LRF_2_or_Better_All
+- lumber-graded
+  - [ ] Lumber_Graded_SS_2x4
+  - [ ] Lumber_Graded_SS_2x6
+  - [ ] Lumber_Graded_SS_2x8
+  - [ ] Lumber_Graded_SS_2x10
+  - [ ] Lumber_Graded_1_2x4
+  - [ ] Lumber_Graded_1_2x6
+  - [ ] Lumber_Graded_1_2x8
+  - [ ] Lumber_Graded_1_2x10
+  - [ ] Lumber_Graded_2_2x4
+  - [ ] Lumber_Graded_2_2x6
+  - [ ] Lumber_Graded_2_2x8
+  - [ ] Lumber_Graded_2_2x10
+  - [ ] Lumber_Graded_3_2x4
+  - [ ] Lumber_Graded_3_2x6
+  - [ ] Lumber_Graded_3_2x8
+  - [ ] Lumber_Graded_3_2x10
+  - [ ] Lumber_Graded_4_2x4
+  - [ ] Lumber_Graded_4_2x6
+  - [ ] Lumber_Graded_4_2x8
+  - [ ] Lumber_Graded_4_2x10
+  - [ ] Lumber_Graded_All
+  - [ ] LRF_Graded_All
+- lumber-degraded
+  - [ ] Lumber_Degraded_SS_2x4
+  - [ ] Lumber_Degraded_SS_2x6
+  - [ ] Lumber_Degraded_SS_2x8
+  - [ ] Lumber_Degraded_SS_2x10
+  - [ ] Lumber_Degraded_1_2x4
+  - [ ] Lumber_Degraded_1_2x6
+  - [ ] Lumber_Degraded_1_2x8
+  - [ ] Lumber_Degraded_1_2x10
+  - [ ] Lumber_Degraded_2_2x4
+  - [ ] Lumber_Degraded_2_2x6
+  - [ ] Lumber_Degraded_2_2x8
+  - [ ] Lumber_Degraded_2_2x10
+  - [ ] Lumber_Degraded_3_2x4
+  - [ ] Lumber_Degraded_3_2x6
+  - [ ] Lumber_Degraded_3_2x8
+  - [ ] Lumber_Degraded_3_2x10
+  - [ ] Lumber_Degraded_4_2x4
+  - [ ] Lumber_Degraded_4_2x6
+  - [ ] Lumber_Degraded_4_2x8
+  - [ ] Lumber_Degraded_4_2x10
+  - [ ] Lumber_Degraded_All
+  - [ ] LRF_Degraded_All
+- industrial-logs
+  - [ ] Industrial_Logs_D38L13
+  - [ ] Industrial_Logs_D38L11
+  - [ ] Industrial_Logs_D38L8
+  - [ ] Industrial_Logs_D30L13
+  - [ ] Industrial_Logs_D30L11
+  - [ ] Industrial_Logs_D30L8
+  - [ ] Industrial_Logs_D20L13
+  - [ ] Industrial_Logs_D20L11
+  - [ ] Industrial_Logs_D20L8
+  - [ ] Industrial_Logs_D125L13
+  - [ ] Industrial_Logs_D125L11
+  - [ ] Industrial_Logs_D125L8
+  - [ ] Industrial_Logs_D125L63
+  - [ ] Industrial_Logs_D125L51
+  - [ ] Industrial_Logs_D125L5
+  - [ ] Industrial_Logs_D305
+  - [ ] Industrial_Logs_D254
+  - [ ] Industrial_Logs_D203
+  - [ ] Industrial_Logs_D178
+  - [ ] Industrial_Logs_D152
+- residual-fibre
+  - [x] Residual_Chips
+  - [x] Residual_Sawdust
+  - [x] Residual_Shavings
+  - [x] Residual_Trim
+  - [x] Residual_Bark
 - mortality-summary
   - [ ] Mortality_Stems
   - [ ] Mortality_DBHg_Mean
@@ -185,109 +272,6 @@ Source inventory: `planning/AllFieldsSQL.rpt`.
   - [ ] Biomass_Dead_Roots
   - [ ] Biomass_Dead_Total
   - [ ] Biomass_Dead_Above
-- crown-and-canopy
-  - [ ] mean_height_to_crown_base
-  - [ ] mean_crown_length
-  - [ ] last
-- lumber-graded
-  - [ ] Lumber_Graded_SS_2x4
-  - [ ] Lumber_Graded_SS_2x6
-  - [ ] Lumber_Graded_SS_2x8
-  - [ ] Lumber_Graded_SS_2x10
-  - [ ] Lumber_Graded_1_2x4
-  - [ ] Lumber_Graded_1_2x6
-  - [ ] Lumber_Graded_1_2x8
-  - [ ] Lumber_Graded_1_2x10
-  - [ ] Lumber_Graded_2_2x4
-  - [ ] Lumber_Graded_2_2x6
-  - [ ] Lumber_Graded_2_2x8
-  - [ ] Lumber_Graded_2_2x10
-  - [ ] Lumber_Graded_3_2x4
-  - [ ] Lumber_Graded_3_2x6
-  - [ ] Lumber_Graded_3_2x8
-  - [ ] Lumber_Graded_3_2x10
-  - [ ] Lumber_Graded_4_2x4
-  - [ ] Lumber_Graded_4_2x6
-  - [ ] Lumber_Graded_4_2x8
-  - [ ] Lumber_Graded_4_2x10
-  - [ ] Lumber_Graded_All
-  - [ ] LRF_Graded_All
-- lumber-degraded
-  - [ ] Lumber_Degraded_SS_2x4
-  - [ ] Lumber_Degraded_SS_2x6
-  - [ ] Lumber_Degraded_SS_2x8
-  - [ ] Lumber_Degraded_SS_2x10
-  - [ ] Lumber_Degraded_1_2x4
-  - [ ] Lumber_Degraded_1_2x6
-  - [ ] Lumber_Degraded_1_2x8
-  - [ ] Lumber_Degraded_1_2x10
-  - [ ] Lumber_Degraded_2_2x4
-  - [ ] Lumber_Degraded_2_2x6
-  - [ ] Lumber_Degraded_2_2x8
-  - [ ] Lumber_Degraded_2_2x10
-  - [ ] Lumber_Degraded_3_2x4
-  - [ ] Lumber_Degraded_3_2x6
-  - [ ] Lumber_Degraded_3_2x8
-  - [ ] Lumber_Degraded_3_2x10
-  - [ ] Lumber_Degraded_4_2x4
-  - [ ] Lumber_Degraded_4_2x6
-  - [ ] Lumber_Degraded_4_2x8
-  - [ ] Lumber_Degraded_4_2x10
-  - [ ] Lumber_Degraded_All
-  - [ ] LRF_Degraded_All
-- industrial-logs
-  - [ ] Industrial_Logs_D38L13
-  - [ ] Industrial_Logs_D38L11
-  - [ ] Industrial_Logs_D38L8
-  - [ ] Industrial_Logs_D30L13
-  - [ ] Industrial_Logs_D30L11
-  - [ ] Industrial_Logs_D30L8
-  - [ ] Industrial_Logs_D20L13
-  - [ ] Industrial_Logs_D20L11
-  - [ ] Industrial_Logs_D20L8
-  - [ ] Industrial_Logs_D125L13
-  - [ ] Industrial_Logs_D125L11
-  - [ ] Industrial_Logs_D125L8
-  - [ ] Industrial_Logs_D125L63
-  - [ ] Industrial_Logs_D125L51
-  - [ ] Industrial_Logs_D125L5
-  - [ ] Industrial_Logs_D305
-  - [ ] Industrial_Logs_D254
-  - [ ] Industrial_Logs_D203
-  - [ ] Industrial_Logs_D178
-  - [ ] Industrial_Logs_D152
-
-## Supplemental OutputColumns-Only Fields
-
-These fields were found in the installed BTC `OutputColumns.txt` field map but
-do not appear in `planning/AllFieldsSQL.rpt`.
-
-- stand-structure-threshold-raw
-  - [x] BasalArea000
-  - [ ] BasalArea125
-  - [ ] BasalArea175
-  - [x] MeanDBHg000
-  - [ ] MeanDBHg125
-  - [ ] MeanDBHg175
-  - [x] StemCount000
-  - [x] StemCount125
-  - [x] StemCount175
-  - [ ] Volume000
-  - [ ] Volume125
-  - [ ] Volume175
-  - [ ] MAI000
-  - [ ] MAI125
-  - [ ] MAI175
-  - [ ] VPT000
-  - [ ] VPT125
-  - [ ] VPT175
-- juvenile-threshold-raw
-  - [ ] Juvenille_Volume000
-  - [ ] Juvenille_Volume125
-  - [ ] Juvenille_Volume175
-  - [ ] Juvenille_Percent000
-  - [ ] Juvenille_Percent125
-  - [ ] Juvenille_Percent175
 - carbon
   - [ ] Carbon_Live_Wood
   - [ ] Carbon_Live_Bark
@@ -318,15 +302,12 @@ do not appear in `planning/AllFieldsSQL.rpt`.
   - [ ] CO2e_Dead_Roots
   - [ ] CO2e_Dead_Total
   - [ ] CO2e_Dead_Above
-- crown-and-fire-supplemental
+- crown-and-fire
   - [ ] CrownCover
+  - [ ] mean_height_to_crown_base
+  - [ ] mean_crown_length
   - [ ] Crown_Bulk_Density
-- btc-internal-raw-variants
-  - [ ] HeightSindex_Base
-  - [ ] HeightSindex_Full
-  - [ ] YearTASS_Base
-  - [ ] YearTASS_Full
-- allfields-only-aliases-or-report-specific-names
+- allfields-only-aliases-or-noncanonical-gui-names
   - [ ] Volume:Auto:Con
   - [ ] Volume:Auto:Dec
   - [ ] Height:Auto:Con

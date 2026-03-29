@@ -7685,6 +7685,9 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     `intensive_*` K3Z pattern used for the stand-structure bank;
   - add a durable field-inventory ledger so optional-bank scope does not drift
     between turns.
+  - treat the installed BTC `OutputColumns.txt` field map as the canonical
+    indicator inventory for that ledger; keep `planning/AllFieldsSQL.rpt` only
+    as a secondary GUI/report-template reference for alias discovery.
   - first new post-stand-structure bank result now in hand:
     - the full `log-grades` family (`D/F/H/I/J/U/X/Y/All`) probes cleanly
       through the live unattended `/TSR` overlay seam and is the next shipped
@@ -7692,6 +7695,9 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - the `lumber-2-or-better` family and `residual-fibre` family also probe
       cleanly through that same seam, so the first product-oriented rollout can
       land as a small cluster of proven banks rather than a one-bank bottleneck.
+  - issue `#48` should now be treated as the umbrella tracker for finishing all
+    remaining logical banks from the canonical ledger, not just the earlier
+    first-wave product families.
   - operator-supervision cleanup to land alongside this work:
     - move BTC/TIPSY CLI default runtime artifacts from `vdyp_io/logs` into
       `tipsy_io/logs`, with default scratch under `tipsy_io/scratch`, so
@@ -7929,20 +7935,32 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - Current implementation order:
         - keep GitHub issue `#48` as the governing tracker for this slice;
         - maintain `planning/tipsy_indicator_bank_checklist.md` as the running
-          field ledger derived from `planning/AllFieldsSQL.rpt`, checking items
-          off only when they are actually surfaced through a shipped FEMIC BTC
-          path;
+          field ledger derived from installed BTC `OutputColumns.txt`, checking
+          items off only when they are actually surfaced through a shipped
+          FEMIC BTC path;
+        - keep `planning/AllFieldsSQL.rpt` only as a side reference for
+          noncanonical GUI-visible aliases (`Volume:Auto:Con`, etc.), not as
+          the primary output inventory;
         - use logical bank groupings rather than one issue per bank, with the
-          current first implementation candidates being:
-          - `log-grades`
-          - `lumber-2-or-better`
+          current remaining implementation candidates including:
+          - `yield-and-age-core`
+          - `genetics-fertilization-and-oaf`
+          - `stand-structure-threshold-raw`
+          - `tass-and-site-index-raw`
+          - `crop250-stand-quality`
           - `lumber-graded`
           - `lumber-degraded`
           - `industrial-logs`
-          - `residual-fibre`
-          and later extension candidates including the supplemental
-          `OutputColumns.txt` families such as Carbon / CO2e and the threshold
-          raw aliases;
+          - `mortality-summary`
+          - `mortality-size-classes`
+          - `diameter-class-stems`
+          - `diameter-class-volume`
+          - `diameter-class-vpt`
+          - `biomass-live`
+          - `biomass-dead`
+          - `carbon`
+          - `co2e`
+          - `crown-and-fire`;
         - probe those fields incrementally against the real live overlay seam
           so we preserve the hidden stock `TimberSupply.rpt` contract and avoid
           false negatives from oversized all-fields replacements;

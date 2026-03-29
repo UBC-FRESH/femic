@@ -8083,3 +8083,21 @@
   - docs now explicitly warn that live unattended `/TSR` overlay smokes are
     sequential-only because they share the same per-user `TimberSupply.rpt`
     seam.
+- 2026-03-29 (Issue #48 checklist reset to canonical BTC field map): rewrote
+  the optional-bank ledger so it is now driven by installed BTC
+  `OutputColumns.txt` rather than the older GUI-built `AllFieldsSQL.rpt`
+  approximation.
+  - `planning/tipsy_indicator_bank_checklist.md` now groups the full canonical
+    BTC output inventory into logical bank buckets, with every real
+    `OutputColumns.txt` token represented exactly once.
+  - `planning/AllFieldsSQL.rpt` is now treated only as a secondary alias/report
+    template reference instead of the source-of-truth inventory.
+  - The only currently known `AllFieldsSQL.rpt`-only noncanonical names are:
+    - `Volume:Auto:Con`
+    - `Volume:Auto:Dec`
+    - `Height:Auto:Con`
+    - `Height:Auto:Dec`
+    - `last`
+  - `ROADMAP.md` and issue `#48` were widened accordingly so the active task is
+    now “finish the remaining logical banks from the canonical ledger,” not
+    only the earlier first-wave product families.
