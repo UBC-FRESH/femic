@@ -169,6 +169,23 @@ One critical reverse-engineering result must not be lost:
   plain installed ``/TSR`` run successfully while still extending the output
   surface
 
+For unattended FEMIC BTC work, this live user-overlay path is the **only
+known-valid `/TSR` seam**. Treat that as an operating constraint, not as a soft
+preference.
+
+One adjacent negative result is also now important enough to document here:
+
+- the undocumented BTC ``/No_GUI`` switch is **not** a proven FEMIC runtime
+  seam
+- runtime probes and direct decompilation both indicate that ``/No_GUI`` acts
+  as a visibility toggle rather than a useful execution trigger
+- plain ``/No_GUI <project>.btc`` loads passive project state into a hidden
+  BTC session but does not automatically process or export anything
+- ``/TSR`` and ``/FLP`` remain the only proven useful command-line execution
+  triggers for unattended FEMIC BTC work
+- if another hidden execution seam exists, it is more likely to be another
+  startup trigger than a post-launch control channel
+
 This matters because early copied-install/generated-template probes were too
 pessimistic. They were useful clues, but they were not exercising the most
 faithful live `/TSR` seam. The safest unattended extension path is now:
@@ -179,6 +196,14 @@ faithful live `/TSR` seam. The safest unattended extension path is now:
 
 Do not assume a clean-room generated replacement template is equivalent to the
 stock report contract just because the visible fields look similar.
+
+Do not treat the following as decision-making proof for unattended FEMIC
+``/TSR`` behavior:
+
+- copied-install-local ``TimberSupply.rpt`` overrides
+- stock-report swaps done outside the live user Documents overlay
+- probes that do not explicitly pass through
+  ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt``
 
 FEMIC now resolves that overlay path generically from the current user's
 Windows Documents directory instead of relying on a machine-specific OneDrive
@@ -213,24 +238,257 @@ So the main compatibility rule appears to be structural:
   deal
 - some earlier failures were seam-mismatch artifacts, not proof that the
   columns were impossible through unattended ``/TSR``
+- when BTC exposes the same metric at ``000``, ``125``, and ``175`` top-
+  diameter merchantable cutoffs, FEMIC should treat that triplet as an atomic
+  bank-design unit so downstream forest-model users can compare the delta
+  between thresholds rather than being stranded with only one cutoff surface
 
-First Optional Unattended Indicator Bank
-----------------------------------------
+Optional Unattended Indicator Banks
+-----------------------------------
 
-FEMIC now has a first real optional BTC indicator-bank switch on top of the
+FEMIC now has real optional BTC indicator-bank switches on top of the
 core unattended `/TSR` seam:
 
 - ``--indicator-bank stand-structure-basic``
+- ``--indicator-bank stand-structure-threshold-raw``
+- ``--indicator-bank yield-and-age-core``
+- ``--indicator-bank genetics-fertilization-and-oaf``
+- ``--indicator-bank tass-and-site-index-raw``
+- ``--indicator-bank log-grades``
+- ``--indicator-bank lumber-2-or-better``
+- ``--indicator-bank lumber-graded``
+- ``--indicator-bank lumber-degraded``
+- ``--indicator-bank industrial-logs``
+- ``--indicator-bank residual-fibre``
+- ``--indicator-bank mortality-summary``
+- ``--indicator-bank crop250-stand-quality``
+- ``--indicator-bank crown-and-fire``
+- ``--indicator-bank biomass-live``
+- ``--indicator-bank biomass-dead``
+- ``--indicator-bank carbon``
+- ``--indicator-bank co2e``
+- ``--indicator-bank mortality-size-classes``
+- ``--indicator-bank diameter-class-stems``
+- ``--indicator-bank diameter-class-volume``
+- ``--indicator-bank diameter-class-vpt``
 
 Current bank contents:
 
-- ``MAI``
-- ``BasalArea:000``
-- ``DBHg:000``
-- ``SPH:000``
-- ``StemCount000``
-- ``StemCount125``
-- ``StemCount175``
+- ``stand-structure-basic``:
+  - ``MAI``
+  - ``BasalArea:000``
+  - ``DBHg:000``
+  - ``SPH:000``
+  - ``StemCount000``
+  - ``StemCount125``
+  - ``StemCount175``
+- ``stand-structure-threshold-raw``:
+  - ``Volume000``
+  - ``Volume125``
+  - ``Volume175``
+  - ``BasalArea000``
+  - ``BasalArea125``
+  - ``BasalArea175``
+  - ``MeanDBHg000``
+  - ``MeanDBHg125``
+  - ``MeanDBHg175``
+  - ``MAI000``
+  - ``MAI125``
+  - ``MAI175``
+  - ``VPT000``
+  - ``VPT125``
+  - ``VPT175``
+  - ``Juvenille_Volume000``
+  - ``Juvenille_Volume125``
+  - ``Juvenille_Volume175``
+  - ``Juvenille_Percent000``
+  - ``Juvenille_Percent125``
+  - ``Juvenille_Percent175``
+- ``yield-and-age-core``:
+  - ``Year``
+  - ``TotalAge``
+  - ``BHAge``
+  - ``StandAge``
+  - ``HeightSindex``
+  - ``Height``
+  - ``Volume``
+  - ``VPT``
+  - ``HeightTassTop``
+  - ``HeightTassMean``
+  - ``HeightTassPredom``
+- ``genetics-fertilization-and-oaf``:
+  - ``GWgain``
+  - ``FertGain``
+  - ``OAFremoval``
+  - ``OAFmortality``
+  - ``OAFimpact``
+  - ``OAF``
+- ``tass-and-site-index-raw``:
+  - ``YearTASS_Base``
+  - ``HeightSindex_Base``
+  - ``YearTASS_Full``
+  - ``HeightSindex_Full``
+- ``log-grades``:
+  - ``Logs_Grade_D``
+  - ``Logs_Grade_F``
+  - ``Logs_Grade_H``
+  - ``Logs_Grade_I``
+  - ``Logs_Grade_J``
+  - ``Logs_Grade_U``
+  - ``Logs_Grade_X``
+  - ``Logs_Grade_Y``
+  - ``Logs_Grade_All``
+- ``lumber-2-or-better``:
+  - ``Lumber_2_or_Better_2x4``
+  - ``Lumber_2_or_Better_2x6``
+  - ``Lumber_2_or_Better_2x8``
+  - ``Lumber_2_or_Better_2x10``
+  - ``Lumber_2_or_Better_All``
+  - ``LRF_2_or_Better_All``
+- ``lumber-graded``:
+  - ``Lumber_Graded_SS_2x4``
+  - ``Lumber_Graded_SS_2x6``
+  - ``Lumber_Graded_SS_2x8``
+  - ``Lumber_Graded_SS_2x10``
+  - ``Lumber_Graded_1_2x4``
+  - ``Lumber_Graded_1_2x6``
+  - ``Lumber_Graded_1_2x8``
+  - ``Lumber_Graded_1_2x10``
+  - ``Lumber_Graded_2_2x4``
+  - ``Lumber_Graded_2_2x6``
+  - ``Lumber_Graded_2_2x8``
+  - ``Lumber_Graded_2_2x10``
+  - ``Lumber_Graded_3_2x4``
+  - ``Lumber_Graded_3_2x6``
+  - ``Lumber_Graded_3_2x8``
+  - ``Lumber_Graded_3_2x10``
+  - ``Lumber_Graded_4_2x4``
+  - ``Lumber_Graded_4_2x6``
+  - ``Lumber_Graded_4_2x8``
+  - ``Lumber_Graded_4_2x10``
+  - ``Lumber_Graded_All``
+  - ``LRF_Graded_All``
+- ``lumber-degraded``:
+  - ``Lumber_Degraded_SS_2x4``
+  - ``Lumber_Degraded_SS_2x6``
+  - ``Lumber_Degraded_SS_2x8``
+  - ``Lumber_Degraded_SS_2x10``
+  - ``Lumber_Degraded_1_2x4``
+  - ``Lumber_Degraded_1_2x6``
+  - ``Lumber_Degraded_1_2x8``
+  - ``Lumber_Degraded_1_2x10``
+  - ``Lumber_Degraded_2_2x4``
+  - ``Lumber_Degraded_2_2x6``
+  - ``Lumber_Degraded_2_2x8``
+  - ``Lumber_Degraded_2_2x10``
+  - ``Lumber_Degraded_3_2x4``
+  - ``Lumber_Degraded_3_2x6``
+  - ``Lumber_Degraded_3_2x8``
+  - ``Lumber_Degraded_3_2x10``
+  - ``Lumber_Degraded_4_2x4``
+  - ``Lumber_Degraded_4_2x6``
+  - ``Lumber_Degraded_4_2x8``
+  - ``Lumber_Degraded_4_2x10``
+  - ``Lumber_Degraded_All``
+  - ``LRF_Degraded_All``
+- ``industrial-logs``:
+  - ``Industrial_Logs_D38L13``
+  - ``Industrial_Logs_D38L11``
+  - ``Industrial_Logs_D38L8``
+  - ``Industrial_Logs_D30L13``
+  - ``Industrial_Logs_D30L11``
+  - ``Industrial_Logs_D30L8``
+  - ``Industrial_Logs_D20L13``
+  - ``Industrial_Logs_D20L11``
+  - ``Industrial_Logs_D20L8``
+  - ``Industrial_Logs_D125L13``
+  - ``Industrial_Logs_D125L11``
+  - ``Industrial_Logs_D125L8``
+  - ``Industrial_Logs_D125L63``
+  - ``Industrial_Logs_D125L51``
+  - ``Industrial_Logs_D125L5``
+  - ``Industrial_Logs_D305``
+  - ``Industrial_Logs_D254``
+  - ``Industrial_Logs_D203``
+  - ``Industrial_Logs_D178``
+  - ``Industrial_Logs_D152``
+- ``residual-fibre``:
+  - ``Residual_Chips``
+  - ``Residual_Sawdust``
+  - ``Residual_Shavings``
+  - ``Residual_Trim``
+  - ``Residual_Bark``
+- ``mortality-summary``:
+  - ``Mortality_Stems``
+  - ``Mortality_DBHg_Mean``
+  - ``Mortality_Height_Mean``
+  - ``Mortality_Basal_Area``
+  - ``Mortality_Volume_Total``
+- ``crop250-stand-quality``:
+  - ``Crop250VolUtil125``
+  - ``Crop250DBHgMean``
+  - ``Crop250LiveCrown``
+- ``crown-and-fire``:
+  - ``CrownCover``
+  - ``mean_height_to_crown_base``
+  - ``mean_crown_length``
+  - ``Crown_Bulk_Density``
+- ``biomass-live``:
+  - ``Biomass_Live_Wood``
+  - ``Biomass_Live_Bark``
+  - ``Biomass_Live_Foliar``
+  - ``Biomass_Live_Branch``
+  - ``Biomass_Live_Roots``
+  - ``Biomass_Live_Total``
+  - ``Biomass_Live_Above``
+- ``biomass-dead``:
+  - ``Biomass_Dead_Wood``
+  - ``Biomass_Dead_Bark``
+  - ``Biomass_Dead_Foliar``
+  - ``Biomass_Dead_Branch``
+  - ``Biomass_Dead_Roots``
+  - ``Biomass_Dead_Total``
+  - ``Biomass_Dead_Above``
+- ``carbon``:
+  - ``Carbon_Live_Wood``
+  - ``Carbon_Live_Bark``
+  - ``Carbon_Live_Foliar``
+  - ``Carbon_Live_Branch``
+  - ``Carbon_Live_Roots``
+  - ``Carbon_Live_Total``
+  - ``Carbon_Live_Above``
+  - ``Carbon_Dead_Wood``
+  - ``Carbon_Dead_Bark``
+  - ``Carbon_Dead_Foliar``
+  - ``Carbon_Dead_Branch``
+  - ``Carbon_Dead_Roots``
+  - ``Carbon_Dead_Total``
+  - ``Carbon_Dead_Above``
+- ``co2e``:
+  - ``CO2e_Live_Wood``
+  - ``CO2e_Live_Bark``
+  - ``CO2e_Live_Foliar``
+  - ``CO2e_Live_Branch``
+  - ``CO2e_Live_Roots``
+  - ``CO2e_Live_Total``
+  - ``CO2e_Live_Above``
+  - ``CO2e_Dead_Wood``
+  - ``CO2e_Dead_Bark``
+  - ``CO2e_Dead_Foliar``
+  - ``CO2e_Dead_Branch``
+  - ``CO2e_Dead_Roots``
+  - ``CO2e_Dead_Total``
+  - ``CO2e_Dead_Above``
+- ``mortality-size-classes``:
+  - ``Mortality_Stems_Size_Class_{5,15,25,35,45,55,65}``
+  - ``Mortality_Volume_Size_Class_{5,15,25,35,45,55,65}``
+  - ``Mortality_VPT_Size_Class_{5,15,25,35,45,55,65}``
+- ``diameter-class-stems``:
+  - ``Stems_Diameter_Class_{0,5,10,...,90}``
+- ``diameter-class-volume``:
+  - ``Volume_Diameter_Class_{0,5,10,...,90}``
+- ``diameter-class-vpt``:
+  - ``VPT_Diameter_Class_{0,5,10,...,90}``
 
 Important runtime detail:
 
@@ -241,12 +499,44 @@ Important runtime detail:
   because the live overlay can silently shadow that local file and make the
   run appear successful while dropping the requested bank columns from the
   returned output.
+- BTC/TIPSY runtime artifacts now default under ``tipsy_io/logs`` and
+  ``tipsy_io/scratch`` so operator supervision is not visually mixed into the
+  VDYP runtime namespace.
+- live unattended ``/TSR`` overlay smokes must be run sequentially, not in
+  parallel, because they share the same per-user ``TimberSupply.rpt`` overlay.
 
 Live smoke proof now exists for:
 
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-basic``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-threshold-raw``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank yield-and-age-core``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank genetics-fertilization-and-oaf``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank tass-and-site-index-raw``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank log-grades``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank lumber-2-or-better``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank lumber-graded``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank lumber-degraded``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank industrial-logs``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank residual-fibre``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank mortality-summary``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank crop250-stand-quality``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank crown-and-fire``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank biomass-live``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank biomass-dead``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank carbon``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank co2e``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank mortality-size-classes``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank diameter-class-stems``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank diameter-class-volume``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank diameter-class-vpt``
 
 That returned a single unattended output CSV with:
+
+The only remaining canonical BTC outputs that do not currently fit cleanly into
+the optional-bank rollout are the non-threshold ``Juvenille_Volume`` and
+``Juvenille_Percent`` totals, which still trigger live-overlay BTC modal
+failures. Their threshold-specific ``000/125/175`` variants are already shipped
+through ``stand-structure-threshold-raw``.
 
 - the default conservative families:
   - ``MVcon_*``
@@ -263,6 +553,114 @@ That returned a single unattended output CSV with:
   - ``StemCount000_*``
   - ``StemCount125_*``
   - ``StemCount175_*``
+- plus the log-grade bank:
+  - ``Logs_Grade_D_*``
+  - ``Logs_Grade_F_*``
+  - ``Logs_Grade_H_*``
+  - ``Logs_Grade_I_*``
+  - ``Logs_Grade_J_*``
+  - ``Logs_Grade_U_*``
+  - ``Logs_Grade_X_*``
+  - ``Logs_Grade_Y_*``
+  - ``Logs_Grade_All_*``
+- plus the lumber-2-or-better bank:
+  - ``Lumber_2_or_Better_2x4_*``
+  - ``Lumber_2_or_Better_2x6_*``
+  - ``Lumber_2_or_Better_2x8_*``
+  - ``Lumber_2_or_Better_2x10_*``
+  - ``Lumber_2_or_Better_All_*``
+  - ``LRF_2_or_Better_All_*``
+- plus the mortality-summary bank:
+  - ``Mortality_Stems_*``
+  - ``Mortality_DBHg_Mean_*``
+  - ``Mortality_Height_Mean_*``
+  - ``Mortality_Basal_Area_*``
+  - ``Mortality_Volume_Total_*``
+- plus the crop250-stand-quality bank:
+  - ``Crop250VolUtil125_*``
+  - ``Crop250DBHgMean_*``
+  - ``Crop250LiveCrown_*``
+- plus the crown-and-fire bank:
+  - ``CrownCover_*``
+  - ``mean_height_to_crown_base_*``
+  - ``mean_crown_length_*``
+  - ``Crown_Bulk_Density_*``
+- plus the biomass-live bank:
+  - ``Biomass_Live_Wood_*``
+  - ``Biomass_Live_Bark_*``
+  - ``Biomass_Live_Foliar_*``
+  - ``Biomass_Live_Branch_*``
+  - ``Biomass_Live_Roots_*``
+  - ``Biomass_Live_Total_*``
+  - ``Biomass_Live_Above_*``
+- plus the biomass-dead bank:
+  - ``Biomass_Dead_Wood_*``
+  - ``Biomass_Dead_Bark_*``
+  - ``Biomass_Dead_Foliar_*``
+  - ``Biomass_Dead_Branch_*``
+  - ``Biomass_Dead_Roots_*``
+  - ``Biomass_Dead_Total_*``
+  - ``Biomass_Dead_Above_*``
+- plus the carbon bank:
+  - ``Carbon_Live_Wood_*``
+  - ``Carbon_Live_Bark_*``
+  - ``Carbon_Live_Foliar_*``
+  - ``Carbon_Live_Branch_*``
+  - ``Carbon_Live_Roots_*``
+  - ``Carbon_Live_Total_*``
+  - ``Carbon_Live_Above_*``
+  - ``Carbon_Dead_Wood_*``
+  - ``Carbon_Dead_Bark_*``
+  - ``Carbon_Dead_Foliar_*``
+  - ``Carbon_Dead_Branch_*``
+  - ``Carbon_Dead_Roots_*``
+  - ``Carbon_Dead_Total_*``
+  - ``Carbon_Dead_Above_*``
+- plus the co2e bank:
+  - ``CO2e_Live_Wood_*``
+  - ``CO2e_Live_Bark_*``
+  - ``CO2e_Live_Foliar_*``
+  - ``CO2e_Live_Branch_*``
+  - ``CO2e_Live_Roots_*``
+  - ``CO2e_Live_Total_*``
+  - ``CO2e_Live_Above_*``
+  - ``CO2e_Dead_Wood_*``
+  - ``CO2e_Dead_Bark_*``
+  - ``CO2e_Dead_Foliar_*``
+  - ``CO2e_Dead_Branch_*``
+  - ``CO2e_Dead_Roots_*``
+  - ``CO2e_Dead_Total_*``
+  - ``CO2e_Dead_Above_*``
+- plus the lumber-graded bank:
+  - ``Lumber_Graded_SS_2x4_*``
+  - ``Lumber_Graded_1_2x4_*``
+  - ``Lumber_Graded_2_2x4_*``
+  - ``Lumber_Graded_3_2x4_*``
+  - ``Lumber_Graded_4_2x4_*``
+  - ``Lumber_Graded_All_*``
+  - ``LRF_Graded_All_*``
+- plus the lumber-degraded bank:
+  - ``Lumber_Degraded_SS_2x4_*``
+  - ``Lumber_Degraded_1_2x4_*``
+  - ``Lumber_Degraded_2_2x4_*``
+  - ``Lumber_Degraded_3_2x4_*``
+  - ``Lumber_Degraded_4_2x4_*``
+  - ``Lumber_Degraded_All_*``
+  - ``LRF_Degraded_All_*``
+- plus the industrial-logs bank:
+  - ``Industrial_Logs_D38L13_*``
+  - ``Industrial_Logs_D30L13_*``
+  - ``Industrial_Logs_D20L13_*``
+  - ``Industrial_Logs_D125L13_*``
+  - ``Industrial_Logs_D125L5_*``
+  - ``Industrial_Logs_D305_*``
+  - ``Industrial_Logs_D152_*``
+- plus the residual-fibre bank:
+  - ``Residual_Chips_*``
+  - ``Residual_Sawdust_*``
+  - ``Residual_Shavings_*``
+  - ``Residual_Trim_*``
+  - ``Residual_Bark_*``
 
 while still honoring the 350-year unattended TSR timeline.
 

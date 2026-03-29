@@ -137,6 +137,7 @@ def test_tipsy_run_btc_cli_preserves_preset_name(monkeypatch, tmp_path: Path) ->
     assert captured["report_preset_name"] == "tsr-unattended-default"
     assert captured["indicator_bank_names"] == []
     assert captured["copy_install"] is True
+    assert Path(captured["log_dir"]).as_posix().endswith("tipsy_io/logs")
 
 
 def test_tipsy_run_btc_cli_passes_indicator_banks(monkeypatch, tmp_path: Path) -> None:
@@ -179,6 +180,37 @@ def test_tipsy_run_btc_cli_passes_indicator_banks(monkeypatch, tmp_path: Path) -
 
     assert result.exit_code == 0
     assert captured["indicator_bank_names"] == ["stand-structure-basic"]
+
+
+def test_tipsy_probe_btc_columns_cli_uses_tipsy_log_dir_default(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    captured: dict[str, object] = {}
+
+    def fake_probe_btc_report_columns(**kwargs: object):
+        captured.update(kwargs)
+        template = cli_main.btc_report_template_preset("tsr-unattended-default")
+        return ([], template)
+
+    monkeypatch.setattr(
+        cli_main, "probe_btc_report_columns", fake_probe_btc_report_columns
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "tipsy",
+            "probe-btc-columns",
+            str(input_csv),
+            "--column",
+            "VolumeGross",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert Path(captured["log_dir"]).as_posix().endswith("tipsy_io/logs")
 
 
 def test_tipsy_probe_btc_columns_cli_writes_summary(
@@ -241,6 +273,43 @@ def test_tipsy_probe_btc_columns_cli_writes_summary(
     payload = cli_main.json.loads(summary.read_text(encoding="utf-8"))
     assert payload["accepted_tokens"] == ["VolumeGross"]
     assert payload["failed_tokens"] == ["SPH:000"]
+
+
+def test_tipsy_probe_btc_columns_cli_stock_matrix_defaults_to_copied_install(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    captured: dict[str, object] = {}
+
+    def fake_probe_btc_report_columns(**kwargs: object):
+        captured.update(kwargs)
+        template = cli_main.btc_report_template_preset("tsr-unattended-default")
+        return ([], template)
+
+    monkeypatch.setattr(
+        cli_main, "probe_btc_report_columns", fake_probe_btc_report_columns
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "tipsy",
+            "probe-btc-columns",
+            str(input_csv),
+            "--column",
+            "BasalArea000",
+            "--variant-strategy",
+            "stock-matrix",
+            "--alias-override",
+            "BasalArea000=BasalArea:000",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["copy_install"] is True
+    assert captured["variant_strategy"] == "stock-matrix"
+    assert captured["alias_overrides"] == {"BasalArea000": ("BasalArea:000",)}
 
 
 def test_tsa_btc_post_tipsy_cli_uses_default_report_preset(

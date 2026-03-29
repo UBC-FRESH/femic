@@ -1,0 +1,227 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="OAFs">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Custom OAFs: Development</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style type="text/css">
+<!--
+td ol { margin-top:0;
+margin-bottom:0; }
+td ul { margin-top:0;
+margin-bottom:0; }
+-->
+</style>
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+tr.hcp2 { vertical-align:top; }
+p.hcp3 { font-weight:bold;
+text-align:center; }
+p.hcp4 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1>Custom OAFs: Development</h1>
+<p>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="1508"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="See Also"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="OAFs$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My RoboHelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\Development_of_Custom_OAFs.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:See Also">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="OAFs">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </p>
+<p><span class="hcp1">Custom OAFs</span> provide a structure 
+ that allows subject specialists (e.g., entomologists, pathologists, etc) 
+ to define <a href="Using_Custom_OAFs.htm#Response_model."><span class="hcp1">Response</span> 
+ models</a> consisting of a sequence of <span class="hcp1">OAFs</span> 
+ over a range of ages or heights. <span class="hcp1">TIPSY</span> 
+ interpolates intermediate values. &#160;&#160;<span class="hcp1">OAFs</span> 
+ for three intensity (severity) levels, i.e., low, medium and high, can 
+ be defined for up to 5 ages or heights.</p>
+<p>The following table describes hypothetical <a href="Using_Custom_OAFs.htm#Response_model."><span class="hcp1">Response</span> models</a> for two agents 
+ (e.g., insects, diseases, etc).</p>
+<table style="left: 0px; top: 329px; height: 223px;" width="599">
+	<col style="width: 9.372%;">
+	<col style="width: 8.844%;">
+	<col style="width: 6.333%;">
+	<col style="width: 6.655%;">
+	<col style="width: 8.866%;">
+	<col width="65">
+	<col width="77">
+	<col width="102">
+	<col width="97">
+	<tr class="hcp2">
+		<td style="width: 9.372%;" bgcolor="#C0C0C0"><p class="hcp3">Agent</p></td>
+		<td style="width: 8.844%;" bgcolor="#C0C0C0"><p class="hcp3">Host 
+		 species</p></td>
+		<td style="width: 6.333%;" bgcolor="#C0C0C0"><p class="hcp3">BEC 
+		 Zone</p></td>
+		<td style="width: 6.655%;" bgcolor="#C0C0C0"><p class="hcp3">Age</p></td>
+		<td style="width: 8.866%;" bgcolor="#C0C0C0"><p class="hcp3">Height</p></td>
+		<td bgcolor="#C0C0C0" width="65"><p class="hcp3">No 
+		 impact</p></td>
+		<td bgcolor="#C0C0C0" width="77"><p class="hcp3">Low 
+		 severity</p></td>
+		<td bgcolor="#C0C0C0" width="102"><p class="hcp3">Medium 
+		 severity</p></td>
+		<td bgcolor="#C0C0C0" width="97"><p class="hcp3">High 
+		 severity</p></td>
+	</tr>
+	<tr class="hcp2">
+		<td style="width: 9.372%;"><p class="hcp4">Agent 
+		 1</p></td>
+		<td style="width: 8.844%;"><p class="hcp4">Fdi</p></td>
+		<td style="width: 6.333%;"><p class="hcp4">ICH</p></td>
+		<td style="width: 6.655%;"><p class="hcp4">0</p></td>
+		<td style="width: 8.866%;"><p class="hcp4">-</p></td>
+		<td width="65"><p class="hcp4">1.00</p></td>
+		<td width="77"><p class="hcp4">1.00</p></td>
+		<td width="102"><p class="hcp4">1.00</p></td>
+		<td width="97"><p class="hcp4">1.00</p></td>
+	</tr>
+	<tr class="hcp2">
+		<td style="width: 9.372%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 8.844%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 6.333%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 6.655%;"><p class="hcp4">30</p></td>
+		<td style="width: 8.866%;"><p class="hcp4">-</p></td>
+		<td width="65"><p class="hcp4">1.00</p></td>
+		<td width="77"><p class="hcp4">1.00</p></td>
+		<td width="102"><p class="hcp4">0.95</p></td>
+		<td width="97"><p class="hcp4">0.90</p></td>
+	</tr>
+	<tr class="hcp2">
+		<td style="width: 9.372%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 8.844%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 6.333%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 6.655%;"><p class="hcp4">80</p></td>
+		<td style="width: 8.866%;"><p class="hcp4">-</p></td>
+		<td width="65"><p class="hcp4">1.00</p></td>
+		<td width="77"><p class="hcp4">0.95</p></td>
+		<td width="102"><p class="hcp4">0.80</p></td>
+		<td width="97"><p class="hcp4">0.60</p></td>
+	</tr>
+	<tr class="hcp2">
+		<td style="width: 9.372%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 8.844%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 6.333%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 6.655%;"><p class="hcp4">150</p></td>
+		<td style="width: 8.866%;"><p class="hcp4">-</p></td>
+		<td width="65"><p class="hcp4">1.00</p></td>
+		<td width="77"><p class="hcp4">0.85</p></td>
+		<td width="102"><p class="hcp4">0.60</p></td>
+		<td width="97"><p class="hcp4">0.40</p></td>
+	</tr>
+	<tr class="hcp2">
+		<td style="width: 9.372%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 8.844%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 6.333%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 6.655%;"><p class="hcp4">300</p></td>
+		<td style="width: 8.866%;"><p class="hcp4">-</p></td>
+		<td width="65"><p class="hcp4">1.00</p></td>
+		<td width="77"><p class="hcp4">0.70</p></td>
+		<td width="102"><p class="hcp4">0.50</p></td>
+		<td width="97"><p class="hcp4">0.30</p></td>
+	</tr>
+	<tr class="hcp2">
+		<td style="width: 9.372%;"><p class="hcp4">Agent 
+		 2</p></td>
+		<td style="width: 8.844%;"><p class="hcp4">Pli</p></td>
+		<td style="width: 6.333%;"><p class="hcp4">All</p></td>
+		<td style="width: 6.655%;"><p class="hcp4">-</p></td>
+		<td style="width: 8.866%;"><p class="hcp4">10</p></td>
+		<td width="65"><p class="hcp4">1.00</p></td>
+		<td width="77"><p class="hcp4">1.00</p></td>
+		<td width="102"><p class="hcp4">1.00</p></td>
+		<td width="97"><p class="hcp4">1.00</p></td>
+	</tr>
+	<tr class="hcp2">
+		<td style="width: 9.372%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 8.844%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 6.333%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 6.655%;"><p class="hcp4">-</p></td>
+		<td style="width: 8.866%;"><p class="hcp4">20</p></td>
+		<td width="65"><p class="hcp4">1.00</p></td>
+		<td width="77"><p class="hcp4">0.90</p></td>
+		<td width="102"><p class="hcp4">0.80</p></td>
+		<td width="97"><p class="hcp4">0.70</p></td>
+	</tr>
+	<tr class="hcp2">
+		<td style="width: 9.372%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 8.844%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 6.333%;"><p class="hcp4">&#160;</p></td>
+		<td style="width: 6.655%;"><p class="hcp4">-</p></td>
+		<td style="width: 8.866%;"><p class="hcp4">30</p></td>
+		<td width="65"><p class="hcp4">1.00</p></td>
+		<td width="77"><p class="hcp4">0.70</p></td>
+		<td width="102"><p class="hcp4">0.40</p></td>
+		<td width="97"><p class="hcp4">0.10</p></td>
+	</tr>
+</table>
+<p>&#160;</p>
+<p><span class="hcp1">OAF values</span> for each severity 
+ level always represent the impact on <span style="text-decoration: underline; ">Merch. 
+ Volume (12.5+)</span>.</p>
+<p>Note that Agent 1 impacts depend on age (time), whereas Agent 2 impacts 
+ are related to height (tree size).</p>
+<p><span class="hcp1">OAFs</span> for Agent 1 are specific 
+ to Douglas-fir (IDF) growing in the ICH <a class="glossterm">BEC 
+ Zone</a> only. &#160;&#160;To restrict <span class="hcp1">OAF</span> 
+ application to one species, it must be implemented through <a href="Species_Specifications_Options.htm#OAFs__species-specific_">Species 
+ Specifications</a>. &#160;&#160;&#160;However, there is no way for users 
+ to restrict <span class="hcp1">OAF</span> application to 
+ specific <a class="glossterm">BEC Zone</a>. &#160;&#160;However, 
+ this feature can be added by <a href="User_Support_1.htm"><span class="hcp1">TIPSY</span> 
+ development staff</a>.</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp4">_______________________________________________</p>
+	<p class="hcp4">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

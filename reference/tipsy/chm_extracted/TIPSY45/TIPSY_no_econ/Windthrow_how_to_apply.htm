@@ -1,0 +1,150 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="windthrow">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Windthrow: How to apply in TIPSY/BatchTIPSY</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-style:italic; }
+p.hcp2 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1>Windthrow: How to apply in TIPSY/BatchTIPSY</h1>
+<h1>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="2302"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="Related topics"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="windthrow$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My Robohelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\Windthrow_how_to_apply.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:Related topics">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="windthrow">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </h1>
+<h2>Interactive</h2>
+<p>To apply windthrow to variable retention calculations, click on the 
+ “Incorporate Windthrow into VR calculations” checkbox from the Variable 
+ Retention dialog.</p>
+<p>TIPSY calculates the <a class="glossterm">Crown Cover Loss</a> 
+ Factor (CCWT) and displays it on the Windthrow dialog for a selected location 
+ model (<a href="Literature_Cited.htm#Mitchell_et_al_2001">Mitchell et. 
+ al 2001</a>; <a href="Literature_Cited.htm#Lanquaye_Mitchell_2005">Lanquaye 
+ and Mitchell, 2005</a>). &#160;You can also see the combined effect of 
+ windthrow and variable retention at the bottom right of the dialog. &#160;As 
+ you make changes in this dialog, the values are automatically recalculated. 
+ &#160;You can also select the Default button at any time to see the default 
+ values for your selected location model. &#160;If you make changes to 
+ variable retention while windthrow is in effect (for example, changing 
+ the retained crown cover %), TIPSY automatically updates the windthrow 
+ calculations.</p>
+<p>You can choose “User Specified” as the location model and enter the 
+ CCWT directly instead of having the model calculate it. &#160;See <a href="Windthrow_how_tipsy_applies.htm">How 
+ TIPSY applies Windthrow</a> for more information on how CCWT is used. 
+ &#160;The effect of windthrow isn't displayed on the variable retention 
+ dialog. &#160;It is displayed in the windthrow dialog and in the stand 
+ description.</p>
+<p>The windthrow model works with certain combinations of variable retention 
+ inputs only. &#160;For example, you can't use windthrow with the formula 
+ method of edge length determination <span style="text-decoration: underline; ">and</span> 
+ a crown area that is partly aggregated and partly dispersed. &#160;TIPSY 
+ will alert you to these limitations.</p>
+<p>Some effects of windthrow, such as reducing the plantable area, are 
+ not currently available.</p>
+<p>The windthrow model is not species specific.</p>
+<h2>BatchTIPSY</h2>
+<p>To use the windthrow module, check the “Incorporate windthrow into VR 
+ calculations” checkbox from BatchTIPSY's variable retention dialog. &#160;In 
+ the windthrow dialog, enter the input file location for the model and 
+ seven related windthrow inputs. &#160;For more information on available 
+ ranges for the inputs, see below.</p>
+<p>Notice that the first input after Model can be used for either the Bearing 
+ or CCWT. &#160;BatchTIPSY will decide how to interpret values in the data 
+ file depending on the model specified. &#160;If the model is ‘User Specified’, 
+ the program will interpret it as CCWT. &#160;Otherwise, it will interpret 
+ it as Bearing. &#160;Be sure to leave enough room in your input file for 
+ CCWT values (which can be longer than the Bearing values).</p>
+<h3>BatchTIPSY operation</h3>
+<p>If all windthrow inputs are missing/blank, then the program will continue 
+ with no warnings or errors, and will simply not apply windthrow to that 
+ particular table. &#160;If some, but not all, windthrow data is present, 
+ an error will be produced and the table will not be run. &#160;The one 
+ exception is if you’ve selected “User Specified” as a model. &#160;In 
+ that case, only the CCWT input is needed.</p>
+<p>The location model is specified as a single letter in the input file, 
+ as follows:</p>
+<p>M: Canfor's <span class="hcp1">McGregor</span> TFL</p>
+<p>N: Weyerhaeuser's North Island (Sayward /Tsitika /Eve River; <span class="hcp1">NIT</span>) 
+ operating area</p>
+<p>Q: Weyerhaeuser's Queen Charlotte (<span class="hcp1">QCI</span>) 
+ operating area</p>
+<p>T: <span class="hcp1">Tem</span>bec's Golden TFL</p>
+<p>W: Weyerhaeuser's West Island (Port Alberni; <span class="hcp1">WIT</span>) 
+ operating area</p>
+<p>L: A portion of Slocan's Slocan Valley Forest License (<span class="hcp1">Lemon</span>)</p>
+<p>C: Coast (pooled coastal model)</p>
+<p>I: Interior (pooled interior model)</p>
+<p>P: Province (pooled provincial model)</p>
+<p>U: User Specified</p>
+<p>Any other letter will generate an error.</p>
+<p>Keep in mind the <a href="Windthrow_defaults_and_contraints_in_TIPSY.htm">available 
+ data ranges</a>. &#160;If an input column contains data beyond the available 
+ range, BatchTIPSY produces an error message and won’t run that row of 
+ the table. &#160;Also, BatchTIPSY checks to see if &#160;the “formula” 
+ method of variable retention calculation is used with partially aggregated 
+ and dispersed retention. &#160;If so, windthrow inputs will produce an 
+ error message due to limitations of the windthrow model.</p>
+<p>The windthrow model works only with certain combinations of variable 
+ retention inputs. &#160;For example, you can't use windthrow with the 
+ formula method of edge length determination and a crown area that is partly 
+ aggregated and partly dispersed. &#160;TIPSY will alert you to these limitations. 
+ &#160;BatchTIPSY produces an error message in its .err file.</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp2">_______________________________________________</p>
+	<p class="hcp2">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

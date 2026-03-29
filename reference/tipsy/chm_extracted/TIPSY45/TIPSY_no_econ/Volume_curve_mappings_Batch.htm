@@ -1,0 +1,121 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="BatchTIPSY">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Volume curve mappings, Batch</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+p.hcp1 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+
+<h1>Volume curve mappings, Batch</h1>
+<p>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="2302"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="Related topics"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="BatchTIPSY$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My Robohelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\Volume_curve_mappings_Batch.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:Related topics">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="BatchTIPSY">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </p>
+<p><a href="Default%20Mappings%20in%20BTP%20file.htm">View Default Species Mappings 
+ here.</a></p>
+<p class="Indent">At the bottom of the <b><i>TIPSY Volume Curve Mappings</i></b> 
+ dialog box is a list of input species codes and <a href="javascript:TextPopup(this)" id="HotSpot7680" class="glossterm">FIZ</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot7680', 'POPUP7680');
+//]]></script><span class="glosstext" id="POPUP7680" style="display: none;"> The Forest Inventory Zone(s) that fall within the forest cover polygon. FIZ zones were developed to provide a broadly based ecological classification of the forestland in British Columbia. FIZ zones closely follow the early Biogeoclimatic zones developed by Dr. Krajina. The province of British Columbia is split into 12 FIZ zones.</span> 
+ , with the corresponding database that BatchTIPSY uses.</p>
+<p class="Indent">If you have code/FIZ combinations that aren't listed, 
+ or that you want to overwrite, you can add your own mappings at the top 
+ of the dialog box. Just type the species code in the <b><i>Input Code</i></b> 
+ field, select a FIZ from the <b><i>Input FIZ</i></b> group and then select 
+ a volume curve from the drop-down list. Finally click the <i><b>Add Mapping 
+ to Current List</b></i> button and you will now see your species code 
+ and volume curve in the list.</p>
+<p class="Indent">Certain common species codes (such as FDC) have an assumed 
+ FIZ built right into the code (in this case, the “C” indicates “coastal”). 
+ &#160;When users try to do BatchTIPSY runs without providing a FIZ for 
+ these particular species, the program generates a warning. &#160;It was 
+ felt that for these species, this warning is not necessary, so we added 
+ a mapping for “None” (which will repress a warning if no FIZ is provided) 
+ for the following species input codes: CWC, CWI, FDC, FDI, HWC, HWI and 
+ PLI.</p>
+<p class="Indent">If you want to delete a current volume curve mapping, 
+ select it from the list, then a warning message appears asking if you 
+ want to delete both the volume mapping curve and the site index curve.</p>
+<p class="Indent">The <b><i>Reset All to Default Mappings</i></b> button 
+ resets both the volume and <a href="Site_index_curve_mappings_Batch.htm">site 
+ index curve mappings</a> to the ministry defaults (recommendations), regardless 
+ of which dialog box you are in.</p>
+<p class="Indent">BatchTIPSY uses the same volume curves (database) as 
+ TIPSY. If you are interested in knowing which version of <a href="https://www2.gov.bc.ca/gov/content/industry/forestry/managing-our-forest-resources/forest-inventory/growth-and-yield-modelling/tree-and-stand-simulator-tass">TASS</a> 
+ was used to create the database for each species in TIPSY/BatchTIPSY, 
+ read <a href="Whats_New.htm">''What's new in TIPSY'</a>.</p>
+<p class="Indent">This paragraph is particularly relevant for Woodlot users. 
+ When using command-line arguments, the user has the option of specifying 
+ either a .btp file or the old DOS command line (input file, output file, 
+ format file, .dat files). Specifying a .btp file will be load it into 
+ the program as described above. If the old DOS command line is used, the 
+ mapping information in the .dat files will override any Ministry defaults.</p>
+<p class="Indent">Keep in mind that mappings are now saved in the .btp 
+ file, rather than the .ini file. BatchTIPSY used to save both site index 
+ and volume curve mappings in the .ini file. This created a personal set 
+ of defaults that appeared with each new .btp file, so you didn't have 
+ to reset them with each .btp file. Users found this confusing, if they 
+ ever realized it! Now the ministry recommended mappings apply to each 
+ new file, or document. Also, if you open a .btp file created with an earlier 
+ version of BatchTIPSY, the program will reset all site index and volume 
+ curve mappings to the ministry defaults.</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp1">_______________________________________________</p>
+	<p class="hcp1">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

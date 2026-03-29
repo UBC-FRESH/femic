@@ -1,0 +1,171 @@
+﻿/*Created with Adobe RoboHelp 8.*/
+BODY {
+	font-family: Arial;
+	background-color: #ffffff;
+}
+H1 {
+	font-weight: bold;
+	margin-top: 5pt;
+	margin-bottom: 7.5pt;
+	font-size: 12pt;
+	color: #f49300;
+}
+LI.H1 {
+	font-weight: bold;
+	font-size: 12pt;
+	color: #f49300;
+}
+
+H2 {
+	font-weight: bold;
+	margin-bottom: 5pt;
+	margin-top: 9pt;
+	color: #005e8a;
+	font-size: 11pt;
+}
+LI.H2 {
+	font-weight: bold;
+	color: #005e8a;
+	font-size: 11pt;
+}
+
+H3 {
+	font-weight: bold;
+	font-size: 10pt;
+	color: #006699;
+	margin-bottom: 3pt;
+	margin-top: 6pt;
+}
+LI.H3 {
+	font-weight: bold;
+	font-size: 10pt;
+	color: #006699;
+}
+
+H4 {
+	font-weight: bold;
+	font-size: 12.0pt;
+}
+LI.H4 {
+	font-weight: bold;
+	font-size: 12.0pt;
+}
+
+H5 {
+	font-weight: bold;
+	font-size: 10.0pt;
+}
+LI.H5 {
+	font-weight: bold;
+	font-size: 10.0pt;
+}
+
+H6 {
+	font-weight: bold;
+	font-size: 8.0pt;
+}
+LI.H6 {
+	font-weight: bold;
+	font-size: 8.0pt;
+}
+
+P {
+	font-family: Verdana, sans-serif;
+	color: #005782;
+	margin-bottom: 3pt;
+	font-size: 9pt;
+	margin-top: 2pt;
+}
+LI.P {
+	font-family: Verdana, sans-serif;
+	color: #005782;
+	font-size: 9pt;
+}
+
+A.expandspot {
+	color: #008000;
+	cursor: hand;
+	font-style: italic;
+	text-decoration: none;
+}
+SPAN.expandtext {
+	font-style: italic;
+	font-weight: normal;
+	color: #ff0000;
+}
+A.dropspot {
+	cursor: hand;
+	color: #008000;
+	font-style: italic;
+	text-decoration: none;
+}
+A.glossterm {
+	color: #800000;
+	cursor: hand;
+	font-style: italic;
+	text-decoration: none;
+}
+SPAN.glosstext {
+	font-style: italic;
+	font-weight: normal;
+	color: #0000ff;
+}
+OL,
+UL {
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+P.Indent {
+	margin-left: 12pt;
+}
+LI.P-Indent {
+}
+
+P.Bulletind {
+	list-style: square;
+	text-indent: 0px;
+	margin-left: 36px;
+}
+LI.P-Bulletind {
+	list-style: square;
+	text-indent: 0px;
+}
+
+P.Tip {
+	margin-bottom: 4.5pt;
+	margin-top: 11pt;
+}
+LI.P-Tip {
+}
+
+P.Bullet {
+	list-style: square;
+	margin-top: 3pt;
+	text-indent: -0in;
+	margin-left: 0.2in;
+}
+LI.P-Bullet {
+	list-style: square;
+	text-indent: -0in;
+}
+
+P.Indent2 {
+	margin-left: 44pt;
+}
+LI.P-Indent2 {
+}
+
+P.TableText {
+}
+LI.P-TableText {
+}
+
+P.Numbers {
+	text-indent: -0.167in;
+	margin-left: 12pt;
+	margin-top: 0pt;
+}
+LI.P-Numbers {
+	text-indent: -0.167in;
+}
+

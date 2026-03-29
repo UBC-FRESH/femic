@@ -1,0 +1,75 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+ 
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Growth Intercept models</title>
+<link rel="StyleSheet" href="../../default.css" type="text/css">
+<script type="text/javascript" language="JavaScript1.2" src="../../ehlpdhtm.js"></script>
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+font.hcp2 { font-family:CG Times; }
+span.hcp3 { font-weight:normal; }
+span.hcp4 { vertical-align:Super; }
+p.hcp5 { font-family:CG Times; }
+li.hcp6 { font-family:CG Times; }
+p.hcp7 { text-align:center; }
+span.hcp8 { font-family:Arial, sans-serif; }
+-->
+</style>
+</head>
+<body>
+
+
+
+
+<h1><a name="MiniTOCBookMark1"></a><font style="font-size: small; font-family: 'CG Times ';" size="3">Growth Intercept models</font></h1>
+<p align="left" style="font-family:Arial;font-size:12pt;font-weight: normal;font-style: normal;text-decoration: none;" >In&#160;this&#160;Topic&#160;<a class="dropspot" href="javascript:TextPopup(this)" id="MTHotSpot33698" ><span class="MTText" style="display: none;" >Show</span><span class="MTText" >Hide</span></a></p>
+<script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('MTHotSpot33698', 'MTPOPUP33698');
+//]]></script>
+<div align="left" class="droptext" id="MTPOPUP33698" >
+ <div style="background: #ffff00;float: none;width: 100% ;" >
+  <p align="left"  ><a href="#MiniTOCBookMark2" >Implementation in SiteTools</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark3" >More about GI</a></p>
+ </div>
+</div>
+<p><span class="hcp1">Growth Intercept (GI) models</span> provide an alternate (optional), generally more accurate, method for estimating <a class="glossterm">site index</a> from <a class="glossterm">breast height age</a> (1-50yrs) and <a href="javascript:TextPopup(this)" id="HotSpot47394" class="glossterm">height</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot47394', 'POPUP47394');
+//]]></script><span class="glosstext" id="POPUP47394" style="display: none;"> In SiteTools, height generally refers to site height.</span>. &#160;&#160;However, the formulation of <span class="hcp1">GI models</span> is not as flexible as conventional <a href="Site_Index_Models.htm">Site Index models</a>. &#160;I.e., <span class="hcp1">GI models</span> can only be used to calculate <a class="glossterm">site index</a>. &#160;They cannot be inverted to calculate <a class="glossterm">breast height age</a> or <a href="javascript:TextPopup(this)" id="HotSpot28967" class="glossterm">height</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot28967', 'POPUP28967');
+//]]></script><span class="glosstext" id="POPUP28967" style="display: none;"> In SiteTools, height generally refers to site height.</span>, like conventional <a href="Site_Index_Models.htm">Site Index models</a>. &#160;<span class="hcp1">GI</span> <font class="hcp2"><span class="hcp1">models</span> are also not available for all species.</font></p>
+<h2><a name="MiniTOCBookMark2"></a><font class="hcp2">Implementation in SiteTools</font></h2>
+<p style="font-weight: bold;">Growth Intercept (GI) models <span class="hcp3">are implemented in</span> SiteTools <span class="hcp3">(<a href="../Background/What_is_SiteTools.htm#SINDEX">Sindex</a>) in conjunction with conventional <a href="Site_Index_Models.htm">Site Index models</a>. &#160;&#160;I.e., calculations utilize</span> Growth Intercept (GI) models <span class="hcp3">from 1-50 yrs (</span><a class="glossterm" style="font-weight: normal;">breast height age</a><span class="hcp3">) and conventional <a href="Site_Index_Models.htm">Site Index models</a> over 50 yrs.</span></p>
+<p><span class="hcp1">SiteTools</span> further restricts the application of <span class="hcp1">GI models</span> to:</p>
+<ul style="list-style: disc;">
+<li>species with <span class="hcp1">GI models</span> in <span class="hcp1">SiteTools</span> <span>(<a href="../Background/What_is_SiteTools.htm#SINDEX">Sindex</a>)</span><span class="hcp4">1</span></li>
+<li>one <a href="../Interactive/Calculation_Settings.htm">Calculation method</a>: &#160;<span class="hcp1">Site Index - by age and height</span></li>
+<li>calculations involving <a class="glossterm">breast height age</a> (not <a class="glossterm">total age</a>).</li>
+</ul>
+<p style="margin-left: 40px;"><span class="hcp4">1</span> <span class="hcp1">GI models</span> can only be paired with <a href="Site_Index_Models.htm">Site Index models</a> for the same species. &#160;&#160;I.e., &#160;<span class="hcp1">GI models</span> developed for Douglas-fir can only be paired with conventional <a href="Site_Index_Models.htm">Site Index models</a> for Douglas-fir, not other species. &#160;&#160;However, a same-species GI-SI pair can be assigned to codes for other species in the <a href="../Species_Assignment/Species_Substitution.htm">Species Assignment Table</a>.<br></p>
+<h2><a name="MiniTOCBookMark3"></a>More about GI</h2>
+<p style="font-size: small; font-family: 'CG Times ';">The growth intercept technique was first developed in the 1930's. &#160;&#160;For species with distinct annual whorls, <a class="glossterm">site index</a> estimates in young stands can be obtained quickly through direct observation of past height growth. &#160;&#160;I.e., count 3-5 whorls above <a class="glossterm">breast height </a>&#160;(BH age) &#160;and measure the corresponding height.</p>
+<p class="hcp5">Generally, <span class="hcp1">GI models</span> give more accurate estimates of <a class="glossterm">site index </a>&#160;than the conventional &#160;<a href="Site_Index_Models.htm">Site Index models</a> for two reasons:</p>
+<ol style="list-style: decimal;">
+<li class="hcp6">
+<p class="hcp5"><span class="hcp1">GI models</span> are formulated to predicted <a class="glossterm">site index </a>&#160;directly. &#160;Whereas, <a href="Site_Index_Models.htm">Site Index models</a> predict height and must be inverted to predict <a class="glossterm">site index </a>, which introduces a small amount of bias;</p>
+</li>
+<li class="hcp6">
+<p class="hcp5">&#160;<span class="hcp1">GI models</span> are fit for each age, whereas <a href="Site_Index_Models.htm">Site Index models</a> are fit over all ages simultaneously.</p>
+</li>
+</ol>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp7">_______________________________________________</p>
+	<p class="hcp7">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span class="hcp8">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span><br><span class="hcp8">Forest Analysis and Inventory</span> 
+	 Branch</p>
+</div>
+</body>
+</html>

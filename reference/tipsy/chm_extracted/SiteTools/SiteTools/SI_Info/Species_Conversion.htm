@@ -1,0 +1,234 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Species Conversion</title>
+<link rel="StyleSheet" href="../../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+p.hcp2 { text-align:center;
+font-family:Arial, sans-serif;
+font-weight:bold; }
+p.hcp3 { text-align:center; }
+font.hcp4 { font-size:small;
+font-family:CG Times; }
+span.hcp5 { font-family:Arial, sans-serif; }
+font.hcp6 { font-size:small;
+font-family:Arial, sans-serif; }
+font.hcp7 { font-size:small; }
+font.hcp8 { font-family:CG Times; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1>Species Conversion</h1>
+<p><span class="hcp1">Species Conversion</span> estimates 
+ are only available in <a href="../Interactive/Calculator_mode.htm">Calculator</a> 
+ and <a href="../Batch/Batch_Mode.htm">Batch modes</a>.</p>
+<p><span class="hcp1">Species Conversion</span> models estimate 
+ the site index of a <span class="hcp1">target species</span> 
+ based on the site index of a <span class="hcp1">reference 
+ species</span> growing on the same or similar site. &#160;The table below 
+ documents the conversion equations currently available in <span class="hcp1">SiteTools</span>.</p>
+<p><span style="font-weight: bold; background-color: #ffff00;">NOTE:</span> 
+ &#160;<span class="hcp1">SiteTools</span> only provides 
+ <span class="hcp1">Species Conversion</span> estimates for 
+ species combinations listed in the table below. &#160;<span class="hcp1">Species 
+ Conversion</span> estimates are <span style="text-decoration: underline; ">not</span> 
+ extended to other species in the <a href="../Species_Assignment/Species_Substitution.htm">Species 
+ Assignment Table</a>.</p>
+<h2>In Calculator Mode</h2>
+<p>Where <a href="#Available_Models">Species Conversion models exist in 
+ <span class="hcp1">SiteTools</span></a>, <a class="glossterm">Site Index</a> estimates are reported for 
+ all (target) species based on the <a class="glossterm">Site 
+ Index</a> of the selected (reference) species.</p>
+<h2>In Batch Mode</h2>
+<p>To obtain <span class="hcp1">Species Conversion</span> 
+ estimates in <a href="../Batch/Batch_Mode.htm">Batch mode</a>, the <a href="../Batch/Input_File_Template.htm">input file</a> must contain 
+ values for (target) <span class="hcp1">Species, Reference</span> 
+ <span class="hcp1">Species,</span> and <span class="hcp1">Reference 
+ Site Index</span>. &#160;&#160;The output variable, <span class="hcp1">Calculate: 
+ Site Conversion (SI)</span> is the <span class="hcp1"><a class="glossterm">Site Index</a></span> estimate for the (target) 
+ <span class="hcp1">Species</span>, based on the two inputs: 
+ <span class="hcp1">Reference</span> <span class="hcp1">Species</span> 
+ and <span class="hcp1">Reference Site Index</span>.</p>
+<h2><a name="Available_Models" id="Available_Models"></a>Available Models</h2>
+<p>Each equation is of the form: &#160;&#160;<span class="hcp1">Target 
+ Species SI</span> = a + b(<span class="hcp1">Reference Species 
+ SI</span>),<br>
+where a and b are the coefficients of the linear equation. &#160;&#160;The 
+ equations are reversed algebraically to interchange the target and reference 
+ species.</p>
+<table class="AlternateGreyColoredGrid" cellspacing="0px" width="97.861%">
+	<col style="width: 19.484%;">
+	<col style="width: 20.499%;">
+	<col style="width: 13.036%;">
+	<col style="width: 12.886%;">
+	<col style="width: 34.095%;">
+	<tr class="t1Row">
+		<td><p class="hcp2">Target<br>
+		Species</p></td>
+		<td><p class="hcp2">Reference Species</p></td>
+		<td><p class="hcp2">a</p></td>
+		<td><p class="hcp2">b</p></td>
+		<td><span style="font-family: Arial, sans-serif; font-weight: bold;">Sources<br>
+		</span></td>
+	</tr>
+	<tr class="t2Row">
+		<td><p class="hcp3">Ba</p></td>
+		<td><p class="hcp3">Hwc</p></td>
+		<td><p class="hcp3"><span><font size="3" class="hcp4">-1.977</font></span></p></td>
+		<td><p class="hcp3"><span><font size="3" class="hcp4">0.9861</font></span></p></td>
+		<td><span><a href="#Nigh_1998"><font size="3" class="hcp4">Nigh 1998</font></a></span></td>
+	</tr>
+	<tr class="t1Row">
+		<td><p class="hcp3">Bl</p></td>
+		<td><p class="hcp3">Pli</p></td>
+		<td><p class="hcp3"><font size="3" class="hcp4">0.474</font></p></td>
+		<td><p class="hcp3"><font size="3" class="hcp4">0.917</font></p></td>
+		<td><span><a href="#Nigh_1995a"><font size="3" class="hcp4">Nigh (1995a,</font> 
+		 <font size="3" class="hcp4">1995b)</font></a></span></td>
+	</tr>
+	<tr class="t2Row">
+		<td><p class="hcp3">Bl</p></td>
+		<td><p class="hcp3">Sw</p></td>
+		<td><p class="hcp3">1.68</p></td>
+		<td><p class="hcp3"><font size="3" class="hcp4">0.860</font></p></td>
+		<td><span><a href="#Nigh_1995a"><font size="3" class="hcp4">Nigh (1995a,</font> 
+		 <font size="3" class="hcp4">1995b)</font></a></span></td>
+	</tr>
+	<tr class="t1Row">
+		<td><p class="hcp3">Cwc</p></td>
+		<td><p class="hcp3">Hwc</p></td>
+		<td><p class="hcp3"><font size="3" class="hcp4">-1.198</font></p></td>
+		<td><p class="hcp3"><font size="3" class="hcp4">0.954</font></p></td>
+		<td><span><a href="#Nigh_Kayahara_2000"><font size="3" class="hcp4">Nigh, 
+		 G.D. and G. Kayahara. 2000</font></a></span></td>
+	</tr>
+	<tr class="t2Row">
+		<td><p class="hcp3"><span class="hcp5">Fdc</span></p></td>
+		<td><p class="hcp3"><span class="hcp5">Hwc</span></p></td>
+		<td><p class="hcp3"><span><font size="3" face="Arial" class="hcp6">0.481</font></span></p></td>
+		<td><p class="hcp3"><span class="hcp5">1.11</span></p></td>
+		<td><span><a href="#Nigh_1995a"><font size="3" face="Arial" class="hcp6">Nigh 
+		 1995a</font></a></span></td>
+	</tr>
+	<tr class="t1Row">
+		<td><p class="hcp3">Hwi</p></td>
+		<td><p class="hcp3">Fdi</p></td>
+		<td><p class="hcp3"><font size="3" class="hcp4">-5.14</font></p></td>
+		<td><p class="hcp3"><font size="3" class="hcp4">1.13</font></p></td>
+		<td><span><a href="#Nigh_1995a"><font size="3" class="hcp4">Nigh (1995a,</font> 
+		 <font size="3" class="hcp4">1995b)</font></a></span></td>
+	</tr>
+	<tr class="t2Row">
+		<td><p class="hcp3">Lw</p></td>
+		<td><p class="hcp3">Fdi</p></td>
+		<td><p class="hcp3">0.702</p></td>
+		<td><p class="hcp3">1.<font size="3" class="hcp4">017</font></p></td>
+		<td><span><a href="#Nigh_1995a"><font size="3" class="hcp4">Nigh (1995a,</font> 
+		 <font size="3" class="hcp4">1995b)</font></a></span></td>
+	</tr>
+	<tr class="t1Row">
+		<td><p class="hcp3">Lw</p></td>
+		<td><p class="hcp3">Pli</p></td>
+		<td><p class="hcp3">1.<font size="3" class="hcp7">923</font></p></td>
+		<td><p class="hcp3">0.962</p></td>
+		<td><span><a href="#Nigh_1995a"><font size="3" class="hcp4">Nigh (1995a,</font> 
+		 <font size="3" class="hcp4">1995b)</font></a></span></td>
+	</tr>
+	<tr class="t2Row">
+		<td><p class="hcp3">Pli</p></td>
+		<td><p class="hcp3">Fdi</p></td>
+		<td><p class="hcp3"><font size="3" class="hcp4">-0.758</font></p></td>
+		<td><p class="hcp3">1.07</p></td>
+		<td><span><a href="#Nigh_1995a"><font size="3" class="hcp4">Nigh (1995a, 
+		 1995b)</font></a></span> <span><font size="3" class="hcp4">and</font> <a 
+		 href="#Nigh_Krestov_1999"><font size="3" class="hcp4">Nigh, G.D. and P. Krestov 
+		 1999</font></a></span></td>
+	</tr>
+	<tr class="t1Row">
+		<td><p class="hcp3">Sb</p></td>
+		<td><p class="hcp3">Pli</p></td>
+		<td><p class="hcp3"><font size="3" class="hcp4">2.764</font></p></td>
+		<td><p class="hcp3"><font size="3" class="hcp4">&#160;0.639</font></p></td>
+		<td><span><a href="#Nigh_Krestov_1999"><font size="3" class="hcp4">Nigh, G.D. 
+		 and P. Krestov 1999</font></a></span></td>
+	</tr>
+	<tr class="t2Row">
+		<td><p class="hcp3">Ss</p></td>
+		<td><p class="hcp3">Hwc</p></td>
+		<td><p class="hcp3">-4.944</p></td>
+		<td><p class="hcp3">1.<font size="3" class="hcp7">248</font></p></td>
+		<td><span><a href="#Nigh_1995a"><font size="3" class="hcp4">Nigh (1995a,</font> 
+		 <font size="3" class="hcp4">1995b)</font></a></span></td>
+	</tr>
+	<tr class="t1Row">
+		<td><p class="hcp3">Sw</p></td>
+		<td><p class="hcp3">Pli</p></td>
+		<td><p class="hcp3">- 2.14</p></td>
+		<td><p class="hcp3">1.09</p></td>
+		<td><span><a href="#Nigh_1995a"><font size="3" class="hcp4">Nigh (1995a,</font> 
+		 <font size="3" class="hcp4">1995b)</font></a></span></td>
+	</tr>
+	<tr class="t2Row">
+		<td><p class="hcp3">Sw</p></td>
+		<td><p class="hcp3">Fdi</p></td>
+		<td><p class="hcp3">- 6.445</p></td>
+		<td><p class="hcp3">1.<font size="3" class="hcp7">357</font></p></td>
+		<td><span><a href="#Nigh_1995a"><font size="3" class="hcp4">Nigh (1995a,</font> 
+		 <font size="3" class="hcp4">1995b)</font></a></span></td>
+	</tr>
+	<tr class="t1Row">
+		<td><p class="hcp3">Sw</p></td>
+		<td><p class="hcp3">Bl</p></td>
+		<td><p class="hcp3">- 1.953</p></td>
+		<td><p class="hcp3">1.<font size="3" class="hcp7">163</font></p></td>
+		<td><span><a href="#Nigh_1995a"><font size="3" class="hcp4">Nigh (1995a,</font> 
+		 <font size="3" class="hcp4">1995b)</font></a></span></td>
+	</tr>
+</table>
+<p>&#160;</p>
+<h2>Literature Cited</h2>
+<p><font class="hcp8"><span class="hcp1"><a 
+	 name="Nigh_1995a" id="Nigh_1995a"></a>Nigh, G. D. 1995a</span>. <span 
+	 style="font-weight: bold; font-family: 'CG Times';"><a href="http://www.for.gov.bc.ca/hfd/pubs/docs/rr/rr01.htm">Site 
+ index conversion equations for mixed species stands.</a></span> B.C. Min. 
+ For., Res. Br., Victoria, B.C. Res. Rep. 01.</font></p>
+<p><font class="hcp8"><span class="hcp1"><a 
+	 name="Nigh_1995b" id="Nigh_1995b"></a>Nigh, G. D. 1995b</span>. <span class="hcp1"><a href="http://www.for.gov.bc.ca/hfd/pubs/Docs/En/En02.htm">Site 
+ index conversion equations for mixed Sitka spruce/western hemlock stands</a>.</span> 
+ B.C. Min. For., Res. Br., Victoria, B.C. Exten. Note 2.</font></p>
+<p><font class="hcp8"><span class="hcp1"><a 
+	 name="Nigh_1998" id="Nigh_1998"></a>Nigh, G.D. 1998</span>. <span class="hcp1"><a href="http://www.for.gov.bc.ca/hfd/pubs/Docs/En/En26.htm">Site 
+ index conversion equations for mixed western hemlock - amabilis fir stands</a>.</span> 
+ B.C. Min. For., Res. Br., Victoria, B.C. Exten Note 26.</font></p>
+<p><font class="hcp8"><span class="hcp1"><a 
+	 name="Nigh_Krestov_1999" id="Nigh_Krestov_1999"></a>Nigh, G.D. and 
+ P. Krestov. 1999</span>. <span class="hcp1"><a href="http://www.for.gov.bc.ca/hfd/pubs/Docs/En/En39.htm" 
+	 style="text-decoration: underline; ">Site index conversion equations 
+ for mixed black spruce-lodgepole pine stands</a>.</span> B.C. Min. For., 
+ Res. Br., Victoria, B.C. Exten. Note 39.</font></p>
+<p><font class="hcp8"><span class="hcp1"><a 
+	 name="Nigh_Kayahara_2000" id="Nigh_Kayahara_2000"></a>Nigh, G.D. and 
+ G. Kayahara. 2000</span>. Site index conversion equations for western 
+ redcedar and western hemlock<span class="hcp1">.</span> 
+ Northwest Sci. 74(2): 146-150.</font></p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp3">_______________________________________________</p>
+	<p class="hcp3">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span class="hcp5">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span><br><span class="hcp5">Forest Analysis and Inventory</span> 
+	 Branch</p>
+</div>
+</body>
+</html>

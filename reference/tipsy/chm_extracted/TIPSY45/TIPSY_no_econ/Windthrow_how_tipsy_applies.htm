@@ -1,0 +1,233 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="windthrow">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Windthrow: How it's applied with VR</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+img.hcp1 { border:none; }
+span.hcp2 { font-style:italic; }
+tr.hcp3 { vertical-align:top; }
+td.hcp4 { border-top:Solid 1px #000000;
+border-right:Solid 1px #000000;
+border-bottom:Solid 1px #000000;
+padding-right:10px;
+padding-left:10px; }
+td.hcp5 { border-left:Solid 1px #000000;
+border-right:Solid 1px #000000;
+border-bottom:Solid 1px #000000;
+padding-right:10px;
+padding-left:10px; }
+td.hcp6 { border-right:Solid 1px #000000;
+border-bottom:Solid 1px #000000;
+padding-right:10px;
+padding-left:10px; }
+p.hcp7 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1>Windthrow: How it's applied with VR</h1>
+<h1>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="2302"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="Related topics"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="windthrow$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My Robohelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\Windthrow_how_tipsy_applies.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:Related topics">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="windthrow">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </h1>
+<p>Following variable retention harvesting, the retention adjustment factor 
+ (VRAF) is affected by three components: 1) the withdrawal of retained 
+ tree areas from future timber production, 2) the competitive influence 
+ (ie. shading, etc.) of retained trees on the adjacent regenerating portions 
+ of the cutblock, and 3) the reduction of the retained trees due to windthrow. 
+ &#160;The third component is optional.</p>
+<p>TIPSY VRAFs represent the reduction in post-harvest regenerated yields 
+ on a per-hectare basis over an entire VR cutblock as a function of the 
+ retained area(s) or trees removed from timber production. &#160;Windthrow 
+ losses will reduce the percentage of crown cover, the average group size 
+ or crown size, and the initial length of edge per hectare retained. This 
+ will decrease the VRAF and therefore increase both the available growing 
+ space and the expected yields for the regeneration. &#160;The computed 
+ VRAF at age 100 is displayed in TIPSY’s Stand Description, and the VRAF 
+ values at any given age are presented in the Custom Table output option. 
+ &#160;You can plot the adjustment factors from the Custom Table.</p>
+<p>The form of the windthrow probability logistic model for a given location 
+ is:</p>
+<p>&#160;&#160;&#160;<img src="../TIPSY40equation1.gif" alt="" width="127" height="64" border="0" class="hcp1"></p>
+<p>Where <span class="hcp2">P</span><span style="vertical-align: Sub; 
+														 font-style: italic;">i</span> 
+ is the probability of damage in boundary segment (25m by 25m) <span class="hcp2">‘i’</span>, 
+ and the logit values are given by:</p>
+<p>&#160;<img src="../TIPSY40equation3.gif" alt="" width="313" height="25" border="0" class="hcp1"></p>
+<p>Where var1 to var <span class="hcp2">k</span> are a series 
+ of independent variables described in Table 1. The mean values and parameter 
+ estimates for these variables are included in TIPSY and described in <a 
+	 href="Literature_Cited.htm#Lanquaye_Mitchell_2005">Lanquaye and Mitchell, 
+ 2005</a>. &#160;You can also view them in <a href="Windthrow_defaults_and_contraints_in_TIPSY.htm">Windthrow 
+ defaults and constraints</a>.</p>
+<p>Table 1. &#160;Summary of independent variables for stand-level models</p>
+<table cellspacing="0" width="83.424%">
+	<col style="width: 33.843%;">
+	<col style="width: 46.07%;">
+	<col style="width: 20.087%;">
+	<tr class="hcp3">
+		<td style="border: Solid 1px #000000; width: 33.843%; padding-right: 10px; 
+			 padding-left: 10px;"><p>Variable</p></td>
+		<td style="width:46.07%;" class="hcp4"><p>Description</p></td>
+		<td style="width:20.087%;" class="hcp4"><p>Units</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:33.843%;" class="hcp5"><p>Bearing</p></td>
+		<td style="width:46.07%;" class="hcp6"><p>Bearing 
+		 (cosine) at right angles to boundary inward towards block. The 
+		 orientation of a clearcut edge relative to a southerly wind, cosine 
+		 backstransformed. It takes a value of 0-180 with 0 being a perpendicular 
+		 but northward facing boundary, 180 being a perpendicular but southward 
+		 facing boundary. 90 is a parallel boundary (facing into block 
+		 from either east of west side) etc.</p></td>
+		<td style="width:20.087%;" class="hcp6"><p>°</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:33.843%;" class="hcp5"><p>Mean wind speed</p></td>
+		<td style="width:46.07%;" class="hcp6"><p>Mean 
+		 wind speed from BC Hydro data (2001)</p></td>
+		<td style="width:20.087%;" class="hcp6"><p>m/s</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:33.843%;" class="hcp5"><p>Directional exposure</p></td>
+		<td style="width:46.07%;" class="hcp6"><p>Number 
+		 of segment exposed directions out of 8 cardinal directions</p></td>
+		<td style="width:20.087%;" class="hcp6"><p>#</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:33.843%;" class="hcp5"><p>Topex 2000</p></td>
+		<td style="width:46.07%;" class="hcp6"><p>Topographic 
+		 exposure to distance: sum of maximum angle to ground within 2 
+		 km for each of eight cardinal directions</p></td>
+		<td style="width:20.087%;" class="hcp6"><p>&#160;°</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:33.843%;" class="hcp5"><p>Elevation</p></td>
+		<td style="width:46.07%;" class="hcp6"><p>Ground 
+		 elevation from 100 m DEM</p></td>
+		<td style="width:20.087%;" class="hcp6"><p>m</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:33.843%;" class="hcp5"><p>Time since harvest</p></td>
+		<td style="width:46.07%;" class="hcp6"><p>Years 
+		 since harvest of adjacent opening</p></td>
+		<td style="width:20.087%;" class="hcp6"><p>&#160;</p>
+		<p>years</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:33.843%;" class="hcp5"><p>Stand top height</p></td>
+		<td style="width:46.07%;" class="hcp6"><p>Stand 
+		 top height from forest cover layer</p></td>
+		<td style="width:20.087%;" class="hcp6"><p>m</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:33.843%;" class="hcp5"><p>Crown cover loss</p></td>
+		<td style="width:46.07%;" class="hcp6"><p>Mean 
+		 proportion of crown cover loss within the segments at a given 
+		 location</p></td>
+		<td style="width:20.087%;" class="hcp6"><p>%</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width:33.843%;" class="hcp5"><p>Area loss</p></td>
+		<td style="width:46.07%;" class="hcp6"><p>Mean 
+		 proportion of area loss within the segments at a given location</p>
+		<p>&#160;</p></td>
+		<td style="width:20.087%;" class="hcp6"><p>%</p></td>
+	</tr>
+</table>
+<p>&#160;</p>
+<p>We expect windthrow losses to increase with:</p>
+<p>• &#160;topographic exposure</p>
+<p>• &#160;elevation</p>
+<p>• &#160;mean wind speed</p>
+<p>• &#160;site index and stand height</p>
+<p>• &#160;slenderness, high height diameter (H/D) ratios</p>
+<p>• &#160;time since harvest</p>
+<p>• &#160;opening size and boundary exposure</p>
+<p>• &#160;density and stand uniformity</p>
+<p>• &#160;decreasing retention levels</p>
+<p>• &#160;smaller retention groups and dispersed trees</p>
+<p>• &#160;narrower rectangular retention strips</p>
+<p>Users should be aware that, as with any predictive model, there are 
+ important modelling assumptions that affect the accuracy of projections 
+ and their interpretation. &#160;The windthrow models are empirical and, 
+ consequently, work best for situations very similar to those for which 
+ the model was fit. The windthrow models reflect the average outcome for 
+ stand edges or trees with particular sets of attributes. They incorporate 
+ damage that occurs within 10 years of harvesting and therefore reflect 
+ endemic windthrow from routinely occurring peak winds rather than catastrophic 
+ windthrow. Harvesting strategies are evolving and the stand-level windthrow 
+ models are based primarily on clearcut systems. Additional tree and stand-level 
+ datasets are needed to fully develop and test models suitable for the 
+ full range of VR scenarios. Windthrow predictions should be used for evaluating 
+ potential outcomes and evaluating trade-offs with the recognition that 
+ actual local windthrow may vary substantially from the prediction.</p>
+<p>The operational version of <a href="https://www2.gov.bc.ca/gov/content/industry/forestry/managing-our-forest-resources/forest-inventory/growth-and-yield-modelling/tree-and-stand-simulator-tass">TASS</a> 
+ used to generate the TIPSY database assumes that the sun is always directly 
+ overhead and that shorter trees will not survive within the vertical canopy 
+ shadow of taller trees. &#160;TIPSY VRAFs remove the crown area of retained 
+ trees after windthrow. &#160;Users who consider this effect too extreme 
+ may wish to reduce the crown area accordingly for dispersed retention 
+ in particular. &#160;</p>
+<p>The windthrow model works only with certain combinations of variable 
+ retention inputs. &#160;For example, you can't use windthrow with the 
+ formula method of edge length determination and a crown area that is partly 
+ aggregated and partly dispersed. &#160;TIPSY will alert you to these limitations. 
+ &#160;BatchTIPSY produces an error message in its .err file.</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp7">_______________________________________________</p>
+	<p class="hcp7">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

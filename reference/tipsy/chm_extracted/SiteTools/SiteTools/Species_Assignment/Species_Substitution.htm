@@ -1,0 +1,122 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Species Assignment Table</title>
+<link rel="StyleSheet" href="../../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+span.hcp2 { background-color:#ffff00; }
+span.hcp3 { font-weight:normal; }
+p.hcp4 { text-align:center; }
+span.hcp5 { font-family:Arial, sans-serif; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1>Species Assignment Table</h1>
+<p><span style="background-color: #ffff00; font-weight: bold; text-decoration: underline; ">Caution:</span> 
+ &#160;The default <span class="hcp1">Species Assignment 
+ Table</span> reflects ministry standards incorporated in many other ministry 
+ systems, e.g., &#160;inventory, timber supply, RESULTS, SIBEC, etc. &#160;Therefore, 
+ table modifications are discouraged for related applications. &#160;&#160;The 
+ <span class="hcp1">Restore All Defaults</span> button will 
+ remove any modifications.</p>
+<p><span class="hcp1">SiteTools</span> uses the <span class="hcp1">Species 
+ Assignment Table</span> to assign site index curves to species via species 
+ codes (136 in the default table). &#160;&#160;The table can be viewed 
+ and edited through its command in the <a href="../Getting_Started/Main_Menu.htm#Preference_menu">Preferences 
+ Menu</a>.</p>
+<p>To use the <span class="hcp1">Species Assignment Table</span> 
+ settings in <a href="../Interactive/Species_Selection.htm">Species and 
+ Curve Selection</a>, select the &quot;All Species&quot; option in <a href="../Interactive/Calculator_mode.htm">Calculator</a> 
+ and <a href="../Interactive/Table_Mode.htm">Table modes</a>. &#160;&#160;<a href="../Batch/Batch_Mode.htm">Batch mode</a> uses the <span class="hcp1">Species 
+ Substitution Table</span> exclusively.</p>
+<h2>Table Columns</h2>
+<p><span class="hcp2">Column 1:</span> &#160;&#160;&#160;&#160;&#160;Species 
+ <span class="hcp1">Code</span> (standard ministry codes).</p>
+<p><span class="hcp2">Column 2:</span> &#160;&#160;&#160;&#160;&#160;Common 
+ <span class="hcp1">Name</span> for the species in column 
+ 1.</p>
+<p><span class="hcp2">Columns 3-6:</span> &#160;&#160;For 
+ each combination of <span class="hcp1">Location</span> (Coast 
+ vs Interior) and <span class="hcp1">Regeneration Method</span> 
+ (Natural vs Planted), a species code representing the species assigned 
+ to provide the site index curve (equation) for the species in Column 1. 
+ &#160;.</p>
+<ul style="list-style: disc;">
+	<li><p><a href="../Background/What_is_SiteTools.htm#SINDEX">SINDEX</a> 
+	 only provides <span class="hcp1">SiteTools</span> with 
+	 site index equations for the 24 common BC species that are short-listed 
+	 in <a href="../Interactive/Species_Selection.htm">Common Species</a>. 
+	 &#160;&#160;Default assignments for these 24 species consist of identical 
+	 species code in Columns 1 and 3-6. &#160;&#160;This directs <span class="hcp1">SiteTools</span> to use site index equations 
+	 derived for that species in all cases.</p></li>
+	<li><p>Species other than the 24 common species are assigned species 
+	 codes in columns 3-6 corresponding to the substitute species, which 
+	 corresponds to one of the 24 species in <a href="../Background/What_is_SiteTools.htm#SINDEX">SINDEX</a>, 
+	 i.e., the short-list in <a href="../Interactive/Species_Selection.htm">Common 
+	 Species</a>. &#160;&#160;Defaults reflect the standard species substitutions 
+	 used in the provincial inventory, etc.</p></li>
+	<li><p><a href="../Background/What_is_SiteTools.htm#SINDEX">SINDEX</a>, 
+	 and therefore <span class="hcp1">SiteTools</span>, contains 
+	 several different site index equations for some species. &#160;&#160;See 
+	 <a href="#Assignment_Details">Assignment Details</a> below. &#160;&#160;</p></li>
+</ul>
+<p><span class="hcp2">Columns 7-8:</span> &#160;The 
+ assigned <a href="../SI_Info/Growth_Intercept_Models.htm">Growth Intercept 
+ (GI) equation</a> by <span class="hcp1">Location</span> 
+ (Coast vs. Interior). &#160;Defaults assignments are restricted to species 
+ having their own species-specific GI equations in <a href="../Background/What_is_SiteTools.htm#SINDEX">SINDEX</a>. 
+ &#160;&#160;See <a href="#Assignment_Details">Assignment Details</a> below.</p>
+<h2><a name="Assignment_Details" id="Assignment_Details"></a>Assignment 
+ Details</h2>
+<p>Clicking on a species (row) highlights it displays <span class="hcp1">Assignment 
+ Details</span> for the species below the table.</p>
+<p><span class="hcp1">Species Code:</span> &#160;&#160;Defaults 
+ are standard ministry species codes. &#160;Click the hot-link to edit.</p>
+<p><span class="hcp1">Species Name:</span> &#160;&#160;Defaults 
+ are standard ministry species common names. Click the hot-link to edit.</p>
+<p><span class="hcp1">Coastal vs. Interior checkbox</span>: 
+ &#160;&#160;Enables separate assignments by <span class="hcp1">Location</span>.</p>
+<p><span class="hcp1">Natural vs. Planted checkbox</span>: 
+ &#160;Enables separate assignments by <span class="hcp1">Regeneration 
+ Method</span>.</p>
+<p>When both checkboxes are unchecked, a single substitute species assignment 
+ is displayed, along with the citation for the associated site index curve 
+ assignment. &#160;&#160;The adjacent <span class="hcp1">All</span> 
+ label indicates the assignment applies to <span class="hcp1">all 
+ Location and Regeneration Methods</span>..</p>
+<p>Multiple assignment pairs are displayed when one or both checkboxes 
+ are checked.</p>
+<h2>Adding or Editing Assignment Details</h2>
+<p style="font-weight: bold;"><span class="hcp2">Caution:</span> 
+ <span class="hcp3">&#160;The default</span> Species Assignment 
+ Table <span class="hcp3">reflects ministry standards incorporated 
+ in many other ministry systems, e.g., &#160;inventory, timber supply, 
+ RESULTS, SIBEC, etc. &#160;Therefore, modifications are discouraged for 
+ related applications. &#160;&#160;The</span> Restore All Defaults <span class="hcp3">button will remove any modifications.</span></p>
+<p><span class="hcp1">To add a new species row</span>, click 
+ the &quot;Add New Species&quot; button and follow the prompts.</p>
+<p><span class="hcp1">To edit existing curve assignments</span>, 
+ open the <a href="Select_Curves.htm">Select Curve(s)</a> dialogue box 
+ by clicking a specific hot-linked curve assignment within the <span class="hcp1">Assignment 
+ Details</span> at the bottom.</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp4">_______________________________________________</p>
+	<p class="hcp4">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span class="hcp5">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span><br><span class="hcp5">Forest Analysis and Inventory</span> 
+	 Branch</p>
+</div>
+</body>
+</html>

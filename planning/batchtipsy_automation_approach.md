@@ -13,6 +13,16 @@ The intended target workflow is:
 3. BTC returns CSV output and CSV error files.
 4. Stage 01b / post-TIPSY consumes the returned CSV directly.
 
+Before anything else, preserve this invariant:
+
+- for unattended BTC ``/TSR`` automation, the live user-overlay
+  ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt`` path is the **only
+  known-valid seam**
+- copied-install-only or stock-report-only ``/TSR`` experiments are not
+  equivalent runtime evidence for FEMIC's unattended seam
+- those experiments may still be useful for clues, but they should not
+  displace the live overlay path in planning, validation, or conclusions
+
 The installed BTC user guide (`userguide1.4.pdf`) now confirms these additional
 CLI details:
 
@@ -30,6 +40,19 @@ CLI details:
   - `5` access denied
 - the guide explicitly says the batch process obeys normal BTC configuration
   files such as `settings.txt`
+
+One important negative result is now also established:
+
+- the undocumented ``/No_GUI`` switch is currently a **reverse-engineering dead
+  end** for FEMIC automation
+- decompilation plus runtime probes show that ``/No_GUI`` acts as a visibility
+  toggle, not a useful execution trigger
+- plain ``/No_GUI <project>.btc`` loads project state into a hidden session but
+  does not auto-run work
+- ``/TSR`` and ``/FLP`` remain the only proven useful BTC command-line
+  execution triggers
+- if another hidden BTC execution seam exists, it is more likely to be another
+  startup trigger than a post-launch control channel
 
 Another packaged clue now in scope:
 
@@ -54,6 +77,49 @@ Current planning implication:
   once the core BTC seam is stable:
   - FEMIC -> BTC/BatchTIPSY -> regime files -> TIPSY-CBM
   - FEMIC -> BTC/BatchTIPSY -> regime files -> FANSIER
+
+## Installed-Tree Audit Update (2026-03-29)
+
+The broader installed-tree audit under `P48.3d` is now complete enough to
+change planning posture from "possible easter eggs" to "documented adjacent
+seams."
+
+High-signal audit findings:
+
+- `BTC\OutputColumns.txt` is confirmed as the canonical BTC output ledger, and
+  it explicitly encodes the repeated `{000,125,175}` utilization-threshold
+  triplets that FEMIC is now treating as atomic bank units.
+- `BTC\userguide1.4.pdf` confirms command-line start modes for:
+  - saved `.btc` projects;
+  - `/TSR` via `TimberSupply.rpt`;
+  - `/FLP` via `ForestLandscapePlan.rpt`.
+- `BTC\userguide1.4.pdf` also confirms the positional command-line filename
+  contract and says command-line BTC still obeys normal config files such as
+  `settings.txt`.
+- `CBM\TIPSY-CBM.pdf` explicitly documents the `-RGM` regime-file export seam
+  for BatchTIPSY.
+- `BTC\oafs.txt`, `BTC\utiliz.txt`, `BTC\gw.txt`, `BTC\FertRespMOF.txt`, and
+  `BTC\vriSpecies.txt` remain first-class reverse-engineering surfaces for
+  future follow-on work around OAF logic, utilization thresholds, genetics,
+  fertilization, and species mapping.
+
+The `.chm` help audit produced a narrower but still useful result:
+
+- local `hh.exe -decompile` did not yield full HTML extraction in this
+  environment;
+- however, machine-readable topic inventories were recovered directly from the
+  compiled help binaries and saved under:
+  - `tipsy_io/logs/p48_3_install_audit/chm/`
+
+Those topic inventories surfaced help coverage for:
+
+- TIPSY Batch/custom-table/timber-supply/OAF/mortality topics;
+- Fansier regime, pricing, economics, biomass/carbon/CO2e topics;
+- SiteTools batch output-column and site-index topics.
+
+The full audit summary now lives in:
+
+- `planning/tipsy_install_tree_audit_20260329.md`
 
 ## Evidence Already Collected
 
@@ -815,6 +881,12 @@ This means the true unattended seam is:
   Documents directory rather than assuming a machine-specific OneDrive path
   so unattended BTC output lines up with FEMIC's longer VDYP curve timeline
   instead of stopping at the stock 120-year range
+
+This is now stronger than a useful clue. For FEMIC unattended BTC ``/TSR``
+work, this live user-overlay path is the only known-valid runtime seam. If a
+future note, probe, or experiment starts treating copied-install or stock-only
+``/TSR`` behavior as equivalent evidence, that note is regressing the repo's
+actual reverse-engineering state.
 
 It also means the earlier copied-install/generated-template probes were too
 pessimistic as a general seam detector. They were useful clues, but they were

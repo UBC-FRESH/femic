@@ -7995,3 +7995,505 @@
       `models/k3z_patchworks_model/analysis/headless_runs/`, and
       variant-track `accounts_backup_*.csv` spill files so future runtime
       save-outs stay out of Git status by default.
+- 2026-03-29 (Issue #48 kickoff planning / TIPSY field ledger): promoted the
+  next BTC cutover edge to the umbrella "remaining optional indicator banks"
+  task and added a durable planning ledger so optional-bank scope is tracked
+  in-repo instead of only in chat.
+  - Added `planning/tipsy_indicator_bank_checklist.md`, a grouped checkbox
+    inventory covering all 216 fields from `planning/AllFieldsSQL.rpt`.
+  - Marked the currently shipped `stand-structure-basic` family coverage as
+    landed in that checklist and left the remaining candidate banks unchecked.
+  - Updated `ROADMAP.md` so `P48.2d2` now explicitly references the new
+    checklist, treats issue `#48` as the governing tracker, and starts from
+    the current first product-oriented candidate families (`log-grades`,
+    `lumber-2-or-better`, `lumber-graded`, `lumber-degraded`,
+    `industrial-logs`, and `residual-fibre`).
+  - Follow-up BTC installation cross-reference:
+    - scraped `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt` and
+      `C:\Program Files\TIPSY 4.7\BTC\btpfields.txt` against
+      `planning/AllFieldsSQL.rpt`;
+    - confirmed `btpfields.txt` behaves like a BTP input-field map rather than
+      an output-column inventory;
+    - found additional output names in `OutputColumns.txt` that are absent from
+      `AllFieldsSQL.rpt`, especially:
+      - threshold-specific raw aliases such as `BasalArea000`,
+        `MeanDBHg000`, `StemCount000`, `Volume000`, `MAI000`, and `VPT000`;
+      - Carbon / CO2e output families; and
+      - `CrownCover` / `Crown_Bulk_Density`;
+    - recorded those supplemental output-only fields in
+      `planning/tipsy_indicator_bank_checklist.md` so they are not forgotten
+      during future optional-bank rollout work.
+- 2026-03-29 (Issue #48 scope rewrite): widened GitHub issue `#48` from one
+  specific grade-oriented bank into the umbrella tracker for "add all missing
+  optional BTC/TIPSY indicators, grouped into logical banks".
+  - The active plan no longer assumes we need a separate GitHub issue for each
+    small bank family.
+  - `ROADMAP.md` now mirrors that broader issue framing while still keeping the
+    current first implementation candidates product-oriented.
+- 2026-03-29 (Issue #48 first shipped product bank): added the `log-grades`
+  optional BTC indicator bank to FEMIC and validated it against the live
+  unattended `/TSR` overlay seam.
+  - `src/femic/pipeline/tipsy.py` now ships a `log-grades` bank containing:
+    - `Logs_Grade_D`
+    - `Logs_Grade_F`
+    - `Logs_Grade_H`
+    - `Logs_Grade_I`
+    - `Logs_Grade_J`
+    - `Logs_Grade_U`
+    - `Logs_Grade_X`
+    - `Logs_Grade_Y`
+    - `Logs_Grade_All`
+  - The generic BTC transposed-output parser already preserved arbitrary bank
+    aliases once they were added to the bank map, so no separate parser seam
+    was required beyond the new bank definition.
+  - Added focused test coverage for:
+    - bank column expansion;
+    - runtime TSR template injection; and
+    - transposed-output parsing of `Logs_Grade_*` fields.
+- 2026-03-29 (Issue #48 follow-on shipped product banks): added the
+  `lumber-2-or-better` and `residual-fibre` optional BTC indicator banks after
+  both families probed cleanly through the live unattended `/TSR` overlay seam.
+  - `src/femic/pipeline/tipsy.py` now also ships:
+    - `lumber-2-or-better`:
+      - `Lumber_2_or_Better_2x4`
+      - `Lumber_2_or_Better_2x6`
+      - `Lumber_2_or_Better_2x8`
+      - `Lumber_2_or_Better_2x10`
+      - `Lumber_2_or_Better_All`
+      - `LRF_2_or_Better_All`
+    - `residual-fibre`:
+      - `Residual_Chips`
+      - `Residual_Sawdust`
+      - `Residual_Shavings`
+      - `Residual_Trim`
+      - `Residual_Bark`
+  - Added focused test coverage for:
+    - bank column expansion; and
+    - runtime TSR template injection for both new bank families.
+- 2026-03-29 (Issue #48 BTC runtime-path cleanup): moved supervised BTC/TIPSY
+  CLI defaults out of the historical `vdyp_io/logs` namespace and into
+  dedicated `tipsy_io` runtime roots.
+  - `femic tipsy run-btc` and `femic tipsy probe-btc-columns` now default
+    manifests/logs under `tipsy_io/logs`.
+  - default BTC scratch now resolves under `tipsy_io/scratch/btc-<run_id>`
+    instead of `<log_dir>/btc_scratch-<run_id>`.
+  - bootstrap/runtime guardrails now create and ignore `tipsy_io/logs` and
+    `tipsy_io/scratch` so BTC supervision is easier to read and stays out of
+    tracked repo state.
+  - docs now explicitly warn that live unattended `/TSR` overlay smokes are
+    sequential-only because they share the same per-user `TimberSupply.rpt`
+    seam.
+- 2026-03-29 (Issue #48 checklist reset to canonical BTC field map): rewrote
+  the optional-bank ledger so it is now driven by installed BTC
+  `OutputColumns.txt` rather than the older GUI-built `AllFieldsSQL.rpt`
+  approximation.
+  - `planning/tipsy_indicator_bank_checklist.md` now groups the full canonical
+    BTC output inventory into logical bank buckets, with every real
+    `OutputColumns.txt` token represented exactly once.
+  - `planning/AllFieldsSQL.rpt` is now treated only as a secondary alias/report
+    template reference instead of the source-of-truth inventory.
+  - The only currently known `AllFieldsSQL.rpt`-only noncanonical names are:
+    - `Volume:Auto:Con`
+    - `Volume:Auto:Dec`
+    - `Height:Auto:Con`
+    - `Height:Auto:Dec`
+    - `last`
+  - `ROADMAP.md` and issue `#48` were widened accordingly so the active task is
+    now “finish the remaining logical banks from the canonical ledger,” not
+    only the earlier first-wave product families.
+- 2026-03-29 (Issue #48 second-wave product banks): added the `lumber-graded`,
+  `lumber-degraded`, and `industrial-logs` optional BTC indicator banks after
+  all three full families probed cleanly through the live unattended `/TSR`
+  overlay seam.
+  - `src/femic/pipeline/tipsy.py` now also ships:
+    - `lumber-graded`
+    - `lumber-degraded`
+    - `industrial-logs`
+  - Added focused test coverage for:
+    - bank column expansion; and
+    - runtime TSR template injection for the new product-bank cluster.
+- 2026-03-29 (Issue #48 remaining canonical bank sweep): pushed the current
+  unattended `/TSR` probe harness across the remaining unshipped canonical
+  `OutputColumns.txt` bank families and confirmed that the failures are real
+  seam selectivity, not a broken probe harness.
+  - Sanity check:
+    - re-probed the previously clean `log-grades` bank with the current
+      bank-probe logic and got `accepted=9`, `failed=0`, with the expected
+      `Logs_Grade_*` headers present in the returned CSV.
+  - Exception cluster:
+    - `yield-and-age-core` failed both as a whole-bank batch probe and as
+      one-token fallback probes (`Year`, then the reduced post-`Year` set),
+      all with the same BTC signature:
+      - `exit_code=1`
+      - no output CSV
+      - no error CSV
+      - auto-closed BTC modal dialog
+  - Silent-omission cluster:
+    - the following families completed BTC `/TSR` runs successfully, but every
+      requested token was omitted from the returned transposed CSV:
+      - `crop250-stand-quality`
+      - `mortality-summary`
+      - `genetics-fertilization-and-oaf`
+      - `tass-and-site-index-raw`
+      - `crown-and-fire`
+      - `biomass-live`
+      - `biomass-dead`
+      - `carbon`
+      - `co2e`
+      - `mortality-size-classes`
+      - `diameter-class-stems`
+      - `diameter-class-volume`
+      - `diameter-class-vpt`
+  - Naming-layer mismatch clue:
+    - `stand-structure-threshold-raw` also omitted all canonical raw names
+      such as `BasalArea000` and `MeanDBHg000`, while the already landed stand
+      structure bank still works with the older report-token forms
+      `BasalArea:000`, `DBHg:000`, and `SPH:000`.
+    - That family now looks more like a report-token alias problem than a
+      broken unattended seam.
+- 2026-03-29 (Issue #48 depth-first stock-matrix probe slice): added
+  variant-aware BTC probing and ran the first representative stock-syntax
+  experiments against the copied-install `/TSR` seam.
+  - The probe harness now supports a stock-matrix variant mode that can try:
+    - the generic transposed TSR line;
+    - exact stock report lines copied from shipped `.rpt` files;
+    - stock-transposed adapted lines; and
+    - explicit alias-token variants for naming-mismatch cases.
+  - The parser/runtime path was tightened to:
+    - read shipped BTC `.rpt` files with UTF-8 BOM handling;
+    - preserve exact stock column lines verbatim when probing;
+    - use short ASCII header overrides on generated transposed variants; and
+    - kill probe attempts immediately once a BTC modal exception dialog is
+      detected.
+  - New in-repo planning ledger:
+    - `planning/tipsy_tsr_variant_probe_ledger.md`
+  - Live representative results:
+    - `Mortality_Height_Mean`, `Mortality_DBHg_Mean`, and
+      `Mortality_Basal_Area` all failed across generic transposed, exact stock
+      `Mortality.rpt`, and stock-transposed adapted variants with the same
+      signature:
+      - `exit_code=1`
+      - no output CSV
+      - no error CSV
+      - auto-closed BTC modal dialog
+    - `BasalArea000`, `MeanDBHg000`, and `StemCount000` all failed across
+      generic canonical, alias-transposed, and exact stock `Yield.rpt`
+      variants with that same modal-signature failure.
+  - Current inference:
+    - width-bearing stock syntax does not rescue the mortality family through
+      copied-install `/TSR`; and
+    - the known-good threshold report-token spellings (`BasalArea:000`,
+      `DBHg:000`, `SPH:000`) appear to depend on the live user-overlay seam
+      rather than working generically in copied-install stock-matrix probes.
+- 2026-03-29 (Issue #48 live-overlay correction and next bank tranche): moved
+  the active probe workflow back onto the real user-overlay
+  `TimberSupply.rpt` seam and proved three more optional bank families there.
+  - Overlay-only differential probes passed cleanly for:
+    - control:
+      - `Logs_Grade_D`
+    - representative omitted-family tokens:
+      - `Mortality_Height_Mean`
+      - `Crop250VolUtil125`
+      - `CrownCover`
+    - sibling follow-up tokens:
+      - `Mortality_Stems`
+      - `Mortality_DBHg_Mean`
+      - `Mortality_Basal_Area`
+      - `Mortality_Volume_Total`
+      - `Crop250DBHgMean`
+      - `Crop250LiveCrown`
+      - `Crown_Bulk_Density`
+  - Direct header inspection confirmed returned age-series columns for all of
+    those fields on the real overlay seam.
+  - `src/femic/pipeline/tipsy.py` now ships three additional optional banks:
+    - `mortality-summary`
+    - `crop250-stand-quality`
+    - `crown-and-fire`
+  - Whole-bank live overlay smokes also passed for all three new switches:
+    - `--indicator-bank mortality-summary`
+    - `--indicator-bank crop250-stand-quality`
+    - `--indicator-bank crown-and-fire`
+  - Planning/docs surfaces updated:
+    - `planning/tipsy_indicator_bank_checklist.md`
+    - `planning/tipsy_tsr_variant_probe_ledger.md`
+    - `docs/reference/api/femic-pipeline-tipsy.rst`
+- 2026-03-29 (Issue #48 biomass/carbon overlay tranche): kept extending the
+  live user-overlay seam and proved the biomass/carbon/CO2e families plus the
+  remaining crown/fire support metrics.
+  - Representative overlay-only probes passed with real returned age-series
+    headers for:
+    - `Biomass_Live_Total`
+    - `Biomass_Dead_Total`
+    - `Carbon_Live_Total`
+    - `Carbon_Dead_Total`
+    - `CO2e_Live_Total`
+    - `CO2e_Dead_Total`
+    - `mean_height_to_crown_base`
+    - `mean_crown_length`
+  - Based on that signal, whole-bank live overlay smokes also passed for:
+    - `biomass-live`
+    - `biomass-dead`
+    - `carbon`
+    - `co2e`
+    - expanded `crown-and-fire`
+  - `src/femic/pipeline/tipsy.py` now ships those additional optional banks,
+    and `crown-and-fire` now includes:
+    - `CrownCover`
+    - `mean_height_to_crown_base`
+    - `mean_crown_length`
+    - `Crown_Bulk_Density`
+  - Direct header inspection confirmed representative returned columns such as:
+    - `Biomass_Live_Wood_*`, `Biomass_Live_Total_*`
+    - `Biomass_Dead_Wood_*`, `Biomass_Dead_Total_*`
+    - `Carbon_Live_Total_*`, `Carbon_Dead_Total_*`
+    - `CO2e_Live_Total_*`, `CO2e_Dead_Total_*`
+    - `mean_height_to_crown_base_*`, `mean_crown_length_*`
+  - Planning/docs/checklist surfaces updated:
+    - `planning/tipsy_indicator_bank_checklist.md`
+    - `planning/tipsy_tsr_variant_probe_ledger.md`
+    - `docs/reference/api/femic-pipeline-tipsy.rst`
+- 2026-03-29 (Issue #48 histogram/class overlay tranche): fixed one real
+  false-negative bug in the live probe harness, then shipped the remaining
+  histogram/class banks through the real user-overlay seam.
+  - Probe harness fix:
+    - default one-token probes now force short ASCII header aliases; and
+    - returned-header detection no longer assumes alnum-only prefixes, so
+      stock BTC headers like `Logs (Grade)_10` are no longer misclassified as
+      missing.
+  - Representative live overlay probes passed for:
+    - `Logs_Grade_D`
+    - `Mortality_Stems_Size_Class_5`
+    - `Mortality_Volume_Size_Class_5`
+    - `Mortality_VPT_Size_Class_5`
+    - `Stems_Diameter_Class_0`
+    - `Volume_Diameter_Class_0`
+    - `VPT_Diameter_Class_0`
+  - Whole-bank live overlay smokes then passed for:
+    - `mortality-size-classes`
+    - `diameter-class-stems`
+    - `diameter-class-volume`
+    - `diameter-class-vpt`
+  - `src/femic/pipeline/tipsy.py` now ships those four additional optional
+    banks, and direct header inspection confirmed returned columns such as:
+    - `Mortality_Stems_Size_Class_5_*`
+    - `Mortality_Volume_Size_Class_5_*`
+    - `Mortality_VPT_Size_Class_5_*`
+    - `Stems_Diameter_Class_0_*`
+    - `Volume_Diameter_Class_0_*`
+    - `VPT_Diameter_Class_0_*`
+  - Planning/docs/checklist surfaces updated:
+    - `planning/tipsy_indicator_bank_checklist.md`
+    - `planning/tipsy_tsr_variant_probe_ledger.md`
+    - `docs/reference/api/femic-pipeline-tipsy.rst`
+    - `ROADMAP.md`
+- 2026-03-29 (Issue #48 scalar-status overlay tranche): shipped the last clean
+  compact scalar/status banks through the real user-overlay seam.
+  - Representative live overlay probes passed with real returned age-series
+    headers for:
+    - `GWgain`
+    - `FertGain`
+    - `OAFremoval`
+    - `OAFmortality`
+    - `OAFimpact`
+    - `OAF`
+    - `YearTASS_Base`
+    - `HeightSindex_Base`
+    - `YearTASS_Full`
+    - `HeightSindex_Full`
+  - Based on that signal, whole-bank live overlay smokes also passed for:
+    - `genetics-fertilization-and-oaf`
+    - `tass-and-site-index-raw`
+  - `src/femic/pipeline/tipsy.py` now ships those two additional optional
+    banks, and direct header inspection confirmed returned columns such as:
+    - `GWgain_*`
+    - `FertGain_*`
+    - `OAF_*`
+    - `YearTASS_Base_*`
+    - `HeightSindex_Base_*`
+    - `YearTASS_Full_*`
+    - `HeightSindex_Full_*`
+  - Planning/docs/checklist surfaces updated:
+    - `planning/tipsy_indicator_bank_checklist.md`
+    - `planning/tipsy_tsr_variant_probe_ledger.md`
+    - `docs/reference/api/femic-pipeline-tipsy.rst`
+    - `ROADMAP.md`
+- 2026-03-29 (Issue #48 threshold-triplet design rule): recorded and
+  partially codified the bank-design rule that when BTC exposes the same
+  metric at `{000,125,175}` top-diameter merchantable cutoffs, FEMIC should
+  treat that triplet as one atomic mapped-bank unit.
+  - `src/femic/pipeline/tipsy.py` now carries an explicit reusable cutoff
+    suffix constant/helper and uses that helper for the shipped
+    `stand-structure-basic` `StemCount{000,125,175}` triplet.
+  - Planning/docs were updated to make the same rule explicit for the
+    unresolved `stand-structure-threshold-raw` family so the intended landing
+    shape is the full three-threshold set per metric, not a single-threshold
+    partial bank unless a live-overlay blockage is proven and documented.
+- 2026-03-29 (Issue #48 threshold raw bank): proved and landed the full
+  `stand-structure-threshold-raw` bank through the real live user-overlay
+  `TimberSupply.rpt` seam.
+  - Live overlay probes accepted all twenty-one threshold-triplet tokens on the
+    generic transposed line:
+    `Volume000/125/175`, `BasalArea000/125/175`, `MeanDBHg000/125/175`,
+    `MAI000/125/175`, `VPT000/125/175`, `Juvenille_Volume000/125/175`, and
+    `Juvenille_Percent000/125/175`.
+  - `src/femic/pipeline/tipsy.py` now ships
+    `--indicator-bank stand-structure-threshold-raw`, while
+    `tests/test_tipsy.py`, `planning/tipsy_indicator_bank_checklist.md`,
+    `planning/tipsy_tsr_variant_probe_ledger.md`, `docs/reference/api/femic-pipeline-tipsy.rst`,
+    and `ROADMAP.md` were updated to reflect that the only unresolved canonical
+    family left under Issue `#48` is now `yield-and-age-core`.
+- 2026-03-29 (Issue #48 yield-and-age bank closeout): live-overlay-only
+  isolation recovered a coherent shipped `yield-and-age-core` bank while also
+  clarifying the remaining non-bank caveats.
+  - The new bank now ships `Year`, `TotalAge`, `BHAge`, `StandAge`,
+    `HeightSindex`, `Height`, `Volume`, `VPT`, `HeightTassTop`,
+    `HeightTassMean`, and `HeightTassPredom`.
+  - `CC` and `VolumeGross` were not added to the bank because they are already
+    part of the unattended TSR base preset.
+  - `Juvenille_Volume` and `Juvenille_Percent` still trigger live-overlay BTC
+    modal failures as non-threshold totals, while their `000/125/175` variants
+    remain shipped through `stand-structure-threshold-raw`.
+  - This leaves Issue `#48` with no remaining unshipped logical banks, only the
+    documented juvenile-total caveat.
+- 2026-03-29 (Issue #56 P48.3 BTC cutover closeout): reconciled the remaining
+  cutover-wide tracker/docs drift and recorded the installed-tree audit in a
+  durable repo note.
+  - `ROADMAP.md` now treats `P48.3` as complete under GitHub issue `#56`
+    rather than leaving the old closed issue `#46` as the apparent governing
+    tracker.
+  - Added `planning/tipsy_install_tree_audit_20260329.md` as the auditable
+    installed-tree summary for `C:\Program Files\TIPSY 4.7\`.
+  - The audit confirms:
+    - BTC CLI can start from saved `.btc` projects, `/TSR`, or `/FLP`;
+    - BatchTIPSY-to-CBM documentation explicitly advertises the `-RGM`
+      regime-file seam;
+    - `OutputColumns.txt` is the canonical BTC output ledger for FEMIC bank
+      planning;
+    - packaged config/default files such as `oafs.txt` and `utiliz.txt` expose
+      useful model semantics for future reverse-engineering work.
+  - Full local CHM HTML decompile was not available through `hh.exe` in this
+    environment, but machine-readable topic inventories were still extracted
+    from the compiled help files and saved under
+    `tipsy_io/logs/p48_3_install_audit/chm/`.
+- 2026-03-29 (Issue #57 tracked CHM archive): archived the installed TIPSY help
+  corpus into tracked repo files for future reverse-engineering work.
+  - Fully extracted the installed `.chm` files for:
+    - `TIPSY45`
+    - `Fansier`
+    - `SiteTools`
+    - `Plotsy2`
+  - The working seam was path-sensitive:
+    - `hh.exe -decompile` failed from long paths with spaces;
+    - the same command succeeded once both input and output lived under a
+      short, no-space path such as `C:\chm\...`.
+  - The extracted help trees are now tracked under:
+    - `reference/tipsy/chm_extracted/TIPSY45/`
+    - `reference/tipsy/chm_extracted/Fansier/`
+    - `reference/tipsy/chm_extracted/SiteTools/`
+    - `reference/tipsy/chm_extracted/Plotsy2/`
+  - Added repo-local provenance notes in:
+    - `reference/tipsy/README.md`
+    - `reference/tipsy/chm_extracted/README.md`
+- 2026-03-29 (Issue #58 doc hardening): tightened the BTC seam docs so the
+  repo now says the critical `/TSR` rule explicitly.
+  - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`,
+    `docs/reference/api/femic-pipeline-tipsy.rst`, `ROADMAP.md`, and
+    `planning/batchtipsy_automation_approach.md` now explicitly state that the
+    live user-overlay `Documents\\BatchTIPSY Composer\\TimberSupply.rpt` path
+    is the **only known-valid** unattended FEMIC `/TSR` seam.
+  - The same notes now explicitly warn that copied-install-local or
+    stock-report-only `/TSR` probes are clue-gathering at best, not equivalent
+    validation of the live unattended FEMIC seam.
+- 2026-03-29 (Issue #58 `/No_GUI` trigger hunt checkpoint): narrowed the
+  hidden BTC execution question from broad flag probing down to the remaining
+  credible seams.
+  - Concrete runtime evidence now says:
+    - plain `TIPSYbtc.exe <project>.btc` visibly opens BTC and loads the
+      project;
+    - `TIPSYbtc.exe /No_GUI <project>.btc` leaves a hidden BTC process alive
+      but does not create output/error files by itself;
+    - re-saving the project after a real GUI export still does not make
+      `/No_GUI <project>.btc` auto-run;
+    - `/No_GUI <project>.btc <input> <output> <error>` also remained idle for
+      both `p.btc` and `p_run.btc`, even when explicit output/error filenames
+      were provided.
+  - A hidden launch of the shipped `DR24.BTP` sample with its working
+    directory pinned to the sample folder also remained alive without creating
+    `DR24.out` or `DR24.err`, so `.btp` alone is not yet a proven modern BTC
+    hidden-run trigger either.
+  - The modern BTC 1.4 user guide wording now reads as a real clue rather than
+    a generic guess:
+    - the first command-line option is described as loading a `.btc` file;
+    - `/TSR` and `/FLP` are the only explicitly documented execution-oriented
+      command-line modes.
+  - Current best read:
+    - `/No_GUI` is a visibility modifier, not an execution trigger;
+    - `.btc` project files behave like passive saved state rather than
+      self-running jobs;
+    - the only proven command-line execution triggers so far remain `/TSR` and
+      `/FLP`;
+    - remaining reverse-engineering targets are a possible legacy DOS/BTP
+      processing seam or an unexposed GUI-side "process" state that ordinary
+      `.btc` saves do not serialize.
+- 2026-03-29 (Issue #58 managed decompilation pass): installed a real .NET
+  decompiler toolchain and used it to inspect the installed `TIPSYbtc.exe`
+  assembly directly.
+  - Installed local tooling:
+    - ILSpy
+    - .NET 8 SDK
+    - `ilspycmd`
+  - Decompiled the high-value types:
+    - `TIPSY.modBTCfile`
+    - `TIPSY.modBTP`
+    - `TIPSY.frmTIPSY`
+  - The recovered startup/control-flow logic now confirms:
+    - `PreviewCommandLine()` only special-cases `/FLP`, `/TSR`, `/NO_GUI`,
+      and `.btc`;
+    - non-switch non-`.btc` command-line tokens are treated generically as
+      `sInputFilename`, then output/error filenames;
+    - `.btp` is not a special startup command-line branch in the current BTC
+      parser;
+    - the timer-driven startup path loads `.btc` files with `LoadBTC(...)`
+      and updates the screen, but only auto-calls `BatchProcess()` inside the
+      hidden `/TSR` or `/FLP` path;
+    - the decompiled `chkProcess` control is only the per-column "Process
+      Column" checkbox in the BTP/template editor, not a hidden global run
+      flag.
+  - This materially strengthens the current conclusion:
+    - `/No_GUI` is a visibility modifier;
+    - `.btc` is passive saved state;
+    - `/TSR` and `/FLP` are still the only proven command-line execution
+      triggers surfaced so far.
+- 2026-03-29 (Issue #58 hidden-session communication surface): narrowed what a
+  hidden BTC process can currently be "told" to do from the decompiled code.
+  - New code-backed findings:
+    - when a `.btc` filename is present on the command line, startup takes the
+      `LoadBTC(...)` branch first and never reaches the hidden
+      auto-`BatchProcess()` path, even if extra input/output/error filenames
+      were also supplied after the project path;
+    - the hidden processing path communicates through startup arguments plus
+      emitted files:
+      - requested output file;
+      - requested error file;
+      - timestamped `LogYYYYMMDDTHHMMSS.txt` status file beside the input;
+      - process exit code (`2` for missing input, `5` for hidden
+        read/write-check failure);
+    - the inspected decompiled type surface does not currently show any named
+      pipe, socket, remoting, console stdin/stdout, or custom Windows-message
+      seam that would allow live interactive control of an already-running
+      `/No_GUI` BTC process.
+  - Current best read:
+    - `/No_GUI` plus ordinary `.btc` load gives a hidden passive session, not
+      a hidden job runner;
+    - if there is another useful hidden execution seam, it is most likely a
+      startup trigger rather than a post-launch control channel.
+- 2026-03-29 (Issue #58 closeout): documented the `/No_GUI` investigation as a
+  reverse-engineering dead end for FEMIC's unattended BTC seam and closed the
+  tracker on that basis.
+  - Durable repo docs now say explicitly:
+    - `/No_GUI` acts as a visibility toggle rather than a useful execution
+      trigger;
+    - plain `/No_GUI <project>.btc` loads passive project state into a hidden
+      BTC session but does not process or export anything;
+    - `/TSR` and `/FLP` remain the only proven useful BTC command-line
+      execution triggers for unattended FEMIC work.

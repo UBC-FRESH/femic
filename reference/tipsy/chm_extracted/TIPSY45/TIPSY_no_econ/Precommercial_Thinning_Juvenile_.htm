@@ -1,0 +1,213 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="Jobs">
+<meta name="MS-HAID" content="Thinning">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Jobs: Pre-commercial Thinning</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+b.hcp1 { font-weight:bold; }
+table.hcp2 { top:182px; }
+tr.hcp3 { vertical-align:top; }
+p.hcp4 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1>Jobs: Pre-commercial Thinning</h1>
+<p>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="1640"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="More jobs"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="Jobs$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My RoboHelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\Precommercial_Thinning_Juvenile_.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:More jobs">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="Jobs">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </p>
+<h3><b class="hcp1">Jobs required to:</b></h3>
+<p>remove trees having no commercial value for the benefit of remaining 
+ trees.</p>
+<h3><b class="hcp1">Options:</b></h3>
+<p>User-specified: Your own local data</p>
+<p>Defaults:</p>
+<p>Manual: Same for all districts in a particular region (regional average)</p>
+<table style="left:0px;" width="181" class="hcp2">
+	<col width="177">
+	<tr class="hcp3">
+		<td width="177">--------------------------------</td>
+	</tr>
+</table>
+<table >
+	<col width="92">
+	<col width="83">
+	<tr class="hcp3">
+		<td width="92"><p class="TableText">Region</p></td>
+		<td width="83"><p class="TableText" style="text-align: center;">Jobs<br>
+		(PD/ha)</p></td>
+	</tr>
+</table>
+<table width="34.858%">
+	<col width="179">
+	<tr class="hcp3">
+		<td width="179"><p class="TableText">--------------------------------</p></td>
+	</tr>
+</table>
+<table >
+	<col width="116">
+	<col width="37">
+	<tr class="hcp3">
+		<td width="116"><p>Coast</p></td>
+		<td width="37"><p>2.74</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td width="116"><p>Northern Interior</p></td>
+		<td width="37"><p>2.75</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td width="116"><p>Southern Interior</p></td>
+		<td width="37"><p>4.72</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td width="116"><p class="TableText">BC average</p></td>
+		<td width="37"><p class="TableText">3.50</p></td>
+	</tr>
+</table>
+<table width="35.239%">
+	<col width="181">
+	<tr class="hcp3">
+		<td width="181">--------------------------------</td>
+	</tr>
+</table>
+<p>Mechanical: 0.87 PD/ha district average. This is the same for all districts 
+ (provincial average).</p>
+<h3>Function:</h3>
+<p>Mechanical: no function is available</p>
+<p>Manual:</p>
+<p>JOBS = f (Area, Slope, Trees removed, Dbh, Regional adjustment)</p>
+<p class="Indent">JOBS = -1.3215 - (0.024 * A) + (0.0878 * S) + (0.000126 
+ * T) + (0.142 * D) + R</p>
+<p class="Indent">If JOBS &lt; 1.0, then JOBS = 1.0</p>
+<p class="Indent">If JOBS &gt; 6.0, then JOBS = 6.0</p>
+<p>where:</p>
+<p class="Indent">JOBS = Average number of person days/ha</p>
+<p class="Indent">A = Area treated in hectares (default = 50ha)</p>
+<p class="Indent">S = Average slope (%) of ground (default = 10%)</p>
+<p class="Indent">T = Average number of trees removed (calculated by TIPSY)</p>
+<p class="Indent">D = Average diameter (cm) of the stand prior to treatment</p>
+<p class="Indent">R = Region-specific adjustment</p>
+<table style="left:0px;" width="181" class="hcp2">
+	<col width="177">
+	<tr class="hcp3">
+		<td width="177">--------------------------------</td>
+	</tr>
+</table>
+<table >
+	<col width="92">
+	<col width="83">
+	<tr class="hcp3">
+		<td width="92"><p class="TableText">Region</p></td>
+		<td width="83"><p class="TableText" style="text-align: center;">Jobs<br>
+		(PD/ha)</p></td>
+	</tr>
+</table>
+<table width="34.858%">
+	<col width="179">
+	<tr class="hcp3">
+		<td width="179"><p class="TableText">--------------------------------</p></td>
+	</tr>
+</table>
+<table >
+	<col width="116">
+	<col width="37">
+	<tr class="hcp3">
+		<td width="116"><p>Coast</p></td>
+		<td width="37"><p>0.00</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td width="116"><p>Northern Interior</p></td>
+		<td width="37"><p>2.09</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td width="116"><p>Southern Interior</p></td>
+		<td width="37"><p>1.91</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td width="116"><p class="TableText">BC average</p></td>
+		<td width="37"><p class="TableText">1.66</p></td>
+	</tr>
+</table>
+<table width="35.239%">
+	<col width="181">
+	<tr class="hcp3">
+		<td width="181">--------------------------------</td>
+	</tr>
+</table>
+<h3><b class="hcp1">Source:</b></h3>
+<p><a href="Literature_Cited.htm#Stone_1992">Mike Stone (1992)</a></p>
+<h3><b class="hcp1">Comments:</b></h3>
+<ul>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet">The 
+	 application age varies but will conform to the height (4 or 6 m) at 
+	 which TIPSY pre-commercially thins the stand. If you pre-commercially 
+	 thin a stand with multiple species, the age at which the thinning 
+	 takes place will be different for each species. This is because thinning 
+	 coincides with certain heights, each species attaining that height 
+	 at a different age. The percent composition of each species has no 
+	 affect on the timing of the thinning.</p></li>
+	<li class="p-Bullet" style="margin-left: -20px;"><p class="Bullet">The 
+	 impact of OAF’s is incorporated automatically when TIPSY calculates 
+	 the number of trees removed (i.e. post OAF density – residual density 
+	 = number of trees removed).</p></li>
+</ul>
+<p>See also <a href="Precommercial_Thinning_how_it_wo.htm">Pre-commercial 
+ Thinning</a></p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp4">_______________________________________________</p>
+	<p class="hcp4">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

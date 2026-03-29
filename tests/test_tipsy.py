@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import os
 from pathlib import Path
+import re
 import sys
 
 import pandas as pd
@@ -31,6 +32,7 @@ from femic.pipeline.tipsy import (
     evaluate_tipsy_candidate,
     parse_btc_custom_report_template,
     parse_btc_tsr_transposed_output,
+    probe_btc_indicator_banks,
     probe_btc_report_columns,
     prepare_btc_runtime,
     resolve_btc_executable,
@@ -343,6 +345,35 @@ def test_parse_btc_tsr_transposed_output_preserves_existing_managed_curve_ids(
     assert out["TPH"].isna().all()
 
 
+def test_parse_btc_tsr_transposed_output_preserves_log_grade_columns(
+    tmp_path: Path,
+) -> None:
+    output_csv = tmp_path / "MSYT_output.csv"
+    pd.DataFrame(
+        [
+            {
+                "feature_id": 1001,
+                "MVcon_0": 1.0,
+                "MVdec_0": 2.0,
+                "HTcon_0": 4.0,
+                "HTdec_0": 3.0,
+                "gVol_0": 5.0,
+                "CC_0": 0.6,
+                "Logs_Grade_D_0": 7.0,
+                "Logs_Grade_All_0": 9.0,
+            }
+        ]
+    ).to_csv(output_csv, index=False)
+
+    out = parse_btc_tsr_transposed_output(output_csv=output_csv, pd_module=pd)
+
+    assert list(out["AU"]) == [21001]
+    assert list(out["Age"]) == [0]
+    assert list(out["Yield"]) == [3.0]
+    assert list(out["Logs_Grade_D"]) == [7.0]
+    assert list(out["Logs_Grade_All"]) == [9.0]
+
+
 def test_parse_btc_custom_report_template_reads_sql_style_template(
     tmp_path: Path,
 ) -> None:
@@ -413,6 +444,374 @@ def test_btc_indicator_bank_columns_returns_first_safe_bank() -> None:
     ]
 
 
+def test_btc_indicator_bank_columns_returns_threshold_raw_triplet_bank() -> None:
+    columns = btc_indicator_bank_columns("stand-structure-threshold-raw")
+    assert [column.token for column in columns] == [
+        "Volume000",
+        "Volume125",
+        "Volume175",
+        "BasalArea000",
+        "BasalArea125",
+        "BasalArea175",
+        "MeanDBHg000",
+        "MeanDBHg125",
+        "MeanDBHg175",
+        "MAI000",
+        "MAI125",
+        "MAI175",
+        "VPT000",
+        "VPT125",
+        "VPT175",
+        "Juvenille_Volume000",
+        "Juvenille_Volume125",
+        "Juvenille_Volume175",
+        "Juvenille_Percent000",
+        "Juvenille_Percent125",
+        "Juvenille_Percent175",
+    ]
+    assert [column.header1_override for column in columns] == [
+        "Volume000",
+        "Volume125",
+        "Volume175",
+        "BasalArea000",
+        "BasalArea125",
+        "BasalArea175",
+        "MeanDBHg000",
+        "MeanDBHg125",
+        "MeanDBHg175",
+        "MAI000",
+        "MAI125",
+        "MAI175",
+        "VPT000",
+        "VPT125",
+        "VPT175",
+        "Juvenille_Volume000",
+        "Juvenille_Volume125",
+        "Juvenille_Volume175",
+        "Juvenille_Percent000",
+        "Juvenille_Percent125",
+        "Juvenille_Percent175",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_yield_and_age_core_bank() -> None:
+    columns = btc_indicator_bank_columns("yield-and-age-core")
+    assert [column.token for column in columns] == [
+        "Year",
+        "TotalAge",
+        "BHAge",
+        "StandAge",
+        "HeightSindex",
+        "Height",
+        "Volume",
+        "VPT",
+        "HeightTassTop",
+        "HeightTassMean",
+        "HeightTassPredom",
+    ]
+    assert [column.header1_override for column in columns] == [
+        "Year",
+        "TotalAge",
+        "BHAge",
+        "StandAge",
+        "HeightSindex",
+        "Height",
+        "Volume",
+        "VPT",
+        "HeightTassTop",
+        "HeightTassMean",
+        "HeightTassPredom",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_genetics_fertilization_oaf_bank() -> None:
+    columns = btc_indicator_bank_columns("genetics-fertilization-and-oaf")
+    assert [column.token for column in columns] == [
+        "GWgain",
+        "FertGain",
+        "OAFremoval",
+        "OAFmortality",
+        "OAFimpact",
+        "OAF",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_tass_site_index_raw_bank() -> None:
+    columns = btc_indicator_bank_columns("tass-and-site-index-raw")
+    assert [column.token for column in columns] == [
+        "YearTASS_Base",
+        "HeightSindex_Base",
+        "YearTASS_Full",
+        "HeightSindex_Full",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_log_grades_bank() -> None:
+    columns = btc_indicator_bank_columns("log-grades")
+    assert [column.token for column in columns] == [
+        "Logs_Grade_D",
+        "Logs_Grade_F",
+        "Logs_Grade_H",
+        "Logs_Grade_I",
+        "Logs_Grade_J",
+        "Logs_Grade_U",
+        "Logs_Grade_X",
+        "Logs_Grade_Y",
+        "Logs_Grade_All",
+    ]
+    assert [column.header1_override for column in columns] == [
+        "Logs_Grade_D",
+        "Logs_Grade_F",
+        "Logs_Grade_H",
+        "Logs_Grade_I",
+        "Logs_Grade_J",
+        "Logs_Grade_U",
+        "Logs_Grade_X",
+        "Logs_Grade_Y",
+        "Logs_Grade_All",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_lumber_2_or_better_bank() -> None:
+    columns = btc_indicator_bank_columns("lumber-2-or-better")
+    assert [column.token for column in columns] == [
+        "Lumber_2_or_Better_2x4",
+        "Lumber_2_or_Better_2x6",
+        "Lumber_2_or_Better_2x8",
+        "Lumber_2_or_Better_2x10",
+        "Lumber_2_or_Better_All",
+        "LRF_2_or_Better_All",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_residual_fibre_bank() -> None:
+    columns = btc_indicator_bank_columns("residual-fibre")
+    assert [column.token for column in columns] == [
+        "Residual_Chips",
+        "Residual_Sawdust",
+        "Residual_Shavings",
+        "Residual_Trim",
+        "Residual_Bark",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_lumber_graded_bank() -> None:
+    columns = btc_indicator_bank_columns("lumber-graded")
+    assert [column.token for column in columns] == [
+        "Lumber_Graded_SS_2x4",
+        "Lumber_Graded_SS_2x6",
+        "Lumber_Graded_SS_2x8",
+        "Lumber_Graded_SS_2x10",
+        "Lumber_Graded_1_2x4",
+        "Lumber_Graded_1_2x6",
+        "Lumber_Graded_1_2x8",
+        "Lumber_Graded_1_2x10",
+        "Lumber_Graded_2_2x4",
+        "Lumber_Graded_2_2x6",
+        "Lumber_Graded_2_2x8",
+        "Lumber_Graded_2_2x10",
+        "Lumber_Graded_3_2x4",
+        "Lumber_Graded_3_2x6",
+        "Lumber_Graded_3_2x8",
+        "Lumber_Graded_3_2x10",
+        "Lumber_Graded_4_2x4",
+        "Lumber_Graded_4_2x6",
+        "Lumber_Graded_4_2x8",
+        "Lumber_Graded_4_2x10",
+        "Lumber_Graded_All",
+        "LRF_Graded_All",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_lumber_degraded_bank() -> None:
+    columns = btc_indicator_bank_columns("lumber-degraded")
+    assert [column.token for column in columns] == [
+        "Lumber_Degraded_SS_2x4",
+        "Lumber_Degraded_SS_2x6",
+        "Lumber_Degraded_SS_2x8",
+        "Lumber_Degraded_SS_2x10",
+        "Lumber_Degraded_1_2x4",
+        "Lumber_Degraded_1_2x6",
+        "Lumber_Degraded_1_2x8",
+        "Lumber_Degraded_1_2x10",
+        "Lumber_Degraded_2_2x4",
+        "Lumber_Degraded_2_2x6",
+        "Lumber_Degraded_2_2x8",
+        "Lumber_Degraded_2_2x10",
+        "Lumber_Degraded_3_2x4",
+        "Lumber_Degraded_3_2x6",
+        "Lumber_Degraded_3_2x8",
+        "Lumber_Degraded_3_2x10",
+        "Lumber_Degraded_4_2x4",
+        "Lumber_Degraded_4_2x6",
+        "Lumber_Degraded_4_2x8",
+        "Lumber_Degraded_4_2x10",
+        "Lumber_Degraded_All",
+        "LRF_Degraded_All",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_industrial_logs_bank() -> None:
+    columns = btc_indicator_bank_columns("industrial-logs")
+    assert [column.token for column in columns] == [
+        "Industrial_Logs_D38L13",
+        "Industrial_Logs_D38L11",
+        "Industrial_Logs_D38L8",
+        "Industrial_Logs_D30L13",
+        "Industrial_Logs_D30L11",
+        "Industrial_Logs_D30L8",
+        "Industrial_Logs_D20L13",
+        "Industrial_Logs_D20L11",
+        "Industrial_Logs_D20L8",
+        "Industrial_Logs_D125L13",
+        "Industrial_Logs_D125L11",
+        "Industrial_Logs_D125L8",
+        "Industrial_Logs_D125L63",
+        "Industrial_Logs_D125L51",
+        "Industrial_Logs_D125L5",
+        "Industrial_Logs_D305",
+        "Industrial_Logs_D254",
+        "Industrial_Logs_D203",
+        "Industrial_Logs_D178",
+        "Industrial_Logs_D152",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_mortality_summary_bank() -> None:
+    columns = btc_indicator_bank_columns("mortality-summary")
+    assert [column.token for column in columns] == [
+        "Mortality_Stems",
+        "Mortality_DBHg_Mean",
+        "Mortality_Height_Mean",
+        "Mortality_Basal_Area",
+        "Mortality_Volume_Total",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_crop250_stand_quality_bank() -> None:
+    columns = btc_indicator_bank_columns("crop250-stand-quality")
+    assert [column.token for column in columns] == [
+        "Crop250VolUtil125",
+        "Crop250DBHgMean",
+        "Crop250LiveCrown",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_crown_and_fire_bank() -> None:
+    columns = btc_indicator_bank_columns("crown-and-fire")
+    assert [column.token for column in columns] == [
+        "CrownCover",
+        "mean_height_to_crown_base",
+        "mean_crown_length",
+        "Crown_Bulk_Density",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_biomass_live_bank() -> None:
+    columns = btc_indicator_bank_columns("biomass-live")
+    assert [column.token for column in columns] == [
+        "Biomass_Live_Wood",
+        "Biomass_Live_Bark",
+        "Biomass_Live_Foliar",
+        "Biomass_Live_Branch",
+        "Biomass_Live_Roots",
+        "Biomass_Live_Total",
+        "Biomass_Live_Above",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_biomass_dead_bank() -> None:
+    columns = btc_indicator_bank_columns("biomass-dead")
+    assert [column.token for column in columns] == [
+        "Biomass_Dead_Wood",
+        "Biomass_Dead_Bark",
+        "Biomass_Dead_Foliar",
+        "Biomass_Dead_Branch",
+        "Biomass_Dead_Roots",
+        "Biomass_Dead_Total",
+        "Biomass_Dead_Above",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_carbon_bank() -> None:
+    columns = btc_indicator_bank_columns("carbon")
+    assert [column.token for column in columns] == [
+        "Carbon_Live_Wood",
+        "Carbon_Live_Bark",
+        "Carbon_Live_Foliar",
+        "Carbon_Live_Branch",
+        "Carbon_Live_Roots",
+        "Carbon_Live_Total",
+        "Carbon_Live_Above",
+        "Carbon_Dead_Wood",
+        "Carbon_Dead_Bark",
+        "Carbon_Dead_Foliar",
+        "Carbon_Dead_Branch",
+        "Carbon_Dead_Roots",
+        "Carbon_Dead_Total",
+        "Carbon_Dead_Above",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_co2e_bank() -> None:
+    columns = btc_indicator_bank_columns("co2e")
+    assert [column.token for column in columns] == [
+        "CO2e_Live_Wood",
+        "CO2e_Live_Bark",
+        "CO2e_Live_Foliar",
+        "CO2e_Live_Branch",
+        "CO2e_Live_Roots",
+        "CO2e_Live_Total",
+        "CO2e_Live_Above",
+        "CO2e_Dead_Wood",
+        "CO2e_Dead_Bark",
+        "CO2e_Dead_Foliar",
+        "CO2e_Dead_Branch",
+        "CO2e_Dead_Roots",
+        "CO2e_Dead_Total",
+        "CO2e_Dead_Above",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_mortality_size_classes_bank() -> None:
+    columns = btc_indicator_bank_columns("mortality-size-classes")
+    assert [column.token for column in columns] == [
+        *(
+            f"Mortality_Stems_Size_Class_{suffix}"
+            for suffix in (5, 15, 25, 35, 45, 55, 65)
+        ),
+        *(
+            f"Mortality_Volume_Size_Class_{suffix}"
+            for suffix in (5, 15, 25, 35, 45, 55, 65)
+        ),
+        *(
+            f"Mortality_VPT_Size_Class_{suffix}"
+            for suffix in (5, 15, 25, 35, 45, 55, 65)
+        ),
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_diameter_class_stems_bank() -> None:
+    columns = btc_indicator_bank_columns("diameter-class-stems")
+    assert [column.token for column in columns] == [
+        *(f"Stems_Diameter_Class_{suffix}" for suffix in range(0, 95, 5))
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_diameter_class_volume_bank() -> None:
+    columns = btc_indicator_bank_columns("diameter-class-volume")
+    assert [column.token for column in columns] == [
+        *(f"Volume_Diameter_Class_{suffix}" for suffix in range(0, 95, 5))
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_diameter_class_vpt_bank() -> None:
+    columns = btc_indicator_bank_columns("diameter-class-vpt")
+    assert [column.token for column in columns] == [
+        *(f"VPT_Diameter_Class_{suffix}" for suffix in range(0, 95, 5))
+    ]
+
+
 def test_apply_btc_indicator_banks_appends_without_duplicates() -> None:
     template = btc_report_template_preset("tsr-unattended-default")
     extended = apply_btc_indicator_banks(
@@ -433,6 +832,352 @@ def test_apply_btc_indicator_banks_appends_without_duplicates() -> None:
         "StemCount000",
         "StemCount125",
         "StemCount175",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_log_grades_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["log-grades"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Logs_Grade_D",
+        "Logs_Grade_F",
+        "Logs_Grade_H",
+        "Logs_Grade_I",
+        "Logs_Grade_J",
+        "Logs_Grade_U",
+        "Logs_Grade_X",
+        "Logs_Grade_Y",
+        "Logs_Grade_All",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_lumber_2_or_better_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["lumber-2-or-better"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Lumber_2_or_Better_2x4",
+        "Lumber_2_or_Better_2x6",
+        "Lumber_2_or_Better_2x8",
+        "Lumber_2_or_Better_2x10",
+        "Lumber_2_or_Better_All",
+        "LRF_2_or_Better_All",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_residual_fibre_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["residual-fibre"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Residual_Chips",
+        "Residual_Sawdust",
+        "Residual_Shavings",
+        "Residual_Trim",
+        "Residual_Bark",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_lumber_graded_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["lumber-graded"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Lumber_Graded_SS_2x4",
+        "Lumber_Graded_SS_2x6",
+        "Lumber_Graded_SS_2x8",
+        "Lumber_Graded_SS_2x10",
+        "Lumber_Graded_1_2x4",
+        "Lumber_Graded_1_2x6",
+        "Lumber_Graded_1_2x8",
+        "Lumber_Graded_1_2x10",
+        "Lumber_Graded_2_2x4",
+        "Lumber_Graded_2_2x6",
+        "Lumber_Graded_2_2x8",
+        "Lumber_Graded_2_2x10",
+        "Lumber_Graded_3_2x4",
+        "Lumber_Graded_3_2x6",
+        "Lumber_Graded_3_2x8",
+        "Lumber_Graded_3_2x10",
+        "Lumber_Graded_4_2x4",
+        "Lumber_Graded_4_2x6",
+        "Lumber_Graded_4_2x8",
+        "Lumber_Graded_4_2x10",
+        "Lumber_Graded_All",
+        "LRF_Graded_All",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_lumber_degraded_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["lumber-degraded"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Lumber_Degraded_SS_2x4",
+        "Lumber_Degraded_SS_2x6",
+        "Lumber_Degraded_SS_2x8",
+        "Lumber_Degraded_SS_2x10",
+        "Lumber_Degraded_1_2x4",
+        "Lumber_Degraded_1_2x6",
+        "Lumber_Degraded_1_2x8",
+        "Lumber_Degraded_1_2x10",
+        "Lumber_Degraded_2_2x4",
+        "Lumber_Degraded_2_2x6",
+        "Lumber_Degraded_2_2x8",
+        "Lumber_Degraded_2_2x10",
+        "Lumber_Degraded_3_2x4",
+        "Lumber_Degraded_3_2x6",
+        "Lumber_Degraded_3_2x8",
+        "Lumber_Degraded_3_2x10",
+        "Lumber_Degraded_4_2x4",
+        "Lumber_Degraded_4_2x6",
+        "Lumber_Degraded_4_2x8",
+        "Lumber_Degraded_4_2x10",
+        "Lumber_Degraded_All",
+        "LRF_Degraded_All",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_industrial_logs_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["industrial-logs"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Industrial_Logs_D38L13",
+        "Industrial_Logs_D38L11",
+        "Industrial_Logs_D38L8",
+        "Industrial_Logs_D30L13",
+        "Industrial_Logs_D30L11",
+        "Industrial_Logs_D30L8",
+        "Industrial_Logs_D20L13",
+        "Industrial_Logs_D20L11",
+        "Industrial_Logs_D20L8",
+        "Industrial_Logs_D125L13",
+        "Industrial_Logs_D125L11",
+        "Industrial_Logs_D125L8",
+        "Industrial_Logs_D125L63",
+        "Industrial_Logs_D125L51",
+        "Industrial_Logs_D125L5",
+        "Industrial_Logs_D305",
+        "Industrial_Logs_D254",
+        "Industrial_Logs_D203",
+        "Industrial_Logs_D178",
+        "Industrial_Logs_D152",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_mortality_summary_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["mortality-summary"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Mortality_Stems",
+        "Mortality_DBHg_Mean",
+        "Mortality_Height_Mean",
+        "Mortality_Basal_Area",
+        "Mortality_Volume_Total",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_crop250_stand_quality_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["crop250-stand-quality"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Crop250VolUtil125",
+        "Crop250DBHgMean",
+        "Crop250LiveCrown",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_crown_and_fire_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["crown-and-fire"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "CrownCover",
+        "mean_height_to_crown_base",
+        "mean_crown_length",
+        "Crown_Bulk_Density",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_biomass_live_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["biomass-live"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Biomass_Live_Wood",
+        "Biomass_Live_Bark",
+        "Biomass_Live_Foliar",
+        "Biomass_Live_Branch",
+        "Biomass_Live_Roots",
+        "Biomass_Live_Total",
+        "Biomass_Live_Above",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_biomass_dead_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["biomass-dead"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Biomass_Dead_Wood",
+        "Biomass_Dead_Bark",
+        "Biomass_Dead_Foliar",
+        "Biomass_Dead_Branch",
+        "Biomass_Dead_Roots",
+        "Biomass_Dead_Total",
+        "Biomass_Dead_Above",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_carbon_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["carbon"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Carbon_Live_Wood",
+        "Carbon_Live_Bark",
+        "Carbon_Live_Foliar",
+        "Carbon_Live_Branch",
+        "Carbon_Live_Roots",
+        "Carbon_Live_Total",
+        "Carbon_Live_Above",
+        "Carbon_Dead_Wood",
+        "Carbon_Dead_Bark",
+        "Carbon_Dead_Foliar",
+        "Carbon_Dead_Branch",
+        "Carbon_Dead_Roots",
+        "Carbon_Dead_Total",
+        "Carbon_Dead_Above",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_co2e_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["co2e"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "CO2e_Live_Wood",
+        "CO2e_Live_Bark",
+        "CO2e_Live_Foliar",
+        "CO2e_Live_Branch",
+        "CO2e_Live_Roots",
+        "CO2e_Live_Total",
+        "CO2e_Live_Above",
+        "CO2e_Dead_Wood",
+        "CO2e_Dead_Bark",
+        "CO2e_Dead_Foliar",
+        "CO2e_Dead_Branch",
+        "CO2e_Dead_Roots",
+        "CO2e_Dead_Total",
+        "CO2e_Dead_Above",
     ]
 
 
@@ -520,6 +1265,47 @@ def test_run_btc_cli_supervised_writes_outputs_and_manifest(tmp_path: Path) -> N
     assert result.manifest_path.is_file()
     assert "feature_id,MVcon_0,gVol_0,CC_0" in result.output_csv_path.read_text(
         encoding="utf-8"
+    )
+
+
+def test_run_btc_cli_defaults_to_tipsy_runtime_roots(
+    monkeypatch, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    helper = tmp_path / "fake_btc.py"
+    helper.write_text(
+        "from pathlib import Path\n"
+        "import sys\n"
+        "mode, input_name, output_name, error_name = sys.argv[1:5]\n"
+        "Path(output_name).write_text('feature_id,MVcon_0,gVol_0,CC_0\\n1,2,3,4\\n', encoding='utf-8')\n"
+        "Path(error_name).write_text('warnings,errors\\n0,0\\n', encoding='utf-8')\n"
+        "sys.exit(0)\n",
+        encoding="utf-8",
+    )
+
+    result = run_btc_cli(
+        input_csv=input_csv,
+        mode="TSR",
+        executable_path=sys.executable,
+        run_id="btc_default_paths",
+        env={},
+        extra_executable_args=(helper,),
+    )
+
+    assert result.exit_code == 0
+    assert result.manifest_path == (
+        tmp_path / "tipsy_io" / "logs" / "btc_manifest-btc_default_paths.json"
+    )
+    assert result.stdout_log_path == (
+        tmp_path / "tipsy_io" / "logs" / "btc_stdout-btc_default_paths.log"
+    )
+    assert result.stderr_log_path == (
+        tmp_path / "tipsy_io" / "logs" / "btc_stderr-btc_default_paths.log"
+    )
+    assert result.working_dir == (
+        tmp_path / "tipsy_io" / "scratch" / "btc-btc_default_paths" / "work"
     )
 
 
@@ -744,6 +1530,396 @@ def test_probe_btc_report_columns_ratchets_forward(monkeypatch, tmp_path: Path) 
     assert overlay_path.read_text(encoding="utf-8") == "ORIGINAL OVERLAY\n"
 
 
+def test_btc_build_probe_variants_default_uses_short_ascii_alias() -> None:
+    variants = tipsy_module._btc_build_probe_variants(
+        candidate_column=BTCCustomReportColumn(token="Logs_Grade_D"),
+        install_root=Path("C:/Program Files/TIPSY 4.7/BTC"),
+        variant_strategy="default",
+    )
+
+    assert len(variants) == 1
+    assert variants[0].variant_id == "default"
+    assert re.fullmatch(r"[A-Za-z0-9]{1,8}", variants[0].column.header1_override)
+    assert variants[0].column.header2_override == "{yr}"
+    assert variants[0].column.render().startswith("Logs_Grade_D\t\t")
+    assert variants[0].column.render().endswith("\t{yr}")
+
+
+def test_probe_btc_report_columns_defaults_compatibility_ledger_under_tipsy_logs(
+    monkeypatch, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+
+    def fake_run_btc_cli(**kwargs: object) -> BTCRunResult:
+        run_id = str(kwargs["run_id"])
+        return BTCRunResult(
+            run_id=run_id,
+            mode="TSR",
+            manifest_path=tmp_path
+            / "tipsy_io"
+            / "logs"
+            / f"btc_manifest-{run_id}.json",
+            stdout_log_path=tmp_path / "tipsy_io" / "logs" / f"btc_stdout-{run_id}.log",
+            stderr_log_path=tmp_path / "tipsy_io" / "logs" / f"btc_stderr-{run_id}.log",
+            output_csv_path=tmp_path / f"{run_id}_output.csv",
+            error_csv_path=tmp_path / f"{run_id}_error.csv",
+            executable_path=tmp_path / "TIPSYbtc.exe",
+            install_root=tmp_path / "btc_install",
+            working_dir=tmp_path / "tipsy_io" / "scratch" / run_id / "work",
+            command=("btc.exe", "/TSR", "MSYT.csv"),
+            copied_install=False,
+            exit_code=0,
+            duration_sec=1.0,
+            report_template_path=None,
+        )
+
+    monkeypatch.setattr("femic.pipeline.tipsy.run_btc_cli", fake_run_btc_cli)
+
+    probe_btc_report_columns(
+        input_csv=input_csv,
+        candidate_tokens=["VolumeGross"],
+        source_preset_name="tsr-unattended-default",
+        copy_install=True,
+        run_id_prefix="probe_defaults",
+        env={},
+    )
+
+    assert (
+        tmp_path / "tipsy_io" / "logs" / "probe_defaults_compatibility.json"
+    ).is_file()
+
+
+def test_btc_tsr_output_prefixes_accepts_stock_display_headers(tmp_path: Path) -> None:
+    output_csv = tmp_path / "output.csv"
+    output_csv.write_text(
+        "feature_id,Logs (Grade)_10,Mortality Stems (Size Class)_20\n1,2,3\n",
+        encoding="utf-8",
+    )
+
+    prefixes = tipsy_module._btc_tsr_output_prefixes(output_csv)
+
+    assert "Logs (Grade)" in prefixes
+    assert "Mortality Stems (Size Class)" in prefixes
+
+
+def test_probe_btc_indicator_banks_accepts_whole_bank_in_one_run(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    run_ids: list[str] = []
+
+    def fake_run_btc_cli(**kwargs: object) -> BTCRunResult:
+        run_id = str(kwargs["run_id"])
+        run_ids.append(run_id)
+        output_path = tmp_path / f"{run_id}_output.csv"
+        error_path = tmp_path / f"{run_id}_error.csv"
+        report_template = kwargs["report_template"]
+        columns = list(report_template.columns)
+        headers = ["feature_id"]
+        for column in columns:
+            prefix = column.header1_override or column.token.replace(":", "")
+            headers.append(f"{prefix}_10")
+        output_path.write_text(
+            ",".join(headers) + "\n1," + ",".join("1" for _ in headers[1:]) + "\n",
+            encoding="utf-8",
+        )
+        error_path.write_text("", encoding="utf-8")
+        return BTCRunResult(
+            run_id=run_id,
+            mode="TSR",
+            manifest_path=tmp_path / f"{run_id}.json",
+            stdout_log_path=tmp_path / f"{run_id}.stdout.log",
+            stderr_log_path=tmp_path / f"{run_id}.stderr.log",
+            output_csv_path=output_path,
+            error_csv_path=error_path,
+            executable_path=tmp_path / "TIPSYbtc.exe",
+            install_root=tmp_path / "btc_install",
+            working_dir=tmp_path / "work",
+            command=("btc.exe", "/TSR", "MSYT.csv"),
+            copied_install=True,
+            exit_code=0,
+            duration_sec=1.0,
+            report_template_path=tmp_path / "btc_install" / "TimberSupply.rpt",
+        )
+
+    monkeypatch.setattr("femic.pipeline.tipsy.run_btc_cli", fake_run_btc_cli)
+
+    results, final_template = probe_btc_indicator_banks(
+        input_csv=input_csv,
+        indicator_bank_names=["log-grades"],
+        source_preset_name="tsr-unattended-default",
+        copy_install=True,
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id_prefix="bankprobe",
+        env={},
+    )
+
+    assert run_ids == ["bankprobe_log_grades"]
+    assert all(result.status == "accepted" for result in results)
+    assert len(results) == 9
+    final_tokens = [column.token for column in final_template.columns]
+    assert "Logs_Grade_D" in final_tokens
+    assert "Logs_Grade_All" in final_tokens
+
+
+def test_probe_btc_indicator_banks_falls_back_to_ratchet_when_batch_run_misses_output(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    run_ids: list[str] = []
+
+    def fake_run_btc_cli(**kwargs: object) -> BTCRunResult:
+        run_id = str(kwargs["run_id"])
+        run_ids.append(run_id)
+        output_path = tmp_path / f"{run_id}_output.csv"
+        error_path = tmp_path / f"{run_id}_error.csv"
+        report_template = kwargs["report_template"]
+        columns = list(report_template.columns)
+        headers = ["feature_id"]
+        include_last = run_id != "bankprobe_log_grades"
+        for column in columns:
+            prefix = column.header1_override or column.token.replace(":", "")
+            if not include_last and prefix == "Logs_Grade_All":
+                continue
+            headers.append(f"{prefix}_10")
+        output_path.write_text(
+            ",".join(headers) + "\n1," + ",".join("1" for _ in headers[1:]) + "\n",
+            encoding="utf-8",
+        )
+        error_path.write_text("", encoding="utf-8")
+        return BTCRunResult(
+            run_id=run_id,
+            mode="TSR",
+            manifest_path=tmp_path / f"{run_id}.json",
+            stdout_log_path=tmp_path / f"{run_id}.stdout.log",
+            stderr_log_path=tmp_path / f"{run_id}.stderr.log",
+            output_csv_path=output_path,
+            error_csv_path=error_path,
+            executable_path=tmp_path / "TIPSYbtc.exe",
+            install_root=tmp_path / "btc_install",
+            working_dir=tmp_path / "work",
+            command=("btc.exe", "/TSR", "MSYT.csv"),
+            copied_install=True,
+            exit_code=0,
+            duration_sec=1.0,
+            report_template_path=tmp_path / "btc_install" / "TimberSupply.rpt",
+        )
+
+    monkeypatch.setattr("femic.pipeline.tipsy.run_btc_cli", fake_run_btc_cli)
+
+    results, final_template = probe_btc_indicator_banks(
+        input_csv=input_csv,
+        indicator_bank_names=["log-grades"],
+        source_preset_name="tsr-unattended-default",
+        copy_install=True,
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id_prefix="bankprobe",
+        env={},
+    )
+
+    assert run_ids[0] == "bankprobe_log_grades"
+    assert any(run_id.startswith("bankprobe_log_grades_01_") for run_id in run_ids[1:])
+    assert len(results) == 9
+    assert all(result.status == "accepted" for result in results)
+    final_tokens = [column.token for column in final_template.columns]
+    assert "Logs_Grade_All" in final_tokens
+
+
+def test_build_btc_probe_variants_includes_alias_and_stock_forms(
+    tmp_path: Path,
+) -> None:
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    (install_root / "Yield.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Yield\n"
+        "Type=databaseByStand\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "BasalArea:000\t750\n",
+        encoding="utf-8",
+    )
+
+    variants = tipsy_module._btc_build_probe_variants(
+        candidate_column=BTCCustomReportColumn(token="BasalArea000"),
+        install_root=install_root,
+        variant_strategy="stock-matrix",
+    )
+
+    variant_ids = {variant.variant_id for variant in variants}
+    variant_tokens = {variant.column.token for variant in variants}
+    short_alias = tipsy_module._btc_preferred_probe_alias(
+        BTCCustomReportColumn(token="BasalArea000")
+    )
+    assert "generic-transposed" in variant_ids
+    assert "alias-transposed-BasalArea_000" in variant_ids
+    assert "stock-exact-Yield" in variant_ids
+    assert "stock-transposed-Yield" in variant_ids
+    assert "BasalArea000" in variant_tokens
+    assert "BasalArea:000" in variant_tokens
+    assert any(
+        variant.variant_id == "generic-transposed"
+        and variant.column.render() == f"BasalArea000\t\t{short_alias}\t{{yr}}"
+        for variant in variants
+    )
+
+
+def test_parse_btc_custom_report_template_handles_utf8_bom(tmp_path: Path) -> None:
+    template_path = tmp_path / "Yield.rpt"
+    template_path.write_text(
+        "[CustomReport]\n"
+        "Name=Yield\n"
+        "Type=databaseByStand\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Crop250VolUtil125\n",
+        encoding="utf-8-sig",
+    )
+
+    template = parse_btc_custom_report_template(template_path)
+
+    assert template.name == "Yield"
+    assert [column.token for column in template.columns] == ["Crop250VolUtil125"]
+
+
+def test_probe_btc_report_columns_stock_matrix_tries_later_variant(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    (install_root / "TIPSYbtc.exe").write_text("stub", encoding="utf-8")
+    (install_root / "Yield.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Yield\n"
+        "Type=databaseByStand\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Crop250VolUtil125\t750\n",
+        encoding="utf-8",
+    )
+    run_ids: list[str] = []
+
+    def fake_run_btc_cli(**kwargs: object) -> BTCRunResult:
+        run_id = str(kwargs["run_id"])
+        run_ids.append(run_id)
+        output_path = tmp_path / f"{run_id}_output.csv"
+        error_path = tmp_path / f"{run_id}_error.csv"
+        trial_column = list(kwargs["report_template"].columns)[-1]
+        headers = ["feature_id"]
+        if (
+            trial_column.width == 750
+            and trial_column.header2_override == "{yr}"
+            and trial_column.token == "Crop250VolUtil125"
+        ):
+            headers.append("Crop250VolUtil125_10")
+        output_path.write_text(
+            ",".join(headers) + "\n1," + ",".join("1" for _ in headers[1:]) + "\n",
+            encoding="utf-8",
+        )
+        error_path.write_text("", encoding="utf-8")
+        return BTCRunResult(
+            run_id=run_id,
+            mode="TSR",
+            manifest_path=tmp_path / f"{run_id}.json",
+            stdout_log_path=tmp_path / f"{run_id}.stdout.log",
+            stderr_log_path=tmp_path / f"{run_id}.stderr.log",
+            output_csv_path=output_path,
+            error_csv_path=error_path,
+            executable_path=install_root / "TIPSYbtc.exe",
+            install_root=install_root,
+            working_dir=tmp_path / "work",
+            command=("btc.exe", "/TSR", "MSYT.csv"),
+            copied_install=True,
+            exit_code=0,
+            duration_sec=1.0,
+            report_template_path=install_root / "TimberSupply.rpt",
+        )
+
+    monkeypatch.setattr("femic.pipeline.tipsy.run_btc_cli", fake_run_btc_cli)
+
+    results, final_template = probe_btc_report_columns(
+        input_csv=input_csv,
+        candidate_tokens=["Crop250VolUtil125"],
+        executable_path=install_root / "TIPSYbtc.exe",
+        source_preset_name="tsr-unattended-default",
+        copy_install=True,
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id_prefix="variantprobe",
+        variant_strategy="stock-matrix",
+    )
+
+    assert len(run_ids) >= 2
+    assert run_ids[0].endswith("generic_transposed")
+    assert results[0].status == "accepted"
+    assert results[0].variant_id == "stock-transposed-Yield"
+    assert results[0].probe_token == "Crop250VolUtil125"
+    assert "stock-transposed-Yield" in results[0].attempted_variants
+    assert final_template.columns[-1].header2_override == "{yr}"
+
+
+def test_probe_btc_report_columns_stock_matrix_preserves_failure_classification(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    (install_root / "TIPSYbtc.exe").write_text("stub", encoding="utf-8")
+    (install_root / "Yield.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Yield\n"
+        "Type=databaseByStand\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "BasalArea:000\n",
+        encoding="utf-8",
+    )
+
+    def fake_run_btc_cli(**kwargs: object) -> BTCRunResult:
+        run_id = str(kwargs["run_id"])
+        manifest_path = tmp_path / "logs" / f"btc_manifest-{run_id}.json"
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest_path.write_text(
+            '{"exit_code": 1, "artifacts": {"output_csv": {"exists": false}, '
+            '"error_csv": {"exists": false}}, "windows_dialog_cleanup": '
+            '{"close_attempted": true, "closed_window_count": 1}}',
+            encoding="utf-8",
+        )
+        raise RuntimeError(
+            "BTC output is missing requested probe columns: BasalArea000"
+        )
+
+    monkeypatch.setattr("femic.pipeline.tipsy.run_btc_cli", fake_run_btc_cli)
+
+    results, _final_template = probe_btc_report_columns(
+        input_csv=input_csv,
+        candidate_tokens=["BasalArea000"],
+        executable_path=install_root / "TIPSYbtc.exe",
+        source_preset_name="tsr-unattended-default",
+        copy_install=True,
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id_prefix="variantprobe",
+        variant_strategy="stock-matrix",
+    )
+
+    assert results[0].status == "failed"
+    assert results[0].failure_classification == "missing_output_exit_1"
+    assert results[0].attempted_variants[-1] in {
+        "stock-exact-Yield",
+        "stock-transposed-Yield",
+    }
+
+
 def test_run_windows_btc_with_dialog_cleanup_force_stops_dialog_tree(
     monkeypatch, tmp_path: Path
 ) -> None:
@@ -791,7 +1967,10 @@ def test_run_windows_btc_with_dialog_cleanup_force_stops_dialog_tree(
         "_force_stop_windows_process",
         lambda pid: stopped.append(pid) is None or True,
     )
-    monkeypatch.setattr(tipsy_module.time, "sleep", lambda _seconds: None)
+    sleep_calls: list[float] = []
+    monkeypatch.setattr(
+        tipsy_module.time, "sleep", lambda seconds: sleep_calls.append(seconds)
+    )
 
     exit_code, stdout_text, stderr_text, automation = (
         tipsy_module._run_windows_btc_with_dialog_cleanup(
@@ -808,6 +1987,7 @@ def test_run_windows_btc_with_dialog_cleanup_force_stops_dialog_tree(
     assert automation["matched_dialog_pids"] == [4321]
     assert automation["closed_window_count"] == 1
     assert stopped == [4321, 5000]
+    assert sleep_calls == []
 
 
 def test_prepare_btc_runtime_copies_install_and_writes_report_template(
@@ -880,6 +2060,222 @@ def test_prepare_btc_runtime_tsr_preset_applies_indicator_bank(
     assert "MAI\t\tMAI\t{yr}" in rendered
     assert "BasalArea:000\t\tBasalArea000\t{yr}" in rendered
     assert "StemCount175\t\tStemCount175\t{yr}" in rendered
+
+
+def test_prepare_btc_runtime_tsr_preset_applies_log_grades_indicator_bank(
+    tmp_path: Path,
+) -> None:
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    fake_exe = install_root / "TIPSYbtc.exe"
+    fake_exe.write_text("stub", encoding="utf-8")
+    (install_root / "TimberSupply.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Timber Supply\n"
+        "TableRange=0-120:10|#\tMAX=120\tINC=10\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Volume:Auto:Con\t0\tMVcon\t{yr}\n",
+        encoding="utf-8",
+    )
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+
+    prep = prepare_btc_runtime(
+        executable_path=fake_exe,
+        input_csv=input_csv,
+        scratch_root=tmp_path / "scratch",
+        mode="TSR",
+        report_preset_name="tsr-unattended-default",
+        indicator_bank_names=["log-grades"],
+        copy_install=True,
+    )
+
+    assert prep.report_template_path is not None
+    rendered = prep.report_template_path.read_text(encoding="utf-8")
+    assert "Logs_Grade_D\t\tLogs_Grade_D\t{yr}" in rendered
+    assert "Logs_Grade_Y\t\tLogs_Grade_Y\t{yr}" in rendered
+    assert "Logs_Grade_All\t\tLogs_Grade_All\t{yr}" in rendered
+
+
+def test_prepare_btc_runtime_tsr_preset_applies_lumber_2_or_better_indicator_bank(
+    tmp_path: Path,
+) -> None:
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    fake_exe = install_root / "TIPSYbtc.exe"
+    fake_exe.write_text("stub", encoding="utf-8")
+    (install_root / "TimberSupply.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Timber Supply\n"
+        "TableRange=0-120:10|#\tMAX=120\tINC=10\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Volume:Auto:Con\t0\tMVcon\t{yr}\n",
+        encoding="utf-8",
+    )
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+
+    prep = prepare_btc_runtime(
+        executable_path=fake_exe,
+        input_csv=input_csv,
+        scratch_root=tmp_path / "scratch",
+        mode="TSR",
+        report_preset_name="tsr-unattended-default",
+        indicator_bank_names=["lumber-2-or-better"],
+        copy_install=True,
+    )
+
+    assert prep.report_template_path is not None
+    rendered = prep.report_template_path.read_text(encoding="utf-8")
+    assert "Lumber_2_or_Better_2x4\t\tLumber_2_or_Better_2x4\t{yr}" in rendered
+    assert "Lumber_2_or_Better_All\t\tLumber_2_or_Better_All\t{yr}" in rendered
+    assert "LRF_2_or_Better_All\t\tLRF_2_or_Better_All\t{yr}" in rendered
+
+
+def test_prepare_btc_runtime_tsr_preset_applies_residual_fibre_indicator_bank(
+    tmp_path: Path,
+) -> None:
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    fake_exe = install_root / "TIPSYbtc.exe"
+    fake_exe.write_text("stub", encoding="utf-8")
+    (install_root / "TimberSupply.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Timber Supply\n"
+        "TableRange=0-120:10|#\tMAX=120\tINC=10\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Volume:Auto:Con\t0\tMVcon\t{yr}\n",
+        encoding="utf-8",
+    )
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+
+    prep = prepare_btc_runtime(
+        executable_path=fake_exe,
+        input_csv=input_csv,
+        scratch_root=tmp_path / "scratch",
+        mode="TSR",
+        report_preset_name="tsr-unattended-default",
+        indicator_bank_names=["residual-fibre"],
+        copy_install=True,
+    )
+
+    assert prep.report_template_path is not None
+    rendered = prep.report_template_path.read_text(encoding="utf-8")
+    assert "Residual_Chips\t\tResidual_Chips\t{yr}" in rendered
+    assert "Residual_Sawdust\t\tResidual_Sawdust\t{yr}" in rendered
+    assert "Residual_Bark\t\tResidual_Bark\t{yr}" in rendered
+
+
+def test_prepare_btc_runtime_tsr_preset_applies_lumber_graded_indicator_bank(
+    tmp_path: Path,
+) -> None:
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    fake_exe = install_root / "TIPSYbtc.exe"
+    fake_exe.write_text("stub", encoding="utf-8")
+    (install_root / "TimberSupply.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Timber Supply\n"
+        "TableRange=0-120:10|#\tMAX=120\tINC=10\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Volume:Auto:Con\t0\tMVcon\t{yr}\n",
+        encoding="utf-8",
+    )
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+
+    prep = prepare_btc_runtime(
+        executable_path=fake_exe,
+        input_csv=input_csv,
+        scratch_root=tmp_path / "scratch",
+        mode="TSR",
+        report_preset_name="tsr-unattended-default",
+        indicator_bank_names=["lumber-graded"],
+        copy_install=True,
+    )
+
+    assert prep.report_template_path is not None
+    rendered = prep.report_template_path.read_text(encoding="utf-8")
+    assert "Lumber_Graded_SS_2x4\t\tLumber_Graded_SS_2x4\t{yr}" in rendered
+    assert "Lumber_Graded_All\t\tLumber_Graded_All\t{yr}" in rendered
+    assert "LRF_Graded_All\t\tLRF_Graded_All\t{yr}" in rendered
+
+
+def test_prepare_btc_runtime_tsr_preset_applies_lumber_degraded_indicator_bank(
+    tmp_path: Path,
+) -> None:
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    fake_exe = install_root / "TIPSYbtc.exe"
+    fake_exe.write_text("stub", encoding="utf-8")
+    (install_root / "TimberSupply.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Timber Supply\n"
+        "TableRange=0-120:10|#\tMAX=120\tINC=10\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Volume:Auto:Con\t0\tMVcon\t{yr}\n",
+        encoding="utf-8",
+    )
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+
+    prep = prepare_btc_runtime(
+        executable_path=fake_exe,
+        input_csv=input_csv,
+        scratch_root=tmp_path / "scratch",
+        mode="TSR",
+        report_preset_name="tsr-unattended-default",
+        indicator_bank_names=["lumber-degraded"],
+        copy_install=True,
+    )
+
+    assert prep.report_template_path is not None
+    rendered = prep.report_template_path.read_text(encoding="utf-8")
+    assert "Lumber_Degraded_SS_2x4\t\tLumber_Degraded_SS_2x4\t{yr}" in rendered
+    assert "Lumber_Degraded_All\t\tLumber_Degraded_All\t{yr}" in rendered
+    assert "LRF_Degraded_All\t\tLRF_Degraded_All\t{yr}" in rendered
+
+
+def test_prepare_btc_runtime_tsr_preset_applies_industrial_logs_indicator_bank(
+    tmp_path: Path,
+) -> None:
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    fake_exe = install_root / "TIPSYbtc.exe"
+    fake_exe.write_text("stub", encoding="utf-8")
+    (install_root / "TimberSupply.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Timber Supply\n"
+        "TableRange=0-120:10|#\tMAX=120\tINC=10\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Volume:Auto:Con\t0\tMVcon\t{yr}\n",
+        encoding="utf-8",
+    )
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+
+    prep = prepare_btc_runtime(
+        executable_path=fake_exe,
+        input_csv=input_csv,
+        scratch_root=tmp_path / "scratch",
+        mode="TSR",
+        report_preset_name="tsr-unattended-default",
+        indicator_bank_names=["industrial-logs"],
+        copy_install=True,
+    )
+
+    assert prep.report_template_path is not None
+    rendered = prep.report_template_path.read_text(encoding="utf-8")
+    assert "Industrial_Logs_D38L13\t\tIndustrial_Logs_D38L13\t{yr}" in rendered
+    assert "Industrial_Logs_D125L5\t\tIndustrial_Logs_D125L5\t{yr}" in rendered
+    assert "Industrial_Logs_D152\t\tIndustrial_Logs_D152\t{yr}" in rendered
 
 
 def test_write_tipsy_input_exports_fails_fast_on_width_overflow(tmp_path: Path) -> None:

@@ -1,0 +1,316 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="Fertilization">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Fertilization: TIPSY Implementation</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style type="text/css">
+<!--
+td ol { margin-top:0;
+margin-bottom:0; }
+td ul { margin-top:0;
+margin-bottom:0; }
+-->
+</style>
+<script type="text/javascript" language="JavaScript1.2" src="../ehlpdhtm.js"></script>
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+b.hcp2 { font-weight:bold; }
+tr.hcp3 { vertical-align:top; }
+p.hcp4 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+
+
+
+
+<h1><a name="MiniTOCBookMark1"></a>Fertilization: TIPSY Implementation 
+ </h1>
+<p align="left" style="font-family:Arial;font-size:12pt;font-weight: normal;font-style: normal;text-decoration: none;" >In&#160;this&#160;Topic&#160;<a class="dropspot" href="javascript:TextPopup(this)" id="MTHotSpot11003" ><span class="MTText" style="display: none;" >Show</span><span class="MTText" >Hide</span></a></p>
+<script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('MTHotSpot11003', 'MTPOPUP11003');
+//]]></script>
+<div align="left" class="droptext" id="MTPOPUP11003" >
+ <div style="background: #ffff00;float: none;width: 100% ;" >
+  <p align="left"  ><a href="#MiniTOCBookMark2" >Height-growth response</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark3" >Volume response</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark4" >Fertilizing a commercially thinned stand</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark5" >Examples of yield response</a></p>
+ </div>
+</div>
+<p>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="1508"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="15790320"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="See Also"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="Fertilization$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\steve\Documents\My Robohelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\Implementation_of_Fertilizer_Res.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="-1"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:See Also">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Flags" value=",,1">
+  <param name="Item1" value="">
+  <param name="Item2" value="Fertilization">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </p>
+<p>In <a href="https://www2.gov.bc.ca/gov/content/industry/forestry/managing-our-forest-resources/forest-inventory/growth-and-yield-modelling/tree-and-stand-simulator-tass">TASS</a>, 
+ fertilization affects height growth and foliar efficiency - both of which 
+ contribute to an increase in volume increment. Other factors also contribute 
+ to the response in the real world, but <span class="hcp1">TIPSY</span> 
+ isn't able to accommodate these factors. Consequently, you can’t specify 
+ a particular application rate of urea, for example, and see a corresponding 
+ increase in tree size and volume per hectare. Instead, <a href="Fertilization_in_TIPSY.htm#Species-level_response_settings__custom_"><span class="hcp1">TIPSY</span> response models</a> provide 
+ the volume response expected in a particular stand. <span class="hcp1">TIPSY</span> 
+ then calculates the 10-year increase in top height needed to achieve the 
+ specified % increase in volume growth over 10 years.</p>
+<p><span style="background-color: #ffff00;">NOTE: &#160;The following examples 
+ were developed using a previous version of TIPSY. &#160;While values (volumes, 
+ etc) may differ from the current version, the principles being illustrated 
+ remain the same.</span> </p>
+<h2><a name="MiniTOCBookMark2"></a><b class="hcp2">Height-growth response</b></h2>
+<p>The height growth response in <span class="hcp1">TIPSY</span> 
+ is simply the vehicle for generating a volume response. It doesn't correspond 
+ to the height growth response observed in fertilizer trials, which is 
+ usually much lower. This approach helps curb <span class="hcp1">TIPSY’s</span> 
+ rapidly expanding database. The height growth response increases at a 
+ linear rate for 10 years and is constant thereafter. For example, a height 
+ gain of 1.0 m between age 50 to 60 would be prorated as follows:</p>
+<table >
+	<tr class="hcp3">
+		<td><p>Age*</p></td>
+		<td><p>48</p></td>
+		<td><p>49</p></td>
+		<td><p>50</p></td>
+		<td><p>51</p></td>
+		<td><p>52</p></td>
+		<td><p>53</p></td>
+		<td><p>…</p></td>
+		<td><p>58</p></td>
+		<td><p>59</p></td>
+		<td><p>60</p></td>
+		<td><p>61</p></td>
+		<td><p>62</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td><p>Top Ht Gain</p></td>
+		<td><p>0</p></td>
+		<td><p>0</p></td>
+		<td><p>0</p></td>
+		<td><p>0.1</p></td>
+		<td><p>0.2</p></td>
+		<td><p>0.3</p></td>
+		<td><p>…</p></td>
+		<td><p>0.8</p></td>
+		<td><p>0.9</p></td>
+		<td><p>1.0</p></td>
+		<td><p>1.0</p></td>
+		<td><p>1.0</p></td>
+	</tr>
+</table>
+<p>This translates into the height/age sequence below if top height reaches 
+ 30m at age 50 and increases 1.0 m/year without treatment.</p>
+<table >
+	<tr class="hcp3">
+		<td><p class="TableText">Age*</p></td>
+		<td><p class="TableText">48</p></td>
+		<td><p class="TableText">49</p></td>
+		<td><p class="TableText">50</p></td>
+		<td><p class="TableText">51</p></td>
+		<td><p class="TableText">52</p></td>
+		<td><p class="TableText">53</p></td>
+		<td><p class="TableText">…</p></td>
+		<td><p class="TableText">58</p></td>
+		<td><p class="TableText">59</p></td>
+		<td><p class="TableText">60</p></td>
+		<td><p class="TableText">61</p></td>
+		<td><p class="TableText">62</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td><p class="TableText">Top Height</p></td>
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">&#160;</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td><p class="TableText">Untreated</p></td>
+		<td><p class="TableText">28.0</p></td>
+		<td><p class="TableText">29.0</p></td>
+		<td><p class="TableText">30.0</p></td>
+		<td><p class="TableText">31.0</p></td>
+		<td><p class="TableText">32.0</p></td>
+		<td><p class="TableText">33.0</p></td>
+		<td><p class="TableText">…</p></td>
+		<td><p class="TableText">38.0</p></td>
+		<td><p class="TableText">39.0</p></td>
+		<td><p class="TableText">40.0</p></td>
+		<td><p class="TableText">41.0</p></td>
+		<td><p class="TableText">42.0</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td><p class="TableText">Treated</p></td>
+		<td><p class="TableText">28.0</p></td>
+		<td><p class="TableText">29.0</p></td>
+		<td><p class="TableText">30.0</p></td>
+		<td><p class="TableText">31.1</p></td>
+		<td><p class="TableText">32.2</p></td>
+		<td><p class="TableText">33.3</p></td>
+		<td><p class="TableText">…</p></td>
+		<td><p class="TableText">38.8</p></td>
+		<td><p class="TableText">39.9</p></td>
+		<td><p class="TableText">41.0</p></td>
+		<td><p class="TableText">42.0</p></td>
+		<td><p class="TableText">43.0</p></td>
+	</tr>
+</table>
+<h2><a name="MiniTOCBookMark3"></a><b class="hcp2">Volume response</b></h2>
+<p>A typical volume response is illustrated in the following table for 
+ a plantation of coastal Douglas-fir growing on site 25. The stand was 
+ fertilized at age 40. The <a href="Ministry_Recommended_Fertilizati.htm">Ministry 
+ response table</a> ) shows that a gain of 50% can be expected. However, 
+ the default aerial application adjustment of 80 % lowers the response 
+ to 40%.</p>
+<table >
+	<tr class="hcp3">
+		<td><p class="TableText">Age</p></td>
+		<td><p class="TableText">40</p></td>
+		<td><p class="TableText">41</p></td>
+		<td><p class="TableText">42</p></td>
+		<td><p class="TableText">…</p></td>
+		<td><p class="TableText">48</p></td>
+		<td><p class="TableText">49</p></td>
+		<td><p class="TableText">50</p></td>
+		<td><p class="TableText">60</p></td>
+		<td><p class="TableText">70</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td><p class="TableText">Volume: fertilized</p></td>
+		<td><p class="TableText">272</p></td>
+		<td><p class="TableText">287</p></td>
+		<td><p class="TableText">302</p></td>
+		<td><p class="TableText">…</p></td>
+		<td><p class="TableText">387</p></td>
+		<td><p class="TableText">402</p></td>
+		<td><p class="TableText">416</p></td>
+		<td><p class="TableText">522</p></td>
+		<td><p class="TableText">621</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td><p class="TableText">Volume: control</p></td>
+		<td><p class="TableText">272</p></td>
+		<td><p class="TableText">283</p></td>
+		<td><p class="TableText">293</p></td>
+		<td><p class="TableText">…</p></td>
+		<td><p class="TableText">356</p></td>
+		<td><p class="TableText">365</p></td>
+		<td><p class="TableText">375</p></td>
+		<td><p class="TableText">481</p></td>
+		<td><p class="TableText">580</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td><p class="TableText">Gain (m3)</p></td>
+		<td><p class="TableText">0</p></td>
+		<td><p class="TableText">4</p></td>
+		<td><p class="TableText">9</p></td>
+		<td><p class="TableText">…</p></td>
+		<td><p class="TableText">31</p></td>
+		<td><p class="TableText">37</p></td>
+		<td><p class="TableText">41</p></td>
+		<td><p class="TableText">41</p></td>
+		<td><p class="TableText">41</p></td>
+	</tr>
+</table>
+<p>The gain in cubic meters increases for 10 years (i.e., age 40 – 50) 
+ then remains constant thereafter. The expected response of 40% can be 
+ confirmed by comparing the volumes at ages 40 and 50 as follows:</p>
+<p>Volume response = [(416 – 272)/(375 – 272) - 1] x 100 = 40%</p>
+<p>The similarity between the response in cubic meters and per cent is 
+ a coincidence.</p>
+<p>Fertilization will also elevate <a href="javascript:TextPopup(this)" id="HotSpot47248" class="glossterm">mortality</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot47248', 'POPUP47248');
+//]]></script><span class="glosstext" id="POPUP47248" style="display: none;"> death or destruction of forest trees as a result of competition, disease, insect damage, drought, wind, fire and other factors (excluding harvesting)</span> 
+ and crown cover, relative to age, because the pattern of stand development 
+ is accelerated. This in turn will affect future growth rates of other 
+ variables (e.g., diameter).</p>
+<h2><a name="MiniTOCBookMark4"></a><b class="hcp2">Fertilizing a commercially thinned stand</b></h2>
+<p>In order to achieve the additional volume growth generated by genetic 
+ gain and/or fertilization, <span class="hcp1">TIPSY</span> 
+ accelerates height growth. This method of implementing genetic gain or 
+ fertilizer is complicated by the sharp decline in standing volume after 
+ commercial thinning.</p>
+<p>Minor anomalies can occur when commercial thinning is applied to stands 
+ with complex prescriptions. Examples are stands with multiple fertilizer 
+ applications or stands that were regenerated with improved planting stock 
+ and have one or more fertilizer applications. Under these conditions, 
+ the reported percentage gain in periodic growth of fertilized stands might 
+ not coincide with the percentage you have specified, or even the percentage 
+ identified in the table header.</p>
+<p>Incremental gains can vary by up to three percent when fertilizer is 
+ applied after the stand is commercially thinned. However, volume growth 
+ in this period is low due to the age of the stand and the reduced number 
+ of trees. As a result, these differences are largely inconsequential relative 
+ to total volume production.</p>
+<h2><a name="MiniTOCBookMark5"></a><b class="hcp2">Examples of yield response</b></h2>
+<p>Assume you plant a stand of coastal Douglas-fir with 1600 trees/ha on 
+ site 25 and plan to fertilize it 40 years later. The upper curve in Figure 
+ 1 illustrates the response over time relative to an untreated stand when 
+ you accept the ministry's default response (50%) and effectiveness (80%). 
+ That is, the net response is 40 %.</p>
+<p>Figure 2 shows that the total volume gain from treatment increases from 
+ 0 to 41 m3/ha from age 40 to 50, and levels off thereafter.</p>
+<p><span class="hcp1">FIGURE 1</span></p>
+<img src="../TIPSY3200000096.gif" alt="TIPSY3200000096.gif" title="TIPSY3200000096.gif" width="592" height="444" border="0"> 
+<p><span class="hcp1">FIGURE 2</span></p>
+<img src="../TIPSY3200000097.gif" alt="TIPSY3200000097.gif" title="TIPSY3200000097.gif" width="602" height="452" border="0"> 
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp4">_______________________________________________</p>
+	<p class="hcp4">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

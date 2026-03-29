@@ -1,0 +1,218 @@
+﻿NAME=#2 & Better Lumber
+A TIPSY output:  The sum of all Pre-Adj lumber grades (bf/ha), omitting grades 3 & 4.
+NAME=Age, Breast height (BH)
+[yrs] Tree or stand age based on a ring count at breast height (1.3m).   BH age is commonly used in site index models.
+NAME=Age, Disturbance
+[yrs] Equal to "total age" plus regeneration delay, if any.   Disturbance age is the basis for most TIPSY age-dependent values, unless noted otherwise.
+NAME=Age, Germination
+Synonymous with Total Age
+NAME=Age, Index
+[yrs] reference age for determining site index, normally 50 years (BH) in BC
+NAME=Age, Physical Rotation
+[yrs] Age (years since disturbance) at which the mean annual volume increment (MAI)culminates for a particular merchantability standard. Harvesting at this age maximizes volume production over multiple rotations.
+NAME=Age, Planting
+[yrs] years since planting; does not include seedling age
+NAME=Age, Selection
+The age (years since planting) at which the gains from tree improvement were assessed
+NAME=Age, Stand
+For Planted stands = Planting Age;  for Natural stands = Germination Age
+NAME=Age, TIPSY
+Synonymous with disturbance age, it is the basis for most TIPSY age-dependent values (e.g., MAI), unless noted otherwise.
+NAME=Age, Total
+[yrs] Planted stands: age since seed germination in the nursery. Natural stands: age since germination in the field. It does NOT include regeneration delay. Total age equals breast-height age plus years-to-breast-height (YTBH).
+NAME=Aggregate retention
+a variable retention system that retains trees in clumps or clusters.  Also known as group retention.  Also see Dispersed retention.
+NAME=Ave. Vol./Tree
+Average volume (total 0.0+) per tree (m3)
+NAME=Basal Area (BA)
+total cross-sectional area (ob) of all living trees at breast height (1.3m) at various minimum DBH limits (m2/ha)
+NAME=BDU
+bone dry unit -- a measure of wood chips produced in the lumber milling process.  One BDU is defined as 2,400 pounds of chips, oven dry.
+NAME=BEC [Biogeoclimatic] Zone
+classification system of biotic zones in BC on the basis of vegetation, soils, topography, and climate
+NAME=Biomass
+mass (oven-dry tonnes per hectare) of various tree components, dead and alive.
+NAME=Board Foot (bf)
+defined as one foot long by one foot wide by one inch thick measured in nominal dimensions.
+NAME=Breakage
+Soundwood losses due to felling and yarding breakage; not merchantable because the broken pieces are considered too small
+NAME=Breast height (BH)
+1.3 m above the ground on the uphill side of the tree
+NAME=Brushing
+the removal of competing vegetation from around seedlings which have not yet reached "free growing" stage
+NAME=CBM
+Carbon Budget Model:  independent software developed by the Canadian Forest Service for conducting carbon budget modelling and analysis using growth and yield data from TIPSY (etc).
+NAME=Chips
+wood chips produced in the lumber milling process, measured in BDUs
+NAME=Closed canopy
+the description given to a stand when the crowns of the main level of trees forming the canopy are touching and intermingled so that light cannot reach the forest floor directly
+NAME=Coarse woody debris (CWD)
+From downed (fallen) dead trees. TIPSY can report the amount of CWD generated during a time or height step, with or without decay, or the amount of CWD on the ground at any time.
+NAME=Coast Region
+adminstrative area west of the crest of the Cascade and Coast Mountains.
+NAME=Crop Trees
+refers to a user-specified number of trees/ha (12.5+cm).  The associated statistics (e.g., merch vol) are affected by OAFs.
+NAME=Crown Bulk Density
+Mean crown (canopy) bulk density at the stand-level (kg/m3), computed as  foliage biomass per hectare divided by mean crown length.
+NAME=Crown cover (CC)
+Percentage of total ground area covered by the vertical projection of the crowns of all live trees [%]
+NAME=Culmination age
+age at which maximum mean annual increment (MAI) occurs
+NAME=Decay
+Soundwood losses due to physical and chemical processes caused by wood-rotting fungi.
+NAME=Delay (Regeneration)
+Natural stands: years from disturbance (fire, logging) until the first successful seed year. Plantations: years from disturbance (fire, logging) until planting
+NAME=Density
+Traditionally refers to any quantitative measure of crowding in stands. In TIPSY we use Number of Trees/ha (see Number of trees). "Residual Density" refers to the number of trees alive after thinning.
+NAME=Diameter, Breast Height (DBH)
+[cm] tree diameter (ob) at breast height (1.3m). Stand (DBH) average diameter (ob) at breast height. Stand (DBHg) diameter (ob) at breast height of tree of average basal area
+NAME=Diameter, Quadratic Mean (DBHg)
+[cm] diameter (BH, ob) of the tree of average basal area. Calculated as: sqrt [(BA/STEM COUNT) x 12732.4
+NAME=Dispersed retention
+a variable retention system that retains scattered individual trees.  Also know as individual tree retention.  Also see Aggregate retention.
+NAME=Dominant
+trees with crowns extending above the general level of the canopy and receiving full light from above and partly from the side; taller than the average trees in the stand with crowns well developed
+NAME=Economic Analysis
+an assessment of the benefits and costs of a project from the perspective of society as a whole. This would include both market and non-market benefits and costs. The effects of taxes are typically ignored as they represent a redistribution of wealth within society rather than a cost to society as a whole. Also referred to as social benefit cost analysis.
+NAME=Effectiveness, Fertilizer
+(%) multiplier applied to fertiler responses derived from carefully hand-fertilized research plots, to adjust for irregularities in operational coverage/rate.   TIPSY default  = 80%
+NAME=Even-aged
+a forest stand in which relatively small (10 - 20 year) age differences exist between individual trees, in contrast to uneven-aged stands
+NAME=FAN$IER
+Financial ANalysis of Silviculture Investment and Economic Return:  independent software packaged with TIPSY for conducting economic analysis on TIPSY regimes.
+NAME=Fertilization
+the attempt to increase forest growth through the provision of nutrients which may be naturally deficient in the soil
+NAME=FIZ
+The Forest Inventory Zone(s) that fall within the forest cover polygon. FIZ zones were developed to provide a broadly based ecological classification of the forestland in British Columbia. FIZ zones closely follow the early Biogeoclimatic zones developed by Dr. Krajina. The province of British Columbia is split into 12 FIZ zones.
+NAME=Free growing stand
+A stand of healthy trees of a commercially valuable species, the growth of which is not impeded by competition from plants, shrubs and other trees
+NAME=Genetic worth
+The percent gain in volume per hectare expected 60 years after planting (80 for white spruce)
+NAME=Genetically improved seed and/or vegetative propagules
+seed or propagule that originate from a tree breeding program and that have been specifically designed to improve some attribute of seeds, seedlings, or vegetative propagules selection
+NAME=Germination period
+the time from the seed year until 100 of the largest crop trees germinate naturally. Enter the number of years in the regeneration delay.
+NAME=Gross volume
+volume of all living, dead and thinned trees (total production) [m3/ha]
+NAME=Height, Mean
+[m] mean height of all live trees
+NAME=Height, Predominant
+Average height of the 100 tallest trees/ha
+NAME=Height, Top
+[m] height of the largest dbh tree of the target species in a 0.01 ha plot. The tree must be healthy, vigorous, dominant or co-dominant, undamaged and unsuppressed.   This is also the height used for site index in BC.
+NAME=Initial density
+refers to the number of trees per hectare, either planted or naturally regenerated.  The word 'initial' can be misleading because these trees appear almost immediately in TIPSY, but might actually take longer.  Note that some OAFs reduce the number of trees requested, even before establishment.
+NAME=Input data file
+The file containing the data that BatchTIPSY processes.
+NAME=Inside bark (ib)
+with reference to measurements recorded inside bark
+NAME=Interior Region
+all of British Columbia excluding the coast region.
+NAME=Intertree distance
+average distance between trees [m]
+NAME=Juvenile wood
+The wood produced annually in the bole section occupied by the live crown.
+NAME=JW Adj Lumber
+A TIPSY output:  Lumber volume (bf/ha) by grade, with grade adjustments for juvenile wood.
+NAME=Live Crown % (LC)
+length of crown relative to tree height [%], only reported in TIPSY for Prime Trees
+NAME=Lorey's Height
+the average height of trees in a stand weighted by their basal area
+NAME=Lumber Recovery Factor
+the number of board feet of lumber recovered from each cubic metre of standing volume at a particular age. (bd ft/m3)
+NAME=Lumber Volume
+the nominal board foot volume of 2-inch lumber reported separately by width class(i.e. 2x4's, 2x6's, 2x8's, and 2x10's) (board dimensions in inches) irrespective of length (8- to 20-foot long boards). (bd ft/ha)
+NAME=Managed Stand
+A stand (natural or planted) that has had some form of density control, e.g., espacement or thinning.   This is the definition used to differentiate TIPSY and VDYP application in forest-level planning.
+NAME=Mature wood
+That wood produced in the regions below the live crown.
+NAME=MBF
+thousand board feet of lumber
+NAME=Mean Annual Increment (MAI)
+average annual increase in stand volume at a given TIPSY age [m3/ha/yr]
+NAME=Mean Crown Base Height
+(m) mean height to the base of the live crown within a stand
+NAME=Mean Crown Length
+(m) mean crown length for a stand
+NAME=Merchantable volume (MRCH. Vol.)
+total standing volume (ib) less 30 cm stumps, 10 cm tops (ib) and trees below a specified minimum diameter, e.g. merchantable volume 12.5+ is the volume (ib) of trees > 12.5cm DBH [m3/ha]. Merch. volume in an economic analysis of a commercially thinned stand includes volume from the thinnings.
+NAME=Mill Residue
+By-products of lumber manufacturing including: chips, sawdust, shavings, trims, and bark.
+NAME=MITD
+The minimum inter-tree distance used to determine which trees in a plot are well-spaced.
+NAME=Mortality
+death or destruction of forest trees as a result of competition, disease, insect damage, drought, wind, fire and other factors (excluding harvesting)
+NAME=MSS
+The minimum stocking standard, measured in well-spaced per hectare (wsph) or free-growing per hectare (fgph), used to determine whether a stand is sufficiently restocked or free-growing.  This is the minimum well-spaced or free-growing density that should be established on a stand for it to be considered sufficiently restocked or free-growing.
+NAME=MSYT
+managed stand yield table
+NAME=Natural
+refers to trees or a stand that regenerated naturally from seed after disturbance, e.g., fire or logging
+NAME=Natural Ingress
+Trees that naturally seed into plantations over time.   TIPSY does not account for this.
+NAME=Number of Trees
+In TIPSY, it refers to the number of living trees in an even-aged stand composed of a single cohort. This includes all trees that regenerate naturally over a short period of less than 5 years, or all trees planted in a particular year. It does not include those which seed in later. All trees start as dominants and later progress to lower crown classes and die in response to intertree crowding. Dead trees are not counted. The number of trees can be reduced by thinning.
+NAME=OAF Impact
+A TIPSY output:  The total impact (% based on merch 12.5+) of all TIPSY OAF adjustments applied.
+NAME=Operational Adjustment Factor 1 (OAF 1)
+unproductive areas such as holes in a stand. The percentage reduction in volume is constant with age. [%]
+NAME=Operational Adjustment Factor 2 (OAF 2)
+losses toward maturity of a stand. The percentage reduction in volume increases with age. [%]
+NAME=Outside bark (ob)
+with reference to measurements recorded outside bark
+NAME=PLOTSY
+Independent software packaged with TIPSY used to generate XY graphs of TIPSY data.
+NAME=Pre Adj Lumber
+A TIPSY output:  Lumber volume (bf/ha) by grade, before (without) juvenile wood adjustment.
+NAME=Prime Trees
+the 250 largest diameter (>12.5cm)trees/ha --- a surrogate for crop trees
+NAME=Pruning
+the removal of the lower branches of crop trees in order to produce a shell of higher valued clear wood
+NAME=Regeneration delay
+Natural stands: years from disturbance (fire, logging) until the first successful seed year.  Plantations: years from disturbance (fire, logging) until planting
+NAME=repression (ht)
+a reduction in height growth due to excessive establishment density effecting all crown classes.
+NAME=Site class
+the measure of the relative productive capacity of a site for a particular crop or stand, generally based on tree height at a given age and expressed as either good, medium, poor or low
+NAME=Site index (SI)
+a measure of site productivity based on the top height [meters] of a stand at breast-heightage 50. It does not apply to stands in which the height growth of top height trees has been affected by treatment (fertilization, tree improvement) or stand density (repression).
+NAME=Site Productivity
+The inherent capability of the land to grow trees, governed by the interaction between climate, geography, soils, and genetics.
+NAME=Slope
+[%] average slope of the stand's terrain
+NAME=Stand top height
+Stand top height from forest cover layer (m)
+NAME=Stem map
+Stem maps display the location of each tree in a square one-hectare plot. Maps of natural stands show all trees which germinate over a period of about 5 years.
+NAME=TASS
+Tree and Stand Simulator
+NAME=Thinning, commercial (CT)
+in TIPSY terms, a single partial harvest preceding the final harvest.
+NAME=Thinning, pre-commercial (PCT)
+removing less desirable trees at an early age, with no commercial value, in order to favour the growth of potential crop trees
+NAME=TIP file
+A TIPSY file containing the user-defined settings required to generate output tables for a unique stand using interactive TIPSY.  It does not contain the output tables themselves, only the settings required to generate them.
+NAME=TIPSY
+Table Interpolation Program for Stand Yields
+NAME=Total Volume
+Total bole (stem) volume, i.b., including tops and stumps. (m3/ha)
+NAME=Tree Count
+number of living trees per hectare, 0.0+cm and larger, unless otherwise specified.
+NAME=Var. Ret. Adjust.
+A TIPSY output:  the total impact (% based on merch 12.5+) of all the TIPSY Variable Retention Adjustments applied.
+NAME=Variable Retention
+a silvicultural system that follows nature's model by always retaining part of the forest after harvesting. Standing trees are left in a dispersed or aggregated form to meet objectives such as retaining old growth structure, habitat protection and visual quality. Variable retention retains structural features (snags, large woody debris, live trees of varying sizes and canopy levels) as habitat for a host of forest organisms. The main objectives of variable retention are to retain the natural range of stand and forest structure and forest functions. With retention systems, forest areas to be retained are determined before deciding which areas will be cut. This system offers a range of retention levels. The system also provides for permanent retention of trees and other structures after regeneration is established. Variable retention can be implemented with a range of harvesting systems and can be combined with traditional silvicultural systems such as shelterwood or selection.
+NAME=VDYP
+Variable Density Yield Projection, a growth and yield model for natural stands in BC
+NAME=Volume
+Bole (stem) volume (m3/ha). Various types include: Gross: inside bark volume of all living, dead and thinned trees (total production), including tops and stumps.   Merchantable Volume(Vol Merch): total standing volume (ib) less 30 cm stumps, 10 cm tops, for trees above a specified minimum diameter, e.g. Merchantable volume 12.5+ is the volume of trees > 12.5 cmDBH.  Total Volume (0.0+): inside bark volume (ib) of all living trees, including tops and stumps.  Total standing volume (7.5+): volume (ib) of trees > 7.5 cm diameter at breast height, including tops and stumps.
+NAME=VRAF
+Variable Retention Adjustment Factor.  This refers to the adjustment due to the partial harvesting, i.e. the original stand less the harvested area.
+NAME=Waste
+Soundwood portion of a tree or log that has more than 50% decay.  Considered to be non-recoverable under current utilization standards.
+NAME=WinTIPSY
+An old name for TIPSY, no longer used.
+NAME=Worker-year
+Two hundred and twenty (220) days should be officially recognized as a worker year.
+NAME=Years to breast height (YBH)
+years to grow from seed to breast height

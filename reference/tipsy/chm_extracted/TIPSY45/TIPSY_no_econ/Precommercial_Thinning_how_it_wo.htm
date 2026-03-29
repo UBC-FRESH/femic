@@ -1,0 +1,118 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="Thinning">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Pre-commercial Thinning in TIPSY</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+p.hcp2 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+
+<h1>Pre-commercial Thinning in TIPSY</h1>
+<p>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso2" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="1508"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="15790320"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="See Also"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="Thinning$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My Robohelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\Precommercial_Thinning_how_it_wo.htm" 
+  />
+<param name="_ID" value="SeeAlso2"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso2"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:See Also">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="Thinning">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </p>
+<p><span class="hcp1">Pre-commercial thinning (PCT)</span> 
+ is applied through the <a href="Stand_Specifications_Options.htm#PCT">Stand 
+ Specifications</a> dialogue box.</p>
+<p>Residual density is selected within the <a href="Stand_Specifications_Options.htm#PCT">Residual 
+ Density</a> dialogue box. &#160;&#160;<span class="hcp1">TIPSY</span> 
+ sets upper and lower limits for residual density, taking <a href="javascript:TextPopup(this)" id="HotSpot31066" class="glossterm">mortality</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot31066', 'POPUP31066');
+//]]></script><span class="glosstext" id="POPUP31066" style="display: none;"> death or destruction of forest trees as a result of competition, disease, insect damage, drought, wind, fire and other factors (excluding harvesting)</span> into consideration and <a 
+	 href="Initial_Density_PCTand_CT_Densit.htm">the minimum post-PCT density 
+ available in <span class="hcp1">TIPSY</span></a> (69 trees/ha).</p>
+<p>The timing of <span class="hcp1">PCT</span> is fixed within 
+ <span class="hcp1">TIPSY</span> at a height of 4 metres 
+ in the interior and 6 metres on the coast. &#160;For <a href="Prorating_Multiple_Species.htm">multiple 
+ species stands</a>, this means <span class="hcp1">PCT</span> 
+ may be applied at different ages, due to height growth differences. &#160;Species 
+ composition has no affect on <span class="hcp1">PCT</span> 
+ timing. &#160;&#160;However, <span class="hcp1">TIPSY</span> 
+ will not <a href="Preferences.htm#PCT_pre_post_data">display PCT pre-post 
+ data in Yield Tables</a> for multiple species.</p>
+<h2><b style="font-weight: bold;">How are trees selected for removal/retention?</b></h2>
+<p><span class="hcp1">TIPSY's PCT</span> database is produced 
+ by <a href="https://www2.gov.bc.ca/gov/content/industry/forestry/managing-our-forest-resources/forest-inventory/growth-and-yield-modelling/tree-and-stand-simulator-tass">TASS</a>. 
+ &#160;TASS's <span class="hcp1">PCT</span> routine tries 
+ to mimic an experienced operator traversing the stand in a series of 5m 
+ wide strips. The selection procedure is as follows:</p>
+<ol style="list-style: decimal;">
+	<li><p>Divide the stand into 5m strips</p></li>
+	<li><p>Select the tree of largest DBH within the first 5 m of the first 
+	 strip</p></li>
+	<li><p>Remove all trees within a fixed radius of the selected tree 
+	 (e.g. 2.0m for a residual density of 625 trees/ha).</p></li>
+	<li><p>Select the next largest tree in the same 5m square cell, and 
+	 remove all trees within the same fixed radius from this tree</p></li>
+	<li><p>Continue until no more trees are removed or retained in the 
+	 cell</p></li>
+	<li><p>Proceed to the second 5m square cell in the strip and repeat 
+	 the process</p></li>
+	<li><p>Continue until the entire stand has been treated</p></li>
+	<li><p>Compare the actual with the requested residual density</p></li>
+	<li><p>Increase or decrease the radius of the surround (2.0m +/-) and 
+	 repeat the thinning`</p></li>
+	<li><p>Continue adjusting the radius until the target residual density 
+	 is achieved</p></li>
+</ol>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp2">_______________________________________________</p>
+	<p class="hcp2">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

@@ -1,0 +1,248 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+<meta name="MS-HAID" content="Outputs">
+<meta name="MS-HAID" content="Age">
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Mean annual increment (MAI)</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+b.hcp2 { font-weight:bold; }
+tr.hcp3 { vertical-align:top; }
+p.hcp4 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1>Mean annual increment (MAI)</h1>
+<p><span class="hcp1">MAI</span> is the ratio of volume over 
+ <a href="Ages_defined_in_TIPSY.htm#Ages_in_Outputs">TIPSY Age</a>; it 
+ is reported in<span class="hcp1"> <a href="YieldMax_MAI_Table.htm">Yield 
+ Tables</a> </span>and<span class="hcp1"> <a href="Custom_Table_in_TIPSY.htm">Custom 
+ Tables</a>. &#160;&#160;</span>Each <a href="Merchantability_Limits.htm">type 
+ of volume and Merchantability Limit</a> has a unique <span class="hcp1">MAI</span>. 
+ &#160;</p>
+<h2>Culmination age determination</h2>
+<p><span class="hcp1">MAI</span> culmination age is the age 
+ of maximum <span class="hcp1">MAI</span>. &#160;This defines 
+ a regime's <span class="hcp1">physical rotation</span>, 
+ i.e., the rotation length that maximizes volume production in perpetuity. 
+ &#160;&#160;Culmination ages <a href="File_Menu_Commands.htm#Send_to_FAN_IER..">sent 
+ to FAN$IER</a> are calculated from annual volume data, rather than the 
+ age steps defined in <a href="Table_Specifications_Options.htm">Table 
+ Specifications</a>. &#160;&#160;</p>
+<p class="Bullet"><b style="font-weight: normal;">Trivial fluctuations 
+ in the <span class="hcp1">TIPSY</span> database affect <span class="hcp1">MAI</span> and the determination of culmination 
+ age. &#160;&#160;In </b>the extreme example below (created by an earlier 
+ version of <span class="hcp1">TIPSY</span>), <span class="hcp1">MAI</span> 
+ (column 5) increases yearly to a maximum of 16.38 at age 56 (apparent 
+ if <span class="hcp1">MAI</span> were displayed more precisely), 
+ declines ever so slightly until age 62, increases to age 67, and then 
+ goes into a very slow decline. <span class="hcp1">MAI</span> 
+ is essentially flat from about age 54 to 76. However, random perturbations 
+ due to the death of individual trees in <a href="https://www2.gov.bc.ca/gov/content/industry/forestry/managing-our-forest-resources/forest-inventory/growth-and-yield-modelling/tree-and-stand-simulator-tass">TASS</a> 
+ simulations cause the <span class="hcp1">MAI</span> to fluctuate 
+ when we engage in such &quot;superfluous precision&quot;. In reality, 
+ we should plot the <span class="hcp1">MAI</span>/age relationship 
+ and subjectively identify the age that coincides with the beginning of 
+ the &quot;plateau&quot; (e.g. 55 years).</p>
+<ul>
+	<li class="p-Bulletind" style="margin-left: -20px;"><p class="Bulletind" 
+															 style="margin-left: 0px;"><b>Linear 
+	 interpolation.</b> <span class="hcp1">TIPSY</span> employs 
+	 linear interpolation to obtain information that falls between entries 
+	 in its database. This technique forces the culmination of <span class="hcp1">MAI</span> 
+	 to coincide with an entry in the database. That is, the point of maximum 
+	 <span class="hcp1">MAI</span> will increase in irregular 
+	 age steps that correspond to height steps of 2 m (interior) or 3 m 
+	 (coast) in the database. Higher resolution in the database and curvilinear 
+	 interpolation techniques may be considered in the future to address 
+	 this minor shortcoming.</p></li>
+	<li class="p-Bulletind" style="margin-left: -20px;"><p class="Bulletind" 
+															 style="margin-left: 0px;"><b>Age 
+	 or height steps in yield tables.</b> In earlier versions of <span class="hcp1">TIPSY</span>, the age or height sequence 
+	 specified for yield tables could affect the <span class="hcp1">MAI</span> 
+	 sequence because <span class="hcp1">MAI</span> was only 
+	 calculated at each step in the table, and the maximum could be missed 
+	 if it occurred between 2 steps. Now, <span class="hcp1">MAI</span> 
+	 is calculated annually as illustrated in the example below, so the 
+	 maximum <span class="hcp1">MAI</span> is no longer affected 
+	 by the age or height sequence in the yield tables.</p></li>
+</ul>
+<h3><b class="hcp2">Yield table illustrating fluctuations 
+ in MAI</b></h3>
+<table >
+	<tr class="hcp3">
+		<td><p class="TableText">-------------------------------------------------------------------------</p></td>
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">&#160;</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 601px;" width="445">
+	<tr style="height:55px;" class="hcp3">
+		<td><p class="TableText" style="text-align: center;">YIELD TABLE<br>
+		Volume (m3/ha) and MAI</p></td>
+		<td><p class="TableText">&#160;</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 679px;" width="372">
+	<col style="width: 4.107%;">
+	<col style="width: 16.429%;">
+	<col style="width: 22.067%;">
+	<col style="width: 21.475%;">
+	<col style="width: 35.922%;">
+	<tr class="hcp3">
+		<td style="width: 4.107%;"><p class="TableText">&#160;</p></td>
+		<td style="width: 16.429%;"><p class="TableText">Age<br>
+		(yr)</p></td>
+		<td style="width: 22.067%;"><p class="TableText">Top Ht (m)</p></td>
+		<td style="width: 21.475%;"><p class="TableText">Gross<br>
+		0.0+</p></td>
+		<td style="width: 35.922%;"><p class="TableText">Merch<br>
+		12.5+ &#160;&#160;&#160;&#160;&#160;&#160;&#160;MAI</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 701px; height: 23px;" width="371">
+	<tr class="hcp3">
+		<td><p class="TableText">-------------------------------------------------------------------------</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 745px;" width="374">
+	<col style="width: 5.283%;">
+	<col width="55">
+	<col width="76">
+	<col width="75">
+	<col width="57">
+	<col width="68">
+	<tr class="hcp3">
+		<td style="width: 5.283%;"><p class="TableText">&#160;</p></td>
+		<td width="55"><p class="TableText">50.0</p></td>
+		<td width="76"><p class="TableText">33.8</p></td>
+		<td width="75"><p class="TableText">860</p></td>
+		<td width="57"><p class="TableText">800</p></td>
+		<td width="68"><p class="TableText">16.00</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 5.283%;"><p class="TableText">&#160;</p></td>
+		<td width="55"><p class="TableText">51.0</p></td>
+		<td width="76"><p class="TableText">34.3</p></td>
+		<td width="75"><p class="TableText">884</p></td>
+		<td width="57"><p class="TableText">821</p></td>
+		<td width="68"><p class="TableText">16.10</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 5.283%;"><p class="TableText">&#160;</p></td>
+		<td width="55"><p class="TableText">52.0</p></td>
+		<td width="76"><p class="TableText">34.8</p></td>
+		<td width="75"><p class="TableText">907</p></td>
+		<td width="57"><p class="TableText">842</p></td>
+		<td width="68"><p class="TableText">16.19</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 5.283%;"><p class="TableText">&#160;</p></td>
+		<td width="55"><p class="TableText">53.0</p></td>
+		<td width="76"><p class="TableText">35.2</p></td>
+		<td width="75"><p class="TableText">930</p></td>
+		<td width="57"><p class="TableText">862</p></td>
+		<td width="68"><p class="TableText">16.26</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 5.283%;"><p class="TableText">&#160;</p></td>
+		<td width="55"><p class="TableText">54.0</p></td>
+		<td width="76"><p class="TableText">35.7</p></td>
+		<td width="75"><p class="TableText">953</p></td>
+		<td width="57"><p class="TableText">882</p></td>
+		<td width="68"><p class="TableText">16.33</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 5.283%;"><p class="TableText">&#160;</p></td>
+		<td width="55"><p class="TableText">55.0</p></td>
+		<td width="76"><p class="TableText">36.1</p></td>
+		<td width="75"><p class="TableText">974</p></td>
+		<td width="57"><p class="TableText">901</p></td>
+		<td width="68"><p class="TableText">16.38</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 879px;" width="502">
+	<col width="17">
+	<col width="54">
+	<col width="77">
+	<col width="74">
+	<col width="57">
+	<col width="69">
+	<col width="89">
+	<col>
+	<col>
+	<tr class="hcp3">
+		<td width="17"><p class="TableText">&#160;</p></td>
+		<td width="54"><p class="TableText"><b class="hcp2">56.0</b></p></td>
+		<td width="77"><p class="TableText"><b class="hcp2">36.5</b></p></td>
+		<td width="74"><p class="TableText"><b class="hcp2">995</b></p></td>
+		<td width="57"><p class="TableText"><b class="hcp2">917</b></p></td>
+		<td width="69"><p class="TableText"><b class="hcp2">16.38</b></p></td>
+		<td width="89"><p class="TableText"><b class="hcp2">maximum</b></p></td>
+		<td><p class="TableText">&#160;</p></td>
+		<td><p class="TableText">&#160;</p></td>
+	</tr>
+</table>
+<table style="left: 0px; top: 904px;" width="375">
+	<col style="width: 5.257%;">
+	<col style="width: 15.397%;">
+	<col style="width: 22.002%;">
+	<col style="width: 21.177%;">
+	<col style="width: 15.946%;">
+	<col width="73">
+	<tr class="hcp3">
+		<td style="width: 5.257%;"><p class="TableText">&#160;</p></td>
+		<td style="width: 15.397%;"><p class="TableText">57.0</p></td>
+		<td style="width: 22.002%;"><p class="TableText">37.0</p></td>
+		<td style="width: 21.177%;"><p class="TableText">1015</p></td>
+		<td style="width: 15.946%;"><p class="TableText">933</p></td>
+		<td width="73"><p class="TableText">16.38</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 5.257%;"><p class="TableText">&#160;</p></td>
+		<td style="width: 15.397%;"><p class="TableText">58.0</p></td>
+		<td style="width: 22.002%;"><p class="TableText">37.4</p></td>
+		<td style="width: 21.177%;"><p class="TableText">1035</p></td>
+		<td style="width: 15.946%;"><p class="TableText">949</p></td>
+		<td width="73"><p class="TableText">16.37</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 5.257%;"><p class="TableText">&#160;</p></td>
+		<td style="width: 15.397%;"><p class="TableText">59.0</p></td>
+		<td style="width: 22.002%;"><p class="TableText">37.8</p></td>
+		<td style="width: 21.177%;"><p class="TableText">1055</p></td>
+		<td style="width: 15.946%;"><p class="TableText">965</p></td>
+		<td width="73"><p class="TableText">16.35</p></td>
+	</tr>
+	<tr class="hcp3">
+		<td style="width: 5.257%;"><p class="TableText">&#160;</p></td>
+		<td style="width: 15.397%;"><p class="TableText">60.0</p></td>
+		<td style="width: 22.002%;"><p class="TableText">38.2</p></td>
+		<td style="width: 21.177%;"><p class="TableText">1074</p></td>
+		<td style="width: 15.946%;"><p class="TableText">980</p></td>
+		<td width="73"><p class="TableText">16.34</p></td>
+	</tr>
+</table>
+<p style="font-weight: bold;">&#160;</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp4">_______________________________________________</p>
+	<p class="hcp4">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

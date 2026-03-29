@@ -1,0 +1,296 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="OAFs">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Custom OAFs: Interactive</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<script type="text/javascript" language="JavaScript1.2" src="../ehlpdhtm.js"></script>
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+span.hcp2 { text-decoration:underline; }
+span.hcp3 { font-weight:normal; }
+p.hcp4 { margin-left:40px; }
+ul.hcp5 { list-style:disc; }
+span.hcp6 { font-weight:bold;
+text-decoration:underline; }
+span.hcp7 { mso-ansi-language:EN-CA;
+mso-fareast-language:EN-CA;
+mso-bidi-language:AR-SA; }
+span.hcp8 { mso-fareast-font-family:Calibri;
+mso-fareast-theme-font:minor-latin; }
+p.hcp9 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+
+
+
+
+<h1><a name="MiniTOCBookMark1"></a>Custom OAFs: Interactive</h1>
+<p align="left" style="font-family:Arial;font-size:12pt;font-weight: normal;font-style: normal;text-decoration: none;" >In&#160;this&#160;Topic&#160;<a class="dropspot" href="javascript:TextPopup(this)" id="MTHotSpot6357" ><span class="MTText" style="display: none;" >Show</span><span class="MTText" >Hide</span></a></p>
+<script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('MTHotSpot6357', 'MTPOPUP6357');
+//]]></script>
+<div align="left" class="droptext" id="MTPOPUP6357" >
+ <div style="background: #ffff00;float: none;width: 100% ;" >
+  <p align="left"  ><a href="#MiniTOCBookMark2" >Introduction</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark3" >Custom OAFs Intensity 
+ dialogue box</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark4" >Customs OAF Specifications 
+ dialogue box</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark5" >Custom OAF Response 
+ dialogue box</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark6" >How Custom OAFs work</a></p>
+ </div>
+</div>
+<h3><b>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="1508"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="See Also"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="OAFs$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\steve\Documents\My Robohelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\Using_Custom_OAFs.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:See Also">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="OAFs">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </b></h3>
+<h2><a name="MiniTOCBookMark2"></a>Introduction</h2>
+<p><span class="hcp1">Customs OAFs</span> can augment or 
+ replace <a href="OAFs_-_Operational_Adjustment_Factors.htm">OAF1 and OAF2</a>. 
+ &#160;&#160;<a href="Species_Specifications_Options.htm#OAFs__species-specific_">Species-specific 
+ Custom OAFs</a> are applied in <a href="Stand_Specifications_Options.htm">Species 
+ Specifications</a>, while <a href="Stand_Specifications_Options.htm#Operational_Adjustment_Factors__OAFs__group">Stand-level 
+ Custom OAFs</a> are applied in <a href="Stand_Specifications_Options.htm">Stand 
+ Specifications</a>. &#160;&#160;<a href="Custom_OAFs_in_BatchTIPSY.htm">Custom 
+ OAFs can be applied in BatchTIPSY</a>, as well.</p>
+<p><span class="hcp1">Custom OAFs</span> enable the creation 
+ and application of <span class="hcp1">OAFs</span> for specific 
+ yield impacts ( e.g., specific insects and diseases) in ways that are 
+ not possible with <span class="hcp1"><a href="Stand_Specifications_Options.htm#Operational_Adjustment_Factors__OAFs__group">regular 
+ OAFs (1 &amp; 2)</a></span> alone. &#160;&#160;The design of <span class="hcp1">Custom 
+ OAFs</span> normally requires the involvement of subject specialists (e.g., 
+ entomologists, pathologists, etc). &#160;&#160;For example, <span class="hcp1">TIPSY</span> 
+ includes <span class="hcp1">Custom OAFs </span>for <a href="How_to_use_the_Armillaria_OAF_in.htm">Armillaria 
+ root-rot (ICH Douglas-fir only)</a> that were developed in cooperation 
+ with pathologists from the Canadian Forest Service.</p>
+<p><span class="hcp1">Custom OAFs</span> reflect impacts 
+ on <span class="hcp2">Merch. Volume (12.5+</span>).</p>
+<p style="font-weight: bold; background-color: Transparent;"><span style="background-color: #ffff00;">NOTE:</span><span class="hcp3"> &#160;&#160;</span><span class="hcp3">The combined effect of </span><span style="font-weight: normal; 
+	 text-decoration: underline; ">all</span><span class="hcp3"> 
+ </span>OAFs<span class="hcp3"> is additive.</span><span class="hcp3"> &#160;Therefore, whenever </span>OAFs<span class="hcp3"> are added or modified, all existing 
+ </span>OAFs<span class="hcp3"> must be re-evaluated and 
+ modified (or turned off) in context.</span></p>
+<p><span class="hcp1">Custom OAFs</span> affect yields in 
+ much the same way as <span class="hcp1">regular OAFs (1 
+ &amp; 2)</span> with the exception of <a href="javascript:TextPopup(this)" id="HotSpot25813" class="glossterm">gross 
+ volume</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot25813', 'POPUP25813');
+//]]></script><span class="glosstext" id="POPUP25813" style="display: none;"> volume of all living, dead and thinned trees (total production) [m3/ha]</span>. See <a href="Impacts_of_Adjustment_Factors.htm">Impacts 
+ of Adjustment Factors</a> for details.</p>
+<p><a href="Using_Custom_OAFs.htm">Back to Top</a></p>
+<h2><a name="MiniTOCBookMark3"></a><span class="hcp2">Custom OAFs Intensity</span> 
+ dialogue box</h2>
+<p>Both <a href="Species_Specifications_Options.htm#OAFs__species-specific_">Species-specific 
+ Custom OAFs</a> and <a href="Stand_Specifications_Options.htm#Operational_Adjustment_Factors__OAFs__group">Stand-level 
+ Custom OAFs</a> are defined and activated through the <span class="hcp1">Custom 
+ OAFs Intensity</span> dialogue box, and two other dialogue boxes nested 
+ within it. &#160;&#160;<span class="hcp1">TIPSY</span> comes 
+ with three pre-defined <span class="hcp1">Custom OAFs. &#160;&#160;</span>The 
+ two<span class="hcp1"> Examples (1 &amp; 2) </span>have 
+ been configured to mimic<span class="hcp1"> OAF1 </span>and<span class="hcp1"> OAF2</span> for demonstration purposes.</p>
+<p>The <span class="hcp1">Custom OAFs Intensity</span> dialogue 
+ box lists existing <span class="hcp1">Custom OAFs</span> 
+ definitions available for use.<span class="hcp1"> &#160;&#160;</span>Each 
+ line contains four radio buttons enabling selection of intensity (severity) 
+ levels specific to each <span class="hcp1">Custom OAF</span> 
+ definition. &#160;&#160;Selecting &quot;None&quot; deactivates the <span class="hcp1">Custom</span> <span class="hcp1">OAF</span>. 
+ &#160;&#160;See below for more detail.</p>
+<p>Additional <span class="hcp1">Custom OAFs</span> can be 
+ added or edited by clicking the <span class="hcp1">Add/Edit 
+ Custom OAFs</span> button at the bottom to open the <span class="hcp1">Customs 
+ OAF Specifications</span> dialogue box.</p>
+<p><span class="hcp1">TIPSY</span> also provides <span class="hcp1">pre-defined 
+ Custom OAFs</span> in conjunction with certain species, i.e.:</p>
+<p class="hcp4">For interior Douglas-fir (Fdi) in the ICH 
+ <a class="glossterm">BEC Zone</a> only, a pre-defined<span class="hcp1"> </span><a href="How_to_use_the_Armillaria_OAF_in.htm">Armillaria</a> 
+ <span class="hcp1">Custom OAF </span>appears, which is disabled 
+ by default.</p>
+<p class="hcp4"><a name="Age_decline_custom_oaf"></a>For 
+ aspen (At) and alder (Dr), an pre-defined <span class="hcp1">Age 
+ Decline</span> <span class="hcp1">Custom OAF</span> is applied 
+ to these two species by default, to better reflect the behavior of these 
+ shorter-lived broadleaf species. &#160;It can also be manually disabled 
+ in this dialogue box.</p>
+<p><a href="Using_Custom_OAFs.htm">Back to Top</a></p>
+<h2><a name="MiniTOCBookMark4"></a><span class="hcp2">Customs OAF Specifications</span> 
+ dialogue box</h2>
+<p>The <span class="hcp1">Custom OAF Specifications</span> 
+ dialogue box enables creation and editing of <span class="hcp1">Custom 
+ OAF</span> of definitions, also referred to as <span class="hcp1">Response</span> 
+ models. &#160;It is accessed through the <span class="hcp1">Custom 
+ OAFs Intensity</span> dialogue box (above).</p>
+<p>The <span class="hcp1">Custom OAF Specifications</span> 
+ dialogue box contains:</p>
+<ul class="hcp5">
+	<li><p><span class="hcp1">Name </span>box<span class="hcp1">:</span> 
+	 &#160;&#160;Selects and displays an existing<span class="hcp1"> 
+	 Custom OAF</span> for editing, or renaming.</p></li>
+	<li><p><span class="hcp1">Add a new OAF</span> button<span class="hcp1">:</span> &#160;Begins a new <span class="hcp1">OAF</span> 
+	 definition by inserting a temporary name into the <span class="hcp1">Name 
+	 box</span>. &#160;&#160;This name can be edited.</p></li>
+	<li><p><span class="hcp1">Delete current OAF</span> button<span class="hcp1">:</span> &#160;Deletes the <span class="hcp1">OAF</span> 
+	 definition displayed in the <span class="hcp1">Name 
+	 box</span>. </p></li>
+	<li><p><span class="hcp1">In relation to Age </span><span class="hcp6">or</span><span class="hcp1"> Height:</span> &#160;selects the variable 
+	 anchoring the <span class="hcp1">Response model</span>. 
+	 &#160;&#160;Selection will depend on whether an impact is best described 
+	 as a function of stand age or <a class="glossterm">top 
+	 height</a> (tree size). &#160;&#160;Like all other <span class="hcp1">OAFs</span>, &#160;age refers to <a href="Ages_defined_in_TIPSY.htm">Germination 
+	 Age</a>.</p></li>
+	<li><p><span class="hcp1">Move trees... </span><span class="hcp6">or</span><span class="hcp1"> Remove trees...:</span> &#160;Normally, 
+	 the first option (Move...) is preferred. &#160;This moves dead trees 
+	 to the <a href="Mortality_Table.htm">Mortality Table</a> where they 
+	 become <a href="Standing_Dead_Tree_Snag_Table.htm">Snags</a> and eventually 
+	 <a href="Cumulative_Volume_of_CWD_less_de.htm">CWD</a>. &#160;&#160;I.e., 
+	 dead trees remain in the stand. &#160;The second option removes dead 
+	 trees from the stand, e.g., sanitation or salvage operations.</p></li>
+	<li><p><span class="hcp1"><a name="Response_model."></a>Response:</span> 
+	 &#160;This box displays the <span class="hcp1">Response</span> 
+	 model definition. &#160;&#160;Each column defines the <span class="hcp1">OAF</span> 
+	 effect at a specified age <span class="hcp2">or</span> 
+	 height, for each intensity (severity) level, i.e., none (fixed at 
+	 1.00), low, medium, high.</p></li>
+	<li><p><span class="hcp1">Add, Edit, Delete</span> buttons: 
+	 &#160;&#160;Operate on the individual columns of the <span class="hcp1">Response</span> 
+	 model. &#160;&#160;<span class="hcp1">Edit</span> and 
+	 <span class="hcp1">Delete</span> operate on the selected 
+	 (highlighted) column. &#160;&#160;<span class="hcp1">Add</span> 
+	 and <span class="hcp1">Edit</span> open the <span class="hcp1">Custom 
+	 OAF Response</span> dialogue box (below).<br>
+	<br>
+	<span class="hcp1">TIPSY</span> allows a maximum of 5 
+	 columns. &#160;<span class="hcp1">TIPSY</span> adheres 
+	 to the following rules:</p></li>
+	<ul class="hcp5">
+		<li><p>Rule 1. <span class="hcp1">OAF values </span>represent 
+		 the impact on<span class="hcp1"> </span><span class="hcp2">Merch. 
+		 Volume (12.5+)</span><span class="hcp1">.</span></p></li>
+		<li><p>Rule 2. By default, the first <span class="hcp1">OAF</span> 
+		 in a sequence is 1.00 at age zero, unless specified otherwise.</p></li>
+		<li><p>Rule 3. The <span class="hcp1">OAF</span> 
+		 value remains constant (to age 300) after the <b>last</b> specified 
+		 value.</p></li>
+		<li><p>Rule 4. <span class="hcp1">TIPSY</span> uses 
+		 linear interpolation to provide <span class="hcp1">OAF 
+		 values</span> for intermediate age or height steps.</p></li>
+	</ul>
+</ul>
+<p>See <a href="Development_of_Custom_OAFs.htm">Custom OAFs Development</a> 
+ for examples.</p>
+<p><a href="Using_Custom_OAFs.htm"><span class="hcp2">B</span>ack 
+ to Top</a></p>
+<h2><a name="MiniTOCBookMark5"></a><span class="hcp2">Custom OAF Response</span> 
+ dialogue box</h2>
+<p>The <span class="hcp1">Custom OAF Response</span> dialogue 
+ box is used to define each intensity (severity) level within one column 
+ of the <span class="hcp1">Response</span> model displayed 
+ in the <span class="hcp1">Custom OAF Specifications</span> 
+ dialogue box (above). &#160;&#160;The top line defines age (or height) 
+ for the column. &#160;&#160;The remaining lines define the <span class="hcp1">OAF 
+ value</span> (yield multiplier) for each of the intensity (severity) levels, 
+ i.e., none (fixed at 1.00), low, medium, high.</p>
+<p><span style="font-weight: bold; background-color: #ffff00;">NOTE:</span> 
+ &#160;&#160;As with regular <span class="hcp1">OAFs (1 &amp; 
+ 2)</span>, individual<span class="hcp7"> </span><span class="hcp1">OAF</span> 
+ values<span class="hcp1"> </span>may be greater than 1.00, 
+ but the combined (net) effect of all <span class="hcp1">OAFs</span> 
+ combined cannot increase<span class="hcp7"> </span><span class="hcp8">yield. 
+ &#160;&#160;Therefore,</span><span class="hcp7"> </span><span 
+	 style="mso-fareast-font-family: Calibri; mso-fareast-theme-font: minor-latin; 
+	 font-weight: bold;">TIPSY</span><span class="hcp7"> 
+ </span><span class="hcp8">caps 
+ the annual net effect at 1.00. &#160;A message appears when this occurs.</span></p>
+<p><a href="Using_Custom_OAFs.htm">Back to Top</a></p>
+<h2><a name="MiniTOCBookMark6"></a>How Custom OAFs work</h2>
+<p><span class="hcp1">TIPSY</span> derives annualized <span class="hcp1">OAF</span> values via linear interpolation 
+ between the <span class="hcp1">OAF</span> values specified 
+ in the columns of the <span class="hcp1">Response</span> 
+ model displayed in the <span class="hcp1">Custom OAF Specifications</span> 
+ dialogue box (above). &#160;&#160;Each <span class="hcp1">Custom 
+ OAF definition </span>contains 4 separate response models, one for each 
+ of the intensity (severity) levels, i.e., none (fixed at 1.00), low, medium, 
+ high. &#160;&#160;Examine the two <span class="hcp1">OAF</span> 
+ <span class="hcp1">definitions</span> (<span class="hcp6">Example 
+ 1 &amp; 2</span>) included with <span class="hcp1">TIPSY</span>:</p>
+<p><span class="hcp6">Example 
+ 1</span> is configured to mimic the default <a href="OAFs_-_Operational_Adjustment_Factors.htm#OAF1">OAF1</a> 
+ (0.85). &#160;&#160;Since <a href="OAFs_-_Operational_Adjustment_Factors.htm#OAF1">OAF1</a> 
+ is a constant multiplier, only one age (or height) column is required. 
+ &#160;&#160;Furthermore, this particular <span class="hcp1">OAF</span> 
+ must be defined at age zero in order for <span class="hcp1">TIPSY</span> 
+ to apply it over the entire rotation.</p>
+<p>In<span class="hcp6"> Example 
+ 2,</span> the <span class="hcp1">low</span> intensity (severity) 
+ model is configured to mimic <a href="OAFs_-_Operational_Adjustment_Factors.htm#OAF2">OAF2</a>. 
+ &#160;&#160;The definition uses three columns. &#160;The first column 
+ initializes the <span class="hcp1">OAF</span> at 1.00, at 
+ age zero. &#160;&#160;The second column (age 100) defines the default 
+ <span class="hcp1">OAF2</span>, i.e., 0.95 at age 100. &#160;&#160;The 
+ third column (age 300) extends the <span class="hcp1">OAF2</span> 
+ effect out to age 300, the practical limit of <span class="hcp1">TIPSY</span>. 
+ &#160;&#160;Without this third column, the <span class="hcp1">OAF</span> 
+ would stop decreasing past age 100 and remain static at 0.95 thereafter. 
+ &#160;&#160;Note, the second column (age 100) values are not actually 
+ needed to define this simple linear <span class="hcp1">OAF</span> 
+ model.</p>
+<p>Additional columns (ages or heights) enable more complex (segmented 
+ linear) <span class="hcp1">OAF</span> models to be defined. 
+ &#160;&#160;However, <span class="hcp1">TIPSY</span> uses 
+ linear interpolation between these points.</p>
+<p><a href="Using_Custom_OAFs.htm">Back to Top</a></p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp9">_______________________________________________</p>
+	<p class="hcp9">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

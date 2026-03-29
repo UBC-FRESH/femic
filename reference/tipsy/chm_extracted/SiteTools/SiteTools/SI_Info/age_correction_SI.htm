@@ -1,0 +1,54 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+ 
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Age correction, SI models</title>
+<link rel="StyleSheet" href="../../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+li.hcp2 { font-size:small; }
+font.hcp3 { font-family:Arial; }
+span.hcp4 { font-family:Arial, sans-serif; }
+p.hcp5 { text-align:center; }
+-->
+</style>
+</head>
+<body>
+<script type="text/javascript" src="../../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1><font style="font-size: small; font-family: 'CG Times ';" size="3">Age correction, SI models</font></h1>
+<p>Some <a href="Ministry_Recommended_Curves.htm">ministry recommended</a> <a href="Site_Index_Models.htm">site index models</a> in <span class="hcp1">SiteTools</span> display "(ac)" for age correction following the developers' names. &#160;&#160;<span class="hcp1">Notes</span> for these equations also contain the comment "Note: the formulation was modified in 2003 to move the age,height origin from 0,1.3 to 0.5,1.3". &#160;&#160;The rationale follows:</p>
+<ol style="font-size: small;">
+<li class="hcp2">
+<p><font face="Arial" class="hcp3">This half-year age correction (<a href="#Nigh_1995">Nigh, 1995</a>) was implemented to make the models consistent with the definition of breast height age, which is the number of annual growth rings at breast height. Since the innermost ring represents a half years growth (on average), the height-age models actually go through a height of 1.3 at breast height age 0.5, not age 0. Therefore, the age adjustment explicitly incorporates this assumption (i.e., tree reaches breast height midway through the growing season) into the height-age model.</font></p>
+</li>
+<li class="hcp2">
+<p><font face="Arial" class="hcp3">If we make this assumption for the height-age curves, then we should make the same assumption for the years-to-breast-height functions. That is, if the years-to-breast-height functions give us the number of years to reach breast height, then this number should end in 0.5. To do this, we truncate the decimal part of the years to breast height estimate, and then add 0.5.</font></p>
+</li>
+<li class="hcp2">
+<p><font face="Arial" class="hcp3">Total age is just the number of years the tree has been growing. If we add breast height age to years-to-breast-height, we get xx.5 but we should be getting a whole number. This 0.5 year "error" is due to the definition of breast height age. At breast height age nn the tree has only been growing nn-0.5 years since it reached breast height. Therefore,</font><br>
+<font face="Arial" class="hcp3">Total Age = Breast Height Age + Years-to-Breast-Height - 0.5.</font></p>
+</li>
+<li>
+<p><font face="Arial" class="hcp3">Since Number 1 above is generally accepted, then Numbers 2 and 3 should follow to make the systems internally consistent with respect to the assumptions.</font></p>
+</li>
+</ol>
+<p>These age corrections are implemented through <a href="../Background/What_is_SiteTools.htm#SINDEX">SINDEX</a>.</p>
+<p><a name="Nigh_1995" id="Nigh_1995"></a>Nigh, G.D. 1995. <a href="https://www.for.gov.bc.ca/hfd/pubs/docs/rr/rr03.htm">Compatibility improvements and bias reduction in height-age models.</a> &#160;Research Report 3. &#160;BC Ministry <span class="hcp4">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span><br>, Victoria.</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp5">_______________________________________________</p>
+	<p class="hcp5">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span class="hcp4">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span><br><span class="hcp4">Forest Analysis and Inventory</span> 
+	 Branch</p>
+</div>
+</body>
+</html>

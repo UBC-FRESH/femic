@@ -1,0 +1,129 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="Variable retention">
+
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Variable Retention: Operational Examples</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+b.hcp1 { font-weight:bold; }
+p.hcp2 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+
+<h1>Variable Retention: Operational Examples</h1>
+<h3><b class="hcp1">
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="1508"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="See Also"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="Variable retention$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My RoboHelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\Operational_examples_using_varia.htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:See Also">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="Variable retention">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </b></h3>
+<h2><b class="hcp1">Example 1</b></h2>
+<p>We want to remove 85% of an existing 90-year old stand of coastal Douglas-fir 
+ (site index 30) with the intention of leaving the remaining 15% to develop 
+ into old-growth. At the time of harvesting, the trees have a top height 
+ of 37.5m, where 90% of the retained area is aggregated (with an average 
+ group size of 1000m2), and 10% is dispersed trees, with an average crown 
+ area of 20 m2. The harvested portion of the stand (85%) would be planted 
+ and left for another 90 years. To do this in TIPSY, in the VR dialog:</p>
+<p class="Numbers">1. Set <b><i>Residual stand top height at entry</i></b> 
+ to 37.5m.</p>
+<p class="Numbers">2. Set <b><i>Crown cover retained</i></b> to 15% (the 
+ area left unplantable due to the presence of old-growth).</p>
+<p class="Numbers">3. Select <b><i>Formula</i></b> for the edge-length 
+ calculation method.</p>
+<p class="Numbers">4. Set the <b><i>Crown cover</i></b> of <b><i>Aggregated 
+ groups</i></b> to 90% (this will automatically adjust the percentage crown 
+ cover of <b><i>dispersed trees</i></b> to 10%).</p>
+<p class="Numbers">5. Set the <b><i>Avg. group size</i></b> to 1000m2.</p>
+<p class="Numbers">6. Set the Dispersed <b><i>Avg. crown area</i></b> to 
+ 20m2.</p>
+<p>This should give a calculated edge length of 335.9 m/ha which will generate 
+ a variable retention adjustment factor (VRAF) of 0.77 100 years after 
+ harvesting. You can then use the various tables in TIPSY to see the values 
+ predicted for the stand after 90 years. Use the <a href="Custom_Table_in_TIPSY.htm">Custom 
+ Table</a> to view the impact of the VRAF on merch. volume 12.5+ at any 
+ age.</p>
+<h2><b class="hcp1">Example 2</b></h2>
+<p>In the above example, we might have a stand with a <a href="javascript:TextPopup(this)" id="HotSpot22863" class="glossterm">regeneration 
+ delay</a><script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('HotSpot22863', 'POPUP22863');
+//]]></script><span class="glosstext" id="POPUP22863" style="display: none;"> Natural stands: years from disturbance (fire, logging) until the first successful seed year.  Plantations: years from disturbance (fire, logging) until planting</span> of 2 years. Because of this delay, TIPSY must calculate 
+ the total age at 37.5m (age 80), add the 2 year delay (age 82), and calculate 
+ the height at that age (38m). This height is used in subsequent calculations, 
+ resulting in an edge length of 334.7 m/ha. Since the edge length difference 
+ between this and the previous example is only 1.2 m/ha, the VRAF is still 
+ 0.77 at age 100 since VR harvesting.</p>
+<h2><b class="hcp1">Example 3</b></h2>
+<p>We want to remove 40% of an existing 100-year old stand of lodgepole 
+ pine (site index 17.5, Nigh 1999 site curve equations). At the time of 
+ harvesting, the retained groups have a top height of 23.2m with an average 
+ size of 1500m2 of circular shape. To do this in TIPSY, go to the VR dialog, 
+ and:</p>
+<p class="Numbers">1. Set <b><i>Residual stand top height at entry</i></b> 
+ to 23.2m.</p>
+<p class="Numbers">2. Set <b><i>Crown cover retained</i></b> to 40%.</p>
+<p class="Numbers">3. Select <b><i>Geometry</i></b> for the edge-length 
+ calculation method.</p>
+<p class="Numbers">4. Set the <b><i>Average group size</i></b> to 1500m2.</p>
+<p class="Numbers">5. Set the <b><i>Group shape</i></b> to <b><i>circular</i></b>.</p>
+<p>This should result in a calculated edge length of 366.1m/ha which generates 
+ a VRAF of 0.58 100 years after harvesting.</p>
+<p>Please note that, as mentioned in 'How TIPSY applies VR', application 
+ of VR will affect your initial density. Initial density refers to the 
+ density without the affect of variable retention or any other adjustment 
+ factors. Please adjust the density if necessary.</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp2">_______________________________________________</p>
+	<p class="hcp2">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

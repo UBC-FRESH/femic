@@ -1,0 +1,184 @@
+﻿NAME=Age at base year
+The age to which all benefits and costs are discounted, age zero by default.
+NAME=Assessed Land Value
+the assessed "fair market value" of land as determined by the B.C. Assessment Authority. For managed forest lands the assessment takes into account the land's accessibility, location, topography, and soil quality.
+NAME=Average Revenue
+Harvest revenue divided by the total merchantable volume 12.5+ cm at a selected harvest age
+NAME=BA
+See:  Basal Area, Stand
+NAME=Basal Area, Stand
+total cross-sectional area of all living trees measured outside the bark at a height of 1.3 meters [square meters/ha]
+NAME=BDU
+See:  Bone Dry Units
+NAME=BEC
+See:  Biogeoclimatic Classification System
+NAME=BH
+See:  Breast Height
+NAME=Biogeoclimatic Classification System
+a heirarchical system commonly used throughout British Columbia for classifying forest ecosystems on the basis of vegetation, soils, topography, and climate
+NAME=Board Foot
+defined as a board one foot long by one foot wide by one inch thick measured in nominal inches.
+NAME=Bone Dry Units
+a bone dry unit which is used to measure the amount of residual wood chips. One BDU is defined as 2,400 pounds of chips when oven dry.
+NAME=Breast height
+(BH) 1.3 m above the ground on the uphill side of the tree
+NAME=Breast height age
+the number of annual growth rings between the bark and the pith, counted at breast height
+NAME=Brushing
+the removal of competing vegetation from around seedlings which have not yet reached "free growing" stage
+NAME=Constant Dollars
+When prices occurring in different years are measured in 'constant dollars' it means that the effects of inflation have been removed through the use of a suitable price index, for example the Consumers Price Index. Constant dollars are measured in relation to some base year. For example, constant 1996 dollars means that prices occurring in any other year have been converted to equivalent prices measured in 1996 dollars. Prices when measured in constant dollar terms are referred to as "real prices".
+NAME=Conversion Cost
+The sum of road development, tree-to-truck, haul, milling, overhead and other harvest costs divided by the merchantable volume 12.5+ cm at a selected harvest age. Silvicultural and annual costs are not included.
+NAME=Culmination age
+age at which maximum mean annual increment (MAI) occurs
+NAME=Cycle Time
+time required for the logging truck to load, haul to the log drop off point, unload and return to the site including any unavoidable delay time. Used in the interior haul cost equation
+NAME=DBH
+See:  Diameter Breast Height
+NAME=DBHg
+See:  Quadratic Mean Diameter, Stand
+NAME=Density
+Traditionally refers to any quantitative measure of crowding in stands, e.g., number of trees/ha;  "Residual Density" refers to the number of trees alive after thinning.
+NAME=Development Costs
+the cost of developing road access to the site in order for harvesting to take place. Measured in dollars per hectare harvested
+NAME=Diameter Breast Height
+Tree diameter (ob) at breast height. (1.3m)
+NAME=Discount Rate
+typically thought of as the interest rate. In economic analysis of public sector investments the discount rate reflects society's temporal preference with regard to future versus current consumption. In financial analysis, the discount rate is the weighted average cost of the firm's sources of capital (i.e. equity, bonds, loans, retained earnings, etc.).
+NAME=Distance to Support Centre
+the one-way road distance from the stand to the nearest support centre as defined in the coast and interior appraisal manuals
+NAME=Economic Analysis
+an assessment of the benefits and costs of a project from the perspective of society as a whole. This would include both market and non-market benefits and costs. The effects of taxes are typically ignored as they represent a redistribution of wealth within society rather than a cost to society as a whole. Also referred to as social benefit cost analysis.
+NAME=Economic Rotation Age
+the age at which the stand's site value is maximized.
+NAME=Even-aged
+a forest stand in which relatively small (10 - 20 year) age differences exist between individual trees, in contrast to uneven-aged stands
+NAME=Fertilization
+the attempt to increase forest growth through the provision of nutrients which may be naturally deficient in the soil
+NAME=Financial Analysis
+an assessment of the benefits and costs of a project from the perspective of an individual or firm. In financial analysis only the benefits and costs incurred by the individual are considered. The effects of taxes on the individual are included but social costs or benefits of the project (those born or received by society as a whole) are ignored.
+NAME=Genetically improved seed
+seed originating from a tree improvement program, from parent trees selected for one or more favourable traits, e.g., height growth
+NAME=Gross volume
+volume of all living, dead and thinned trees (total production) [m3/ha]
+NAME=Harvest Revenue
+All revenue accumulated to the selected harvest age (final harvest + CT if applicable).This revenue will change if you select a general real price increase, or specify an increase by log or lumber grade.
+NAME=Harvest System
+the method by which the trees are felled and skidded or yarded to the landing for loading.
+NAME=Haul Costs
+Includes log transport from the landing to the point of appraisal (log dump). For interior districts, hauling costs depend on the weighted average cycle time. A cycle includes loading, hauling, weighing, unloading, return time and unavoidable delay or idle time. Coastal districts use one-way road hauling costs plus additional towing or barging charges. All costs (CT, if applicable, plus final harvest) are accumulated to the selected harvest age.
+NAME=Haul distance
+the one-way road distance from the stand to the log dump. Used in the coast haul cost equation.
+NAME=Highway Hauling
+transportation of logs over public roads using logging trucks licensed for public roads
+NAME=Incremental IRR
+IRR calculated from the differences in costs and benefits between two mutually-exclusive  investment options of equal length.
+NAME=Index age
+height is referenced to an index age of 50 years (BH) for the determination of site index
+NAME=Initial density
+refers to the number of trees per hectare, either planted or naturally regenerated.  The word 'initial' can be misleading because these trees appear almost immediately in TIPSY and TASS, but might actually take longer.  Note that some OAFs reduce the number of trees requested, even before establishment.
+NAME=Inside bark
+(ib) with reference to measurements recorded inside bark
+NAME=Internal Rate of Return
+one of several methods for evaluating return on investment (ROI).  Simply put, IRR  represents the interest rate returned on an investment.  It is also the discount  rate that produces a NPV equal to zero.
+NAME=IRR
+See:  Internal Rate of Return
+NAME=Juvenile wood
+Lower valued bole wood produced annually in area  occupied by the live crown.
+NAME=Lumber Recovery
+the number of board feet of lumber recovered from each cubic metre of standing volume at a particular age. (bd ft/m3)
+NAME=MAI
+See:  Mean Annual Increment
+NAME=Mature wood
+Higher valued bole wood produced in the area below the live crown.
+NAME=MBF
+thousand board feet of lumber in nominal size
+NAME=Mean Annual Increment
+mean annual increment in total stand volume at a particular age [m3/ha/yr]
+NAME=Merch. Vol.
+See:   Merchantable Volume, Stand
+NAME=Merchantable volume, Stand
+total standing volume (ib), less 30 cm stumps, 10 cm tops (ib) and trees below a specified minimum diameter, e.g. merchantable volume 12.5+ is the volume (ib) of trees > 12.5cm DBH [m3/ha].
+NAME=Mill Rate
+the tax rate applied to the appraised value of the land and its improvements for the purposes of calculating property taxes. In British Columbia, it is also applied to the assessed value of the timber when harvested. See yield tax.
+NAME=Milling Costs
+the cost of manufacturing lumber from logs excluding the cost of the logs. Measured in dollars per thousand board feet of lumber.
+NAME=Mortality
+death or destruction of forest trees as a result of competition, disease, insect damage, drought, wind, fire and other factors (excluding harvesting)
+NAME=MSYT
+managed stand yield table
+NAME=Natural
+refers to a stand that regenerated naturally after logging or natural disturbance, i.e., the stand was not planted.
+NAME=Net Present Value
+the net value resulting from the summation of discounted benefits and costs incurred over a rotation
+NAME=NPV
+See:  Net Present Value
+NAME=OAF1
+See:  Operational Adjustment Factor 1
+NAME=OAF2
+See:  Operational Adjustment Factor 2
+NAME=Off-Highway Hauling
+transportation of logs over logging roads in large trucks not licensed for operationon public highways
+NAME=Operational Adjustment Factor 1
+yield adjustments applied by TIPSY and TASS to account for unproductive areas such as holes in a stand. The percentage reduction in volume is constant with age. [%]
+NAME=Operational Adjustment Factor 2
+yield adjustments applied by TIPSY and TASS to account for losses increasing toward maturity of a stand. The percentage reduction in volume increases with age. [%]
+NAME=Opportunity Cost of Capital
+the return on the capital used in logging and/or sawmilling which the owner would receive if the capital were invested in the best alternative use
+NAME=Outside bark
+(ob) with reference to measurements recorded outside bark
+NAME=Overhead Costs
+the cost of road maintenance plus the related administrative activities that occur at head offices, branch offices, camps and operations. Measured in dollars per hectare.
+NAME=Physical Rotation Age
+Age (years since disturbance) at which the mean annual volume increment culminates for a particular merchantability standard.
+NAME=Pre-Commercial Thinning
+precommercial thinning (PCT) whereby the least desirable trees are removed to free up growing space and resources for potential crop trees
+NAME=Property Tax
+a tax applied to the current market value of real estate property and improvements
+NAME=Pruning
+the removal of the lower branches of crop trees in order to produce a shell of higher valued clear wood
+NAME=Quadratic Mean Diameter, Stand
+Quadratic mean diameter measured outside the bark at breast height (1.3 m). That is, the diameter of the tree of average basal area (g). It is calculated as follows: MEAN DBHg = sqrt [(BA/STEM COUNT) x 12732.4
+NAME=Real Price Increase
+an increase in a nominal price greater than the prevailing rate of inflation. Thus when inflation is removed there would still be a real price increase.
+NAME=Real Prices
+prices measured in constant dollar terms. That is, the effects of inflation have been removed when comparing prices occurring in different year.
+NAME=Regeneration delay
+Natural stands: years from disturbance (fire, logging) until the first successful seed year.  Plantations: years from disturbance (fire, logging) until planting
+NAME=Road development costs
+Charged once per rotation for the construction of the access roads to a particular stand. They apply to the first harvest which could be a commercial thinning entry. Here we assume that access roads built to service thinning entries will be available for the final harvest, unless you specify otherwise.
+NAME=Sensitivity Analysis
+an analysis of how sensitive the basic findings of an economic analysis are to changes in the major assumptions used in the economic analysis. This is done by changing each assumption by some amount, say  10%, in order to see if the NPV or SV changes significantly. When alternative projects are being compared, the sensitivity tests allow the user to see if the relative rankings of the projects change in response to changes in the underlying assumptions.
+NAME=SI
+See:  Site Index
+NAME=Site index
+a measure of site productivity based on the top height [meters] of a stand at breast-heightage 50. It does not apply to stands in which the height growth of top height trees has been affected by treatment (fertilization, tree improvement) or stand density (repression).
+NAME=Site Value
+the discounted net value of the summation of discounted benefits and costs which would result from an infinite series of rotations of the same given length. Also known as soil rent, bare land value and soil expectation value.
+NAME=Slope
+the average slope of the stand's terrain measured in percent
+NAME=Stem count
+number of living trees (0.0+) per hectare
+NAME=SV
+See:  Site Value
+NAME=TASS
+Tree and Stand Simulator
+NAME=TIPSY
+Table Interpolation Program for Stand Yields, provides user-friendly access to managed stand yield tables generated by TASS.
+NAME=Top height, Stand
+average height of the 100 trees/ha of largest diameter at breast height [m]
+NAME=Total age
+years since germination or the budding of the sprout or root sucker - usually used with reference to stands of natural origin
+NAME=Tree-to-Truck Costs
+the cost of cutting the tree from the stump, transporting it to the landing and loading it on the truck for haul to the log dump. It includes landing and skid trail construction, felling, bucking, skidding, and loading plus crew transportation and any contractor overhead or profit.  All costs (CT, if applicable, plus final harvest) are accumulated to the selected harvest age.
+NAME=Variable retention
+a silvicultural system that follows nature's model by always retaining part of the forest after harvesting. Standing trees are left in a dispersed or aggregated form to meet objectives such as retaining old growth structure, habitat protection and visual quality. Variable retention retains structural features (snags, large woody debris, live trees of varying sizes and canopy levels) as habitat for a host of forest organisms. The main objectives of variable retention are to retain the natural range of stand and forest structure and forest functions. With retention systems, forest areas to be retained are determined before deciding which areas will be cut. This system offers a range of retention levels. The system also provides for permanent retention of trees and other structures after regeneration is established. Variable retention can be implemented with a range of harvesting systems and can be combined with traditional silvicultural systems such as shelterwood or selection.
+NAME=Volume, Stand
+Gross: inside bark volume of all living, dead and thinned trees (total production), including tops and stumps Merchantable (MRCH. Vol.): total standing volume (ib) less 30 cm stumps, 10 cm tops and trees below a specifiedminimum diameter, e.g. Merchantable volume 12.5+ is the volume of trees > 12.5 cmDBH.Total standing (0.0+): inside bark volume (ib) of all living trees, including tops and stumps.Total standing (7.5+): volume (ib) of trees > 7.5 cm diameter at breast height, including tops and stumps.
+NAME=Worker-year
+Officially defined as two hundred and twenty (220) days.   A worker year is the measure of "Jobs" predicted by TIPSY..
+NAME=Years to breast height
+years to grow from seed to breast height
+NAME=Yield Tax
+a tax applied to the value of timber harvested off private land.

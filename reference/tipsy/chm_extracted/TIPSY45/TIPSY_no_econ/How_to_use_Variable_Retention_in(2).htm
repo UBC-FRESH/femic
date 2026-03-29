@@ -1,0 +1,172 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="Variable retention">
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Variable Retention: Interactive</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+b.hcp2 { font-weight:bold; }
+p.hcp3 { text-align:center; }
+-->
+</style>
+</head>
+
+<body>
+<script type="text/javascript" src="../ehlpdhtm.js" language="JavaScript1.2"></script>
+
+
+<h1>Variable Retention: Interactive</h1>
+<h1>
+<!--Metadata type="DesignerControl" startspan
+<object classid="clsid:A2F1FA63-C1E6-11d2-9140-006DC83B9955" id="SeeAlso" 
+		 border="0" style="margin-top: 0px; margin-bottom: 0px; margin-left: 0px; 
+		 margin-right: 0px;" align="bottom">
+<param name="_Version" value="65536"  />
+<param name="_ExtentX" value="1508"  />
+<param name="_ExtentY" value="609"  />
+<param name="_StockProps" value="13"  />
+<param name="ForeColor" value="0"  />
+<param name="BackColor" value="14215660"  />
+<param name="UseButton" value="-1"  />
+<param name="UseText" value="0"  />
+<param name="ControlLabel" value="See Also"  />
+<param name="UseIcon" value="0"  />
+<param name="Items" value="Variable retention$$**$$" />
+<param name="Image" value=""  />
+<param name="FontInfo" value="Arial,8,0,,"  />
+<param name="_CURRENTFILEPATH" value="C:\Users\Steve\Documents\My Robohelp Projects\TIPSY_4.4_HELP_FY14-15\Working Draft TIPSY4.4\TIPSY_no_econ\How_to_use_Variable_Retention_in(2).htm" 
+  />
+<param name="_ID" value="SeeAlso"  />
+<param name="DialogDisplay" value="1"  />
+<param name="Frame" value=""  />
+<param name="Window" value=""  />
+<param name="ChmFile" value=""  />
+<param name="DisableJump" value="0"  />
+</object>-->
+<object
+  classid="clsid:ADB880A6-D8FF-11CF-9377-00AA003B7A11"
+  id="SeeAlso"  type="application/x-oleobject">
+  <param name="Command" value="ALink,MENU">
+  <param name="Button" value="Text:See Also">
+  <param name="Font" value="Arial,8,0,,">
+  <param name="Frame" value="">
+  <param name="Item1" value="">
+  <param name="Item2" value="Variable retention">
+</object>
+
+<!--Metadata type="DesignerControl" endspan-->
+ </h1>
+<h2>Interactive TIPSY</h2>
+<p><span class="hcp1">TIPSY</span> needs three pieces of 
+ information about the retained groups:</p>
+<p class="Numbers">1. total edge length</p>
+<p class="Numbers">2. crown cover percentage (how much of the stand was 
+ actually retained as either aggregated groups or dispersed trees), and</p>
+<p class="Numbers">3. top height at the time of variable retention (VR) 
+ harvest.</p>
+<p>If, however, crown cover percentage or edge length is unavailable, <span class="hcp1">TIPSY</span> can calculate them using other 
+ stand values. Crown cover percentage can be calculated from the basal 
+ area of the retained groups. Edge length can be calculated using a formula 
+ provided by the Ministry (the default), or by geometry.</p>
+<p>Enter this information via the Variable Retention dialog, accessible 
+ from the <a href="../Stand_Specifications_Options.htm">Stand Specifications</a> 
+ dialog.</p>
+<h3><b class="hcp2">Calculating Crown Cover Percentage:</b></h3>
+<p>You can calculate crown cover percentage by basal area only if the edge 
+ length is calculated using the formula option. If crown cover is entered 
+ directly, it will be apportioned to the dispersed and aggregated edge 
+ length calculations accordingly. To calculate crown cover using basal 
+ area,</p>
+<p class="Numbers">1. Select the checkbox near the greyed <b><i>Calculate…</i></b> 
+ button in the variable retention dialog.</p>
+<p class="Numbers">2. Enter the basal area, then TIPSY converts it to a 
+ crown cover percentage for both types of retention.</p>
+<p>TIPSY uses coefficients based not only on the species, but also on whether 
+ the calculation is for dispersed or aggregated crown cover percentage. 
+ TIPSY displays a single crown cover percentage, but uses the individual 
+ values to calculate the actual edge length. The single crown cover value 
+ displayed is also used in the calculation of the VR adjustment factor. 
+ Since the top height of the retained overstorey is used as part of the 
+ conversion formula from basal area to crown cover, the crown cover value 
+ is recalculated whenever the retained top height is changed. It will also 
+ be recalculated if you change the percentage breakdown of the retained 
+ groups.</p>
+<p>If you choose to calculate crown cover percentage by basal area, the 
+ text on the <b><i>Edge length</i></b> section of the dialog will be updated 
+ to reflect this. Instead of breaking up the crown cover by aggregated 
+ and dispersed types, you are essentially breaking up basal area.</p>
+<p>For a mixed-species stand, the leading species will be used to calculate 
+ edge length and pro-rated accordingly.</p>
+<h3><b class="hcp2">Calculating edge length using the Formula 
+ option (default option)</b></h3>
+<p>To use the formula calculation, you must indicate how much of the total 
+ retained stand is dispersed trees and how much is aggregated groups by 
+ assigning a percentage to both types of retention (these two percentages 
+ will always add up to 100%). For both types, you also need to specify 
+ the average size of the group area, and/or the average crown size of the 
+ dispersed trees. The calculated edge length will update automatically 
+ as these values change. The formula uses coefficients based on one of 
+ the four species.</p>
+<h3><b class="hcp2">Calculating edge length by the User Specify 
+ option</b></h3>
+<p>TIPSY allows you to directly enter the edge length (perimeter) per hectare 
+ retained. For instance, if a digitized aerial photo for the VR block layout 
+ is available, the total edge length of the retained groups can be calculated 
+ using imaging analyzing software. This will also provide the average size 
+ of the groups, which can be used as input in the Calculating Edge Length 
+ using the Formula option, described above.</p>
+<h3><b class="hcp2">Calculating edge length using the Geometry 
+ option</b></h3>
+<p>TIPSY requires an average group size as well as the general shape of 
+ the groups (circular, square, etc.) The &quot;irregular&quot; shape is 
+ modelled from a 12x1 rectangle. You can also have a rectangular shape 
+ of any dimension from 1x1 to 9x1. Based on this information and the value 
+ provided for crown cover percentage, the program can determine how many 
+ groups there are in all, and use that to calculate the edge length per 
+ ha.</p>
+<p>For example, we want to remove 60% of the area of an existing 70-year 
+ old cutblock of coastal Douglas-fir (site index 30) located in Campbell 
+ River. &#160;The cutblock prescription includes the retention of the remaining 
+ 40% of crown cover of the stand to meet VR objectives. &#160;The retained 
+ area is aggregated into groups with an average area of 500 m2 and with 
+ a top height of 30m at the time of harvest. &#160;</p>
+<p>• If the user selects the “Formula” option, which was derived using 
+ a rectangular group shape (i.e. 2.5 x 1 rectangle group with an aspect 
+ ratio of 2.5), the calculated edge length per hectare is 1047.4 m/ha.</p>
+<p>• If the user selects the “Geometry” and a “Circular” group shape option 
+ the calculation is done as follows:</p>
+<p>Edge/ha = SQRT(group area / pi) &#160;&#160;&#160;* 2 * &#160;pi * CC% 
+ * 100 / 10000 * (# of groups/ha)</p>
+<p>then</p>
+<p>Edge/ha = SQRT(500 / pi) &#160;* 2 * pi * 40 * 100 / 10000 * 20 = 634.1 
+ m/ha</p>
+<p>• If the user selects the “Geometry” and a “Square” group shape option 
+ the calculation is done as follows:</p>
+<p>Edge/ha = SQRT(group area) * 4 * CC% * 100 / 10000 * (# of groups/ha)</p>
+<p>then</p>
+<p>Edge/ha = SQRT(500) * 4 * 40 * 100 / 10000 * 20 = 715.5 m/ha</p>
+<p>• If the user selects the “Geometry” and a “Irregular” group shape option 
+ (i.e. 12 x 1 rectangle group with an aspect &#160;ratio of 12) the calculation 
+ is done as follows:</p>
+<p>&#160;Side A length = SQRT(group area * 12) &#160;&#160;* 2 = SQRT(500 
+ * 12) * 2 = 154.9 m</p>
+<p>Side B width = SQRT(group area / 12) &#160;&#160;* 2 = SQRT(500 / 12) 
+ * 2 = 12.9 m</p>
+<p>Edge/ha = (Side A + Side B) * CC% * 100 / 10000 * (# of groups/ha)</p>
+<p>then</p>
+<p>Edge/ha = (Side A + Side B) * 40 * 100 / 10000 * 20 = 1342.6 m/ha</p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp3">_______________________________________________</p>
+	<p class="hcp3">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>

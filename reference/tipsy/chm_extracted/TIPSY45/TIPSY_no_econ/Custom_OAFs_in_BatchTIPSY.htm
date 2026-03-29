@@ -1,0 +1,169 @@
+
+<!doctype HTML public "-//W3C//DTD HTML 4.0 Frameset//EN">
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="MS-HAID" content="Custom OAFs in BatchTIPSY">
+ <meta name="generator" content="Adobe RoboHelp 10">
+<title>Custom OAFs, Batch</title>
+<link rel="StyleSheet" href="../default.css" type="text/css">
+<script type="text/javascript" language="JavaScript1.2" src="../ehlpdhtm.js"></script>
+<style title="hcp" type="text/css">
+<!--
+span.hcp1 { font-weight:bold; }
+p.hcp2 { background-color:Transparent; }
+span.hcp3 { mso-ansi-language:EN-CA; }
+span.hcp4 { mso-spacerun:yes; }
+span.hcp5 { font-family:Courier New;
+mso-ansi-language:EN-CA; }
+span.hcp6 { mso-ansi-language:EN-CA;
+mso-spacerun:yes; }
+p.hcp7 { text-align:center; }
+-->
+</style>
+</head>
+
+<body><a name="642b3b9347ca42c9b00b820c00c373fa=1"></a>
+
+
+
+<h1><a name="MiniTOCBookMark1"></a>Custom OAFs, Batch</h1>
+<p align="left" style="font-family:Arial;font-size:12pt;font-weight: normal;font-style: normal;text-decoration: none;" >In&#160;this&#160;Topic&#160;<a class="dropspot" href="javascript:TextPopup(this)" id="MTHotSpot25656" ><span class="MTText" style="display: none;" >Show</span><span class="MTText" >Hide</span></a></p>
+<script type="text/javascript" language="JavaScript1.2">//<![CDATA[
+TextPopupInit('MTHotSpot25656', 'MTPOPUP25656');
+//]]></script>
+<div align="left" class="droptext" id="MTPOPUP25656" >
+ <div style="background: #ffff00;float: none;width: 100% ;" >
+  <p align="left"  ><a href="#MiniTOCBookMark2" >Custom OAF File</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark3" >Custom OAFs</a></p>
+  <p align="left"  ><a href="#MiniTOCBookMark4" >File Format Specifications</a></p>
+ </div>
+</div>
+<p>When the application of<span class="hcp1"> Custom OAFs 
+ </span>is activated via a checkbox in the <a href="Input_variables.htm">Input 
+ Variables</a> dialog box, the following two dialog boxes appear during 
+ the dialog wizard process.</p>
+<h2><a name="MiniTOCBookMark2"></a>Custom OAF File</h2>
+<p class="hcp2">The <span class="hcp1">Custom 
+ OAF File</span> dialog box prompts the user for the name of the Custom 
+ OAFs file. &#160;&#160;The file format specifications are given below. 
+ </p>
+<h2><a name="MiniTOCBookMark3"></a>Custom OAFs</h2>
+<p class="hcp2">The <span class="hcp1">Custom 
+ OAFs</span> dialog box <span class="hcp3">allows 
+ the user to specify up to 5 custom OAFs for each run.</span><span class="hcp4">&#160;</span><span class="hcp3">&#160;These can be a combination 
+ of stand and species specific OAFs, with 3-letter codes corresponding 
+ to those defined in the Custom OAF definition file.</span><span class="hcp4">&#160;</span><span class="hcp3">&#160;The intensity can be one of 
+ four single-character codes: blank (no OAF applied), L (low intensity), 
+ M (medium intensity) or H (high intensity).</span><span class="hcp4">&#160;</span><span class="hcp3">&#160;Anything else would generate 
+ an error message.</span></p>
+<p class="MsoNormal"><span class="hcp3"><span class="hcp3">I</span>f 
+ the user specifies a 3-letter custom OAF identifier that does not appear 
+ in the definition file, an error message will be presented to the user 
+ and the run will not be completed.<span class="hcp4">&#160;</span>&#160;If, 
+ however, the user specifies an OAF that does not apply to any of the species 
+ in the stand for that particular run, a warning message will be generated 
+ to that effect (the run proceeding as normal).</span></p>
+<p class="MsoNormal"><span class="hcp3">The identifier 
+ can also be left blank, indicating that there is no custom OAF (in that 
+ position) for this run.</span></p>
+<p class="MsoNormal"><span class="hcp3">For example:</span></p>
+<p class="MsoNormal"><span class="hcp5">... 
+ OA1 L<span class="hcp4">&#160;&#160;</span>&#160;OA2 M<span class="hcp4">&#160;&#160;</span>&#160;OA3 H ...</span></p>
+<p class="MsoNormal"><span class="hcp5">... 
+ OA4 H<span class="hcp4">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;</span>&#160;...</span></p>
+<p class="MsoNormal"><span class="hcp5">... 
+ OA1 L<span class="hcp4">&#160;&#160;</span>&#160;OA2 L<span class="hcp4">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;</span>&#160;...</span></p>
+<p class="MsoNormal"><span class="hcp3">In the above 
+ example, the first run applies the OAFs OA1 (low level), OA2 (medium level) 
+ and OA3 (high level).<span class="hcp4">&#160;</span>&#160;OA1 
+ and OA2 may apply to specific species, where OA3 is a stand-level OAF 
+ (applied to the stand as a whole).<span class="hcp4">&#160;</span>&#160;The 
+ second run only applies the OAF OA4 (high level), whereas the third run 
+ applies OAFs OA1 and OA2, both at the low level.<span class="hcp4">&#160;</span>&#160;The 
+ user is able to choose from any the OAFs defined within their definition 
+ file.</span></p>
+<p class="MsoNormal"><span class="hcp3">I</span><span 
+	 style="background: #ffff00; mso-highlight: yellow; mso-ansi-language: EN-CA;">t's 
+ important to note that application of species-specific custom OAFs are 
+ specified at the stand level in BatchTIPSY (as opposed to interactive 
+ TIPSY, where they are specified at the species level).</span></p>
+<p class="MsoNormal"><span class="hcp3">Like the custom 
+ fertilization response file, the custom OAFs data definition file is not 
+ read into the system until the user processes the batch file.<span class="hcp4">&#160;</span>&#160;Any 
+ format errors in this file will result in an error being written to the 
+ error file and the batch file will be processed with no custom OAF information.</span></p>
+<p class="hcp2"><a href="Custom_OAFs_in_BatchTIPSY.htm">Back 
+ to Top</a></p>
+<h2><a name="MiniTOCBookMark4"></a>File Format Specifications</h2>
+<p class="MsoNormal"><span class="hcp3">The custom 
+ OAF definitions data file must be a text file, formatted as follows:</span><span class="hcp6">&#160;</span><span class="hcp3">&#160;One &quot;header&quot; line 
+ indicating a unique 3-character text identifier for the OAF (i.e. &quot;ARM&quot;), 
+ the name of the species (or STAND if it is a stand-level OAF) to which 
+ the OAF will be applied, whether or not responses will be specified by 
+ age or height, and whether the OAF moves trees to the mortality table 
+ (&quot;mort&quot;) or removes them from the stand completely (&quot;remove&quot;).</span><span class="hcp6">&#160;</span><span class="hcp3">&#160;Lastly, an optional &quot;long 
+ name&quot; would appear on the line such that it could be used as an identifier 
+ for use in the TIPSY application.</span><span class="hcp6">&#160;</span><span class="hcp3">&#160;These &quot;long names&quot; 
+ would have to be unique across a species (one species cannot have two 
+ OAFs that share the same long name).</span><span class="hcp6">&#160;</span><span class="hcp3">&#160;Note that the link from the 
+ custom OAF definition to a specific species (or the stand in general) 
+ is through the 3-character code.</span></p>
+<p class="MsoNormal"><span class="hcp3">This OAF &quot;header&quot; 
+ will be followed by up to 5 lines of response data.<span class="hcp4">&#160;</span>&#160;Each 
+ line will have 4 values.<span class="hcp4">&#160;</span>&#160;The 
+ first value is either the age or height in question (depending upon what 
+ is specified in the header for that OAF).<span class="hcp4">&#160;</span>&#160;The 
+ following 3 values are the low, medium and high intensity OAFs for that 
+ age or height.</span></p>
+<p class="MsoNormal"><span class="hcp3">For example 
+ a stand level &quot;oaf 2&quot; type OAF could be specified as follows:</span></p>
+<p class="MsoNormal" style="margin-left: 36.0pt;"><span class="hcp5"><span class="hcp3">O</span>A2, STAND, age, mort, OAF 
+ 2</span></p>
+<p class="MsoNormal" style="margin-left: 36.0pt;"><span class="hcp5">0.0, 
+ 1.0, 1.0, 1.0</span></p>
+<p class="MsoNormal" style="margin-left: 36.0pt;"><span class="hcp5">100.0, 
+ 0.95, 0.85, 0.75</span></p>
+<p class="MsoNormal" style="margin-left: 36.0pt;"><span class="hcp5">300.0, 
+ 0.85, 0.70, 0.55</span></p>
+<p class="MsoNormal"><span class="hcp3"><span class="hcp5">I</span>n order that the program reading 
+ the data file can distinguish between OAF definitions (i.e., where the 
+ definition of one OAF ends and another begins), there must be some indication 
+ of how many lines of response data there are for a given OAF.<span class="hcp4">&#160;</span>&#160;This 
+ can be done in a couple of ways.<span class="hcp4">&#160;</span>&#160;Either 
+ by indicating the number of responses on the header line:</span></p>
+<p class="MsoNormal" style="margin-left: 36.0pt;"><span class="hcp5"><span class="hcp3">O</span>A2, STAND, age, mort, OAF 
+ 2, 3</span></p>
+<p class="MsoNormal" style="margin-left: 36.0pt;"><span class="hcp5">0.0, 
+ 1.0, 1.0, 1.0</span></p>
+<p class="MsoNormal" style="margin-left: 36.0pt;"><span class="hcp5">100.0, 
+ 0.95, 0.85, 0.75</span></p>
+<p class="MsoNormal" style="margin-left: 36.0pt;"><span class="hcp5">300.0, 
+ 0.85, 0.70, 0.55</span></p>
+<p class="MsoNormal"><span class="hcp3">or by delimiting 
+ each OAF definition with a &quot;!&quot; character (or some other character)</span></p>
+<p class="MsoNormal" style="margin-left: 36.0pt;"><span class="hcp5"><span class="hcp3">O</span>A2, STAND, age, mort, OAF 
+ 2</span></p>
+<p class="MsoNormal" style="margin-left: 36.0pt;"><span class="hcp5">0.0, 
+ 1.0, 1.0, 1.0</span></p>
+<p class="MsoNormal" style="margin-left: 36.0pt;"><span class="hcp5">100.0, 
+ 0.95, 0.85, 0.75</span></p>
+<p class="MsoNormal" style="margin-left: 36.0pt;"><span class="hcp5">300.0, 
+ 0.85, 0.70, 0.55</span></p>
+<p class="MsoNormal"><span class="hcp5"><span 
+	 style="mso-tab-count: 1;">&#160;&#160;&#160;&#160;&#160;</span>&#160;!</span></p>
+<p class="MsoNormal" style="mso-ansi-language: EN-CA;">As many OAFs as 
+ desired can be specified, provided they each have a unique 3-character 
+ identifier.</p>
+<p class="MsoNormal" style="background-color: Transparent;"><span style="background-color: Transparent;"><a 
+	 href="Custom_OAFs_in_BatchTIPSY.htm">Back to Top</a></span></p>
+<div style="width: 100%; position: relative;" id="footer">
+	<p class="hcp7">_______________________________________________</p>
+	<p class="hcp7">Copyright © 
+	 2021 by the Provincial Government of British Columbia, Canada<br>
+	Ministry of <span style="font-family: Arial, sans-serif;">Forests, Lands, Natural Resource 
+ Operations and Rural Development</span></p>
+</div>
+</body>
+</html>
