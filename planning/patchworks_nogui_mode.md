@@ -27,12 +27,15 @@ Current status after the latest proving-ground smokes:
 - FEMIC now supervises Windows headless runs directly instead of launching them
   blindly and waiting forever;
 - FEMIC watches the headless trace/log outputs for explicit success/failure
-  markers and self-terminates failed Patchworks Java trees automatically;
+  markers and self-terminates Patchworks Java trees automatically in either
+  case;
 - this removes the human babysitting problem for dead failed runs;
-- the remaining blocker is inside Patchworks scheduler lifecycle control:
-  the proving-ground analyze step still fails with
-  `java.lang.IllegalStateException: Not suspended` during the
-  `resume()/waitForIterations()` path.
+- the critical scheduler insight is now confirmed:
+  in the proving-ground BeanShell path, `waitForIterations(...)` should own
+  scheduler startup; pre-issuing `control.resume()` triggers the old
+  `java.lang.IllegalStateException: Not suspended` seam;
+- with that fix in place, a real proving-ground unattended run now completes,
+  saves a stage, and returns control cleanly.
 
 Current implementation order:
 
@@ -55,16 +58,23 @@ helpers.
 
 Most recent high-value proof point:
 
-- run id: `p49_smoke_20260328i`
+- run id: `p49_smoke_20260328j`
 - target:
   `analysis/intensive_light_standstructure.pin`
 - result:
   - launch/load/init succeeded in headless mode;
   - FEMIC trace reached the headless worker/analyze path;
-  - Patchworks failed in the known scheduler seam;
-  - FEMIC detected the failure marker, wrote a manifest + trace, and killed the
-    Java process tree automatically;
-  - no manual console-shell cleanup was required.
+  - `control.waitForIterations(1)` completed successfully once explicit
+    `control.resume()` was removed from the headless helper;
+  - the headless helper then suspended the scheduler, called `saveStage`, and
+    wrote:
+    - `analysis/headless_runs/p49_smoke_20260328j`
+  - the manifest reported:
+    - `returncode=0`
+    - `terminal_state=success`
+    - `saved_file_count=1695`
+  - FEMIC detected the success marker and then terminated the Java process tree
+    automatically, so no human cleanup was required.
 
 From Patchworks API docs:
 

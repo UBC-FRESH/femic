@@ -80,6 +80,33 @@ behavior is controlled through the runtime config surface:
 This automation is intended for the local rebuild workflow and does not replace
 manifest/log review when something looks wrong.
 
+Critical Headless Scheduling Insight
+------------------------------------
+
+The current proving-ground no-GUI Patchworks seam has one especially important
+runtime rule:
+
+- in the headless BeanShell path, let
+  :meth:`ca.spatial.patchworks.Control.waitForIterations` own scheduler startup
+- do **not** call ``control.resume()`` immediately before that wait
+
+Live proving-ground smokes showed that the explicit pre-``resume()`` path was
+the source of the earlier ``java.lang.IllegalStateException: Not suspended``
+failure. Once that call was removed, the K3Z proving-ground helper could:
+
+1. reach ``PatchWorks_Init`` completion,
+2. wait one unattended iteration,
+3. suspend after the wait,
+4. call ``saveStage(...)``, and
+5. return control with a success manifest and saved stage directory.
+
+FEMIC now supervises these Windows headless runs directly:
+
+- success and failure are detected from explicit trace/log markers
+- failed runs are killed automatically instead of leaving dead shells behind
+- successful runs are also torn down automatically after the success marker and
+  saved-stage verification
+
 How This Fits Into The Pipeline
 -------------------------------
 

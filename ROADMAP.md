@@ -8170,9 +8170,9 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         blocker to closing this regression bug.
 
 - [ ] P49 Add a headless Patchworks runner and scenario orchestration layer
-  - [ ] P49.1 Confirm and document the real no-GUI Patchworks seam from the
+  - [x] P49.1 Confirm and document the real no-GUI Patchworks seam from the
     shipped BeanShell/runtime surfaces and local API docs.
-  - [ ] P49.2 Add a FEMIC-side headless Patchworks runner API/CLI that can:
+  - [x] P49.2 Add a FEMIC-side headless Patchworks runner API/CLI that can:
     - launch Patchworks against a target `.pin`
     - suppress the classic GUI path
     - run at least one unattended scenario to completion
@@ -8206,12 +8206,14 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         being launched and forgotten;
       - FEMIC watches the headless trace/log outputs for explicit success and
         failure markers;
-      - on failure, FEMIC now self-terminates the Patchworks Java process tree
-        and returns a normal CLI failure result instead of leaving dead shells
-        for the human to close manually;
-      - this means the remaining blocker is the Patchworks scheduler lifecycle
-        (`Control.waitForIterations(...)` still fails with `Not suspended` in
-        the proving-ground model), not headless failure cleanup.
+      - on both success and failure, FEMIC now self-terminates the Patchworks
+        Java process tree and returns a normal CLI result instead of leaving
+        dead shells for the human to close manually;
+      - the key scheduler insight is now documented and implemented:
+        in the proving-ground headless BeanShell path,
+        `Control.waitForIterations(...)` should own scheduler startup; calling
+        `control.resume()` first causes the `Not suspended` seam we were
+        seeing.
   - Notes:
     - Governing tracker:
       - GitHub issue #54
@@ -8235,15 +8237,18 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         headless success until FEMIC has actually launched a real Patchworks
         scenario, written outputs to disk, and returned control without human
         clicks.
-    - Latest proving-ground smoke (`p49_smoke_20260328i`):
+    - Latest proving-ground smoke (`p49_smoke_20260328j`):
       - headless launch/load/init succeeded;
       - `PatchWorks_Init` completed and FEMIC trace logging reached the worker
         analyze step;
-      - the run failed in the known scheduler seam
-        (`java.lang.IllegalStateException: Not suspended`);
-      - FEMIC detected the failure marker, killed the Java process tree
-        automatically, wrote a headless manifest/trace, and returned control
-        without human cleanup.
+      - `control.waitForIterations(1)` completed without the old
+        `Not suspended` failure once explicit `control.resume()` was removed;
+      - FEMIC suspended the scheduler after the wait, saved the stage to:
+        `analysis/headless_runs/p49_smoke_20260328j`
+      - the returned manifest reported `returncode=0`,
+        `terminal_state=success`, and `saved_file_count=1695`;
+      - FEMIC then terminated the Patchworks Java tree automatically after the
+        success marker, so no human cleanup was required.
 
 
 

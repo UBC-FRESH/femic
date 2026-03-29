@@ -7837,3 +7837,19 @@
     Patchworks scheduler seam (`Not suspended` during
     `resume()/waitForIterations()`), but the human babysitting problem for dead
     failed runs is now removed.
+- 2026-03-28 (Phase 49 first successful headless Patchworks save-stage proof):
+  proved the first real unattended Patchworks run/save/exit seam on the K3Z
+  proving-ground model.
+  - The critical fix was in the proving-ground BeanShell helper:
+    `waitForIterations(...)` must own scheduler startup in this no-GUI path;
+    pre-issuing `control.resume()` caused the earlier
+    `java.lang.IllegalStateException: Not suspended` failure.
+  - Real proving-ground smoke `p49_smoke_20260328j` now:
+    - launches and initializes headlessly;
+    - waits one iteration successfully;
+    - suspends cleanly after the wait;
+    - saves stage `analysis/headless_runs/p49_smoke_20260328j`;
+    - writes a manifest with `returncode=0`,
+      `terminal_state=success`, and `saved_file_count=1695`;
+    - returns control without any human cleanup because FEMIC terminates the
+      Patchworks Java tree automatically after the success marker.

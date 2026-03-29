@@ -23,7 +23,10 @@ External Runtime Boundaries
    * - Patchworks
      - Proprietary runtime boundary. FEMIC can export packages, run preflight,
        and launch commands, but users must supply the local Patchworks install,
-       license wiring, and host-ready runtime.
+       license wiring, and host-ready runtime. The current proving-ground
+       headless seam is now real on native Windows:
+       FEMIC can launch a `.pin` without `classic_GUI(control)`, wait one
+       unattended iteration, save a stage, and return control cleanly.
    * - ArcRasterRescue
      - Treat as an explicit external executable; if auto-discovery fails, set
        ``FEMIC_ARC_RASTER_RESCUE_EXE`` to the compiled path.
@@ -82,6 +85,35 @@ Before Patchworks runtime launch:
 2. confirm Java or Wine + Java is available for the host mode
 3. confirm ``patchworks.jar``, ``SPSHOME``, and license values are wired
 4. launch ``build-blocks`` or ``matrix-build`` only after preflight is clean
+
+Patchworks Headless Runtime Note
+--------------------------------
+
+The first successful FEMIC-controlled no-GUI Patchworks seam now has one
+critical scheduler rule:
+
+- in the proving-ground BeanShell helper, let
+  ``Control.waitForIterations(...)`` own scheduler startup
+- do **not** call ``control.resume()`` immediately before the wait in this
+  headless path
+
+In the current native-Windows proving ground, the explicit ``resume()`` caused
+the old ``java.lang.IllegalStateException: Not suspended`` failure. Removing
+that pre-resume step allows the headless helper to:
+
+1. load the proving-ground ``.pin``
+2. reach ``PatchWorks_Init`` completion
+3. wait one unattended iteration
+4. suspend after the wait
+5. call ``saveStage(...)``
+6. return control cleanly while FEMIC tears down the Patchworks Java tree
+
+FEMIC now also supervises these Windows headless runs directly:
+
+- success and failure are detected from explicit headless trace/log markers
+- failed runs no longer leave dead console shells for the human to close
+- successful runs are also terminated cleanly after the success marker and
+  saved-stage verification
 
 Host Assumptions
 ----------------
