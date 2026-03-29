@@ -8491,49 +8491,51 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - `C:\Program Files\TIPSY 4.7\BTC\TIPSYbtc.exe`
       - `C:\Users\gep\OneDrive - UBC\Documents\BatchTIPSY Composer\test1.btc`
       - `external/femic-k3z-instance/data/03_input-tsak3z.csv`
-    - Current hypothesis:
-      - `/No_GUI` is more likely to control execution mode for saved-project
-        runs than to define a new output contract by itself.
-        - supervised `/TSR`
-        - emitted output/error CSVs in scratch
-        - manifest status `ok`
-        - returned columns:
-          - `feature_id`
-          - `MVcon_*`, `MVdec_*`
-          - `HTcon_*`, `HTdec_*`
-          - `gVol_*`
-          - `CC_*`
-      - the first Stage 01a BTC input writer slice is also now in place:
-        - canonical path helper:
-          - `03_input-tsaXX.csv`
-        - conservative planted-path writer derived from the existing TIPSY
-          `f`-table payload
-        - legacy `01a_run-tsa.py` now emits `03_input-tsaXX.csv` beside the
-          older artifacts
-      - the first post-TIPSY BTC CSV parser slice is also now in place:
-        - `src/femic/pipeline/tipsy.py` now parses unattended transposed `/TSR`
-          CSV into long-form FEMIC managed-curve rows
-        - legacy `01b_run-tsa.py` now branches to the BTC CSV parser when the
-          returned TIPSY artifact is `.csv`
-        - returned BTC `feature_id` values are now interpreted more safely:
-          - if `feature_id >= 20000`, preserve it as an existing FEMIC
-            managed-curve id
-          - otherwise map it back onto the legacy `20000 + AU` convention
-        - current first-cut replacements for not-yet-proven BTC fields are:
-          - `DBHq = NaN`
-          - `TPH = NaN`
-        - current first-cut extra retained fields are:
-          - `GrossYield = gVol`
-          - `CrownCover = CC`
-      - the first orchestration slice is now also in place:
-        - `src/femic/workflows/legacy.py` now has
-          `run_btc_and_post_tipsy_bundle_with_manifest(...)`
-        - `femic tsa btc-post-tipsy` now runs unattended BTC against
-          `data/03_input-tsaXX.csv`, writes `04_output-tsaXX.csv` /
-          `04_error-tsaXX.csv`, then resumes the existing post-TIPSY bundle
-          build against the new CSV output seam
-        - the old `tsa post-tipsy` path remains intact and still defaults to
-          the legacy `.out` handoff unless explicitly overridden by the new
+    - Current evidence:
+      - plain `TIPSYbtc.exe <project>.btc` visibly opens BTC and loads the
+        saved project;
+      - `TIPSYbtc.exe /No_GUI <project>.btc` leaves a live hidden
+        `TIPSYbtc.exe` process running, but does not create output/error files
+        on its own;
+      - re-saving the project after a real GUI export still did not make
+        `/No_GUI <project>.btc` auto-run, which strongly suggests a `.btc`
+        file is passive saved state rather than a self-running batch script;
+      - `/FLP` and `/No_GUI /FLP` produced equivalent useful output in prior
+        probes, so `/No_GUI` does not currently look like a report-selector
+        seam;
+      - the only known-valid unattended `/TSR` seam remains the live user
+        overlay
+        `C:\Users\gep\OneDrive - UBC\Documents\BatchTIPSY Composer\TimberSupply.rpt`;
+        copied-install or stock-report-only `/TSR` experiments are not valid
+        substitutes for FEMIC runtime proof.
+    - Refined hypothesis:
+      - `/No_GUI` controls visibility only;
+      - a second trigger likely tells BTC to actually process/export after
+        loading saved state;
+      - the most plausible missing execution seam is either:
+        - a separate undocumented command-line flag;
+        - a legacy `.btp`/DOS-style batch pathway that still survives in BTC;
+        - or a saved-project state contract that differs from ordinary `.btc`
+          files produced by the GUI.
+    - Next line of inquiry:
+      - inspect the modern BTC user guide, extracted legacy BatchTIPSY help,
+        and `TIPSYbtc.exe` string surface together for any clue that separates
+        `LoadBTC` from `ProcessBTC`;
+      - specifically follow the legacy `.btp` pathway, because the extracted
+        help says opening an existing `.btp` file processes it immediately and
+        the binary still exposes `LoadBTP`, `PreviewInputFileBTP`, and
+        `CreateTemplateBTP`;
+      - probe the smallest evidence-backed hidden-run candidates next:
+        - `/No_GUI <project>.btc` plus any discovered execution trigger;
+        - direct `.btp` launch forms if the docs/binary imply they still
+          exist;
+        - any command-line form near saved output/report state or regime-file
+          export (`cRGM`, `WriteCBM`, `WritePlotsy45`) if a concrete parser
+          clue surfaces first.
+    - Validation rule:
+      - do not claim a hidden execution seam exists unless a real hidden BTC
+        session creates concrete output artifacts or logs that prove work was
+        performed, not just that a process remained alive without a window.
           orchestration helper
     - Richer-output fallback note:
       - a manual BTC GUI `Yield` report appears to provide a much richer CSV

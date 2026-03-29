@@ -8404,3 +8404,34 @@
   - The same notes now explicitly warn that copied-install-local or
     stock-report-only `/TSR` probes are clue-gathering at best, not equivalent
     validation of the live unattended FEMIC seam.
+- 2026-03-29 (Issue #58 `/No_GUI` trigger hunt checkpoint): narrowed the
+  hidden BTC execution question from broad flag probing down to the remaining
+  credible seams.
+  - Concrete runtime evidence now says:
+    - plain `TIPSYbtc.exe <project>.btc` visibly opens BTC and loads the
+      project;
+    - `TIPSYbtc.exe /No_GUI <project>.btc` leaves a hidden BTC process alive
+      but does not create output/error files by itself;
+    - re-saving the project after a real GUI export still does not make
+      `/No_GUI <project>.btc` auto-run;
+    - `/No_GUI <project>.btc <input> <output> <error>` also remained idle for
+      both `p.btc` and `p_run.btc`, even when explicit output/error filenames
+      were provided.
+  - A hidden launch of the shipped `DR24.BTP` sample with its working
+    directory pinned to the sample folder also remained alive without creating
+    `DR24.out` or `DR24.err`, so `.btp` alone is not yet a proven modern BTC
+    hidden-run trigger either.
+  - The modern BTC 1.4 user guide wording now reads as a real clue rather than
+    a generic guess:
+    - the first command-line option is described as loading a `.btc` file;
+    - `/TSR` and `/FLP` are the only explicitly documented execution-oriented
+      command-line modes.
+  - Current best read:
+    - `/No_GUI` is a visibility modifier, not an execution trigger;
+    - `.btc` project files behave like passive saved state rather than
+      self-running jobs;
+    - the only proven command-line execution triggers so far remain `/TSR` and
+      `/FLP`;
+    - remaining reverse-engineering targets are a possible legacy DOS/BTP
+      processing seam or an unexposed GUI-side "process" state that ordinary
+      `.btc` saves do not serialize.
