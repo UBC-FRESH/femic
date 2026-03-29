@@ -343,6 +343,35 @@ def test_parse_btc_tsr_transposed_output_preserves_existing_managed_curve_ids(
     assert out["TPH"].isna().all()
 
 
+def test_parse_btc_tsr_transposed_output_preserves_log_grade_columns(
+    tmp_path: Path,
+) -> None:
+    output_csv = tmp_path / "MSYT_output.csv"
+    pd.DataFrame(
+        [
+            {
+                "feature_id": 1001,
+                "MVcon_0": 1.0,
+                "MVdec_0": 2.0,
+                "HTcon_0": 4.0,
+                "HTdec_0": 3.0,
+                "gVol_0": 5.0,
+                "CC_0": 0.6,
+                "Logs_Grade_D_0": 7.0,
+                "Logs_Grade_All_0": 9.0,
+            }
+        ]
+    ).to_csv(output_csv, index=False)
+
+    out = parse_btc_tsr_transposed_output(output_csv=output_csv, pd_module=pd)
+
+    assert list(out["AU"]) == [21001]
+    assert list(out["Age"]) == [0]
+    assert list(out["Yield"]) == [3.0]
+    assert list(out["Logs_Grade_D"]) == [7.0]
+    assert list(out["Logs_Grade_All"]) == [9.0]
+
+
 def test_parse_btc_custom_report_template_reads_sql_style_template(
     tmp_path: Path,
 ) -> None:
@@ -413,6 +442,32 @@ def test_btc_indicator_bank_columns_returns_first_safe_bank() -> None:
     ]
 
 
+def test_btc_indicator_bank_columns_returns_log_grades_bank() -> None:
+    columns = btc_indicator_bank_columns("log-grades")
+    assert [column.token for column in columns] == [
+        "Logs_Grade_D",
+        "Logs_Grade_F",
+        "Logs_Grade_H",
+        "Logs_Grade_I",
+        "Logs_Grade_J",
+        "Logs_Grade_U",
+        "Logs_Grade_X",
+        "Logs_Grade_Y",
+        "Logs_Grade_All",
+    ]
+    assert [column.header1_override for column in columns] == [
+        "Logs_Grade_D",
+        "Logs_Grade_F",
+        "Logs_Grade_H",
+        "Logs_Grade_I",
+        "Logs_Grade_J",
+        "Logs_Grade_U",
+        "Logs_Grade_X",
+        "Logs_Grade_Y",
+        "Logs_Grade_All",
+    ]
+
+
 def test_apply_btc_indicator_banks_appends_without_duplicates() -> None:
     template = btc_report_template_preset("tsr-unattended-default")
     extended = apply_btc_indicator_banks(
@@ -433,6 +488,31 @@ def test_apply_btc_indicator_banks_appends_without_duplicates() -> None:
         "StemCount000",
         "StemCount125",
         "StemCount175",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_log_grades_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["log-grades"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Logs_Grade_D",
+        "Logs_Grade_F",
+        "Logs_Grade_H",
+        "Logs_Grade_I",
+        "Logs_Grade_J",
+        "Logs_Grade_U",
+        "Logs_Grade_X",
+        "Logs_Grade_Y",
+        "Logs_Grade_All",
     ]
 
 
@@ -880,6 +960,42 @@ def test_prepare_btc_runtime_tsr_preset_applies_indicator_bank(
     assert "MAI\t\tMAI\t{yr}" in rendered
     assert "BasalArea:000\t\tBasalArea000\t{yr}" in rendered
     assert "StemCount175\t\tStemCount175\t{yr}" in rendered
+
+
+def test_prepare_btc_runtime_tsr_preset_applies_log_grades_indicator_bank(
+    tmp_path: Path,
+) -> None:
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    fake_exe = install_root / "TIPSYbtc.exe"
+    fake_exe.write_text("stub", encoding="utf-8")
+    (install_root / "TimberSupply.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Timber Supply\n"
+        "TableRange=0-120:10|#\tMAX=120\tINC=10\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Volume:Auto:Con\t0\tMVcon\t{yr}\n",
+        encoding="utf-8",
+    )
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+
+    prep = prepare_btc_runtime(
+        executable_path=fake_exe,
+        input_csv=input_csv,
+        scratch_root=tmp_path / "scratch",
+        mode="TSR",
+        report_preset_name="tsr-unattended-default",
+        indicator_bank_names=["log-grades"],
+        copy_install=True,
+    )
+
+    assert prep.report_template_path is not None
+    rendered = prep.report_template_path.read_text(encoding="utf-8")
+    assert "Logs_Grade_D\t\tLogs_Grade_D\t{yr}" in rendered
+    assert "Logs_Grade_Y\t\tLogs_Grade_Y\t{yr}" in rendered
+    assert "Logs_Grade_All\t\tLogs_Grade_All\t{yr}" in rendered
 
 
 def test_write_tipsy_input_exports_fails_fast_on_width_overflow(tmp_path: Path) -> None:

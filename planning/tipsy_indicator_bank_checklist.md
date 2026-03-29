@@ -1,0 +1,334 @@
+# TIPSY Indicator Bank Checklist
+
+Source inventory: `planning/AllFieldsSQL.rpt`.
+
+- `[x]` means the indicator family is already surfaced in FEMIC through a
+  shipped BTC path.
+- `[ ]` means the indicator is still only in the planning inventory.
+- This checklist is grouped into candidate bank names for rollout planning; the
+  bank names are planning buckets, not proof that every column in that bucket
+  is `/TSR` safe yet.
+- The current `stand-structure-basic` bank is represented here at the family
+  level from `AllFieldsSQL.rpt`; the shipped bank uses the richer BTC tokens
+  `BasalArea:000`, `DBHg:000`, `SPH:000`, `StemCount000`, `StemCount125`, and
+  `StemCount175` in code.
+- Cross-reference note:
+  - installed BTC field maps checked on 2026-03-29:
+    - `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt`
+    - `C:\Program Files\TIPSY 4.7\BTC\btpfields.txt`
+  - `btpfields.txt` appears to be an input/BTP field map, not an output-column
+    inventory.
+  - `OutputColumns.txt` includes additional output names that are not present in
+    `AllFieldsSQL.rpt`; those are captured in the supplemental section at the
+    end of this file so they do not get lost.
+
+- stand-structure-basic
+  - [x] MAI
+  - [x] BasalArea
+  - [x] DBHg
+  - [x] SPH
+- yield-and-age-core
+  - [ ] Year
+  - [ ] Volume:Auto:Con
+  - [ ] Volume:Auto:Dec
+  - [ ] Height:Auto:Con
+  - [ ] Height:Auto:Dec
+  - [ ] TotalAge
+  - [ ] BHAge
+  - [ ] StandAge
+  - [ ] HeightSindex
+  - [ ] Height
+  - [ ] Volume
+  - [ ] VPT
+  - [ ] CC
+  - [ ] Juvenille_Volume
+  - [ ] Juvenille_Percent
+  - [ ] VolumeGross
+  - [ ] HeightTassTop
+  - [ ] HeightTassMean
+  - [ ] HeightTassPredom
+- genetics-fertilization-and-oaf
+  - [ ] GWgain
+  - [ ] FertGain
+  - [ ] OAFremoval
+  - [ ] OAFmortality
+  - [ ] OAFimpact
+  - [ ] OAF
+- crop250-stand-quality
+  - [ ] Crop250VolUtil125
+  - [ ] Crop250DBHgMean
+  - [ ] Crop250LiveCrown
+- lumber-2-or-better
+  - [ ] Lumber_2_or_Better_2x4
+  - [ ] Lumber_2_or_Better_2x6
+  - [ ] Lumber_2_or_Better_2x8
+  - [ ] Lumber_2_or_Better_2x10
+  - [ ] Lumber_2_or_Better_All
+  - [ ] LRF_2_or_Better_All
+- residual-fibre
+  - [ ] Residual_Chips
+  - [ ] Residual_Sawdust
+  - [ ] Residual_Shavings
+  - [ ] Residual_Trim
+  - [ ] Residual_Bark
+- log-grades
+  - [x] Logs_Grade_D
+  - [x] Logs_Grade_F
+  - [x] Logs_Grade_H
+  - [x] Logs_Grade_I
+  - [x] Logs_Grade_J
+  - [x] Logs_Grade_U
+  - [x] Logs_Grade_X
+  - [x] Logs_Grade_Y
+  - [x] Logs_Grade_All
+- mortality-summary
+  - [ ] Mortality_Stems
+  - [ ] Mortality_DBHg_Mean
+  - [ ] Mortality_Height_Mean
+  - [ ] Mortality_Basal_Area
+  - [ ] Mortality_Volume_Total
+- mortality-size-classes
+  - [ ] Mortality_Stems_Size_Class_5
+  - [ ] Mortality_Stems_Size_Class_15
+  - [ ] Mortality_Stems_Size_Class_25
+  - [ ] Mortality_Stems_Size_Class_35
+  - [ ] Mortality_Stems_Size_Class_45
+  - [ ] Mortality_Stems_Size_Class_55
+  - [ ] Mortality_Stems_Size_Class_65
+  - [ ] Mortality_Volume_Size_Class_5
+  - [ ] Mortality_Volume_Size_Class_15
+  - [ ] Mortality_Volume_Size_Class_25
+  - [ ] Mortality_Volume_Size_Class_35
+  - [ ] Mortality_Volume_Size_Class_45
+  - [ ] Mortality_Volume_Size_Class_55
+  - [ ] Mortality_Volume_Size_Class_65
+  - [ ] Mortality_VPT_Size_Class_5
+  - [ ] Mortality_VPT_Size_Class_15
+  - [ ] Mortality_VPT_Size_Class_25
+  - [ ] Mortality_VPT_Size_Class_35
+  - [ ] Mortality_VPT_Size_Class_45
+  - [ ] Mortality_VPT_Size_Class_55
+  - [ ] Mortality_VPT_Size_Class_65
+- diameter-class-stems
+  - [ ] Stems_Diameter_Class_0
+  - [ ] Stems_Diameter_Class_5
+  - [ ] Stems_Diameter_Class_10
+  - [ ] Stems_Diameter_Class_15
+  - [ ] Stems_Diameter_Class_20
+  - [ ] Stems_Diameter_Class_25
+  - [ ] Stems_Diameter_Class_30
+  - [ ] Stems_Diameter_Class_35
+  - [ ] Stems_Diameter_Class_40
+  - [ ] Stems_Diameter_Class_45
+  - [ ] Stems_Diameter_Class_50
+  - [ ] Stems_Diameter_Class_55
+  - [ ] Stems_Diameter_Class_60
+  - [ ] Stems_Diameter_Class_65
+  - [ ] Stems_Diameter_Class_70
+  - [ ] Stems_Diameter_Class_75
+  - [ ] Stems_Diameter_Class_80
+  - [ ] Stems_Diameter_Class_85
+  - [ ] Stems_Diameter_Class_90
+- diameter-class-volume
+  - [ ] Volume_Diameter_Class_0
+  - [ ] Volume_Diameter_Class_5
+  - [ ] Volume_Diameter_Class_10
+  - [ ] Volume_Diameter_Class_15
+  - [ ] Volume_Diameter_Class_20
+  - [ ] Volume_Diameter_Class_25
+  - [ ] Volume_Diameter_Class_30
+  - [ ] Volume_Diameter_Class_35
+  - [ ] Volume_Diameter_Class_40
+  - [ ] Volume_Diameter_Class_45
+  - [ ] Volume_Diameter_Class_50
+  - [ ] Volume_Diameter_Class_55
+  - [ ] Volume_Diameter_Class_60
+  - [ ] Volume_Diameter_Class_65
+  - [ ] Volume_Diameter_Class_70
+  - [ ] Volume_Diameter_Class_75
+  - [ ] Volume_Diameter_Class_80
+  - [ ] Volume_Diameter_Class_85
+  - [ ] Volume_Diameter_Class_90
+- diameter-class-vpt
+  - [ ] VPT_Diameter_Class_0
+  - [ ] VPT_Diameter_Class_5
+  - [ ] VPT_Diameter_Class_10
+  - [ ] VPT_Diameter_Class_15
+  - [ ] VPT_Diameter_Class_20
+  - [ ] VPT_Diameter_Class_25
+  - [ ] VPT_Diameter_Class_30
+  - [ ] VPT_Diameter_Class_35
+  - [ ] VPT_Diameter_Class_40
+  - [ ] VPT_Diameter_Class_45
+  - [ ] VPT_Diameter_Class_50
+  - [ ] VPT_Diameter_Class_55
+  - [ ] VPT_Diameter_Class_60
+  - [ ] VPT_Diameter_Class_65
+  - [ ] VPT_Diameter_Class_70
+  - [ ] VPT_Diameter_Class_75
+  - [ ] VPT_Diameter_Class_80
+  - [ ] VPT_Diameter_Class_85
+  - [ ] VPT_Diameter_Class_90
+- biomass-live
+  - [ ] Biomass_Live_Wood
+  - [ ] Biomass_Live_Bark
+  - [ ] Biomass_Live_Foliar
+  - [ ] Biomass_Live_Branch
+  - [ ] Biomass_Live_Roots
+  - [ ] Biomass_Live_Total
+  - [ ] Biomass_Live_Above
+- biomass-dead
+  - [ ] Biomass_Dead_Wood
+  - [ ] Biomass_Dead_Bark
+  - [ ] Biomass_Dead_Foliar
+  - [ ] Biomass_Dead_Branch
+  - [ ] Biomass_Dead_Roots
+  - [ ] Biomass_Dead_Total
+  - [ ] Biomass_Dead_Above
+- crown-and-canopy
+  - [ ] mean_height_to_crown_base
+  - [ ] mean_crown_length
+  - [ ] last
+- lumber-graded
+  - [ ] Lumber_Graded_SS_2x4
+  - [ ] Lumber_Graded_SS_2x6
+  - [ ] Lumber_Graded_SS_2x8
+  - [ ] Lumber_Graded_SS_2x10
+  - [ ] Lumber_Graded_1_2x4
+  - [ ] Lumber_Graded_1_2x6
+  - [ ] Lumber_Graded_1_2x8
+  - [ ] Lumber_Graded_1_2x10
+  - [ ] Lumber_Graded_2_2x4
+  - [ ] Lumber_Graded_2_2x6
+  - [ ] Lumber_Graded_2_2x8
+  - [ ] Lumber_Graded_2_2x10
+  - [ ] Lumber_Graded_3_2x4
+  - [ ] Lumber_Graded_3_2x6
+  - [ ] Lumber_Graded_3_2x8
+  - [ ] Lumber_Graded_3_2x10
+  - [ ] Lumber_Graded_4_2x4
+  - [ ] Lumber_Graded_4_2x6
+  - [ ] Lumber_Graded_4_2x8
+  - [ ] Lumber_Graded_4_2x10
+  - [ ] Lumber_Graded_All
+  - [ ] LRF_Graded_All
+- lumber-degraded
+  - [ ] Lumber_Degraded_SS_2x4
+  - [ ] Lumber_Degraded_SS_2x6
+  - [ ] Lumber_Degraded_SS_2x8
+  - [ ] Lumber_Degraded_SS_2x10
+  - [ ] Lumber_Degraded_1_2x4
+  - [ ] Lumber_Degraded_1_2x6
+  - [ ] Lumber_Degraded_1_2x8
+  - [ ] Lumber_Degraded_1_2x10
+  - [ ] Lumber_Degraded_2_2x4
+  - [ ] Lumber_Degraded_2_2x6
+  - [ ] Lumber_Degraded_2_2x8
+  - [ ] Lumber_Degraded_2_2x10
+  - [ ] Lumber_Degraded_3_2x4
+  - [ ] Lumber_Degraded_3_2x6
+  - [ ] Lumber_Degraded_3_2x8
+  - [ ] Lumber_Degraded_3_2x10
+  - [ ] Lumber_Degraded_4_2x4
+  - [ ] Lumber_Degraded_4_2x6
+  - [ ] Lumber_Degraded_4_2x8
+  - [ ] Lumber_Degraded_4_2x10
+  - [ ] Lumber_Degraded_All
+  - [ ] LRF_Degraded_All
+- industrial-logs
+  - [ ] Industrial_Logs_D38L13
+  - [ ] Industrial_Logs_D38L11
+  - [ ] Industrial_Logs_D38L8
+  - [ ] Industrial_Logs_D30L13
+  - [ ] Industrial_Logs_D30L11
+  - [ ] Industrial_Logs_D30L8
+  - [ ] Industrial_Logs_D20L13
+  - [ ] Industrial_Logs_D20L11
+  - [ ] Industrial_Logs_D20L8
+  - [ ] Industrial_Logs_D125L13
+  - [ ] Industrial_Logs_D125L11
+  - [ ] Industrial_Logs_D125L8
+  - [ ] Industrial_Logs_D125L63
+  - [ ] Industrial_Logs_D125L51
+  - [ ] Industrial_Logs_D125L5
+  - [ ] Industrial_Logs_D305
+  - [ ] Industrial_Logs_D254
+  - [ ] Industrial_Logs_D203
+  - [ ] Industrial_Logs_D178
+  - [ ] Industrial_Logs_D152
+
+## Supplemental OutputColumns-Only Fields
+
+These fields were found in the installed BTC `OutputColumns.txt` field map but
+do not appear in `planning/AllFieldsSQL.rpt`.
+
+- stand-structure-threshold-raw
+  - [x] BasalArea000
+  - [ ] BasalArea125
+  - [ ] BasalArea175
+  - [x] MeanDBHg000
+  - [ ] MeanDBHg125
+  - [ ] MeanDBHg175
+  - [x] StemCount000
+  - [x] StemCount125
+  - [x] StemCount175
+  - [ ] Volume000
+  - [ ] Volume125
+  - [ ] Volume175
+  - [ ] MAI000
+  - [ ] MAI125
+  - [ ] MAI175
+  - [ ] VPT000
+  - [ ] VPT125
+  - [ ] VPT175
+- juvenile-threshold-raw
+  - [ ] Juvenille_Volume000
+  - [ ] Juvenille_Volume125
+  - [ ] Juvenille_Volume175
+  - [ ] Juvenille_Percent000
+  - [ ] Juvenille_Percent125
+  - [ ] Juvenille_Percent175
+- carbon
+  - [ ] Carbon_Live_Wood
+  - [ ] Carbon_Live_Bark
+  - [ ] Carbon_Live_Foliar
+  - [ ] Carbon_Live_Branch
+  - [ ] Carbon_Live_Roots
+  - [ ] Carbon_Live_Total
+  - [ ] Carbon_Live_Above
+  - [ ] Carbon_Dead_Wood
+  - [ ] Carbon_Dead_Bark
+  - [ ] Carbon_Dead_Foliar
+  - [ ] Carbon_Dead_Branch
+  - [ ] Carbon_Dead_Roots
+  - [ ] Carbon_Dead_Total
+  - [ ] Carbon_Dead_Above
+- co2e
+  - [ ] CO2e_Live_Wood
+  - [ ] CO2e_Live_Bark
+  - [ ] CO2e_Live_Foliar
+  - [ ] CO2e_Live_Branch
+  - [ ] CO2e_Live_Roots
+  - [ ] CO2e_Live_Total
+  - [ ] CO2e_Live_Above
+  - [ ] CO2e_Dead_Wood
+  - [ ] CO2e_Dead_Bark
+  - [ ] CO2e_Dead_Foliar
+  - [ ] CO2e_Dead_Branch
+  - [ ] CO2e_Dead_Roots
+  - [ ] CO2e_Dead_Total
+  - [ ] CO2e_Dead_Above
+- crown-and-fire-supplemental
+  - [ ] CrownCover
+  - [ ] Crown_Bulk_Density
+- btc-internal-raw-variants
+  - [ ] HeightSindex_Base
+  - [ ] HeightSindex_Full
+  - [ ] YearTASS_Base
+  - [ ] YearTASS_Full
+- allfields-only-aliases-or-report-specific-names
+  - [ ] Volume:Auto:Con
+  - [ ] Volume:Auto:Dec
+  - [ ] Height:Auto:Con
+  - [ ] Height:Auto:Dec
+  - [ ] last

@@ -214,23 +214,35 @@ So the main compatibility rule appears to be structural:
 - some earlier failures were seam-mismatch artifacts, not proof that the
   columns were impossible through unattended ``/TSR``
 
-First Optional Unattended Indicator Bank
-----------------------------------------
+Optional Unattended Indicator Banks
+-----------------------------------
 
-FEMIC now has a first real optional BTC indicator-bank switch on top of the
+FEMIC now has real optional BTC indicator-bank switches on top of the
 core unattended `/TSR` seam:
 
 - ``--indicator-bank stand-structure-basic``
+- ``--indicator-bank log-grades``
 
 Current bank contents:
 
-- ``MAI``
-- ``BasalArea:000``
-- ``DBHg:000``
-- ``SPH:000``
-- ``StemCount000``
-- ``StemCount125``
-- ``StemCount175``
+- ``stand-structure-basic``:
+  - ``MAI``
+  - ``BasalArea:000``
+  - ``DBHg:000``
+  - ``SPH:000``
+  - ``StemCount000``
+  - ``StemCount125``
+  - ``StemCount175``
+- ``log-grades``:
+  - ``Logs_Grade_D``
+  - ``Logs_Grade_F``
+  - ``Logs_Grade_H``
+  - ``Logs_Grade_I``
+  - ``Logs_Grade_J``
+  - ``Logs_Grade_U``
+  - ``Logs_Grade_X``
+  - ``Logs_Grade_Y``
+  - ``Logs_Grade_All``
 
 Important runtime detail:
 
@@ -245,6 +257,7 @@ Important runtime detail:
 Live smoke proof now exists for:
 
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-basic``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank log-grades``
 
 That returned a single unattended output CSV with:
 
@@ -263,6 +276,16 @@ That returned a single unattended output CSV with:
   - ``StemCount000_*``
   - ``StemCount125_*``
   - ``StemCount175_*``
+- plus the log-grade bank:
+  - ``Logs_Grade_D_*``
+  - ``Logs_Grade_F_*``
+  - ``Logs_Grade_H_*``
+  - ``Logs_Grade_I_*``
+  - ``Logs_Grade_J_*``
+  - ``Logs_Grade_U_*``
+  - ``Logs_Grade_X_*``
+  - ``Logs_Grade_Y_*``
+  - ``Logs_Grade_All_*``
 
 while still honoring the 350-year unattended TSR timeline.
 

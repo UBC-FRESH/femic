@@ -41,7 +41,7 @@ _BTC_REPORT_PRESET_NAMES = (
     "timber-supply-sql",
     "tsr-unattended-default",
 )
-_BTC_INDICATOR_BANK_NAMES = ("stand-structure-basic",)
+_BTC_INDICATOR_BANK_NAMES = ("stand-structure-basic", "log-grades")
 _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
     "stand-structure-basic": (
         ("MAI", "MAI"),
@@ -51,6 +51,17 @@ _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
         ("StemCount000", "StemCount000"),
         ("StemCount125", "StemCount125"),
         ("StemCount175", "StemCount175"),
+    ),
+    "log-grades": (
+        ("Logs_Grade_D", "Logs_Grade_D"),
+        ("Logs_Grade_F", "Logs_Grade_F"),
+        ("Logs_Grade_H", "Logs_Grade_H"),
+        ("Logs_Grade_I", "Logs_Grade_I"),
+        ("Logs_Grade_J", "Logs_Grade_J"),
+        ("Logs_Grade_U", "Logs_Grade_U"),
+        ("Logs_Grade_X", "Logs_Grade_X"),
+        ("Logs_Grade_Y", "Logs_Grade_Y"),
+        ("Logs_Grade_All", "Logs_Grade_All"),
     ),
 }
 _BTC_OUTPUT_ALIAS_TO_TABLE_COLUMN: dict[str, str] = {
@@ -2021,7 +2032,7 @@ def parse_btc_tsr_transposed_output(
         "CC",
         *_BTC_OUTPUT_ALIAS_TO_TABLE_COLUMN.keys(),
     }
-    age_pattern = re.compile(r"^(?P<prefix>[A-Za-z0-9]+)_(?P<age>\d+)$")
+    age_pattern = re.compile(r"^(?P<prefix>[A-Za-z0-9_]+)_(?P<age>\d+)$")
     ages: set[int] = set()
     prefixes_present: set[str] = set()
     for column in df.columns:

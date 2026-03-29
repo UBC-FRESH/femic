@@ -7995,3 +7995,58 @@
       `models/k3z_patchworks_model/analysis/headless_runs/`, and
       variant-track `accounts_backup_*.csv` spill files so future runtime
       save-outs stay out of Git status by default.
+- 2026-03-29 (Issue #48 kickoff planning / TIPSY field ledger): promoted the
+  next BTC cutover edge to the umbrella "remaining optional indicator banks"
+  task and added a durable planning ledger so optional-bank scope is tracked
+  in-repo instead of only in chat.
+  - Added `planning/tipsy_indicator_bank_checklist.md`, a grouped checkbox
+    inventory covering all 216 fields from `planning/AllFieldsSQL.rpt`.
+  - Marked the currently shipped `stand-structure-basic` family coverage as
+    landed in that checklist and left the remaining candidate banks unchecked.
+  - Updated `ROADMAP.md` so `P48.2d2` now explicitly references the new
+    checklist, treats issue `#48` as the governing tracker, and starts from
+    the current first product-oriented candidate families (`log-grades`,
+    `lumber-2-or-better`, `lumber-graded`, `lumber-degraded`,
+    `industrial-logs`, and `residual-fibre`).
+  - Follow-up BTC installation cross-reference:
+    - scraped `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt` and
+      `C:\Program Files\TIPSY 4.7\BTC\btpfields.txt` against
+      `planning/AllFieldsSQL.rpt`;
+    - confirmed `btpfields.txt` behaves like a BTP input-field map rather than
+      an output-column inventory;
+    - found additional output names in `OutputColumns.txt` that are absent from
+      `AllFieldsSQL.rpt`, especially:
+      - threshold-specific raw aliases such as `BasalArea000`,
+        `MeanDBHg000`, `StemCount000`, `Volume000`, `MAI000`, and `VPT000`;
+      - Carbon / CO2e output families; and
+      - `CrownCover` / `Crown_Bulk_Density`;
+    - recorded those supplemental output-only fields in
+      `planning/tipsy_indicator_bank_checklist.md` so they are not forgotten
+      during future optional-bank rollout work.
+- 2026-03-29 (Issue #48 scope rewrite): widened GitHub issue `#48` from one
+  specific grade-oriented bank into the umbrella tracker for "add all missing
+  optional BTC/TIPSY indicators, grouped into logical banks".
+  - The active plan no longer assumes we need a separate GitHub issue for each
+    small bank family.
+  - `ROADMAP.md` now mirrors that broader issue framing while still keeping the
+    current first implementation candidates product-oriented.
+- 2026-03-29 (Issue #48 first shipped product bank): added the `log-grades`
+  optional BTC indicator bank to FEMIC and validated it against the live
+  unattended `/TSR` overlay seam.
+  - `src/femic/pipeline/tipsy.py` now ships a `log-grades` bank containing:
+    - `Logs_Grade_D`
+    - `Logs_Grade_F`
+    - `Logs_Grade_H`
+    - `Logs_Grade_I`
+    - `Logs_Grade_J`
+    - `Logs_Grade_U`
+    - `Logs_Grade_X`
+    - `Logs_Grade_Y`
+    - `Logs_Grade_All`
+  - The generic BTC transposed-output parser already preserved arbitrary bank
+    aliases once they were added to the bank map, so no separate parser seam
+    was required beyond the new bank definition.
+  - Added focused test coverage for:
+    - bank column expansion;
+    - runtime TSR template injection; and
+    - transposed-output parsing of `Logs_Grade_*` fields.

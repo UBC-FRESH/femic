@@ -7670,6 +7670,25 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 - The core unattended BTC cutover bird is landed through Phase `48.2d3`
   under GitHub issue `#49`; the next cutover-wide closeout edge is `P48.3`.
+- The next active optional-bank implementation target is GitHub issue `#48`
+  / roadmap task `P48.2d2`:
+  - treat the remaining missing optional BTC/TIPSY indicators as one umbrella
+    rollout track, grouped into logical banks rather than split across a large
+    pile of tiny issues;
+  - start with the most downstream-useful product-oriented families, but keep
+    the issue broad enough to absorb the other missing banks as they are
+    proven;
+  - probe each candidate bank through the proven live user-overlay
+    `TimberSupply.rpt` seam, not through oversized clean-room replacement
+    reports;
+  - keep the rollout proving-ground-only first, following the same dedicated
+    `intensive_*` K3Z pattern used for the stand-structure bank;
+  - add a durable field-inventory ledger so optional-bank scope does not drift
+    between turns.
+  - first new post-stand-structure bank result now in hand:
+    - the full `log-grades` family (`D/F/H/I/J/U/X/Y/All`) probes cleanly
+      through the live unattended `/TSR` overlay seam and is the next shipped
+      optional bank candidate.
 - The first optional unattended BTC indicator-bank switch is now wired through
   the live user-overlay TSR seam:
   - `--indicator-bank stand-structure-basic`
@@ -7706,6 +7725,25 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     tracked `analysis/` paths;
   - only use `--stage-label` for a custom destination when that different save
     location is intentional and reviewed.
+- The new human-facing inventory ledger for indicator-bank planning is:
+  - `planning/tipsy_indicator_bank_checklist.md`
+  - source inventory: `planning/AllFieldsSQL.rpt`
+  - cross-reference sources:
+    - `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt`
+    - `C:\Program Files\TIPSY 4.7\BTC\btpfields.txt`
+  - status rule:
+    - `[x]` means the indicator family is already surfaced through a shipped
+      FEMIC BTC path;
+    - `[ ]` means the field is still only in planning inventory and has not
+      yet been rolled into a shipped bank/switch.
+  - current cross-reference finding:
+    - `OutputColumns.txt` carries useful output names that are not present in
+      `AllFieldsSQL.rpt`, especially the threshold-specific raw stand
+      structure aliases (`BasalArea000`, `MeanDBHg000`, `StemCount000`, etc.)
+      plus the Carbon / CO2e families;
+    - `btpfields.txt` appears to be a BTP input-field map, not an output-field
+      ledger, but it is still worth keeping as a side reference when we later
+      work on BTC/BTP input-side features.
 - Keep the parallel seam-detection mission alive:
   - for any future failing column, collect clues about report family, token
     syntax, stock report membership, and `OutputColumns.txt`/Tcl references so
@@ -7873,11 +7911,37 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - do not touch the active student-facing K3Z variants while proving the
         first bank; use a dedicated `intensive_*` proving-ground subvariant.
       Track on GitHub issue #47.
-    - [ ] P48.2d2 Add a log-grade / lumber-grade output bank from BTC bindings
-      and wire those behind a FEMIC-level optional activation switch, again
-      piloting first on a dedicated K3Z intensive-silviculture proving-ground
-      subvariant rather than the active student-facing variants. Track on
-      GitHub issue #48.
+    - [ ] P48.2d2 Add the remaining optional BTC/TIPSY indicators in logical
+      banks and wire those behind FEMIC-level optional activation switches,
+      again piloting first on dedicated K3Z intensive-silviculture
+      proving-ground subvariants rather than the active student-facing
+      variants. Track on GitHub issue #48.
+      - Current implementation order:
+        - keep GitHub issue `#48` as the governing tracker for this slice;
+        - maintain `planning/tipsy_indicator_bank_checklist.md` as the running
+          field ledger derived from `planning/AllFieldsSQL.rpt`, checking items
+          off only when they are actually surfaced through a shipped FEMIC BTC
+          path;
+        - use logical bank groupings rather than one issue per bank, with the
+          current first implementation candidates being:
+          - `log-grades`
+          - `lumber-2-or-better`
+          - `lumber-graded`
+          - `lumber-degraded`
+          - `industrial-logs`
+          - `residual-fibre`
+          and later extension candidates including the supplemental
+          `OutputColumns.txt` families such as Carbon / CO2e and the threshold
+          raw aliases;
+        - probe those fields incrementally against the real live overlay seam
+          so we preserve the hidden stock `TimberSupply.rpt` contract and avoid
+          false negatives from oversized all-fields replacements;
+        - land each safe bank behind a named `--indicator-bank` switch as it is
+          proven, instead of waiting for the whole universe of fields to be
+          solved at once;
+        - prove each rollout only on a dedicated K3Z intensive proving-ground
+          subvariant and inspect rebuilt outputs directly before touching
+          active student-facing variants.
     - [x] P48.2d3 Revisit the current K3Z QMD curves and either:
       - validate the current derived math more rigorously against BTC-native
         diameter signals, or
