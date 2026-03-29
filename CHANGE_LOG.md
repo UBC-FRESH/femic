@@ -8217,3 +8217,38 @@
     - `planning/tipsy_indicator_bank_checklist.md`
     - `planning/tipsy_tsr_variant_probe_ledger.md`
     - `docs/reference/api/femic-pipeline-tipsy.rst`
+- 2026-03-29 (Issue #48 biomass/carbon overlay tranche): kept extending the
+  live user-overlay seam and proved the biomass/carbon/CO2e families plus the
+  remaining crown/fire support metrics.
+  - Representative overlay-only probes passed with real returned age-series
+    headers for:
+    - `Biomass_Live_Total`
+    - `Biomass_Dead_Total`
+    - `Carbon_Live_Total`
+    - `Carbon_Dead_Total`
+    - `CO2e_Live_Total`
+    - `CO2e_Dead_Total`
+    - `mean_height_to_crown_base`
+    - `mean_crown_length`
+  - Based on that signal, whole-bank live overlay smokes also passed for:
+    - `biomass-live`
+    - `biomass-dead`
+    - `carbon`
+    - `co2e`
+    - expanded `crown-and-fire`
+  - `src/femic/pipeline/tipsy.py` now ships those additional optional banks,
+    and `crown-and-fire` now includes:
+    - `CrownCover`
+    - `mean_height_to_crown_base`
+    - `mean_crown_length`
+    - `Crown_Bulk_Density`
+  - Direct header inspection confirmed representative returned columns such as:
+    - `Biomass_Live_Wood_*`, `Biomass_Live_Total_*`
+    - `Biomass_Dead_Wood_*`, `Biomass_Dead_Total_*`
+    - `Carbon_Live_Total_*`, `Carbon_Dead_Total_*`
+    - `CO2e_Live_Total_*`, `CO2e_Dead_Total_*`
+    - `mean_height_to_crown_base_*`, `mean_crown_length_*`
+  - Planning/docs/checklist surfaces updated:
+    - `planning/tipsy_indicator_bank_checklist.md`
+    - `planning/tipsy_tsr_variant_probe_ledger.md`
+    - `docs/reference/api/femic-pipeline-tipsy.rst`

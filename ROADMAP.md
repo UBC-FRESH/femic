@@ -8125,6 +8125,54 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
               - `Crop250VolUtil125_*`, `Crop250DBHgMean_*`,
                 `Crop250LiveCrown_*`
               - `CrownCover_*`, `Crown_Bulk_Density_*`
+          - exact next overlay-only slice:
+            - known-good control:
+              - `Logs_Grade_D`
+            - representative biomass / carbon / CO2e totals:
+              - `Biomass_Live_Total`
+              - `Biomass_Dead_Total`
+              - `Carbon_Live_Total`
+              - `Carbon_Dead_Total`
+              - `CO2e_Live_Total`
+              - `CO2e_Dead_Total`
+            - remaining crown/fire support metrics:
+              - `mean_height_to_crown_base`
+              - `mean_crown_length`
+            - syntax to use:
+              - stock-TSR-style overlay line
+                `Token<TAB><TAB><shortascii><TAB>{yr}`
+            - decision question:
+              - do those totals/support metrics also return real age-series
+                columns on the live overlay seam, and if so should the next
+                shipped banks be `biomass-live`, `biomass-dead`, `carbon`,
+                `co2e`, plus an expanded `crown-and-fire`?
+          - biomass/carbon overlay result now in hand:
+            - representative totals all passed cleanly on the live overlay
+              seam with returned age-series columns:
+              - `Biomass_Live_Total`
+              - `Biomass_Dead_Total`
+              - `Carbon_Live_Total`
+              - `Carbon_Dead_Total`
+              - `CO2e_Live_Total`
+              - `CO2e_Dead_Total`
+            - the remaining crown/fire support metrics also passed:
+              - `mean_height_to_crown_base`
+              - `mean_crown_length`
+            - based on that signal, whole-bank live overlay smokes were run
+              and passed for:
+              - `biomass-live`
+              - `biomass-dead`
+              - `carbon`
+              - `co2e`
+              - expanded `crown-and-fire`
+            - those banks are therefore ready to ship behind normal FEMIC
+              switches, with direct header inspection confirming representative
+              returned columns such as:
+              - `Biomass_Live_Wood_*`, `Biomass_Live_Total_*`
+              - `Biomass_Dead_Wood_*`, `Biomass_Dead_Total_*`
+              - `Carbon_Live_Total_*`, `Carbon_Dead_Total_*`
+              - `CO2e_Live_Total_*`, `CO2e_Dead_Total_*`
+              - `mean_height_to_crown_base_*`, `mean_crown_length_*`
           - do not ship any new optional banks until one representative family
             proves clean under a stable variant pattern and a known-good bank
             still reprobes cleanly afterward.

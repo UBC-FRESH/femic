@@ -598,7 +598,75 @@ def test_btc_indicator_bank_columns_returns_crown_and_fire_bank() -> None:
     columns = btc_indicator_bank_columns("crown-and-fire")
     assert [column.token for column in columns] == [
         "CrownCover",
+        "mean_height_to_crown_base",
+        "mean_crown_length",
         "Crown_Bulk_Density",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_biomass_live_bank() -> None:
+    columns = btc_indicator_bank_columns("biomass-live")
+    assert [column.token for column in columns] == [
+        "Biomass_Live_Wood",
+        "Biomass_Live_Bark",
+        "Biomass_Live_Foliar",
+        "Biomass_Live_Branch",
+        "Biomass_Live_Roots",
+        "Biomass_Live_Total",
+        "Biomass_Live_Above",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_biomass_dead_bank() -> None:
+    columns = btc_indicator_bank_columns("biomass-dead")
+    assert [column.token for column in columns] == [
+        "Biomass_Dead_Wood",
+        "Biomass_Dead_Bark",
+        "Biomass_Dead_Foliar",
+        "Biomass_Dead_Branch",
+        "Biomass_Dead_Roots",
+        "Biomass_Dead_Total",
+        "Biomass_Dead_Above",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_carbon_bank() -> None:
+    columns = btc_indicator_bank_columns("carbon")
+    assert [column.token for column in columns] == [
+        "Carbon_Live_Wood",
+        "Carbon_Live_Bark",
+        "Carbon_Live_Foliar",
+        "Carbon_Live_Branch",
+        "Carbon_Live_Roots",
+        "Carbon_Live_Total",
+        "Carbon_Live_Above",
+        "Carbon_Dead_Wood",
+        "Carbon_Dead_Bark",
+        "Carbon_Dead_Foliar",
+        "Carbon_Dead_Branch",
+        "Carbon_Dead_Roots",
+        "Carbon_Dead_Total",
+        "Carbon_Dead_Above",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_co2e_bank() -> None:
+    columns = btc_indicator_bank_columns("co2e")
+    assert [column.token for column in columns] == [
+        "CO2e_Live_Wood",
+        "CO2e_Live_Bark",
+        "CO2e_Live_Foliar",
+        "CO2e_Live_Branch",
+        "CO2e_Live_Roots",
+        "CO2e_Live_Total",
+        "CO2e_Live_Above",
+        "CO2e_Dead_Wood",
+        "CO2e_Dead_Bark",
+        "CO2e_Dead_Foliar",
+        "CO2e_Dead_Branch",
+        "CO2e_Dead_Roots",
+        "CO2e_Dead_Total",
+        "CO2e_Dead_Above",
     ]
 
 
@@ -859,7 +927,115 @@ def test_apply_btc_indicator_banks_supports_crown_and_fire_bank() -> None:
         "VolumeGross",
         "CC",
         "CrownCover",
+        "mean_height_to_crown_base",
+        "mean_crown_length",
         "Crown_Bulk_Density",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_biomass_live_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["biomass-live"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Biomass_Live_Wood",
+        "Biomass_Live_Bark",
+        "Biomass_Live_Foliar",
+        "Biomass_Live_Branch",
+        "Biomass_Live_Roots",
+        "Biomass_Live_Total",
+        "Biomass_Live_Above",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_biomass_dead_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["biomass-dead"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Biomass_Dead_Wood",
+        "Biomass_Dead_Bark",
+        "Biomass_Dead_Foliar",
+        "Biomass_Dead_Branch",
+        "Biomass_Dead_Roots",
+        "Biomass_Dead_Total",
+        "Biomass_Dead_Above",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_carbon_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["carbon"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Carbon_Live_Wood",
+        "Carbon_Live_Bark",
+        "Carbon_Live_Foliar",
+        "Carbon_Live_Branch",
+        "Carbon_Live_Roots",
+        "Carbon_Live_Total",
+        "Carbon_Live_Above",
+        "Carbon_Dead_Wood",
+        "Carbon_Dead_Bark",
+        "Carbon_Dead_Foliar",
+        "Carbon_Dead_Branch",
+        "Carbon_Dead_Roots",
+        "Carbon_Dead_Total",
+        "Carbon_Dead_Above",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_co2e_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["co2e"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "CO2e_Live_Wood",
+        "CO2e_Live_Bark",
+        "CO2e_Live_Foliar",
+        "CO2e_Live_Branch",
+        "CO2e_Live_Roots",
+        "CO2e_Live_Total",
+        "CO2e_Live_Above",
+        "CO2e_Dead_Wood",
+        "CO2e_Dead_Bark",
+        "CO2e_Dead_Foliar",
+        "CO2e_Dead_Branch",
+        "CO2e_Dead_Roots",
+        "CO2e_Dead_Total",
+        "CO2e_Dead_Above",
     ]
 
 

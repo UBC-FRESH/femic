@@ -257,55 +257,55 @@ Canonical source inventory: `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt`.
   - [ ] VPT_Diameter_Class_85
   - [ ] VPT_Diameter_Class_90
 - biomass-live
-  - [ ] Biomass_Live_Wood
-  - [ ] Biomass_Live_Bark
-  - [ ] Biomass_Live_Foliar
-  - [ ] Biomass_Live_Branch
-  - [ ] Biomass_Live_Roots
-  - [ ] Biomass_Live_Total
-  - [ ] Biomass_Live_Above
+  - [x] Biomass_Live_Wood
+  - [x] Biomass_Live_Bark
+  - [x] Biomass_Live_Foliar
+  - [x] Biomass_Live_Branch
+  - [x] Biomass_Live_Roots
+  - [x] Biomass_Live_Total
+  - [x] Biomass_Live_Above
 - biomass-dead
-  - [ ] Biomass_Dead_Wood
-  - [ ] Biomass_Dead_Bark
-  - [ ] Biomass_Dead_Foliar
-  - [ ] Biomass_Dead_Branch
-  - [ ] Biomass_Dead_Roots
-  - [ ] Biomass_Dead_Total
-  - [ ] Biomass_Dead_Above
+  - [x] Biomass_Dead_Wood
+  - [x] Biomass_Dead_Bark
+  - [x] Biomass_Dead_Foliar
+  - [x] Biomass_Dead_Branch
+  - [x] Biomass_Dead_Roots
+  - [x] Biomass_Dead_Total
+  - [x] Biomass_Dead_Above
 - carbon
-  - [ ] Carbon_Live_Wood
-  - [ ] Carbon_Live_Bark
-  - [ ] Carbon_Live_Foliar
-  - [ ] Carbon_Live_Branch
-  - [ ] Carbon_Live_Roots
-  - [ ] Carbon_Live_Total
-  - [ ] Carbon_Live_Above
-  - [ ] Carbon_Dead_Wood
-  - [ ] Carbon_Dead_Bark
-  - [ ] Carbon_Dead_Foliar
-  - [ ] Carbon_Dead_Branch
-  - [ ] Carbon_Dead_Roots
-  - [ ] Carbon_Dead_Total
-  - [ ] Carbon_Dead_Above
+  - [x] Carbon_Live_Wood
+  - [x] Carbon_Live_Bark
+  - [x] Carbon_Live_Foliar
+  - [x] Carbon_Live_Branch
+  - [x] Carbon_Live_Roots
+  - [x] Carbon_Live_Total
+  - [x] Carbon_Live_Above
+  - [x] Carbon_Dead_Wood
+  - [x] Carbon_Dead_Bark
+  - [x] Carbon_Dead_Foliar
+  - [x] Carbon_Dead_Branch
+  - [x] Carbon_Dead_Roots
+  - [x] Carbon_Dead_Total
+  - [x] Carbon_Dead_Above
 - co2e
-  - [ ] CO2e_Live_Wood
-  - [ ] CO2e_Live_Bark
-  - [ ] CO2e_Live_Foliar
-  - [ ] CO2e_Live_Branch
-  - [ ] CO2e_Live_Roots
-  - [ ] CO2e_Live_Total
-  - [ ] CO2e_Live_Above
-  - [ ] CO2e_Dead_Wood
-  - [ ] CO2e_Dead_Bark
-  - [ ] CO2e_Dead_Foliar
-  - [ ] CO2e_Dead_Branch
-  - [ ] CO2e_Dead_Roots
-  - [ ] CO2e_Dead_Total
-  - [ ] CO2e_Dead_Above
+  - [x] CO2e_Live_Wood
+  - [x] CO2e_Live_Bark
+  - [x] CO2e_Live_Foliar
+  - [x] CO2e_Live_Branch
+  - [x] CO2e_Live_Roots
+  - [x] CO2e_Live_Total
+  - [x] CO2e_Live_Above
+  - [x] CO2e_Dead_Wood
+  - [x] CO2e_Dead_Bark
+  - [x] CO2e_Dead_Foliar
+  - [x] CO2e_Dead_Branch
+  - [x] CO2e_Dead_Roots
+  - [x] CO2e_Dead_Total
+  - [x] CO2e_Dead_Above
 - crown-and-fire
   - [x] CrownCover
-  - [ ] mean_height_to_crown_base
-  - [ ] mean_crown_length
+  - [x] mean_height_to_crown_base
+  - [x] mean_crown_length
   - [x] Crown_Bulk_Density
 - allfields-only-aliases-or-noncanonical-gui-names
   - [ ] Volume:Auto:Con

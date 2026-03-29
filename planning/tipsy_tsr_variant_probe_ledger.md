@@ -327,6 +327,87 @@ Current practical reading:
   strong shipped-bank candidates and should be validated at whole-bank level
   and then rolled forward as real FEMIC optional banks
 
+## Next Active Overlay-Only Slice
+
+The next live-overlay-only candidate set should be:
+
+Control:
+
+1. `Logs_Grade_D`
+
+Representative biomass / carbon / CO2e totals:
+
+2. `Biomass_Live_Total`
+3. `Biomass_Dead_Total`
+4. `Carbon_Live_Total`
+5. `Carbon_Dead_Total`
+6. `CO2e_Live_Total`
+7. `CO2e_Dead_Total`
+
+Remaining crown/fire support metrics:
+
+8. `mean_height_to_crown_base`
+9. `mean_crown_length`
+
+Overlay line shape:
+
+- `Token<TAB><TAB><shortascii><TAB>{yr}`
+
+Why this slice:
+
+- it extends the now-proven overlay-only workflow to the next compact,
+  interpretable ecological families before taking on the bulky diameter/mortality
+  class histograms;
+- the totals-first biomass/carbon/CO2e probes give a cheap high-signal answer
+  before trying every component field;
+- the two remaining crown/fire support metrics clarify whether the current
+  `crown-and-fire` bank should stay as-is or expand to include the supporting
+  height/length columns.
+
+## Biomass / Carbon / CO2e Overlay Result (2026-03-29)
+
+The next overlay-only totals slice also came back clean.
+
+- control:
+  - `Logs_Grade_D`
+  - passed again on the live overlay seam
+- representative totals passed with real returned age-series headers:
+  - `Biomass_Live_Total`
+  - `Biomass_Dead_Total`
+  - `Carbon_Live_Total`
+  - `Carbon_Dead_Total`
+  - `CO2e_Live_Total`
+  - `CO2e_Dead_Total`
+- remaining crown/fire support metrics also passed:
+  - `mean_height_to_crown_base`
+  - `mean_crown_length`
+
+That was strong enough to justify whole-bank live overlay smokes, and those
+also passed cleanly for:
+
+- `biomass-live`
+- `biomass-dead`
+- `carbon`
+- `co2e`
+- expanded `crown-and-fire`
+
+Direct header inspection confirmed returned columns including:
+
+- `Biomass_Live_Wood_*`, `Biomass_Live_Total_*`
+- `Biomass_Dead_Wood_*`, `Biomass_Dead_Total_*`
+- `Carbon_Live_Total_*`, `Carbon_Dead_Total_*`
+- `CO2e_Live_Total_*`, `CO2e_Dead_Total_*`
+- `CrownCover_*`, `mean_height_to_crown_base_*`,
+  `mean_crown_length_*`, `Crown_Bulk_Density_*`
+
+Current practical reading:
+
+- the live overlay seam continues to unlock coherent whole-bank families well
+  beyond the first product and summary slices
+- the next major remaining bank cluster is the class/histogram surface:
+  `mortality-size-classes`, `diameter-class-stems`,
+  `diameter-class-volume`, and `diameter-class-vpt`
+
 ## Variant Rules
 
 - Keep `log-grades` as the standing sanity reprobe before and after major

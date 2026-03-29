@@ -230,6 +230,10 @@ core unattended `/TSR` seam:
 - ``--indicator-bank mortality-summary``
 - ``--indicator-bank crop250-stand-quality``
 - ``--indicator-bank crown-and-fire``
+- ``--indicator-bank biomass-live``
+- ``--indicator-bank biomass-dead``
+- ``--indicator-bank carbon``
+- ``--indicator-bank co2e``
 
 Current bank contents:
 
@@ -343,7 +347,55 @@ Current bank contents:
   - ``Crop250LiveCrown``
 - ``crown-and-fire``:
   - ``CrownCover``
+  - ``mean_height_to_crown_base``
+  - ``mean_crown_length``
   - ``Crown_Bulk_Density``
+- ``biomass-live``:
+  - ``Biomass_Live_Wood``
+  - ``Biomass_Live_Bark``
+  - ``Biomass_Live_Foliar``
+  - ``Biomass_Live_Branch``
+  - ``Biomass_Live_Roots``
+  - ``Biomass_Live_Total``
+  - ``Biomass_Live_Above``
+- ``biomass-dead``:
+  - ``Biomass_Dead_Wood``
+  - ``Biomass_Dead_Bark``
+  - ``Biomass_Dead_Foliar``
+  - ``Biomass_Dead_Branch``
+  - ``Biomass_Dead_Roots``
+  - ``Biomass_Dead_Total``
+  - ``Biomass_Dead_Above``
+- ``carbon``:
+  - ``Carbon_Live_Wood``
+  - ``Carbon_Live_Bark``
+  - ``Carbon_Live_Foliar``
+  - ``Carbon_Live_Branch``
+  - ``Carbon_Live_Roots``
+  - ``Carbon_Live_Total``
+  - ``Carbon_Live_Above``
+  - ``Carbon_Dead_Wood``
+  - ``Carbon_Dead_Bark``
+  - ``Carbon_Dead_Foliar``
+  - ``Carbon_Dead_Branch``
+  - ``Carbon_Dead_Roots``
+  - ``Carbon_Dead_Total``
+  - ``Carbon_Dead_Above``
+- ``co2e``:
+  - ``CO2e_Live_Wood``
+  - ``CO2e_Live_Bark``
+  - ``CO2e_Live_Foliar``
+  - ``CO2e_Live_Branch``
+  - ``CO2e_Live_Roots``
+  - ``CO2e_Live_Total``
+  - ``CO2e_Live_Above``
+  - ``CO2e_Dead_Wood``
+  - ``CO2e_Dead_Bark``
+  - ``CO2e_Dead_Foliar``
+  - ``CO2e_Dead_Branch``
+  - ``CO2e_Dead_Roots``
+  - ``CO2e_Dead_Total``
+  - ``CO2e_Dead_Above``
 
 Important runtime detail:
 
@@ -372,6 +424,10 @@ Live smoke proof now exists for:
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank mortality-summary``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank crop250-stand-quality``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank crown-and-fire``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank biomass-live``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank biomass-dead``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank carbon``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank co2e``
 
 That returned a single unattended output CSV with:
 
@@ -419,7 +475,55 @@ That returned a single unattended output CSV with:
   - ``Crop250LiveCrown_*``
 - plus the crown-and-fire bank:
   - ``CrownCover_*``
+  - ``mean_height_to_crown_base_*``
+  - ``mean_crown_length_*``
   - ``Crown_Bulk_Density_*``
+- plus the biomass-live bank:
+  - ``Biomass_Live_Wood_*``
+  - ``Biomass_Live_Bark_*``
+  - ``Biomass_Live_Foliar_*``
+  - ``Biomass_Live_Branch_*``
+  - ``Biomass_Live_Roots_*``
+  - ``Biomass_Live_Total_*``
+  - ``Biomass_Live_Above_*``
+- plus the biomass-dead bank:
+  - ``Biomass_Dead_Wood_*``
+  - ``Biomass_Dead_Bark_*``
+  - ``Biomass_Dead_Foliar_*``
+  - ``Biomass_Dead_Branch_*``
+  - ``Biomass_Dead_Roots_*``
+  - ``Biomass_Dead_Total_*``
+  - ``Biomass_Dead_Above_*``
+- plus the carbon bank:
+  - ``Carbon_Live_Wood_*``
+  - ``Carbon_Live_Bark_*``
+  - ``Carbon_Live_Foliar_*``
+  - ``Carbon_Live_Branch_*``
+  - ``Carbon_Live_Roots_*``
+  - ``Carbon_Live_Total_*``
+  - ``Carbon_Live_Above_*``
+  - ``Carbon_Dead_Wood_*``
+  - ``Carbon_Dead_Bark_*``
+  - ``Carbon_Dead_Foliar_*``
+  - ``Carbon_Dead_Branch_*``
+  - ``Carbon_Dead_Roots_*``
+  - ``Carbon_Dead_Total_*``
+  - ``Carbon_Dead_Above_*``
+- plus the co2e bank:
+  - ``CO2e_Live_Wood_*``
+  - ``CO2e_Live_Bark_*``
+  - ``CO2e_Live_Foliar_*``
+  - ``CO2e_Live_Branch_*``
+  - ``CO2e_Live_Roots_*``
+  - ``CO2e_Live_Total_*``
+  - ``CO2e_Live_Above_*``
+  - ``CO2e_Dead_Wood_*``
+  - ``CO2e_Dead_Bark_*``
+  - ``CO2e_Dead_Foliar_*``
+  - ``CO2e_Dead_Branch_*``
+  - ``CO2e_Dead_Roots_*``
+  - ``CO2e_Dead_Total_*``
+  - ``CO2e_Dead_Above_*``
 - plus the lumber-graded bank:
   - ``Lumber_Graded_SS_2x4_*``
   - ``Lumber_Graded_1_2x4_*``
