@@ -502,22 +502,84 @@ def test_run_btc_cli_windows_missing_output_raises_with_exit_code(
         )
 
 
+def test_resolve_windows_documents_dir_uses_user_shell_folders(
+    monkeypatch, tmp_path: Path
+) -> None:
+    docs_dir = tmp_path / "Docs"
+
+    class _FakeKey:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+    class _FakeWinreg:
+        HKEY_CURRENT_USER = object()
+
+        @staticmethod
+        def OpenKey(_root, subkey: str):
+            assert subkey == (
+                r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
+            )
+            return _FakeKey()
+
+        @staticmethod
+        def QueryValueEx(_key, value_name: str):
+            assert value_name == "Personal"
+            return (str(docs_dir), 0)
+
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: True)
+    monkeypatch.setitem(sys.modules, "winreg", _FakeWinreg)
+
+    assert tipsy_module._resolve_windows_documents_dir() == docs_dir
+
+
+def test_resolve_btc_user_overlay_report_path_prefers_windows_documents_dir(
+    monkeypatch, tmp_path: Path
+) -> None:
+    docs_dir = tmp_path / "Docs"
+    monkeypatch.setattr(
+        tipsy_module,
+        "_resolve_windows_documents_dir",
+        lambda: docs_dir,
+    )
+
+    resolved = tipsy_module._resolve_btc_user_overlay_report_path(mode="TSR")
+
+    assert resolved == docs_dir / "BatchTIPSY Composer" / "TimberSupply.rpt"
+    assert resolved.parent.is_dir()
+
+
 def test_probe_btc_report_columns_ratchets_forward(monkeypatch, tmp_path: Path) -> None:
     input_csv = tmp_path / "MSYT.csv"
     input_csv.write_text("feature_id\n1\n", encoding="utf-8")
     install_root = tmp_path / "btc"
     install_root.mkdir()
     (install_root / "TIPSYbtc.exe").write_text("stub", encoding="utf-8")
+    (install_root / "TimberSupply.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Timber Supply\n"
+        "TableRange=0-120:10|#\tMAX=120\tINC=10\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Volume:Auto:Con\t\tMVcon\t{yr}\n",
+        encoding="utf-8",
+    )
     (install_root / "Yield.rpt").write_text("SPH:000\n", encoding="utf-8")
     (install_root / "OutputColumns.txt").write_text("SPH:000\n", encoding="utf-8")
+    overlay_path = tmp_path / "user_overlay" / "TimberSupply.rpt"
+    overlay_path.parent.mkdir(parents=True, exist_ok=True)
+    overlay_path.write_text("ORIGINAL OVERLAY\n", encoding="utf-8")
     seen_tokens: list[str] = []
 
     def fake_run_btc_cli(**kwargs: object) -> BTCRunResult:
-        template = kwargs["report_template"]
-        assert template is not None
-        tokens = [column.token for column in template.columns]
-        seen_tokens.append(tokens[-1])
-        if tokens[-1] == "SPH:000":
+        assert kwargs["report_template"] is None
+        candidate = str(kwargs["run_id"]).split("_", 2)[-1].replace("_", ":")
+        if candidate == "SPH:000":
+            assert "SPH:000" in overlay_path.read_text(encoding="utf-8")
+        seen_tokens.append(candidate)
+        if candidate == "SPH:000":
             raise RuntimeError("BTC crashed in BatchProcess()")
         run_id = str(kwargs["run_id"])
         return BTCRunResult(
@@ -539,12 +601,18 @@ def test_probe_btc_report_columns_ratchets_forward(monkeypatch, tmp_path: Path) 
         )
 
     monkeypatch.setattr("femic.pipeline.tipsy.run_btc_cli", fake_run_btc_cli)
+    monkeypatch.setattr(
+        tipsy_module,
+        "_resolve_btc_user_overlay_report_path",
+        lambda **kwargs: overlay_path,
+    )
 
     results, final_template = probe_btc_report_columns(
         input_csv=input_csv,
         candidate_tokens=["VolumeGross", "SPH:000", "CC"],
         executable_path=install_root / "TIPSYbtc.exe",
         source_preset_name="tsr-unattended-default",
+        copy_install=False,
         scratch_root=tmp_path / "scratch",
         log_dir=tmp_path / "logs",
         run_id_prefix="probe",
@@ -562,6 +630,7 @@ def test_probe_btc_report_columns_ratchets_forward(monkeypatch, tmp_path: Path) 
     assert results[1].clues is not None
     assert results[1].clues["present_in_yield_rpt"] is True
     assert (tmp_path / "compatibility.json").is_file()
+    assert overlay_path.read_text(encoding="utf-8") == "ORIGINAL OVERLAY\n"
 
 
 def test_run_windows_btc_with_dialog_cleanup_force_stops_dialog_tree(

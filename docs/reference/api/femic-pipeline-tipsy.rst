@@ -158,8 +158,9 @@ Critical `/TSR` Overlay Precedence Insight
 
 One critical reverse-engineering result must not be lost:
 
-- plain installed ``TIPSYbtc.exe /TSR`` consults the user-overlay report at:
-  - ``C:\Users\gep\OneDrive - UBC\Documents\BatchTIPSY Composer\TimberSupply.rpt``
+- plain installed ``TIPSYbtc.exe /TSR`` consults the user-overlay report under
+  the current user's Windows Documents folder:
+  - ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt``
   before falling back to the stock installed ``TimberSupply.rpt``
 - a broken overlay can therefore make stock-looking ``/TSR`` runs fail even
   when the installed BTC report under ``Program Files`` is fine
@@ -178,6 +179,10 @@ faithful live `/TSR` seam. The safest unattended extension path is now:
 
 Do not assume a clean-room generated replacement template is equivalent to the
 stock report contract just because the visible fields look similar.
+
+FEMIC now resolves that overlay path generically from the current user's
+Windows Documents directory instead of relying on a machine-specific OneDrive
+path assumption.
 
 The current stock-based unattended patch path also forces the TSR horizon to:
 

@@ -37,8 +37,8 @@ Critical BTC `/TSR` Runtime Note
 The unattended BTC seam has one especially important hidden rule:
 
 - plain installed ``TIPSYbtc.exe /TSR`` consults the per-user overlay report
-  at:
-  - ``C:\Users\gep\OneDrive - UBC\Documents\BatchTIPSY Composer\TimberSupply.rpt``
+  under the current user's Windows Documents folder:
+  - ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt``
   before falling back to the stock installed report under
   ``C:\Program Files\TIPSY 4.7\BTC``
 
@@ -51,6 +51,8 @@ Operational consequences:
   structure and extend it conservatively through that overlay seam
 - do not assume that replacing ``TimberSupply.rpt`` wholesale with a
   clean-room generated template is equivalent to the stock report contract
+- FEMIC should resolve the overlay path from the current user's Windows
+  Documents directory, not from any machine-specific OneDrive naming pattern
 
 This is now a critical FEMIC development invariant for BTC reverse-engineering
 and unattended report-template probing.

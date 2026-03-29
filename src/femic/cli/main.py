@@ -2809,7 +2809,7 @@ def tipsy_probe_btc_columns(
         executable_path=resolved_btc_exe,
         source_template=resolved_source_rpt,
         source_preset_name=(preset if resolved_source_rpt is None else None),
-        copy_install=True,
+        copy_install=False,
         scratch_root=resolved_scratch,
         log_dir=resolved_log_dir,
         run_id_prefix=run_id_prefix,

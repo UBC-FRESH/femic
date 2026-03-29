@@ -794,8 +794,9 @@ the stock report under ``C:\Program Files\TIPSY 4.7\BTC``.
 
 Live behavior proved the following:
 
-- installed ``/TSR`` consults the per-user overlay report at:
-  - ``C:\Users\gep\OneDrive - UBC\Documents\BatchTIPSY Composer\TimberSupply.rpt``
+- installed ``/TSR`` consults the per-user overlay report under the current
+  user's Windows Documents folder:
+  - ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt``
   before falling back to the stock installed ``TimberSupply.rpt``
 - with the user overlay present and broken, plain installed ``/TSR`` fails
 - when the user overlay is moved out of the way, plain installed stock
@@ -810,6 +811,8 @@ This means the true unattended seam is:
 - test plain installed ``/TSR`` against that overlay
 - force the live TSR overlay horizon to:
   - ``TableRange=0-350:10|# MAX=350 INC=10``
+- resolve the overlay path generically from the current user's Windows
+  Documents directory rather than assuming a machine-specific OneDrive path
   so unattended BTC output lines up with FEMIC's longer VDYP curve timeline
   instead of stopping at the stock 120-year range
 

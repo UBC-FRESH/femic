@@ -604,6 +604,17 @@ def _write_tsr_unattended_runtime_template_from_stock(*, install_root: Path) -> 
     """Patch stock `TimberSupply.rpt` in place with the proven safe mashup columns."""
     template_path = install_root / _BTC_REPORT_FILENAME_BY_MODE["TSR"]
     text = template_path.read_text(encoding="utf-8")
+    lines = _build_tsr_unattended_runtime_report_lines(text=text)
+    template_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return template_path
+
+
+def _build_tsr_unattended_runtime_report_lines(
+    *,
+    text: str,
+    extra_lines: Sequence[str] = (),
+) -> list[str]:
+    """Return stock-based TSR report lines patched for FEMIC's unattended seam."""
     lines = text.splitlines()
     table_range_replaced = False
     for index, line in enumerate(lines):
@@ -616,14 +627,57 @@ def _write_tsr_unattended_runtime_template_from_stock(*, install_root: Path) -> 
     additions = [
         "VolumeGross\t\tgVol\t{yr}",
         "CC\t\tCC\t{yr}",
+        *extra_lines,
     ]
     for addition in additions:
         token = addition.split("\t", 1)[0]
         if any(line.startswith(token) for line in lines):
             continue
         lines.append(addition)
-    template_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    return template_path
+    return lines
+
+
+def _render_tsr_overlay_probe_line(token: str) -> str:
+    """Render one conservative stock-shaped transposed TSR probe line."""
+    return f"{token}\t\t\t{{yr}}"
+
+
+def _resolve_windows_documents_dir() -> Path | None:
+    """Return the current user's Windows Documents directory when discoverable."""
+    if not _tipsy_is_windows_host():
+        return None
+    try:
+        import winreg
+    except ImportError:
+        return None
+    try:
+        with winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER,
+            r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders",
+        ) as key:
+            value, _value_type = winreg.QueryValueEx(key, "Personal")
+    except OSError:
+        return None
+    expanded = os.path.expandvars(str(value)).strip()
+    if not expanded:
+        return None
+    return Path(expanded).expanduser()
+
+
+def _resolve_btc_user_overlay_report_path(*, mode: str) -> Path:
+    """Resolve the per-user BTC overlay report path for the requested mode."""
+    filename = _BTC_REPORT_FILENAME_BY_MODE[str(mode).strip().upper()]
+    candidates: list[Path] = []
+    documents_dir = _resolve_windows_documents_dir()
+    if documents_dir is not None:
+        candidates.append(documents_dir / "BatchTIPSY Composer" / filename)
+    candidates.append(Path.home() / "Documents" / "BatchTIPSY Composer" / filename)
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    preferred = candidates[0]
+    preferred.parent.mkdir(parents=True, exist_ok=True)
+    return preferred
 
 
 def resolve_btc_executable(
@@ -1170,7 +1224,7 @@ def probe_btc_report_columns(
     executable_path: str | Path | None = None,
     source_template: BTCCustomReportTemplate | str | Path | None = None,
     source_preset_name: str | None = "tsr-unattended-default",
-    copy_install: bool = True,
+    copy_install: bool = False,
     scratch_root: str | Path | None = None,
     log_dir: str | Path = Path("vdyp_io/logs"),
     run_id_prefix: str = "btc_probe",
@@ -1216,52 +1270,144 @@ def probe_btc_report_columns(
         if executable_path is not None
         else DEFAULT_BATCHTIPSY_WINDOWS_EXE.parent
     )
-
-    for index, candidate_token in enumerate(candidate_tokens, start=1):
-        trial_columns = [*accepted_columns, BTCCustomReportColumn(token=candidate_token)]
-        trial_template = build_btc_custom_report_template(
-            name=base_template.name,
-            source_template=base_template,
-            columns=trial_columns,
+    use_live_overlay = (
+        not copy_install
+        and str(mode).strip().upper() == "TSR"
+        and source_template is None
+        and str(source_preset_name or "").strip().lower().replace("_", "-")
+        == "tsr-unattended-default"
+    )
+    overlay_path: Path | None = None
+    original_overlay_text: str | None = None
+    original_overlay_exists = False
+    base_overlay_text: str | None = None
+    if use_live_overlay:
+        overlay_path = _resolve_btc_user_overlay_report_path(mode=mode)
+        original_overlay_exists = overlay_path.exists()
+        if original_overlay_exists:
+            original_overlay_text = overlay_path.read_text(encoding="utf-8")
+        stock_report_path = install_root / _BTC_REPORT_FILENAME_BY_MODE["TSR"]
+        base_overlay_text = (
+            "\n".join(
+                _build_tsr_unattended_runtime_report_lines(
+                    text=stock_report_path.read_text(encoding="utf-8")
+                )
+            )
+            + "\n"
         )
-        token_slug = re.sub(r"[^A-Za-z0-9]+", "_", candidate_token).strip("_") or "token"
-        trial_run_id = f"{run_id_prefix}_{index:02d}_{token_slug}"
-        try:
-            run_result = run_btc_cli(
-                input_csv=input_csv,
-                mode=mode,
-                executable_path=executable_path,
-                report_template=trial_template,
-                report_preset_name=None,
-                copy_install=copy_install,
-                scratch_root=(
-                    resolved_scratch_root / token_slug
-                    if resolved_scratch_root is not None
+
+    try:
+        for index, candidate_token in enumerate(candidate_tokens, start=1):
+            trial_columns = [*accepted_columns, BTCCustomReportColumn(token=candidate_token)]
+            trial_template = build_btc_custom_report_template(
+                name=base_template.name,
+                source_template=base_template,
+                columns=trial_columns,
+            )
+            token_slug = re.sub(r"[^A-Za-z0-9]+", "_", candidate_token).strip("_") or "token"
+            trial_run_id = f"{run_id_prefix}_{index:02d}_{token_slug}"
+            if use_live_overlay and overlay_path is not None and base_overlay_text is not None:
+                overlay_path.write_text(
+                    "\n".join(
+                        _build_tsr_unattended_runtime_report_lines(
+                            text=base_overlay_text,
+                            extra_lines=(_render_tsr_overlay_probe_line(candidate_token),),
+                        )
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
+            try:
+                run_result = run_btc_cli(
+                    input_csv=input_csv,
+                    mode=mode,
+                    executable_path=executable_path,
+                    report_template=(None if use_live_overlay else trial_template),
+                    report_preset_name=None,
+                    copy_install=copy_install,
+                    scratch_root=(
+                        resolved_scratch_root / token_slug
+                        if resolved_scratch_root is not None
+                        else None
+                    ),
+                    log_dir=resolved_log_dir,
+                    run_id=trial_run_id,
+                    env=env,
+                )
+            except Exception as exc:
+                manifest_path = resolved_log_dir / f"btc_manifest-{trial_run_id}.json"
+                manifest_payload = (
+                    _load_btc_manifest(manifest_path) if manifest_path.is_file() else None
+                )
+                output_created = (
+                    manifest_payload.get("artifacts", {})
+                    .get("output_csv", {})
+                    .get("exists")
+                    if manifest_payload
                     else None
-                ),
-                log_dir=resolved_log_dir,
-                run_id=trial_run_id,
-                env=env,
-            )
-        except Exception as exc:
-            manifest_path = resolved_log_dir / f"btc_manifest-{trial_run_id}.json"
-            manifest_payload = (
-                _load_btc_manifest(manifest_path) if manifest_path.is_file() else None
-            )
-            output_created = (
-                manifest_payload.get("artifacts", {})
-                .get("output_csv", {})
-                .get("exists")
-                if manifest_payload
-                else None
-            )
-            error_created = (
-                manifest_payload.get("artifacts", {})
-                .get("error_csv", {})
-                .get("exists")
-                if manifest_payload
-                else None
-            )
+                )
+                error_created = (
+                    manifest_payload.get("artifacts", {})
+                    .get("error_csv", {})
+                    .get("exists")
+                    if manifest_payload
+                    else None
+                )
+                windows_cleanup = (
+                    manifest_payload.get("windows_dialog_cleanup", {})
+                    if manifest_payload
+                    else {}
+                )
+                results.append(
+                    BTCColumnProbeResult(
+                        candidate_token=candidate_token,
+                        status="failed",
+                        accepted_column_tokens=tuple(column.token for column in accepted_columns),
+                        run_id=trial_run_id,
+                        exit_code=(
+                            manifest_payload.get("exit_code") if manifest_payload else None
+                        ),
+                        error_message=str(exc),
+                        manifest_path=(manifest_path if manifest_path.is_file() else None),
+                        output_created=output_created,
+                        error_created=error_created,
+                        dialog_auto_closed=(
+                            bool(windows_cleanup.get("closed_window_count", 0))
+                            if isinstance(windows_cleanup, Mapping)
+                            else None
+                        ),
+                        dialog_close_attempted=(
+                            bool(windows_cleanup.get("close_attempted"))
+                            if isinstance(windows_cleanup, Mapping)
+                            else None
+                        ),
+                        failure_classification=_classify_btc_probe_failure(
+                            error_message=str(exc),
+                            manifest_payload=manifest_payload,
+                        ),
+                        report_type=trial_template.report_type,
+                        identifier_mode=trial_template.identifier,
+                        output_format=trial_template.output_format,
+                        clues=_btc_token_clues(
+                            token=candidate_token, install_root=install_root
+                        ),
+                    )
+                )
+                final_template = build_btc_custom_report_template(
+                    name=base_template.name,
+                    source_template=base_template,
+                    columns=accepted_columns,
+                )
+                _write_btc_probe_compatibility_ledger(
+                    compatibility_json=resolved_compatibility_json,
+                    results=results,
+                    final_template=final_template,
+                    source_template=base_template,
+                )
+                continue
+
+            accepted_columns.append(BTCCustomReportColumn(token=candidate_token))
+            manifest_payload = _load_btc_manifest(run_result.manifest_path)
             windows_cleanup = (
                 manifest_payload.get("windows_dialog_cleanup", {})
                 if manifest_payload
@@ -1270,14 +1416,15 @@ def probe_btc_report_columns(
             results.append(
                 BTCColumnProbeResult(
                     candidate_token=candidate_token,
-                    status="failed",
+                    status="accepted",
                     accepted_column_tokens=tuple(column.token for column in accepted_columns),
                     run_id=trial_run_id,
-                    exit_code=(manifest_payload.get("exit_code") if manifest_payload else None),
-                    error_message=str(exc),
-                    manifest_path=(manifest_path if manifest_path.is_file() else None),
-                    output_created=output_created,
-                    error_created=error_created,
+                    exit_code=run_result.exit_code,
+                    manifest_path=run_result.manifest_path,
+                    output_csv_path=run_result.output_csv_path,
+                    error_csv_path=run_result.error_csv_path,
+                    output_created=run_result.output_csv_path.is_file(),
+                    error_created=run_result.error_csv_path.is_file(),
                     dialog_auto_closed=(
                         bool(windows_cleanup.get("closed_window_count", 0))
                         if isinstance(windows_cleanup, Mapping)
@@ -1287,10 +1434,6 @@ def probe_btc_report_columns(
                         bool(windows_cleanup.get("close_attempted"))
                         if isinstance(windows_cleanup, Mapping)
                         else None
-                    ),
-                    failure_classification=_classify_btc_probe_failure(
-                        error_message=str(exc),
-                        manifest_payload=manifest_payload,
                     ),
                     report_type=trial_template.report_type,
                     identifier_mode=trial_template.identifier,
@@ -1309,54 +1452,12 @@ def probe_btc_report_columns(
                 final_template=final_template,
                 source_template=base_template,
             )
-            continue
-
-        accepted_columns.append(BTCCustomReportColumn(token=candidate_token))
-        manifest_payload = _load_btc_manifest(run_result.manifest_path)
-        windows_cleanup = (
-            manifest_payload.get("windows_dialog_cleanup", {})
-            if manifest_payload
-            else {}
-        )
-        results.append(
-            BTCColumnProbeResult(
-                candidate_token=candidate_token,
-                status="accepted",
-                accepted_column_tokens=tuple(column.token for column in accepted_columns),
-                run_id=trial_run_id,
-                exit_code=run_result.exit_code,
-                manifest_path=run_result.manifest_path,
-                output_csv_path=run_result.output_csv_path,
-                error_csv_path=run_result.error_csv_path,
-                output_created=run_result.output_csv_path.is_file(),
-                error_created=run_result.error_csv_path.is_file(),
-                dialog_auto_closed=(
-                    bool(windows_cleanup.get("closed_window_count", 0))
-                    if isinstance(windows_cleanup, Mapping)
-                    else None
-                ),
-                dialog_close_attempted=(
-                    bool(windows_cleanup.get("close_attempted"))
-                    if isinstance(windows_cleanup, Mapping)
-                    else None
-                ),
-                report_type=trial_template.report_type,
-                identifier_mode=trial_template.identifier,
-                output_format=trial_template.output_format,
-                clues=_btc_token_clues(token=candidate_token, install_root=install_root),
-            )
-        )
-        final_template = build_btc_custom_report_template(
-            name=base_template.name,
-            source_template=base_template,
-            columns=accepted_columns,
-        )
-        _write_btc_probe_compatibility_ledger(
-            compatibility_json=resolved_compatibility_json,
-            results=results,
-            final_template=final_template,
-            source_template=base_template,
-        )
+    finally:
+        if use_live_overlay and overlay_path is not None:
+            if original_overlay_exists and original_overlay_text is not None:
+                overlay_path.write_text(original_overlay_text, encoding="utf-8")
+            elif overlay_path.exists():
+                overlay_path.unlink()
 
     final_template = build_btc_custom_report_template(
         name=base_template.name,

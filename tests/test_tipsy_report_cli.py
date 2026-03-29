@@ -168,6 +168,7 @@ def test_tipsy_probe_btc_columns_cli_writes_summary(monkeypatch, tmp_path: Path)
     assert result.exit_code == 0
     assert captured["source_preset_name"] is None
     assert captured["candidate_tokens"] == ["VolumeGross", "SPH:000"]
+    assert captured["copy_install"] is False
     payload = cli_main.json.loads(summary.read_text(encoding="utf-8"))
     assert payload["accepted_tokens"] == ["VolumeGross"]
     assert payload["failed_tokens"] == ["SPH:000"]

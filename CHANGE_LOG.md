@@ -7743,3 +7743,7 @@
     the real `/TSR` game is about preserving the hidden stock
     `TimberSupply.rpt` contract and extending it conservatively through the
     live overlay path.
+- 2026-03-28 (Phase 48 Windows overlay path portability): replaced the
+  machine-specific BTC overlay lookup in FEMIC source code with a generic
+  Windows Documents-folder resolver so unattended `/TSR` probing and runtime
+  patching no longer assume a user-specific OneDrive directory name.
