@@ -7668,10 +7668,22 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 ## Detailed Next Steps Notes
 
-- The core unattended BTC cutover bird is landed through Phase `48.2d3`
-  under GitHub issue `#49`; the next cutover-wide closeout edge is `P48.3`.
-- The next active optional-bank implementation target is GitHub issue `#48`
-  / roadmap task `P48.2d2`:
+- The core unattended BTC cutover bird is landed through Phase `48.2d3`.
+- Phase `48.3` is now complete under GitHub issue `#56`.
+- The BTC cutover track now carries:
+  - the landed unattended `MSYT.csv` + returned CSV seam;
+  - the full optional indicator-bank rollout from the canonical BTC ledger;
+  - a tracked installed-tree audit note at
+    `planning/tipsy_install_tree_audit_20260329.md`;
+  - runtime audit artifacts under `tipsy_io/logs/p48_3_install_audit/`,
+    including PDF text extracts and machine-readable CHM topic inventories.
+- The remaining notable caveat from the install-tree audit is narrow:
+  - local `hh.exe -decompile` did not yield full CHM HTML extraction in this
+    environment;
+  - however, the compiled help files were still mined into topic inventories,
+    which was sufficient to record the adjacent help/report/runtime surfaces for
+    future follow-on work.
+- The optional-bank rollout under GitHub issue `#48` is now complete:
   - treat the remaining missing optional BTC/TIPSY indicators as one umbrella
     rollout track, grouped into logical banks rather than split across a large
     pile of tiny issues;
@@ -8325,27 +8337,28 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P48.2e Add a FEMIC-side BTC custom-report template generator so vetted
     `.rpt` files can be authored from curated or user-specified output-column
     lists instead of hand-edited inside the BTC GUI.
-- [ ] P48.3 Validate, document, and close out the cutover
+- [x] P48.3 Validate, document, and close out the cutover
   - [x] P48.3a Add tests for BTC executable discovery, MSYT CSV writing, CLI
     argument assembly, and returned BTC CSV parsing.
   - [x] P48.3b Update operator/docs/contracts to describe BTC `MSYT.csv` input,
     BTC CLI `/TSR`, returned CSV outputs, and any remaining gaps in richer
     stock-level indicator support.
-  - [ ] P48.3c Update `CHANGE_LOG.md` and GitHub issue #46 with either the
-    landed BTC CSV cutover result or the concrete blocker map if richer output
-    requirements still prevent full adoption.
-  - [ ] P48.3d Perform a full deep-dive audit of the installed
+  - [x] P48.3c Reconcile the repo narrative and GitHub tracker state now that
+    the landed BTC CSV seam, optional-bank rollout, and cutover closeout notes
+    live across issues `#48`, `#49`, and `#56`.
+  - [x] P48.3d Perform a full deep-dive audit of the installed
     `C:\Program Files\TIPSY 4.7\` tree as part of the ongoing BTC seam
     reverse-engineering effort, including:
     - mining all packaged PDFs for CLI/runtime/report clues;
-    - extracting Windows `.chm` help content into a platform-independent,
-      human-readable, machine-scannable format;
+    - recovering a platform-independent, human-readable, machine-scannable CHM
+      topic inventory even though full local `hh.exe -decompile` HTML
+      extraction remained unavailable in this environment;
     - scanning Tcl/report/config/default files for undocumented switches,
       report coupling behavior, and other "easter egg" runtime seams such as
       the newly surfaced `-RGM` regime-file clue from `TIPSY-CBM.pdf`.
   - Notes:
     - Governing tracker:
-      - GitHub issue #46
+      - GitHub issue #56
     - Current design intent:
       - hard-cut the old fixed-width DAT / raw `.out` BatchTIPSY seam over to
         the newer BTC `MSYT.csv` + returned CSV seam.
@@ -8357,6 +8370,8 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - `C:\Program Files\TIPSY 4.7\BTC\vriSpecies.txt`
       - `C:\Program Files\TIPSY 4.7\BTC\gw.txt`
       - `C:\Program Files\TIPSY 4.7\BTC\oafs.txt`
+      - `planning/tipsy_install_tree_audit_20260329.md`
+      - `tipsy_io/logs/p48_3_install_audit/`
     - Proven seam:
       - `TIPSYbtc.exe /TSR <input_csv> <output_csv> <error_csv>` works on the
         local Windows host and returns CSV output/error files with at least

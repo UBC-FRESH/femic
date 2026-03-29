@@ -8355,3 +8355,23 @@
     remain shipped through `stand-structure-threshold-raw`.
   - This leaves Issue `#48` with no remaining unshipped logical banks, only the
     documented juvenile-total caveat.
+- 2026-03-29 (Issue #56 P48.3 BTC cutover closeout): reconciled the remaining
+  cutover-wide tracker/docs drift and recorded the installed-tree audit in a
+  durable repo note.
+  - `ROADMAP.md` now treats `P48.3` as complete under GitHub issue `#56`
+    rather than leaving the old closed issue `#46` as the apparent governing
+    tracker.
+  - Added `planning/tipsy_install_tree_audit_20260329.md` as the auditable
+    installed-tree summary for `C:\Program Files\TIPSY 4.7\`.
+  - The audit confirms:
+    - BTC CLI can start from saved `.btc` projects, `/TSR`, or `/FLP`;
+    - BatchTIPSY-to-CBM documentation explicitly advertises the `-RGM`
+      regime-file seam;
+    - `OutputColumns.txt` is the canonical BTC output ledger for FEMIC bank
+      planning;
+    - packaged config/default files such as `oafs.txt` and `utiliz.txt` expose
+      useful model semantics for future reverse-engineering work.
+  - Full local CHM HTML decompile was not available through `hh.exe` in this
+    environment, but machine-readable topic inventories were still extracted
+    from the compiled help files and saved under
+    `tipsy_io/logs/p48_3_install_audit/chm/`.

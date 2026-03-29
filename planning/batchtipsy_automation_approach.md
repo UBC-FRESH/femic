@@ -55,6 +55,49 @@ Current planning implication:
   - FEMIC -> BTC/BatchTIPSY -> regime files -> TIPSY-CBM
   - FEMIC -> BTC/BatchTIPSY -> regime files -> FANSIER
 
+## Installed-Tree Audit Update (2026-03-29)
+
+The broader installed-tree audit under `P48.3d` is now complete enough to
+change planning posture from "possible easter eggs" to "documented adjacent
+seams."
+
+High-signal audit findings:
+
+- `BTC\OutputColumns.txt` is confirmed as the canonical BTC output ledger, and
+  it explicitly encodes the repeated `{000,125,175}` utilization-threshold
+  triplets that FEMIC is now treating as atomic bank units.
+- `BTC\userguide1.4.pdf` confirms command-line start modes for:
+  - saved `.btc` projects;
+  - `/TSR` via `TimberSupply.rpt`;
+  - `/FLP` via `ForestLandscapePlan.rpt`.
+- `BTC\userguide1.4.pdf` also confirms the positional command-line filename
+  contract and says command-line BTC still obeys normal config files such as
+  `settings.txt`.
+- `CBM\TIPSY-CBM.pdf` explicitly documents the `-RGM` regime-file export seam
+  for BatchTIPSY.
+- `BTC\oafs.txt`, `BTC\utiliz.txt`, `BTC\gw.txt`, `BTC\FertRespMOF.txt`, and
+  `BTC\vriSpecies.txt` remain first-class reverse-engineering surfaces for
+  future follow-on work around OAF logic, utilization thresholds, genetics,
+  fertilization, and species mapping.
+
+The `.chm` help audit produced a narrower but still useful result:
+
+- local `hh.exe -decompile` did not yield full HTML extraction in this
+  environment;
+- however, machine-readable topic inventories were recovered directly from the
+  compiled help binaries and saved under:
+  - `tipsy_io/logs/p48_3_install_audit/chm/`
+
+Those topic inventories surfaced help coverage for:
+
+- TIPSY Batch/custom-table/timber-supply/OAF/mortality topics;
+- Fansier regime, pricing, economics, biomass/carbon/CO2e topics;
+- SiteTools batch output-column and site-index topics.
+
+The full audit summary now lives in:
+
+- `planning/tipsy_install_tree_audit_20260329.md`
+
 ## Evidence Already Collected
 
 - Local Windows host has BTC installed at:
