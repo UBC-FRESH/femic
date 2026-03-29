@@ -70,6 +70,21 @@ Extracted help surface
 Decompiled scratch
 
 - `tmp/ilspy_fansier/`
+- regenerated deterministically from the installed binary with:
+  - `C:\Users\gep\.dotnet\tools\ilspycmd.exe -p -o tmp\ilspy_fansier --disable-updatecheck "C:\Program Files\TIPSY 4.7\Fansier\Fansier.exe"`
+- primary files to cite going forward:
+  - `tmp/ilspy_fansier/Fansier/frmFansier.cs`
+  - `tmp/ilspy_fansier/Fansier/frmBatch.cs`
+  - `tmp/ilspy_fansier/Fansier/modRegime.cs`
+
+Related BTC decompiled scratch
+
+- `tmp/ilspy_btc/`
+- regenerated deterministically from the installed binary with:
+  - `C:\Users\gep\.dotnet\tools\ilspycmd.exe -p -o tmp\ilspy_btc --disable-updatecheck "C:\Program Files\TIPSY 4.7\BTC\TIPSYbtc.exe"`
+- primary files to cite going forward:
+  - `tmp/ilspy_btc/TIPSY/frmTIPSY.cs`
+  - `tmp/ilspy_btc/TIPSY/modBTCfile.cs`
 
 ## Confirmed Code-Backed Findings
 
@@ -316,22 +331,91 @@ Interpretation
 - So the preferred FEMIC posture of extracting raw/null-discount outputs is
   compatible with the shipped FAN$IER discount-assumptions editor.
 
+## First Real Batch Extraction Proof
+
+Live validation on 2026-03-29
+
+- Started from the current lowest clean watcher-import probe:
+  - `tipsy_io/logs/fansier_probe/TIPSY45 Sample_ultramin_clean_1row.rgm`
+- Confirmed that this regime still loads through the live
+  `%TEMP%\\Fansier\\` watcher seam.
+- Opened FAN$IER batch mode and confirmed an important UI/runtime boundary:
+  - batch mode does not inherit the currently loaded main-window regime;
+  - the batch form maintains its own `lstRegime` collection and requires
+    regimes to be added explicitly through the `+` button / `LoadBatchRgm(...)`
+    file-dialog path.
+- With that one-row regime loaded into batch mode, `Use defaults` selected,
+  `Fansier Defaults   (Discount Rate = 2%)` checked, one product selected,
+  one age selected, and output path set to:
+  - `tipsy_io/logs/fansier_probe/batch_smoke/`
+  the `Start Batch` button enabled and FAN$IER emitted a real CSV report:
+  - `tipsy_io/logs/fansier_probe/batch_smoke/Report.csv`
+- The output is economically degenerate but structurally real:
+  - one result row was written for the minimal regime;
+  - values are mostly `0` / `n/c`, which is consistent with a one-row
+    ultramin input rather than a richer operational regime.
+
+Interpretation
+
+- The current one-row minimum regime is not merely importable; it is also
+  batch-extractable.
+- A separate `.eco` file is still not required for that batch report path when
+  `Use defaults` is selected.
+- The next useful question is no longer "can FAN$IER emit anything from a
+  reduced regime?" but rather:
+  - what richer regime content is needed before the emitted report becomes
+    analytically useful rather than just structurally valid; and
+  - whether the same path works cleanly with an explicit `0%` discount
+    assumptions set.
+
 ## What Is Still Unproven
 
-- fully unattended headless FAN$IER batch execution
 - any useful command-line seam that:
   - opens batch mode
   - loads `.rgm` / `.eco` directly
   - starts `Start Batch` without clicks
+- whether FAN$IER's `0%` discount assumptions can be persisted or loaded
+  across fresh sessions without GUI automation
+- whether the remaining quoted/comma-formatted activity-cost columns in batch
+  CSV output can be normalized purely through existing FAN$IER export options
 
 ## Current Best Hypothesis
 
 - the real practical seam is:
   - FEMIC prepares `.rgm` / `.eco`
-  - FAN$IER ingests regimes through its temp-folder watcher and/or interactive
-    import/export flows
-  - FAN$IER batch reporting may remain GUI-triggered unless a hidden startup
-    branch is found later
+  - FAN$IER ingests regimes through its temp-folder watcher and/or scripted
+    batch-form import/export flows
+  - fully unattended execution is achievable through GUI automation even though
+    a useful command-line startup seam still has not been found
+
+## New Proof: Fully Unattended Fresh-Session Batch Extraction
+
+- The repo-local smoke `tmp/fansier_batch_fresh_session_smoke.py` now proves a
+  fresh FAN$IER session can be driven end to end without user clicks:
+  - kill existing FAN$IER processes
+  - relaunch FAN$IER
+  - open batch mode from the main toolbar
+  - load a standalone `.rgm` through the batch form's `+` picker
+  - create `FEMIC Raw 0%` on the fly if it is absent
+  - select one discount set, one product group, and one harvest age
+  - start batch and wait for `Done`
+  - harvest the emitted CSV
+- The current proof run succeeded with:
+  - regime:
+    `C:\Users\gep\OneDrive - UBC\Documents\TIPSY\test1\Batchbiomass-10000.rgm`
+  - output:
+    `tipsy_io/logs/fansier_probe/batch_auto/AutoSmoke.csv`
+  - discount assumptions:
+    `FEMIC Raw 0%`
+- This is now the first real proof that FAN$IER extraction can be run
+  unattended in practice, even though the seam is GUI automation rather than a
+  native headless CLI contract.
+- Remaining CSV caveat:
+  - disabling the batch-form `Use comma for thousands separator` checkbox is
+    necessary and now automated;
+  - even so, some activity-cost columns still arrive as quoted values with
+    thousands separators (for example `"4,056.43"`), so downstream FEMIC CSV
+    normalization still needs to treat those fields cautiously.
 
 ## Next High-Value Experiments
 
@@ -354,17 +438,37 @@ Interpretation
      - probe whether a minimal `.eco` sidecar or embedded ECO content changes
        anything for batch/report preparation beyond pure regime import
 3. Probe whether registry-preseeded batch settings reduce the GUI boundary.
-   - `RunIdentifier`
-   - `BatchPath`
-   - report type / short/long toggles
+   - Done for the current unattended proof:
+     - `RunIdentifier`
+     - `BatchPath`
+     - report type / short/long toggles
+     - `ThousandSeparator = False`
+   - Next:
+     - determine whether any additional registry state can remove the need to
+       create `FEMIC Raw 0%` through GUI automation on each fresh session.
 4. Inspect whether any remaining decompiled startup branch can auto-open
     batch mode or consume temp `.rgm` files without manual navigation.
 5. If batch extraction becomes reachable, validate whether a null-discount
    configuration is sufficient to treat FAN$IER as a raw economics extractor
    while leaving discounting entirely to downstream FEMIC analysis.
 6. Shift the next live probe from importability to report usefulness:
-   - load the current ultramin one-row regime
-   - open batch mode with `Use defaults`
-   - add or edit a `0%` discount-assumptions set
-   - see whether FAN$IER can emit short/long reports from that minimal regime
-     without requiring a separate `.eco`
+   - Done for the first threshold:
+     - the current ultramin one-row regime now emits a real CSV batch report
+       under `Use defaults` with the shipped 2% assumptions set.
+   - Done:
+     - repeat the same smoke with an explicit `0%` discount-assumptions set;
+     - run the same path against at least one richer known-good `.rgm`.
+   - Current richer unattended proof:
+     - `Batchbiomass-10000.rgm` now batch-runs unattended under
+       `FEMIC Raw 0%` and emits materially populated economics in
+       `tipsy_io/logs/fansier_probe/batch_auto/AutoSmoke.csv`.
+   - Next:
+     - compare whether remaining formatting artifacts are limited to the
+       activity-cost columns;
+     - inspect whether short-report option combinations reduce those artifacts
+       without losing useful economics content.
+7. Preserve deterministic decompile notes while this issue is active.
+   - Treat `tmp/ilspy_fansier/` and `tmp/ilspy_btc/` as the canonical local
+     scratch locations for managed-source inspection on this machine.
+   - Do not rely on ephemeral decompile output paths or chat memory for source
+     file locations again.

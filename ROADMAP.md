@@ -8694,6 +8694,14 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         FAN$IER-preparation seam.
     - Confirmed findings now recorded in:
       - `planning/fansier_linkage_investigation.md`
+    - Keep the reverse-engineering scratch deterministic and repo-local:
+      - `tmp/ilspy_fansier/`
+      - `tmp/ilspy_btc/`
+      so follow-on work can cite stable files such as:
+      - `tmp/ilspy_fansier/Fansier/frmFansier.cs`
+      - `tmp/ilspy_fansier/Fansier/frmBatch.cs`
+      - `tmp/ilspy_fansier/Fansier/modRegime.cs`
+      - `tmp/ilspy_btc/TIPSY/frmTIPSY.cs`
     - Current best read:
       - FAN$IER command-line startup is currently only proven as a project-load
         seam, not an unattended execution seam;
@@ -8726,6 +8734,19 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - one valid `*Product` block is enough for a clean live load, so the
           full shipped product catalog is not required just to import a regime.
       - current lowest proven live watcher regime is essentially:
+      - the next live FAN$IER slice should now test report usefulness rather
+        than pure importability:
+        - first batch threshold is now proven:
+          - the one-row minimum regime emits a real `Report.csv` under
+            `Use defaults` with the shipped 2% discount assumptions set;
+          - the result is structurally valid but economically sparse
+            (`0` / `n/c` heavy), which is expected at that floor.
+        - next:
+          - repeat the same smoke with an explicit `0%` discount assumptions
+            set; and
+          - compare against at least one richer known-good `.rgm` to isolate
+            what additional regime richness turns the batch output from merely
+            valid into analytically useful.
         - one `*FansierData` header plus one real row
         - one `*Product` block with one subtype column and one aligned row
       - a zero-row regime is below FAN$IER's UI floor and crashes later in the
@@ -8738,6 +8759,19 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
           - one product selection
           - one age selection
           - valid output path and report type
+      - fully unattended fresh-session extraction is now proven through GUI
+        automation:
+        - `tmp/fansier_batch_fresh_session_smoke.py` can relaunch FAN$IER,
+          open batch mode, load `Batchbiomass-10000.rgm`, synthesize
+          `FEMIC Raw 0%` if absent, run batch, and harvest
+          `tipsy_io/logs/fansier_probe/batch_auto/AutoSmoke.csv`
+          without user clicks.
+        - this is a real unsupervised seam even though it is not a native CLI
+          batch contract.
+      - current extraction caveat:
+        - forcing `ThousandSeparator = False` is necessary for cleaner CSV,
+          but some activity-cost columns still emerge as quoted values with
+          thousands separators, so downstream normalization is still needed.
       - null-rate economics is not blocked by FAN$IER:
         - the shipped discount-assumptions editor explicitly allows
           `0%` discount and `0%` reinvestment rates.
@@ -8748,6 +8782,10 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - Guardrails:
       - do not assume unsupervised FAN$IER runtime automation exists just
         because the help says "batch mode";
+      - do not confuse "native headless CLI seam" with "practical unattended
+        seam":
+        - the former is still unproven;
+        - the latter is now real via scripted GUI automation.
       - distinguish carefully between:
         - data-preparation seams FEMIC can automate;
         - fully unattended execution seams;

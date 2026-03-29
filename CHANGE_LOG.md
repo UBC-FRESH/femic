@@ -8597,3 +8597,48 @@
     - `0%` reinvestment rate
   - This keeps the preferred FEMIC null-discount extraction posture viable even
     if FAN$IER remains part of the reporting path.
+- 2026-03-29 (Issue #59): proved the first real FAN$IER batch extraction from a
+  reduced standalone regime.
+  - Regenerated the decompiled FAN$IER/BTC source into deterministic repo-local
+    scratch so the reverse-engineering notes now point at stable files:
+    - `tmp/ilspy_fansier/`
+    - `tmp/ilspy_btc/`
+  - Confirmed an important batch/UI boundary:
+    - batch mode does not inherit the currently loaded main-window regime;
+    - regimes must be added separately to the batch form's own regime list via
+      the `+` button / `LoadBatchRgm(...)`.
+  - Loaded the current watcher-floor regime,
+    `tipsy_io/logs/fansier_probe/TIPSY45 Sample_ultramin_clean_1row.rgm`,
+    into batch mode and ran it with:
+    - `Use defaults`
+    - `Fansier Defaults   (Discount Rate = 2%)`
+    - one selected product
+    - one selected age
+    - output path `tipsy_io/logs/fansier_probe/batch_smoke/`
+  - FAN$IER emitted a real CSV batch report:
+    - `tipsy_io/logs/fansier_probe/batch_smoke/Report.csv`
+  - The result is structurally valid but economically sparse (`0` / `n/c`
+    heavy), which proves the reduced regime is batch-extractable even though it
+    is not yet a rich operational economics case.
+- 2026-03-29 (Issue #59): proved the first fully unattended fresh-session
+  FAN$IER batch extraction path.
+  - Added and hardened repo-local automation scratch at:
+    - `tmp/fansier_batch_fresh_session_smoke.py`
+  - Confirmed a fresh FAN$IER session can now be driven without user clicks to:
+    - relaunch FAN$IER
+    - open batch mode
+    - load a standalone `.rgm`
+    - synthesize `FEMIC Raw 0%` if absent
+    - select one discount set, one product, and one harvest age
+    - start batch
+    - harvest emitted CSV output
+  - Successful unattended proof artifact:
+    - `tipsy_io/logs/fansier_probe/batch_auto/AutoSmoke.csv`
+  - The richer proof used:
+    - `C:\Users\gep\OneDrive - UBC\Documents\TIPSY\test1\Batchbiomass-10000.rgm`
+    - `FEMIC Raw 0%`
+  - One real caveat remains:
+    - disabling `Use comma for thousands separator` is necessary and now part
+      of the automation path, but some activity-cost columns still arrive as
+      quoted comma-formatted values, so downstream FEMIC normalization is still
+      needed for a perfectly machine-clean ingest.
