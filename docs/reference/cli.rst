@@ -197,8 +197,8 @@ Subcommands
 - ``--report-template PATH`` (optional vetted ``TimberSupply.rpt`` override)
 - ``--report-preset TEXT`` (default: ``tsr-unattended-default`` for ``TSR``)
 - ``--copy-install`` / ``--use-installed-btc``
-- ``--scratch-dir PATH`` (optional writable scratch directory)
-- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--scratch-dir PATH`` (optional writable scratch directory; defaults under ``tipsy_io/scratch``)
+- ``--log-dir PATH`` (default: ``tipsy_io/logs``)
 - ``--run-id TEXT``
 - ``--instance-root PATH``
 

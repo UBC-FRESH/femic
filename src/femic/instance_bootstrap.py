@@ -43,6 +43,8 @@ INSTANCE_DIRS: tuple[Path, ...] = (
     Path("data"),
     Path("data/downloads"),
     Path("output"),
+    Path("tipsy_io/logs"),
+    Path("tipsy_io/scratch"),
     Path("vdyp_io/logs"),
 )
 INSTANCE_TEMPLATE_FILES: tuple[Path, ...] = (

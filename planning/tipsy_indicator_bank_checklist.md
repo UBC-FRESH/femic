@@ -59,18 +59,18 @@ Source inventory: `planning/AllFieldsSQL.rpt`.
   - [ ] Crop250DBHgMean
   - [ ] Crop250LiveCrown
 - lumber-2-or-better
-  - [ ] Lumber_2_or_Better_2x4
-  - [ ] Lumber_2_or_Better_2x6
-  - [ ] Lumber_2_or_Better_2x8
-  - [ ] Lumber_2_or_Better_2x10
-  - [ ] Lumber_2_or_Better_All
-  - [ ] LRF_2_or_Better_All
+  - [x] Lumber_2_or_Better_2x4
+  - [x] Lumber_2_or_Better_2x6
+  - [x] Lumber_2_or_Better_2x8
+  - [x] Lumber_2_or_Better_2x10
+  - [x] Lumber_2_or_Better_All
+  - [x] LRF_2_or_Better_All
 - residual-fibre
-  - [ ] Residual_Chips
-  - [ ] Residual_Sawdust
-  - [ ] Residual_Shavings
-  - [ ] Residual_Trim
-  - [ ] Residual_Bark
+  - [x] Residual_Chips
+  - [x] Residual_Sawdust
+  - [x] Residual_Shavings
+  - [x] Residual_Trim
+  - [x] Residual_Bark
 - log-grades
   - [x] Logs_Grade_D
   - [x] Logs_Grade_F

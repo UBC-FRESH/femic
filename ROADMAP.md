@@ -7689,6 +7689,16 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - the full `log-grades` family (`D/F/H/I/J/U/X/Y/All`) probes cleanly
       through the live unattended `/TSR` overlay seam and is the next shipped
       optional bank candidate.
+    - the `lumber-2-or-better` family and `residual-fibre` family also probe
+      cleanly through that same seam, so the first product-oriented rollout can
+      land as a small cluster of proven banks rather than a one-bank bottleneck.
+  - operator-supervision cleanup to land alongside this work:
+    - move BTC/TIPSY CLI default runtime artifacts from `vdyp_io/logs` into
+      `tipsy_io/logs`, with default scratch under `tipsy_io/scratch`, so
+      supervised BTC runs no longer look like VDYP runs at a glance;
+    - treat live unattended `/TSR` overlay validation as strictly sequential,
+      not parallel, because the user-overlay `TimberSupply.rpt` seam is shared
+      across runs.
 - The first optional unattended BTC indicator-bank switch is now wired through
   the live user-overlay TSR seam:
   - `--indicator-bank stand-structure-basic`

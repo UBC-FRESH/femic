@@ -41,7 +41,14 @@ _BTC_REPORT_PRESET_NAMES = (
     "timber-supply-sql",
     "tsr-unattended-default",
 )
-_BTC_INDICATOR_BANK_NAMES = ("stand-structure-basic", "log-grades")
+DEFAULT_BTC_LOG_DIR = Path("tipsy_io/logs")
+DEFAULT_BTC_SCRATCH_ROOT = Path("tipsy_io/scratch")
+_BTC_INDICATOR_BANK_NAMES = (
+    "stand-structure-basic",
+    "log-grades",
+    "lumber-2-or-better",
+    "residual-fibre",
+)
 _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
     "stand-structure-basic": (
         ("MAI", "MAI"),
@@ -62,6 +69,21 @@ _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
         ("Logs_Grade_X", "Logs_Grade_X"),
         ("Logs_Grade_Y", "Logs_Grade_Y"),
         ("Logs_Grade_All", "Logs_Grade_All"),
+    ),
+    "lumber-2-or-better": (
+        ("Lumber_2_or_Better_2x4", "Lumber_2_or_Better_2x4"),
+        ("Lumber_2_or_Better_2x6", "Lumber_2_or_Better_2x6"),
+        ("Lumber_2_or_Better_2x8", "Lumber_2_or_Better_2x8"),
+        ("Lumber_2_or_Better_2x10", "Lumber_2_or_Better_2x10"),
+        ("Lumber_2_or_Better_All", "Lumber_2_or_Better_All"),
+        ("LRF_2_or_Better_All", "LRF_2_or_Better_All"),
+    ),
+    "residual-fibre": (
+        ("Residual_Chips", "Residual_Chips"),
+        ("Residual_Sawdust", "Residual_Sawdust"),
+        ("Residual_Shavings", "Residual_Shavings"),
+        ("Residual_Trim", "Residual_Trim"),
+        ("Residual_Bark", "Residual_Bark"),
     ),
 }
 _BTC_OUTPUT_ALIAS_TO_TABLE_COLUMN: dict[str, str] = {
@@ -1112,7 +1134,7 @@ def run_btc_cli(
     indicator_bank_names: Sequence[str] = (),
     copy_install: bool | None = None,
     scratch_root: str | Path | None = None,
-    log_dir: str | Path = Path("vdyp_io/logs"),
+    log_dir: str | Path = DEFAULT_BTC_LOG_DIR,
     run_id: str | None = None,
     env: Mapping[str, str] | None = None,
     extra_executable_args: Sequence[str | Path] = (),
@@ -1129,7 +1151,9 @@ def run_btc_cli(
     resolved_scratch_root = (
         Path(scratch_root).expanduser().resolve()
         if scratch_root is not None
-        else (resolved_log_dir / f"btc_scratch-{effective_run_id}").resolve()
+        else (DEFAULT_BTC_SCRATCH_ROOT / f"btc-{effective_run_id}")
+        .expanduser()
+        .resolve()
     )
     should_copy_install = (
         bool(copy_install)
@@ -1378,7 +1402,7 @@ def probe_btc_report_columns(
     source_preset_name: str | None = "tsr-unattended-default",
     copy_install: bool = False,
     scratch_root: str | Path | None = None,
-    log_dir: str | Path = Path("vdyp_io/logs"),
+    log_dir: str | Path = DEFAULT_BTC_LOG_DIR,
     run_id_prefix: str = "btc_probe",
     env: Mapping[str, str] | None = None,
     compatibility_json: str | Path | None = None,

@@ -85,6 +85,7 @@ from femic.pipeline.tipsy_config import (
     load_tipsy_tsa_config,
 )
 from femic.pipeline.tipsy import (
+    DEFAULT_BTC_LOG_DIR,
     apply_btc_indicator_banks,
     probe_btc_report_columns,
     BTCRunResult,
@@ -2712,11 +2713,14 @@ def tipsy_run_btc(
     scratch_dir: Path | None = typer.Option(
         None,
         "--scratch-dir",
-        help="Scratch directory for staged install/input/output files.",
+        help=(
+            "Scratch directory for staged install/input/output files. "
+            "Defaults under tipsy_io/scratch when omitted."
+        ),
         show_default=False,
     ),
     log_dir: Path = typer.Option(
-        Path("vdyp_io/logs"),
+        DEFAULT_BTC_LOG_DIR,
         "--log-dir",
         help="Directory for BTC stdout/stderr logs and manifest.",
         show_default=True,
@@ -2823,11 +2827,14 @@ def tipsy_probe_btc_columns(
     scratch_dir: Path | None = typer.Option(
         None,
         "--scratch-dir",
-        help="Scratch directory root for staged probe installs.",
+        help=(
+            "Scratch directory root for staged probe installs. "
+            "Defaults under tipsy_io/scratch when omitted."
+        ),
         show_default=False,
     ),
     log_dir: Path = typer.Option(
-        Path("vdyp_io/logs"),
+        DEFAULT_BTC_LOG_DIR,
         "--log-dir",
         help="Directory for BTC probe manifests/logs.",
         show_default=True,

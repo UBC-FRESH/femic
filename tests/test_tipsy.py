@@ -468,6 +468,29 @@ def test_btc_indicator_bank_columns_returns_log_grades_bank() -> None:
     ]
 
 
+def test_btc_indicator_bank_columns_returns_lumber_2_or_better_bank() -> None:
+    columns = btc_indicator_bank_columns("lumber-2-or-better")
+    assert [column.token for column in columns] == [
+        "Lumber_2_or_Better_2x4",
+        "Lumber_2_or_Better_2x6",
+        "Lumber_2_or_Better_2x8",
+        "Lumber_2_or_Better_2x10",
+        "Lumber_2_or_Better_All",
+        "LRF_2_or_Better_All",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_residual_fibre_bank() -> None:
+    columns = btc_indicator_bank_columns("residual-fibre")
+    assert [column.token for column in columns] == [
+        "Residual_Chips",
+        "Residual_Sawdust",
+        "Residual_Shavings",
+        "Residual_Trim",
+        "Residual_Bark",
+    ]
+
+
 def test_apply_btc_indicator_banks_appends_without_duplicates() -> None:
     template = btc_report_template_preset("tsr-unattended-default")
     extended = apply_btc_indicator_banks(
@@ -513,6 +536,49 @@ def test_apply_btc_indicator_banks_supports_log_grades_bank() -> None:
         "Logs_Grade_X",
         "Logs_Grade_Y",
         "Logs_Grade_All",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_lumber_2_or_better_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["lumber-2-or-better"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Lumber_2_or_Better_2x4",
+        "Lumber_2_or_Better_2x6",
+        "Lumber_2_or_Better_2x8",
+        "Lumber_2_or_Better_2x10",
+        "Lumber_2_or_Better_All",
+        "LRF_2_or_Better_All",
+    ]
+
+
+def test_apply_btc_indicator_banks_supports_residual_fibre_bank() -> None:
+    template = btc_report_template_preset("tsr-unattended-default")
+    extended = apply_btc_indicator_banks(
+        template=template,
+        indicator_bank_names=["residual-fibre"],
+    )
+    assert [column.token for column in extended.columns] == [
+        "Volume:Auto:Con",
+        "Volume:Auto:Dec",
+        "Height:Con",
+        "Height:Dec",
+        "VolumeGross",
+        "CC",
+        "Residual_Chips",
+        "Residual_Sawdust",
+        "Residual_Shavings",
+        "Residual_Trim",
+        "Residual_Bark",
     ]
 
 
@@ -600,6 +666,47 @@ def test_run_btc_cli_supervised_writes_outputs_and_manifest(tmp_path: Path) -> N
     assert result.manifest_path.is_file()
     assert "feature_id,MVcon_0,gVol_0,CC_0" in result.output_csv_path.read_text(
         encoding="utf-8"
+    )
+
+
+def test_run_btc_cli_defaults_to_tipsy_runtime_roots(
+    monkeypatch, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    helper = tmp_path / "fake_btc.py"
+    helper.write_text(
+        "from pathlib import Path\n"
+        "import sys\n"
+        "mode, input_name, output_name, error_name = sys.argv[1:5]\n"
+        "Path(output_name).write_text('feature_id,MVcon_0,gVol_0,CC_0\\n1,2,3,4\\n', encoding='utf-8')\n"
+        "Path(error_name).write_text('warnings,errors\\n0,0\\n', encoding='utf-8')\n"
+        "sys.exit(0)\n",
+        encoding="utf-8",
+    )
+
+    result = run_btc_cli(
+        input_csv=input_csv,
+        mode="TSR",
+        executable_path=sys.executable,
+        run_id="btc_default_paths",
+        env={},
+        extra_executable_args=(helper,),
+    )
+
+    assert result.exit_code == 0
+    assert result.manifest_path == (
+        tmp_path / "tipsy_io" / "logs" / "btc_manifest-btc_default_paths.json"
+    )
+    assert result.stdout_log_path == (
+        tmp_path / "tipsy_io" / "logs" / "btc_stdout-btc_default_paths.log"
+    )
+    assert result.stderr_log_path == (
+        tmp_path / "tipsy_io" / "logs" / "btc_stderr-btc_default_paths.log"
+    )
+    assert result.working_dir == (
+        tmp_path / "tipsy_io" / "scratch" / "btc-btc_default_paths" / "work"
     )
 
 
@@ -824,6 +931,52 @@ def test_probe_btc_report_columns_ratchets_forward(monkeypatch, tmp_path: Path) 
     assert overlay_path.read_text(encoding="utf-8") == "ORIGINAL OVERLAY\n"
 
 
+def test_probe_btc_report_columns_defaults_compatibility_ledger_under_tipsy_logs(
+    monkeypatch, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+
+    def fake_run_btc_cli(**kwargs: object) -> BTCRunResult:
+        run_id = str(kwargs["run_id"])
+        return BTCRunResult(
+            run_id=run_id,
+            mode="TSR",
+            manifest_path=tmp_path
+            / "tipsy_io"
+            / "logs"
+            / f"btc_manifest-{run_id}.json",
+            stdout_log_path=tmp_path / "tipsy_io" / "logs" / f"btc_stdout-{run_id}.log",
+            stderr_log_path=tmp_path / "tipsy_io" / "logs" / f"btc_stderr-{run_id}.log",
+            output_csv_path=tmp_path / f"{run_id}_output.csv",
+            error_csv_path=tmp_path / f"{run_id}_error.csv",
+            executable_path=tmp_path / "TIPSYbtc.exe",
+            install_root=tmp_path / "btc_install",
+            working_dir=tmp_path / "tipsy_io" / "scratch" / run_id / "work",
+            command=("btc.exe", "/TSR", "MSYT.csv"),
+            copied_install=False,
+            exit_code=0,
+            duration_sec=1.0,
+            report_template_path=None,
+        )
+
+    monkeypatch.setattr("femic.pipeline.tipsy.run_btc_cli", fake_run_btc_cli)
+
+    probe_btc_report_columns(
+        input_csv=input_csv,
+        candidate_tokens=["VolumeGross"],
+        source_preset_name="tsr-unattended-default",
+        copy_install=True,
+        run_id_prefix="probe_defaults",
+        env={},
+    )
+
+    assert (
+        tmp_path / "tipsy_io" / "logs" / "probe_defaults_compatibility.json"
+    ).is_file()
+
+
 def test_run_windows_btc_with_dialog_cleanup_force_stops_dialog_tree(
     monkeypatch, tmp_path: Path
 ) -> None:
@@ -996,6 +1149,78 @@ def test_prepare_btc_runtime_tsr_preset_applies_log_grades_indicator_bank(
     assert "Logs_Grade_D\t\tLogs_Grade_D\t{yr}" in rendered
     assert "Logs_Grade_Y\t\tLogs_Grade_Y\t{yr}" in rendered
     assert "Logs_Grade_All\t\tLogs_Grade_All\t{yr}" in rendered
+
+
+def test_prepare_btc_runtime_tsr_preset_applies_lumber_2_or_better_indicator_bank(
+    tmp_path: Path,
+) -> None:
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    fake_exe = install_root / "TIPSYbtc.exe"
+    fake_exe.write_text("stub", encoding="utf-8")
+    (install_root / "TimberSupply.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Timber Supply\n"
+        "TableRange=0-120:10|#\tMAX=120\tINC=10\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Volume:Auto:Con\t0\tMVcon\t{yr}\n",
+        encoding="utf-8",
+    )
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+
+    prep = prepare_btc_runtime(
+        executable_path=fake_exe,
+        input_csv=input_csv,
+        scratch_root=tmp_path / "scratch",
+        mode="TSR",
+        report_preset_name="tsr-unattended-default",
+        indicator_bank_names=["lumber-2-or-better"],
+        copy_install=True,
+    )
+
+    assert prep.report_template_path is not None
+    rendered = prep.report_template_path.read_text(encoding="utf-8")
+    assert "Lumber_2_or_Better_2x4\t\tLumber_2_or_Better_2x4\t{yr}" in rendered
+    assert "Lumber_2_or_Better_All\t\tLumber_2_or_Better_All\t{yr}" in rendered
+    assert "LRF_2_or_Better_All\t\tLRF_2_or_Better_All\t{yr}" in rendered
+
+
+def test_prepare_btc_runtime_tsr_preset_applies_residual_fibre_indicator_bank(
+    tmp_path: Path,
+) -> None:
+    install_root = tmp_path / "btc"
+    install_root.mkdir()
+    fake_exe = install_root / "TIPSYbtc.exe"
+    fake_exe.write_text("stub", encoding="utf-8")
+    (install_root / "TimberSupply.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Timber Supply\n"
+        "TableRange=0-120:10|#\tMAX=120\tINC=10\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Volume:Auto:Con\t0\tMVcon\t{yr}\n",
+        encoding="utf-8",
+    )
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+
+    prep = prepare_btc_runtime(
+        executable_path=fake_exe,
+        input_csv=input_csv,
+        scratch_root=tmp_path / "scratch",
+        mode="TSR",
+        report_preset_name="tsr-unattended-default",
+        indicator_bank_names=["residual-fibre"],
+        copy_install=True,
+    )
+
+    assert prep.report_template_path is not None
+    rendered = prep.report_template_path.read_text(encoding="utf-8")
+    assert "Residual_Chips\t\tResidual_Chips\t{yr}" in rendered
+    assert "Residual_Sawdust\t\tResidual_Sawdust\t{yr}" in rendered
+    assert "Residual_Bark\t\tResidual_Bark\t{yr}" in rendered
 
 
 def test_write_tipsy_input_exports_fails_fast_on_width_overflow(tmp_path: Path) -> None:

@@ -222,6 +222,8 @@ core unattended `/TSR` seam:
 
 - ``--indicator-bank stand-structure-basic``
 - ``--indicator-bank log-grades``
+- ``--indicator-bank lumber-2-or-better``
+- ``--indicator-bank residual-fibre``
 
 Current bank contents:
 
@@ -243,6 +245,19 @@ Current bank contents:
   - ``Logs_Grade_X``
   - ``Logs_Grade_Y``
   - ``Logs_Grade_All``
+- ``lumber-2-or-better``:
+  - ``Lumber_2_or_Better_2x4``
+  - ``Lumber_2_or_Better_2x6``
+  - ``Lumber_2_or_Better_2x8``
+  - ``Lumber_2_or_Better_2x10``
+  - ``Lumber_2_or_Better_All``
+  - ``LRF_2_or_Better_All``
+- ``residual-fibre``:
+  - ``Residual_Chips``
+  - ``Residual_Sawdust``
+  - ``Residual_Shavings``
+  - ``Residual_Trim``
+  - ``Residual_Bark``
 
 Important runtime detail:
 
@@ -253,11 +268,18 @@ Important runtime detail:
   because the live overlay can silently shadow that local file and make the
   run appear successful while dropping the requested bank columns from the
   returned output.
+- BTC/TIPSY runtime artifacts now default under ``tipsy_io/logs`` and
+  ``tipsy_io/scratch`` so operator supervision is not visually mixed into the
+  VDYP runtime namespace.
+- live unattended ``/TSR`` overlay smokes must be run sequentially, not in
+  parallel, because they share the same per-user ``TimberSupply.rpt`` overlay.
 
 Live smoke proof now exists for:
 
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-basic``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank log-grades``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank lumber-2-or-better``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank residual-fibre``
 
 That returned a single unattended output CSV with:
 
@@ -286,6 +308,19 @@ That returned a single unattended output CSV with:
   - ``Logs_Grade_X_*``
   - ``Logs_Grade_Y_*``
   - ``Logs_Grade_All_*``
+- plus the lumber-2-or-better bank:
+  - ``Lumber_2_or_Better_2x4_*``
+  - ``Lumber_2_or_Better_2x6_*``
+  - ``Lumber_2_or_Better_2x8_*``
+  - ``Lumber_2_or_Better_2x10_*``
+  - ``Lumber_2_or_Better_All_*``
+  - ``LRF_2_or_Better_All_*``
+- plus the residual-fibre bank:
+  - ``Residual_Chips_*``
+  - ``Residual_Sawdust_*``
+  - ``Residual_Shavings_*``
+  - ``Residual_Trim_*``
+  - ``Residual_Bark_*``
 
 while still honoring the 350-year unattended TSR timeline.
 

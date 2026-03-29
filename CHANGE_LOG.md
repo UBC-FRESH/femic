@@ -8050,3 +8050,36 @@
     - bank column expansion;
     - runtime TSR template injection; and
     - transposed-output parsing of `Logs_Grade_*` fields.
+- 2026-03-29 (Issue #48 follow-on shipped product banks): added the
+  `lumber-2-or-better` and `residual-fibre` optional BTC indicator banks after
+  both families probed cleanly through the live unattended `/TSR` overlay seam.
+  - `src/femic/pipeline/tipsy.py` now also ships:
+    - `lumber-2-or-better`:
+      - `Lumber_2_or_Better_2x4`
+      - `Lumber_2_or_Better_2x6`
+      - `Lumber_2_or_Better_2x8`
+      - `Lumber_2_or_Better_2x10`
+      - `Lumber_2_or_Better_All`
+      - `LRF_2_or_Better_All`
+    - `residual-fibre`:
+      - `Residual_Chips`
+      - `Residual_Sawdust`
+      - `Residual_Shavings`
+      - `Residual_Trim`
+      - `Residual_Bark`
+  - Added focused test coverage for:
+    - bank column expansion; and
+    - runtime TSR template injection for both new bank families.
+- 2026-03-29 (Issue #48 BTC runtime-path cleanup): moved supervised BTC/TIPSY
+  CLI defaults out of the historical `vdyp_io/logs` namespace and into
+  dedicated `tipsy_io` runtime roots.
+  - `femic tipsy run-btc` and `femic tipsy probe-btc-columns` now default
+    manifests/logs under `tipsy_io/logs`.
+  - default BTC scratch now resolves under `tipsy_io/scratch/btc-<run_id>`
+    instead of `<log_dir>/btc_scratch-<run_id>`.
+  - bootstrap/runtime guardrails now create and ignore `tipsy_io/logs` and
+    `tipsy_io/scratch` so BTC supervision is easier to read and stays out of
+    tracked repo state.
+  - docs now explicitly warn that live unattended `/TSR` overlay smokes are
+    sequential-only because they share the same per-user `TimberSupply.rpt`
+    seam.
