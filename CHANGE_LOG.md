@@ -8286,3 +8286,34 @@
     - `planning/tipsy_tsr_variant_probe_ledger.md`
     - `docs/reference/api/femic-pipeline-tipsy.rst`
     - `ROADMAP.md`
+- 2026-03-29 (Issue #48 scalar-status overlay tranche): shipped the last clean
+  compact scalar/status banks through the real user-overlay seam.
+  - Representative live overlay probes passed with real returned age-series
+    headers for:
+    - `GWgain`
+    - `FertGain`
+    - `OAFremoval`
+    - `OAFmortality`
+    - `OAFimpact`
+    - `OAF`
+    - `YearTASS_Base`
+    - `HeightSindex_Base`
+    - `YearTASS_Full`
+    - `HeightSindex_Full`
+  - Based on that signal, whole-bank live overlay smokes also passed for:
+    - `genetics-fertilization-and-oaf`
+    - `tass-and-site-index-raw`
+  - `src/femic/pipeline/tipsy.py` now ships those two additional optional
+    banks, and direct header inspection confirmed returned columns such as:
+    - `GWgain_*`
+    - `FertGain_*`
+    - `OAF_*`
+    - `YearTASS_Base_*`
+    - `HeightSindex_Base_*`
+    - `YearTASS_Full_*`
+    - `HeightSindex_Full_*`
+  - Planning/docs/checklist surfaces updated:
+    - `planning/tipsy_indicator_bank_checklist.md`
+    - `planning/tipsy_tsr_variant_probe_ledger.md`
+    - `docs/reference/api/femic-pipeline-tipsy.rst`
+    - `ROADMAP.md`

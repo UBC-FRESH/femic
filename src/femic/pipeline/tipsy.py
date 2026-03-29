@@ -89,6 +89,8 @@ _BTC_INDICATOR_BANK_NAMES = (
     "diameter-class-stems",
     "diameter-class-volume",
     "diameter-class-vpt",
+    "genetics-fertilization-and-oaf",
+    "tass-and-site-index-raw",
 )
 _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
     "stand-structure-basic": (
@@ -99,6 +101,20 @@ _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
         ("StemCount000", "StemCount000"),
         ("StemCount125", "StemCount125"),
         ("StemCount175", "StemCount175"),
+    ),
+    "genetics-fertilization-and-oaf": (
+        ("GWgain", "GWgain"),
+        ("FertGain", "FertGain"),
+        ("OAFremoval", "OAFremoval"),
+        ("OAFmortality", "OAFmortality"),
+        ("OAFimpact", "OAFimpact"),
+        ("OAF", "OAF"),
+    ),
+    "tass-and-site-index-raw": (
+        ("YearTASS_Base", "YearTASS_Base"),
+        ("HeightSindex_Base", "HeightSindex_Base"),
+        ("YearTASS_Full", "YearTASS_Full"),
+        ("HeightSindex_Full", "HeightSindex_Full"),
     ),
     "log-grades": (
         ("Logs_Grade_D", "Logs_Grade_D"),

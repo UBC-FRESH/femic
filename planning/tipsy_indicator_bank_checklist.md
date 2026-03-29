@@ -41,12 +41,12 @@ Canonical source inventory: `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt`.
   - [ ] HeightTassMean
   - [ ] HeightTassPredom
 - genetics-fertilization-and-oaf
-  - [ ] GWgain
-  - [ ] FertGain
-  - [ ] OAFremoval
-  - [ ] OAFmortality
-  - [ ] OAFimpact
-  - [ ] OAF
+  - [x] GWgain
+  - [x] FertGain
+  - [x] OAFremoval
+  - [x] OAFmortality
+  - [x] OAFimpact
+  - [x] OAF
 - stand-structure-threshold-raw
   - [ ] Volume000
   - [ ] Volume125
@@ -70,10 +70,10 @@ Canonical source inventory: `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt`.
   - [ ] Juvenille_Percent125
   - [ ] Juvenille_Percent175
 - tass-and-site-index-raw
-  - [ ] YearTASS_Base
-  - [ ] HeightSindex_Base
-  - [ ] YearTASS_Full
-  - [ ] HeightSindex_Full
+  - [x] YearTASS_Base
+  - [x] HeightSindex_Base
+  - [x] YearTASS_Full
+  - [x] HeightSindex_Full
 - crop250-stand-quality
   - [x] Crop250VolUtil125
   - [x] Crop250DBHgMean

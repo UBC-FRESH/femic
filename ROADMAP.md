@@ -8025,19 +8025,39 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
               which was falsely classifying stock BTC headers like
               `Logs (Grade)_10` as missing.
           - current remaining unresolved families:
-            - `genetics-fertilization-and-oaf`
-            - `tass-and-site-index-raw`
             - `stand-structure-threshold-raw`
             - `yield-and-age-core`
           - next remaining live-overlay slice:
-            - start with compact scalar/status tokens, not another bulky bank:
-              - `Genetic_Worth_Mean`
-              - `Fertilization`
-              - `OAF`
-            - `HeightTassMean`
-            - `HeightSindex`
-            - only reopen `stand-structure-threshold-raw` deliberately through
-              alias/report-token comparisons if the smaller scalar banks stall.
+            - the compact scalar/status tranche is now shipped too:
+              - representative live overlay probes passed for:
+                - `GWgain`
+                - `FertGain`
+                - `OAFremoval`
+                - `OAFmortality`
+                - `OAFimpact`
+                - `OAF`
+                - `YearTASS_Base`
+                - `HeightSindex_Base`
+                - `YearTASS_Full`
+                - `HeightSindex_Full`
+              - whole-bank live overlay smokes then passed for:
+                - `genetics-fertilization-and-oaf`
+                - `tass-and-site-index-raw`
+              - direct header inspection confirmed returned canonical bank
+                aliases such as:
+                - `GWgain_*`
+                - `FertGain_*`
+                - `OAF_*`
+                - `YearTASS_Base_*`
+                - `HeightSindex_Base_*`
+            - current remaining unresolved families are now:
+              - `stand-structure-threshold-raw`
+              - `yield-and-age-core`
+            - recommended next remaining slice:
+              - reopen `stand-structure-threshold-raw` through deliberate
+                alias/report-token comparisons first;
+              - keep `yield-and-age-core` last unless a stronger structural
+                clue appears.
           - the next productive step after this sweep is no longer "probe more
             canonical banks blindly"; it is to add a depth-first variant probe
             matrix for a smaller number of representative high-value tokens:

@@ -505,13 +505,65 @@ Recommended order:
 
 Representative next tokens to run first:
 
-1. `Genetic_Worth_Mean`
-2. `Fertilization`
+1. `GWgain`
+2. `FertGain`
 3. `OAF`
-4. `HeightTassMean`
-5. `HeightSindex`
+4. `YearTASS_Base`
+5. `HeightSindex_Base`
 6. `BasalArea000` / `DBHg:000` only if the threshold-raw alias question is
    reopened deliberately
+
+## Scalar Status Overlay Result (2026-03-29)
+
+The remaining compact scalar/status families also passed on the live overlay
+seam.
+
+- representative live overlay probes passed with real returned age-series
+  headers for:
+  - `GWgain`
+  - `FertGain`
+  - `OAFremoval`
+  - `OAFmortality`
+  - `OAFimpact`
+  - `OAF`
+  - `YearTASS_Base`
+  - `HeightSindex_Base`
+  - `YearTASS_Full`
+  - `HeightSindex_Full`
+- based on that signal, whole-bank live overlay smokes also passed cleanly for:
+  - `genetics-fertilization-and-oaf`
+  - `tass-and-site-index-raw`
+- direct header inspection confirmed returned columns such as:
+  - `GWgain_*`
+  - `FertGain_*`
+  - `OAF_*`
+  - `YearTASS_Base_*`
+  - `HeightSindex_Base_*`
+  - `YearTASS_Full_*`
+  - `HeightSindex_Full_*`
+
+Current practical reading:
+
+- all compact canonical scalar/status banks are now shipped through the live
+  overlay seam; and
+- the only remaining unresolved canonical families are now:
+  - `stand-structure-threshold-raw`
+  - `yield-and-age-core`
+
+## Remaining Unresolved Families
+
+Recommended order:
+
+1. `stand-structure-threshold-raw`
+2. `yield-and-age-core`
+
+Why this order:
+
+- `stand-structure-threshold-raw` still looks like the better near-term
+  candidate because the likely issue is alias/report-token mapping, not a hard
+  BTC exception cluster; and
+- `yield-and-age-core` remains the high-friction exception family and should
+  stay last unless a stronger structural clue appears.
 
 ## Variant Rules
 

@@ -221,6 +221,8 @@ FEMIC now has real optional BTC indicator-bank switches on top of the
 core unattended `/TSR` seam:
 
 - ``--indicator-bank stand-structure-basic``
+- ``--indicator-bank genetics-fertilization-and-oaf``
+- ``--indicator-bank tass-and-site-index-raw``
 - ``--indicator-bank log-grades``
 - ``--indicator-bank lumber-2-or-better``
 - ``--indicator-bank lumber-graded``
@@ -249,6 +251,18 @@ Current bank contents:
   - ``StemCount000``
   - ``StemCount125``
   - ``StemCount175``
+- ``genetics-fertilization-and-oaf``:
+  - ``GWgain``
+  - ``FertGain``
+  - ``OAFremoval``
+  - ``OAFmortality``
+  - ``OAFimpact``
+  - ``OAF``
+- ``tass-and-site-index-raw``:
+  - ``YearTASS_Base``
+  - ``HeightSindex_Base``
+  - ``YearTASS_Full``
+  - ``HeightSindex_Full``
 - ``log-grades``:
   - ``Logs_Grade_D``
   - ``Logs_Grade_F``
@@ -429,6 +443,8 @@ Important runtime detail:
 Live smoke proof now exists for:
 
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-basic``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank genetics-fertilization-and-oaf``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank tass-and-site-index-raw``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank log-grades``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank lumber-2-or-better``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank lumber-graded``

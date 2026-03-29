@@ -444,6 +444,28 @@ def test_btc_indicator_bank_columns_returns_first_safe_bank() -> None:
     ]
 
 
+def test_btc_indicator_bank_columns_returns_genetics_fertilization_oaf_bank() -> None:
+    columns = btc_indicator_bank_columns("genetics-fertilization-and-oaf")
+    assert [column.token for column in columns] == [
+        "GWgain",
+        "FertGain",
+        "OAFremoval",
+        "OAFmortality",
+        "OAFimpact",
+        "OAF",
+    ]
+
+
+def test_btc_indicator_bank_columns_returns_tass_site_index_raw_bank() -> None:
+    columns = btc_indicator_bank_columns("tass-and-site-index-raw")
+    assert [column.token for column in columns] == [
+        "YearTASS_Base",
+        "HeightSindex_Base",
+        "YearTASS_Full",
+        "HeightSindex_Full",
+    ]
+
+
 def test_btc_indicator_bank_columns_returns_log_grades_bank() -> None:
     columns = btc_indicator_bank_columns("log-grades")
     assert [column.token for column in columns] == [
