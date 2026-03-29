@@ -8053,11 +8053,19 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
             - current remaining unresolved families are now:
               - `stand-structure-threshold-raw`
               - `yield-and-age-core`
-            - recommended next remaining slice:
+          - recommended next remaining slice:
               - reopen `stand-structure-threshold-raw` through deliberate
                 alias/report-token comparisons first;
               - keep `yield-and-age-core` last unless a stronger structural
                 clue appears.
+          - threshold-family design rule going forward:
+            - when BTC exposes a metric at `{000,125,175}` top-diameter
+              merchantable cutoffs, FEMIC should treat that triplet as an
+              atomic mapped-bank unit;
+            - for the unresolved `stand-structure-threshold-raw` family, the
+              target landing shape is therefore the full three-threshold set
+              for each metric, not a single-threshold partial bank, unless a
+              specific live-overlay blockage is proven and documented.
           - the next productive step after this sweep is no longer "probe more
             canonical banks blindly"; it is to add a depth-first variant probe
             matrix for a smaller number of representative high-value tokens:

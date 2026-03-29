@@ -8317,3 +8317,14 @@
     - `planning/tipsy_tsr_variant_probe_ledger.md`
     - `docs/reference/api/femic-pipeline-tipsy.rst`
     - `ROADMAP.md`
+- 2026-03-29 (Issue #48 threshold-triplet design rule): recorded and
+  partially codified the bank-design rule that when BTC exposes the same
+  metric at `{000,125,175}` top-diameter merchantable cutoffs, FEMIC should
+  treat that triplet as one atomic mapped-bank unit.
+  - `src/femic/pipeline/tipsy.py` now carries an explicit reusable cutoff
+    suffix constant/helper and uses that helper for the shipped
+    `stand-structure-basic` `StemCount{000,125,175}` triplet.
+  - Planning/docs were updated to make the same rule explicit for the
+    unresolved `stand-structure-threshold-raw` family so the intended landing
+    shape is the full three-threshold set per metric, not a single-threshold
+    partial bank unless a live-overlay blockage is proven and documented.

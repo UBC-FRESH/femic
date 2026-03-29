@@ -565,6 +565,17 @@ Why this order:
 - `yield-and-age-core` remains the high-friction exception family and should
   stay last unless a stronger structural clue appears.
 
+Threshold-triplet design rule:
+
+- when BTC exposes the same metric at `{000,125,175}` top-diameter merchantable
+  cutoffs, FEMIC should treat that triplet as one atomic bank-design unit;
+- do not ship only one member of that triplet as the long-term mapped-bank
+  result unless a specific live-overlay blockage is proven and documented; and
+- for `stand-structure-threshold-raw`, that means the intended landing shape is
+  the full three-threshold family for each metric (`Volume`, `BasalArea`,
+  `MeanDBHg`, `MAI`, `VPT`, `Juvenille_Volume`, `Juvenille_Percent`), not just
+  the `000` member.
+
 ## Variant Rules
 
 - Keep `log-grades` as the standing sanity reprobe before and after major

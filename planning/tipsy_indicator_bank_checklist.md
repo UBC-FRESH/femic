@@ -11,6 +11,10 @@ Canonical source inventory: `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt`.
 - `planning/AllFieldsSQL.rpt` is still useful as a secondary reference for
   GUI-visible aliases and report-template experimentation, but it is not the
   canonical output-field ledger.
+- When BTC exposes `{000,125,175}` variants for the same metric, treat that
+  top-diameter-cutoff triplet as an atomic bank-design unit: FEMIC should ship
+  all three together unless a documented live-overlay seam limitation blocks a
+  specific member.
 - The current shipped `stand-structure-basic` bank still uses the richer BTC
   report tokens `BasalArea:000`, `DBHg:000`, and `SPH:000` in code; the
   canonical checklist below tracks the underlying BTC output families they map

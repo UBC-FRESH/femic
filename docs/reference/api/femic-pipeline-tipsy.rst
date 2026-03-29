@@ -213,6 +213,10 @@ So the main compatibility rule appears to be structural:
   deal
 - some earlier failures were seam-mismatch artifacts, not proof that the
   columns were impossible through unattended ``/TSR``
+- when BTC exposes the same metric at ``000``, ``125``, and ``175`` top-
+  diameter merchantable cutoffs, FEMIC should treat that triplet as an atomic
+  bank-design unit so downstream forest-model users can compare the delta
+  between thresholds rather than being stranded with only one cutoff surface
 
 Optional Unattended Indicator Banks
 -----------------------------------

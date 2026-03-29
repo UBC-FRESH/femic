@@ -48,6 +48,7 @@ _BTC_PROBE_VARIANT_STRATEGIES = (
 )
 DEFAULT_BTC_LOG_DIR = Path("tipsy_io/logs")
 DEFAULT_BTC_SCRATCH_ROOT = Path("tipsy_io/scratch")
+_BTC_TOP_DIAMETER_CUTOFF_SUFFIXES = ("000", "125", "175")
 _BTC_MORTALITY_SIZE_CLASS_SUFFIXES = ("5", "15", "25", "35", "45", "55", "65")
 _BTC_DIAMETER_CLASS_SUFFIXES = (
     "0",
@@ -92,15 +93,25 @@ _BTC_INDICATOR_BANK_NAMES = (
     "genetics-fertilization-and-oaf",
     "tass-and-site-index-raw",
 )
+
+
+def _btc_suffix_variant_specs(
+    prefix: str,
+    suffixes: Sequence[str],
+) -> tuple[tuple[str, str], ...]:
+    return tuple((f"{prefix}{suffix}", f"{prefix}{suffix}") for suffix in suffixes)
+
+
 _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
     "stand-structure-basic": (
         ("MAI", "MAI"),
         ("BasalArea:000", "BasalArea000"),
         ("DBHg:000", "DBHg000"),
         ("SPH:000", "SPH000"),
-        ("StemCount000", "StemCount000"),
-        ("StemCount125", "StemCount125"),
-        ("StemCount175", "StemCount175"),
+    )
+    + _btc_suffix_variant_specs(
+        "StemCount",
+        _BTC_TOP_DIAMETER_CUTOFF_SUFFIXES,
     ),
     "genetics-fertilization-and-oaf": (
         ("GWgain", "GWgain"),
