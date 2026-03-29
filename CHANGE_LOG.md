@@ -7716,6 +7716,11 @@
   - no output CSV,
   - FEMIC auto-closing the BTC/.NET modal path,
   - and failure classification `missing_output_exit_1`.
+- 2026-03-28 (Phase 48 TSR horizon alignment): updated FEMIC's stock-based
+  unattended `TimberSupply.rpt` patch path so the default TSR overlay uses:
+  - `TableRange=0-350:10|#	MAX=350	INC=10`
+  instead of the older 120-year range, aligning the BTC unattended output
+  horizon with FEMIC's longer VDYP curve timeline.
 - 2026-03-28 (Phase 48 critical `/TSR` overlay breakthrough): confirmed that
   plain installed `TIPSYbtc.exe /TSR` consults the per-user
   `Documents\\BatchTIPSY Composer\\TimberSupply.rpt` overlay before falling

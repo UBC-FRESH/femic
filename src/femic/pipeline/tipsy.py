@@ -110,6 +110,7 @@ _BTC_REPORT_FILENAME_BY_MODE = {
     "TSR": "TimberSupply.rpt",
     "FLP": "ForestLandscapePlan.rpt",
 }
+_BTC_TSR_TABLE_RANGE_LINE = "TableRange=0-350:10|#\tMAX=350\tINC=10"
 _BTC_DIALOG_TITLES = ("microsoft .net framework",)
 
 
@@ -604,6 +605,14 @@ def _write_tsr_unattended_runtime_template_from_stock(*, install_root: Path) -> 
     template_path = install_root / _BTC_REPORT_FILENAME_BY_MODE["TSR"]
     text = template_path.read_text(encoding="utf-8")
     lines = text.splitlines()
+    table_range_replaced = False
+    for index, line in enumerate(lines):
+        if line.startswith("TableRange="):
+            lines[index] = _BTC_TSR_TABLE_RANGE_LINE
+            table_range_replaced = True
+            break
+    if not table_range_replaced:
+        lines.append(_BTC_TSR_TABLE_RANGE_LINE)
     additions = [
         "VolumeGross\t\tgVol\t{yr}",
         "CC\t\tCC\t{yr}",

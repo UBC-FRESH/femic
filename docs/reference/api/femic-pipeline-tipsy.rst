@@ -179,6 +179,13 @@ faithful live `/TSR` seam. The safest unattended extension path is now:
 Do not assume a clean-room generated replacement template is equivalent to the
 stock report contract just because the visible fields look similar.
 
+The current stock-based unattended patch path also forces the TSR horizon to:
+
+- ``TableRange=0-350:10|# MAX=350 INC=10``
+
+so the unattended BTC output timeline lines up with FEMIC's longer VDYP curve
+timeline instead of stopping at the stock 120-year range.
+
 Why This Matters For Richer Indicator Probing
 ---------------------------------------------
 

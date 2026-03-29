@@ -808,6 +808,10 @@ This means the true unattended seam is:
 - preserve the hidden stock ``TimberSupply.rpt`` structure
 - extend that structure conservatively through the live overlay path
 - test plain installed ``/TSR`` against that overlay
+- force the live TSR overlay horizon to:
+  - ``TableRange=0-350:10|# MAX=350 INC=10``
+  so unattended BTC output lines up with FEMIC's longer VDYP curve timeline
+  instead of stopping at the stock 120-year range
 
 It also means the earlier copied-install/generated-template probes were too
 pessimistic as a general seam detector. They were useful clues, but they were

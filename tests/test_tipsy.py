@@ -637,6 +637,15 @@ def test_prepare_btc_runtime_copies_install_and_writes_report_template(
     install_root.mkdir()
     fake_exe = install_root / "TIPSYbtc.exe"
     fake_exe.write_text("stub", encoding="utf-8")
+    (install_root / "TimberSupply.rpt").write_text(
+        "[CustomReport]\n"
+        "Name=Timber Supply\n"
+        "TableRange=0-120:10|#\tMAX=120\tINC=10\n"
+        "\n"
+        "[CustomReportColumns]\n"
+        "Volume:Auto:Con\t0\tMVcon\t{yr}\n",
+        encoding="utf-8",
+    )
     input_csv = tmp_path / "MSYT.csv"
     input_csv.write_text("feature_id\n1\n", encoding="utf-8")
     prep = prepare_btc_runtime(
@@ -644,16 +653,17 @@ def test_prepare_btc_runtime_copies_install_and_writes_report_template(
         input_csv=input_csv,
         scratch_root=tmp_path / "scratch",
         mode="TSR",
-        report_template=btc_report_template_preset("tsr-unattended-default"),
+        report_preset_name="tsr-unattended-default",
         copy_install=True,
     )
     assert prep.copied_install is True
     assert prep.executable_path.is_file()
     assert prep.staged_input_csv.is_file()
     assert prep.report_template_path is not None
-    assert "TSR Unattended Default" in prep.report_template_path.read_text(
-        encoding="utf-8"
-    )
+    rendered = prep.report_template_path.read_text(encoding="utf-8")
+    assert "TableRange=0-350:10|#\tMAX=350\tINC=10" in rendered
+    assert "VolumeGross\t\tgVol\t{yr}" in rendered
+    assert "CC\t\tCC\t{yr}" in rendered
 
 
 def test_write_tipsy_input_exports_fails_fast_on_width_overflow(tmp_path: Path) -> None:
