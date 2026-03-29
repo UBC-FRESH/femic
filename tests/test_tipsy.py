@@ -444,6 +444,56 @@ def test_btc_indicator_bank_columns_returns_first_safe_bank() -> None:
     ]
 
 
+def test_btc_indicator_bank_columns_returns_threshold_raw_triplet_bank() -> None:
+    columns = btc_indicator_bank_columns("stand-structure-threshold-raw")
+    assert [column.token for column in columns] == [
+        "Volume000",
+        "Volume125",
+        "Volume175",
+        "BasalArea000",
+        "BasalArea125",
+        "BasalArea175",
+        "MeanDBHg000",
+        "MeanDBHg125",
+        "MeanDBHg175",
+        "MAI000",
+        "MAI125",
+        "MAI175",
+        "VPT000",
+        "VPT125",
+        "VPT175",
+        "Juvenille_Volume000",
+        "Juvenille_Volume125",
+        "Juvenille_Volume175",
+        "Juvenille_Percent000",
+        "Juvenille_Percent125",
+        "Juvenille_Percent175",
+    ]
+    assert [column.header1_override for column in columns] == [
+        "Volume000",
+        "Volume125",
+        "Volume175",
+        "BasalArea000",
+        "BasalArea125",
+        "BasalArea175",
+        "MeanDBHg000",
+        "MeanDBHg125",
+        "MeanDBHg175",
+        "MAI000",
+        "MAI125",
+        "MAI175",
+        "VPT000",
+        "VPT125",
+        "VPT175",
+        "Juvenille_Volume000",
+        "Juvenille_Volume125",
+        "Juvenille_Volume175",
+        "Juvenille_Percent000",
+        "Juvenille_Percent125",
+        "Juvenille_Percent175",
+    ]
+
+
 def test_btc_indicator_bank_columns_returns_genetics_fertilization_oaf_bank() -> None:
     columns = btc_indicator_bank_columns("genetics-fertilization-and-oaf")
     assert [column.token for column in columns] == [

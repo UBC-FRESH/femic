@@ -73,6 +73,7 @@ _BTC_DIAMETER_CLASS_SUFFIXES = (
 )
 _BTC_INDICATOR_BANK_NAMES = (
     "stand-structure-basic",
+    "stand-structure-threshold-raw",
     "log-grades",
     "lumber-2-or-better",
     "lumber-graded",
@@ -112,6 +113,21 @@ _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
     + _btc_suffix_variant_specs(
         "StemCount",
         _BTC_TOP_DIAMETER_CUTOFF_SUFFIXES,
+    ),
+    "stand-structure-threshold-raw": (
+        _btc_suffix_variant_specs("Volume", _BTC_TOP_DIAMETER_CUTOFF_SUFFIXES)
+        + _btc_suffix_variant_specs("BasalArea", _BTC_TOP_DIAMETER_CUTOFF_SUFFIXES)
+        + _btc_suffix_variant_specs("MeanDBHg", _BTC_TOP_DIAMETER_CUTOFF_SUFFIXES)
+        + _btc_suffix_variant_specs("MAI", _BTC_TOP_DIAMETER_CUTOFF_SUFFIXES)
+        + _btc_suffix_variant_specs("VPT", _BTC_TOP_DIAMETER_CUTOFF_SUFFIXES)
+        + _btc_suffix_variant_specs(
+            "Juvenille_Volume",
+            _BTC_TOP_DIAMETER_CUTOFF_SUFFIXES,
+        )
+        + _btc_suffix_variant_specs(
+            "Juvenille_Percent",
+            _BTC_TOP_DIAMETER_CUTOFF_SUFFIXES,
+        )
     ),
     "genetics-fertilization-and-oaf": (
         ("GWgain", "GWgain"),

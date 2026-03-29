@@ -225,6 +225,7 @@ FEMIC now has real optional BTC indicator-bank switches on top of the
 core unattended `/TSR` seam:
 
 - ``--indicator-bank stand-structure-basic``
+- ``--indicator-bank stand-structure-threshold-raw``
 - ``--indicator-bank genetics-fertilization-and-oaf``
 - ``--indicator-bank tass-and-site-index-raw``
 - ``--indicator-bank log-grades``
@@ -255,6 +256,28 @@ Current bank contents:
   - ``StemCount000``
   - ``StemCount125``
   - ``StemCount175``
+- ``stand-structure-threshold-raw``:
+  - ``Volume000``
+  - ``Volume125``
+  - ``Volume175``
+  - ``BasalArea000``
+  - ``BasalArea125``
+  - ``BasalArea175``
+  - ``MeanDBHg000``
+  - ``MeanDBHg125``
+  - ``MeanDBHg175``
+  - ``MAI000``
+  - ``MAI125``
+  - ``MAI175``
+  - ``VPT000``
+  - ``VPT125``
+  - ``VPT175``
+  - ``Juvenille_Volume000``
+  - ``Juvenille_Volume125``
+  - ``Juvenille_Volume175``
+  - ``Juvenille_Percent000``
+  - ``Juvenille_Percent125``
+  - ``Juvenille_Percent175``
 - ``genetics-fertilization-and-oaf``:
   - ``GWgain``
   - ``FertGain``
@@ -447,6 +470,7 @@ Important runtime detail:
 Live smoke proof now exists for:
 
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-basic``
+- ``femic tipsy run-btc <MSYT.csv> --indicator-bank stand-structure-threshold-raw``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank genetics-fertilization-and-oaf``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank tass-and-site-index-raw``
 - ``femic tipsy run-btc <MSYT.csv> --indicator-bank log-grades``

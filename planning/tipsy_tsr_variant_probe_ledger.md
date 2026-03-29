@@ -546,24 +546,32 @@ Current practical reading:
 
 - all compact canonical scalar/status banks are now shipped through the live
   overlay seam; and
-- the only remaining unresolved canonical families are now:
-  - `stand-structure-threshold-raw`
+- the live overlay seam also unlocked the full `stand-structure-threshold-raw`
+  family on the simple generic transposed probe line:
+  - `Volume000/125/175`
+  - `BasalArea000/125/175`
+  - `MeanDBHg000/125/175`
+  - `MAI000/125/175`
+  - `VPT000/125/175`
+  - `Juvenille_Volume000/125/175`
+  - `Juvenille_Percent000/125/175`
+- all twenty-one threshold-raw tokens were accepted in live overlay probing with
+  `runtime_layout=live-overlay`, `variant_strategy=stock-matrix`, and the
+  generic transposed line winning immediately before any alias/stock fallback
+  was needed.
+- the only remaining unresolved canonical family is now:
   - `yield-and-age-core`
 
 ## Remaining Unresolved Families
 
 Recommended order:
 
-1. `stand-structure-threshold-raw`
-2. `yield-and-age-core`
+1. `yield-and-age-core`
 
 Why this order:
 
-- `stand-structure-threshold-raw` still looks like the better near-term
-  candidate because the likely issue is alias/report-token mapping, not a hard
-  BTC exception cluster; and
-- `yield-and-age-core` remains the high-friction exception family and should
-  stay last unless a stronger structural clue appears.
+- `yield-and-age-core` is the only family still unresolved, and it remains the
+  high-friction exception cluster from the earlier live overlay sweep.
 
 Threshold-triplet design rule:
 
@@ -571,10 +579,10 @@ Threshold-triplet design rule:
   cutoffs, FEMIC should treat that triplet as one atomic bank-design unit;
 - do not ship only one member of that triplet as the long-term mapped-bank
   result unless a specific live-overlay blockage is proven and documented; and
-- for `stand-structure-threshold-raw`, that means the intended landing shape is
-  the full three-threshold family for each metric (`Volume`, `BasalArea`,
-  `MeanDBHg`, `MAI`, `VPT`, `Juvenille_Volume`, `Juvenille_Percent`), not just
-  the `000` member.
+- for `stand-structure-threshold-raw`, that intended landing shape is now
+  proven and landed as the full three-threshold family for each metric
+  (`Volume`, `BasalArea`, `MeanDBHg`, `MAI`, `VPT`, `Juvenille_Volume`,
+  `Juvenille_Percent`), not just the `000` member.
 
 ## Variant Rules
 

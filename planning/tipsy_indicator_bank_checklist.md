@@ -52,27 +52,27 @@ Canonical source inventory: `C:\Program Files\TIPSY 4.7\BTC\OutputColumns.txt`.
   - [x] OAFimpact
   - [x] OAF
 - stand-structure-threshold-raw
-  - [ ] Volume000
-  - [ ] Volume125
-  - [ ] Volume175
-  - [ ] BasalArea000
-  - [ ] BasalArea125
-  - [ ] BasalArea175
-  - [ ] MeanDBHg000
-  - [ ] MeanDBHg125
-  - [ ] MeanDBHg175
-  - [ ] MAI000
-  - [ ] MAI125
-  - [ ] MAI175
-  - [ ] VPT000
-  - [ ] VPT125
-  - [ ] VPT175
-  - [ ] Juvenille_Volume000
-  - [ ] Juvenille_Volume125
-  - [ ] Juvenille_Volume175
-  - [ ] Juvenille_Percent000
-  - [ ] Juvenille_Percent125
-  - [ ] Juvenille_Percent175
+  - [x] Volume000
+  - [x] Volume125
+  - [x] Volume175
+  - [x] BasalArea000
+  - [x] BasalArea125
+  - [x] BasalArea175
+  - [x] MeanDBHg000
+  - [x] MeanDBHg125
+  - [x] MeanDBHg175
+  - [x] MAI000
+  - [x] MAI125
+  - [x] MAI175
+  - [x] VPT000
+  - [x] VPT125
+  - [x] VPT175
+  - [x] Juvenille_Volume000
+  - [x] Juvenille_Volume125
+  - [x] Juvenille_Volume175
+  - [x] Juvenille_Percent000
+  - [x] Juvenille_Percent125
+  - [x] Juvenille_Percent175
 - tass-and-site-index-raw
   - [x] YearTASS_Base
   - [x] HeightSindex_Base

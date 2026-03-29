@@ -8328,3 +8328,17 @@
     unresolved `stand-structure-threshold-raw` family so the intended landing
     shape is the full three-threshold set per metric, not a single-threshold
     partial bank unless a live-overlay blockage is proven and documented.
+- 2026-03-29 (Issue #48 threshold raw bank): proved and landed the full
+  `stand-structure-threshold-raw` bank through the real live user-overlay
+  `TimberSupply.rpt` seam.
+  - Live overlay probes accepted all twenty-one threshold-triplet tokens on the
+    generic transposed line:
+    `Volume000/125/175`, `BasalArea000/125/175`, `MeanDBHg000/125/175`,
+    `MAI000/125/175`, `VPT000/125/175`, `Juvenille_Volume000/125/175`, and
+    `Juvenille_Percent000/125/175`.
+  - `src/femic/pipeline/tipsy.py` now ships
+    `--indicator-bank stand-structure-threshold-raw`, while
+    `tests/test_tipsy.py`, `planning/tipsy_indicator_bank_checklist.md`,
+    `planning/tipsy_tsr_variant_probe_ledger.md`, `docs/reference/api/femic-pipeline-tipsy.rst`,
+    and `ROADMAP.md` were updated to reflect that the only unresolved canonical
+    family left under Issue `#48` is now `yield-and-age-core`.

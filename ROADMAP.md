@@ -7701,6 +7701,17 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - issue `#48` should now be treated as the umbrella tracker for finishing all
     remaining logical banks from the canonical ledger, not just the earlier
     first-wave product families.
+  - the live-overlay threshold-triplet recovery slice is now in hand too:
+    - `stand-structure-threshold-raw` probes cleanly through the real
+      user-overlay `TimberSupply.rpt` seam on the simple generic transposed
+      line, without needing copied-install experiments or alias fallback to
+      win;
+    - the landed bank shape follows the explicit triplet rule and now includes
+      `Volume000/125/175`, `BasalArea000/125/175`, `MeanDBHg000/125/175`,
+      `MAI000/125/175`, `VPT000/125/175`, `Juvenille_Volume000/125/175`, and
+      `Juvenille_Percent000/125/175`;
+    - the only unresolved canonical family left under issue `#48` is now
+      `yield-and-age-core`.
   - operator-supervision cleanup to land alongside this work:
     - move BTC/TIPSY CLI default runtime artifacts from `vdyp_io/logs` into
       `tipsy_io/logs`, with default scratch under `tipsy_io/scratch`, so
@@ -8050,22 +8061,23 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
                 - `OAF_*`
                 - `YearTASS_Base_*`
                 - `HeightSindex_Base_*`
-            - current remaining unresolved families are now:
-              - `stand-structure-threshold-raw`
+            - the live-overlay seam has now also proven and landed
+              `stand-structure-threshold-raw` as a full threshold-triplet bank
+              (`Volume`, `BasalArea`, `MeanDBHg`, `MAI`, `VPT`,
+              `Juvenille_Volume`, `Juvenille_Percent`);
+            - the only remaining unresolved family is now:
               - `yield-and-age-core`
           - recommended next remaining slice:
-              - reopen `stand-structure-threshold-raw` through deliberate
-                alias/report-token comparisons first;
               - keep `yield-and-age-core` last unless a stronger structural
                 clue appears.
           - threshold-family design rule going forward:
             - when BTC exposes a metric at `{000,125,175}` top-diameter
               merchantable cutoffs, FEMIC should treat that triplet as an
               atomic mapped-bank unit;
-            - for the unresolved `stand-structure-threshold-raw` family, the
-              target landing shape is therefore the full three-threshold set
-              for each metric, not a single-threshold partial bank, unless a
-              specific live-overlay blockage is proven and documented.
+            - that rule is now proven in practice by the landed
+              `stand-structure-threshold-raw` bank, which ships the full
+              three-threshold set for each recovered metric rather than a
+              single-threshold partial bank.
           - the next productive step after this sweep is no longer "probe more
             canonical banks blindly"; it is to add a depth-first variant probe
             matrix for a smaller number of representative high-value tokens:
