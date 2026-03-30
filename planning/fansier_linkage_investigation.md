@@ -438,6 +438,58 @@ Interpretation
   - product columns: `True`
   - activity columns: `False`
 
+## Long Report Surface
+
+- Unattended `long report` generation is now proven too.
+- Proof artifact:
+  - `tipsy_io/logs/fansier_probe/long_compare/LongTXTLean - Batchbiomass-10000.rgm - {defaults} - FEMIC Raw 0% - Lumber & Mill Residues (All Grades) - Max MAI (12.5).txt`
+- Initial interpretation:
+  - long report is much richer and more narrative than the lean short/txt lane;
+  - it includes structured sections such as:
+    - `Results`
+    - `Harvest Summary`
+    - `Discount Assumptions`
+  - so long report looks like the better "pump FAN$IER for all it has"
+    discovery/export surface, while short/txt remains the better current
+    FEMIC-ingest lane.
+
+## "All Outputs" Boundary
+
+- Current evidence says "all outputs" is **not** just an `.rgm` construction
+  problem.
+- The `.rgm` determines which product groups/regime content FAN$IER knows
+  about, but the batch form still controls:
+  - short vs long
+  - selected discount assumptions
+  - selected product groups
+  - selected harvest ages
+  - product/activity column toggles
+- Live maximal-selection proof now exists:
+  - output directory:
+    - `tipsy_io/logs/fansier_probe/diag_allprod_oneage/`
+  - proven successful batch state:
+    - `1` checked regime
+    - `1` checked discount setting
+    - `6` checked product groups
+    - `28` checked harvest ages
+    - `168` generated long-report `txt` files
+  - FAN$IER's own bottom-of-form label at success read:
+    - `1 Regimes X 1 Assumptions X 6 Products X 28 Ages = 168 calculations`
+  - inspected sample output confirms materially populated economics, not empty
+    placeholders.
+- Reframed interpretation:
+  - the earlier automated failures were false negatives caused by driving the
+    checked-list controls faster than FAN$IER's internal state-update logic
+    could refresh `lblRuns` and `Start Batch`.
+  - this means the all-product-group / multi-age fan-out is **possible**.
+  - the remaining seam is now clearly UI pacing/synchronization, not missing
+    `.rgm` content.
+- Immediate automation consequence:
+  - unattended automation should treat the calculations label (`lblRuns`) as a
+    sync surface.
+  - checkbox state alone is not enough; the script should wait for coherent
+    calculation-count updates before continuing or clicking `Start Batch`.
+
 ## Discount-Assumptions File Seam
 
 - FAN$IER has a native discount-assumptions file contract:
@@ -529,6 +581,23 @@ Interpretation
        - validate whether the chosen lean lane
          (`txt` + no activity columns) remains sufficient across additional
          known-good `.rgm` examples.
+       - Done:
+         - unattended `long report` smoke against the richer known-good regime;
+         - confirmed that long report is a richer sectioned export surface than
+           the current lean short/txt lane.
+       - In progress:
+         - unattended "maximal extraction" smoke with all product groups and
+           all harvest ages selected.
+       - Current read:
+         - the blocker is now the batch form's internal checked-list
+           event/counter seam, not a missing `.rgm` output family.
+         - thinning the ages to sampled numeric-only ages did not resolve it,
+           so the product-group side is now the sharper target.
+       - Next:
+         - harden multi-select event propagation for batch product/age lists so
+           the "all outputs" run becomes startable;
+         - once that works, compare maximal long-report output against the lean
+           short/txt lane and decide whether FEMIC should archive both.
 7. Preserve deterministic decompile notes while this issue is active.
    - Treat `tmp/ilspy_fansier/` and `tmp/ilspy_btc/` as the canonical local
      scratch locations for managed-source inspection on this machine.

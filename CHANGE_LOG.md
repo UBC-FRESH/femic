@@ -8665,3 +8665,34 @@
       `tipsy_io/logs/fansier_probe/FEMIC Raw 0%.dis`
     - loading that file through FAN$IER's own `Load Discount Assumptions...`
       path adds `FEMIC Raw 0%` to a fresh session's batch settings list.
+- 2026-03-29 (Issue #59): proved unattended FAN$IER long-report generation and
+  narrowed the current "all outputs" blocker.
+  - Unattended long-report proof artifact:
+    - `tipsy_io/logs/fansier_probe/long_compare/LongTXTLean - Batchbiomass-10000.rgm - {defaults} - FEMIC Raw 0% - Lumber & Mill Residues (All Grades) - Max MAI (12.5).txt`
+  - Long report is now confirmed to be a richer sectioned export surface than
+    the lean short/txt lane; it looks like the better discovery/archive path
+    when the goal is to pump FAN$IER for more than the minimum FEMIC ingest
+    row.
+  - Also pushed on the "all products/all ages" maximal batch selection path.
+  - Current best reading:
+    - the richer known-good `.rgm` does expose the needed product groups;
+    - the blocker is currently FAN$IER's internal batch checked-list
+      event/counter seam, not a missing `.rgm` output family.
+  - So the next hard problem is UI-state/event hardening for multi-select batch
+    lists, not more speculation about `.rgm` schema richness.
+- 2026-03-29 (Issue #59): confirmed that the broad FAN$IER long-report fan-out
+  is real and that the remaining problem is batch-form pacing.
+  - Found the successful proof outputs under:
+    - `tipsy_io/logs/fansier_probe/diag_allprod_oneage/`
+  - Confirmed a live successful batch state of:
+    - `1 regime x 1 assumptions x 6 products x 28 ages = 168 calculations`
+  - Inspected the generated `.txt` outputs directly and confirmed materially
+    populated economics content.
+  - This reframes the prior false-negative automation runs:
+    - the broad fan-out is not structurally blocked;
+    - FAN$IER's checked-list/event logic just falls behind if controls are
+      updated too quickly.
+  - Recorded the next hardening step in `ROADMAP.md` and
+    `planning/fansier_linkage_investigation.md`:
+    pace GUI automation against `lblRuns` / `Start Batch` instead of trusting
+    checkbox state alone.

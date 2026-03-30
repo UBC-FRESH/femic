@@ -8789,6 +8789,26 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - a synthesized `FEMIC Raw 0%.dis` now live-loads into a fresh
           session's batch settings list, though that seam is not yet the
           default unattended path.
+      - next active FAN$IER extraction slice:
+        - unattended `long report` smoke against the richer known-good regime
+          is now done:
+          - long report is a richer sectioned export surface than the current
+            lean short/txt lane, and looks like the better "pump FAN$IER for
+            all it has" discovery surface.
+        - unattended "maximal extraction" probing with all product groups and
+          all harvest ages selected is now in progress:
+          - the user has now live-proved a successful long-report fan-out of
+            `1 regime x 1 assumptions x 6 products x 28 ages = 168
+            calculations`;
+          - proof artifacts are saved under
+            `tipsy_io/logs/fansier_probe/diag_allprod_oneage/`;
+          - this collapses the old hypothesis that the broader fan-out might be
+            structurally blocked by the `.rgm` or by special/too-many ages;
+          - the remaining seam is FAN$IER's sluggish batch-form state refresh:
+            checked boxes can get ahead of `lblRuns` / `Start Batch`;
+          - next automation hardening step is to pace selections more slowly
+            and use the bottom-of-form calculations label as the sync surface
+            before starting batch.
       - null-rate economics is not blocked by FAN$IER:
         - the shipped discount-assumptions editor explicitly allows
           `0%` discount and `0%` reinvestment rates.
