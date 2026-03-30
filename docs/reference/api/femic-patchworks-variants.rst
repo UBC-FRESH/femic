@@ -10,6 +10,8 @@ Current responsibilities include:
 - merging an optional user overlay registry from ``~/.femic/variants.yaml``;
 - writing user overlay entries for register/update/remove flows;
 - resolving named scenarios attached to variants;
+- resolving one default scenario per variant when the registry provides one or
+  when a variant carries exactly one scenario;
 - resolving named scenario sets that bundle registered scenarios across one or
   more variants;
 - resolving named variants to concrete instance roots, runtime configs, and

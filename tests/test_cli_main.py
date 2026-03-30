@@ -952,6 +952,7 @@ def test_patchworks_variants_show_emits_registry_entry(
                 variant_family="baseline",
                 kind="patchworks",
                 default=True,
+                default_scenario_id="even_flow_smoke",
                 instance_root=Path("external/femic-k3z-instance"),
                 analysis_pin=Path("external/femic-k3z-instance/models/.../base.pin"),
                 runtime_config=Path(
@@ -1304,6 +1305,7 @@ def test_patchworks_variants_update_overlays_builtin_variant(
             "external/femic-k3z-instance/config/patchworks.runtime.windows.yaml"
         ),
         default=True,
+        default_scenario_id=None,
         notes=(),
         materialization=(),
         scenarios=(),
@@ -1488,6 +1490,72 @@ def test_patchworks_run_scenario_delegates_to_headless_runner(
     assert called["scenario_target"] == "product.Yield.managed.Total"
     assert called["iterations"] == 100000
     assert any("Patchworks scenario run complete" in msg for msg in messages)
+
+
+def test_patchworks_run_default_scenario_delegates_to_headless_runner(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    variant = SimpleNamespace(
+        variant_id="k3z.base",
+        runtime_config=Path("external/femic-k3z-instance/config/runtime.yaml"),
+    )
+    scenario = SimpleNamespace(
+        scenario_id="even_flow_smoke",
+        label="Even-flow smoke",
+        mode="max-even-flow-smoke",
+        target="product.Yield.managed.Total",
+        min_annual=None,
+        iterations=100000,
+        improvement=0.0,
+        stage_label=None,
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(
+            get_default_scenario=lambda _variant_id: (variant, scenario)
+        ),
+    )
+
+    calls: list[dict[str, object]] = []
+
+    def _fake_run_registered_scenario(**kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(
+            run_id="demo_default",
+            returncode=0,
+            pin_path=Path("external/femic-k3z-instance/models/base.pin"),
+            stage_dir=Path("vdyp_io/logs/headless_stage/demo_default"),
+            manifest_path=Path("vdyp_io/logs/demo_default.json"),
+            execution=SimpleNamespace(
+                stdout_log_path=Path("stdout.log"),
+                stderr_log_path=Path("stderr.log"),
+            ),
+            scenario_mode="max-even-flow-smoke",
+            failures=(),
+        )
+
+    monkeypatch.setattr(
+        cli_main, "_run_patchworks_registered_scenario", _fake_run_registered_scenario
+    )
+
+    cli_main.patchworks_run_default_scenario(
+        "k3z.base",
+        registry=Path("variants.yaml"),
+        log_dir=Path("vdyp_io/logs"),
+        run_id="demo_default",
+        stage_label=None,
+        allow_large_download=False,
+        materialization_threshold_mib=100,
+    )
+
+    assert calls
+    assert calls[0]["variant"] is variant
+    assert calls[0]["scenario"] is scenario
+    assert any("Patchworks default-scenario run complete" in msg for msg in messages)
 
 
 def test_patchworks_scenario_sets_list_prints_registry_sets(

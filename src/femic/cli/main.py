@@ -3872,9 +3872,15 @@ def patchworks_variants_list(
         if normalized_instance_id and item.instance_id != normalized_instance_id:
             continue
         default_text = " default" if item.default else ""
+        default_scenario_text = (
+            f" default_scenario={item.default_scenario_id}"
+            if item.default_scenario_id
+            else ""
+        )
         console.print(
             f"- {item.variant_id}: {item.label} "
-            f"[instance={item.instance_id} family={item.variant_family}{default_text}]"
+            f"[instance={item.instance_id} family={item.variant_family}"
+            f"{default_text}{default_scenario_text}]"
         )
 
 
@@ -3900,6 +3906,7 @@ def patchworks_variants_show(
     console.print(f"variant_family: {item.variant_family}")
     console.print(f"kind: {item.kind}")
     console.print(f"default: {item.default}")
+    console.print(f"default_scenario_id: {item.default_scenario_id or 'none'}")
     console.print(f"instance_root: {item.instance_root}")
     console.print(f"analysis_pin: {item.analysis_pin}")
     console.print(f"runtime_config: {item.runtime_config}")
@@ -4336,6 +4343,73 @@ def patchworks_run_scenario(
     color = "green" if result.returncode == 0 else "red"
     console.print(
         f"[{color}]Patchworks scenario run complete[/{color}] "
+        f"variant={variant.variant_id} scenario={scenario.scenario_id} "
+        f"run_id={result.run_id} returncode={result.returncode}"
+    )
+    console.print(f"scenario_label: {scenario.label}")
+    console.print(f"runtime_config: {variant.runtime_config}")
+    console.print(f"pin: {result.pin_path}")
+    console.print(f"stage_dir: {result.stage_dir}")
+    console.print(f"scenario_mode: {result.scenario_mode}")
+    console.print(f"stdout_log: {result.execution.stdout_log_path}")
+    console.print(f"stderr_log: {result.execution.stderr_log_path}")
+    console.print(f"manifest: {result.manifest_path}")
+    for failure in result.failures:
+        console.print(f"[red]Runtime failure:[/red] {failure}")
+    if result.returncode != 0:
+        raise typer.Exit(code=result.returncode)
+
+
+@patchworks_app.command("run-default-scenario")
+def patchworks_run_default_scenario(
+    variant_id: str = typer.Argument(..., help="Registered Patchworks variant id."),
+    registry: Path = PATCHWORKS_VARIANT_REGISTRY_OPTION,
+    log_dir: Path = PATCHWORKS_LOG_DIR_OPTION,
+    run_id: str | None = PATCHWORKS_RUN_ID_OPTION,
+    stage_label: str | None = PATCHWORKS_HEADLESS_STAGE_LABEL_OPTION,
+    allow_large_download: bool = typer.Option(
+        False,
+        "--allow-large-download",
+        help=(
+            "Allow registry-declared materialization larger than the prompt threshold "
+            "without asking for confirmation."
+        ),
+    ),
+    materialization_threshold_mib: int = typer.Option(
+        DEFAULT_PATCHWORKS_MATERIALIZATION_PROMPT_BYTES // (1024 * 1024),
+        "--materialization-threshold-mib",
+        min=0,
+        help="Prompt threshold for registry-declared materialization downloads.",
+    ),
+) -> None:
+    """Run the default registry-backed Patchworks scenario for one variant."""
+
+    try:
+        variant_registry = load_patchworks_variant_registry(user_registry_path=registry)
+        variant, scenario = variant_registry.get_default_scenario(variant_id)
+        result = _run_patchworks_registered_scenario(
+            variant=variant,
+            scenario=scenario,
+            log_dir=log_dir,
+            run_id=run_id,
+            stage_label=stage_label,
+            allow_large_download=allow_large_download,
+            materialization_threshold_mib=materialization_threshold_mib,
+            cancellation_prefix="Patchworks default-scenario run cancelled:",
+        )
+    except (
+        FileNotFoundError,
+        PatchworksConfigError,
+        PatchworksVariantRegistryError,
+        json.JSONDecodeError,
+        yaml.YAMLError,
+    ) as exc:
+        console.print(f"[red]Patchworks default-scenario run failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    color = "green" if result.returncode == 0 else "red"
+    console.print(
+        f"[{color}]Patchworks default-scenario run complete[/{color}] "
         f"variant={variant.variant_id} scenario={scenario.scenario_id} "
         f"run_id={result.run_id} returncode={result.returncode}"
     )

@@ -12,6 +12,7 @@ variants:
     analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/base.pin
     runtime_config: external/femic-k3z-instance/config/patchworks.runtime.windows.yaml
     default: true
+    default_scenario_id: even_flow_smoke
     notes:
       - Canonical baseline K3Z Patchworks launch surface.
     scenarios:
@@ -69,6 +70,7 @@ variants:
     instance_root: external/femic-k3z-instance
     analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/intensive_light_standstructure.pin
     runtime_config: external/femic-k3z-instance/config/patchworks.runtime.intensive_light_standstructure.windows.yaml
+    default_scenario_id: even_flow_smoke
     scenarios:
       - scenario_id: even_flow_smoke
         label: K3Z proving-ground even-flow smoke

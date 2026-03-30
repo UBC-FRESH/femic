@@ -33,6 +33,9 @@ def test_load_patchworks_variant_registry_includes_builtin_k3z_base() -> None:
     assert scenario_set.mode == "sequential"
     assert scenario_set.scenarios[0].variant_id == "k3z.base"
     assert scenario_set.scenarios[1].variant_id == "k3z.intensive_light_standstructure"
+    default_variant, default_scenario = registry.get_default_scenario("k3z.base")
+    assert default_variant.variant_id == "k3z.base"
+    assert default_scenario.scenario_id == "even_flow_smoke"
 
 
 def test_load_patchworks_variant_registry_user_overlay_can_override_builtin(
@@ -322,3 +325,35 @@ def test_load_patchworks_variant_registry_parses_scenario_sets_from_overlay(
     assert scenario_set.scenarios == (
         PatchworksScenarioSetMember(variant_id="demo.base", scenario_id="smoke"),
     )
+
+
+def test_load_patchworks_variant_registry_default_scenario_falls_back_to_single(
+    tmp_path: Path,
+) -> None:
+    overlay_path = tmp_path / "variants.yaml"
+    overlay_path.write_text(
+        "\n".join(
+            [
+                "variants:",
+                "  - variant_id: demo.base",
+                '    label: "Demo base"',
+                "    instance_id: demo",
+                "    variant_family: baseline",
+                "    kind: patchworks",
+                "    instance_root: external/demo-instance",
+                "    analysis_pin: external/demo-instance/models/demo/analysis/base.pin",
+                "    runtime_config: external/demo-instance/config/runtime.yaml",
+                "    scenarios:",
+                "      - scenario_id: smoke",
+                "        mode: max-even-flow-smoke",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    registry = load_patchworks_variant_registry(user_registry_path=overlay_path)
+
+    variant, scenario = registry.get_default_scenario("demo.base")
+    assert variant.variant_id == "demo.base"
+    assert scenario.scenario_id == "smoke"

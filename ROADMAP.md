@@ -9175,8 +9175,30 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - after that, decide whether the first production materialization
         experience should stay as raw `datalad-get` actions or grow a more
         user-facing dataset summary/consent surface;
-      - once scenario sets exist, decide whether `run-variant` should grow a
-        default-scenario alias or stay as a pure direct-variant launch;
+      - the next small operator-convenience slice is now also in hand:
+        - `run-variant` stays a pure direct-variant launch;
+        - variants can now declare `default_scenario_id`;
+        - new CLI surface:
+          - `femic patchworks run-default-scenario <variant-id>`
+        - built-in proof variants now wire their default scenario to
+          `even_flow_smoke`:
+          - `k3z.base`
+          - `k3z.intensive_light_standstructure`
+        - direct K3Z default-scenario smoke now also passed:
+          - `python -m femic patchworks run-default-scenario k3z.base --run-id issue60_default_scenario --log-dir vdyp_io/logs`
+          - direct inspected outputs:
+            - manifest:
+              `vdyp_io/logs/patchworks_headless_manifest-issue60_default_scenario.json`
+            - `targetStatus.csv` kept both:
+              - `product.Yield.managed.Total`
+              - `flow.even.product.Yield.managed.Total`
+            - `schedule.csv` remained non-empty (`327` lines)
+      - current next edge:
+        - decide whether the first production materialization experience
+          should stay as raw `datalad-get` actions or grow a more user-facing
+          dataset summary/consent surface;
+        - once that is settled, decide whether scenario-set metadata needs
+          richer labels/families/default-set aliases before parallel execution;
       - defer parallel scenario-set execution until there is a clearer
         Patchworks process-safety contract for concurrent runs.
   - Current implementation order:

@@ -348,6 +348,7 @@ Subcommands
 - ``build-blocks``: ``python -m femic patchworks build-blocks [OPTIONS]``
 - ``matrix-build``: ``python -m femic patchworks matrix-build [OPTIONS]``
 - ``run-headless``: ``python -m femic patchworks run-headless [OPTIONS] PIN``
+- ``run-default-scenario``: ``python -m femic patchworks run-default-scenario [OPTIONS] VARIANT_ID``
 - ``run-scenario``: ``python -m femic patchworks run-scenario [OPTIONS] VARIANT_ID SCENARIO_ID``
 - ``run-variant``: ``python -m femic patchworks run-variant [OPTIONS] VARIANT_ID``
 - ``scenarios list``: ``python -m femic patchworks scenarios list [OPTIONS] VARIANT_ID``
@@ -430,6 +431,17 @@ Subcommands
 - ``--log-dir PATH`` (default: ``vdyp_io/logs``)
 - ``--run-id TEXT`` (optional)
 - ``--stage-label TEXT`` (optional override; falls back to the registry scenario when set there)
+- ``--allow-large-download`` (skip the materialization confirmation prompt when
+  known estimated downloads exceed the threshold)
+- ``--materialization-threshold-mib INTEGER`` (default: ``100``)
+
+``patchworks run-default-scenario`` options
+
+- ``VARIANT_ID`` argument (required)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--run-id TEXT`` (optional)
+- ``--stage-label TEXT`` (optional override; falls back to the registry default scenario when set there)
 - ``--allow-large-download`` (skip the materialization confirmation prompt when
   known estimated downloads exceed the threshold)
 - ``--materialization-threshold-mib INTEGER`` (default: ``100``)

@@ -264,6 +264,10 @@ Direct smoke evidence:
 Next edge after this slice:
 
 - keep scenario-set execution sequential for now;
+- a small follow-on convenience slice is now also landed:
+  - optional variant-level ``default_scenario_id``
+  - ``femic patchworks run-default-scenario <variant-id>``
+  - thin wrapper over the existing named-scenario runner
 - decide whether the next operator-facing value is:
   - richer materialization consent/reporting; or
   - scenario-set metadata such as labels, families, or default-set aliases;

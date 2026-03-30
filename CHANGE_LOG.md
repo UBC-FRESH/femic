@@ -8946,3 +8946,22 @@
     - `schedule.csv` remained non-empty:
       - step 1: `325` lines
       - step 2: `323` lines
+- 2026-03-30 (Issue #60): landed a small default-scenario operator
+  convenience slice on top of the proven Patchworks registry scenario seam.
+  - `run-variant` remains a pure direct-variant launch.
+  - Variants can now declare `default_scenario_id`.
+  - Added new CLI surface:
+    - `femic patchworks run-default-scenario <variant-id>`
+  - Built-in proof variants now wire their default scenario to
+    `even_flow_smoke`:
+    - `k3z.base`
+    - `k3z.intensive_light_standstructure`
+  - Direct real default-scenario smoke passed:
+    - `python -m femic patchworks run-default-scenario k3z.base --run-id issue60_default_scenario --log-dir vdyp_io/logs`
+  - Directly inspected real outputs:
+    - manifest:
+      `vdyp_io/logs/patchworks_headless_manifest-issue60_default_scenario.json`
+    - `targetStatus.csv` kept both:
+      - `product.Yield.managed.Total`
+      - `flow.even.product.Yield.managed.Total`
+    - `schedule.csv` remained non-empty (`327` lines)

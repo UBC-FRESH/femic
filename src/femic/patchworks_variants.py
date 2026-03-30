@@ -88,6 +88,7 @@ class PatchworksVariantDefinition:
     analysis_pin: Path
     runtime_config: Path
     default: bool = False
+    default_scenario_id: str | None = None
     notes: tuple[str, ...] = ()
     materialization: tuple[PatchworksVariantMaterializationAction, ...] = ()
     scenarios: tuple[PatchworksVariantScenarioDefinition, ...] = ()
@@ -140,6 +141,21 @@ class PatchworksVariantRegistry:
                 return variant, scenario
         raise PatchworksVariantRegistryError(
             f"Unknown Patchworks scenario {scenario_id} for variant {variant_id}"
+        )
+
+    def get_default_scenario(
+        self,
+        variant_id: str,
+    ) -> tuple[PatchworksVariantDefinition, PatchworksVariantScenarioDefinition]:
+        """Return the default scenario for one variant."""
+
+        variant = self.get_variant(variant_id)
+        if variant.default_scenario_id:
+            return self.get_scenario(variant.variant_id, variant.default_scenario_id)
+        if len(variant.scenarios) == 1:
+            return variant, variant.scenarios[0]
+        raise PatchworksVariantRegistryError(
+            f"Variant {variant_id} does not define a default Patchworks scenario."
         )
 
     def get_scenario_set(self, scenario_set_id: str) -> PatchworksScenarioSetDefinition:
@@ -423,6 +439,9 @@ def _load_variant_entries_from_payload(
                 analysis_pin=analysis_pin,
                 runtime_config=runtime_config,
                 default=bool(item.get("default", False)),
+                default_scenario_id=(
+                    str(item.get("default_scenario_id") or "").strip() or None
+                ),
                 notes=notes,
                 materialization=_parse_materialization_actions(
                     item.get("materialization"),
@@ -653,6 +672,8 @@ def serialize_patchworks_variant_definition(
     }
     if variant.default:
         payload["default"] = True
+    if variant.default_scenario_id:
+        payload["default_scenario_id"] = variant.default_scenario_id
     if variant.notes:
         payload["notes"] = list(variant.notes)
     if variant.materialization:
