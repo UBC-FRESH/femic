@@ -16,10 +16,13 @@ Status
     - `variants register`
     - `variants update`
     - `variants remove`
+  - registry-backed scenario execution:
+    - `scenarios list <variant-id>`
+    - `run-scenario <variant-id> <scenario-id>`
 - Immediate next edge:
   - decide whether materialization should stay as raw `datalad-get` actions
     or grow a friendlier dataset-summary consent surface
-  - then widen into registry-backed scenario/scenario-set execution
+  - then widen into registry-backed scenario-set execution
 
 Purpose
 -------

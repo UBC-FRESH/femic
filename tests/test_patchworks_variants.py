@@ -25,6 +25,9 @@ def test_load_patchworks_variant_registry_includes_builtin_k3z_base() -> None:
     assert variant.default is True
     assert variant.analysis_pin.name == "base.pin"
     assert variant.runtime_config.name == "patchworks.runtime.windows.yaml"
+    assert variant.scenarios[0].scenario_id == "even_flow_smoke"
+    assert variant.scenarios[0].mode == "max-even-flow-smoke"
+    assert variant.scenarios[0].target == "product.Yield.managed.Total"
 
 
 def test_load_patchworks_variant_registry_user_overlay_can_override_builtin(
@@ -234,3 +237,42 @@ def test_remove_patchworks_user_variant_entry_removes_entry(tmp_path: Path) -> N
 
     _, payload = load_patchworks_user_registry_overlay(registry_path)
     assert payload["variants"] == []
+
+
+def test_load_patchworks_variant_registry_parses_scenarios_from_overlay(
+    tmp_path: Path,
+) -> None:
+    overlay_path = tmp_path / "variants.yaml"
+    overlay_path.write_text(
+        "\n".join(
+            [
+                "variants:",
+                "  - variant_id: demo.base",
+                '    label: "Demo base"',
+                "    instance_id: demo",
+                "    variant_family: baseline",
+                "    kind: patchworks",
+                "    instance_root: external/demo-instance",
+                "    analysis_pin: external/demo-instance/models/demo/analysis/base.pin",
+                "    runtime_config: external/demo-instance/config/runtime.yaml",
+                "    scenarios:",
+                "      - scenario_id: smoke",
+                '        label: "Demo smoke"',
+                "        mode: max-even-flow-smoke",
+                "        target: product.Yield.managed.Total",
+                "        iterations: 123",
+                "        improvement: 0.5",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    registry = load_patchworks_variant_registry(user_registry_path=overlay_path)
+
+    variant, scenario = registry.get_scenario("demo.base", "smoke")
+    assert variant.variant_id == "demo.base"
+    assert scenario.label == "Demo smoke"
+    assert scenario.mode == "max-even-flow-smoke"
+    assert scenario.iterations == 123
+    assert scenario.improvement == 0.5

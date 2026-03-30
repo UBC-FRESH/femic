@@ -182,6 +182,11 @@ patchworks_variants_app = typer.Typer(
     no_args_is_help=True,
     help="Inspect registered Patchworks variants.",
 )
+patchworks_scenarios_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Inspect and run registered Patchworks scenarios.",
+)
 instance_app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
@@ -4024,6 +4029,32 @@ def patchworks_variants_remove(
     console.print(f"registry_path: {removed_registry_path}")
 
 
+@patchworks_scenarios_app.command("list")
+def patchworks_scenarios_list(
+    variant_id: str = typer.Argument(..., help="Registered Patchworks variant id."),
+    registry: Path = PATCHWORKS_VARIANT_REGISTRY_OPTION,
+) -> None:
+    """List named scenarios attached to one Patchworks registry variant."""
+
+    try:
+        variant_registry = load_patchworks_variant_registry(user_registry_path=registry)
+        variant = variant_registry.get_variant(variant_id)
+    except (FileNotFoundError, PatchworksVariantRegistryError, yaml.YAMLError) as exc:
+        console.print(f"[red]Patchworks variant registry error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]Patchworks scenarios[/green]")
+    console.print(f"variant_id: {variant.variant_id}")
+    if not variant.scenarios:
+        console.print("scenarios: none")
+        return
+    for scenario in variant.scenarios:
+        console.print(
+            f"- {scenario.scenario_id}: {scenario.label} "
+            f"[mode={scenario.mode} target={scenario.target or 'default'}]"
+        )
+
+
 @patchworks_app.command("run-variant")
 def patchworks_run_variant(
     variant_id: str = typer.Argument(..., help="Registered Patchworks variant id."),
@@ -4133,6 +4164,115 @@ def patchworks_run_variant(
         f"variant={variant.variant_id} run_id={result.run_id} returncode={result.returncode}"
     )
     console.print(f"instance_root: {variant.instance_root}")
+    console.print(f"runtime_config: {variant.runtime_config}")
+    console.print(f"pin: {result.pin_path}")
+    console.print(f"stage_dir: {result.stage_dir}")
+    console.print(f"scenario_mode: {result.scenario_mode}")
+    console.print(f"stdout_log: {result.execution.stdout_log_path}")
+    console.print(f"stderr_log: {result.execution.stderr_log_path}")
+    console.print(f"manifest: {result.manifest_path}")
+    for failure in result.failures:
+        console.print(f"[red]Runtime failure:[/red] {failure}")
+    if result.returncode != 0:
+        raise typer.Exit(code=result.returncode)
+
+
+@patchworks_app.command("run-scenario")
+def patchworks_run_scenario(
+    variant_id: str = typer.Argument(..., help="Registered Patchworks variant id."),
+    scenario_id: str = typer.Argument(
+        ..., help="Registered scenario id for the variant."
+    ),
+    registry: Path = PATCHWORKS_VARIANT_REGISTRY_OPTION,
+    log_dir: Path = PATCHWORKS_LOG_DIR_OPTION,
+    run_id: str | None = PATCHWORKS_RUN_ID_OPTION,
+    stage_label: str | None = PATCHWORKS_HEADLESS_STAGE_LABEL_OPTION,
+    allow_large_download: bool = typer.Option(
+        False,
+        "--allow-large-download",
+        help=(
+            "Allow registry-declared materialization larger than the prompt threshold "
+            "without asking for confirmation."
+        ),
+    ),
+    materialization_threshold_mib: int = typer.Option(
+        DEFAULT_PATCHWORKS_MATERIALIZATION_PROMPT_BYTES // (1024 * 1024),
+        "--materialization-threshold-mib",
+        min=0,
+        help="Prompt threshold for registry-declared materialization downloads.",
+    ),
+) -> None:
+    """Run one named registry-backed Patchworks scenario."""
+
+    try:
+        variant_registry = load_patchworks_variant_registry(user_registry_path=registry)
+        variant, scenario = variant_registry.get_scenario(variant_id, scenario_id)
+        materialization_plan = build_patchworks_variant_materialization_plan(
+            variant,
+            prompt_threshold_bytes=materialization_threshold_mib * 1024 * 1024,
+        )
+        if materialization_plan.action_count:
+            console.print(
+                "[yellow]Patchworks variant materialization required[/yellow] "
+                f"variant={variant.variant_id} actions={materialization_plan.action_count}"
+            )
+            for action in variant.materialization:
+                estimate_text = (
+                    _format_binary_size(action.estimated_bytes)
+                    if action.estimated_bytes is not None
+                    else "unknown"
+                )
+                console.print(
+                    "materialization: "
+                    f"kind={action.kind} dataset_root={action.dataset_root} "
+                    f"relpaths={list(action.relpaths) or ['.']} estimated={estimate_text}"
+                )
+            if (
+                materialization_plan.requires_confirmation
+                and not allow_large_download
+                and not typer.confirm(
+                    "Proceed with approximately "
+                    f"{_format_binary_size(materialization_plan.known_estimated_bytes)} "
+                    f"of Patchworks materialization for {variant.variant_id}?",
+                    default=False,
+                )
+            ):
+                console.print(
+                    "[red]Patchworks scenario run cancelled:[/red] "
+                    "large materialization was not approved."
+                )
+                raise typer.Exit(code=1)
+            materialize_patchworks_variant(variant)
+        runtime_config = load_patchworks_runtime_config(variant.runtime_config)
+        result = run_patchworks_headless_pin(
+            config=runtime_config,
+            pin_path=variant.analysis_pin,
+            log_dir=log_dir.expanduser().resolve(),
+            run_id=run_id,
+            stage_label=stage_label or scenario.stage_label,
+            iterations=scenario.iterations or 1,
+            improvement=scenario.improvement or 0.0,
+            scenario_mode=scenario.mode,
+            scenario_target=scenario.target,
+            scenario_min_annual=scenario.min_annual,
+        )
+    except (
+        FileNotFoundError,
+        PatchworksConfigError,
+        PatchworksVariantRegistryError,
+        json.JSONDecodeError,
+        yaml.YAMLError,
+    ) as exc:
+        console.print(f"[red]Patchworks scenario run failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    color = "green" if result.returncode == 0 else "red"
+    console.print(
+        f"[{color}]Patchworks scenario run complete[/{color}] "
+        f"variant={variant.variant_id} scenario={scenario.scenario_id} "
+        f"run_id={result.run_id} returncode={result.returncode}"
+    )
+    console.print(f"scenario_label: {scenario.label}")
     console.print(f"runtime_config: {variant.runtime_config}")
     console.print(f"pin: {result.pin_path}")
     console.print(f"stage_dir: {result.stage_dir}")
@@ -4483,6 +4623,7 @@ app.add_typer(tipsy_app, name="tipsy")
 app.add_typer(fansier_app, name="fansier")
 app.add_typer(export_app, name="export")
 patchworks_app.add_typer(patchworks_instances_app, name="instances")
+patchworks_app.add_typer(patchworks_scenarios_app, name="scenarios")
 patchworks_app.add_typer(patchworks_variants_app, name="variants")
 app.add_typer(patchworks_app, name="patchworks")
 app.add_typer(instance_app, name="instance")

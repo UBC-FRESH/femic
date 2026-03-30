@@ -8889,3 +8889,32 @@
       - `python -m femic patchworks variants list --registry ...`
     - removed `demo.base` again and confirmed the overlay file retained only
       the `k3z.base` user override
+- 2026-03-30 (Issue #60): landed registry-backed Patchworks scenario
+  definitions and execution on top of the proven headless runner.
+  - Registry parsing now supports named variant scenarios in:
+    - `src/femic/patchworks_variants.py`
+  - Added new CLI surfaces:
+    - `femic patchworks scenarios list <variant-id>`
+    - `femic patchworks run-scenario <variant-id> <scenario-id>`
+  - Added built-in proof scenario on `k3z.base`:
+    - `even_flow_smoke`
+  - `run-scenario` now translates registry scenario fields directly into the
+    existing headless runner contract:
+    - `scenario_mode`
+    - `scenario_target`
+    - `scenario_min_annual`
+    - `iterations`
+    - `improvement`
+  - Direct real scenario smoke passed:
+    - `python -m femic patchworks scenarios list k3z.base`
+    - `python -m femic patchworks run-scenario k3z.base even_flow_smoke --run-id issue60_registry_scenario --log-dir vdyp_io/logs`
+  - Directly inspected real outputs:
+    - manifest:
+      `vdyp_io/logs/patchworks_headless_manifest-issue60_registry_scenario.json`
+    - saved stage:
+      `vdyp_io/logs/headless_stage/issue60_registry_scenario/`
+    - `targetStatus.csv` still showed both:
+      - `product.Yield.managed.Total`
+      - `flow.even.product.Yield.managed.Total`
+    - `targetSummary.csv` still showed near-zero even-flow deviations
+    - `schedule.csv` remained non-empty (`333` lines)

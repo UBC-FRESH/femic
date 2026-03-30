@@ -14,6 +14,13 @@ variants:
     default: true
     notes:
       - Canonical baseline K3Z Patchworks launch surface.
+    scenarios:
+      - scenario_id: even_flow_smoke
+        label: K3Z base even-flow smoke
+        mode: max-even-flow-smoke
+        target: product.Yield.managed.Total
+        iterations: 100000
+        improvement: 0.0
   - variant_id: k3z.ctfert_l15h5
     label: K3Z CT/fert L15/M10/H5
     instance_id: k3z

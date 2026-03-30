@@ -9091,9 +9091,36 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
           - confirmed merged CLI resolution via:
             - `python -m femic patchworks variants show demo.base --registry ...`
             - `python -m femic patchworks variants show k3z.base --registry ...`
-            - `python -m femic patchworks variants list --registry ...`
+          - `python -m femic patchworks variants list --registry ...`
           - removed `demo.base` again and confirmed the overlay file now only
             retained the `k3z.base` user override.
+      - fourth landed execution slice now in hand:
+        - registry parsing now supports named scenarios attached to variants.
+        - new CLI surfaces:
+          - `femic patchworks scenarios list <variant-id>`
+          - `femic patchworks run-scenario <variant-id> <scenario-id>`
+        - built-in proof scenario now shipped on `k3z.base`:
+          - `even_flow_smoke`
+        - `run-scenario` reuses the existing headless runner by translating
+          registry scenario fields into:
+          - `scenario_mode`
+          - `scenario_target`
+          - `scenario_min_annual`
+          - `iterations`
+          - `improvement`
+        - direct K3Z scenario smoke now also passed:
+          - `python -m femic patchworks scenarios list k3z.base`
+          - `python -m femic patchworks run-scenario k3z.base even_flow_smoke --run-id issue60_registry_scenario --log-dir vdyp_io/logs`
+          - direct inspected outputs:
+            - manifest:
+              `vdyp_io/logs/patchworks_headless_manifest-issue60_registry_scenario.json`
+            - saved stage:
+              `vdyp_io/logs/headless_stage/issue60_registry_scenario/`
+            - `targetStatus.csv` still showed both:
+              - `product.Yield.managed.Total`
+              - `flow.even.product.Yield.managed.Total`
+            - `targetSummary.csv` still showed near-zero even-flow deviations
+            - `schedule.csv` remained non-empty (`333` lines)
         - regression-proof K3Z smoke also still passed:
           - `python -m femic patchworks run-variant k3z.base --run-id issue60_materialization_guardrail --log-dir vdyp_io/logs --scenario-mode max-even-flow-smoke`
           - direct inspected outputs:
@@ -9118,9 +9145,9 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - decide whether the first production materialization experience should
         stay as raw `datalad-get` actions or grow a more user-facing dataset
         summary/consent surface;
-      - then widen into registry-backed scenario/scenario-set execution
-        surfaces instead of keeping `run-variant` as the only higher-level
-        operator entry point.
+      - then widen into registry-backed scenario-set execution surfaces;
+      - once scenario sets exist, decide whether `run-variant` should grow a
+        default-scenario alias or stay as a pure direct-variant launch.
   - Current implementation order:
     - reuse FEMIC's existing BeanShell launcher in
       `src/femic/patchworks_runtime.py` rather than inventing a second

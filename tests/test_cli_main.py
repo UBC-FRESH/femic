@@ -1306,6 +1306,7 @@ def test_patchworks_variants_update_overlays_builtin_variant(
         default=True,
         notes=(),
         materialization=(),
+        scenarios=(),
         runtime=None,
     )
     monkeypatch.setattr(
@@ -1367,6 +1368,126 @@ def test_patchworks_variants_remove_deletes_user_overlay_entry(
     payload = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
     assert payload["variants"] == []
     assert any("Patchworks variant removed" in msg for msg in messages)
+
+
+def test_patchworks_scenarios_list_prints_variant_scenarios(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    variant = SimpleNamespace(
+        variant_id="k3z.base",
+        scenarios=(
+            SimpleNamespace(
+                scenario_id="even_flow_smoke",
+                label="K3Z base even-flow smoke",
+                mode="max-even-flow-smoke",
+                target="product.Yield.managed.Total",
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(get_variant=lambda _variant_id: variant),
+    )
+
+    cli_main.patchworks_scenarios_list("k3z.base", registry=Path("variants.yaml"))
+
+    assert any("Patchworks scenarios" in msg for msg in messages)
+    assert any("even_flow_smoke" in msg for msg in messages)
+
+
+def test_patchworks_run_scenario_delegates_to_headless_runner(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    variant = SimpleNamespace(
+        variant_id="k3z.base",
+        runtime_config=Path(
+            "external/femic-k3z-instance/config/patchworks.runtime.windows.yaml"
+        ),
+        analysis_pin=Path(
+            "external/femic-k3z-instance/models/k3z_patchworks_model/analysis/base.pin"
+        ),
+        materialization=(),
+    )
+    scenario = SimpleNamespace(
+        scenario_id="even_flow_smoke",
+        label="K3Z base even-flow smoke",
+        mode="max-even-flow-smoke",
+        target="product.Yield.managed.Total",
+        min_annual=None,
+        iterations=100000,
+        improvement=0.0,
+        stage_label=None,
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(
+            get_scenario=lambda _variant_id, _scenario_id: (variant, scenario)
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "build_patchworks_variant_materialization_plan",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            action_count=0,
+            known_estimated_bytes=0,
+            has_unknown_sizes=False,
+            requires_confirmation=False,
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main, "materialize_patchworks_variant", lambda *_args, **_kwargs: None
+    )
+    runtime_cfg = SimpleNamespace()
+    monkeypatch.setattr(
+        cli_main, "load_patchworks_runtime_config", lambda _path: runtime_cfg
+    )
+    called: dict[str, object] = {}
+
+    def _fake_run_patchworks_headless_pin(**kwargs):
+        called.update(kwargs)
+        return SimpleNamespace(
+            run_id="demo",
+            returncode=0,
+            pin_path=variant.analysis_pin,
+            stage_dir=Path("vdyp_io/logs/headless_stage/demo"),
+            scenario_mode=scenario.mode,
+            execution=SimpleNamespace(
+                stdout_log_path=Path("tipsy_io/logs/stdout.log"),
+                stderr_log_path=Path("tipsy_io/logs/stderr.log"),
+            ),
+            manifest_path=Path("tipsy_io/logs/manifest.json"),
+            failures=(),
+        )
+
+    monkeypatch.setattr(
+        cli_main, "run_patchworks_headless_pin", _fake_run_patchworks_headless_pin
+    )
+
+    cli_main.patchworks_run_scenario(
+        "k3z.base",
+        "even_flow_smoke",
+        registry=Path("variants.yaml"),
+        log_dir=Path("vdyp_io/logs"),
+        run_id="demo",
+        stage_label=None,
+        allow_large_download=False,
+        materialization_threshold_mib=100,
+    )
+
+    assert called["config"] is runtime_cfg
+    assert called["pin_path"] == variant.analysis_pin
+    assert called["scenario_mode"] == "max-even-flow-smoke"
+    assert called["scenario_target"] == "product.Yield.managed.Total"
+    assert called["iterations"] == 100000
+    assert any("Patchworks scenario run complete" in msg for msg in messages)
 
 
 def test_fansier_run_batch_emits_manifest_and_output(

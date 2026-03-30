@@ -43,6 +43,20 @@ class PatchworksVariantMaterializationPlan:
 
 
 @dataclass(frozen=True)
+class PatchworksVariantScenarioDefinition:
+    """Named scenario contract attached to one registry variant."""
+
+    scenario_id: str
+    label: str
+    mode: str
+    target: str | None = None
+    min_annual: float | None = None
+    iterations: int | None = None
+    improvement: float | None = None
+    stage_label: str | None = None
+
+
+@dataclass(frozen=True)
 class PatchworksVariantDefinition:
     """Resolved Patchworks variant registry entry."""
 
@@ -58,6 +72,7 @@ class PatchworksVariantDefinition:
     default: bool = False
     notes: tuple[str, ...] = ()
     materialization: tuple[PatchworksVariantMaterializationAction, ...] = ()
+    scenarios: tuple[PatchworksVariantScenarioDefinition, ...] = ()
     runtime: dict[str, Any] | None = None
     source: str = "builtin"
     registry_path: Path | None = None
@@ -90,6 +105,22 @@ class PatchworksVariantRegistry:
                 return variant
         raise PatchworksVariantRegistryError(
             f"Unknown Patchworks variant: {variant_id}"
+        )
+
+    def get_scenario(
+        self,
+        variant_id: str,
+        scenario_id: str,
+    ) -> tuple[PatchworksVariantDefinition, PatchworksVariantScenarioDefinition]:
+        """Return one named scenario attached to one variant."""
+
+        variant = self.get_variant(variant_id)
+        normalized_scenario_id = str(scenario_id or "").strip()
+        for scenario in variant.scenarios:
+            if scenario.scenario_id == normalized_scenario_id:
+                return variant, scenario
+        raise PatchworksVariantRegistryError(
+            f"Unknown Patchworks scenario {scenario_id} for variant {variant_id}"
         )
 
 
@@ -215,6 +246,56 @@ def _parse_materialization_actions(
     return tuple(actions)
 
 
+def _parse_variant_scenarios(
+    payload: Any,
+    *,
+    source_label: str,
+) -> tuple[PatchworksVariantScenarioDefinition, ...]:
+    if payload in (None, ""):
+        return ()
+    if not isinstance(payload, (list, tuple)):
+        raise PatchworksVariantRegistryError(
+            f"Patchworks variant registry {source_label} field scenarios must be a list."
+        )
+    scenarios: list[PatchworksVariantScenarioDefinition] = []
+    for item in payload:
+        if not isinstance(item, dict):
+            raise PatchworksVariantRegistryError(
+                f"Patchworks variant registry {source_label} scenario items must be mappings."
+            )
+        scenario_id = _as_str(
+            item.get("scenario_id"),
+            "scenario_id",
+            source_label=source_label,
+        )
+        mode = _as_str(item.get("mode"), "mode", source_label=source_label)
+        label = str(item.get("label") or scenario_id).strip() or scenario_id
+        target = str(item.get("target") or "").strip() or None
+        min_annual_raw = item.get("min_annual")
+        iterations_raw = item.get("iterations")
+        improvement_raw = item.get("improvement")
+        stage_label = str(item.get("stage_label") or "").strip() or None
+        scenarios.append(
+            PatchworksVariantScenarioDefinition(
+                scenario_id=scenario_id,
+                label=label,
+                mode=mode,
+                target=target,
+                min_annual=None
+                if min_annual_raw in (None, "")
+                else float(str(min_annual_raw).strip()),
+                iterations=None
+                if iterations_raw in (None, "")
+                else int(str(iterations_raw).strip()),
+                improvement=None
+                if improvement_raw in (None, "")
+                else float(str(improvement_raw).strip()),
+                stage_label=stage_label,
+            )
+        )
+    return tuple(scenarios)
+
+
 def _load_variant_entries_from_payload(
     payload: dict[str, Any],
     *,
@@ -315,6 +396,10 @@ def _load_variant_entries_from_payload(
                 notes=notes,
                 materialization=_parse_materialization_actions(
                     item.get("materialization"),
+                    source_label=source_label,
+                ),
+                scenarios=_parse_variant_scenarios(
+                    item.get("scenarios"),
                     source_label=source_label,
                 ),
                 runtime=dict(runtime_payload)
@@ -450,6 +535,36 @@ def serialize_patchworks_variant_definition(
                 ),
             }
             for action in variant.materialization
+        ]
+    if variant.scenarios:
+        payload["scenarios"] = [
+            {
+                "scenario_id": scenario.scenario_id,
+                "label": scenario.label,
+                "mode": scenario.mode,
+                **({"target": scenario.target} if scenario.target is not None else {}),
+                **(
+                    {"min_annual": scenario.min_annual}
+                    if scenario.min_annual is not None
+                    else {}
+                ),
+                **(
+                    {"iterations": scenario.iterations}
+                    if scenario.iterations is not None
+                    else {}
+                ),
+                **(
+                    {"improvement": scenario.improvement}
+                    if scenario.improvement is not None
+                    else {}
+                ),
+                **(
+                    {"stage_label": scenario.stage_label}
+                    if scenario.stage_label is not None
+                    else {}
+                ),
+            }
+            for scenario in variant.scenarios
         ]
     if variant.runtime:
         payload["runtime"] = dict(variant.runtime)
