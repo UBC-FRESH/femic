@@ -1490,6 +1490,104 @@ def test_patchworks_run_scenario_delegates_to_headless_runner(
     assert any("Patchworks scenario run complete" in msg for msg in messages)
 
 
+def test_patchworks_scenario_sets_list_prints_registry_sets(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    scenario_set = SimpleNamespace(
+        scenario_set_id="k3z.proving_ground",
+        label="K3Z proving-ground scenario smoke set",
+        mode="sequential",
+        scenarios=(SimpleNamespace(), SimpleNamespace()),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(scenario_sets=(scenario_set,)),
+    )
+
+    cli_main.patchworks_scenario_sets_list(registry=Path("variants.yaml"))
+
+    assert any("Patchworks scenario sets" in msg for msg in messages)
+    assert any("k3z.proving_ground" in msg for msg in messages)
+
+
+def test_patchworks_run_scenario_set_runs_members_sequentially(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    scenario_set = SimpleNamespace(
+        scenario_set_id="k3z.proving_ground",
+        label="K3Z proving-ground scenario smoke set",
+        mode="sequential",
+        scenarios=(
+            SimpleNamespace(variant_id="k3z.base", scenario_id="even_flow_smoke"),
+            SimpleNamespace(
+                variant_id="k3z.intensive_light_standstructure",
+                scenario_id="even_flow_smoke",
+            ),
+        ),
+    )
+    variant_a = SimpleNamespace(variant_id="k3z.base")
+    variant_b = SimpleNamespace(variant_id="k3z.intensive_light_standstructure")
+    scenario = SimpleNamespace(
+        scenario_id="even_flow_smoke",
+        label="Even-flow smoke",
+        mode="max-even-flow-smoke",
+        target="product.Yield.managed.Total",
+        min_annual=None,
+        iterations=100000,
+        improvement=0.0,
+        stage_label=None,
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(
+            get_scenario_set=lambda _id: scenario_set,
+            get_scenario=lambda variant_id, _scenario_id: (
+                variant_a if variant_id == "k3z.base" else variant_b,
+                scenario,
+            ),
+        ),
+    )
+    calls: list[tuple[str, str]] = []
+
+    def _fake_run_registered_scenario(**kwargs):
+        calls.append((kwargs["variant"].variant_id, kwargs["run_id"]))
+        return SimpleNamespace(
+            run_id=kwargs["run_id"],
+            returncode=0,
+            stage_dir=Path(f"vdyp_io/logs/headless_stage/{kwargs['run_id']}"),
+            manifest_path=Path(f"vdyp_io/logs/{kwargs['run_id']}.json"),
+            failures=(),
+        )
+
+    monkeypatch.setattr(
+        cli_main, "_run_patchworks_registered_scenario", _fake_run_registered_scenario
+    )
+
+    cli_main.patchworks_run_scenario_set(
+        "k3z.proving_ground",
+        registry=Path("variants.yaml"),
+        log_dir=Path("vdyp_io/logs"),
+        run_id="demo_set",
+        stage_label=None,
+        allow_large_download=False,
+        materialization_threshold_mib=100,
+    )
+
+    assert calls == [
+        ("k3z.base", "demo_set_01"),
+        ("k3z.intensive_light_standstructure", "demo_set_02"),
+    ]
+    assert any("Patchworks scenario-set run complete" in msg for msg in messages)
+
+
 def test_fansier_run_batch_emits_manifest_and_output(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

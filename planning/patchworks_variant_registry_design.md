@@ -227,6 +227,49 @@ can later support:
 This does **not** need to be fully implemented in the first slice, but the
 registry shape should avoid blocking it.
 
+Current landed slice
+--------------------
+
+The first registry-backed scenario-set slice is now in hand.
+
+Current tracked support is intentionally narrow:
+
+- top-level named ``scenario_sets`` in the built-in and user overlay registries
+- sequential execution only
+- ``femic patchworks scenario-sets list``
+- ``femic patchworks run-scenario-set <scenario-set-id>``
+- reuse of the existing named-scenario and headless Patchworks runner contract
+  for each step
+
+The shipped built-in proof set is:
+
+- ``k3z.proving_ground``
+  - ``k3z.base/even_flow_smoke``
+  - ``k3z.intensive_light_standstructure/even_flow_smoke``
+
+Direct smoke evidence:
+
+- ``python -m femic patchworks scenario-sets list``
+- ``python -m femic patchworks run-scenario-set k3z.proving_ground --run-id issue60_scenario_set --log-dir vdyp_io/logs``
+- inspected outputs:
+  - manifests:
+    - ``vdyp_io/logs/patchworks_headless_manifest-issue60_scenario_set_01.json``
+    - ``vdyp_io/logs/patchworks_headless_manifest-issue60_scenario_set_02.json``
+  - both saved stages kept:
+    - ``product.Yield.managed.Total``
+    - ``flow.even.product.Yield.managed.Total``
+    active in ``scenario/targetStatus.csv``
+  - both stages retained non-empty ``scenario/schedule.csv`` files
+
+Next edge after this slice:
+
+- keep scenario-set execution sequential for now;
+- decide whether the next operator-facing value is:
+  - richer materialization consent/reporting; or
+  - scenario-set metadata such as labels, families, or default-set aliases;
+- defer parallel scenario-set execution until there is a clear safety contract
+  for Patchworks process concurrency.
+
 Future DataLad-Linked Deployment Seam
 -------------------------------------
 

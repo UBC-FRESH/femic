@@ -9142,12 +9142,43 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - inspect the saved stage/report outputs directly before calling the
         slice landed.
     - Current next edge:
-      - decide whether the first production materialization experience should
-        stay as raw `datalad-get` actions or grow a more user-facing dataset
-        summary/consent surface;
-      - then widen into registry-backed scenario-set execution surfaces;
+      - the fifth landed execution slice is now in hand:
+        - registry parsing now supports top-level named scenario sets in both
+          the packaged built-ins and the user overlay;
+        - new CLI surfaces:
+          - `femic patchworks scenario-sets list`
+          - `femic patchworks run-scenario-set <scenario-set-id>`
+        - the first landing intentionally supports sequential execution only;
+        - `run-scenario-set` reuses the existing named-scenario/headless
+          contract for each step rather than inventing a second Patchworks
+          runner;
+        - built-in proof set now shipped:
+          - `k3z.proving_ground`
+            - `k3z.base/even_flow_smoke`
+            - `k3z.intensive_light_standstructure/even_flow_smoke`
+        - direct K3Z scenario-set smoke now also passed:
+          - `python -m femic patchworks scenario-sets list`
+          - `python -m femic patchworks run-scenario-set k3z.proving_ground --run-id issue60_scenario_set --log-dir vdyp_io/logs`
+          - direct inspected outputs:
+            - manifests:
+              - `vdyp_io/logs/patchworks_headless_manifest-issue60_scenario_set_01.json`
+              - `vdyp_io/logs/patchworks_headless_manifest-issue60_scenario_set_02.json`
+            - both saved stages kept:
+              - `product.Yield.managed.Total`
+              - `flow.even.product.Yield.managed.Total`
+              active in `scenario/targetStatus.csv`
+            - both `targetSummary.csv` files still showed near-zero even-flow
+              deviations
+            - `schedule.csv` remained non-empty:
+              - step 1: `325` lines
+              - step 2: `323` lines
+      - after that, decide whether the first production materialization
+        experience should stay as raw `datalad-get` actions or grow a more
+        user-facing dataset summary/consent surface;
       - once scenario sets exist, decide whether `run-variant` should grow a
-        default-scenario alias or stay as a pure direct-variant launch.
+        default-scenario alias or stay as a pure direct-variant launch;
+      - defer parallel scenario-set execution until there is a clearer
+        Patchworks process-safety contract for concurrent runs.
   - Current implementation order:
     - reuse FEMIC's existing BeanShell launcher in
       `src/femic/patchworks_runtime.py` rather than inventing a second

@@ -69,6 +69,13 @@ variants:
     instance_root: external/femic-k3z-instance
     analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/intensive_light_standstructure.pin
     runtime_config: external/femic-k3z-instance/config/patchworks.runtime.intensive_light_standstructure.windows.yaml
+    scenarios:
+      - scenario_id: even_flow_smoke
+        label: K3Z proving-ground even-flow smoke
+        mode: max-even-flow-smoke
+        target: product.Yield.managed.Total
+        iterations: 100000
+        improvement: 0.0
   - variant_id: k3z.pct_light
     label: K3Z PCT light
     instance_id: k3z
@@ -125,3 +132,11 @@ variants:
     instance_root: external/femic-k3z-instance
     analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/overlay_scenario2_sum.pin
     runtime_config: external/femic-k3z-instance/config/patchworks.runtime.overlay.scenario2_sum.windows.yaml
+
+scenario_sets:
+  - scenario_set_id: k3z.proving_ground
+    label: K3Z proving-ground scenario smoke set
+    mode: sequential
+    scenarios:
+      - k3z.base/even_flow_smoke
+      - k3z.intensive_light_standstructure/even_flow_smoke

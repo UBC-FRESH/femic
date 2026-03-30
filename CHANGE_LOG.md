@@ -8918,3 +8918,31 @@
       - `flow.even.product.Yield.managed.Total`
     - `targetSummary.csv` still showed near-zero even-flow deviations
     - `schedule.csv` remained non-empty (`333` lines)
+- 2026-03-30 (Issue #60): landed registry-backed Patchworks scenario sets on
+  top of the proven named-scenario/headless runner seam.
+  - Registry parsing now supports top-level named `scenario_sets` in both the
+    packaged built-ins and the user overlay.
+  - Added new CLI surfaces:
+    - `femic patchworks scenario-sets list`
+    - `femic patchworks run-scenario-set <scenario-set-id>`
+  - The first landing intentionally supports sequential execution only.
+  - Added built-in proof set:
+    - `k3z.proving_ground`
+      - `k3z.base/even_flow_smoke`
+      - `k3z.intensive_light_standstructure/even_flow_smoke`
+  - Direct real scenario-set smoke passed:
+    - `python -m femic patchworks scenario-sets list`
+    - `python -m femic patchworks run-scenario-set k3z.proving_ground --run-id issue60_scenario_set --log-dir vdyp_io/logs`
+  - Directly inspected real outputs:
+    - manifests:
+      - `vdyp_io/logs/patchworks_headless_manifest-issue60_scenario_set_01.json`
+      - `vdyp_io/logs/patchworks_headless_manifest-issue60_scenario_set_02.json`
+    - both saved stages kept:
+      - `product.Yield.managed.Total`
+      - `flow.even.product.Yield.managed.Total`
+      active in `scenario/targetStatus.csv`
+    - both `targetSummary.csv` files still showed near-zero even-flow
+      deviations
+    - `schedule.csv` remained non-empty:
+      - step 1: `325` lines
+      - step 2: `323` lines

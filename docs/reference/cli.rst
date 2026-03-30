@@ -418,6 +418,10 @@ Subcommands
 - ``VARIANT_ID`` argument (required)
 - ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
 
+``patchworks scenario-sets list`` options
+
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+
 ``patchworks run-scenario`` options
 
 - ``VARIANT_ID`` argument (required)
@@ -426,6 +430,18 @@ Subcommands
 - ``--log-dir PATH`` (default: ``vdyp_io/logs``)
 - ``--run-id TEXT`` (optional)
 - ``--stage-label TEXT`` (optional override; falls back to the registry scenario when set there)
+- ``--allow-large-download`` (skip the materialization confirmation prompt when
+  known estimated downloads exceed the threshold)
+- ``--materialization-threshold-mib INTEGER`` (default: ``100``)
+
+``patchworks run-scenario-set`` options
+
+- ``SCENARIO_SET_ID`` argument (required)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--run-id TEXT`` (optional; step runs derive ``_01``, ``_02``, ...)
+- ``--stage-label TEXT`` (optional; per-step stage labels derive ``_01``,
+  ``_02``, ...)
 - ``--allow-large-download`` (skip the materialization confirmation prompt when
   known estimated downloads exceed the threshold)
 - ``--materialization-threshold-mib INTEGER`` (default: ``100``)

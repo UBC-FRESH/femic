@@ -57,6 +57,24 @@ class PatchworksVariantScenarioDefinition:
 
 
 @dataclass(frozen=True)
+class PatchworksScenarioSetMember:
+    """One variant/scenario reference inside a named scenario set."""
+
+    variant_id: str
+    scenario_id: str
+
+
+@dataclass(frozen=True)
+class PatchworksScenarioSetDefinition:
+    """Named collection of scenarios that can be executed together."""
+
+    scenario_set_id: str
+    label: str
+    mode: str
+    scenarios: tuple[PatchworksScenarioSetMember, ...]
+
+
+@dataclass(frozen=True)
 class PatchworksVariantDefinition:
     """Resolved Patchworks variant registry entry."""
 
@@ -94,6 +112,7 @@ class PatchworksVariantRegistry:
 
     variants: tuple[PatchworksVariantDefinition, ...]
     instances: tuple[PatchworksInstanceDefinition, ...]
+    scenario_sets: tuple[PatchworksScenarioSetDefinition, ...]
     builtin_registry_loaded: bool
     user_registry_path: Path | None
 
@@ -121,6 +140,17 @@ class PatchworksVariantRegistry:
                 return variant, scenario
         raise PatchworksVariantRegistryError(
             f"Unknown Patchworks scenario {scenario_id} for variant {variant_id}"
+        )
+
+    def get_scenario_set(self, scenario_set_id: str) -> PatchworksScenarioSetDefinition:
+        """Return one named scenario set or raise a registry error."""
+
+        normalized = str(scenario_set_id or "").strip()
+        for scenario_set in self.scenario_sets:
+            if scenario_set.scenario_set_id == normalized:
+                return scenario_set
+        raise PatchworksVariantRegistryError(
+            f"Unknown Patchworks scenario set: {scenario_set_id}"
         )
 
 
@@ -456,7 +486,114 @@ def _validate_user_registry_payload(
         raise PatchworksVariantRegistryError(
             f"Patchworks variant registry {source_label} field instances must be a list."
         )
+    scenario_sets = payload.get("scenario_sets")
+    if scenario_sets in (None, ""):
+        payload["scenario_sets"] = []
+    elif not isinstance(scenario_sets, list):
+        raise PatchworksVariantRegistryError(
+            f"Patchworks variant registry {source_label} field scenario_sets must be a list."
+        )
     return payload
+
+
+def _parse_scenario_set_entries(
+    payload: dict[str, Any],
+    *,
+    source_label: str,
+) -> tuple[PatchworksScenarioSetDefinition, ...]:
+    scenario_sets_payload = payload.get("scenario_sets", ())
+    if scenario_sets_payload in (None, ""):
+        return ()
+    if not isinstance(scenario_sets_payload, (list, tuple)):
+        raise PatchworksVariantRegistryError(
+            f"Patchworks variant registry {source_label} field scenario_sets must be a list."
+        )
+
+    scenario_sets: list[PatchworksScenarioSetDefinition] = []
+    for item in scenario_sets_payload:
+        if not isinstance(item, dict):
+            raise PatchworksVariantRegistryError(
+                f"Patchworks variant registry {source_label} scenario-set items must be mappings."
+            )
+        scenario_set_id = _as_str(
+            item.get("scenario_set_id"),
+            "scenario_set_id",
+            source_label=source_label,
+        )
+        label = str(item.get("label") or scenario_set_id).strip() or scenario_set_id
+        mode = str(item.get("mode") or "sequential").strip() or "sequential"
+        members_payload = item.get("scenarios", ())
+        if not isinstance(members_payload, (list, tuple)) or not members_payload:
+            raise PatchworksVariantRegistryError(
+                f"Patchworks variant registry {source_label} scenario set "
+                f"{scenario_set_id} must define a non-empty scenarios list."
+            )
+        members: list[PatchworksScenarioSetMember] = []
+        for member in members_payload:
+            if isinstance(member, str):
+                text = member.strip()
+                if "/" not in text:
+                    raise PatchworksVariantRegistryError(
+                        f"Patchworks variant registry {source_label} scenario set "
+                        f"{scenario_set_id} member must look like variant/scenario."
+                    )
+                variant_id, scenario_id = text.split("/", 1)
+                members.append(
+                    PatchworksScenarioSetMember(
+                        variant_id=variant_id.strip(),
+                        scenario_id=scenario_id.strip(),
+                    )
+                )
+                continue
+            if not isinstance(member, dict):
+                raise PatchworksVariantRegistryError(
+                    f"Patchworks variant registry {source_label} scenario set "
+                    f"{scenario_set_id} members must be strings or mappings."
+                )
+            members.append(
+                PatchworksScenarioSetMember(
+                    variant_id=_as_str(
+                        member.get("variant_id"),
+                        "scenario_sets[].variant_id",
+                        source_label=source_label,
+                    ),
+                    scenario_id=_as_str(
+                        member.get("scenario_id"),
+                        "scenario_sets[].scenario_id",
+                        source_label=source_label,
+                    ),
+                )
+            )
+        scenario_sets.append(
+            PatchworksScenarioSetDefinition(
+                scenario_set_id=scenario_set_id,
+                label=label,
+                mode=mode,
+                scenarios=tuple(members),
+            )
+        )
+    return tuple(scenario_sets)
+
+
+def _merge_scenario_sets(
+    builtin_payload: dict[str, Any],
+    *,
+    user_payload: dict[str, Any] | None,
+) -> tuple[PatchworksScenarioSetDefinition, ...]:
+    merged_by_id: dict[str, PatchworksScenarioSetDefinition] = {
+        item.scenario_set_id: item
+        for item in _parse_scenario_set_entries(
+            builtin_payload,
+            source_label=PATCHWORKS_BUILTIN_VARIANTS_RESOURCE,
+        )
+    }
+    if user_payload is not None:
+        for item in _parse_scenario_set_entries(
+            user_payload,
+            source_label="user Patchworks registry",
+        ):
+            merged_by_id[item.scenario_set_id] = item
+    return tuple(sorted(merged_by_id.values(), key=lambda item: item.scenario_set_id))
 
 
 def load_patchworks_user_registry_overlay(
@@ -672,6 +809,7 @@ def load_patchworks_variant_registry(
         if user_registry_path is not None
         else DEFAULT_PATCHWORKS_USER_REGISTRY_PATH.expanduser().resolve()
     )
+    user_payload: dict[str, Any] | None = None
     if effective_user_registry.exists():
         user_payload = _load_yaml_payload(
             effective_user_registry.read_text(encoding="utf-8"),
@@ -693,6 +831,10 @@ def load_patchworks_variant_registry(
     return PatchworksVariantRegistry(
         variants=variants,
         instances=_build_instance_definitions(variants),
+        scenario_sets=_merge_scenario_sets(
+            builtin_payload,
+            user_payload=user_payload,
+        ),
         builtin_registry_loaded=True,
         user_registry_path=user_path_result,
     )

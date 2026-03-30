@@ -10,6 +10,8 @@ Current responsibilities include:
 - merging an optional user overlay registry from ``~/.femic/variants.yaml``;
 - writing user overlay entries for register/update/remove flows;
 - resolving named scenarios attached to variants;
+- resolving named scenario sets that bundle registered scenarios across one or
+  more variants;
 - resolving named variants to concrete instance roots, runtime configs, and
   analysis ``.pin`` paths; and
 - planning/executing registry-declared materialization before launch; and
@@ -28,6 +30,7 @@ Primary entry points
 - :class:`PatchworksVariantRegistry`
 - :class:`PatchworksVariantDefinition`
 - :class:`PatchworksVariantScenarioDefinition`
+- :class:`PatchworksScenarioSetDefinition`
 
 .. automodule:: femic.patchworks_variants
    :members:
