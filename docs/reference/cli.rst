@@ -213,6 +213,8 @@ FAN$IER
 Subcommands
 
 - ``run-batch``: ``python -m femic fansier run-batch [OPTIONS] RGM_PATH``
+- ``parse-batch-output``:
+  ``python -m femic fansier parse-batch-output [OPTIONS] REPORT_DIR``
 
 ``fansier run-batch`` options
 
@@ -231,6 +233,12 @@ Subcommands
 - ``--select-all-ages``
 - ``--product-name TEXT`` (used when not selecting all products)
 - ``--age-name TEXT`` (used when not selecting all ages)
+
+``fansier parse-batch-output`` options
+
+- ``REPORT_DIR`` argument (required directory of FAN$IER ``.txt`` outputs)
+- ``--out-dir PATH`` (default: ``tipsy_io/logs/fansier_parsed``)
+- ``--report-glob TEXT`` (default: ``*.txt``)
 
 Export
 ------

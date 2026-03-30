@@ -981,6 +981,60 @@ def test_fansier_run_batch_reports_runtime_error(
     assert any("FAN$IER batch run failed" in msg for msg in messages)
 
 
+def test_fansier_parse_batch_output_emits_manifest_and_counts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "parse_fansier_batch_output_dir",
+        lambda **_kwargs: SimpleNamespace(
+            manifest_path=Path("tipsy_io/logs/fansier_batch_parse_manifest-demo.json"),
+            report_count=1800,
+            calculation_summary_rows=1800,
+            harvest_summary_rows=1800,
+            cost_line_rows=7200,
+            product_price_factor_rows=10800,
+            benefit_line_rows=54000,
+        ),
+    )
+
+    cli_main.fansier_parse_batch_output(
+        report_dir=Path("tipsy_io/logs/fansier_cli_smoke"),
+        out_dir=Path("tipsy_io/logs/fansier_parsed"),
+        report_glob="*.txt",
+    )
+
+    assert any("FAN$IER batch parse complete" in msg for msg in messages)
+    assert any("manifest:" in msg for msg in messages)
+    assert any("benefit_rows=54000" in msg for msg in messages)
+
+
+def test_fansier_parse_batch_output_reports_parse_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "parse_fansier_batch_output_dir",
+        lambda **_kwargs: (_ for _ in ()).throw(
+            cli_main.FansierReportParseError("boom")
+        ),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.fansier_parse_batch_output(
+            report_dir=Path("tipsy_io/logs/fansier_cli_smoke"),
+            out_dir=Path("tipsy_io/logs/fansier_parsed"),
+            report_glob="*.txt",
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("FAN$IER batch parse failed" in msg for msg in messages)
+
+
 def test_instance_init_calls_bootstrap(monkeypatch: pytest.MonkeyPatch) -> None:
     messages: list[str] = []
     monkeypatch.setattr(cli_main.console, "print", messages.append)

@@ -8829,6 +8829,46 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
           - normalize/parse the long-report `txt` outputs into structured
             FEMIC-owned tables so downstream workflows do not have to scrape
             narrative report text directly.
+          - first tracked parser target should emit:
+            - one calculation-summary table per batch/report set;
+            - one harvest-summary table;
+            - one cost-line table;
+            - one product-price-factor table; and
+            - one benefit-line table.
+          - preserve the current proven runtime defaults while doing this:
+            - `txt`
+            - long report for discovery/archive parsing
+            - null-rate discount profile when available
+          - prefer a parser that can normalize:
+            - comma-formatted numerics;
+            - `∞`;
+            - `n/a`; and
+            - file-derived regime/product/age metadata.
+          - parser seam is now live in tracked code too:
+            - `src/femic/fansier_reporting.py`
+            - `femic fansier parse-batch-output`
+          - tracked parse smoke now exists under:
+            - `tipsy_io/logs/fansier_parsed_cli_smoke/`
+          - current direct-inspection proof:
+            - the 1,800-file long-report batch smoke was normalized into:
+              - `calculation_summary.csv`
+              - `harvest_summary.csv`
+              - `cost_lines.csv`
+              - `product_price_factors.csv`
+              - `benefit_lines.csv`
+            - manifest:
+              `tipsy_io/logs/fansier_parsed_cli_smoke/fansier_batch_parse_manifest.json`
+            - row counts:
+              - `calculation_summary_rows=1800`
+              - `harvest_summary_rows=1800`
+              - `cost_line_rows=21450`
+              - `product_price_factor_rows=5100`
+              - `benefit_line_rows=30000`
+          - next FAN$IER data-product edge after this parser:
+            - decide whether FEMIC should default to:
+              - the lean short/txt ingestion lane;
+              - the broad long/txt archive lane; or
+              - both, with a shared normalized table contract.
       - null-rate economics is not blocked by FAN$IER:
         - the shipped discount-assumptions editor explicitly allows
           `0%` discount and `0%` reinvestment rates.

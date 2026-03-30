@@ -8728,3 +8728,25 @@
   - Confirmed tracked-command result:
     - `1 regime x 1 assumptions x 6 products x 300 ages = 1,800` long-report
       files with materially populated economics output.
+- 2026-03-29 (Issue #59): promoted FAN$IER long-report parsing into tracked
+  FEMIC code and validated it on the real 1,800-file batch smoke.
+  - Added tracked parser module:
+    - `src/femic/fansier_reporting.py`
+  - Added tracked CLI entrypoint:
+    - `femic fansier parse-batch-output`
+  - Added docs/tests for the parser surface.
+  - Real parse smoke passed:
+    - `python -m femic fansier parse-batch-output tipsy_io/logs/fansier_cli_smoke --out-dir tipsy_io/logs/fansier_parsed_cli_smoke`
+  - Directly inspected normalized outputs:
+    - `calculation_summary.csv`
+    - `harvest_summary.csv`
+    - `cost_lines.csv`
+    - `product_price_factors.csv`
+    - `benefit_lines.csv`
+    - `fansier_batch_parse_manifest.json`
+  - Confirmed real parse row counts:
+    - `calculation_summary_rows=1800`
+    - `harvest_summary_rows=1800`
+    - `cost_line_rows=21450`
+    - `product_price_factor_rows=5100`
+    - `benefit_line_rows=30000`

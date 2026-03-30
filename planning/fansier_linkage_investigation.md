@@ -544,6 +544,62 @@ Interpretation
   - unattended FAN$IER batch extraction is no longer just a scratch proof; it
     is now a tracked FEMIC runtime seam with a real CLI surface.
 
+## Next Parser Target
+
+- The next tracked FEMIC step should stop at the long-report `txt` surface, not
+  at raw file generation.
+- First parser target tables:
+  - `calculation_summary`
+  - `harvest_summary`
+  - `cost_lines`
+  - `product_price_factors`
+  - `benefit_lines`
+- Normalization requirements:
+  - preserve file-derived batch metadata:
+    - regime file
+    - discount assumptions name
+    - selected product group
+    - selected harvest age
+  - normalize machine-hostile scalar values:
+    - comma-formatted numerics
+    - `∞`
+    - `n/a`
+  - keep the current proven extraction lane fixed while parsing:
+    - `txt`
+    - long report
+    - null-rate discount assumptions when available
+- This parser seam is now live in tracked FEMIC code:
+  - module:
+    - `src/femic/fansier_reporting.py`
+  - CLI entrypoint:
+    - `femic fansier parse-batch-output`
+- Real parse smoke proof:
+  - input:
+    - `tipsy_io/logs/fansier_cli_smoke/`
+  - normalized outputs:
+    - `tipsy_io/logs/fansier_parsed_cli_smoke/calculation_summary.csv`
+    - `tipsy_io/logs/fansier_parsed_cli_smoke/harvest_summary.csv`
+    - `tipsy_io/logs/fansier_parsed_cli_smoke/cost_lines.csv`
+    - `tipsy_io/logs/fansier_parsed_cli_smoke/product_price_factors.csv`
+    - `tipsy_io/logs/fansier_parsed_cli_smoke/benefit_lines.csv`
+  - manifest:
+    - `tipsy_io/logs/fansier_parsed_cli_smoke/fansier_batch_parse_manifest.json`
+  - row counts:
+    - `calculation_summary_rows=1800`
+    - `harvest_summary_rows=1800`
+    - `cost_line_rows=21450`
+    - `product_price_factor_rows=5100`
+    - `benefit_line_rows=30000`
+- Direct-inspection notes:
+  - `calculation_summary.csv` now preserves per-report regime/discount/product/age
+    metadata alongside normalized scalar economics.
+  - `cost_lines.csv` preserves cost-table provenance such as
+    `Silviculture Treatment Costs`, `Road and Infrastructure Costs`, and
+    `Final Harvest`.
+  - `benefit_lines.csv` preserves both `benefit_stage` and `benefit_family`,
+    so downstream FEMIC logic does not have to infer them back out of narrative
+    report text.
+
 ## Discount-Assumptions File Seam
 
 - FAN$IER has a native discount-assumptions file contract:

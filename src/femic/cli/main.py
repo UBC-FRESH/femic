@@ -30,6 +30,11 @@ from femic.fansier_runtime import (
     FansierRuntimeError,
     run_fansier_batch,
 )
+from femic.fansier_reporting import (
+    DEFAULT_FANSIER_PARSED_OUTPUT_DIR,
+    FansierReportParseError,
+    parse_fansier_batch_output_dir,
+)
 from femic.geospatial_preflight import run_geospatial_preflight
 from femic.instance_bootstrap import bootstrap_instance_workspace
 from femic.instance_context import (
@@ -3823,6 +3828,42 @@ def fansier_run_batch(
     console.print(
         f"products={result.product_count} ages={result.age_count} "
         f"calculations={result.calculations} files={len(result.output_files)}"
+    )
+
+
+@fansier_app.command("parse-batch-output")
+def fansier_parse_batch_output(
+    report_dir: Path = typer.Argument(..., exists=True, file_okay=False, readable=True),
+    out_dir: Path = typer.Option(
+        DEFAULT_FANSIER_PARSED_OUTPUT_DIR,
+        "--out-dir",
+        help="Directory for normalized parsed FAN$IER tables.",
+    ),
+    report_glob: str = typer.Option(
+        "*.txt",
+        "--report-glob",
+        help="Glob pattern for FAN$IER batch reports to parse.",
+    ),
+) -> None:
+    """Parse FAN$IER batch text outputs into normalized CSV tables."""
+
+    try:
+        result = parse_fansier_batch_output_dir(
+            report_dir=report_dir,
+            out_dir=out_dir,
+            report_glob=report_glob,
+        )
+    except FansierReportParseError as exc:
+        console.print(f"[red]FAN$IER batch parse failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]FAN$IER batch parse complete[/green]")
+    console.print(f"manifest: {result.manifest_path}")
+    console.print(
+        f"reports={result.report_count} calculations={result.calculation_summary_rows} "
+        f"harvest_rows={result.harvest_summary_rows} cost_rows={result.cost_line_rows} "
+        f"factor_rows={result.product_price_factor_rows} "
+        f"benefit_rows={result.benefit_line_rows}"
     )
 
 
