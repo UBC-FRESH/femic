@@ -10,7 +10,10 @@ from femic.patchworks_variants import (
     PatchworksVariantRegistryError,
     build_patchworks_variant_materialization_plan,
     load_patchworks_variant_registry,
+    load_patchworks_user_registry_overlay,
     materialize_patchworks_variant,
+    remove_patchworks_user_variant_entry,
+    upsert_patchworks_user_variant_entry,
 )
 
 
@@ -179,3 +182,55 @@ def test_materialize_patchworks_variant_runs_datalad_get(
     materialize_patchworks_variant(variant, source_root=tmp_path)
 
     assert calls == [(["datalad", "get", "data"], dataset_root.resolve())]
+
+
+def test_upsert_patchworks_user_variant_entry_writes_overlay_file(
+    tmp_path: Path,
+) -> None:
+    registry_path = tmp_path / "variants.yaml"
+
+    written_path = upsert_patchworks_user_variant_entry(
+        {
+            "variant_id": "demo.base",
+            "label": "Demo base",
+            "instance_id": "demo",
+            "variant_family": "baseline",
+            "kind": "patchworks",
+            "instance_root": "external/demo-instance",
+            "analysis_pin": "external/demo-instance/models/demo/analysis/base.pin",
+            "runtime_config": "external/demo-instance/config/runtime.yaml",
+        },
+        user_registry_path=registry_path,
+        instance_label="Demo instance",
+    )
+
+    assert written_path == registry_path.resolve()
+    _, payload = load_patchworks_user_registry_overlay(registry_path)
+    assert payload["instances"] == [{"instance_id": "demo", "label": "Demo instance"}]
+    assert payload["variants"][0]["variant_id"] == "demo.base"
+
+
+def test_remove_patchworks_user_variant_entry_removes_entry(tmp_path: Path) -> None:
+    registry_path = tmp_path / "variants.yaml"
+    registry_path.write_text(
+        "\n".join(
+            [
+                "variants:",
+                "  - variant_id: demo.base",
+                '    label: "Demo base"',
+                "    instance_id: demo",
+                "    variant_family: baseline",
+                "    kind: patchworks",
+                "    instance_root: external/demo-instance",
+                "    analysis_pin: external/demo-instance/models/demo/analysis/base.pin",
+                "    runtime_config: external/demo-instance/config/runtime.yaml",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    remove_patchworks_user_variant_entry("demo.base", user_registry_path=registry_path)
+
+    _, payload = load_patchworks_user_registry_overlay(registry_path)
+    assert payload["variants"] == []

@@ -8863,3 +8863,29 @@
     - `pytest`
     - `pre-commit run --all-files`
     - `python -m sphinx -b html docs _build/html -W`
+- 2026-03-30 (Issue #60): landed user-managed Patchworks registry mutation
+  commands on top of the built-in + overlay registry seam.
+  - Added new CLI surfaces:
+    - `femic patchworks variants register <variant-id>`
+    - `femic patchworks variants update <variant-id>`
+    - `femic patchworks variants remove <variant-id>`
+  - Added tracked user-overlay helpers in:
+    - `src/femic/patchworks_variants.py`
+  - The new mutation commands:
+    - write only the user overlay registry;
+    - never mutate packaged built-ins in place;
+    - allow built-in variants such as `k3z.base` to be overlaid via `update`;
+      and
+    - only delete user-managed entries or overrides via `remove`.
+  - Direct file-backed smoke passed against:
+    - `vdyp_io/logs/issue60_registry_overlay_smoke/variants.yaml`
+  - Directly inspected proof points:
+    - registered `demo.base` into the custom user registry
+    - overlaid built-in `k3z.base` label through the same user registry
+    - inspected the written YAML directly
+    - confirmed merged resolution with:
+      - `python -m femic patchworks variants show demo.base --registry ...`
+      - `python -m femic patchworks variants show k3z.base --registry ...`
+      - `python -m femic patchworks variants list --registry ...`
+    - removed `demo.base` again and confirmed the overlay file retained only
+      the `k3z.base` user override

@@ -9073,6 +9073,27 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
           - actual `datalad get` subprocess invocation wiring.
         - no registry mutation commands were mixed into this slice; those stay
           as the immediate follow-on edge.
+      - third landed execution slice now in hand:
+        - new user-overlay mutation commands:
+          - `femic patchworks variants register <variant-id>`
+          - `femic patchworks variants update <variant-id>`
+          - `femic patchworks variants remove <variant-id>`
+        - those commands edit only the writable user overlay registry and do
+          not mutate packaged built-ins in place.
+        - `update` can now overlay a built-in variant through the user file,
+          while `remove` only deletes user-managed entries or user overrides.
+        - direct file-backed smoke now also passed against a disposable custom
+          registry:
+          - registered `demo.base` into:
+            `vdyp_io/logs/issue60_registry_overlay_smoke/variants.yaml`
+          - overlaid built-in `k3z.base` label through the same user registry
+          - inspected the written YAML directly
+          - confirmed merged CLI resolution via:
+            - `python -m femic patchworks variants show demo.base --registry ...`
+            - `python -m femic patchworks variants show k3z.base --registry ...`
+            - `python -m femic patchworks variants list --registry ...`
+          - removed `demo.base` again and confirmed the overlay file now only
+            retained the `k3z.base` user override.
         - regression-proof K3Z smoke also still passed:
           - `python -m femic patchworks run-variant k3z.base --run-id issue60_materialization_guardrail --log-dir vdyp_io/logs --scenario-mode max-even-flow-smoke`
           - direct inspected outputs:
@@ -9094,11 +9115,12 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - inspect the saved stage/report outputs directly before calling the
         slice landed.
     - Current next edge:
-      - widen into user-managed register/update/remove flows instead of
-        keeping the registry surface read-only forever;
-      - once registry mutation exists, decide whether the first production
-        materialization experience should stay as raw `datalad-get` actions or
-        grow a more user-facing dataset summary/consent surface.
+      - decide whether the first production materialization experience should
+        stay as raw `datalad-get` actions or grow a more user-facing dataset
+        summary/consent surface;
+      - then widen into registry-backed scenario/scenario-set execution
+        surfaces instead of keeping `run-variant` as the only higher-level
+        operator entry point.
   - Current implementation order:
     - reuse FEMIC's existing BeanShell launcher in
       `src/femic/patchworks_runtime.py` rather than inventing a second

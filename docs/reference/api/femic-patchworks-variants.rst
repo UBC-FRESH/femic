@@ -8,6 +8,7 @@ Current responsibilities include:
 
 - loading the packaged built-in Patchworks variant registry;
 - merging an optional user overlay registry from ``~/.femic/variants.yaml``;
+- writing user overlay entries for register/update/remove flows;
 - resolving named variants to concrete instance roots, runtime configs, and
   analysis ``.pin`` paths; and
 - planning/executing registry-declared materialization before launch; and
@@ -18,8 +19,11 @@ Primary entry points
 --------------------
 
 - :func:`load_patchworks_variant_registry`
+- :func:`load_patchworks_user_registry_overlay`
 - :func:`build_patchworks_variant_materialization_plan`
 - :func:`materialize_patchworks_variant`
+- :func:`upsert_patchworks_user_variant_entry`
+- :func:`remove_patchworks_user_variant_entry`
 - :class:`PatchworksVariantRegistry`
 - :class:`PatchworksVariantDefinition`
 

@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 import typer
+import yaml
 
 from femic.cli import main as cli_main
 
@@ -1240,6 +1241,132 @@ def test_patchworks_run_variant_stops_when_large_materialization_declined(
     assert exc_info.value.exit_code == 1
     assert materialize_called is False
     assert any("large materialization was not approved" in msg for msg in messages)
+
+
+def test_patchworks_variants_register_writes_user_overlay(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(
+            get_variant=lambda _variant_id: (_ for _ in ()).throw(
+                cli_main.PatchworksVariantRegistryError("missing")
+            )
+        ),
+    )
+    registry_path = tmp_path / "variants.yaml"
+
+    cli_main.patchworks_variants_register(
+        "demo.base",
+        label="Demo base",
+        instance_id="demo",
+        instance_root=Path("external/demo-instance"),
+        analysis_pin=Path("external/demo-instance/models/demo/analysis/base.pin"),
+        runtime_config=Path("external/demo-instance/config/runtime.yaml"),
+        variant_family="baseline",
+        kind="patchworks",
+        default=False,
+        instance_label="Demo instance",
+        registry=registry_path,
+    )
+
+    payload = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
+    assert payload["variants"][0]["variant_id"] == "demo.base"
+    assert payload["instances"][0]["label"] == "Demo instance"
+    assert any("Patchworks variant registered" in msg for msg in messages)
+
+
+def test_patchworks_variants_update_overlays_builtin_variant(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    registry_path = tmp_path / "variants.yaml"
+
+    builtin_variant = SimpleNamespace(
+        variant_id="k3z.base",
+        label="K3Z base",
+        instance_id="k3z",
+        instance_label="K3Z example instance",
+        variant_family="baseline",
+        kind="patchworks",
+        instance_root=Path("external/femic-k3z-instance"),
+        analysis_pin=Path(
+            "external/femic-k3z-instance/models/k3z_patchworks_model/analysis/base.pin"
+        ),
+        runtime_config=Path(
+            "external/femic-k3z-instance/config/patchworks.runtime.windows.yaml"
+        ),
+        default=True,
+        notes=(),
+        materialization=(),
+        runtime=None,
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(
+            get_variant=lambda _variant_id: builtin_variant
+        ),
+    )
+
+    cli_main.patchworks_variants_update(
+        "k3z.base",
+        label="Overlaid K3Z base",
+        instance_id=None,
+        instance_root=None,
+        analysis_pin=None,
+        runtime_config=None,
+        variant_family=None,
+        kind=None,
+        default=False,
+        instance_label=None,
+        registry=registry_path,
+    )
+
+    payload = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
+    assert payload["variants"][0]["variant_id"] == "k3z.base"
+    assert payload["variants"][0]["label"] == "Overlaid K3Z base"
+    assert "default" not in payload["variants"][0]
+    assert any("Patchworks variant updated" in msg for msg in messages)
+
+
+def test_patchworks_variants_remove_deletes_user_overlay_entry(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    registry_path = tmp_path / "variants.yaml"
+    registry_path.write_text(
+        "\n".join(
+            [
+                "variants:",
+                "  - variant_id: demo.base",
+                '    label: "Demo base"',
+                "    instance_id: demo",
+                "    variant_family: baseline",
+                "    kind: patchworks",
+                "    instance_root: external/demo-instance",
+                "    analysis_pin: external/demo-instance/models/demo/analysis/base.pin",
+                "    runtime_config: external/demo-instance/config/runtime.yaml",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    cli_main.patchworks_variants_remove("demo.base", registry=registry_path)
+
+    payload = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
+    assert payload["variants"] == []
+    assert any("Patchworks variant removed" in msg for msg in messages)
 
 
 def test_fansier_run_batch_emits_manifest_and_output(

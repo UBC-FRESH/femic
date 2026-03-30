@@ -80,7 +80,11 @@ from femic.patchworks_variants import (
     PatchworksVariantRegistryError,
     build_patchworks_variant_materialization_plan,
     load_patchworks_variant_registry,
+    load_patchworks_user_registry_overlay,
     materialize_patchworks_variant,
+    remove_patchworks_user_variant_entry,
+    serialize_patchworks_variant_definition,
+    upsert_patchworks_user_variant_entry,
 )
 from femic.rebuild_baseline import (
     apply_diff_allowlist,
@@ -201,6 +205,37 @@ def _format_binary_size(num_bytes: int) -> str:
     if num_bytes < 1024 * 1024 * 1024:
         return f"{num_bytes / (1024 * 1024):.1f} MiB"
     return f"{num_bytes / (1024 * 1024 * 1024):.1f} GiB"
+
+
+def _stringify_registry_path(path: Path) -> str:
+    return str(path.expanduser())
+
+
+def _build_patchworks_variant_entry_payload(
+    *,
+    variant_id: str,
+    label: str,
+    instance_id: str,
+    instance_root: Path,
+    analysis_pin: Path,
+    runtime_config: Path,
+    variant_family: str,
+    kind: str,
+    default: bool,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "variant_id": variant_id.strip(),
+        "label": label.strip(),
+        "instance_id": instance_id.strip(),
+        "variant_family": variant_family.strip() or "default",
+        "kind": kind.strip() or "patchworks",
+        "instance_root": _stringify_registry_path(instance_root),
+        "analysis_pin": _stringify_registry_path(analysis_pin),
+        "runtime_config": _stringify_registry_path(runtime_config),
+    }
+    if default:
+        payload["default"] = True
+    return payload
 
 
 _HostPath = WindowsPath if sys.platform.startswith("win") else PosixPath
@@ -3794,6 +3829,199 @@ def patchworks_variants_show(
                 f"kind={action.kind} dataset_root={action.dataset_root} "
                 f"relpaths={list(action.relpaths)} estimated_bytes={action.estimated_bytes}"
             )
+
+
+@patchworks_variants_app.command("register")
+def patchworks_variants_register(
+    variant_id: str = typer.Argument(
+        ..., help="New user-managed Patchworks variant id."
+    ),
+    label: str = typer.Option(..., "--label", help="Readable variant label."),
+    instance_id: str = typer.Option(..., "--instance-id", help="Owning instance id."),
+    instance_root: Path = typer.Option(
+        ..., "--instance-root", help="Variant instance root path."
+    ),
+    analysis_pin: Path = typer.Option(
+        ..., "--analysis-pin", help="Patchworks analysis .pin path."
+    ),
+    runtime_config: Path = typer.Option(
+        ..., "--runtime-config", help="Patchworks runtime config path."
+    ),
+    variant_family: str = typer.Option(
+        "default",
+        "--variant-family",
+        help="Optional variant family label.",
+    ),
+    kind: str = typer.Option(
+        "patchworks",
+        "--kind",
+        help="Variant kind.",
+    ),
+    default: bool = typer.Option(
+        False,
+        "--default/--no-default",
+        help="Mark this variant as the instance default in the user overlay.",
+    ),
+    instance_label: str | None = typer.Option(
+        None,
+        "--instance-label",
+        help="Optional readable instance label to store in the user overlay.",
+    ),
+    registry: Path = PATCHWORKS_VARIANT_REGISTRY_OPTION,
+) -> None:
+    """Register one new user-managed Patchworks variant entry."""
+
+    try:
+        variant_registry = load_patchworks_variant_registry(user_registry_path=registry)
+        normalized_variant_id = variant_id.strip()
+        try:
+            variant_registry.get_variant(normalized_variant_id)
+        except PatchworksVariantRegistryError:
+            pass
+        else:
+            raise PatchworksVariantRegistryError(
+                f"Patchworks variant already exists: {normalized_variant_id}. "
+                "Use `patchworks variants update` instead."
+            )
+        entry = _build_patchworks_variant_entry_payload(
+            variant_id=normalized_variant_id,
+            label=label,
+            instance_id=instance_id,
+            instance_root=instance_root,
+            analysis_pin=analysis_pin,
+            runtime_config=runtime_config,
+            variant_family=variant_family,
+            kind=kind,
+            default=default,
+        )
+        registry_path = upsert_patchworks_user_variant_entry(
+            entry,
+            user_registry_path=registry,
+            instance_label=instance_label,
+        )
+    except (FileNotFoundError, PatchworksVariantRegistryError, yaml.YAMLError) as exc:
+        console.print(f"[red]Patchworks variant registry error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]Patchworks variant registered[/green]")
+    console.print(f"variant_id: {entry['variant_id']}")
+    console.print(f"registry_path: {registry_path}")
+
+
+@patchworks_variants_app.command("update")
+def patchworks_variants_update(
+    variant_id: str = typer.Argument(
+        ..., help="Existing Patchworks variant id to overlay/update."
+    ),
+    label: str | None = typer.Option(None, "--label", help="Readable variant label."),
+    instance_id: str | None = typer.Option(
+        None, "--instance-id", help="Owning instance id."
+    ),
+    instance_root: Path | None = typer.Option(
+        None, "--instance-root", help="Variant instance root path."
+    ),
+    analysis_pin: Path | None = typer.Option(
+        None, "--analysis-pin", help="Patchworks analysis .pin path."
+    ),
+    runtime_config: Path | None = typer.Option(
+        None, "--runtime-config", help="Patchworks runtime config path."
+    ),
+    variant_family: str | None = typer.Option(
+        None, "--variant-family", help="Optional variant family label."
+    ),
+    kind: str | None = typer.Option(None, "--kind", help="Variant kind."),
+    default: bool | None = typer.Option(
+        None,
+        "--default",
+        help="Optional default marker override (`true` or `false`).",
+    ),
+    instance_label: str | None = typer.Option(
+        None,
+        "--instance-label",
+        help="Optional readable instance label to store in the user overlay.",
+    ),
+    registry: Path = PATCHWORKS_VARIANT_REGISTRY_OPTION,
+) -> None:
+    """Update one Patchworks variant through the writable user overlay registry."""
+
+    try:
+        variant_registry = load_patchworks_variant_registry(user_registry_path=registry)
+        current = variant_registry.get_variant(variant_id)
+        entry = serialize_patchworks_variant_definition(current)
+        if label is not None:
+            entry["label"] = label.strip()
+        if instance_id is not None:
+            entry["instance_id"] = instance_id.strip()
+        if instance_root is not None:
+            entry["instance_root"] = _stringify_registry_path(instance_root)
+        if analysis_pin is not None:
+            entry["analysis_pin"] = _stringify_registry_path(analysis_pin)
+        if runtime_config is not None:
+            entry["runtime_config"] = _stringify_registry_path(runtime_config)
+        if variant_family is not None:
+            entry["variant_family"] = variant_family.strip() or "default"
+        if kind is not None:
+            entry["kind"] = kind.strip() or "patchworks"
+        if default is not None:
+            if default:
+                entry["default"] = True
+            else:
+                entry.pop("default", None)
+        registry_path = upsert_patchworks_user_variant_entry(
+            entry,
+            user_registry_path=registry,
+            instance_label=instance_label or current.instance_label,
+        )
+    except (FileNotFoundError, PatchworksVariantRegistryError, yaml.YAMLError) as exc:
+        console.print(f"[red]Patchworks variant registry error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]Patchworks variant updated[/green]")
+    console.print(f"variant_id: {entry['variant_id']}")
+    console.print(f"registry_path: {registry_path}")
+
+
+@patchworks_variants_app.command("remove")
+def patchworks_variants_remove(
+    variant_id: str = typer.Argument(
+        ..., help="User-managed Patchworks variant id to remove."
+    ),
+    registry: Path = PATCHWORKS_VARIANT_REGISTRY_OPTION,
+) -> None:
+    """Remove one user-managed Patchworks variant entry from the overlay registry."""
+
+    try:
+        registry_path, payload = load_patchworks_user_registry_overlay(registry)
+        defined_ids = {
+            str(item.get("variant_id") or "").strip()
+            for item in payload.get("variants", [])
+            if isinstance(item, dict)
+        }
+        if variant_id.strip() not in defined_ids:
+            merged_registry = load_patchworks_variant_registry(
+                user_registry_path=registry
+            )
+            try:
+                merged_registry.get_variant(variant_id)
+            except PatchworksVariantRegistryError:
+                raise PatchworksVariantRegistryError(
+                    f"Patchworks user registry does not define variant: {variant_id}"
+                ) from None
+            raise PatchworksVariantRegistryError(
+                f"Patchworks variant {variant_id} is built-in only; "
+                "remove the user override instead of the packaged entry."
+            )
+        removed_registry_path = remove_patchworks_user_variant_entry(
+            variant_id,
+            user_registry_path=registry_path,
+        )
+    except (FileNotFoundError, PatchworksVariantRegistryError, yaml.YAMLError) as exc:
+        console.print(f"[red]Patchworks variant registry error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]Patchworks variant removed[/green]")
+    console.print(f"variant_id: {variant_id.strip()}")
+    console.print(f"registry_path: {removed_registry_path}")
 
 
 @patchworks_app.command("run-variant")

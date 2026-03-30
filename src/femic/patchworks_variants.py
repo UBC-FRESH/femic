@@ -93,6 +93,13 @@ class PatchworksVariantRegistry:
         )
 
 
+def _normalize_variant_id(value: str) -> str:
+    normalized = str(value or "").strip()
+    if not normalized:
+        raise PatchworksVariantRegistryError("Patchworks variant id must not be blank.")
+    return normalized
+
+
 def _source_tree_root() -> Path:
     """Return the FEMIC source checkout root that owns this module."""
     return Path(__file__).resolve().parents[2]
@@ -140,6 +147,19 @@ def _resolve_registry_path(value: Path, *, base_dir: Path) -> Path:
     if candidate.is_absolute():
         return candidate.resolve()
     return (base_dir / candidate).resolve()
+
+
+def resolve_patchworks_user_registry_path(
+    user_registry_path: Path | None = None,
+) -> Path:
+    """Resolve the writable user overlay registry path."""
+
+    candidate = (
+        user_registry_path.expanduser().resolve()
+        if user_registry_path is not None
+        else DEFAULT_PATCHWORKS_USER_REGISTRY_PATH.expanduser().resolve()
+    )
+    return candidate
 
 
 def _parse_materialization_actions(
@@ -329,6 +349,184 @@ def _build_instance_definitions(
             )
         )
     return tuple(instances)
+
+
+def _validate_user_registry_payload(
+    payload: dict[str, Any],
+    *,
+    source_label: str,
+) -> dict[str, Any]:
+    variants = payload.get("variants")
+    if variants in (None, ""):
+        payload["variants"] = []
+    elif not isinstance(variants, list):
+        raise PatchworksVariantRegistryError(
+            f"Patchworks variant registry {source_label} field variants must be a list."
+        )
+
+    instances = payload.get("instances")
+    if instances in (None, ""):
+        payload["instances"] = []
+    elif not isinstance(instances, list):
+        raise PatchworksVariantRegistryError(
+            f"Patchworks variant registry {source_label} field instances must be a list."
+        )
+    return payload
+
+
+def load_patchworks_user_registry_overlay(
+    user_registry_path: Path | None = None,
+) -> tuple[Path, dict[str, Any]]:
+    """Load the writable user overlay registry payload, creating an empty view if missing."""
+
+    resolved_path = resolve_patchworks_user_registry_path(user_registry_path)
+    if resolved_path.exists():
+        payload = _validate_user_registry_payload(
+            _load_yaml_payload(
+                resolved_path.read_text(encoding="utf-8"),
+                source_label=str(resolved_path),
+            ),
+            source_label=str(resolved_path),
+        )
+    else:
+        payload = {"instances": [], "variants": []}
+    return resolved_path, payload
+
+
+def write_patchworks_user_registry_overlay(
+    registry_path: Path,
+    payload: dict[str, Any],
+) -> None:
+    """Persist the user overlay registry YAML to disk."""
+
+    normalized_payload = _validate_user_registry_payload(
+        dict(payload),
+        source_label=str(registry_path),
+    )
+    registry_path.parent.mkdir(parents=True, exist_ok=True)
+    registry_path.write_text(
+        yaml.safe_dump(
+            normalized_payload,
+            sort_keys=False,
+            allow_unicode=False,
+        ),
+        encoding="utf-8",
+    )
+
+
+def serialize_patchworks_variant_definition(
+    variant: PatchworksVariantDefinition,
+) -> dict[str, Any]:
+    """Convert one resolved variant definition back into writable YAML payload form."""
+
+    payload: dict[str, Any] = {
+        "variant_id": variant.variant_id,
+        "label": variant.label,
+        "instance_id": variant.instance_id,
+        "variant_family": variant.variant_family,
+        "kind": variant.kind,
+        "instance_root": str(variant.instance_root),
+        "analysis_pin": str(variant.analysis_pin),
+        "runtime_config": str(variant.runtime_config),
+    }
+    if variant.default:
+        payload["default"] = True
+    if variant.notes:
+        payload["notes"] = list(variant.notes)
+    if variant.materialization:
+        payload["materialization"] = [
+            {
+                "kind": action.kind,
+                **(
+                    {"dataset_root": action.dataset_root}
+                    if action.dataset_root is not None
+                    else {}
+                ),
+                **({"relpaths": list(action.relpaths)} if action.relpaths else {}),
+                **(
+                    {"estimated_bytes": action.estimated_bytes}
+                    if action.estimated_bytes is not None
+                    else {}
+                ),
+            }
+            for action in variant.materialization
+        ]
+    if variant.runtime:
+        payload["runtime"] = dict(variant.runtime)
+    return payload
+
+
+def _upsert_instance_label(
+    payload: dict[str, Any],
+    *,
+    instance_id: str,
+    instance_label: str | None,
+) -> None:
+    if not instance_label:
+        return
+    instances = payload.setdefault("instances", [])
+    for item in instances:
+        if str(item.get("instance_id") or "").strip() == instance_id:
+            item["label"] = instance_label
+            return
+    instances.append({"instance_id": instance_id, "label": instance_label})
+
+
+def upsert_patchworks_user_variant_entry(
+    variant_entry: dict[str, Any],
+    *,
+    user_registry_path: Path | None = None,
+    instance_label: str | None = None,
+) -> Path:
+    """Insert or replace one variant entry in the writable user overlay registry."""
+
+    registry_path, payload = load_patchworks_user_registry_overlay(user_registry_path)
+    normalized_variant_id = _normalize_variant_id(
+        str(variant_entry.get("variant_id") or "")
+    )
+    variants = payload.setdefault("variants", [])
+    for index, item in enumerate(variants):
+        if str(item.get("variant_id") or "").strip() == normalized_variant_id:
+            variants[index] = variant_entry
+            _upsert_instance_label(
+                payload,
+                instance_id=str(variant_entry["instance_id"]),
+                instance_label=instance_label,
+            )
+            write_patchworks_user_registry_overlay(registry_path, payload)
+            return registry_path
+    variants.append(variant_entry)
+    _upsert_instance_label(
+        payload,
+        instance_id=str(variant_entry["instance_id"]),
+        instance_label=instance_label,
+    )
+    write_patchworks_user_registry_overlay(registry_path, payload)
+    return registry_path
+
+
+def remove_patchworks_user_variant_entry(
+    variant_id: str,
+    *,
+    user_registry_path: Path | None = None,
+) -> Path:
+    """Remove one variant entry from the writable user overlay registry."""
+
+    normalized_variant_id = _normalize_variant_id(variant_id)
+    registry_path, payload = load_patchworks_user_registry_overlay(user_registry_path)
+    variants = payload.setdefault("variants", [])
+    retained = [
+        item
+        for item in variants
+        if str(item.get("variant_id") or "").strip() != normalized_variant_id
+    ]
+    if len(retained) == len(variants):
+        raise PatchworksVariantRegistryError(
+            f"Patchworks user registry does not define variant: {normalized_variant_id}"
+        )
+    payload["variants"] = retained
+    write_patchworks_user_registry_overlay(registry_path, payload)
+    return registry_path
 
 
 def load_patchworks_variant_registry(

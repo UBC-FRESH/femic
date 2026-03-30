@@ -350,7 +350,10 @@ Subcommands
 - ``run-headless``: ``python -m femic patchworks run-headless [OPTIONS] PIN``
 - ``run-variant``: ``python -m femic patchworks run-variant [OPTIONS] VARIANT_ID``
 - ``variants list``: ``python -m femic patchworks variants list [OPTIONS]``
+- ``variants register``: ``python -m femic patchworks variants register [OPTIONS] VARIANT_ID``
+- ``variants remove``: ``python -m femic patchworks variants remove [OPTIONS] VARIANT_ID``
 - ``variants show``: ``python -m femic patchworks variants show [OPTIONS] VARIANT_ID``
+- ``variants update``: ``python -m femic patchworks variants update [OPTIONS] VARIANT_ID``
 
 ``patchworks preflight`` options
 
@@ -412,6 +415,39 @@ Subcommands
 
 - ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
 - ``--instance-id TEXT`` (optional filter)
+
+``patchworks variants register`` options
+
+- ``VARIANT_ID`` argument (required)
+- ``--label TEXT`` (required)
+- ``--instance-id TEXT`` (required)
+- ``--instance-label TEXT`` (optional)
+- ``--instance-root PATH`` (required)
+- ``--analysis-pin PATH`` (required)
+- ``--runtime-config PATH`` (required)
+- ``--variant-family TEXT`` (default: ``default``)
+- ``--kind TEXT`` (default: ``patchworks``)
+- ``--default / --no-default`` (default: ``--no-default``)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; writes the user overlay)
+
+``patchworks variants update`` options
+
+- ``VARIANT_ID`` argument (required)
+- ``--label TEXT`` (optional)
+- ``--instance-id TEXT`` (optional)
+- ``--instance-label TEXT`` (optional)
+- ``--instance-root PATH`` (optional)
+- ``--analysis-pin PATH`` (optional)
+- ``--runtime-config PATH`` (optional)
+- ``--variant-family TEXT`` (optional)
+- ``--kind TEXT`` (optional)
+- ``--default BOOL`` (optional explicit override: ``true`` or ``false``)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; writes the user overlay)
+
+``patchworks variants remove`` options
+
+- ``VARIANT_ID`` argument (required)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; removes only user-overlay entries)
 
 ``patchworks variants show`` options
 

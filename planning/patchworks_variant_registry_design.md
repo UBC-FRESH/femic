@@ -12,8 +12,14 @@ Status
   - `run-variant <variant-id>` delegating to the proven headless runner
   - registry-declared `datalad-get` materialization with a default
     `100 MiB` approval threshold
+  - user-overlay mutation commands:
+    - `variants register`
+    - `variants update`
+    - `variants remove`
 - Immediate next edge:
-  - user-managed register/update/remove flows
+  - decide whether materialization should stay as raw `datalad-get` actions
+    or grow a friendlier dataset-summary consent surface
+  - then widen into registry-backed scenario/scenario-set execution
 
 Purpose
 -------
