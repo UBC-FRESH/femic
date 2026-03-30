@@ -9224,3 +9224,24 @@
     - `.venv\\Scripts\\python.exe -m sphinx -b html docs _build\\html -W`
     - `.venv\\Scripts\\python.exe -m femic --help`
     - `.venv\\Scripts\\python.exe -m femic patchworks instances list`
+- 2026-03-30 (Issue #64 kickoff): started the urgent K3Z species-account
+  regression repair on branch `bug/issue-64-k3z-species-account-dropout`.
+  - Created GitHub issue `#64`:
+    - `Bug: restore dropped species-wise managed yield and harvested-volume accounts across active K3Z variants`
+  - Updated `ROADMAP.md`:
+    - added `Phase 50` as the active regression-repair slice;
+    - refreshed `Detailed Next Steps Notes` so the current
+      species-account-dropout evidence and execution order are explicit.
+  - Current local evidence:
+    - `.venv\\Scripts\\python.exe -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.windows.yaml`
+      reports `species=1 complete_species=1` with the
+      `total OK, species-wise empty` diagnosis;
+    - `.venv\\Scripts\\python.exe -m femic instance account-surface --instance-root external/femic-k3z-instance --config config/patchworks.runtime.pct_light.windows.yaml`
+      reports the same signature;
+    - `external/femic-k3z-instance/data/model_input_bundle/curve_table.csv`
+      is missing all `treated_species_prop_*` / `untreated_species_prop_*`
+      rows;
+    - the active K3Z instance ships
+      `data/ria_vri_vclr1p_checkpoint1-tsak3z.feather`, while
+      `_load_species_universe_for_tsas(...)` is still hard-wired to
+      `data/ria_vri_vclr1p_checkpoint8.feather`.
