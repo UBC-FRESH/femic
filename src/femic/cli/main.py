@@ -75,9 +75,12 @@ from femic.patchworks_runtime import (
     run_patchworks_preflight,
 )
 from femic.patchworks_variants import (
+    DEFAULT_PATCHWORKS_MATERIALIZATION_PROMPT_BYTES,
     DEFAULT_PATCHWORKS_USER_REGISTRY_PATH,
     PatchworksVariantRegistryError,
+    build_patchworks_variant_materialization_plan,
     load_patchworks_variant_registry,
+    materialize_patchworks_variant,
 )
 from femic.rebuild_baseline import (
     apply_diff_allowlist,
@@ -186,6 +189,19 @@ fansier_app = typer.Typer(
     help="Run FAN$IER batch workflows on Windows.",
 )
 console = Console()
+
+
+def _format_binary_size(num_bytes: int) -> str:
+    """Format a byte count using IEC binary units for operator prompts."""
+
+    if num_bytes < 1024:
+        return f"{num_bytes} B"
+    if num_bytes < 1024 * 1024:
+        return f"{num_bytes / 1024:.1f} KiB"
+    if num_bytes < 1024 * 1024 * 1024:
+        return f"{num_bytes / (1024 * 1024):.1f} MiB"
+    return f"{num_bytes / (1024 * 1024 * 1024):.1f} GiB"
+
 
 _HostPath = WindowsPath if sys.platform.startswith("win") else PosixPath
 
@@ -3804,12 +3820,62 @@ def patchworks_run_variant(
         "--scenario-min-annual",
         help="Optional annual minimum target level for the selected scenario mode.",
     ),
+    allow_large_download: bool = typer.Option(
+        False,
+        "--allow-large-download",
+        help=(
+            "Allow registry-declared materialization larger than the prompt threshold "
+            "without asking for confirmation."
+        ),
+    ),
+    materialization_threshold_mib: int = typer.Option(
+        DEFAULT_PATCHWORKS_MATERIALIZATION_PROMPT_BYTES // (1024 * 1024),
+        "--materialization-threshold-mib",
+        min=0,
+        help="Prompt threshold for registry-declared materialization downloads.",
+    ),
 ) -> None:
     """Resolve a registered Patchworks variant and delegate to the headless runner."""
 
     try:
         variant_registry = load_patchworks_variant_registry(user_registry_path=registry)
         variant = variant_registry.get_variant(variant_id)
+        materialization_plan = build_patchworks_variant_materialization_plan(
+            variant,
+            prompt_threshold_bytes=materialization_threshold_mib * 1024 * 1024,
+        )
+        if materialization_plan.action_count:
+            console.print(
+                "[yellow]Patchworks variant materialization required[/yellow] "
+                f"variant={variant.variant_id} actions={materialization_plan.action_count}"
+            )
+            for action in variant.materialization:
+                estimate_text = (
+                    _format_binary_size(action.estimated_bytes)
+                    if action.estimated_bytes is not None
+                    else "unknown"
+                )
+                console.print(
+                    "materialization: "
+                    f"kind={action.kind} dataset_root={action.dataset_root} "
+                    f"relpaths={list(action.relpaths) or ['.']} estimated={estimate_text}"
+                )
+            if (
+                materialization_plan.requires_confirmation
+                and not allow_large_download
+                and not typer.confirm(
+                    "Proceed with approximately "
+                    f"{_format_binary_size(materialization_plan.known_estimated_bytes)} "
+                    f"of Patchworks materialization for {variant.variant_id}?",
+                    default=False,
+                )
+            ):
+                console.print(
+                    "[red]Patchworks variant run cancelled:[/red] "
+                    "large materialization was not approved."
+                )
+                raise typer.Exit(code=1)
+            materialize_patchworks_variant(variant)
         runtime_config = load_patchworks_runtime_config(variant.runtime_config)
         result = run_patchworks_headless_pin(
             config=runtime_config,

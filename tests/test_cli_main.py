@@ -994,6 +994,19 @@ def test_patchworks_run_variant_delegates_to_headless_runner(
         "load_patchworks_variant_registry",
         lambda **_kwargs: SimpleNamespace(get_variant=lambda _variant_id: variant),
     )
+    monkeypatch.setattr(
+        cli_main,
+        "build_patchworks_variant_materialization_plan",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            action_count=0,
+            known_estimated_bytes=0,
+            has_unknown_sizes=False,
+            requires_confirmation=False,
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main, "materialize_patchworks_variant", lambda *_args, **_kwargs: None
+    )
     runtime_cfg = SimpleNamespace()
     monkeypatch.setattr(
         cli_main, "load_patchworks_runtime_config", lambda _path: runtime_cfg
@@ -1031,6 +1044,8 @@ def test_patchworks_run_variant_delegates_to_headless_runner(
         scenario_mode="none",
         scenario_target=None,
         scenario_min_annual=None,
+        allow_large_download=False,
+        materialization_threshold_mib=100,
     )
 
     assert called["config"] is runtime_cfg
@@ -1065,10 +1080,166 @@ def test_patchworks_run_variant_reports_registry_errors(
             scenario_mode="none",
             scenario_target=None,
             scenario_min_annual=None,
+            allow_large_download=False,
+            materialization_threshold_mib=100,
         )
 
     assert exc_info.value.exit_code == 1
     assert any("Patchworks variant run failed" in msg for msg in messages)
+
+
+def test_patchworks_run_variant_prompts_for_large_materialization(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    variant = SimpleNamespace(
+        variant_id="k3z.base",
+        instance_root=Path("external/femic-k3z-instance"),
+        analysis_pin=Path(
+            "external/femic-k3z-instance/models/k3z_patchworks_model/analysis/base.pin"
+        ),
+        runtime_config=Path(
+            "external/femic-k3z-instance/config/patchworks.runtime.windows.yaml"
+        ),
+        materialization=(
+            SimpleNamespace(
+                kind="datalad-get",
+                dataset_root="external/femic-public-data",
+                relpaths=("data",),
+                estimated_bytes=150 * 1024 * 1024,
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(get_variant=lambda _variant_id: variant),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "build_patchworks_variant_materialization_plan",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            action_count=1,
+            known_estimated_bytes=150 * 1024 * 1024,
+            has_unknown_sizes=False,
+            requires_confirmation=True,
+        ),
+    )
+    confirmed: list[tuple[str, bool]] = []
+    monkeypatch.setattr(
+        cli_main.typer,
+        "confirm",
+        lambda message, default=False: confirmed.append((message, default)) or True,
+    )
+    materialized: list[str] = []
+    monkeypatch.setattr(
+        cli_main,
+        "materialize_patchworks_variant",
+        lambda item: materialized.append(item.variant_id),
+    )
+    monkeypatch.setattr(
+        cli_main, "load_patchworks_runtime_config", lambda _path: SimpleNamespace()
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "run_patchworks_headless_pin",
+        lambda **_kwargs: SimpleNamespace(
+            run_id="demo",
+            returncode=0,
+            pin_path=variant.analysis_pin,
+            stage_dir=Path("vdyp_io/logs/headless_stage/demo"),
+            scenario_mode="none",
+            execution=SimpleNamespace(
+                stdout_log_path=Path("tipsy_io/logs/stdout.log"),
+                stderr_log_path=Path("tipsy_io/logs/stderr.log"),
+            ),
+            manifest_path=Path("tipsy_io/logs/manifest.json"),
+            failures=(),
+        ),
+    )
+
+    cli_main.patchworks_run_variant(
+        "k3z.base",
+        registry=Path("variants.yaml"),
+        log_dir=Path("vdyp_io/logs"),
+        run_id="demo",
+        stage_label=None,
+        iterations=1,
+        improvement=0.0,
+        scenario_mode="none",
+        scenario_target=None,
+        scenario_min_annual=None,
+        allow_large_download=False,
+        materialization_threshold_mib=100,
+    )
+
+    assert confirmed
+    assert materialized == ["k3z.base"]
+    assert any("materialization required" in msg for msg in messages)
+
+
+def test_patchworks_run_variant_stops_when_large_materialization_declined(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    variant = SimpleNamespace(
+        variant_id="k3z.base",
+        materialization=(
+            SimpleNamespace(
+                kind="datalad-get",
+                dataset_root="external/femic-public-data",
+                relpaths=("data",),
+                estimated_bytes=150 * 1024 * 1024,
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(get_variant=lambda _variant_id: variant),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "build_patchworks_variant_materialization_plan",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            action_count=1,
+            known_estimated_bytes=150 * 1024 * 1024,
+            has_unknown_sizes=False,
+            requires_confirmation=True,
+        ),
+    )
+    monkeypatch.setattr(cli_main.typer, "confirm", lambda *_args, **_kwargs: False)
+    materialize_called = False
+
+    def _fake_materialize(*_args, **_kwargs):
+        nonlocal materialize_called
+        materialize_called = True
+
+    monkeypatch.setattr(cli_main, "materialize_patchworks_variant", _fake_materialize)
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.patchworks_run_variant(
+            "k3z.base",
+            registry=Path("variants.yaml"),
+            log_dir=Path("vdyp_io/logs"),
+            run_id="demo",
+            stage_label=None,
+            iterations=1,
+            improvement=0.0,
+            scenario_mode="none",
+            scenario_target=None,
+            scenario_min_annual=None,
+            allow_large_download=False,
+            materialization_threshold_mib=100,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert materialize_called is False
+    assert any("large materialization was not approved" in msg for msg in messages)
 
 
 def test_fansier_run_batch_emits_manifest_and_output(

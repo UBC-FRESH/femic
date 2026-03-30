@@ -9057,6 +9057,34 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
               - `flow.even.product.Yield.managed.Total`
             - `targetSummary.csv` still showed near-zero even-flow deviations
             - `schedule.csv` was non-empty (`316` lines)
+      - second landed execution slice now in hand:
+        - registry materialization planning/execution in:
+          - `src/femic/patchworks_variants.py`
+        - `run-variant` now:
+          - summarizes registry-declared materialization actions;
+          - supports `datalad-get` actions before Patchworks launch; and
+          - prompts for approval when known estimated downloads exceed the
+            default `100 MiB` threshold unless
+            `--allow-large-download` is supplied.
+        - focused tests now cover:
+          - parsing materialization actions from user registry overlays;
+          - the `100 MiB` consent threshold;
+          - approval/decline behavior in `run-variant`; and
+          - actual `datalad get` subprocess invocation wiring.
+        - no registry mutation commands were mixed into this slice; those stay
+          as the immediate follow-on edge.
+        - regression-proof K3Z smoke also still passed:
+          - `python -m femic patchworks run-variant k3z.base --run-id issue60_materialization_guardrail --log-dir vdyp_io/logs --scenario-mode max-even-flow-smoke`
+          - direct inspected outputs:
+            - manifest:
+              `vdyp_io/logs/patchworks_headless_manifest-issue60_materialization_guardrail.json`
+            - saved stage:
+              `vdyp_io/logs/headless_stage/issue60_materialization_guardrail/`
+            - `targetStatus.csv` still showed both:
+              - `product.Yield.managed.Total`
+              - `flow.even.product.Yield.managed.Total`
+            - `targetSummary.csv` still showed near-zero even-flow deviations
+            - `schedule.csv` remained non-empty (`284` lines)
     - Validation bar:
       - list and resolve at least one built-in K3Z variant from the registry;
       - print the exact resolved `.pin` and runtime config used;
@@ -9066,10 +9094,11 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - inspect the saved stage/report outputs directly before calling the
         slice landed.
     - Current next edge:
-      - add the first real materialization guardrail layer on top of the new
-        registry-backed launch surface;
-      - then widen into user-managed register/update/remove flows instead of
-        keeping the first slice read-only forever.
+      - widen into user-managed register/update/remove flows instead of
+        keeping the registry surface read-only forever;
+      - once registry mutation exists, decide whether the first production
+        materialization experience should stay as raw `datalad-get` actions or
+        grow a more user-facing dataset summary/consent surface.
   - Current implementation order:
     - reuse FEMIC's existing BeanShell launcher in
       `src/femic/patchworks_runtime.py` rather than inventing a second

@@ -6,6 +6,14 @@ Status
 - Governing GitHub issue: `#60`
 - Governing roadmap task: `P49.5`
 - Working branch: `feature/issue-60-patchworks-pin-launch`
+- Landed slices so far:
+  - built-in + user-overlay registry loading
+  - `instances list`, `variants list`, `variants show`
+  - `run-variant <variant-id>` delegating to the proven headless runner
+  - registry-declared `datalad-get` materialization with a default
+    `100 MiB` approval threshold
+- Immediate next edge:
+  - user-managed register/update/remove flows
 
 Purpose
 -------

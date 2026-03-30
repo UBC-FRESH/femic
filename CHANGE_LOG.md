@@ -8828,3 +8828,38 @@
       - `flow.even.product.Yield.managed.Total`
     - `targetSummary.csv` kept near-zero even-flow deviations
     - `schedule.csv` remained non-empty (`316` lines)
+- 2026-03-30 (Issue #60): landed the first Patchworks materialization guardrail
+  layer on top of the registry-backed launch surface.
+  - Added tracked materialization helpers in:
+    - `src/femic/patchworks_variants.py`
+  - `femic patchworks run-variant` now:
+    - prints registry-declared materialization actions before launch;
+    - supports `datalad-get` actions before Patchworks startup; and
+    - prompts for approval when known estimated downloads exceed the default
+      `100 MiB` threshold unless `--allow-large-download` is supplied.
+  - Added focused tests for:
+    - parsing materialization actions from user registry overlays;
+    - materialization plan thresholding;
+    - approval/decline behavior in `run-variant`; and
+    - `datalad get` subprocess wiring.
+  - Updated the CLI/API docs for the new `run-variant` options and
+    materialization responsibilities.
+  - Real regression-proof K3Z smoke still passed:
+    - `python -m femic patchworks run-variant k3z.base --run-id issue60_materialization_guardrail --log-dir vdyp_io/logs --scenario-mode max-even-flow-smoke`
+  - Directly inspected real outputs:
+    - manifest:
+      `vdyp_io/logs/patchworks_headless_manifest-issue60_materialization_guardrail.json`
+    - saved stage:
+      `vdyp_io/logs/headless_stage/issue60_materialization_guardrail/`
+    - `targetStatus.csv` still showed both:
+      - `product.Yield.managed.Total`
+      - `flow.even.product.Yield.managed.Total`
+    - `targetSummary.csv` still showed near-zero even-flow deviations
+    - `schedule.csv` remained non-empty (`284` lines)
+  - Validation outcome:
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `mypy src`
+    - `pytest`
+    - `pre-commit run --all-files`
+    - `python -m sphinx -b html docs _build/html -W`

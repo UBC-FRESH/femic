@@ -404,6 +404,9 @@ Subcommands
 - ``--scenario-mode TEXT`` (default: ``none``)
 - ``--scenario-target TEXT`` (optional)
 - ``--scenario-min-annual FLOAT`` (optional)
+- ``--allow-large-download`` (skip the materialization confirmation prompt when
+  known estimated downloads exceed the threshold)
+- ``--materialization-threshold-mib INTEGER`` (default: ``100``)
 
 ``patchworks variants list`` options
 

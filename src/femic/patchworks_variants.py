@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from importlib import resources
 from pathlib import Path
+import shutil
+import subprocess
 from typing import Any
 
 import yaml
@@ -13,6 +15,7 @@ import yaml
 PATCHWORKS_VARIANT_REGISTRY_PACKAGE = "femic.resources.patchworks"
 PATCHWORKS_BUILTIN_VARIANTS_RESOURCE = "variants.builtin.yaml"
 DEFAULT_PATCHWORKS_USER_REGISTRY_PATH = Path.home() / ".femic" / "variants.yaml"
+DEFAULT_PATCHWORKS_MATERIALIZATION_PROMPT_BYTES = 100 * 1024 * 1024
 
 
 class PatchworksVariantRegistryError(RuntimeError):
@@ -27,6 +30,16 @@ class PatchworksVariantMaterializationAction:
     dataset_root: str | None = None
     relpaths: tuple[str, ...] = ()
     estimated_bytes: int | None = None
+
+
+@dataclass(frozen=True)
+class PatchworksVariantMaterializationPlan:
+    """Summary of the prelaunch materialization implied by one variant."""
+
+    action_count: int
+    known_estimated_bytes: int
+    has_unknown_sizes: bool
+    requires_confirmation: bool
 
 
 @dataclass(frozen=True)
@@ -136,11 +149,11 @@ def _parse_materialization_actions(
 ) -> tuple[PatchworksVariantMaterializationAction, ...]:
     if payload in (None, ""):
         return ()
-        if not isinstance(payload, (list, tuple)):
-            raise PatchworksVariantRegistryError(
-                f"Patchworks variant registry {source_label} field materialization "
-                "must be a list."
-            )
+    if not isinstance(payload, (list, tuple)):
+        raise PatchworksVariantRegistryError(
+            f"Patchworks variant registry {source_label} field materialization "
+            "must be a list."
+        )
     actions: list[PatchworksVariantMaterializationAction] = []
     for item in payload:
         if not isinstance(item, dict):
@@ -370,3 +383,97 @@ def load_patchworks_variant_registry(
         builtin_registry_loaded=True,
         user_registry_path=user_path_result,
     )
+
+
+def _resolve_datalad_executable(*, source_root: Path) -> str:
+    path_tool = shutil.which("datalad")
+    if path_tool:
+        return path_tool
+    windows_candidate = source_root / ".venv" / "Scripts" / "datalad.exe"
+    if windows_candidate.exists():
+        return str(windows_candidate.resolve())
+    posix_candidate = source_root / ".venv" / "bin" / "datalad"
+    if posix_candidate.exists():
+        return str(posix_candidate.resolve())
+    raise PatchworksVariantRegistryError(
+        "DataLad executable not found (looked on PATH and in .venv)."
+    )
+
+
+def _resolve_materialization_dataset_root(
+    action: PatchworksVariantMaterializationAction,
+    *,
+    source_root: Path,
+) -> Path:
+    if not action.dataset_root:
+        raise PatchworksVariantRegistryError(
+            "Patchworks variant materialization action missing dataset_root."
+        )
+    return _resolve_registry_path(Path(action.dataset_root), base_dir=source_root)
+
+
+def build_patchworks_variant_materialization_plan(
+    variant: PatchworksVariantDefinition,
+    *,
+    prompt_threshold_bytes: int = DEFAULT_PATCHWORKS_MATERIALIZATION_PROMPT_BYTES,
+) -> PatchworksVariantMaterializationPlan:
+    """Summarize whether a variant requires guarded prelaunch materialization."""
+
+    known_estimated_bytes = 0
+    has_unknown_sizes = False
+    for action in variant.materialization:
+        if action.estimated_bytes is None:
+            has_unknown_sizes = True
+        else:
+            known_estimated_bytes += action.estimated_bytes
+    return PatchworksVariantMaterializationPlan(
+        action_count=len(variant.materialization),
+        known_estimated_bytes=known_estimated_bytes,
+        has_unknown_sizes=has_unknown_sizes,
+        requires_confirmation=known_estimated_bytes > prompt_threshold_bytes,
+    )
+
+
+def materialize_patchworks_variant(
+    variant: PatchworksVariantDefinition,
+    *,
+    source_root: Path | None = None,
+) -> None:
+    """Run any declared materialization actions required before Patchworks launch."""
+
+    if not variant.materialization:
+        return
+
+    effective_source_root = (source_root or _source_tree_root()).expanduser().resolve()
+    datalad_executable = _resolve_datalad_executable(source_root=effective_source_root)
+
+    for action in variant.materialization:
+        if action.kind != "datalad-get":
+            raise PatchworksVariantRegistryError(
+                f"Unsupported Patchworks materialization action kind: {action.kind}"
+            )
+
+        dataset_root = _resolve_materialization_dataset_root(
+            action,
+            source_root=effective_source_root,
+        )
+        if not dataset_root.exists():
+            raise PatchworksVariantRegistryError(
+                f"Patchworks materialization dataset root not found: {dataset_root}"
+            )
+
+        relpaths = list(action.relpaths) if action.relpaths else ["."]
+        completed = subprocess.run(
+            [datalad_executable, "get", *relpaths],
+            cwd=dataset_root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if completed.returncode != 0:
+            detail = (completed.stderr or completed.stdout or "").strip()
+            raise PatchworksVariantRegistryError(
+                "Patchworks variant materialization failed: "
+                f"datalad get in {dataset_root} returned {completed.returncode}"
+                + (f" ({detail})" if detail else "")
+            )
