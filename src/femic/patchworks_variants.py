@@ -72,6 +72,10 @@ class PatchworksScenarioSetDefinition:
     label: str
     mode: str
     scenarios: tuple[PatchworksScenarioSetMember, ...]
+    instance_id: str | None = None
+    scenario_set_family: str | None = None
+    default: bool = False
+    notes: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -168,6 +172,20 @@ class PatchworksVariantRegistry:
                 return scenario_set
         raise PatchworksVariantRegistryError(
             f"Unknown Patchworks scenario set: {scenario_set_id}"
+        )
+
+    def iter_scenario_sets(
+        self,
+        *,
+        instance_id: str | None = None,
+    ) -> tuple[PatchworksScenarioSetDefinition, ...]:
+        """Return scenario sets, optionally filtered by instance id."""
+
+        normalized = str(instance_id or "").strip()
+        if not normalized:
+            return self.scenario_sets
+        return tuple(
+            item for item in self.scenario_sets if item.instance_id == normalized
         )
 
     def get_default_scenario_set(
@@ -609,6 +627,21 @@ def _parse_scenario_set_entries(
         )
         label = str(item.get("label") or scenario_set_id).strip() or scenario_set_id
         mode = str(item.get("mode") or "sequential").strip() or "sequential"
+        instance_id = str(item.get("instance_id") or "").strip() or None
+        scenario_set_family = str(item.get("scenario_set_family") or "").strip() or None
+        default = bool(item.get("default", False))
+        notes_payload = item.get("notes", ())
+        if notes_payload in (None, ""):
+            notes: tuple[str, ...] = ()
+        else:
+            if not isinstance(notes_payload, (list, tuple)):
+                raise PatchworksVariantRegistryError(
+                    f"Patchworks variant registry {source_label} field "
+                    f"scenario_sets[{scenario_set_id}].notes must be a list."
+                )
+            notes = tuple(
+                str(note).strip() for note in notes_payload if str(note).strip()
+            )
         members_payload = item.get("scenarios", ())
         if not isinstance(members_payload, (list, tuple)) or not members_payload:
             raise PatchworksVariantRegistryError(
@@ -656,6 +689,10 @@ def _parse_scenario_set_entries(
                 scenario_set_id=scenario_set_id,
                 label=label,
                 mode=mode,
+                instance_id=instance_id,
+                scenario_set_family=scenario_set_family,
+                default=default,
+                notes=notes,
                 scenarios=tuple(members),
             )
         )

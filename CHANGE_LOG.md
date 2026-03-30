@@ -8986,3 +8986,22 @@
     - `schedule.csv` remained non-empty:
       - step 1: `372` lines
       - step 2: `373` lines
+- 2026-03-30 (Issue #60): landed a small Patchworks scenario-set metadata
+  slice on top of the proven registry-backed scenario-set seam.
+  - Scenario sets can now carry:
+    - `instance_id`
+    - `scenario_set_family`
+    - `default`
+    - `notes`
+  - Added new CLI surface:
+    - `femic patchworks scenario-sets show <scenario-set-id>`
+  - `femic patchworks scenario-sets list` now also supports:
+    - `--instance-id`
+  - Direct CLI proof passed:
+    - `python -m femic patchworks scenario-sets list --instance-id k3z`
+    - `python -m femic patchworks scenario-sets show k3z.proving_ground`
+  - Directly inspected output now prints:
+    - `instance_id: k3z`
+    - `scenario_set_family: proving_ground`
+    - `default: True`
+    - the shipped proving-ground note text

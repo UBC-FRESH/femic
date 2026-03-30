@@ -139,6 +139,11 @@ variants:
 scenario_sets:
   - scenario_set_id: k3z.proving_ground
     label: K3Z proving-ground scenario smoke set
+    instance_id: k3z
+    scenario_set_family: proving_ground
+    default: true
+    notes:
+      - Sequential proving-ground smoke set for the shipped K3Z registry surface.
     mode: sequential
     scenarios:
       - k3z.base/even_flow_smoke

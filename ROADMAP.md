@@ -9215,9 +9215,28 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - decide whether the first production materialization experience
           should stay as raw `datalad-get` actions or grow a more user-facing
           dataset summary/consent surface;
-        - once that is settled, decide whether scenario-set metadata needs
-          richer labels/families before parallel execution;
-      - defer parallel scenario-set execution until there is a clearer
+        - the next scenario-set metadata slice is now also in hand:
+          - scenario sets can now carry:
+            - `instance_id`
+            - `scenario_set_family`
+            - `default`
+            - `notes`
+          - new CLI surface:
+            - `femic patchworks scenario-sets show <scenario-set-id>`
+          - `scenario-sets list` now supports:
+            - `--instance-id`
+          - direct CLI proof now also passed:
+            - `python -m femic patchworks scenario-sets list --instance-id k3z`
+            - `python -m femic patchworks scenario-sets show k3z.proving_ground`
+            - direct inspected output now prints:
+              - `instance_id: k3z`
+              - `scenario_set_family: proving_ground`
+              - `default: True`
+              - the shipped proving-ground note text
+        - then decide whether the first production materialization experience
+          should stay as raw `datalad-get` actions or grow a more user-facing
+          dataset summary/consent surface;
+        - defer parallel scenario-set execution until there is a clearer
         Patchworks process-safety contract for concurrent runs.
   - Current implementation order:
     - reuse FEMIC's existing BeanShell launcher in

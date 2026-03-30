@@ -405,3 +405,26 @@ Those files already carry:
 
 So the first built-in registry loader should reuse that existing metadata
 instead of duplicating it by hand.
+
+Current metadata follow-on slices
+---------------------------------
+
+The registry now also carries two small convenience/metadata layers beyond the
+original minimal launch slice:
+
+- variant-level ``default_scenario_id`` plus
+  ``femic patchworks run-default-scenario <variant-id>``
+- instance-level ``default_scenario_set_id`` plus
+  ``femic patchworks run-default-scenario-set <instance-id>``
+
+And the current scenario-set metadata surface now includes:
+
+- optional ``instance_id``
+- optional ``scenario_set_family``
+- optional ``default``
+- optional ``notes``
+- ``femic patchworks scenario-sets show <scenario-set-id>``
+- ``femic patchworks scenario-sets list --instance-id <instance-id>``
+
+That keeps the registry expressive enough for operator-facing grouping without
+yet committing to broader orchestration or parallel execution semantics.

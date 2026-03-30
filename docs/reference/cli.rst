@@ -353,6 +353,8 @@ Subcommands
 - ``run-scenario``: ``python -m femic patchworks run-scenario [OPTIONS] VARIANT_ID SCENARIO_ID``
 - ``run-variant``: ``python -m femic patchworks run-variant [OPTIONS] VARIANT_ID``
 - ``scenarios list``: ``python -m femic patchworks scenarios list [OPTIONS] VARIANT_ID``
+- ``scenario-sets list``: ``python -m femic patchworks scenario-sets list [OPTIONS]``
+- ``scenario-sets show``: ``python -m femic patchworks scenario-sets show [OPTIONS] SCENARIO_SET_ID``
 - ``variants list``: ``python -m femic patchworks variants list [OPTIONS]``
 - ``variants register``: ``python -m femic patchworks variants register [OPTIONS] VARIANT_ID``
 - ``variants remove``: ``python -m femic patchworks variants remove [OPTIONS] VARIANT_ID``
@@ -422,6 +424,12 @@ Subcommands
 
 ``patchworks scenario-sets list`` options
 
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--instance-id TEXT`` (optional instance id filter)
+
+``patchworks scenario-sets show`` options
+
+- ``SCENARIO_SET_ID`` argument (required)
 - ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
 
 ``patchworks run-scenario`` options

@@ -31,6 +31,10 @@ def test_load_patchworks_variant_registry_includes_builtin_k3z_base() -> None:
     assert variant.scenarios[0].target == "product.Yield.managed.Total"
     scenario_set = registry.get_scenario_set("k3z.proving_ground")
     assert scenario_set.mode == "sequential"
+    assert scenario_set.instance_id == "k3z"
+    assert scenario_set.scenario_set_family == "proving_ground"
+    assert scenario_set.default is True
+    assert scenario_set.notes
     assert scenario_set.scenarios[0].variant_id == "k3z.base"
     assert scenario_set.scenarios[1].variant_id == "k3z.intensive_light_standstructure"
     default_variant, default_scenario = registry.get_default_scenario("k3z.base")
@@ -38,6 +42,7 @@ def test_load_patchworks_variant_registry_includes_builtin_k3z_base() -> None:
     assert default_scenario.scenario_id == "even_flow_smoke"
     default_scenario_set = registry.get_default_scenario_set("k3z")
     assert default_scenario_set.scenario_set_id == "k3z.proving_ground"
+    assert registry.iter_scenario_sets(instance_id="k3z") == (scenario_set,)
 
 
 def test_load_patchworks_variant_registry_user_overlay_can_override_builtin(
@@ -310,6 +315,11 @@ def test_load_patchworks_variant_registry_parses_scenario_sets_from_overlay(
                 "scenario_sets:",
                 "  - scenario_set_id: demo.set",
                 '    label: "Demo set"',
+                "    instance_id: demo",
+                "    scenario_set_family: smoke",
+                "    default: true",
+                "    notes:",
+                '      - "Overlay demo scenario set"',
                 "    mode: sequential",
                 "    scenarios:",
                 "      - demo.base/smoke",
@@ -324,6 +334,10 @@ def test_load_patchworks_variant_registry_parses_scenario_sets_from_overlay(
     scenario_set = registry.get_scenario_set("demo.set")
     assert scenario_set.label == "Demo set"
     assert scenario_set.mode == "sequential"
+    assert scenario_set.instance_id == "demo"
+    assert scenario_set.scenario_set_family == "smoke"
+    assert scenario_set.default is True
+    assert scenario_set.notes == ("Overlay demo scenario set",)
     assert scenario_set.scenarios == (
         PatchworksScenarioSetMember(variant_id="demo.base", scenario_id="smoke"),
     )

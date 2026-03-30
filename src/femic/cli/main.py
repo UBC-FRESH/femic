@@ -4153,6 +4153,12 @@ def patchworks_scenarios_list(
 @patchworks_scenario_sets_app.command("list")
 def patchworks_scenario_sets_list(
     registry: Path = PATCHWORKS_VARIANT_REGISTRY_OPTION,
+    instance_id: str | None = typer.Option(
+        None,
+        "--instance-id",
+        help="Optional instance id filter.",
+        show_default=False,
+    ),
 ) -> None:
     """List named Patchworks scenario sets available through the FEMIC registry."""
 
@@ -4163,13 +4169,55 @@ def patchworks_scenario_sets_list(
         raise typer.Exit(code=1) from exc
 
     console.print("[green]Patchworks scenario sets[/green]")
-    if not variant_registry.scenario_sets:
+    scenario_sets = variant_registry.iter_scenario_sets(instance_id=instance_id)
+    if not scenario_sets:
         console.print("scenario_sets: none")
         return
-    for scenario_set in variant_registry.scenario_sets:
+    for scenario_set in scenario_sets:
+        instance_text = (
+            f" instance={scenario_set.instance_id}" if scenario_set.instance_id else ""
+        )
+        family_text = (
+            f" family={scenario_set.scenario_set_family}"
+            if scenario_set.scenario_set_family
+            else ""
+        )
+        default_text = " default" if scenario_set.default else ""
         console.print(
             f"- {scenario_set.scenario_set_id}: {scenario_set.label} "
-            f"[mode={scenario_set.mode} scenarios={len(scenario_set.scenarios)}]"
+            f"[mode={scenario_set.mode}{instance_text}{family_text}{default_text} "
+            f"scenarios={len(scenario_set.scenarios)}]"
+        )
+
+
+@patchworks_scenario_sets_app.command("show")
+def patchworks_scenario_sets_show(
+    scenario_set_id: str = typer.Argument(
+        ..., help="Registered Patchworks scenario-set id."
+    ),
+    registry: Path = PATCHWORKS_VARIANT_REGISTRY_OPTION,
+) -> None:
+    """Show one resolved Patchworks scenario-set entry."""
+
+    try:
+        variant_registry = load_patchworks_variant_registry(user_registry_path=registry)
+        scenario_set = variant_registry.get_scenario_set(scenario_set_id)
+    except (FileNotFoundError, PatchworksVariantRegistryError, yaml.YAMLError) as exc:
+        console.print(f"[red]Patchworks variant registry error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]Patchworks scenario set[/green]")
+    console.print(f"scenario_set_id: {scenario_set.scenario_set_id}")
+    console.print(f"label: {scenario_set.label}")
+    console.print(f"mode: {scenario_set.mode}")
+    console.print(f"instance_id: {scenario_set.instance_id or 'none'}")
+    console.print(f"scenario_set_family: {scenario_set.scenario_set_family or 'none'}")
+    console.print(f"default: {scenario_set.default}")
+    for note in scenario_set.notes:
+        console.print(f"note: {note}")
+    for member in scenario_set.scenarios:
+        console.print(
+            f"scenario: variant_id={member.variant_id} scenario_id={member.scenario_id}"
         )
 
 

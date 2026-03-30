@@ -1613,18 +1613,71 @@ def test_patchworks_scenario_sets_list_prints_registry_sets(
         scenario_set_id="k3z.proving_ground",
         label="K3Z proving-ground scenario smoke set",
         mode="sequential",
+        instance_id="k3z",
+        scenario_set_family="proving_ground",
+        default=True,
         scenarios=(SimpleNamespace(), SimpleNamespace()),
     )
     monkeypatch.setattr(
         cli_main,
         "load_patchworks_variant_registry",
-        lambda **_kwargs: SimpleNamespace(scenario_sets=(scenario_set,)),
+        lambda **_kwargs: SimpleNamespace(
+            iter_scenario_sets=lambda **_kwargs: (scenario_set,)
+        ),
     )
 
-    cli_main.patchworks_scenario_sets_list(registry=Path("variants.yaml"))
+    cli_main.patchworks_scenario_sets_list(
+        registry=Path("variants.yaml"),
+        instance_id="k3z",
+    )
 
     assert any("Patchworks scenario sets" in msg for msg in messages)
     assert any("k3z.proving_ground" in msg for msg in messages)
+    assert any("instance=k3z" in msg for msg in messages)
+    assert any("family=proving_ground" in msg for msg in messages)
+    assert any("default" in msg for msg in messages)
+
+
+def test_patchworks_scenario_sets_show_prints_registry_set(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    scenario_set = SimpleNamespace(
+        scenario_set_id="k3z.proving_ground",
+        label="K3Z proving-ground scenario smoke set",
+        mode="sequential",
+        instance_id="k3z",
+        scenario_set_family="proving_ground",
+        default=True,
+        notes=("Demo note",),
+        scenarios=(
+            SimpleNamespace(variant_id="k3z.base", scenario_id="even_flow_smoke"),
+            SimpleNamespace(
+                variant_id="k3z.intensive_light_standstructure",
+                scenario_id="even_flow_smoke",
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(
+            get_scenario_set=lambda _scenario_set_id: scenario_set
+        ),
+    )
+
+    cli_main.patchworks_scenario_sets_show(
+        "k3z.proving_ground",
+        registry=Path("variants.yaml"),
+    )
+
+    assert any("Patchworks scenario set" in msg for msg in messages)
+    assert any("scenario_set_id: k3z.proving_ground" in msg for msg in messages)
+    assert any("instance_id: k3z" in msg for msg in messages)
+    assert any("scenario_set_family: proving_ground" in msg for msg in messages)
+    assert any("note: Demo note" in msg for msg in messages)
 
 
 def test_patchworks_run_scenario_set_runs_members_sequentially(

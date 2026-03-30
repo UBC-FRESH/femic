@@ -16,6 +16,8 @@ Current responsibilities include:
   more variants;
 - resolving one default scenario set per instance when the registry provides
   one;
+- preserving richer scenario-set metadata such as instance membership,
+  families, default markers, and notes;
 - resolving named variants to concrete instance roots, runtime configs, and
   analysis ``.pin`` paths; and
 - planning/executing registry-declared materialization before launch; and
