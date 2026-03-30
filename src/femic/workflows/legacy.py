@@ -144,18 +144,45 @@ def _load_species_universe_for_tsas(
     tsa_list: list[str],
     message_fn: Callable[[str], Any] = print,
 ) -> list[str]:
-    """Load unique top-6 VRI species codes for selected TSAs from checkpoint8."""
-    checkpoint_path = data_root / "ria_vri_vclr1p_checkpoint8.feather"
-    if not checkpoint_path.exists():
-        message_fn(f"warning: species-universe scan skipped; missing {checkpoint_path}")
-        return []
-    table = pd.read_feather(checkpoint_path)
-    if "tsa_code" not in table.columns:
+    """Load unique top-6 VRI species codes for selected TSAs from best checkpoint."""
+    required_columns = {"tsa_code"} | {
+        f"SPECIES_CD_{idx}" for idx in range(1, 7)
+    } | {f"SPECIES_PCT_{idx}" for idx in range(1, 7)}
+    normalized = {str(tsa).zfill(2).lower() for tsa in tsa_list}
+    candidate_paths: list[Path] = [data_root / "ria_vri_vclr1p_checkpoint8.feather"]
+    candidate_paths.extend(
+        data_root / f"ria_vri_vclr1p_checkpoint1-tsa{tsa}.feather"
+        for tsa in sorted(normalized)
+    )
+    candidate_paths.append(data_root / "ria_vri_vclr1p_checkpoint1.feather")
+    candidate_paths.extend(
+        sorted(data_root.glob("ria_vri_vclr1p_checkpoint1-tsa*.feather"))
+    )
+    seen_candidates: set[Path] = set()
+    checkpoint_path: Path | None = None
+    table: pd.DataFrame | None = None
+    for candidate in candidate_paths:
+        if candidate in seen_candidates or not candidate.exists():
+            continue
+        seen_candidates.add(candidate)
+        candidate_table = pd.read_feather(candidate)
+        if not required_columns.issubset(candidate_table.columns):
+            continue
+        candidate_mask = (
+            candidate_table["tsa_code"].astype(str).str.lower().isin(normalized)
+        )
+        if not candidate_mask.any():
+            continue
+        checkpoint_path = candidate
+        table = candidate_table
+        break
+    if checkpoint_path is None or table is None:
         message_fn(
-            "warning: species-universe scan skipped; checkpoint missing 'tsa_code'"
+            "warning: species-universe scan skipped; no usable checkpoint artifact "
+            f"found under {data_root}"
         )
         return []
-    normalized = {str(tsa).zfill(2).lower() for tsa in tsa_list}
+    message_fn(f"species-universe scan using {checkpoint_path.name}")
     tsa_mask = table["tsa_code"].astype(str).str.lower().isin(normalized)
     scoped = table.loc[tsa_mask]
     species_codes: set[str] = set()

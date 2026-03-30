@@ -12,6 +12,7 @@ from femic.workflows.legacy import (
     BTCPostTipsyRunResult,
     PostTipsyBundleResult,
     PostTipsyBundleRunResult,
+    _load_species_universe_for_tsas,
     run_btc_and_post_tipsy_bundle_with_manifest,
     run_post_tipsy_bundle,
     run_post_tipsy_bundle_with_manifest,
@@ -104,6 +105,40 @@ def test_run_post_tipsy_bundle_builds_bundle_from_cached_artifacts(
     assert result.curve_points_table_path.is_file()
 
 
+def test_load_species_universe_can_fallback_to_checkpoint1_case_artifact(
+    tmp_path: Path,
+) -> None:
+    data_root = tmp_path / "data"
+    data_root.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        {
+            "tsa_code": ["k3z", "k3z", "99"],
+            "SPECIES_CD_1": ["FD", "HW", "SX"],
+            "SPECIES_PCT_1": [60.0, 50.0, 100.0],
+            "SPECIES_CD_2": ["HW", "FD", ""],
+            "SPECIES_PCT_2": [40.0, 50.0, 0.0],
+            "SPECIES_CD_3": ["", "", ""],
+            "SPECIES_PCT_3": [0.0, 0.0, 0.0],
+            "SPECIES_CD_4": ["", "", ""],
+            "SPECIES_PCT_4": [0.0, 0.0, 0.0],
+            "SPECIES_CD_5": ["", "", ""],
+            "SPECIES_PCT_5": [0.0, 0.0, 0.0],
+            "SPECIES_CD_6": ["", "", ""],
+            "SPECIES_PCT_6": [0.0, 0.0, 0.0],
+        }
+    ).to_feather(data_root / "ria_vri_vclr1p_checkpoint1-tsak3z.feather")
+
+    messages: list[str] = []
+    out = _load_species_universe_for_tsas(
+        data_root=data_root,
+        tsa_list=["k3z"],
+        message_fn=messages.append,
+    )
+
+    assert out == ["FD", "HW"]
+    assert any("checkpoint1-tsak3z" in msg for msg in messages)
+
+
 def test_run_post_tipsy_bundle_can_fallback_to_persisted_au_table_when_prep_missing(
     tmp_path: Path,
 ) -> None:
@@ -191,6 +226,116 @@ def test_run_post_tipsy_bundle_can_fallback_to_persisted_au_table_when_prep_miss
     assert seen_au_scsi == {1000: ("CWHvm_HW+FDC", "L")}
     assert result.tsa_list == [tsa]
     assert result.au_table_path.is_file()
+
+
+def test_run_post_tipsy_bundle_emits_species_prop_curves_from_checkpoint1_case_artifact(
+    tmp_path: Path,
+) -> None:
+    data_root = tmp_path / "data"
+    data_root.mkdir(parents=True, exist_ok=True)
+    tsa = "k3z"
+
+    results_for_tsa = [
+        (
+            0,
+            "CWHvm_HW+FDC",
+            {
+                "L": {"species": {"HW": {"pct": 70.0}, "FD": {"pct": 30.0}}},
+                "M": {"species": {"HW": {"pct": 70.0}, "FD": {"pct": 30.0}}},
+                "H": {"species": {"HW": {"pct": 70.0}, "FD": {"pct": 30.0}}},
+            },
+        )
+    ]
+    with (data_root / f"vdyp_prep-tsa{tsa}.pkl").open("wb") as fh:
+        pickle.dump(results_for_tsa, fh)
+
+    pd.DataFrame(
+        {
+            "tsa_code": ["k3z"],
+            "SPECIES_CD_1": ["HW"],
+            "SPECIES_PCT_1": [70.0],
+            "SPECIES_CD_2": ["FD"],
+            "SPECIES_PCT_2": [30.0],
+            "SPECIES_CD_3": [""],
+            "SPECIES_PCT_3": [0.0],
+            "SPECIES_CD_4": [""],
+            "SPECIES_PCT_4": [0.0],
+            "SPECIES_CD_5": [""],
+            "SPECIES_PCT_5": [0.0],
+            "SPECIES_CD_6": [""],
+            "SPECIES_PCT_6": [0.0],
+        }
+    ).to_feather(data_root / "ria_vri_vclr1p_checkpoint1-tsak3z.feather")
+
+    pd.DataFrame(
+        {
+            "stratum_code": [
+                "CWHvm_HW+FDC",
+                "CWHvm_HW+FDC",
+                "CWHvm_HW+FDC",
+                "CWHvm_HW+FDC",
+                "CWHvm_HW+FDC",
+                "CWHvm_HW+FDC",
+            ],
+            "si_level": ["L", "L", "M", "M", "H", "H"],
+            "age": [0, 10, 0, 10, 0, 10],
+            "volume": [0.0, 10.0, 0.0, 11.0, 0.0, 12.0],
+        }
+    ).to_feather(data_root / f"vdyp_curves_smooth-tsa{tsa}.feather")
+    pd.DataFrame({"AU": [21000]}).to_excel(
+        data_root / f"tipsy_params_tsa{tsa}.xlsx",
+        index=False,
+        sheet_name="TIPSY_inputTBL",
+    )
+    (data_root / f"04_output-tsa{tsa}.csv").write_text(
+        "feature_id,MVcon_0,MVdec_0,HTcon_0,HTdec_0,gVol_0,CC_0\n21000,0,0,0,0,0,0\n",
+        encoding="utf-8",
+    )
+
+    def _fake_run_01b(
+        *,
+        tsa: str,
+        results,
+        au_scsi,
+        tipsy_curves,
+        vdyp_curves_smooth,
+        runtime_config,
+    ) -> None:
+        _ = (results, au_scsi, vdyp_curves_smooth, runtime_config)
+        tipsy_df = pd.DataFrame(
+            {
+                "AU": [21000, 21000, 22000, 22000, 23000, 23000],
+                "Age": [0, 10, 0, 10, 0, 10],
+                "Yield": [0.0, 12.0, 0.0, 24.0, 0.0, 36.0],
+                "Height": [0.0, 2.0, 0.0, 3.0, 0.0, 4.0],
+                "DBHq": [0.0, 1.0, 0.0, 1.5, 0.0, 2.0],
+                "TPH": [1000, 900, 1000, 900, 1000, 900],
+            }
+        ).set_index(["AU", "Age"])
+        tipsy_curves[tsa] = tipsy_df
+        tipsy_df.reset_index().to_csv(
+            data_root / f"tipsy_curves_tsa{tsa}.csv",
+            index=False,
+        )
+        pd.DataFrame({"AU": [21000], "HW": [70.0], "FD": [30.0]}).to_csv(
+            data_root / f"tipsy_sppcomp_tsa{tsa}.csv",
+            index=False,
+        )
+
+    result = run_post_tipsy_bundle(
+        tsa_list=[tsa],
+        repo_root=tmp_path,
+        data_root=data_root,
+        run_01b_fn=_fake_run_01b,
+        message_fn=lambda _msg: None,
+    )
+
+    curve_table = pd.read_csv(result.curve_table_path)
+    curve_types = set(curve_table["curve_type"].tolist())
+    assert "untreated_species_prop_FD" in curve_types
+    assert "untreated_species_prop_HW" in curve_types
+    assert "treated_species_prop_FD" in curve_types
+    assert "treated_species_prop_HW" in curve_types
 
 
 def test_run_post_tipsy_bundle_sets_managed_curve_env_for_01b(
