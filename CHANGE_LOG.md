@@ -8714,3 +8714,17 @@
   - The key stabilizing insight is that FAN$IER's own checked-list context menu
     is the right broad-selection seam; per-row UIA checkbox state was too
     flaky for reliable unattended fan-out.
+- 2026-03-29 (Issue #59): promoted the proven FAN$IER seam into tracked FEMIC
+  runtime code and CLI.
+  - Added tracked runtime module:
+    - `src/femic/fansier_runtime.py`
+  - Added tracked CLI entrypoint:
+    - `femic fansier run-batch`
+  - Added docs/tests for the new runtime surface.
+  - Real productized smoke passed:
+    - `python -m femic fansier run-batch "<rgm>" --discount-dis-path "<.dis>" --long-report --select-all-products --select-all-ages ...`
+    - outputs landed under `tipsy_io/logs/fansier_cli_smoke/`
+    - manifest landed at `tipsy_io/logs/fansier_batch_manifest-cli_smoke_all.json`
+  - Confirmed tracked-command result:
+    - `1 regime x 1 assumptions x 6 products x 300 ages = 1,800` long-report
+      files with materially populated economics output.

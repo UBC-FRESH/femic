@@ -9,6 +9,7 @@ description = "Forest Estate Model Input Compiler"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "comtypes; platform_system == 'Windows'",
     "distance",
     "fiona",
     "geocube",
@@ -20,6 +21,7 @@ dependencies = [
     "numpy",
     "pandas",
     "pympler",
+    "pywinauto; platform_system == 'Windows'",
     "rasterio",
     "scipy",
     "seaborn",

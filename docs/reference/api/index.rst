@@ -43,6 +43,8 @@ that matches the job you are trying to do:
   canonical artifact selection.
 - ``femic.pipeline.tipsy``: BatchTIPSY handoff generation and related
   fixed-width export logic.
+- ``femic.fansier_runtime``: FAN$IER clean-session launch, batch automation,
+  and unattended runtime seam helpers.
 - ``femic.pipeline.siteprod``: SiteProd artifact resolution, band mapping, and
   raster assignment helpers.
 - ``femic.fmg.patchworks``: Patchworks export synthesis, fragments wiring, and

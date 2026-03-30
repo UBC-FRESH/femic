@@ -23,6 +23,7 @@ Commands
 - ``vdyp``
 - ``tsa``
 - ``tipsy``
+- ``fansier``
 - ``export``
 - ``patchworks``
 - ``instance``
@@ -201,6 +202,35 @@ Subcommands
 - ``--log-dir PATH`` (default: ``tipsy_io/logs``)
 - ``--run-id TEXT``
 - ``--instance-root PATH``
+
+FAN$IER
+-------
+
+.. code-block:: text
+
+   python -m femic fansier [OPTIONS] COMMAND [ARGS]...
+
+Subcommands
+
+- ``run-batch``: ``python -m femic fansier run-batch [OPTIONS] RGM_PATH``
+
+``fansier run-batch`` options
+
+- ``RGM_PATH`` argument (required)
+- ``--out-dir PATH`` (default: ``tipsy_io/logs/fansier_batch``)
+- ``--log-dir PATH`` (default: ``tipsy_io/logs``)
+- ``--run-id TEXT`` (default: ``fansier_batch``)
+- ``--fansier-exe PATH`` (default: installed ``Fansier.exe`` path)
+- ``--discount-name TEXT`` (default: ``FEMIC Raw 0%``)
+- ``--discount-dis-path PATH`` (optional; load `.dis` before selection)
+- ``--report-type TEXT`` (default: ``txt``)
+- ``--long-report`` / ``--short-report`` (default: short)
+- ``--product-cols`` / ``--no-product-cols``
+- ``--activity-cols`` / ``--no-activity-cols`` (default: off)
+- ``--select-all-products``
+- ``--select-all-ages``
+- ``--product-name TEXT`` (used when not selecting all products)
+- ``--age-name TEXT`` (used when not selecting all ages)
 
 Export
 ------

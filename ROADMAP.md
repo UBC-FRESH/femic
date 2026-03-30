@@ -8819,6 +8819,16 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
           - that run produced
             `1 regime x 1 assumptions x 6 products x 300 ages = 1,800`
             long-report `txt` files.
+        - the proven seam is now promoted into tracked FEMIC code:
+          - `src/femic/fansier_runtime.py`
+          - `femic fansier run-batch`
+          - tracked-command smoke proof now exists under
+            `tipsy_io/logs/fansier_cli_smoke/` with manifest
+            `tipsy_io/logs/fansier_batch_manifest-cli_smoke_all.json`
+        - next FAN$IER productization edge:
+          - normalize/parse the long-report `txt` outputs into structured
+            FEMIC-owned tables so downstream workflows do not have to scrape
+            narrative report text directly.
       - null-rate economics is not blocked by FAN$IER:
         - the shipped discount-assumptions editor explicitly allows
           `0%` discount and `0%` reinvestment rates.

@@ -905,6 +905,82 @@ def test_patchworks_build_blocks_reports_errors(
     assert any("Patchworks block build failed" in msg for msg in messages)
 
 
+def test_fansier_run_batch_emits_manifest_and_output(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    monkeypatch.setattr(
+        cli_main,
+        "run_fansier_batch",
+        lambda **_kwargs: SimpleNamespace(
+            manifest_path=Path("tipsy_io/logs/fansier_batch_manifest-demo.json"),
+            first_output_path=Path("tipsy_io/logs/fansier_batch/demo.txt"),
+            product_count=6,
+            age_count=300,
+            calculations=1800,
+            output_files=(Path("tipsy_io/logs/fansier_batch/demo.txt"),),
+        ),
+    )
+
+    cli_main.fansier_run_batch(
+        rgm_path=Path("demo.rgm"),
+        out_dir=Path("tipsy_io/logs/fansier_batch"),
+        log_dir=Path("tipsy_io/logs"),
+        run_id="demo",
+        fansier_exe=Path("Fansier.exe"),
+        discount_name="FEMIC Raw 0%",
+        discount_dis_path=None,
+        report_type="txt",
+        long_report=True,
+        product_cols=True,
+        activity_cols=False,
+        select_all_products=True,
+        select_all_ages=True,
+        product_name="Logs (1)",
+        age_name="10.00 (1)",
+    )
+
+    assert any("FAN$IER batch run complete" in msg for msg in messages)
+    assert any("manifest:" in msg for msg in messages)
+    assert any("calculations=1800" in msg for msg in messages)
+
+
+def test_fansier_run_batch_reports_runtime_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "run_fansier_batch",
+        lambda **_kwargs: (_ for _ in ()).throw(cli_main.FansierRuntimeError("boom")),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.fansier_run_batch(
+            rgm_path=Path("demo.rgm"),
+            out_dir=Path("tipsy_io/logs/fansier_batch"),
+            log_dir=Path("tipsy_io/logs"),
+            run_id="demo",
+            fansier_exe=Path("Fansier.exe"),
+            discount_name="FEMIC Raw 0%",
+            discount_dis_path=None,
+            report_type="txt",
+            long_report=False,
+            product_cols=True,
+            activity_cols=False,
+            select_all_products=False,
+            select_all_ages=False,
+            product_name="Logs (1)",
+            age_name="10.00 (1)",
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("FAN$IER batch run failed" in msg for msg in messages)
+
+
 def test_instance_init_calls_bootstrap(monkeypatch: pytest.MonkeyPatch) -> None:
     messages: list[str] = []
     monkeypatch.setattr(cli_main.console, "print", messages.append)

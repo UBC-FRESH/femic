@@ -522,6 +522,28 @@ Interpretation
     `SetItemChecked(...)` + `UpdateStatus()` path;
   - UIA checkbox states alone were not reliable enough for broad selections.
 
+## Tracked FEMIC Runtime Surface
+
+- The proven FAN$IER scratch harness is now promoted into tracked FEMIC code:
+  - runtime module:
+    - `src/femic/fansier_runtime.py`
+  - CLI entrypoint:
+    - `femic fansier run-batch`
+- Productized smoke proof:
+  - command:
+    - `python -m femic fansier run-batch "<rgm>" --discount-dis-path "<.dis>" --long-report --select-all-products --select-all-ages --run-id cli_smoke_all --out-dir tipsy_io/logs/fansier_cli_smoke --log-dir tipsy_io/logs`
+  - outputs:
+    - `tipsy_io/logs/fansier_cli_smoke/`
+    - `tipsy_io/logs/fansier_batch_manifest-cli_smoke_all.json`
+- Confirmed tracked-command result:
+  - `1 regime x 1 assumptions x 6 products x 300 ages = 1,800` long-report
+    files
+  - representative inspected output:
+    - `cli_smoke_all - Batchbiomass-10000.rgm - {defaults} - FEMIC Raw 0% - Lumber & Mill Residues (All Grades) - 170.00.txt`
+- Current best read:
+  - unattended FAN$IER batch extraction is no longer just a scratch proof; it
+    is now a tracked FEMIC runtime seam with a real CLI surface.
+
 ## Discount-Assumptions File Seam
 
 - FAN$IER has a native discount-assumptions file contract:
