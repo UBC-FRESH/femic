@@ -163,7 +163,7 @@ from femic.workflows.legacy import (
 app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
-    help="Forest Estate Model Input Compiler (FEMIC).",
+    help="Forest Estate Modelling Integration Core (FEMIC).",
 )
 prep_app = typer.Typer(
     add_completion=False, no_args_is_help=True, help="Prepare data inputs."

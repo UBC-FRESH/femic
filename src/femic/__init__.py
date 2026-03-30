@@ -1,4 +1,4 @@
-"""Forest Estate Model Input Compiler (FEMIC)."""
+"""Forest Estate Modelling Integration Core (FEMIC)."""
 
 from __future__ import annotations
 

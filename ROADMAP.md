@@ -2,7 +2,7 @@
 
 ## Phase 1: Stabilize Runtime + Inputs
 - [x] P1.1 Stand up Typer CLI entrypoint (FHOPS-style, nemora-compatible)
-  - [x] P1.1a Expose the `femic` console script (Forest Estate Model Input Compiler)
+  - [x] P1.1a Expose the `femic` console script (Forest Estate Modelling Integration Core)
   - [x] P1.1b Create `src/femic/cli/main.py` with `Typer(add_completion=False, no_args_is_help=True)`
   - [x] P1.1c Organize subcommands (prep, vdyp, tsa, run) via `app.add_typer(...)`
   - [x] P1.1d Use module-level constants for defaults + typed `Path` args (avoid B008)
@@ -7716,14 +7716,13 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     first and otherwise from the configured managed built-in root;
   - built-in Patchworks launches now fail with a direct install hint when the
     underlying built-in instance is missing.
-    on Linux/macOS and `%USERPROFILE%\\.femic\\external` on Windows, with
-    user-configured overrides when desired;
-  - add a visible configured user-instance workspace root with
-    `~/femic/instances` / Windows equivalent as the default;
-  - keep source-checkout developer workflows and normal runtime
-    `--instance-root` precedence unchanged while teaching shipped built-in
-    Patchworks entries to resolve from repo-local `external/...` first and the
-    managed built-in root second.
+- Issue `#63` expansion rename is now in place:
+  - `Forest Estate Modelling Integration Core` is now the governing
+    spelled-out expansion of FEMIC;
+  - package metadata, CLI help, docs index, and planning/history surfaces now
+    use the new expansion consistently;
+  - the stable runtime identifiers `femic` / `FEMIC` were intentionally left
+    unchanged.
 - Keep issue `#8` open as the narrower follow-on docs task for native Windows
   Patchworks runtime orientation and the SiteProd default/fallback summary.
 - The optional-bank rollout under GitHub issue `#48` is now complete:
@@ -9416,6 +9415,39 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - `python -m femic instance config show`
         - `python -m femic instance builtins list`
         - `python -m femic patchworks variants show k3z.base`
+  - [x] P49.8 Adopt Forest Estate Modelling Integration Core as the FEMIC
+    expansion.
+    - Governing tracker:
+      - GitHub issue #63
+    - Working branch:
+      - `feature/issue-63-femic-expansion-rename`
+    - Goal:
+      - replace the previous spelled-out FEMIC expansion with
+        `Forest Estate Modelling Integration Core` across package metadata,
+        docs, roadmap/changelog history, and onboarding/planning surfaces
+        without changing the stable `femic` package/module/CLI identifier.
+    - Planned scope:
+      - update package metadata and top-level help text;
+      - update docs index and other spelled-out expansion references;
+      - update roadmap/changelog and related planning/onboarding surfaces;
+      - remove the adopted rename idea from `planning/incoming_ideas.md`.
+    - Landed behavior:
+      - adopted `Forest Estate Modelling Integration Core` as the governing
+        spelled-out expansion of FEMIC;
+      - updated package metadata, module docstring, top-level CLI help, docs
+        index, roadmap/changelog planning surfaces, and the adopted idea queue
+        so the previous expansion text no longer lingers in the repo;
+      - left the stable runtime identifiers `femic` / `FEMIC` unchanged.
+    - Validation result:
+      - `ruff format src tests`
+      - `ruff check src tests`
+      - `mypy src`
+      - `pytest`
+      - `pre-commit run --all-files`
+      - `python -m sphinx -b html docs _build/html -W`
+      - non-mutating CLI spot checks passed:
+        - `python -m femic --help`
+        - `python -m femic patchworks instances list`
   - Historical implementation notes:
     - reuse FEMIC's existing BeanShell launcher in
       `src/femic/patchworks_runtime.py` rather than inventing a second

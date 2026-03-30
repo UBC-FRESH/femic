@@ -1,7 +1,7 @@
 FEMIC
 =====
 
-Forest Estate Model Input Compiler (FEMIC) documentation.
+Forest Estate Modelling Integration Core (FEMIC) documentation.
 
 .. toctree::
    :maxdepth: 2

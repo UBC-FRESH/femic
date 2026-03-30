@@ -9191,3 +9191,36 @@
     - `.venv\Scripts\python.exe -m femic instance config show`
     - `.venv\Scripts\python.exe -m femic instance builtins list`
     - `.venv\Scripts\python.exe -m femic patchworks variants show k3z.base`
+- 2026-03-30 (Issue #63 kickoff): started the FEMIC expansion rename sweep to
+  adopt `Forest Estate Modelling Integration Core` as the governing spelled-out
+  expansion.
+  - Created GitHub issue `#63`:
+    - `Adopt Forest Estate Modelling Integration Core as FEMIC expansion`
+  - Created working branch:
+    - `feature/issue-63-femic-expansion-rename`
+  - Updated `ROADMAP.md`:
+    - added `P49.8` as the active rename/docs consistency slice;
+    - refreshed `Detailed Next Steps Notes` so the rename is now the active
+      edge.
+  - Removed the adopted rename idea from `planning/incoming_ideas.md`.
+- 2026-03-30 (Issue #63 closeout): adopted `Forest Estate Modelling
+  Integration Core` as the governing spelled-out FEMIC expansion.
+  - Updated runtime/package-facing surfaces:
+    - `pyproject.toml`
+    - `src/femic/__init__.py`
+    - `src/femic/cli/main.py`
+  - Updated docs/planning-facing surfaces:
+    - `docs/index.rst`
+    - `ROADMAP.md`
+    - `CHANGE_LOG.md`
+    - `planning/incoming_ideas.md`
+  - Kept the stable runtime identifiers `femic` / `FEMIC` unchanged.
+  - Validation passed:
+    - `.venv\\Scripts\\ruff.exe format src tests`
+    - `.venv\\Scripts\\ruff.exe check src tests`
+    - `.venv\\Scripts\\python.exe -m mypy src`
+    - `.venv\\Scripts\\python.exe -m pytest`
+    - `.venv\\Scripts\\python.exe -m pre_commit run --all-files`
+    - `.venv\\Scripts\\python.exe -m sphinx -b html docs _build\\html -W`
+    - `.venv\\Scripts\\python.exe -m femic --help`
+    - `.venv\\Scripts\\python.exe -m femic patchworks instances list`
