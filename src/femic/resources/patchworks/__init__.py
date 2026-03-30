@@ -1,0 +1,1 @@
+"""Packaged Patchworks registry resources."""

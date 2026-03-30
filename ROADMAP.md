@@ -8994,6 +8994,82 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - writing the standard Patchworks target/report outputs to disk
     - checking those outputs directly for obvious regressions before declaring
       the seam landed
+  - [ ] P49.5 Add a registry-backed Patchworks variant launch surface on top of
+    the proven headless runner.
+    - Governing tracker:
+      - GitHub issue #60
+    - Working branch:
+      - `feature/issue-60-patchworks-pin-launch`
+    - Goal:
+      - let operators launch a representative Patchworks headless run by
+        naming a FEMIC-registered variant instead of passing a raw `.pin`
+        path, while keeping the explicit-path primitive seam intact.
+    - Minimal implementation shape:
+      - keep `femic patchworks run-headless <pin>` unchanged as the stable
+        primitive seam;
+      - define a FEMIC-owned registry contract for Patchworks variants,
+        likely YAML-backed, with:
+        - built-in entries for bundled example-instance variants; and
+        - user-managed entries or overrides in a FEMIC config home;
+      - make that registry rich enough to carry future execution metadata such
+        as:
+        - variant-family / instance grouping;
+        - per-variant runtime overrides (for example Java max-memory);
+        - default stage/output directories;
+        - named scenario definitions; and
+        - scenario-set groupings;
+      - leave room for a future DataLad-linked deployment mode where:
+        - registry add/remove/update operations can optionally mirror into a
+          linked dataset/deployment repo; and
+        - variant/scenario/scenario-set execution can optionally run with a
+          `--use-datalad` / `use_datalad=true` reproducibility wrapper;
+      - add CLI hooks to list/show/register/update/remove variant entries;
+      - add a launch hook that resolves a registered variant to:
+        - the real analysis `.pin`;
+        - the matching runtime config; and
+        - the instance/data prerequisites needed before launch;
+      - teach that launch hook to trigger missing-data materialization before
+        Patchworks startup, with a size-aware consent seam for larger pulls.
+      - capture the registry contract and first-slice CLI shape in:
+        - `planning/patchworks_variant_registry_design.md`
+      - first landed execution slice now in hand:
+        - tracked registry loader:
+          - `src/femic/patchworks_variants.py`
+        - packaged built-ins:
+          - `src/femic/resources/patchworks/variants.builtin.yaml`
+        - new CLI surfaces:
+          - `femic patchworks instances list`
+          - `femic patchworks variants list`
+          - `femic patchworks variants show <variant-id>`
+          - `femic patchworks run-variant <variant-id>`
+        - current built-in proof:
+          - `k3z.base` resolves to the expected instance root, runtime config,
+            and `analysis/base.pin`
+          - real headless smoke:
+            - `python -m femic patchworks run-variant k3z.base --run-id issue60_registry_base --log-dir vdyp_io/logs --scenario-mode max-even-flow-smoke`
+          - direct inspected outputs:
+            - manifest:
+              `vdyp_io/logs/patchworks_headless_manifest-issue60_registry_base.json`
+            - saved stage:
+              `vdyp_io/logs/headless_stage/issue60_registry_base/`
+            - `targetStatus.csv` still showed both:
+              - `product.Yield.managed.Total`
+              - `flow.even.product.Yield.managed.Total`
+            - `targetSummary.csv` still showed near-zero even-flow deviations
+            - `schedule.csv` was non-empty (`316` lines)
+    - Validation bar:
+      - list and resolve at least one built-in K3Z variant from the registry;
+      - print the exact resolved `.pin` and runtime config used;
+      - prove the prelaunch data/materialization checks behave as documented;
+      - run a real K3Z headless smoke through the registry-backed launch
+        surface; and
+      - inspect the saved stage/report outputs directly before calling the
+        slice landed.
+    - Current next edge:
+      - add the first real materialization guardrail layer on top of the new
+        registry-backed launch surface;
+      - then widen into user-managed register/update/remove flows instead of
+        keeping the first slice read-only forever.
   - Current implementation order:
     - reuse FEMIC's existing BeanShell launcher in
       `src/femic/patchworks_runtime.py` rather than inventing a second
@@ -9074,7 +9150,8 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
           - `schedule.csv` remained non-empty (480 lines).
   - Notes:
     - Governing tracker:
-      - GitHub issue #54
+      - GitHub issue #54 for the landed base seam;
+      - GitHub issue #60 for the active named-pin operator surface.
     - Primary local evidence:
       - `planning/patchworks_nogui_mode.md`
       - `tmp/patchworks-201901.doc.tar.gz`

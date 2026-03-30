@@ -905,6 +905,172 @@ def test_patchworks_build_blocks_reports_errors(
     assert any("Patchworks block build failed" in msg for msg in messages)
 
 
+def test_patchworks_instances_list_emits_registry_summary(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(
+            builtin_registry_loaded=True,
+            user_registry_path=Path("C:/Users/test/.femic/variants.yaml"),
+            instances=(
+                SimpleNamespace(
+                    instance_id="k3z",
+                    label="K3Z example instance",
+                    variant_ids=("k3z.base", "k3z.intensive_light"),
+                    default_variant_id="k3z.base",
+                ),
+            ),
+        ),
+    )
+
+    cli_main.patchworks_instances_list(registry=Path("variants.yaml"))
+
+    assert any("Patchworks instances" in msg for msg in messages)
+    assert any("builtins_loaded: True" in msg for msg in messages)
+    assert any("k3z: K3Z example instance" in msg for msg in messages)
+
+
+def test_patchworks_variants_show_emits_registry_entry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(
+            get_variant=lambda _variant_id: SimpleNamespace(
+                variant_id="k3z.base",
+                label="K3Z base",
+                instance_id="k3z",
+                instance_label="K3Z example instance",
+                variant_family="baseline",
+                kind="patchworks",
+                default=True,
+                instance_root=Path("external/femic-k3z-instance"),
+                analysis_pin=Path("external/femic-k3z-instance/models/.../base.pin"),
+                runtime_config=Path(
+                    "external/femic-k3z-instance/config/patchworks.runtime.windows.yaml"
+                ),
+                source="builtin",
+                registry_path=None,
+                runtime=None,
+                notes=("note one",),
+                materialization=(),
+            )
+        ),
+    )
+
+    cli_main.patchworks_variants_show("k3z.base", registry=Path("variants.yaml"))
+
+    assert any("Patchworks variant" in msg for msg in messages)
+    assert any("variant_id: k3z.base" in msg for msg in messages)
+    assert any("analysis_pin:" in msg for msg in messages)
+    assert any("note: note one" in msg for msg in messages)
+
+
+def test_patchworks_run_variant_delegates_to_headless_runner(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    variant = SimpleNamespace(
+        variant_id="k3z.base",
+        instance_root=Path("external/femic-k3z-instance"),
+        analysis_pin=Path(
+            "external/femic-k3z-instance/models/k3z_patchworks_model/analysis/base.pin"
+        ),
+        runtime_config=Path(
+            "external/femic-k3z-instance/config/patchworks.runtime.windows.yaml"
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(get_variant=lambda _variant_id: variant),
+    )
+    runtime_cfg = SimpleNamespace()
+    monkeypatch.setattr(
+        cli_main, "load_patchworks_runtime_config", lambda _path: runtime_cfg
+    )
+    called: dict[str, object] = {}
+
+    def _fake_run_patchworks_headless_pin(**kwargs):
+        called.update(kwargs)
+        return SimpleNamespace(
+            run_id="demo",
+            returncode=0,
+            pin_path=variant.analysis_pin,
+            stage_dir=Path("tipsy_io/logs/headless_stage/demo"),
+            scenario_mode="none",
+            execution=SimpleNamespace(
+                stdout_log_path=Path("tipsy_io/logs/stdout.log"),
+                stderr_log_path=Path("tipsy_io/logs/stderr.log"),
+            ),
+            manifest_path=Path("tipsy_io/logs/manifest.json"),
+            failures=(),
+        )
+
+    monkeypatch.setattr(
+        cli_main, "run_patchworks_headless_pin", _fake_run_patchworks_headless_pin
+    )
+
+    cli_main.patchworks_run_variant(
+        "k3z.base",
+        registry=Path("variants.yaml"),
+        log_dir=Path("vdyp_io/logs"),
+        run_id="demo",
+        stage_label=None,
+        iterations=1,
+        improvement=0.0,
+        scenario_mode="none",
+        scenario_target=None,
+        scenario_min_annual=None,
+    )
+
+    assert called["config"] is runtime_cfg
+    assert called["pin_path"] == variant.analysis_pin
+    assert Path(called["log_dir"]) == Path("vdyp_io/logs").resolve()
+    assert any("Patchworks variant run complete" in msg for msg in messages)
+    assert any("runtime_config:" in msg for msg in messages)
+
+
+def test_patchworks_run_variant_reports_registry_errors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: (_ for _ in ()).throw(
+            cli_main.PatchworksVariantRegistryError("boom")
+        ),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.patchworks_run_variant(
+            "k3z.base",
+            registry=Path("variants.yaml"),
+            log_dir=Path("vdyp_io/logs"),
+            run_id="demo",
+            stage_label=None,
+            iterations=1,
+            improvement=0.0,
+            scenario_mode="none",
+            scenario_target=None,
+            scenario_min_annual=None,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("Patchworks variant run failed" in msg for msg in messages)
+
+
 def test_fansier_run_batch_emits_manifest_and_output(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

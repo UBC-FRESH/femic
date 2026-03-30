@@ -74,6 +74,11 @@ from femic.patchworks_runtime import (
     run_patchworks_command,
     run_patchworks_preflight,
 )
+from femic.patchworks_variants import (
+    DEFAULT_PATCHWORKS_USER_REGISTRY_PATH,
+    PatchworksVariantRegistryError,
+    load_patchworks_variant_registry,
+)
 from femic.rebuild_baseline import (
     apply_diff_allowlist,
     build_current_snapshot,
@@ -159,6 +164,16 @@ patchworks_app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
     help="Run proprietary Patchworks Matrix Builder (Wine on Linux, native on Windows).",
+)
+patchworks_instances_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Inspect registered Patchworks instances.",
+)
+patchworks_variants_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Inspect registered Patchworks variants.",
 )
 instance_app = typer.Typer(
     add_completion=False,
@@ -628,6 +643,11 @@ PATCHWORKS_RUN_ID_OPTION = typer.Option(
     "--run-id",
     help="Optional run identifier for Patchworks runtime logs.",
     show_default=False,
+)
+PATCHWORKS_VARIANT_REGISTRY_OPTION = typer.Option(
+    DEFAULT_PATCHWORKS_USER_REGISTRY_PATH,
+    "--registry",
+    help="Optional user Patchworks variant registry overlay path.",
 )
 PATCHWORKS_HEADLESS_STAGE_LABEL_OPTION = typer.Option(
     None,
@@ -3662,6 +3682,176 @@ def patchworks_run_headless(
         raise typer.Exit(code=result.returncode)
 
 
+@patchworks_instances_app.command("list")
+def patchworks_instances_list(
+    registry: Path = PATCHWORKS_VARIANT_REGISTRY_OPTION,
+) -> None:
+    """List Patchworks instances available through the FEMIC variant registry."""
+
+    try:
+        variant_registry = load_patchworks_variant_registry(user_registry_path=registry)
+    except (FileNotFoundError, PatchworksVariantRegistryError, yaml.YAMLError) as exc:
+        console.print(f"[red]Patchworks variant registry error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]Patchworks instances[/green]")
+    console.print(f"builtins_loaded: {variant_registry.builtin_registry_loaded}")
+    console.print(
+        f"user_registry: {variant_registry.user_registry_path or 'not found'}"
+    )
+    for item in variant_registry.instances:
+        default_text = (
+            f" default={item.default_variant_id}" if item.default_variant_id else ""
+        )
+        console.print(
+            f"- {item.instance_id}: {item.label} "
+            f"(variants={len(item.variant_ids)}{default_text})"
+        )
+
+
+@patchworks_variants_app.command("list")
+def patchworks_variants_list(
+    registry: Path = PATCHWORKS_VARIANT_REGISTRY_OPTION,
+    instance_id: str | None = typer.Option(
+        None,
+        "--instance-id",
+        help="Optional instance id filter.",
+        show_default=False,
+    ),
+) -> None:
+    """List Patchworks variants available through the FEMIC registry."""
+
+    try:
+        variant_registry = load_patchworks_variant_registry(user_registry_path=registry)
+    except (FileNotFoundError, PatchworksVariantRegistryError, yaml.YAMLError) as exc:
+        console.print(f"[red]Patchworks variant registry error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    normalized_instance_id = str(instance_id or "").strip()
+    console.print("[green]Patchworks variants[/green]")
+    for item in variant_registry.variants:
+        if normalized_instance_id and item.instance_id != normalized_instance_id:
+            continue
+        default_text = " default" if item.default else ""
+        console.print(
+            f"- {item.variant_id}: {item.label} "
+            f"[instance={item.instance_id} family={item.variant_family}{default_text}]"
+        )
+
+
+@patchworks_variants_app.command("show")
+def patchworks_variants_show(
+    variant_id: str = typer.Argument(..., help="Registered Patchworks variant id."),
+    registry: Path = PATCHWORKS_VARIANT_REGISTRY_OPTION,
+) -> None:
+    """Show one resolved Patchworks variant entry."""
+
+    try:
+        variant_registry = load_patchworks_variant_registry(user_registry_path=registry)
+        item = variant_registry.get_variant(variant_id)
+    except (FileNotFoundError, PatchworksVariantRegistryError, yaml.YAMLError) as exc:
+        console.print(f"[red]Patchworks variant registry error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]Patchworks variant[/green]")
+    console.print(f"variant_id: {item.variant_id}")
+    console.print(f"label: {item.label}")
+    console.print(f"instance_id: {item.instance_id}")
+    console.print(f"instance_label: {item.instance_label}")
+    console.print(f"variant_family: {item.variant_family}")
+    console.print(f"kind: {item.kind}")
+    console.print(f"default: {item.default}")
+    console.print(f"instance_root: {item.instance_root}")
+    console.print(f"analysis_pin: {item.analysis_pin}")
+    console.print(f"runtime_config: {item.runtime_config}")
+    console.print(f"source: {item.source}")
+    console.print(f"registry_path: {item.registry_path or 'builtin'}")
+    if item.runtime:
+        console.print(f"runtime: {json.dumps(item.runtime, indent=2, sort_keys=True)}")
+    if item.notes:
+        for note in item.notes:
+            console.print(f"note: {note}")
+    if item.materialization:
+        for action in item.materialization:
+            console.print(
+                "materialization: "
+                f"kind={action.kind} dataset_root={action.dataset_root} "
+                f"relpaths={list(action.relpaths)} estimated_bytes={action.estimated_bytes}"
+            )
+
+
+@patchworks_app.command("run-variant")
+def patchworks_run_variant(
+    variant_id: str = typer.Argument(..., help="Registered Patchworks variant id."),
+    registry: Path = PATCHWORKS_VARIANT_REGISTRY_OPTION,
+    log_dir: Path = PATCHWORKS_LOG_DIR_OPTION,
+    run_id: str | None = PATCHWORKS_RUN_ID_OPTION,
+    stage_label: str | None = PATCHWORKS_HEADLESS_STAGE_LABEL_OPTION,
+    iterations: int = PATCHWORKS_HEADLESS_ITERATIONS_OPTION,
+    improvement: float = PATCHWORKS_HEADLESS_IMPROVEMENT_OPTION,
+    scenario_mode: str = typer.Option(
+        "none",
+        "--scenario-mode",
+        help="Optional headless scenario helper mode (for example max-even-flow-smoke).",
+    ),
+    scenario_target: str | None = typer.Option(
+        None,
+        "--scenario-target",
+        help="Optional target label to configure for the selected scenario mode.",
+    ),
+    scenario_min_annual: float | None = typer.Option(
+        None,
+        "--scenario-min-annual",
+        help="Optional annual minimum target level for the selected scenario mode.",
+    ),
+) -> None:
+    """Resolve a registered Patchworks variant and delegate to the headless runner."""
+
+    try:
+        variant_registry = load_patchworks_variant_registry(user_registry_path=registry)
+        variant = variant_registry.get_variant(variant_id)
+        runtime_config = load_patchworks_runtime_config(variant.runtime_config)
+        result = run_patchworks_headless_pin(
+            config=runtime_config,
+            pin_path=variant.analysis_pin,
+            log_dir=log_dir.expanduser().resolve(),
+            run_id=run_id,
+            stage_label=stage_label,
+            iterations=iterations,
+            improvement=improvement,
+            scenario_mode=scenario_mode,
+            scenario_target=scenario_target,
+            scenario_min_annual=scenario_min_annual,
+        )
+    except (
+        FileNotFoundError,
+        PatchworksConfigError,
+        PatchworksVariantRegistryError,
+        json.JSONDecodeError,
+        yaml.YAMLError,
+    ) as exc:
+        console.print(f"[red]Patchworks variant run failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    color = "green" if result.returncode == 0 else "red"
+    console.print(
+        f"[{color}]Patchworks variant run complete[/{color}] "
+        f"variant={variant.variant_id} run_id={result.run_id} returncode={result.returncode}"
+    )
+    console.print(f"instance_root: {variant.instance_root}")
+    console.print(f"runtime_config: {variant.runtime_config}")
+    console.print(f"pin: {result.pin_path}")
+    console.print(f"stage_dir: {result.stage_dir}")
+    console.print(f"scenario_mode: {result.scenario_mode}")
+    console.print(f"stdout_log: {result.execution.stdout_log_path}")
+    console.print(f"stderr_log: {result.execution.stderr_log_path}")
+    console.print(f"manifest: {result.manifest_path}")
+    for failure in result.failures:
+        console.print(f"[red]Runtime failure:[/red] {failure}")
+    if result.returncode != 0:
+        raise typer.Exit(code=result.returncode)
+
+
 @patchworks_app.command("build-blocks")
 def patchworks_build_blocks(
     config: Path = PATCHWORKS_CONFIG_OPTION,
@@ -3998,5 +4188,7 @@ app.add_typer(tsa_app, name="tsa")
 app.add_typer(tipsy_app, name="tipsy")
 app.add_typer(fansier_app, name="fansier")
 app.add_typer(export_app, name="export")
+patchworks_app.add_typer(patchworks_instances_app, name="instances")
+patchworks_app.add_typer(patchworks_variants_app, name="variants")
 app.add_typer(patchworks_app, name="patchworks")
 app.add_typer(instance_app, name="instance")

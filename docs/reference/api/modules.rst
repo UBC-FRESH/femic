@@ -14,6 +14,7 @@ Current curated pages in this section include ``femic.cli.main``,
 ``femic.pipeline.vdyp_stage``, ``femic.pipeline.io``,
 ``femic.pipeline.tipsy``, ``femic.fansier_runtime``,
 ``femic.fansier_reporting``, ``femic.fansier_workflow``,
+``femic.patchworks_variants``,
 ``femic.fmg.patchworks``,
 ``femic.patchworks_runtime``, ``femic.workflows.legacy``, and
 ``femic.pipeline.siteprod``.
@@ -28,6 +29,7 @@ Current curated pages in this section include ``femic.cli.main``,
    femic-fansier-runtime
    femic-fansier-reporting
    femic-fansier-workflow
+   femic-patchworks-variants
    femic-fmg-patchworks
    femic-patchworks-runtime
    femic-workflows-legacy

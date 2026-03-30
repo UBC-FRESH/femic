@@ -344,12 +344,21 @@ Patchworks Runtime
 Subcommands
 
 - ``preflight``: ``python -m femic patchworks preflight [OPTIONS]``
+- ``instances list``: ``python -m femic patchworks instances list [OPTIONS]``
 - ``build-blocks``: ``python -m femic patchworks build-blocks [OPTIONS]``
 - ``matrix-build``: ``python -m femic patchworks matrix-build [OPTIONS]``
+- ``run-headless``: ``python -m femic patchworks run-headless [OPTIONS] PIN``
+- ``run-variant``: ``python -m femic patchworks run-variant [OPTIONS] VARIANT_ID``
+- ``variants list``: ``python -m femic patchworks variants list [OPTIONS]``
+- ``variants show``: ``python -m femic patchworks variants show [OPTIONS] VARIANT_ID``
 
 ``patchworks preflight`` options
 
 - ``--config PATH`` (default: ``config/patchworks.runtime.yaml``)
+
+``patchworks instances list`` options
+
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
 
 ``patchworks matrix-build`` options
 
@@ -368,6 +377,43 @@ Subcommands
 - ``--topology-radius FLOAT`` (default: ``200.0``)
 - ``--with-topology / --no-topology`` (default: ``--with-topology``)
 - ``--instance-root PATH``
+
+``patchworks run-headless`` options
+
+- ``PIN`` argument (required)
+- ``--config PATH`` (default: ``config/patchworks.runtime.yaml``)
+- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--run-id TEXT`` (optional)
+- ``--stage-label TEXT`` (optional)
+- ``--iterations INTEGER`` (default: ``1``)
+- ``--improvement FLOAT`` (default: ``0.0``)
+- ``--scenario-mode TEXT`` (default: ``none``)
+- ``--scenario-target TEXT`` (optional)
+- ``--scenario-min-annual FLOAT`` (optional)
+- ``--instance-root PATH``
+
+``patchworks run-variant`` options
+
+- ``VARIANT_ID`` argument (required)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--run-id TEXT`` (optional)
+- ``--stage-label TEXT`` (optional)
+- ``--iterations INTEGER`` (default: ``1``)
+- ``--improvement FLOAT`` (default: ``0.0``)
+- ``--scenario-mode TEXT`` (default: ``none``)
+- ``--scenario-target TEXT`` (optional)
+- ``--scenario-min-annual FLOAT`` (optional)
+
+``patchworks variants list`` options
+
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--instance-id TEXT`` (optional filter)
+
+``patchworks variants show`` options
+
+- ``VARIANT_ID`` argument (required)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
 
 Instance Workspace
 ------------------

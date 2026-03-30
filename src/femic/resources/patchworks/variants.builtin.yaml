@@ -1,0 +1,120 @@
+instances:
+  - instance_id: k3z
+    label: K3Z example instance
+
+variants:
+  - variant_id: k3z.base
+    label: K3Z base
+    instance_id: k3z
+    variant_family: baseline
+    kind: patchworks
+    instance_root: external/femic-k3z-instance
+    analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/base.pin
+    runtime_config: external/femic-k3z-instance/config/patchworks.runtime.windows.yaml
+    default: true
+    notes:
+      - Canonical baseline K3Z Patchworks launch surface.
+  - variant_id: k3z.ctfert_l15h5
+    label: K3Z CT/fert L15/M10/H5
+    instance_id: k3z
+    variant_family: ctfert
+    kind: patchworks
+    instance_root: external/femic-k3z-instance
+    analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/ctfert_l15h5.pin
+    runtime_config: external/femic-k3z-instance/config/patchworks.runtime.ctfert_l15h5.windows.yaml
+  - variant_id: k3z.ctfert_l20h0
+    label: K3Z CT/fert L20/M10/H0
+    instance_id: k3z
+    variant_family: ctfert
+    kind: patchworks
+    instance_root: external/femic-k3z-instance
+    analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/ctfert_l20h0.pin
+    runtime_config: external/femic-k3z-instance/config/patchworks.runtime.ctfert_l20h0.windows.yaml
+  - variant_id: k3z.intensive_light
+    label: K3Z intensive light
+    instance_id: k3z
+    variant_family: intensive
+    kind: patchworks
+    instance_root: external/femic-k3z-instance
+    analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/intensive_light.pin
+    runtime_config: external/femic-k3z-instance/config/patchworks.runtime.intensive_light.windows.yaml
+  - variant_id: k3z.intensive_moderate
+    label: K3Z intensive moderate
+    instance_id: k3z
+    variant_family: intensive
+    kind: patchworks
+    instance_root: external/femic-k3z-instance
+    analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/intensive_moderate.pin
+    runtime_config: external/femic-k3z-instance/config/patchworks.runtime.intensive_moderate.windows.yaml
+  - variant_id: k3z.intensive_heavy
+    label: K3Z intensive heavy
+    instance_id: k3z
+    variant_family: intensive
+    kind: patchworks
+    instance_root: external/femic-k3z-instance
+    analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/intensive_heavy.pin
+    runtime_config: external/femic-k3z-instance/config/patchworks.runtime.intensive_heavy.windows.yaml
+  - variant_id: k3z.intensive_light_standstructure
+    label: K3Z intensive light stand-structure proving ground
+    instance_id: k3z
+    variant_family: proving_ground
+    kind: patchworks
+    instance_root: external/femic-k3z-instance
+    analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/intensive_light_standstructure.pin
+    runtime_config: external/femic-k3z-instance/config/patchworks.runtime.intensive_light_standstructure.windows.yaml
+  - variant_id: k3z.pct_light
+    label: K3Z PCT light
+    instance_id: k3z
+    variant_family: pct
+    kind: patchworks
+    instance_root: external/femic-k3z-instance
+    analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/pct_light.pin
+    runtime_config: external/femic-k3z-instance/config/patchworks.runtime.pct_light.windows.yaml
+  - variant_id: k3z.pct_moderate
+    label: K3Z PCT moderate
+    instance_id: k3z
+    variant_family: pct
+    kind: patchworks
+    instance_root: external/femic-k3z-instance
+    analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/pct_moderate.pin
+    runtime_config: external/femic-k3z-instance/config/patchworks.runtime.pct_moderate.windows.yaml
+  - variant_id: k3z.pct_heavy
+    label: K3Z PCT heavy
+    instance_id: k3z
+    variant_family: pct
+    kind: patchworks
+    instance_root: external/femic-k3z-instance
+    analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/pct_heavy.pin
+    runtime_config: external/femic-k3z-instance/config/patchworks.runtime.pct_heavy.windows.yaml
+  - variant_id: k3z.overlay_basecase_riparian
+    label: K3Z overlay basecase riparian
+    instance_id: k3z
+    variant_family: overlay
+    kind: patchworks
+    instance_root: external/femic-k3z-instance
+    analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/overlay_basecase_riparian.pin
+    runtime_config: external/femic-k3z-instance/config/patchworks.runtime.overlay.basecase_riparian.windows.yaml
+  - variant_id: k3z.overlay_basecase_sum
+    label: K3Z overlay basecase sum
+    instance_id: k3z
+    variant_family: overlay
+    kind: patchworks
+    instance_root: external/femic-k3z-instance
+    analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/overlay_basecase_sum.pin
+    runtime_config: external/femic-k3z-instance/config/patchworks.runtime.overlay.basecase_sum.windows.yaml
+  - variant_id: k3z.overlay_scenario1_sum
+    label: K3Z overlay scenario1 sum
+    instance_id: k3z
+    variant_family: overlay
+    kind: patchworks
+    instance_root: external/femic-k3z-instance
+    analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/overlay_scenario1_sum.pin
+    runtime_config: external/femic-k3z-instance/config/patchworks.runtime.overlay.scenario1_sum.windows.yaml
+  - variant_id: k3z.overlay_scenario2_sum
+    label: K3Z overlay scenario2 sum
+    instance_id: k3z
+    variant_family: overlay
+    kind: patchworks
+    instance_root: external/femic-k3z-instance
+    analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/overlay_scenario2_sum.pin
+    runtime_config: external/femic-k3z-instance/config/patchworks.runtime.overlay.scenario2_sum.windows.yaml

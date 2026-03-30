@@ -8771,3 +8771,60 @@
     - `cost_line_rows=21450`
     - `product_price_factor_rows=5100`
     - `benefit_line_rows=30000`
+- 2026-03-29 (Issue #60 kickoff): started the next Patchworks operator-facing
+  slice for a registry-backed variant launch surface on top of the
+  already-proven headless runner.
+  - Created GitHub issue `#60`:
+    - `Add a registry-backed Patchworks variant launch surface with materialization guardrails`
+  - Created working branch:
+    - `feature/issue-60-patchworks-pin-launch`
+  - Broadened `ROADMAP.md` `P49.5` from a thin named-pin alias into a
+    registry-backed launch design with:
+    - built-in variant entries;
+    - user-managed registry extensions/overrides; and
+    - size-aware data materialization guardrails before launch.
+  - Captured the first registry contract and CLI shape in:
+    - `planning/patchworks_variant_registry_design.md`
+  - Expanded the registry design to explicitly leave room for:
+    - instance and variant-family grouping;
+    - per-variant runtime parameter sets (for example Java memory ceilings);
+    - named scenario definitions; and
+    - scenario-set groupings for future sequential/parallel runs.
+  - Also recorded the future DataLad-linked deployment seam:
+    - registry add/remove/update could later mirror into a linked DataLad
+      deployment repo; and
+    - variant/scenario execution could later support a `--use-datalad` /
+      `use_datalad=true` reproducibility mode.
+  - Removed the adopted named-pin Patchworks launch idea from
+    `planning/incoming_ideas.md` so the intake queue stays current.
+- 2026-03-29 (Issue #60): landed the first registry-backed Patchworks variant
+  launch slice on top of the proven headless runner.
+  - Added tracked registry loader:
+    - `src/femic/patchworks_variants.py`
+  - Added packaged built-ins:
+    - `src/femic/resources/patchworks/variants.builtin.yaml`
+  - Added new CLI surfaces:
+    - `femic patchworks instances list`
+    - `femic patchworks variants list`
+    - `femic patchworks variants show <variant-id>`
+    - `femic patchworks run-variant <variant-id>`
+  - Added focused tests:
+    - `tests/test_patchworks_variants.py`
+    - new Patchworks registry/CLI coverage in `tests/test_cli_main.py`
+  - Added docs:
+    - `docs/reference/api/femic-patchworks-variants.rst`
+    - updated CLI/API reference surfaces
+  - Real built-in launch proof passed:
+    - `python -m femic patchworks instances list`
+    - `python -m femic patchworks variants show k3z.base`
+    - `python -m femic patchworks run-variant k3z.base --run-id issue60_registry_base --log-dir vdyp_io/logs --scenario-mode max-even-flow-smoke`
+  - Directly inspected real outputs:
+    - manifest:
+      `vdyp_io/logs/patchworks_headless_manifest-issue60_registry_base.json`
+    - saved stage:
+      `vdyp_io/logs/headless_stage/issue60_registry_base/`
+    - `targetStatus.csv` kept both:
+      - `product.Yield.managed.Total`
+      - `flow.even.product.Yield.managed.Total`
+    - `targetSummary.csv` kept near-zero even-flow deviations
+    - `schedule.csv` remained non-empty (`316` lines)
