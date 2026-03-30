@@ -215,6 +215,8 @@ Subcommands
 - ``run-batch``: ``python -m femic fansier run-batch [OPTIONS] RGM_PATH``
 - ``parse-batch-output``:
   ``python -m femic fansier parse-batch-output [OPTIONS] REPORT_DIR``
+- ``run-and-parse``:
+  ``python -m femic fansier run-and-parse [OPTIONS] RGM_PATH``
 
 ``fansier run-batch`` options
 
@@ -239,6 +241,25 @@ Subcommands
 - ``REPORT_DIR`` argument (required directory of FAN$IER ``.txt`` outputs)
 - ``--out-dir PATH`` (default: ``tipsy_io/logs/fansier_parsed``)
 - ``--report-glob TEXT`` (default: ``*.txt``)
+
+``fansier run-and-parse`` options
+
+- ``RGM_PATH`` argument (required)
+- ``--out-dir PATH`` (default: ``tipsy_io/logs/fansier_batch``)
+- ``--parsed-out-dir PATH`` (default: ``tipsy_io/logs/fansier_parsed``)
+- ``--log-dir PATH`` (default: ``tipsy_io/logs``)
+- ``--run-id TEXT`` (default: ``fansier_batch``)
+- ``--fansier-exe PATH`` (default: installed ``Fansier.exe`` path)
+- ``--discount-name TEXT`` (default: ``FEMIC Raw 0%``)
+- ``--discount-dis-path PATH`` (optional; load `.dis` before selection)
+- ``--report-type TEXT`` (currently must be ``txt`` for parsing)
+- ``--long-report`` / ``--short-report`` (default: long)
+- ``--product-cols`` / ``--no-product-cols``
+- ``--activity-cols`` / ``--no-activity-cols`` (default: off)
+- ``--select-all-products`` / ``--single-product`` (default: all)
+- ``--select-all-ages`` / ``--single-age`` (default: all)
+- ``--product-name TEXT`` (used when broad product selection is off)
+- ``--age-name TEXT`` (used when broad age selection is off)
 
 Export
 ------

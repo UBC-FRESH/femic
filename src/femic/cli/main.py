@@ -35,6 +35,10 @@ from femic.fansier_reporting import (
     FansierReportParseError,
     parse_fansier_batch_output_dir,
 )
+from femic.fansier_workflow import (
+    FansierWorkflowError,
+    run_fansier_batch_and_parse,
+)
 from femic.geospatial_preflight import run_geospatial_preflight
 from femic.instance_bootstrap import bootstrap_instance_workspace
 from femic.instance_context import (
@@ -3864,6 +3868,127 @@ def fansier_parse_batch_output(
         f"harvest_rows={result.harvest_summary_rows} cost_rows={result.cost_line_rows} "
         f"factor_rows={result.product_price_factor_rows} "
         f"benefit_rows={result.benefit_line_rows}"
+    )
+
+
+@fansier_app.command("run-and-parse")
+def fansier_run_and_parse(
+    rgm_path: Path = typer.Argument(..., exists=True, dir_okay=False, readable=True),
+    out_dir: Path = typer.Option(
+        DEFAULT_FANSIER_BATCH_OUTPUT_DIR,
+        "--out-dir",
+        help="Directory for FAN$IER report outputs.",
+    ),
+    parsed_out_dir: Path = typer.Option(
+        DEFAULT_FANSIER_PARSED_OUTPUT_DIR,
+        "--parsed-out-dir",
+        help="Directory for normalized parsed FAN$IER tables.",
+    ),
+    log_dir: Path = typer.Option(
+        DEFAULT_FANSIER_LOG_DIR,
+        "--log-dir",
+        help="Directory for FAN$IER manifests and runtime logs.",
+    ),
+    run_id: str = typer.Option(
+        "fansier_batch",
+        "--run-id",
+        help="Run identifier used in output and manifest naming.",
+    ),
+    fansier_exe: Path = typer.Option(
+        DEFAULT_FANSIER_EXE_PATH,
+        "--fansier-exe",
+        help="Explicit Fansier.exe path override.",
+    ),
+    discount_name: str = typer.Option(
+        DEFAULT_FANSIER_DISCOUNT_NAME,
+        "--discount-name",
+        help="Discount assumptions profile name to select or create.",
+    ),
+    discount_dis_path: Path | None = typer.Option(
+        None,
+        "--discount-dis-path",
+        help="Optional .dis file to load before selecting discount assumptions.",
+        show_default=False,
+    ),
+    report_type: str = typer.Option(
+        DEFAULT_FANSIER_REPORT_TYPE,
+        "--report-type",
+        help="FAN$IER batch report type: txt, csv, or pdf.",
+    ),
+    long_report: bool = typer.Option(
+        True,
+        "--long-report/--short-report",
+        help="Use long report output instead of short report output.",
+    ),
+    product_cols: bool = typer.Option(
+        True,
+        "--product-cols/--no-product-cols",
+        help="Include product detail columns when supported by the selected report type.",
+    ),
+    activity_cols: bool = typer.Option(
+        False,
+        "--activity-cols/--no-activity-cols",
+        help="Include activity detail columns when supported by the selected report type.",
+    ),
+    select_all_products: bool = typer.Option(
+        True,
+        "--select-all-products/--single-product",
+        help="Select all product groups using FAN$IER's native Check All path.",
+    ),
+    select_all_ages: bool = typer.Option(
+        True,
+        "--select-all-ages/--single-age",
+        help="Select all harvest ages using FAN$IER's native Check All path.",
+    ),
+    product_name: str = typer.Option(
+        DEFAULT_FANSIER_PRODUCT_NAME,
+        "--product-name",
+        help="Single product-group label to select when broad selection is off.",
+    ),
+    age_name: str = typer.Option(
+        DEFAULT_FANSIER_AGE_NAME,
+        "--age-name",
+        help="Single harvest-age label to select when broad selection is off.",
+    ),
+) -> None:
+    """Run FAN$IER batch extraction and immediately parse the resulting text outputs."""
+
+    try:
+        result = run_fansier_batch_and_parse(
+            rgm_path=rgm_path,
+            out_dir=out_dir,
+            parsed_out_dir=parsed_out_dir,
+            log_dir=log_dir,
+            run_id=run_id,
+            fansier_exe_path=fansier_exe,
+            discount_name=discount_name,
+            discount_dis_path=discount_dis_path,
+            report_type=report_type,
+            long_report=long_report,
+            product_cols=product_cols,
+            activity_cols=activity_cols,
+            select_all_products=select_all_products,
+            select_all_ages=select_all_ages,
+            product_name=product_name,
+            age_name=age_name,
+        )
+    except (
+        FansierRuntimeError,
+        FansierReportParseError,
+        FansierWorkflowError,
+        FileNotFoundError,
+        subprocess.CalledProcessError,
+    ) as exc:
+        console.print(f"[red]FAN$IER run-and-parse failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]FAN$IER run-and-parse complete[/green]")
+    console.print(f"batch_manifest: {result.batch_result.manifest_path}")
+    console.print(f"parse_manifest: {result.parse_result.manifest_path}")
+    console.print(
+        f"files={len(result.batch_result.output_files)} "
+        f"calculations={result.batch_result.calculations} "
+        f"benefit_rows={result.parse_result.benefit_line_rows}"
     )
 
 

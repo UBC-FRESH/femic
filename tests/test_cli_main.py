@@ -1035,6 +1035,89 @@ def test_fansier_parse_batch_output_reports_parse_error(
     assert any("FAN$IER batch parse failed" in msg for msg in messages)
 
 
+def test_fansier_run_and_parse_emits_both_manifest_paths(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "run_fansier_batch_and_parse",
+        lambda **_kwargs: SimpleNamespace(
+            batch_result=SimpleNamespace(
+                manifest_path=Path("tipsy_io/logs/fansier_batch_manifest-demo.json"),
+                output_files=(Path("tipsy_io/logs/fansier_batch/demo.txt"),),
+                calculations=1800,
+            ),
+            parse_result=SimpleNamespace(
+                manifest_path=Path(
+                    "tipsy_io/logs/fansier_batch_parse_manifest-demo.json"
+                ),
+                benefit_line_rows=54000,
+            ),
+        ),
+    )
+
+    cli_main.fansier_run_and_parse(
+        rgm_path=Path("demo.rgm"),
+        out_dir=Path("tipsy_io/logs/fansier_batch"),
+        parsed_out_dir=Path("tipsy_io/logs/fansier_parsed"),
+        log_dir=Path("tipsy_io/logs"),
+        run_id="demo",
+        fansier_exe=Path("Fansier.exe"),
+        discount_name="FEMIC Raw 0%",
+        discount_dis_path=None,
+        report_type="txt",
+        long_report=True,
+        product_cols=True,
+        activity_cols=False,
+        select_all_products=True,
+        select_all_ages=True,
+        product_name="Logs (1)",
+        age_name="10.00 (1)",
+    )
+
+    assert any("FAN$IER run-and-parse complete" in msg for msg in messages)
+    assert any("batch_manifest:" in msg for msg in messages)
+    assert any("parse_manifest:" in msg for msg in messages)
+    assert any("benefit_rows=54000" in msg for msg in messages)
+
+
+def test_fansier_run_and_parse_reports_workflow_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "run_fansier_batch_and_parse",
+        lambda **_kwargs: (_ for _ in ()).throw(cli_main.FansierWorkflowError("boom")),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.fansier_run_and_parse(
+            rgm_path=Path("demo.rgm"),
+            out_dir=Path("tipsy_io/logs/fansier_batch"),
+            parsed_out_dir=Path("tipsy_io/logs/fansier_parsed"),
+            log_dir=Path("tipsy_io/logs"),
+            run_id="demo",
+            fansier_exe=Path("Fansier.exe"),
+            discount_name="FEMIC Raw 0%",
+            discount_dis_path=None,
+            report_type="txt",
+            long_report=True,
+            product_cols=True,
+            activity_cols=False,
+            select_all_products=True,
+            select_all_ages=True,
+            product_name="Logs (1)",
+            age_name="10.00 (1)",
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("FAN$IER run-and-parse failed" in msg for msg in messages)
+
+
 def test_instance_init_calls_bootstrap(monkeypatch: pytest.MonkeyPatch) -> None:
     messages: list[str] = []
     monkeypatch.setattr(cli_main.console, "print", messages.append)

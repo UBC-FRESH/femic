@@ -599,6 +599,32 @@ Interpretation
   - `benefit_lines.csv` preserves both `benefit_stage` and `benefit_family`,
     so downstream FEMIC logic does not have to infer them back out of narrative
     report text.
+- Next productization step:
+  - add one tracked wrapper command that runs FAN$IER batch extraction and then
+    immediately parses the resulting `txt` outputs into normalized FEMIC-owned
+    tables, so operators do not have to orchestrate two separate CLI steps.
+- That wrapper seam is now live and proven:
+  - workflow module:
+    - `src/femic/fansier_workflow.py`
+  - CLI entrypoint:
+    - `femic fansier run-and-parse`
+- Real wrapper smoke proof:
+  - command shape:
+    - `python -m femic fansier run-and-parse "<rgm>" --discount-dis-path "<.dis>" --run-id workflow_smoke_all --out-dir tipsy_io/logs/fansier_workflow_smoke --parsed-out-dir tipsy_io/logs/fansier_workflow_parsed --log-dir tipsy_io/logs`
+  - batch output:
+    - `tipsy_io/logs/fansier_workflow_smoke/`
+  - parsed output:
+    - `tipsy_io/logs/fansier_workflow_parsed/`
+  - manifests:
+    - `tipsy_io/logs/fansier_batch_manifest-workflow_smoke_all.json`
+    - `tipsy_io/logs/fansier_workflow_parsed/fansier_batch_parse_manifest.json`
+  - direct inspected result:
+    - `1800` report files
+    - `calculation_summary_rows=1800`
+    - `harvest_summary_rows=1800`
+    - `cost_line_rows=21450`
+    - `product_price_factor_rows=5100`
+    - `benefit_line_rows=30000`
 
 ## Discount-Assumptions File Seam
 

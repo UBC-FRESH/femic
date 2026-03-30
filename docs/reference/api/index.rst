@@ -47,6 +47,8 @@ that matches the job you are trying to do:
   and unattended runtime seam helpers.
 - ``femic.fansier_reporting``: FAN$IER long-report text parsing and normalized
   table extraction for downstream FEMIC use.
+- ``femic.fansier_workflow``: higher-level FAN$IER workflows that chain tracked
+  extraction and parsing seams into one FEMIC-owned operation.
 - ``femic.pipeline.siteprod``: SiteProd artifact resolution, band mapping, and
   raster assignment helpers.
 - ``femic.fmg.patchworks``: Patchworks export synthesis, fragments wiring, and

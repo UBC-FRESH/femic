@@ -8750,3 +8750,24 @@
     - `cost_line_rows=21450`
     - `product_price_factor_rows=5100`
     - `benefit_line_rows=30000`
+- 2026-03-29 (Issue #59): added and proved a thin one-command FAN$IER wrapper
+  on top of the restored known-good runtime and parser primitives.
+  - Added tracked workflow module:
+    - `src/femic/fansier_workflow.py`
+  - Added tracked CLI entrypoint:
+    - `femic fansier run-and-parse`
+  - Real wrapper smoke passed:
+    - `python -m femic fansier run-and-parse "<rgm>" --discount-dis-path "<.dis>" --run-id workflow_smoke_all --out-dir tipsy_io/logs/fansier_workflow_smoke --parsed-out-dir tipsy_io/logs/fansier_workflow_parsed --log-dir tipsy_io/logs`
+  - Directly inspected wrapper outputs:
+    - batch manifest:
+      `tipsy_io/logs/fansier_batch_manifest-workflow_smoke_all.json`
+    - parse manifest:
+      `tipsy_io/logs/fansier_workflow_parsed/fansier_batch_parse_manifest.json`
+    - `1800` report files in `tipsy_io/logs/fansier_workflow_smoke/`
+    - normalized parsed tables in `tipsy_io/logs/fansier_workflow_parsed/`
+  - Confirmed wrapper row counts:
+    - `calculation_summary_rows=1800`
+    - `harvest_summary_rows=1800`
+    - `cost_line_rows=21450`
+    - `product_price_factor_rows=5100`
+    - `benefit_line_rows=30000`

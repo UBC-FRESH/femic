@@ -13,7 +13,8 @@ first targets in the Phase 24 API-docs rebuild.
 Current curated pages in this section include ``femic.cli.main``,
 ``femic.pipeline.vdyp_stage``, ``femic.pipeline.io``,
 ``femic.pipeline.tipsy``, ``femic.fansier_runtime``,
-``femic.fansier_reporting``, ``femic.fmg.patchworks``,
+``femic.fansier_reporting``, ``femic.fansier_workflow``,
+``femic.fmg.patchworks``,
 ``femic.patchworks_runtime``, ``femic.workflows.legacy``, and
 ``femic.pipeline.siteprod``.
 
@@ -26,6 +27,7 @@ Current curated pages in this section include ``femic.cli.main``,
    femic-pipeline-tipsy
    femic-fansier-runtime
    femic-fansier-reporting
+   femic-fansier-workflow
    femic-fmg-patchworks
    femic-patchworks-runtime
    femic-workflows-legacy

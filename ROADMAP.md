@@ -8865,7 +8865,30 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
               - `product_price_factor_rows=5100`
               - `benefit_line_rows=30000`
           - next FAN$IER data-product edge after this parser:
-            - decide whether FEMIC should default to:
+          - add one tracked wrapper command that chains:
+              - unattended `run-batch`; then
+              - `parse-batch-output`
+              into one FEMIC-owned operation with both report files and
+              normalized tables on disk.
+            - wrapper seam is now proven in tracked code:
+              - `src/femic/fansier_workflow.py`
+              - `femic fansier run-and-parse`
+            - real wrapper smoke now exists under:
+              - `tipsy_io/logs/fansier_workflow_smoke/`
+              - `tipsy_io/logs/fansier_workflow_parsed/`
+            - direct-inspection proof:
+              - batch manifest:
+                `tipsy_io/logs/fansier_batch_manifest-workflow_smoke_all.json`
+              - parse manifest:
+                `tipsy_io/logs/fansier_workflow_parsed/fansier_batch_parse_manifest.json`
+              - outputs:
+                - `1800` report files
+                - `calculation_summary_rows=1800`
+                - `harvest_summary_rows=1800`
+                - `cost_line_rows=21450`
+                - `product_price_factor_rows=5100`
+                - `benefit_line_rows=30000`
+            - after that wrapper exists, decide whether FEMIC should default to:
               - the lean short/txt ingestion lane;
               - the broad long/txt archive lane; or
               - both, with a shared normalized table contract.
