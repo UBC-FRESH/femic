@@ -93,12 +93,23 @@ When contributing to this repository as the coding agent:
 9. Before launching a new task or plan, review the latest entries in `CHANGE_LOG.md` alongside the
    roadmap notes to confirm the proposed work is consistent with recorded progress and avoids
    backtracking.
-10. Commit early and often using roadmap task/subtask granularity:
+10. Never publish machine-specific personal paths or identifiers in repo-tracked docs, planning
+   notes, changelog entries, issue comments, or user-facing examples:
+   - do not include personal home-directory paths such as `C:\Users\<name>\...`,
+     `/home/<name>/...`, institutional OneDrive paths, or other workstation-specific absolute
+     paths unless the path itself is the subject of the contract being documented;
+   - normalize examples to placeholders, repo-relative paths, environment variables, or generic
+     install roots instead;
+   - if a real external-install path must be documented, prefer stable vendor roots such as
+     `C:\Program Files\...` over personal workstation locations;
+   - before finalizing a docs/planning hygiene pass, do a quick search for leaked personal-path
+     fragments if there is any chance examples were copied from a live shell session.
+11. Commit early and often using roadmap task/subtask granularity:
    - prefer small, thematic commits over large mixed commits;
    - create at least one commit per completed roadmap task (or tightly related subtask bundle);
    - reference the phase/task ID in commit messages when applicable (for example, `P19.12`).
    Do this continuously during implementation so progress is checkpointed without user prompting.
-11. Treat GitHub issue hygiene as a required part of the development workflow:
+12. Treat GitHub issue hygiene as a required part of the development workflow:
    - before starting a new feature, bug, docs push, or other non-trivial task, ensure `gh` is
      available in the active shell and authenticated as the intended active GitHub user;
    - use GitHub built-in issue `Type` as the canonical work-kind field for FEMIC issues:
@@ -119,7 +130,7 @@ When contributing to this repository as the coding agent:
      points to the primary user-facing docs and relevant repo paths, states the validation outcome,
      and explains why any remaining caveats do not block closure; do not close issues with only an
      implicit or chat-only rationale.
-12. Monitor the incoming issue ideas list in `planning/incoming_ideas.md` as part of normal task
+13. Monitor the incoming issue ideas list in `planning/incoming_ideas.md` as part of normal task
     triage:
    - when the developer asks "what next" or otherwise invites the agent to propose follow-on work,
      consult `planning/incoming_ideas.md` alongside `ROADMAP.md`, `CHANGE_LOG.md`, and open GitHub
@@ -129,7 +140,7 @@ When contributing to this repository as the coding agent:
    - once the developer explicitly green-lights running with an idea, edit
      `planning/incoming_ideas.md` to remove that idea from the queue or narrow it to the remaining
      unclaimed scope so the list stays current.
-13. When working on Patchworks-facing changes, preserve the rebuild order:
+14. When working on Patchworks-facing changes, preserve the rebuild order:
    - if code or config changes affect ForestModel XML semantics in any way (for example exporter
      logic, silviculture YAML, seral YAML, treatment/state attributes, feature/product/account
      source labels, or curve construction), regenerate the relevant `yield/forestmodel*.xml`
@@ -141,7 +152,7 @@ When contributing to this repository as the coding agent:
    - if the full `femic export patchworks` path is blocked by a known checkpoint/fragments seam,
      regenerate the XML through the lower-level bundle-table builder first, then run matrix build
      against the refreshed XML rather than skipping directly to matrix build.
-14. Treat smoke-testing of known-working behavior as a required validation step, not an optional
+15. Treat smoke-testing of known-working behavior as a required validation step, not an optional
    courtesy:
    - after any Patchworks-facing rebuild, do not report "all clear", "green light", or equivalent
      unless you have inspected the concrete rebuilt outputs that are most likely to reveal

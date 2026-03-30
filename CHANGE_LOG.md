@@ -9133,3 +9133,10 @@
     - `.venv\Scripts\python.exe -m femic patchworks scenario-sets show k3z.proving_ground`
     - `.venv\Scripts\python.exe -m pytest tests/test_docs_contract.py -q`
     - `.venv\Scripts\python.exe -m sphinx -b html docs _build/html -W`
+- 2026-03-30 (Docs hygiene follow-up): tightened the repo's agent contract so
+  personal workstation paths do not leak back into published or tracked docs.
+  - Updated `AGENTS.md` to forbid publishing machine-specific personal home
+    paths, institutional OneDrive paths, and other workstation-specific
+    absolute paths in docs, roadmap notes, changelog entries, issue comments,
+    or user-facing examples unless the path itself is the contract being
+    documented.
