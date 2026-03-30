@@ -105,6 +105,7 @@ class PatchworksInstanceDefinition:
     label: str
     variant_ids: tuple[str, ...]
     default_variant_id: str | None = None
+    default_scenario_set_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -167,6 +168,27 @@ class PatchworksVariantRegistry:
                 return scenario_set
         raise PatchworksVariantRegistryError(
             f"Unknown Patchworks scenario set: {scenario_set_id}"
+        )
+
+    def get_default_scenario_set(
+        self,
+        instance_id: str,
+    ) -> PatchworksScenarioSetDefinition:
+        """Return the default scenario set for one instance."""
+
+        normalized = str(instance_id or "").strip()
+        instance = next(
+            (item for item in self.instances if item.instance_id == normalized),
+            None,
+        )
+        if instance is None:
+            raise PatchworksVariantRegistryError(
+                f"Unknown Patchworks instance: {instance_id}"
+            )
+        if instance.default_scenario_set_id:
+            return self.get_scenario_set(instance.default_scenario_set_id)
+        raise PatchworksVariantRegistryError(
+            f"Instance {instance_id} does not define a default Patchworks scenario set."
         )
 
 
@@ -342,6 +364,38 @@ def _parse_variant_scenarios(
     return tuple(scenarios)
 
 
+def _parse_instance_metadata(
+    payload: dict[str, Any],
+    *,
+    source_label: str,
+) -> dict[str, dict[str, str]]:
+    instances_payload = payload.get("instances", ())
+    if instances_payload in (None, ""):
+        return {}
+    if not isinstance(instances_payload, (list, tuple)):
+        raise PatchworksVariantRegistryError(
+            f"Patchworks variant registry {source_label} field instances must be a list."
+        )
+
+    metadata: dict[str, dict[str, str]] = {}
+    for item in instances_payload:
+        if not isinstance(item, dict):
+            raise PatchworksVariantRegistryError(
+                f"Patchworks variant registry {source_label} instance items must be mappings."
+            )
+        instance_id = _as_str(
+            item.get("instance_id"), "instance_id", source_label=source_label
+        )
+        record: dict[str, str] = {
+            "label": str(item.get("label") or instance_id).strip() or instance_id,
+        }
+        default_scenario_set_id = str(item.get("default_scenario_set_id") or "").strip()
+        if default_scenario_set_id:
+            record["default_scenario_set_id"] = default_scenario_set_id
+        metadata[instance_id] = record
+    return metadata
+
+
 def _load_variant_entries_from_payload(
     payload: dict[str, Any],
     *,
@@ -350,24 +404,7 @@ def _load_variant_entries_from_payload(
     source_kind: str,
     registry_path: Path | None,
 ) -> tuple[PatchworksVariantDefinition, ...]:
-    instances_payload = payload.get("instances", ())
-    if instances_payload in (None, ""):
-        instance_labels: dict[str, str] = {}
-    else:
-        if not isinstance(instances_payload, (list, tuple)):
-            raise PatchworksVariantRegistryError(
-                f"Patchworks variant registry {source_label} field instances must be a list."
-            )
-        instance_labels = {}
-        for item in instances_payload:
-            if not isinstance(item, dict):
-                raise PatchworksVariantRegistryError(
-                    f"Patchworks variant registry {source_label} instance items must be mappings."
-                )
-            instance_id = _as_str(
-                item.get("instance_id"), "instance_id", source_label=source_label
-            )
-            instance_labels[instance_id] = str(item.get("label") or instance_id).strip()
+    instance_metadata = _parse_instance_metadata(payload, source_label=source_label)
 
     variants_payload = payload.get("variants", ())
     if variants_payload in (None, ""):
@@ -390,7 +427,9 @@ def _load_variant_entries_from_payload(
             item.get("instance_id"), "instance_id", source_label=source_label
         )
         label = _as_str(item.get("label"), "label", source_label=source_label)
-        instance_label = instance_labels.get(instance_id, instance_id)
+        instance_label = instance_metadata.get(instance_id, {}).get(
+            "label", instance_id
+        )
         family = str(item.get("variant_family") or "default").strip() or "default"
         kind = str(item.get("kind") or "patchworks").strip() or "patchworks"
         instance_root = _resolve_registry_path(
@@ -463,7 +502,9 @@ def _load_variant_entries_from_payload(
 
 def _build_instance_definitions(
     variants: tuple[PatchworksVariantDefinition, ...],
+    instance_metadata: dict[str, dict[str, str]] | None = None,
 ) -> tuple[PatchworksInstanceDefinition, ...]:
+    effective_metadata = instance_metadata or {}
     grouped: dict[str, list[PatchworksVariantDefinition]] = {}
     for variant in variants:
         grouped.setdefault(variant.instance_id, []).append(variant)
@@ -477,12 +518,39 @@ def _build_instance_definitions(
         instances.append(
             PatchworksInstanceDefinition(
                 instance_id=instance_id,
-                label=items[0].instance_label,
+                label=effective_metadata.get(instance_id, {}).get(
+                    "label",
+                    items[0].instance_label,
+                ),
                 variant_ids=tuple(item.variant_id for item in items),
                 default_variant_id=default_variant_id,
+                default_scenario_set_id=effective_metadata.get(instance_id, {}).get(
+                    "default_scenario_set_id"
+                ),
             )
         )
     return tuple(instances)
+
+
+def _merge_instance_metadata(
+    builtin_payload: dict[str, Any],
+    *,
+    user_payload: dict[str, Any] | None,
+) -> dict[str, dict[str, str]]:
+    merged = dict(
+        _parse_instance_metadata(
+            builtin_payload,
+            source_label=PATCHWORKS_BUILTIN_VARIANTS_RESOURCE,
+        )
+    )
+    if user_payload is not None:
+        merged.update(
+            _parse_instance_metadata(
+                user_payload,
+                source_label="user Patchworks registry",
+            )
+        )
+    return merged
 
 
 def _validate_user_registry_payload(
@@ -851,7 +919,13 @@ def load_patchworks_variant_registry(
     variants = tuple(sorted(merged_by_id.values(), key=lambda item: item.variant_id))
     return PatchworksVariantRegistry(
         variants=variants,
-        instances=_build_instance_definitions(variants),
+        instances=_build_instance_definitions(
+            variants,
+            _merge_instance_metadata(
+                builtin_payload,
+                user_payload=user_payload,
+            ),
+        ),
         scenario_sets=_merge_scenario_sets(
             builtin_payload,
             user_payload=user_payload,

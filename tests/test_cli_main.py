@@ -923,6 +923,7 @@ def test_patchworks_instances_list_emits_registry_summary(
                     label="K3Z example instance",
                     variant_ids=("k3z.base", "k3z.intensive_light"),
                     default_variant_id="k3z.base",
+                    default_scenario_set_id="k3z.proving_ground",
                 ),
             ),
         ),
@@ -1556,6 +1557,50 @@ def test_patchworks_run_default_scenario_delegates_to_headless_runner(
     assert calls[0]["variant"] is variant
     assert calls[0]["scenario"] is scenario
     assert any("Patchworks default-scenario run complete" in msg for msg in messages)
+
+
+def test_patchworks_run_default_scenario_set_delegates_to_named_set(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(
+            get_default_scenario_set=lambda _instance_id: SimpleNamespace(
+                scenario_set_id="k3z.proving_ground"
+            )
+        ),
+    )
+    calls: list[dict[str, object]] = []
+
+    def _fake_run_scenario_set(*args, **kwargs):
+        calls.append({"args": args, "kwargs": kwargs})
+
+    monkeypatch.setattr(cli_main, "patchworks_run_scenario_set", _fake_run_scenario_set)
+
+    cli_main.patchworks_run_default_scenario_set(
+        "k3z",
+        registry=Path("variants.yaml"),
+        log_dir=Path("vdyp_io/logs"),
+        run_id="demo_default_set",
+        stage_label=None,
+        allow_large_download=False,
+        materialization_threshold_mib=100,
+    )
+
+    assert calls == [
+        {
+            "args": ("k3z.proving_ground",),
+            "kwargs": {
+                "registry": Path("variants.yaml"),
+                "log_dir": Path("vdyp_io/logs"),
+                "run_id": "demo_default_set",
+                "stage_label": None,
+                "allow_large_download": False,
+                "materialization_threshold_mib": 100,
+            },
+        }
+    ]
 
 
 def test_patchworks_scenario_sets_list_prints_registry_sets(

@@ -8965,3 +8965,24 @@
       - `product.Yield.managed.Total`
       - `flow.even.product.Yield.managed.Total`
     - `schedule.csv` remained non-empty (`327` lines)
+- 2026-03-30 (Issue #60): landed a small default-scenario-set operator
+  convenience slice on top of the proven Patchworks registry scenario-set
+  seam.
+  - Instances can now declare `default_scenario_set_id`.
+  - Added new CLI surface:
+    - `femic patchworks run-default-scenario-set <instance-id>`
+  - Built-in proof instance now wires its default set to:
+    - `k3z.proving_ground`
+  - Direct real default-scenario-set smoke passed:
+    - `python -m femic patchworks run-default-scenario-set k3z --run-id issue60_default_scenario_set --log-dir vdyp_io/logs`
+  - Directly inspected real outputs:
+    - manifests:
+      - `vdyp_io/logs/patchworks_headless_manifest-issue60_default_scenario_set_01.json`
+      - `vdyp_io/logs/patchworks_headless_manifest-issue60_default_scenario_set_02.json`
+    - both saved stages kept:
+      - `product.Yield.managed.Total`
+      - `flow.even.product.Yield.managed.Total`
+      active in `scenario/targetStatus.csv`
+    - `schedule.csv` remained non-empty:
+      - step 1: `372` lines
+      - step 2: `373` lines

@@ -9193,12 +9193,30 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
               - `product.Yield.managed.Total`
               - `flow.even.product.Yield.managed.Total`
             - `schedule.csv` remained non-empty (`327` lines)
+      - the next instance-level alias slice is now also in hand:
+        - instances can now declare `default_scenario_set_id`;
+        - new CLI surface:
+          - `femic patchworks run-default-scenario-set <instance-id>`
+        - built-in proof instance now wires its default set to:
+          - `k3z.proving_ground`
+        - direct K3Z default-scenario-set smoke now also passed:
+          - `python -m femic patchworks run-default-scenario-set k3z --run-id issue60_default_scenario_set --log-dir vdyp_io/logs`
+          - both step manifests returned `returncode=0`:
+            - `vdyp_io/logs/patchworks_headless_manifest-issue60_default_scenario_set_01.json`
+            - `vdyp_io/logs/patchworks_headless_manifest-issue60_default_scenario_set_02.json`
+          - both saved stages kept:
+            - `product.Yield.managed.Total`
+            - `flow.even.product.Yield.managed.Total`
+            active in `scenario/targetStatus.csv`
+          - `schedule.csv` remained non-empty:
+            - step 1: `372` lines
+            - step 2: `373` lines
       - current next edge:
         - decide whether the first production materialization experience
           should stay as raw `datalad-get` actions or grow a more user-facing
           dataset summary/consent surface;
         - once that is settled, decide whether scenario-set metadata needs
-          richer labels/families/default-set aliases before parallel execution;
+          richer labels/families before parallel execution;
       - defer parallel scenario-set execution until there is a clearer
         Patchworks process-safety contract for concurrent runs.
   - Current implementation order:

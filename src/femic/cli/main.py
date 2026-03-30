@@ -3842,9 +3842,14 @@ def patchworks_instances_list(
         default_text = (
             f" default={item.default_variant_id}" if item.default_variant_id else ""
         )
+        default_set_text = (
+            f" default_scenario_set={item.default_scenario_set_id}"
+            if item.default_scenario_set_id
+            else ""
+        )
         console.print(
             f"- {item.instance_id}: {item.label} "
-            f"(variants={len(item.variant_ids)}{default_text})"
+            f"(variants={len(item.variant_ids)}{default_text}{default_set_text})"
         )
 
 
@@ -4425,6 +4430,55 @@ def patchworks_run_default_scenario(
         console.print(f"[red]Runtime failure:[/red] {failure}")
     if result.returncode != 0:
         raise typer.Exit(code=result.returncode)
+
+
+@patchworks_app.command("run-default-scenario-set")
+def patchworks_run_default_scenario_set(
+    instance_id: str = typer.Argument(..., help="Registered Patchworks instance id."),
+    registry: Path = PATCHWORKS_VARIANT_REGISTRY_OPTION,
+    log_dir: Path = PATCHWORKS_LOG_DIR_OPTION,
+    run_id: str | None = PATCHWORKS_RUN_ID_OPTION,
+    stage_label: str | None = PATCHWORKS_HEADLESS_STAGE_LABEL_OPTION,
+    allow_large_download: bool = typer.Option(
+        False,
+        "--allow-large-download",
+        help=(
+            "Allow registry-declared materialization larger than the prompt threshold "
+            "without asking for confirmation."
+        ),
+    ),
+    materialization_threshold_mib: int = typer.Option(
+        DEFAULT_PATCHWORKS_MATERIALIZATION_PROMPT_BYTES // (1024 * 1024),
+        "--materialization-threshold-mib",
+        min=0,
+        help="Prompt threshold for registry-declared materialization downloads.",
+    ),
+) -> None:
+    """Run the default registry-backed Patchworks scenario set for one instance."""
+
+    try:
+        variant_registry = load_patchworks_variant_registry(user_registry_path=registry)
+        scenario_set = variant_registry.get_default_scenario_set(instance_id)
+        patchworks_run_scenario_set(
+            scenario_set.scenario_set_id,
+            registry=registry,
+            log_dir=log_dir,
+            run_id=run_id,
+            stage_label=stage_label,
+            allow_large_download=allow_large_download,
+            materialization_threshold_mib=materialization_threshold_mib,
+        )
+    except typer.Exit:
+        raise
+    except (
+        FileNotFoundError,
+        PatchworksConfigError,
+        PatchworksVariantRegistryError,
+        json.JSONDecodeError,
+        yaml.YAMLError,
+    ) as exc:
+        console.print(f"[red]Patchworks default scenario-set run failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
 
 
 @patchworks_app.command("run-scenario-set")

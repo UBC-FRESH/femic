@@ -1,6 +1,7 @@
 instances:
   - instance_id: k3z
     label: K3Z example instance
+    default_scenario_set_id: k3z.proving_ground
 
 variants:
   - variant_id: k3z.base

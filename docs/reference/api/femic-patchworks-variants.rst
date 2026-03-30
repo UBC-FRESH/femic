@@ -14,6 +14,8 @@ Current responsibilities include:
   when a variant carries exactly one scenario;
 - resolving named scenario sets that bundle registered scenarios across one or
   more variants;
+- resolving one default scenario set per instance when the registry provides
+  one;
 - resolving named variants to concrete instance roots, runtime configs, and
   analysis ``.pin`` paths; and
 - planning/executing registry-declared materialization before launch; and
