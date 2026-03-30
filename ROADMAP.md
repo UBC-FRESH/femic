@@ -8809,6 +8809,16 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
           - next automation hardening step is to pace selections more slowly
             and use the bottom-of-form calculations label as the sync surface
             before starting batch.
+        - broad unattended FAN$IER extraction is now proven too:
+          - a clean FAN$IER launch can open `Batch` directly without a bogus
+            main-window regime load;
+          - the stable native broad-selection seam is the checked-list context
+            menu `Check All` path, not per-row UIA checkbox driving;
+          - fresh-session unattended proof now exists under
+            `tipsy_io/logs/fansier_probe/batch_auto_native_all/`;
+          - that run produced
+            `1 regime x 1 assumptions x 6 products x 300 ages = 1,800`
+            long-report `txt` files.
       - null-rate economics is not blocked by FAN$IER:
         - the shipped discount-assumptions editor explicitly allows
           `0%` discount and `0%` reinvestment rates.

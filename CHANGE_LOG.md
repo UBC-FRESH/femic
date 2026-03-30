@@ -8696,3 +8696,21 @@
     `planning/fansier_linkage_investigation.md`:
     pace GUI automation against `lblRuns` / `Start Batch` instead of trusting
     checkbox state alone.
+- 2026-03-29 (Issue #59): closed the loop on broad unattended FAN$IER batch
+  extraction.
+  - Fresh-session unattended proof now exists under:
+    - `tipsy_io/logs/fansier_probe/batch_auto_native_all/`
+  - Confirmed successful broad unattended run shape:
+    - clean FAN$IER launch;
+    - open `Batch` directly from the toolbar;
+    - load `Batchbiomass-10000.rgm`;
+    - load `FEMIC Raw 0%` from `.dis`;
+    - force `Use default (1st) product group` off;
+    - use native checked-list `Check All` menu actions for products and ages;
+    - run long-report `txt`.
+  - Result:
+    - `1 regime x 1 assumptions x 6 products x 300 ages = 1,800` generated
+      long-report files with materially populated economics output.
+  - The key stabilizing insight is that FAN$IER's own checked-list context menu
+    is the right broad-selection seam; per-row UIA checkbox state was too
+    flaky for reliable unattended fan-out.

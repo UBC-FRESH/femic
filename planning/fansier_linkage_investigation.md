@@ -490,6 +490,38 @@ Interpretation
   - checkbox state alone is not enough; the script should wait for coherent
     calculation-count updates before continuing or clicking `Start Batch`.
 
+## Broad Unattended Proof
+
+- Fresh-session unattended FAN$IER batch extraction is now proven on the broad
+  fan-out path too.
+- Proof artifact root:
+  - `tipsy_io/logs/fansier_probe/batch_auto_native_all/`
+- Successful unattended run shape:
+  - clean FAN$IER launch with no preloaded main-window regime;
+  - open `Batch` directly from the main toolbar;
+  - load `Batchbiomass-10000.rgm` into the batch form;
+  - load `FEMIC Raw 0%` from `.dis`;
+  - force `Use default (1st) product group` off;
+  - use the batch checked-list context-menu `Check All` path for:
+    - product groups;
+    - harvest ages;
+  - run long-report `txt` output.
+- Confirmed successful unattended batch state:
+  - `1 regime`
+  - `1 assumptions set`
+  - `6 products`
+  - `300 ages`
+  - `1,800` generated long-report files
+- Inspected output confirms materially populated economics, for example:
+  - `AutoAllProdAllAges - Batchbiomass-10000.rgm - {defaults} - FEMIC Raw 0% - Lumber & Mill Residues (All Grades) - 170.00.txt`
+- Important implementation clues that made this stable:
+  - the `Batch` form is reachable from a clean FAN$IER launch without loading a
+    bogus `.rgm` into the main window first;
+  - the native checked-list context menu (`Check All` / `Uncheck All`) is the
+    reliable broad-selection seam because it uses FAN$IER's own
+    `SetItemChecked(...)` + `UpdateStatus()` path;
+  - UIA checkbox states alone were not reliable enough for broad selections.
+
 ## Discount-Assumptions File Seam
 
 - FAN$IER has a native discount-assumptions file contract:
