@@ -22,7 +22,9 @@ export modules.
    stage-00-data-prep
    stage-01a-vdyp-tipsy-input
    stage-01b-post-tipsy
+   btc-fansier-runtime-and-extraction
    model-input-bundle-and-export
+   patchworks-variant-and-scenario-management
    diagnostics-playbook
    troubleshooting
    limitations-and-boundaries

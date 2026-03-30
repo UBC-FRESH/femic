@@ -35,6 +35,28 @@ The first tracked runtime surface focuses on launching and running unattended
 batch extraction, not on downstream normalization of FAN$IER report text into
 tabular FEMIC artifacts. Output parsing is a follow-on concern.
 
+Operational shape
+-----------------
+
+In practical FEMIC use, this module now owns a Windows GUI-automation seam
+with the following stable shape:
+
+- launch FAN$IER from a clean session;
+- load one `.rgm` and optional `.dis`;
+- open Batch mode directly;
+- drive broad product/age selection through FAN$IER's own checked-list context
+  menus rather than generic UIA checkbox poking;
+- export deterministic batch reports; and
+- write a tracked manifest around the unattended run.
+
+This is intentionally documented as GUI automation, not as a native FAN$IER
+CLI contract. If you need the higher-level one-command composition or the
+normalized output tables, move next to:
+
+- :doc:`femic-fansier-workflow`
+- :doc:`femic-fansier-reporting`
+- :doc:`../../guides/btc-fansier-runtime-and-extraction`
+
 .. automodule:: femic.fansier_runtime
    :members:
    :undoc-members:

@@ -79,6 +79,7 @@ BatchTIPSY compatibility boundary described in:
 
 - :doc:`../../guides/stage-01a-vdyp-tipsy-input`
 - :doc:`../../guides/stage-01b-post-tipsy`
+- :doc:`../../guides/btc-fansier-runtime-and-extraction`
 
 At a high level, the owning sequence is:
 
@@ -185,6 +186,9 @@ One adjacent negative result is also now important enough to document here:
   triggers for unattended FEMIC BTC work
 - if another hidden execution seam exists, it is more likely to be another
   startup trigger than a post-launch control channel
+
+Treat that `/No_GUI` result as a stable operating conclusion, not as an
+invitation to keep probing it during ordinary FEMIC maintenance.
 
 This matters because early copied-install/generated-template probes were too
 pessimistic. They were useful clues, but they were not exercising the most
@@ -741,6 +745,7 @@ Guides and references that pair especially closely with this module:
 
 - :doc:`../../guides/stage-01a-vdyp-tipsy-input`
 - :doc:`../../guides/stage-01b-post-tipsy`
+- :doc:`../../guides/btc-fansier-runtime-and-extraction`
 - :doc:`../../guides/cross-platform-runtime-smoke`
 - :doc:`../../guides/troubleshooting`
 - :doc:`../../guides/pipeline-overview`

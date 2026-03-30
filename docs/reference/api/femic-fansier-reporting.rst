@@ -20,11 +20,22 @@ Current responsibilities include:
   - ``product_price_factors``; and
   - ``benefit_lines``.
 
+This is the parsing half of the tracked FAN$IER seam. In operator terms, it is
+what turns the long-report text lane into FEMIC-owned normalized tables that
+downstream economics code can consume without having to understand FAN$IER's
+report layout directly.
+
 Primary entry points
 --------------------
 
 - ``parse_fansier_batch_report()``
 - ``parse_fansier_batch_output_dir()``
+
+See also:
+
+- :doc:`femic-fansier-runtime`
+- :doc:`femic-fansier-workflow`
+- :doc:`../../guides/btc-fansier-runtime-and-extraction`
 
 .. automodule:: femic.fansier_reporting
    :members:

@@ -109,6 +109,31 @@ materialization ritual), see
 For practical VS Code plus local coding-agent onboarding in this repo, see
 ``docs/guides/vscode-coding-agent-onboarding.rst``.
 
+Registry-Backed Patchworks Variants
+-----------------------------------
+
+FEMIC now ships built-in Patchworks registry entries and merges them at runtime
+with an optional user overlay at ``~/.femic/variants.yaml``.
+
+Important implication:
+
+- built-ins are available out of the box;
+- FEMIC does not mutate the user home directory at install time just to make
+  built-ins visible.
+
+Use the registry-backed surfaces when launching shipped K3Z Patchworks
+variants:
+
+.. code-block:: bash
+
+   python -m femic patchworks instances list
+   python -m femic patchworks variants list --instance-id k3z
+   python -m femic patchworks run-variant k3z.base --run-id k3z_registry_smoke
+
+For the fuller operator-facing workflow, including scenarios, scenario sets,
+and materialization consent, see
+``docs/guides/patchworks-variant-and-scenario-management.rst``.
+
 At minimum, materialize annex-backed payloads before case preflight:
 
 .. code-block:: bash

@@ -4,9 +4,22 @@ Known Limitations and Human-in-the-Loop Boundaries
 TIPSY Boundary
 --------------
 
-- BatchTIPSY remains an external GUI/manual boundary.
-- FEMIC can prepare deterministic handoff files and parse returned outputs,
-  but cannot replace operator-run BatchTIPSY execution in current workflow.
+- BatchTIPSY/BTC remains an external proprietary runtime boundary.
+- FEMIC now supports a tracked unattended BTC `/TSR` seam on Windows through
+  the live user-overlay ``TimberSupply.rpt`` path.
+- The external-boundary caveat is now about the proprietary Windows tool and
+  its report/runtime quirks, not about a hard requirement for routine manual
+  button-clicking in the supported FEMIC path.
+- For unattended BTC work, the supported FEMIC seam is the live `/TSR`
+  user-overlay report path. BTC `/No_GUI` is not a supported FEMIC workflow.
+
+FAN$IER Boundary
+----------------
+
+- FAN$IER automation is now real, but it remains Windows GUI automation around
+  a proprietary application, not a native CLI/runtime contract.
+- FEMIC can launch unattended batch extraction and parse the resulting reports,
+  but this seam should still be treated as a fragile external runtime boundary.
 
 Data Vendor/Format Constraints
 ------------------------------

@@ -9104,3 +9104,32 @@
     - refreshed the `Detailed Next Steps Notes` section so it points at the
       current BTC, FAN$IER, Patchworks, and docs state instead of stale
       pre-closeout notes.
+- 2026-03-30 (Issue #61 closeout): reconciled the latest BTC, FAN$IER, and
+  Patchworks Sphinx docs across user-facing, dev-facing, and agent-facing
+  surfaces.
+  - Added new guides:
+    - `docs/guides/btc-fansier-runtime-and-extraction.rst`
+    - `docs/guides/patchworks-variant-and-scenario-management.rst`
+  - Updated user-facing guide surfaces:
+    - `docs/guides/index.rst`
+    - `docs/guides/pipeline-overview.rst`
+    - `docs/guides/deployment-instances.rst`
+    - `docs/guides/limitations-and-boundaries.rst`
+    - `docs/guides/vscode-coding-agent-onboarding.rst`
+  - Updated dev-facing reference surfaces:
+    - `docs/reference/cli.rst`
+    - `docs/reference/api/femic-pipeline-tipsy.rst`
+    - `docs/reference/api/femic-fansier-runtime.rst`
+    - `docs/reference/api/femic-fansier-reporting.rst`
+    - `docs/reference/api/femic-fansier-workflow.rst`
+    - `docs/reference/api/femic-patchworks-variants.rst`
+  - Updated agent-facing contract surface:
+    - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
+  - Validation passed:
+    - `.venv\Scripts\python.exe -m femic tipsy --help`
+    - `.venv\Scripts\python.exe -m femic fansier --help`
+    - `.venv\Scripts\python.exe -m femic patchworks instances list`
+    - `.venv\Scripts\python.exe -m femic patchworks variants show k3z.base`
+    - `.venv\Scripts\python.exe -m femic patchworks scenario-sets show k3z.proving_ground`
+    - `.venv\Scripts\python.exe -m pytest tests/test_docs_contract.py -q`
+    - `.venv\Scripts\python.exe -m sphinx -b html docs _build/html -W`

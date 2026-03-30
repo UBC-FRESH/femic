@@ -58,6 +58,12 @@ practical boundary is:
    python -m femic run --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --run-id k3z_windows_cleanstart
    python -m femic tsa btc-post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_windows_cleanstart
 
+Tracked downstream economics extraction is now available too:
+
+.. code-block:: powershell
+
+   python -m femic fansier run-and-parse "<regime.rgm>" --discount-name "FEMIC Raw 0%" --report-type txt --run-id fansier_smoke
+
 5. Export planning-system packages:
 
    .. code-block:: bash
@@ -65,6 +71,10 @@ practical boundary is:
       femic export patchworks --tsa <code>
       femic export woodstock --tsa <code>
       femic export dual --tsa <code> --with-ws3-smoke --ws3-command "<ws3 smoke command>"
+
+For Patchworks runtime launch, prefer the registry-backed operator surfaces
+(``run-variant``, ``run-scenario``, ``run-scenario-set``) over raw `.pin`
+paths when you are using shipped or user-registered FEMIC variants.
 
 Stage Boundaries
 ----------------
@@ -82,6 +92,8 @@ Key Assumptions
 - Inventory and growth model inputs are local and version-controlled by path,
   not fetched dynamically at runtime.
 - BTC is the default unattended Windows BatchTIPSY seam.
+- FAN$IER is now a tracked downstream Windows batch-extraction seam through
+  FEMIC-owned runtime and parsing commands.
 - ``03_input-*.csv`` is the canonical BTC/BatchTIPSY handoff input; XLSX
   companions are readability aids generated from the same payload.
 - Legacy ``02_input-*.dat`` / ``04_output-*.out`` remain compatibility
@@ -107,3 +119,5 @@ Primary Sources
 - ``planning/femic_instance_rebuild_contract.md``
 - ``docs/reference/run-config.rst``
 - ``docs/reference/patchworks-export.rst``
+- ``docs/guides/btc-fansier-runtime-and-extraction.rst``
+- ``docs/guides/patchworks-variant-and-scenario-management.rst``

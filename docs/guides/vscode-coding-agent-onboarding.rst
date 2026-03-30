@@ -232,6 +232,29 @@ for when steering a coding agent:
 If you suspect one of these, say so directly in the prompt. That kind of
 domain hint is often more valuable than a long generic instruction.
 
+Current Proprietary-Tool Seams
+------------------------------
+
+The current proprietary-tool boundaries are now specific enough that agents
+should be pointed at the right doc surface instead of rediscovering them:
+
+- BTC unattended `/TSR`:
+  the only known-valid unattended FEMIC seam is the live user-overlay
+  ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt`` path, and copied-install
+  or stock-report-only probes are not equivalent validation.
+- BTC `/No_GUI`:
+  documented dead end; not a supported FEMIC runtime seam.
+- FAN$IER:
+  unattended extraction is real, but it is a Windows GUI-automation seam, not
+  a native CLI contract. Start with
+  ``docs/guides/btc-fansier-runtime-and-extraction.rst`` and
+  ``docs/reference/api/femic-fansier-runtime.rst``.
+- Patchworks:
+  prefer the shipped registry/operator surfaces over raw `.pin` spelunking
+  when using bundled K3Z examples. Start with
+  ``docs/guides/patchworks-variant-and-scenario-management.rst`` and
+  ``docs/reference/api/femic-patchworks-variants.rst``.
+
 Suggested First Session for a New Contributor
 ---------------------------------------------
 

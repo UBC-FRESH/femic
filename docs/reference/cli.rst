@@ -168,6 +168,11 @@ TIPSY
 
    python -m femic tipsy [OPTIONS] COMMAND [ARGS]...
 
+Use this command group when you want direct control of the BTC/TIPSY runtime
+boundary rather than the broader Stage 01a/01b orchestration. The current
+operator-facing default is the unattended BTC `/TSR` seam through the live
+user-overlay ``TimberSupply.rpt`` path.
+
 Subcommands
 
 - ``validate``: ``python -m femic tipsy validate [OPTIONS]``
@@ -203,12 +208,22 @@ Subcommands
 - ``--run-id TEXT``
 - ``--instance-root PATH``
 
+Operational note:
+
+- runtime artifacts now default under ``tipsy_io/logs`` and
+  ``tipsy_io/scratch`` so BTC supervision is visually separate from the VDYP
+  runtime namespace.
+
 FAN$IER
 -------
 
 .. code-block:: text
 
    python -m femic fansier [OPTIONS] COMMAND [ARGS]...
+
+Use this command group when you want FEMIC to drive the tracked Windows
+FAN$IER batch-extraction seam and optionally normalize the resulting long-report
+text files into FEMIC-owned tables.
 
 Subcommands
 
@@ -260,6 +275,12 @@ Subcommands
 - ``--select-all-ages`` / ``--single-age`` (default: all)
 - ``--product-name TEXT`` (used when broad product selection is off)
 - ``--age-name TEXT`` (used when broad age selection is off)
+
+Operational notes:
+
+- the parsing seam currently expects ``txt`` reports;
+- the practical machine-ingest default is `0%` discount posture with product
+  columns on and activity columns off.
 
 Export
 ------
@@ -340,6 +361,10 @@ Patchworks Runtime
 .. code-block:: text
 
    python -m femic patchworks [OPTIONS] COMMAND [ARGS]...
+
+Use this command group when you want FEMIC to inspect or launch registry-backed
+Patchworks variants, scenarios, and scenario sets, while still preserving the
+lower-level ``run-headless <pin>`` primitive seam.
 
 Subcommands
 
@@ -537,6 +562,14 @@ Both ``patchworks variants show`` and
 - one aggregate materialization summary;
 - one dataset-root grouped summary per touched dataset; and
 - the supporting raw per-action detail lines.
+
+Operational notes:
+
+- built-ins are always loaded from FEMIC's packaged registry;
+- ``~/.femic/variants.yaml`` is a writable user overlay, not the only source
+  of truth;
+- launch-time materialization consent is driven by the grouped dataset summary
+  before the raw per-action detail lines.
 
 Instance Workspace
 ------------------

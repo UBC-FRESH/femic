@@ -27,6 +27,12 @@ External Runtime Boundaries
        headless seam is now real on native Windows:
        FEMIC can launch a `.pin` without `classic_GUI(control)`, wait one
        unattended iteration, save a stage, and return control cleanly.
+   * - FAN$IER
+     - Windows-only proprietary runtime boundary. FEMIC now owns a tracked
+       unattended batch seam around ``Fansier.exe``: it can launch a clean
+       session, load one `.rgm` plus optional `.dis`, run Batch mode,
+       harvest deterministic report outputs, and parse those reports through
+       FEMIC-owned reporting/workflow surfaces.
    * - ArcRasterRescue
      - Treat as an explicit external executable; if auto-discovery fails, set
        ``FEMIC_ARC_RASTER_RESCUE_EXE`` to the compiled path.
@@ -91,6 +97,16 @@ Before Patchworks runtime launch:
 2. confirm Java or Wine + Java is available for the host mode
 3. confirm ``patchworks.jar``, ``SPSHOME``, and license values are wired
 4. launch ``build-blocks`` or ``matrix-build`` only after preflight is clean
+
+Before FAN$IER unattended extraction:
+
+1. confirm you are on a Windows host with ``Fansier.exe`` available
+2. confirm the target `.rgm` exists
+3. optionally confirm a `.dis` file exists if you want to load discount
+   assumptions instead of creating/selecting them in-session
+4. choose the intended output lane:
+   - lean ingest: short `txt`, product columns on, activity columns off
+   - archive/discovery: long `txt`, broad products/ages
 
 Patchworks Headless Runtime Note
 --------------------------------
@@ -175,6 +191,20 @@ base K3Z variant:
   even-flow summary values stayed tightly clustered near zero, and
   ``scenario/schedule.csv`` remained non-empty with real treatments.
 
+Patchworks Registry Operator Note
+---------------------------------
+
+The current preferred operator surface for shipped Patchworks examples is now
+registry-backed, not raw-path-first:
+
+- inspect with ``instances list`` / ``variants list`` / ``variants show``;
+- inspect grouped download/materialization work with
+  ``variants materialization-plan``;
+- launch with ``run-variant``, ``run-scenario``, or the scenario-set helpers.
+
+Use raw `.pin` paths only when you are intentionally bypassing the FEMIC
+registry/operator layer.
+
 Host Assumptions
 ----------------
 
@@ -204,9 +234,14 @@ See Also
 --------
 
 - :doc:`../../guides/stage-01b-post-tipsy`
+- :doc:`../../guides/btc-fansier-runtime-and-extraction`
+- :doc:`../../guides/patchworks-variant-and-scenario-management`
 - :doc:`../../guides/patchworks-wine-runtime`
 - :doc:`../../guides/geospatial-runtime-bootstrap`
 - :doc:`../../guides/cross-platform-runtime-smoke`
 - :doc:`../api/femic-pipeline-tipsy`
+- :doc:`../api/femic-fansier-runtime`
+- :doc:`../api/femic-fansier-workflow`
+- :doc:`../api/femic-patchworks-variants`
 - :doc:`../api/femic-patchworks-runtime`
 - :doc:`../api/femic-pipeline-siteprod`

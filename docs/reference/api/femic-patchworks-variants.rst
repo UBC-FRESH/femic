@@ -27,6 +27,30 @@ Current responsibilities include:
 - preserving richer metadata for future runtime/scenario/materialization
   orchestration.
 
+Operational shape
+-----------------
+
+In user-facing terms, this module is the registry seam behind:
+
+- ``instances list``
+- ``variants list/show/register/update/remove``
+- ``variants materialization-plan``
+- ``run-variant``
+- ``scenarios list``
+- ``run-scenario``
+- ``run-default-scenario``
+- ``scenario-sets list/show``
+- ``run-scenario-set``
+- ``run-default-scenario-set``
+
+The current built-in proof surface is the shipped K3Z registry family. This
+module therefore owns more than plain `.pin` lookup: it also owns default
+scenario resolution, default scenario-set resolution, scenario-set metadata,
+and grouped materialization summaries for launch-time consent.
+
+For the operator-facing workflow, examples, and K3Z built-in usage pattern,
+see :doc:`../../guides/patchworks-variant-and-scenario-management`.
+
 Primary entry points
 --------------------
 

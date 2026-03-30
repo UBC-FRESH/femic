@@ -7696,15 +7696,17 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - `run-default-scenario`
   - `run-scenario-set`
   - `run-default-scenario-set`
-- The active next edge is docs reconciliation under issue `#61`:
-  - remove stale `#60` roadmap closeout notes;
-  - add user-facing Sphinx guides for:
+- The docs reconciliation sweep is now complete under issue `#61`:
+  - stale `#60` roadmap closeout notes were removed;
+  - user-facing guides now cover:
     - unattended BTC/FAN$IER runtime and extraction;
     - Patchworks variant/scenario/scenario-set management;
-  - top up the API/CLI reference so current defaults and operator surfaces are
-    easy to spot;
-  - strengthen contract/onboarding docs so the current proprietary-tool seams
-    are explicit for agents and maintainers.
+  - the API/CLI reference now carries clearer operator-facing notes for the
+    shipped BTC, FAN$IER, and Patchworks seams;
+  - the contract/onboarding docs now surface the current proprietary-tool
+    seams more directly for agents and maintainers.
+- Keep issue `#8` open as the narrower follow-on docs task for native Windows
+  Patchworks runtime orientation and the SiteProd default/fallback summary.
 - The optional-bank rollout under GitHub issue `#48` is now complete:
   - treat the remaining missing optional BTC/TIPSY indicators as one umbrella
     rollout track, grouped into logical banks rather than split across a large
@@ -9270,7 +9272,7 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
           - the feature branch was deleted after merge
         - defer parallel scenario-set execution until there is a clearer
           Patchworks process-safety contract for concurrent runs.
-  - [ ] P49.6 Reconcile Sphinx docs for BTC, FAN$IER, and Patchworks
+  - [x] P49.6 Reconcile Sphinx docs for BTC, FAN$IER, and Patchworks
     operator/runtime surfaces.
     - Governing tracker:
       - GitHub issue #61
@@ -9302,7 +9304,34 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - `python -m femic patchworks instances list`
         - `python -m femic patchworks variants show k3z.base`
         - `python -m femic patchworks scenario-sets show k3z.proving_ground`
-  - Current implementation order:
+    - Closeout result:
+      - added new user-facing guides:
+        - `docs/guides/btc-fansier-runtime-and-extraction.rst`
+        - `docs/guides/patchworks-variant-and-scenario-management.rst`
+      - updated user-facing guide surfaces:
+        - `docs/guides/index.rst`
+        - `docs/guides/pipeline-overview.rst`
+        - `docs/guides/deployment-instances.rst`
+        - `docs/guides/limitations-and-boundaries.rst`
+        - `docs/guides/vscode-coding-agent-onboarding.rst`
+      - updated dev-facing reference surfaces:
+        - `docs/reference/cli.rst`
+        - `docs/reference/api/femic-pipeline-tipsy.rst`
+        - `docs/reference/api/femic-fansier-runtime.rst`
+        - `docs/reference/api/femic-fansier-reporting.rst`
+        - `docs/reference/api/femic-fansier-workflow.rst`
+        - `docs/reference/api/femic-patchworks-variants.rst`
+      - updated agent-facing contract surface:
+        - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
+      - validation passed:
+        - `.venv\Scripts\python.exe -m femic tipsy --help`
+        - `.venv\Scripts\python.exe -m femic fansier --help`
+        - `.venv\Scripts\python.exe -m femic patchworks instances list`
+        - `.venv\Scripts\python.exe -m femic patchworks variants show k3z.base`
+        - `.venv\Scripts\python.exe -m femic patchworks scenario-sets show k3z.proving_ground`
+        - `.venv\Scripts\python.exe -m pytest tests/test_docs_contract.py -q`
+        - `.venv\Scripts\python.exe -m sphinx -b html docs _build/html -W`
+  - Historical implementation notes:
     - reuse FEMIC's existing BeanShell launcher in
       `src/femic/patchworks_runtime.py` rather than inventing a second
       Patchworks process runner;
@@ -9383,7 +9412,7 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Notes:
     - Governing tracker:
       - GitHub issue #54 for the landed base seam;
-      - GitHub issue #60 for the active named-pin operator surface.
+      - GitHub issue #60 for the landed registry/operator surface.
     - Primary local evidence:
       - `planning/patchworks_nogui_mode.md`
       - `tmp/patchworks-201901.doc.tar.gz`
