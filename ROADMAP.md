@@ -7705,9 +7705,17 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     shipped BTC, FAN$IER, and Patchworks seams;
   - the contract/onboarding docs now surface the current proprietary-tool
     seams more directly for agents and maintainers.
-- The active edge is now issue `#62`:
-  - add a packaged-install user config contract at `~/.femic/user.yaml`;
-  - add managed built-in instance install flows rooted at `~/.femic/external`
+- Issue `#62` packaged-install built-in instance install is now in place:
+  - FEMIC now carries a packaged-install user config contract at
+    `~/.femic/user.yaml` (or the Windows equivalent);
+  - managed built-ins can now be listed/installed under the configured
+    managed external root;
+  - `femic instance init --instance-name <name>` now resolves through the
+    configured visible user-instance root;
+  - shipped Patchworks built-ins now resolve from repo-local `external/...`
+    first and otherwise from the configured managed built-in root;
+  - built-in Patchworks launches now fail with a direct install hint when the
+    underlying built-in instance is missing.
     on Linux/macOS and `%USERPROFILE%\\.femic\\external` on Windows, with
     user-configured overrides when desired;
   - add a visible configured user-instance workspace root with
@@ -9342,7 +9350,7 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         - `.venv\Scripts\python.exe -m femic patchworks scenario-sets show k3z.proving_ground`
         - `.venv\Scripts\python.exe -m pytest tests/test_docs_contract.py -q`
         - `.venv\Scripts\python.exe -m sphinx -b html docs _build/html -W`
-  - [ ] P49.7 Add packaged-install built-in instance install and user
+  - [x] P49.7 Add packaged-install built-in instance install and user
     workspace-root management.
     - Governing tracker:
       - GitHub issue #62
@@ -9374,14 +9382,37 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         `external/...` first, then from the configured managed external root;
       - keep `resolve_instance_context()` precedence unchanged for normal
         runtime commands.
-    - Validation target:
+    - Landed behavior:
+      - added a packaged-install user config contract in
+        `src/femic/user_config.py` backed by `~/.femic/user.yaml` (or the
+        Windows equivalent) with:
+        - `paths.managed_external_root`
+        - `paths.user_instance_root`
+      - added a packaged built-in instance catalog plus installer in
+        `src/femic/builtin_instances.py` and
+        `src/femic/resources/builtins/instances.builtin.yaml`;
+      - added CLI surfaces:
+        - `femic instance config show`
+        - `femic instance config set-managed-external-root`
+        - `femic instance config set-user-instance-root`
+        - `femic instance builtins list`
+        - `femic instance builtins install <builtin-id|all>`
+        - `femic instance init --instance-name <name>`
+      - taught shipped Patchworks built-ins to resolve from repo-local
+        `external/...` first and otherwise from the configured managed
+        external root;
+      - added direct install hints when a built-in Patchworks variant is
+        requested before its built-in instance is locally available;
+      - reconciled the deployment/CLI/contract docs to distinguish
+        source-checkout developer flow from packaged-install user flow.
+    - Validation result:
       - `ruff format src tests`
       - `ruff check src tests`
       - `mypy src`
       - `pytest`
       - `pre-commit run --all-files`
       - `python -m sphinx -b html docs _build/html -W`
-      - non-destructive CLI spot checks:
+      - non-destructive CLI spot checks passed:
         - `python -m femic instance config show`
         - `python -m femic instance builtins list`
         - `python -m femic patchworks variants show k3z.base`

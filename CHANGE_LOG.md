@@ -9153,3 +9153,41 @@
       now the leading edge.
   - Removed the adopted built-in-instance install idea from
     `planning/incoming_ideas.md`.
+- 2026-03-30 (Issue #62 closeout): landed packaged-install built-in instance
+  install and visible user workspace-root support.
+  - Added a packaged-install user config contract in:
+    - `src/femic/user_config.py`
+    - `~/.femic/user.yaml` / Windows equivalent
+  - Added a packaged built-in catalog and installer in:
+    - `src/femic/builtin_instances.py`
+    - `src/femic/resources/builtins/instances.builtin.yaml`
+  - Added CLI surfaces:
+    - `femic instance config show`
+    - `femic instance config set-managed-external-root`
+    - `femic instance config set-user-instance-root`
+    - `femic instance builtins list`
+    - `femic instance builtins install <builtin-id|all>`
+    - `femic instance init --instance-name <name>`
+  - Taught shipped Patchworks built-ins to resolve from repo-local
+    `external/...` first and otherwise from the configured managed built-in
+    root.
+  - Added a direct install hint when a built-in Patchworks variant is
+    requested before its built-in instance is locally available.
+  - Reconciled the relevant docs so packaged-install user flow is distinct
+    from source-checkout developer flow in:
+    - `docs/guides/deployment-instances.rst`
+    - `docs/guides/patchworks-variant-and-scenario-management.rst`
+    - `docs/reference/cli.rst`
+    - `docs/reference/contracts/instance-and-data-roots.rst`
+    - `docs/reference/api/femic-instance-bootstrap.rst`
+    - `docs/reference/api/femic-patchworks-variants.rst`
+  - Validation passed:
+    - `.venv\Scripts\ruff.exe format src tests`
+    - `.venv\Scripts\ruff.exe check src tests`
+    - `.venv\Scripts\python.exe -m mypy src`
+    - `.venv\Scripts\python.exe -m pytest`
+    - `.venv\Scripts\python.exe -m pre_commit run --all-files`
+    - `.venv\Scripts\python.exe -m sphinx -b html docs _build/html -W`
+    - `.venv\Scripts\python.exe -m femic instance config show`
+    - `.venv\Scripts\python.exe -m femic instance builtins list`
+    - `.venv\Scripts\python.exe -m femic patchworks variants show k3z.base`

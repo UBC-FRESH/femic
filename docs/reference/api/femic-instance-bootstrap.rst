@@ -43,6 +43,17 @@ The common operator-facing call is:
 
    femic instance init --instance-root instances/reference --no-download-bc-vri
 
+For packaged-install users who want FEMIC to place a new workspace under the
+configured visible user root, the CLI also supports:
+
+.. code-block:: bash
+
+   femic instance init --instance-name my_new_case
+
+That resolves the target path through ``~/.femic/user.yaml`` (or the Windows
+equivalent) using ``paths.user_instance_root`` rather than requiring the user
+to type an absolute path each time.
+
 The matching Python entrypoint is:
 
 .. code-block:: python
@@ -70,6 +81,10 @@ That means this module owns the *initial filesystem contract* for instances,
 not the later runtime semantics. Once the instance exists, path resolution and
 workflow behavior move into :mod:`femic.instance_context`,
 :mod:`femic.pipeline.io`, and the guide/runbook layers.
+
+For packaged installs, it therefore sits immediately beside the newer
+``femic.user_config`` contract: user config chooses the visible root, and this
+module writes the actual workspace at that resolved location.
 
 Key Entry Surfaces
 ------------------

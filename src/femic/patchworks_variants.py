@@ -11,10 +11,15 @@ from typing import Any
 
 import yaml
 
+from femic.builtin_instances import (
+    resolve_builtin_external_path,
+    resolve_builtin_repo_status,
+)
+from femic.user_config import DEFAULT_FEMIC_CONFIG_HOME
 
 PATCHWORKS_VARIANT_REGISTRY_PACKAGE = "femic.resources.patchworks"
 PATCHWORKS_BUILTIN_VARIANTS_RESOURCE = "variants.builtin.yaml"
-DEFAULT_PATCHWORKS_USER_REGISTRY_PATH = Path.home() / ".femic" / "variants.yaml"
+DEFAULT_PATCHWORKS_USER_REGISTRY_PATH = DEFAULT_FEMIC_CONFIG_HOME / "variants.yaml"
 DEFAULT_PATCHWORKS_MATERIALIZATION_PROMPT_BYTES = 100 * 1024 * 1024
 
 
@@ -277,6 +282,22 @@ def _resolve_registry_path(value: Path, *, base_dir: Path) -> Path:
     return (base_dir / candidate).resolve()
 
 
+def _resolve_builtin_aware_registry_path(
+    value: Path,
+    *,
+    base_dir: Path,
+    user_config_path: Path | None,
+) -> Path:
+    candidate = value.expanduser()
+    if candidate.is_absolute():
+        return candidate.resolve()
+    return resolve_builtin_external_path(
+        candidate,
+        source_root=base_dir,
+        user_config_path=user_config_path,
+    )
+
+
 def resolve_patchworks_user_registry_path(
     user_registry_path: Path | None = None,
 ) -> Path:
@@ -432,6 +453,7 @@ def _load_variant_entries_from_payload(
     source_label: str,
     source_kind: str,
     registry_path: Path | None,
+    user_config_path: Path | None,
 ) -> tuple[PatchworksVariantDefinition, ...]:
     instance_metadata = _parse_instance_metadata(payload, source_label=source_label)
 
@@ -461,23 +483,26 @@ def _load_variant_entries_from_payload(
         )
         family = str(item.get("variant_family") or "default").strip() or "default"
         kind = str(item.get("kind") or "patchworks").strip() or "patchworks"
-        instance_root = _resolve_registry_path(
+        instance_root = _resolve_builtin_aware_registry_path(
             _normalize_relpath(
                 item.get("instance_root"), "instance_root", source_label=source_label
             ),
             base_dir=base_dir,
+            user_config_path=user_config_path,
         )
-        analysis_pin = _resolve_registry_path(
+        analysis_pin = _resolve_builtin_aware_registry_path(
             _normalize_relpath(
                 item.get("analysis_pin"), "analysis_pin", source_label=source_label
             ),
             base_dir=base_dir,
+            user_config_path=user_config_path,
         )
-        runtime_config = _resolve_registry_path(
+        runtime_config = _resolve_builtin_aware_registry_path(
             _normalize_relpath(
                 item.get("runtime_config"), "runtime_config", source_label=source_label
             ),
             base_dir=base_dir,
+            user_config_path=user_config_path,
         )
         notes_payload = item.get("notes", ())
         if notes_payload in (None, ""):
@@ -922,6 +947,7 @@ def load_patchworks_variant_registry(
     *,
     user_registry_path: Path | None = None,
     source_root: Path | None = None,
+    user_config_path: Path | None = None,
 ) -> PatchworksVariantRegistry:
     """Load the merged built-in and optional user Patchworks variant registry."""
 
@@ -938,6 +964,7 @@ def load_patchworks_variant_registry(
             source_label=PATCHWORKS_BUILTIN_VARIANTS_RESOURCE,
             source_kind="builtin",
             registry_path=None,
+            user_config_path=user_config_path,
         )
     }
 
@@ -958,6 +985,7 @@ def load_patchworks_variant_registry(
             source_label=str(effective_user_registry),
             source_kind="user",
             registry_path=effective_user_registry,
+            user_config_path=user_config_path,
         ):
             merged_by_id[item.variant_id] = item
         user_path_result: Path | None = effective_user_registry
@@ -1002,12 +1030,17 @@ def _resolve_materialization_dataset_root(
     action: PatchworksVariantMaterializationAction,
     *,
     source_root: Path,
+    user_config_path: Path | None = None,
 ) -> Path:
     if not action.dataset_root:
         raise PatchworksVariantRegistryError(
             "Patchworks variant materialization action missing dataset_root."
         )
-    return _resolve_registry_path(Path(action.dataset_root), base_dir=source_root)
+    return resolve_builtin_external_path(
+        Path(action.dataset_root),
+        source_root=source_root,
+        user_config_path=user_config_path,
+    )
 
 
 def build_patchworks_variant_materialization_plan(
@@ -1075,6 +1108,7 @@ def materialize_patchworks_variant(
     variant: PatchworksVariantDefinition,
     *,
     source_root: Path | None = None,
+    user_config_path: Path | None = None,
 ) -> None:
     """Run any declared materialization actions required before Patchworks launch."""
 
@@ -1093,6 +1127,7 @@ def materialize_patchworks_variant(
         dataset_root = _resolve_materialization_dataset_root(
             action,
             source_root=effective_source_root,
+            user_config_path=user_config_path,
         )
         if not dataset_root.exists():
             raise PatchworksVariantRegistryError(
@@ -1114,3 +1149,27 @@ def materialize_patchworks_variant(
                 f"datalad get in {dataset_root} returned {completed.returncode}"
                 + (f" ({detail})" if detail else "")
             )
+
+
+def builtins_install_hint_for_variant(
+    variant: PatchworksVariantDefinition,
+    *,
+    source_root: Path | None = None,
+    user_config_path: Path | None = None,
+) -> str | None:
+    """Return an install hint when a shipped built-in instance is missing locally."""
+
+    if getattr(variant, "source", None) != "builtin":
+        return None
+
+    status = resolve_builtin_repo_status(
+        target_dirname=variant.instance_root.name,
+        source_root=source_root,
+        user_config_path=user_config_path,
+    )
+    if status.status != "missing":
+        return None
+    return (
+        f"Built-in instance {variant.instance_id} is not available locally. "
+        f"Install it with `femic instance builtins install {variant.instance_id}`."
+    )

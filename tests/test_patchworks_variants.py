@@ -10,6 +10,7 @@ from femic.patchworks_variants import (
     PatchworksVariantMaterializationDatasetSummary,
     PatchworksVariantRegistryError,
     PatchworksScenarioSetMember,
+    builtins_install_hint_for_variant,
     build_patchworks_variant_materialization_plan,
     load_patchworks_variant_registry,
     load_patchworks_user_registry_overlay,
@@ -18,6 +19,7 @@ from femic.patchworks_variants import (
     summarize_patchworks_variant_materialization_by_dataset,
     upsert_patchworks_user_variant_entry,
 )
+from femic.user_config import FemicUserConfig, FemicUserPaths, write_femic_user_config
 
 
 def test_load_patchworks_variant_registry_includes_builtin_k3z_base() -> None:
@@ -45,6 +47,45 @@ def test_load_patchworks_variant_registry_includes_builtin_k3z_base() -> None:
     default_scenario_set = registry.get_default_scenario_set("k3z")
     assert default_scenario_set.scenario_set_id == "k3z.proving_ground"
     assert registry.iter_scenario_sets(instance_id="k3z") == (scenario_set,)
+
+
+def test_load_patchworks_variant_registry_uses_managed_root_for_builtins(
+    tmp_path: Path,
+) -> None:
+    config_path = tmp_path / "user.yaml"
+    write_femic_user_config(
+        FemicUserConfig(
+            config_path=config_path,
+            exists=False,
+            paths=FemicUserPaths(
+                managed_external_root=tmp_path / "managed-external",
+                user_instance_root=tmp_path / "instances",
+            ),
+        )
+    )
+
+    registry = load_patchworks_variant_registry(
+        source_root=tmp_path / "source-root",
+        user_config_path=config_path,
+    )
+
+    variant = registry.get_variant("k3z.base")
+    assert (
+        variant.instance_root
+        == (tmp_path / "managed-external" / "femic-k3z-instance").resolve()
+    )
+    assert (
+        variant.analysis_pin
+        == (
+            tmp_path
+            / "managed-external"
+            / "femic-k3z-instance"
+            / "models"
+            / "k3z_patchworks_model"
+            / "analysis"
+            / "base.pin"
+        ).resolve()
+    )
 
 
 def test_load_patchworks_variant_registry_user_overlay_can_override_builtin(
@@ -257,6 +298,45 @@ def test_materialize_patchworks_variant_runs_datalad_get(
     materialize_patchworks_variant(variant, source_root=tmp_path)
 
     assert calls == [(["datalad", "get", "data"], dataset_root.resolve())]
+
+
+def test_builtins_install_hint_for_variant_returns_helpful_message(
+    tmp_path: Path,
+) -> None:
+    config_path = tmp_path / "user.yaml"
+    write_femic_user_config(
+        FemicUserConfig(
+            config_path=config_path,
+            exists=False,
+            paths=FemicUserPaths(
+                managed_external_root=tmp_path / "managed-external",
+                user_instance_root=tmp_path / "instances",
+            ),
+        )
+    )
+    variant = PatchworksVariantDefinition(
+        variant_id="k3z.base",
+        label="K3Z base",
+        instance_id="k3z",
+        instance_label="K3Z",
+        variant_family="baseline",
+        kind="patchworks",
+        instance_root=(tmp_path / "managed-external" / "femic-k3z-instance").resolve(),
+        analysis_pin=Path("analysis/base.pin"),
+        runtime_config=Path("config/runtime.yaml"),
+        source="builtin",
+    )
+
+    hint = builtins_install_hint_for_variant(
+        variant,
+        source_root=tmp_path / "source-root",
+        user_config_path=config_path,
+    )
+
+    assert hint == (
+        "Built-in instance k3z is not available locally. "
+        "Install it with `femic instance builtins install k3z`."
+    )
 
 
 def test_upsert_patchworks_user_variant_entry_writes_overlay_file(

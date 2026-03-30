@@ -33,6 +33,41 @@ Interpretation rules:
 - If neither is supplied, FEMIC treats the current working directory as the
   instance root.
 
+Packaged Install User Roots
+---------------------------
+
+Packaged installs now carry a separate user-config contract for:
+
+- managed built-in instance installs; and
+- the visible user workspace root used by ``femic instance init --instance-name``.
+
+That config lives at:
+
+- Linux/macOS: ``~/.femic/user.yaml``
+- Windows: ``%USERPROFILE%\.femic\user.yaml``
+
+Recorded keys:
+
+- ``paths.managed_external_root``
+- ``paths.user_instance_root``
+
+Default values:
+
+- Linux/macOS:
+  - managed built-ins: ``~/.femic/external``
+  - visible user instances: ``~/femic/instances``
+- Windows:
+  - managed built-ins: ``%USERPROFILE%\.femic\external``
+  - visible user instances: ``%USERPROFILE%\femic\instances``
+
+Important boundary:
+
+- these roots support packaged-install bootstrap and built-in instance
+  discovery;
+- they do **not** change the normal runtime precedence for operational
+  commands, which remains
+  ``--instance-root`` -> ``FEMIC_INSTANCE_ROOT`` -> current working directory.
+
 Bundled Example Instances
 -------------------------
 
@@ -47,6 +82,11 @@ Treat them as git submodules, not ordinary folders:
 - change case-specific instance content in the submodule repo
 - commit submodule changes in the instance repo first, then update the parent
   submodule pointer in FEMIC
+
+Built-in packaged-install resolution now prefers:
+
+1. repo-local ``external/...`` when present in a source checkout;
+2. otherwise the configured managed built-in root from ``user.yaml``.
 
 External Data Root
 ------------------

@@ -1,0 +1,25 @@
+support_repos:
+  - repo_id: femic-public-data
+    label: FEMIC public data mirror
+    repo_url: https://github.com/UBC-FRESH/femic-public-data.git
+    target_dirname: femic-public-data
+    notes:
+      - Annex-backed public data mirror used by shipped example instances.
+
+instances:
+  - builtin_id: k3z
+    label: K3Z example instance
+    repo_url: https://github.com/UBC-FRESH/femic-k3z-instance.git
+    target_dirname: femic-k3z-instance
+    support_repo_ids:
+      - femic-public-data
+    notes:
+      - Canonical teaching example instance bundled in source checkouts.
+  - builtin_id: tsa29
+    label: TSA29 example instance
+    repo_url: https://github.com/UBC-FRESH/femic-tsa29-instance.git
+    target_dirname: femic-tsa29-instance
+    support_repo_ids:
+      - femic-public-data
+    notes:
+      - Canonical TSA29 teaching and research example instance.

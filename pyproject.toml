@@ -54,6 +54,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 femic = [
+    "resources/builtins/*",
     "resources/instance/.gitignore",
     "resources/instance/*",
     "resources/instance/config/*",

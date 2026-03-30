@@ -25,6 +25,51 @@ By default this scaffolds:
 - ``vdyp_io/logs/``
 - workspace ``.gitignore`` and ``QUICKSTART.md``
 
+Visible User Workspace Root
+---------------------------
+
+For packaged installs, FEMIC now also carries a small user-config contract at:
+
+- Linux/macOS: ``~/.femic/user.yaml``
+- Windows: ``%USERPROFILE%\.femic\user.yaml``
+
+That config records two path families:
+
+- ``paths.managed_external_root``
+  machine-managed built-in instance installs and support repositories
+- ``paths.user_instance_root``
+  the visible user workspace root for new working instances
+
+Default packaged-install roots are:
+
+- Linux/macOS:
+  - managed built-ins: ``~/.femic/external``
+  - visible user instances: ``~/femic/instances``
+- Windows:
+  - managed built-ins: ``%USERPROFILE%\.femic\external``
+  - visible user instances: ``%USERPROFILE%\femic\instances``
+
+Inspect or adjust those roots with:
+
+.. code-block:: bash
+
+   python -m femic instance config show
+   python -m femic instance config set-managed-external-root "<path>"
+   python -m femic instance config set-user-instance-root "<path>"
+
+If you want FEMIC to create a new working instance under the configured
+visible user root, use ``--instance-name`` instead of manually constructing
+an absolute path:
+
+.. code-block:: bash
+
+   python -m femic instance init --instance-name my_new_case
+
+That resolves to:
+
+- Linux/macOS: ``~/femic/instances/my_new_case`` by default
+- Windows: ``%USERPROFILE%\femic\instances\my_new_case`` by default
+
 Canonical In-Repo Reference Instance (Maintainers)
 --------------------------------------------------
 
@@ -120,6 +165,22 @@ Important implication:
 - built-ins are available out of the box;
 - FEMIC does not mutate the user home directory at install time just to make
   built-ins visible.
+- built-ins resolve from repo-local ``external/...`` paths when you are in a
+  source checkout with submodules present;
+- otherwise they resolve from the configured managed built-in root recorded in
+  ``user.yaml``.
+
+For packaged installs, list and install built-ins with:
+
+.. code-block:: bash
+
+   python -m femic instance builtins list
+   python -m femic instance builtins install k3z
+   python -m femic instance builtins install all
+
+Install does **not** run ``datalad get`` automatically; it only clones the
+standalone built-in instance repositories plus any declared support
+repositories. Payload materialization still happens on demand at runtime.
 
 Use the registry-backed surfaces when launching shipped K3Z Patchworks
 variants:
@@ -133,6 +194,10 @@ variants:
 For the fuller operator-facing workflow, including scenarios, scenario sets,
 and materialization consent, see
 ``docs/guides/patchworks-variant-and-scenario-management.rst``.
+
+If you request a built-in variant that FEMIC cannot find either in repo-local
+``external/...`` or under the configured managed built-in root, FEMIC now
+fails with a direct install hint instead of a vague file-missing error.
 
 At minimum, materialize annex-backed payloads before case preflight:
 

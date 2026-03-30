@@ -19,6 +19,12 @@ from rich.console import Console
 
 from femic import __version__
 from femic.account_surface import summarize_account_surface
+from femic.builtin_instances import (
+    BuiltinInstanceCatalogError,
+    install_builtin_instances,
+    load_builtin_instance_catalog,
+    resolve_builtin_repo_status,
+)
 from femic.fansier_runtime import (
     DEFAULT_FANSIER_AGE_NAME,
     DEFAULT_FANSIER_BATCH_OUTPUT_DIR,
@@ -78,6 +84,7 @@ from femic.patchworks_variants import (
     DEFAULT_PATCHWORKS_MATERIALIZATION_PROMPT_BYTES,
     DEFAULT_PATCHWORKS_USER_REGISTRY_PATH,
     PatchworksVariantRegistryError,
+    builtins_install_hint_for_variant,
     build_patchworks_variant_materialization_plan,
     load_patchworks_variant_registry,
     load_patchworks_user_registry_overlay,
@@ -86,6 +93,15 @@ from femic.patchworks_variants import (
     serialize_patchworks_variant_definition,
     summarize_patchworks_variant_materialization_by_dataset,
     upsert_patchworks_user_variant_entry,
+)
+from femic.user_config import (
+    FemicUserConfig,
+    FemicUserConfigError,
+    default_femic_user_paths,
+    load_femic_user_config,
+    with_managed_external_root,
+    with_user_instance_root,
+    write_femic_user_config,
 )
 from femic.rebuild_baseline import (
     apply_diff_allowlist,
@@ -197,6 +213,16 @@ instance_app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
     help="Initialize and manage deployment-instance workspaces.",
+)
+instance_config_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Inspect and configure user-scoped FEMIC instance paths.",
+)
+instance_builtins_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Inspect and install FEMIC built-in example instances.",
 )
 fansier_app = typer.Typer(
     add_completion=False,
@@ -368,6 +394,9 @@ def _run_patchworks_registered_scenario(
     materialization_threshold_mib: int,
     cancellation_prefix: str,
 ) -> Any:
+    install_hint = builtins_install_hint_for_variant(variant)
+    if install_hint is not None:
+        raise PatchworksVariantRegistryError(install_hint)
     _maybe_materialize_patchworks_variant(
         variant=variant,
         allow_large_download=allow_large_download,
@@ -1216,6 +1245,28 @@ def _normalize_case_code(value: str) -> str:
     return code.zfill(2) if code.isdigit() else code.lower()
 
 
+def _load_or_exit_user_config() -> FemicUserConfig:
+    try:
+        return load_femic_user_config()
+    except FemicUserConfigError as exc:
+        console.print(f"[red]FEMIC user config error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+
+def _resolve_named_instance_root(
+    instance_name: str, *, config: FemicUserConfig
+) -> Path:
+    normalized = str(instance_name or "").strip()
+    if not normalized:
+        raise ValueError("Instance name must not be blank.")
+    relative = Path(normalized)
+    if relative.is_absolute() or ".." in relative.parts:
+        raise ValueError(
+            "Instance name must be a relative workspace name, not an absolute path."
+        )
+    return (config.paths.user_instance_root / relative).resolve()
+
+
 def _resolve_cli_instance_context(
     *,
     instance_root: Path | None,
@@ -1270,9 +1321,109 @@ def main(
         raise typer.Exit()
 
 
+@instance_config_app.command("show")
+def instance_config_show() -> None:
+    """Show the resolved FEMIC user config and default workspace roots."""
+
+    config = _load_or_exit_user_config()
+    defaults = default_femic_user_paths()
+    console.print("[green]FEMIC user config[/green]")
+    console.print(f"config_path: {config.config_path}")
+    console.print(f"config_exists: {config.exists}")
+    console.print(f"managed_external_root: {config.paths.managed_external_root}")
+    console.print(f"user_instance_root: {config.paths.user_instance_root}")
+    console.print(f"default_managed_external_root: {defaults.managed_external_root}")
+    console.print(f"default_user_instance_root: {defaults.user_instance_root}")
+
+
+@instance_config_app.command("set-managed-external-root")
+def instance_config_set_managed_external_root(
+    path: Path = typer.Argument(..., help="Managed built-in instance root."),
+) -> None:
+    """Persist the managed built-in instance root in the FEMIC user config."""
+
+    config = _load_or_exit_user_config()
+    updated = with_managed_external_root(config, path)
+    written_path = write_femic_user_config(updated)
+    console.print("[green]FEMIC user config updated[/green]")
+    console.print(f"config_path: {written_path}")
+    console.print(f"managed_external_root: {updated.paths.managed_external_root}")
+
+
+@instance_config_app.command("set-user-instance-root")
+def instance_config_set_user_instance_root(
+    path: Path = typer.Argument(..., help="Visible default user instance root."),
+) -> None:
+    """Persist the visible user instance workspace root in the FEMIC user config."""
+
+    config = _load_or_exit_user_config()
+    updated = with_user_instance_root(config, path)
+    written_path = write_femic_user_config(updated)
+    console.print("[green]FEMIC user config updated[/green]")
+    console.print(f"config_path: {written_path}")
+    console.print(f"user_instance_root: {updated.paths.user_instance_root}")
+
+
+@instance_builtins_app.command("list")
+def instance_builtins_list() -> None:
+    """List FEMIC-owned built-in instances available for source or package installs."""
+
+    try:
+        catalog = load_builtin_instance_catalog()
+    except BuiltinInstanceCatalogError as exc:
+        console.print(f"[red]FEMIC built-in catalog error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]FEMIC built-in instances[/green]")
+    for item in catalog.instances:
+        status = resolve_builtin_repo_status(target_dirname=item.target_dirname)
+        support_notes = list(item.support_repo_ids) or ["none"]
+        console.print(
+            f"- {item.builtin_id}: {item.label} "
+            f"status={status.status} path={status.path}"
+        )
+        console.print(f"  repo_url: {item.repo_url}")
+        console.print(f"  support_repos: {support_notes}")
+        for note in item.notes:
+            console.print(f"  note: {note}")
+
+
+@instance_builtins_app.command("install")
+def instance_builtins_install(
+    builtin_id: str = typer.Argument(..., help="Built-in id to install, or `all`."),
+) -> None:
+    """Install one or all FEMIC built-in instances into the managed user root."""
+
+    try:
+        result = install_builtin_instances(builtin_id)
+    except BuiltinInstanceCatalogError as exc:
+        console.print(f"[red]FEMIC built-in install failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]FEMIC built-in install complete[/green]")
+    console.print(f"managed_external_root: {result.managed_external_root}")
+    console.print(
+        f"installed={len(result.installed_paths)} skipped={len(result.skipped_paths)}"
+    )
+    for path in result.installed_paths:
+        console.print(f"installed_path: {path}")
+    for path in result.skipped_paths:
+        console.print(f"skipped_path: {path}")
+    console.print(
+        "next_step: materialize annex-backed payloads on demand after install; "
+        "this command does not run `datalad get` automatically."
+    )
+
+
 @instance_app.command("init")
 def instance_init(
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    instance_name: str | None = typer.Option(
+        None,
+        "--instance-name",
+        help="Create the instance under the configured visible user instance root.",
+        show_default=False,
+    ),
     overwrite: bool = typer.Option(
         False,
         "--overwrite",
@@ -1291,10 +1442,35 @@ def instance_init(
     ),
 ) -> None:
     """Create and initialize an instance workspace from packaged templates."""
-    context = _resolve_cli_instance_context(
-        instance_root=instance_root,
-        allow_legacy_fallback=False,
-    )
+    if instance_name is not None and not isinstance(instance_name, str):
+        instance_name = None
+
+    if instance_root is not None and instance_name:
+        console.print(
+            "[red]Instance init failed:[/red] "
+            "--instance-root and --instance-name are mutually exclusive."
+        )
+        raise typer.Exit(code=1)
+
+    if instance_name:
+        config = _load_or_exit_user_config()
+        try:
+            resolved_instance_root = _resolve_named_instance_root(
+                instance_name,
+                config=config,
+            )
+        except ValueError as exc:
+            console.print(f"[red]Instance init failed:[/red] {exc}")
+            raise typer.Exit(code=1) from exc
+        context = _resolve_cli_instance_context(
+            instance_root=resolved_instance_root,
+            allow_legacy_fallback=False,
+        )
+    else:
+        context = _resolve_cli_instance_context(
+            instance_root=instance_root,
+            allow_legacy_fallback=False,
+        )
 
     should_download = download_bc_vri
     if should_download and not yes:
@@ -3986,6 +4162,12 @@ def patchworks_variants_show(
     console.print(f"runtime_config: {item.runtime_config}")
     console.print(f"source: {item.source}")
     console.print(f"registry_path: {item.registry_path or 'builtin'}")
+    if item.source == "builtin":
+        builtin_status = resolve_builtin_repo_status(
+            target_dirname=item.instance_root.name
+        )
+        console.print(f"builtin_install_status: {builtin_status.status}")
+        console.print(f"builtin_resolved_root: {builtin_status.path}")
     if item.runtime:
         console.print(f"runtime: {json.dumps(item.runtime, indent=2, sort_keys=True)}")
     if item.notes:
@@ -4361,6 +4543,9 @@ def patchworks_run_variant(
     try:
         variant_registry = load_patchworks_variant_registry(user_registry_path=registry)
         variant = variant_registry.get_variant(variant_id)
+        install_hint = builtins_install_hint_for_variant(variant)
+        if install_hint is not None:
+            raise PatchworksVariantRegistryError(install_hint)
         _maybe_materialize_patchworks_variant(
             variant=variant,
             allow_large_download=allow_large_download,
@@ -5036,4 +5221,6 @@ patchworks_app.add_typer(patchworks_scenarios_app, name="scenarios")
 patchworks_app.add_typer(patchworks_scenario_sets_app, name="scenario-sets")
 patchworks_app.add_typer(patchworks_variants_app, name="variants")
 app.add_typer(patchworks_app, name="patchworks")
+instance_app.add_typer(instance_config_app, name="config")
+instance_app.add_typer(instance_builtins_app, name="builtins")
 app.add_typer(instance_app, name="instance")

@@ -24,6 +24,24 @@ FEMIC merges two registry sources at runtime:
 Built-ins are available out of the box. FEMIC does **not** install them into
 the user home directory at package install time.
 
+Built-in path resolution now works in two modes:
+
+1. source checkout:
+   repo-local ``external/...`` wins when the bundled instance submodule is
+   present;
+2. packaged install:
+   FEMIC falls back to the configured managed built-in root from
+   ``~/.femic/user.yaml`` (or the Windows equivalent).
+
+Use the instance/builtins surfaces when you want to inspect or install those
+managed built-ins explicitly:
+
+.. code-block:: powershell
+
+   python -m femic instance config show
+   python -m femic instance builtins list
+   python -m femic instance builtins install k3z
+
 The registry currently carries:
 
 - instance metadata;
@@ -55,7 +73,8 @@ Use these commands first when orienting yourself:
    python -m femic patchworks scenario-sets show k3z.proving_ground
 
 Use ``variants show`` when you want the resolved instance root, runtime
-config, `.pin`, and materialization summary for one variant.
+config, `.pin`, built-in install status, and materialization summary for one
+variant.
 
 Use ``variants materialization-plan`` when you want the richer pre-launch
 download/materialization view:
@@ -96,6 +115,12 @@ variant:
      k3z.base `
      --run-id k3z_variant_smoke `
      --scenario-mode max-even-flow-smoke
+
+If a built-in variant is not available in either repo-local ``external/...``
+or the configured managed built-in root, FEMIC now stops early with a direct
+install hint of the form:
+
+``femic instance builtins install <instance-id>``
 
 Use ``run-scenario`` when the registry already defines a named scenario:
 

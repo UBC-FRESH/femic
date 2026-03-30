@@ -2216,6 +2216,170 @@ def test_instance_init_calls_bootstrap(monkeypatch: pytest.MonkeyPatch) -> None:
     assert any("instance init completed" in msg for msg in messages)
 
 
+def test_instance_init_with_instance_name_uses_configured_user_root(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    called: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        cli_main,
+        "load_femic_user_config",
+        lambda: SimpleNamespace(
+            config_path=Path("user.yaml"),
+            exists=True,
+            paths=SimpleNamespace(
+                managed_external_root=Path("managed"),
+                user_instance_root=Path("userspace") / "instances",
+            ),
+        ),
+    )
+
+    def _fake_bootstrap_instance_workspace(
+        *,
+        instance_root,
+        overwrite,
+        include_bc_vri_download,
+        message_fn,
+    ):
+        called["instance_root"] = instance_root
+        called["overwrite"] = overwrite
+        called["include_bc_vri_download"] = include_bc_vri_download
+        message_fn("download simulation")
+        return SimpleNamespace(
+            instance_root=instance_root,
+            created_dirs=(),
+            written_files=(instance_root / "QUICKSTART.md",),
+            skipped_files=(),
+            downloaded_archives=(),
+            extracted_dirs=(),
+        )
+
+    monkeypatch.setattr(
+        cli_main,
+        "bootstrap_instance_workspace",
+        _fake_bootstrap_instance_workspace,
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "run_geospatial_preflight",
+        lambda **_kwargs: SimpleNamespace(
+            os_family="windows",
+            install_hint="windows hint",
+            gdal_version=None,
+            warnings=(),
+            errors=(),
+            ok=True,
+        ),
+    )
+
+    cli_main.instance_init(
+        instance_root=None,
+        instance_name="demo-case",
+        overwrite=False,
+        download_bc_vri=False,
+        yes=True,
+    )
+
+    assert (
+        called["instance_root"]
+        == (Path("userspace") / "instances" / "demo-case").resolve()
+    )
+    assert any("instance init completed" in msg for msg in messages)
+
+
+def test_instance_init_rejects_instance_root_and_name(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.instance_init(
+            instance_root=Path("instance"),
+            instance_name="demo-case",
+            overwrite=False,
+            download_bc_vri=False,
+            yes=True,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("mutually exclusive" in msg for msg in messages)
+
+
+def test_instance_config_show_prints_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "load_femic_user_config",
+        lambda: SimpleNamespace(
+            config_path=Path("user.yaml"),
+            exists=False,
+            paths=SimpleNamespace(
+                managed_external_root=Path("managed"),
+                user_instance_root=Path("instances"),
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "default_femic_user_paths",
+        lambda: SimpleNamespace(
+            managed_external_root=Path("default-managed"),
+            user_instance_root=Path("default-instances"),
+        ),
+    )
+
+    cli_main.instance_config_show()
+
+    assert any("config_path: user.yaml" in msg for msg in messages)
+    assert any("managed_external_root: managed" in msg for msg in messages)
+    assert any(
+        "default_user_instance_root: default-instances" in msg for msg in messages
+    )
+
+
+def test_patchworks_run_variant_surfaces_builtin_install_hint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    fake_variant = SimpleNamespace(variant_id="k3z.base")
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(get_variant=lambda _variant_id: fake_variant),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "builtins_install_hint_for_variant",
+        lambda _variant: "Built-in instance k3z is not available locally.",
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.patchworks_run_variant(
+            variant_id="k3z.base",
+            registry=Path("variants.yaml"),
+            log_dir=Path("vdyp_io/logs"),
+            run_id=None,
+            stage_label=None,
+            iterations=1,
+            improvement=0.0,
+            scenario_mode="none",
+            scenario_target=None,
+            scenario_min_annual=None,
+            allow_large_download=False,
+            materialization_threshold_mib=100,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any(
+        "Built-in instance k3z is not available locally." in msg for msg in messages
+    )
+
+
 def test_instance_rebuild_runs_runner_and_reports(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
