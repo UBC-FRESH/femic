@@ -20,7 +20,8 @@ Current responsibilities include:
   families, default markers, and notes;
 - resolving named variants to concrete instance roots, runtime configs, and
   analysis ``.pin`` paths; and
-- planning/executing registry-declared materialization before launch; and
+- planning/executing registry-declared materialization before launch;
+- exposing read-only materialization-plan summaries for operator inspection;
 - preserving richer metadata for future runtime/scenario/materialization
   orchestration.
 

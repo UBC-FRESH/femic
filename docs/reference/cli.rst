@@ -521,6 +521,15 @@ Subcommands
 
 - ``VARIANT_ID`` argument (required)
 - ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--materialization-threshold-mib INTEGER`` (default: ``100``; used when
+  summarizing registry-declared materialization)
+
+``patchworks variants materialization-plan`` options
+
+- ``VARIANT_ID`` argument (required)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--materialization-threshold-mib INTEGER`` (default: ``100``; used when
+  deciding whether the current plan would require confirmation)
 
 Instance Workspace
 ------------------

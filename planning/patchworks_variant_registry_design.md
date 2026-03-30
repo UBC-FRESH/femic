@@ -428,3 +428,30 @@ And the current scenario-set metadata surface now includes:
 
 That keeps the registry expressive enough for operator-facing grouping without
 yet committing to broader orchestration or parallel execution semantics.
+
+Current materialization-inspection slice
+----------------------------------------
+
+The registry surface now also has a small read-only materialization inspection
+layer on top of the existing launch guardrail:
+
+- ``femic patchworks variants materialization-plan <variant-id>``
+- richer aggregate materialization summary in
+  ``femic patchworks variants show <variant-id>``
+
+That summary intentionally mirrors the existing launch-consent contract rather
+than inventing a second policy model:
+
+- action count
+- known estimated bytes
+- human-readable known estimate
+- unknown-size flag
+- whether the current threshold would require confirmation
+- per-action dataset root / relpaths / estimate lines
+
+The point of this slice is operator visibility, not execution change:
+
+- inspect a registry-declared `datalad-get` plan before launch;
+- keep `run-variant` and the named scenario/scenario-set runner seam
+  untouched; and
+- leave richer dataset-summary / consent UX as a follow-on decision.

@@ -963,17 +963,116 @@ def test_patchworks_variants_show_emits_registry_entry(
                 registry_path=None,
                 runtime=None,
                 notes=("note one",),
-                materialization=(),
+                materialization=(
+                    SimpleNamespace(
+                        kind="datalad-get",
+                        dataset_root="external/femic-public-data",
+                        relpaths=("data",),
+                        estimated_bytes=1024,
+                    ),
+                ),
             )
         ),
     )
 
-    cli_main.patchworks_variants_show("k3z.base", registry=Path("variants.yaml"))
+    cli_main.patchworks_variants_show(
+        "k3z.base",
+        registry=Path("variants.yaml"),
+        materialization_threshold_mib=100,
+    )
 
     assert any("Patchworks variant" in msg for msg in messages)
     assert any("variant_id: k3z.base" in msg for msg in messages)
     assert any("analysis_pin:" in msg for msg in messages)
     assert any("note: note one" in msg for msg in messages)
+    assert any("materialization_summary:" in msg for msg in messages)
+    assert any("estimated=1.0 KiB" in msg for msg in messages)
+
+
+def test_patchworks_variants_show_reports_no_materialization(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(
+            get_variant=lambda _variant_id: SimpleNamespace(
+                variant_id="k3z.base",
+                label="K3Z base",
+                instance_id="k3z",
+                instance_label="K3Z example instance",
+                variant_family="baseline",
+                kind="patchworks",
+                default=True,
+                default_scenario_id="even_flow_smoke",
+                instance_root=Path("external/femic-k3z-instance"),
+                analysis_pin=Path("external/femic-k3z-instance/models/.../base.pin"),
+                runtime_config=Path(
+                    "external/femic-k3z-instance/config/patchworks.runtime.windows.yaml"
+                ),
+                source="builtin",
+                registry_path=None,
+                runtime=None,
+                notes=(),
+                materialization=(),
+            )
+        ),
+    )
+
+    cli_main.patchworks_variants_show(
+        "k3z.base",
+        registry=Path("variants.yaml"),
+        materialization_threshold_mib=100,
+    )
+
+    assert any("materialization_summary: none" in msg for msg in messages)
+
+
+def test_patchworks_variants_materialization_plan_prints_summary(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(
+            get_variant=lambda _variant_id: SimpleNamespace(
+                variant_id="k3z.base",
+                label="K3Z base",
+                registry_path=None,
+                materialization=(
+                    SimpleNamespace(
+                        kind="datalad-get",
+                        dataset_root="external/femic-public-data",
+                        relpaths=("data", "k3z"),
+                        estimated_bytes=150 * 1024 * 1024,
+                    ),
+                    SimpleNamespace(
+                        kind="datalad-get",
+                        dataset_root="external/femic-public-data",
+                        relpaths=("cache",),
+                        estimated_bytes=None,
+                    ),
+                ),
+            )
+        ),
+    )
+
+    cli_main.patchworks_variants_materialization_plan(
+        "k3z.base",
+        registry=Path("variants.yaml"),
+        materialization_threshold_mib=100,
+    )
+
+    assert any("Patchworks variant materialization plan" in msg for msg in messages)
+    assert any("materialization_summary:" in msg for msg in messages)
+    assert any("actions=2" in msg for msg in messages)
+    assert any("requires_confirmation=True" in msg for msg in messages)
+    assert any("has_unknown_sizes=True" in msg for msg in messages)
+    assert any("relpaths=['data', 'k3z']" in msg for msg in messages)
 
 
 def test_patchworks_run_variant_delegates_to_headless_runner(

@@ -294,6 +294,44 @@ def _maybe_materialize_patchworks_variant(
     materialize_patchworks_variant(variant)
 
 
+def _print_patchworks_materialization_plan(
+    *,
+    variant: Any,
+    materialization_threshold_mib: int,
+) -> None:
+    """Print aggregate and per-action materialization details for one variant."""
+
+    materialization_plan = build_patchworks_variant_materialization_plan(
+        variant,
+        prompt_threshold_bytes=materialization_threshold_mib * 1024 * 1024,
+    )
+    if not materialization_plan.action_count:
+        console.print("materialization_summary: none")
+        return
+
+    console.print(
+        "materialization_summary: "
+        f"actions={materialization_plan.action_count} "
+        f"known_estimated_bytes={materialization_plan.known_estimated_bytes} "
+        f"known_estimated={_format_binary_size(materialization_plan.known_estimated_bytes)} "
+        f"has_unknown_sizes={materialization_plan.has_unknown_sizes} "
+        f"requires_confirmation={materialization_plan.requires_confirmation} "
+        f"threshold_mib={materialization_threshold_mib}"
+    )
+    for action in variant.materialization:
+        estimate_text = (
+            _format_binary_size(action.estimated_bytes)
+            if action.estimated_bytes is not None
+            else "unknown"
+        )
+        console.print(
+            "materialization: "
+            f"kind={action.kind} dataset_root={action.dataset_root} "
+            f"relpaths={list(action.relpaths) or ['.']} estimated={estimate_text} "
+            f"estimated_bytes={action.estimated_bytes}"
+        )
+
+
 def _run_patchworks_registered_scenario(
     *,
     variant: Any,
@@ -3893,6 +3931,12 @@ def patchworks_variants_list(
 def patchworks_variants_show(
     variant_id: str = typer.Argument(..., help="Registered Patchworks variant id."),
     registry: Path = PATCHWORKS_VARIANT_REGISTRY_OPTION,
+    materialization_threshold_mib: int = typer.Option(
+        DEFAULT_PATCHWORKS_MATERIALIZATION_PROMPT_BYTES // (1024 * 1024),
+        "--materialization-threshold-mib",
+        min=0,
+        help="Prompt threshold used when summarizing registry-declared materialization.",
+    ),
 ) -> None:
     """Show one resolved Patchworks variant entry."""
 
@@ -3922,13 +3966,40 @@ def patchworks_variants_show(
     if item.notes:
         for note in item.notes:
             console.print(f"note: {note}")
-    if item.materialization:
-        for action in item.materialization:
-            console.print(
-                "materialization: "
-                f"kind={action.kind} dataset_root={action.dataset_root} "
-                f"relpaths={list(action.relpaths)} estimated_bytes={action.estimated_bytes}"
-            )
+    _print_patchworks_materialization_plan(
+        variant=item,
+        materialization_threshold_mib=materialization_threshold_mib,
+    )
+
+
+@patchworks_variants_app.command("materialization-plan")
+def patchworks_variants_materialization_plan(
+    variant_id: str = typer.Argument(..., help="Registered Patchworks variant id."),
+    registry: Path = PATCHWORKS_VARIANT_REGISTRY_OPTION,
+    materialization_threshold_mib: int = typer.Option(
+        DEFAULT_PATCHWORKS_MATERIALIZATION_PROMPT_BYTES // (1024 * 1024),
+        "--materialization-threshold-mib",
+        min=0,
+        help="Prompt threshold used when summarizing registry-declared materialization.",
+    ),
+) -> None:
+    """Show the prelaunch materialization plan for one Patchworks variant."""
+
+    try:
+        variant_registry = load_patchworks_variant_registry(user_registry_path=registry)
+        item = variant_registry.get_variant(variant_id)
+    except (FileNotFoundError, PatchworksVariantRegistryError, yaml.YAMLError) as exc:
+        console.print(f"[red]Patchworks variant registry error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]Patchworks variant materialization plan[/green]")
+    console.print(f"variant_id: {item.variant_id}")
+    console.print(f"label: {item.label}")
+    console.print(f"registry_path: {item.registry_path or 'builtin'}")
+    _print_patchworks_materialization_plan(
+        variant=item,
+        materialization_threshold_mib=materialization_threshold_mib,
+    )
 
 
 @patchworks_variants_app.command("register")

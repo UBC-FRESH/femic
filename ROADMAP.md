@@ -9212,32 +9212,37 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
             - step 1: `372` lines
             - step 2: `373` lines
       - current next edge:
-        - decide whether the first production materialization experience
-          should stay as raw `datalad-get` actions or grow a more user-facing
-          dataset summary/consent surface;
-        - the next scenario-set metadata slice is now also in hand:
-          - scenario sets can now carry:
-            - `instance_id`
-            - `scenario_set_family`
-            - `default`
-            - `notes`
+        - the small read-only materialization inspection slice is now also in
+          hand:
           - new CLI surface:
-            - `femic patchworks scenario-sets show <scenario-set-id>`
-          - `scenario-sets list` now supports:
-            - `--instance-id`
-          - direct CLI proof now also passed:
-            - `python -m femic patchworks scenario-sets list --instance-id k3z`
-            - `python -m femic patchworks scenario-sets show k3z.proving_ground`
-            - direct inspected output now prints:
-              - `instance_id: k3z`
-              - `scenario_set_family: proving_ground`
-              - `default: True`
-              - the shipped proving-ground note text
-        - then decide whether the first production materialization experience
-          should stay as raw `datalad-get` actions or grow a more user-facing
-          dataset summary/consent surface;
+            - `femic patchworks variants materialization-plan <variant-id>`
+          - `femic patchworks variants show <variant-id>` now also prints an
+            aggregate materialization summary;
+          - the inspection output mirrors the existing launch-consent
+            contract:
+            - action count
+            - known estimated bytes
+            - human-readable known estimate
+            - unknown-size flag
+            - whether the current threshold would require confirmation
+            - per-action dataset root / relpaths / estimate lines
+          - direct disposable-overlay proof now also passed:
+            - `python -m femic patchworks variants show demo.materialized --registry vdyp_io/logs/issue60_materialization_overlay.yaml --materialization-threshold-mib 100`
+            - `python -m femic patchworks variants materialization-plan demo.materialized --registry vdyp_io/logs/issue60_materialization_overlay.yaml --materialization-threshold-mib 100`
+            - both inspected outputs agreed on:
+              - `actions=2`
+              - `known_estimated=150.0 MiB`
+              - `has_unknown_sizes=True`
+              - `requires_confirmation=True`
+        - next edge:
+          - decide whether raw registry-declared `datalad-get` actions are
+            enough for the first production materialization experience, or
+            whether FEMIC should grow a richer dataset-summary / consent
+            surface;
+          - keep the proven `run-variant` / named-scenario / scenario-set
+            launch seam untouched while making that choice;
         - defer parallel scenario-set execution until there is a clearer
-        Patchworks process-safety contract for concurrent runs.
+          Patchworks process-safety contract for concurrent runs.
   - Current implementation order:
     - reuse FEMIC's existing BeanShell launcher in
       `src/femic/patchworks_runtime.py` rather than inventing a second

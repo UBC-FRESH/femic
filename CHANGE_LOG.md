@@ -9005,3 +9005,24 @@
     - `scenario_set_family: proving_ground`
     - `default: True`
     - the shipped proving-ground note text
+- 2026-03-30 (Issue #60): landed a small read-only Patchworks materialization
+  inspection slice on top of the proven registry-backed launch seam.
+  - Added new CLI surface:
+    - `femic patchworks variants materialization-plan <variant-id>`
+  - `femic patchworks variants show <variant-id>` now also prints an
+    aggregate materialization summary.
+  - The new inspection output mirrors the existing launch-consent contract:
+    - action count
+    - known estimated bytes
+    - human-readable known estimate
+    - unknown-size flag
+    - whether the current threshold would require confirmation
+    - per-action dataset root / relpaths / estimate lines
+  - Direct disposable-overlay proof passed:
+    - `python -m femic patchworks variants show demo.materialized --registry vdyp_io/logs/issue60_materialization_overlay.yaml --materialization-threshold-mib 100`
+    - `python -m femic patchworks variants materialization-plan demo.materialized --registry vdyp_io/logs/issue60_materialization_overlay.yaml --materialization-threshold-mib 100`
+  - Directly inspected output now agrees on:
+    - `actions=2`
+    - `known_estimated=150.0 MiB`
+    - `has_unknown_sizes=True`
+    - `requires_confirmation=True`
