@@ -986,6 +986,7 @@ def test_patchworks_variants_show_emits_registry_entry(
     assert any("analysis_pin:" in msg for msg in messages)
     assert any("note: note one" in msg for msg in messages)
     assert any("materialization_summary:" in msg for msg in messages)
+    assert any("materialization_dataset:" in msg for msg in messages)
     assert any("estimated=1.0 KiB" in msg for msg in messages)
 
 
@@ -1069,10 +1070,103 @@ def test_patchworks_variants_materialization_plan_prints_summary(
 
     assert any("Patchworks variant materialization plan" in msg for msg in messages)
     assert any("materialization_summary:" in msg for msg in messages)
+    assert any("datasets=1" in msg for msg in messages)
     assert any("actions=2" in msg for msg in messages)
     assert any("requires_confirmation=True" in msg for msg in messages)
     assert any("has_unknown_sizes=True" in msg for msg in messages)
+    assert any("materialization_dataset:" in msg for msg in messages)
     assert any("relpaths=['data', 'k3z']" in msg for msg in messages)
+
+
+def test_patchworks_run_variant_reports_dataset_summary_for_materialization(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    variant = SimpleNamespace(
+        variant_id="k3z.base",
+        instance_root=Path("external/femic-k3z-instance"),
+        analysis_pin=Path(
+            "external/femic-k3z-instance/models/k3z_patchworks_model/analysis/base.pin"
+        ),
+        runtime_config=Path(
+            "external/femic-k3z-instance/config/patchworks.runtime.windows.yaml"
+        ),
+        materialization=(
+            SimpleNamespace(
+                kind="datalad-get",
+                dataset_root="external/femic-public-data",
+                relpaths=("data",),
+                estimated_bytes=150 * 1024 * 1024,
+            ),
+            SimpleNamespace(
+                kind="datalad-get",
+                dataset_root="external/femic-public-data",
+                relpaths=("cache",),
+                estimated_bytes=None,
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "load_patchworks_variant_registry",
+        lambda **_kwargs: SimpleNamespace(get_variant=lambda _variant_id: variant),
+    )
+    confirmed: list[tuple[str, bool]] = []
+    monkeypatch.setattr(
+        cli_main.typer,
+        "confirm",
+        lambda message, default=False: confirmed.append((message, default)) or True,
+    )
+    materialized: list[str] = []
+    monkeypatch.setattr(
+        cli_main,
+        "materialize_patchworks_variant",
+        lambda item: materialized.append(item.variant_id),
+    )
+    monkeypatch.setattr(
+        cli_main, "load_patchworks_runtime_config", lambda _path: SimpleNamespace()
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "run_patchworks_headless_pin",
+        lambda **_kwargs: SimpleNamespace(
+            run_id="demo",
+            returncode=0,
+            pin_path=variant.analysis_pin,
+            stage_dir=Path("vdyp_io/logs/headless_stage/demo"),
+            scenario_mode="none",
+            execution=SimpleNamespace(
+                stdout_log_path=Path("tipsy_io/logs/stdout.log"),
+                stderr_log_path=Path("tipsy_io/logs/stderr.log"),
+            ),
+            manifest_path=Path("tipsy_io/logs/manifest.json"),
+            failures=(),
+        ),
+    )
+
+    cli_main.patchworks_run_variant(
+        "k3z.base",
+        registry=Path("variants.yaml"),
+        log_dir=Path("vdyp_io/logs"),
+        run_id="demo",
+        stage_label=None,
+        iterations=1,
+        improvement=0.0,
+        scenario_mode="none",
+        scenario_target=None,
+        scenario_min_annual=None,
+        allow_large_download=False,
+        materialization_threshold_mib=100,
+    )
+
+    assert confirmed
+    assert materialized == ["k3z.base"]
+    rendered = "\n".join(str(msg) for msg in messages)
+    assert "datasets=1" in rendered
+    assert "actions=2" in rendered
+    assert "materialization_dataset:" in rendered
 
 
 def test_patchworks_run_variant_delegates_to_headless_runner(

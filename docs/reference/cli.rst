@@ -531,6 +531,13 @@ Subcommands
 - ``--materialization-threshold-mib INTEGER`` (default: ``100``; used when
   deciding whether the current plan would require confirmation)
 
+Both ``patchworks variants show`` and
+``patchworks variants materialization-plan`` now print:
+
+- one aggregate materialization summary;
+- one dataset-root grouped summary per touched dataset; and
+- the supporting raw per-action detail lines.
+
 Instance Workspace
 ------------------
 

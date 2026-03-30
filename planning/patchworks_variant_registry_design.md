@@ -455,3 +455,27 @@ The point of this slice is operator visibility, not execution change:
 - keep `run-variant` and the named scenario/scenario-set runner seam
   untouched; and
 - leave richer dataset-summary / consent UX as a follow-on decision.
+
+Current dataset-summary / consent slice
+---------------------------------------
+
+The materialization surface now also grows one small operator-facing summary
+layer on top of the raw action view:
+
+- group actions by `dataset_root`
+- print per-dataset action count
+- print per-dataset known estimated bytes
+- print per-dataset unknown-size flag
+- print per-dataset relpath coverage
+
+That grouped view now appears both in:
+
+- `femic patchworks variants show <variant-id>`
+- `femic patchworks variants materialization-plan <variant-id>`
+
+And the same grouped summary now leads the launch-time consent messaging before
+the raw per-action detail lines.
+
+This keeps the execution seam unchanged while making the operator-facing
+materialization story easier to understand than a flat list of `datalad-get`
+actions.

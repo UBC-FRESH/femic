@@ -43,6 +43,17 @@ class PatchworksVariantMaterializationPlan:
 
 
 @dataclass(frozen=True)
+class PatchworksVariantMaterializationDatasetSummary:
+    """Dataset-root grouped summary of variant materialization actions."""
+
+    dataset_root: str
+    action_count: int
+    known_estimated_bytes: int
+    has_unknown_sizes: bool
+    relpaths: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class PatchworksVariantScenarioDefinition:
     """Named scenario contract attached to one registry variant."""
 
@@ -1018,6 +1029,45 @@ def build_patchworks_variant_materialization_plan(
         known_estimated_bytes=known_estimated_bytes,
         has_unknown_sizes=has_unknown_sizes,
         requires_confirmation=known_estimated_bytes > prompt_threshold_bytes,
+    )
+
+
+def summarize_patchworks_variant_materialization_by_dataset(
+    variant: PatchworksVariantDefinition,
+) -> tuple[PatchworksVariantMaterializationDatasetSummary, ...]:
+    """Group registry-declared materialization actions by dataset root."""
+
+    grouped: dict[str, dict[str, Any]] = {}
+    for action in variant.materialization:
+        dataset_root = action.dataset_root or "<missing>"
+        bucket = grouped.setdefault(
+            dataset_root,
+            {
+                "action_count": 0,
+                "known_estimated_bytes": 0,
+                "has_unknown_sizes": False,
+                "relpaths": [],
+            },
+        )
+        bucket["action_count"] += 1
+        if action.estimated_bytes is None:
+            bucket["has_unknown_sizes"] = True
+        else:
+            bucket["known_estimated_bytes"] += action.estimated_bytes
+        relpath_items = list(action.relpaths) if action.relpaths else ["."]
+        for relpath in relpath_items:
+            if relpath not in bucket["relpaths"]:
+                bucket["relpaths"].append(relpath)
+
+    return tuple(
+        PatchworksVariantMaterializationDatasetSummary(
+            dataset_root=dataset_root,
+            action_count=int(payload["action_count"]),
+            known_estimated_bytes=int(payload["known_estimated_bytes"]),
+            has_unknown_sizes=bool(payload["has_unknown_sizes"]),
+            relpaths=tuple(str(item) for item in payload["relpaths"]),
+        )
+        for dataset_root, payload in sorted(grouped.items())
     )
 
 

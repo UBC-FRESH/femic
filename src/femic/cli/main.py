@@ -84,6 +84,7 @@ from femic.patchworks_variants import (
     materialize_patchworks_variant,
     remove_patchworks_user_variant_entry,
     serialize_patchworks_variant_definition,
+    summarize_patchworks_variant_materialization_by_dataset,
     upsert_patchworks_user_variant_entry,
 )
 from femic.rebuild_baseline import (
@@ -262,10 +263,22 @@ def _maybe_materialize_patchworks_variant(
     if not materialization_plan.action_count:
         return
 
+    dataset_summaries = summarize_patchworks_variant_materialization_by_dataset(variant)
     console.print(
         "[yellow]Patchworks variant materialization required[/yellow] "
-        f"variant={variant.variant_id} actions={materialization_plan.action_count}"
+        f"variant={variant.variant_id} datasets={len(dataset_summaries)} "
+        f"actions={materialization_plan.action_count}"
     )
+    for dataset_summary in dataset_summaries:
+        console.print(
+            "materialization_dataset: "
+            f"dataset_root={dataset_summary.dataset_root} "
+            f"actions={dataset_summary.action_count} "
+            f"known_estimated={_format_binary_size(dataset_summary.known_estimated_bytes)} "
+            f"known_estimated_bytes={dataset_summary.known_estimated_bytes} "
+            f"has_unknown_sizes={dataset_summary.has_unknown_sizes} "
+            f"relpaths={list(dataset_summary.relpaths)}"
+        )
     for action in variant.materialization:
         estimate_text = (
             _format_binary_size(action.estimated_bytes)
@@ -309,8 +322,10 @@ def _print_patchworks_materialization_plan(
         console.print("materialization_summary: none")
         return
 
+    dataset_summaries = summarize_patchworks_variant_materialization_by_dataset(variant)
     console.print(
         "materialization_summary: "
+        f"datasets={len(dataset_summaries)} "
         f"actions={materialization_plan.action_count} "
         f"known_estimated_bytes={materialization_plan.known_estimated_bytes} "
         f"known_estimated={_format_binary_size(materialization_plan.known_estimated_bytes)} "
@@ -318,6 +333,16 @@ def _print_patchworks_materialization_plan(
         f"requires_confirmation={materialization_plan.requires_confirmation} "
         f"threshold_mib={materialization_threshold_mib}"
     )
+    for dataset_summary in dataset_summaries:
+        console.print(
+            "materialization_dataset: "
+            f"dataset_root={dataset_summary.dataset_root} "
+            f"actions={dataset_summary.action_count} "
+            f"known_estimated={_format_binary_size(dataset_summary.known_estimated_bytes)} "
+            f"known_estimated_bytes={dataset_summary.known_estimated_bytes} "
+            f"has_unknown_sizes={dataset_summary.has_unknown_sizes} "
+            f"relpaths={list(dataset_summary.relpaths)}"
+        )
     for action in variant.materialization:
         estimate_text = (
             _format_binary_size(action.estimated_bytes)
@@ -4336,42 +4361,12 @@ def patchworks_run_variant(
     try:
         variant_registry = load_patchworks_variant_registry(user_registry_path=registry)
         variant = variant_registry.get_variant(variant_id)
-        materialization_plan = build_patchworks_variant_materialization_plan(
-            variant,
-            prompt_threshold_bytes=materialization_threshold_mib * 1024 * 1024,
+        _maybe_materialize_patchworks_variant(
+            variant=variant,
+            allow_large_download=allow_large_download,
+            materialization_threshold_mib=materialization_threshold_mib,
+            failure_prefix="Patchworks variant run cancelled:",
         )
-        if materialization_plan.action_count:
-            console.print(
-                "[yellow]Patchworks variant materialization required[/yellow] "
-                f"variant={variant.variant_id} actions={materialization_plan.action_count}"
-            )
-            for action in variant.materialization:
-                estimate_text = (
-                    _format_binary_size(action.estimated_bytes)
-                    if action.estimated_bytes is not None
-                    else "unknown"
-                )
-                console.print(
-                    "materialization: "
-                    f"kind={action.kind} dataset_root={action.dataset_root} "
-                    f"relpaths={list(action.relpaths) or ['.']} estimated={estimate_text}"
-                )
-            if (
-                materialization_plan.requires_confirmation
-                and not allow_large_download
-                and not typer.confirm(
-                    "Proceed with approximately "
-                    f"{_format_binary_size(materialization_plan.known_estimated_bytes)} "
-                    f"of Patchworks materialization for {variant.variant_id}?",
-                    default=False,
-                )
-            ):
-                console.print(
-                    "[red]Patchworks variant run cancelled:[/red] "
-                    "large materialization was not approved."
-                )
-                raise typer.Exit(code=1)
-            materialize_patchworks_variant(variant)
         runtime_config = load_patchworks_runtime_config(variant.runtime_config)
         result = run_patchworks_headless_pin(
             config=runtime_config,

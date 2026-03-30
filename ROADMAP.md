@@ -9212,33 +9212,28 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
             - step 1: `372` lines
             - step 2: `373` lines
       - current next edge:
-        - the small read-only materialization inspection slice is now also in
-          hand:
-          - new CLI surface:
-            - `femic patchworks variants materialization-plan <variant-id>`
-          - `femic patchworks variants show <variant-id>` now also prints an
-            aggregate materialization summary;
-          - the inspection output mirrors the existing launch-consent
-            contract:
-            - action count
-            - known estimated bytes
-            - human-readable known estimate
-            - unknown-size flag
-            - whether the current threshold would require confirmation
-            - per-action dataset root / relpaths / estimate lines
+        - the small dataset-summary / consent slice is now also in hand:
+          - the materialization surface now groups actions by `dataset_root`;
+          - `variants show` and `variants materialization-plan` now print:
+            - dataset count
+            - per-dataset action count
+            - per-dataset known estimated bytes
+            - per-dataset unknown-size flag
+            - per-dataset relpath coverage
+          - the same grouped dataset summary now leads launch-time consent
+            messaging before the raw per-action detail lines;
           - direct disposable-overlay proof now also passed:
             - `python -m femic patchworks variants show demo.materialized --registry vdyp_io/logs/issue60_materialization_overlay.yaml --materialization-threshold-mib 100`
             - `python -m femic patchworks variants materialization-plan demo.materialized --registry vdyp_io/logs/issue60_materialization_overlay.yaml --materialization-threshold-mib 100`
-            - both inspected outputs agreed on:
-              - `actions=2`
-              - `known_estimated=150.0 MiB`
-              - `has_unknown_sizes=True`
-              - `requires_confirmation=True`
+            - both inspected outputs now show:
+              - `datasets=1`
+              - `materialization_dataset: dataset_root=external/femic-public-data`
+              - grouped relpaths spanning both `data/bc` and `cache`
+              - unchanged `requires_confirmation=True`
         - next edge:
-          - decide whether raw registry-declared `datalad-get` actions are
-            enough for the first production materialization experience, or
-            whether FEMIC should grow a richer dataset-summary / consent
-            surface;
+          - decide whether this grouped dataset summary is enough for the
+            first production materialization experience, or whether FEMIC
+            should grow an even richer dataset provenance / consent surface;
           - keep the proven `run-variant` / named-scenario / scenario-set
             launch seam untouched while making that choice;
         - defer parallel scenario-set execution until there is a clearer

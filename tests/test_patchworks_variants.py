@@ -5,8 +5,9 @@ from types import SimpleNamespace
 import pytest
 
 from femic.patchworks_variants import (
-    PatchworksVariantMaterializationAction,
     PatchworksVariantDefinition,
+    PatchworksVariantMaterializationAction,
+    PatchworksVariantMaterializationDatasetSummary,
     PatchworksVariantRegistryError,
     PatchworksScenarioSetMember,
     build_patchworks_variant_materialization_plan,
@@ -14,6 +15,7 @@ from femic.patchworks_variants import (
     load_patchworks_user_registry_overlay,
     materialize_patchworks_variant,
     remove_patchworks_user_variant_entry,
+    summarize_patchworks_variant_materialization_by_dataset,
     upsert_patchworks_user_variant_entry,
 )
 
@@ -157,6 +159,61 @@ def test_build_patchworks_variant_materialization_plan_requires_confirmation() -
     assert plan.known_estimated_bytes == 110 * 1024 * 1024
     assert plan.has_unknown_sizes is False
     assert plan.requires_confirmation is True
+
+
+def test_summarize_patchworks_variant_materialization_by_dataset_groups_actions() -> (
+    None
+):
+    variant = PatchworksVariantDefinition(
+        variant_id="k3z.base",
+        label="K3Z base",
+        instance_id="k3z",
+        instance_label="K3Z",
+        variant_family="baseline",
+        kind="patchworks",
+        instance_root=Path("external/femic-k3z-instance"),
+        analysis_pin=Path("analysis/base.pin"),
+        runtime_config=Path("config/runtime.yaml"),
+        materialization=(
+            PatchworksVariantMaterializationAction(
+                kind="datalad-get",
+                dataset_root="external/femic-public-data",
+                relpaths=("data", "bc"),
+                estimated_bytes=80 * 1024 * 1024,
+            ),
+            PatchworksVariantMaterializationAction(
+                kind="datalad-get",
+                dataset_root="external/femic-public-data",
+                relpaths=("cache",),
+                estimated_bytes=None,
+            ),
+            PatchworksVariantMaterializationAction(
+                kind="datalad-get",
+                dataset_root="external/other-data",
+                relpaths=(),
+                estimated_bytes=1024,
+            ),
+        ),
+    )
+
+    summary = summarize_patchworks_variant_materialization_by_dataset(variant)
+
+    assert summary == (
+        PatchworksVariantMaterializationDatasetSummary(
+            dataset_root="external/femic-public-data",
+            action_count=2,
+            known_estimated_bytes=80 * 1024 * 1024,
+            has_unknown_sizes=True,
+            relpaths=("data", "bc", "cache"),
+        ),
+        PatchworksVariantMaterializationDatasetSummary(
+            dataset_root="external/other-data",
+            action_count=1,
+            known_estimated_bytes=1024,
+            has_unknown_sizes=False,
+            relpaths=(".",),
+        ),
+    )
 
 
 def test_materialize_patchworks_variant_runs_datalad_get(

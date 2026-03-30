@@ -9026,3 +9026,23 @@
     - `known_estimated=150.0 MiB`
     - `has_unknown_sizes=True`
     - `requires_confirmation=True`
+- 2026-03-30 (Issue #60): landed a small dataset-summary / consent slice on
+  top of the proven Patchworks materialization inspection seam.
+  - The materialization surface now groups actions by `dataset_root` and
+    prints:
+    - per-dataset action count
+    - per-dataset known estimated bytes
+    - per-dataset unknown-size flag
+    - per-dataset relpath coverage
+  - The grouped dataset summary now appears in:
+    - `femic patchworks variants show <variant-id>`
+    - `femic patchworks variants materialization-plan <variant-id>`
+  - The same grouped dataset summary now also leads launch-time consent
+    messaging before the raw per-action detail lines.
+  - Direct disposable-overlay proof passed again:
+    - `python -m femic patchworks variants show demo.materialized --registry vdyp_io/logs/issue60_materialization_overlay.yaml --materialization-threshold-mib 100`
+    - `python -m femic patchworks variants materialization-plan demo.materialized --registry vdyp_io/logs/issue60_materialization_overlay.yaml --materialization-threshold-mib 100`
+  - Directly inspected output now also shows:
+    - `datasets=1`
+    - `materialization_dataset: dataset_root=external/femic-public-data`
+    - grouped relpaths spanning both `data/bc` and `cache`

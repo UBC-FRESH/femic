@@ -22,6 +22,8 @@ Current responsibilities include:
   analysis ``.pin`` paths; and
 - planning/executing registry-declared materialization before launch;
 - exposing read-only materialization-plan summaries for operator inspection;
+- exposing dataset-root grouped materialization summaries for operator-facing
+  inspection and consent; and
 - preserving richer metadata for future runtime/scenario/materialization
   orchestration.
 
