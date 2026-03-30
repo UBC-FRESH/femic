@@ -9140,3 +9140,16 @@
     absolute paths in docs, roadmap notes, changelog entries, issue comments,
     or user-facing examples unless the path itself is the contract being
     documented.
+- 2026-03-30 (Issue #62 kickoff): started packaged-install built-in instance
+  install and user workspace-root support.
+  - Created GitHub issue `#62`:
+    - `Package-install built-in instance install and user workspace roots`
+  - Created working branch:
+    - `feature/issue-62-builtin-instance-install`
+  - Updated `ROADMAP.md`:
+    - added `P49.7` as the active feature slice;
+    - refreshed `Detailed Next Steps Notes` so the new packaged-install user
+      config, managed built-in root, and visible user-instance root contract is
+      now the leading edge.
+  - Removed the adopted built-in-instance install idea from
+    `planning/incoming_ideas.md`.
