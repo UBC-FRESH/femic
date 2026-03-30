@@ -9212,30 +9212,58 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
             - step 1: `372` lines
             - step 2: `373` lines
       - current next edge:
-        - the small dataset-summary / consent slice is now also in hand:
-          - the materialization surface now groups actions by `dataset_root`;
-          - `variants show` and `variants materialization-plan` now print:
-            - dataset count
-            - per-dataset action count
-            - per-dataset known estimated bytes
-            - per-dataset unknown-size flag
-            - per-dataset relpath coverage
-          - the same grouped dataset summary now leads launch-time consent
-            messaging before the raw per-action detail lines;
-          - direct disposable-overlay proof now also passed:
-            - `python -m femic patchworks variants show demo.materialized --registry vdyp_io/logs/issue60_materialization_overlay.yaml --materialization-threshold-mib 100`
-            - `python -m femic patchworks variants materialization-plan demo.materialized --registry vdyp_io/logs/issue60_materialization_overlay.yaml --materialization-threshold-mib 100`
-            - both inspected outputs now show:
-              - `datasets=1`
-              - `materialization_dataset: dataset_root=external/femic-public-data`
-              - grouped relpaths spanning both `data/bc` and `cache`
-              - unchanged `requires_confirmation=True`
-        - next edge:
-          - decide whether this grouped dataset summary is enough for the
-            first production materialization experience, or whether FEMIC
-            should grow an even richer dataset provenance / consent surface;
-          - keep the proven `run-variant` / named-scenario / scenario-set
-            launch seam untouched while making that choice;
+        - closeout audit is now in hand for the actually-landed `#60`
+          operator surface:
+          - read-only inspection:
+            - `instances list`
+            - `variants list/show`
+            - `scenarios list`
+            - `scenario-sets list/show`
+            - `variants materialization-plan`
+          - mutable overlay management:
+            - `variants register/update/remove`
+          - execution:
+            - `run-variant`
+            - `run-scenario`
+            - `run-default-scenario`
+            - `run-scenario-set`
+            - `run-default-scenario-set`
+        - direct closeout smoke also passed:
+          - built-in K3Z inspection commands all resolved cleanly;
+          - disposable mixed-size overlay proof still showed:
+            - `datasets=1`
+            - `materialization_dataset: dataset_root=external/femic-public-data`
+            - grouped relpaths covering both `data/bc` and `cache`
+            - unchanged `requires_confirmation=True`
+          - real K3Z registry-backed smokes all passed with direct output
+            inspection:
+            - `run-variant k3z.base`
+              - manifest: `patchworks_headless_manifest-issue60_closeout_variant.json`
+              - `targetStatus.csv` kept both
+                `product.Yield.managed.Total` and
+                `flow.even.product.Yield.managed.Total` active
+              - `schedule.csv` non-empty (`331` lines)
+            - `run-scenario k3z.base even_flow_smoke`
+              - manifest: `patchworks_headless_manifest-issue60_closeout_scenario.json`
+              - same target pair active
+              - `schedule.csv` non-empty (`313` lines)
+            - `run-scenario-set k3z.proving_ground`
+              - manifests:
+                - `patchworks_headless_manifest-issue60_closeout_set_01.json`
+                - `patchworks_headless_manifest-issue60_closeout_set_02.json`
+              - same target pair active in both saved stages
+              - `schedule.csv` non-empty:
+                - step 1: `322` lines
+                - step 2: `374` lines
+        - treat the following as follow-on backlog, not `#60` branch blockers:
+          - richer dataset provenance / consent UX beyond the grouped summary
+          - broader scenario-family ideas
+          - any parallel scenario-set execution
+        - next step is issue/branch closeout:
+          - final closeout comment on GitHub issue `#60`
+          - close issue `#60`
+          - merge branch to `main`
+          - delete the feature branch
         - defer parallel scenario-set execution until there is a clearer
           Patchworks process-safety contract for concurrent runs.
   - Current implementation order:

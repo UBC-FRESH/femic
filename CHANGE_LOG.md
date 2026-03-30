@@ -9046,3 +9046,48 @@
     - `datasets=1`
     - `materialization_dataset: dataset_root=external/femic-public-data`
     - grouped relpaths spanning both `data/bc` and `cache`
+- 2026-03-30 (Issue #60): completed the Patchworks registry/operator surface
+  closeout audit and treated the remaining ideas as follow-on backlog rather
+  than branch blockers.
+  - Audited the shipped surface end to end:
+    - `instances list`
+    - `variants list/show/register/update/remove`
+    - `variants materialization-plan`
+    - `scenarios list`
+    - `scenario-sets list/show`
+    - `run-variant`
+    - `run-scenario`
+    - `run-default-scenario`
+    - `run-scenario-set`
+    - `run-default-scenario-set`
+  - Direct closeout smoke passed:
+    - built-in K3Z inspection commands resolved cleanly;
+    - disposable mixed-size overlay proof still showed:
+      - `datasets=1`
+      - `materialization_dataset: dataset_root=external/femic-public-data`
+      - grouped relpaths covering both `data/bc` and `cache`
+      - unchanged `requires_confirmation=True`
+    - real K3Z registry-backed smokes all passed with direct output
+      inspection:
+      - `run-variant k3z.base`
+        - manifest:
+          `vdyp_io/logs/patchworks_headless_manifest-issue60_closeout_variant.json`
+        - same target pair active in `targetStatus.csv`
+        - `schedule.csv` non-empty (`331` lines)
+      - `run-scenario k3z.base even_flow_smoke`
+        - manifest:
+          `vdyp_io/logs/patchworks_headless_manifest-issue60_closeout_scenario.json`
+        - same target pair active in `targetStatus.csv`
+        - `schedule.csv` non-empty (`313` lines)
+      - `run-scenario-set k3z.proving_ground`
+        - manifests:
+          - `vdyp_io/logs/patchworks_headless_manifest-issue60_closeout_set_01.json`
+          - `vdyp_io/logs/patchworks_headless_manifest-issue60_closeout_set_02.json`
+        - same target pair active in both saved stages
+        - `schedule.csv` non-empty:
+          - step 1: `322` lines
+          - step 2: `374` lines
+  - Deferred as future backlog instead of `#60` blockers:
+    - richer dataset provenance / consent UX beyond the grouped summary
+    - broader scenario-family ideas
+    - any parallel scenario-set execution
