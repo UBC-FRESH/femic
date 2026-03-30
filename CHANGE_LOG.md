@@ -9091,3 +9091,16 @@
     - richer dataset provenance / consent UX beyond the grouped summary
     - broader scenario-family ideas
     - any parallel scenario-set execution
+- 2026-03-30 (Issue #61 kickoff): started a focused docs reconciliation sweep
+  for the latest BTC, FAN$IER, and Patchworks operator/runtime surfaces.
+  - Created GitHub issue `#61`:
+    - `Reconcile Sphinx docs for BTC, FAN$IER, and Patchworks operator/runtime surfaces`
+  - Created working branch:
+    - `feature/issue-61-docs-reconciliation`
+  - Reconciled roadmap hygiene first:
+    - marked `P49.5` complete now that issue `#60` is already closed and the
+      branch has already been merged/deleted;
+    - added `P49.6` as the active docs sweep under issue `#61`;
+    - refreshed the `Detailed Next Steps Notes` section so it points at the
+      current BTC, FAN$IER, Patchworks, and docs state instead of stale
+      pre-closeout notes.

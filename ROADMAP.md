@@ -7668,39 +7668,43 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 ## Detailed Next Steps Notes
 
-- The core unattended BTC cutover bird is landed through Phase `48.2d3`.
-- Phase `48.3` is now complete under GitHub issue `#56`.
-- Phase `48.4` is now complete under GitHub issue `#57`.
-- Phase `48.5` is now complete under GitHub issue `#58`.
-- The next BTC/TIPSY adjacency edge is GitHub issue `#59`:
-  - mine the extracted `Fansier.chm` help plus adjacent BTC/TIPSY docs for the
-    concrete file seams that couple BTC outputs or regime exports into
-    FAN$IER;
-  - determine whether the likely FEMIC value surface is:
-    - unattended BTC-side preparation only,
-    - a human-in-the-loop FAN$IER handoff,
-    - or a harder blocker map that should stay documented but unimplemented;
-  - treat `-RGM` regime-file export, product-yield tables, and FAN$IER batch
-    mode topics as the first evidence-bearing surfaces.
-- Do not regress the repo's documented BTC seam understanding while doing that:
+- The BTC/TIPSY cutover and optional indicator-bank rollout are complete
+  through issues `#56`, `#57`, and `#58`.
+- The current documented BTC contract should remain explicit everywhere:
   - the live user-overlay
     ``<Documents>\BatchTIPSY Composer\TimberSupply.rpt`` path is the only
     known-valid unattended FEMIC ``/TSR`` seam;
-  - copied-install or stock-report ``/TSR`` probes may still be used as clue
-    gathering, but they are not equivalent validation surfaces and should not
-    displace the live overlay seam in docs, planning, or conclusions.
-- The BTC cutover track now carries:
-  - the landed unattended `MSYT.csv` + returned CSV seam;
-  - the full optional indicator-bank rollout from the canonical BTC ledger;
-  - a tracked installed-tree audit note at
-    `planning/tipsy_install_tree_audit_20260329.md`;
-  - runtime audit artifacts under `tipsy_io/logs/p48_3_install_audit/`,
-    including PDF text extracts and machine-readable CHM topic inventories.
-- The remaining notable caveat from the install-tree audit is narrow:
-  - local `hh.exe -decompile` needs a short, no-space path such as `C:\chm\...`
-    to work reliably here;
-  - once that seam is respected, full HTML extraction succeeds and can be
-    archived into tracked repo reference files.
+  - BTC `/No_GUI` is a reverse-engineering dead end, not a supported FEMIC
+    runtime seam.
+- The FAN$IER extraction seam is complete through issue `#59`:
+  - tracked user-facing surfaces now include:
+    - `femic fansier run-batch`
+    - `femic fansier parse-batch-output`
+    - `femic fansier run-and-parse`
+  - the practical machine-ingest default remains:
+    - `txt`
+    - raw `0%` discount posture
+    - short report for lean ingest, long report for broader archive/discovery
+- The Patchworks registry/operator surface is complete through issue `#60`:
+  - `instances list`
+  - `variants list/show/register/update/remove`
+  - `variants materialization-plan`
+  - `scenarios list`
+  - `scenario-sets list/show`
+  - `run-variant`
+  - `run-scenario`
+  - `run-default-scenario`
+  - `run-scenario-set`
+  - `run-default-scenario-set`
+- The active next edge is docs reconciliation under issue `#61`:
+  - remove stale `#60` roadmap closeout notes;
+  - add user-facing Sphinx guides for:
+    - unattended BTC/FAN$IER runtime and extraction;
+    - Patchworks variant/scenario/scenario-set management;
+  - top up the API/CLI reference so current defaults and operator surfaces are
+    easy to spot;
+  - strengthen contract/onboarding docs so the current proprietary-tool seams
+    are explicit for agents and maintainers.
 - The optional-bank rollout under GitHub issue `#48` is now complete:
   - treat the remaining missing optional BTC/TIPSY indicators as one umbrella
     rollout track, grouped into logical banks rather than split across a large
@@ -8994,7 +8998,7 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - writing the standard Patchworks target/report outputs to disk
     - checking those outputs directly for obvious regressions before declaring
       the seam landed
-  - [ ] P49.5 Add a registry-backed Patchworks variant launch surface on top of
+  - [x] P49.5 Add a registry-backed Patchworks variant launch surface on top of
     the proven headless runner.
     - Governing tracker:
       - GitHub issue #60
@@ -9259,13 +9263,45 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
           - richer dataset provenance / consent UX beyond the grouped summary
           - broader scenario-family ideas
           - any parallel scenario-set execution
-        - next step is issue/branch closeout:
-          - final closeout comment on GitHub issue `#60`
-          - close issue `#60`
-          - merge branch to `main`
-          - delete the feature branch
+        - closeout is now complete:
+          - final closeout comment was posted on GitHub issue `#60`
+          - issue `#60` is closed
+          - the feature branch was merged to `main`
+          - the feature branch was deleted after merge
         - defer parallel scenario-set execution until there is a clearer
           Patchworks process-safety contract for concurrent runs.
+  - [ ] P49.6 Reconcile Sphinx docs for BTC, FAN$IER, and Patchworks
+    operator/runtime surfaces.
+    - Governing tracker:
+      - GitHub issue #61
+    - Working branch:
+      - `feature/issue-61-docs-reconciliation`
+    - Goal:
+      - clean up stale roadmap notes left behind after `#60` closeout and make
+        the shipped BTC, FAN$IER, and Patchworks seams easy to find across the
+        user-facing guides, dev-facing API/CLI reference, and agent-facing
+        contract/onboarding docs.
+    - Planned scope:
+      - remove stale `#60` closeout notes and stop presenting that issue as
+        active work;
+      - add one operator-facing guide for the unattended BTC and FAN$IER
+        runtime/extraction seams;
+      - add one operator-facing guide for the Patchworks registry,
+        materialization, variant, scenario, and scenario-set surfaces;
+      - top up API/CLI docs so the latest defaults and operator-facing seams
+        are easy to spot;
+      - strengthen the contract/onboarding docs so agents do not have to infer
+        BTC `/TSR`, BTC `/No_GUI`, FAN$IER, or Patchworks registry behavior
+        from scattered notes.
+    - Validation target:
+      - `python -m sphinx -b html docs _build/html -W`
+      - `pytest tests/test_docs_contract.py -q` if contract docs change
+      - non-mutating CLI spot checks:
+        - `python -m femic tipsy --help`
+        - `python -m femic fansier --help`
+        - `python -m femic patchworks instances list`
+        - `python -m femic patchworks variants show k3z.base`
+        - `python -m femic patchworks scenario-sets show k3z.proving_ground`
   - Current implementation order:
     - reuse FEMIC's existing BeanShell launcher in
       `src/femic/patchworks_runtime.py` rather than inventing a second
