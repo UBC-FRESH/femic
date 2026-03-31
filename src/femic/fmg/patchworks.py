@@ -46,7 +46,7 @@ DEFAULT_SILVICULTURE_CONFIG_PATH: Path | None = None
 DEFAULT_RETENTION_VALUE = 0.0
 DEFAULT_SILV_STATE_NATURAL = "baseline"
 DEFAULT_SILV_STATE_PLANTED = "cc_pl"
-SUPPORTED_BTC_INDICATOR_BANKS = {"stand-structure-basic"}
+SUPPORTED_BTC_INDICATOR_BANKS = {"stand-structure-basic", "log-grades"}
 STAND_STRUCTURE_BASIC_FEATURE_COLUMNS = (
     ("MAI", "feature.MAI.managed.{au_token}"),
     ("BasalArea000", "feature.BasalArea000.managed.{au_token}"),
@@ -55,6 +55,17 @@ STAND_STRUCTURE_BASIC_FEATURE_COLUMNS = (
     ("StemCount000", "feature.StemCount000.managed.{au_token}"),
     ("StemCount125", "feature.StemCount125.managed.{au_token}"),
     ("StemCount175", "feature.StemCount175.managed.{au_token}"),
+)
+LOG_GRADES_PRODUCT_COLUMNS = (
+    "Logs_Grade_D",
+    "Logs_Grade_F",
+    "Logs_Grade_H",
+    "Logs_Grade_I",
+    "Logs_Grade_J",
+    "Logs_Grade_U",
+    "Logs_Grade_X",
+    "Logs_Grade_Y",
+    "Logs_Grade_All",
 )
 VALID_IFM_VALUES = {"managed", "unmanaged"}
 VALID_ORIGIN_VALUES = {"natural", "planted"}
@@ -482,6 +493,36 @@ def _harvested_treated_area_product_label(
 ) -> str:
     treatment_token = _sanitize_id_component(treatment_label).upper()
     return f"product.Treated.managed.{au_token}.{treatment_token}"
+
+
+def _log_grade_product_label(*, indicator_key: str, treatment_label: str) -> str:
+    treatment_token = _sanitize_id_component(treatment_label).upper()
+    return f"product.{indicator_key}.managed.Total.{treatment_token}"
+
+
+def _append_log_grade_product_attrs(
+    *,
+    product_attrs: list[AttributeBinding],
+    curves: dict[str, tuple[CurvePoint, ...]],
+    managed_indicator_curves: dict[str, tuple[CurvePoint, ...]],
+    au_token: str,
+    treatment_label: str,
+) -> None:
+    for indicator_key in LOG_GRADES_PRODUCT_COLUMNS:
+        curve_points = tuple(managed_indicator_curves.get(indicator_key, ()))
+        if not curve_points or not _curve_has_positive_signal(curve_points):
+            continue
+        curve_ref = f"au_{au_token}_managed_{_sanitize_id_component(indicator_key)}"
+        curves.setdefault(curve_ref, curve_points)
+        product_attrs.append(
+            AttributeBinding(
+                label=_log_grade_product_label(
+                    indicator_key=indicator_key,
+                    treatment_label=treatment_label,
+                ),
+                curve_idref=curve_ref,
+            )
+        )
 
 
 def _build_old_growth_1_curve_points(
@@ -2091,6 +2132,14 @@ def build_patchworks_forestmodel_definition(
                     curve_idref=managed_curve_ref,
                 ),
             ]
+            if origin == "planted" and "log-grades" in btc_indicator_bank_names:
+                _append_log_grade_product_attrs(
+                    product_attrs=product_attrs,
+                    curves=curves,
+                    managed_indicator_curves=managed_indicator_curves,
+                    au_token=au_token,
+                    treatment_label="CC",
+                )
             if unmanaged_stems_curve_ref is not None:
                 unmanaged_attrs.append(
                     AttributeBinding(
@@ -2821,6 +2870,14 @@ def build_patchworks_forestmodel_definition(
                         curve_idref=ct_residual_curve_ref,
                     ),
                 ]
+                if "log-grades" in btc_indicator_bank_names:
+                    _append_log_grade_product_attrs(
+                        product_attrs=ct_cc_product_attrs,
+                        curves=curves,
+                        managed_indicator_curves=managed_indicator_curves,
+                        au_token=au_token,
+                        treatment_label="CC",
+                    )
                 ct_residual_attrs = [
                     AttributeBinding(label="feature.Area.managed", curve_idref="unity"),
                     AttributeBinding(
@@ -3162,6 +3219,14 @@ def build_patchworks_forestmodel_definition(
                             curve_idref=fert_curve_ref,
                         ),
                     ]
+                    if "log-grades" in btc_indicator_bank_names:
+                        _append_log_grade_product_attrs(
+                            product_attrs=fert_cc_product_attrs,
+                            curves=curves,
+                            managed_indicator_curves=managed_indicator_curves,
+                            au_token=au_token,
+                            treatment_label="CC",
+                        )
                     if qmd_enabled:
                         fert_qmd_curve_ref = f"au_{au_token}_managed_{_sanitize_id_component(str(fert_config['to_state']))}_qmd"
                         curves[fert_qmd_curve_ref] = _build_qmd_curve_points(

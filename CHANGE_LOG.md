@@ -9293,3 +9293,14 @@
     - `vdyp_io/logs/headless_stage/issue64_species_runtime/targets/product_HarvestedVolume_managed_CW_CC.csv`,
       which shows non-zero species-wise harvested volume values after a
       harvest-producing headless Patchworks smoke.
+- 2026-03-30 (Issue #65 kickoff): started the narrow K3Z ctfert log-grade
+  harvested product/account rollout.
+  - Created GitHub issue `#65`:
+    - `Feature: add BTC log-grade harvested product accounts to K3Z ctfert variants`
+  - Created feature branch:
+    - `feature/issue-65-k3z-ctfert-log-grades`
+  - Updated `ROADMAP.md` so Phase 51 now tracks the rollout explicitly:
+    - narrow CC-only scope
+    - `ctfert_l15h5`
+    - `ctfert_l20h0`
+    - no CT or broader variant rollout in this slice

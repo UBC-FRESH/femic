@@ -7678,8 +7678,35 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P50.3b Run a harvest-producing Patchworks smoke and directly inspect saved runtime outputs to confirm species-wise harvested product volume is observable in live scenario artifacts.
   - [x] P50.3c Update `CHANGE_LOG.md`, K3Z troubleshooting/operator docs, and GitHub issue `#64` with the repaired contract and validation evidence.
 
+## Phase 51: Add BTC Log-Grade Harvested Product Families to K3Z CTFert Variants
+- [ ] P51.1 Add the narrow CC-only log-grade exporter surface for the two ctfert variants
+  - [ ] P51.1a Use the existing shipped BTC `log-grades` bank as the upstream source and emit new harvested product/account families for `Logs_Grade_{D,F,H,I,J,U,X,Y,All}`.
+  - [ ] P51.1b Keep the rollout scoped to `ctfert_l15h5` and `ctfert_l20h0`, and keep the family CC-only with no CT exposure in this slice.
+- [ ] P51.2 Wire the ctfert variants and rebuild the affected checked-in Patchworks artifacts
+  - [ ] P51.2a Update the two ctfert silviculture surfaces so they explicitly request the `log-grades` bank.
+  - [ ] P51.2b Regenerate the affected validated ForestModel XML plus `tracks_ctfert_l15h5/` and `tracks_ctfert_l20h0/` products/protoaccounts/accounts outputs before Matrix Builder validation.
+- [ ] P51.3 Validate the narrow rollout and close issue `#65`
+  - [ ] P51.3a Add focused exporter tests that prove the new log-grade family is present, complete, CC-only, and ctfert-only.
+  - [ ] P51.3b Inspect rebuilt XML/tracks directly and run one representative harvest-producing Patchworks smoke on a repaired ctfert surface to confirm live saved outputs include the new family.
+  - [ ] P51.3c Update `CHANGE_LOG.md`, the relevant K3Z docs, and GitHub issue `#65` with the rollout evidence and closeout note.
+
 ## Detailed Next Steps Notes
 
+- 2026-03-30 (Issue #65 kickoff): start the narrow K3Z ctfert log-grade harvested product/account rollout on branch `feature/issue-65-k3z-ctfert-log-grades`.
+  - Governing issue:
+    - GitHub issue `#65`
+  - Rollout scope:
+    - only `ctfert_l15h5`
+    - only `ctfert_l20h0`
+    - CC harvested product/account family only
+    - no CT log-grade surfaces yet
+    - no broader rollout to baseline, `pct_*`, `intensive_*`, or generalized treated surfaces yet
+  - Immediate execution order:
+    - wire the existing BTC `log-grades` bank into the shared Patchworks exporter only as far as needed for the two ctfert variants;
+    - request the bank explicitly from the two ctfert silviculture configs;
+    - rebuild the affected validated ForestModel XMLs before rerunning Matrix Builder on the two ctfert variants;
+    - inspect rebuilt `products.csv`, `protoaccounts.csv`, and `accounts.csv` directly to confirm all expected grade members are present as CC-only families;
+    - finish with one representative Patchworks smoke that schedules harvest volume and shows the new saved runtime log-grade family in concrete outputs.
 - 2026-03-30 (Issue #64 kickoff): start the urgent K3Z species-account regression repair on branch `bug/issue-64-k3z-species-account-dropout`.
   - Current local evidence:
     - baseline and `pct_light` now report `species=1 complete_species=1` with the `total OK, species-wise empty` diagnosis;

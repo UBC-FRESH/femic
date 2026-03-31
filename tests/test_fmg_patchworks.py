@@ -887,6 +887,153 @@ def test_build_forestmodel_xml_tree_adds_ct_track_and_qmd_when_configured() -> N
     assert f1_treatment_labels == ["CC", "F2"]
 
 
+def test_build_forestmodel_xml_tree_adds_ctfert_log_grade_products_as_cc_only() -> None:
+    context = _build_single_au_context(
+        au_id=985502001,
+        stratum_code="CWHvm_FDC+HW",
+        si_level="M",
+        unmanaged_points=(
+            CurvePoint(x=1.0, y=5.0),
+            CurvePoint(x=40.0, y=200.0),
+            CurvePoint(x=50.0, y=280.0),
+            CurvePoint(x=60.0, y=360.0),
+        ),
+        managed_points=(
+            CurvePoint(x=1.0, y=8.0),
+            CurvePoint(x=40.0, y=240.0),
+            CurvePoint(x=50.0, y=340.0),
+            CurvePoint(x=60.0, y=450.0),
+        ),
+        managed_indicator_curves={
+            "Logs_Grade_D": (
+                CurvePoint(x=1.0, y=1.0),
+                CurvePoint(x=40.0, y=50.0),
+                CurvePoint(x=60.0, y=75.0),
+            ),
+            "Logs_Grade_F": (
+                CurvePoint(x=1.0, y=1.5),
+                CurvePoint(x=40.0, y=40.0),
+                CurvePoint(x=60.0, y=55.0),
+            ),
+            "Logs_Grade_H": (
+                CurvePoint(x=1.0, y=0.5),
+                CurvePoint(x=40.0, y=30.0),
+                CurvePoint(x=60.0, y=45.0),
+            ),
+            "Logs_Grade_I": (
+                CurvePoint(x=1.0, y=0.4),
+                CurvePoint(x=40.0, y=20.0),
+                CurvePoint(x=60.0, y=35.0),
+            ),
+            "Logs_Grade_J": (
+                CurvePoint(x=1.0, y=0.3),
+                CurvePoint(x=40.0, y=10.0),
+                CurvePoint(x=60.0, y=22.0),
+            ),
+            "Logs_Grade_U": (
+                CurvePoint(x=1.0, y=0.2),
+                CurvePoint(x=40.0, y=9.0),
+                CurvePoint(x=60.0, y=18.0),
+            ),
+            "Logs_Grade_X": (
+                CurvePoint(x=1.0, y=0.1),
+                CurvePoint(x=40.0, y=8.0),
+                CurvePoint(x=60.0, y=16.0),
+            ),
+            "Logs_Grade_Y": (
+                CurvePoint(x=1.0, y=0.1),
+                CurvePoint(x=40.0, y=7.0),
+                CurvePoint(x=60.0, y=14.0),
+            ),
+            "Logs_Grade_All": (
+                CurvePoint(x=1.0, y=4.1),
+                CurvePoint(x=40.0, y=174.0),
+                CurvePoint(x=60.0, y=280.0),
+            ),
+        },
+    )
+    silviculture_config = {
+        "commercial_thinning": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "from_state": "cc_pl",
+            "to_state": "cc_pl_ct",
+            "age_by_au": {"985502001": 40},
+            "basal_area_removal_fraction": 0.30,
+            "basal_area_to_volume_ratio": 1.0,
+        },
+        "fertilization": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "response_years": 10,
+            "growth_speedup_fraction": 0.10,
+            "first_application": {
+                "from_state": "cc_pl_ct",
+                "to_state": "cc_pl_ct_f1",
+                "age_by_au": {"985502001": 50},
+            },
+            "second_application": {"enabled": False},
+            "third_application": {"enabled": False},
+        },
+        "btc_indicator_banks": ["log-grades"],
+    }
+
+    root = build_forestmodel_xml_tree_from_context(
+        context=context,
+        silviculture_config=silviculture_config,
+    )
+
+    xml_text = et.tostring(root, encoding="unicode")
+    for token in (
+        "Logs_Grade_D",
+        "Logs_Grade_F",
+        "Logs_Grade_H",
+        "Logs_Grade_I",
+        "Logs_Grade_J",
+        "Logs_Grade_U",
+        "Logs_Grade_X",
+        "Logs_Grade_Y",
+        "Logs_Grade_All",
+    ):
+        assert f"product.{token}.managed.Total.CC" in xml_text
+        assert f"product.{token}.managed.Total.CT" not in xml_text
+
+
+def test_build_forestmodel_xml_tree_does_not_add_log_grade_products_without_bank() -> None:
+    context = _build_single_au_context(
+        au_id=985502001,
+        stratum_code="CWHvm_FDC+HW",
+        si_level="M",
+        unmanaged_points=(
+            CurvePoint(x=1.0, y=5.0),
+            CurvePoint(x=40.0, y=200.0),
+        ),
+        managed_points=(
+            CurvePoint(x=1.0, y=8.0),
+            CurvePoint(x=40.0, y=240.0),
+        ),
+        managed_indicator_curves={
+            "Logs_Grade_D": (
+                CurvePoint(x=1.0, y=1.0),
+                CurvePoint(x=40.0, y=50.0),
+            ),
+            "Logs_Grade_All": (
+                CurvePoint(x=1.0, y=4.0),
+                CurvePoint(x=40.0, y=120.0),
+            ),
+        },
+    )
+
+    root = build_forestmodel_xml_tree_from_context(
+        context=context,
+        silviculture_config={"commercial_thinning": {"enabled": False}},
+    )
+
+    xml_text = et.tostring(root, encoding="unicode")
+    assert "product.Logs_Grade_D.managed.Total.CC" not in xml_text
+    assert "product.Logs_Grade_All.managed.Total.CC" not in xml_text
+
+
 def test_build_patchworks_definition_prefers_btc_native_qmd_curve_when_available() -> (
     None
 ):
