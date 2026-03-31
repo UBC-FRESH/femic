@@ -7824,6 +7824,29 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - finish with a representative headless Patchworks smoke that writes
       species-wise harvested product volume outputs and confirms the new
       price-linked value surfaces are present in concrete runtime artifacts.
+- 2026-03-31 (Issue #65 P51.5 progress): the AU/species/log-grade bridge and
+  value-account layer are now wired into the shared K3Z export path.
+  - The shipped `log-grades` recipe now carries:
+    - `species_grade_split.enabled`;
+    - matrix selectors for managed vs natural-origin harvest;
+    - explicit market-species proxy mappings; and
+    - FEMIC-owned reference price matrices in
+      `src/femic/resources/patchworks/log_grade_price_matrices.yaml`.
+  - Rebuilt K3Z XML and active track surfaces now contain:
+    - AU/species/log-grade harvested products; and
+    - matching AU/species/log-grade value products.
+  - Runtime smoke on `base` and `ctfert_l15h5` confirms:
+    - non-zero species-grade harvested outputs are saved;
+    - non-zero value-account outputs are saved; and
+    - the price-linked bridge is live in concrete Patchworks stage artifacts.
+  - Acceptance note:
+    - rebuilt static `products.csv` / `accounts.csv` surfaces now reconcile the
+      AU/species/log-grade bridge against the existing harvested-volume margins
+      on representative K3Z tracks;
+    - Patchworks saved target CSVs still do not provide a clean whole-stage
+      additive proof surface for this matrix layer, so closeout should rely on
+      the rebuilt static track/account surfaces plus representative non-zero
+      runtime target files rather than whole-stage target summation alone.
 - 2026-03-30 (Issue #64 kickoff): start the urgent K3Z species-account regression repair on branch `bug/issue-64-k3z-species-account-dropout`.
   - Current local evidence:
     - baseline and `pct_light` now report `species=1 complete_species=1` with the `total OK, species-wise empty` diagnosis;

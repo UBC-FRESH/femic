@@ -9413,3 +9413,29 @@
       harvested volumes by the price matrix coefficients.
   - Left the runtime contract unchanged in this kickoff step; this pass is only
     the repo-side reactivation breadcrumb before the next implementation slice.
+- 2026-03-31 (Issue #65 P51.5 progress): wired the AU/species/log-grade bridge
+  and value-account layer into the shared K3Z export path.
+  - Added a FEMIC-owned coast price surface at
+    `src/femic/resources/patchworks/log_grade_price_matrices.yaml` with:
+    - `second_growth_coast_2025`;
+    - `old_growth_coast_2025`; and
+    - explicit shipped market-species proxy mappings in the
+      `log-grades` compile recipe.
+  - Extended the shared Patchworks exporter so the repaired additive grade
+    family now emits:
+    - AU/species/log-grade harvested products; and
+    - matching AU/species/log-grade value products.
+  - Refreshed the active K3Z XML/track family and reran Matrix Builder on the
+    active runtime surfaces so the checked-in products/protoaccounts/accounts
+    stay aligned with the new bridge layer.
+  - Runtime smokes on `base` and `ctfert_l15h5` confirm that the new
+    species-grade and price-linked value outputs are concretely saved in
+    Patchworks stage artifacts.
+  - Acceptance note:
+    - rebuilt static `products.csv` / `accounts.csv` surfaces now reconcile the
+      AU/species/log-grade bridge against the existing harvested-volume margins
+      on representative K3Z tracks; and
+    - whole-stage saved target summation in Patchworks is not being treated as
+      the closeout proof surface for this matrix layer, because the saved stage
+      target aggregation does not line up cleanly even when the rebuilt static
+      track/account surfaces do.

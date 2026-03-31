@@ -1,0 +1,106 @@
+second_growth_coast_2025:
+  provenance:
+    issue: 65
+    report_label: "Coast Selling Price System Average Log Prices - Second Growth"
+    period_ending: "2025-12"
+    attachment_url: "https://github.com/user-attachments/files/26387213/3m2gc_dec_25.2.pdf"
+    units: "CAD/m3"
+  species:
+    Cedar:
+      Logs_Grade_D: 0.0
+      Logs_Grade_F: 0.0
+      Logs_Grade_H: 491.28
+      Logs_Grade_I: 425.93
+      Logs_Grade_J: 219.36
+      Logs_Grade_U: 128.81
+      Logs_Grade_X: 89.94
+      Logs_Grade_Y: 29.18
+    Fir:
+      Logs_Grade_D: 0.0
+      Logs_Grade_F: 0.0
+      Logs_Grade_H: 185.01
+      Logs_Grade_I: 156.47
+      Logs_Grade_J: 111.62
+      Logs_Grade_U: 77.42
+      Logs_Grade_X: 57.99
+      Logs_Grade_Y: 44.04
+    Hembal:
+      Logs_Grade_D: 0.0
+      Logs_Grade_F: 0.0
+      Logs_Grade_H: 137.96
+      Logs_Grade_I: 110.69
+      Logs_Grade_J: 84.58
+      Logs_Grade_U: 59.70
+      Logs_Grade_X: 55.14
+      Logs_Grade_Y: 27.61
+    Spruce:
+      Logs_Grade_D: 0.0
+      Logs_Grade_F: 0.0
+      Logs_Grade_H: 72.67
+      Logs_Grade_I: 73.52
+      Logs_Grade_J: 88.21
+      Logs_Grade_U: 61.55
+      Logs_Grade_X: 56.68
+      Logs_Grade_Y: 59.10
+old_growth_coast_2025:
+  provenance:
+    issue: 65
+    report_label: "Coast Selling Price System Average Log Prices - Old Growth"
+    period_ending: "2025-12"
+    attachment_url: "https://github.com/user-attachments/files/26387212/3mc_dec_25.pdf"
+    units: "CAD/m3"
+  species:
+    Cedar:
+      Logs_Grade_D: 939.38
+      Logs_Grade_F: 482.48
+      Logs_Grade_H: 574.81
+      Logs_Grade_I: 478.48
+      Logs_Grade_J: 192.46
+      Logs_Grade_U: 196.75
+      Logs_Grade_X: 97.07
+      Logs_Grade_Y: 25.67
+    Cypress:
+      Logs_Grade_D: 680.67
+      Logs_Grade_F: 415.42
+      Logs_Grade_H: 311.09
+      Logs_Grade_I: 204.67
+      Logs_Grade_J: 96.69
+      Logs_Grade_U: 189.11
+      Logs_Grade_X: 108.84
+      Logs_Grade_Y: 35.43
+    Fir:
+      Logs_Grade_D: 545.10
+      Logs_Grade_F: 0.0
+      Logs_Grade_H: 225.51
+      Logs_Grade_I: 168.98
+      Logs_Grade_J: 83.00
+      Logs_Grade_U: 70.00
+      Logs_Grade_X: 44.13
+      Logs_Grade_Y: 51.50
+    Hembal:
+      Logs_Grade_D: 0.0
+      Logs_Grade_F: 0.0
+      Logs_Grade_H: 210.23
+      Logs_Grade_I: 109.67
+      Logs_Grade_J: 85.24
+      Logs_Grade_U: 57.26
+      Logs_Grade_X: 51.71
+      Logs_Grade_Y: 32.75
+    Pine:
+      Logs_Grade_D: 0.0
+      Logs_Grade_F: 0.0
+      Logs_Grade_H: 79.03
+      Logs_Grade_I: 69.46
+      Logs_Grade_J: 73.31
+      Logs_Grade_U: 62.46
+      Logs_Grade_X: 54.01
+      Logs_Grade_Y: 54.17
+    Spruce:
+      Logs_Grade_D: 0.0
+      Logs_Grade_F: 0.0
+      Logs_Grade_H: 233.50
+      Logs_Grade_I: 60.57
+      Logs_Grade_J: 68.96
+      Logs_Grade_U: 55.75
+      Logs_Grade_X: 46.00
+      Logs_Grade_Y: 40.42

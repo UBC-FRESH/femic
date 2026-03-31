@@ -173,6 +173,20 @@ volume toward lower-grade ``J/U/X/Y`` material. This is a deliberate bridge
 between upstream forest-growth signals and downstream product-sector teaching
 accounts, not a claim that BTC directly observed CT-grade outcomes.
 
+The same recipe seam now also supports a second teaching bridge layer for K3Z:
+
+- additive ``AU x species x grade`` harvested-volume products built from the
+  explicit grade family plus AU-level species weights;
+- matching value products built from shipped coast-market price matrices; and
+- user-owned override seams under ``~/.femic/recipe-overlays`` for both the
+  compile recipe and the price matrices/proxy mappings.
+
+This bridge should be read as a modeled classroom surface, not as a claim that
+BTC directly observed species-by-grade outturn. FEMIC uses the explicit grade
+totals as one margin, combines them with AU/species weights, and emits the
+full matrix so students can move between forest-growth accounting and
+products-sector accounting inside the same Patchworks model.
+
 Fragments And State Wiring
 --------------------------
 

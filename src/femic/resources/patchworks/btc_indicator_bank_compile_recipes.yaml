@@ -43,3 +43,40 @@ log-grades:
       Logs_Grade_U: 1.3
       Logs_Grade_X: 2.2
       Logs_Grade_Y: 2.4
+  species_grade_split:
+    enabled: true
+    emit_value_products: true
+    # Managed/planted harvest defaults to the second-growth coast matrix, while
+    # natural-origin harvest defaults to the old-growth coast matrix. User
+    # overlays can refine this by origin/treatment without editing the shipped
+    # reference recipe.
+    price_matrix_selector:
+      default: second_growth_coast_2025
+      by_origin:
+        natural: old_growth_coast_2025
+        planted: second_growth_coast_2025
+    # These are explicit market-species proxies for the active K3Z species set.
+    # We avoid silent averaging so users can see and override every bridge
+    # assumption directly. Current rationale:
+    # - CW -> Cedar
+    # - FDC -> Fir
+    # - HW -> Hembal
+    # - PLC -> Spruce in the second-growth matrix because no direct coast SG
+    #   pine row is reported there; PLC -> Pine in the old-growth matrix where
+    #   a direct row exists
+    # - YC -> Cedar in the second-growth matrix because no direct SG cypress
+    #   row is reported there; YC -> Cypress in the old-growth matrix where a
+    #   direct row exists
+    species_market_proxies:
+      second_growth_coast_2025:
+        CW: Cedar
+        FDC: Fir
+        HW: Hembal
+        PLC: Spruce
+        YC: Cedar
+      old_growth_coast_2025:
+        CW: Cedar
+        FDC: Fir
+        HW: Hembal
+        PLC: Pine
+        YC: Cypress

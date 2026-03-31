@@ -21,7 +21,10 @@ from femic.fmg.patchworks import (
     _build_curve_with_post_thinning_gap,
     _build_height_curve_points,
     _build_qmd_curve_points,
+    _build_species_grade_split_curve_points,
     _resolve_btc_indicator_bank_compile_recipes,
+    _resolve_log_grade_market_species,
+    _resolve_log_grade_price_matrices,
     _build_stems_per_ha_curve_points,
     _estimate_qmd_cm_from_volume,
     _sanitize_id_component,
@@ -1378,6 +1381,108 @@ def test_resolve_btc_indicator_bank_compile_recipes_merges_user_overlay(
     )
 
 
+def test_resolve_log_grade_market_species_uses_shipped_proxy_mapping() -> None:
+    recipes = _resolve_btc_indicator_bank_compile_recipes(
+        silviculture_config=None,
+        btc_indicator_bank_names=("log-grades",),
+    )
+
+    assert (
+        _resolve_log_grade_market_species(
+            compile_recipe=recipes["log-grades"],
+            matrix_name="second_growth_coast_2025",
+            species="PLC",
+        )
+        == "Spruce"
+    )
+    assert (
+        _resolve_log_grade_market_species(
+            compile_recipe=recipes["log-grades"],
+            matrix_name="old_growth_coast_2025",
+            species="YC",
+        )
+        == "Cypress"
+    )
+
+
+def test_resolve_log_grade_price_matrices_merges_user_overlay(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    overlay_root = tmp_path / "recipe-overlays"
+    overlay_root.mkdir(parents=True)
+    (overlay_root / "log_grade_price_matrices.yaml").write_text(
+        "second_growth_coast_2025:\n"
+        "  species:\n"
+        "    Cedar:\n"
+        "      Logs_Grade_H: 999.0\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.default_femic_recipe_overlay_root",
+        lambda: overlay_root,
+    )
+
+    matrices = _resolve_log_grade_price_matrices()
+
+    assert (
+        matrices["second_growth_coast_2025"]["species"]["Cedar"]["Logs_Grade_H"]
+        == 999.0
+    )
+    assert (
+        matrices["second_growth_coast_2025"]["species"]["Fir"]["Logs_Grade_J"] == 111.62
+    )
+
+
+def test_build_species_grade_split_curve_points_preserves_both_margins() -> None:
+    total_points = (CurvePoint(x=60.0, y=100.0),)
+    species_points = {
+        "CW": (CurvePoint(x=60.0, y=40.0),),
+        "HW": (CurvePoint(x=60.0, y=60.0),),
+    }
+    grade_points = {
+        "Logs_Grade_H": (CurvePoint(x=60.0, y=30.0),),
+        "Logs_Grade_I": (CurvePoint(x=60.0, y=20.0),),
+        "Logs_Grade_J": (CurvePoint(x=60.0, y=50.0),),
+    }
+
+    split = _build_species_grade_split_curve_points(
+        total_curve_points=total_points,
+        species_curve_points_by_species=species_points,
+        grade_curve_points_by_indicator=grade_points,
+    )
+
+    assert split[("CW", "Logs_Grade_H")][0].y == 12.0
+    assert split[("CW", "Logs_Grade_I")][0].y == 8.0
+    assert split[("CW", "Logs_Grade_J")][0].y == 20.0
+    assert split[("HW", "Logs_Grade_H")][0].y == 18.0
+    assert split[("HW", "Logs_Grade_I")][0].y == 12.0
+    assert split[("HW", "Logs_Grade_J")][0].y == 30.0
+    assert sum(split[("CW", grade)][0].y for grade in grade_points) == 40.0
+    assert sum(split[("HW", grade)][0].y for grade in grade_points) == 60.0
+    assert (
+        sum(split[(species, "Logs_Grade_H")][0].y for species in species_points) == 30.0
+    )
+    assert (
+        sum(split[(species, "Logs_Grade_I")][0].y for species in species_points) == 20.0
+    )
+    assert (
+        sum(split[(species, "Logs_Grade_J")][0].y for species in species_points) == 50.0
+    )
+
+
+def test_build_species_grade_split_curve_points_handles_zero_total() -> None:
+    split = _build_species_grade_split_curve_points(
+        total_curve_points=(CurvePoint(x=60.0, y=0.0),),
+        species_curve_points_by_species={"CW": (CurvePoint(x=60.0, y=0.0),)},
+        grade_curve_points_by_indicator={
+            "Logs_Grade_H": (CurvePoint(x=60.0, y=0.0),),
+        },
+    )
+
+    assert split[("CW", "Logs_Grade_H")][0].y == 0.0
+
+
 def test_build_compiled_log_grade_curve_points_applies_treatment_override_weights() -> (
     None
 ):
@@ -1441,6 +1546,60 @@ def test_build_compiled_log_grade_curve_points_applies_treatment_override_weight
         pytest.approx(ct_h_points[0].y + ct_i_points[0].y + ct_j_points[0].y, abs=0.11)
         == 100.0
     )
+
+
+def test_build_forestmodel_xml_tree_adds_species_log_grade_volume_and_value_products() -> (
+    None
+):
+    context = _build_single_au_context(
+        au_id=985502001,
+        stratum_code="CWHvm_FDC+HW",
+        si_level="M",
+        unmanaged_points=(
+            CurvePoint(x=1.0, y=5.0),
+            CurvePoint(x=40.0, y=200.0),
+        ),
+        managed_points=(
+            CurvePoint(x=1.0, y=8.0),
+            CurvePoint(x=40.0, y=240.0),
+        ),
+        managed_species_curve_ids={"FDC": 985522001001, "HW": 985522001002},
+        unmanaged_species_curve_ids={"FDC": 985502001001, "HW": 985502001002},
+        curve_points_by_id={
+            985522001001: (CurvePoint(x=1.0, y=0.25), CurvePoint(x=40.0, y=0.25)),
+            985522001002: (CurvePoint(x=1.0, y=0.75), CurvePoint(x=40.0, y=0.75)),
+            985502001001: (CurvePoint(x=1.0, y=0.25), CurvePoint(x=40.0, y=0.25)),
+            985502001002: (CurvePoint(x=1.0, y=0.75), CurvePoint(x=40.0, y=0.75)),
+        },
+        managed_indicator_curves={
+            "Logs_Grade_H": (
+                CurvePoint(x=1.0, y=2.0),
+                CurvePoint(x=40.0, y=72.0),
+            ),
+            "Logs_Grade_I": (
+                CurvePoint(x=1.0, y=2.0),
+                CurvePoint(x=40.0, y=48.0),
+            ),
+            "Logs_Grade_J": (
+                CurvePoint(x=1.0, y=4.0),
+                CurvePoint(x=40.0, y=120.0),
+            ),
+        },
+    )
+
+    root = build_forestmodel_xml_tree_from_context(
+        context=context,
+        silviculture_config={"btc_indicator_banks": ["log-grades"]},
+    )
+
+    xml_text = et.tostring(root, encoding="unicode")
+    au_token = _au_token("CWHvm_FDC+HW", "M")
+    assert f"product.Logs_Grade_H.managed.{au_token}.FDC.CC" in xml_text
+    assert f"product.Logs_Grade_J.managed.{au_token}.HW.CC" in xml_text
+    assert f"product.Logs_Grade_Value_H.managed.{au_token}.FDC.CC" in xml_text
+    assert f"product.Logs_Grade_Value_J.managed.{au_token}.HW.CC" in xml_text
+    assert f"product.Logs_Grade_All.managed.{au_token}.FDC.CC" not in xml_text
+    assert f"product.Logs_Grade_Value_All.managed.{au_token}.FDC.CC" not in xml_text
 
 
 def test_build_patchworks_definition_prefers_btc_native_qmd_curve_when_available() -> (

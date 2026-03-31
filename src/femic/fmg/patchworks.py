@@ -71,6 +71,7 @@ LOG_GRADES_EXPLICIT_PRODUCT_COLUMNS = (
 LOG_GRADES_ALL_PRODUCT_COLUMN = "Logs_Grade_All"
 _BTC_INDICATOR_BANK_COMPILE_RECIPES_PACKAGE = "femic.resources.patchworks"
 _BTC_INDICATOR_BANK_COMPILE_RECIPES_RESOURCE = "btc_indicator_bank_compile_recipes.yaml"
+_LOG_GRADE_PRICE_MATRICES_RESOURCE = "log_grade_price_matrices.yaml"
 VALID_IFM_VALUES = {"managed", "unmanaged"}
 VALID_ORIGIN_VALUES = {"natural", "planted"}
 VALID_SILV_STATE_VALUES = {
@@ -504,6 +505,31 @@ def _log_grade_product_label(*, indicator_key: str, treatment_label: str) -> str
     return f"product.{indicator_key}.managed.Total.{treatment_token}"
 
 
+def _log_grade_species_product_label(
+    *,
+    indicator_key: str,
+    au_token: str,
+    species: str,
+    treatment_label: str,
+) -> str:
+    treatment_token = _sanitize_id_component(treatment_label).upper()
+    return f"product.{indicator_key}.managed.{au_token}.{species}.{treatment_token}"
+
+
+def _log_grade_species_value_product_label(
+    *,
+    indicator_key: str,
+    au_token: str,
+    species: str,
+    treatment_label: str,
+) -> str:
+    treatment_token = _sanitize_id_component(treatment_label).upper()
+    grade_token = _sanitize_id_component(
+        indicator_key.removeprefix("Logs_Grade_") or indicator_key
+    ).upper()
+    return f"product.Logs_Grade_Value_{grade_token}.managed.{au_token}.{species}.{treatment_token}"
+
+
 def _load_default_btc_indicator_bank_compile_recipes() -> dict[str, dict[str, Any]]:
     resource = importlib_resources.files(
         _BTC_INDICATOR_BANK_COMPILE_RECIPES_PACKAGE
@@ -552,6 +578,54 @@ def _load_user_btc_indicator_bank_compile_recipes() -> dict[str, dict[str, Any]]
         for bank, recipe in raw.items()
         if str(bank).strip() and isinstance(recipe, dict)
     }
+
+
+def _load_default_log_grade_price_matrices() -> dict[str, dict[str, Any]]:
+    resource = importlib_resources.files(
+        _BTC_INDICATOR_BANK_COMPILE_RECIPES_PACKAGE
+    ).joinpath(_LOG_GRADE_PRICE_MATRICES_RESOURCE)
+    with resource.open("r", encoding="utf-8") as handle:
+        raw = yaml.safe_load(handle) or {}
+    if not isinstance(raw, dict):
+        raise ValueError("log grade price matrices must deserialize to a mapping")
+    return {
+        str(matrix_name).strip(): dict(payload)
+        for matrix_name, payload in raw.items()
+        if str(matrix_name).strip() and isinstance(payload, dict)
+    }
+
+
+def _load_user_log_grade_price_matrices() -> dict[str, dict[str, Any]]:
+    overlay_path = (
+        default_femic_recipe_overlay_root() / _LOG_GRADE_PRICE_MATRICES_RESOURCE
+    )
+    if not overlay_path.exists():
+        return {}
+    raw = yaml.safe_load(overlay_path.read_text(encoding="utf-8")) or {}
+    if not isinstance(raw, dict):
+        raise ValueError(
+            "User log grade price matrix overlay must deserialize to a mapping"
+        )
+    return {
+        str(matrix_name).strip(): dict(payload)
+        for matrix_name, payload in raw.items()
+        if str(matrix_name).strip() and isinstance(payload, dict)
+    }
+
+
+def _resolve_log_grade_price_matrices() -> dict[str, dict[str, Any]]:
+    defaults = _load_default_log_grade_price_matrices()
+    user_overlays = _load_user_log_grade_price_matrices()
+    resolved: dict[str, dict[str, Any]] = {}
+    for matrix_name, payload in defaults.items():
+        overlay = user_overlays.get(matrix_name, {})
+        resolved[matrix_name] = (
+            _merge_nested_mapping(payload, overlay) if overlay else dict(payload)
+        )
+    for matrix_name, payload in user_overlays.items():
+        if matrix_name not in resolved:
+            resolved[matrix_name] = dict(payload)
+    return resolved
 
 
 def _resolve_btc_indicator_bank_compile_recipes(
@@ -663,6 +737,223 @@ def _resolve_log_grade_ratio_scaling_factors(
     return weights
 
 
+def _resolve_log_grade_species_grade_split_recipe(
+    *, compile_recipe: dict[str, Any] | None
+) -> dict[str, Any]:
+    recipe = dict(compile_recipe or {})
+    split_recipe = recipe.get("species_grade_split", {}) or {}
+    if not isinstance(split_recipe, dict):
+        raise ValueError("log-grades species_grade_split must be a mapping/object")
+    return dict(split_recipe)
+
+
+def _resolve_log_grade_price_matrix_name(
+    *,
+    compile_recipe: dict[str, Any] | None,
+    origin: str,
+    treatment_label: str,
+) -> str | None:
+    split_recipe = _resolve_log_grade_species_grade_split_recipe(
+        compile_recipe=compile_recipe
+    )
+    selector = split_recipe.get("price_matrix_selector", {}) or {}
+    if not isinstance(selector, dict):
+        raise ValueError("log-grades price_matrix_selector must be a mapping/object")
+    by_origin_treatment = selector.get("by_origin_treatment", {}) or {}
+    if by_origin_treatment:
+        if not isinstance(by_origin_treatment, dict):
+            raise ValueError(
+                "log-grades price_matrix_selector.by_origin_treatment must be a "
+                "mapping/object"
+            )
+        origin_map = by_origin_treatment.get(origin, {}) or {}
+        if not isinstance(origin_map, dict):
+            raise ValueError(
+                "log-grades price_matrix_selector.by_origin_treatment entries must "
+                "be mappings/objects"
+            )
+        matrix_name = str(origin_map.get(treatment_label, "")).strip()
+        if matrix_name:
+            return matrix_name
+    by_origin = selector.get("by_origin", {}) or {}
+    if by_origin:
+        if not isinstance(by_origin, dict):
+            raise ValueError(
+                "log-grades price_matrix_selector.by_origin must be a mapping/object"
+            )
+        matrix_name = str(by_origin.get(origin, "")).strip()
+        if matrix_name:
+            return matrix_name
+    by_treatment = selector.get("by_treatment", {}) or {}
+    if by_treatment:
+        if not isinstance(by_treatment, dict):
+            raise ValueError(
+                "log-grades price_matrix_selector.by_treatment must be a mapping/object"
+            )
+        matrix_name = str(by_treatment.get(treatment_label, "")).strip()
+        if matrix_name:
+            return matrix_name
+    matrix_name = str(selector.get("default", "")).strip()
+    return matrix_name or None
+
+
+def _resolve_log_grade_market_species(
+    *,
+    compile_recipe: dict[str, Any] | None,
+    matrix_name: str,
+    species: str,
+) -> str | None:
+    split_recipe = _resolve_log_grade_species_grade_split_recipe(
+        compile_recipe=compile_recipe
+    )
+    raw_proxy_map = split_recipe.get("species_market_proxies", {}) or {}
+    if raw_proxy_map and not isinstance(raw_proxy_map, dict):
+        raise ValueError(
+            "log-grades species_grade_split.species_market_proxies must be a "
+            "mapping/object"
+        )
+    matrix_proxy_map = raw_proxy_map.get(matrix_name, {}) or {}
+    if matrix_proxy_map and not isinstance(matrix_proxy_map, dict):
+        raise ValueError(
+            "log-grades species_market_proxies entries must be mappings/objects"
+        )
+    market_species = str(matrix_proxy_map.get(species, "")).strip()
+    return market_species or None
+
+
+def _normalize_margin_to_total(
+    *,
+    values: dict[str, float],
+    target_total: float,
+) -> dict[str, float]:
+    normalized = {
+        key: round(max(0.0, float(value)), 1) for key, value in values.items()
+    }
+    if not normalized:
+        return {}
+    positive_keys = [key for key, value in normalized.items() if value > 0.0]
+    residual_key = (
+        max(positive_keys, key=lambda key: normalized[key])
+        if positive_keys
+        else next(reversed(normalized))
+    )
+    residual_value = round(
+        max(
+            0.0,
+            float(target_total)
+            - sum(value for key, value in normalized.items() if key != residual_key),
+        ),
+        1,
+    )
+    normalized[residual_key] = residual_value
+    return normalized
+
+
+def _build_species_grade_split_curve_points(
+    *,
+    total_curve_points: tuple[CurvePoint, ...],
+    species_curve_points_by_species: dict[str, tuple[CurvePoint, ...]],
+    grade_curve_points_by_indicator: dict[str, tuple[CurvePoint, ...]],
+) -> dict[tuple[str, str], tuple[CurvePoint, ...]]:
+    if (
+        not total_curve_points
+        or not species_curve_points_by_species
+        or not grade_curve_points_by_indicator
+    ):
+        return {}
+
+    species_list = sorted(species_curve_points_by_species)
+    grade_list = tuple(
+        indicator_key
+        for indicator_key in LOG_GRADES_EXPLICIT_PRODUCT_COLUMNS
+        if indicator_key in grade_curve_points_by_indicator
+    )
+    if not species_list or not grade_list:
+        return {}
+
+    split_points: dict[tuple[str, str], list[CurvePoint]] = {
+        (species, grade): [] for species in species_list for grade in grade_list
+    }
+    for total_point in total_curve_points:
+        age = float(total_point.x)
+        total_value = round(max(0.0, float(total_point.y)), 1)
+        if total_value <= 0.0:
+            for species in species_list:
+                for grade in grade_list:
+                    split_points[(species, grade)].append(CurvePoint(x=age, y=0.0))
+            continue
+
+        species_totals = _normalize_margin_to_total(
+            values={
+                species: _curve_value_at_x(
+                    points=species_curve_points_by_species[species],
+                    x=age,
+                )
+                for species in species_list
+            },
+            target_total=total_value,
+        )
+        grade_totals = _normalize_margin_to_total(
+            values={
+                grade: _curve_value_at_x(
+                    points=grade_curve_points_by_indicator[grade],
+                    x=age,
+                )
+                for grade in grade_list
+            },
+            target_total=total_value,
+        )
+
+        remaining_grade_totals = dict(grade_totals)
+        for species_index, species in enumerate(species_list):
+            row_remaining = species_totals[species]
+            for grade_index, grade in enumerate(grade_list):
+                is_last_species = species_index == len(species_list) - 1
+                is_last_grade = grade_index == len(grade_list) - 1
+                if row_remaining <= 0.0:
+                    cell_value = 0.0
+                elif is_last_species and is_last_grade:
+                    cell_value = round(
+                        max(0.0, min(row_remaining, remaining_grade_totals[grade])),
+                        1,
+                    )
+                elif is_last_species:
+                    cell_value = round(max(0.0, remaining_grade_totals[grade]), 1)
+                elif is_last_grade:
+                    cell_value = round(max(0.0, row_remaining), 1)
+                else:
+                    raw_value = (
+                        species_totals[species] * grade_totals[grade] / total_value
+                    )
+                    cell_value = round(
+                        max(
+                            0.0,
+                            min(
+                                raw_value, row_remaining, remaining_grade_totals[grade]
+                            ),
+                        ),
+                        1,
+                    )
+                split_points[(species, grade)].append(CurvePoint(x=age, y=cell_value))
+                row_remaining = round(max(0.0, row_remaining - cell_value), 1)
+                remaining_grade_totals[grade] = round(
+                    max(0.0, remaining_grade_totals[grade] - cell_value),
+                    1,
+                )
+    return {key: tuple(points) for key, points in split_points.items()}
+
+
+def _build_value_curve_points(
+    *,
+    volume_curve_points: tuple[CurvePoint, ...],
+    unit_price: float,
+) -> tuple[CurvePoint, ...]:
+    return tuple(
+        CurvePoint(x=float(point.x), y=round(max(0.0, float(point.y)) * unit_price, 2))
+        for point in volume_curve_points
+    )
+
+
 def _build_compiled_log_grade_curve_points(
     *,
     source_curve_points: tuple[CurvePoint, ...],
@@ -747,7 +1038,8 @@ def _append_log_grade_product_attrs(
     treatment_label: str,
     curve_ref_prefix: str,
     compile_recipe: dict[str, Any] | None = None,
-) -> None:
+) -> dict[str, tuple[CurvePoint, ...]]:
+    built_curves: dict[str, tuple[CurvePoint, ...]] = {}
     for indicator_key in _resolve_log_grade_product_columns(
         compile_recipe=compile_recipe
     ):
@@ -764,6 +1056,7 @@ def _append_log_grade_product_attrs(
             f"{curve_ref_prefix}_{au_token}_{_sanitize_id_component(indicator_key)}"
         )
         curves.setdefault(curve_ref, curve_points)
+        built_curves[indicator_key] = curve_points
         product_attrs.append(
             AttributeBinding(
                 label=_log_grade_product_label(
@@ -771,6 +1064,116 @@ def _append_log_grade_product_attrs(
                     treatment_label=treatment_label,
                 ),
                 curve_idref=curve_ref,
+            )
+        )
+    return built_curves
+
+
+def _append_species_log_grade_product_attrs(
+    *,
+    product_attrs: list[AttributeBinding],
+    curves: dict[str, tuple[CurvePoint, ...]],
+    total_curve_points: tuple[CurvePoint, ...],
+    species_total_curve_points_by_species: dict[str, tuple[CurvePoint, ...]],
+    grade_curve_points_by_indicator: dict[str, tuple[CurvePoint, ...]],
+    au_token: str,
+    origin: str,
+    treatment_label: str,
+    curve_ref_prefix: str,
+    compile_recipe: dict[str, Any] | None,
+    log_grade_price_matrices: dict[str, dict[str, Any]],
+) -> None:
+    split_recipe = _resolve_log_grade_species_grade_split_recipe(
+        compile_recipe=compile_recipe
+    )
+    if not bool(split_recipe.get("enabled", False)):
+        return
+
+    split_curves = _build_species_grade_split_curve_points(
+        total_curve_points=total_curve_points,
+        species_curve_points_by_species=species_total_curve_points_by_species,
+        grade_curve_points_by_indicator=grade_curve_points_by_indicator,
+    )
+    if not split_curves:
+        return
+
+    matrix_name = _resolve_log_grade_price_matrix_name(
+        compile_recipe=compile_recipe,
+        origin=origin,
+        treatment_label=treatment_label,
+    )
+    matrix_payload = (
+        log_grade_price_matrices.get(matrix_name, {}) if matrix_name is not None else {}
+    )
+    matrix_species_payload = matrix_payload.get("species", {}) or {}
+    if matrix_species_payload and not isinstance(matrix_species_payload, dict):
+        raise ValueError(
+            f"log grade price matrix {matrix_name!r} species payload must be a "
+            "mapping/object"
+        )
+    emit_value_products = bool(split_recipe.get("emit_value_products", False))
+
+    for species, indicator_key in sorted(split_curves):
+        curve_points = split_curves[(species, indicator_key)]
+        if not curve_points:
+            continue
+        curve_ref = (
+            f"{curve_ref_prefix}_{au_token}_{_sanitize_id_component(species)}_"
+            f"{_sanitize_id_component(indicator_key)}"
+        )
+        curves.setdefault(curve_ref, curve_points)
+        product_attrs.append(
+            AttributeBinding(
+                label=_log_grade_species_product_label(
+                    indicator_key=indicator_key,
+                    au_token=au_token,
+                    species=species,
+                    treatment_label=treatment_label,
+                ),
+                curve_idref=curve_ref,
+            )
+        )
+        if not emit_value_products:
+            continue
+        market_species = (
+            _resolve_log_grade_market_species(
+                compile_recipe=compile_recipe,
+                matrix_name=matrix_name,
+                species=species,
+            )
+            if matrix_name is not None
+            else None
+        )
+        if not market_species:
+            continue
+        market_species_payload = matrix_species_payload.get(market_species, {}) or {}
+        if market_species_payload and not isinstance(market_species_payload, dict):
+            raise ValueError(
+                f"log grade price matrix {matrix_name!r} species entry {market_species!r} "
+                "must be a mapping/object"
+            )
+        try:
+            unit_price = float(market_species_payload.get(indicator_key, 0.0) or 0.0)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"Invalid price for {matrix_name!r} {market_species!r} "
+                f"{indicator_key!r}: {market_species_payload.get(indicator_key)!r}"
+            ) from exc
+        value_curve_points = _build_value_curve_points(
+            volume_curve_points=curve_points,
+            unit_price=unit_price,
+        )
+        value_curve_ref = f"{curve_ref}_value"
+        curves.setdefault(value_curve_ref, value_curve_points)
+        product_attrs.append(
+            AttributeBinding(
+                label=_log_grade_species_value_product_label(
+                    indicator_key=indicator_key,
+                    au_token=au_token,
+                    species=species,
+                    treatment_label=treatment_label,
+                ),
+                curve_idref=value_curve_ref,
             )
         )
 
@@ -2093,6 +2496,7 @@ def build_patchworks_forestmodel_definition(
         silviculture_config=silviculture_config,
         btc_indicator_bank_names=btc_indicator_bank_names,
     )
+    log_grade_price_matrices = _resolve_log_grade_price_matrices()
     transition_assignments_list: list[TreatmentAssignment] = [
         TreatmentAssignment(field="ORIGIN", value=_as_quoted_literal("planted")),
         TreatmentAssignment(field="SILV_STATE", value=_as_quoted_literal("cc_pl")),
@@ -2208,6 +2612,13 @@ def build_patchworks_forestmodel_definition(
         planted_species_curve_map = context.managed_species_curve_ids.get(
             managed_curve_id, {}
         )
+        natural_species_has_any_signal = any(
+            (curve_def is not None and _curve_has_positive_signal(curve_def.points))
+            for curve_def in (
+                context.curves_by_id.get(curve_id)
+                for curve_id in natural_species_curve_map.values()
+            )
+        )
         planted_species_has_any_signal = any(
             (curve_def is not None and _curve_has_positive_signal(curve_def.points))
             for curve_def in (
@@ -2215,6 +2626,8 @@ def build_patchworks_forestmodel_definition(
                 for curve_id in planted_species_curve_map.values()
             )
         )
+        if not natural_species_has_any_signal:
+            natural_species_curve_map = planted_species_curve_map
         if not planted_species_has_any_signal:
             planted_species_curve_map = natural_species_curve_map
 
@@ -2387,7 +2800,7 @@ def build_patchworks_forestmodel_definition(
                 ),
             ]
             if "log-grades" in btc_indicator_bank_names:
-                _append_log_grade_product_attrs(
+                log_grade_curves = _append_log_grade_product_attrs(
                     product_attrs=product_attrs,
                     curves=curves,
                     managed_indicator_curves=managed_indicator_curves,
@@ -2402,6 +2815,25 @@ def build_patchworks_forestmodel_definition(
                         f"au_{au_token}_{_sanitize_id_component(origin)}_cc_log_grade"
                     ),
                     compile_recipe=btc_indicator_bank_compile_recipes.get("log-grades"),
+                )
+                _append_species_log_grade_product_attrs(
+                    product_attrs=product_attrs,
+                    curves=curves,
+                    total_curve_points=(
+                        managed_total_curve.points
+                        if managed_total_curve is not None
+                        else ()
+                    ),
+                    species_total_curve_points_by_species=managed_derived_yield_curves,
+                    grade_curve_points_by_indicator=log_grade_curves,
+                    au_token=au_token,
+                    origin=origin,
+                    treatment_label="CC",
+                    curve_ref_prefix=(
+                        f"au_{au_token}_{_sanitize_id_component(origin)}_cc_log_grade_species"
+                    ),
+                    compile_recipe=btc_indicator_bank_compile_recipes.get("log-grades"),
+                    log_grade_price_matrices=log_grade_price_matrices,
                 )
             if unmanaged_stems_curve_ref is not None:
                 unmanaged_attrs.append(
@@ -2812,6 +3244,24 @@ def build_patchworks_forestmodel_definition(
                         curve_idref=managed_curve_ref,
                     ),
                 ]
+                pct_cc_log_grade_curves: dict[str, tuple[CurvePoint, ...]] = {}
+                if "log-grades" in btc_indicator_bank_names:
+                    pct_cc_log_grade_curves = _append_log_grade_product_attrs(
+                        product_attrs=pct_cc_product_attrs,
+                        curves=curves,
+                        managed_indicator_curves=managed_indicator_curves,
+                        source_curve_points=managed_total_curve.points,
+                        au_token=au_token,
+                        treatment_label="CC",
+                        curve_ref_prefix=(
+                            "au_"
+                            f"{au_token}_{_sanitize_id_component(str(pct_config['to_state']))}"
+                            "_cc_log_grade"
+                        ),
+                        compile_recipe=btc_indicator_bank_compile_recipes.get(
+                            "log-grades"
+                        ),
+                    )
                 pct_stems_curve_ref: str | None = None
                 pct_stems_curve_points: tuple[CurvePoint, ...] = ()
                 if managed_stems_curve_points:
@@ -2957,6 +3407,26 @@ def build_patchworks_forestmodel_definition(
                             label=f"product.SpeciesProp.managed.{species}",
                             curve_idref=pct_prop_curve_ref,
                         )
+                    )
+                if "log-grades" in btc_indicator_bank_names:
+                    _append_species_log_grade_product_attrs(
+                        product_attrs=pct_cc_product_attrs,
+                        curves=curves,
+                        total_curve_points=managed_total_curve.points,
+                        species_total_curve_points_by_species=pct_species_yield_curves,
+                        grade_curve_points_by_indicator=pct_cc_log_grade_curves,
+                        au_token=au_token,
+                        origin="planted",
+                        treatment_label="CC",
+                        curve_ref_prefix=(
+                            "au_"
+                            f"{au_token}_{_sanitize_id_component(str(pct_config['to_state']))}"
+                            "_cc_log_grade_species"
+                        ),
+                        compile_recipe=btc_indicator_bank_compile_recipes.get(
+                            "log-grades"
+                        ),
+                        log_grade_price_matrices=log_grade_price_matrices,
                     )
                 pct_state_literal = _as_quoted_literal(pct_config["to_state"])
                 pct_state_track_treatments_list: list[TreatmentDefinition] = [
@@ -3134,7 +3604,7 @@ def build_patchworks_forestmodel_definition(
                     ),
                 ]
                 if "log-grades" in btc_indicator_bank_names:
-                    _append_log_grade_product_attrs(
+                    ct_log_grade_curves = _append_log_grade_product_attrs(
                         product_attrs=ct_product_attrs,
                         curves=curves,
                         managed_indicator_curves=managed_indicator_curves,
@@ -3146,7 +3616,7 @@ def build_patchworks_forestmodel_definition(
                             "log-grades"
                         ),
                     )
-                    _append_log_grade_product_attrs(
+                    ct_cc_log_grade_curves = _append_log_grade_product_attrs(
                         product_attrs=ct_cc_product_attrs,
                         curves=curves,
                         managed_indicator_curves=managed_indicator_curves,
@@ -3337,6 +3807,41 @@ def build_patchworks_forestmodel_definition(
                                 curve_idref=product_curve_ref,
                             )
                         )
+                if "log-grades" in btc_indicator_bank_names:
+                    _append_species_log_grade_product_attrs(
+                        product_attrs=ct_product_attrs,
+                        curves=curves,
+                        total_curve_points=curves[ct_product_curve_ref],
+                        species_total_curve_points_by_species=ct_species_product_curves,
+                        grade_curve_points_by_indicator=ct_log_grade_curves,
+                        au_token=au_token,
+                        origin="planted",
+                        treatment_label="CT",
+                        curve_ref_prefix=(
+                            f"au_{au_token}_{state_slug}_ct_log_grade_species"
+                        ),
+                        compile_recipe=btc_indicator_bank_compile_recipes.get(
+                            "log-grades"
+                        ),
+                        log_grade_price_matrices=log_grade_price_matrices,
+                    )
+                    _append_species_log_grade_product_attrs(
+                        product_attrs=ct_cc_product_attrs,
+                        curves=curves,
+                        total_curve_points=curves[ct_residual_curve_ref],
+                        species_total_curve_points_by_species=ct_species_residual_curves,
+                        grade_curve_points_by_indicator=ct_cc_log_grade_curves,
+                        au_token=au_token,
+                        origin="planted",
+                        treatment_label="CC",
+                        curve_ref_prefix=(
+                            f"au_{au_token}_{state_slug}_cc_log_grade_species"
+                        ),
+                        compile_recipe=btc_indicator_bank_compile_recipes.get(
+                            "log-grades"
+                        ),
+                        log_grade_price_matrices=log_grade_price_matrices,
+                    )
                 for species, species_prop_curve_ref in sorted(
                     ct_species_prop_curve_refs.items()
                 ):
@@ -3499,8 +4004,9 @@ def build_patchworks_forestmodel_definition(
                             curve_idref=fert_curve_ref,
                         ),
                     ]
+                    fert_log_grade_curves: dict[str, tuple[CurvePoint, ...]] = {}
                     if "log-grades" in btc_indicator_bank_names:
-                        _append_log_grade_product_attrs(
+                        fert_log_grade_curves = _append_log_grade_product_attrs(
                             product_attrs=fert_cc_product_attrs,
                             curves=curves,
                             managed_indicator_curves=managed_indicator_curves,
@@ -3587,6 +4093,26 @@ def build_patchworks_forestmodel_definition(
                         total_points=curves[fert_curve_ref],
                         species_prop_points_by_species=ct_species_prop_points,
                     )
+                    if "log-grades" in btc_indicator_bank_names:
+                        _append_species_log_grade_product_attrs(
+                            product_attrs=fert_cc_product_attrs,
+                            curves=curves,
+                            total_curve_points=curves[fert_curve_ref],
+                            species_total_curve_points_by_species=fert_species_curves,
+                            grade_curve_points_by_indicator=fert_log_grade_curves,
+                            au_token=au_token,
+                            origin="planted",
+                            treatment_label="CC",
+                            curve_ref_prefix=(
+                                "au_"
+                                f"{au_token}_{_sanitize_id_component(str(fert_config['to_state']))}"
+                                "_cc_log_grade_species"
+                            ),
+                            compile_recipe=btc_indicator_bank_compile_recipes.get(
+                                "log-grades"
+                            ),
+                            log_grade_price_matrices=log_grade_price_matrices,
+                        )
                     for species, species_curve_points in sorted(
                         fert_species_curves.items()
                     ):
