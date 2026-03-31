@@ -7788,6 +7788,91 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - no new branch remains active; and
     - the work is parked on `main` until the stacked local commits are pushed
       and we circle back to implementation.
+- 2026-03-31 (Issue #65 P51.5 reactivated): resume the widened log-grade follow-on
+  on branch `feature/issue-65-log-grade-value-accounts`.
+  - Governing issue:
+    - GitHub issue `#65`
+  - Immediate execution order:
+    - add AU-wise, species-wise harvested log-grade product/account families on
+      top of the repaired additive compile-recipe contract;
+    - implement the species x grade split as a margin-preserving outer-product
+      recipe:
+      - use the already-working species-wise harvested-volume totals as one
+        margin;
+      - use the already-working log-grade totals as the other margin; and
+      - compute each AU/species/log-grade cell as
+        `species_total * grade_total / harvested_total` so species sums and
+        grade sums both remain coherent with the existing harvested-volume
+        contract;
+    - apply the same cross-split logic to natural-origin/unmanaged harvested
+      states so forest-wide harvested volume still equals the sum of the
+      explicit species/grade family rather than only the managed/TIPSY-driven
+      subset;
+    - scrape the newly attached 2025 coast market-report PDFs from issue `#65`
+      into a FEMIC-owned, user-overridable species x grade price surface;
+    - keep the repo-owned reference price matrices inside FEMIC and merge an
+      optional user overlay from `~/.femic/recipe-overlays`;
+    - wire the first price-surface contract to distinguish second-growth and
+      old-growth coast reports, with a simple runtime selector that maps
+      managed/second-growth harvests to the second-growth matrix and
+      natural-origin/old-growth harvests to the old-growth matrix unless
+      overridden by recipe/user config;
+    - add derived value-account families that multiply AU/species/log-grade
+      harvested volumes by the price matrix coefficients;
+    - rebuild the affected K3Z XML / tracks surfaces before rerunning Matrix
+      Builder;
+    - finish with a representative headless Patchworks smoke that writes
+      species-wise harvested product volume outputs and confirms the new
+      price-linked value surfaces are present in concrete runtime artifacts.
+- 2026-03-31 (Issue #65 P51.5 progress): the AU/species/log-grade bridge and
+  value-account layer are now wired into the shared K3Z export path.
+  - The shipped `log-grades` recipe now carries:
+    - `species_grade_split.enabled`;
+    - matrix selectors for managed vs natural-origin harvest;
+    - explicit market-species proxy mappings; and
+    - FEMIC-owned reference price matrices in
+      `src/femic/resources/patchworks/log_grade_price_matrices.yaml`.
+  - Rebuilt K3Z XML and active track surfaces now contain:
+    - AU/species/log-grade harvested products; and
+    - matching AU/species/log-grade value products.
+  - Runtime smoke on `base` and `ctfert_l15h5` confirms:
+    - non-zero species-grade harvested outputs are saved;
+    - non-zero value-account outputs are saved; and
+    - the price-linked bridge is live in concrete Patchworks stage artifacts.
+  - Acceptance note:
+    - rebuilt static `products.csv` / `accounts.csv` surfaces now reconcile the
+      AU/species/log-grade bridge against the existing harvested-volume margins
+      on representative K3Z tracks;
+    - Patchworks saved target CSVs still do not provide a clean whole-stage
+      additive proof surface for this matrix layer, so closeout should rely on
+      the rebuilt static track/account surfaces plus representative non-zero
+      runtime target files rather than whole-stage target summation alone.
+- 2026-03-31 (Urgent bug prep): park the current `#65` feature slice behind a
+  new upstream K3Z bug for ctfert species-universe narrowing.
+  - Governing issue:
+    - GitHub issue `#66`
+  - Immediate symptom:
+    - current `ctfert_*` surfaces only emit `CW/FDC/HW` in
+      `feature.Yield.managed.*`, `product.HarvestedVolume.managed.*`, and the
+      new `product.Logs_Grade*` families, while AU strata tokens such as
+      `CWHvm_DR_HW_M`, `CWHvm_HW_BA_M`, and `CWHvm_HW_SS_M` clearly imply
+      additional expected species (`DR`, `BA`, `SS`).
+  - Key evidence:
+    - the same ctfert species narrowing is already present on published
+      `main` before the current `#65` feature branch;
+    - `pct_*` surfaces still carry the broader species set
+      (`CW/FDC/HW/PLC/YC`), so this is not a generic issue with the new
+      species-grade bridge itself;
+    - the new bridge is inheriting an already-too-narrow ctfert harvested
+      species margin.
+  - Immediate next steps:
+    - switch to the dedicated bug branch
+      `bug/issue-66-ctfert-species-universe` off `main`;
+    - trace why ctfert harvested-volume species families on `main` already
+      collapse to `CW/FDC/HW` even when AU strata naming implies additional
+      species; and
+    - restore the broader expected species membership before resuming
+      additional `#65` feature work.
 - 2026-03-30 (Issue #64 kickoff): start the urgent K3Z species-account regression repair on branch `bug/issue-64-k3z-species-account-dropout`.
   - Current local evidence:
     - baseline and `pct_light` now report `species=1 complete_species=1` with the `total OK, species-wise empty` diagnosis;

@@ -9401,3 +9401,56 @@
       upward inside Patchworks with `duplicateAccount()` calls.
   - Left the work intentionally parked on `main` so the stacked local commits
     can be pushed before opening the next implementation branch.
+- 2026-03-31 (Issue #65 P51.5 reactivated): resumed the widened log-grade
+  follow-on on branch `feature/issue-65-log-grade-value-accounts`.
+  - Restored `#65` as the active implementation edge in `ROADMAP.md`, with the
+    immediate execution order now pinned to:
+    - AU-wise, species-wise harvested log-grade product/account families;
+    - a FEMIC-owned, user-overridable species x grade price surface scraped
+      from the newly attached 2025 coast market-report PDFs on issue `#65`;
+      and
+    - derived value-account families that multiply AU/species/log-grade
+      harvested volumes by the price matrix coefficients.
+  - Left the runtime contract unchanged in this kickoff step; this pass is only
+    the repo-side reactivation breadcrumb before the next implementation slice.
+- 2026-03-31 (Issue #65 P51.5 progress): wired the AU/species/log-grade bridge
+  and value-account layer into the shared K3Z export path.
+  - Added a FEMIC-owned coast price surface at
+    `src/femic/resources/patchworks/log_grade_price_matrices.yaml` with:
+    - `second_growth_coast_2025`;
+    - `old_growth_coast_2025`; and
+    - explicit shipped market-species proxy mappings in the
+      `log-grades` compile recipe.
+  - Extended the shared Patchworks exporter so the repaired additive grade
+    family now emits:
+    - AU/species/log-grade harvested products; and
+    - matching AU/species/log-grade value products.
+  - Refreshed the active K3Z XML/track family and reran Matrix Builder on the
+    active runtime surfaces so the checked-in products/protoaccounts/accounts
+    stay aligned with the new bridge layer.
+  - Runtime smokes on `base` and `ctfert_l15h5` confirm that the new
+    species-grade and price-linked value outputs are concretely saved in
+    Patchworks stage artifacts.
+  - Acceptance note:
+    - rebuilt static `products.csv` / `accounts.csv` surfaces now reconcile the
+      AU/species/log-grade bridge against the existing harvested-volume margins
+      on representative K3Z tracks; and
+    - whole-stage saved target summation in Patchworks is not being treated as
+      the closeout proof surface for this matrix layer, because the saved stage
+      target aggregation does not line up cleanly even when the rebuilt static
+      track/account surfaces do.
+- 2026-03-31 (Urgent bug prep): parked the current `#65` feature slice behind
+  a new upstream K3Z bug for ctfert species-universe narrowing.
+  - Created GitHub issue `#66`:
+    - `Bug: restore broader ctfert K3Z species-wise yield and harvested-volume families`
+  - Confirmed the narrowing predates the current feature branch:
+    - on published `main`, `tracks_ctfert_l15h5/features.csv` and
+      `tracks_ctfert_l15h5/products.csv` already limit species-wise yield and
+      harvested-volume families to `CW/FDC/HW`;
+    - `pct_light` on the same baseline still carries the broader
+      `CW/FDC/HW/PLC/YC` species set.
+  - Confirmed the current `#65` species-grade bridge is inheriting that
+    already-too-narrow ctfert harvested species margin, not newly causing it.
+  - Recorded the next step in `ROADMAP.md` as an urgent dedicated bug track to
+    restore the broader expected ctfert species membership before resuming
+    additional `#65` feature work.
