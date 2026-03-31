@@ -7788,6 +7788,22 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - no new branch remains active; and
     - the work is parked on `main` until the stacked local commits are pushed
       and we circle back to implementation.
+- 2026-03-31 (Issue #65 P51.5 reactivated): resume the widened log-grade follow-on
+  on branch `feature/issue-65-log-grade-value-accounts`.
+  - Governing issue:
+    - GitHub issue `#65`
+  - Immediate execution order:
+    - add AU-wise, species-wise harvested log-grade product/account families on
+      top of the repaired additive compile-recipe contract;
+    - scrape the newly attached 2025 coast market-report PDFs from issue `#65`
+      into a FEMIC-owned, user-overridable species x grade price surface;
+    - add derived value-account families that multiply AU/species/log-grade
+      harvested volumes by the price matrix coefficients;
+    - rebuild the affected K3Z XML / tracks surfaces before rerunning Matrix
+      Builder;
+    - finish with a representative headless Patchworks smoke that writes
+      species-wise harvested product volume outputs and confirms the new
+      price-linked value surfaces are present in concrete runtime artifacts.
 - 2026-03-30 (Issue #64 kickoff): start the urgent K3Z species-account regression repair on branch `bug/issue-64-k3z-species-account-dropout`.
   - Current local evidence:
     - baseline and `pct_light` now report `species=1 complete_species=1` with the `total OK, species-wise empty` diagnosis;

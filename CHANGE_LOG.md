@@ -9401,3 +9401,15 @@
       upward inside Patchworks with `duplicateAccount()` calls.
   - Left the work intentionally parked on `main` so the stacked local commits
     can be pushed before opening the next implementation branch.
+- 2026-03-31 (Issue #65 P51.5 reactivated): resumed the widened log-grade
+  follow-on on branch `feature/issue-65-log-grade-value-accounts`.
+  - Restored `#65` as the active implementation edge in `ROADMAP.md`, with the
+    immediate execution order now pinned to:
+    - AU-wise, species-wise harvested log-grade product/account families;
+    - a FEMIC-owned, user-overridable species x grade price surface scraped
+      from the newly attached 2025 coast market-report PDFs on issue `#65`;
+      and
+    - derived value-account families that multiply AU/species/log-grade
+      harvested volumes by the price matrix coefficients.
+  - Left the runtime contract unchanged in this kickoff step; this pass is only
+    the repo-side reactivation breadcrumb before the next implementation slice.
