@@ -7865,6 +7865,12 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       species-grade bridge itself;
     - the new bridge is inheriting an already-too-narrow ctfert harvested
       species margin.
+  - Additional reported symptom to verify on this bug track:
+    - many blocks reportedly show no visible seral stage in Patchworks map
+      views on the current main-branch state;
+    - treat this as a potentially related regression signal until proven
+      otherwise, and explicitly inspect seral-stage feature emission / XML
+      wiring / matrix-build outputs during the bug investigation.
   - Immediate next steps:
     - switch to the dedicated bug branch
       `bug/issue-66-ctfert-species-universe` off `main`;

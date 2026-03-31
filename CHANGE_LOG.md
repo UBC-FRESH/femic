@@ -9451,6 +9451,11 @@
       `CW/FDC/HW/PLC/YC` species set.
   - Confirmed the current `#65` species-grade bridge is inheriting that
     already-too-narrow ctfert harvested species margin, not newly causing it.
+  - Added a second related symptom to the same urgent bug track:
+    - many blocks reportedly appear to have no visible seral stage in current
+      Patchworks map views; and
+    - this should be verified as part of the same regression investigation
+      instead of assuming it is unrelated.
   - Recorded the next step in `ROADMAP.md` as an urgent dedicated bug track to
     restore the broader expected ctfert species membership before resuming
     additional `#65` feature work.
