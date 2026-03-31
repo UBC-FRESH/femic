@@ -1,0 +1,45 @@
+log-grades:
+  # Exclude Logs_Grade_All by default. The explicit grades behave like a
+  # partition of merchantable yield, while Logs_Grade_All behaves like a
+  # separate scaled-log metric that can exceed Yield.
+  emit_columns:
+    - Logs_Grade_D
+    - Logs_Grade_F
+    - Logs_Grade_H
+    - Logs_Grade_I
+    - Logs_Grade_J
+    - Logs_Grade_U
+    - Logs_Grade_X
+    - Logs_Grade_Y
+  include_all_grades: false
+  # FEMIC rescales the explicit grades so they sum to harvested volume total,
+  # not raw BTC Yield. This makes the grade family additive against the
+  # harvested-volume product accounts used downstream in Patchworks.
+  scale_to_harvested_volume_total: true
+  # These base weights are neutral. User overlays can shift them, and FEMIC
+  # normalizes the result at compile time so the weights only rebalance grade
+  # shares and never create or destroy harvested volume.
+  ratio_scaling_factors:
+    Logs_Grade_D: 1.0
+    Logs_Grade_F: 1.0
+    Logs_Grade_H: 1.0
+    Logs_Grade_I: 1.0
+    Logs_Grade_J: 1.0
+    Logs_Grade_U: 1.0
+    Logs_Grade_X: 1.0
+    Logs_Grade_Y: 1.0
+  # The current K3Z teaching contract treats CT as early-age thinning from
+  # below, so CT output should skew toward lower-grade small-log material.
+  # These weights intentionally suppress premium sawlogs and favor J/U/X/Y.
+  # Rationale: BC Coast Scaling Manual Chapter 10, especially the J/U/X/Y
+  # coastal conifer grade rules for 8-18 cm and 5-7 cm radii.
+  ratio_scaling_factors_by_treatment:
+    CT:
+      Logs_Grade_D: 0.0
+      Logs_Grade_F: 0.0
+      Logs_Grade_H: 0.5
+      Logs_Grade_I: 0.8
+      Logs_Grade_J: 0.85
+      Logs_Grade_U: 1.3
+      Logs_Grade_X: 2.2
+      Logs_Grade_Y: 2.4

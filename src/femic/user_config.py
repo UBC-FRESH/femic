@@ -12,6 +12,7 @@ import yaml
 DEFAULT_FEMIC_CONFIG_HOME = Path.home() / ".femic"
 DEFAULT_FEMIC_USER_CONFIG_PATH = DEFAULT_FEMIC_CONFIG_HOME / "user.yaml"
 DEFAULT_FEMIC_MANAGED_EXTERNAL_ROOT = DEFAULT_FEMIC_CONFIG_HOME / "external"
+DEFAULT_FEMIC_RECIPE_OVERLAY_ROOT = DEFAULT_FEMIC_CONFIG_HOME / "recipe-overlays"
 DEFAULT_FEMIC_USER_INSTANCE_ROOT = Path.home() / "femic" / "instances"
 
 
@@ -54,6 +55,12 @@ def default_femic_user_paths() -> FemicUserPaths:
         managed_external_root=DEFAULT_FEMIC_MANAGED_EXTERNAL_ROOT.expanduser().resolve(),
         user_instance_root=DEFAULT_FEMIC_USER_INSTANCE_ROOT.expanduser().resolve(),
     )
+
+
+def default_femic_recipe_overlay_root() -> Path:
+    """Return the default user-owned recipe overlay root."""
+
+    return DEFAULT_FEMIC_RECIPE_OVERLAY_ROOT.expanduser().resolve()
 
 
 def _load_yaml_payload(config_path: Path) -> dict[str, Any]:

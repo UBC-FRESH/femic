@@ -557,7 +557,6 @@ def test_btc_indicator_bank_columns_returns_log_grades_bank() -> None:
         "Logs_Grade_U",
         "Logs_Grade_X",
         "Logs_Grade_Y",
-        "Logs_Grade_All",
     ]
     assert [column.header1_override for column in columns] == [
         "Logs_Grade_D",
@@ -568,8 +567,16 @@ def test_btc_indicator_bank_columns_returns_log_grades_bank() -> None:
         "Logs_Grade_U",
         "Logs_Grade_X",
         "Logs_Grade_Y",
-        "Logs_Grade_All",
     ]
+
+
+def test_btc_indicator_bank_columns_can_opt_into_log_grades_all() -> None:
+    columns = btc_indicator_bank_columns(
+        "log-grades",
+        options={"include_all_grades": True},
+    )
+    assert [column.token for column in columns][-1] == "Logs_Grade_All"
+    assert [column.header1_override for column in columns][-1] == "Logs_Grade_All"
 
 
 def test_btc_indicator_bank_columns_returns_lumber_2_or_better_bank() -> None:
@@ -856,7 +863,6 @@ def test_apply_btc_indicator_banks_supports_log_grades_bank() -> None:
         "Logs_Grade_U",
         "Logs_Grade_X",
         "Logs_Grade_Y",
-        "Logs_Grade_All",
     ]
 
 
@@ -1660,10 +1666,10 @@ def test_probe_btc_indicator_banks_accepts_whole_bank_in_one_run(
 
     assert run_ids == ["bankprobe_log_grades"]
     assert all(result.status == "accepted" for result in results)
-    assert len(results) == 9
+    assert len(results) == 8
     final_tokens = [column.token for column in final_template.columns]
     assert "Logs_Grade_D" in final_tokens
-    assert "Logs_Grade_All" in final_tokens
+    assert "Logs_Grade_All" not in final_tokens
 
 
 def test_probe_btc_indicator_banks_falls_back_to_ratchet_when_batch_run_misses_output(
@@ -1684,7 +1690,7 @@ def test_probe_btc_indicator_banks_falls_back_to_ratchet_when_batch_run_misses_o
         include_last = run_id != "bankprobe_log_grades"
         for column in columns:
             prefix = column.header1_override or column.token.replace(":", "")
-            if not include_last and prefix == "Logs_Grade_All":
+            if not include_last and prefix == "Logs_Grade_Y":
                 continue
             headers.append(f"{prefix}_10")
         output_path.write_text(
@@ -1725,10 +1731,11 @@ def test_probe_btc_indicator_banks_falls_back_to_ratchet_when_batch_run_misses_o
 
     assert run_ids[0] == "bankprobe_log_grades"
     assert any(run_id.startswith("bankprobe_log_grades_01_") for run_id in run_ids[1:])
-    assert len(results) == 9
+    assert len(results) == 8
     assert all(result.status == "accepted" for result in results)
     final_tokens = [column.token for column in final_template.columns]
-    assert "Logs_Grade_All" in final_tokens
+    assert "Logs_Grade_Y" in final_tokens
+    assert "Logs_Grade_All" not in final_tokens
 
 
 def test_build_btc_probe_variants_includes_alias_and_stock_forms(
@@ -2095,7 +2102,7 @@ def test_prepare_btc_runtime_tsr_preset_applies_log_grades_indicator_bank(
     rendered = prep.report_template_path.read_text(encoding="utf-8")
     assert "Logs_Grade_D\t\tLogs_Grade_D\t{yr}" in rendered
     assert "Logs_Grade_Y\t\tLogs_Grade_Y\t{yr}" in rendered
-    assert "Logs_Grade_All\t\tLogs_Grade_All\t{yr}" in rendered
+    assert "Logs_Grade_All\t\tLogs_Grade_All\t{yr}" not in rendered
 
 
 def test_prepare_btc_runtime_tsr_preset_applies_lumber_2_or_better_indicator_bank(

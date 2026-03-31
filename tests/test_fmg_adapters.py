@@ -10,6 +10,7 @@ from femic.fmg.adapters import (
     build_bundle_model_context_from_tables,
     normalize_tsa_code,
 )
+from femic.fmg.core import CurvePoint
 
 
 def _write_bundle_tables(bundle_dir: Path) -> None:
@@ -228,6 +229,95 @@ def test_build_bundle_model_context_loads_managed_stems_fallback_from_btc_input(
     support = context.qmd_support_by_au[985502001]
     assert support.managed_stems_per_ha == pytest.approx(900.0)
     assert support.managed_tph_points == ()
+
+
+def test_build_bundle_model_context_loads_log_grade_indicator_curves_from_tipsy(
+    tmp_path: Path,
+) -> None:
+    bundle_dir = tmp_path / "data" / "model_input_bundle"
+    bundle_dir.mkdir(parents=True, exist_ok=True)
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985502001,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_FDC+HW",
+                "si_level": "M",
+                "treated_curve_id": 985522001,
+                "untreated_curve_id": 985502001,
+            }
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "curve_type": "untreated"},
+            {"curve_id": 985522001, "curve_type": "treated"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985502001, "x": 0, "y": 0.0},
+            {"curve_id": 985502001, "x": 10, "y": 30.0},
+            {"curve_id": 985502001, "x": 20, "y": 80.0},
+            {"curve_id": 985522001, "x": 0, "y": 0.0},
+            {"curve_id": 985522001, "x": 10, "y": 36.0},
+            {"curve_id": 985522001, "x": 20, "y": 90.0},
+        ]
+    )
+    au_table.to_csv(bundle_dir / "au_table.csv", index=False)
+    curve_table.to_csv(bundle_dir / "curve_table.csv", index=False)
+    curve_points.to_csv(bundle_dir / "curve_points_table.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                "AU": 21001,
+                "Age": 0,
+                "Yield": 0.0,
+                "Height": 0.0,
+                "TPH": 0.0,
+                "Logs_Grade_D": 0.0,
+                "Logs_Grade_All": 0.0,
+            },
+            {
+                "AU": 21001,
+                "Age": 10,
+                "Yield": 36.0,
+                "Height": 4.0,
+                "TPH": 900.0,
+                "Logs_Grade_D": 7.0,
+                "Logs_Grade_All": 14.0,
+            },
+            {
+                "AU": 21001,
+                "Age": 20,
+                "Yield": 90.0,
+                "Height": 9.0,
+                "TPH": 700.0,
+                "Logs_Grade_D": 18.0,
+                "Logs_Grade_All": 30.0,
+            },
+        ]
+    ).to_csv(tmp_path / "data" / "tipsy_curves_tsak3z.csv", index=False)
+
+    context = build_bundle_model_context_from_tables(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+        tsa_list=["k3z"],
+        bundle_dir=bundle_dir,
+    )
+
+    indicator_curves = context.managed_indicator_curves_by_au[985502001]
+    assert indicator_curves["Logs_Grade_D"] == (
+        CurvePoint(x=0.0, y=0.0),
+        CurvePoint(x=10.0, y=7.0),
+        CurvePoint(x=20.0, y=18.0),
+    )
+    assert indicator_curves["Logs_Grade_All"] == (
+        CurvePoint(x=0.0, y=0.0),
+        CurvePoint(x=10.0, y=14.0),
+        CurvePoint(x=20.0, y=30.0),
+    )
 
 
 def test_build_bundle_model_context_requires_tsa(tmp_path: Path) -> None:

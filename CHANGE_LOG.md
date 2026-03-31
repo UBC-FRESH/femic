@@ -9304,3 +9304,87 @@
     - `ctfert_l15h5`
     - `ctfert_l20h0`
     - no CT or broader variant rollout in this slice
+- 2026-03-30 (Issue #65 closeout): surfaced the shipped BTC `log-grades` bank
+  as a new CC-only harvested product/account family on the active K3Z ctfert
+  variants.
+  - Parent exporter/adapters now carry
+    `product.Logs_Grade_{D,F,H,I,J,U,X,Y,All}.managed.Total.CC` for
+    `ctfert_l15h5` and `ctfert_l20h0`, with focused regression tests proving
+    the family is complete, CC-only, ctfert-only, and retains the zero-only
+    `D/F` members.
+  - The two ctfert silviculture configs now request the existing BTC
+    `log-grades` bank, and the refreshed K3Z BTC curves plus rebuilt validated
+    XML/tracks now contain the full nine-member family in:
+    - `tracks_ctfert_l15h5/{products,protoaccounts,accounts}.csv`
+    - `tracks_ctfert_l20h0/{products,protoaccounts,accounts}.csv`
+  - Repaired the ctfert headless Patchworks PINs so they once again source the
+    shared `headless_runtime_common.bsh` seam; this restored unattended
+    save-stage support for the SI-profile ctfert launch surfaces.
+  - Representative live runtime proof:
+    - `external/femic-k3z-instance/vdyp_io/logs/headless_stage/issue65_ctfert_loggrades_runtime_rerun/targets/product_Logs_Grade_H_managed_Total_CC.csv`
+      contains non-zero harvested values;
+    - `external/femic-k3z-instance/vdyp_io/logs/headless_stage/issue65_ctfert_loggrades_runtime_rerun/targets/product_Logs_Grade_D_managed_Total_CC.csv`
+      preserves the expected zero-only surface;
+    - no matching `...CT` log-grade outputs appear in rebuilt tracks, XML, or
+      the saved runtime stage.
+  - Final validation is green:
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest`
+    - `python -m pre_commit run --all-files`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
+- 2026-03-31 (Issue #65 semantics correction kickoff): reopened the ctfert
+  log-grade rollout to repair the bank semantics before final closure.
+  - Updated `ROADMAP.md` so Phase 51 now carries an active `P51.4`
+    follow-on for the semantics correction.
+  - Locked the correction scope to:
+    - add a first-class bank compile-recipe seam;
+    - make the default `log-grades` family exclude `Logs_Grade_All`;
+    - preserve an explicit opt-in path for `Logs_Grade_All`;
+    - add user-tweakable per-grade ratio weights, normalized by FEMIC so they
+      rebalance grade shares without changing net harvested volume;
+    - keep the shipped reference recipe inside FEMIC while merging optional
+      user overlays from `~/.femic/recipe-overlays`;
+    - scale emitted log-grade harvested product accounts by the same
+      harvested-volume utilization factor as `product.HarvestedVolume.*`
+      so the grade family sums to effective harvested volume at runtime;
+    - widen rebuild/validation beyond the two ctfert variants so shared and
+      natural-origin harvest surfaces are checked too.
+- 2026-03-31 (Issue #65 semantics correction closeout): hardened the K3Z
+  log-grade contract so the explicit grade family is additive, treatment-aware,
+  and aligned with harvested-volume totals at runtime.
+  - Added a first-class BTC indicator-bank compile-recipe seam with the shipped
+    reference recipe at
+    `src/femic/resources/patchworks/btc_indicator_bank_compile_recipes.yaml`
+    and optional user overrides at
+    `~/.femic/recipe-overlays/btc_indicator_bank_compile_recipes.yaml`.
+  - The default `log-grades` recipe now excludes `Logs_Grade_All`, keeps an
+    explicit opt-in path for that separate scaled-log metric, exposes
+    user-tweakable per-grade ratio weights, and normalizes the explicit
+    `D/F/H/I/J/U/X/Y` family so it sums to `product.HarvestedVolume.*` rather
+    than raw BTC merchantable `Yield`.
+  - Added treatment-specific ratio overrides so the K3Z teaching contract can
+    intentionally bias `CT` harvested material toward `J/U/X/Y` small-log and
+    utility/chipper classes, while `CC` continues to follow the normalized
+    BTC-derived mix.
+  - Rebuilt the broader affected K3Z family (ctfert plus active/intensive
+    surfaces), reran Matrix Builder, and directly inspected both the static
+    tracks/XML and the saved runtime outputs under
+    `external/femic-k3z-instance/vdyp_io/logs/headless_stage/issue65_loggrade_ctfert_runtime_ctoverride`.
+  - Runtime proof confirms:
+    - some harvest occurs;
+    - explicit `CC` and `CT` grade files are saved;
+    - explicit grades track harvested-volume totals within small rounding
+      noise; and
+    - `CT` now emits a clearly lower-grade mix concentrated in `J/U/X/Y`.
+  - Final validation is green:
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest`
+    - `python -m pre_commit run --all-files`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m sphinx -b html docs docs/_build/html -W` from the standalone
+      K3Z docs root

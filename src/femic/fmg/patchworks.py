@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import importlib
+from importlib import resources as importlib_resources
 import math
 import re
 from pathlib import Path
@@ -14,6 +15,7 @@ import numpy as np
 import pandas as pd
 import yaml
 
+from femic.user_config import default_femic_recipe_overlay_root
 from .adapters import (
     build_bundle_model_context,
     build_bundle_model_context_from_tables,
@@ -56,7 +58,7 @@ STAND_STRUCTURE_BASIC_FEATURE_COLUMNS = (
     ("StemCount125", "feature.StemCount125.managed.{au_token}"),
     ("StemCount175", "feature.StemCount175.managed.{au_token}"),
 )
-LOG_GRADES_PRODUCT_COLUMNS = (
+LOG_GRADES_EXPLICIT_PRODUCT_COLUMNS = (
     "Logs_Grade_D",
     "Logs_Grade_F",
     "Logs_Grade_H",
@@ -65,8 +67,10 @@ LOG_GRADES_PRODUCT_COLUMNS = (
     "Logs_Grade_U",
     "Logs_Grade_X",
     "Logs_Grade_Y",
-    "Logs_Grade_All",
 )
+LOG_GRADES_ALL_PRODUCT_COLUMN = "Logs_Grade_All"
+_BTC_INDICATOR_BANK_COMPILE_RECIPES_PACKAGE = "femic.resources.patchworks"
+_BTC_INDICATOR_BANK_COMPILE_RECIPES_RESOURCE = "btc_indicator_bank_compile_recipes.yaml"
 VALID_IFM_VALUES = {"managed", "unmanaged"}
 VALID_ORIGIN_VALUES = {"natural", "planted"}
 VALID_SILV_STATE_VALUES = {
@@ -500,19 +504,265 @@ def _log_grade_product_label(*, indicator_key: str, treatment_label: str) -> str
     return f"product.{indicator_key}.managed.Total.{treatment_token}"
 
 
+def _load_default_btc_indicator_bank_compile_recipes() -> dict[str, dict[str, Any]]:
+    resource = importlib_resources.files(
+        _BTC_INDICATOR_BANK_COMPILE_RECIPES_PACKAGE
+    ).joinpath(_BTC_INDICATOR_BANK_COMPILE_RECIPES_RESOURCE)
+    with resource.open("r", encoding="utf-8") as handle:
+        raw = yaml.safe_load(handle) or {}
+    if not isinstance(raw, dict):
+        raise ValueError(
+            "BTC indicator bank compile recipes must deserialize to a mapping"
+        )
+    return {
+        str(bank).strip(): dict(recipe)
+        for bank, recipe in raw.items()
+        if str(bank).strip() and isinstance(recipe, dict)
+    }
+
+
+def _merge_nested_mapping(
+    base: dict[str, Any],
+    override: dict[str, Any],
+) -> dict[str, Any]:
+    merged = dict(base)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _merge_nested_mapping(dict(merged[key]), value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def _load_user_btc_indicator_bank_compile_recipes() -> dict[str, dict[str, Any]]:
+    overlay_path = (
+        default_femic_recipe_overlay_root()
+        / _BTC_INDICATOR_BANK_COMPILE_RECIPES_RESOURCE
+    )
+    if not overlay_path.exists():
+        return {}
+    raw = yaml.safe_load(overlay_path.read_text(encoding="utf-8")) or {}
+    if not isinstance(raw, dict):
+        raise ValueError(
+            "User BTC indicator bank compile recipe overlay must deserialize "
+            "to a mapping"
+        )
+    return {
+        str(bank).strip(): dict(recipe)
+        for bank, recipe in raw.items()
+        if str(bank).strip() and isinstance(recipe, dict)
+    }
+
+
+def _resolve_btc_indicator_bank_compile_recipes(
+    *,
+    silviculture_config: dict[str, Any] | None,
+    btc_indicator_bank_names: Iterable[str],
+) -> dict[str, dict[str, Any]]:
+    defaults = _load_default_btc_indicator_bank_compile_recipes()
+    user_overlays = _load_user_btc_indicator_bank_compile_recipes()
+    raw_overrides = (silviculture_config or {}).get(
+        "btc_indicator_bank_compile_recipes", {}
+    ) or {}
+    if not isinstance(raw_overrides, dict):
+        raise ValueError("btc_indicator_bank_compile_recipes must be a mapping by bank")
+
+    resolved: dict[str, dict[str, Any]] = {}
+    for bank_name in btc_indicator_bank_names:
+        recipe = dict(defaults.get(bank_name, {}))
+        user_overlay = user_overlays.get(bank_name, {})
+        if user_overlay:
+            recipe = _merge_nested_mapping(recipe, user_overlay)
+        override_value = raw_overrides.get(bank_name, {})
+        if override_value in (None, {}):
+            resolved[bank_name] = recipe
+            continue
+        if not isinstance(override_value, dict):
+            raise ValueError(
+                "btc_indicator_bank_compile_recipes entries must be mappings "
+                f"(received {type(override_value).__name__} for {bank_name!r})"
+            )
+        recipe = _merge_nested_mapping(recipe, override_value)
+        resolved[bank_name] = recipe
+    return resolved
+
+
+def _resolve_log_grade_product_columns(
+    *, compile_recipe: dict[str, Any] | None
+) -> tuple[str, ...]:
+    recipe = dict(compile_recipe or {})
+    raw_emit_columns = recipe.get("emit_columns", LOG_GRADES_EXPLICIT_PRODUCT_COLUMNS)
+    if not isinstance(raw_emit_columns, (list, tuple)):
+        raise ValueError("log-grades compile recipe emit_columns must be a list/tuple")
+    columns: list[str] = []
+    for raw_column in raw_emit_columns:
+        column = str(raw_column).strip()
+        if not column:
+            continue
+        if (
+            column not in LOG_GRADES_EXPLICIT_PRODUCT_COLUMNS
+            and column != LOG_GRADES_ALL_PRODUCT_COLUMN
+        ):
+            raise ValueError(
+                f"Unsupported log-grades compile recipe emit_columns entry {column!r}"
+            )
+        if column not in columns:
+            columns.append(column)
+    if (
+        bool(recipe.get("include_all_grades"))
+        and LOG_GRADES_ALL_PRODUCT_COLUMN not in columns
+    ):
+        columns.append(LOG_GRADES_ALL_PRODUCT_COLUMN)
+    return tuple(columns)
+
+
+def _resolve_log_grade_ratio_scaling_factors(
+    *,
+    compile_recipe: dict[str, Any] | None,
+    denominator_columns: Iterable[str],
+    treatment_label: str | None = None,
+) -> dict[str, float]:
+    recipe = dict(compile_recipe or {})
+    raw_weights = recipe.get("ratio_scaling_factors", {}) or {}
+    if not isinstance(raw_weights, dict):
+        raise ValueError("log-grades ratio_scaling_factors must be a mapping/object")
+    if treatment_label:
+        raw_by_treatment = recipe.get("ratio_scaling_factors_by_treatment", {}) or {}
+        if not isinstance(raw_by_treatment, dict):
+            raise ValueError(
+                "log-grades ratio_scaling_factors_by_treatment must be a mapping/object"
+            )
+        treatment_weights = raw_by_treatment.get(treatment_label, {}) or {}
+        if not isinstance(treatment_weights, dict):
+            raise ValueError(
+                "log-grades ratio_scaling_factors_by_treatment entries must be "
+                "mappings/objects"
+            )
+        raw_weights = {**raw_weights, **treatment_weights}
+
+    weights: dict[str, float] = {}
+    for column in denominator_columns:
+        raw_value = raw_weights.get(column, 1.0)
+        try:
+            weight = float(raw_value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"Invalid log-grades ratio scaling factor for {column!r}: {raw_value!r}"
+            ) from exc
+        if weight < 0.0:
+            raise ValueError(
+                "log-grades ratio scaling factors must be non-negative "
+                f"(received {weight!r} for {column!r})"
+            )
+        weights[column] = weight
+    if not any(weight > 0.0 for weight in weights.values()):
+        raise ValueError(
+            "log-grades ratio_scaling_factors must leave at least one explicit "
+            "grade with a positive weight"
+        )
+    return weights
+
+
+def _build_compiled_log_grade_curve_points(
+    *,
+    source_curve_points: tuple[CurvePoint, ...],
+    managed_indicator_curves: dict[str, tuple[CurvePoint, ...]],
+    indicator_key: str,
+    treatment_label: str,
+    compile_recipe: dict[str, Any] | None = None,
+) -> tuple[CurvePoint, ...]:
+    recipe = dict(compile_recipe or {})
+    if not bool(recipe.get("scale_to_harvested_volume_total", False)):
+        return tuple(managed_indicator_curves.get(indicator_key, ()))
+
+    source_indicator_points = tuple(managed_indicator_curves.get(indicator_key, ()))
+    if not source_curve_points or not source_indicator_points:
+        return ()
+
+    denominator_columns = tuple(
+        column
+        for column in _resolve_log_grade_product_columns(compile_recipe=recipe)
+        if column != LOG_GRADES_ALL_PRODUCT_COLUMN
+    )
+    if not denominator_columns:
+        denominator_columns = LOG_GRADES_EXPLICIT_PRODUCT_COLUMNS
+    ratio_weights = _resolve_log_grade_ratio_scaling_factors(
+        compile_recipe=recipe,
+        denominator_columns=denominator_columns,
+        treatment_label=treatment_label,
+    )
+
+    out: list[CurvePoint] = []
+    for point in source_curve_points:
+        age = float(point.x)
+        source_total = max(0.0, float(point.y))
+        denominator = 0.0
+        for column in denominator_columns:
+            denominator += (
+                max(
+                    0.0,
+                    float(
+                        _interpolate_curve_y(
+                            curve_points=tuple(
+                                managed_indicator_curves.get(column, ())
+                            ),
+                            x_value=age,
+                        )
+                        or 0.0
+                    ),
+                )
+                * ratio_weights[column]
+            )
+        if denominator <= 0.0 or source_total <= 0.0:
+            out.append(CurvePoint(x=age, y=0.0))
+            continue
+        numerator = max(
+            0.0,
+            float(
+                _interpolate_curve_y(
+                    curve_points=source_indicator_points,
+                    x_value=age,
+                )
+                or 0.0
+            ),
+        )
+        if indicator_key != LOG_GRADES_ALL_PRODUCT_COLUMN:
+            numerator *= ratio_weights.get(indicator_key, 1.0)
+        out.append(
+            CurvePoint(
+                x=age,
+                y=round(source_total * (numerator / denominator), 1),
+            )
+        )
+    return tuple(out)
+
+
 def _append_log_grade_product_attrs(
     *,
     product_attrs: list[AttributeBinding],
     curves: dict[str, tuple[CurvePoint, ...]],
     managed_indicator_curves: dict[str, tuple[CurvePoint, ...]],
+    source_curve_points: tuple[CurvePoint, ...],
     au_token: str,
     treatment_label: str,
+    curve_ref_prefix: str,
+    compile_recipe: dict[str, Any] | None = None,
 ) -> None:
-    for indicator_key in LOG_GRADES_PRODUCT_COLUMNS:
-        curve_points = tuple(managed_indicator_curves.get(indicator_key, ()))
-        if not curve_points or not _curve_has_positive_signal(curve_points):
+    for indicator_key in _resolve_log_grade_product_columns(
+        compile_recipe=compile_recipe
+    ):
+        curve_points = _build_compiled_log_grade_curve_points(
+            source_curve_points=source_curve_points,
+            managed_indicator_curves=managed_indicator_curves,
+            indicator_key=indicator_key,
+            treatment_label=treatment_label,
+            compile_recipe=compile_recipe,
+        )
+        if not curve_points:
             continue
-        curve_ref = f"au_{au_token}_managed_{_sanitize_id_component(indicator_key)}"
+        curve_ref = (
+            f"{curve_ref_prefix}_{au_token}_{_sanitize_id_component(indicator_key)}"
+        )
         curves.setdefault(curve_ref, curve_points)
         product_attrs.append(
             AttributeBinding(
@@ -1839,6 +2089,10 @@ def build_patchworks_forestmodel_definition(
     btc_indicator_bank_names = _resolve_btc_indicator_bank_names(
         silviculture_config=silviculture_config
     )
+    btc_indicator_bank_compile_recipes = _resolve_btc_indicator_bank_compile_recipes(
+        silviculture_config=silviculture_config,
+        btc_indicator_bank_names=btc_indicator_bank_names,
+    )
     transition_assignments_list: list[TreatmentAssignment] = [
         TreatmentAssignment(field="ORIGIN", value=_as_quoted_literal("planted")),
         TreatmentAssignment(field="SILV_STATE", value=_as_quoted_literal("cc_pl")),
@@ -2132,13 +2386,22 @@ def build_patchworks_forestmodel_definition(
                     curve_idref=managed_curve_ref,
                 ),
             ]
-            if origin == "planted" and "log-grades" in btc_indicator_bank_names:
+            if "log-grades" in btc_indicator_bank_names:
                 _append_log_grade_product_attrs(
                     product_attrs=product_attrs,
                     curves=curves,
                     managed_indicator_curves=managed_indicator_curves,
+                    source_curve_points=(
+                        managed_total_curve.points
+                        if managed_total_curve is not None
+                        else ()
+                    ),
                     au_token=au_token,
                     treatment_label="CC",
+                    curve_ref_prefix=(
+                        f"au_{au_token}_{_sanitize_id_component(origin)}_cc_log_grade"
+                    ),
+                    compile_recipe=btc_indicator_bank_compile_recipes.get("log-grades"),
                 )
             if unmanaged_stems_curve_ref is not None:
                 unmanaged_attrs.append(
@@ -2872,11 +3135,28 @@ def build_patchworks_forestmodel_definition(
                 ]
                 if "log-grades" in btc_indicator_bank_names:
                     _append_log_grade_product_attrs(
+                        product_attrs=ct_product_attrs,
+                        curves=curves,
+                        managed_indicator_curves=managed_indicator_curves,
+                        source_curve_points=curves[ct_product_curve_ref],
+                        au_token=au_token,
+                        treatment_label="CT",
+                        curve_ref_prefix=(f"au_{au_token}_{state_slug}_ct_log_grade"),
+                        compile_recipe=btc_indicator_bank_compile_recipes.get(
+                            "log-grades"
+                        ),
+                    )
+                    _append_log_grade_product_attrs(
                         product_attrs=ct_cc_product_attrs,
                         curves=curves,
                         managed_indicator_curves=managed_indicator_curves,
+                        source_curve_points=curves[ct_residual_curve_ref],
                         au_token=au_token,
                         treatment_label="CC",
+                        curve_ref_prefix=(f"au_{au_token}_{state_slug}_cc_log_grade"),
+                        compile_recipe=btc_indicator_bank_compile_recipes.get(
+                            "log-grades"
+                        ),
                     )
                 ct_residual_attrs = [
                     AttributeBinding(label="feature.Area.managed", curve_idref="unity"),
@@ -3224,8 +3504,17 @@ def build_patchworks_forestmodel_definition(
                             product_attrs=fert_cc_product_attrs,
                             curves=curves,
                             managed_indicator_curves=managed_indicator_curves,
+                            source_curve_points=curves[fert_curve_ref],
                             au_token=au_token,
                             treatment_label="CC",
+                            curve_ref_prefix=(
+                                "au_"
+                                f"{au_token}_{_sanitize_id_component(str(fert_config['to_state']))}"
+                                "_cc_log_grade"
+                            ),
+                            compile_recipe=btc_indicator_bank_compile_recipes.get(
+                                "log-grades"
+                            ),
                         )
                     if qmd_enabled:
                         fert_qmd_curve_ref = f"au_{au_token}_managed_{_sanitize_id_component(str(fert_config['to_state']))}_qmd"

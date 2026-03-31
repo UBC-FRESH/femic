@@ -153,6 +153,26 @@ That keeps the newer K3Z proving-ground QMD surfaces coherent with the richer
 BTC-managed stand-structure outputs without forcing every non-bank surface to
 carry the same dependency.
 
+Another current example is the log-grade compile-recipe seam. The shipped
+``log-grades`` recipe now treats the explicit grades
+``D/F/H/I/J/U/X/Y`` as the additive family and excludes ``Logs_Grade_All`` by
+default because that BTC field behaves as a separate scaled-log metric rather
+than a true additive parent. At export time this module:
+
+- reads the shipped reference recipe from
+  ``src/femic/resources/patchworks/btc_indicator_bank_compile_recipes.yaml``;
+- merges optional user overlays from
+  ``~/.femic/recipe-overlays/btc_indicator_bank_compile_recipes.yaml``;
+- applies optional treatment-specific ratio overrides;
+- normalizes the explicit grades against harvested-volume totals so the emitted
+  grade family sums to ``product.HarvestedVolume.*`` instead of raw BTC
+  merchantable yield.
+
+The current K3Z teaching contract uses that seam to bias ``CT`` harvested
+volume toward lower-grade ``J/U/X/Y`` material. This is a deliberate bridge
+between upstream forest-growth signals and downstream product-sector teaching
+accounts, not a claim that BTC directly observed CT-grade outcomes.
+
 Fragments And State Wiring
 --------------------------
 

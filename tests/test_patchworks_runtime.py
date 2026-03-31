@@ -1465,6 +1465,10 @@ def test_run_patchworks_command_applies_harvest_utilization_by_treatment(
             "product.HarvestedVolume.managed.Total.CT,1\n"
             "_MANAGED_,product.HarvestedVolume.managed.Total.PCT,"
             "product.HarvestedVolume.managed.Total.PCT,1\n"
+            "_MANAGED_,product.Logs_Grade_H.managed.Total.CC,"
+            "product.Logs_Grade_H.managed.Total.CC,1\n"
+            "_MANAGED_,product.Logs_Grade_H.managed.Total.CT,"
+            "product.Logs_Grade_H.managed.Total.CT,1\n"
         ),
         encoding="utf-8",
     )
@@ -1498,6 +1502,14 @@ def test_run_patchworks_command_applies_harvest_utilization_by_treatment(
     assert (
         "product.HarvestedVolume.managed.Total.PCT,"
         "product.HarvestedVolume.managed.Total.PCT,1" in accounts_text
+    )
+    assert (
+        "product.Logs_Grade_H.managed.Total.CC,"
+        "product.Logs_Grade_H.managed.Total.CC,0.85" in accounts_text
+    )
+    assert (
+        "product.Logs_Grade_H.managed.Total.CT,"
+        "product.Logs_Grade_H.managed.Total.CT,0.75" in accounts_text
     )
 
     manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))

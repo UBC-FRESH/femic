@@ -166,7 +166,6 @@ _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
         ("Logs_Grade_U", "Logs_Grade_U"),
         ("Logs_Grade_X", "Logs_Grade_X"),
         ("Logs_Grade_Y", "Logs_Grade_Y"),
-        ("Logs_Grade_All", "Logs_Grade_All"),
     ),
     "lumber-2-or-better": (
         ("Lumber_2_or_Better_2x4", "Lumber_2_or_Better_2x4"),
@@ -349,14 +348,26 @@ _BTC_INDICATOR_BANK_SPECS: dict[str, tuple[tuple[str, str], ...]] = {
         for suffix in _BTC_DIAMETER_CLASS_SUFFIXES
     ),
 }
+_BTC_INDICATOR_BANK_OPTIONAL_SPECS: dict[
+    str, dict[str, tuple[tuple[str, str], ...]]
+] = {
+    "log-grades": {
+        "include_all_grades": (("Logs_Grade_All", "Logs_Grade_All"),),
+    }
+}
+_BTC_ALL_INDICATOR_BANK_SPECS: tuple[tuple[str, str], ...] = tuple(
+    spec for bank in _BTC_INDICATOR_BANK_SPECS.values() for spec in bank
+) + tuple(
+    spec
+    for bank_options in _BTC_INDICATOR_BANK_OPTIONAL_SPECS.values()
+    for option_specs in bank_options.values()
+    for spec in option_specs
+)
 _BTC_OUTPUT_ALIAS_TO_TABLE_COLUMN: dict[str, str] = {
-    alias: alias for bank in _BTC_INDICATOR_BANK_SPECS.values() for _, alias in bank
+    alias: alias for _, alias in _BTC_ALL_INDICATOR_BANK_SPECS
 }
 _BTC_OUTPUT_ALIAS_TO_REPORT_TOKEN: dict[str, str] = {
-    alias: token
-    for bank in _BTC_INDICATOR_BANK_SPECS.values()
-    for token, alias in bank
-    if alias != token
+    alias: token for token, alias in _BTC_ALL_INDICATOR_BANK_SPECS if alias != token
 }
 DEFAULT_BTC_MSYT_COLUMNS = (
     "feature_id",
@@ -742,7 +753,11 @@ def build_btc_custom_report_template(
     )
 
 
-def btc_indicator_bank_columns(name: str) -> tuple[BTCCustomReportColumn, ...]:
+def btc_indicator_bank_columns(
+    name: str,
+    *,
+    options: Mapping[str, Any] | None = None,
+) -> tuple[BTCCustomReportColumn, ...]:
     """Return the vetted column set for one optional BTC indicator bank."""
     normalized = name.strip().lower().replace("_", "-")
     specs = _BTC_INDICATOR_BANK_SPECS.get(normalized)
@@ -751,13 +766,20 @@ def btc_indicator_bank_columns(name: str) -> tuple[BTCCustomReportColumn, ...]:
         raise ValueError(
             f"Unsupported BTC indicator bank {name!r}. Supported banks: {supported}"
         )
+    merged_specs = list(specs)
+    for option_name, option_specs in _BTC_INDICATOR_BANK_OPTIONAL_SPECS.get(
+        normalized, {}
+    ).items():
+        if not bool((options or {}).get(option_name)):
+            continue
+        merged_specs.extend(option_specs)
     return tuple(
         BTCCustomReportColumn(
             token=token,
             header1_override=alias,
             header2_override="{yr}",
         )
-        for token, alias in specs
+        for token, alias in merged_specs
     )
 
 

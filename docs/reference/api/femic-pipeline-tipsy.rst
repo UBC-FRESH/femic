@@ -341,7 +341,8 @@ Current bank contents:
   - ``Logs_Grade_U``
   - ``Logs_Grade_X``
   - ``Logs_Grade_Y``
-  - ``Logs_Grade_All``
+  - default shipped bank excludes ``Logs_Grade_All`` because that BTC field is a separate scaled-log metric rather than an additive member of the explicit merchantable-grade partition
+  - downstream compile recipes may still opt ``Logs_Grade_All`` back in explicitly when a model wants that separate metric
 - ``lumber-2-or-better``:
   - ``Lumber_2_or_Better_2x4``
   - ``Lumber_2_or_Better_2x6``
@@ -566,7 +567,7 @@ through ``stand-structure-threshold-raw``.
   - ``Logs_Grade_U_*``
   - ``Logs_Grade_X_*``
   - ``Logs_Grade_Y_*``
-  - ``Logs_Grade_All_*``
+  - ``Logs_Grade_All_*`` only when the bank is explicitly configured to include the separate all-grades metric
 - plus the lumber-2-or-better bank:
   - ``Lumber_2_or_Better_2x4_*``
   - ``Lumber_2_or_Better_2x6_*``

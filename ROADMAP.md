@@ -7679,16 +7679,24 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P50.3c Update `CHANGE_LOG.md`, K3Z troubleshooting/operator docs, and GitHub issue `#64` with the repaired contract and validation evidence.
 
 ## Phase 51: Add BTC Log-Grade Harvested Product Families to K3Z CTFert Variants
-- [ ] P51.1 Add the narrow CC-only log-grade exporter surface for the two ctfert variants
-  - [ ] P51.1a Use the existing shipped BTC `log-grades` bank as the upstream source and emit new harvested product/account families for `Logs_Grade_{D,F,H,I,J,U,X,Y,All}`.
-  - [ ] P51.1b Keep the rollout scoped to `ctfert_l15h5` and `ctfert_l20h0`, and keep the family CC-only with no CT exposure in this slice.
-- [ ] P51.2 Wire the ctfert variants and rebuild the affected checked-in Patchworks artifacts
-  - [ ] P51.2a Update the two ctfert silviculture surfaces so they explicitly request the `log-grades` bank.
-  - [ ] P51.2b Regenerate the affected validated ForestModel XML plus `tracks_ctfert_l15h5/` and `tracks_ctfert_l20h0/` products/protoaccounts/accounts outputs before Matrix Builder validation.
-- [ ] P51.3 Validate the narrow rollout and close issue `#65`
-  - [ ] P51.3a Add focused exporter tests that prove the new log-grade family is present, complete, CC-only, and ctfert-only.
-  - [ ] P51.3b Inspect rebuilt XML/tracks directly and run one representative harvest-producing Patchworks smoke on a repaired ctfert surface to confirm live saved outputs include the new family.
-  - [ ] P51.3c Update `CHANGE_LOG.md`, the relevant K3Z docs, and GitHub issue `#65` with the rollout evidence and closeout note.
+- [x] P51.1 Add the narrow CC-only log-grade exporter surface for the two ctfert variants
+  - [x] P51.1a Use the existing shipped BTC `log-grades` bank as the upstream source and emit new harvested product/account families for `Logs_Grade_{D,F,H,I,J,U,X,Y,All}`.
+  - [x] P51.1b Keep the rollout scoped to `ctfert_l15h5` and `ctfert_l20h0`, and keep the family CC-only with no CT exposure in this slice.
+- [x] P51.2 Wire the ctfert variants and rebuild the affected checked-in Patchworks artifacts
+  - [x] P51.2a Update the two ctfert silviculture surfaces so they explicitly request the `log-grades` bank.
+  - [x] P51.2b Regenerate the affected validated ForestModel XML plus `tracks_ctfert_l15h5/` and `tracks_ctfert_l20h0/` products/protoaccounts/accounts outputs before Matrix Builder validation.
+- [x] P51.3 Validate the narrow rollout and close issue `#65`
+  - [x] P51.3a Add focused exporter tests that prove the new log-grade family is present, complete, CC-only, and ctfert-only.
+  - [x] P51.3b Inspect rebuilt XML/tracks directly and run one representative harvest-producing Patchworks smoke on a repaired ctfert surface to confirm live saved outputs include the new family.
+  - [x] P51.3c Update `CHANGE_LOG.md`, the relevant K3Z docs, and GitHub issue `#65` with the rollout evidence and closeout note.
+- [x] P51.4 Harden the log-grade bank semantics and reopen issue `#65`
+  - [x] P51.4a Add a first-class BTC indicator-bank compile-recipe contract, with `log-grades` as the first recipe-backed bank and a shipped reference recipe inside FEMIC.
+  - [x] P51.4b Change the default `log-grades` recipe to emit only `D/F/H/I/J/U/X/Y`, while preserving an explicit opt-in flag for `Logs_Grade_All`.
+  - [x] P51.4c Add user-tweakable per-grade ratio scaling factors to the recipe contract, normalized by FEMIC so they rebalance grade shares without creating or destroying harvested volume.
+  - [x] P51.4c1 Add treatment-specific ratio override support so CT can intentionally skew toward lower-grade small-log material instead of inheriting CC-oriented TIPSY grade shares.
+  - [x] P51.4d Add a user recipe-overlay seam rooted at `~/.femic/recipe-overlays` so reference recipes stay repo-owned while local ratio tweaks stay user-owned.
+  - [x] P51.4e Apply the same harvested-volume utilization multiplier to emitted log-grade product accounts so the explicit grade family sums to effective harvested volume at runtime.
+  - [x] P51.4f Rebuild the broader affected K3Z family, rerun Matrix Builder, and directly inspect both static tracks/XML and one harvest-producing runtime smoke for the corrected semantics across managed and natural-origin harvest surfaces.
 
 ## Detailed Next Steps Notes
 
@@ -7707,6 +7715,60 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - rebuild the affected validated ForestModel XMLs before rerunning Matrix Builder on the two ctfert variants;
     - inspect rebuilt `products.csv`, `protoaccounts.csv`, and `accounts.csv` directly to confirm all expected grade members are present as CC-only families;
     - finish with one representative Patchworks smoke that schedules harvest volume and shows the new saved runtime log-grade family in concrete outputs.
+- 2026-03-30 (Issue #65 progress): the narrow ctfert log-grade rollout is working end to end.
+  - Shared exporter support now emits `product.Logs_Grade_{D,F,H,I,J,U,X,Y,All}.managed.Total.CC` only for the two active ctfert variants, and the adapter layer now loads `Logs_Grade_*` curves from the K3Z BTC export.
+  - The two ctfert silviculture configs now request the existing BTC `log-grades` bank, `data/tipsy_curves_tsak3z.csv` now carries the `Logs_Grade_*` columns, and the rebuilt `tracks_ctfert_l15h5/` and `tracks_ctfert_l20h0/` products/protoaccounts/accounts surfaces now contain the full nine-member CC-only family.
+  - The initial ctfert runtime smoke failure was traced to missing `headless_runtime_common.bsh` hooks in `analysis/ctfert_l15h5.pin` and `analysis/ctfert_l20h0.pin`; after restoring that shared headless contract, `femic patchworks run-headless ...ctfert_l15h5.pin --scenario-mode max-even-flow-smoke --run-id issue65_ctfert_loggrades_runtime_rerun` completed successfully.
+  - Representative live runtime proof now exists at:
+    - `external/femic-k3z-instance/vdyp_io/logs/headless_stage/issue65_ctfert_loggrades_runtime_rerun/targets/product_Logs_Grade_H_managed_Total_CC.csv`
+    - `external/femic-k3z-instance/vdyp_io/logs/headless_stage/issue65_ctfert_loggrades_runtime_rerun/targets/product_Logs_Grade_D_managed_Total_CC.csv`
+    proving that materially populated and zero-only CC log-grade surfaces are both saved at runtime and that no matching `...CT` log-grade products were introduced in this slice.
+- 2026-03-31 (Issue #65 semantics correction): reopen the ctfert log-grade rollout on the same feature branch to repair the bank contract before final closeout.
+  - Current interpretation issue:
+    - raw BTC inspection shows `Logs_Grade_D/F/H/I/J/U/X/Y` behave like a partition of merchantable `Yield`, while `Logs_Grade_All` is a distinct scaled-log quantity that can exceed `Yield`;
+    - carrying `Logs_Grade_All` as a peer product account in the additive K3Z harvested family is therefore misleading.
+  - Immediate correction order:
+    - add a generic bank compile-recipe seam in FEMIC, starting with a recipe-backed `log-grades` bank;
+    - make the default log-grade recipe exclude `Logs_Grade_All`, but support an explicit `include_all_grades` opt-in when a model really wants it;
+    - add user-tweakable per-grade ratio weights and normalize them inside FEMIC so users can shift grade shares without changing net harvested volume;
+    - add treatment-specific ratio overrides so K3Z CT can deliberately favor `J/U/X/Y` material in line with early-age thinning from below and the BC coast grading manual's small-radius/utility/chipper grades;
+    - keep the shipped reference recipe inside FEMIC and merge an optional user overlay from `~/.femic/recipe-overlays`;
+    - apply the same harvested-volume utilization multiplier to the emitted log-grade harvested product accounts so the grade family sums to effective harvested volume rather than raw merchantable yield;
+    - push the repaired recipe through the broader affected K3Z family, not just the two ctfert variants, so natural-origin harvest surfaces participate too;
+    - finish with a harvest-producing headless smoke that confirms saved runtime grade-family totals line up with harvested-volume totals in concrete output files.
+- 2026-03-31 (Issue #65 semantics correction closeout): the repaired compile-recipe
+  contract is now in place and validated end to end.
+  - The shipped reference recipe now excludes `Logs_Grade_All` by default, keeps
+    an explicit opt-in path for that separate scaled-log metric, exposes
+    user-tweakable ratio weights plus user overlay support, and normalizes the
+    explicit grade family so it sums to `product.HarvestedVolume.*` instead of
+    raw BTC merchantable yield.
+  - K3Z runtime semantics are now deliberately split by treatment:
+    - `CC` continues to follow the normalized BTC-derived grade mix;
+    - `CT` now uses recipe-backed ratio overrides to bias harvested material
+      toward `J/U/X/Y` small-log and utility/chipper classes in line with the
+      BC coast grading manual and the teaching-instance "thinning from below"
+      rationale.
+  - The rebuilt broader K3Z family now carries the repaired contract through
+    both managed and natural-origin harvest surfaces, and the representative
+    ctfert runtime proof at
+    `external/femic-k3z-instance/vdyp_io/logs/headless_stage/issue65_loggrade_ctfert_runtime_ctoverride`
+    confirms:
+    - some harvest occurs;
+    - explicit `CT` and `CC` grade files are saved at runtime;
+    - grade-family totals track harvested-volume totals within small rounding
+      noise; and
+    - `CT` output now shows a clearly lower-grade mix concentrated in
+      `J/U/X/Y`.
+  - Final validation is green:
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest`
+    - `python -m pre_commit run --all-files`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m sphinx -b html docs docs/_build/html -W` from the standalone
+      K3Z docs root.
 - 2026-03-30 (Issue #64 kickoff): start the urgent K3Z species-account regression repair on branch `bug/issue-64-k3z-species-account-dropout`.
   - Current local evidence:
     - baseline and `pct_light` now report `species=1 complete_species=1` with the `total OK, species-wise empty` diagnosis;

@@ -60,6 +60,9 @@ STAND_STRUCTURE_BASIC_ACCOUNT_PATTERN = re.compile(
 HARVESTED_VOLUME_ACCOUNT_PATTERN = re.compile(
     r"^product\.HarvestedVolume\.managed\..+\.([A-Z0-9_]+)$"
 )
+LOG_GRADE_ACCOUNT_PATTERN = re.compile(
+    r"^product\.Logs_Grade_[A-Za-z0-9_]+\.managed\.Total\.([A-Z0-9_]+)$"
+)
 AU_EQ_PATTERN = re.compile(r"\bAU eq (\d+)\b")
 
 
@@ -1491,6 +1494,8 @@ def _resolve_harvested_volume_sum_multiplier(
     if not harvested_volume_utilization_by_treatment:
         return None
     match = HARVESTED_VOLUME_ACCOUNT_PATTERN.match(attribute)
+    if match is None:
+        match = LOG_GRADE_ACCOUNT_PATTERN.match(attribute)
     if match is None:
         return None
     treatment = match.group(1).upper()

@@ -17,9 +17,11 @@ from femic.fmg.core import (
 )
 from femic.fmg.patchworks import (
     _au_base_display_label,
+    _build_compiled_log_grade_curve_points,
     _build_curve_with_post_thinning_gap,
     _build_height_curve_points,
     _build_qmd_curve_points,
+    _resolve_btc_indicator_bank_compile_recipes,
     _build_stems_per_ha_curve_points,
     _estimate_qmd_cm_from_volume,
     _sanitize_id_component,
@@ -887,7 +889,9 @@ def test_build_forestmodel_xml_tree_adds_ct_track_and_qmd_when_configured() -> N
     assert f1_treatment_labels == ["CC", "F2"]
 
 
-def test_build_forestmodel_xml_tree_adds_ctfert_log_grade_products_as_cc_only() -> None:
+def test_build_forestmodel_xml_tree_adds_ctfert_log_grade_products_for_cc_and_ct() -> (
+    None
+):
     context = _build_single_au_context(
         au_id=985502001,
         stratum_code="CWHvm_FDC+HW",
@@ -993,13 +997,192 @@ def test_build_forestmodel_xml_tree_adds_ctfert_log_grade_products_as_cc_only() 
         "Logs_Grade_U",
         "Logs_Grade_X",
         "Logs_Grade_Y",
-        "Logs_Grade_All",
     ):
         assert f"product.{token}.managed.Total.CC" in xml_text
-        assert f"product.{token}.managed.Total.CT" not in xml_text
+        assert f"product.{token}.managed.Total.CT" in xml_text
+    assert "product.Logs_Grade_All.managed.Total.CC" not in xml_text
+    assert "product.Logs_Grade_All.managed.Total.CT" not in xml_text
 
 
-def test_build_forestmodel_xml_tree_does_not_add_log_grade_products_without_bank() -> None:
+def test_build_forestmodel_xml_tree_adds_log_grade_products_to_natural_origin_cc() -> (
+    None
+):
+    context = _build_single_au_context(
+        au_id=985502001,
+        stratum_code="CWHvm_FDC+HW",
+        si_level="M",
+        unmanaged_points=(
+            CurvePoint(x=1.0, y=5.0),
+            CurvePoint(x=40.0, y=200.0),
+        ),
+        managed_points=(
+            CurvePoint(x=1.0, y=8.0),
+            CurvePoint(x=40.0, y=240.0),
+        ),
+        managed_indicator_curves={
+            "Logs_Grade_D": (
+                CurvePoint(x=1.0, y=10.0),
+                CurvePoint(x=40.0, y=80.0),
+            ),
+            "Logs_Grade_F": (
+                CurvePoint(x=1.0, y=15.0),
+                CurvePoint(x=40.0, y=120.0),
+            ),
+        },
+    )
+
+    root = build_forestmodel_xml_tree_from_context(
+        context=context,
+        silviculture_config={"btc_indicator_banks": ["log-grades"]},
+    )
+
+    natural_cc_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq "
+        "'natural' and SILV_STATE eq 'baseline' and treatment eq 'CC'\"]"
+    )
+    assert natural_cc_select is not None
+    labels = {
+        node.attrib["label"]
+        for node in natural_cc_select.findall("./products/attribute")
+    }
+    assert "product.Logs_Grade_D.managed.Total.CC" in labels
+    assert "product.Logs_Grade_F.managed.Total.CC" in labels
+    assert "product.Logs_Grade_All.managed.Total.CC" not in labels
+
+
+def test_build_forestmodel_xml_tree_can_opt_into_logs_grade_all() -> None:
+    context = _build_single_au_context(
+        au_id=985502001,
+        stratum_code="CWHvm_FDC+HW",
+        si_level="M",
+        unmanaged_points=(
+            CurvePoint(x=1.0, y=5.0),
+            CurvePoint(x=40.0, y=160.0),
+        ),
+        managed_points=(
+            CurvePoint(x=1.0, y=8.0),
+            CurvePoint(x=40.0, y=200.0),
+        ),
+        managed_indicator_curves={
+            "Logs_Grade_D": (
+                CurvePoint(x=1.0, y=0.0),
+                CurvePoint(x=40.0, y=0.0),
+            ),
+            "Logs_Grade_All": (
+                CurvePoint(x=1.0, y=4.1),
+                CurvePoint(x=40.0, y=174.0),
+            ),
+        },
+    )
+    silviculture_config = {
+        "commercial_thinning": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "from_state": "cc_pl",
+            "to_state": "cc_pl_ct",
+            "age_by_au": {"985502001": 40},
+            "basal_area_removal_fraction": 0.30,
+            "basal_area_to_volume_ratio": 1.0,
+        },
+        "fertilization": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "response_years": 10,
+            "growth_speedup_fraction": 0.10,
+            "first_application": {
+                "from_state": "cc_pl_ct",
+                "to_state": "cc_pl_ct_f1",
+                "age_by_au": {"985502001": 50},
+            },
+            "second_application": {"enabled": False},
+            "third_application": {"enabled": False},
+        },
+        "btc_indicator_banks": ["log-grades"],
+        "btc_indicator_bank_compile_recipes": {
+            "log-grades": {"include_all_grades": True}
+        },
+    }
+
+    root = build_forestmodel_xml_tree_from_context(
+        context=context,
+        silviculture_config=silviculture_config,
+    )
+
+    xml_text = et.tostring(root, encoding="unicode")
+    assert "product.Logs_Grade_D.managed.Total.CC" in xml_text
+    assert "product.Logs_Grade_All.managed.Total.CC" in xml_text
+    assert "product.Logs_Grade_All.managed.Total.CT" in xml_text
+
+
+def test_build_forestmodel_xml_tree_keeps_zero_only_ctfert_log_grade_products() -> None:
+    context = _build_single_au_context(
+        au_id=985502001,
+        stratum_code="CWHvm_FDC+HW",
+        si_level="M",
+        unmanaged_points=(
+            CurvePoint(x=1.0, y=5.0),
+            CurvePoint(x=40.0, y=200.0),
+        ),
+        managed_points=(
+            CurvePoint(x=1.0, y=8.0),
+            CurvePoint(x=40.0, y=240.0),
+        ),
+        managed_indicator_curves={
+            "Logs_Grade_D": (
+                CurvePoint(x=1.0, y=0.0),
+                CurvePoint(x=40.0, y=0.0),
+            ),
+            "Logs_Grade_F": (
+                CurvePoint(x=1.0, y=0.0),
+                CurvePoint(x=40.0, y=0.0),
+            ),
+            "Logs_Grade_All": (
+                CurvePoint(x=1.0, y=1.0),
+                CurvePoint(x=40.0, y=10.0),
+            ),
+        },
+    )
+    silviculture_config = {
+        "commercial_thinning": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "from_state": "cc_pl",
+            "to_state": "cc_pl_ct",
+            "age_by_au": {"985502001": 40},
+            "basal_area_removal_fraction": 0.30,
+            "basal_area_to_volume_ratio": 1.0,
+        },
+        "fertilization": {
+            "enabled": True,
+            "eligible_au_ids": [985502001],
+            "response_years": 10,
+            "growth_speedup_fraction": 0.10,
+            "first_application": {
+                "from_state": "cc_pl_ct",
+                "to_state": "cc_pl_ct_f1",
+                "age_by_au": {"985502001": 50},
+            },
+            "second_application": {"enabled": False},
+            "third_application": {"enabled": False},
+        },
+        "btc_indicator_banks": ["log-grades"],
+    }
+
+    root = build_forestmodel_xml_tree_from_context(
+        context=context,
+        silviculture_config=silviculture_config,
+    )
+
+    xml_text = et.tostring(root, encoding="unicode")
+    assert "product.Logs_Grade_D.managed.Total.CC" in xml_text
+    assert "product.Logs_Grade_F.managed.Total.CC" in xml_text
+    assert "product.Logs_Grade_D.managed.Total.CT" in xml_text
+    assert "product.Logs_Grade_F.managed.Total.CT" in xml_text
+
+
+def test_build_forestmodel_xml_tree_does_not_add_log_grade_products_without_bank() -> (
+    None
+):
     context = _build_single_au_context(
         au_id=985502001,
         stratum_code="CWHvm_FDC+HW",
@@ -1032,6 +1215,232 @@ def test_build_forestmodel_xml_tree_does_not_add_log_grade_products_without_bank
     xml_text = et.tostring(root, encoding="unicode")
     assert "product.Logs_Grade_D.managed.Total.CC" not in xml_text
     assert "product.Logs_Grade_All.managed.Total.CC" not in xml_text
+
+
+def test_build_compiled_log_grade_curve_points_scales_explicit_grades_to_source_total() -> (
+    None
+):
+    source_curve_points = (
+        CurvePoint(x=40.0, y=85.0),
+        CurvePoint(x=60.0, y=170.0),
+    )
+    managed_indicator_curves = {
+        "Logs_Grade_H": (
+            CurvePoint(x=40.0, y=20.0),
+            CurvePoint(x=60.0, y=40.0),
+        ),
+        "Logs_Grade_I": (
+            CurvePoint(x=40.0, y=30.0),
+            CurvePoint(x=60.0, y=60.0),
+        ),
+        "Logs_Grade_J": (
+            CurvePoint(x=40.0, y=50.0),
+            CurvePoint(x=60.0, y=100.0),
+        ),
+    }
+    recipe = {
+        "emit_columns": ["Logs_Grade_H", "Logs_Grade_I", "Logs_Grade_J"],
+        "scale_to_harvested_volume_total": True,
+    }
+
+    h_points = _build_compiled_log_grade_curve_points(
+        source_curve_points=source_curve_points,
+        managed_indicator_curves=managed_indicator_curves,
+        indicator_key="Logs_Grade_H",
+        treatment_label="CC",
+        compile_recipe=recipe,
+    )
+    i_points = _build_compiled_log_grade_curve_points(
+        source_curve_points=source_curve_points,
+        managed_indicator_curves=managed_indicator_curves,
+        indicator_key="Logs_Grade_I",
+        treatment_label="CC",
+        compile_recipe=recipe,
+    )
+    j_points = _build_compiled_log_grade_curve_points(
+        source_curve_points=source_curve_points,
+        managed_indicator_curves=managed_indicator_curves,
+        indicator_key="Logs_Grade_J",
+        treatment_label="CC",
+        compile_recipe=recipe,
+    )
+
+    assert [point.y for point in h_points] == [17.0, 34.0]
+    assert [point.y for point in i_points] == [25.5, 51.0]
+    assert [point.y for point in j_points] == [42.5, 85.0]
+    for idx in range(len(source_curve_points)):
+        assert (
+            pytest.approx(
+                h_points[idx].y + i_points[idx].y + j_points[idx].y,
+                abs=0.11,
+            )
+            == source_curve_points[idx].y
+        )
+
+
+def test_build_compiled_log_grade_curve_points_applies_ratio_scaling_factors() -> None:
+    source_curve_points = (
+        CurvePoint(x=40.0, y=85.0),
+        CurvePoint(x=60.0, y=170.0),
+    )
+    managed_indicator_curves = {
+        "Logs_Grade_H": (
+            CurvePoint(x=40.0, y=20.0),
+            CurvePoint(x=60.0, y=40.0),
+        ),
+        "Logs_Grade_I": (
+            CurvePoint(x=40.0, y=30.0),
+            CurvePoint(x=60.0, y=60.0),
+        ),
+        "Logs_Grade_J": (
+            CurvePoint(x=40.0, y=50.0),
+            CurvePoint(x=60.0, y=100.0),
+        ),
+    }
+    recipe = {
+        "emit_columns": ["Logs_Grade_H", "Logs_Grade_I", "Logs_Grade_J"],
+        "scale_to_harvested_volume_total": True,
+        "ratio_scaling_factors": {
+            "Logs_Grade_H": 1.0,
+            "Logs_Grade_I": 2.0,
+            "Logs_Grade_J": 1.0,
+        },
+    }
+
+    h_points = _build_compiled_log_grade_curve_points(
+        source_curve_points=source_curve_points,
+        managed_indicator_curves=managed_indicator_curves,
+        indicator_key="Logs_Grade_H",
+        treatment_label="CC",
+        compile_recipe=recipe,
+    )
+    i_points = _build_compiled_log_grade_curve_points(
+        source_curve_points=source_curve_points,
+        managed_indicator_curves=managed_indicator_curves,
+        indicator_key="Logs_Grade_I",
+        treatment_label="CC",
+        compile_recipe=recipe,
+    )
+    j_points = _build_compiled_log_grade_curve_points(
+        source_curve_points=source_curve_points,
+        managed_indicator_curves=managed_indicator_curves,
+        indicator_key="Logs_Grade_J",
+        treatment_label="CC",
+        compile_recipe=recipe,
+    )
+
+    assert [point.y for point in h_points] == [13.1, 26.2]
+    assert [point.y for point in i_points] == [39.2, 78.5]
+    assert [point.y for point in j_points] == [32.7, 65.4]
+    for idx in range(len(source_curve_points)):
+        assert (
+            pytest.approx(
+                h_points[idx].y + i_points[idx].y + j_points[idx].y,
+                abs=0.11,
+            )
+            == source_curve_points[idx].y
+        )
+
+
+def test_resolve_btc_indicator_bank_compile_recipes_merges_user_overlay(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    overlay_root = tmp_path / "recipe-overlays"
+    overlay_root.mkdir(parents=True)
+    (overlay_root / "btc_indicator_bank_compile_recipes.yaml").write_text(
+        "log-grades:\n"
+        "  ratio_scaling_factors:\n"
+        "    Logs_Grade_H: 1.5\n"
+        "  ratio_scaling_factors_by_treatment:\n"
+        "    CT:\n"
+        "      Logs_Grade_Y: 3.0\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.default_femic_recipe_overlay_root",
+        lambda: overlay_root,
+    )
+
+    recipes = _resolve_btc_indicator_bank_compile_recipes(
+        silviculture_config=None,
+        btc_indicator_bank_names=("log-grades",),
+    )
+
+    assert recipes["log-grades"]["include_all_grades"] is False
+    assert recipes["log-grades"]["ratio_scaling_factors"]["Logs_Grade_H"] == 1.5
+    assert recipes["log-grades"]["ratio_scaling_factors"]["Logs_Grade_I"] == 1.0
+    assert (
+        recipes["log-grades"]["ratio_scaling_factors_by_treatment"]["CT"][
+            "Logs_Grade_Y"
+        ]
+        == 3.0
+    )
+
+
+def test_build_compiled_log_grade_curve_points_applies_treatment_override_weights() -> (
+    None
+):
+    source_curve_points = (CurvePoint(x=60.0, y=100.0),)
+    managed_indicator_curves = {
+        "Logs_Grade_H": (CurvePoint(x=60.0, y=10.0),),
+        "Logs_Grade_I": (CurvePoint(x=60.0, y=20.0),),
+        "Logs_Grade_J": (CurvePoint(x=60.0, y=70.0),),
+    }
+    recipe = {
+        "emit_columns": ["Logs_Grade_H", "Logs_Grade_I", "Logs_Grade_J"],
+        "scale_to_harvested_volume_total": True,
+        "ratio_scaling_factors": {
+            "Logs_Grade_H": 1.0,
+            "Logs_Grade_I": 1.0,
+            "Logs_Grade_J": 1.0,
+        },
+        "ratio_scaling_factors_by_treatment": {
+            "CT": {
+                "Logs_Grade_H": 0.0,
+                "Logs_Grade_I": 0.5,
+                "Logs_Grade_J": 2.0,
+            }
+        },
+    }
+
+    cc_h_points = _build_compiled_log_grade_curve_points(
+        source_curve_points=source_curve_points,
+        managed_indicator_curves=managed_indicator_curves,
+        indicator_key="Logs_Grade_H",
+        treatment_label="CC",
+        compile_recipe=recipe,
+    )
+    ct_h_points = _build_compiled_log_grade_curve_points(
+        source_curve_points=source_curve_points,
+        managed_indicator_curves=managed_indicator_curves,
+        indicator_key="Logs_Grade_H",
+        treatment_label="CT",
+        compile_recipe=recipe,
+    )
+    ct_i_points = _build_compiled_log_grade_curve_points(
+        source_curve_points=source_curve_points,
+        managed_indicator_curves=managed_indicator_curves,
+        indicator_key="Logs_Grade_I",
+        treatment_label="CT",
+        compile_recipe=recipe,
+    )
+    ct_j_points = _build_compiled_log_grade_curve_points(
+        source_curve_points=source_curve_points,
+        managed_indicator_curves=managed_indicator_curves,
+        indicator_key="Logs_Grade_J",
+        treatment_label="CT",
+        compile_recipe=recipe,
+    )
+
+    assert cc_h_points[0].y == 10.0
+    assert ct_h_points[0].y == 0.0
+    assert ct_i_points[0].y == 6.7
+    assert ct_j_points[0].y == 93.3
+    assert (
+        pytest.approx(ct_h_points[0].y + ct_i_points[0].y + ct_j_points[0].y, abs=0.11)
+        == 100.0
+    )
 
 
 def test_build_patchworks_definition_prefers_btc_native_qmd_curve_when_available() -> (
