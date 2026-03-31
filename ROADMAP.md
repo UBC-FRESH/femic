@@ -7795,8 +7795,28 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Immediate execution order:
     - add AU-wise, species-wise harvested log-grade product/account families on
       top of the repaired additive compile-recipe contract;
+    - implement the species x grade split as a margin-preserving outer-product
+      recipe:
+      - use the already-working species-wise harvested-volume totals as one
+        margin;
+      - use the already-working log-grade totals as the other margin; and
+      - compute each AU/species/log-grade cell as
+        `species_total * grade_total / harvested_total` so species sums and
+        grade sums both remain coherent with the existing harvested-volume
+        contract;
+    - apply the same cross-split logic to natural-origin/unmanaged harvested
+      states so forest-wide harvested volume still equals the sum of the
+      explicit species/grade family rather than only the managed/TIPSY-driven
+      subset;
     - scrape the newly attached 2025 coast market-report PDFs from issue `#65`
       into a FEMIC-owned, user-overridable species x grade price surface;
+    - keep the repo-owned reference price matrices inside FEMIC and merge an
+      optional user overlay from `~/.femic/recipe-overlays`;
+    - wire the first price-surface contract to distinguish second-growth and
+      old-growth coast reports, with a simple runtime selector that maps
+      managed/second-growth harvests to the second-growth matrix and
+      natural-origin/old-growth harvests to the old-growth matrix unless
+      overridden by recipe/user config;
     - add derived value-account families that multiply AU/species/log-grade
       harvested volumes by the price matrix coefficients;
     - rebuild the affected K3Z XML / tracks surfaces before rerunning Matrix
