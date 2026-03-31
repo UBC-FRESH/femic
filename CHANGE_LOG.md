@@ -9245,3 +9245,51 @@
       `data/ria_vri_vclr1p_checkpoint1-tsak3z.feather`, while
       `_load_species_universe_for_tsas(...)` is still hard-wired to
       `data/ria_vri_vclr1p_checkpoint8.feather`.
+- 2026-03-30 (Issue #64 progress): repaired the shared K3Z species-account
+  regression and rehydrated the affected Patchworks surfaces.
+  - Restored the post-TIPSY species-universe fallback in
+    `src/femic/workflows/legacy.py` so active K3Z runs can recover from the
+    shipped `data/ria_vri_vclr1p_checkpoint1-tsak3z.feather` artifact when
+    `checkpoint8` is absent.
+  - Added focused regression coverage in
+    `tests/test_workflows_post_tipsy.py` proving:
+    - direct fallback to the `checkpoint1-tsak3z` case artifact;
+    - `run_post_tipsy_bundle(...)` once again emits
+      `treated_species_prop_*` / `untreated_species_prop_*` curves from that
+      artifact.
+  - Reran `femic tsa btc-post-tipsy --run-config config/run_profile.k3z.yaml --tsa k3z --run-id issue64_species_fix`,
+    restoring species-proportion bundle rows in
+    `external/femic-k3z-instance/data/model_input_bundle/curve_table.csv`.
+  - Regenerated validated K3Z ForestModel XMLs from the repaired bundle path
+    and reran Matrix Builder across baseline, `ctfert_*`, `pct_*`,
+    `intensive_*`, `intensive_light_standstructure`, and overlay runtime
+    surfaces so checked-in tracks once again carry species-wise managed yield
+    and harvested-volume accounts.
+  - Representative repaired evidence:
+    - baseline `account-surface`: `accounts=213 species=6 complete_species=6 au=14`;
+    - `pct_light` `account-surface`: `accounts=331 species=6 complete_species=6 au=14`;
+    - `ctfert_l15h5` `account-surface`: `accounts=322 species=4 complete_species=4 au=14`.
+  - Harvest-producing runtime proof:
+    - `femic patchworks run-variant k3z.base --scenario-mode max-even-flow-smoke --scenario-target product.HarvestedVolume.managed.CW.CC --scenario-min-annual 100 --run-id issue64_species_runtime --log-dir vdyp_io/logs`
+      produced non-empty `scenario/schedule.csv` plus
+      `targets/product_HarvestedVolume_managed_CW_CC.csv` with non-zero
+      period values, confirming species-wise harvested runtime output is back.
+- 2026-03-30 (Issue #64 closeout): completed the K3Z species-account regression
+  repair without regressing the pre-existing baseline/overlay QMD contract.
+  - Rebuilt the baseline validated ForestModel using
+    `config/silviculture.k3z.base.yaml` and reran baseline plus overlay Matrix
+    Builder surfaces so the expected baseline `feature.Height.*`,
+    `feature.QMD.*`, and `product.QMDNumerator.*` families are restored
+    alongside the repaired species-wise yield / harvested-volume surfaces.
+  - Final validation is green:
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest`
+    - `python -m pre_commit run --all-files`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
+  - The repaired live runtime proof remains:
+    - `vdyp_io/logs/headless_stage/issue64_species_runtime/targets/product_HarvestedVolume_managed_CW_CC.csv`,
+      which shows non-zero species-wise harvested volume values after a
+      harvest-producing headless Patchworks smoke.

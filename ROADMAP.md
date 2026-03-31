@@ -7667,16 +7667,16 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         Sphinx builds.
 
 ## Phase 50: Restore Dropped Species-Wise K3Z Yield / Harvest-Volume Accounts
-- [ ] P50.1 Repair the K3Z species-universe source contract in post-TIPSY bundle assembly
-  - [ ] P50.1a Confirm and fix the current fallback seam in `_load_species_universe_for_tsas(...)` so the active K3Z instance can recover species-universe input from shipped checkpoint artifacts instead of depending only on `checkpoint8`.
-  - [ ] P50.1b Restore `treated_species_prop_*` / `untreated_species_prop_*` bundle curves for the current K3Z data package.
-- [ ] P50.2 Rebuild the affected active K3Z Patchworks surfaces
-  - [ ] P50.2a Regenerate the affected K3Z ForestModel XML family from the repaired species-proportion bundle path.
-  - [ ] P50.2b Rerun Matrix Builder for the active K3Z family so checked-in `tracks/*` surfaces once again carry species-wise managed yield / harvested-volume accounts.
-- [ ] P50.3 Validate and close the regression
-  - [ ] P50.3a Re-run representative `femic instance account-surface` checks for baseline, one `ctfert_*`, and one `pct_*` surface to confirm the `total OK, species-wise empty` diagnosis is gone.
-  - [ ] P50.3b Run a harvest-producing Patchworks smoke and directly inspect saved runtime outputs to confirm species-wise harvested product volume is observable in live scenario artifacts.
-  - [ ] P50.3c Update `CHANGE_LOG.md`, K3Z troubleshooting/operator docs, and GitHub issue `#64` with the repaired contract and validation evidence.
+- [x] P50.1 Repair the K3Z species-universe source contract in post-TIPSY bundle assembly
+  - [x] P50.1a Confirm and fix the current fallback seam in `_load_species_universe_for_tsas(...)` so the active K3Z instance can recover species-universe input from shipped checkpoint artifacts instead of depending only on `checkpoint8`.
+  - [x] P50.1b Restore `treated_species_prop_*` / `untreated_species_prop_*` bundle curves for the current K3Z data package.
+- [x] P50.2 Rebuild the affected active K3Z Patchworks surfaces
+  - [x] P50.2a Regenerate the affected K3Z ForestModel XML family from the repaired species-proportion bundle path.
+  - [x] P50.2b Rerun Matrix Builder for the active K3Z family so checked-in `tracks/*` surfaces once again carry species-wise managed yield / harvested-volume accounts.
+- [x] P50.3 Validate and close the regression
+  - [x] P50.3a Re-run representative `femic instance account-surface` checks for baseline, one `ctfert_*`, and one `pct_*` surface to confirm the `total OK, species-wise empty` diagnosis is gone.
+  - [x] P50.3b Run a harvest-producing Patchworks smoke and directly inspect saved runtime outputs to confirm species-wise harvested product volume is observable in live scenario artifacts.
+  - [x] P50.3c Update `CHANGE_LOG.md`, K3Z troubleshooting/operator docs, and GitHub issue `#64` with the repaired contract and validation evidence.
 
 ## Detailed Next Steps Notes
 
@@ -7690,6 +7690,29 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - repair the species-universe source fallback first;
     - rebuild the shared K3Z XML / tracks surfaces from the repaired bundle path;
     - then prove the recovery through both `account-surface` diagnostics and a harvest-producing Patchworks smoke with species-wise harvested output.
+- 2026-03-30 (Issue #64 progress): the shared K3Z species-account contract is repaired and rehydrated on disk.
+  - `_load_species_universe_for_tsas(...)` now falls back from missing `checkpoint8` to the shipped `data/ria_vri_vclr1p_checkpoint1-tsak3z.feather` case artifact when it contains `tsa_code` plus top-6 species columns.
+  - `femic tsa btc-post-tipsy --run-config config/run_profile.k3z.yaml --tsa k3z --run-id issue64_species_fix` now reports `species proportion export enabled for 10 species`, and `data/model_input_bundle/curve_table.csv` once again contains `treated_species_prop_*` / `untreated_species_prop_*` rows.
+  - Regenerated active validated K3Z ForestModel XMLs from the repaired bundle path and reran Matrix Builder across baseline, `ctfert_*`, `pct_*`, `intensive_*`, `intensive_light_standstructure`, and overlay runtime surfaces.
+  - Representative validation now shows:
+    - baseline `account-surface`: `accounts=213 species=6 complete_species=6 au=14`;
+    - `pct_light` `account-surface`: `accounts=331 species=6 complete_species=6 au=14`;
+    - `ctfert_l15h5` `account-surface`: `accounts=322 species=4 complete_species=4 au=14`.
+  - Headless runtime smoke:
+    - `femic patchworks run-variant k3z.base --scenario-mode max-even-flow-smoke --scenario-target product.HarvestedVolume.managed.CW.CC --scenario-min-annual 100 --run-id issue64_species_runtime --log-dir vdyp_io/logs`
+    - produced non-empty `scenario/schedule.csv` plus `targets/product_HarvestedVolume_managed_CW_CC.csv` with non-zero per-period harvest values, proving species-wise harvested runtime output is back.
+- 2026-03-30 (Issue #64 closeout): the repaired K3Z contract is now fully back in compliance with the pre-existing docs-contract expectations.
+  - Rebuilt the baseline validated ForestModel against `config/silviculture.k3z.base.yaml` before rerunning baseline and overlay Matrix Builder surfaces, restoring the expected baseline `feature.Height.*`, `feature.QMD.*`, and `product.QMDNumerator.*` families alongside the repaired species-wise yield/harvested-volume accounts.
+  - Final validation is green:
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest`
+    - `python -m pre_commit run --all-files`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
+  - The representative runtime smoke remains the direct proof that live scenario output is no longer Total-only:
+    - `vdyp_io/logs/headless_stage/issue64_species_runtime/targets/product_HarvestedVolume_managed_CW_CC.csv`
 - The BTC/TIPSY cutover and optional indicator-bank rollout are complete
   through issues `#56`, `#57`, and `#58`.
 - The current documented BTC contract should remain explicit everywhere:

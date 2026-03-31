@@ -145,9 +145,11 @@ def _load_species_universe_for_tsas(
     message_fn: Callable[[str], Any] = print,
 ) -> list[str]:
     """Load unique top-6 VRI species codes for selected TSAs from best checkpoint."""
-    required_columns = {"tsa_code"} | {
-        f"SPECIES_CD_{idx}" for idx in range(1, 7)
-    } | {f"SPECIES_PCT_{idx}" for idx in range(1, 7)}
+    required_columns = (
+        {"tsa_code"}
+        | {f"SPECIES_CD_{idx}" for idx in range(1, 7)}
+        | {f"SPECIES_PCT_{idx}" for idx in range(1, 7)}
+    )
     normalized = {str(tsa).zfill(2).lower() for tsa in tsa_list}
     candidate_paths: list[Path] = [data_root / "ria_vri_vclr1p_checkpoint8.feather"]
     candidate_paths.extend(
