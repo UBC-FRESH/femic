@@ -9388,3 +9388,16 @@
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m sphinx -b html docs docs/_build/html -W` from the standalone
       K3Z docs root
+- 2026-03-31 (Issue #65 scope expansion parked): reopened the issue as a parked
+  follow-on for the next log-grade phase without changing shipped code yet.
+  - Expanded the planned scope to cover:
+    - AU-wise, species-wise log-grade harvested product/account splits built on
+      the same additive compile-recipe logic as the repaired total-volume
+      family;
+    - a FEMIC-owned, user-overridable species x log-grade price surface built
+      from the 2025 coast market-report PDFs attached on issue `#65`; and
+    - new value-account families that multiply AU/species/log-grade harvested
+      volume by the corresponding price coefficients so users can aggregate
+      upward inside Patchworks with `duplicateAccount()` calls.
+  - Left the work intentionally parked on `main` so the stacked local commits
+    can be pushed before opening the next implementation branch.

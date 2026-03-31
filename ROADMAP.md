@@ -7697,6 +7697,11 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P51.4d Add a user recipe-overlay seam rooted at `~/.femic/recipe-overlays` so reference recipes stay repo-owned while local ratio tweaks stay user-owned.
   - [x] P51.4e Apply the same harvested-volume utilization multiplier to emitted log-grade product accounts so the explicit grade family sums to effective harvested volume at runtime.
   - [x] P51.4f Rebuild the broader affected K3Z family, rerun Matrix Builder, and directly inspect both static tracks/XML and one harvest-producing runtime smoke for the corrected semantics across managed and natural-origin harvest surfaces.
+- [ ] P51.5 Extend K3Z log-grade surfaces from total-volume teaching accounts into AU/species splits and value-account layers
+  - [ ] P51.5a Add AU-wise, species-wise log-grade harvested product/account families using the same additive compile-recipe logic now used for total harvested volume.
+  - [ ] P51.5b Scrape the 2025 coast log market reports attached to issue `#65` and convert the species x grade price tables into a FEMIC-owned, user-overridable input surface.
+  - [ ] P51.5c Add new value-account families that multiply AU/species/log-grade harvested volumes by the price matrix coefficients so users can aggregate upward inside Patchworks with `duplicateAccount()` patterns.
+  - [ ] P51.5d Document the teaching/bridge rationale, the market-report provenance, and the user override seams in both user-facing and dev-facing docs.
 
 ## Detailed Next Steps Notes
 
@@ -7769,6 +7774,20 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m sphinx -b html docs docs/_build/html -W` from the standalone
       K3Z docs root.
+- 2026-03-31 (Issue #65 scope expansion parked): the next log-grade phase is now
+  defined but intentionally parked while `main` is pushed and cleaned up.
+  - Reopened issue `#65` and widened the follow-on scope to include:
+    - AU-wise, species-wise log-grade harvested product/account splits;
+    - user-overridable species x log-grade price surfaces built from the 2025
+      coast market reports attached on the issue; and
+    - derived value-account families that multiply AU/species/log-grade volume
+      by the price matrix so users can aggregate upward with
+      `duplicateAccount()` inside Patchworks.
+  - This is planning-only at this point:
+    - no new code shipped in this pass;
+    - no new branch remains active; and
+    - the work is parked on `main` until the stacked local commits are pushed
+      and we circle back to implementation.
 - 2026-03-30 (Issue #64 kickoff): start the urgent K3Z species-account regression repair on branch `bug/issue-64-k3z-species-account-dropout`.
   - Current local evidence:
     - baseline and `pct_light` now report `species=1 complete_species=1` with the `total OK, species-wise empty` diagnosis;
