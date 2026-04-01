@@ -9631,3 +9631,11 @@
   - Checked the new stdout/stderr logs and found no occurrences of the earlier
     `ignoring product ... non existent treatment CC` warning.
   - Deleted the temporary `*_issue69_full.pin` probe files after verification.
+- 2026-04-01 (Issue #67 kickoff):
+  - Reused open GitHub issue `#67` as the governing bug for reported ctfert CT
+    harvested-volume anomalies in `ctfert_l15h5` / `ctfert_l20h0`.
+  - Created bug branch `bug/issue-67-ctfert-ct-volume-triage`.
+  - Recorded the investigation plan in `ROADMAP.md`: reproduce the report on
+    current `main`, inspect saved CT harvested-volume outputs directly, and
+    distinguish a real current regression from a likely fork-side or already-
+    fixed non-repro before making any code changes.

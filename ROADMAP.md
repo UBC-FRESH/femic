@@ -10017,6 +10017,30 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Searched the new stdout/stderr logs and found **no** occurrences of the
     earlier `ignoring product ... non existent treatment CC` warning.
   - Deleted the temporary `*_issue69_full.pin` probe files after verification.
+- 2026-04-01 (Issue #67 kickoff): investigate reported ctfert CT harvested
+  volume anomalies against current `main`.
+  - Governing tracker:
+    - GitHub issue `#67`
+    - branch `bug/issue-67-ctfert-ct-volume-triage`
+  - Reported symptom:
+    - student reports `product.HarvestedVolume.managed.Total.CT` is zero in
+      `ctfert_l15h5` and implausibly high in `ctfert_l20h0` on a fork synced a
+      few days ago.
+  - Investigation posture:
+    - do **not** assume current `main` is broken until reproduced locally;
+    - compare current `main`/published K3Z behavior against the issue report
+      and the referenced student fork sync point;
+    - determine whether this is a real current regression, an already-fixed
+      bug, or a fork-side interaction caused by student-local merges.
+  - Detailed Next Steps:
+    - reproduce the reported `ctfert_l15h5` and `ctfert_l20h0` CT volume
+      behavior on current `main` with cheap headless smokes;
+    - inspect saved CT harvested volume outputs directly, not just objective
+      values or GUI impressions;
+    - if current `main` is clean, document the non-repro / already-fixed
+      result and close `#67`;
+    - if reproducible, isolate whether the defect lives in tracks, pins,
+      treatment wiring, or runtime account generation before patching.
 
 
 
