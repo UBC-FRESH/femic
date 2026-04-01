@@ -9583,6 +9583,34 @@
   - Updated `ROADMAP.md` so the immediate next steps are:
     - inspect the student thinners overlay payload and key/join contract;
     - wire the RETAIN replacement into `pct_light`, `pct_moderate`, and
-      `pct_heavy`;
+    `pct_heavy`;
     - rebuild the three PCT variants and re-smoke representative Patchworks
       runtime behavior before closing the feature.
+- 2026-04-01 (Issue #68 RETAIN overlay implementation + validation):
+  - Normalized the student thinners shapefile into the tracked join table
+    `external/femic-k3z-instance/tmp/k3z_pct_thinners_retention_join.csv`
+    keyed by `BLOCK`, with `retention_thinners` as the replacement source.
+  - Added reproducible helper
+    `external/femic-k3z-instance/tools/apply_pct_retention_overlay.py` to
+    rewrite the validated `pct_light`, `pct_moderate`, and `pct_heavy`
+    fragments surfaces from that tracked join table.
+  - Updated the three PCT variant YAMLs plus K3Z operator/rebuild docs so the
+    accepted validated fragments are explicitly described as using the student
+    thinners RETAIN overlay instead of the old uniform `0.05` placeholder.
+  - Verified the applied overlay directly:
+    - all three validated PCT fragment surfaces remained a 1:1 `BLOCK` match
+      to baseline geometry and non-`RETENTION` attributes;
+    - retained area changed from `89.065662 ha` to `483.178703 ha`, exactly
+      matching the student overlay.
+  - Rebuilt all three PCT Matrix Builder track sets successfully under run ids
+    `issue68_pct_light`, `issue68_pct_moderate`, and `issue68_pct_heavy`.
+  - Representative runtime A/B check:
+    - `base.pin` still completed cleanly (`issue68_base_runtime_ab`);
+    - shipped default `pct_light.pin` still hangs before headless trace
+      startup;
+    - a temporary same-directory `pct_light` probe pin with
+      `enableLogGradeAccounts = true` completed cleanly
+      (`issue68_pct_light_force_full2`), showing the RETAIN overlay itself is
+      not the cause of the headless failure;
+    - treated the default-pin/runtime-filter hang as a separate inherited
+      Patchworks surface issue from `main`, not a blocker for this feature.

@@ -9947,6 +9947,34 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       baseline or CT/fert retention surfaces;
     - rebuild the three PCT variants and run direct Patchworks smoke checks on
       at least one representative PCT surface before claiming success.
+- 2026-04-01 (Issue #68 RETAIN overlay implementation + validation):
+  - Normalized the student thinners shapefile into a tracked join table at
+    `external/femic-k3z-instance/tmp/k3z_pct_thinners_retention_join.csv`
+    keyed by `BLOCK`, with `retention_thinners` as the replacement source.
+  - Added reproducible helper
+    `external/femic-k3z-instance/tools/apply_pct_retention_overlay.py` to
+    rewrite the validated `pct_light`, `pct_moderate`, and `pct_heavy`
+    fragments shapefiles in place from that tracked join table.
+  - Verified the applied overlay directly:
+    - all three validated PCT fragment surfaces remain a 1:1 `BLOCK` match to
+      baseline geometry and non-`RETENTION` attributes;
+    - retained area changed from the old uniform-`0.05` placeholder total
+      `89.065662 ha` to `483.178703 ha`, exactly matching the student overlay.
+  - Rebuilt all three PCT Matrix Builder track sets successfully:
+    - `issue68_pct_light`
+    - `issue68_pct_moderate`
+    - `issue68_pct_heavy`
+  - Representative runtime proof:
+    - the shipped default `pct_light.pin` currently hangs before headless trace
+      startup, but an A/B check against `base.pin` showed this is not caused by
+      the new RETAIN overlay;
+    - a temporary `pct_light` probe pin in the same analysis directory with the
+      full track files forced on (`enableLogGradeAccounts = true`) completed
+      successfully under run id `issue68_pct_light_force_full2`, proving the
+      rebuilt PCT surface itself still launches and saves a stage;
+    - treat the default-pin/runtime-filter hang as a separate inherited
+      Patchworks surface problem from `main`, not a blocker for the RETAIN
+      overlay feature.
 
 
 
