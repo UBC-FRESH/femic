@@ -9732,3 +9732,37 @@
       approaches;
     - `python -m py_compile external/femic-k3z-instance/tools/refresh_pct_heavy_zones_tracks.py`
       passed after the final cleanup.
+- 2026-04-01 (Issue #72 kickoff):
+  - Started the `pct_heavy_zones` aggregate log-revenue rollup slice.
+  - Scope for this feature is intentionally narrow:
+    - keep the existing fine-grained AU/species/log-grade revenue accounts;
+    - add new species subtotal gross-revenue accounts plus one global total
+      revenue account in the `pct_heavy_zones` variant;
+    - surface those simpler totals in both `accounts.csv` and
+      `accounts.default.csv` so students can use the summary outputs without
+      enabling the full fine-grained log-grade account family.
+- 2026-04-01 (Issue #72 closeout):
+  - Added `pct_heavy_zones` gross-revenue rollups on top of the existing
+    fine-grained log-grade value surface.
+  - The zoned-track refresh helper now appends:
+    - species subtotal accounts
+      - `product.Logs_Grade_Value_Total.managed.CW.CC`
+      - `product.Logs_Grade_Value_Total.managed.FDC.CC`
+      - `product.Logs_Grade_Value_Total.managed.HW.CC`
+      - `product.Logs_Grade_Value_Total.managed.PLC.CC`
+      - `product.Logs_Grade_Value_Total.managed.YC.CC`
+    - one global total account
+      - `product.Logs_Grade_Value_Total.managed.Total.CC`
+  - Those new rollups are present in both:
+    - `tracks_pct_heavy_zones/accounts.csv`
+    - `tracks_pct_heavy_zones/accounts.default.csv`
+  - Updated K3Z docs so students can discover the simpler revenue rollups
+    without enabling the full AU/species/log-grade teaching surface.
+  - Validation:
+    - zoned-track refresh succeeded
+    - helper `py_compile` passed
+    - standalone K3Z Sphinx build passed
+    - `femic instance account-surface` on the zoned runtime reported
+      `accounts=1466 species=9 complete_species=9 au=14`
+    - representative `pct_heavy_zones` Patchworks smoke completed with
+      `returncode=0`

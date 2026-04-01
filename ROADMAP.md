@@ -10186,6 +10186,54 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       `Undefined column "GROUP"` / `Undefined column "ZONE"` errors
     - `python -m py_compile external/femic-k3z-instance/tools/refresh_pct_heavy_zones_tracks.py`
       passed after the helper cleanup.
+- 2026-04-01 (Issue #72 kickoff): add aggregate log gross-revenue rollups to
+  `pct_heavy_zones`.
+  - Governing issue: `#72` (`Feature`)
+  - Branch: `feature/issue-72-pct-heavy-zones-revenue-rollups`
+  - Intended scope:
+    - keep the existing fine-grained AU/species/log-grade value attributes;
+    - add friendlier aggregate accounts in `pct_heavy_zones` only:
+      - species-wise gross-revenue subtotals
+      - one global total gross-revenue account
+    - make the rollups available in both the full and default account
+      surfaces so students can use the simple totals without turning on the
+      entire fine-grained teaching surface.
+  - Detailed Next Steps:
+    - inspect current `product.Logs_Grade_Value_*` naming in
+      `tracks_pct_heavy_zones`;
+    - add account rows that sum those fine-grained value products into
+      species-level subtotals plus a global total;
+    - update K3Z docs so the new rollups are easy to discover;
+    - run representative `pct_heavy_zones` Patchworks smoke validation before
+      closeout.
+- 2026-04-01 (Issue #72 closeout): `pct_heavy_zones` now ships simpler gross-
+  revenue rollups on top of the fine-grained log-grade value surface.
+  - Implemented in the zoned-track refresh helper:
+    - `external/femic-k3z-instance/tools/refresh_pct_heavy_zones_tracks.py`
+      now appends aggregate rollup rows after copying the heavy-PCT tracks.
+  - Shipped account surfaces now include:
+    - species subtotal accounts
+      - `product.Logs_Grade_Value_Total.managed.CW.CC`
+      - `product.Logs_Grade_Value_Total.managed.FDC.CC`
+      - `product.Logs_Grade_Value_Total.managed.HW.CC`
+      - `product.Logs_Grade_Value_Total.managed.PLC.CC`
+      - `product.Logs_Grade_Value_Total.managed.YC.CC`
+    - one global total account
+      - `product.Logs_Grade_Value_Total.managed.Total.CC`
+  - Important scope note:
+    - this is a `pct_heavy_zones`-only teaching convenience layer;
+    - the underlying fine-grained AU/species/log-grade value accounts remain
+      intact and unchanged.
+  - Validation:
+    - `python external/femic-k3z-instance/tools/refresh_pct_heavy_zones_tracks.py`
+      refreshed the zoned sibling tracks successfully;
+    - `python -m py_compile external/femic-k3z-instance/tools/refresh_pct_heavy_zones_tracks.py`
+      passed;
+    - `python -m femic instance account-surface` on the zoned runtime still
+      reported a healthy compiled surface
+      (`accounts=1466 species=9 complete_species=9 au=14`);
+    - representative smoke
+      `issue72_pct_heavy_zones_revenue_smoke` completed with `returncode=0`.
 
 
 
