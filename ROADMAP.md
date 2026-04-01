@@ -7879,6 +7879,42 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       species; and
     - restore the broader expected species membership before resuming
       additional `#65` feature work.
+- 2026-03-31 (Issue #66 active fix): restore broader ctfert species families
+  by repairing the missing `01a` fallback path in post-TIPSY bundle assembly.
+  - Root cause:
+    - when `vdyp_prep-tsa<tsa>.pkl` was missing, `run_post_tipsy_bundle(...)`
+      rebuilt AU maps from the persisted bundle `au_table.csv` but silently set
+      `vdyp_species_proportions[tsa] = {}`;
+    - that left unmanaged species-proportion curves as zero dummy rows for the
+      affected ctfert AUs and prevented the treated repair seam from
+      reintroducing companion species such as `DR`, `BA`, and `SS`.
+  - Repair:
+    - added a new fallback that rebuilds unmanaged species proportions from the
+      shipped `data/vdyp_lyr-tsak3z.feather` surface when `01a` prep is absent;
+    - for each persisted `(stratum_code, si_level)` pair, the fallback matches
+      the leading species pair in the AU token against the dominant-pair mix in
+      `vdyp_lyr`, aggregates the full top-6 species composition, and normalizes
+      it before bundle emission;
+    - the treated repair seam now has a real unmanaged companion map to merge
+      against the planted-species TIPSY mix.
+  - Verified bundle result:
+    - rebuilt `treated_species_prop_*` / `untreated_species_prop_*` rows for
+      `CWHvm_DR+HW`, `CWHvm_HW+SS`, and `CWHvm_HW+BA` now carry non-zero
+      `DR` / `SS` / `BA` values instead of zero dummy curves.
+  - Verified ctfert rebuild result:
+    - refreshed `tracks_ctfert_l15h5` and `tracks_ctfert_l20h0` now carry
+      broader managed species families again in
+      `feature.Yield.managed.*` and `product.HarvestedVolume.managed.*`;
+    - representative species now present again include `DR`, `BA`, and `SS`.
+  - Verified runtime result:
+    - headless ctfert smoke `issue66_ctfert_runtime_species` wrote non-zero
+      runtime targets for
+      `product.HarvestedVolume.managed.{DR,BA,SS}.{CC,CT}`.
+  - Detailed Next Steps:
+    - write closeout notes to `CHANGE_LOG.md` and GitHub issue `#66`;
+    - run repo/K3Z doc validation;
+    - close the bug once the seral-stage symptom is either disproven on the
+      rebuilt ctfert surfaces or moved into a separate follow-up.
 - 2026-03-30 (Issue #64 kickoff): start the urgent K3Z species-account regression repair on branch `bug/issue-64-k3z-species-account-dropout`.
   - Current local evidence:
     - baseline and `pct_light` now report `species=1 complete_species=1` with the `total OK, species-wise empty` diagnosis;

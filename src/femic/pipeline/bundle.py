@@ -36,6 +36,38 @@ def _normalize_species_proportion_map(
     }
 
 
+def _repair_treated_species_proportion_map(
+    *,
+    treated_proportions: dict[str, float],
+    untreated_proportions: dict[str, float],
+) -> dict[str, float]:
+    """Supplement treated species proportions with missing untreated species.
+
+    Legacy TIPSY species-composition exports can collapse treated states to the
+    planted species columns present in the 01b workbook handoff. When the
+    untreated VDYP/VRI species map still carries additional companion species,
+    preserve the treated mix where it exists, add the missing untreated species,
+    and renormalize the combined map to 1.0.
+    """
+    treated = _normalize_species_proportion_map(treated_proportions)
+    untreated = _normalize_species_proportion_map(untreated_proportions)
+    if not untreated:
+        return treated
+    if not treated:
+        return dict(untreated)
+
+    merged = dict(treated)
+    missing_species = {
+        species_code: proportion
+        for species_code, proportion in untreated.items()
+        if species_code not in merged and proportion > 0.0
+    }
+    if not missing_species:
+        return treated
+    merged.update(missing_species)
+    return _normalize_species_proportion_map(merged)
+
+
 @dataclass(frozen=True)
 class BundlePaths:
     """Resolved file paths for model input bundle tables."""
@@ -275,6 +307,10 @@ def build_bundle_tables_from_curves(
                         tipsy_prop_map = _normalize_species_proportion_map(
                             tipsy_prop_map
                         )
+                    tipsy_prop_map = _repair_treated_species_proportion_map(
+                        treated_proportions=tipsy_prop_map,
+                        untreated_proportions=vdyp_prop_map,
+                    )
                     for species_idx, species_code in enumerate(
                         ordered_species, start=1
                     ):

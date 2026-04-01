@@ -9459,3 +9459,42 @@
   - Recorded the next step in `ROADMAP.md` as an urgent dedicated bug track to
     restore the broader expected ctfert species membership before resuming
     additional `#65` feature work.
+- 2026-03-31 (Issue #66 active fix): restored the broader ctfert managed
+  species families by repairing the missing `01a` post-TIPSY fallback path.
+  - Root cause:
+    - when `vdyp_prep-tsa<tsa>.pkl` was missing, `run_post_tipsy_bundle(...)`
+      rebuilt AU maps from the persisted bundle `au_table.csv` but silently
+      dropped `vdyp_species_proportions` to `{}`;
+    - that left unmanaged species-proportion curves as zero dummy rows for the
+      affected ctfert AUs and prevented treated ctfert surfaces from
+      reintroducing companion species such as `DR`, `BA`, and `SS`.
+  - Repair:
+    - added a new `vdyp_lyr-tsa*.feather` fallback in
+      `src/femic/workflows/legacy.py` that rebuilds unmanaged species
+      proportions from the shipped VDYP layer species mix when `01a` prep is
+      missing;
+    - kept the bundle-layer treated repair in `src/femic/pipeline/bundle.py`
+      so the planted TIPSY mix is supplemented by the unmanaged companion map
+      and renormalized.
+  - Focused validation:
+    - `tests/test_bundle.py` passed with the treated repair preserved;
+    - `tests/test_workflows_post_tipsy.py` now proves the missing-`01a`
+      fallback can rebuild unmanaged species props from `vdyp_lyr` and carry
+      missing species such as `DR` into treated curves.
+  - Rebuilt ctfert runtime surfaces:
+    - reran `tsa post-tipsy` for `k3z`;
+    - rewrote the `ctfert_l15h5` and `ctfert_l20h0` ForestModel XMLs from the
+      refreshed bundle;
+    - restored the accepted curated CT/fert fragments overlay; and
+    - reran Matrix Builder for both ctfert variants.
+  - Static proof:
+    - `tracks_ctfert_l15h5` and `tracks_ctfert_l20h0` once again carry broader
+      managed species families in `feature.Yield.managed.*` and
+      `product.HarvestedVolume.managed.*`, including `DR`, `BA`, and `SS`;
+    - `femic instance account-surface --config config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+      now reports `accounts=326 species=9 complete_species=9 au=14`.
+  - Runtime proof:
+    - headless smoke `issue66_ctfert_runtime_species` produced non-zero saved
+      target outputs for
+      `product.HarvestedVolume.managed.{DR,BA,SS}.{CC,CT}` on the rebuilt
+      ctfert surface.
