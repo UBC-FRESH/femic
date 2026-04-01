@@ -9766,3 +9766,38 @@
       `accounts=1466 species=9 complete_species=9 au=14`
     - representative `pct_heavy_zones` Patchworks smoke completed with
       `returncode=0`
+- 2026-04-01 (Issue #73 kickoff):
+  - Started the `pct_heavy_zones` zone-account overlay slice.
+  - Scope for this feature is intentionally narrow:
+    - carry forward the archived Bianca zone-tagged account rows into the
+      shipped `pct_heavy_zones` account surfaces;
+    - keep those rows reproducible through the zoned-track refresh helper;
+    - document the overlay accounts clearly in the K3Z user docs;
+    - verify the zoned runtime still launches cleanly.
+- 2026-04-01 (Issue #73 closeout):
+  - Added a canonical tracked source for the archived Bianca zone-account
+    overlay at:
+    - `external/femic-k3z-instance/config/pct_heavy_zones.accounts_overlay.csv`
+  - Extended
+    `external/femic-k3z-instance/tools/refresh_pct_heavy_zones_tracks.py` so
+    the overlay rows are appended reproducibly into both:
+    - `tracks_pct_heavy_zones/accounts.csv`
+    - `tracks_pct_heavy_zones/accounts.default.csv`
+  - Shipped overlay accounts now include:
+    - `zone1harvestvol`, `zone2harvestvol`, `zone3harvestvol`
+    - `zone1inventoryarea`, `zone2inventoryarea`, `zone3inventoryarea`
+    - `zone1inventoryvol`, `zone2inventoryvol`, `zone3inventoryvol`
+    - `zone1og1CW_HW`, `zone1og1HW_CW_H`, `zone1og1HW_CW_L`,
+      `zone1og1HW_CW_M`
+    - `zone3PCT`
+  - Updated the K3Z operator runbook and variant catalog so the legacy
+    `pct_heavy_zones` overlay accounts are discoverable.
+  - Validation:
+    - zoned-track refresh succeeded
+    - helper `py_compile` passed
+    - standalone K3Z Sphinx build passed
+    - `femic instance account-surface` on the zoned runtime reported
+      `accounts=1480 species=9 complete_species=9 au=14`
+    - representative `pct_heavy_zones` Patchworks smoke
+      `issue73_pct_heavy_zones_zone_accounts_smoke` completed with
+      `returncode=0` and wrote a saved stage
