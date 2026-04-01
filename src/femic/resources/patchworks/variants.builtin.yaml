@@ -103,6 +103,14 @@ variants:
     instance_root: external/femic-k3z-instance
     analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/pct_heavy.pin
     runtime_config: external/femic-k3z-instance/config/patchworks.runtime.pct_heavy.windows.yaml
+  - variant_id: k3z.pct_heavy_zones
+    label: K3Z PCT heavy zones
+    instance_id: k3z
+    variant_family: pct
+    kind: patchworks
+    instance_root: external/femic-k3z-instance
+    analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/pct_heavy_zones.pin
+    runtime_config: external/femic-k3z-instance/config/patchworks.runtime.pct_heavy_zones.windows.yaml
   - variant_id: k3z.overlay_basecase_riparian
     label: K3Z overlay basecase riparian
     instance_id: k3z

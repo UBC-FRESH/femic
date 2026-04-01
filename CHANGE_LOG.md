@@ -9666,3 +9666,23 @@
       existing `pct_heavy`;
     - rebuild the new variant and prove it runs cleanly with a representative
       headless Patchworks smoke.
+- 2026-04-01 (Issue #70 implementation checkpoint):
+  - Imported Bianca's alternate grouping source as
+    `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_pct_heavy/groups_zones.csv`.
+  - Added the refresh helper
+    `external/femic-k3z-instance/tools/refresh_pct_heavy_zones_tracks.py` to
+    regenerate `tracks_pct_heavy_zones/` from the canonical heavy-PCT tracks
+    plus the zoned groups surface.
+  - Added the new sibling variant surfaces:
+    - `config/patchworks.variant.pct_heavy_zones.yaml`
+    - `config/patchworks.runtime.pct_heavy_zones.windows.yaml`
+    - `models/k3z_patchworks_model/analysis/pct_heavy_zones.pin`
+    - builtin registry entry `k3z.pct_heavy_zones`
+  - Updated K3Z docs so `pct_heavy_zones` is described as a zone-grouping
+    sibling of `pct_heavy`.
+  - Verified the alternate groups surface directly (`218` rows;
+    `zone1=41`, `zone2=84`, `zone3=93`).
+  - Ran a representative headless Patchworks smoke on the new variant:
+    - `issue70_pct_heavy_zones_smoke`
+    - `returncode=0`
+    - saved stage written under the expected K3Z headless-stage log path.

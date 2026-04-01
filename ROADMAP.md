@@ -10085,6 +10085,38 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       tracks directly;
     - run a representative headless Patchworks smoke on the new variant before
       closing `#70`.
+- 2026-04-01 (Issue #70 implementation checkpoint): the new
+  `pct_heavy_zones` sibling variant is wired and already launches cleanly.
+  - Imported Bianca's alternate grouping source as
+    `models/k3z_patchworks_model/tracks_pct_heavy/groups_zones.csv`.
+  - Added a reproducible refresh helper
+    `external/femic-k3z-instance/tools/refresh_pct_heavy_zones_tracks.py`
+    that clones `tracks_pct_heavy/` into `tracks_pct_heavy_zones/` and swaps
+    in the zoned groups surface as `groups.csv`.
+  - Added the new sibling surfaces:
+    - `config/patchworks.variant.pct_heavy_zones.yaml`
+    - `config/patchworks.runtime.pct_heavy_zones.windows.yaml`
+    - `models/k3z_patchworks_model/analysis/pct_heavy_zones.pin`
+    - builtin registry entry `k3z.pct_heavy_zones`
+  - Updated K3Z docs so `pct_heavy_zones` is described as a zone-grouping
+    sibling of `pct_heavy` that reuses the validated heavy-PCT ForestModel and
+    fragments surfaces.
+  - Verified the alternate groups surface directly:
+    - `218` rows keyed by `BLOCK`
+    - zone counts `zone1=41`, `zone2=84`, `zone3=93`
+  - Ran representative headless smoke:
+    - run id `issue70_pct_heavy_zones_smoke`
+    - `returncode=0`
+    - saved stage written under
+      `vdyp_io/logs/headless_stage/issue70_pct_heavy_zones_smoke`
+  - Detailed Next Steps:
+    - run the relevant docs/validation commands for the changed user-facing
+      surfaces;
+    - decide whether the current track-surface sibling is sufficient for
+      closure or whether the teaching surface needs any extra reporting notes
+      before closing `#70`;
+    - if current scope is sufficient, commit the K3Z/parent changes, comment
+      on `#70`, and close the feature.
 
 
 
