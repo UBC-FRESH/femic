@@ -228,6 +228,134 @@ def test_run_post_tipsy_bundle_can_fallback_to_persisted_au_table_when_prep_miss
     assert result.au_table_path.is_file()
 
 
+def test_run_post_tipsy_bundle_can_rebuild_vdyp_species_props_from_vdyp_layer_when_prep_missing(
+    tmp_path: Path,
+) -> None:
+    data_root = tmp_path / "data"
+    bundle_root = data_root / "model_input_bundle"
+    data_root.mkdir(parents=True, exist_ok=True)
+    bundle_root.mkdir(parents=True, exist_ok=True)
+    tsa = "k3z"
+
+    pd.DataFrame(
+        {
+            "stratum_code": ["CWHvm_DR+HW", "CWHvm_DR+HW"],
+            "si_level": ["M", "M"],
+            "age": [0, 10],
+            "volume": [0.0, 12.0],
+        }
+    ).to_feather(data_root / f"vdyp_curves_smooth-tsa{tsa}.feather")
+    pd.DataFrame({"AU": [22004]}).to_excel(
+        data_root / f"tipsy_params_tsa{tsa}.xlsx",
+        index=False,
+        sheet_name="TIPSY_inputTBL",
+    )
+    (data_root / f"04_output-tsa{tsa}.csv").write_text(
+        "feature_id,MVcon_0,MVdec_0,HTcon_0,HTdec_0,gVol_0,CC_0\n22004,0,0,0,0,0,0\n",
+        encoding="utf-8",
+    )
+    pd.DataFrame(
+        {
+            "au_id": [985502004],
+            "tsa": [tsa],
+            "stratum_code": ["CWHvm_DR+HW"],
+            "si_level": ["M"],
+            "canfi_species": [402],
+            "unmanaged_curve_id": [985502004],
+            "managed_curve_id": [985522004],
+        }
+    ).to_csv(bundle_root / "au_table.csv", index=False)
+    pd.DataFrame(
+        {
+            "SPECIES_CD_1": ["DR", "DR"],
+            "SPECIES_PCT_1": [70.0, 60.0],
+            "SPECIES_CD_2": ["HW", "HW"],
+            "SPECIES_PCT_2": [20.0, 30.0],
+            "SPECIES_CD_3": ["FDC", "CW"],
+            "SPECIES_PCT_3": [10.0, 10.0],
+            "SPECIES_CD_4": ["", ""],
+            "SPECIES_PCT_4": [0.0, 0.0],
+            "SPECIES_CD_5": ["", ""],
+            "SPECIES_PCT_5": [0.0, 0.0],
+            "SPECIES_CD_6": ["", ""],
+            "SPECIES_PCT_6": [0.0, 0.0],
+        }
+    ).to_feather(data_root / f"vdyp_lyr-tsa{tsa}.feather")
+    pd.DataFrame(
+        {
+            "tsa_code": [tsa],
+            "SPECIES_CD_1": ["DR"],
+            "SPECIES_PCT_1": [70.0],
+            "SPECIES_CD_2": ["HW"],
+            "SPECIES_PCT_2": [20.0],
+            "SPECIES_CD_3": ["FDC"],
+            "SPECIES_PCT_3": [10.0],
+            "SPECIES_CD_4": [""],
+            "SPECIES_PCT_4": [0.0],
+            "SPECIES_CD_5": [""],
+            "SPECIES_PCT_5": [0.0],
+            "SPECIES_CD_6": [""],
+            "SPECIES_PCT_6": [0.0],
+        }
+    ).to_feather(data_root / f"ria_vri_vclr1p_checkpoint1-tsa{tsa}.feather")
+
+    def _fake_run_01b(
+        *,
+        tsa: str,
+        results,
+        au_scsi,
+        tipsy_curves,
+        vdyp_curves_smooth,
+        runtime_config,
+    ) -> None:
+        _ = (results, au_scsi, vdyp_curves_smooth, runtime_config)
+        tipsy_df = pd.DataFrame(
+            {
+                "AU": [22004, 22004],
+                "Age": [0, 10],
+                "Yield": [0.0, 5.0],
+                "Height": [0.0, 2.0],
+                "DBHq": [0.0, 1.0],
+                "TPH": [0.0, 900.0],
+            }
+        ).set_index(["AU", "Age"])
+        tipsy_curves[tsa] = tipsy_df
+        tipsy_df.reset_index().to_csv(
+            data_root / f"tipsy_curves_tsa{tsa}.csv",
+            index=False,
+        )
+        pd.DataFrame({"AU": [22004], "CW": [10.0], "FD": [70.0], "HW": [20.0]}).to_csv(
+            data_root / f"tipsy_sppcomp_tsa{tsa}.csv",
+            index=False,
+        )
+
+    result = run_post_tipsy_bundle(
+        tsa_list=[tsa],
+        repo_root=tmp_path,
+        data_root=data_root,
+        run_01b_fn=_fake_run_01b,
+        message_fn=lambda _msg: None,
+    )
+
+    curve_table = pd.read_csv(result.curve_table_path)
+    curve_points = pd.read_csv(result.curve_points_table_path)
+    unmanaged_dr_id = curve_table.loc[
+        curve_table["curve_type"] == "untreated_species_prop_DR", "curve_id"
+    ].iloc[0]
+    unmanaged_dr_y = curve_points.loc[
+        curve_points["curve_id"] == unmanaged_dr_id, "y"
+    ].iloc[0]
+    treated_dr_id = curve_table.loc[
+        curve_table["curve_type"] == "treated_species_prop_DR", "curve_id"
+    ].iloc[0]
+    treated_dr_y = curve_points.loc[
+        curve_points["curve_id"] == treated_dr_id, "y"
+    ].iloc[0]
+
+    assert unmanaged_dr_y > 0.0
+    assert treated_dr_y > 0.0
+
+
 def test_run_post_tipsy_bundle_emits_species_prop_curves_from_checkpoint1_case_artifact(
     tmp_path: Path,
 ) -> None:

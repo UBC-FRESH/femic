@@ -305,6 +305,79 @@ def test_build_bundle_tables_from_curves_maps_tipsy_fd_to_fdc() -> None:
     assert treated_fdc_y == 0.1
 
 
+def test_build_bundle_tables_from_curves_repairs_treated_mix_with_missing_untreated_species() -> (
+    None
+):
+    vdyp_curves_smooth = {
+        "08": pd.DataFrame(
+            [
+                {
+                    "stratum_code": "CWH_DR_HW",
+                    "si_level": "L",
+                    "age": 10,
+                    "volume": 1.0,
+                },
+                {
+                    "stratum_code": "CWH_DR_HW",
+                    "si_level": "L",
+                    "age": 20,
+                    "volume": 2.0,
+                },
+            ]
+        )
+    }
+    tipsy_curves = {
+        "08": pd.DataFrame(
+            [
+                {"AU": 20005, "Age": 10, "Yield": 1.5},
+                {"AU": 20005, "Age": 20, "Yield": 2.5},
+            ]
+        )
+    }
+    tipsy_spp = {
+        "08": pd.DataFrame([{"AU": 20005, "CW": 20.0, "FD": 10.0, "HW": 70.0}])
+    }
+    vdyp_spp = {
+        "08": {("CWH_DR_HW", "L"): {"CW": 0.1, "DR": 0.3, "FDC": 0.1, "HW": 0.5}}
+    }
+    scsi_au = {"08": {("CWH_DR_HW", "L"): 5}}
+
+    out = build_bundle_tables_from_curves(
+        tsa_list=["08"],
+        vdyp_curves_smooth=vdyp_curves_smooth,
+        tipsy_curves=tipsy_curves,
+        scsi_au=scsi_au,
+        canfi_species_fn=lambda _s: 101,
+        species_universe=["CW", "DR", "FDC", "HW"],
+        vdyp_species_proportions=vdyp_spp,
+        tipsy_species_proportions=tipsy_spp,
+        pd_module=pd,
+        message_fn=lambda _m: None,
+    )
+
+    treated_rows = out.curve_table[
+        out.curve_table["curve_type"].str.startswith("treated_species_prop_")
+    ].merge(out.curve_points_table, on="curve_id", how="left")
+    assert treated_rows["y"].sum() == 1.0
+
+    treated_dr_id = out.curve_table.loc[
+        out.curve_table["curve_type"] == "treated_species_prop_DR", "curve_id"
+    ].iloc[0]
+    treated_dr_y = out.curve_points_table.loc[
+        out.curve_points_table["curve_id"] == treated_dr_id, "y"
+    ].iloc[0]
+    assert treated_dr_y > 0.0
+
+    treated_cw_id = out.curve_table.loc[
+        out.curve_table["curve_type"] == "treated_species_prop_CW", "curve_id"
+    ].iloc[0]
+    treated_cw_y = out.curve_points_table.loc[
+        out.curve_points_table["curve_id"] == treated_cw_id, "y"
+    ].iloc[0]
+    # CW remains present after repair, but shrinks to make room for missing DR.
+    assert treated_cw_y < 0.2
+
+
 def test_bundle_tables_support_named_unit_codes() -> None:
     vdyp_curves_smooth = {
         "k3z": pd.DataFrame(

@@ -9439,3 +9439,100 @@
       the closeout proof surface for this matrix layer, because the saved stage
       target aggregation does not line up cleanly even when the rebuilt static
       track/account surfaces do.
+- 2026-03-31 (Urgent bug prep): parked the current `#65` feature slice behind
+  a new upstream K3Z bug for ctfert species-universe narrowing.
+  - Created GitHub issue `#66`:
+    - `Bug: restore broader ctfert K3Z species-wise yield and harvested-volume families`
+  - Confirmed the narrowing predates the current feature branch:
+    - on published `main`, `tracks_ctfert_l15h5/features.csv` and
+      `tracks_ctfert_l15h5/products.csv` already limit species-wise yield and
+      harvested-volume families to `CW/FDC/HW`;
+    - `pct_light` on the same baseline still carries the broader
+      `CW/FDC/HW/PLC/YC` species set.
+  - Confirmed the current `#65` species-grade bridge is inheriting that
+    already-too-narrow ctfert harvested species margin, not newly causing it.
+  - Added a second related symptom to the same urgent bug track:
+    - many blocks reportedly appear to have no visible seral stage in current
+      Patchworks map views; and
+    - this should be verified as part of the same regression investigation
+      instead of assuming it is unrelated.
+  - Recorded the next step in `ROADMAP.md` as an urgent dedicated bug track to
+    restore the broader expected ctfert species membership before resuming
+    additional `#65` feature work.
+- 2026-03-31 (Issue #66 active fix): restored the broader ctfert managed
+  species families by repairing the missing `01a` post-TIPSY fallback path.
+  - Root cause:
+    - when `vdyp_prep-tsa<tsa>.pkl` was missing, `run_post_tipsy_bundle(...)`
+      rebuilt AU maps from the persisted bundle `au_table.csv` but silently
+      dropped `vdyp_species_proportions` to `{}`;
+    - that left unmanaged species-proportion curves as zero dummy rows for the
+      affected ctfert AUs and prevented treated ctfert surfaces from
+      reintroducing companion species such as `DR`, `BA`, and `SS`.
+  - Repair:
+    - added a new `vdyp_lyr-tsa*.feather` fallback in
+      `src/femic/workflows/legacy.py` that rebuilds unmanaged species
+      proportions from the shipped VDYP layer species mix when `01a` prep is
+      missing;
+    - kept the bundle-layer treated repair in `src/femic/pipeline/bundle.py`
+      so the planted TIPSY mix is supplemented by the unmanaged companion map
+      and renormalized.
+  - Focused validation:
+    - `tests/test_bundle.py` passed with the treated repair preserved;
+    - `tests/test_workflows_post_tipsy.py` now proves the missing-`01a`
+      fallback can rebuild unmanaged species props from `vdyp_lyr` and carry
+      missing species such as `DR` into treated curves.
+  - Rebuilt ctfert runtime surfaces:
+    - reran `tsa post-tipsy` for `k3z`;
+    - rewrote the `ctfert_l15h5` and `ctfert_l20h0` ForestModel XMLs from the
+      refreshed bundle;
+    - restored the accepted curated CT/fert fragments overlay; and
+    - reran Matrix Builder for both ctfert variants.
+  - Static proof:
+    - representative ctfert outputs again carry broader species-wise yield and
+      harvested-volume families, including `DR`, `BA`, and `SS`.
+- 2026-03-31 (Issue #66 all-variant safety pass): rebuilt the full active K3Z
+  family, repaired PCT headless smoke support, and verified runtime smokes on
+  every shipped variant.
+  - Broadened rebuild scope:
+    - refreshed validated XML and Matrix Builder outputs for base, PCT,
+      ctfert, intensive, and overlay variants rather than stopping at the two
+      ctfert surfaces.
+  - Static reconciliation result:
+    - species-wise `feature.Yield.managed.*` and
+      `product.HarvestedVolume.managed.*` families now appear across all active
+      K3Z variants;
+    - direct curve reconciliation across the rebuilt tracks shows species sums
+      matching total managed yield / harvested volume within only small
+      rounding-noise differences (`0.1` to `0.2` on the common support
+      points).
+  - Runtime seam fix discovered during validation:
+    - `pct_light.pin`, `pct_moderate.pin`, and `pct_heavy.pin` were missing
+      the shared `headless_runtime_common.bsh` hook and never queued the FEMIC
+      worker thread in headless mode;
+    - patched those three PCT pins so they now behave like the already-working
+      base/ctfert/intensive headless surfaces.
+  - Full smoke result:
+    - successful headless Patchworks smokes now exist for every active K3Z
+      variant:
+      `base`, `pct_light`, `pct_moderate`, `pct_heavy`,
+      `ctfert_l15h5`, `ctfert_l20h0`,
+      `intensive_light`, `intensive_moderate`, `intensive_heavy`,
+      `intensive_light_standstructure`,
+      `overlay_basecase_sum`, `overlay_scenario1_sum`,
+      `overlay_scenario2_sum`, and `overlay_basecase_riparian`;
+    - every smoke wrote a saved stage with `returncode=0`.
+  - Seral-stage symptom:
+    - a live check on `ctfert_l15h5` showed blocks carrying seral-stage
+      attributes and managed/unmanaged area sums looking correct, so the
+      earlier “missing seral stage” report is treated as not reproduced in the
+      current FEMIC/K3Z build.
+    - `tracks_ctfert_l15h5` and `tracks_ctfert_l20h0` once again carry broader
+      managed species families in `feature.Yield.managed.*` and
+      `product.HarvestedVolume.managed.*`, including `DR`, `BA`, and `SS`;
+    - `femic instance account-surface --config config/patchworks.runtime.ctfert_l15h5.windows.yaml`
+      now reports `accounts=326 species=9 complete_species=9 au=14`.
+  - Runtime proof:
+    - headless smoke `issue66_ctfert_runtime_species` produced non-zero saved
+      target outputs for
+      `product.HarvestedVolume.managed.{DR,BA,SS}.{CC,CT}` on the rebuilt
+      ctfert surface.

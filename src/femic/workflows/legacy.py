@@ -284,6 +284,88 @@ def _vdyp_species_proportions_for_tsa(
     return out
 
 
+def _species_mix_from_layer_row(row: Any) -> dict[str, float]:
+    normalized: dict[str, float] = {}
+    total = 0.0
+    for idx in range(1, 7):
+        species_code = _normalize_species_code(row.get(f"SPECIES_CD_{idx}", ""))
+        if not species_code:
+            continue
+        pct_raw = row.get(f"SPECIES_PCT_{idx}", 0.0)
+        if pd.isna(pct_raw):
+            continue
+        pct = float(pct_raw)
+        if pct <= 0:
+            continue
+        prop = pct * 0.01
+        normalized[species_code] = normalized.get(species_code, 0.0) + prop
+        total += prop
+    if total > 0:
+        for code in list(normalized.keys()):
+            normalized[code] = normalized[code] / total
+    return normalized
+
+
+def _parse_stratum_species_tokens(stratum_code: str) -> list[str]:
+    suffix = str(stratum_code).split("_")[-1]
+    out: list[str] = []
+    for token in suffix.split("+"):
+        code = _normalize_species_code(token)
+        if not code:
+            continue
+        if code not in out:
+            out.append(code)
+    return out
+
+
+def _vdyp_species_proportions_from_vdyp_layer_fallback(
+    *,
+    data_root: Path,
+    tsa: str,
+    bundle_au_table: pd.DataFrame,
+) -> dict[tuple[str, str], dict[str, float]]:
+    layer_path = data_root / f"vdyp_lyr-tsa{tsa}.feather"
+    if not layer_path.exists():
+        return {}
+
+    vdyp_lyr = pd.read_feather(layer_path)
+    row_pairs: list[tuple[frozenset[str], dict[str, float]]] = []
+    for _, row in vdyp_lyr.iterrows():
+        species_mix = _species_mix_from_layer_row(row)
+        if not species_mix:
+            continue
+        dominant_pair = frozenset(list(species_mix.keys())[:2])
+        if len(dominant_pair) < 2:
+            continue
+        row_pairs.append((dominant_pair, species_mix))
+
+    out: dict[tuple[str, str], dict[str, float]] = {}
+    unique_pairs = (
+        bundle_au_table[["stratum_code", "si_level"]]
+        .drop_duplicates()
+        .itertuples(index=False)
+    )
+    for stratum_code, si_level in unique_pairs:
+        target_pair = frozenset(_parse_stratum_species_tokens(stratum_code)[:2])
+        matched = [
+            species_mix for pair, species_mix in row_pairs if pair == target_pair
+        ]
+        aggregate: dict[str, float] = {}
+        if matched:
+            for species_mix in matched:
+                for code, prop in species_mix.items():
+                    aggregate[code] = aggregate.get(code, 0.0) + float(prop)
+            total = sum(aggregate.values())
+            if total > 0:
+                for code in list(aggregate.keys()):
+                    aggregate[code] = aggregate[code] / total
+        elif target_pair:
+            equal = 1.0 / len(target_pair)
+            aggregate = {code: equal for code in target_pair}
+        out[(str(stratum_code), str(si_level))] = aggregate
+    return out
+
+
 def run_post_tipsy_bundle(
     *,
     tsa_list: list[str],
@@ -381,7 +463,13 @@ def run_post_tipsy_bundle(
                     )
                 results_for_tsa = []
                 results[tsa] = results_for_tsa
-                vdyp_species_proportions[tsa] = {}
+                vdyp_species_proportions[tsa] = (
+                    _vdyp_species_proportions_from_vdyp_layer_fallback(
+                        data_root=data_root,
+                        tsa=tsa,
+                        bundle_au_table=bundle_tsa,
+                    )
+                )
                 scsi_au[tsa], au_scsi[tsa] = _build_au_maps_from_bundle_au_table(
                     au_table=bundle_tsa
                 )
