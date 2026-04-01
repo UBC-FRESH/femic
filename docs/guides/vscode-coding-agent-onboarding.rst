@@ -226,6 +226,10 @@ for when steering a coding agent:
   at the same intended milestone state;
 - external runtime seams: Matrix Builder, Patchworks, BatchTIPSY, `git-annex`,
   or DataLad are the actual blocker, not Python code;
+- track overlay confusion: a user-edited Patchworks ``tracks/*/groups.csv``
+  surface gets mistaken for a compiled artifact and the agent starts
+  rebuilding or adding BeanShell logic even though the real task is to respect
+  the post-build overlay contract;
 - issue hygiene drift: the branch is real, but the GitHub
   issue/roadmap/changelog still describe an older scope.
 
@@ -254,6 +258,24 @@ should be pointed at the right doc surface instead of rediscovering them:
   when using bundled K3Z examples. Start with
   ``docs/guides/patchworks-variant-and-scenario-management.rst`` and
   ``docs/reference/api/femic-patchworks-variants.rst``.
+
+Patchworks Overlay Reminder
+---------------------------
+
+One recurring FEMIC/K3Z gotcha is that not every file under a Patchworks
+``tracks/`` directory is a "rebuild me" artifact.
+
+- The compiled tables such as ``curves.csv`` and ``products.csv`` come from
+  export + Matrix Builder.
+- ``groups.csv`` may instead be a user-defined post-build overlay.
+
+If a human asks for a new grouping assignment on an already-built track
+surface, the safe first assumption is:
+
+- do **not** rebuild yet;
+- do **not** invent new BeanShell ``calculateGroups("...")`` expressions;
+- first verify the documented runtime contract for how that instance consumes
+  ``groups.csv``.
 
 Suggested First Session for a New Contributor
 ---------------------------------------------

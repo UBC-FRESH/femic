@@ -60,6 +60,33 @@ Canonical Artifact Rules
   ``siteprod.bandmap.json``.
 - Export-time Patchworks artifacts prove package synthesis, not runtime
   readiness.
+- ``tracks/*/groups.csv`` should be treated as a post-matrix-builder
+  user-overlay surface unless a specific instance explicitly documents
+  otherwise. Editing group assignments in that file does not, by itself,
+  imply that ``forestmodel.xml`` or the other compiled track tables need to be
+  regenerated.
+
+Patchworks Track Overlay Note
+-----------------------------
+
+Not every file under a compiled ``tracks/`` directory has the same rebuild
+contract.
+
+- ``curves.csv``, ``features.csv``, ``products.csv``, ``treatments.csv``,
+  ``protoaccounts.csv``, and ``accounts.csv`` are compiled outputs and should
+  normally be refreshed through the normal export / matrix-build path.
+- ``groups.csv`` may be a deliberate user-edited overlay applied *after*
+  Matrix Builder has generated the main track package.
+
+Agent/developer consequence:
+
+- if a request is specifically about swapping or editing ``groups.csv`` in an
+  already-built Patchworks surface, do not assume the right next step is a
+  rebuild;
+- first verify the runtime contract for how that instance consumes the groups
+  overlay;
+- do not invent BeanShell ``calculateGroups("GROUP")``-style fixes unless the
+  instance docs or runtime contract explicitly say that is required.
 
 Freshness and Resume Rules
 --------------------------

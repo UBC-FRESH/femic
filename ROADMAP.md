@@ -10139,25 +10139,53 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       the intended user-facing surface;
     - re-smoke the fixed variant before closing `#71`.
 - 2026-04-01 (Issue #71 fix checkpoint): the zoned groups surface was present,
-  but the variant never asked Patchworks to calculate a `GROUP` family from it.
-  - Confirmed the failure mode:
-    - `tracks_pct_heavy_zones/groups.csv` already contained the intended
-      `zone1` / `zone2` / `zone3` assignments;
-    - the `pct_heavy_zones` pin only called
-      `control.calculateGroups("AU")` and `control.calculateGroups("IFM")`,
-      so no live `GROUP` family was created at runtime.
-  - Applied the direct fix:
-    - added `control.calculateGroups("GROUP");` to
-      `models/k3z_patchworks_model/analysis/pct_heavy_zones.pin`.
-  - Re-smoked the fixed variant:
-    - run id `issue71_pct_heavy_zones_group_smoke`
-    - `returncode=0`
-    - saved stage written successfully
+  but the first attempted fix was wrong and needed to be backed out.
+  - New contract clarification:
+    - `tracks/*/groups.csv` should be treated as a post-matrix-builder
+      user-overlay surface unless an instance explicitly documents otherwise;
+    - swapping that file does not, by itself, imply that the rest of the
+      track package should be regenerated.
+  - Confirmed the bad assumption:
+    - adding `control.calculateGroups("GROUP");` to the
+      `pct_heavy_zones` pin triggered a real Patchworks parse failure
+      (`Undefined column "GROUP"`), so that BeanShell expression is not the
+      correct activation mechanism for this overlay.
+  - Repo docs now warn agents not to repeat that mistake:
+    - `docs/reference/contracts/stage-boundaries-and-canonical-artifacts.rst`
+    - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
+    - `docs/guides/vscode-coding-agent-onboarding.rst`
   - Detailed Next Steps:
-    - update the issue/CHANGE_LOG with the concrete root cause and fix;
-    - decide whether one more explicit user-facing doc sentence is needed
-      stating that `pct_heavy_zones` exposes the `GROUP` family at runtime;
-    - if no further surface changes are needed, close `#71`.
+    - keep `pct_heavy_zones.pin` aligned with the normal `AU` / `IFM` group
+      contract;
+    - verify directly, with the human in Patchworks, what user-visible surface
+      should change when `groups.csv` is edited post-build;
+    - only then decide whether `#71` is a real runtime bug or just a mistaken
+      expectation about how the overlay is exposed.
+- 2026-04-01 (Issue #71 closeout): the zoned grouping bug was a real pin
+  wiring mistake, but the correct fix was much smaller than the earlier
+  detours suggested.
+  - Final diagnosis:
+    - `AU` and `IFM` groups come from compiled track attributes exposed through
+      `strata.csv` / `tracknames.csv`, which is why
+      `control.calculateGroups("AU")` and `control.calculateGroups("IFM")`
+      work;
+    - the student-authored zoned surface is a post-build tag overlay living in
+      `tracks_pct_heavy_zones/groups.csv`, so it must be loaded with
+      `control.inputGroups(...)` rather than `control.calculateGroups(...)`;
+    - both earlier guesses (`GROUP` and `ZONE`) were invalid expression names
+      in the Patchworks `calculateGroups(...)` context.
+  - Final shipped state:
+    - `pct_heavy_zones.pin` now calls
+      `control.inputGroups(tracks_path_prefix + "groups.csv");`
+    - zoned groups files use the canonical Patchworks two-column shape
+      `BLOCK,GROUP`
+    - the refresh helper preserves that canonical shape instead of rewriting
+      headers.
+  - Validation:
+    - live user Patchworks testing supplied the decisive contract proof via the
+      `Undefined column "GROUP"` / `Undefined column "ZONE"` errors
+    - `python -m py_compile external/femic-k3z-instance/tools/refresh_pct_heavy_zones_tracks.py`
+      passed after the helper cleanup.
 
 
 

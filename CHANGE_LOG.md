@@ -9698,14 +9698,37 @@
     - patch the variant so the zone groups are truly live before closing the
       bug.
 - 2026-04-01 (Issue #71 fix checkpoint):
-  - Confirmed the root cause: `pct_heavy_zones` already had the zoned
-    `groups.csv` surface on disk, but the pin only called
-    `control.calculateGroups(\"AU\")` and `control.calculateGroups(\"IFM\")`,
-    so Patchworks never created a live `GROUP` family from the zoned groups
-    file.
-  - Patched `models/k3z_patchworks_model/analysis/pct_heavy_zones.pin` to add
-    `control.calculateGroups(\"GROUP\")`.
-  - Re-ran a representative smoke on the fixed variant:
-    - `issue71_pct_heavy_zones_group_smoke`
-    - `returncode=0`
-    - saved stage written successfully.
+  - Corrected the diagnosis after user testing: `groups.csv` is a
+    post-matrix-builder user overlay surface here, so the right fix is **not**
+    to regenerate tracks or inject `control.calculateGroups(\"GROUP\")` into
+    the pin.
+  - The attempted BeanShell fix was backed out after Patchworks reported the
+    real parse error:
+    - `Could not calculate groups using expression: GROUP`
+    - `Undefined column \"GROUP\"`
+  - Added explicit agent-facing docs so future FEMIC work treats
+    `tracks/*/groups.csv` as a post-build overlay unless an instance documents
+    otherwise:
+    - `docs/reference/contracts/stage-boundaries-and-canonical-artifacts.rst`
+    - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
+    - `docs/guides/vscode-coding-agent-onboarding.rst`
+  - Validation for the docs clarification passed:
+    - `pytest tests/test_docs_contract.py -q`
+    - `python -m sphinx -b html docs _build/html -W`
+- 2026-04-01 (Issue #71 closeout):
+  - Fixed `pct_heavy_zones` so the custom zone tags are loaded through the
+    documented Patchworks group-overlay contract instead of the invalid
+    `calculateGroups(...)` expression path.
+  - `pct_heavy_zones.pin` now uses:
+    - `control.inputGroups(tracks_path_prefix + "groups.csv");`
+  - Restored the zoned groups files to the canonical two-column Patchworks
+    shape:
+    - `BLOCK,GROUP`
+  - Cleaned the refresh helper so it preserves the canonical groups-file shape
+    instead of rewriting headers.
+  - Validation:
+    - live Patchworks error evidence from the user established that both
+      `calculateGroups("GROUP")` and `calculateGroups("ZONE")` were invalid
+      approaches;
+    - `python -m py_compile external/femic-k3z-instance/tools/refresh_pct_heavy_zones_tracks.py`
+      passed after the final cleanup.
