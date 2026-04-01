@@ -9655,3 +9655,14 @@
   - Closed `#67` as a non-repro on current published `main`; if the student
     report resurfaces, the next step is to gather the exact fork commit, pin,
     and saved target CSVs needed for an apples-to-apples comparison.
+- 2026-04-01 (Issue #70 kickoff):
+  - Created GitHub issue `#70` to add a new K3Z variant derived from
+    `pct_heavy` that uses the alternate `groups_zones.csv` surface from the
+    Bianca forked `femic-k3z-instance` repo.
+  - Created feature branch `feature/issue-70-k3z-pct-heavy-zones`.
+  - Updated `ROADMAP.md` so the active next steps are:
+    - inspect the alternate groups surface from the Bianca fork;
+    - create the new `pct_heavy`-derived variant without disturbing the
+      existing `pct_heavy`;
+    - rebuild the new variant and prove it runs cleanly with a representative
+      headless Patchworks smoke.

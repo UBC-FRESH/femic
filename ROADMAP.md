@@ -10065,6 +10065,26 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - if a new artifact set arrives, reopen with the fork commit, pin, and
       saved target CSVs needed to compare directly against the current smoke
       outputs.
+- 2026-04-01 (Issue #70 kickoff): add a new K3Z `pct_heavy`-derived variant
+  using the alternate `groups_zones.csv` surface from the Bianca fork.
+  - Governing tracker:
+    - GitHub issue `#70`
+    - branch `feature/issue-70-k3z-pct-heavy-zones`
+  - Scope:
+    - create a new K3Z variant derived from `pct_heavy`;
+    - replace the standard `tracks_pct_heavy/groups.csv` surface with the
+      alternate `tracks_pct_heavy/groups_zones.csv` file currently present in
+      the cloned Bianca fork;
+    - rebuild the new variant and prove it launches/runs cleanly.
+  - Detailed Next Steps:
+    - inspect the Bianca fork groups surface and determine the minimum tracked
+      files that must be imported into the canonical K3Z instance;
+    - create the new variant config/pin/runtime/build surfaces without
+      disturbing the existing `pct_heavy`;
+    - rebuild the new variant, rerun Matrix Builder, and inspect the rebuilt
+      tracks directly;
+    - run a representative headless Patchworks smoke on the new variant before
+      closing `#70`.
 
 
 
