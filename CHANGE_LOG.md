@@ -9612,13 +9612,22 @@
     `ignoring product ... non existent treatment CC` warning.
   - Rebuilt all three PCT Matrix Builder track sets successfully under run ids
     `issue68_pct_light`, `issue68_pct_moderate`, and `issue68_pct_heavy`.
-  - Representative runtime A/B check:
-    - `base.pin` still completed cleanly (`issue68_base_runtime_ab`);
-    - shipped default `pct_light.pin` still hangs before headless trace
-      startup;
-    - a temporary same-directory `pct_light` probe pin with
-      `enableLogGradeAccounts = true` completed cleanly
-      (`issue68_pct_light_force_full2`), showing the RETAIN overlay itself is
-      not the cause of the headless failure;
-    - treated the default-pin/runtime-filter hang as a separate inherited
-      Patchworks surface issue from `main`, not a blocker for this feature.
+- 2026-04-01 (Issue #69 kickoff):
+  - Created GitHub issue `#69` for the inherited shared default-pin regression
+    introduced by the earlier `products.default.csv` fallback logic.
+  - Created bug branch `bug/issue-69-default-pin-products-filtering`.
+  - Recorded the fix plan in `ROADMAP.md`: keep canonical `products.csv` live,
+    restrict quiet-by-default behavior to `accounts.default.csv` / pin-side
+    account gating, and prove the repair across representative active K3Z
+    surfaces with new default and full-account Patchworks smokes.
+- 2026-04-01 (Issue #69 shared default-pin repair + family-wide validation):
+  - Removed the shared `products.default.csv` fallback from the K3Z analysis
+    pin/common logic and kept canonical `products.csv` live for base, ctfert,
+    PCT, intensive, and overlay surfaces. Quiet-by-default behavior now stays
+    on the account side only through `accounts.default.csv`.
+  - Ran representative default and full-account headless Patchworks smokes on
+    `base`, `ctfert_l15h5`, `pct_light`, `intensive_light`, and
+    `overlay_basecase_sum`; all ten runs completed with `returncode=0`.
+  - Checked the new stdout/stderr logs and found no occurrences of the earlier
+    `ignoring product ... non existent treatment CC` warning.
+  - Deleted the temporary `*_issue69_full.pin` probe files after verification.

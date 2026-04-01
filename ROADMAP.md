@@ -9974,17 +9974,49 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `issue68_pct_light`
     - `issue68_pct_moderate`
     - `issue68_pct_heavy`
-  - Representative runtime proof:
-    - the shipped default `pct_light.pin` currently hangs before headless trace
-      startup, but an A/B check against `base.pin` showed this is not caused by
-      the new RETAIN overlay;
-    - a temporary `pct_light` probe pin in the same analysis directory with the
-      full track files forced on (`enableLogGradeAccounts = true`) completed
-      successfully under run id `issue68_pct_light_force_full2`, proving the
-      rebuilt PCT surface itself still launches and saves a stage;
-    - treat the default-pin/runtime-filter hang as a separate inherited
-      Patchworks surface problem from `main`, not a blocker for the RETAIN
-      overlay feature.
+- 2026-04-01 (Issue #69 kickoff): remove the inherited shared default-pin
+  `products.default.csv` regression path and verify the repair across the
+  active K3Z family.
+  - Governing tracker:
+    - GitHub issue `#69`
+    - branch `bug/issue-69-default-pin-products-filtering`
+  - Scope:
+    - keep canonical `products.csv` live for shared K3Z pins;
+    - allow quiet-by-default behavior only through `accounts.default.csv`
+      and/or pin-side account gating;
+    - prove the warning path is gone on representative active K3Z surfaces,
+      including full-account runs after the shared pin fix.
+  - Detailed Next Steps:
+    - patch the shared/default pin logic so `products` always points at
+      canonical `products.csv`;
+    - rerun representative default and full-account Patchworks smokes across
+      base, ctfert, pct, intensive, and overlay surfaces;
+    - confirm the `ignoring product ... non existent treatment CC` warning is
+      absent from the new logs;
+    - if clean, close `#69` and treat the broader regression as repaired on
+      `main`.
+- 2026-04-01 (Issue #69 shared default-pin repair + family-wide validation):
+  - Removed the shared `products.default.csv` fallback from the K3Z analysis
+    pin/common logic and kept canonical `products.csv` live for base, ctfert,
+    PCT, intensive, and overlay surfaces. Quiet-by-default behavior now stays
+    on the account side only through `accounts.default.csv`.
+  - Ran representative **default and full-account** headless Patchworks smokes
+    on:
+    - `base`
+    - `ctfert_l15h5`
+    - `pct_light`
+    - `intensive_light`
+    - `overlay_basecase_sum`
+  - All ten runs completed successfully with `returncode=0`:
+    - `issue69_default_base` / `issue69_full_base`
+    - `issue69_default_ctfert_l15h5` / `issue69_full_ctfert_l15h5`
+    - `issue69_default_pct_light` / `issue69_full_pct_light`
+    - `issue69_default_intensive_light` / `issue69_full_intensive_light`
+    - `issue69_default_overlay_basecase_sum` /
+      `issue69_full_overlay_basecase_sum`
+  - Searched the new stdout/stderr logs and found **no** occurrences of the
+    earlier `ignoring product ... non existent treatment CC` warning.
+  - Deleted the temporary `*_issue69_full.pin` probe files after verification.
 
 
 
