@@ -8,6 +8,7 @@ from typing import Any, Iterable, cast
 import numpy as np
 import pandas as pd
 
+from femic.pipeline.bundle import tsa_curve_id_prefix
 from femic.pipeline.tsa import (
     assign_si_levels_from_stratum_quantiles,
     assign_stratum_matches_from_au_table,
@@ -85,12 +86,28 @@ def _dedupe_au_table(au_table: pd.DataFrame) -> pd.DataFrame:
                 "si_level": "first",
                 "managed_curve_id": "first",
                 "unmanaged_curve_id": "first",
+                **{
+                    column: "first"
+                    for column in (
+                        "source_local_au_id",
+                        "source_managed_local_au_id",
+                        "source_unmanaged_local_au_id",
+                    )
+                    if column in table.columns
+                },
             }
         )
     )
     deduped["au_id"] = deduped["au_id"].astype(int)
     deduped["managed_curve_id"] = deduped["managed_curve_id"].astype(int)
     deduped["unmanaged_curve_id"] = deduped["unmanaged_curve_id"].astype(int)
+    for column in (
+        "source_local_au_id",
+        "source_managed_local_au_id",
+        "source_unmanaged_local_au_id",
+    ):
+        if column in deduped.columns:
+            deduped[column] = pd.to_numeric(deduped[column], errors="coerce")
     return deduped
 
 
@@ -187,29 +204,26 @@ _MANAGED_BANK_INDICATOR_COLUMNS = (
 )
 
 
-def _curve_matches_points(
-    curve_points: tuple[CurvePoint, ...],
-    source_rows: pd.DataFrame,
-) -> bool:
-    if source_rows.empty or not curve_points:
-        return False
-    curve_df = pd.DataFrame(
-        {
-            "age": [float(point.x) for point in curve_points],
-            "yield": [round(float(point.y), 1) for point in curve_points],
-        }
+def _derive_local_au_from_namespaced_curve_id(*, tsa: str, curve_id: int) -> int | None:
+    prefix = 100000 * tsa_curve_id_prefix(normalize_tsa_code(tsa))
+    local_au = int(curve_id) - prefix
+    if local_au <= 0:
+        return None
+    return int(local_au)
+
+
+def _resolve_source_managed_local_au_id(au: AnalysisUnitDefinition) -> int | None:
+    if au.source_managed_local_au_id is not None:
+        return int(au.source_managed_local_au_id)
+    if int(au.managed_curve_id) == int(au.unmanaged_curve_id):
+        return None
+    derived = _derive_local_au_from_namespaced_curve_id(
+        tsa=au.tsa,
+        curve_id=int(au.managed_curve_id),
     )
-    source_df = source_rows.loc[:, ["Age", "Yield"]].copy()
-    source_df["age"] = pd.to_numeric(source_df["Age"], errors="coerce")
-    source_df["yield"] = pd.to_numeric(source_df["Yield"], errors="coerce").round(1)
-    source_df = source_df.dropna(subset=["age", "yield"]).sort_values("age")
-    curve_df = curve_df.sort_values("age")
-    if len(curve_df) != len(source_df):
-        return False
-    return bool(
-        np.array_equal(curve_df["age"].to_numpy(), source_df["age"].to_numpy())
-        and np.array_equal(curve_df["yield"].to_numpy(), source_df["yield"].to_numpy())
-    )
+    if derived is not None and derived != int(au.managed_curve_id):
+        return int(derived)
+    return None
 
 
 def _load_site_index_by_au_from_tipsy_input(data_dir: Path) -> dict[int, float]:
@@ -303,12 +317,7 @@ def _load_managed_qmd_support_from_tipsy(
     grouped = {_coerce_int(au): sub.copy() for au, sub in tipsy_df.groupby("AU")}
     out: dict[int, dict[str, Any]] = {}
     for au in analysis_units:
-        managed_curve_points = tuple(points_by_id.get(int(au.managed_curve_id), []))
-        matched_local_au: int | None = None
-        for local_au, subdf in grouped.items():
-            if _curve_matches_points(managed_curve_points, subdf):
-                matched_local_au = int(local_au)
-                break
+        matched_local_au = _resolve_source_managed_local_au_id(au)
         if matched_local_au is None:
             continue
         matched_rows = grouped[matched_local_au].sort_values("Age")
@@ -366,12 +375,7 @@ def _load_managed_indicator_curves_from_tipsy(
     }
     out: dict[int, dict[str, tuple[CurvePoint, ...]]] = {}
     for au in analysis_units:
-        managed_curve_points = tuple(points_by_id.get(int(au.managed_curve_id), []))
-        matched_local_au: int | None = None
-        for local_au, subdf in rows_by_local_au.items():
-            if _curve_matches_points(managed_curve_points, subdf):
-                matched_local_au = int(local_au)
-                break
+        matched_local_au = _resolve_source_managed_local_au_id(au)
         if matched_local_au is None:
             continue
         managed_rows = rows_by_local_au.get(matched_local_au)
@@ -591,6 +595,21 @@ def build_bundle_model_context_from_tables(
             si_level=str(row.si_level),
             managed_curve_id=_coerce_int(row.managed_curve_id),
             unmanaged_curve_id=_coerce_int(row.unmanaged_curve_id),
+            source_local_au_id=(
+                _coerce_int(row.source_local_au_id)
+                if pd.notna(getattr(row, "source_local_au_id", None))
+                else None
+            ),
+            source_managed_local_au_id=(
+                _coerce_int(row.source_managed_local_au_id)
+                if pd.notna(getattr(row, "source_managed_local_au_id", None))
+                else None
+            ),
+            source_unmanaged_local_au_id=(
+                _coerce_int(row.source_unmanaged_local_au_id)
+                if pd.notna(getattr(row, "source_unmanaged_local_au_id", None))
+                else None
+            ),
         )
         for row in deduped_au.itertuples(index=False)
     )

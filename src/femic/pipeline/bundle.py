@@ -204,6 +204,9 @@ def build_bundle_tables_from_curves(
         "stratum_code": [],
         "si_level": [],
         "canfi_species": [],
+        "source_local_au_id": [],
+        "source_managed_local_au_id": [],
+        "source_unmanaged_local_au_id": [],
         # Canonical upstream naming.
         "untreated_curve_id": [],
         "treated_curve_id": [],
@@ -246,6 +249,11 @@ def build_bundle_tables_from_curves(
             au_table_data["stratum_code"].append(stratum_code)
             au_table_data["si_level"].append(si_level)
             au_table_data["canfi_species"].append(canfi_species_fn(stratum_code))
+            au_table_data["source_local_au_id"].append(au_id_)
+            au_table_data["source_managed_local_au_id"].append(
+                tipsy_curve_id if is_managed_au else None
+            )
+            au_table_data["source_unmanaged_local_au_id"].append(au_id_)
             au_table_data["untreated_curve_id"].append(unmanaged_curve_id)
             au_table_data["treated_curve_id"].append(managed_curve_id)
             au_table_data["unmanaged_curve_id"].append(unmanaged_curve_id)

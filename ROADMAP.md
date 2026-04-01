@@ -7847,6 +7847,23 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       additive proof surface for this matrix layer, so closeout should rely on
       the rebuilt static track/account surfaces plus representative non-zero
       runtime target files rather than whole-stage target summation alone.
+- 2026-03-31 (Issue #65 deterministic managed-AU crosswalk repair): stop
+  guessing raw managed TIPSY rows from curve shape and use a first-class
+  deterministic crosswalk instead.
+  - Immediate execution order:
+    - persist the raw local managed/unmanaged AU linkage in the bundle AU table
+      alongside the existing namespaced K3Z AU ids;
+    - extend the FMG bundle context to carry that linkage forward as normalized
+      analysis-unit metadata;
+    - replace the exact yield-curve matching seam in
+      `femic.fmg.adapters` with deterministic lookup by the persisted/raw local
+      managed AU id (with a reversible namespace-derived fallback only for old
+      bundle tables);
+    - add focused regression tests proving managed indicator curves and QMD
+      support load through the deterministic crosswalk rather than curve-shape
+      rediscovery; and
+    - rebuild `ctfert_l15h5` first and verify `Logs_Grade*` products/accounts
+      return before broadening any further `#65` closeout work.
 - 2026-03-31 (Urgent bug prep): park the current `#65` feature slice behind a
   new upstream K3Z bug for ctfert species-universe narrowing.
   - Governing issue:
@@ -9871,6 +9888,45 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
         `terminal_state=success`, and `saved_file_count=1695`;
       - FEMIC then terminated the Patchworks Java tree automatically after the
         success marker, so no human cleanup was required.
+
+- 2026-03-31 (Issue #65 deterministic crosswalk + default-off pin control):
+  - The widened log-grade branch now uses a deterministic managed-source AU
+    crosswalk instead of the old exact `Yield`-curve matching seam when loading
+    managed TIPSY indicator curves.
+  - Rebuilt `tracks_ctfert_l15h5/` now carries the restored broad-species
+    `Logs_Grade*` volume/value families (`BA/CW/DR/FDC/HW/PL/PLC/SS/YC`) on the
+    repaired crosswalk seam.
+  - Live ctfert smoke `issue65_crosswalk_runtime_ctfert_l15h5` wrote non-zero
+    `Logs_Grade*` volume/value target files, and the explicit
+    `D/F/H/I/J/U/X/Y` totals reconciled back to harvested volume within tiny
+    rounding noise for both `CC` and `CT`.
+  - The shipped K3Z analysis pins now prefer `products.default.csv` /
+    `accounts.default.csv` when present; users opt into the full log-grade
+    teaching surface by setting `enableLogGradeAccounts = true` in the pin.
+  - Confirming smoke `issue65_default_off_smoke` showed the quiet default:
+    `product.HarvestedVolume.managed.Total.CC` still saved normally, while no
+    `product_Logs_Grade*.csv` target files were written with the pin left at
+    its default `enableLogGradeAccounts = false`.
+  - Follow-on all-variant rebuild safety pass completed on the `#65` branch:
+    baseline, all overlays, all three PCT variants, both ctfert variants, and
+    all intensive variants now carry rebuilt `Logs_Grade*` volume/value
+    families in their checked-in Patchworks track surfaces.
+  - Tight accounting proof now includes exact static-track reconciliation on
+    rebuilt `ctfert_l15h5` slices:
+    - `TRACK=116`, `CC`, `species=HW`, `X=90`: summed
+      `D/F/H/I/J/U/X/Y = 791.2`, matching
+      `product.HarvestedVolume.managed.HW.CC = 791.2` exactly, with weighted
+      mean unit revenue `105.829 CAD/m3`;
+    - `TRACK=271`, `CT`, `species=FDC`, `X=40`: summed
+      `D/F/H/I/J/U/X/Y = 56.7`, matching
+      `product.HarvestedVolume.managed.FDC.CT = 56.7` exactly, with weighted
+      mean unit revenue `97.787 CAD/m3`.
+  - Additional enabled-pin runtime smokes confirmed the widened rollout beyond
+    the original ctfert proof surface:
+    - `issue65_pct_light_enabled_runtime` wrote non-zero `product_Logs_Grade*`
+      targets on a non-ctfert PCT surface;
+    - `issue65_ctfert_l20h0_enabled_runtime` wrote non-zero
+      `product_Logs_Grade_Value*` targets on the second ctfert surface.
 
 
 

@@ -9536,3 +9536,43 @@
       target outputs for
       `product.HarvestedVolume.managed.{DR,BA,SS}.{CC,CT}` on the rebuilt
       ctfert surface.
+- 2026-03-31 (Issue #65 deterministic crosswalk + default-off pin control):
+  removed the fragile managed-curve exact-match seam from the K3Z/TIPSY
+  indicator bridge and added opt-in pin control for the huge log-grade
+  teaching families.
+  - `src/femic/pipeline/bundle.py`, `src/femic/fmg/core.py`, and
+    `src/femic/fmg/adapters.py` now carry and consume deterministic
+    managed-source AU crosswalk fields instead of rediscovering raw managed
+    TIPSY rows by exact `Yield`-curve matching.
+  - Rebuilt `tracks_ctfert_l15h5/` now includes the restored broad-species
+    `Logs_Grade*` volume/value families rather than the earlier missing/partial
+    surface.
+  - Live ctfert smoke `issue65_crosswalk_runtime_ctfert_l15h5` wrote non-zero
+    `Logs_Grade*` target files and showed grade totals reconciling back to
+    harvested volume within small rounding noise.
+  - The K3Z analysis pins now prefer `products.default.csv` /
+    `accounts.default.csv` when present, so students see the quieter default
+    surface unless they explicitly set `enableLogGradeAccounts = true` in the
+    pin. The confirming smoke `issue65_default_off_smoke` still saved
+    `product.HarvestedVolume.managed.Total.CC` and wrote zero
+    `product_Logs_Grade*.csv` target files.
+- 2026-03-31 (Issue #65 all-variant rebuild + tight accounting proof):
+  - Rebuilt the full active K3Z family on the `#65` branch after the
+    deterministic crosswalk repair: baseline, overlays, all PCT variants, both
+    ctfert variants, and all intensive variants now carry refreshed
+    `Logs_Grade*` volume/value track surfaces.
+  - Added a stronger exact accounting proof on rebuilt `ctfert_l15h5`
+    static-track slices:
+    - `TRACK=116`, `CC`, `species=HW`, `X=90`:
+      `sum(D/F/H/I/J/U/X/Y)=791.2`, exactly matching
+      `product.HarvestedVolume.managed.HW.CC=791.2`, with weighted mean unit
+      revenue `105.829 CAD/m3`;
+    - `TRACK=271`, `CT`, `species=FDC`, `X=40`:
+      `sum(D/F/H/I/J/U/X/Y)=56.7`, exactly matching
+      `product.HarvestedVolume.managed.FDC.CT=56.7`, with weighted mean unit
+      revenue `97.787 CAD/m3`.
+  - Ran extra enabled-pin runtime smokes beyond the original ctfert proof:
+    - `issue65_pct_light_enabled_runtime` confirmed non-zero
+      `product_Logs_Grade*` targets on a non-ctfert PCT surface;
+    - `issue65_ctfert_l20h0_enabled_runtime` confirmed non-zero
+      `product_Logs_Grade_Value*` targets on the second ctfert surface.

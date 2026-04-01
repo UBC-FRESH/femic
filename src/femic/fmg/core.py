@@ -32,6 +32,9 @@ class AnalysisUnitDefinition:
     si_level: str
     managed_curve_id: int
     unmanaged_curve_id: int
+    source_local_au_id: int | None = None
+    source_managed_local_au_id: int | None = None
+    source_unmanaged_local_au_id: int | None = None
 
 
 @dataclass(frozen=True)
