@@ -9686,3 +9686,26 @@
     - `issue70_pct_heavy_zones_smoke`
     - `returncode=0`
     - saved stage written under the expected K3Z headless-stage log path.
+- 2026-04-01 (Issue #71 kickoff):
+  - Created GitHub issue `#71` for the follow-on bug that the new
+    `pct_heavy_zones` variant launches but does not actually expose the
+    intended `zone1` / `zone2` / `zone3` grouping surface in Patchworks.
+  - Created bug branch `bug/issue-71-pct-heavy-zones-groups`.
+  - Updated `ROADMAP.md` so the active next steps are:
+    - reproduce the grouping failure directly;
+    - determine whether the problem is in the zoned `groups.csv` surface,
+      pin/runtime wiring, or our assumptions about Patchworks group handling;
+    - patch the variant so the zone groups are truly live before closing the
+      bug.
+- 2026-04-01 (Issue #71 fix checkpoint):
+  - Confirmed the root cause: `pct_heavy_zones` already had the zoned
+    `groups.csv` surface on disk, but the pin only called
+    `control.calculateGroups(\"AU\")` and `control.calculateGroups(\"IFM\")`,
+    so Patchworks never created a live `GROUP` family from the zoned groups
+    file.
+  - Patched `models/k3z_patchworks_model/analysis/pct_heavy_zones.pin` to add
+    `control.calculateGroups(\"GROUP\")`.
+  - Re-ran a representative smoke on the fixed variant:
+    - `issue71_pct_heavy_zones_group_smoke`
+    - `returncode=0`
+    - saved stage written successfully.

@@ -10117,6 +10117,47 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       before closing `#70`;
     - if current scope is sufficient, commit the K3Z/parent changes, comment
       on `#70`, and close the feature.
+- 2026-04-01 (Issue #71 kickoff): investigate why `pct_heavy_zones` does not
+  actually expose the expected `zone1` / `zone2` / `zone3` grouping surface.
+  - Governing tracker:
+    - GitHub issue `#71`
+    - branch `bug/issue-71-pct-heavy-zones-groups`
+  - Reported symptom:
+    - the new `pct_heavy_zones` sibling variant launches, but the intended
+      zone groups are not actually visible/usable in Patchworks as expected.
+  - Investigation posture:
+    - do not assume the zoned `groups.csv` file alone is sufficient;
+    - inspect whether Patchworks is reading the groups surface at all, and if
+      so, whether some additional report/theme/config wiring is required;
+    - determine whether the bug lives in the tracks surface, pin/runtime
+      wiring, or our assumptions about how Patchworks consumes `groups.csv`.
+  - Detailed Next Steps:
+    - reproduce the grouping failure directly on `pct_heavy_zones`;
+    - compare the new zoned groups surface against a known-good grouping use
+      case in the existing model/runtime;
+    - patch the variant so `zone1` / `zone2` / `zone3` are actually live in
+      the intended user-facing surface;
+    - re-smoke the fixed variant before closing `#71`.
+- 2026-04-01 (Issue #71 fix checkpoint): the zoned groups surface was present,
+  but the variant never asked Patchworks to calculate a `GROUP` family from it.
+  - Confirmed the failure mode:
+    - `tracks_pct_heavy_zones/groups.csv` already contained the intended
+      `zone1` / `zone2` / `zone3` assignments;
+    - the `pct_heavy_zones` pin only called
+      `control.calculateGroups("AU")` and `control.calculateGroups("IFM")`,
+      so no live `GROUP` family was created at runtime.
+  - Applied the direct fix:
+    - added `control.calculateGroups("GROUP");` to
+      `models/k3z_patchworks_model/analysis/pct_heavy_zones.pin`.
+  - Re-smoked the fixed variant:
+    - run id `issue71_pct_heavy_zones_group_smoke`
+    - `returncode=0`
+    - saved stage written successfully
+  - Detailed Next Steps:
+    - update the issue/CHANGE_LOG with the concrete root cause and fix;
+    - decide whether one more explicit user-facing doc sentence is needed
+      stating that `pct_heavy_zones` exposes the `GROUP` family at runtime;
+    - if no further surface changes are needed, close `#71`.
 
 
 
