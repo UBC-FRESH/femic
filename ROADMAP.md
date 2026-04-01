@@ -9927,6 +9927,26 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       targets on a non-ctfert PCT surface;
     - `issue65_ctfert_l20h0_enabled_runtime` wrote non-zero
       `product_Logs_Grade_Value*` targets on the second ctfert surface.
+- 2026-03-31 (Issue #68 kickoff): replace K3Z `pct*` RETAIN values from the
+  student thinners overlay in `tmp/fragments_thinners.zip`.
+  - Governing tracker:
+    - GitHub issue `#68`
+    - branch `feature/issue-68-k3z-pct-retain-overlay`
+  - Intended scope:
+    - inspect the student-provided thinners fragments payload and pin down the
+      join/key contract against the canonical K3Z fragments surface;
+    - replace the validated `RETAIN` values used by `pct_light`,
+      `pct_moderate`, and `pct_heavy` with the student-provided values;
+    - rebuild the affected PCT XML/fragments/track surfaces, rerun Matrix
+      Builder, and inspect representative runtime outputs directly.
+  - Detailed Next Steps:
+    - unpack and inspect `tmp/fragments_thinners.zip`;
+    - confirm the field names and spatial/key join path back to canonical K3Z
+      fragments;
+    - wire the overlay into the PCT-only variant family without changing
+      baseline or CT/fert retention surfaces;
+    - rebuild the three PCT variants and run direct Patchworks smoke checks on
+      at least one representative PCT surface before claiming success.
 
 
 

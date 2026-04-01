@@ -9576,3 +9576,13 @@
       `product_Logs_Grade*` targets on a non-ctfert PCT surface;
     - `issue65_ctfert_l20h0_enabled_runtime` confirmed non-zero
       `product_Logs_Grade_Value*` targets on the second ctfert surface.
+- 2026-03-31 (Issue #68 kickoff):
+  - Created GitHub issue `#68` to replace the K3Z `pct*` RETAIN values from
+    the student-provided thinners overlay in `tmp/fragments_thinners.zip`.
+  - Created feature branch `feature/issue-68-k3z-pct-retain-overlay`.
+  - Updated `ROADMAP.md` so the immediate next steps are:
+    - inspect the student thinners overlay payload and key/join contract;
+    - wire the RETAIN replacement into `pct_light`, `pct_moderate`, and
+      `pct_heavy`;
+    - rebuild the three PCT variants and re-smoke representative Patchworks
+      runtime behavior before closing the feature.
