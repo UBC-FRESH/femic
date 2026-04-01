@@ -9900,9 +9900,10 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     `Logs_Grade*` volume/value target files, and the explicit
     `D/F/H/I/J/U/X/Y` totals reconciled back to harvested volume within tiny
     rounding noise for both `CC` and `CT`.
-  - The shipped K3Z analysis pins now prefer `products.default.csv` /
-    `accounts.default.csv` when present; users opt into the full log-grade
-    teaching surface by setting `enableLogGradeAccounts = true` in the pin.
+  - The shipped K3Z analysis pins now keep canonical `products.csv` live and
+    hide the large log-grade teaching surface only through
+    `accounts.default.csv`; users opt into the full log-grade teaching surface
+    by setting `enableLogGradeAccounts = true` in the pin.
   - Confirming smoke `issue65_default_off_smoke` showed the quiet default:
     `product.HarvestedVolume.managed.Total.CC` still saved normally, while no
     `product_Logs_Grade*.csv` target files were written with the pin left at
@@ -9961,6 +9962,15 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - retained area changed from the old uniform-`0.05` placeholder total
       `89.065662 ha` to `483.178703 ha`, exactly matching the student overlay.
   - Rebuilt all three PCT Matrix Builder track sets successfully:
+  - Fixed the inherited default-pin warning/hang by reverting the fragile
+    `products.default.csv` detour. The shipped PCT pins now always use the
+    canonical `products.csv` track surface and hide the quiet-by-default
+    teaching layer only through `accounts.default.csv`, which matches the
+    intended "turn some accounts off" contract.
+  - Re-ran default headless Patchworks smokes for `pct_light`, `pct_moderate`,
+    and `pct_heavy`; all three now complete with `returncode=0`, and the new
+    stderr/stdout logs no longer contain the earlier `ignoring product ...
+    non existent treatment CC` warning.
     - `issue68_pct_light`
     - `issue68_pct_moderate`
     - `issue68_pct_heavy`

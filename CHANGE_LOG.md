@@ -9550,10 +9550,10 @@
   - Live ctfert smoke `issue65_crosswalk_runtime_ctfert_l15h5` wrote non-zero
     `Logs_Grade*` target files and showed grade totals reconciling back to
     harvested volume within small rounding noise.
-  - The K3Z analysis pins now prefer `products.default.csv` /
-    `accounts.default.csv` when present, so students see the quieter default
-    surface unless they explicitly set `enableLogGradeAccounts = true` in the
-    pin. The confirming smoke `issue65_default_off_smoke` still saved
+  - The K3Z analysis pins now keep canonical `products.csv` live and hide the
+    quieter default surface only through `accounts.default.csv`, unless users
+    explicitly set `enableLogGradeAccounts = true` in the pin. The confirming
+    smoke `issue65_default_off_smoke` still saved
     `product.HarvestedVolume.managed.Total.CC` and wrote zero
     `product_Logs_Grade*.csv` target files.
 - 2026-03-31 (Issue #65 all-variant rebuild + tight accounting proof):
@@ -9602,6 +9602,14 @@
       to baseline geometry and non-`RETENTION` attributes;
     - retained area changed from `89.065662 ha` to `483.178703 ha`, exactly
       matching the student overlay.
+  - Fixed the inherited default-pin warning/hang by reverting the fragile
+    `products.default.csv` detour. The shipped PCT pins now always use the
+    canonical `products.csv` track surface and hide the quiet-by-default
+    teaching layer only through `accounts.default.csv`.
+  - Re-ran default headless Patchworks smokes for `pct_light`,
+    `pct_moderate`, and `pct_heavy`; all three now complete with
+    `returncode=0`, and the new logs no longer contain the earlier
+    `ignoring product ... non existent treatment CC` warning.
   - Rebuilt all three PCT Matrix Builder track sets successfully under run ids
     `issue68_pct_light`, `issue68_pct_moderate`, and `issue68_pct_heavy`.
   - Representative runtime A/B check:

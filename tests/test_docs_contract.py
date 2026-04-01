@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 import subprocess
 
+import pandas as pd
 import pytest
 from typer.testing import CliRunner
 import yaml
@@ -1149,8 +1150,13 @@ def test_k3z_pct_checked_in_surface_preserves_baseline_geometry_footprint() -> N
     baseline_path = (
         K3Z_INSTANCE_ROOT / "output/patchworks_k3z_validated/fragments/fragments.shp"
     )
+    overlay_join = pd.read_csv(
+        K3Z_INSTANCE_ROOT / "tmp/k3z_pct_thinners_retention_join.csv",
+        usecols=["BLOCK", "retention_thinners"],
+    ).rename(columns={"retention_thinners": "RETENTION_overlay"})
+
     baseline = gpd.read_file(baseline_path)[
-        ["AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE", "geometry"]
+        ["BLOCK", "AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE", "geometry"]
     ].copy()
     baseline["geom_key"] = baseline.geometry.to_wkb(hex=True)
     for slug in PCT_SUBVARIANT_IDS:
@@ -1159,7 +1165,7 @@ def test_k3z_pct_checked_in_surface_preserves_baseline_geometry_footprint() -> N
             / f"output/patchworks_k3z_{slug}_validated/fragments/fragments.shp"
         )
         pct = gpd.read_file(pct_path)[
-            ["AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE", "geometry"]
+            ["BLOCK", "AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE", "geometry"]
         ].copy()
         pct["geom_key"] = pct.geometry.to_wkb(hex=True)
         merged = baseline.merge(
@@ -1175,10 +1181,21 @@ def test_k3z_pct_checked_in_surface_preserves_baseline_geometry_footprint() -> N
         assert set(merged["_merge"]) == {"both"}
 
         both = merged[merged["_merge"] == "both"]
-        for col in ("AU", "IFM", "RETENTION", "ORIGIN", "SILV_STATE"):
+        for col in ("BLOCK", "AU", "IFM", "ORIGIN", "SILV_STATE"):
             assert (both[f"{col}_baseline"] == both[f"{col}_pct"]).all(), (
                 f"{slug} differs from baseline in {col}"
             )
+        pct_overlay = (
+            pct.drop(columns="geometry")
+            .merge(overlay_join, on="BLOCK", how="left")
+            .sort_values("BLOCK")
+            .reset_index(drop=True)
+        )
+        assert pct_overlay["RETENTION_overlay"].notna().all()
+        assert (
+            pct_overlay["RETENTION"].round(12)
+            == pct_overlay["RETENTION_overlay"].round(12)
+        ).all(), f"{slug} RETENTION does not match tracked thinners overlay"
 
 
 def test_fhops_aligned_sphinx_template_contract() -> None:
