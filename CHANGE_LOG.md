@@ -9639,3 +9639,19 @@
     current `main`, inspect saved CT harvested-volume outputs directly, and
     distinguish a real current regression from a likely fork-side or already-
     fixed non-repro before making any code changes.
+- 2026-04-01 (Issue #67 closeout):
+  - Reproduced `ctfert_l15h5` and `ctfert_l20h0` on current `main` with
+    direct headless Patchworks smokes targeting
+    `product.HarvestedVolume.managed.Total.CT`.
+  - Confirmed `ctfert_l15h5` writes non-zero `product.Treated.managed.CT` and
+    non-zero `product.HarvestedVolume.managed.Total.CT` in the same periods.
+  - Confirmed `ctfert_l20h0` also writes non-zero treated area, non-zero total
+    CT harvested volume, and non-zero species-wise CT harvested-volume files,
+    with the species-wise CT sum matching total CT volume within tiny rounding
+    noise.
+  - Compared simple CT volume-per-hectare summaries across the two ctfert
+    variants and found no convincing evidence of a current-main `ctfert_l20h0`
+    inflation bug.
+  - Closed `#67` as a non-repro on current published `main`; if the student
+    report resurfaces, the next step is to gather the exact fork commit, pin,
+    and saved target CSVs needed for an apples-to-apples comparison.

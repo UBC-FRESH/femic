@@ -10041,6 +10041,30 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       result and close `#67`;
     - if reproducible, isolate whether the defect lives in tracks, pins,
       treatment wiring, or runtime account generation before patching.
+- 2026-04-01 (Issue #67 closeout): current `main` does not reproduce the
+  reported ctfert CT harvested-volume anomaly.
+  - Reproduced both `ctfert_l15h5` and `ctfert_l20h0` directly with fresh
+    headless Patchworks smokes targeting
+    `product.HarvestedVolume.managed.Total.CT`.
+  - Direct saved-stage inspection showed:
+    - `ctfert_l15h5`: non-zero `product.Treated.managed.CT` and matching
+      non-zero `product.HarvestedVolume.managed.Total.CT` in multiple periods;
+    - `ctfert_l20h0`: non-zero treated area, non-zero total CT harvested
+      volume, and non-zero species-wise CT harvested-volume files.
+  - Checked species reconciliation on the `ctfert_l20h0` saved runtime
+    outputs and found the species-wise CT sum matches
+    `product.HarvestedVolume.managed.Total.CT` within tiny rounding noise.
+  - Compared simple CT volume-per-hectare summaries between the two ctfert
+    variants and did not find evidence of a wildly inflated current-main
+    `ctfert_l20h0` runtime.
+  - Treat this report as a likely fork/stale-merge or other student-local
+    interaction unless a minimal reproducible artifact set arrives that
+    reproduces the issue on current published `main`.
+  - Detailed Next Steps:
+    - keep `#67` closed unless a reproducible current-main case appears;
+    - if a new artifact set arrives, reopen with the fork commit, pin, and
+      saved target CSVs needed to compare directly against the current smoke
+      outputs.
 
 
 
