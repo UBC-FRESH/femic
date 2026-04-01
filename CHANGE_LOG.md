@@ -9488,6 +9488,44 @@
     - restored the accepted curated CT/fert fragments overlay; and
     - reran Matrix Builder for both ctfert variants.
   - Static proof:
+    - representative ctfert outputs again carry broader species-wise yield and
+      harvested-volume families, including `DR`, `BA`, and `SS`.
+- 2026-03-31 (Issue #66 all-variant safety pass): rebuilt the full active K3Z
+  family, repaired PCT headless smoke support, and verified runtime smokes on
+  every shipped variant.
+  - Broadened rebuild scope:
+    - refreshed validated XML and Matrix Builder outputs for base, PCT,
+      ctfert, intensive, and overlay variants rather than stopping at the two
+      ctfert surfaces.
+  - Static reconciliation result:
+    - species-wise `feature.Yield.managed.*` and
+      `product.HarvestedVolume.managed.*` families now appear across all active
+      K3Z variants;
+    - direct curve reconciliation across the rebuilt tracks shows species sums
+      matching total managed yield / harvested volume within only small
+      rounding-noise differences (`0.1` to `0.2` on the common support
+      points).
+  - Runtime seam fix discovered during validation:
+    - `pct_light.pin`, `pct_moderate.pin`, and `pct_heavy.pin` were missing
+      the shared `headless_runtime_common.bsh` hook and never queued the FEMIC
+      worker thread in headless mode;
+    - patched those three PCT pins so they now behave like the already-working
+      base/ctfert/intensive headless surfaces.
+  - Full smoke result:
+    - successful headless Patchworks smokes now exist for every active K3Z
+      variant:
+      `base`, `pct_light`, `pct_moderate`, `pct_heavy`,
+      `ctfert_l15h5`, `ctfert_l20h0`,
+      `intensive_light`, `intensive_moderate`, `intensive_heavy`,
+      `intensive_light_standstructure`,
+      `overlay_basecase_sum`, `overlay_scenario1_sum`,
+      `overlay_scenario2_sum`, and `overlay_basecase_riparian`;
+    - every smoke wrote a saved stage with `returncode=0`.
+  - Seral-stage symptom:
+    - a live check on `ctfert_l15h5` showed blocks carrying seral-stage
+      attributes and managed/unmanaged area sums looking correct, so the
+      earlier “missing seral stage” report is treated as not reproduced in the
+      current FEMIC/K3Z build.
     - `tracks_ctfert_l15h5` and `tracks_ctfert_l20h0` once again carry broader
       managed species families in `feature.Yield.managed.*` and
       `product.HarvestedVolume.managed.*`, including `DR`, `BA`, and `SS`;

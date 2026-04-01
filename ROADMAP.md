@@ -7910,11 +7910,40 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - headless ctfert smoke `issue66_ctfert_runtime_species` wrote non-zero
       runtime targets for
       `product.HarvestedVolume.managed.{DR,BA,SS}.{CC,CT}`.
+  - Broadened validation:
+    - rebuilt validated XML plus Matrix Builder outputs across all active K3Z
+      variants, not just the two ctfert surfaces;
+    - static track reconciliation now shows species-wise
+      `feature.Yield.managed.*` and `product.HarvestedVolume.managed.*`
+      families present across base, PCT, ctfert, intensive, and overlay
+      variants, with maximum species-vs-total curve differences only in the
+      small rounding-noise range (`0.1` to `0.2`);
+    - discovered and fixed a separate PCT runtime seam while doing the smoke
+      pass: `pct_light.pin`, `pct_moderate.pin`, and `pct_heavy.pin` were
+      missing the shared `headless_runtime_common.bsh` hook and never queued
+      the FEMIC worker thread, so their earlier headless failures were not
+      species-account regressions at all.
+  - Runtime sweep result:
+    - successful headless Patchworks smokes now exist for every active K3Z
+      variant:
+      `base`, `pct_light`, `pct_moderate`, `pct_heavy`,
+      `ctfert_l15h5`, `ctfert_l20h0`,
+      `intensive_light`, `intensive_moderate`, `intensive_heavy`,
+      `intensive_light_standstructure`,
+      `overlay_basecase_sum`, `overlay_scenario1_sum`,
+      `overlay_scenario2_sum`, and `overlay_basecase_riparian`;
+    - every smoke wrote a saved stage with `returncode=0`.
+  - Seral-stage symptom status:
+    - user live-tested `ctfert_l15h5` and confirmed blocks do carry seral
+      stage attributes and managed/unmanaged area sums look good;
+    - treat the earlier “missing seral stage” report as a non-reproduced
+      student-side symptom, not an active FEMIC/K3Z defect.
   - Detailed Next Steps:
-    - write closeout notes to `CHANGE_LOG.md` and GitHub issue `#66`;
-    - run repo/K3Z doc validation;
-    - close the bug once the seral-stage symptom is either disproven on the
-      rebuilt ctfert surfaces or moved into a separate follow-up.
+    - record the full all-variant validation and PCT headless-pin repair in
+      `CHANGE_LOG.md`;
+    - post a final closeout comment on GitHub issue `#66`;
+    - merge/push the K3Z submodule rebuild + PCT headless-pin fix;
+    - update the parent repo submodule pointer and close the bug.
 - 2026-03-30 (Issue #64 kickoff): start the urgent K3Z species-account regression repair on branch `bug/issue-64-k3z-species-account-dropout`.
   - Current local evidence:
     - baseline and `pct_light` now report `species=1 complete_species=1` with the `total OK, species-wise empty` diagnosis;
