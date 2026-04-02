@@ -10355,4 +10355,33 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 
 
+- 2026-04-01 (Issue #75 kickoff): replace TSA-first generic terminology with
+  FMU-first terminology across FEMIC while preserving literal TSA references
+  where they are true runtime/data contracts.
+  - Governing issue: `#75` (`Feature`)
+  - Branch: `feature/issue-75-fmu-terminology`
+  - Intended scope:
+    - scan code, docs, guides, contract pages, registry metadata, and
+      user-facing examples for places where generic forest management unit
+      concepts are still named as if every case were a BC Timber Supply Area;
+    - replace those generic references with `FMU`/forest-management-unit
+      wording and establish `fmu-<flavour>-<identifier>` as the preferred
+      naming pattern for built-in instance/variant docs where a generic FMU
+      token is appropriate;
+    - preserve literal `TSA` usage anywhere it is still the real domain term,
+      data column, CLI/runtime contract, file naming convention, or
+      compatibility surface rather than generic wording.
+  - Detailed Next Steps:
+    - classify the current `TSA`/`tsa` surface into three buckets before large
+      edits:
+      1. generic user-facing wording to rename to `FMU`,
+      2. mixed user/dev surfaces that need clarifying prose rather than a raw
+         token swap,
+      3. hard runtime/data compatibility seams that must stay `tsa`;
+    - update `ROADMAP.md`, `CHANGE_LOG.md`, and the adopted idea queue entry
+      first, then do the broader scan/rewrite in docs, API/CLI references,
+      bundled instance docs, and built-in registry naming surfaces;
+    - avoid churn in Python/runtime identifiers unless the current name is
+      clearly user-facing and generic, because this slice is about
+      terminology-contract cleanup first, not gratuitous API breakage.
 

@@ -9860,3 +9860,12 @@
     warning outcome directly, no extra warning-policy/user-override code was
     added in this slice. That follow-on should stay deferred unless a new real
     warning family appears.
+- 2026-04-01 (Issue #75 kickoff):
+  - Opened the FMU terminology sweep to replace TSA-first generic wording with
+    FMU-first wording across FEMIC where the concept is a generic forest
+    management unit rather than literally a BC Timber Supply Area.
+  - Created governing GitHub issue `#75` and branch
+    `feature/issue-75-fmu-terminology`.
+  - Scoped the work to preserve literal `TSA` usage where it is part of real
+    runtime/data compatibility contracts, while cleaning up generic docs,
+    guides, registry wording, and other user-facing terminology.
