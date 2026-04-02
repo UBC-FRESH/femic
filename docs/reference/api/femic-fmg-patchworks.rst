@@ -173,6 +173,15 @@ volume toward lower-grade ``J/U/X/Y`` material. This is a deliberate bridge
 between upstream forest-growth signals and downstream product-sector teaching
 accounts, not a claim that BTC directly observed CT-grade outcomes.
 
+Another exporter-owned contract to keep in mind is Patchworks succession
+wiring. Patchworks' own DTD and sample ForestModel XMLs define ``succession``
+as a ``select``-scoped element, not a treatment transition block. FEMIC now
+uses that same contract for K3Z by attaching a default pass-through
+``<succession breakup="1000" renew="1000" />`` to the state-bearing selects
+that also carry the live track surface. That default form deliberately makes no
+field assignments and therefore behaves as a null "keep the current state"
+succession path while still satisfying the explicit-successions XML contract.
+
 The same recipe seam now also supports a second teaching bridge layer for K3Z:
 
 - additive ``AU x species x grade`` harvested-volume products built from the

@@ -18,6 +18,7 @@
       QmdSupportDefinition
       RetentionDefinition
       SelectDefinition
+      SuccessionDefinition
       TreatmentAssignment
       TreatmentDefinition
    

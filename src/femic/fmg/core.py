@@ -110,6 +110,16 @@ class RetentionDefinition:
 
 
 @dataclass(frozen=True)
+class SuccessionDefinition:
+    """One succession definition applied within a select statement."""
+
+    breakup: str = "0"
+    renew: str = "0"
+    initial_age_limit: str | None = None
+    assignments: tuple[TreatmentAssignment, ...] = ()
+
+
+@dataclass(frozen=True)
 class SelectDefinition:
     """One select statement plus optional features/products/track treatment."""
 
@@ -117,6 +127,7 @@ class SelectDefinition:
     feature_attributes: tuple[AttributeBinding, ...] = ()
     product_attributes: tuple[AttributeBinding, ...] = ()
     retention_definitions: tuple[RetentionDefinition, ...] = ()
+    succession_definitions: tuple[SuccessionDefinition, ...] = ()
     include_track: bool = False
     track_treatment: TreatmentDefinition | None = None
     track_treatments: tuple[TreatmentDefinition, ...] = ()

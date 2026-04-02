@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import importlib
 from importlib import resources as importlib_resources
 import math
@@ -29,6 +29,7 @@ from .core import (
     ForestModelDefinition,
     RetentionDefinition,
     SelectDefinition,
+    SuccessionDefinition,
     TreatmentAssignment,
     TreatmentDefinition,
 )
@@ -48,6 +49,8 @@ DEFAULT_SILVICULTURE_CONFIG_PATH: Path | None = None
 DEFAULT_RETENTION_VALUE = 0.0
 DEFAULT_SILV_STATE_NATURAL = "baseline"
 DEFAULT_SILV_STATE_PLANTED = "cc_pl"
+DEFAULT_PASS_THROUGH_SUCCESSION_BREAKUP = "1000"
+DEFAULT_PASS_THROUGH_SUCCESSION_RENEW = "1000"
 SUPPORTED_BTC_INDICATOR_BANKS = {"stand-structure-basic", "log-grades"}
 STAND_STRUCTURE_BASIC_FEATURE_COLUMNS = (
     ("MAI", "feature.MAI.managed.{au_token}"),
@@ -4266,7 +4269,7 @@ def build_patchworks_forestmodel_definition(
             DefineFieldDefinition(field="treatment"),
         ),
         curves=curves,
-        selects=tuple(selects),
+        selects=_apply_default_pass_through_successions(selects=selects),
     )
 
 
@@ -4303,7 +4306,28 @@ def _append_retention_definitions(
             _append_attribute_bindings(
                 parent=retention,
                 tag_name="features",
-                bindings=retention_definition.feature_attributes,
+                    bindings=retention_definition.feature_attributes,
+            )
+
+
+def _append_succession_definitions(
+    *,
+    parent: et.Element,
+    succession_definitions: tuple[SuccessionDefinition, ...],
+) -> None:
+    for succession_definition in succession_definitions:
+        attrs = {
+            "breakup": succession_definition.breakup,
+            "renew": succession_definition.renew,
+        }
+        if succession_definition.initial_age_limit is not None:
+            attrs["initialagelimit"] = succession_definition.initial_age_limit
+        succession = et.SubElement(parent, "succession", attrs)
+        for assignment in succession_definition.assignments:
+            et.SubElement(
+                succession,
+                "assign",
+                {"field": assignment.field, "value": assignment.value},
             )
 
 
@@ -4351,6 +4375,29 @@ def _append_track(
     track = et.SubElement(parent, "track")
     for treatment_def in treatment_defs:
         _append_track_treatment(parent=track, treatment_def=treatment_def)
+
+
+def _default_pass_through_succession_definition() -> SuccessionDefinition:
+    return SuccessionDefinition(
+        breakup=DEFAULT_PASS_THROUGH_SUCCESSION_BREAKUP,
+        renew=DEFAULT_PASS_THROUGH_SUCCESSION_RENEW,
+    )
+
+
+def _apply_default_pass_through_successions(
+    *,
+    selects: list[SelectDefinition],
+) -> tuple[SelectDefinition, ...]:
+    default_succession = (_default_pass_through_succession_definition(),)
+    return tuple(
+        replace(
+            select,
+            succession_definitions=default_succession,
+        )
+        if select.include_track and not select.succession_definitions
+        else select
+        for select in selects
+    )
 
 
 def forestmodel_definition_to_xml_tree(
@@ -4410,6 +4457,11 @@ def forestmodel_definition_to_xml_tree(
             _append_retention_definitions(
                 parent=select_node,
                 retention_definitions=select.retention_definitions,
+            )
+        if select.succession_definitions:
+            _append_succession_definitions(
+                parent=select_node,
+                succession_definitions=select.succession_definitions,
             )
         _append_track(
             parent=select_node,

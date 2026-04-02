@@ -9810,3 +9810,22 @@
       0 errors gold-standard signal;
     - add FEMIC warning-policy defaults plus user override seams so warnings
       are only ignored through explicit policy.
+- 2026-04-01 (Issue #74 progress):
+  - Used the installed Patchworks `ForestModel.dtd` and
+    `sample_2024/yield/ForestModel_C5_lookup.xml` as the authoritative local
+    contract for `<succession>` rather than guessing from K3Z `messages.csv`
+    byproducts.
+  - Added first-class FMG succession wiring so `SelectDefinition` can carry
+    `select`-scoped succession definitions and serialize them into
+    `forestmodel.xml`.
+  - Current K3Z default behavior is now a pass-through succession on
+    state-bearing selects only:
+    - `<succession breakup="1000" renew="1000" />`
+    - no `assign` children
+  - Updated the FMG XML fixtures and added a focused regression test proving
+    that track-bearing selects receive the default succession while
+    product-only selects do not.
+  - Rebuilt one representative K3Z ForestModel XML at
+    `external/femic-k3z-instance/tmp/issue74_patchworks_export/forestmodel.xml`
+    and directly confirmed the new `succession` nodes are present ahead of the
+    live `track` blocks.

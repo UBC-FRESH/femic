@@ -3705,6 +3705,52 @@ def test_write_forestmodel_xml_matches_multi_au_fixture(tmp_path: Path) -> None:
     assert actual == expected
 
 
+def test_build_forestmodel_xml_tree_adds_default_pass_through_successions() -> None:
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": 985501000,
+                "tsa": "k3z",
+                "stratum_code": "CWHvm_HW+FDC",
+                "si_level": "L",
+                "managed_curve_id": 985521000,
+                "unmanaged_curve_id": 985501000,
+            }
+        ]
+    )
+    curve_table = pd.DataFrame(
+        [
+            {"curve_id": 985501000, "curve_type": "unmanaged"},
+            {"curve_id": 985521000, "curve_type": "managed"},
+        ]
+    )
+    curve_points = pd.DataFrame(
+        [
+            {"curve_id": 985501000, "x": 1, "y": 10.0},
+            {"curve_id": 985501000, "x": 10, "y": 55.0},
+            {"curve_id": 985521000, "x": 1, "y": 12.0},
+            {"curve_id": 985521000, "x": 10, "y": 70.0},
+        ]
+    )
+
+    root = build_forestmodel_xml_tree(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points,
+    )
+
+    selects = root.findall("select")
+    succession_selects = [select for select in selects if select.find("succession") is not None]
+
+    assert succession_selects
+    assert len(succession_selects) == len([select for select in selects if select.find("track") is not None])
+    for select in succession_selects:
+        succession = select.find("succession")
+        assert succession is not None
+        assert succession.attrib == {"breakup": "1000", "renew": "1000"}
+        assert list(succession) == []
+
+
 def test_build_patchworks_forestmodel_definition_rejects_invalid_transition_ifm() -> (
     None
 ):

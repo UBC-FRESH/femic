@@ -32,6 +32,7 @@ from .core import (
     ForestModelDefinition,
     RetentionDefinition,
     SelectDefinition,
+    SuccessionDefinition,
     TreatmentAssignment,
     TreatmentDefinition,
 )
@@ -68,6 +69,7 @@ __all__ = [
     "TreatmentAssignment",
     "TreatmentDefinition",
     "SelectDefinition",
+    "SuccessionDefinition",
     "ForestModelDefinition",
     "RetentionDefinition",
     "normalize_tsa_code",

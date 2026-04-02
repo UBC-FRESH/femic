@@ -10311,13 +10311,27 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - apply the resulting contract consistently across all K3Z variant
       surfaces.
   - Detailed Next Steps:
-    - inspect current K3Z XML and `messages.csv` / Matrix Builder artifacts to
-      confirm where missing succession definitions are surfacing;
-    - trace the current exporter seam that emits (or omits) succession
-      elements and identify the narrowest shared place to inject the default
-      pass-through behavior;
-    - define the warning-policy contract and decide which warnings, if any,
-      are acceptable by default;
+    - use the installed Patchworks `ForestModel.dtd` and sample
+      `ForestModel_C5_lookup.xml` as the authoritative contract so FEMIC emits
+      `select`-scoped `<succession>` elements rather than guessing from current
+      `messages.csv` byproducts;
+    - add a first-class FMG succession definition plus XML serialization and
+      inject a default pass-through succession (`breakup="1000"`,
+      `renew="1000"`, no assignments) onto state-bearing K3Z selects only;
+    - rebuild one representative K3Z XML first and inspect the emitted
+      `<succession>` nodes directly before broadening to all variants and any
+      later warning-policy work;
+  - Progress so far:
+    - the FMG core/serializer now supports explicit `select`-scoped succession
+      definitions;
+    - representative K3Z XML rebuilt at
+      `external/femic-k3z-instance/tmp/issue74_patchworks_export/forestmodel.xml`
+      now shows pass-through
+      `<succession breakup="1000" renew="1000" />` nodes immediately before the
+      live `<track>` blocks on state-bearing selects;
+    - next step is to decide whether to regenerate the tracked K3Z validated
+      ForestModel XML surfaces now or to widen the feature immediately into the
+      warning-policy/reporting layer first.
     - rebuild representative K3Z surfaces, then widen to the full family once
       the contract is validated.
 
