@@ -3,7 +3,8 @@
 
 The :mod:`femic.pipeline.bundle` module owns FEMIC's canonical
 ``data/model_input_bundle`` table surface. It resolves the three bundle table
-paths, loads and writes them, constructs AU/curve tables from per-TSA VDYP and
+paths, loads and writes them, constructs AU/curve tables from per-case/per-FMU
+VDYP and
 TIPSY outputs, and provides compatibility helpers for downstream consumers that
 need stable AU-to-curve mapping behavior.
 
@@ -13,7 +14,8 @@ decide which treated and untreated curve IDs to use, this is the first module
 to read. In practice it owns:
 
 - canonical bundle table paths and readiness checks
-- assembly of AU, curve, and curve-points tables from per-TSA curve surfaces
+- assembly of AU, curve, and curve-points tables from per-case/per-FMU curve
+  surfaces
 - species-proportion curve emission for ordered species universes
 - compatibility helpers for AU mapping backfill and curve-id assignment
 
@@ -32,7 +34,7 @@ Typical maintenance path:
 1. Start with :func:`resolve_bundle_paths` and :func:`bundle_tables_ready` for
    basic path-contract questions.
 2. Read :func:`build_bundle_tables_from_curves` when the issue is in bundle
-   assembly from per-TSA VDYP and TIPSY outputs.
+   assembly from per-case/per-FMU VDYP and TIPSY outputs.
 3. Inspect :func:`assign_curve_ids_from_au_table` when downstream consumers are
    attaching curve IDs back onto stand tables.
 
@@ -58,7 +60,7 @@ How This Fits Into The Pipeline
 
 This module sits at the seam between post-TIPSY assembly and model export:
 
-1. upstream code produces per-TSA untreated VDYP curves and optional treated
+1. upstream code produces per-case/per-FMU untreated VDYP curves and optional treated
    TIPSY curves
 2. this module compiles those surfaces into canonical bundle tables
 3. export/runtime layers such as :mod:`femic.fmg.patchworks` and related tools
@@ -79,7 +81,7 @@ The highest-value entrypoints in this module are:
 - :func:`write_bundle_tables`
   Persist bundle tables to the canonical CSV surface.
 - :func:`build_bundle_tables_from_curves`
-  Assemble the three canonical bundle tables from per-TSA VDYP and TIPSY
+  Assemble the three canonical bundle tables from per-case/per-FMU VDYP and TIPSY
   outputs.
 - :func:`assign_curve_ids_from_au_table`
   Attach treated/untreated curve IDs back onto stand-like tables.
@@ -98,8 +100,8 @@ The most important runtime contracts in this module are:
 - the canonical bundle directory defaults to ``data/model_input_bundle``
 - the required tables are ``au_table.csv``, ``curve_table.csv``, and
   ``curve_points_table.csv``
-- AU identifiers are deterministically namespaced by TSA through
-  :func:`tsa_curve_id_prefix`
+- AU identifiers are deterministically namespaced by case/FMU code through the
+  legacy :func:`tsa_curve_id_prefix`
 - managed and unmanaged curve IDs are emitted together so downstream export
   layers can choose the right curve family without recomputing upstream logic
 - optional ordered-species support emits extra species-proportion curves for
@@ -111,7 +113,7 @@ Failure Seams To Watch
 The common failure boundaries in this module are:
 
 - missing AU mappings
-  per-TSA curve combinations can be skipped if ``scsi_au`` lacks a required
+  per-case/per-FMU curve combinations can be skipped if ``scsi_au`` lacks a required
   mapping
 - bundle-table naming drift
   downstream tools assume the canonical three-table contract and can break if

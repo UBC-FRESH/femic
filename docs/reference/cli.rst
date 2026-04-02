@@ -37,7 +37,7 @@ Run
 
 - ``--data-root PATH`` (default: ``data``)
 - ``--output-root PATH`` (default: ``outputs``)
-- ``--tsa TEXT`` (repeatable)
+- ``--tsa TEXT`` (repeatable; legacy FMU/code selector name)
 - ``--resume``
 - ``--dry-run``
 - ``--verbose`` / ``-v``
@@ -65,7 +65,7 @@ Subcommands
 
 - ``--data-root PATH`` (default: ``data``)
 - ``--output-root PATH`` (default: ``outputs``)
-- ``--tsa TEXT`` (repeatable)
+- ``--tsa TEXT`` (repeatable; legacy FMU/code selector name)
 - ``--resume``
 - ``--dry-run``
 - ``--verbose`` / ``-v``
@@ -98,7 +98,7 @@ Subcommands
 
 - ``--data-root PATH`` (default: ``data``)
 - ``--output-root PATH`` (default: ``outputs``)
-- ``--tsa TEXT`` (repeatable)
+- ``--tsa TEXT`` (repeatable; legacy FMU/code selector name)
 - ``--resume``
 - ``--dry-run``
 - ``--verbose`` / ``-v``
@@ -125,6 +125,12 @@ TSA
 
    python -m femic tsa [OPTIONS] COMMAND [ARGS]...
 
+Compatibility note:
+
+- ``tsa`` remains the command-group name for historical/runtime compatibility.
+  In generic FEMIC usage, read it as "FMU/code-targeted legacy pipeline
+  commands" unless the case is literally a BC Timber Supply Area.
+
 Subcommands
 
 - ``run``: ``python -m femic tsa run [OPTIONS]``
@@ -135,27 +141,27 @@ Subcommands
 
 - ``--data-root PATH`` (default: ``data``)
 - ``--output-root PATH`` (default: ``outputs``)
-- ``--tsa TEXT`` (repeatable)
+- ``--tsa TEXT`` (repeatable; selected FMU/code values)
 - ``--resume``
 - ``--dry-run``
 - ``--verbose`` / ``-v``
 
 ``tsa post-tipsy`` options
 
-- ``--tsa TEXT`` (repeatable, required)
+- ``--tsa TEXT`` (repeatable, required; selected FMU/code values)
 - ``--verbose`` / ``-v``
 - ``--run-id TEXT``
 - ``--log-dir PATH`` (default: ``vdyp_io/logs``)
-- ``--run-config PATH`` (optional; load TSA and managed-curve mode defaults)
+- ``--run-config PATH`` (optional; load FMU/code selection and managed-curve mode defaults)
 - ``--instance-root PATH``
 
 ``tsa btc-post-tipsy`` options
 
-- ``--tsa TEXT`` (repeatable, required)
+- ``--tsa TEXT`` (repeatable, required; selected FMU/code values)
 - ``--verbose`` / ``-v``
 - ``--run-id TEXT``
 - ``--log-dir PATH`` (default: ``vdyp_io/logs``)
-- ``--run-config PATH`` (optional; load TSA and managed-curve mode defaults)
+- ``--run-config PATH`` (optional; load FMU/code selection and managed-curve mode defaults)
 - ``--btc-exe PATH`` (optional explicit ``TIPSYbtc.exe`` override)
 - ``--scratch-dir PATH`` (optional scratch root for copied BTC installs and staged run files)
 - ``--report-preset TEXT`` (default: ``tsr-unattended-default``)
@@ -182,7 +188,7 @@ Subcommands
 ``tipsy validate`` options
 
 - ``--config-dir PATH`` (default: ``config/tipsy``)
-- ``--tsa TEXT`` (repeatable)
+- ``--tsa TEXT`` (repeatable; selected FMU/code values)
 - ``--instance-root PATH``
 
 ``tipsy write-btc-report-template`` options
@@ -298,7 +304,7 @@ Subcommands
 
 ``export patchworks`` options
 
-- ``--tsa TEXT`` (repeatable, required)
+- ``--tsa TEXT`` (repeatable, required; selected FMU/code values)
 - ``--bundle-dir PATH`` (default: ``data/model_input_bundle``)
 - ``--checkpoint PATH`` (default: ``data/ria_vri_vclr1p_checkpoint7.feather``)
 - ``--output-dir PATH`` (default: ``output/patchworks``)
@@ -316,7 +322,7 @@ Subcommands
 
 ``export woodstock`` options
 
-- ``--tsa TEXT`` (repeatable, required)
+- ``--tsa TEXT`` (repeatable, required; selected FMU/code values)
 - ``--bundle-dir PATH`` (default: ``data/model_input_bundle``)
 - ``--checkpoint PATH`` (default: ``data/ria_vri_vclr1p_checkpoint7.feather``)
 - ``--output-dir PATH`` (default: ``output/woodstock``)
@@ -327,7 +333,7 @@ Subcommands
 
 ``export dual`` options
 
-- ``--tsa TEXT`` (repeatable, required)
+- ``--tsa TEXT`` (repeatable, required; selected FMU/code values)
 - ``--bundle-dir PATH`` (default: ``data/model_input_bundle``)
 - ``--checkpoint PATH`` (default: ``data/ria_vri_vclr1p_checkpoint7.feather``)
 - ``--patchworks-output-dir PATH`` (default: ``output/patchworks``)

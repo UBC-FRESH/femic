@@ -172,7 +172,9 @@ vdyp_app = typer.Typer(
     add_completion=False, no_args_is_help=True, help="Run VDYP workflows."
 )
 tsa_app = typer.Typer(
-    add_completion=False, no_args_is_help=True, help="Process individual TSAs."
+    add_completion=False,
+    no_args_is_help=True,
+    help="Process individual FMU/code targets through the legacy tsa command seam.",
 )
 tipsy_app = typer.Typer(
     add_completion=False,
@@ -433,7 +435,7 @@ OUTPUT_ROOT_OPTION = typer.Option(
 TSA_OPTION = typer.Option(
     None,
     "--tsa",
-    help="Limit processing to TSA code(s). Can be provided multiple times.",
+    help="Limit processing to FMU/code target(s). Uses the legacy --tsa flag name.",
     show_default=False,
 )
 RESUME_OPTION = typer.Option(
@@ -487,7 +489,7 @@ LOG_DIR_OPTION = typer.Option(
 RUN_CONFIG_OPTION = typer.Option(
     None,
     "--run-config",
-    help="YAML/JSON run profile used to seed TSA/strata and mode defaults.",
+    help="YAML/JSON run profile used to seed FMU/code selection, strata, and mode defaults.",
     show_default=False,
 )
 INSTANCE_ROOT_OPTION = typer.Option(
@@ -507,7 +509,7 @@ CASE_RUN_CONFIG_OPTION = typer.Option(
 CASE_TIPSY_CONFIG_DIR_OPTION = typer.Option(
     Path("config/tipsy"),
     "--tipsy-config-dir",
-    help="Directory containing case TIPSY config files (tsaXX.yaml / tsak3z.yaml).",
+    help="Directory containing case TIPSY config files (legacy tsaXX.yaml / tsak3z.yaml names).",
 )
 CASE_STRICT_WARNINGS_OPTION = typer.Option(
     False,
@@ -615,7 +617,7 @@ EXPORT_WOODSTOCK_OUTPUT_DIR_OPTION = typer.Option(
 EXPORT_RELEASE_CASE_ID_OPTION = typer.Option(
     None,
     "--case-id",
-    help="Case identifier used in release bundle naming (for example: k3z, tsa29).",
+    help="Case identifier used in release bundle naming (for example: k3z, fmu-tsa-29).",
     show_default=False,
 )
 EXPORT_RELEASE_OUTPUT_ROOT_OPTION = typer.Option(
@@ -722,7 +724,7 @@ INSTANCE_REBUILD_SPEC_OPTION = typer.Option(
 INSTANCE_REBUILD_TIPSY_CONFIG_DIR_OPTION = typer.Option(
     Path("config/tipsy"),
     "--tipsy-config-dir",
-    help="Directory containing tsa*.yaml TIPSY configs for case preflight.",
+    help="Directory containing case TIPSY configs (legacy tsa*.yaml filenames).",
 )
 INSTANCE_REBUILD_LOG_DIR_OPTION = typer.Option(
     Path("vdyp_io/logs"),
@@ -2640,7 +2642,7 @@ def tsa_run(
     verbose: bool = VERBOSE_OPTION,
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
-    """Placeholder TSA command retained for CLI compatibility."""
+    """Placeholder FMU/code command retained behind the legacy tsa CLI seam."""
     _ = (data_root, output_root, tsa, resume, dry_run, verbose, instance_root)
     _emit_stub("femic tsa run")
 
@@ -2654,7 +2656,7 @@ def tsa_post_tipsy(
     run_config: Path | None = RUN_CONFIG_OPTION,
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
-    """Build post-TIPSY bundle tables for selected TSA/case targets."""
+    """Build post-TIPSY bundle tables for selected FMU/code targets."""
     instance_context = _resolve_cli_instance_context(instance_root=instance_root)
     resolved_log_dir = instance_context.resolve_path(Path(log_dir))
     resolved_run_config = (
@@ -2677,7 +2679,7 @@ def tsa_post_tipsy(
     targets = [str(v).zfill(2) for v in targets_raw] if targets_raw else []
     if not targets:
         console.print(
-            "[red]Provide at least one TSA via --tsa or selection.tsa in --run-config "
+            "[red]Provide at least one FMU/code via --tsa or selection.tsa in --run-config "
             "for post-tipsy.[/red]"
         )
         raise typer.Exit(code=1)
@@ -2773,7 +2775,7 @@ def tsa_btc_post_tipsy(
     ),
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
-    """Run unattended BTC for selected TSAs, then resume post-TIPSY bundle assembly."""
+    """Run unattended BTC for selected FMU/code targets, then resume post-TIPSY bundle assembly."""
     instance_context = _resolve_cli_instance_context(instance_root=instance_root)
     resolved_log_dir = instance_context.resolve_path(Path(log_dir))
     resolved_run_config = (
@@ -2796,7 +2798,7 @@ def tsa_btc_post_tipsy(
     targets = [str(v).zfill(2) for v in targets_raw] if targets_raw else []
     if not targets:
         console.print(
-            "[red]Provide at least one TSA via --tsa or selection.tsa in --run-config "
+            "[red]Provide at least one FMU/code via --tsa or selection.tsa in --run-config "
             "for btc-post-tipsy.[/red]"
         )
         raise typer.Exit(code=1)
@@ -2878,12 +2880,12 @@ def tipsy_validate(
     config_dir: Path = typer.Option(
         Path("config/tipsy"),
         "--config-dir",
-        help="Directory containing tsaXX.yaml files.",
+        help="Directory containing case TIPSY configs (legacy tsaXX.yaml filenames).",
     ),
     tsa: list[str] | None = TSA_OPTION,
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
-    """Validate per-TSA TIPSY YAML config availability and parseability."""
+    """Validate per-case/per-FMU TIPSY YAML config availability and parseability."""
     instance_context = _resolve_cli_instance_context(instance_root=instance_root)
     resolved_config_dir = instance_context.resolve_path(config_dir)
     found = discover_tipsy_config_tsas(resolved_config_dir)
@@ -2893,12 +2895,12 @@ def tipsy_validate(
     targets = sorted({str(v).zfill(2) for v in tsa}) if tsa else sorted(found.keys())
     missing = [code for code in targets if code not in found]
     if missing:
-        console.print(f"[red]Missing TSA config files:[/red] {', '.join(missing)}")
+        console.print(f"[red]Missing case/FMU TIPSY config files:[/red] {', '.join(missing)}")
         raise typer.Exit(code=1)
     for code in targets:
         load_tipsy_tsa_config(tsa_code=code, config_dir=resolved_config_dir)
     console.print(
-        f"[green]Validated TIPSY configs:[/green] {', '.join(targets)} "
+        f"[green]Validated case/FMU TIPSY configs:[/green] {', '.join(targets)} "
         f"(dir={resolved_config_dir})"
     )
 
@@ -3527,7 +3529,7 @@ def export_patchworks(
     silviculture_config: Path | None = EXPORT_SILVICULTURE_CONFIG_OPTION,
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
-    """Export a Patchworks model package for the selected TSA/case targets."""
+    """Export a Patchworks model package for the selected FMU/code targets."""
     instance_context = _resolve_cli_instance_context(instance_root=instance_root)
     resolved_bundle_dir = instance_context.resolve_path(bundle_dir)
     resolved_checkpoint = instance_context.resolve_path(checkpoint)
@@ -3549,7 +3551,7 @@ def export_patchworks(
     )
     if not targets:
         console.print(
-            "[red]Provide at least one TSA via --tsa for patchworks export.[/red]"
+            "[red]Provide at least one FMU/code via --tsa for patchworks export.[/red]"
         )
         raise typer.Exit(code=1)
     try:
@@ -3594,7 +3596,7 @@ def export_woodstock(
     fragments_crs: str = EXPORT_FRAGMENTS_CRS_OPTION,
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
-    """Export Woodstock CSV artifacts for the selected TSA/case targets."""
+    """Export Woodstock CSV artifacts for the selected FMU/code targets."""
     instance_context = _resolve_cli_instance_context(instance_root=instance_root)
     resolved_bundle_dir = instance_context.resolve_path(bundle_dir)
     resolved_checkpoint = instance_context.resolve_path(checkpoint)
@@ -3606,7 +3608,7 @@ def export_woodstock(
     )
     if not targets:
         console.print(
-            "[red]Provide at least one TSA via --tsa for woodstock export.[/red]"
+            "[red]Provide at least one FMU/code via --tsa for woodstock export.[/red]"
         )
         raise typer.Exit(code=1)
     try:
@@ -3751,7 +3753,7 @@ def export_dual(
         else []
     )
     if not targets:
-        console.print("[red]Provide at least one TSA via --tsa for dual export.[/red]")
+        console.print("[red]Provide at least one FMU/code via --tsa for dual export.[/red]")
         raise typer.Exit(code=1)
 
     try:

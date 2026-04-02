@@ -1,9 +1,10 @@
 selection:
-  # TSA mode (set one or more TSA codes):
+  # FMU/code mode (legacy field name: selection.tsa):
   tsa:
     - "08"
 
-  # Custom-boundary mode (uncomment and set these fields to override TSA mode):
+  # Custom-boundary mode (uncomment and set these fields to override
+  # selection.tsa FMU/code mode):
   # boundary_path: "data/bc/cfa/example/ExampleBoundary.shp"
   # boundary_layer: null
   # boundary_code: "example"

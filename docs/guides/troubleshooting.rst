@@ -17,7 +17,7 @@ Recovery:
 
 1. Keep wizard column mapping constant across runs.
 2. Regenerate DAT from FEMIC with unchanged schema.
-3. Apply species-code overrides in TSA YAML config where needed.
+3. Apply species-code overrides in case/FMU TIPSY YAML config where needed.
 
 Sparse/unstable VDYP fits
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -37,7 +37,7 @@ Recovery:
 VDYP fit-policy config surface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- FEMIC-level default per-TSA smoothing exceptions live in
+- FEMIC-level default per-case/per-FMU smoothing exceptions live in
   ``config/vdyp_fit_policy.yaml``.
 - Case-specific overrides can live beside the instance in
   ``<instance_root>/config/vdyp_fit_policy.yaml``.

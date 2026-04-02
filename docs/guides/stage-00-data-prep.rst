@@ -4,14 +4,15 @@ Stage 00: Data Prep and Inventory Conditioning
 Scope
 -----
 
-Stage 00 prepares stand-level inputs used by all downstream TSA-specific runs.
+Stage 00 prepares stand-level inputs used by all downstream FMU/code-targeted
+runs.
 It covers boundary masking, VRI cleanup, site productivity enrichment,
 species-volume compilation, and intermediate checkpoints.
 
 Inputs
 ------
 
-- TSA or custom boundary geometry
+- management-unit geometry (legacy TSA seam or custom boundary)
 - VRI polygon/layer datasets
 - Optional site productivity raster data (species-wise)
 - Existing checkpoint feathers when resume paths are enabled

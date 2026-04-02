@@ -26,7 +26,7 @@ VDYP Fitting and SI Splits
   unstable regressions.
 - Tail handling and outlier controls are needed when right-tail flattening or
   early-age anomalies appear in binned medians.
-- Default per-TSA smoothing exceptions now live in
+- Default per-case/per-FMU smoothing exceptions now live in
   ``config/vdyp_fit_policy.yaml``.
 - Instance-specific overlays can add or adjust those rules with
   ``config/vdyp_fit_policy.yaml`` inside the active ``--instance-root``
@@ -45,7 +45,8 @@ TIPSY Input Boundary
   mirror generated from the same table payload.
 - Legacy ``02_input-*.dat`` remains a compatibility artifact only.
 - Species code mapping and SI fallback behavior should be explicit in
-  ``config/tipsy/tsa*.yaml``.
+  ``config/tipsy/tsa*.yaml`` (legacy filename pattern retained for
+  compatibility).
 
 Operator QA Checklist
 ---------------------

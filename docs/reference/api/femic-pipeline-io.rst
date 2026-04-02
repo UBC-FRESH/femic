@@ -12,7 +12,7 @@ run profile, SiteProd artifact, THLB raster, or external data root, this is
 the first module to read. In practice it owns:
 
 - loading and validating YAML/JSON run profiles
-- normalizing TSA lists and other CLI/profile option surfaces
+- normalizing FMU/code lists and other CLI/profile option surfaces
 - building the dataclass payloads that carry resolved path contracts
 - resolving canonical external-data, SiteProd, and THLB artifact locations
 - constructing the environment and command payload for legacy-script execution
@@ -113,7 +113,7 @@ The highest-value entrypoints in this module are:
 - :func:`resolve_effective_run_options`
   Merge explicit CLI values with profile defaults.
 - :func:`resolve_legacy_external_data_paths`
-  Pick the effective external data root and the main VRI/VDYP/TSA/SiteProd
+  Pick the effective external data root and the main VRI/VDYP/management-unit/SiteProd
   source paths.
 - :func:`resolve_legacy_siteprod_artifacts`
   Prefer instance-local or canonical pre-stacked SiteProd assets when both TIFF
@@ -143,7 +143,8 @@ The most important path/artifact resolution behavior in this module is:
 
 - run profiles are loaded from YAML or JSON and must have mapping-shaped root,
   ``selection``, ``modes``, and ``run`` sections when present
-- TSA lists are normalized to zero-padded string codes
+- the legacy ``tsa`` selection list is normalized to canonical string case
+  codes even when it is being used generically for FMU selection
 - instance-root-aware paths are built under the active runtime root instead of
   assuming one hard-coded workspace layout
 - external data is resolved from the first viable candidate among:
@@ -165,7 +166,7 @@ Environment And Legacy Handoff
 When FEMIC launches the legacy stage script, this module is responsible for the
 main env contract, including:
 
-- ``FEMIC_TSA_LIST``
+- ``FEMIC_TSA_LIST`` (legacy env name for selected FMU/code targets)
 - ``FEMIC_RESUME`` and ``FEMIC_NO_CACHE``
 - ``FEMIC_RUN_ID`` and ``FEMIC_RUN_UUID``
 - ``FEMIC_LOG_DIR`` and ``FEMIC_OUTPUT_ROOT``

@@ -1,8 +1,8 @@
 Case Onboarding Template
 ========================
 
-This guide defines the minimum assets needed to onboard a new management unit
-(TSA or custom boundary case) into FEMIC.
+This guide defines the minimum assets needed to onboard a new forest
+management unit (FMU) or custom-boundary case into FEMIC.
 
 Template Files
 --------------
@@ -41,7 +41,7 @@ Onboarding Workflow
 
 3. Set case identity:
 
-   - For TSA mode: set ``selection.tsa``.
+   - For FMU/code mode: set ``selection.tsa``.
    - For custom boundary mode: set ``selection.boundary_path``,
      ``selection.boundary_layer``, and ``selection.boundary_code``.
 
@@ -51,8 +51,9 @@ Onboarding Workflow
 
       cp config/tipsy/template.case.yaml config/tipsy/tsa<code>.yaml
 
-   For named custom units, use the boundary code in filename form accepted by
-   your run wiring (for example ``tsak3z.yaml``).
+   The current compatibility filename contract still uses the legacy
+   ``tsa<code>.yaml`` / ``tsak3z.yaml`` pattern even when the case is a
+   non-TSA FMU.
 
 5. Validate and customize rebuild control files:
 

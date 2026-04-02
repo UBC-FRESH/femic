@@ -65,7 +65,9 @@ Patchworks-safe AU token derived from ``stratum_code`` + ``si_level`` (for
 example ``CWHvm_HW_FDC_H``). Operator characters such as ``+`` and ``-`` are
 sanitized because Patchworks parses account labels as expressions rather than
 free-text strings. When the same readable AU token would otherwise collide
-across TSAs, FEMIC prefixes the TSA code to keep the label unique.
+across FMU/code targets, FEMIC prefixes the case code to keep the label
+unique. The underlying compatibility field/normalizer still uses legacy
+``tsa`` naming in parts of the runtime.
 
 CC treatment minimum age is now resolved per AU as:
 
@@ -170,7 +172,7 @@ The exporter validates these required fields before writing:
 - ``IFM``: management mode, one of ``managed`` or ``unmanaged``
 - ``ORIGIN``: stand origin state, one of ``natural`` or ``planted``
 - ``RETENTION``: retention factor in ``[0.0, 1.0]``
-- ``TSA``: TSA code label
+- ``TSA``: legacy case/FMU code label field retained for compatibility
 - ``geometry``: non-null, non-empty geometry
 
 Managed/unmanaged assignment:
@@ -202,7 +204,8 @@ Basic usage:
 Useful overrides:
 
 - ``--bundle-dir``: alternate bundle source (``au_table.csv``, ``curve_table.csv``, ``curve_points_table.csv``)
-- ``--checkpoint``: alternate stand checkpoint feather (must include geometry, TSA, AU, age)
+- ``--checkpoint``: alternate stand checkpoint feather (must include geometry,
+  legacy ``TSA`` case code field, AU, and age)
 - ``--output-dir``: export destination
 - ``--start-year``, ``--horizon-years``, ``--cc-min-age``, ``--cc-max-age``,
   ``--cc-transition-ifm``, ``--fragments-crs``, ``--seral-stage-config``

@@ -1,8 +1,10 @@
 # Case onboarding template for FEMIC TIPSY rule configuration.
-# Copy this file to config/tipsy/tsa<code>.yaml (or tsak3z.yaml style for named units).
+# Copy this file to config/tipsy/tsa<code>.yaml (or tsak3z.yaml style for named
+# units). The filename still uses the legacy tsa* pattern for compatibility
+# even when the case is a non-TSA FMU.
 
 schema_version: 1
-tsa_code: "08"
+tsa_code: "08"  # legacy key name; use as the case/FMU code where applicable
 
 metadata:
   source_tsr:

@@ -81,8 +81,8 @@ Stage Boundaries
 
 - **Stage 00 (data prep):** ingest/filter inventory, derive strata inputs,
   compile stand attributes and checkpoints.
-- **Stage 01a (per TSA):** build strata/AUs, run VDYP, smooth curves,
-  generate canonical BTC ``MSYT.csv`` input tables.
+- **Stage 01a (per FMU/code target):** build strata/AUs, run VDYP, smooth
+  curves, generate canonical BTC ``MSYT.csv`` input tables.
 - **Stage 01b (post-TIPSY):** parse returned BTC/TIPSY outputs, compare
   against VDYP, publish bundle tables and diagnostics.
 

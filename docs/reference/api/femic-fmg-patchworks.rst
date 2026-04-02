@@ -58,6 +58,9 @@ rather than rerunning upstream stages from inside the exporter:
 
 At the Python level, maintainers usually enter through the top-level export
 helpers after bundle tables already exist under ``data/model_input_bundle/``.
+The CLI flag remains ``--tsa`` for compatibility, but in generic FEMIC usage
+that selector should be read as an FMU/code target rather than only a BC
+Timber Supply Area.
 
 How This Fits Into The Pipeline
 -------------------------------

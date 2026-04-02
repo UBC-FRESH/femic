@@ -2,7 +2,7 @@ Run Config Profile
 ==================
 
 ``femic run`` accepts ``--run-config`` pointing to a YAML or JSON profile.
-Profile values seed CLI defaults for TSA selection and mode flags.
+Profile values seed CLI defaults for FMU/code selection and mode flags.
 
 Schema
 ------
@@ -10,11 +10,11 @@ Schema
 .. code-block:: yaml
 
    selection:
-     tsa: ["08", "16"]      # optional list[str]
+     tsa: ["08", "16"]      # optional list[str]; legacy field name for FMU/code selection
      strata: ["SBSdk"]      # optional list[str], currently informational only
      boundary_path: "data/bc/cfa/k3z/CFA K3Z Tenure.shp"  # optional custom boundary path
      boundary_layer: null   # optional layer name/index for multi-layer GIS sources
-     boundary_code: "k3z"   # optional label used as FEMIC TSA code for boundary mode
+     boundary_code: "k3z"   # optional label used as FEMIC FMU/code identifier for boundary mode
      stratification:         # optional controls for stratum construction/selection
        bec_grouping: "subzone"                  # zone | subzone | variant | phase
        species_combo_count: 2                   # top-N species in stratum key
@@ -58,9 +58,17 @@ Precedence
   unmanaged curves (instead of using raw TIPSY yields) using:
   ``x' = x * managed_curve_x_scale`` and ``y' = y * managed_curve_y_scale``, with
   optional post-culmination flattening via ``managed_curve_truncate_at_culm``.
-- When ``selection.stratification.top_area_coverage`` is set, 01a selects the minimum
-  number of descending-area strata needed to hit the requested cumulative area target,
-  instead of using a fixed per-TSA top-N cutoff.
+- When ``selection.stratification.top_area_coverage`` is set, 01a selects the
+  minimum number of descending-area strata needed to hit the requested
+  cumulative area target, instead of using a fixed per-code top-N cutoff.
+
+Compatibility note
+------------------
+
+The run-profile schema still uses the legacy ``selection.tsa`` field name
+because that key is part of the current CLI/runtime compatibility contract.
+Treat it as "selected FMU/code(s)" in generic FEMIC usage unless the case is
+literally a BC Timber Supply Area.
 
 Example
 -------
