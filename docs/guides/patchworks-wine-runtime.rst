@@ -1,8 +1,13 @@
 Patchworks Under Wine
 =====================
 
-This guide documents the supported command path to run Patchworks Matrix Builder
-from Linux through Wine.
+This guide documents the supported Linux-through-Wine command path for
+Patchworks Matrix Builder.
+
+The current known-good day-to-day operator workflow is still native Windows on
+a workstation that already has a valid local Patchworks installation and
+system-level licensing configured. Use the Wine path only when you
+intentionally need the Linux/Wine runtime seam.
 
 Prerequisites
 -------------
@@ -27,7 +32,7 @@ Use ``config/patchworks.runtime.yaml``:
      jar_path: reference/Patchworks/patchworks.jar
      wine_prefix: null
      license_env: SPS_LICENSE_SERVER
-     license_value: sps_user@auth.spatial.ca
+     license_value: <sps_user>@auth.spatial.ca
      spshome: Z:\\Program Files\\Spatial Planning Systems\\Patchworks
      use_xvfb: false
 
@@ -87,6 +92,10 @@ Notes
 
 - Patchworks binaries are proprietary and should remain outside published docs
   artifacts and repository source control.
+- ``<sps_user>`` is a template token, not a literal production value. On known
+  good Windows workstations, prefer the existing system-level
+  ``SPS_LICENSE_SERVER`` configuration instead of overriding it in FEMIC
+  runtime config.
 - FEMIC preflight validates environment/config only; Patchworks performs license
   server checks during launch.
 - When running in headless Linux, set ``patchworks.use_xvfb: true`` to wrap

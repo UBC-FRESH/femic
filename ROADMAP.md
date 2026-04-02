@@ -7765,13 +7765,49 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `pytest`
     - `pre-commit run --all-files`
   - Immediate next execution order:
-    - run TSA29 on the current synced workspace to confirm the instance now
-      reaches the expected BTC boundary and emits `data/03_input-tsa29.csv`;
-    - run `femic tsa btc-post-tipsy` on the same run ID and confirm the new
-      CSV seam is accepted end to end;
-    - once that local contract smoke is green, repeat the full acceptance pass
-      from a fresh/current FEMIC checkout for the real `P19.5` / issue `#10`
-      evidence closeout.
+    - checkpoint only the permanent contract/runtime/doc fixes, keeping large
+      TSA29 runtime spill out of the intentional Git payload;
+    - prove fresh-seam provenance explicitly for one final closeout run:
+      `03_input-tsa29.csv` -> fresh BTC `04_output-tsa29.csv` /
+      `04_error-tsa29.csv` -> fresh post-TIPSY curves/bundle/plots;
+    - treat blank/null BTC output as a blocker, and treat any remaining
+      fresh-provenance no-volume plot pattern as a follow-on TSA29 v0 issue
+      rather than widening `#10` into a full behavior investigation;
+    - run the final acceptance/evidence pass from a fresh/current FEMIC
+      checkout using the approved Windows Patchworks contract:
+      inherited `SPS_LICENSE_SERVER`, output-local validated XML/fragments,
+      `patchworks-raster` topology backend, and successful Matrix Builder
+      completion with `returncode=0`.
+
+- 2026-04-02 (Issue #10 Patchworks + provenance checkpoint):
+  - Current synced-workspace evidence now proves:
+    - TSA29 Patchworks Matrix Builder succeeds when FEMIC inherits the real
+      Windows `SPS_LICENSE_SERVER` value instead of overriding it with the old
+      placeholder runtime config value;
+    - TSA29 Matrix Builder must point at
+      `output/patchworks_tsa29_validated/forestmodel.xml` beside the matching
+      validated fragments, not at stale model-local
+      `models/tsa29_patchworks_model/yield/forestmodel.xml`;
+    - the reviewed `plots/tipsy_vdyp_tsa29-*.png` family in this forensic
+      workspace was regenerated immediately after the fresh
+      `tsa29_btc_boundary_smoke_20260402b` BTC-first run chain, not from the
+      old historical DAT/out seam.
+  - Verified current-workspace provenance chain:
+    - `data/03_input-tsa29.csv` mtime `2026-04-02 01:34:59`
+    - `data/04_output-tsa29.csv` / `data/04_error-tsa29.csv` mtimes
+      `2026-04-02 01:37:17`
+    - `data/tipsy_curves_tsa29.csv` mtime `2026-04-02 01:37:27`
+    - `plots/tipsy_vdyp_tsa29-*.png` mtimes `2026-04-02 01:37:27` through
+      `2026-04-02 01:37:34`
+    - BTC manifest `tsa29_btc_boundary_smoke_20260402b_tsa29` records
+      `TIPSYbtc.exe /TSR` consuming fresh `03_input-tsa29.csv` and returning
+      fresh `04_output-tsa29.csv` / `04_error-tsa29.csv`
+    - post-TIPSY manifest `tsa29_btc_boundary_smoke_20260402b` records fresh
+      `tipsy_curves_tsa29.csv`, `tipsy_sppcomp_tsa29.csv`, and rebuilt bundle
+      tables from the same run lineage.
+  - Remaining closeout move:
+    - repeat this same proof from a fresh/current checkout and use that run as
+      the final issue-`#10` closeout evidence.
 
 - 2026-04-02 (Issue #10 BTC-first TSA29 re-entry plan):
   - Governing issue:

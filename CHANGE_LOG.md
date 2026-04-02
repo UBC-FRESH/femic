@@ -10056,11 +10056,39 @@
       with `femic export patchworks --tsa 29 --bundle-dir data/model_input_bundle --checkpoint data/ria_vri_vclr1p_checkpoint7.feather --output-dir output/patchworks_tsa29_validated`.
     - `femic patchworks preflight --instance-root external/femic-tsa29-instance --config config/patchworks.runtime.windows.yaml`
       then passed.
-  - Runtime closeout is still blocked at Patchworks:
-    - the default Python topology backend is not practical for
-      `femic patchworks build-blocks --with-topology` on the full TSA29
-      validated surface, so the TSA29 spec/runbook now direct Windows rebuilds
-      to use `--topology-backend patchworks-raster`;
-    - `femic patchworks matrix-build` starts but the Patchworks stderr log
-      reports `No license available`, so the final evidence pass must resume
-      once a Matrix Builder license seat is obtainable.
+  - Follow-up Patchworks/runtime correction:
+    - traced the apparent Patchworks licensing failure to TSA29 runtime config
+      drift: FEMIC was overriding the valid system `SPS_LICENSE_SERVER` value
+      with the old placeholder `sps_user@auth.spatial.ca`;
+    - changed the runtime contract to inherit the real system license env by
+      default (`license_value: null`) and updated repo docs/templates so
+      placeholder examples now render as `<sps_user>@auth.spatial.ca` rather
+      than a literal-looking production value.
+  - Follow-up Patchworks/XML correction:
+    - traced the next Matrix Builder failure to TSA29 still pointing at stale
+      model-local `models/tsa29_patchworks_model/yield/forestmodel.xml`;
+    - aligned TSA29 with the issue-`#40` K3Z contract so Matrix Builder now
+      uses `output/patchworks_tsa29_validated/forestmodel.xml` beside the
+      matching validated fragments set;
+    - removed the stale duplicate TSA29 XML copies so they cannot keep
+      reappearing as fake-bug inputs.
+  - Live Patchworks success:
+    - `femic patchworks preflight --instance-root external/femic-tsa29-instance --config config/patchworks.runtime.windows.yaml`
+      now passes with inherited `SPS_LICENSE_SERVER=frst424@auth.spatial.ca`;
+    - `femic patchworks matrix-build --instance-root external/femic-tsa29-instance --config config/patchworks.runtime.windows.yaml --run-id tsa29_patchworks_retry_20260402c`
+      completed successfully with `returncode=0`, no recorded failures, and the
+      validated output-local XML path in the emitted manifest.
+  - Provenance checkpoint:
+    - current-workspace file mtimes and manifests show the reviewed
+      `plots/tipsy_vdyp_tsa29-*.png` family was regenerated from the fresh
+      `tsa29_btc_boundary_smoke_20260402b` BTC-first chain
+      (`03_input-tsa29.csv` -> fresh BTC `04_output-tsa29.csv` /
+      `04_error-tsa29.csv` -> fresh `tipsy_curves_tsa29.csv` and plots),
+      not from stale pre-issue DAT/out residue.
+  - Closeout boundary update:
+    - issue `#10` now explicitly owns proving fresh-seam provenance and
+      determining whether any apparent no-volume TIPSY pattern is a fresh
+      runtime result or stale-artifact confusion;
+    - if the fresh seam is proven and the pattern remains, that behavior moves
+      into the follow-on TSA29 v0 issue instead of blocking this contract/evidence
+      closeout by default.

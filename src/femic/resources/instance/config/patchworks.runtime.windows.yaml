@@ -2,7 +2,7 @@ patchworks:
   jar_path: C:/Program Files/Spatial Planning Systems/Patchworks/patchworks.jar
   wine_prefix: null
   license_env: SPS_LICENSE_SERVER
-  license_value: sps_user@auth.spatial.ca
+  license_value: null
   spshome: C:\Program Files\Spatial Planning Systems\Patchworks
   use_xvfb: false
 

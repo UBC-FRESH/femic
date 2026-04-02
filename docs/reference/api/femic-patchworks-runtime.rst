@@ -189,8 +189,10 @@ The most important runtime contracts in this module are:
 - runtime config must contain valid `patchworks` and `matrix_builder` sections
 - the runtime must have a usable Java surface on Windows or a usable Wine +
   Java surface on non-Windows hosts
-- licensing must resolve through `patchworks.license_value` or the configured
-  env var, usually `SPS_LICENSE_SERVER`
+- on known-good Windows workstations, licensing should usually resolve through
+  the existing system-level `SPS_LICENSE_SERVER` environment value
+- `patchworks.license_value` is a fallback override seam and should not
+  replace a valid system license setting unless that override is intentional
 - `SPSHOME` must point to the Patchworks install root visible to the chosen
   launcher mode
 - Matrix Builder requires a valid fragments dataset, output tracks directory,
