@@ -10519,4 +10519,35 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       recently closed issues to confirm the cleaned tracker state;
     - close `#76` with an explicit comment noting that the helper-wrapper idea
       remains design-only unless the same `gh` failure mode recurs.
+- 2026-04-01 (Issue #76 full-sweep follow-up after premature closure): the
+  first closeout was too early because it relied on a representative sample,
+  not the promised full issue/comment scan.
+  - What was wrong with the first closure:
+    - `#75` still contained obvious maintainer-authored control-character and
+      escape-sequence corruption after `#76` was closed;
+    - that meant the tracker was materially improved but not yet cleaned to the
+      stated full-sweep standard.
+  - Corrective action taken:
+    - reopened `#76`;
+    - pulled the full issue set plus the full repo issue-comment history;
+    - ran a repo-wide hygiene transform over **all** FEMIC issue bodies and
+      **all maintainer-authored issue comments**;
+    - repaired the remaining broken issue bodies on `#17`, `#33`, `#36`,
+      `#59`, `#68`, `#69`, `#71`, and `#74`;
+    - repaired the remaining broken maintainer-authored comments across older
+      and newer issues, including `#7`, `#13`, `#14`, `#17`, `#31`, `#33`,
+      `#35`, `#44`, `#46`, `#48`, `#54`, `#58`, `#59`, `#65`, `#67`, `#68`,
+      `#69`, `#73`, `#74`, and `#75`.
+  - Final acceptance evidence:
+    - a fresh full scan of all issue bodies found no remaining obvious control
+      characters, stray literal escape sequences, or token-leading fake
+      backslashes in FEMIC issue text;
+    - a fresh full scan of all maintainer-authored issue comments found the
+      same clean result;
+    - direct spot-checks on the originally missed `#74` / `#75` cases now read
+      cleanly.
+  - Detailed Next Steps:
+    - update the `#76` closeout note so it explicitly records that the issue
+      was reopened once for a true full sweep;
+    - close `#76` again only after this stricter pass is merged and pushed.
 

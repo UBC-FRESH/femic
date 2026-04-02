@@ -9947,3 +9947,44 @@
   - Kept the proposed helper-wrapper / `fresh-gh` work design-only for now; the
     current recommendation is to rely on the documented `gh issue edit` /
     `gh api graphql` workflow unless the same failure mode recurs.
+- 2026-04-01 (Issue #76 full-sweep follow-up):
+  - Reopened `#76` after a user spot check showed the first closure was
+    premature; `#75` still had obvious maintainer-authored formatting damage,
+    which meant the representative-sample cleanup had not satisfied the actual
+    full-sweep scope.
+  - Pulled the complete FEMIC issue set and full repo issue-comment history,
+    then ran a true repo-wide cleanup over all issue bodies and all
+    maintainer-authored comments.
+  - Repaired the remaining broken issue bodies on:
+    - `#17`
+    - `#33`
+    - `#36`
+    - `#59`
+    - `#68`
+    - `#69`
+    - `#71`
+    - `#74`
+  - Repaired the remaining broken maintainer-authored comments across:
+    - `#7`
+    - `#13`
+    - `#14`
+    - `#17`
+    - `#31`
+    - `#33`
+    - `#35`
+    - `#44`
+    - `#46`
+    - `#48`
+    - `#54`
+    - `#58`
+    - `#59`
+    - `#65`
+    - `#67`
+    - `#68`
+    - `#69`
+    - `#73`
+    - `#74`
+    - `#75`
+  - Verified the corrected result with a fresh full scan of all issue bodies
+    and all maintainer-authored comments; no obvious control-character damage,
+    escaped newline litter, or fake token-leading backslashes remained.
