@@ -927,6 +927,39 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-04-02 (Issue #10 runtime checkpoint): resume TSA29 rebuild execution from
+  the synced current-`origin/main` BTC-first workspace and carry the runtime
+  findings forward in-repo before the final evidence pass.
+  - Tracking issue:
+    - GitHub issue #10 ("TSA29 P19.5 rebuild validation and evidence closeout")
+  - Current proven status:
+    - `femic prep validate-case` and `femic prep geospatial-preflight` pass in
+      the synced workspace after restoring the thin-instance checkpoint ladder
+      (`tsa_boundaries.feather`, `ria_vri_vclr1p_checkpoint1..8.feather`) from
+      the preserved local backup as execution-only forensic inputs;
+    - `femic run --run-id tsa29_btc_boundary_smoke_20260402b` reaches the BTC
+      seam and emits fresh `03_input-tsa29.csv`, `tipsy_params_tsa29.xlsx`,
+      the legacy `02_input-tsa29.dat` mirror, and `vdyp_results-tsa29.pkl`;
+    - `femic tsa btc-post-tipsy --run-id tsa29_btc_boundary_smoke_20260402b`
+      completes on current main and rebuilds `04_output-tsa29.csv`,
+      `04_error-tsa29.csv`, and `data/model_input_bundle/*`;
+    - thin TSA29 checkouts do not carry the externalized validated fragments
+      shapefile set, so `femic export patchworks --tsa 29 ... --output-dir
+      output/patchworks_tsa29_validated` is now part of the practical local
+      recovery path before Patchworks preflight;
+    - `femic patchworks preflight` passes after that fragments regeneration.
+  - Runtime blockers and next actions:
+    - keep the parent fix for infinite VDYP sample targets (`b47ad35`) in the
+      active branch and include it in the eventual issue closeout;
+    - treat `femic patchworks build-blocks --with-topology` with the default
+      Python backend as non-viable for the full TSA29 validated surface and use
+      `--topology-backend patchworks-raster` for Windows rebuilds;
+    - rerun `femic patchworks build-blocks` and `femic patchworks matrix-build`
+      once a Patchworks license seat is available; current matrix-build attempts
+      stop on `No license available`;
+    - once the license-backed Patchworks steps complete, refresh the TSA29
+      evidence package and promote the final issue `#10` closeout summary into
+      the linked submodule docs plus GitHub.
 - 2026-03-28 (Phase 49 kickoff): start issue `#54` on branch
   `feature/patchworks-headless-runner` to turn the documented
   `classic_GUI(control);` seam into a real FEMIC-controlled unattended

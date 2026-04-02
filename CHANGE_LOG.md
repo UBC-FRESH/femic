@@ -10025,3 +10025,42 @@
     - `mypy src`
     - `pytest`
     - `pre-commit run --all-files`
+- 2026-04-02 (Issue #10 TSA29 runtime execution checkpoint):
+  - Restored the thin-instance TSA29 execution prerequisites from the preserved
+    local backup as forensic-only runtime inputs:
+    - `data/tsa_boundaries.feather`
+    - `data/ria_vri_vclr1p_checkpoint1.feather` through
+      `data/ria_vri_vclr1p_checkpoint8.feather`
+  - `femic prep validate-case --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml`
+    and `femic prep geospatial-preflight --instance-root external/femic-tsa29-instance`
+    both passed in the synced current-main workspace.
+  - Found and fixed a real current-main TSA29 blocker in
+    `src/femic/pipeline/vdyp_stage.py`: unresolved `nsamples_from_curves(...)`
+    estimates could return `inf`, which crashed Stage 01a with
+    `OverflowError: cannot convert float infinity to integer`.
+    - Fixed by capping non-finite default sample targets at `max_samples` and
+      committed the change as `b47ad35` (`P19.5 cap unresolved VDYP sample targets`).
+    - Added a focused regression test in `tests/test_vdyp_stage.py`.
+  - Proved the new BTC-first TSA29 seam on current main end-to-end up to and
+    through post-TIPSY resume:
+    - `femic run --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --run-id tsa29_btc_boundary_smoke_20260402b`
+      emitted fresh `data/03_input-tsa29.csv`, `data/tipsy_params_tsa29.xlsx`,
+      `data/02_input-tsa29.dat`, and `data/vdyp_results-tsa29.pkl`;
+    - `femic tsa btc-post-tipsy --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --tsa 29 --run-id tsa29_btc_boundary_smoke_20260402b`
+      completed successfully and wrote fresh `data/04_output-tsa29.csv`,
+      `data/04_error-tsa29.csv`, and rebuilt `data/model_input_bundle/*`
+      (`au_rows=30`, `curve_rows=2100`, `curve_points_rows=12090`).
+  - Patchworks preflight initially failed because the synced thin TSA29 checkout
+    does not ship the externalized validated fragments shapefile set.
+    - Rebuilt `output/patchworks_tsa29_validated/fragments/fragments.*` locally
+      with `femic export patchworks --tsa 29 --bundle-dir data/model_input_bundle --checkpoint data/ria_vri_vclr1p_checkpoint7.feather --output-dir output/patchworks_tsa29_validated`.
+    - `femic patchworks preflight --instance-root external/femic-tsa29-instance --config config/patchworks.runtime.windows.yaml`
+      then passed.
+  - Runtime closeout is still blocked at Patchworks:
+    - the default Python topology backend is not practical for
+      `femic patchworks build-blocks --with-topology` on the full TSA29
+      validated surface, so the TSA29 spec/runbook now direct Windows rebuilds
+      to use `--topology-backend patchworks-raster`;
+    - `femic patchworks matrix-build` starts but the Patchworks stderr log
+      reports `No license available`, so the final evidence pass must resume
+      once a Matrix Builder license seat is obtainable.
