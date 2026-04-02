@@ -107,6 +107,9 @@ resume **only** the downstream path:
    $env:FEMIC_EXTERNAL_DATA_ROOT="$PWD\external\femic-public-data\data"
    python -m femic tsa btc-post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_windows_cleanstart
 
+The command group and flag still use the legacy ``tsa`` naming seam for
+compatibility. Read them generically as the selected FMU/code target.
+
 Then continue into Patchworks export/build as needed, for example:
 
 .. code-block:: powershell

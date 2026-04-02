@@ -9899,3 +9899,24 @@
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
     - `pytest tests/test_docs_contract.py -q`
+- 2026-04-01 (Issue #75 closeout pass):
+  - Added an explicit FMU naming-policy note in
+    `docs/reference/contracts/instance-and-data-roots.rst` documenting both:
+    - the preferred future generic naming pattern:
+      `fmu-<flavour>-<identifier>`
+    - the intentionally retained legacy compatibility seams that still use
+      `tsa` naming (`femic tsa`, `--tsa`, `selection.tsa`, `tsa*.yaml`,
+      `FEMIC_TSA_LIST`, `vdyp_prep-tsa*.pkl`,
+      `vdyp_curves_smooth-tsa*.feather`)
+  - Finished the remaining high-signal generic-prose cleanup in:
+    - `docs/guides/cross-platform-runtime-smoke.rst`
+    - `docs/guides/stage-00-data-prep.rst`
+    - `docs/guides/stage-01b-post-tipsy.rst`
+    - `docs/reference/contracts/instance-and-data-roots.rst`
+  - Final terminology audit now leaves only intentional `tsa`/`TSA` hits that
+    are compatibility, historical, generated, or BC-literal surfaces rather
+    than generic wording regressions.
+  - Validation:
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
+    - `pytest tests/test_docs_contract.py -q`

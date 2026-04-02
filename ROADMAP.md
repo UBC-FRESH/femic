@@ -10421,4 +10421,39 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - parent Sphinx build passed with warnings as errors;
     - standalone K3Z Sphinx build passed with warnings as errors;
     - `tests/test_docs_contract.py` passed.
+- 2026-04-01 (Issue #75 closeout pass):
+  - Added an explicit FMU naming-policy note in the contract layer so the repo
+    now states, in one place, both:
+    - FEMIC's preferred future naming pattern for generic units:
+      `fmu-<flavour>-<identifier>`
+    - the current legacy compatibility seams that intentionally still use
+      `tsa` naming:
+      - `femic tsa`
+      - `--tsa`
+      - `selection.tsa`
+      - `tsa*.yaml`
+      - `FEMIC_TSA_LIST`
+      - `vdyp_prep-tsa*.pkl`
+      - `vdyp_curves_smooth-tsa*.feather`
+  - Finished the remaining high-signal generic-prose cleanup in the parent docs
+    so the surviving `TSA`/`tsa` hits are now overwhelmingly explainable as:
+    - compatibility seams,
+    - historical notebook/file/module names,
+    - generated API/module surfaces,
+    - or BC-literal Timber Supply Area wording.
+  - Updated pages in this final pass include:
+    - `docs/reference/contracts/instance-and-data-roots.rst`
+    - `docs/guides/cross-platform-runtime-smoke.rst`
+    - `docs/guides/stage-00-data-prep.rst`
+    - `docs/guides/stage-01b-post-tipsy.rst`
+  - Final acceptance audit:
+    - no obvious generic TSA-first prose remains in the user/dev docs scanned
+      under `docs`, `src/femic/resources/instance`, and
+      `external/femic-k3z-instance/docs`;
+    - the remaining `tsa` hits are intentional compatibility, historical,
+      generated, or BC-literal surfaces rather than missed generic wording.
+  - Validation:
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
+    - `pytest tests/test_docs_contract.py -q`
 

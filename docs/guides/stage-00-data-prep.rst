@@ -12,7 +12,7 @@ species-volume compilation, and intermediate checkpoints.
 Inputs
 ------
 
-- management-unit geometry (legacy TSA seam or custom boundary)
+- management-unit geometry (legacy TSA-boundary seam or custom boundary)
 - VRI polygon/layer datasets
 - Optional site productivity raster data (species-wise)
 - Existing checkpoint feathers when resume paths are enabled

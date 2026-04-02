@@ -81,6 +81,9 @@ Use K3Z as the reference case.
       python -m femic patchworks build-blocks --instance-root external/femic-k3z-instance --config config/patchworks.runtime.windows.yaml
       python -m femic patchworks matrix-build --instance-root external/femic-k3z-instance --config config/patchworks.runtime.windows.yaml --run-id k3z_windows_cleanstart
 
+   The command group and flag still use the legacy ``tsa`` naming seam for
+   compatibility. Read them generically as the selected FMU/code target.
+
 6. Optional but recommended final smoke:
 
 - launch `external/femic-k3z-instance/models/k3z_patchworks_model/analysis/base.pin`
@@ -129,6 +132,9 @@ not native on Linux.
    .. code-block:: bash
 
       femic tsa btc-post-tipsy --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml --tsa k3z --run-id k3z_linux_parity
+
+   The command group and flag still use the legacy ``tsa`` naming seam for
+   compatibility. Read them generically as the selected FMU/code target.
 
 6. Verify downstream artifacts match the expected contract:
 

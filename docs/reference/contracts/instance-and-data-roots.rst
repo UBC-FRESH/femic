@@ -144,6 +144,36 @@ Common Mistakes
 - Assuming ``FEMIC_EXTERNAL_DATA_ROOT`` replaces the instance root; it only
   supplies canonical external data fallback.
 
+FMU Naming Policy
+-----------------
+
+FEMIC now prefers **FMU-first conceptual terminology** when describing generic
+forest management units.
+
+Compatibility note:
+
+- several current runtime/schema/file seams still use legacy ``tsa`` naming
+  and remain valid compatibility contracts:
+  ``femic tsa``, ``--tsa``, ``selection.tsa``, ``tsa*.yaml``,
+  ``FEMIC_TSA_LIST``, ``vdyp_prep-tsa*.pkl``, and
+  ``vdyp_curves_smooth-tsa*.feather``
+- those names remain valid compatibility contracts and are not being renamed in
+  the current terminology sweep
+
+For new generic examples and future built-ins, prefer the naming pattern:
+
+- ``fmu-<flavour>-<identifier>``
+
+Examples:
+
+- ``fmu-tsa-29``
+- ``fmu-cfa-k3z``
+- ``fmu-tfl-26``
+- ``fmu-ubc-mkrf``
+
+This is guidance for future naming surfaces, not a migration of current
+shipped IDs.
+
 See Also
 --------
 
