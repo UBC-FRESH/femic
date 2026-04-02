@@ -9829,3 +9829,34 @@
     `external/femic-k3z-instance/tmp/issue74_patchworks_export/forestmodel.xml`
     and directly confirmed the new `succession` nodes are present ahead of the
     live `track` blocks.
+- 2026-04-01 (Issue #74 broad K3Z rollout):
+  - Regenerated the distinct tracked K3Z validated `forestmodel.xml` surfaces
+    from the bundle tables plus variant silviculture configs, so the checked-in
+    XML family now carries the pass-through succession contract rather than
+    only the serializer fixtures.
+  - Reran Matrix Builder across the active K3Z family:
+    - `base`
+    - `ctfert_l15h5`
+    - `ctfert_l20h0`
+    - `pct_light`
+    - `pct_moderate`
+    - `pct_heavy`
+    - `pct_heavy_zones`
+    - `intensive_light`
+    - `intensive_moderate`
+    - `intensive_heavy`
+    - `intensive_light_standstructure`
+    - `overlay_basecase_riparian`
+    - `overlay_basecase_sum`
+    - `overlay_scenario1_sum`
+    - `overlay_scenario2_sum`
+  - All `issue74_*` matrix-build manifests completed with `returncode=0`.
+  - The rebuilt K3Z `tracks*/messages.csv` surfaces are now header-only across
+    the family; the old `succession` message rows are gone.
+  - The stderr logs no longer contain substantive warning/error text. The only
+    remaining warning-flavored line is Patchworks’ stock footer:
+    `Processing completed.  Review warnings and exit when finished.`
+  - Because the explicit pass-through successions achieved the 0-substantive-
+    warning outcome directly, no extra warning-policy/user-override code was
+    added in this slice. That follow-on should stay deferred unless a new real
+    warning family appears.

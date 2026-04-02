@@ -10311,29 +10311,41 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - apply the resulting contract consistently across all K3Z variant
       surfaces.
   - Detailed Next Steps:
-    - use the installed Patchworks `ForestModel.dtd` and sample
-      `ForestModel_C5_lookup.xml` as the authoritative contract so FEMIC emits
-      `select`-scoped `<succession>` elements rather than guessing from current
-      `messages.csv` byproducts;
+    - use the installed Patchworks `ForestModel.dtd`, the local
+      `reference/ForestModel.xsd`, and sample `ForestModel_C5_lookup.xml` as
+      the authoritative contract so FEMIC emits `select`-scoped
+      `<succession>` elements rather than guessing from current `messages.csv`
+      byproducts;
     - add a first-class FMG succession definition plus XML serialization and
       inject a default pass-through succession (`breakup="1000"`,
       `renew="1000"`, no assignments) onto state-bearing K3Z selects only;
-    - rebuild one representative K3Z XML first and inspect the emitted
-      `<succession>` nodes directly before broadening to all variants and any
-      later warning-policy work;
+    - regenerate the distinct tracked K3Z validated `forestmodel.xml`
+      surfaces, rerun Matrix Builder across the active family, and treat empty
+      `messages.csv` plus warning-free stderr (apart from the stock “Review
+      warnings and exit when finished.” footer) as the acceptance signal before
+      deciding whether any warning-policy code is still needed;
   - Progress so far:
     - the FMG core/serializer now supports explicit `select`-scoped succession
       definitions;
     - representative K3Z XML rebuilt at
       `external/femic-k3z-instance/tmp/issue74_patchworks_export/forestmodel.xml`
-      now shows pass-through
+      showed pass-through
       `<succession breakup="1000" renew="1000" />` nodes immediately before the
       live `<track>` blocks on state-bearing selects;
-    - next step is to decide whether to regenerate the tracked K3Z validated
-      ForestModel XML surfaces now or to widen the feature immediately into the
-      warning-policy/reporting layer first.
-    - rebuild representative K3Z surfaces, then widen to the full family once
-      the contract is validated.
+    - the tracked distinct K3Z validated XML surfaces have now been regenerated
+      from the bundle tables and variant silviculture configs;
+    - Matrix Builder accepted the refreshed XMLs across the active K3Z family
+      (`base`, `ctfert_*`, `pct_*`, `pct_heavy_zones`, `intensive_*`, and all
+      overlays) with `returncode=0` for all `issue74_*` runs;
+    - all rebuilt `tracks*/messages.csv` files are now header-only, meaning the
+      old `succession` message rows have collapsed away across the family;
+    - stderr logs no longer show substantive warning/error text; the only
+      warning-flavored string left is the stock Patchworks footer
+      “Review warnings and exit when finished.”;
+    - because the explicit succession defaults achieved the 0-substantive-
+      warning goal directly, the warning-policy/user-override sub-scope is no
+      longer a blocker and should be treated as future work unless a new real
+      warning family appears.
 
 
 

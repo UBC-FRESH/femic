@@ -4306,7 +4306,7 @@ def _append_retention_definitions(
             _append_attribute_bindings(
                 parent=retention,
                 tag_name="features",
-                    bindings=retention_definition.feature_attributes,
+                bindings=retention_definition.feature_attributes,
             )
 
 

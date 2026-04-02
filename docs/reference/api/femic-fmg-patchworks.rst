@@ -196,6 +196,30 @@ totals as one margin, combines them with AU/species weights, and emits the
 full matrix so students can move between forest-growth accounting and
 products-sector accounting inside the same Patchworks model.
 
+Succession Defaults
+-------------------
+
+Patchworks treats ``succession`` as a ``select``-scoped XML element, not a
+``treatment``-scoped one. FEMIC now models that contract directly and emits a
+default pass-through succession on state-bearing selects:
+
+.. code-block:: xml
+
+   <succession breakup="1000" renew="1000" />
+
+No ``assign`` children are emitted for this default. The intent is simply to
+ensure every compiled state path has an explicit valid succession contract
+without changing the modeled state. This behavior was anchored against the
+installed Patchworks ``ForestModel.dtd`` and corroborated with the newer
+``reference/ForestModel.xsd`` plus the shipped sample
+``ForestModel_C5_lookup.xml``.
+
+For the K3Z family, broad Matrix Builder revalidation after this change
+collapsed the old ``succession`` rows out of every rebuilt ``tracks*/messages.csv``
+surface, and no substantive warning/error text remained in stderr. That means
+the explicit succession defaults achieved the practical 0-warning goal directly
+without needing an extra warning-policy layer in the current slice.
+
 Fragments And State Wiring
 --------------------------
 

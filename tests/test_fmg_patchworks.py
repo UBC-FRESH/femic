@@ -3740,10 +3740,14 @@ def test_build_forestmodel_xml_tree_adds_default_pass_through_successions() -> N
     )
 
     selects = root.findall("select")
-    succession_selects = [select for select in selects if select.find("succession") is not None]
+    succession_selects = [
+        select for select in selects if select.find("succession") is not None
+    ]
 
     assert succession_selects
-    assert len(succession_selects) == len([select for select in selects if select.find("track") is not None])
+    assert len(succession_selects) == len(
+        [select for select in selects if select.find("track") is not None]
+    )
     for select in succession_selects:
         succession = select.find("succession")
         assert succession is not None
