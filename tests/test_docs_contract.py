@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import zipfile
 
 import pandas as pd
 import pytest
@@ -99,6 +100,16 @@ NOTEBOOKS = [
 LEGACY_SLUG = "wbi_ria_yield"
 
 runner = CliRunner()
+
+
+def _read_k3z_validated_forestmodel_text(path: Path) -> str:
+    if path.exists():
+        return path.read_text(encoding="utf-8")
+    zip_path = path.with_name("patchworks_k3z_matrix_inputs.zip")
+    if zip_path.exists():
+        with zipfile.ZipFile(zip_path) as archive:
+            return archive.read("forestmodel.xml").decode("utf-8")
+    raise FileNotFoundError(path)
 
 
 def _non_trivial_markdown_cells(path: Path) -> set[tuple[str, int]]:
@@ -517,6 +528,39 @@ def test_tsa29_instance_standalone_docs_scaffold_exists() -> None:
     assert (TSA29_INSTANCE_ROOT / "metadata/lineage_registry.yaml").is_file()
 
 
+def test_tsa29_instance_docs_advertise_btc_first_rebuild_contract() -> None:
+    readme_text = (TSA29_INSTANCE_ROOT / "README.md").read_text()
+    getting_started_text = (
+        TSA29_INSTANCE_ROOT / "docs/getting-started.rst"
+    ).read_text()
+    rebuild_text = (TSA29_INSTANCE_ROOT / "docs/rebuild-and-qa.rst").read_text()
+    provenance_text = (TSA29_INSTANCE_ROOT / "docs/data-and-provenance.rst").read_text()
+    troubleshooting_text = (
+        TSA29_INSTANCE_ROOT / "docs/troubleshooting.rst"
+    ).read_text()
+    runbook_text = (TSA29_INSTANCE_ROOT / "runbooks/REBUILD_RUNBOOK.md").read_text()
+    rebuild_spec_text = (TSA29_INSTANCE_ROOT / "config/rebuild.spec.yaml").read_text()
+
+    for text in (
+        readme_text,
+        getting_started_text,
+        rebuild_text,
+        provenance_text,
+        troubleshooting_text,
+        runbook_text,
+        rebuild_spec_text,
+    ):
+        assert "03_input-tsa29.csv" in text
+        assert "04_output-tsa29.csv" in text
+        assert "04_error-tsa29.csv" in text
+        assert "femic tsa btc-post-tipsy" in text
+
+    assert "02_input-tsa29" in readme_text
+    assert "04_output-tsa29.out" in readme_text
+    assert "legacy" in readme_text.lower()
+    assert "btc_post_tipsy_bundle" in rebuild_spec_text
+
+
 def test_k3z_instance_standalone_docs_scaffold_exists() -> None:
     docs_root = K3Z_INSTANCE_ROOT / "docs"
     assert docs_root.is_dir()
@@ -895,7 +939,6 @@ def test_k3z_pct_checked_in_surface_keeps_representative_managed_accounts() -> N
 
 def test_k3z_output_local_xmls_keep_qmd_and_height_feature_families() -> None:
     variant_to_xml = {
-        "base": K3Z_INSTANCE_ROOT / "output/patchworks_k3z_validated/forestmodel.xml",
         "ctfert_l15h5": (
             K3Z_INSTANCE_ROOT
             / "output/patchworks_k3z_ctfert_l15h5_validated/forestmodel.xml"
@@ -915,7 +958,7 @@ def test_k3z_output_local_xmls_keep_qmd_and_height_feature_families() -> None:
     }
 
     for slug, forestmodel_path in variant_to_xml.items():
-        text = forestmodel_path.read_text(encoding="utf-8")
+        text = _read_k3z_validated_forestmodel_text(forestmodel_path)
         assert "feature.QMD.managed." in text, (
             f"{slug} output-local forestmodel.xml is missing managed QMD features"
         )
@@ -994,8 +1037,13 @@ def test_k3z_pctct_subvariant_family_has_been_removed() -> None:
         )
 
 
-def test_k3z_legacy_single_ctfert_surface_has_been_removed() -> None:
+def test_k3z_only_legacy_ctfert_validated_output_is_retained() -> None:
+    retained_output = K3Z_INSTANCE_ROOT / "output/patchworks_k3z_ctfert_validated"
+    assert retained_output.exists()
+
     for path in REMOVED_CTFERT_LEGACY_PATHS:
+        if path == retained_output:
+            continue
         assert not path.exists(), f"legacy ctfert path should be removed: {path}"
 
 

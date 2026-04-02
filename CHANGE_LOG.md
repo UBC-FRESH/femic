@@ -9988,3 +9988,40 @@
   - Verified the corrected result with a fresh full scan of all issue bodies
     and all maintainer-authored comments; no obvious control-character damage,
     escaped newline litter, or fake token-leading backslashes remained.
+- 2026-04-02 (Issue #10 BTC-first TSA29 migration checkpoint):
+  - Added repo-local planning trace for the approved TSA29 re-entry plan in
+    `planning/tsa29_p19_5_btc_reentry.md` and updated `ROADMAP.md` so `P19.5`
+    now explicitly tracks the BTC-first rebuild/evidence closeout for issue
+    `#10`.
+  - Migrated the linked TSA29 instance surfaces from the old DAT/out framing
+    to the current BTC-first contract:
+    - `external/femic-tsa29-instance/README.md`
+    - `external/femic-tsa29-instance/docs/getting-started.rst`
+    - `external/femic-tsa29-instance/docs/rebuild-and-qa.rst`
+    - `external/femic-tsa29-instance/docs/data-and-provenance.rst`
+    - `external/femic-tsa29-instance/docs/troubleshooting.rst`
+    - `external/femic-tsa29-instance/runbooks/REBUILD_RUNBOOK.md`
+    - `external/femic-tsa29-instance/config/rebuild.spec.yaml`
+    - `external/femic-tsa29-instance/config/patchworks.runtime.windows.yaml`
+  - The active TSA29 rebuild seam is now documented as:
+    - `data/03_input-tsa29.csv`
+    - unattended BTC
+    - `data/04_output-tsa29.csv`
+    - `data/04_error-tsa29.csv`
+    - `femic tsa btc-post-tipsy --run-config config/run_profile.tsa29.yaml --tsa 29 --run-id <id>`
+  - Added the smallest necessary parent blocker fix in
+    `src/femic/cli/main.py` so `femic instance rebuild` can honor a spec that
+    declares `btc_post_tipsy_bundle` instead of silently forcing the legacy
+    `post_tipsy_bundle` action.
+  - Refreshed CLI/docs contract tests to match current FMU-first wording and
+    current checked-in K3Z artifact reality on `origin/main`.
+  - Validation:
+    - `python -m pytest tests/test_cli_main.py -k "instance_rebuild"`
+    - `python -m pytest tests/test_docs_contract.py -k "tsa29"`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m sphinx -b html external/femic-tsa29-instance/docs external/femic-tsa29-instance/docs/_build/html -W`
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `mypy src`
+    - `pytest`
+    - `pre-commit run --all-files`

@@ -384,7 +384,7 @@ def test_tsa_post_tipsy_requires_tsa(monkeypatch: pytest.MonkeyPatch) -> None:
         )
 
     assert exc_info.value.exit_code == 1
-    assert any("Provide at least one TSA" in msg for msg in messages)
+    assert any("Provide at least one FMU/code" in msg for msg in messages)
 
 
 def test_tsa_post_tipsy_calls_workflow(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -535,7 +535,7 @@ def test_export_patchworks_requires_tsa(monkeypatch: pytest.MonkeyPatch) -> None
         cli_main.export_patchworks(tsa=None)
 
     assert exc_info.value.exit_code == 1
-    assert any("Provide at least one TSA" in msg for msg in messages)
+    assert any("Provide at least one FMU/code" in msg for msg in messages)
 
 
 def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -637,7 +637,7 @@ def test_export_woodstock_requires_tsa(monkeypatch: pytest.MonkeyPatch) -> None:
         cli_main.export_woodstock(tsa=None)
 
     assert exc_info.value.exit_code == 1
-    assert any("Provide at least one TSA" in msg for msg in messages)
+    assert any("Provide at least one FMU/code" in msg for msg in messages)
 
 
 def test_export_woodstock_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -2519,6 +2519,75 @@ def test_instance_rebuild_includes_patchworks_steps_when_enabled(
     step_ids = [step.step_id for step in calls["steps"]]
     assert "patchworks_preflight" in step_ids
     assert "patchworks_matrix_build" in step_ids
+
+
+def test_instance_rebuild_uses_btc_post_tipsy_step_when_declared_in_spec(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        cli_main,
+        "_resolve_cli_instance_context",
+        lambda **_kwargs: SimpleNamespace(
+            root=Path("instance-root"),
+            resolve_path=lambda value: Path("instance-root") / value,
+        ),
+    )
+
+    calls: dict[str, object] = {}
+
+    class FakeRunner:
+        def __init__(self, *, steps, report_sink):
+            calls["steps"] = steps
+            calls["report_sink"] = report_sink
+
+        def run(self, *, run_id, context):
+            _ = (run_id, context)
+            return SimpleNamespace(failed=False, outcomes=())
+
+    monkeypatch.setattr(cli_main, "RebuildRunner", FakeRunner)
+    monkeypatch.setattr(
+        cli_main,
+        "load_rebuild_spec",
+        lambda _path: {
+            "schema_version": "1.0",
+            "instance": {"case_id": "x"},
+            "runtime": {},
+            "steps": [
+                {"step_id": "validate_case"},
+                {"step_id": "compile_upstream"},
+                {
+                    "step_id": "btc_post_tipsy_bundle",
+                    "command": "femic tsa btc-post-tipsy --run-config config/run.yaml --tsa 29",
+                },
+            ],
+            "invariants": [{}],
+        },
+    )
+    monkeypatch.setattr(cli_main, "validate_rebuild_spec_payload", lambda _payload: [])
+    monkeypatch.setattr(cli_main.console, "print", lambda _msg: None)
+
+    cli_main.instance_rebuild(
+        spec=Path("config/rebuild.spec.yaml"),
+        run_config=Path("config/run_profile.case_template.yaml"),
+        tipsy_config_dir=Path("config/tipsy"),
+        log_dir=Path("vdyp_io/logs"),
+        run_id="rebuild_test",
+        with_patchworks=True,
+        dry_run=False,
+        patchworks_config=Path("config/patchworks.runtime.yaml"),
+        baseline=Path("config/rebuild.baseline.json"),
+        write_baseline=False,
+        allowlist=Path("config/rebuild.allowlist.yaml"),
+        instance_root=Path("instance-root"),
+    )
+
+    step_ids = [step.step_id for step in calls["steps"]]
+    assert "btc_post_tipsy_bundle" in step_ids
+    assert "post_tipsy_bundle" not in step_ids
+    patchworks_preflight = next(
+        step for step in calls["steps"] if step.step_id == "patchworks_preflight"
+    )
+    assert patchworks_preflight.depends_on == ("btc_post_tipsy_bundle",)
 
 
 def test_instance_rebuild_dry_run_prints_plan_without_execution(

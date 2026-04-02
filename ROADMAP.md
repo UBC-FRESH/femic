@@ -465,7 +465,7 @@ notes.
 - [x] P19.2 Bootstrap and structure femic-tsa29-instance repository
 - [x] P19.3 Assemble ASAP-usable TSA29 snapshot payload
 - [x] P19.4 Add rebuild spec + invariant policy + evidence workflow
-- [ ] P19.5 Execute rebuild validation and publish evidence
+- [ ] P19.5 Execute BTC-first rebuild validation and publish evidence (`#10`)
 - [x] P19.6 Build canonical TSA29 student docs in instance repo
 - [x] P19.7 Link TSA29 repo back into FEMIC as submodule + pointer docs
 - [x] P19.8 Add contract tests and release handoff (v0.1.0)
@@ -7704,6 +7704,82 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [ ] P51.5d Document the teaching/bridge rationale, the market-report provenance, and the user override seams in both user-facing and dev-facing docs.
 
 ## Detailed Next Steps Notes
+
+- 2026-04-02 (Issue #10 BTC-first TSA29 migration checkpoint):
+  - Completed in this branch:
+    - added repo-local planning note `planning/tsa29_p19_5_btc_reentry.md`;
+    - updated the Phase 19 `P19.5` wording so issue `#10` now tracks the
+      BTC-first rebuild/evidence closeout explicitly;
+    - migrated the linked TSA29 instance docs/runbook/spec/runtime wiring so
+      the active contract is now `03_input-tsa29.csv` -> unattended BTC ->
+      `04_output-tsa29.csv` / `04_error-tsa29.csv` ->
+      `femic tsa btc-post-tipsy`;
+    - repaired the stale TSA29 Patchworks runtime config so it no longer points
+      at K3Z model paths;
+    - added the smallest necessary parent blocker fix so `femic instance rebuild`
+      can honor a TSA29 spec that declares `btc_post_tipsy_bundle` instead of
+      silently forcing the old legacy `post_tipsy_bundle` step;
+    - refreshed docs/CLI contract tests to match current FMU-first wording and
+      current checked-in K3Z artifact reality on `origin/main`.
+  - Validation completed:
+    - `python -m pytest tests/test_cli_main.py -k "instance_rebuild"`
+    - `python -m pytest tests/test_docs_contract.py -k "tsa29"`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m sphinx -b html external/femic-tsa29-instance/docs external/femic-tsa29-instance/docs/_build/html -W`
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `mypy src`
+    - `pytest`
+    - `pre-commit run --all-files`
+  - Immediate next execution order:
+    - run TSA29 on the current synced workspace to confirm the instance now
+      reaches the expected BTC boundary and emits `data/03_input-tsa29.csv`;
+    - run `femic tsa btc-post-tipsy` on the same run ID and confirm the new
+      CSV seam is accepted end to end;
+    - once that local contract smoke is green, repeat the full acceptance pass
+      from a fresh/current FEMIC checkout for the real `P19.5` / issue `#10`
+      evidence closeout.
+
+- 2026-04-02 (Issue #10 BTC-first TSA29 re-entry plan):
+  - Governing issue:
+    - GitHub issue `#10`
+  - Branch:
+    - `work/p19.5-tsa29-btc-reentry`
+  - Re-entry decision:
+    - retire the stale TSA29 closeout framing built around the old manual
+      BatchTIPSY DAT/out seam;
+    - treat the freshly synced parent `origin/main` BTC workflow as the
+      authoritative contract;
+    - use the preserved local TSA29 backup at
+      `C:\Users\gep\projects\backups\femic-tsa29-instance-pre-main-sync-20260402\snapshot`
+      as the forensic source for selective carry-forward only.
+  - Approved execution sequence:
+    - migrate the TSA29 instance docs/runbook/spec/runtime wiring so the active
+      seam is:
+      - `data/03_input-tsa29.csv`
+      - unattended BTC
+      - `data/04_output-tsa29.csv`
+      - `data/04_error-tsa29.csv`
+      - `femic tsa btc-post-tipsy --run-config config/run_profile.tsa29.yaml --tsa 29 --run-id <id>`
+    - keep legacy `02_input-tsa29*.dat` / `04_output-tsa29.out` references as
+      historical or compatibility context only;
+    - make only the smallest necessary parent-code blocker fixes if the current
+      `origin/main` rebuild runner cannot honor the BTC-first TSA29 contract;
+    - after migration, run the final acceptance/evidence pass from a fresh
+      current FEMIC checkout rather than from the old forensic workspace.
+  - Immediate execution order:
+    - patch `ROADMAP.md`, `CHANGE_LOG.md`, and
+      `planning/tsa29_p19_5_btc_reentry.md` so the approved re-entry plan lives
+      in-repo and matches the updated GitHub issue `#10`;
+    - migrate the linked TSA29 instance surfaces:
+      `README.md`, `docs/getting-started.rst`,
+      `docs/rebuild-and-qa.rst`, `docs/data-and-provenance.rst`,
+      `docs/troubleshooting.rst`, `runbooks/REBUILD_RUNBOOK.md`,
+      `config/rebuild.spec.yaml`, and
+      `config/patchworks.runtime.windows.yaml`;
+    - validate the migrated contract with focused docs/spec checks plus a
+      targeted BTC-boundary smoke before attempting the final clean rebuild
+      closeout.
 
 - 2026-03-30 (Issue #65 kickoff): start the narrow K3Z ctfert log-grade harvested product/account rollout on branch `feature/issue-65-k3z-ctfert-log-grades`.
   - Governing issue:
