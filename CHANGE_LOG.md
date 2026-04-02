@@ -9801,3 +9801,12 @@
     - representative `pct_heavy_zones` Patchworks smoke
       `issue73_pct_heavy_zones_zone_accounts_smoke` completed with
       `returncode=0` and wrote a saved stage
+- 2026-04-01 (Issue #74 kickoff):
+  - Started the K3Z-wide succession-default and warning-policy slice.
+  - Scope for this feature is intentionally broad across the K3Z family:
+    - add explicit default pass-through `<succession>` elements where the
+      compiled ForestModel currently omits a succession path;
+    - investigate and reduce Matrix Builder warning noise toward a 0 warnings /
+      0 errors gold-standard signal;
+    - add FEMIC warning-policy defaults plus user override seams so warnings
+      are only ignored through explicit policy.

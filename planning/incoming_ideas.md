@@ -55,10 +55,6 @@ Good queue hygiene
 
 ---
 
-[feature] Add missing `<succcession>` elements to ForestModel XML files compiled by FEMIC (always: default can be a null "pass through" succession event at age 1000, but every fragment in Patchworks should have a valid succession path defined so we can get down to 0 warnings 0 errors as the "gold standard" green-light post-MatrixBuilder signal, and then wire in warning-tolerance default and user override settings into FEMIC so that no warning goes ignored without getting a pass from an explicit ignore-these-specific-warnings default or user-defined policy).
-
-[feature] Add the new `log-grades` TIPSY indicator bank as new product account family in the K3Z `ctfert_l15h5` and `ctfert_l20h0` instance variants.
-
 [feature] Add FEMIC CLI surface to help users connect a local FEMIC package installation with their own FEMIC-compatible GitHub+DataLad "instance repository", and optionally populate their new instance repo with "forks" of built-in FEMIC model instance variants (or grab a whole instance family with all of its variants). Basically the first (and possibly only---we we'll see how she goes) client for this functionality would be me (as PI of the UBC FRESH lab) and my UBC FRESH lab team members---basically I want to create both private (for WIP projects, accessible only to FRESH team and authorized collaborators) and public (for ready-to-share projects) FEMIC model instance repositories that are storage-volume-backed by either my DRAC Arbutus cloud S3 bucket object store account or my UBC ARC Chinook cloud S3 bucket object store account (the latter has much more space and better Globus-user-based self-serve cloud-based user-access management surface). Also make sure that users who cannot or prefer not to sync their datalad data to a cloud "special remote" repo can just use the default "local" dataset data stash (a local git-annex repo or something?... I am fuzzy on recalling the implementation details)
 
 [feature] Implement parallel Patchworks scenario runner feature on top of existing variant scenario runner functionality.

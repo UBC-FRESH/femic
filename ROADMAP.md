@@ -10294,6 +10294,32 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - representative smoke
       `issue73_pct_heavy_zones_zone_accounts_smoke` completed with
       `returncode=0` and saved `1711` stage files.
+- 2026-04-01 (Issue #74 kickoff): add default pass-through succession wiring
+  and warning-policy hooks for all K3Z variants.
+  - Governing issue: `#74` (`Feature`)
+  - Branch: `feature/issue-74-k3z-succession-defaults`
+  - Intended scope:
+    - ensure every compiled K3Z ForestModel surface carries an explicit
+      `<succession>` path for every fragment/state combination, with a default
+      null pass-through succession at age `1000` where no richer transition is
+      defined;
+    - investigate current K3Z Matrix Builder warnings and determine which are
+      truly caused by missing succession declarations versus other exporter
+      contracts;
+    - add FEMIC warning-policy defaults plus user override hooks so warnings
+      are ignored only through explicit policy rather than silently;
+    - apply the resulting contract consistently across all K3Z variant
+      surfaces.
+  - Detailed Next Steps:
+    - inspect current K3Z XML and `messages.csv` / Matrix Builder artifacts to
+      confirm where missing succession definitions are surfacing;
+    - trace the current exporter seam that emits (or omits) succession
+      elements and identify the narrowest shared place to inject the default
+      pass-through behavior;
+    - define the warning-policy contract and decide which warnings, if any,
+      are acceptable by default;
+    - rebuild representative K3Z surfaces, then widen to the full family once
+      the contract is validated.
 
 
 
