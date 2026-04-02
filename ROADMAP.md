@@ -10479,10 +10479,44 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       1. direct issue/comment cleanup on GitHub,
       2. repo-side agent/docs/process guidance,
       3. wrapper/helper feasibility assessment;
-    - document the specific `gh` command/metadata pitfalls the coding agent is
-      still hitting so the resulting guidance is concrete rather than generic
-      issue-triage advice;
-    - only propose a repo-local helper API or separate `fresh-gh` package if
-      the audit shows a clear repeated failure mode that better docs/process
-      instructions alone will not solve.
+      - document the specific `gh` command/metadata pitfalls the coding agent is
+        still hitting so the resulting guidance is concrete rather than generic
+        issue-triage advice;
+      - only propose a repo-local helper API or separate `fresh-gh` package if
+        the audit shows a clear repeated failure mode that better docs/process
+        instructions alone will not solve.
+- 2026-04-01 (Issue #76 audit + workflow guidance pass): cleaned the first
+  real set of tracker hygiene defects and recorded the concrete `gh` workflow
+  rules in-repo.
+  - GitHub-side audit findings:
+    - multiple recent issue bodies and maintainer-authored comments had
+      formatting/control-character corruption traceable to bad shell quoting in
+      `gh` update commands;
+    - several recent issues were missing obvious orthogonal labels like `k3z`,
+      `patchworks`, `windows`, `data`, or `documentation`;
+    - stale-open `#49` was still open even though its cited implementation had
+      already landed on current `main`.
+  - GitHub-side cleanup completed:
+    - cleaned issue bodies including `#35`, `#62`, `#64`, and `#70`;
+    - rewrote corrupted maintainer-authored comments on `#49`, `#60`, `#62`,
+      `#64`, and `#70`;
+    - normalized orthogonal labels on the recent issue set where the missing
+      metadata was obvious;
+    - added a fresh closeout comment on `#49` and closed it after verifying the
+      referenced parent and K3Z commits were in current upstream history.
+  - Repo-side guidance updates:
+    - strengthened `AGENTS.md` with explicit `gh issue list/view` audit-first
+      guidance, `gh issue edit` vs `gh api graphql` usage guidance, and the
+      warning to avoid inline PowerShell escape sequences when sending Markdown
+      bodies to GitHub;
+    - added the same practical workflow note to
+      `docs/guides/vscode-coding-agent-onboarding.rst`;
+    - recorded the audit categories, command patterns, and `fresh-gh`
+      follow-on decision in `planning/github_issue_hygiene_audit.md`.
+  - Detailed Next Steps:
+    - run the docs validation pass for the new guidance;
+    - do one final `gh issue list/view` spot-check over representative open and
+      recently closed issues to confirm the cleaned tracker state;
+    - close `#76` with an explicit comment noting that the helper-wrapper idea
+      remains design-only unless the same `gh` failure mode recurs.
 

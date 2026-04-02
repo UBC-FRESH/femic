@@ -9930,3 +9930,20 @@
     - capture concrete guidance for reliable `gh`-based agent workflows;
     - assess, but do not yet commit to, a helper wrapper or future
       `fresh-gh` package extraction.
+- 2026-04-01 (Issue #76 audit + workflow guidance pass):
+  - Audited the active FEMIC GitHub tracker and found a real recurring hygiene
+    defect in maintainer-authored issue text: control-character corruption
+    caused by bad PowerShell/`gh` body escaping in issue/comment edits.
+  - Cleaned recent issue bodies including `#35`, `#62`, `#64`, and `#70`, and
+    rewrote corrupted maintainer-authored comments on `#49`, `#60`, `#62`,
+    `#64`, and `#70` through GitHub GraphQL comment edits.
+  - Normalized obviously missing orthogonal labels on recent issues and closed
+    stale-open `#49` after confirming its cited parent/submodule work had
+    already landed on current upstream `main`.
+  - Added repo-side issue-hygiene guidance to:
+    - `AGENTS.md`
+    - `docs/guides/vscode-coding-agent-onboarding.rst`
+    - `planning/github_issue_hygiene_audit.md`
+  - Kept the proposed helper-wrapper / `fresh-gh` work design-only for now; the
+    current recommendation is to rely on the documented `gh issue edit` /
+    `gh api graphql` workflow unless the same failure mode recurs.

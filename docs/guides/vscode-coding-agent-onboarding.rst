@@ -196,6 +196,38 @@ This review loop is especially important for:
 - Patchworks-facing changes;
 - generated artifact refreshes;
 - teaching-model assumptions;
+- GitHub issue/comment cleanup, where shell quoting mistakes can corrupt text
+  just as badly as a code bug can corrupt a config file.
+
+GitHub Issue Workflow Hygiene
+-----------------------------
+
+When the task includes GitHub issue work, use a disciplined shell workflow.
+
+Recommended baseline:
+
+1. Audit before mutating anything:
+
+   - ``gh issue list --state open``
+   - ``gh issue list --state closed``
+   - ``gh issue view <n> --json ...``
+
+2. Use ``gh issue edit`` for issue titles, bodies, and labels.
+
+3. Use ``gh api graphql`` when you need to edit maintainer-authored comments or
+   another metadata surface that the higher-level CLI does not expose cleanly.
+
+4. When sending Markdown bodies from PowerShell, prefer body files or quoted
+   here-strings instead of inline escaped strings. FEMIC has already seen issue
+   comments mangled by accidental control-character injection from bad shell
+   escaping.
+
+5. Before closing an issue, add one final closeout comment that states:
+
+   - what landed;
+   - which repo paths/docs matter most;
+   - what validation passed; and
+   - why any remaining caveats do not block closure.
 
 One Windows-specific improvement now helps with local agent-driven rebuilds:
 

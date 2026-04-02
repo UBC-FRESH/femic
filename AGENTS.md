@@ -112,6 +112,11 @@ When contributing to this repository as the coding agent:
 12. Treat GitHub issue hygiene as a required part of the development workflow:
    - before starting a new feature, bug, docs push, or other non-trivial task, ensure `gh` is
      available in the active shell and authenticated as the intended active GitHub user;
+   - start with a non-mutating audit before editing issue state:
+     - `gh issue list --state open`
+     - `gh issue list --state closed`
+     - `gh issue view <n> --json ...`
+     so you understand the current title/body/label/state before mutating anything;
    - use GitHub built-in issue `Type` as the canonical work-kind field for FEMIC issues:
      `Bug`, `Feature`, or `Task`;
    - do not mirror issue `Type` into duplicate work-kind labels such as `bug`, `enhancement`,
@@ -126,6 +131,13 @@ When contributing to this repository as the coding agent:
    - when work status changes materially, update the issue accordingly (comment, retitle, relabel,
      close on merge, or otherwise reconcile status) so the GitHub tracker reflects reality and does
      not leave dropped or duplicated work behind.
+   - prefer `gh issue edit` for issue titles, bodies, and labels, but prefer `gh api graphql` for
+     maintainer-authored comment edits and any metadata surface that `gh issue edit` handles
+     poorly; document the exact successful command pattern in repo notes/docs if you need the
+     GraphQL fallback.
+   - when sending Markdown bodies to `gh` from PowerShell, prefer body files or quoted here-strings
+     over inline escaped strings; avoid hand-built escape sequences that can inject control
+     characters such as `\f`, `\r`, `\t`, or `\v` into issue text.
    - when closing an issue, add a final closeout comment first that summarizes what was implemented,
      points to the primary user-facing docs and relevant repo paths, states the validation outcome,
      and explains why any remaining caveats do not block closure; do not close issues with only an
