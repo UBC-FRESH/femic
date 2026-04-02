@@ -10456,4 +10456,33 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
     - `pytest tests/test_docs_contract.py -q`
+- 2026-04-01 (Issue #76 kickoff): revisit FEMIC GitHub issue hygiene end to
+  end so issue text, metadata usage, and agent guidance become a cleaner,
+  more exemplary open-source workflow surface.
+  - Governing issue: `#76` (`Task`)
+  - Branch: `feature/issue-76-github-issue-hygiene`
+  - Intended scope:
+    - audit open and closed GitHub issues for broken formatting, weak wording,
+      stale or incomplete closeout notes, and messy comment presentation;
+    - reconcile issue metadata usage where accessible so labels, type, and
+      related tracking surfaces are coherent and relevant rather than ad hoc;
+    - strengthen FEMIC's agent-facing guidance for reliable `gh`-based issue
+      operations, and decide whether a lightweight helper wrapper/design note is
+      warranted for future work;
+    - treat any possible `fresh-gh` package extraction as a follow-on design
+      outcome, not an automatic implementation commitment in this first sweep.
+  - Detailed Next Steps:
+    - start with a targeted audit of currently open issues plus the most recent
+      closed issues to identify the common formatting/metadata failure modes
+      before attempting broad edits;
+    - separate the work into:
+      1. direct issue/comment cleanup on GitHub,
+      2. repo-side agent/docs/process guidance,
+      3. wrapper/helper feasibility assessment;
+    - document the specific `gh` command/metadata pitfalls the coding agent is
+      still hitting so the resulting guidance is concrete rather than generic
+      issue-triage advice;
+    - only propose a repo-local helper API or separate `fresh-gh` package if
+      the audit shows a clear repeated failure mode that better docs/process
+      instructions alone will not solve.
 

@@ -9920,3 +9920,13 @@
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
     - `pytest tests/test_docs_contract.py -q`
+- 2026-04-01 (Issue #76 kickoff):
+  - Opened GitHub issue `#76` and branch
+    `feature/issue-76-github-issue-hygiene` to audit and clean up FEMIC's
+    GitHub issue formatting, metadata hygiene, and agent workflow guidance.
+  - Scoped the work as a docs/process/task sweep first:
+    - improve issue description/comment clarity and formatting;
+    - reconcile issue metadata usage where accessible;
+    - capture concrete guidance for reliable `gh`-based agent workflows;
+    - assess, but do not yet commit to, a helper wrapper or future
+      `fresh-gh` package extraction.
