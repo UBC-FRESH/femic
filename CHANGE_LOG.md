@@ -9869,3 +9869,33 @@
   - Scoped the work to preserve literal `TSA` usage where it is part of real
     runtime/data compatibility contracts, while cleaning up generic docs,
     guides, registry wording, and other user-facing terminology.
+- 2026-04-01 (Issue #75 FMU-first docs/API pass):
+  - Completed a second terminology sweep across higher-signal docs and API
+    pages so generic prose now talks about FMU/code targets rather than
+    assuming every case is literally a BC TSA.
+  - Clarified the retained `tsa` surfaces as legacy compatibility seams in the
+    touched CLI/API/contract/K3Z docs instead of leaving them to read as
+    conceptual truth.
+  - Updated pages include:
+    - `docs/reference/api/femic-cli-main.rst`
+    - `docs/reference/api/femic-pipeline-legacy-runtime.rst`
+    - `docs/reference/api/femic-pipeline-vdyp-stage.rst`
+    - `docs/reference/api/femic-pipeline-manifest.rst`
+    - `docs/reference/api/femic-workflows-legacy.rst`
+    - `docs/reference/api/femic-pipeline-tipsy.rst`
+    - `docs/reference/woodstock-export.rst`
+    - `docs/reference/nemora-task-map.rst`
+    - `docs/reference/nemora-upstream-candidates.rst`
+    - `docs/guides/data-access-inventory.rst`
+    - `docs/guides/model-input-bundle-and-export.rst`
+    - `docs/guides/pipeline-overview.rst`
+    - `docs/guides/limitations-and-boundaries.rst`
+    - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
+    - `docs/sample-models/k3z-metadata-lineage.rst`
+    - `external/femic-k3z-instance/docs/getting-started.rst`
+    - `external/femic-k3z-instance/docs/operator-runbook.rst`
+    - `external/femic-k3z-instance/docs/rebuild-and-qa.rst`
+  - Validation:
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
+    - `pytest tests/test_docs_contract.py -q`

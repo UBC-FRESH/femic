@@ -65,7 +65,8 @@ The module defines one root Typer app and several sub-apps:
 - ``app``: top-level ``femic`` command
 - ``prep_app``: input preparation and preflight commands
 - ``vdyp_app``: VDYP execution and reporting commands
-- ``tsa_app``: TSA-specific stage commands, especially BTC/post-TIPSY resume
+- ``tsa_app``: legacy-named FMU/code stage commands, especially BTC/post-TIPSY
+  resume
 - ``tipsy_app``: TIPSY/BTC config, report-template, and runtime helpers
 - ``export_app``: Patchworks, Woodstock, dual-export, and release packaging
 - ``patchworks_app``: proprietary Patchworks runtime helpers

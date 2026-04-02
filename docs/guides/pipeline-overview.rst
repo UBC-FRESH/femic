@@ -49,6 +49,9 @@ first:
 
       femic tsa btc-post-tipsy --run-config config/run_profile.<case>.yaml --tsa <code> -v
 
+   The command group and flag still use the legacy ``tsa`` naming seam for
+   compatibility. Read them generically as the selected FMU/code target.
+
 For the known-good K3Z Windows path from the parent FEMIC checkout, the
 practical boundary is:
 
@@ -71,6 +74,9 @@ Tracked downstream economics extraction is now available too:
       femic export patchworks --tsa <code>
       femic export woodstock --tsa <code>
       femic export dual --tsa <code> --with-ws3-smoke --ws3-command "<ws3 smoke command>"
+
+   The export flag remains ``--tsa`` for compatibility, but it should be read
+   generically as the selected FMU/code target.
 
 For Patchworks runtime launch, prefer the registry-backed operator surfaces
 (``run-variant``, ``run-scenario``, ``run-scenario-set``) over raw `.pin`

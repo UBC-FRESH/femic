@@ -13,7 +13,8 @@ how parallel worker and sampling settings move across the Stage 00/01a/01b
 boundary, this is the first module to read. In practice it owns:
 
 - typed dataclasses for legacy 01a and 01b runtime payloads
-- deterministic cache-path bundling for 01a TSA runs
+- deterministic cache-path bundling for 01a FMU/code runs through the legacy
+  ``tsa`` seam
 - the explicit contract between modern orchestration code and legacy stage
   entrypoints
 
@@ -22,7 +23,8 @@ Start Here If...
 
 Use this page first if you are trying to:
 
-- inspect what a single 01a TSA run receives from the Stage 00 orchestrator
+- inspect what a single 01a FMU/code run receives from the Stage 00
+  orchestrator
 - understand the small runtime contract passed into legacy 01b post-TIPSY work
 - debug why a legacy call saw the wrong cache paths, worker count, or TIPSY
   output root
@@ -72,10 +74,11 @@ Key Entry Surfaces
 The highest-value entrypoints in this module are:
 
 - :func:`build_legacy_01a_runtime_config`
-  Build the typed runtime payload for one 01a TSA run, including VDYP cache
-  path resolution.
+  Build the typed runtime payload for one 01a FMU/code run, including VDYP
+  cache path resolution. The field names still use the legacy ``tsa`` seam for
+  compatibility.
 - :func:`build_legacy_01b_runtime_config`
-  Build the typed runtime payload for one 01b post-TIPSY TSA run.
+  Build the typed runtime payload for one 01b post-TIPSY FMU/code run.
 - :class:`Legacy01ARuntimeConfig`
 - :class:`Legacy01BRuntimeConfig`
 

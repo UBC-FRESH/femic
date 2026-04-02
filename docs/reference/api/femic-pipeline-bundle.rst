@@ -77,7 +77,8 @@ The highest-value entrypoints in this module are:
 - :func:`resolve_bundle_paths`
   Resolve canonical AU/curve/curve-points bundle table locations.
 - :func:`load_bundle_tables`
-  Load bundle tables from CSV and optionally normalize TSA codes.
+  Load bundle tables from CSV and optionally normalize legacy case/FMU codes
+  carried through the ``tsa`` naming seam.
 - :func:`write_bundle_tables`
   Persist bundle tables to the canonical CSV surface.
 - :func:`build_bundle_tables_from_curves`

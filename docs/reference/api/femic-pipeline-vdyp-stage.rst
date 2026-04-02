@@ -48,7 +48,8 @@ Typical Usage
 -------------
 
 The common call pattern is to let higher-level orchestration prepare the inputs
-and then pass one TSA/runtime payload into the Stage 01a seam:
+and then pass one FMU/code runtime payload into the Stage 01a seam through the
+legacy ``tsa`` contract:
 
 .. code-block:: python
 
@@ -70,7 +71,8 @@ and then pass one TSA/runtime payload into the Stage 01a seam:
        vdyp_curves_smooth_tsa_feather_path_prefix="data/vdyp_curves_smooth-tsa",
    )
 
-   # Higher-level callers then dispatch the TSA run through the Stage 01a seam.
+   # Higher-level callers then dispatch the selected FMU/code run through the
+   # Stage 01a seam. The payload still uses legacy ``tsa`` field names.
 
 How This Fits Into The Pipeline
 -------------------------------
@@ -131,7 +133,8 @@ The highest-value entrypoints in this module are:
 - :func:`execute_bootstrap_vdyp_runs`
   Multi-stratum orchestration across L/M/H site-index buckets.
 - :func:`load_or_build_vdyp_results_tsa`
-  Reuse or rebuild pickled per-TSA VDYP results.
+  Reuse or rebuild pickled per-FMU/code VDYP results through the legacy
+  ``tsa`` cache naming seam.
 - :func:`execute_curve_smoothing_runs`
   Convert raw batch outputs into smoothed curve products and fit diagnostics.
 
@@ -165,7 +168,7 @@ The main artifacts this module writes or updates are:
 - temp batch inputs/outputs under ``vdyp_io/`` for each subprocess run
 - per-run JSONL/text logs via :mod:`femic.pipeline.vdyp_logging`
 - stdout/stderr capture files for the external VDYP runtime
-- pickle caches for combined or per-TSA VDYP results
+- pickle caches for combined or per-FMU/code VDYP results
 - smoothed-curve tables and the diagnostic plots reviewed during Stage 01a
 
 Failure Seams To Watch

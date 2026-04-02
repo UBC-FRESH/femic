@@ -3,7 +3,8 @@ Woodstock Compatibility Export
 
 ``femic export woodstock`` writes four CSV artifacts:
 
-- ``woodstock_yields.csv``: long-form yield points by TSA/AU/IFM/age
+- ``woodstock_yields.csv``: long-form yield points by FMU/code, AU, IFM, and
+  age (the CLI flag still uses the legacy ``--tsa`` name)
 - ``woodstock_areas.csv``: stand-level area/age/AU assignments
 - ``woodstock_actions.csv``: baseline clearcut action metadata by AU
 - ``woodstock_transitions.csv``: baseline post-action AU/IFM transitions

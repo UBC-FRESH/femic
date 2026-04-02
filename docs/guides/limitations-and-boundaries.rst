@@ -32,7 +32,8 @@ Data Vendor/Format Constraints
 Modeling Limitations
 --------------------
 
-- Small-area units can break stratification assumptions tuned for large TSAs.
+- Small-area units can break stratification assumptions tuned for large
+  TSA-scale BC management units and may need explicit FMU-local tuning.
 - SI signal may appear weak without careful split/merge and fit controls.
 - Species-wise managed trajectories may require explicit tuning when vendor
   outputs are inconsistent with scenario intent.

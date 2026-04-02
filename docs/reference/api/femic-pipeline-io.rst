@@ -87,7 +87,8 @@ The most important sub-flows in this module are:
 - **Profile loading and normalization**
   :func:`load_pipeline_run_profile`, :func:`normalize_tsa_list`, and
   :func:`resolve_effective_run_options` turn CLI/profile inputs into normalized
-  execution options.
+  execution options. The helper name still reflects the legacy ``tsa`` schema
+  seam even when the selected targets are generic FMU/code values.
 - **Dataclass payload construction**
   :func:`build_pipeline_run_config` and the module-level dataclasses make the
   run/profile/path contracts explicit instead of passing unstructured path bags

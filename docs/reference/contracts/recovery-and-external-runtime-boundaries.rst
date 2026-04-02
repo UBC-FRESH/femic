@@ -84,6 +84,9 @@ After Stage 01a / before BTC:
 2. run ``femic tsa btc-post-tipsy ...`` to launch unattended BTC and resume
 3. inspect ``04_output-*.csv`` / ``04_error-*.csv`` if the run fails
 
+The command group and flag still use the legacy ``tsa`` naming seam for
+compatibility. Read them generically as the selected FMU/code target.
+
 After BTC output refresh:
 
 .. code-block:: powershell

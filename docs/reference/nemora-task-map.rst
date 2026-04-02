@@ -15,7 +15,8 @@ task taxonomy so command intent can be aligned before upstream integration.
    * - ``femic run``
      - End-to-end legacy pipeline wrapper
      - ``pipeline.run_legacy``
-     - Main orchestration entrypoint with preflight, run manifest, and TSA selection.
+     - Main orchestration entrypoint with preflight, run manifest, and
+       legacy ``--tsa`` FMU/code selection.
    * - ``femic prep run``
      - Data-prep workflow wrapper
      - ``pipeline.prep.run``
@@ -29,9 +30,10 @@ task taxonomy so command intent can be aligned before upstream integration.
      - ``pipeline.vdyp.report``
      - Candidate for shared diagnostics/reporting utility in Nemora.
    * - ``femic tsa run``
-     - TSA-scoped workflow wrapper
+     - legacy-named FMU/code-scoped workflow wrapper
      - ``pipeline.tsa.run``
-     - Parallel shape to ``prep run``/``vdyp run`` with shared run-option contract.
+     - Parallel shape to ``prep run``/``vdyp run`` with shared run-option
+       contract.
    * - ``femic tipsy validate``
      - Validate TIPSY handoff config files
      - ``pipeline.tipsy.validate``

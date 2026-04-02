@@ -10384,4 +10384,41 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - avoid churn in Python/runtime identifiers unless the current name is
       clearly user-facing and generic, because this slice is about
       terminology-contract cleanup first, not gratuitous API breakage.
+- 2026-04-01 (Issue #75 FMU-first docs/API pass):
+  - Completed a second terminology sweep across higher-signal user/dev docs
+    and API reference pages so generic prose now talks about FMU/code targets
+    rather than assuming every case is literally a BC TSA.
+  - Strengthened the compatibility framing in the affected pages so retained
+    `tsa` surfaces are labeled explicitly as legacy seams instead of implicit
+    conceptual truth:
+    - CLI/API pages now call out the legacy `tsa` naming seam where commands,
+      cache names, env vars, or run-profile fields still use it;
+    - bundle/VDYP/legacy-runtime docs now describe per-FMU/code behavior while
+      preserving true `tsa` file/module/cache names;
+    - K3Z user docs now explain that `femic tsa ... --tsa k3z` is legacy
+      command/flag naming applied to a named FMU/code case, not evidence that
+      K3Z is literally a BC TSA.
+  - Touched pages in this pass include:
+    - `docs/reference/api/femic-cli-main.rst`
+    - `docs/reference/api/femic-pipeline-legacy-runtime.rst`
+    - `docs/reference/api/femic-pipeline-vdyp-stage.rst`
+    - `docs/reference/api/femic-pipeline-manifest.rst`
+    - `docs/reference/api/femic-workflows-legacy.rst`
+    - `docs/reference/api/femic-pipeline-tipsy.rst`
+    - `docs/reference/woodstock-export.rst`
+    - `docs/reference/nemora-task-map.rst`
+    - `docs/reference/nemora-upstream-candidates.rst`
+    - `docs/guides/data-access-inventory.rst`
+    - `docs/guides/model-input-bundle-and-export.rst`
+    - `docs/guides/pipeline-overview.rst`
+    - `docs/guides/limitations-and-boundaries.rst`
+    - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
+    - `docs/sample-models/k3z-metadata-lineage.rst`
+    - `external/femic-k3z-instance/docs/getting-started.rst`
+    - `external/femic-k3z-instance/docs/operator-runbook.rst`
+    - `external/femic-k3z-instance/docs/rebuild-and-qa.rst`
+  - Validation:
+    - parent Sphinx build passed with warnings as errors;
+    - standalone K3Z Sphinx build passed with warnings as errors;
+    - `tests/test_docs_contract.py` passed.
 

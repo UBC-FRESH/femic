@@ -88,9 +88,9 @@ Core Contracts
 The most important runtime contracts in this module are:
 
 - manifests are written as UTF-8 pretty-printed JSON with sorted keys
-- payloads include run IDs, command/cwd, log dir, selected TSAs, config
-  provenance, runtime flags, output paths, runtime versions, log-path
-  references, and checkpoint presence
+- payloads include run IDs, command/cwd, log dir, selected FMU/code targets
+  (via the legacy ``tsa`` selection seam), config provenance, runtime flags,
+  output paths, runtime versions, log-path references, and checkpoint presence
 - runtime version capture is best-effort and tolerates packages that are not
   installed as distributions
 - manifest path creation must succeed even when the parent directories do not

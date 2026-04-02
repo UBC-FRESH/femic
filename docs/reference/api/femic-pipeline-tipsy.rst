@@ -27,7 +27,8 @@ Start Here If...
 Use this page first if you are trying to:
 
 - understand why ``03_input-*.csv`` is treated as canonical while
-  ``tipsy_params_tsa*.xlsx`` is only a mirror
+  ``tipsy_params_tsa*.xlsx`` is only a mirror built on the legacy ``tsa``
+  filename seam
 - debug BTC parse failures caused by input-schema mismatch or unsafe report
   templates
 - inspect why a stratum/SI candidate was excluded from TIPSY parameter
@@ -106,9 +107,12 @@ The highest-value entrypoints in this module are:
 - :func:`build_tipsy_input_table`
   Turn per-AU parameter payloads into the tabular export surface.
 - :func:`write_tipsy_input_exports`
-  Write the canonical BTC handoff and workbook mirror for one TSA.
+  Write the canonical BTC handoff and workbook mirror for one selected
+  FMU/code target. The exported workbook filename still follows the legacy
+  ``tsa`` pattern for compatibility.
 - :func:`write_btc_input_csv`
-  Write the canonical ``MSYT.csv``-style BTC input file for one TSA.
+  Write the canonical ``MSYT.csv``-style BTC input file for one selected
+  FMU/code target.
 - :func:`run_btc_cli`
   Launch unattended ``TIPSYbtc.exe /TSR`` against a canonical BTC handoff.
 - :func:`validate_tipsy_output_is_fresh`

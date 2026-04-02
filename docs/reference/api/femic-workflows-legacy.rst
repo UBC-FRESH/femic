@@ -30,8 +30,9 @@ Use this page first if you are trying to:
 
 - understand which layer actually launches the legacy ``00_data-prep.py``
   script after the CLI resolves run options
-- trace how cached ``vdyp_prep-tsa*.pkl`` and ``vdyp_curves_smooth-tsa*.feather``
-  artifacts are reused during a post-TIPSY-only rebuild
+- trace how cached ``vdyp_prep-tsa*.pkl`` and
+  ``vdyp_curves_smooth-tsa*.feather`` artifacts are reused during a
+  post-TIPSY-only rebuild for a selected FMU/code target
 - debug why FEMIC cannot find the packaged legacy scripts in a fresh clone or
   installed-package workflow
 - inspect where run manifests are written for Stage 00 or post-TIPSY bundle
@@ -133,7 +134,8 @@ The most important contracts in this module are:
   instance root or from package-owned resources exposed through
   :func:`femic.workflows.legacy_resources.resolve_legacy_script_bundle`
 - post-TIPSY rebuilds require cached ``vdyp_prep-tsa*.pkl`` and
-  ``vdyp_curves_smooth-tsa*.feather`` inputs for every selected TSA
+  ``vdyp_curves_smooth-tsa*.feather`` inputs for every selected FMU/code
+  target through the legacy ``tsa`` cache naming seam
 - the post-TIPSY path expects returned BTC/TIPSY outputs under the active data
   root through :mod:`femic.pipeline.legacy_runtime` configuration
 - bundle rebuild outputs are written into the resolved ``model_input_bundle``
@@ -156,7 +158,8 @@ downstream bundle tables without rerunning the whole pipeline.
 
 That flow:
 
-- loads per-TSA 01a checkpoints and smoothed curves from the active data root
+- loads per-FMU/code 01a checkpoints and smoothed curves from the active data
+  root
 - reconstructs AU/stratum/SI lookup maps needed by the legacy 01b code
 - calls the legacy 01b ``run_tsa`` function inside a temporary working
   directory rooted at the selected repo/package script location
@@ -177,7 +180,8 @@ The common failure boundaries in this module are:
   the expected ``00_data-prep.py`` / ``01b_run-tsa.py`` bundle
 - missing cached 01a artifacts
   post-TIPSY reruns fail fast when ``vdyp_prep-tsa*.pkl`` or
-  ``vdyp_curves_smooth-tsa*.feather`` are absent for a selected TSA
+  ``vdyp_curves_smooth-tsa*.feather`` are absent for a selected FMU/code
+  target
 - manifest/log expectation drift
   callers rely on this module to emit manifest files even for failed runs, so
   any early exception before manifest update is important

@@ -58,8 +58,8 @@ Current inclusion priority:
 
 1. ``hectaresbc_misc_thlb_tif`` (source is decommissioned).
 2. Historical/manual-access provincial fallbacks and base layers where
-   operator access is inconsistent (2019 VRI/VDYP inputs, TSA boundaries,
-   Site_Prod_BC).
+   operator access is inconsistent (2019 VRI/VDYP inputs, FMU boundary layers
+   including TSA boundaries, Site_Prod_BC).
 
 Directly downloadable datasets (for example 2024 VRI endpoints) remain outside
 the mirror by default unless reliability policy changes.

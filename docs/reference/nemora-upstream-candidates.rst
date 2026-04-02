@@ -13,11 +13,13 @@ upstreaming into Nemora as shared utilities.
      - Upstream priority
      - Upstream rationale
    * - ``femic.pipeline.io`` (run-config/path resolvers)
-     - Canonicalizes CLI run inputs, TSA defaults, run env, manifest/checkpoint paths
+     - Canonicalizes CLI run inputs, FMU/code defaults, run env, and
+       manifest/checkpoint paths through the legacy ``tsa`` seam
      - High
      - Stable interface and broadly reusable across task wrappers.
    * - ``femic.pipeline.stages.execute_legacy_tsa_stage``
-     - Shared stage loader/runner seam for per-TSA script execution
+     - Shared stage loader/runner seam for per-FMU/code script execution
+       through the legacy ``tsa`` contract
      - High
      - Removes duplicated orchestration loops and enforces consistent stage contracts.
    * - ``femic.pipeline.vdyp_logging`` JSONL/text append helpers

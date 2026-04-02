@@ -72,7 +72,8 @@ Component-Level Notes
 ---------------------
 
 - Fragments compiler semantics:
-  ``build_fragments_geodataframe(...)`` scopes checkpoint rows by TSA and AU,
+  ``build_fragments_geodataframe(...)`` scopes checkpoint rows by the legacy
+  case/FMU code field and AU,
   computes area/age fields, and resolves IFM assignment from THLB signal
   columns (or explicit IFM options).
 - ForestModel compiler semantics:

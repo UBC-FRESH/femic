@@ -22,6 +22,9 @@ Use:
 
    PYTHONPATH=src python -m femic export patchworks --tsa <code>
 
+The export flag remains ``--tsa`` for compatibility, but it should be read
+generically as the selected FMU/code target.
+
 Outputs:
 
 - ``forestmodel.xml``
