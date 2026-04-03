@@ -33,7 +33,9 @@ Quick Contract
    * - Annex-backed public data
      - ``external/femic-public-data`` is not usable until ``git annex`` works,
        the ``arbutus-s3`` remote is enabled, and ``datalad get`` has
-       materialized real payloads.
+       materialized real payloads. For Windows-specific Arbutus bootstrap or
+       publication work, the canonical maintainer runbook is
+       :doc:`../../guides/public-data-mirror-runbook`.
    * - External data root
      - Export ``FEMIC_EXTERNAL_DATA_ROOT`` before case preflight and pipeline
        runs when using the linked public-data mirror.
@@ -87,6 +89,9 @@ Do Not Assume
 
 - Do not treat symlinked annex pointers as usable data files before
   ``datalad get`` completes.
+- Do not assume quoted values in a local Arbutus env file are harmless; for the
+  documented Windows auth-file workflow, quoted ``KEY=VALUE`` lines are an
+  input bug, not an accepted variant.
 - Do not assume proprietary runtimes are vendored into the repo.
 - Do not assume a Windows-only helper is available on Linux, or vice versa.
 - Do not assume the current working directory is the intended instance root if

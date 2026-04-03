@@ -30,6 +30,16 @@ the repo root:
    - `datalad --version` (provided by `.venv` via `datalad[full]`)
    - `git -C external/femic-public-data annex enableremote arbutus-s3`
    - `datalad get -r external/femic-public-data/data`
+   - if you are bootstrapping a new DataLad dataset or FEMIC instance dataset
+     with an Arbutus special remote from Windows, read
+     `docs/guides/public-data-mirror-runbook.rst` first and do not improvise
+     the auth/bootstrap order
+   - Windows-specific Arbutus reminders:
+     - `%USERPROFILE%\.config\femic\arbutus.env` must use plain `KEY=VALUE`
+       lines with no quotes
+     - interactive loader usage needs an execution-policy-bypassed session
+     - validate bucket visibility with a direct `HeadBucket` probe before
+       running `git annex initremote`
 4. Export `FEMIC_EXTERNAL_DATA_ROOT` before case preflight/runs when using the
    linked mirror:
    - Linux/macOS:

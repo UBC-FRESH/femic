@@ -58,3 +58,54 @@ Known-good command sequence source:
 - Arbutus S3 special remote config recorded in repo docs.
 - Checksum values backfilled in `metadata/required_datasets.yaml`.
 - Follow-on FEMIC task: add repo as submodule (`P10.6c`).
+
+## Windows Lessons Learned (Issue #95)
+
+If this workflow is repeated from a fresh Windows environment for a new FEMIC
+instance dataset, do not start from `git annex testremote`. The lowest-noise
+path is:
+
+1. Load a user-local env file with plain `KEY=VALUE` lines and no quotes.
+2. In PowerShell, use an execution-policy-bypassed session before dot-sourcing
+   the loader.
+3. Confirm required vars are non-empty.
+4. Run direct `HeadBucket` probe(s).
+5. Only then run `git annex initremote`.
+
+Known-good Windows-specific details now proven in `#95`:
+
+- `%USERPROFILE%\.config\femic\arbutus.env` should contain:
+  - `AWS_ACCESS_KEY_ID=<key-id>`
+  - `AWS_SECRET_ACCESS_KEY=<secret-key>`
+  - `AWS_DEFAULT_REGION=ca-west-1`
+  - `S3_ENDPOINT_URL=https://object-arbutus.cloud.computecanada.ca`
+  - `S3_BUCKET_NAME=<unique-bucket-name>`
+- quoted values in `arbutus.env` are a real failure mode; they cause Windows to
+  export invalid literal credentials;
+- if interactive PowerShell blocks the loader script, use:
+  - `Set-ExecutionPolicy -Scope Process Bypass -Force`
+- the known-good `git annex initremote` parity flags are:
+  - `public=yes`
+  - `publicurl=https://object-arbutus.cloud.computecanada.ca/<unique-bucket-name>`
+  - `host=object-arbutus.cloud.computecanada.ca`
+  - `protocol=https`
+  - `port=80`
+  - `requeststyle=path`
+  - `autoenable=true`
+  - `chunk=1GiB`
+  - `storageclass=STANDARD`
+
+If `initremote` fails because the bucket already has a different `annex-uuid`,
+inspect the bucket contents before doing anything destructive:
+
+- if the bucket has real payload, treat it as a legitimate ownership conflict;
+- if it contains only a stale lone `annex-uuid` marker from an aborted init,
+  clear that marker and retry.
+
+Publish order matters:
+
+1. `git annex copy --to arbutus-s3 --all`
+2. `git config remote.origin.datalad-publish-depends arbutus-s3`
+3. `git push origin main`
+4. `git push origin git-annex`
+5. fresh-clone validation

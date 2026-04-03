@@ -1237,6 +1237,55 @@ notes.
     - issue `#96` remains the follow-on investigation into whether FEMIC
       should proactively catch/normalize these local auth-file and bucket
       bootstrap seams instead of leaving them to operator debugging.
+  - Immediate documentation hardening follow-up now needed:
+    - governing issue:
+      - GitHub issue `#97`
+    - planned branch:
+      - `feature/issue-97-windows-arbutus-bootstrap-docs`
+    - the `#95` recovery path depended on facts that were not discoverable
+      fast enough from the current user-facing docs, agent-facing notes, or
+      CLI/API surfaces for a fresh Windows environment;
+    - this dedicated docs issue/branch will turn the successful Windows
+      bootstrap path into a short, explicit “new FEMIC instance dataset +
+      Arbutus special remote” runbook;
+    - that docs pass should make the following points impossible to miss:
+      - `%USERPROFILE%\.config\femic\arbutus.env` must use plain
+        `KEY=VALUE` lines with no quotes;
+      - interactive PowerShell loading needs an execution-policy-bypass path;
+      - the recommended lowest-noise validation sequence is:
+        - load env file
+        - confirm non-empty vars
+        - run direct `HeadBucket` probe(s)
+        - only then run `git annex initremote`
+      - if `initremote` reports an existing conflicting `annex-uuid`, inspect
+        the bucket contents before reusing or clearing it;
+      - after remote init, publish order matters:
+        - `git annex copy --to arbutus-s3 --all`
+        - `remote.origin.datalad-publish-depends=arbutus-s3`
+        - push `main` and `git-annex`
+        - cold-clone / materialization validation;
+      - for fresh Windows clones, prefer `git annex get` or an explicit
+        materialization check when `datalad get` is not the active entry point
+        in the current shell.
+  - Documentation hardening delivered under `#97`:
+    - updated the canonical Arbutus/DataLad maintainer runbook at
+      `docs/guides/public-data-mirror-runbook.rst` with:
+      - the recommended Windows local env-file pattern;
+      - the no-quotes rule for `arbutus.env`;
+      - execution-policy-safe PowerShell loading;
+      - the lowest-noise `HeadBucket -> initremote` debug order;
+      - the known-good `initremote` parity flags;
+      - stale-`annex-uuid` recovery guidance;
+      - explicit publish order; and
+      - Windows cold-clone materialization guidance;
+    - added cross-links and guardrails in:
+      - `AGENTS.md`
+      - `README.md`
+      - `docs/reference/contracts/repo-runtime-invariants.rst`
+      - `planning/femic_public_data_datalad_bootstrap.md`
+    - validation:
+      - `python -m sphinx -b html docs _build/html -W` passed after the docs
+        edits.
 
 - 2026-04-03 (Issue `#85` curve refresh ready for `@gparadis` review):
   - Parent rollout umbrella:

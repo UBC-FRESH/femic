@@ -32,13 +32,39 @@ Maintainer Workflow (Create/Publish Mirror Repo)
 4. Compute and record checksums for mirrored artifacts in
    ``metadata/required_datasets.yaml``.
 5. Configure Arbutus S3 special remote and GitHub publication dependency.
-   Prepare credentials/environment before remote setup:
+   Prepare credentials/environment before remote setup.
+
+   Linux/macOS pattern:
 
    .. code-block:: bash
 
       cp config/credentials/arbutus_env.template.sh config/credentials/arbutus_env.sh
       # edit config/credentials/arbutus_env.sh with real values
       source config/credentials/arbutus_env.sh
+
+   Windows PowerShell pattern (recommended for local-user secrets):
+
+   - create ``%USERPROFILE%\.config\femic\arbutus.env`` with plain
+     ``KEY=VALUE`` lines;
+   - do **not** wrap values in quotes; and
+   - keep this file outside the repo.
+
+   Example:
+
+   .. code-block:: text
+
+      AWS_ACCESS_KEY_ID=<key-id>
+      AWS_SECRET_ACCESS_KEY=<secret-key>
+      AWS_DEFAULT_REGION=ca-west-1
+      S3_ENDPOINT_URL=https://object-arbutus.cloud.computecanada.ca
+      S3_BUCKET_NAME=<unique-bucket-name>
+
+   Then load it in a bypassed PowerShell session:
+
+   .. code-block:: powershell
+
+      Set-ExecutionPolicy -Scope Process Bypass -Force
+      . $env:USERPROFILE\.config\femic\load-arbutus-env.ps1
 
    At minimum, the following variables must be set in-shell:
 
@@ -48,8 +74,56 @@ Maintainer Workflow (Create/Publish Mirror Repo)
       export AWS_SECRET_ACCESS_KEY=<secret-key>
       export AWS_DEFAULT_REGION=ca-west-1
 
-   Initialize the Arbutus S3 special remote (host must be endpoint hostname,
-   not a ``ria+`` URL):
+   Lowest-noise validation order before remote init:
+
+   1. Load the env file.
+   2. Confirm required variables are non-empty.
+   3. Probe bucket visibility directly.
+   4. Only then run ``git annex initremote``.
+
+   Minimal Windows probe sequence:
+
+   .. code-block:: powershell
+
+      Set-ExecutionPolicy -Scope Process Bypass -Force
+      . $env:USERPROFILE\.config\femic\load-arbutus-env.ps1
+      Get-Item Env:AWS_ACCESS_KEY_ID
+      Get-Item Env:AWS_SECRET_ACCESS_KEY
+      Get-Item Env:S3_ENDPOINT_URL
+      Get-Item Env:S3_BUCKET_NAME
+
+      $probe = Join-Path $env:TEMP 'arbutus-head-bucket.py'
+      @'
+      import os
+      import boto3
+      from botocore.config import Config
+      from botocore.exceptions import ClientError
+
+      session = boto3.session.Session(
+          aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+          aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+          region_name=os.environ['AWS_DEFAULT_REGION'],
+      )
+      client = session.client(
+          's3',
+          endpoint_url=os.environ['S3_ENDPOINT_URL'],
+          config=Config(s3={'addressing_style': 'path'}),
+      )
+      for bucket in ['<unique-bucket-name>']:
+          try:
+              client.head_bucket(Bucket=bucket)
+              print(f'head_ok:{bucket}')
+          except ClientError as exc:
+              print(
+                  f"head_error:{bucket}:{exc.response.get('Error', {}).get('Code', 'unknown')}"
+              )
+      '@ | Set-Content -LiteralPath $probe -Encoding ascii
+      .venv\Scripts\python.exe $probe
+      Remove-Item $probe -Force
+
+   Initialize the Arbutus S3 special remote only after the bucket probe is
+   returning ``head_ok``. Host must be the endpoint hostname, not a ``ria+``
+   URL:
 
    .. code-block:: bash
 
@@ -61,14 +135,29 @@ Maintainer Workflow (Create/Publish Mirror Repo)
         publicurl=https://object-arbutus.cloud.computecanada.ca/<unique-bucket-name> \
         host=object-arbutus.cloud.computecanada.ca \
         protocol=https \
+        port=80 \
         requeststyle=path \
-        autoenable=true
+        autoenable=true \
+        chunk=1GiB \
+        storageclass=STANDARD
+
+   If ``initremote`` says the bucket already exists and cannot be reused
+   because its ``annex-uuid`` belongs to a different special remote:
+
+   - inspect the bucket contents first;
+   - if the bucket contains real payload, stop and treat it as an ownership
+     conflict; and
+   - if the bucket contains only a stale lone ``annex-uuid`` marker from an
+     aborted initialization attempt, clear that marker and retry
+     ``initremote``.
 
    Create/reconfigure GitHub sibling and wire publication dependency so one
    push publishes Git metadata and annexed content:
 
    .. code-block:: bash
 
+      git annex copy --to arbutus-s3 --all
+      git config remote.origin.datalad-publish-depends arbutus-s3
       datalad create-sibling-github -d . \
         --github-organization UBC-FRESH \
         --name origin \
@@ -76,7 +165,8 @@ Maintainer Workflow (Create/Publish Mirror Repo)
         --existing reconfigure \
         femic-public-data
 
-      datalad push --to origin
+      git push origin main
+      git push origin git-annex
 
 6. Verify fresh clone and selective retrieval works:
 
@@ -93,6 +183,17 @@ Maintainer Workflow (Create/Publish Mirror Repo)
 
       git annex enableremote arbutus-s3
       datalad get data/misc.thlb.tif
+
+   On Windows, prefer explicit materialization checks for required runtime
+   assets. If ``datalad get`` is not the active entry point in the current
+   shell, use ``git annex get`` directly and confirm placement with
+   ``git annex whereis``:
+
+   .. code-block:: powershell
+
+      git annex enableremote arbutus-s3
+      git annex get data/misc.thlb.tif
+      git annex whereis data/misc.thlb.tif
 
 Collaborator Workflow (Clone/Get/Update)
 ----------------------------------------
@@ -162,6 +263,19 @@ Recommended smoke checks on Windows:
    .venv\Scripts\datalad.exe get -r external/femic-public-data/data
    git -C external/femic-public-data annex version
 
+If you are creating/publishing a new DataLad dataset with an Arbutus special
+remote from Windows, the common low-cost failure checks are:
+
+- confirm ``%USERPROFILE%\.config\femic\arbutus.env`` uses plain
+  ``KEY=VALUE`` with no quotes;
+- use ``Set-ExecutionPolicy -Scope Process Bypass -Force`` before dot-sourcing
+  ``load-arbutus-env.ps1`` interactively;
+- do not start with ``git annex testremote``; start with a direct bucket probe
+  plus the single ``git annex initremote`` attempt; and
+- if a cold clone still shows thin placeholders after enable/get, use
+  ``git annex get`` for the specific required assets and confirm with
+  ``git annex whereis``.
+
 If a repo looks dirty because a GIS library touched internal sidecar files,
 recover it before continuing with FEMIC work:
 
@@ -186,3 +300,10 @@ Acceptance Checks
   - ``git -C external/femic-public-data annex enableremote arbutus-s3``
   - ``.venv\Scripts\datalad.exe get -r external/femic-public-data/data``
   - ``git -C external/femic-public-data annex version``
+- Windows maintainer bootstrap for a new dataset can run:
+  - load local Arbutus env file without quoted values
+  - direct ``HeadBucket`` probe returns ``head_ok``
+  - ``git annex initremote arbutus-s3 ...`` succeeds
+  - ``git annex copy --to arbutus-s3 --all`` succeeds
+  - ``git push origin main`` and ``git push origin git-annex`` succeed
+  - fresh clone can ``git annex enableremote arbutus-s3`` and materialize required assets

@@ -10843,3 +10843,39 @@
       - `data/vdyp_results-tsa29.pkl`
     - `python -m femic patchworks preflight --instance-root <fresh-clone> --config config/patchworks.runtime.windows.yaml`
       passes against the freshly cloned TSA29 dataset.
+- 2026-04-03 (Queued follow-up docs hardening after the `#95` Windows Arbutus bootstrap fire drill):
+  - Recorded a new immediate documentation lane to make the successful Windows
+    recovery path discoverable for a fresh user and a fresh agent in a fresh
+    environment, rather than relying on issue archaeology and ad hoc debugging.
+  - Opened GitHub issue `#97`:
+    - `Documentation: harden Windows Arbutus/DataLad bootstrap for new FEMIC instance datasets`
+  - The planned docs upgrade will explicitly cover:
+    - plain unquoted `KEY=VALUE` formatting for
+      `%USERPROFILE%\.config\femic\arbutus.env`;
+    - execution-policy-safe PowerShell loader usage;
+    - the recommended minimal debug order:
+      - load env file
+      - confirm non-empty vars
+      - run direct `HeadBucket` probe(s)
+      - only then run `git annex initremote`;
+    - stale `annex-uuid` conflict handling;
+    - publish-order expectations after remote init; and
+    - fresh-clone materialization guidance for Windows.
+- 2026-04-03 (Issue `#97` implemented: Windows Arbutus/DataLad bootstrap docs hardened):
+  - Upgraded the canonical maintainer runbook at
+    `docs/guides/public-data-mirror-runbook.rst` so it now explicitly covers:
+    - the recommended Windows local Arbutus env-file pattern;
+    - the “plain `KEY=VALUE`, no quotes” rule;
+    - execution-policy-safe PowerShell loader usage;
+    - minimal `HeadBucket` probes before `git annex initremote`;
+    - the known-good `initremote` parity flags;
+    - stale-`annex-uuid` conflict handling;
+    - publish order after remote init; and
+    - Windows cold-clone materialization guidance.
+  - Added cross-links and guardrails in:
+    - `AGENTS.md`
+    - `README.md`
+    - `docs/reference/contracts/repo-runtime-invariants.rst`
+    - `planning/femic_public_data_datalad_bootstrap.md`
+  - Docs validation passed with:
+    - `python -m sphinx -b html docs _build/html -W`

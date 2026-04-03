@@ -135,6 +135,10 @@ The compact companion contract page is
 `docs/reference/contracts/repo-runtime-invariants.rst`.
 For local VS Code/Codex workflow guidance, including this Windows recovery
 seam, see `docs/guides/vscode-coding-agent-onboarding.rst`.
+If you are creating or publishing a new DataLad-managed FEMIC instance dataset
+with an Arbutus special remote, use
+`docs/guides/public-data-mirror-runbook.rst` as the canonical maintainer
+runbook, especially on Windows.
 
 ## Bundled Example Instances Under `external/`
 
