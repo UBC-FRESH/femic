@@ -3000,7 +3000,7 @@ def test_instance_refresh_reference_evidence_uses_reference_defaults(
     assert captured["report"] is None
     assert captured["instance_root"] == Path("r")
     assert captured["output"] == Path("evidence/reference_rebuild_report.latest.json")
-    assert captured["log_dir"] == Path("vdyp_io/logs")
+    assert captured["log_dir"] == Path("runtime/logs")
     assert captured["max_warn_increase"] == 1
     assert captured["max_baseline_diff_increase"] == 2
 

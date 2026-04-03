@@ -43,6 +43,10 @@ TIPSY Input Boundary
 - ``03_input-*.csv`` is the canonical BTC/BatchTIPSY input artifact used by
   the unattended ``/TSR`` seam; ``tipsy_params_tsa*.xlsx`` is a human-readable
   mirror generated from the same table payload.
+- When FEMIC emits BTC rows with ``planted_percent < 100``, the same canonical
+  handoff must also carry explicit ``natural_species*`` and
+  ``natural_density*`` payload; mixed-share rows with blank natural-ingress
+  fields are now treated as a FEMIC contract error before BTC launch.
 - Legacy ``02_input-*.dat`` remains a compatibility artifact only.
 - Species code mapping and SI fallback behavior should be explicit in
   ``config/tipsy/tsa*.yaml`` (legacy filename pattern retained for

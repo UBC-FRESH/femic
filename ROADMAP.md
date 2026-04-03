@@ -7743,6 +7743,65 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 ## Detailed Next Steps Notes
 
+- 2026-04-03 (Issue `#79` implementation + fresh BTC/post-TIPSY validation):
+  - Share audit result:
+    - the problematic TSA29 `planted_percent < 100` rows were **not** caused by
+      random arithmetic drift;
+    - fresh `03_input-tsa29.csv` values such as `30`, `85`, and `90` trace
+      directly to explicit `config/tipsy/tsa29.yaml` `Proportion` assignments,
+      so the mixed-share behavior is currently treated as deliberate TSA29
+      compile logic.
+  - BTC seam fix now in place:
+    - `build_btc_msyt_input_table()` now pairs the planted-side `f` payload with
+      the matching natural-side `e` payload when emitting BTC `MSYT.csv`;
+    - rows with `planted_percent < 100` now receive explicit
+      `natural_species*` / `natural_density*` fields;
+    - FEMIC now fails fast before BTC if a mixed-share row lacks a usable
+      natural-ingress payload.
+  - Fresh validation evidence from rerun `tsa29_issue79_20260403a` in
+    `F:\projects\tmp\femic-issue10-closeout-20260402-clean`:
+    - regenerated `03_input-tsa29.csv` now shows the old problem rows carrying
+      real natural-ingress payload (for example `21000` / `22000` now include
+      `natural_species1=Pl`, `natural_density1=871`, `natural_species2=At`,
+      `natural_density2=100`);
+    - fresh unattended BTC plus `femic tsa btc-post-tipsy` completed
+      successfully against that regenerated handoff;
+    - fresh `04_error-tsa29.csv` is now header-only;
+    - fresh `04_output-tsa29.csv` now has `54/54` rows with positive
+      non-null `gVol_*` output and `0` all-null rows.
+  - Remaining validation caveat:
+    - the full clean-clone `femic run` command still hit an unrelated THLB
+      fallback-raster open failure in
+      `F:\projects\femic\external\femic-public-data\data\misc.thlb.tif` after
+      Stage 01a had already regenerated the canonical BTC handoff;
+    - that raster-format issue did **not** block the issue-79 seam proof
+      because the fresh Stage 01a outputs plus `femic tsa btc-post-tipsy`
+      rerun were sufficient to validate the repaired BTC contract end to end.
+
+- 2026-04-03 (Issue `#79` active implementation: mixed-share TSA29 BTC contract):
+  - Root-cause audit now points at the BTC handoff seam rather than stale
+    provenance or random arithmetic drift:
+    - the fresh failing BTC rows in clean-clone `03_input-tsa29.csv` carry
+      `planted_percent` values such as `30`, `85`, and `90`;
+    - those values match explicit TSA29 rule `Proportion` settings already
+      encoded in `config/tipsy/tsa29.yaml` (`0.30`, `0.85`, `0.90`) rather than
+      an apparent downstream accounting error;
+    - the current issue-79 working assumption is therefore that mixed-share
+      planted input is deliberate TSA29 compile logic, but FEMIC exports it
+      incompletely for BTC.
+  - Active implementation target:
+    - preserve the intended mixed-share TSA29 behavior;
+    - repair the BTC export so any row with `planted_percent < 100` also carries
+      explicit natural-ingress species/density payload;
+    - fail fast before BTC if FEMIC is about to emit a mixed-share row without
+      usable natural-ingress fields.
+  - Validation target for this pass:
+    - regenerate fresh `03_input-tsa29.csv`;
+    - rerun the clean TSA29 BTC/post-TIPSY chain;
+    - prove the 21 previously failing feature IDs no longer hit fresh
+      `Natural has no Species` errors, or else document a narrower remaining
+      contract gap explicitly before any further TSA29 prototype claims.
+
 - 2026-04-03 (Issue #10 fresh-clone closeout achieved; follow-on moves to `#79`):
   - Fresh validation closeout completed from:
     - source workspace: `F:\projects\femic`

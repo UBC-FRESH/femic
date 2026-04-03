@@ -324,6 +324,60 @@ def test_build_tipsy_params_from_config_normalizes_mix_sum_and_order() -> None:
     assert "SW" in [out["f"].get(f"SPP_{idx}") for idx in range(1, 6)]
 
 
+def test_build_tipsy_params_from_config_preserves_explicit_side_proportions() -> None:
+    cfg = {
+        "schema_version": 1,
+        "tsa_code": "29",
+        "defaults": {
+            "e": {"Regen_Method": "N", "Proportion": 1},
+            "f": {"Regen_Method": "P", "Proportion": 1},
+        },
+        "rules": [
+            {
+                "id": "mixed_share",
+                "when": {"leading_species_in": ["PL"]},
+                "assign": {
+                    "e": {
+                        "Proportion": 0.15,
+                        "Density": 1133,
+                        "SPP_1": "PL",
+                        "PCT_1": 62,
+                        "SPP_2": "AT",
+                        "PCT_2": 17,
+                    },
+                    "f": {
+                        "Proportion": 0.85,
+                        "Density": 1133,
+                        "SPP_1": "PL",
+                        "PCT_1": 62,
+                        "SPP_2": "FD",
+                        "PCT_2": 8,
+                    },
+                },
+            }
+        ],
+    }
+    au_data = {
+        "ss": pd.DataFrame({"SITE_INDEX": [15.0], "BEC_ZONE_CODE": ["IDF"]}),
+        "species": {"PL": {"pct": 100.0}},
+    }
+    vdyp_out = {1: pd.DataFrame({"SI": [15.0], "% Stk": [90.0]})}
+
+    out = build_tipsy_params_from_config(
+        au_id=3004,
+        au_data=au_data,
+        vdyp_out=vdyp_out,
+        config=cfg,
+    )
+
+    assert out["e"]["Proportion"] == 0.15
+    assert out["f"]["Proportion"] == 0.85
+    assert out["e"]["SPP_1"] == "PL"
+    assert out["e"]["SPP_2"] == "AT"
+    assert out["f"]["SPP_1"] == "PL"
+    assert out["f"]["SPP_2"] == "FD"
+
+
 def test_build_tipsy_params_from_config_applies_side_specific_si_offset() -> None:
     cfg = {
         "schema_version": 1,
@@ -536,7 +590,15 @@ def test_repo_tsa29_config_matches_idf_fir_rule() -> None:
         config=cfg,
     )
     assert out["e"]["SPP_1"] == "PL"
-    assert out["e"]["PCT_1"] == 42
+    assert out["e"]["PCT_1"] == 41
+    assert (
+        sum(
+            int(out["e"][f"PCT_{idx}"])
+            for idx in range(1, 6)
+            if out["e"].get(f"PCT_{idx}") is not None
+        )
+        == 100
+    )
     assert out["f"]["SPP_1"] == "PLI"
     assert out["f"]["SI"] == 17.0
     assert out["f"]["GW_1"] == 9.0

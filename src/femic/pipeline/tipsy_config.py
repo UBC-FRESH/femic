@@ -594,6 +594,12 @@ def build_tipsy_params_from_config(
         tp[side]["SI"] = round((c1 * si) + c2 + offset, 1)
     tp["e"]["BEC"] = tp["f"]["BEC"] = bec
     tp["e"]["OAF1"] = tp["f"]["OAF1"] = oaf1
+    if str(tp["e"].get("Regen_Method", "")).upper() == "N":
+        _finalize_species_mix(
+            side_map=tp["e"],
+            leading_species=leading_species,
+            species_code_overrides=species_code_overrides,
+        )
     _finalize_species_mix(
         side_map=tp["f"],
         leading_species=leading_species,

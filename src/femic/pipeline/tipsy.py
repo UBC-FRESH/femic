@@ -2974,16 +2974,70 @@ def _btc_density_from_percent(*, total_density: Any, percent: Any) -> Any:
     return int(round(total_float * (pct_float / 100.0)))
 
 
+def _btc_prepare_source_table(table: Any) -> Any:
+    prepared = table.copy()
+    unnamed_cols = [col for col in prepared.columns if str(col).startswith("Unnamed:")]
+    if unnamed_cols:
+        prepared = prepared.drop(columns=unnamed_cols)
+    return prepared
+
+
+def _btc_pairing_key(value: Any, *, side: str) -> int | str:
+    numeric = _btc_numeric_or_blank(value)
+    if numeric == "":
+        return ""
+    offset = 10000 if side == "e" else 20000
+    return int(float(numeric)) - offset
+
+
+def _btc_apply_species_payload(
+    *,
+    row: dict[str, Any],
+    source_record: Mapping[str, Any],
+    species_prefix: str,
+    density_prefix: str,
+    include_genetic_worth: bool,
+    preserve_existing_site_index: bool = False,
+) -> None:
+    for i in range(1, 6):
+        species_key = f"SPP_{i}"
+        percent_key = f"PCT_{i}"
+        gw_key = f"GW_{i}"
+        btc_species = _btc_species_code(source_record.get(species_key))
+        if not btc_species:
+            continue
+        species_col = f"{species_prefix}{i}"
+        density_col = f"{density_prefix}{i}"
+        row[species_col] = btc_species
+        row[density_col] = _btc_density_from_percent(
+            total_density=source_record.get("Density"),
+            percent=source_record.get(percent_key),
+        )
+        if include_genetic_worth:
+            row[f"genetic_worth{i}"] = _btc_numeric_or_blank(source_record.get(gw_key))
+        site_column = _btc_site_index_column_for_species(btc_species)
+        if site_column is None:
+            continue
+        if preserve_existing_site_index and row.get(site_column, 0) not in ("", 0):
+            continue
+        row[site_column] = _btc_numeric_or_blank(source_record.get("SI")) or 0
+
+
 def build_btc_msyt_input_table(
     *,
     tipsy_table: Any,
+    natural_tipsy_table: Any | None = None,
     pd_module: Any,
 ) -> Any:
-    """Build BTC `MSYT.csv` input rows from the current TIPSY `f`-table payload."""
-    table = tipsy_table.copy()
-    unnamed_cols = [col for col in table.columns if str(col).startswith("Unnamed:")]
-    if unnamed_cols:
-        table = table.drop(columns=unnamed_cols)
+    """Build BTC `MSYT.csv` input rows from TIPSY planted and natural-side payloads."""
+    table = _btc_prepare_source_table(tipsy_table)
+    natural_records_by_key: dict[int | str, Mapping[str, Any]] = {}
+    if natural_tipsy_table is not None:
+        natural_table = _btc_prepare_source_table(natural_tipsy_table)
+        natural_records_by_key = {
+            _btc_pairing_key(record.get("AU"), side="e"): record
+            for record in natural_table.to_dict(orient="records")
+        }
 
     rows: list[dict[str, Any]] = []
     for record in table.to_dict(orient="records"):
@@ -3007,26 +3061,42 @@ def build_btc_msyt_input_table(
         row["opening_id"] = feature_id
         row["vri_ref_age"] = 0
         row["vri_ref_sph"] = 0
+        _btc_apply_species_payload(
+            row=row,
+            source_record=record,
+            species_prefix="planted_species",
+            density_prefix="planted_density",
+            include_genetic_worth=True,
+        )
 
-        for i in range(1, 6):
-            species_key = f"SPP_{i}"
-            percent_key = f"PCT_{i}"
-            gw_key = f"GW_{i}"
-            btc_species = _btc_species_code(record.get(species_key))
-            if not btc_species:
-                continue
-            planted_species_col = f"planted_species{i}"
-            planted_density_col = f"planted_density{i}"
-            genetic_worth_col = f"genetic_worth{i}"
-            row[planted_species_col] = btc_species
-            row[planted_density_col] = _btc_density_from_percent(
-                total_density=record.get("Density"),
-                percent=record.get(percent_key),
+        planted_percent = row["planted_percent"]
+        if planted_percent != "" and float(planted_percent) < 100.0:
+            natural_record = natural_records_by_key.get(
+                _btc_pairing_key(record.get("AU"), side="f")
             )
-            row[genetic_worth_col] = _btc_numeric_or_blank(record.get(gw_key))
-            site_column: str | None = _btc_site_index_column_for_species(btc_species)
-            if site_column is not None:
-                row[site_column] = _btc_numeric_or_blank(record.get("SI")) or 0
+            if natural_record is None:
+                raise ValueError(
+                    "BTC MSYT mixed-share row is missing a matching natural-side TIPSY "
+                    f"payload (feature_id={feature_id}, planted_percent={planted_percent})."
+                )
+            _btc_apply_species_payload(
+                row=row,
+                source_record=natural_record,
+                species_prefix="natural_species",
+                density_prefix="natural_density",
+                include_genetic_worth=False,
+                preserve_existing_site_index=True,
+            )
+            if not any(row[f"natural_species{i}"] for i in range(1, 6)):
+                raise ValueError(
+                    "BTC MSYT mixed-share row has no usable natural species payload "
+                    f"(feature_id={feature_id}, planted_percent={planted_percent})."
+                )
+            if not any(row[f"natural_density{i}"] != "" for i in range(1, 6)):
+                raise ValueError(
+                    "BTC MSYT mixed-share row has no usable natural density payload "
+                    f"(feature_id={feature_id}, planted_percent={planted_percent})."
+                )
 
         rows.append(row)
 

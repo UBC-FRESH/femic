@@ -650,6 +650,12 @@ def run_tsa(
             tipsy_params_columns=runtime_config.tipsy_params_columns,
             pd_module=pd,
         )
+        natural_df = build_tipsy_input_table(
+            tipsy_params_for_tsa=tipsy_params[tsa],
+            tipsy_params_columns=runtime_config.tipsy_params_columns,
+            pd_module=pd,
+            table_key="e",
+        )
     except RuntimeError:
         print(
             "warning: no TIPSY parameter tables generated for TSA %s; writing empty "
@@ -657,6 +663,7 @@ def run_tsa(
             % (tsa, vdyp_curve_events_path)
         )
         df = pd.DataFrame(columns=list(runtime_config.tipsy_params_columns))
+        natural_df = pd.DataFrame(columns=list(runtime_config.tipsy_params_columns))
     write_tipsy_input_exports(
         tipsy_table=df,
         tsa=tsa,
@@ -665,6 +672,7 @@ def run_tsa(
     try:
         btc_msyt_df = build_btc_msyt_input_table(
             tipsy_table=df,
+            natural_tipsy_table=natural_df,
             pd_module=pd,
         )
     except RuntimeError:

@@ -1134,7 +1134,7 @@ def test_resolve_effective_run_options_merges_profile_and_cli() -> None:
         skip_checks=False,
         debug_rows=None,
         run_id=None,
-        log_dir=Path("vdyp_io/logs"),
+        log_dir=Path("runtime/logs"),
         profile=profile,
     )
 
@@ -1145,7 +1145,7 @@ def test_resolve_effective_run_options_merges_profile_and_cli() -> None:
     assert resolved.skip_checks is True
     assert resolved.debug_rows == 250
     assert resolved.run_id == "dev-profile"
-    assert resolved.log_dir == Path("vdyp_io/profile_logs")
+    assert resolved.log_dir == Path("runtime/profile_logs")
     assert resolved.boundary_path is None
     assert resolved.boundary_layer is None
     assert resolved.boundary_code is None

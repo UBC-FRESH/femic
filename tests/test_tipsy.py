@@ -247,6 +247,86 @@ def test_build_btc_msyt_input_table_maps_current_tipsy_payload() -> None:
     assert row["cw_si"] == 0
 
 
+def test_build_btc_msyt_input_table_populates_natural_payload_for_mixed_share() -> None:
+    planted_table = pd.DataFrame(
+        {
+            "AU": [23001],
+            "BEC": ["IDFdk3"],
+            "Proportion": [0.85],
+            "Regen_Delay": [2],
+            "Density": [1133],
+            "SPP_1": ["PL"],
+            "PCT_1": [62],
+            "SPP_2": ["FD"],
+            "PCT_2": [8],
+            "GW_1": [3.0],
+            "OAF1": [0.85],
+            "OAF2": [0.95],
+            "SI": [18.5],
+        }
+    )
+    natural_table = pd.DataFrame(
+        {
+            "AU": [13001],
+            "BEC": ["IDFdk3"],
+            "Proportion": [0.15],
+            "Regen_Delay": [2],
+            "Density": [1133],
+            "SPP_1": ["PL"],
+            "PCT_1": [62],
+            "SPP_2": ["AT"],
+            "PCT_2": [17],
+            "SPP_3": ["SX"],
+            "PCT_3": [10],
+            "OAF1": [0.85],
+            "OAF2": [0.95],
+            "SI": [16.5],
+        }
+    )
+
+    out = build_btc_msyt_input_table(
+        tipsy_table=planted_table,
+        natural_tipsy_table=natural_table,
+        pd_module=pd,
+    )
+
+    row = out.iloc[0].to_dict()
+    assert row["feature_id"] == 23001
+    assert row["planted_percent"] == 85
+    assert row["planted_species1"] == "Pl"
+    assert row["planted_density1"] == 702
+    assert row["natural_species1"] == "Pl"
+    assert row["natural_density1"] == 702
+    assert row["natural_species2"] == "At"
+    assert row["natural_density2"] == 193
+    assert row["sx_si"] == 16.5
+    assert row["pl_si"] == 18.5
+
+
+def test_build_btc_msyt_input_table_rejects_mixed_share_without_natural_payload() -> (
+    None
+):
+    planted_table = pd.DataFrame(
+        {
+            "AU": [23001],
+            "BEC": ["IDFdk3"],
+            "Proportion": [0.85],
+            "Regen_Delay": [2],
+            "Density": [1133],
+            "SPP_1": ["PL"],
+            "PCT_1": [62],
+            "OAF1": [0.85],
+            "OAF2": [0.95],
+            "SI": [18.5],
+        }
+    )
+
+    with pytest.raises(
+        ValueError, match="missing a matching natural-side TIPSY payload"
+    ):
+        build_btc_msyt_input_table(tipsy_table=planted_table, pd_module=pd)
+
+
 def test_write_btc_msyt_input_csv_writes_canonical_path(tmp_path: Path) -> None:
     row = {column: "" for column in DEFAULT_BTC_MSYT_COLUMNS}
     row["feature_id"] = 1

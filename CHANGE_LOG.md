@@ -10233,3 +10233,32 @@
     perpetually untracked local-only files.
   - Left `vdyp_io/logs/vdyp_runs-*.jsonl` out of version control because those
     files are runtime logs, not essential system/config assets.
+- 2026-04-03 (Issue `#79` implementation launched):
+  - Updated the active roadmap/issue-79 execution notes to make the
+    planted-share audit explicit instead of treating it as a side question.
+  - Confirmed from the live TSA29 config and fresh clean-clone BTC handoff that
+    the failing `planted_percent` values (`30`, `85`, `90`) line up with
+    explicit `config/tipsy/tsa29.yaml` `Proportion` settings, so the issue is
+    currently classified as a deliberate mixed-share TSA29 model exported
+    incompletely to BTC rather than an obvious random accounting drift.
+  - Set the active implementation target to preserve those mixed-share rows,
+    populate explicit BTC natural-ingress fields, and revalidate the 21
+    previously failing feature IDs through a fresh TSA29 rerun.
+- 2026-04-03 (Issue `#79` BTC natural-ingress fix validated):
+  - Repaired the BTC `MSYT.csv` handoff so mixed-share rows now pair the
+    planted-side TIPSY payload with the matching natural-side payload instead of
+    exporting blank `natural_species*` / `natural_density*` fields.
+  - Added fail-fast validation so FEMIC now errors before BTC if a row carries
+    `planted_percent < 100` but no usable natural-ingress payload.
+  - Confirmed the planted-share root cause is deliberate TSA29 config logic,
+    not a random accounting error: the problematic `30` / `85` / `90`
+    percentages trace directly to explicit `config/tipsy/tsa29.yaml`
+    `Proportion` values.
+  - Fresh rerun `tsa29_issue79_20260403a` in the clean validation clone
+    regenerated `03_input-tsa29.csv`, ran unattended BTC plus
+    `femic tsa btc-post-tipsy`, and eliminated the old failure subset:
+    `04_error-tsa29.csv` is now header-only and `04_output-tsa29.csv` now has
+    `54/54` rows with positive non-null `gVol_*` output.
+  - Also updated the shipped stage-01a guide to state the repaired mixed-share
+    BTC contract explicitly and refreshed the run-profile example / stale tests
+    around the repo's current `runtime/logs` default.
