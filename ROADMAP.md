@@ -1137,6 +1137,30 @@ notes.
       home directory; and
     - intentionally deferred optional PowerShell profile / `.bashrc` hooks
       pending explicit approval.
+  - Current execution status on Windows:
+    - the TSA29 submodule now has a dedicated
+      `feature/issue-95-tsa29-arbutus-special-remote` branch;
+    - the local auth loader now yields non-empty values for all required
+      AWS/S3 variables in both PowerShell and Git Bash;
+    - `git -C external/femic-public-data annex enableremote arbutus-s3`
+      succeeds from this Windows host, confirming the existing public-data
+      remote remains reachable/enable-able here; but
+    - `git annex initremote arbutus-s3 ...` inside
+      `external/femic-tsa29-instance` still fails at the bucket-creation step
+      with:
+      `XmlException {xmlErrorMessage = "Missing error Message"}`.
+  - Additional debugging evidence:
+    - direct boto3 probes against the Arbutus endpoint from this Windows host
+      return `404` for `HeadBucket` on both the intended TSA29 bucket and the
+      known public-data bucket name; and
+    - boto3 `create_bucket(...)` attempts against the intended TSA29 bucket
+      return `NoSuchKey`, so the current blocker is specifically the bucket
+      creation / endpoint semantics, not the local loader workflow.
+  - Next likely resolution path:
+    - create the TSA29 bucket out-of-band from the Linux/Arbutus environment
+      that previously succeeded for `femic-public-data`, or via the Arbutus UI;
+      then rerun `git annex initremote arbutus-s3 ...` against that existing
+      bucket from this Windows checkout.
 
 - 2026-04-03 (Issue `#85` curve refresh ready for `@gparadis` review):
   - Parent rollout umbrella:

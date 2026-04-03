@@ -10742,3 +10742,23 @@
   - The remaining blocker to the actual `git annex initremote arbutus-s3 ...`
     step is that `arbutus.env` still contains placeholder secret values rather
     than the real AWS key/secret pair.
+- 2026-04-03 (Issue `#95` Windows Arbutus bootstrap advanced to bucket-creation blocker):
+  - Verified the user-local auth workflow with real non-empty values loaded
+    into both PowerShell and Git Bash.
+  - Switched the TSA29 instance dataset onto submodule branch
+    `feature/issue-95-tsa29-arbutus-special-remote`.
+  - Confirmed the existing `external/femic-public-data` Arbutus special remote
+    can still be enabled from this Windows host with
+    `git -C external/femic-public-data annex enableremote arbutus-s3`.
+  - Attempted the actual TSA29 remote bootstrap with the known-good remote
+    shape, but `git annex initremote arbutus-s3 ...` still fails at bucket
+    creation with:
+    - `XmlException {xmlErrorMessage = "Missing error Message"}`
+  - Additional boto3 probes from the same loaded session showed:
+    - `HeadBucket` returns `404` for both the intended TSA29 bucket and the
+      known public-data bucket name; and
+    - `create_bucket(...)` returns `NoSuchKey` on the Arbutus endpoint.
+  - Current interpretation:
+    - the local auth-file workflow is solved;
+    - the remaining blocker is bucket creation / endpoint semantics for the new
+      TSA29 bucket, not loader wiring inside the Windows shells.
