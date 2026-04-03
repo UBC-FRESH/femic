@@ -10,6 +10,28 @@ import re
 from typing import Any, cast
 
 
+def _build_aligned_vdyp_input_tables(
+    *,
+    feature_ids: list[int] | Any,
+    vdyp_ply: Any,
+    vdyp_lyr: Any,
+) -> tuple[Any, Any]:
+    """Filter VDYP polygon/layer tables to a shared, stably ordered feature set."""
+    vdyp_ply_ = vdyp_ply[vdyp_ply.FEATURE_ID.isin(feature_ids)].copy()
+    vdyp_lyr_ = vdyp_lyr[vdyp_lyr.FEATURE_ID.isin(feature_ids)].copy()
+
+    common_feature_ids = set(vdyp_ply_["FEATURE_ID"]).intersection(
+        vdyp_lyr_["FEATURE_ID"]
+    )
+    vdyp_ply_ = vdyp_ply_[vdyp_ply_.FEATURE_ID.isin(common_feature_ids)].copy()
+    vdyp_lyr_ = vdyp_lyr_[vdyp_lyr_.FEATURE_ID.isin(common_feature_ids)].copy()
+
+    # Keep same-feature layer rows in source order while still grouping batches by feature.
+    vdyp_ply_.sort_values(by="FEATURE_ID", inplace=True, kind="mergesort")
+    vdyp_lyr_.sort_values(by="FEATURE_ID", inplace=True, kind="mergesort")
+    return vdyp_ply_, vdyp_lyr_
+
+
 def write_vdyp_infiles_plylyr(
     feature_ids: list[int] | Any,
     vdyp_ply: Any,
@@ -22,8 +44,11 @@ def write_vdyp_infiles_plylyr(
     vdyp_io_dir = Path(vdyp_io_dirname)
     vdyp_io_dir.mkdir(parents=True, exist_ok=True)
 
-    vdyp_ply_ = vdyp_ply[vdyp_ply.FEATURE_ID.isin(feature_ids)].copy()
-    vdyp_ply_.sort_values(by="FEATURE_ID", inplace=True)
+    vdyp_ply_, vdyp_lyr_ = _build_aligned_vdyp_input_tables(
+        feature_ids=feature_ids,
+        vdyp_ply=vdyp_ply,
+        vdyp_lyr=vdyp_lyr,
+    )
     vdyp_ply_.to_csv(
         vdyp_io_dir / vdyp_ply_csv,
         columns=list(vdyp_ply.columns)[:-5],
@@ -31,8 +56,6 @@ def write_vdyp_infiles_plylyr(
         quoting=csv.QUOTE_NONNUMERIC,
     )
 
-    vdyp_lyr_ = vdyp_lyr[vdyp_lyr.FEATURE_ID.isin(vdyp_ply_.FEATURE_ID)].copy()
-    vdyp_lyr_.sort_values(by="FEATURE_ID", inplace=True)
     vdyp_lyr_.to_csv(
         vdyp_io_dir / vdyp_lyr_csv,
         columns=list(vdyp_lyr.columns)[:-5],

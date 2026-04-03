@@ -49,6 +49,96 @@ def test_write_vdyp_infiles_plylyr_filters_and_sorts(tmp_path: Path) -> None:
     assert lyr_out["FEATURE_ID"].tolist() == [1, 3]
 
 
+def test_write_vdyp_infiles_plylyr_drops_unmatched_polygons(tmp_path: Path) -> None:
+    ply = pd.DataFrame(
+        {
+            "FEATURE_ID": [30, 10, 20],
+            "A": [300, 100, 200],
+            "B": [3000, 1000, 2000],
+            "X1": [0, 0, 0],
+            "X2": [0, 0, 0],
+            "X3": [0, 0, 0],
+            "X4": [0, 0, 0],
+            "X5": [0, 0, 0],
+        }
+    )
+    lyr = pd.DataFrame(
+        {
+            "FEATURE_ID": [30, 20, 20],
+            "C": [3000, 2000, 2001],
+            "D": [30, 20, 21],
+            "Y1": [0, 0, 0],
+            "Y2": [0, 0, 0],
+            "Y3": [0, 0, 0],
+            "Y4": [0, 0, 0],
+            "Y5": [0, 0, 0],
+        }
+    )
+
+    write_vdyp_infiles_plylyr(
+        [30, 10, 20],
+        ply,
+        lyr,
+        vdyp_io_dirname=str(tmp_path),
+        vdyp_ply_csv="ply.csv",
+        vdyp_lyr_csv="lyr.csv",
+    )
+
+    ply_out = pd.read_csv(tmp_path / "ply.csv")
+    lyr_out = pd.read_csv(tmp_path / "lyr.csv")
+
+    assert ply_out["FEATURE_ID"].tolist() == [20, 30]
+    assert lyr_out["FEATURE_ID"].tolist() == [20, 20, 30]
+
+
+def test_write_vdyp_infiles_plylyr_preserves_layer_order_within_feature(
+    tmp_path: Path,
+) -> None:
+    ply = pd.DataFrame(
+        {
+            "FEATURE_ID": [2, 1],
+            "A": [20, 10],
+            "B": [200, 100],
+            "X1": [0, 0],
+            "X2": [0, 0],
+            "X3": [0, 0],
+            "X4": [0, 0],
+            "X5": [0, 0],
+        }
+    )
+    lyr = pd.DataFrame(
+        {
+            "FEATURE_ID": [2, 1, 1, 2],
+            "LAYER_LEVEL_CODE": ["secondary", "older", "younger", "primary"],
+            "D": [20, 10, 11, 21],
+            "Y1": [0, 0, 0, 0],
+            "Y2": [0, 0, 0, 0],
+            "Y3": [0, 0, 0, 0],
+            "Y4": [0, 0, 0, 0],
+            "Y5": [0, 0, 0, 0],
+        }
+    )
+
+    write_vdyp_infiles_plylyr(
+        [2, 1],
+        ply,
+        lyr,
+        vdyp_io_dirname=str(tmp_path),
+        vdyp_ply_csv="ply.csv",
+        vdyp_lyr_csv="lyr.csv",
+    )
+
+    lyr_out = pd.read_csv(tmp_path / "lyr.csv")
+
+    assert lyr_out["FEATURE_ID"].tolist() == [1, 1, 2, 2]
+    assert lyr_out["LAYER_LEVEL_CODE"].tolist() == [
+        "older",
+        "younger",
+        "secondary",
+        "primary",
+    ]
+
+
 def test_import_vdyp_tables_returns_empty_for_nonmatching_content(
     tmp_path: Path,
 ) -> None:

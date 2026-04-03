@@ -10300,3 +10300,35 @@
       repaired BTC seam itself;
     - issue `#79` is therefore technically closeout-ready once its final note
       links those new follow-on bug tickets explicitly.
+- 2026-04-03 (Issue `#82` VDYP batch-alignment fix validated):
+  - Repaired `src/femic/pipeline/vdyp_io.py` so
+    `write_vdyp_infiles_plylyr(...)` now filters polygon and layer inputs down
+    to the shared `FEATURE_ID` set before writing the batch sent to VDYP.
+  - Switched the writer to stable `FEATURE_ID` ordering (`mergesort`) so
+    duplicated same-feature layer rows keep their original within-feature order
+    instead of relying on an unstable generic sort.
+  - Added focused regression coverage in `tests/test_vdyp_io.py` for:
+    - the exact missing-layer failure shape (polygon row present, no matching
+      layer row),
+    - deterministic within-feature ordering when multiple layer rows share one
+      `FEATURE_ID`.
+  - Updated the Stage 01a and troubleshooting guides so operator-facing docs
+    now call out polygon/layer batch alignment as part of VDYP failure triage.
+  - Narrow TSA29 validation from the live repo using the saved clean-clone
+    evidence payload confirmed the seam-level and bucket-level fix:
+    - the saved bad batch output from
+      `vdyp_out_9tylbxvg.out` still parses to only `1` table;
+    - replaying those same `100` sampled feature IDs through the patched writer
+      rewrote the input batch to `95` aligned polygon rows / `109` layer rows
+      (`95` unique matching features) and replayed as `106` parsed VDYP tables
+      instead of collapsing to one;
+    - rerunning the isolated TSA29 `ESSF_SE / H` bucket (`1996` stands) through
+      the live code produced `117` VDYP tables and a full `299`-point smoothed
+      unmanaged curve with positive volume throughout, peaking around
+      `290.4 m3/ha` and ending near `250.5 m3/ha` rather than degenerating into
+      the broken near-two-point fallback shape.
+  - Validation gates run for this change:
+    - `ruff format --check src tests`
+    - `ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest` (`809 passed`)

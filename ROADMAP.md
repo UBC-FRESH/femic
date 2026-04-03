@@ -7743,6 +7743,25 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 ## Detailed Next Steps Notes
 
+- 2026-04-03 (Issue `#82` active implementation: VDYP polygon/layer batch alignment):
+  - Root-cause read for this pass:
+    - the broken TSA29 `ESSF_SE / H` curve is currently traced to the sampled
+      VDYP input-writer seam, not to stratum sizing;
+    - the saved bad batch had `100` polygon rows but only `95` unique matching
+      layer `FEATURE_ID`s, and the first polygon row had no corresponding layer
+      row before VDYP consumed the batch.
+  - Active implementation target:
+    - repair `write_vdyp_infiles_plylyr(...)` so FEMIC only writes
+      feature-aligned polygon/layer batches to VDYP;
+    - preserve deterministic per-feature ordering for multi-layer rows instead
+      of relying on an unstable generic sort;
+    - add focused regression coverage for missing-layer and duplicated-layer
+      cases so the sampled TSA29 failure shape stays reproducible in tests.
+  - Validation target for this pass:
+    - rerun the relevant narrow TSA29 Stage 01a bucket after the writer fix;
+    - confirm `ESSF_SE / H` no longer degenerates into the broken near-two-point
+      fallback curve and that AU `23009` regains a plausible VDYP overlay.
+
 - 2026-04-03 (Issue `#79` follow-on VDYP bug split after plot QA):
   - The BTC/null-volume seam targeted by issue `#79` is now fixed and the
     Windows annex-raster blocker from the same clean-clone rerun is also

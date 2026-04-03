@@ -26,6 +26,9 @@ VDYP Fitting and SI Splits
   unstable regressions.
 - Tail handling and outlier controls are needed when right-tail flattening or
   early-age anomalies appear in binned medians.
+- Before each VDYP batch is launched, FEMIC now drops sampled polygon rows
+  that lack matching layer rows so the polygon/layer CSV pair stays strictly
+  feature-aligned at the external handoff seam.
 - Default per-case/per-FMU smoothing exceptions now live in
   ``config/vdyp_fit_policy.yaml``.
 - Instance-specific overlays can add or adjust those rules with
@@ -67,7 +70,8 @@ Known Failure Signatures
 - Empty SI bins despite adequate stand counts: inspect quantile logic and
   collapse thresholds.
 - Flat/degenerate or wildly oscillating VDYP curves: inspect bin medians,
-  sample size, and fit overrides.
+  sample size, fit overrides, and whether the sampled polygon/layer batch lost
+  feature alignment before VDYP.
 - BTC / BatchTIPSY parse failures: usually input-schema mismatch, unsupported
   species/FIZ combinations, or incompatible report-template seams.
 

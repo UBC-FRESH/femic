@@ -27,12 +27,16 @@ Likely causes:
 - Over-fragmented strata/SI bins
 - Too-few stands in fit bins
 - Outlier points driving NLLS behavior
+- Sampled VDYP polygon/layer temp files drifting out of feature alignment
 
 Recovery:
 
 1. Reduce stratification complexity for small areas.
 2. Increase SI-bin collapse aggressiveness or merge bins.
-3. Apply targeted fit overrides and compare diagnostics.
+3. Inspect the sampled VDYP temp CSVs and confirm polygon rows and layer rows
+   still share the same ``FEATURE_ID`` set before VDYP launch.
+4. Apply targeted fit overrides and compare diagnostics only after the batch
+   handoff itself looks sane.
 
 VDYP fit-policy config surface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
