@@ -10226,3 +10226,10 @@
   - Left true VDYP event/stdout logging in `vdyp_io/logs`, preserving
     `vdyp_io/VDYP.INI` and `vdyp_io/VDYP_CFG/**` as untouched essential runtime
     assets.
+- 2026-04-03 (TSA29 essential VDYP runtime assets committed):
+  - Committed `external/femic-tsa29-instance/vdyp_io/VDYP.INI` and
+    `external/femic-tsa29-instance/vdyp_io/VDYP_CFG/**` so the required TSA29
+    local VDYP system/config payload is now versioned instead of living as
+    perpetually untracked local-only files.
+  - Left `vdyp_io/logs/vdyp_runs-*.jsonl` out of version control because those
+    files are runtime logs, not essential system/config assets.

@@ -10883,4 +10883,11 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - at age `80.0`, `Logs_Grade_J` rises from `373.1` to `396.9`, while
       `Logs_Grade_X` falls from `16.5` to `13.2` and `Logs_Grade_Y` falls from
       `16.5` to `11.7`, matching the intended directional shift.
+- 2026-04-03 (TSA29 essential VDYP runtime assets committed):
+  - Promoted the previously local-only TSA29 VDYP runtime support payload into
+    the instance repo by committing `vdyp_io/VDYP.INI` and
+    `vdyp_io/VDYP_CFG/**`.
+  - Left disposable runtime logs out of version control; the only remaining
+    untracked TSA29 `vdyp_io/logs/vdyp_runs-*.jsonl` files are runtime logs,
+    not essential system/config assets.
 
