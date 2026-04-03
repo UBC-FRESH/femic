@@ -10151,3 +10151,14 @@
     payloads and common binary GIS artifacts (`.tif`, `.tiff`, `.feather`,
     `.gpkg`) so future Windows clones are less likely to pick up CRLF-driven
     false dirt after normal data access.
+- 2026-04-03 (TSA29 VDYP raw-output ignore cleanup):
+  - Added focused ignore rules in `external/femic-tsa29-instance/.gitignore`
+    for the largest transient raw VDYP spill families:
+    `vdyp_err_*.err`, `vdyp_lyr_*.csv`, `vdyp_out_*.out`, and
+    `vdyp_ply_*.csv`.
+  - Committed that TSA29 submodule cleanup as `1b9a3cb`
+    (`Ignore transient VDYP raw output spill`) so the branch carries the
+    merge-hygiene fix intentionally.
+  - The ignore update reduced TSA29 Git-visible noise from roughly `7,886`
+    files to `179` files while still leaving the evidence-bearing manifests and
+    non-raw runtime artifacts visible for review.

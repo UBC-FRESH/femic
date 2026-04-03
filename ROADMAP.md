@@ -7806,6 +7806,17 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - parent merge work should advance the public-data submodule pointer to
       `155711f` together with the existing TSA29 pointer update, but must still
       keep the large TSA29 runtime spill out of the intentional Git payload.
+  - TSA29 merge-hygiene follow-up:
+    - committed `external/femic-tsa29-instance` submodule fix `1b9a3cb`
+      (`Ignore transient VDYP raw output spill`) to ignore the largest
+      throwaway `vdyp_io` raw-output families
+      (`vdyp_err_*.err`, `vdyp_lyr_*.csv`, `vdyp_out_*.out`,
+      `vdyp_ply_*.csv`);
+    - that change cut the TSA29 Git-visible worktree noise from roughly
+      `7,886` files to `179` files without hiding the JSON evidence manifests;
+    - remaining TSA29 dirt is now concentrated in still-meaningful runtime
+      artifacts (`data/*`, `plots/*`, fragments, manifests, and local
+      `VDYP_CFG` / `VDYP.INI`) rather than the transient raw spill.
 
 - 2026-04-02 (Issue #10 BTC-first TSA29 migration checkpoint):
   - Completed in this branch:
