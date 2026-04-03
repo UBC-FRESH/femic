@@ -4,6 +4,7 @@ from femic.pipeline.io import (
     build_legacy_data_artifact_paths,
     resolve_legacy_siteprod_artifacts,
     resolve_legacy_thlb_raster_path,
+    resolve_windows_annex_pointer_payload_path,
     LegacyExternalDataPaths,
 )
 
@@ -74,6 +75,49 @@ def test_resolve_legacy_thlb_raster_path_returns_instance_when_both_missing(
         external_data_paths=_external_paths(external_root),
     )
     assert resolved == instance_data_root / "misc.thlb.tif"
+
+
+def test_resolve_windows_annex_pointer_payload_path_maps_submodule_pointer(
+    tmp_path: Path,
+) -> None:
+    worktree_root = tmp_path / "dataset"
+    pointer_path = worktree_root / "data" / "bc" / "siteprod" / "siteprod.tif"
+    pointer_path.parent.mkdir(parents=True)
+    gitdir = tmp_path / "gitdir"
+    payload = (
+        gitdir
+        / "annex"
+        / "objects"
+        / "fa1"
+        / "741"
+        / "MD5E-s10--deadbeef.tif"
+        / "MD5E-s10--deadbeef.tif"
+    )
+    payload.parent.mkdir(parents=True)
+    payload.write_bytes(b"payload")
+    (worktree_root / ".git").write_text("gitdir: ../gitdir\n", encoding="utf-8")
+    pointer_path.write_text(
+        "../../../.git/annex/objects/Gp/pM/MD5E-s10--deadbeef.tif/MD5E-s10--deadbeef.tif",
+        encoding="utf-8",
+    )
+
+    resolved = resolve_windows_annex_pointer_payload_path(pointer_path, os_name="nt")
+
+    assert resolved == payload.resolve()
+
+
+def test_resolve_windows_annex_pointer_payload_path_leaves_linux_paths_unchanged(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "misc.thlb.tif"
+    path.write_text(
+        "../.git/annex/objects/FM/vw/payload.tif/payload.tif",
+        encoding="utf-8",
+    )
+
+    resolved = resolve_windows_annex_pointer_payload_path(path, os_name="posix")
+
+    assert resolved == path
 
 
 def test_resolve_legacy_siteprod_artifacts_prefers_instance_local_pair(

@@ -191,6 +191,12 @@ A healthy Windows checkout should also report:
 If the payload is present and the repo responds normally, the Windows public-data
 bootstrap is good enough for FEMIC pipeline runs.
 
+Native Windows clones may still materialize some annexed raster worktree paths
+as tiny pointer stubs instead of ordinary TIFF files. FEMIC now resolves those
+pointer-style paths at the direct THLB/SiteProd raster-open seams before calling
+``rasterio.open(...)``, so Linux behavior stays unchanged while Windows clones
+remain usable without extra manual checkout-mode tweaking.
+
 Verify Runtime Readiness
 ------------------------
 

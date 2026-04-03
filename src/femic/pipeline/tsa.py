@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
 from femic.pipeline.bundle import tsa_curve_id_prefix
+from femic.pipeline.io import resolve_windows_annex_pointer_payload_path
 
 TARGET_NSTRATA_BY_TSA: dict[str, int] = {
     "08": 9,
@@ -574,7 +575,8 @@ def assign_thlb_raw_from_raster(
 ) -> Any:
     """Assign per-row raw THLB values by masking a THLB raster."""
     table = f_table.copy()
-    with rio_module.open(thlb_raster_path) as src:
+    readable_path = resolve_windows_annex_pointer_payload_path(Path(thlb_raster_path))
+    with rio_module.open(readable_path) as src:
 
         def _mean(row: Any) -> float:
             try:

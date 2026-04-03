@@ -635,8 +635,11 @@ def test_mean_thlb_for_geometry_and_assign_thlb_raw_from_raster() -> None:
         def __exit__(self, exc_type: object, exc: object, tb: object) -> None:
             return None
 
+    opened_paths: list[Path] = []
+
     class _FakeRio:
-        def open(self, _path: Path) -> _FakeSrc:
+        def open(self, path: Path) -> _FakeSrc:
+            opened_paths.append(path)
             return _FakeSrc()
 
     frame = pd.DataFrame({"geometry": [object(), object()]})
@@ -654,6 +657,7 @@ def test_mean_thlb_for_geometry_and_assign_thlb_raw_from_raster() -> None:
         row_apply_fn=_row_apply,
     )
     assert out["thlb_raw"].tolist() == [6.0, 6.0]
+    assert opened_paths == [Path("misc.thlb.tif")]
 
 
 def test_mean_thlb_for_geometry_fallback_scope() -> None:

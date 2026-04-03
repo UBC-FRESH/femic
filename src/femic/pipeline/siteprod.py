@@ -10,6 +10,8 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
+from femic.pipeline.io import resolve_windows_annex_pointer_payload_path
+
 
 def _find_arcgis_pro_python() -> Path | None:
     candidates = [
@@ -224,7 +226,8 @@ def assign_siteprod_from_raster(
 ) -> Any:
     """Assign siteprod column by masking the stacked siteprod raster per stand row."""
     table = f_table.copy()
-    with rio_module.open(siteprod_tif_path) as src:
+    readable_path = resolve_windows_annex_pointer_payload_path(Path(siteprod_tif_path))
+    with rio_module.open(readable_path) as src:
 
         def _mean(row: Any) -> float:
             return mean_siteprod_for_row(

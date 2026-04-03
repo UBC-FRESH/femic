@@ -10262,3 +10262,25 @@
   - Also updated the shipped stage-01a guide to state the repaired mixed-share
     BTC contract explicitly and refreshed the run-profile example / stale tests
     around the repo's current `runtime/logs` default.
+- 2026-04-03 (Windows annex-pointer raster follow-up launched):
+  - Recorded the newly observed Windows-only public-data seam from the clean TSA29
+    validation clone: `datalad get` can still leave annexed raster worktree
+    paths as tiny pointer stubs that fail when FEMIC calls `rasterio.open(...)`
+    directly.
+  - Scoped the fix narrowly to a Windows-only annex-pointer resolver at the THLB
+    and canonical SiteProd raster-open seams, keeping Linux behavior unchanged.
+- 2026-04-03 (Windows annex-pointer raster follow-up validated):
+  - Added a Windows-only annex-pointer resolver in the pipeline I/O seam that
+    maps tiny git-annex worktree stub files to their real payload paths under
+    the submodule gitdir before direct raster reads.
+  - Applied that resolver only at the THLB and canonical SiteProd raster-open
+    seams, leaving Linux behavior and normal non-annex paths unchanged.
+  - Added focused regression coverage for:
+    - submodule-style `.git` indirection plus annex key lookup,
+    - unchanged Linux behavior,
+    - unchanged THLB/SiteProd helper behavior on ordinary paths.
+  - Re-ran the exact previously failing clean-clone command and confirmed the
+    old Windows THLB blocker is gone:
+    `femic run --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --run-id tsa29_issue79_windows_annexfix_20260403b`
+    now completes successfully from
+    `F:\projects\tmp\femic-issue10-closeout-20260402-clean`.

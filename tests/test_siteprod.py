@@ -287,8 +287,11 @@ def test_mean_siteprod_for_row_and_assign_siteprod_from_raster() -> None:
         def __exit__(self, exc_type: object, exc: object, tb: object) -> None:
             return None
 
+    opened_paths: list[Path] = []
+
     class _FakeRio:
-        def open(self, _path: Path) -> _FakeSrc:
+        def open(self, path: Path) -> _FakeSrc:
+            opened_paths.append(path)
             return _FakeSrc()
 
     class _Table:
@@ -319,6 +322,7 @@ def test_mean_siteprod_for_row_and_assign_siteprod_from_raster() -> None:
     )
     assert out is table
     assert table.written["siteprod"] == [4.0]
+    assert opened_paths == [Path("siteprod.tif")]
 
 
 def test_load_siteprod_bandmap_prefers_bands_1_based(tmp_path: Path) -> None:

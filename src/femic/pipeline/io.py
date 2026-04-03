@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 import hashlib
 import json
+import os
 from pathlib import Path
 import tomllib
 from typing import Callable, Iterable, Mapping, Sequence
@@ -430,6 +431,73 @@ def resolve_legacy_thlb_raster_path(
     if exists(fallback_path):
         return fallback_path
     return instance_path
+
+
+def _discover_gitdir_from_worktree(path: Path) -> Path | None:
+    for base in (path, *path.parents):
+        git_entry = base / ".git"
+        if git_entry.is_dir():
+            return git_entry
+        if not git_entry.is_file():
+            continue
+        try:
+            content = git_entry.read_text(encoding="utf-8").strip()
+        except OSError:
+            return None
+        prefix = "gitdir:"
+        if not content.lower().startswith(prefix):
+            return None
+        return (base / content[len(prefix) :].strip()).resolve()
+    return None
+
+
+def resolve_windows_annex_pointer_payload_path(
+    path: str | Path,
+    *,
+    os_name: str | None = None,
+    max_pointer_bytes: int = 4096,
+) -> Path:
+    """Resolve Windows git-annex pointer stubs to readable payload paths when possible."""
+    candidate = Path(path)
+    if (os_name or os.name) != "nt":
+        return candidate
+    try:
+        if not candidate.is_file():
+            return candidate
+        if candidate.stat().st_size > int(max_pointer_bytes):
+            return candidate
+        text = candidate.read_text(encoding="utf-8").strip()
+    except (OSError, UnicodeDecodeError):
+        return candidate
+    if not text or "\n" in text or "\r" in text:
+        return candidate
+    normalized = text.replace("\\", "/")
+    marker = ".git/annex/"
+    if marker not in normalized:
+        return candidate
+
+    direct = (candidate.parent / Path(normalized)).resolve()
+    if direct.exists():
+        return direct
+
+    gitdir = _discover_gitdir_from_worktree(candidate.parent)
+    if gitdir is None:
+        return candidate
+    suffix = normalized.split(".git/", 1)[1]
+    payload = (gitdir / Path(suffix)).resolve()
+    if payload.exists():
+        return payload
+    key_name = Path(normalized).name
+    annex_objects = gitdir / "annex" / "objects"
+    if annex_objects.is_dir():
+        matches = [
+            match.resolve()
+            for match in annex_objects.glob(f"*/*/{key_name}/{key_name}")
+            if match.is_file()
+        ]
+        if matches:
+            return matches[0]
+    return candidate
 
 
 def _normalize_optional_str_list(value: object, *, field_name: str) -> list[str] | None:

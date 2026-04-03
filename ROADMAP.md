@@ -7743,6 +7743,28 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 ## Detailed Next Steps Notes
 
+- 2026-04-03 (Windows annex-pointer raster follow-up after issue `#79` validation):
+  - The clean-clone TSA29 rerun exposed a narrower Windows-only public-data seam
+    beyond the earlier missing-path fallback work:
+    - `datalad get` / `git annex get` can still leave annexed raster worktree
+      paths as tiny pointer stub files on native Windows submodule checkouts;
+    - direct `rasterio.open(...)` against those worktree paths fails even when
+      the real annex payload exists in the object store.
+  - The intended fix for this pass is intentionally narrow:
+    - add a Windows-only resolver for annex pointer-style raster paths;
+    - use it only at the direct raster-open seams (`misc.thlb.tif`,
+      canonical `siteprod.tif`);
+    - leave Linux behavior unchanged and avoid broad new environment policy.
+  - Completion evidence:
+    - added a Windows-only annex-pointer resolver that maps tiny worktree stub
+      files to the real annex payload under the submodule gitdir before direct
+      raster opens;
+    - wired that resolver into the THLB and SiteProd raster-open seams only;
+    - confirmed the earlier failing clean-clone command now passes the old THLB
+      blocker and completes:
+      `femic run --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --run-id tsa29_issue79_windows_annexfix_20260403b`
+      from `F:\projects\tmp\femic-issue10-closeout-20260402-clean`.
+
 - 2026-04-03 (Issue `#79` implementation + fresh BTC/post-TIPSY validation):
   - Share audit result:
     - the problematic TSA29 `planted_percent < 100` rows were **not** caused by
