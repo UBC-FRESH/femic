@@ -211,6 +211,14 @@ def test_validate_windows_annex_runtime_passes_when_tools_and_repo_are_healthy(
         "_run_preflight_command",
         lambda command, cwd, timeout_s=15: (True, ""),
     )
+    monkeypatch.setattr(
+        cli_main, "_resolve_windows_user_local_path", lambda _path: None
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_current_arbutus_env_values",
+        lambda: {key: "" for key in cli_main.WINDOWS_ARBUTUS_REQUIRED_ENV_KEYS},
+    )
 
     errors, warnings = cli_main._validate_windows_annex_runtime(
         source_root=source_root,
@@ -260,6 +268,14 @@ def test_validate_windows_annex_runtime_reports_datalad_failures(
         return False, "status failed"
 
     monkeypatch.setattr(cli_main, "_run_preflight_command", _fake_run)
+    monkeypatch.setattr(
+        cli_main, "_resolve_windows_user_local_path", lambda _path: None
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_current_arbutus_env_values",
+        lambda: {key: "" for key in cli_main.WINDOWS_ARBUTUS_REQUIRED_ENV_KEYS},
+    )
 
     errors, warnings = cli_main._validate_windows_annex_runtime(
         source_root=source_root,
@@ -269,6 +285,261 @@ def test_validate_windows_annex_runtime_reports_datalad_failures(
     assert warnings == []
     assert any("DataLad status check failed" in msg for msg in errors)
     assert len(calls) == 2
+
+
+def test_validate_windows_arbutus_env_file_reports_quoted_credentials(
+    tmp_path: Path,
+) -> None:
+    env_file = tmp_path / "arbutus.env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "AWS_ACCESS_KEY_ID='quoted-key'",
+                "AWS_SECRET_ACCESS_KEY='quoted-secret'",
+                "AWS_DEFAULT_REGION=ca-west-1",
+                "S3_ENDPOINT_URL=https://object-arbutus.cloud.computecanada.ca",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    errors = cli_main._validate_windows_arbutus_env_file(env_file)
+
+    assert any(
+        "AWS_ACCESS_KEY_ID" in msg and "no surrounding quotes" in msg for msg in errors
+    )
+    assert any(
+        "AWS_SECRET_ACCESS_KEY" in msg and "no surrounding quotes" in msg
+        for msg in errors
+    )
+
+
+def test_validate_windows_annex_runtime_reports_missing_arbutus_env_vars(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    source_root = tmp_path / "repo"
+    public_data_root = source_root / "external" / "femic-public-data"
+    public_data_root.mkdir(parents=True, exist_ok=True)
+    external_paths = SimpleNamespace(
+        vri_vclr1p_path=public_data_root / "data" / "bc" / "vri.gdb",
+        vdyp_input_pandl_path=public_data_root / "data" / "bc" / "vdyp.gdb",
+        tsa_boundaries_path=public_data_root / "data" / "bc" / "tsa.gdb",
+        site_prod_bc_gdb_path=public_data_root / "data" / "bc" / "siteprod.gdb",
+    )
+    for path_obj in (
+        external_paths.vri_vclr1p_path,
+        external_paths.vdyp_input_pandl_path,
+        external_paths.tsa_boundaries_path,
+        external_paths.site_prod_bc_gdb_path,
+    ):
+        path_obj.parent.mkdir(parents=True, exist_ok=True)
+        path_obj.touch()
+
+    env_file = tmp_path / "user" / ".config" / "femic" / "arbutus.env"
+    env_file.parent.mkdir(parents=True, exist_ok=True)
+    env_file.write_text("AWS_ACCESS_KEY_ID=abc123\n", encoding="utf-8")
+    loader_path = env_file.parent / "load-arbutus-env.ps1"
+    loader_path.write_text("# loader\n", encoding="utf-8")
+
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setattr(
+        cli_main.shutil,
+        "which",
+        lambda name: "tool.exe" if name in {"git", "datalad"} else None,
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_run_preflight_command",
+        lambda command, cwd, timeout_s=15: (True, ""),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_resolve_windows_user_local_path",
+        lambda rel: (
+            env_file
+            if rel == cli_main.WINDOWS_ARBUTUS_ENV_FILE_RELATIVE
+            else loader_path
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_current_arbutus_env_values",
+        lambda: {
+            "AWS_ACCESS_KEY_ID": "",
+            "AWS_SECRET_ACCESS_KEY": "",
+            "AWS_DEFAULT_REGION": "",
+            "S3_ENDPOINT_URL": "",
+        },
+    )
+
+    errors, warnings = cli_main._validate_windows_annex_runtime(
+        source_root=source_root,
+        external_paths=external_paths,
+    )
+
+    assert warnings == []
+    assert any(
+        "Set-ExecutionPolicy -Scope Process Bypass -Force" in msg for msg in errors
+    )
+    assert any("AWS_SECRET_ACCESS_KEY" in msg for msg in errors)
+
+
+def test_validate_windows_annex_runtime_reports_bucket_visibility_failure(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    source_root = tmp_path / "repo"
+    public_data_root = source_root / "external" / "femic-public-data"
+    public_data_root.mkdir(parents=True, exist_ok=True)
+    external_paths = SimpleNamespace(
+        vri_vclr1p_path=public_data_root / "data" / "bc" / "vri.gdb",
+        vdyp_input_pandl_path=public_data_root / "data" / "bc" / "vdyp.gdb",
+        tsa_boundaries_path=public_data_root / "data" / "bc" / "tsa.gdb",
+        site_prod_bc_gdb_path=public_data_root / "data" / "bc" / "siteprod.gdb",
+    )
+    for path_obj in (
+        external_paths.vri_vclr1p_path,
+        external_paths.vdyp_input_pandl_path,
+        external_paths.tsa_boundaries_path,
+        external_paths.site_prod_bc_gdb_path,
+    ):
+        path_obj.parent.mkdir(parents=True, exist_ok=True)
+        path_obj.touch()
+
+    env_file = tmp_path / "user" / ".config" / "femic" / "arbutus.env"
+    env_file.parent.mkdir(parents=True, exist_ok=True)
+    env_file.write_text("AWS_ACCESS_KEY_ID=abc123\n", encoding="utf-8")
+    loader_path = env_file.parent / "load-arbutus-env.ps1"
+    loader_path.write_text("# loader\n", encoding="utf-8")
+
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setattr(
+        cli_main.shutil,
+        "which",
+        lambda name: "tool.exe" if name in {"git", "datalad"} else None,
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_run_preflight_command",
+        lambda command, cwd, timeout_s=15: (True, ""),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_resolve_windows_user_local_path",
+        lambda rel: (
+            env_file
+            if rel == cli_main.WINDOWS_ARBUTUS_ENV_FILE_RELATIVE
+            else loader_path
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_validate_windows_arbutus_env_file",
+        lambda _path: [],
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_current_arbutus_env_values",
+        lambda: {
+            "AWS_ACCESS_KEY_ID": "abc123",
+            "AWS_SECRET_ACCESS_KEY": "secret123",
+            "AWS_DEFAULT_REGION": "ca-west-1",
+            "S3_ENDPOINT_URL": "https://object-arbutus.cloud.computecanada.ca",
+        },
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_probe_windows_arbutus_bucket",
+        lambda bucket_name, env_values: (
+            False,
+            f"bucket={bucket_name} error_code=404. This usually means invalid loaded credentials.",
+        ),
+    )
+
+    errors, warnings = cli_main._validate_windows_annex_runtime(
+        source_root=source_root,
+        external_paths=external_paths,
+    )
+
+    assert warnings == []
+    assert any("bucket visibility probe failed" in msg for msg in errors)
+    assert any("Stop before `git annex initremote`" in msg for msg in errors)
+
+
+def test_validate_windows_annex_runtime_passes_with_visible_public_bucket(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    source_root = tmp_path / "repo"
+    public_data_root = source_root / "external" / "femic-public-data"
+    public_data_root.mkdir(parents=True, exist_ok=True)
+    external_paths = SimpleNamespace(
+        vri_vclr1p_path=public_data_root / "data" / "bc" / "vri.gdb",
+        vdyp_input_pandl_path=public_data_root / "data" / "bc" / "vdyp.gdb",
+        tsa_boundaries_path=public_data_root / "data" / "bc" / "tsa.gdb",
+        site_prod_bc_gdb_path=public_data_root / "data" / "bc" / "siteprod.gdb",
+    )
+    for path_obj in (
+        external_paths.vri_vclr1p_path,
+        external_paths.vdyp_input_pandl_path,
+        external_paths.tsa_boundaries_path,
+        external_paths.site_prod_bc_gdb_path,
+    ):
+        path_obj.parent.mkdir(parents=True, exist_ok=True)
+        path_obj.touch()
+
+    env_file = tmp_path / "user" / ".config" / "femic" / "arbutus.env"
+    env_file.parent.mkdir(parents=True, exist_ok=True)
+    env_file.write_text("AWS_ACCESS_KEY_ID=abc123\n", encoding="utf-8")
+    loader_path = env_file.parent / "load-arbutus-env.ps1"
+    loader_path.write_text("# loader\n", encoding="utf-8")
+
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setattr(
+        cli_main.shutil,
+        "which",
+        lambda name: "tool.exe" if name in {"git", "datalad"} else None,
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_run_preflight_command",
+        lambda command, cwd, timeout_s=15: (True, ""),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_resolve_windows_user_local_path",
+        lambda rel: (
+            env_file
+            if rel == cli_main.WINDOWS_ARBUTUS_ENV_FILE_RELATIVE
+            else loader_path
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_validate_windows_arbutus_env_file",
+        lambda _path: [],
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_current_arbutus_env_values",
+        lambda: {
+            "AWS_ACCESS_KEY_ID": "abc123",
+            "AWS_SECRET_ACCESS_KEY": "secret123",
+            "AWS_DEFAULT_REGION": "ca-west-1",
+            "S3_ENDPOINT_URL": "https://object-arbutus.cloud.computecanada.ca",
+        },
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_probe_windows_arbutus_bucket",
+        lambda bucket_name, env_values: (True, ""),
+    )
+
+    errors, warnings = cli_main._validate_windows_annex_runtime(
+        source_root=source_root,
+        external_paths=external_paths,
+    )
+
+    assert errors == []
+    assert warnings == []
 
 
 def test_preflight_checks_fails_for_specific_missing_required_file(

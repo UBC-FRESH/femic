@@ -151,6 +151,19 @@ Windows PowerShell:
    femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
    femic prep geospatial-preflight
 
+If you are using the documented Windows local Arbutus auth-file workflow,
+``femic prep validate-case`` now catches the most common low-cost failures
+before they turn into noisy ``git-annex`` errors:
+
+- quoted values in ``%USERPROFILE%\.config\femic\arbutus.env``;
+- missing loaded Arbutus auth vars in the current PowerShell session; and
+- inability to see the known Arbutus public-data bucket from the currently
+  loaded Windows session.
+
+For the exact maintainer/bootstrap sequence, including execution-policy-safe
+loader usage and Arbutus remote publication order, see
+``docs/guides/public-data-mirror-runbook.rst``.
+
 Related Guides
 --------------
 

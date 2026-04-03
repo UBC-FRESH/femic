@@ -41,7 +41,10 @@ Quick Contract
        runs when using the linked public-data mirror.
    * - Preflight
      - Run ``femic prep validate-case`` and
-       ``femic prep geospatial-preflight`` before long workflows.
+       ``femic prep geospatial-preflight`` before long workflows. On Windows,
+       ``validate-case`` is also the intended low-noise place to catch Arbutus
+       auth-format and bucket-visibility failures before users fall into noisy
+       ``git-annex`` diagnostics.
    * - External runtime boundaries
      - BatchTIPSY and Patchworks remain external/proprietary runtime seams;
        FEMIC documents and validates those boundaries but does not replace

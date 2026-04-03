@@ -1286,6 +1286,25 @@ notes.
     - validation:
       - `python -m sphinx -b html docs _build/html -W` passed after the docs
         edits.
+  - Preflight hardening delivered under `#96`:
+    - extended the existing Windows annex/DataLad seam inside
+      `femic prep validate-case` rather than adding a new top-level command;
+    - when a Windows local Arbutus env-file workflow is actually in play,
+      `validate-case` now fails fast on:
+      - quoted credential values in `arbutus.env`;
+      - missing loaded Arbutus auth vars in the current shell; and
+      - failed low-noise bucket visibility probes against the known Arbutus
+        public-data bucket;
+    - the new logic remains detect/report only:
+      - no auto-rewrites of user-local auth files;
+      - no bucket creation;
+      - no `initremote`/publication automation; and
+      - no stale-bucket mutation;
+    - docs/reference guidance was updated so `validate-case` is now described
+      as the intended low-noise place to catch these Windows Arbutus seams.
+  - GitHub hygiene follow-up:
+    - close umbrella issue `#84` separately as completed post-PoC tracking,
+      rather than keeping it open under the new Arbutus/preflight lane.
 
 - 2026-04-03 (Issue `#85` curve refresh ready for `@gparadis` review):
   - Parent rollout umbrella:

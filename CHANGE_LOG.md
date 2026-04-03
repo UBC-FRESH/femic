@@ -10879,3 +10879,36 @@
     - `planning/femic_public_data_datalad_bootstrap.md`
   - Docs validation passed with:
     - `python -m sphinx -b html docs _build/html -W`
+- 2026-04-03 (Issue `#96` implemented: Windows Arbutus preflight hardened in `validate-case`):
+  - Extended the existing Windows annex/DataLad validation inside
+    `femic prep validate-case` instead of adding a new CLI command.
+  - Added focused Windows Arbutus preflight helpers for:
+    - user-local env-file discovery;
+    - plain `KEY=VALUE` parsing;
+    - quoted-credential detection in `arbutus.env`;
+    - loaded env-var presence checks; and
+    - low-noise bucket visibility probes against the known public-data bucket.
+  - Behavior change:
+    - when a Windows local Arbutus auth workflow is actually in play,
+      `validate-case` now fails fast before noisy `git-annex` errors on:
+      - quoted `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` values;
+      - missing loaded Arbutus auth vars in the current shell; and
+      - bucket-invisibility failures that usually indicate bad credentials or
+        wrong Arbutus account/project scope.
+  - Kept this lane preflight-only:
+    - no auto-correction of user-local auth files;
+    - no bucket creation or remote wiring automation; and
+    - no stale-`annex-uuid` mutation.
+  - Updated supporting docs in:
+    - `docs/reference/cli.rst`
+    - `docs/guides/developer-environment-bootstrap.rst`
+    - `docs/reference/contracts/repo-runtime-invariants.rst`
+  - Validation completed:
+    - `python -m pytest tests/test_cli_main.py -k "windows_annex_runtime or arbutus_env_file" -q`
+    - `python -m pytest tests/test_docs_contract.py -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+    - `python -m pre_commit run --all-files`

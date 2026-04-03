@@ -233,6 +233,20 @@ fansier_app = typer.Typer(
 )
 console = Console()
 
+WINDOWS_ARBUTUS_ENV_FILE_RELATIVE = Path(".config") / "femic" / "arbutus.env"
+WINDOWS_ARBUTUS_LOADER_RELATIVE = Path(".config") / "femic" / "load-arbutus-env.ps1"
+WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET = "ubc-fresh-femic-public-data"
+WINDOWS_ARBUTUS_REQUIRED_ENV_KEYS = (
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY",
+    "AWS_DEFAULT_REGION",
+    "S3_ENDPOINT_URL",
+)
+WINDOWS_ARBUTUS_QUOTED_ENV_KEYS = (
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY",
+)
+
 
 def _format_binary_size(num_bytes: int) -> str:
     """Format a byte count using IEC binary units for operator prompts."""
@@ -1163,6 +1177,106 @@ def _run_preflight_command(
     return False, detail
 
 
+def _resolve_windows_user_local_path(relative_path: Path) -> Path | None:
+    """Resolve a user-local Windows config path from USERPROFILE."""
+    userprofile = os.environ.get("USERPROFILE")
+    if not userprofile:
+        return None
+    return Path(userprofile) / relative_path
+
+
+def _parse_simple_env_file(env_file: Path) -> tuple[dict[str, str], list[str]]:
+    """Parse a simple KEY=VALUE env file, preserving literal values."""
+    values: dict[str, str] = {}
+    errors: list[str] = []
+    for lineno, raw_line in enumerate(
+        env_file.read_text(encoding="utf-8").splitlines(),
+        start=1,
+    ):
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" not in line:
+            errors.append(f"Invalid line {lineno} in {env_file}: expected KEY=VALUE.")
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if not key:
+            errors.append(f"Invalid line {lineno} in {env_file}: missing key name.")
+            continue
+        values[key] = value
+    return values, errors
+
+
+def _validate_windows_arbutus_env_file(env_file: Path) -> list[str]:
+    """Return Windows-specific Arbutus env-file validation findings."""
+    errors: list[str] = []
+    values, parse_errors = _parse_simple_env_file(env_file)
+    errors.extend(parse_errors)
+    for key in WINDOWS_ARBUTUS_QUOTED_ENV_KEYS:
+        value = values.get(key, "")
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            errors.append(
+                f"Quoted value for {key} detected in {env_file}; use plain KEY=VALUE "
+                "with no surrounding quotes."
+            )
+    return errors
+
+
+def _current_arbutus_env_values() -> dict[str, str]:
+    """Return the currently loaded Arbutus-related environment values."""
+    return {
+        key: str(os.environ.get(key, "")).strip()
+        for key in WINDOWS_ARBUTUS_REQUIRED_ENV_KEYS
+    }
+
+
+def _probe_windows_arbutus_bucket(
+    *,
+    bucket_name: str,
+    env_values: dict[str, str],
+) -> tuple[bool | None, str]:
+    """Probe Arbutus bucket visibility from the current Windows session."""
+    try:
+        import boto3  # type: ignore[import-untyped]
+        from botocore.config import Config  # type: ignore[import-untyped]
+        from botocore.exceptions import (  # type: ignore[import-untyped]
+            BotoCoreError,
+            ClientError,
+        )
+    except ImportError:
+        return None, (
+            "boto3/botocore not available for Arbutus bucket probe; "
+            "install the standard FEMIC dev environment before relying on "
+            "Windows Arbutus bootstrap diagnostics."
+        )
+
+    try:
+        session = boto3.session.Session(
+            aws_access_key_id=env_values["AWS_ACCESS_KEY_ID"],
+            aws_secret_access_key=env_values["AWS_SECRET_ACCESS_KEY"],
+            region_name=env_values["AWS_DEFAULT_REGION"],
+        )
+        client = session.client(
+            "s3",
+            endpoint_url=env_values["S3_ENDPOINT_URL"],
+            config=Config(s3={"addressing_style": "path"}),
+        )
+        client.head_bucket(Bucket=bucket_name)
+    except ClientError as exc:
+        code = exc.response.get("Error", {}).get("Code", "unknown")
+        return (
+            False,
+            f"bucket={bucket_name} error_code={code}. "
+            "This usually means invalid loaded credentials or the wrong "
+            "Arbutus account/project scope on Windows.",
+        )
+    except BotoCoreError as exc:
+        return False, f"bucket={bucket_name} probe_failed={exc}"
+    return True, ""
+
+
 def _validate_windows_annex_runtime(
     *,
     source_root: Path,
@@ -1221,6 +1335,53 @@ def _validate_windows_annex_runtime(
         errors.append(
             "DataLad status check failed for external/femic-public-data: "
             f"{datalad_detail}"
+        )
+
+    arbutus_env_file = _resolve_windows_user_local_path(
+        WINDOWS_ARBUTUS_ENV_FILE_RELATIVE
+    )
+    arbutus_loader = _resolve_windows_user_local_path(WINDOWS_ARBUTUS_LOADER_RELATIVE)
+    if arbutus_env_file and arbutus_env_file.exists():
+        errors.extend(_validate_windows_arbutus_env_file(arbutus_env_file))
+
+    env_values = _current_arbutus_env_values()
+    any_env_loaded = any(env_values.values())
+    should_run_arbutus_preflight = (
+        arbutus_env_file is not None and arbutus_env_file.exists()
+    ) or any_env_loaded
+    if not should_run_arbutus_preflight:
+        return errors, warnings
+
+    missing_env = [key for key, value in env_values.items() if not value]
+    if missing_env:
+        missing_display = ", ".join(missing_env)
+        if arbutus_loader and arbutus_loader.exists():
+            errors.append(
+                "Windows Arbutus auth env vars are not loaded in this shell: "
+                f"{missing_display}. If you use the documented local loader, run "
+                "`Set-ExecutionPolicy -Scope Process Bypass -Force` and then "
+                f"source {arbutus_loader} before rerunning `femic prep validate-case`."
+            )
+        else:
+            errors.append(
+                "Windows Arbutus auth env vars are not loaded in this shell: "
+                f"{missing_display}. Load the documented Arbutus auth env before "
+                "rerunning `femic prep validate-case`."
+            )
+        return errors, warnings
+
+    bucket_ok, bucket_detail = _probe_windows_arbutus_bucket(
+        bucket_name=WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET,
+        env_values=env_values,
+    )
+    if bucket_ok is None:
+        warnings.append(bucket_detail)
+    elif not bucket_ok:
+        errors.append(
+            "Windows Arbutus bucket visibility probe failed for "
+            f"{WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET}: {bucket_detail} "
+            "Stop before `git annex initremote` or other Arbutus bootstrap work "
+            "and re-check the loaded env values."
         )
 
     return errors, warnings

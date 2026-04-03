@@ -77,6 +77,20 @@ Subcommands
 - ``--strict-warnings``
 - ``--instance-root PATH``
 
+On Windows, ``prep validate-case`` now also performs the low-noise
+annex/Arbutus checks needed for FEMIC's Arbutus-backed public-data workflow
+when that mirror is in play. It can fail fast on:
+
+- unusable ``git-annex`` / DataLad runtime;
+- quoted credential values in ``%USERPROFILE%\.config\femic\arbutus.env``;
+- missing loaded Arbutus auth vars when a local Arbutus env-file workflow is
+  already in use; and
+- failed visibility probes for the known public-data Arbutus bucket.
+
+For the canonical maintainer/bootstrap runbook, including the exact Windows
+auth-file and remote-publication sequence, see
+``docs/guides/public-data-mirror-runbook.rst``.
+
 ``prep geospatial-preflight`` options
 
 - ``--strict-warnings``
