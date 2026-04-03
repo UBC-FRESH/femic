@@ -104,7 +104,25 @@ Before Patchworks runtime launch:
 3. confirm ``patchworks.jar`` and ``SPSHOME`` resolve, and on Windows confirm
    the workstation already exposes the intended system-level
    ``SPS_LICENSE_SERVER`` value
-4. launch ``build-blocks`` or ``matrix-build`` only after preflight is clean
+4. confirm the compiled Patchworks package is materially present
+
+   Matrix-Builder-ready minimum:
+
+   - ``forestmodel.xml``
+   - the full fragments shapefile sidecar set
+     (``fragments.{shp,dbf,shx,prj,cpg}``)
+   - and, if you are resuming from an already-built model surface, the expected
+     compiled ``tracks/*.csv`` tables
+   - this tier is sufficient for preflight / Matrix Builder work, not for a
+     fully shipped standalone launch surface by itself
+
+   Standalone launch-ready published minimum:
+
+   - compiled ``tracks/*.csv`` tables
+   - ``blocks/blocks.shp`` plus required sidecars
+   - the topology CSV used by the shipped analysis surface
+   - the analysis/PIN launch surfaces used to open the model directly
+5. launch ``build-blocks`` or ``matrix-build`` only after preflight is clean
 
 Before FAN$IER unattended extraction:
 

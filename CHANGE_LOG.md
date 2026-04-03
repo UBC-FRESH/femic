@@ -10626,3 +10626,41 @@
       validated `forestmodel.xml` plus validated `fragments/`;
     - large-only annexing is the target storage policy for this bundle, while
       transient runtime spill remains local-only.
+- 2026-04-03 (Issue `#93` closed: standalone TSA29 Patchworks publication contract made explicit):
+  - Switched active work to branch
+    `feature/issue-93-tsa29-standalone-artifact-contract`.
+  - Expanded the FEMIC/TSA29 Patchworks readiness contract to distinguish:
+    - Matrix-Builder-ready minimum;
+    - post-matrix-build compiled minimum;
+    - standalone launch-ready published minimum; and
+    - editable anti-lock-in publication tier.
+  - The newly explicit standalone launch-ready published tier now requires:
+    - compiled `tracks/*.csv`;
+    - shipped `blocks/blocks.shp` plus sidecars;
+    - the topology CSV used by the shipped analysis surface; and
+    - the analysis/PIN launch surfaces required to open the model directly.
+  - The editable anti-lock-in publication tier now explicitly preserves the
+    validated `forestmodel.xml` plus validated `fragments/*` sidecar set as
+    the manual rebuild/overlay starting point for users who choose to work
+    outside FEMIC.
+  - Tightened release-packaging semantics so the code/docs now clearly treat
+    release export packaging as the **export-bundle** minimum only, not the
+    full standalone runtime tier:
+    - `src/femic/release_packaging.py` now exposes
+      `REQUIRED_PATCHWORKS_EXPORT_FILES` (with backward-compatible aliasing);
+    - release handoff notes now warn that standalone runtime publication also
+      requires blocks/topology/analysis surfaces beyond the validated
+      XML/fragments pair.
+  - Updated the TSA29 standalone docs in
+    `external/femic-tsa29-instance/docs/rebuild-and-qa.rst` so the instance
+    itself now documents `blocks`, topology, and analysis/PIN surfaces as part
+    of the runnable standalone model tier.
+  - Validation:
+    - `python -m pytest tests/test_release_packaging.py`
+    - `python -m ruff check src/femic/release_packaging.py tests/test_release_packaging.py`
+    - TSA29 standalone docs build passed with
+      `python -m sphinx -b html docs _build/html -W -n`
+      from `external/femic-tsa29-instance/`
+    - the parent-repo docs build remains blocked by a large set of pre-existing
+      unrelated API/reference warnings and was not newly regressed by this
+      issue.

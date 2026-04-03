@@ -15,6 +15,19 @@ REQUIRED_MODEL_INPUT_FILES = (
     "curve_points_table.csv",
 )
 
+REQUIRED_PATCHWORKS_EXPORT_FILES = (
+    "forestmodel.xml",
+    "fragments/fragments.shp",
+    "fragments/fragments.dbf",
+    "fragments/fragments.shx",
+    "fragments/fragments.prj",
+    "fragments/fragments.cpg",
+)
+# Backward-compatible alias for existing callers/tests. This constant covers
+# the export-bundle Patchworks minimum only, not the full standalone runtime
+# package needed to launch a compiled model directly in Patchworks.
+REQUIRED_PATCHWORKS_FILES = REQUIRED_PATCHWORKS_EXPORT_FILES
+
 
 @dataclass(frozen=True)
 class ReleasePackageResult:
@@ -94,11 +107,8 @@ def build_release_package(
         if not candidate.exists():
             errors.append(f"Missing required model-input file: {candidate}")
 
-    required_patchworks = [
-        patchworks_dir / "forestmodel.xml",
-        patchworks_dir / "fragments" / "fragments.shp",
-    ]
-    for candidate in required_patchworks:
+    for required in REQUIRED_PATCHWORKS_EXPORT_FILES:
+        candidate = patchworks_dir / required
         if not candidate.exists():
             errors.append(f"Missing required Patchworks artifact: {candidate}")
 
@@ -185,9 +195,13 @@ def build_release_package(
                 "",
                 "## Quick Validation",
                 "1. Confirm `patchworks/forestmodel.xml` exists.",
-                "2. Confirm `patchworks/fragments/fragments.shp` exists.",
+                "2. Confirm the full `patchworks/fragments/` shapefile sidecar set exists:",
+                "   `fragments.{shp,dbf,shx,prj,cpg}`.",
                 "3. Confirm all three `model_input_bundle/*.csv` files exist.",
-                "4. Review `release_manifest.json` warnings before delivery.",
+                "4. Treat this release as the export-bundle minimum, not the full standalone runtime package.",
+                "5. For a launch-ready standalone Patchworks instance, also ship blocks/topology,",
+                "   analysis/PIN surfaces, and compiled tracks beside the validated XML/fragments pair.",
+                "6. Review `release_manifest.json` warnings before delivery.",
                 "",
                 "## Suggested Operator Commands",
                 "```bash",

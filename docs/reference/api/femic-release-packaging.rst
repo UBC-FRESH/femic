@@ -84,6 +84,7 @@ The highest-value entrypoints in this module are:
 The main minimum-artifact constant is also useful:
 
 - ``REQUIRED_MODEL_INPUT_FILES``
+- ``REQUIRED_PATCHWORKS_EXPORT_FILES``
 
 Core Contracts
 --------------
@@ -91,8 +92,14 @@ Core Contracts
 The most important runtime contracts in this module are:
 
 - model-input bundle releases require the canonical three bundle CSVs
-- Patchworks releases require at least ``forestmodel.xml`` and the fragments
-  shapefile
+- Patchworks **export-bundle** releases require ``forestmodel.xml`` plus the
+  full fragments shapefile sidecar set:
+  ``fragments.shp``, ``fragments.dbf``, ``fragments.shx``,
+  ``fragments.prj``, and ``fragments.cpg``
+- that export-bundle minimum is intentionally narrower than the published
+  standalone runtime contract for a full Patchworks instance, which also
+  requires shipped blocks/topology, compiled tracks, and analysis/PIN launch
+  surfaces
 - release IDs combine normalized case ID with an explicit run ID or UTC stamp
 - copied files are hashed into a machine-readable manifest
 - only selected manifest/log families are copied from the logs directory

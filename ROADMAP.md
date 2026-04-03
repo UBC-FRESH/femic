@@ -980,6 +980,49 @@ notes.
     - once the contract and dataset policy are explicit, publish and validate
       the current TSA29 PoC artifact set under issue `#92`.
 
+- 2026-04-03 (Issue `#93` complete: standalone TSA29 Patchworks publication contract made explicit):
+  - Switched active execution from umbrella branch `feature/issue-91-tsa29-datalad-instance-publishing`
+    to issue branch `feature/issue-93-tsa29-standalone-artifact-contract`.
+  - Expanded FEMIC's Patchworks readiness language from a two-tier minimum to a
+    publication-ready tier ladder:
+    - Matrix-Builder-ready
+    - post-matrix-build compiled minimum
+    - standalone launch-ready published minimum
+    - editable anti-lock-in publication tier
+  - The standalone launch-ready published tier now explicitly requires:
+    - compiled `tracks/*.csv`
+    - `blocks/blocks.shp` plus required sidecars
+    - the topology CSV used by the shipped analysis surface
+    - the analysis/PIN launch surfaces needed to open the model directly
+  - The anti-lock-in publication tier now explicitly preserves validated
+    `forestmodel.xml` plus validated `fragments/*` as the user-visible rebuild
+    and manual-overlay escape hatch, even when the compiled model could
+    technically launch without revisiting them.
+  - Tightened release-packaging semantics so the module/docs clearly describe
+    the **export-bundle** minimum only:
+    - renamed the module-facing constant to
+      `REQUIRED_PATCHWORKS_EXPORT_FILES` with backward-compatible aliasing;
+    - updated release handoff notes to warn that export packaging alone does
+      not equal a full standalone Patchworks runtime package.
+  - Updated TSA29 instance docs so the local rebuild/runbook contract now names
+    `blocks`, topology, and shipped analysis/PIN surfaces as part of the
+    runnable standalone model tier.
+  - Validation for this contract pass:
+    - `python -m pytest tests/test_release_packaging.py`
+    - `python -m ruff check src/femic/release_packaging.py tests/test_release_packaging.py`
+    - TSA29 standalone docs build passed with
+      `python -m sphinx -b html docs _build/html -W -n`
+      from `external/femic-tsa29-instance/`
+    - the parent-repo Sphinx build is still blocked by a large set of
+      pre-existing unrelated API/reference warnings, so that global warning
+      wall remains a separate hygiene problem rather than a blocker to `#93`.
+  - Immediate next active step:
+    - move to issue `#94` and convert `external/femic-tsa29-instance` into the
+      large-only DataLad/git-annex dataset defined by the new publication
+      contract;
+    - after the dataset conversion is in place, publish the current TSA29 PoC
+      artifact set and cold-start validation bundle under issue `#92`.
+
 - 2026-04-03 (Issue `#85` curve refresh ready for `@gparadis` review):
   - Parent rollout umbrella:
     - GitHub issue `#84`

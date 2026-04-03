@@ -66,6 +66,65 @@ Canonical Artifact Rules
   imply that ``forestmodel.xml`` or the other compiled track tables need to be
   regenerated.
 
+Minimal Functional Patchworks Instance
+--------------------------------------
+
+When FEMIC or an instance doc says "functional Patchworks instance", be
+explicit about *which* readiness tier you mean.
+
+Matrix-Builder-ready minimum:
+
+- Patchworks runtime config for the target instance (for example
+  ``config/patchworks.runtime.windows.yaml``)
+- compiled ``forestmodel.xml``
+- full fragments shapefile sidecar set:
+  ``fragments.shp``, ``fragments.dbf``, ``fragments.shx``,
+  ``fragments.prj``, and ``fragments.cpg``
+- host/runtime prerequisites that let ``femic patchworks preflight`` pass
+
+Post-matrix-build compiled minimum:
+
+- everything in the Matrix-Builder-ready tier
+- compiled track tables under ``tracks/`` including at least:
+  ``curves.csv``, ``features.csv``, ``products.csv``, ``treatments.csv``,
+  ``protoaccounts.csv``, and ``accounts.csv``
+
+Standalone launch-ready published minimum:
+
+- everything in the post-matrix-build compiled tier
+- ``blocks/blocks.shp`` plus the full shapefile sidecar set used by the
+  shipped runtime surface
+- the topology CSV used by the shipped analysis surface
+- the analysis/PIN launch surfaces required to open the compiled model
+
+Editable anti-lock-in publication tier:
+
+- the standalone launch-ready published minimum
+- the validated ``forestmodel.xml`` plus validated ``fragments`` sidecar set
+  preserved as the user-visible rebuild/overlay starting point even when the
+  compiled model could technically launch without revisiting them
+
+If you are rebuilding ``forestmodel.xml`` from FEMIC bundle outputs, the
+minimum upstream compile inputs are also:
+
+- ``data/model_input_bundle/au_table.csv``
+- ``data/model_input_bundle/curve_table.csv``
+- ``data/model_input_bundle/curve_points_table.csv``
+
+Operational rule:
+
+- do not treat a thin instance that only contains ``forestmodel.xml`` plus a
+  placeholder ``fragments/README.md`` as Patchworks-functional;
+- restore or regenerate the actual fragments sidecar set before preflight or
+  Matrix Builder work;
+- do not treat a compiled model surface with tracks but no shipped
+  ``blocks/blocks.shp`` payload as standalone launch-ready;
+- if an instance is published as a runnable standalone Patchworks model, make
+  the shipped blocks/topology/analysis surfaces explicit alongside the editable
+  XML/fragments escape hatch;
+- do not claim a rebuilt Patchworks input layer is sane until you have
+  inspected the concrete compiled track outputs directly.
+
 Patchworks Track Overlay Note
 -----------------------------
 

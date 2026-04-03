@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from femic.release_packaging import build_release_package
+from femic.release_packaging import REQUIRED_PATCHWORKS_EXPORT_FILES, build_release_package
 
 
 def _touch(path: Path, text: str = "x") -> None:
@@ -23,6 +23,9 @@ def test_build_release_package_creates_manifest_and_handoff(tmp_path: Path) -> N
     _touch(patchworks_dir / "forestmodel.xml", "xml")
     _touch(patchworks_dir / "fragments/fragments.shp", "shp")
     _touch(patchworks_dir / "fragments/fragments.dbf", "dbf")
+    _touch(patchworks_dir / "fragments/fragments.shx", "shx")
+    _touch(patchworks_dir / "fragments/fragments.prj", "prj")
+    _touch(patchworks_dir / "fragments/fragments.cpg", "cpg")
 
     logs_dir = tmp_path / "vdyp_io/logs"
     _touch(logs_dir / "run_manifest-test.json", "{}")
@@ -47,6 +50,11 @@ def test_build_release_package_creates_manifest_and_handoff(tmp_path: Path) -> N
     paths = {entry["path"] for entry in manifest["files"]}
     assert "model_input_bundle/au_table.csv" in paths
     assert "patchworks/forestmodel.xml" in paths
+    for required in REQUIRED_PATCHWORKS_EXPORT_FILES:
+        assert f"patchworks/{required}" in paths
+    handoff_text = result.handoff_notes_path.read_text(encoding="utf-8")
+    assert "export-bundle minimum" in handoff_text
+    assert "blocks/topology" in handoff_text
 
 
 def test_build_release_package_strict_fails_when_required_missing(
