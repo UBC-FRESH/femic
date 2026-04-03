@@ -39,7 +39,7 @@ Expected Operator Workflow
         --with-patchworks
 
 3. Review rebuild report:
-   ``vdyp_io/logs/instance_rebuild_report-<run_id>.json``.
+   ``runtime/logs/instance_rebuild_report-<run_id>.json``.
 4. If baseline drift is intentional:
    update ``config/rebuild.allowlist.yaml`` (or regenerate baseline with
    ``--write-baseline`` when appropriate).

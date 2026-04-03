@@ -44,7 +44,7 @@ Run
 - ``--skip-checks``
 - ``--debug-rows INTEGER``
 - ``--run-id TEXT``
-- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-config PATH`` (YAML/JSON run profile)
 - ``--instance-root PATH`` (optional; defaults to CWD or ``FEMIC_INSTANCE_ROOT`` env)
 
@@ -151,7 +151,7 @@ Subcommands
 - ``--tsa TEXT`` (repeatable, required; selected FMU/code values)
 - ``--verbose`` / ``-v``
 - ``--run-id TEXT``
-- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-config PATH`` (optional; load FMU/code selection and managed-curve mode defaults)
 - ``--instance-root PATH``
 
@@ -160,7 +160,7 @@ Subcommands
 - ``--tsa TEXT`` (repeatable, required; selected FMU/code values)
 - ``--verbose`` / ``-v``
 - ``--run-id TEXT``
-- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-config PATH`` (optional; load FMU/code selection and managed-curve mode defaults)
 - ``--btc-exe PATH`` (optional explicit ``TIPSYbtc.exe`` override)
 - ``--scratch-dir PATH`` (optional scratch root for copied BTC installs and staged run files)
@@ -356,7 +356,7 @@ Subcommands
 - ``--bundle-dir PATH`` (default: ``data/model_input_bundle``)
 - ``--patchworks-dir PATH`` (default: ``output/patchworks_k3z_validated``)
 - ``--woodstock-dir PATH`` (optional)
-- ``--logs-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--logs-dir PATH`` (default: ``runtime/logs``)
 - ``--run-id TEXT`` (optional)
 - ``--strict / --no-strict`` (default: ``--strict``)
 - ``--instance-root PATH``
@@ -404,7 +404,7 @@ Subcommands
 
 - ``--config PATH`` (default: ``config/patchworks.runtime.yaml``)
 - ``--instance-root PATH``
-- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-id TEXT``
 - ``--interactive``
 - ``--instance-root PATH``
@@ -422,7 +422,7 @@ Subcommands
 
 - ``PIN`` argument (required)
 - ``--config PATH`` (default: ``config/patchworks.runtime.yaml``)
-- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-id TEXT`` (optional)
 - ``--stage-label TEXT`` (optional)
 - ``--iterations INTEGER`` (default: ``1``)
@@ -436,7 +436,7 @@ Subcommands
 
 - ``VARIANT_ID`` argument (required)
 - ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
-- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-id TEXT`` (optional)
 - ``--stage-label TEXT`` (optional)
 - ``--iterations INTEGER`` (default: ``1``)
@@ -468,7 +468,7 @@ Subcommands
 - ``VARIANT_ID`` argument (required)
 - ``SCENARIO_ID`` argument (required)
 - ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
-- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-id TEXT`` (optional)
 - ``--stage-label TEXT`` (optional override; falls back to the registry scenario when set there)
 - ``--allow-large-download`` (skip the materialization confirmation prompt when
@@ -479,7 +479,7 @@ Subcommands
 
 - ``VARIANT_ID`` argument (required)
 - ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
-- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-id TEXT`` (optional)
 - ``--stage-label TEXT`` (optional override; falls back to the registry default scenario when set there)
 - ``--allow-large-download`` (skip the materialization confirmation prompt when
@@ -490,7 +490,7 @@ Subcommands
 
 - ``INSTANCE_ID`` argument (required)
 - ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
-- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-id TEXT`` (optional; step runs derive ``_01``, ``_02``, ...)
 - ``--stage-label TEXT`` (optional; per-step stage labels derive ``_01``,
   ``_02``, ...)
@@ -502,7 +502,7 @@ Subcommands
 
 - ``SCENARIO_SET_ID`` argument (required)
 - ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
-- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-id TEXT`` (optional; step runs derive ``_01``, ``_02``, ...)
 - ``--stage-label TEXT`` (optional; per-step stage labels derive ``_01``,
   ``_02``, ...)
@@ -648,7 +648,7 @@ Operational notes:
 - ``--spec PATH`` (default: ``config/rebuild.spec.yaml``)
 - ``--run-config PATH`` (default: ``config/run_profile.case_template.yaml``)
 - ``--tipsy-config-dir PATH`` (default: ``config/tipsy``)
-- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-id TEXT`` (optional; defaults to UTC timestamp)
 - ``--with-patchworks / --no-patchworks`` (default: ``--no-patchworks``)
 - ``--dry-run`` (print planned step sequence without execution)
@@ -659,7 +659,7 @@ Operational notes:
 - ``--instance-root PATH``
 
 ``instance rebuild`` writes a machine-readable report to
-``vdyp_io/logs/instance_rebuild_report-<run_id>.json`` and records discovered
+``runtime/logs/instance_rebuild_report-<run_id>.json`` and records discovered
 manifest/log artifact references under ``artifact_references``.
 It also writes ``diagnostics.account_surface`` when ``tracks/accounts.csv`` is
 available, including a deterministic
@@ -686,7 +686,7 @@ Rebuild exits non-zero when unexpected baseline diffs exceed
 
 - ``--report PATH`` (optional; defaults to latest rebuild report in ``--log-dir``)
 - ``--output PATH`` (default: ``evidence/reference_rebuild_report.latest.json``)
-- ``--log-dir PATH`` (default: ``vdyp_io/logs``)
+- ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--max-warn-increase INT`` (optional drift warning threshold)
 - ``--max-baseline-diff-increase INT`` (optional drift warning threshold)
 - ``--instance-root PATH``
@@ -698,7 +698,7 @@ Promoted evidence summary also includes:
 
 ``instance refresh-reference-evidence`` options
 
-- ``--report PATH`` (optional; defaults to latest report in reference ``vdyp_io/logs``)
+- ``--report PATH`` (optional; defaults to latest report in reference ``runtime/logs``)
 - ``--reference-root PATH`` (default: ``instances/reference``)
 - ``--max-warn-increase INT`` (optional drift warning threshold)
 - ``--max-baseline-diff-increase INT`` (optional drift warning threshold)

@@ -2,7 +2,7 @@ patchworks:
   jar_path: ../reference/Patchworks/patchworks.jar
   wine_prefix: null
   license_env: SPS_LICENSE_SERVER
-  license_value: sps_user@auth.spatial.ca
+  license_value: null
   # Prefer `SPSHOME` environment variable to avoid host-specific absolute paths.
   use_xvfb: true
 

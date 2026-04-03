@@ -19,6 +19,7 @@ dependencies = [
     "matplotlib",
     "nbformat",
     "numpy",
+    "openpyxl",
     "pandas",
     "pympler",
     "pywinauto; platform_system == 'Windows'",

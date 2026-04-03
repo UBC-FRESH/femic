@@ -23,7 +23,7 @@ import yaml
 DEFAULT_LICENSE_ENV = "SPS_LICENSE_SERVER"
 DEFAULT_PATCHWORKS_JAR_PATH = Path("reference/Patchworks/patchworks.jar")
 DEFAULT_PATCHWORKS_CONFIG_PATH = Path("config/patchworks.runtime.yaml")
-DEFAULT_PATCHWORKS_LOG_DIR = Path("vdyp_io/logs")
+DEFAULT_PATCHWORKS_LOG_DIR = Path("runtime/logs")
 FATAL_MATRIX_STDERR_PATTERNS = (
     "no mrsidget2_64 in java.library.path",
     "not licensed or no connection to license server",

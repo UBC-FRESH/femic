@@ -482,9 +482,9 @@ RUN_ID_OPTION = typer.Option(
     show_default=False,
 )
 LOG_DIR_OPTION = typer.Option(
-    Path("vdyp_io/logs"),
+    Path("runtime/logs"),
     "--log-dir",
-    help="Directory for run manifests and run-scoped VDYP JSONL logs.",
+    help="Directory for non-VDYP run manifests and runtime reports.",
 )
 RUN_CONFIG_OPTION = typer.Option(
     None,
@@ -637,7 +637,7 @@ EXPORT_RELEASE_WOODSTOCK_DIR_OPTION = typer.Option(
     show_default=False,
 )
 EXPORT_RELEASE_LOGS_DIR_OPTION = typer.Option(
-    Path("vdyp_io/logs"),
+    Path("runtime/logs"),
     "--logs-dir",
     help="Log directory used to include run manifests and Patchworks runtime logs.",
 )
@@ -727,7 +727,7 @@ INSTANCE_REBUILD_TIPSY_CONFIG_DIR_OPTION = typer.Option(
     help="Directory containing case TIPSY configs (legacy tsa*.yaml filenames).",
 )
 INSTANCE_REBUILD_LOG_DIR_OPTION = typer.Option(
-    Path("vdyp_io/logs"),
+    Path("runtime/logs"),
     "--log-dir",
     help="Directory for rebuild runner reports and step logs.",
 )
@@ -779,7 +779,7 @@ INSTANCE_EVIDENCE_OUTPUT_OPTION = typer.Option(
     help="Output path for normalized rebuild evidence payload.",
 )
 INSTANCE_EVIDENCE_LOG_DIR_OPTION = typer.Option(
-    Path("vdyp_io/logs"),
+    Path("runtime/logs"),
     "--log-dir",
     help="Log directory used when auto-selecting latest rebuild report.",
 )
@@ -1559,6 +1559,18 @@ def instance_rebuild(
             console.print(f"[red]-[/red] {issue}")
         raise typer.Exit(code=1)
 
+    declared_steps = [
+        step for step in spec_payload.get("steps", []) if isinstance(step, dict)
+    ]
+    uses_btc_post_tipsy = any(
+        str(step.get("step_id", "")).strip() == "btc_post_tipsy_bundle"
+        or "btc-post-tipsy" in str(step.get("command", ""))
+        for step in declared_steps
+    )
+    post_tipsy_step_id = (
+        "btc_post_tipsy_bundle" if uses_btc_post_tipsy else "post_tipsy_bundle"
+    )
+
     steps: list[RebuildStep] = [
         RebuildStep(
             step_id="validate_case",
@@ -1605,18 +1617,34 @@ def instance_rebuild(
             depends_on=("geospatial_preflight",),
         ),
         RebuildStep(
-            step_id="post_tipsy_bundle",
-            action=lambda _ctx: (
-                tsa_post_tipsy(
-                    tsa=None,
-                    verbose=True,
-                    run_id=effective_run_id,
-                    log_dir=resolved_log_dir,
-                    run_config=resolved_run_config,
-                    instance_root=context.root,
-                ),
-                {"post_tipsy": "ok"},
-            )[1],
+            step_id=post_tipsy_step_id,
+            action=(
+                lambda _ctx: (
+                    (
+                        tsa_btc_post_tipsy(
+                            tsa=None,
+                            verbose=True,
+                            run_id=effective_run_id,
+                            log_dir=resolved_log_dir,
+                            run_config=resolved_run_config,
+                            instance_root=context.root,
+                        ),
+                        {"btc_post_tipsy": "ok"},
+                    )[1]
+                    if uses_btc_post_tipsy
+                    else (
+                        tsa_post_tipsy(
+                            tsa=None,
+                            verbose=True,
+                            run_id=effective_run_id,
+                            log_dir=resolved_log_dir,
+                            run_config=resolved_run_config,
+                            instance_root=context.root,
+                        ),
+                        {"post_tipsy": "ok"},
+                    )[1]
+                )
+            ),
             depends_on=("compile_upstream",),
         ),
     ]
@@ -1632,7 +1660,7 @@ def instance_rebuild(
                         ),
                         {"patchworks_preflight": "ok"},
                     )[1],
-                    depends_on=("post_tipsy_bundle",),
+                    depends_on=(post_tipsy_step_id,),
                 ),
                 RebuildStep(
                     step_id="patchworks_matrix_build",
@@ -2133,7 +2161,7 @@ def instance_refresh_reference_evidence(
     instance_promote_evidence(
         report=report,
         output=Path("evidence/reference_rebuild_report.latest.json"),
-        log_dir=Path("vdyp_io/logs"),
+        log_dir=Path("runtime/logs"),
         max_warn_increase=max_warn_increase,
         max_baseline_diff_increase=max_baseline_diff_increase,
         instance_root=reference_root,
@@ -2359,7 +2387,7 @@ def prep_validate_case(
         skip_checks=False,
         debug_rows=None,
         run_id=None,
-        log_dir=Path("vdyp_io/logs"),
+        log_dir=Path("runtime/logs"),
         profile=profile,
     )
 
@@ -2695,7 +2723,7 @@ def tsa_post_tipsy(
         instance_context.resolve_path(run_profile.log_dir)
         if (
             run_profile is not None
-            and Path(log_dir) == Path("vdyp_io/logs")
+            and Path(log_dir) == Path("runtime/logs")
             and run_profile.log_dir is not None
         )
         else resolved_log_dir
@@ -2814,7 +2842,7 @@ def tsa_btc_post_tipsy(
         instance_context.resolve_path(run_profile.log_dir)
         if (
             run_profile is not None
-            and Path(log_dir) == Path("vdyp_io/logs")
+            and Path(log_dir) == Path("runtime/logs")
             and run_profile.log_dir is not None
         )
         else resolved_log_dir
@@ -2895,7 +2923,9 @@ def tipsy_validate(
     targets = sorted({str(v).zfill(2) for v in tsa}) if tsa else sorted(found.keys())
     missing = [code for code in targets if code not in found]
     if missing:
-        console.print(f"[red]Missing case/FMU TIPSY config files:[/red] {', '.join(missing)}")
+        console.print(
+            f"[red]Missing case/FMU TIPSY config files:[/red] {', '.join(missing)}"
+        )
         raise typer.Exit(code=1)
     for code in targets:
         load_tipsy_tsa_config(tsa_code=code, config_dir=resolved_config_dir)
@@ -3753,7 +3783,9 @@ def export_dual(
         else []
     )
     if not targets:
-        console.print("[red]Provide at least one FMU/code via --tsa for dual export.[/red]")
+        console.print(
+            "[red]Provide at least one FMU/code via --tsa for dual export.[/red]"
+        )
         raise typer.Exit(code=1)
 
     try:

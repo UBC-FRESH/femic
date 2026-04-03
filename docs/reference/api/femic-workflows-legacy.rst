@@ -75,7 +75,7 @@ safer maintenance seam:
    result = run_post_tipsy_bundle_with_manifest(
        tsa_list=["08"],
        data_root=Path("data"),
-       log_dir=Path("vdyp_io/logs"),
+       log_dir=Path("runtime/logs"),
    )
 
 How This Fits Into The Pipeline

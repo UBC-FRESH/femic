@@ -21,7 +21,8 @@ That precedence decides where FEMIC will look for:
 - ``config/``
 - ``data/``
 - ``output/``
-- ``vdyp_io/logs/``
+- ``runtime/logs/`` for non-VDYP manifests and rebuild reports
+- ``vdyp_io/logs/`` for VDYP-specific event/stdout logs
 - instance-local rebuild specs and runbooks
 
 Interpretation rules:

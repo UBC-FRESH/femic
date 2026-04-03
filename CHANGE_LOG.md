@@ -10036,3 +10036,193 @@
     - `Logs_Grade_J` increased from `373.1` to `396.9`
     - `Logs_Grade_X` decreased from `16.5` to `13.2`
     - `Logs_Grade_Y` decreased from `16.5` to `11.7`
+- 2026-04-02 (Issue #10 BTC-first TSA29 migration checkpoint):
+  - Added repo-local planning trace for the approved TSA29 re-entry plan in
+    `planning/tsa29_p19_5_btc_reentry.md` and updated `ROADMAP.md` so `P19.5`
+    now explicitly tracks the BTC-first rebuild/evidence closeout for issue
+    `#10`.
+  - Migrated the linked TSA29 instance surfaces from the old DAT/out framing
+    to the current BTC-first contract:
+    - `external/femic-tsa29-instance/README.md`
+    - `external/femic-tsa29-instance/docs/getting-started.rst`
+    - `external/femic-tsa29-instance/docs/rebuild-and-qa.rst`
+    - `external/femic-tsa29-instance/docs/data-and-provenance.rst`
+    - `external/femic-tsa29-instance/docs/troubleshooting.rst`
+    - `external/femic-tsa29-instance/runbooks/REBUILD_RUNBOOK.md`
+    - `external/femic-tsa29-instance/config/rebuild.spec.yaml`
+    - `external/femic-tsa29-instance/config/patchworks.runtime.windows.yaml`
+  - The active TSA29 rebuild seam is now documented as:
+    - `data/03_input-tsa29.csv`
+    - unattended BTC
+    - `data/04_output-tsa29.csv`
+    - `data/04_error-tsa29.csv`
+    - `femic tsa btc-post-tipsy --run-config config/run_profile.tsa29.yaml --tsa 29 --run-id <id>`
+  - Added the smallest necessary parent blocker fix in
+    `src/femic/cli/main.py` so `femic instance rebuild` can honor a spec that
+    declares `btc_post_tipsy_bundle` instead of silently forcing the legacy
+    `post_tipsy_bundle` action.
+  - Refreshed CLI/docs contract tests to match current FMU-first wording and
+    current checked-in K3Z artifact reality on `origin/main`.
+  - Validation:
+    - `python -m pytest tests/test_cli_main.py -k "instance_rebuild"`
+    - `python -m pytest tests/test_docs_contract.py -k "tsa29"`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m sphinx -b html external/femic-tsa29-instance/docs external/femic-tsa29-instance/docs/_build/html -W`
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `mypy src`
+    - `pytest`
+    - `pre-commit run --all-files`
+- 2026-04-02 (Issue #10 TSA29 runtime execution checkpoint):
+  - Restored the thin-instance TSA29 execution prerequisites from the preserved
+    local backup as forensic-only runtime inputs:
+    - `data/tsa_boundaries.feather`
+    - `data/ria_vri_vclr1p_checkpoint1.feather` through
+      `data/ria_vri_vclr1p_checkpoint8.feather`
+  - `femic prep validate-case --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml`
+    and `femic prep geospatial-preflight --instance-root external/femic-tsa29-instance`
+    both passed in the synced current-main workspace.
+  - Found and fixed a real current-main TSA29 blocker in
+    `src/femic/pipeline/vdyp_stage.py`: unresolved `nsamples_from_curves(...)`
+    estimates could return `inf`, which crashed Stage 01a with
+    `OverflowError: cannot convert float infinity to integer`.
+    - Fixed by capping non-finite default sample targets at `max_samples` and
+      committed the change as `b47ad35` (`P19.5 cap unresolved VDYP sample targets`).
+    - Added a focused regression test in `tests/test_vdyp_stage.py`.
+  - Proved the new BTC-first TSA29 seam on current main end-to-end up to and
+    through post-TIPSY resume:
+    - `femic run --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --run-id tsa29_btc_boundary_smoke_20260402b`
+      emitted fresh `data/03_input-tsa29.csv`, `data/tipsy_params_tsa29.xlsx`,
+      `data/02_input-tsa29.dat`, and `data/vdyp_results-tsa29.pkl`;
+    - `femic tsa btc-post-tipsy --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --tsa 29 --run-id tsa29_btc_boundary_smoke_20260402b`
+      completed successfully and wrote fresh `data/04_output-tsa29.csv`,
+      `data/04_error-tsa29.csv`, and rebuilt `data/model_input_bundle/*`
+      (`au_rows=30`, `curve_rows=2100`, `curve_points_rows=12090`).
+  - Patchworks preflight initially failed because the synced thin TSA29 checkout
+    does not ship the externalized validated fragments shapefile set.
+    - Rebuilt `output/patchworks_tsa29_validated/fragments/fragments.*` locally
+      with `femic export patchworks --tsa 29 --bundle-dir data/model_input_bundle --checkpoint data/ria_vri_vclr1p_checkpoint7.feather --output-dir output/patchworks_tsa29_validated`.
+    - `femic patchworks preflight --instance-root external/femic-tsa29-instance --config config/patchworks.runtime.windows.yaml`
+      then passed.
+  - Follow-up Patchworks/runtime correction:
+    - traced the apparent Patchworks licensing failure to TSA29 runtime config
+      drift: FEMIC was overriding the valid system `SPS_LICENSE_SERVER` value
+      with the old placeholder `sps_user@auth.spatial.ca`;
+    - changed the runtime contract to inherit the real system license env by
+      default (`license_value: null`) and updated repo docs/templates so
+      placeholder examples now render as `<sps_user>@auth.spatial.ca` rather
+      than a literal-looking production value.
+  - Follow-up Patchworks/XML correction:
+    - traced the next Matrix Builder failure to TSA29 still pointing at stale
+      model-local `models/tsa29_patchworks_model/yield/forestmodel.xml`;
+    - aligned TSA29 with the issue-`#40` K3Z contract so Matrix Builder now
+      uses `output/patchworks_tsa29_validated/forestmodel.xml` beside the
+      matching validated fragments set;
+    - removed the stale duplicate TSA29 XML copies so they cannot keep
+      reappearing as fake-bug inputs.
+  - Live Patchworks success:
+    - `femic patchworks preflight --instance-root external/femic-tsa29-instance --config config/patchworks.runtime.windows.yaml`
+      now passes with inherited `SPS_LICENSE_SERVER=frst424@auth.spatial.ca`;
+    - `femic patchworks matrix-build --instance-root external/femic-tsa29-instance --config config/patchworks.runtime.windows.yaml --run-id tsa29_patchworks_retry_20260402c`
+      completed successfully with `returncode=0`, no recorded failures, and the
+      validated output-local XML path in the emitted manifest.
+  - Provenance checkpoint:
+    - current-workspace file mtimes and manifests show the reviewed
+      `plots/tipsy_vdyp_tsa29-*.png` family was regenerated from the fresh
+      `tsa29_btc_boundary_smoke_20260402b` BTC-first chain
+      (`03_input-tsa29.csv` -> fresh BTC `04_output-tsa29.csv` /
+      `04_error-tsa29.csv` -> fresh `tipsy_curves_tsa29.csv` and plots),
+      not from stale pre-issue DAT/out residue.
+  - Closeout boundary update:
+    - issue `#10` now explicitly owns proving fresh-seam provenance and
+      determining whether any apparent no-volume TIPSY pattern is a fresh
+      runtime result or stale-artifact confusion;
+    - if the fresh seam is proven and the pattern remains, that behavior moves
+      into the follow-on TSA29 v0 issue instead of blocking this contract/evidence
+      closeout by default.
+- 2026-04-03 (Issue #10 fresh-clone closeout achieved; follow-on moved to `#79`):
+  - Rebuilt the moved clean-clone `.venv` from scratch in
+    `F:\projects\tmp\femic-issue10-closeout-20260402-clean`, restored only the
+    minimal TSA29-local prerequisites (`tipsy_params_columns`,
+    `tsa_boundaries.feather`, `ria_vri_vclr1p_checkpoint1..8.feather`), and
+    scrubbed stale downstream runtime products before rerunning the final
+    evidence chain.
+  - Found a real packaging gap during the clean rerun and added `openpyxl` to
+    `pyproject.toml` and `requirements.txt` because Stage 01a and the TIPSY
+    freshness tests write `tipsy_params_tsa29.xlsx`.
+  - Fresh validation closeout run `tsa29_issue10_closeout_20260402f` completed
+    end to end in the clean clone:
+    - `femic prep validate-case --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml`
+    - `femic prep geospatial-preflight`
+    - `femic run --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --run-id tsa29_issue10_closeout_20260402f`
+    - `femic tsa btc-post-tipsy --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --tsa 29 --run-id tsa29_issue10_closeout_20260402f`
+    - `femic export patchworks --instance-root external/femic-tsa29-instance --tsa 29 --bundle-dir data/model_input_bundle --checkpoint data/ria_vri_vclr1p_checkpoint7.feather --output-dir output/patchworks_tsa29_validated`
+    - `femic patchworks preflight --instance-root external/femic-tsa29-instance --config config/patchworks.runtime.windows.yaml`
+    - `femic patchworks build-blocks --instance-root external/femic-tsa29-instance --config config/patchworks.runtime.windows.yaml --with-topology --topology-backend patchworks-raster`
+    - `femic patchworks matrix-build --instance-root external/femic-tsa29-instance --config config/patchworks.runtime.windows.yaml --run-id tsa29_issue10_closeout_20260402f`
+  - Fresh closeout evidence now proves:
+    - unattended BTC completed with `exit_code=0` and wrote fresh
+      `04_output-tsa29.csv` / `04_error-tsa29.csv`;
+    - post-TIPSY rebuilt fresh `tipsy_curves_tsa29.csv`,
+      `tipsy_sppcomp_tsa29.csv`, `data/model_input_bundle/*`, and
+      `plots/tipsy_vdyp_tsa29-*.png`;
+    - the regenerated topology file
+      `models/tsa29_patchworks_model/blocks/topology_blocks_200r.csv` is
+      non-empty (`29,954,243` bytes; `1,266,753` edges);
+    - the fresh Matrix Builder manifest records `returncode=0`, `failures=[]`,
+      inherited `SPS_LICENSE_SERVER=frst424@auth.spatial.ca`, and the
+      output-local validated XML path beside the matching fragments set;
+    - `messages.csv` is empty apart from the header row.
+  - Fresh-provenance null-volume conclusion:
+    - `04_output-tsa29.csv` has `54` rows total and `33` rows with positive
+      `gVol_*` output;
+    - the remaining `21` all-null `gVol_*` rows align exactly with fresh
+      `04_error-tsa29.csv` rows reporting `Natural has no Species`;
+    - there were no additional all-null volume rows outside that fresh BTC
+      error set, so the pattern is a fresh TSA29 behavior problem rather than
+      stale artifact residue.
+  - Follow-on tracking:
+    - opened issue `#79` (`TSA29 v0: investigate fresh BTC null-volume rows
+      with "Natural has no Species" errors`);
+    - issue `#10` can now close as the rebuild-contract, provenance, and
+      evidence closeout without blocking on the remaining TSA29 v0 behavior
+      investigation.
+- 2026-04-03 (Windows public-data annex hardening follow-up):
+  - Investigated the false-dirty `external/femic-public-data` state seen on
+    native Windows after loading BC GIS datasets and confirmed the churn was
+    landing in annex-managed FileGDB payloads under `data/bc/...`.
+  - Applied the low-risk local mitigation first (`core.autocrlf=false`,
+    `core.safecrlf=false`) to restore a clean baseline, then committed a
+    permanent repo-side hardening fix in the public-data submodule:
+    `155711f` (`Harden binary GIS attributes for Windows clones`).
+  - That public-data commit adds `.gitattributes` `-text` rules for FileGDB
+    payloads and common binary GIS artifacts (`.tif`, `.tiff`, `.feather`,
+    `.gpkg`) so future Windows clones are less likely to pick up CRLF-driven
+    false dirt after normal data access.
+- 2026-04-03 (TSA29 VDYP raw-output ignore cleanup):
+  - Added focused ignore rules in `external/femic-tsa29-instance/.gitignore`
+    for the largest transient raw VDYP spill families:
+    `vdyp_err_*.err`, `vdyp_lyr_*.csv`, `vdyp_out_*.out`, and
+    `vdyp_ply_*.csv`.
+  - Committed that TSA29 submodule cleanup as `1b9a3cb`
+    (`Ignore transient VDYP raw output spill`) so the branch carries the
+    merge-hygiene fix intentionally.
+  - The ignore update reduced TSA29 Git-visible noise from roughly `7,886`
+    files to `179` files while still leaving the evidence-bearing manifests and
+    non-raw runtime artifacts visible for review.
+- 2026-04-03 (Opened follow-on VDYP runtime-layout issue `#80`):
+  - Opened issue `#80` (`Feature: separate essential VDYP runtime assets from
+    transient vdyp_io spill`) to tackle the deeper layout problem later.
+  - The new issue explicitly preserves `vdyp_io/VDYP.INI` and `vdyp_io/VDYP_CFG`
+    as essential local runtime assets and scopes the future work to separating
+    them from cleanup-safe transient raw spill files.
+- 2026-04-03 (Split non-VDYP runtime artifacts out of `vdyp_io/logs`):
+  - Redirected non-VDYP runtime/manifests/report defaults from `vdyp_io/logs`
+    to `runtime/logs` in the parent CLI/workflow defaults and in the active
+    TSA29/K3Z instance configs/docs.
+  - Moved the current TSA29 BTC manifests/logs, post-TIPSY run manifests, and
+    Patchworks matrix-builder manifests/logs out of `vdyp_io/logs` into the new
+    `runtime/logs` home.
+  - Left true VDYP event/stdout logging in `vdyp_io/logs`, preserving
+    `vdyp_io/VDYP.INI` and `vdyp_io/VDYP_CFG/**` as untouched essential runtime
+    assets.

@@ -13,7 +13,7 @@ runner = CliRunner()
 def test_tipsy_validate_cli_passes_with_repo_configs() -> None:
     result = runner.invoke(app, ["tipsy", "validate", "--config-dir", "config/tipsy"])
     assert result.exit_code == 0
-    assert "Validated TIPSY configs" in result.stdout
+    assert "Validated case/FMU TIPSY configs" in result.stdout
 
 
 def test_tipsy_validate_cli_fails_when_requested_tsa_missing(tmp_path: Path) -> None:
@@ -28,7 +28,7 @@ def test_tipsy_validate_cli_fails_when_requested_tsa_missing(tmp_path: Path) -> 
         ["tipsy", "validate", "--config-dir", str(cfg), "--tsa", "08", "--tsa", "16"],
     )
     assert result.exit_code == 1
-    assert "Missing TSA config files" in result.stdout
+    assert "Missing case/FMU TIPSY config files" in result.stdout
 
 
 def test_tipsy_validate_cli_supports_named_unit_codes(tmp_path: Path) -> None:

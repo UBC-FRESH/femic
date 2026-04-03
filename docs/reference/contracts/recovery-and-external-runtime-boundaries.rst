@@ -23,7 +23,10 @@ External Runtime Boundaries
    * - Patchworks
      - Proprietary runtime boundary. FEMIC can export packages, run preflight,
        and launch commands, but users must supply the local Patchworks install,
-       license wiring, and host-ready runtime. The current proving-ground
+       license wiring, and host-ready runtime. The only known-good default
+       operator path is a Windows workstation with Patchworks already installed
+       and the real ``SPS_LICENSE_SERVER`` value already present in system
+       environment configuration. The current proving-ground
        headless seam is now real on native Windows:
        FEMIC can launch a `.pin` without `classic_GUI(control)`, wait one
        unattended iteration, save a stage, and return control cleanly.
@@ -98,7 +101,9 @@ Before Patchworks runtime launch:
 
 1. run ``femic patchworks preflight ...``
 2. confirm Java or Wine + Java is available for the host mode
-3. confirm ``patchworks.jar``, ``SPSHOME``, and license values are wired
+3. confirm ``patchworks.jar`` and ``SPSHOME`` resolve, and on Windows confirm
+   the workstation already exposes the intended system-level
+   ``SPS_LICENSE_SERVER`` value
 4. launch ``build-blocks`` or ``matrix-build`` only after preflight is clean
 
 Before FAN$IER unattended extraction:

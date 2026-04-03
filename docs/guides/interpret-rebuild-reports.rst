@@ -6,7 +6,7 @@ Report Location
 
 Each rebuild run writes a machine-readable report:
 
-- ``vdyp_io/logs/instance_rebuild_report-<run_id>.json``
+- ``runtime/logs/instance_rebuild_report-<run_id>.json``
 
 Start with the run summary at top-level keys:
 

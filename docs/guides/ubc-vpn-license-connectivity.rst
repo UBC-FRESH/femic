@@ -1,12 +1,20 @@
 UBC VPN and License Connectivity
 ================================
 
-Patchworks license checks use ``SPS_LICENSE_SERVER`` in ``<user>@<server>`` form.
-For this project the configured value is typically:
+Patchworks license checks use ``SPS_LICENSE_SERVER`` in
+``<user>@<server>`` form. Example placeholder:
 
 .. code-block:: text
 
-   sps_user@auth.spatial.ca
+   <sps_user>@auth.spatial.ca
+
+``<sps_user>`` is a template token, not a literal username.
+
+Known-good FEMIC/Patchworks operation on UBC institutional Windows workstations
+assumes Patchworks is already installed locally and the real
+``SPS_LICENSE_SERVER`` value is already set in global system configuration. In
+that normal Windows path, FEMIC should inherit the system environment instead
+of injecting a replacement runtime value.
 
 Primary Topology
 ----------------

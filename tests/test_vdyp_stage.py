@@ -979,6 +979,60 @@ def test_run_vdyp_for_stratum_uses_default_log_paths_and_runs_batch(
     assert events and events[0]["status"] == "start"
 
 
+def test_run_vdyp_for_stratum_default_nsamples_wrapper_handles_infinite_target(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sample_table = pd.DataFrame({"FEATURE_ID": [1, 2, 3]})
+    vdyp_bin = tmp_path / "vdyp.exe"
+    vdyp_params = tmp_path / "vdyp_params-landp"
+    vdyp_bin.write_text("x", encoding="utf-8")
+    vdyp_params.write_text("x", encoding="utf-8")
+    phases: list[str] = []
+
+    monkeypatch.setattr(
+        "femic.pipeline.vdyp_sampling.nsamples_from_curves",
+        lambda *_args, **_kwargs: (np.inf, None),
+    )
+
+    def fake_execute_vdyp_batch_fn(**kwargs: object) -> dict[int, dict[str, object]]:
+        phases.append(str(kwargs["phase"]))
+        feature_ids = kwargs["feature_ids"]
+        assert isinstance(feature_ids, list)
+        return {int(fid): {"phase": kwargs["phase"]} for fid in feature_ids}
+
+    out = run_vdyp_for_stratum(
+        sample_table=sample_table,
+        tsa="08",
+        run_id="run-inf-target",
+        vdyp_ply=pd.DataFrame({"FEATURE_ID": [1, 2, 3]}),
+        vdyp_lyr=pd.DataFrame({"FEATURE_ID": [1, 2, 3]}),
+        rc_len=1,
+        curve_fit_fn=lambda *_a, **_k: None,
+        fit_func=lambda *_a, **_k: None,
+        fit_func_bounds_func=lambda *_a, **_k: None,
+        vdyp_binpath=str(vdyp_bin),
+        vdyp_params_infile=str(vdyp_params),
+        which_fn=lambda _name: "/usr/bin/wine",
+        build_tsa_vdyp_log_paths_fn=lambda **_kwargs: {
+            "run": tmp_path / "run.jsonl",
+            "curve": tmp_path / "curve.jsonl",
+            "stdout": tmp_path / "stdout.log",
+            "stderr": tmp_path / "stderr.log",
+        },
+        append_jsonl_fn=lambda *_args: None,
+        append_text_fn=lambda *_args: None,
+        execute_vdyp_batch_fn=fake_execute_vdyp_batch_fn,
+        min_samples=1,
+        max_samples=10,
+        nsamples_c2=1.0,
+    )
+
+    assert phases[0] == "initial"
+    assert "gap_fill" in phases[1:]
+    assert set(out) == {1, 2, 3}
+
+
 def test_run_vdyp_for_stratum_resolves_relative_binpath_from_source_root(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

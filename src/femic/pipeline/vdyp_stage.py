@@ -1362,6 +1362,7 @@ def run_vdyp_sampling(
             vdyp_out,
             confidence=confidence,
             half_rel_ci=half_rel_ci,
+            max_samples=max_samples,
         )
         nsamples_target = min(max(nsamples_target, min_samples), ss.shape[0])
         nsamples_gap = nsamples_target - len(vdyp_out)
@@ -1409,6 +1410,7 @@ def run_vdyp_sampling(
                 vdyp_out,
                 confidence=confidence,
                 half_rel_ci=half_rel_ci,
+                max_samples=max_samples,
             )
             nsamples_target = min(
                 max(nsamples_target, min_samples), sample_table.shape[0]
@@ -1506,6 +1508,11 @@ def run_vdyp_for_stratum(
             vdyp_out: dict[Any, Any], **kwargs: Any
         ) -> tuple[int, Any]:
             nsamples_target, fit_out = nsamples_from_curves(vdyp_out, **kwargs)
+            if not math.isfinite(float(nsamples_target)):
+                # When the estimate cannot be resolved yet, fall back to the
+                # configured ceiling instead of exploding on int(inf) or
+                # sampling an entire large stratum.
+                return int(kwargs.get("max_samples", 1000)), fit_out
             return int(nsamples_target), fit_out
 
         nsamples_from_curves_fn = _default_nsamples_from_curves

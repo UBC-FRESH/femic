@@ -9,4 +9,4 @@ modes:
   skip_checks: false
 run:
   run_id: "tsa29_20260303"
-  log_dir: "vdyp_io/logs"
+  log_dir: "runtime/logs"

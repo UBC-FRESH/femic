@@ -47,7 +47,7 @@ configured invariant list against those metrics:
 
    metrics = collect_rebuild_metrics(
        instance_root=Path("."),
-       log_dir=Path("vdyp_io/logs"),
+       log_dir=Path("runtime/logs"),
        run_id="docs_example",
        patchworks_config_path=Path("config/patchworks.runtime.windows.yaml"),
    )

@@ -8,7 +8,7 @@ runtime:
   run_config: "config/run_profile.case_template.yaml"
   tipsy_config_dir: "config/tipsy"
   patchworks_config: "config/patchworks.runtime.windows.yaml"
-  log_dir: "vdyp_io/logs"
+  log_dir: "runtime/logs"
   baseline_unexpected_diff_threshold: 0
 
 steps:
@@ -37,7 +37,7 @@ steps:
       - "geospatial_preflight"
     mutable_artifacts:
       - "data/*"
-      - "vdyp_io/logs/*"
+      - "runtime/logs/*"
     expected_outputs:
       - "run_manifest-<run_id>.json"
   - step_id: "post_tipsy_bundle"
@@ -48,7 +48,7 @@ steps:
       - "compile_upstream"
     mutable_artifacts:
       - "data/model_input_bundle/*"
-      - "vdyp_io/logs/*"
+      - "runtime/logs/*"
     expected_outputs:
       - "post-tipsy manifest and bundle tables"
 

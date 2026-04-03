@@ -465,7 +465,7 @@ notes.
 - [x] P19.2 Bootstrap and structure femic-tsa29-instance repository
 - [x] P19.3 Assemble ASAP-usable TSA29 snapshot payload
 - [x] P19.4 Add rebuild spec + invariant policy + evidence workflow
-- [ ] P19.5 Execute rebuild validation and publish evidence
+- [x] P19.5 Execute BTC-first rebuild validation and publish evidence (`#10`)
 - [x] P19.6 Build canonical TSA29 student docs in instance repo
 - [x] P19.7 Link TSA29 repo back into FEMIC as submodule + pointer docs
 - [x] P19.8 Add contract tests and release handoff (v0.1.0)
@@ -927,6 +927,39 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+- 2026-04-02 (Issue #10 runtime checkpoint): resume TSA29 rebuild execution from
+  the synced current-`origin/main` BTC-first workspace and carry the runtime
+  findings forward in-repo before the final evidence pass.
+  - Tracking issue:
+    - GitHub issue #10 ("TSA29 P19.5 rebuild validation and evidence closeout")
+  - Current proven status:
+    - `femic prep validate-case` and `femic prep geospatial-preflight` pass in
+      the synced workspace after restoring the thin-instance checkpoint ladder
+      (`tsa_boundaries.feather`, `ria_vri_vclr1p_checkpoint1..8.feather`) from
+      the preserved local backup as execution-only forensic inputs;
+    - `femic run --run-id tsa29_btc_boundary_smoke_20260402b` reaches the BTC
+      seam and emits fresh `03_input-tsa29.csv`, `tipsy_params_tsa29.xlsx`,
+      the legacy `02_input-tsa29.dat` mirror, and `vdyp_results-tsa29.pkl`;
+    - `femic tsa btc-post-tipsy --run-id tsa29_btc_boundary_smoke_20260402b`
+      completes on current main and rebuilds `04_output-tsa29.csv`,
+      `04_error-tsa29.csv`, and `data/model_input_bundle/*`;
+    - thin TSA29 checkouts do not carry the externalized validated fragments
+      shapefile set, so `femic export patchworks --tsa 29 ... --output-dir
+      output/patchworks_tsa29_validated` is now part of the practical local
+      recovery path before Patchworks preflight;
+    - `femic patchworks preflight` passes after that fragments regeneration.
+  - Runtime blockers and next actions:
+    - keep the parent fix for infinite VDYP sample targets (`b47ad35`) in the
+      active branch and include it in the eventual issue closeout;
+    - treat `femic patchworks build-blocks --with-topology` with the default
+      Python backend as non-viable for the full TSA29 validated surface and use
+      `--topology-backend patchworks-raster` for Windows rebuilds;
+    - rerun `femic patchworks build-blocks` and `femic patchworks matrix-build`
+      once a Patchworks license seat is available; current matrix-build attempts
+      stop on `No license available`;
+    - once the license-backed Patchworks steps complete, refresh the TSA29
+      evidence package and promote the final issue `#10` closeout summary into
+      the linked submodule docs plus GitHub.
 - 2026-03-28 (Phase 49 kickoff): start issue `#54` on branch
   `feature/patchworks-headless-runner` to turn the documented
   `classic_GUI(control);` seam into a real FEMIC-controlled unattended
@@ -7709,6 +7742,233 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P51.6d Update the relevant docs and user overlay example for the new exact-state override seam.
 
 ## Detailed Next Steps Notes
+
+- 2026-04-03 (Issue #10 fresh-clone closeout achieved; follow-on moves to `#79`):
+  - Fresh validation closeout completed from:
+    - source workspace: `F:\projects\femic`
+    - clean validation clone:
+      `F:\projects\tmp\femic-issue10-closeout-20260402-clean`
+    - shared public-data mirror:
+      `F:\projects\femic\external\femic-public-data\data`
+  - Clean-clone bootstrap and validation notes:
+    - rebuilt the moved clean-clone `.venv` from scratch instead of trusting the
+      migrated virtual environment;
+    - restored only the minimal TSA29-local prerequisites needed for the clean
+      rerun (`tipsy_params_columns`, `tsa_boundaries.feather`,
+      `ria_vri_vclr1p_checkpoint1..8.feather`);
+    - removed stale downstream TSA29 runtime products before rerun so the final
+      evidence chain stayed single-lineage and auditable;
+    - found a real packaging gap during the clean rerun and added `openpyxl` to
+      `pyproject.toml` and `requirements.txt` because Stage 01a and tests write
+      `tipsy_params_tsa29.xlsx`.
+  - Fresh closeout run `tsa29_issue10_closeout_20260402f` now proves:
+    - `femic prep validate-case --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml`
+      passed in the clean clone;
+    - `femic prep geospatial-preflight` passed in the clean clone;
+    - `femic run` emitted fresh `03_input-tsa29.csv` and Stage 01a/01b runtime
+      artifacts;
+    - unattended BTC completed with `exit_code=0` and wrote fresh
+      `04_output-tsa29.csv` / `04_error-tsa29.csv`;
+    - `femic tsa btc-post-tipsy` completed with fresh
+      `tipsy_curves_tsa29.csv`, `tipsy_sppcomp_tsa29.csv`,
+      `data/model_input_bundle/*`, and fresh `plots/tipsy_vdyp_tsa29-*.png`;
+    - `femic export patchworks`, `femic patchworks build-blocks --with-topology --topology-backend patchworks-raster`,
+      and `femic patchworks matrix-build --run-id tsa29_issue10_closeout_20260402f`
+      all completed successfully in the clean clone;
+    - the regenerated topology file
+      `models/tsa29_patchworks_model/blocks/topology_blocks_200r.csv` is now
+      non-empty (`29,954,243` bytes; `1,266,753` topology edges);
+    - the fresh Matrix Builder manifest records `returncode=0`,
+      `failures=[]`, inherited
+      `SPS_LICENSE_SERVER=frst424@auth.spatial.ca`, and the output-local
+      validated XML path beside the matching fragments set.
+  - Fresh-provenance null-volume resolution:
+    - the apparent TSA29 null/no-volume pattern is **not** stale artifact
+      confusion;
+    - fresh `04_output-tsa29.csv` contains `54` rows total, with `33` rows
+      showing positive `gVol_*` output;
+    - the remaining `21` all-null `gVol_*` rows line up exactly with fresh
+      `04_error-tsa29.csv` rows reporting `Natural has no Species`;
+    - there were no additional all-null volume rows outside that fresh BTC
+      error set.
+  - Closeout consequence:
+    - issue `#10` can close as a rebuild-contract, provenance, and evidence
+      closeout;
+    - the remaining TSA29 v0 behavior investigation moves to follow-on issue
+      `#79` (`TSA29 v0: investigate fresh BTC null-volume rows with "Natural has no Species" errors`).
+  - Immediate next task:
+    - use issue `#79` as the active surface for root-causing the fresh
+      `Natural has no Species` subset and repairing the affected TSA29 BTC
+      inputs without reopening issue `#10`.
+  - Windows public-data hygiene follow-up:
+    - local testing in `external/femic-public-data` showed Windows false-dirty
+      churn was being amplified by `core.autocrlf=true` against annex-managed
+      GIS payloads;
+    - committed `external/femic-public-data` submodule fix `155711f`
+      (`Harden binary GIS attributes for Windows clones`) to mark FileGDB
+      payloads plus raster/feather/GPKG artifacts as binary (`-text`) in
+      `.gitattributes`;
+    - parent merge work should advance the public-data submodule pointer to
+      `155711f` together with the existing TSA29 pointer update, but must still
+      keep the large TSA29 runtime spill out of the intentional Git payload.
+  - TSA29 merge-hygiene follow-up:
+    - committed `external/femic-tsa29-instance` submodule fix `1b9a3cb`
+      (`Ignore transient VDYP raw output spill`) to ignore the largest
+      throwaway `vdyp_io` raw-output families
+      (`vdyp_err_*.err`, `vdyp_lyr_*.csv`, `vdyp_out_*.out`,
+      `vdyp_ply_*.csv`);
+    - that change cut the TSA29 Git-visible worktree noise from roughly
+      `7,886` files to `179` files without hiding the JSON evidence manifests;
+    - remaining TSA29 dirt is now concentrated in still-meaningful runtime
+      artifacts (`data/*`, `plots/*`, fragments, manifests, and local
+      `VDYP_CFG` / `VDYP.INI`) rather than the transient raw spill.
+    - follow-on issue `#80` now tracks redesigning the `vdyp_io` layout so the
+      essential local runtime assets (`VDYP_CFG`, `VDYP.INI`) no longer live in
+      the same directory as thousands of transient raw VDYP spill files that
+      need periodic cleanup on Windows.
+  - Non-VDYP runtime-log split:
+    - redirected non-VDYP run/manifests/rebuild-report defaults from
+      `vdyp_io/logs` to `runtime/logs` in the parent CLI/workflow defaults and
+      in the TSA29/K3Z instance configs/docs;
+    - moved the current TSA29 non-VDYP runtime artifacts (BTC manifests/logs,
+      post-TIPSY run manifests, Patchworks matrix-builder manifests/logs) out
+      of `vdyp_io/logs` into `runtime/logs`;
+    - left true VDYP event/stdout logging under `vdyp_io/logs`, keeping
+      `VDYP.INI` / `VDYP_CFG` untouched as essential runtime assets.
+
+- 2026-04-02 (Issue #10 BTC-first TSA29 migration checkpoint):
+  - Completed in this branch:
+    - added repo-local planning note `planning/tsa29_p19_5_btc_reentry.md`;
+    - updated the Phase 19 `P19.5` wording so issue `#10` now tracks the
+      BTC-first rebuild/evidence closeout explicitly;
+    - migrated the linked TSA29 instance docs/runbook/spec/runtime wiring so
+      the active contract is now `03_input-tsa29.csv` -> unattended BTC ->
+      `04_output-tsa29.csv` / `04_error-tsa29.csv` ->
+      `femic tsa btc-post-tipsy`;
+    - repaired the stale TSA29 Patchworks runtime config so it no longer points
+      at K3Z model paths;
+    - added the smallest necessary parent blocker fix so `femic instance rebuild`
+      can honor a TSA29 spec that declares `btc_post_tipsy_bundle` instead of
+      silently forcing the old legacy `post_tipsy_bundle` step;
+    - refreshed docs/CLI contract tests to match current FMU-first wording and
+      current checked-in K3Z artifact reality on `origin/main`.
+  - Validation completed:
+    - `python -m pytest tests/test_cli_main.py -k "instance_rebuild"`
+    - `python -m pytest tests/test_docs_contract.py -k "tsa29"`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m sphinx -b html external/femic-tsa29-instance/docs external/femic-tsa29-instance/docs/_build/html -W`
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `mypy src`
+    - `pytest`
+    - `pre-commit run --all-files`
+  - Immediate next execution order:
+    - checkpoint only the permanent contract/runtime/doc fixes, keeping large
+      TSA29 runtime spill out of the intentional Git payload;
+    - prove fresh-seam provenance explicitly for one final closeout run:
+      `03_input-tsa29.csv` -> fresh BTC `04_output-tsa29.csv` /
+      `04_error-tsa29.csv` -> fresh post-TIPSY curves/bundle/plots;
+    - treat blank/null BTC output as a blocker, and treat any remaining
+      fresh-provenance no-volume plot pattern as a follow-on TSA29 v0 issue
+      rather than widening `#10` into a full behavior investigation;
+    - run the final acceptance/evidence pass from a fresh/current FEMIC
+      checkout using the approved Windows Patchworks contract:
+      inherited `SPS_LICENSE_SERVER`, output-local validated XML/fragments,
+      `patchworks-raster` topology backend, and successful Matrix Builder
+      completion with `returncode=0`.
+
+- 2026-04-02 (Issue #10 Patchworks + provenance checkpoint):
+  - Current synced-workspace evidence now proves:
+    - TSA29 Patchworks Matrix Builder succeeds when FEMIC inherits the real
+      Windows `SPS_LICENSE_SERVER` value instead of overriding it with the old
+      placeholder runtime config value;
+    - TSA29 Matrix Builder must point at
+      `output/patchworks_tsa29_validated/forestmodel.xml` beside the matching
+      validated fragments, not at stale model-local
+      `models/tsa29_patchworks_model/yield/forestmodel.xml`;
+    - the reviewed `plots/tipsy_vdyp_tsa29-*.png` family in this forensic
+      workspace was regenerated immediately after the fresh
+      `tsa29_btc_boundary_smoke_20260402b` BTC-first run chain, not from the
+      old historical DAT/out seam.
+  - Verified current-workspace provenance chain:
+    - `data/03_input-tsa29.csv` mtime `2026-04-02 01:34:59`
+    - `data/04_output-tsa29.csv` / `data/04_error-tsa29.csv` mtimes
+      `2026-04-02 01:37:17`
+    - `data/tipsy_curves_tsa29.csv` mtime `2026-04-02 01:37:27`
+    - `plots/tipsy_vdyp_tsa29-*.png` mtimes `2026-04-02 01:37:27` through
+      `2026-04-02 01:37:34`
+    - BTC manifest `tsa29_btc_boundary_smoke_20260402b_tsa29` records
+      `TIPSYbtc.exe /TSR` consuming fresh `03_input-tsa29.csv` and returning
+      fresh `04_output-tsa29.csv` / `04_error-tsa29.csv`
+    - post-TIPSY manifest `tsa29_btc_boundary_smoke_20260402b` records fresh
+      `tipsy_curves_tsa29.csv`, `tipsy_sppcomp_tsa29.csv`, and rebuilt bundle
+      tables from the same run lineage.
+  - Remaining closeout move:
+    - repeat this same proof from a fresh/current checkout and use that run as
+      the final issue-`#10` closeout evidence.
+
+- 2026-04-02 (Issue #10 F-drive re-ground + clean validation plan):
+  - Live workspace sanity check now confirms:
+    - source repo root: `F:\projects\femic`
+    - fresh validation checkout:
+      `F:\projects\tmp\femic-issue10-closeout-20260402-clean`
+    - both repos are on `work/p19.5-tsa29-btc-reentry`
+    - the intended shared public-data mirror for
+      `FEMIC_EXTERNAL_DATA_ROOT` remains
+      `F:\projects\femic\external\femic-public-data\data`
+  - Immediate execution order from this point:
+    - finish editable bootstrap in the fresh validation checkout so
+      `python -m femic` resolves from its local `.venv`;
+    - restore only the missing TSA29-local prerequisite files needed for the
+      clean closeout chain from the source workspace into the fresh clone;
+    - remove stale downstream TSA29 runtime products in the fresh clone before
+      the rerun so provenance stays single-lineage and auditable;
+    - rerun `validate-case`, `geospatial-preflight`, the BTC-first TSA29 chain,
+      and the Patchworks closeout steps from the clean checkout;
+    - inspect the rebuilt BTC/TIPSY manifests and outputs explicitly to decide
+      whether the apparent null-volume pattern is fresh behavior or stale-mix
+      confusion before touching issue `#10` closure state.
+
+- 2026-04-02 (Issue #10 BTC-first TSA29 re-entry plan):
+  - Governing issue:
+    - GitHub issue `#10`
+  - Branch:
+    - `work/p19.5-tsa29-btc-reentry`
+  - Re-entry decision:
+    - retire the stale TSA29 closeout framing built around the old manual
+      BatchTIPSY DAT/out seam;
+    - treat the freshly synced parent `origin/main` BTC workflow as the
+      authoritative contract;
+    - use the preserved pre-sync TSA29 backup snapshot as the forensic source
+      for selective carry-forward only, without relying on any stale `C:`
+      checkout paths.
+  - Approved execution sequence:
+    - migrate the TSA29 instance docs/runbook/spec/runtime wiring so the active
+      seam is:
+      - `data/03_input-tsa29.csv`
+      - unattended BTC
+      - `data/04_output-tsa29.csv`
+      - `data/04_error-tsa29.csv`
+      - `femic tsa btc-post-tipsy --run-config config/run_profile.tsa29.yaml --tsa 29 --run-id <id>`
+    - keep legacy `02_input-tsa29*.dat` / `04_output-tsa29.out` references as
+      historical or compatibility context only;
+    - make only the smallest necessary parent-code blocker fixes if the current
+      `origin/main` rebuild runner cannot honor the BTC-first TSA29 contract;
+    - after migration, run the final acceptance/evidence pass from a fresh
+      current FEMIC checkout rather than from the old forensic workspace.
+  - Immediate execution order:
+    - patch `ROADMAP.md`, `CHANGE_LOG.md`, and
+      `planning/tsa29_p19_5_btc_reentry.md` so the approved re-entry plan lives
+      in-repo and matches the updated GitHub issue `#10`;
+    - migrate the linked TSA29 instance surfaces:
+      `README.md`, `docs/getting-started.rst`,
+      `docs/rebuild-and-qa.rst`, `docs/data-and-provenance.rst`,
+      `docs/troubleshooting.rst`, `runbooks/REBUILD_RUNBOOK.md`,
+      `config/rebuild.spec.yaml`, and
+      `config/patchworks.runtime.windows.yaml`;
+    - validate the migrated contract with focused docs/spec checks plus a
+      targeted BTC-boundary smoke before attempting the final clean rebuild
+      closeout.
 
 - 2026-03-30 (Issue #65 kickoff): start the narrow K3Z ctfert log-grade harvested product/account rollout on branch `feature/issue-65-k3z-ctfert-log-grades`.
   - Governing issue:

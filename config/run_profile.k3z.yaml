@@ -21,4 +21,4 @@ modes:
   managed_curve_mode: tipsy
 run:
   run_id: "k3z_20260304"
-  log_dir: "vdyp_io/logs"
+  log_dir: "runtime/logs"
