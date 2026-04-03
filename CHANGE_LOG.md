@@ -10708,3 +10708,10 @@
     - `python -m femic prep validate-case --instance-root <fresh-clone> --run-config config/run_profile.tsa29.yaml`
       still expects the broader legacy full-rebuild cache surface and is not
       yet the right acceptance gate for the standalone published package.
+- 2026-04-03 (TSA29 reference package note tracked):
+  - Started tracking `reference/29ts_dpkg_2024.pdf` in the repo so the TSA29
+    TSR data-package reference stays available for later production-grade
+    refinement work.
+  - Added a matching reminder to `planning/incoming_ideas.md` so future TSA29
+    release-polish work can treat this PDF as an explicit reference source
+    rather than a forgotten local-only file.

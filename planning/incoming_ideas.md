@@ -78,3 +78,5 @@ Good queue hygiene
 [feature] Extend BTC/TIPSY functionality to include explicit simulation of various combinations of optional mid-rotation treatments (pre-commercial thinning, multiple fertilization treatment applications, commercial thinning, variable retention harvesting, final felling at different ages [and impact on logs/products/economic outputs produced at end of rotation], etc)
 
 [feature] Modify TISPY rpt input template to request 200 years of output instead of 120.
+
+[documentation] Keep `reference/29ts_dpkg_2024.pdf` under version control as a TSA29 refinement reference for later production-grade release work. Use it as a likely source when we revisit final-package polish, parameter provenance, and any remaining TSR-alignment questions for the TSA29 standalone instance.
