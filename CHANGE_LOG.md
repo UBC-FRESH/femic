@@ -10162,3 +10162,9 @@
   - The ignore update reduced TSA29 Git-visible noise from roughly `7,886`
     files to `179` files while still leaving the evidence-bearing manifests and
     non-raw runtime artifacts visible for review.
+- 2026-04-03 (Opened follow-on VDYP runtime-layout issue `#80`):
+  - Opened issue `#80` (`Feature: separate essential VDYP runtime assets from
+    transient vdyp_io spill`) to tackle the deeper layout problem later.
+  - The new issue explicitly preserves `vdyp_io/VDYP.INI` and `vdyp_io/VDYP_CFG`
+    as essential local runtime assets and scopes the future work to separating
+    them from cleanup-safe transient raw spill files.

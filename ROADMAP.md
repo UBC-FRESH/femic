@@ -7817,6 +7817,10 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - remaining TSA29 dirt is now concentrated in still-meaningful runtime
       artifacts (`data/*`, `plots/*`, fragments, manifests, and local
       `VDYP_CFG` / `VDYP.INI`) rather than the transient raw spill.
+    - follow-on issue `#80` now tracks redesigning the `vdyp_io` layout so the
+      essential local runtime assets (`VDYP_CFG`, `VDYP.INI`) no longer live in
+      the same directory as thousands of transient raw VDYP spill files that
+      need periodic cleanup on Windows.
 
 - 2026-04-02 (Issue #10 BTC-first TSA29 migration checkpoint):
   - Completed in this branch:
