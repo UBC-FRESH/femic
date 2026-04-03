@@ -135,3 +135,15 @@ At that point, do **not** rerun Stage 01a unless the TIPSY handoff really needs
 to be regenerated. Stage 01b freshness is BTC-CSV-content based, so unchanged
 ``03_input`` content can reuse existing BTC output, but real canonical input
 changes require a refreshed ``04_output``.
+
+Curve Rescue Guard
+------------------
+
+Stage 01a curve smoothing now keeps the late fit-quality rescue pass aligned
+with earlier candidate-selection policy. In particular, a raw ``tail_blend``
+candidate that was already rejected during ``tail_blend_selection`` is no
+longer allowed to re-enter later only because it clears
+``early_overshoot_exceeds_gate``. If the primary/current fit still fails the
+gate and no previously accepted candidate resolves that failure, Stage 01a now
+logs the unresolved-gate warning and keeps the better current fit instead of
+reviving the rejected tail blend.

@@ -10332,3 +10332,22 @@
     - `ruff check src tests`
     - `python -m mypy src`
     - `python -m pytest` (`809 passed`)
+- 2026-04-03 (Issue `#81` rescue-guard fix validated):
+  - Repaired `src/femic/pipeline/vdyp_stage.py` so the late
+    `fit_quality_gate` rescue pass only compares candidates that earlier policy
+    stages actually accepted, with raw rejected `tail_blend` excluded from the
+    rescue candidate set.
+  - Added focused regression coverage in `tests/test_vdyp_stage.py` for the
+    TSA29-shaped failure seam where the primary fit only fails
+    `early_overshoot_exceeds_gate`, the raw `tail_blend` is rejected earlier,
+    and the final selection must stay off `tail_blend`.
+  - Preserved accepted-candidate rescue behavior by tightening the existing
+    merchantable-floor rescue test so it still proves an actually accepted
+    rescue candidate remains eligible in the late gate pass.
+  - Updated the Stage 01a and troubleshooting guides so operator-facing docs
+    now state that fit-quality rescue respects earlier acceptance decisions and
+    does not revive rejected tail blends purely to clear early overshoot.
+  - Narrow live-code replay against the saved clean-clone TSA29 evidence now
+    keeps both `ICH_SX / M` and `ICH_SX / H` on `primary_nlls` with
+    `selected_curve_gate_unresolved`; the old saved event log for that same
+    production evidence had ended both cases on rescued `tail_blend`.

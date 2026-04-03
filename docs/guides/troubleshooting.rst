@@ -120,3 +120,29 @@ Deterministic troubleshooting flow:
 5. If still failing, compare against baseline/allowlist diff output in
    ``instance_rebuild_report-<run_id>.json`` and only allowlist intentional
    deltas.
+
+VDYP Gate Rescue Picks Worse Tail Curve
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Failure signature:
+
+- ``tail_blend_selection`` already logs ``tail_blend_rejected`` for a stratum.
+- A later ``fit_quality_gate`` event used to rescue back to ``tail_blend``
+  anyway because that curve cleared ``early_overshoot_exceeds_gate``.
+- Final ``fallback_policy`` then reported ``selected_path = tail_blend`` even
+  though the rejected tail fit had materially worse RMSE or tail RMSE.
+
+Deterministic troubleshooting flow:
+
+1. Inspect the stratum's Stage 01a curve events in
+   ``vdyp_curve_events-tsaXX-<run_id>.jsonl``.
+2. If ``tail_blend_selection`` already rejected the candidate, confirm the
+   later rescue path only considers previously accepted candidates
+   (``reparameterized_nlls``, ``censored_refit``, accepted ``tail_blend``,
+   accepted ``merchantable_floor``, plus ``primary_nlls``).
+3. If the selected fit still fails the gate and no accepted candidate resolves
+   it, expect ``selected_curve_gate_unresolved`` plus
+   ``fallback_policy.selected_path = primary_nlls`` rather than a revived raw
+   tail blend.
+4. Treat any remaining unresolved gate as a separate fitting-policy problem,
+   not as evidence that the rejected tail-blend candidate should be revived.

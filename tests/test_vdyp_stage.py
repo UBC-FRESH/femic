@@ -2147,7 +2147,7 @@ def test_execute_curve_smoothing_runs_layers_tail_blend_after_left_toe_censor(
     assert selection_events[-1].get("selected_path") != "primary_nlls"
 
 
-def test_execute_curve_smoothing_runs_rescues_selected_curve_gate_failures(
+def test_execute_curve_smoothing_runs_does_not_revive_rejected_tail_blend_in_gate_rescue(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -2162,14 +2162,24 @@ def test_execute_curve_smoothing_runs_rescues_selected_curve_gate_failures(
         _vdyp_out: object, **kwargs: object
     ) -> tuple[list[float], list[float]]:
         if bool(kwargs.get("tail_blend_enabled", False)):
-            return [0.0, 150.0, 300.0], [0.0, 85.0, 90.0]
-        # Non-finite primary fit should fail gate and trigger rescue.
-        return [0.0, 150.0, 300.0], [0.0, float("nan"), 350.0]
+            # Clears the early-overshoot gate but is much worse overall, so it
+            # should be rejected by tail_blend_selection and stay ineligible for
+            # the later gate-rescue pass.
+            return [0.0, 150.0, 300.0], [0.0, 30.0, 75.0]
+        # Primary fit stays globally reasonable but fails the early-overshoot
+        # gate, matching the TSA29 issue-81 failure shape.
+        return [0.0, 150.0, 300.0], [0.0, 90.0, 95.0]
 
     vdyp_obs = pd.DataFrame(
         {
-            "Age": [30, 35, 40, 45, 200, 210, 220, 230],
-            "Vdwb": [10.0, 12.0, 14.0, 16.0, 80.0, 82.0, 83.0, 84.0],
+            "Age": [30, 35, 40, 45, *range(100, 300, 5)],
+            "Vdwb": [
+                2.5,
+                2.7,
+                3.0,
+                3.2,
+                *[80.0 + (0.1 * (age - 100)) for age in range(100, 300, 5)],
+            ],
         }
     )
     smoothed_runs = execute_curve_smoothing_runs(
@@ -2178,7 +2188,9 @@ def test_execute_curve_smoothing_runs_rescues_selected_curve_gate_failures(
         results_for_tsa=[(1, "CWH_HW", {})],
         si_levels=["L"],
         vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
-        kwarg_overrides_for_tsa={},
+        kwarg_overrides_for_tsa={
+            ("CWH_HW", "L"): {"tail_linear_allow_quantile_fallback": True}
+        },
         process_vdyp_out_fn=fake_process,
         append_jsonl_fn=append_event,
         vdyp_curve_events_path="curve.jsonl",
@@ -2191,6 +2203,23 @@ def test_execute_curve_smoothing_runs_rescues_selected_curve_gate_failures(
     )
 
     assert len(smoothed_runs) == 1
+    tail_reject_events = [
+        event
+        for event in events
+        if event.get("stage") == "tail_blend_selection"
+        and event.get("reason") == "tail_blend_rejected"
+    ]
+    assert tail_reject_events
+    gate_fail_events = [
+        event
+        for event in events
+        if event.get("stage") == "fit_quality_gate"
+        and event.get("reason") == "fit_quality_gate_failed"
+    ]
+    assert gate_fail_events
+    assert gate_fail_events[-1].get("failure_reasons") == [
+        "early_overshoot_exceeds_gate"
+    ]
     fallback_events = [
         event
         for event in events
@@ -2198,14 +2227,18 @@ def test_execute_curve_smoothing_runs_rescues_selected_curve_gate_failures(
         and event.get("reason") == "curve_selected"
     ]
     assert fallback_events
-    assert fallback_events[-1].get("selected_path") == "tail_blend"
+    assert fallback_events[-1].get("selected_path") == "primary_nlls"
     rescue_events = [
         event
         for event in events
         if event.get("stage") == "fit_quality_gate"
         and event.get("reason") == "selected_curve_gate_rescue"
     ]
-    assert rescue_events
+    if rescue_events:
+        assert rescue_events[-1].get("rescue_selected_path") == "primary_nlls"
+        gate_by_path = rescue_events[-1].get("gate_by_path")
+        assert isinstance(gate_by_path, dict)
+        assert "tail_blend" not in gate_by_path
 
 
 def test_execute_curve_smoothing_runs_logs_fit_quality_gate_failures(
@@ -2508,6 +2541,9 @@ def test_execute_curve_smoothing_runs_selects_merchantable_floor_candidate(
         and event.get("reason") == "selected_curve_gate_rescue"
     ]
     assert rescue_events
+    rescue_gate_by_path = rescue_events[-1].get("gate_by_path")
+    assert isinstance(rescue_gate_by_path, dict)
+    assert "merchantable_floor" in rescue_gate_by_path
 
 
 def test_execute_curve_smoothing_runs_applies_toe_shift_env_default(

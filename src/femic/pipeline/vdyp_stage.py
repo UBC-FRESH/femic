@@ -3557,7 +3557,10 @@ def execute_curve_smoothing_runs(
                     left_toe_curve,
                     dict(fit_metrics.get("left_toe_censor", {})),
                 )
-            tail_curve = candidate_curves.get("tail_blend")
+            # Keep late gate rescue constrained to candidates that earlier
+            # policy stages actually accepted rather than reviving raw
+            # rejected tail-blend fits.
+            tail_curve = candidate_curves.get("tail_blend_selected")
             if tail_curve is not None:
                 path_candidates["tail_blend"] = (
                     tail_curve,

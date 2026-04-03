@@ -7743,6 +7743,48 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 ## Detailed Next Steps Notes
 
+- 2026-04-03 (Issue `#81` rescue-guard fix validated):
+  - Narrow scope delivered exactly as planned:
+    - late `fit_quality_gate` rescue now considers only candidates that earlier
+      policy stages actually accepted/selected;
+    - raw rejected `tail_blend` no longer re-enters rescue comparison just
+      because it clears `early_overshoot_exceeds_gate`.
+  - Validation outcome for this pass:
+    - focused regression coverage now locks the failure seam where
+      `tail_blend_selection` rejects a worse tail curve and the final selected
+      path must stay off `tail_blend`;
+    - accepted-candidate rescue remains covered by the existing
+      `merchantable_floor` rescue regression;
+    - replaying the saved clean-clone TSA29 evidence through the live repo code
+      now keeps both `ICH_SX / M` and `ICH_SX / H` on `primary_nlls` with
+      `selected_curve_gate_unresolved` instead of rescuing to `tail_blend`.
+  - Immediate follow-through:
+    - run the full lint/type/test/docs gates;
+    - post the validation closeout to GitHub issue `#81` and close it if the
+      full repo gates stay green.
+
+- 2026-04-03 (Issue `#81` active implementation: rescue guard, not broad tail retune):
+  - Root-cause read for this pass:
+    - the known TSA29 `ICH_SX / M` and `ICH_SX / H` mis-selections are not
+      being caused by the earlier `tail_blend_selection` step;
+    - in the saved clean-clone evidence, `tail_blend_selection` already rejects
+      the raw `tail_blend` candidate for both cases, but the later
+      `fit_quality_gate` rescue still revives raw `tail_blend` because it
+      clears `early_overshoot_exceeds_gate`.
+  - Active implementation target:
+    - keep the issue narrow to the late rescue-candidate set;
+    - allow gate rescue to consider only candidates that earlier policy stages
+      actually accepted/selected;
+    - do not broaden this pass into a general retune of tail-detection,
+      tail-blend thresholds, or fit-quality gate constants.
+  - Validation target for this pass:
+    - add focused regression coverage for "rejected tail_blend must not be
+      revived by gate rescue";
+    - preserve at least one accepted-candidate gate-rescue path;
+    - replay the saved TSA29 `ICH_SX / M` and `ICH_SX / H` evidence through the
+      live repo code and confirm the final selected path no longer ends at
+      `tail_blend`.
+
 - 2026-04-03 (Issue `#82` closeout; issue `#81` is the next active VDYP follow-on):
   - Issue `#82` is now closeout-complete:
     - the polygon/layer batch writer was repaired so VDYP input CSVs now keep
