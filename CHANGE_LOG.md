@@ -10792,3 +10792,15 @@
     - TSA29 bucket existence is solved;
     - the remaining blocker is Windows-native Arbutus S3 access itself for
       `git-annex` / S3 operations, not just bucket creation for TSA29.
+- 2026-04-03 (Issue `#95` narrowed further to Windows credential/account-scope parity):
+  - Confirmed the Windows auth loader is still injecting a stable-looking
+    redacted `AWS_ACCESS_KEY_ID` fingerprint together with the intended bucket,
+    endpoint, and region values.
+  - Re-ran the smallest useful dual-bucket boto3 probe from that same loaded
+    Windows session:
+    - `HeadBucket(ubc-fresh-femic-public-data)` returned `404`
+    - `HeadBucket(ubc-fresh-femic-tsa29-instance)` returned `404`
+  - Because both the known public-data bucket and the new TSA29 bucket are
+    invisible from the same session, the next debug target is Windows-side
+    credential/account-scope parity with the known-good Linux environment,
+    rather than further `git-annex` argument changes.

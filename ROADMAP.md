@@ -1178,6 +1178,17 @@ notes.
   - Next likely resolution path:
     - treat the bucket-existence prerequisite as solved and move the active
       blocker to a broader Windows-native Arbutus S3 access seam;
+    - tighten the immediate debug target further before any more `git-annex`
+      retries:
+      - the Windows session is loading a stable-looking redacted
+        `AWS_ACCESS_KEY_ID` fingerprint and the intended endpoint/region/bucket
+        values; but
+      - from that same loaded session, direct boto3 `HeadBucket` probes still
+        return `404` for both `ubc-fresh-femic-public-data` and
+        `ubc-fresh-femic-tsa29-instance`;
+      - this makes Windows-side credential/account-scope parity with the known
+        good Linux environment the next thing to confirm before retrying
+        `initremote`;
     - continue issue `#95` only once we have either a Windows-native fix or a
       Linux/WSL-backed execution path that can actually perform `git-annex` S3
       operations against Arbutus from this workstation.
