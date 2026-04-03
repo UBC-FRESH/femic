@@ -1196,6 +1196,47 @@ notes.
     - issue `#96` will determine whether FEMIC should gain a cross-platform
       Arbutus bucket bootstrap/preflight helper so future instance-publication
       work does not depend on manual bucket creation outside FEMIC.
+  - Final resolution reached on this Windows host:
+    - the immediate Windows-side failure was a local auth-input bug, not a new
+      Arbutus API mystery:
+      - `%USERPROFILE%\.config\femic\arbutus.env` still had single quotes
+        wrapped around `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`;
+      - interactive dot-sourcing of `load-arbutus-env.ps1` was also being
+        blocked by execution policy unless the session used
+        `Set-ExecutionPolicy -Scope Process Bypass -Force` or
+        `powershell -ExecutionPolicy Bypass -NoProfile ...`;
+    - once the quotes were removed and the loader was executed in a bypassed
+      session, direct boto3 `HeadBucket` probes returned `head_ok` for both:
+      - `ubc-fresh-femic-public-data`
+      - `ubc-fresh-femic-tsa29-instance`;
+    - `git annex initremote arbutus-s3 ...` then advanced to a different,
+      legitimate conflict:
+      - the bucket contained only a stale `annex-uuid` marker from an earlier
+        aborted initialization attempt;
+      - after confirming the bucket held no real payload beyond that single
+        marker, deleting `annex-uuid` and retrying `initremote` succeeded;
+    - annex payload publication then succeeded with
+      `git annex copy --to arbutus-s3 --all`;
+    - Git publication dependency was wired with
+      `remote.origin.datalad-publish-depends=arbutus-s3`;
+    - the TSA29 dataset repo `main` branch was fast-forwarded to the current
+      published-package commit (`ccdb50e`) so GitHub cold clones now see the
+      actual `models/tsa29_patchworks_model` tree instead of the stale
+      pre-publication state; and
+    - a fresh clone validated the end-to-end path:
+      - `git annex enableremote arbutus-s3` succeeded;
+      - required shipped assets were materialized from Arbutus, including:
+        - `models/tsa29_patchworks_model/blocks/blocks.shp`
+        - `output/patchworks_tsa29_validated/fragments/fragments.shp`
+        - `output/patchworks_tsa29_validated/forestmodel.xml`
+        - `data/vdyp_results-tsa29.pkl`
+      - `python -m femic patchworks preflight --instance-root <fresh-clone> --config config/patchworks.runtime.windows.yaml`
+        passed from the fresh clone.
+  - Result:
+    - issue `#95` is now complete;
+    - issue `#96` remains the follow-on investigation into whether FEMIC
+      should proactively catch/normalize these local auth-file and bucket
+      bootstrap seams instead of leaving them to operator debugging.
 
 - 2026-04-03 (Issue `#85` curve refresh ready for `@gparadis` review):
   - Parent rollout umbrella:

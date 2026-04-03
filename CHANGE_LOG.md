@@ -10804,3 +10804,42 @@
     invisible from the same session, the next debug target is Windows-side
     credential/account-scope parity with the known-good Linux environment,
     rather than further `git-annex` argument changes.
+- 2026-04-03 (Issue `#95` completed: TSA29 Arbutus special remote wired and cold-clone path proven):
+  - Found and fixed the actual Windows-side auth-input seam:
+    - `%USERPROFILE%\.config\femic\arbutus.env` still had single quotes around
+      `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, so the loader was
+      exporting invalid literal values;
+    - interactive PowerShell loading also needed
+      `Set-ExecutionPolicy -Scope Process Bypass -Force` (or an equivalent
+      `powershell -ExecutionPolicy Bypass ...` wrapper) before dot-sourcing the
+      loader script.
+  - After removing those quotes, Windows-side boto3 probes returned `head_ok`
+    for both:
+    - `ubc-fresh-femic-public-data`
+    - `ubc-fresh-femic-tsa29-instance`
+  - Retrying `git annex initremote arbutus-s3 ...` then exposed a stale-bucket
+    marker rather than a credential failure:
+    - the bucket contained only one object, `annex-uuid`;
+    - after deleting that lone stale marker, `git annex initremote arbutus-s3`
+      succeeded with the known-good parity flags:
+      - `public=yes`
+      - `publicurl=https://object-arbutus.cloud.computecanada.ca/ubc-fresh-femic-tsa29-instance`
+      - `autoenable=true`
+  - Published the annex payload to Arbutus with:
+    - `git annex copy --to arbutus-s3 --all`
+  - Wired Git publication dependency:
+    - `git config remote.origin.datalad-publish-depends arbutus-s3`
+  - Fast-forwarded `external/femic-tsa29-instance` `main` to the published
+    package commit (`ccdb50e`) and pushed both:
+    - `origin/main`
+    - `origin/git-annex`
+  - Fresh-clone validation from
+    `https://github.com/UBC-FRESH/femic-tsa29-instance.git` now succeeds:
+    - `git annex enableremote arbutus-s3` works;
+    - required shipped assets can be materialized from Arbutus, including:
+      - `models/tsa29_patchworks_model/blocks/blocks.shp`
+      - `output/patchworks_tsa29_validated/fragments/fragments.shp`
+      - `output/patchworks_tsa29_validated/forestmodel.xml`
+      - `data/vdyp_results-tsa29.pkl`
+    - `python -m femic patchworks preflight --instance-root <fresh-clone> --config config/patchworks.runtime.windows.yaml`
+      passes against the freshly cloned TSA29 dataset.
