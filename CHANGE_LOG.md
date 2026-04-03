@@ -10689,3 +10689,22 @@
       from `external/femic-tsa29-instance/`
     - `git annex info --fast`
     - DataLad status inspection against the TSA29 instance dataset
+- 2026-04-03 (Issue `#92` ready to close: current TSA29 PoC package published into the DataLad-managed instance and cold-start validated):
+  - Switched active work to branch
+    `feature/issue-92-tsa29-publish-cold-start`.
+  - Published the current TSA29 PoC package into the DataLad-managed instance:
+    - refreshed bundle/curve inputs and BTC seam files under `data/`;
+    - published the standalone Patchworks runtime surfaces under
+      `models/tsa29_patchworks_model/{analysis,blocks,tracks}/`;
+    - published the validated editable rebuild surfaces under
+      `output/patchworks_tsa29_validated/{forestmodel.xml,fragments/}`; and
+    - refreshed provenance/checksum ledgers plus curated runtime manifests.
+  - Cold-start validation:
+    - created a fresh thin DataLad clone of `external/femic-tsa29-instance`;
+    - confirmed annex-backed placeholders initially resolved only to `origin`;
+    - materialized the published package with `datalad get`; and
+    - ran `python -m femic patchworks preflight --instance-root <fresh-clone> --config config/patchworks.runtime.windows.yaml`, which passed against the freshly materialized checkout.
+  - Important non-blocking caveat:
+    - `python -m femic prep validate-case --instance-root <fresh-clone> --run-config config/run_profile.tsa29.yaml`
+      still expects the broader legacy full-rebuild cache surface and is not
+      yet the right acceptance gate for the standalone published package.

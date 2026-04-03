@@ -1060,6 +1060,39 @@ notes.
     - verify a cold-start materialized checkout can still reach the current
       runnable TSA29 Patchworks prototype boundary.
 
+- 2026-04-03 (Issue `#92` closeout in progress: current TSA29 PoC package published into the DataLad-managed instance and cold-start validated):
+  - Switched active execution to issue branch
+    `feature/issue-92-tsa29-publish-cold-start`.
+  - Published the current TSA29 PoC package into the DataLad-managed instance:
+    - refreshed bundle/curve inputs and BTC seam files under `data/`;
+    - published the standalone Patchworks runtime surfaces under
+      `models/tsa29_patchworks_model/{analysis,blocks,tracks}/`;
+    - published the validated editable rebuild surfaces under
+      `output/patchworks_tsa29_validated/{forestmodel.xml,fragments/}`;
+    - refreshed provenance/checksum ledgers under `metadata/`; and
+    - added curated runtime manifests tying the package to the issue `#85`,
+      `#87`, and `#90` validation passes.
+  - Cold-start validation from a fresh local clone:
+    - cloned `external/femic-tsa29-instance` into a fresh thin DataLad clone;
+    - confirmed annex-backed placeholders initially resolved only to `origin`;
+    - materialized the published package with `datalad get`;
+    - confirmed annex-backed copies for `blocks.shp`, validated
+      `fragments.shp`, `forestmodel.xml`, and `vdyp_results-tsa29.pkl` were
+      then present `here`; and
+    - ran `python -m femic patchworks preflight --instance-root <fresh-clone> --config config/patchworks.runtime.windows.yaml`,
+      which passed against the freshly materialized checkout.
+  - Important non-blocking caveat discovered during cold-start replay:
+    - `femic prep validate-case` against the fresh clone still expects the
+      older broader full-rebuild cache surface (for example
+      `ria_vri_vclr1p_checkpoint1.feather`) and is therefore not yet the right
+      acceptance gate for the standalone published package.
+  - Detailed Next Steps:
+    - close issue `#92` with the published-package and cold-start evidence;
+    - close umbrella issue `#91` if no additional TSA29 DataLad publication
+      work remains in this bundle; and
+    - consider a narrower follow-up issue if we want the standalone published
+      package and `prep validate-case` expectations to converge more tightly.
+
 - 2026-04-03 (Issue `#85` curve refresh ready for `@gparadis` review):
   - Parent rollout umbrella:
     - GitHub issue `#84`
