@@ -685,7 +685,7 @@ def resolve_effective_run_options(
     merged_run_id = run_id if run_id is not None else active_profile.run_id
     merged_log_dir = (
         active_profile.log_dir
-        if log_dir == Path("vdyp_io/logs") and active_profile.log_dir is not None
+        if log_dir == Path("runtime/logs") and active_profile.log_dir is not None
         else log_dir
     )
     return EffectiveRunOptions(

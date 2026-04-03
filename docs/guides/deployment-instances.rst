@@ -22,7 +22,8 @@ By default this scaffolds:
 - ``runbooks/REBUILD_RUNBOOK.md`` rebuild runbook placeholder
 - ``data/`` and ``data/downloads/``
 - ``output/``
-- ``vdyp_io/logs/``
+- ``runtime/logs/`` for non-VDYP manifests/reports
+- ``vdyp_io/logs/`` for VDYP-specific event/stdout logs
 - workspace ``.gitignore`` and ``QUICKSTART.md``
 
 Visible User Workspace Root
@@ -364,7 +365,7 @@ instances under ``external/``.
 
    Review:
 
-   - ``external/femic-k3z-instance/vdyp_io/logs/instance_rebuild_report-<run-id>.json``
+   - ``external/femic-k3z-instance/runtime/logs/instance_rebuild_report-<run-id>.json``
    - any manifests/logs referenced by that report
 
 5. Refresh tracked evidence when the rebuild result is the new accepted

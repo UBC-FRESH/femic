@@ -48,7 +48,7 @@ runner handle execution order and report generation:
            RebuildStep(step_id="validate_case", action=lambda ctx: {"validated": True}),
            RebuildStep(step_id="compile_upstream", action=lambda ctx: {}, depends_on=("validate_case",)),
        ],
-       report_sink=JsonRebuildReportSink(path=Path("vdyp_io/logs/rebuild_report.json")),
+       report_sink=JsonRebuildReportSink(path=Path("runtime/logs/rebuild_report.json")),
    )
    report = runner.run(run_id="docs_example")
 

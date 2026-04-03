@@ -50,7 +50,7 @@ Minimal Copy-Ready Example
      run_config: "config/run_profile.mycase.yaml"
      tipsy_config_dir: "config/tipsy"
      patchworks_config: "config/patchworks.runtime.windows.yaml"
-     log_dir: "vdyp_io/logs"
+     log_dir: "runtime/logs"
      baseline_unexpected_diff_threshold: 0
      species_account_policy:
        required_present:
@@ -81,7 +81,7 @@ Minimal Copy-Ready Example
          - "validate_case"
        mutable_artifacts:
          - "data/*"
-         - "vdyp_io/logs/*"
+         - "runtime/logs/*"
        expected_outputs:
          - "run_manifest-<run_id>.json"
 

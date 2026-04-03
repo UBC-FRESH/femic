@@ -18,7 +18,7 @@ femic instance rebuild \
 ```
 
 ## Evidence to Archive
-- `vdyp_io/logs/instance_rebuild_report-<run_id>.json`
+- `runtime/logs/instance_rebuild_report-<run_id>.json`
 - Referenced manifests/logs listed under `artifact_references`.
 
 ## Evidence Refresh Step (Release Prep)
@@ -35,9 +35,9 @@ After refresh, verify:
 
 ## Species-Surface Diagnostics (When Total Looks OK but Species Look Empty)
 ```bash
-femic instance account-surface \
+  femic instance account-surface \
   --config config/patchworks.runtime.windows.yaml \
-  --output vdyp_io/logs/account_surface-<run_id>.json
+  --output runtime/logs/account_surface-<run_id>.json
 ```
 After running, verify in the JSON/report:
 - `diagnosis.total_ok_species_empty_signature` is `false`.

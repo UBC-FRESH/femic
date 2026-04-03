@@ -44,7 +44,7 @@ Precedence
 - CLI values override config values for ``--tsa`` and ``--debug-rows`` when explicitly provided.
 - Boolean flags use additive behavior (CLI or config can enable).
 - ``--run-id`` overrides ``run.run_id`` when provided.
-- ``--log-dir`` overrides config unless left at the default ``vdyp_io/logs``.
+- ``--log-dir`` overrides config unless left at the default ``runtime/logs``.
 - Boundary fields are profile-driven only (no dedicated CLI flags yet). When
   ``selection.boundary_path`` is set, legacy extraction runs in custom-boundary mode
   and bypasses checkpoint reuse.

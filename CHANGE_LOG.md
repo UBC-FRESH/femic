@@ -10168,3 +10168,13 @@
   - The new issue explicitly preserves `vdyp_io/VDYP.INI` and `vdyp_io/VDYP_CFG`
     as essential local runtime assets and scopes the future work to separating
     them from cleanup-safe transient raw spill files.
+- 2026-04-03 (Split non-VDYP runtime artifacts out of `vdyp_io/logs`):
+  - Redirected non-VDYP runtime/manifests/report defaults from `vdyp_io/logs`
+    to `runtime/logs` in the parent CLI/workflow defaults and in the active
+    TSA29/K3Z instance configs/docs.
+  - Moved the current TSA29 BTC manifests/logs, post-TIPSY run manifests, and
+    Patchworks matrix-builder manifests/logs out of `vdyp_io/logs` into the new
+    `runtime/logs` home.
+  - Left true VDYP event/stdout logging in `vdyp_io/logs`, preserving
+    `vdyp_io/VDYP.INI` and `vdyp_io/VDYP_CFG/**` as untouched essential runtime
+    assets.

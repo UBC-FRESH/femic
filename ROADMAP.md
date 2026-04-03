@@ -7821,6 +7821,15 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       essential local runtime assets (`VDYP_CFG`, `VDYP.INI`) no longer live in
       the same directory as thousands of transient raw VDYP spill files that
       need periodic cleanup on Windows.
+  - Non-VDYP runtime-log split:
+    - redirected non-VDYP run/manifests/rebuild-report defaults from
+      `vdyp_io/logs` to `runtime/logs` in the parent CLI/workflow defaults and
+      in the TSA29/K3Z instance configs/docs;
+    - moved the current TSA29 non-VDYP runtime artifacts (BTC manifests/logs,
+      post-TIPSY run manifests, Patchworks matrix-builder manifests/logs) out
+      of `vdyp_io/logs` into `runtime/logs`;
+    - left true VDYP event/stdout logging under `vdyp_io/logs`, keeping
+      `VDYP.INI` / `VDYP_CFG` untouched as essential runtime assets.
 
 - 2026-04-02 (Issue #10 BTC-first TSA29 migration checkpoint):
   - Completed in this branch:

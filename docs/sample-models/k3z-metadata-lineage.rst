@@ -98,7 +98,7 @@ Use this policy for each rebuild intended for teaching/collaboration release:
 2. Rebuild in deterministic order:
    export patchworks -> sync model inputs -> build blocks -> matrix-build.
 3. Preserve run evidence:
-   keep run-scoped manifests/logs under ``vdyp_io/logs`` for rebuild events.
+   keep run-scoped manifests/logs under ``runtime/logs`` for rebuild events.
 4. Commit artifact + metadata updates together:
    model artifacts changed by rebuild, updates to this page and
    ``lineage_registry.yaml``, `ROADMAP.md` Detailed Next Steps note, and

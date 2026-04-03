@@ -482,9 +482,9 @@ RUN_ID_OPTION = typer.Option(
     show_default=False,
 )
 LOG_DIR_OPTION = typer.Option(
-    Path("vdyp_io/logs"),
+    Path("runtime/logs"),
     "--log-dir",
-    help="Directory for run manifests and run-scoped VDYP JSONL logs.",
+    help="Directory for non-VDYP run manifests and runtime reports.",
 )
 RUN_CONFIG_OPTION = typer.Option(
     None,
@@ -637,7 +637,7 @@ EXPORT_RELEASE_WOODSTOCK_DIR_OPTION = typer.Option(
     show_default=False,
 )
 EXPORT_RELEASE_LOGS_DIR_OPTION = typer.Option(
-    Path("vdyp_io/logs"),
+    Path("runtime/logs"),
     "--logs-dir",
     help="Log directory used to include run manifests and Patchworks runtime logs.",
 )
@@ -727,7 +727,7 @@ INSTANCE_REBUILD_TIPSY_CONFIG_DIR_OPTION = typer.Option(
     help="Directory containing case TIPSY configs (legacy tsa*.yaml filenames).",
 )
 INSTANCE_REBUILD_LOG_DIR_OPTION = typer.Option(
-    Path("vdyp_io/logs"),
+    Path("runtime/logs"),
     "--log-dir",
     help="Directory for rebuild runner reports and step logs.",
 )
@@ -779,7 +779,7 @@ INSTANCE_EVIDENCE_OUTPUT_OPTION = typer.Option(
     help="Output path for normalized rebuild evidence payload.",
 )
 INSTANCE_EVIDENCE_LOG_DIR_OPTION = typer.Option(
-    Path("vdyp_io/logs"),
+    Path("runtime/logs"),
     "--log-dir",
     help="Log directory used when auto-selecting latest rebuild report.",
 )
@@ -2161,7 +2161,7 @@ def instance_refresh_reference_evidence(
     instance_promote_evidence(
         report=report,
         output=Path("evidence/reference_rebuild_report.latest.json"),
-        log_dir=Path("vdyp_io/logs"),
+        log_dir=Path("runtime/logs"),
         max_warn_increase=max_warn_increase,
         max_baseline_diff_increase=max_baseline_diff_increase,
         instance_root=reference_root,
@@ -2387,7 +2387,7 @@ def prep_validate_case(
         skip_checks=False,
         debug_rows=None,
         run_id=None,
-        log_dir=Path("vdyp_io/logs"),
+        log_dir=Path("runtime/logs"),
         profile=profile,
     )
 
@@ -2723,7 +2723,7 @@ def tsa_post_tipsy(
         instance_context.resolve_path(run_profile.log_dir)
         if (
             run_profile is not None
-            and Path(log_dir) == Path("vdyp_io/logs")
+            and Path(log_dir) == Path("runtime/logs")
             and run_profile.log_dir is not None
         )
         else resolved_log_dir
@@ -2842,7 +2842,7 @@ def tsa_btc_post_tipsy(
         instance_context.resolve_path(run_profile.log_dir)
         if (
             run_profile is not None
-            and Path(log_dir) == Path("vdyp_io/logs")
+            and Path(log_dir) == Path("runtime/logs")
             and run_profile.log_dir is not None
         )
         else resolved_log_dir

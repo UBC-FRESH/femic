@@ -189,8 +189,8 @@ Evidence to Keep
 
 At minimum, retain or inspect:
 
-- `vdyp_io/logs/run_manifest-*.json`
-- `vdyp_io/logs/patchworks_matrixbuilder_manifest-*.json` on Windows
+- `runtime/logs/run_manifest-*.json`
+- `runtime/logs/patchworks_matrixbuilder_manifest-*.json` on Windows
 - refreshed `tipsy_vdyp_*.png` plots
 - regenerated bundle tables under `data/model_input_bundle/`
 

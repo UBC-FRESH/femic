@@ -92,7 +92,7 @@ Deterministic troubleshooting flow:
 
       python -m femic instance account-surface \
         --config config/patchworks.runtime.windows.yaml \
-        --output vdyp_io/logs/account_surface-<run_id>.json \
+        --output runtime/logs/account_surface-<run_id>.json \
         --instance-root <instance-root>
 
 2. If diagnostics prints ``total OK, species-wise empty``:

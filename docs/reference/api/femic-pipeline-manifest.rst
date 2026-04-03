@@ -21,7 +21,7 @@ Start Here If...
 
 Use this page first if you are trying to:
 
-- inspect what should appear in ``vdyp_io/logs/run_manifest-<run_id>.json``
+- inspect what should appear in ``runtime/logs/run_manifest-<run_id>.json``
 - debug manifest provenance for a completed or failed run
 - understand how execution-plan fields become stored audit metadata
 - decide whether a manifest bug belongs here or in the code that built the

@@ -70,9 +70,9 @@ Generated Runtime Artifacts
 
 Each run writes:
 
-- ``vdyp_io/logs/patchworks_matrixbuilder_stdout-<run_id>.log``
-- ``vdyp_io/logs/patchworks_matrixbuilder_stderr-<run_id>.log``
-- ``vdyp_io/logs/patchworks_matrixbuilder_manifest-<run_id>.json``
+- ``runtime/logs/patchworks_matrixbuilder_stdout-<run_id>.log``
+- ``runtime/logs/patchworks_matrixbuilder_stderr-<run_id>.log``
+- ``runtime/logs/patchworks_matrixbuilder_manifest-<run_id>.json``
 
 For non-interactive matrix builds, FEMIC now also promotes
 ``tracks/protoaccounts.csv`` to ``tracks/accounts.csv`` when present.

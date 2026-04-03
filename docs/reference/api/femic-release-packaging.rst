@@ -54,7 +54,7 @@ The matching Python entrypoint is:
        model_input_bundle_dir=Path("data/model_input_bundle"),
        patchworks_output_dir=Path("output/patchworks"),
        woodstock_output_dir=Path("output/woodstock"),
-       logs_dir=Path("vdyp_io/logs"),
+       logs_dir=Path("runtime/logs"),
        run_id="docs_example",
        strict=True,
    )
