@@ -917,6 +917,20 @@ notes.
   - [x] P32.3a Run the required K3Z/parent docs checks for the changed pages.
   - [x] P32.3b Append the progress summary to `CHANGE_LOG.md` and update GitHub issue 13 with an implementation/closeout note as appropriate.
 
+## Phase 33: TSA29 DataLad Standalone Publishing
+- [ ] P33.1 Define the TSA29 shippable Patchworks-instance artifact contract
+  - [ ] P33.1a Expand FEMIC docs/contracts so standalone launch-ready publication explicitly requires shipped `blocks/` runtime assets in addition to the existing XML/fragments/tracks surfaces.
+  - [ ] P33.1b Distinguish three artifact tiers for TSA29 publication: launch-critical runtime assets, editable rebuild/overlay assets, and transient local spill that must not be published.
+  - [ ] P33.1c Tighten release-packaging / validation semantics so standalone launch-ready checks cover `blocks` sidecars, topology CSVs, and analysis/PIN launch surfaces.
+- [ ] P33.2 Convert `external/femic-tsa29-instance` to a large-artifact DataLad dataset
+  - [ ] P33.2a Initialize the TSA29 instance repo as a DataLad/git-annex dataset using large-only annexing.
+  - [ ] P33.2b Define and document the annex policy for TSA29 instance publication, keeping docs/config/small canonical text in Git while annexing bulky instance payloads and oversized rebuild/runtime artifacts.
+  - [ ] P33.2c Document bootstrap, special-remote enablement, publish, and materialization workflow for collaborators.
+- [ ] P33.3 Publish the current TSA29 PoC package under the new dataset contract
+  - [ ] P33.3a Save the current TSA29 standalone model package under the DataLad-managed policy, including shipped `blocks`, `tracks`, validated `forestmodel.xml`, and validated `fragments`.
+  - [ ] P33.3b Refresh artifact checksums / lineage notes so the published package is auditable.
+  - [ ] P33.3c Verify cold-start usability from a freshly materialized checkout using Patchworks preflight plus a representative GUI or headless smoke launch.
+
 ### Phase 23 Windows Closeout Status
 - Windows-side Phase 23 closeout is complete on branch feature/phase23-windows-runtime-parity.
 - The remaining open work in Phase 23 is Linux-specific parity verification under P23.3.
@@ -927,6 +941,360 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+
+- 2026-04-03 (Issue `#91` launched: TSA29 standalone DataLad publication is the next post-PoC lane):
+  - Prior TSA29 rollout umbrella `#84` remains conceptually complete at the
+    first runnable Patchworks PoC boundary and should be closed separately
+    after the earlier branch/merge hygiene pass; do **not** fold the next TSA29
+    work bundle back into `#84`.
+  - New post-PoC umbrella:
+    - GitHub issue `#91`
+    - branch `feature/issue-91-tsa29-datalad-instance-publishing`
+  - Child issue gear-train:
+    - issue `#93`: define the TSA29 shippable Patchworks-instance artifact
+      contract for standalone publication;
+    - issue `#94`: convert `external/femic-tsa29-instance` to a large-artifact
+      DataLad dataset;
+    - issue `#92`: publish the current TSA29 PoC artifact set into the
+      DataLad-managed instance and verify cold-start usability.
+  - Working contract for this lane:
+    - `models/tsa29_patchworks_model/blocks/blocks.shp` sidecar set is now
+      treated as a required shipped runtime asset because Patchworks cannot
+      launch the TSA29 prototype without it;
+    - `models/tsa29_patchworks_model/tracks/` is likewise a required shipped
+      runtime asset;
+    - `output/patchworks_tsa29_validated/forestmodel.xml` plus
+      `output/patchworks_tsa29_validated/fragments/` sidecar set must also ship
+      as the anti-lock-in rebuild surface for manual overlays / manual local
+      variants outside FEMIC.
+  - Storage policy decision:
+    - use large-only annexing for TSA29 publication;
+    - keep docs/config/small canonical text artifacts in Git;
+    - annex bulky instance payloads and oversized rebuild/runtime artifacts;
+    - do **not** publish transient local spill such as headless saved-stage
+      dumps, scratch logs, temp launchers, or local probe outputs.
+  - Immediate next active step:
+    - execute issue `#93` first so the standalone publication contract is
+      explicit before converting the TSA29 instance repo itself to DataLad in
+      issue `#94`;
+    - once the contract and dataset policy are explicit, publish and validate
+      the current TSA29 PoC artifact set under issue `#92`.
+
+- 2026-04-03 (Issue `#85` curve refresh ready for `@gparadis` review):
+  - Parent rollout umbrella:
+    - GitHub issue `#84`
+  - Active issue / branch:
+    - GitHub issue `#85`
+    - branch `feature/issue-85-tsa29-curve-refresh-post-81-82`
+  - What was required to execute the bounded cache-only refresh in this
+    checkout:
+    - restored the missing TSA29-local execution prerequisites from the
+      preserved clean validation clone into
+      `external/femic-tsa29-instance/data/`:
+      `tsa_boundaries.feather`, the `ria_vri_vclr1p_checkpoint1..8.feather`
+      ladder, and the cached `vdyp_prep-tsa29.pkl` /
+      `vdyp_results-tsa29.pkl` pair;
+    - confirmed `femic prep geospatial-preflight` still passes;
+    - observed that `femic prep validate-case` is currently blocked by a
+      narrower DataLad status-check seam on `external/femic-public-data` even
+      though the submodule worktree itself is clean.
+  - Execution completed for run `issue85_curve_refresh_20260403a`:
+    - deleted only `data/vdyp_curves_smooth-tsa29.feather` to force Stage 01a
+      smoothing replay while keeping raw VDYP bootstrap results cached;
+    - reran
+      `python -m femic run --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --run-id issue85_curve_refresh_20260403a`
+      and rebuilt the TSA29 smoothed-curve surface plus fresh Stage 01a handoff
+      artifacts from cached inputs only;
+    - reran
+      `python -m femic tsa btc-post-tipsy --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --tsa 29 --run-id issue85_curve_refresh_20260403a`
+      to regenerate the AU-wise review overlays from the refreshed handoff.
+  - Fresh review artifacts now available:
+    - `external/femic-tsa29-instance/data/vdyp_curves_smooth-tsa29.feather`
+      (`413842` bytes; refreshed 2026-04-03 12:19 local);
+    - `external/femic-tsa29-instance/data/03_input-tsa29.csv`,
+      `tipsy_params_tsa29.xlsx`, `04_output-tsa29.csv`,
+      `04_error-tsa29.csv`, `tipsy_curves_tsa29.csv`, and
+      `tipsy_sppcomp_tsa29.csv`;
+    - `54` refreshed
+      `external/femic-tsa29-instance/plots/tipsy_vdyp_tsa29-*.png` overlays;
+    - `54` refreshed
+      `external/femic-tsa29-instance/plots/vdyp_fitdiag_tsa29-*.png` fit
+      diagnostics;
+    - `external/femic-tsa29-instance/runtime/logs/run_manifest-issue85_curve_refresh_20260403a.json`
+      and
+      `external/femic-tsa29-instance/runtime/logs/btc_manifest-issue85_curve_refresh_20260403a_tsa29.json`;
+    - `external/femic-tsa29-instance/runtime/logs/vdyp_curve_events-tsa29-issue85_curve_refresh_20260403a.jsonl`.
+  - Immediate next step:
+    - pause for explicit `@gparadis` review of the refreshed AU plot family;
+    - do not start issue `#86` or any downstream XML/tracks work until that
+      review gives the hard-freeze green light.
+
+- 2026-04-03 (Issue `#85` review checkpoint corrected after direct plot QA):
+  - Direct review of `external/femic-tsa29-instance/plots/tipsy_vdyp_tsa29-23009.png`
+    exposed that the earlier `issue85_curve_refresh_20260403a` checkpoint was
+    not actually review-ready: the refreshed smoothing step had reused a stale
+    raw VDYP cache entry and produced an obviously degenerate straight-line
+    `ESSF_SE / H` curve.
+  - Root cause:
+    - `external/femic-tsa29-instance/data/vdyp_results-tsa29.pkl` still
+      contained eleven TSA29 stratum/SI bins with only a single cached VDYP
+      table even though the cached prep checkpoint held hundreds to thousands of
+      candidate stands for those bins.
+    - That stale raw-cache seam produced duplicated and inverted curves that a
+      human review should have caught immediately, so the earlier pause point
+      was a false completion signal.
+  - Repair work completed from cached prep evidence only:
+    - replayed the already-isolated `ESSF_SE / H` bucket through raw VDYP with
+      run `issue85_essf_se_h_repair_20260403d`, replaced the broken raw cache
+      entry, regenerated the smoothed `ESSF_SE / H` curve, and then refreshed
+      downstream TIPSY-vs-VDYP overlays;
+    - replayed the remaining thin raw-cache bins from the cached
+      `vdyp_prep-tsa29.pkl` checkpoint with run
+      `issue85_cache_repair_20260403e`:
+      `SBPS_PLI / H`, `ESSF_SE / L`, `ESSF_SE / M`, `SBPS_SX / H`,
+      `SBS_FDI / M`, `SBS_FDI / H`, `ESSF_PLI / M`, `ESSF_PLI / H`,
+      `ICH_CW / L`, `SBS_SX / L`, and `SBS_SX / M`;
+    - rebuilt `data/vdyp_results-tsa29.pkl`,
+      `data/vdyp_curves_smooth-tsa29.feather`, the `vdyp_fitdiag_tsa29-*.png`
+      family, and reran
+      `femic tsa btc-post-tipsy --run-id issue85_cache_repair_20260403e` to
+      refresh the full `tipsy_vdyp_tsa29-*.png` family plus
+      `data/model_input_bundle/*`, `tipsy_curves_tsa29.csv`, and
+      `tipsy_sppcomp_tsa29.csv`.
+  - Post-repair sanity scan:
+    - no TSA29 raw VDYP cache bins remain below 20 tables;
+    - the exact duplicate-curve collision between `ESSF_SE / L` and
+      `ICH_CW / L` is gone;
+    - the catastrophic `ESSF_SE` L/M/H ordering inversion is gone;
+    - a small set of mild productivity-order oddities still appears at select
+      early/late ages (`SBPS_PLI`, `SBPS_SX`, `SBS_FDI`, `SBS_SX`), but the
+      family-wide scan no longer shows the obviously broken one-table/straight-line
+      pathology that invalidated the earlier review handoff.
+  - Updated review-ready evidence for `@gparadis` is now the repaired
+    `issue85_cache_repair_20260403e` output set, not the earlier
+    `issue85_curve_refresh_20260403a` checkpoint.
+
+- 2026-04-03 (Issues `#85` and `#86` complete: TSA29 upstream baseline approved and frozen):
+  - `@gparadis` explicitly approved the repaired TSA29 AU review bundle after
+    direct review of the refreshed `plots/tipsy_vdyp_tsa29-*.png` family.
+  - Issue `#85` is now complete; the approved review-ready checkpoint is the
+    repaired `issue85_cache_repair_20260403e` artifact set.
+  - Issue `#86` is now complete and the TSA29 upstream baseline is frozen for
+    downstream work:
+    - authoritative upstream artifacts now include
+      `external/femic-tsa29-instance/data/vdyp_results-tsa29.pkl`,
+      `external/femic-tsa29-instance/data/vdyp_curves_smooth-tsa29.feather`,
+      `external/femic-tsa29-instance/plots/tipsy_vdyp_tsa29-*.png`,
+      `external/femic-tsa29-instance/plots/vdyp_fitdiag_tsa29-*.png`, and the
+      current `data/model_input_bundle/{au_table,curve_table,curve_points_table}.csv`
+      set;
+    - governing repair run IDs are
+      `issue85_essf_se_h_repair_20260403d` and
+      `issue85_cache_repair_20260403e`.
+  - Policy from this freeze point onward:
+    - for TSA29, Stage 00/01 inventory and yield inputs are now treated as
+      frozen baseline input to downstream Patchworks assembly;
+    - any future change to that upstream baseline requires a new explicit issue
+      rather than being folded into downstream rebuild work.
+  - Immediate next active step:
+    - move to issue `#87` and rebuild TSA29 Patchworks XML plus tracks from the
+      frozen upstream bundle without rebuilding fragments, blocks, or topology;
+    - after rebuild, inspect the resulting `tracks/*/{features,protoaccounts,accounts}.csv`
+      surfaces directly before declaring the Patchworks input layer sane.
+
+- 2026-04-03 (Issues `#87` and `#88` complete: TSA29 Patchworks XML/tracks rebuilt and QA'd):
+  - Switched active execution to branch
+    `feature/issue-87-tsa29-xml-tracks-rebuild`.
+  - Reused the frozen TSA29 upstream bundle and regenerated only
+    `external/femic-tsa29-instance/output/patchworks_tsa29_validated/forestmodel.xml`
+    through the lower-level XML builder path, explicitly avoiding a fragments
+    rebuild.
+  - Restored the previously validated fragments shapefile payload into the thin
+    TSA29 checkout from the preserved clean TSA29 clone so the canonical
+    Matrix Builder input pair was available locally without rerunning
+    fragments/topology generation.
+  - Patchworks runtime evidence:
+    - `femic patchworks preflight --instance-root external/femic-tsa29-instance --config config/patchworks.runtime.windows.yaml`
+      passed with the expected local Patchworks install and inherited
+      `SPS_LICENSE_SERVER` seat;
+    - `femic patchworks matrix-build --instance-root external/femic-tsa29-instance --config config/patchworks.runtime.windows.yaml --run-id issue87_xml_tracks_20260403a`
+      completed successfully against the refreshed XML-plus-fragments pair;
+    - authoritative logs/manifests are
+      `external/femic-tsa29-instance/runtime/logs/patchworks_matrixbuilder_manifest-issue87_xml_tracks_20260403a.json`,
+      `...stdout-issue87_xml_tracks_20260403a.log`, and
+      `...stderr-issue87_xml_tracks_20260403a.log`.
+  - Direct tracks QA summary:
+    - rebuilt outputs now live under
+      `external/femic-tsa29-instance/models/tsa29_patchworks_model/tracks/`;
+    - `features.csv` has `2380` rows;
+    - `protoaccounts.csv` has `215` rows;
+    - `accounts.csv` has `215` rows and matches `protoaccounts.csv` exactly;
+    - `messages.csv` contains only the header row;
+    - Matrix Builder stdout reports `217425` fragments/blocks/strata,
+      total area `2990475.2087286147`, managed area `2236461.9634461775`,
+      passive area `754013.2452824372`, and excluded area `0.0`.
+  - Snapshot comparison:
+    - `protoaccounts.csv` and `accounts.csv` match the last saved known-good
+      TSA29 tracks snapshot exactly;
+    - `features.csv` changed as expected with refreshed feature/curve wiring
+      from the rebuilt XML, but the expected feature/account label families are
+      still present.
+  - Immediate next active step:
+    - move to issue `#89` and audit whether FEMIC already states the minimal
+      functional Patchworks-instance contract clearly enough for TSA29;
+    - if gaps remain, harden docs/contracts/preflight logic before attempting
+      the first runnable TSA29 scenario/PIN PoC in issue `#90`.
+
+- 2026-04-03 (Issue `#89` complete: Patchworks instance contract made explicit and enforceable):
+  - Switched active execution to branch
+    `feature/issue-89-tsa29-patchworks-instance-contract`.
+  - Hardened FEMIC strict release-packaging logic in
+    `src/femic/release_packaging.py` so a Patchworks package is no longer
+    treated as complete with only `forestmodel.xml` plus `fragments.shp`;
+    the required fragments sidecar set is now:
+    `fragments.shp`, `fragments.dbf`, `fragments.shx`,
+    `fragments.prj`, and `fragments.cpg`.
+  - Added/update contract guidance in:
+    - `docs/reference/contracts/stage-boundaries-and-canonical-artifacts.rst`
+    - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
+    - `docs/guides/model-input-bundle-and-export.rst`
+    - `docs/reference/api/femic-release-packaging.rst`
+    - `external/femic-tsa29-instance/docs/rebuild-and-qa.rst`
+  - The documented minimal contract is now explicit at two tiers:
+    - Matrix-Builder-ready: Patchworks runtime config, compiled
+      `forestmodel.xml`, full fragments sidecar set, and a host/runtime surface
+      that passes `femic patchworks preflight`;
+    - post-matrix-build compiled minimum: everything above plus the compiled
+      `tracks/` tables (`curves.csv`, `features.csv`, `products.csv`,
+      `treatments.csv`, `protoaccounts.csv`, and `accounts.csv`).
+  - Validation for this contract-hardening pass:
+    - `ruff check src/femic/release_packaging.py tests/test_release_packaging.py`
+    - `pytest tests/test_release_packaging.py`
+    - `python -m sphinx -b html docs _build/html -W -n`
+    - `python -m sphinx -b html docs _build/html -W -n`
+      from `external/femic-tsa29-instance/`
+  - Immediate next active step:
+    - move to issue `#90` and use the rebuilt TSA29 Patchworks package to
+      reach the first runnable scenario/PIN boundary with saved outputs or a
+      clear actionable runtime error surface.
+
+- 2026-04-03 (Issue `#90` in-flight caution: Patchworks "headless" remains a fragile proving-ground seam):
+  - TSA29 has now crossed the first runnable Patchworks scenario/PIN boundary:
+    the reconstructed TSA29 launch surface (`analysis/base.pin` +
+    restored `blocks/` + rebuilt `tracks/`) successfully completed one
+    `max-even-flow-smoke` headless launch with run
+    `issue90_tsa29_headless_20260403a` and saved a stage under
+    `external/femic-tsa29-instance/runtime/logs/headless_stage/issue90_tsa29_headless_20260403a/`.
+  - Important operator caveat:
+    - Patchworks can still display execution-blocking modal dialogs that expect
+      a human to click `Continue`, `Ignore All`, or `Quit`;
+    - those modal windows can break unattended FEMIC runs even when the nominal
+      BeanShell/AppChooser launch seam works;
+    - Patchworks should therefore be treated as a fragile proving-ground
+      headless seam rather than a fully solved unattended runtime.
+  - Interpretation rule for issue `#90`:
+    - the current success proves TSA29 now has a real runnable launch surface
+      and can produce saved-stage output under favorable conditions;
+    - it does **not** yet prove that Patchworks modal-dialog handling is solved
+      generally or that all TSA29/K3Z headless runs are robustly unattended.
+
+- 2026-04-03 (Issue `#90` complete: TSA29 reached first runnable Patchworks PoC boundary):
+  - Closed issue `#90` after confirming that TSA29 now has a genuinely runnable
+    Patchworks surface rather than stopping at XML/tracks compilation only.
+  - Final PoC ingredients now in place for TSA29:
+    - frozen approved upstream inventory/yield baseline from issues `#85`/`#86`;
+    - rebuilt canonical Patchworks XML/tracks from issues `#87`/`#88`;
+    - explicit minimal Patchworks-instance contract from issue `#89`;
+    - restored validated fragments plus restored blocks/topology payload;
+    - minimal launch wiring under
+      `external/femic-tsa29-instance/models/tsa29_patchworks_model/analysis/`
+      and `.../scripts/targets/`.
+  - Runnable proof:
+    - `femic patchworks run-headless models/tsa29_patchworks_model/analysis/base.pin --instance-root external/femic-tsa29-instance --config config/patchworks.runtime.windows.yaml --run-id issue90_tsa29_headless_20260403a --scenario-mode max-even-flow-smoke --scenario-target product.Yield.managed.Total --iterations 100000`
+      completed with `returncode=0`;
+    - authoritative runtime evidence is
+      `external/femic-tsa29-instance/runtime/logs/patchworks_headless_manifest-issue90_tsa29_headless_20260403a.json`
+      plus the saved stage under
+      `external/femic-tsa29-instance/runtime/logs/headless_stage/issue90_tsa29_headless_20260403a/`.
+  - Closure interpretation:
+    - first runnable TSA29 Patchworks PoC: achieved;
+    - robust unattended Patchworks runtime: still **not** fully solved because
+      modal dialogs can still interrupt nominally headless runs.
+  - Post-PoC development mode now changes shape:
+    - follow-on work can be scoped as narrower runtime-hardening, packaging,
+      policy-cleanup, and scenario-definition issues against an actually
+      runnable TSA29 model surface.
+
+- 2026-04-03 (Issue `#90` reopened for TSA29 interactive dev-mode runtime polish):
+  - Extend the newly runnable TSA29 Patchworks prototype with two explicit
+    development-mode runtime adjustments requested by `@gparadis`:
+    - provide an explicitly documented GUI-friendly TSA29 PIN launch surface so
+      the prototype can be test-run interactively by a human operator; and
+    - temporarily reduce the runtime topology search distance from `100 m` to
+      `0 m` in the TSA29 analysis wiring so Patchworks loads a simpler
+      adjacency graph during active model development.
+  - Scope guard:
+    - do **not** reopen upstream inventory/yield compilation;
+    - do **not** rebuild fragments or topology geometry;
+    - only adjust the TSA29 runtime launch surface / analysis wiring plus any
+      directly required Matrix Builder refresh if the changed runtime contract
+      demands it.
+
+- 2026-04-03 (Issue `#90` interactive dev-mode polish implemented):
+  - Added an explicit operator-facing GUI launch wrapper at
+    `external/femic-tsa29-instance/models/tsa29_patchworks_model/analysis/base_gui.pin`
+    so `@gparadis` can test the first TSA29 prototype directly in Patchworks
+    GUI mode without depending on the fragile headless path.
+  - Updated the shared TSA29 analysis wiring to load
+    `../blocks/topology_blocks_0r.csv` with topology distance `0 m` during the
+    current development cycle.
+  - Regenerated the runtime topology CSV with
+    `femic patchworks build-blocks --with-topology --topology-radius 0`,
+    which produced
+    `external/femic-tsa29-instance/models/tsa29_patchworks_model/blocks/topology_blocks_0r.csv`
+    for the new lean-load runtime surface.
+  - Boundary preserved:
+    - no upstream TSA29 inventory or yield artifacts were reopened;
+    - no fragments were rebuilt;
+    - topology geometry itself was not recomputed beyond the requested `0 m`
+      runtime adjacency CSV refresh.
+
+- 2026-04-03 (Issue `#90` re-closed after TSA29 interactive GUI smoke green-light):
+  - `@gparadis` confirmed a quick interactive Patchworks GUI smoke test of the
+    TSA29 prototype showed no obvious broken runtime surfaces.
+  - With both:
+    - a successful FEMIC-driven headless saved-stage smoke run; and
+    - a successful operator-driven GUI sanity smoke run through
+      `models/tsa29_patchworks_model/analysis/base_gui.pin`,
+    issue `#90` can close again as complete.
+  - Caveat still preserved:
+    - unattended Patchworks runtime remains a narrower future hardening seam
+      because modal dialogs can still interrupt nominally headless runs.
+
+- 2026-04-03 (TSA29 rollout kickoff after issues `#81` and `#82`):
+  - issues `#81` and `#82` repaired real TSA29 VDYP curve-compilation
+    defects, so the next active TSA29 lane is now the structured push from
+    refreshed AU curve review to the first runnable Patchworks PoC.
+  - Immediate execution order:
+    - rebuild TSA29 cached VDYP best-fit curves and TIPSY comparison plots
+      from cached Stage 01a evidence only;
+    - pause for explicit `@gparadis` review of the regenerated AU-wise
+      `plots/tipsy_vdyp_tsa29-*.png` family;
+    - once approved, hard-freeze the upstream stratified inventory and yield
+      baseline with exact artifact and run-ID references;
+    - rebuild TSA29 Patchworks XML and tracks from that frozen baseline
+      without rebuilding fragments or topology;
+    - inspect rebuilt `tracks/*/{features,protoaccounts,accounts}.csv`
+      directly for structural and semantic sanity;
+    - tighten FEMIC's minimal functional Patchworks-instance contract if any
+      required folders/files/runtime seams are still too implicit; and
+    - drive TSA29 to a first runnable Patchworks scenario/PIN with saved
+      outputs or a clear actionable runtime error surface.
+  - Explicit non-scope for this lane:
+    - do not rerun raw VDYP from source stands;
+    - do not rebuild fragments; and
+    - do not rerun topology builder unless a later issue proves the current
+      topology invalid.
 
 - 2026-04-03 (Issue `#83` kickoff): add explicit Windows VS Code/Codex local
   file-link recovery guidance so FEMIC contributors can quickly bootstrap-fix a
