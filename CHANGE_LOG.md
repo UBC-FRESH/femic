@@ -10284,3 +10284,19 @@
     `femic run --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --run-id tsa29_issue79_windows_annexfix_20260403b`
     now completes successfully from
     `F:\projects\tmp\femic-issue10-closeout-20260402-clean`.
+- 2026-04-03 (Issue `#79` follow-on VDYP bug triage):
+  - Opened issue `#82` (`Bug: VDYP bootstrap polygon/layer misalignment can
+    collapse TSA29 ESSF_SE batches`) after tracing the broken `ESSF_SE / H`
+    curve to a sampled VDYP batch where polygon rows and layer rows were no
+    longer aligned feature-for-feature.
+  - Opened issue `#81` (`Bug: VDYP fit-quality rescue can replace better
+    current fit with worse tail-blend curve`) after reviewing the regenerated
+    `ICH_SX / M` and `ICH_SX / H` diagnostics and confirming the selector was
+    preferring materially worse rescue curves.
+  - Current closeout read for issue `#79`:
+    - the BTC natural-ingress contract fix and Windows annex-raster follow-up
+      are both validated;
+    - the new VDYP issues are real follow-on bugs, but they do not negate the
+      repaired BTC seam itself;
+    - issue `#79` is therefore technically closeout-ready once its final note
+      links those new follow-on bug tickets explicitly.

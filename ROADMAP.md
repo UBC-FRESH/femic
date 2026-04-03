@@ -7743,6 +7743,25 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 ## Detailed Next Steps Notes
 
+- 2026-04-03 (Issue `#79` follow-on VDYP bug split after plot QA):
+  - The BTC/null-volume seam targeted by issue `#79` is now fixed and the
+    Windows annex-raster blocker from the same clean-clone rerun is also
+    resolved, but direct review of the regenerated TSA29 VDYP QA plots exposed
+    two separate follow-on VDYP defects that should be handled outside issue
+    `#79`:
+    - issue `#82`: sampled VDYP polygon/layer temp files can become misaligned
+      when polygons without matching layer rows are written into the same batch,
+      collapsing healthy strata such as `ESSF_SE / H`;
+    - issue `#81`: the fit-quality rescue policy can replace a materially better
+      primary/current fit with a much worse `tail_blend` curve just to satisfy
+      the early-overshoot gate (for example `ICH_SX / M` and `ICH_SX / H`).
+  - Current closeout read on issue `#79`:
+    - the original BTC acceptance criteria are satisfied;
+    - the newly split VDYP bugs are real and worth fixing, but they do not
+      reopen the repaired BTC natural-ingress contract itself;
+    - issue `#79` should be treated as closeout-ready once its final closeout
+      note explicitly links the two follow-on VDYP bug tickets.
+
 - 2026-04-03 (Windows annex-pointer raster follow-up after issue `#79` validation):
   - The clean-clone TSA29 rerun exposed a narrower Windows-only public-data seam
     beyond the earlier missing-path fallback work:
