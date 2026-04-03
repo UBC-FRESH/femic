@@ -7743,6 +7743,22 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 ## Detailed Next Steps Notes
 
+- 2026-04-03 (Issue `#82` closeout; issue `#81` is the next active VDYP follow-on):
+  - Issue `#82` is now closeout-complete:
+    - the polygon/layer batch writer was repaired so VDYP input CSVs now keep
+      only the shared `FEATURE_ID` set and preserve stable within-feature layer
+      ordering;
+    - saved-batch replay confirmed the old bad TSA29 `ESSF_SE / H` sample no
+      longer collapses to a one-table parse after the alignment fix;
+    - narrow bucket rerun confirmed `ESSF_SE / H` now rebuilds as a plausible
+      full smoothed curve instead of the broken near-two-point fallback.
+  - Next active issue is `#81`:
+    - focus now shifts from the batch-alignment seam to the fit-selection
+      policy seam;
+    - the intended next pass is to tighten rescue selection so
+      `tail_blend` cannot replace a materially better primary/current fit just
+      to satisfy the early-overshoot gate.
+
 - 2026-04-03 (Issue `#82` active implementation: VDYP polygon/layer batch alignment):
   - Root-cause read for this pass:
     - the broken TSA29 `ESSF_SE / H` curve is currently traced to the sampled
