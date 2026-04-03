@@ -10762,3 +10762,11 @@
     - the local auth-file workflow is solved;
     - the remaining blocker is bucket creation / endpoint semantics for the new
       TSA29 bucket, not loader wiring inside the Windows shells.
+- 2026-04-03 (Opened child issue `#96` for FEMIC-managed Arbutus bucket bootstrap investigation):
+  - Split the broader question of whether FEMIC can reliably create/probe
+    Arbutus S3 buckets across Linux and Windows out of the narrower TSA29
+    remote-wiring task in `#95`.
+  - New issue `#96` now owns the cross-platform design/investigation surface:
+    - direct provider-aware bucket existence/create helper in FEMIC if viable;
+    - or explicit docs/contracts that bucket creation must remain an
+      out-of-band Arbutus dashboard / external-client step if not viable.

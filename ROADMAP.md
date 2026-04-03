@@ -1096,6 +1096,10 @@ notes.
 - 2026-04-03 (Next TSA29 publication follow-up identified: wire named Arbutus S3 special remote for the TSA29 dataset):
   - Governing issue:
     - GitHub issue `#95`
+  - Related child issue:
+    - GitHub issue `#96` tracks whether FEMIC itself can reliably own
+      Arbutus bucket creation/preflight across Linux and Windows, rather than
+      relying on manual out-of-band bucket creation.
   - Planned branch:
     - `feature/issue-95-tsa29-arbutus-special-remote`
   - Scope:
@@ -1161,6 +1165,10 @@ notes.
       that previously succeeded for `femic-public-data`, or via the Arbutus UI;
       then rerun `git annex initremote arbutus-s3 ...` against that existing
       bucket from this Windows checkout.
+  - Follow-on design question now split out:
+    - issue `#96` will determine whether FEMIC should gain a cross-platform
+      Arbutus bucket bootstrap/preflight helper so future instance-publication
+      work does not depend on manual bucket creation outside FEMIC.
 
 - 2026-04-03 (Issue `#85` curve refresh ready for `@gparadis` review):
   - Parent rollout umbrella:
