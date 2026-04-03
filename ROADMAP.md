@@ -1123,6 +1123,20 @@ notes.
   - Current blocker observed in this Windows session:
     - those secure environment variables are not set here yet, so the actual
       `git annex initremote arbutus-s3 ...` step remains pending.
+  - Progress made on the auth bootstrap seam:
+    - implemented a Windows-local canonical secret file at
+      `%USERPROFILE%\.config\femic\arbutus.env` using plain `KEY=VALUE`
+      lines with no quotes and no `export`;
+    - added sibling loader scripts:
+      - `%USERPROFILE%\.config\femic\load-arbutus-env.ps1`
+      - `%USERPROFILE%\.config\femic\load-arbutus-env.sh`
+    - verified the PowerShell loader by dot-sourcing it under
+      `powershell -ExecutionPolicy Bypass -NoProfile ...`;
+    - verified the Git Bash loader by sourcing it under
+      `C:\Program Files\Git\bin\bash.exe` with `HOME` pointed at the Windows
+      home directory; and
+    - intentionally deferred optional PowerShell profile / `.bashrc` hooks
+      pending explicit approval.
 
 - 2026-04-03 (Issue `#85` curve refresh ready for `@gparadis` review):
   - Parent rollout umbrella:

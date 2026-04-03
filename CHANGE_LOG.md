@@ -10726,3 +10726,19 @@
   - Confirmed the current Windows session does **not** yet have the required
     secure AWS/S3 environment variables injected, so the credentialed
     `initremote` step remains pending rather than partially attempted.
+- 2026-04-03 (Issue `#95` local auth loader workflow implemented outside the repo):
+  - Created the canonical Windows-local secret file path:
+    - `%USERPROFILE%\.config\femic\arbutus.env`
+  - Added sibling user-local loader scripts:
+    - `%USERPROFILE%\.config\femic\load-arbutus-env.ps1`
+    - `%USERPROFILE%\.config\femic\load-arbutus-env.sh`
+  - Verified the PowerShell loader by dot-sourcing it under
+    `powershell -ExecutionPolicy Bypass -NoProfile ...` and confirming the
+    expected env var names loaded.
+  - Verified the Git Bash loader by sourcing it under
+    `C:\Program Files\Git\bin\bash.exe` with `HOME` pointed at the Windows
+    home directory and confirming the same env var names loaded there.
+  - Left optional shell profile hooks unwritten pending explicit approval.
+  - The remaining blocker to the actual `git annex initremote arbutus-s3 ...`
+    step is that `arbutus.env` still contains placeholder secret values rather
+    than the real AWS key/secret pair.
