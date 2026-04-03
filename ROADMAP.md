@@ -10595,4 +10595,32 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - full `python -m pytest` is currently red on unrelated existing CLI wording
       expectations in `tests/test_cli_main.py` and
       `tests/test_tipsy_config_cli.py`, not on the new log-grade exporter seam.
+- 2026-04-02 (Issue #78 rebuild evidence): applied a user overlay for
+  post-CT clearcuts and refreshed the two `ctfert` Patchworks variants most
+  likely to use the new seam.
+  - Active user overlay:
+    - exact-state `CC` overrides for `cc_pl_ct`, `cc_pl_ct_f1`,
+      `cc_pl_ct_f1_f2`, and `cc_pl_ct_f1_f2_f3`
+    - weights:
+      - `Logs_Grade_I: 1.1`
+      - `Logs_Grade_J: 1.2`
+      - `Logs_Grade_U: 1.0`
+      - `Logs_Grade_X: 0.9`
+      - `Logs_Grade_Y: 0.8`
+  - Rebuild path used:
+    - the top-level `femic export patchworks` path was blocked in this checkout
+      by the current checkpoint/fragments seam, so the ForestModel XML was
+      regenerated through the lower-level bundle-context builder and then
+      `femic patchworks matrix-build` was rerun against the refreshed XML.
+  - Refreshed outputs:
+    - `external/femic-k3z-instance/output/patchworks_k3z_ctfert_l15h5_validated/forestmodel.xml`
+    - `external/femic-k3z-instance/output/patchworks_k3z_ctfert_l20h0_validated/forestmodel.xml`
+    - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_ctfert_l15h5/*`
+    - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_ctfert_l20h0/*`
+  - Smoke evidence:
+    - representative AU `985502001` shows baseline `cc_pl` `CC` and post-CT
+      `cc_pl_ct` `CC` now diverging in both `ctfert_l15h5` and `ctfert_l20h0`;
+    - at age `80.0`, `Logs_Grade_J` rises from `373.1` to `396.9`, while
+      `Logs_Grade_X` falls from `16.5` to `13.2` and `Logs_Grade_Y` falls from
+      `16.5` to `11.7`, matching the intended directional shift.
 

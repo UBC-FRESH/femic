@@ -10016,3 +10016,23 @@
   - Full `python -m pytest` still reports unrelated pre-existing failures in
     `tests/test_cli_main.py` and `tests/test_tipsy_config_cli.py` due to CLI
     wording drift; the new log-grade exporter tests passed.
+- 2026-04-02 (Issue #78 rebuild evidence):
+  - Activated a user overlay for post-CT `CC` log-grade shifts using:
+    - `Logs_Grade_I: 1.1`
+    - `Logs_Grade_J: 1.2`
+    - `Logs_Grade_U: 1.0`
+    - `Logs_Grade_X: 0.9`
+    - `Logs_Grade_Y: 0.8`
+  - Rebuilt `ctfert_l15h5` and `ctfert_l20h0` by regenerating the ForestModel
+    XML through the lower-level bundle-context builder, then rerunning
+    `femic patchworks matrix-build` against the refreshed XML.
+  - Refreshed outputs now live in:
+    - `external/femic-k3z-instance/output/patchworks_k3z_ctfert_l15h5_validated/forestmodel.xml`
+    - `external/femic-k3z-instance/output/patchworks_k3z_ctfert_l20h0_validated/forestmodel.xml`
+    - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_ctfert_l15h5/*`
+    - `external/femic-k3z-instance/models/k3z_patchworks_model/tracks_ctfert_l20h0/*`
+  - Direct XML smoke checks on representative AU `985502001` at age `80.0`
+    show the intended post-CT clearcut shift in both variants:
+    - `Logs_Grade_J` increased from `373.1` to `396.9`
+    - `Logs_Grade_X` decreased from `16.5` to `13.2`
+    - `Logs_Grade_Y` decreased from `16.5` to `11.7`
