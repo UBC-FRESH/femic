@@ -167,6 +167,8 @@ than a true additive parent. At export time this module:
 - merges optional user overlays from
   ``~/.femic/recipe-overlays/btc_indicator_bank_compile_recipes.yaml``;
 - applies optional treatment-specific ratio overrides;
+- can also apply exact ``treatment + SILV_STATE`` ratio overrides for narrow
+  cases such as post-CT ``CC`` without changing baseline ``CC``;
 - normalizes the explicit grades against harvested-volume totals so the emitted
   grade family sums to ``product.HarvestedVolume.*`` instead of raw BTC
   merchantable yield.

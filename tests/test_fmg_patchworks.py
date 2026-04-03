@@ -1357,7 +1357,11 @@ def test_resolve_btc_indicator_bank_compile_recipes_merges_user_overlay(
         "    Logs_Grade_H: 1.5\n"
         "  ratio_scaling_factors_by_treatment:\n"
         "    CT:\n"
-        "      Logs_Grade_Y: 3.0\n",
+        "      Logs_Grade_Y: 3.0\n"
+        "  ratio_scaling_factors_by_treatment_and_state:\n"
+        "    CC:\n"
+        "      cc_pl_ct:\n"
+        "        Logs_Grade_H: 1.8\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(
@@ -1378,6 +1382,12 @@ def test_resolve_btc_indicator_bank_compile_recipes_merges_user_overlay(
             "Logs_Grade_Y"
         ]
         == 3.0
+    )
+    assert (
+        recipes["log-grades"]["ratio_scaling_factors_by_treatment_and_state"]["CC"][
+            "cc_pl_ct"
+        ]["Logs_Grade_H"]
+        == 1.8
     )
 
 
@@ -1544,6 +1554,80 @@ def test_build_compiled_log_grade_curve_points_applies_treatment_override_weight
     assert ct_j_points[0].y == 93.3
     assert (
         pytest.approx(ct_h_points[0].y + ct_i_points[0].y + ct_j_points[0].y, abs=0.11)
+        == 100.0
+    )
+
+
+def test_build_compiled_log_grade_curve_points_applies_treatment_and_state_override_weights() -> (
+    None
+):
+    source_curve_points = (CurvePoint(x=60.0, y=100.0),)
+    managed_indicator_curves = {
+        "Logs_Grade_H": (CurvePoint(x=60.0, y=10.0),),
+        "Logs_Grade_I": (CurvePoint(x=60.0, y=20.0),),
+        "Logs_Grade_J": (CurvePoint(x=60.0, y=70.0),),
+    }
+    recipe = {
+        "emit_columns": ["Logs_Grade_H", "Logs_Grade_I", "Logs_Grade_J"],
+        "scale_to_harvested_volume_total": True,
+        "ratio_scaling_factors": {
+            "Logs_Grade_H": 1.0,
+            "Logs_Grade_I": 1.0,
+            "Logs_Grade_J": 1.0,
+        },
+        "ratio_scaling_factors_by_treatment_and_state": {
+            "CC": {
+                "cc_pl_ct": {
+                    "Logs_Grade_H": 2.0,
+                    "Logs_Grade_I": 1.0,
+                    "Logs_Grade_J": 0.5,
+                }
+            }
+        },
+    }
+
+    baseline_h_points = _build_compiled_log_grade_curve_points(
+        source_curve_points=source_curve_points,
+        managed_indicator_curves=managed_indicator_curves,
+        indicator_key="Logs_Grade_H",
+        treatment_label="CC",
+        silv_state="cc_pl",
+        compile_recipe=recipe,
+    )
+    post_ct_h_points = _build_compiled_log_grade_curve_points(
+        source_curve_points=source_curve_points,
+        managed_indicator_curves=managed_indicator_curves,
+        indicator_key="Logs_Grade_H",
+        treatment_label="CC",
+        silv_state="cc_pl_ct",
+        compile_recipe=recipe,
+    )
+    post_ct_i_points = _build_compiled_log_grade_curve_points(
+        source_curve_points=source_curve_points,
+        managed_indicator_curves=managed_indicator_curves,
+        indicator_key="Logs_Grade_I",
+        treatment_label="CC",
+        silv_state="cc_pl_ct",
+        compile_recipe=recipe,
+    )
+    post_ct_j_points = _build_compiled_log_grade_curve_points(
+        source_curve_points=source_curve_points,
+        managed_indicator_curves=managed_indicator_curves,
+        indicator_key="Logs_Grade_J",
+        treatment_label="CC",
+        silv_state="cc_pl_ct",
+        compile_recipe=recipe,
+    )
+
+    assert baseline_h_points[0].y == 10.0
+    assert post_ct_h_points[0].y == 26.7
+    assert post_ct_i_points[0].y == 26.7
+    assert post_ct_j_points[0].y == 46.7
+    assert (
+        pytest.approx(
+            post_ct_h_points[0].y + post_ct_i_points[0].y + post_ct_j_points[0].y,
+            abs=0.11,
+        )
         == 100.0
     )
 

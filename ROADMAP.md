@@ -7702,6 +7702,11 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [ ] P51.5b Scrape the 2025 coast log market reports attached to issue `#65` and convert the species x grade price tables into a FEMIC-owned, user-overridable input surface.
   - [ ] P51.5c Add new value-account families that multiply AU/species/log-grade harvested volumes by the price matrix coefficients so users can aggregate upward inside Patchworks with `duplicateAccount()` patterns.
   - [ ] P51.5d Document the teaching/bridge rationale, the market-report provenance, and the user override seams in both user-facing and dev-facing docs.
+- [x] P51.6 Add state-aware `CC` log-grade mix overrides after prior silviculture (`#78`)
+  - [x] P51.6a Extend the log-grade compile-recipe seam so exact `SILV_STATE` values can override `CC` ratio weights without affecting other `CC` surfaces.
+  - [x] P51.6b Expose the new state-aware `CC` override shape through the shipped recipe plus `~/.femic/recipe-overlays`.
+  - [x] P51.6c Add focused exporter tests proving post-CT `CC` can differ from baseline `CC` while harvested-volume normalization still holds.
+  - [x] P51.6d Update the relevant docs and user overlay example for the new exact-state override seam.
 
 ## Detailed Next Steps Notes
 
@@ -10550,4 +10555,44 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - update the `#76` closeout note so it explicitly records that the issue
       was reopened once for a true full sweep;
     - close `#76` again only after this stricter pass is merged and pushed.
+- 2026-04-02 (Issue #78 kickoff): add the smallest practical state-aware `CC`
+  log-grade override seam so post-treatment clearcuts in the current rotation
+  can use a different mix than baseline `CC`.
+  - Governing issue:
+    - GitHub issue `#78`
+  - Planned branch:
+    - `feature/issue-78-state-aware-cc-log-grades`
+  - Immediate execution order:
+    - keep the existing treatment-aware recipe contract intact and add one new
+      exact-state override layer rather than inventing a broader history DSL;
+    - thread current `SILV_STATE` values through the existing `CC` log-grade
+      compile path for baseline, post-CT, post-PCT, and post-fert `CC`
+      surfaces;
+    - let exact states such as `cc_pl_ct` override the default `CC` weights
+      while leaving untreated `cc_pl` on the existing normalized BTC-derived
+      mix;
+    - add focused tests that prove state-aware `CC` overrides apply only to the
+      intended state and still sum back to harvested-volume totals; and
+    - update the shipped recipe/docs plus the user overlay example so students
+      can see the new seam immediately.
+- 2026-04-02 (Issue #78 closeout): the exact-state `CC` override seam is now
+  live and documented.
+  - What shipped:
+    - the `log-grades` compile recipe now supports
+      `ratio_scaling_factors_by_treatment_and_state`;
+    - baseline `CC` can keep the shipped normalized BTC-derived mix while exact
+      states such as `cc_pl_ct` use different `CC` weights;
+    - the home-overlay example under `~/.femic/recipe-overlays` now shows both
+      whole-`CC` and post-CT-only `CC` override patterns.
+  - Validation:
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - focused `tests/test_fmg_patchworks.py` log-grade slice: passed
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
+  - Remaining non-blocking validation caveat:
+    - full `python -m pytest` is currently red on unrelated existing CLI wording
+      expectations in `tests/test_cli_main.py` and
+      `tests/test_tipsy_config_cli.py`, not on the new log-grade exporter seam.
 

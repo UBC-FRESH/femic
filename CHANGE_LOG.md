@@ -9988,3 +9988,31 @@
   - Verified the corrected result with a fresh full scan of all issue bodies
     and all maintainer-authored comments; no obvious control-character damage,
     escaped newline litter, or fake token-leading backslashes remained.
+- 2026-04-02 (Issue #78 closeout):
+  - Added the smallest practical state-aware `CC` log-grade override seam so
+    exact current-rotation states such as `cc_pl_ct` can use different `CC`
+    ratio weights than baseline `cc_pl`.
+  - The shipped `log-grades` recipe now supports
+    `ratio_scaling_factors_by_treatment_and_state` in
+    `src/femic/resources/patchworks/btc_indicator_bank_compile_recipes.yaml`.
+  - The exporter now threads `SILV_STATE` through the `CC` log-grade compile
+    path for baseline, post-PCT, post-CT, and post-fert `CC` surfaces, while
+    preserving harvested-volume normalization.
+  - Updated docs and examples:
+    - `docs/reference/api/femic-fmg-patchworks.rst`
+    - `external/femic-k3z-instance/docs/operator-runbook.rst`
+    - user overlay example at `~/.femic/recipe-overlays/btc_indicator_bank_compile_recipes.yaml`
+  - Added focused regression coverage proving:
+    - user recipe overlays can carry the new exact-state key;
+    - post-CT `CC` weights can differ from baseline `CC`; and
+    - the reweighted explicit grade family still sums back to harvested volume.
+  - Validation:
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - focused `tests/test_fmg_patchworks.py` log-grade slice passed
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m sphinx -b html external/femic-k3z-instance/docs external/femic-k3z-instance/docs/_build/html -W`
+  - Full `python -m pytest` still reports unrelated pre-existing failures in
+    `tests/test_cli_main.py` and `tests/test_tipsy_config_cli.py` due to CLI
+    wording drift; the new log-grade exporter tests passed.

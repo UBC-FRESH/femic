@@ -43,6 +43,19 @@ log-grades:
       Logs_Grade_U: 1.3
       Logs_Grade_X: 2.2
       Logs_Grade_Y: 2.4
+  # Optional exact-state overrides can narrow a treatment mix further without
+  # affecting all surfaces of that treatment. This is the current simplest seam
+  # for "post-CT CC should differ from baseline CC" style teaching tweaks.
+  # Example user overlay shape:
+  # ratio_scaling_factors_by_treatment_and_state:
+  #   CC:
+  #     cc_pl_ct:
+  #       Logs_Grade_H: 1.2
+  #       Logs_Grade_I: 1.1
+  #       Logs_Grade_J: 0.9
+  #       Logs_Grade_U: 0.8
+  #       Logs_Grade_X: 0.7
+  #       Logs_Grade_Y: 0.6
   species_grade_split:
     enabled: true
     emit_value_products: true

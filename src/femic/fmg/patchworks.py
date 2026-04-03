@@ -698,6 +698,7 @@ def _resolve_log_grade_ratio_scaling_factors(
     compile_recipe: dict[str, Any] | None,
     denominator_columns: Iterable[str],
     treatment_label: str | None = None,
+    silv_state: str | None = None,
 ) -> dict[str, float]:
     recipe = dict(compile_recipe or {})
     raw_weights = recipe.get("ratio_scaling_factors", {}) or {}
@@ -716,6 +717,39 @@ def _resolve_log_grade_ratio_scaling_factors(
                 "mappings/objects"
             )
         raw_weights = {**raw_weights, **treatment_weights}
+    if treatment_label and silv_state:
+        raw_by_treatment_state = (
+            recipe.get("ratio_scaling_factors_by_treatment_and_state", {}) or {}
+        )
+        if raw_by_treatment_state:
+            if not isinstance(raw_by_treatment_state, dict):
+                raise ValueError(
+                    "log-grades ratio_scaling_factors_by_treatment_and_state must "
+                    "be a mapping/object"
+                )
+            state_map = raw_by_treatment_state.get(treatment_label, {}) or {}
+            if state_map and not isinstance(state_map, dict):
+                raise ValueError(
+                    "log-grades ratio_scaling_factors_by_treatment_and_state "
+                    "entries must be mappings/objects"
+                )
+            normalized_silv_state = str(silv_state).strip()
+            treatment_state_weights = state_map.get(normalized_silv_state, {}) or {}
+            if (
+                not treatment_state_weights
+                and normalized_silv_state.lower() != normalized_silv_state
+            ):
+                treatment_state_weights = (
+                    state_map.get(normalized_silv_state.lower(), {}) or {}
+                )
+            if treatment_state_weights and not isinstance(
+                treatment_state_weights, dict
+            ):
+                raise ValueError(
+                    "log-grades ratio_scaling_factors_by_treatment_and_state "
+                    "state entries must be mappings/objects"
+                )
+            raw_weights = {**raw_weights, **treatment_state_weights}
 
     weights: dict[str, float] = {}
     for column in denominator_columns:
@@ -963,6 +997,7 @@ def _build_compiled_log_grade_curve_points(
     managed_indicator_curves: dict[str, tuple[CurvePoint, ...]],
     indicator_key: str,
     treatment_label: str,
+    silv_state: str | None = None,
     compile_recipe: dict[str, Any] | None = None,
 ) -> tuple[CurvePoint, ...]:
     recipe = dict(compile_recipe or {})
@@ -984,6 +1019,7 @@ def _build_compiled_log_grade_curve_points(
         compile_recipe=recipe,
         denominator_columns=denominator_columns,
         treatment_label=treatment_label,
+        silv_state=silv_state,
     )
 
     out: list[CurvePoint] = []
@@ -1039,6 +1075,7 @@ def _append_log_grade_product_attrs(
     source_curve_points: tuple[CurvePoint, ...],
     au_token: str,
     treatment_label: str,
+    silv_state: str | None = None,
     curve_ref_prefix: str,
     compile_recipe: dict[str, Any] | None = None,
 ) -> dict[str, tuple[CurvePoint, ...]]:
@@ -1051,6 +1088,7 @@ def _append_log_grade_product_attrs(
             managed_indicator_curves=managed_indicator_curves,
             indicator_key=indicator_key,
             treatment_label=treatment_label,
+            silv_state=silv_state,
             compile_recipe=compile_recipe,
         )
         if not curve_points:
@@ -2730,6 +2768,7 @@ def build_patchworks_forestmodel_definition(
                 curves[managed_stems_curve_ref] = managed_stems_curve_points
 
         for origin in ORIGIN_ORDER:
+            default_silv_state = _default_silv_state_for_origin(origin)
             species_curve_map = species_curve_maps_by_origin[origin]
             species_prop_points_by_species = _species_curve_points_by_species(
                 context=context,
@@ -2814,6 +2853,7 @@ def build_patchworks_forestmodel_definition(
                     ),
                     au_token=au_token,
                     treatment_label="CC",
+                    silv_state=default_silv_state,
                     curve_ref_prefix=(
                         f"au_{au_token}_{_sanitize_id_component(origin)}_cc_log_grade"
                     ),
@@ -3256,6 +3296,7 @@ def build_patchworks_forestmodel_definition(
                         source_curve_points=managed_total_curve.points,
                         au_token=au_token,
                         treatment_label="CC",
+                        silv_state=str(pct_config["to_state"]),
                         curve_ref_prefix=(
                             "au_"
                             f"{au_token}_{_sanitize_id_component(str(pct_config['to_state']))}"
@@ -3614,6 +3655,7 @@ def build_patchworks_forestmodel_definition(
                         source_curve_points=curves[ct_product_curve_ref],
                         au_token=au_token,
                         treatment_label="CT",
+                        silv_state=str(ct_config["from_state"]),
                         curve_ref_prefix=(f"au_{au_token}_{state_slug}_ct_log_grade"),
                         compile_recipe=btc_indicator_bank_compile_recipes.get(
                             "log-grades"
@@ -3626,6 +3668,7 @@ def build_patchworks_forestmodel_definition(
                         source_curve_points=curves[ct_residual_curve_ref],
                         au_token=au_token,
                         treatment_label="CC",
+                        silv_state=str(ct_config["to_state"]),
                         curve_ref_prefix=(f"au_{au_token}_{state_slug}_cc_log_grade"),
                         compile_recipe=btc_indicator_bank_compile_recipes.get(
                             "log-grades"
@@ -4016,6 +4059,7 @@ def build_patchworks_forestmodel_definition(
                             source_curve_points=curves[fert_curve_ref],
                             au_token=au_token,
                             treatment_label="CC",
+                            silv_state=str(fert_config["to_state"]),
                             curve_ref_prefix=(
                                 "au_"
                                 f"{au_token}_{_sanitize_id_component(str(fert_config['to_state']))}"
