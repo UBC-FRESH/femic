@@ -10715,3 +10715,14 @@
   - Added a matching reminder to `planning/incoming_ideas.md` so future TSA29
     release-polish work can treat this PDF as an explicit reference source
     rather than a forgotten local-only file.
+- 2026-04-03 (Queued TSA29 Arbutus special-remote bootstrap follow-up):
+  - Recorded the next TSA29 DataLad publication task in `ROADMAP.md`: wire the
+    named `arbutus-s3` git-annex special remote for
+    `external/femic-tsa29-instance`, push annexed content, and validate a cold
+    clone that materializes via `git annex enableremote arbutus-s3` plus
+    `datalad get -r .`.
+  - Captured Neo's known-good Arbutus remote shape in planning notes without
+    copying any credentials into the repo.
+  - Confirmed the current Windows session does **not** yet have the required
+    secure AWS/S3 environment variables injected, so the credentialed
+    `initremote` step remains pending rather than partially attempted.

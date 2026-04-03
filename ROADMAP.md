@@ -1093,6 +1093,37 @@ notes.
     - consider a narrower follow-up issue if we want the standalone published
       package and `prep validate-case` expectations to converge more tightly.
 
+- 2026-04-03 (Next TSA29 publication follow-up identified: wire named Arbutus S3 special remote for the TSA29 dataset):
+  - Governing issue:
+    - GitHub issue `#95`
+  - Planned branch:
+    - `feature/issue-95-tsa29-arbutus-special-remote`
+  - Scope:
+    - configure the named `arbutus-s3` git-annex special remote for
+      `external/femic-tsa29-instance`;
+    - push annexed TSA29 package content to Arbutus S3;
+    - set GitHub publish dependency on the S3 remote; and
+    - validate a fresh cold clone using `git annex enableremote arbutus-s3`
+      plus `datalad get -r .`.
+  - Known-good remote shape from the Linux bootstrap environment:
+    - endpoint: `https://object-arbutus.cloud.computecanada.ca`
+    - region: `ca-west-1`
+    - host: `object-arbutus.cloud.computecanada.ca`
+    - protocol: `https`
+    - port: `80`
+    - request style: `path`
+    - chunk: `1GiB`
+    - storage class: `STANDARD`
+    - encryption: `none`
+  - Important execution boundary:
+    - do not commit credentials or secret shell snippets into the repo;
+    - execute the remote bootstrap only from a shell/session with secure
+      `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`,
+      `S3_ENDPOINT_URL`, and `S3_BUCKET_NAME` values already injected.
+  - Current blocker observed in this Windows session:
+    - those secure environment variables are not set here yet, so the actual
+      `git annex initremote arbutus-s3 ...` step remains pending.
+
 - 2026-04-03 (Issue `#85` curve refresh ready for `@gparadis` review):
   - Parent rollout umbrella:
     - GitHub issue `#84`
