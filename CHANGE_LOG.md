@@ -10351,3 +10351,21 @@
     keeps both `ICH_SX / M` and `ICH_SX / H` on `primary_nlls` with
     `selected_curve_gate_unresolved`; the old saved event log for that same
     production evidence had ended both cases on rescued `tail_blend`.
+- 2026-04-03 (Issue `#83` Windows Codex-link recovery docs wired into FEMIC):
+  - Added an explicit Windows VS Code/Codex local-file-link recovery note to
+    repo-root `AGENTS.md` so a coding agent can discover the maintained patch
+    repo and bootstrap-fix a broken extension before deeper FEMIC work.
+  - Added a matching contributor-facing note to `README.md` pointing Windows
+    VS Code/Cursor users at `UBC-FRESH/codex-local-file-link-patch`.
+  - Extended `docs/guides/vscode-coding-agent-onboarding.rst` with a focused
+    recovery section covering the broken-local-file-link symptom, the dry-run
+    and apply commands, and the `Developer: Reload Window` step.
+  - Added short discovery cross-links from:
+    - `docs/guides/deployment-instances.rst`
+    - `docs/guides/case-onboarding.rst`
+  - Validation:
+    - `.venv\\Scripts\\python.exe -m sphinx -b html docs _build/html -W`
+  - Notes:
+    - a direct `python -m sphinx ...` attempt from the system Python failed in
+      this shell because Sphinx was not installed there; the repo-local `.venv`
+      build passed cleanly and is the authoritative validation result.

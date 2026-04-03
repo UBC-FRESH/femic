@@ -120,10 +120,21 @@ femic prep validate-case --instance-root external/femic-k3z-instance --run-confi
 femic prep geospatial-preflight
 ```
 
+If you are doing FEMIC work from VS Code/Cursor on Windows with a local Codex
+agent and assistant-rendered file links are opening in the browser instead of
+the editor, use the lab-maintained patch utility before fighting the IDE:
+
+- `https://github.com/UBC-FRESH/codex-local-file-link-patch`
+
+That repo includes agent-facing bootstrap notes plus a PowerShell patcher for
+the recurring Windows `openai.chatgpt` local-file-link regression.
+
 The canonical guide version of this bootstrap ritual lives in
 `docs/guides/developer-environment-bootstrap.rst`.
 The compact companion contract page is
 `docs/reference/contracts/repo-runtime-invariants.rst`.
+For local VS Code/Codex workflow guidance, including this Windows recovery
+seam, see `docs/guides/vscode-coding-agent-onboarding.rst`.
 
 ## Bundled Example Instances Under `external/`
 

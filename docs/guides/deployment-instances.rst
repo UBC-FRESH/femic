@@ -155,6 +155,13 @@ materialization ritual), see
 For practical VS Code plus local coding-agent onboarding in this repo, see
 ``docs/guides/vscode-coding-agent-onboarding.rst``.
 
+If that onboarding is happening inside a Windows VS Code/Cursor Codex session
+and assistant-rendered local file links are opening in the browser instead of
+the editor, use the maintained recovery patch repo before pushing further into
+instance setup:
+
+- ``https://github.com/UBC-FRESH/codex-local-file-link-patch``
+
 Registry-Backed Patchworks Variants
 -----------------------------------
 

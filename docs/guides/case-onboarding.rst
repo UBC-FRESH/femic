@@ -170,6 +170,8 @@ agent in the same checkout, read this guide before assigning larger rebuild or
 instance-maintenance tasks:
 
 - ``docs/guides/vscode-coding-agent-onboarding.rst``
+- ``https://github.com/UBC-FRESH/codex-local-file-link-patch`` (Windows
+  VS Code/Codex recovery when local file links are broken)
 
 That guide explains the expected planning, supervision, and validation loop for
 agent-assisted FEMIC work.

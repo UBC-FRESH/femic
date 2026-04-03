@@ -45,6 +45,19 @@ the repo root:
    - BatchTIPSY freshness: treat `02_input-tsaXX.dat` as canonical; XLSX is a
      mirror only. Do not assume a stale block means rerun is required without
      checking whether DAT content actually changed.
+7. If you are running inside VS Code/Cursor on Windows and Codex file links are
+   broken (assistant-rendered local file links open in the browser instead of
+   the editor), bootstrap-fix the IDE before doing deeper FEMIC work:
+   - patch repo:
+     - `https://github.com/UBC-FRESH/codex-local-file-link-patch`
+   - agent bootstrap notes:
+     - `https://github.com/UBC-FRESH/codex-local-file-link-patch/blob/main/AGENTS.md`
+   - primary fix command:
+     - `powershell -ExecutionPolicy Bypass -File .\apply_codex_local_file_link_patch.ps1`
+   - after patching:
+     - run `Developer: Reload Window`
+   - do this early if file navigation is broken; it is a Windows VS Code/Codex
+     productivity workaround, not a FEMIC runtime requirement on Linux.
 
 For the compact docs source of truth behind these operating notes, see:
 - `docs/reference/contracts/index.rst`

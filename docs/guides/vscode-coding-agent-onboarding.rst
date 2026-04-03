@@ -62,6 +62,55 @@ Before thinking about prompts or agent workflow, get the local environment into
 5. Initialize submodules and materialize any required annex-backed data before
    assuming a path under ``external/`` is usable.
 
+Windows VS Code/Codex Recovery: Broken Local File Links
+-------------------------------------------------------
+
+One recurring Windows 11-specific productivity failure in the local
+VS Code/Codex workflow is that assistant-rendered local file links can regress
+and start opening in the browser instead of the editor.
+
+When that happens, the coding agent can still edit files, but ordinary
+file-navigation from the chat surface becomes unreliable and wastes time
+immediately.
+
+If you hit that seam in a Windows VS Code or Cursor environment, use the
+lab-maintained patch repo before doing deeper FEMIC work:
+
+- ``https://github.com/UBC-FRESH/codex-local-file-link-patch``
+
+That repo includes:
+
+- a PowerShell patcher that auto-detects the newest local
+  ``openai.chatgpt-*`` extension install under VS Code or Cursor;
+- backup/restore behavior for the modified bundle files; and
+- root-level ``AGENTS.md`` notes intended for a Codex agent that is trying to
+  bootstrap-fix its own broken IDE environment safely.
+
+Recommended recovery sequence:
+
+1. Clone or open ``codex-local-file-link-patch``.
+2. Dry-run the patcher first:
+
+   .. code-block:: powershell
+
+      powershell -ExecutionPolicy Bypass -File .\apply_codex_local_file_link_patch.ps1 -WhatIf
+
+3. Run the real patch:
+
+   .. code-block:: powershell
+
+      powershell -ExecutionPolicy Bypass -File .\apply_codex_local_file_link_patch.ps1
+
+4. In VS Code, run:
+
+   .. code-block:: text
+
+      Developer: Reload Window
+
+Treat this as a Windows VS Code/Codex recovery step, not a normal FEMIC
+runtime dependency. Linux contributors working in other IDE surfaces should not
+need it.
+
 VS Code Workspace Basics
 ------------------------
 
@@ -77,6 +126,12 @@ For FEMIC work, a good baseline VS Code layout usually includes:
   - `ROADMAP.md`,
   - `CHANGE_LOG.md`,
   - and any relevant instance config/docs files.
+
+If the Windows local-file-link regression is active, keep the patch repo open
+in a second window or clone so the agent can rediscover its own bootstrap
+instructions quickly:
+
+- ``https://github.com/UBC-FRESH/codex-local-file-link-patch``
 
 Treat this repo-root VS Code window as the canonical place to launch commands.
 Do not let stale editor tasks or copied absolute paths pull you into a
@@ -363,3 +418,4 @@ Related Guides
 - ``docs/guides/deployment-instances.rst``
 - ``docs/guides/case-onboarding.rst``
 - ``docs/reference/contracts/index.rst``
+- ``https://github.com/UBC-FRESH/codex-local-file-link-patch``

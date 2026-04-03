@@ -927,6 +927,23 @@ notes.
 - Once those Linux tasks are completed and documented, mark top-level P23.3 and P23 complete.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
+
+- 2026-04-03 (Issue `#83` kickoff): add explicit Windows VS Code/Codex local
+  file-link recovery guidance so FEMIC contributors can quickly bootstrap-fix a
+  broken coding-agent environment instead of getting stuck on browser-opened
+  file links.
+  - Governing issue:
+    - GitHub issue `#83`
+  - Immediate execution order:
+    - add a short repo-root clue in `AGENTS.md` for agents running inside a
+      broken Windows Codex extension;
+    - add a concise Windows recovery note to `README.md`;
+    - extend `docs/guides/vscode-coding-agent-onboarding.rst` with a focused
+      recovery section pointing to `UBC-FRESH/codex-local-file-link-patch`;
+    - add short cross-links from deployment/case onboarding docs so new
+      contributors can discover the fix from normal FEMIC entry points; and
+    - validate the docs build with Sphinx warnings treated as errors before
+      closing out the docs push.
 - 2026-04-02 (Issue #10 runtime checkpoint): resume TSA29 rebuild execution from
   the synced current-`origin/main` BTC-first workspace and carry the runtime
   findings forward in-repo before the final evidence pass.
