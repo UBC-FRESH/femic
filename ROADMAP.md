@@ -465,7 +465,7 @@ notes.
 - [x] P19.2 Bootstrap and structure femic-tsa29-instance repository
 - [x] P19.3 Assemble ASAP-usable TSA29 snapshot payload
 - [x] P19.4 Add rebuild spec + invariant policy + evidence workflow
-- [ ] P19.5 Execute BTC-first rebuild validation and publish evidence (`#10`)
+- [x] P19.5 Execute BTC-first rebuild validation and publish evidence (`#10`)
 - [x] P19.6 Build canonical TSA29 student docs in instance repo
 - [x] P19.7 Link TSA29 repo back into FEMIC as submodule + pointer docs
 - [x] P19.8 Add contract tests and release handoff (v0.1.0)
@@ -7738,6 +7738,64 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 ## Detailed Next Steps Notes
 
+- 2026-04-03 (Issue #10 fresh-clone closeout achieved; follow-on moves to `#79`):
+  - Fresh validation closeout completed from:
+    - source workspace: `F:\projects\femic`
+    - clean validation clone:
+      `F:\projects\tmp\femic-issue10-closeout-20260402-clean`
+    - shared public-data mirror:
+      `F:\projects\femic\external\femic-public-data\data`
+  - Clean-clone bootstrap and validation notes:
+    - rebuilt the moved clean-clone `.venv` from scratch instead of trusting the
+      migrated virtual environment;
+    - restored only the minimal TSA29-local prerequisites needed for the clean
+      rerun (`tipsy_params_columns`, `tsa_boundaries.feather`,
+      `ria_vri_vclr1p_checkpoint1..8.feather`);
+    - removed stale downstream TSA29 runtime products before rerun so the final
+      evidence chain stayed single-lineage and auditable;
+    - found a real packaging gap during the clean rerun and added `openpyxl` to
+      `pyproject.toml` and `requirements.txt` because Stage 01a and tests write
+      `tipsy_params_tsa29.xlsx`.
+  - Fresh closeout run `tsa29_issue10_closeout_20260402f` now proves:
+    - `femic prep validate-case --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml`
+      passed in the clean clone;
+    - `femic prep geospatial-preflight` passed in the clean clone;
+    - `femic run` emitted fresh `03_input-tsa29.csv` and Stage 01a/01b runtime
+      artifacts;
+    - unattended BTC completed with `exit_code=0` and wrote fresh
+      `04_output-tsa29.csv` / `04_error-tsa29.csv`;
+    - `femic tsa btc-post-tipsy` completed with fresh
+      `tipsy_curves_tsa29.csv`, `tipsy_sppcomp_tsa29.csv`,
+      `data/model_input_bundle/*`, and fresh `plots/tipsy_vdyp_tsa29-*.png`;
+    - `femic export patchworks`, `femic patchworks build-blocks --with-topology --topology-backend patchworks-raster`,
+      and `femic patchworks matrix-build --run-id tsa29_issue10_closeout_20260402f`
+      all completed successfully in the clean clone;
+    - the regenerated topology file
+      `models/tsa29_patchworks_model/blocks/topology_blocks_200r.csv` is now
+      non-empty (`29,954,243` bytes; `1,266,753` topology edges);
+    - the fresh Matrix Builder manifest records `returncode=0`,
+      `failures=[]`, inherited
+      `SPS_LICENSE_SERVER=frst424@auth.spatial.ca`, and the output-local
+      validated XML path beside the matching fragments set.
+  - Fresh-provenance null-volume resolution:
+    - the apparent TSA29 null/no-volume pattern is **not** stale artifact
+      confusion;
+    - fresh `04_output-tsa29.csv` contains `54` rows total, with `33` rows
+      showing positive `gVol_*` output;
+    - the remaining `21` all-null `gVol_*` rows line up exactly with fresh
+      `04_error-tsa29.csv` rows reporting `Natural has no Species`;
+    - there were no additional all-null volume rows outside that fresh BTC
+      error set.
+  - Closeout consequence:
+    - issue `#10` can close as a rebuild-contract, provenance, and evidence
+      closeout;
+    - the remaining TSA29 v0 behavior investigation moves to follow-on issue
+      `#79` (`TSA29 v0: investigate fresh BTC null-volume rows with "Natural has no Species" errors`).
+  - Immediate next task:
+    - use issue `#79` as the active surface for root-causing the fresh
+      `Natural has no Species` subset and repairing the affected TSA29 BTC
+      inputs without reopening issue `#10`.
+
 - 2026-04-02 (Issue #10 BTC-first TSA29 migration checkpoint):
   - Completed in this branch:
     - added repo-local planning note `planning/tsa29_p19_5_btc_reentry.md`;
@@ -7809,6 +7867,28 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - repeat this same proof from a fresh/current checkout and use that run as
       the final issue-`#10` closeout evidence.
 
+- 2026-04-02 (Issue #10 F-drive re-ground + clean validation plan):
+  - Live workspace sanity check now confirms:
+    - source repo root: `F:\projects\femic`
+    - fresh validation checkout:
+      `F:\projects\tmp\femic-issue10-closeout-20260402-clean`
+    - both repos are on `work/p19.5-tsa29-btc-reentry`
+    - the intended shared public-data mirror for
+      `FEMIC_EXTERNAL_DATA_ROOT` remains
+      `F:\projects\femic\external\femic-public-data\data`
+  - Immediate execution order from this point:
+    - finish editable bootstrap in the fresh validation checkout so
+      `python -m femic` resolves from its local `.venv`;
+    - restore only the missing TSA29-local prerequisite files needed for the
+      clean closeout chain from the source workspace into the fresh clone;
+    - remove stale downstream TSA29 runtime products in the fresh clone before
+      the rerun so provenance stays single-lineage and auditable;
+    - rerun `validate-case`, `geospatial-preflight`, the BTC-first TSA29 chain,
+      and the Patchworks closeout steps from the clean checkout;
+    - inspect the rebuilt BTC/TIPSY manifests and outputs explicitly to decide
+      whether the apparent null-volume pattern is fresh behavior or stale-mix
+      confusion before touching issue `#10` closure state.
+
 - 2026-04-02 (Issue #10 BTC-first TSA29 re-entry plan):
   - Governing issue:
     - GitHub issue `#10`
@@ -7819,9 +7899,9 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       BatchTIPSY DAT/out seam;
     - treat the freshly synced parent `origin/main` BTC workflow as the
       authoritative contract;
-    - use the preserved local TSA29 backup at
-      `C:\Users\gep\projects\backups\femic-tsa29-instance-pre-main-sync-20260402\snapshot`
-      as the forensic source for selective carry-forward only.
+    - use the preserved pre-sync TSA29 backup snapshot as the forensic source
+      for selective carry-forward only, without relying on any stale `C:`
+      checkout paths.
   - Approved execution sequence:
     - migrate the TSA29 instance docs/runbook/spec/runtime wiring so the active
       seam is:

@@ -11,7 +11,7 @@ closeout around the legacy manual BatchTIPSY DAT/out seam:
 That is no longer the best current representation of FEMIC's intended TIPSY
 contract.
 
-The newer parent baseline in `C:\Users\gep\projects\tmp\femic` has already
+The newer parent baseline in the current fresh validation checkout has already
 shifted the supported workflow to a BTC-first seam:
 
 1. Stage 01a writes canonical `03_input-tsaXX.csv`.
@@ -26,20 +26,20 @@ contract.
 
 ### Stronger TSA29 source workspace
 
-The active `C:\Users\gep\projects\femic` clone still appears to be the better
-TSA29 forensic/source workspace because it retains:
+The active source workspace at the current repo root remains the better TSA29
+forensic/source workspace because it retains:
 
 - parent branch `bug/p19.5-tsa29-rebuild-triage`;
 - TSA29 submodule branch `bug/p19.5-tsa29-rebuild-triage`;
 - TSA29 submodule commit `5413e23`;
 - repaired TSA29 runtime/config/runbook state;
-- checkpoint and boundary artifacts that were missing from the thinner
-  `tmp\femic` clone.
+- checkpoint and boundary artifacts that were missing from the thinner fresh
+  validation clone.
 
 ### Better parent BTC baseline elsewhere
 
-The newer parent baseline in `C:\Users\gep\projects\tmp\femic` `main` now
-contains the reference BTC-first surfaces:
+The fresh validation checkout now carries the reference BTC-first parent
+surfaces:
 
 - CLI:
   - `femic tsa btc-post-tipsy`
@@ -74,7 +74,7 @@ question:
 ## Execution Plan
 
 1. Preserve and commit only the permanent issue-`#10` contract fixes.
-   - Treat `C:\Users\gep\projects\femic` as the source/forensic workspace.
+   - Treat the active repo root as the source/forensic workspace.
    - Keep the permanent payload focused on:
      - env-driven Patchworks licensing on Windows
      - output-local `forestmodel.xml` beside validated fragments
@@ -111,8 +111,12 @@ question:
 4. Validate from a fresh/current parent checkout.
    - Do not treat the already-dirty forensic workspace as the final
      reproducibility proof.
-   - Run the final acceptance/evidence pass from a fresh/current checkout after
-     the intended issue-`#10` commits are in place.
+   - Run the final acceptance/evidence pass from the fresh validation checkout
+     at `F:\projects\tmp\femic-issue10-closeout-20260402-clean` after the
+     intended issue-`#10` commits are in place.
+   - Point `FEMIC_EXTERNAL_DATA_ROOT` at the already-materialized shared public
+     data mirror under the source workspace:
+     `F:\projects\femic\external\femic-public-data\data`.
    - Final execution order:
      1. `femic prep validate-case --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml`
      2. `femic prep geospatial-preflight --instance-root external/femic-tsa29-instance`
@@ -140,6 +144,15 @@ question:
 
 ## Immediate Next Task
 
-The next concrete implementation step is to checkpoint the permanent
-issue-`#10` contract/provenance fixes, then rerun the full closeout chain from
-a fresh validation checkout.
+The planned fresh validation checkout rerun has now completed successfully from
+`F:\projects\tmp\femic-issue10-closeout-20260402-clean` using run ID
+`tsa29_issue10_closeout_20260402f`.
+
+Closeout outcome:
+
+- issue `#10` is satisfied as a BTC-first rebuild-contract, provenance, and
+  evidence closeout;
+- the clean-clone evidence proved the reviewed TSA29 null/no-volume pattern is
+  fresh behavior, not stale artifact residue;
+- the remaining behavior investigation now belongs to follow-on issue `#79`
+  rather than reopening the issue-`#10` contract closeout.

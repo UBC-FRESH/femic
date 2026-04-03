@@ -10092,3 +10092,50 @@
     - if the fresh seam is proven and the pattern remains, that behavior moves
       into the follow-on TSA29 v0 issue instead of blocking this contract/evidence
       closeout by default.
+- 2026-04-03 (Issue #10 fresh-clone closeout achieved; follow-on moved to `#79`):
+  - Rebuilt the moved clean-clone `.venv` from scratch in
+    `F:\projects\tmp\femic-issue10-closeout-20260402-clean`, restored only the
+    minimal TSA29-local prerequisites (`tipsy_params_columns`,
+    `tsa_boundaries.feather`, `ria_vri_vclr1p_checkpoint1..8.feather`), and
+    scrubbed stale downstream runtime products before rerunning the final
+    evidence chain.
+  - Found a real packaging gap during the clean rerun and added `openpyxl` to
+    `pyproject.toml` and `requirements.txt` because Stage 01a and the TIPSY
+    freshness tests write `tipsy_params_tsa29.xlsx`.
+  - Fresh validation closeout run `tsa29_issue10_closeout_20260402f` completed
+    end to end in the clean clone:
+    - `femic prep validate-case --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml`
+    - `femic prep geospatial-preflight`
+    - `femic run --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --run-id tsa29_issue10_closeout_20260402f`
+    - `femic tsa btc-post-tipsy --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --tsa 29 --run-id tsa29_issue10_closeout_20260402f`
+    - `femic export patchworks --instance-root external/femic-tsa29-instance --tsa 29 --bundle-dir data/model_input_bundle --checkpoint data/ria_vri_vclr1p_checkpoint7.feather --output-dir output/patchworks_tsa29_validated`
+    - `femic patchworks preflight --instance-root external/femic-tsa29-instance --config config/patchworks.runtime.windows.yaml`
+    - `femic patchworks build-blocks --instance-root external/femic-tsa29-instance --config config/patchworks.runtime.windows.yaml --with-topology --topology-backend patchworks-raster`
+    - `femic patchworks matrix-build --instance-root external/femic-tsa29-instance --config config/patchworks.runtime.windows.yaml --run-id tsa29_issue10_closeout_20260402f`
+  - Fresh closeout evidence now proves:
+    - unattended BTC completed with `exit_code=0` and wrote fresh
+      `04_output-tsa29.csv` / `04_error-tsa29.csv`;
+    - post-TIPSY rebuilt fresh `tipsy_curves_tsa29.csv`,
+      `tipsy_sppcomp_tsa29.csv`, `data/model_input_bundle/*`, and
+      `plots/tipsy_vdyp_tsa29-*.png`;
+    - the regenerated topology file
+      `models/tsa29_patchworks_model/blocks/topology_blocks_200r.csv` is
+      non-empty (`29,954,243` bytes; `1,266,753` edges);
+    - the fresh Matrix Builder manifest records `returncode=0`, `failures=[]`,
+      inherited `SPS_LICENSE_SERVER=frst424@auth.spatial.ca`, and the
+      output-local validated XML path beside the matching fragments set;
+    - `messages.csv` is empty apart from the header row.
+  - Fresh-provenance null-volume conclusion:
+    - `04_output-tsa29.csv` has `54` rows total and `33` rows with positive
+      `gVol_*` output;
+    - the remaining `21` all-null `gVol_*` rows align exactly with fresh
+      `04_error-tsa29.csv` rows reporting `Natural has no Species`;
+    - there were no additional all-null volume rows outside that fresh BTC
+      error set, so the pattern is a fresh TSA29 behavior problem rather than
+      stale artifact residue.
+  - Follow-on tracking:
+    - opened issue `#79` (`TSA29 v0: investigate fresh BTC null-volume rows
+      with "Natural has no Species" errors`);
+    - issue `#10` can now close as the rebuild-contract, provenance, and
+      evidence closeout without blocking on the remaining TSA29 v0 behavior
+      investigation.

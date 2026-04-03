@@ -13,6 +13,7 @@ fiona
 distance
 datalad[full]
 nbformat
+openpyxl
 typer
 rich
 ruff
