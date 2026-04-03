@@ -10664,3 +10664,28 @@
     - the parent-repo docs build remains blocked by a large set of pre-existing
       unrelated API/reference warnings and was not newly regressed by this
       issue.
+- 2026-04-03 (Issue `#94` ready to close: TSA29 instance converted to a DataLad dataset with large-only publication policy):
+  - Switched active work to branch
+    `feature/issue-94-tsa29-datalad-dataset`.
+  - Converted `external/femic-tsa29-instance` into a live DataLad/git-annex
+    dataset and recorded the TSA29-specific large-only policy in:
+    - `external/femic-tsa29-instance/.gitattributes`
+    - `external/femic-tsa29-instance/.gitignore`
+    - `external/femic-tsa29-instance/README.md`
+    - `external/femic-tsa29-instance/docs/getting-started.rst`
+    - `external/femic-tsa29-instance/docs/data-and-provenance.rst`
+    - `external/femic-tsa29-instance/docs/docs-ownership-and-release.rst`
+  - The published-policy split is now explicit:
+    - small docs/config/checksum/launch-wrapper text stays in Git;
+    - bulky runtime/rebuild payloads are annex-backed candidates; and
+    - transient runtime spill remains local-only.
+  - The collaborator docs now describe thin-clone materialization honestly:
+    - use `git annex info --fast` plus `datalad get` to materialize payloads;
+    - the final named special-remote bootstrap surface is intentionally deferred
+      to issue `#92`, where the first published TSA29 annex content will be
+      wired and cold-start tested.
+  - Validation:
+    - `python -m sphinx -b html docs _build/html -W -n`
+      from `external/femic-tsa29-instance/`
+    - `git annex info --fast`
+    - DataLad status inspection against the TSA29 instance dataset

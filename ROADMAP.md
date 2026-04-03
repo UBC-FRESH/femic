@@ -1023,6 +1023,43 @@ notes.
     - after the dataset conversion is in place, publish the current TSA29 PoC
       artifact set and cold-start validation bundle under issue `#92`.
 
+- 2026-04-03 (Issue `#94` closeout in progress: TSA29 instance converted to a DataLad dataset with large-only publication policy):
+  - Switched active execution to issue branch
+    `feature/issue-94-tsa29-datalad-dataset`.
+  - Converted `external/femic-tsa29-instance` into a live DataLad/git-annex
+    dataset and preserved the initializer metadata in the instance repo.
+  - Tightened the TSA29 dataset classification policy:
+    - small docs/config/checksum/launch-wrapper text stays in Git;
+    - bulky runtime and rebuild payloads are classified for annex-backed
+      storage; and
+    - transient runtime spill such as saved-stage dumps and scratch logs stays
+      local-only.
+  - Updated TSA29 instance docs so collaborators now have an explicit dataset
+    bootstrap and maintainer publication workflow:
+    - `README.md`
+    - `docs/getting-started.rst`
+    - `docs/data-and-provenance.rst`
+    - `docs/docs-ownership-and-release.rst`
+  - Important scope boundary:
+    - issue `#94` establishes the dataset and policy surface;
+    - issue `#92` remains responsible for publishing the current TSA29 PoC
+      payload set, wiring the canonical special-remote bootstrap name, and
+      proving cold-start materialization/launch from the published package.
+  - Validation:
+    - `python -m sphinx -b html docs _build/html -W -n`
+      from `external/femic-tsa29-instance/`
+    - `git annex info --fast`
+    - DataLad status inspection against the TSA29 instance dataset
+  - Detailed Next Steps:
+    - close issue `#94` with an explicit note that remote publication/bootstrap
+      proof moves to issue `#92`;
+    - publish the current TSA29 PoC runtime plus rebuild payload set under the
+      new dataset policy in issue `#92`;
+    - refresh lineage/checksum ledgers as needed for the published payload set;
+      and
+    - verify a cold-start materialized checkout can still reach the current
+      runnable TSA29 Patchworks prototype boundary.
+
 - 2026-04-03 (Issue `#85` curve refresh ready for `@gparadis` review):
   - Parent rollout umbrella:
     - GitHub issue `#84`
