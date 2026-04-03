@@ -7795,6 +7795,17 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - use issue `#79` as the active surface for root-causing the fresh
       `Natural has no Species` subset and repairing the affected TSA29 BTC
       inputs without reopening issue `#10`.
+  - Windows public-data hygiene follow-up:
+    - local testing in `external/femic-public-data` showed Windows false-dirty
+      churn was being amplified by `core.autocrlf=true` against annex-managed
+      GIS payloads;
+    - committed `external/femic-public-data` submodule fix `155711f`
+      (`Harden binary GIS attributes for Windows clones`) to mark FileGDB
+      payloads plus raster/feather/GPKG artifacts as binary (`-text`) in
+      `.gitattributes`;
+    - parent merge work should advance the public-data submodule pointer to
+      `155711f` together with the existing TSA29 pointer update, but must still
+      keep the large TSA29 runtime spill out of the intentional Git payload.
 
 - 2026-04-02 (Issue #10 BTC-first TSA29 migration checkpoint):
   - Completed in this branch:

@@ -10139,3 +10139,15 @@
     - issue `#10` can now close as the rebuild-contract, provenance, and
       evidence closeout without blocking on the remaining TSA29 v0 behavior
       investigation.
+- 2026-04-03 (Windows public-data annex hardening follow-up):
+  - Investigated the false-dirty `external/femic-public-data` state seen on
+    native Windows after loading BC GIS datasets and confirmed the churn was
+    landing in annex-managed FileGDB payloads under `data/bc/...`.
+  - Applied the low-risk local mitigation first (`core.autocrlf=false`,
+    `core.safecrlf=false`) to restore a clean baseline, then committed a
+    permanent repo-side hardening fix in the public-data submodule:
+    `155711f` (`Harden binary GIS attributes for Windows clones`).
+  - That public-data commit adds `.gitattributes` `-text` rules for FileGDB
+    payloads and common binary GIS artifacts (`.tif`, `.tiff`, `.feather`,
+    `.gpkg`) so future Windows clones are less likely to pick up CRLF-driven
+    false dirt after normal data access.
