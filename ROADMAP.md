@@ -1160,11 +1160,27 @@ notes.
     - boto3 `create_bucket(...)` attempts against the intended TSA29 bucket
       return `NoSuchKey`, so the current blocker is specifically the bucket
       creation / endpoint semantics, not the local loader workflow.
+  - Updated state after Linux-side bucket creation:
+    - the Linux environment created and verified
+      `ubc-fresh-femic-tsa29-instance`, which cleared the original “bucket must
+      exist first” blocker;
+    - despite that, rerunning `git annex initremote arbutus-s3 ...` from this
+      Windows checkout still fails with the same
+      `XmlException {xmlErrorMessage = "Missing error Message"}` as if the
+      bucket were invisible;
+    - repeating direct boto3 `HeadBucket` / `ListBuckets` probes from the same
+      loaded Windows session still returns `404` / `NoSuchKey` for both the new
+      TSA29 bucket and the known public-data bucket; and
+    - `git -C external/femic-public-data annex testremote arbutus-s3` now
+      shows the broader problem clearly: the existing Arbutus remote is
+      `unavailable` from this Windows-native path and repeatedly throws the
+      same `XmlException` during S3 operations.
   - Next likely resolution path:
-    - create the TSA29 bucket out-of-band from the Linux/Arbutus environment
-      that previously succeeded for `femic-public-data`, or via the Arbutus UI;
-      then rerun `git annex initremote arbutus-s3 ...` against that existing
-      bucket from this Windows checkout.
+    - treat the bucket-existence prerequisite as solved and move the active
+      blocker to a broader Windows-native Arbutus S3 access seam;
+    - continue issue `#95` only once we have either a Windows-native fix or a
+      Linux/WSL-backed execution path that can actually perform `git-annex` S3
+      operations against Arbutus from this workstation.
   - Follow-on design question now split out:
     - issue `#96` will determine whether FEMIC should gain a cross-platform
       Arbutus bucket bootstrap/preflight helper so future instance-publication

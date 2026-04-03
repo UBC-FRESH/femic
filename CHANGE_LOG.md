@@ -10770,3 +10770,25 @@
     - direct provider-aware bucket existence/create helper in FEMIC if viable;
     - or explicit docs/contracts that bucket creation must remain an
       out-of-band Arbutus dashboard / external-client step if not viable.
+- 2026-04-03 (Issue `#95` narrowed from bucket-creation blocker to broader Windows-native Arbutus access seam):
+  - Linux-side creation/verification of `ubc-fresh-femic-tsa29-instance`
+    cleared the original “bucket must exist first” blocker.
+  - Even after that, rerunning
+    `git annex initremote arbutus-s3 type=S3 ... bucket=ubc-fresh-femic-tsa29-instance ...`
+    from the Windows TSA29 checkout still fails with:
+    - `XmlException {xmlErrorMessage = "Missing error Message"}`
+  - Repeated direct boto3 probes from the same loaded Windows session still
+    return:
+    - `404` for `HeadBucket` on both the new TSA29 bucket and the known
+      public-data bucket; and
+    - `NoSuchKey` for `ListBuckets`.
+  - Cross-checking the already-configured public-data remote showed the seam is
+    broader than the new TSA29 bucket:
+    - `git -C external/femic-public-data annex testremote arbutus-s3`
+      reports `unavailable remote` with repeated `XmlException` failures during
+      S3 operations.
+  - Current interpretation:
+    - Windows-local auth loading is solved;
+    - TSA29 bucket existence is solved;
+    - the remaining blocker is Windows-native Arbutus S3 access itself for
+      `git-annex` / S3 operations, not just bucket creation for TSA29.
