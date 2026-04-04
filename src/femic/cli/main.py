@@ -261,8 +261,17 @@ WINDOWS_ARBUTUS_QUOTED_ENV_KEYS = (
     "AWS_SECRET_ACCESS_KEY",
 )
 BCDC_QUERY_ARGUMENT = typer.Argument(
-    ...,
+    None,
     help="One or more BC Data Catalogue layer names or keywords to resolve.",
+)
+BCDC_QUERY_FILE_OPTION = typer.Option(
+    None,
+    "--query-file",
+    help=(
+        "Optional text file containing one BC Data Catalogue query per line. "
+        "Blank lines and `#` comments are ignored."
+    ),
+    show_default=False,
 )
 BCDC_MANIFEST_OPTION = typer.Option(
     None,
@@ -1699,9 +1708,9 @@ def _write_bcdc_resolve_manifest(
 def _print_bcdc_resolve_summary(result: BcdcResolveResult) -> None:
     console.print(f"query: {result.query}")
     console.print(f"matches: {len(result.matches)}")
+    for note in result.notes:
+        console.print(f"note: {note}")
     if result.top_match is None:
-        for note in result.notes:
-            console.print(f"note: {note}")
         return
 
     top_match = result.top_match
@@ -1718,14 +1727,23 @@ def _print_bcdc_resolve_summary(result: BcdcResolveResult) -> None:
     for note in top_match.manual_follow_up:
         console.print(f"manual_follow_up: {note}")
     if result.download_result is not None:
-        download_result = result.download_result
         console.print(
             "downloads: "
-            f"downloaded={len(download_result.downloaded)} "
-            f"skipped={len(download_result.skipped_resources)} "
-            f"failures={len(download_result.failures)} "
-            f"root={download_result.destination_root}"
+            f"downloaded={len(result.download_result.downloaded)} "
+            f"skipped={len(result.download_result.skipped_resources)} "
+            f"failures={len(result.download_result.failures)}"
         )
+
+
+def _load_bcdc_queries_from_file(path: Path) -> list[str]:
+    resolved = path.expanduser().resolve()
+    queries: list[str] = []
+    for raw_line in resolved.read_text(encoding="utf-8-sig").splitlines():
+        line = raw_line.strip().lstrip("\ufeff")
+        if not line or line.startswith("#"):
+            continue
+        queries.append(line)
+    return queries
 
 
 @app.callback()
@@ -1758,7 +1776,8 @@ def instance_config_show() -> None:
 
 @data_app.command("bcdc-resolve")
 def data_bcdc_resolve(
-    queries: list[str] = BCDC_QUERY_ARGUMENT,
+    queries: list[str] | None = BCDC_QUERY_ARGUMENT,
+    query_file: Path | None = BCDC_QUERY_FILE_OPTION,
     manifest_path: Path | None = BCDC_MANIFEST_OPTION,
     download_direct: bool = BCDC_DOWNLOAD_DIRECT_OPTION,
     download_root: Path | None = BCDC_DOWNLOAD_ROOT_OPTION,
@@ -1766,6 +1785,19 @@ def data_bcdc_resolve(
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
     """Resolve BC Data Catalogue candidates from explicit layer names or keywords."""
+
+    if query_file is not None and not isinstance(query_file, Path):
+        query_file = None
+
+    resolved_queries = list(queries or [])
+    if query_file is not None:
+        resolved_queries.extend(_load_bcdc_queries_from_file(query_file))
+    if not resolved_queries:
+        console.print(
+            "[red]BCDC resolver error:[/red] provide at least one query or use "
+            "`--query-file`."
+        )
+        raise typer.Exit(code=1)
 
     instance_context = (
         _resolve_cli_instance_context(instance_root=instance_root)
@@ -1784,7 +1816,7 @@ def data_bcdc_resolve(
 
     results: list[BcdcResolveResult] = []
     try:
-        for query in queries:
+        for query in resolved_queries:
             result = resolve_bcdc_candidates(query, limit=limit)
             if download_direct:
                 download_direct_bcdc_resources(

@@ -12109,4 +12109,32 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - make query-file parsing robust to blank lines and `#` comments;
     - update the discovery docs with a Windows-friendly batch-input example;
     - extend CLI/tests so the new batch mode and curated aliases are covered.
+- 2026-04-04 (Issue `#99` implemented: first BCDC alias and batch-input
+  follow-on slice):
+  - What shipped:
+    - added a first curated alias path in `femic.bcdc_catalog`, including a
+      working resolver rescue for `CONSOLIDATED_CUTBLOCKS_2011` via the cleaner
+      `CONSOLIDATED_CUTBLOCKS` query variant;
+    - added `--query-file PATH` to `femic data bcdc-resolve`;
+    - query files now support one query per line and ignore blank lines plus
+      `#` comments;
+    - query-file loading now handles UTF-8 BOM cleanly for Windows-friendly
+      text files;
+    - updated the BCDC discovery docs with a Windows batch-input example and
+      explicit note about the first curated alias behavior.
+  - Validation:
+    - `python -m pytest tests/test_bcdc_catalog.py tests/test_cli_main.py -k "bcdc or query_file" -q`
+    - `python -m pytest tests/test_docs_contract.py -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+  - Detailed Next Steps:
+    - grow the curated forestry alias map deliberately from preserved TSR
+      source-list misses rather than guessing broadly;
+    - consider adding a manifest field that records which alias variant or
+      fallback rule succeeded;
+    - revisit whether direct-download-capable hits from the Williams Lake/Table
+      2 pass should become curated promotion candidates for
+      `metadata/required_datasets.yaml` or `external/femic-public-data`.
 

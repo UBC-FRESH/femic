@@ -94,6 +94,37 @@ Another direct-download-capable example is the VRI R1 layer:
      --download-root data\downloads\bcdc `
      --manifest-path runtime\logs\bcdc_vri_r1_manifest.json
 
+Batch Input from a Query File
+-----------------------------
+
+When working through a TSR source list on Windows, a query file is usually more
+reliable than a large interactive paste.
+
+Create a text file with one query per line. Blank lines and ``#`` comments are
+ignored.
+
+Example ``runtime/logs/williams_lake_table2_queries.txt``:
+
+.. code-block:: text
+
+   # Williams Lake Table 2 sample
+   WHSE_FOREST_VEGETATION.F_OWN
+   WHSE_ADMIN_BOUNDARIES.FADM_TSA
+   CONSOLIDATED_CUTBLOCKS_2011
+
+Then run:
+
+.. code-block:: text
+
+   & .\.venv\Scripts\python.exe -m femic data bcdc-resolve `
+     --query-file runtime\logs\williams_lake_table2_queries.txt `
+     --manifest-path runtime\logs\williams_lake_table2_manifest.json
+
+The first follow-on slice after issue `#98` also adds a small curated alias
+path for known forestry naming drift. For example,
+``CONSOLIDATED_CUTBLOCKS_2011`` now retries through the cleaner
+``CONSOLIDATED_CUTBLOCKS`` query variant before giving up.
+
 PowerShell Notes
 ----------------
 

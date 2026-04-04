@@ -3897,3 +3897,107 @@ def test_data_bcdc_resolve_downloads_direct_resources(
     )
 
     assert any("downloads: downloaded=1" in msg for msg in messages)
+
+
+def test_data_bcdc_resolve_query_file_ignores_blank_lines_and_comments(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    resolved_queries: list[str] = []
+
+    def _fake_resolve(query: str, limit: int):
+        resolved_queries.append(query)
+        return cli_main.BcdcResolveResult(
+            query=query,
+            limit=limit,
+            generated_utc="2026-04-04T00:00:00+00:00",
+            api_urls=("https://example.invalid/package_search",),
+            matches=(),
+            notes=("No catalogue matches found for the supplied query.",),
+        )
+
+    monkeypatch.setattr(cli_main, "resolve_bcdc_candidates", _fake_resolve)
+
+    query_file = tmp_path / "queries.txt"
+    query_file.write_text(
+        "# comment\n"
+        "WHSE_FOREST_VEGETATION.F_OWN\n"
+        "\n"
+        "CONSOLIDATED_CUTBLOCKS_2011\n",
+        encoding="utf-8",
+    )
+
+    cli_main.data_bcdc_resolve(
+        queries=None,
+        query_file=query_file,
+        manifest_path=None,
+        download_direct=False,
+        download_root=None,
+        limit=5,
+        instance_root=None,
+    )
+
+    assert resolved_queries == [
+        "WHSE_FOREST_VEGETATION.F_OWN",
+        "CONSOLIDATED_CUTBLOCKS_2011",
+    ]
+
+
+def test_data_bcdc_resolve_query_file_strips_utf8_bom(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    resolved_queries: list[str] = []
+
+    def _fake_resolve(query: str, limit: int):
+        resolved_queries.append(query)
+        return cli_main.BcdcResolveResult(
+            query=query,
+            limit=limit,
+            generated_utc="2026-04-04T00:00:00+00:00",
+            api_urls=("https://example.invalid/package_search",),
+            matches=(),
+            notes=("No catalogue matches found for the supplied query.",),
+        )
+
+    monkeypatch.setattr(cli_main, "resolve_bcdc_candidates", _fake_resolve)
+    monkeypatch.setattr(cli_main.console, "print", lambda *_args, **_kwargs: None)
+
+    query_file = tmp_path / "queries.txt"
+    query_file.write_text("\ufeffWHSE_FOREST_VEGETATION.F_OWN\n", encoding="utf-8")
+
+    cli_main.data_bcdc_resolve(
+        queries=None,
+        query_file=query_file,
+        manifest_path=None,
+        download_direct=False,
+        download_root=None,
+        limit=5,
+        instance_root=None,
+    )
+
+    assert resolved_queries == ["WHSE_FOREST_VEGETATION.F_OWN"]
+
+
+def test_data_bcdc_resolve_requires_query_or_query_file(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.data_bcdc_resolve(
+            queries=None,
+            query_file=None,
+            manifest_path=None,
+            download_direct=False,
+            download_root=None,
+            limit=5,
+            instance_root=None,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("provide at least one query or use `--query-file`" in msg for msg in messages)

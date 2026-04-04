@@ -157,6 +157,7 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "Purpose",
         "Minimal Workflow",
         "Concrete Examples",
+        "Batch Input from a Query File",
         "PowerShell Notes",
         "Classification Buckets",
         "Manifest Output",
@@ -169,6 +170,8 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "WHSE_FOREST_VEGETATION.VEG_COMP_LYR_R1_POLY",
         "Silviculture Activities History",
         "--download-direct",
+        "--query-file",
+        "CONSOLIDATED_CUTBLOCKS_2011",
         "direct_data_download",
         "indirect_custom_download",
         "metadata/required_datasets.yaml",
@@ -179,6 +182,7 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
     for snippet in (
         "- ``data``",
         "python -m femic data bcdc-resolve",
+        "--query-file PATH",
         "--download-direct / --no-download-direct",
         "--manifest-path PATH",
     ):

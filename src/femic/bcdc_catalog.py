@@ -50,6 +50,9 @@ OBJECT_SHORT_NAME_MATCH_SCORE = 300
 EXACT_TEXT_MATCH_SCORE = 200
 CONTAINS_TEXT_MATCH_SCORE = 100
 NO_MATCH_SCORE = 0
+CURATED_QUERY_ALIASES: dict[str, tuple[str, ...]] = {
+    "CONSOLIDATED_CUTBLOCKS_2011": ("CONSOLIDATED_CUTBLOCKS",),
+}
 
 
 class BcdcCatalogError(RuntimeError):
@@ -246,6 +249,27 @@ def _build_object_name_search_url(query: str, *, rows: int) -> str:
 
 def _build_keyword_search_url(query: str, *, rows: int) -> str:
     return _build_package_search_url(query.strip(), rows=rows)
+
+
+def _query_variants(query: str) -> tuple[str, ...]:
+    normalized_query = query.strip()
+    variants: list[str] = [normalized_query]
+    seen = {normalized_query.casefold()}
+
+    for alias in CURATED_QUERY_ALIASES.get(normalized_query, ()):
+        alias_value = alias.strip()
+        if alias_value and alias_value.casefold() not in seen:
+            variants.append(alias_value)
+            seen.add(alias_value.casefold())
+
+    year_suffix_match = re.match(r"^(?P<stem>.+?)(?:[_\s-])(?P<year>19\d{2}|20\d{2})$", normalized_query)
+    if year_suffix_match:
+        stripped = year_suffix_match.group("stem").strip()
+        if stripped and stripped.casefold() not in seen:
+            variants.append(stripped)
+            seen.add(stripped.casefold())
+
+    return tuple(variants)
 
 
 def _fetch_json(url: str) -> dict[str, Any]:
@@ -522,13 +546,35 @@ def resolve_bcdc_candidates(query: str, *, limit: int = 5) -> BcdcResolveResult:
     api_urls: list[str] = []
     package_matches: dict[str, BcdcPackageMatch] = {}
 
-    object_url = _build_object_name_search_url(normalized_query, rows=limit)
-    api_urls.append(object_url)
-    _merge_package_matches(
-        package_matches,
-        normalized_query,
-        _extract_package_rows(_fetch_json(object_url)),
-    )
+    query_variants = _query_variants(normalized_query)
+    notes_list: list[str] = []
+
+    alias_variant_used: str | None = None
+    for variant in query_variants:
+        object_url = _build_object_name_search_url(variant, rows=limit)
+        api_urls.append(object_url)
+        before_count = len(package_matches)
+        _merge_package_matches(
+            package_matches,
+            variant,
+            _extract_package_rows(_fetch_json(object_url)),
+        )
+        if variant != normalized_query and len(package_matches) > before_count:
+            alias_variant_used = variant
+
+        ranked_matches = tuple(
+            sorted(
+                package_matches.values(),
+                key=lambda match: (match.match_score, match.title.casefold()),
+                reverse=True,
+            )[:limit]
+        )
+        if _has_good_match(ranked_matches):
+            if variant != normalized_query:
+                notes_list.append(
+                    f"Used alias/query variant `{variant}` after the original query did not produce a strong exact match."
+                )
+            break
 
     ranked_matches = tuple(
         sorted(
@@ -538,13 +584,30 @@ def resolve_bcdc_candidates(query: str, *, limit: int = 5) -> BcdcResolveResult:
         )[:limit]
     )
     if not _has_good_match(ranked_matches):
-        keyword_url = _build_keyword_search_url(normalized_query, rows=limit)
-        api_urls.append(keyword_url)
-        _merge_package_matches(
-            package_matches,
-            normalized_query,
-            _extract_package_rows(_fetch_json(keyword_url)),
-        )
+        for variant in query_variants:
+            keyword_url = _build_keyword_search_url(variant, rows=limit)
+            api_urls.append(keyword_url)
+            before_count = len(package_matches)
+            _merge_package_matches(
+                package_matches,
+                variant,
+                _extract_package_rows(_fetch_json(keyword_url)),
+            )
+            if variant != normalized_query and len(package_matches) > before_count:
+                alias_variant_used = variant
+            ranked_matches = tuple(
+                sorted(
+                    package_matches.values(),
+                    key=lambda match: (match.match_score, match.title.casefold()),
+                    reverse=True,
+                )[:limit]
+            )
+            if _has_good_match(ranked_matches):
+                if variant != normalized_query:
+                    notes_list.append(
+                        f"Used alias/query variant `{variant}` during keyword fallback."
+                    )
+                break
 
     ranked_matches = tuple(
         sorted(
@@ -553,9 +616,15 @@ def resolve_bcdc_candidates(query: str, *, limit: int = 5) -> BcdcResolveResult:
             reverse=True,
         )[:limit]
     )
-    notes: tuple[str, ...] = ()
+    notes: tuple[str, ...] = tuple(notes_list)
+    if alias_variant_used is not None and not any(
+        alias_variant_used in note for note in notes
+    ):
+        notes = notes + (
+            f"Used alias/query variant `{alias_variant_used}` to surface the current top match.",
+        )
     if not ranked_matches:
-        notes = ("No catalogue matches found for the supplied query.",)
+        notes = notes + ("No catalogue matches found for the supplied query.",)
     return BcdcResolveResult(
         query=normalized_query,
         limit=limit,

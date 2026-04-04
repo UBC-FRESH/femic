@@ -200,6 +200,31 @@ boundary rather than the broader Stage 01a/01b orchestration. The current
 operator-facing default is the unattended BTC `/TSR` seam through the live
 user-overlay ``TimberSupply.rpt`` path.
 
+Data
+----
+
+.. code-block:: text
+
+   python -m femic data [OPTIONS] COMMAND [ARGS]...
+
+Subcommands
+
+- ``bcdc-resolve``: ``python -m femic data bcdc-resolve [OPTIONS] [QUERY]...``
+
+``data bcdc-resolve`` options
+
+- ``QUERY`` argument (repeatable; BC Data Catalogue layer names or keywords)
+- ``--query-file PATH`` (optional one-query-per-line text file; blank lines and ``#`` comments ignored)
+- ``--manifest-path PATH`` (optional JSON manifest output path)
+- ``--download-direct / --no-download-direct`` (opt-in direct-downloads from the top-ranked package only)
+- ``--download-root PATH`` (optional destination root for direct downloads)
+- ``--limit INTEGER`` (default: ``5``)
+- ``--instance-root PATH`` (optional instance root used to resolve default output paths)
+
+For working Windows examples, including quoted multi-word queries and
+``--query-file`` batch usage, see
+``docs/guides/bc-data-catalogue-discovery.rst``.
+
 Subcommands
 
 - ``validate``: ``python -m femic tipsy validate [OPTIONS]``

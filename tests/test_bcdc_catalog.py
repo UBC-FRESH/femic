@@ -133,6 +133,48 @@ def test_resolve_bcdc_candidates_falls_back_to_keyword_search_when_exact_is_weak
     assert result.top_match is not None
 
 
+def test_resolve_bcdc_candidates_uses_curated_alias_when_original_query_misses(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+
+    def _fake_fetch(url: str) -> dict[str, object]:
+        calls.append(url)
+        if "CONSOLIDATED_CUTBLOCKS_2011" in url:
+            return {"success": True, "result": {"results": []}}
+        if "CONSOLIDATED_CUTBLOCKS" in url:
+            return {
+                "success": True,
+                "result": {
+                    "results": [
+                        {
+                            "id": "pkg-cutblocks",
+                            "name": "harvested-areas-of-bc-consolidated-cutblocks",
+                            "title": "Harvested Areas of BC (Consolidated Cutblocks)",
+                            "license_title": "Open Government Licence",
+                            "download_audience": "Public",
+                            "organization": {
+                                "name": "forest-analysis-and-inventory",
+                                "title": "Forest Analysis and Inventory Branch",
+                            },
+                            "resources": [],
+                        }
+                    ]
+                },
+            }
+        raise AssertionError(f"Unexpected URL: {url}")
+
+    monkeypatch.setattr(bcdc_catalog, "_fetch_json", _fake_fetch)
+
+    result = bcdc_catalog.resolve_bcdc_candidates("CONSOLIDATED_CUTBLOCKS_2011")
+
+    assert result.top_match is not None
+    assert result.top_match.title == "Harvested Areas of BC (Consolidated Cutblocks)"
+    assert any("CONSOLIDATED_CUTBLOCKS" in note for note in result.notes)
+    assert any("CONSOLIDATED_CUTBLOCKS_2011" in url for url in result.api_urls)
+    assert any("CONSOLIDATED_CUTBLOCKS" in url for url in result.api_urls)
+
+
 def test_download_direct_bcdc_resources_downloads_only_direct_data(
     tmp_path: Path,
 ) -> None:

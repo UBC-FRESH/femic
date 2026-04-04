@@ -11111,3 +11111,20 @@
     - curated forestry alias handling for known miss cases; and
     - `--query-file` support for Windows-friendly batch resolution without
       interactive multiline paste pain.
+- 2026-04-04 (Issue `#99` implemented: first BCDC alias and batch-input slice):
+  - Added a first curated resolver alias in `femic.bcdc_catalog`, including a
+    working rescue path for `CONSOLIDATED_CUTBLOCKS_2011`.
+  - Added `--query-file PATH` to `femic data bcdc-resolve`.
+  - Query files now support:
+    - one query per line;
+    - blank-line and `#` comment skipping; and
+    - UTF-8 BOM-safe loading for Windows-authored text files.
+  - Updated `docs/guides/bc-data-catalogue-discovery.rst` and the CLI
+    reference with a Windows-friendly batch-input example.
+  - Validation completed:
+    - `python -m pytest tests/test_bcdc_catalog.py tests/test_cli_main.py -k "bcdc or query_file" -q`
+    - `python -m pytest tests/test_docs_contract.py -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
