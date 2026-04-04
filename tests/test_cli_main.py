@@ -4193,3 +4193,92 @@ def test_tsr_index_reports_catalog_errors(monkeypatch: pytest.MonkeyPatch) -> No
 
     assert exc_info.value.exit_code == 1
     assert any("TSR index error:" in msg for msg in messages)
+
+
+def test_tsr_fetch_uses_repo_relative_defaults_and_prints_summary(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    user_corpus_root = tmp_path / ".femic" / "tsr" / "corpus"
+    user_manifest_path = tmp_path / ".femic" / "tsr" / "tsa_pdf_cache_manifest.json"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main, "default_femic_tsr_corpus_root", lambda: user_corpus_root
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "default_femic_tsr_cache_manifest_path",
+        lambda: user_manifest_path,
+    )
+
+    result = cli_main.TsrFetchResult(
+        generated_utc="2026-04-04T00:00:00+00:00",
+        documents_path=repo_root / "metadata" / "tsr" / "tsa_documents.json",
+        corpus_root=user_corpus_root,
+        manifest_path=user_manifest_path,
+        selected_tsa_filters=("29",),
+        selected_document_count=3,
+        cached_documents=(),
+        failures=(),
+    )
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_fetch(**kwargs):
+        captured_kwargs.update(kwargs)
+        return result
+
+    monkeypatch.setattr(cli_main, "fetch_tsr_pdfs", _fake_fetch)
+
+    cli_main.tsr_fetch(
+        documents_path=None,
+        corpus_root=None,
+        manifest_path=None,
+        tsa=["29"],
+        max_documents=3,
+    )
+
+    assert (
+        captured_kwargs["documents_path"]
+        == repo_root / "metadata" / "tsr" / "tsa_documents.json"
+    )
+    assert captured_kwargs["corpus_root"] == user_corpus_root
+    assert captured_kwargs["manifest_path"] == user_manifest_path
+    assert captured_kwargs["tsa_filters"] == ("29",)
+    assert captured_kwargs["max_documents"] == 3
+    assert captured_kwargs["source_root"] == repo_root
+    assert any("selected_document_count: 3" in msg for msg in messages)
+    assert any("manifest:" in msg for msg in messages)
+
+
+def test_tsr_fetch_reports_cache_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "default_femic_tsr_corpus_root",
+        lambda: Path("C:/tmp/.femic/tsr/corpus"),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "default_femic_tsr_cache_manifest_path",
+        lambda: Path("C:/tmp/.femic/tsr/tsa_pdf_cache_manifest.json"),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "fetch_tsr_pdfs",
+        lambda **_kwargs: (_ for _ in ()).throw(cli_main.TsrCacheError("boom")),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.tsr_fetch(
+            documents_path=None,
+            corpus_root=None,
+            manifest_path=None,
+            tsa=None,
+            max_documents=None,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("TSR fetch error:" in msg for msg in messages)

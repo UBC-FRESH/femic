@@ -12345,3 +12345,33 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       TSR PDF copies;
     - keep `#104` extraction blocked on the cached-PDF/provenance layer so
       candidate facts are always tied to deterministic fetched artifacts.
+- 2026-04-04 (Issue `#103` TSR PDF fetch/cache implemented with user-local defaults):
+  - Added the TSR PDF cache layer in `femic.tsr_catalog.cache` and the new CLI
+    entrypoint:
+    - `python -m femic tsr fetch`
+  - The fetch/cache slice now:
+    - loads the canonical TSA document inventory from
+      `metadata/tsr/tsa_documents.json`;
+    - downloads/caches TSR PDFs into a configurable corpus root;
+    - writes a machine-readable provenance manifest with checksums, source
+      URLs, fetch status, and stable corpus-relative paths; and
+    - preserves `--corpus-root` as the escape hatch for future shared or
+      DataLad-managed corpus roots.
+  - Design pivot recorded before closeout:
+    - default TSR PDF storage is now user-local under `~/.femic/tsr/`;
+    - default manifest path is now
+      `~/.femic/tsr/tsa_pdf_cache_manifest.json`; and
+    - repo-local PDF corpus storage is no longer the default so normal FEMIC
+      clones do not accumulate hundreds of TSR PDFs or churn repo-local cache
+      manifests.
+  - Live fetch evidence:
+    - an early full-corpus smoke proved the fetch layer works at scale
+      (`666` selected PDFs, `665` cached, `1` upstream failure);
+    - the post-pivot default-path smoke for TSA29 completed cleanly with
+      `17` selected PDFs, `17` cached, and `0` failures using the user-local
+      cache root.
+  - Detailed Next Steps:
+    - move to `#104` next so candidate-fact extraction builds on the user-local
+      TSR corpus and provenance manifest rather than raw URLs alone;
+    - defer any optional DataLad-managed TSR corpus automation to a future
+      follow-on issue rather than expanding `#103` further.

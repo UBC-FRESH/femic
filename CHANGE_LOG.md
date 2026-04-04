@@ -11263,3 +11263,26 @@
     - `python -m pytest tests/test_tsr_catalog.py tests/test_cli_main.py -k "tsr_index or tsr_catalog" -q`
     - `python -m pytest tests/test_docs_contract.py -q`
     - `python -m sphinx -b html docs _build/html -W`
+- 2026-04-04 (Issue `#103` TSR PDF fetch/cache with user-local defaults):
+  - Added the TSR PDF cache layer in `femic.tsr_catalog.cache` plus the new
+    CLI command:
+    - `python -m femic tsr fetch`
+  - The fetch/cache slice now:
+    - reads the canonical TSA document inventory from
+      `metadata/tsr/tsa_documents.json`;
+    - downloads/caches TSR PDFs into a configurable corpus root;
+    - writes a provenance manifest with checksums, fetch status, source URLs,
+      and corpus-relative paths; and
+    - keeps `--corpus-root` available for future shared or DataLad-managed
+      corpus roots.
+  - Pivoted the defaults away from repo-local cache storage:
+    - default corpus root is now `~/.femic/tsr/corpus`;
+    - default manifest path is now
+      `~/.femic/tsr/tsa_pdf_cache_manifest.json`; and
+    - repo-local PDF cache artifacts are no longer the normal default for
+      routine FEMIC use.
+  - Live evidence:
+    - full-corpus smoke proved the fetch layer works at scale
+      (`666` selected PDFs, `665` cached, `1` upstream failure);
+    - post-pivot TSA29 smoke completed with `17` selected PDFs, `17` cached,
+      and `0` failures under the new user-local default cache root.

@@ -13,6 +13,9 @@ DEFAULT_FEMIC_CONFIG_HOME = Path.home() / ".femic"
 DEFAULT_FEMIC_USER_CONFIG_PATH = DEFAULT_FEMIC_CONFIG_HOME / "user.yaml"
 DEFAULT_FEMIC_MANAGED_EXTERNAL_ROOT = DEFAULT_FEMIC_CONFIG_HOME / "external"
 DEFAULT_FEMIC_RECIPE_OVERLAY_ROOT = DEFAULT_FEMIC_CONFIG_HOME / "recipe-overlays"
+DEFAULT_FEMIC_TSR_ROOT = DEFAULT_FEMIC_CONFIG_HOME / "tsr"
+DEFAULT_FEMIC_TSR_CORPUS_ROOT = DEFAULT_FEMIC_TSR_ROOT / "corpus"
+DEFAULT_FEMIC_TSR_MANIFEST_PATH = DEFAULT_FEMIC_TSR_ROOT / "tsa_pdf_cache_manifest.json"
 DEFAULT_FEMIC_USER_INSTANCE_ROOT = Path.home() / "femic" / "instances"
 
 
@@ -61,6 +64,18 @@ def default_femic_recipe_overlay_root() -> Path:
     """Return the default user-owned recipe overlay root."""
 
     return DEFAULT_FEMIC_RECIPE_OVERLAY_ROOT.expanduser().resolve()
+
+
+def default_femic_tsr_corpus_root() -> Path:
+    """Return the default user-local TSR PDF corpus root."""
+
+    return DEFAULT_FEMIC_TSR_CORPUS_ROOT.expanduser().resolve()
+
+
+def default_femic_tsr_cache_manifest_path() -> Path:
+    """Return the default user-local TSR PDF cache manifest path."""
+
+    return DEFAULT_FEMIC_TSR_MANIFEST_PATH.expanduser().resolve()
 
 
 def _load_yaml_payload(config_path: Path) -> dict[str, Any]:

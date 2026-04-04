@@ -26,6 +26,7 @@ build/
 dist/
 output/
 outputs/
+runtime/tsr_corpus/
 
 # Runtime/generated plot artifacts
 plots/tipsy_vdyp_tsa*.png

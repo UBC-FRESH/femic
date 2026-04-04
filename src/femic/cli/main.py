@@ -106,6 +106,8 @@ from femic.user_config import (
     FemicUserConfig,
     FemicUserConfigError,
     default_femic_user_paths,
+    default_femic_tsr_cache_manifest_path,
+    default_femic_tsr_corpus_root,
     load_femic_user_config,
     with_managed_external_root,
     with_user_instance_root,
@@ -131,9 +133,12 @@ from femic.rebuild_runner import JsonRebuildReportSink, RebuildRunner, RebuildSt
 from femic.rebuild_spec import load_rebuild_spec, validate_rebuild_spec_payload
 from femic.release_packaging import build_release_package
 from femic.tsr_catalog import (
+    TsrCacheError,
     TsrCatalogError,
+    TsrFetchResult,
     TsrIndexResult,
     TsrWrittenIndex,
+    fetch_tsr_pdfs,
     index_tsr_tsa_surfaces,
     write_tsr_index,
 )
@@ -326,6 +331,46 @@ TSR_OUTPUT_ROOT_OPTION = typer.Option(
         "Optional canonical TSR metadata output root. Defaults to "
         "`metadata/tsr` under the active FEMIC checkout."
     ),
+    show_default=False,
+)
+TSR_DOCUMENTS_PATH_OPTION = typer.Option(
+    None,
+    "--documents-path",
+    help=(
+        "Optional canonical TSR documents inventory path. Defaults to "
+        "`metadata/tsr/tsa_documents.json` under the active FEMIC checkout."
+    ),
+    show_default=False,
+)
+TSR_CORPUS_ROOT_OPTION = typer.Option(
+    None,
+    "--corpus-root",
+    help=(
+        "Optional TSR PDF corpus root. Defaults to the user-local "
+        "`~/.femic/tsr/corpus`; later workflows can redirect this to a "
+        "separate DataLad-managed corpus root or shared path."
+    ),
+    show_default=False,
+)
+TSR_MANIFEST_PATH_OPTION = typer.Option(
+    None,
+    "--manifest-path",
+    help=(
+        "Optional TSR PDF cache-manifest path. Defaults to the user-local "
+        "`~/.femic/tsr/tsa_pdf_cache_manifest.json`."
+    ),
+    show_default=False,
+)
+TSR_TSA_FILTER_OPTION = typer.Option(
+    None,
+    "--tsa",
+    help="Optional TSA filter. Repeatable; accepts TSA code, tsa_<code>, or TSA name.",
+)
+TSR_MAX_DOCUMENTS_OPTION = typer.Option(
+    None,
+    "--max-documents",
+    min=1,
+    help="Optional cap for bounded TSR PDF fetch/cache runs and smoke tests.",
     show_default=False,
 )
 
@@ -1872,9 +1917,9 @@ def _load_bcdc_queries_from_file(path: Path) -> list[str]:
     return queries
 
 
-def _resolve_repo_output_root(value: Path | None, *, source_root: Path) -> Path:
+def _resolve_repo_output_path(value: Path | None, *, source_root: Path) -> Path:
     if value is None:
-        return (source_root / "metadata" / "tsr").resolve()
+        raise ValueError("repo output path cannot be resolved from None")
     expanded = value.expanduser()
     if expanded.is_absolute():
         return expanded.resolve()
@@ -1890,6 +1935,15 @@ def _print_tsr_index_summary(
     console.print(f"document_count: {written.document_count}")
     console.print(f"registry: {written.registry_path}")
     console.print(f"documents: {written.documents_path}")
+
+
+def _print_tsr_fetch_summary(result: TsrFetchResult) -> None:
+    console.print(f"documents_path: {result.documents_path}")
+    console.print(f"corpus_root: {result.corpus_root}")
+    console.print(f"manifest: {result.manifest_path}")
+    console.print(f"selected_document_count: {result.selected_document_count}")
+    console.print(f"cached_count: {len(result.cached_documents)}")
+    console.print(f"failure_count: {len(result.failures)}")
 
 
 @app.callback()
@@ -2007,8 +2061,8 @@ def tsr_index(
     """Index BC TSR TSA document surfaces into canonical registry JSON artifacts."""
 
     source_root = _source_tree_root()
-    resolved_output_root = _resolve_repo_output_root(
-        output_root,
+    resolved_output_root = _resolve_repo_output_path(
+        output_root or Path("metadata/tsr"),
         source_root=source_root,
     )
     try:
@@ -2019,6 +2073,45 @@ def tsr_index(
         raise typer.Exit(code=1) from exc
 
     _print_tsr_index_summary(result=result, written=written)
+
+
+@tsr_app.command("fetch")
+def tsr_fetch(
+    documents_path: Path | None = TSR_DOCUMENTS_PATH_OPTION,
+    corpus_root: Path | None = TSR_CORPUS_ROOT_OPTION,
+    manifest_path: Path | None = TSR_MANIFEST_PATH_OPTION,
+    tsa: list[str] | None = TSR_TSA_FILTER_OPTION,
+    max_documents: int | None = TSR_MAX_DOCUMENTS_OPTION,
+) -> None:
+    """Fetch/cache TSR PDFs referenced by the canonical TSA documents inventory."""
+
+    source_root = _source_tree_root()
+    resolved_documents_path = _resolve_repo_output_path(
+        documents_path or Path("metadata/tsr/tsa_documents.json"),
+        source_root=source_root,
+    )
+    resolved_corpus_root = (
+        (corpus_root or default_femic_tsr_corpus_root()).expanduser().resolve()
+    )
+    resolved_manifest_path = (
+        (manifest_path or default_femic_tsr_cache_manifest_path())
+        .expanduser()
+        .resolve()
+    )
+    try:
+        result = fetch_tsr_pdfs(
+            documents_path=resolved_documents_path,
+            corpus_root=resolved_corpus_root,
+            manifest_path=resolved_manifest_path,
+            tsa_filters=tuple(tsa or ()),
+            max_documents=max_documents,
+            source_root=source_root,
+        )
+    except TsrCacheError as exc:
+        console.print(f"[red]TSR fetch error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_fetch_summary(result)
 
 
 @instance_config_app.command("set-managed-external-root")

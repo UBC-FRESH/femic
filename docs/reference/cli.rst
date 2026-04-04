@@ -380,6 +380,7 @@ TSR
 Subcommands
 
 - ``index``: ``python -m femic tsr index [OPTIONS]``
+- ``fetch``: ``python -m femic tsr fetch [OPTIONS]``
 
 ``tsr index`` options
 
@@ -394,6 +395,24 @@ and writes the canonical repo-tracked registry outputs:
 
 This first slice indexes TSA folders, cycles, and linked document metadata
 only. It does not download PDFs or extract candidate facts yet.
+
+``tsr fetch`` options
+
+- ``--documents-path PATH`` (optional; defaults to
+  ``metadata/tsr/tsa_documents.json`` under the active FEMIC checkout)
+- ``--corpus-root PATH`` (optional; defaults to the user-local
+  ``~/.femic/tsr/corpus`` and can later be redirected to a separate
+  DataLad-managed corpus root)
+- ``--manifest-path PATH`` (optional; defaults to the user-local
+  ``~/.femic/tsr/tsa_pdf_cache_manifest.json``)
+- ``--tsa TEXT`` (repeatable optional TSA filter)
+- ``--max-documents INTEGER`` (optional bounded smoke-test/fetch limit)
+
+``tsr fetch`` downloads the indexed TSA PDF corpus into the chosen corpus root
+and writes a canonical provenance manifest that stores repo-relative corpus
+paths or stable user-local placeholders, checksums, fetch status, and source
+URLs without requiring the PDFs themselves to live in the main FEMIC Git
+history.
 
 Export
 ------

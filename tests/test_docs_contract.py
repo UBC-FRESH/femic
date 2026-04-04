@@ -186,12 +186,15 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "- ``tsr``",
         "python -m femic data bcdc-resolve",
         "python -m femic tsr index",
+        "python -m femic tsr fetch",
         "--query-file PATH",
         "--summary-csv PATH",
         "--download-direct / --no-download-direct",
         "--manifest-path PATH",
         "metadata/tsr/tsa_registry.json",
         "metadata/tsr/tsa_documents.json",
+        "~/.femic/tsr/tsa_pdf_cache_manifest.json",
+        "~/.femic/tsr/corpus",
     ):
         assert snippet in cli_text
 
@@ -206,9 +209,12 @@ def test_tsr_api_page_is_wired_into_curated_modules() -> None:
     for snippet in (
         "``femic.tsr_catalog`` Module",
         "femic tsr index",
+        "femic tsr fetch",
         "index_tsr_tsa_surfaces",
+        "fetch_tsr_pdfs",
         "write_tsr_index",
         "metadata/tsr",
+        "~/.femic/tsr/tsa_pdf_cache_manifest.json",
     ):
         assert snippet in api_text
 
