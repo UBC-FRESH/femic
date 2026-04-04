@@ -114,6 +114,45 @@ is WFS-queryable, normalize the AOI from ``--bbox`` or ``--geomark``, and save
 a local GeoPackage or GeoJSON subset instead of dropping you directly into the
 manual BCGW UI.
 
+Worked Example: F_OWN to a Local GeoPackage
+-------------------------------------------
+
+This is the cleanest current example of the full WFS-first path.
+
+1. resolve the layer and inspect the service hints:
+
+   .. code-block:: text
+
+      & .\.venv\Scripts\python.exe -m femic data bcdc-resolve `
+        WHSE_FOREST_VEGETATION.F_OWN `
+        --manifest-path runtime\logs\bcdc_f_own_manifest.json
+
+2. confirm the top match reports:
+
+   - ``service_type=openmaps_ows``
+   - ``wfs_queryable=True``
+   - ``wfs_typename=pub:WHSE_FOREST_VEGETATION.F_OWN``
+   - ``suggested_fetch_strategy=wfs_getfeature_bbox``
+
+3. fetch a local subset using an explicit BC Albers bbox:
+
+   .. code-block:: text
+
+      & .\.venv\Scripts\python.exe -m femic data bcdc-fetch `
+        WHSE_FOREST_VEGETATION.F_OWN `
+        --bbox 1170000,450000,1180000,460000 `
+        --output-format gpkg `
+        --download-root data\downloads\bcdc `
+        --manifest-path runtime\logs\bcdc_f_own_fetch_manifest.json
+
+4. inspect the outputs:
+
+   - local vector file under ``data/downloads/bcdc/WHSE_FOREST_VEGETATION_F_OWN/``
+   - JSON manifest at ``runtime/logs/bcdc_f_own_fetch_manifest.json``
+
+This is the intended path when a dataset has no clean direct-download URL but
+does expose a WFS-queryable OpenMaps service.
+
 Batch Input from a Query File
 -----------------------------
 
@@ -253,6 +292,60 @@ The intended split is:
 - ``bcdc-fetch`` = automatable WFS subset download; and
 - DWDS/FGDB ordering = later fallback lane for datasets that cannot be fetched
   cleanly through WFS.
+
+Worked Example: TSA29 Query File to Local Layers
+------------------------------------------------
+
+The TSA29-friendly path starts from a reviewed query file rather than a large
+interactive paste.
+
+1. start from a reviewed source-layer query file, for example:
+
+   - ``runtime/logs/tsa29_tsr_source_layers.txt``
+
+2. resolve the reviewed candidates into a triage manifest and summary CSV:
+
+   .. code-block:: text
+
+      & .\.venv\Scripts\python.exe -m femic data bcdc-resolve `
+        --query-file runtime\logs\tsa29_tsr_source_layers.txt `
+        --summary-csv runtime\logs\tsa29_tsr_source_layers_summary.csv `
+        --manifest-path runtime\logs\tsa29_tsr_source_layers_manifest.json
+
+3. from the summary/manifest, identify which approved rows are:
+
+   - ``direct_data_download`` and should use ``--download-direct``; versus
+   - WFS-queryable service rows and should use ``bcdc-fetch``.
+
+4. fetch a WFS-queryable reviewed layer directly. For example, if
+   ``WHSE_FOREST_VEGETATION.F_OWN`` is on the approved TSA29 list:
+
+   .. code-block:: text
+
+      & .\.venv\Scripts\python.exe -m femic data bcdc-fetch `
+        WHSE_FOREST_VEGETATION.F_OWN `
+        --bbox 1170000,450000,1180000,460000 `
+        --output-format gpkg `
+        --download-root data\downloads\bcdc `
+        --manifest-path runtime\logs\tsa29_f_own_fetch_manifest.json
+
+5. for reviewed direct-download rows such as ``SITE_PROD_BC``, stay on the
+   direct-download path instead:
+
+   .. code-block:: text
+
+      & .\.venv\Scripts\python.exe -m femic data bcdc-resolve `
+        SITE_PROD_BC `
+        --download-direct `
+        --download-root data\downloads\bcdc `
+        --manifest-path runtime\logs\bcdc_site_prod_bc_manifest.json
+
+This keeps TSA29 acquisition practical:
+
+- review with query files and CSVs;
+- fetch WFS-backed layers through ``bcdc-fetch``; and
+- use ``--download-direct`` only where the dataset actually exposes a clean
+  file-download surface.
 
 Manifest Output
 ---------------

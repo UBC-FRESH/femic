@@ -11479,3 +11479,14 @@
     - `python -m pytest -q`
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m pre_commit run --all-files`
+- 2026-04-04 (Issue `#111` active: worked `F_OWN` and TSA29 BCDC fetch docs):
+  - Extend the operator docs so the new WFS-first fetch path is shown as a
+    real end-to-end workflow rather than just a CLI reference surface.
+  - Add two worked examples:
+    - `F_OWN` from resolve -> WFS hints -> local GeoPackage fetch; and
+    - TSA29 reviewed-query workflow from TSR facts CSV/query file ->
+      `bcdc-resolve` -> `bcdc-fetch` or `--download-direct`.
+  - Make the Windows guidance more explicit about:
+    - query files over giant interactive pastes;
+    - manifest files as the durable review surface; and
+    - using `bcdc-fetch` only for WFS-queryable service rows.

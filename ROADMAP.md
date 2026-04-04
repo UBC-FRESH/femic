@@ -12673,3 +12673,15 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - move to `#111` next so the worked `F_OWN` and TSA29 fetch examples are
       documented while the new CLI is still fresh; and
     - leave `#112` as the later FGDB/DWDS fallback investigation lane.
+- 2026-04-04 (Issue `#111` active: worked F_OWN and TSA29 BCDC fetch docs):
+  - Extend the operator docs so the new WFS-first fetch path is shown as a
+    real end-to-end workflow rather than just a CLI reference surface.
+  - Add two explicit worked examples:
+    - `F_OWN` from resolve -> WFS hints -> local GeoPackage fetch; and
+    - TSA29 reviewed-query workflow from TSR facts CSV/query file ->
+      `bcdc-resolve` -> `bcdc-fetch` or `--download-direct`, depending on the
+      surfaced resource class.
+  - Make the Windows guidance more explicit about:
+    - query files over giant interactive pastes;
+    - manifest files as the durable review surface; and
+    - using `bcdc-fetch` only for WFS-queryable service rows.

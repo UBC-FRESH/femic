@@ -147,7 +147,23 @@ The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
         --summary-csv runtime/logs/tsa29_tsr_source_layers_summary.csv \
         --manifest-path runtime/logs/tsa29_tsr_source_layers_manifest.json
 
-6. initialize or refresh the reviewed overlay:
+6. for WFS-queryable rows such as ``WHSE_FOREST_VEGETATION.F_OWN``, fetch a
+   usable local subset instead of stopping at the manifest:
+
+   .. code-block:: bash
+
+      python -m femic data bcdc-fetch \
+        WHSE_FOREST_VEGETATION.F_OWN \
+        --bbox 1170000,450000,1180000,460000 \
+        --output-format gpkg \
+        --download-root data/downloads/bcdc \
+        --manifest-path runtime/logs/tsa29_f_own_fetch_manifest.json
+
+   For direct-download-only rows such as ``SITE_PROD_BC``, stay on the
+   ``femic data bcdc-resolve --download-direct`` path instead of forcing
+   ``bcdc-fetch``.
+
+7. initialize or refresh the reviewed overlay:
 
    .. code-block:: bash
 
@@ -156,7 +172,7 @@ The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
         --tsa 29 \
         --overwrite
 
-7. manually copy only approved facts into:
+8. manually copy only approved facts into:
 
    - ``external/femic-tsa29-instance/config/tsr/overlay.yaml``
 
@@ -167,6 +183,8 @@ The current intended human loop is:
 - keep good candidates
 - curate approved ``recommended_query`` values into a query file
 - resolve source layers through BCDC
+- fetch WFS-queryable reviewed layers through ``femic data bcdc-fetch`` where
+  that is the cleanest path
 - adopt only reviewed facts into the overlay
 
 You should not need to hand-scrub ``metadata/tsr/tsa_candidate_facts.json`` for
@@ -190,6 +208,14 @@ usually:
 3. curate approved layer names into a query file; and
 4. pass that query file to ``femic data bcdc-resolve``.
 
+If you already know you need a WFS-backed layer like ``F_OWN``, the next
+Windows-friendly step is still file-based and explicit:
+
+1. keep the approved layer token in a query file or single command;
+2. use ``--bbox`` or ``--geomark`` rather than pasting large AOI definitions;
+3. write a manifest and local file output in one shot with
+   ``femic data bcdc-fetch``.
+
 Using Extracted Source Layers with BCDC Discovery
 -------------------------------------------------
 
@@ -211,11 +237,23 @@ Example follow-on command:
      --summary-csv runtime/logs/tsa29_tsr_source_layers_summary.csv \
      --manifest-path runtime/logs/tsa29_tsr_source_layers_manifest.json
 
+Example WFS fetch after reviewing the BCDC manifest:
+
+.. code-block:: bash
+
+   python -m femic data bcdc-fetch \
+     WHSE_FOREST_VEGETATION.F_OWN \
+     --bbox 1170000,450000,1180000,460000 \
+     --output-format gpkg \
+     --manifest-path runtime/logs/tsa29_f_own_fetch_manifest.json
+
 This keeps TSR extraction and BCDC promotion loosely coupled:
 
 - TSR docs produce candidate tokens and provenance; then
 - BCDC discovery resolves which of those tokens correspond to public catalogue
-  packages and direct-download/custom-download seams.
+  packages and direct-download/custom-download seams; and then
+- the new WFS-first fetch path can pull usable local vector subsets for the
+  reviewed rows that expose queryable OpenMaps services.
 
 Agent Workflow Notes
 --------------------
