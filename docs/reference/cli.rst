@@ -470,6 +470,9 @@ auto-promote unresolved candidate facts into live instance truth.
 candidate summary already stored inside the overlay and reports adopted counts
 per section without mutating the file.
 
+For the full operator/agent workflow from TSR page to cached PDFs to reviewed
+instance overlay, see ``docs/guides/tsr-intelligence-workflow.rst``.
+
 Export
 ------
 

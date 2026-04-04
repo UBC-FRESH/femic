@@ -12453,3 +12453,32 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       place; and
     - defer any auto-promotion helpers until after the documented reviewed
       overlay workflow has stabilized.
+- 2026-04-04 (Issue `#106` TSR operator/agent workflow docs implemented):
+  - Added the dedicated TSR workflow runbook:
+    - `docs/guides/tsr-intelligence-workflow.rst`
+  - The new guide now ties the full v1 TSR path together in one place:
+    - canonical registry/documents/candidate facts under `metadata/tsr/`;
+    - user-local PDF cache under `~/.femic/tsr/`;
+    - reviewed/adopted instance-local overlays under
+      `config/tsr/overlay.yaml`; and
+    - the follow-on handoff from extracted source-layer candidates into
+      `femic data bcdc-resolve`.
+  - Cross-links and agent-facing notes landed in:
+    - `docs/guides/index.rst`
+    - `docs/guides/data-access-inventory.rst`
+    - `docs/reference/cli.rst`
+    - `docs/reference/api/femic-tsr-catalog.rst`
+    - `AGENTS.md`
+  - Validation:
+    - `python -m pytest tests/test_docs_contract.py -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+    - `python -m pre_commit run --all-files`
+  - Detailed Next Steps:
+    - close out parent issue `#101` now that child issues `#102` through
+      `#106` are complete; and
+    - treat future TSR work as new narrower follow-on issues such as
+      auto-promotion helpers, richer search, or broader non-TSA coverage.

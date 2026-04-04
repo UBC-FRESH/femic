@@ -78,3 +78,18 @@ That workflow is intentionally separate from the authoritative registry:
 - maintainers review and classify the result; and only then
 - approved datasets are promoted into ``metadata/required_datasets.yaml`` or a
   case-specific contract.
+
+TSR Intelligence Workflow
+-------------------------
+
+When the candidate layer names come from Timber Supply Review data-package
+documents rather than from a hand-curated source list, use the TSR workflow
+first:
+
+- index/fetch/extract with ``femic tsr`` to populate ``metadata/tsr`` and the
+  user-local TSR PDF corpus; then
+- copy reviewed source-layer candidates into the existing
+  ``femic data bcdc-resolve`` workflow.
+
+Use the operator/agent guide:
+``docs/guides/tsr-intelligence-workflow.rst``.

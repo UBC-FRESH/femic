@@ -220,3 +220,24 @@ When contributing to this repository as the coding agent:
      present the result as verified.
 
 Treat these steps as the minimum bar for every milestone so manual reminders are not required.
+
+## TSR Intelligence Quickstart
+
+When working with BC Timber Supply Review source documents:
+
+1. Refresh the canonical TSR registry:
+   - `python -m femic tsr index`
+2. Fetch only the TSA you are actively working on:
+   - `python -m femic tsr fetch --tsa 29`
+3. Extract candidate facts for that TSA:
+   - `python -m femic tsr extract --tsa 29`
+4. Initialize the reviewed instance-local overlay:
+   - `python -m femic tsr overlay-init --instance-root external/femic-tsa29-instance --tsa 29`
+5. Inspect adopted-vs-canonical state:
+   - `python -m femic tsr overlay-report --instance-root external/femic-tsa29-instance`
+
+Important boundary:
+- canonical discovery artifacts live under `metadata/tsr/`
+- cached PDFs live under `~/.femic/tsr/` by default
+- reviewed/adopted instance-local facts live under `config/tsr/overlay.yaml`
+- do not auto-promote unresolved candidate facts into live instance contracts

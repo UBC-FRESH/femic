@@ -111,6 +111,7 @@ Cross-References
 ----------------
 
 - :doc:`../cli`
+- :doc:`../../guides/tsr-intelligence-workflow`
 - :doc:`../../guides/data-access-inventory`
 
 .. toctree::

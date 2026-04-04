@@ -18,6 +18,7 @@ export modules.
    interpret-rebuild-reports
    data-access-inventory
    bc-data-catalogue-discovery
+   tsr-intelligence-workflow
    public-data-mirror-runbook
    case-onboarding
    stage-00-data-prep

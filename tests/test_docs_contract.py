@@ -65,6 +65,7 @@ GUIDE_PAGES = [
     "interpret-rebuild-reports",
     "data-access-inventory",
     "bc-data-catalogue-discovery",
+    "tsr-intelligence-workflow",
     "public-data-mirror-runbook",
     "case-onboarding",
     "stage-00-data-prep",
@@ -231,6 +232,38 @@ def test_tsr_api_page_is_wired_into_curated_modules() -> None:
         assert snippet in api_text
 
 
+def test_tsr_intelligence_workflow_guide_keeps_required_sections() -> None:
+    guide_text = (GUIDES_ROOT / "tsr-intelligence-workflow.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Canonical vs Local Outputs",
+        "Minimal One-TSA Workflow",
+        "Reviewed Adoption Workflow",
+        "Using Extracted Source Layers with BCDC Discovery",
+        "Agent Workflow Notes",
+        "Current Boundaries",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "python -m femic tsr index",
+        "python -m femic tsr fetch --tsa 29",
+        "python -m femic tsr extract --tsa 29",
+        "python -m femic tsr overlay-init",
+        "python -m femic tsr overlay-report",
+        "metadata/tsr/tsa_registry.json",
+        "metadata/tsr/tsa_documents.json",
+        "metadata/tsr/tsa_candidate_facts.json",
+        "config/tsr/overlay.yaml",
+        "~/.femic/tsr/corpus",
+        "~/.femic/tsr/tsa_pdf_cache_manifest.json",
+        "candidate facts are **not auto-adopted**",
+        "femic data bcdc-resolve",
+    ):
+        assert snippet in guide_text
+
+
 def test_bcdc_examples_are_present_in_readme_and_agents() -> None:
     readme_text = Path("README.md").read_text(encoding="utf-8")
     for snippet in (
@@ -246,6 +279,9 @@ def test_bcdc_examples_are_present_in_readme_and_agents() -> None:
         "femic data bcdc-resolve WHSE_FOREST_VEGETATION.F_OWN",
         "femic data bcdc-resolve SITE_PROD_BC --download-direct",
         'femic data bcdc-resolve "Silviculture Activities History"',
+        "python -m femic tsr index",
+        "python -m femic tsr fetch --tsa 29",
+        "config/tsr/overlay.yaml",
     ):
         assert snippet in agents_text
 

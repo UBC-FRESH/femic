@@ -1,0 +1,165 @@
+TSR Intelligence Workflow
+=========================
+
+Purpose
+-------
+
+Use the ``femic tsr`` workflow when you want to turn public BC Timber Supply
+Review document surfaces into three separate layers of knowledge:
+
+1. canonical repo-tracked TSR discovery artifacts under ``metadata/tsr``;
+2. user-local cached PDFs under ``~/.femic/tsr/corpus`` by default; and
+3. reviewed/adopted instance-local notes under ``config/tsr/overlay.yaml``.
+
+This guide is intentionally about workflow and promotion discipline. It does
+**not** make FEMIC auto-adopt extracted candidate facts into a live instance.
+
+Canonical vs Local Outputs
+--------------------------
+
+The TSR intelligence lane separates shared discovery artifacts from
+instance-local reviewed metadata.
+
+Canonical repo-tracked outputs:
+
+- ``metadata/tsr/tsa_registry.json``
+- ``metadata/tsr/tsa_documents.json``
+- ``metadata/tsr/tsa_candidate_facts.json``
+
+User-local cache outputs by default:
+
+- ``~/.femic/tsr/corpus``
+- ``~/.femic/tsr/tsa_pdf_cache_manifest.json``
+
+Instance-local reviewed overlay:
+
+- ``config/tsr/overlay.yaml``
+
+Treat the canonical JSON artifacts as the shared discovery surface, and treat
+the overlay YAML as the reviewed/adopted per-instance surface.
+
+Minimal One-TSA Workflow
+------------------------
+
+Refresh the canonical TSA registry and document inventory:
+
+.. code-block:: bash
+
+   python -m femic tsr index
+
+Fetch only the TSA you are actively working on. For example, TSA 29:
+
+.. code-block:: bash
+
+   python -m femic tsr fetch --tsa 29
+
+Extract candidate facts only for that TSA:
+
+.. code-block:: bash
+
+   python -m femic tsr extract --tsa 29
+
+Initialize the reviewed overlay inside the target instance:
+
+.. code-block:: bash
+
+   python -m femic tsr overlay-init \
+     --instance-root external/femic-tsa29-instance \
+     --tsa 29
+
+Inspect the local adopted-vs-canonical state:
+
+.. code-block:: bash
+
+   python -m femic tsr overlay-report \
+     --instance-root external/femic-tsa29-instance
+
+This is the recommended default path for most users. Few workflows need a
+full-corpus fetch or extraction run across every indexed TSA.
+
+Reviewed Adoption Workflow
+--------------------------
+
+``femic tsr extract`` writes candidate facts, not final truth. The expected
+promotion path is:
+
+1. run ``femic tsr extract`` for the target TSA;
+2. inspect the relevant candidate facts in
+   ``metadata/tsr/tsa_candidate_facts.json``;
+3. initialize ``config/tsr/overlay.yaml`` for the target instance;
+4. copy only reviewed/adopted facts into the overlay YAML, preserving
+   provenance back to the source document/page/snippet IDs;
+5. use ``femic tsr overlay-report`` to confirm what remains canonical-only vs
+   what is now adopted locally.
+
+Candidate facts are **not auto-adopted** into the overlay. In other words,
+candidate facts are **not auto-adopted** into live instance truth, and the
+overlay is the only place where reviewed instance-local TSR interpretation
+should live.
+
+Using Extracted Source Layers with BCDC Discovery
+-------------------------------------------------
+
+One important use of TSR candidate facts is to drive the existing BC Data
+Catalogue resolver.
+
+Typical pattern:
+
+1. find source-layer candidates in ``metadata/tsr/tsa_candidate_facts.json``;
+2. copy the promising BCGW/BCDC-style layer tokens into a query file;
+3. resolve them with ``femic data bcdc-resolve``.
+
+Example follow-on command:
+
+.. code-block:: bash
+
+   python -m femic data bcdc-resolve \
+     --query-file runtime/logs/tsa29_tsr_source_layers.txt \
+     --summary-csv runtime/logs/tsa29_tsr_source_layers_summary.csv \
+     --manifest-path runtime/logs/tsa29_tsr_source_layers_manifest.json
+
+This keeps TSR extraction and BCDC promotion loosely coupled:
+
+- TSR docs produce candidate tokens and provenance; then
+- BCDC discovery resolves which of those tokens correspond to public catalogue
+  packages and direct-download/custom-download seams.
+
+Agent Workflow Notes
+--------------------
+
+For coding agents and maintainers, the key boundary is:
+
+- canonical JSON under ``metadata/tsr`` is safe to regenerate and compare; but
+- ``config/tsr/overlay.yaml`` is reviewed instance-local metadata and should
+  not be overwritten casually.
+
+When helping a user with one TSA at a time:
+
+- prefer ``--tsa <code>`` for ``fetch`` and ``extract``;
+- prefer the default user-local corpus root instead of inventing a repo-local
+  PDF cache;
+- prefer promoting only reviewed facts into the overlay rather than editing
+  other instance contracts directly.
+
+Current Boundaries
+------------------
+
+The current TSR intelligence workflow is intentionally bounded:
+
+- TSAs only in v1
+- no automatic promotion into ``metadata/required_datasets.yaml``
+- no automatic mutation of rebuild specs
+- no arbitrary full-document semantic search workflow embedded in FEMIC
+- no OCR-heavy recovery path for image-only PDFs
+
+If you need deeper interpretation, use the canonical JSON artifacts and cached
+PDF corpus as the structured substrate for additional human or LLM-assisted
+review.
+
+Related References
+------------------
+
+- :doc:`bc-data-catalogue-discovery`
+- :doc:`data-access-inventory`
+- :doc:`../reference/cli`
+- :doc:`../reference/api/femic-tsr-catalog`

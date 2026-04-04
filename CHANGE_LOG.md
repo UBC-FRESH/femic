@@ -11332,3 +11332,27 @@
     - `femic tsr overlay-report --instance-root external/femic-tsa29-instance`
       then reported the same canonical counts with all adopted sections still
       at zero, confirming the default path stays review-only.
+- 2026-04-04 (Issue `#106` TSR operator/agent workflow docs):
+  - Added the dedicated TSR workflow runbook:
+    - `docs/guides/tsr-intelligence-workflow.rst`
+  - Documented the full v1 path from public TSR page -> canonical registry ->
+    user-local cached PDFs -> canonical candidate facts -> reviewed
+    instance-local overlay adoption.
+  - Added cross-links so the TSR workflow is discoverable from:
+    - `docs/guides/index.rst`
+    - `docs/guides/data-access-inventory.rst`
+    - `docs/reference/cli.rst`
+    - `docs/reference/api/femic-tsr-catalog.rst`
+    - `AGENTS.md`
+  - Kept the promotion boundary explicit:
+    - canonical candidate facts remain under `metadata/tsr/`
+    - reviewed/adopted instance-local facts live under `config/tsr/overlay.yaml`
+    - no automatic promotion into live instance contracts
+  - Validation:
+    - `python -m pytest tests/test_docs_contract.py -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+    - `python -m pre_commit run --all-files`
