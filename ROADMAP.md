@@ -11998,4 +11998,39 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       object names as representative fixture inputs;
     - document the intended pairing with coding-agent workflows and future
       instance-contract usage once the first slice is concrete.
+- 2026-04-04 (Issue `#98` implemented: BC Data Catalogue resolver and
+  opt-in direct-download first slice):
+  - What shipped:
+    - added `femic.bcdc_catalog` as a reusable support module for BC Data
+      Catalogue lookup, ranking, resource classification, direct-download
+      handling, and JSON candidate-manifest writing;
+    - added `femic data bcdc-resolve` as the first user-facing surface for this
+      capability;
+    - kept the first slice intentionally narrow:
+      discovery/classification plus opt-in direct downloads from the top-ranked
+      package only, with indirect/custom-download cases reported clearly but
+      left manual;
+    - kept promotion into `metadata/required_datasets.yaml` out of scope, so
+      v1 writes a separate candidate manifest rather than mutating the central
+      dataset registry.
+  - Docs and API surfaces:
+    - added `docs/guides/bc-data-catalogue-discovery.rst`;
+    - updated the CLI reference and data-access inventory guide;
+    - added curated API docs for `femic.bcdc_catalog`.
+  - Validation:
+    - `python -m pytest tests/test_bcdc_catalog.py tests/test_cli_main.py -k "bcdc" -q`
+    - `python -m pytest tests/test_docs_contract.py -k "bcdc or guide" -q`
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`
+  - Detailed Next Steps:
+    - decide whether the next follow-on is TSR/PDF source-list extraction,
+      curated resolver rules for common forestry layers, or a deliberate
+      promotion path from candidate manifests into
+      `metadata/required_datasets.yaml`;
+    - keep `package_list` and broader CKAN-admin-style exploration out of the
+      hot path unless a later issue demonstrates a clear payoff.
 

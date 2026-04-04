@@ -63,3 +63,18 @@ Current inclusion priority:
 
 Directly downloadable datasets (for example 2024 VRI endpoints) remain outside
 the mirror by default unless reliability policy changes.
+
+BC Data Catalogue Discovery
+---------------------------
+
+When the next required dataset is not yet in ``metadata/required_datasets.yaml``
+and you only have a likely TSR source-layer name, start with
+``femic data bcdc-resolve`` and the operator guide
+``docs/guides/bc-data-catalogue-discovery.rst``.
+
+That workflow is intentionally separate from the authoritative registry:
+
+- discovery emits a candidate manifest;
+- maintainers review and classify the result; and only then
+- approved datasets are promoted into ``metadata/required_datasets.yaml`` or a
+  case-specific contract.

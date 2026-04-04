@@ -9,6 +9,7 @@ import pytest
 import typer
 import yaml
 
+from femic import bcdc_catalog
 from femic.cli import main as cli_main
 
 
@@ -3738,3 +3739,161 @@ def test_instance_ws3_smoke_fails_on_failed_result(
             instance_root=instance_root,
         )
     assert exc_info.value.exit_code == 1
+
+
+def test_data_bcdc_resolve_prints_summary_and_manifest(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "resolve_bcdc_candidates",
+        lambda query, limit: cli_main.BcdcResolveResult(
+            query=query,
+            limit=limit,
+            generated_utc="2026-04-04T00:00:00+00:00",
+            api_urls=("https://example.invalid/package_search",),
+            matches=(
+                bcdc_catalog.BcdcPackageMatch(
+                    package_id="pkg-f-own",
+                    package_name="generalized-forest-cover-ownership",
+                    title="Generalized Forest Cover Ownership",
+                    dataset_page_url=(
+                        "https://catalogue.data.gov.bc.ca/dataset/"
+                        "generalized-forest-cover-ownership"
+                    ),
+                    organization_name="forest-analysis-and-inventory",
+                    organization_title="Forest Analysis and Inventory Branch",
+                    license_title="Access Only",
+                    download_audience="Public",
+                    matched_by="object_name:WHSE_FOREST_VEGETATION.F_OWN",
+                    match_score=400,
+                    resources=(
+                        bcdc_catalog.BcdcResourceMatch(
+                            resource_id="custom-id",
+                            name="BC Geographic Warehouse Custom Download",
+                            classification="indirect_custom_download",
+                            url=None,
+                            format="multiple",
+                            bcdc_type="geographic",
+                            object_name="WHSE_FOREST_VEGETATION.F_OWN",
+                            object_short_name="F_OWN",
+                            resource_access_method="indirect access",
+                            resource_type="data",
+                            resource_storage_location="bc geographic warehouse",
+                            matched_by="object_name:WHSE_FOREST_VEGETATION.F_OWN",
+                            match_score=400,
+                            notes=("Needs manual custom-download follow-up.",),
+                        ),
+                    ),
+                    manual_follow_up=("Use the dataset page for manual access.",),
+                ),
+            ),
+        ),
+    )
+
+    cli_main.data_bcdc_resolve(
+        queries=["WHSE_FOREST_VEGETATION.F_OWN"],
+        manifest_path=tmp_path / "manifest.json",
+        download_direct=False,
+        download_root=None,
+        limit=5,
+        instance_root=None,
+    )
+
+    assert any("query: WHSE_FOREST_VEGETATION.F_OWN" in msg for msg in messages)
+    assert any(
+        "top_match: Generalized Forest Cover Ownership" in msg for msg in messages
+    )
+    assert any(
+        "manual_follow_up: Use the dataset page for manual access." in msg
+        for msg in messages
+    )
+    assert any("manifest:" in msg for msg in messages)
+    assert (tmp_path / "manifest.json").is_file()
+
+
+def test_data_bcdc_resolve_downloads_direct_resources(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    resolve_result = cli_main.BcdcResolveResult(
+        query="WHSE_FOREST_VEGETATION.F_OWN",
+        limit=5,
+        generated_utc="2026-04-04T00:00:00+00:00",
+        api_urls=("https://example.invalid/package_search",),
+        matches=(
+            bcdc_catalog.BcdcPackageMatch(
+                package_id="pkg-f-own",
+                package_name="generalized-forest-cover-ownership",
+                title="Generalized Forest Cover Ownership",
+                dataset_page_url=(
+                    "https://catalogue.data.gov.bc.ca/dataset/"
+                    "generalized-forest-cover-ownership"
+                ),
+                organization_name="forest-analysis-and-inventory",
+                organization_title="Forest Analysis and Inventory Branch",
+                license_title="Access Only",
+                download_audience="Public",
+                matched_by="object_name:WHSE_FOREST_VEGETATION.F_OWN",
+                match_score=400,
+                resources=(
+                    bcdc_catalog.BcdcResourceMatch(
+                        resource_id="zip-id",
+                        name="Download FGDB zip",
+                        classification="direct_data_download",
+                        url="https://pub.data.gov.bc.ca/datasets/F_OWN.gdb.zip",
+                        format="zip",
+                        bcdc_type="geographic",
+                        object_name="WHSE_FOREST_VEGETATION.F_OWN",
+                        object_short_name="F_OWN",
+                        resource_access_method="direct access",
+                        resource_type="data",
+                        resource_storage_location="web or ftp site",
+                        matched_by="object_name:WHSE_FOREST_VEGETATION.F_OWN",
+                        match_score=400,
+                        notes=("Stable direct download.",),
+                    ),
+                ),
+                manual_follow_up=(),
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main, "resolve_bcdc_candidates", lambda query, limit: resolve_result
+    )
+
+    def _fake_download(result, destination_root):
+        download_result = bcdc_catalog.BcdcDownloadResult(
+            destination_root=destination_root,
+            downloaded=(
+                bcdc_catalog.BcdcDownloadedResource(
+                    resource_name="Download FGDB zip",
+                    resource_url="https://pub.data.gov.bc.ca/datasets/F_OWN.gdb.zip",
+                    saved_path=destination_root
+                    / "WHSE_FOREST_VEGETATION_F_OWN"
+                    / "F_OWN.gdb.zip",
+                ),
+            ),
+            skipped_resources=("WMS getCapabilities request: service",),
+            failures=(),
+        )
+        result.download_result = download_result
+        return download_result
+
+    monkeypatch.setattr(cli_main, "download_direct_bcdc_resources", _fake_download)
+
+    cli_main.data_bcdc_resolve(
+        queries=["WHSE_FOREST_VEGETATION.F_OWN"],
+        manifest_path=None,
+        download_direct=True,
+        download_root=tmp_path / "downloads",
+        limit=5,
+        instance_root=None,
+    )
+
+    assert any("downloads: downloaded=1" in msg for msg in messages)

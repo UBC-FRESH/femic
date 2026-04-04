@@ -19,6 +19,13 @@ from rich.console import Console
 
 from femic import __version__
 from femic.account_surface import summarize_account_surface
+from femic.bcdc_catalog import (
+    BcdcCatalogError,
+    BcdcResolveResult,
+    download_direct_bcdc_resources,
+    resolve_bcdc_candidates,
+    write_bcdc_manifest,
+)
 from femic.builtin_instances import (
     BuiltinInstanceCatalogError,
     install_builtin_instances,
@@ -232,6 +239,11 @@ fansier_app = typer.Typer(
     no_args_is_help=True,
     help="Run FAN$IER batch workflows on Windows.",
 )
+data_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Resolve and collect BC Data Catalogue source-data candidates.",
+)
 console = Console()
 
 WINDOWS_ARBUTUS_ENV_FILE_RELATIVE = Path(".config") / "femic" / "arbutus.env"
@@ -247,6 +259,37 @@ WINDOWS_ARBUTUS_REQUIRED_ENV_KEYS = (
 WINDOWS_ARBUTUS_QUOTED_ENV_KEYS = (
     "AWS_ACCESS_KEY_ID",
     "AWS_SECRET_ACCESS_KEY",
+)
+BCDC_QUERY_ARGUMENT = typer.Argument(
+    ...,
+    help="One or more BC Data Catalogue layer names or keywords to resolve.",
+)
+BCDC_MANIFEST_OPTION = typer.Option(
+    None,
+    "--manifest-path",
+    help="Optional JSON path for the resolver candidate manifest.",
+    show_default=False,
+)
+BCDC_DOWNLOAD_DIRECT_OPTION = typer.Option(
+    False,
+    "--download-direct/--no-download-direct",
+    help="Download only stable direct-access data resources from the top-ranked package.",
+)
+BCDC_DOWNLOAD_ROOT_OPTION = typer.Option(
+    None,
+    "--download-root",
+    help=(
+        "Optional destination root for direct downloads. Defaults to "
+        "`data/downloads/bcdc` under the instance root when `--instance-root` "
+        "is provided, otherwise `./downloads/bcdc`."
+    ),
+    show_default=False,
+)
+BCDC_LIMIT_OPTION = typer.Option(
+    5,
+    "--limit",
+    min=1,
+    help="Maximum ranked package matches to keep per query.",
 )
 
 
@@ -1625,6 +1668,66 @@ def _collect_rebuild_artifact_references(
     return references
 
 
+def _resolve_cli_output_path(
+    value: Path,
+    *,
+    instance_context: InstanceContext | None,
+) -> Path:
+    if instance_context is not None:
+        return instance_context.resolve_path(value)
+    return value.expanduser().resolve()
+
+
+def _write_bcdc_resolve_manifest(
+    results: list[BcdcResolveResult],
+    *,
+    path: Path,
+) -> Path:
+    if len(results) == 1:
+        return write_bcdc_manifest(results[0], path)
+    resolved = path.expanduser().resolve()
+    resolved.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "generated_utc": datetime.now(UTC).isoformat(),
+        "query_count": len(results),
+        "results": [result.to_dict() for result in results],
+    }
+    resolved.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return resolved
+
+
+def _print_bcdc_resolve_summary(result: BcdcResolveResult) -> None:
+    console.print(f"query: {result.query}")
+    console.print(f"matches: {len(result.matches)}")
+    if result.top_match is None:
+        for note in result.notes:
+            console.print(f"note: {note}")
+        return
+
+    top_match = result.top_match
+    console.print(
+        "top_match: "
+        f"{top_match.title} matched_by={top_match.matched_by} "
+        f"page={top_match.dataset_page_url}"
+    )
+    console.print(
+        f"direct_download_candidates: {len(top_match.direct_download_resources)}"
+    )
+    for resource in top_match.resources:
+        console.print(f"resource: {resource.classification} {resource.name}")
+    for note in top_match.manual_follow_up:
+        console.print(f"manual_follow_up: {note}")
+    if result.download_result is not None:
+        download_result = result.download_result
+        console.print(
+            "downloads: "
+            f"downloaded={len(download_result.downloaded)} "
+            f"skipped={len(download_result.skipped_resources)} "
+            f"failures={len(download_result.failures)} "
+            f"root={download_result.destination_root}"
+        )
+
+
 @app.callback()
 def main(
     version: bool = VERSION_OPTION,
@@ -1651,6 +1754,59 @@ def instance_config_show() -> None:
     console.print(f"user_instance_root: {config.paths.user_instance_root}")
     console.print(f"default_managed_external_root: {defaults.managed_external_root}")
     console.print(f"default_user_instance_root: {defaults.user_instance_root}")
+
+
+@data_app.command("bcdc-resolve")
+def data_bcdc_resolve(
+    queries: list[str] = BCDC_QUERY_ARGUMENT,
+    manifest_path: Path | None = BCDC_MANIFEST_OPTION,
+    download_direct: bool = BCDC_DOWNLOAD_DIRECT_OPTION,
+    download_root: Path | None = BCDC_DOWNLOAD_ROOT_OPTION,
+    limit: int = BCDC_LIMIT_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Resolve BC Data Catalogue candidates from explicit layer names or keywords."""
+
+    instance_context = (
+        _resolve_cli_instance_context(instance_root=instance_root)
+        if instance_root is not None
+        else None
+    )
+    resolved_download_root = (
+        _resolve_cli_output_path(download_root, instance_context=instance_context)
+        if download_root is not None
+        else (
+            instance_context.resolve_path(Path("data/downloads/bcdc"))
+            if instance_context is not None
+            else Path("downloads/bcdc").resolve()
+        )
+    )
+
+    results: list[BcdcResolveResult] = []
+    try:
+        for query in queries:
+            result = resolve_bcdc_candidates(query, limit=limit)
+            if download_direct:
+                download_direct_bcdc_resources(
+                    result,
+                    destination_root=resolved_download_root,
+                )
+            results.append(result)
+            _print_bcdc_resolve_summary(result)
+    except BcdcCatalogError as exc:
+        console.print(f"[red]BCDC resolver error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    if manifest_path is not None:
+        resolved_manifest_path = _resolve_cli_output_path(
+            manifest_path,
+            instance_context=instance_context,
+        )
+        written_manifest = _write_bcdc_resolve_manifest(
+            results,
+            path=resolved_manifest_path,
+        )
+        console.print(f"manifest: {written_manifest}")
 
 
 @instance_config_app.command("set-managed-external-root")
@@ -5564,6 +5720,7 @@ app.add_typer(vdyp_app, name="vdyp")
 app.add_typer(tsa_app, name="tsa")
 app.add_typer(tipsy_app, name="tipsy")
 app.add_typer(fansier_app, name="fansier")
+app.add_typer(data_app, name="data")
 app.add_typer(export_app, name="export")
 patchworks_app.add_typer(patchworks_instances_app, name="instances")
 patchworks_app.add_typer(patchworks_scenarios_app, name="scenarios")

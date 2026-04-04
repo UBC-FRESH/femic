@@ -64,6 +64,7 @@ GUIDE_PAGES = [
     "author-instance-rebuild-spec",
     "interpret-rebuild-reports",
     "data-access-inventory",
+    "bc-data-catalogue-discovery",
     "public-data-mirror-runbook",
     "case-onboarding",
     "stage-00-data-prep",
@@ -146,6 +147,36 @@ def test_release_runbook_and_workflows_exist() -> None:
 
     assert Path(".github/workflows/publish-testpypi.yml").exists()
     assert Path(".github/workflows/publish-pypi.yml").exists()
+
+
+def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
+    guide_text = (GUIDES_ROOT / "bc-data-catalogue-discovery.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Minimal Workflow",
+        "Classification Buckets",
+        "Manifest Output",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic data bcdc-resolve",
+        "WHSE_FOREST_VEGETATION.F_OWN",
+        "direct_data_download",
+        "indirect_custom_download",
+        "metadata/required_datasets.yaml",
+    ):
+        assert snippet in guide_text
+
+    cli_text = (DOCS_ROOT / "reference" / "cli.rst").read_text(encoding="utf-8")
+    for snippet in (
+        "- ``data``",
+        "python -m femic data bcdc-resolve",
+        "--download-direct / --no-download-direct",
+        "--manifest-path PATH",
+    ):
+        assert snippet in cli_text
 
 
 def test_legacy_notebook_coverage_matrix_is_complete() -> None:

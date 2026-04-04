@@ -17,6 +17,7 @@ export modules.
    author-instance-rebuild-spec
    interpret-rebuild-reports
    data-access-inventory
+   bc-data-catalogue-discovery
    public-data-mirror-runbook
    case-onboarding
    stage-00-data-prep

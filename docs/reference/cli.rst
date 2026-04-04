@@ -24,6 +24,7 @@ Commands
 - ``tsa``
 - ``tipsy``
 - ``fansier``
+- ``data``
 - ``export``
 - ``patchworks``
 - ``instance``
@@ -307,6 +308,40 @@ Operational notes:
 - the parsing seam currently expects ``txt`` reports;
 - the practical machine-ingest default is `0%` discount posture with product
   columns on and activity columns off.
+
+Data
+----
+
+.. code-block:: text
+
+   python -m femic data [OPTIONS] COMMAND [ARGS]...
+
+Use this command group when you want FEMIC to help resolve BC Data Catalogue
+records from explicit layer names or keywords copied from TSR source-data
+lists.
+
+Subcommands
+
+- ``bcdc-resolve``: ``python -m femic data bcdc-resolve [OPTIONS] QUERY...``
+
+``data bcdc-resolve`` options
+
+- ``QUERY`` argument (repeatable; one or more layer names or keywords)
+- ``--manifest-path PATH`` (optional JSON candidate-manifest output path)
+- ``--download-direct / --no-download-direct`` (default: ``--no-download-direct``)
+- ``--download-root PATH`` (optional; defaults under ``data/downloads/bcdc``
+  for ``--instance-root`` workflows, otherwise ``./downloads/bcdc``)
+- ``--limit INTEGER`` (default: ``5``)
+- ``--instance-root PATH``
+
+Operational notes:
+
+- v1 resolves and classifies catalogue resources first; it does **not**
+  automate indirect/custom-download BCGW flows;
+- ``--download-direct`` only downloads stable direct-access data resources from
+  the top-ranked package match; and
+- the intended promotion path is candidate manifest first, then manual review,
+  then optional updates to ``metadata/required_datasets.yaml``.
 
 Export
 ------

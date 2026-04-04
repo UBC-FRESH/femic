@@ -11041,3 +11041,30 @@
   - Framed the idea explicitly as a later follow-on to FEMIC's growing
     dataset-discovery and provenance/publication workflows rather than active
     implementation work in the current branch.
+- 2026-04-04 (Issue `#98` implemented: BC Data Catalogue resolver and direct-download first slice):
+  - Added `femic.bcdc_catalog` as a reusable BC Data Catalogue support module.
+  - Added `femic data bcdc-resolve` as the first CLI surface for:
+    - exact object-name lookup via the public catalogue API;
+    - keyword fallback when exact object-name search is weak/empty;
+    - ranked package/resource normalization;
+    - resource classification into direct download, service, indirect/custom
+      download, supporting document, or unknown; and
+    - opt-in direct-download handling for stable direct-access data resources
+      from the top-ranked package only.
+  - Kept the first slice deliberately separate from
+    `metadata/required_datasets.yaml`: FEMIC now writes a candidate manifest
+    rather than auto-promoting discovered datasets into the central registry.
+  - Added user/docs surfaces:
+    - `docs/guides/bc-data-catalogue-discovery.rst`
+    - CLI reference updates for the new `data` command group
+    - API docs for `femic.bcdc_catalog`
+    - `docs/guides/data-access-inventory.rst` cross-linking discovery before
+      registry promotion
+  - Added focused unit/CLI/docs tests for the new resolver flow and direct
+    downloads, then completed the full validation bar:
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`
