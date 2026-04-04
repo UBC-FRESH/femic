@@ -130,6 +130,13 @@ from femic.rebuild_invariants import (
 from femic.rebuild_runner import JsonRebuildReportSink, RebuildRunner, RebuildStep
 from femic.rebuild_spec import load_rebuild_spec, validate_rebuild_spec_payload
 from femic.release_packaging import build_release_package
+from femic.tsr_catalog import (
+    TsrCatalogError,
+    TsrIndexResult,
+    TsrWrittenIndex,
+    index_tsr_tsa_surfaces,
+    write_tsr_index,
+)
 from femic.pipeline.io import (
     build_pipeline_run_config,
     file_sha256,
@@ -245,6 +252,11 @@ data_app = typer.Typer(
     no_args_is_help=True,
     help="Resolve and collect BC Data Catalogue source-data candidates.",
 )
+tsr_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Index BC TSR TSA document surfaces and canonical discovery metadata.",
+)
 console = Console()
 
 WINDOWS_ARBUTUS_ENV_FILE_RELATIVE = Path(".config") / "femic" / "arbutus.env"
@@ -306,6 +318,15 @@ BCDC_LIMIT_OPTION = typer.Option(
     "--limit",
     min=1,
     help="Maximum ranked package matches to keep per query.",
+)
+TSR_OUTPUT_ROOT_OPTION = typer.Option(
+    None,
+    "--output-root",
+    help=(
+        "Optional canonical TSR metadata output root. Defaults to "
+        "`metadata/tsr` under the active FEMIC checkout."
+    ),
+    show_default=False,
 )
 
 
@@ -1851,6 +1872,26 @@ def _load_bcdc_queries_from_file(path: Path) -> list[str]:
     return queries
 
 
+def _resolve_repo_output_root(value: Path | None, *, source_root: Path) -> Path:
+    if value is None:
+        return (source_root / "metadata" / "tsr").resolve()
+    expanded = value.expanduser()
+    if expanded.is_absolute():
+        return expanded.resolve()
+    return (source_root / expanded).resolve()
+
+
+def _print_tsr_index_summary(
+    *, result: TsrIndexResult, written: TsrWrittenIndex
+) -> None:
+    console.print(f"landing_url: {result.landing_url}")
+    console.print(f"tsa_root_url: {result.tsa_root_url}")
+    console.print(f"tsa_count: {written.tsa_count}")
+    console.print(f"document_count: {written.document_count}")
+    console.print(f"registry: {written.registry_path}")
+    console.print(f"documents: {written.documents_path}")
+
+
 @app.callback()
 def main(
     version: bool = VERSION_OPTION,
@@ -1957,6 +1998,27 @@ def data_bcdc_resolve(
             path=resolved_summary_csv,
         )
         console.print(f"summary_csv: {written_summary_csv}")
+
+
+@tsr_app.command("index")
+def tsr_index(
+    output_root: Path | None = TSR_OUTPUT_ROOT_OPTION,
+) -> None:
+    """Index BC TSR TSA document surfaces into canonical registry JSON artifacts."""
+
+    source_root = _source_tree_root()
+    resolved_output_root = _resolve_repo_output_root(
+        output_root,
+        source_root=source_root,
+    )
+    try:
+        result = index_tsr_tsa_surfaces()
+        written = write_tsr_index(result, resolved_output_root)
+    except TsrCatalogError as exc:
+        console.print(f"[red]TSR index error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_index_summary(result=result, written=written)
 
 
 @instance_config_app.command("set-managed-external-root")
@@ -5875,6 +5937,7 @@ app.add_typer(tsa_app, name="tsa")
 app.add_typer(tipsy_app, name="tipsy")
 app.add_typer(fansier_app, name="fansier")
 app.add_typer(data_app, name="data")
+app.add_typer(tsr_app, name="tsr")
 app.add_typer(export_app, name="export")
 patchworks_app.add_typer(patchworks_instances_app, name="instances")
 patchworks_app.add_typer(patchworks_scenarios_app, name="scenarios")

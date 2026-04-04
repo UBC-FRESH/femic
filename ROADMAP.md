@@ -12320,3 +12320,28 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       existing `femic data bcdc-resolve` workflow cleanly later;
     - keep discovery/extraction separate from reviewed overlay adoption until
       `#105`, so v1 does not silently write live instance contracts.
+- 2026-04-04 (Issue `#102` canonical TSR TSA registry/index implemented):
+  - Added the first `femic.tsr_catalog` support package with crawl/index helpers
+    for BC TSR TSA document surfaces.
+  - Added the first `femic tsr` CLI command:
+    - `python -m femic tsr index`
+  - The new index command now writes canonical repo-tracked outputs under
+    `metadata/tsr/`:
+    - `tsa_registry.json`
+    - `tsa_documents.json`
+  - The first live crawl completed successfully and produced:
+    - `42` indexed TSA folders; and
+    - `677` indexed TSA document records.
+  - Documentation/reference updates landed for:
+    - CLI reference coverage of `femic tsr index`; and
+    - a curated API page for `femic.tsr_catalog`.
+  - Validation:
+    - `python -m pytest tests/test_tsr_catalog.py tests/test_cli_main.py -k "tsr_index or tsr_catalog" -q`
+    - `python -m pytest tests/test_docs_contract.py -q`
+    - `python -m sphinx -b html docs _build/html -W`
+  - Detailed Next Steps:
+    - move to `#103` next so the indexed TSA registry can drive deterministic
+      PDF fetch/cache manifests rather than continuing to rely on ad hoc local
+      TSR PDF copies;
+    - keep `#104` extraction blocked on the cached-PDF/provenance layer so
+      candidate facts are always tied to deterministic fetched artifacts.

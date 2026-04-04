@@ -25,6 +25,7 @@ Commands
 - ``tipsy``
 - ``fansier``
 - ``data``
+- ``tsr``
 - ``export``
 - ``patchworks``
 - ``instance``
@@ -368,6 +369,31 @@ Operational notes:
   the top-ranked package match; and
 - the intended promotion path is candidate manifest first, then manual review,
   then optional updates to ``metadata/required_datasets.yaml``.
+
+TSR
+---
+
+.. code-block:: text
+
+   python -m femic tsr [OPTIONS] COMMAND [ARGS]...
+
+Subcommands
+
+- ``index``: ``python -m femic tsr index [OPTIONS]``
+
+``tsr index`` options
+
+- ``--output-root PATH`` (optional; defaults to ``metadata/tsr`` under the
+  active FEMIC checkout)
+
+``tsr index`` crawls the public BC Timber Supply Review TSA document surfaces
+and writes the canonical repo-tracked registry outputs:
+
+- ``metadata/tsr/tsa_registry.json``
+- ``metadata/tsr/tsa_documents.json``
+
+This first slice indexes TSA folders, cycles, and linked document metadata
+only. It does not download PDFs or extract candidate facts yet.
 
 Export
 ------

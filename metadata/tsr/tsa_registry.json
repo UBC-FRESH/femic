@@ -1,0 +1,1776 @@
+{
+  "document_count": 677,
+  "generated_utc": "2026-04-04T09:16:07.560925+00:00",
+  "landing_resources": [
+    {
+      "document_type": "supporting_document",
+      "title": "Timber Supply Review",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/"
+    },
+    {
+      "document_type": "backgrounder",
+      "title": "tsr backgrounder apr 2021",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/tsr_backgrounder_apr_2021.pdf"
+    },
+    {
+      "document_type": "document_descriptions",
+      "title": "tsr document descriptions",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/tsr_document_descriptions.pdf"
+    },
+    {
+      "document_type": "tfl_guide",
+      "title": "tsr tree farm licences",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/tsr_tree_farm_licences.pdf"
+    },
+    {
+      "document_type": "tsa_guide",
+      "title": "tsr timber supply areas",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/tsr_timber_supply_areas.pdf"
+    },
+    {
+      "document_type": "supporting_document",
+      "title": "guide area based tenures",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/guide_area_based_tenures.pdf"
+    },
+    {
+      "document_type": "supporting_document",
+      "title": "tsr carbon modeling guidance 25 april 2025",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/tsr_carbon_modeling_guidance_25_april_2025.pdf"
+    },
+    {
+      "document_type": "supporting_document",
+      "title": "climate change mitigation silviculture",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/climate_change_mitigation_silviculture.pdf"
+    },
+    {
+      "document_type": "supporting_document",
+      "title": "climate change in tsr report april 6 2023 no ip",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/climate_change_in_tsr_report_april_6_2023_no_ip.pdf"
+    },
+    {
+      "document_type": "supporting_document",
+      "title": "impacts 2024 fires",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/impacts_2024_fires.pdf"
+    },
+    {
+      "document_type": "supporting_document",
+      "title": "wildfire report 2023v1",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/wildfire_report_2023v1.pdf"
+    },
+    {
+      "document_type": "supporting_document",
+      "title": "impacts of 2021 fires final",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/impacts_of_2021_fires_final.pdf"
+    },
+    {
+      "document_type": "supporting_document",
+      "title": "impacts of 2018 fires",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/impacts_of_2018_fires.pdf"
+    },
+    {
+      "document_type": "supporting_document",
+      "title": "impacts 2017 fires",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/impacts_2017_fires.pdf"
+    },
+    {
+      "document_type": "supporting_document",
+      "title": "48ts ra 2024",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/48ts_ra_2024.pdf"
+    },
+    {
+      "document_type": "supporting_document",
+      "title": "38tf ra 2024",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/38tf_ra_2024.pdf"
+    },
+    {
+      "document_type": "supporting_document",
+      "title": "41tf ra 2024",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/41tf_ra_2024.pdf"
+    },
+    {
+      "document_type": "supporting_document",
+      "title": "39ts pdp 2023",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/39ts_pdp_2023.pdf"
+    },
+    {
+      "document_type": "supporting_document",
+      "title": "13ts pdp 2023",
+      "url": "https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/13ts_pdp_2023.pdf"
+    },
+    {
+      "document_type": "tsa_guide",
+      "title": "ul\\u0026gt",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/\\u0026quot; target=\\u0026quot;_blank\\u0026quot;\\u0026gt;Timber Supply Review (TSR)\\u0026amp;nbsp;documents are available for download\\u0026lt;/a\\u0026gt;.\\u0026amp;nbsp;If you require further information contact\\u0026amp;nbsp;\\u0026lt;a href=\\u0026quot;mailto:Denise.Young@gov.bc.ca\\u0026quot; target=\\u0026quot;_self\\u0026quot;\\u0026gt;Denise.Young@gov.bc.ca\\u0026lt;/a\\u0026gt;\\u0026amp;nbsp;(Timber Supply Review Technician)\\u0026lt;span\\u0026gt;. \\u0026lt;/span\\u0026gt;\\u0026lt;/p\\u0026gt;\\n\\n\\u0026lt;p\\u0026gt;Find out more about the Timber Supply Review process:\\u0026amp;nbsp;\\u0026lt;/p\\u0026gt;\\n\\n\\u0026lt;ul\\u0026gt;\\n\\t\\u0026lt;li\\u0026gt;\\u0026lt;a href=\\u0026quot;/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/tsr_backgrounder_apr_2021.pdf\\u0026quot; target=\\u0026quot;_blank\\u0026quot;\\u0026gt;Timber Supply Review (TSR) Backgrounder (PDF, 332KB))\\u0026lt;/a\\u0026gt;\\u0026lt;/li\\u0026gt;\\n\\t\\u0026lt;li\\u0026gt;\\u0026lt;a href=\\u0026quot;/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/tsr_document_descriptions.pdf\\u0026quot; target=\\u0026quot;_blank\\u0026quot;\\u0026gt;TSR Document Descriptions (PDF, 44KB)\\u0026lt;/a\\u0026gt;\\u0026lt;/li\\u0026gt;\\n\\t\\u0026lt;li\\u0026gt;\\u0026lt;a href=\\u0026quot;/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/tsr_tree_farm_licences.pdf\\u0026quot; target=\\u0026quot;_blank\\u0026quot;\\u0026gt;TSR Tree Farm Licences (PDF, 221KB)\\u0026lt;/a\\u0026gt;\\u0026lt;/li\\u0026gt;\\n\\t\\u0026lt;li\\u0026gt;\\u0026lt;a href=\\u0026quot;/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/tsr_timber_supply_areas.pdf\\u0026quot; target=\\u0026quot;_blank\\u0026quot;\\u0026gt;TSR Timber Supply Areas (PDF, 158KB)\\u0026lt;/a\\u0026gt;\\u0026lt;/li\\u0026gt;\\n\\u0026lt;/ul\\u0026gt;\\n\\n\\u0026lt;div class=\\u0026quot;callout\\u0026quot;\\u0026gt;\\n\\u0026lt;p\\u0026gt;This guide assists area-based tenure holders such as Tree Farm Licences (TFL), Community Forest Agreements (CFA) and First Nations Woodland Licences (FNWL) prepare the information package and timber supply analysis report, which are the major components of a management plan:\\u0026lt;/p\\u0026gt;\\n\\n\\u0026lt;ul\\u0026gt;\\n\\t\\u0026lt;li\\u0026gt;\\u0026lt;a href=\\u0026quot;/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/guide_area_based_tenures.pdf\\u0026quot; target=\\u0026quot;_blank\\u0026quot;\\u0026gt;Provincial Guide for the preparation of Information Packages and Analysis Reports for Area-based Tenures (PDF, 2MB)\\u0026lt;/a\\u0026gt;\\u0026lt;/li\\u0026gt;\\n\\u0026lt;/ul\\u0026gt;\\n\\u0026lt;/div\\u0026gt;\\n\\n\\u0026lt;p\\u0026gt;\\u0026amp;nbsp;\\u0026lt;/p\\u0026gt;\\n\\n\\u0026lt;div class=\\u0026quot;callout\\u0026quot;\\u0026gt;\\n\\u0026lt;p\\u0026gt;Learn about the methodology, assumptions and parameters\\u0026amp;nbsp;used in forest carbon modelling for Timber Supply Review:\\u0026lt;/p\\u0026gt;\\n\\n\\u0026lt;ul\\u0026gt;\\n\\t\\u0026lt;li\\u0026gt;\\u0026lt;a href=\\u0026quot;/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/tsr_carbon_modeling_guidance_25_april_2025.pdf\\u0026quot; target=\\u0026quot;_blank\\u0026quot;\\u0026gt;Carbon Modelling Guidance for Timber Supply Review (PDF, 847KB)\\u0026lt;/a\\u0026gt;\\u0026lt;/li\\u0026gt;\\n\\u0026lt;/ul\\u0026gt;\\n\\n\\u0026lt;p\\u0026gt;Learn about the\\u0026amp;nbsp;estimation, accounting and reporting of climate change mitigation from investments in silviculture on public land:\\u0026lt;/p\\u0026gt;\\n\\n\\u0026lt;ul\\u0026gt;\\n\\t\\u0026lt;li\\u0026gt;\\u0026lt;a href=\\u0026quot;/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/climate_change_mitigation_silviculture.pdf\\u0026quot; target=\\u0026quot;_blank\\u0026quot;\\u0026gt;Quantification Methodology Climate Change Mitigation from Silviculture Investments (PDF, 1.1MB)\\u0026lt;/a\\u0026gt;\\u0026lt;/li\\u0026gt;\\n\\u0026lt;/ul\\u0026gt;\\n\\u0026lt;/div\\u0026gt;\\n\\n\\u0026lt;h2 class=\\u0026quot;bc_h2\\u0026quot;\\u0026gt;Timber Supply Review special reports\\u0026lt;/h2\\u0026gt;\\n\\n\\u0026lt;p\\u0026gt;\\u0026lt;a href=\\u0026quot;/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/climate_change_in_tsr_report_april_6_2023_no_ip.pdf\\u0026quot; target=\\u0026quot;_blank\\u0026quot;\\u0026gt;Climate change in TSR Report April 6 2023 (PDF, 2.78MB)\\u0026lt;/a\\u0026gt; a discussion paper assisting in climate change consideration into the Timber Supply Review (TSR) process.\\u0026lt;/p\\u0026gt;\\n\\n\\u0026lt;p\\u0026gt;Periodically, forest analysis staff will do analysis or modelling in light of changing forest conditions:\\u0026lt;/p\\u0026gt;\\n\\n\\u0026lt;ul\\u0026gt;\\n\\t\\u0026lt;li\\u0026gt;\\u0026lt;a href=\\u0026quot;/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/impacts_2024_fires.pdf\\u0026quot; target=\\u0026quot;_blank\\u0026quot;\\u0026gt;Impacts of 2024 Fires on Forests and Timber Supply in British Columbia (PDF, 1.23MB)\\u0026lt;/a\\u0026gt; an assessment of the effect of the 2024 wildfires on timber supply\\u0026lt;/li\\u0026gt;\\n\\t\\u0026lt;li\\u0026gt;\\u0026lt;a href=\\u0026quot;/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/wildfire_report_2023v1.pdf\\u0026quot; target=\\u0026quot;_blank\\u0026quot;\\u0026gt;Impacts of 2023 Fires on Forests and Timber Supply in British Columbia (PDF, 1.2MB)\\u0026lt;/a\\u0026gt;\\u0026amp;nbsp;an assessment of\\u0026amp;nbsp;the effect of the 2023 wildfires on timber supply\\u0026lt;/li\\u0026gt;\\n\\t\\u0026lt;li\\u0026gt;\\u0026lt;a href=\\u0026quot;/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/tsr-annual-allowable-cut/impacts_of_2021_fires_final.pdf\\u0026quot; target=\\u0026quot;_blank\\u0026quot;\\u0026gt;Impacts of 2021 Fires on Forests and Timber Supply in British Columbia (PDF, 964KB)\\u0026lt;/a\\u0026gt; assesses the effect of the 2021 wildfires on timber supply\\u0026lt;/li\\u0026gt;\\n\\t\\u0026lt;li\\u0026gt;\\u0026lt;a href=\\u0026quot;/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/impacts_of_2018_fires.pdf\\u0026quot; target=\\u0026quot;_blank\\u0026quot;\\u0026gt;Impacts of 2018 Fires on Timber Supply (PDF, 932KB)\\u0026lt;/a\\u0026gt;\\u0026amp;nbsp;provides an impact analysis of the 2018 wildfires on timber supply\\u0026lt;/li\\u0026gt;\\n\\t\\u0026lt;li\\u0026gt;\\u0026lt;a href=\\u0026quot;/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/impacts_2017_fires.pdf\\u0026quot; target=\\u0026quot;_blank\\u0026quot;\\u0026gt;Impacts of 2017 Fires on Timber Supply (PDF, 1MB)\\u0026lt;/a\\u0026gt;\\u0026amp;nbsp;provides an impact analysis of the 2017 wildfires on timber supply in the 100 Mile House, Quesnel and Williams Lake timber supply areas\\u0026lt;/li\\u0026gt;\\n\\u0026lt;/ul\\u0026gt"
+    }
+  ],
+  "landing_url": "https://www2.gov.bc.ca/gov/content/industry/forestry/managing-our-forest-resources/timber-supply-review-and-allowable-annual-cut",
+  "publish_root_url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/",
+  "tsa_count": 42,
+  "tsa_root_url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/",
+  "tsas": [
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1995",
+          "cycle_year": 1995,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Arrow_01/TSR_1995/"
+        },
+        {
+          "cycle_label": "TSR_2001",
+          "cycle_year": 2001,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Arrow_01/TSR_2001/"
+        },
+        {
+          "cycle_label": "TSR_2005",
+          "cycle_year": 2005,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Arrow_01/TSR_2005/"
+        },
+        {
+          "cycle_label": "TSR_2016",
+          "cycle_year": 2016,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Arrow_01/TSR_2016/"
+        }
+      ],
+      "document_count": 18,
+      "listed_modified_raw": "7/17/2020  3:58 PM",
+      "tsa_code": "01",
+      "tsa_directory_name": "Arrow_01",
+      "tsa_id": "tsa_01",
+      "tsa_name": "Arrow",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Arrow_01/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "Section_8(3.1)_Postponement",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/20/2020 12:16 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Boundary_02/Section_8(3.1)_Postponement/"
+        },
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Boundary_02/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2001",
+          "cycle_year": 2001,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Boundary_02/TSR_2001/"
+        },
+        {
+          "cycle_label": "TSR_2011",
+          "cycle_year": 2011,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Boundary_02/TSR_2011/"
+        }
+      ],
+      "document_count": 15,
+      "listed_modified_raw": "7/20/2020 12:16 PM",
+      "tsa_code": "02",
+      "tsa_directory_name": "Boundary_02",
+      "tsa_id": "tsa_02",
+      "tsa_name": "Boundary",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Boundary_02/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "Chief Forester Order",
+          "cycle_year": null,
+          "document_count": 2,
+          "listed_modified_raw": "7/20/2020 12:25 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Bulkley_03/Chief%20Forester%20Order/"
+        },
+        {
+          "cycle_label": "TSR_1995",
+          "cycle_year": 1995,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Bulkley_03/TSR_1995/"
+        },
+        {
+          "cycle_label": "TSR_2001",
+          "cycle_year": 2001,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Bulkley_03/TSR_2001/"
+        },
+        {
+          "cycle_label": "TSR_2011",
+          "cycle_year": 2011,
+          "document_count": 4,
+          "listed_modified_raw": "7/20/2020 12:30 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Bulkley_03/TSR_2011/"
+        }
+      ],
+      "document_count": 17,
+      "listed_modified_raw": "7/20/2020 12:25 PM",
+      "tsa_code": "03",
+      "tsa_directory_name": "Bulkley_03",
+      "tsa_id": "tsa_03",
+      "tsa_name": "Bulkley",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Bulkley_03/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "Section_8(3.1)__Postponement",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/20/2020 12:40 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cassiar_04/Section_8(3.1)__Postponement/"
+        },
+        {
+          "cycle_label": "TSR_1995",
+          "cycle_year": 1995,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cassiar_04/TSR_1995/"
+        },
+        {
+          "cycle_label": "TSR_2001",
+          "cycle_year": 2001,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cassiar_04/TSR_2001/"
+        },
+        {
+          "cycle_label": "TSR_2013",
+          "cycle_year": 2013,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cassiar_04/TSR_2013/"
+        }
+      ],
+      "document_count": 15,
+      "listed_modified_raw": "7/20/2020 12:40 PM",
+      "tsa_code": "04",
+      "tsa_directory_name": "Cassiar_04",
+      "tsa_id": "tsa_04",
+      "tsa_name": "Cassiar",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cassiar_04/"
+    },
+    {
+      "cycle_count": 5,
+      "cycles": [
+        {
+          "cycle_label": "Chief Forester Order",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/21/2020  1:33 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cranbrook_05/Chief%20Forester%20Order/"
+        },
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cranbrook_05/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2000",
+          "cycle_year": 2000,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cranbrook_05/TSR_2000/"
+        },
+        {
+          "cycle_label": "TSR_2005",
+          "cycle_year": 2005,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cranbrook_05/TSR_2005/"
+        },
+        {
+          "cycle_label": "TSR_2015",
+          "cycle_year": 2015,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cranbrook_05/TSR_2015/"
+        }
+      ],
+      "document_count": 20,
+      "listed_modified_raw": "7/21/2020  1:33 PM",
+      "tsa_code": "05",
+      "tsa_directory_name": "Cranbrook_05",
+      "tsa_id": "tsa_05",
+      "tsa_name": "Cranbrook",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cranbrook_05/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1994",
+          "cycle_year": 1994,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Golden_07/TSR_1994/"
+        },
+        {
+          "cycle_label": "TSR_1999",
+          "cycle_year": 1999,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Golden_07/TSR_1999/"
+        },
+        {
+          "cycle_label": "TSR_2004",
+          "cycle_year": 2004,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Golden_07/TSR_2004/"
+        },
+        {
+          "cycle_label": "TSR_2009",
+          "cycle_year": 2009,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Golden_07/TSR_2009/"
+        }
+      ],
+      "document_count": 18,
+      "listed_modified_raw": "7/17/2020  3:59 PM",
+      "tsa_code": "07",
+      "tsa_directory_name": "Golden_07",
+      "tsa_id": "tsa_07",
+      "tsa_name": "Golden",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Golden_07/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1994",
+          "cycle_year": 1994,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Fort_Nelson_08/TSR_1994/"
+        },
+        {
+          "cycle_label": "TSR_2001",
+          "cycle_year": 2001,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Fort_Nelson_08/TSR_2001/"
+        },
+        {
+          "cycle_label": "TSR_2006",
+          "cycle_year": 2006,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Fort_Nelson_08/TSR_2006/"
+        },
+        {
+          "cycle_label": "TSR_2016",
+          "cycle_year": 2016,
+          "document_count": 1,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Fort_Nelson_08/TSR_2016/"
+        }
+      ],
+      "document_count": 15,
+      "listed_modified_raw": "7/17/2020  3:59 PM",
+      "tsa_code": "08",
+      "tsa_directory_name": "Fort_Nelson_08",
+      "tsa_id": "tsa_08",
+      "tsa_name": "Fort Nelson",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Fort_Nelson_08/"
+    },
+    {
+      "cycle_count": 5,
+      "cycles": [
+        {
+          "cycle_label": "Chief_Forester_Order",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Invermere_09/Chief_Forester_Order/"
+        },
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Invermere_09/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2001",
+          "cycle_year": 2001,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Invermere_09/TSR_2001/"
+        },
+        {
+          "cycle_label": "TSR_2005",
+          "cycle_year": 2005,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Invermere_09/TSR_2005/"
+        },
+        {
+          "cycle_label": "TSR_2017",
+          "cycle_year": 2017,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Invermere_09/TSR_2017/"
+        }
+      ],
+      "document_count": 19,
+      "listed_modified_raw": "7/17/2020  4:00 PM",
+      "tsa_code": "09",
+      "tsa_directory_name": "Invermere_09",
+      "tsa_id": "tsa_09",
+      "tsa_name": "Invermere",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Invermere_09/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "Chief_Forester_Order",
+          "cycle_year": null,
+          "document_count": 2,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kalum_10/Chief_Forester_Order/"
+        },
+        {
+          "cycle_label": "TSR_1995",
+          "cycle_year": 1995,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kalum_10/TSR_1995/"
+        },
+        {
+          "cycle_label": "TSR_1999",
+          "cycle_year": 1999,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kalum_10/TSR_1999/"
+        },
+        {
+          "cycle_label": "TSR_2011",
+          "cycle_year": 2011,
+          "document_count": 4,
+          "listed_modified_raw": "7/22/2020  7:47 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kalum_10/TSR_2011/"
+        }
+      ],
+      "document_count": 17,
+      "listed_modified_raw": "7/17/2020  4:00 PM",
+      "tsa_code": "10",
+      "tsa_directory_name": "Kalum_10",
+      "tsa_id": "tsa_10",
+      "tsa_name": "Kalum",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kalum_10/"
+    },
+    {
+      "cycle_count": 5,
+      "cycles": [
+        {
+          "cycle_label": "AAC_Temp_Inc_2004",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kamloops_11/AAC_Temp_Inc_2004/"
+        },
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kamloops_11/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2002",
+          "cycle_year": 2002,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kamloops_11/TSR_2002/"
+        },
+        {
+          "cycle_label": "TSR_2008",
+          "cycle_year": 2008,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kamloops_11/TSR_2008/"
+        },
+        {
+          "cycle_label": "TSR_2014",
+          "cycle_year": 2014,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kamloops_11/TSR_2014/"
+        }
+      ],
+      "document_count": 19,
+      "listed_modified_raw": "7/17/2020  4:00 PM",
+      "tsa_code": "11",
+      "tsa_directory_name": "Kamloops_11",
+      "tsa_id": "tsa_11",
+      "tsa_name": "Kamloops",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kamloops_11/"
+    },
+    {
+      "cycle_count": 3,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kispiox_12/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2002",
+          "cycle_year": 2002,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kispiox_12/TSR_2002/"
+        },
+        {
+          "cycle_label": "TSR_2007",
+          "cycle_year": 2007,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kispiox_12/TSR_2007/"
+        }
+      ],
+      "document_count": 16,
+      "listed_modified_raw": "7/17/2020  4:00 PM",
+      "tsa_code": "12",
+      "tsa_directory_name": "Kispiox_12",
+      "tsa_id": "tsa_12",
+      "tsa_name": "Kispiox",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kispiox_12/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1995",
+          "cycle_year": 1995,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kootenay_Lake_13/TSR_1995/"
+        },
+        {
+          "cycle_label": "TSR_2001",
+          "cycle_year": 2001,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:01 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kootenay_Lake_13/TSR_2001/"
+        },
+        {
+          "cycle_label": "TSR_2010",
+          "cycle_year": 2010,
+          "document_count": 4,
+          "listed_modified_raw": "7/22/2020  8:07 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kootenay_Lake_13/TSR_2010/"
+        },
+        {
+          "cycle_label": "TSR_2020",
+          "cycle_year": 2020,
+          "document_count": 1,
+          "listed_modified_raw": "11/19/2020  2:11 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kootenay_Lake_13/TSR_2020/"
+        }
+      ],
+      "document_count": 16,
+      "listed_modified_raw": "11/19/2020  2:11 PM",
+      "tsa_code": "13",
+      "tsa_directory_name": "Kootenay_Lake_13",
+      "tsa_id": "tsa_13",
+      "tsa_name": "Kootenay Lake",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kootenay_Lake_13/"
+    },
+    {
+      "cycle_count": 5,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:01 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Lakes_14/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2001",
+          "cycle_year": 2001,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:01 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Lakes_14/TSR_2001/"
+        },
+        {
+          "cycle_label": "TSR_2004",
+          "cycle_year": 2004,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  4:01 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Lakes_14/TSR_2004/"
+        },
+        {
+          "cycle_label": "TSR_2010",
+          "cycle_year": 2010,
+          "document_count": 3,
+          "listed_modified_raw": "7/22/2020  8:13 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Lakes_14/TSR_2010/"
+        },
+        {
+          "cycle_label": "TSR_2018",
+          "cycle_year": 2018,
+          "document_count": 5,
+          "listed_modified_raw": "7/22/2020  8:14 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Lakes_14/TSR_2018/"
+        }
+      ],
+      "document_count": 22,
+      "listed_modified_raw": "7/22/2020  8:13 AM",
+      "tsa_code": "14",
+      "tsa_directory_name": "Lakes_14",
+      "tsa_id": "tsa_14",
+      "tsa_name": "Lakes",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Lakes_14/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:01 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Lillooet_15/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2001",
+          "cycle_year": 2001,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:01 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Lillooet_15/TSR_2001/"
+        },
+        {
+          "cycle_label": "TSR_2009",
+          "cycle_year": 2009,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  4:01 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Lillooet_15/TSR_2009/"
+        },
+        {
+          "cycle_label": "TSR_2021",
+          "cycle_year": 2021,
+          "document_count": 1,
+          "listed_modified_raw": "1/19/2021 11:05 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Lillooet_15/TSR_2021/"
+        }
+      ],
+      "document_count": 17,
+      "listed_modified_raw": "1/19/2021 11:05 AM",
+      "tsa_code": "15",
+      "tsa_directory_name": "Lillooet_15",
+      "tsa_id": "tsa_15",
+      "tsa_name": "Lillooet",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Lillooet_15/"
+    },
+    {
+      "cycle_count": 5,
+      "cycles": [
+        {
+          "cycle_label": "Chief_Forester_Order",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/17/2020  4:01 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Mackenzie_16/Chief_Forester_Order/"
+        },
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:01 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Mackenzie_16/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2001",
+          "cycle_year": 2001,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:01 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Mackenzie_16/TSR_2001/"
+        },
+        {
+          "cycle_label": "TSR_2012",
+          "cycle_year": 2012,
+          "document_count": 4,
+          "listed_modified_raw": "7/22/2020  8:23 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Mackenzie_16/TSR_2012/"
+        },
+        {
+          "cycle_label": "TSR_2019",
+          "cycle_year": 2019,
+          "document_count": 10,
+          "listed_modified_raw": "2/15/2023  9:19 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Mackenzie_16/TSR_2019/"
+        }
+      ],
+      "document_count": 25,
+      "listed_modified_raw": "7/22/2020  8:23 AM",
+      "tsa_code": "16",
+      "tsa_directory_name": "Mackenzie_16",
+      "tsa_id": "tsa_16",
+      "tsa_name": "Mackenzie",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Mackenzie_16/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Robson_Valley_17/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2001",
+          "cycle_year": 2001,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Robson_Valley_17/TSR_2001/"
+        },
+        {
+          "cycle_label": "TSR_2006",
+          "cycle_year": 2006,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Robson_Valley_17/TSR_2006/"
+        },
+        {
+          "cycle_label": "TSR_2012",
+          "cycle_year": 2012,
+          "document_count": 3,
+          "listed_modified_raw": "7/22/2020  9:38 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Robson_Valley_17/TSR_2012/"
+        }
+      ],
+      "document_count": 19,
+      "listed_modified_raw": "7/17/2020  4:04 PM",
+      "tsa_code": "17",
+      "tsa_directory_name": "Robson_Valley_17",
+      "tsa_id": "tsa_17",
+      "tsa_name": "Robson Valley",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Robson_Valley_17/"
+    },
+    {
+      "cycle_count": 7,
+      "cycles": [
+        {
+          "cycle_label": "1998_IP_AAC_Incr",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/17/2020  4:01 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Merritt_18/1998_IP_AAC_Incr/"
+        },
+        {
+          "cycle_label": "1999_Uplift_Determination",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/17/2020  4:01 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Merritt_18/1999_Uplift_Determination/"
+        },
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:01 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Merritt_18/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2002",
+          "cycle_year": 2002,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:01 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Merritt_18/TSR_2002/"
+        },
+        {
+          "cycle_label": "TSR_2005",
+          "cycle_year": 2005,
+          "document_count": 2,
+          "listed_modified_raw": "7/17/2020  4:01 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Merritt_18/TSR_2005/"
+        },
+        {
+          "cycle_label": "TSR_2009",
+          "cycle_year": 2009,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  4:01 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Merritt_18/TSR_2009/"
+        },
+        {
+          "cycle_label": "TSR_2015",
+          "cycle_year": 2015,
+          "document_count": 2,
+          "listed_modified_raw": "7/22/2020  8:34 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Merritt_18/TSR_2015/"
+        }
+      ],
+      "document_count": 20,
+      "listed_modified_raw": "7/17/2020  4:01 PM",
+      "tsa_code": "18",
+      "tsa_directory_name": "Merritt_18",
+      "tsa_id": "tsa_18",
+      "tsa_name": "Merritt",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Merritt_18/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "Chief_Forester_Order",
+          "cycle_year": null,
+          "document_count": 2,
+          "listed_modified_raw": "5/4/2022  8:11 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Mid_Coast_19/Chief_Forester_Order/"
+        },
+        {
+          "cycle_label": "TSR_1994",
+          "cycle_year": 1994,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Mid_Coast_19/TSR_1994/"
+        },
+        {
+          "cycle_label": "TSR_2000",
+          "cycle_year": 2000,
+          "document_count": 6,
+          "listed_modified_raw": "5/4/2022  8:14 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Mid_Coast_19/TSR_2000/"
+        },
+        {
+          "cycle_label": "TSR_2011",
+          "cycle_year": 2011,
+          "document_count": 4,
+          "listed_modified_raw": "5/4/2022  8:15 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Mid_Coast_19/TSR_2011/"
+        }
+      ],
+      "document_count": 17,
+      "listed_modified_raw": "7/17/2020  4:02 PM",
+      "tsa_code": "19",
+      "tsa_directory_name": "Mid_Coast_19",
+      "tsa_id": "tsa_19",
+      "tsa_name": "Mid Coast",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Mid_Coast_19/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Morice_20/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2002",
+          "cycle_year": 2002,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Morice_20/TSR_2002/"
+        },
+        {
+          "cycle_label": "TSR_2008",
+          "cycle_year": 2008,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Morice_20/TSR_2008/"
+        },
+        {
+          "cycle_label": "TSR_2013",
+          "cycle_year": 2013,
+          "document_count": 3,
+          "listed_modified_raw": "7/22/2020  8:41 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Morice_20/TSR_2013/"
+        }
+      ],
+      "document_count": 18,
+      "listed_modified_raw": "7/17/2020  4:02 PM",
+      "tsa_code": "20",
+      "tsa_directory_name": "Morice_20",
+      "tsa_id": "tsa_20",
+      "tsa_name": "Morice",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Morice_20/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "Chief_Forester_Order",
+          "cycle_year": null,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/North_Coast_21/Chief_Forester_Order/"
+        },
+        {
+          "cycle_label": "TSR_1995",
+          "cycle_year": 1995,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/North_Coast_21/TSR_1995/"
+        },
+        {
+          "cycle_label": "TSR_2000",
+          "cycle_year": 2000,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/North_Coast_21/TSR_2000/"
+        },
+        {
+          "cycle_label": "TSR_2007",
+          "cycle_year": 2007,
+          "document_count": 7,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/North_Coast_21/TSR_2007/"
+        }
+      ],
+      "document_count": 23,
+      "listed_modified_raw": "7/17/2020  4:02 PM",
+      "tsa_code": "21",
+      "tsa_directory_name": "North_Coast_21",
+      "tsa_id": "tsa_21",
+      "tsa_name": "North Coast",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/North_Coast_21/"
+    },
+    {
+      "cycle_count": 5,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Okanagan_22/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2001",
+          "cycle_year": 2001,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Okanagan_22/TSR_2001/"
+        },
+        {
+          "cycle_label": "TSR_2005",
+          "cycle_year": 2005,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Okanagan_22/TSR_2005/"
+        },
+        {
+          "cycle_label": "TSR_2012",
+          "cycle_year": 2012,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Okanagan_22/TSR_2012/"
+        },
+        {
+          "cycle_label": "TSR_2017",
+          "cycle_year": 2017,
+          "document_count": 2,
+          "listed_modified_raw": "1/18/2021  2:30 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Okanagan_22/TSR_2017/"
+        }
+      ],
+      "document_count": 18,
+      "listed_modified_raw": "7/22/2020  8:58 AM",
+      "tsa_code": "22",
+      "tsa_directory_name": "Okanagan_22",
+      "tsa_id": "tsa_22",
+      "tsa_name": "Okanagan",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Okanagan_22/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1995",
+          "cycle_year": 1995,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  3:57 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/100_Mile_House_23/TSR_1995/"
+        },
+        {
+          "cycle_label": "TSR_2001",
+          "cycle_year": 2001,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  3:57 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/100_Mile_House_23/TSR_2001/"
+        },
+        {
+          "cycle_label": "TSR_2006",
+          "cycle_year": 2006,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  3:57 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/100_Mile_House_23/TSR_2006/"
+        },
+        {
+          "cycle_label": "TSR_2012",
+          "cycle_year": 2012,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  3:57 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/100_Mile_House_23/TSR_2012/"
+        }
+      ],
+      "document_count": 18,
+      "listed_modified_raw": "7/17/2020  3:57 PM",
+      "tsa_code": "23",
+      "tsa_directory_name": "100_Mile_House_23",
+      "tsa_id": "tsa_23",
+      "tsa_name": "100 Mile House",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/100_Mile_House_23/"
+    },
+    {
+      "cycle_count": 5,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Prince_George_24/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2002",
+          "cycle_year": 2002,
+          "document_count": 7,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Prince_George_24/TSR_2002/"
+        },
+        {
+          "cycle_label": "TSR_2004",
+          "cycle_year": 2004,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Prince_George_24/TSR_2004/"
+        },
+        {
+          "cycle_label": "TSR_2011",
+          "cycle_year": 2011,
+          "document_count": 5,
+          "listed_modified_raw": "7/22/2020  9:21 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Prince_George_24/TSR_2011/"
+        },
+        {
+          "cycle_label": "TSR_2015",
+          "cycle_year": 2015,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Prince_George_24/TSR_2015/"
+        }
+      ],
+      "document_count": 23,
+      "listed_modified_raw": "7/17/2020  4:03 PM",
+      "tsa_code": "24",
+      "tsa_directory_name": "Prince_George_24",
+      "tsa_id": "tsa_24",
+      "tsa_name": "Prince George",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Prince_George_24/"
+    },
+    {
+      "cycle_count": 5,
+      "cycles": [
+        {
+          "cycle_label": "Chief_Forester_Order",
+          "cycle_year": null,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Haida_Gwaii_(Queen_Charlotte)_25/Chief_Forester_Order/"
+        },
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Haida_Gwaii_(Queen_Charlotte)_25/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2000",
+          "cycle_year": 2000,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Haida_Gwaii_(Queen_Charlotte)_25/TSR_2000/"
+        },
+        {
+          "cycle_label": "TSR_2011",
+          "cycle_year": 2011,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Haida_Gwaii_(Queen_Charlotte)_25/TSR_2011/"
+        },
+        {
+          "cycle_label": "TSR_2019",
+          "cycle_year": 2019,
+          "document_count": 8,
+          "listed_modified_raw": "10/27/2020  2:47 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Haida_Gwaii_(Queen_Charlotte)_25/TSR_2019/"
+        }
+      ],
+      "document_count": 28,
+      "listed_modified_raw": "7/22/2020 11:14 AM",
+      "tsa_code": "25",
+      "tsa_directory_name": "Haida_Gwaii_(Queen_Charlotte)_25",
+      "tsa_id": "tsa_25",
+      "tsa_name": "Haida Gwaii (Queen Charlotte)",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Haida_Gwaii_(Queen_Charlotte)_25/"
+    },
+    {
+      "cycle_count": 5,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Quesnel_26/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2001",
+          "cycle_year": 2001,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Quesnel_26/TSR_2001/"
+        },
+        {
+          "cycle_label": "TSR_2004",
+          "cycle_year": 2004,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Quesnel_26/TSR_2004/"
+        },
+        {
+          "cycle_label": "TSR_2011",
+          "cycle_year": 2011,
+          "document_count": 3,
+          "listed_modified_raw": "7/22/2020  9:26 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Quesnel_26/TSR_2011/"
+        },
+        {
+          "cycle_label": "TSR_2015",
+          "cycle_year": 2015,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Quesnel_26/TSR_2015/"
+        }
+      ],
+      "document_count": 19,
+      "listed_modified_raw": "7/17/2020  4:03 PM",
+      "tsa_code": "26",
+      "tsa_directory_name": "Quesnel_26",
+      "tsa_id": "tsa_26",
+      "tsa_name": "Quesnel",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Quesnel_26/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1994",
+          "cycle_year": 1994,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Revelstoke_27/TSR_1994/"
+        },
+        {
+          "cycle_label": "TSR_1999",
+          "cycle_year": 1999,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Revelstoke_27/TSR_1999/"
+        },
+        {
+          "cycle_label": "TSR_2005",
+          "cycle_year": 2005,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Revelstoke_27/TSR_2005/"
+        },
+        {
+          "cycle_label": "TSR_2010",
+          "cycle_year": 2010,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  4:03 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Revelstoke_27/TSR_2010/"
+        }
+      ],
+      "document_count": 18,
+      "listed_modified_raw": "7/17/2020  4:03 PM",
+      "tsa_code": "27",
+      "tsa_directory_name": "Revelstoke_27",
+      "tsa_id": "tsa_27",
+      "tsa_name": "Revelstoke",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Revelstoke_27/"
+    },
+    {
+      "cycle_count": 5,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1995",
+          "cycle_year": 1995,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Williams_Lake_29/TSR_1995/"
+        },
+        {
+          "cycle_label": "TSR_2002",
+          "cycle_year": 2002,
+          "document_count": 7,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Williams_Lake_29/TSR_2002/"
+        },
+        {
+          "cycle_label": "TSR_2007",
+          "cycle_year": 2007,
+          "document_count": 2,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Williams_Lake_29/TSR_2007/"
+        },
+        {
+          "cycle_label": "TSR_2013",
+          "cycle_year": 2013,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Williams_Lake_29/TSR_2013/"
+        },
+        {
+          "cycle_label": "TSR_2024",
+          "cycle_year": 2024,
+          "document_count": 1,
+          "listed_modified_raw": "9/27/2024 10:45 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Williams_Lake_29/TSR_2024/"
+        }
+      ],
+      "document_count": 19,
+      "listed_modified_raw": "9/27/2024 10:44 AM",
+      "tsa_code": "29",
+      "tsa_directory_name": "Williams_Lake_29",
+      "tsa_id": "tsa_29",
+      "tsa_name": "Williams Lake",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Williams_Lake_29/"
+    },
+    {
+      "cycle_count": 5,
+      "cycles": [
+        {
+          "cycle_label": "Chief_Forester_Order",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Fraser_30/Chief_Forester_Order/"
+        },
+        {
+          "cycle_label": "TSR_1995",
+          "cycle_year": 1995,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Fraser_30/TSR_1995/"
+        },
+        {
+          "cycle_label": "TSR_1999",
+          "cycle_year": 1999,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Fraser_30/TSR_1999/"
+        },
+        {
+          "cycle_label": "TSR_2004",
+          "cycle_year": 2004,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Fraser_30/TSR_2004/"
+        },
+        {
+          "cycle_label": "TSR_2013",
+          "cycle_year": 2013,
+          "document_count": 3,
+          "listed_modified_raw": "7/22/2020 10:55 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Fraser_30/TSR_2013/"
+        }
+      ],
+      "document_count": 19,
+      "listed_modified_raw": "7/17/2020  3:59 PM",
+      "tsa_code": "30",
+      "tsa_directory_name": "Fraser_30",
+      "tsa_id": "tsa_30",
+      "tsa_name": "Fraser",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Fraser_30/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "Chief_Forester_Order",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Soo_31/Chief_Forester_Order/"
+        },
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Soo_31/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2000",
+          "cycle_year": 2000,
+          "document_count": 7,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Soo_31/TSR_2000/"
+        },
+        {
+          "cycle_label": "TSR_2011",
+          "cycle_year": 2011,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Soo_31/TSR_2011/"
+        }
+      ],
+      "document_count": 16,
+      "listed_modified_raw": "7/17/2020  4:04 PM",
+      "tsa_code": "31",
+      "tsa_directory_name": "Soo_31",
+      "tsa_id": "tsa_31",
+      "tsa_name": "Soo",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Soo_31/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "Chief_Forester_Order",
+          "cycle_year": null,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kingcome_33/Chief_Forester_Order/"
+        },
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kingcome_33/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2002",
+          "cycle_year": 2002,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kingcome_33/TSR_2002/"
+        },
+        {
+          "cycle_label": "TSR_2010",
+          "cycle_year": 2010,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  4:00 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kingcome_33/TSR_2010/"
+        }
+      ],
+      "document_count": 19,
+      "listed_modified_raw": "7/17/2020  4:00 PM",
+      "tsa_code": "33",
+      "tsa_directory_name": "Kingcome_33",
+      "tsa_id": "tsa_33",
+      "tsa_name": "Kingcome",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Kingcome_33/"
+    },
+    {
+      "cycle_count": 5,
+      "cycles": [
+        {
+          "cycle_label": "Chief_Forester_Order",
+          "cycle_year": null,
+          "document_count": 2,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Strathcona_37/Chief_Forester_Order/"
+        },
+        {
+          "cycle_label": "TSR_1995",
+          "cycle_year": 1995,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Strathcona_37/TSR_1995/"
+        },
+        {
+          "cycle_label": "TSR_1999",
+          "cycle_year": 1999,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Strathcona_37/TSR_1999/"
+        },
+        {
+          "cycle_label": "TSR_2005",
+          "cycle_year": 2005,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Strathcona_37/TSR_2005/"
+        },
+        {
+          "cycle_label": "TSR_2012",
+          "cycle_year": 2012,
+          "document_count": 3,
+          "listed_modified_raw": "7/22/2020 10:02 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Strathcona_37/TSR_2012/"
+        }
+      ],
+      "document_count": 19,
+      "listed_modified_raw": "7/17/2020  4:04 PM",
+      "tsa_code": "37",
+      "tsa_directory_name": "Strathcona_37",
+      "tsa_id": "tsa_37",
+      "tsa_name": "Strathcona",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Strathcona_37/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  3:57 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Arrowsmith_38/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2002",
+          "cycle_year": 2002,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  3:57 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Arrowsmith_38/TSR_2002/"
+        },
+        {
+          "cycle_label": "TSR_2009",
+          "cycle_year": 2009,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  3:57 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Arrowsmith_38/TSR_2009/"
+        },
+        {
+          "cycle_label": "TSR_2015",
+          "cycle_year": 2015,
+          "document_count": 4,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Arrowsmith_38/TSR_2015/"
+        }
+      ],
+      "document_count": 18,
+      "listed_modified_raw": "7/17/2020  3:57 PM",
+      "tsa_code": "38",
+      "tsa_directory_name": "Arrowsmith_38",
+      "tsa_id": "tsa_38",
+      "tsa_name": "Arrowsmith",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Arrowsmith_38/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "Chief_Forester_Order",
+          "cycle_year": null,
+          "document_count": 2,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Sunshine_Coast_39/Chief_Forester_Order/"
+        },
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Sunshine_Coast_39/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2001",
+          "cycle_year": 2001,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Sunshine_Coast_39/TSR_2001/"
+        },
+        {
+          "cycle_label": "TSR_2012",
+          "cycle_year": 2012,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  4:04 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Sunshine_Coast_39/TSR_2012/"
+        }
+      ],
+      "document_count": 16,
+      "listed_modified_raw": "7/17/2020  4:04 PM",
+      "tsa_code": "39",
+      "tsa_directory_name": "Sunshine_Coast_39",
+      "tsa_id": "tsa_39",
+      "tsa_name": "Sunshine Coast",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Sunshine_Coast_39/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "Chief_Forester_Order",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Fort_St_John_40/Chief_Forester_Order/"
+        },
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Fort_St_John_40/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2003",
+          "cycle_year": 2003,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Fort_St_John_40/TSR_2003/"
+        },
+        {
+          "cycle_label": "TSR_2015",
+          "cycle_year": 2015,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Fort_St_John_40/TSR_2015/"
+        }
+      ],
+      "document_count": 15,
+      "listed_modified_raw": "7/17/2020  3:59 PM",
+      "tsa_code": "40",
+      "tsa_directory_name": "Fort_St_John_40",
+      "tsa_id": "tsa_40",
+      "tsa_name": "Fort St John",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Fort_St_John_40/"
+    },
+    {
+      "cycle_count": 3,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1996",
+          "cycle_year": 1996,
+          "document_count": 7,
+          "listed_modified_raw": "7/17/2020  3:58 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Dawson_Creek_41/TSR_1996/"
+        },
+        {
+          "cycle_label": "TSR_2003",
+          "cycle_year": 2003,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  3:59 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Dawson_Creek_41/TSR_2003/"
+        },
+        {
+          "cycle_label": "TSR_2011",
+          "cycle_year": 2011,
+          "document_count": 3,
+          "listed_modified_raw": "7/22/2020 10:55 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Dawson_Creek_41/TSR_2011/"
+        }
+      ],
+      "document_count": 16,
+      "listed_modified_raw": "7/22/2020 10:54 AM",
+      "tsa_code": "41",
+      "tsa_directory_name": "Dawson_Creek_41",
+      "tsa_id": "tsa_41",
+      "tsa_name": "Dawson Creek",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Dawson_Creek_41/"
+    },
+    {
+      "cycle_count": 1,
+      "cycles": [
+        {
+          "cycle_label": "TSR_1998",
+          "cycle_year": 1998,
+          "document_count": 5,
+          "listed_modified_raw": "7/21/2020  1:31 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cranberry_42/TSR_1998/"
+        }
+      ],
+      "document_count": 5,
+      "listed_modified_raw": "7/17/2020  3:58 PM",
+      "tsa_code": "42",
+      "tsa_directory_name": "Cranberry_42",
+      "tsa_id": "tsa_42",
+      "tsa_name": "Cranberry",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cranberry_42/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "Chief_Forester_Order",
+          "cycle_year": null,
+          "document_count": 3,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Nass_43/Chief_Forester_Order/"
+        },
+        {
+          "cycle_label": "TSR_1995",
+          "cycle_year": 1995,
+          "document_count": 5,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Nass_43/TSR_1995/"
+        },
+        {
+          "cycle_label": "TSR_2002",
+          "cycle_year": 2002,
+          "document_count": 6,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Nass_43/TSR_2002/"
+        },
+        {
+          "cycle_label": "TSR_2019",
+          "cycle_year": 2019,
+          "document_count": 1,
+          "listed_modified_raw": "7/22/2020  8:44 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Nass_43/TSR_2019/"
+        }
+      ],
+      "document_count": 15,
+      "listed_modified_raw": "7/22/2020  8:54 AM",
+      "tsa_code": "43",
+      "tsa_directory_name": "Nass_43",
+      "tsa_id": "tsa_43",
+      "tsa_name": "Nass",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Nass_43/"
+    },
+    {
+      "cycle_count": 3,
+      "cycles": [
+        {
+          "cycle_label": "Analysis",
+          "cycle_year": null,
+          "document_count": 3,
+          "listed_modified_raw": "7/22/2020  9:19 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Pacific_44/Analysis/"
+        },
+        {
+          "cycle_label": "Data_Package_2016",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Pacific_44/Data_Package_2016/"
+        },
+        {
+          "cycle_label": "Rationale_2017",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/17/2020  4:02 PM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Pacific_44/Rationale_2017/"
+        }
+      ],
+      "document_count": 5,
+      "listed_modified_raw": "7/22/2020  9:19 AM",
+      "tsa_code": "44",
+      "tsa_directory_name": "Pacific_44",
+      "tsa_id": "tsa_44",
+      "tsa_name": "Pacific",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Pacific_44/"
+    },
+    {
+      "cycle_count": 4,
+      "cycles": [
+        {
+          "cycle_label": "AAC_Rationale",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/22/2020 10:53 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cascadia_45/AAC_Rationale/"
+        },
+        {
+          "cycle_label": "Analysis_Report",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/22/2020 10:53 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cascadia_45/Analysis_Report/"
+        },
+        {
+          "cycle_label": "Chief_Forester_Order",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/22/2020 10:52 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cascadia_45/Chief_Forester_Order/"
+        },
+        {
+          "cycle_label": "Information_Report",
+          "cycle_year": null,
+          "document_count": 1,
+          "listed_modified_raw": "7/22/2020 10:53 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cascadia_45/Information_Report/"
+        }
+      ],
+      "document_count": 4,
+      "listed_modified_raw": "7/22/2020 10:53 AM",
+      "tsa_code": "45",
+      "tsa_directory_name": "Cascadia_45",
+      "tsa_id": "tsa_45",
+      "tsa_name": "Cascadia",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Cascadia_45/"
+    },
+    {
+      "cycle_count": 0,
+      "cycles": [],
+      "document_count": 0,
+      "listed_modified_raw": "12/13/2017  5:39 PM",
+      "tsa_code": "46",
+      "tsa_directory_name": "Great_Bear_Rainforest_North_46",
+      "tsa_id": "tsa_46",
+      "tsa_name": "Great Bear Rainforest North",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Great_Bear_Rainforest_North_46/"
+    },
+    {
+      "cycle_count": 0,
+      "cycles": [],
+      "document_count": 0,
+      "listed_modified_raw": "12/13/2017  5:39 PM",
+      "tsa_code": "47",
+      "tsa_directory_name": "Great_Bear_Rainforest_South_47",
+      "tsa_id": "tsa_47",
+      "tsa_name": "Great Bear Rainforest South",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/Great_Bear_Rainforest_South_47/"
+    },
+    {
+      "cycle_count": 1,
+      "cycles": [
+        {
+          "cycle_label": "TSR_2020",
+          "cycle_year": 2020,
+          "document_count": 1,
+          "listed_modified_raw": "7/22/2020  8:53 AM",
+          "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/North_Island_48/TSR_2020/"
+        }
+      ],
+      "document_count": 1,
+      "listed_modified_raw": "7/22/2020  8:53 AM",
+      "tsa_code": "48",
+      "tsa_directory_name": "North_Island_48",
+      "tsa_id": "tsa_48",
+      "tsa_name": "North Island",
+      "url": "https://www.for.gov.bc.ca/ftp/HTS/external/!publish/Timber_Supply_Review/TSA/North_Island_48/"
+    }
+  ]
+}

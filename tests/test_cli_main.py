@@ -10,6 +10,7 @@ import typer
 import yaml
 
 from femic import bcdc_catalog
+from femic import tsr_catalog
 from femic.cli import main as cli_main
 
 
@@ -4097,3 +4098,98 @@ def test_data_bcdc_resolve_requires_query_or_query_file(
     assert any(
         "provide at least one query or use `--query-file`" in msg for msg in messages
     )
+
+
+def test_tsr_index_writes_canonical_registry_under_repo_metadata_root(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    result = cli_main.TsrIndexResult(
+        generated_utc="2026-04-04T00:00:00+00:00",
+        landing_url=tsr_catalog.DEFAULT_TSR_LANDING_URL,
+        publish_root_url=tsr_catalog.DEFAULT_TSR_PUBLISH_ROOT_URL,
+        tsa_root_url=tsr_catalog.DEFAULT_TSR_TSA_ROOT_URL,
+        landing_resources=(),
+        registry=(),
+        documents=(),
+    )
+    written = cli_main.TsrWrittenIndex(
+        output_root=repo_root / "metadata" / "tsr",
+        registry_path=repo_root / "metadata" / "tsr" / "tsa_registry.json",
+        documents_path=repo_root / "metadata" / "tsr" / "tsa_documents.json",
+        tsa_count=0,
+        document_count=0,
+    )
+    monkeypatch.setattr(cli_main, "index_tsr_tsa_surfaces", lambda: result)
+    captured_roots: list[Path] = []
+
+    def _fake_write(index_result, output_root):
+        assert index_result is result
+        captured_roots.append(output_root)
+        return written
+
+    monkeypatch.setattr(cli_main, "write_tsr_index", _fake_write)
+
+    cli_main.tsr_index(output_root=None)
+
+    assert captured_roots == [repo_root / "metadata" / "tsr"]
+    assert any("tsa_count: 0" in msg for msg in messages)
+    assert any(str(written.registry_path) in msg for msg in messages)
+
+
+def test_tsr_index_supports_relative_output_root(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    monkeypatch.setattr(cli_main.console, "print", lambda *_args, **_kwargs: None)
+
+    result = cli_main.TsrIndexResult(
+        generated_utc="2026-04-04T00:00:00+00:00",
+        landing_url=tsr_catalog.DEFAULT_TSR_LANDING_URL,
+        publish_root_url=tsr_catalog.DEFAULT_TSR_PUBLISH_ROOT_URL,
+        tsa_root_url=tsr_catalog.DEFAULT_TSR_TSA_ROOT_URL,
+        landing_resources=(),
+        registry=(),
+        documents=(),
+    )
+    written = cli_main.TsrWrittenIndex(
+        output_root=repo_root / "runtime" / "tsr-smoke",
+        registry_path=repo_root / "runtime" / "tsr-smoke" / "tsa_registry.json",
+        documents_path=repo_root / "runtime" / "tsr-smoke" / "tsa_documents.json",
+        tsa_count=0,
+        document_count=0,
+    )
+    monkeypatch.setattr(cli_main, "index_tsr_tsa_surfaces", lambda: result)
+    captured_roots: list[Path] = []
+
+    def _fake_write(index_result, output_root):
+        assert index_result is result
+        captured_roots.append(output_root)
+        return written
+
+    monkeypatch.setattr(cli_main, "write_tsr_index", _fake_write)
+
+    cli_main.tsr_index(output_root=Path("runtime/tsr-smoke"))
+
+    assert captured_roots == [repo_root / "runtime" / "tsr-smoke"]
+
+
+def test_tsr_index_reports_catalog_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "index_tsr_tsa_surfaces",
+        lambda: (_ for _ in ()).throw(cli_main.TsrCatalogError("boom")),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.tsr_index(output_root=None)
+
+    assert exc_info.value.exit_code == 1
+    assert any("TSR index error:" in msg for msg in messages)

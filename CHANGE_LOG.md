@@ -11245,3 +11245,21 @@
       and TIPSY references;
     - `#105` add reviewed instance-local overlay files; and
     - `#106` document the operator/agent workflow.
+- 2026-04-04 (Issue `#102` canonical TSR TSA registry/index):
+  - Added the first `femic.tsr_catalog` support package with crawl/index logic
+    for the BC TSR TSA document surfaces.
+  - Added the first `femic tsr` CLI command:
+    - `python -m femic tsr index`
+  - The command now writes canonical repo-tracked JSON outputs under
+    `metadata/tsr/`:
+    - `tsa_registry.json`
+    - `tsa_documents.json`
+  - Ran a live index build and recorded the first canonical corpus snapshot:
+    - `42` TSA folders
+    - `677` TSA document records
+  - Added offline crawl tests, CLI tests, and curated API/CLI docs for the new
+    TSR indexing surface.
+  - Validation completed:
+    - `python -m pytest tests/test_tsr_catalog.py tests/test_cli_main.py -k "tsr_index or tsr_catalog" -q`
+    - `python -m pytest tests/test_docs_contract.py -q`
+    - `python -m sphinx -b html docs _build/html -W`
