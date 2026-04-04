@@ -12056,6 +12056,14 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       PDF parsing;
     - add PowerShell guidance or batch-input support so multiline/manual query
       entry does not fall into PSReadLine/paste traps.
+- 2026-04-04 (Issue `#98` provenance correction: manual resolver pass was
+  against the 2013 Williams Lake package, not the 2024 TSA29 package):
+  - Corrected the planning note so the preserved manual resolver findings are
+    tied to `reference/williams_lake_tsa_data_package-2.pdf` Table 2 rather
+    than `reference/29ts_dpkg_2024.pdf`.
+  - Recorded the practical pattern surfaced by the developer's scrape:
+    - rows listed with source `BCGW` generally produced useful catalogue hits;
+    - rows not sourced from `BCGW` generally did not.
 - 2026-04-04 (Issue `#98` docs refinement: richer user/agent examples for the
   BCDC resolver):
   - Extended the discovery docs so the first slice is easier to use without

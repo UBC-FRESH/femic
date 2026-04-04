@@ -11090,3 +11090,10 @@
   - Added compact BCDC resolver quickstart examples to `README.md` and
     `AGENTS.md` so both human users and coding agents can find a known-working
     Windows PowerShell command quickly.
+- 2026-04-04 (Issue `#98` note correction: manual TSR resolver pass came from the 2013 Williams Lake package):
+  - Corrected `planning/tsa29_section51_bcdc_manual_resolution_notes.md` so it
+    points at `reference/williams_lake_tsa_data_package-2.pdf` Table 2 rather
+    than the 2024 TSA29 package.
+  - Added the observed source-system pattern:
+    - `BCGW`-sourced rows generally produced useful BC Data Catalogue hits;
+    - non-`BCGW` rows generally did not.

@@ -3,8 +3,11 @@
 Purpose
 
 This note preserves one manual exploration pass of the new
-`femic data bcdc-resolve` workflow against layer names scraped from section 5.1
-of `reference/29ts_dpkg_2024.pdf`.
+`femic data bcdc-resolve` workflow against layer names scraped from a TSR
+source-data list. Per later clarification from the developer, this pass was
+actually based on the older Williams Lake TSA package
+`reference/williams_lake_tsa_data_package-2.pdf`, specifically Table 2, not
+the 2024 TSA29 package.
 
 Treat this as a planning/provenance note, not as a canonical dataset contract.
 It is useful for:
@@ -17,6 +20,18 @@ It is useful for:
   curated fallback rules later.
 
 ## High-signal findings
+
+### Source-system pattern
+
+The manual pass suggests a useful first-order rule:
+
+- rows in Table 2 whose source was listed as `BCGW` generally produced useful
+  catalogue hits; and
+- rows not listed with source `BCGW` generally did not.
+
+That pattern makes sense and should probably inform later resolver heuristics:
+the first slice is naturally strongest when the TSR source list is already
+pointing at BC Data Catalogue / BCGW-facing layer names.
 
 ### Clean exact object-name hits
 
