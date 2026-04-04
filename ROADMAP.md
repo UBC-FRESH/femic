@@ -12033,4 +12033,27 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       `metadata/required_datasets.yaml`;
     - keep `package_list` and broader CKAN-admin-style exploration out of the
       hot path unless a later issue demonstrates a clear payoff.
+- 2026-04-04 (Issue `#98` follow-up note: TSA29 section 5.1 manual resolver
+  pass captured for later THLB/netdown and dataset-curation work):
+  - Preserved one manual BCDC resolver pass against section 5.1 layer names
+    from `reference/29ts_dpkg_2024.pdf` in
+    `planning/tsa29_section51_bcdc_manual_resolution_notes.md`.
+  - High-value findings worth revisiting later:
+    - clean exact object-name matches were found for many TSA29-relevant
+      layers, including F_OWN, FADM_TSA, landscape units, BEC, VRI R1, visual
+      landscape inventory, WHA/UWR, OGMA/legal-planning surfaces, and related
+      TANTALIS layers;
+    - the first slice also surfaced a small set of direct-download candidates
+      with potential immediate reuse value:
+      `SITE_PROD_BC`, VRI R1, Consolidated Cutblocks, and current fire
+      perimeters;
+    - several TSR source-list names still failed to resolve cleanly and now
+      form a concrete seed list for future curated alias/ranking work.
+  - Detailed Next Steps:
+    - use the preserved TSA29 section 5.1 manual findings to prioritize
+      resolver improvements that matter for later THLB/netdown refinement;
+    - consider a small forestry-focused alias map before attempting full TSR
+      PDF parsing;
+    - add PowerShell guidance or batch-input support so multiline/manual query
+      entry does not fall into PSReadLine/paste traps.
 

@@ -11068,3 +11068,16 @@
     - `python -m pytest -q`
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m pre_commit run --all-files`
+- 2026-04-04 (Issue `#98` follow-up: preserved TSA29 section 5.1 manual BCDC discovery results):
+  - Added `planning/tsa29_section51_bcdc_manual_resolution_notes.md` to record
+    one manual resolver pass against the Williams Lake TSA TSR section 5.1
+    source-data list.
+  - Captured:
+    - clean exact object-name hits for many TSA29-relevant layers;
+    - direct-download wins surfaced by the first slice
+      (`SITE_PROD_BC`, VRI R1, Consolidated Cutblocks, and current fire
+      perimeters);
+    - unresolved alias/name-drift cases that should seed future resolver
+      curation work; and
+    - Windows PowerShell/PSReadLine multiline-query pitfalls worth addressing
+      in later docs or batch-input improvements.
