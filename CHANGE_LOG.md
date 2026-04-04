@@ -11005,3 +11005,17 @@
     - `python -m pytest -q`
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m pre_commit run --all-files`
+- 2026-04-03 (Issue `#83` reconciled: Windows Codex local-link recovery docs were already in place):
+  - Audited GitHub issue `#83` against the current repo and confirmed the
+    requested guidance had already landed earlier in the expected surfaces:
+    - `AGENTS.md`
+    - `README.md`
+    - `docs/guides/vscode-coding-agent-onboarding.rst`
+    - `docs/guides/case-onboarding.rst`
+    - `docs/guides/deployment-instances.rst`
+  - The shipped docs already point contributors and coding agents at the
+    maintained `codex-local-file-link-patch` repo, the PowerShell patch
+    command, and the Windows-only scope of the workaround.
+  - No new code or doc content was needed in this pass; the remaining action is
+    GitHub hygiene only: close `#83` with a repo-path-based closeout comment so
+    the issue tracker matches the actual documented state.

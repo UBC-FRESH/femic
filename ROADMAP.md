@@ -8454,6 +8454,25 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 ## Detailed Next Steps Notes
 
+- 2026-04-03 (Issue `#83` reconciled and ready to close: Windows Codex local-link recovery docs were already landed):
+  - GitHub issue `#83` no longer reflects missing implementation work; the
+    requested Windows VS Code/Codex recovery guidance is already present in the
+    current repo surfaces:
+    - `AGENTS.md`
+    - `README.md`
+    - `docs/guides/vscode-coding-agent-onboarding.rst`
+    - `docs/guides/case-onboarding.rst`
+    - `docs/guides/deployment-instances.rst`
+  - The shipped guidance already covers:
+    - the maintained `codex-local-file-link-patch` repo;
+    - the Windows-only scope of the workaround;
+    - the PowerShell patch command; and
+    - the post-patch `Developer: Reload Window` step.
+  - Immediate follow-through:
+    - post a closeout comment on GitHub issue `#83` pointing to the existing
+      docs and close the issue as tracker reconciliation rather than new code
+      or docs work.
+
 - 2026-04-03 (Issue `#11` implemented: Windows `validate-case` now diagnoses
   canonical TSA FileGDB materialization before blaming GDAL):
   - What shipped:
