@@ -55,7 +55,9 @@ Good queue hygiene
 
 ---
 
-[feature] Clean up FEMIC package root dir file structure to move stuff that does not arguably belong there (especially the core *.py files, but also *.feather, ria_maptiles.csv, vdyp_params and vdyp_params_landp, etc.).
+[feature] LLM coding-agent supported "legacy model based FEMIC instance warm-start" module that expedites building a new FEMIC-style model instance from canonical source data (possibly with multiple output format target, e.g., ws3, Patchworks, Woodstock, etc.) by basing it on a known-valid legacy instance (in one of same input data formats we already know how to output).
+
+[feature] Clean up FEMIC package root dir file structure to move stuff that does not arguably belong there (especially the core `*.py` files, but also `*.feather`, `ria_maptiles.csv`, `vdyp_params` and `vdyp_params_landp`, etc.).
 
 [feature] Add FEMIC CLI surface to help users connect a local FEMIC package installation with their own FEMIC-compatible GitHub+DataLad "instance repository", and optionally populate their new instance repo with "forks" of built-in FEMIC model instance variants (or grab a whole instance family with all of its variants). Basically the first (and possibly only---we we'll see how she goes) client for this functionality would be me (as PI of the UBC FRESH lab) and my UBC FRESH lab team members---basically I want to create both private (for WIP projects, accessible only to FRESH team and authorized collaborators) and public (for ready-to-share projects) FEMIC model instance repositories that are storage-volume-backed by either my DRAC Arbutus cloud S3 bucket object store account or my UBC ARC Chinook cloud S3 bucket object store account (the latter has much more space and better Globus-user-based self-serve cloud-based user-access management surface). Also make sure that users who cannot or prefer not to sync their datalad data to a cloud "special remote" repo can just use the default "local" dataset data stash (a local git-annex repo or something?... I am fuzzy on recalling the implementation details)
 
