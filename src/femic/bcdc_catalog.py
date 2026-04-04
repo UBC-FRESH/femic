@@ -8,9 +8,10 @@ import json
 from pathlib import Path
 import re
 from typing import Any, Callable
-from urllib.parse import urlencode, urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from urllib.request import urlopen
 import shutil
+import xml.etree.ElementTree as ET
 
 
 BCDC_PACKAGE_SEARCH_URL = "https://catalogue.data.gov.bc.ca/api/3/action/package_search"
@@ -20,6 +21,8 @@ SERVICE = "service"
 INDIRECT_CUSTOM_DOWNLOAD = "indirect_custom_download"
 SUPPORTING_DOCUMENT = "supporting_document"
 UNKNOWN = "unknown"
+SERVICE_TYPE_OPENMAPS_OWS = "openmaps_ows"
+FETCH_STRATEGY_WFS_GETFEATURE_BBOX = "wfs_getfeature_bbox"
 DIRECT_DOWNLOAD_CLASSIFICATIONS = {DIRECT_DATA_DOWNLOAD}
 DIRECT_DATA_FORMATS = {
     "zip",
@@ -126,6 +129,11 @@ class BcdcResourceMatch:
     resource_storage_location: str | None
     matched_by: str
     match_score: int
+    service_type: str | None = None
+    wfs_queryable: bool = False
+    wfs_capabilities_url: str | None = None
+    wfs_typename: str | None = None
+    suggested_fetch_strategy: str | None = None
     notes: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, object]:
@@ -141,6 +149,11 @@ class BcdcResourceMatch:
             "resource_access_method": self.resource_access_method,
             "resource_type": self.resource_type,
             "resource_storage_location": self.resource_storage_location,
+            "service_type": self.service_type,
+            "wfs_queryable": self.wfs_queryable,
+            "wfs_capabilities_url": self.wfs_capabilities_url,
+            "wfs_typename": self.wfs_typename,
+            "suggested_fetch_strategy": self.suggested_fetch_strategy,
             "matched_by": self.matched_by,
             "match_score": self.match_score,
             "notes": list(self.notes),
@@ -162,6 +175,7 @@ class BcdcPackageMatch:
     matched_by: str
     match_score: int
     resources: tuple[BcdcResourceMatch, ...]
+    suggested_fetch_strategy: str | None = None
     manual_follow_up: tuple[str, ...] = ()
 
     @property
@@ -184,6 +198,7 @@ class BcdcPackageMatch:
             "download_audience": self.download_audience,
             "matched_by": self.matched_by,
             "match_score": self.match_score,
+            "suggested_fetch_strategy": self.suggested_fetch_strategy,
             "resources": [resource.to_dict() for resource in self.resources],
             "manual_follow_up": list(self.manual_follow_up),
         }
@@ -251,6 +266,118 @@ def _build_keyword_search_url(query: str, *, rows: int) -> str:
     return _build_package_search_url(query.strip(), rows=rows)
 
 
+def _normalize_url_without_query(url: str) -> str:
+    parsed = urlparse(url.strip())
+    return urlunparse((parsed.scheme, parsed.netloc, parsed.path, "", "", ""))
+
+
+def _looks_like_openmaps_ows_url(url: str | None) -> bool:
+    if not url:
+        return False
+    parsed = urlparse(url)
+    return (
+        parsed.scheme in {"http", "https"}
+        and parsed.netloc.casefold() == "openmaps.gov.bc.ca"
+        and parsed.path.casefold().endswith("/ows")
+    )
+
+
+def _build_wfs_capabilities_url(service_url: str) -> str:
+    parsed = urlparse(service_url)
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    query["service"] = "WFS"
+    query["request"] = "GetCapabilities"
+    if "version" not in query:
+        query["version"] = "2.0.0"
+    encoded_query = urlencode(query)
+    return urlunparse(
+        (
+            parsed.scheme,
+            parsed.netloc,
+            parsed.path,
+            parsed.params,
+            encoded_query,
+            parsed.fragment,
+        )
+    )
+
+
+def _probe_service_resource(
+    resource: dict[str, Any],
+    *,
+    fetch_text_fn: Callable[[str], str],
+) -> tuple[str | None, bool, str | None, str | None, str | None, tuple[str, ...]]:
+    resource_url = str(resource.get("url") or "").strip()
+    if not _looks_like_openmaps_ows_url(resource_url):
+        return (None, False, None, None, None, ())
+
+    capabilities_url = _build_wfs_capabilities_url(resource_url)
+    notes = [
+        "OpenMaps `ows` service detected; probing WFS capabilities for later AOI-scoped automation.",
+    ]
+    try:
+        payload = fetch_text_fn(capabilities_url)
+        root = ET.fromstring(payload)
+    except Exception as exc:
+        return (
+            SERVICE_TYPE_OPENMAPS_OWS,
+            False,
+            capabilities_url,
+            None,
+            None,
+            tuple(notes + [f"WFS probe failed while reading capabilities: {exc}"]),
+        )
+
+    feature_names = [
+        element.text.strip()
+        for element in root.findall(".//{*}FeatureType/{*}Name")
+        if element.text and element.text.strip()
+    ]
+    object_name = str(resource.get("object_name") or "").strip()
+    expected_name = f"pub:{object_name}" if object_name else None
+    chosen_name: str | None = None
+    if expected_name and expected_name in feature_names:
+        chosen_name = expected_name
+    elif object_name and object_name in feature_names:
+        chosen_name = object_name
+
+    if chosen_name is not None:
+        notes.append(
+            f"WFS `GetFeature` is available for `{chosen_name}`; later automation can use bbox-scoped fetches."
+        )
+        return (
+            SERVICE_TYPE_OPENMAPS_OWS,
+            True,
+            capabilities_url,
+            chosen_name,
+            FETCH_STRATEGY_WFS_GETFEATURE_BBOX,
+            tuple(notes),
+        )
+
+    if feature_names:
+        notes.append(
+            "WFS capabilities responded, but the expected feature type name was not discovered in the advertised layer list."
+        )
+        return (
+            SERVICE_TYPE_OPENMAPS_OWS,
+            False,
+            capabilities_url,
+            None,
+            None,
+            tuple(notes),
+        )
+
+    notes.append("WFS capabilities responded without any advertised feature types.")
+    return (
+        SERVICE_TYPE_OPENMAPS_OWS,
+        False,
+        capabilities_url,
+        None,
+        None,
+        tuple(notes),
+    )
+
+
 def _query_variants(query: str) -> tuple[str, ...]:
     normalized_query = query.strip()
     variants: list[str] = [normalized_query]
@@ -262,7 +389,9 @@ def _query_variants(query: str) -> tuple[str, ...]:
             variants.append(alias_value)
             seen.add(alias_value.casefold())
 
-    year_suffix_match = re.match(r"^(?P<stem>.+?)(?:[_\s-])(?P<year>19\d{2}|20\d{2})$", normalized_query)
+    year_suffix_match = re.match(
+        r"^(?P<stem>.+?)(?:[_\s-])(?P<year>19\d{2}|20\d{2})$", normalized_query
+    )
     if year_suffix_match:
         stripped = year_suffix_match.group("stem").strip()
         if stripped and stripped.casefold() not in seen:
@@ -278,6 +407,11 @@ def _fetch_json(url: str) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise BcdcCatalogError("BCDC API returned a non-object JSON payload.")
     return payload
+
+
+def _fetch_text(url: str) -> str:
+    with urlopen(url) as response:
+        return response.read().decode("utf-8")
 
 
 def _extract_package_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
@@ -407,9 +541,25 @@ def _score_resource(query: str, resource: dict[str, Any]) -> tuple[int, str]:
     )
 
 
-def _build_resource_match(query: str, resource: dict[str, Any]) -> BcdcResourceMatch:
+def _build_resource_match(
+    query: str,
+    resource: dict[str, Any],
+    *,
+    probe_service_fn: Callable[
+        [dict[str, Any]],
+        tuple[str | None, bool, str | None, str | None, str | None, tuple[str, ...]],
+    ],
+) -> BcdcResourceMatch:
     match_score, matched_by = _score_resource(query, resource)
     classification, notes = _classify_resource(resource)
+    (
+        service_type,
+        wfs_queryable,
+        wfs_capabilities_url,
+        wfs_typename,
+        suggested_fetch_strategy,
+        service_notes,
+    ) = probe_service_fn(resource)
     return BcdcResourceMatch(
         resource_id=str(resource.get("id") or ""),
         name=str(resource.get("name") or ""),
@@ -426,9 +576,14 @@ def _build_resource_match(query: str, resource: dict[str, Any]) -> BcdcResourceM
         resource_storage_location=(
             str(resource.get("resource_storage_location") or "").strip() or None
         ),
+        service_type=service_type,
+        wfs_queryable=wfs_queryable,
+        wfs_capabilities_url=wfs_capabilities_url,
+        wfs_typename=wfs_typename,
+        suggested_fetch_strategy=suggested_fetch_strategy,
         matched_by=matched_by,
         match_score=match_score,
-        notes=notes,
+        notes=notes + service_notes,
     )
 
 
@@ -459,6 +614,10 @@ def _package_manual_follow_up(
         notes.append(
             "Top match currently exposes service resources but no direct-access data file for v1 automation."
         )
+    if any(resource.wfs_queryable for resource in resources):
+        notes.append(
+            "Top match includes WFS-queryable OpenMaps service resources; a later AOI-scoped fetch path can use these service hints directly."
+        )
     if any(resource.classification == SUPPORTING_DOCUMENT for resource in resources):
         notes.append(
             "Supporting documents are available for manual review but are not auto-downloaded in v1."
@@ -466,11 +625,57 @@ def _package_manual_follow_up(
     return tuple(notes)
 
 
-def _build_package_match(query: str, package: dict[str, Any]) -> BcdcPackageMatch:
+def _package_suggested_fetch_strategy(
+    resources: tuple[BcdcResourceMatch, ...],
+) -> str | None:
+    for resource in resources:
+        if resource.suggested_fetch_strategy is not None:
+            return resource.suggested_fetch_strategy
+    return None
+
+
+def _make_service_probe_fn(
+    *,
+    fetch_text_fn: Callable[[str], str],
+) -> Callable[
+    [dict[str, Any]],
+    tuple[str | None, bool, str | None, str | None, str | None, tuple[str, ...]],
+]:
+    def _probe(
+        resource: dict[str, Any],
+    ) -> tuple[
+        str | None,
+        bool,
+        str | None,
+        str | None,
+        str | None,
+        tuple[str, ...],
+    ]:
+        return _probe_service_resource(resource, fetch_text_fn=fetch_text_fn)
+
+    return _probe
+
+
+def _build_package_match(
+    query: str,
+    package: dict[str, Any],
+    *,
+    probe_service_fn: Callable[
+        [dict[str, Any]],
+        tuple[str | None, bool, str | None, str | None, str | None, tuple[str, ...]],
+    ]
+    | None = None,
+) -> BcdcPackageMatch:
+    if probe_service_fn is None:
+        probe_service_fn = _make_service_probe_fn(fetch_text_fn=_fetch_text)
     resources = tuple(
         sorted(
             (
-                _build_resource_match(query, resource)
+                _build_resource_match(
+                    query,
+                    resource,
+                    probe_service_fn=probe_service_fn,
+                )
                 for resource in package.get("resources", [])
                 if isinstance(resource, dict)
             ),
@@ -510,6 +715,7 @@ def _build_package_match(query: str, package: dict[str, Any]) -> BcdcPackageMatc
         matched_by=package_matched_by,
         match_score=package_score,
         resources=resources,
+        suggested_fetch_strategy=_package_suggested_fetch_strategy(resources),
         manual_follow_up=_package_manual_follow_up(resources),
     )
 
@@ -522,9 +728,14 @@ def _merge_package_matches(
     existing: dict[str, BcdcPackageMatch],
     query: str,
     rows: list[dict[str, Any]],
+    *,
+    probe_service_fn: Callable[
+        [dict[str, Any]],
+        tuple[str | None, bool, str | None, str | None, str | None, tuple[str, ...]],
+    ],
 ) -> None:
     for row in rows:
-        match = _build_package_match(query, row)
+        match = _build_package_match(query, row, probe_service_fn=probe_service_fn)
         current = existing.get(match.package_id)
         if current is None or (
             match.match_score,
@@ -545,6 +756,7 @@ def resolve_bcdc_candidates(query: str, *, limit: int = 5) -> BcdcResolveResult:
 
     api_urls: list[str] = []
     package_matches: dict[str, BcdcPackageMatch] = {}
+    probe_service_fn = _make_service_probe_fn(fetch_text_fn=_fetch_text)
 
     query_variants = _query_variants(normalized_query)
     notes_list: list[str] = []
@@ -558,6 +770,7 @@ def resolve_bcdc_candidates(query: str, *, limit: int = 5) -> BcdcResolveResult:
             package_matches,
             variant,
             _extract_package_rows(_fetch_json(object_url)),
+            probe_service_fn=probe_service_fn,
         )
         if variant != normalized_query and len(package_matches) > before_count:
             alias_variant_used = variant
@@ -592,6 +805,7 @@ def resolve_bcdc_candidates(query: str, *, limit: int = 5) -> BcdcResolveResult:
                 package_matches,
                 variant,
                 _extract_package_rows(_fetch_json(keyword_url)),
+                probe_service_fn=probe_service_fn,
             )
             if variant != normalized_query and len(package_matches) > before_count:
                 alias_variant_used = variant

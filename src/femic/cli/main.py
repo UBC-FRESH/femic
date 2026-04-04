@@ -1890,8 +1890,10 @@ def _write_bcdc_summary_csv(
         "dataset_page_url",
         "matched_by",
         "used_alias",
+        "suggested_fetch_strategy",
         "direct_download_candidates",
         "has_service",
+        "has_wfs_queryable_service",
         "has_indirect_custom_download",
         "has_supporting_document",
         "notes",
@@ -1921,6 +1923,12 @@ def _write_bcdc_summary_csv(
                     ),
                     "matched_by": top_match.matched_by if top_match is not None else "",
                     "used_alias": used_alias,
+                    "suggested_fetch_strategy": (
+                        top_match.suggested_fetch_strategy
+                        if top_match is not None
+                        and top_match.suggested_fetch_strategy is not None
+                        else ""
+                    ),
                     "direct_download_candidates": (
                         len(top_match.direct_download_resources)
                         if top_match is not None
@@ -1928,6 +1936,9 @@ def _write_bcdc_summary_csv(
                     ),
                     "has_service": any(
                         resource.classification == "service" for resource in resources
+                    ),
+                    "has_wfs_queryable_service": any(
+                        resource.wfs_queryable for resource in resources
                     ),
                     "has_indirect_custom_download": any(
                         resource.classification == "indirect_custom_download"
@@ -1964,11 +1975,20 @@ def _print_bcdc_resolve_summary(result: BcdcResolveResult) -> None:
         f"{top_match.title} matched_by={top_match.matched_by} "
         f"page={top_match.dataset_page_url}"
     )
+    if top_match.suggested_fetch_strategy is not None:
+        console.print(f"suggested_fetch_strategy: {top_match.suggested_fetch_strategy}")
     console.print(
         f"direct_download_candidates: {len(top_match.direct_download_resources)}"
     )
     for resource in top_match.resources:
         console.print(f"resource: {resource.classification} {resource.name}")
+        if resource.wfs_queryable:
+            console.print(
+                "resource_hint: "
+                f"service_type={resource.service_type} "
+                f"wfs_typename={resource.wfs_typename} "
+                f"strategy={resource.suggested_fetch_strategy}"
+            )
     for note in top_match.manual_follow_up:
         console.print(f"manual_follow_up: {note}")
     if result.download_result is not None:

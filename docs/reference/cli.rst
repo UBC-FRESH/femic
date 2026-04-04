@@ -365,6 +365,9 @@ Operational notes:
 
 - v1 resolves and classifies catalogue resources first; it does **not**
   automate indirect/custom-download BCGW flows;
+- service-backed OpenMaps resources can now surface machine-readable WFS hints
+  such as ``wfs_queryable``, ``wfs_typename``, and
+  ``suggested_fetch_strategy`` in the manifest/summary outputs;
 - ``--download-direct`` only downloads stable direct-access data resources from
   the top-ranked package match; and
 - the intended promotion path is candidate manifest first, then manual review,

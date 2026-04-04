@@ -11410,3 +11410,32 @@
     - `#110` second;
     - `#111` after the new fetch path exists; and
     - `#112` as the later heavier fallback path.
+- 2026-04-04 (Issue `#109` implemented: WFS probing/classification for
+  OpenMaps-backed BCDC service resources):
+  - Extended `femic data bcdc-resolve` so service-backed resources can now
+    expose machine-readable WFS/OpenMaps automation hints without changing the
+    existing top-level resource classification contract.
+  - Added new resolver/manfiest/summary fields for:
+    - `service_type`
+    - `wfs_queryable`
+    - `wfs_capabilities_url`
+    - `wfs_typename`
+    - `suggested_fetch_strategy`
+  - Updated console output, JSON manifests, and summary CSVs so the new hints
+    are visible to both users and follow-on automation.
+  - Added docs explaining the new service-hint surface in:
+    - `docs/guides/bc-data-catalogue-discovery.rst`
+    - `docs/reference/api/femic-bcdc-catalog.rst`
+    - `docs/reference/cli.rst`
+  - Live `F_OWN` smoke now proves the seam directly:
+    - top match reports `suggested_fetch_strategy: wfs_getfeature_bbox`;
+    - the WMS resource reports `service_type=openmaps_ows`; and
+    - the same resource reports
+      `wfs_typename=pub:WHSE_FOREST_VEGETATION.F_OWN`.
+  - Validation passed:
+    - `python -m ruff format src/femic/bcdc_catalog.py src/femic/cli/main.py tests/test_bcdc_catalog.py tests/test_cli_main.py tests/test_docs_contract.py`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`

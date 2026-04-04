@@ -161,6 +161,7 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "Batch Input from a Query File",
         "PowerShell Notes",
         "Classification Buckets",
+        "Service Automation Hints",
         "Manifest Output",
     ):
         assert heading in guide_text
@@ -177,6 +178,9 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "CONSOLIDATED_CUTBLOCKS_2011",
         "direct_data_download",
         "indirect_custom_download",
+        "wfs_queryable",
+        "suggested_fetch_strategy",
+        "wfs_getfeature_bbox",
         "metadata/required_datasets.yaml",
     ):
         assert snippet in guide_text
@@ -197,6 +201,9 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "--download-direct / --no-download-direct",
         "--manifest-path PATH",
         "--fact-family [source_layer_candidate|thlb_reference]",
+        "wfs_queryable",
+        "wfs_typename",
+        "suggested_fetch_strategy",
         "metadata/tsr/tsa_registry.json",
         "metadata/tsr/tsa_documents.json",
         "metadata/tsr/tsa_candidate_facts.json",

@@ -97,19 +97,48 @@ def test_resolve_bcdc_candidates_prefers_exact_object_name_match(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(bcdc_catalog, "_fetch_json", lambda _url: _f_own_payload())
+    monkeypatch.setattr(
+        bcdc_catalog,
+        "_fetch_text",
+        lambda _url: (
+            """<?xml version="1.0" encoding="UTF-8"?>
+<WFS_Capabilities xmlns="http://www.opengis.net/wfs/2.0">
+  <FeatureTypeList>
+    <FeatureType>
+      <Name>pub:WHSE_FOREST_VEGETATION.F_OWN</Name>
+    </FeatureType>
+  </FeatureTypeList>
+</WFS_Capabilities>
+"""
+        ),
+    )
 
     result = bcdc_catalog.resolve_bcdc_candidates("WHSE_FOREST_VEGETATION.F_OWN")
 
     assert result.top_match is not None
     assert result.top_match.title == "Generalized Forest Cover Ownership"
     assert result.top_match.matched_by.startswith("object_name:")
+    assert result.top_match.suggested_fetch_strategy == "wfs_getfeature_bbox"
     classifications = {
         resource.classification for resource in result.top_match.resources
     }
     assert bcdc_catalog.SERVICE in classifications
     assert bcdc_catalog.INDIRECT_CUSTOM_DOWNLOAD in classifications
     assert bcdc_catalog.SUPPORTING_DOCUMENT in classifications
+    wms_resource = next(
+        resource
+        for resource in result.top_match.resources
+        if resource.name == "WMS getCapabilities request"
+    )
+    assert wms_resource.service_type == "openmaps_ows"
+    assert wms_resource.wfs_queryable is True
+    assert wms_resource.wfs_typename == "pub:WHSE_FOREST_VEGETATION.F_OWN"
+    assert wms_resource.suggested_fetch_strategy == "wfs_getfeature_bbox"
     assert any("manual access" in note for note in result.top_match.manual_follow_up)
+    assert any(
+        "WFS-queryable OpenMaps service resources" in note
+        for note in result.top_match.manual_follow_up
+    )
 
 
 def test_resolve_bcdc_candidates_falls_back_to_keyword_search_when_exact_is_weak(
@@ -124,6 +153,21 @@ def test_resolve_bcdc_candidates_falls_back_to_keyword_search_when_exact_is_weak
         return _f_own_payload()
 
     monkeypatch.setattr(bcdc_catalog, "_fetch_json", _fake_fetch)
+    monkeypatch.setattr(
+        bcdc_catalog,
+        "_fetch_text",
+        lambda _url: (
+            """<?xml version="1.0" encoding="UTF-8"?>
+<WFS_Capabilities xmlns="http://www.opengis.net/wfs/2.0">
+  <FeatureTypeList>
+    <FeatureType>
+      <Name>pub:WHSE_FOREST_VEGETATION.F_OWN</Name>
+    </FeatureType>
+  </FeatureTypeList>
+</WFS_Capabilities>
+"""
+        ),
+    )
 
     result = bcdc_catalog.resolve_bcdc_candidates("WHSE_FOREST_VEGETATION.F_OWN")
 
@@ -165,6 +209,16 @@ def test_resolve_bcdc_candidates_uses_curated_alias_when_original_query_misses(
         raise AssertionError(f"Unexpected URL: {url}")
 
     monkeypatch.setattr(bcdc_catalog, "_fetch_json", _fake_fetch)
+    monkeypatch.setattr(
+        bcdc_catalog,
+        "_fetch_text",
+        lambda _url: (
+            """<?xml version="1.0" encoding="UTF-8"?>
+<WFS_Capabilities xmlns="http://www.opengis.net/wfs/2.0">
+</WFS_Capabilities>
+"""
+        ),
+    )
 
     result = bcdc_catalog.resolve_bcdc_candidates("CONSOLIDATED_CUTBLOCKS_2011")
 
@@ -173,6 +227,56 @@ def test_resolve_bcdc_candidates_uses_curated_alias_when_original_query_misses(
     assert any("CONSOLIDATED_CUTBLOCKS" in note for note in result.notes)
     assert any("CONSOLIDATED_CUTBLOCKS_2011" in url for url in result.api_urls)
     assert any("CONSOLIDATED_CUTBLOCKS" in url for url in result.api_urls)
+
+
+def test_probe_service_resource_marks_openmaps_wfs_queryable() -> None:
+    resource = _f_own_payload()["result"]["results"][0]["resources"][0]
+
+    probe = bcdc_catalog._probe_service_resource(
+        resource,
+        fetch_text_fn=lambda _url: (
+            """<?xml version="1.0" encoding="UTF-8"?>
+<WFS_Capabilities xmlns="http://www.opengis.net/wfs/2.0">
+  <FeatureTypeList>
+    <FeatureType>
+      <Name>pub:WHSE_FOREST_VEGETATION.F_OWN</Name>
+    </FeatureType>
+  </FeatureTypeList>
+</WFS_Capabilities>
+"""
+        ),
+    )
+
+    assert probe[0] == "openmaps_ows"
+    assert probe[1] is True
+    assert probe[2] is not None
+    assert "service=WFS" in probe[2]
+    assert probe[3] == "pub:WHSE_FOREST_VEGETATION.F_OWN"
+    assert probe[4] == "wfs_getfeature_bbox"
+
+
+def test_probe_service_resource_keeps_non_ows_service_unprobed() -> None:
+    resource = {
+        "id": "kml-id",
+        "name": "Download KML Ground Overlay file",
+        "format": "kml",
+        "bcdc_type": "webservice",
+        "object_name": "WHSE_FOREST_VEGETATION.F_OWN",
+        "object_short_name": "F_OWN",
+        "resource_access_method": "service",
+        "resource_type": "data",
+        "resource_storage_location": "bc geographic warehouse",
+        "url": "https://openmaps.gov.bc.ca/kml/geo/layers/WHSE_FOREST_VEGETATION.F_OWN_loader.kml",
+    }
+
+    probe = bcdc_catalog._probe_service_resource(
+        resource,
+        fetch_text_fn=lambda _url: (_ for _ in ()).throw(
+            AssertionError("fetch_text_fn should not be called")
+        ),
+    )
+
+    assert probe == (None, False, None, None, None, ())
 
 
 def test_download_direct_bcdc_resources_downloads_only_direct_data(

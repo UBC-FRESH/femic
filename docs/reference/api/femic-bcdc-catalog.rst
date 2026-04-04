@@ -19,7 +19,9 @@ Use this page first if you are trying to:
 - inspect the exact-vs-keyword fallback lookup logic;
 - debug why a resource was classified as direct download, service, indirect
   custom download, or supporting document; or
-- inspect how the v1 direct-download helper chooses what to save.
+- inspect how the v1 direct-download helper chooses what to save; or
+- inspect the WFS/OpenMaps service hints FEMIC now derives for later AOI-scoped
+  fetch automation.
 
 Typical Usage
 -------------
@@ -49,11 +51,13 @@ Key Entry Surfaces
 ------------------
 
 - :func:`resolve_bcdc_candidates`
-  Query the public catalogue and build a normalized ranked result.
+  Query the public catalogue, probe service-backed resources, and build a
+  normalized ranked result.
 - :func:`download_direct_bcdc_resources`
   Download only direct-access data resources from the chosen top match.
 - :func:`write_bcdc_manifest`
-  Persist the resolve/download result as JSON for later promotion/review.
+  Persist the resolve/download result as JSON for later promotion/review,
+  including any WFS service hints.
 
 Cross-References
 ----------------

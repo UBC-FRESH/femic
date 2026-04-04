@@ -12578,3 +12578,40 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       immediately after the new CLI path exists; and
     - leave `#112` as the explicit heavier fallback lane for later FGDB/DWDS
       investigation.
+- 2026-04-04 (Issue `#109` implemented: WFS probing/classification for
+  OpenMaps-backed BCDC service resources):
+  - Extended `femic data bcdc-resolve` so service-backed resources can now
+    carry machine-readable automation hints without changing the existing
+    classification contract:
+    - `service_type`
+    - `wfs_queryable`
+    - `wfs_capabilities_url`
+    - `wfs_typename`
+    - `suggested_fetch_strategy`
+  - Kept `classification=service` for compatibility, while surfacing
+    WFS-queryable OpenMaps `ows` seams for later AOI-scoped acquisition work.
+  - Updated CLI/manifests/summary CSV output so the new hints are visible in
+    both human-facing and machine-readable review paths.
+  - Docs updated:
+    - `docs/guides/bc-data-catalogue-discovery.rst`
+    - `docs/reference/api/femic-bcdc-catalog.rst`
+    - `docs/reference/cli.rst`
+  - Live smoke:
+    - `femic data bcdc-resolve WHSE_FOREST_VEGETATION.F_OWN` now reports:
+      - `suggested_fetch_strategy: wfs_getfeature_bbox`
+      - `service_type=openmaps_ows`
+      - `wfs_typename=pub:WHSE_FOREST_VEGETATION.F_OWN`
+    - the corresponding manifest and summary CSV also now carry the same WFS
+      hint surface.
+  - Validation completed:
+    - `python -m ruff format src/femic/bcdc_catalog.py src/femic/cli/main.py tests/test_bcdc_catalog.py tests/test_cli_main.py tests/test_docs_contract.py`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`
+  - Detailed Next Steps:
+    - move to `#110` next and turn the newly exposed WFS hints into the first
+      AOI-normalized fetch path; and
+    - keep `#111` immediately behind it so the worked `F_OWN`/TSA29 docs land
+      as soon as `bcdc-fetch` exists.

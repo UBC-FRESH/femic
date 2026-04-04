@@ -63,6 +63,8 @@ Typical outcome:
 
 - top match resolves to ``Generalized Forest Cover Ownership``;
 - service resources are listed;
+- WFS-capable OpenMaps services are now surfaced with a suggested fetch
+  strategy when FEMIC can probe them successfully;
 - the BCGW custom-download seam is identified as
   ``indirect_custom_download``; and
 - supporting PDF documentation is surfaced for manual review.
@@ -176,6 +178,28 @@ For many forestry datasets, a package may expose more than one class at the
 same time. For example, one package can expose service endpoints, BCGW custom
 download surfaces, and supporting PDF documentation together.
 
+Service Automation Hints
+------------------------
+
+Some ``service`` resources now carry machine-readable hints for later
+automation, especially when they point at an OpenMaps ``.../ows`` endpoint.
+
+When FEMIC can prove that a service resource is WFS-queryable, the resolver
+will surface hints such as:
+
+- ``service_type`` (for example ``openmaps_ows``)
+- ``wfs_queryable``
+- ``wfs_capabilities_url``
+- ``wfs_typename``
+- ``suggested_fetch_strategy`` (currently
+  ``wfs_getfeature_bbox`` when the OpenMaps service advertises a matching
+  feature type)
+
+This does not yet replace ``femic data bcdc-resolve`` with a download path by
+itself, but it gives the next acquisition layer enough structured information
+to automate AOI-scoped fetches without making users rediscover the service seam
+manually.
+
 Manifest Output
 ---------------
 
@@ -186,6 +210,7 @@ The candidate manifest is the durable output of this first slice. It records:
 - ranked package matches;
 - normalized resource classifications;
 - the chosen top match; and
+- any WFS/OpenMaps service automation hints discovered during probing; and
 - any direct-download attempts and outcomes.
 
 Use that manifest as a review/promotion artifact before touching

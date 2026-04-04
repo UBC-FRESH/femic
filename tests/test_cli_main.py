@@ -3776,7 +3776,36 @@ def test_data_bcdc_resolve_prints_summary_and_manifest(
                     download_audience="Public",
                     matched_by="object_name:WHSE_FOREST_VEGETATION.F_OWN",
                     match_score=400,
+                    suggested_fetch_strategy="wfs_getfeature_bbox",
                     resources=(
+                        bcdc_catalog.BcdcResourceMatch(
+                            resource_id="wms-id",
+                            name="WMS getCapabilities request",
+                            classification="service",
+                            url=(
+                                "https://openmaps.gov.bc.ca/geo/pub/"
+                                "WHSE_FOREST_VEGETATION.F_OWN/ows"
+                            ),
+                            format="wms",
+                            bcdc_type="webservice",
+                            object_name="WHSE_FOREST_VEGETATION.F_OWN",
+                            object_short_name="F_OWN",
+                            resource_access_method="service",
+                            resource_type="data",
+                            resource_storage_location="bc geographic warehouse",
+                            service_type="openmaps_ows",
+                            wfs_queryable=True,
+                            wfs_capabilities_url=(
+                                "https://openmaps.gov.bc.ca/geo/pub/"
+                                "WHSE_FOREST_VEGETATION.F_OWN/ows"
+                                "?service=WFS&request=GetCapabilities&version=2.0.0"
+                            ),
+                            wfs_typename="pub:WHSE_FOREST_VEGETATION.F_OWN",
+                            suggested_fetch_strategy="wfs_getfeature_bbox",
+                            matched_by="object_name:WHSE_FOREST_VEGETATION.F_OWN",
+                            match_score=400,
+                            notes=("WFS-capable OpenMaps service.",),
+                        ),
                         bcdc_catalog.BcdcResourceMatch(
                             resource_id="custom-id",
                             name="BC Geographic Warehouse Custom Download",
@@ -3815,6 +3844,14 @@ def test_data_bcdc_resolve_prints_summary_and_manifest(
     )
     assert any(
         "manual_follow_up: Use the dataset page for manual access." in msg
+        for msg in messages
+    )
+    assert any(
+        "suggested_fetch_strategy: wfs_getfeature_bbox" in msg for msg in messages
+    )
+    assert any(
+        "resource_hint:" in msg
+        and "wfs_typename=pub:WHSE_FOREST_VEGETATION.F_OWN" in msg
         for msg in messages
     )
     assert any("manifest:" in msg for msg in messages)
@@ -3911,6 +3948,8 @@ def test_data_bcdc_resolve_writes_summary_csv(
     assert "CONSOLIDATED_CUTBLOCKS_2011" in text
     assert "alias_hit" in text
     assert "CONSOLIDATED_CUTBLOCKS" in text
+    assert "suggested_fetch_strategy" in text
+    assert "has_wfs_queryable_service" in text
 
 
 def test_data_bcdc_resolve_downloads_direct_resources(
