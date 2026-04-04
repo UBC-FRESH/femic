@@ -77,6 +77,9 @@ That workflow is intentionally separate from the authoritative registry:
 - discovery emits a candidate manifest;
 - WFS-queryable service rows can then move into ``femic data bcdc-fetch`` for
   AOI-scoped local vector acquisition;
+- BCGW fallback rows can then move into ``femic data bcdc-order`` when a DWDS
+  order and a richer output such as File Geodatabase or GeoPackage is the
+  better fit;
 - maintainers review and classify the result; and only then
 - approved datasets are promoted into ``metadata/required_datasets.yaml`` or a
   case-specific contract.

@@ -290,8 +290,44 @@ The intended split is:
 
 - ``bcdc-resolve`` = discovery and classification;
 - ``bcdc-fetch`` = automatable WFS subset download; and
-- DWDS/FGDB ordering = later fallback lane for datasets that cannot be fetched
-  cleanly through WFS.
+- ``bcdc-order`` = DWDS fallback order submission for datasets that need a
+  warehouse order and richer outputs such as File Geodatabase or GeoPackage.
+
+DWDS / FGDB Fallback
+--------------------
+
+When a dataset cannot be fetched cleanly through WFS, or when you explicitly
+want a richer warehouse output such as File Geodatabase, use
+``femic data bcdc-order``.
+
+Example ``F_OWN`` fallback order:
+
+.. code-block:: text
+
+   & .\.venv\Scripts\python.exe -m femic data bcdc-order `
+     WHSE_FOREST_VEGETATION.F_OWN `
+     --bbox 1170000,450000,1180000,460000 `
+     --output-format fgdb `
+     --manifest-path runtime\logs\bcdc_f_own_dwds_manifest.json
+
+This path currently does three useful things:
+
+- resolves the top BCDC package and BCGW feature type;
+- submits a public DWDS order for the requested output format; and
+- writes a manifest recording the order id, order guid, AOI, payload, and any
+  public-status caveats.
+
+Current caveats of the public fallback seam:
+
+- FEMIC submits the order through the public ``createOrderFiltered`` endpoint
+  using a raw JSON body, because that is the live shape that actually worked in
+  probes;
+- ``--geomark`` is currently normalized to a bbox-derived custom GML AOI for
+  reliable order submission rather than being passed through directly to DWDS;
+  and
+- the public ``/order/{id}`` status lookup may still report successful live
+  orders as missing, so the manifest should be treated as the durable record of
+  submission until that seam is better behaved.
 
 Worked Example: TSA29 Query File to Local Layers
 ------------------------------------------------
@@ -344,6 +380,8 @@ This keeps TSA29 acquisition practical:
 
 - review with query files and CSVs;
 - fetch WFS-backed layers through ``bcdc-fetch``; and
+- use ``bcdc-order`` when a reviewed layer needs a warehouse order and a
+  richer output such as FGDB; and
 - use ``--download-direct`` only where the dataset actually exposes a clean
   file-download surface.
 
@@ -369,6 +407,15 @@ The new ``bcdc-fetch`` manifest records:
 - the saved local vector path;
 - the output format; and
 - the returned feature count.
+
+The new ``bcdc-order`` manifest records:
+
+- the chosen package/resource and BCGW feature type;
+- the AOI source (bbox vs geomark-derived bbox);
+- the normalized ``EPSG:3005`` bbox;
+- the DWDS order payload and ordering application;
+- the returned order id and order guid; and
+- any warnings from the public status probe.
 
 Use that manifest as a review/promotion artifact before touching
 ``metadata/required_datasets.yaml`` or copying payloads into

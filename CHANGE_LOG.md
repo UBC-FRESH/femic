@@ -11490,3 +11490,41 @@
     - query files over giant interactive pastes;
     - manifest files as the durable review surface; and
     - using `bcdc-fetch` only for WFS-queryable service rows.
+- 2026-04-04 (Issue `#112` active: DWDS/FGDB fallback investigation and public
+  order submission):
+  - Starting the heavier BCGW fallback lane as a distinct public-order path
+    instead of overloading the existing WFS fetch command.
+  - Narrowed the first implementation slice to what the live public seam has
+    actually proven:
+    - submit public DWDS orders for BCGW feature types;
+    - accept bbox and geomark user inputs, but normalize them to a custom GML
+      AOI for reliable order submission;
+    - expose richer output formats such as FGDB, GeoPackage, GeoJSON, and
+      shapefile; and
+    - write durable order manifests with any status-probe caveats.
+  - Also recording the live caveats up front:
+    - `createOrderFiltered` is scriptable when called with a raw JSON body;
+    - public `/order/{id}` lookups currently return "order does not exist"
+      for successful live probes; and
+    - direct DWDS geomark validation failed in live probes, so v1 will treat
+      `--geomark` as a user-friendly way to derive a bbox/GML AOI rather than
+      as a direct DWDS geomark passthrough.
+- 2026-04-04 (Issue `#112` complete: public DWDS fallback order path landed):
+  - Added `src/femic/bcdc_dwds.py` and the new `femic data bcdc-order` CLI so
+    FEMIC can submit public DWDS fallback orders for BCGW-backed layers when a
+    WFS subset fetch is not the right path.
+  - Shipped support for:
+    - `--bbox` and `--geomark` AOI inputs;
+    - bbox-derived custom GML AOI submission;
+    - output formats `fgdb`, `gpkg`, `geojson`, and `shp`; and
+    - JSON order manifests with request payload, order identifiers, status
+      probes, and warnings.
+  - Live `F_OWN` smoke succeeded with accepted public submission:
+    - `submission_status=SUCCESS`;
+    - `order_id=2550987`; and
+    - the expected warning that the public `/order/{id}` seam still reports
+      the accepted order as missing.
+  - Documented the honest remaining caveats:
+    - public status/download completion is still unreliable; and
+    - `--geomark` is currently normalized to bbox-derived custom GML AOI
+      instead of being passed through directly to DWDS.

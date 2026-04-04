@@ -212,6 +212,7 @@ Subcommands
 
 - ``bcdc-resolve``: ``python -m femic data bcdc-resolve [OPTIONS] [QUERY]...``
 - ``bcdc-fetch``: ``python -m femic data bcdc-fetch [OPTIONS] [QUERY]...``
+- ``bcdc-order``: ``python -m femic data bcdc-order [OPTIONS] [QUERY]...``
 
 ``data bcdc-resolve`` options
 
@@ -246,6 +247,27 @@ dataset exposes ``wfs_queryable`` and
 ``suggested_fetch_strategy=wfs_getfeature_bbox``. If a dataset exposes only
 direct-download resources, use ``femic data bcdc-resolve --download-direct``
 instead.
+
+``data bcdc-order`` options
+
+- ``QUERY`` argument (repeatable; BC Data Catalogue layer names or keywords)
+- ``--query-file PATH`` (optional one-query-per-line text file; blank lines and ``#`` comments ignored)
+- ``--manifest-path PATH`` (optional JSON manifest output path)
+- ``--limit INTEGER`` (default: ``5``)
+- ``--instance-root PATH`` (optional instance root used to resolve relative manifest paths)
+- ``--bbox minx,miny,maxx,maxy`` (required unless ``--geomark`` is supplied; interpreted in ``EPSG:3005``)
+- ``--geomark TEXT`` (required unless ``--bbox`` is supplied; accepts a full Geomark URL or bare Geomark ID)
+- ``--output-format [fgdb|gpkg|geojson|shp]`` (default: ``fgdb``)
+- ``--email TEXT`` (optional DWDS notification email)
+- ``--clip / --no-clip`` (default: ``--clip``)
+
+``data bcdc-order`` is the heavier BCGW fallback lane. Use it when a dataset
+needs a DWDS order for richer outputs such as File Geodatabase or GeoPackage
+instead of a simple direct file download or a WFS-backed subset fetch. The
+current public DWDS seam can submit orders successfully, but the public
+``/order/{id}`` status lookup may still report successful live orders as
+missing, so FEMIC records that caveat in the manifest instead of pretending
+the full end-to-end download path is already solved.
 
 Subcommands
 

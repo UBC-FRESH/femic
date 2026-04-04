@@ -12685,3 +12685,49 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - query files over giant interactive pastes;
     - manifest files as the durable review surface; and
     - using `bcdc-fetch` only for WFS-queryable service rows.
+- 2026-04-04 (Issue `#112` active: DWDS/FGDB fallback investigation and public
+  order submission):
+  - Build the heavier BCGW fallback as a distinct public-order lane instead of
+    overloading the existing WFS fetch path.
+  - Scope this slice around what the live public seam actually supports:
+    - submit public DWDS orders for BCGW feature types;
+    - support bbox and geomark user inputs, but normalize them to a custom GML
+      AOI for reliable order submission;
+    - expose richer output formats such as FGDB, GeoPackage, GeoJSON, and
+      shapefile; and
+    - write durable order manifests with any status-probe caveats.
+  - Record the live caveats honestly in code/docs:
+    - the public `createOrderFiltered` seam is scriptable when called with a
+      raw JSON body;
+    - the advertised public status lookup (`/order/{id}`) currently returns
+      "order does not exist" for successful live probes; and
+    - direct DWDS geomark validation also failed in live probes, so v1 should
+      treat `--geomark` as a user-friendly way to derive a bbox/GML AOI rather
+      than as a direct DWDS geomark passthrough.
+  - Detailed Next Steps:
+    - add a dedicated DWDS helper module and `femic data bcdc-order` CLI;
+    - keep the order path manifest-first, with status/download handled only as
+      far as the public seam proves reliable; and
+    - document `F_OWN` as the representative worked fallback case once the CLI
+      exists.
+- 2026-04-04 (Issue `#112` complete: public DWDS fallback order path landed):
+  - Added a dedicated DWDS helper module at `src/femic/bcdc_dwds.py` plus the
+    new `femic data bcdc-order` CLI for BCGW-backed fallback ordering when WFS
+    is not the desired acquisition path.
+  - Landed public-order support for:
+    - `--bbox` and `--geomark` AOI inputs;
+    - bbox normalization to custom GML AOI for reliable submission;
+    - output formats `fgdb`, `gpkg`, `geojson`, and `shp`; and
+    - JSON order manifests that preserve request payload, chosen feature type,
+      order identifiers, status-probe payload, and warnings.
+  - Live smoke against `WHSE_FOREST_VEGETATION.F_OWN` succeeded with:
+    - `submission_status=SUCCESS`;
+    - `order_id=2550987`; and
+    - an honest warning that the public `/order/{id}` seam still reports the
+      accepted order as missing.
+  - Final contract for this slice:
+    - public DWDS submission is automated and useful;
+    - direct public download/status completion is still unreliable; and
+    - `--geomark` remains a user-friendly AOI input that FEMIC resolves to a
+      bbox-derived custom GML AOI rather than a direct DWDS geomark
+      passthrough.

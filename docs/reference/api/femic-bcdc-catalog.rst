@@ -66,6 +66,7 @@ Cross-References
 - :doc:`../../guides/bc-data-catalogue-discovery`
 - :doc:`../../guides/data-access-inventory`
 - :doc:`femic-bcdc-fetch`
+- :doc:`femic-bcdc-dwds`
 - :doc:`../cli`
 
 .. toctree::

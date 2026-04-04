@@ -4320,6 +4320,213 @@ def test_data_bcdc_fetch_reports_fetch_error(
     assert any("download-direct" in msg for msg in messages)
 
 
+def test_data_bcdc_order_prints_summary_and_manifest(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "submit_bcdc_dwds_order",
+        lambda query, **_kwargs: cli_main.BcdcDwdsOrderResult(
+            query=query,
+            limit=5,
+            generated_utc="2026-04-04T00:00:00+00:00",
+            package_id="pkg-f-own",
+            package_name="generalized-forest-cover-ownership",
+            package_title="Generalized Forest Cover Ownership",
+            dataset_page_url=(
+                "https://catalogue.data.gov.bc.ca/dataset/"
+                "generalized-forest-cover-ownership"
+            ),
+            resource_id="dwds-id",
+            resource_name="BC Geographic Warehouse Custom Download",
+            resource_url=None,
+            feature_type="WHSE_FOREST_VEGETATION.F_OWN",
+            matched_by="object_name:WHSE_FOREST_VEGETATION.F_OWN",
+            aoi_source="bbox",
+            bbox_epsg3005=(1170000.0, 450000.0, 1180000.0, 460000.0),
+            geomark_id=None,
+            geomark_url=None,
+            output_format="fgdb",
+            email_address=None,
+            clipping_method="clip_to_aoi",
+            ordering_application="FEMIC-BCDC-DWDS",
+            request_url="https://apps.gov.bc.ca/pub/dwds-ofi/order/createOrderFiltered",
+            request_payload={"featureItems": []},
+            order_id="2551000",
+            order_guid="guid-123",
+            submission_status="SUCCESS",
+            submission_description="submitted",
+            submission_value="2551000",
+            status_probe=cli_main.BcdcDwdsStatusProbe(
+                order_id="2551000",
+                raw_payload={
+                    "Status": "FAILURE",
+                    "Description": "missing",
+                    "Value": "6",
+                },
+                status="FAILURE",
+                description="missing",
+                value="6",
+                download_url=None,
+            ),
+            warnings=(
+                "DWDS accepted the order submission, but the public `/order/{id}` status seam still reported the order as missing in live probes.",
+            ),
+        ),
+    )
+
+    cli_main.data_bcdc_order(
+        queries=["WHSE_FOREST_VEGETATION.F_OWN"],
+        query_file=None,
+        manifest_path=tmp_path / "manifest.json",
+        limit=5,
+        instance_root=None,
+        bbox="1170000,450000,1180000,460000",
+        geomark=None,
+        output_format="fgdb",
+        email=None,
+        clip=True,
+    )
+
+    assert any("feature_type: WHSE_FOREST_VEGETATION.F_OWN" in msg for msg in messages)
+    assert any("order_id: 2551000" in msg for msg in messages)
+    assert any("status_probe:" in msg for msg in messages)
+    assert any("manifest:" in msg for msg in messages)
+    assert (tmp_path / "manifest.json").is_file()
+
+
+def test_data_bcdc_order_query_file_with_geomark(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "resolve_geomark_bbox_3005",
+        lambda _value: SimpleNamespace(
+            geomark_id="gm-demo",
+            geomark_url="https://apps.gov.bc.ca/pub/geomark/geomarks/gm-demo",
+            bbox_epsg3005=(1170000.0, 450000.0, 1180000.0, 460000.0),
+        ),
+    )
+    captured_queries: list[str] = []
+
+    def _fake_order(query: str, **kwargs):
+        captured_queries.append(query)
+        assert kwargs["geomark"] is not None
+        return cli_main.BcdcDwdsOrderResult(
+            query=query,
+            limit=5,
+            generated_utc="2026-04-04T00:00:00+00:00",
+            package_id="pkg-f-own",
+            package_name="generalized-forest-cover-ownership",
+            package_title="Generalized Forest Cover Ownership",
+            dataset_page_url="https://catalogue.data.gov.bc.ca/dataset/generalized-forest-cover-ownership",
+            resource_id="dwds-id",
+            resource_name="BC Geographic Warehouse Custom Download",
+            resource_url=None,
+            feature_type="WHSE_FOREST_VEGETATION.F_OWN",
+            matched_by="object_name:WHSE_FOREST_VEGETATION.F_OWN",
+            aoi_source="geomark",
+            bbox_epsg3005=(1170000.0, 450000.0, 1180000.0, 460000.0),
+            geomark_id="gm-demo",
+            geomark_url="https://apps.gov.bc.ca/pub/geomark/geomarks/gm-demo",
+            output_format="fgdb",
+            email_address="user@example.com",
+            clipping_method="clip_to_aoi",
+            ordering_application="FEMIC-BCDC-DWDS",
+            request_url="https://apps.gov.bc.ca/pub/dwds-ofi/order/createOrderFiltered",
+            request_payload={"featureItems": []},
+            order_id="2551001",
+            order_guid="guid-124",
+            submission_status="SUCCESS",
+            submission_description="submitted",
+            submission_value="2551001",
+            status_probe=None,
+            warnings=(),
+        )
+
+    monkeypatch.setattr(cli_main, "submit_bcdc_dwds_order", _fake_order)
+
+    query_file = tmp_path / "queries.txt"
+    query_file.write_text("WHSE_FOREST_VEGETATION.F_OWN\n", encoding="utf-8")
+
+    cli_main.data_bcdc_order(
+        queries=None,
+        query_file=query_file,
+        manifest_path=None,
+        limit=5,
+        instance_root=None,
+        bbox=None,
+        geomark="gm-demo",
+        output_format="fgdb",
+        email="user@example.com",
+        clip=True,
+    )
+
+    assert captured_queries == ["WHSE_FOREST_VEGETATION.F_OWN"]
+    assert any("geomark: gm-demo" in msg for msg in messages)
+
+
+def test_data_bcdc_order_requires_exactly_one_aoi(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.data_bcdc_order(
+            queries=["WHSE_FOREST_VEGETATION.F_OWN"],
+            query_file=None,
+            manifest_path=None,
+            limit=5,
+            instance_root=None,
+            bbox=None,
+            geomark=None,
+            output_format="fgdb",
+            email=None,
+            clip=True,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("supply exactly one AOI input" in msg for msg in messages)
+
+
+def test_data_bcdc_order_reports_order_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "submit_bcdc_dwds_order",
+        lambda query, **_kwargs: (_ for _ in ()).throw(
+            cli_main.BcdcDwdsError("DWDS does not report public download permission")
+        ),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.data_bcdc_order(
+            queries=["WHSE_FOREST_VEGETATION.F_OWN"],
+            query_file=None,
+            manifest_path=None,
+            limit=5,
+            instance_root=None,
+            bbox="1170000,450000,1180000,460000",
+            geomark=None,
+            output_format="fgdb",
+            email=None,
+            clip=True,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("BCDC order error:" in msg for msg in messages)
+
+
 def test_tsr_index_writes_canonical_registry_under_repo_metadata_root(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

@@ -34,6 +34,14 @@ from femic.bcdc_fetch import (
     resolve_geomark_bbox_3005,
     write_bcdc_fetch_manifest as write_single_bcdc_fetch_manifest,
 )
+from femic.bcdc_dwds import (
+    BcdcDwdsError,
+    BcdcDwdsOrderResult,
+    BcdcDwdsStatusProbe,
+    DWDS_DEFAULT_OUTPUT_FORMAT,
+    submit_bcdc_dwds_order,
+    write_bcdc_dwds_manifest as write_single_bcdc_dwds_manifest,
+)
 from femic.builtin_instances import (
     BuiltinInstanceCatalogError,
     install_builtin_instances,
@@ -360,6 +368,22 @@ BCDC_OUTPUT_FORMAT_OPTION = typer.Option(
     "gpkg",
     "--output-format",
     help="Output format for WFS-backed fetches: `gpkg` or `geojson`.",
+)
+BCDC_DWDS_OUTPUT_FORMAT_OPTION = typer.Option(
+    DWDS_DEFAULT_OUTPUT_FORMAT,
+    "--output-format",
+    help="Output format for DWDS fallback orders: `fgdb`, `gpkg`, `geojson`, or `shp`.",
+)
+BCDC_EMAIL_OPTION = typer.Option(
+    None,
+    "--email",
+    help="Optional email address for DWDS order notifications.",
+    show_default=False,
+)
+BCDC_CLIP_OPTION = typer.Option(
+    True,
+    "--clip/--no-clip",
+    help="Clip DWDS output to the supplied AOI instead of leaving features whole.",
 )
 TSR_OUTPUT_ROOT_OPTION = typer.Option(
     None,
@@ -1904,6 +1928,24 @@ def _write_bcdc_fetch_manifest(
     return resolved
 
 
+def _write_bcdc_dwds_manifest(
+    results: list[BcdcDwdsOrderResult],
+    *,
+    path: Path,
+) -> Path:
+    if len(results) == 1:
+        return write_single_bcdc_dwds_manifest(results[0], path)
+    resolved = path.expanduser().resolve()
+    resolved.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "generated_utc": datetime.now(UTC).isoformat(),
+        "query_count": len(results),
+        "results": [result.to_dict() for result in results],
+    }
+    resolved.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return resolved
+
+
 def _bcdc_summary_status(result: BcdcResolveResult) -> str:
     top_match = result.top_match
     if top_match is None:
@@ -2061,6 +2103,41 @@ def _print_bcdc_fetch_summary(result: BcdcFetchResult) -> None:
     console.print(f"feature_count: {result.feature_count}")
     console.print(f"saved_path: {result.saved_path}")
     console.print(f"request_url: {result.request_url}")
+    for warning in result.warnings:
+        console.print(f"warning: {warning}")
+
+
+def _format_bcdc_dwds_status_probe(status_probe: BcdcDwdsStatusProbe) -> str:
+    return f"{status_probe.status} {status_probe.description or ''}".strip()
+
+
+def _print_bcdc_dwds_summary(result: BcdcDwdsOrderResult) -> None:
+    console.print(f"query: {result.query}")
+    console.print(
+        "top_match: "
+        f"{result.package_title} matched_by={result.matched_by} "
+        f"page={result.dataset_page_url}"
+    )
+    console.print(f"feature_type: {result.feature_type}")
+    console.print(f"aoi_source: {result.aoi_source}")
+    if result.geomark_id is not None:
+        console.print(f"geomark: {result.geomark_id}")
+    minx, miny, maxx, maxy = result.bbox_epsg3005
+    console.print(f"bbox_epsg3005: {minx},{miny},{maxx},{maxy}")
+    console.print(f"output_format: {result.output_format}")
+    console.print(f"order_id: {result.order_id}")
+    if result.order_guid is not None:
+        console.print(f"order_guid: {result.order_guid}")
+    console.print(f"submission_status: {result.submission_status}")
+    console.print(f"submission_description: {result.submission_description}")
+    if result.email_address:
+        console.print(f"email: {result.email_address}")
+    if result.status_probe is not None:
+        console.print(
+            f"status_probe: {_format_bcdc_dwds_status_probe(result.status_probe)}"
+        )
+        if result.status_probe.download_url is not None:
+            console.print(f"download_url: {result.status_probe.download_url}")
     for warning in result.warnings:
         console.print(f"warning: {warning}")
 
@@ -2349,6 +2426,88 @@ def data_bcdc_fetch(
             instance_context=instance_context,
         )
         written_manifest = _write_bcdc_fetch_manifest(
+            results,
+            path=resolved_manifest_path,
+        )
+        console.print(f"manifest: {written_manifest}")
+
+
+@data_app.command("bcdc-order")
+def data_bcdc_order(
+    queries: list[str] | None = BCDC_QUERY_ARGUMENT,
+    query_file: Path | None = BCDC_QUERY_FILE_OPTION,
+    manifest_path: Path | None = BCDC_MANIFEST_OPTION,
+    limit: int = BCDC_LIMIT_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    bbox: str | None = BCDC_BBOX_OPTION,
+    geomark: str | None = BCDC_GEOMARK_OPTION,
+    output_format: str = BCDC_DWDS_OUTPUT_FORMAT_OPTION,
+    email: str | None = BCDC_EMAIL_OPTION,
+    clip: bool = BCDC_CLIP_OPTION,
+) -> None:
+    """Submit DWDS fallback orders for BCGW-backed BCDC layers."""
+
+    if query_file is not None and not isinstance(query_file, Path):
+        query_file = None
+
+    resolved_queries = list(queries or [])
+    if query_file is not None:
+        resolved_queries.extend(_load_bcdc_queries_from_file(query_file))
+    if not resolved_queries:
+        console.print(
+            "[red]BCDC order error:[/red] provide at least one query or use "
+            "`--query-file`."
+        )
+        raise typer.Exit(code=1)
+
+    if bool(bbox) == bool(geomark):
+        console.print(
+            "[red]BCDC order error:[/red] supply exactly one AOI input via "
+            "`--bbox` or `--geomark`."
+        )
+        raise typer.Exit(code=1)
+
+    instance_context = (
+        _resolve_cli_instance_context(instance_root=instance_root)
+        if instance_root is not None
+        else None
+    )
+
+    try:
+        if bbox is not None:
+            bbox_epsg3005 = build_bbox_3005(bbox)
+            resolved_geomark = None
+        else:
+            resolved_geomark = resolve_geomark_bbox_3005(str(geomark))
+            bbox_epsg3005 = resolved_geomark.bbox_epsg3005
+    except (BcdcFetchError, BcdcDwdsError) as exc:
+        console.print(f"[red]BCDC order error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    results: list[BcdcDwdsOrderResult] = []
+    try:
+        for query in resolved_queries:
+            result = submit_bcdc_dwds_order(
+                query,
+                bbox_epsg3005=bbox_epsg3005,
+                output_format=output_format,
+                limit=limit,
+                geomark=resolved_geomark,
+                email_address=email,
+                clip_to_aoi=clip,
+            )
+            results.append(result)
+            _print_bcdc_dwds_summary(result)
+    except BcdcDwdsError as exc:
+        console.print(f"[red]BCDC order error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    if manifest_path is not None:
+        resolved_manifest_path = _resolve_cli_output_path(
+            manifest_path,
+            instance_context=instance_context,
+        )
+        written_manifest = _write_bcdc_dwds_manifest(
             results,
             path=resolved_manifest_path,
         )

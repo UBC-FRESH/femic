@@ -176,10 +176,12 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "Silviculture Activities History",
         "--download-direct",
         "femic data bcdc-fetch",
+        "femic data bcdc-order",
         "--bbox 1170000,450000,1180000,460000",
         "--geomark gm-abcdefghijklmnopqrstuvwxyz0000bc",
         "--output-format gpkg",
         "bcdc_f_own_fetch_manifest.json",
+        "bcdc_f_own_dwds_manifest.json",
         "tsa29_f_own_fetch_manifest.json",
         "direct_data_download",
         "WFS-queryable OpenMaps service",
@@ -202,6 +204,7 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "- ``tsr``",
         "python -m femic data bcdc-resolve",
         "python -m femic data bcdc-fetch",
+        "python -m femic data bcdc-order",
         "python -m femic tsr index",
         "python -m femic tsr fetch",
         "python -m femic tsr extract",
@@ -214,6 +217,9 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "--bbox minx,miny,maxx,maxy",
         "--geomark TEXT",
         "--output-format [gpkg|geojson]",
+        "--output-format [fgdb|gpkg|geojson|shp]",
+        "--email TEXT",
+        "--clip / --no-clip",
         "--manifest-path PATH",
         "--fact-family [source_layer_candidate|thlb_reference]",
         "wfs_queryable",
@@ -233,6 +239,7 @@ def test_tsr_api_page_is_wired_into_curated_modules() -> None:
     modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
     assert "femic-tsr-catalog" in modules_text
     assert "femic-bcdc-fetch" in modules_text
+    assert "femic-bcdc-dwds" in modules_text
 
     api_page = API_ROOT / "femic-tsr-catalog.rst"
     assert api_page.exists()
@@ -273,6 +280,22 @@ def test_bcdc_fetch_api_page_is_wired_into_curated_modules() -> None:
         "write_bcdc_fetch_manifest",
         "GeoPackage",
         "GeoJSON",
+    ):
+        assert snippet in api_text
+
+
+def test_bcdc_dwds_api_page_is_wired_into_curated_modules() -> None:
+    api_page = API_ROOT / "femic-bcdc-dwds.rst"
+    assert api_page.exists()
+    api_text = api_page.read_text(encoding="utf-8")
+    for snippet in (
+        "``femic.bcdc_dwds`` Module",
+        "femic data bcdc-order",
+        "submit_bcdc_dwds_order",
+        "write_bcdc_dwds_manifest",
+        "File Geodatabase",
+        "GeoPackage",
+        "public `/order/{id}`",
     ):
         assert snippet in api_text
 
