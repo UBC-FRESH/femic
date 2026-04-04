@@ -125,6 +125,34 @@ Operational rule:
 - do not claim a rebuilt Patchworks input layer is sane until you have
   inspected the concrete compiled track outputs directly.
 
+VDYP Runtime Layout Note
+------------------------
+
+Treat the local ``vdyp_io/`` tree as three different contracts, not one pile:
+
+- ``vdyp_io/VDYP.INI`` and ``vdyp_io/VDYP_CFG/**`` are durable local runtime
+  prerequisites;
+- ``vdyp_io/logs/`` is for VDYP-specific event/stdout/stderr evidence;
+- ``vdyp_io/scratch/`` is cleanup-safe raw per-batch spill
+  (``vdyp_ply_*.csv``, ``vdyp_lyr_*.csv``, ``vdyp_out_*.out``,
+  ``vdyp_err_*.err``).
+
+Operational rule:
+
+- do not treat raw per-batch scratch under ``vdyp_io/scratch/`` as canonical
+  evidence or durable runtime input;
+- do not delete ``VDYP.INI`` or ``VDYP_CFG/**`` when cleaning runtime spill.
+
+Canonical-source note:
+
+- FEMIC-level VDYP runtime assets are the preferred canonical shared source
+  during ordinary source-checkout development;
+- instance-local copies of ``VDYP.INI`` / ``VDYP_CFG/**`` are mainly justified
+  when an instance is being frozen or published as a more standalone runtime
+  package that should not depend on the parent FEMIC checkout being present;
+- if both surfaces exist, treat unnecessary duplication as a maintenance risk
+  and keep the intended source of truth explicit in the instance/operator docs.
+
 Patchworks Track Overlay Note
 -----------------------------
 

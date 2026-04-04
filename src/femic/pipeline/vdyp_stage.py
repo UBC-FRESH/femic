@@ -141,6 +141,11 @@ def _as_path(path: str | Path) -> Path:
     return path if isinstance(path, Path) else Path(path)
 
 
+def resolve_vdyp_batch_scratch_dir(vdyp_io_dir: str | Path) -> Path:
+    """Return the disposable scratch directory used for raw VDYP batch spill."""
+    return _as_path(vdyp_io_dir) / "scratch"
+
+
 def _sampling_seed_from_env(env_key: str = "FEMIC_SAMPLING_SEED") -> int | None:
     """Resolve optional sampling seed from env for deterministic bootstrap sampling."""
     raw = os.environ.get(env_key)
@@ -2143,28 +2148,30 @@ def execute_vdyp_batch(
 
     vdyp_io_dir = Path(vdyp_io_dirname)
     vdyp_io_dir.mkdir(parents=True, exist_ok=True)
+    vdyp_scratch_dir = resolve_vdyp_batch_scratch_dir(vdyp_io_dir)
+    vdyp_scratch_dir.mkdir(parents=True, exist_ok=True)
 
     with (
         tempfile.NamedTemporaryFile(
-            dir=vdyp_io_dir,
+            dir=vdyp_scratch_dir,
             prefix="vdyp_ply_",
             suffix=".csv",
             delete=False,
         ) as vdyp_ply_csv_,
         tempfile.NamedTemporaryFile(
-            dir=vdyp_io_dir,
+            dir=vdyp_scratch_dir,
             prefix="vdyp_lyr_",
             suffix=".csv",
             delete=False,
         ) as vdyp_lyr_csv_,
         tempfile.NamedTemporaryFile(
-            dir=vdyp_io_dir,
+            dir=vdyp_scratch_dir,
             prefix="vdyp_out_",
             suffix=".out",
             delete=False,
         ) as vdyp_out_txt_,
         tempfile.NamedTemporaryFile(
-            dir=vdyp_io_dir,
+            dir=vdyp_scratch_dir,
             prefix="vdyp_err_",
             suffix=".err",
             delete=False,
@@ -2181,7 +2188,7 @@ def execute_vdyp_batch(
             feature_ids_list,
             vdyp_ply,
             vdyp_lyr,
-            str(vdyp_io_dir),
+            str(vdyp_scratch_dir),
             temp_artifacts.vdyp_ply_csv,
             temp_artifacts.vdyp_lyr_csv,
         )
@@ -2190,7 +2197,7 @@ def execute_vdyp_batch(
         args = build_vdyp_batch_command(
             vdyp_binpath=vdyp_binpath,
             vdyp_params_infile=vdyp_params_infile,
-            vdyp_io_dir=vdyp_io_dir,
+            vdyp_io_dir=vdyp_scratch_dir,
             vdyp_ply_csv=temp_artifacts.vdyp_ply_csv,
             vdyp_lyr_csv=temp_artifacts.vdyp_lyr_csv,
             vdyp_out_txt=temp_artifacts.vdyp_out_txt,
@@ -2261,9 +2268,7 @@ def execute_vdyp_batch(
             run_started=run_started,
         )
         try:
-            vdyp_out = deps.import_vdyp_tables(
-                str(vdyp_io_dir / temp_artifacts.vdyp_out_txt)
-            )
+            vdyp_out = deps.import_vdyp_tables(str(temp_artifacts.out_path))
         except _vdyp_parse_exception_types() as exc:
             emit_vdyp_run_event(
                 append_jsonl_fn=deps.append_jsonl,

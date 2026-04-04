@@ -11,6 +11,7 @@ tipsy_io/logs/*.json
 tipsy_io/scratch/
 vdyp_io/logs/*.log
 vdyp_io/logs/*.json
+vdyp_io/scratch/
 
 # Large raw datasets
 data/downloads/

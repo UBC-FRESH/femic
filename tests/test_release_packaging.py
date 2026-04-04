@@ -5,7 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from femic.release_packaging import REQUIRED_PATCHWORKS_EXPORT_FILES, build_release_package
+from femic.release_packaging import (
+    REQUIRED_PATCHWORKS_EXPORT_FILES,
+    build_release_package,
+)
 
 
 def _touch(path: Path, text: str = "x") -> None:

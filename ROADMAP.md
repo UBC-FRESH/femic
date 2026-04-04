@@ -8454,6 +8454,37 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 ## Detailed Next Steps Notes
 
+- 2026-04-03 (Issue `#80` validated and closeout-ready):
+  - Delivered exactly the narrow layout split planned at kickoff:
+    - durable VDYP runtime assets stay at `vdyp_io/VDYP.INI` and
+      `vdyp_io/VDYP_CFG/**`;
+    - disposable per-batch raw spill now lands under `vdyp_io/scratch/`;
+    - VDYP-specific event/stdout evidence stays under `vdyp_io/logs/`.
+  - Closeout evidence:
+    - focused runtime-layout regressions passed;
+    - full lint/type/test/docs/pre-commit gates passed;
+    - direct TSA29 inspection now shows a clean `vdyp_io/` root with the old
+      raw spill relocated into `vdyp_io/scratch/`.
+  - Immediate follow-through:
+    - checkpoint the branch commits and submodule pointers;
+    - post the implementation/validation closeout on GitHub issue `#80` and
+      close it if no further scope is added.
+
+- 2026-04-03 (Issue `#80` active implementation: move raw VDYP batch spill,
+  not the durable runtime contract):
+  - Immediate execution order:
+    - update the roadmap/changelog first and keep `#80` as the governing issue;
+    - refactor the VDYP batch temp-file creation path so raw `.csv/.out/.err`
+      spill lands in a dedicated scratch directory instead of the top-level
+      `vdyp_io/` root;
+    - leave `vdyp_io/VDYP.INI`, `vdyp_io/VDYP_CFG/**`, and the existing
+      evidence-bearing log surfaces intact in this pass;
+    - update instance bootstrap, tests, and docs/contracts to describe the new
+      durable-runtime-versus-disposable-scratch boundary;
+    - directly inspect the live TSA29 `vdyp_io/` tree after the code change so
+      the fix is verified on a real representative instance rather than only in
+      unit tests.
+
 - 2026-04-03 (Issue `#81` rescue-guard fix validated):
   - Narrow scope delivered exactly as planned:
     - late `fit_quality_gate` rescue now considers only candidates that earlier
@@ -11778,4 +11809,65 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Left disposable runtime logs out of version control; the only remaining
     untracked TSA29 `vdyp_io/logs/vdyp_runs-*.jsonl` files are runtime logs,
     not essential system/config assets.
+- 2026-04-03 (Issue `#80` kickoff: separate durable VDYP runtime assets from
+  disposable batch spill):
+  - Governing issue:
+    - GitHub issue `#80`
+  - Planned branch:
+    - `feature/issue-80-vdyp-runtime-scratch`
+  - Root-cause read:
+    - `external/femic-tsa29-instance/vdyp_io/` still mixes durable local
+      runtime prerequisites (`VDYP.INI`, `VDYP_CFG/**`) with thousands of raw
+      per-batch spill files (`vdyp_ply_*.csv`, `vdyp_lyr_*.csv`,
+      `vdyp_out_*.out`, `vdyp_err_*.err`);
+    - the main source of that spill is the current VDYP batch runner, which
+      still creates temp batch input/output files directly in the top-level
+      `vdyp_io/` directory.
+  - Active implementation target:
+    - keep `vdyp_io/VDYP.INI` and `vdyp_io/VDYP_CFG/**` in their current
+      durable home so the Windows/Linux runtime contract stays stable;
+    - move only the cleanup-safe raw per-batch VDYP scratch files into a
+      dedicated sibling scratch directory;
+    - update the instance bootstrap/docs/contracts/tests so a fresh instance
+      gets the new layout by default and the durable-vs-disposable boundary is
+      explicit.
+  - Validation target:
+    - add focused regression coverage proving temp batch files are now created
+      under the scratch directory rather than next to `VDYP.INI` / `VDYP_CFG`;
+    - confirm at least one representative instance contract/doc surface
+      reflects the new layout;
+    - directly inspect the TSA29 `vdyp_io/` layout after the refactor to make
+      sure the durable runtime root is no longer the raw spill sink.
+- 2026-04-03 (Issue `#80` implemented: raw VDYP batch spill now lands under
+  `vdyp_io/scratch/`):
+  - What shipped:
+    - `execute_vdyp_batch(...)` now writes disposable
+      `vdyp_ply_*.csv`, `vdyp_lyr_*.csv`, `vdyp_out_*.out`, and
+      `vdyp_err_*.err` files under `vdyp_io/scratch/` instead of the top-level
+      `vdyp_io/` root;
+    - the durable runtime contract stays unchanged:
+      `vdyp_io/VDYP.INI`, `vdyp_io/VDYP_CFG/**`, and `vdyp_io/logs/` remain in
+      place;
+    - instance bootstrap now scaffolds `vdyp_io/scratch/`, and the default
+      instance `.gitignore` ignores it;
+    - the built-in TSA29 and K3Z instance repos now ignore `vdyp_io/scratch/`
+      explicitly as well.
+  - Representative instance validation:
+    - moved the existing TSA29 raw spill into
+      `external/femic-tsa29-instance/vdyp_io/scratch/`;
+    - direct post-change inspection of the TSA29 `vdyp_io/` root now shows only
+      `VDYP.INI`, `VDYP_CFG/`, `logs/`, and `scratch/`;
+    - the relocated TSA29 raw spill count is `7,836` files under
+      `vdyp_io/scratch/`, confirming the durable runtime root is no longer the
+      raw spill sink.
+  - Validation:
+    - `python -m pytest tests/test_vdyp_stage.py -k "scratch or execute_vdyp_batch or build_vdyp_batch_command or ensure_local_vdyp_runtime_assets" -q`
+    - `python -m pytest tests/test_instance_bootstrap.py -q`
+    - `python -m pytest tests/test_docs_contract.py -q`
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`
 

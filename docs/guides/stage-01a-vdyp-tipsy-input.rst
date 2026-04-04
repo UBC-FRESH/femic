@@ -72,6 +72,9 @@ Known Failure Signatures
 - Flat/degenerate or wildly oscillating VDYP curves: inspect bin medians,
   sample size, fit overrides, and whether the sampled polygon/layer batch lost
   feature alignment before VDYP.
+- Raw ``vdyp_ply_*`` / ``vdyp_lyr_*`` / ``vdyp_out_*`` / ``vdyp_err_*`` spill:
+  these now belong under ``vdyp_io/scratch/``; if they are still collecting in
+  the top-level ``vdyp_io/`` root, treat that as a runtime-layout regression.
 - BTC / BatchTIPSY parse failures: usually input-schema mismatch, unsupported
   species/FIZ combinations, or incompatible report-template seams.
 

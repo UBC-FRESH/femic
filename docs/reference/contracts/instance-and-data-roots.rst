@@ -23,6 +23,7 @@ That precedence decides where FEMIC will look for:
 - ``output/``
 - ``runtime/logs/`` for non-VDYP manifests and rebuild reports
 - ``vdyp_io/logs/`` for VDYP-specific event/stdout logs
+- ``vdyp_io/scratch/`` for disposable raw VDYP batch files
 - instance-local rebuild specs and runbooks
 
 Interpretation rules:
@@ -83,6 +84,16 @@ Treat them as git submodules, not ordinary folders:
 - change case-specific instance content in the submodule repo
 - commit submodule changes in the instance repo first, then update the parent
   submodule pointer in FEMIC
+
+VDYP runtime duplication rule:
+
+- the FEMIC source tree can act as the canonical shared source for
+  ``vdyp_io/VDYP.INI`` and ``vdyp_io/VDYP_CFG/**`` during normal source-checkout
+  development;
+- instance-local copies are still valid when a built-in or published instance
+  is intentionally being made more self-contained;
+- do not duplicate those assets casually across every instance without saying
+  which copy is authoritative for maintenance.
 
 Built-in packaged-install resolution now prefers:
 

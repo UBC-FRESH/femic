@@ -102,9 +102,9 @@ The most important sub-flows in this module are:
   :func:`load_vdyp_input_tables` reads the PandL source plus feather caches and
   normalizes the polygon/layer tables used for later batch runs.
 - **Single-batch execution**
-  :func:`execute_vdyp_batch` writes temp ``ply``/``lyr`` CSVs under
-  ``vdyp_io/``, builds the external command line, captures stdout/stderr, and
-  imports the resulting VDYP tables.
+  :func:`execute_vdyp_batch` writes temp ``ply``/``lyr`` CSVs plus raw
+  ``.out``/``.err`` spill under ``vdyp_io/scratch/``, builds the external
+  command line, captures stdout/stderr, and imports the resulting VDYP tables.
 - **Per-stratum orchestration**
   :func:`run_vdyp_for_stratum` resolves runtime assets, log paths, sampling
   behavior, and feature-ID mapping before dispatching one or more batches.
@@ -165,7 +165,7 @@ The most important runtime assumptions in this module are:
 
 The main artifacts this module writes or updates are:
 
-- temp batch inputs/outputs under ``vdyp_io/`` for each subprocess run
+- temp batch inputs/outputs under ``vdyp_io/scratch/`` for each subprocess run
 - per-run JSONL/text logs via :mod:`femic.pipeline.vdyp_logging`
 - stdout/stderr capture files for the external VDYP runtime
 - pickle caches for combined or per-FMU/code VDYP results

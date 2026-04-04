@@ -36,6 +36,7 @@ from femic.pipeline.vdyp_stage import (
     load_or_build_vdyp_results_tsa,
     plot_curve_overlays,
     resolve_vdyp_batch_execution_dependencies,
+    resolve_vdyp_batch_scratch_dir,
     resolve_vdyp_batch_temp_artifacts,
     run_vdyp_for_stratum,
     run_vdyp_sampling,
@@ -1566,6 +1567,54 @@ def test_execute_vdyp_batch_logs_timeout(tmp_path: Path) -> None:
     assert out == {}
     assert len(events) == 1
     assert events[0]["status"] == "timeout"
+
+
+def test_resolve_vdyp_batch_scratch_dir_returns_scratch_child() -> None:
+    assert resolve_vdyp_batch_scratch_dir("vdyp_io") == Path("vdyp_io") / "scratch"
+
+
+def test_execute_vdyp_batch_uses_scratch_dir_for_temp_files(tmp_path: Path) -> None:
+    vdyp_io_dir = tmp_path / "vdyp_io"
+    vdyp_io_dir.mkdir(parents=True)
+    vdyp_ply, vdyp_lyr = _sample_vdyp_tables()
+    seen_write_dir: Path | None = None
+    seen_import_path: Path | None = None
+
+    def fake_write(*args: object) -> None:
+        nonlocal seen_write_dir
+        assert len(args) == 6
+        seen_write_dir = Path(str(args[3]))
+
+    def fake_import(path: str) -> dict[int, object]:
+        nonlocal seen_import_path
+        seen_import_path = Path(path)
+        return {1: {"curve": "ok"}}
+
+    out = execute_vdyp_batch(
+        feature_ids=[1, 2],
+        vdyp_ply=vdyp_ply,
+        vdyp_lyr=vdyp_lyr,
+        vdyp_binpath="VDYP7/VDYP7/VDYP7Console.exe",
+        vdyp_params_infile="vdyp_params-landp",
+        vdyp_io_dirname=str(vdyp_io_dir),
+        vdyp_log_path=vdyp_io_dir / "vdyp_runs.jsonl",
+        vdyp_stdout_log_path=vdyp_io_dir / "vdyp_stdout.log",
+        vdyp_stderr_log_path=vdyp_io_dir / "vdyp_stderr.log",
+        phase="initial",
+        write_vdyp_infiles=fake_write,
+        import_vdyp_tables_fn=fake_import,
+        append_jsonl_fn=lambda *_args: None,
+        append_text_fn=lambda *_args: None,
+        subprocess_run=lambda *_args, **_kwargs: _RunResult(stdout="", stderr=""),
+    )
+
+    assert out == {1: {"curve": "ok"}}
+    assert seen_write_dir == vdyp_io_dir / "scratch"
+    assert seen_import_path is not None
+    assert seen_import_path.parent == vdyp_io_dir / "scratch"
+    assert not any(vdyp_io_dir.glob("vdyp_*.csv"))
+    assert not any(vdyp_io_dir.glob("vdyp_*.out"))
+    assert not any(vdyp_io_dir.glob("vdyp_*.err"))
 
 
 def test_execute_vdyp_batch_unexpected_subprocess_error_propagates(

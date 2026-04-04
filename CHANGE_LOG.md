@@ -10233,6 +10233,49 @@
     perpetually untracked local-only files.
   - Left `vdyp_io/logs/vdyp_runs-*.jsonl` out of version control because those
     files are runtime logs, not essential system/config assets.
+- 2026-04-03 (Issue `#80` kickoff): started the dedicated runtime-layout pass
+  to stop raw VDYP batch spill from landing beside durable `vdyp_io`
+  prerequisites.
+  - Governing issue: `#80`
+  - Working branch: `feature/issue-80-vdyp-runtime-scratch`
+  - Active scope:
+    - keep `vdyp_io/VDYP.INI` and `vdyp_io/VDYP_CFG/**` as the durable runtime
+      contract;
+    - move only cleanup-safe per-batch raw `.csv/.out/.err` spill into a
+      dedicated scratch directory;
+    - update instance bootstrap/tests/docs so the new layout is explicit and
+      validated.
+  - Added matching active-execution notes in `ROADMAP.md`, including a Detailed
+    Next Steps entry that keeps this narrow scratch-layout split at the leading
+    edge of the implementation plan.
+- 2026-04-03 (Issue `#80` implemented): raw VDYP batch spill now lands under
+  `vdyp_io/scratch/` instead of the durable runtime root.
+  - Shipped behavior:
+    - `src/femic/pipeline/vdyp_stage.py` now stages per-batch raw
+      `vdyp_ply_*.csv`, `vdyp_lyr_*.csv`, `vdyp_out_*.out`, and
+      `vdyp_err_*.err` files under `vdyp_io/scratch/`;
+    - `vdyp_io/VDYP.INI`, `vdyp_io/VDYP_CFG/**`, and `vdyp_io/logs/` remain the
+      durable runtime/evidence surfaces;
+    - instance bootstrap now creates `vdyp_io/scratch/`, and the default
+      instance `.gitignore` ignores it;
+    - both built-in instance repos updated their local `.gitignore` rules to
+      ignore `vdyp_io/scratch/`.
+  - Representative TSA29 evidence:
+    - moved the existing raw TSA29 spill into
+      `external/femic-tsa29-instance/vdyp_io/scratch/`;
+    - direct inspection of `external/femic-tsa29-instance/vdyp_io/` now shows
+      only `VDYP.INI`, `VDYP_CFG/`, `logs/`, and `scratch/` at the root;
+    - `vdyp_io/scratch/` now contains `7,836` relocated raw spill files.
+  - Validation:
+    - focused `tests/test_vdyp_stage.py` runtime-layout slice: passed
+    - `tests/test_instance_bootstrap.py`: passed
+    - `tests/test_docs_contract.py`: passed
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `mypy src`
+    - full `pytest`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `pre-commit run --all-files`
 - 2026-04-03 (Issue `#79` implementation launched):
   - Updated the active roadmap/issue-79 execution notes to make the
     planted-share audit explicit instead of treating it as a side question.

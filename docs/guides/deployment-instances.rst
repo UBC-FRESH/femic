@@ -24,6 +24,7 @@ By default this scaffolds:
 - ``output/``
 - ``runtime/logs/`` for non-VDYP manifests/reports
 - ``vdyp_io/logs/`` for VDYP-specific event/stdout logs
+- ``vdyp_io/scratch/`` for disposable raw VDYP batch spill
 - workspace ``.gitignore`` and ``QUICKSTART.md``
 
 Visible User Workspace Root

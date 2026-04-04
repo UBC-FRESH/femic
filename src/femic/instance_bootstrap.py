@@ -47,6 +47,7 @@ INSTANCE_DIRS: tuple[Path, ...] = (
     Path("tipsy_io/logs"),
     Path("tipsy_io/scratch"),
     Path("vdyp_io/logs"),
+    Path("vdyp_io/scratch"),
 )
 INSTANCE_TEMPLATE_FILES: tuple[Path, ...] = (
     Path(".gitignore"),
