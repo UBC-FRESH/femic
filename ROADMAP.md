@@ -12282,3 +12282,41 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - treat the proportional THLB interpretation as the active TSA29 contract;
     - do not revert TSA29 to the old binary/calibrated THLB handling unless a
       new explicit issue reopens that modeling decision.
+- 2026-04-04 (TSR intelligence lane launched: crawler, PDF corpus, and
+  instance-overlay workflow):
+  - Governing issue:
+    - GitHub issue `#101`
+  - Active branch:
+    - `feature/issue-101-tsr-intelligence-lane`
+  - Child issue stack:
+    - `#102` canonical TSA registry/index
+    - `#103` TSR PDF fetch/cache with provenance manifests
+    - `#104` candidate-fact extraction from cached TSR PDFs
+    - `#105` TSA instance-local reviewed TSR overlay files
+    - `#106` user/agent workflow docs and promotion guidance
+  - Scope defaults locked for v1:
+    - TSAs only
+    - canonical repo-tracked JSON registry/candidate facts under
+      `metadata/tsr/`
+    - instance-local reviewed/adopted YAML overlays under
+      `config/tsr/overlay.yaml`
+    - extraction produces candidate facts only, not adopted truth
+    - no automatic mutation of `metadata/required_datasets.yaml`
+  - Active implementation target:
+    - add a new `femic.tsr_catalog` support package with four concerns:
+      crawl, cache, extract, and overlay
+    - add a new `femic tsr` CLI group with:
+      - `index`
+      - `fetch`
+      - `extract`
+      - `overlay-init`
+      - `overlay-report`
+    - keep TSR extraction adjacent to, not merged into, the existing
+      `femic.bcdc_catalog` module
+  - Detailed Next Steps:
+    - implement `#102` first so the TSA document registry and canonical JSON
+      surfaces exist before any PDF caching or extraction logic is built;
+    - shape extracted source-layer candidates in `#104` so they can feed the
+      existing `femic data bcdc-resolve` workflow cleanly later;
+    - keep discovery/extraction separate from reviewed overlay adoption until
+      `#105`, so v1 does not silently write live instance contracts.

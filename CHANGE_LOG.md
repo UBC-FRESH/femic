@@ -11226,3 +11226,22 @@
     area) was accepted as close enough for the current modeling definition, and
     the old binary/calibrated handling should now be treated as a legacy escape
     hatch rather than the active TSA29 baseline.
+- 2026-04-04 (Issue `#101` kickoff: BC TSR intelligence crawler, PDF corpus, and instance-overlay lane):
+  - Opened umbrella issue `#101` plus child issues `#102` through `#106` for a
+    new TSR intelligence workflow built on top of FEMIC's existing BCDC
+    discovery work.
+  - Locked the v1 defaults for this lane:
+    - TSAs only;
+    - canonical repo-tracked JSON registry/candidate facts under
+      `metadata/tsr/`;
+    - instance-local reviewed/adopted YAML overlays under
+      `config/tsr/overlay.yaml`;
+    - discovery/extraction stays separate from adopted instance truth; and
+    - no automatic mutation of `metadata/required_datasets.yaml`.
+  - Planned the implementation order as:
+    - `#102` crawl/index TSA TSR document surfaces;
+    - `#103` fetch/cache TSR PDFs with provenance manifests;
+    - `#104` extract candidate facts for source layers, AU definitions, THLB,
+      and TIPSY references;
+    - `#105` add reviewed instance-local overlay files; and
+    - `#106` document the operator/agent workflow.
