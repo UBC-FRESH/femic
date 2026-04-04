@@ -12421,3 +12421,35 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       discovery state into live instance truth; and
     - keep the broader agent/operator workflow docs for `#106` so the overlay
       promotion path stays separate from the extraction engine itself.
+- 2026-04-04 (Issue `#105` TSR instance-local reviewed overlays implemented):
+  - Added the reviewed/adopted overlay layer in `femic.tsr_catalog.overlay`
+    plus two new CLI entrypoints:
+    - `python -m femic tsr overlay-init`
+    - `python -m femic tsr overlay-report`
+  - The new overlay slice now:
+    - initializes `config/tsr/overlay.yaml` under a chosen instance root;
+    - stores only TSA identity, canonical provenance pointers, candidate
+      summary counts, and empty adopted sections;
+    - preserves the boundary that reviewed/adopted facts are local instance
+      truth while canonical candidate facts remain repo-tracked discovery
+      state; and
+    - reports adopted counts against the canonical summary already embedded in
+      the overlay.
+  - Live TSA29 smoke:
+    - `femic tsr overlay-init --instance-root external/femic-tsa29-instance --tsa 29`
+      initialized a reviewed overlay with:
+      - `822` candidate facts total;
+      - `19` documents;
+      - `104` source-layer candidates;
+      - `127` AU definition candidates;
+      - `420` THLB references; and
+      - `171` TIPSY input candidates;
+    - `femic tsr overlay-report --instance-root external/femic-tsa29-instance`
+      then reported the same canonical counts with all adopted sections still
+      at zero, proving the command path stays review-only by default.
+  - Detailed Next Steps:
+    - move to `#106` next so the operator/agent workflow from TSR page ->
+      fetch/cache -> extract -> reviewed overlay adoption is documented in one
+      place; and
+    - defer any auto-promotion helpers until after the documented reviewed
+      overlay workflow has stabilized.

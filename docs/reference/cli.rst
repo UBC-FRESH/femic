@@ -382,6 +382,8 @@ Subcommands
 - ``index``: ``python -m femic tsr index [OPTIONS]``
 - ``fetch``: ``python -m femic tsr fetch [OPTIONS]``
 - ``extract``: ``python -m femic tsr extract [OPTIONS]``
+- ``overlay-init``: ``python -m femic tsr overlay-init [OPTIONS]``
+- ``overlay-report``: ``python -m femic tsr overlay-report [OPTIONS]``
 
 ``tsr index`` options
 
@@ -435,6 +437,38 @@ The extraction slice is intentionally review-oriented. It produces candidate
 facts for source-layer tokens, AU snippets, THLB references, and TIPSY
 assumption snippets with page/snippet provenance, but it does not adopt those
 facts into live instance overlays yet.
+
+``tsr overlay-init`` options
+
+- ``--tsa TEXT`` (required TSA code, ``tsa_<code>``, or TSA name)
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--registry-path PATH`` (optional; defaults to
+  ``metadata/tsr/tsa_registry.json``)
+- ``--documents-path PATH`` (optional; defaults to
+  ``metadata/tsr/tsa_documents.json``)
+- ``--candidate-facts-path PATH`` (optional; defaults to
+  ``metadata/tsr/tsa_candidate_facts.json`` for canonical candidate facts)
+- ``--overlay-path PATH`` (optional; defaults to
+  ``config/tsr/overlay.yaml`` under the instance root)
+- ``--overwrite`` (optional; replace an existing overlay)
+
+``tsr overlay-init`` initializes the instance-local reviewed/adopted overlay:
+
+- ``config/tsr/overlay.yaml``
+
+The initialized overlay stores only TSA identity, canonical provenance
+references, candidate-summary counts, and empty adopted sections. It does not
+auto-promote unresolved candidate facts into live instance truth.
+
+``tsr overlay-report`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--overlay-path PATH`` (optional; defaults to
+  ``config/tsr/overlay.yaml`` under the instance root)
+
+``tsr overlay-report`` compares the local reviewed overlay against the canonical
+candidate summary already stored inside the overlay and reports adopted counts
+per section without mutating the file.
 
 Export
 ------

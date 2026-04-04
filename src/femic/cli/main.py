@@ -139,10 +139,15 @@ from femic.tsr_catalog import (
     TsrExtractResult,
     TsrFetchResult,
     TsrIndexResult,
+    TsrOverlayError,
+    TsrOverlayInitResult,
+    TsrOverlayReport,
     TsrWrittenIndex,
+    build_tsr_overlay_report,
     extract_tsr_candidate_facts,
     fetch_tsr_pdfs,
     index_tsr_tsa_surfaces,
+    init_tsr_overlay,
     write_tsr_index,
 )
 from femic.pipeline.io import (
@@ -345,6 +350,15 @@ TSR_DOCUMENTS_PATH_OPTION = typer.Option(
     ),
     show_default=False,
 )
+TSR_REGISTRY_PATH_OPTION = typer.Option(
+    None,
+    "--registry-path",
+    help=(
+        "Optional canonical TSR registry path. Defaults to "
+        "`metadata/tsr/tsa_registry.json` under the active FEMIC checkout."
+    ),
+    show_default=False,
+)
 TSR_CORPUS_ROOT_OPTION = typer.Option(
     None,
     "--corpus-root",
@@ -372,6 +386,29 @@ TSR_CANDIDATE_FACTS_PATH_OPTION = typer.Option(
         "`metadata/tsr/tsa_candidate_facts.json` under the active FEMIC checkout."
     ),
     show_default=False,
+)
+TSR_CANDIDATE_FACTS_INPUT_OPTION = typer.Option(
+    None,
+    "--candidate-facts-path",
+    help=(
+        "Optional canonical TSR candidate-facts JSON path. Defaults to "
+        "`metadata/tsr/tsa_candidate_facts.json` under the active FEMIC checkout."
+    ),
+    show_default=False,
+)
+TSR_OVERLAY_PATH_OPTION = typer.Option(
+    None,
+    "--overlay-path",
+    help=(
+        "Optional reviewed TSR overlay YAML path. Defaults to "
+        "`config/tsr/overlay.yaml` under the instance root."
+    ),
+    show_default=False,
+)
+TSR_OVERWRITE_OPTION = typer.Option(
+    False,
+    "--overwrite",
+    help="Overwrite an existing reviewed TSR overlay file.",
 )
 TSR_TSA_FILTER_OPTION = typer.Option(
     None,
@@ -1970,6 +2007,34 @@ def _print_tsr_extract_summary(result: TsrExtractResult) -> None:
     console.print(f"failure_count: {len(result.failures)}")
 
 
+def _print_tsr_overlay_init_summary(result: TsrOverlayInitResult) -> None:
+    console.print(f"overlay_path: {result.overlay_path}")
+    console.print(f"tsa_id: {result.tsa.tsa_id}")
+    console.print(f"tsa_code: {result.tsa.tsa_code}")
+    console.print(f"tsa_name: {result.tsa.tsa_name}")
+    console.print(
+        f"candidate_fact_count: {result.canonical_summary.candidate_fact_count}"
+    )
+    console.print(f"document_count: {result.canonical_summary.document_count}")
+    for family, count in result.canonical_summary.fact_family_counts.items():
+        console.print(f"{family}_count: {count}")
+
+
+def _print_tsr_overlay_report(summary: TsrOverlayReport) -> None:
+    console.print(f"overlay_path: {summary.overlay_path}")
+    console.print(f"tsa_id: {summary.tsa.tsa_id}")
+    console.print(f"tsa_code: {summary.tsa.tsa_code}")
+    console.print(f"tsa_name: {summary.tsa.tsa_name}")
+    console.print(
+        f"candidate_fact_count: {summary.canonical_summary.candidate_fact_count}"
+    )
+    console.print(f"document_count: {summary.canonical_summary.document_count}")
+    for family, count in summary.canonical_summary.fact_family_counts.items():
+        console.print(f"{family}_count: {count}")
+    for section, count in summary.adopted_counts.items():
+        console.print(f"adopted_{section}_count: {count}")
+
+
 @app.callback()
 def main(
     version: bool = VERSION_OPTION,
@@ -2174,6 +2239,77 @@ def tsr_extract(
         raise typer.Exit(code=1) from exc
 
     _print_tsr_extract_summary(result)
+
+
+@tsr_app.command("overlay-init")
+def tsr_overlay_init(
+    tsa: str = typer.Option(..., "--tsa", help="TSA code, tsa_<code>, or TSA name."),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    registry_path: Path | None = TSR_REGISTRY_PATH_OPTION,
+    documents_path: Path | None = TSR_DOCUMENTS_PATH_OPTION,
+    candidate_facts_path: Path | None = TSR_CANDIDATE_FACTS_INPUT_OPTION,
+    overlay_path: Path | None = TSR_OVERLAY_PATH_OPTION,
+    overwrite: bool = TSR_OVERWRITE_OPTION,
+) -> None:
+    """Initialize a reviewed/adopted TSR overlay YAML for one instance."""
+
+    source_root = _source_tree_root()
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_registry_path = _resolve_repo_output_path(
+        registry_path or Path("metadata/tsr/tsa_registry.json"),
+        source_root=source_root,
+    )
+    resolved_documents_path = _resolve_repo_output_path(
+        documents_path or Path("metadata/tsr/tsa_documents.json"),
+        source_root=source_root,
+    )
+    resolved_candidate_facts_path = _resolve_repo_output_path(
+        candidate_facts_path or Path("metadata/tsr/tsa_candidate_facts.json"),
+        source_root=source_root,
+    )
+    resolved_overlay_path = (
+        instance_context.resolve_path(overlay_path)
+        if overlay_path is not None
+        else instance_context.resolve_path(Path("config/tsr/overlay.yaml"))
+    )
+    try:
+        result = init_tsr_overlay(
+            instance_root=instance_context.root,
+            overlay_path=resolved_overlay_path,
+            tsa=tsa,
+            registry_path=resolved_registry_path,
+            documents_path=resolved_documents_path,
+            candidate_facts_path=resolved_candidate_facts_path,
+            source_root=source_root,
+            overwrite=overwrite,
+        )
+    except TsrOverlayError as exc:
+        console.print(f"[red]TSR overlay init error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_overlay_init_summary(result)
+
+
+@tsr_app.command("overlay-report")
+def tsr_overlay_report(
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    overlay_path: Path | None = TSR_OVERLAY_PATH_OPTION,
+) -> None:
+    """Report reviewed/adopted TSR overlay state for one instance."""
+
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_overlay_path = (
+        instance_context.resolve_path(overlay_path)
+        if overlay_path is not None
+        else instance_context.resolve_path(Path("config/tsr/overlay.yaml"))
+    )
+    try:
+        result = build_tsr_overlay_report(overlay_path=resolved_overlay_path)
+    except TsrOverlayError as exc:
+        console.print(f"[red]TSR overlay report error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_overlay_report(result)
 
 
 @instance_config_app.command("set-managed-external-root")

@@ -4364,3 +4364,126 @@ def test_tsr_extract_reports_extract_errors(monkeypatch: pytest.MonkeyPatch) -> 
 
     assert exc_info.value.exit_code == 1
     assert any("TSR extract error:" in msg for msg in messages)
+
+
+def test_tsr_overlay_init_writes_instance_local_overlay(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    result = cli_main.TsrOverlayInitResult(
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        tsa=tsr_catalog.TsrOverlayTsaRecord(
+            tsa_id="tsa_29",
+            tsa_code="29",
+            tsa_name="Williams Lake",
+        ),
+        canonical_summary=tsr_catalog.TsrOverlayCanonicalSummary(
+            candidate_fact_count=4,
+            document_count=2,
+            fact_family_counts={"source_layer_candidate": 2},
+            candidate_facts_path="metadata/tsr/tsa_candidate_facts.json",
+            documents_path="metadata/tsr/tsa_documents.json",
+            registry_path="metadata/tsr/tsa_registry.json",
+        ),
+        created=True,
+    )
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_init(**kwargs):
+        captured_kwargs.update(kwargs)
+        return result
+
+    monkeypatch.setattr(cli_main, "init_tsr_overlay", _fake_init)
+
+    cli_main.tsr_overlay_init(
+        tsa="29",
+        instance_root=instance_root,
+        registry_path=None,
+        documents_path=None,
+        candidate_facts_path=None,
+        overlay_path=None,
+        overwrite=False,
+    )
+
+    assert captured_kwargs["instance_root"] == instance_root.resolve()
+    assert captured_kwargs["tsa"] == "29"
+    assert (
+        captured_kwargs["registry_path"]
+        == repo_root / "metadata" / "tsr" / "tsa_registry.json"
+    )
+    assert (
+        captured_kwargs["candidate_facts_path"]
+        == repo_root / "metadata" / "tsr" / "tsa_candidate_facts.json"
+    )
+    assert any("overlay_path:" in msg for msg in messages)
+    assert any("tsa_id: tsa_29" in msg for msg in messages)
+
+
+def test_tsr_overlay_init_reports_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "init_tsr_overlay",
+        lambda **_kwargs: (_ for _ in ()).throw(cli_main.TsrOverlayError("boom")),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.tsr_overlay_init(
+            tsa="29",
+            instance_root=Path("instance"),
+            registry_path=None,
+            documents_path=None,
+            candidate_facts_path=None,
+            overlay_path=None,
+            overwrite=False,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("TSR overlay init error:" in msg for msg in messages)
+
+
+def test_tsr_overlay_report_summarizes_adopted_state(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "build_tsr_overlay_report",
+        lambda **_kwargs: cli_main.TsrOverlayReport(
+            overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            canonical_summary=tsr_catalog.TsrOverlayCanonicalSummary(
+                candidate_fact_count=4,
+                document_count=2,
+                fact_family_counts={"source_layer_candidate": 2},
+                candidate_facts_path="metadata/tsr/tsa_candidate_facts.json",
+                documents_path="metadata/tsr/tsa_documents.json",
+                registry_path="metadata/tsr/tsa_registry.json",
+            ),
+            adopted_counts={
+                "source_layers": 1,
+                "au_definitions": 0,
+                "thlb_references": 0,
+                "tipsy_inputs": 0,
+                "notes": 0,
+            },
+        ),
+    )
+
+    cli_main.tsr_overlay_report(instance_root=instance_root, overlay_path=None)
+
+    assert any("adopted_source_layers_count: 1" in msg for msg in messages)
+    assert any("tsa_name: Williams Lake" in msg for msg in messages)

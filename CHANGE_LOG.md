@@ -11314,3 +11314,21 @@
       `metadata/tsr/tsa_candidate_facts.json` with `665` extracted documents,
       `43,525` candidate facts, and `1` remaining failure matching the same
       upstream missing PDF rather than an extractor defect.
+- 2026-04-04 (Issue `#105` TSR instance-local reviewed overlays):
+  - Added the reviewed/adopted overlay layer in `femic.tsr_catalog.overlay`
+    plus two new CLI commands:
+    - `python -m femic tsr overlay-init`
+    - `python -m femic tsr overlay-report`
+  - The overlay workflow now:
+    - initializes `config/tsr/overlay.yaml` under an instance root;
+    - stores only TSA identity, canonical provenance pointers, candidate
+      summary counts, and empty adopted sections; and
+    - reports adopted counts against the canonical summary already embedded in
+      the overlay without auto-promoting candidate facts.
+  - Live TSA29 smoke:
+    - `femic tsr overlay-init --instance-root external/femic-tsa29-instance --tsa 29`
+      initialized a reviewed overlay with `822` candidate facts and `19`
+      source documents summarized for TSA29;
+    - `femic tsr overlay-report --instance-root external/femic-tsa29-instance`
+      then reported the same canonical counts with all adopted sections still
+      at zero, confirming the default path stays review-only.

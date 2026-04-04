@@ -188,6 +188,8 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "python -m femic tsr index",
         "python -m femic tsr fetch",
         "python -m femic tsr extract",
+        "python -m femic tsr overlay-init",
+        "python -m femic tsr overlay-report",
         "--query-file PATH",
         "--summary-csv PATH",
         "--download-direct / --no-download-direct",
@@ -195,6 +197,7 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "metadata/tsr/tsa_registry.json",
         "metadata/tsr/tsa_documents.json",
         "metadata/tsr/tsa_candidate_facts.json",
+        "config/tsr/overlay.yaml",
         "~/.femic/tsr/tsa_pdf_cache_manifest.json",
         "~/.femic/tsr/corpus",
     ):
@@ -213,11 +216,16 @@ def test_tsr_api_page_is_wired_into_curated_modules() -> None:
         "femic tsr index",
         "femic tsr fetch",
         "femic tsr extract",
+        "femic tsr overlay-init",
+        "femic tsr overlay-report",
         "extract_tsr_candidate_facts",
+        "init_tsr_overlay",
+        "build_tsr_overlay_report",
         "index_tsr_tsa_surfaces",
         "fetch_tsr_pdfs",
         "write_tsr_index",
         "metadata/tsr",
+        "config/tsr/overlay.yaml",
         "~/.femic/tsr/tsa_pdf_cache_manifest.json",
     ):
         assert snippet in api_text

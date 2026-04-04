@@ -32,6 +32,17 @@ from .extract import (
     TsrExtractionFailure,
     extract_tsr_candidate_facts,
 )
+from .overlay import (
+    TsrOverlayCanonicalSummary,
+    TsrOverlayError,
+    TsrOverlayInitResult,
+    TsrOverlayRecord,
+    TsrOverlayReport,
+    TsrOverlayTsaRecord,
+    build_tsr_overlay_report,
+    init_tsr_overlay,
+    load_tsr_overlay,
+)
 
 __all__ = [
     "DEFAULT_TSR_LANDING_URL",
@@ -52,10 +63,19 @@ __all__ = [
     "TsrInventoryDocument",
     "TsrIndexResult",
     "TsrLandingResource",
+    "TsrOverlayCanonicalSummary",
+    "TsrOverlayError",
+    "TsrOverlayInitResult",
+    "TsrOverlayRecord",
+    "TsrOverlayReport",
+    "TsrOverlayTsaRecord",
     "TsrWrittenIndex",
+    "build_tsr_overlay_report",
     "extract_tsr_candidate_facts",
     "fetch_tsr_pdfs",
     "index_tsr_tsa_surfaces",
+    "init_tsr_overlay",
     "load_tsr_document_inventory",
+    "load_tsr_overlay",
     "write_tsr_index",
 ]
