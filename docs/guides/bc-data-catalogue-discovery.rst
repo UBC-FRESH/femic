@@ -96,6 +96,24 @@ Another direct-download-capable example is the VRI R1 layer:
      --download-root data\downloads\bcdc `
      --manifest-path runtime\logs\bcdc_vri_r1_manifest.json
 
+WFS-backed acquisition example using the new ``bcdc-fetch`` path:
+
+.. code-block:: text
+
+   & .\.venv\Scripts\python.exe -m femic data bcdc-fetch `
+     WHSE_FOREST_VEGETATION.F_OWN `
+     --bbox 1170000,450000,1180000,460000 `
+     --output-format gpkg `
+     --download-root data\downloads\bcdc `
+     --manifest-path runtime\logs\bcdc_f_own_fetch_manifest.json
+
+That path is intended for datasets that do **not** expose a simple direct file
+download, but *do* expose a WFS-queryable OpenMaps service. For F_OWN, FEMIC
+can now resolve the catalogue package, detect that the OpenMaps ``ows`` service
+is WFS-queryable, normalize the AOI from ``--bbox`` or ``--geomark``, and save
+a local GeoPackage or GeoJSON subset instead of dropping you directly into the
+manual BCGW UI.
+
 Batch Input from a Query File
 -----------------------------
 
@@ -200,6 +218,42 @@ itself, but it gives the next acquisition layer enough structured information
 to automate AOI-scoped fetches without making users rediscover the service seam
 manually.
 
+AOI-Scoped WFS Fetch
+--------------------
+
+When ``femic data bcdc-resolve`` reports a WFS-capable service hint, follow up
+with ``femic data bcdc-fetch``.
+
+The v1 fetch path accepts exactly one AOI input:
+
+- ``--bbox minx,miny,maxx,maxy`` in ``EPSG:3005``; or
+- ``--geomark`` as either a full Geomark URL or a bare Geomark ID.
+
+Example with explicit bbox:
+
+.. code-block:: text
+
+   & .\.venv\Scripts\python.exe -m femic data bcdc-fetch `
+     WHSE_FOREST_VEGETATION.F_OWN `
+     --bbox 1170000,450000,1180000,460000 `
+     --output-format gpkg
+
+Example with Geomark:
+
+.. code-block:: text
+
+   & .\.venv\Scripts\python.exe -m femic data bcdc-fetch `
+     WHSE_FOREST_VEGETATION.F_OWN `
+     --geomark gm-abcdefghijklmnopqrstuvwxyz0000bc `
+     --output-format geojson
+
+The intended split is:
+
+- ``bcdc-resolve`` = discovery and classification;
+- ``bcdc-fetch`` = automatable WFS subset download; and
+- DWDS/FGDB ordering = later fallback lane for datasets that cannot be fetched
+  cleanly through WFS.
+
 Manifest Output
 ---------------
 
@@ -212,6 +266,16 @@ The candidate manifest is the durable output of this first slice. It records:
 - the chosen top match; and
 - any WFS/OpenMaps service automation hints discovered during probing; and
 - any direct-download attempts and outcomes.
+
+The new ``bcdc-fetch`` manifest records:
+
+- the chosen package and WFS-capable service resource;
+- the AOI source (bbox vs Geomark);
+- the normalized ``EPSG:3005`` bbox;
+- the exact WFS ``GetFeature`` request URL;
+- the saved local vector path;
+- the output format; and
+- the returned feature count.
 
 Use that manifest as a review/promotion artifact before touching
 ``metadata/required_datasets.yaml`` or copying payloads into

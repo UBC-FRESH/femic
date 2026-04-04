@@ -44,6 +44,7 @@ stubs.
 
 Current curated pages in this section include ``femic.instance_context``,
 ``femic.instance_bootstrap``, ``femic.bcdc_catalog``,
+``femic.bcdc_fetch``,
 ``femic.tsr_catalog``,
 ``femic.geospatial_preflight``,
 ``femic.pipeline.bundle``, ``femic.pipeline.legacy_runtime``, and
@@ -55,6 +56,7 @@ Current curated pages in this section include ``femic.instance_context``,
    femic-instance-context
    femic-instance-bootstrap
    femic-bcdc-catalog
+   femic-bcdc-fetch
    femic-tsr-catalog
    femic-geospatial-preflight
    femic-pipeline-bundle

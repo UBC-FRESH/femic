@@ -12615,3 +12615,61 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       AOI-normalized fetch path; and
     - keep `#111` immediately behind it so the worked `F_OWN`/TSA29 docs land
       as soon as `bcdc-fetch` exists.
+- 2026-04-04 (Issue `#110` active: AOI-normalized WFS fetch support with
+  GeoPackage default output):
+  - Add the first actual automated geographic acquisition path on top of the
+    new BCDC WFS hints by introducing `femic data bcdc-fetch`.
+  - Scope the first fetch lane narrowly:
+    - require a WFS-queryable service resource from `femic data bcdc-resolve`;
+    - accept exactly one AOI input via `--bbox` or `--geomark`;
+    - normalize Geomark inputs to an EPSG:3005 bounding box in v1; and
+    - write either GeoJSON or GeoPackage, with GeoPackage as the default local
+      working format.
+  - Keep DWDS/FGDB ordering explicitly out of scope for this issue so the
+    initial fetch path stays lightweight, testable, and demonstrably useful on
+    `F_OWN` before the heavier custom-download lane begins.
+- 2026-04-04 (Issue `#110` implemented: AOI-normalized WFS fetch support for
+  BCDC layers):
+  - Added the first actual automated geographic acquisition path on top of the
+    BCDC resolver:
+    - new helper module `src/femic/bcdc_fetch.py`;
+    - new CLI command `femic data bcdc-fetch`; and
+    - new curated API docs page `docs/reference/api/femic-bcdc-fetch.rst`.
+  - `bcdc-fetch` now:
+    - accepts the same positional/query-file discovery inputs as
+      `bcdc-resolve`;
+    - requires exactly one AOI input via `--bbox` or `--geomark`;
+    - normalizes Geomark references to an EPSG:3005 bbox in v1;
+    - requires a WFS-queryable OpenMaps service resource; and
+    - writes either GeoPackage (default) or GeoJSON subset outputs under the
+      normal `data/downloads/bcdc` path.
+  - Resolver/fetch contract remains intentionally narrow:
+    - WFS-first only in v1;
+    - no shapefile default;
+    - no DWDS/FGDB order submission yet; and
+    - direct-download-only datasets are redirected back to
+      `femic data bcdc-resolve --download-direct`.
+  - Docs/tests updated:
+    - `docs/guides/bc-data-catalogue-discovery.rst`
+    - `docs/reference/cli.rst`
+    - `docs/reference/api/femic-bcdc-catalog.rst`
+    - `docs/reference/api/femic-bcdc-fetch.rst`
+    - `docs/reference/api/modules.rst`
+    - `docs/reference/api/generated/femic.bcdc_fetch.rst`
+  - Live smoke:
+    - `femic data bcdc-fetch WHSE_FOREST_VEGETATION.F_OWN --bbox 1170000,450000,1180000,460000 --output-format gpkg`
+      wrote
+      `tmp/issue110_f_own_fetch_smoke/WHSE_FOREST_VEGETATION_F_OWN/WHSE_FOREST_VEGETATION_F_OWN.gpkg`
+      with `83` features in `EPSG:3005`, plus a manifest recording the exact
+      `GetFeature` request URL.
+  - Validation completed:
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`
+  - Detailed Next Steps:
+    - move to `#111` next so the worked `F_OWN` and TSA29 fetch examples are
+      documented while the new CLI is still fresh; and
+    - leave `#112` as the later FGDB/DWDS fallback investigation lane.

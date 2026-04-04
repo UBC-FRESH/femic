@@ -162,6 +162,7 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "PowerShell Notes",
         "Classification Buckets",
         "Service Automation Hints",
+        "AOI-Scoped WFS Fetch",
         "Manifest Output",
     ):
         assert heading in guide_text
@@ -172,6 +173,10 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "WHSE_FOREST_VEGETATION.VEG_COMP_LYR_R1_POLY",
         "Silviculture Activities History",
         "--download-direct",
+        "femic data bcdc-fetch",
+        "--bbox 1170000,450000,1180000,460000",
+        "--geomark gm-abcdefghijklmnopqrstuvwxyz0000bc",
+        "--output-format gpkg",
         "--query-file",
         "--summary-csv",
         "williams_lake_table2_summary.csv",
@@ -190,6 +195,7 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "- ``data``",
         "- ``tsr``",
         "python -m femic data bcdc-resolve",
+        "python -m femic data bcdc-fetch",
         "python -m femic tsr index",
         "python -m femic tsr fetch",
         "python -m femic tsr extract",
@@ -199,6 +205,9 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "--query-file PATH",
         "--summary-csv PATH",
         "--download-direct / --no-download-direct",
+        "--bbox minx,miny,maxx,maxy",
+        "--geomark TEXT",
+        "--output-format [gpkg|geojson]",
         "--manifest-path PATH",
         "--fact-family [source_layer_candidate|thlb_reference]",
         "wfs_queryable",
@@ -217,6 +226,7 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
 def test_tsr_api_page_is_wired_into_curated_modules() -> None:
     modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
     assert "femic-tsr-catalog" in modules_text
+    assert "femic-bcdc-fetch" in modules_text
 
     api_page = API_ROOT / "femic-tsr-catalog.rst"
     assert api_page.exists()
@@ -240,6 +250,23 @@ def test_tsr_api_page_is_wired_into_curated_modules() -> None:
         "metadata/tsr",
         "config/tsr/overlay.yaml",
         "~/.femic/tsr/tsa_pdf_cache_manifest.json",
+    ):
+        assert snippet in api_text
+
+
+def test_bcdc_fetch_api_page_is_wired_into_curated_modules() -> None:
+    api_page = API_ROOT / "femic-bcdc-fetch.rst"
+    assert api_page.exists()
+    api_text = api_page.read_text(encoding="utf-8")
+    for snippet in (
+        "``femic.bcdc_fetch`` Module",
+        "femic data bcdc-fetch",
+        "build_bbox_3005",
+        "resolve_geomark_bbox_3005",
+        "fetch_bcdc_wfs_data",
+        "write_bcdc_fetch_manifest",
+        "GeoPackage",
+        "GeoJSON",
     ):
         assert snippet in api_text
 

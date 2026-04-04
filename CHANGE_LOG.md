@@ -11439,3 +11439,43 @@
     - `python -m pytest -q`
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m pre_commit run --all-files`
+- 2026-04-04 (Issue `#110` implemented: AOI-normalized WFS fetch support for
+  BCDC layers):
+  - Added the first actual automated geographic acquisition path on top of the
+    BCDC resolver:
+    - new helper module `src/femic/bcdc_fetch.py`;
+    - new CLI command `femic data bcdc-fetch`; and
+    - new curated API docs page `docs/reference/api/femic-bcdc-fetch.rst`.
+  - `bcdc-fetch` now:
+    - accepts positional or query-file inputs like `bcdc-resolve`;
+    - requires exactly one AOI input via `--bbox` or `--geomark`;
+    - normalizes Geomark references to an EPSG:3005 bbox in v1;
+    - requires a WFS-queryable OpenMaps service resource; and
+    - writes either GeoPackage (default) or GeoJSON subset outputs under the
+      normal `data/downloads/bcdc` download root.
+  - Kept the scope intentionally narrow:
+    - WFS-first only in v1;
+    - no shapefile default;
+    - no DWDS/FGDB order submission yet; and
+    - direct-download-only datasets now fail with guidance to use
+      `femic data bcdc-resolve --download-direct`.
+  - Updated docs/tests:
+    - `docs/guides/bc-data-catalogue-discovery.rst`
+    - `docs/reference/cli.rst`
+    - `docs/reference/api/femic-bcdc-catalog.rst`
+    - `docs/reference/api/femic-bcdc-fetch.rst`
+    - `docs/reference/api/modules.rst`
+    - `docs/reference/api/generated/femic.bcdc_fetch.rst`
+  - Live `F_OWN` smoke succeeded:
+    - `femic data bcdc-fetch WHSE_FOREST_VEGETATION.F_OWN --bbox 1170000,450000,1180000,460000 --output-format gpkg`
+      wrote a local GeoPackage at
+      `tmp/issue110_f_own_fetch_smoke/WHSE_FOREST_VEGETATION_F_OWN/WHSE_FOREST_VEGETATION_F_OWN.gpkg`
+      with `83` features in `EPSG:3005`, plus a JSON manifest recording the
+      exact WFS `GetFeature` URL.
+  - Validation passed:
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`

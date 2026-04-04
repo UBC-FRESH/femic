@@ -26,6 +26,14 @@ from femic.bcdc_catalog import (
     resolve_bcdc_candidates,
     write_bcdc_manifest,
 )
+from femic.bcdc_fetch import (
+    BcdcFetchError,
+    BcdcFetchResult,
+    build_bbox_3005,
+    fetch_bcdc_wfs_data,
+    resolve_geomark_bbox_3005,
+    write_bcdc_fetch_manifest as write_single_bcdc_fetch_manifest,
+)
 from femic.builtin_instances import (
     BuiltinInstanceCatalogError,
     install_builtin_instances,
@@ -335,6 +343,23 @@ BCDC_LIMIT_OPTION = typer.Option(
     "--limit",
     min=1,
     help="Maximum ranked package matches to keep per query.",
+)
+BCDC_BBOX_OPTION = typer.Option(
+    None,
+    "--bbox",
+    help="AOI bbox in EPSG:3005 as `minx,miny,maxx,maxy`.",
+    show_default=False,
+)
+BCDC_GEOMARK_OPTION = typer.Option(
+    None,
+    "--geomark",
+    help="AOI Geomark reference as a bare ID or full URL.",
+    show_default=False,
+)
+BCDC_OUTPUT_FORMAT_OPTION = typer.Option(
+    "gpkg",
+    "--output-format",
+    help="Output format for WFS-backed fetches: `gpkg` or `geojson`.",
 )
 TSR_OUTPUT_ROOT_OPTION = typer.Option(
     None,
@@ -1861,6 +1886,24 @@ def _write_bcdc_resolve_manifest(
     return resolved
 
 
+def _write_bcdc_fetch_manifest(
+    results: list[BcdcFetchResult],
+    *,
+    path: Path,
+) -> Path:
+    if len(results) == 1:
+        return write_single_bcdc_fetch_manifest(results[0], path)
+    resolved = path.expanduser().resolve()
+    resolved.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "generated_utc": datetime.now(UTC).isoformat(),
+        "query_count": len(results),
+        "results": [result.to_dict() for result in results],
+    }
+    resolved.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return resolved
+
+
 def _bcdc_summary_status(result: BcdcResolveResult) -> str:
     top_match = result.top_match
     if top_match is None:
@@ -1998,6 +2041,28 @@ def _print_bcdc_resolve_summary(result: BcdcResolveResult) -> None:
             f"skipped={len(result.download_result.skipped_resources)} "
             f"failures={len(result.download_result.failures)}"
         )
+
+
+def _print_bcdc_fetch_summary(result: BcdcFetchResult) -> None:
+    console.print(f"query: {result.query}")
+    console.print(
+        "top_match: "
+        f"{result.package_title} matched_by={result.matched_by} "
+        f"page={result.dataset_page_url}"
+    )
+    console.print(f"resource: {result.resource_name}")
+    console.print(f"fetch_strategy: {result.suggested_fetch_strategy}")
+    console.print(f"aoi_source: {result.aoi_source}")
+    if result.geomark_id is not None:
+        console.print(f"geomark: {result.geomark_id}")
+    minx, miny, maxx, maxy = result.bbox_epsg3005
+    console.print(f"bbox_epsg3005: {minx},{miny},{maxx},{maxy}")
+    console.print(f"output_format: {result.output_format}")
+    console.print(f"feature_count: {result.feature_count}")
+    console.print(f"saved_path: {result.saved_path}")
+    console.print(f"request_url: {result.request_url}")
+    for warning in result.warnings:
+        console.print(f"warning: {warning}")
 
 
 def _load_bcdc_queries_from_file(path: Path) -> list[str]:
@@ -2199,6 +2264,95 @@ def data_bcdc_resolve(
             path=resolved_summary_csv,
         )
         console.print(f"summary_csv: {written_summary_csv}")
+
+
+@data_app.command("bcdc-fetch")
+def data_bcdc_fetch(
+    queries: list[str] | None = BCDC_QUERY_ARGUMENT,
+    query_file: Path | None = BCDC_QUERY_FILE_OPTION,
+    manifest_path: Path | None = BCDC_MANIFEST_OPTION,
+    download_root: Path | None = BCDC_DOWNLOAD_ROOT_OPTION,
+    limit: int = BCDC_LIMIT_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    bbox: str | None = BCDC_BBOX_OPTION,
+    geomark: str | None = BCDC_GEOMARK_OPTION,
+    output_format: str = BCDC_OUTPUT_FORMAT_OPTION,
+) -> None:
+    """Fetch AOI-scoped WFS-backed BCDC layers into local vector files."""
+
+    if query_file is not None and not isinstance(query_file, Path):
+        query_file = None
+
+    resolved_queries = list(queries or [])
+    if query_file is not None:
+        resolved_queries.extend(_load_bcdc_queries_from_file(query_file))
+    if not resolved_queries:
+        console.print(
+            "[red]BCDC fetch error:[/red] provide at least one query or use "
+            "`--query-file`."
+        )
+        raise typer.Exit(code=1)
+
+    if bool(bbox) == bool(geomark):
+        console.print(
+            "[red]BCDC fetch error:[/red] supply exactly one AOI input via "
+            "`--bbox` or `--geomark`."
+        )
+        raise typer.Exit(code=1)
+
+    instance_context = (
+        _resolve_cli_instance_context(instance_root=instance_root)
+        if instance_root is not None
+        else None
+    )
+    resolved_download_root = (
+        _resolve_cli_output_path(download_root, instance_context=instance_context)
+        if download_root is not None
+        else (
+            instance_context.resolve_path(Path("data/downloads/bcdc"))
+            if instance_context is not None
+            else Path("downloads/bcdc").resolve()
+        )
+    )
+
+    try:
+        if bbox is not None:
+            bbox_epsg3005 = build_bbox_3005(bbox)
+            resolved_geomark = None
+        else:
+            resolved_geomark = resolve_geomark_bbox_3005(str(geomark))
+            bbox_epsg3005 = resolved_geomark.bbox_epsg3005
+    except BcdcFetchError as exc:
+        console.print(f"[red]BCDC fetch error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    results: list[BcdcFetchResult] = []
+    try:
+        for query in resolved_queries:
+            result = fetch_bcdc_wfs_data(
+                query,
+                destination_root=resolved_download_root,
+                bbox_epsg3005=bbox_epsg3005,
+                output_format=output_format,
+                limit=limit,
+                geomark=resolved_geomark,
+            )
+            results.append(result)
+            _print_bcdc_fetch_summary(result)
+    except BcdcFetchError as exc:
+        console.print(f"[red]BCDC fetch error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    if manifest_path is not None:
+        resolved_manifest_path = _resolve_cli_output_path(
+            manifest_path,
+            instance_context=instance_context,
+        )
+        written_manifest = _write_bcdc_fetch_manifest(
+            results,
+            path=resolved_manifest_path,
+        )
+        console.print(f"manifest: {written_manifest}")
 
 
 @tsr_app.command("index")

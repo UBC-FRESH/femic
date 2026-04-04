@@ -211,6 +211,7 @@ Data
 Subcommands
 
 - ``bcdc-resolve``: ``python -m femic data bcdc-resolve [OPTIONS] [QUERY]...``
+- ``bcdc-fetch``: ``python -m femic data bcdc-fetch [OPTIONS] [QUERY]...``
 
 ``data bcdc-resolve`` options
 
@@ -226,6 +227,25 @@ Subcommands
 For working Windows examples, including quoted multi-word queries and
 ``--query-file`` batch usage, see
 ``docs/guides/bc-data-catalogue-discovery.rst``.
+
+``data bcdc-fetch`` options
+
+- ``QUERY`` argument (repeatable; BC Data Catalogue layer names or keywords)
+- ``--query-file PATH`` (optional one-query-per-line text file; blank lines and ``#`` comments ignored)
+- ``--manifest-path PATH`` (optional JSON manifest output path)
+- ``--download-root PATH`` (optional destination root; defaults under ``data/downloads/bcdc``)
+- ``--limit INTEGER`` (default: ``5``)
+- ``--instance-root PATH`` (optional instance root used to resolve default output paths)
+- ``--bbox minx,miny,maxx,maxy`` (required unless ``--geomark`` is supplied; interpreted in ``EPSG:3005``)
+- ``--geomark TEXT`` (required unless ``--bbox`` is supplied; accepts a full Geomark URL or bare Geomark ID)
+- ``--output-format [gpkg|geojson]`` (default: ``gpkg``)
+
+``data bcdc-fetch`` is the first automated geographic acquisition lane built on
+top of the WFS service hints from ``bcdc-resolve``. Use it when the resolved
+dataset exposes ``wfs_queryable`` and
+``suggested_fetch_strategy=wfs_getfeature_bbox``. If a dataset exposes only
+direct-download resources, use ``femic data bcdc-resolve --download-direct``
+instead.
 
 Subcommands
 

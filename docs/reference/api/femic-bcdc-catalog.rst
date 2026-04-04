@@ -5,7 +5,8 @@ The :mod:`femic.bcdc_catalog` module owns FEMIC's first BC Data Catalogue
 resolver slice. It translates explicit layer names or keywords into ranked
 catalogue package matches, classifies the discovered resource surfaces, and can
 optionally download only the stable direct-access data resources from the
-top-ranked package.
+top-ranked package. It also exposes the WFS/OpenMaps service hints that the
+separate :mod:`femic.bcdc_fetch` module uses for AOI-scoped acquisition.
 
 Use this page when you are debugging the BCDC resolution logic itself rather
 than the higher-level CLI surface.
@@ -64,6 +65,7 @@ Cross-References
 
 - :doc:`../../guides/bc-data-catalogue-discovery`
 - :doc:`../../guides/data-access-inventory`
+- :doc:`femic-bcdc-fetch`
 - :doc:`../cli`
 
 .. toctree::

@@ -4139,6 +4139,187 @@ def test_data_bcdc_resolve_requires_query_or_query_file(
     )
 
 
+def test_data_bcdc_fetch_prints_summary_and_manifest(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "fetch_bcdc_wfs_data",
+        lambda query, **_kwargs: cli_main.BcdcFetchResult(
+            query=query,
+            limit=5,
+            generated_utc="2026-04-04T00:00:00+00:00",
+            package_id="pkg-f-own",
+            package_name="generalized-forest-cover-ownership",
+            package_title="Generalized Forest Cover Ownership",
+            dataset_page_url=(
+                "https://catalogue.data.gov.bc.ca/dataset/"
+                "generalized-forest-cover-ownership"
+            ),
+            resource_id="wms-id",
+            resource_name="WMS getCapabilities request",
+            resource_url=(
+                "https://openmaps.gov.bc.ca/geo/pub/WHSE_FOREST_VEGETATION.F_OWN/ows"
+            ),
+            wfs_typename="pub:WHSE_FOREST_VEGETATION.F_OWN",
+            matched_by="object_name:WHSE_FOREST_VEGETATION.F_OWN",
+            suggested_fetch_strategy="wfs_getfeature_bbox",
+            aoi_source="bbox",
+            bbox_epsg3005=(1170000.0, 450000.0, 1180000.0, 460000.0),
+            geomark_id=None,
+            geomark_url=None,
+            request_url="https://openmaps.gov.bc.ca/example/GetFeature",
+            saved_path=tmp_path / "downloads" / "WHSE_FOREST_VEGETATION_F_OWN.gpkg",
+            output_format="gpkg",
+            feature_count=2,
+            warnings=(),
+        ),
+    )
+
+    cli_main.data_bcdc_fetch(
+        queries=["WHSE_FOREST_VEGETATION.F_OWN"],
+        query_file=None,
+        manifest_path=tmp_path / "manifest.json",
+        download_root=tmp_path / "downloads",
+        limit=5,
+        instance_root=None,
+        bbox="1170000,450000,1180000,460000",
+        geomark=None,
+        output_format="gpkg",
+    )
+
+    assert any("query: WHSE_FOREST_VEGETATION.F_OWN" in msg for msg in messages)
+    assert any("aoi_source: bbox" in msg for msg in messages)
+    assert any("feature_count: 2" in msg for msg in messages)
+    assert any("saved_path:" in msg for msg in messages)
+    assert any("manifest:" in msg for msg in messages)
+    assert (tmp_path / "manifest.json").is_file()
+
+
+def test_data_bcdc_fetch_query_file_with_geomark(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "resolve_geomark_bbox_3005",
+        lambda _value: SimpleNamespace(
+            geomark_id="gm-demo",
+            geomark_url="https://apps.gov.bc.ca/pub/geomark/geomarks/gm-demo",
+            bbox_epsg3005=(1170000.0, 450000.0, 1180000.0, 460000.0),
+        ),
+    )
+    captured_queries: list[str] = []
+
+    def _fake_fetch(query: str, **kwargs):
+        captured_queries.append(query)
+        assert kwargs["geomark"] is not None
+        return cli_main.BcdcFetchResult(
+            query=query,
+            limit=5,
+            generated_utc="2026-04-04T00:00:00+00:00",
+            package_id="pkg-f-own",
+            package_name="generalized-forest-cover-ownership",
+            package_title="Generalized Forest Cover Ownership",
+            dataset_page_url="https://catalogue.data.gov.bc.ca/dataset/generalized-forest-cover-ownership",
+            resource_id="wms-id",
+            resource_name="WMS getCapabilities request",
+            resource_url="https://openmaps.gov.bc.ca/geo/pub/WHSE_FOREST_VEGETATION.F_OWN/ows",
+            wfs_typename="pub:WHSE_FOREST_VEGETATION.F_OWN",
+            matched_by="object_name:WHSE_FOREST_VEGETATION.F_OWN",
+            suggested_fetch_strategy="wfs_getfeature_bbox",
+            aoi_source="geomark",
+            bbox_epsg3005=(1170000.0, 450000.0, 1180000.0, 460000.0),
+            geomark_id="gm-demo",
+            geomark_url="https://apps.gov.bc.ca/pub/geomark/geomarks/gm-demo",
+            request_url="https://openmaps.gov.bc.ca/example/GetFeature",
+            saved_path=tmp_path / "downloads" / "WHSE_FOREST_VEGETATION_F_OWN.gpkg",
+            output_format="gpkg",
+            feature_count=2,
+            warnings=(),
+        )
+
+    monkeypatch.setattr(cli_main, "fetch_bcdc_wfs_data", _fake_fetch)
+
+    query_file = tmp_path / "queries.txt"
+    query_file.write_text("WHSE_FOREST_VEGETATION.F_OWN\n", encoding="utf-8")
+
+    cli_main.data_bcdc_fetch(
+        queries=None,
+        query_file=query_file,
+        manifest_path=None,
+        download_root=tmp_path / "downloads",
+        limit=5,
+        instance_root=None,
+        bbox=None,
+        geomark="gm-demo",
+        output_format="gpkg",
+    )
+
+    assert captured_queries == ["WHSE_FOREST_VEGETATION.F_OWN"]
+    assert any("geomark: gm-demo" in msg for msg in messages)
+
+
+def test_data_bcdc_fetch_requires_exactly_one_aoi(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.data_bcdc_fetch(
+            queries=["WHSE_FOREST_VEGETATION.F_OWN"],
+            query_file=None,
+            manifest_path=None,
+            download_root=None,
+            limit=5,
+            instance_root=None,
+            bbox=None,
+            geomark=None,
+            output_format="gpkg",
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("supply exactly one AOI input" in msg for msg in messages)
+
+
+def test_data_bcdc_fetch_reports_fetch_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "fetch_bcdc_wfs_data",
+        lambda query, **_kwargs: (_ for _ in ()).throw(
+            cli_main.BcdcFetchError(
+                "use `femic data bcdc-resolve --download-direct` instead"
+            )
+        ),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.data_bcdc_fetch(
+            queries=["SITE_PROD_BC"],
+            query_file=None,
+            manifest_path=None,
+            download_root=None,
+            limit=5,
+            instance_root=None,
+            bbox="1170000,450000,1180000,460000",
+            geomark=None,
+            output_format="gpkg",
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("download-direct" in msg for msg in messages)
+
+
 def test_tsr_index_writes_canonical_registry_under_repo_metadata_root(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
