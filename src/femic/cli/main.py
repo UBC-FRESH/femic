@@ -128,6 +128,7 @@ from femic.pipeline.io import (
     load_pipeline_run_profile,
     resolve_legacy_external_data_paths,
     resolve_effective_run_options,
+    resolve_windows_annex_pointer_payload_path,
 )
 from femic.pipeline.tipsy_config import (
     discover_tipsy_config_tsas,
@@ -236,6 +237,7 @@ console = Console()
 WINDOWS_ARBUTUS_ENV_FILE_RELATIVE = Path(".config") / "femic" / "arbutus.env"
 WINDOWS_ARBUTUS_LOADER_RELATIVE = Path(".config") / "femic" / "load-arbutus-env.ps1"
 WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET = "ubc-fresh-femic-public-data"
+WINDOWS_CANONICAL_TSA_BOUNDARY_RELATIVE = Path("data") / "bc" / "tsa" / "FADM_TSA.gdb"
 WINDOWS_ARBUTUS_REQUIRED_ENV_KEYS = (
     "AWS_ACCESS_KEY_ID",
     "AWS_SECRET_ACCESS_KEY",
@@ -1277,6 +1279,156 @@ def _probe_windows_arbutus_bucket(
     return True, ""
 
 
+def _collect_filegdb_member_files(
+    filegdb_path: Path,
+    *,
+    max_members: int = 24,
+) -> list[Path]:
+    """Return a bounded sample of member files from a FileGDB directory."""
+    try:
+        if filegdb_path.is_file():
+            return [filegdb_path]
+        if not filegdb_path.is_dir():
+            return []
+        members: list[Path] = []
+        for member in sorted(filegdb_path.rglob("*")):
+            if not member.is_file():
+                continue
+            members.append(member)
+            if len(members) >= max_members:
+                break
+        return members
+    except OSError:
+        return []
+
+
+def _find_windows_annex_pointer_like_members(
+    filegdb_path: Path,
+    *,
+    max_members: int = 24,
+) -> list[Path]:
+    """Return bounded FileGDB members that still look like annex pointer stubs."""
+    members = _collect_filegdb_member_files(filegdb_path, max_members=max_members)
+    return [
+        member
+        for member in members
+        if resolve_windows_annex_pointer_payload_path(member, os_name="nt") != member
+    ]
+
+
+def _probe_windows_filegdb_layers(filegdb_path: Path) -> tuple[bool | None, str]:
+    """Probe whether a Windows FileGDB is readable via the open-source stack."""
+    pyogrio_error: str | None = None
+    fiona_error: str | None = None
+    geospatial_backend_available = False
+
+    try:
+        import pyogrio  # type: ignore[import-untyped]
+
+        geospatial_backend_available = True
+        pyogrio.list_layers(filegdb_path)
+        return True, ""
+    except ImportError:
+        pyogrio_error = "pyogrio import failed"
+    except Exception as exc:  # pragma: no cover - exercised via tests with fakes
+        pyogrio_error = f"pyogrio {type(exc).__name__}: {exc}"
+
+    try:
+        import fiona  # type: ignore[import-untyped]
+
+        geospatial_backend_available = True
+        fiona.listlayers(filegdb_path)
+        return True, ""
+    except ImportError:
+        fiona_error = "fiona import failed"
+    except Exception as exc:  # pragma: no cover - exercised via tests with fakes
+        fiona_error = f"fiona {type(exc).__name__}: {exc}"
+
+    if not geospatial_backend_available:
+        return (
+            None,
+            "Neither `pyogrio` nor `fiona` is importable in the active FEMIC "
+            "environment, so Windows FileGDB readability cannot be checked yet.",
+        )
+
+    detail_parts = [part for part in (pyogrio_error, fiona_error) if part]
+    return False, "; ".join(detail_parts)
+
+
+def _format_windows_tsa_boundary_recovery() -> str:
+    """Return the canonical low-noise recovery sequence for TSA boundary reads."""
+    relpath = WINDOWS_CANONICAL_TSA_BOUNDARY_RELATIVE.as_posix()
+    dataset_rel = "external/femic-public-data"
+    return (
+        "Run the canonical recovery sequence in this order: "
+        f"`git -C {dataset_rel} annex enableremote arbutus-s3`; "
+        f"`datalad get -r {dataset_rel}/data`; "
+        f"`git -C {dataset_rel} annex unlock {relpath}`; "
+        "then rerun `femic prep validate-case`."
+    )
+
+
+def _validate_windows_public_data_tsa_boundary(
+    *,
+    tsa_boundaries_path: Path,
+) -> list[str]:
+    """Return Windows FileGDB/materialization findings for the canonical TSA boundary."""
+    errors: list[str] = []
+    if not tsa_boundaries_path.exists():
+        errors.append(
+            "Missing canonical TSA boundaries source: "
+            f"{tsa_boundaries_path}. This usually means the annex-backed public-data "
+            "payload has not been materialized yet. "
+            f"{_format_windows_tsa_boundary_recovery()}"
+        )
+        return errors
+
+    probe_ok, probe_detail = _probe_windows_filegdb_layers(tsa_boundaries_path)
+    if probe_ok:
+        return errors
+
+    recovery = _format_windows_tsa_boundary_recovery()
+    if probe_ok is None:
+        errors.append(
+            "Windows canonical TSA FileGDB probe could not run because the active "
+            f"geospatial runtime is incomplete for {tsa_boundaries_path}: "
+            f"{probe_detail} Stop before deeper Stage 00/01 debugging and repair "
+            "the standard FEMIC geospatial environment first."
+        )
+        return errors
+
+    pointer_like_members = _find_windows_annex_pointer_like_members(tsa_boundaries_path)
+    if pointer_like_members:
+        sample = ", ".join(path.name for path in pointer_like_members[:3])
+        errors.append(
+            "Windows canonical TSA FileGDB read failed for "
+            f"{tsa_boundaries_path}, and sampled members still look like annex "
+            f"pointer-style worktree stubs ({sample}). This is likely a "
+            "public-data materialization/unlock problem, not automatically a "
+            f"generic GDAL/FileGDB incompatibility. {recovery}"
+        )
+        return errors
+
+    sampled_members = _collect_filegdb_member_files(tsa_boundaries_path)
+    if not sampled_members:
+        errors.append(
+            "Windows canonical TSA FileGDB read failed for "
+            f"{tsa_boundaries_path}, and the geodatabase currently exposes no "
+            "readable member files. This usually means the annex-backed payload "
+            f"is still missing or not properly materialized. {recovery}"
+        )
+        return errors
+
+    errors.append(
+        "Windows canonical TSA FileGDB read failed for "
+        f"{tsa_boundaries_path}: {probe_detail}. Because this path lives under "
+        "`external/femic-public-data`, stop before deeper Stage 00/01 debugging "
+        "and first rule out annex-backed materialization/unlock problems with the "
+        f"canonical recovery sequence. {recovery}"
+    )
+    return errors
+
+
 def _validate_windows_annex_runtime(
     *,
     source_root: Path,
@@ -1325,17 +1477,16 @@ def _validate_windows_annex_runtime(
         warnings.append(
             "DataLad executable not found (looked on PATH and in .venv\\Scripts\\datalad.exe)"
         )
-        return errors, warnings
-
-    datalad_ok, datalad_detail = _run_preflight_command(
-        [datalad_exe, "status", str(public_data_root)],
-        cwd=source_root,
-    )
-    if not datalad_ok:
-        errors.append(
-            "DataLad status check failed for external/femic-public-data: "
-            f"{datalad_detail}"
+    else:
+        datalad_ok, datalad_detail = _run_preflight_command(
+            [datalad_exe, "status", str(public_data_root)],
+            cwd=source_root,
         )
+        if not datalad_ok:
+            errors.append(
+                "DataLad status check failed for external/femic-public-data: "
+                f"{datalad_detail}"
+            )
 
     arbutus_env_file = _resolve_windows_user_local_path(
         WINDOWS_ARBUTUS_ENV_FILE_RELATIVE
@@ -1349,40 +1500,43 @@ def _validate_windows_annex_runtime(
     should_run_arbutus_preflight = (
         arbutus_env_file is not None and arbutus_env_file.exists()
     ) or any_env_loaded
-    if not should_run_arbutus_preflight:
-        return errors, warnings
-
-    missing_env = [key for key, value in env_values.items() if not value]
-    if missing_env:
-        missing_display = ", ".join(missing_env)
-        if arbutus_loader and arbutus_loader.exists():
-            errors.append(
-                "Windows Arbutus auth env vars are not loaded in this shell: "
-                f"{missing_display}. If you use the documented local loader, run "
-                "`Set-ExecutionPolicy -Scope Process Bypass -Force` and then "
-                f"source {arbutus_loader} before rerunning `femic prep validate-case`."
-            )
+    if should_run_arbutus_preflight:
+        missing_env = [key for key, value in env_values.items() if not value]
+        if missing_env:
+            missing_display = ", ".join(missing_env)
+            if arbutus_loader and arbutus_loader.exists():
+                errors.append(
+                    "Windows Arbutus auth env vars are not loaded in this shell: "
+                    f"{missing_display}. If you use the documented local loader, run "
+                    "`Set-ExecutionPolicy -Scope Process Bypass -Force` and then "
+                    f"source {arbutus_loader} before rerunning `femic prep validate-case`."
+                )
+            else:
+                errors.append(
+                    "Windows Arbutus auth env vars are not loaded in this shell: "
+                    f"{missing_display}. Load the documented Arbutus auth env before "
+                    "rerunning `femic prep validate-case`."
+                )
         else:
-            errors.append(
-                "Windows Arbutus auth env vars are not loaded in this shell: "
-                f"{missing_display}. Load the documented Arbutus auth env before "
-                "rerunning `femic prep validate-case`."
+            bucket_ok, bucket_detail = _probe_windows_arbutus_bucket(
+                bucket_name=WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET,
+                env_values=env_values,
             )
-        return errors, warnings
+            if bucket_ok is None:
+                warnings.append(bucket_detail)
+            elif not bucket_ok:
+                errors.append(
+                    "Windows Arbutus bucket visibility probe failed for "
+                    f"{WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET}: {bucket_detail} "
+                    "Stop before `git annex initremote` or other Arbutus bootstrap "
+                    "work and re-check the loaded env values."
+                )
 
-    bucket_ok, bucket_detail = _probe_windows_arbutus_bucket(
-        bucket_name=WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET,
-        env_values=env_values,
-    )
-    if bucket_ok is None:
-        warnings.append(bucket_detail)
-    elif not bucket_ok:
-        errors.append(
-            "Windows Arbutus bucket visibility probe failed for "
-            f"{WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET}: {bucket_detail} "
-            "Stop before `git annex initremote` or other Arbutus bootstrap work "
-            "and re-check the loaded env values."
+    errors.extend(
+        _validate_windows_public_data_tsa_boundary(
+            tsa_boundaries_path=Path(external_paths.tsa_boundaries_path),
         )
+    )
 
     return errors, warnings
 

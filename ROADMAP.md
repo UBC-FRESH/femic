@@ -8454,6 +8454,82 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 ## Detailed Next Steps Notes
 
+- 2026-04-03 (Issue `#11` implemented: Windows `validate-case` now diagnoses
+  canonical TSA FileGDB materialization before blaming GDAL):
+  - What shipped:
+    - extended the existing Windows annex/runtime seam inside
+      `femic prep validate-case` instead of adding a new CLI command;
+    - added a lightweight canonical TSA FileGDB layer probe against
+      `external/femic-public-data/data/bc/tsa/FADM_TSA.gdb`;
+    - the new helper now distinguishes:
+      - missing geospatial backends (`pyogrio` / `fiona`);
+      - missing or empty canonical FileGDB payloads;
+      - pointer-like annex worktree exposure inside the FileGDB; and
+      - generic read failures that still need the annex/materialization
+        recovery sequence ruled out first;
+    - the emitted Windows error path now points operators to the exact
+      low-noise recovery sequence:
+      - `git -C external/femic-public-data annex enableremote arbutus-s3`
+      - `datalad get -r external/femic-public-data/data`
+      - `git -C external/femic-public-data annex unlock data/bc/tsa/FADM_TSA.gdb`
+      - rerun `femic prep validate-case`
+    - `femic prep geospatial-preflight` stayed generic, while the Windows
+      geospatial/runtime docs now explicitly explain that `validate-case` is
+      the case-aware canonical TSA/FileGDB readability check and that ArcGIS
+      Pro / `arcpy` is only a fallback recovery leg.
+  - Validation:
+    - focused CLI/runtime tests passed for the new Windows annex/FileGDB seam;
+    - full docs-contract coverage passed after updating the Windows guides;
+    - full repo validation passed:
+      - `python -m ruff format src tests`
+      - `python -m ruff check src tests`
+      - `python -m mypy src`
+      - `python -m pytest -q`
+      - `python -m sphinx -b html docs _build/html -W`
+      - `python -m pre_commit run --all-files`
+  - Immediate follow-through:
+    - post the implementation/validation closeout to GitHub issue `#11`;
+    - close `#11` if no new Windows FileGDB scope is added in review.
+
+- 2026-04-03 (Issue `#11` kickoff: diagnose canonical Windows TSA FileGDB
+  materialization before users chase fake GDAL ghosts):
+  - Governing issue:
+    - GitHub issue `#11`
+  - Planned branch:
+    - `feature/issue-11-windows-filegdb-materialization`
+  - Root-cause read for this pass:
+    - the misleading Windows `FADM_TSA.gdb` failures are not automatically
+      proof that GDAL/FileGDB support is broken on Windows;
+    - on the known workstation, the more common seam is annex-backed
+      `external/femic-public-data` worktree materialization, where the
+      canonical TSA geodatabase can still present pointer-like/unusable content
+      until the public-data checkout is properly materialized and unlocked;
+    - `femic prep geospatial-preflight` should remain the generic
+      package/runtime smoke, while `femic prep validate-case` should become the
+      low-noise place to detect the active-case canonical TSA FileGDB seam.
+  - Active implementation target:
+    - extend the existing Windows annex/runtime helper inside
+      `femic prep validate-case` rather than adding a new CLI command;
+    - probe the canonical TSA boundary geodatabase with a lightweight layer-list
+      read and distinguish:
+      - missing geospatial libraries;
+      - missing/unmaterialized annex payload;
+      - pointer-like/unusable worktree exposure; and
+      - genuine FileGDB read failure;
+    - fail with the exact recommended recovery sequence:
+      - `git -C external/femic-public-data annex enableremote arbutus-s3`
+      - `datalad get -r external/femic-public-data/data`
+      - `git -C external/femic-public-data annex unlock data/bc/tsa/FADM_TSA.gdb`
+      - rerun `femic prep validate-case`
+    - keep ArcGIS Pro / `arcpy` as documentation-only fallback guidance.
+  - Validation target:
+    - add focused regression tests for the new Windows FileGDB materialization
+      seam inside `validate-case`;
+    - update the Windows/bootstrap docs to distinguish
+      `geospatial-preflight` from active-case FileGDB readability;
+    - run the full lint/type/test/docs/pre-commit sweep once the narrow helper
+      and docs are in place.
+
 - 2026-04-03 (Issue `#80` validated and closeout-ready):
   - Delivered exactly the narrow layout split planned at kickoff:
     - durable VDYP runtime assets stay at `vdyp_io/VDYP.INI` and

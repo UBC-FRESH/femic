@@ -219,6 +219,11 @@ def test_validate_windows_annex_runtime_passes_when_tools_and_repo_are_healthy(
         "_current_arbutus_env_values",
         lambda: {key: "" for key in cli_main.WINDOWS_ARBUTUS_REQUIRED_ENV_KEYS},
     )
+    monkeypatch.setattr(
+        cli_main,
+        "_validate_windows_public_data_tsa_boundary",
+        lambda tsa_boundaries_path: [],
+    )
 
     errors, warnings = cli_main._validate_windows_annex_runtime(
         source_root=source_root,
@@ -532,6 +537,11 @@ def test_validate_windows_annex_runtime_passes_with_visible_public_bucket(
         "_probe_windows_arbutus_bucket",
         lambda bucket_name, env_values: (True, ""),
     )
+    monkeypatch.setattr(
+        cli_main,
+        "_validate_windows_public_data_tsa_boundary",
+        lambda tsa_boundaries_path: [],
+    )
 
     errors, warnings = cli_main._validate_windows_annex_runtime(
         source_root=source_root,
@@ -540,6 +550,152 @@ def test_validate_windows_annex_runtime_passes_with_visible_public_bucket(
 
     assert errors == []
     assert warnings == []
+
+
+def test_validate_windows_public_data_tsa_boundary_reports_missing_geospatial_runtime(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    public_data_root = tmp_path / "repo" / "external" / "femic-public-data"
+    tsa_path = public_data_root / "data" / "bc" / "tsa" / "FADM_TSA.gdb"
+    tsa_path.mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(
+        cli_main,
+        "_probe_windows_filegdb_layers",
+        lambda _path: (
+            None,
+            "Neither `pyogrio` nor `fiona` is importable in the active FEMIC environment.",
+        ),
+    )
+
+    errors = cli_main._validate_windows_public_data_tsa_boundary(
+        tsa_boundaries_path=tsa_path,
+    )
+
+    assert any("geospatial runtime is incomplete" in msg for msg in errors)
+    assert any(
+        "repair the standard FEMIC geospatial environment first" in msg
+        for msg in errors
+    )
+
+
+def test_validate_windows_public_data_tsa_boundary_reports_pointer_like_members(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    public_data_root = tmp_path / "repo" / "external" / "femic-public-data"
+    tsa_path = public_data_root / "data" / "bc" / "tsa" / "FADM_TSA.gdb"
+    tsa_path.mkdir(parents=True, exist_ok=True)
+    gitdir = public_data_root.parent / "gitdir"
+    payload = (
+        gitdir
+        / "annex"
+        / "objects"
+        / "aa1"
+        / "bb2"
+        / "MD5E-s10--tsa-boundary.gdbtable"
+        / "MD5E-s10--tsa-boundary.gdbtable"
+    )
+    payload.parent.mkdir(parents=True, exist_ok=True)
+    payload.write_bytes(b"payload")
+    (public_data_root / ".git").write_text("gitdir: ../gitdir\n", encoding="utf-8")
+    (tsa_path / "a00000001.gdbtable").write_text(
+        "../../../.git/annex/objects/aa1/bb2/MD5E-s10--tsa-boundary.gdbtable/"
+        "MD5E-s10--tsa-boundary.gdbtable",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        cli_main,
+        "_probe_windows_filegdb_layers",
+        lambda _path: (False, "pyogrio DataSourceError: failed to open dataset"),
+    )
+
+    errors = cli_main._validate_windows_public_data_tsa_boundary(
+        tsa_boundaries_path=tsa_path,
+    )
+
+    assert any("pointer-style worktree stubs" in msg for msg in errors)
+    assert any("annex unlock data/bc/tsa/FADM_TSA.gdb" in msg for msg in errors)
+
+
+def test_validate_windows_public_data_tsa_boundary_reports_generic_read_failure(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    public_data_root = tmp_path / "repo" / "external" / "femic-public-data"
+    tsa_path = public_data_root / "data" / "bc" / "tsa" / "FADM_TSA.gdb"
+    tsa_path.mkdir(parents=True, exist_ok=True)
+    (tsa_path / "a00000001.gdbtable").write_bytes(b"real-ish-bytes")
+
+    monkeypatch.setattr(
+        cli_main,
+        "_probe_windows_filegdb_layers",
+        lambda _path: (False, "pyogrio DataSourceError: failed to open dataset"),
+    )
+
+    errors = cli_main._validate_windows_public_data_tsa_boundary(
+        tsa_boundaries_path=tsa_path,
+    )
+
+    assert any(
+        "first rule out annex-backed materialization/unlock problems" in msg
+        for msg in errors
+    )
+    assert any("annex enableremote arbutus-s3" in msg for msg in errors)
+
+
+def test_validate_windows_annex_runtime_surfaces_canonical_tsa_boundary_failure(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    source_root = tmp_path / "repo"
+    public_data_root = source_root / "external" / "femic-public-data"
+    public_data_root.mkdir(parents=True, exist_ok=True)
+    external_paths = SimpleNamespace(
+        vri_vclr1p_path=public_data_root / "data" / "bc" / "vri.gdb",
+        vdyp_input_pandl_path=public_data_root / "data" / "bc" / "vdyp.gdb",
+        tsa_boundaries_path=public_data_root / "data" / "bc" / "tsa" / "FADM_TSA.gdb",
+        site_prod_bc_gdb_path=public_data_root / "data" / "bc" / "siteprod.gdb",
+    )
+    for path_obj in (
+        external_paths.vri_vclr1p_path,
+        external_paths.vdyp_input_pandl_path,
+        external_paths.site_prod_bc_gdb_path,
+    ):
+        path_obj.parent.mkdir(parents=True, exist_ok=True)
+        path_obj.touch()
+    external_paths.tsa_boundaries_path.mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setattr(
+        cli_main.shutil,
+        "which",
+        lambda name: "tool.exe" if name in {"git", "datalad"} else None,
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_run_preflight_command",
+        lambda command, cwd, timeout_s=15: (True, ""),
+    )
+    monkeypatch.setattr(
+        cli_main, "_resolve_windows_user_local_path", lambda _path: None
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_current_arbutus_env_values",
+        lambda: {key: "" for key in cli_main.WINDOWS_ARBUTUS_REQUIRED_ENV_KEYS},
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_validate_windows_public_data_tsa_boundary",
+        lambda tsa_boundaries_path: ["annex unlock data/bc/tsa/FADM_TSA.gdb"],
+    )
+
+    errors, warnings = cli_main._validate_windows_annex_runtime(
+        source_root=source_root,
+        external_paths=external_paths,
+    )
+
+    assert warnings == []
+    assert "annex unlock data/bc/tsa/FADM_TSA.gdb" in errors
 
 
 def test_preflight_checks_fails_for_specific_missing_required_file(

@@ -1378,6 +1378,7 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "FEMIC_EXTERNAL_DATA_ROOT",
             "femic prep validate-case",
             "femic prep geospatial-preflight",
+            "FADM_TSA.gdb",
         ],
         "instance-and-data-roots": [
             "--instance-root",
@@ -1464,6 +1465,8 @@ def test_geospatial_runtime_bootstrap_guide_keeps_required_sections() -> None:
     ):
         assert heading in guide_text
     assert "femic prep geospatial-preflight" in guide_text
+    assert "femic prep validate-case" in guide_text
+    assert "WHSE_ADMIN_BOUNDARIES_FADM_TSA" in guide_text
 
 
 def test_curated_api_pages_only_reference_tracked_generated_docs() -> None:

@@ -212,6 +212,12 @@ This checks:
 - GDAL version visibility
 - basic shapefile write/read smoke test
 
+This is intentionally a **generic** runtime smoke, not a case-aware annex or
+FileGDB materialization check. On Windows, passing
+``femic prep geospatial-preflight`` does **not** prove that the canonical
+annex-backed TSA boundary geodatabase is readable in the active FEMIC case.
+Use ``femic prep validate-case`` for that.
+
 Troubleshooting
 ---------------
 
@@ -222,8 +228,27 @@ Troubleshooting
 - If annex-backed payloads show only pointer files, run
   `git -C external/femic-public-data annex enableremote arbutus-s3` and then
   `datalad get -r external/femic-public-data/data` before rerunning FEMIC.
+- If ``femic prep validate-case`` fails on
+  ``external/femic-public-data/data/bc/tsa/FADM_TSA.gdb``, do **not** jump
+  straight to reinstalling GDAL. First treat it as a likely public-data
+  materialization seam and run the canonical open-source recovery sequence:
+
+  .. code-block:: powershell
+
+     git -C external/femic-public-data annex enableremote arbutus-s3
+     .venv\Scripts\datalad.exe get -r external/femic-public-data/data
+     git -C external/femic-public-data annex unlock data/bc/tsa/FADM_TSA.gdb
+     python -m femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
+
+  A successful open-source recovery should end with the canonical layer
+  ``WHSE_ADMIN_BOUNDARIES_FADM_TSA`` becoming readable again through the same
+  ``validate-case`` seam.
 - If Fiona imports but shapefile smoke fails, verify GDAL shared-library
   resolution and recreate the virtual environment.
+- If the open-source recovery path is still blocked but ArcGIS Pro is available,
+  treat ``arcpy`` as a fallback recovery leg for exporting the TSA boundary to
+  a GeoPandas-friendly artifact. It is a fallback, not a required primary FEMIC
+  runtime dependency.
 - If ArcGIS Pro fallback is required, treat `propy.bat` as a path-resolved tool,
   not something guaranteed to be on `PATH`.
 - If Linux VDYP runs but Windows does not, check the Windows-native VDYP config

@@ -44,7 +44,9 @@ Quick Contract
        ``femic prep geospatial-preflight`` before long workflows. On Windows,
        ``validate-case`` is also the intended low-noise place to catch Arbutus
        auth-format and bucket-visibility failures before users fall into noisy
-       ``git-annex`` diagnostics.
+       ``git-annex`` diagnostics, and to catch canonical
+       ``FADM_TSA.gdb`` materialization/readability failures before users
+       misdiagnose them as generic GDAL/FileGDB incompatibility.
    * - External runtime boundaries
      - BatchTIPSY and Patchworks remain external/proprietary runtime seams;
        FEMIC documents and validates those boundaries but does not replace
@@ -92,6 +94,9 @@ Do Not Assume
 
 - Do not treat symlinked annex pointers as usable data files before
   ``datalad get`` completes.
+- Do not assume a passing ``femic prep geospatial-preflight`` result proves the
+  active annex-backed ``FADM_TSA.gdb`` checkout is readable on Windows;
+  ``femic prep validate-case`` is the case-aware check for that seam.
 - Do not assume quoted values in a local Arbutus env file are harmless; for the
   documented Windows auth-file workflow, quoted ``KEY=VALUE`` lines are an
   input bug, not an accepted variant.

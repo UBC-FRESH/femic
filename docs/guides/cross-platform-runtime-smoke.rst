@@ -56,6 +56,11 @@ Use K3Z as the reference case.
       python -m femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
       python -m femic prep geospatial-preflight
 
+   ``femic prep geospatial-preflight`` only proves the generic Python
+   geospatial stack is healthy. ``femic prep validate-case`` is the case-aware
+   check that the canonical annex-backed ``FADM_TSA.gdb`` TSA boundary input is
+   actually readable on Windows.
+
 2. Run Stage 01a / upstream compile through the BTC boundary:
 
    .. code-block:: powershell

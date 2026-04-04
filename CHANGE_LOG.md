@@ -10955,3 +10955,53 @@
     - `python -m mypy src`
     - `python -m pytest -q`
     - `python -m pre_commit run --all-files`
+- 2026-04-03 (Issue `#11` kickoff: Windows canonical TSA FileGDB diagnostics move into `validate-case`):
+  - Recorded the next active Windows hardening lane under GitHub issue `#11`
+    on branch `feature/issue-11-windows-filegdb-materialization`.
+  - Locked the scope to a diagnostic-only code+docs pass:
+    - extend the existing Windows annex/runtime seam inside
+      `femic prep validate-case`;
+    - probe the canonical `FADM_TSA.gdb` boundary with a lightweight layer-list
+      read;
+    - distinguish missing geospatial libs, missing/unmaterialized annex
+      payloads, pointer-like worktree exposure, and genuine FileGDB read
+      failures; and
+    - keep `femic prep geospatial-preflight` generic while documenting ArcGIS
+      Pro only as a fallback recovery leg.
+  - Recorded the exact intended operator recovery sequence for the new error
+    path:
+    - `git -C external/femic-public-data annex enableremote arbutus-s3`
+    - `datalad get -r external/femic-public-data/data`
+    - `git -C external/femic-public-data annex unlock data/bc/tsa/FADM_TSA.gdb`
+    - rerun `femic prep validate-case`
+- 2026-04-03 (Issue `#11` implemented: Windows canonical TSA FileGDB failures now diagnose annex materialization first):
+  - Extended the existing Windows annex/runtime seam inside
+    `femic prep validate-case` so it now probes the canonical TSA FileGDB at
+    `external/femic-public-data/data/bc/tsa/FADM_TSA.gdb` before operators go
+    chasing generic GDAL ghosts.
+  - Added low-noise helper logic that distinguishes:
+    - missing `pyogrio` / `fiona` support in the active FEMIC environment;
+    - missing or empty canonical FileGDB payloads;
+    - pointer-like annex worktree exposure inside the FileGDB; and
+    - generic FileGDB read failures that still require the annex/materialization
+      recovery sequence to be ruled out first.
+  - The new Windows error path now emits the exact documented recovery order:
+    - `git -C external/femic-public-data annex enableremote arbutus-s3`
+    - `datalad get -r external/femic-public-data/data`
+    - `git -C external/femic-public-data annex unlock data/bc/tsa/FADM_TSA.gdb`
+    - rerun `femic prep validate-case`
+  - Updated the compact/runtime docs so the contract is explicit:
+    - `femic prep geospatial-preflight` remains the generic geospatial smoke;
+    - `femic prep validate-case` is the case-aware Windows check for canonical
+      annex-backed TSA/FileGDB readability; and
+    - ArcGIS Pro / `arcpy` is documented only as a fallback recovery leg.
+  - Validation completed:
+    - `python -m pytest tests/test_cli_main.py -k "windows_annex_runtime or public_data_tsa_boundary" -q`
+    - `python -m pytest tests/test_case_preflight_cli.py -q`
+    - `python -m pytest tests/test_docs_contract.py -q`
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`

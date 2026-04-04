@@ -343,3 +343,57 @@ def test_prep_validate_case_template_boundary_mode_compatibility(
     assert "Case preflight passed" in result.stdout
     assert "targets=" in result.stdout
     assert "Missing TIPSY config" not in result.stdout
+
+
+def test_prep_validate_case_surfaces_windows_filegdb_materialization_guidance(
+    tmp_path: Path, monkeypatch
+) -> None:
+    profile = tmp_path / "run_profile.yaml"
+    _write_profile(
+        profile,
+        "selection:\n"
+        "  tsa: ['08']\n"
+        "run:\n"
+        f"  log_dir: '{(tmp_path / 'logs').as_posix()}'\n",
+    )
+
+    cfg_dir = tmp_path / "tipsy"
+    cfg_dir.mkdir()
+    _write_min_tipsy_cfg(cfg_dir / "tsa08.yaml", "08")
+
+    monkeypatch.setattr(
+        cli_main,
+        "_preflight_checks",
+        lambda **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "resolve_legacy_external_data_paths",
+        lambda **_: _mock_external_paths(tmp_path),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_validate_windows_annex_runtime",
+        lambda **_kwargs: (
+            [
+                "Windows canonical TSA FileGDB read failed; "
+                "git -C external/femic-public-data annex unlock data/bc/tsa/FADM_TSA.gdb"
+            ],
+            [],
+        ),
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "prep",
+            "validate-case",
+            "--run-config",
+            str(profile),
+            "--tipsy-config-dir",
+            str(cfg_dir),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "annex unlock data/bc/tsa/FADM_TSA.gdb" in result.stdout

@@ -85,11 +85,17 @@ when that mirror is in play. It can fail fast on:
 - quoted credential values in ``%USERPROFILE%\.config\femic\arbutus.env``;
 - missing loaded Arbutus auth vars when a local Arbutus env-file workflow is
   already in use; and
-- failed visibility probes for the known public-data Arbutus bucket.
+- failed visibility probes for the known public-data Arbutus bucket; and
+- unreadable canonical ``data/bc/tsa/FADM_TSA.gdb`` inputs that are more likely
+  annex materialization/unlock problems than generic Windows GDAL ghosts.
 
 For the canonical maintainer/bootstrap runbook, including the exact Windows
 auth-file and remote-publication sequence, see
 ``docs/guides/public-data-mirror-runbook.rst``.
+
+``prep geospatial-preflight`` remains the generic Fiona/GDAL/shapefile smoke
+check. On Windows, use ``prep validate-case`` to prove that the active FEMIC
+case can actually read the annex-backed canonical TSA/FileGDB inputs.
 
 ``prep geospatial-preflight`` options
 
