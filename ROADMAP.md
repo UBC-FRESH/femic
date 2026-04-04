@@ -12269,4 +12269,16 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - if a downstream THLB/netdown review is needed, use the paired TSA29 smoke
       outputs under `external/femic-tsa29-instance/tmp/issue100_tsa29_patchworks_*`
       as the primary comparison surface.
-
+- 2026-04-04 (Issue `#100` decision note: adopt proportional THLB as the
+  authoritative TSA29 definition going forward):
+  - Reviewer follow-up accepted the new proportional THLB mode as the TSA29
+    default/authoritative definition for ongoing instance work.
+  - Reference point from `reference/29ts_dpkg_2024.pdf`:
+    - the 2024 TSA29 TSR data package cites `1,682,843 ha` as THLB;
+    - the live proportional smoke produced effective managed area about
+      `1,513,233.574 ha`, which was accepted as close enough for this current
+      modeling definition.
+  - Guidance going forward:
+    - treat the proportional THLB interpretation as the active TSA29 contract;
+    - do not revert TSA29 to the old binary/calibrated THLB handling unless a
+      new explicit issue reopens that modeling decision.

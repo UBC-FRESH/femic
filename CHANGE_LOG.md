@@ -11216,3 +11216,13 @@
   - This confirms the new proportional default materially changes Patchworks
     area accounting on the live TSA29 instance in the intended way, rather than
     merely relabeling the old binary behavior.
+- 2026-04-04 (Issue `#100` TSA29 THLB definition accepted):
+  - Recorded reviewer acceptance that the new proportional THLB mode is now the
+    active TSA29 THLB definition going forward.
+  - Anchored the acceptance against the 2024 TSA29 TSR data package reference
+    point in `reference/29ts_dpkg_2024.pdf`, which cites `1,682,843 ha` as
+    THLB.
+  - The live proportional TSA29 smoke (`~1,513,233.574 ha` effective managed
+    area) was accepted as close enough for the current modeling definition, and
+    the old binary/calibrated handling should now be treated as a legacy escape
+    hatch rather than the active TSA29 baseline.
