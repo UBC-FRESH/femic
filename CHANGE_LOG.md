@@ -11611,3 +11611,27 @@
   - Opened follow-on bug `#116` so the misleading burn-severity WFS hints do
     not get lost while `#113` and `#114` continue to track the broader policy
     and resolver follow-up work.
+- 2026-04-04 (Issue `#114` rerun confirms the current deterministic public
+  alias wall for TSA29):
+  - Latest TSA29 resolve-stage counts are now `50` exact hits, `32` alias
+    hits, `0` weak-text hits, and `5` remaining no-hit rows.
+  - Latest bounded TSA29 acquisition rerun reached:
+    - `34` unique WFS subset fetches;
+    - `1` successful direct download (`SITE_PROD_BC`);
+    - `38` confident duplicate rows safely reused without re-fetching the same
+      public dataset;
+    - `5` indirect-only rows intentionally left as bounded-smoke skips; and
+    - `4` failures, split between `2` expected DWDS public-permission denials
+      and `2` known burn-severity WFS-hint mismatches tracked in `#116`.
+  - The remaining no-hit wall is now:
+    - `REG_LAND_AND_NATURAL_RESOURCE.L_MULE_DEER`
+    - `WHSE_HUMAN_CULTURAL_ECONOMIC.FNIRS`
+    - `WHSE_ADMIN_BOUNDARIES.PIP_CONSULTATION`
+    - `WHSE_HUMAN_CULTURAL_ECONOMIC.FNIRS_AGREEMENT`
+    - `BCMPB.V9.CUMKILL.PROJECTED`
+  - Split the new post-wall scope into dedicated issues:
+    - `#117` wrapped-token reconstruction in TSR PDF extraction;
+    - `#118` reviewed replacement-family suggestions for stale wildlife and
+      netdown tokens; and
+    - `#119` user-supplied mapping overrides and external acquisition hints for
+      unresolved TSR tokens.

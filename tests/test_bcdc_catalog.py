@@ -271,6 +271,18 @@ def test_query_variants_expand_tsa_shorthand_namespace_and_suffix() -> None:
     assert "WHSE_FOREST_TENURE.FTEN_MANAGED_LICENCE_POLY_SVW" in variants
 
 
+def test_query_variants_include_cross_namespace_curated_aliases() -> None:
+    cadastre_variants = bcdc_catalog._query_variants(
+        "WHSE_CADASTRE.CBM_CADASTRAL_FABRIC"
+    )
+    proposed_wha_variants = bcdc_catalog._query_variants(
+        "REG_LAND_AND_NATURAL_RESOURCE.WLD_WHA_PROPOSED_SP"
+    )
+
+    assert "WHSE_CADASTRE.PMBC_PARCEL_FABRIC_POLY_SVW" in cadastre_variants
+    assert "WHSE_WILDLIFE_MANAGEMENT.WCP_WHA_PROPOSED_SP" in proposed_wha_variants
+
+
 def test_resolve_bcdc_candidates_uses_generated_alias_for_managed_licence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

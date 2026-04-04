@@ -12703,6 +12703,69 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       needed;
     - keep `#113` open for soft good-citizen guardrails; and
     - track the new burn-severity service-hint mismatch in `#116`.
+- 2026-04-04 (Issue `#114` second pass now focused on the residual wall):
+  - Push one more deterministic pass before declaring the remaining boundary a
+    true workflow wall.
+  - Prioritize the residual TSA29 rows in this order:
+    - stale/public-name drift likely fixable with aliases:
+      - `WHSE_CADASTRE.CBM_CADASTRAL_FABRIC`
+      - `WHSE_BASEMAPPING.DRA_DIGITAL_ROAD_ATLAS_LINE_SP`
+      - `WHSE_HUMAN_CULTURAL_ECONOMIC.FNIRS`
+      - `WHSE_HUMAN_CULTURAL_ECONOMIC.FNIRS_AGREEMENT`
+      - `REG_LAND_AND_NATURAL_RESOURCE.STE_TER`
+    - possibly resolvable but ambiguous enough to keep conservative:
+      - `WHSE_WATER_MANAGEMENT.BC_COMMUNITY_WATERSHEDS`
+      - `SITE_PROD_BC`
+    - likely outside what public BCDC aliasing alone can infer reliably:
+      - `BCMPB.V9.CUMKILL.PROJECTED`
+      - `REG_LAND_AND_NATURAL_RESOURCE.L_MULE_DEER`
+      - `REG_LAND_AND_NATURAL_RESOURCE.WLD_WHA_PROPOSED_SP`
+      - `WHSE_ADMIN_BOUNDARIES.PIP_CONSULTATION`
+      - `WHSE_LAND_USE_PLANNING.FADM_DESIGNATED`
+  - If this pass stops moving the counts materially, record the wall
+    explicitly in `#114` as:
+    - shorthand/private/non-public layers need a human-supplied mapping;
+    - proprietary or permission-gated layers need local copies, bespoke URLs,
+      or user-managed FEMIC/DataLad data roots; and
+    - some stale TSR tokens may only be recoverable from human domain context,
+      not catalogue metadata alone.
+- 2026-04-04 (Issue `#114` rerun confirms the current deterministic public
+  alias wall for TSA29):
+  - Latest TSA29 resolve-stage counts:
+    - `50` exact hits;
+    - `32` alias hits;
+    - `0` weak-text hits; and
+    - `5` remaining no-hit rows.
+  - Latest bounded TSA29 acquisition rerun:
+    - `34` unique WFS subset fetches;
+    - `1` successful direct download (`SITE_PROD_BC`);
+    - `38` confident duplicate rows safely reused without re-fetching the same
+      public dataset;
+    - `5` indirect-only rows intentionally left as bounded-smoke skips; and
+    - `4` failures:
+      - `2` expected DWDS public-permission denials; and
+      - `2` known burn-severity WFS-hint mismatches tracked in `#116`.
+  - The remaining no-hit set is now:
+    - `REG_LAND_AND_NATURAL_RESOURCE.L_MULE_DEER`
+    - `WHSE_HUMAN_CULTURAL_ECONOMIC.FNIRS`
+    - `WHSE_ADMIN_BOUNDARIES.PIP_CONSULTATION`
+    - `WHSE_HUMAN_CULTURAL_ECONOMIC.FNIRS_AGREEMENT`
+    - `BCMPB.V9.CUMKILL.PROJECTED`
+  - Interpretation:
+    - `#114` has now extracted most of the safe deterministic public
+      alias/shorthand recovery available from BCDC metadata;
+    - the mule-deer row now looks primarily like an upstream TSR PDF
+      line-wrap truncation bug rather than a missing alias;
+    - some stale/internal tokens are better represented as reviewed
+      replacement families rather than fake exact hits; and
+    - the remaining wall will mostly move through human-supplied overrides,
+      bespoke URLs, local copies, or FEMIC/DataLad-managed mirrors.
+  - New follow-on issues opened so `#114` can stay narrow:
+    - `#117` wrapped-token reconstruction in TSR PDF extraction;
+    - `#118` reviewed replacement-family suggestions for stale wildlife and
+      netdown tokens; and
+    - `#119` user-supplied mapping overrides and external acquisition hints for
+      unresolved TSR tokens.
 - 2026-04-04 (Issue `#109` implemented: WFS probing/classification for
   OpenMaps-backed BCDC service resources):
   - Extended `femic data bcdc-resolve` so service-backed resources can now
