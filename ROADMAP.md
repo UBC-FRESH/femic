@@ -12540,3 +12540,41 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `python -m pytest -q`
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m pre_commit run --all-files`
+- 2026-04-04 (Issue `#108` kickoff: BCDC geographic acquisition automation
+  beyond direct-download URLs):
+  - Governing issue:
+    - GitHub issue `#108`
+  - Active branch:
+    - `feature/issue-108-bcdc-geographic-acquisition`
+  - Open child issues:
+    - `#109` classify and probe OpenMaps-backed BCDC service resources for WFS
+      download capability;
+    - `#110` add AOI-normalized WFS fetch support for BCDC layers with
+      GeoPackage default output;
+    - `#111` add worked `F_OWN` and TSA29 BCDC fetch docs for AOI-scoped WFS
+      acquisition; and
+    - `#112` investigate and optionally automate BCGW DWDS/Geomark order
+      submission for FGDB fallback.
+  - Goal:
+    - automate geographic acquisition for BCDC layers that do not expose a
+      simple direct-download URL by using a WFS-first path over OpenMaps-backed
+      service resources.
+  - Planned implementation:
+    - extend `femic data bcdc-resolve` with machine-readable service automation
+      hints such as WFS capability and suggested fetch strategy;
+    - add `femic data bcdc-fetch` with exactly one AOI input required:
+      - `--bbox minx,miny,maxx,maxy` in `EPSG:3005`; or
+      - `--geomark` using a Geomark URL or bare ID;
+    - default local output to GeoPackage, with GeoJSON as the lighter fallback;
+      and
+    - keep DWDS/FGDB automation as a follow-on rather than part of the first
+      active implementation slice.
+  - Detailed Next Steps:
+    - do `#109` first to prove and expose WFS-queryable service seams without
+      mixing probing with download behavior;
+    - then do `#110` as the first actual acquisition path, normalized around
+      bbox-based AOIs even when the user starts from `--geomark`;
+    - follow with `#111` so the `F_OWN` and TSA29 workflows are documented
+      immediately after the new CLI path exists; and
+    - leave `#112` as the explicit heavier fallback lane for later FGDB/DWDS
+      investigation.

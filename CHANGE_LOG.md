@@ -11390,3 +11390,23 @@
     - `python -m pytest -q`
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m pre_commit run --all-files`
+- 2026-04-04 (Issue `#108` kickoff: BCDC geographic acquisition automation):
+  - Cleaned the tree before starting the new lane:
+    - landed the previously closed `#107` branch onto `main`;
+    - discarded generated TSR/runtime/K3Z temp spill; and
+    - preserved the intentional local queue/PDF hygiene edits in a separate
+      cleanup commit.
+  - Opened the new BCDC acquisition issue stack:
+    - `#108` umbrella feature;
+    - `#109` WFS service probing/classification;
+    - `#110` AOI-normalized WFS fetch support with GeoPackage default output;
+    - `#111` worked `F_OWN` and TSA29 fetch docs; and
+    - `#112` deferred DWDS/Geomark FGDB fallback investigation.
+  - Created and switched to:
+    - `feature/issue-108-bcdc-geographic-acquisition`
+  - Recorded the new active lane in `ROADMAP.md` Detailed Next Steps Notes with
+    the intended execution order:
+    - `#109` first;
+    - `#110` second;
+    - `#111` after the new fetch path exists; and
+    - `#112` as the later heavier fallback path.
