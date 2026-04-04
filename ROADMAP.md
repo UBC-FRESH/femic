@@ -12871,6 +12871,59 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       suggestions layered on top of the new override seam; or
     - keep `#113` in view if we want to add soft guardrails before making the
       bulk acquisition workflow even more aggressive.
+- 2026-04-04 (Issue `#118` active: reviewed replacement-family suggestions for
+  stale TSR wildlife and netdown tokens):
+  - Layer small, bounded public replacement suggestions onto the new
+    `config/tsr/source_layer_overrides.yaml` seam instead of inventing a new
+    review surface.
+  - Keep the first slice intentionally narrow:
+    - only curate theme-driven public suggestion families where the live BCDC
+      search results are coherent and obviously relevant;
+    - do not auto-fetch from the suggestion list;
+    - do not pretend a family suggestion is an exact replacement; and
+    - leave true hard walls such as `FNIRS` untouched when public search still
+      produces nothing defensible.
+  - Immediate targets from the TSA29 wall:
+    - `REG_LAND_AND_NATURAL_RESOURCE.L_MULE_DEER...`
+    - `WHSE_ADMIN_BOUNDARIES.PIP_CONSULTATION`
+    - selected burn-severity stems already implicated by `#116`
+  - Detailed Next Steps:
+    - add a small reviewed replacement-suggestion helper on the BCDC side;
+    - surface those suggestions in `source_layer_overrides.yaml`;
+    - extend `override-report` so users can see how many wall rows now have
+      suggested public leads; and
+    - document that these are review-only candidates, not auto-substitutions.
+- 2026-04-04 (Issue `#118` complete: review-only replacement-family
+  suggestions now help move selected TSA29 wall rows):
+  - Added a bounded replacement-family suggestion helper in
+    `src/femic/bcdc_catalog.py` for selected stale wildlife/netdown themes
+    rather than pretending broad public search can always produce one exact
+    replacement layer.
+  - The new suggestions are now surfaced through
+    `config/tsr/source_layer_overrides.yaml` and summarized by
+    `femic tsr override-report` via:
+    - `entries_with_suggestions`; and
+    - `total_suggestion_candidates`.
+  - Live TSA29 smoke on `femic tsr override-init --overwrite` and
+    `femic tsr override-report` confirmed:
+    - `9` pending override rows;
+    - `4` rows with review-only public replacement suggestions; and
+    - `8` total suggestion candidates across the current wall set.
+  - The first curated public suggestion families now cover:
+    - stale mule-deer wall rows, with Cariboo leads ranked ahead of unrelated
+      districts;
+    - burn-severity stems already implicated by `#116`; and
+    - the public PIP consultation service seam.
+  - Explicitly out of scope for this slice:
+    - auto-fetching from replacement-family suggestions;
+    - auto-adopting them into the overlay; and
+    - pretending hard walls like `FNIRS` are solved when public search still
+      produces nothing defensible.
+  - Detailed Next Steps:
+    - move to `#116` if we want to clean up misleading burn-severity WFS hints
+      before users trip over them; or
+    - move to `#113` if we want soft good-citizen guardrails before the now
+      stronger public acquisition workflow gets more aggressive.
 - 2026-04-04 (Issue `#109` implemented: WFS probing/classification for
   OpenMaps-backed BCDC service resources):
   - Extended `femic data bcdc-resolve` so service-backed resources can now

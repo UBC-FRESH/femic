@@ -5133,6 +5133,8 @@ def test_tsr_override_report_summarizes_override_state(
             total_entries=5,
             resolved_entries=2,
             pending_entries=3,
+            entries_with_suggestions=2,
+            total_suggestion_candidates=4,
             unresolved_overlay_queries=("WHSE_HUMAN_CULTURAL_ECONOMIC.FNIRS",),
             override_kind_counts={"replacement_layer": 1, "local_path": 1},
         ),
@@ -5144,6 +5146,8 @@ def test_tsr_override_report_summarizes_override_state(
 
     assert any("resolved_entries: 2" in msg for msg in messages)
     assert any("pending_entries: 3" in msg for msg in messages)
+    assert any("entries_with_suggestions: 2" in msg for msg in messages)
+    assert any("total_suggestion_candidates: 4" in msg for msg in messages)
     assert any("replacement_layer_count: 1" in msg for msg in messages)
 
 

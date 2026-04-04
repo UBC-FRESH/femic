@@ -150,6 +150,11 @@ Key Entry Surfaces
   Summarize how many unresolved overlay rows have reviewed escape hatches
   recorded locally.
 
+The override layer can now also carry review-only
+``replacement_family_candidates`` for selected stale wildlife/netdown tokens.
+These are bounded public shortlists meant to help human review move the wall;
+they are not treated as exact replacements or auto-fetch targets.
+
 Cross-References
 ----------------
 

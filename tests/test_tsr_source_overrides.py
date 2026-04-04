@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from femic.tsr_catalog import source_overrides
 from femic.tsr_catalog.source_overrides import (
     TsrSourceLayerOverridesError,
     build_tsr_source_layer_override_report,
@@ -63,11 +64,33 @@ def _write_overlay(path: Path) -> None:
     path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
 
-def test_init_tsr_source_layer_overrides_writes_template(tmp_path: Path) -> None:
+def test_init_tsr_source_layer_overrides_writes_template(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     instance_root = tmp_path / "instance"
     overlay_path = instance_root / "config" / "tsr" / "overlay.yaml"
     overrides_path = instance_root / "config" / "tsr" / "source_layer_overrides.yaml"
     _write_overlay(overlay_path)
+    monkeypatch.setattr(
+        source_overrides,
+        "suggest_bcdc_replacement_family",
+        lambda query, limit=3: (
+            (
+                source_overrides.BcdcReplacementFamilyCandidate(
+                    title="Mule Deer Winter Range Topographic Buffers - Cariboo Region",
+                    dataset_page_url="https://catalogue.data.gov.bc.ca/dataset/mule-deer-winter-range-topographic-buffers-cariboo-region",
+                    object_names=(
+                        "REG_LAND_AND_NATURAL_RESOURCE.WLD_MULE_DEER_RNG_TOPO_CAR_SP",
+                    ),
+                    matched_query="MULE_DEER",
+                    rationale="Broad mule-deer search surfaced a small public wildlife family that may replace a stale TSR token.",
+                ),
+            )
+            if "MULE_DEER" in query
+            else ()
+        ),
+    )
 
     result = init_tsr_source_layer_overrides(
         instance_root=instance_root,
@@ -81,6 +104,11 @@ def test_init_tsr_source_layer_overrides_writes_template(tmp_path: Path) -> None
     assert payload["source_overlay_path"] == "config/tsr/overlay.yaml"
     assert payload["entries"][0]["query"] == "REG_LAND_AND_NATURAL_RESOURCE.L_MULE_DEER"
     assert payload["entries"][0]["override_kind"] == ""
+    assert payload["entries"][0]["replacement_family_candidates"]
+    assert (
+        payload["entries"][0]["replacement_family_candidates"][0]["matched_query"]
+        == "MULE_DEER"
+    )
     assert payload["entries"][1]["current_public_notes"] == [
         "Resolver guessed a public lead but later automation failed.",
         "Needs human review.",
@@ -138,6 +166,17 @@ def test_build_tsr_source_layer_override_report_summarizes_resolved_and_pending(
                     {
                         "query": "REG_LAND_AND_NATURAL_RESOURCE.L_MULE_DEER",
                         "current_public_status": "no_catalog_match",
+                        "replacement_family_candidates": [
+                            {
+                                "title": "Mule Deer Winter Range Topographic Buffers - Cariboo Region",
+                                "dataset_page_url": "https://catalogue.data.gov.bc.ca/dataset/mule-deer-winter-range-topographic-buffers-cariboo-region",
+                                "object_names": [
+                                    "REG_LAND_AND_NATURAL_RESOURCE.WLD_MULE_DEER_RNG_TOPO_CAR_SP"
+                                ],
+                                "matched_query": "MULE_DEER",
+                                "rationale": "Broad mule-deer search surfaced a small public wildlife family that may replace a stale TSR token.",
+                            }
+                        ],
                         "override_kind": "replacement_layer",
                         "override_value": "REG_LAND_AND_NATURAL_RESOURCE.WLD_MULE_DEER_RNG_TOPO_CAR_SP",
                         "notes": "Use reviewed replacement family candidate for now.",
@@ -164,5 +203,63 @@ def test_build_tsr_source_layer_override_report_summarizes_resolved_and_pending(
     assert report.total_entries == 2
     assert report.resolved_entries == 1
     assert report.pending_entries == 1
+    assert report.entries_with_suggestions == 1
+    assert report.total_suggestion_candidates == 1
     assert report.override_kind_counts == {"replacement_layer": 1}
     assert report.unresolved_overlay_queries == ("WHSE_HUMAN_CULTURAL_ECONOMIC.FNIRS",)
+
+
+def test_load_tsr_source_layer_overrides_preserves_replacement_family_candidates(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "source_layer_overrides.yaml"
+    path.write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": 1,
+                "tsa": {
+                    "tsa_id": "tsa_29",
+                    "tsa_code": "29",
+                    "tsa_name": "Williams Lake",
+                },
+                "source_overlay_path": "config/tsr/overlay.yaml",
+                "entries": [
+                    {
+                        "query": "REG_LAND_AND_NATURAL_RESOURCE.L_MULE_DEER_WR_CAR_POLY",
+                        "current_public_status": "no_catalog_match",
+                        "matched_by": "",
+                        "top_match_title": "",
+                        "dataset_page_url": "",
+                        "suggested_fetch_strategy": "",
+                        "current_public_notes": [],
+                        "replacement_family_candidates": [
+                            {
+                                "title": "Mule Deer Winter Range Topographic Buffers - Cariboo Region",
+                                "dataset_page_url": "https://catalogue.data.gov.bc.ca/dataset/mule-deer-winter-range-topographic-buffers-cariboo-region",
+                                "object_names": [
+                                    "REG_LAND_AND_NATURAL_RESOURCE.WLD_MULE_DEER_RNG_TOPO_CAR_SP"
+                                ],
+                                "matched_query": "MULE_DEER",
+                                "rationale": "Broad mule-deer search surfaced a small public wildlife family that may replace a stale TSR token.",
+                            }
+                        ],
+                        "override_kind": "",
+                        "override_value": "",
+                        "notes": "",
+                    }
+                ],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+
+    record = load_tsr_source_layer_overrides(path)
+
+    assert len(record.entries) == 1
+    assert len(record.entries[0].replacement_family_candidates) == 1
+    candidate = record.entries[0].replacement_family_candidates[0]
+    assert candidate.matched_query == "MULE_DEER"
+    assert candidate.object_names == (
+        "REG_LAND_AND_NATURAL_RESOURCE.WLD_MULE_DEER_RNG_TOPO_CAR_SP",
+    )

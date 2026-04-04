@@ -573,6 +573,11 @@ record a reviewed escape hatch such as:
 - ``--overrides-path PATH`` (optional; defaults to
   ``config/tsr/source_layer_overrides.yaml`` under the instance root)
 
+The override workflow is for reviewed escape hatches only. ``override-init``
+can now pre-populate ``replacement_family_candidates`` for a small number of
+stale/public-facing wall cases, but those suggestions are not automatic
+replacements and are never auto-fetched or auto-adopted.
+
 ``tsr override-report`` compares the override file against the unresolved rows
 still present in the TSR overlay and reports:
 

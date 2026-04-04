@@ -8,6 +8,12 @@ from typing import Any
 
 import yaml
 
+from femic.bcdc_catalog import (
+    BcdcCatalogError,
+    BcdcReplacementFamilyCandidate,
+    suggest_bcdc_replacement_family,
+)
+
 from .overlay import TsrOverlayError, TsrOverlayTsaRecord
 
 
@@ -37,6 +43,7 @@ class TsrSourceLayerOverrideEntry:
     dataset_page_url: str
     suggested_fetch_strategy: str
     current_public_notes: tuple[str, ...]
+    replacement_family_candidates: tuple[BcdcReplacementFamilyCandidate, ...] = ()
     override_kind: str | None = None
     override_value: str | None = None
     notes: str | None = None
@@ -54,6 +61,9 @@ class TsrSourceLayerOverrideEntry:
             "dataset_page_url": self.dataset_page_url,
             "suggested_fetch_strategy": self.suggested_fetch_strategy,
             "current_public_notes": list(self.current_public_notes),
+            "replacement_family_candidates": [
+                candidate.to_dict() for candidate in self.replacement_family_candidates
+            ],
             "override_kind": self.override_kind or "",
             "override_value": self.override_value or "",
             "notes": self.notes or "",
@@ -100,6 +110,8 @@ class TsrSourceLayerOverridesReport:
     total_entries: int
     resolved_entries: int
     pending_entries: int
+    entries_with_suggestions: int
+    total_suggestion_candidates: int
     unresolved_overlay_queries: tuple[str, ...]
     override_kind_counts: dict[str, int]
 
@@ -180,9 +192,21 @@ def _overlay_unresolved_entries(
                     attempt.get("suggested_fetch_strategy", "")
                 ).strip(),
                 current_public_notes=_normalize_notes(attempt.get("notes")),
+                replacement_family_candidates=_suggest_replacement_family_candidates(
+                    query
+                ),
             )
         )
     return tuple(entries)
+
+
+def _suggest_replacement_family_candidates(
+    query: str,
+) -> tuple[BcdcReplacementFamilyCandidate, ...]:
+    try:
+        return suggest_bcdc_replacement_family(query, limit=3)
+    except (BcdcCatalogError, OSError, ValueError):
+        return ()
 
 
 def default_tsr_source_layer_overrides_path(*, instance_root: Path) -> Path:
@@ -287,6 +311,21 @@ def load_tsr_source_layer_overrides(path: Path) -> TsrSourceLayerOverridesRecord
                     raw.get("suggested_fetch_strategy", "")
                 ).strip(),
                 current_public_notes=_normalize_notes(raw.get("current_public_notes")),
+                replacement_family_candidates=tuple(
+                    BcdcReplacementFamilyCandidate(
+                        title=str(item.get("title", "")).strip(),
+                        dataset_page_url=str(item.get("dataset_page_url", "")).strip(),
+                        object_names=tuple(
+                            str(value).strip()
+                            for value in item.get("object_names", [])
+                            if str(value).strip()
+                        ),
+                        matched_query=str(item.get("matched_query", "")).strip(),
+                        rationale=str(item.get("rationale", "")).strip(),
+                    )
+                    for item in raw.get("replacement_family_candidates", [])
+                    if isinstance(item, dict)
+                ),
                 override_kind=override_kind,
                 override_value=str(raw.get("override_value", "")).strip() or None,
                 notes=str(raw.get("notes", "")).strip() or None,
@@ -333,12 +372,17 @@ def build_tsr_source_layer_override_report(
     override_kind_counts = {kind: 0 for kind in ALLOWED_OVERRIDE_KINDS}
     resolved_entries = 0
     pending_entries = 0
+    entries_with_suggestions = 0
+    total_suggestion_candidates = 0
     for entry in overrides.entries:
         if entry.override_kind:
             resolved_entries += 1
             override_kind_counts[entry.override_kind] += 1
         else:
             pending_entries += 1
+        if entry.replacement_family_candidates:
+            entries_with_suggestions += 1
+            total_suggestion_candidates += len(entry.replacement_family_candidates)
     override_kind_counts = {
         kind: count for kind, count in override_kind_counts.items() if count > 0
     }
@@ -349,6 +393,8 @@ def build_tsr_source_layer_override_report(
         total_entries=len(overrides.entries),
         resolved_entries=resolved_entries,
         pending_entries=pending_entries,
+        entries_with_suggestions=entries_with_suggestions,
+        total_suggestion_candidates=total_suggestion_candidates,
         unresolved_overlay_queries=unresolved_overlay_queries,
         override_kind_counts=override_kind_counts,
     )

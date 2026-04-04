@@ -11659,3 +11659,25 @@
   - Live TSA29 extraction smoke against the cached corpus confirmed that the
     repaired full tokens are now emitted and the old truncated TSA29 variants
     are gone.
+- 2026-04-04 (Issue `#118` landed review-only replacement-family suggestions
+  for selected TSA29 wall rows):
+  - Added bounded public replacement-family suggestions in
+    `src/femic/bcdc_catalog.py` for selected stale wildlife/netdown themes so
+    FEMIC can offer a reviewed shortlist when exact public alias recovery has
+    honestly run out.
+  - Surfaced those suggestions through the existing override seam in
+    `config/tsr/source_layer_overrides.yaml` and summarized them in
+    `femic tsr override-report` via:
+    - `entries_with_suggestions`; and
+    - `total_suggestion_candidates`.
+  - Updated the TSR workflow/docs/tests so users can see that these are
+    review-only candidates, not auto-substitutions or auto-fetch targets.
+  - Live TSA29 smoke confirmed:
+    - `9` pending override rows remain;
+    - `4` of those rows now carry replacement-family suggestions; and
+    - `8` total suggestion candidates are available across the current wall.
+  - The first suggestion families now cover:
+    - mule-deer wall rows, with Cariboo leads ranked ahead of unrelated
+      districts;
+    - burn-severity stems already implicated by `#116`; and
+    - the public PIP consultation service seam.

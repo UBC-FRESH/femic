@@ -117,6 +117,66 @@ def _managed_licence_payload() -> dict[str, object]:
     }
 
 
+def _mule_deer_payload() -> dict[str, object]:
+    return {
+        "success": True,
+        "result": {
+            "results": [
+                {
+                    "id": "pkg-mule-deer-suit2",
+                    "name": "mule-deer-suitability-lillooet-tsa-version-2",
+                    "title": "Mule Deer Suitability Lillooet TSA Version 2",
+                    "resources": [
+                        {
+                            "object_name": "REG_LAND_AND_NATURAL_RESOURCE.MULE_DEER_SUIT2_TLI_POLY"
+                        }
+                    ],
+                },
+                {
+                    "id": "pkg-mule-deer-topo",
+                    "name": "mule-deer-winter-range-topographic-buffers-cariboo-region",
+                    "title": "Mule Deer Winter Range Topographic Buffers - Cariboo Region",
+                    "resources": [
+                        {
+                            "object_name": "REG_LAND_AND_NATURAL_RESOURCE.WLD_MULE_DEER_RNG_TOPO_CAR_SP"
+                        }
+                    ],
+                },
+                {
+                    "id": "pkg-mule-deer-vernon",
+                    "name": "mule-deer-winter-range-shelter-vernon-forest-district",
+                    "title": "Mule Deer Winter Range Shelter Vernon Forest District",
+                    "resources": [
+                        {
+                            "object_name": "REG_LAND_AND_NATURAL_RESOURCE.MULE_DEER_WR_SHELTER_DVE_POLY"
+                        }
+                    ],
+                },
+                {
+                    "id": "pkg-mule-deer-hab",
+                    "name": "mule-deer-habitat-management-zones-cariboo-region",
+                    "title": "Mule Deer Habitat Management Zones - Cariboo Region",
+                    "resources": [
+                        {
+                            "object_name": "REG_LAND_AND_NATURAL_RESOURCE.WLD_MULE_DEER_HAB_MG_ZN_CAR_SP"
+                        }
+                    ],
+                },
+                {
+                    "id": "pkg-mule-deer-stand",
+                    "name": "stand-structure-habitat-classes-in-mule-deer-winter-range-cariboo-region",
+                    "title": "Stand Structure Habitat Classes in Mule Deer Winter Range - Cariboo Region",
+                    "resources": [
+                        {
+                            "object_name": "REG_LAND_AND_NATURAL_RESOURCE.WLD_MULE_DEER_STND_STRC_CAR_SP"
+                        }
+                    ],
+                },
+            ]
+        },
+    }
+
+
 def test_build_object_name_search_url_uses_res_extras_object_name() -> None:
     url = bcdc_catalog._build_object_name_search_url(
         "WHSE_FOREST_VEGETATION.F_OWN",
@@ -317,6 +377,24 @@ def test_resolve_bcdc_candidates_uses_generated_alias_for_managed_licence(
     assert result.top_match.title == "Forest Tenure Managed Licence"
     assert any("FTEN_MANAGED_LICENCE_POLY_SVW" in note for note in result.notes)
     assert any("FTEN_MANAGED_LICENCE_POLY_SVW" in url for url in result.api_urls)
+
+
+def test_suggest_bcdc_replacement_family_returns_review_only_candidates() -> None:
+    suggestions = bcdc_catalog.suggest_bcdc_replacement_family(
+        "REG_LAND_AND_NATURAL_RESOURCE.L_MULE_DEER_WR_CAR_POLY",
+        fetch_json_fn=lambda _url: _mule_deer_payload(),
+        limit=3,
+    )
+
+    assert len(suggestions) == 3
+    assert suggestions[0].matched_query == "MULE_DEER"
+    assert suggestions[0].dataset_page_url.endswith(
+        "/mule-deer-winter-range-topographic-buffers-cariboo-region"
+    )
+    assert (
+        "REG_LAND_AND_NATURAL_RESOURCE.WLD_MULE_DEER_RNG_TOPO_CAR_SP"
+        in suggestions[0].object_names
+    )
 
 
 def test_score_resource_promotes_object_name_stem_matches() -> None:

@@ -2262,6 +2262,8 @@ def _print_tsr_source_layer_overrides_report(
     console.print(f"total_entries: {summary.total_entries}")
     console.print(f"resolved_entries: {summary.resolved_entries}")
     console.print(f"pending_entries: {summary.pending_entries}")
+    console.print(f"entries_with_suggestions: {summary.entries_with_suggestions}")
+    console.print(f"total_suggestion_candidates: {summary.total_suggestion_candidates}")
     console.print(
         "unresolved_overlay_queries: " + str(len(summary.unresolved_overlay_queries))
     )

@@ -270,6 +270,7 @@ def test_tsr_api_page_is_wired_into_curated_modules() -> None:
         "metadata/tsr",
         "config/tsr/overlay.yaml",
         "config/tsr/source_layer_overrides.yaml",
+        "replacement_family_candidates",
         "~/.femic/tsr/tsa_pdf_cache_manifest.json",
     ):
         assert snippet in api_text
@@ -343,6 +344,9 @@ def test_tsr_intelligence_workflow_guide_keeps_required_sections() -> None:
         "metadata/tsr/tsa_candidate_facts.json",
         "config/tsr/overlay.yaml",
         "config/tsr/source_layer_overrides.yaml",
+        "replacement_family_candidates",
+        "review-only suggestions",
+        "WLD_MULE_DEER_RNG_TOPO_CAR_SP",
         "~/.femic/tsr/corpus",
         "~/.femic/tsr/tsa_pdf_cache_manifest.json",
         "candidate facts are **not auto-adopted**",

@@ -309,6 +309,26 @@ class BcdcResolveResult:
         }
 
 
+@dataclass(frozen=True)
+class BcdcReplacementFamilyCandidate:
+    """One review-only replacement candidate for a stale TSR source token."""
+
+    title: str
+    dataset_page_url: str
+    object_names: tuple[str, ...]
+    matched_query: str
+    rationale: str
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "title": self.title,
+            "dataset_page_url": self.dataset_page_url,
+            "object_names": list(self.object_names),
+            "matched_query": self.matched_query,
+            "rationale": self.rationale,
+        }
+
+
 def _download_url_to_path(url: str, destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     with urlopen(url) as response, destination.open("wb") as handle:
@@ -520,6 +540,33 @@ def _query_variants(query: str) -> tuple[str, ...]:
     return tuple(variants)
 
 
+def _replacement_family_search_terms(query: str) -> tuple[tuple[str, str], ...]:
+    normalized = query.strip().upper()
+    terms: list[tuple[str, str]] = []
+    if "MULE_DEER" in normalized:
+        terms.append(
+            (
+                "MULE_DEER",
+                "Broad mule-deer search surfaced a small public wildlife family that may replace a stale TSR token.",
+            )
+        )
+    if "PIP_CONSULTATION" in normalized:
+        terms.append(
+            (
+                "PIP_CONSULTATION",
+                "Broad PIP consultation search surfaced a likely public consultation-area lead.",
+            )
+        )
+    if "BURN_SEVERITY" in normalized:
+        terms.append(
+            (
+                "BURN_SEVERITY",
+                "Broad burn-severity search surfaced current public burn-severity dataset candidates.",
+            )
+        )
+    return tuple(terms)
+
+
 def _fetch_json(url: str) -> dict[str, Any]:
     with urlopen(url) as response:
         payload = json.load(response)
@@ -545,6 +592,67 @@ def _extract_package_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
     if not isinstance(rows, list):
         raise BcdcCatalogError("BCDC API package_search payload has invalid `results`.")
     return [row for row in rows if isinstance(row, dict)]
+
+
+def _resource_object_names(package: dict[str, Any]) -> tuple[str, ...]:
+    resources = package.get("resources", [])
+    if not isinstance(resources, list):
+        return ()
+    names: list[str] = []
+    seen: set[str] = set()
+    for resource in resources:
+        if not isinstance(resource, dict):
+            continue
+        object_name = str(resource.get("object_name") or "").strip()
+        if object_name and object_name not in seen:
+            names.append(object_name)
+            seen.add(object_name)
+    return tuple(names)
+
+
+def _replacement_family_priority(
+    *,
+    original_query: str,
+    candidate: BcdcReplacementFamilyCandidate,
+) -> tuple[int, str]:
+    normalized_query = original_query.strip().upper()
+    title = candidate.title.upper()
+    object_names = tuple(name.upper() for name in candidate.object_names)
+
+    score = 0
+    if "MULE_DEER" in normalized_query:
+        if "CARIBOO" in title or any("_CAR_" in name for name in object_names):
+            score += 5
+        if any(
+            name.startswith("REG_LAND_AND_NATURAL_RESOURCE.WLD_MULE_DEER")
+            for name in object_names
+        ):
+            score += 3
+        if any("RNG_TOPO" in name for name in object_names) or (
+            "TOPOGRAPHIC BUFFERS" in title
+        ):
+            score += 2
+        if any("HAB_MG_ZN" in name for name in object_names) or (
+            "HABITAT MANAGEMENT ZONES" in title
+        ):
+            score += 1
+        if "LILLOOET" in title:
+            score -= 2
+    if "PIP_CONSULTATION" in normalized_query:
+        if "CONSULTATION" in title:
+            score += 3
+        if "PIP" in title or "INDIGENOUS" in title:
+            score += 2
+    if "BURN_SEVERITY" in normalized_query:
+        if any(
+            name.startswith("WHSE_FOREST_VEGETATION.VEG_BURN_SEVERITY")
+            for name in object_names
+        ):
+            score += 4
+        if "BURN SEVERITY" in title:
+            score += 2
+
+    return (score, candidate.title.casefold())
 
 
 def _looks_like_document(resource: dict[str, Any]) -> bool:
@@ -878,6 +986,56 @@ def _merge_package_matches(
             current.title.casefold(),
         ):
             existing[match.package_id] = match
+
+
+def suggest_bcdc_replacement_family(
+    query: str,
+    *,
+    limit: int = 5,
+    fetch_json_fn: Callable[[str], dict[str, Any]] | None = None,
+) -> tuple[BcdcReplacementFamilyCandidate, ...]:
+    """Return review-only public replacement candidates for selected stale TSR tokens."""
+
+    fetch_json = fetch_json_fn or _fetch_json
+    search_terms = _replacement_family_search_terms(query)
+    if not search_terms:
+        return ()
+
+    candidates: list[BcdcReplacementFamilyCandidate] = []
+    seen_pages: set[str] = set()
+    for search_term, rationale in search_terms:
+        url = _build_keyword_search_url(search_term, rows=max(limit * 2, 10))
+        payload = fetch_json(url)
+        for package in _extract_package_rows(payload):
+            title = str(package.get("title") or "").strip()
+            package_name = str(package.get("name") or "").strip()
+            dataset_page_url = (
+                f"{BCDC_DATASET_PAGE_URL}/{package_name}" if package_name else ""
+            )
+            if not title or not dataset_page_url or dataset_page_url in seen_pages:
+                continue
+            object_names = _resource_object_names(package)
+            if not object_names and "PIP_CONSULTATION" not in query.upper():
+                continue
+            candidates.append(
+                BcdcReplacementFamilyCandidate(
+                    title=title,
+                    dataset_page_url=dataset_page_url,
+                    object_names=object_names,
+                    matched_query=search_term,
+                    rationale=rationale,
+                )
+            )
+            seen_pages.add(dataset_page_url)
+    ranked_candidates = sorted(
+        candidates,
+        key=lambda candidate: _replacement_family_priority(
+            original_query=query,
+            candidate=candidate,
+        ),
+        reverse=True,
+    )
+    return tuple(ranked_candidates[:limit])
 
 
 def resolve_bcdc_candidates(query: str, *, limit: int = 5) -> BcdcResolveResult:

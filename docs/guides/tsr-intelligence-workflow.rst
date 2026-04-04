@@ -228,6 +228,27 @@ The override file is where you can record reviewed escape hatches such as:
 - ``private`` / ``unavailable`` when the wall is real and should stop repeated
   public inference attempts.
 
+For a few selected stale wildlife/netdown tokens, ``override-init`` can now
+pre-populate ``replacement_family_candidates``. These are intentionally
+review-only suggestions, not auto-adopted replacements. Their job is to give
+you a bounded shortlist when the old TSR token no longer maps cleanly to one
+public BCDC object, but a small current public dataset family looks promising.
+
+For example, a stale mule-deer token can now surface a reviewed public family
+including entries such as:
+
+- ``REG_LAND_AND_NATURAL_RESOURCE.WLD_MULE_DEER_RNG_TOPO_CAR_SP``
+- ``REG_LAND_AND_NATURAL_RESOURCE.WLD_MULE_DEER_HAB_MG_ZN_CAR_SP``
+- ``REG_LAND_AND_NATURAL_RESOURCE.WLD_MULE_DEER_STND_STRC_CAR_SP``
+
+The intended loop is still manual:
+
+1. inspect the suggested family;
+2. decide whether one of the candidates is a valid reviewed replacement for
+   your project;
+3. record that decision under ``override_kind: replacement_layer`` only after
+   review.
+
 Windows PowerShell Notes
 ------------------------
 
