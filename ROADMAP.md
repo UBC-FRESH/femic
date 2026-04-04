@@ -12085,4 +12085,28 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - if later follow-on work adds batch-input mode or curated alias rules,
       update these examples again so the docs continue to show the lowest-friction
       working Windows path.
+- 2026-04-04 (Issue `#99` kickoff: BCDC forestry alias resolution and batch
+  query-file support):
+  - Governing issue:
+    - GitHub issue `#99`
+  - Planned branch:
+    - `feature/issue-99-bcdc-alias-batch-input`
+  - Problem framing:
+    - the first resolver slice works well for clean BCGW object names, but the
+      Williams Lake Table 2 manual pass exposed the next two usability gaps:
+      alias/name-drift misses for forestry layer names and poor Windows UX for
+      bulk interactive query entry.
+  - Active implementation target:
+    - add a small curated forestry alias map for known high-value query
+      patterns;
+    - add `--query-file` batch input to `femic data bcdc-resolve`;
+    - keep the slice deliberately narrow:
+      no TSR PDF parsing, no automatic registry promotion, and no custom
+      download automation.
+  - Detailed Next Steps:
+    - use the preserved Williams Lake/Table 2 misses as the seed list for the
+      first alias map;
+    - make query-file parsing robust to blank lines and `#` comments;
+    - update the discovery docs with a Windows-friendly batch-input example;
+    - extend CLI/tests so the new batch mode and curated aliases are covered.
 

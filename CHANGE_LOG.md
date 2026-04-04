@@ -11104,3 +11104,10 @@
     instead.
   - Rationale: the Patchworks user guide is proprietary vendor documentation
     and should not be redistributed from the public FEMIC repository.
+- 2026-04-04 (Issue `#99` kickoff: BCDC alias resolution and query-file follow-on):
+  - Opened GitHub issue `#99`, `Feature: add BCDC forestry alias resolution and batch query-file support`.
+  - Scoped the follow-on around the two highest-value gaps surfaced by the
+    Williams Lake Table 2 manual pass:
+    - curated forestry alias handling for known miss cases; and
+    - `--query-file` support for Windows-friendly batch resolution without
+      interactive multiline paste pain.
