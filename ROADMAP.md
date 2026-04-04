@@ -11965,4 +11965,37 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `python -m pytest -q`
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m pre_commit run --all-files`
+- 2026-04-04 (Issue `#98` kickoff: BC Data Catalogue dataset
+  locator/downloader support for TSR source-data discovery):
+  - Governing issue:
+    - GitHub issue `#98`
+  - Planned branch:
+    - `feature/issue-98-bcdc-dataset-locator`
+  - Problem framing:
+    - TSR data-package documents often include a source-data-list section that
+      names BC Data Catalogue / BCGW layers directly, but turning those names
+      into usable dataset pages, metadata, and download paths is still too
+      manual and too dependent on expert memory.
+    - The public BC Data Catalogue exposes a CKAN API surface that already
+      supports package search, including exact `object_name`-style resource
+      queries, so FEMIC can solve the discovery/classification problem before
+      trying to automate every download path.
+  - Active implementation target:
+    - add a reusable FEMIC module that can accept candidate layer names or
+      keywords from TSR source lists;
+    - query the public BC Data Catalogue API and rank candidate package/resource
+      matches;
+    - classify discovered resources into rough access buckets such as direct
+      download, service-only, indirect/custom-download, or supporting docs; and
+    - emit machine-readable manifest output that later instance metadata,
+      contracts, or `external/femic-public-data` archival workflows can reuse.
+  - Detailed Next Steps:
+    - audit the current CLI/API layout and choose the smallest first public
+      surface for this capability;
+    - implement the pure locator/metadata/classifier slice first, without
+      overcommitting to full automation of custom BCGW order flows;
+    - use `reference/29ts_dpkg_2024.pdf` section 5.1 and a few known BCGW
+      object names as representative fixture inputs;
+    - document the intended pairing with coding-agent workflows and future
+      instance-contract usage once the first slice is concrete.
 

@@ -11019,3 +11019,18 @@
   - No new code or doc content was needed in this pass; the remaining action is
     GitHub hygiene only: close `#83` with a repo-path-based closeout comment so
     the issue tracker matches the actual documented state.
+- 2026-04-04 (Issue `#98` kickoff: BC Data Catalogue locator/downloader lane):
+  - Opened GitHub issue `#98`, `Feature: add BC Data Catalogue dataset locator/downloader support for TSR source-data discovery`.
+  - Started branch `feature/issue-98-bcdc-dataset-locator`.
+  - Recorded the first-slice scope in the roadmap:
+    - query the public BC Data Catalogue CKAN API from candidate TSR source
+      layer names or keywords;
+    - rank and normalize package/resource matches;
+    - classify discovered resources as direct-download, service-only,
+      indirect/custom-download, or supporting docs; and
+    - emit machine-readable manifest output that later instance metadata,
+      contracts, and `external/femic-public-data` archival workflows can reuse.
+  - Kept the initial scope deliberately narrow:
+    - solve discovery/classification first;
+    - defer worst-case ambiguous TSR parsing and full automation of every BCGW
+      custom-download path to later follow-on work.
