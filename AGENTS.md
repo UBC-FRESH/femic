@@ -55,6 +55,14 @@ the repo root:
    - BatchTIPSY freshness: treat `02_input-tsaXX.dat` as canonical; XLSX is a
      mirror only. Do not assume a stale block means rerun is required without
      checking whether DAT content actually changed.
+   - BC Data Catalogue discovery quickstart:
+     - resolve/classify one likely BCDC layer:
+       - `& .\.venv\Scripts\python.exe -m femic data bcdc-resolve WHSE_FOREST_VEGETATION.F_OWN`
+     - exercise a real direct-download-capable case:
+       - `& .\.venv\Scripts\python.exe -m femic data bcdc-resolve SITE_PROD_BC --download-direct --download-root data\downloads\bcdc --manifest-path runtime\logs\bcdc_site_prod_bc_manifest.json`
+     - in PowerShell, quote multi-word free-text queries so they are passed as
+       one query:
+       - `& .\.venv\Scripts\python.exe -m femic data bcdc-resolve "Silviculture Activities History"`
 7. If you are running inside VS Code/Cursor on Windows and Codex file links are
    broken (assistant-rendered local file links open in the browser instead of
    the editor), bootstrap-fix the IDE before doing deeper FEMIC work:

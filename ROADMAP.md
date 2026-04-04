@@ -12056,4 +12056,17 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       PDF parsing;
     - add PowerShell guidance or batch-input support so multiline/manual query
       entry does not fall into PSReadLine/paste traps.
+- 2026-04-04 (Issue `#98` docs refinement: richer user/agent examples for the
+  BCDC resolver):
+  - Extended the discovery docs so the first slice is easier to use without
+    guesswork:
+    - added concrete resolve-only and direct-download-capable examples to
+      `docs/guides/bc-data-catalogue-discovery.rst`;
+    - added explicit PowerShell quoting guidance for multi-word free-text
+      queries;
+    - added compact quickstart examples to `README.md` and `AGENTS.md`.
+  - Detailed Next Steps:
+    - if later follow-on work adds batch-input mode or curated alias rules,
+      update these examples again so the docs continue to show the lowest-friction
+      working Windows path.
 

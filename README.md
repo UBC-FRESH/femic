@@ -195,6 +195,28 @@ Then commit in the correct repository:
 The source-of-truth guide for this workflow is
 `docs/guides/deployment-instances.rst`.
 
+## BC Data Catalogue Discovery
+
+FEMIC now includes a first-pass BC Data Catalogue resolver for turning likely
+TSR source-layer names into ranked catalogue matches, resource classifications,
+and optional direct downloads.
+
+Resolve a likely BCDC object name:
+
+```powershell
+& .\.venv\Scripts\python.exe -m femic data bcdc-resolve WHSE_FOREST_VEGETATION.F_OWN
+```
+
+Exercise the direct-download path when the top match exposes stable file
+resources:
+
+```powershell
+& .\.venv\Scripts\python.exe -m femic data bcdc-resolve SITE_PROD_BC --download-direct --download-root data\downloads\bcdc --manifest-path runtime\logs\bcdc_site_prod_bc_manifest.json
+```
+
+For the fuller guide, classification buckets, and PowerShell quoting notes for
+multi-word queries, see `docs/guides/bc-data-catalogue-discovery.rst`.
+
 ## CLI
 
 Run the legacy pipeline through the FEMIC CLI: 

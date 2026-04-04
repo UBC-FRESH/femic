@@ -156,6 +156,8 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
     for heading in (
         "Purpose",
         "Minimal Workflow",
+        "Concrete Examples",
+        "PowerShell Notes",
         "Classification Buckets",
         "Manifest Output",
     ):
@@ -163,6 +165,10 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
     for snippet in (
         "femic data bcdc-resolve",
         "WHSE_FOREST_VEGETATION.F_OWN",
+        "SITE_PROD_BC",
+        "WHSE_FOREST_VEGETATION.VEG_COMP_LYR_R1_POLY",
+        "Silviculture Activities History",
+        "--download-direct",
         "direct_data_download",
         "indirect_custom_download",
         "metadata/required_datasets.yaml",
@@ -177,6 +183,25 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "--manifest-path PATH",
     ):
         assert snippet in cli_text
+
+
+def test_bcdc_examples_are_present_in_readme_and_agents() -> None:
+    readme_text = Path("README.md").read_text(encoding="utf-8")
+    for snippet in (
+        "BC Data Catalogue Discovery",
+        "femic data bcdc-resolve WHSE_FOREST_VEGETATION.F_OWN",
+        "femic data bcdc-resolve SITE_PROD_BC --download-direct",
+    ):
+        assert snippet in readme_text
+
+    agents_text = Path("AGENTS.md").read_text(encoding="utf-8")
+    for snippet in (
+        "BC Data Catalogue discovery quickstart",
+        "femic data bcdc-resolve WHSE_FOREST_VEGETATION.F_OWN",
+        "femic data bcdc-resolve SITE_PROD_BC --download-direct",
+        'femic data bcdc-resolve "Silviculture Activities History"',
+    ):
+        assert snippet in agents_text
 
 
 def test_legacy_notebook_coverage_matrix_is_complete() -> None:

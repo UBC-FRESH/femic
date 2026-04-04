@@ -50,6 +50,64 @@ Opt into the easy direct-download subset only:
 When ``--instance-root`` is supplied, FEMIC resolves relative paths against the
 instance workspace and defaults direct downloads under ``data/downloads/bcdc``.
 
+Concrete Examples
+-----------------
+
+Resolve-only example with a clean exact object-name hit:
+
+.. code-block:: text
+
+   & .\.venv\Scripts\python.exe -m femic data bcdc-resolve WHSE_FOREST_VEGETATION.F_OWN
+
+Typical outcome:
+
+- top match resolves to ``Generalized Forest Cover Ownership``;
+- service resources are listed;
+- the BCGW custom-download seam is identified as
+  ``indirect_custom_download``; and
+- supporting PDF documentation is surfaced for manual review.
+
+Direct-download-capable example:
+
+.. code-block:: text
+
+   & .\.venv\Scripts\python.exe -m femic data bcdc-resolve SITE_PROD_BC
+
+That query currently exposes direct-download candidates for the provincial site
+productivity package. To actually exercise the v1 download capability, follow
+up with:
+
+.. code-block:: text
+
+   & .\.venv\Scripts\python.exe -m femic data bcdc-resolve SITE_PROD_BC `
+     --download-direct `
+     --download-root data\downloads\bcdc `
+     --manifest-path runtime\logs\bcdc_site_prod_bc_manifest.json
+
+Another direct-download-capable example is the VRI R1 layer:
+
+.. code-block:: text
+
+   & .\.venv\Scripts\python.exe -m femic data bcdc-resolve `
+     WHSE_FOREST_VEGETATION.VEG_COMP_LYR_R1_POLY `
+     --download-direct `
+     --download-root data\downloads\bcdc `
+     --manifest-path runtime\logs\bcdc_vri_r1_manifest.json
+
+PowerShell Notes
+----------------
+
+Quote multi-word free-text queries so PowerShell passes them as one query
+instead of splitting them into multiple positional arguments:
+
+.. code-block:: text
+
+   & .\.venv\Scripts\python.exe -m femic data bcdc-resolve "Silviculture Activities History"
+
+Prefer one query per command or use a script file when working through large
+TSR source lists. Large multiline interactive pastes can trigger noisy
+``PSReadLine`` rendering failures that are unrelated to FEMIC itself.
+
 Classification Buckets
 ----------------------
 

@@ -11081,3 +11081,12 @@
       curation work; and
     - Windows PowerShell/PSReadLine multiline-query pitfalls worth addressing
       in later docs or batch-input improvements.
+- 2026-04-04 (Issue `#98` docs refinement: richer BCDC examples for users and agents):
+  - Expanded `docs/guides/bc-data-catalogue-discovery.rst` with:
+    - a concrete resolve-only example;
+    - a real direct-download-capable example using `SITE_PROD_BC`;
+    - a second download example using VRI R1; and
+    - explicit PowerShell quoting guidance for multi-word queries.
+  - Added compact BCDC resolver quickstart examples to `README.md` and
+    `AGENTS.md` so both human users and coding agents can find a known-working
+    Windows PowerShell command quickly.
