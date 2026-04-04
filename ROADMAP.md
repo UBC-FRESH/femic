@@ -12804,6 +12804,73 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - keep `#118` as the later review-family suggestion lane for stale public
       wildlife/netdown tokens that still do not have a single safe exact
       replacement.
+- 2026-04-04 (Issue `#119` active: user-supplied layer mapping overrides and
+  external acquisition hints for unresolved TSR tokens):
+  - Extend the existing instance-local TSR overlay workflow instead of adding
+    a separate configuration universe.
+  - Add a reviewed override file under the instance, likely
+    `config/tsr/source_layer_overrides.yaml`, that can map unresolved TSR
+    tokens to one of:
+    - local filesystem paths;
+    - bespoke dataset URLs;
+    - FEMIC/DataLad dataset-relative paths;
+    - reviewed replacement layer names; or
+    - explicit `private` / `unavailable` states with notes.
+  - Add CLI helpers so users are not forced to hand-author the whole file:
+    - initialize an override template from unresolved TSA rows already stored
+      in `config/tsr/overlay.yaml`; and
+    - report mapped vs unresolved override coverage for the active instance.
+  - Keep the first slice honest and bounded:
+    - no automatic access to non-public data;
+    - no silent mutation of canonical TSR facts;
+    - no second-guessing reviewed user overrides with new public inference; and
+    - no attempt yet to absorb replacement-family suggestion logic from `#118`.
+  - Detailed Next Steps:
+    - implement the override YAML schema and instance-local loader/writer;
+    - add `femic tsr override-init` and `femic tsr override-report`;
+    - wire the overlay report surface so unresolved TSA wall rows can point to
+      explicit user escape hatches; and
+    - document the intended “move the wall” workflow before starting `#118`.
+- 2026-04-04 (Issue `#119` implemented: instance-local TSR source-layer
+  overrides now capture the real post-BCDC wall):
+  - Added a dedicated override helper module at
+    `src/femic/tsr_catalog/source_overrides.py`.
+  - Landed two new CLI commands:
+    - `femic tsr override-init`
+    - `femic tsr override-report`
+  - The new per-instance override surface lives at:
+    - `config/tsr/source_layer_overrides.yaml`
+  - Override entries now support reviewed escape-hatch kinds for unresolved TSR
+    source-layer rows:
+    - `local_path`
+    - `dataset_url`
+    - `datalad_path`
+    - `replacement_layer`
+    - `private`
+    - `unavailable`
+  - The first slice stays intentionally honest:
+    - no automatic access to non-public data;
+    - no mutation of canonical TSR facts; and
+    - no automatic second-guessing of reviewed local overrides with new public
+      inference.
+  - Live TSA29 smoke:
+    - `femic tsr override-init --instance-root external/femic-tsa29-instance --overwrite`
+      produced a `source_layer_overrides.yaml` template with `9` unresolved or
+      failed wall rows carried forward from the TSA29 overlay; and
+    - `femic tsr override-report --instance-root external/femic-tsa29-instance`
+      confirmed `0` resolved and `9` pending entries before any manual review.
+  - Docs/tests updated:
+    - `docs/guides/tsr-intelligence-workflow.rst`
+    - `docs/reference/cli.rst`
+    - `docs/reference/api/femic-tsr-catalog.rst`
+    - `tests/test_tsr_source_overrides.py`
+    - `tests/test_cli_main.py`
+    - `tests/test_docs_contract.py`
+  - Detailed Next Steps:
+    - move to `#118` next if we want smarter reviewed replacement-family
+      suggestions layered on top of the new override seam; or
+    - keep `#113` in view if we want to add soft guardrails before making the
+      bulk acquisition workflow even more aggressive.
 - 2026-04-04 (Issue `#109` implemented: WFS probing/classification for
   OpenMaps-backed BCDC service resources):
   - Extended `femic data bcdc-resolve` so service-backed resources can now

@@ -160,12 +160,18 @@ from femic.tsr_catalog import (
     TsrOverlayError,
     TsrOverlayInitResult,
     TsrOverlayReport,
+    TsrSourceLayerOverridesError,
+    TsrSourceLayerOverridesInitResult,
+    TsrSourceLayerOverridesReport,
     TsrWrittenIndex,
     build_tsr_overlay_report,
+    build_tsr_source_layer_override_report,
+    default_tsr_source_layer_overrides_path,
     extract_tsr_candidate_facts,
     fetch_tsr_pdfs,
     index_tsr_tsa_surfaces,
     init_tsr_overlay,
+    init_tsr_source_layer_overrides,
     report_tsr_candidate_facts,
     write_tsr_fact_report_csv,
     write_tsr_index,
@@ -455,6 +461,15 @@ TSR_OVERLAY_PATH_OPTION = typer.Option(
     help=(
         "Optional reviewed TSR overlay YAML path. Defaults to "
         "`config/tsr/overlay.yaml` under the instance root."
+    ),
+    show_default=False,
+)
+TSR_SOURCE_LAYER_OVERRIDES_PATH_OPTION = typer.Option(
+    None,
+    "--overrides-path",
+    help=(
+        "Optional TSR source-layer override YAML path. Defaults to "
+        "`config/tsr/source_layer_overrides.yaml` under the instance root."
     ),
     show_default=False,
 )
@@ -2225,6 +2240,35 @@ def _print_tsr_overlay_report(summary: TsrOverlayReport) -> None:
         console.print(f"adopted_{section}_count: {count}")
 
 
+def _print_tsr_source_layer_overrides_init_summary(
+    result: TsrSourceLayerOverridesInitResult,
+) -> None:
+    console.print(f"overrides_path: {result.overrides_path}")
+    console.print(f"overlay_path: {result.overlay_path}")
+    console.print(f"tsa_id: {result.tsa.tsa_id}")
+    console.print(f"tsa_code: {result.tsa.tsa_code}")
+    console.print(f"tsa_name: {result.tsa.tsa_name}")
+    console.print(f"entry_count: {result.entry_count}")
+
+
+def _print_tsr_source_layer_overrides_report(
+    summary: TsrSourceLayerOverridesReport,
+) -> None:
+    console.print(f"overrides_path: {summary.overrides_path}")
+    console.print(f"overlay_path: {summary.overlay_path}")
+    console.print(f"tsa_id: {summary.tsa.tsa_id}")
+    console.print(f"tsa_code: {summary.tsa.tsa_code}")
+    console.print(f"tsa_name: {summary.tsa.tsa_name}")
+    console.print(f"total_entries: {summary.total_entries}")
+    console.print(f"resolved_entries: {summary.resolved_entries}")
+    console.print(f"pending_entries: {summary.pending_entries}")
+    console.print(
+        "unresolved_overlay_queries: " + str(len(summary.unresolved_overlay_queries))
+    )
+    for kind, count in summary.override_kind_counts.items():
+        console.print(f"{kind}_count: {count}")
+
+
 def _print_tsr_fact_report_summary(result: TsrFactReportResult) -> None:
     console.print(f"candidate_facts_path: {result.candidate_facts_path}")
     console.print(f"tsa_id: {result.tsa_id}")
@@ -2719,6 +2763,75 @@ def tsr_overlay_report(
         raise typer.Exit(code=1) from exc
 
     _print_tsr_overlay_report(result)
+
+
+@tsr_app.command("override-init")
+def tsr_override_init(
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    overlay_path: Path | None = TSR_OVERLAY_PATH_OPTION,
+    overrides_path: Path | None = TSR_SOURCE_LAYER_OVERRIDES_PATH_OPTION,
+    overwrite: bool = TSR_OVERWRITE_OPTION,
+) -> None:
+    """Initialize a per-instance TSR source-layer override template."""
+
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_overlay_path = (
+        instance_context.resolve_path(overlay_path)
+        if overlay_path is not None
+        else instance_context.resolve_path(Path("config/tsr/overlay.yaml"))
+    )
+    resolved_overrides_path = (
+        instance_context.resolve_path(overrides_path)
+        if overrides_path is not None
+        else default_tsr_source_layer_overrides_path(
+            instance_root=instance_context.root
+        )
+    )
+    try:
+        result = init_tsr_source_layer_overrides(
+            instance_root=instance_context.root,
+            overlay_path=resolved_overlay_path,
+            overrides_path=resolved_overrides_path,
+            overwrite=overwrite,
+        )
+    except (TsrSourceLayerOverridesError, TsrOverlayError) as exc:
+        console.print(f"[red]TSR override init error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_source_layer_overrides_init_summary(result)
+
+
+@tsr_app.command("override-report")
+def tsr_override_report(
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    overlay_path: Path | None = TSR_OVERLAY_PATH_OPTION,
+    overrides_path: Path | None = TSR_SOURCE_LAYER_OVERRIDES_PATH_OPTION,
+) -> None:
+    """Report per-instance TSR source-layer override coverage."""
+
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_overlay_path = (
+        instance_context.resolve_path(overlay_path)
+        if overlay_path is not None
+        else instance_context.resolve_path(Path("config/tsr/overlay.yaml"))
+    )
+    resolved_overrides_path = (
+        instance_context.resolve_path(overrides_path)
+        if overrides_path is not None
+        else default_tsr_source_layer_overrides_path(
+            instance_root=instance_context.root
+        )
+    )
+    try:
+        result = build_tsr_source_layer_override_report(
+            overlay_path=resolved_overlay_path,
+            overrides_path=resolved_overrides_path,
+        )
+    except (TsrSourceLayerOverridesError, TsrOverlayError) as exc:
+        console.print(f"[red]TSR override report error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_source_layer_overrides_report(result)
 
 
 @instance_config_app.command("set-managed-external-root")

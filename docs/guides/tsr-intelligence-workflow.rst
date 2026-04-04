@@ -10,6 +10,9 @@ Review document surfaces into three separate layers of knowledge:
 1. canonical repo-tracked TSR discovery artifacts under ``metadata/tsr``;
 2. user-local cached PDFs under ``~/.femic/tsr/corpus`` by default; and
 3. reviewed/adopted instance-local notes under ``config/tsr/overlay.yaml``.
+4. reviewed instance-local source-layer escape hatches under
+   ``config/tsr/source_layer_overrides.yaml`` when the public catalogue cannot
+   finish the job safely.
 
 This guide is intentionally about workflow and promotion discipline. It does
 **not** make FEMIC auto-adopt extracted candidate facts into a live instance.
@@ -34,6 +37,8 @@ User-local cache outputs by default:
 Instance-local reviewed overlay:
 
 - ``config/tsr/overlay.yaml``
+- ``config/tsr/source_layer_overrides.yaml`` (when explicit source-layer
+  overrides are needed)
 
 Treat the canonical JSON artifacts as the shared discovery surface, and treat
 the overlay YAML as the reviewed/adopted per-instance surface.
@@ -91,6 +96,10 @@ promotion path is:
    provenance back to the source document/page/snippet IDs;
 5. use ``femic tsr overlay-report`` to confirm what remains canonical-only vs
    what is now adopted locally.
+6. when the public BCDC lane hits a real wall, initialize
+   ``config/tsr/source_layer_overrides.yaml`` and record reviewed local/URL/
+   mirror/replacement/unavailable decisions there instead of rediscovering
+   them repeatedly.
 
 Candidate facts are **not auto-adopted** into the overlay. In other words,
 candidate facts are **not auto-adopted** into live instance truth, and the
@@ -175,6 +184,8 @@ The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
 8. manually copy only approved facts into:
 
    - ``external/femic-tsa29-instance/config/tsr/overlay.yaml``
+   - ``external/femic-tsa29-instance/config/tsr/source_layer_overrides.yaml``
+     for unresolved public-catalogue rows that need a reviewed escape hatch
 
 The current intended human loop is:
 
@@ -186,10 +197,36 @@ The current intended human loop is:
 - fetch WFS-queryable reviewed layers through ``femic data bcdc-fetch`` where
   that is the cleanest path
 - adopt only reviewed facts into the overlay
+- record any remaining wall cases in ``source_layer_overrides.yaml`` rather
+  than hoping the same public query will behave differently later
 
 You should not need to hand-scrub ``metadata/tsr/tsa_candidate_facts.json`` for
 this workflow. The intended review surface is the CSV produced by
 ``femic tsr facts-report``.
+
+When the wall is real rather than accidental, initialize the reviewed
+source-layer override file:
+
+.. code-block:: bash
+
+   python -m femic tsr override-init \
+     --instance-root external/femic-tsa29-instance
+
+Then inspect current coverage:
+
+.. code-block:: bash
+
+   python -m femic tsr override-report \
+     --instance-root external/femic-tsa29-instance
+
+The override file is where you can record reviewed escape hatches such as:
+
+- ``local_path`` to a local copy you obtained outside FEMIC;
+- ``dataset_url`` for a bespoke download seam;
+- ``datalad_path`` for a FEMIC/DataLad-managed mirror;
+- ``replacement_layer`` for a reviewed current public substitute; or
+- ``private`` / ``unavailable`` when the wall is real and should stop repeated
+  public inference attempts.
 
 Windows PowerShell Notes
 ------------------------

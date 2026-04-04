@@ -11567,15 +11567,27 @@
     download result wrappers.
   - Re-ran the bounded TSA29 acquisition smoke and confirmed that
     `SITE_PROD_BC` now lands as `downloaded` instead of failing.
-  - Updated post-fix TSA29 smoke outcome:
-    - `24` successful WFS fetches;
-    - `1` successful direct download;
+- Updated post-fix TSA29 smoke outcome:
+  - `24` successful WFS fetches;
+  - `1` successful direct download;
     - `26` weak-text duplicates safely skipped because a cleaner exact/alias
       match already existed;
     - `19` weak-text rows left for human review;
     - `15` no-hit shorthand/stale-token rows; and
-    - `2` remaining automation failures, both informative DWDS
-      public-permission denials.
+  - `2` remaining automation failures, both informative DWDS
+    public-permission denials.
+- 2026-04-04: Issue `#119` added instance-local TSR source-layer override
+  support so unresolved TSR tokens can move past the public BCDC wall without
+  pretending public inference solved them. The new helper module
+  `src/femic/tsr_catalog/source_overrides.py` plus new CLI commands
+  `femic tsr override-init` and `femic tsr override-report` now manage a
+  reviewed per-instance file at `config/tsr/source_layer_overrides.yaml`. The
+  override surface supports `local_path`, `dataset_url`, `datalad_path`,
+  `replacement_layer`, `private`, and `unavailable` entries while keeping the
+  canonical TSR facts untouched. Live TSA29 smoke confirmed that the generated
+  override template carries forward the current `9` unresolved/failed wall rows
+  and that the reporting command summarizes resolved vs pending coverage
+  cleanly before any human review.
   - Remaining follow-on work stays tracked in:
     - `#114` resolver alias/shorthand recovery; and
     - `#113` soft good-citizen guardrails.

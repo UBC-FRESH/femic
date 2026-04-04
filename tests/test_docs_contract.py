@@ -211,6 +211,8 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "python -m femic tsr facts-report",
         "python -m femic tsr overlay-init",
         "python -m femic tsr overlay-report",
+        "python -m femic tsr override-init",
+        "python -m femic tsr override-report",
         "--query-file PATH",
         "--summary-csv PATH",
         "--download-direct / --no-download-direct",
@@ -229,6 +231,7 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "metadata/tsr/tsa_documents.json",
         "metadata/tsr/tsa_candidate_facts.json",
         "config/tsr/overlay.yaml",
+        "config/tsr/source_layer_overrides.yaml",
         "~/.femic/tsr/tsa_pdf_cache_manifest.json",
         "~/.femic/tsr/corpus",
     ):
@@ -252,9 +255,13 @@ def test_tsr_api_page_is_wired_into_curated_modules() -> None:
         "femic tsr facts-report",
         "femic tsr overlay-init",
         "femic tsr overlay-report",
+        "femic tsr override-init",
+        "femic tsr override-report",
         "extract_tsr_candidate_facts",
         "init_tsr_overlay",
         "build_tsr_overlay_report",
+        "init_tsr_source_layer_overrides",
+        "build_tsr_source_layer_override_report",
         "report_tsr_candidate_facts",
         "write_tsr_fact_report_csv",
         "index_tsr_tsa_surfaces",
@@ -262,6 +269,7 @@ def test_tsr_api_page_is_wired_into_curated_modules() -> None:
         "write_tsr_index",
         "metadata/tsr",
         "config/tsr/overlay.yaml",
+        "config/tsr/source_layer_overrides.yaml",
         "~/.femic/tsr/tsa_pdf_cache_manifest.json",
     ):
         assert snippet in api_text
@@ -326,12 +334,15 @@ def test_tsr_intelligence_workflow_guide_keeps_required_sections() -> None:
         "tsa29_tsr_thlb_review.csv",
         "python -m femic tsr overlay-init",
         "python -m femic tsr overlay-report",
+        "python -m femic tsr override-init",
+        "python -m femic tsr override-report",
         "python -m femic data bcdc-fetch",
         "tsa29_f_own_fetch_manifest.json",
         "metadata/tsr/tsa_registry.json",
         "metadata/tsr/tsa_documents.json",
         "metadata/tsr/tsa_candidate_facts.json",
         "config/tsr/overlay.yaml",
+        "config/tsr/source_layer_overrides.yaml",
         "~/.femic/tsr/corpus",
         "~/.femic/tsr/tsa_pdf_cache_manifest.json",
         "candidate facts are **not auto-adopted**",
@@ -340,6 +351,7 @@ def test_tsr_intelligence_workflow_guide_keeps_required_sections() -> None:
         "review CSV",
         "adopt only reviewed facts into the overlay",
         "giant interactive pastes",
+        "private`` / ``unavailable``",
     ):
         assert snippet in guide_text
 

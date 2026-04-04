@@ -5036,3 +5036,134 @@ def test_tsr_overlay_report_summarizes_adopted_state(
 
     assert any("adopted_source_layers_count: 1" in msg for msg in messages)
     assert any("tsa_name: Williams Lake" in msg for msg in messages)
+
+
+def test_tsr_override_init_writes_instance_local_override_template(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    result = cli_main.TsrSourceLayerOverridesInitResult(
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        tsa=tsr_catalog.TsrOverlayTsaRecord(
+            tsa_id="tsa_29",
+            tsa_code="29",
+            tsa_name="Williams Lake",
+        ),
+        entry_count=5,
+        created=True,
+    )
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_init(**kwargs):
+        captured_kwargs.update(kwargs)
+        return result
+
+    monkeypatch.setattr(cli_main, "init_tsr_source_layer_overrides", _fake_init)
+
+    cli_main.tsr_override_init(
+        instance_root=instance_root,
+        overlay_path=None,
+        overrides_path=None,
+        overwrite=False,
+    )
+
+    assert captured_kwargs["instance_root"] == instance_root.resolve()
+    assert (
+        captured_kwargs["overlay_path"]
+        == (instance_root / "config" / "tsr" / "overlay.yaml").resolve()
+    )
+    assert (
+        captured_kwargs["overrides_path"]
+        == (instance_root / "config" / "tsr" / "source_layer_overrides.yaml").resolve()
+    )
+    assert any("overrides_path:" in msg for msg in messages)
+    assert any("entry_count: 5" in msg for msg in messages)
+
+
+def test_tsr_override_init_reports_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "init_tsr_source_layer_overrides",
+        lambda **_kwargs: (_ for _ in ()).throw(
+            cli_main.TsrSourceLayerOverridesError("boom")
+        ),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.tsr_override_init(
+            instance_root=Path("instance"),
+            overlay_path=None,
+            overrides_path=None,
+            overwrite=False,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("TSR override init error:" in msg for msg in messages)
+
+
+def test_tsr_override_report_summarizes_override_state(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "build_tsr_source_layer_override_report",
+        lambda **_kwargs: cli_main.TsrSourceLayerOverridesReport(
+            overrides_path=instance_root
+            / "config"
+            / "tsr"
+            / "source_layer_overrides.yaml",
+            overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            total_entries=5,
+            resolved_entries=2,
+            pending_entries=3,
+            unresolved_overlay_queries=("WHSE_HUMAN_CULTURAL_ECONOMIC.FNIRS",),
+            override_kind_counts={"replacement_layer": 1, "local_path": 1},
+        ),
+    )
+
+    cli_main.tsr_override_report(
+        instance_root=instance_root, overlay_path=None, overrides_path=None
+    )
+
+    assert any("resolved_entries: 2" in msg for msg in messages)
+    assert any("pending_entries: 3" in msg for msg in messages)
+    assert any("replacement_layer_count: 1" in msg for msg in messages)
+
+
+def test_tsr_override_report_reports_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "build_tsr_source_layer_override_report",
+        lambda **_kwargs: (_ for _ in ()).throw(
+            cli_main.TsrSourceLayerOverridesError("boom")
+        ),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.tsr_override_report(
+            instance_root=Path("instance"),
+            overlay_path=None,
+            overrides_path=None,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("TSR override report error:" in msg for msg in messages)

@@ -430,6 +430,8 @@ Subcommands
 - ``facts-report``: ``python -m femic tsr facts-report [OPTIONS]``
 - ``overlay-init``: ``python -m femic tsr overlay-init [OPTIONS]``
 - ``overlay-report``: ``python -m femic tsr overlay-report [OPTIONS]``
+- ``override-init``: ``python -m femic tsr override-init [OPTIONS]``
+- ``override-report``: ``python -m femic tsr override-report [OPTIONS]``
 
 ``tsr index`` options
 
@@ -539,6 +541,44 @@ auto-promote unresolved candidate facts into live instance truth.
 ``tsr overlay-report`` compares the local reviewed overlay against the canonical
 candidate summary already stored inside the overlay and reports adopted counts
 per section without mutating the file.
+
+``tsr override-init`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--overlay-path PATH`` (optional; defaults to
+  ``config/tsr/overlay.yaml`` under the instance root)
+- ``--overrides-path PATH`` (optional; defaults to
+  ``config/tsr/source_layer_overrides.yaml`` under the instance root)
+- ``--overwrite`` (optional; replace an existing override file)
+
+``tsr override-init`` initializes an instance-local source-layer override file
+from unresolved TSA rows already captured in the reviewed TSR overlay:
+
+- ``config/tsr/source_layer_overrides.yaml``
+
+Use it when the public BCDC resolver has hit an honest wall and you need to
+record a reviewed escape hatch such as:
+
+- a local filesystem path;
+- a bespoke dataset URL;
+- a FEMIC/DataLad-managed mirror path;
+- a reviewed replacement layer; or
+- an explicit ``private`` / ``unavailable`` marker with notes.
+
+``tsr override-report`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--overlay-path PATH`` (optional; defaults to
+  ``config/tsr/overlay.yaml`` under the instance root)
+- ``--overrides-path PATH`` (optional; defaults to
+  ``config/tsr/source_layer_overrides.yaml`` under the instance root)
+
+``tsr override-report`` compares the override file against the unresolved rows
+still present in the TSR overlay and reports:
+
+- total override entries;
+- how many are already resolved vs still pending; and
+- which override kinds are currently in use.
 
 For the full operator/agent workflow from TSR page to cached PDFs to reviewed
 instance overlay, see ``docs/guides/tsr-intelligence-workflow.rst``.

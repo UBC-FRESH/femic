@@ -10,8 +10,11 @@ slice also derives reviewable candidate facts from cached TSR PDFs and writes a
 canonical ``metadata/tsr/tsa_candidate_facts.json`` artifact. The current
 overlay slice initializes reviewed/adopted per-instance TSR overlays under
 ``config/tsr/overlay.yaml`` without auto-promoting unresolved candidate facts,
-and the current reporting slice renders guided review tables over the canonical
-fact pool without forcing users to hand-scrub raw JSON.
+the current reporting slice renders guided review tables over the canonical
+fact pool without forcing users to hand-scrub raw JSON, and the current
+override slice adds reviewed per-instance source-layer escape hatches under
+``config/tsr/source_layer_overrides.yaml`` for tokens that public BCDC
+inference cannot resolve safely.
 
 Use this page when you are debugging the TSR indexing logic itself rather than
 the higher-level CLI surface.
@@ -49,6 +52,8 @@ The common operator-facing entrypoint is:
    femic tsr facts-report --tsa 29 --fact-family source_layer_candidate
    femic tsr overlay-init --instance-root external/femic-tsa29-instance --tsa 29
    femic tsr overlay-report --instance-root external/femic-tsa29-instance
+   femic tsr override-init --instance-root external/femic-tsa29-instance
+   femic tsr override-report --instance-root external/femic-tsa29-instance
 
 The matching Python entrypoints are:
 
@@ -60,8 +65,10 @@ The matching Python entrypoints are:
       extract_tsr_candidate_facts,
       fetch_tsr_pdfs,
       init_tsr_overlay,
+      init_tsr_source_layer_overrides,
       index_tsr_tsa_surfaces,
       report_tsr_candidate_facts,
+      build_tsr_source_layer_override_report,
       write_tsr_fact_report_csv,
       write_tsr_index,
    )
@@ -99,6 +106,19 @@ The matching Python entrypoints are:
    build_tsr_overlay_report(
        overlay_path=Path("external/femic-tsa29-instance/config/tsr/overlay.yaml"),
    )
+   init_tsr_source_layer_overrides(
+       instance_root=Path("external/femic-tsa29-instance"),
+       overlay_path=Path("external/femic-tsa29-instance/config/tsr/overlay.yaml"),
+       overrides_path=Path(
+           "external/femic-tsa29-instance/config/tsr/source_layer_overrides.yaml"
+       ),
+   )
+   build_tsr_source_layer_override_report(
+       overlay_path=Path("external/femic-tsa29-instance/config/tsr/overlay.yaml"),
+       overrides_path=Path(
+           "external/femic-tsa29-instance/config/tsr/source_layer_overrides.yaml"
+       ),
+   )
 
 Key Entry Surfaces
 ------------------
@@ -123,6 +143,12 @@ Key Entry Surfaces
 - :func:`build_tsr_overlay_report`
   Summarize one reviewed overlay against the canonical candidate-fact pool it
   references.
+- :func:`init_tsr_source_layer_overrides`
+  Initialize a reviewed instance-local source-layer override YAML from the
+  unresolved rows already captured in the TSR overlay.
+- :func:`build_tsr_source_layer_override_report`
+  Summarize how many unresolved overlay rows have reviewed escape hatches
+  recorded locally.
 
 Cross-References
 ----------------
