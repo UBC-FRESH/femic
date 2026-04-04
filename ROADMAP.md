@@ -12224,4 +12224,49 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - if later TSA-specific THLB netdown refinement is needed, build it on top
       of the preserved continuous THLB signal rather than re-entangling the
       default path with binary calibration logic.
+- 2026-04-04 (Issue `#100` smoke-tested against a real K3Z Patchworks export):
+  - Real export smoke completed with:
+    - `python -m femic export patchworks --instance-root external/femic-k3z-instance --tsa k3z --output-dir tmp/issue100_k3z_patchworks_smoke`
+    - `python -m femic export patchworks --instance-root external/femic-k3z-instance --tsa k3z --output-dir tmp/issue100_k3z_patchworks_legacy_smoke --ifm-mode legacy_binary --ifm-source-col thlb_raw --ifm-threshold 0`
+  - Inspected results:
+    - proportional default export completed and emitted a valid ForestModel XML
+      plus fragments shapefile;
+    - emitted XML still contains the expected `RETENTION` define and retention
+      factor wiring;
+    - live K3Z checkpoint data currently contains only two nonzero `thlb_raw`
+      rows, so both the new proportional default and the legacy-binary smoke
+      exported exactly two managed fragments for this dataset;
+    - the proportional default correctly preserved partial retained/unmanaged
+      share on those two fragments (`RETENTION` approximately `0.8532` and
+      `0.9285`), while the legacy smoke kept those same two fragments fully
+      managed with `RETENTION = 0`.
+  - Detailed Next Steps:
+    - if a follow-on regression concern appears, use the preserved K3Z smoke
+      outputs under `external/femic-k3z-instance/tmp/issue100_k3z_patchworks_*`
+      as the first comparison surface.
+- 2026-04-04 (Issue `#100` smoke-tested against the live TSA29 instance):
+  - Real export smoke completed with:
+    - `python -m femic export patchworks --instance-root external/femic-tsa29-instance --tsa 29 --output-dir tmp/issue100_tsa29_patchworks_smoke`
+    - `python -m femic export patchworks --instance-root external/femic-tsa29-instance --tsa 29 --output-dir tmp/issue100_tsa29_patchworks_legacy_smoke --ifm-mode legacy_binary --ifm-source-col thlb_raw --ifm-threshold 0`
+  - Inspected results:
+    - both exports completed and emitted valid ForestModel XML plus fragments
+      shapefiles;
+    - live TSA29 checkpoint data carries substantial nonzero `thlb_raw`
+      coverage (`136132` rows > 0, max `100.0`, mean about `47.46`);
+    - proportional default export produced:
+      - `136132` managed rows and `80973` unmanaged rows;
+      - `87418` rows with nonzero partial `RETENTION`;
+      - effective managed area about `1,513,233.574 ha`; and
+      - effective unmanaged area about `1,464,270.166 ha`;
+    - the paired legacy-binary smoke preserved the same managed/unmanaged row
+      counts for this threshold choice but left `RETENTION = 0` everywhere,
+      yielding effective managed area about `2,220,719.887 ha` and effective
+      unmanaged area about `756,783.853 ha`;
+    - this confirms the new default is materially changing area accounting in
+      the intended way on the real TSA29 instance, rather than merely
+      preserving the previous binary behavior behind a new label.
+  - Detailed Next Steps:
+    - if a downstream THLB/netdown review is needed, use the paired TSA29 smoke
+      outputs under `external/femic-tsa29-instance/tmp/issue100_tsa29_patchworks_*`
+      as the primary comparison surface.
 

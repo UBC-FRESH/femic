@@ -11183,3 +11183,36 @@
     - `python -m pytest -q`
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m pre_commit run --all-files`
+- 2026-04-04 (Issue `#100` real Patchworks export smoke):
+  - Ran a real K3Z Patchworks export smoke in both:
+    - new default proportional mode; and
+    - legacy binary mode (`--ifm-mode legacy_binary --ifm-source-col thlb_raw --ifm-threshold 0`).
+  - Confirmed the export completed in both modes and inspected the emitted
+    ForestModel XML plus fragments shapefiles directly.
+  - Live K3Z checkpoint data currently contains only two nonzero `thlb_raw`
+    rows, so both smokes exported the same two managed fragments.
+  - The important behavioral difference showed up exactly where expected:
+    - proportional mode preserved partial unmanaged share through `RETENTION`
+      (`~0.8532` and `~0.9285` on the two managed fragments);
+    - legacy-binary mode kept those same two fragments fully managed with
+      `RETENTION = 0`.
+- 2026-04-04 (Issue `#100` live TSA29 Patchworks export smoke):
+  - Ran a real TSA29 Patchworks export smoke in both:
+    - new default proportional mode; and
+    - legacy binary mode (`--ifm-mode legacy_binary --ifm-source-col thlb_raw --ifm-threshold 0`).
+  - Confirmed both exports completed and inspected the emitted ForestModel XML
+    plus fragments shapefiles directly.
+  - Live TSA29 checkpoint data carries substantial `thlb_raw` coverage:
+    - `136132` rows with `thlb_raw > 0`;
+    - max `100.0`; and
+    - mean about `47.46`.
+  - The new default is doing real work on TSA29:
+    - proportional mode emitted `87418` rows with nonzero partial
+      `RETENTION`, with effective managed area about `1,513,233.574 ha` and
+      effective unmanaged area about `1,464,270.166 ha`;
+    - the paired legacy-binary smoke kept `RETENTION = 0` everywhere and
+      yielded effective managed area about `2,220,719.887 ha` with effective
+      unmanaged area about `756,783.853 ha`.
+  - This confirms the new proportional default materially changes Patchworks
+    area accounting on the live TSA29 instance in the intended way, rather than
+    merely relabeling the old binary behavior.
