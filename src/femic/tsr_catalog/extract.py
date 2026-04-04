@@ -19,6 +19,7 @@ from femic.tsr_catalog.cache import (
 )
 
 
+_INCOMPLETE_TOKEN_TAIL_RE = re.compile(r"[A-Z][A-Z0-9_]*_(?:[A-Z0-9_]*)?$")
 _SOURCE_LAYER_OBJECT_RE = re.compile(r"\b[A-Z][A-Z0-9_]+(?:\.[A-Z0-9_]+)+\b")
 _SOURCE_LAYER_TOKEN_RE = re.compile(
     r"\b(?:SITE_PROD_BC|CONSOLIDATED_CUTBLOCKS(?:_\d{4})?|[A-Z][A-Z0-9]+(?:_[A-Z0-9]+){2,})\b"
@@ -245,6 +246,26 @@ def _looks_like_source_layer_token(token: str) -> bool:
     return "." in token
 
 
+def _rewrap_split_tokens(lines: list[str]) -> list[str]:
+    """Join consecutive lines where a source-layer token is split across the wrap."""
+    if not lines:
+        return lines
+    result: list[str] = [lines[0]]
+    for line in lines[1:]:
+        prev = result[-1]
+        prev_tail = prev.rstrip()
+        line_head = line.lstrip()
+        should_join = False
+        # Previous line ends with trailing underscore suffix (e.g. "L_MULE_DEER_")
+        if prev_tail and prev_tail[-1] == "_" and _INCOMPLETE_TOKEN_TAIL_RE.search(prev_tail):
+            should_join = True
+        if should_join:
+            result[-1] = f"{prev_tail}{line}"
+        else:
+            result.append(line)
+    return result
+
+
 def _iter_source_layer_facts(
     document: TsrInventoryDocument,
     *,
@@ -254,7 +275,7 @@ def _iter_source_layer_facts(
 ) -> tuple[TsrCandidateFact, ...]:
     facts: list[TsrCandidateFact] = []
     seen: set[str] = set()
-    for raw_line in page_text.splitlines():
+    for raw_line in _rewrap_split_tokens(page_text.splitlines()):
         line = _trim_snippet(raw_line)
         if not line:
             continue
