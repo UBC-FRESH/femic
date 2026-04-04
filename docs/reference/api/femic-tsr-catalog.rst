@@ -5,7 +5,9 @@ The :mod:`femic.tsr_catalog` module owns FEMIC's first BC Timber Supply Review
 intelligence slice. It crawls the public TSA-oriented TSR document surfaces,
 normalizes TSA/cycle/document metadata, writes the canonical JSON registry
 artifacts under ``metadata/tsr``, and fetches/caches TSR PDFs into a
-configurable corpus root with provenance manifests.
+configurable corpus root with provenance manifests. The current extraction
+slice also derives reviewable candidate facts from cached TSR PDFs and writes a
+canonical ``metadata/tsr/tsa_candidate_facts.json`` artifact.
 
 Use this page when you are debugging the TSR indexing logic itself rather than
 the higher-level CLI surface.
@@ -24,7 +26,9 @@ Use this page first if you are trying to:
 - inspect how TSA identity, cycle labels, and document types are normalized; or
 - debug the canonical JSON outputs written to ``metadata/tsr``; or
 - inspect how TSR PDF cache manifests and corpus-relative paths are shaped for
-  a later DataLad-managed corpus split.
+  a later DataLad-managed corpus split; or
+- inspect how cached TSR PDFs are turned into reviewable source-layer, AU,
+  THLB, and TIPSY candidate facts.
 
 Typical Usage
 -------------
@@ -35,13 +39,19 @@ The common operator-facing entrypoint is:
 
    femic tsr index
    femic tsr fetch
+   femic tsr extract
 
 The matching Python entrypoints are:
 
 .. code-block:: python
 
    from pathlib import Path
-   from femic.tsr_catalog import fetch_tsr_pdfs, index_tsr_tsa_surfaces, write_tsr_index
+   from femic.tsr_catalog import (
+       extract_tsr_candidate_facts,
+       fetch_tsr_pdfs,
+       index_tsr_tsa_surfaces,
+       write_tsr_index,
+   )
 
    result = index_tsr_tsa_surfaces()
    write_tsr_index(result, Path("metadata/tsr"))
@@ -49,6 +59,11 @@ The matching Python entrypoints are:
        documents_path=Path("metadata/tsr/tsa_documents.json"),
        corpus_root=Path.home() / ".femic" / "tsr" / "corpus",
        manifest_path=Path.home() / ".femic" / "tsr" / "tsa_pdf_cache_manifest.json",
+   )
+   extract_tsr_candidate_facts(
+       documents_path=Path("metadata/tsr/tsa_documents.json"),
+       corpus_root=Path.home() / ".femic" / "tsr" / "corpus",
+       output_path=Path("metadata/tsr/tsa_candidate_facts.json"),
    )
 
 Key Entry Surfaces
@@ -62,6 +77,9 @@ Key Entry Surfaces
   Download/cache indexed TSR PDFs into a configurable corpus root and write a
   provenance manifest with corpus-relative paths, stable user-local path
   placeholders, and checksums.
+- :func:`extract_tsr_candidate_facts`
+  Parse cached TSR PDFs into reviewable candidate facts with page/snippet
+  provenance for later human or agent adoption.
 
 Cross-References
 ----------------

@@ -4282,3 +4282,85 @@ def test_tsr_fetch_reports_cache_errors(monkeypatch: pytest.MonkeyPatch) -> None
 
     assert exc_info.value.exit_code == 1
     assert any("TSR fetch error:" in msg for msg in messages)
+
+
+def test_tsr_extract_writes_candidate_facts_under_repo_metadata_root(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    user_corpus_root = tmp_path / ".femic" / "tsr" / "corpus"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main, "default_femic_tsr_corpus_root", lambda: user_corpus_root
+    )
+
+    result = cli_main.TsrExtractResult(
+        generated_utc="2026-04-04T00:00:00+00:00",
+        documents_path=repo_root / "metadata" / "tsr" / "tsa_documents.json",
+        corpus_root=user_corpus_root,
+        output_path=repo_root / "metadata" / "tsr" / "tsa_candidate_facts.json",
+        selected_tsa_filters=("29",),
+        selected_document_count=3,
+        extracted_documents_count=2,
+        facts=(),
+        failures=(),
+    )
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_extract(**kwargs):
+        captured_kwargs.update(kwargs)
+        return result
+
+    monkeypatch.setattr(cli_main, "extract_tsr_candidate_facts", _fake_extract)
+
+    cli_main.tsr_extract(
+        documents_path=None,
+        corpus_root=None,
+        output_path=None,
+        tsa=["29"],
+        max_documents=3,
+    )
+
+    assert (
+        captured_kwargs["documents_path"]
+        == repo_root / "metadata" / "tsr" / "tsa_documents.json"
+    )
+    assert captured_kwargs["corpus_root"] == user_corpus_root
+    assert (
+        captured_kwargs["output_path"]
+        == repo_root / "metadata" / "tsr" / "tsa_candidate_facts.json"
+    )
+    assert captured_kwargs["tsa_filters"] == ("29",)
+    assert captured_kwargs["max_documents"] == 3
+    assert captured_kwargs["source_root"] == repo_root
+    assert any("fact_count: 0" in msg for msg in messages)
+    assert any("output_path:" in msg for msg in messages)
+
+
+def test_tsr_extract_reports_extract_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "default_femic_tsr_corpus_root",
+        lambda: Path("C:/tmp/.femic/tsr/corpus"),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "extract_tsr_candidate_facts",
+        lambda **_kwargs: (_ for _ in ()).throw(cli_main.TsrExtractError("boom")),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.tsr_extract(
+            documents_path=None,
+            corpus_root=None,
+            output_path=None,
+            tsa=None,
+            max_documents=None,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("TSR extract error:" in msg for msg in messages)

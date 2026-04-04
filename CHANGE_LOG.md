@@ -11286,3 +11286,31 @@
       (`666` selected PDFs, `665` cached, `1` upstream failure);
     - post-pivot TSA29 smoke completed with `17` selected PDFs, `17` cached,
       and `0` failures under the new user-local default cache root.
+- 2026-04-04 (Issue `#104` TSR candidate-fact extraction):
+  - Added the extraction layer in `femic.tsr_catalog.extract` plus the new CLI
+    command:
+    - `python -m femic tsr extract`
+  - The extraction slice now:
+    - reads the canonical TSA document inventory from
+      `metadata/tsr/tsa_documents.json`;
+    - reads cached PDFs from the user-local TSR corpus root by default
+      (`~/.femic/tsr/corpus`);
+    - emits the canonical repo-tracked candidate-fact artifact
+      `metadata/tsr/tsa_candidate_facts.json`; and
+    - records page/snippet provenance for reviewable candidate facts instead of
+      auto-adopting them into instance overlays.
+  - Covered candidate-fact families:
+    - source-layer candidates;
+    - AU definition candidates;
+    - THLB references;
+    - TIPSY input/assumption candidates; and
+    - document metadata facts.
+  - Added `pypdf` plus `cryptography>=3.1` so encrypted TSR PDFs can be parsed
+    reliably rather than failing on AES support.
+  - Live evidence:
+    - reran the full TSR PDF fetch into the user-local corpus and confirmed
+      `666` selected PDFs, `665` cached, and `1` upstream fetch failure;
+    - ran the full extraction pass and produced
+      `metadata/tsr/tsa_candidate_facts.json` with `665` extracted documents,
+      `43,525` candidate facts, and `1` remaining failure matching the same
+      upstream missing PDF rather than an extractor defect.

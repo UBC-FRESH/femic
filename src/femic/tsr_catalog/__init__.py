@@ -25,11 +25,19 @@ from .crawl import (
     index_tsr_tsa_surfaces,
     write_tsr_index,
 )
+from .extract import (
+    TsrCandidateFact,
+    TsrExtractError,
+    TsrExtractResult,
+    TsrExtractionFailure,
+    extract_tsr_candidate_facts,
+)
 
 __all__ = [
     "DEFAULT_TSR_LANDING_URL",
     "DEFAULT_TSR_PUBLISH_ROOT_URL",
     "DEFAULT_TSR_TSA_ROOT_URL",
+    "TsrCandidateFact",
     "TsaRegistryRecord",
     "TsrCacheError",
     "TsrCacheFailure",
@@ -37,11 +45,15 @@ __all__ = [
     "TsrCycleRecord",
     "TsrDownloadedPdf",
     "TsrDocumentRecord",
+    "TsrExtractError",
+    "TsrExtractResult",
+    "TsrExtractionFailure",
     "TsrFetchResult",
     "TsrInventoryDocument",
     "TsrIndexResult",
     "TsrLandingResource",
     "TsrWrittenIndex",
+    "extract_tsr_candidate_facts",
     "fetch_tsr_pdfs",
     "index_tsr_tsa_surfaces",
     "load_tsr_document_inventory",

@@ -5,12 +5,14 @@ seaborn
 scipy
 rasterio
 geocube
+pypdf
 pympler
 ipyparallel
 mapply
 swifter
 fiona
 distance
+cryptography>=3.1
 datalad[full]
 nbformat
 openpyxl

@@ -12373,5 +12373,51 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Detailed Next Steps:
     - move to `#104` next so candidate-fact extraction builds on the user-local
       TSR corpus and provenance manifest rather than raw URLs alone;
+    - keep `#104` extraction deliberately shallow in v1:
+      - add `femic tsr extract`;
+      - parse cached PDFs into reviewable candidate facts only;
+      - cover source-layer tokens, AU snippets, THLB references, and TIPSY
+        assumption snippets; and
+      - write a canonical repo-tracked
+        `metadata/tsr/tsa_candidate_facts.json`;
+    - shape source-layer candidate facts so they can feed later
+      `femic data bcdc-resolve` batch workflows cleanly;
     - defer any optional DataLad-managed TSR corpus automation to a future
       follow-on issue rather than expanding `#103` further.
+- 2026-04-04 (Issue `#104` TSR candidate-fact extraction implemented):
+  - Added the extraction layer in `femic.tsr_catalog.extract` and the new CLI
+    entrypoint:
+    - `python -m femic tsr extract`
+  - The extraction slice now:
+    - reads the canonical TSA document inventory from
+      `metadata/tsr/tsa_documents.json`;
+    - reads cached PDFs from the user-local TSR corpus root by default
+      (`~/.femic/tsr/corpus`);
+    - emits the canonical repo-tracked candidate-fact artifact:
+      `metadata/tsr/tsa_candidate_facts.json`; and
+    - records page/snippet provenance for reviewable candidate facts rather
+      than auto-adopting them into live instance overlays.
+  - V1 candidate-fact families now covered:
+    - source-layer candidates;
+    - AU definition candidates;
+    - THLB references;
+    - TIPSY input/assumption candidates; and
+    - document metadata facts.
+  - Live evidence:
+    - reran the full TSR PDF fetch into the user-local corpus and confirmed
+      `666` selected PDFs, `665` cached, and `1` upstream fetch failure;
+    - ran the full extraction pass and produced
+      `metadata/tsr/tsa_candidate_facts.json` with:
+      - `665` extracted documents;
+      - `43,525` candidate facts total; and
+      - `1` remaining failure, corresponding to the same upstream missing PDF
+        rather than an extractor defect.
+  - Dependency/runtime note:
+    - added `pypdf` plus `cryptography>=3.1` so encrypted TSR PDFs can be
+      parsed instead of failing open on AES support.
+  - Detailed Next Steps:
+    - move to `#105` next so reviewed instance-local TSR overlays can adopt a
+      curated subset of the new candidate-fact corpus without mixing canonical
+      discovery state into live instance truth; and
+    - keep the broader agent/operator workflow docs for `#106` so the overlay
+      promotion path stays separate from the extraction engine itself.

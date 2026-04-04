@@ -381,6 +381,7 @@ Subcommands
 
 - ``index``: ``python -m femic tsr index [OPTIONS]``
 - ``fetch``: ``python -m femic tsr fetch [OPTIONS]``
+- ``extract``: ``python -m femic tsr extract [OPTIONS]``
 
 ``tsr index`` options
 
@@ -413,6 +414,27 @@ and writes a canonical provenance manifest that stores repo-relative corpus
 paths or stable user-local placeholders, checksums, fetch status, and source
 URLs without requiring the PDFs themselves to live in the main FEMIC Git
 history.
+
+``tsr extract`` options
+
+- ``--documents-path PATH`` (optional; defaults to
+  ``metadata/tsr/tsa_documents.json`` under the active FEMIC checkout)
+- ``--corpus-root PATH`` (optional; defaults to the user-local
+  ``~/.femic/tsr/corpus``)
+- ``--output-path PATH`` (optional; defaults to
+  ``metadata/tsr/tsa_candidate_facts.json`` under the active FEMIC checkout)
+- ``--tsa TEXT`` (repeatable optional TSA filter)
+- ``--max-documents INTEGER`` (optional bounded smoke-test/extract limit)
+
+``tsr extract`` reads cached TSR PDFs from the chosen corpus root and emits a
+canonical candidate-fact JSON artifact:
+
+- ``metadata/tsr/tsa_candidate_facts.json``
+
+The extraction slice is intentionally review-oriented. It produces candidate
+facts for source-layer tokens, AU snippets, THLB references, and TIPSY
+assumption snippets with page/snippet provenance, but it does not adopt those
+facts into live instance overlays yet.
 
 Export
 ------

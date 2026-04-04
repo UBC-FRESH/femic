@@ -135,9 +135,12 @@ from femic.release_packaging import build_release_package
 from femic.tsr_catalog import (
     TsrCacheError,
     TsrCatalogError,
+    TsrExtractError,
+    TsrExtractResult,
     TsrFetchResult,
     TsrIndexResult,
     TsrWrittenIndex,
+    extract_tsr_candidate_facts,
     fetch_tsr_pdfs,
     index_tsr_tsa_surfaces,
     write_tsr_index,
@@ -358,6 +361,15 @@ TSR_MANIFEST_PATH_OPTION = typer.Option(
     help=(
         "Optional TSR PDF cache-manifest path. Defaults to the user-local "
         "`~/.femic/tsr/tsa_pdf_cache_manifest.json`."
+    ),
+    show_default=False,
+)
+TSR_CANDIDATE_FACTS_PATH_OPTION = typer.Option(
+    None,
+    "--output-path",
+    help=(
+        "Optional TSR candidate-facts JSON path. Defaults to "
+        "`metadata/tsr/tsa_candidate_facts.json` under the active FEMIC checkout."
     ),
     show_default=False,
 )
@@ -1946,6 +1958,18 @@ def _print_tsr_fetch_summary(result: TsrFetchResult) -> None:
     console.print(f"failure_count: {len(result.failures)}")
 
 
+def _print_tsr_extract_summary(result: TsrExtractResult) -> None:
+    console.print(f"documents_path: {result.documents_path}")
+    console.print(f"corpus_root: {result.corpus_root}")
+    console.print(f"output_path: {result.output_path}")
+    console.print(f"selected_document_count: {result.selected_document_count}")
+    console.print(f"extracted_documents_count: {result.extracted_documents_count}")
+    console.print(f"fact_count: {len(result.facts)}")
+    for family, count in result.fact_family_counts().items():
+        console.print(f"{family}_count: {count}")
+    console.print(f"failure_count: {len(result.failures)}")
+
+
 @app.callback()
 def main(
     version: bool = VERSION_OPTION,
@@ -2112,6 +2136,44 @@ def tsr_fetch(
         raise typer.Exit(code=1) from exc
 
     _print_tsr_fetch_summary(result)
+
+
+@tsr_app.command("extract")
+def tsr_extract(
+    documents_path: Path | None = TSR_DOCUMENTS_PATH_OPTION,
+    corpus_root: Path | None = TSR_CORPUS_ROOT_OPTION,
+    output_path: Path | None = TSR_CANDIDATE_FACTS_PATH_OPTION,
+    tsa: list[str] | None = TSR_TSA_FILTER_OPTION,
+    max_documents: int | None = TSR_MAX_DOCUMENTS_OPTION,
+) -> None:
+    """Extract reviewable TSR candidate facts from cached PDFs."""
+
+    source_root = _source_tree_root()
+    resolved_documents_path = _resolve_repo_output_path(
+        documents_path or Path("metadata/tsr/tsa_documents.json"),
+        source_root=source_root,
+    )
+    resolved_corpus_root = (
+        (corpus_root or default_femic_tsr_corpus_root()).expanduser().resolve()
+    )
+    resolved_output_path = _resolve_repo_output_path(
+        output_path or Path("metadata/tsr/tsa_candidate_facts.json"),
+        source_root=source_root,
+    )
+    try:
+        result = extract_tsr_candidate_facts(
+            documents_path=resolved_documents_path,
+            corpus_root=resolved_corpus_root,
+            output_path=resolved_output_path,
+            tsa_filters=tuple(tsa or ()),
+            max_documents=max_documents,
+            source_root=source_root,
+        )
+    except TsrExtractError as exc:
+        console.print(f"[red]TSR extract error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_extract_summary(result)
 
 
 @instance_config_app.command("set-managed-external-root")

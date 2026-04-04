@@ -8,6 +8,7 @@ femic.tsr\_catalog
 
    .. autosummary::
    
+      extract_tsr_candidate_facts
       fetch_tsr_pdfs
       index_tsr_tsa_surfaces
       load_tsr_document_inventory
@@ -17,6 +18,7 @@ femic.tsr\_catalog
 
    .. autosummary::
    
+      TsrCandidateFact
       TsaRegistryRecord
       TsrCacheError
       TsrCacheFailure
@@ -24,6 +26,9 @@ femic.tsr\_catalog
       TsrCycleRecord
       TsrDownloadedPdf
       TsrDocumentRecord
+      TsrExtractError
+      TsrExtractResult
+      TsrExtractionFailure
       TsrFetchResult
       TsrInventoryDocument
       TsrIndexResult
