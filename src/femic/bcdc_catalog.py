@@ -77,6 +77,11 @@ class BcdcDownloadedResource:
             "saved_path": str(self.saved_path),
         }
 
+    def relative_to(self, *other: str | Path) -> Path:
+        """Delegate path-style relative resolution to the saved path."""
+
+        return self.saved_path.relative_to(*other)
+
 
 @dataclass
 class BcdcDownloadFailure:

@@ -11528,3 +11528,54 @@
     - public status/download completion is still unreliable; and
     - `--geomark` is currently normalized to bbox-derived custom GML AOI
       instead of being passed through directly to DWDS.
+- 2026-04-04 (TSA29 full-chain smoke over the TSR -> BCDC -> acquisition
+  chain):
+  - Exercised the new end-to-end workflow using TSA29 as the subject:
+    - TSR fact review -> BCDC resolve -> AOI-scoped WFS/direct/DWDS
+      acquisition.
+  - Wrote the durable per-instance status snapshot to:
+    - `external/femic-tsa29-instance/config/tsr/overlay.yaml`
+  - Wrote transient audit artifacts to:
+    - `runtime/logs/tsa29_tsr_source_layers_review.csv`
+    - `runtime/logs/tsa29_tsr_source_layers_batch_queries.txt`
+    - `runtime/logs/tsa29_tsr_source_layers_batch_summary.csv`
+    - `runtime/logs/tsa29_tsr_source_layers_batch_manifest.json`
+    - `runtime/logs/tsa29_bcdc_acquisition_smoke_results.csv`
+    - `runtime/logs/tsa29_bcdc_acquisition_smoke_results.json`
+  - Smoke outcome:
+    - `87` reviewed queries attempted;
+    - `24` successful WFS fetches;
+    - `26` weak-text duplicates safely skipped because a cleaner exact/alias
+      match already existed;
+    - `19` weak-text rows left for human review;
+    - `15` no-hit shorthand/stale-token rows; and
+    - `3` automation failures.
+  - Main interpretation:
+    - the chain already works and WFS acquisition is operationally useful;
+    - the direct-download path has one real bug for `SITE_PROD_BC`;
+    - DWDS public-permission failures should be treated as informative
+      outcomes; and
+    - resolver shorthand recovery is now the main remaining usability gap.
+  - Opened follow-on issues from the smoke:
+    - `#113` soft good-citizen guardrails;
+    - `#114` direct-download result-object logging bug; and
+    - `#115` resolver alias/shorthand recovery.
+- 2026-04-04 (Issue `#114` fixed: `SITE_PROD_BC` direct-download results now
+  log cleanly in the TSA29 batch workflow):
+  - Added a narrow compatibility shim to `BcdcDownloadedResource` so
+    path-oriented reporting code can safely call `relative_to(...)` on direct
+    download result wrappers.
+  - Re-ran the bounded TSA29 acquisition smoke and confirmed that
+    `SITE_PROD_BC` now lands as `downloaded` instead of failing.
+  - Updated post-fix TSA29 smoke outcome:
+    - `24` successful WFS fetches;
+    - `1` successful direct download;
+    - `26` weak-text duplicates safely skipped because a cleaner exact/alias
+      match already existed;
+    - `19` weak-text rows left for human review;
+    - `15` no-hit shorthand/stale-token rows; and
+    - `2` remaining automation failures, both informative DWDS
+      public-permission denials.
+  - Remaining follow-on work stays tracked in:
+    - `#115` resolver alias/shorthand recovery; and
+    - `#113` soft good-citizen guardrails.

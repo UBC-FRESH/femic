@@ -12578,6 +12578,55 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       immediately after the new CLI path exists; and
     - leave `#112` as the explicit heavier fallback lane for later FGDB/DWDS
       investigation.
+- 2026-04-04 (TSA29 full-chain smoke over the TSR -> BCDC -> acquisition
+  workflow):
+  - Durable per-instance memory now lives in:
+    - `external/femic-tsa29-instance/config/tsr/overlay.yaml`
+  - Transient audit artifacts were written to:
+    - `runtime/logs/tsa29_tsr_source_layers_review.csv`
+    - `runtime/logs/tsa29_tsr_source_layers_batch_queries.txt`
+    - `runtime/logs/tsa29_tsr_source_layers_batch_summary.csv`
+    - `runtime/logs/tsa29_tsr_source_layers_batch_manifest.json`
+    - `runtime/logs/tsa29_bcdc_acquisition_smoke_results.csv`
+    - `runtime/logs/tsa29_bcdc_acquisition_smoke_results.json`
+  - The bounded TSA29 smoke attempted `87` reviewed queries and produced:
+    - `24` successful WFS fetches;
+    - `26` weak-text rows safely skipped because a cleaner exact/alias match
+      already existed;
+    - `19` weak-text rows left for human review;
+    - `15` no-hit shorthand/stale-token rows; and
+    - `3` automation failures.
+  - Practical interpretation:
+    - the chain already works and WFS acquisition is genuinely useful;
+    - the direct-download path exposed one real bug for `SITE_PROD_BC`;
+    - DWDS public-permission failures are informative outcomes, not immediate
+      blockers; and
+    - resolver shorthand recovery is now the main remaining usability gap.
+  - Follow-on tracker work opened from this smoke:
+    - `#113` soft good-citizen guardrails for bulk public-service automation;
+    - `#114` fix `SITE_PROD_BC` direct-download result-object logging; and
+    - `#115` improve BCDC resolver alias/shorthand recovery for TSR-derived
+      TSA source-layer tokens.
+- 2026-04-04 (Issue `#114` fixed: `SITE_PROD_BC` direct-download results now
+  log cleanly in the TSA29 batch workflow):
+  - Added a narrow compatibility shim to `BcdcDownloadedResource` so
+    path-oriented reporting code can safely call `relative_to(...)` on direct
+    download result entries instead of crashing on the wrapper object.
+  - Re-ran the bounded TSA29 acquisition smoke against the same reviewed query
+    set and confirmed that `SITE_PROD_BC` now lands as `downloaded` instead of
+    failing.
+  - Updated TSA29 post-fix outcome counts:
+    - `24` successful WFS fetches;
+    - `1` successful direct download (`SITE_PROD_BC`);
+    - `26` weak-text rows safely skipped because a cleaner exact/alias match
+      already existed;
+    - `19` weak-text rows left for human review;
+    - `15` no-hit shorthand/stale-token rows; and
+    - `2` remaining automation failures, both informative DWDS
+      public-permission denials.
+  - Remaining follow-on work after the bug fix:
+    - `#115` resolver alias/shorthand recovery; and
+    - `#113` soft good-citizen guardrails for bulk automation.
 - 2026-04-04 (Issue `#109` implemented: WFS probing/classification for
   OpenMaps-backed BCDC service resources):
   - Extended `femic data bcdc-resolve` so service-backed resources can now
@@ -12731,3 +12780,11 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `--geomark` remains a user-friendly AOI input that FEMIC resolves to a
       bbox-derived custom GML AOI rather than a direct DWDS geomark
       passthrough.
+  - Detailed Next Steps:
+    - run a full TSA29 end-to-end smoke over the newly built TSR -> BCDC
+      workflow rather than relying only on the worked single-layer examples;
+    - log per-layer acquisition results in the TSA29 local TSR overlay so the
+      same exploratory fetch/order pass does not need to be repeated blindly;
+    - spawn immediate child follow-up issues only for gaps revealed by the
+      smoke that materially block practical multi-layer acquisition, and defer
+      lower-value papercuts to later issue lanes.

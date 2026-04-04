@@ -314,6 +314,23 @@ def test_download_direct_bcdc_resources_downloads_only_direct_data(
     )
 
 
+def test_bcdc_downloaded_resource_delegates_relative_to(tmp_path: Path) -> None:
+    destination_root = tmp_path / "downloads"
+    saved_path = destination_root / "SITE_PROD_BC" / "site_prod_bc.gpkg"
+    saved_path.parent.mkdir(parents=True, exist_ok=True)
+    saved_path.write_text("ok", encoding="utf-8")
+
+    resource = bcdc_catalog.BcdcDownloadedResource(
+        resource_name="Site Productivity",
+        resource_url="https://example.invalid/site_prod_bc.gpkg",
+        saved_path=saved_path,
+    )
+
+    assert resource.relative_to(destination_root) == Path(
+        "SITE_PROD_BC/site_prod_bc.gpkg"
+    )
+
+
 def test_write_bcdc_manifest_writes_json_payload(tmp_path: Path) -> None:
     result = bcdc_catalog.BcdcResolveResult(
         query="WHSE_FOREST_VEGETATION.F_OWN",
