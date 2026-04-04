@@ -12160,4 +12160,40 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - if the BCDC lane continues later, the next best leverage is probably a
       larger curated forestry alias map built from preserved TSR source-list
       misses rather than more output formats.
+- 2026-04-04 (THLB simplification lane kickoff: move toward proportional
+  managed/unmanaged area by default):
+  - Governing issue:
+    - GitHub issue `#100`
+  - Active branch:
+    - `feature/issue-100-thlb-proportional-mode`
+  - Problem framing:
+    - current THLB handling still mixes two distinct ideas:
+      stand-level THLB signal extraction from the raster and a later binary
+      managed/unmanaged snap calibrated toward a landscape target area;
+    - the current default behavior is heavier and harder to reason about than
+      it needs to be for early-model assembly and patchworks-facing THLB
+      netdown work.
+  - Active implementation target:
+    - keep the current threshold/calibration path as an explicit legacy mode;
+    - add a new default proportional THLB mode that:
+      - keeps stand-level raster mean values as the working THLB signal;
+      - treats THLB raster nodata as `0`;
+      - stops snapping stands immediately to `{0,1}` by default; and
+      - feeds Patchworks a managed/unmanaged area split derived from the
+        continuous THLB proportion instead.
+    - keep ws3 follow-on work out of this first slice, but name/configure the
+      mode so a ws3-equivalent implementation can mirror it later.
+  - Detailed Next Steps:
+    - introduce an explicit THLB processing mode/config surface rather than
+      hiding the new behavior behind existing threshold options;
+    - thread the new mode through the legacy Stage 00 orchestration and the
+      modern Patchworks export seams cleanly;
+    - decide whether proportional mode is best represented by duplicating
+      fragment rows into managed/unmanaged shares or by another equally clear
+      fragments contract that preserves area accounting;
+    - add targeted tests covering:
+      - raster nodata -> `0` behavior;
+      - legacy binary mode preservation; and
+      - proportional managed/unmanaged area accounting in Patchworks-facing
+        fragments output.
 

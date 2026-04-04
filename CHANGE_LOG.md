@@ -11151,3 +11151,11 @@
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m ruff check src tests`
     - `python -m mypy src`
+- 2026-04-04 (THLB simplification lane kickoff):
+  - Promoted the incoming THLB simplification idea into the formal planning
+    workflow.
+  - Recorded the next intended feature lane in `ROADMAP.md`:
+    keep the current binary/calibrated THLB behavior as an optional legacy
+    mode, but move toward a new default proportional THLB mode that treats
+    raster nodata as `0` and derives managed/unmanaged area shares from the
+    continuous stand-level THLB signal.
