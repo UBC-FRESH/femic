@@ -11635,3 +11635,15 @@
       netdown tokens; and
     - `#119` user-supplied mapping overrides and external acquisition hints for
       unresolved TSR tokens.
+- 2026-04-04 (Issue `#117` fixed the TSR wrapped-token extraction seam):
+  - Added conservative wrapped-token reconstruction in the TSR extraction
+    layer so line-broken BCGW/object-name-style tokens are repaired before
+    they become canonical `source_layer_candidate` facts.
+  - Regression coverage now verifies:
+    - `REG_LAND_AND_NATURAL_RESOURCE.L_MULE_DEER_` +
+      `WR_CAR_POLY` -> `REG_LAND_AND_NATURAL_RESOURCE.L_MULE_DEER_WR_CAR_POLY`
+    - `WHSE_WILDLIFE_MANAGEMENT.WCP_UNGULATE_WINTER_RAN` +
+      `GE_SP` -> `WHSE_WILDLIFE_MANAGEMENT.WCP_UNGULATE_WINTER_RANGE_SP`
+  - Live TSA29 extraction smoke against the cached corpus confirmed that the
+    repaired full tokens are now emitted and the old truncated TSA29 variants
+    are gone.

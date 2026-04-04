@@ -130,3 +130,53 @@ def test_extract_tsr_candidate_facts_reports_missing_cached_pdfs(
     assert len(result.facts) == 0
     assert len(result.failures) == 1
     assert result.failures[0].error == "cached_pdf_missing"
+
+
+def test_extract_tsr_candidate_facts_repairs_wrapped_source_layer_tokens(
+    tmp_path: Path,
+) -> None:
+    inventory_path = _write_inventory(tmp_path)
+    corpus_root = tmp_path / ".femic" / "tsr" / "corpus"
+    cached_pdf = (
+        corpus_root
+        / "tsa"
+        / "tsa_29"
+        / "TSR_2024"
+        / "Data_Package_2024"
+        / "29ts_dpkg_2024.pdf"
+    )
+    cached_pdf.parent.mkdir(parents=True, exist_ok=True)
+    cached_pdf.write_bytes(b"fake-pdf")
+    output_path = tmp_path / "metadata" / "tsr" / "tsa_candidate_facts.json"
+
+    def _fake_extract_pages(path: Path) -> tuple[str, ...]:
+        assert path == cached_pdf
+        return (
+            "\n".join(
+                [
+                    "Mule Deer winter range BCGW REG_LAND_AND_NATURAL_RESOURCE.L_MULE_DEER_",
+                    "WR_CAR_POLY",
+                    "Ungulate winter range BCGW WHSE_WILDLIFE_MANAGEMENT.WCP_UNGULATE_WINTER_RAN",
+                    "GE_SP",
+                ]
+            ),
+        )
+
+    result = tsr_catalog.extract_tsr_candidate_facts(
+        documents_path=inventory_path,
+        corpus_root=corpus_root,
+        output_path=output_path,
+        tsa_filters=("29",),
+        source_root=tmp_path,
+        extract_pdf_pages_fn=_fake_extract_pages,
+    )
+
+    source_values = {
+        fact.value
+        for fact in result.facts
+        if fact.fact_family == "source_layer_candidate"
+    }
+    assert "REG_LAND_AND_NATURAL_RESOURCE.L_MULE_DEER_WR_CAR_POLY" in source_values
+    assert "WHSE_WILDLIFE_MANAGEMENT.WCP_UNGULATE_WINTER_RANGE_SP" in source_values
+    assert "REG_LAND_AND_NATURAL_RESOURCE.L_MULE_DEER_" not in source_values
+    assert "WHSE_WILDLIFE_MANAGEMENT.WCP_UNGULATE_WINTER_RAN" not in source_values

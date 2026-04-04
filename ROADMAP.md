@@ -12766,6 +12766,44 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       netdown tokens; and
     - `#119` user-supplied mapping overrides and external acquisition hints for
       unresolved TSR tokens.
+- 2026-04-04 (Issue `#117` active: repair wrapped TSR source-layer tokens at
+  extraction time):
+  - Patch the TSR PDF extraction layer, not the BCDC resolver, so wrapped
+    table-cell tokens can be reconstructed before they become canonical
+    `source_layer_candidate` facts.
+  - Scope the repair narrowly around obvious BCGW/object-name-style wrapped
+    tokens such as:
+    - `REG_LAND_AND_NATURAL_RESOURCE.L_MULE_DEER_` + `WR_CAR_POLY`
+    - `WHSE_WILDLIFE_MANAGEMENT.WCP_UNGULATE_WINTER_RAN` + `GE_SP`
+  - Keep the behavior conservative:
+    - only merge line continuations when the seed line already looks like a
+      source-layer fragment;
+    - preserve provenance/snippet context for the repaired token; and
+    - avoid generic OCR/semantic cleanup outside this structured token seam.
+- 2026-04-04 (Issue `#117` implemented: wrapped TSR source-layer tokens now
+  repair at extraction time):
+  - Added conservative wrapped-token reconstruction to the TSR extraction
+    layer so line-broken BCGW/object-name-style tokens can be reassembled
+    before they become canonical `source_layer_candidate` facts.
+  - The repair stays intentionally narrow:
+    - seed lines must already contain a recognizable source-layer fragment;
+    - only token-like continuation lines are merged; and
+    - repaired longer tokens supersede the truncated shorter variants on the
+      same page.
+  - Regression coverage now includes:
+    - `REG_LAND_AND_NATURAL_RESOURCE.L_MULE_DEER_` +
+      `WR_CAR_POLY` -> `REG_LAND_AND_NATURAL_RESOURCE.L_MULE_DEER_WR_CAR_POLY`
+    - `WHSE_WILDLIFE_MANAGEMENT.WCP_UNGULATE_WINTER_RAN` +
+      `GE_SP` -> `WHSE_WILDLIFE_MANAGEMENT.WCP_UNGULATE_WINTER_RANGE_SP`
+  - Live TSA29 extraction smoke against the cached corpus confirmed:
+    - repaired full tokens are present in the extracted facts; and
+    - the old truncated TSA29 variants are no longer emitted.
+  - Detailed Next Steps:
+    - move to `#119` next so users can supply explicit local/provenance-aware
+      mappings for the remaining unresolved wall cases; and
+    - keep `#118` as the later review-family suggestion lane for stale public
+      wildlife/netdown tokens that still do not have a single safe exact
+      replacement.
 - 2026-04-04 (Issue `#109` implemented: WFS probing/classification for
   OpenMaps-backed BCDC service resources):
   - Extended `femic data bcdc-resolve` so service-backed resources can now

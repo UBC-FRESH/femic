@@ -245,6 +245,59 @@ def _looks_like_source_layer_token(token: str) -> bool:
     return "." in token
 
 
+def _extract_source_layer_tokens(text: str) -> tuple[str, ...]:
+    tokens: list[str] = []
+    seen: set[str] = set()
+    for pattern in (_SOURCE_LAYER_OBJECT_RE, _SOURCE_LAYER_TOKEN_RE):
+        for match in pattern.finditer(text):
+            token = match.group(0)
+            if pattern is _SOURCE_LAYER_TOKEN_RE and f"{token}." in text:
+                continue
+            if not _looks_like_source_layer_token(token):
+                continue
+            if token in seen:
+                continue
+            seen.add(token)
+            tokens.append(token)
+    return tuple(tokens)
+
+
+def _looks_like_source_layer_seed(line: str) -> bool:
+    return bool(_extract_source_layer_tokens(line))
+
+
+def _looks_like_source_layer_continuation(line: str) -> bool:
+    stripped = line.strip()
+    return bool(stripped) and bool(re.match(r"^[A-Z][A-Z0-9_]*$", stripped))
+
+
+def _iter_source_layer_lines(page_text: str) -> tuple[str, ...]:
+    base_lines = [_trim_snippet(raw_line) for raw_line in page_text.splitlines()]
+    logical_lines: list[str] = []
+    for index, line in enumerate(base_lines):
+        if not line:
+            continue
+        logical_lines.append(line)
+        if not _looks_like_source_layer_seed(line):
+            continue
+        merged = line
+        merged_tokens = _extract_source_layer_tokens(merged)
+        for lookahead in range(index + 1, min(index + 4, len(base_lines))):
+            continuation = base_lines[lookahead]
+            if not continuation or not _looks_like_source_layer_continuation(
+                continuation
+            ):
+                break
+            candidate = merged + continuation.strip()
+            candidate_tokens = _extract_source_layer_tokens(candidate)
+            if candidate_tokens == merged_tokens:
+                break
+            logical_lines.append(candidate)
+            merged = candidate
+            merged_tokens = candidate_tokens
+    return tuple(logical_lines)
+
+
 def _iter_source_layer_facts(
     document: TsrInventoryDocument,
     *,
@@ -252,33 +305,34 @@ def _iter_source_layer_facts(
     page_number: int,
     page_text: str,
 ) -> tuple[TsrCandidateFact, ...]:
-    facts: list[TsrCandidateFact] = []
+    candidates: list[tuple[str, str]] = []
     seen: set[str] = set()
-    for raw_line in page_text.splitlines():
-        line = _trim_snippet(raw_line)
-        if not line:
+    for line in _iter_source_layer_lines(page_text):
+        for token in _extract_source_layer_tokens(line):
+            dedupe_key = f"{page_number}:{token}"
+            if dedupe_key in seen:
+                continue
+            seen.add(dedupe_key)
+            candidates.append((token, line))
+    superseded = {
+        token
+        for token, _line in candidates
+        if any(other != token and other.startswith(token) for other, _ in candidates)
+    }
+    facts: list[TsrCandidateFact] = []
+    for token, line in candidates:
+        if token in superseded:
             continue
-        for pattern in (_SOURCE_LAYER_OBJECT_RE, _SOURCE_LAYER_TOKEN_RE):
-            for match in pattern.finditer(line):
-                token = match.group(0)
-                if pattern is _SOURCE_LAYER_TOKEN_RE and f"{token}." in line:
-                    continue
-                if not _looks_like_source_layer_token(token):
-                    continue
-                dedupe_key = f"{page_number}:{token}"
-                if dedupe_key in seen:
-                    continue
-                seen.add(dedupe_key)
-                facts.append(
-                    _build_fact(
-                        document,
-                        corpus_relative_path=corpus_relative_path,
-                        fact_family="source_layer_candidate",
-                        value=token,
-                        page_number=page_number,
-                        snippet=line,
-                    )
-                )
+        facts.append(
+            _build_fact(
+                document,
+                corpus_relative_path=corpus_relative_path,
+                fact_family="source_layer_candidate",
+                value=token,
+                page_number=page_number,
+                snippet=line,
+            )
+        )
     return tuple(facts)
 
 
