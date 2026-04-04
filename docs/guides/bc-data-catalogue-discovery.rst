@@ -120,6 +120,21 @@ Then run:
      --query-file runtime\logs\williams_lake_table2_queries.txt `
      --manifest-path runtime\logs\williams_lake_table2_manifest.json
 
+If you want a quick review surface before opening the full JSON manifest, also
+write a one-row-per-query CSV summary:
+
+.. code-block:: text
+
+   & .\.venv\Scripts\python.exe -m femic data bcdc-resolve `
+     --query-file runtime\logs\williams_lake_table2_queries.txt `
+     --summary-csv runtime\logs\williams_lake_table2_summary.csv `
+     --manifest-path runtime\logs\williams_lake_table2_manifest.json
+
+The CSV summary is intended for fast triage of larger source lists. It records
+the original query, top match title, dataset page URL, whether an alias was
+used, whether direct-download candidates exist, and whether the top match is
+mostly service/custom-download/document driven.
+
 The first follow-on slice after issue `#98` also adds a small curated alias
 path for known forestry naming drift. For example,
 ``CONSOLIDATED_CUTBLOCKS_2011`` now retries through the cleaner

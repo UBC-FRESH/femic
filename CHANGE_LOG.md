@@ -11128,3 +11128,26 @@
     - `python -m ruff check src tests`
     - `python -m mypy src`
     - `python -m pytest -q`
+- 2026-04-04 (Issue `#99` extension kickoff: add a review-friendly batch summary export):
+  - Reopened `#99` for one last narrow usability slice before merge.
+  - Target:
+    add a summary export for batch/query-file runs so larger TSR source lists
+    can be scanned quickly without opening the full JSON manifest first.
+- 2026-04-04 (Issue `#99` implemented: CSV summary export for batch/query-file runs):
+  - Added `--summary-csv PATH` to `femic data bcdc-resolve`.
+  - Batch/query-file runs can now emit a one-row-per-query CSV review surface
+    with:
+    - query;
+    - match count;
+    - status (`exact_hit`, `alias_hit`, `weak_text_hit`, `no_hit`);
+    - top match title and dataset page URL;
+    - match strategy / used alias; and
+    - direct-download and service/custom-download/document summary flags.
+  - Updated the discovery guide and CLI reference with the new CSV review path.
+  - Validation completed:
+    - live smoke using `--query-file` and `--summary-csv`
+    - `python -m pytest tests/test_cli_main.py -k "bcdc_resolve" -q`
+    - `python -m pytest -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`

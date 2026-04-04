@@ -171,6 +171,8 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "Silviculture Activities History",
         "--download-direct",
         "--query-file",
+        "--summary-csv",
+        "williams_lake_table2_summary.csv",
         "CONSOLIDATED_CUTBLOCKS_2011",
         "direct_data_download",
         "indirect_custom_download",
@@ -183,6 +185,7 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "- ``data``",
         "python -m femic data bcdc-resolve",
         "--query-file PATH",
+        "--summary-csv PATH",
         "--download-direct / --no-download-direct",
         "--manifest-path PATH",
     ):

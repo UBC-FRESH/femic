@@ -273,6 +273,12 @@ BCDC_QUERY_FILE_OPTION = typer.Option(
     ),
     show_default=False,
 )
+BCDC_SUMMARY_CSV_OPTION = typer.Option(
+    None,
+    "--summary-csv",
+    help="Optional CSV summary path for one-row-per-query batch review output.",
+    show_default=False,
+)
 BCDC_MANIFEST_OPTION = typer.Option(
     None,
     "--manifest-path",
@@ -1705,6 +1711,95 @@ def _write_bcdc_resolve_manifest(
     return resolved
 
 
+def _bcdc_summary_status(result: BcdcResolveResult) -> str:
+    top_match = result.top_match
+    if top_match is None:
+        return "no_hit"
+    if any("alias/query variant" in note for note in result.notes):
+        return "alias_hit"
+    matched_by = top_match.matched_by
+    if matched_by.startswith("object_name:") or matched_by.startswith(
+        "object_short_name:"
+    ):
+        return "exact_hit"
+    return "weak_text_hit"
+
+
+def _write_bcdc_summary_csv(
+    results: list[BcdcResolveResult],
+    *,
+    path: Path,
+) -> Path:
+    resolved = path.expanduser().resolve()
+    resolved.parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = [
+        "query",
+        "match_count",
+        "status",
+        "top_match_title",
+        "dataset_page_url",
+        "matched_by",
+        "used_alias",
+        "direct_download_candidates",
+        "has_service",
+        "has_indirect_custom_download",
+        "has_supporting_document",
+        "notes",
+    ]
+    with resolved.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        for result in results:
+            top_match = result.top_match
+            resources = top_match.resources if top_match is not None else ()
+            used_alias = next(
+                (
+                    note.split("`")[1]
+                    for note in result.notes
+                    if "alias/query variant" in note and "`" in note
+                ),
+                "",
+            )
+            writer.writerow(
+                {
+                    "query": result.query,
+                    "match_count": len(result.matches),
+                    "status": _bcdc_summary_status(result),
+                    "top_match_title": top_match.title if top_match is not None else "",
+                    "dataset_page_url": (
+                        top_match.dataset_page_url if top_match is not None else ""
+                    ),
+                    "matched_by": top_match.matched_by if top_match is not None else "",
+                    "used_alias": used_alias,
+                    "direct_download_candidates": (
+                        len(top_match.direct_download_resources)
+                        if top_match is not None
+                        else 0
+                    ),
+                    "has_service": any(
+                        resource.classification == "service" for resource in resources
+                    ),
+                    "has_indirect_custom_download": any(
+                        resource.classification == "indirect_custom_download"
+                        for resource in resources
+                    ),
+                    "has_supporting_document": any(
+                        resource.classification == "supporting_document"
+                        for resource in resources
+                    ),
+                    "notes": " | ".join(
+                        list(result.notes)
+                        + (
+                            list(top_match.manual_follow_up)
+                            if top_match is not None
+                            else []
+                        )
+                    ),
+                }
+            )
+    return resolved
+
+
 def _print_bcdc_resolve_summary(result: BcdcResolveResult) -> None:
     console.print(f"query: {result.query}")
     console.print(f"matches: {len(result.matches)}")
@@ -1778,6 +1873,7 @@ def instance_config_show() -> None:
 def data_bcdc_resolve(
     queries: list[str] | None = BCDC_QUERY_ARGUMENT,
     query_file: Path | None = BCDC_QUERY_FILE_OPTION,
+    summary_csv: Path | None = BCDC_SUMMARY_CSV_OPTION,
     manifest_path: Path | None = BCDC_MANIFEST_OPTION,
     download_direct: bool = BCDC_DOWNLOAD_DIRECT_OPTION,
     download_root: Path | None = BCDC_DOWNLOAD_ROOT_OPTION,
@@ -1788,6 +1884,8 @@ def data_bcdc_resolve(
 
     if query_file is not None and not isinstance(query_file, Path):
         query_file = None
+    if summary_csv is not None and not isinstance(summary_csv, Path):
+        summary_csv = None
 
     resolved_queries = list(queries or [])
     if query_file is not None:
@@ -1839,6 +1937,16 @@ def data_bcdc_resolve(
             path=resolved_manifest_path,
         )
         console.print(f"manifest: {written_manifest}")
+    if summary_csv is not None:
+        resolved_summary_csv = _resolve_cli_output_path(
+            summary_csv,
+            instance_context=instance_context,
+        )
+        written_summary_csv = _write_bcdc_summary_csv(
+            results,
+            path=resolved_summary_csv,
+        )
+        console.print(f"summary_csv: {written_summary_csv}")
 
 
 @instance_config_app.command("set-managed-external-root")

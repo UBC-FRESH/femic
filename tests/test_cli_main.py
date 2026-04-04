@@ -3815,6 +3815,98 @@ def test_data_bcdc_resolve_prints_summary_and_manifest(
     assert (tmp_path / "manifest.json").is_file()
 
 
+def test_data_bcdc_resolve_writes_summary_csv(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "resolve_bcdc_candidates",
+        lambda query, limit: cli_main.BcdcResolveResult(
+            query=query,
+            limit=limit,
+            generated_utc="2026-04-04T00:00:00+00:00",
+            api_urls=("https://example.invalid/package_search",),
+            matches=(
+                bcdc_catalog.BcdcPackageMatch(
+                    package_id="pkg-cutblocks",
+                    package_name="harvested-areas-of-bc-consolidated-cutblocks",
+                    title="Harvested Areas of BC (Consolidated Cutblocks)",
+                    dataset_page_url=(
+                        "https://catalogue.data.gov.bc.ca/dataset/"
+                        "harvested-areas-of-bc-consolidated-cutblocks"
+                    ),
+                    organization_name="forest-analysis-and-inventory",
+                    organization_title="Forest Analysis and Inventory Branch",
+                    license_title="Open Government Licence",
+                    download_audience="Public",
+                    matched_by="none",
+                    match_score=100,
+                    resources=(
+                        bcdc_catalog.BcdcResourceMatch(
+                            resource_id="zip-id",
+                            name="Consolidated Cutblocks Complete Download",
+                            classification="direct_data_download",
+                            url="https://example.invalid/cutblocks.zip",
+                            format="zip",
+                            bcdc_type="geographic",
+                            object_name=None,
+                            object_short_name=None,
+                            resource_access_method="direct access",
+                            resource_type="data",
+                            resource_storage_location="web or ftp site",
+                            matched_by="none",
+                            match_score=100,
+                            notes=("Stable direct download.",),
+                        ),
+                        bcdc_catalog.BcdcResourceMatch(
+                            resource_id="doc-id",
+                            name="Documentation",
+                            classification="supporting_document",
+                            url="https://example.invalid/doc.pdf",
+                            format="pdf",
+                            bcdc_type="document",
+                            object_name=None,
+                            object_short_name=None,
+                            resource_access_method="direct access",
+                            resource_type="abstraction",
+                            resource_storage_location="web or ftp site",
+                            matched_by="none",
+                            match_score=0,
+                            notes=("Supporting documentation.",),
+                        ),
+                    ),
+                    manual_follow_up=("Supporting docs available.",),
+                ),
+            ),
+            notes=(
+                "Used alias/query variant `CONSOLIDATED_CUTBLOCKS` to surface the current top match.",
+            ),
+        ),
+    )
+
+    summary_path = tmp_path / "summary.csv"
+    cli_main.data_bcdc_resolve(
+        queries=["CONSOLIDATED_CUTBLOCKS_2011"],
+        query_file=None,
+        summary_csv=summary_path,
+        manifest_path=None,
+        download_direct=False,
+        download_root=None,
+        limit=5,
+        instance_root=None,
+    )
+
+    assert any("summary_csv:" in msg for msg in messages)
+    assert summary_path.is_file()
+    text = summary_path.read_text(encoding="utf-8")
+    assert "CONSOLIDATED_CUTBLOCKS_2011" in text
+    assert "alias_hit" in text
+    assert "CONSOLIDATED_CUTBLOCKS" in text
+
+
 def test_data_bcdc_resolve_downloads_direct_resources(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

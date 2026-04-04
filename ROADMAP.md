@@ -12137,4 +12137,27 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - revisit whether direct-download-capable hits from the Williams Lake/Table
       2 pass should become curated promotion candidates for
       `metadata/required_datasets.yaml` or `external/femic-public-data`.
+- 2026-04-04 (Issue `#99` implemented: review-friendly CSV summary export for
+  batch/query-file runs):
+  - What shipped:
+    - added `--summary-csv PATH` to `femic data bcdc-resolve`;
+    - batch/query-file runs can now emit a one-row-per-query CSV summary for
+      fast review before opening the full JSON manifest;
+    - summary rows capture the original query, match count, resolution status
+      (`exact_hit`, `alias_hit`, `weak_text_hit`, `no_hit`), top match title,
+      dataset page URL, match strategy, used alias, direct-download candidate
+      count, and whether the top match is mainly service/custom-download/
+      document-driven.
+  - Validation:
+    - live smoke with `--query-file` and `--summary-csv` against
+      `WHSE_FOREST_VEGETATION.F_OWN` and `CONSOLIDATED_CUTBLOCKS_2011`;
+    - `python -m pytest tests/test_cli_main.py -k "bcdc_resolve" -q`
+    - `python -m pytest -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+  - Detailed Next Steps:
+    - if the BCDC lane continues later, the next best leverage is probably a
+      larger curated forestry alias map built from preserved TSR source-list
+      misses rather than more output formats.
 

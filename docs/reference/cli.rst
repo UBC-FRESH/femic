@@ -215,6 +215,7 @@ Subcommands
 
 - ``QUERY`` argument (repeatable; BC Data Catalogue layer names or keywords)
 - ``--query-file PATH`` (optional one-query-per-line text file; blank lines and ``#`` comments ignored)
+- ``--summary-csv PATH`` (optional one-row-per-query CSV review export)
 - ``--manifest-path PATH`` (optional JSON manifest output path)
 - ``--download-direct / --no-download-direct`` (opt-in direct-downloads from the top-ranked package only)
 - ``--download-root PATH`` (optional destination root for direct downloads)
