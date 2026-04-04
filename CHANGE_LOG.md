@@ -2227,7 +2227,7 @@
   `output/patchworks_k3z_validated/forestmodel.xml`.
 
 ## 2026-03-08 - Patchworks managed/unmanaged semantics audit and fragment fix
-- Reviewed `reference/UserGuide.pdf` semantics for block-vs-fragment,
+- Reviewed vendor Patchworks user-guide semantics for block-vs-fragment,
   managed/unmanaged components, and treatment eligibility.
 - Simplified fragments export logic in `src/femic/fmg/patchworks.py` for the
   K3Z teaching model:
@@ -11097,3 +11097,10 @@
   - Added the observed source-system pattern:
     - `BCGW`-sourced rows generally produced useful BC Data Catalogue hits;
     - non-`BCGW` rows generally did not.
+- 2026-04-04 (Reference hygiene: removed tracked proprietary Patchworks user guide):
+  - Accepted the intentional deletion of `reference/UserGuide.pdf`.
+  - Removed lingering repo-history references that pointed at that tracked PDF
+    directly; notes now refer generically to vendor Patchworks documentation
+    instead.
+  - Rationale: the Patchworks user guide is proprietary vendor documentation
+    and should not be redistributed from the public FEMIC repository.

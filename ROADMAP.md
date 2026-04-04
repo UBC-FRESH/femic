@@ -6325,7 +6325,7 @@ notes.
   managed total/species yield curves; validated via refreshed fixtures/tests
   and regenerated `output/patchworks_k3z_validated/forestmodel.xml`.
 - 2026-03-08: Audited Patchworks managed/unmanaged semantics against
-  `reference/UserGuide.pdf` and corrected FMG export assumptions:
+  vendor Patchworks documentation and corrected FMG export assumptions:
   fragments exporter now writes one stand-fragment row per block (`1 fragment = 1 block`)
   with binary IFM assignment (`managed`/`unmanaged`) using THLB signal precedence
   (`thlb` -> `thlb_fact` -> `thlb_area` -> `thlb_raw`), matching the simplified K3Z
@@ -12064,6 +12064,14 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Recorded the practical pattern surfaced by the developer's scrape:
     - rows listed with source `BCGW` generally produced useful catalogue hits;
     - rows not sourced from `BCGW` generally did not.
+- 2026-04-04 (Reference hygiene: proprietary Patchworks user guide removed):
+  - Confirmed the intentional removal of `reference/UserGuide.pdf` from the
+    tracked repo.
+  - Historical notes that previously named that file directly now refer
+    generically to vendor Patchworks documentation instead.
+  - Future rule remains unchanged:
+    do not republish proprietary Patchworks manuals or similar vendor
+    documentation in the public FEMIC repository.
 - 2026-04-04 (Issue `#98` docs refinement: richer user/agent examples for the
   BCDC resolver):
   - Extended the discovery docs so the first slice is easier to use without
