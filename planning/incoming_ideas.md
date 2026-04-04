@@ -80,3 +80,5 @@ Good queue hygiene
 [feature] Modify TISPY rpt input template to request 200 years of output instead of 120.
 
 [documentation] Keep `reference/29ts_dpkg_2024.pdf` under version control as a TSA29 refinement reference for later production-grade release work. Use it as a likely source when we revisit final-package polish, parameter provenance, and any remaining TSR-alignment questions for the TSA29 standalone instance.
+
+[feature] Explore CKAN as a potential framework for one or more future FRESH-lab-hosted open data portals. The immediate motivation is that FEMIC is starting to grow BC Data Catalogue / source-data-discovery capabilities, and CKAN may be a good fit for hosting discoverable, metadata-rich open-data portals and dataset registries under FRESH-lab control. When this idea is eventually promoted into a real issue, use the upstream CKAN project README and deployment/docs ecosystem as the starting technology reference point, and think explicitly about how a FRESH-hosted portal could interoperate with FEMIC instance metadata, `femic-public-data`, provenance manifests, and reproducible model-input publication workflows.

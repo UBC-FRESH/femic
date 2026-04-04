@@ -11034,3 +11034,10 @@
     - solve discovery/classification first;
     - defer worst-case ambiguous TSR parsing and full automation of every BCGW
       custom-download path to later follow-on work.
+- 2026-04-04 (Incoming-ideas note added: future CKAN portal exploration):
+  - Added a new intake note to `planning/incoming_ideas.md` to revisit CKAN as
+    a possible framework for one or more future FRESH-lab-hosted open-data
+    portals.
+  - Framed the idea explicitly as a later follow-on to FEMIC's growing
+    dataset-discovery and provenance/publication workflows rather than active
+    implementation work in the current branch.
