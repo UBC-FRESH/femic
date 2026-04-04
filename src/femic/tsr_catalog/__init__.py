@@ -43,6 +43,13 @@ from .overlay import (
     init_tsr_overlay,
     load_tsr_overlay,
 )
+from .report import (
+    TsrFactReportError,
+    TsrFactReportResult,
+    TsrFactReviewRow,
+    report_tsr_candidate_facts,
+    write_tsr_fact_report_csv,
+)
 
 __all__ = [
     "DEFAULT_TSR_LANDING_URL",
@@ -59,6 +66,9 @@ __all__ = [
     "TsrExtractError",
     "TsrExtractResult",
     "TsrExtractionFailure",
+    "TsrFactReportError",
+    "TsrFactReportResult",
+    "TsrFactReviewRow",
     "TsrFetchResult",
     "TsrInventoryDocument",
     "TsrIndexResult",
@@ -77,5 +87,7 @@ __all__ = [
     "init_tsr_overlay",
     "load_tsr_document_inventory",
     "load_tsr_overlay",
+    "report_tsr_candidate_facts",
+    "write_tsr_fact_report_csv",
     "write_tsr_index",
 ]

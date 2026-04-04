@@ -9,7 +9,9 @@ configurable corpus root with provenance manifests. The current extraction
 slice also derives reviewable candidate facts from cached TSR PDFs and writes a
 canonical ``metadata/tsr/tsa_candidate_facts.json`` artifact. The current
 overlay slice initializes reviewed/adopted per-instance TSR overlays under
-``config/tsr/overlay.yaml`` without auto-promoting unresolved candidate facts.
+``config/tsr/overlay.yaml`` without auto-promoting unresolved candidate facts,
+and the current reporting slice renders guided review tables over the canonical
+fact pool without forcing users to hand-scrub raw JSON.
 
 Use this page when you are debugging the TSR indexing logic itself rather than
 the higher-level CLI surface.
@@ -44,6 +46,7 @@ The common operator-facing entrypoint is:
    femic tsr index
    femic tsr fetch
    femic tsr extract
+   femic tsr facts-report --tsa 29 --fact-family source_layer_candidate
    femic tsr overlay-init --instance-root external/femic-tsa29-instance --tsa 29
    femic tsr overlay-report --instance-root external/femic-tsa29-instance
 
@@ -53,12 +56,14 @@ The matching Python entrypoints are:
 
    from pathlib import Path
    from femic.tsr_catalog import (
-       build_tsr_overlay_report,
-       extract_tsr_candidate_facts,
-       fetch_tsr_pdfs,
-       init_tsr_overlay,
-       index_tsr_tsa_surfaces,
-       write_tsr_index,
+      build_tsr_overlay_report,
+      extract_tsr_candidate_facts,
+      fetch_tsr_pdfs,
+      init_tsr_overlay,
+      index_tsr_tsa_surfaces,
+      report_tsr_candidate_facts,
+      write_tsr_fact_report_csv,
+      write_tsr_index,
    )
 
    result = index_tsr_tsa_surfaces()
@@ -72,6 +77,15 @@ The matching Python entrypoints are:
        documents_path=Path("metadata/tsr/tsa_documents.json"),
        corpus_root=Path.home() / ".femic" / "tsr" / "corpus",
        output_path=Path("metadata/tsr/tsa_candidate_facts.json"),
+   )
+   report = report_tsr_candidate_facts(
+       candidate_facts_path=Path("metadata/tsr/tsa_candidate_facts.json"),
+       tsa="29",
+       fact_families=("source_layer_candidate",),
+   )
+   write_tsr_fact_report_csv(
+       report,
+       path=Path("runtime/logs/tsa29_tsr_source_layers_review.csv"),
    )
    init_tsr_overlay(
        instance_root=Path("external/femic-tsa29-instance"),
@@ -100,6 +114,9 @@ Key Entry Surfaces
 - :func:`extract_tsr_candidate_facts`
   Parse cached TSR PDFs into reviewable candidate facts with page/snippet
   provenance for later human or agent adoption.
+- :func:`report_tsr_candidate_facts`
+  Shape canonical candidate facts into review-friendly rows with lightweight
+  quality heuristics for operator review.
 - :func:`init_tsr_overlay`
   Initialize the reviewed/adopted instance-local TSR overlay YAML without
   auto-adopting candidate facts.

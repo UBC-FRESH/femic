@@ -97,6 +97,99 @@ candidate facts are **not auto-adopted** into live instance truth, and the
 overlay is the only place where reviewed instance-local TSR interpretation
 should live.
 
+Worked Example: TSA29 Source Layers and THLB
+--------------------------------------------
+
+The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
+
+1. refresh the canonical TSR surfaces:
+
+   .. code-block:: bash
+
+      python -m femic tsr index
+      python -m femic tsr fetch --tsa 29
+      python -m femic tsr extract --tsa 29
+
+2. render a review CSV for source-layer candidates:
+
+   .. code-block:: bash
+
+      python -m femic tsr facts-report \
+        --tsa 29 \
+        --fact-family source_layer_candidate \
+        --output-csv runtime/logs/tsa29_tsr_source_layers_review.csv
+
+3. render a separate THLB review CSV:
+
+   .. code-block:: bash
+
+      python -m femic tsr facts-report \
+        --tsa 29 \
+        --fact-family thlb_reference \
+        --output-csv runtime/logs/tsa29_tsr_thlb_review.csv
+
+4. review the CSVs:
+
+   - reject rows marked ``likely_noise``;
+   - keep rows marked ``likely_useful``;
+   - inspect ``needs_review`` rows manually using the snippet, page number,
+     title, and provenance ID columns.
+   - copy the approved ``recommended_query`` values into
+     ``runtime/logs/tsa29_tsr_source_layers.txt`` so the next BCDC step uses a
+     clean query file instead of raw JSON.
+
+5. turn the approved source-layer queries into BCDC follow-on resolution:
+
+   .. code-block:: bash
+
+      python -m femic data bcdc-resolve \
+        --query-file runtime/logs/tsa29_tsr_source_layers.txt \
+        --summary-csv runtime/logs/tsa29_tsr_source_layers_summary.csv \
+        --manifest-path runtime/logs/tsa29_tsr_source_layers_manifest.json
+
+6. initialize or refresh the reviewed overlay:
+
+   .. code-block:: bash
+
+      python -m femic tsr overlay-init \
+        --instance-root external/femic-tsa29-instance \
+        --tsa 29 \
+        --overwrite
+
+7. manually copy only approved facts into:
+
+   - ``external/femic-tsa29-instance/config/tsr/overlay.yaml``
+
+The current intended human loop is:
+
+- review CSV
+- reject noise
+- keep good candidates
+- curate approved ``recommended_query`` values into a query file
+- resolve source layers through BCDC
+- adopt only reviewed facts into the overlay
+
+You should not need to hand-scrub ``metadata/tsr/tsa_candidate_facts.json`` for
+this workflow. The intended review surface is the CSV produced by
+``femic tsr facts-report``.
+
+Windows PowerShell Notes
+------------------------
+
+On Windows, prefer:
+
+- one command per line or a saved script file;
+- query files instead of giant interactive pastes; and
+- CSV outputs for review instead of trying to inspect raw JSON in the shell.
+
+If interactive PowerShell pastes keep breaking, the friendliest path is
+usually:
+
+1. run the ``femic tsr facts-report`` command once;
+2. open the review CSV in VS Code or Excel;
+3. curate approved layer names into a query file; and
+4. pass that query file to ``femic data bcdc-resolve``.
+
 Using Extracted Source Layers with BCDC Discovery
 -------------------------------------------------
 

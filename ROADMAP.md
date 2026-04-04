@@ -12482,3 +12482,61 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       `#106` are complete; and
     - treat future TSR work as new narrower follow-on issues such as
       auto-promotion helpers, richer search, or broader non-TSA coverage.
+- 2026-04-04 (Issue `#107` kickoff: guided TSR fact review CLI and TSA29
+  adoption examples):
+  - Governing issue:
+    - GitHub issue `#107`
+  - Active branch:
+    - `feature/issue-107-tsr-facts-report`
+  - Goal:
+    - add a friendlier last-mile path from `metadata/tsr/tsa_candidate_facts.json`
+      to reviewable, adoptable information without forcing users to hand-scrub
+      raw JSON or write ad hoc Python.
+  - Planned implementation:
+    - add `femic tsr facts-report`;
+    - support `--tsa`, `--fact-family`, and `--output-csv`;
+    - prioritize `source_layer_candidate` and `thlb_reference`;
+    - add lightweight review heuristics:
+      - `likely_useful`
+      - `needs_review`
+      - `likely_noise`
+    - extend the TSR workflow docs with a worked TSA29 netdown/source-layer +
+      THLB example that goes all the way to reviewed overlay-ready information.
+  - Detailed Next Steps:
+    - build the report layer as a read-only surface over the existing canonical
+      candidate-fact JSON rather than changing the extraction artifact format;
+    - shape the first review CSV around TSA29 netdown use so source-layer and
+      THLB review become the easiest end-to-end path;
+    - keep overlay adoption manual and explicit in this slice.
+- 2026-04-04 (Issue `#107` implemented: guided TSR fact review CLI and TSA29
+  review/adoption docs):
+  - Added `femic tsr facts-report` as a read-only guided review layer over
+    `metadata/tsr/tsa_candidate_facts.json`.
+  - First supported review families:
+    - `source_layer_candidate`
+    - `thlb_reference`
+  - Review output is CSV-first and adds lightweight heuristics:
+    - `likely_useful`
+    - `needs_review`
+    - `likely_noise`
+  - Extended the TSR workflow docs with a full TSA29 worked example that now
+    goes all the way through:
+    - `femic tsr facts-report`
+    - query-file curation via `recommended_query`
+    - `femic data bcdc-resolve`
+    - manual adoption into `config/tsr/overlay.yaml`
+  - Live TSA29 smoke:
+    - `femic tsr facts-report --tsa 29 --fact-family source_layer_candidate`
+      wrote `runtime/logs/tsa29_tsr_source_layers_review.csv` with `25`
+      review rows, all top-ranked as `likely_useful` in the bounded smoke;
+    - `femic tsr facts-report --tsa 29 --fact-family thlb_reference`
+      wrote `runtime/logs/tsa29_tsr_thlb_review.csv` with `25` review rows and
+      surfaced THLB-definition/context snippets without forcing raw-JSON
+      inspection.
+  - Validation completed:
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`

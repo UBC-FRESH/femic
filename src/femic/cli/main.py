@@ -137,6 +137,8 @@ from femic.tsr_catalog import (
     TsrCatalogError,
     TsrExtractError,
     TsrExtractResult,
+    TsrFactReportError,
+    TsrFactReportResult,
     TsrFetchResult,
     TsrIndexResult,
     TsrOverlayError,
@@ -148,6 +150,8 @@ from femic.tsr_catalog import (
     fetch_tsr_pdfs,
     index_tsr_tsa_surfaces,
     init_tsr_overlay,
+    report_tsr_candidate_facts,
+    write_tsr_fact_report_csv,
     write_tsr_index,
 )
 from femic.pipeline.io import (
@@ -420,6 +424,27 @@ TSR_MAX_DOCUMENTS_OPTION = typer.Option(
     "--max-documents",
     min=1,
     help="Optional cap for bounded TSR PDF fetch/cache runs and smoke tests.",
+    show_default=False,
+)
+TSR_FACT_FAMILY_OPTION = typer.Option(
+    ...,
+    "--fact-family",
+    help=(
+        "Repeatable TSR fact family filter. Supported values currently include "
+        "`source_layer_candidate` and `thlb_reference`."
+    ),
+)
+TSR_REPORT_CSV_OPTION = typer.Option(
+    None,
+    "--output-csv",
+    help="Optional review CSV output path for guided TSR fact reports.",
+    show_default=False,
+)
+TSR_FACT_LIMIT_OPTION = typer.Option(
+    None,
+    "--limit",
+    min=1,
+    help="Optional cap on review rows after quality-based sorting.",
     show_default=False,
 )
 
@@ -2035,6 +2060,19 @@ def _print_tsr_overlay_report(summary: TsrOverlayReport) -> None:
         console.print(f"adopted_{section}_count: {count}")
 
 
+def _print_tsr_fact_report_summary(result: TsrFactReportResult) -> None:
+    console.print(f"candidate_facts_path: {result.candidate_facts_path}")
+    console.print(f"tsa_id: {result.tsa_id}")
+    console.print(f"tsa_code: {result.tsa_code}")
+    console.print(f"tsa_name: {result.tsa_name}")
+    console.print("fact_families: " + ", ".join(result.selected_fact_families))
+    console.print(f"row_count: {len(result.rows)}")
+    for family, count in result.fact_family_counts().items():
+        console.print(f"{family}_count: {count}")
+    for quality, count in result.quality_counts().items():
+        console.print(f"{quality}_count: {count}")
+
+
 @app.callback()
 def main(
     version: bool = VERSION_OPTION,
@@ -2288,6 +2326,41 @@ def tsr_overlay_init(
         raise typer.Exit(code=1) from exc
 
     _print_tsr_overlay_init_summary(result)
+
+
+@tsr_app.command("facts-report")
+def tsr_facts_report(
+    tsa: str = typer.Option(..., "--tsa", help="TSA code, tsa_<code>, or TSA name."),
+    fact_family: list[str] = TSR_FACT_FAMILY_OPTION,
+    candidate_facts_path: Path | None = TSR_CANDIDATE_FACTS_INPUT_OPTION,
+    output_csv: Path | None = TSR_REPORT_CSV_OPTION,
+    limit: int | None = TSR_FACT_LIMIT_OPTION,
+) -> None:
+    """Render review-friendly TSR fact rows from the canonical candidate pool."""
+
+    source_root = _source_tree_root()
+    resolved_candidate_facts_path = _resolve_repo_output_path(
+        candidate_facts_path or Path("metadata/tsr/tsa_candidate_facts.json"),
+        source_root=source_root,
+    )
+    try:
+        result = report_tsr_candidate_facts(
+            candidate_facts_path=resolved_candidate_facts_path,
+            tsa=tsa,
+            fact_families=tuple(fact_family),
+            limit=limit,
+        )
+    except TsrFactReportError as exc:
+        console.print(f"[red]TSR fact-report error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_fact_report_summary(result)
+    if output_csv is not None:
+        resolved_output_csv = _resolve_repo_output_path(
+            output_csv, source_root=source_root
+        )
+        written = write_tsr_fact_report_csv(result, path=resolved_output_csv)
+        console.print(f"output_csv: {written}")
 
 
 @tsr_app.command("overlay-report")

@@ -4448,6 +4448,100 @@ def test_tsr_overlay_init_reports_errors(monkeypatch: pytest.MonkeyPatch) -> Non
     assert any("TSR overlay init error:" in msg for msg in messages)
 
 
+def test_tsr_facts_report_writes_review_csv(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    result = cli_main.TsrFactReportResult(
+        candidate_facts_path=repo_root
+        / "metadata"
+        / "tsr"
+        / "tsa_candidate_facts.json",
+        tsa_id="tsa_29",
+        tsa_code="29",
+        tsa_name="Williams Lake",
+        selected_fact_families=("source_layer_candidate",),
+        rows=(
+            tsr_catalog.TsrFactReviewRow(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+                fact_family="source_layer_candidate",
+                extracted_value="WHSE_FOREST_VEGETATION.F_OWN",
+                recommended_query="WHSE_FOREST_VEGETATION.F_OWN",
+                quality="likely_useful",
+                quality_reason="BCGW object-name style token",
+                snippet="BCGW source layer used for ownership netdown.",
+                page_number=12,
+                title="Williams Lake TSA Data Package",
+                cycle_label="2024 TSR",
+                cycle_year=2024,
+                provenance_id="tsa29-doc-12-source-1",
+                source_url="https://example.invalid/tsa29-data-package.pdf",
+            ),
+        ),
+    )
+    captured_kwargs: dict[str, object] = {}
+    written_paths: list[Path] = []
+
+    def _fake_report(**kwargs):
+        captured_kwargs.update(kwargs)
+        return result
+
+    def _fake_write(report_result, *, path):
+        assert report_result == result
+        written_paths.append(path)
+        return path
+
+    monkeypatch.setattr(cli_main, "report_tsr_candidate_facts", _fake_report)
+    monkeypatch.setattr(cli_main, "write_tsr_fact_report_csv", _fake_write)
+
+    cli_main.tsr_facts_report(
+        tsa="29",
+        fact_family=["source_layer_candidate"],
+        candidate_facts_path=None,
+        output_csv=Path("runtime/logs/tsa29_source_review.csv"),
+        limit=25,
+    )
+
+    assert (
+        captured_kwargs["candidate_facts_path"]
+        == repo_root / "metadata" / "tsr" / "tsa_candidate_facts.json"
+    )
+    assert captured_kwargs["tsa"] == "29"
+    assert captured_kwargs["fact_families"] == ("source_layer_candidate",)
+    assert captured_kwargs["limit"] == 25
+    assert written_paths == [repo_root / "runtime" / "logs" / "tsa29_source_review.csv"]
+    assert any("row_count: 1" in msg for msg in messages)
+    assert any("output_csv:" in msg for msg in messages)
+
+
+def test_tsr_facts_report_reports_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "report_tsr_candidate_facts",
+        lambda **_kwargs: (_ for _ in ()).throw(cli_main.TsrFactReportError("boom")),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.tsr_facts_report(
+            tsa="29",
+            fact_family=["source_layer_candidate"],
+            candidate_facts_path=None,
+            output_csv=None,
+            limit=None,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("TSR fact-report error:" in msg for msg in messages)
+
+
 def test_tsr_overlay_report_summarizes_adopted_state(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

@@ -382,6 +382,7 @@ Subcommands
 - ``index``: ``python -m femic tsr index [OPTIONS]``
 - ``fetch``: ``python -m femic tsr fetch [OPTIONS]``
 - ``extract``: ``python -m femic tsr extract [OPTIONS]``
+- ``facts-report``: ``python -m femic tsr facts-report [OPTIONS]``
 - ``overlay-init``: ``python -m femic tsr overlay-init [OPTIONS]``
 - ``overlay-report``: ``python -m femic tsr overlay-report [OPTIONS]``
 
@@ -437,6 +438,30 @@ The extraction slice is intentionally review-oriented. It produces candidate
 facts for source-layer tokens, AU snippets, THLB references, and TIPSY
 assumption snippets with page/snippet provenance, but it does not adopt those
 facts into live instance overlays yet.
+
+``tsr facts-report`` options
+
+- ``--tsa TEXT`` (required TSA code, ``tsa_<code>``, or TSA name)
+- ``--fact-family TEXT`` (required, repeatable; currently supports at least
+  ``source_layer_candidate`` and ``thlb_reference``)
+- ``--fact-family [source_layer_candidate|thlb_reference]`` is the most useful
+  current review slice for TSR netdown/THLB work
+- ``--candidate-facts-path PATH`` (optional; defaults to
+  ``metadata/tsr/tsa_candidate_facts.json``)
+- ``--output-csv PATH`` (optional review CSV output path)
+- ``--limit INTEGER`` (optional cap on sorted review rows)
+
+``tsr facts-report`` renders a review-friendly table over the canonical TSR
+candidate-fact pool. It does not mutate the canonical fact artifact or the
+instance-local overlay. The first guided-review slice:
+
+- filters by TSA and fact family;
+- adds lightweight quality labels:
+  - ``likely_useful``
+  - ``needs_review``
+  - ``likely_noise``;
+- preserves provenance and source URLs; and
+- can write a CSV that is easier to sort/filter than the raw JSON fact pool.
 
 ``tsr overlay-init`` options
 

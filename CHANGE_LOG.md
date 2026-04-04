@@ -11356,3 +11356,37 @@
     - `python -m mypy src`
     - `python -m pytest -q`
     - `python -m pre_commit run --all-files`
+- 2026-04-04 (Issue `#107` kickoff: guided TSR fact review CLI):
+  - Opened follow-on issue `#107` to add a friendlier last-mile path from
+    canonical TSR candidate facts into reviewable, adoptable overlay-ready
+    information.
+  - Scope for this slice:
+    - add `femic tsr facts-report`;
+    - support review-friendly CSV output for at least
+      `source_layer_candidate` and `thlb_reference`;
+    - add TSA29 worked-example docs that go from TSR extraction to reviewed
+      overlay-ready information and BCDC follow-on resolution.
+- 2026-04-04 (Issue `#107` implemented: guided TSR fact review CLI):
+  - Added `femic tsr facts-report` as a read-only report layer over
+    `metadata/tsr/tsa_candidate_facts.json`, with CSV-first review output for
+    `source_layer_candidate` and `thlb_reference`.
+  - Added lightweight review heuristics so users can sort/filter rows as
+    `likely_useful`, `needs_review`, or `likely_noise` instead of reading raw
+    JSON directly.
+  - Extended `docs/guides/tsr-intelligence-workflow.rst` with a worked TSA29
+    example that explicitly covers:
+    - generating source-layer and THLB review CSVs;
+    - curating approved `recommended_query` values into a query file;
+    - resolving those queries through `femic data bcdc-resolve`; and
+    - manually adopting approved facts into
+      `external/femic-tsa29-instance/config/tsr/overlay.yaml`.
+  - Live TSA29 smoke succeeded for both intended review families:
+    - source layers: `runtime/logs/tsa29_tsr_source_layers_review.csv`
+    - THLB references: `runtime/logs/tsa29_tsr_thlb_review.csv`
+  - Validation passed:
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`
