@@ -395,9 +395,14 @@ Subcommands
 - ``--cc-max-age INTEGER`` (default: ``1000``)
 - ``--cc-transition-ifm TEXT`` (default: unset; no IFM transition assign)
 - ``--fragments-crs TEXT`` (default: ``EPSG:3005``)
+- ``--ifm-mode TEXT`` (default: ``proportional``; ``proportional`` keeps
+  continuous THLB share via ``RETENTION``, ``legacy_binary`` preserves the
+  older threshold/share-based stand snap)
 - ``--ifm-source-col TEXT`` (optional; explicit checkpoint THLB signal column)
-- ``--ifm-threshold FLOAT`` (optional; managed when source value > threshold)
-- ``--ifm-target-managed-share FLOAT`` (optional; top-N managed by source value)
+- ``--ifm-threshold FLOAT`` (optional; legacy-binary mode only; managed when
+  source value > threshold)
+- ``--ifm-target-managed-share FLOAT`` (optional; legacy-binary mode only;
+  top-N managed by source value)
 - ``--seral-stage-config PATH`` (optional; YAML per-AU seral-stage boundaries)
 - ``--instance-root PATH``
 

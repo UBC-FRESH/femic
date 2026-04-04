@@ -29,6 +29,18 @@ Core Processing Responsibilities
 - Compile THLB signals for managed/unmanaged eligibility semantics.
 - Persist intermediate checkpoints for restartable execution.
 
+THLB interpretation note
+------------------------
+
+- FEMIC still computes stand-level THLB signal from the mean raster value over
+  each stand footprint.
+- The older binary/calibrated THLB snap is retained as a legacy path, but
+  Patchworks-facing export now defaults to a proportional interpretation where
+  the continuous THLB share is preserved and the complementary unmanaged share
+  is carried through the fragments ``RETENTION`` field.
+- THLB raster nodata is treated as ``0`` in the raster-mean seam unless a
+  caller explicitly overrides the fallback.
+
 Checkpoint Semantics
 --------------------
 

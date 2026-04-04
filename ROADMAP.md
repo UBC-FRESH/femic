@@ -12184,16 +12184,44 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - keep ws3 follow-on work out of this first slice, but name/configure the
       mode so a ws3-equivalent implementation can mirror it later.
   - Detailed Next Steps:
-    - introduce an explicit THLB processing mode/config surface rather than
-      hiding the new behavior behind existing threshold options;
-    - thread the new mode through the legacy Stage 00 orchestration and the
-      modern Patchworks export seams cleanly;
-    - decide whether proportional mode is best represented by duplicating
-      fragment rows into managed/unmanaged shares or by another equally clear
-      fragments contract that preserves area accounting;
-    - add targeted tests covering:
-      - raster nodata -> `0` behavior;
-      - legacy binary mode preservation; and
-      - proportional managed/unmanaged area accounting in Patchworks-facing
-        fragments output.
+    - implement an explicit THLB/IFM mode surface in Patchworks export;
+    - preserve the older threshold/share path under an explicit legacy mode;
+    - use the existing ``RETENTION`` splitter, rather than overlapping fragment
+      duplication, to carry proportional unmanaged area in the new default
+      mode; and
+    - document and test the 0..1 versus 0..100 THLB signal normalization seam.
+- 2026-04-04 (Issue `#100` implemented: proportional THLB default for
+  Patchworks export, with legacy binary mode retained):
+  - What shipped:
+    - added explicit Patchworks export mode selection via ``--ifm-mode``;
+    - made ``proportional`` the default mode;
+    - retained the older threshold/share-based stand snap as
+      ``legacy_binary``;
+    - proportional mode now interprets continuous THLB signal as managed share
+      and carries the complementary unmanaged share through the existing
+      fragments ``RETENTION`` mechanism instead of duplicating overlapping
+      geometries;
+    - percent-style THLB signals greater than ``1.0`` are normalized from
+      ``0..100`` to ``0..1`` in the proportional path;
+    - THLB raster nodata continues to fall back to ``0`` in the raster-mean
+      seam;
+    - updated operator/reference docs so the new default and the legacy escape
+      hatch are discoverable.
+  - Validation:
+    - `python -m pytest tests/test_fmg_patchworks.py -k "fragments_geodataframe or export_patchworks_package" -q`
+    - `python -m pytest tests/test_cli_main.py -k "export_patchworks or export_dual" -q`
+    - `python -m pytest tests/test_docs_contract.py -q`
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`
+  - Detailed Next Steps:
+    - review whether the default proportional Patchworks behavior should also
+      drive a future ws3-side equivalent mode rather than leaving ws3 on a
+      separate semantic island;
+    - if later TSA-specific THLB netdown refinement is needed, build it on top
+      of the preserved continuous THLB signal rather than re-entangling the
+      default path with binary calibration logic.
 

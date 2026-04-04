@@ -11159,3 +11159,27 @@
     mode, but move toward a new default proportional THLB mode that treats
     raster nodata as `0` and derives managed/unmanaged area shares from the
     continuous stand-level THLB signal.
+- 2026-04-04 (Issue `#100` implemented: proportional THLB default for Patchworks export):
+  - Added explicit `--ifm-mode` control to Patchworks export and made
+    `proportional` the new default.
+  - Preserved the older threshold/share-based stand snap as
+    `legacy_binary`.
+  - Proportional mode now:
+    - keeps continuous THLB signal instead of snapping immediately to `{0,1}`;
+    - normalizes percent-style THLB signals greater than `1.0` from `0..100`
+      into `0..1`; and
+    - carries the complementary unmanaged share through the existing
+      `RETENTION` mechanism rather than duplicating overlapping fragment
+      geometries.
+  - Updated Patchworks export docs and Stage 00 guidance so the new default and
+    the legacy escape hatch are explicit.
+  - Validation completed:
+    - `python -m pytest tests/test_fmg_patchworks.py -k "fragments_geodataframe or export_patchworks_package" -q`
+    - `python -m pytest tests/test_cli_main.py -k "export_patchworks or export_dual" -q`
+    - `python -m pytest tests/test_docs_contract.py -q`
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`

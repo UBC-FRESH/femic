@@ -65,6 +65,7 @@ from femic.fmg import (
     DEFAULT_CC_TRANSITION_IFM,
     DEFAULT_FRAGMENTS_CRS,
     DEFAULT_HORIZON_YEARS,
+    DEFAULT_IFM_MODE,
     DEFAULT_IFM_SOURCE_COL,
     DEFAULT_IFM_TARGET_MANAGED_SHARE,
     DEFAULT_IFM_THRESHOLD,
@@ -637,6 +638,15 @@ EXPORT_FRAGMENTS_CRS_OPTION = typer.Option(
     DEFAULT_FRAGMENTS_CRS,
     "--fragments-crs",
     help="CRS assigned to exported fragments shapefile.",
+)
+EXPORT_IFM_MODE_OPTION = typer.Option(
+    DEFAULT_IFM_MODE,
+    "--ifm-mode",
+    help=(
+        "Managed/unmanaged assignment mode: "
+        "`proportional` keeps continuous THLB share via RETENTION; "
+        "`legacy_binary` preserves the older threshold/share-based stand snap."
+    ),
 )
 EXPORT_IFM_SOURCE_COL_OPTION = typer.Option(
     DEFAULT_IFM_SOURCE_COL,
@@ -4163,6 +4173,7 @@ def export_patchworks(
     cc_max_age: int = EXPORT_CC_MAX_AGE_OPTION,
     cc_transition_ifm: str | None = EXPORT_CC_TRANSITION_IFM_OPTION,
     fragments_crs: str = EXPORT_FRAGMENTS_CRS_OPTION,
+    ifm_mode: str = EXPORT_IFM_MODE_OPTION,
     ifm_source_col: str | None = EXPORT_IFM_SOURCE_COL_OPTION,
     ifm_threshold: float | None = EXPORT_IFM_THRESHOLD_OPTION,
     ifm_target_managed_share: float | None = (EXPORT_IFM_TARGET_MANAGED_SHARE_OPTION),
@@ -4207,6 +4218,7 @@ def export_patchworks(
             cc_max_age=cc_max_age,
             cc_transition_ifm=cc_transition_ifm,
             fragments_crs=fragments_crs,
+            ifm_mode=ifm_mode,
             ifm_source_col=ifm_source_col,
             ifm_threshold=ifm_threshold,
             ifm_target_managed_share=ifm_target_managed_share,
@@ -4338,6 +4350,7 @@ def export_dual(
     cc_max_age: int = EXPORT_CC_MAX_AGE_OPTION,
     cc_transition_ifm: str | None = EXPORT_CC_TRANSITION_IFM_OPTION,
     fragments_crs: str = EXPORT_FRAGMENTS_CRS_OPTION,
+    ifm_mode: str = EXPORT_IFM_MODE_OPTION,
     ifm_source_col: str | None = EXPORT_IFM_SOURCE_COL_OPTION,
     ifm_threshold: float | None = EXPORT_IFM_THRESHOLD_OPTION,
     ifm_target_managed_share: float | None = (EXPORT_IFM_TARGET_MANAGED_SHARE_OPTION),
@@ -4411,6 +4424,7 @@ def export_dual(
             cc_max_age=cc_max_age,
             cc_transition_ifm=cc_transition_ifm,
             fragments_crs=fragments_crs,
+            ifm_mode=ifm_mode,
             ifm_source_col=ifm_source_col,
             ifm_threshold=ifm_threshold,
             ifm_target_managed_share=ifm_target_managed_share,

@@ -301,6 +301,7 @@ def test_cli_reference_mentions_current_high_value_options() -> None:
                 "--bundle-dir",
                 "--checkpoint",
                 "--cc-transition-ifm",
+                "--ifm-mode",
                 "--ifm-source-col",
                 "--ifm-threshold",
                 "--ifm-target-managed-share",

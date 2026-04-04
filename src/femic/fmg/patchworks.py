@@ -41,6 +41,7 @@ DEFAULT_CC_MIN_AGE = 0
 DEFAULT_CC_MAX_AGE = 1000
 DEFAULT_CC_TRANSITION_IFM: str | None = None
 DEFAULT_FRAGMENTS_CRS = "EPSG:3005"
+DEFAULT_IFM_MODE = "proportional"
 DEFAULT_IFM_SOURCE_COL: str | None = None
 DEFAULT_IFM_THRESHOLD: float | None = None
 DEFAULT_IFM_TARGET_MANAGED_SHARE: float | None = None
@@ -76,6 +77,7 @@ _BTC_INDICATOR_BANK_COMPILE_RECIPES_PACKAGE = "femic.resources.patchworks"
 _BTC_INDICATOR_BANK_COMPILE_RECIPES_RESOURCE = "btc_indicator_bank_compile_recipes.yaml"
 _LOG_GRADE_PRICE_MATRICES_RESOURCE = "log_grade_price_matrices.yaml"
 VALID_IFM_VALUES = {"managed", "unmanaged"}
+VALID_IFM_MODES = {"legacy_binary", "proportional"}
 VALID_ORIGIN_VALUES = {"natural", "planted"}
 VALID_SILV_STATE_VALUES = {
     "baseline",
@@ -105,6 +107,7 @@ REQUIRED_FRAGMENT_COLUMNS = {
     "geometry",
 }
 IFM_SIGNAL_PRIORITY = ("thlb", "thlb_fact", "thlb_area", "thlb_raw")
+IFM_PROPORTIONAL_SIGNAL_PRIORITY = ("thlb_fact", "thlb_raw", "thlb_area", "thlb")
 SERAL_STAGE_ORDER = (
     "regenerating",
     "young",
@@ -4620,6 +4623,7 @@ def build_fragments_geodataframe(
     au_table: pd.DataFrame,
     tsa_list: Iterable[str],
     fragments_crs: str = DEFAULT_FRAGMENTS_CRS,
+    ifm_mode: str = DEFAULT_IFM_MODE,
     ifm_source_col: str | None = DEFAULT_IFM_SOURCE_COL,
     ifm_threshold: float | None = DEFAULT_IFM_THRESHOLD,
     ifm_target_managed_share: float | None = DEFAULT_IFM_TARGET_MANAGED_SHARE,
@@ -4666,13 +4670,6 @@ def build_fragments_geodataframe(
         pd.to_numeric(total_area_ha, errors="coerce").fillna(0.0).clip(lower=0.0)
     )
 
-    managed_flag = _resolve_managed_flag(
-        scoped=scoped,
-        ifm_source_col=ifm_source_col,
-        ifm_threshold=ifm_threshold,
-        ifm_target_managed_share=ifm_target_managed_share,
-    )
-
     age = pd.to_numeric(scoped["PROJ_AGE_1"], errors="coerce").fillna(0).astype(int)
     fragment_ids = np.arange(1, len(scoped) + 1, dtype=int)
     au_values = scoped["au"].astype(int)
@@ -4683,6 +4680,15 @@ def build_fragments_geodataframe(
     retention_values = np.full(len(scoped), DEFAULT_RETENTION_VALUE, dtype=float)
     for au_id, factor in retention_overrides.items():
         retention_values[au_values == int(au_id)] = float(factor)
+    ifm_values, final_retention_values = _resolve_ifm_and_retention(
+        scoped=scoped,
+        total_area_ha=total_area_ha,
+        ifm_mode=ifm_mode,
+        ifm_source_col=ifm_source_col,
+        ifm_threshold=ifm_threshold,
+        ifm_target_managed_share=ifm_target_managed_share,
+        retention_values=retention_values,
+    )
     out = pd.DataFrame(
         {
             FRAGMENT_ID_COLUMN: fragment_ids,
@@ -4690,14 +4696,14 @@ def build_fragments_geodataframe(
             "AREA_HA": total_area_ha.astype(float),
             "F_AGE": age,
             "AU": au_values,
-            "IFM": np.where(managed_flag, "managed", "unmanaged"),
+            "IFM": ifm_values.to_numpy(),
             "ORIGIN": np.where(age <= ORIGIN_PLANTED_MAX_AGE, "planted", "natural"),
             "SILV_STATE": np.where(
                 age <= ORIGIN_PLANTED_MAX_AGE,
                 DEFAULT_SILV_STATE_PLANTED,
                 DEFAULT_SILV_STATE_NATURAL,
             ),
-            "RETENTION": retention_values,
+            "RETENTION": final_retention_values,
             "TSA": scoped["tsa_code"].astype(str),
             "geometry": scoped["geometry"],
         }
@@ -4719,8 +4725,9 @@ def write_fragments_shapefile(*, fragments_gdf: Any, path: Path) -> None:
 
 
 def _resolve_ifm_signal_col(
-    *, scoped: pd.DataFrame, ifm_source_col: str | None
+    *, scoped: pd.DataFrame, ifm_source_col: str | None, ifm_mode: str
 ) -> str | None:
+    normalized_mode = str(ifm_mode).strip().lower()
     if ifm_source_col is not None and ifm_source_col.strip():
         candidate = ifm_source_col.strip()
         if candidate not in scoped.columns:
@@ -4728,10 +4735,38 @@ def _resolve_ifm_signal_col(
                 f"ifm_source_col {candidate!r} was requested but not found in checkpoint"
             )
         return candidate
-    for candidate in IFM_SIGNAL_PRIORITY:
+    if normalized_mode == "legacy_binary":
+        candidates = IFM_SIGNAL_PRIORITY
+    elif normalized_mode == "proportional":
+        candidates = IFM_PROPORTIONAL_SIGNAL_PRIORITY
+    else:
+        raise ValueError(
+            f"Unsupported ifm_mode {ifm_mode!r}; expected one of "
+            f"{sorted(VALID_IFM_MODES)}"
+        )
+    for candidate in candidates:
         if candidate in scoped.columns:
             return candidate
     return None
+
+
+def _resolve_ifm_managed_share(
+    *,
+    scoped: pd.DataFrame,
+    signal_col: str | None,
+    total_area_ha: pd.Series,
+) -> pd.Series:
+    if signal_col is None:
+        return pd.Series(1.0, index=scoped.index, dtype=float)
+
+    signal = pd.to_numeric(scoped[signal_col], errors="coerce").fillna(0.0)
+    if signal_col == "thlb_area":
+        denominator = pd.to_numeric(total_area_ha, errors="coerce").replace(0.0, np.nan)
+        managed_share = signal.div(denominator).fillna(0.0)
+    else:
+        max_signal = float(signal.max()) if not signal.empty else 0.0
+        managed_share = signal / 100.0 if max_signal > 1.0 else signal
+    return managed_share.clip(lower=0.0, upper=1.0)
 
 
 def _resolve_managed_flag(
@@ -4745,7 +4780,11 @@ def _resolve_managed_flag(
         raise ValueError(
             "ifm_threshold and ifm_target_managed_share are mutually exclusive"
         )
-    signal_col = _resolve_ifm_signal_col(scoped=scoped, ifm_source_col=ifm_source_col)
+    signal_col = _resolve_ifm_signal_col(
+        scoped=scoped,
+        ifm_source_col=ifm_source_col,
+        ifm_mode="legacy_binary",
+    )
     if signal_col is None:
         # If no THLB signal exists, default to fully managed.
         return pd.Series(True, index=scoped.index)
@@ -4764,6 +4803,76 @@ def _resolve_managed_flag(
 
     threshold = float(ifm_threshold) if ifm_threshold is not None else 0.0
     return signal > threshold
+
+
+def _resolve_ifm_and_retention(
+    *,
+    scoped: pd.DataFrame,
+    total_area_ha: pd.Series,
+    ifm_mode: str,
+    ifm_source_col: str | None,
+    ifm_threshold: float | None,
+    ifm_target_managed_share: float | None,
+    retention_values: np.ndarray,
+) -> tuple[pd.Series, np.ndarray]:
+    normalized_mode = str(ifm_mode).strip().lower()
+    if normalized_mode not in VALID_IFM_MODES:
+        raise ValueError(
+            f"Unsupported ifm_mode {ifm_mode!r}; expected one of "
+            f"{sorted(VALID_IFM_MODES)}"
+        )
+
+    if normalized_mode == "legacy_binary":
+        managed_flag = _resolve_managed_flag(
+            scoped=scoped,
+            ifm_source_col=ifm_source_col,
+            ifm_threshold=ifm_threshold,
+            ifm_target_managed_share=ifm_target_managed_share,
+        )
+        return (
+            pd.Series(
+                np.where(managed_flag.to_numpy(dtype=bool), "managed", "unmanaged"),
+                index=scoped.index,
+            ),
+            retention_values,
+        )
+
+    if ifm_threshold is not None or ifm_target_managed_share is not None:
+        raise ValueError(
+            "ifm_threshold and ifm_target_managed_share are only supported when "
+            "ifm_mode='legacy_binary'"
+        )
+
+    signal_col = _resolve_ifm_signal_col(
+        scoped=scoped,
+        ifm_source_col=ifm_source_col,
+        ifm_mode=normalized_mode,
+    )
+    managed_share = _resolve_ifm_managed_share(
+        scoped=scoped,
+        signal_col=signal_col,
+        total_area_ha=total_area_ha,
+    )
+    retention_overlay = np.clip(
+        pd.to_numeric(pd.Series(retention_values), errors="coerce")
+        .fillna(0.0)
+        .to_numpy(dtype=float),
+        0.0,
+        1.0,
+    )
+    final_managed_share = (
+        managed_share.to_numpy(dtype=float) * (1.0 - retention_overlay)
+    ).clip(0.0, 1.0)
+    ifm_values = pd.Series(
+        np.where(final_managed_share > 0.0, "managed", "unmanaged"),
+        index=scoped.index,
+    )
+    final_retention = np.where(
+        final_managed_share > 0.0,
+        1.0 - final_managed_share,
+        0.0,
+    ).astype(float)
+    return ifm_values, final_retention
 
 
 def validate_fragments_geodataframe(*, fragments_gdf: Any) -> None:
@@ -4860,6 +4969,7 @@ def export_patchworks_package(
     cc_max_age: int = DEFAULT_CC_MAX_AGE,
     cc_transition_ifm: str | None = DEFAULT_CC_TRANSITION_IFM,
     fragments_crs: str = DEFAULT_FRAGMENTS_CRS,
+    ifm_mode: str = DEFAULT_IFM_MODE,
     ifm_source_col: str | None = DEFAULT_IFM_SOURCE_COL,
     ifm_threshold: float | None = DEFAULT_IFM_THRESHOLD,
     ifm_target_managed_share: float | None = DEFAULT_IFM_TARGET_MANAGED_SHARE,
@@ -4901,6 +5011,7 @@ def export_patchworks_package(
         au_table=au_table,
         tsa_list=normalized_tsa,
         fragments_crs=fragments_crs,
+        ifm_mode=ifm_mode,
         ifm_source_col=ifm_source_col,
         ifm_threshold=ifm_threshold,
         ifm_target_managed_share=ifm_target_managed_share,

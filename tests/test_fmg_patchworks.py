@@ -3414,7 +3414,7 @@ def test_build_fragments_geodataframe_emits_one_row_per_stand_fragment(
                 "au": 985501000,
                 "PROJ_AGE_1": 80,
                 "FEATURE_AREA_SQM": 100000.0,  # 10 ha
-                "thlb_area": 4.0,  # any positive THLB signal => managed fragment
+                "thlb_area": 4.0,  # 4 ha of 10 ha remain managed in proportional mode
                 "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
             }
         ]
@@ -3435,7 +3435,7 @@ def test_build_fragments_geodataframe_emits_one_row_per_stand_fragment(
     assert gdf.loc[0, "IFM"] == "managed"
     assert gdf.loc[0, "ORIGIN"] == "natural"
     assert gdf.loc[0, "SILV_STATE"] == "baseline"
-    assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.0)
+    assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.6)
     assert float(gdf.loc[0, "AREA_HA"]) == pytest.approx(10.0)
 
     validate_fragments_geodataframe(fragments_gdf=gdf)
@@ -3473,7 +3473,7 @@ def test_build_fragments_geodataframe_marks_age_60_as_planted(
     assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.0)
 
 
-def test_build_fragments_geodataframe_interprets_thlb_raw_as_binary_signal(
+def test_build_fragments_geodataframe_defaults_to_proportional_thlb_split(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     checkpoint_path = tmp_path / "checkpoint7.feather"
@@ -3485,7 +3485,7 @@ def test_build_fragments_geodataframe_interprets_thlb_raw_as_binary_signal(
                 "au": 985501000,
                 "PROJ_AGE_1": 80,
                 "FEATURE_AREA_SQM": 100000.0,  # 10 ha
-                "thlb_raw": 0.0,  # no THLB signal => unmanaged fragment
+                "thlb_raw": 0.25,  # 25% managed share
                 "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
             }
         ]
@@ -3501,10 +3501,10 @@ def test_build_fragments_geodataframe_interprets_thlb_raw_as_binary_signal(
     )
 
     assert gdf.shape[0] == 1
-    assert gdf.loc[0, "IFM"] == "unmanaged"
+    assert gdf.loc[0, "IFM"] == "managed"
     assert gdf.loc[0, "ORIGIN"] == "natural"
     assert gdf.loc[0, "SILV_STATE"] == "baseline"
-    assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.0)
+    assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.75)
     assert float(gdf.loc[0, "AREA_HA"]) == pytest.approx(10.0)
 
 
@@ -3541,6 +3541,7 @@ def test_build_fragments_geodataframe_allows_ifm_threshold_override(
         checkpoint_path=checkpoint_path,
         au_table=au_table,
         tsa_list=["k3z"],
+        ifm_mode="legacy_binary",
         ifm_source_col="thlb_raw",
         ifm_threshold=0.2,
     )
@@ -3583,6 +3584,7 @@ def test_build_fragments_geodataframe_allows_ifm_target_managed_share(
         checkpoint_path=checkpoint_path,
         au_table=au_table,
         tsa_list=["k3z"],
+        ifm_mode="legacy_binary",
         ifm_source_col="thlb_raw",
         ifm_target_managed_share=0.8,
     )
@@ -3637,10 +3639,44 @@ def test_build_fragments_geodataframe_applies_full_retention_by_stratum_code(
         },
     )
 
-    retained = gdf.loc[gdf["AU"] == 985501006, "RETENTION"].iloc[0]
+    retained_row = gdf.loc[gdf["AU"] == 985501006].iloc[0]
     baseline = gdf.loc[gdf["AU"] == 985501000, "RETENTION"].iloc[0]
-    assert float(retained) == pytest.approx(1.0)
-    assert float(baseline) == pytest.approx(0.0)
+    assert retained_row["IFM"] == "unmanaged"
+    assert float(retained_row["RETENTION"]) == pytest.approx(0.0)
+    assert float(baseline) == pytest.approx(0.6)
+
+
+def test_build_fragments_geodataframe_normalizes_percent_style_thlb_raw(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    au_table = pd.DataFrame([{"au_id": 985501000}])
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "29",
+                "au": 985501000,
+                "PROJ_AGE_1": 80,
+                "FEATURE_AREA_SQM": 100000.0,
+                "thlb_raw": 85.0,
+                "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+            }
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    gdf = build_fragments_geodataframe(
+        checkpoint_path=checkpoint_path,
+        au_table=au_table,
+        tsa_list=["29"],
+        ifm_source_col="thlb_raw",
+    )
+
+    assert gdf.shape[0] == 1
+    assert gdf.loc[0, "IFM"] == "managed"
+    assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.15)
 
 
 def test_build_fragments_geodataframe_rejects_conflicting_ifm_options(
@@ -3669,9 +3705,44 @@ def test_build_fragments_geodataframe_rejects_conflicting_ifm_options(
             checkpoint_path=checkpoint_path,
             au_table=au_table,
             tsa_list=["k3z"],
+            ifm_mode="legacy_binary",
             ifm_source_col="thlb_raw",
             ifm_threshold=0.2,
             ifm_target_managed_share=0.8,
+        )
+
+
+def test_build_fragments_geodataframe_rejects_threshold_in_proportional_mode(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    au_table = pd.DataFrame([{"au_id": 985501000}])
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "k3z",
+                "au": 985501000,
+                "PROJ_AGE_1": 80,
+                "FEATURE_AREA_SQM": 100000.0,
+                "thlb_raw": 0.8,
+                "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+            }
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    with pytest.raises(
+        ValueError, match="only supported when ifm_mode='legacy_binary'"
+    ):
+        build_fragments_geodataframe(
+            checkpoint_path=checkpoint_path,
+            au_table=au_table,
+            tsa_list=["k3z"],
+            ifm_mode="proportional",
+            ifm_source_col="thlb_raw",
+            ifm_threshold=0.2,
         )
 
 

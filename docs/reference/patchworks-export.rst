@@ -177,18 +177,32 @@ The exporter validates these required fields before writing:
 
 Managed/unmanaged assignment:
 
-- Each fragment row is assigned a single IFM value:
-  ``managed`` or ``unmanaged``.
-- Priority/order for IFM assignment:
+- Exporter now supports two managed/unmanaged assignment modes:
+
+  - ``proportional`` (default):
+    interprets the THLB signal as a continuous managed-area share and carries
+    the complementary unmanaged share through ``RETENTION``;
+  - ``legacy_binary``:
+    preserves the older threshold/share-based stand snap.
+- In ``proportional`` mode, exporter prefers continuous THLB sources in this
+  order:
+  ``thlb_fact``, then ``thlb_raw``, then ``thlb_area``, then ``thlb``.
+- In ``legacy_binary`` mode, exporter preserves the historical priority order:
   ``thlb`` (0/1), then ``thlb_fact`` (>0), then ``thlb_area`` (>0), then
   ``thlb_raw`` (>0).
 - If no THLB signal is present, exporter defaults to ``managed``.
+- In proportional mode, percent-style THLB signals greater than ``1.0`` are
+  interpreted as ``0..100`` percentages and normalized to ``0..1``.
 - You can override the source column with ``--ifm-source-col``.
+- ``--ifm-mode proportional`` is now the default and keeps continuous THLB
+  share rather than snapping stands immediately to ``{0,1}``.
 - ``--ifm-threshold <value>`` marks stands as managed when source value exceeds
-  the threshold.
-- ``--ifm-target-managed-share <share>`` marks top-N stands as managed to hit the
-  requested stand-count share.
-- ``--ifm-threshold`` and ``--ifm-target-managed-share`` are mutually exclusive.
+  the threshold in ``legacy_binary`` mode.
+- ``--ifm-target-managed-share <share>`` marks top-N stands as managed to hit
+  the requested stand-count share in ``legacy_binary`` mode.
+- ``--ifm-threshold`` and ``--ifm-target-managed-share`` are mutually
+  exclusive, and both are only valid when ``--ifm-mode legacy_binary`` is in
+  effect.
 
 The fragments dataset must also carry a CRS.
 
@@ -209,7 +223,8 @@ Useful overrides:
 - ``--output-dir``: export destination
 - ``--start-year``, ``--horizon-years``, ``--cc-min-age``, ``--cc-max-age``,
   ``--cc-transition-ifm``, ``--fragments-crs``, ``--seral-stage-config``
-- ``--ifm-source-col``, ``--ifm-threshold``, ``--ifm-target-managed-share``
+- ``--ifm-mode``, ``--ifm-source-col``, ``--ifm-threshold``,
+  ``--ifm-target-managed-share``
 
 Transition note:
 

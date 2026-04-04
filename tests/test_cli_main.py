@@ -983,6 +983,7 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
         cc_max_age,
         cc_transition_ifm,
         fragments_crs,
+        ifm_mode,
         ifm_source_col,
         ifm_threshold,
         ifm_target_managed_share,
@@ -1001,6 +1002,7 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
                 "cc_max_age": cc_max_age,
                 "cc_transition_ifm": cc_transition_ifm,
                 "fragments_crs": fragments_crs,
+                "ifm_mode": ifm_mode,
                 "ifm_source_col": ifm_source_col,
                 "ifm_threshold": ifm_threshold,
                 "ifm_target_managed_share": ifm_target_managed_share,
@@ -1032,6 +1034,7 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
         cc_max_age=500,
         cc_transition_ifm="managed",
         fragments_crs="EPSG:3005",
+        ifm_mode="legacy_binary",
         ifm_source_col="thlb_raw",
         ifm_threshold=0.2,
         ifm_target_managed_share=None,
@@ -1042,6 +1045,7 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
     assert called["tsa_list"] == ["k3z"]
     assert called["cc_max_age"] == 500
     assert called["cc_transition_ifm"] == "managed"
+    assert called["ifm_mode"] == "legacy_binary"
     assert called["ifm_source_col"] == "thlb_raw"
     assert called["ifm_threshold"] == pytest.approx(0.2)
     assert (
@@ -3679,6 +3683,7 @@ def test_export_dual_runs_patchworks_and_woodstock(
         cc_max_age=1000,
         cc_transition_ifm=None,
         fragments_crs="EPSG:3005",
+        ifm_mode="proportional",
         ifm_source_col=None,
         ifm_threshold=None,
         ifm_target_managed_share=None,
@@ -4015,10 +4020,7 @@ def test_data_bcdc_resolve_query_file_ignores_blank_lines_and_comments(
 
     query_file = tmp_path / "queries.txt"
     query_file.write_text(
-        "# comment\n"
-        "WHSE_FOREST_VEGETATION.F_OWN\n"
-        "\n"
-        "CONSOLIDATED_CUTBLOCKS_2011\n",
+        "# comment\nWHSE_FOREST_VEGETATION.F_OWN\n\nCONSOLIDATED_CUTBLOCKS_2011\n",
         encoding="utf-8",
     )
 
@@ -4092,4 +4094,6 @@ def test_data_bcdc_resolve_requires_query_or_query_file(
         )
 
     assert exc_info.value.exit_code == 1
-    assert any("provide at least one query or use `--query-file`" in msg for msg in messages)
+    assert any(
+        "provide at least one query or use `--query-file`" in msg for msg in messages
+    )
