@@ -12604,10 +12604,10 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - resolver shorthand recovery is now the main remaining usability gap.
   - Follow-on tracker work opened from this smoke:
     - `#113` soft good-citizen guardrails for bulk public-service automation;
-    - `#114` fix `SITE_PROD_BC` direct-download result-object logging; and
-    - `#115` improve BCDC resolver alias/shorthand recovery for TSR-derived
+    - `#115` fix `SITE_PROD_BC` direct-download result-object logging; and
+    - `#114` improve BCDC resolver alias/shorthand recovery for TSR-derived
       TSA source-layer tokens.
-- 2026-04-04 (Issue `#114` fixed: `SITE_PROD_BC` direct-download results now
+- 2026-04-04 (Issue `#115` fixed: `SITE_PROD_BC` direct-download results now
   log cleanly in the TSA29 batch workflow):
   - Added a narrow compatibility shim to `BcdcDownloadedResource` so
     path-oriented reporting code can safely call `relative_to(...)` on direct
@@ -12625,8 +12625,84 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `2` remaining automation failures, both informative DWDS
       public-permission denials.
   - Remaining follow-on work after the bug fix:
-    - `#115` resolver alias/shorthand recovery; and
+    - `#114` resolver alias/shorthand recovery; and
     - `#113` soft good-citizen guardrails for bulk automation.
+- 2026-04-04 (Issue `#114` active: BCDC resolver alias/shorthand recovery for
+  TSA29 TSR-derived source-layer tokens):
+  - Governing issue:
+    - GitHub issue `#114`
+  - Active branch:
+    - `feature/issue-114-bcdc-alias-recovery`
+  - Goal:
+    - shrink the TSA29 `no_catalog_match` bucket and reduce the
+      `skipped_manual_review_required_for_weak_text_hit` bucket without making
+      auto-fetch more reckless.
+  - Scope the first recovery pass around deterministic, forestry-aware rules:
+    - expand the curated alias table for high-value TSA29 shorthand and
+      stale-token cases such as:
+      - `FTEN_MANAGED_LIC`
+      - `WHSE_FOREST_TENURE.FTEN_MANAGED_LIC`
+      - `WHSE_FOREST_TENURE.FTEN_MANAGED_LIC_POLY_SVW`
+      - `WHSE_HUMAN_CULTURAL_ECONOMIC.FNIRS`
+      - `WHSE_HUMAN_CULTURAL_ECONOMIC.FNIRS_AGREEMENT`
+      - `REG_LAND_AND_NATURAL_RESOURCE.TERRAIN_STABILITY`;
+    - add deterministic suffix-restoration and object-name-stem recovery for
+      common TSR shorthand such as `_SVW`, `_SP`, `_POLY`, and ministry-prefix
+      variants; and
+    - improve ranking for safe near-exact object-name family matches before
+      falling back to generic text-contains scoring.
+  - Acceptance target for this first pass:
+    - meaningfully reduce the TSA29 no-hit set;
+    - convert a useful subset of current weak-text rows into exact/alias hits;
+      and
+    - preserve conservative behavior for genuinely ambiguous rows such as the
+      remaining visual-landscape/community-watershed/WHA cases.
+- 2026-04-04 (Issue `#114` first alias-recovery pass implemented and validated
+  against the TSA29 full-chain acquisition smoke):
+  - Resolver improvements landed:
+    - deterministic namespace/suffix restoration for common TSR shorthand such
+      as `FADM_*`, `FTEN_*`, `RMP_*`, `WCP_*`, `TA_*`, `BEC`, and related
+      `_SVW` / `_SP` / `_POLY` families;
+    - curated alias recovery for high-value TSA29 problem cases such as
+      `FTEN_MANAGED_LIC` and
+      `REG_LAND_AND_NATURAL_RESOURCE.TERRAIN_STABILITY`; and
+    - stronger ranking for safe object-name suffix and object-name stem
+      matches before generic text-contains fallback.
+  - TSA29 resolve-stage improvement after the rerun:
+    - `50` exact hits and `25` alias hits;
+    - `3` weak-text rows remaining; and
+    - `9` no-hit rows remaining.
+  - Bounded TSA29 acquisition rerun with the improved resolver:
+    - `30` unique WFS subset fetches succeeded;
+    - `1` direct download succeeded (`SITE_PROD_BC`);
+    - `36` confident duplicate rows safely reused the already-fetched result
+      instead of re-hitting the same public dataset;
+    - `1` weak-text row was safely skipped as redundant with a confident hit;
+    - `1` weak-text row still requires manual review
+      (`WHSE_WATER_MANAGEMENT.BC_COMMUNITY_WATERSHEDS`);
+    - `5` indirect-only rows were intentionally not exercised in the bounded
+      smoke to avoid turning the fallback seam into a bulk DWDS order blast;
+      and
+    - `4` failures remain:
+      - `2` expected DWDS public-permission denials
+        (`WHSE_LAND_USE_PLANNING.RMP_PLAN_LEGAL_POLY`,
+        `FTEN_ROAD_LINES`);
+      - `2` real WFS-hint mismatches on the burn-severity family
+        (`VEG_BURN_SEVERITY`,
+        `WHSE_FOREST_VEGETATION.VEG_BURN_SEVERITY`).
+  - Durable TSA29 memory surfaces refreshed:
+    - local overlay snapshot:
+      `external/femic-tsa29-instance/config/tsr/overlay.yaml`
+    - latest runtime audit files:
+      - `runtime/logs/tsa29_tsr_source_layers_batch_summary.csv`
+      - `runtime/logs/tsa29_tsr_source_layers_batch_manifest.json`
+      - `runtime/logs/tsa29_bcdc_acquisition_smoke_results.csv`
+      - `runtime/logs/tsa29_bcdc_acquisition_smoke_results.json`
+  - Follow-on tracker state after the rerun:
+    - keep `#114` open for any later residual shorthand/no-hit cleanup if
+      needed;
+    - keep `#113` open for soft good-citizen guardrails; and
+    - track the new burn-severity service-hint mismatch in `#116`.
 - 2026-04-04 (Issue `#109` implemented: WFS probing/classification for
   OpenMaps-backed BCDC service resources):
   - Extended `femic data bcdc-resolve` so service-backed resources can now

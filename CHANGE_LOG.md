@@ -11558,9 +11558,9 @@
     - resolver shorthand recovery is now the main remaining usability gap.
   - Opened follow-on issues from the smoke:
     - `#113` soft good-citizen guardrails;
-    - `#114` direct-download result-object logging bug; and
-    - `#115` resolver alias/shorthand recovery.
-- 2026-04-04 (Issue `#114` fixed: `SITE_PROD_BC` direct-download results now
+    - `#115` direct-download result-object logging bug; and
+    - `#114` resolver alias/shorthand recovery.
+- 2026-04-04 (Issue `#115` fixed: `SITE_PROD_BC` direct-download results now
   log cleanly in the TSA29 batch workflow):
   - Added a narrow compatibility shim to `BcdcDownloadedResource` so
     path-oriented reporting code can safely call `relative_to(...)` on direct
@@ -11577,5 +11577,37 @@
     - `2` remaining automation failures, both informative DWDS
       public-permission denials.
   - Remaining follow-on work stays tracked in:
-    - `#115` resolver alias/shorthand recovery; and
+    - `#114` resolver alias/shorthand recovery; and
     - `#113` soft good-citizen guardrails.
+- 2026-04-04 (Issue `#114` first alias-recovery pass materially improved the
+  TSA29 full-chain acquisition workflow):
+  - Landed deterministic resolver recovery for common TSR shorthand and stale
+    object-name fragments, including namespace restoration, suffix repair, and
+    safer object-name suffix/stem ranking before generic text fallback.
+  - TSA29 resolve-stage improvement after the rerun:
+    - `50` exact hits and `25` alias hits;
+    - `3` weak-text rows remaining; and
+    - `9` no-hit rows remaining.
+  - Bounded TSA29 acquisition rerun results:
+    - `30` unique WFS subset fetches succeeded;
+    - `1` direct download succeeded (`SITE_PROD_BC`);
+    - `36` confident duplicate rows reused an already-fetched result instead
+      of re-querying the same public dataset;
+    - `1` weak-text row was safely skipped as redundant with a confident hit;
+    - `1` weak-text row still requires manual review
+      (`WHSE_WATER_MANAGEMENT.BC_COMMUNITY_WATERSHEDS`);
+    - `5` indirect-only rows were intentionally not exercised in the bounded
+      smoke; and
+    - `4` failures remain:
+      - `2` expected DWDS public-permission denials; and
+      - `2` real burn-severity WFS-hint mismatches.
+  - Refreshed the TSA29 local memory snapshot in:
+    - `external/femic-tsa29-instance/config/tsr/overlay.yaml`
+  - Refreshed the latest runtime audit surfaces in:
+    - `runtime/logs/tsa29_tsr_source_layers_batch_summary.csv`
+    - `runtime/logs/tsa29_tsr_source_layers_batch_manifest.json`
+    - `runtime/logs/tsa29_bcdc_acquisition_smoke_results.csv`
+    - `runtime/logs/tsa29_bcdc_acquisition_smoke_results.json`
+  - Opened follow-on bug `#116` so the misleading burn-severity WFS hints do
+    not get lost while `#113` and `#114` continue to track the broader policy
+    and resolver follow-up work.

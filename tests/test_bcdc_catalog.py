@@ -82,6 +82,41 @@ def _f_own_payload(*, include_direct: bool = False) -> dict[str, object]:
     }
 
 
+def _managed_licence_payload() -> dict[str, object]:
+    return {
+        "success": True,
+        "result": {
+            "results": [
+                {
+                    "id": "pkg-managed-lic",
+                    "name": "forest-tenure-managed-licence",
+                    "title": "Forest Tenure Managed Licence",
+                    "license_title": "Access Only",
+                    "download_audience": "Public",
+                    "organization": {
+                        "name": "forest-tenure",
+                        "title": "Forest Tenure Branch",
+                    },
+                    "resources": [
+                        {
+                            "id": "managed-lic-wms",
+                            "name": "WMS getCapabilities request",
+                            "format": "wms",
+                            "bcdc_type": "webservice",
+                            "object_name": "WHSE_FOREST_TENURE.FTEN_MANAGED_LICENCE_POLY_SVW",
+                            "object_short_name": "FTEN_MGD_LIC",
+                            "resource_access_method": "service",
+                            "resource_type": "data",
+                            "resource_storage_location": "bc geographic warehouse",
+                            "url": "https://openmaps.gov.bc.ca/geo/pub/WHSE_FOREST_TENURE.FTEN_MANAGED_LICENCE_POLY_SVW/ows?service=WMS&request=GetCapabilities",
+                        }
+                    ],
+                }
+            ]
+        },
+    }
+
+
 def test_build_object_name_search_url_uses_res_extras_object_name() -> None:
     url = bcdc_catalog._build_object_name_search_url(
         "WHSE_FOREST_VEGETATION.F_OWN",
@@ -227,6 +262,68 @@ def test_resolve_bcdc_candidates_uses_curated_alias_when_original_query_misses(
     assert any("CONSOLIDATED_CUTBLOCKS" in note for note in result.notes)
     assert any("CONSOLIDATED_CUTBLOCKS_2011" in url for url in result.api_urls)
     assert any("CONSOLIDATED_CUTBLOCKS" in url for url in result.api_urls)
+
+
+def test_query_variants_expand_tsa_shorthand_namespace_and_suffix() -> None:
+    variants = bcdc_catalog._query_variants("FTEN_MANAGED_LIC")
+
+    assert "WHSE_FOREST_TENURE.FTEN_MANAGED_LIC" in variants
+    assert "WHSE_FOREST_TENURE.FTEN_MANAGED_LICENCE_POLY_SVW" in variants
+
+
+def test_resolve_bcdc_candidates_uses_generated_alias_for_managed_licence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+
+    def _fake_fetch(url: str) -> dict[str, object]:
+        calls.append(url)
+        if "FTEN_MANAGED_LICENCE_POLY_SVW" in url:
+            return _managed_licence_payload()
+        return {"success": True, "result": {"results": []}}
+
+    monkeypatch.setattr(bcdc_catalog, "_fetch_json", _fake_fetch)
+    monkeypatch.setattr(
+        bcdc_catalog,
+        "_fetch_text",
+        lambda _url: (
+            """<?xml version="1.0" encoding="UTF-8"?>
+<WFS_Capabilities xmlns="http://www.opengis.net/wfs/2.0">
+  <FeatureTypeList>
+    <FeatureType>
+      <Name>pub:WHSE_FOREST_TENURE.FTEN_MANAGED_LICENCE_POLY_SVW</Name>
+    </FeatureType>
+  </FeatureTypeList>
+</WFS_Capabilities>
+"""
+        ),
+    )
+
+    result = bcdc_catalog.resolve_bcdc_candidates("FTEN_MANAGED_LIC")
+
+    assert result.top_match is not None
+    assert result.top_match.title == "Forest Tenure Managed Licence"
+    assert any("FTEN_MANAGED_LICENCE_POLY_SVW" in note for note in result.notes)
+    assert any("FTEN_MANAGED_LICENCE_POLY_SVW" in url for url in result.api_urls)
+
+
+def test_score_resource_promotes_object_name_stem_matches() -> None:
+    resource = {
+        "object_name": "WHSE_FOREST_VEGETATION.BEC_BIOGEOCLIMATIC_POLY",
+        "object_short_name": "BEC",
+        "name": "BEC Map",
+        "object_table_comments": "",
+    }
+
+    score, matched_by = bcdc_catalog._score_resource(
+        "WHSE_FOREST_VEGETATION.BEC",
+        resource,
+    )
+
+    assert score == bcdc_catalog.OBJECT_NAME_STEM_MATCH_SCORE
+    assert (
+        matched_by == "object_name_stem:WHSE_FOREST_VEGETATION.BEC_BIOGEOCLIMATIC_POLY"
+    )
 
 
 def test_probe_service_resource_marks_openmaps_wfs_queryable() -> None:

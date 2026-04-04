@@ -3952,6 +3952,34 @@ def test_data_bcdc_resolve_writes_summary_csv(
     assert "has_wfs_queryable_service" in text
 
 
+def test_bcdc_summary_status_treats_object_name_stem_as_exact_hit() -> None:
+    result = cli_main.BcdcResolveResult(
+        query="WHSE_FOREST_VEGETATION.BEC",
+        limit=5,
+        generated_utc="2026-04-04T00:00:00+00:00",
+        api_urls=("https://example.invalid/package_search",),
+        matches=(
+            bcdc_catalog.BcdcPackageMatch(
+                package_id="pkg-bec",
+                package_name="bec-map",
+                title="BEC Map",
+                dataset_page_url="https://catalogue.data.gov.bc.ca/dataset/bec-map",
+                organization_name="forest-analysis-and-inventory",
+                organization_title="Forest Analysis and Inventory Branch",
+                license_title="Access Only",
+                download_audience="Public",
+                matched_by=(
+                    "object_name_stem:WHSE_FOREST_VEGETATION.BEC_BIOGEOCLIMATIC_POLY"
+                ),
+                match_score=250,
+                resources=(),
+            ),
+        ),
+    )
+
+    assert cli_main._bcdc_summary_status(result) == "exact_hit"
+
+
 def test_data_bcdc_resolve_downloads_direct_resources(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

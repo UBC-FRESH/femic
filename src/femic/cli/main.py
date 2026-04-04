@@ -1953,8 +1953,11 @@ def _bcdc_summary_status(result: BcdcResolveResult) -> str:
     if any("alias/query variant" in note for note in result.notes):
         return "alias_hit"
     matched_by = top_match.matched_by
-    if matched_by.startswith("object_name:") or matched_by.startswith(
-        "object_short_name:"
+    if (
+        matched_by.startswith("object_name:")
+        or matched_by.startswith("object_short_name:")
+        or matched_by.startswith("object_name_suffix:")
+        or matched_by.startswith("object_name_stem:")
     ):
         return "exact_hit"
     return "weak_text_hit"

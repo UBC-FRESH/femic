@@ -49,12 +49,55 @@ DIRECT_DATA_RESOURCE_TYPES = {"data"}
 INDIRECT_ACCESS_METHODS = {"indirect access"}
 SERVICE_ACCESS_METHODS = {"service"}
 OBJECT_NAME_MATCH_SCORE = 400
+OBJECT_NAME_SUFFIX_MATCH_SCORE = 350
 OBJECT_SHORT_NAME_MATCH_SCORE = 300
+OBJECT_NAME_STEM_MATCH_SCORE = 250
 EXACT_TEXT_MATCH_SCORE = 200
 CONTAINS_TEXT_MATCH_SCORE = 100
 NO_MATCH_SCORE = 0
 CURATED_QUERY_ALIASES: dict[str, tuple[str, ...]] = {
     "CONSOLIDATED_CUTBLOCKS_2011": ("CONSOLIDATED_CUTBLOCKS",),
+    "REG_LAND_AND_NATURAL_RESOURCE.TERRAIN_STABILITY": (
+        "WHSE_TERRESTRIAL_ECOLOGY.STE_TER_STABILITY_POLYS_SVW",
+    ),
+}
+QUERY_NAMESPACE_PREFIXES: dict[str, str] = {
+    "FADM_": "WHSE_ADMIN_BOUNDARIES.",
+    "CLAB_": "WHSE_ADMIN_BOUNDARIES.",
+    "TA_": "WHSE_TANTALIS.",
+    "BEC_": "WHSE_FOREST_VEGETATION.",
+    "VEG_": "WHSE_FOREST_VEGETATION.",
+    "FTEN_": "WHSE_FOREST_TENURE.",
+    "WCP_": "WHSE_WILDLIFE_MANAGEMENT.",
+    "RMP_": "WHSE_LAND_USE_PLANNING.",
+    "TRIM_": "WHSE_BASEMAPPING.",
+}
+LOCAL_TOKEN_ALIASES: dict[str, tuple[str, ...]] = {
+    "FADM_BCTS_AREA": ("FADM_BCTS_AREA_SP",),
+    "CLAB_INDIAN": ("CLAB_INDIAN_RESERVES",),
+    "TA_CROWN_TENURES": ("TA_CROWN_TENURES_SVW",),
+    "TA_WILDLIFE_MGMT_AREAS": ("TA_WILDLIFE_MGMT_AREAS_SVW",),
+    "TA_PARK_ECORES_PA": ("TA_PARK_ECORES_PA_SVW",),
+    "RMP_OGMA_LEGAL": ("RMP_OGMA_LEGAL_CURRENT_SVW",),
+    "RMP_PLAN_LEGAL": ("RMP_PLAN_LEGAL_POLY_SVW",),
+    "RMP_PLAN_NON_LEGAL": ("RMP_PLAN_NON_LEGAL_POLY_SVW",),
+    "RMP_LANDSCAPE_UNIT_SVW_NO_MULTIPLES": ("RMP_LANDSCAPE_UNIT_SVW",),
+    "RMP_STRGC_LAND": ("RMP_STRGC_LAND_RSRCE_PLAN_SVW",),
+    "RMP_STRGC_LAND_RSRCE_PLAN": ("RMP_STRGC_LAND_RSRCE_PLAN_SVW",),
+    "WCP_UNGULATE": ("WCP_UNGULATE_WINTER_RANGE_SP",),
+    "WCP_UNGULATE_WINTER_RANGE": ("WCP_UNGULATE_WINTER_RANGE_SP",),
+    "WCP_WILDLIFE_HABITAT_AREA": ("WCP_WILDLIFE_HABITAT_AREA_POLY",),
+    "REC_VISUAL_LANDSCAPE": ("REC_VISUAL_LANDSCAPE_INVENTORY",),
+    "FTEN_ROAD_SECTION_LINES": ("FTEN_ROAD_SECTION_LINES_SVW",),
+    "FTEN_MANAGED_LIC": (
+        "FTEN_MANAGED_LICENCE_POLY_SVW",
+        "FTEN_MANAGED_LICENCE_POLY",
+    ),
+    "FTEN_MANAGED_LIC_POLY_SVW": (
+        "FTEN_MANAGED_LICENCE_POLY_SVW",
+        "FTEN_MANAGED_LICENCE_POLY",
+    ),
+    "BEC": ("BEC_BIOGEOCLIMATIC_POLY",),
 }
 
 
@@ -257,6 +300,39 @@ def _normalize_text(value: str | None) -> str:
     return (value or "").strip().casefold()
 
 
+def _split_query_namespace(query: str) -> tuple[str | None, str]:
+    namespace, separator, local_name = query.partition(".")
+    if separator:
+        return (namespace, local_name)
+    return (None, query)
+
+
+def _add_query_variant(
+    variants: list[str],
+    seen: set[str],
+    value: str,
+) -> None:
+    normalized_value = value.strip()
+    if normalized_value and normalized_value.casefold() not in seen:
+        variants.append(normalized_value)
+        seen.add(normalized_value.casefold())
+
+
+def _local_query_aliases(local_name: str) -> tuple[str, ...]:
+    normalized_local = local_name.strip()
+    variants: list[str] = []
+    seen: set[str] = set()
+    for alias in LOCAL_TOKEN_ALIASES.get(normalized_local, ()):
+        _add_query_variant(variants, seen, alias)
+    if "_LIC_" in normalized_local:
+        _add_query_variant(
+            variants,
+            seen,
+            normalized_local.replace("_LIC_", "_LICENCE_"),
+        )
+    return tuple(variants)
+
+
 def _build_package_search_url(query: str, *, rows: int) -> str:
     params = urlencode({"q": query, "rows": rows})
     return f"{BCDC_PACKAGE_SEARCH_URL}?{params}"
@@ -394,6 +470,20 @@ def _query_variants(query: str) -> tuple[str, ...]:
             variants.append(alias_value)
             seen.add(alias_value.casefold())
 
+    namespace, local_name = _split_query_namespace(normalized_query)
+    local_aliases = _local_query_aliases(local_name)
+    if namespace is not None:
+        for alias in local_aliases:
+            _add_query_variant(variants, seen, f"{namespace}.{alias}")
+    else:
+        for alias in local_aliases:
+            _add_query_variant(variants, seen, alias)
+        for prefix, namespace_prefix in QUERY_NAMESPACE_PREFIXES.items():
+            if local_name.startswith(prefix):
+                _add_query_variant(variants, seen, f"{namespace_prefix}{local_name}")
+                for alias in local_aliases:
+                    _add_query_variant(variants, seen, f"{namespace_prefix}{alias}")
+
     year_suffix_match = re.match(
         r"^(?P<stem>.+?)(?:[_\s-])(?P<year>19\d{2}|20\d{2})$", normalized_query
     )
@@ -529,8 +619,22 @@ def _score_text_match(query: str, values: tuple[str | None, ...]) -> tuple[int, 
 def _score_resource(query: str, resource: dict[str, Any]) -> tuple[int, str]:
     object_name = str(resource.get("object_name") or "").strip()
     object_short_name = str(resource.get("object_short_name") or "").strip()
-    if object_name and _normalize_text(object_name) == _normalize_text(query):
+    normalized_query = _normalize_text(query)
+    if object_name and _normalize_text(object_name) == normalized_query:
         return (OBJECT_NAME_MATCH_SCORE, f"object_name:{object_name}")
+    _, object_local_name = _split_query_namespace(object_name)
+    normalized_object_local = _normalize_text(object_local_name)
+    if object_local_name and normalized_object_local == normalized_query:
+        return (OBJECT_NAME_SUFFIX_MATCH_SCORE, f"object_name_suffix:{object_name}")
+    if normalized_query:
+        if object_name and _normalize_text(object_name).startswith(
+            f"{normalized_query}_"
+        ):
+            return (OBJECT_NAME_STEM_MATCH_SCORE, f"object_name_stem:{object_name}")
+        if object_local_name and normalized_object_local.startswith(
+            f"{normalized_query}_"
+        ):
+            return (OBJECT_NAME_STEM_MATCH_SCORE, f"object_name_stem:{object_name}")
     if object_short_name and _normalize_text(object_short_name) == _normalize_text(
         query
     ):
