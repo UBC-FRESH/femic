@@ -1988,6 +1988,151 @@ def _format_ratio(value: float | None) -> str:
     return f"{value:.4f} ({value * 100.0:.2f}%)"
 
 
+def _lookup_override_for_source_entry(
+    *,
+    source_entry: dict[str, Any],
+    override_entries: dict[str, TsrSourceLayerOverrideEntry],
+) -> TsrSourceLayerOverrideEntry | None:
+    recommended_query = (
+        str(source_entry.get("recommended_query", "")).strip().casefold()
+    )
+    if not recommended_query:
+        return None
+    return override_entries.get(recommended_query)
+
+
+def _describe_thlb_step_logic(step: dict[str, Any]) -> str:
+    normalized_action = str(step.get("normalized_action", "")).strip()
+    spatial_mode = str(step.get("spatial_application_mode", "")).strip()
+    normalized_subject = str(step.get("normalized_subject", "")).strip()
+    normalized_predicate = str(step.get("normalized_predicate", "")).strip()
+    if normalized_action == "use_land_base":
+        return "Use the AFLB-style initialized land base as the THLB starting universe."
+    if normalized_action == "no_deduction":
+        return "Apply no THLB deduction for this rule."
+    if normalized_action == "exclude":
+        if spatial_mode == "fragment_overlay":
+            return (
+                "Overlay the linked polygon layers onto the working land base, fragment intersected "
+                "geometry, and assign binary THLB {0,1} so excluded fragments are 0 and retained "
+                "fragments remain 1."
+            )
+        if spatial_mode == "stand_binary_majority":
+            return (
+                "Apply the current coarse stand-binary fallback: whole stands are netted down when "
+                "the exclusion mask trips the explicit stand-binary approximation."
+            )
+        return (
+            "Exclude the linked polygons from THLB where they intersect the working land base; "
+            "the exact execution mode depends on available data and current implementation support."
+        )
+    if normalized_action == "aspatial_reduction":
+        return (
+            "Apply a final aspatial THLB reduction of the TSR-cited magnitude after the spatially "
+            "executable steps have completed."
+        )
+    if normalized_action in {
+        "section_heading",
+        "definition",
+        "increase_conditions",
+        "decrease_conditions",
+    }:
+        return "Context/interpretation row only; no executable THLB logic is applied automatically."
+    logic_parts = [part for part in (normalized_subject, normalized_predicate) if part]
+    if logic_parts:
+        return " ".join(logic_parts)
+    return "No executable logic has been normalized for this row yet."
+
+
+def _format_thlb_step_markdown(
+    *,
+    step: dict[str, Any],
+    source_entry_map: dict[str, dict[str, Any]],
+    override_entries: dict[str, TsrSourceLayerOverrideEntry],
+) -> list[str]:
+    label = str(step.get("label", "")).strip() or str(step.get("step_id", "")).strip()
+    lines = [
+        f"### {int(step.get('order_index', 0))}. {label}",
+        "",
+        f"- Step id: `{step.get('step_id', '')}`",
+        f"- Kind: `{step.get('step_kind', '')}`",
+        f"- Run status: `{step.get('run_status', step.get('step_status', 'unknown'))}`",
+        f"- TSR provenance: `{step.get('provenance_id', '')}`",
+    ]
+    page_number = step.get("page_number")
+    if page_number:
+        lines.append(f"- TSR page: `{page_number}`")
+    raw_text = str(step.get("raw_text", "")).strip()
+    if raw_text:
+        lines.append(f"- TSR text: `{raw_text}`")
+    lines.append(f"- FEMIC proposed logic: {_describe_thlb_step_logic(step)}")
+
+    linked_source_ids = [
+        str(value).strip()
+        for value in step.get("linked_source_entry_ids", ())
+        if str(value).strip()
+    ]
+    if linked_source_ids:
+        lines.append("- Linked source layers:")
+        for entry_id in linked_source_ids:
+            source_entry = source_entry_map.get(entry_id)
+            if source_entry is None:
+                lines.append(
+                    f"  - `{entry_id}`: missing from `source_layers.recipe.yaml`"
+                )
+                continue
+            lines.append(
+                "  - "
+                + f"`{entry_id}` | query=`{source_entry.get('recommended_query', '')}` | "
+                + f"status=`{source_entry.get('current_public_status', '')}` | "
+                + f"strategy=`{source_entry.get('acquisition_strategy', '')}`"
+            )
+            artifact_path = str(source_entry.get("artifact_path", "")).strip()
+            if artifact_path:
+                lines.append(f"    - artifact: `{artifact_path}`")
+            matched_by = str(source_entry.get("matched_by", "")).strip()
+            if matched_by:
+                lines.append(f"    - matched by: `{matched_by}`")
+            top_match_title = str(source_entry.get("top_match_title", "")).strip()
+            if top_match_title:
+                lines.append(f"    - top match: `{top_match_title}`")
+            override_entry = _lookup_override_for_source_entry(
+                source_entry=source_entry,
+                override_entries=override_entries,
+            )
+            if override_entry is not None and override_entry.override_kind:
+                lines.append(
+                    "    - user-overlay logic mode: "
+                    + f"`{override_entry.override_kind}` via `config/tsr/source_layer_overrides.yaml`"
+                )
+                if override_entry.override_value:
+                    lines.append(
+                        f"    - override value: `{override_entry.override_value}`"
+                    )
+                if override_entry.notes:
+                    lines.append(f"    - override notes: {override_entry.notes}")
+
+    missing_source_ids = [
+        str(value).strip()
+        for value in step.get("missing_source_entry_ids", ())
+        if str(value).strip()
+    ]
+    if missing_source_ids:
+        lines.append("- Missing linked source entries:")
+        for entry_id in missing_source_ids:
+            lines.append(f"  - `{entry_id}`")
+
+    run_notes = [
+        str(note).strip() for note in step.get("run_notes", ()) if str(note).strip()
+    ]
+    if run_notes:
+        lines.append("- Run notes:")
+        for note in run_notes:
+            lines.append(f"  - {note}")
+    lines.append("")
+    return lines
+
+
 def _build_tsr_thlb_status_report_markdown(
     *,
     recipe: TsrThlbNetdownRecipeRecord,
@@ -2008,6 +2153,9 @@ def _build_tsr_thlb_status_report_markdown(
     step_count: int,
     generated_utc: str,
     runtime_report_relative_path: str,
+    applied_steps: Sequence[dict[str, Any]],
+    source_entry_map: dict[str, dict[str, Any]],
+    override_entries: dict[str, TsrSourceLayerOverrideEntry],
 ) -> str:
     input_to_baseline_ratio = _safe_ratio(baseline_managed_area_ha, input_area_ha)
     baseline_to_final_ratio = _safe_ratio(
@@ -2090,6 +2238,15 @@ def _build_tsr_thlb_status_report_markdown(
             "- Legacy raster THLB values are reference-only in reconstructed mode.",
         ]
     )
+    lines.extend(["", "## Sequential THLB Steps", ""])
+    for step in applied_steps:
+        lines.extend(
+            _format_thlb_step_markdown(
+                step=step,
+                source_entry_map=source_entry_map,
+                override_entries=override_entries,
+            )
+        )
     return "\n".join(lines) + "\n"
 
 
@@ -2258,6 +2415,10 @@ def run_tsr_thlb_netdown_recipe(
     )
     source_recipe = load_tsr_source_layers_recipe(source_layer_recipe_path)
     source_entry_map = _load_source_recipe_entry_map(source_recipe)
+    overrides_path = _resolve_instance_path(
+        instance_root, recipe.instance_inputs.source_layer_overrides_path
+    )
+    override_entries = _load_override_map(overrides_path)
 
     resolved_checkpoint_path = (
         checkpoint_path.expanduser().resolve()
@@ -2592,6 +2753,9 @@ def run_tsr_thlb_netdown_recipe(
         runtime_report_relative_path=str(
             runtime_status_report_path.relative_to(instance_root).as_posix()
         ),
+        applied_steps=applied_steps,
+        source_entry_map=source_entry_map,
+        override_entries=override_entries,
     )
     status_report_path.parent.mkdir(parents=True, exist_ok=True)
     status_report_path.write_text(status_report_markdown, encoding="utf-8")

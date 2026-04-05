@@ -13726,3 +13726,30 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     then THLB logic are "good enough" to lock for an instance. Explicit lock
     enforcement is still a future step, but the report now preserves the
     numbers and runtime history needed for that decision.
+
+- 2026-04-05 (Issue `#128` THLB status report correction and usability pass:
+  the Markdown reports now actually exist on disk for TSA29, and they carry a
+  real sequential netdown-step ledger instead of just benchmark ratios):
+  - Re-ran the live TSA29 recipe commands after landing the report writer so
+    the promised files are now genuinely materialized under the instance:
+    - `external/femic-tsa29-instance/config/tsr/thlb_netdown.status.md`
+    - `external/femic-tsa29-instance/config/tsr/thlb_reconstructed.status.md`
+    - timestamped history copies under
+      `external/femic-tsa29-instance/runtime/logs/tsr/`
+  - The status report now includes a human-readable **Sequential THLB Steps**
+    section for each reviewed TSR step, showing:
+    - step id / kind / run status
+    - TSR provenance and page number
+    - raw extracted TSR text
+    - FEMIC's proposed execution logic in plain language
+    - linked source-layer recipe entries with query, match status, strategy,
+      and chosen local artifact when present
+    - explicit user-overlay mode notes when a linked source is being driven by
+      `source_layer_overrides.yaml` rather than FEMIC core acquisition logic
+  - This closes the earlier gap where the docs/code claimed a Markdown report
+    existed but no live run had actually produced it on disk yet.
+  - Current rough edge noted for follow-on cleanup:
+    - the front of the sequential ledger still contains too much
+      table-of-contents / context noise before the more actionable exclusion
+      rules, so later `#128` / `#133` work should likely introduce a clearer
+      separation between pure context rows and executable/review-critical rows.

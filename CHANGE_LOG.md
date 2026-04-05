@@ -11977,3 +11977,27 @@
   - This makes the current `#128` proving-ground much easier for users and
     helper agents to review while the reconstruction logic converges toward the
     published TSA29 benchmarks.
+- 2026-04-05: Corrected the `#128` THLB status-report milestone so the promised
+  Markdown reports are now really generated on disk for TSA29, and expanded the
+  report into a proper step-by-step review surface.
+  - Re-ran the live TSA29 hybrid and reconstructed commands, which now write:
+    - `external/femic-tsa29-instance/config/tsr/thlb_netdown.status.md`
+    - `external/femic-tsa29-instance/config/tsr/thlb_reconstructed.status.md`
+    - timestamped history copies under
+      `external/femic-tsa29-instance/runtime/logs/tsr/`
+  - The report now includes a sequential THLB step ledger showing, for each
+    reviewed TSR step:
+    - provenance/page
+    - raw TSR text
+    - FEMIC's proposed logic in plain English
+    - linked source-layer entries and artifacts
+    - explicit user-overlay mode notes when a step is relying on
+      `source_layer_overrides.yaml`
+  - Also fixed the report-generation seam so missing
+    `config/tsr/source_layer_overrides.yaml` no longer hard-fails THLB recipe
+    execution; override data is optional and simply renders as empty when not
+    present.
+  - One remaining usability note is now explicit in repo planning: the current
+    sequential ledger still carries too much table-of-contents/context noise at
+    the top, so later `#128` / `#133` cleanup should separate context rows from
+    actionable netdown rules more cleanly.

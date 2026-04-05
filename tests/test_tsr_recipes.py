@@ -573,6 +573,36 @@ def test_run_tsr_thlb_netdown_recipe_writes_thlb_fact_checkpoint_and_audit(
         ),
         encoding="utf-8",
     )
+    overrides_payload = {
+        "schema_version": 1,
+        "tsa": {
+            "tsa_id": "tsa_29",
+            "tsa_code": "29",
+            "tsa_name": "Williams Lake",
+        },
+        "source_overlay_path": "config/tsr/overlay.yaml",
+        "entries": [
+            {
+                "query": "REG_LAND_AND_NATURAL_RESOURCE.WLD_MULE_DEER_RNG_TOPO_CAR_SP",
+                "current_public_status": "fetched",
+                "matched_by": "object_name",
+                "top_match_title": "Mule Deer winter range",
+                "dataset_page_url": "https://example.invalid/mdwr",
+                "suggested_fetch_strategy": "wfs_getfeature_bbox",
+                "current_public_notes": [],
+                "replacement_family_candidates": [],
+                "override_kind": "local_path",
+                "override_value": "data/downloads/bcdc/MDWR/MDWR.gpkg",
+                "notes": "Reviewed local override for proving-ground coverage.",
+            }
+        ],
+    }
+    (instance_root / "config" / "tsr" / "source_layer_overrides.yaml").write_text(
+        tsr_recipes.yaml.safe_dump(
+            overrides_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
 
     thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
         init_result.thlb_netdown_recipe_path
@@ -649,6 +679,9 @@ def test_run_tsr_thlb_netdown_recipe_writes_thlb_fact_checkpoint_and_audit(
     assert "Input:AFLB =" in status_text
     assert "AFLB:THLB =" in status_text
     assert "AFLB lock state: `unlocked`" in status_text
+    assert "## Sequential THLB Steps" in status_text
+    assert "Linked source layers:" in status_text
+    assert "user-overlay logic mode: `local_path`" in status_text
     recipe = tsr_catalog.load_tsr_thlb_netdown_recipe(
         init_result.thlb_netdown_recipe_path
     )
