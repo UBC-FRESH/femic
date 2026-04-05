@@ -11695,3 +11695,21 @@
   - Added regression coverage for the mixed-package case where a lower-signal
     WMS-style row is WFS-queryable but classified as indirect/custom-download,
     and therefore must not promote a package-level WFS fetch strategy.
+- 2026-04-04: Completed `#113` (soft good-citizen guardrails for bulk public
+  BCDC/WFS/DWDS automation).
+  - Added deduplicated plan summaries plus `--plan-only` and `--allow-bulk`
+    to:
+    - `femic data bcdc-resolve --download-direct`
+    - `femic data bcdc-fetch`
+    - `femic data bcdc-order`
+  - Repeated query entries are now collapsed before public-service activity
+    starts, and the CLI reports requested vs deduplicated query counts.
+  - Bulk runs now stop with a clear good-citizen warning unless the user
+    explicitly reruns with `--allow-bulk`.
+  - Live smoke confirmed:
+    - `bcdc-fetch --plan-only` prints a deduplicated plan without making
+      network calls; and
+    - a three-query DWDS batch now stops early with a warning instead of
+      quietly submitting multiple public orders.
+  - Updated the BCDC discovery guide and CLI reference so the user-facing
+    boundary and override path are explicit.

@@ -391,6 +391,25 @@ BCDC_CLIP_OPTION = typer.Option(
     "--clip/--no-clip",
     help="Clip DWDS output to the supplied AOI instead of leaving features whole.",
 )
+BCDC_PLAN_ONLY_OPTION = typer.Option(
+    False,
+    "--plan-only",
+    help=(
+        "Preview deduplicated public-service activity and guardrail warnings "
+        "without executing downloads, fetches, or DWDS orders."
+    ),
+)
+BCDC_ALLOW_BULK_OPTION = typer.Option(
+    False,
+    "--allow-bulk/--no-allow-bulk",
+    help=(
+        "Explicitly acknowledge and allow bulk public-service activity when "
+        "the deduplicated plan exceeds FEMIC's default good-citizen thresholds."
+    ),
+)
+BCDC_DIRECT_DOWNLOAD_BULK_THRESHOLD = 10
+BCDC_WFS_FETCH_BULK_THRESHOLD = 10
+BCDC_DWDS_ORDER_BULK_THRESHOLD = 2
 TSR_OUTPUT_ROOT_OPTION = typer.Option(
     None,
     "--output-root",
@@ -2171,6 +2190,72 @@ def _load_bcdc_queries_from_file(path: Path) -> list[str]:
     return queries
 
 
+def _dedupe_preserving_order(values: list[str]) -> tuple[list[str], int]:
+    deduped: list[str] = []
+    seen: set[str] = set()
+    duplicates = 0
+    for value in values:
+        normalized = value.strip()
+        key = normalized.casefold()
+        if key in seen:
+            duplicates += 1
+            continue
+        seen.add(key)
+        deduped.append(normalized)
+    return deduped, duplicates
+
+
+def _evaluate_bcdc_bulk_guardrail(
+    *,
+    operation_label: str,
+    unique_query_count: int,
+    bulk_threshold: int,
+    plan_only: bool,
+    allow_bulk: bool,
+) -> tuple[bool, tuple[str, ...]]:
+    warnings: list[str] = []
+    if unique_query_count > bulk_threshold:
+        warnings.append(
+            "good-citizen warning: this plan would execute "
+            f"{unique_query_count} public {operation_label} actions, which exceeds "
+            f"the default bulk threshold of {bulk_threshold}."
+        )
+        warnings.append(
+            "Use `--plan-only` to preview large runs or rerun with "
+            "`--allow-bulk` if you intentionally want to proceed."
+        )
+        if not plan_only and not allow_bulk:
+            return False, tuple(warnings)
+    return True, tuple(warnings)
+
+
+def _print_bcdc_guardrail_plan(
+    *,
+    operation_label: str,
+    requested_query_count: int,
+    unique_queries: list[str],
+    duplicate_count: int,
+    warnings: tuple[str, ...],
+    plan_only: bool,
+) -> None:
+    console.print(f"plan_operation: {operation_label}")
+    console.print(f"requested_query_count: {requested_query_count}")
+    console.print(f"deduplicated_query_count: {len(unique_queries)}")
+    if duplicate_count:
+        console.print(
+            "deduplicated_duplicates: "
+            f"{duplicate_count} repeated query entr{'y' if duplicate_count == 1 else 'ies'} "
+            "collapsed before public-service activity."
+        )
+    for warning in warnings:
+        console.print(f"warning: {warning}")
+    if plan_only:
+        console.print(
+            "plan_only: no public-service activity executed; review the plan above "
+            "and rerun without `--plan-only` when ready."
+        )
+
+
 def _resolve_repo_output_path(value: Path | None, *, source_root: Path) -> Path:
     if value is None:
         raise ValueError("repo output path cannot be resolved from None")
@@ -2322,9 +2407,15 @@ def data_bcdc_resolve(
     download_root: Path | None = BCDC_DOWNLOAD_ROOT_OPTION,
     limit: int = BCDC_LIMIT_OPTION,
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    plan_only: bool = BCDC_PLAN_ONLY_OPTION,
+    allow_bulk: bool = BCDC_ALLOW_BULK_OPTION,
 ) -> None:
     """Resolve BC Data Catalogue candidates from explicit layer names or keywords."""
 
+    if not isinstance(plan_only, bool):
+        plan_only = False
+    if not isinstance(allow_bulk, bool):
+        allow_bulk = False
     if query_file is not None and not isinstance(query_file, Path):
         query_file = None
     if summary_csv is not None and not isinstance(summary_csv, Path):
@@ -2339,6 +2430,8 @@ def data_bcdc_resolve(
             "`--query-file`."
         )
         raise typer.Exit(code=1)
+    requested_query_count = len(resolved_queries)
+    resolved_queries, duplicate_count = _dedupe_preserving_order(resolved_queries)
 
     instance_context = (
         _resolve_cli_instance_context(instance_root=instance_root)
@@ -2354,6 +2447,28 @@ def data_bcdc_resolve(
             else Path("downloads/bcdc").resolve()
         )
     )
+
+    guardrail_warnings: tuple[str, ...] = ()
+    if download_direct:
+        should_continue, guardrail_warnings = _evaluate_bcdc_bulk_guardrail(
+            operation_label="direct-download",
+            unique_query_count=len(resolved_queries),
+            bulk_threshold=BCDC_DIRECT_DOWNLOAD_BULK_THRESHOLD,
+            plan_only=plan_only,
+            allow_bulk=allow_bulk,
+        )
+        _print_bcdc_guardrail_plan(
+            operation_label="direct-download",
+            requested_query_count=requested_query_count,
+            unique_queries=resolved_queries,
+            duplicate_count=duplicate_count,
+            warnings=guardrail_warnings,
+            plan_only=plan_only,
+        )
+        if not should_continue:
+            raise typer.Exit(code=1)
+        if plan_only:
+            return
 
     results: list[BcdcResolveResult] = []
     try:
@@ -2403,9 +2518,15 @@ def data_bcdc_fetch(
     bbox: str | None = BCDC_BBOX_OPTION,
     geomark: str | None = BCDC_GEOMARK_OPTION,
     output_format: str = BCDC_OUTPUT_FORMAT_OPTION,
+    plan_only: bool = BCDC_PLAN_ONLY_OPTION,
+    allow_bulk: bool = BCDC_ALLOW_BULK_OPTION,
 ) -> None:
     """Fetch AOI-scoped WFS-backed BCDC layers into local vector files."""
 
+    if not isinstance(plan_only, bool):
+        plan_only = False
+    if not isinstance(allow_bulk, bool):
+        allow_bulk = False
     if query_file is not None and not isinstance(query_file, Path):
         query_file = None
 
@@ -2418,6 +2539,8 @@ def data_bcdc_fetch(
             "`--query-file`."
         )
         raise typer.Exit(code=1)
+    requested_query_count = len(resolved_queries)
+    resolved_queries, duplicate_count = _dedupe_preserving_order(resolved_queries)
 
     if bool(bbox) == bool(geomark):
         console.print(
@@ -2451,6 +2574,26 @@ def data_bcdc_fetch(
     except BcdcFetchError as exc:
         console.print(f"[red]BCDC fetch error:[/red] {exc}")
         raise typer.Exit(code=1) from exc
+
+    should_continue, guardrail_warnings = _evaluate_bcdc_bulk_guardrail(
+        operation_label="WFS fetch",
+        unique_query_count=len(resolved_queries),
+        bulk_threshold=BCDC_WFS_FETCH_BULK_THRESHOLD,
+        plan_only=plan_only,
+        allow_bulk=allow_bulk,
+    )
+    _print_bcdc_guardrail_plan(
+        operation_label="WFS fetch",
+        requested_query_count=requested_query_count,
+        unique_queries=resolved_queries,
+        duplicate_count=duplicate_count,
+        warnings=guardrail_warnings,
+        plan_only=plan_only,
+    )
+    if not should_continue:
+        raise typer.Exit(code=1)
+    if plan_only:
+        return
 
     results: list[BcdcFetchResult] = []
     try:
@@ -2493,9 +2636,15 @@ def data_bcdc_order(
     output_format: str = BCDC_DWDS_OUTPUT_FORMAT_OPTION,
     email: str | None = BCDC_EMAIL_OPTION,
     clip: bool = BCDC_CLIP_OPTION,
+    plan_only: bool = BCDC_PLAN_ONLY_OPTION,
+    allow_bulk: bool = BCDC_ALLOW_BULK_OPTION,
 ) -> None:
     """Submit DWDS fallback orders for BCGW-backed BCDC layers."""
 
+    if not isinstance(plan_only, bool):
+        plan_only = False
+    if not isinstance(allow_bulk, bool):
+        allow_bulk = False
     if query_file is not None and not isinstance(query_file, Path):
         query_file = None
 
@@ -2508,6 +2657,8 @@ def data_bcdc_order(
             "`--query-file`."
         )
         raise typer.Exit(code=1)
+    requested_query_count = len(resolved_queries)
+    resolved_queries, duplicate_count = _dedupe_preserving_order(resolved_queries)
 
     if bool(bbox) == bool(geomark):
         console.print(
@@ -2532,6 +2683,26 @@ def data_bcdc_order(
     except (BcdcFetchError, BcdcDwdsError) as exc:
         console.print(f"[red]BCDC order error:[/red] {exc}")
         raise typer.Exit(code=1) from exc
+
+    should_continue, guardrail_warnings = _evaluate_bcdc_bulk_guardrail(
+        operation_label="DWDS order",
+        unique_query_count=len(resolved_queries),
+        bulk_threshold=BCDC_DWDS_ORDER_BULK_THRESHOLD,
+        plan_only=plan_only,
+        allow_bulk=allow_bulk,
+    )
+    _print_bcdc_guardrail_plan(
+        operation_label="DWDS order",
+        requested_query_count=requested_query_count,
+        unique_queries=resolved_queries,
+        duplicate_count=duplicate_count,
+        warnings=guardrail_warnings,
+        plan_only=plan_only,
+    )
+    if not should_continue:
+        raise typer.Exit(code=1)
+    if plan_only:
+        return
 
     results: list[BcdcDwdsOrderResult] = []
     try:

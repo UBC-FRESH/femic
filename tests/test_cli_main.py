@@ -4064,6 +4064,52 @@ def test_data_bcdc_resolve_downloads_direct_resources(
     assert any("downloads: downloaded=1" in msg for msg in messages)
 
 
+def test_data_bcdc_resolve_plan_only_skips_direct_download_execution(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "resolve_bcdc_candidates",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("resolve_bcdc_candidates should not be called")
+        ),
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "download_direct_bcdc_resources",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("download_direct_bcdc_resources should not be called")
+        ),
+    )
+
+    query_file = tmp_path / "queries.txt"
+    query_file.write_text(
+        "SITE_PROD_BC\nSITE_PROD_BC\nWHSE_FOREST_VEGETATION.VEG_COMP_LYR_R1_POLY\n",
+        encoding="utf-8",
+    )
+
+    cli_main.data_bcdc_resolve(
+        queries=None,
+        query_file=query_file,
+        summary_csv=None,
+        manifest_path=None,
+        download_direct=True,
+        download_root=tmp_path / "downloads",
+        limit=5,
+        instance_root=None,
+        plan_only=True,
+        allow_bulk=False,
+    )
+
+    assert any("plan_operation: direct-download" in msg for msg in messages)
+    assert any("requested_query_count: 3" in msg for msg in messages)
+    assert any("deduplicated_query_count: 2" in msg for msg in messages)
+    assert any("plan_only:" in msg for msg in messages)
+
+
 def test_data_bcdc_resolve_query_file_ignores_blank_lines_and_comments(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -4348,6 +4394,46 @@ def test_data_bcdc_fetch_reports_fetch_error(
     assert any("download-direct" in msg for msg in messages)
 
 
+def test_data_bcdc_fetch_plan_only_deduplicates_without_fetching(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    called: list[str] = []
+    monkeypatch.setattr(
+        cli_main,
+        "fetch_bcdc_wfs_data",
+        lambda query, **_kwargs: called.append(query),
+    )
+
+    query_file = tmp_path / "queries.txt"
+    query_file.write_text(
+        "WHSE_FOREST_VEGETATION.F_OWN\nwhse_forest_vegetation.f_own\n",
+        encoding="utf-8",
+    )
+
+    cli_main.data_bcdc_fetch(
+        queries=None,
+        query_file=query_file,
+        manifest_path=None,
+        download_root=None,
+        limit=5,
+        instance_root=None,
+        bbox="1170000,450000,1180000,460000",
+        geomark=None,
+        output_format="gpkg",
+        plan_only=True,
+        allow_bulk=False,
+    )
+
+    assert called == []
+    assert any("plan_operation: WFS fetch" in msg for msg in messages)
+    assert any("requested_query_count: 2" in msg for msg in messages)
+    assert any("deduplicated_query_count: 1" in msg for msg in messages)
+    assert any("plan_only:" in msg for msg in messages)
+
+
 def test_data_bcdc_order_prints_summary_and_manifest(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -4424,6 +4510,88 @@ def test_data_bcdc_order_prints_summary_and_manifest(
     assert any("status_probe:" in msg for msg in messages)
     assert any("manifest:" in msg for msg in messages)
     assert (tmp_path / "manifest.json").is_file()
+
+
+def test_data_bcdc_order_requires_allow_bulk_for_large_plan(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "submit_bcdc_dwds_order",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("submit_bcdc_dwds_order should not be called")
+        ),
+    )
+
+    query_file = tmp_path / "queries.txt"
+    query_file.write_text(
+        "\n".join(
+            [
+                "WHSE_FOREST_VEGETATION.F_OWN",
+                "WHSE_ADMIN_BOUNDARIES.FADM_TSA",
+                "WHSE_FOREST_VEGETATION.BEC_BIOGEOCLIMATIC_POLY",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.data_bcdc_order(
+            queries=None,
+            query_file=query_file,
+            manifest_path=None,
+            limit=5,
+            instance_root=None,
+            bbox="1170000,450000,1180000,460000",
+            geomark=None,
+            output_format="fgdb",
+            email=None,
+            clip=True,
+            plan_only=False,
+            allow_bulk=False,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("plan_operation: DWDS order" in msg for msg in messages)
+    assert any("requested_query_count: 3" in msg for msg in messages)
+    assert any("good-citizen warning:" in msg for msg in messages)
+    assert any("--allow-bulk" in msg for msg in messages)
+
+
+def test_data_bcdc_order_plan_only_skips_submission(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "submit_bcdc_dwds_order",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("submit_bcdc_dwds_order should not be called")
+        ),
+    )
+
+    cli_main.data_bcdc_order(
+        queries=["WHSE_FOREST_VEGETATION.F_OWN"],
+        query_file=None,
+        manifest_path=None,
+        limit=5,
+        instance_root=None,
+        bbox="1170000,450000,1180000,460000",
+        geomark=None,
+        output_format="fgdb",
+        email=None,
+        clip=True,
+        plan_only=True,
+        allow_bulk=False,
+    )
+
+    assert any("plan_operation: DWDS order" in msg for msg in messages)
+    assert any("plan_only:" in msg for msg in messages)
 
 
 def test_data_bcdc_order_query_file_with_geomark(

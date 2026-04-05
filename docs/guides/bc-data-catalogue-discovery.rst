@@ -114,6 +114,48 @@ is WFS-queryable, normalize the AOI from ``--bbox`` or ``--geomark``, and save
 a local GeoPackage or GeoJSON subset instead of dropping you directly into the
 manual BCGW UI.
 
+Good-Citizen Guardrails
+-----------------------
+
+FEMIC now adds a light-touch "be a good citizen" layer around the public BCDC,
+OpenMaps WFS, and DWDS acquisition commands.
+
+The defaults are intentionally stiff but plastic:
+
+- repeated queries are deduplicated before public-service activity starts;
+- ``--plan-only`` lets you preview the intended fetch/order/download burst
+  without making network calls; and
+- larger batch runs now require ``--allow-bulk`` so a user or agent does not
+  accidentally turn one exploratory workflow into a big burst of public API
+  traffic.
+
+Typical pattern for a cautious batch run:
+
+.. code-block:: text
+
+   & .\.venv\Scripts\python.exe -m femic data bcdc-fetch `
+     --query-file runtime\logs\tsa29_tsr_source_layers.txt `
+     --bbox 1170000,450000,1180000,460000 `
+     --plan-only
+
+Then, if the plan looks intentional and you really do want the larger run:
+
+.. code-block:: text
+
+   & .\.venv\Scripts\python.exe -m femic data bcdc-fetch `
+     --query-file runtime\logs\tsa29_tsr_source_layers.txt `
+     --bbox 1170000,450000,1180000,460000 `
+     --allow-bulk
+
+The same pattern applies to:
+
+- ``femic data bcdc-resolve --download-direct``; and
+- ``femic data bcdc-order``.
+
+These are not hard lockouts. They are defaults meant to discourage accidental
+public-service abuse while still leaving an explicit override path for expert
+users who knowingly want to push further.
+
 Worked Example: F_OWN to a Local GeoPackage
 -------------------------------------------
 

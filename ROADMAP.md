@@ -12958,6 +12958,51 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Added regression coverage for the mixed-package case where a lower-signal
     WMS-style row is WFS-queryable but classified as indirect/custom-download,
     and therefore must not promote a package-level WFS fetch strategy.
+- 2026-04-04 (Issue `#113` active: add soft good-citizen guardrails for bulk
+  public BCDC/WFS/DWDS automation):
+  - Keep this slice intentionally behavioral rather than punitive:
+    - prefer deduplication and cache reuse first;
+    - add a low-friction planning surface for batch fetch/order runs; and
+    - require an explicit bulk override only when a run crosses a modest
+      public-service threshold.
+  - First implementation targets:
+    - `femic data bcdc-resolve --download-direct`
+    - `femic data bcdc-fetch`
+    - `femic data bcdc-order`
+  - The initial guardrail bundle should include:
+    - automatic duplicate-query collapse with a visible summary;
+    - `--plan-only` support so users/agents can preview the intended public
+      traffic without executing it;
+    - threshold-based warnings/soft stops for bulk direct-download, WFS fetch,
+      and DWDS order bursts; and
+    - user/agent docs that explain the “good citizen” principle and the
+      explicit override path.
+  - Detailed Next Steps:
+    - add small internal helpers that summarize batch query intent before
+      network activity starts;
+    - wire `--plan-only` and `--allow-bulk` through the three acquisition
+      commands;
+    - add tests proving duplicate queries are collapsed and bulk runs are
+      blocked unless explicitly acknowledged; and
+    - document the new behavior in the BCDC discovery guide and CLI docs.
+- 2026-04-04 (Issue `#113` complete: soft good-citizen guardrails now shape
+  bulk public BCDC/WFS/DWDS activity by default):
+  - Added deduplicated plan summaries plus ``--plan-only`` and
+    ``--allow-bulk`` to:
+    - ``femic data bcdc-resolve --download-direct``
+    - ``femic data bcdc-fetch``
+    - ``femic data bcdc-order``
+  - Repeated query entries are now collapsed before public-service activity
+    starts, and the CLI reports the requested vs deduplicated query counts.
+  - Bulk runs now stop with a clear good-citizen warning unless the user
+    explicitly reruns with ``--allow-bulk``.
+  - Live smoke confirmed:
+    - ``bcdc-fetch --plan-only`` prints a deduplicated plan without making
+      network calls; and
+    - a three-query DWDS batch now stops early with a warning instead of
+      quietly submitting multiple public orders.
+  - Updated the BCDC discovery guide and CLI reference so the user-facing
+    boundary and override path are discoverable instead of implicit.
 - 2026-04-04 (Issue `#109` implemented: WFS probing/classification for
   OpenMaps-backed BCDC service resources):
   - Extended `femic data bcdc-resolve` so service-backed resources can now

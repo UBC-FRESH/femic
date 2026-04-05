@@ -224,6 +224,8 @@ Subcommands
 - ``--download-root PATH`` (optional destination root for direct downloads)
 - ``--limit INTEGER`` (default: ``5``)
 - ``--instance-root PATH`` (optional instance root used to resolve default output paths)
+- ``--plan-only`` (preview deduplicated direct-download activity without executing it)
+- ``--allow-bulk / --no-allow-bulk`` (explicitly allow larger direct-download bursts that exceed FEMIC's default public-service threshold)
 
 For working Windows examples, including quoted multi-word queries and
 ``--query-file`` batch usage, see
@@ -240,6 +242,8 @@ For working Windows examples, including quoted multi-word queries and
 - ``--bbox minx,miny,maxx,maxy`` (required unless ``--geomark`` is supplied; interpreted in ``EPSG:3005``)
 - ``--geomark TEXT`` (required unless ``--bbox`` is supplied; accepts a full Geomark URL or bare Geomark ID)
 - ``--output-format [gpkg|geojson]`` (default: ``gpkg``)
+- ``--plan-only`` (preview deduplicated WFS activity without executing it)
+- ``--allow-bulk / --no-allow-bulk`` (explicitly allow larger WFS bursts that exceed FEMIC's default public-service threshold)
 
 ``data bcdc-fetch`` is the first automated geographic acquisition lane built on
 top of the WFS service hints from ``bcdc-resolve``. Use it when the resolved
@@ -260,6 +264,8 @@ instead.
 - ``--output-format [fgdb|gpkg|geojson|shp]`` (default: ``fgdb``)
 - ``--email TEXT`` (optional DWDS notification email)
 - ``--clip / --no-clip`` (default: ``--clip``)
+- ``--plan-only`` (preview deduplicated DWDS order activity without executing it)
+- ``--allow-bulk / --no-allow-bulk`` (explicitly allow larger DWDS order bursts that exceed FEMIC's default public-service threshold)
 
 ``data bcdc-order`` is the heavier BCGW fallback lane. Use it when a dataset
 needs a DWDS order for richer outputs such as File Geodatabase or GeoPackage
@@ -268,6 +274,11 @@ current public DWDS seam can submit orders successfully, but the public
 ``/order/{id}`` status lookup may still report successful live orders as
 missing, so FEMIC records that caveat in the manifest instead of pretending
 the full end-to-end download path is already solved.
+
+All three BCDC acquisition commands now apply soft good-citizen guardrails:
+duplicate queries are collapsed automatically, ``--plan-only`` previews the
+deduplicated public-service activity, and larger batch runs require an
+explicit ``--allow-bulk`` acknowledgement before FEMIC will execute them.
 
 Subcommands
 
