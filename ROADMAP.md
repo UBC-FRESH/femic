@@ -8453,28 +8453,32 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P51.6d Update the relevant docs and user overlay example for the new exact-state override seam.
 
 ## Phase 52: TSR Recipe Templates for Source-Layer Acquisition and THLB Netdown
-- [ ] P52.1 Define the recipe schema and instance-local template lifecycle (`#123`)
-  - [ ] P52.1a Add packaged template YAML for:
+- [x] P52.1 Define the recipe schema and instance-local template lifecycle (`#123`)
+  - [x] P52.1a Add packaged template YAML for:
     - `config/tsr/source_layers.recipe.yaml`
     - `config/tsr/thlb_netdown.recipe.yaml`
-  - [ ] P52.1b Add loader/validator support for the new recipe surfaces.
-  - [ ] P52.1c Add `femic tsr recipe-init` with idempotent refresh/overwrite behavior.
-- [ ] P52.2 Build and execute the reusable source-layer recipe (`#124`)
-  - [ ] P52.2a Add `femic tsr source-layers-build` so TSR candidate facts + current BCDC knowledge become a reviewable acquisition recipe.
-  - [ ] P52.2b Add `femic tsr source-layers-run` so safe public acquisition, reuse, and override seams can be executed from the recipe instead of rediscovered ad hoc.
-  - [ ] P52.2c Persist per-entry provenance, current acquisition strategy, local artifact path, and blocked/override-required state.
-- [ ] P52.3 Extract TSA THLB netdown logic into a reviewable recipe (`#125`)
-  - [ ] P52.3a Add `femic tsr thlb-netdown-build` to derive ordered, provenance-preserving netdown steps from TSR source documents.
-  - [ ] P52.3b Normalize high-confidence predicates/operators while preserving raw TSR wording for later review.
-  - [ ] P52.3c Compose the THLB recipe against logical source-layer recipe ids rather than hard-coded one-off file paths.
-- [ ] P52.4 Execute the THLB netdown recipe into stand-level overlays (`#126`)
-  - [ ] P52.4a Add `femic tsr thlb-netdown-run` with a bounded supported operation set sufficient for TSA29 acceptance.
-  - [ ] P52.4b Emit a stand-level `thlb_fact` artifact plus a structured per-step audit report.
-  - [ ] P52.4c Keep unsupported or low-confidence steps explicit as `needs_review`, `unsupported`, or `blocked_missing_source` instead of guessing silently.
+  - [x] P52.1b Add loader/validator support for the new recipe surfaces.
+  - [x] P52.1c Add `femic tsr recipe-init` with idempotent refresh/overwrite behavior.
+- [x] P52.2 Build and execute the reusable source-layer recipe (`#124`)
+  - [x] P52.2a Add `femic tsr source-layers-build` so TSR candidate facts + current BCDC knowledge become a reviewable acquisition recipe.
+  - [x] P52.2b Add `femic tsr source-layers-run` so safe public acquisition, reuse, and override seams can be executed from the recipe instead of rediscovered ad hoc.
+  - [x] P52.2c Persist per-entry provenance, current acquisition strategy, local artifact path, and blocked/override-required state.
+- [x] P52.3 Extract TSA THLB netdown logic into a reviewable recipe (`#125`)
+  - [x] P52.3a Add `femic tsr thlb-netdown-build` to derive ordered, provenance-preserving netdown steps from TSR source documents.
+  - [x] P52.3b Normalize high-confidence predicates/operators while preserving raw TSR wording for later review.
+  - [x] P52.3c Compose the THLB recipe against logical source-layer recipe ids rather than hard-coded one-off file paths.
+- [x] P52.4 Execute the THLB netdown recipe into stand-level overlays (`#126`)
+  - [x] P52.4a Add `femic tsr thlb-netdown-run` with a bounded supported operation set sufficient for TSA29 acceptance.
+  - [x] P52.4b Emit a stand-level `thlb_fact` artifact plus a structured per-step audit report.
+  - [x] P52.4c Keep unsupported or low-confidence steps explicit as `needs_review`, `unsupported`, or `blocked_missing_source` instead of guessing silently.
 - [ ] P52.5 Document the convergent, reproducible TSA29 acceptance path (`#127`)
   - [ ] P52.5a Add worked docs for recipe init/build/run/report and the relationship between canonical TSR JSON, reviewed recipes, and user overrides.
   - [ ] P52.5b Record the TSA29 proving-ground case from fresh clone through source-layer acquisition and THLB recipe execution.
   - [ ] P52.5c Make the convergence and reproducibility contract explicit: when a user approves the finished instance, FEMIC should expose the fully scripted steps needed to rebuild that same product from a clean environment.
+- [ ] P52.6 Promote THLB execution from hybrid bridge to raw-land-base fragment reconstruction (`#128`)
+  - [ ] P52.6a Rebuild THLB from the raw/resultant VRI land base instead of seeding from legacy raster-derived `thlb_raw` / `thlb_area` / `thlb`.
+  - [ ] P52.6b Overlay the reviewed exclusion layers to fragment the geometry and assign binary THLB membership `{0,1}` at the fragment level.
+  - [ ] P52.6c Emit fragment/resultant artifacts and comparison reports against legacy raster THLB and TSR-reported THLB so the new path is auditable.
 
 ## Detailed Next Steps Notes
 
@@ -13463,6 +13467,43 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       are checkpointed;
     - move to `#127` next so the recipe workflow docs and TSA29 acceptance
       case are finalized as the definitive Phase 52 runbook; and
-    - keep the eventual Phase 52 closeout focused on one fresh-clone
-      reproducibility story rather than letting downstream acceptance evidence
-      drift back into chat-only lore.
+    - explicitly promote a follow-on child issue for the production-grade THLB
+      target so the current hybrid `thlb_fact` bridge does not get mistaken for
+      the final reproducible land-base reconstruction workflow.
+
+- 2026-04-04 (Issue `#128` promoted: move beyond the hybrid THLB bridge toward
+  true raw-land-base fragment reconstruction):
+  - Why the new child issue exists:
+    - `#126` proved that FEMIC can execute a bounded TSR-derived THLB recipe
+      and feed downstream Patchworks export successfully;
+    - however, that runner still seeds `thlb_fact` from legacy raster-derived
+      THLB signals already present in the stand checkpoint, then applies
+      reviewed exclusions on top;
+    - that is a useful bridge, but it is not the final reproducible target the
+      TSA29 proving-ground actually needs.
+  - Production-grade target being promoted into the active plan:
+    - start from the raw/resultant VRI land base rather than from
+      `thlb_raw` / `thlb_area` / `thlb`;
+    - overlay the reviewed exclusion layers and fragment the geometry the way
+      BC analysts commonly do when building a resultant/fragments layer;
+    - assign binary THLB membership `{0,1}` at the fragment level, not a
+      stand-level proportional surrogate unless an explicit fallback mode is
+      invoked;
+    - preserve the fragment/resultant product as the authoritative geometric
+      substrate for downstream Patchworks retention, track, and block logic.
+  - Convergence/reproducibility contract for the promoted lane:
+    - every step in the future raw-land-base reconstruction workflow must have
+      a definite scripted FEMIC/runbook counterpart suitable for a fresh-clone
+      rebuild;
+    - downstream work must not dynamite the upstream reproducibility story by
+      creating hidden state or shell-only lore;
+    - the legacy raster THLB should survive only as a comparison/fallback
+      reference, not as the baseline truth for the production-grade workflow.
+  - Detailed Next Steps:
+    - complete `#127` so the current Phase 52 hybrid bridge and TSA29
+      acceptance workflow are documented honestly;
+    - then move into `#128` to replace the legacy-raster baseline with
+      fragment-level reconstructed THLB from the reviewed TSR netdown recipe;
+    - make the eventual `#128` acceptance proof include explicit comparison
+      against both the legacy raster-derived THLB area and the TSR-reported
+      THLB area so the new path is auditable rather than hand-wavy.

@@ -11866,3 +11866,21 @@
     - `femic export patchworks` completed successfully when pointed at the new
       THLB checkpoint, confirming that the produced `thlb_fact` artifact is
       consumable by the existing Patchworks export seam.
+- 2026-04-04: Promoted `#128` to capture the production-grade THLB target
+  beyond the hybrid bridge landed in `#126`.
+  - Clarified the architectural distinction:
+    - `#126` is a useful executable bridge that seeds `thlb_fact` from legacy
+      raster-derived THLB signals already present in the checkpoint, then
+      applies reviewed TSR exclusions on top;
+    - `#128` is the real reproducible target for TSA29 and later TSAs:
+      reconstruct THLB from the raw/resultant VRI land base by overlaying the
+      reviewed exclusion layers, fragmenting the geometry, and assigning binary
+      fragment-level THLB membership `{0,1}`.
+  - Recorded the BC-style modeling expectation that any resultant/fragment
+    passed downstream should carry binary in/out THLB status, with Patchworks
+    then handling managed/unmanaged accounting through fragment retention,
+    tracks, and later block aggregation.
+  - Made the convergence contract explicit in repo planning:
+    the future raw-land-base reconstruction lane must improve or preserve the
+    eventual fresh-clone "make all" rebuild story instead of relying on hidden
+    state or legacy raster lore.
