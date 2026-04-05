@@ -11713,3 +11713,21 @@
       quietly submitting multiple public orders.
   - Updated the BCDC discovery guide and CLI reference so the user-facing
     boundary and override path are explicit.
+- 2026-04-04: Opened `#121` to clean the TSA29 DataLad subdataset by
+  promoting curated instance artifacts (including BCDC downloads, TSR overlay
+  state, and plots) while isolating transient logs/checkpoints/tmp spill.
+- 2026-04-04: Completed `#121` by promoting the curated TSA29 instance state
+  through DataLad and pushing it cleanly.
+  - Saved and published the TSA29 subdataset with:
+    - `config/tsr/overlay.yaml`
+    - `config/tsr/source_layer_overrides.yaml`
+    - curated `data/downloads/bcdc/**`
+    - `data/shp/tsa29.shp/stands.*`
+    - the requested `plots/*.png` diagnostics
+  - Left the canonical fragment shapefiles in
+    `output/patchworks_tsa29_validated/fragments/` unchanged and ignored the
+    redundant `tmp/issue100.../fragments/` smoke copies.
+  - Updated the TSA29 `.gitignore` to suppress checkpoint feathers, temp
+    exports, issue85 runtime/VDYP spill, and extra generated
+    `topology_blocks_*r.csv` variants so the subdataset is clean for future
+    work.

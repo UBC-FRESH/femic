@@ -13164,3 +13164,44 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - spawn immediate child follow-up issues only for gaps revealed by the
       smoke that materially block practical multi-layer acquisition, and defer
       lower-value papercuts to later issue lanes.
+- 2026-04-04 (Issue `#121` active: TSA29 dataset hygiene and curated artifact
+  promotion):
+  - Triage the TSA29 DataLad subdataset's large untracked set into:
+    - curated instance artifacts to keep for future users;
+    - transient logs/checkpoints/tmp spill to ignore or leave local; and
+    - any ambiguous items that need an explicit policy call before tracking.
+  - Use DataLad save/publish flow for the TSA29 repo so large curated files
+    stay under annex control instead of being mixed into plain git by accident.
+  - The initial user request explicitly includes keeping the TSA29 BCDC
+    downloads and plots, so this pass should treat those as default "promote"
+    candidates unless the subrepo's existing conventions clearly say
+    otherwise.
+- 2026-04-04 (Issue `#121` complete: TSA29 curated artifacts promoted and
+  transient spill suppressed):
+  - Saved the TSA29 subdataset with DataLad and pushed both git history and
+    annex content after promoting the curated instance state:
+    - `config/tsr/overlay.yaml`
+    - `config/tsr/source_layer_overrides.yaml`
+    - the curated `data/downloads/bcdc/**` acquisition stash
+    - `data/shp/tsa29.shp/stands.*`
+    - the requested `plots/*.png` diagnostics
+  - Left the already-canonical fragment shapefiles alone in
+    `output/patchworks_tsa29_validated/fragments/` and did not promote the
+    redundant `tmp/issue100.../fragments/` smoke copies.
+  - Tightened the TSA29 repo `.gitignore` so the remaining local noise stops
+    polluting source control, including:
+    - checkpoint feathers;
+    - `tmp/` smoke exports;
+    - issue85 runtime/VDYP JSONL spill; and
+    - generated `topology_blocks_*r.csv` variants beyond the tracked `0r`
+      baseline.
+  - DataLad push results:
+    - annexed curated content copied to `arbutus-s3`; and
+    - the TSA29 git history published to `origin`.
+  - Detailed Next Steps:
+    - keep the top-level FEMIC repo aligned to the new TSA29 submodule
+      pointer;
+    - leave top-level `runtime/` smoke artifacts untracked unless a later
+      deliverable explicitly promotes them; and
+    - use the now-clean TSA29 dataset state as the baseline for any further
+      instance-build or netdown automation work.
