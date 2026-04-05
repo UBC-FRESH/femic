@@ -224,6 +224,24 @@ The override layer can now also carry review-only
 These are bounded public shortlists meant to help human review move the wall;
 they are not treated as exact replacements or auto-fetch targets.
 
+Current THLB Execution Boundary
+-------------------------------
+
+The THLB execution helper shipped in issue ``#126`` is intentionally a
+reproducible **hybrid bridge**, not yet the full raw-land-base reconstruction
+engine:
+
+- it starts from the existing checkpoint THLB signal when building
+  ``thlb_fact``;
+- it applies the bounded supported reviewed exclusions on top of that
+  baseline; and
+- it keeps unsupported or blocked clauses explicit in the audit output.
+
+The promoted next target, tracked in issue ``#128``, is to rebuild THLB from
+the raw/resultant land base itself by overlaying the reviewed exclusion layers,
+fragmenting the geometry, and assigning binary fragment-level THLB membership
+``{0,1}``.
+
 Cross-References
 ----------------
 

@@ -11884,3 +11884,17 @@
     the future raw-land-base reconstruction lane must improve or preserve the
     eventual fresh-clone "make all" rebuild story instead of relying on hidden
     state or legacy raster lore.
+- 2026-04-04: Completed `#127` by documenting the current Phase 52 milestone
+  honestly as a reproducible hybrid THLB bridge rather than a fully landed
+  raw-land-base reconstruction engine.
+  - Updated the TSA runbook, CLI reference, and TSR API docs to state
+    explicitly that:
+    - `#126` seeds `thlb_fact` from the existing checkpoint THLB signal and
+      then applies the supported reviewed TSR exclusions on top; and
+    - `#128` is the promoted production-grade target that should rebuild THLB
+      from the raw/resultant land base, fragment the geometry, and assign
+      binary fragment-level THLB membership `{0,1}`.
+  - Added the convergence/reproducibility guidance that the current Phase 52
+    scripted chain is already a valid milestone, but that future work must
+    keep any coarse stand-level approximations explicit and reviewable rather
+    than silently replacing required overlay/fragmentation logic.

@@ -8471,10 +8471,10 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P52.4a Add `femic tsr thlb-netdown-run` with a bounded supported operation set sufficient for TSA29 acceptance.
   - [x] P52.4b Emit a stand-level `thlb_fact` artifact plus a structured per-step audit report.
   - [x] P52.4c Keep unsupported or low-confidence steps explicit as `needs_review`, `unsupported`, or `blocked_missing_source` instead of guessing silently.
-- [ ] P52.5 Document the convergent, reproducible TSA29 acceptance path (`#127`)
-  - [ ] P52.5a Add worked docs for recipe init/build/run/report and the relationship between canonical TSR JSON, reviewed recipes, and user overrides.
-  - [ ] P52.5b Record the TSA29 proving-ground case from fresh clone through source-layer acquisition and THLB recipe execution.
-  - [ ] P52.5c Make the convergence and reproducibility contract explicit: when a user approves the finished instance, FEMIC should expose the fully scripted steps needed to rebuild that same product from a clean environment.
+- [x] P52.5 Document the convergent, reproducible TSA29 acceptance path (`#127`)
+  - [x] P52.5a Add worked docs for recipe init/build/run/report and the relationship between canonical TSR JSON, reviewed recipes, and user overrides.
+  - [x] P52.5b Record the TSA29 proving-ground case from fresh clone through source-layer acquisition and THLB recipe execution.
+  - [x] P52.5c Make the convergence and reproducibility contract explicit: when a user approves the finished instance, FEMIC should expose the fully scripted steps needed to rebuild that same product from a clean environment.
 - [ ] P52.6 Promote THLB execution from hybrid bridge to raw-land-base fragment reconstruction (`#128`)
   - [ ] P52.6a Rebuild THLB from the raw/resultant VRI land base instead of seeding from legacy raster-derived `thlb_raw` / `thlb_area` / `thlb`.
   - [ ] P52.6b Overlay the reviewed exclusion layers to fragment the geometry and assign binary THLB membership `{0,1}` at the fragment level.
@@ -13507,3 +13507,29 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - make the eventual `#128` acceptance proof include explicit comparison
       against both the legacy raster-derived THLB area and the TSR-reported
       THLB area so the new path is auditable rather than hand-wavy.
+
+- 2026-04-04 (Issue `#127` completed: Phase 52 docs now describe the current
+  hybrid THLB milestone honestly instead of implying the raw-land-base
+  reconstruction target is already landed):
+  - Docs now make the architectural distinction explicit across:
+    - `docs/guides/tsr-intelligence-workflow.rst`
+    - `docs/reference/cli.rst`
+    - `docs/reference/api/femic-tsr-catalog.rst`
+  - The user-facing contract is now clear:
+    - `#126` provides a reproducible, scriptable hybrid bridge that seeds
+      `thlb_fact` from the existing checkpoint THLB signal and applies the
+      supported reviewed TSR exclusions on top;
+    - `#128` is the promoted production-grade target that should rebuild THLB
+      from the raw/resultant land base, fragment the geometry through reviewed
+      overlay logic, and assign binary fragment-level THLB membership
+      `{0,1}`.
+  - The accepted Phase 52 milestone is therefore internally consistent and
+    reproducible, while still leaving a clear next lane for the true BC-style
+    resultant/fragments reconstruction story.
+  - Detailed Next Steps:
+    - close `#127` with the explicit note that the current runbook documents an
+      honest hybrid milestone rather than the final THLB reconstruction engine;
+    - start `#128` next and keep the modeling contract explicit:
+      stand-level binary approximations may remain an explicit fallback for
+      coarse exclusions, but the production-grade target is still fragment
+      overlay with binary THLB at the fragment level.

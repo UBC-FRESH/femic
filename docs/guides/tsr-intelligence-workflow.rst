@@ -268,6 +268,25 @@ The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
    instance forward, and unsupported steps remain explicit instead of forcing
    the user to rediscover what FEMIC did or did not apply.
 
+   Important current boundary:
+
+   - this is the **hybrid THLB bridge** landed in issue ``#126``;
+   - FEMIC currently seeds ``thlb_fact`` from the existing checkpoint THLB
+     signal (``thlb_fact`` -> ``thlb_raw`` -> ``thlb_area`` -> ``thlb``) and
+     then applies the supported reviewed TSR exclusions on top;
+   - that is internally consistent and reproducible, but it is **not** yet the
+     full production-grade reconstruction target.
+
+   The promoted next target is issue ``#128``:
+
+   - start from the raw/resultant VRI land base;
+   - overlay the reviewed exclusion layers and fragment the geometry; and
+   - assign binary fragment-level THLB membership ``{0,1}`` the way BC
+     analysts commonly do when building a resultant/fragments surface.
+
+   Until that lane lands, treat ``thlb-netdown-run`` as the current approved
+   milestone, not as the final reconstructed land-base engine.
+
 7. initialize or refresh the reviewed overlay:
 
    .. code-block:: bash
@@ -295,6 +314,43 @@ The current intended human loop is:
 - adopt only reviewed facts into the overlay
 - record any remaining wall cases in ``source_layer_overrides.yaml`` rather
   than hoping the same public query will behave differently later
+
+Convergence And Reproducibility Contract
+----------------------------------------
+
+Phase 52 is being developed as action research on TSA29, but the accepted
+result still has to converge toward production-grade reproducibility rather
+than remaining clever one-off shell lore.
+
+The current scriptable milestone is:
+
+1. ``femic tsr index``
+2. ``femic tsr fetch --tsa 29``
+3. ``femic tsr extract --tsa 29``
+4. ``femic tsr recipe-init --instance-root ... --tsa 29``
+5. ``femic tsr source-layers-build``
+6. ``femic tsr source-layers-run``
+7. ``femic tsr thlb-netdown-build``
+8. ``femic tsr thlb-netdown-run``
+9. ``femic tsr overlay-init`` / ``overlay-report``
+
+That chain is already a valid, reproducible TSA29 runbook.
+
+However, it is important not to blur two different THLB states:
+
+- **Current milestone:** a reproducible hybrid bridge that starts from the
+  existing checkpoint THLB signal and applies the supported TSR-derived
+  exclusions into ``thlb_fact``.
+- **Promoted next target (`#128`):** a raw-land-base reconstruction path that
+  overlays the reviewed layers onto the VRI/resultant geometry, fragments the
+  land base, and assigns binary fragment-level THLB membership ``{0,1}``.
+
+For coarse exclusions whose spatial scale is much larger than individual
+stands, a stand-level binary approximation may remain a defensible explicit
+fallback. For awkward fine-scale exclusions such as road or riparian buffers,
+future work may need fragment-level or fractional-overlap handling rather than
+magical stand-level guessing. The important contract is that FEMIC must make
+those approximations explicit, reviewable, and scriptable.
 
 You should not need to hand-scrub ``metadata/tsr/tsa_candidate_facts.json`` for
 this workflow. The intended review surface is the CSV produced by

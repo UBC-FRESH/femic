@@ -650,6 +650,21 @@ This command is intentionally partial-success friendly: it should move the
 recipe forward where FEMIC has enough trustworthy information while keeping the
 remaining wall visible and reproducible.
 
+Important current boundary:
+
+- this command is the **hybrid THLB bridge** landed in issue ``#126``;
+- it currently normalizes the baseline managed share from the existing
+  checkpoint THLB columns and applies supported reviewed exclusions on top;
+- it is therefore a reproducible executable milestone, but not yet the final
+  raw-land-base fragment reconstruction target promoted into issue ``#128``.
+
+The intended production-grade target for ``#128`` is different:
+
+- start from the raw/resultant land-base geometry;
+- overlay the reviewed exclusion layers and fragment the geometry; and
+- assign binary fragment-level THLB membership ``{0,1}`` instead of relying on
+  the legacy raster-derived baseline as the underlying truth.
+
 ``tsr overlay-init`` options
 
 - ``--tsa TEXT`` (required TSA code, ``tsa_<code>``, or TSA name)
