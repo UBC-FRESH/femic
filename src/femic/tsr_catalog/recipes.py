@@ -9,7 +9,7 @@ from importlib import resources as importlib_resources
 import json
 from pathlib import Path
 import re
-from typing import Any
+from typing import Any, Sequence
 
 import geopandas as gpd  # type: ignore[import-untyped]
 import pandas as pd
@@ -29,6 +29,7 @@ from femic.bcdc_fetch import (
     GeomarkBBox,
     fetch_bcdc_wfs_data,
 )
+from femic.pipeline.vri import initialize_aflb_land_base_records
 
 from .overlay import TsrOverlayTsaRecord
 from .report import TsrFactReviewRow, report_tsr_candidate_facts
@@ -205,6 +206,7 @@ class TsrThlbNetdownRecipeRunResult:
     audit_path: Path
     execution_mode: str
     baseline_signal: str
+    selected_map_ids: tuple[str, ...]
     step_count: int
     outcome_counts: dict[str, int]
     baseline_managed_area_ha: float
@@ -1600,6 +1602,64 @@ def _load_checkpoint_geodataframe(path: Path) -> gpd.GeoDataFrame:
     return checkpoint
 
 
+def _normalize_map_id_token(value: Any) -> str:
+    text = str(value).strip().upper()
+    return text
+
+
+def _filter_checkpoint_by_map_ids(
+    checkpoint: gpd.GeoDataFrame,
+    *,
+    map_ids: tuple[str, ...],
+) -> gpd.GeoDataFrame:
+    if not map_ids:
+        return checkpoint
+    if "MAP_ID" not in checkpoint.columns:
+        raise TsrRecipeError(
+            "Checkpoint does not carry `MAP_ID`, so MAP_ID-based THLB smoke subsetting "
+            "cannot be applied."
+        )
+    normalized = tuple(
+        _normalize_map_id_token(value) for value in map_ids if str(value).strip()
+    )
+    if not normalized:
+        return checkpoint
+    subset = checkpoint.loc[
+        checkpoint["MAP_ID"].fillna("").astype(str).str.upper().isin(normalized)
+    ].copy()
+    if subset.empty:
+        raise TsrRecipeError(
+            "MAP_ID subset did not match any checkpoint rows: " + ", ".join(normalized)
+        )
+    return subset
+
+
+def _auto_select_smoke_map_ids(
+    checkpoint: gpd.GeoDataFrame,
+    *,
+    max_area_ha: float = 100000.0,
+) -> tuple[str, ...]:
+    if "MAP_ID" not in checkpoint.columns:
+        raise TsrRecipeError(
+            "Checkpoint does not carry `MAP_ID`, so automatic smoke subset selection "
+            "cannot be applied."
+        )
+    working = checkpoint.loc[
+        checkpoint["MAP_ID"].notna() & checkpoint.geometry.notna()
+    ].copy()
+    if working.empty:
+        raise TsrRecipeError("Checkpoint does not contain any usable `MAP_ID` rows.")
+    working["_area_ha"] = working.geometry.area.astype(float) / 10000.0
+    summary = (
+        working.groupby("MAP_ID", dropna=False)
+        .agg(rows=("MAP_ID", "size"), area_ha=("_area_ha", "sum"))
+        .sort_values(["area_ha", "rows"], ascending=[False, False])
+    )
+    under_cap = summary.loc[summary["area_ha"] <= max_area_ha]
+    chosen = under_cap.index[0] if not under_cap.empty else summary.index[0]
+    return (_normalize_map_id_token(chosen),)
+
+
 def _normalize_checkpoint_thlb_fact(
     checkpoint: gpd.GeoDataFrame,
 ) -> tuple[gpd.GeoDataFrame, str]:
@@ -1662,18 +1722,17 @@ def _update_geometry_measure_columns(checkpoint: gpd.GeoDataFrame) -> gpd.GeoDat
 def _initialize_reconstructed_land_base(
     checkpoint: gpd.GeoDataFrame,
 ) -> tuple[gpd.GeoDataFrame, str]:
-    reconstructed = checkpoint.copy()
-    if "FOR_MGMT_LAND_BASE_IND" in reconstructed.columns:
-        indicator = (
-            reconstructed["FOR_MGMT_LAND_BASE_IND"]
-            .fillna("N")
-            .astype(str)
-            .str.strip()
-            .str.upper()
+    if "FOR_MGMT_LAND_BASE_IND" in checkpoint.columns:
+        reconstructed = initialize_aflb_land_base_records(
+            f_table=checkpoint,
+            required_bclcs_level_2="T",
+            required_for_mgmt_land_base="Y",
+            excluded_bec_zones=(),
         )
-        thlb_binary = indicator.eq("Y").astype(float)
-        signal_source = "FOR_MGMT_LAND_BASE_IND_a_flb_proxy"
+        thlb_binary = reconstructed.geometry.map(lambda _value: 1.0).astype(float)
+        signal_source = "checkpoint1_aflb_initialization"
     else:
+        reconstructed = checkpoint.copy()
         thlb_binary = reconstructed.geometry.map(lambda _value: 1.0).astype(float)
         signal_source = "default_one"
     if (
@@ -2018,6 +2077,8 @@ def run_tsr_thlb_netdown_recipe(
     output_path: Path | None = None,
     audit_path: Path | None = None,
     execution_mode: str = TSR_THLB_EXECUTION_MODE_HYBRID,
+    map_ids: Sequence[str] = (),
+    auto_map_id_smoke_subset: bool = False,
 ) -> TsrThlbNetdownRecipeRunResult:
     """Execute a THLB netdown recipe into either a hybrid or reconstructed checkpoint."""
 
@@ -2067,6 +2128,19 @@ def run_tsr_thlb_netdown_recipe(
     )
 
     checkpoint = _load_checkpoint_geodataframe(resolved_checkpoint_path)
+    selected_map_ids: tuple[str, ...] = ()
+    if auto_map_id_smoke_subset and map_ids:
+        raise TsrRecipeError(
+            "Choose either explicit `map_ids` or `auto_map_id_smoke_subset`, not both."
+        )
+    if auto_map_id_smoke_subset:
+        selected_map_ids = _auto_select_smoke_map_ids(checkpoint)
+        checkpoint = _filter_checkpoint_by_map_ids(checkpoint, map_ids=selected_map_ids)
+    elif map_ids:
+        selected_map_ids = tuple(
+            _normalize_map_id_token(value) for value in map_ids if str(value).strip()
+        )
+        checkpoint = _filter_checkpoint_by_map_ids(checkpoint, map_ids=selected_map_ids)
     if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
         checkpoint, baseline_signal = _initialize_reconstructed_land_base(checkpoint)
     else:
@@ -2251,6 +2325,7 @@ def run_tsr_thlb_netdown_recipe(
     recipe_contract["selected_checkpoint_path"] = str(
         resolved_checkpoint_path.relative_to(instance_root).as_posix()
     )
+    recipe_contract["selected_map_ids"] = list(selected_map_ids)
     output_contract_key = (
         "reconstructed_output_checkpoint_path"
         if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
@@ -2284,6 +2359,7 @@ def run_tsr_thlb_netdown_recipe(
         "checkpoint_path": str(
             resolved_checkpoint_path.relative_to(instance_root).as_posix()
         ),
+        "selected_map_ids": list(selected_map_ids),
         "output_path": str(resolved_output_path.relative_to(instance_root).as_posix()),
         "execution_mode": execution_mode,
         "baseline_signal": baseline_signal,
@@ -2309,6 +2385,7 @@ def run_tsr_thlb_netdown_recipe(
         audit_path=resolved_audit_path,
         execution_mode=execution_mode,
         baseline_signal=baseline_signal,
+        selected_map_ids=selected_map_ids,
         step_count=len(applied_steps),
         outcome_counts=dict(sorted(outcome_counts.items())),
         baseline_managed_area_ha=baseline_managed_area_ha,

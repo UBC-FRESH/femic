@@ -689,6 +689,13 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
         {
             "FEATURE_ID": [100, 200],
             "FOR_MGMT_LAND_BASE_IND": ["Y", "N"],
+            "BCLCS_LEVEL_2": ["T", "T"],
+            "NON_PRODUCTIVE_CD": [None, None],
+            "BEC_ZONE_CODE": ["SBS", "SBS"],
+            "PROJ_AGE_1": [5, 80],
+            "BASAL_AREA": [1.0, 20.0],
+            "LIVE_STAND_VOLUME_125": [0.0, 50.0],
+            "MAP_ID": ["093J034", "093J099"],
             "POLYGON_AREA": [0.01, 0.01],
             "FEATURE_AREA_SQM": [100.0, 100.0],
             "FEATURE_LENGTH_M": [40.0, 40.0],
@@ -773,14 +780,15 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
 
     assert result.execution_mode == tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
     assert result.checkpoint_path == checkpoint1_path.resolve()
-    assert result.baseline_signal == "FOR_MGMT_LAND_BASE_IND_a_flb_proxy"
+    assert result.baseline_signal == "checkpoint1_aflb_initialization"
     assert result.baseline_managed_area_ha == pytest.approx(0.01)
     assert result.final_managed_area_ha == pytest.approx(0.005)
     assert result.legacy_reference_managed_area_ha == pytest.approx(0.01)
+    assert result.selected_map_ids == ()
 
     output = gpd.read_feather(result.output_path)
-    assert len(output) == 3
-    assert set(output["SOURCE_FEATURE_ID"].tolist()) == {100, 200}
+    assert len(output) == 2
+    assert set(output["SOURCE_FEATURE_ID"].tolist()) == {100}
     assert set(output["thlb"].tolist()) == {0, 1}
     assert set(output["thlb_fact"].tolist()) == {0.0, 1.0}
     assert output["FEATURE_ID"].is_unique
@@ -788,7 +796,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     managed = output.loc[output["thlb_fact"] > 0.0]
     unmanaged = output.loc[output["thlb_fact"] == 0.0]
     assert managed.geometry.area.sum() / 10000.0 == pytest.approx(0.005)
-    assert unmanaged.geometry.area.sum() / 10000.0 == pytest.approx(0.015)
+    assert unmanaged.geometry.area.sum() / 10000.0 == pytest.approx(0.005)
 
     audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
     assert (
@@ -805,3 +813,96 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
         recipe.recipe_contract["reconstructed_output_checkpoint_path"]
         == "data/tsr/thlb_reconstructed_checkpoint.feather"
     )
+    assert recipe.recipe_contract["selected_map_ids"] == []
+
+
+def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_can_auto_select_map_id_subset(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint1 = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [100, 200],
+            "FOR_MGMT_LAND_BASE_IND": ["Y", "Y"],
+            "BCLCS_LEVEL_2": ["T", "T"],
+            "NON_PRODUCTIVE_CD": [None, None],
+            "BEC_ZONE_CODE": ["SBS", "SBS"],
+            "PROJ_AGE_1": [5, 80],
+            "BASAL_AREA": [1.0, 20.0],
+            "LIVE_STAND_VOLUME_125": [0.0, 50.0],
+            "MAP_ID": ["093J034", "093J099"],
+        },
+        geometry=[box(0, 0, 1000, 1000), box(0, 0, 2000, 2000)],
+        crs="EPSG:3005",
+    )
+    checkpoint1.to_feather(checkpoint1_path)
+
+    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint8 = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1],
+            "thlb_raw": [100.0],
+        },
+        geometry=[box(0, 0, 10, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint8.to_feather(checkpoint8_path)
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["recipe_contract"]["status"] = "built"
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "thlb_step_001_land_base",
+            "order_index": 1,
+            "step_kind": "netdown_rule",
+            "label": "Timber harvesting land base",
+            "normalized_action": "use_land_base",
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 24,
+        }
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    result = tsr_recipes.run_tsr_thlb_netdown_recipe(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        execution_mode=tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+        auto_map_id_smoke_subset=True,
+    )
+
+    assert result.selected_map_ids == ("093J099",)
+    assert result.baseline_managed_area_ha == pytest.approx(400.0)
+    audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
+    assert audit_payload["selected_map_ids"] == ["093J099"]

@@ -565,6 +565,22 @@ TSR_THLB_EXECUTION_MODE_OPTION = typer.Option(
         "checkpoint and emits a fragment/resultant checkpoint with binary THLB."
     ),
 )
+TSR_THLB_MAP_ID_OPTION = typer.Option(
+    None,
+    "--map-id",
+    help=(
+        "Optional VRI MAP_ID filter for bounded THLB smoke runs. Repeat to use a "
+        "small curated mapsheet set."
+    ),
+)
+TSR_THLB_AUTO_MAP_ID_SMOKE_OPTION = typer.Option(
+    False,
+    "--auto-map-id-smoke-subset",
+    help=(
+        "Automatically select one dense TSA MAP_ID for a bounded THLB smoke run "
+        "before scaling to the full TSA."
+    ),
+)
 TSR_OVERWRITE_OPTION = typer.Option(
     False,
     "--overwrite",
@@ -2463,6 +2479,8 @@ def _print_tsr_thlb_netdown_recipe_run_summary(
     console.print(f"audit_path: {result.audit_path}")
     console.print(f"execution_mode: {result.execution_mode}")
     console.print(f"baseline_signal: {result.baseline_signal}")
+    if result.selected_map_ids:
+        console.print("selected_map_ids: " + ", ".join(result.selected_map_ids))
     console.print(f"tsa_id: {result.tsa.tsa_id}")
     console.print(f"tsa_code: {result.tsa.tsa_code}")
     console.print(f"tsa_name: {result.tsa.tsa_name}")
@@ -3218,6 +3236,8 @@ def tsr_thlb_netdown_run(
     output_path: Path | None = TSR_THLB_OUTPUT_PATH_OPTION,
     audit_path: Path | None = TSR_THLB_AUDIT_PATH_OPTION,
     execution_mode: str = TSR_THLB_EXECUTION_MODE_OPTION,
+    map_id: list[str] | None = TSR_THLB_MAP_ID_OPTION,
+    auto_map_id_smoke_subset: bool = TSR_THLB_AUTO_MAP_ID_SMOKE_OPTION,
 ) -> None:
     """Execute the reviewed THLB netdown recipe in hybrid or reconstructed mode."""
 
@@ -3265,6 +3285,8 @@ def tsr_thlb_netdown_run(
             output_path=resolved_output_path,
             audit_path=resolved_audit_path,
             execution_mode=execution_mode,
+            map_ids=tuple(map_id or ()),
+            auto_map_id_smoke_subset=auto_map_id_smoke_subset,
         )
     except TsrRecipeError as exc:
         console.print(f"[red]TSR THLB recipe run error:[/red] {exc}")

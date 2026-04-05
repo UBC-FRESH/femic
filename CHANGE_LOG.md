@@ -11932,3 +11932,28 @@
     - enable true fragment/resultant splitting for smaller/finer exclusions;
     - keep reporting exact spatial hectares versus coarse stand-binary versus
       later aspatial fallback separately.
+- 2026-04-05: Completed the first two child slices under `#128` and validated
+  them with a live TSA29 `MAP_ID` smoke run.
+  - `#129` restored a distinct AFLB-style checkpoint1 initialization seam for
+    reconstructed THLB:
+    - non-AFLB polygons are dropped from the working reconstruction land base;
+    - young and low-volume productive stands are retained in that starting
+      land base instead of inheriting AU/VDYP-only pruning logic.
+  - `#130` added a VRI `MAP_ID` proving-ground ladder so reconstructed THLB can
+    be validated on a compact dense mapsheet before scaling to the full TSA.
+  - First live TSA29 subset smoke used:
+    - `femic tsr thlb-netdown-run --instance-root external/femic-tsa29-instance --execution-mode reconstructed --auto-map-id-smoke-subset`
+    - selected mapsheet: `092O071`
+    - baseline AFLB-style managed area: `26,350.175 ha`
+    - final managed area after supported reconstructed steps:
+      `25,690.668 ha`
+  - The subset audit stayed explicit:
+    - `2` applied
+    - `2` applied_noop
+    - `3` blocked_missing_source
+    - `10` needs_review
+    - `1` unsupported
+  - Remaining `#128` work now concentrates on:
+    - `#131` fragment-first execution for more steps
+    - `#132` explicit aspatial fallback
+    - `#133` docs/runbook comparison contract

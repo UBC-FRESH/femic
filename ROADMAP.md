@@ -8476,9 +8476,11 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P52.5b Record the TSA29 proving-ground case from fresh clone through source-layer acquisition and THLB recipe execution.
   - [x] P52.5c Make the convergence and reproducibility contract explicit: when a user approves the finished instance, FEMIC should expose the fully scripted steps needed to rebuild that same product from a clean environment.
 - [ ] P52.6 Promote THLB execution from hybrid bridge to raw-land-base fragment reconstruction (`#128`)
-  - [ ] P52.6a Rebuild THLB from the raw/resultant VRI land base instead of seeding from legacy raster-derived `thlb_raw` / `thlb_area` / `thlb`.
-  - [ ] P52.6b Overlay the reviewed exclusion layers to fragment the geometry and assign binary THLB membership `{0,1}` at the fragment level.
-  - [ ] P52.6c Emit fragment/resultant artifacts and comparison reports against legacy raster THLB and TSR-reported THLB so the new path is auditable.
+  - [x] P52.6a Restore and validate AFLB-style checkpoint1 land-base initialization for reconstructed THLB (`#129`).
+  - [x] P52.6b Add a TSA29 `MAP_ID`-based smoke subset ladder for fast overlay proving-ground runs (`#130`).
+  - [ ] P52.6c Execute fragment-first TSR THLB reconstruction from reviewed recipe steps (`#131`).
+  - [ ] P52.6d Add explicit end-of-workflow aspatial fallback for blocked TSR target-area steps (`#132`).
+  - [ ] P52.6e Document the reconstruction ladder and comparison contract (`#133`).
 
 ## Detailed Next Steps Notes
 
@@ -13633,3 +13635,70 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       where the exact overlay is tractable; and
     - keep documenting which hectares came from exact spatial overlay versus
       coarse stand-binary approximation versus later aspatial fallback.
+
+- 2026-04-05 (Issue `#128` direction pivot: separate AFLB-style land-base
+  initialization from later AU/VDYP filtering, use `MAP_ID` subset smokes, and
+  make fragment-first reconstruction the production target):
+  - Corrected modeling contract:
+    - `FOR_MGMT_LAND_BASE_IND` is treated as an AFLB-style starting signal,
+      not as THLB;
+    - checkpoint1 is the right reconstruction start because it predates the
+      legacy THLB raster netdown seam;
+    - young and low-volume productive stands must stay in the reconstructed
+      starting land base even if stricter filters such as
+      `PROJ_AGE_1 >= 30` or `LIVE_STAND_VOLUME_125 >= 1` remain useful for
+      AU/SI/VDYP preparation later in the pipeline.
+  - Useful repo truth discovered during the pivot:
+    - checkpoint1 already carries the uppercase VRI mapsheet field `MAP_ID`,
+      so the proving-ground can use a domain-native mapsheet partition seam;
+    - the current reconstructed runner still conflates AFLB-style
+      initialization with the old checkpoint2-style filtering concerns, so that
+      seam needs to be made explicit before the fragment/resultant acceptance
+      story is trustworthy.
+  - `#128` is now split into tighter child issues:
+    - `#129`: restore and validate AFLB-style checkpoint1 land-base
+      initialization for reconstructed THLB;
+    - `#130`: add the TSA29 `MAP_ID`-based smoke subset workflow;
+    - `#131`: execute fragment-first TSR THLB reconstruction from reviewed
+      recipe steps;
+    - `#132`: add explicit aspatial fallback for blocked TSR target-area
+      steps; and
+    - `#133`: document the reconstruction ladder and comparison contract.
+  - Immediate execution order for this pivot:
+    - land the AFLB-style initialization seam first so the reconstruction lane
+      stops inheriting yield/VDYP-only exclusions by accident;
+    - add the `MAP_ID` subset ladder and prove the overlay chain on a compact
+      dense TSA29 area before burning hours on the full TSA;
+    - then make fragment/resultant overlay the primary execution path and keep
+      end-of-workflow aspatial fallback explicit, auditable, and separate from
+      exact spatial deductions.
+
+- 2026-04-05 (Issues `#129` and `#130` landed as the first real `#128`
+  convergence checkpoint on TSA29):
+  - Restored a clean AFLB-style checkpoint1 initialization seam:
+    - reconstructed THLB now starts from checkpoint1 and explicitly drops
+      non-AFLB polygons from the working land base;
+    - young/low-volume productive stands are retained in that starting land
+      base instead of being silently discarded by AU/VDYP-only filters;
+    - the stricter checkpoint2-style preparation logic remains available for
+      yield/strata work, but no longer defines the reconstructed THLB start.
+  - Added a mapsheet-smoke ladder using VRI `MAP_ID`:
+    - `femic tsr thlb-netdown-run --execution-mode reconstructed --auto-map-id-smoke-subset`
+      now auto-selects one dense TSA29 mapsheet and records it in both the
+      recipe contract and the audit surface;
+    - the first live smoke selected `092O071` and completed successfully on a
+      compact subset instead of grinding through the full TSA.
+  - First live TSA29 subset checkpoint:
+    - baseline AFLB-style managed area on mapsheet `092O071`:
+      `26,350.175 ha`;
+    - final managed area after the currently supported reconstructed steps:
+      `25,690.668 ha`;
+    - outcome mix remained explicit and auditable:
+      `2` applied, `2` applied_noop, `3` blocked_missing_source,
+      `10` needs_review, `1` unsupported.
+  - Immediate next work inside `#128`:
+    - make fragment/resultant overlay the primary execution path for more
+      steps under `#131`;
+    - add explicit aspatial fallback for blocked TSR target-area deductions
+      under `#132`; and
+    - document the reconstruction ladder and comparison contract under `#133`.

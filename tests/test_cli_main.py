@@ -5297,6 +5297,7 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
             audit_path=instance_root / "config" / "tsr" / "thlb_netdown.audit.json",
             execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_HYBRID,
             baseline_signal="thlb_raw",
+            selected_map_ids=(),
             step_count=3,
             outcome_counts={"applied": 1, "unsupported": 2},
             baseline_managed_area_ha=1682843.0,
@@ -5314,6 +5315,8 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
         output_path=None,
         audit_path=None,
         execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_HYBRID,
+        map_id=[],
+        auto_map_id_smoke_subset=False,
     )
 
     assert (
@@ -5334,9 +5337,70 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
     assert (
         captured_kwargs["execution_mode"] == tsr_catalog.TSR_THLB_EXECUTION_MODE_HYBRID
     )
+    assert captured_kwargs["map_ids"] == ()
+    assert captured_kwargs["auto_map_id_smoke_subset"] is False
     assert any("step_count: 3" in msg for msg in messages)
     assert any("execution_mode: hybrid" in msg for msg in messages)
     assert any("outcome_applied: 1" in msg for msg in messages)
+
+
+def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_run(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbNetdownRecipeRunResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            checkpoint_path=instance_root
+            / "data"
+            / "ria_vri_vclr1p_checkpoint1.feather",
+            output_path=instance_root
+            / "data"
+            / "tsr"
+            / "thlb_reconstructed_checkpoint.feather",
+            audit_path=instance_root
+            / "config"
+            / "tsr"
+            / "thlb_reconstructed.audit.json",
+            execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+            baseline_signal="checkpoint1_aflb_initialization",
+            selected_map_ids=("093J034", "093J044"),
+            step_count=2,
+            outcome_counts={"applied": 1, "needs_review": 1},
+            baseline_managed_area_ha=92345.0,
+            final_managed_area_ha=80123.0,
+            legacy_reference_managed_area_ha=65000.0,
+            tsr_reported_thlb_area_ha=66053.0,
+        )
+
+    monkeypatch.setattr(cli_main, "run_tsr_thlb_netdown_recipe", _fake_run)
+
+    cli_main.tsr_thlb_netdown_run(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+        checkpoint_path=None,
+        output_path=None,
+        audit_path=None,
+        execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+        map_id=["093J034", "093J044"],
+        auto_map_id_smoke_subset=False,
+    )
+
+    assert captured_kwargs["map_ids"] == ("093J034", "093J044")
+    assert captured_kwargs["auto_map_id_smoke_subset"] is False
+    assert any("selected_map_ids: 093J034, 093J044" in msg for msg in messages)
 
 
 def test_tsr_facts_report_writes_review_csv(
