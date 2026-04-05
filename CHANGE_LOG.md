@@ -11898,3 +11898,37 @@
     scripted chain is already a valid milestone, but that future work must
     keep any coarse stand-level approximations explicit and reviewable rather
     than silently replacing required overlay/fragmentation logic.
+- 2026-04-05: Advanced `#128` to its first executable TSA29 reconstruction
+  checkpoint without pretending the full BC-style resultant/fragments engine is
+  already done.
+  - Added `femic tsr thlb-netdown-run --execution-mode reconstructed`, which:
+    - defaults to `checkpoint1` instead of the legacy THLB-seeded checkpoint;
+    - initializes binary land-base membership from
+      `FOR_MGMT_LAND_BASE_IND` as an AFLB-style starting proxy;
+    - writes a separate reconstructed checkpoint at
+      `data/tsr/thlb_reconstructed_checkpoint.feather`; and
+    - writes a paired audit at `config/tsr/thlb_reconstructed.audit.json`.
+  - First live TSA29 proving-ground run succeeded after a performance pivot:
+    - the initial exact full-overlay attempt on checkpoint1 timed out;
+    - the landed checkpoint now uses true reconstructed mode plus an explicit
+      coarse-polygon stand-binary fallback for very large spatial exclusions;
+    - TSA29 reconstructed run now completes in about three minutes.
+  - Current TSA29 comparison snapshot is explicit and auditable:
+    - AFLB-style starting proxy area: `3,754,157.508 ha`;
+    - reconstructed final managed area after the currently supported steps:
+      `3,037,631.928 ha`;
+    - legacy raster-derived hybrid reference: `1,513,233.574 ha`;
+    - TSR-reported long-term THLB reference parsed from the cached 2024 PDF:
+      `1,660,053 ha`.
+  - Important caveat recorded deliberately:
+    - the current reconstructed output is binary `{0,1}` THLB, but it does not
+      yet create finer fragment rows because the two currently executable TSA29
+      spatial steps (`OGMAs`, `Mule Deer winter range`) both crossed the
+      coarse-polygon fallback threshold and therefore ran as representative-
+      point stand-binary approximations.
+  - Next `#128` work stays explicit:
+    - add the end-of-workflow aspatial fallback for blocked/aspatial steps with
+      defendable TSR target areas;
+    - enable true fragment/resultant splitting for smaller/finer exclusions;
+    - keep reporting exact spatial hectares versus coarse stand-binary versus
+      later aspatial fallback separately.

@@ -149,6 +149,8 @@ from femic.rebuild_runner import JsonRebuildReportSink, RebuildRunner, RebuildSt
 from femic.rebuild_spec import load_rebuild_spec, validate_rebuild_spec_payload
 from femic.release_packaging import build_release_package
 from femic.tsr_catalog import (
+    TSR_THLB_EXECUTION_MODE_HYBRID,
+    TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
     TsrCacheError,
     TsrCatalogError,
     TsrExtractError,
@@ -179,6 +181,8 @@ from femic.tsr_catalog import (
     default_tsr_thlb_netdown_audit_path,
     default_tsr_thlb_netdown_output_path,
     default_tsr_thlb_netdown_recipe_path,
+    default_tsr_thlb_reconstructed_audit_path,
+    default_tsr_thlb_reconstructed_output_path,
     extract_tsr_candidate_facts,
     fetch_tsr_pdfs,
     index_tsr_tsa_surfaces,
@@ -551,6 +555,15 @@ TSR_THLB_AUDIT_PATH_OPTION = typer.Option(
         "`config/tsr/thlb_netdown.audit.json` under the instance root."
     ),
     show_default=False,
+)
+TSR_THLB_EXECUTION_MODE_OPTION = typer.Option(
+    TSR_THLB_EXECUTION_MODE_HYBRID,
+    "--execution-mode",
+    help=(
+        "THLB execution mode: `hybrid` keeps the current stand-level bridge seeded "
+        "from checkpoint THLB signals; `reconstructed` starts from the raw land-base "
+        "checkpoint and emits a fragment/resultant checkpoint with binary THLB."
+    ),
 )
 TSR_OVERWRITE_OPTION = typer.Option(
     False,
@@ -2448,12 +2461,23 @@ def _print_tsr_thlb_netdown_recipe_run_summary(
     console.print(f"checkpoint_path: {result.checkpoint_path}")
     console.print(f"output_path: {result.output_path}")
     console.print(f"audit_path: {result.audit_path}")
+    console.print(f"execution_mode: {result.execution_mode}")
+    console.print(f"baseline_signal: {result.baseline_signal}")
     console.print(f"tsa_id: {result.tsa.tsa_id}")
     console.print(f"tsa_code: {result.tsa.tsa_code}")
     console.print(f"tsa_name: {result.tsa.tsa_name}")
     console.print(f"step_count: {result.step_count}")
     console.print(f"baseline_managed_area_ha: {result.baseline_managed_area_ha:.3f}")
     console.print(f"final_managed_area_ha: {result.final_managed_area_ha:.3f}")
+    if result.legacy_reference_managed_area_ha is not None:
+        console.print(
+            "legacy_reference_managed_area_ha: "
+            f"{result.legacy_reference_managed_area_ha:.3f}"
+        )
+    if result.tsr_reported_thlb_area_ha is not None:
+        console.print(
+            f"tsr_reported_thlb_area_ha: {result.tsr_reported_thlb_area_ha:.3f}"
+        )
     for outcome, count in result.outcome_counts.items():
         console.print(f"outcome_{outcome}: {count}")
 
@@ -3193,8 +3217,9 @@ def tsr_thlb_netdown_run(
     checkpoint_path: Path | None = TSR_THLB_CHECKPOINT_PATH_OPTION,
     output_path: Path | None = TSR_THLB_OUTPUT_PATH_OPTION,
     audit_path: Path | None = TSR_THLB_AUDIT_PATH_OPTION,
+    execution_mode: str = TSR_THLB_EXECUTION_MODE_OPTION,
 ) -> None:
-    """Execute the reviewed THLB netdown recipe into a stand-level `thlb_fact` checkpoint."""
+    """Execute the reviewed THLB netdown recipe in hybrid or reconstructed mode."""
 
     instance_context = _resolve_cli_instance_context(instance_root=instance_root)
     resolved_recipe_path = (
@@ -3210,12 +3235,28 @@ def tsr_thlb_netdown_run(
     resolved_output_path = (
         instance_context.resolve_path(output_path)
         if output_path is not None
-        else default_tsr_thlb_netdown_output_path(instance_root=instance_context.root)
+        else (
+            default_tsr_thlb_reconstructed_output_path(
+                instance_root=instance_context.root
+            )
+            if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+            else default_tsr_thlb_netdown_output_path(
+                instance_root=instance_context.root
+            )
+        )
     )
     resolved_audit_path = (
         instance_context.resolve_path(audit_path)
         if audit_path is not None
-        else default_tsr_thlb_netdown_audit_path(instance_root=instance_context.root)
+        else (
+            default_tsr_thlb_reconstructed_audit_path(
+                instance_root=instance_context.root
+            )
+            if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+            else default_tsr_thlb_netdown_audit_path(
+                instance_root=instance_context.root
+            )
+        )
     )
     try:
         result = run_tsr_thlb_netdown_recipe(
@@ -3223,6 +3264,7 @@ def tsr_thlb_netdown_run(
             checkpoint_path=resolved_checkpoint_path,
             output_path=resolved_output_path,
             audit_path=resolved_audit_path,
+            execution_mode=execution_mode,
         )
     except TsrRecipeError as exc:
         console.print(f"[red]TSR THLB recipe run error:[/red] {exc}")

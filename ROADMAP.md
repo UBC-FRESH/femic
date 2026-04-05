@@ -13533,3 +13533,103 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       stand-level binary approximations may remain an explicit fallback for
       coarse exclusions, but the production-grade target is still fragment
       overlay with binary THLB at the fragment level.
+
+- 2026-04-05 (Issue `#128` first execution checkpoint plan: start the
+  reconstruction lane from checkpoint1 and land an auditable fragment/resultant
+  proof on TSA29 before broadening the operation set):
+  - The first useful `#128` slice should not overwrite the hybrid `#126`
+    artifact. Instead, add a separate reconstruction mode/output that:
+    - starts from `data/ria_vri_vclr1p_checkpoint1.feather`, where
+      `FOR_MGMT_LAND_BASE_IND` still carries both `Y` and `N`;
+    - treats that land-base indicator as the initial binary in/out surface
+      instead of seeding from legacy `thlb_raw` / `thlb_area` / `thlb`;
+    - applies the currently supported reviewed `exclude` steps by fragmenting
+      the geometry through overlay rather than subtracting stand-level overlap
+      fractions; and
+    - emits a separate reconstructed checkpoint/resultant artifact plus audit
+      output so the old hybrid bridge remains available for comparison.
+  - The first proving-ground acceptance target for TSA29 is:
+    - binary fragment-level `thlb_fact` / `thlb` on the reconstructed output;
+    - preserved lineage back to the originating stand (`FEATURE_ID` or
+      equivalent source-feature id);
+    - explicit comparison against the legacy raster-derived THLB area and the
+      TSR-reported THLB area; and
+    - a bounded downstream smoke that proves the reconstructed artifact is at
+      least structurally consumable by the existing Patchworks-facing surfaces.
+  - Immediate follow-through:
+    - implement a reconstruction execution mode in the THLB recipe runner;
+    - write the first TSA29 reconstructed checkpoint/audit artifacts;
+    - smoke the resulting artifact on TSA29; and
+    - document what remains blocked for later `#128` increments (for example
+      unsupported/aspatial clauses and any geometry-scale cases that still need
+      later refinement).
+
+- 2026-04-05 (Issue `#128` execution strategy pivot after the first live
+  checkpoint1 reconstruction attempt timed out on TSA29):
+  - A naive full fragment/resultant pass over raw checkpoint1 geometry timed
+    out at roughly one hour, so the first useful production-grade `#128`
+    checkpoint needs a more convergent execution strategy than “exact spatial
+    overlay for every rule or bust.”
+  - Updated working approach:
+    - keep **true spatial overlay + fragmentation** for reviewed exclusion
+      steps when the required polygon layer is available and fetched locally;
+    - add an **explicit end-of-workflow aspatial fallback** for blocked or
+      intentionally aspatial TSR clauses when the TSR data package provides a
+      defendable area target but FEMIC does not have the required spatial
+      layer; and
+    - report spatially applied hectares, aspatial fallback hectares, and still
+      unresolved clauses separately so the approximation remains honest.
+  - This is the intended “action research but production-convergent” middle
+    path for TSA29:
+    - exact spatial truth where available,
+    - documented landscape-scale approximation where justified,
+    - and no hidden substitution of one for the other.
+  - Immediate follow-through:
+    - keep the reconstructed execution mode but narrow the first checkpoint to
+      supported spatial exclusions plus explicit audit/reporting;
+    - add the area-based fallback seam for blocked/aspatial recipe steps that
+      have a defendable TSR target area; and
+    - only then rerun the TSA29 proving-ground smoke and compare the new
+      reconstructed total against both the legacy raster baseline and the
+      TSR-reported THLB area.
+
+- 2026-04-05 (Issue `#128` first executable checkpoint landed locally: TSA29
+  reconstructed mode now runs from checkpoint1 and produces a separate audited
+  result, but it is still an intermediate approximation rather than the final
+  resultant/fragments engine):
+  - Added a new `femic tsr thlb-netdown-run --execution-mode reconstructed`
+    path that:
+    - defaults to `data/ria_vri_vclr1p_checkpoint1.feather`;
+    - initializes binary land-base membership from
+      `FOR_MGMT_LAND_BASE_IND` as an AFLB-style starting proxy rather than
+      from legacy THLB raster fields;
+    - writes a separate reconstructed checkpoint at
+      `data/tsr/thlb_reconstructed_checkpoint.feather`; and
+    - writes a paired audit at `config/tsr/thlb_reconstructed.audit.json`.
+  - The first live TSA29 reconstructed run now completes in about three
+    minutes instead of timing out:
+    - baseline managed area from the AFLB-style proxy:
+      `3,754,157.508 ha`;
+    - reconstructed final managed area after the currently supported reviewed
+      steps: `3,037,631.928 ha`;
+    - legacy raster-derived reference from the accepted hybrid bridge:
+      `1,513,233.574 ha`;
+    - TSR-reported long-term THLB reference parsed from the cached 2024 data
+      package PDF: `1,660,053 ha`.
+  - The audit/result is intentionally explicit about what this first checkpoint
+    is and is not:
+    - supported large-polygon steps (`OGMAs`, `Mule Deer winter range`) ran as
+      **coarse stand-binary approximations** using representative-point
+      containment because exact fragment overlay on the full checkpoint1 land
+      base still timed out;
+    - blocked/aspatial clauses remain visible and were not silently patched;
+    - the current output remains binary in/out THLB, but it does **not** yet
+      create finer fragment rows because both currently executable spatial
+      steps crossed the coarse-polygon fallback threshold.
+  - Immediate next work inside `#128`:
+    - add the explicit end-of-workflow aspatial fallback for blocked/aspatial
+      steps when the TSR provides a defendable area target;
+    - enable true fragment/resultant splitting for smaller/finer exclusions
+      where the exact overlay is tractable; and
+    - keep documenting which hectares came from exact spatial overlay versus
+      coarse stand-binary approximation versus later aspatial fallback.

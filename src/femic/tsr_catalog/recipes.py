@@ -12,6 +12,7 @@ import re
 from typing import Any
 
 import geopandas as gpd  # type: ignore[import-untyped]
+import pandas as pd
 import yaml
 
 from femic.bcdc_catalog import (
@@ -44,6 +45,14 @@ class TsrRecipeError(RuntimeError):
 _TSR_RECIPE_RESOURCE_PACKAGE = "femic.resources.tsr_recipes"
 _SOURCE_LAYERS_RECIPE_RESOURCE = "source_layers.recipe.yaml"
 _THLB_NETDOWN_RECIPE_RESOURCE = "thlb_netdown.recipe.yaml"
+TSR_THLB_EXECUTION_MODE_HYBRID = "hybrid"
+TSR_THLB_EXECUTION_MODE_RECONSTRUCTED = "reconstructed"
+_TSR_THLB_EXECUTION_MODES = {
+    TSR_THLB_EXECUTION_MODE_HYBRID,
+    TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+}
+_RECONSTRUCTED_FRAGMENT_ROW_THRESHOLD = 10000
+_RECONSTRUCTED_STAND_BINARY_EXCLUDE_THRESHOLD = 0.5
 
 
 @dataclass(frozen=True)
@@ -194,10 +203,14 @@ class TsrThlbNetdownRecipeRunResult:
     checkpoint_path: Path
     output_path: Path
     audit_path: Path
+    execution_mode: str
+    baseline_signal: str
     step_count: int
     outcome_counts: dict[str, int]
     baseline_managed_area_ha: float
     final_managed_area_ha: float
+    legacy_reference_managed_area_ha: float | None
+    tsr_reported_thlb_area_ha: float | None
 
 
 def _read_json_object(path: Path, *, description: str) -> dict[str, Any]:
@@ -299,6 +312,28 @@ def default_tsr_thlb_netdown_audit_path(*, instance_root: Path) -> Path:
         / "config"
         / "tsr"
         / "thlb_netdown.audit.json"
+    )
+
+
+def default_tsr_thlb_reconstructed_output_path(*, instance_root: Path) -> Path:
+    """Return the default reconstructed fragment/resultant THLB checkpoint path."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "data"
+        / "tsr"
+        / "thlb_reconstructed_checkpoint.feather"
+    )
+
+
+def default_tsr_thlb_reconstructed_audit_path(*, instance_root: Path) -> Path:
+    """Return the default reconstructed THLB audit JSON path."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "config"
+        / "tsr"
+        / "thlb_reconstructed.audit.json"
     )
 
 
@@ -1526,7 +1561,7 @@ def run_tsr_source_layers_recipe(
     )
 
 
-def _find_latest_tsr_checkpoint_path(*, instance_root: Path) -> Path:
+def _find_tsr_checkpoint_path(*, instance_root: Path, mode: str) -> Path:
     candidates = sorted(
         instance_root.expanduser()
         .resolve()
@@ -1543,7 +1578,11 @@ def _find_latest_tsr_checkpoint_path(*, instance_root: Path) -> Path:
             return -1
         return int(match.group(1))
 
-    return max(candidates, key=_checkpoint_order)
+    if mode == "latest":
+        return max(candidates, key=_checkpoint_order)
+    if mode == "earliest":
+        return min(candidates, key=_checkpoint_order)
+    raise TsrRecipeError(f"Unsupported checkpoint lookup mode: {mode}")
 
 
 def _load_checkpoint_geodataframe(path: Path) -> gpd.GeoDataFrame:
@@ -1590,6 +1629,246 @@ def _normalize_checkpoint_thlb_fact(
 
     normalized["thlb_fact"] = thlb_fact.clip(lower=0.0, upper=1.0)
     return normalized, signal_source
+
+
+def _resolve_union_geometry(exclusion_geometries: gpd.GeoDataFrame) -> Any | None:
+    if exclusion_geometries.empty:
+        return None
+    series = exclusion_geometries.geometry
+    if hasattr(series, "union_all"):
+        return series.union_all()
+    return series.unary_union
+
+
+def _update_geometry_measure_columns(checkpoint: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    updated = checkpoint.copy()
+    area_sqm = updated.geometry.area.astype(float)
+    length_m = updated.geometry.length.astype(float)
+    if "FEATURE_AREA_SQM" in updated.columns:
+        updated["FEATURE_AREA_SQM"] = area_sqm
+    if "POLYGON_AREA" in updated.columns:
+        updated["POLYGON_AREA"] = area_sqm / 10000.0
+    if "GEOMETRY_AREA" in updated.columns:
+        updated["GEOMETRY_AREA"] = area_sqm / 10000.0
+    if "Shape_Area" in updated.columns:
+        updated["Shape_Area"] = area_sqm
+    if "FEATURE_LENGTH_M" in updated.columns:
+        updated["FEATURE_LENGTH_M"] = length_m
+    if "Shape_Length" in updated.columns:
+        updated["Shape_Length"] = length_m
+    return updated
+
+
+def _initialize_reconstructed_land_base(
+    checkpoint: gpd.GeoDataFrame,
+) -> tuple[gpd.GeoDataFrame, str]:
+    reconstructed = checkpoint.copy()
+    if "FOR_MGMT_LAND_BASE_IND" in reconstructed.columns:
+        indicator = (
+            reconstructed["FOR_MGMT_LAND_BASE_IND"]
+            .fillna("N")
+            .astype(str)
+            .str.strip()
+            .str.upper()
+        )
+        thlb_binary = indicator.eq("Y").astype(float)
+        signal_source = "FOR_MGMT_LAND_BASE_IND_a_flb_proxy"
+    else:
+        thlb_binary = reconstructed.geometry.map(lambda _value: 1.0).astype(float)
+        signal_source = "default_one"
+    if (
+        "FEATURE_ID" in reconstructed.columns
+        and "SOURCE_FEATURE_ID" not in reconstructed.columns
+    ):
+        reconstructed["SOURCE_FEATURE_ID"] = reconstructed["FEATURE_ID"]
+    reconstructed["thlb_fact"] = thlb_binary
+    reconstructed["thlb"] = thlb_binary.astype(int)
+    reconstructed = _update_geometry_measure_columns(reconstructed)
+    reconstructed["_row_id"] = range(len(reconstructed))
+    reconstructed["_stand_area_sqm"] = reconstructed.geometry.area.astype(float)
+    return reconstructed, signal_source
+
+
+def _assign_fragment_feature_ids(checkpoint: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    updated = checkpoint.copy().reset_index(drop=True)
+    updated["_row_id"] = range(len(updated))
+    if "FEATURE_ID" in updated.columns:
+        updated["FEATURE_ID"] = updated.index + 1
+    updated = _update_geometry_measure_columns(updated)
+    updated["_stand_area_sqm"] = updated.geometry.area.astype(float)
+    return updated
+
+
+def _fragment_binary_exclusion_step(
+    *,
+    checkpoint: gpd.GeoDataFrame,
+    exclusion_geometries: gpd.GeoDataFrame,
+) -> tuple[gpd.GeoDataFrame, int, float]:
+    if checkpoint.empty or exclusion_geometries.empty:
+        return checkpoint, 0, 0.0
+    active = checkpoint.loc[checkpoint["thlb_fact"] > 0].copy()
+    if active.empty:
+        return checkpoint, 0, 0.0
+    candidate_indices = active.sindex.query(
+        exclusion_geometries.geometry,
+        predicate="intersects",
+    )
+    if getattr(candidate_indices, "ndim", 1) == 2:
+        candidate_values = candidate_indices[1]
+    else:
+        candidate_values = candidate_indices
+    unique_indices = sorted({int(index) for index in candidate_values.tolist()})
+    if not unique_indices:
+        return checkpoint, 0, 0.0
+    candidate = active.iloc[unique_indices].copy()
+    mask_geometry = _resolve_union_geometry(exclusion_geometries)
+    if mask_geometry is None or getattr(mask_geometry, "is_empty", False):
+        return checkpoint, 0, 0.0
+
+    untouched = checkpoint.drop(candidate.index).copy()
+    mask_frame = gpd.GeoDataFrame(geometry=[mask_geometry], crs=BC_ALBERS_EPSG)
+    intersections = gpd.overlay(
+        candidate,
+        mask_frame,
+        how="intersection",
+        keep_geom_type=False,
+    )
+    if intersections.empty:
+        return checkpoint, 0, 0.0
+    differences = gpd.overlay(
+        candidate,
+        mask_frame,
+        how="difference",
+        keep_geom_type=False,
+    )
+
+    intersections = intersections.copy()
+    intersections["thlb_fact"] = 0.0
+    intersections["thlb"] = 0
+    if "FOR_MGMT_LAND_BASE_IND" in intersections.columns:
+        intersections["FOR_MGMT_LAND_BASE_IND"] = "N"
+
+    if not differences.empty:
+        differences = differences.copy()
+        differences["thlb_fact"] = 1.0
+        differences["thlb"] = 1
+
+    affected_area_ha = float(intersections.geometry.area.sum() / 10000.0)
+    affected_fragment_count = int(len(intersections))
+    rebuilt = gpd.GeoDataFrame(
+        pd.concat([untouched, differences, intersections], ignore_index=True),
+        crs=BC_ALBERS_EPSG,
+    )
+    rebuilt = rebuilt.loc[~rebuilt.geometry.is_empty].copy()
+    rebuilt = _assign_fragment_feature_ids(rebuilt)
+    return rebuilt, affected_fragment_count, affected_area_ha
+
+
+def _apply_binary_stand_exclusion(
+    *,
+    checkpoint: gpd.GeoDataFrame,
+    exclusion_geometries: gpd.GeoDataFrame,
+) -> tuple[gpd.GeoDataFrame, int, float, float]:
+    if checkpoint.empty or exclusion_geometries.empty:
+        return checkpoint, 0, 0.0, 0.0
+    active = checkpoint.loc[checkpoint["thlb_fact"] > 0].copy()
+    if active.empty:
+        return checkpoint, 0, 0.0, 0.0
+    candidate_indices = active.sindex.query(
+        exclusion_geometries.geometry,
+        predicate="intersects",
+    )
+    if getattr(candidate_indices, "ndim", 1) == 2:
+        candidate_values = candidate_indices[1]
+    else:
+        candidate_values = candidate_indices
+    unique_indices = sorted({int(index) for index in candidate_values.tolist()})
+    if not unique_indices:
+        return checkpoint, 0, 0.0, 0.0
+    candidate = active.iloc[unique_indices].copy()
+    mask_geometry = _resolve_union_geometry(exclusion_geometries)
+    if mask_geometry is None or getattr(mask_geometry, "is_empty", False):
+        return checkpoint, 0, 0.0, 0.0
+    representative = candidate.geometry.representative_point()
+    selected_row_ids = candidate.loc[
+        representative.intersects(mask_geometry), "_row_id"
+    ]
+    if selected_row_ids.empty:
+        return checkpoint, 0, 0.0, 0.0
+    exclude_mask = checkpoint["_row_id"].isin(selected_row_ids.tolist())
+    updated = checkpoint.copy()
+    updated.loc[exclude_mask, "thlb_fact"] = 0.0
+    updated.loc[exclude_mask, "thlb"] = 0
+    affected_area_ha = float(
+        updated.loc[exclude_mask, "_stand_area_sqm"].sum() / 10000.0
+    )
+    overlap_area_ha = affected_area_ha
+    return updated, int(exclude_mask.sum()), affected_area_ha, overlap_area_ha
+
+
+def _compute_legacy_reference_managed_area_ha(
+    *,
+    instance_root: Path,
+    checkpoint_path: Path,
+) -> float | None:
+    latest_checkpoint = _find_tsr_checkpoint_path(
+        instance_root=instance_root, mode="latest"
+    )
+    if latest_checkpoint == checkpoint_path:
+        return None
+    comparison = _load_checkpoint_geodataframe(latest_checkpoint)
+    if not {"thlb_fact", "thlb_raw", "thlb_area", "thlb"}.intersection(
+        comparison.columns
+    ):
+        return None
+    comparison["_row_id"] = range(len(comparison))
+    comparison, _signal_source = _normalize_checkpoint_thlb_fact(comparison)
+    return _managed_area_ha(comparison)
+
+
+def _extract_tsr_reported_thlb_area_ha(
+    *,
+    instance_root: Path,
+    recipe: TsrThlbNetdownRecipeRecord,
+) -> float | None:
+    selected_paths = tuple(
+        str(path).strip()
+        for path in recipe.recipe_contract.get("selected_document_paths", ())
+        if str(path).strip()
+    )
+    if not selected_paths:
+        return None
+    try:
+        from pypdf import PdfReader
+    except Exception:  # pragma: no cover - dependency seam
+        return None
+    from femic.user_config import default_femic_tsr_corpus_root
+
+    corpus_root = default_femic_tsr_corpus_root()
+    target_document = corpus_root / "tsa" / recipe.tsa.tsa_id / Path(selected_paths[0])
+    if not target_document.exists():
+        return None
+    try:
+        reader = PdfReader(str(target_document))
+    except Exception:  # pragma: no cover - runtime seam
+        return None
+
+    pattern = re.compile(
+        r"Timber harvesting land\s+base\s+([\d,]+)|Long-term THLB\s+([\d,]+)",
+        flags=re.IGNORECASE,
+    )
+    timber_harvesting_land_base: float | None = None
+    long_term_thlb: float | None = None
+    for page in reader.pages:
+        text = page.extract_text() or ""
+        for match in pattern.finditer(text):
+            timber_value = match.group(1)
+            long_term_value = match.group(2)
+            if timber_value:
+                timber_harvesting_land_base = float(timber_value.replace(",", ""))
+            if long_term_value:
+                long_term_thlb = float(long_term_value.replace(",", ""))
+    return long_term_thlb or timber_harvesting_land_base
 
 
 def _load_source_recipe_entry_map(
@@ -1708,6 +1987,24 @@ def _compute_exclusion_fraction(
     return {int(key): float(value) for key, value in fraction.items()}
 
 
+def _count_exclusion_candidate_rows(
+    *,
+    checkpoint: gpd.GeoDataFrame,
+    exclusion_geometries: gpd.GeoDataFrame,
+) -> int:
+    if checkpoint.empty or exclusion_geometries.empty:
+        return 0
+    candidate_indices = checkpoint.sindex.query(
+        exclusion_geometries.geometry,
+        predicate="intersects",
+    )
+    if getattr(candidate_indices, "ndim", 1) == 2:
+        candidate_values = candidate_indices[1]
+    else:
+        candidate_values = candidate_indices
+    return len({int(index) for index in candidate_values.tolist()})
+
+
 def _managed_area_ha(checkpoint: gpd.GeoDataFrame) -> float:
     return float(
         (checkpoint["_stand_area_sqm"] * checkpoint["thlb_fact"]).sum() / 10000.0
@@ -1720,12 +2017,18 @@ def run_tsr_thlb_netdown_recipe(
     checkpoint_path: Path | None = None,
     output_path: Path | None = None,
     audit_path: Path | None = None,
+    execution_mode: str = TSR_THLB_EXECUTION_MODE_HYBRID,
 ) -> TsrThlbNetdownRecipeRunResult:
-    """Execute a bounded THLB netdown recipe into a stand-level `thlb_fact` checkpoint."""
+    """Execute a THLB netdown recipe into either a hybrid or reconstructed checkpoint."""
 
     resolved_recipe_path = recipe_path.expanduser().resolve()
     recipe = load_tsr_thlb_netdown_recipe(resolved_recipe_path)
     instance_root = resolved_recipe_path.parents[2]
+    if execution_mode not in _TSR_THLB_EXECUTION_MODES:
+        raise TsrRecipeError(
+            "Unsupported THLB execution mode: "
+            f"{execution_mode}. Expected one of {sorted(_TSR_THLB_EXECUTION_MODES)}."
+        )
     source_layer_recipe_path = _resolve_instance_path(
         instance_root, recipe.instance_inputs.source_layer_recipe_path
     )
@@ -1735,23 +2038,49 @@ def run_tsr_thlb_netdown_recipe(
     resolved_checkpoint_path = (
         checkpoint_path.expanduser().resolve()
         if checkpoint_path is not None
-        else _find_latest_tsr_checkpoint_path(instance_root=instance_root)
+        else _find_tsr_checkpoint_path(
+            instance_root=instance_root,
+            mode=(
+                "earliest"
+                if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+                else "latest"
+            ),
+        )
     )
     resolved_output_path = (
         output_path.expanduser().resolve()
         if output_path is not None
-        else default_tsr_thlb_netdown_output_path(instance_root=instance_root)
+        else (
+            default_tsr_thlb_reconstructed_output_path(instance_root=instance_root)
+            if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+            else default_tsr_thlb_netdown_output_path(instance_root=instance_root)
+        )
     )
     resolved_audit_path = (
         audit_path.expanduser().resolve()
         if audit_path is not None
-        else default_tsr_thlb_netdown_audit_path(instance_root=instance_root)
+        else (
+            default_tsr_thlb_reconstructed_audit_path(instance_root=instance_root)
+            if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+            else default_tsr_thlb_netdown_audit_path(instance_root=instance_root)
+        )
     )
 
     checkpoint = _load_checkpoint_geodataframe(resolved_checkpoint_path)
-    checkpoint["_row_id"] = range(len(checkpoint))
-    checkpoint, baseline_signal = _normalize_checkpoint_thlb_fact(checkpoint)
+    if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
+        checkpoint, baseline_signal = _initialize_reconstructed_land_base(checkpoint)
+    else:
+        checkpoint["_row_id"] = range(len(checkpoint))
+        checkpoint, baseline_signal = _normalize_checkpoint_thlb_fact(checkpoint)
     baseline_managed_area_ha = _managed_area_ha(checkpoint)
+    legacy_reference_managed_area_ha = _compute_legacy_reference_managed_area_ha(
+        instance_root=instance_root,
+        checkpoint_path=resolved_checkpoint_path,
+    )
+    tsr_reported_thlb_area_ha = _extract_tsr_reported_thlb_area_ha(
+        instance_root=instance_root,
+        recipe=recipe,
+    )
 
     outcome_counts: Counter[str] = Counter()
     applied_steps: list[dict[str, Any]] = []
@@ -1793,33 +2122,101 @@ def run_tsr_thlb_netdown_recipe(
                 if missing_sources:
                     updated_step["missing_source_entry_ids"] = missing_sources
             else:
-                exclusion_fraction = _compute_exclusion_fraction(
-                    checkpoint=checkpoint,
-                    exclusion_geometries=exclusion_geometries,
-                )
-                if not exclusion_fraction:
-                    updated_step["run_status"] = "applied_noop"
-                    updated_step["run_notes"] = [
-                        "No stand geometries intersected the exclusion mask."
-                    ]
-                else:
-                    ratios = checkpoint["_row_id"].map(exclusion_fraction).fillna(0.0)
-                    checkpoint["thlb_fact"] = (checkpoint["thlb_fact"] - ratios).clip(
-                        lower=0.0, upper=1.0
+                if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
+                    candidate_count = _count_exclusion_candidate_rows(
+                        checkpoint=checkpoint,
+                        exclusion_geometries=exclusion_geometries,
                     )
-                    updated_step["run_status"] = "applied"
-                    updated_step["affected_stand_count"] = int((ratios > 0).sum())
-                    updated_step["affected_area_ha"] = float(
+                    if candidate_count == 0:
+                        updated_step["run_status"] = "applied_noop"
+                        updated_step["run_notes"] = [
+                            "No active land-base geometries intersected the exclusion mask."
+                        ]
+                    elif candidate_count > _RECONSTRUCTED_FRAGMENT_ROW_THRESHOLD:
                         (
-                            checkpoint["_stand_area_sqm"]
-                            * ratios.clip(lower=0.0, upper=1.0)
-                        ).sum()
-                        / 10000.0
+                            checkpoint,
+                            affected_stand_count,
+                            affected_area_ha,
+                            overlap_area_ha,
+                        ) = _apply_binary_stand_exclusion(
+                            checkpoint=checkpoint,
+                            exclusion_geometries=exclusion_geometries,
+                        )
+                        if affected_stand_count == 0:
+                            updated_step["run_status"] = "applied_noop"
+                            updated_step["run_notes"] = [
+                                "Candidate rows were found, but none exceeded the stand-binary exclusion threshold."
+                            ]
+                        else:
+                            updated_step["run_status"] = "applied"
+                            updated_step["spatial_application_mode"] = (
+                                "stand_binary_majority"
+                            )
+                            updated_step["candidate_row_count"] = candidate_count
+                            updated_step["affected_stand_count"] = affected_stand_count
+                            updated_step["affected_area_ha"] = affected_area_ha
+                            updated_step["overlap_area_ha"] = overlap_area_ha
+                            updated_step["run_notes"] = [
+                                "Applied reconstructed stand-binary exclusion because the intersecting coarse-polygon workload exceeded the fragment overlay threshold.",
+                                "Representative-point containment was used as the coarse-polygon stand-binary approximation.",
+                            ]
+                    else:
+                        (
+                            checkpoint,
+                            affected_fragment_count,
+                            affected_area_ha,
+                        ) = _fragment_binary_exclusion_step(
+                            checkpoint=checkpoint,
+                            exclusion_geometries=exclusion_geometries,
+                        )
+                        if affected_fragment_count == 0:
+                            updated_step["run_status"] = "applied_noop"
+                            updated_step["run_notes"] = [
+                                "No active fragment geometries intersected the exclusion mask."
+                            ]
+                        else:
+                            updated_step["run_status"] = "applied"
+                            updated_step["spatial_application_mode"] = (
+                                "fragment_overlay"
+                            )
+                            updated_step["candidate_row_count"] = candidate_count
+                            updated_step["affected_fragment_count"] = (
+                                affected_fragment_count
+                            )
+                            updated_step["affected_area_ha"] = affected_area_ha
+                            updated_step["run_notes"] = [
+                                "Applied fragment/resultant exclusion with binary THLB output in EPSG:3005."
+                            ]
+                else:
+                    exclusion_fraction = _compute_exclusion_fraction(
+                        checkpoint=checkpoint,
+                        exclusion_geometries=exclusion_geometries,
                     )
-                    updated_step["run_notes"] = [
-                        "Applied stand-level exclusion using overlap fractions in EPSG:3005.",
-                        "Sequential stand-level subtraction may approximate overlapping exclusion masks.",
-                    ]
+                    if not exclusion_fraction:
+                        updated_step["run_status"] = "applied_noop"
+                        updated_step["run_notes"] = [
+                            "No stand geometries intersected the exclusion mask."
+                        ]
+                    else:
+                        ratios = (
+                            checkpoint["_row_id"].map(exclusion_fraction).fillna(0.0)
+                        )
+                        checkpoint["thlb_fact"] = (
+                            checkpoint["thlb_fact"] - ratios
+                        ).clip(lower=0.0, upper=1.0)
+                        updated_step["run_status"] = "applied"
+                        updated_step["affected_stand_count"] = int((ratios > 0).sum())
+                        updated_step["affected_area_ha"] = float(
+                            (
+                                checkpoint["_stand_area_sqm"]
+                                * ratios.clip(lower=0.0, upper=1.0)
+                            ).sum()
+                            / 10000.0
+                        )
+                        updated_step["run_notes"] = [
+                            "Applied stand-level exclusion using overlap fractions in EPSG:3005.",
+                            "Sequential stand-level subtraction may approximate overlapping exclusion masks.",
+                        ]
                 if missing_sources:
                     updated_step["missing_source_entry_ids"] = missing_sources
         elif normalized_action == "aspatial_reduction":
@@ -1838,6 +2235,14 @@ def run_tsr_thlb_netdown_recipe(
         outcome_counts.update([str(updated_step.get("run_status", "unsupported"))])
 
     final_managed_area_ha = _managed_area_ha(checkpoint)
+    if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
+        checkpoint["thlb_fact"] = checkpoint["thlb_fact"].fillna(0.0).clip(0.0, 1.0)
+        checkpoint["thlb"] = checkpoint["thlb_fact"].round().astype(int)
+        checkpoint["thlb_raw"] = checkpoint["thlb_fact"]
+        checkpoint["thlb_area"] = (
+            checkpoint["_stand_area_sqm"] * checkpoint["thlb_fact"] / 10000.0
+        )
+    checkpoint = _update_geometry_measure_columns(checkpoint)
 
     payload = recipe.to_dict()
     recipe_contract = dict(recipe.recipe_contract)
@@ -1846,10 +2251,20 @@ def run_tsr_thlb_netdown_recipe(
     recipe_contract["selected_checkpoint_path"] = str(
         resolved_checkpoint_path.relative_to(instance_root).as_posix()
     )
-    recipe_contract["output_checkpoint_path"] = str(
+    output_contract_key = (
+        "reconstructed_output_checkpoint_path"
+        if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+        else "output_checkpoint_path"
+    )
+    audit_contract_key = (
+        "reconstructed_audit_path"
+        if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+        else "audit_path"
+    )
+    recipe_contract[output_contract_key] = str(
         resolved_output_path.relative_to(instance_root).as_posix()
     )
-    recipe_contract["audit_path"] = str(
+    recipe_contract[audit_contract_key] = str(
         resolved_audit_path.relative_to(instance_root).as_posix()
     )
     payload["recipe_contract"] = recipe_contract
@@ -1870,9 +2285,12 @@ def run_tsr_thlb_netdown_recipe(
             resolved_checkpoint_path.relative_to(instance_root).as_posix()
         ),
         "output_path": str(resolved_output_path.relative_to(instance_root).as_posix()),
+        "execution_mode": execution_mode,
         "baseline_signal": baseline_signal,
         "baseline_managed_area_ha": baseline_managed_area_ha,
         "final_managed_area_ha": final_managed_area_ha,
+        "legacy_reference_managed_area_ha": legacy_reference_managed_area_ha,
+        "tsr_reported_thlb_area_ha": tsr_reported_thlb_area_ha,
         "step_count": len(applied_steps),
         "outcome_counts": dict(sorted(outcome_counts.items())),
         "steps": applied_steps,
@@ -1889,8 +2307,12 @@ def run_tsr_thlb_netdown_recipe(
         checkpoint_path=resolved_checkpoint_path,
         output_path=resolved_output_path,
         audit_path=resolved_audit_path,
+        execution_mode=execution_mode,
+        baseline_signal=baseline_signal,
         step_count=len(applied_steps),
         outcome_counts=dict(sorted(outcome_counts.items())),
         baseline_managed_area_ha=baseline_managed_area_ha,
         final_managed_area_ha=final_managed_area_ha,
+        legacy_reference_managed_area_ha=legacy_reference_managed_area_ha,
+        tsr_reported_thlb_area_ha=tsr_reported_thlb_area_ha,
     )

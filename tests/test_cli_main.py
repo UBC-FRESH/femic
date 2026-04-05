@@ -5295,10 +5295,14 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
             / "tsr"
             / "thlb_netdown_checkpoint.feather",
             audit_path=instance_root / "config" / "tsr" / "thlb_netdown.audit.json",
+            execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_HYBRID,
+            baseline_signal="thlb_raw",
             step_count=3,
             outcome_counts={"applied": 1, "unsupported": 2},
             baseline_managed_area_ha=1682843.0,
             final_managed_area_ha=1513233.574,
+            legacy_reference_managed_area_ha=None,
+            tsr_reported_thlb_area_ha=1660053.0,
         )
 
     monkeypatch.setattr(cli_main, "run_tsr_thlb_netdown_recipe", _fake_run)
@@ -5309,6 +5313,7 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
         checkpoint_path=None,
         output_path=None,
         audit_path=None,
+        execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_HYBRID,
     )
 
     assert (
@@ -5326,7 +5331,11 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
         captured_kwargs["audit_path"]
         == (instance_root / "config" / "tsr" / "thlb_netdown.audit.json").resolve()
     )
+    assert (
+        captured_kwargs["execution_mode"] == tsr_catalog.TSR_THLB_EXECUTION_MODE_HYBRID
+    )
     assert any("step_count: 3" in msg for msg in messages)
+    assert any("execution_mode: hybrid" in msg for msg in messages)
     assert any("outcome_applied: 1" in msg for msg in messages)
 
 
