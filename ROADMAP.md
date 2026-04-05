@@ -8452,6 +8452,30 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P51.6c Add focused exporter tests proving post-CT `CC` can differ from baseline `CC` while harvested-volume normalization still holds.
   - [x] P51.6d Update the relevant docs and user overlay example for the new exact-state override seam.
 
+## Phase 52: TSR Recipe Templates for Source-Layer Acquisition and THLB Netdown
+- [ ] P52.1 Define the recipe schema and instance-local template lifecycle (`#123`)
+  - [ ] P52.1a Add packaged template YAML for:
+    - `config/tsr/source_layers.recipe.yaml`
+    - `config/tsr/thlb_netdown.recipe.yaml`
+  - [ ] P52.1b Add loader/validator support for the new recipe surfaces.
+  - [ ] P52.1c Add `femic tsr recipe-init` with idempotent refresh/overwrite behavior.
+- [ ] P52.2 Build and execute the reusable source-layer recipe (`#124`)
+  - [ ] P52.2a Add `femic tsr source-layers-build` so TSR candidate facts + current BCDC knowledge become a reviewable acquisition recipe.
+  - [ ] P52.2b Add `femic tsr source-layers-run` so safe public acquisition, reuse, and override seams can be executed from the recipe instead of rediscovered ad hoc.
+  - [ ] P52.2c Persist per-entry provenance, current acquisition strategy, local artifact path, and blocked/override-required state.
+- [ ] P52.3 Extract TSA THLB netdown logic into a reviewable recipe (`#125`)
+  - [ ] P52.3a Add `femic tsr thlb-netdown-build` to derive ordered, provenance-preserving netdown steps from TSR source documents.
+  - [ ] P52.3b Normalize high-confidence predicates/operators while preserving raw TSR wording for later review.
+  - [ ] P52.3c Compose the THLB recipe against logical source-layer recipe ids rather than hard-coded one-off file paths.
+- [ ] P52.4 Execute the THLB netdown recipe into stand-level overlays (`#126`)
+  - [ ] P52.4a Add `femic tsr thlb-netdown-run` with a bounded supported operation set sufficient for TSA29 acceptance.
+  - [ ] P52.4b Emit a stand-level `thlb_fact` artifact plus a structured per-step audit report.
+  - [ ] P52.4c Keep unsupported or low-confidence steps explicit as `needs_review`, `unsupported`, or `blocked_missing_source` instead of guessing silently.
+- [ ] P52.5 Document the convergent, reproducible TSA29 acceptance path (`#127`)
+  - [ ] P52.5a Add worked docs for recipe init/build/run/report and the relationship between canonical TSR JSON, reviewed recipes, and user overrides.
+  - [ ] P52.5b Record the TSA29 proving-ground case from fresh clone through source-layer acquisition and THLB recipe execution.
+  - [ ] P52.5c Make the convergence and reproducibility contract explicit: when a user approves the finished instance, FEMIC should expose the fully scripted steps needed to rebuild that same product from a clean environment.
+
 ## Detailed Next Steps Notes
 
 - 2026-04-03 (Issue `#83` reconciled and ready to close: Windows Codex local-link recovery docs were already landed):
@@ -13205,3 +13229,31 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       deliverable explicitly promotes them; and
     - use the now-clean TSA29 dataset state as the baseline for any further
       instance-build or netdown automation work.
+- 2026-04-04 (Issue `#122` kickoff: TSR recipe templates + THLB netdown recipe
+  lane launched as Phase 52):
+  - Governing issue:
+    - GitHub issue `#122`
+  - Child issue stack:
+    - `#123` recipe schema + instance-local template scaffolds
+    - `#124` source-layer recipe builder and acquisition executor
+    - `#125` THLB netdown recipe extraction
+    - `#126` THLB recipe execution into stand-level `thlb_fact`
+    - `#127` recipe workflow docs + TSA29 acceptance record
+  - Action-research intent for this lane:
+    - use TSA29 as the proving-ground case because the lab needs a real,
+      production-grade downstream dataset rather than a toy example;
+    - build new automation in a way that strengthens convergence instead of
+      creating snakes-and-ladders regressions while downstream work proceeds;
+    - keep reproducibility as a first-class contract so a fresh clone can
+      eventually rerun the full approved instance-build workflow from scripted
+      recipe surfaces rather than from chat lore or manual rediscovery.
+  - Detailed Next Steps:
+    - start with `#123` so the recipe YAML surfaces and `recipe-init` lifecycle
+      land before any one-off builder/executor logic sprawls;
+    - keep the source-layer recipe and THLB recipe instance-local, reviewed,
+      and composable with the existing TSR overlay + override seams;
+    - use TSA29 acceptance evidence to decide what generalizes, but do not
+      overfit the public interfaces to one TSA-only edge case; and
+    - require each landed slice to preserve the user-visible convergence
+      property: later downstream work must not quietly dynamite already
+      approved upstream steps.

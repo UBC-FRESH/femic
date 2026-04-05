@@ -11731,3 +11731,24 @@
     exports, issue85 runtime/VDYP spill, and extra generated
     `topology_blocks_*r.csv` variants so the subdataset is clean for future
     work.
+- 2026-04-04: Opened the new TSR recipe/netdown umbrella `#122` plus child
+  issues `#123`-`#127` and promoted the work into `ROADMAP.md` as Phase 52.
+  - The new lane turns the TSA29 TSR/BCDC intelligence work into reusable,
+    instance-local YAML recipes instead of a one-off proving-ground workflow:
+    - `config/tsr/source_layers.recipe.yaml`
+    - `config/tsr/thlb_netdown.recipe.yaml`
+  - The implementation contract is explicitly action-research with
+    production intent:
+    - TSA29 remains the proving-ground case because the lab needs it as a real
+      downstream dataset;
+    - convergence is now an explicit goal, so new downstream automation should
+      not destabilize already approved upstream work; and
+    - reproducibility is a first-class acceptance criterion, aiming toward a
+      fully scripted fresh-clone rebuild path once the instance reaches an
+      approved state.
+  - Child issue scope:
+    - `#123` recipe schema and template lifecycle;
+    - `#124` source-layer recipe builder and acquisition executor;
+    - `#125` THLB netdown recipe extraction;
+    - `#126` THLB recipe execution into stand-level `thlb_fact`; and
+    - `#127` workflow docs and TSA29 acceptance record.
