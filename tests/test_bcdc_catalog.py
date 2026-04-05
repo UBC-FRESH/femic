@@ -236,6 +236,94 @@ def test_resolve_bcdc_candidates_prefers_exact_object_name_match(
     )
 
 
+def test_resolve_bcdc_candidates_only_advertises_wfs_when_top_match_is_fetchable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = {
+        "success": True,
+        "result": {
+            "results": [
+                {
+                    "id": "pkg-burn",
+                    "name": "burn-severity-mixed-package",
+                    "title": "Burn Severity Mixed Package",
+                    "license_title": "Open Government Licence",
+                    "download_audience": "Public",
+                    "organization": {
+                        "name": "forest-analysis-and-inventory",
+                        "title": "Forest Analysis and Inventory Branch",
+                    },
+                    "resources": [
+                        {
+                            "id": "svc-burn",
+                            "name": "View WMS getCapabilities request details",
+                            "format": "wms",
+                            "bcdc_type": "webservice",
+                            "object_name": "WHSE_FOREST_VEGETATION.VEG_BURN_SEVERITY_SP",
+                            "object_short_name": "VEG_BURN",
+                            "resource_access_method": "indirect access",
+                            "resource_type": "data",
+                            "resource_storage_location": "bc geographic warehouse",
+                            "url": (
+                                "https://openmaps.gov.bc.ca/geo/pub/"
+                                "WHSE_FOREST_VEGETATION.VEG_BURN_SEVERITY_SP/ows"
+                                "?service=WMS&request=GetCapabilities"
+                            ),
+                        },
+                        {
+                            "id": "dict-burn",
+                            "name": "Burn Severity Legend",
+                            "format": "pdf",
+                            "bcdc_type": "document",
+                            "resource_access_method": "direct access",
+                            "resource_type": "abstraction",
+                            "resource_storage_location": "web or ftp site",
+                            "url": "https://example.invalid/burn_severity_legend.pdf",
+                        },
+                    ],
+                }
+            ]
+        },
+    }
+
+    monkeypatch.setattr(bcdc_catalog, "_fetch_json", lambda _url: payload)
+    monkeypatch.setattr(
+        bcdc_catalog,
+        "_fetch_text",
+        lambda _url: (
+            """<?xml version="1.0" encoding="UTF-8"?>
+<WFS_Capabilities xmlns="http://www.opengis.net/wfs/2.0">
+  <FeatureTypeList>
+    <FeatureType>
+      <Name>pub:WHSE_FOREST_VEGETATION.VEG_BURN_SEVERITY_SP</Name>
+    </FeatureType>
+  </FeatureTypeList>
+</WFS_Capabilities>
+"""
+        ),
+    )
+
+    result = bcdc_catalog.resolve_bcdc_candidates(
+        "WHSE_FOREST_VEGETATION.VEG_BURN_SEVERITY"
+    )
+
+    assert result.top_match is not None
+    assert result.top_match.matched_by.startswith("object_name_stem:")
+    assert result.top_match.suggested_fetch_strategy is None
+    assert not any(
+        "WFS-queryable OpenMaps service resources" in note
+        for note in result.top_match.manual_follow_up
+    )
+    service_resource = next(
+        resource
+        for resource in result.top_match.resources
+        if resource.resource_id == "svc-burn"
+    )
+    assert service_resource.classification == bcdc_catalog.INDIRECT_CUSTOM_DOWNLOAD
+    assert service_resource.wfs_queryable is True
+    assert service_resource.suggested_fetch_strategy == "wfs_getfeature_bbox"
+
+
 def test_resolve_bcdc_candidates_falls_back_to_keyword_search_when_exact_is_weak(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

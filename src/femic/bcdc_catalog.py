@@ -839,8 +839,28 @@ def _package_text_score(query: str, package: dict[str, Any]) -> tuple[int, str]:
     )
 
 
+def _package_fetchable_wfs_resource(
+    resources: tuple[BcdcResourceMatch, ...],
+    *,
+    package_match_score: int,
+) -> BcdcResourceMatch | None:
+    for resource in resources:
+        if (
+            resource.match_score == package_match_score
+            and resource.classification == SERVICE
+            and resource.wfs_queryable
+            and resource.wfs_typename is not None
+            and resource.url is not None
+            and resource.suggested_fetch_strategy is not None
+        ):
+            return resource
+    return None
+
+
 def _package_manual_follow_up(
     resources: tuple[BcdcResourceMatch, ...],
+    *,
+    package_match_score: int,
 ) -> tuple[str, ...]:
     notes: list[str] = []
     if any(
@@ -855,7 +875,13 @@ def _package_manual_follow_up(
         notes.append(
             "Top match currently exposes service resources but no direct-access data file for v1 automation."
         )
-    if any(resource.wfs_queryable for resource in resources):
+    if (
+        _package_fetchable_wfs_resource(
+            resources,
+            package_match_score=package_match_score,
+        )
+        is not None
+    ):
         notes.append(
             "Top match includes WFS-queryable OpenMaps service resources; a later AOI-scoped fetch path can use these service hints directly."
         )
@@ -868,11 +894,14 @@ def _package_manual_follow_up(
 
 def _package_suggested_fetch_strategy(
     resources: tuple[BcdcResourceMatch, ...],
+    *,
+    package_match_score: int,
 ) -> str | None:
-    for resource in resources:
-        if resource.suggested_fetch_strategy is not None:
-            return resource.suggested_fetch_strategy
-    return None
+    resource = _package_fetchable_wfs_resource(
+        resources,
+        package_match_score=package_match_score,
+    )
+    return None if resource is None else resource.suggested_fetch_strategy
 
 
 def _make_service_probe_fn(
@@ -956,8 +985,14 @@ def _build_package_match(
         matched_by=package_matched_by,
         match_score=package_score,
         resources=resources,
-        suggested_fetch_strategy=_package_suggested_fetch_strategy(resources),
-        manual_follow_up=_package_manual_follow_up(resources),
+        suggested_fetch_strategy=_package_suggested_fetch_strategy(
+            resources,
+            package_match_score=package_score,
+        ),
+        manual_follow_up=_package_manual_follow_up(
+            resources,
+            package_match_score=package_score,
+        ),
     )
 
 

@@ -12924,6 +12924,40 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       before users trip over them; or
     - move to `#113` if we want soft good-citizen guardrails before the now
       stronger public acquisition workflow gets more aggressive.
+- 2026-04-04 (Issue `#116` active: package-level WFS hints must only advertise
+  the fetch path that the chosen top match can actually satisfy):
+  - Tighten the BCDC resolver so package-level `suggested_fetch_strategy`
+    comes only from a genuinely fetchable WFS-backed service resource aligned
+    with the chosen package match, not from any lower-signal service row in
+    the package.
+  - Use the burn-severity family from the TSA29 bounded acquisition smoke as
+    the regression case:
+    - `VEG_BURN_SEVERITY`
+    - `WHSE_FOREST_VEGETATION.VEG_BURN_SEVERITY`
+  - Keep the stem-match ranking improvements from `#114` intact while making
+    the summary hints and review notes honest about when `bcdc-fetch` is
+    actually available.
+  - Detailed Next Steps:
+    - add focused tests for mixed packages where a lower-signal service row is
+      WFS-queryable but the winning matched resource is not;
+    - update package-level hint propagation and follow-up notes to use the
+      fetchable winning resource only; and
+    - rerun the burn-severity smoke so the misleading package hint disappears
+      without regressing real WFS cases like `F_OWN`.
+- 2026-04-04 (Issue `#116` complete: burn-severity packages no longer
+  overclaim WFS fetchability):
+  - Tightened package-level `suggested_fetch_strategy` and WFS follow-up-note
+    propagation so FEMIC only advertises `wfs_getfeature_bbox` when the
+    winning package match is backed by a fetchable WFS service resource.
+  - Burn-severity stem matches such as
+    `WHSE_FOREST_VEGETATION.VEG_BURN_SEVERITY` now keep their per-resource
+    OpenMaps hints without falsely promising that `femic data bcdc-fetch` can
+    run directly from the package-level summary.
+  - Real WFS-backed cases such as `WHSE_FOREST_VEGETATION.F_OWN` still expose
+    the package-level WFS strategy and follow-up note.
+  - Added regression coverage for the mixed-package case where a lower-signal
+    WMS-style row is WFS-queryable but classified as indirect/custom-download,
+    and therefore must not promote a package-level WFS fetch strategy.
 - 2026-04-04 (Issue `#109` implemented: WFS probing/classification for
   OpenMaps-backed BCDC service resources):
   - Extended `femic data bcdc-resolve` so service-backed resources can now

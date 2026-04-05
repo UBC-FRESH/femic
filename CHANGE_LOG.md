@@ -11681,3 +11681,17 @@
       districts;
     - burn-severity stems already implicated by `#116`; and
     - the public PIP consultation service seam.
+- 2026-04-04: Completed `#116` (package-level WFS hints no longer overclaim
+  fetchability for burn-severity-style stem matches).
+  - Tightened package-level `suggested_fetch_strategy` and WFS follow-up-note
+    propagation so FEMIC only advertises `wfs_getfeature_bbox` when the
+    winning package match is backed by a fetchable WFS service resource.
+  - Burn-severity stem matches such as
+    `WHSE_FOREST_VEGETATION.VEG_BURN_SEVERITY` now keep their per-resource
+    OpenMaps hints without falsely promising that `femic data bcdc-fetch` can
+    run directly from the package-level summary.
+  - Real WFS-backed cases such as `WHSE_FOREST_VEGETATION.F_OWN` still expose
+    the package-level WFS strategy and follow-up note.
+  - Added regression coverage for the mixed-package case where a lower-signal
+    WMS-style row is WFS-queryable but classified as indirect/custom-download,
+    and therefore must not promote a package-level WFS fetch strategy.
