@@ -165,6 +165,7 @@ from femic.tsr_catalog import (
     TsrSourceLayersRecipeBuildResult,
     TsrSourceLayersRecipeRunResult,
     TsrThlbNetdownRecipeBuildResult,
+    TsrThlbNetdownRecipeRunResult,
     TsrSourceLayerOverridesError,
     TsrSourceLayerOverridesInitResult,
     TsrSourceLayerOverridesReport,
@@ -175,6 +176,8 @@ from femic.tsr_catalog import (
     build_tsr_source_layer_override_report,
     default_tsr_source_layer_overrides_path,
     default_tsr_source_layers_recipe_path,
+    default_tsr_thlb_netdown_audit_path,
+    default_tsr_thlb_netdown_output_path,
     default_tsr_thlb_netdown_recipe_path,
     extract_tsr_candidate_facts,
     fetch_tsr_pdfs,
@@ -184,6 +187,7 @@ from femic.tsr_catalog import (
     init_tsr_source_layer_overrides,
     report_tsr_candidate_facts,
     run_tsr_source_layers_recipe,
+    run_tsr_thlb_netdown_recipe,
     write_tsr_fact_report_csv,
     write_tsr_index,
 )
@@ -518,6 +522,33 @@ TSR_THLB_NETDOWN_RECIPE_PATH_OPTION = typer.Option(
     help=(
         "Optional TSR THLB netdown recipe YAML path. Defaults to "
         "`config/tsr/thlb_netdown.recipe.yaml` under the instance root."
+    ),
+    show_default=False,
+)
+TSR_THLB_CHECKPOINT_PATH_OPTION = typer.Option(
+    None,
+    "--checkpoint-path",
+    help=(
+        "Optional stand checkpoint feather used as the THLB netdown execution base. "
+        "Defaults to the latest `ria_vri_vclr1p_checkpoint*.feather` under the instance data root."
+    ),
+    show_default=False,
+)
+TSR_THLB_OUTPUT_PATH_OPTION = typer.Option(
+    None,
+    "--output-path",
+    help=(
+        "Optional output feather path for the stand-level `thlb_fact` checkpoint. "
+        "Defaults to `data/tsr/thlb_netdown_checkpoint.feather` under the instance root."
+    ),
+    show_default=False,
+)
+TSR_THLB_AUDIT_PATH_OPTION = typer.Option(
+    None,
+    "--audit-path",
+    help=(
+        "Optional audit JSON path for THLB netdown execution. Defaults to "
+        "`config/tsr/thlb_netdown.audit.json` under the instance root."
     ),
     show_default=False,
 )
@@ -2410,6 +2441,23 @@ def _print_tsr_thlb_netdown_recipe_build_summary(
         console.print(f"selected_document_path: {document_path}")
 
 
+def _print_tsr_thlb_netdown_recipe_run_summary(
+    result: TsrThlbNetdownRecipeRunResult,
+) -> None:
+    console.print(f"recipe_path: {result.recipe_path}")
+    console.print(f"checkpoint_path: {result.checkpoint_path}")
+    console.print(f"output_path: {result.output_path}")
+    console.print(f"audit_path: {result.audit_path}")
+    console.print(f"tsa_id: {result.tsa.tsa_id}")
+    console.print(f"tsa_code: {result.tsa.tsa_code}")
+    console.print(f"tsa_name: {result.tsa.tsa_name}")
+    console.print(f"step_count: {result.step_count}")
+    console.print(f"baseline_managed_area_ha: {result.baseline_managed_area_ha:.3f}")
+    console.print(f"final_managed_area_ha: {result.final_managed_area_ha:.3f}")
+    for outcome, count in result.outcome_counts.items():
+        console.print(f"outcome_{outcome}: {count}")
+
+
 def _print_tsr_source_layer_overrides_init_summary(
     result: TsrSourceLayerOverridesInitResult,
 ) -> None:
@@ -3136,6 +3184,51 @@ def tsr_thlb_netdown_build(
         raise typer.Exit(code=1) from exc
 
     _print_tsr_thlb_netdown_recipe_build_summary(result)
+
+
+@tsr_app.command("thlb-netdown-run")
+def tsr_thlb_netdown_run(
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    thlb_netdown_recipe_path: Path | None = TSR_THLB_NETDOWN_RECIPE_PATH_OPTION,
+    checkpoint_path: Path | None = TSR_THLB_CHECKPOINT_PATH_OPTION,
+    output_path: Path | None = TSR_THLB_OUTPUT_PATH_OPTION,
+    audit_path: Path | None = TSR_THLB_AUDIT_PATH_OPTION,
+) -> None:
+    """Execute the reviewed THLB netdown recipe into a stand-level `thlb_fact` checkpoint."""
+
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_recipe_path = (
+        instance_context.resolve_path(thlb_netdown_recipe_path)
+        if thlb_netdown_recipe_path is not None
+        else default_tsr_thlb_netdown_recipe_path(instance_root=instance_context.root)
+    )
+    resolved_checkpoint_path = (
+        instance_context.resolve_path(checkpoint_path)
+        if checkpoint_path is not None
+        else None
+    )
+    resolved_output_path = (
+        instance_context.resolve_path(output_path)
+        if output_path is not None
+        else default_tsr_thlb_netdown_output_path(instance_root=instance_context.root)
+    )
+    resolved_audit_path = (
+        instance_context.resolve_path(audit_path)
+        if audit_path is not None
+        else default_tsr_thlb_netdown_audit_path(instance_root=instance_context.root)
+    )
+    try:
+        result = run_tsr_thlb_netdown_recipe(
+            recipe_path=resolved_recipe_path,
+            checkpoint_path=resolved_checkpoint_path,
+            output_path=resolved_output_path,
+            audit_path=resolved_audit_path,
+        )
+    except TsrRecipeError as exc:
+        console.print(f"[red]TSR THLB recipe run error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_thlb_netdown_recipe_run_summary(result)
 
 
 @tsr_app.command("facts-report")

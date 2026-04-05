@@ -11,6 +11,7 @@ from pathlib import Path
 import re
 from typing import Any
 
+import geopandas as gpd  # type: ignore[import-untyped]
 import yaml
 
 from femic.bcdc_catalog import (
@@ -21,7 +22,12 @@ from femic.bcdc_catalog import (
     resolve_bcdc_candidates,
 )
 from femic.bcdc_dwds import BcdcDwdsError, submit_bcdc_dwds_order
-from femic.bcdc_fetch import BcdcFetchError, GeomarkBBox, fetch_bcdc_wfs_data
+from femic.bcdc_fetch import (
+    BC_ALBERS_EPSG,
+    BcdcFetchError,
+    GeomarkBBox,
+    fetch_bcdc_wfs_data,
+)
 
 from .overlay import TsrOverlayTsaRecord
 from .report import TsrFactReviewRow, report_tsr_candidate_facts
@@ -179,6 +185,21 @@ class TsrThlbNetdownRecipeBuildResult:
     selected_document_paths: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class TsrThlbNetdownRecipeRunResult:
+    """Summary of one THLB netdown recipe execution pass."""
+
+    recipe_path: Path
+    tsa: TsrOverlayTsaRecord
+    checkpoint_path: Path
+    output_path: Path
+    audit_path: Path
+    step_count: int
+    outcome_counts: dict[str, int]
+    baseline_managed_area_ha: float
+    final_managed_area_ha: float
+
+
 def _read_json_object(path: Path, *, description: str) -> dict[str, Any]:
     resolved = path.expanduser().resolve()
     if not resolved.exists():
@@ -256,6 +277,28 @@ def default_tsr_thlb_netdown_recipe_path(*, instance_root: Path) -> Path:
         / "config"
         / "tsr"
         / "thlb_netdown.recipe.yaml"
+    )
+
+
+def default_tsr_thlb_netdown_output_path(*, instance_root: Path) -> Path:
+    """Return the default stand-level THLB checkpoint output path."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "data"
+        / "tsr"
+        / "thlb_netdown_checkpoint.feather"
+    )
+
+
+def default_tsr_thlb_netdown_audit_path(*, instance_root: Path) -> Path:
+    """Return the default THLB netdown audit JSON path."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "config"
+        / "tsr"
+        / "thlb_netdown.audit.json"
     )
 
 
@@ -1480,4 +1523,374 @@ def run_tsr_source_layers_recipe(
         tsa=recipe.tsa,
         entry_count=len(updated_entries),
         outcome_counts=dict(sorted(outcome_counts.items())),
+    )
+
+
+def _find_latest_tsr_checkpoint_path(*, instance_root: Path) -> Path:
+    candidates = sorted(
+        instance_root.expanduser()
+        .resolve()
+        .glob("data/ria_vri_vclr1p_checkpoint*.feather")
+    )
+    if not candidates:
+        raise TsrRecipeError(
+            "No stand checkpoint feather found under the instance data directory."
+        )
+
+    def _checkpoint_order(path: Path) -> int:
+        match = re.search(r"checkpoint(\d+)", path.stem, flags=re.IGNORECASE)
+        if match is None:
+            return -1
+        return int(match.group(1))
+
+    return max(candidates, key=_checkpoint_order)
+
+
+def _load_checkpoint_geodataframe(path: Path) -> gpd.GeoDataFrame:
+    try:
+        checkpoint = gpd.read_feather(path)
+    except Exception as exc:  # pragma: no cover - filesystem/runtime seam
+        raise TsrRecipeError(f"Unable to read THLB checkpoint feather: {path}") from exc
+    if "geometry" not in checkpoint.columns:
+        raise TsrRecipeError(f"THLB checkpoint is missing a geometry column: {path}")
+    checkpoint = checkpoint.copy()
+    if checkpoint.crs is None:
+        checkpoint = checkpoint.set_crs(BC_ALBERS_EPSG)
+    else:
+        checkpoint = checkpoint.to_crs(BC_ALBERS_EPSG)
+    return checkpoint
+
+
+def _normalize_checkpoint_thlb_fact(
+    checkpoint: gpd.GeoDataFrame,
+) -> tuple[gpd.GeoDataFrame, str]:
+    normalized = checkpoint.copy()
+    stand_area_sqm = normalized.geometry.area.astype(float)
+    normalized["_stand_area_sqm"] = stand_area_sqm
+    signal_source = "default_one"
+
+    if "thlb_fact" in normalized.columns:
+        thlb_fact = normalized["thlb_fact"].fillna(0).astype(float)
+        signal_source = "thlb_fact"
+    elif "thlb_raw" in normalized.columns:
+        thlb_fact = normalized["thlb_raw"].fillna(0).astype(float)
+        if float(thlb_fact.max()) > 1.0:
+            thlb_fact = thlb_fact / 100.0
+        signal_source = "thlb_raw"
+    elif "thlb_area" in normalized.columns:
+        area_ha = stand_area_sqm / 10000.0
+        with_area = area_ha.where(area_ha > 0, other=1.0)
+        thlb_fact = normalized["thlb_area"].fillna(0).astype(float) / with_area
+        signal_source = "thlb_area"
+    elif "thlb" in normalized.columns:
+        thlb_fact = normalized["thlb"].fillna(0).astype(float)
+        signal_source = "thlb"
+    else:
+        thlb_fact = stand_area_sqm.map(lambda _value: 1.0)
+
+    normalized["thlb_fact"] = thlb_fact.clip(lower=0.0, upper=1.0)
+    return normalized, signal_source
+
+
+def _load_source_recipe_entry_map(
+    source_recipe: TsrSourceLayersRecipeRecord,
+) -> dict[str, dict[str, Any]]:
+    index: dict[str, dict[str, Any]] = {}
+    for entry in source_recipe.entries:
+        entry_id = str(entry.get("entry_id", "")).strip()
+        if entry_id:
+            index[entry_id] = dict(entry)
+    return index
+
+
+def _resolve_source_artifact_path(
+    *,
+    instance_root: Path,
+    source_entry: dict[str, Any],
+) -> Path | None:
+    artifact_path = str(source_entry.get("artifact_path", "")).strip()
+    if not artifact_path:
+        return None
+    candidate = instance_root / artifact_path
+    resolved = candidate.expanduser().resolve()
+    if not resolved.exists():
+        return None
+    return resolved
+
+
+def _load_exclusion_geometries(
+    *,
+    instance_root: Path,
+    linked_source_entry_ids: tuple[str, ...],
+    source_entry_map: dict[str, dict[str, Any]],
+) -> tuple[gpd.GeoDataFrame | None, list[str]]:
+    frames: list[gpd.GeoDataFrame] = []
+    missing_sources: list[str] = []
+    for entry_id in linked_source_entry_ids:
+        source_entry = source_entry_map.get(entry_id)
+        if source_entry is None:
+            missing_sources.append(entry_id)
+            continue
+        artifact_path = _resolve_source_artifact_path(
+            instance_root=instance_root,
+            source_entry=source_entry,
+        )
+        if artifact_path is None:
+            missing_sources.append(entry_id)
+            continue
+        try:
+            layer = gpd.read_file(artifact_path)
+        except Exception:  # pragma: no cover - runtime seam
+            missing_sources.append(entry_id)
+            continue
+        if layer.empty or "geometry" not in layer.columns:
+            missing_sources.append(entry_id)
+            continue
+        layer = layer.copy()
+        if layer.crs is None:
+            layer = layer.set_crs(BC_ALBERS_EPSG)
+        else:
+            layer = layer.to_crs(BC_ALBERS_EPSG)
+        layer = layer[["geometry"]].dropna(subset=["geometry"])
+        layer = layer.loc[~layer.geometry.is_empty]
+        layer = layer.loc[layer.geometry.geom_type.isin(["Polygon", "MultiPolygon"])]
+        if layer.empty:
+            missing_sources.append(entry_id)
+            continue
+        frames.append(layer)
+    if not frames:
+        return None, missing_sources
+    merged = gpd.GeoDataFrame(
+        geometry=gpd.GeoSeries(
+            [geom for frame in frames for geom in frame.geometry],
+            crs=BC_ALBERS_EPSG,
+        ),
+        crs=BC_ALBERS_EPSG,
+    )
+    return merged, missing_sources
+
+
+def _compute_exclusion_fraction(
+    *,
+    checkpoint: gpd.GeoDataFrame,
+    exclusion_geometries: gpd.GeoDataFrame,
+) -> dict[int, float]:
+    if checkpoint.empty or exclusion_geometries.empty:
+        return {}
+    candidate_indices = checkpoint.sindex.query(
+        exclusion_geometries.geometry, predicate="intersects"
+    )
+    if getattr(candidate_indices, "ndim", 1) == 2:
+        candidate_values = candidate_indices[1]
+    else:
+        candidate_values = candidate_indices
+    unique_indices = sorted({int(index) for index in candidate_values.tolist()})
+    if not unique_indices:
+        return {}
+    candidate = checkpoint.iloc[unique_indices][
+        ["_row_id", "_stand_area_sqm", "geometry"]
+    ].copy()
+    intersections = gpd.overlay(
+        candidate[["_row_id", "geometry"]],
+        exclusion_geometries[["geometry"]],
+        how="intersection",
+        keep_geom_type=False,
+    )
+    if intersections.empty:
+        return {}
+    intersection_area = intersections.geometry.area.groupby(
+        intersections["_row_id"]
+    ).sum()
+    stand_area = candidate.set_index("_row_id")["_stand_area_sqm"].reindex(
+        intersection_area.index
+    )
+    fraction = (intersection_area / stand_area).clip(lower=0.0, upper=1.0)
+    return {int(key): float(value) for key, value in fraction.items()}
+
+
+def _managed_area_ha(checkpoint: gpd.GeoDataFrame) -> float:
+    return float(
+        (checkpoint["_stand_area_sqm"] * checkpoint["thlb_fact"]).sum() / 10000.0
+    )
+
+
+def run_tsr_thlb_netdown_recipe(
+    *,
+    recipe_path: Path,
+    checkpoint_path: Path | None = None,
+    output_path: Path | None = None,
+    audit_path: Path | None = None,
+) -> TsrThlbNetdownRecipeRunResult:
+    """Execute a bounded THLB netdown recipe into a stand-level `thlb_fact` checkpoint."""
+
+    resolved_recipe_path = recipe_path.expanduser().resolve()
+    recipe = load_tsr_thlb_netdown_recipe(resolved_recipe_path)
+    instance_root = resolved_recipe_path.parents[2]
+    source_layer_recipe_path = _resolve_instance_path(
+        instance_root, recipe.instance_inputs.source_layer_recipe_path
+    )
+    source_recipe = load_tsr_source_layers_recipe(source_layer_recipe_path)
+    source_entry_map = _load_source_recipe_entry_map(source_recipe)
+
+    resolved_checkpoint_path = (
+        checkpoint_path.expanduser().resolve()
+        if checkpoint_path is not None
+        else _find_latest_tsr_checkpoint_path(instance_root=instance_root)
+    )
+    resolved_output_path = (
+        output_path.expanduser().resolve()
+        if output_path is not None
+        else default_tsr_thlb_netdown_output_path(instance_root=instance_root)
+    )
+    resolved_audit_path = (
+        audit_path.expanduser().resolve()
+        if audit_path is not None
+        else default_tsr_thlb_netdown_audit_path(instance_root=instance_root)
+    )
+
+    checkpoint = _load_checkpoint_geodataframe(resolved_checkpoint_path)
+    checkpoint["_row_id"] = range(len(checkpoint))
+    checkpoint, baseline_signal = _normalize_checkpoint_thlb_fact(checkpoint)
+    baseline_managed_area_ha = _managed_area_ha(checkpoint)
+
+    outcome_counts: Counter[str] = Counter()
+    applied_steps: list[dict[str, Any]] = []
+
+    for step in recipe.steps:
+        updated_step = dict(step)
+        normalized_action = str(step.get("normalized_action", "")).strip()
+        linked_source_entry_ids = tuple(
+            str(value).strip()
+            for value in step.get("linked_source_entry_ids", ())
+            if str(value).strip()
+        )
+        page_number = int(step.get("page_number") or 0)
+
+        if normalized_action in {
+            "section_heading",
+            "definition",
+            "increase_conditions",
+            "decrease_conditions",
+        }:
+            updated_step["run_status"] = "needs_review"
+            updated_step["run_notes"] = [
+                "Context-only THLB row; no execution attempted."
+            ]
+        elif normalized_action in {"use_land_base", "no_deduction"}:
+            updated_step["run_status"] = "applied_noop"
+            updated_step["run_notes"] = ["No spatial deduction applied for this rule."]
+        elif normalized_action == "exclude":
+            exclusion_geometries, missing_sources = _load_exclusion_geometries(
+                instance_root=instance_root,
+                linked_source_entry_ids=linked_source_entry_ids,
+                source_entry_map=source_entry_map,
+            )
+            if exclusion_geometries is None:
+                updated_step["run_status"] = "blocked_missing_source"
+                updated_step["run_notes"] = [
+                    "No fetched polygon artifact was available for the linked source entries."
+                ]
+                if missing_sources:
+                    updated_step["missing_source_entry_ids"] = missing_sources
+            else:
+                exclusion_fraction = _compute_exclusion_fraction(
+                    checkpoint=checkpoint,
+                    exclusion_geometries=exclusion_geometries,
+                )
+                if not exclusion_fraction:
+                    updated_step["run_status"] = "applied_noop"
+                    updated_step["run_notes"] = [
+                        "No stand geometries intersected the exclusion mask."
+                    ]
+                else:
+                    ratios = checkpoint["_row_id"].map(exclusion_fraction).fillna(0.0)
+                    checkpoint["thlb_fact"] = (checkpoint["thlb_fact"] - ratios).clip(
+                        lower=0.0, upper=1.0
+                    )
+                    updated_step["run_status"] = "applied"
+                    updated_step["affected_stand_count"] = int((ratios > 0).sum())
+                    updated_step["affected_area_ha"] = float(
+                        (
+                            checkpoint["_stand_area_sqm"]
+                            * ratios.clip(lower=0.0, upper=1.0)
+                        ).sum()
+                        / 10000.0
+                    )
+                    updated_step["run_notes"] = [
+                        "Applied stand-level exclusion using overlap fractions in EPSG:3005.",
+                        "Sequential stand-level subtraction may approximate overlapping exclusion masks.",
+                    ]
+                if missing_sources:
+                    updated_step["missing_source_entry_ids"] = missing_sources
+        elif normalized_action == "aspatial_reduction":
+            updated_step["run_status"] = "unsupported"
+            updated_step["run_notes"] = [
+                "Aspatial reduction steps are preserved for review but not executed in v1."
+            ]
+        else:
+            updated_step["run_status"] = "unsupported"
+            updated_step["run_notes"] = [
+                f"Normalized action `{normalized_action or 'unknown'}` is not executable in v1."
+            ]
+
+        updated_step["page_number"] = page_number
+        applied_steps.append(updated_step)
+        outcome_counts.update([str(updated_step.get("run_status", "unsupported"))])
+
+    final_managed_area_ha = _managed_area_ha(checkpoint)
+
+    payload = recipe.to_dict()
+    recipe_contract = dict(recipe.recipe_contract)
+    recipe_contract["status"] = "run"
+    recipe_contract["last_run_utc"] = datetime.now(UTC).isoformat()
+    recipe_contract["selected_checkpoint_path"] = str(
+        resolved_checkpoint_path.relative_to(instance_root).as_posix()
+    )
+    recipe_contract["output_checkpoint_path"] = str(
+        resolved_output_path.relative_to(instance_root).as_posix()
+    )
+    recipe_contract["audit_path"] = str(
+        resolved_audit_path.relative_to(instance_root).as_posix()
+    )
+    payload["recipe_contract"] = recipe_contract
+    payload["steps"] = applied_steps
+    _write_recipe_yaml(resolved_recipe_path, payload)
+
+    output_frame = checkpoint.drop(
+        columns=["_row_id", "_stand_area_sqm"], errors="ignore"
+    )
+    resolved_output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_frame.to_feather(resolved_output_path)
+
+    audit_payload = {
+        "generated_utc": datetime.now(UTC).isoformat(),
+        "tsa": recipe.tsa.to_dict(),
+        "recipe_path": str(resolved_recipe_path.relative_to(instance_root).as_posix()),
+        "checkpoint_path": str(
+            resolved_checkpoint_path.relative_to(instance_root).as_posix()
+        ),
+        "output_path": str(resolved_output_path.relative_to(instance_root).as_posix()),
+        "baseline_signal": baseline_signal,
+        "baseline_managed_area_ha": baseline_managed_area_ha,
+        "final_managed_area_ha": final_managed_area_ha,
+        "step_count": len(applied_steps),
+        "outcome_counts": dict(sorted(outcome_counts.items())),
+        "steps": applied_steps,
+    }
+    resolved_audit_path.parent.mkdir(parents=True, exist_ok=True)
+    resolved_audit_path.write_text(
+        json.dumps(audit_payload, indent=2, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    return TsrThlbNetdownRecipeRunResult(
+        recipe_path=resolved_recipe_path,
+        tsa=recipe.tsa,
+        checkpoint_path=resolved_checkpoint_path,
+        output_path=resolved_output_path,
+        audit_path=resolved_audit_path,
+        step_count=len(applied_steps),
+        outcome_counts=dict(sorted(outcome_counts.items())),
+        baseline_managed_area_ha=baseline_managed_area_ha,
+        final_managed_area_ha=final_managed_area_ha,
     )

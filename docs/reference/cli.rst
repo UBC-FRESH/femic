@@ -618,6 +618,38 @@ executing the netdown. It writes an ordered, reviewable
 - per-step readiness/blocking state; and
 - the selected source TSR document paths used for the build.
 
+``tsr thlb-netdown-run`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
+- ``--checkpoint-path PATH`` (optional; defaults to the latest
+  ``data/ria_vri_vclr1p_checkpoint*.feather`` under the instance root)
+- ``--output-path PATH`` (optional; defaults to
+  ``data/tsr/thlb_netdown_checkpoint.feather`` under the instance root)
+- ``--audit-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.audit.json`` under the instance root)
+
+``tsr thlb-netdown-run`` executes a bounded subset of the reviewed THLB recipe
+into a stand-level checkpoint that carries ``thlb_fact`` for downstream export
+and simulation flows.
+
+Current v1 execution contract:
+
+- ``use_land_base`` and ``no_deduction`` become explicit no-op audit rows;
+- ``exclude`` steps with fetched polygon sources are applied as stand-level
+  overlap deductions in ``EPSG:3005``;
+- unsupported or low-confidence actions remain explicit as
+  ``needs_review`` / ``unsupported`` / ``blocked_missing_source`` instead of
+  being guessed silently; and
+- the run writes both:
+  - ``data/tsr/thlb_netdown_checkpoint.feather``
+  - ``config/tsr/thlb_netdown.audit.json``
+
+This command is intentionally partial-success friendly: it should move the
+recipe forward where FEMIC has enough trustworthy information while keeping the
+remaining wall visible and reproducible.
+
 ``tsr overlay-init`` options
 
 - ``--tsa TEXT`` (required TSA code, ``tsa_<code>``, or TSA name)

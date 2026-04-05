@@ -13418,3 +13418,51 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - use the TSA29 recipe as the acceptance baseline for the execution slice,
       preserving the same selected 2024 data-package provenance and logical
       source-layer ids.
+- 2026-04-04 (Issue `#126` execution slice in proving-ground acceptance: THLB
+  recipe steps now run into a reusable stand-level `thlb_fact` checkpoint
+  instead of stopping at reviewed YAML):
+  - Added the new CLI:
+    - `python -m femic tsr thlb-netdown-run --instance-root ...`
+  - Added THLB recipe execution helpers that:
+    - detect the latest stand checkpoint feather by default;
+    - normalize the baseline managed share from existing `thlb_fact`,
+      `thlb_raw`, `thlb_area`, or `thlb` signals;
+    - apply bounded `exclude` rules using fetched polygon layers in
+      `EPSG:3005`;
+    - preserve `use_land_base` and `no_deduction` as explicit no-op audit rows;
+    - leave `aspatial_reduction` and other unsupported actions visible instead
+      of silently guessing; and
+    - write both `data/tsr/thlb_netdown_checkpoint.feather` and
+      `config/tsr/thlb_netdown.audit.json`.
+  - TSA29 proving-ground smoke:
+    - ran `femic tsr thlb-netdown-run --instance-root external/femic-tsa29-instance`;
+    - baseline managed area: `1,513,233.574 ha`;
+    - final managed area after supported exclusions:
+      `1,290,690.224 ha`;
+    - step outcomes:
+      - `2` `applied`
+      - `2` `applied_noop`
+      - `3` `blocked_missing_source`
+      - `10` `needs_review`
+      - `1` `unsupported`
+    - concrete applied exclusions:
+      - `OGMAs`
+      - `Mule Deer winter range`
+  - Downstream smoke:
+    - `femic export patchworks` completed successfully against
+      `data/tsr/thlb_netdown_checkpoint.feather`;
+    - exported fragments carried nonzero `RETENTION`, confirming that the new
+      `thlb_fact` artifact is consumable by the existing Patchworks export seam.
+  - Convergence/reproducibility note:
+    - Phase 52 now has a scriptable path from TSR intelligence through source
+      acquisition, THLB recipe build, THLB execution, and downstream export;
+    - supported steps are executable, unsupported steps remain explicit, and
+      the produced checkpoint is a durable handoff artifact for later rebuilds.
+  - Detailed Next Steps:
+    - close `#126` once the full validation stack and TSA29 proving-ground save
+      are checkpointed;
+    - move to `#127` next so the recipe workflow docs and TSA29 acceptance
+      case are finalized as the definitive Phase 52 runbook; and
+    - keep the eventual Phase 52 closeout focused on one fresh-clone
+      reproducibility story rather than letting downstream acceptance evidence
+      drift back into chat-only lore.

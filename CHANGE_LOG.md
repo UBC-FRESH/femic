@@ -11836,3 +11836,33 @@
   - This keeps the Phase 52 action-research workflow convergent and
     reproducible: the THLB interpretation is now expressed as script-generated,
     reviewable instance state rather than chat-only or shell-only lore.
+- 2026-04-04: Advanced `#126` to proving-ground acceptance (execute THLB
+  recipe into a stand-level `thlb_fact` checkpoint).
+  - Added the new CLI:
+    - `python -m femic tsr thlb-netdown-run --instance-root ...`
+  - Added THLB execution helpers that:
+    - detect the latest stand checkpoint feather automatically;
+    - normalize baseline managed share from existing THLB signals;
+    - apply supported `exclude` rules with fetched polygon layers in
+      `EPSG:3005`;
+    - preserve `use_land_base` / `no_deduction` as explicit no-op audit rows;
+    - leave unsupported actions such as `aspatial_reduction` visible in the
+      audit instead of silently guessing; and
+    - write both `data/tsr/thlb_netdown_checkpoint.feather` and
+      `config/tsr/thlb_netdown.audit.json`.
+  - TSA29 proving-ground smoke:
+    - baseline managed area: `1,513,233.574 ha`
+    - final managed area after supported exclusions: `1,290,690.224 ha`
+    - step outcomes:
+      - `2` `applied`
+      - `2` `applied_noop`
+      - `3` `blocked_missing_source`
+      - `10` `needs_review`
+      - `1` `unsupported`
+    - concrete applied exclusions:
+      - `OGMAs`
+      - `Mule Deer winter range`
+  - Downstream smoke:
+    - `femic export patchworks` completed successfully when pointed at the new
+      THLB checkpoint, confirming that the produced `thlb_fact` artifact is
+      consumable by the existing Patchworks export seam.

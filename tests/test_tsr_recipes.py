@@ -3,7 +3,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import geopandas as gpd
 import pytest
+from shapely.geometry import box
 
 from femic import tsr_catalog
 from femic.tsr_catalog import recipes as tsr_recipes
@@ -499,3 +501,140 @@ def test_build_tsr_thlb_netdown_recipe_populates_steps_from_latest_data_package(
     assert reference_step["label"] == "Long-term THLB reference"
     assert netdown_step["normalized_action"] == "exclude"
     assert netdown_step["linked_source_entry_ids"] == ["mdwr"]
+
+
+def test_run_tsr_thlb_netdown_recipe_writes_thlb_fact_checkpoint_and_audit(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    exclusion_path = (
+        instance_root / "data" / "downloads" / "bcdc" / "MDWR" / "MDWR.gpkg"
+    )
+    exclusion_path.parent.mkdir(parents=True, exist_ok=True)
+    exclusion = gpd.GeoDataFrame(
+        {"rule": ["mdwr"]},
+        geometry=[box(0, 0, 5, 10)],
+        crs="EPSG:3005",
+    )
+    exclusion.to_file(exclusion_path, driver="GPKG")
+
+    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2],
+            "thlb_raw": [100.0, 100.0],
+        },
+        geometry=[box(0, 0, 10, 10), box(20, 0, 30, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint.to_feather(checkpoint_path)
+
+    source_recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    source_recipe_payload["recipe_contract"]["status"] = "run"
+    source_recipe_payload["entries"] = [
+        {
+            "entry_id": "mdwr",
+            "label": "Mule Deer winter range",
+            "recommended_query": "REG_LAND_AND_NATURAL_RESOURCE.WLD_MULE_DEER_RNG_TOPO_CAR_SP",
+            "acquisition_strategy": "wfs_fetch",
+            "artifact_path": "data/downloads/bcdc/MDWR/MDWR.gpkg",
+            "run_status": "fetched",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            source_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["recipe_contract"]["status"] = "built"
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "thlb_step_001_use_land_base",
+            "order_index": 1,
+            "step_kind": "reference_target",
+            "label": "Long-term THLB reference",
+            "normalized_action": "use_land_base",
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 25,
+        },
+        {
+            "step_id": "thlb_step_002_mdwr",
+            "order_index": 2,
+            "step_kind": "netdown_rule",
+            "label": "Mule Deer winter range",
+            "normalized_action": "exclude",
+            "linked_source_entry_ids": ["mdwr"],
+            "step_status": "ready",
+            "page_number": 47,
+        },
+        {
+            "step_id": "thlb_step_003_wtra",
+            "order_index": 3,
+            "step_kind": "netdown_rule",
+            "label": "WTRA",
+            "normalized_action": "aspatial_reduction",
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 50,
+        },
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    result = tsr_recipes.run_tsr_thlb_netdown_recipe(
+        recipe_path=init_result.thlb_netdown_recipe_path
+    )
+
+    assert result.step_count == 3
+    assert result.outcome_counts["applied"] == 1
+    assert result.outcome_counts["applied_noop"] == 1
+    assert result.outcome_counts["unsupported"] == 1
+    assert result.baseline_managed_area_ha == pytest.approx(0.02)
+    assert result.final_managed_area_ha == pytest.approx(0.015)
+
+    output = gpd.read_feather(result.output_path)
+    assert output["thlb_fact"].tolist() == pytest.approx([0.5, 1.0])
+
+    audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
+    assert audit_payload["baseline_signal"] == "thlb_raw"
+    assert audit_payload["outcome_counts"]["applied"] == 1
+    recipe = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    )
+    assert recipe.recipe_contract["status"] == "run"

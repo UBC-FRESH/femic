@@ -16,6 +16,8 @@ Review document surfaces into three separate layers of knowledge:
 5. reviewed instance-local working recipe scaffolds under:
    - ``config/tsr/source_layers.recipe.yaml``
    - ``config/tsr/thlb_netdown.recipe.yaml``
+   - ``config/tsr/thlb_netdown.audit.json``
+   - ``data/tsr/thlb_netdown_checkpoint.feather``
 
 This guide is intentionally about workflow and promotion discipline. It does
 **not** make FEMIC auto-adopt extracted candidate facts into a live instance.
@@ -44,6 +46,8 @@ Instance-local reviewed overlay:
   overrides are needed)
 - ``config/tsr/source_layers.recipe.yaml``
 - ``config/tsr/thlb_netdown.recipe.yaml``
+- ``config/tsr/thlb_netdown.audit.json``
+- ``data/tsr/thlb_netdown_checkpoint.feather``
 
 Treat the canonical JSON artifacts as the shared discovery surface, and treat
 the overlay YAML plus recipe YAMLs as the reviewed/adopted per-instance
@@ -83,6 +87,9 @@ instance:
      --instance-root external/femic-tsa29-instance
 
    python -m femic tsr thlb-netdown-build \
+     --instance-root external/femic-tsa29-instance
+
+   python -m femic tsr thlb-netdown-run \
      --instance-root external/femic-tsa29-instance
 
    python -m femic tsr overlay-init \
@@ -235,6 +242,31 @@ The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
 
    The THLB recipe build step is intentionally about extracting
    **what the TSR says to do**, not applying the netdown yet.
+
+6c. execute the bounded supported subset of the THLB recipe into a stand-level
+   checkpoint:
+
+   .. code-block:: bash
+
+      python -m femic tsr thlb-netdown-run \
+        --instance-root external/femic-tsa29-instance
+
+   This writes:
+
+   - ``config/tsr/thlb_netdown.audit.json``
+   - ``data/tsr/thlb_netdown_checkpoint.feather``
+
+   The output checkpoint carries ``thlb_fact`` for downstream export logic.
+   The audit JSON records which THLB recipe steps were:
+
+   - ``applied``;
+   - ``applied_noop``;
+   - ``unsupported``; or
+   - ``blocked_missing_source``.
+
+   This keeps the run convergent and reproducible: supported steps move the
+   instance forward, and unsupported steps remain explicit instead of forcing
+   the user to rediscover what FEMIC did or did not apply.
 
 7. initialize or refresh the reviewed overlay:
 

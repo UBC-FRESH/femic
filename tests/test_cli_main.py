@@ -5268,6 +5268,68 @@ def test_tsr_thlb_netdown_build_uses_default_recipe_path(
     )
 
 
+def test_tsr_thlb_netdown_run_uses_default_paths(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_run(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbNetdownRecipeRunResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            checkpoint_path=instance_root
+            / "data"
+            / "ria_vri_vclr1p_checkpoint8.feather",
+            output_path=instance_root
+            / "data"
+            / "tsr"
+            / "thlb_netdown_checkpoint.feather",
+            audit_path=instance_root / "config" / "tsr" / "thlb_netdown.audit.json",
+            step_count=3,
+            outcome_counts={"applied": 1, "unsupported": 2},
+            baseline_managed_area_ha=1682843.0,
+            final_managed_area_ha=1513233.574,
+        )
+
+    monkeypatch.setattr(cli_main, "run_tsr_thlb_netdown_recipe", _fake_run)
+
+    cli_main.tsr_thlb_netdown_run(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+        checkpoint_path=None,
+        output_path=None,
+        audit_path=None,
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert captured_kwargs["checkpoint_path"] is None
+    assert (
+        captured_kwargs["output_path"]
+        == (
+            instance_root / "data" / "tsr" / "thlb_netdown_checkpoint.feather"
+        ).resolve()
+    )
+    assert (
+        captured_kwargs["audit_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.audit.json").resolve()
+    )
+    assert any("step_count: 3" in msg for msg in messages)
+    assert any("outcome_applied: 1" in msg for msg in messages)
+
+
 def test_tsr_facts_report_writes_review_csv(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

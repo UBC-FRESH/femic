@@ -58,6 +58,7 @@ The common operator-facing entrypoint is:
    femic tsr source-layers-build --instance-root external/femic-tsa29-instance
    femic tsr source-layers-run --instance-root external/femic-tsa29-instance --bbox ...
    femic tsr thlb-netdown-build --instance-root external/femic-tsa29-instance
+   femic tsr thlb-netdown-run --instance-root external/femic-tsa29-instance
    femic tsr overlay-init --instance-root external/femic-tsa29-instance --tsa 29
    femic tsr overlay-report --instance-root external/femic-tsa29-instance
    femic tsr override-init --instance-root external/femic-tsa29-instance
@@ -151,6 +152,11 @@ The matching Python entrypoints are:
        ),
        source_root=Path.cwd(),
    )
+   run_tsr_thlb_netdown_recipe(
+       recipe_path=Path(
+           "external/femic-tsa29-instance/config/tsr/thlb_netdown.recipe.yaml"
+       ),
+   )
    build_tsr_overlay_report(
        overlay_path=Path("external/femic-tsa29-instance/config/tsr/overlay.yaml"),
    )
@@ -200,6 +206,9 @@ Key Entry Surfaces
 - :func:`build_tsr_thlb_netdown_recipe`
   Refresh the reviewed THLB netdown recipe from TSR THLB facts plus the stable
   logical-source ids already captured in the source-layer recipe.
+- :func:`run_tsr_thlb_netdown_recipe`
+  Execute the bounded supported subset of the reviewed THLB recipe into a
+  stand-level checkpoint carrying ``thlb_fact`` plus a structured audit JSON.
 - :func:`build_tsr_overlay_report`
   Summarize one reviewed overlay against the canonical candidate-fact pool it
   references.
