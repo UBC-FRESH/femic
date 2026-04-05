@@ -439,6 +439,7 @@ Subcommands
 - ``fetch``: ``python -m femic tsr fetch [OPTIONS]``
 - ``extract``: ``python -m femic tsr extract [OPTIONS]``
 - ``facts-report``: ``python -m femic tsr facts-report [OPTIONS]``
+- ``recipe-init``: ``python -m femic tsr recipe-init [OPTIONS]``
 - ``overlay-init``: ``python -m femic tsr overlay-init [OPTIONS]``
 - ``overlay-report``: ``python -m femic tsr overlay-report [OPTIONS]``
 - ``override-init``: ``python -m femic tsr override-init [OPTIONS]``
@@ -520,6 +521,39 @@ instance-local overlay. The first guided-review slice:
   - ``likely_noise``;
 - preserves provenance and source URLs; and
 - can write a CSV that is easier to sort/filter than the raw JSON fact pool.
+
+``tsr recipe-init`` options
+
+- ``--tsa TEXT`` (required TSA code, ``tsa_<code>``, or TSA name)
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--registry-path PATH`` (optional; defaults to
+  ``metadata/tsr/tsa_registry.json``)
+- ``--documents-path PATH`` (optional; defaults to
+  ``metadata/tsr/tsa_documents.json``)
+- ``--candidate-facts-path PATH`` (optional; defaults to
+  ``metadata/tsr/tsa_candidate_facts.json``)
+- ``--overlay-path PATH`` (optional; defaults to
+  ``config/tsr/overlay.yaml`` under the instance root)
+- ``--overrides-path PATH`` (optional; defaults to
+  ``config/tsr/source_layer_overrides.yaml`` under the instance root)
+- ``--source-layers-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/source_layers.recipe.yaml`` under the instance root)
+- ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
+- ``--overwrite`` (optional; replace existing recipe scaffold files)
+
+``tsr recipe-init`` initializes the two instance-local reviewed working
+recipes that later recipe build/run slices will own:
+
+- ``config/tsr/source_layers.recipe.yaml``
+- ``config/tsr/thlb_netdown.recipe.yaml``
+
+These recipe files are intentionally distinct from:
+
+- canonical shared TSR discovery JSON under ``metadata/tsr``;
+- the reviewed/adopted overlay at ``config/tsr/overlay.yaml``; and
+- the wall-moving escape hatch file at
+  ``config/tsr/source_layer_overrides.yaml``.
 
 ``tsr overlay-init`` options
 

@@ -13257,3 +13257,40 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - require each landed slice to preserve the user-visible convergence
       property: later downstream work must not quietly dynamite already
       approved upstream steps.
+- 2026-04-04 (Issue `#123` implemented: instance-local TSR recipe scaffolds now
+  exist for the new Phase 52 lane):
+  - Added packaged recipe scaffold resources under:
+    - `src/femic/resources/tsr_recipes/source_layers.recipe.yaml`
+    - `src/femic/resources/tsr_recipes/thlb_netdown.recipe.yaml`
+  - Added the new helper module `src/femic/tsr_catalog/recipes.py` with:
+    - default per-instance recipe paths under `config/tsr/`;
+    - TSA-aware scaffold initialization against canonical TSR registry inputs;
+    - YAML loaders/validators for both recipe kinds; and
+    - a single init result surface that keeps the source-layer and THLB recipe
+      scaffolds paired from the start.
+  - Added the new CLI:
+    - `python -m femic tsr recipe-init --instance-root ... --tsa ...`
+  - The initialized per-instance working surfaces are now:
+    - `config/tsr/source_layers.recipe.yaml`
+    - `config/tsr/thlb_netdown.recipe.yaml`
+  - These recipe files are intentionally distinct from:
+    - canonical shared discovery JSON under `metadata/tsr/`;
+    - the reviewed/adopted overlay at `config/tsr/overlay.yaml`; and
+    - the escape-hatch override file at
+      `config/tsr/source_layer_overrides.yaml`.
+  - Validation:
+    - targeted recipe/CLI/doc-contract tests passed;
+    - full repo validation passed:
+      - `python -m ruff format src tests`
+      - `python -m ruff check src tests`
+      - `python -m mypy src`
+      - `python -m pytest -q`
+      - `python -m sphinx -b html docs _build/html -W`
+      - `python -m pre_commit run --all-files`
+  - Detailed Next Steps:
+    - move to `#124` next so the source-layer recipe becomes a real build/run
+      surface instead of a static scaffold;
+    - keep `#125` and `#126` behind it so THLB netdown logic composes against
+      stable logical source-layer recipe ids instead of one-off path lore; and
+    - keep the recipe lifecycle instance-local and reproducible rather than
+      drifting toward hidden user-home state.

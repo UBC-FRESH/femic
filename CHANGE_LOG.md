@@ -11752,3 +11752,31 @@
     - `#125` THLB netdown recipe extraction;
     - `#126` THLB recipe execution into stand-level `thlb_fact`; and
     - `#127` workflow docs and TSA29 acceptance record.
+- 2026-04-04: Completed `#123` (TSR recipe schema and instance-local template
+  scaffolds).
+  - Added packaged recipe scaffold resources for:
+    - `config/tsr/source_layers.recipe.yaml`
+    - `config/tsr/thlb_netdown.recipe.yaml`
+  - Added `src/femic/tsr_catalog/recipes.py` to own:
+    - default per-instance recipe paths;
+    - TSA-aware scaffold initialization against canonical TSR registry inputs;
+    - paired source-layer and THLB recipe lifecycle helpers; and
+    - YAML loading/validation for both recipe surfaces.
+  - Added the new CLI:
+    - `python -m femic tsr recipe-init --instance-root ... --tsa ...`
+  - The recipe scaffolds now sit alongside, but remain intentionally distinct
+    from:
+    - canonical shared discovery JSON under `metadata/tsr/`;
+    - the reviewed/adopted overlay at `config/tsr/overlay.yaml`; and
+    - the escape-hatch override file at
+      `config/tsr/source_layer_overrides.yaml`.
+  - This slice reinforces the new Phase 52 convergence/reproducibility
+    contract by making recipe state instance-local, explicit, and scriptable
+    from a fresh clone instead of leaving downstream build logic to chat lore.
+  - Validation passed:
+    - `python -m ruff format src tests`
+    - `python -m ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest -q`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`

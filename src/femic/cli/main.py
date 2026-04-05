@@ -160,6 +160,8 @@ from femic.tsr_catalog import (
     TsrOverlayError,
     TsrOverlayInitResult,
     TsrOverlayReport,
+    TsrRecipeError,
+    TsrRecipeInitResult,
     TsrSourceLayerOverridesError,
     TsrSourceLayerOverridesInitResult,
     TsrSourceLayerOverridesReport,
@@ -167,10 +169,13 @@ from femic.tsr_catalog import (
     build_tsr_overlay_report,
     build_tsr_source_layer_override_report,
     default_tsr_source_layer_overrides_path,
+    default_tsr_source_layers_recipe_path,
+    default_tsr_thlb_netdown_recipe_path,
     extract_tsr_candidate_facts,
     fetch_tsr_pdfs,
     index_tsr_tsa_surfaces,
     init_tsr_overlay,
+    init_tsr_recipe_scaffolds,
     init_tsr_source_layer_overrides,
     report_tsr_candidate_facts,
     write_tsr_fact_report_csv,
@@ -489,6 +494,24 @@ TSR_SOURCE_LAYER_OVERRIDES_PATH_OPTION = typer.Option(
     help=(
         "Optional TSR source-layer override YAML path. Defaults to "
         "`config/tsr/source_layer_overrides.yaml` under the instance root."
+    ),
+    show_default=False,
+)
+TSR_SOURCE_LAYERS_RECIPE_PATH_OPTION = typer.Option(
+    None,
+    "--source-layers-recipe-path",
+    help=(
+        "Optional TSR source-layer recipe YAML path. Defaults to "
+        "`config/tsr/source_layers.recipe.yaml` under the instance root."
+    ),
+    show_default=False,
+)
+TSR_THLB_NETDOWN_RECIPE_PATH_OPTION = typer.Option(
+    None,
+    "--thlb-netdown-recipe-path",
+    help=(
+        "Optional TSR THLB netdown recipe YAML path. Defaults to "
+        "`config/tsr/thlb_netdown.recipe.yaml` under the instance root."
     ),
     show_default=False,
 )
@@ -2325,6 +2348,14 @@ def _print_tsr_overlay_report(summary: TsrOverlayReport) -> None:
         console.print(f"adopted_{section}_count: {count}")
 
 
+def _print_tsr_recipe_init_summary(result: TsrRecipeInitResult) -> None:
+    console.print(f"source_layers_recipe_path: {result.source_layers_recipe_path}")
+    console.print(f"thlb_netdown_recipe_path: {result.thlb_netdown_recipe_path}")
+    console.print(f"tsa_id: {result.tsa.tsa_id}")
+    console.print(f"tsa_code: {result.tsa.tsa_code}")
+    console.print(f"tsa_name: {result.tsa.tsa_name}")
+
+
 def _print_tsr_source_layer_overrides_init_summary(
     result: TsrSourceLayerOverridesInitResult,
 ) -> None:
@@ -2879,6 +2910,78 @@ def tsr_overlay_init(
         raise typer.Exit(code=1) from exc
 
     _print_tsr_overlay_init_summary(result)
+
+
+@tsr_app.command("recipe-init")
+def tsr_recipe_init(
+    tsa: str = typer.Option(..., "--tsa", help="TSA code, tsa_<code>, or TSA name."),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    registry_path: Path | None = TSR_REGISTRY_PATH_OPTION,
+    documents_path: Path | None = TSR_DOCUMENTS_PATH_OPTION,
+    candidate_facts_path: Path | None = TSR_CANDIDATE_FACTS_INPUT_OPTION,
+    overlay_path: Path | None = TSR_OVERLAY_PATH_OPTION,
+    overrides_path: Path | None = TSR_SOURCE_LAYER_OVERRIDES_PATH_OPTION,
+    source_layers_recipe_path: Path | None = TSR_SOURCE_LAYERS_RECIPE_PATH_OPTION,
+    thlb_netdown_recipe_path: Path | None = TSR_THLB_NETDOWN_RECIPE_PATH_OPTION,
+    overwrite: bool = TSR_OVERWRITE_OPTION,
+) -> None:
+    """Initialize instance-local TSR source-layer and THLB recipe YAML files."""
+
+    source_root = _source_tree_root()
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_registry_path = _resolve_repo_output_path(
+        registry_path or Path("metadata/tsr/tsa_registry.json"),
+        source_root=source_root,
+    )
+    resolved_documents_path = _resolve_repo_output_path(
+        documents_path or Path("metadata/tsr/tsa_documents.json"),
+        source_root=source_root,
+    )
+    resolved_candidate_facts_path = _resolve_repo_output_path(
+        candidate_facts_path or Path("metadata/tsr/tsa_candidate_facts.json"),
+        source_root=source_root,
+    )
+    resolved_overlay_path = (
+        instance_context.resolve_path(overlay_path)
+        if overlay_path is not None
+        else instance_context.resolve_path(Path("config/tsr/overlay.yaml"))
+    )
+    resolved_overrides_path = (
+        instance_context.resolve_path(overrides_path)
+        if overrides_path is not None
+        else default_tsr_source_layer_overrides_path(
+            instance_root=instance_context.root
+        )
+    )
+    resolved_source_layers_recipe_path = (
+        instance_context.resolve_path(source_layers_recipe_path)
+        if source_layers_recipe_path is not None
+        else default_tsr_source_layers_recipe_path(instance_root=instance_context.root)
+    )
+    resolved_thlb_netdown_recipe_path = (
+        instance_context.resolve_path(thlb_netdown_recipe_path)
+        if thlb_netdown_recipe_path is not None
+        else default_tsr_thlb_netdown_recipe_path(instance_root=instance_context.root)
+    )
+    try:
+        result = init_tsr_recipe_scaffolds(
+            instance_root=instance_context.root,
+            tsa=tsa,
+            registry_path=resolved_registry_path,
+            documents_path=resolved_documents_path,
+            candidate_facts_path=resolved_candidate_facts_path,
+            source_root=source_root,
+            overlay_path=resolved_overlay_path,
+            overrides_path=resolved_overrides_path,
+            source_layers_recipe_path=resolved_source_layers_recipe_path,
+            thlb_netdown_recipe_path=resolved_thlb_netdown_recipe_path,
+            overwrite=overwrite,
+        )
+    except TsrRecipeError as exc:
+        console.print(f"[red]TSR recipe init error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_recipe_init_summary(result)
 
 
 @tsr_app.command("facts-report")

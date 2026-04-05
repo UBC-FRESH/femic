@@ -14,7 +14,11 @@ the current reporting slice renders guided review tables over the canonical
 fact pool without forcing users to hand-scrub raw JSON, and the current
 override slice adds reviewed per-instance source-layer escape hatches under
 ``config/tsr/source_layer_overrides.yaml`` for tokens that public BCDC
-inference cannot resolve safely.
+inference cannot resolve safely. The new recipe scaffold slice adds reviewed
+working YAML surfaces under:
+
+- ``config/tsr/source_layers.recipe.yaml``
+- ``config/tsr/thlb_netdown.recipe.yaml``
 
 Use this page when you are debugging the TSR indexing logic itself rather than
 the higher-level CLI surface.
@@ -50,6 +54,7 @@ The common operator-facing entrypoint is:
    femic tsr fetch
    femic tsr extract
    femic tsr facts-report --tsa 29 --fact-family source_layer_candidate
+   femic tsr recipe-init --instance-root external/femic-tsa29-instance --tsa 29
    femic tsr overlay-init --instance-root external/femic-tsa29-instance --tsa 29
    femic tsr overlay-report --instance-root external/femic-tsa29-instance
    femic tsr override-init --instance-root external/femic-tsa29-instance
@@ -65,6 +70,7 @@ The matching Python entrypoints are:
       extract_tsr_candidate_facts,
       fetch_tsr_pdfs,
       init_tsr_overlay,
+      init_tsr_recipe_scaffolds,
       init_tsr_source_layer_overrides,
       index_tsr_tsa_surfaces,
       report_tsr_candidate_facts,
@@ -103,6 +109,24 @@ The matching Python entrypoints are:
        candidate_facts_path=Path("metadata/tsr/tsa_candidate_facts.json"),
        source_root=Path.cwd(),
    )
+   init_tsr_recipe_scaffolds(
+       instance_root=Path("external/femic-tsa29-instance"),
+       tsa="29",
+       registry_path=Path("metadata/tsr/tsa_registry.json"),
+       documents_path=Path("metadata/tsr/tsa_documents.json"),
+       candidate_facts_path=Path("metadata/tsr/tsa_candidate_facts.json"),
+       source_root=Path.cwd(),
+       overlay_path=Path("external/femic-tsa29-instance/config/tsr/overlay.yaml"),
+       overrides_path=Path(
+           "external/femic-tsa29-instance/config/tsr/source_layer_overrides.yaml"
+       ),
+       source_layers_recipe_path=Path(
+           "external/femic-tsa29-instance/config/tsr/source_layers.recipe.yaml"
+       ),
+       thlb_netdown_recipe_path=Path(
+           "external/femic-tsa29-instance/config/tsr/thlb_netdown.recipe.yaml"
+       ),
+   )
    build_tsr_overlay_report(
        overlay_path=Path("external/femic-tsa29-instance/config/tsr/overlay.yaml"),
    )
@@ -140,6 +164,9 @@ Key Entry Surfaces
 - :func:`init_tsr_overlay`
   Initialize the reviewed/adopted instance-local TSR overlay YAML without
   auto-adopting candidate facts.
+- :func:`init_tsr_recipe_scaffolds`
+  Initialize the reviewed working recipe YAML files that later source-layer
+  and THLB recipe build/run slices will own.
 - :func:`build_tsr_overlay_report`
   Summarize one reviewed overlay against the canonical candidate-fact pool it
   references.

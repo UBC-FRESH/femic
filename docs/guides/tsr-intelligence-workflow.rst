@@ -13,6 +13,9 @@ Review document surfaces into three separate layers of knowledge:
 4. reviewed instance-local source-layer escape hatches under
    ``config/tsr/source_layer_overrides.yaml`` when the public catalogue cannot
    finish the job safely.
+5. reviewed instance-local working recipe scaffolds under:
+   - ``config/tsr/source_layers.recipe.yaml``
+   - ``config/tsr/thlb_netdown.recipe.yaml``
 
 This guide is intentionally about workflow and promotion discipline. It does
 **not** make FEMIC auto-adopt extracted candidate facts into a live instance.
@@ -39,9 +42,12 @@ Instance-local reviewed overlay:
 - ``config/tsr/overlay.yaml``
 - ``config/tsr/source_layer_overrides.yaml`` (when explicit source-layer
   overrides are needed)
+- ``config/tsr/source_layers.recipe.yaml``
+- ``config/tsr/thlb_netdown.recipe.yaml``
 
 Treat the canonical JSON artifacts as the shared discovery surface, and treat
-the overlay YAML as the reviewed/adopted per-instance surface.
+the overlay YAML plus recipe YAMLs as the reviewed/adopted per-instance
+surface.
 
 Minimal One-TSA Workflow
 ------------------------
@@ -64,9 +70,14 @@ Extract candidate facts only for that TSA:
 
    python -m femic tsr extract --tsa 29
 
-Initialize the reviewed overlay inside the target instance:
+Initialize the reviewed recipe scaffolds and overlay inside the target
+instance:
 
 .. code-block:: bash
+
+   python -m femic tsr recipe-init \
+     --instance-root external/femic-tsa29-instance \
+     --tsa 29
 
    python -m femic tsr overlay-init \
      --instance-root external/femic-tsa29-instance \

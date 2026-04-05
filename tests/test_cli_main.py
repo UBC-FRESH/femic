@@ -5071,6 +5071,98 @@ def test_tsr_overlay_init_reports_errors(monkeypatch: pytest.MonkeyPatch) -> Non
     assert any("TSR overlay init error:" in msg for msg in messages)
 
 
+def test_tsr_recipe_init_writes_instance_local_recipe_scaffolds(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    result = cli_main.TsrRecipeInitResult(
+        tsa=tsr_catalog.TsrOverlayTsaRecord(
+            tsa_id="tsa_29",
+            tsa_code="29",
+            tsa_name="Williams Lake",
+        ),
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+        created_source_layers_recipe=True,
+        created_thlb_netdown_recipe=True,
+    )
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_init(**kwargs):
+        captured_kwargs.update(kwargs)
+        return result
+
+    monkeypatch.setattr(cli_main, "init_tsr_recipe_scaffolds", _fake_init)
+
+    cli_main.tsr_recipe_init(
+        tsa="29",
+        instance_root=instance_root,
+        registry_path=None,
+        documents_path=None,
+        candidate_facts_path=None,
+        overlay_path=None,
+        overrides_path=None,
+        source_layers_recipe_path=None,
+        thlb_netdown_recipe_path=None,
+        overwrite=False,
+    )
+
+    assert captured_kwargs["instance_root"] == instance_root.resolve()
+    assert captured_kwargs["tsa"] == "29"
+    assert (
+        captured_kwargs["registry_path"]
+        == repo_root / "metadata" / "tsr" / "tsa_registry.json"
+    )
+    assert (
+        captured_kwargs["source_layers_recipe_path"]
+        == (instance_root / "config" / "tsr" / "source_layers.recipe.yaml").resolve()
+    )
+    assert (
+        captured_kwargs["thlb_netdown_recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert any("source_layers_recipe_path:" in msg for msg in messages)
+    assert any("thlb_netdown_recipe_path:" in msg for msg in messages)
+
+
+def test_tsr_recipe_init_reports_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "init_tsr_recipe_scaffolds",
+        lambda **_kwargs: (_ for _ in ()).throw(cli_main.TsrRecipeError("boom")),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.tsr_recipe_init(
+            tsa="29",
+            instance_root=Path("instance"),
+            registry_path=None,
+            documents_path=None,
+            candidate_facts_path=None,
+            overlay_path=None,
+            overrides_path=None,
+            source_layers_recipe_path=None,
+            thlb_netdown_recipe_path=None,
+            overwrite=False,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("TSR recipe init error:" in msg for msg in messages)
+
+
 def test_tsr_facts_report_writes_review_csv(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
