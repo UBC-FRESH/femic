@@ -254,7 +254,9 @@ The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
    This writes:
 
    - ``config/tsr/thlb_netdown.audit.json``
+   - ``config/tsr/thlb_netdown.status.md``
    - ``data/tsr/thlb_netdown_checkpoint.feather``
+   - a versioned Markdown history copy under ``runtime/logs/tsr/``
 
    The output checkpoint carries ``thlb_fact`` for downstream export logic.
    The audit JSON records which THLB recipe steps were:
@@ -267,6 +269,18 @@ The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
    This keeps the run convergent and reproducible: supported steps move the
    instance forward, and unsupported steps remain explicit instead of forcing
    the user to rediscover what FEMIC did or did not apply.
+
+   The status report Markdown is the user-facing convergence surface for this
+   lane. It records, for each run:
+
+   - input checkpoint area;
+   - AFLB / baseline managed area;
+   - final THLB area;
+   - VRI:AFLB and AFLB:THLB ratios for the current run;
+   - TSR benchmark AFLB and THLB values when FEMIC can parse them from the
+     selected TSR data package; and
+   - a stable latest report plus a timestamped runtime-history copy so users
+     and helper agents can compare successive runs while the recipe converges.
 
    Important current boundary:
 

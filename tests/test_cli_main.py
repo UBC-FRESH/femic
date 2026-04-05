@@ -5295,14 +5295,25 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
             / "tsr"
             / "thlb_netdown_checkpoint.feather",
             audit_path=instance_root / "config" / "tsr" / "thlb_netdown.audit.json",
+            status_report_path=instance_root
+            / "config"
+            / "tsr"
+            / "thlb_netdown.status.md",
+            runtime_status_report_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "thlb_netdown_status_report-20260405T000000Z.md",
             execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_HYBRID,
             baseline_signal="thlb_raw",
             selected_map_ids=(),
             step_count=3,
             outcome_counts={"applied": 1, "unsupported": 2},
+            input_area_ha=1682843.0,
             baseline_managed_area_ha=1682843.0,
             final_managed_area_ha=1513233.574,
             legacy_reference_managed_area_ha=None,
+            tsr_reported_aflb_area_ha=3098168.0,
             tsr_reported_thlb_area_ha=1660053.0,
         )
 
@@ -5342,6 +5353,8 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
     assert any("step_count: 3" in msg for msg in messages)
     assert any("execution_mode: hybrid" in msg for msg in messages)
     assert any("outcome_applied: 1" in msg for msg in messages)
+    assert any("status_report_path:" in msg for msg in messages)
+    assert any("tsr_reported_aflb_area_ha:" in msg for msg in messages)
 
 
 def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
@@ -5374,14 +5387,25 @@ def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
             / "config"
             / "tsr"
             / "thlb_reconstructed.audit.json",
+            status_report_path=instance_root
+            / "config"
+            / "tsr"
+            / "thlb_reconstructed.status.md",
+            runtime_status_report_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "thlb_reconstructed_status_report-20260405T000000Z.md",
             execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
             baseline_signal="checkpoint1_aflb_initialization",
             selected_map_ids=("093J034", "093J044"),
             step_count=2,
             outcome_counts={"applied": 1, "needs_review": 1},
+            input_area_ha=100000.0,
             baseline_managed_area_ha=92345.0,
             final_managed_area_ha=80123.0,
             legacy_reference_managed_area_ha=65000.0,
+            tsr_reported_aflb_area_ha=3098168.0,
             tsr_reported_thlb_area_ha=66053.0,
         )
 

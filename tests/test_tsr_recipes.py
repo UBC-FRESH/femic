@@ -627,10 +627,12 @@ def test_run_tsr_thlb_netdown_recipe_writes_thlb_fact_checkpoint_and_audit(
     assert result.outcome_counts["applied"] == 1
     assert result.outcome_counts["applied_noop"] == 1
     assert result.outcome_counts["unsupported"] == 1
+    assert result.input_area_ha == pytest.approx(0.02)
     assert result.baseline_managed_area_ha == pytest.approx(0.02)
     assert result.final_managed_area_ha == pytest.approx(0.015)
     assert result.legacy_reference_managed_area_ha is None
     assert result.tsr_reported_thlb_area_ha is None
+    assert result.tsr_reported_aflb_area_ha is None
 
     output = gpd.read_feather(result.output_path)
     assert output["thlb_fact"].tolist() == pytest.approx([0.5, 1.0])
@@ -638,11 +640,23 @@ def test_run_tsr_thlb_netdown_recipe_writes_thlb_fact_checkpoint_and_audit(
     audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
     assert audit_payload["execution_mode"] == tsr_recipes.TSR_THLB_EXECUTION_MODE_HYBRID
     assert audit_payload["baseline_signal"] == "thlb_raw"
+    assert audit_payload["input_area_ha"] == pytest.approx(0.02)
     assert audit_payload["outcome_counts"]["applied"] == 1
+    assert result.status_report_path.exists()
+    assert result.runtime_status_report_path.exists()
+    status_text = result.status_report_path.read_text(encoding="utf-8")
+    assert "# THLB Netdown Status Report: TSA 29 (Williams Lake)" in status_text
+    assert "Input:AFLB =" in status_text
+    assert "AFLB:THLB =" in status_text
+    assert "AFLB lock state: `unlocked`" in status_text
     recipe = tsr_catalog.load_tsr_thlb_netdown_recipe(
         init_result.thlb_netdown_recipe_path
     )
     assert recipe.recipe_contract["status"] == "run"
+    assert (
+        recipe.recipe_contract["status_report_path"]
+        == "config/tsr/thlb_netdown.status.md"
+    )
 
 
 def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
@@ -781,10 +795,12 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     assert result.execution_mode == tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
     assert result.checkpoint_path == checkpoint1_path.resolve()
     assert result.baseline_signal == "checkpoint1_aflb_initialization"
+    assert result.input_area_ha == pytest.approx(0.02)
     assert result.baseline_managed_area_ha == pytest.approx(0.01)
     assert result.final_managed_area_ha == pytest.approx(0.005)
     assert result.legacy_reference_managed_area_ha == pytest.approx(0.01)
     assert result.selected_map_ids == ()
+    assert result.tsr_reported_aflb_area_ha is None
 
     output = gpd.read_feather(result.output_path)
     assert len(output) == 2
@@ -803,8 +819,12 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
         audit_payload["execution_mode"]
         == tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
     )
+    assert audit_payload["input_area_ha"] == pytest.approx(0.02)
     assert audit_payload["legacy_reference_managed_area_ha"] == pytest.approx(0.01)
     assert audit_payload["outcome_counts"]["applied"] == 1
+    reconstructed_status = result.status_report_path.read_text(encoding="utf-8")
+    assert "Execution mode: `reconstructed`" in reconstructed_status
+    assert "Legacy raster THLB reference: `0.010 ha`" in reconstructed_status
 
     recipe = tsr_catalog.load_tsr_thlb_netdown_recipe(
         init_result.thlb_netdown_recipe_path
@@ -814,6 +834,10 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
         == "data/tsr/thlb_reconstructed_checkpoint.feather"
     )
     assert recipe.recipe_contract["selected_map_ids"] == []
+    assert (
+        recipe.recipe_contract["status_report_path"]
+        == "config/tsr/thlb_reconstructed.status.md"
+    )
 
 
 def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_can_auto_select_map_id_subset(

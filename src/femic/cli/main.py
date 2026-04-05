@@ -2477,6 +2477,8 @@ def _print_tsr_thlb_netdown_recipe_run_summary(
     console.print(f"checkpoint_path: {result.checkpoint_path}")
     console.print(f"output_path: {result.output_path}")
     console.print(f"audit_path: {result.audit_path}")
+    console.print(f"status_report_path: {result.status_report_path}")
+    console.print(f"runtime_status_report_path: {result.runtime_status_report_path}")
     console.print(f"execution_mode: {result.execution_mode}")
     console.print(f"baseline_signal: {result.baseline_signal}")
     if result.selected_map_ids:
@@ -2485,12 +2487,17 @@ def _print_tsr_thlb_netdown_recipe_run_summary(
     console.print(f"tsa_code: {result.tsa.tsa_code}")
     console.print(f"tsa_name: {result.tsa.tsa_name}")
     console.print(f"step_count: {result.step_count}")
+    console.print(f"input_area_ha: {result.input_area_ha:.3f}")
     console.print(f"baseline_managed_area_ha: {result.baseline_managed_area_ha:.3f}")
     console.print(f"final_managed_area_ha: {result.final_managed_area_ha:.3f}")
     if result.legacy_reference_managed_area_ha is not None:
         console.print(
             "legacy_reference_managed_area_ha: "
             f"{result.legacy_reference_managed_area_ha:.3f}"
+        )
+    if result.tsr_reported_aflb_area_ha is not None:
+        console.print(
+            f"tsr_reported_aflb_area_ha: {result.tsr_reported_aflb_area_ha:.3f}"
         )
     if result.tsr_reported_thlb_area_ha is not None:
         console.print(

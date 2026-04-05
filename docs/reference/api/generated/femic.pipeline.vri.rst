@@ -14,9 +14,11 @@
       classify_stand_forest_type
       derive_species_list_from_slots
       filter_post_thlb_stands
+      initialize_aflb_land_base_records
       is_conifer_species_code
       is_deciduous_species_code
       normalize_and_filter_checkpoint2_records
+      normalize_vri_problem_values
       pconif
       pdecid
       stratify_stand

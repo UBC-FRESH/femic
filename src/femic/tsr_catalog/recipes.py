@@ -204,14 +204,18 @@ class TsrThlbNetdownRecipeRunResult:
     checkpoint_path: Path
     output_path: Path
     audit_path: Path
+    status_report_path: Path
+    runtime_status_report_path: Path
     execution_mode: str
     baseline_signal: str
     selected_map_ids: tuple[str, ...]
     step_count: int
     outcome_counts: dict[str, int]
+    input_area_ha: float
     baseline_managed_area_ha: float
     final_managed_area_ha: float
     legacy_reference_managed_area_ha: float | None
+    tsr_reported_aflb_area_ha: float | None
     tsr_reported_thlb_area_ha: float | None
 
 
@@ -336,6 +340,28 @@ def default_tsr_thlb_reconstructed_audit_path(*, instance_root: Path) -> Path:
         / "config"
         / "tsr"
         / "thlb_reconstructed.audit.json"
+    )
+
+
+def default_tsr_thlb_netdown_status_report_path(*, instance_root: Path) -> Path:
+    """Return the default human-readable hybrid THLB status report path."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "config"
+        / "tsr"
+        / "thlb_netdown.status.md"
+    )
+
+
+def default_tsr_thlb_reconstructed_status_report_path(*, instance_root: Path) -> Path:
+    """Return the default human-readable reconstructed THLB status report path."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "config"
+        / "tsr"
+        / "thlb_reconstructed.status.md"
     )
 
 
@@ -1890,44 +1916,181 @@ def _extract_tsr_reported_thlb_area_ha(
     instance_root: Path,
     recipe: TsrThlbNetdownRecipeRecord,
 ) -> float | None:
+    return _extract_tsr_reported_land_base_benchmarks(
+        instance_root=instance_root,
+        recipe=recipe,
+    ).get("thlb_area_ha")
+
+
+def _extract_tsr_reported_land_base_benchmarks(
+    *,
+    instance_root: Path,
+    recipe: TsrThlbNetdownRecipeRecord,
+) -> dict[str, float]:
     selected_paths = tuple(
         str(path).strip()
         for path in recipe.recipe_contract.get("selected_document_paths", ())
         if str(path).strip()
     )
     if not selected_paths:
-        return None
+        return {}
     try:
         from pypdf import PdfReader
     except Exception:  # pragma: no cover - dependency seam
-        return None
+        return {}
     from femic.user_config import default_femic_tsr_corpus_root
 
     corpus_root = default_femic_tsr_corpus_root()
     target_document = corpus_root / "tsa" / recipe.tsa.tsa_id / Path(selected_paths[0])
     if not target_document.exists():
-        return None
+        return {}
     try:
         reader = PdfReader(str(target_document))
     except Exception:  # pragma: no cover - runtime seam
-        return None
+        return {}
 
-    pattern = re.compile(
-        r"Timber harvesting land\s+base\s+([\d,]+)|Long-term THLB\s+([\d,]+)",
-        flags=re.IGNORECASE,
-    )
-    timber_harvesting_land_base: float | None = None
-    long_term_thlb: float | None = None
+    patterns = {
+        "aflb_area_ha": re.compile(
+            r"(?:Analysis forest land base|AFLB)\s+([\d,]+)",
+            flags=re.IGNORECASE,
+        ),
+        "thlb_area_ha": re.compile(
+            r"(?:Timber harvesting land\s+base|THLB)\s+([\d,]+)",
+            flags=re.IGNORECASE,
+        ),
+        "long_term_thlb_area_ha": re.compile(
+            r"Long-term THLB\s+([\d,]+)",
+            flags=re.IGNORECASE,
+        ),
+    }
+    benchmarks: dict[str, float] = {}
     for page in reader.pages:
         text = page.extract_text() or ""
-        for match in pattern.finditer(text):
-            timber_value = match.group(1)
-            long_term_value = match.group(2)
-            if timber_value:
-                timber_harvesting_land_base = float(timber_value.replace(",", ""))
-            if long_term_value:
-                long_term_thlb = float(long_term_value.replace(",", ""))
-    return long_term_thlb or timber_harvesting_land_base
+        for key, pattern in patterns.items():
+            for match in pattern.finditer(text):
+                value = match.group(1)
+                if value:
+                    benchmarks[key] = float(value.replace(",", ""))
+    if "long_term_thlb_area_ha" in benchmarks:
+        benchmarks["thlb_area_ha"] = benchmarks["long_term_thlb_area_ha"]
+    return benchmarks
+
+
+def _safe_ratio(numerator: float, denominator: float) -> float | None:
+    if denominator <= 0:
+        return None
+    return numerator / denominator
+
+
+def _format_ratio(value: float | None) -> str:
+    if value is None:
+        return "n/a"
+    return f"{value:.4f} ({value * 100.0:.2f}%)"
+
+
+def _build_tsr_thlb_status_report_markdown(
+    *,
+    recipe: TsrThlbNetdownRecipeRecord,
+    recipe_relative_path: str,
+    checkpoint_relative_path: str,
+    output_relative_path: str,
+    audit_relative_path: str,
+    execution_mode: str,
+    baseline_signal: str,
+    selected_map_ids: tuple[str, ...],
+    input_area_ha: float,
+    baseline_managed_area_ha: float,
+    final_managed_area_ha: float,
+    legacy_reference_managed_area_ha: float | None,
+    tsr_reported_aflb_area_ha: float | None,
+    tsr_reported_thlb_area_ha: float | None,
+    outcome_counts: dict[str, int],
+    step_count: int,
+    generated_utc: str,
+    runtime_report_relative_path: str,
+) -> str:
+    input_to_baseline_ratio = _safe_ratio(baseline_managed_area_ha, input_area_ha)
+    baseline_to_final_ratio = _safe_ratio(
+        final_managed_area_ha, baseline_managed_area_ha
+    )
+    input_to_final_ratio = _safe_ratio(final_managed_area_ha, input_area_ha)
+    tsr_aflb_to_thlb_ratio = (
+        _safe_ratio(tsr_reported_thlb_area_ha, tsr_reported_aflb_area_ha)
+        if tsr_reported_aflb_area_ha is not None
+        and tsr_reported_thlb_area_ha is not None
+        else None
+    )
+    lines = [
+        f"# THLB Netdown Status Report: TSA {recipe.tsa.tsa_code} ({recipe.tsa.tsa_name})",
+        "",
+        f"- Generated UTC: `{generated_utc}`",
+        f"- Execution mode: `{execution_mode}`",
+        f"- Baseline signal: `{baseline_signal}`",
+        f"- Recipe path: `{recipe_relative_path}`",
+        f"- Checkpoint input: `{checkpoint_relative_path}`",
+        f"- Output checkpoint: `{output_relative_path}`",
+        f"- Audit JSON: `{audit_relative_path}`",
+        f"- Runtime history copy: `{runtime_report_relative_path}`",
+        "",
+        "## Scope",
+        "",
+        f"- Selected MAP_ID subset: `{', '.join(selected_map_ids) if selected_map_ids else 'full input'}`",
+        f"- Step count: `{step_count}`",
+        "",
+        "## Areas",
+        "",
+        f"- Input checkpoint area: `{input_area_ha:.3f} ha`",
+        f"- AFLB / baseline managed area: `{baseline_managed_area_ha:.3f} ha`",
+        f"- Final THLB area: `{final_managed_area_ha:.3f} ha`",
+    ]
+    if legacy_reference_managed_area_ha is not None:
+        lines.append(
+            f"- Legacy raster THLB reference: `{legacy_reference_managed_area_ha:.3f} ha`"
+        )
+    if tsr_reported_aflb_area_ha is not None:
+        lines.append(
+            f"- TSR reported AFLB benchmark: `{tsr_reported_aflb_area_ha:.3f} ha`"
+        )
+    if tsr_reported_thlb_area_ha is not None:
+        lines.append(
+            f"- TSR reported THLB benchmark: `{tsr_reported_thlb_area_ha:.3f} ha`"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Ratios",
+            "",
+            f"- Input:AFLB = `{_format_ratio(input_to_baseline_ratio)}`",
+            f"- AFLB:THLB = `{_format_ratio(baseline_to_final_ratio)}`",
+            f"- Input:THLB = `{_format_ratio(input_to_final_ratio)}`",
+        ]
+    )
+    if tsr_aflb_to_thlb_ratio is not None:
+        lines.append(f"- TSR AFLB:THLB = `{_format_ratio(tsr_aflb_to_thlb_ratio)}`")
+
+    lines.extend(["", "## Outcomes", ""])
+    for outcome, count in outcome_counts.items():
+        lines.append(f"- `{outcome}`: `{count}`")
+
+    lines.extend(
+        [
+            "",
+            "## Locking / Convergence",
+            "",
+            "- AFLB lock state: `unlocked`",
+            "- THLB lock state: `unlocked`",
+            "- Current note: FEMIC now records benchmark ratios and runtime history for convergence review, but explicit user lock/cut-lock controls are not implemented yet.",
+            "",
+            "## Interpretation",
+            "",
+            "- Non-AFLB polygons are excluded from the reconstruction universe before THLB logic applies.",
+            "- Non-THLB polygons or fragments remain inside that working universe and are assigned THLB state by the recipe run.",
+            "- AU/VDYP-oriented filters are not assumed to be valid THLB filters unless the TSR logic says so explicitly.",
+            "- Legacy raster THLB values are reference-only in reconstructed mode.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
 
 
 def _load_source_recipe_entry_map(
@@ -2141,6 +2304,7 @@ def run_tsr_thlb_netdown_recipe(
             _normalize_map_id_token(value) for value in map_ids if str(value).strip()
         )
         checkpoint = _filter_checkpoint_by_map_ids(checkpoint, map_ids=selected_map_ids)
+    input_area_ha = float(checkpoint.geometry.area.sum() / 10000.0)
     if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
         checkpoint, baseline_signal = _initialize_reconstructed_land_base(checkpoint)
     else:
@@ -2151,10 +2315,12 @@ def run_tsr_thlb_netdown_recipe(
         instance_root=instance_root,
         checkpoint_path=resolved_checkpoint_path,
     )
-    tsr_reported_thlb_area_ha = _extract_tsr_reported_thlb_area_ha(
+    land_base_benchmarks = _extract_tsr_reported_land_base_benchmarks(
         instance_root=instance_root,
         recipe=recipe,
     )
+    tsr_reported_aflb_area_ha = land_base_benchmarks.get("aflb_area_ha")
+    tsr_reported_thlb_area_ha = land_base_benchmarks.get("thlb_area_ha")
 
     outcome_counts: Counter[str] = Counter()
     applied_steps: list[dict[str, Any]] = []
@@ -2363,9 +2529,11 @@ def run_tsr_thlb_netdown_recipe(
         "output_path": str(resolved_output_path.relative_to(instance_root).as_posix()),
         "execution_mode": execution_mode,
         "baseline_signal": baseline_signal,
+        "input_area_ha": input_area_ha,
         "baseline_managed_area_ha": baseline_managed_area_ha,
         "final_managed_area_ha": final_managed_area_ha,
         "legacy_reference_managed_area_ha": legacy_reference_managed_area_ha,
+        "tsr_reported_aflb_area_ha": tsr_reported_aflb_area_ha,
         "tsr_reported_thlb_area_ha": tsr_reported_thlb_area_ha,
         "step_count": len(applied_steps),
         "outcome_counts": dict(sorted(outcome_counts.items())),
@@ -2377,19 +2545,85 @@ def run_tsr_thlb_netdown_recipe(
         encoding="utf-8",
     )
 
+    status_report_path = (
+        default_tsr_thlb_reconstructed_status_report_path(instance_root=instance_root)
+        if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+        else default_tsr_thlb_netdown_status_report_path(instance_root=instance_root)
+    )
+    status_report_timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    runtime_status_report_path = (
+        instance_root
+        / "runtime"
+        / "logs"
+        / "tsr"
+        / (
+            "thlb_reconstructed_status_report-" + status_report_timestamp + ".md"
+            if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+            else "thlb_netdown_status_report-" + status_report_timestamp + ".md"
+        )
+    )
+    generated_utc = datetime.now(UTC).isoformat()
+    status_report_markdown = _build_tsr_thlb_status_report_markdown(
+        recipe=recipe,
+        recipe_relative_path=str(
+            resolved_recipe_path.relative_to(instance_root).as_posix()
+        ),
+        checkpoint_relative_path=str(
+            resolved_checkpoint_path.relative_to(instance_root).as_posix()
+        ),
+        output_relative_path=str(
+            resolved_output_path.relative_to(instance_root).as_posix()
+        ),
+        audit_relative_path=str(
+            resolved_audit_path.relative_to(instance_root).as_posix()
+        ),
+        execution_mode=execution_mode,
+        baseline_signal=baseline_signal,
+        selected_map_ids=selected_map_ids,
+        input_area_ha=input_area_ha,
+        baseline_managed_area_ha=baseline_managed_area_ha,
+        final_managed_area_ha=final_managed_area_ha,
+        legacy_reference_managed_area_ha=legacy_reference_managed_area_ha,
+        tsr_reported_aflb_area_ha=tsr_reported_aflb_area_ha,
+        tsr_reported_thlb_area_ha=tsr_reported_thlb_area_ha,
+        outcome_counts=dict(sorted(outcome_counts.items())),
+        step_count=len(applied_steps),
+        generated_utc=generated_utc,
+        runtime_report_relative_path=str(
+            runtime_status_report_path.relative_to(instance_root).as_posix()
+        ),
+    )
+    status_report_path.parent.mkdir(parents=True, exist_ok=True)
+    status_report_path.write_text(status_report_markdown, encoding="utf-8")
+    runtime_status_report_path.parent.mkdir(parents=True, exist_ok=True)
+    runtime_status_report_path.write_text(status_report_markdown, encoding="utf-8")
+
+    recipe_contract["status_report_path"] = str(
+        status_report_path.relative_to(instance_root).as_posix()
+    )
+    recipe_contract["runtime_status_report_path"] = str(
+        runtime_status_report_path.relative_to(instance_root).as_posix()
+    )
+    payload["recipe_contract"] = recipe_contract
+    _write_recipe_yaml(resolved_recipe_path, payload)
+
     return TsrThlbNetdownRecipeRunResult(
         recipe_path=resolved_recipe_path,
         tsa=recipe.tsa,
         checkpoint_path=resolved_checkpoint_path,
         output_path=resolved_output_path,
         audit_path=resolved_audit_path,
+        status_report_path=status_report_path,
+        runtime_status_report_path=runtime_status_report_path,
         execution_mode=execution_mode,
         baseline_signal=baseline_signal,
         selected_map_ids=selected_map_ids,
         step_count=len(applied_steps),
         outcome_counts=dict(sorted(outcome_counts.items())),
+        input_area_ha=input_area_ha,
         baseline_managed_area_ha=baseline_managed_area_ha,
         final_managed_area_ha=final_managed_area_ha,
         legacy_reference_managed_area_ha=legacy_reference_managed_area_ha,
+        tsr_reported_aflb_area_ha=tsr_reported_aflb_area_ha,
         tsr_reported_thlb_area_ha=tsr_reported_thlb_area_ha,
     )

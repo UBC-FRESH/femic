@@ -645,10 +645,22 @@ Current v1 execution contract:
 - the run writes both:
   - ``data/tsr/thlb_netdown_checkpoint.feather``
   - ``config/tsr/thlb_netdown.audit.json``
+  - ``config/tsr/thlb_netdown.status.md``
+  - plus a timestamped history copy under ``runtime/logs/tsr/``
 
 This command is intentionally partial-success friendly: it should move the
 recipe forward where FEMIC has enough trustworthy information while keeping the
 remaining wall visible and reproducible.
+
+The generated status report keeps benchmark ratios visible while the THLB logic
+converges:
+
+- input checkpoint area;
+- AFLB / baseline managed area;
+- final THLB area;
+- VRI:AFLB and AFLB:THLB ratios; and
+- TSR AFLB / THLB benchmark values when they can be parsed from the selected
+  data package PDF.
 
 Important current boundary:
 

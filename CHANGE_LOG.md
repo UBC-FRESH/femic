@@ -11957,3 +11957,23 @@
     - `#131` fragment-first execution for more steps
     - `#132` explicit aspatial fallback
     - `#133` docs/runbook comparison contract
+- 2026-04-05: Added user-facing THLB netdown status reports to the `#128`
+  reconstruction lane so convergence can be reviewed without hand-scrubbing
+  audit JSON.
+  - `femic tsr thlb-netdown-run` now writes a stable Markdown report under
+    `config/tsr/`:
+    - `thlb_netdown.status.md` for hybrid runs
+    - `thlb_reconstructed.status.md` for reconstructed runs
+  - It also writes a timestamped history copy under `runtime/logs/tsr/` so
+    successive AFLB/THLB attempts can be compared over time.
+  - The report keeps the core benchmark surface visible:
+    - input checkpoint area
+    - AFLB / baseline managed area
+    - final THLB area
+    - VRI:AFLB ratio
+    - AFLB:THLB ratio
+    - TSR-reported AFLB / THLB values when they can be parsed from the
+      selected data package
+  - This makes the current `#128` proving-ground much easier for users and
+    helper agents to review while the reconstruction logic converges toward the
+    published TSA29 benchmarks.

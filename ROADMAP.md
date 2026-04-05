@@ -13702,3 +13702,27 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - add explicit aspatial fallback for blocked TSR target-area deductions
       under `#132`; and
     - document the reconstruction ladder and comparison contract under `#133`.
+
+- 2026-04-05 (Issue `#128` netdown progress reporting checkpoint: every THLB
+  recipe run now emits a human-readable convergence report instead of relying
+  on users to mine the raw audit JSON by hand):
+  - `femic tsr thlb-netdown-run` now writes:
+    - the stable latest status report beside the recipe/audit under
+      `config/tsr/`:
+      - `thlb_netdown.status.md` for hybrid runs
+      - `thlb_reconstructed.status.md` for reconstructed runs
+    - plus a timestamped runtime-history copy under `runtime/logs/tsr/`
+      so users and helper agents can compare successive runs while the THLB
+      logic converges.
+  - Each report now keeps the benchmark comparison contract visible:
+    - input checkpoint area
+    - AFLB / baseline managed area
+    - final THLB area
+    - VRI:AFLB ratio
+    - AFLB:THLB ratio
+    - TSR-reported AFLB and THLB values when the selected data package exposes
+      them cleanly enough to parse
+  - This is the intended user-facing review surface for deciding when AFLB and
+    then THLB logic are "good enough" to lock for an instance. Explicit lock
+    enforcement is still a future step, but the report now preserves the
+    numbers and runtime history needed for that decision.
