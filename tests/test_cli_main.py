@@ -5224,6 +5224,50 @@ def test_tsr_source_layers_run_requires_exactly_one_aoi(
     )
 
 
+def test_tsr_thlb_netdown_build_uses_default_recipe_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_build(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbNetdownRecipeBuildResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            step_count=4,
+            step_kind_counts={"netdown_rule": 3, "reference_target": 1},
+            status_counts={"ready": 3, "needs_review": 1},
+            selected_document_paths=("TSR_2024/Data_Package_2024/29ts_dpkg_2024.pdf",),
+        )
+
+    monkeypatch.setattr(cli_main, "build_tsr_thlb_netdown_recipe", _fake_build)
+
+    cli_main.tsr_thlb_netdown_build(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert captured_kwargs["source_root"] == repo_root
+    assert any("step_count: 4" in msg for msg in messages)
+    assert any(
+        "selected_document_path: TSR_2024/Data_Package_2024/29ts_dpkg_2024.pdf" in msg
+        for msg in messages
+    )
+
+
 def test_tsr_facts_report_writes_review_csv(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

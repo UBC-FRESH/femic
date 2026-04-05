@@ -164,11 +164,13 @@ from femic.tsr_catalog import (
     TsrRecipeInitResult,
     TsrSourceLayersRecipeBuildResult,
     TsrSourceLayersRecipeRunResult,
+    TsrThlbNetdownRecipeBuildResult,
     TsrSourceLayerOverridesError,
     TsrSourceLayerOverridesInitResult,
     TsrSourceLayerOverridesReport,
     TsrWrittenIndex,
     build_tsr_source_layers_recipe,
+    build_tsr_thlb_netdown_recipe,
     build_tsr_overlay_report,
     build_tsr_source_layer_override_report,
     default_tsr_source_layer_overrides_path,
@@ -2392,6 +2394,22 @@ def _print_tsr_source_layers_recipe_run_summary(
         console.print(f"outcome_{outcome}: {count}")
 
 
+def _print_tsr_thlb_netdown_recipe_build_summary(
+    result: TsrThlbNetdownRecipeBuildResult,
+) -> None:
+    console.print(f"recipe_path: {result.recipe_path}")
+    console.print(f"tsa_id: {result.tsa.tsa_id}")
+    console.print(f"tsa_code: {result.tsa.tsa_code}")
+    console.print(f"tsa_name: {result.tsa.tsa_name}")
+    console.print(f"step_count: {result.step_count}")
+    for step_kind, count in result.step_kind_counts.items():
+        console.print(f"step_kind_{step_kind}: {count}")
+    for status, count in result.status_counts.items():
+        console.print(f"status_{status}: {count}")
+    for document_path in result.selected_document_paths:
+        console.print(f"selected_document_path: {document_path}")
+
+
 def _print_tsr_source_layer_overrides_init_summary(
     result: TsrSourceLayerOverridesInitResult,
 ) -> None:
@@ -3092,6 +3110,32 @@ def tsr_source_layers_run(
         raise typer.Exit(code=1) from exc
 
     _print_tsr_source_layers_recipe_run_summary(result)
+
+
+@tsr_app.command("thlb-netdown-build")
+def tsr_thlb_netdown_build(
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    thlb_netdown_recipe_path: Path | None = TSR_THLB_NETDOWN_RECIPE_PATH_OPTION,
+) -> None:
+    """Build the reviewed THLB netdown recipe from TSR facts and source-layer state."""
+
+    source_root = _source_tree_root()
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_recipe_path = (
+        instance_context.resolve_path(thlb_netdown_recipe_path)
+        if thlb_netdown_recipe_path is not None
+        else default_tsr_thlb_netdown_recipe_path(instance_root=instance_context.root)
+    )
+    try:
+        result = build_tsr_thlb_netdown_recipe(
+            recipe_path=resolved_recipe_path,
+            source_root=source_root,
+        )
+    except TsrRecipeError as exc:
+        console.print(f"[red]TSR THLB recipe build error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_thlb_netdown_recipe_build_summary(result)
 
 
 @tsr_app.command("facts-report")

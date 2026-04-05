@@ -167,6 +167,18 @@ class TsrSourceLayersRecipeRunResult:
     outcome_counts: dict[str, int]
 
 
+@dataclass(frozen=True)
+class TsrThlbNetdownRecipeBuildResult:
+    """Summary of one THLB netdown recipe build pass."""
+
+    recipe_path: Path
+    tsa: TsrOverlayTsaRecord
+    step_count: int
+    step_kind_counts: dict[str, int]
+    status_counts: dict[str, int]
+    selected_document_paths: tuple[str, ...]
+
+
 def _read_json_object(path: Path, *, description: str) -> dict[str, Any]:
     resolved = path.expanduser().resolve()
     if not resolved.exists():
@@ -789,6 +801,380 @@ def _overlay_attempt_for_row(
     return None
 
 
+def _load_tsa_documents_for_recipe(
+    documents_path: Path, *, tsa_id: str
+) -> tuple[dict[str, dict[str, Any]], tuple[dict[str, Any], ...]]:
+    payload = _read_json_object(documents_path, description="TSR documents JSON")
+    documents = payload.get("documents")
+    if not isinstance(documents, list):
+        raise TsrRecipeError("TSR documents JSON is missing a valid `documents` list.")
+
+    records: list[dict[str, Any]] = []
+    index: dict[str, dict[str, Any]] = {}
+    for item in documents:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("tsa_id", "")) != tsa_id:
+            continue
+        record = dict(item)
+        relative_path = str(record.get("relative_path", "")).strip()
+        if relative_path:
+            index[relative_path] = record
+        records.append(record)
+    return index, tuple(records)
+
+
+def _provenance_document_path(provenance_id: str) -> str:
+    return provenance_id.split("#", 1)[0].strip()
+
+
+def _coerce_cycle_year(value: object) -> int:
+    text = str(value or "").strip()
+    return int(text) if text.isdigit() else 0
+
+
+def _normalize_whitespace(text: str) -> str:
+    return " ".join(str(text or "").split())
+
+
+def _normalize_step_slug(text: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "_", text.casefold()).strip("_")
+    return slug or "step"
+
+
+def _choose_preferred_thlb_documents(
+    rows: tuple[TsrFactReviewRow, ...],
+    *,
+    documents_index: dict[str, dict[str, Any]],
+    documents: tuple[dict[str, Any], ...],
+) -> tuple[tuple[TsrFactReviewRow, ...], tuple[str, ...]]:
+    available_paths = {
+        _provenance_document_path(row.provenance_id)
+        for row in rows
+        if row.provenance_id.strip()
+    }
+    if not available_paths:
+        return rows, ()
+
+    latest_year = max(
+        (_coerce_cycle_year(doc.get("cycle_year")) for doc in documents),
+        default=0,
+    )
+    preferred_paths = tuple(
+        path
+        for path, doc in documents_index.items()
+        if path in available_paths
+        and _coerce_cycle_year(doc.get("cycle_year")) == latest_year
+        and str(doc.get("document_type", "")).casefold() == "data_package"
+    )
+    if not preferred_paths:
+        preferred_paths = tuple(
+            path
+            for path, doc in documents_index.items()
+            if path in available_paths
+            and _coerce_cycle_year(doc.get("cycle_year")) == latest_year
+        )
+    if not preferred_paths:
+        return rows, tuple(sorted(available_paths))
+
+    selected = tuple(
+        row
+        for row in rows
+        if _provenance_document_path(row.provenance_id) in preferred_paths
+    )
+    return (selected or rows), tuple(sorted(preferred_paths))
+
+
+_THLB_GENERIC_TOKENS = {
+    "the",
+    "and",
+    "for",
+    "from",
+    "with",
+    "that",
+    "this",
+    "will",
+    "into",
+    "have",
+    "used",
+    "use",
+    "land",
+    "base",
+    "timber",
+    "harvesting",
+    "thlb",
+    "whse",
+    "reg",
+    "resource",
+    "resources",
+    "planning",
+    "management",
+    "current",
+    "poly",
+    "line",
+    "lines",
+    "svw",
+    "sp",
+    "tsa",
+    "bcgw",
+    "data",
+    "layer",
+    "forest",
+    "natural",
+}
+
+
+def _meaningful_tokens(text: str) -> set[str]:
+    tokens = {
+        token
+        for token in re.findall(r"[A-Za-z0-9]+", str(text).casefold())
+        if len(token) >= 3 and token not in _THLB_GENERIC_TOKENS
+    }
+    return tokens
+
+
+def _build_source_recipe_index(
+    source_recipe: TsrSourceLayersRecipeRecord,
+) -> tuple[dict[str, Any], ...]:
+    indexed = []
+    for entry in source_recipe.entries:
+        entry_id = str(entry.get("entry_id", "")).strip()
+        if not entry_id:
+            continue
+        label = str(entry.get("label", "")).strip()
+        recommended_query = str(entry.get("recommended_query", "")).strip()
+        top_match_title = str(entry.get("top_match_title", "")).strip()
+        snippet = str(entry.get("snippet", "")).strip()
+        tokens = (
+            _meaningful_tokens(label)
+            | _meaningful_tokens(recommended_query)
+            | _meaningful_tokens(top_match_title)
+            | _meaningful_tokens(snippet)
+        )
+        indexed.append(
+            {
+                "entry_id": entry_id,
+                "label": label,
+                "recommended_query": recommended_query,
+                "tokens": tokens,
+            }
+        )
+    return tuple(indexed)
+
+
+def _link_thlb_step_to_sources(
+    text: str,
+    *,
+    source_index: tuple[dict[str, Any], ...],
+) -> tuple[str, ...]:
+    subject_tokens = _meaningful_tokens(text)
+    if not subject_tokens:
+        return ()
+
+    scored: list[tuple[int, str]] = []
+    for entry in source_index:
+        overlap = subject_tokens & set(entry["tokens"])
+        score = len(overlap)
+        if score > 0:
+            scored.append((score, str(entry["entry_id"])))
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    if not scored:
+        return ()
+
+    top_score = scored[0][0]
+    linked = [entry_id for score, entry_id in scored if score == top_score]
+    if top_score == 1:
+        return tuple(linked[:1])
+    return tuple(linked[:3])
+
+
+def _match_thlb_action(text: str) -> tuple[str, str, str]:
+    normalized = _normalize_whitespace(text)
+    lower = normalized.casefold()
+
+    patterns = (
+        (
+            "use_land_base",
+            re.compile(
+                r"^(?P<subject>.+?)\s+use\s+(?P<predicate>[A-Z]{3,5})$", re.IGNORECASE
+            ),
+        ),
+        (
+            "exclude",
+            re.compile(
+                r"^(?P<subject>.+?)\s+exclude(?:d)?\s+(?P<predicate>.+?)\s+from the thlb",
+                re.IGNORECASE,
+            ),
+        ),
+        (
+            "exclude",
+            re.compile(r"^(?P<subject>.+?)\s+exclude from the thlb$", re.IGNORECASE),
+        ),
+        (
+            "exclude",
+            re.compile(
+                r"^(?P<subject>.+?)\s+remove(?:d)?\s+(?P<predicate>.+?)\s+from the thlb",
+                re.IGNORECASE,
+            ),
+        ),
+        (
+            "exclude",
+            re.compile(
+                r"^(?P<subject>.+?)\s+(?:are|is)\s+removed from the thlb", re.IGNORECASE
+            ),
+        ),
+        (
+            "exclude",
+            re.compile(
+                r"^(?P<subject>.+?)\s+(?:are|is)\s+excluded from the thlb",
+                re.IGNORECASE,
+            ),
+        ),
+        (
+            "defer",
+            re.compile(
+                r"^(?P<subject>.+?)\s+included in the thlb but will be deferred from harvest for (?P<predicate>\d+\s+years?)",
+                re.IGNORECASE,
+            ),
+        ),
+        (
+            "aspatial_reduction",
+            re.compile(
+                r"^(?P<subject>.+?)\s+will be modelled as an aspatial(?: thlb)? reduction(?: factor)?",
+                re.IGNORECASE,
+            ),
+        ),
+        (
+            "no_deduction",
+            re.compile(
+                r"^(?P<subject>.+?)\s+will have no deduction from the thlb",
+                re.IGNORECASE,
+            ),
+        ),
+        (
+            "restore",
+            re.compile(
+                r"^(?P<subject>.+?)\s+.*fully restored to the thlb",
+                re.IGNORECASE,
+            ),
+        ),
+    )
+    for action, pattern in patterns:
+        match = pattern.search(normalized)
+        if match:
+            subject = _normalize_whitespace(match.groupdict().get("subject", ""))
+            predicate = _normalize_whitespace(match.groupdict().get("predicate", ""))
+            return action, subject, predicate
+
+    if "long-term thlb" in lower:
+        return "reference_target", "long-term thlb", _normalize_whitespace(normalized)
+    if "the thlb is the portion" in lower:
+        return "definition", "thlb definition", ""
+    if "the thlb may increase in size" in lower:
+        return "increase_conditions", "thlb increase conditions", ""
+    if "the thlb may also decrease in size" in lower:
+        return "decrease_conditions", "thlb decrease conditions", ""
+    return "", "", ""
+
+
+def _is_heading_like(text: str) -> bool:
+    normalized = _normalize_whitespace(text)
+    if not normalized:
+        return False
+    return bool(
+        re.match(r"^\d+(\.\d+)*\s", normalized)
+        or "timber harvesting land base definition" in normalized.casefold()
+        or "identification of the timber harvesting land base" in normalized.casefold()
+    )
+
+
+def _classify_thlb_recipe_step(
+    row: TsrFactReviewRow,
+    *,
+    documents_index: dict[str, dict[str, Any]],
+    source_index: tuple[dict[str, Any], ...],
+) -> dict[str, Any] | None:
+    snippet = _normalize_whitespace(row.snippet)
+    value = _normalize_whitespace(row.extracted_value)
+    if not snippet:
+        return None
+
+    action, subject, predicate = _match_thlb_action(value if value else snippet)
+    document_path = _provenance_document_path(row.provenance_id)
+    document_record = documents_index.get(document_path, {})
+    document_title = row.title or str(document_record.get("title", ""))
+    document_type = str(document_record.get("document_type", "")).strip()
+
+    if action == "reference_target":
+        step_kind = "reference_target"
+        label = "Long-term THLB reference"
+    elif action in {"definition", "increase_conditions", "decrease_conditions"}:
+        step_kind = "context"
+        label = {
+            "definition": "THLB definition",
+            "increase_conditions": "THLB increase conditions",
+            "decrease_conditions": "THLB decrease conditions",
+        }[action]
+    elif action:
+        step_kind = "netdown_rule"
+        label = subject or snippet[:80]
+    elif _is_heading_like(snippet):
+        step_kind = "context"
+        label = snippet[:80]
+        action = "section_heading"
+    else:
+        return None
+
+    linked_source_entry_ids = _link_thlb_step_to_sources(
+        " ".join(part for part in (label, snippet, subject, predicate) if part),
+        source_index=source_index,
+    )
+    if step_kind == "context":
+        step_status = "needs_review"
+        required = False
+    elif step_kind == "reference_target":
+        step_status = "ready"
+        required = True
+    elif linked_source_entry_ids or action in {
+        "use_land_base",
+        "aspatial_reduction",
+        "no_deduction",
+        "restore",
+    }:
+        step_status = "ready"
+        required = True
+    else:
+        step_status = "blocked_missing_source"
+        required = True
+
+    notes = []
+    if not linked_source_entry_ids and step_kind == "netdown_rule":
+        notes.append(
+            "No source-layer recipe entry linked automatically; review or add an override."
+        )
+
+    return {
+        "step_kind": step_kind,
+        "label": _normalize_whitespace(label),
+        "raw_value": value,
+        "raw_text": snippet,
+        "normalized_action": action,
+        "normalized_subject": subject,
+        "normalized_predicate": predicate,
+        "linked_source_entry_ids": list(linked_source_entry_ids),
+        "step_status": step_status,
+        "required": required,
+        "page_number": row.page_number,
+        "document_title": document_title,
+        "document_type": document_type,
+        "cycle_label": row.cycle_label,
+        "cycle_year": row.cycle_year,
+        "provenance_id": row.provenance_id,
+        "source_url": row.source_url,
+        "notes": notes,
+    }
+
+
 def build_tsr_source_layers_recipe(
     *,
     recipe_path: Path,
@@ -845,6 +1231,102 @@ def build_tsr_source_layers_recipe(
         tsa=recipe.tsa,
         entry_count=len(entries),
         status_counts=dict(sorted(status_counts.items())),
+    )
+
+
+def build_tsr_thlb_netdown_recipe(
+    *,
+    recipe_path: Path,
+    source_root: Path,
+) -> TsrThlbNetdownRecipeBuildResult:
+    """Populate the THLB netdown recipe from TSR facts and source-layer recipe state."""
+
+    recipe = load_tsr_thlb_netdown_recipe(recipe_path)
+    source_root_resolved = source_root.expanduser().resolve()
+    candidate_facts_path = _resolve_path_from_recipe(
+        source_root_resolved, recipe.canonical_inputs.candidate_facts_path
+    )
+    documents_path = _resolve_path_from_recipe(
+        source_root_resolved, recipe.canonical_inputs.documents_path
+    )
+    instance_root = recipe_path.expanduser().resolve().parents[2]
+    source_layer_recipe_path = _resolve_instance_path(
+        instance_root, recipe.instance_inputs.source_layer_recipe_path
+    )
+    source_recipe = load_tsr_source_layers_recipe(source_layer_recipe_path)
+    source_index = _build_source_recipe_index(source_recipe)
+
+    report_result = report_tsr_candidate_facts(
+        candidate_facts_path=candidate_facts_path,
+        tsa=recipe.tsa.tsa_code,
+        fact_families=("thlb_reference",),
+        limit=None,
+    )
+    documents_index, documents = _load_tsa_documents_for_recipe(
+        documents_path,
+        tsa_id=recipe.tsa.tsa_id,
+    )
+    selected_rows, selected_document_paths = _choose_preferred_thlb_documents(
+        report_result.rows,
+        documents_index=documents_index,
+        documents=documents,
+    )
+
+    steps: list[dict[str, Any]] = []
+    step_kind_counts: Counter[str] = Counter()
+    status_counts: Counter[str] = Counter()
+    seen_signatures: set[tuple[int, str, str]] = set()
+    for order_index, row in enumerate(
+        sorted(
+            selected_rows,
+            key=lambda item: (
+                int(item.page_number or 0),
+                str(item.provenance_id),
+                str(item.extracted_value),
+            ),
+        ),
+        start=1,
+    ):
+        classified = _classify_thlb_recipe_step(
+            row,
+            documents_index=documents_index,
+            source_index=source_index,
+        )
+        if classified is None:
+            continue
+        signature = (
+            int(classified.get("page_number") or 0),
+            str(classified["step_kind"]),
+            str(classified["raw_text"]),
+        )
+        if signature in seen_signatures:
+            continue
+        seen_signatures.add(signature)
+        slug = _normalize_step_slug(
+            str(classified["label"] or classified["normalized_action"])
+        )
+        step_id = f"thlb_step_{order_index:03d}_{slug}"
+        classified["step_id"] = step_id
+        classified["order_index"] = order_index
+        steps.append(classified)
+        step_kind_counts.update([str(classified["step_kind"])])
+        status_counts.update([str(classified["step_status"])])
+
+    payload = recipe.to_dict()
+    recipe_contract = dict(recipe.recipe_contract)
+    recipe_contract["status"] = "built"
+    recipe_contract["last_built_utc"] = datetime.now(UTC).isoformat()
+    recipe_contract["selected_document_paths"] = list(selected_document_paths)
+    payload["recipe_contract"] = recipe_contract
+    payload["steps"] = steps
+    _write_recipe_yaml(recipe_path.expanduser().resolve(), payload)
+    return TsrThlbNetdownRecipeBuildResult(
+        recipe_path=recipe_path.expanduser().resolve(),
+        tsa=recipe.tsa,
+        step_count=len(steps),
+        step_kind_counts=dict(sorted(step_kind_counts.items())),
+        status_counts=dict(sorted(status_counts.items())),
+        selected_document_paths=selected_document_paths,
     )
 
 

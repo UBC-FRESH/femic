@@ -82,6 +82,9 @@ instance:
    python -m femic tsr source-layers-build \
      --instance-root external/femic-tsa29-instance
 
+   python -m femic tsr thlb-netdown-build \
+     --instance-root external/femic-tsa29-instance
+
    python -m femic tsr overlay-init \
      --instance-root external/femic-tsa29-instance \
      --tsa 29
@@ -209,6 +212,29 @@ The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
    The run step then executes only the safe acquisition paths already trusted
    elsewhere in FEMIC and writes the resulting artifact paths back into the
    recipe.
+
+6b. once the source-layer recipe is in a good state, build the reviewed THLB
+   netdown recipe:
+
+   .. code-block:: bash
+
+      python -m femic tsr thlb-netdown-build \
+        --instance-root external/femic-tsa29-instance
+
+   This refreshes ``config/tsr/thlb_netdown.recipe.yaml`` from the canonical
+   ``thlb_reference`` fact pool while preserving:
+
+   - raw TSR wording and provenance;
+   - normalized action hints such as ``exclude``, ``defer``,
+     ``aspatial_reduction``, and ``reference_target`` when the builder is
+     confident enough;
+   - linked source-layer recipe entry ids when the THLB text can be connected
+     conservatively to a logical source; and
+   - explicit ``ready`` / ``needs_review`` / ``blocked_missing_source`` step
+     status so the later execution slice has a stable contract to work from.
+
+   The THLB recipe build step is intentionally about extracting
+   **what the TSR says to do**, not applying the netdown yet.
 
 7. initialize or refresh the reviewed overlay:
 

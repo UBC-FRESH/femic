@@ -11814,3 +11814,25 @@
     every downstream THLB/netdown slice now has to preserve or improve the
     final "make all"-style rebuild path for TSA29 instead of introducing new
     hidden one-off state.
+- 2026-04-04: Completed `#125` (THLB netdown recipe extraction into a reviewed
+  per-instance recipe).
+  - Added the new CLI:
+    - `python -m femic tsr thlb-netdown-build --instance-root ...`
+  - Added THLB recipe build helpers that:
+    - select the preferred latest-cycle TSR data package for the target TSA;
+    - transform `thlb_reference` facts into ordered recipe steps with preserved
+      raw wording, provenance, and normalized action hints;
+    - distinguish `context`, `reference_target`, and `netdown_rule` rows; and
+    - link THLB rules back to stable logical source ids from
+      `config/tsr/source_layers.recipe.yaml` when the overlap is conservative
+      enough to trust.
+  - TSA29 proving-ground smoke:
+    - selected `TSR_2024/Data_Package_2024/29ts_dpkg_2024.pdf`;
+    - wrote `18` reviewed steps into
+      `config/tsr/thlb_netdown.recipe.yaml`;
+    - surfaced ready-to-review rules for temporary roads, WTRA aspatial
+      reduction, OGMAs, and mule deer winter range; and
+    - kept uncertain or blocked rows explicit instead of silently guessing.
+  - This keeps the Phase 52 action-research workflow convergent and
+    reproducible: the THLB interpretation is now expressed as script-generated,
+    reviewable instance state rather than chat-only or shell-only lore.

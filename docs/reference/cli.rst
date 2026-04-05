@@ -594,6 +594,30 @@ trusted elsewhere in FEMIC:
 - explicit reviewed override mappings from
   ``config/tsr/source_layer_overrides.yaml``.
 
+``tsr thlb-netdown-build`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
+
+``tsr thlb-netdown-build`` refreshes the reviewed THLB netdown recipe from:
+
+- canonical TSR ``thlb_reference`` facts;
+- the current source-layer recipe so THLB steps can link to stable logical
+  source ids instead of ad hoc filenames; and
+- the latest preferred TSR data-package document for the target TSA when
+  multiple cycles are present.
+
+The command is intentionally about **what the TSR says to do**, not about
+executing the netdown. It writes an ordered, reviewable
+``config/tsr/thlb_netdown.recipe.yaml`` that preserves:
+
+- raw TSR wording;
+- normalized action/subject/predicate hints where the extraction is confident;
+- linked source-layer recipe entry ids when they can be derived conservatively;
+- per-step readiness/blocking state; and
+- the selected source TSR document paths used for the build.
+
 ``tsr overlay-init`` options
 
 - ``--tsa TEXT`` (required TSA code, ``tsa_<code>``, or TSA name)

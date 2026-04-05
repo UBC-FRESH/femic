@@ -57,6 +57,7 @@ The common operator-facing entrypoint is:
    femic tsr recipe-init --instance-root external/femic-tsa29-instance --tsa 29
    femic tsr source-layers-build --instance-root external/femic-tsa29-instance
    femic tsr source-layers-run --instance-root external/femic-tsa29-instance --bbox ...
+   femic tsr thlb-netdown-build --instance-root external/femic-tsa29-instance
    femic tsr overlay-init --instance-root external/femic-tsa29-instance --tsa 29
    femic tsr overlay-report --instance-root external/femic-tsa29-instance
    femic tsr override-init --instance-root external/femic-tsa29-instance
@@ -68,7 +69,9 @@ The matching Python entrypoints are:
 
    from pathlib import Path
    from femic.tsr_catalog import (
+      build_tsr_thlb_netdown_recipe,
       build_tsr_overlay_report,
+      build_tsr_source_layers_recipe,
       extract_tsr_candidate_facts,
       fetch_tsr_pdfs,
       init_tsr_overlay,
@@ -77,6 +80,7 @@ The matching Python entrypoints are:
       index_tsr_tsa_surfaces,
       report_tsr_candidate_facts,
       build_tsr_source_layer_override_report,
+      run_tsr_source_layers_recipe,
       write_tsr_fact_report_csv,
       write_tsr_index,
    )
@@ -141,6 +145,12 @@ The matching Python entrypoints are:
        ),
        bbox_epsg3005=(1170000.0, 450000.0, 1180000.0, 460000.0),
    )
+   build_tsr_thlb_netdown_recipe(
+       recipe_path=Path(
+           "external/femic-tsa29-instance/config/tsr/thlb_netdown.recipe.yaml"
+       ),
+       source_root=Path.cwd(),
+   )
    build_tsr_overlay_report(
        overlay_path=Path("external/femic-tsa29-instance/config/tsr/overlay.yaml"),
    )
@@ -187,6 +197,9 @@ Key Entry Surfaces
 - :func:`run_tsr_source_layers_recipe`
   Execute safe acquisition steps from the reviewed source-layer recipe while
   reusing already materialized artifacts when available.
+- :func:`build_tsr_thlb_netdown_recipe`
+  Refresh the reviewed THLB netdown recipe from TSR THLB facts plus the stable
+  logical-source ids already captured in the source-layer recipe.
 - :func:`build_tsr_overlay_report`
   Summarize one reviewed overlay against the canonical candidate-fact pool it
   references.

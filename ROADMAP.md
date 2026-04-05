@@ -13376,3 +13376,45 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       runbook for rebuilding the approved TSA29 instance from a fresh clone,
       including all recipe build/run steps and any required external-data
       materialization boundaries.
+- 2026-04-04 (Issue `#125` implemented: THLB netdown logic is now extracted
+  into a reviewed per-instance recipe instead of staying trapped in raw TSR
+  snippets):
+  - Added the new CLI:
+    - `python -m femic tsr thlb-netdown-build --instance-root ...`
+  - Added THLB recipe build helpers in `src/femic/tsr_catalog/recipes.py` that:
+    - select the preferred latest-cycle TSR data package when multiple TSA
+      document cycles exist;
+    - shape `thlb_reference` facts into ordered recipe steps with preserved raw
+      wording, provenance, and normalized action hints;
+    - distinguish `context`, `reference_target`, and `netdown_rule` step kinds;
+    - link THLB rules back to stable logical source ids from
+      `config/tsr/source_layers.recipe.yaml` when the overlap is strong enough;
+    - keep uncertain rows explicit as `needs_review` or
+      `blocked_missing_source` rather than silently guessing.
+  - TSA29 proving-ground smoke:
+    - `thlb-netdown-build` selected
+      `TSR_2024/Data_Package_2024/29ts_dpkg_2024.pdf`;
+    - wrote `18` reviewed steps into
+      `config/tsr/thlb_netdown.recipe.yaml`;
+    - surfaced concrete ready-to-review rules for:
+      - temporary roads (`no_deduction`);
+      - WTRA (`aspatial_reduction`);
+      - OGMAs (`exclude`);
+      - mule deer winter range (`exclude`);
+    - and preserved blocked/manual-review cases such as `Dasiqox` and generic
+      unresolved THLB wording without pretending they were machine-clean.
+  - Convergence/reproducibility note:
+    - Phase 52 now has a fully scriptable path from canonical TSR facts into
+      two reviewed working recipes:
+      `recipe-init -> source-layers-build/run -> thlb-netdown-build`;
+    - this keeps the action-research proving-ground aligned with the eventual
+      fresh-clone “make all” rebuild story instead of creating one-off THLB
+      extraction lore outside the instance.
+  - Detailed Next Steps:
+    - move to `#126` next so the THLB recipe can execute a bounded audited
+      subset of supported netdown rules into a stand-level `thlb_fact` output;
+    - keep `#126` explicitly partial-success friendly so unsupported netdown
+      rules stay visible in the audit instead of blocking the whole run; and
+    - use the TSA29 recipe as the acceptance baseline for the execution slice,
+      preserving the same selected 2024 data-package provenance and logical
+      source-layer ids.
