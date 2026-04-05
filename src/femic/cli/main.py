@@ -162,10 +162,13 @@ from femic.tsr_catalog import (
     TsrOverlayReport,
     TsrRecipeError,
     TsrRecipeInitResult,
+    TsrSourceLayersRecipeBuildResult,
+    TsrSourceLayersRecipeRunResult,
     TsrSourceLayerOverridesError,
     TsrSourceLayerOverridesInitResult,
     TsrSourceLayerOverridesReport,
     TsrWrittenIndex,
+    build_tsr_source_layers_recipe,
     build_tsr_overlay_report,
     build_tsr_source_layer_override_report,
     default_tsr_source_layer_overrides_path,
@@ -178,6 +181,7 @@ from femic.tsr_catalog import (
     init_tsr_recipe_scaffolds,
     init_tsr_source_layer_overrides,
     report_tsr_candidate_facts,
+    run_tsr_source_layers_recipe,
     write_tsr_fact_report_csv,
     write_tsr_index,
 )
@@ -518,7 +522,15 @@ TSR_THLB_NETDOWN_RECIPE_PATH_OPTION = typer.Option(
 TSR_OVERWRITE_OPTION = typer.Option(
     False,
     "--overwrite",
-    help="Overwrite an existing reviewed TSR overlay file.",
+    help="Overwrite an existing reviewed TSR overlay/override/recipe file.",
+)
+TSR_ALLOW_ORDER_OPTION = typer.Option(
+    False,
+    "--allow-order",
+    help=(
+        "Allow `tsr source-layers-run` to submit DWDS orders for recipe entries "
+        "whose chosen acquisition strategy is `dwds_order`."
+    ),
 )
 TSR_TSA_FILTER_OPTION = typer.Option(
     None,
@@ -2356,6 +2368,30 @@ def _print_tsr_recipe_init_summary(result: TsrRecipeInitResult) -> None:
     console.print(f"tsa_name: {result.tsa.tsa_name}")
 
 
+def _print_tsr_source_layers_recipe_build_summary(
+    result: TsrSourceLayersRecipeBuildResult,
+) -> None:
+    console.print(f"recipe_path: {result.recipe_path}")
+    console.print(f"tsa_id: {result.tsa.tsa_id}")
+    console.print(f"tsa_code: {result.tsa.tsa_code}")
+    console.print(f"tsa_name: {result.tsa.tsa_name}")
+    console.print(f"entry_count: {result.entry_count}")
+    for status, count in result.status_counts.items():
+        console.print(f"status_{status}: {count}")
+
+
+def _print_tsr_source_layers_recipe_run_summary(
+    result: TsrSourceLayersRecipeRunResult,
+) -> None:
+    console.print(f"recipe_path: {result.recipe_path}")
+    console.print(f"tsa_id: {result.tsa.tsa_id}")
+    console.print(f"tsa_code: {result.tsa.tsa_code}")
+    console.print(f"tsa_name: {result.tsa.tsa_name}")
+    console.print(f"entry_count: {result.entry_count}")
+    for outcome, count in result.outcome_counts.items():
+        console.print(f"outcome_{outcome}: {count}")
+
+
 def _print_tsr_source_layer_overrides_init_summary(
     result: TsrSourceLayerOverridesInitResult,
 ) -> None:
@@ -2982,6 +3018,80 @@ def tsr_recipe_init(
         raise typer.Exit(code=1) from exc
 
     _print_tsr_recipe_init_summary(result)
+
+
+@tsr_app.command("source-layers-build")
+def tsr_source_layers_build(
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    source_layers_recipe_path: Path | None = TSR_SOURCE_LAYERS_RECIPE_PATH_OPTION,
+    limit: int = BCDC_LIMIT_OPTION,
+) -> None:
+    """Build the reviewed source-layer recipe from TSR facts and BCDC knowledge."""
+
+    source_root = _source_tree_root()
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_recipe_path = (
+        instance_context.resolve_path(source_layers_recipe_path)
+        if source_layers_recipe_path is not None
+        else default_tsr_source_layers_recipe_path(instance_root=instance_context.root)
+    )
+    try:
+        result = build_tsr_source_layers_recipe(
+            recipe_path=resolved_recipe_path,
+            source_root=source_root,
+            limit=limit,
+        )
+    except TsrRecipeError as exc:
+        console.print(f"[red]TSR source-layer recipe build error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_source_layers_recipe_build_summary(result)
+
+
+@tsr_app.command("source-layers-run")
+def tsr_source_layers_run(
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    source_layers_recipe_path: Path | None = TSR_SOURCE_LAYERS_RECIPE_PATH_OPTION,
+    bbox: str | None = BCDC_BBOX_OPTION,
+    geomark: str | None = BCDC_GEOMARK_OPTION,
+    limit: int = BCDC_LIMIT_OPTION,
+    allow_order: bool = TSR_ALLOW_ORDER_OPTION,
+) -> None:
+    """Execute safe acquisition steps from the reviewed source-layer recipe."""
+
+    if (bbox is None) == (geomark is None):
+        console.print(
+            "[red]TSR source-layer recipe run error:[/red] Supply exactly one of "
+            "`--bbox` or `--geomark`."
+        )
+        raise typer.Exit(code=1)
+
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_recipe_path = (
+        instance_context.resolve_path(source_layers_recipe_path)
+        if source_layers_recipe_path is not None
+        else default_tsr_source_layers_recipe_path(instance_root=instance_context.root)
+    )
+    try:
+        resolved_geomark = None
+        if geomark is not None:
+            resolved_geomark = resolve_geomark_bbox_3005(geomark)
+            bbox_epsg3005 = resolved_geomark.bbox_epsg3005
+        else:
+            assert bbox is not None
+            bbox_epsg3005 = build_bbox_3005(bbox)
+        result = run_tsr_source_layers_recipe(
+            recipe_path=resolved_recipe_path,
+            bbox_epsg3005=bbox_epsg3005,
+            geomark=resolved_geomark,
+            limit=limit,
+            allow_order=allow_order,
+        )
+    except (TsrRecipeError, BcdcFetchError, BcdcDwdsError) as exc:
+        console.print(f"[red]TSR source-layer recipe run error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_source_layers_recipe_run_summary(result)
 
 
 @tsr_app.command("facts-report")

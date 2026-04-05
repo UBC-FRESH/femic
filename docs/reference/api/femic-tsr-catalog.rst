@@ -55,6 +55,8 @@ The common operator-facing entrypoint is:
    femic tsr extract
    femic tsr facts-report --tsa 29 --fact-family source_layer_candidate
    femic tsr recipe-init --instance-root external/femic-tsa29-instance --tsa 29
+   femic tsr source-layers-build --instance-root external/femic-tsa29-instance
+   femic tsr source-layers-run --instance-root external/femic-tsa29-instance --bbox ...
    femic tsr overlay-init --instance-root external/femic-tsa29-instance --tsa 29
    femic tsr overlay-report --instance-root external/femic-tsa29-instance
    femic tsr override-init --instance-root external/femic-tsa29-instance
@@ -127,6 +129,18 @@ The matching Python entrypoints are:
            "external/femic-tsa29-instance/config/tsr/thlb_netdown.recipe.yaml"
        ),
    )
+   build_tsr_source_layers_recipe(
+       recipe_path=Path(
+           "external/femic-tsa29-instance/config/tsr/source_layers.recipe.yaml"
+       ),
+       source_root=Path.cwd(),
+   )
+   run_tsr_source_layers_recipe(
+       recipe_path=Path(
+           "external/femic-tsa29-instance/config/tsr/source_layers.recipe.yaml"
+       ),
+       bbox_epsg3005=(1170000.0, 450000.0, 1180000.0, 460000.0),
+   )
    build_tsr_overlay_report(
        overlay_path=Path("external/femic-tsa29-instance/config/tsr/overlay.yaml"),
    )
@@ -167,6 +181,12 @@ Key Entry Surfaces
 - :func:`init_tsr_recipe_scaffolds`
   Initialize the reviewed working recipe YAML files that later source-layer
   and THLB recipe build/run slices will own.
+- :func:`build_tsr_source_layers_recipe`
+  Refresh the reviewed source-layer recipe from TSR facts plus current public
+  BCDC resolution metadata.
+- :func:`run_tsr_source_layers_recipe`
+  Execute safe acquisition steps from the reviewed source-layer recipe while
+  reusing already materialized artifacts when available.
 - :func:`build_tsr_overlay_report`
   Summarize one reviewed overlay against the canonical candidate-fact pool it
   references.

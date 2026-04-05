@@ -11780,3 +11780,37 @@
     - `python -m pytest -q`
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m pre_commit run --all-files`
+- 2026-04-04: Completed `#124` (source-layer recipe builder and acquisition
+  executor).
+  - Added the new CLI:
+    - `python -m femic tsr source-layers-build --instance-root ...`
+    - `python -m femic tsr source-layers-run --instance-root ... --bbox ...`
+  - The new source-layer recipe build/run helpers now:
+    - populate `config/tsr/source_layers.recipe.yaml` from TSR
+      `source_layer_candidate` facts plus current BCDC resolution metadata;
+    - carry an explicit acquisition query so alias/object-name promotion is
+      script-visible rather than hidden in shell history;
+    - seed recipe entries from the existing TSA overlay acquisition review so
+      prior approved/downloaded work is reused instead of re-hammering public
+      services; and
+    - execute safe acquisition paths (`wfs_fetch`, `direct_download`, explicit
+      overrides, optional DWDS) while writing resulting artifact paths/status
+      back into the recipe.
+  - TSA29 proving-ground smoke:
+    - `source-layers-build` produced `87` reviewed entries:
+      - `50` `exact_hit`
+      - `32` `alias_hit`
+      - `5` `no_hit`
+    - after seeding from the prior TSA29 acquisition history,
+      `source-layers-run` converged to:
+      - `73` `reused`
+      - `9` `dwds_order_skipped`
+      - `5` `override_required`
+  - This is the intended action-research convergence signal for Phase 52:
+    the recipe no longer restarts the entire public acquisition chain every
+    time; it preserves scriptable state that a fresh clone can re-enter and
+    reuse.
+  - Explicit production-grade intent for the rest of Phase 52:
+    every downstream THLB/netdown slice now has to preserve or improve the
+    final "make all"-style rebuild path for TSA29 instead of introducing new
+    hidden one-off state.

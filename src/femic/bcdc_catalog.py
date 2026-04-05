@@ -1191,6 +1191,7 @@ def download_direct_bcdc_resources(
     result: BcdcResolveResult,
     *,
     destination_root: Path,
+    query_slug: str | None = None,
     download_url_fn: Callable[[str, Path], None] = _download_url_to_path,
 ) -> BcdcDownloadResult:
     """Download direct-access resources from the top-ranked package only."""
@@ -1207,7 +1208,7 @@ def download_direct_bcdc_resources(
         result.download_result = download_result
         return download_result
 
-    query_root = resolved_root / _slugify_query(result.query)
+    query_root = resolved_root / _slugify_query(query_slug or result.query)
     downloaded: list[BcdcDownloadedResource] = []
     skipped: list[str] = []
     failures: list[BcdcDownloadFailure] = []

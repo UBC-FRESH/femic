@@ -5163,6 +5163,67 @@ def test_tsr_recipe_init_reports_errors(monkeypatch: pytest.MonkeyPatch) -> None
     assert any("TSR recipe init error:" in msg for msg in messages)
 
 
+def test_tsr_source_layers_build_uses_default_recipe_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_build(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrSourceLayersRecipeBuildResult(
+            recipe_path=instance_root / "config" / "tsr" / "source_layers.recipe.yaml",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            entry_count=3,
+            status_counts={"exact_hit": 2, "alias_hit": 1},
+        )
+
+    monkeypatch.setattr(cli_main, "build_tsr_source_layers_recipe", _fake_build)
+
+    cli_main.tsr_source_layers_build(
+        instance_root=instance_root,
+        source_layers_recipe_path=None,
+        limit=5,
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "source_layers.recipe.yaml").resolve()
+    )
+    assert captured_kwargs["source_root"] == repo_root
+    assert any("entry_count: 3" in msg for msg in messages)
+
+
+def test_tsr_source_layers_run_requires_exactly_one_aoi(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.tsr_source_layers_run(
+            instance_root=Path("instance"),
+            source_layers_recipe_path=None,
+            bbox=None,
+            geomark=None,
+            limit=5,
+            allow_order=False,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any(
+        "Supply exactly one of `--bbox` or `--geomark`." in msg for msg in messages
+    )
+
+
 def test_tsr_facts_report_writes_review_csv(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

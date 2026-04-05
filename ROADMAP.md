@@ -13294,3 +13294,85 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       stable logical source-layer recipe ids instead of one-off path lore; and
     - keep the recipe lifecycle instance-local and reproducible rather than
       drifting toward hidden user-home state.
+- 2026-04-04 (Issue `#124` active plan: make the source-layer recipe a real
+  build/run surface without forking the trusted TSA29 workflow):
+  - Builder scope:
+    - reuse `femic tsr facts-report` heuristics to populate recipe entries from
+      `source_layer_candidate` facts instead of inventing a second review
+      classifier;
+    - resolve the deduplicated recommended queries through the existing BCDC
+      resolver so each entry records current public status, top match metadata,
+      and the suggested acquisition strategy; and
+    - surface override-linkage explicitly so unresolved public wall cases stay
+      connected to `config/tsr/source_layer_overrides.yaml`.
+  - Runner scope:
+    - execute only the safe acquisition paths we already trust:
+      `bcdc-fetch`, `download-direct`, and explicit override mappings;
+    - require an explicit AOI input (`--bbox` or `--geomark`) for public fetch
+      steps instead of guessing from hidden state; and
+    - write the resulting artifact paths and run status back into the recipe so
+      later THLB steps can depend on logical source ids instead of ad hoc path
+      lore.
+  - Convergence/reproducibility guardrails:
+    - the build command should be deterministic and re-runnable without
+      duplicating entries;
+    - the run command should reuse already downloaded assets instead of
+      redownloading them blindly; and
+    - both commands should preserve an obvious "fresh clone -> scripted
+      recipe-init/build/run" story for TSA29 as the proving-ground case.
+- 2026-04-04 (Issue `#124` implemented: the source-layer recipe is now a real
+  reviewed build/run surface for TSA29 and future TSA instances):
+  - Added the new CLI:
+    - `python -m femic tsr source-layers-build --instance-root ...`
+    - `python -m femic tsr source-layers-run --instance-root ... --bbox ...`
+  - Added reusable recipe build/run helpers in
+    `src/femic/tsr_catalog/recipes.py` that:
+    - populate `config/tsr/source_layers.recipe.yaml` from TSR source-layer
+      facts plus current BCDC resolution metadata;
+    - carry an explicit acquisition query separate from the reviewed logical
+      query so alias/object-name promotion remains reproducible instead of
+      hidden in chat history;
+    - seed recipe entries from the existing TSA overlay acquisition review so
+      previously approved/downloaded work is reused instead of rediscovered;
+    - execute safe acquisition paths (`wfs_fetch`, `direct_download`, explicit
+      overrides, optional DWDS) and write resulting artifact paths/status back
+      into the recipe; and
+    - keep recipe-owned download targets stable even when the acquisition query
+      expands to a different public object-name token.
+  - TSA29 proving-ground acceptance:
+    - `source-layers-build` produced `87` reviewed entries:
+      - `50` `exact_hit`
+      - `32` `alias_hit`
+      - `5` `no_hit`
+    - after seeding from prior TSA29 acquisition history, `source-layers-run`
+      converged to:
+      - `73` `reused`
+      - `9` `dwds_order_skipped`
+      - `5` `override_required`
+    - this is the desired convergence shape: the recipe stops replaying the
+      whole public acquisition chain and instead treats prior approved work as
+      reusable scripted state.
+  - Reproducibility note:
+    - Phase 52 now has a concrete fresh-clone story for the upstream layer
+      acquisition leg:
+      `recipe-init -> source-layers-build -> source-layers-run`, with the
+      recipe YAML persisting both logical source ids and realized artifact
+      paths.
+    - The active action-research contract is now explicit:
+      each downstream slice must improve or preserve the eventual
+      "make all"-style rebuild story for a clean clone, rather than creating
+      new hidden state or one-off shell lore that would force the user to
+      rediscover approved work.
+  - Detailed Next Steps:
+    - move to `#125` next so the THLB netdown recipe can reference stable
+      logical source ids from `source_layers.recipe.yaml` instead of one-off
+      manual path choices;
+    - keep `#126` focused on executing a bounded, auditable subset of the THLB
+      recipe into stand-level `thlb_fact` overlays; and
+    - keep the TSA29 instance recipe files tracked as part of the proving-ground
+      dataset so later action-research runs can start from known-good recipe
+      state rather than rebuilding that state from memory.
+    - require the eventual Phase 52 closeout to point to a definitive scripted
+      runbook for rebuilding the approved TSA29 instance from a fresh clone,
+      including all recipe build/run steps and any required external-data
+      materialization boundaries.

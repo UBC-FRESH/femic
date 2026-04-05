@@ -440,6 +440,8 @@ Subcommands
 - ``extract``: ``python -m femic tsr extract [OPTIONS]``
 - ``facts-report``: ``python -m femic tsr facts-report [OPTIONS]``
 - ``recipe-init``: ``python -m femic tsr recipe-init [OPTIONS]``
+- ``source-layers-build``: ``python -m femic tsr source-layers-build [OPTIONS]``
+- ``source-layers-run``: ``python -m femic tsr source-layers-run [OPTIONS]``
 - ``overlay-init``: ``python -m femic tsr overlay-init [OPTIONS]``
 - ``overlay-report``: ``python -m femic tsr overlay-report [OPTIONS]``
 - ``override-init``: ``python -m femic tsr override-init [OPTIONS]``
@@ -553,6 +555,43 @@ These recipe files are intentionally distinct from:
 - canonical shared TSR discovery JSON under ``metadata/tsr``;
 - the reviewed/adopted overlay at ``config/tsr/overlay.yaml``; and
 - the wall-moving escape hatch file at
+  ``config/tsr/source_layer_overrides.yaml``.
+
+``tsr source-layers-build`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--source-layers-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/source_layers.recipe.yaml`` under the instance root)
+- ``--limit INTEGER`` (optional BCDC package-match cap; defaults to ``5``)
+
+``tsr source-layers-build`` refreshes the reviewed source-layer recipe from:
+
+- canonical TSR source-layer candidate facts;
+- the existing guided review heuristics behind ``femic tsr facts-report``; and
+- current BCDC resolution metadata.
+
+The command records a deterministic reviewed acquisition plan instead of making
+the user re-run the TSA29-style discovery sequence manually every time.
+
+``tsr source-layers-run`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--source-layers-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/source_layers.recipe.yaml`` under the instance root)
+- exactly one AOI input:
+  - ``--bbox minx,miny,maxx,maxy`` in ``EPSG:3005``
+  - ``--geomark TEXT``
+- ``--limit INTEGER`` (optional BCDC package-match cap; defaults to ``5``)
+- ``--allow-order`` (optional; permit DWDS order submission for recipe entries
+  that still require ``dwds_order``)
+
+``tsr source-layers-run`` executes only the safe acquisition paths already
+trusted elsewhere in FEMIC:
+
+- WFS fetch via ``femic data bcdc-fetch``-equivalent logic;
+- direct-download reuse via ``femic data bcdc-resolve --download-direct``-equivalent
+  logic; and
+- explicit reviewed override mappings from
   ``config/tsr/source_layer_overrides.yaml``.
 
 ``tsr overlay-init`` options

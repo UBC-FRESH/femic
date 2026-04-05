@@ -79,6 +79,9 @@ instance:
      --instance-root external/femic-tsa29-instance \
      --tsa 29
 
+   python -m femic tsr source-layers-build \
+     --instance-root external/femic-tsa29-instance
+
    python -m femic tsr overlay-init \
      --instance-root external/femic-tsa29-instance \
      --tsa 29
@@ -182,6 +185,30 @@ The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
    For direct-download-only rows such as ``SITE_PROD_BC``, stay on the
    ``femic data bcdc-resolve --download-direct`` path instead of forcing
    ``bcdc-fetch``.
+
+6a. once the reviewed source-layer recipe exists, you can rerun the same
+   acquisition story through the instance-local recipe surface instead of
+   rebuilding the logic manually:
+
+   .. code-block:: bash
+
+      python -m femic tsr source-layers-build \
+        --instance-root external/femic-tsa29-instance
+
+      python -m femic tsr source-layers-run \
+        --instance-root external/femic-tsa29-instance \
+        --bbox 1015173.8086,653963.4944,1393139.0550,901924.5102
+
+   The build step refreshes ``config/tsr/source_layers.recipe.yaml`` from:
+
+   - TSR source-layer candidate facts;
+   - current BCDC public-resolution metadata; and
+   - reviewed override context from
+     ``config/tsr/source_layer_overrides.yaml`` when present.
+
+   The run step then executes only the safe acquisition paths already trusted
+   elsewhere in FEMIC and writes the resulting artifact paths back into the
+   recipe.
 
 7. initialize or refresh the reviewed overlay:
 

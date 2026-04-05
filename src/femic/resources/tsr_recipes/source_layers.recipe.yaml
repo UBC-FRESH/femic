@@ -11,11 +11,12 @@ canonical_inputs:
 instance_inputs:
   overlay_path: ""
   source_layer_overrides_path: ""
+  download_root: ""
 recipe_contract:
   status: scaffolded
   last_built_utc: ""
+  last_run_utc: ""
   notes:
     - Review and refresh this file with `femic tsr source-layers-build`.
     - Use `source_layer_overrides.yaml` only for unresolved public-acquisition wall cases.
 entries: []
-

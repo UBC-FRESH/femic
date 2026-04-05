@@ -264,9 +264,10 @@ def _save_wfs_payload(
     *,
     destination_root: Path,
     query: str,
+    query_slug: str | None,
     output_format: str,
 ) -> Path:
-    slug = _slugify_query(query)
+    slug = _slugify_query(query_slug or query)
     output_dir = destination_root / slug
     if output_format == "geojson":
         destination = output_dir / f"{slug}.geojson"
@@ -300,6 +301,7 @@ def fetch_bcdc_wfs_data(
     output_format: str = DEFAULT_WFS_OUTPUT_FORMAT,
     limit: int = 5,
     geomark: GeomarkBBox | None = None,
+    query_slug: str | None = None,
 ) -> BcdcFetchResult:
     """Fetch AOI-scoped WFS data for the top-ranked WFS-capable BCDC resource."""
 
@@ -344,6 +346,7 @@ def fetch_bcdc_wfs_data(
         payload,
         destination_root=destination_root.expanduser().resolve(),
         query=query,
+        query_slug=query_slug,
         output_format=normalized_format,
     )
 
