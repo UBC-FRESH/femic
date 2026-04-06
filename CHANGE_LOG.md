@@ -12329,3 +12329,18 @@
       - `order_guid=5b1f44ca-1acb-4c0f-bd0b-97fc1a9d3c5a`
       - manifest:
         `runtime/logs/bcdc_psp_status_active_williams_lake_order_manifest_with_email.json`
+- 2026-04-06: Wired the DWDS `pickupByGUID` launcher seam into FEMIC follow-up
+  and documented the real public retrieval workflow (`#140`).
+  - Live TSA29 PSP order `2551234` showed that the emailed `pickupByGUID` URL
+    is an HTML launcher page, not the final package.
+  - FEMIC follow-up now:
+    - retries the public `/order/{id}` seam first;
+    - if no download URL is exposed and `order_guid` is present, fetches the
+      `pickupByGUID` launcher page;
+    - parses the launcher HTML for the final
+      `distribution.data.gov.bc.ca/...zip` URL; and
+    - downloads/materializes the artifact while recording both the pickup URL
+      and the resolved distribution URL in the manifest.
+  - Updated user-facing and agent-facing guidance so the DWDS notification
+    email is treated as part of the usable retrieval workflow rather than a
+    mere courtesy.

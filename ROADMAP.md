@@ -8543,6 +8543,24 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       `email: 0@01101.io`;
     - new order manifest:
       `runtime/logs/bcdc_psp_status_active_williams_lake_order_manifest_with_email.json`.
+- 2026-04-06 (Issue `#140` pickup-by-GUID retrieval seam discovered and wired
+  into FEMIC follow-up):
+  - Live TSA29 PSP order `2551234` proved the stronger public retrieval path:
+    - DWDS sent an email saying the order was assembled;
+    - the emailed `pickupByGUID` URL was an HTML launcher page, not the final
+      package; and
+    - that launcher page exposed the real
+      `distribution.data.gov.bc.ca/...zip` URL for the assembled artifact.
+  - FEMIC now mirrors that path in `follow_up_bcdc_dwds_order(...)`:
+    - retry `/order/{id}` first;
+    - if no download URL is exposed and `order_guid` exists, fetch the
+      `pickupByGUID` launcher page;
+    - parse the launcher HTML for the final distribution zip URL; then
+    - download/materialize the artifact and record both URLs in the manifest.
+  - User/agent-facing documentation must now treat DWDS notification email as
+    part of the usable public-order workflow, not just as an optional courtesy,
+    because the email-driven launcher may be the only discoverable route to the
+    final package when `/order/{id}` is still unreliable.
 
 - 2026-04-06 (Issue `#139` opened: split TSA29 step `015` area netdown from
   TSR Section `7.1.5` later yield-assumption logic):

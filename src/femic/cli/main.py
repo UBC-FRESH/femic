@@ -2307,8 +2307,16 @@ def _print_bcdc_dwds_summary(result: BcdcDwdsOrderResult) -> None:
             console.print(f"download_url: {result.status_probe.download_url}")
     if result.latest_followup_utc is not None:
         console.print(f"latest_followup_utc: {result.latest_followup_utc}")
+    if result.latest_followup_pickup_url is not None:
+        console.print(f"pickup_url: {result.latest_followup_pickup_url}")
+    if result.latest_followup_pickup_download_url is not None:
+        console.print(
+            f"pickup_download_url: {result.latest_followup_pickup_download_url}"
+        )
     if result.materialized_artifact_path is not None:
         console.print(f"materialized_artifact_path: {result.materialized_artifact_path}")
+    if result.materialized_download_url is not None:
+        console.print(f"materialized_download_url: {result.materialized_download_url}")
     if result.materialized_bytes is not None:
         console.print(f"materialized_bytes: {result.materialized_bytes}")
     for warning in result.warnings:

@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
+from html import unescape
 import json
 from pathlib import Path
+import re
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote, urlparse
+from urllib.parse import quote, urljoin, urlparse
 from urllib.request import Request, urlopen
 
 from femic.bcdc_catalog import (
@@ -20,8 +22,10 @@ from femic.bcdc_fetch import GeomarkBBox
 
 
 DWDS_BASE_URL = "https://apps.gov.bc.ca/pub/dwds-ofi"
+DWDS_PICKUP_BASE_URL = "https://apps.gov.bc.ca/pub/dwds-rasp"
 DWDS_CREATE_ORDER_FILTERED_URL = f"{DWDS_BASE_URL}/order/createOrderFiltered"
 DWDS_ORDER_STATUS_URL_TEMPLATE = f"{DWDS_BASE_URL}/order/{{order_id}}"
+DWDS_PICKUP_BY_GUID_URL_TEMPLATE = f"{DWDS_PICKUP_BASE_URL}/pickupByGUID/{{order_guid}}"
 DWDS_PRODUCT_ALLOWED_URL_TEMPLATE = (
     f"{DWDS_BASE_URL}/security/productAllowedByFeatureType/{{feature_type}}"
 )
@@ -100,6 +104,8 @@ class BcdcDwdsOrderResult:
     warnings: tuple[str, ...] = ()
     latest_followup_utc: str | None = None
     latest_followup_status_probe: BcdcDwdsStatusProbe | None = None
+    latest_followup_pickup_url: str | None = None
+    latest_followup_pickup_download_url: str | None = None
     materialized_artifact_path: str | None = None
     materialized_download_url: str | None = None
     materialized_content_type: str | None = None
@@ -145,6 +151,8 @@ class BcdcDwdsOrderResult:
                 if self.latest_followup_status_probe is not None
                 else None
             ),
+            "latest_followup_pickup_url": self.latest_followup_pickup_url,
+            "latest_followup_pickup_download_url": self.latest_followup_pickup_download_url,
             "materialized_artifact_path": self.materialized_artifact_path,
             "materialized_download_url": self.materialized_download_url,
             "materialized_content_type": self.materialized_content_type,
@@ -187,6 +195,18 @@ def _post_json(url: str, payload: dict[str, object]) -> dict[str, Any]:
         raise BcdcDwdsError(
             f"Unable to parse DWDS order response from {url}: {exc}"
         ) from exc
+
+
+def _fetch_text(url: str) -> str:
+    request = Request(url, headers={"Accept": "text/html,*/*"}, method="GET")
+    try:
+        with urlopen(request) as response:
+            return response.read().decode("utf-8", errors="replace")
+    except HTTPError as exc:  # pragma: no cover - network branch
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise BcdcDwdsError(f"Unable to fetch DWDS text from {url}: {detail}") from exc
+    except URLError as exc:  # pragma: no cover - network branch
+        raise BcdcDwdsError(f"Unable to fetch DWDS text from {url}: {exc}") from exc
 
 
 def _select_dwds_feature_resource(match: BcdcPackageMatch) -> BcdcResourceMatch | None:
@@ -243,6 +263,36 @@ def _extract_download_url(payload: dict[str, Any]) -> str | None:
         elif isinstance(current, str) and current.startswith(("http://", "https://")):
             return current
     return None
+
+
+def _extract_dwds_pickup_download_url(*, pickup_url: str, html_text: str) -> str | None:
+    pickup_link_match = re.search(
+        r"<a[^>]*id=['\"]pickup_link['\"][^>]*href\s*=\s*['\"]?([^'\">\s]+)",
+        html_text,
+        flags=re.IGNORECASE,
+    )
+    if pickup_link_match is not None:
+        candidate = urljoin(pickup_url, unescape(pickup_link_match.group(1).strip()))
+        parsed = urlparse(candidate)
+        if parsed.scheme in {"http", "https"} and parsed.netloc:
+            return candidate
+
+    href_matches = re.findall(r"href\s*=\s*['\"]?([^'\">\s]+)", html_text, flags=re.IGNORECASE)
+    for href in href_matches:
+        candidate = urljoin(pickup_url, unescape(href.strip()))
+        parsed = urlparse(candidate)
+        if parsed.scheme in {"http", "https"} and parsed.netloc:
+            return candidate
+    return None
+
+
+def _resolve_dwds_pickup_download_url(order_guid: str) -> tuple[str, str | None]:
+    pickup_url = DWDS_PICKUP_BY_GUID_URL_TEMPLATE.format(order_guid=quote(order_guid, safe="-"))
+    html_text = _fetch_text(pickup_url)
+    return pickup_url, _extract_dwds_pickup_download_url(
+        pickup_url=pickup_url,
+        html_text=html_text,
+    )
 
 
 def _status_probe_from_payload(payload: dict[str, Any] | None) -> BcdcDwdsStatusProbe | None:
@@ -326,6 +376,16 @@ def _order_result_from_payload(payload: dict[str, Any]) -> BcdcDwdsOrderResult:
         ),
         latest_followup_status_probe=_status_probe_from_payload(
             payload.get("latest_followup_status_probe")
+        ),
+        latest_followup_pickup_url=(
+            str(payload["latest_followup_pickup_url"])
+            if payload.get("latest_followup_pickup_url") is not None
+            else None
+        ),
+        latest_followup_pickup_download_url=(
+            str(payload["latest_followup_pickup_download_url"])
+            if payload.get("latest_followup_pickup_download_url") is not None
+            else None
         ),
         materialized_artifact_path=(
             str(payload["materialized_artifact_path"])
@@ -476,14 +536,26 @@ def follow_up_bcdc_dwds_order(
         else order_result.latest_followup_status_probe or order_result.status_probe
     )
     followup_warnings: list[str] = []
+    pickup_url = order_result.latest_followup_pickup_url
+    pickup_download_url = order_result.latest_followup_pickup_download_url
     artifact_path = order_result.materialized_artifact_path
     artifact_download_url = order_result.materialized_download_url
     artifact_content_type = order_result.materialized_content_type
     artifact_bytes = order_result.materialized_bytes
 
     effective_download_url = latest_probe.download_url if latest_probe is not None else None
+    if effective_download_url is None and order_result.order_guid:
+        pickup_url, pickup_download_url = _resolve_dwds_pickup_download_url(
+            order_result.order_guid
+        )
+        effective_download_url = pickup_download_url
     if effective_download_url is None:
-        if poll_status:
+        if order_result.order_guid and pickup_url is not None:
+            followup_warnings.append(
+                "DWDS follow-up reached the pickup-by-GUID launcher page, but it did not expose a "
+                "final distribution download URL yet; keep the order manifest and retry later."
+            )
+        elif poll_status:
             followup_warnings.append(
                 "DWDS follow-up did not expose a download URL yet; keep the order manifest and retry later."
             )
@@ -509,6 +581,8 @@ def follow_up_bcdc_dwds_order(
         status_probe=latest_probe,
         latest_followup_utc=datetime.now(UTC).isoformat(),
         latest_followup_status_probe=latest_probe,
+        latest_followup_pickup_url=pickup_url,
+        latest_followup_pickup_download_url=pickup_download_url,
         materialized_artifact_path=artifact_path,
         materialized_download_url=artifact_download_url,
         materialized_content_type=artifact_content_type,

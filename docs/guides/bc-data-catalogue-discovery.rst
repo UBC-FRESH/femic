@@ -383,6 +383,19 @@ This follow-up path reloads the prior order manifest, retries the public
 the manifest so downstream workflows can consume a real file instead of only an
 ``order_id``.
 
+When the public ``/order/{id}`` seam still withholds a download URL, FEMIC now
+also uses the saved ``order_guid`` to try the stronger email-aligned retrieval
+path:
+
+- fetch the DWDS ``pickupByGUID`` launcher page;
+- parse the launcher HTML for the real
+  ``https://distribution.data.gov.bc.ca/...zip`` link; then
+- download/materialize that package into the selected root.
+
+This matches the live TSA29 PSP case: the emailed ``pickupByGUID`` URL was not
+the final package, but the launcher page did contain the real distribution zip
+link.
+
 Current caveats of the public fallback seam:
 
 - FEMIC submits the order through the public ``createOrderFiltered`` endpoint
@@ -393,7 +406,10 @@ Current caveats of the public fallback seam:
   and
 - the public ``/order/{id}`` status lookup may still report successful live
   orders as missing, so the manifest should be treated as the durable record of
-  submission until that seam is better behaved.
+  submission until that seam is better behaved; and
+- the emailed ``pickupByGUID`` page may be the only practical public bridge to
+  the real artifact, so notification email delivery is part of the usable DWDS
+  workflow, not just a courtesy.
 
 Worked Example: TSA29 Query File to Local Layers
 ------------------------------------------------
@@ -486,6 +502,8 @@ The new ``bcdc-order`` manifest records:
 After ``bcdc-order-followup`` runs, the same manifest may also record:
 
 - the latest follow-up probe timestamp and payload;
+- the ``pickupByGUID`` launcher URL and the resolved distribution URL when that
+  fallback seam is used;
 - the materialized artifact path and content type when DWDS exposes a download
   URL; and
 - any follow-up warnings when the public seam still does not expose a

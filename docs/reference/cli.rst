@@ -289,7 +289,10 @@ the full end-to-end download path is already solved.
 submitted successfully but did not immediately expose a downloadable artifact.
 It reloads an existing DWDS manifest, retries the public status seam, and
 downloads the artifact into the selected root if DWDS finally returns a
-download URL.
+download URL. When the public ``/order/{id}`` seam still returns the known
+false negative, FEMIC now also uses the saved ``order_guid`` to try the DWDS
+``pickupByGUID`` launcher page and extract the real
+``distribution.data.gov.bc.ca`` package URL.
 
 All three BCDC acquisition commands now apply soft good-citizen guardrails:
 duplicate queries are collapsed automatically, ``--plan-only`` previews the
