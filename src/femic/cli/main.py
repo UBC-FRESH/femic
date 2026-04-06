@@ -414,6 +414,7 @@ BCDC_EMAIL_OPTION = typer.Option(
     help="Optional email address for DWDS order notifications.",
     show_default=False,
 )
+BCDC_DWDS_EMAIL_ENV = "FEMIC_BCDC_DWDS_EMAIL"
 BCDC_CLIP_OPTION = typer.Option(
     True,
     "--clip/--no-clip",
@@ -2316,6 +2317,32 @@ def _print_bcdc_dwds_summary(result: BcdcDwdsOrderResult) -> None:
         console.print(f"followup_warning: {warning}")
 
 
+def _resolve_bcdc_dwds_email(*, explicit_email: str | None, repo_root: Path) -> str:
+    if explicit_email is not None and explicit_email.strip():
+        return explicit_email.strip()
+    env_email = os.environ.get(BCDC_DWDS_EMAIL_ENV, "").strip()
+    if env_email:
+        return env_email
+    try:
+        result = subprocess.run(
+            ["git", "config", "--get", "user.email"],
+            cwd=repo_root,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        result = None
+    if result is not None and result.returncode == 0:
+        git_email = result.stdout.strip()
+        if git_email:
+            return git_email
+    raise BcdcDwdsError(
+        "DWDS orders need a notification email. Set `git config user.email`, "
+        f"export `{BCDC_DWDS_EMAIL_ENV}`, or pass `--email` explicitly."
+    )
+
+
 def _load_bcdc_queries_from_file(path: Path) -> list[str]:
     resolved = path.expanduser().resolve()
     queries: list[str] = []
@@ -2953,6 +2980,14 @@ def data_bcdc_order(
         if instance_root is not None
         else None
     )
+    try:
+        resolved_email = _resolve_bcdc_dwds_email(
+            explicit_email=email,
+            repo_root=_source_tree_root(),
+        )
+    except BcdcDwdsError as exc:
+        console.print(f"[red]BCDC order error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
 
     try:
         if bbox is not None:
@@ -2994,7 +3029,7 @@ def data_bcdc_order(
                 output_format=output_format,
                 limit=limit,
                 geomark=resolved_geomark,
-                email_address=email,
+                email_address=resolved_email,
                 clip_to_aoi=clip,
             )
             results.append(result)

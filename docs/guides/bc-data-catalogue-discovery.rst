@@ -362,6 +362,13 @@ This path currently does three useful things:
 - writes a manifest recording the order id, order guid, AOI, payload, and any
   public-status caveats.
 
+If ``--email`` is omitted, FEMIC now resolves the DWDS notification address in
+this order:
+
+- explicit ``--email`` value;
+- ``FEMIC_BCDC_DWDS_EMAIL`` from the environment; then
+- ``git config user.email`` from the active repo.
+
 When DWDS accepts an order but the artifact is not immediately available, use
 ``femic data bcdc-order-followup`` against that saved manifest:
 

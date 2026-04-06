@@ -27,6 +27,9 @@ Use this page first if you are trying to:
   resolve successful live orders cleanly, even though ``bcdc-order-followup``
   can now retry that seam later and materialize the artifact when DWDS
   eventually publishes a download URL.
+- understand how FEMIC resolves the DWDS notification email when ``--email``
+  is omitted (explicit flag first, then ``FEMIC_BCDC_DWDS_EMAIL``, then
+  ``git config user.email``).
 
 Typical Usage
 -------------

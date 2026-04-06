@@ -12313,3 +12313,19 @@
     - `pytest tests/test_bcdc_dwds.py tests/test_cli_main.py -q`
     - `ruff check src/femic/bcdc_dwds.py src/femic/cli/main.py tests/test_bcdc_dwds.py tests/test_cli_main.py`
     - `mypy src`
+- 2026-04-06: Added DWDS notification-email fallback resolution and submitted a
+  fresh live PSP order with the local git email (`#140`).
+  - `femic data bcdc-order` now resolves the notification email in this order:
+    - explicit `--email`;
+    - `FEMIC_BCDC_DWDS_EMAIL`; then
+    - `git config user.email`.
+  - If none are available, FEMIC now fails early with a clear instruction
+    instead of silently submitting a no-email order.
+  - Live validation:
+    - submitted a fresh Williams Lake LU PSP order without `--email`;
+    - FEMIC picked up the local git email `0@01101.io`;
+    - order result:
+      - `order_id=2551234`
+      - `order_guid=5b1f44ca-1acb-4c0f-bd0b-97fc1a9d3c5a`
+      - manifest:
+        `runtime/logs/bcdc_psp_status_active_williams_lake_order_manifest_with_email.json`

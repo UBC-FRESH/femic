@@ -8528,6 +8528,21 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - the public `/order/{id}` seam still returns the known false negative; and
     - FEMIC now records that state honestly in the manifest instead of stopping
       at raw submission metadata.
+- 2026-04-06 (Issue `#140` email fallback added for live DWDS orders):
+  - `femic data bcdc-order` now resolves the DWDS notification email in this
+    order:
+    - explicit `--email`;
+    - `FEMIC_BCDC_DWDS_EMAIL`; then
+    - `git config user.email`.
+  - If none of those sources are available, FEMIC now fails early with a clear
+    instruction instead of silently submitting a no-email order.
+  - Live validation:
+    - submitted a fresh PSP order for the TSA29 `Williams Lake` LU without
+      `--email`;
+    - FEMIC picked up the local git email and the order summary now reports
+      `email: 0@01101.io`;
+    - new order manifest:
+      `runtime/logs/bcdc_psp_status_active_williams_lake_order_manifest_with_email.json`.
 
 - 2026-04-06 (Issue `#139` opened: split TSA29 step `015` area netdown from
   TSR Section `7.1.5` later yield-assumption logic):

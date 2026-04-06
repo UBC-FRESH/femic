@@ -263,7 +263,7 @@ instead.
 - ``--bbox minx,miny,maxx,maxy`` (required unless ``--geomark`` is supplied; interpreted in ``EPSG:3005``)
 - ``--geomark TEXT`` (required unless ``--bbox`` is supplied; accepts a full Geomark URL or bare Geomark ID)
 - ``--output-format [fgdb|gpkg|geojson|shp]`` (default: ``fgdb``)
-- ``--email TEXT`` (optional DWDS notification email)
+- ``--email TEXT`` (optional DWDS notification email; defaults to ``FEMIC_BCDC_DWDS_EMAIL`` when set, otherwise ``git config user.email``)
 - ``--clip / --no-clip`` (default: ``--clip``)
 - ``--plan-only`` (preview deduplicated DWDS order activity without executing it)
 - ``--allow-bulk / --no-allow-bulk`` (explicitly allow larger DWDS order bursts that exceed FEMIC's default public-service threshold)
