@@ -12456,3 +12456,35 @@
     - keep GeoPandas/Shapely as the canonical THLB GIS execution engine
     - do not merge the ArcGIS experimental backend into the main THLB branch
     - return focus to the full-TSA reconciliation work under `#141`
+- 2026-04-06: Fresh-boundary follow-up under `#141` confirmed that refreshing
+  `WHSE_ADMIN_BOUNDARIES.FADM_TSA` does not materially change the Williams Lake
+  TSA starting AOI.
+  - Refreshed `WHSE_ADMIN_BOUNDARIES.FADM_TSA` from the current BCGW/OpenMaps
+    WFS path and dissolved `TSA_NUMBER = 29`.
+  - Refreshed dissolve area:
+    - `4,933,664.338 ha`
+  - TSR Table 3 total TSA / GLB benchmark:
+    - `4,933,635 ha`
+  - Delta:
+    - `+29.338 ha`
+  - Reused the current full-TSA early-pass step artifacts (`2`, `3`, `4`,
+    `23`) and confirmed the rebuilt post-step-23 effective AFLB remains:
+    - `2,905,358.090 ha`
+  - Interpretation:
+    - the initial AOI boundary is effectively exact;
+    - refreshing `FADM_TSA` does not move the early-pass result; and
+    - the remaining GLB/AFLB reconciliation target now clearly sits in
+      checkpoint1 / VRI-universe composition rather than stale TSA-boundary
+      geometry.
+- 2026-04-06: Green-lit the TSA29 full-TSA early `GLB -> AFLB` pass as a
+  stable checkpoint for continued THLB validation.
+  - Decision basis:
+    - initial AOI boundary is effectively exact against the TSR total; and
+    - the rebuilt post-step-23 AFLB remains close enough overall to the Table 3
+      benchmark to count as "good enough" for TSA29 validation even though the
+      individual marginal step values still do not line up exactly.
+  - Working interpretation:
+    - do not burn more time trying to solve that specific early-pass mystery
+      right now; and
+    - move the active full-TSA validation effort down into
+      `AFLB -> LHLB -> THLB`.

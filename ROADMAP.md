@@ -8533,6 +8533,27 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - and steps should only be reopened when full-TSA evidence materially
       misses the TSR benchmark or exposes a semantic error the LU smoke could
       not reveal.
+  - Immediate reconciliation subtask:
+    - refresh the BC-wide `WHSE_ADMIN_BOUNDARIES.FADM_TSA` artifact from the
+      BC Data Catalogue, then use that fresh TSA boundary to rebuild the TSA29
+      masked 2024 VRI stand universe from the BC-scale VRI source;
+    - compare the resulting fresh GLB proxy against:
+      - the current full-TSA29 GLB proxy already being used in `#141`; and
+      - the TSR Table 3 total TSA area benchmark;
+    - use that comparison to decide whether the current ~`225k ha` GLB excess
+      is coming from a stale/incorrect TSA mask seam or from a deeper VRI/input
+      surface mismatch.
+  - Current decision checkpoint:
+    - the refreshed `FADM_TSA` Williams Lake dissolve is effectively exact
+      against the TSR Table 3 total (`4,933,664.338 ha` vs `4,933,635 ha`);
+    - the current full-TSA post-step-23 AFLB remains `2,905,358.090 ha`, about
+      `152,147.910 ha` low relative to the implied Table 3 benchmark
+      (`3,057,506 ha`);
+    - the exact reason the individual `GLB -> AFLB` marginal rows do not line
+      up remains unresolved, but the resulting AFLB is close enough overall to
+      count as "good enough" for TSA29 validation; and
+    - treat the early full-TSA `GLB -> AFLB` pass as green-lit and move the
+      active `#141` work down into `AFLB -> LHLB` / `LHLB -> THLB` validation.
 
 - 2026-04-06 (Issue `#140` checkpoint landed: DWDS follow-up/materialization
   no longer stops at submission):
