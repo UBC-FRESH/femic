@@ -8570,6 +8570,29 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       `email: 0@01101.io`;
     - new order manifest:
       `runtime/logs/bcdc_psp_status_active_williams_lake_order_manifest_with_email.json`.
+- 2026-04-06 (Issue `#142` closed: ArcGIS Pro THLB benchmark completed and not
+  adopted):
+  - The ArcGIS Pro subprocess side-quest was benchmarked head-to-head against
+    the canonical GeoPandas/Shapely lane on the `Williams Lake` LU subset.
+  - Results on this workstation:
+    - step `003` (`Non-forest`):
+      - GeoPandas about `18.4 s`;
+      - ArcGIS about `145.5 s`;
+      - output parity close enough to count as parity.
+    - step `004` (`Roads and landings`):
+      - GeoPandas about `70.0 s`;
+      - ArcGIS about `190.4 s`;
+      - ArcGIS still landed in `applied_with_unsupported` because one
+        road-buffer substep failed.
+    - steps `018` (`Riparian areas`) and `019` (`Buffered trails`):
+      - GeoPandas completed in about `22.6 s` and `24.0 s`;
+      - ArcGIS did not complete either step within an eight-minute timeout and
+        had to be terminated manually.
+  - Decision:
+    - keep GeoPandas/Shapely as the canonical THLB GIS execution engine;
+    - do not merge the ArcGIS experimental backend into the main THLB branch;
+    - treat `#142` as answered `not worth extending` for now and return focus
+      to `#141`.
 - 2026-04-06 (Issue `#140` pickup-by-GUID retrieval seam discovered and wired
   into FEMIC follow-up):
   - Live TSA29 PSP order `2551234` proved the stronger public retrieval path:

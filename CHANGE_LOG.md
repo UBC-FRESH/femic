@@ -12433,3 +12433,26 @@
     - reconcile current LU soft approvals/benchmarks against full-TSA evidence;
     - and emit an explicit full-run validation summary artifact under
       `config/tsr/`.
+- 2026-04-06: Closed `#142` after benchmarking an experimental ArcGIS Pro THLB
+  execution lane against the canonical GeoPandas/Shapely path on the
+  `Williams Lake` LU subset.
+  - Outcome:
+    - ArcGIS was not adopted.
+  - Measured results on this workstation:
+    - step `003` (`Non-forest`):
+      - GeoPandas about `18.4 s`
+      - ArcGIS about `145.5 s`
+      - output parity close enough to count as parity
+    - step `004` (`Roads and landings`):
+      - GeoPandas about `70.0 s`
+      - ArcGIS about `190.4 s`
+      - ArcGIS still produced `applied_with_unsupported` because one
+        road-buffer substep failed
+    - steps `018` (`Riparian areas`) and `019` (`Buffered trails`):
+      - GeoPandas completed in about `22.6 s` and `24.0 s`
+      - ArcGIS failed to finish within an eight-minute timeout and had to be
+        terminated manually
+  - Decision:
+    - keep GeoPandas/Shapely as the canonical THLB GIS execution engine
+    - do not merge the ArcGIS experimental backend into the main THLB branch
+    - return focus to the full-TSA reconciliation work under `#141`
