@@ -8484,6 +8484,7 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [ ] P52.6b2 Improve THLB status reports and recipe review UX with stage groups, exact logic, and lock state (`#135`).
   - [ ] P52.6b3 Add a generated THLB notebook workbench and lock/export flow (`#137`).
   - [ ] P52.6b4 Improve DWDS follow-up retrieval and artifact materialization after order submission (`#140`).
+  - [ ] P52.6b5 Run full-TSA29 THLB step-by-step validation and reconcile the recipe against TSR benchmarks (`#141`).
   - [ ] P52.6c Execute fragment-first TSR THLB reconstruction from reviewed recipe steps (`#131`).
   - [ ] P52.6d Add explicit end-of-workflow aspatial fallback for blocked TSR target-area steps (`#132`).
   - [ ] P52.6e Document the reconstruction ladder and comparison contract (`#133`).
@@ -8508,6 +8509,30 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       `/order/{id}` endpoint; and
     - feed any recovered artifact path back into TSR source-layer and THLB
       workflows so DWDS-backed steps like TSA29 step `017` can become runnable.
+- 2026-04-06 (Issue `#141` opened: full-TSA29 THLB retest and recipe
+  reconciliation after the Williams Lake LU ratchet pass):
+  - The single-LU work is now pre-validation evidence only; the next hardening
+    pass must rerun the currently executable TSA29 ladder on the full dataset
+    against the canonical 2024 Table 3 marginal/cumulative benchmarks.
+  - Scope for `#141`:
+    - rerun every executable transformation row in canonical Table 3 order
+      while preserving milestone rows as non-runnable nodes;
+    - keep the established stage split:
+      - `GLB -> AFLB` on checkpoint1-style land-base surfaces; and
+      - `AFLB -> LHLB -> THLB` on the curve-ready pre-legacy-THLB checkpoint;
+    - treat current LU soft approvals as candidate confirmations rather than
+      final acceptance; and
+    - emit one explicit full-run validation summary under `config/tsr/`
+      recording per-step full-TSA benchmark comparison, disposition, and
+      AFLB/THLB lock readiness.
+  - Full-TSA validation must explicitly confirm:
+    - early-stage area deductions like step `023` still recompute from stable
+      canonical area and only overwrite `FEMIC_EFFECTIVE_AREA_SQM`;
+    - later-stage exclusions preserve geometry/fragments and lower
+      harvestability in place (`thlb_fact` / `thlb = 0`);
+    - and steps should only be reopened when full-TSA evidence materially
+      misses the TSR benchmark or exposes a semantic error the LU smoke could
+      not reveal.
 
 - 2026-04-06 (Issue `#140` checkpoint landed: DWDS follow-up/materialization
   no longer stops at submission):

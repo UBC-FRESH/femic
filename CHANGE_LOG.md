@@ -12421,3 +12421,15 @@
     - `mypy src`
     - `femic tsr thlb-netdown-build --instance-root external/femic-tsa29-instance`
     - `femic tsr thlb-netdown-workbench-build --instance-root external/femic-tsa29-instance`
+- 2026-04-06: Opened child issue `#141` to contain the full-TSA29 THLB
+  hardening pass after the Williams Lake LU ratchet work.
+  - Title:
+    - `Task: run full-TSA29 THLB step-by-step validation and reconcile recipe against TSR benchmarks`
+  - Scope:
+    - rerun every currently executable TSA29 transformation row on the full TSA
+      in canonical Table 3 order;
+    - preserve the stage split between checkpoint1-style `GLB -> AFLB` logic
+      and later curve-ready `AFLB -> LHLB -> THLB` logic;
+    - reconcile current LU soft approvals/benchmarks against full-TSA evidence;
+    - and emit an explicit full-run validation summary artifact under
+      `config/tsr/`.
