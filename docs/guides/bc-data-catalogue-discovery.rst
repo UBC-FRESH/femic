@@ -333,7 +333,10 @@ The intended split is:
 - ``bcdc-resolve`` = discovery and classification;
 - ``bcdc-fetch`` = automatable WFS subset download; and
 - ``bcdc-order`` = DWDS fallback order submission for datasets that need a
-  warehouse order and richer outputs such as File Geodatabase or GeoPackage.
+  warehouse order and richer outputs such as File Geodatabase or GeoPackage;
+- ``bcdc-order-followup`` = reload a prior DWDS manifest, retry the public
+  status seam, and materialize the artifact when DWDS finally exposes a
+  download URL.
 
 DWDS / FGDB Fallback
 --------------------
@@ -358,6 +361,20 @@ This path currently does three useful things:
 - submits a public DWDS order for the requested output format; and
 - writes a manifest recording the order id, order guid, AOI, payload, and any
   public-status caveats.
+
+When DWDS accepts an order but the artifact is not immediately available, use
+``femic data bcdc-order-followup`` against that saved manifest:
+
+.. code-block:: text
+
+   & .\.venv\Scripts\python.exe -m femic data bcdc-order-followup `
+     runtime\logs\bcdc_f_own_dwds_manifest.json `
+     --download-root data\downloads\bcdc
+
+This follow-up path reloads the prior order manifest, retries the public
+``/order/{id}`` seam, and writes any newly materialized artifact path back into
+the manifest so downstream workflows can consume a real file instead of only an
+``order_id``.
 
 Current caveats of the public fallback seam:
 
@@ -458,6 +475,14 @@ The new ``bcdc-order`` manifest records:
 - the DWDS order payload and ordering application;
 - the returned order id and order guid; and
 - any warnings from the public status probe.
+
+After ``bcdc-order-followup`` runs, the same manifest may also record:
+
+- the latest follow-up probe timestamp and payload;
+- the materialized artifact path and content type when DWDS exposes a download
+  URL; and
+- any follow-up warnings when the public seam still does not expose a
+  downloadable artifact.
 
 Use that manifest as a review/promotion artifact before touching
 ``metadata/required_datasets.yaml`` or copying payloads into

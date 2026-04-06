@@ -213,6 +213,7 @@ Subcommands
 - ``bcdc-resolve``: ``python -m femic data bcdc-resolve [OPTIONS] [QUERY]...``
 - ``bcdc-fetch``: ``python -m femic data bcdc-fetch [OPTIONS] [QUERY]...``
 - ``bcdc-order``: ``python -m femic data bcdc-order [OPTIONS] [QUERY]...``
+- ``bcdc-order-followup``: ``python -m femic data bcdc-order-followup [OPTIONS] ORDER_MANIFEST``
 
 ``data bcdc-resolve`` options
 
@@ -274,6 +275,21 @@ current public DWDS seam can submit orders successfully, but the public
 ``/order/{id}`` status lookup may still report successful live orders as
 missing, so FEMIC records that caveat in the manifest instead of pretending
 the full end-to-end download path is already solved.
+
+``data bcdc-order-followup`` options
+
+- ``ORDER_MANIFEST`` argument (required; manifest written by ``data bcdc-order``)
+- ``--manifest-path PATH`` (optional output manifest path; defaults to updating the input manifest in place)
+- ``--download-root PATH`` (optional destination root for downloaded DWDS artifacts)
+- ``--instance-root PATH`` (optional instance root used to resolve relative output paths)
+- ``--download / --no-download`` (default: ``--download``; materialize the artifact when a follow-up probe exposes a download URL)
+- ``--poll-status / --no-poll-status`` (default: ``--poll-status``; re-probe the public DWDS order seam before materialization)
+
+``data bcdc-order-followup`` is FEMIC's recovery lane for orders that were
+submitted successfully but did not immediately expose a downloadable artifact.
+It reloads an existing DWDS manifest, retries the public status seam, and
+downloads the artifact into the selected root if DWDS finally returns a
+download URL.
 
 All three BCDC acquisition commands now apply soft good-citizen guardrails:
 duplicate queries are collapsed automatically, ``--plan-only`` previews the
@@ -613,10 +629,101 @@ executing the netdown. It writes an ordered, reviewable
 ``config/tsr/thlb_netdown.recipe.yaml`` that preserves:
 
 - raw TSR wording;
+- explicit land-base stage semantics:
+  - ``glb_to_aflb``
+  - ``aflb_to_lhlb``
+  - ``lhlb_to_thlb``
+  - ``reference_target``
+  - ``context``
 - normalized action/subject/predicate hints where the extraction is confident;
 - linked source-layer recipe entry ids when they can be derived conservatively;
 - per-step readiness/blocking state; and
 - the selected source TSR document paths used for the build.
+
+The stage model is the guardrail that keeps the THLB recipe from confusing
+universe definition, legal exclusions, projected operational deductions,
+benchmark rows, and pure context.
+
+``tsr thlb-netdown-workbench-build`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
+- ``--workbench-path PATH`` (optional; defaults to
+  ``workbench/tsr/thlb_netdown.workbench.ipynb`` under the instance root)
+
+``tsr thlb-netdown-workbench-build`` generates a Jupyter notebook bridge
+artifact from the current reviewed THLB recipe. The notebook is intentionally
+**not** the canonical source of truth. Instead it is a structured work surface
+for:
+
+- LLM-assisted piloting of the THLB review/execution process; and
+- no-LLM human review when users need a warm-start workbench instead of raw
+  YAML or JSON.
+
+The notebook is generated from the same parent-step + draft-subrule structure
+already captured in ``config/tsr/thlb_netdown.recipe.yaml`` and organizes the
+workflow into a text -> code -> output -> interpretation ladder grouped by:
+
+- ``GLB -> AFLB``
+- ``AFLB -> LHLB``
+- ``LHLB -> THLB``
+
+The generated cells also respect the stage boundary in the underlying FEMIC
+pipeline:
+
+- ``GLB -> AFLB`` notebook steps default to the earliest checkpoint / raw
+  land-base surface; and
+- ``AFLB -> LHLB -> THLB`` notebook steps default to the curve-ready
+  pre-legacy-THLB checkpoint so late rules can consume compiled AU and
+  yield-curve state.
+
+``tsr thlb-netdown-workbench-lock`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
+- ``--workbench-path PATH`` (optional; defaults to
+  ``workbench/tsr/thlb_netdown.workbench.ipynb`` under the instance root)
+- ``--lock-scope [aflb|thlb|all]`` (optional; defaults to ``all``)
+
+``tsr thlb-netdown-workbench-lock`` freezes the current reviewed state into a
+deterministic reproducibility bundle:
+
+- ``workbench/tsr/thlb_netdown.locked.py``
+- a frozen recipe copy
+- a frozen Markdown status report copy
+- a frozen audit JSON copy when one exists
+
+Important lock contract:
+
+- AFLB lock freezes the modeled universe definition
+- THLB lock freezes the downstream harvest-eligibility logic
+- THLB cannot lock unless AFLB is already locked or locked in the same pass
+- cutting AFLB invalidates THLB because THLB is downstream from the AFLB
+  universe definition
+
+``tsr thlb-netdown-step-run`` options
+
+- ``PARENT_STEP_ID`` (required parent-step id from
+  ``config/tsr/thlb_netdown.recipe.yaml``)
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
+- ``--checkpoint-path PATH`` (optional; defaults to the earliest matching
+  checkpoint discovered by FEMIC)
+- ``--map-id TEXT`` (repeatable; optional explicit ``MAP_ID`` subset)
+- ``--auto-map-id-smoke-subset / --no-auto-map-id-smoke-subset`` (default:
+  ``--auto-map-id-smoke-subset``)
+
+``tsr thlb-netdown-step-run`` executes one parent step cumulatively on the
+small smoke subset and writes working artifacts under:
+
+- ``runtime/logs/tsr/notebook_runs/``
+
+This helper is the command-line twin of the generated notebook cells and keeps
+the small-area proving-ground discipline explicit while the recipe shape is
+still being refined.
 
 ``tsr thlb-netdown-run`` options
 
@@ -655,12 +762,21 @@ remaining wall visible and reproducible.
 The generated status report keeps benchmark ratios visible while the THLB logic
 converges:
 
+- a GLB/AFLB/LHLB/THLB backbone summary;
 - input checkpoint area;
 - AFLB / baseline managed area;
 - final THLB area;
-- VRI:AFLB and AFLB:THLB ratios; and
+- current executable ratios such as the GLB:AFLB proxy and ``AFLB:THLB``; and
 - TSR AFLB / THLB benchmark values when they can be parsed from the selected
   data package PDF.
+
+It also groups the reviewed steps by:
+
+- ``GLB -> AFLB``
+- ``AFLB -> LHLB``
+- ``LHLB -> THLB``
+- ``Reference targets``
+- ``Context / interpretation``
 
 Important current boundary:
 

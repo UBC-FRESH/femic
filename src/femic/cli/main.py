@@ -39,6 +39,8 @@ from femic.bcdc_dwds import (
     BcdcDwdsOrderResult,
     BcdcDwdsStatusProbe,
     DWDS_DEFAULT_OUTPUT_FORMAT,
+    follow_up_bcdc_dwds_order,
+    load_bcdc_dwds_manifest,
     submit_bcdc_dwds_order,
     write_bcdc_dwds_manifest as write_single_bcdc_dwds_manifest,
 )
@@ -167,12 +169,16 @@ from femic.tsr_catalog import (
     TsrSourceLayersRecipeBuildResult,
     TsrSourceLayersRecipeRunResult,
     TsrThlbNetdownRecipeBuildResult,
+    TsrThlbParentStepRunResult,
     TsrThlbNetdownRecipeRunResult,
+    TsrThlbWorkbenchBuildResult,
+    TsrThlbWorkbenchLockResult,
     TsrSourceLayerOverridesError,
     TsrSourceLayerOverridesInitResult,
     TsrSourceLayerOverridesReport,
     TsrWrittenIndex,
     build_tsr_source_layers_recipe,
+    build_tsr_thlb_workbench,
     build_tsr_thlb_netdown_recipe,
     build_tsr_overlay_report,
     build_tsr_source_layer_override_report,
@@ -183,14 +189,17 @@ from femic.tsr_catalog import (
     default_tsr_thlb_netdown_recipe_path,
     default_tsr_thlb_reconstructed_audit_path,
     default_tsr_thlb_reconstructed_output_path,
+    default_tsr_thlb_workbench_notebook_path,
     extract_tsr_candidate_facts,
     fetch_tsr_pdfs,
     index_tsr_tsa_surfaces,
     init_tsr_overlay,
     init_tsr_recipe_scaffolds,
     init_tsr_source_layer_overrides,
+    lock_tsr_thlb_workbench,
     report_tsr_candidate_facts,
     run_tsr_source_layers_recipe,
+    run_tsr_thlb_parent_step,
     run_tsr_thlb_netdown_recipe,
     write_tsr_fact_report_csv,
     write_tsr_index,
@@ -410,6 +419,11 @@ BCDC_CLIP_OPTION = typer.Option(
     "--clip/--no-clip",
     help="Clip DWDS output to the supplied AOI instead of leaving features whole.",
 )
+BCDC_DOWNLOAD_OPTION = typer.Option(
+    True,
+    "--download/--no-download",
+    help="Materialize the DWDS artifact when the follow-up probe exposes a download URL.",
+)
 BCDC_PLAN_ONLY_OPTION = typer.Option(
     False,
     "--plan-only",
@@ -580,6 +594,24 @@ TSR_THLB_AUTO_MAP_ID_SMOKE_OPTION = typer.Option(
         "Automatically select one dense TSA MAP_ID for a bounded THLB smoke run "
         "before scaling to the full TSA."
     ),
+)
+TSR_THLB_WORKBENCH_PATH_OPTION = typer.Option(
+    None,
+    "--workbench-path",
+    help=(
+        "Optional THLB workbench notebook path. Defaults to "
+        "`workbench/tsr/thlb_netdown.workbench.ipynb` under the instance root."
+    ),
+    show_default=False,
+)
+TSR_THLB_LOCK_SCOPE_OPTION = typer.Option(
+    "all",
+    "--lock-scope",
+    help=(
+        "THLB lock scope: `aflb`, `thlb`, or `all` (default). "
+        "THLB cannot lock unless AFLB is already locked or locked in the same pass."
+    ),
+    show_default=True,
 )
 TSR_OVERWRITE_OPTION = typer.Option(
     False,
@@ -2272,8 +2304,16 @@ def _print_bcdc_dwds_summary(result: BcdcDwdsOrderResult) -> None:
         )
         if result.status_probe.download_url is not None:
             console.print(f"download_url: {result.status_probe.download_url}")
+    if result.latest_followup_utc is not None:
+        console.print(f"latest_followup_utc: {result.latest_followup_utc}")
+    if result.materialized_artifact_path is not None:
+        console.print(f"materialized_artifact_path: {result.materialized_artifact_path}")
+    if result.materialized_bytes is not None:
+        console.print(f"materialized_bytes: {result.materialized_bytes}")
     for warning in result.warnings:
         console.print(f"warning: {warning}")
+    for warning in result.followup_warnings:
+        console.print(f"followup_warning: {warning}")
 
 
 def _load_bcdc_queries_from_file(path: Path) -> list[str]:
@@ -2505,6 +2545,65 @@ def _print_tsr_thlb_netdown_recipe_run_summary(
         )
     for outcome, count in result.outcome_counts.items():
         console.print(f"outcome_{outcome}: {count}")
+
+
+def _print_tsr_thlb_workbench_build_summary(
+    result: TsrThlbWorkbenchBuildResult,
+) -> None:
+    console.print(f"recipe_path: {result.recipe_path}")
+    console.print(f"notebook_path: {result.notebook_path}")
+    console.print(f"tsa_id: {result.tsa.tsa_id}")
+    console.print(f"tsa_code: {result.tsa.tsa_code}")
+    console.print(f"tsa_name: {result.tsa.tsa_name}")
+    console.print(f"parent_step_count: {result.parent_step_count}")
+    console.print(f"compiled_logic_count: {result.compiled_logic_count}")
+    for stage, count in result.stage_counts.items():
+        console.print(f"stage_{stage}: {count}")
+
+
+def _print_tsr_thlb_workbench_lock_summary(
+    result: TsrThlbWorkbenchLockResult,
+) -> None:
+    console.print(f"recipe_path: {result.recipe_path}")
+    console.print(f"notebook_path: {result.notebook_path}")
+    console.print(f"locked_script_path: {result.locked_script_path}")
+    console.print(f"locked_recipe_path: {result.locked_recipe_path}")
+    console.print(f"frozen_status_report_path: {result.frozen_status_report_path}")
+    if result.frozen_audit_path is not None:
+        console.print(f"frozen_audit_path: {result.frozen_audit_path}")
+    console.print(f"lock_scope: {result.lock_scope}")
+
+
+def _print_tsr_thlb_parent_step_run_summary(
+    result: TsrThlbParentStepRunResult,
+) -> None:
+    console.print(f"recipe_path: {result.recipe_path}")
+    console.print(f"parent_step_id: {result.parent_step_id}")
+    console.print(f"parent_label: {result.parent_label}")
+    console.print(f"checkpoint_path: {result.checkpoint_path}")
+    if result.selected_map_ids:
+        console.print("selected_map_ids: " + ", ".join(result.selected_map_ids))
+    console.print(f"output_path: {result.output_path}")
+    console.print(f"result_json_path: {result.result_json_path}")
+    console.print(f"status: {result.status}")
+    console.print(f"input_area_ha: {result.input_area_ha:.3f}")
+    console.print(f"removed_area_ha: {result.removed_area_ha:.3f}")
+    console.print(f"remaining_area_ha: {result.remaining_area_ha:.3f}")
+    if result.benchmark_marginal_area_ha is not None:
+        console.print(
+            "benchmark_marginal_area_ha: "
+            + f"{result.benchmark_marginal_area_ha:.3f}"
+        )
+    if result.benchmark_cumulative_area_ha is not None:
+        console.print(
+            "benchmark_cumulative_area_ha: "
+            + f"{result.benchmark_cumulative_area_ha:.3f}"
+        )
+    if result.notes:
+        console.print("notes: " + " | ".join(result.notes))
+    console.print(f"tsa_id: {result.tsa.tsa_id}")
+    console.print(f"tsa_code: {result.tsa.tsa_code}")
+    console.print(f"tsa_name: {result.tsa.tsa_name}")
 
 
 def _print_tsr_source_layer_overrides_init_summary(
@@ -2916,6 +3015,73 @@ def data_bcdc_order(
         console.print(f"manifest: {written_manifest}")
 
 
+@data_app.command("bcdc-order-followup")
+def data_bcdc_order_followup(
+    order_manifest: Path = typer.Argument(
+        ...,
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="Existing DWDS order manifest written by `femic data bcdc-order`.",
+    ),
+    manifest_path: Path | None = BCDC_MANIFEST_OPTION,
+    download_root: Path | None = BCDC_DOWNLOAD_ROOT_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    download: bool = BCDC_DOWNLOAD_OPTION,
+    poll_status: bool = typer.Option(
+        True,
+        "--poll-status/--no-poll-status",
+        help="Re-probe the public DWDS order status seam before attempting materialization.",
+    ),
+) -> None:
+    """Re-probe a DWDS order manifest and materialize ready artifacts."""
+
+    if manifest_path is not None and not isinstance(manifest_path, Path):
+        manifest_path = None
+    instance_context = (
+        _resolve_cli_instance_context(instance_root=instance_root)
+        if instance_root is not None
+        else None
+    )
+    resolved_output_manifest = (
+        _resolve_cli_output_path(manifest_path, instance_context=instance_context)
+        if manifest_path is not None
+        else order_manifest.expanduser().resolve()
+    )
+    resolved_download_root = (
+        _resolve_cli_output_path(download_root, instance_context=instance_context)
+        if download_root is not None
+        else (
+            instance_context.resolve_path(Path("data/downloads/bcdc"))
+            if instance_context is not None
+            else Path("downloads/bcdc").resolve()
+        )
+    )
+
+    try:
+        orders = load_bcdc_dwds_manifest(order_manifest)
+        followup_results = [
+            follow_up_bcdc_dwds_order(
+                order,
+                download_root=resolved_download_root if download else None,
+                poll_status=poll_status,
+            )
+            for order in orders
+        ]
+    except BcdcDwdsError as exc:
+        console.print(f"[red]BCDC order follow-up error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    for result in followup_results:
+        _print_bcdc_dwds_summary(result)
+
+    written_manifest = _write_bcdc_dwds_manifest(
+        followup_results,
+        path=resolved_output_manifest,
+    )
+    console.print(f"manifest: {written_manifest}")
+
+
 @tsr_app.command("index")
 def tsr_index(
     output_root: Path | None = TSR_OUTPUT_ROOT_OPTION,
@@ -3233,6 +3399,110 @@ def tsr_thlb_netdown_build(
         raise typer.Exit(code=1) from exc
 
     _print_tsr_thlb_netdown_recipe_build_summary(result)
+
+
+@tsr_app.command("thlb-netdown-workbench-build")
+def tsr_thlb_netdown_workbench_build(
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    thlb_netdown_recipe_path: Path | None = TSR_THLB_NETDOWN_RECIPE_PATH_OPTION,
+    workbench_path: Path | None = TSR_THLB_WORKBENCH_PATH_OPTION,
+) -> None:
+    """Generate the instance-local THLB workbench notebook from the current recipe."""
+
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_recipe_path = (
+        instance_context.resolve_path(thlb_netdown_recipe_path)
+        if thlb_netdown_recipe_path is not None
+        else default_tsr_thlb_netdown_recipe_path(instance_root=instance_context.root)
+    )
+    resolved_workbench_path = (
+        instance_context.resolve_path(workbench_path)
+        if workbench_path is not None
+        else default_tsr_thlb_workbench_notebook_path(
+            instance_root=instance_context.root
+        )
+    )
+    try:
+        result = build_tsr_thlb_workbench(
+            recipe_path=resolved_recipe_path,
+            notebook_path=resolved_workbench_path,
+        )
+    except TsrRecipeError as exc:
+        console.print(f"[red]TSR THLB workbench build error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_thlb_workbench_build_summary(result)
+
+
+@tsr_app.command("thlb-netdown-workbench-lock")
+def tsr_thlb_netdown_workbench_lock(
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    thlb_netdown_recipe_path: Path | None = TSR_THLB_NETDOWN_RECIPE_PATH_OPTION,
+    workbench_path: Path | None = TSR_THLB_WORKBENCH_PATH_OPTION,
+    lock_scope: str = TSR_THLB_LOCK_SCOPE_OPTION,
+) -> None:
+    """Freeze the current THLB workbench into a locked script + frozen report bundle."""
+
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_recipe_path = (
+        instance_context.resolve_path(thlb_netdown_recipe_path)
+        if thlb_netdown_recipe_path is not None
+        else default_tsr_thlb_netdown_recipe_path(instance_root=instance_context.root)
+    )
+    resolved_workbench_path = (
+        instance_context.resolve_path(workbench_path)
+        if workbench_path is not None
+        else default_tsr_thlb_workbench_notebook_path(
+            instance_root=instance_context.root
+        )
+    )
+    try:
+        result = lock_tsr_thlb_workbench(
+            recipe_path=resolved_recipe_path,
+            notebook_path=resolved_workbench_path,
+            lock_scope=lock_scope,
+        )
+    except TsrRecipeError as exc:
+        console.print(f"[red]TSR THLB workbench lock error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_thlb_workbench_lock_summary(result)
+
+
+@tsr_app.command("thlb-netdown-step-run")
+def tsr_thlb_netdown_step_run(
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    parent_step_id: str = typer.Argument(..., help="Parent step id to execute."),
+    thlb_netdown_recipe_path: Path | None = TSR_THLB_NETDOWN_RECIPE_PATH_OPTION,
+    checkpoint_path: Path | None = TSR_THLB_CHECKPOINT_PATH_OPTION,
+    map_id: list[str] | None = TSR_THLB_MAP_ID_OPTION,
+    auto_map_id_smoke_subset: bool = TSR_THLB_AUTO_MAP_ID_SMOKE_OPTION,
+) -> None:
+    """Execute one THLB parent step cumulatively on the smoke subset."""
+
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_recipe_path = (
+        instance_context.resolve_path(thlb_netdown_recipe_path)
+        if thlb_netdown_recipe_path is not None
+        else default_tsr_thlb_netdown_recipe_path(instance_root=instance_context.root)
+    )
+    resolved_checkpoint_path = (
+        instance_context.resolve_path(checkpoint_path)
+        if checkpoint_path is not None
+        else None
+    )
+    try:
+        result = run_tsr_thlb_parent_step(
+            recipe_path=resolved_recipe_path,
+            parent_step_id=parent_step_id,
+            checkpoint_path=resolved_checkpoint_path,
+            map_ids=tuple(map_id or ()),
+            auto_map_id_smoke_subset=auto_map_id_smoke_subset,
+        )
+    except TsrRecipeError as exc:
+        console.print(f"[red]TSR THLB parent-step execution error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    _print_tsr_thlb_parent_step_run_summary(result)
 
 
 @tsr_app.command("thlb-netdown-run")

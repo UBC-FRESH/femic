@@ -12001,3 +12001,315 @@
     sequential ledger still carries too much table-of-contents/context noise at
     the top, so later `#128` / `#133` cleanup should separate context rows from
     actionable netdown rules more cleanly.
+- 2026-04-05: Expanded `#128` so the next THLB recipe work is explicitly about
+  teaching FEMIC the `GLB -> AFLB -> LHLB -> THLB` backbone before pushing
+  farther on execution.
+  - Split the missing semantic/parser work into two new child issues:
+    - `#134` for stage-aware GLB/AFLB/LHLB/THLB parsing and recipe schema;
+    - `#135` for stage-grouped THLB status reports, exact logic display, and
+      lock-state review UX.
+  - Clarified the dependency order for the rest of the THLB lane:
+    - clean up the recipe semantics first;
+    - then reshape the user-facing report around that staged model;
+    - only then keep pushing `#131` fragment execution and `#132` aspatial
+      fallback.
+  - Also promoted the docs requirement under `#133` to recreate the TSA29 2024
+    Figure 3 flowchart as a FEMIC-adapted, attributed diagram so both users
+    and helper agents can see the intended GLB/AFLB/LHLB/THLB ladder clearly.
+- 2026-04-05: Clarified the THLB recipe v1 benchmark so FEMIC remains usable
+  even when no LLM coding agent is available.
+  - The preferred proving-ground path still leans on recipe + LLM assistance
+    first so TSA29 can converge quickly and credibly.
+  - But the required FEMIC v1 fallback is now explicit: recipe + human analyst
+    with no LLM available.
+  - Opened `#136` to track a no-LLM warm-start checklist/template lane derived
+    from recurring TSR netdown patterns, so FEMIC can help users find the
+    right sections/tables/figures and start from a credible template instead
+    of raw JSON archaeology.
+- 2026-04-05: Tightened `#128` execution discipline so THLB logic development
+  stays on the TSA29 `MAP_ID` smoke ladder until the staged parser/report
+  surfaces stop producing semantic junk.
+  - While `#134` / `#135` are still teaching the extractor the
+    `GLB -> AFLB -> LHLB -> THLB` backbone, the primary live proving-ground is
+    now the single-`MAP_ID` reconstructed smoke path.
+  - Full TSA29 reruns are reserved for explicit milestone validation, not for
+    routine parser/report iteration on the already-understood hybrid fallback.
+- 2026-04-05: Clarified the actual “prototype fin” target for the TSA29 THLB
+  extractor.
+  - For TSA29, the canonical step backbone is now explicitly:
+    - Table 3 (`Preliminary land base classification summary for Williams
+      Lake TSA`) for the ordered netdown rows and benchmark areas;
+    - Section 6.2 for the per-step prose/rationale/GIS-detail expansion;
+    - older TSR cycles only as hint documents when the current document is too
+      terse to connect the dots cleanly.
+  - Updated the active issue scopes so the parser is no longer framed as
+    generic THLB-ish text scraping; it is now explicitly a table-first,
+    prose-second extraction problem.
+- 2026-04-05: Crossed an important THLB parser/report crux on the TSA29 `MAP_ID` smoke ladder.
+  - The live TSA29 THLB recipe build now writes `parent_steps` into `config/tsr/thlb_netdown.recipe.yaml`, so the recipe is no longer only a flat bag of extracted rows.
+  - The current working translation contract is now explicit in the live recipe and report:
+    - summary-table row = canonical parent step with benchmark marginal/cumulative areas;
+    - matching 6.2 / 6.3 / 6.4 subsection = nested draft subrules / rationale;
+    - compiled logic = deterministic runner-facing layer.
+  - Verified on the live TSA29 2024 data package that key parent rows now land in the right stage windows:
+    - `Land not administered by the Province` -> `GLB -> AFLB` -> `6.2.1`
+    - `Non-forest` -> `GLB -> AFLB` -> `6.2.2`
+    - `Parks, protected areas, area-base tenures` -> `AFLB -> LHLB` -> `6.3.1`
+    - `Old growth management areas` -> `AFLB -> LHLB` -> `6.3.2`
+    - `Wildlife tree retention areas` -> `LHLB -> THLB` -> `6.4.8`
+  - The TSA29 reconstructed status report is now driven from that parent/subrule structure instead of the older flat THLB-ish wall.
+  - The remaining live problem is now much narrower and better isolated: the small `MAP_ID` reconstructed run still over-deducts to zero THLB, which points to downstream execution / compilation work in `#131` / `#132`, not failure to find the prototype-fin parent steps.
+
+- 2026-04-05: Tightened the THLB table-first translator so draft subrules prefer rule-bearing sentences and domain-aware layer hints instead of loose fuzzy source matches. On the live TSA29 recipe build, `Land not administered by the Province` now stays anchored on `WHSE_FOREST_VEGETATION.F_OWN`, and `Non-forest` now carries explicit `VRI`, `Freshwater Atlas`, `consolidated_harvest_depletion`, `FOR_MGMT_LAND_BASE_IND`, and `CROWN_CLOSURE < 10` hints in the draft logic surface. Focused parser tests are now 15/15 green.
+- 2026-04-05: Tried one more small-`MAP_ID` reconstructed run only to refresh the user-facing markdown report, but the runner still timed out before updating the status files. The THLB parser/report seam is moving in the right direction; the remaining bottleneck is the downstream reconstructed execution/report-refresh path, which should be addressed under `#131/#132` before relying on repeated live report refreshes during parser iteration.
+- 2026-04-05: Opened `#137` to add a generated THLB notebook workbench and lock/export flow as the final bridge layer between the canonical THLB recipe/report surfaces and the locked reproducibility artifacts.
+  - The new contract is explicit:
+    - canonical during iteration: `YAML + script`
+    - locked reproducibility artifact: `script + frozen report`
+    - generated notebook = interactive bridge media, not the sole source of truth
+  - Planned instance-local artifacts:
+    - `workbench/tsr/thlb_netdown.workbench.ipynb`
+    - `workbench/tsr/thlb_netdown.locked.py`
+  - This keeps the preferred LLM-assisted TSA29 proving path strong while also improving the required no-LLM v1 fallback by giving human analysts a structured text-code-output-interpretation work surface instead of raw JSON archaeology.
+- 2026-04-06: Turned the TSA29 THLB workbench from placeholder notebook cells into a live parent-step runner for the first smoke tranche.
+  - Added a notebook-safe executor seam so generated workbench cells now call
+    `run_tsr_thlb_parent_step(...)` instead of stopping at TODO placeholders.
+  - Fixed the road-layer execution bug where fetched line datasets were being
+    treated as missing sources before buffering; `buffer_then_intersect` now
+    accepts line geometries, buffers them, and only then intersects them
+    against the working land base.
+  - Added regression coverage proving the road-step helper can execute from a
+    line-based source layer and write runtime artifacts.
+  - Live TSA29 `092O071` smoke subset results now show:
+    - `Land not administered by the Province`: runnable, `0.0 ha` removed
+    - `Non-forest`: runnable, `~941.294 ha` removed
+    - `Roads and landings`: runnable, no longer `blocked_missing_source`, but
+      currently `0.0 ha` removed on this specific tile because the fetched road
+      layers do not intersect the smoke mapsheet under the current compiled
+      logic/AOI
+  - The recipe/report surface now ratchets forward visibly after notebook runs:
+    per-parent-step last-run status, artifact paths, removed/remaining area,
+    and derived ratchet state are written back into the THLB recipe and shown in
+    the build-time Markdown status report.
+- 2026-04-06: Pivoted the TSA29 THLB smoke subset from blind `MAP_ID` guessing
+  to an explicit adjacent landscape-unit subset and pushed the roads step
+  across the line from “runnable” to “informative”.
+  - Added landscape-unit subset support to `run_tsr_thlb_parent_step(...)` and
+    the generated TSA29 notebook cells; the workbench now defaults to
+    `Williams Lake`, `Chimney`, and `Alkali` instead of a dead single-tile
+    `MAP_ID` smoke subset.
+  - Confirmed the public LU layer names match directly and map to IDs
+    `1372`, `1380`, and `1394`.
+  - Added bbox-aware source loading for notebook spatial execution so LU-scale
+    subsets no longer read full province-wide road layers before buffering and
+    intersecting them.
+  - Live TSA29 LU-subset result for `Roads and landings`:
+    - subset area: about `230,727.406 ha`
+    - selected `MAP_ID`s span the LU cluster
+    - status: `applied`
+    - removed area: about `1,334.569 ha`
+  - The roads step is still benchmark-far, but it is now producing a real
+    deduction on a purposeful review subset rather than a misleading zero-hit
+    noop.
+- 2026-04-06: Tightened the first TSA29 GLB -> AFLB parent step and made
+  partial notebook progress report honestly.
+  - Replaced the old `OWN != {62,69}` shortcut for `Land not administered by
+    the Province` with explicit `F_OWN.OWNERSHIP_DESCRIPTION` exclusion
+    buckets that better match TSA29 section `6.2.1`: private, federal, Indian
+    reserve, area-based tenure, municipal, and lease classes are excluded;
+    woodlots and parks/protected areas stay in AFLB at this stage; treaty/title
+    cases remain explicit manual-review overlays.
+  - On the single-LU (`Williams Lake`) notebook smoke subset, the first-step
+    deduction dropped from roughly `37.0k ha` to about `31.8k ha`, which is
+    still too aggressive relative to the naive scaled benchmark but materially
+    closer and easier to reason about.
+  - Updated parent-step status aggregation so mixed outcomes are no longer
+    flattened into fake hard failures: `applied_with_blockers` now means some
+    compiled subrules ran and others are still blocked by missing reviewed
+    source coverage. This surfaced useful signal for `Non-forest`, whose
+    attribute-driven core is already close to the scaled benchmark even while
+    the FWA cleanup seam remains incomplete.
+  - Rebuilt the TSA29 THLB recipe and generated workbench notebook so the
+    on-disk artifacts now reflect the refined parent-step logic and honest
+    partial-success statuses.
+  - The user has now soft-approved `Land not administered by the Province` on
+    the single `Williams Lake` LU smoke subset. That decision is now preserved
+    directly in the THLB recipe/report surfaces as a smoke-scope approval that
+    still requires full-TSA validation before any final lock.
+- 2026-04-06: Cleared the missing-water blocker in the TSA29 `Non-forest`
+  notebook step.
+  - Fetched the missing public Freshwater Atlas layers into the TSA29 instance:
+    - `WHSE_BASEMAPPING.FWA_RIVERS_POLY`
+    - `WHSE_BASEMAPPING.FWA_WETLANDS_POLY`
+  - Added them to `config/tsr/source_layers.recipe.yaml` and updated the
+    specialized `Non-forest` compiled logic so the direct FWA final-water check
+    now runs against lakes + rivers + wetlands instead of lakes alone.
+  - Kept the conceptual boundary explicit:
+    - direct FWA lakes/rivers/wetlands exclusion stays in `Non-forest`;
+    - riparian reserve / management-zone buffers remain a later riparian step.
+  - Live Williams Lake LU notebook smoke now shows `Non-forest` as `applied`
+    rather than `applied_with_blockers`, with:
+    - removed area: about `21,756.313 ha`
+    - scaled marginal benchmark: about `23,136.457 ha`
+    - scaled marginal delta: about `-1,380.144 ha`
+- 2026-04-06: Queued and began the next THLB correction slice after the first
+  soft-approved TSA29 LU smoke steps exposed a stage-semantics bug.
+  - Confirmed that the notebook bridge was still treating some
+    `AFLB -> LHLB` / `LHLB -> THLB` exclusions like `GLB -> AFLB` universe
+    cuts by physically dropping excluded geometry instead of preserving rows
+    and setting `thlb_fact = 0` / `thlb = 0`.
+  - Locked the corrective contract into the roadmap before patching code:
+    `GLB -> AFLB` may drop geometry; later-stage exclusions must preserve
+    geometry and only lower harvestability.
+  - Also confirmed the live wildlife layers expose the exact discriminator that
+    matches TSA29 section `6.3.3`:
+    `TIMBER_HARVEST_CODE = NO HARVEST ZONE | CONDITIONAL HARVEST ZONE`.
+  - That means the next wildlife refinement can stop bluntly excluding whole
+    WHA/UWR surfaces and instead:
+    - exclude only `NO HARVEST ZONE` at the current step; and
+    - defer `CONDITIONAL HARVEST ZONE` to the later
+      silviculture/assumptions seam described in the TSR documentation.
+- 2026-04-06: Fixed the later-stage THLB notebook semantics and pushed the
+  wildlife/fish steps forward on the Williams Lake LU smoke subset.
+  - `AFLB -> LHLB` and `LHLB -> THLB` notebook exclusions now preserve
+    geometry/fragments and set `thlb_fact = 0` / `thlb = 0` in place instead
+    of dropping rows like `GLB -> AFLB` universe cuts.
+  - Refined `Wildlife habitat areas` to follow TSA29 section `6.3.3`:
+    - exclude only `TIMBER_HARVEST_CODE = NO HARVEST ZONE`;
+    - defer `CONDITIONAL HARVEST ZONE` to the later assumptions/silviculture
+      seam.
+  - Extended THLB candidate-fact extraction so wildlife harvest-zone lines are
+    captured into the standard fact database for future instances.
+  - Re-ran the Williams Lake LU smoke subset:
+    - `Wildlife habitat areas`: `13.619 ha` removed vs scaled benchmark
+      `3222.972 ha`; conceptually corrected but not benchmark-close enough for
+      soft approval, so it remains unapproved pending broader/full-TSA
+      validation.
+    - `Critical habitat for fish`: `58.252 ha` removed vs scaled benchmark
+      `241.028 ha`; runnable and informative enough for the next review.
+- 2026-04-06: Repaired the TSA29 step-11 / Table-3 sequencing seam after a
+  deeper source-document dive.
+  - Confirmed from the 2024 TSR document that the correct step-11 spatial
+    source is the LUO / CCLUP Map 5 legal-planning objective polygon surface,
+    not a broad designated-area overlay.
+  - Specialized `Community areas of special concern` compiled logic now uses
+    `RMP_PLAN_LEGAL_POLY_SVW` filtered to:
+    - `STRGC_LAND_RSRCE_PLAN_NAME = Cariboo Chilcotin Land Use Plan`
+    - `LEGAL_FEAT_OBJECTIVE = Community Areas of Special Concern`
+  - Re-ran the Williams Lake LU smoke subset and moved step `011` from a
+    catastrophic full-land-base wipeout to a mechanically valid no-signal
+    result (`0.0 ha` removed); the step is now recorded as `benchmarked`,
+    pending validation on a more informative subset or full TSA29.
+  - Adjusted the generated THLB ladder so the visible recipe/report/notebook
+    now place:
+    - `Proven Aboriginal Rights areas` (`012`) in `AFLB -> LHLB`;
+    - `Buffered trails` (`019`) in `LHLB -> THLB`;
+    - `Future roads` (`023`) late in `LHLB -> THLB`.
+  - Reconciled ratchet metadata with the actual user approvals:
+    - step `006` is no longer falsely marked approved;
+    - steps `007` and `009` again show the soft approvals the user granted.
+- 2026-04-06: Reworked TSA29 step `013` (`Areas considered inoperable`) so the
+  notebook bridge now uses terrain-stability logic instead of stale harvested-area
+  proxies.
+  - Added specialized compiled logic that:
+    - auto-runs the terrain-stability subset via
+      `REG_LAND_AND_NATURAL_RESOURCE.TERRAIN_STABILITY`; and
+    - keeps the Highway 97 east/west steep-slope threshold branch as explicit
+      manual review until a reviewed slope-angle source and partition are adopted.
+  - Added the step to the notebook activation tranche and fixed the geometry
+    loader so “fetched artifact exists but no features match this smoke subset”
+    reports as a no-signal noop instead of `blocked_missing_source`.
+  - Live `Williams Lake` LU smoke result:
+    - status: `applied`
+    - removed area: `0.0 ha`
+    - scaled marginal benchmark: about `701.536 ha`
+    - interpretation: honest no-signal on the current LU subset, not yet an
+      approval candidate.
+- 2026-04-06: Wired TSA29 step `014` (`Sites with low growing timber
+  potential`) into the late-stage curve-ready THLB notebook workflow.
+  - The notebook/workbench stage boundary is now explicit:
+    - `GLB -> AFLB` parent steps still run from the earliest checkpoint /
+      raw land-base surface;
+    - `AFLB -> LHLB -> THLB` parent steps now default to the curve-ready
+      pre-legacy-THLB checkpoint instead of replaying early AFLB exclusions.
+  - Added a new curve-driven compiled operation for step `014`:
+    - treated / plantation states use assigned curve volume at CMAI;
+    - untreated / natural states use assigned curve culmination volume;
+    - the core auto-runnable threshold is `80 m3/ha`;
+    - the `250 m3/ha` steep-slope branch remains explicit manual review until
+      a reviewed steep-slope mask is adopted.
+  - Live `Williams Lake` LU smoke result for step `014` now runs against
+    `checkpoint7` and returns:
+    - status: `applied`
+    - removed area: `53.336 ha`
+    - scaled marginal benchmark: `4653.829 ha`
+    - interpretation: mechanically correct late-stage curve logic, but still a
+      weak signal that needs broader/full-TSA validation before approval.
+- 2026-04-06: Split TSA29 step `015` and TSR Section `7.1.5` into the correct
+  lanes, and opened follow-on GitHub issue `#139`.
+  - Confirmed the active interpretation:
+    - `6.4.5 Non-merchantable timber profiles` remains in the THLB area-netdown
+      lane for the rule:
+      - exclude **broadleaf-leading stands** from THLB;
+    - `7.1.5 Volume exclusions for broadleaf species in coniferous stands`
+      does **not** belong in the THLB area-netdown lane.
+  - Opened GitHub issue `#139` to implement `7.1.5` later as a curve/yield
+    assumption for **conifer-leading** stands after AU compilation and
+    VDYP/TIPSY/yield preparation.
+  - Updated `ROADMAP.md` Detailed Next Steps Notes to keep that split explicit
+    so future TSA29 work does not accidentally fold mixed-conifer broadleaf
+    volume handling back into the area-netdown recipe.
+- 2026-04-06: Reworked TSA29 step `016` (`Recreation features`) to use the
+  active FTEN recreation polygons and validated it on the `Williams Lake` LU
+  smoke subset.
+  - Replaced the old bogus `MOT_ROAD_FEATURES_INVNTRY` proxy with specialized
+    compiled logic that:
+    - uses `WHSE_FOREST_TENURE.FTEN_RECREATION`;
+    - filters to `LIFE_CYCLE_STATUS_CODE = ACTIVE`; and
+    - keeps recreation trails / FSP consultation language explicit as
+      out-of-scope notes for this first runnable bridge pass.
+  - Validation:
+    - `pytest tests/test_tsr_recipes.py -q`
+    - `ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
+    - `mypy src`
+  - Live `Williams Lake` LU smoke result:
+    - status: `applied`
+    - removed area: `370.381 ha`
+    - scaled marginal benchmark: `139.132 ha`
+- 2026-04-06: Opened GitHub issue `#140` and branched
+  `feature/issue-140-dwds-followup-materialization` to close the DWDS
+  follow-up/materialization gap uncovered by TSA29 step `017`.
+  - Confirmed that FEMIC already automates DWDS order submission:
+    - submitted `WHSE_FOREST_VEGETATION.GRY_PSP_STATUS_ACTIVE` clipped to the
+      `Williams Lake` LU in `gpkg` format;
+    - received `order_id=2551251` with submission status `SUCCESS`.
+  - Confirmed the remaining gap is post-submission:
+    - the public `/order/{id}` status seam still returned the known false
+      negative "order does not exist" response; and
+    - step `017` remains blocked on retrieval/materialization rather than order
+      creation.
+- 2026-04-06: Added a manifest-driven DWDS follow-up/materialization lane for
+  post-submission recovery (`#140`).
+  - Added helpers in `src/femic/bcdc_dwds.py` to:
+    - reload prior DWDS order manifests;
+    - retry the public order-status seam later; and
+    - download/materialize the artifact into a local root when DWDS exposes a
+      download URL.
+  - Added CLI command:
+    - `python -m femic data bcdc-order-followup ORDER_MANIFEST`
+    - default behavior updates the manifest in place with:
+      - `latest_followup_utc`;
+      - latest follow-up status-probe payload;
+      - materialized artifact path / content type / size when available; and
+      - explicit follow-up warnings when the public seam still withholds a
+        download URL.
+  - Live validation against the TSA29 PSP order manifest now reports the real
+    state cleanly:
+    - original DWDS submission succeeded (`order_id=2551251`);
+    - the public `/order/{id}` seam still returns the known false negative; and
+    - FEMIC now records that follow-up state in the saved manifest instead of
+      stopping at raw submission metadata.
+  - Validation:
+    - `pytest tests/test_bcdc_dwds.py tests/test_cli_main.py -q`
+    - `ruff check src/femic/bcdc_dwds.py src/femic/cli/main.py tests/test_bcdc_dwds.py tests/test_cli_main.py`
+    - `mypy src`

@@ -4723,6 +4723,124 @@ def test_data_bcdc_order_reports_order_error(
     assert any("BCDC order error:" in msg for msg in messages)
 
 
+def test_data_bcdc_order_followup_prints_materialization_summary(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    manifest_path = tmp_path / "order_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "query": "WHSE_FOREST_VEGETATION.F_OWN",
+                "limit": 5,
+                "generated_utc": "2026-04-04T00:00:00+00:00",
+                "package_id": "pkg-f-own",
+                "package_name": "generalized-forest-cover-ownership",
+                "package_title": "Generalized Forest Cover Ownership",
+                "dataset_page_url": "https://catalogue.data.gov.bc.ca/dataset/generalized-forest-cover-ownership",
+                "resource_id": "dwds-id",
+                "resource_name": "BC Geographic Warehouse Custom Download",
+                "resource_url": None,
+                "feature_type": "WHSE_FOREST_VEGETATION.F_OWN",
+                "matched_by": "object_name:WHSE_FOREST_VEGETATION.F_OWN",
+                "aoi_source": "bbox",
+                "bbox_epsg3005": [1170000.0, 450000.0, 1180000.0, 460000.0],
+                "geomark_id": None,
+                "geomark_url": None,
+                "output_format": "fgdb",
+                "email_address": None,
+                "clipping_method": "clip_to_aoi",
+                "ordering_application": "FEMIC-BCDC-DWDS",
+                "request_url": "https://apps.gov.bc.ca/pub/dwds-ofi/order/createOrderFiltered",
+                "request_payload": {"featureItems": []},
+                "order_id": "2551000",
+                "order_guid": "guid-123",
+                "submission_status": "SUCCESS",
+                "submission_description": "submitted",
+                "submission_value": "2551000",
+                "status_probe": None,
+                "warnings": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "follow_up_bcdc_dwds_order",
+        lambda order, **_kwargs: cli_main.BcdcDwdsOrderResult(
+            **{
+                **order.__dict__,
+                "latest_followup_utc": "2026-04-06T00:00:00+00:00",
+                "latest_followup_status_probe": cli_main.BcdcDwdsStatusProbe(
+                    order_id=order.order_id,
+                    raw_payload={"Status": "SUCCESS"},
+                    status="SUCCESS",
+                    description="ready",
+                    value=order.order_id,
+                    download_url="https://example.invalid/order_2551000.zip",
+                ),
+                "status_probe": cli_main.BcdcDwdsStatusProbe(
+                    order_id=order.order_id,
+                    raw_payload={"Status": "SUCCESS"},
+                    status="SUCCESS",
+                    description="ready",
+                    value=order.order_id,
+                    download_url="https://example.invalid/order_2551000.zip",
+                ),
+                "materialized_artifact_path": str(tmp_path / "order_2551000.zip"),
+                "materialized_download_url": "https://example.invalid/order_2551000.zip",
+                "materialized_content_type": "application/zip",
+                "materialized_bytes": 1234,
+                "followup_warnings": (),
+            }
+        ),
+    )
+
+    cli_main.data_bcdc_order_followup(
+        order_manifest=manifest_path,
+        manifest_path=tmp_path / "followup_manifest.json",
+        download_root=tmp_path / "downloads",
+        instance_root=None,
+        download=True,
+        poll_status=True,
+    )
+
+    assert any("materialized_artifact_path:" in msg for msg in messages)
+    assert any("latest_followup_utc:" in msg for msg in messages)
+    assert any("manifest:" in msg for msg in messages)
+    assert (tmp_path / "followup_manifest.json").is_file()
+
+
+def test_data_bcdc_order_followup_reports_errors(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    manifest_path = tmp_path / "missing_status_manifest.json"
+    manifest_path.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(
+        cli_main,
+        "load_bcdc_dwds_manifest",
+        lambda _path: (_ for _ in ()).throw(cli_main.BcdcDwdsError("bad manifest")),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.data_bcdc_order_followup(
+            order_manifest=manifest_path,
+            manifest_path=None,
+            download_root=None,
+            instance_root=None,
+            download=True,
+            poll_status=True,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("BCDC order follow-up error:" in msg for msg in messages)
+
+
 def test_tsr_index_writes_canonical_registry_under_repo_metadata_root(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -5266,6 +5384,204 @@ def test_tsr_thlb_netdown_build_uses_default_recipe_path(
         "selected_document_path: TSR_2024/Data_Package_2024/29ts_dpkg_2024.pdf" in msg
         for msg in messages
     )
+
+
+def test_tsr_thlb_workbench_build_uses_default_paths(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_build(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbWorkbenchBuildResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            notebook_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "thlb_netdown.workbench.ipynb",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            parent_step_count=5,
+            compiled_logic_count=9,
+            stage_counts={"glb_to_aflb": 2, "lhlb_to_thlb": 3},
+        )
+
+    monkeypatch.setattr(cli_main, "build_tsr_thlb_workbench", _fake_build)
+
+    cli_main.tsr_thlb_netdown_workbench_build(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+        workbench_path=None,
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert (
+        captured_kwargs["notebook_path"]
+        == (
+            instance_root / "workbench" / "tsr" / "thlb_netdown.workbench.ipynb"
+        ).resolve()
+    )
+    assert any("parent_step_count: 5" in msg for msg in messages)
+    assert any("compiled_logic_count: 9" in msg for msg in messages)
+
+
+def test_tsr_thlb_workbench_lock_uses_default_paths(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_lock(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbWorkbenchLockResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            notebook_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "thlb_netdown.workbench.ipynb",
+            locked_script_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "thlb_netdown.locked.py",
+            locked_recipe_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "thlb_netdown.locked.recipe.yaml",
+            frozen_status_report_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "frozen"
+            / "thlb_netdown.status.locked-20260405T000000Z.md",
+            frozen_audit_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "frozen"
+            / "thlb_netdown.audit.locked-20260405T000000Z.json",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            lock_scope="all",
+        )
+
+    monkeypatch.setattr(cli_main, "lock_tsr_thlb_workbench", _fake_lock)
+
+    cli_main.tsr_thlb_netdown_workbench_lock(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+        workbench_path=None,
+        lock_scope="all",
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert (
+        captured_kwargs["notebook_path"]
+        == (
+            instance_root / "workbench" / "tsr" / "thlb_netdown.workbench.ipynb"
+        ).resolve()
+    )
+    assert captured_kwargs["lock_scope"] == "all"
+    assert any("locked_script_path:" in msg for msg in messages)
+    assert any("lock_scope: all" in msg for msg in messages)
+
+
+def test_tsr_thlb_netdown_step_run_uses_default_recipe_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_run(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbParentStepRunResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+            parent_label="Land not administered by the Province",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            checkpoint_path=instance_root
+            / "data"
+            / "ria_vri_vclr1p_checkpoint1.feather",
+            selected_map_ids=("092O071",),
+            selected_landscape_units=(),
+            output_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "notebook_runs"
+            / "thlb_parent_002.feather",
+            result_json_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "notebook_runs"
+            / "thlb_parent_002.json",
+            status="applied",
+            executed_parent_step_ids=(
+                "thlb_parent_002_land_not_administered_by_the_province",
+            ),
+            input_area_ha=2.0,
+            removed_area_ha=1.0,
+            remaining_area_ha=1.0,
+            benchmark_marginal_area_ha=1.0,
+            benchmark_cumulative_area_ha=1.0,
+            benchmark_marginal_delta_ha=0.0,
+            benchmark_cumulative_delta_ha=0.0,
+            smoke_benchmark_scale_factor=None,
+            scaled_benchmark_marginal_area_ha=None,
+            scaled_benchmark_cumulative_area_ha=None,
+            scaled_benchmark_marginal_delta_ha=None,
+            scaled_benchmark_cumulative_delta_ha=None,
+            notes=("Used smoke subset 092O071",),
+        )
+
+    monkeypatch.setattr(cli_main, "run_tsr_thlb_parent_step", _fake_run)
+
+    cli_main.tsr_thlb_netdown_step_run(
+        instance_root=instance_root,
+        parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+        thlb_netdown_recipe_path=None,
+        checkpoint_path=None,
+        map_id=None,
+        auto_map_id_smoke_subset=True,
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert captured_kwargs["checkpoint_path"] is None
+    assert captured_kwargs["map_ids"] == ()
+    assert captured_kwargs["auto_map_id_smoke_subset"] is True
+    assert any("parent_step_id:" in msg for msg in messages)
+    assert any("selected_map_ids: 092O071" in msg for msg in messages)
+    assert any("notes: Used smoke subset 092O071" in msg for msg in messages)
 
 
 def test_tsr_thlb_netdown_run_uses_default_paths(
