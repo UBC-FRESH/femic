@@ -12344,3 +12344,80 @@
   - Updated user-facing and agent-facing guidance so the DWDS notification
     email is treated as part of the usable retrieval workflow rather than a
     mere courtesy.
+- 2026-04-06: Step `019` (`Buffered trails`) is now runnable in the TSA29 THLB
+  workbench with the corrected 85%-of-corridor simplification.
+  - Replaced the bogus placeholder source with
+    `WHSE_LAND_USE_PLANNING_RMP_PLAN_LEGAL_POLY_SVW`, filtered to
+    `LEGAL_FEAT_OBJECTIVE = Buffered Trail Areas`.
+  - Modeled the TSR rule by shrinking the legal `100 m` corridor inward by
+    `7.5 m` on each side to yield an `85 m` effective full-exclusion corridor,
+    instead of introducing a separate partial-retention executor.
+  - Live `Williams Lake` LU smoke result:
+    - status: `applied`
+    - removed area: `523.966 ha`
+    - scaled marginal benchmark: about `116.533 ha`
+  - Validation:
+    - `pytest tests/test_tsr_recipes.py -q`
+    - `ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
+    - `mypy src`
+    - `femic tsr thlb-netdown-build --instance-root external/femic-tsa29-instance`
+    - `femic tsr thlb-netdown-workbench-build --instance-root external/femic-tsa29-instance`
+- 2026-04-06: Step `020` (`Wildlife tree retention areas`) now follows the
+  TSA29 wording as an aspatial later-stage THLB reduction factor.
+  - Replaced the bogus cutblock-mask proxy with a dedicated
+    `aspatial_reduction` compiled operation for future WTRA requirements.
+  - Notebook execution now preserves geometry and proportionally reduces
+    `thlb_fact` / `thlb` across the active later-stage subset based on the TSR
+    benchmark area scaled to the current smoke subset.
+  - Live `Williams Lake` LU smoke result:
+    - status: `applied`
+    - removed area: `1078.084 ha`
+    - scaled marginal benchmark: about `1368.661 ha`
+  - Validation:
+    - `pytest tests/test_tsr_recipes.py -q`
+    - `ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
+    - `mypy src`
+    - `femic tsr thlb-netdown-build --instance-root external/femic-tsa29-instance`
+    - `femic tsr thlb-netdown-workbench-build --instance-root external/femic-tsa29-instance`
+- 2026-04-06: Step `021` (`Cultural heritage and archaeological resources`) no
+  longer advertises nonsense candidate layers in the TSA29 THLB recipe surface.
+  - Added a curated step-21 draft/compiled interpretation in
+    `src/femic/tsr_catalog/recipes.py` so TSA29 section `6.4.9` is represented
+    as a reviewable/aspatial reduction step instead of a fake spatial query.
+  - Removed bogus road/burn-severity style candidate-layer leakage from the
+    generated recipe, status report, and notebook workbench.
+  - Validation:
+    - `pytest tests/test_tsr_recipes.py -q`
+    - `ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
+    - `mypy src`
+    - `femic tsr thlb-netdown-build --instance-root external/femic-tsa29-instance`
+    - `femic tsr thlb-netdown-workbench-build --instance-root external/femic-tsa29-instance`
+- 2026-04-06: Step `023` (`Future roads`) now uses an early-stage aspatial
+  AFLB area reduction instead of a later-stage THLB retention-style reduction.
+  - Added a dedicated `aspatial_area_reduction` operation to
+    `src/femic/tsr_catalog/recipes.py`.
+  - Future-roads recipe generation now:
+    - classifies the step into `GLB -> AFLB`;
+    - emits a draft subrule with `candidate_operation_type:
+      aspatial_area_reduction`; and
+    - explains that the deduction should shrink stand-area attributes rather
+      than `thlb_fact`.
+  - Added a dedicated checkpoint field, `FEMIC_EFFECTIVE_AREA_SQM`, so the
+    future-roads deduction no longer mutates canonical stand-area fields.
+  - The executor now recomputes `FEMIC_EFFECTIVE_AREA_SQM` from the stable
+    canonical area source on each run, making repeated future-roads runs
+    deterministic instead of compounding shrinkage.
+  - Downstream fragments export now prefers `FEMIC_EFFECTIVE_AREA_SQM` ahead
+    of `FEATURE_AREA_SQM` / `POLYGON_AREA` when building `AREA_HA`, so the
+    corrected area reduction threads into Patchworks without overwriting the
+    raw stand-area contract.
+  - Live `Williams Lake` LU smoke result:
+    - status: `applied`
+    - removed area: `222.029 ha`
+    - scaled marginal benchmark: about `476.031 ha`
+  - Validation:
+    - `pytest tests/test_tsr_recipes.py -q`
+    - `ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
+    - `mypy src`
+    - `femic tsr thlb-netdown-build --instance-root external/femic-tsa29-instance`
+    - `femic tsr thlb-netdown-workbench-build --instance-root external/femic-tsa29-instance`

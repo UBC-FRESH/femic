@@ -3441,6 +3441,37 @@ def test_build_fragments_geodataframe_emits_one_row_per_stand_fragment(
     validate_fragments_geodataframe(fragments_gdf=gdf)
 
 
+def test_build_fragments_geodataframe_prefers_effective_area_field(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    au_table = pd.DataFrame([{"au_id": 985501000}])
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "k3z",
+                "au": 985501000,
+                "PROJ_AGE_1": 80,
+                "FEMIC_EFFECTIVE_AREA_SQM": 80000.0,
+                "FEATURE_AREA_SQM": 100000.0,
+                "thlb_area": 4.0,
+                "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+            }
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    gdf = build_fragments_geodataframe(
+        checkpoint_path=checkpoint_path,
+        au_table=au_table,
+        tsa_list=["k3z"],
+    )
+
+    assert float(gdf.loc[0, "AREA_HA"]) == pytest.approx(8.0)
+
+
 def test_build_fragments_geodataframe_marks_age_60_as_planted(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

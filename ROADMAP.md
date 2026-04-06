@@ -942,6 +942,8 @@ notes.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
 
+- TSA29 THLB validation checkpoint: step 21 (`Cultural heritage and archaeological resources`) no longer falls through the generic candidate-layer heuristics. The recipe/workbench now uses a curated aspatial-reduction interpretation tied to TSA29 section 6.4.9, with no fake spatial candidate layers and no bogus road-feature linkage. Next ratchet should resume from this cleaned surface rather than the earlier junk draft-state artifact.
+
 - 2026-04-03 (Issue `#91` launched: TSA29 standalone DataLad publication is the next post-PoC lane):
   - Prior TSA29 rollout umbrella `#84` remains conceptually complete at the
     first runnable Patchworks PoC boundary and should be closed separately
@@ -14201,3 +14203,62 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - interpretation: a real late-stage THLB signal that is now worth analyst
       review, though still somewhat high relative to the naive proportional
       benchmark.
+- 2026-04-06: Step `019` (`Buffered trails`) now follows the TSA29 section
+  `6.3.6` 85%-of-corridor rule using the legal buffered-trail polygons already
+  present in the TSA29 instance.
+  - Specialized compiled logic now:
+    - uses `WHSE_LAND_USE_PLANNING_RMP_PLAN_LEGAL_POLY_SVW`;
+    - filters to `LEGAL_FEAT_OBJECTIVE = Buffered Trail Areas`; and
+    - models the TSR rule by shrinking the legal 100 m corridor inward by
+      `7.5 m` on each side, yielding an `85 m` equivalent full-exclusion
+      corridor instead of introducing a separate partial-retention executor.
+  - Step `019` is now in the runnable notebook tranche.
+  - Live `Williams Lake` LU smoke result:
+    - status: `applied`
+    - removed area: `523.966 ha`
+    - scaled marginal benchmark: about `116.533 ha`
+    - interpretation: real late-stage THLB signal; worth analyst review before
+      any ratchet decision.
+- 2026-04-06: Step `020` (`Wildlife tree retention areas`) is now modeled as
+  the TSA29 document describes it: an aspatial later-stage THLB reduction
+  factor rather than a fake spatial cutblock mask.
+  - Specialized compiled logic now:
+    - treats existing mapped WTRA as deferred-from-harvest context, not a THLB
+      area exclusion; and
+    - executes only the future WTRA requirement as an aspatial reduction
+      scaled to the current smoke subset from the TSR benchmark area.
+  - Notebook execution now preserves geometry and proportionally reduces
+    `thlb_fact` / `thlb` across the active later-stage subset for this class of
+    aspatial reduction step.
+  - Live `Williams Lake` LU smoke result:
+    - status: `applied`
+    - removed area: `1078.084 ha`
+    - scaled marginal benchmark: about `1368.661 ha`
+    - interpretation: real late-stage aspatial THLB signal; worth analyst
+      review before any ratchet decision.
+- 2026-04-06: Step `023` (`Future roads`) was reclassified from a later-stage
+  THLB retention-style deduction to an early-stage AFLB area reduction, per the
+  TSA29 interpretation now adopted for FEMIC.
+  - Specialized future-roads logic now:
+    - stays non-spatial;
+    - uses `aspatial_area_reduction` instead of `aspatial_reduction`; and
+    - recomputes a dedicated effective-area field from the stable canonical
+      stand-area source instead of scaling `thlb_fact`.
+  - The executor now updates the same area attributes that feed downstream
+    fragments compilation through a new persistent checkpoint field:
+    - `FEMIC_EFFECTIVE_AREA_SQM`
+    - plus the internal `_stand_area_sqm` working column
+  - This keeps the future-road deduction threaded into the downstream
+    Patchworks fragments pathway, where `build_fragments_geodataframe(...)`
+    now prefers `FEMIC_EFFECTIVE_AREA_SQM`, then `FEATURE_AREA_SQM`, then
+    `POLYGON_AREA`, then geometry-derived area when compiling `AREA_HA`.
+  - Because `FEMIC_EFFECTIVE_AREA_SQM` is recalculated from the stable
+    canonical area source on each future-roads run, rerunning the step
+    overwrites the derived field deterministically instead of compounding
+    shrinkage.
+  - Live `Williams Lake` LU smoke result after the correction:
+    - status: `applied`
+    - removed area: `222.029 ha`
+    - scaled marginal benchmark: about `476.031 ha`
+    - interpretation: now a semantically correct early-stage area shrink rather
+      than a fake THLB-retention deduction.

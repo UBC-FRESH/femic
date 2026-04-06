@@ -58,11 +58,19 @@ The common operator-facing entrypoint is:
    femic tsr source-layers-build --instance-root external/femic-tsa29-instance
    femic tsr source-layers-run --instance-root external/femic-tsa29-instance --bbox ...
    femic tsr thlb-netdown-build --instance-root external/femic-tsa29-instance
+   femic tsr thlb-netdown-workbench-build --instance-root external/femic-tsa29-instance
    femic tsr thlb-netdown-run --instance-root external/femic-tsa29-instance
+   femic tsr thlb-netdown-workbench-lock --instance-root external/femic-tsa29-instance
    femic tsr overlay-init --instance-root external/femic-tsa29-instance --tsa 29
    femic tsr overlay-report --instance-root external/femic-tsa29-instance
    femic tsr override-init --instance-root external/femic-tsa29-instance
    femic tsr override-report --instance-root external/femic-tsa29-instance
+
+Important instance-local THLB artifacts in this lane include:
+
+- ``config/tsr/thlb_netdown.recipe.yaml``
+- ``workbench/tsr/thlb_netdown.workbench.ipynb``
+- ``workbench/tsr/thlb_netdown.locked.py``
 
 The matching Python entrypoints are:
 
@@ -73,12 +81,14 @@ The matching Python entrypoints are:
       build_tsr_thlb_netdown_recipe,
       build_tsr_overlay_report,
       build_tsr_source_layers_recipe,
+      build_tsr_thlb_workbench,
       extract_tsr_candidate_facts,
       fetch_tsr_pdfs,
       init_tsr_overlay,
       init_tsr_recipe_scaffolds,
       init_tsr_source_layer_overrides,
       index_tsr_tsa_surfaces,
+      lock_tsr_thlb_workbench,
       report_tsr_candidate_facts,
       build_tsr_source_layer_override_report,
       run_tsr_source_layers_recipe,
@@ -205,7 +215,9 @@ Key Entry Surfaces
   reusing already materialized artifacts when available.
 - :func:`build_tsr_thlb_netdown_recipe`
   Refresh the reviewed THLB netdown recipe from TSR THLB facts plus the stable
-  logical-source ids already captured in the source-layer recipe.
+  logical-source ids already captured in the source-layer recipe, while also
+  classifying rows into the GLB/AFLB/LHLB/THLB backbone instead of leaving
+  every row in one flat semantic bucket.
 - :func:`run_tsr_thlb_netdown_recipe`
   Execute the bounded supported subset of the reviewed THLB recipe into a
   stand-level checkpoint carrying ``thlb_fact`` plus a structured audit JSON.
@@ -241,6 +253,17 @@ The promoted next target, tracked in issue ``#128``, is to rebuild THLB from
 the raw/resultant land base itself by overlaying the reviewed exclusion layers,
 fragmenting the geometry, and assigning binary fragment-level THLB membership
 ``{0,1}``.
+
+The current recipe/review improvement lane under ``#128`` also teaches FEMIC
+the explicit land-base ladder:
+
+- ``GLB -> AFLB``
+- ``AFLB -> LHLB``
+- ``LHLB -> THLB``
+
+That staged schema is what lets later execution and fallback slices tell the
+difference between universe definition, legal exclusions, projected
+operational deductions, benchmark targets, and pure context.
 
 Cross-References
 ----------------

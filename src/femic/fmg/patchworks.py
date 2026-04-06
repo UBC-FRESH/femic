@@ -4653,7 +4653,11 @@ def build_fragments_geodataframe(
     if scoped.empty:
         raise ValueError("no checkpoint rows matched selected TSA/AU export filters")
 
-    if "FEATURE_AREA_SQM" in scoped.columns:
+    if "FEMIC_EFFECTIVE_AREA_SQM" in scoped.columns:
+        total_area_ha = (
+            pd.to_numeric(scoped["FEMIC_EFFECTIVE_AREA_SQM"], errors="coerce") * 0.0001
+        )
+    elif "FEATURE_AREA_SQM" in scoped.columns:
         total_area_ha = (
             pd.to_numeric(scoped["FEATURE_AREA_SQM"], errors="coerce") * 0.0001
         )

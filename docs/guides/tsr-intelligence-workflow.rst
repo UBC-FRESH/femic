@@ -89,6 +89,9 @@ instance:
    python -m femic tsr thlb-netdown-build \
      --instance-root external/femic-tsa29-instance
 
+   python -m femic tsr thlb-netdown-workbench-build \
+     --instance-root external/femic-tsa29-instance
+
    python -m femic tsr thlb-netdown-run \
      --instance-root external/femic-tsa29-instance
 
@@ -232,6 +235,12 @@ The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
    ``thlb_reference`` fact pool while preserving:
 
    - raw TSR wording and provenance;
+   - explicit land-base stage semantics:
+     - ``glb_to_aflb``
+     - ``aflb_to_lhlb``
+     - ``lhlb_to_thlb``
+     - ``reference_target``
+     - ``context``
    - normalized action hints such as ``exclude``, ``defer``,
      ``aspatial_reduction``, and ``reference_target`` when the builder is
      confident enough;
@@ -242,6 +251,17 @@ The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
 
    The THLB recipe build step is intentionally about extracting
    **what the TSR says to do**, not applying the netdown yet.
+
+   The current goal is no longer a flat wall of THLB snippets. FEMIC now
+   treats the TSA land-base ladder itself as the organizing grammar:
+
+   - ``Gross Land Base (GLB) -> Analysis Forest Land Base (AFLB)``
+   - ``AFLB -> Legally Harvestable Land Base (LHLB)``
+   - ``LHLB -> Timber Harvesting Land Base (THLB)``
+
+   That staged backbone is the guardrail that helps the recipe stop confusing
+   headings, context, benchmark rows, legal exclusions, and projected
+   operational deductions.
 
 6c. execute the bounded supported subset of the THLB recipe into a stand-level
    checkpoint:
@@ -273,12 +293,20 @@ The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
    The status report Markdown is the user-facing convergence surface for this
    lane. It records, for each run:
 
+   - a backbone summary for GLB/AFLB/LHLB/THLB;
    - input checkpoint area;
    - AFLB / baseline managed area;
    - final THLB area;
-   - VRI:AFLB and AFLB:THLB ratios for the current run;
+   - the current executable ratios (currently a GLB/AFLB proxy plus
+     ``AFLB:THLB``);
    - TSR benchmark AFLB and THLB values when FEMIC can parse them from the
      selected TSR data package; and
+   - stage-grouped step ledgers for:
+     - ``GLB -> AFLB``
+     - ``AFLB -> LHLB``
+     - ``LHLB -> THLB``
+     - ``Reference targets``
+     - ``Context / interpretation``
    - a stable latest report plus a timestamped runtime-history copy so users
      and helper agents can compare successive runs while the recipe converges.
 
@@ -300,6 +328,61 @@ The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
 
    Until that lane lands, treat ``thlb-netdown-run`` as the current approved
    milestone, not as the final reconstructed land-base engine.
+
+6d. generate the notebook bridge artifact when you want a text-code-output
+   review surface for either an LLM coding agent or a human analyst:
+
+   .. code-block:: bash
+
+      python -m femic tsr thlb-netdown-workbench-build \
+        --instance-root external/femic-tsa29-instance
+
+   This writes:
+
+   - ``workbench/tsr/thlb_netdown.workbench.ipynb``
+
+   The notebook is generated from the current THLB recipe and is intended as
+   an interactive bridge medium, not the canonical source of truth. During
+   iteration, the authoritative machine-readable state remains:
+
+   - ``config/tsr/thlb_netdown.recipe.yaml``
+   - ``config/tsr/thlb_netdown.status.md``
+   - ``config/tsr/thlb_netdown.audit.json`` when a runtime pass has been run
+
+   Workbench execution follows the staged FEMIC pipeline boundary:
+
+   - ``GLB -> AFLB`` parent steps run against the earliest checkpoint / raw
+     land-base surface; and
+   - ``AFLB -> LHLB -> THLB`` parent steps run later against the curve-ready
+     checkpoint so late THLB rules can consume compiled AU / VDYP / TIPSY
+     outputs instead of trying to infer harvestability from raw VRI alone.
+
+   For example, TSA29 step ``014`` (sites with low growing timber potential)
+   now uses assigned bundle curves directly in the notebook bridge:
+
+   - treated / plantation states use volume at CMAI; and
+   - untreated / natural states use culmination volume.
+
+6e. once the human+agent team agrees the THLB workflow is ready to freeze,
+   lock it into deterministic reproducibility artifacts:
+
+   .. code-block:: bash
+
+      python -m femic tsr thlb-netdown-workbench-lock \
+        --instance-root external/femic-tsa29-instance \
+        --lock-scope all
+
+   This writes:
+
+   - ``workbench/tsr/thlb_netdown.locked.py``
+   - a frozen status report copy
+   - a frozen audit JSON copy when one exists
+
+   Lock hierarchy is explicit:
+
+   - AFLB lock freezes the modeled universe definition
+   - THLB lock freezes downstream harvest-eligibility logic
+   - cutting AFLB invalidates THLB
 
 7. initialize or refresh the reviewed overlay:
 
@@ -345,8 +428,10 @@ The current scriptable milestone is:
 5. ``femic tsr source-layers-build``
 6. ``femic tsr source-layers-run``
 7. ``femic tsr thlb-netdown-build``
-8. ``femic tsr thlb-netdown-run``
-9. ``femic tsr overlay-init`` / ``overlay-report``
+8. ``femic tsr thlb-netdown-workbench-build``
+9. ``femic tsr thlb-netdown-run``
+10. ``femic tsr thlb-netdown-workbench-lock``
+11. ``femic tsr overlay-init`` / ``overlay-report``
 
 That chain is already a valid, reproducible TSA29 runbook.
 

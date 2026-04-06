@@ -52,7 +52,16 @@ _SOURCE_LAYER_STOPWORDS = {
 _AU_LINE_RE = re.compile(
     r"(?i)\b(analysis unit|analysis units|productivity unit|au\b)\b"
 )
-_THLB_LINE_RE = re.compile(r"(?i)\b(thlb|timber harvesting land base)\b")
+_THLB_LINE_RE = re.compile(
+    r"(?i)\b("
+    r"thlb|timber harvesting land base|"
+    r"no harvest(?: zone)?|conditional harvest zone|"
+    r"general wildlife measures|wildlife habitat areas|ungulate winter range|"
+    r"old growth management areas|riparian areas|critical habitat for fish|"
+    r"community areas of special concern|areas considered inoperable|"
+    r"site(?:s)? with low timber growing potential"
+    r")\b"
+)
 _TIPSY_LINE_RE = re.compile(
     r"(?i)\b(tipsy|oaf1|oaf2|regen delay|regeneration delay|initial density|site index|si\b|operable age)\b"
 )
@@ -371,6 +380,18 @@ def _iter_keyword_line_facts(
 
 
 def _thlb_value_from_line(line: str) -> str:
+    lower = line.casefold()
+    if any(
+        marker in lower
+        for marker in (
+            "no harvest",
+            "conditional harvest zone",
+            "general wildlife measures",
+            "wildlife habitat areas",
+            "ungulate winter range",
+        )
+    ):
+        return _trim_snippet(line)
     hectare_match = _HECTARE_VALUE_RE.search(line)
     if hectare_match:
         return hectare_match.group(0)
