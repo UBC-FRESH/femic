@@ -8485,6 +8485,7 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [ ] P52.6b3 Add a generated THLB notebook workbench and lock/export flow (`#137`).
   - [ ] P52.6b4 Improve DWDS follow-up retrieval and artifact materialization after order submission (`#140`).
   - [ ] P52.6b5 Run full-TSA29 THLB step-by-step validation and reconcile the recipe against TSR benchmarks (`#141`).
+  - [ ] P52.6b6 Benchmark LU-wise local-process parallel THLB execution for TSA-scale netdown (`#143`).
   - [ ] P52.6c Execute fragment-first TSR THLB reconstruction from reviewed recipe steps (`#131`).
   - [ ] P52.6d Add explicit end-of-workflow aspatial fallback for blocked TSR target-area steps (`#132`).
   - [ ] P52.6e Document the reconstruction ladder and comparison contract (`#133`).
@@ -8554,6 +8555,128 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       count as "good enough" for TSA29 validation; and
     - treat the early full-TSA `GLB -> AFLB` pass as green-lit and move the
       active `#141` work down into `AFLB -> LHLB` / `LHLB -> THLB` validation.
+- 2026-04-06 (Issue `#143` opened: LU-wise local-process parallel THLB
+  benchmark side quest):
+  - Motivation:
+    - full-TSA THLB step validation under `#141` is currently too slow for
+      rapid recipe iteration on this workstation; and
+    - we need a contained answer to whether exact LU-clipped decomposition plus
+      local multi-process execution can materially shorten the feedback loop
+      without changing THLB semantics.
+  - Scope for `#143`:
+    - keep GeoPandas/Shapely as the GIS engine;
+    - prototype a Windows-first local `ProcessPoolExecutor` backend;
+    - clip the active working geometry to LU boundaries so every worker gets a
+      disjoint exact spatial slice;
+    - benchmark only the expensive spatial step classes:
+      - `004 Roads and landings`;
+      - `007 Old growth management areas`;
+      - `018 Riparian areas`; and
+      - `019 Buffered trails`;
+    - compare serial vs LU-parallel runtime, parity, and basic memory signals
+      on the current workstation with worker counts `1`, `2`, `4`, `8`; and
+    - decide whether the feature is worth keeping before touching the main
+      `#141` validation lane.
+  - Guardrails:
+    - no centroid/map-sheet stand assignment heuristics;
+    - no ArcGIS backend revival after the closed `#142` benchmark result;
+    - do not adopt the feature if LU-parallel merge-back changes removed area,
+      remaining area, or later-stage `thlb_fact` / `thlb` semantics beyond a
+      very small tolerance; and
+    - keep the side quest on its own feature branch so any experimental mess
+      can be abandoned cleanly if the benchmark result is negative.
+- 2026-04-06 (Issue `#143` prototype landed: LU-wise local-process parallel
+  THLB benchmark harness and backend toggle):
+  - Implementation status:
+    - added an experimental LU-parallel execution mode to the THLB parent-step
+      runner using local `ProcessPoolExecutor` workers, with explicit
+      `serial` vs `lu_parallel` mode selection and optional worker-count
+      control;
+    - added LU clipping helpers that split the active working geometry into
+      disjoint landscape-unit slices before dispatch;
+    - added a new benchmark entrypoint:
+      - `femic tsr thlb-netdown-parallel-benchmark`
+    - added benchmark result artifacts under:
+      - `runtime/logs/tsr/parallel_benchmarks/`
+    - kept GeoPandas/Shapely as the only GIS engine in scope for this side
+      quest.
+  - Validation status:
+    - regression coverage was added for LU-parallel parity on a controlled
+      fixture plus benchmark-summary generation;
+    - validation gates passed:
+      - `pytest tests/test_tsr_recipes.py tests/test_cli_main.py -q`
+      - `ruff check src/femic/tsr_catalog/recipes.py src/femic/tsr_catalog/__init__.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_cli_main.py`
+      - `mypy src`
+      - `sphinx-build -b html docs _build/html -W`
+  - First live benchmark signal:
+    - benchmarked step `004` (`Roads and landings`) on the `Williams Lake` LU;
+    - serial result:
+      - runtime about `71.0 s`
+      - removed area `1470.416 ha`
+    - LU-parallel (`2` workers) result:
+      - runtime about `75.2 s`
+      - removed area `1388.719 ha`
+      - parity failed relative to serial
+    - current interpretation:
+    - the prototype is real and benchmarkable;
+    - the current partial-LU path is not yet adoption-worthy; and
+    - the parity drift likely reflects the difference between exact LU
+      clipping in the parallel path and the current non-clipped serial LU
+      subset reference, so any further benchmark claims need to use a cleaner
+      reference contract (ideally full-TSA/all-LU).
+- 2026-04-06 (Issue `#143` next slice: grouped-LU chunking plus notebook
+  progress UX for full-TSA step-6 testing):
+  - Immediate motivation:
+    - one-LU-per-chunk granularity is not obviously delivering enough speedup;
+    - the live 4-LU tests show the `lu_parallel` path itself is internally
+      stable across `1`, `2`, and `4` workers; and
+    - the next meaningful experiment is full-TSA step `006`
+      (`Parks, protected areas, area-base tenures`) with `8` grouped LU bundles
+      and visible progress reporting in the notebook.
+  - Planned implementation:
+    - add a grouped-LU bundle mode on top of the current LU-clipped chunk
+      preparation so the runner can partition the active LU set into a smaller
+      number of worker bundles (for example `8`) instead of one worker task per
+      LU;
+    - keep the chunk contract exact by grouping already-clipped LU slices,
+      rather than reverting to centroid or map-sheet heuristics;
+    - add optional progress reporting backed by per-worker progress files so the
+      parent process and generated notebook can render one progress bar per
+      worker bundle;
+    - regenerate the TSA29 THLB workbench notebook so step `006` can be launched
+      from the notebook using the grouped-LU `8`-worker path.
+  - Guardrails:
+    - do not claim parity or performance success until the full-TSA grouped
+      benchmark is compared against the matching grouped/clipped serial
+      reference;
+    - keep the notebook progress UX optional and degrade cleanly to plain-text
+      notes if widget support is unavailable.
+- 2026-04-06 (Issue `#143` follow-up: step-6 tenure semantics note plus
+  profiling-first optimization pass):
+  - Tenure follow-up to preserve:
+    - step `006` still lacks validated automation logic for the "small
+      area-based tenures and woodlots" portion even though fetched public
+      tenure-adjacent layers are already on disk;
+    - likely next seam is to mine BC Data Catalogue metadata/dictionaries for:
+      - `TA_CROWN_TENURES_SVW`;
+      - `WHSE_TANTALIS.TA_CROWN_TENURES_SVW`; and
+      - `WHSE_FOREST_TENURE.FTEN_MANAGED_LICENCE*_SVW`
+      to find defensible field/value logic for the missing tenure classes; and
+    - keep the current step-6 parks/protected-areas automation separate from
+      that still-unresolved tenure sublogic.
+  - Immediate profiling mission:
+    - collect structured timing for the grouped-LU full-TSA step-6 path so we
+      can separate:
+      - LU-partition materialization/cache time;
+      - worker feather/shard load time;
+      - worker GIS execution time;
+      - worker output-write time; and
+      - parent-process merge/readback time;
+    - use that profile to decide whether the next optimization should be:
+      - preloading/caching larger LU bundles once before step 6;
+      - reducing repeated shard reads by caching bundle-ready datasets; or
+      - keeping the notebook kernel hot with preloaded data if file I/O turns
+        out to dominate runtime.
 
 - 2026-04-06 (Issue `#140` checkpoint landed: DWDS follow-up/materialization
   no longer stops at submission):
@@ -14331,3 +14454,42 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - scaled marginal benchmark: about `476.031 ha`
     - interpretation: now a semantically correct early-stage area shrink rather
       than a fake THLB-retention deduction.
+- 2026-04-07: `#143` step-6 notebook profiling showed the repeated late-stage
+  wall-time tax is still front-loaded before workers receive LU assignments.
+  - Key observations:
+    - warm-cache step-6 notebook runs still take about `7 minutes`;
+    - per-worker GIS execution is only on the order of tens of seconds;
+    - cached LU-feather shard reads are small, so repeated Feather loading is
+      not the dominant cost signal; and
+    - the unprofiled coordinator-side LU-selection / bundle-planning seam is
+      now the leading suspect.
+  - Action now in flight:
+    - break LU selection into finer profiling fields (`load`, `bbox`, `union`,
+      `intersect`);
+    - reuse cached partition metadata to recover the selected LU set on later
+      runs instead of recomputing full-checkpoint `union_all()` every step; and
+    - continue the follow-up seam for step `006` by mining BCDC metadata and
+      dictionaries for valid automation logic for the missing small area-based
+      tenure / woodlot portion.
+- 2026-04-07: `#143` warm-run coordinator bottleneck and step-6 tenure gap are
+  now both in a good-enough state to hand control back to `#141`.
+  - Direct profiling on the real TSA29 step-6 later-stage checkpoint showed
+    the hidden front-loaded wall time was dominated by repeated
+    `checkpoint.geometry.union_all()` just to recover the intersecting LU set:
+    - old full-checkpoint LU-selection path: about `334.24 s`
+    - cached partition-metadata LU-selection path: about `0.018 s`
+  - Warm notebook reruns of step `006` dropped from roughly `7 minutes` to
+    about `1m12s` once later-stage LU-parallel runs reused cached partition
+    metadata instead of recomputing checkpoint-wide LU intersection.
+  - Step `006`'s missing small area-based tenure logic now uses the explicit
+    `F_OWN` classes that remain unresolved after the upstream step-2 pass:
+    - `Crown Tenure - Woodlot Licence, Schedule A`
+    - `Crown Tenure - Woodlot Licence, Schedule B`
+    - `Crown Lease - Misc. lease`
+  - Broader CFA/FNWL/TFL tenure classes were removed from step `006` because
+    they belong upstream in the current TSA29 interpretation.
+  - Resulting validation signals:
+    - `Williams Lake` LU smell test: about `6109 ha` removed vs scaled
+      benchmark about `4440 ha`
+    - full-TSA step-6 run on cached 8-bundle path: about `275,618 ha` removed
+      vs TSR benchmark `306,327 ha`

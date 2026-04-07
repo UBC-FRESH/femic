@@ -153,6 +153,7 @@ from femic.release_packaging import build_release_package
 from femic.tsr_catalog import (
     TSR_THLB_EXECUTION_MODE_HYBRID,
     TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+    TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL,
     TsrCacheError,
     TsrCatalogError,
     TsrExtractError,
@@ -171,6 +172,7 @@ from femic.tsr_catalog import (
     TsrThlbNetdownRecipeBuildResult,
     TsrThlbParentStepRunResult,
     TsrThlbNetdownRecipeRunResult,
+    TsrThlbParallelBenchmarkResult,
     TsrThlbWorkbenchBuildResult,
     TsrThlbWorkbenchLockResult,
     TsrSourceLayerOverridesError,
@@ -199,6 +201,7 @@ from femic.tsr_catalog import (
     lock_tsr_thlb_workbench,
     report_tsr_candidate_facts,
     run_tsr_source_layers_recipe,
+    run_tsr_thlb_parallel_benchmark,
     run_tsr_thlb_parent_step,
     run_tsr_thlb_netdown_recipe,
     write_tsr_fact_report_csv,
@@ -2314,7 +2317,9 @@ def _print_bcdc_dwds_summary(result: BcdcDwdsOrderResult) -> None:
             f"pickup_download_url: {result.latest_followup_pickup_download_url}"
         )
     if result.materialized_artifact_path is not None:
-        console.print(f"materialized_artifact_path: {result.materialized_artifact_path}")
+        console.print(
+            f"materialized_artifact_path: {result.materialized_artifact_path}"
+        )
     if result.materialized_download_url is not None:
         console.print(f"materialized_download_url: {result.materialized_download_url}")
     if result.materialized_bytes is not None:
@@ -2618,6 +2623,15 @@ def _print_tsr_thlb_parent_step_run_summary(
     console.print(f"checkpoint_path: {result.checkpoint_path}")
     if result.selected_map_ids:
         console.print("selected_map_ids: " + ", ".join(result.selected_map_ids))
+    if result.selected_landscape_units:
+        console.print(
+            "selected_landscape_units: " + ", ".join(result.selected_landscape_units)
+        )
+    console.print(f"execution_mode: {result.execution_mode}")
+    if result.worker_count is not None:
+        console.print(f"worker_count: {result.worker_count}")
+    if result.lu_chunk_count is not None:
+        console.print(f"lu_chunk_count: {result.lu_chunk_count}")
     console.print(f"output_path: {result.output_path}")
     console.print(f"result_json_path: {result.result_json_path}")
     console.print(f"status: {result.status}")
@@ -2626,8 +2640,7 @@ def _print_tsr_thlb_parent_step_run_summary(
     console.print(f"remaining_area_ha: {result.remaining_area_ha:.3f}")
     if result.benchmark_marginal_area_ha is not None:
         console.print(
-            "benchmark_marginal_area_ha: "
-            + f"{result.benchmark_marginal_area_ha:.3f}"
+            "benchmark_marginal_area_ha: " + f"{result.benchmark_marginal_area_ha:.3f}"
         )
     if result.benchmark_cumulative_area_ha is not None:
         console.print(
@@ -2639,6 +2652,26 @@ def _print_tsr_thlb_parent_step_run_summary(
     console.print(f"tsa_id: {result.tsa.tsa_id}")
     console.print(f"tsa_code: {result.tsa.tsa_code}")
     console.print(f"tsa_name: {result.tsa.tsa_name}")
+
+
+def _print_tsr_thlb_parallel_benchmark_summary(
+    result: TsrThlbParallelBenchmarkResult,
+) -> None:
+    console.print(f"summary_path: {result.summary_path}")
+    if result.landscape_units:
+        console.print("landscape_units: " + ", ".join(result.landscape_units))
+    for run in result.run_results:
+        console.print(
+            "benchmark_run: "
+            f"step={run.parent_step_id} "
+            f"backend={run.execution_mode} "
+            f"workers={run.worker_count} "
+            f"lus={run.lu_count} "
+            f"runtime_s={run.wall_time_seconds:.3f} "
+            f"removed_ha={run.removed_area_ha:.3f} "
+            f"remaining_ha={run.remaining_area_ha:.3f} "
+            f"parity={run.parity_with_serial}"
+        )
 
 
 def _print_tsr_source_layer_overrides_init_summary(
@@ -3519,7 +3552,32 @@ def tsr_thlb_netdown_step_run(
     thlb_netdown_recipe_path: Path | None = TSR_THLB_NETDOWN_RECIPE_PATH_OPTION,
     checkpoint_path: Path | None = TSR_THLB_CHECKPOINT_PATH_OPTION,
     map_id: list[str] | None = TSR_THLB_MAP_ID_OPTION,
+    landscape_unit: list[str] | None = typer.Option(
+        None,
+        "--landscape-unit",
+        help="Optional LU subset for parent-step execution.",
+    ),
     auto_map_id_smoke_subset: bool = TSR_THLB_AUTO_MAP_ID_SMOKE_OPTION,
+    execution_mode: str = typer.Option(
+        TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL,
+        "--execution-mode",
+        help="Parent-step execution backend (`serial` or `lu_parallel`).",
+    ),
+    max_workers: int | None = typer.Option(
+        None,
+        "--max-workers",
+        help="Optional LU-parallel worker count.",
+    ),
+    lu_bundle_count: int | None = typer.Option(
+        None,
+        "--lu-bundle-count",
+        help="Optional grouped-LU bundle count for LU-parallel execution.",
+    ),
+    progress_root: Path | None = typer.Option(
+        None,
+        "--progress-root",
+        help="Optional progress-output directory for LU-parallel notebook polling.",
+    ),
 ) -> None:
     """Execute one THLB parent step cumulatively on the smoke subset."""
 
@@ -3540,12 +3598,67 @@ def tsr_thlb_netdown_step_run(
             parent_step_id=parent_step_id,
             checkpoint_path=resolved_checkpoint_path,
             map_ids=tuple(map_id or ()),
+            landscape_units=tuple(landscape_unit or ()),
             auto_map_id_smoke_subset=auto_map_id_smoke_subset,
+            execution_mode=execution_mode,
+            max_workers=max_workers,
+            lu_bundle_count=lu_bundle_count,
+            progress_root=instance_context.resolve_path(progress_root)
+            if progress_root is not None
+            else None,
         )
     except TsrRecipeError as exc:
         console.print(f"[red]TSR THLB parent-step execution error:[/red] {exc}")
         raise typer.Exit(code=1) from exc
     _print_tsr_thlb_parent_step_run_summary(result)
+
+
+@tsr_app.command("thlb-netdown-parallel-benchmark")
+def tsr_thlb_netdown_parallel_benchmark(
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    parent_step_id: list[str] = typer.Option(
+        ...,
+        "--parent-step-id",
+        help="One or more THLB parent step ids to benchmark.",
+    ),
+    thlb_netdown_recipe_path: Path | None = TSR_THLB_NETDOWN_RECIPE_PATH_OPTION,
+    checkpoint_path: Path | None = TSR_THLB_CHECKPOINT_PATH_OPTION,
+    landscape_unit: list[str] | None = typer.Option(
+        None,
+        "--landscape-unit",
+        help="Optional LU subset for the benchmark.",
+    ),
+    worker_count: list[int] | None = typer.Option(
+        None,
+        "--worker-count",
+        help="Worker counts to benchmark (repeatable). Defaults to 1,2,4,8.",
+    ),
+) -> None:
+    """Benchmark serial vs LU-parallel THLB parent-step execution."""
+
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_recipe_path = (
+        instance_context.resolve_path(thlb_netdown_recipe_path)
+        if thlb_netdown_recipe_path is not None
+        else default_tsr_thlb_netdown_recipe_path(instance_root=instance_context.root)
+    )
+    resolved_checkpoint_path = (
+        instance_context.resolve_path(checkpoint_path)
+        if checkpoint_path is not None
+        else None
+    )
+    try:
+        result = run_tsr_thlb_parallel_benchmark(
+            recipe_path=resolved_recipe_path,
+            parent_step_ids=tuple(parent_step_id),
+            checkpoint_path=resolved_checkpoint_path,
+            landscape_units=tuple(landscape_unit or ()),
+            worker_counts=tuple(worker_count or (1, 2, 4, 8)),
+        )
+    except TsrRecipeError as exc:
+        console.print(f"[red]TSR THLB parallel benchmark error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    _print_tsr_thlb_parallel_benchmark_summary(result)
 
 
 @tsr_app.command("thlb-netdown-run")

@@ -3,19 +3,23 @@
 from __future__ import annotations
 
 from collections import Counter
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import lru_cache
+import hashlib
 from importlib import resources as importlib_resources
 import json
 import shutil
 from pathlib import Path
 import re
+from time import perf_counter
 from typing import Any, Sequence
 
 import geopandas as gpd  # type: ignore[import-untyped]
 import nbformat
 import pandas as pd
+from shapely.geometry import box  # type: ignore[import-untyped]
 import yaml
 from nbformat.v4 import new_code_cell, new_markdown_cell, new_notebook
 
@@ -124,6 +128,12 @@ _RIPARIAN_WETLAND_WIDTHS_M = {
     "w5": 18.0,
 }
 TSR_EFFECTIVE_AREA_SQM_COLUMN = "FEMIC_EFFECTIVE_AREA_SQM"
+TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL = "serial"
+TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL = "lu_parallel"
+_TSR_THLB_PARENT_STEP_EXECUTION_MODES = {
+    TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL,
+    TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL,
+}
 
 
 @dataclass(frozen=True)
@@ -345,6 +355,12 @@ class TsrThlbParentStepRunResult:
     scaled_benchmark_marginal_delta_ha: float | None
     scaled_benchmark_cumulative_delta_ha: float | None
     notes: tuple[str, ...]
+    execution_mode: str = TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL
+    worker_count: int | None = None
+    lu_chunk_count: int | None = None
+    lu_bundle_count: int | None = None
+    progress_root: Path | None = None
+    profiling: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -372,6 +388,76 @@ class TsrThlbParentStepRunResult:
             "scaled_benchmark_marginal_delta_ha": self.scaled_benchmark_marginal_delta_ha,
             "scaled_benchmark_cumulative_delta_ha": self.scaled_benchmark_cumulative_delta_ha,
             "notes": list(self.notes),
+            "execution_mode": self.execution_mode,
+            "worker_count": self.worker_count,
+            "lu_chunk_count": self.lu_chunk_count,
+            "lu_bundle_count": self.lu_bundle_count,
+            "progress_root": str(self.progress_root) if self.progress_root is not None else None,
+            "profiling": self.profiling,
+        }
+
+
+@dataclass(frozen=True)
+class TsrThlbParallelBenchmarkRunResult:
+    """One serial or LU-parallel benchmark record for a THLB parent step."""
+
+    parent_step_id: str
+    parent_label: str
+    execution_mode: str
+    worker_count: int
+    lu_count: int
+    wall_time_seconds: float
+    peak_memory_mb: float | None
+    status: str
+    input_area_ha: float
+    removed_area_ha: float
+    remaining_area_ha: float
+    output_row_count: int
+    result_json_path: Path
+    output_path: Path
+    parity_with_serial: bool | None
+    parity_removed_area_delta_ha: float | None
+    parity_remaining_area_delta_ha: float | None
+    notes: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "parent_step_id": self.parent_step_id,
+            "parent_label": self.parent_label,
+            "execution_mode": self.execution_mode,
+            "worker_count": self.worker_count,
+            "lu_count": self.lu_count,
+            "wall_time_seconds": self.wall_time_seconds,
+            "peak_memory_mb": self.peak_memory_mb,
+            "status": self.status,
+            "input_area_ha": self.input_area_ha,
+            "removed_area_ha": self.removed_area_ha,
+            "remaining_area_ha": self.remaining_area_ha,
+            "output_row_count": self.output_row_count,
+            "result_json_path": str(self.result_json_path),
+            "output_path": str(self.output_path),
+            "parity_with_serial": self.parity_with_serial,
+            "parity_removed_area_delta_ha": self.parity_removed_area_delta_ha,
+            "parity_remaining_area_delta_ha": self.parity_remaining_area_delta_ha,
+            "notes": list(self.notes),
+        }
+
+
+@dataclass(frozen=True)
+class TsrThlbParallelBenchmarkResult:
+    """Aggregate benchmark summary for one or more THLB parent steps."""
+
+    summary_path: Path
+    run_results: tuple[TsrThlbParallelBenchmarkRunResult, ...]
+    parent_step_ids: tuple[str, ...]
+    landscape_units: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "summary_path": str(self.summary_path),
+            "parent_step_ids": list(self.parent_step_ids),
+            "landscape_units": list(self.landscape_units),
+            "run_results": [item.to_dict() for item in self.run_results],
         }
 
 
@@ -563,6 +649,30 @@ def default_tsr_thlb_notebook_runs_root(*, instance_root: Path) -> Path:
         / "logs"
         / "tsr"
         / "notebook_runs"
+    )
+
+
+def default_tsr_thlb_parallel_benchmark_root(*, instance_root: Path) -> Path:
+    """Return the default runtime root for LU-parallel THLB benchmark artifacts."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "runtime"
+        / "logs"
+        / "tsr"
+        / "parallel_benchmarks"
+    )
+
+
+def default_tsr_thlb_lu_partition_root(*, instance_root: Path) -> Path:
+    """Return the default runtime root for cached LU-clipped THLB partitions."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "runtime"
+        / "logs"
+        / "tsr"
+        / "lu_partitions"
     )
 
 
@@ -1808,7 +1918,10 @@ def _build_draft_subrules_for_parent_step(
                 ),
                 "candidate_layers": [],
                 "candidate_fields": [],
-                "candidate_values": ["2.28% future RTL factor", "22,754 ha total TSR benchmark"],
+                "candidate_values": [
+                    "2.28% future RTL factor",
+                    "22,754 ha total TSR benchmark",
+                ],
                 "candidate_operation_type": "aspatial_area_reduction",
                 "field_mapping_notes": [
                     "Do not reuse the existing-roads spatial overlay logic for this parent step.",
@@ -1820,7 +1933,10 @@ def _build_draft_subrules_for_parent_step(
                 "hint_provenance_ids": [],
             },
         )
-    if subsection_title.casefold().strip() == "cultural heritage and archaeological resources.":
+    if (
+        subsection_title.casefold().strip()
+        == "cultural heritage and archaeological resources."
+    ):
         provenance_id = str(linked_subsection.get("provenance_id", ""))
         return (
             {
@@ -1862,7 +1978,10 @@ def _build_draft_subrules_for_parent_step(
                 ),
                 "candidate_layers": [],
                 "candidate_fields": [],
-                "candidate_values": ["2% of cutblock area", "34,205 ha total TSR benchmark"],
+                "candidate_values": [
+                    "2% of cutblock area",
+                    "34,205 ha total TSR benchmark",
+                ],
                 "candidate_operation_type": "aspatial_reduction",
                 "field_mapping_notes": [
                     "This is a benchmark-anchored aspatial reduction step, not a direct public-GIS query.",
@@ -1888,9 +2007,13 @@ def _build_draft_subrules_for_parent_step(
                     "effective riparian widths (reserve width plus retained RMZ share) "
                     "to set THLB to 0 on riparian stream buffers."
                 ),
-                "candidate_layers": ["reg_land_and_natural_resource_stream_classification_car_line"],
+                "candidate_layers": [
+                    "reg_land_and_natural_resource_stream_classification_car_line"
+                ],
                 "candidate_fields": ["STREAM_CLASS"],
-                "candidate_values": [f"S{value}" for value in _RIPARIAN_STREAM_WIDTHS_M],
+                "candidate_values": [
+                    f"S{value}" for value in _RIPARIAN_STREAM_WIDTHS_M
+                ],
                 "candidate_operation_type": "exclude",
                 "field_mapping_notes": [
                     "STREAM_CLASS uses numeric values 1-6 in the downloaded Cariboo stream-classification layer."
@@ -1910,7 +2033,9 @@ def _build_draft_subrules_for_parent_step(
                     "Use the Cariboo wetland-class polygon layer with Table 15 "
                     "effective riparian widths to set THLB to 0 on riparian wetland buffers."
                 ),
-                "candidate_layers": ["reg_land_and_natural_resource_wetland_class_car_poly"],
+                "candidate_layers": [
+                    "reg_land_and_natural_resource_wetland_class_car_poly"
+                ],
                 "candidate_fields": ["SWAMP_CLASS"],
                 "candidate_values": sorted(_RIPARIAN_WETLAND_WIDTHS_M),
                 "candidate_operation_type": "exclude",
@@ -2043,9 +2168,13 @@ def _specialized_compiled_logic_for_parent_step(
 ) -> tuple[dict[str, Any], ...] | None:
     lower = parent_label.casefold().strip()
     provenance_id = (
-        str(linked_subsection.get("provenance_id", "")) if linked_subsection else table_provenance
+        str(linked_subsection.get("provenance_id", ""))
+        if linked_subsection
+        else table_provenance
     )
-    page_number = int(linked_subsection.get("page_number", 0)) if linked_subsection else None
+    page_number = (
+        int(linked_subsection.get("page_number", 0)) if linked_subsection else None
+    )
 
     def _base_item(step_suffix: str, label: str, operation_type: str) -> dict[str, Any]:
         return {
@@ -2056,7 +2185,9 @@ def _specialized_compiled_logic_for_parent_step(
             "step_kind": "netdown_rule",
             "label": label,
             "raw_value": label,
-            "raw_text": str(linked_subsection.get("body", "")).strip() if linked_subsection else parent_label,
+            "raw_text": str(linked_subsection.get("body", "")).strip()
+            if linked_subsection
+            else parent_label,
             "land_base_stage": land_base_stage,
             "stage_label": stage_label,
             "execution_class": execution_class,
@@ -2154,7 +2285,11 @@ def _specialized_compiled_logic_for_parent_step(
                 "checkpoint_attribute_filters": [
                     {"field": "BCLCS_LEVEL_2", "operator": "ne", "value": "T"},
                     {"field": "FOR_MGMT_LAND_BASE_IND", "operator": "ne", "value": "Y"},
-                    {"field": "NON_PRODUCTIVE_CD", "operator": "not_blank", "value": None},
+                    {
+                        "field": "NON_PRODUCTIVE_CD",
+                        "operator": "not_blank",
+                        "value": None,
+                    },
                     {"field": "CROWN_CLOSURE", "operator": "lt", "value": 10},
                 ],
                 "execution_notes": [
@@ -2163,7 +2298,11 @@ def _specialized_compiled_logic_for_parent_step(
                 ],
             }
         )
-        fwa_item = _base_item("compiled_02", "Freshwater Atlas final water check", "select_spatial_intersect")
+        fwa_item = _base_item(
+            "compiled_02",
+            "Freshwater Atlas final water check",
+            "select_spatial_intersect",
+        )
         fwa_item.update(
             {
                 "normalized_action": "exclude",
@@ -2185,39 +2324,53 @@ def _specialized_compiled_logic_for_parent_step(
         return (attribute_item, fwa_item)
 
     if lower == "roads and landings":
-        road_atlas = _base_item("compiled_01", "Existing public and resource roads", "buffer_then_intersect")
+        road_atlas = _base_item(
+            "compiled_01", "Existing public and resource roads", "buffer_then_intersect"
+        )
         road_atlas.update(
             {
                 "normalized_action": "exclude",
                 "normalized_subject": "Existing public and resource roads",
                 "normalized_predicate": "buffer road-atlas lines by maintained clearing width and exclude the overlap",
-                "linked_source_entry_ids": ["whse_basemapping_dra_dgtl_road_atlas_mpar_sp"],
+                "linked_source_entry_ids": [
+                    "whse_basemapping_dra_dgtl_road_atlas_mpar_sp"
+                ],
                 "buffer_distance_m": 12.5,
                 "execution_notes": [
                     "Notebook execution applies the 12.5 m half-width from the TSR prose for public and forest service road centerlines."
                 ],
             }
         )
-        road_section = _base_item("compiled_02", "Active or retired road permit roads", "buffer_then_intersect")
+        road_section = _base_item(
+            "compiled_02",
+            "Active or retired road permit roads",
+            "buffer_then_intersect",
+        )
         road_section.update(
             {
                 "normalized_action": "exclude",
                 "normalized_subject": "Active or retired road permit roads",
                 "normalized_predicate": "buffer road-permit lines by maintained clearing width and exclude the overlap",
-                "linked_source_entry_ids": ["whse_forest_tenure_ften_road_section_lines_svw"],
+                "linked_source_entry_ids": [
+                    "whse_forest_tenure_ften_road_section_lines_svw"
+                ],
                 "buffer_distance_m": 7.5,
                 "execution_notes": [
                     "Notebook execution applies the 7.5 m half-width from the TSR prose for active/retired road permit centerlines."
                 ],
             }
         )
-        landing_item = _base_item("compiled_03", "Landings and temporary roads", "manual_review_required")
+        landing_item = _base_item(
+            "compiled_03", "Landings and temporary roads", "manual_review_required"
+        )
         landing_item.update(
             {
                 "normalized_action": "review",
                 "normalized_subject": "Landings and temporary roads",
                 "normalized_predicate": "requires non-spatial or additional harvested-area treatment logic",
-                "linked_source_entry_ids": ["whse_forest_vegetation_veg_consolidated_cut_blocks_sp"],
+                "linked_source_entry_ids": [
+                    "whse_forest_vegetation_veg_consolidated_cut_blocks_sp"
+                ],
                 "step_status": "manual_review_required",
                 "required": False,
                 "notes": [
@@ -2228,7 +2381,9 @@ def _specialized_compiled_logic_for_parent_step(
         return (road_atlas, road_section, landing_item)
 
     if lower == "parks, protected areas, area-base tenures":
-        parks_item = _base_item("compiled_01", "Parks and protected areas", "select_spatial_intersect")
+        parks_item = _base_item(
+            "compiled_01", "Parks and protected areas", "select_spatial_intersect"
+        )
         parks_item.update(
             {
                 "normalized_action": "exclude",
@@ -2237,17 +2392,39 @@ def _specialized_compiled_logic_for_parent_step(
                 "linked_source_entry_ids": ["whse_tantalis_ta_park_ecores_pa_svw"],
             }
         )
-        tenure_item = _base_item("compiled_02", "Area-based tenures and woodlots", "manual_review_required")
+        excluded_tenure_descriptions = [
+            "Crown Lease - Misc. lease",
+            "Crown Tenure - Woodlot Licence, Schedule A",
+            "Crown Tenure - Woodlot Licence, Schedule B",
+        ]
+        tenure_item = _base_item(
+            "compiled_02",
+            "Area-based tenures and woodlots",
+            "select_spatial_intersect",
+        )
         tenure_item.update(
             {
-                "normalized_action": "review",
+                "normalized_action": "exclude",
                 "normalized_subject": "Area-based tenures and woodlots",
-                "normalized_predicate": "requires explicit tenure overlays or reviewed ownership logic before automation",
+                "normalized_predicate": (
+                    "exclude mapped area-based tenure and woodlot polygons from the "
+                    "working harvestable land base"
+                ),
                 "linked_source_entry_ids": ["whse_forest_vegetation_f_own"],
-                "step_status": "manual_review_required",
-                "required": False,
+                "source_attribute_filters": [
+                    {
+                        "field": "OWNERSHIP_DESCRIPTION",
+                        "operator": "in",
+                        "value": excluded_tenure_descriptions,
+                    }
+                ],
+                "step_status": "ready",
+                "required": True,
                 "notes": [
-                    "Notebook bridge currently auto-runs the parks/protected-areas portion only; small area-based tenures remain review-driven."
+                    "TSA29 section 6.2.1 keeps woodlots in AFLB but removes them when defining the LHLB, so woodlot schedules A/B are included here.",
+                    "This first runnable pass uses the explicit F_OWN ownership descriptions for woodlots and the small miscellaneous crown-lease class cited in TSA29 Table 7.",
+                    "Community forest agreements and first nations woodland licences were already netted out upstream in TSA29 step 2 and are therefore intentionally excluded from this step-6 executable filter.",
+                    "FTEN managed-licence and TANTALIS crown-tenure layers remain supporting metadata/reference surfaces, but F_OWN is the executable ownership overlay in the TSA29 bridge.",
                 ],
             }
         )
@@ -2415,7 +2592,9 @@ def _specialized_compiled_logic_for_parent_step(
                     "set THLB to 0 where terrain-stability mapping identifies unstable "
                     "terrain or terrain class 5 polygons"
                 ),
-                "linked_source_entry_ids": ["reg_land_and_natural_resource_terrain_stability"],
+                "linked_source_entry_ids": [
+                    "reg_land_and_natural_resource_terrain_stability"
+                ],
                 "source_attribute_filters": [
                     {
                         "field": "SLOPE_STABILITY_CLASS_W_ROADS",
@@ -2476,7 +2655,7 @@ def _specialized_compiled_logic_for_parent_step(
                 "notes": [
                     "Step 14 runs late in the pipeline on the curve-ready checkpoint rather than on checkpoint1.",
                     "Notebook execution uses the current assigned bundle curves: treated curves use volume at CMAI, untreated curves use culmination volume.",
-                    "This replaces the earlier site-index placeholder with a direct yield-curve threshold test."
+                    "This replaces the earlier site-index placeholder with a direct yield-curve threshold test.",
                 ],
             }
         )
@@ -2534,7 +2713,7 @@ def _specialized_compiled_logic_for_parent_step(
                 "notes": [
                     "TSA29 section 6.4.5 excludes broadleaf-leading stands from THLB.",
                     "Notebook execution uses the leading VRI species code on the late-stage curve-ready checkpoint surface.",
-                    "The deciduous component of conifer-leading stands is explicitly deferred to the later broadleaf volume-exclusion assumption."
+                    "The deciduous component of conifer-leading stands is explicitly deferred to the later broadleaf volume-exclusion assumption.",
                 ],
             }
         )
@@ -3238,7 +3417,11 @@ def _build_source_recipe_index(
         snippet = str(entry.get("snippet", "")).strip()
         cycle_year = int(entry.get("cycle_year", 0) or 0)
         query_years = _extract_token_years(
-            " ".join(part for part in (label, recommended_query, top_match_title, snippet) if part)
+            " ".join(
+                part
+                for part in (label, recommended_query, top_match_title, snippet)
+                if part
+            )
         )
         is_stale_year_stamped = (
             bool(query_years)
@@ -4181,7 +4364,9 @@ def _default_workbench_checkpoint_path(
     return _find_curve_ready_thlb_checkpoint_path(instance_root=instance_root)
 
 
-def _workbench_stage_window_for_target(target_parent: dict[str, Any]) -> tuple[str, ...]:
+def _workbench_stage_window_for_target(
+    target_parent: dict[str, Any],
+) -> tuple[str, ...]:
     stage = str(target_parent.get("land_base_stage", "")).strip()
     if stage == "glb_to_aflb":
         return ("glb_to_aflb",)
@@ -4285,28 +4470,34 @@ def _find_landscape_unit_layer_path(instance_root: Path) -> Path | None:
     return None
 
 
-def _filter_checkpoint_by_landscape_units(
-    checkpoint: gpd.GeoDataFrame,
-    *,
-    instance_root: Path,
-    landscape_units: Sequence[str],
-) -> tuple[gpd.GeoDataFrame, tuple[str, ...]]:
-    tokens = tuple(str(value).strip() for value in landscape_units if str(value).strip())
-    if not tokens:
-        return checkpoint, ()
+def _load_landscape_unit_layer(instance_root: Path) -> gpd.GeoDataFrame:
     layer_path = _find_landscape_unit_layer_path(instance_root)
     if layer_path is None:
         raise TsrRecipeError(
-            "Landscape unit smoke subset requested, but no landscape unit layer was found "
-            "under the instance BCDC downloads."
+            "Landscape unit layer was not found under the instance BCDC downloads."
         )
     lu_layer = gpd.read_file(layer_path, engine="pyogrio")
     if lu_layer.empty or "geometry" not in lu_layer.columns:
-        raise TsrRecipeError(f"Landscape unit layer is empty or unreadable: {layer_path}")
+        raise TsrRecipeError(
+            f"Landscape unit layer is empty or unreadable: {layer_path}"
+        )
     if lu_layer.crs is None:
         lu_layer = lu_layer.set_crs(BC_ALBERS_EPSG)
     else:
         lu_layer = lu_layer.to_crs(BC_ALBERS_EPSG)
+    return lu_layer
+
+
+def _select_landscape_unit_rows(
+    lu_layer: gpd.GeoDataFrame,
+    *,
+    landscape_units: Sequence[str],
+) -> tuple[gpd.GeoDataFrame, tuple[str, ...]]:
+    tokens = tuple(
+        str(value).strip() for value in landscape_units if str(value).strip()
+    )
+    if not tokens:
+        return lu_layer.iloc[0:0].copy(), ()
     normalized = {token.casefold() for token in tokens}
     selected_rows = pd.Series(False, index=lu_layer.index)
     for column in ("LANDSCAPE_UNIT_ID", "LANDSCAPE_UNIT_NAME", "LANDSCAPE_UNIT_NUMBER"):
@@ -4315,10 +4506,6 @@ def _filter_checkpoint_by_landscape_units(
         values = lu_layer[column].fillna("").astype(str).str.strip()
         selected_rows = selected_rows | values.str.casefold().isin(normalized)
     selected = lu_layer.loc[selected_rows].copy()
-    if selected.empty:
-        raise TsrRecipeError(
-            "Landscape unit subset did not match any LU rows: " + ", ".join(tokens)
-        )
     selected_names = tuple(
         str(value).strip()
         for value in selected.get("LANDSCAPE_UNIT_NAME", pd.Series(dtype=str))
@@ -4327,6 +4514,31 @@ def _filter_checkpoint_by_landscape_units(
         .tolist()
         if str(value).strip()
     )
+    return selected, selected_names
+
+
+def _filter_checkpoint_by_landscape_units(
+    checkpoint: gpd.GeoDataFrame,
+    *,
+    instance_root: Path,
+    landscape_units: Sequence[str],
+) -> tuple[gpd.GeoDataFrame, tuple[str, ...]]:
+    tokens = tuple(
+        str(value).strip() for value in landscape_units if str(value).strip()
+    )
+    if not tokens:
+        return checkpoint, ()
+    lu_layer = _load_landscape_unit_layer(instance_root)
+    selected, selected_names = _select_landscape_unit_rows(
+        lu_layer, landscape_units=landscape_units
+    )
+    if selected.empty:
+        raise TsrRecipeError(
+            "Landscape unit subset did not match any LU rows: "
+            + ", ".join(
+                str(value).strip() for value in landscape_units if str(value).strip()
+            )
+        )
     union = selected.geometry.union_all()
     checkpoint_bc = checkpoint.copy()
     if checkpoint_bc.crs is None:
@@ -4339,6 +4551,405 @@ def _filter_checkpoint_by_landscape_units(
             "Landscape unit subset matched no checkpoint rows: " + ", ".join(tokens)
         )
     return subset, selected_names
+
+
+def _select_intersecting_landscape_units_for_checkpoint(
+    checkpoint: gpd.GeoDataFrame,
+    *,
+    instance_root: Path,
+) -> tuple[gpd.GeoDataFrame, tuple[str, ...], dict[str, float]]:
+    profiling: dict[str, float] = {
+        "lu_layer_load_seconds": 0.0,
+        "lu_bbox_filter_seconds": 0.0,
+        "lu_union_seconds": 0.0,
+        "lu_intersect_seconds": 0.0,
+    }
+    lu_load_started = perf_counter()
+    lu_layer = _load_landscape_unit_layer(instance_root)
+    profiling["lu_layer_load_seconds"] = perf_counter() - lu_load_started
+    checkpoint_bc = checkpoint.copy()
+    if checkpoint_bc.crs is None:
+        checkpoint_bc = checkpoint_bc.set_crs(BC_ALBERS_EPSG)
+    else:
+        checkpoint_bc = checkpoint_bc.to_crs(BC_ALBERS_EPSG)
+    bbox = tuple(map(float, checkpoint_bc.total_bounds))
+    bbox_started = perf_counter()
+    candidate = lu_layer.loc[lu_layer.geometry.intersects(box(*bbox))].copy()
+    profiling["lu_bbox_filter_seconds"] = perf_counter() - bbox_started
+    if candidate.empty:
+        raise TsrRecipeError(
+            "No landscape units intersect the current checkpoint extent."
+        )
+    union_started = perf_counter()
+    union = checkpoint_bc.geometry.union_all()
+    profiling["lu_union_seconds"] = perf_counter() - union_started
+    intersect_started = perf_counter()
+    selected = candidate.loc[candidate.geometry.intersects(union)].copy()
+    profiling["lu_intersect_seconds"] = perf_counter() - intersect_started
+    if selected.empty:
+        raise TsrRecipeError(
+            "No landscape units intersect the current checkpoint geometry."
+        )
+    selected_names = tuple(
+        str(value).strip()
+        for value in selected.get("LANDSCAPE_UNIT_NAME", pd.Series(dtype=str))
+        .fillna("")
+        .astype(str)
+        .tolist()
+        if str(value).strip()
+    )
+    return selected, selected_names, profiling
+
+
+def _load_cached_landscape_unit_partition_selection(
+    *,
+    checkpoint_path: Path,
+    instance_root: Path,
+) -> tuple[tuple[str, ...], Path] | None:
+    partition_root = default_tsr_thlb_lu_partition_root(instance_root=instance_root)
+    if not partition_root.exists():
+        return None
+    resolved_checkpoint = str(checkpoint_path.expanduser().resolve())
+    for metadata_path in sorted(partition_root.glob("*/partition_metadata.json")):
+        try:
+            payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if str(payload.get("checkpoint_path", "")).strip() != resolved_checkpoint:
+            continue
+        selected_raw = payload.get("selected_landscape_units", [])
+        if not isinstance(selected_raw, list):
+            continue
+        selected_names = tuple(
+            str(value).strip() for value in selected_raw if str(value).strip()
+        )
+        if not selected_names:
+            continue
+        return selected_names, metadata_path.parent
+    return None
+
+
+def _load_cached_landscape_unit_partition_records(
+    *,
+    checkpoint_path: Path,
+    instance_root: Path,
+) -> tuple[tuple[str, ...], list[dict[str, Any]]] | None:
+    partition_root = default_tsr_thlb_lu_partition_root(instance_root=instance_root)
+    if not partition_root.exists():
+        return None
+    resolved_checkpoint = str(checkpoint_path.expanduser().resolve())
+    for metadata_path in sorted(partition_root.glob("*/partition_metadata.json")):
+        try:
+            payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if str(payload.get("checkpoint_path", "")).strip() != resolved_checkpoint:
+            continue
+        selected_raw = payload.get("selected_landscape_units", [])
+        records_raw = payload.get("chunk_records", [])
+        if not isinstance(selected_raw, list) or not isinstance(records_raw, list):
+            continue
+        selected_names = tuple(
+            str(value).strip() for value in selected_raw if str(value).strip()
+        )
+        cached_records: list[dict[str, Any]] = []
+        partition_dir = metadata_path.parent
+        for item in records_raw:
+            if not isinstance(item, dict):
+                continue
+            path_value = str(item.get("chunk_path", "")).strip()
+            if not path_value:
+                continue
+            chunk_path = partition_dir / path_value
+            if not chunk_path.exists():
+                cached_records = []
+                break
+            cached_records.append(
+                {
+                    "lu_name": str(item.get("lu_name", "")).strip(),
+                    "chunk_path": chunk_path,
+                    "area_ha": float(item.get("area_ha", 0.0) or 0.0),
+                }
+            )
+        if cached_records:
+            cached_records.sort(key=lambda item: str(item.get("lu_name", "")).strip())
+            return selected_names, cached_records
+    return None
+
+
+def _scale_area_series_for_clip(
+    values: pd.Series,
+    *,
+    ratio: pd.Series,
+    unit: str,
+) -> pd.Series:
+    numeric = pd.to_numeric(values, errors="coerce").fillna(0.0)
+    scaled = numeric * ratio
+    if unit == "ha":
+        return scaled.clip(lower=0.0)
+    return scaled.clip(lower=0.0)
+
+
+def _clip_checkpoint_to_landscape_unit_chunks(
+    checkpoint: gpd.GeoDataFrame,
+    *,
+    lu_frame: gpd.GeoDataFrame,
+) -> list[tuple[str, gpd.GeoDataFrame]]:
+    if checkpoint.empty:
+        return []
+    checkpoint_bc = checkpoint.copy()
+    if checkpoint_bc.crs is None:
+        checkpoint_bc = checkpoint_bc.set_crs(BC_ALBERS_EPSG)
+    else:
+        checkpoint_bc = checkpoint_bc.to_crs(BC_ALBERS_EPSG)
+    checkpoint_bc = checkpoint_bc.copy()
+    checkpoint_bc["_orig_geom_area_sqm"] = checkpoint_bc.geometry.area.astype(float)
+    lu_bc = lu_frame.copy()
+    if lu_bc.crs is None:
+        lu_bc = lu_bc.set_crs(BC_ALBERS_EPSG)
+    else:
+        lu_bc = lu_bc.to_crs(BC_ALBERS_EPSG)
+    lu_bc = lu_bc.copy()
+    lu_bc["_lu_name"] = (
+        lu_bc.get("LANDSCAPE_UNIT_NAME", pd.Series(dtype=str))
+        .fillna("")
+        .astype(str)
+        .str.strip()
+    )
+    overlay = gpd.overlay(
+        checkpoint_bc,
+        lu_bc[["_lu_name", "geometry"]],
+        how="intersection",
+        keep_geom_type=False,
+    )
+    if overlay.empty:
+        return []
+    overlay = overlay.loc[~overlay.geometry.is_empty].copy()
+    clipped_area_sqm = overlay.geometry.area.astype(float)
+    original_area_sqm = pd.to_numeric(
+        overlay.get("_orig_geom_area_sqm", pd.Series(0.0, index=overlay.index)),
+        errors="coerce",
+    ).fillna(0.0)
+    ratio = clipped_area_sqm / original_area_sqm.where(
+        original_area_sqm > 0.0, other=1.0
+    )
+    ratio = ratio.where(original_area_sqm > 0.0, other=0.0).fillna(0.0).clip(lower=0.0)
+    if "FEATURE_AREA_SQM" in overlay.columns:
+        overlay["FEATURE_AREA_SQM"] = _scale_area_series_for_clip(
+            overlay["FEATURE_AREA_SQM"], ratio=ratio, unit="sqm"
+        )
+    if "Shape_Area" in overlay.columns:
+        overlay["Shape_Area"] = _scale_area_series_for_clip(
+            overlay["Shape_Area"], ratio=ratio, unit="sqm"
+        )
+    if "POLYGON_AREA" in overlay.columns:
+        overlay["POLYGON_AREA"] = _scale_area_series_for_clip(
+            overlay["POLYGON_AREA"], ratio=ratio, unit="ha"
+        )
+    if "GEOMETRY_AREA" in overlay.columns:
+        overlay["GEOMETRY_AREA"] = _scale_area_series_for_clip(
+            overlay["GEOMETRY_AREA"], ratio=ratio, unit="ha"
+        )
+    if "AREA_HA" in overlay.columns:
+        overlay["AREA_HA"] = _scale_area_series_for_clip(
+            overlay["AREA_HA"], ratio=ratio, unit="ha"
+        )
+    if TSR_EFFECTIVE_AREA_SQM_COLUMN in overlay.columns:
+        overlay[TSR_EFFECTIVE_AREA_SQM_COLUMN] = _scale_area_series_for_clip(
+            overlay[TSR_EFFECTIVE_AREA_SQM_COLUMN], ratio=ratio, unit="sqm"
+        )
+    if "_stand_area_sqm" in overlay.columns:
+        overlay["_stand_area_sqm"] = _scale_area_series_for_clip(
+            overlay["_stand_area_sqm"], ratio=ratio, unit="sqm"
+        )
+    else:
+        overlay["_stand_area_sqm"] = clipped_area_sqm
+    overlay = _update_geometry_measure_columns(overlay)
+
+    chunks: list[tuple[str, gpd.GeoDataFrame]] = []
+    for lu_name, group in overlay.groupby("_lu_name", dropna=False):
+        label = str(lu_name).strip() or "unnamed_lu"
+        chunk = gpd.GeoDataFrame(
+            group.drop(columns=["_lu_name"], errors="ignore").copy(),
+            crs=BC_ALBERS_EPSG,
+        )
+        chunks.append((label, chunk))
+    chunks.sort(key=lambda item: item[0])
+    return chunks
+
+
+def _group_landscape_unit_chunks(
+    chunks: Sequence[tuple[str, gpd.GeoDataFrame]],
+    *,
+    bundle_count: int,
+) -> list[dict[str, Any]]:
+    if not chunks:
+        return []
+    resolved_bundle_count = max(1, min(int(bundle_count), len(chunks)))
+    bundles: list[dict[str, Any]] = [
+        {
+            "bundle_index": index + 1,
+            "bundle_label": f"worker_{index + 1:02d}",
+            "total_area_ha": 0.0,
+            "chunks": [],
+        }
+        for index in range(resolved_bundle_count)
+    ]
+    sorted_chunks = sorted(
+        chunks,
+        key=lambda item: float(_managed_area_ha(item[1])),
+        reverse=True,
+    )
+    for lu_name, chunk in sorted_chunks:
+        target = min(bundles, key=lambda item: float(item["total_area_ha"]))
+        target["chunks"].append((lu_name, chunk))
+        target["total_area_ha"] = float(target["total_area_ha"]) + float(
+            _managed_area_ha(chunk)
+        )
+    return bundles
+
+
+def _group_landscape_unit_chunk_records(
+    chunk_records: Sequence[dict[str, Any]],
+    *,
+    bundle_count: int,
+) -> list[dict[str, Any]]:
+    if not chunk_records:
+        return []
+    resolved_bundle_count = max(1, min(int(bundle_count), len(chunk_records)))
+    bundles: list[dict[str, Any]] = [
+        {
+            "bundle_index": index + 1,
+            "bundle_label": f"worker_{index + 1:02d}",
+            "total_area_ha": 0.0,
+            "chunk_records": [],
+        }
+        for index in range(resolved_bundle_count)
+    ]
+    sorted_records = sorted(
+        chunk_records,
+        key=lambda item: float(item.get("area_ha", 0.0) or 0.0),
+        reverse=True,
+    )
+    for record in sorted_records:
+        target = min(bundles, key=lambda item: float(item["total_area_ha"]))
+        target["chunk_records"].append(dict(record))
+        target["total_area_ha"] = float(target["total_area_ha"]) + float(
+            record.get("area_ha", 0.0) or 0.0
+        )
+    return bundles
+
+
+def _materialize_checkpoint_landscape_unit_partitions(
+    checkpoint: gpd.GeoDataFrame,
+    *,
+    checkpoint_path: Path,
+    lu_frame: gpd.GeoDataFrame,
+    selected_landscape_units: Sequence[str],
+    instance_root: Path,
+) -> list[dict[str, Any]]:
+    partition_root = default_tsr_thlb_lu_partition_root(instance_root=instance_root)
+    partition_root.mkdir(parents=True, exist_ok=True)
+    lu_key = "|".join(str(value).strip() for value in selected_landscape_units if str(value).strip())
+    digest = hashlib.sha1(
+        (
+            f"{checkpoint_path.expanduser().resolve()}||{lu_key or 'all_lus'}"
+        ).encode("utf-8")
+    ).hexdigest()[:12]
+    partition_dir = partition_root / f"{checkpoint_path.stem}.{digest}"
+    metadata_path = partition_dir / "partition_metadata.json"
+    if metadata_path.exists():
+        payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+        records_raw = payload.get("chunk_records", [])
+        if isinstance(records_raw, list):
+            cached_records: list[dict[str, Any]] = []
+            for item in records_raw:
+                if not isinstance(item, dict):
+                    continue
+                path_value = str(item.get("chunk_path", "")).strip()
+                if not path_value:
+                    continue
+                chunk_path = partition_dir / path_value
+                if not chunk_path.exists():
+                    continue
+                cached_records.append(
+                    {
+                        "lu_name": str(item.get("lu_name", "")).strip(),
+                        "chunk_path": chunk_path,
+                        "area_ha": float(item.get("area_ha", 0.0) or 0.0),
+                    }
+                )
+            if cached_records:
+                cached_records.sort(key=lambda item: str(item.get("lu_name", "")).strip())
+                return cached_records
+
+    partition_dir.mkdir(parents=True, exist_ok=True)
+    chunks = _clip_checkpoint_to_landscape_unit_chunks(checkpoint, lu_frame=lu_frame)
+    records: list[dict[str, Any]] = []
+    for index, (lu_name, chunk) in enumerate(chunks, start=1):
+        slug = re.sub(r"[^A-Za-z0-9]+", "_", lu_name).strip("_").lower() or f"lu_{index:03d}"
+        chunk_filename = f"{index:03d}_{slug}.feather"
+        chunk_path = partition_dir / chunk_filename
+        chunk.drop(columns=["_orig_geom_area_sqm"], errors="ignore").to_feather(chunk_path)
+        area_ha = float(chunk.geometry.area.astype(float).sum() / 10000.0)
+        records.append(
+            {
+                "lu_name": lu_name,
+                "chunk_path": chunk_path,
+                "area_ha": area_ha,
+            }
+        )
+    metadata_payload = {
+        "checkpoint_path": str(checkpoint_path.expanduser().resolve()),
+        "selected_landscape_units": list(selected_landscape_units),
+        "chunk_records": [
+            {
+                "lu_name": str(item["lu_name"]),
+                "chunk_path": Path(str(item["chunk_path"])).name,
+                "area_ha": float(item["area_ha"] or 0.0),
+            }
+            for item in records
+        ],
+    }
+    metadata_path.write_text(
+        json.dumps(metadata_payload, indent=2, sort_keys=False),
+        encoding="utf-8",
+    )
+    records.sort(key=lambda item: str(item.get("lu_name", "")).strip())
+    return records
+
+
+def _write_tsr_thlb_parallel_progress(
+    progress_path: Path,
+    *,
+    bundle_index: int,
+    bundle_label: str,
+    lu_names: Sequence[str],
+    completed_lus: int,
+    total_lus: int,
+    current_lu: str | None,
+    status: str,
+    notes: Sequence[str] = (),
+) -> None:
+    progress_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "bundle_index": bundle_index,
+        "bundle_label": bundle_label,
+        "lu_names": list(lu_names),
+        "completed_lus": int(completed_lus),
+        "total_lus": int(total_lus),
+        "fraction_complete": (
+            float(completed_lus) / float(total_lus) if total_lus > 0 else 1.0
+        ),
+        "current_lu": current_lu,
+        "status": status,
+        "notes": [str(value).strip() for value in notes if str(value).strip()],
+        "updated_utc": datetime.now(UTC).isoformat(),
+    }
+    progress_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=False),
+        encoding="utf-8",
+    )
 
 
 def _auto_select_smoke_map_ids_for_parent_step(
@@ -4402,8 +5013,8 @@ def _auto_select_smoke_map_ids_for_parent_step(
         return _auto_select_smoke_map_ids(checkpoint)
 
     scored: list[tuple[float, str, tuple[float, float, float, float]]] = []
-    candidate_rows = (
-        map_polys.sort_values("_area_ha", ascending=False).head(max_candidate_tiles)
+    candidate_rows = map_polys.sort_values("_area_ha", ascending=False).head(
+        max_candidate_tiles
     )
     for _idx, row in candidate_rows.iterrows():
         map_id = _normalize_map_id_token(row["MAP_ID"])
@@ -4503,7 +5114,9 @@ def _resolve_canonical_stand_area_sqm(checkpoint: gpd.GeoDataFrame) -> pd.Series
         ).fillna(0.0)
         return feature_area.clip(lower=0.0)
     if "POLYGON_AREA" in checkpoint.columns:
-        polygon_area = pd.to_numeric(checkpoint["POLYGON_AREA"], errors="coerce").fillna(0.0)
+        polygon_area = pd.to_numeric(
+            checkpoint["POLYGON_AREA"], errors="coerce"
+        ).fillna(0.0)
         if float(polygon_area.max()) <= 1000.0:
             polygon_area = polygon_area * 10000.0
         return polygon_area.clip(lower=0.0)
@@ -4596,7 +5209,10 @@ def _fragment_binary_exclusion_step(
     intersections = intersections.copy()
     intersections["thlb_fact"] = 0.0
     intersections["thlb"] = 0
-    if update_aflb_flag_on_exclusion and "FOR_MGMT_LAND_BASE_IND" in intersections.columns:
+    if (
+        update_aflb_flag_on_exclusion
+        and "FOR_MGMT_LAND_BASE_IND" in intersections.columns
+    ):
         intersections["FOR_MGMT_LAND_BASE_IND"] = "N"
 
     if not differences.empty:
@@ -5588,7 +6204,9 @@ def _resolve_tsr_thlb_parent_step(
     raise TsrRecipeError(f"No THLB parent step found for `{parent_step_id}`.")
 
 
-def _resolve_tsr_total_area_benchmark(recipe: TsrThlbNetdownRecipeRecord) -> float | None:
+def _resolve_tsr_total_area_benchmark(
+    recipe: TsrThlbNetdownRecipeRecord,
+) -> float | None:
     for parent_step in recipe.parent_steps:
         if str(parent_step.get("parent_kind", "")).strip() != "milestone":
             continue
@@ -5658,7 +6276,11 @@ def _apply_checkpoint_attribute_filters(
         value = item.get("value")
         if field not in checkpoint.columns:
             continue
-        masks.append(_evaluate_attribute_filter(checkpoint[field], operator=operator, value=value))
+        masks.append(
+            _evaluate_attribute_filter(
+                checkpoint[field], operator=operator, value=value
+            )
+        )
     if not masks:
         return checkpoint, 0.0
     exclude_mask = masks[0].copy()
@@ -5667,7 +6289,9 @@ def _apply_checkpoint_attribute_filters(
             exclude_mask = exclude_mask & mask
         else:
             exclude_mask = exclude_mask | mask
-    active_mask = checkpoint["thlb_fact"] > 0 if "thlb_fact" in checkpoint.columns else True
+    active_mask = (
+        checkpoint["thlb_fact"] > 0 if "thlb_fact" in checkpoint.columns else True
+    )
     effective_exclude_mask = exclude_mask & active_mask
     removed_area_ha = float(
         checkpoint.loc[effective_exclude_mask, "_stand_area_sqm"].sum() / 10000.0
@@ -5699,7 +6323,9 @@ def _apply_source_attribute_filters(
         value = item.get("value")
         if field not in filtered.columns:
             continue
-        mask = _evaluate_attribute_filter(filtered[field], operator=operator, value=value)
+        mask = _evaluate_attribute_filter(
+            filtered[field], operator=operator, value=value
+        )
         filtered = filtered.loc[mask].copy()
     return filtered
 
@@ -5732,12 +6358,9 @@ def _load_curve_metric_lookup(bundle_root_str: str) -> dict[int, dict[str, Any]]
     curve_points["mai"] = curve_points["y"] / curve_points["x"]
     cmai_rows = curve_points.loc[
         curve_points.groupby("curve_id", sort=False)["mai"].idxmax()
-    ][["curve_id", "x", "y"]].rename(
-        columns={"x": "cmai_age", "y": "cmai_volume"}
-    )
-    culmination_rows = (
-        curve_points.groupby("curve_id", as_index=False)
-        .agg(culmination_volume=("y", "max"))
+    ][["curve_id", "x", "y"]].rename(columns={"x": "cmai_age", "y": "cmai_volume"})
+    culmination_rows = curve_points.groupby("curve_id", as_index=False).agg(
+        culmination_volume=("y", "max")
     )
     merged = curve_table.merge(cmai_rows, on="curve_id", how="left").merge(
         culmination_rows, on="curve_id", how="left"
@@ -5769,14 +6392,18 @@ def _apply_curve_volume_threshold_exclusion(
     compiled_item: dict[str, Any],
     preserve_geometry: bool,
 ) -> tuple[gpd.GeoDataFrame, float, int, int]:
-    curve_id_column = str(compiled_item.get("curve_id_column", "curve1")).strip() or "curve1"
+    curve_id_column = (
+        str(compiled_item.get("curve_id_column", "curve1")).strip() or "curve1"
+    )
     if curve_id_column not in checkpoint.columns:
         raise TsrRecipeError(
             f"Curve-driven THLB step requires checkpoint column `{curve_id_column}`."
         )
     minimum_volume = float(compiled_item.get("minimum_volume_m3_per_ha", 0.0) or 0.0)
     if minimum_volume <= 0.0:
-        raise TsrRecipeError("Curve-driven THLB step requires a positive minimum volume cutoff.")
+        raise TsrRecipeError(
+            "Curve-driven THLB step requires a positive minimum volume cutoff."
+        )
     metrics_lookup = _load_curve_metric_lookup(
         str((instance_root / "data" / "model_input_bundle").expanduser().resolve())
     )
@@ -5785,27 +6412,37 @@ def _apply_curve_volume_threshold_exclusion(
         {
             "curve_id": curve_ids,
             "curve_type": curve_ids.map(
-                lambda value: metrics_lookup.get(int(value), {}).get("curve_type")
-                if pd.notna(value)
-                else None
+                lambda value: (
+                    metrics_lookup.get(int(value), {}).get("curve_type")
+                    if pd.notna(value)
+                    else None
+                )
             ),
             "cmai_volume": curve_ids.map(
-                lambda value: metrics_lookup.get(int(value), {}).get("cmai_volume")
-                if pd.notna(value)
-                else None
+                lambda value: (
+                    metrics_lookup.get(int(value), {}).get("cmai_volume")
+                    if pd.notna(value)
+                    else None
+                )
             ),
             "culmination_volume": curve_ids.map(
-                lambda value: metrics_lookup.get(int(value), {}).get("culmination_volume")
-                if pd.notna(value)
-                else None
+                lambda value: (
+                    metrics_lookup.get(int(value), {}).get("culmination_volume")
+                    if pd.notna(value)
+                    else None
+                )
             ),
         },
         index=checkpoint.index,
     )
-    treated_mask = metric_frame["curve_type"].fillna("").str.casefold().str.startswith("treated")
+    treated_mask = (
+        metric_frame["curve_type"].fillna("").str.casefold().str.startswith("treated")
+    )
     metric_series = metric_frame["culmination_volume"].copy()
     metric_series.loc[treated_mask] = metric_frame.loc[treated_mask, "cmai_volume"]
-    active_mask = checkpoint["thlb_fact"] > 0 if "thlb_fact" in checkpoint.columns else True
+    active_mask = (
+        checkpoint["thlb_fact"] > 0 if "thlb_fact" in checkpoint.columns else True
+    )
     metric_available = metric_series.notna()
     exclude_mask = active_mask & metric_available & (metric_series < minimum_volume)
     removed_area_ha = float(
@@ -5819,12 +6456,22 @@ def _apply_curve_volume_threshold_exclusion(
         updated.loc[exclude_mask, "thlb_fact"] = 0.0
         updated.loc[exclude_mask, "thlb"] = 0
         updated = _assign_fragment_feature_ids(updated)
-        return updated, removed_area_ha, missing_metric_count, treated_count + untreated_count
+        return (
+            updated,
+            removed_area_ha,
+            missing_metric_count,
+            treated_count + untreated_count,
+        )
     remaining = checkpoint.loc[~exclude_mask].copy()
     remaining = _assign_fragment_feature_ids(remaining)
     remaining["thlb_fact"] = 1.0
     remaining["thlb"] = 1
-    return remaining, removed_area_ha, missing_metric_count, treated_count + untreated_count
+    return (
+        remaining,
+        removed_area_ha,
+        missing_metric_count,
+        treated_count + untreated_count,
+    )
 
 
 def _load_compiled_logic_geometries(
@@ -5897,7 +6544,9 @@ def _execute_workbench_compiled_item(
             for item in compiled_item.get("checkpoint_attribute_filters", ())
             if isinstance(item, dict)
         ]
-        mode = str(compiled_item.get("checkpoint_attribute_mode", "any")).strip() or "any"
+        mode = (
+            str(compiled_item.get("checkpoint_attribute_mode", "any")).strip() or "any"
+        )
         updated, removed_area_ha = _apply_checkpoint_attribute_filters(
             checkpoint,
             filters=filters,
@@ -5906,7 +6555,9 @@ def _execute_workbench_compiled_item(
         )
         runtime_item["removed_area_ha"] = removed_area_ha
         runtime_item["remaining_area_ha"] = _managed_area_ha(updated)
-        runtime_item["execution_status"] = "applied" if removed_area_ha > 0 else "applied_noop"
+        runtime_item["execution_status"] = (
+            "applied" if removed_area_ha > 0 else "applied_noop"
+        )
         if preserve_geometry:
             runtime_notes.append(
                 "Later-stage exclusion preserved geometry and set THLB state to 0 on matched rows."
@@ -5933,7 +6584,9 @@ def _execute_workbench_compiled_item(
         runtime_item["remaining_area_ha"] = _managed_area_ha(updated)
         runtime_item["affected_fragment_count"] = affected_row_count
         runtime_item["missing_curve_metric_row_count"] = missing_metric_count
-        runtime_item["execution_status"] = "applied" if removed_area_ha > 0 else "applied_noop"
+        runtime_item["execution_status"] = (
+            "applied" if removed_area_ha > 0 else "applied_noop"
+        )
         if missing_metric_count:
             runtime_notes.append(
                 f"{missing_metric_count} active rows had no usable curve metric and were retained."
@@ -5960,7 +6613,9 @@ def _execute_workbench_compiled_item(
             runtime_item["runtime_notes"] = runtime_notes
             return checkpoint, runtime_item
         target_removed_area_ha = (
-            float(benchmark_marginal_area_ha) * current_managed_area_ha / total_area_benchmark_ha
+            float(benchmark_marginal_area_ha)
+            * current_managed_area_ha
+            / total_area_benchmark_ha
         )
         updated, removed_area_ha, affected_row_count = _apply_aspatial_thlb_reduction(
             checkpoint,
@@ -5969,7 +6624,9 @@ def _execute_workbench_compiled_item(
         runtime_item["removed_area_ha"] = removed_area_ha
         runtime_item["remaining_area_ha"] = _managed_area_ha(updated)
         runtime_item["affected_fragment_count"] = affected_row_count
-        runtime_item["execution_status"] = "applied" if removed_area_ha > 0 else "applied_noop"
+        runtime_item["execution_status"] = (
+            "applied" if removed_area_ha > 0 else "applied_noop"
+        )
         runtime_notes.append(
             "Later-stage aspatial reduction preserved geometry and reduced THLB state proportionally across the active subset."
         )
@@ -5981,7 +6638,9 @@ def _execute_workbench_compiled_item(
 
     if operation_type == "aspatial_area_reduction":
         benchmark_marginal_area_ha = compiled_item.get("benchmark_marginal_area_ha")
-        current_area_ha = float(_resolve_canonical_stand_area_sqm(checkpoint).sum() / 10000.0)
+        current_area_ha = float(
+            _resolve_canonical_stand_area_sqm(checkpoint).sum() / 10000.0
+        )
         if (
             benchmark_marginal_area_ha is None
             or total_area_benchmark_ha is None
@@ -5994,7 +6653,9 @@ def _execute_workbench_compiled_item(
             runtime_item["runtime_notes"] = runtime_notes
             return checkpoint, runtime_item
         target_removed_area_ha = (
-            float(benchmark_marginal_area_ha) * current_area_ha / total_area_benchmark_ha
+            float(benchmark_marginal_area_ha)
+            * current_area_ha
+            / total_area_benchmark_ha
         )
         updated, removed_area_ha, affected_row_count = _apply_aspatial_area_reduction(
             checkpoint,
@@ -6003,7 +6664,9 @@ def _execute_workbench_compiled_item(
         runtime_item["removed_area_ha"] = removed_area_ha
         runtime_item["remaining_area_ha"] = _managed_area_ha(updated)
         runtime_item["affected_fragment_count"] = affected_row_count
-        runtime_item["execution_status"] = "applied" if removed_area_ha > 0 else "applied_noop"
+        runtime_item["execution_status"] = (
+            "applied" if removed_area_ha > 0 else "applied_noop"
+        )
         runtime_notes.append(
             "Early-stage aspatial area reduction preserved geometry and reduced stand-area fields across the active AFLB subset."
         )
@@ -6014,16 +6677,18 @@ def _execute_workbench_compiled_item(
         return updated, runtime_item
 
     if operation_type in {"select_spatial_intersect", "buffer_then_intersect"}:
-        exclusion_geometries, missing_sources, no_matching_features = _load_compiled_logic_geometries(
-            instance_root=instance_root,
-            compiled_item=compiled_item,
-            source_entry_map=source_entry_map,
-            bbox=(
-                float(checkpoint.total_bounds[0]),
-                float(checkpoint.total_bounds[1]),
-                float(checkpoint.total_bounds[2]),
-                float(checkpoint.total_bounds[3]),
-            ),
+        exclusion_geometries, missing_sources, no_matching_features = (
+            _load_compiled_logic_geometries(
+                instance_root=instance_root,
+                compiled_item=compiled_item,
+                source_entry_map=source_entry_map,
+                bbox=(
+                    float(checkpoint.total_bounds[0]),
+                    float(checkpoint.total_bounds[1]),
+                    float(checkpoint.total_bounds[2]),
+                    float(checkpoint.total_bounds[3]),
+                ),
+            )
         )
         if exclusion_geometries is None:
             runtime_item["execution_status"] = "blocked_missing_source"
@@ -6042,14 +6707,22 @@ def _execute_workbench_compiled_item(
             runtime_item["runtime_notes"] = runtime_notes
             return checkpoint, runtime_item
         if operation_type == "buffer_then_intersect":
-            buffer_distance_m = float(compiled_item.get("buffer_distance_m", 0.0) or 0.0)
+            buffer_distance_m = float(
+                compiled_item.get("buffer_distance_m", 0.0) or 0.0
+            )
             exclusion_geometries = exclusion_geometries.copy()
-            exclusion_geometries["geometry"] = exclusion_geometries.geometry.buffer(buffer_distance_m)
-            exclusion_geometries = exclusion_geometries.loc[~exclusion_geometries.geometry.is_empty].copy()
-        updated, affected_fragment_count, affected_area_ha = _fragment_binary_exclusion_step(
-            checkpoint=checkpoint,
-            exclusion_geometries=exclusion_geometries,
-            update_aflb_flag_on_exclusion=not preserve_geometry,
+            exclusion_geometries["geometry"] = exclusion_geometries.geometry.buffer(
+                buffer_distance_m
+            )
+            exclusion_geometries = exclusion_geometries.loc[
+                ~exclusion_geometries.geometry.is_empty
+            ].copy()
+        updated, affected_fragment_count, affected_area_ha = (
+            _fragment_binary_exclusion_step(
+                checkpoint=checkpoint,
+                exclusion_geometries=exclusion_geometries,
+                update_aflb_flag_on_exclusion=not preserve_geometry,
+            )
         )
         if not preserve_geometry:
             updated = updated.loc[updated["thlb_fact"] > 0].copy()
@@ -6063,12 +6736,16 @@ def _execute_workbench_compiled_item(
         runtime_item["removed_area_ha"] = affected_area_ha
         runtime_item["remaining_area_ha"] = _managed_area_ha(updated)
         runtime_item["affected_fragment_count"] = affected_fragment_count
-        runtime_item["execution_status"] = "applied" if affected_area_ha > 0 else "applied_noop"
+        runtime_item["execution_status"] = (
+            "applied" if affected_area_ha > 0 else "applied_noop"
+        )
         runtime_item["runtime_notes"] = runtime_notes
         return updated, runtime_item
 
     runtime_item["execution_status"] = "unsupported"
-    runtime_notes.append(f"Unsupported notebook compiled operation type: {operation_type}")
+    runtime_notes.append(
+        f"Unsupported notebook compiled operation type: {operation_type}"
+    )
     runtime_item["runtime_notes"] = runtime_notes
     return checkpoint, runtime_item
 
@@ -6102,6 +6779,356 @@ def _resolve_compiled_operation_type(compiled_item: dict[str, Any]) -> str:
     return ""
 
 
+def _combine_parent_step_statuses(statuses: set[str]) -> str:
+    applied_statuses = {"applied", "applied_noop"}
+    if "blocked_missing_source" in statuses:
+        return (
+            "applied_with_blockers"
+            if statuses & applied_statuses
+            else "blocked_missing_source"
+        )
+    if "unsupported" in statuses:
+        return (
+            "applied_with_unsupported" if statuses & applied_statuses else "unsupported"
+        )
+    if "manual_review_required" in statuses and len(statuses) == 1:
+        return "manual_review_required"
+    return "applied"
+
+
+def _build_parent_step_execution_plan(
+    *,
+    recipe: TsrThlbNetdownRecipeRecord,
+    target_parent: dict[str, Any],
+) -> list[dict[str, Any]]:
+    target_stage_window = _workbench_stage_window_for_target(target_parent)
+    plan: list[dict[str, Any]] = []
+    for parent_step in recipe.parent_steps:
+        if str(parent_step.get("parent_kind", "")).strip() == "milestone":
+            continue
+        current_stage = str(parent_step.get("land_base_stage", "")).strip()
+        current_label = str(parent_step.get("parent_label", "")).strip()
+        if target_stage_window and current_stage not in target_stage_window:
+            continue
+        if current_label.casefold() not in _THLB_NOTEBOOK_RUNNABLE_PARENT_LABELS:
+            continue
+        compiled_logic = [
+            dict(item)
+            for item in parent_step.get("compiled_logic", ())
+            if isinstance(item, dict)
+        ]
+        plan.append(
+            {
+                "parent_step_id": str(parent_step.get("parent_step_id", "")).strip(),
+                "parent_label": current_label,
+                "compiled_logic": compiled_logic,
+            }
+        )
+        if (
+            str(parent_step.get("parent_step_id", "")).strip()
+            == str(target_parent.get("parent_step_id", "")).strip()
+        ):
+            break
+    return plan
+
+
+def _execute_tsr_thlb_parent_step_plan(
+    *,
+    checkpoint: gpd.GeoDataFrame,
+    execution_plan: Sequence[dict[str, Any]],
+    target_parent_id: str,
+    instance_root: Path,
+    source_entry_map: dict[str, dict[str, Any]],
+    total_area_benchmark_ha: float | None,
+) -> tuple[
+    gpd.GeoDataFrame,
+    tuple[str, ...],
+    list[dict[str, Any]],
+    float,
+    float,
+    str,
+    tuple[str, ...],
+]:
+    executed_parent_step_ids: list[str] = []
+    executed_items: list[dict[str, Any]] = []
+    target_removed_area_ha = 0.0
+    target_remaining_area_ha = _managed_area_ha(checkpoint)
+    target_notes: list[str] = []
+    final_status = "ready"
+
+    working = checkpoint
+    for parent_step in execution_plan:
+        current_parent_id = str(parent_step.get("parent_step_id", "")).strip()
+        removed_area_this_parent = 0.0
+        parent_runtime_items: list[dict[str, Any]] = []
+        for compiled_item in parent_step.get("compiled_logic", ()):
+            if not isinstance(compiled_item, dict):
+                continue
+            working, runtime_item = _execute_workbench_compiled_item(
+                checkpoint=working,
+                compiled_item=dict(compiled_item),
+                instance_root=instance_root,
+                source_entry_map=source_entry_map,
+                total_area_benchmark_ha=total_area_benchmark_ha,
+            )
+            removed_area_this_parent += float(
+                runtime_item.get("removed_area_ha", 0.0) or 0.0
+            )
+            parent_runtime_items.append(runtime_item)
+            executed_items.append(runtime_item)
+        executed_parent_step_ids.append(current_parent_id)
+        if current_parent_id != target_parent_id:
+            continue
+        target_removed_area_ha = removed_area_this_parent
+        target_remaining_area_ha = _managed_area_ha(working)
+        statuses = {
+            str(item.get("execution_status", "")).strip()
+            for item in parent_runtime_items
+            if str(item.get("execution_status", "")).strip()
+        }
+        final_status = _combine_parent_step_statuses(statuses)
+        for item in parent_runtime_items:
+            for note in item.get("runtime_notes", ()):
+                note_text = str(note).strip()
+                if note_text and note_text not in target_notes:
+                    target_notes.append(note_text)
+        break
+
+    return (
+        working,
+        tuple(executed_parent_step_ids),
+        executed_items,
+        target_removed_area_ha,
+        target_remaining_area_ha,
+        final_status,
+        tuple(target_notes),
+    )
+
+
+def _run_tsr_thlb_parent_step_chunk_worker(
+    *,
+    chunk_path: str,
+    output_path: str,
+    execution_plan: Sequence[dict[str, Any]],
+    target_parent_id: str,
+    instance_root: str,
+    source_entry_map: dict[str, dict[str, Any]],
+    total_area_benchmark_ha: float | None,
+) -> dict[str, Any]:
+    checkpoint = gpd.read_feather(chunk_path)
+    checkpoint = gpd.GeoDataFrame(checkpoint, geometry="geometry", crs=BC_ALBERS_EPSG)
+    (
+        updated,
+        executed_parent_step_ids,
+        executed_items,
+        target_removed_area_ha,
+        target_remaining_area_ha,
+        final_status,
+        target_notes,
+    ) = _execute_tsr_thlb_parent_step_plan(
+        checkpoint=checkpoint,
+        execution_plan=execution_plan,
+        target_parent_id=target_parent_id,
+        instance_root=Path(instance_root),
+        source_entry_map=source_entry_map,
+        total_area_benchmark_ha=total_area_benchmark_ha,
+    )
+    updated.drop(columns=["_row_id", "_stand_area_sqm"], errors="ignore").to_feather(
+        output_path
+    )
+    return {
+        "output_path": output_path,
+        "executed_parent_step_ids": list(executed_parent_step_ids),
+        "executed_items": executed_items,
+        "removed_area_ha": target_removed_area_ha,
+        "remaining_area_ha": target_remaining_area_ha,
+        "status": final_status,
+        "notes": list(target_notes),
+    }
+
+
+def _run_tsr_thlb_parent_step_bundle_worker(
+    *,
+    bundle_index: int,
+    bundle_label: str,
+    bundle_items: Sequence[tuple[str, str]],
+    output_path: str,
+    execution_plan: Sequence[dict[str, Any]],
+    target_parent_id: str,
+    instance_root: str,
+    source_entry_map: dict[str, dict[str, Any]],
+    total_area_benchmark_ha: float | None,
+    progress_path: str | None = None,
+) -> dict[str, Any]:
+    bundle_started = perf_counter()
+    progress_target = Path(progress_path) if progress_path else None
+    lu_names = [str(lu_name).strip() for lu_name, _chunk_path in bundle_items]
+    if progress_target is not None:
+        _write_tsr_thlb_parallel_progress(
+            progress_target,
+            bundle_index=bundle_index,
+            bundle_label=bundle_label,
+            lu_names=lu_names,
+            completed_lus=0,
+            total_lus=len(bundle_items),
+            current_lu=None,
+            status="running",
+        )
+
+    merged_frames: list[gpd.GeoDataFrame] = []
+    executed_parent_step_ids: tuple[str, ...] = ()
+    executed_items: list[dict[str, Any]] = []
+    removed_area_ha = 0.0
+    notes: list[str] = []
+    statuses: set[str] = set()
+    completed_lus = 0
+    chunk_profile_items: list[dict[str, Any]] = []
+
+    try:
+        for lu_name, chunk_path in bundle_items:
+            if progress_target is not None:
+                _write_tsr_thlb_parallel_progress(
+                    progress_target,
+                    bundle_index=bundle_index,
+                    bundle_label=bundle_label,
+                    lu_names=lu_names,
+                    completed_lus=completed_lus,
+                    total_lus=len(bundle_items),
+                    current_lu=lu_name,
+                    status="running",
+                )
+            chunk_started = perf_counter()
+            read_started = perf_counter()
+            checkpoint = gpd.read_feather(Path(chunk_path))
+            checkpoint = gpd.GeoDataFrame(
+                checkpoint, geometry="geometry", crs=BC_ALBERS_EPSG
+            )
+            read_elapsed = perf_counter() - read_started
+            execute_started = perf_counter()
+            (
+                updated,
+                current_parent_step_ids,
+                current_executed_items,
+                current_removed_area_ha,
+                _current_remaining_area_ha,
+                current_status,
+                current_notes,
+            ) = _execute_tsr_thlb_parent_step_plan(
+                checkpoint=checkpoint,
+                execution_plan=execution_plan,
+                target_parent_id=target_parent_id,
+                instance_root=Path(instance_root),
+                source_entry_map=source_entry_map,
+                total_area_benchmark_ha=total_area_benchmark_ha,
+            )
+            execute_elapsed = perf_counter() - execute_started
+            merged_frames.append(updated)
+            if not executed_parent_step_ids:
+                executed_parent_step_ids = tuple(current_parent_step_ids)
+            executed_items.extend(current_executed_items)
+            removed_area_ha += float(current_removed_area_ha)
+            statuses.add(str(current_status).strip())
+            notes.extend(str(value).strip() for value in current_notes if str(value).strip())
+            completed_lus += 1
+            chunk_profile_items.append(
+                {
+                    "lu_name": lu_name,
+                    "chunk_path": str(chunk_path),
+                    "input_row_count": int(len(checkpoint)),
+                    "output_row_count": int(len(updated)),
+                    "read_seconds": read_elapsed,
+                    "execute_seconds": execute_elapsed,
+                    "total_seconds": perf_counter() - chunk_started,
+                }
+            )
+            if progress_target is not None:
+                _write_tsr_thlb_parallel_progress(
+                    progress_target,
+                    bundle_index=bundle_index,
+                    bundle_label=bundle_label,
+                    lu_names=lu_names,
+                    completed_lus=completed_lus,
+                    total_lus=len(bundle_items),
+                    current_lu=lu_name,
+                    status="running",
+                    notes=notes[-5:],
+                )
+    except Exception as exc:
+        if progress_target is not None:
+            _write_tsr_thlb_parallel_progress(
+                progress_target,
+                bundle_index=bundle_index,
+                bundle_label=bundle_label,
+                lu_names=lu_names,
+                completed_lus=completed_lus,
+                total_lus=len(bundle_items),
+                current_lu=None,
+                status="failed",
+                notes=[*notes[-5:], str(exc)],
+            )
+        raise
+
+    if merged_frames:
+        merge_started = perf_counter()
+        updated_frame = gpd.GeoDataFrame(
+            pd.concat(merged_frames, ignore_index=True),
+            geometry="geometry",
+            crs=BC_ALBERS_EPSG,
+        )
+        concat_elapsed = perf_counter() - merge_started
+        write_started = perf_counter()
+        updated_frame.drop(
+            columns=["_row_id", "_stand_area_sqm"], errors="ignore"
+        ).to_feather(output_path)
+        write_elapsed = perf_counter() - write_started
+        remaining_area_ha = _managed_area_ha(updated_frame)
+    else:
+        updated_frame = gpd.GeoDataFrame(geometry=[], crs=BC_ALBERS_EPSG)
+        concat_elapsed = 0.0
+        write_started = perf_counter()
+        updated_frame.to_feather(output_path)
+        write_elapsed = perf_counter() - write_started
+        remaining_area_ha = 0.0
+    final_status = _combine_parent_step_statuses(statuses)
+    if progress_target is not None:
+        _write_tsr_thlb_parallel_progress(
+            progress_target,
+            bundle_index=bundle_index,
+            bundle_label=bundle_label,
+            lu_names=lu_names,
+            completed_lus=len(bundle_items),
+            total_lus=len(bundle_items),
+            current_lu=None,
+            status="completed",
+            notes=notes[-5:],
+        )
+    return {
+        "output_path": output_path,
+        "executed_parent_step_ids": list(executed_parent_step_ids),
+        "executed_items": executed_items,
+        "removed_area_ha": removed_area_ha,
+        "remaining_area_ha": remaining_area_ha,
+        "status": final_status,
+        "notes": list(dict.fromkeys(notes)),
+        "bundle_index": bundle_index,
+        "bundle_label": bundle_label,
+        "lu_names": lu_names,
+        "completed_lus": len(bundle_items),
+        "profiling": {
+            "bundle_total_seconds": perf_counter() - bundle_started,
+            "bundle_concat_seconds": concat_elapsed,
+            "bundle_write_seconds": write_elapsed,
+            "chunk_items": chunk_profile_items,
+            "chunk_read_seconds_total": float(
+                sum(float(item["read_seconds"]) for item in chunk_profile_items)
+            ),
+            "chunk_execute_seconds_total": float(
+                sum(float(item["execute_seconds"]) for item in chunk_profile_items)
+            ),
+        },
+    }
+
+
 def run_tsr_thlb_parent_step(
     *,
     recipe_path: Path,
@@ -6110,9 +7137,15 @@ def run_tsr_thlb_parent_step(
     map_ids: Sequence[str] = (),
     landscape_units: Sequence[str] = (),
     auto_map_id_smoke_subset: bool = True,
+    execution_mode: str = TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL,
+    max_workers: int | None = None,
+    lu_bundle_count: int | None = None,
+    progress_root: Path | None = None,
+    persist_recipe_update: bool = True,
 ) -> TsrThlbParentStepRunResult:
     """Execute one THLB parent step cumulatively on the notebook smoke subset."""
 
+    total_started = perf_counter()
     recipe, instance_root, source_recipe, source_entry_map, override_entries = (
         _load_tsr_thlb_recipe_context(recipe_path)
     )
@@ -6123,7 +7156,11 @@ def run_tsr_thlb_parent_step(
             "Notebook execution is currently limited to the first TSA29 activation tranche: "
             + ", ".join(sorted(_THLB_NOTEBOOK_RUNNABLE_PARENT_LABELS))
         )
-    target_stage_window = _workbench_stage_window_for_target(target_parent)
+    if execution_mode not in _TSR_THLB_PARENT_STEP_EXECUTION_MODES:
+        allowed = ", ".join(sorted(_TSR_THLB_PARENT_STEP_EXECUTION_MODES))
+        raise TsrRecipeError(
+            f"Unsupported THLB parent-step execution mode `{execution_mode}`. Expected one of: {allowed}"
+        )
     resolved_checkpoint_path = (
         checkpoint_path.expanduser().resolve()
         if checkpoint_path is not None
@@ -6131,7 +7168,31 @@ def run_tsr_thlb_parent_step(
             instance_root=instance_root, target_parent=target_parent
         )
     )
+    profiling: dict[str, Any] = {
+        "total_seconds": 0.0,
+        "checkpoint_load_seconds": 0.0,
+        "subset_filter_seconds": 0.0,
+        "input_prepare_seconds": 0.0,
+        "plan_build_seconds": 0.0,
+        "lu_selection_cache_lookup_seconds": 0.0,
+        "lu_selection_seconds": 0.0,
+        "lu_layer_load_seconds": 0.0,
+        "lu_bbox_filter_seconds": 0.0,
+        "lu_union_seconds": 0.0,
+        "lu_intersect_seconds": 0.0,
+        "partition_materialize_seconds": 0.0,
+        "bundle_group_seconds": 0.0,
+        "worker_pool_seconds": 0.0,
+        "merge_read_seconds": 0.0,
+        "merge_concat_seconds": 0.0,
+        "output_write_seconds": 0.0,
+        "result_json_write_seconds": 0.0,
+        "recipe_update_seconds": 0.0,
+        "report_refresh_seconds": 0.0,
+    }
+    checkpoint_load_started = perf_counter()
     checkpoint = _load_checkpoint_geodataframe(resolved_checkpoint_path)
+    profiling["checkpoint_load_seconds"] = perf_counter() - checkpoint_load_started
     selected_map_ids: tuple[str, ...] = ()
     selected_landscape_units: tuple[str, ...] = ()
     if auto_map_id_smoke_subset and (map_ids or landscape_units):
@@ -6139,6 +7200,7 @@ def run_tsr_thlb_parent_step(
             "Choose either explicit subset controls (`map_ids` / `landscape_units`) "
             "or `auto_map_id_smoke_subset`, not both."
         )
+    subset_filter_started = perf_counter()
     if auto_map_id_smoke_subset:
         selected_map_ids = _auto_select_smoke_map_ids_for_parent_step(
             checkpoint=checkpoint,
@@ -6173,87 +7235,243 @@ def run_tsr_thlb_parent_step(
             _normalize_map_id_token(value) for value in map_ids if str(value).strip()
         )
         checkpoint = _filter_checkpoint_by_map_ids(checkpoint, map_ids=selected_map_ids)
+    profiling["subset_filter_seconds"] = perf_counter() - subset_filter_started
 
+    input_prepare_started = perf_counter()
     checkpoint = checkpoint.copy()
     checkpoint["_row_id"] = range(len(checkpoint))
     checkpoint["_stand_area_sqm"] = _resolve_effective_stand_area_sqm(checkpoint)
     checkpoint["thlb_fact"] = 1.0
     checkpoint["thlb"] = 1
     input_area_ha = _managed_area_ha(checkpoint)
+    profiling["input_prepare_seconds"] = perf_counter() - input_prepare_started
 
     runtime_root = default_tsr_thlb_notebook_runs_root(instance_root=instance_root)
     runtime_root.mkdir(parents=True, exist_ok=True)
-    executed_parent_step_ids: list[str] = []
-    executed_items: list[dict[str, Any]] = []
-    final_status = "ready"
-    target_removed_area_ha = 0.0
-    target_remaining_area_ha = input_area_ha
-    target_notes: list[str] = []
     total_area_benchmark_ha = _resolve_tsr_total_area_benchmark(recipe)
-
-    for parent_step in recipe.parent_steps:
-        if str(parent_step.get("parent_kind", "")).strip() == "milestone":
-            continue
-        current_parent_id = str(parent_step.get("parent_step_id", "")).strip()
-        current_label = str(parent_step.get("parent_label", "")).strip()
-        current_stage = str(parent_step.get("land_base_stage", "")).strip()
-        if target_stage_window and current_stage not in target_stage_window:
-            continue
-        if current_label.casefold() not in _THLB_NOTEBOOK_RUNNABLE_PARENT_LABELS:
-            continue
-        removed_area_this_parent = 0.0
-        parent_runtime_items: list[dict[str, Any]] = []
-        for compiled_item in parent_step.get("compiled_logic", ()):
-            if not isinstance(compiled_item, dict):
-                continue
-            checkpoint, runtime_item = _execute_workbench_compiled_item(
-                checkpoint=checkpoint,
-                compiled_item=dict(compiled_item),
-                instance_root=instance_root,
-                source_entry_map=source_entry_map,
-                total_area_benchmark_ha=total_area_benchmark_ha,
+    plan_build_started = perf_counter()
+    execution_plan = _build_parent_step_execution_plan(
+        recipe=recipe,
+        target_parent=target_parent,
+    )
+    profiling["plan_build_seconds"] = perf_counter() - plan_build_started
+    worker_count = 1
+    lu_chunk_count: int | None = None
+    resolved_progress_root: Path | None = None
+    resolved_lu_bundle_count: int | None = None
+    if execution_mode == TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL:
+        serial_execute_started = perf_counter()
+        (
+            checkpoint,
+            executed_parent_step_ids,
+            executed_items,
+            target_removed_area_ha,
+            target_remaining_area_ha,
+            final_status,
+            target_notes,
+        ) = _execute_tsr_thlb_parent_step_plan(
+            checkpoint=checkpoint,
+            execution_plan=execution_plan,
+            target_parent_id=parent_step_id,
+            instance_root=instance_root,
+            source_entry_map=source_entry_map,
+            total_area_benchmark_ha=total_area_benchmark_ha,
+        )
+        profiling["worker_pool_seconds"] = perf_counter() - serial_execute_started
+    else:
+        if auto_map_id_smoke_subset:
+            raise TsrRecipeError(
+                "LU-parallel THLB execution requires an explicit full/subset scope; "
+                "disable `auto_map_id_smoke_subset`."
             )
-            removed_area_this_parent += float(runtime_item.get("removed_area_ha", 0.0) or 0.0)
-            parent_runtime_items.append(runtime_item)
-            executed_items.append(runtime_item)
-        executed_parent_step_ids.append(current_parent_id)
-        if current_parent_id == parent_step_id:
-            target_removed_area_ha = removed_area_this_parent
-            target_remaining_area_ha = _managed_area_ha(checkpoint)
-            statuses = {
-                str(item.get("execution_status", "")).strip()
-                for item in parent_runtime_items
-                if str(item.get("execution_status", "")).strip()
-            }
-            applied_statuses = {"applied", "applied_noop"}
-            if "blocked_missing_source" in statuses:
-                final_status = (
-                    "applied_with_blockers"
-                    if statuses & applied_statuses
-                    else "blocked_missing_source"
+        if map_ids:
+            raise TsrRecipeError(
+                "LU-parallel THLB execution does not support explicit `map_ids`; "
+                "use the full TSA or an explicit LU subset."
+            )
+        chunk_records: list[dict[str, Any]] | None = None
+        if landscape_units:
+            lu_load_started = perf_counter()
+            lu_layer = _load_landscape_unit_layer(instance_root)
+            profiling["lu_layer_load_seconds"] = perf_counter() - lu_load_started
+            lu_select_started = perf_counter()
+            lu_frame, selected_landscape_units = _select_landscape_unit_rows(
+                lu_layer,
+                landscape_units=landscape_units,
+            )
+            profiling["lu_selection_seconds"] = perf_counter() - lu_select_started
+            if lu_frame.empty:
+                raise TsrRecipeError(
+                    "LU-parallel THLB execution matched no landscape units: "
+                    + ", ".join(
+                        str(value).strip()
+                        for value in landscape_units
+                        if str(value).strip()
+                    )
                 )
-            elif "unsupported" in statuses:
-                final_status = (
-                    "applied_with_unsupported"
-                    if statuses & applied_statuses
-                    else "unsupported"
-                )
-            elif "manual_review_required" in statuses and len(statuses) == 1:
-                final_status = "manual_review_required"
+        else:
+            cache_lookup_started = perf_counter()
+            cached_partition = _load_cached_landscape_unit_partition_records(
+                checkpoint_path=resolved_checkpoint_path,
+                instance_root=instance_root,
+            )
+            profiling["lu_selection_cache_lookup_seconds"] = (
+                perf_counter() - cache_lookup_started
+            )
+            if cached_partition is not None:
+                selected_landscape_units, chunk_records = cached_partition
             else:
-                final_status = "applied"
-            for item in parent_runtime_items:
-                for note in item.get("runtime_notes", ()):
-                    note_text = str(note).strip()
-                    if note_text and note_text not in target_notes:
-                        target_notes.append(note_text)
-            break
+                lu_select_started = perf_counter()
+                (
+                    lu_frame,
+                    selected_landscape_units,
+                    lu_selection_profile,
+                ) = _select_intersecting_landscape_units_for_checkpoint(
+                    checkpoint,
+                    instance_root=instance_root,
+                )
+                profiling["lu_selection_seconds"] = (
+                    perf_counter() - lu_select_started
+                )
+                for key, value in lu_selection_profile.items():
+                    profiling[key] = float(value)
+        if chunk_records is None:
+            partition_started = perf_counter()
+            chunk_records = _materialize_checkpoint_landscape_unit_partitions(
+                checkpoint,
+                checkpoint_path=resolved_checkpoint_path,
+                lu_frame=lu_frame,
+                selected_landscape_units=selected_landscape_units,
+                instance_root=instance_root,
+            )
+            profiling["partition_materialize_seconds"] = (
+                perf_counter() - partition_started
+            )
+        if not chunk_records:
+            raise TsrRecipeError("LU-parallel THLB execution produced no LU chunks.")
+        lu_chunk_count = len(chunk_records)
+        resolved_lu_bundle_count = max(
+            1,
+            min(
+                int(lu_bundle_count) if lu_bundle_count is not None else lu_chunk_count,
+                lu_chunk_count,
+            ),
+        )
+        worker_count = max(
+            1,
+            min(max_workers or resolved_lu_bundle_count, resolved_lu_bundle_count),
+        )
+        timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+        staging_root = runtime_root / f"{parent_step_id}.parallel.{timestamp}"
+        staging_root.mkdir(parents=True, exist_ok=True)
+        bundle_group_started = perf_counter()
+        bundles = _group_landscape_unit_chunk_records(
+            chunk_records,
+            bundle_count=resolved_lu_bundle_count,
+        )
+        profiling["bundle_group_seconds"] = perf_counter() - bundle_group_started
+        resolved_progress_root = (
+            progress_root.expanduser().resolve()
+            if progress_root is not None
+            else staging_root / "progress"
+        )
+        resolved_progress_root.mkdir(parents=True, exist_ok=True)
+        worker_results: list[dict[str, Any]] = []
+        worker_pool_started = perf_counter()
+        with ProcessPoolExecutor(max_workers=worker_count) as pool:
+            futures = [
+                pool.submit(
+                    _run_tsr_thlb_parent_step_bundle_worker,
+                    bundle_index=int(bundle["bundle_index"]),
+                    bundle_label=str(bundle["bundle_label"]),
+                    bundle_items=[
+                        (str(item["lu_name"]), str(Path(item["chunk_path"])))
+                        for item in bundle["chunk_records"]
+                    ],
+                    output_path=str(
+                        staging_root
+                        / f"bundle_{int(bundle['bundle_index']):02d}.output.feather"
+                    ),
+                    execution_plan=execution_plan,
+                    target_parent_id=parent_step_id,
+                    instance_root=str(instance_root),
+                    source_entry_map=source_entry_map,
+                    total_area_benchmark_ha=total_area_benchmark_ha,
+                    progress_path=str(
+                        resolved_progress_root
+                        / f"bundle_{int(bundle['bundle_index']):02d}.json"
+                    ),
+                )
+                for bundle in bundles
+            ]
+            for future in futures:
+                worker_results.append(future.result())
+        profiling["worker_pool_seconds"] = perf_counter() - worker_pool_started
+        merge_read_started = perf_counter()
+        merged_frames = [
+            gpd.read_feather(Path(result["output_path"])) for result in worker_results
+        ]
+        profiling["merge_read_seconds"] = perf_counter() - merge_read_started
+        merge_concat_started = perf_counter()
+        checkpoint = gpd.GeoDataFrame(
+            pd.concat(merged_frames, ignore_index=True),
+            geometry="geometry",
+            crs=BC_ALBERS_EPSG,
+        )
+        checkpoint = checkpoint.loc[~checkpoint.geometry.is_empty].copy()
+        checkpoint = _assign_fragment_feature_ids(checkpoint)
+        profiling["merge_concat_seconds"] = perf_counter() - merge_concat_started
+        executed_parent_step_ids = tuple(
+            worker_results[0].get("executed_parent_step_ids", [])
+        )
+        executed_items = [
+            item
+            for result in worker_results
+            for item in result.get("executed_items", [])
+            if isinstance(item, dict)
+        ]
+        target_removed_area_ha = float(
+            sum(
+                float(result.get("removed_area_ha", 0.0) or 0.0)
+                for result in worker_results
+            )
+        )
+        target_remaining_area_ha = _managed_area_ha(checkpoint)
+        statuses = {
+            str(result.get("status", "")).strip()
+            for result in worker_results
+            if str(result.get("status", "")).strip()
+        }
+        final_status = _combine_parent_step_statuses(statuses)
+        target_notes = tuple(
+            dict.fromkeys(
+                note_text
+                for result in worker_results
+                for note in result.get("notes", [])
+                for note_text in [str(note).strip()]
+                if note_text
+            )
+        )
+        profiling["worker_bundles"] = [
+            {
+                "bundle_index": int(result.get("bundle_index", 0) or 0),
+                "bundle_label": str(result.get("bundle_label", "")).strip(),
+                "completed_lus": int(result.get("completed_lus", 0) or 0),
+                "lu_names": list(result.get("lu_names", [])),
+                "profiling": result.get("profiling", {}),
+            }
+            for result in worker_results
+        ]
 
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     output_path = runtime_root / f"{parent_step_id}.{timestamp}.feather"
     result_json_path = runtime_root / f"{parent_step_id}.{timestamp}.json"
-    output_frame = checkpoint.drop(columns=["_row_id", "_stand_area_sqm"], errors="ignore")
+    output_frame = checkpoint.drop(
+        columns=["_row_id", "_stand_area_sqm"], errors="ignore"
+    )
+    output_write_started = perf_counter()
     output_frame.to_feather(output_path)
+    profiling["output_write_seconds"] = perf_counter() - output_write_started
 
     benchmark_marginal_area_ha = target_parent.get("benchmark_marginal_area_ha")
     benchmark_cumulative_area_ha = target_parent.get("benchmark_cumulative_area_ha")
@@ -6321,7 +7539,15 @@ def run_tsr_thlb_parent_step(
         scaled_benchmark_marginal_delta_ha=scaled_benchmark_marginal_delta_ha,
         scaled_benchmark_cumulative_delta_ha=scaled_benchmark_cumulative_delta_ha,
         notes=tuple(target_notes),
+        execution_mode=execution_mode,
+        worker_count=worker_count,
+        lu_chunk_count=lu_chunk_count,
+        lu_bundle_count=resolved_lu_bundle_count,
+        progress_root=resolved_progress_root,
+        profiling=profiling,
     )
+    profiling["total_seconds"] = perf_counter() - total_started
+    result_json_write_started = perf_counter()
     result_json_path.write_text(
         json.dumps(
             {
@@ -6333,6 +7559,10 @@ def run_tsr_thlb_parent_step(
         ),
         encoding="utf-8",
     )
+    profiling["result_json_write_seconds"] = perf_counter() - result_json_write_started
+    if not persist_recipe_update:
+        profiling["total_seconds"] = perf_counter() - total_started
+        return result
     resolved_recipe_path = recipe_path.expanduser().resolve()
     payload = recipe.to_dict()
     payload_parent_steps_raw = payload.get("parent_steps", ())
@@ -6352,7 +7582,9 @@ def run_tsr_thlb_parent_step(
             output_path.relative_to(instance_root).as_posix()
         )
         payload_parent_step["last_selected_map_ids"] = list(selected_map_ids)
-        payload_parent_step["last_selected_landscape_units"] = list(selected_landscape_units)
+        payload_parent_step["last_selected_landscape_units"] = list(
+            selected_landscape_units
+        )
         payload_parent_step["last_input_area_ha"] = input_area_ha
         payload_parent_step["last_removed_area_ha"] = target_removed_area_ha
         payload_parent_step["last_remaining_area_ha"] = target_remaining_area_ha
@@ -6373,12 +7605,15 @@ def run_tsr_thlb_parent_step(
     )
     recipe_contract["last_parent_step_run_utc"] = datetime.now(UTC).isoformat()
     payload["recipe_contract"] = recipe_contract
+    recipe_update_started = perf_counter()
     _write_recipe_yaml(resolved_recipe_path, payload)
     updated_recipe = load_tsr_thlb_netdown_recipe(resolved_recipe_path)
+    profiling["recipe_update_seconds"] = perf_counter() - recipe_update_started
     recipe_build_status_report_value = str(
         recipe_contract.get("recipe_build_status_report_path", "")
     ).strip()
     if recipe_build_status_report_value:
+        report_refresh_started = perf_counter()
         recipe_build_status_report_path = _resolve_instance_path(
             instance_root, recipe_build_status_report_value
         )
@@ -6402,10 +7637,220 @@ def run_tsr_thlb_parent_step(
             override_entries=override_entries,
         )
         recipe_build_status_report_path.parent.mkdir(parents=True, exist_ok=True)
-        recipe_build_status_report_path.write_text(
-            refreshed_markdown, encoding="utf-8"
-        )
+        recipe_build_status_report_path.write_text(refreshed_markdown, encoding="utf-8")
+        profiling["report_refresh_seconds"] = perf_counter() - report_refresh_started
+    profiling["total_seconds"] = perf_counter() - total_started
     return result
+
+
+def _summarize_parallel_benchmark_markdown(
+    *,
+    recipe_path: Path,
+    landscape_units: Sequence[str],
+    run_results: Sequence[TsrThlbParallelBenchmarkRunResult],
+) -> str:
+    lines = [
+        "# TSA29 THLB LU-Parallel Benchmark",
+        "",
+        f"- Recipe: `{recipe_path}`",
+        f"- Landscape units: `{', '.join(landscape_units) if landscape_units else 'all intersecting LUs'}`",
+        "",
+    ]
+    if landscape_units:
+        lines.extend(
+            [
+                "- Note: partial-LU benchmark parity assumes the serial reference covers the",
+                "  same selected LU union. Any remaining drift is a clipping/merge warning,",
+                "  not evidence that LU-parallel is semantically acceptable yet.",
+                "",
+            ]
+        )
+    grouped: dict[str, list[TsrThlbParallelBenchmarkRunResult]] = {}
+    for item in run_results:
+        grouped.setdefault(item.parent_step_id, []).append(item)
+    for parent_step_id, group in grouped.items():
+        ordered = sorted(
+            group,
+            key=lambda item: (
+                0
+                if item.execution_mode
+                == TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL
+                else 1,
+                item.worker_count,
+            ),
+        )
+        label = ordered[0].parent_label
+        lines.append(f"## {label}")
+        lines.append("")
+        serial = next(
+            (
+                item
+                for item in ordered
+                if item.execution_mode == TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL
+            ),
+            None,
+        )
+        for item in ordered:
+            speedup = (
+                serial.wall_time_seconds / item.wall_time_seconds
+                if serial is not None and item.wall_time_seconds > 0
+                else None
+            )
+            lines.extend(
+                [
+                    f"- backend=`{item.execution_mode}` workers=`{item.worker_count}` lu_count=`{item.lu_count}`",
+                    f"  - runtime: `{item.wall_time_seconds:.3f} s`",
+                    f"  - removed area: `{item.removed_area_ha:.3f} ha`",
+                    f"  - remaining area: `{item.remaining_area_ha:.3f} ha`",
+                    f"  - output rows: `{item.output_row_count}`",
+                    f"  - parity with serial: `{item.parity_with_serial}`",
+                ]
+            )
+            if speedup is not None:
+                lines.append(f"  - speedup vs serial: `{speedup:.3f}x`")
+            if item.parity_removed_area_delta_ha is not None:
+                lines.append(
+                    "  - parity deltas: "
+                    f"removed=`{item.parity_removed_area_delta_ha:.6f} ha` "
+                    f"remaining=`{item.parity_remaining_area_delta_ha:.6f} ha`"
+                )
+            recommendation = "neutral"
+            if item.execution_mode == TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL:
+                if item.parity_with_serial is False:
+                    recommendation = "not worth adopting"
+                elif speedup is not None and speedup > 1.2:
+                    recommendation = "promising"
+                elif speedup is not None and speedup <= 1.0:
+                    recommendation = "not worth adopting"
+            lines.append(f"  - recommendation: `{recommendation}`")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def run_tsr_thlb_parallel_benchmark(
+    *,
+    recipe_path: Path,
+    parent_step_ids: Sequence[str],
+    checkpoint_path: Path | None = None,
+    landscape_units: Sequence[str] = (),
+    worker_counts: Sequence[int] = (1, 2, 4, 8),
+) -> TsrThlbParallelBenchmarkResult:
+    """Benchmark serial vs LU-parallel THLB parent-step execution."""
+
+    if not parent_step_ids:
+        raise TsrRecipeError(
+            "At least one parent step id is required for benchmark runs."
+        )
+    recipe, instance_root, _source_recipe, _source_entry_map, _override_entries = (
+        _load_tsr_thlb_recipe_context(recipe_path)
+    )
+    runtime_root = default_tsr_thlb_parallel_benchmark_root(instance_root=instance_root)
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    resolved_checkpoint_path = (
+        checkpoint_path.expanduser().resolve() if checkpoint_path is not None else None
+    )
+    selected_landscape_units: tuple[str, ...] = tuple(
+        str(value).strip() for value in landscape_units if str(value).strip()
+    )
+    run_records: list[TsrThlbParallelBenchmarkRunResult] = []
+    for parent_step_id in parent_step_ids:
+        serial_started = perf_counter()
+        serial_result = run_tsr_thlb_parent_step(
+            recipe_path=recipe_path,
+            parent_step_id=parent_step_id,
+            checkpoint_path=resolved_checkpoint_path,
+            landscape_units=selected_landscape_units,
+            auto_map_id_smoke_subset=False,
+            execution_mode=TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL,
+            persist_recipe_update=False,
+        )
+        serial_elapsed = perf_counter() - serial_started
+        serial_record = TsrThlbParallelBenchmarkRunResult(
+            parent_step_id=serial_result.parent_step_id,
+            parent_label=serial_result.parent_label,
+            execution_mode=TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL,
+            worker_count=1,
+            lu_count=max(1, len(serial_result.selected_landscape_units)),
+            wall_time_seconds=serial_elapsed,
+            peak_memory_mb=None,
+            status=serial_result.status,
+            input_area_ha=serial_result.input_area_ha,
+            removed_area_ha=serial_result.removed_area_ha,
+            remaining_area_ha=serial_result.remaining_area_ha,
+            output_row_count=len(gpd.read_feather(serial_result.output_path)),
+            result_json_path=serial_result.result_json_path,
+            output_path=serial_result.output_path,
+            parity_with_serial=True,
+            parity_removed_area_delta_ha=0.0,
+            parity_remaining_area_delta_ha=0.0,
+            notes=serial_result.notes,
+        )
+        run_records.append(serial_record)
+        active_lus = (
+            serial_result.selected_landscape_units
+            if serial_result.selected_landscape_units
+            else selected_landscape_units
+        )
+        for workers in worker_counts:
+            if workers <= 0:
+                continue
+            started = perf_counter()
+            parallel_result = run_tsr_thlb_parent_step(
+                recipe_path=recipe_path,
+                parent_step_id=parent_step_id,
+                checkpoint_path=resolved_checkpoint_path,
+                landscape_units=active_lus,
+                auto_map_id_smoke_subset=False,
+                execution_mode=TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL,
+                max_workers=workers,
+                persist_recipe_update=False,
+            )
+            elapsed = perf_counter() - started
+            removed_delta = (
+                parallel_result.removed_area_ha - serial_result.removed_area_ha
+            )
+            remaining_delta = (
+                parallel_result.remaining_area_ha - serial_result.remaining_area_ha
+            )
+            parity = abs(removed_delta) <= 1e-6 and abs(remaining_delta) <= 1e-6
+            run_records.append(
+                TsrThlbParallelBenchmarkRunResult(
+                    parent_step_id=parallel_result.parent_step_id,
+                    parent_label=parallel_result.parent_label,
+                    execution_mode=TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL,
+                    worker_count=workers,
+                    lu_count=parallel_result.lu_chunk_count or len(active_lus),
+                    wall_time_seconds=elapsed,
+                    peak_memory_mb=None,
+                    status=parallel_result.status,
+                    input_area_ha=parallel_result.input_area_ha,
+                    removed_area_ha=parallel_result.removed_area_ha,
+                    remaining_area_ha=parallel_result.remaining_area_ha,
+                    output_row_count=len(gpd.read_feather(parallel_result.output_path)),
+                    result_json_path=parallel_result.result_json_path,
+                    output_path=parallel_result.output_path,
+                    parity_with_serial=parity,
+                    parity_removed_area_delta_ha=removed_delta,
+                    parity_remaining_area_delta_ha=remaining_delta,
+                    notes=parallel_result.notes,
+                )
+            )
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    summary_path = runtime_root / f"thlb_parallel_benchmark.{timestamp}.md"
+    summary_path.write_text(
+        _summarize_parallel_benchmark_markdown(
+            recipe_path=recipe_path,
+            landscape_units=selected_landscape_units,
+            run_results=run_records,
+        ),
+        encoding="utf-8",
+    )
+    return TsrThlbParallelBenchmarkResult(
+        summary_path=summary_path,
+        run_results=tuple(run_records),
+        parent_step_ids=tuple(parent_step_ids),
+        landscape_units=selected_landscape_units,
+    )
 
 
 def _build_thlb_parent_step_code_cell(
@@ -6439,13 +7884,31 @@ def _build_thlb_parent_step_code_cell(
         }
         for item in compiled_logic
     ]
+    is_full_tsa_parallel_default = (
+        tsa_code == "29"
+        and parent_step_id == "thlb_parent_006_parks_protected_areas_area_base_tenures"
+    )
+    default_landscape_unit_scope = (
+        "()"
+        if is_full_tsa_parallel_default
+        else '(\"Williams Lake\",)' if tsa_code == "29" else "()"
+    )
+    default_execution_mode = (
+        TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL
+        if is_full_tsa_parallel_default
+        else TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL
+    )
+    default_auto_map_id = "False" if is_full_tsa_parallel_default else "True"
     lines = [
         "# Auto-generated FEMIC THLB workbench cell.",
         "# Teach Baby Groot what the prototype fin looks like:",
         "# keep the parent step anchored on the summary-table row, then",
         "# translate its nested subrules into deterministic compiled logic.",
         "from pathlib import Path",
+        "from datetime import UTC, datetime",
         "import json",
+        "import threading",
+        "import time",
         "try:",
         "    from femic.tsr_catalog import (",
         "        resolve_tsr_workbench_instance_root,",
@@ -6463,14 +7926,20 @@ def _build_thlb_parent_step_code_cell(
         f"BENCHMARK_CUMULATIVE_AREA_HA = {repr(benchmark_cumulative)}",
         'INSTANCE_ROOT = resolve_tsr_workbench_instance_root(start=Path(".").resolve())',
         'RECIPE_PATH = INSTANCE_ROOT / "config" / "tsr" / "thlb_netdown.recipe.yaml"',
-        "AUTO_MAP_ID_SMOKE_SUBSET = True",
+        f"AUTO_MAP_ID_SMOKE_SUBSET = {default_auto_map_id}",
         "MAP_ID_SCOPE: tuple[str, ...] = ()",
+        f"LANDSCAPE_UNIT_SCOPE: tuple[str, ...] = {default_landscape_unit_scope}",
+        f'EXECUTION_MODE = "{default_execution_mode}"',
+        "MAX_WORKERS = 8",
+        "LU_BUNDLE_COUNT = 8",
+        "PERSIST_RECIPE_UPDATE = False",
+        "SHOW_PROGRESS = EXECUTION_MODE == 'lu_parallel'",
+        "if LANDSCAPE_UNIT_SCOPE:\n    AUTO_MAP_ID_SMOKE_SUBSET = False",
+        'RUN_TIMESTAMP = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")',
         (
-            'LANDSCAPE_UNIT_SCOPE: tuple[str, ...] = ("Williams Lake",)'
-            if tsa_code == "29"
-            else "LANDSCAPE_UNIT_SCOPE: tuple[str, ...] = ()"
+            'PROGRESS_ROOT = INSTANCE_ROOT / "runtime" / "logs" / "tsr" / '
+            '"notebook_progress" / f"{PARENT_STEP_ID}.{RUN_TIMESTAMP}"'
         ),
-        'if LANDSCAPE_UNIT_SCOPE:\n    AUTO_MAP_ID_SMOKE_SUBSET = False',
         "",
         "# Human reviewers are not expected to read raw machine-oriented list-of-dict",
         "# compiled logic here. Review the Markdown status report for the narrative",
@@ -6483,15 +7952,105 @@ def _build_thlb_parent_step_code_cell(
         [
             "]",
             "",
-            "result = run_tsr_thlb_parent_step(",
-            "    recipe_path=RECIPE_PATH,",
-            "    parent_step_id=PARENT_STEP_ID,",
-            "    map_ids=MAP_ID_SCOPE,",
-            "    landscape_units=LANDSCAPE_UNIT_SCOPE,",
-            "    auto_map_id_smoke_subset=AUTO_MAP_ID_SMOKE_SUBSET,",
-            ")",
+            "try:",
+            "    import ipywidgets as widgets",
+            "    from IPython.display import display",
+            "except ImportError:",
+            "    widgets = None",
+            "    display = None",
+            "",
+            "bars = []",
+            "status_lines = []",
+            "if SHOW_PROGRESS and widgets is not None:",
+            "    rows = []",
+            "    for worker_index in range(max(1, LU_BUNDLE_COUNT)):",
+            "        title = widgets.HTML(f'<b>Worker {worker_index + 1}</b>')",
+            "        bar = widgets.FloatProgress(value=0.0, min=0.0, max=1.0)",
+            "        status = widgets.HTML('waiting for assignment')",
+            "        rows.append(widgets.VBox([title, bar, status]))",
+            "        bars.append((bar, status))",
+            "    display(widgets.VBox(rows))",
+            "elif SHOW_PROGRESS:",
+            "    print('ipywidgets not available; falling back to text progress polling.')",
+            "",
+            "run_state = {}",
+            "",
+            "def _worker_run():",
+            "    try:",
+            "        run_state['result'] = run_tsr_thlb_parent_step(",
+            "            recipe_path=RECIPE_PATH,",
+            "            parent_step_id=PARENT_STEP_ID,",
+            "            map_ids=MAP_ID_SCOPE,",
+            "            landscape_units=LANDSCAPE_UNIT_SCOPE,",
+            "            auto_map_id_smoke_subset=AUTO_MAP_ID_SMOKE_SUBSET,",
+            "            execution_mode=EXECUTION_MODE,",
+            "            max_workers=MAX_WORKERS,",
+            "            lu_bundle_count=LU_BUNDLE_COUNT,",
+            "            progress_root=PROGRESS_ROOT,",
+            "            persist_recipe_update=PERSIST_RECIPE_UPDATE,",
+            "        )",
+            "    except Exception as exc:",
+            "        run_state['error'] = exc",
+            "",
+            "worker_thread = threading.Thread(target=_worker_run, daemon=True)",
+            "worker_thread.start()",
+            "",
+            "def _poll_progress():",
+            "    progress_files = sorted(PROGRESS_ROOT.glob('*.json')) if PROGRESS_ROOT.exists() else []",
+            "    snapshots = []",
+            "    for progress_file in progress_files:",
+            "        try:",
+            "            snapshots.append(json.loads(progress_file.read_text(encoding='utf-8')))",
+            "        except Exception:",
+            "            continue",
+            "    snapshots.sort(key=lambda item: int(item.get('bundle_index', 0) or 0))",
+            "    return snapshots",
+            "",
+            "while worker_thread.is_alive():",
+            "    snapshots = _poll_progress()",
+            "    if bars:",
+            "        for index, (bar, status) in enumerate(bars, start=1):",
+            "            if index <= len(snapshots):",
+            "                snapshot = snapshots[index - 1]",
+            "                bar.value = float(snapshot.get('fraction_complete', 0.0) or 0.0)",
+            "                current_lu = snapshot.get('current_lu') or 'idle'",
+            "                completed = int(snapshot.get('completed_lus', 0) or 0)",
+            "                total = int(snapshot.get('total_lus', 0) or 0)",
+            "                state = str(snapshot.get('status', '') or 'running')",
+            "                status.value = f\"{state}: {completed}/{total} LUs, current={current_lu}\"",
+            "            else:",
+            "                bar.value = 0.0",
+            "                status.value = 'waiting for assignment'",
+            "    elif SHOW_PROGRESS:",
+            "        if snapshots:",
+            "            latest = [",
+            "                f\"worker {int(item.get('bundle_index', 0) or 0)}: {int(item.get('completed_lus', 0) or 0)}/{int(item.get('total_lus', 0) or 0)}\"",
+            "                for item in snapshots",
+            "            ]",
+            "            latest_line = ' | '.join(latest)",
+            "            if not status_lines or latest_line != status_lines[-1]:",
+            "                print(latest_line)",
+            "                status_lines.append(latest_line)",
+            "    time.sleep(0.5)",
+            "",
+            "worker_thread.join()",
+            "snapshots = _poll_progress()",
+            "if bars:",
+            "    for index, (bar, status) in enumerate(bars, start=1):",
+            "        if index <= len(snapshots):",
+            "            snapshot = snapshots[index - 1]",
+            "            bar.value = float(snapshot.get('fraction_complete', 0.0) or 0.0)",
+            "            state = str(snapshot.get('status', '') or 'completed')",
+            "            completed = int(snapshot.get('completed_lus', 0) or 0)",
+            "            total = int(snapshot.get('total_lus', 0) or 0)",
+            "            status.value = f\"{state}: {completed}/{total} LUs\"",
+            "",
+            "if 'error' in run_state:",
+            "    raise run_state['error']",
+            "result = run_state['result']",
             "payload = result.to_dict()",
             "payload['compiled_logic_summary'] = compiled_logic_summary",
+            "payload['persist_recipe_update'] = PERSIST_RECIPE_UPDATE",
             "print(json.dumps(payload, indent=2))",
         ]
     )
@@ -7089,7 +8648,9 @@ def _apply_aspatial_thlb_reduction(
     updated.loc[active_mask, "thlb_fact"] = (
         updated.loc[active_mask, "thlb_fact"].astype(float) * keep_factor
     )
-    updated.loc[active_mask, "thlb"] = updated.loc[active_mask, "thlb_fact"].astype(float)
+    updated.loc[active_mask, "thlb"] = updated.loc[active_mask, "thlb_fact"].astype(
+        float
+    )
     return updated, removed_area_ha, int(active_mask.sum())
 
 
@@ -7111,7 +8672,9 @@ def _apply_aspatial_area_reduction(
     if not active_mask.any():
         return checkpoint, 0.0, 0
 
-    updated[TSR_EFFECTIVE_AREA_SQM_COLUMN] = canonical_area_sqm.astype(float) * keep_factor
+    updated[TSR_EFFECTIVE_AREA_SQM_COLUMN] = (
+        canonical_area_sqm.astype(float) * keep_factor
+    )
     updated.loc[active_mask, "_stand_area_sqm"] = updated.loc[
         active_mask, TSR_EFFECTIVE_AREA_SQM_COLUMN
     ].astype(float)
@@ -7366,13 +8929,19 @@ def run_tsr_thlb_netdown_recipe(
                     _resolve_canonical_stand_area_sqm(checkpoint).sum() / 10000.0
                 )
                 target_removed_area_ha = (
-                    float(benchmark_marginal_area_ha) * current_area_ha / total_area_benchmark_ha
+                    float(benchmark_marginal_area_ha)
+                    * current_area_ha
+                    / total_area_benchmark_ha
                 )
-                checkpoint, removed_area_ha, affected_row_count = _apply_aspatial_area_reduction(
-                    checkpoint,
-                    target_removed_area_ha=target_removed_area_ha,
+                checkpoint, removed_area_ha, affected_row_count = (
+                    _apply_aspatial_area_reduction(
+                        checkpoint,
+                        target_removed_area_ha=target_removed_area_ha,
+                    )
                 )
-                updated_step["run_status"] = "applied" if removed_area_ha > 0 else "applied_noop"
+                updated_step["run_status"] = (
+                    "applied" if removed_area_ha > 0 else "applied_noop"
+                )
                 updated_step["affected_stand_count"] = affected_row_count
                 updated_step["affected_area_ha"] = removed_area_ha
                 updated_step["run_notes"] = [

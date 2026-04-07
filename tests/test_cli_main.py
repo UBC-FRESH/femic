@@ -4521,7 +4521,9 @@ def test_data_bcdc_order_uses_git_email_when_flag_missing(
     monkeypatch.setattr(cli_main, "_source_tree_root", lambda: tmp_path)
 
     def _fake_run(*_args, **_kwargs):
-        return SimpleNamespace(returncode=0, stdout="git-email@example.com\n", stderr="")
+        return SimpleNamespace(
+            returncode=0, stdout="git-email@example.com\n", stderr=""
+        )
 
     monkeypatch.setattr(cli_main.subprocess, "run", _fake_run)
 
@@ -4588,7 +4590,9 @@ def test_data_bcdc_order_prefers_env_email_over_git(
     monkeypatch.setenv(cli_main.BCDC_DWDS_EMAIL_ENV, "env-email@example.com")
 
     def _fake_run(*_args, **_kwargs):
-        return SimpleNamespace(returncode=0, stdout="git-email@example.com\n", stderr="")
+        return SimpleNamespace(
+            returncode=0, stdout="git-email@example.com\n", stderr=""
+        )
 
     monkeypatch.setattr(cli_main.subprocess, "run", _fake_run)
     captured_email: list[str | None] = []
@@ -5742,7 +5746,12 @@ def test_tsr_thlb_netdown_step_run_uses_default_recipe_path(
         thlb_netdown_recipe_path=None,
         checkpoint_path=None,
         map_id=None,
+        landscape_unit=None,
         auto_map_id_smoke_subset=True,
+        execution_mode=cli_main.TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL,
+        max_workers=None,
+        lu_bundle_count=None,
+        progress_root=None,
     )
 
     assert (
@@ -5751,10 +5760,80 @@ def test_tsr_thlb_netdown_step_run_uses_default_recipe_path(
     )
     assert captured_kwargs["checkpoint_path"] is None
     assert captured_kwargs["map_ids"] == ()
+    assert captured_kwargs["landscape_units"] == ()
     assert captured_kwargs["auto_map_id_smoke_subset"] is True
+    assert captured_kwargs["lu_bundle_count"] is None
+    assert captured_kwargs["progress_root"] is None
     assert any("parent_step_id:" in msg for msg in messages)
     assert any("selected_map_ids: 092O071" in msg for msg in messages)
     assert any("notes: Used smoke subset 092O071" in msg for msg in messages)
+
+
+def test_tsr_thlb_netdown_parallel_benchmark_uses_default_recipe_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_run(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbParallelBenchmarkResult(
+            summary_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "parallel_benchmarks"
+            / "summary.md",
+            parent_step_ids=("thlb_parent_007_old_growth_management_areas",),
+            landscape_units=("Williams Lake",),
+            run_results=(
+                tsr_catalog.TsrThlbParallelBenchmarkRunResult(
+                    parent_step_id="thlb_parent_007_old_growth_management_areas",
+                    parent_label="Old growth management areas",
+                    execution_mode="serial",
+                    worker_count=1,
+                    lu_count=1,
+                    wall_time_seconds=1.0,
+                    peak_memory_mb=None,
+                    status="applied",
+                    input_area_ha=2.0,
+                    removed_area_ha=0.5,
+                    remaining_area_ha=1.5,
+                    output_row_count=2,
+                    result_json_path=instance_root / "runtime" / "logs" / "serial.json",
+                    output_path=instance_root / "runtime" / "logs" / "serial.feather",
+                    parity_with_serial=True,
+                    parity_removed_area_delta_ha=0.0,
+                    parity_remaining_area_delta_ha=0.0,
+                    notes=(),
+                ),
+            ),
+        )
+
+    monkeypatch.setattr(cli_main, "run_tsr_thlb_parallel_benchmark", _fake_run)
+
+    cli_main.tsr_thlb_netdown_parallel_benchmark(
+        instance_root=instance_root,
+        parent_step_id=["thlb_parent_007_old_growth_management_areas"],
+        thlb_netdown_recipe_path=None,
+        checkpoint_path=None,
+        landscape_unit=["Williams Lake"],
+        worker_count=[1, 2],
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert captured_kwargs["checkpoint_path"] is None
+    assert captured_kwargs["landscape_units"] == ("Williams Lake",)
+    assert captured_kwargs["worker_counts"] == (1, 2)
+    assert any("summary_path:" in msg for msg in messages)
+    assert any("benchmark_run:" in msg for msg in messages)
 
 
 def test_tsr_thlb_netdown_run_uses_default_paths(

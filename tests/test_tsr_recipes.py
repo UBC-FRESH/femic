@@ -520,7 +520,9 @@ WHSE_FOREST_VEGETATION.F_OWN
     assert "69" in code_62_69_rule["candidate_values"]
 
 
-def test_build_draft_subrules_for_cultural_heritage_avoids_fake_spatial_layers() -> None:
+def test_build_draft_subrules_for_cultural_heritage_avoids_fake_spatial_layers() -> (
+    None
+):
     linked_subsection = {
         "title": "Cultural heritage and archaeological resources.",
         "body": """
@@ -588,7 +590,9 @@ def test_infer_parent_row_stage_places_future_roads_in_glb_to_aflb() -> None:
     assert execution_class == "drop_from_universe"
 
 
-def test_infer_parent_row_stage_places_proven_aboriginal_rights_in_aflb_to_lhlb() -> None:
+def test_infer_parent_row_stage_places_proven_aboriginal_rights_in_aflb_to_lhlb() -> (
+    None
+):
     stage, execution_class = tsr_recipes._infer_parent_row_stage(
         label="Proven Aboriginal Rights areas",
         linked_subsection={
@@ -1399,6 +1403,9 @@ def test_build_tsr_thlb_workbench_writes_generated_notebook_and_updates_recipe_c
     assert "Williams Lake" in notebook_text
     assert "Chimney" not in notebook_text
     assert "Alkali" not in notebook_text
+    assert "PROGRESS_ROOT" in notebook_text
+    assert "LU_BUNDLE_COUNT = 8" in notebook_text
+    assert "FloatProgress" in notebook_text
     recipe = tsr_catalog.load_tsr_thlb_netdown_recipe(
         init_result.thlb_netdown_recipe_path
     )
@@ -1592,9 +1599,7 @@ def test_run_tsr_thlb_parent_step_executes_first_tranche_parent_and_writes_runti
         / "thlb_netdown.recipe.yaml",
     )
 
-    f_own_path = (
-        instance_root / "data" / "downloads" / "bcdc" / "F_OWN" / "F_OWN.gpkg"
-    )
+    f_own_path = instance_root / "data" / "downloads" / "bcdc" / "F_OWN" / "F_OWN.gpkg"
     f_own_path.parent.mkdir(parents=True, exist_ok=True)
     f_own = gpd.GeoDataFrame(
         {
@@ -1668,7 +1673,10 @@ def test_run_tsr_thlb_parent_step_executes_first_tranche_parent_and_writes_runti
                     "human_summary": "Exclude ownership classes not administered for TSA supply",
                     "candidate_layers": ["whse_f_own"],
                     "candidate_fields": ["OWNERSHIP_DESCRIPTION"],
-                    "candidate_values": ["Private", "Federal - Dominion government Block/Federal Parcels"],
+                    "candidate_values": [
+                        "Private",
+                        "Federal - Dominion government Block/Federal Parcels",
+                    ],
                     "candidate_operation_type": "attribute_select",
                     "review_status": "draft",
                 }
@@ -2038,7 +2046,11 @@ def test_run_tsr_thlb_parent_step_reports_applied_with_blockers_for_partial_succ
                     "operation_type": "select_attribute",
                     "checkpoint_attribute_mode": "any",
                     "checkpoint_attribute_filters": [
-                        {"field": "FOR_MGMT_LAND_BASE_IND", "operator": "ne", "value": "Y"}
+                        {
+                            "field": "FOR_MGMT_LAND_BASE_IND",
+                            "operator": "ne",
+                            "value": "Y",
+                        }
                     ],
                 },
                 {
@@ -2103,21 +2115,23 @@ def test_load_compiled_logic_geometries_treats_empty_bbox_hit_as_no_matching(
     )
     layer.to_file(artifact_path, driver="GPKG")
 
-    geometries, missing_sources, no_matching = tsr_recipes._load_compiled_logic_geometries(
-        instance_root=instance_root,
-        compiled_item={
-            "compiled_operation_type": "select_spatial_intersect",
-            "linked_source_entry_ids": ["terrain"],
-            "source_attribute_filters": [
-                {"field": "CLASS", "operator": "eq", "value": "U"}
-            ],
-        },
-        source_entry_map={
-            "terrain": {
-                "artifact_path": "data/downloads/bcdc/TEST/TEST.gpkg",
-            }
-        },
-        bbox=(0.0, 0.0, 10.0, 10.0),
+    geometries, missing_sources, no_matching = (
+        tsr_recipes._load_compiled_logic_geometries(
+            instance_root=instance_root,
+            compiled_item={
+                "compiled_operation_type": "select_spatial_intersect",
+                "linked_source_entry_ids": ["terrain"],
+                "source_attribute_filters": [
+                    {"field": "CLASS", "operator": "eq", "value": "U"}
+                ],
+            },
+            source_entry_map={
+                "terrain": {
+                    "artifact_path": "data/downloads/bcdc/TEST/TEST.gpkg",
+                }
+            },
+            bbox=(0.0, 0.0, 10.0, 10.0),
+        )
     )
 
     assert geometries is not None
@@ -2126,7 +2140,9 @@ def test_load_compiled_logic_geometries_treats_empty_bbox_hit_as_no_matching(
     assert no_matching is True
 
 
-def test_apply_checkpoint_attribute_filters_preserves_geometry_for_later_stage() -> None:
+def test_apply_checkpoint_attribute_filters_preserves_geometry_for_later_stage() -> (
+    None
+):
     checkpoint = gpd.GeoDataFrame(
         {
             "FEATURE_ID": [1, 2],
@@ -2180,12 +2196,7 @@ def test_run_tsr_thlb_parent_step_preserves_geometry_for_later_stage_spatial_exc
     )
 
     exclusion_path = (
-        instance_root
-        / "data"
-        / "downloads"
-        / "bcdc"
-        / "OGMA"
-        / "OGMA.gpkg"
+        instance_root / "data" / "downloads" / "bcdc" / "OGMA" / "OGMA.gpkg"
     )
     exclusion_path.parent.mkdir(parents=True, exist_ok=True)
     exclusion = gpd.GeoDataFrame(
@@ -2288,6 +2299,460 @@ def test_run_tsr_thlb_parent_step_preserves_geometry_for_later_stage_spatial_exc
     assert len(output) == 2
 
 
+def test_run_tsr_thlb_parent_step_lu_parallel_matches_serial_removed_area(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    exclusion_path = (
+        instance_root / "data" / "downloads" / "bcdc" / "OGMA" / "OGMA.gpkg"
+    )
+    exclusion_path.parent.mkdir(parents=True, exist_ok=True)
+    exclusion = gpd.GeoDataFrame(
+        {"name": ["ogma"]},
+        geometry=[box(0, 0, 50, 100)],
+        crs="EPSG:3005",
+    )
+    exclusion.to_file(exclusion_path, driver="GPKG")
+
+    lu_path = (
+        instance_root
+        / "data"
+        / "downloads"
+        / "bcdc"
+        / "WHSE_LAND_USE_PLANNING_RMP_LANDSCAPE_UNIT_SVW"
+        / "WHSE_LAND_USE_PLANNING_RMP_LANDSCAPE_UNIT_SVW.gpkg"
+    )
+    lu_path.parent.mkdir(parents=True, exist_ok=True)
+    lu_layer = gpd.GeoDataFrame(
+        {
+            "LANDSCAPE_UNIT_NAME": ["West", "East"],
+            "LANDSCAPE_UNIT_NUMBER": ["1", "2"],
+        },
+        geometry=[box(0, 0, 50, 100), box(50, 0, 100, 100)],
+        crs="EPSG:3005",
+    )
+    lu_layer.to_file(lu_path, driver="GPKG")
+
+    source_recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    source_recipe_payload["entries"] = [
+        {
+            "entry_id": "rmp_ogma_legal",
+            "label": "OGMA",
+            "artifact_path": "data/downloads/bcdc/OGMA/OGMA.gpkg",
+            "run_status": "fetched",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            source_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    recipe_payload["recipe_contract"]["status"] = "built"
+    recipe_payload["parent_steps"] = [
+        {
+            "parent_step_id": "thlb_parent_001_total_tsa_area",
+            "parent_label": "Total TSA area",
+            "parent_kind": "milestone",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "execution_class": "reference_only",
+            "benchmark_cumulative_area_ha": 1.0,
+            "row_order": 1,
+        },
+        {
+            "parent_step_id": "thlb_parent_007_old_growth_management_areas",
+            "parent_label": "Old growth management areas",
+            "parent_kind": "transformation",
+            "land_base_stage": "aflb_to_lhlb",
+            "stage_label": "AFLB -> LHLB",
+            "execution_class": "legal_harvest_exclusion",
+            "benchmark_marginal_area_ha": 0.5,
+            "benchmark_cumulative_area_ha": 0.5,
+            "compiled_logic": [
+                {
+                    "step_id": "thlb_parent_007_old_growth_management_areas_compiled_01",
+                    "parent_step_id": "thlb_parent_007_old_growth_management_areas",
+                    "label": "Old growth management areas",
+                    "step_status": "ready",
+                    "execution_status": "ready",
+                    "step_kind": "netdown_rule",
+                    "land_base_stage": "aflb_to_lhlb",
+                    "operation_type": "select_spatial_intersect",
+                    "linked_source_entry_ids": ["rmp_ogma_legal"],
+                }
+            ],
+            "row_order": 7,
+        },
+    ]
+    recipe_payload["steps"] = []
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1],
+            "MAP_ID": ["092O071"],
+        },
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    )
+    checkpoint.to_feather(checkpoint_path)
+
+    serial = tsr_recipes.run_tsr_thlb_parent_step(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        parent_step_id="thlb_parent_007_old_growth_management_areas",
+        checkpoint_path=checkpoint_path,
+        landscape_units=("West", "East"),
+        auto_map_id_smoke_subset=False,
+    )
+    parallel = tsr_recipes.run_tsr_thlb_parent_step(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        parent_step_id="thlb_parent_007_old_growth_management_areas",
+        checkpoint_path=checkpoint_path,
+        landscape_units=("West", "East"),
+        auto_map_id_smoke_subset=False,
+        execution_mode=tsr_recipes.TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL,
+        max_workers=2,
+        lu_bundle_count=2,
+        progress_root=instance_root / "runtime" / "logs" / "tsr" / "progress",
+    )
+
+    assert parallel.execution_mode == "lu_parallel"
+    assert parallel.worker_count == 2
+    assert parallel.lu_chunk_count == 2
+    assert parallel.lu_bundle_count == 2
+    assert parallel.progress_root == (
+        instance_root / "runtime" / "logs" / "tsr" / "progress"
+    ).resolve()
+    assert parallel.removed_area_ha == pytest.approx(serial.removed_area_ha)
+    assert parallel.remaining_area_ha == pytest.approx(serial.remaining_area_ha)
+    assert len(list(parallel.progress_root.glob("*.json"))) == 2
+
+
+def test_materialize_checkpoint_landscape_unit_partitions_reuses_cached_chunks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    instance_root = tmp_path / "instance"
+    checkpoint_path = instance_root / "data" / "checkpoint7.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint = gpd.GeoDataFrame(
+        {"FEATURE_ID": [1]},
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    )
+    checkpoint.to_feather(checkpoint_path)
+    lu_frame = gpd.GeoDataFrame(
+        {"LANDSCAPE_UNIT_NAME": ["West", "East"]},
+        geometry=[box(0, 0, 50, 100), box(50, 0, 100, 100)],
+        crs="EPSG:3005",
+    )
+
+    records_first = tsr_recipes._materialize_checkpoint_landscape_unit_partitions(
+        checkpoint,
+        checkpoint_path=checkpoint_path,
+        lu_frame=lu_frame,
+        selected_landscape_units=("West", "East"),
+        instance_root=instance_root,
+    )
+    assert len(records_first) == 2
+
+    def _fail_if_reclipped(*args, **kwargs):
+        raise AssertionError("expected cached LU partitions to be reused")
+
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_clip_checkpoint_to_landscape_unit_chunks",
+        _fail_if_reclipped,
+    )
+
+    records_second = tsr_recipes._materialize_checkpoint_landscape_unit_partitions(
+        checkpoint,
+        checkpoint_path=checkpoint_path,
+        lu_frame=lu_frame,
+        selected_landscape_units=("West", "East"),
+        instance_root=instance_root,
+    )
+
+    assert [item["lu_name"] for item in records_second] == ["East", "West"]
+
+
+def test_load_cached_landscape_unit_partition_selection_returns_cached_names(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "instance"
+    checkpoint_path = (instance_root / "data" / "checkpoint7.feather").resolve()
+    partition_root = tsr_recipes.default_tsr_thlb_lu_partition_root(
+        instance_root=instance_root
+    )
+    partition_dir = partition_root / "checkpoint7.cached"
+    partition_dir.mkdir(parents=True, exist_ok=True)
+    metadata_path = partition_dir / "partition_metadata.json"
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "checkpoint_path": str(checkpoint_path),
+                "selected_landscape_units": ["West", "East"],
+                "chunk_records": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    cached = tsr_recipes._load_cached_landscape_unit_partition_selection(
+        checkpoint_path=checkpoint_path,
+        instance_root=instance_root,
+    )
+
+    assert cached is not None
+    selected_names, cached_dir = cached
+    assert selected_names == ("West", "East")
+    assert cached_dir == partition_dir
+
+
+def test_load_cached_landscape_unit_partition_records_returns_records(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "instance"
+    checkpoint_path = (instance_root / "data" / "checkpoint7.feather").resolve()
+    partition_root = tsr_recipes.default_tsr_thlb_lu_partition_root(
+        instance_root=instance_root
+    )
+    partition_dir = partition_root / "checkpoint7.cached"
+    partition_dir.mkdir(parents=True, exist_ok=True)
+    chunk_path = partition_dir / "001_west.feather"
+    gpd.GeoDataFrame(
+        {"VALUE": [1]},
+        geometry=[box(0, 0, 1, 1)],
+        crs="EPSG:3005",
+    ).to_feather(chunk_path)
+    metadata_path = partition_dir / "partition_metadata.json"
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "checkpoint_path": str(checkpoint_path),
+                "selected_landscape_units": ["West", "East"],
+                "chunk_records": [
+                    {
+                        "lu_name": "West",
+                        "chunk_path": "001_west.feather",
+                        "area_ha": 1.0,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    cached = tsr_recipes._load_cached_landscape_unit_partition_records(
+        checkpoint_path=checkpoint_path,
+        instance_root=instance_root,
+    )
+
+    assert cached is not None
+    selected_names, records = cached
+    assert selected_names == ("West", "East")
+    assert len(records) == 1
+    assert records[0]["lu_name"] == "West"
+    assert records[0]["chunk_path"] == chunk_path
+
+
+def test_build_thlb_parent_step_code_cell_defaults_step6_to_full_tsa_parallel() -> None:
+    cell_text = tsr_recipes._build_thlb_parent_step_code_cell(
+        {
+            "parent_step_id": "thlb_parent_006_parks_protected_areas_area_base_tenures",
+            "parent_label": "Parks, protected areas, area-base tenures",
+            "benchmark_marginal_area_ha": 1.0,
+            "benchmark_cumulative_area_ha": 2.0,
+            "compiled_logic": [],
+        },
+        tsa_code="29",
+    )
+
+    assert 'LANDSCAPE_UNIT_SCOPE: tuple[str, ...] = ()' in cell_text
+    assert 'EXECUTION_MODE = "lu_parallel"' in cell_text
+    assert "LU_BUNDLE_COUNT = 8" in cell_text
+    assert "PERSIST_RECIPE_UPDATE = False" in cell_text
+    assert "persist_recipe_update=PERSIST_RECIPE_UPDATE" in cell_text
+    assert "PROGRESS_ROOT" in cell_text
+
+
+def test_run_tsr_thlb_parallel_benchmark_writes_summary(tmp_path: Path) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+    lu_path = (
+        instance_root
+        / "data"
+        / "downloads"
+        / "bcdc"
+        / "WHSE_LAND_USE_PLANNING_RMP_LANDSCAPE_UNIT_SVW"
+        / "WHSE_LAND_USE_PLANNING_RMP_LANDSCAPE_UNIT_SVW.gpkg"
+    )
+    lu_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {
+            "LANDSCAPE_UNIT_NAME": ["West", "East"],
+            "LANDSCAPE_UNIT_NUMBER": ["1", "2"],
+        },
+        geometry=[box(0, 0, 50, 100), box(50, 0, 100, 100)],
+        crs="EPSG:3005",
+    ).to_file(lu_path, driver="GPKG")
+    exclusion_path = (
+        instance_root / "data" / "downloads" / "bcdc" / "OGMA" / "OGMA.gpkg"
+    )
+    exclusion_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {"name": ["ogma"]},
+        geometry=[box(0, 0, 50, 100)],
+        crs="EPSG:3005",
+    ).to_file(exclusion_path, driver="GPKG")
+    source_recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    source_recipe_payload["entries"] = [
+        {
+            "entry_id": "rmp_ogma_legal",
+            "label": "OGMA",
+            "artifact_path": "data/downloads/bcdc/OGMA/OGMA.gpkg",
+            "run_status": "fetched",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            source_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+    recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    recipe_payload["recipe_contract"]["status"] = "built"
+    recipe_payload["parent_steps"] = [
+        {
+            "parent_step_id": "thlb_parent_001_total_tsa_area",
+            "parent_label": "Total TSA area",
+            "parent_kind": "milestone",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "execution_class": "reference_only",
+            "benchmark_cumulative_area_ha": 1.0,
+            "row_order": 1,
+        },
+        {
+            "parent_step_id": "thlb_parent_007_old_growth_management_areas",
+            "parent_label": "Old growth management areas",
+            "parent_kind": "transformation",
+            "land_base_stage": "aflb_to_lhlb",
+            "stage_label": "AFLB -> LHLB",
+            "execution_class": "legal_harvest_exclusion",
+            "benchmark_marginal_area_ha": 0.5,
+            "benchmark_cumulative_area_ha": 0.5,
+            "compiled_logic": [
+                {
+                    "step_id": "thlb_parent_007_old_growth_management_areas_compiled_01",
+                    "parent_step_id": "thlb_parent_007_old_growth_management_areas",
+                    "label": "Old growth management areas",
+                    "step_status": "ready",
+                    "execution_status": "ready",
+                    "step_kind": "netdown_rule",
+                    "land_base_stage": "aflb_to_lhlb",
+                    "operation_type": "select_spatial_intersect",
+                    "linked_source_entry_ids": ["rmp_ogma_legal"],
+                }
+            ],
+            "row_order": 7,
+        },
+    ]
+    recipe_payload["steps"] = []
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1],
+            "MAP_ID": ["092O071"],
+        },
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    ).to_feather(checkpoint_path)
+
+    result = tsr_recipes.run_tsr_thlb_parallel_benchmark(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        parent_step_ids=("thlb_parent_007_old_growth_management_areas",),
+        checkpoint_path=checkpoint_path,
+        landscape_units=("West", "East"),
+        worker_counts=(1,),
+    )
+
+    assert result.summary_path.exists()
+    assert len(result.run_results) == 2
+    parallel = next(
+        item for item in result.run_results if item.execution_mode == "lu_parallel"
+    )
+    assert parallel.parity_with_serial is True
+
+
 def test_specialized_compiled_logic_for_wildlife_uses_harvest_zone_filters() -> None:
     items = tsr_recipes._specialized_compiled_logic_for_parent_step(
         parent_step_id="thlb_parent_008_wildlife_habitat_areas",
@@ -2322,13 +2787,58 @@ def test_specialized_compiled_logic_for_wildlife_uses_harvest_zone_filters() -> 
             }
         ]
     conditional = next(
-        item for item in items if item.get("compiled_operation_type") == "manual_review_required"
+        item
+        for item in items
+        if item.get("compiled_operation_type") == "manual_review_required"
     )
     assert conditional["source_attribute_filters"] == [
         {
             "field": "TIMBER_HARVEST_CODE",
             "operator": "eq",
             "value": "CONDITIONAL HARVEST ZONE",
+        }
+    ]
+
+
+def test_specialized_compiled_logic_for_step6_uses_fown_tenure_classes() -> None:
+    items = tsr_recipes._specialized_compiled_logic_for_parent_step(
+        parent_step_id="thlb_parent_006_parks_protected_areas_area_base_tenures",
+        parent_label="Parks, protected areas, area-base tenures",
+        land_base_stage="aflb_to_lhlb",
+        stage_label="AFLB -> LHLB",
+        execution_class="legal_harvest_exclusion",
+        benchmark_marginal_area_ha=306327.0,
+        benchmark_cumulative_area_ha=2791841.0,
+        table_provenance="TSR_2024/...#table=3,row=6",
+        row_order=6,
+        linked_subsection={
+            "body": (
+                "Parks and protected areas are included in the AFLB. "
+                "Area-based licences such as community forest agreements and "
+                "First Nations woodland licences are removed from the AFLB. "
+                "Woodlots are left in the AFLB and removed when defining the LHLB."
+            ),
+            "provenance_id": "TSR_2024/...#page=25",
+            "page_number": 25,
+        },
+    )
+
+    assert items is not None
+    assert len(items) == 2
+    tenure_item = next(
+        item for item in items if item["label"] == "Area-based tenures and woodlots"
+    )
+    assert tenure_item["compiled_operation_type"] == "select_spatial_intersect"
+    assert tenure_item["linked_source_entry_ids"] == ["whse_forest_vegetation_f_own"]
+    assert tenure_item["source_attribute_filters"] == [
+        {
+            "field": "OWNERSHIP_DESCRIPTION",
+            "operator": "in",
+            "value": [
+                "Crown Lease - Misc. lease",
+                "Crown Tenure - Woodlot Licence, Schedule A",
+                "Crown Tenure - Woodlot Licence, Schedule B",
+            ],
         }
     ]
 
@@ -2402,7 +2912,9 @@ def test_specialized_compiled_logic_for_pra_is_review_only() -> None:
     ]
 
 
-def test_specialized_compiled_logic_for_inoperable_uses_terrain_plus_review_hold() -> None:
+def test_specialized_compiled_logic_for_inoperable_uses_terrain_plus_review_hold() -> (
+    None
+):
     items = tsr_recipes._specialized_compiled_logic_for_parent_step(
         parent_step_id="thlb_parent_013_areas_considered_inoperable",
         parent_label="Areas considered inoperable",
@@ -2427,7 +2939,9 @@ def test_specialized_compiled_logic_for_inoperable_uses_terrain_plus_review_hold
     assert items is not None
     assert len(items) == 2
     terrain_item = next(
-        item for item in items if item["compiled_operation_type"] == "select_spatial_intersect"
+        item
+        for item in items
+        if item["compiled_operation_type"] == "select_spatial_intersect"
     )
     assert terrain_item["linked_source_entry_ids"] == [
         "reg_land_and_natural_resource_terrain_stability"
@@ -2440,7 +2954,9 @@ def test_specialized_compiled_logic_for_inoperable_uses_terrain_plus_review_hold
         }
     ]
     review_item = next(
-        item for item in items if item["compiled_operation_type"] == "manual_review_required"
+        item
+        for item in items
+        if item["compiled_operation_type"] == "manual_review_required"
     )
     assert review_item["linked_source_entry_ids"] == [
         "reg_land_and_natural_resource_terrain_stability",
@@ -2487,7 +3003,13 @@ def test_specialized_compiled_logic_for_riparian_uses_classed_buffers() -> None:
         "5",
         "6",
     }
-    assert {item["buffer_distance_m"] for item in stream_items} == {6.0, 10.0, 24.0, 34.0, 60.0}
+    assert {item["buffer_distance_m"] for item in stream_items} == {
+        6.0,
+        10.0,
+        24.0,
+        34.0,
+        60.0,
+    }
 
     wetland_items = [
         item
@@ -2506,12 +3028,16 @@ def test_specialized_compiled_logic_for_riparian_uses_classed_buffers() -> None:
     assert {item["buffer_distance_m"] for item in wetland_items} == {6.0, 14.0, 18.0}
 
     review_items = [
-        item for item in items if item.get("compiled_operation_type") == "manual_review_required"
+        item
+        for item in items
+        if item.get("compiled_operation_type") == "manual_review_required"
     ]
     assert len(review_items) == 2
 
 
-def test_specialized_compiled_logic_for_low_growing_potential_uses_curve_threshold() -> None:
+def test_specialized_compiled_logic_for_low_growing_potential_uses_curve_threshold() -> (
+    None
+):
     items = tsr_recipes._specialized_compiled_logic_for_parent_step(
         parent_step_id="thlb_parent_014_sites_with_low_growing_timber_potential",
         parent_label="Sites with low growing timber potential",
@@ -2543,12 +3069,16 @@ def test_specialized_compiled_logic_for_low_growing_potential_uses_curve_thresho
     assert curve_item["curve_id_column"] == "curve1"
     assert curve_item["minimum_volume_m3_per_ha"] == pytest.approx(80.0)
     review_item = next(
-        item for item in items if item["compiled_operation_type"] == "manual_review_required"
+        item
+        for item in items
+        if item["compiled_operation_type"] == "manual_review_required"
     )
     assert review_item["step_status"] == "manual_review_required"
 
 
-def test_specialized_compiled_logic_for_non_merchantable_profiles_uses_broadleaf_filter() -> None:
+def test_specialized_compiled_logic_for_non_merchantable_profiles_uses_broadleaf_filter() -> (
+    None
+):
     items = tsr_recipes._specialized_compiled_logic_for_parent_step(
         parent_step_id="thlb_parent_015_non_merchantable_timber_profiles",
         parent_label="Non-merchantable timber profiles",
@@ -2580,8 +3110,9 @@ def test_specialized_compiled_logic_for_non_merchantable_profiles_uses_broadleaf
     assert item["normalized_subject"] == "Broadleaf-leading stands"
 
 
-def test_specialized_compiled_logic_for_recreation_features_uses_active_recreation_polygons(
-) -> None:
+def test_specialized_compiled_logic_for_recreation_features_uses_active_recreation_polygons() -> (
+    None
+):
     items = tsr_recipes._specialized_compiled_logic_for_parent_step(
         parent_step_id="thlb_parent_016_recreation_features",
         parent_label="Recreation features",
@@ -2618,7 +3149,9 @@ def test_specialized_compiled_logic_for_recreation_features_uses_active_recreati
     ]
 
 
-def test_specialized_compiled_logic_for_buffered_trails_uses_buffered_trail_polygons() -> None:
+def test_specialized_compiled_logic_for_buffered_trails_uses_buffered_trail_polygons() -> (
+    None
+):
     items = tsr_recipes._specialized_compiled_logic_for_parent_step(
         parent_step_id="thlb_parent_019_buffered_trails",
         parent_label="Buffered trails",
@@ -2689,7 +3222,9 @@ def test_specialized_compiled_logic_for_wtra_uses_aspatial_reduction() -> None:
     assert item["normalized_subject"] == "Future wildlife tree retention area reduction"
 
 
-def test_specialized_compiled_logic_for_cultural_heritage_uses_aspatial_reduction() -> None:
+def test_specialized_compiled_logic_for_cultural_heritage_uses_aspatial_reduction() -> (
+    None
+):
     items = tsr_recipes._specialized_compiled_logic_for_parent_step(
         parent_step_id="thlb_parent_021_cultural_heritage_and_archaeological_resources",
         parent_label="Cultural heritage and archaeological resources",
@@ -2712,10 +3247,15 @@ def test_specialized_compiled_logic_for_cultural_heritage_uses_aspatial_reductio
     item = items[0]
     assert item["compiled_operation_type"] == "aspatial_reduction"
     assert item["linked_source_entry_ids"] == []
-    assert item["normalized_subject"] == "Cultural heritage and archaeological resources reduction"
+    assert (
+        item["normalized_subject"]
+        == "Cultural heritage and archaeological resources reduction"
+    )
 
 
-def test_specialized_compiled_logic_for_future_roads_uses_aspatial_area_reduction() -> None:
+def test_specialized_compiled_logic_for_future_roads_uses_aspatial_area_reduction() -> (
+    None
+):
     items = tsr_recipes._specialized_compiled_logic_for_parent_step(
         parent_step_id="thlb_parent_023_future_roads",
         parent_label="Future roads",
@@ -2739,10 +3279,15 @@ def test_specialized_compiled_logic_for_future_roads_uses_aspatial_area_reductio
     assert item["compiled_operation_type"] == "aspatial_area_reduction"
     assert item["linked_source_entry_ids"] == []
     assert item["benchmark_marginal_area_ha"] == pytest.approx(22754.0)
-    assert item["normalized_subject"] == "Future roads, trails, and landings area reduction"
+    assert (
+        item["normalized_subject"]
+        == "Future roads, trails, and landings area reduction"
+    )
 
 
-def test_apply_aspatial_area_reduction_sets_effective_area_without_touching_canonical_area_or_thlb() -> None:
+def test_apply_aspatial_area_reduction_sets_effective_area_without_touching_canonical_area_or_thlb() -> (
+    None
+):
     checkpoint = gpd.GeoDataFrame(
         {
             "_stand_area_sqm": [100.0, 100.0],
@@ -2758,9 +3303,11 @@ def test_apply_aspatial_area_reduction_sets_effective_area_without_touching_cano
         crs="EPSG:3005",
     )
 
-    updated, removed_area_ha, affected_row_count = tsr_recipes._apply_aspatial_area_reduction(
-        checkpoint,
-        target_removed_area_ha=0.01,
+    updated, removed_area_ha, affected_row_count = (
+        tsr_recipes._apply_aspatial_area_reduction(
+            checkpoint,
+            target_removed_area_ha=0.01,
+        )
     )
 
     assert removed_area_ha == pytest.approx(0.01)
@@ -2791,9 +3338,11 @@ def test_apply_aspatial_area_reduction_is_idempotent_against_canonical_area() ->
         crs="EPSG:3005",
     )
 
-    updated, removed_area_ha, _affected_row_count = tsr_recipes._apply_aspatial_area_reduction(
-        checkpoint,
-        target_removed_area_ha=0.01,
+    updated, removed_area_ha, _affected_row_count = (
+        tsr_recipes._apply_aspatial_area_reduction(
+            checkpoint,
+            target_removed_area_ha=0.01,
+        )
     )
 
     assert removed_area_ha == pytest.approx(0.01)
@@ -2831,12 +3380,7 @@ def test_run_tsr_thlb_parent_step_treats_no_matching_filtered_source_as_noop(
     )
 
     wildlife_path = (
-        instance_root
-        / "data"
-        / "downloads"
-        / "bcdc"
-        / "WILDLIFE"
-        / "WILDLIFE.gpkg"
+        instance_root / "data" / "downloads" / "bcdc" / "WILDLIFE" / "WILDLIFE.gpkg"
     )
     wildlife_path.parent.mkdir(parents=True, exist_ok=True)
     wildlife = gpd.GeoDataFrame(
@@ -2898,7 +3442,9 @@ def test_run_tsr_thlb_parent_step_treats_no_matching_filtered_source_as_noop(
                     "step_kind": "netdown_rule",
                     "land_base_stage": "aflb_to_lhlb",
                     "operation_type": "select_spatial_intersect",
-                    "linked_source_entry_ids": ["whse_wildlife_management_wcp_ungulate"],
+                    "linked_source_entry_ids": [
+                        "whse_wildlife_management_wcp_ungulate"
+                    ],
                     "source_attribute_filters": [
                         {
                             "field": "TIMBER_HARVEST_CODE",
@@ -2948,9 +3494,10 @@ def test_run_tsr_thlb_parent_step_treats_no_matching_filtered_source_as_noop(
         if entry["parent_step_id"] == "thlb_parent_008_wildlife_habitat_areas"
     )
     assert item["execution_status"] == "applied_noop"
-    assert "no features matched the current attribute filters" in " ".join(
-        item["runtime_notes"]
-    ).lower()
+    assert (
+        "no features matched the current attribute filters"
+        in " ".join(item["runtime_notes"]).lower()
+    )
 
 
 def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
@@ -3097,9 +3644,8 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
         == "thlb_parent_014_sites_with_low_growing_timber_potential"
     )
     assert item["execution_status"] == "applied"
-    assert (
-        "preserved geometry/fragments and set THLB state to 0"
-        in " ".join(item["runtime_notes"])
+    assert "preserved geometry/fragments and set THLB state to 0" in " ".join(
+        item["runtime_notes"]
     )
 
 

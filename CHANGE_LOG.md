@@ -12488,3 +12488,110 @@
       right now; and
     - move the active full-TSA validation effort down into
       `AFLB -> LHLB -> THLB`.
+- 2026-04-06: Opened child issue `#143` and branch
+  `feature/issue-143-lu-parallel-thlb-benchmark` for a contained LU-wise THLB
+  parallelization benchmark side quest.
+  - Goal:
+    - test whether exact LU-clipped decomposition plus local
+      `ProcessPoolExecutor` execution can speed up expensive full-TSA spatial
+      THLB steps enough to justify adoption.
+  - Agreed v1 scope:
+    - GeoPandas/Shapely remains the GIS engine;
+    - benchmark steps `004`, `007`, `018`, and `019`;
+    - compare serial vs LU-parallel runs with worker counts `1`, `2`, `4`,
+      `8`; and
+    - require strict parity on removed/remaining area and later-stage
+      harvestability semantics before treating any speedup as credible.
+  - Boundary:
+    - this is a performance side quest adjacent to `#141`, not a new THLB
+      semantics lane, and ArcGIS remains out of scope after the completed
+      `#142` benchmark.
+- 2026-04-06: Landed the first LU-wise THLB parallel benchmark prototype for
+  issue `#143`.
+  - Added an experimental `lu_parallel` execution mode to the THLB parent-step
+    runner using local `ProcessPoolExecutor` workers plus disjoint
+    landscape-unit clipping.
+  - Added a benchmark CLI:
+    - `femic tsr thlb-netdown-parallel-benchmark`
+  - Added benchmark artifact summaries under:
+    - `runtime/logs/tsr/parallel_benchmarks/`
+  - Added regression coverage for LU-parallel parity on a small fixture and
+    benchmark-summary generation.
+  - Validation passed:
+    - `pytest tests/test_tsr_recipes.py tests/test_cli_main.py -q`
+    - `ruff check src/femic/tsr_catalog/recipes.py src/femic/tsr_catalog/__init__.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_cli_main.py`
+    - `mypy src`
+    - `sphinx-build -b html docs _build/html -W`
+  - First live benchmark on `Williams Lake` LU for step `004`
+    (`Roads and landings`) was not encouraging:
+    - serial runtime about `71.0 s`
+    - LU-parallel (`2` workers) runtime about `75.2 s`
+    - LU-parallel parity drifted from serial on removed/remaining area
+  - Current interpretation:
+    - the benchmark harness is real and usable;
+    - LU-wise parallel execution is not adoption-ready yet; and
+    - further claims should use a cleaner full-TSA/all-LU parity reference
+      before deciding whether to keep the feature.
+- 2026-04-06: Queued the next `#143` slice to move from one-LU-per-task testing
+  to grouped-LU worker bundles with notebook-visible progress for full-TSA step
+  `006`.
+  - New direction:
+    - keep exact LU clipping, but group the clipped LU slices into a smaller
+      number of worker bundles (targeting `8`) to reduce per-chunk overhead;
+    - add per-worker progress-file reporting so the generated THLB notebook can
+      show one progress bar per worker bundle during long runs; and
+    - use that path to probe the first full-TSA `AFLB -> LHLB` gate
+      (`thlb_parent_006_parks_protected_areas_area_base_tenures`) without
+      waiting blindly through serial runtime.
+- 2026-04-06: Restored the intended notebook progress-bar UX for the grouped-LU
+  `#143` step-006 full-TSA run path.
+  - Installed `ipywidgets` into the active repo `.venv`.
+  - Added `ipywidgets` to the FEMIC dev extra in `pyproject.toml` so future
+    `requirements-dev.txt` bootstraps pick it up automatically.
+  - Verified the active notebook kernel Python can now import `ipywidgets`.
+- 2026-04-07: Switched the generated TSA29 THLB workbench cells to a fast
+  validation default for `#143`.
+  - Notebook-generated parent-step cells now set:
+    - `PERSIST_RECIPE_UPDATE = False`
+    by default and pass that through to `run_tsr_thlb_parent_step(...)`.
+  - This means interactive notebook validation runs no longer rebuild the THLB
+    recipe/status surfaces on every cell execution unless explicitly opted in.
+  - Rebuilt:
+    - `external/femic-tsa29-instance/workbench/tsr/thlb_netdown.workbench.ipynb`
+  - Validation passed:
+    - `pytest tests/test_tsr_recipes.py -q`
+    - `ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
+    - `mypy src`
+    - `python -m femic tsr thlb-netdown-workbench-build --instance-root external/femic-tsa29-instance`
+- 2026-04-07: Started closing the remaining `#143` profiling gap for the
+  slow full-TSA step-6 notebook loop.
+  - Added finer LU-selection profiling fields so the coordinator-side work can
+    distinguish LU-layer load, bbox candidate filtering, checkpoint `union_all`,
+    and final LU intersection time.
+  - Added cached LU-selection recovery from existing LU partition metadata so
+    later full-TSA `AFLB -> LHLB` / `LHLB -> THLB` runs can reuse the already
+    known selected LU set instead of recomputing checkpoint-wide LU
+    intersection every time.
+  - Added regression coverage for cached LU-selection lookup from partition
+    metadata.
+- 2026-04-07: Finished the useful part of `#143` and got step `006` back onto
+  a fast tight-loop footing.
+  - Profiling on the real TSA29 later-stage checkpoint showed the apparent
+    notebook “hang” was dominated by repeated
+    `checkpoint.geometry.union_all()` in LU selection:
+    - old path: about `334.24 s`
+    - cached partition-metadata path: about `0.018 s`
+  - After that fix, warm notebook reruns of full-TSA step `006` dropped from
+    about `7 minutes` to about `1m12s`.
+  - Tightened the missing step-6 tenure logic so the executable `F_OWN` filter
+    now uses only:
+    - `Crown Tenure - Woodlot Licence, Schedule A`
+    - `Crown Tenure - Woodlot Licence, Schedule B`
+    - `Crown Lease - Misc. lease`
+  - Removed broader CFA/FNWL/TFL classes from step `006` because those are
+    already handled upstream in the current TSA29 interpretation.
+  - Validation signal after the fix:
+    - `Williams Lake` LU smell test: about `6109 ha` removed vs scaled
+      benchmark about `4440 ha`
+    - full-TSA cached 8-bundle run: about `275,618 ha` removed vs TSR
+      benchmark `306,327 ha`
