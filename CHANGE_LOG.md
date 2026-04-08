@@ -12789,3 +12789,33 @@
       the current side/slope workflow; and
     - this supports keeping the current executable contract unchanged while
       focusing future refinement on the steep-slope mask semantics instead.
+- 2026-04-08: User directed the TSA29 validation lane to accept step `013` on
+  the current `40%` run and move on to step `014`.
+  - Step `013` approval handling:
+    - use the accepted `40%` attribute-first full-TSA run
+      (`43,628.139 ha` removed) as the governing run surface for approval
+      metadata;
+    - keep the later `35%` rerun as sensitivity evidence only; and
+    - record the approval note honestly as a user-directed acceptance despite
+      material benchmark overcut.
+  - Next active step after that approval update:
+    - full-TSA execution of step `014` from the enriched step-13 checkpoint.
+- 2026-04-08: Ran the first full-TSA cached LU-parallel benchmark for TSA29
+  step `014` (`Sites with low growing timber potential`) from the enriched
+  step-13 checkpoint.
+  - Run setup:
+    - used `data/tsr/ria_vri_vclr1p_checkpoint7.step13_attrs.feather` as the
+      cumulative later-stage checkpoint; and
+    - kept the current step-14 executable subset unchanged:
+      - runnable `80 m3/ha` curve-threshold branch;
+      - still-manual steep-slope `250 m3/ha` branch.
+  - Full-TSA cached 8-bundle run result:
+    - removed `4,527.316 ha`
+    - TSR benchmark `321,044 ha`
+    - delta `-316,516.684 ha`
+    - cumulative remaining area `2,206,359.406 ha`
+  - Outcome:
+    - step `014` remains `benchmarked` and very far from approvable; and
+    - the missing signal now points squarely at the still-manual steep-slope
+      `250 m3/ha` branch and/or at additional TSR low-productivity semantics
+      beyond the current curve-only executable slice.

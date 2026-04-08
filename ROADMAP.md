@@ -14739,3 +14739,35 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - it makes the overcut materially worse; and
     - the next refinement seam is still in how the TSR operationalizes the
       steep-slope mask, not in lowering the west cutoff blindly.
+- 2026-04-08: User directed the validation pass to accept step `013` on the
+  current `40%` west-side run and move forward to step `014`.
+  - Approval handling:
+    - record step `013` as approved on the accepted `40%` attribute-first run,
+      not on the later `35%` sensitivity artifact;
+    - keep the ratchet note honest that the approval is user-directed despite a
+      material benchmark overcut; and
+    - preserve the `35%` rerun as sensitivity evidence only.
+  - Next active execution step:
+    - run step `014` on the full TSA from the enriched step-13 checkpoint so
+      the cumulative later-stage chain can execute cleanly through the newly
+      accepted step `013` logic.
+- 2026-04-08: Advanced into step `014` and completed the first full-TSA cached
+  LU-parallel benchmark from the enriched step-13 checkpoint.
+  - Run setup:
+    - used the accepted enriched checkpoint
+      `data/tsr/ria_vri_vclr1p_checkpoint7.step13_attrs.feather`;
+    - kept the current executable step-14 logic unchanged:
+      - curve-driven `80 m3/ha` threshold runnable;
+      - steep-slope `250 m3/ha` branch still manual.
+  - Full-TSA cached 8-bundle run result:
+    - removed `4,527.316 ha`
+    - TSR benchmark `321,044 ha`
+    - delta `-316,516.684 ha`
+    - cumulative remaining area `2,206,359.406 ha`
+  - Interpretation:
+    - the current curve-only executable subset is nowhere near approvable;
+    - most of the missing signal almost certainly sits in the still-manual
+      steep-slope `250 m3/ha` branch and/or in additional TSR low-productivity
+      screening semantics beyond the current curve-only executable slice; and
+    - keep step `014` in `benchmarked` territory while the next refinement seam
+      is scoped.
