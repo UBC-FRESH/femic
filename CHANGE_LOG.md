@@ -12662,3 +12662,27 @@
   - Rebuilt the TSA29 recipe, Markdown status report, and notebook so step `010`
     no longer advertises stale candidate layers or stale `77,308 ha` notebook
     output in the human-facing review surfaces.
+- 2026-04-08: Green-lit TSA29 step `011` (`Community areas of special concern`)
+  after cleaning the recipe surface and rerunning the narrowed legal-objective
+  mask on the full TSA.
+  - Cleaned the step-11 recipe surface so it now points at:
+    - `whse_land_use_planning_rmp_plan_legal_poly_svw`
+    - `STRGC_LAND_RSRCE_PLAN_NAME = Cariboo Chilcotin Land Use Plan`
+    - `LEGAL_FEAT_OBJECTIVE = Community Areas of Special Concern`
+  - Removed stale candidate-layer junk and duplicate legal-source alias clutter
+    from the generated draft/compiled metadata.
+  - Full-TSA cached 8-bundle run result:
+    - removed `69,545.637 ha`
+    - TSR benchmark `62,460 ha`
+    - delta `+7,085.637 ha`
+  - Interpretation:
+    - close enough to accept as good enough for forward progress, so step `011`
+      is now approved and the pass can move on to step `012`.
+- 2026-04-08: Recorded an explicit Windows multiprocessing reminder in the repo
+  notes for the TSA29 THLB validation lane.
+  - `lu_parallel` / `ProcessPoolExecutor` runs must be launched from:
+    - the real FEMIC CLI, or
+    - a real `.py` file on disk
+  - do **not** launch them from inline PowerShell here-strings or stdin-fed
+    Python snippets on Windows, because spawn mode will try to re-import
+    `'<stdin>'` and fail with `BrokenProcessPool`.

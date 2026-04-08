@@ -2224,6 +2224,41 @@ def _build_draft_subrules_for_parent_step(
                 "hint_provenance_ids": [],
             },
         )
+    if subsection_title.casefold().strip() == "community areas of special concern (casc)":
+        provenance_id = str(linked_subsection.get("provenance_id", ""))
+        return (
+            {
+                "subrule_id": f"{parent_step_id}_draft_01",
+                "human_summary": (
+                    "Exclude the legal LUO / CCLUP Map 5 community areas of special "
+                    "concern polygons from the harvestable land base."
+                ),
+                "rationale": (
+                    "TSA29 section 6.3.7 says CASC areas are no-harvest polygons "
+                    "designated in the LUO to address CCLUP objectives."
+                ),
+                "candidate_layers": [
+                    "whse_land_use_planning_rmp_plan_legal_poly_svw",
+                ],
+                "candidate_fields": [
+                    "STRGC_LAND_RSRCE_PLAN_NAME",
+                    "LEGAL_FEAT_OBJECTIVE",
+                ],
+                "candidate_values": [
+                    "Cariboo Chilcotin Land Use Plan",
+                    "Community Areas of Special Concern",
+                ],
+                "candidate_operation_type": "exclude",
+                "field_mapping_notes": [
+                    "Use the legal planning polygons for the CCLUP / LUO Map 5 boundaries.",
+                    "Do not substitute broad designated-area overlays or unrelated disturbance layers.",
+                ],
+                "confidence": "needs_review",
+                "review_status": "draft",
+                "prose_provenance": provenance_id,
+                "hint_provenance_ids": [],
+            },
+        )
     subsection_source_hints = _extract_data_source_comment_tokens(subsection_body)
     candidate_operation_type = {
         "drop_from_universe": "exclude",
@@ -2691,7 +2726,6 @@ def _specialized_compiled_logic_for_parent_step(
                     "LEGAL_FEAT_OBJECTIVE = Community Areas of Special Concern"
                 ),
                 "linked_source_entry_ids": [
-                    "rmp_plan_legal_poly_svw",
                     "whse_land_use_planning_rmp_plan_legal_poly_svw",
                 ],
                 "source_attribute_filters": [
@@ -2707,7 +2741,7 @@ def _specialized_compiled_logic_for_parent_step(
                     },
                 ],
                 "notes": [
-                    "TSA29 section 6.3.7 points to LUO / CCLUP Map 5 boundaries, so notebook execution uses the CCLUP legal-planning objective polygons instead of broad designated-area overlays."
+                    "TSA29 section 6.3.7 points to LUO / CCLUP Map 5 boundaries, so notebook execution uses the legal CCLUP planning polygons instead of broad designated-area overlays."
                 ],
             }
         )

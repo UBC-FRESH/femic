@@ -2884,7 +2884,6 @@ def test_specialized_compiled_logic_for_casc_uses_cclup_objective_filter() -> No
     casc_item = items[0]
     assert casc_item["compiled_operation_type"] == "select_spatial_intersect"
     assert casc_item["linked_source_entry_ids"] == [
-        "rmp_plan_legal_poly_svw",
         "whse_land_use_planning_rmp_plan_legal_poly_svw",
     ]
     assert casc_item["source_attribute_filters"] == [

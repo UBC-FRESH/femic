@@ -14568,3 +14568,30 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - approval scope `full_tsa_trivial_benchmark_skip`; and
     - no stale `77,308 ha` notebook-run residue in the human-facing review
       surfaces.
+- 2026-04-08: Green-lit TSA29 step `011` (`Community areas of special concern`)
+  on the full-TSA basis after cleaning the recipe surface and rerunning the
+  narrowed legal-objective mask.
+  - Step `011` now uses:
+    - a single legal planning source
+      `whse_land_use_planning_rmp_plan_legal_poly_svw`; and
+    - filters
+      `STRGC_LAND_RSRCE_PLAN_NAME = Cariboo Chilcotin Land Use Plan` and
+      `LEGAL_FEAT_OBJECTIVE = Community Areas of Special Concern`
+  - Stale candidate-layer noise and duplicate source-alias clutter were removed
+    from the draft/compiled recipe surface before rerunning.
+  - Full-TSA cached 8-bundle run result:
+    - removed `69,545.637 ha`
+    - TSR benchmark `62,460 ha`
+    - delta `+7,085.637 ha`
+  - Interpretation:
+    - this is close enough to accept as good enough for forward progress, so
+      step `011` is now approved and the `#141` pass can move on to step `012`.
+- Windows multiprocessing reminder for the active TSA29 THLB validation lane:
+  - do **not** launch `lu_parallel` / `ProcessPoolExecutor` THLB runs from an
+    inline PowerShell here-string or stdin-fed Python snippet;
+  - on Windows spawn mode, `run_tsr_thlb_parent_step(..., execution_mode="lu_parallel")`
+    must be invoked from:
+    - the real FEMIC CLI surface, or
+    - a real `.py` file on disk;
+  - otherwise worker spawn will fail trying to re-import `'<stdin>'`, wasting
+    time and producing a misleading `BrokenProcessPool`.
