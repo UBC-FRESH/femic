@@ -2097,6 +2097,72 @@ def _build_draft_subrules_for_parent_step(
                 "hint_provenance_ids": [],
             },
         )
+    if subsection_title.casefold().strip() == "critical habitat for fish":
+        provenance_id = str(linked_subsection.get("provenance_id", ""))
+        return (
+            {
+                "subrule_id": f"{parent_step_id}_draft_01",
+                "human_summary": (
+                    "Use the legal CCLUP critical-fish-habitat polygons from the "
+                    "Section 93.4 LAO / Map 4 source, not wildlife proxy layers."
+                ),
+                "rationale": (
+                    "TSA29 section 6.3.4 says critical fish habitat boundaries come "
+                    "from the Section 93.4 LAO establishing objectives for the CCLUP, "
+                    "Map 4."
+                ),
+                "candidate_layers": [
+                    "whse_land_use_planning_rmp_plan_legal_poly_svw"
+                ],
+                "candidate_fields": [
+                    "STRGC_LAND_RSRCE_PLAN_NAME",
+                    "LEGAL_FEAT_OBJECTIVE",
+                    "LEGAL_FEAT_ATRB_1_VALUE",
+                ],
+                "candidate_values": [
+                    "Cariboo Chilcotin Land Use Plan",
+                    "Critical Habitat for Fish",
+                    "CRITFISH",
+                ],
+                "candidate_operation_type": "exclude",
+                "field_mapping_notes": [
+                    "Keep the executable query inside the legal-planning fish-objective layer.",
+                    "Do not revert to wildlife-habitat proxy layers for this parent step.",
+                ],
+                "confidence": "needs_review",
+                "review_status": "draft",
+                "prose_provenance": provenance_id,
+                "hint_provenance_ids": [],
+            },
+            {
+                "subrule_id": f"{parent_step_id}_draft_02",
+                "human_summary": (
+                    "Treat the mapped critical-fish-habitat polygons as no-harvest "
+                    "areas within the LHLB."
+                ),
+                "rationale": (
+                    "The TSR says the LAO specifies these critical fish habitat "
+                    "areas are to be maintained as no-harvest areas and excluded "
+                    "from the LHLB."
+                ),
+                "candidate_layers": [
+                    "whse_land_use_planning_rmp_plan_legal_poly_svw"
+                ],
+                "candidate_fields": [],
+                "candidate_values": [
+                    "no harvest",
+                    "Section 93.4 LAO",
+                ],
+                "candidate_operation_type": "exclude",
+                "field_mapping_notes": [
+                    "If later refinement is needed, narrow the legal fish-objective attributes rather than swapping data sources."
+                ],
+                "confidence": "needs_review",
+                "review_status": "draft",
+                "prose_provenance": provenance_id,
+                "hint_provenance_ids": [],
+            },
+        )
     subsection_source_hints = _extract_data_source_comment_tokens(subsection_body)
     candidate_operation_type = {
         "drop_from_universe": "exclude",
@@ -2585,6 +2651,49 @@ def _specialized_compiled_logic_for_parent_step(
             }
         )
         return (casc_item,)
+
+    if lower == "critical habitat for fish":
+        fish_item = _base_item(
+            "compiled_01",
+            "Critical fish habitat",
+            "select_spatial_intersect",
+        )
+        fish_item.update(
+            {
+                "normalized_action": "exclude",
+                "normalized_subject": "Critical fish habitat",
+                "normalized_predicate": (
+                    "exclude only the CCLUP legal-planning polygons for critical "
+                    "fish habitat from the working harvestable land base"
+                ),
+                "linked_source_entry_ids": [
+                    "whse_land_use_planning_rmp_plan_legal_poly_svw"
+                ],
+                "source_attribute_filters": [
+                    {
+                        "field": "STRGC_LAND_RSRCE_PLAN_NAME",
+                        "operator": "eq",
+                        "value": "Cariboo Chilcotin Land Use Plan",
+                    },
+                    {
+                        "field": "LEGAL_FEAT_OBJECTIVE",
+                        "operator": "eq",
+                        "value": "Critical Habitat for Fish",
+                    },
+                    {
+                        "field": "LEGAL_FEAT_ATRB_1_VALUE",
+                        "operator": "eq",
+                        "value": "CRITFISH",
+                    },
+                ],
+                "notes": [
+                    "TSA29 section 6.3.4 cites the Section 93.4 LAO establishing objectives for the CCLUP, Map 4, as the critical-fish-habitat source.",
+                    "Notebook execution therefore uses the legal-planning fish objective polygons instead of wildlife-habitat proxy layers.",
+                    "If the full-TSA result still runs materially high, the next refinement seam is inside the legal fish objective attributes themselves, not a return to wildlife proxy sources.",
+                ],
+            }
+        )
+        return (fish_item,)
 
     if lower == "areas considered inoperable":
         terrain_item = _base_item(

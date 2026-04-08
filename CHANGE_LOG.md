@@ -12625,3 +12625,24 @@
     - step `008` is good enough to move on
     - step `009` is clearly too aggressive and needs a deeper logic review
       before approval
+- 2026-04-08: Tightened TSA29 step `009` (`Critical habitat for fish`) and
+  moved it into the approved column after the full-TSA source/logic review.
+  - Replaced the bad wildlife-proxy executable path with the legal CCLUP fish
+    habitat source:
+    - `WHSE_LAND_USE_PLANNING.RMP_PLAN_LEGAL_POLY_SVW`
+    - `STRGC_LAND_RSRCE_PLAN_NAME = Cariboo Chilcotin Land Use Plan`
+    - `LEGAL_FEAT_OBJECTIVE = Critical Habitat for Fish`
+    - `LEGAL_FEAT_ATRB_1_VALUE = CRITFISH`
+  - Specialized the step-9 draft subrules so the generated recipe, status
+    report, and notebook all reference the same legal-fish source and no longer
+    advertise stale wildlife candidate layers.
+  - Validation after the patch:
+    - `Williams Lake` LU smell test: about `65.730 ha` removed vs scaled
+      benchmark about `167.008 ha`
+    - full-TSA cached 8-bundle run: about `17,483 ha` removed vs TSR benchmark
+      `11,521 ha`
+  - Interpretation:
+    - the residual overcut is still present, but now small enough on this
+      landscape scale to accept as good enough for forward progress
+    - step `009` is therefore green-lit and the full-TSA validation pass can
+      continue to step `010`
