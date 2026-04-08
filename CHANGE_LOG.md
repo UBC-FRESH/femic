@@ -12725,3 +12725,16 @@
       and rationale consistently; and
     - the public-data-only FEMIC lane will revisit this step only if a vetted
       public/reviewed PRA boundary source is later adopted.
+- 2026-04-08: Ran the first full-TSA cached LU-parallel validation pass for
+  TSA29 step `013` (`Areas considered inoperable`) and kept it unapproved.
+  - Full-TSA cached 8-bundle run result:
+    - removed `16.620 ha`
+    - TSR benchmark `33,533 ha`
+    - delta `-33,516.380 ha`
+  - Interpretation:
+    - the current public-data runnable subset is still far too weak to approve;
+    - most of the missing benchmark signal appears to sit in the still-manual
+      Highway 97 east/west steep-slope threshold branch; and
+    - the TSA29 recipe should keep step `013` in `benchmarked` /
+      `manual_review_required` territory until a reviewed slope-angle source
+      and Highway 97 partition are adopted.

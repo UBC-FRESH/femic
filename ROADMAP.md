@@ -14639,3 +14639,27 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - rationale is explicit that the TSR logic is documented, but the backing
       PRA boundary data is not publicly available enough for defensible
       automation in the current research/teaching model lane.
+- 2026-04-08: Next active `#141` ratchet after the step `012` public-data skip
+  is full-TSA validation of step `013` (`Areas considered inoperable`).
+  - Preserve the current split while running the next benchmark:
+    - keep the terrain-stability `U` / `V` branch as the only auto-runnable
+      compiled logic for the full-TSA pass;
+    - keep the Highway-97 east/west steep-slope threshold branch in
+      `manual_review_required` until a reviewed slope-angle source and partition
+      are adopted.
+  - Use the existing Windows-safe full-TSA runner pattern:
+    - launch from the FEMIC CLI or a real `.py` file on disk, not stdin /
+      here-string Python;
+    - prefer the fast cached `lu_parallel` path with grouped LU bundles.
+- 2026-04-08: Full-TSA step `013` (`Areas considered inoperable`) is still not
+  green-lit after the first cached LU-parallel validation pass.
+  - Full-TSA cached 8-bundle run result:
+    - removed `16.620 ha`
+    - TSR benchmark `33,533 ha`
+    - delta `-33,516.380 ha`
+  - Interpretation:
+    - the current public-data runnable subset is still far too weak to approve;
+    - most of the missing benchmark signal appears to sit in the still-manual
+      Highway 97 east/west steep-slope threshold branch; and
+    - keep step `013` in `benchmarked` / `manual_review_required` territory
+      until a reviewed slope-angle source and Highway 97 partition are adopted.
