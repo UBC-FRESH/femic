@@ -14618,3 +14618,24 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       for the PRA boundary; and
     - keep the executable compiled logic in review/manual state until a vetted
       PRA boundary source or instance override is adopted.
+- 2026-04-08: Closed the loop on the public-data search for TSA29 step `012`
+  and intentionally green-lit it as a public-data-only skip.
+  - Actual public-source work completed:
+    - FEMIC resolver on exact token `WHSE_ADMIN_BOUNDARIES.PIP_CONSULTATION`
+      returned no catalogue hit.
+    - Broader resolver query `PIP Consultation Areas` surfaced the public lead:
+      `Profiles of Indigenous Peoples (PIP): Consultation Areas - Public Map Service`.
+    - The CAD/PIP public viewer is reachable, but the obvious machine-readable
+      config probe returned `HTTP 500`.
+    - The public CAD FAQ explicitly states that consultation-area linework is
+      not displayed in the public map service due to privacy concerns.
+  - Interpretation:
+    - we have enough evidence to conclude that the PRA boundary is not
+      currently available through a trustworthy, readily downloadable/queryable
+      public path for FEMIC automation in the public-data-only lane.
+  - Decision:
+    - step `012` is now approved with scope
+      `full_tsa_public_data_unavailable_skip`.
+    - rationale is explicit that the TSR logic is documented, but the backing
+      PRA boundary data is not publicly available enough for defensible
+      automation in the current research/teaching model lane.

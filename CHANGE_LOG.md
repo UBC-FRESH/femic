@@ -12706,3 +12706,22 @@
       for the PRA boundary; and
     - keep the compiled logic in reviewed-boundary/manual state until a vetted
       PRA boundary source or instance override is adopted.
+- 2026-04-08: Completed the actual public-source due diligence for TSA29 step
+  `012` and converted it from an unresolved manual seam into an intentional
+  public-data-only skip.
+  - Completed public-source checks:
+    - `WHSE_ADMIN_BOUNDARIES.PIP_CONSULTATION` returned no direct catalogue hit
+      in FEMIC's resolver;
+    - broader query `PIP Consultation Areas` surfaced the public lead
+      `Profiles of Indigenous Peoples (PIP): Consultation Areas - Public Map Service`;
+    - the CAD/PIP public viewer is reachable, but an obvious machine-readable
+      config probe returned `HTTP 500`; and
+    - the public CAD FAQ explicitly states that consultation-area linework is
+      not displayed publicly due to privacy concerns.
+  - Decision:
+    - step `012` is now approved with scope
+      `full_tsa_public_data_unavailable_skip`;
+    - the generated TSA29 recipe/status/notebook now carry that approval note
+      and rationale consistently; and
+    - the public-data-only FEMIC lane will revisit this step only if a vetted
+      public/reviewed PRA boundary source is later adopted.
