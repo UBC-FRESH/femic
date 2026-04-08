@@ -90,9 +90,7 @@ _THLB_JUNK_FRAGMENTS = {
     "non contributing areas",
 }
 _THLB_ADDITIONAL_SUPPORTING_PROVENANCE_IDS: dict[str, tuple[str, ...]] = {
-    "areas considered inoperable": (
-        "reference/res_xSteepSlopeLogging.pdf#page=1",
-    ),
+    "areas considered inoperable": ("reference/res_xSteepSlopeLogging.pdf#page=1",),
 }
 _THLB_NOTEBOOK_RUNNABLE_PARENT_LABELS = {
     "land not administered by the province",
@@ -2954,56 +2952,71 @@ def _specialized_compiled_logic_for_parent_step(
         return (terrain_item, steep_item)
 
     if lower == "sites with low growing timber potential":
-        curve_item = _base_item(
+        non_steep_item = _base_item(
             "compiled_01",
-            "Curve-driven low productivity threshold",
+            "Non-steep 80 m3/ha threshold",
             "curve_volume_threshold_exclusion",
         )
-        curve_item.update(
+        non_steep_item.update(
             {
                 "normalized_action": "exclude",
-                "normalized_subject": "Curve-driven low productivity threshold",
+                "normalized_subject": "Non-steep 80 m3/ha threshold",
                 "normalized_predicate": (
-                    "set THLB to 0 where assigned curve volume falls below 80 m3/ha; "
-                    "treated curves use volume at CMAI and untreated curves use culmination volume"
+                    "set THLB to 0 on non-steep stands where assigned curve volume "
+                    "falls below 80 m3/ha; treated curves use volume at CMAI and "
+                    "untreated curves use culmination volume"
                 ),
                 "linked_source_entry_ids": [],
                 "curve_id_column": "curve1",
                 "minimum_volume_m3_per_ha": 80.0,
+                "checkpoint_attribute_mode": "any",
+                "checkpoint_attribute_filters": [
+                    {
+                        "field": "femic_step13_steep_slope_flag",
+                        "operator": "eq",
+                        "value": False,
+                    }
+                ],
                 "notes": [
                     "Step 14 runs late in the pipeline on the curve-ready checkpoint rather than on checkpoint1.",
                     "Notebook execution uses the current assigned bundle curves: treated curves use volume at CMAI, untreated curves use culmination volume.",
-                    "This replaces the earlier site-index placeholder with a direct yield-curve threshold test.",
+                    "This branch reuses the accepted step-13 steep-slope flag and applies the non-steep 80 m3/ha threshold only where `femic_step13_steep_slope_flag == False`.",
                 ],
             }
         )
         steep_item = _base_item(
             "compiled_02",
             "Steep-slope 250 m3/ha threshold",
-            "manual_review_required",
+            "curve_volume_threshold_exclusion",
         )
         steep_item.update(
             {
-                "normalized_action": "review",
+                "normalized_action": "exclude",
                 "normalized_subject": "Steep-slope 250 m3/ha threshold",
                 "normalized_predicate": (
-                    "apply the 250 m3/ha threshold only after a reviewed steep-slope mask is "
-                    "available; current notebook bridge does not auto-derive a defensible stand-level "
-                    "steep class from VRI alone"
+                    "set THLB to 0 on steep stands where assigned curve volume falls "
+                    "below 250 m3/ha; treated curves use volume at CMAI and untreated "
+                    "curves use culmination volume"
                 ),
-                "linked_source_entry_ids": [
-                    "reg_land_and_natural_resource_terrain_stability",
-                    "whse_imagery_and_base_maps_mot_highway_profiles_sp",
+                "linked_source_entry_ids": [],
+                "curve_id_column": "curve1",
+                "minimum_volume_m3_per_ha": 250.0,
+                "checkpoint_attribute_mode": "any",
+                "checkpoint_attribute_filters": [
+                    {
+                        "field": "femic_step13_steep_slope_flag",
+                        "operator": "eq",
+                        "value": True,
+                    }
                 ],
-                "step_status": "manual_review_required",
-                "required": False,
                 "notes": [
                     "TSA29 section 6.4.4 raises the threshold to 250 m3/ha on steep slopes.",
-                    "The notebook bridge does not yet have a reviewed steep-slope mask beyond the earlier inoperable exclusions, so this branch remains manual review for now.",
+                    "This branch reuses the accepted step-13 steep-slope flag and applies the 250 m3/ha threshold only where `femic_step13_steep_slope_flag == True`.",
+                    "Together with the non-steep 80 m3/ha branch, this keeps the step-14 partition mutually exclusive and avoids applying the 80 m3/ha threshold to steep stands.",
                 ],
             }
         )
-        return (curve_item, steep_item)
+        return (non_steep_item, steep_item)
 
     if lower == "non-merchantable timber profiles":
         broadleaf_item = _base_item(
@@ -6615,26 +6628,13 @@ def _apply_checkpoint_attribute_filters(
 ) -> tuple[gpd.GeoDataFrame, float]:
     if not filters:
         return checkpoint, 0.0
-    masks: list[pd.Series] = []
-    for item in filters:
-        field = str(item.get("field", "")).strip()
-        operator = str(item.get("operator", "")).strip()
-        value = item.get("value")
-        if field not in checkpoint.columns:
-            continue
-        masks.append(
-            _evaluate_attribute_filter(
-                checkpoint[field], operator=operator, value=value
-            )
-        )
-    if not masks:
+    exclude_mask = _build_checkpoint_attribute_mask(
+        checkpoint,
+        filters=filters,
+        mode=mode,
+    )
+    if exclude_mask is None:
         return checkpoint, 0.0
-    exclude_mask = masks[0].copy()
-    for mask in masks[1:]:
-        if mode == "all":
-            exclude_mask = exclude_mask & mask
-        else:
-            exclude_mask = exclude_mask | mask
     active_mask = (
         checkpoint["thlb_fact"] > 0 if "thlb_fact" in checkpoint.columns else True
     )
@@ -6653,6 +6653,37 @@ def _apply_checkpoint_attribute_filters(
     remaining["thlb_fact"] = 1.0
     remaining["thlb"] = 1
     return remaining, removed_area_ha
+
+
+def _build_checkpoint_attribute_mask(
+    checkpoint: gpd.GeoDataFrame,
+    *,
+    filters: Sequence[dict[str, Any]],
+    mode: str,
+) -> pd.Series | None:
+    if not filters:
+        return None
+    masks: list[pd.Series] = []
+    for item in filters:
+        field = str(item.get("field", "")).strip()
+        operator = str(item.get("operator", "")).strip()
+        value = item.get("value")
+        if field not in checkpoint.columns:
+            continue
+        masks.append(
+            _evaluate_attribute_filter(
+                checkpoint[field], operator=operator, value=value
+            )
+        )
+    if not masks:
+        return None
+    exclude_mask = masks[0].copy()
+    for mask in masks[1:]:
+        if mode == "all":
+            exclude_mask = exclude_mask & mask
+        else:
+            exclude_mask = exclude_mask | mask
+    return exclude_mask
 
 
 def _apply_source_attribute_filters(
@@ -6737,7 +6768,7 @@ def _apply_curve_volume_threshold_exclusion(
     instance_root: Path,
     compiled_item: dict[str, Any],
     preserve_geometry: bool,
-) -> tuple[gpd.GeoDataFrame, float, int, int]:
+) -> tuple[gpd.GeoDataFrame, float, int, int, int, int]:
     curve_id_column = (
         str(compiled_item.get("curve_id_column", "curve1")).strip() or "curve1"
     )
@@ -6786,17 +6817,35 @@ def _apply_curve_volume_threshold_exclusion(
     )
     metric_series = metric_frame["culmination_volume"].copy()
     metric_series.loc[treated_mask] = metric_frame.loc[treated_mask, "cmai_volume"]
+    filters = [
+        dict(item)
+        for item in compiled_item.get("checkpoint_attribute_filters", ())
+        if isinstance(item, dict)
+    ]
+    mode = str(compiled_item.get("checkpoint_attribute_mode", "any")).strip() or "any"
+    subset_mask = _build_checkpoint_attribute_mask(
+        checkpoint,
+        filters=filters,
+        mode=mode,
+    )
+    if subset_mask is None:
+        subset_mask = pd.Series(True, index=checkpoint.index, dtype=bool)
     active_mask = (
         checkpoint["thlb_fact"] > 0 if "thlb_fact" in checkpoint.columns else True
     )
+    scoped_active_mask = active_mask & subset_mask
     metric_available = metric_series.notna()
-    exclude_mask = active_mask & metric_available & (metric_series < minimum_volume)
+    exclude_mask = (
+        scoped_active_mask & metric_available & (metric_series < minimum_volume)
+    )
     removed_area_ha = float(
         checkpoint.loc[exclude_mask, "_stand_area_sqm"].sum() / 10000.0
     )
-    missing_metric_count = int((active_mask & ~metric_available).sum())
+    missing_metric_count = int((scoped_active_mask & ~metric_available).sum())
     treated_count = int((exclude_mask & treated_mask).sum())
     untreated_count = int((exclude_mask & ~treated_mask).sum())
+    scoped_row_count = int(subset_mask.sum())
+    scoped_active_row_count = int(scoped_active_mask.sum())
     if preserve_geometry:
         updated = checkpoint.copy()
         updated.loc[exclude_mask, "thlb_fact"] = 0.0
@@ -6807,6 +6856,8 @@ def _apply_curve_volume_threshold_exclusion(
             removed_area_ha,
             missing_metric_count,
             treated_count + untreated_count,
+            scoped_row_count,
+            scoped_active_row_count,
         )
     remaining = checkpoint.loc[~exclude_mask].copy()
     remaining = _assign_fragment_feature_ids(remaining)
@@ -6817,6 +6868,8 @@ def _apply_curve_volume_threshold_exclusion(
         removed_area_ha,
         missing_metric_count,
         treated_count + untreated_count,
+        scoped_row_count,
+        scoped_active_row_count,
     )
 
 
@@ -6913,13 +6966,18 @@ def _execute_workbench_compiled_item(
 
     if operation_type == "curve_volume_threshold_exclusion":
         try:
-            updated, removed_area_ha, missing_metric_count, affected_row_count = (
-                _apply_curve_volume_threshold_exclusion(
-                    checkpoint,
-                    instance_root=instance_root,
-                    compiled_item=compiled_item,
-                    preserve_geometry=preserve_geometry,
-                )
+            (
+                updated,
+                removed_area_ha,
+                missing_metric_count,
+                affected_row_count,
+                scoped_row_count,
+                scoped_active_row_count,
+            ) = _apply_curve_volume_threshold_exclusion(
+                checkpoint,
+                instance_root=instance_root,
+                compiled_item=compiled_item,
+                preserve_geometry=preserve_geometry,
             )
         except TsrRecipeError as exc:
             runtime_item["execution_status"] = "unsupported"
@@ -6930,12 +6988,14 @@ def _execute_workbench_compiled_item(
         runtime_item["remaining_area_ha"] = _managed_area_ha(updated)
         runtime_item["affected_fragment_count"] = affected_row_count
         runtime_item["missing_curve_metric_row_count"] = missing_metric_count
+        runtime_item["checkpoint_filter_row_count"] = scoped_row_count
+        runtime_item["active_checkpoint_filter_row_count"] = scoped_active_row_count
         runtime_item["execution_status"] = (
             "applied" if removed_area_ha > 0 else "applied_noop"
         )
         if missing_metric_count:
             runtime_notes.append(
-                f"{missing_metric_count} active rows had no usable curve metric and were retained."
+                f"{missing_metric_count} active scoped rows had no usable curve metric and were retained."
             )
         if preserve_geometry:
             runtime_notes.append(
@@ -7477,6 +7537,61 @@ def _run_tsr_thlb_parent_step_bundle_worker(
     }
 
 
+def _dedupe_runtime_notes(notes: Sequence[str]) -> tuple[str, ...]:
+    unique: list[str] = []
+    seen: set[str] = set()
+    for note in notes:
+        normalized = str(note).strip()
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        unique.append(normalized)
+    return tuple(unique)
+
+
+def _summarize_executed_items(
+    executed_items: Sequence[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    summary_map: dict[tuple[str, str, str], dict[str, Any]] = {}
+    for item in executed_items:
+        step_id = str(item.get("step_id", "")).strip()
+        label = str(item.get("label", "")).strip()
+        operation = str(item.get("compiled_operation_type", "")).strip()
+        if not step_id:
+            continue
+        key = (step_id, label, operation)
+        summary = summary_map.setdefault(
+            key,
+            {
+                "step_id": step_id,
+                "label": label,
+                "compiled_operation_type": operation,
+                "minimum_volume_m3_per_ha": item.get("minimum_volume_m3_per_ha"),
+                "removed_area_ha": 0.0,
+                "missing_curve_metric_row_count": 0,
+                "affected_fragment_count": 0,
+                "checkpoint_filter_row_count": 0,
+                "active_checkpoint_filter_row_count": 0,
+                "item_count": 0,
+            },
+        )
+        summary["removed_area_ha"] += float(item.get("removed_area_ha", 0.0) or 0.0)
+        summary["missing_curve_metric_row_count"] += int(
+            item.get("missing_curve_metric_row_count", 0) or 0
+        )
+        summary["affected_fragment_count"] += int(
+            item.get("affected_fragment_count", 0) or 0
+        )
+        summary["checkpoint_filter_row_count"] += int(
+            item.get("checkpoint_filter_row_count", 0) or 0
+        )
+        summary["active_checkpoint_filter_row_count"] += int(
+            item.get("active_checkpoint_filter_row_count", 0) or 0
+        )
+        summary["item_count"] += 1
+    return list(summary_map.values())
+
+
 def run_tsr_thlb_parent_step(
     *,
     recipe_path: Path,
@@ -7856,6 +7971,8 @@ def run_tsr_thlb_parent_step(
             scaled_benchmark_cumulative_delta_ha = (
                 target_remaining_area_ha - scaled_benchmark_cumulative_area_ha
             )
+    target_notes = _dedupe_runtime_notes(target_notes)
+    executed_item_summaries = _summarize_executed_items(executed_items)
     result = TsrThlbParentStepRunResult(
         recipe_path=recipe_path.expanduser().resolve(),
         parent_step_id=parent_step_id,
@@ -7899,6 +8016,7 @@ def run_tsr_thlb_parent_step(
             {
                 **result.to_dict(),
                 "executed_items": executed_items,
+                "executed_item_summaries": executed_item_summaries,
             },
             indent=2,
             sort_keys=False,

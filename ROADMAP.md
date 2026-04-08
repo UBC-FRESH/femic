@@ -14771,3 +14771,26 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       screening semantics beyond the current curve-only executable slice; and
     - keep step `014` in `benchmarked` territory while the next refinement seam
       is scoped.
+- 2026-04-08: Next active step-14 implementation slice is the partitioned
+  `80/250 m3/ha` late-stage curve-threshold pass using the accepted step-13
+  steep mask.
+  - Implementation contract:
+    - reuse `data/tsr/ria_vri_vclr1p_checkpoint7.step13_attrs.feather` as the
+      required step-14 checkpoint;
+    - treat `femic_step13_steep_slope_flag` as the governing steep-slope mask
+      without introducing a separate step-14 steep classifier; and
+    - extend the existing `curve_volume_threshold_exclusion` executor so it can
+      operate on filtered checkpoint subsets.
+  - Required branch split:
+    - non-steep stands only: `80 m3/ha`;
+    - steep stands only: `250 m3/ha`; and
+    - keep the two branches mutually exclusive so step `014` does not apply the
+      `80 m3/ha` threshold to steep stands before the `250 m3/ha` branch runs.
+  - Approval bar:
+    - carry the code change through a full-TSA cached LU-parallel rerun from
+      the accepted enriched checkpoint;
+    - record branch-level diagnostics for steep vs non-steep removed area and
+      missing curve metrics; and
+    - only promote step `014` to approved if the new executable split moves the
+      result materially into the TSR benchmark regime for the `321,044 ha`
+      target rather than merely making the branch runnable.

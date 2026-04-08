@@ -3268,19 +3268,37 @@ def test_specialized_compiled_logic_for_low_growing_potential_uses_curve_thresho
 
     assert items is not None
     assert len(items) == 2
-    curve_item = next(
+    curve_items = [
         item
         for item in items
         if item["compiled_operation_type"] == "curve_volume_threshold_exclusion"
-    )
-    assert curve_item["curve_id_column"] == "curve1"
-    assert curve_item["minimum_volume_m3_per_ha"] == pytest.approx(80.0)
-    review_item = next(
+    ]
+    assert len(curve_items) == 2
+    non_steep_item = next(
         item
-        for item in items
-        if item["compiled_operation_type"] == "manual_review_required"
+        for item in curve_items
+        if item["minimum_volume_m3_per_ha"] == pytest.approx(80.0)
     )
-    assert review_item["step_status"] == "manual_review_required"
+    steep_item = next(
+        item
+        for item in curve_items
+        if item["minimum_volume_m3_per_ha"] == pytest.approx(250.0)
+    )
+    assert non_steep_item["curve_id_column"] == "curve1"
+    assert non_steep_item["checkpoint_attribute_filters"] == [
+        {
+            "field": "femic_step13_steep_slope_flag",
+            "operator": "eq",
+            "value": False,
+        }
+    ]
+    assert steep_item["checkpoint_attribute_filters"] == [
+        {
+            "field": "femic_step13_steep_slope_flag",
+            "operator": "eq",
+            "value": True,
+        }
+    ]
 
 
 def test_specialized_compiled_logic_for_non_merchantable_profiles_uses_broadleaf_filter() -> (
@@ -3315,6 +3333,73 @@ def test_specialized_compiled_logic_for_non_merchantable_profiles_uses_broadleaf
     assert item["checkpoint_attribute_filters"][0]["field"] == "SPECIES_CD_1"
     assert "AT" in item["checkpoint_attribute_filters"][0]["value"]
     assert item["normalized_subject"] == "Broadleaf-leading stands"
+
+
+def test_curve_volume_threshold_exclusion_respects_checkpoint_filters(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    bundle_root = instance_root / "data" / "model_input_bundle"
+    bundle_root.mkdir(parents=True, exist_ok=True)
+    (bundle_root / "curve_table.csv").write_text(
+        "curve_id,curve_type\n1001,untreated\n1002,untreated\n",
+        encoding="utf-8",
+    )
+    (bundle_root / "curve_points_table.csv").write_text(
+        "curve_id,x,y\n"
+        "1001,40,20\n"
+        "1001,80,40\n"
+        "1001,120,60\n"
+        "1002,40,80\n"
+        "1002,80,160\n"
+        "1002,120,200\n",
+        encoding="utf-8",
+    )
+
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2, 3],
+            "curve1": [1001, 1002, 1001],
+            "thlb_fact": [1.0, 1.0, 1.0],
+            "thlb": [1, 1, 1],
+            "_stand_area_sqm": [100.0, 100.0, 100.0],
+            "femic_step13_steep_slope_flag": [False, True, True],
+        },
+        geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10), box(20, 0, 30, 10)],
+        crs="EPSG:3005",
+    )
+
+    (
+        updated,
+        removed_area_ha,
+        missing_metric_count,
+        affected_row_count,
+        scoped_row_count,
+        scoped_active_row_count,
+    ) = tsr_recipes._apply_curve_volume_threshold_exclusion(
+        checkpoint,
+        instance_root=instance_root,
+        compiled_item={
+            "curve_id_column": "curve1",
+            "minimum_volume_m3_per_ha": 250.0,
+            "checkpoint_attribute_mode": "any",
+            "checkpoint_attribute_filters": [
+                {
+                    "field": "femic_step13_steep_slope_flag",
+                    "operator": "eq",
+                    "value": True,
+                }
+            ],
+        },
+        preserve_geometry=True,
+    )
+
+    assert removed_area_ha == pytest.approx(0.02)
+    assert missing_metric_count == 0
+    assert affected_row_count == 2
+    assert scoped_row_count == 2
+    assert scoped_active_row_count == 2
+    assert updated["thlb"].tolist() == [1, 0, 0]
 
 
 def test_specialized_compiled_logic_for_recreation_features_uses_active_recreation_polygons() -> (
@@ -3737,11 +3822,20 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
     bundle_root = instance_root / "data" / "model_input_bundle"
     bundle_root.mkdir(parents=True, exist_ok=True)
     (bundle_root / "curve_table.csv").write_text(
-        "curve_id,curve_type\n1001,untreated\n",
+        "curve_id,curve_type\n1001,untreated\n1002,untreated\n1003,untreated\n",
         encoding="utf-8",
     )
     (bundle_root / "curve_points_table.csv").write_text(
-        "curve_id,x,y\n1001,40,20\n1001,80,40\n1001,120,60\n",
+        "curve_id,x,y\n"
+        "1001,40,20\n"
+        "1001,80,40\n"
+        "1001,120,60\n"
+        "1002,40,80\n"
+        "1002,80,160\n"
+        "1002,120,200\n"
+        "1003,40,120\n"
+        "1003,80,240\n"
+        "1003,120,300\n",
         encoding="utf-8",
     )
 
@@ -3757,11 +3851,17 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
     checkpoint7_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint7.feather"
     checkpoint7 = gpd.GeoDataFrame(
         {
-            "FEATURE_ID": [1],
-            "MAP_ID": ["092O071"],
-            "curve1": [1001],
+            "FEATURE_ID": [1, 2, 3, 4],
+            "MAP_ID": ["092O071", "092O071", "092O071", "092O071"],
+            "curve1": [1001, 1002, 1003, 1002],
+            "femic_step13_steep_slope_flag": [False, True, True, False],
         },
-        geometry=[box(0, 0, 10, 10)],
+        geometry=[
+            box(0, 0, 10, 10),
+            box(10, 0, 20, 10),
+            box(20, 0, 30, 10),
+            box(30, 0, 40, 10),
+        ],
         crs="EPSG:3005",
     )
     checkpoint7.to_feather(checkpoint7_path)
@@ -3809,7 +3909,7 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
                 {
                     "step_id": "thlb_parent_014_compiled_01",
                     "parent_step_id": "thlb_parent_014_sites_with_low_growing_timber_potential",
-                    "label": "Curve-driven low productivity threshold",
+                    "label": "Non-steep 80 m3/ha threshold",
                     "step_status": "ready",
                     "execution_status": "ready",
                     "step_kind": "netdown_rule",
@@ -3817,7 +3917,35 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
                     "compiled_operation_type": "curve_volume_threshold_exclusion",
                     "curve_id_column": "curve1",
                     "minimum_volume_m3_per_ha": 80.0,
-                }
+                    "checkpoint_attribute_mode": "any",
+                    "checkpoint_attribute_filters": [
+                        {
+                            "field": "femic_step13_steep_slope_flag",
+                            "operator": "eq",
+                            "value": False,
+                        }
+                    ],
+                },
+                {
+                    "step_id": "thlb_parent_014_compiled_02",
+                    "parent_step_id": "thlb_parent_014_sites_with_low_growing_timber_potential",
+                    "label": "Steep-slope 250 m3/ha threshold",
+                    "step_status": "ready",
+                    "execution_status": "ready",
+                    "step_kind": "netdown_rule",
+                    "land_base_stage": "lhlb_to_thlb",
+                    "compiled_operation_type": "curve_volume_threshold_exclusion",
+                    "curve_id_column": "curve1",
+                    "minimum_volume_m3_per_ha": 250.0,
+                    "checkpoint_attribute_mode": "any",
+                    "checkpoint_attribute_filters": [
+                        {
+                            "field": "femic_step13_steep_slope_flag",
+                            "operator": "eq",
+                            "value": True,
+                        }
+                    ],
+                },
             ],
             "row_order": 14,
         },
@@ -3842,17 +3970,37 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
         "thlb_parent_014_sites_with_low_growing_timber_potential",
     )
     assert result.status == "applied"
-    assert result.removed_area_ha == pytest.approx(0.01)
+    assert result.removed_area_ha == pytest.approx(0.02)
+    output = gpd.read_feather(result.output_path)
+    assert output["thlb"].tolist() == [0, 0, 1, 1]
     payload = json.loads(result.result_json_path.read_text(encoding="utf-8"))
-    item = next(
+    items = [
         entry
         for entry in payload["executed_items"]
         if entry["parent_step_id"]
         == "thlb_parent_014_sites_with_low_growing_timber_potential"
+    ]
+    assert len(items) == 2
+    non_steep_item = next(
+        entry
+        for entry in items
+        if entry["minimum_volume_m3_per_ha"] == pytest.approx(80.0)
     )
-    assert item["execution_status"] == "applied"
+    steep_item = next(
+        entry
+        for entry in items
+        if entry["minimum_volume_m3_per_ha"] == pytest.approx(250.0)
+    )
+    assert non_steep_item["execution_status"] == "applied"
+    assert non_steep_item["removed_area_ha"] == pytest.approx(0.01)
+    assert non_steep_item["checkpoint_filter_row_count"] == 2
+    assert non_steep_item["active_checkpoint_filter_row_count"] == 2
+    assert steep_item["execution_status"] == "applied"
+    assert steep_item["removed_area_ha"] == pytest.approx(0.01)
+    assert steep_item["checkpoint_filter_row_count"] == 2
+    assert steep_item["active_checkpoint_filter_row_count"] == 2
     assert "preserved geometry/fragments and set THLB state to 0" in " ".join(
-        item["runtime_notes"]
+        steep_item["runtime_notes"]
     )
 
 

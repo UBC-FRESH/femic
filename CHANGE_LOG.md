@@ -12819,3 +12819,33 @@
     - the missing signal now points squarely at the still-manual steep-slope
       `250 m3/ha` branch and/or at additional TSR low-productivity semantics
       beyond the current curve-only executable slice.
+- 2026-04-08: Implemented the executable TSA29 step `014` 80/250 split and
+  reran the full-TSA validation from the accepted step-13 checkpoint.
+  - New step-14 execution contract:
+    - `curve_volume_threshold_exclusion` now accepts optional checkpoint
+      filters so one executor can operate on scoped late-stage subsets;
+    - step `014` now runs as two mutually exclusive curve-threshold branches:
+      - non-steep stands only at `80 m3/ha`;
+      - steep stands only at `250 m3/ha`; and
+    - both branches reuse the accepted
+      `femic_step13_steep_slope_flag` rather than introducing a separate
+      step-14 steep classifier.
+  - Added regression coverage proving:
+    - step `014` now specializes into two curve-threshold compiled items;
+    - filtered curve-threshold execution respects checkpoint filters; and
+    - the late-stage parent-step runner preserves geometry while applying the
+      non-steep/steep partition correctly.
+  - Full-TSA cached 8-bundle rerun result:
+    - total removed `4,527.316 ha`
+    - TSR benchmark `321,044 ha`
+    - delta `-316,516.684 ha`
+    - non-steep `80 m3/ha` branch removed `4,527.316 ha`
+    - steep `250 m3/ha` branch removed `0.000 ha`
+    - steep branch diagnostics: `11,672` scoped rows, `0` active rows
+  - Interpretation:
+    - step `014` remains `benchmarked` / not approved;
+    - the old “manual steep branch” gap is now closed; but
+    - the accepted step-13 pass has already zeroed the steep-slope subset by
+      the time step `014` runs, so the next seam is about TSR step ordering
+      and/or broader low-productivity semantics rather than branch
+      executability.
