@@ -12738,3 +12738,31 @@
     - the TSA29 recipe should keep step `013` in `benchmarked` /
       `manual_review_required` territory until a reviewed slope-angle source
       and Highway 97 partition are adopted.
+- 2026-04-08: Implemented the first TSA29 step `013` attribute-first steep-slope
+  slice and reran the full-TSA benchmark against the enriched checkpoint.
+  - New implementation:
+    - added CLI command `femic tsr thlb-step13-compile-attributes`;
+    - compile output checkpoint
+      `data/tsr/ria_vri_vclr1p_checkpoint7.step13_attrs.feather`; and
+    - new checkpoint attributes
+      `femic_slope_pct_median`, `femic_hwy97_side`,
+      `femic_step13_steep_slope_flag`.
+  - Actual runtime inputs now driving the steep-slope branch:
+    - BC DEM from the BCDC catalogue entry
+      `Digital Elevation Model for British Columbia - CDED - 1:250,000`;
+    - Highway `97` from
+      `WHSE_IMAGERY_AND_BASE_MAPS.MOT_HIGHWAY_PROFILES_SP` filtered by
+      `HIGHWAY_NUMBER == "97"`; and
+    - step `013` compiled logic switched from a manual placeholder to
+      `select_attribute` over the enriched checkpoint.
+  - Full-TSA cached 8-bundle rerun result:
+    - total removed `43,628.139 ha`
+    - TSR benchmark `33,533 ha`
+    - delta `+10,095.139 ha`
+    - terrain branch contribution `16.620 ha`
+    - steep-slope attribute branch contribution `43,611.519 ha`
+  - Outcome:
+    - step `013` remains `benchmarked` / not approved;
+    - the execution seam now works end-to-end; but
+    - the next reconciliation target is the steep-slope attribute path itself,
+      because v1 overcuts materially instead of missing the benchmark.

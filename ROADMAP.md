@@ -14663,3 +14663,45 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       Highway 97 east/west steep-slope threshold branch; and
     - keep step `013` in `benchmarked` / `manual_review_required` territory
       until a reviewed slope-angle source and Highway 97 partition are adopted.
+- 2026-04-08: Next active implementation slice for step `013` is now the
+  attribute-first steep-slope path, not more partial query tweaking.
+  - Compile the stand attributes that make TSR `6.4.3` directly executable:
+    - stand-wise median slope percent from the BC CDED `1:250,000` DEM;
+    - stand side relative to Highway `97`; and
+    - a derived boolean `femic_step13_steep_slope_flag`.
+  - Keep the current unstable-terrain spatial overlay branch in place for this
+    slice, but switch the Highway-97 steep-slope branch to checkpoint-attribute
+    execution once those stand attributes exist.
+  - After the compiler lands, rerun the full-TSA step-13 validation against the
+    enriched curve-ready checkpoint before revisiting ratchet state.
+- 2026-04-08: Implemented the first step-13 attribute compiler slice and reran
+  the full-TSA benchmark against the enriched checkpoint.
+  - New code path:
+    - CLI: `femic tsr thlb-step13-compile-attributes`
+    - output checkpoint:
+      `data/tsr/ria_vri_vclr1p_checkpoint7.step13_attrs.feather`
+    - compiled attributes:
+      `femic_slope_pct_median`, `femic_hwy97_side`,
+      `femic_step13_steep_slope_flag`
+  - Actual metadata-backed/runtime inputs now used:
+    - BC DEM dataset resolved from the BCDC catalogue entry
+      `Digital Elevation Model for British Columbia - CDED - 1:250,000`
+    - Highway `97` isolated from
+      `WHSE_IMAGERY_AND_BASE_MAPS.MOT_HIGHWAY_PROFILES_SP` using
+      `HIGHWAY_NUMBER == "97"`
+    - step `013` steep-slope compiled logic now runs as
+      `select_attribute` over the enriched checkpoint instead of remaining
+      `manual_review_required`
+  - Full-TSA cached 8-bundle rerun result:
+    - total removed `43,628.139 ha`
+    - TSR benchmark `33,533 ha`
+    - delta `+10,095.139 ha`
+    - terrain branch contribution still only `16.620 ha`
+    - steep-slope attribute branch contribution `43,611.519 ha`
+  - Interpretation / next seam:
+    - the execution seam is now working end-to-end, but v1 overcuts the TSR
+      benchmark materially;
+    - keep step `013` in `benchmarked` / not-approved territory; and
+    - next reconciliation work should focus on the steep-slope attribute path
+      itself (DEM/slope derivation contract and Highway `97` side logic), not a
+      return to the old manual placeholder.

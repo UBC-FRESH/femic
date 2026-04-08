@@ -66,6 +66,7 @@ from .recipes import (
     TsrThlbNetdownRecipeRunResult,
     TsrThlbNetdownRecipeInstanceInputs,
     TsrThlbParallelBenchmarkResult,
+    TsrThlbParallelBenchmarkRunResult,
     TsrThlbNetdownRecipeRecord,
     TsrThlbParentStepRunResult,
     TsrThlbWorkbenchBuildResult,
@@ -107,6 +108,11 @@ from .source_overrides import (
     default_tsr_source_layer_overrides_path,
     init_tsr_source_layer_overrides,
     load_tsr_source_layer_overrides,
+)
+from .step13_attributes import (
+    TsrThlbStep13AttributeCompileResult,
+    compile_tsr_thlb_step13_attributes,
+    default_tsr_thlb_step13_attribute_output_path,
 )
 
 __all__ = [
@@ -154,7 +160,9 @@ __all__ = [
     "TsrThlbNetdownRecipeInstanceInputs",
     "TsrThlbNetdownRecipeRecord",
     "TsrThlbParallelBenchmarkResult",
+    "TsrThlbParallelBenchmarkRunResult",
     "TsrThlbParentStepRunResult",
+    "TsrThlbStep13AttributeCompileResult",
     "TsrThlbWorkbenchBuildResult",
     "TsrThlbWorkbenchLockResult",
     "TsrWrittenIndex",
@@ -169,11 +177,13 @@ __all__ = [
     "build_tsr_source_layer_override_report",
     "build_tsr_thlb_workbench",
     "build_tsr_thlb_netdown_recipe",
+    "compile_tsr_thlb_step13_attributes",
     "default_tsr_source_layer_overrides_path",
     "default_tsr_source_layers_recipe_path",
     "default_tsr_thlb_netdown_audit_path",
     "default_tsr_thlb_netdown_output_path",
     "default_tsr_thlb_netdown_status_report_path",
+    "default_tsr_thlb_step13_attribute_output_path",
     "default_tsr_thlb_reconstructed_audit_path",
     "default_tsr_thlb_notebook_runs_root",
     "default_tsr_thlb_reconstructed_output_path",

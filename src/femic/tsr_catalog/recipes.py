@@ -127,6 +127,9 @@ _RIPARIAN_WETLAND_WIDTHS_M = {
     "w4": 6.0,
     "w5": 18.0,
 }
+_STEP13_ATTRIBUTE_CHECKPOINT_RELATIVE_PATH = Path(
+    "data/tsr/ria_vri_vclr1p_checkpoint7.step13_attrs.feather"
+)
 TSR_EFFECTIVE_AREA_SQM_COLUMN = "FEMIC_EFFECTIVE_AREA_SQM"
 TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL = "serial"
 TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL = "lu_parallel"
@@ -392,7 +395,9 @@ class TsrThlbParentStepRunResult:
             "worker_count": self.worker_count,
             "lu_chunk_count": self.lu_chunk_count,
             "lu_bundle_count": self.lu_bundle_count,
-            "progress_root": str(self.progress_root) if self.progress_root is not None else None,
+            "progress_root": str(self.progress_root)
+            if self.progress_root is not None
+            else None,
             "profiling": self.profiling,
         }
 
@@ -2111,9 +2116,7 @@ def _build_draft_subrules_for_parent_step(
                     "from the Section 93.4 LAO establishing objectives for the CCLUP, "
                     "Map 4."
                 ),
-                "candidate_layers": [
-                    "whse_land_use_planning_rmp_plan_legal_poly_svw"
-                ],
+                "candidate_layers": ["whse_land_use_planning_rmp_plan_legal_poly_svw"],
                 "candidate_fields": [
                     "STRGC_LAND_RSRCE_PLAN_NAME",
                     "LEGAL_FEAT_OBJECTIVE",
@@ -2145,9 +2148,7 @@ def _build_draft_subrules_for_parent_step(
                     "areas are to be maintained as no-harvest areas and excluded "
                     "from the LHLB."
                 ),
-                "candidate_layers": [
-                    "whse_land_use_planning_rmp_plan_legal_poly_svw"
-                ],
+                "candidate_layers": ["whse_land_use_planning_rmp_plan_legal_poly_svw"],
                 "candidate_fields": [],
                 "candidate_values": [
                     "no harvest",
@@ -2224,7 +2225,10 @@ def _build_draft_subrules_for_parent_step(
                 "hint_provenance_ids": [],
             },
         )
-    if subsection_title.casefold().strip() == "community areas of special concern (casc)":
+    if (
+        subsection_title.casefold().strip()
+        == "community areas of special concern (casc)"
+    ):
         provenance_id = str(linked_subsection.get("provenance_id", ""))
         return (
             {
@@ -2906,33 +2910,39 @@ def _specialized_compiled_logic_for_parent_step(
                     },
                 ],
                 "notes": [
-                    "Notebook execution currently auto-runs only the terrain-stability portion of TSR 6.4.3.",
-                    "The v1 terrain filter uses terrain-stability classes U (Unstable) and V (Terrain Class 5 proxy) as the auto-runnable subset.",
+                    "The terrain-stability branch remains the current public-data executable proxy for the TSR's Unstable (U) / Terrain Class 5 clause.",
+                    "The v1 terrain filter uses terrain-stability classes U (Unstable) and V (Terrain Class 5 proxy) as the current executable subset.",
                 ],
             }
         )
         steep_item = _base_item(
             "compiled_02",
             "Steep slope thresholds east and west of Highway 97",
-            "manual_review_required",
+            "select_attribute",
         )
         steep_item.update(
             {
-                "normalized_action": "review",
+                "normalized_action": "exclude",
                 "normalized_subject": "Steep slope thresholds east and west of Highway 97",
                 "normalized_predicate": (
-                    "review slope > 70% east of Highway 97 and slope > 40% west of "
-                    "Highway 97 with a reviewed slope-angle source and Highway 97 split"
+                    "set THLB to 0 where checkpoint-derived stand attributes identify "
+                    "slope > 70% east of Highway 97 or slope > 40% west of Highway 97"
                 ),
+                "checkpoint_attribute_mode": "any",
+                "checkpoint_attribute_filters": [
+                    {
+                        "field": "femic_step13_steep_slope_flag",
+                        "operator": "eq",
+                        "value": True,
+                    }
+                ],
                 "linked_source_entry_ids": [
                     "reg_land_and_natural_resource_terrain_stability",
                     "whse_imagery_and_base_maps_mot_highway_profiles_sp",
                 ],
-                "step_status": "manual_review_required",
-                "required": False,
                 "notes": [
                     "TSA29 section 6.4.3 splits steep-slope exclusions east and west of Highway 97.",
-                    "The notebook bridge does not yet auto-derive a reviewed slope-angle surface plus Highway 97 partition, so this portion remains manual review.",
+                    "Checkpoint execution expects `femic_slope_pct_median`, `femic_hwy97_side`, and `femic_step13_steep_slope_flag` to be precompiled onto the curve-ready checkpoint.",
                 ],
             }
         )
@@ -4661,6 +4671,14 @@ def _find_curve_ready_thlb_checkpoint_path(*, instance_root: Path) -> Path:
 def _default_workbench_checkpoint_path(
     *, instance_root: Path, target_parent: dict[str, Any]
 ) -> Path:
+    parent_step_id = str(target_parent.get("parent_step_id", "")).strip()
+    if parent_step_id == "thlb_parent_013_areas_considered_inoperable":
+        enriched_path = (
+            instance_root.expanduser().resolve()
+            / _STEP13_ATTRIBUTE_CHECKPOINT_RELATIVE_PATH
+        )
+        if enriched_path.exists():
+            return enriched_path
     stage = str(target_parent.get("land_base_stage", "")).strip()
     if stage == "glb_to_aflb":
         return _find_tsr_checkpoint_path(instance_root=instance_root, mode="earliest")
@@ -5153,11 +5171,13 @@ def _materialize_checkpoint_landscape_unit_partitions(
 ) -> list[dict[str, Any]]:
     partition_root = default_tsr_thlb_lu_partition_root(instance_root=instance_root)
     partition_root.mkdir(parents=True, exist_ok=True)
-    lu_key = "|".join(str(value).strip() for value in selected_landscape_units if str(value).strip())
+    lu_key = "|".join(
+        str(value).strip() for value in selected_landscape_units if str(value).strip()
+    )
     digest = hashlib.sha1(
-        (
-            f"{checkpoint_path.expanduser().resolve()}||{lu_key or 'all_lus'}"
-        ).encode("utf-8")
+        (f"{checkpoint_path.expanduser().resolve()}||{lu_key or 'all_lus'}").encode(
+            "utf-8"
+        )
     ).hexdigest()[:12]
     partition_dir = partition_root / f"{checkpoint_path.stem}.{digest}"
     metadata_path = partition_dir / "partition_metadata.json"
@@ -5183,17 +5203,24 @@ def _materialize_checkpoint_landscape_unit_partitions(
                     }
                 )
             if cached_records:
-                cached_records.sort(key=lambda item: str(item.get("lu_name", "")).strip())
+                cached_records.sort(
+                    key=lambda item: str(item.get("lu_name", "")).strip()
+                )
                 return cached_records
 
     partition_dir.mkdir(parents=True, exist_ok=True)
     chunks = _clip_checkpoint_to_landscape_unit_chunks(checkpoint, lu_frame=lu_frame)
     records: list[dict[str, Any]] = []
     for index, (lu_name, chunk) in enumerate(chunks, start=1):
-        slug = re.sub(r"[^A-Za-z0-9]+", "_", lu_name).strip("_").lower() or f"lu_{index:03d}"
+        slug = (
+            re.sub(r"[^A-Za-z0-9]+", "_", lu_name).strip("_").lower()
+            or f"lu_{index:03d}"
+        )
         chunk_filename = f"{index:03d}_{slug}.feather"
         chunk_path = partition_dir / chunk_filename
-        chunk.drop(columns=["_orig_geom_area_sqm"], errors="ignore").to_feather(chunk_path)
+        chunk.drop(columns=["_orig_geom_area_sqm"], errors="ignore").to_feather(
+            chunk_path
+        )
         area_ha = float(chunk.geometry.area.astype(float).sum() / 10000.0)
         records.append(
             {
@@ -7331,7 +7358,9 @@ def _run_tsr_thlb_parent_step_bundle_worker(
             executed_items.extend(current_executed_items)
             removed_area_ha += float(current_removed_area_ha)
             statuses.add(str(current_status).strip())
-            notes.extend(str(value).strip() for value in current_notes if str(value).strip())
+            notes.extend(
+                str(value).strip() for value in current_notes if str(value).strip()
+            )
             completed_lus += 1
             chunk_profile_items.append(
                 {
@@ -7633,9 +7662,7 @@ def run_tsr_thlb_parent_step(
                     checkpoint,
                     instance_root=instance_root,
                 )
-                profiling["lu_selection_seconds"] = (
-                    perf_counter() - lu_select_started
-                )
+                profiling["lu_selection_seconds"] = perf_counter() - lu_select_started
                 for key, value in lu_selection_profile.items():
                     profiling[key] = float(value)
         if chunk_records is None:
@@ -7976,8 +8003,7 @@ def _summarize_parallel_benchmark_markdown(
             group,
             key=lambda item: (
                 0
-                if item.execution_mode
-                == TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL
+                if item.execution_mode == TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL
                 else 1,
                 item.worker_count,
             ),
@@ -8194,7 +8220,9 @@ def _build_thlb_parent_step_code_cell(
     default_landscape_unit_scope = (
         "()"
         if is_full_tsa_parallel_default
-        else '(\"Williams Lake\",)' if tsa_code == "29" else "()"
+        else '("Williams Lake",)'
+        if tsa_code == "29"
+        else "()"
     )
     default_execution_mode = (
         TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL
@@ -8320,7 +8348,7 @@ def _build_thlb_parent_step_code_cell(
             "                completed = int(snapshot.get('completed_lus', 0) or 0)",
             "                total = int(snapshot.get('total_lus', 0) or 0)",
             "                state = str(snapshot.get('status', '') or 'running')",
-            "                status.value = f\"{state}: {completed}/{total} LUs, current={current_lu}\"",
+            '                status.value = f"{state}: {completed}/{total} LUs, current={current_lu}"',
             "            else:",
             "                bar.value = 0.0",
             "                status.value = 'waiting for assignment'",
@@ -8346,7 +8374,7 @@ def _build_thlb_parent_step_code_cell(
             "            state = str(snapshot.get('status', '') or 'completed')",
             "            completed = int(snapshot.get('completed_lus', 0) or 0)",
             "            total = int(snapshot.get('total_lus', 0) or 0)",
-            "            status.value = f\"{state}: {completed}/{total} LUs\"",
+            '            status.value = f"{state}: {completed}/{total} LUs"',
             "",
             "if 'error' in run_state:",
             "    raise run_state['error']",

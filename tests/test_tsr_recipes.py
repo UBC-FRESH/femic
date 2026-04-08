@@ -2317,6 +2317,164 @@ def test_run_tsr_thlb_parent_step_preserves_geometry_for_later_stage_spatial_exc
     assert len(output) == 2
 
 
+def test_run_tsr_thlb_parent_step_step13_combines_attribute_and_spatial_exclusion(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    terrain_path = (
+        instance_root / "data" / "downloads" / "bcdc" / "TERRAIN" / "TERRAIN.gpkg"
+    )
+    terrain_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {"SLOPE_STABILITY_CLASS_W_ROADS": ["U"]},
+        geometry=[box(120, 0, 160, 100)],
+        crs="EPSG:3005",
+    ).to_file(terrain_path, driver="GPKG")
+
+    source_recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    source_recipe_payload["entries"] = [
+        {
+            "entry_id": "reg_land_and_natural_resource_terrain_stability",
+            "label": "Terrain stability",
+            "artifact_path": "data/downloads/bcdc/TERRAIN/TERRAIN.gpkg",
+            "run_status": "fetched",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            source_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    recipe_payload["recipe_contract"]["status"] = "built"
+    recipe_payload["parent_steps"] = [
+        {
+            "parent_step_id": "thlb_parent_001_total_tsa_area",
+            "parent_label": "Total TSA area",
+            "parent_kind": "milestone",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "execution_class": "reference_only",
+            "benchmark_cumulative_area_ha": 2.0,
+            "row_order": 1,
+        },
+        {
+            "parent_step_id": "thlb_parent_013_areas_considered_inoperable",
+            "parent_label": "Areas considered inoperable",
+            "parent_kind": "transformation",
+            "land_base_stage": "lhlb_to_thlb",
+            "stage_label": "LHLB -> THLB",
+            "execution_class": "projected_harvest_exclusion",
+            "benchmark_marginal_area_ha": 1.5,
+            "benchmark_cumulative_area_ha": 0.5,
+            "compiled_logic": [
+                {
+                    "step_id": "thlb_parent_013_compiled_01",
+                    "parent_step_id": "thlb_parent_013_areas_considered_inoperable",
+                    "label": "Unstable terrain and terrain class 5",
+                    "step_status": "ready",
+                    "execution_status": "ready",
+                    "step_kind": "netdown_rule",
+                    "land_base_stage": "lhlb_to_thlb",
+                    "compiled_operation_type": "select_spatial_intersect",
+                    "linked_source_entry_ids": [
+                        "reg_land_and_natural_resource_terrain_stability"
+                    ],
+                    "source_attribute_filters": [
+                        {
+                            "field": "SLOPE_STABILITY_CLASS_W_ROADS",
+                            "operator": "in",
+                            "value": ["U", "V"],
+                        }
+                    ],
+                },
+                {
+                    "step_id": "thlb_parent_013_compiled_02",
+                    "parent_step_id": "thlb_parent_013_areas_considered_inoperable",
+                    "label": "Steep slope thresholds east and west of Highway 97",
+                    "step_status": "ready",
+                    "execution_status": "ready",
+                    "step_kind": "netdown_rule",
+                    "land_base_stage": "lhlb_to_thlb",
+                    "compiled_operation_type": "select_attribute",
+                    "checkpoint_attribute_mode": "any",
+                    "checkpoint_attribute_filters": [
+                        {
+                            "field": "femic_step13_steep_slope_flag",
+                            "operator": "eq",
+                            "value": True,
+                        }
+                    ],
+                },
+            ],
+            "row_order": 13,
+        },
+    ]
+    recipe_payload["steps"] = []
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint7.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2],
+            "MAP_ID": ["092O071", "092O071"],
+            "femic_step13_steep_slope_flag": [True, False],
+        },
+        geometry=[box(0, 0, 100, 100), box(100, 0, 200, 100)],
+        crs="EPSG:3005",
+    )
+    checkpoint.to_feather(checkpoint_path)
+
+    result = tsr_recipes.run_tsr_thlb_parent_step(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        parent_step_id="thlb_parent_013_areas_considered_inoperable",
+        checkpoint_path=checkpoint_path,
+        map_ids=("092O071",),
+        auto_map_id_smoke_subset=False,
+    )
+
+    assert result.status == "applied"
+    output = gpd.read_feather(result.output_path)
+    assert len(output) == 3
+    assert sorted(output["thlb"].tolist()) == [0, 0, 1]
+    assert sorted(output["thlb_fact"].tolist()) == pytest.approx([0.0, 0.0, 1.0])
+
+
 def test_run_tsr_thlb_parent_step_lu_parallel_matches_serial_removed_area(
     tmp_path: Path,
 ) -> None:
@@ -2475,9 +2633,10 @@ def test_run_tsr_thlb_parent_step_lu_parallel_matches_serial_removed_area(
     assert parallel.worker_count == 2
     assert parallel.lu_chunk_count == 2
     assert parallel.lu_bundle_count == 2
-    assert parallel.progress_root == (
-        instance_root / "runtime" / "logs" / "tsr" / "progress"
-    ).resolve()
+    assert (
+        parallel.progress_root
+        == (instance_root / "runtime" / "logs" / "tsr" / "progress").resolve()
+    )
     assert parallel.removed_area_ha == pytest.approx(serial.removed_area_ha)
     assert parallel.remaining_area_ha == pytest.approx(serial.remaining_area_ha)
     assert len(list(parallel.progress_root.glob("*.json"))) == 2
@@ -2622,7 +2781,7 @@ def test_build_thlb_parent_step_code_cell_defaults_step6_to_full_tsa_parallel() 
         tsa_code="29",
     )
 
-    assert 'LANDSCAPE_UNIT_SCOPE: tuple[str, ...] = ()' in cell_text
+    assert "LANDSCAPE_UNIT_SCOPE: tuple[str, ...] = ()" in cell_text
     assert 'EXECUTION_MODE = "lu_parallel"' in cell_text
     assert "LU_BUNDLE_COUNT = 8" in cell_text
     assert "PERSIST_RECIPE_UPDATE = False" in cell_text
@@ -2929,7 +3088,7 @@ def test_specialized_compiled_logic_for_pra_is_review_only() -> None:
     ]
 
 
-def test_specialized_compiled_logic_for_inoperable_uses_terrain_plus_review_hold() -> (
+def test_specialized_compiled_logic_for_inoperable_uses_terrain_plus_step13_flag() -> (
     None
 ):
     items = tsr_recipes._specialized_compiled_logic_for_parent_step(
@@ -2970,16 +3129,47 @@ def test_specialized_compiled_logic_for_inoperable_uses_terrain_plus_review_hold
             "value": ["U", "V"],
         }
     ]
-    review_item = next(
-        item
-        for item in items
-        if item["compiled_operation_type"] == "manual_review_required"
+    steep_item = next(
+        item for item in items if item["compiled_operation_type"] == "select_attribute"
     )
-    assert review_item["linked_source_entry_ids"] == [
+    assert steep_item["linked_source_entry_ids"] == [
         "reg_land_and_natural_resource_terrain_stability",
         "whse_imagery_and_base_maps_mot_highway_profiles_sp",
     ]
-    assert review_item["step_status"] == "manual_review_required"
+    assert steep_item["checkpoint_attribute_filters"] == [
+        {
+            "field": "femic_step13_steep_slope_flag",
+            "operator": "eq",
+            "value": True,
+        }
+    ]
+
+
+def test_default_workbench_checkpoint_path_prefers_step13_attribute_checkpoint(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "instance"
+    (instance_root / "data" / "tsr").mkdir(parents=True)
+    (instance_root / "data" / "ria_vri_vclr1p_checkpoint7.feather").write_text(
+        "base", encoding="utf-8"
+    )
+    enriched_path = (
+        instance_root
+        / "data"
+        / "tsr"
+        / "ria_vri_vclr1p_checkpoint7.step13_attrs.feather"
+    )
+    enriched_path.write_text("enriched", encoding="utf-8")
+
+    selected = tsr_recipes._default_workbench_checkpoint_path(
+        instance_root=instance_root,
+        target_parent={
+            "parent_step_id": "thlb_parent_013_areas_considered_inoperable",
+            "land_base_stage": "lhlb_to_thlb",
+        },
+    )
+
+    assert selected == enriched_path.resolve()
 
 
 def test_specialized_compiled_logic_for_riparian_uses_classed_buffers() -> None:

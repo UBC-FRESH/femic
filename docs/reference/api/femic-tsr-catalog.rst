@@ -58,6 +58,7 @@ The common operator-facing entrypoint is:
    femic tsr source-layers-build --instance-root external/femic-tsa29-instance
    femic tsr source-layers-run --instance-root external/femic-tsa29-instance --bbox ...
    femic tsr thlb-netdown-build --instance-root external/femic-tsa29-instance
+   femic tsr thlb-step13-compile-attributes --instance-root external/femic-tsa29-instance
    femic tsr thlb-netdown-workbench-build --instance-root external/femic-tsa29-instance
    femic tsr thlb-netdown-run --instance-root external/femic-tsa29-instance
    femic tsr thlb-netdown-workbench-lock --instance-root external/femic-tsa29-instance
@@ -82,6 +83,7 @@ The matching Python entrypoints are:
       build_tsr_overlay_report,
       build_tsr_source_layers_recipe,
       build_tsr_thlb_workbench,
+      compile_tsr_thlb_step13_attributes,
       extract_tsr_candidate_facts,
       fetch_tsr_pdfs,
       init_tsr_overlay,
@@ -161,6 +163,9 @@ The matching Python entrypoints are:
            "external/femic-tsa29-instance/config/tsr/thlb_netdown.recipe.yaml"
        ),
        source_root=Path.cwd(),
+   )
+   compile_tsr_thlb_step13_attributes(
+       instance_root=Path("external/femic-tsa29-instance"),
    )
    run_tsr_thlb_netdown_recipe(
        recipe_path=Path(

@@ -173,6 +173,7 @@ from femic.tsr_catalog import (
     TsrThlbParentStepRunResult,
     TsrThlbNetdownRecipeRunResult,
     TsrThlbParallelBenchmarkResult,
+    TsrThlbStep13AttributeCompileResult,
     TsrThlbWorkbenchBuildResult,
     TsrThlbWorkbenchLockResult,
     TsrSourceLayerOverridesError,
@@ -182,6 +183,7 @@ from femic.tsr_catalog import (
     build_tsr_source_layers_recipe,
     build_tsr_thlb_workbench,
     build_tsr_thlb_netdown_recipe,
+    compile_tsr_thlb_step13_attributes,
     build_tsr_overlay_report,
     build_tsr_source_layer_override_report,
     default_tsr_source_layer_overrides_path,
@@ -189,6 +191,7 @@ from femic.tsr_catalog import (
     default_tsr_thlb_netdown_audit_path,
     default_tsr_thlb_netdown_output_path,
     default_tsr_thlb_netdown_recipe_path,
+    default_tsr_thlb_step13_attribute_output_path,
     default_tsr_thlb_reconstructed_audit_path,
     default_tsr_thlb_reconstructed_output_path,
     default_tsr_thlb_workbench_notebook_path,
@@ -2674,6 +2677,28 @@ def _print_tsr_thlb_parallel_benchmark_summary(
         )
 
 
+def _print_tsr_thlb_step13_attribute_compile_summary(
+    result: TsrThlbStep13AttributeCompileResult,
+) -> None:
+    console.print(f"instance_root: {result.instance_root}")
+    console.print(f"checkpoint_path: {result.checkpoint_path}")
+    console.print(f"output_path: {result.output_path}")
+    console.print(f"audit_path: {result.audit_path}")
+    console.print(f"dem_dataset_page_url: {result.dem_dataset_page_url}")
+    console.print(f"dem_resource_root_url: {result.dem_resource_root_url}")
+    console.print(f"dem_tile_count: {len(result.dem_tile_ids)}")
+    console.print(f"highway_artifact_path: {result.highway_artifact_path}")
+    console.print(
+        "highway_filter: "
+        f"{result.highway_filter_field} == {result.highway_filter_value}"
+    )
+    console.print(f"stand_count: {result.stand_count}")
+    console.print(f"slope_value_count: {result.slope_value_count}")
+    for side, count in result.highway_side_counts.items():
+        console.print(f"highway_side_{side}: {count}")
+    console.print(f"steep_slope_flag_count: {result.steep_slope_flag_count}")
+
+
 def _print_tsr_source_layer_overrides_init_summary(
     result: TsrSourceLayerOverridesInitResult,
 ) -> None:
@@ -3543,6 +3568,48 @@ def tsr_thlb_netdown_workbench_lock(
         raise typer.Exit(code=1) from exc
 
     _print_tsr_thlb_workbench_lock_summary(result)
+
+
+@tsr_app.command("thlb-step13-compile-attributes")
+def tsr_thlb_step13_compile_attributes(
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    checkpoint_path: Path | None = TSR_THLB_CHECKPOINT_PATH_OPTION,
+    output_path: Path | None = typer.Option(
+        None,
+        "--output-path",
+        help=(
+            "Optional enriched checkpoint output path. Defaults to "
+            "`data/tsr/ria_vri_vclr1p_checkpoint7.step13_attrs.feather` under the "
+            "instance root."
+        ),
+    ),
+) -> None:
+    """Compile the stand attributes needed to execute TSR step 13 directly."""
+
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_checkpoint_path = (
+        instance_context.resolve_path(checkpoint_path)
+        if checkpoint_path is not None
+        else None
+    )
+    resolved_output_path = (
+        instance_context.resolve_path(output_path)
+        if output_path is not None
+        else default_tsr_thlb_step13_attribute_output_path(
+            instance_root=instance_context.root
+        )
+    )
+    try:
+        result = compile_tsr_thlb_step13_attributes(
+            instance_root=instance_context.root,
+            checkpoint_path=resolved_checkpoint_path,
+            output_path=resolved_output_path,
+        )
+    except TsrRecipeError as exc:
+        console.print(f"[red]TSR step-13 attribute compile error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_thlb_step13_attribute_compile_summary(result)
 
 
 @tsr_app.command("thlb-netdown-step-run")
