@@ -14514,3 +14514,17 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - the full-TSA step-7 result is now in the right regime and looks like a
       candidate approval rather than a semantic failure, but the local
       `Williams Lake` LU smell test remains intentionally only a rough signal.
+- 2026-04-08: Advanced the full-TSA `#141` pass through steps `008` and `009`.
+  - Step `008` (`Wildlife habitat areas`) is now green-lit on the full-TSA basis:
+    - full-TSA cached 8-bundle run: about `133,006 ha` removed vs TSR benchmark
+      `154,056 ha`
+    - interpretation: close enough to approve while keeping the existing
+      semantic contract intact:
+      - exclude only no-harvest wildlife zones here
+      - defer conditional harvest zones to later assumptions logic
+  - Step `009` (`Critical habitat for fish`) now has a full-TSA benchmark signal
+    but is not approval-ready:
+    - full-TSA cached 8-bundle run: about `141,591 ha` removed vs TSR benchmark
+      `11,521 ha`
+    - interpretation: clearly too aggressive, so the next step-9 work should be
+      a deeper source/logic review before any approval discussion.

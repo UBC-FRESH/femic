@@ -12611,3 +12611,17 @@
     - the full-TSA step-7 result now looks like a plausible candidate
       approval-level signal rather than a semantic failure, even though the
       one-LU smell test remains locally high.
+- 2026-04-08: Green-lit TSA29 step `008` on the full-TSA basis and pushed the
+  reconciliation pass into step `009`.
+  - Step `008` (`Wildlife habitat areas`) now carries full-TSA approval
+    metadata and keeps the intended semantic split:
+    - exclude only no-harvest wildlife zones here
+    - defer conditional harvest zones to later assumptions logic
+  - Full-TSA step-8 result:
+    - about `133,006 ha` removed vs TSR benchmark `154,056 ha`
+  - Full-TSA step-9 result:
+    - about `141,591 ha` removed vs TSR benchmark `11,521 ha`
+  - Interpretation:
+    - step `008` is good enough to move on
+    - step `009` is clearly too aggressive and needs a deeper logic review
+      before approval
