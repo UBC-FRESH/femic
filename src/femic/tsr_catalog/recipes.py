@@ -89,6 +89,11 @@ _THLB_JUNK_FRAGMENTS = {
     "non-forested areas",
     "non contributing areas",
 }
+_THLB_ADDITIONAL_SUPPORTING_PROVENANCE_IDS: dict[str, tuple[str, ...]] = {
+    "areas considered inoperable": (
+        "reference/res_xSteepSlopeLogging.pdf#page=1",
+    ),
+}
 _THLB_NOTEBOOK_RUNNABLE_PARENT_LABELS = {
     "land not administered by the province",
     "non-forest",
@@ -3615,6 +3620,14 @@ def _build_parent_steps_from_land_base_summary(
                 compiled_cumulatives.append(float(cumulative_value))
             if compiled_cumulatives:
                 benchmark_cumulative_area_ha = compiled_cumulatives[0]
+        supporting_provenance_ids: list[str] = []
+        if linked_subsection:
+            provenance_id = str(linked_subsection.get("provenance_id", "")).strip()
+            if provenance_id:
+                supporting_provenance_ids.append(provenance_id)
+        supporting_provenance_ids.extend(
+            _additional_supporting_provenance_ids(parent_label=label)
+        )
         parent_steps.append(
             {
                 "parent_step_id": parent_step_id,
@@ -3635,11 +3648,7 @@ def _build_parent_steps_from_land_base_summary(
                 "subsection_number": str(linked_subsection.get("section_number", ""))
                 if linked_subsection
                 else "",
-                "supporting_provenance_ids": [
-                    str(linked_subsection.get("provenance_id", ""))
-                ]
-                if linked_subsection
-                else [],
+                "supporting_provenance_ids": supporting_provenance_ids,
                 "draft_subrules": [dict(item) for item in draft_subrules],
                 "compiled_logic": [dict(item) for item in compiled_logic],
             }
@@ -4683,6 +4692,13 @@ def _default_workbench_checkpoint_path(
     if stage == "glb_to_aflb":
         return _find_tsr_checkpoint_path(instance_root=instance_root, mode="earliest")
     return _find_curve_ready_thlb_checkpoint_path(instance_root=instance_root)
+
+
+def _additional_supporting_provenance_ids(*, parent_label: str) -> tuple[str, ...]:
+    return _THLB_ADDITIONAL_SUPPORTING_PROVENANCE_IDS.get(
+        parent_label.strip().casefold(),
+        (),
+    )
 
 
 def _workbench_stage_window_for_target(

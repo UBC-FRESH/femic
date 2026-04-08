@@ -14705,3 +14705,37 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - next reconciliation work should focus on the steep-slope attribute path
       itself (DEM/slope derivation contract and Highway `97` side logic), not a
       return to the old manual placeholder.
+- 2026-04-08: Immediate follow-up for step `013` is threshold sensitivity plus
+  better retained context, not another structural rewrite.
+  - Preserve a metadata link from step `013` to the uploaded steep-slope
+    operations reference `reference/res_xSteepSlopeLogging.pdf` so later
+    refinement keeps the operational/mechanical context near the recipe.
+  - Run a sensitivity pass with the current Highway `97` side logic but a more
+    conservative west-side steep-slope cutoff of `35%` instead of `40%`.
+  - Use that comparison only as evidence for refinement; do not silently change
+    the executable step-13 contract without recording the delta against the TSR
+    benchmark.
+- 2026-04-08: Completed the first west-side `35%` sensitivity pass for step
+  `013` and confirmed that it moves the model farther from the TSR benchmark.
+  - Metadata/context update:
+    - step `013` now carries a rebuild-stable supporting provenance link to
+      `reference/res_xSteepSlopeLogging.pdf#page=1`.
+  - Sensitivity rerun setup:
+    - kept the current DEM-based slope workflow and current Highway `97` side
+      logic;
+    - changed only the west-side steep-slope flag threshold from `> 40%` to
+      `> 35%`; and
+    - ran the same cached LU-parallel full-TSA parent-step execution using a
+      temporary enriched checkpoint override.
+  - Sensitivity rerun result:
+    - total removed `61,846.235 ha`
+    - TSR benchmark `33,533 ha`
+    - delta `+28,313.235 ha`
+    - terrain branch still `16.620 ha`
+    - steep-slope branch `61,829.615 ha`
+  - Interpretation:
+    - a more conservative engineering-style west cutoff does not reconcile the
+      TSR benchmark under the current side/slope workflow;
+    - it makes the overcut materially worse; and
+    - the next refinement seam is still in how the TSR operationalizes the
+      steep-slope mask, not in lowering the west cutoff blindly.

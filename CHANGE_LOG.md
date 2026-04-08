@@ -12766,3 +12766,26 @@
     - the execution seam now works end-to-end; but
     - the next reconciliation target is the steep-slope attribute path itself,
       because v1 overcuts materially instead of missing the benchmark.
+- 2026-04-08: Added retained steep-slope reference context to step `013` and ran
+  a west-side `35%` sensitivity pass.
+  - Metadata update:
+    - step `013` now carries a rebuild-stable supporting provenance link to
+      `reference/res_xSteepSlopeLogging.pdf#page=1`.
+  - Sensitivity rerun setup:
+    - kept the current DEM-based slope workflow and current Highway `97` side
+      logic;
+    - changed only the west-side steep-slope threshold from `> 40%` to
+      `> 35%`; and
+    - reran the full-TSA cached 8-bundle parent-step execution using a
+      temporary enriched checkpoint override.
+  - Sensitivity rerun result:
+    - total removed `61,846.235 ha`
+    - TSR benchmark `33,533 ha`
+    - delta `+28,313.235 ha`
+    - terrain branch contribution `16.620 ha`
+    - steep-slope branch contribution `61,829.615 ha`
+  - Interpretation:
+    - the lower west-side threshold makes the overcut materially worse under
+      the current side/slope workflow; and
+    - this supports keeping the current executable contract unchanged while
+      focusing future refinement on the steep-slope mask semantics instead.
