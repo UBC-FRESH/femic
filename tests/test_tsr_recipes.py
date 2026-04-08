@@ -330,6 +330,14 @@ The land base that will continually be required for WTRA will be modelled as an 
     )
     assert ogma_compiled["parent_step_id"] == ogma_parent["parent_step_id"]
     assert ogma_compiled["land_base_stage"] == "aflb_to_lhlb"
+    assert ogma_compiled["linked_source_entry_ids"] == ["rmp_ogma_legal"]
+    assert ogma_compiled["source_attribute_filters"] == [
+        {
+            "field": "OGMA_TYPE",
+            "operator": "in",
+            "value": ["PERM", "ROT"],
+        }
+    ]
 
 
 def test_split_subsection_and_explicit_data_source_hints_clean_tableish_noise() -> None:
@@ -2200,8 +2208,11 @@ def test_run_tsr_thlb_parent_step_preserves_geometry_for_later_stage_spatial_exc
     )
     exclusion_path.parent.mkdir(parents=True, exist_ok=True)
     exclusion = gpd.GeoDataFrame(
-        {"name": ["ogma"]},
-        geometry=[box(0, 0, 50, 100)],
+        {
+            "name": ["ogma_perm", "ogma_trans"],
+            "OGMA_TYPE": ["PERM", "TRANS"],
+        },
+        geometry=[box(0, 0, 50, 100), box(50, 0, 100, 100)],
         crs="EPSG:3005",
     )
     exclusion.to_file(exclusion_path, driver="GPKG")
@@ -2259,6 +2270,13 @@ def test_run_tsr_thlb_parent_step_preserves_geometry_for_later_stage_spatial_exc
                     "land_base_stage": "aflb_to_lhlb",
                     "operation_type": "select_spatial_intersect",
                     "linked_source_entry_ids": ["rmp_ogma_legal"],
+                    "source_attribute_filters": [
+                        {
+                            "field": "OGMA_TYPE",
+                            "operator": "in",
+                            "value": ["PERM", "ROT"],
+                        }
+                    ],
                 }
             ],
             "row_order": 7,

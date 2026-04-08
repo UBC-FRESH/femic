@@ -14493,3 +14493,24 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       benchmark about `4440 ha`
     - full-TSA step-6 run on cached 8-bundle path: about `275,618 ha` removed
       vs TSR benchmark `306,327 ha`
+- 2026-04-08: Tightened TSA29 step `007` (`Old growth management areas`) so the
+  executable mask now follows the document structure more faithfully.
+  - The step-7 compiled logic now:
+    - uses a single legal OGMA source entry; and
+    - filters `OGMA_TYPE IN ('PERM', 'ROT')` instead of treating the whole legal
+      OGMA surface as one blunt exclusion mask.
+  - Transition OGMAs are now explicitly treated as contextual/temporal logic
+    rather than part of the base-case executable exclusion surface.
+  - This matches the TSA29 `6.3.2` wording and Table 8 shape:
+    - permanent and rotating OGMAs are the no-harvest exclusion;
+    - transition OGMAs are discussed separately with restoration timing; and
+    - the legal OGMA layer schema exposes `OGMA_TYPE = PERM | ROT | TRANS`.
+  - Validation signal after the step-7 patch:
+    - `Williams Lake` LU smell test: about `8687 ha` removed vs scaled
+      benchmark about `3055 ha`
+    - full-TSA cached 8-bundle run: about `227,336 ha` removed vs TSR
+      benchmark `210,719 ha`
+  - Current interpretation:
+    - the full-TSA step-7 result is now in the right regime and looks like a
+      candidate approval rather than a semantic failure, but the local
+      `Williams Lake` LU smell test remains intentionally only a rough signal.

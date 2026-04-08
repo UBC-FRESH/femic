@@ -12595,3 +12595,19 @@
       benchmark about `4440 ha`
     - full-TSA cached 8-bundle run: about `275,618 ha` removed vs TSR
       benchmark `306,327 ha`
+- 2026-04-08: Tightened TSA29 step `007` (`Old growth management areas`) so
+  the executable GIS mask now follows the TSR more faithfully.
+  - Step-7 compiled logic now uses a single legal OGMA source and filters
+    `OGMA_TYPE IN ('PERM', 'ROT')` instead of treating the whole legal OGMA
+    surface as one blunt exclusion mask.
+  - Transition OGMAs are now explicitly handled as contextual/temporal logic
+    rather than being hard-excluded in the base-case executable mask.
+  - Validation after the patch:
+    - `Williams Lake` LU smell test: about `8687 ha` removed vs scaled
+      benchmark about `3055 ha`
+    - full-TSA cached 8-bundle run: about `227,336 ha` removed vs TSR
+      benchmark `210,719 ha`
+  - Interpretation:
+    - the full-TSA step-7 result now looks like a plausible candidate
+      approval-level signal rather than a semantic failure, even though the
+      one-LU smell test remains locally high.

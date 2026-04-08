@@ -2440,14 +2440,22 @@ def _specialized_compiled_logic_for_parent_step(
             {
                 "normalized_action": "exclude",
                 "normalized_subject": "Old growth management areas",
-                "normalized_predicate": "exclude legal OGMA polygons from the working harvestable land base",
-                "linked_source_entry_ids": [
-                    "rmp_ogma_legal",
-                    "whse_land_use_planning_rmp_ogma_legal",
+                "normalized_predicate": (
+                    "exclude only permanent and rotating legal OGMA polygons "
+                    "from the working harvestable land base"
+                ),
+                "linked_source_entry_ids": ["rmp_ogma_legal"],
+                "source_attribute_filters": [
+                    {
+                        "field": "OGMA_TYPE",
+                        "operator": "in",
+                        "value": ["PERM", "ROT"],
+                    }
                 ],
                 "notes": [
-                    "Current notebook execution treats the legal OGMA layer as the direct no-harvest exclusion surface.",
-                    "Transition OGMA restoration timing and exception logic remain later review/calibration work.",
+                    "Current notebook execution treats only permanent and rotating legal OGMAs as the direct no-harvest exclusion surface.",
+                    "Transition OGMAs remain contextual/temporal logic and are not hard-excluded in this base-case executable mask.",
+                    "Harvest exceptions, overlap replacement, and transition restoration timing remain later review/calibration work.",
                 ],
             }
         )
