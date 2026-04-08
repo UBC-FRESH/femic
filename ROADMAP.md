@@ -14548,3 +14548,23 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - residual overcut is still present but now small enough on this landscape
       scale to accept as good enough for forward progress; and
     - step `009` is now approved so the `#141` pass can move on to step `010`.
+- 2026-04-08: Resolved TSA29 step `010` (`Lakeshore management`) by explicitly
+  treating it as a trivial-benchmark skip instead of letting stale bogus logic
+  block the `#141` pass.
+  - Deep source review of TSA29 `6.3.5` showed the executable GIS logic is much
+    narrower than the stale generated recipe had implied:
+    - only Class A lake management areas overlapping preservation VQO belong in
+      the LHLB exclusion here; and
+    - Class B-E lakes are deferred to Section `7.2.6` assumptions logic.
+  - Current adopted public layers do not expose a trustworthy Class A lake
+    discriminator for TSA29, and substituting the whole scenic-PR legal surface
+    materially overcuts the benchmark.
+  - User direction is therefore to skip detailed validation here because the TSR
+    benchmark is only `327 ha` on a `~5 million ha` landscape.
+  - Generated recipe/status/notebook surfaces were rebuilt and cleaned so step
+    `010` now shows:
+    - truthful draft subrules pointing at the unresolved Class A lake seam;
+    - `manual_review_required` compiled status;
+    - approval scope `full_tsa_trivial_benchmark_skip`; and
+    - no stale `77,308 ha` notebook-run residue in the human-facing review
+      surfaces.

@@ -2163,6 +2163,67 @@ def _build_draft_subrules_for_parent_step(
                 "hint_provenance_ids": [],
             },
         )
+    if subsection_title.casefold().strip() == "lakeshore management":
+        provenance_id = str(linked_subsection.get("provenance_id", ""))
+        return (
+            {
+                "subrule_id": f"{parent_step_id}_draft_01",
+                "human_summary": (
+                    "Only the no-harvest overlap between Class A lake management "
+                    "areas and VQO preservation should be excluded here."
+                ),
+                "rationale": (
+                    "TSA29 section 6.3.5 says only Class A lakes with legal buffer "
+                    "areas overlapping visual quality objective class "
+                    "'preservation' are excluded from the LHLB."
+                ),
+                "candidate_layers": [
+                    "whse_land_use_planning_rmp_plan_legal_poly_svw",
+                    "whse_forest_vegetation_rec_visual_landscape",
+                ],
+                "candidate_fields": [
+                    "LEGAL_FEAT_OBJECTIVE",
+                    "LEGAL_FEAT_ATRB_2_VALUE",
+                    "REC_EVQO_CODE",
+                ],
+                "candidate_values": [
+                    "Scenic Areas / Scenic Corridors",
+                    "PR",
+                    "Class A lake subset still required",
+                ],
+                "candidate_operation_type": "review",
+                "field_mapping_notes": [
+                    "The currently adopted public layers do not yet expose a trusted Class A lake discriminator for TSA29.",
+                    "Do not use the whole scenic-PR legal surface as a surrogate; it overcuts badly.",
+                ],
+                "confidence": "needs_review",
+                "review_status": "draft",
+                "prose_provenance": provenance_id,
+                "hint_provenance_ids": [],
+            },
+            {
+                "subrule_id": f"{parent_step_id}_draft_02",
+                "human_summary": (
+                    "Class B-E lakes are not excluded here; they are handled later "
+                    "through Section 7.2.6 disturbance assumptions."
+                ),
+                "rationale": (
+                    "The TSR explicitly defers management of Class B to E lakes to "
+                    "Section 7.2.6 rather than excluding them in this step."
+                ),
+                "candidate_layers": [],
+                "candidate_fields": [],
+                "candidate_values": ["Section 7.2.6 later assumptions"],
+                "candidate_operation_type": "reference_only",
+                "field_mapping_notes": [
+                    "This step is tiny in the TSR benchmark and is being skipped for detailed TSA29 validation."
+                ],
+                "confidence": "needs_review",
+                "review_status": "draft",
+                "prose_provenance": provenance_id,
+                "hint_provenance_ids": [],
+            },
+        )
     subsection_source_hints = _extract_data_source_comment_tokens(subsection_body)
     candidate_operation_type = {
         "drop_from_universe": "exclude",
@@ -2694,6 +2755,36 @@ def _specialized_compiled_logic_for_parent_step(
             }
         )
         return (fish_item,)
+
+    if lower == "lakeshore management":
+        lakeshore_item = _base_item(
+            "compiled_01",
+            "Class A lakes with preservation VQO overlap",
+            "manual_review_required",
+        )
+        lakeshore_item.update(
+            {
+                "normalized_action": "review",
+                "normalized_subject": "Class A lakes with preservation VQO overlap",
+                "normalized_predicate": (
+                    "exclude only the Class A lake legal buffer areas that overlap "
+                    "VQO preservation once a trusted Class A lake source is adopted"
+                ),
+                "linked_source_entry_ids": [
+                    "whse_land_use_planning_rmp_plan_legal_poly_svw",
+                    "whse_forest_vegetation_rec_visual_landscape",
+                ],
+                "step_status": "manual_review_required",
+                "required": False,
+                "notes": [
+                    "TSA29 section 6.3.5 is a very small benchmark step and only applies to Class A lakes overlapping preservation VQO.",
+                    "The currently adopted public layers do not yet expose a trusted Class A lake discriminator for TSA29.",
+                    "Do not substitute the whole scenic-PR legal surface; it materially overcuts.",
+                    "Class B-E lakes are deferred to Section 7.2.6 assumptions logic, not excluded here.",
+                ],
+            }
+        )
+        return (lakeshore_item,)
 
     if lower == "areas considered inoperable":
         terrain_item = _base_item(

@@ -12646,3 +12646,19 @@
       landscape scale to accept as good enough for forward progress
     - step `009` is therefore green-lit and the full-TSA validation pass can
       continue to step `010`
+- 2026-04-08: Cleaned up TSA29 step `010` (`Lakeshore management`) and moved it
+  out of the active blocker set as a user-directed trivial-benchmark skip.
+  - Replaced the stale bogus OGMA/designated-area logic with truthful step-10
+    draft/compiled metadata:
+    - only Class A lake areas overlapping preservation VQO belong here; and
+    - Class B-E lakes are deferred to Section `7.2.6` assumptions logic.
+  - Recorded the current limitation explicitly:
+    - the adopted public layers do not yet expose a trustworthy Class A lake
+      discriminator for TSA29, so the detailed GIS exclusion remains
+      `manual_review_required`.
+  - Because the TSR benchmark is only `327 ha` on a `~5 million ha` landscape,
+    step `010` is now approved with scope
+    `full_tsa_trivial_benchmark_skip`.
+  - Rebuilt the TSA29 recipe, Markdown status report, and notebook so step `010`
+    no longer advertises stale candidate layers or stale `77,308 ha` notebook
+    output in the human-facing review surfaces.
