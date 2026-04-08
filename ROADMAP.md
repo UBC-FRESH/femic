@@ -14595,3 +14595,26 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - a real `.py` file on disk;
   - otherwise worker spawn will fail trying to re-import `'<stdin>'`, wasting
     time and producing a misleading `BrokenProcessPool`.
+- 2026-04-08: Deep-dived TSA29 step `012` (`Proven Aboriginal Rights areas`)
+  and cleaned the recipe/workbench surface so it now reflects the actual
+  document-backed logic instead of stale placeholder layer guesses.
+  - TSA29 section `6.4.1` and Table `14` now anchor the step explicitly:
+    - PRA overlaps but is not identical to the proven/declared title area;
+    - PRA extends beyond the court case area;
+    - the 2024 TSR excludes the PRA from the THLB because deep consultation is
+      required and very little provincial authorization activity has occurred
+      there since 2014.
+  - Older-cycle TSR material was reviewed for context and helps distinguish:
+    - title area;
+    - caretaker area; and
+    - PRA;
+    but still does not provide a trustworthy public PRA boundary source for
+    automation.
+  - Step `012` therefore remains `manual_review_required`, but the generated
+    recipe/status/notebook surfaces now:
+    - point draft subrules at `whse_admin_boundaries_pip_consultation` as the
+      current public lead;
+    - explicitly warn not to substitute title/caretaker/TSA/ownership layers
+      for the PRA boundary; and
+    - keep the executable compiled logic in review/manual state until a vetted
+      PRA boundary source or instance override is adopted.

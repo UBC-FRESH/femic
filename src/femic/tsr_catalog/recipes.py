@@ -2259,6 +2259,67 @@ def _build_draft_subrules_for_parent_step(
                 "hint_provenance_ids": [],
             },
         )
+    if subsection_title.casefold().strip() == "proven aboriginal rights area":
+        provenance_id = str(linked_subsection.get("provenance_id", ""))
+        return (
+            {
+                "subrule_id": f"{parent_step_id}_draft_01",
+                "human_summary": (
+                    "Exclude the Proven Aboriginal Rights area from the THLB to "
+                    "reflect the current lack of commercial forestry activity and "
+                    "the unique consultation / authorization regime."
+                ),
+                "rationale": (
+                    "TSA29 section 6.4.1 says the PRA will be excluded from the THLB "
+                    "because deep consultation is required and very few provincial "
+                    "authorizations have been made there since 2014."
+                ),
+                "candidate_layers": [
+                    "whse_admin_boundaries_pip_consultation",
+                ],
+                "candidate_fields": [
+                    "boundary source still required",
+                ],
+                "candidate_values": [
+                    "Proven Aboriginal Rights area boundary",
+                ],
+                "candidate_operation_type": "review",
+                "field_mapping_notes": [
+                    "The PRA is not the same thing as the proven Aboriginal title area and extends beyond the court case area.",
+                    "Do not substitute the title area, caretaker area, TSA boundary, or broad ownership layers for the PRA boundary.",
+                ],
+                "confidence": "needs_review",
+                "review_status": "draft",
+                "prose_provenance": provenance_id,
+                "hint_provenance_ids": [],
+            },
+            {
+                "subrule_id": f"{parent_step_id}_draft_02",
+                "human_summary": (
+                    "Keep the logic manual until a reviewed PRA boundary source is "
+                    "adopted into the instance."
+                ),
+                "rationale": (
+                    "The 2024 data package explains why the PRA is excluded but does "
+                    "not cite a clean downloadable vector source for the boundary."
+                ),
+                "candidate_layers": [
+                    "whse_admin_boundaries_pip_consultation",
+                ],
+                "candidate_fields": [],
+                "candidate_values": [
+                    "reviewed PRA boundary override required",
+                ],
+                "candidate_operation_type": "manual_review_required",
+                "field_mapping_notes": [
+                    "Older-cycle TSR material clarifies the distinction between title, caretaker-area, and PRA concepts, but still does not provide a stable public PRA vector source for automation.",
+                ],
+                "confidence": "needs_review",
+                "review_status": "draft",
+                "prose_provenance": provenance_id,
+                "hint_provenance_ids": [],
+            },
+        )
     subsection_source_hints = _extract_data_source_comment_tokens(subsection_body)
     candidate_operation_type = {
         "drop_from_universe": "exclude",

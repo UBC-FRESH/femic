@@ -12686,3 +12686,23 @@
   - do **not** launch them from inline PowerShell here-strings or stdin-fed
     Python snippets on Windows, because spawn mode will try to re-import
     `'<stdin>'` and fail with `BrokenProcessPool`.
+- 2026-04-08: Deep-dived TSA29 step `012` (`Proven Aboriginal Rights areas`)
+  and cleaned the generated recipe/workbench surfaces so they reflect the
+  document-backed PRA logic instead of stale placeholder layer guesses.
+  - TSA29 `6.4.1` / Table `14` confirm that the PRA:
+    - overlaps but is not identical to the proven/declared title area;
+    - extends beyond the court case area; and
+    - is excluded from the THLB in the 2024 TSR because deep consultation is
+      required and very little provincial authorization activity has occurred
+      there since 2014.
+  - Older-cycle TSR material clarified the title/caretaker/PRA distinction but
+    still did not provide a trustworthy public PRA boundary source for
+    automation.
+  - Step `012` therefore remains `manual_review_required`, but the TSA29
+    recipe/status/notebook now:
+    - point draft subrules at `whse_admin_boundaries_pip_consultation` as the
+      current public lead;
+    - explicitly warn not to substitute title/caretaker/TSA/ownership layers
+      for the PRA boundary; and
+    - keep the compiled logic in reviewed-boundary/manual state until a vetted
+      PRA boundary source or instance override is adopted.
