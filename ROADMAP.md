@@ -14838,3 +14838,42 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - the next refinement seam is no longer the step-14 volume metric itself
       but the TSR's site-index/harvest-history operationalization and its
       interaction with the accepted step-13 overcut.
+- 2026-04-09: Immediate step-14 follow-up is a calibrated threshold sweep on
+  the corrected age-160 executable path.
+  - Working assumption:
+    - the current executable semantics are now directionally right, but the
+      exact non-steep `80 m3/ha` threshold is acting as a stand-in for a TSR
+      yield-curve family we cannot reproduce exactly from public inputs.
+  - Active calibration task:
+    - hold the accepted step-13 checkpoint fixed;
+    - hold the steep `250 m3/ha` branch fixed;
+    - sweep the non-steep age-160 threshold by trial and error against the
+      actual stand set; and
+    - identify the threshold that moves the executable result closest to the
+      TSR step-14 benchmark of `321,044 ha`.
+  - Decision bar:
+    - if a small threshold adjustment produces a close benchmark match, record
+      that calibrated value and decide whether user-directed acceptance is
+      reasonable for the research bridge lane;
+    - if not, keep step `014` benchmarked and treat the remaining gap as a
+      deeper TSR operationalization mismatch.
+- 2026-04-09: User directed the TSA29 lane to accept the calibrated step-14
+  bridge result and move on.
+  - Accepted calibrated executable contract:
+    - non-steep threshold `67.1 m3/ha`;
+    - steep threshold `250 m3/ha`; and
+    - both evaluated on assigned curve volume at age `160`.
+  - Governing accepted full-TSA run:
+    - `runtime/logs/tsr/notebook_runs/thlb_parent_014_sites_with_low_growing_timber_potential.20260409T033111Z.json`
+    - removed `329,228.613 ha`
+    - TSR benchmark `321,044 ha`
+    - marginal delta `+8,184.613 ha`
+    - cumulative remaining area `1,881,658.109 ha`
+    - cumulative delta `-48,121.891 ha`
+  - Acceptance framing:
+    - this is an explicitly calibrated bridge against the TSR benchmark under
+      the current public-input curve family and coarse AU structure;
+    - it is not presented as proof that FEMIC has reproduced the Chief
+      Forester's exact yield-table workflow; and
+    - step `014` is now approved by user direction so the active validation
+      lane can proceed beyond the low-productivity calibration seam.

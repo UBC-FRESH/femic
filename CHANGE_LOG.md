@@ -12882,3 +12882,55 @@
       by the strata and yield-curve evidence; but
     - step `014` still materially overcuts the TSR benchmark and remains
       `benchmarked`, not approved.
+- 2026-04-09: Ran a threshold-calibration sweep on the corrected TSA29 step
+  `014` age-160 path using the accepted step-13 cumulative output as the fixed
+  starting state.
+  - Calibration setup:
+    - held the accepted step-13 output constant at
+      `external/femic-tsa29-instance/runtime/logs/tsr/notebook_runs/thlb_parent_013_areas_considered_inoperable.20260408T171029Z.feather`;
+    - held the steep branch fixed at `250 m3/ha`; and
+    - swept only the non-steep threshold against the age-160 assigned-curve
+      volumes.
+  - Best observed fit to the TSR step-14 benchmark (`321,044 ha`):
+    - non-steep threshold `67.1-67.7 m3/ha`
+    - removed area `329,228.613 ha`
+    - delta `+8,184.613 ha`
+  - Important sensitivity finding:
+    - the calibration surface is highly discontinuous rather than smooth;
+    - `67.0 m3/ha` removes only `30,679.984 ha`; while
+    - `67.1 m3/ha` jumps immediately to `329,228.613 ha`.
+  - Dominant jump driver:
+    - the main step change is the untreated curve `2901000` at age-160 volume
+      `67.06`, dominated by `SBPS_PLI` low-site-index area (roughly
+      `286,921 ha` plus smaller SBPS low-site-index companion strata).
+  - Interpretation:
+    - a calibrated threshold near `67.1 m3/ha` can bring the executable result
+      close to the TSR benchmark in the research bridge lane; but
+    - the cliff-like response confirms that step `014` is numerically unstable
+      with respect to small threshold / curve-shape differences.
+- 2026-04-09: Accepted the calibrated TSA29 step `014` bridge result by user
+  direction and recorded the final run surfaces.
+  - Code change:
+    - updated the specialized step-14 non-steep executable threshold in
+      `src/femic/tsr_catalog/recipes.py` from `80.0` to the accepted calibrated
+      bridge value `67.1 m3/ha` while keeping the steep branch at `250 m3/ha`
+      and both branches on the age-160 metric.
+  - Regression follow-through:
+    - updated `tests/test_tsr_recipes.py` to match the accepted calibrated
+      threshold and the enriched-checkpoint default.
+  - Governing accepted full-TSA run:
+    - `external/femic-tsa29-instance/runtime/logs/tsr/notebook_runs/thlb_parent_014_sites_with_low_growing_timber_potential.20260409T033111Z.json`
+    - removed `329,228.613 ha`
+    - TSR benchmark `321,044 ha`
+    - marginal delta `+8,184.613 ha`
+    - cumulative remaining area `1,881,658.109 ha`
+    - cumulative delta `-48,121.891 ha`
+  - TSA29 review-surface update:
+    - step `014` now carries approval scope
+      `full_tsa_user_directed_calibrated_acceptance` in the recipe/status
+      surfaces.
+  - Acceptance framing:
+    - this is a calibrated research-lane bridge using the current public-input
+      curve family, not a claim of exact parity with the Chief Forester's yield
+      tables; and
+    - the user directed the lane to accept that bridge and proceed onward.

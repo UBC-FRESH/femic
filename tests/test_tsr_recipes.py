@@ -3277,7 +3277,7 @@ def test_specialized_compiled_logic_for_low_growing_potential_uses_curve_thresho
     non_steep_item = next(
         item
         for item in curve_items
-        if item["minimum_volume_m3_per_ha"] == pytest.approx(80.0)
+        if item["minimum_volume_m3_per_ha"] == pytest.approx(67.1)
     )
     steep_item = next(
         item
@@ -3354,7 +3354,7 @@ def test_curve_volume_threshold_exclusion_respects_checkpoint_filters(
         "1001,40,20\n"
         "1001,80,40\n"
         "1001,120,60\n"
-        "1001,160,70\n"
+        "1001,160,60\n"
         "1002,40,80\n"
         "1002,80,160\n"
         "1002,120,200\n"
@@ -3838,7 +3838,7 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
         "1001,40,20\n"
         "1001,80,40\n"
         "1001,120,60\n"
-        "1001,160,70\n"
+        "1001,160,60\n"
         "1002,40,80\n"
         "1002,80,160\n"
         "1002,120,200\n"
@@ -3877,7 +3877,10 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
     )
     checkpoint7.to_feather(checkpoint7_path)
     enriched_checkpoint_path = (
-        instance_root / "data" / "tsr" / "ria_vri_vclr1p_checkpoint7.step13_attrs.feather"
+        instance_root
+        / "data"
+        / "tsr"
+        / "ria_vri_vclr1p_checkpoint7.step13_attrs.feather"
     )
     enriched_checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint7.to_feather(enriched_checkpoint_path)
@@ -3925,14 +3928,14 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
                 {
                     "step_id": "thlb_parent_014_compiled_01",
                     "parent_step_id": "thlb_parent_014_sites_with_low_growing_timber_potential",
-                    "label": "Non-steep 80 m3/ha threshold",
+                    "label": "Non-steep 67.1 m3/ha threshold",
                     "step_status": "ready",
                     "execution_status": "ready",
                     "step_kind": "netdown_rule",
                     "land_base_stage": "lhlb_to_thlb",
                     "compiled_operation_type": "curve_volume_threshold_exclusion",
                     "curve_id_column": "curve1",
-                    "minimum_volume_m3_per_ha": 80.0,
+                    "minimum_volume_m3_per_ha": 67.1,
                     "curve_volume_metric": "volume_at_age",
                     "curve_volume_age_years": 160.0,
                     "checkpoint_attribute_mode": "any",
@@ -4004,7 +4007,7 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
     non_steep_item = next(
         entry
         for entry in items
-        if entry["minimum_volume_m3_per_ha"] == pytest.approx(80.0)
+        if entry["minimum_volume_m3_per_ha"] == pytest.approx(67.1)
     )
     steep_item = next(
         entry

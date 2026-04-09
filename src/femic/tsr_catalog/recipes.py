@@ -134,6 +134,7 @@ _RIPARIAN_WETLAND_WIDTHS_M = {
 _STEP13_ATTRIBUTE_CHECKPOINT_RELATIVE_PATH = Path(
     "data/tsr/ria_vri_vclr1p_checkpoint7.step13_attrs.feather"
 )
+_STEP14_CALIBRATED_NON_STEEP_THRESHOLD_M3_PER_HA = 67.1
 TSR_EFFECTIVE_AREA_SQM_COLUMN = "FEMIC_EFFECTIVE_AREA_SQM"
 TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL = "serial"
 TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL = "lu_parallel"
@@ -2957,20 +2958,25 @@ def _specialized_compiled_logic_for_parent_step(
     if lower == "sites with low growing timber potential":
         non_steep_item = _base_item(
             "compiled_01",
-            "Non-steep 80 m3/ha threshold",
+            f"Non-steep {_STEP14_CALIBRATED_NON_STEEP_THRESHOLD_M3_PER_HA:g} m3/ha threshold",
             "curve_volume_threshold_exclusion",
         )
         non_steep_item.update(
             {
                 "normalized_action": "exclude",
-                "normalized_subject": "Non-steep 80 m3/ha threshold",
+                "normalized_subject": (
+                    f"Non-steep {_STEP14_CALIBRATED_NON_STEEP_THRESHOLD_M3_PER_HA:g} m3/ha threshold"
+                ),
                 "normalized_predicate": (
                     "set THLB to 0 on non-steep stands where assigned curve volume "
-                    "at age 160 falls below 80 m3/ha"
+                    f"at age 160 falls below the calibrated "
+                    f"{_STEP14_CALIBRATED_NON_STEEP_THRESHOLD_M3_PER_HA:g} m3/ha bridge threshold"
                 ),
                 "linked_source_entry_ids": [],
                 "curve_id_column": "curve1",
-                "minimum_volume_m3_per_ha": 80.0,
+                "minimum_volume_m3_per_ha": (
+                    _STEP14_CALIBRATED_NON_STEEP_THRESHOLD_M3_PER_HA
+                ),
                 "curve_volume_metric": _CURVE_VOLUME_METRIC_AGE,
                 "curve_volume_age_years": 160.0,
                 "checkpoint_attribute_mode": "any",
@@ -2984,7 +2990,8 @@ def _specialized_compiled_logic_for_parent_step(
                 "notes": [
                     "Step 14 runs late in the pipeline on the curve-ready checkpoint rather than on checkpoint1.",
                     "Notebook execution uses the current assigned bundle curves and evaluates volume at age 160, matching the TSR wording for low-productivity stands.",
-                    "This branch reuses the accepted step-13 steep-slope flag and applies the non-steep 80 m3/ha threshold only where `femic_step13_steep_slope_flag == False`.",
+                    f"This branch reuses the accepted step-13 steep-slope flag and applies the calibrated non-steep {_STEP14_CALIBRATED_NON_STEEP_THRESHOLD_M3_PER_HA:g} m3/ha bridge threshold only where `femic_step13_steep_slope_flag == False`.",
+                    "The threshold is calibrated to approximate the TSR step-14 benchmark with the current public-input curve family rather than claiming exact parity with the Chief Forester's yield tables.",
                 ],
             }
         )
@@ -3018,7 +3025,7 @@ def _specialized_compiled_logic_for_parent_step(
                     "TSA29 section 6.4.4 raises the threshold to 250 m3/ha on steep slopes.",
                     "Notebook execution uses the current assigned bundle curves and evaluates volume at age 160, matching the TSR wording for low-productivity stands.",
                     "This branch reuses the accepted step-13 steep-slope flag and applies the 250 m3/ha threshold only where `femic_step13_steep_slope_flag == True`.",
-                    "Together with the non-steep 80 m3/ha branch, this keeps the step-14 partition mutually exclusive and avoids applying the 80 m3/ha threshold to steep stands.",
+                    f"Together with the calibrated non-steep {_STEP14_CALIBRATED_NON_STEEP_THRESHOLD_M3_PER_HA:g} m3/ha branch, this keeps the step-14 partition mutually exclusive and avoids applying the lower threshold to steep stands.",
                 ],
             }
         )
