@@ -134,6 +134,12 @@ _RIPARIAN_WETLAND_WIDTHS_M = {
 _STEP13_ATTRIBUTE_CHECKPOINT_RELATIVE_PATH = Path(
     "data/tsr/ria_vri_vclr1p_checkpoint7.step13_attrs.feather"
 )
+
+_EXTENT_COVERAGE_BLOCK_THRESHOLD = 0.5
+_EXTENT_AREA_BLOCK_THRESHOLD = 0.25
+_SOURCE_ARTIFACT_SCOPE_PRODUCTION = "production_full_tsa"
+_SOURCE_ARTIFACT_SCOPE_SMOKE = "smoke_subset"
+_SOURCE_ARTIFACT_SCOPE_AOI_UNKNOWN = "aoi_scoped_unknown"
 _STEP14_CALIBRATED_NON_STEEP_THRESHOLD_M3_PER_HA = 67.1
 TSR_EFFECTIVE_AREA_SQM_COLUMN = "FEMIC_EFFECTIVE_AREA_SQM"
 TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL = "serial"
@@ -1020,6 +1026,84 @@ def _load_overlay_attempt_map(
             continue
         result[query.casefold()] = attempt
     return result
+
+
+def _load_overlay_review_bbox_epsg3005(
+    overlay_path: Path,
+) -> tuple[float, float, float, float] | None:
+    if not overlay_path.exists():
+        return None
+    payload = yaml.safe_load(overlay_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        return None
+    review_payload = payload.get("bcdc_acquisition_review")
+    if not isinstance(review_payload, dict):
+        return None
+    bbox_payload = review_payload.get("bbox_epsg3005")
+    if not isinstance(bbox_payload, list | tuple) or len(bbox_payload) != 4:
+        return None
+    try:
+        return tuple(float(value) for value in bbox_payload)  # type: ignore[return-value]
+    except (TypeError, ValueError):
+        return None
+
+
+def _bbox_matches(
+    left: tuple[float, float, float, float],
+    right: tuple[float, float, float, float],
+    *,
+    tolerance_m: float = 1.0,
+) -> bool:
+    return all(abs(lv - rv) <= tolerance_m for lv, rv in zip(left, right, strict=True))
+
+
+def _classify_source_artifact_scope(
+    *,
+    instance_root: Path,
+    bbox_epsg3005: tuple[float, float, float, float] | None,
+) -> str | None:
+    if bbox_epsg3005 is None:
+        return None
+    overlay_bbox = _load_overlay_review_bbox_epsg3005(
+        instance_root / "config" / "tsr" / "overlay.yaml"
+    )
+    if overlay_bbox is not None and _bbox_matches(bbox_epsg3005, overlay_bbox):
+        return _SOURCE_ARTIFACT_SCOPE_PRODUCTION
+    if overlay_bbox is not None:
+        return _SOURCE_ARTIFACT_SCOPE_SMOKE
+    return _SOURCE_ARTIFACT_SCOPE_AOI_UNKNOWN
+
+
+def _artifact_download_root_for_scope(
+    *, instance_root: Path, scope: str | None
+) -> Path:
+    base_root = instance_root / "data" / "downloads" / "bcdc"
+    if scope == _SOURCE_ARTIFACT_SCOPE_PRODUCTION:
+        return base_root
+    if scope in {_SOURCE_ARTIFACT_SCOPE_SMOKE, _SOURCE_ARTIFACT_SCOPE_AOI_UNKNOWN}:
+        return base_root / "smoke"
+    return base_root
+
+
+def _probe_vector_artifact_bounds(
+    artifact_path: Path,
+) -> tuple[float, float, float, float] | None:
+    try:
+        layer = gpd.read_file(artifact_path, engine="pyogrio")
+    except Exception:
+        return None
+    if layer.empty or "geometry" not in layer.columns:
+        return None
+    layer = layer.dropna(subset=["geometry"])
+    layer = layer.loc[~layer.geometry.is_empty]
+    if layer.empty:
+        return None
+    if layer.crs is None:
+        layer = layer.set_crs(BC_ALBERS_EPSG)
+    else:
+        layer = layer.to_crs(BC_ALBERS_EPSG)
+    minx, miny, maxx, maxy = layer.total_bounds
+    return float(minx), float(miny), float(maxx), float(maxy)
 
 
 def _review_rows_for_recipe(
@@ -4509,7 +4593,7 @@ def run_tsr_source_layers_recipe(
     resolved_recipe_path = recipe_path.expanduser().resolve()
     recipe = load_tsr_source_layers_recipe(resolved_recipe_path)
     instance_root = resolved_recipe_path.parents[2]
-    download_root = _resolve_instance_path(
+    base_download_root = _resolve_instance_path(
         instance_root, recipe.instance_inputs.download_root
     )
     outcome_counts: Counter[str] = Counter()
@@ -4534,6 +4618,18 @@ def run_tsr_source_layers_recipe(
             entry.get("acquisition_query") or entry.get("recommended_query", "")
         )
         override_kind = str(entry.get("override_kind", ""))
+        artifact_scope = _classify_source_artifact_scope(
+            instance_root=instance_root,
+            bbox_epsg3005=bbox_epsg3005
+            if strategy in {"wfs_fetch", "dwds_order"}
+            else None,
+        )
+        if bbox_epsg3005 is not None and strategy in {"wfs_fetch", "dwds_order"}:
+            updated["requested_bbox_epsg3005"] = [
+                float(value) for value in bbox_epsg3005
+            ]
+        if artifact_scope is not None and strategy in {"wfs_fetch", "dwds_order"}:
+            updated["artifact_scope"] = artifact_scope
 
         if strategy == "override":
             if override_kind in {"local_path", "datalad_path", "replacement_layer"}:
@@ -4547,6 +4643,16 @@ def run_tsr_source_layers_recipe(
             continue
 
         if artifact_path and _path_exists_under_instance(instance_root, artifact_path):
+            resolved_artifact_path = _resolve_source_artifact_path(
+                instance_root=instance_root,
+                source_entry=updated,
+            )
+            if resolved_artifact_path is not None:
+                artifact_bounds = _probe_vector_artifact_bounds(resolved_artifact_path)
+                if artifact_bounds is not None:
+                    updated["artifact_extent_bbox_epsg3005"] = [
+                        float(value) for value in artifact_bounds
+                    ]
             updated["run_status"] = "reused"
             outcome_counts.update(["reused"])
             updated_entries.append(updated)
@@ -4559,6 +4665,10 @@ def run_tsr_source_layers_recipe(
         elif strategy == "wfs_fetch":
             assert bbox_epsg3005 is not None
             try:
+                download_root = _artifact_download_root_for_scope(
+                    instance_root=instance_root,
+                    scope=artifact_scope,
+                )
                 fetch_result = fetch_bcdc_wfs_data(
                     query,
                     destination_root=download_root,
@@ -4573,6 +4683,11 @@ def run_tsr_source_layers_recipe(
                     fetch_result.saved_path.relative_to(instance_root).as_posix()
                 )
                 updated["feature_count"] = fetch_result.feature_count
+                artifact_bounds = _probe_vector_artifact_bounds(fetch_result.saved_path)
+                if artifact_bounds is not None:
+                    updated["artifact_extent_bbox_epsg3005"] = [
+                        float(value) for value in artifact_bounds
+                    ]
                 updated["run_status"] = "fetched"
             except BcdcFetchError as exc:
                 updated["run_status"] = "failed"
@@ -4582,7 +4697,7 @@ def run_tsr_source_layers_recipe(
                 resolve_result = resolve_bcdc_candidates(query, limit=limit)
                 download_result = download_direct_bcdc_resources(
                     resolve_result,
-                    destination_root=download_root,
+                    destination_root=base_download_root,
                     query_slug=str(
                         entry.get("recommended_query") or entry.get("entry_id") or query
                     ),
@@ -7014,7 +7129,7 @@ def _load_compiled_logic_geometries(
     compiled_item: dict[str, Any],
     source_entry_map: dict[str, dict[str, Any]],
     bbox: tuple[float, float, float, float] | None = None,
-) -> tuple[gpd.GeoDataFrame | None, list[str], bool]:
+) -> tuple[gpd.GeoDataFrame | None, list[str], bool, list[str]]:
     filters = [
         dict(item)
         for item in compiled_item.get("source_attribute_filters", ())
@@ -7031,7 +7146,7 @@ def _load_compiled_logic_geometries(
         if operation_type == "buffer_then_intersect"
         else ("Polygon", "MultiPolygon")
     )
-    geometries, missing_sources = _load_exclusion_geometries(
+    geometries, missing_sources, extent_mismatch_notes = _load_exclusion_geometries(
         instance_root=instance_root,
         linked_source_entry_ids=linked_source_entry_ids,
         source_entry_map=source_entry_map,
@@ -7040,14 +7155,14 @@ def _load_compiled_logic_geometries(
         bbox=bbox,
     )
     if geometries is None:
-        return None, missing_sources, False
+        return None, missing_sources, False, extent_mismatch_notes
     if geometries.empty:
-        return geometries, missing_sources, True
+        return geometries, missing_sources, True, extent_mismatch_notes
     if filters:
         geometries = _apply_source_attribute_filters(geometries, filters=filters)
         if geometries.empty:
-            return geometries, missing_sources, True
-    return geometries, missing_sources, False
+            return geometries, missing_sources, True, extent_mismatch_notes
+    return geometries, missing_sources, False, extent_mismatch_notes
 
 
 def _execute_workbench_compiled_item(
@@ -7222,29 +7337,37 @@ def _execute_workbench_compiled_item(
         return updated, runtime_item
 
     if operation_type in {"select_spatial_intersect", "buffer_then_intersect"}:
-        exclusion_geometries, missing_sources, no_matching_features = (
-            _load_compiled_logic_geometries(
-                instance_root=instance_root,
-                compiled_item=compiled_item,
-                source_entry_map=source_entry_map,
-                bbox=(
-                    float(checkpoint.total_bounds[0]),
-                    float(checkpoint.total_bounds[1]),
-                    float(checkpoint.total_bounds[2]),
-                    float(checkpoint.total_bounds[3]),
-                ),
-            )
+        (
+            exclusion_geometries,
+            missing_sources,
+            no_matching_features,
+            extent_mismatch_notes,
+        ) = _load_compiled_logic_geometries(
+            instance_root=instance_root,
+            compiled_item=compiled_item,
+            source_entry_map=source_entry_map,
+            bbox=(
+                float(checkpoint.total_bounds[0]),
+                float(checkpoint.total_bounds[1]),
+                float(checkpoint.total_bounds[2]),
+                float(checkpoint.total_bounds[3]),
+            ),
         )
         if exclusion_geometries is None:
-            runtime_item["execution_status"] = "blocked_missing_source"
-            runtime_item["missing_source_entry_ids"] = missing_sources
-            runtime_notes.append(
-                "No fetched spatial artifact was available for the linked source entries."
-            )
+            if extent_mismatch_notes:
+                runtime_item["execution_status"] = "blocked_extent_mismatch"
+                runtime_notes.extend(extent_mismatch_notes)
+            else:
+                runtime_item["execution_status"] = "blocked_missing_source"
+                runtime_item["missing_source_entry_ids"] = missing_sources
+                runtime_notes.append(
+                    "No fetched spatial artifact was available for the linked source entries."
+                )
             runtime_item["runtime_notes"] = runtime_notes
             return checkpoint, runtime_item
         if no_matching_features:
             runtime_item["execution_status"] = "applied_noop"
+            runtime_notes.extend(extent_mismatch_notes)
             runtime_notes.append(
                 "Fetched spatial artifacts were available, but no features matched the current "
                 "attribute filters within the smoke subset."
@@ -7326,6 +7449,12 @@ def _resolve_compiled_operation_type(compiled_item: dict[str, Any]) -> str:
 
 def _combine_parent_step_statuses(statuses: set[str]) -> str:
     applied_statuses = {"applied", "applied_noop"}
+    if "blocked_extent_mismatch" in statuses:
+        return (
+            "applied_with_blockers"
+            if statuses & applied_statuses
+            else "blocked_extent_mismatch"
+        )
     if "blocked_missing_source" in statuses:
         return (
             "applied_with_blockers"
@@ -9094,6 +9223,67 @@ def _resolve_source_artifact_path(
     return resolved
 
 
+def _parse_bbox_payload(
+    value: Any,
+) -> tuple[float, float, float, float] | None:
+    if not isinstance(value, list | tuple) or len(value) != 4:
+        return None
+    try:
+        return tuple(float(item) for item in value)  # type: ignore[return-value]
+    except (TypeError, ValueError):
+        return None
+
+
+def _bbox_width_height(
+    bbox: tuple[float, float, float, float],
+) -> tuple[float, float]:
+    minx, miny, maxx, maxy = bbox
+    return max(maxx - minx, 0.0), max(maxy - miny, 0.0)
+
+
+def _bbox_area(
+    bbox: tuple[float, float, float, float],
+) -> float:
+    width, height = _bbox_width_height(bbox)
+    return width * height
+
+
+def _evaluate_source_extent_mismatch(
+    *,
+    source_entry: dict[str, Any],
+    artifact_bbox_epsg3005: tuple[float, float, float, float] | None,
+    target_bbox_epsg3005: tuple[float, float, float, float] | None,
+) -> str | None:
+    if artifact_bbox_epsg3005 is None or target_bbox_epsg3005 is None:
+        return None
+    strategy = str(source_entry.get("acquisition_strategy", "")).strip()
+    scope = str(source_entry.get("artifact_scope", "")).strip()
+    if strategy not in {"wfs_fetch", "dwds_order"} and not scope:
+        return None
+    source_width, source_height = _bbox_width_height(artifact_bbox_epsg3005)
+    target_width, target_height = _bbox_width_height(target_bbox_epsg3005)
+    target_area = _bbox_area(target_bbox_epsg3005)
+    if target_width <= 0.0 or target_height <= 0.0 or target_area <= 0.0:
+        return None
+    width_coverage = source_width / target_width
+    height_coverage = source_height / target_height
+    area_coverage = _bbox_area(artifact_bbox_epsg3005) / target_area
+    if (
+        width_coverage >= _EXTENT_COVERAGE_BLOCK_THRESHOLD
+        or height_coverage >= _EXTENT_COVERAGE_BLOCK_THRESHOLD
+        or area_coverage >= _EXTENT_AREA_BLOCK_THRESHOLD
+    ):
+        return None
+    entry_id = str(source_entry.get("entry_id", "")).strip() or "<unknown>"
+    scope_label = scope or "aoi-scoped/unknown"
+    return (
+        f"Source artifact `{entry_id}` appears clipped relative to the current checkpoint "
+        f"extent (bbox coverage: width {width_coverage:.1%}, height {height_coverage:.1%}, "
+        f"area {area_coverage:.1%}; scope `{scope_label}`). Do not reuse smoke/AOI-scoped "
+        "overlays for full-TSA production runs."
+    )
+
+
 def _load_exclusion_geometries(
     *,
     instance_root: Path,
@@ -9102,9 +9292,10 @@ def _load_exclusion_geometries(
     preserve_attributes: bool = False,
     allowed_geom_types: tuple[str, ...] = ("Polygon", "MultiPolygon"),
     bbox: tuple[float, float, float, float] | None = None,
-) -> tuple[gpd.GeoDataFrame | None, list[str]]:
+) -> tuple[gpd.GeoDataFrame | None, list[str], list[str]]:
     frames: list[gpd.GeoDataFrame] = []
     missing_sources: list[str] = []
+    extent_mismatch_notes: list[str] = []
     found_artifact = False
     for entry_id in linked_source_entry_ids:
         source_entry = source_entry_map.get(entry_id)
@@ -9144,15 +9335,30 @@ def _load_exclusion_geometries(
         layer = layer.loc[layer.geometry.geom_type.isin(list(allowed_geom_types))]
         if layer.empty:
             continue
+        extent_mismatch_note = _evaluate_source_extent_mismatch(
+            source_entry=source_entry,
+            artifact_bbox_epsg3005=(
+                float(layer.total_bounds[0]),
+                float(layer.total_bounds[1]),
+                float(layer.total_bounds[2]),
+                float(layer.total_bounds[3]),
+            ),
+            target_bbox_epsg3005=bbox,
+        )
+        if extent_mismatch_note is not None:
+            extent_mismatch_notes.append(extent_mismatch_note)
+            continue
         frames.append(layer)
     if not frames:
+        if extent_mismatch_notes:
+            return None, missing_sources, extent_mismatch_notes
         if found_artifact and not missing_sources:
             empty_geometry = gpd.GeoDataFrame(
                 geometry=gpd.GeoSeries([], crs=BC_ALBERS_EPSG),
                 crs=BC_ALBERS_EPSG,
             )
-            return empty_geometry, missing_sources
-        return None, missing_sources
+            return empty_geometry, missing_sources, extent_mismatch_notes
+        return None, missing_sources, extent_mismatch_notes
     if preserve_attributes:
         merged = gpd.GeoDataFrame(
             pd.concat(frames, ignore_index=True),
@@ -9167,7 +9373,7 @@ def _load_exclusion_geometries(
             ),
             crs=BC_ALBERS_EPSG,
         )
-    return merged, missing_sources
+    return merged, missing_sources, extent_mismatch_notes
 
 
 def _compute_exclusion_fraction(
@@ -9407,18 +9613,30 @@ def run_tsr_thlb_netdown_recipe(
             updated_step["run_status"] = "applied_noop"
             updated_step["run_notes"] = ["No spatial deduction applied for this rule."]
         elif normalized_action == "exclude":
-            exclusion_geometries, missing_sources = _load_exclusion_geometries(
-                instance_root=instance_root,
-                linked_source_entry_ids=linked_source_entry_ids,
-                source_entry_map=source_entry_map,
+            exclusion_geometries, missing_sources, extent_mismatch_notes = (
+                _load_exclusion_geometries(
+                    instance_root=instance_root,
+                    linked_source_entry_ids=linked_source_entry_ids,
+                    source_entry_map=source_entry_map,
+                    bbox=(
+                        float(checkpoint.total_bounds[0]),
+                        float(checkpoint.total_bounds[1]),
+                        float(checkpoint.total_bounds[2]),
+                        float(checkpoint.total_bounds[3]),
+                    ),
+                )
             )
             if exclusion_geometries is None:
-                updated_step["run_status"] = "blocked_missing_source"
-                updated_step["run_notes"] = [
-                    "No fetched polygon artifact was available for the linked source entries."
-                ]
-                if missing_sources:
-                    updated_step["missing_source_entry_ids"] = missing_sources
+                if extent_mismatch_notes:
+                    updated_step["run_status"] = "blocked_extent_mismatch"
+                    updated_step["run_notes"] = extent_mismatch_notes
+                else:
+                    updated_step["run_status"] = "blocked_missing_source"
+                    updated_step["run_notes"] = [
+                        "No fetched polygon artifact was available for the linked source entries."
+                    ]
+                    if missing_sources:
+                        updated_step["missing_source_entry_ids"] = missing_sources
             else:
                 if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
                     candidate_count = _count_exclusion_candidate_rows(

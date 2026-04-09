@@ -1051,7 +1051,20 @@ def test_run_tsr_source_layers_recipe_reuses_existing_artifact(
         instance_root / "data" / "downloads" / "bcdc" / "F_OWN" / "F_OWN.gpkg"
     )
     artifact_path.parent.mkdir(parents=True, exist_ok=True)
-    artifact_path.write_text("placeholder", encoding="utf-8")
+    gpd.GeoDataFrame(
+        {"OWNERSHIP_DESCRIPTION": ["Private"]},
+        geometry=[box(1, 2, 3, 4)],
+        crs="EPSG:3005",
+    ).to_file(artifact_path, driver="GPKG")
+    overlay_path = instance_root / "config" / "tsr" / "overlay.yaml"
+    overlay_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            {"bcdc_acquisition_review": {"bbox_epsg3005": [1.0, 2.0, 3.0, 4.0]}},
+            sort_keys=False,
+            allow_unicode=False,
+        ),
+        encoding="utf-8",
+    )
     recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
         init_result.source_layers_recipe_path
     ).to_dict()
@@ -1084,6 +1097,168 @@ def test_run_tsr_source_layers_recipe_reuses_existing_artifact(
         init_result.source_layers_recipe_path
     )
     assert recipe.entries[0]["run_status"] == "reused"
+    assert recipe.entries[0]["artifact_scope"] == "production_full_tsa"
+    assert recipe.entries[0]["requested_bbox_epsg3005"] == [1.0, 2.0, 3.0, 4.0]
+    assert recipe.entries[0]["artifact_extent_bbox_epsg3005"] == [1.0, 2.0, 3.0, 4.0]
+
+
+def test_run_tsr_thlb_parent_step_blocks_obvious_smoke_extent_mismatch(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    smoke_path = (
+        instance_root
+        / "data"
+        / "downloads"
+        / "bcdc"
+        / "smoke"
+        / "F_OWN"
+        / "F_OWN_smoke.gpkg"
+    )
+    smoke_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {"OWNERSHIP_DESCRIPTION": ["Private"]},
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    ).to_file(smoke_path, driver="GPKG")
+
+    source_recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    source_recipe_payload["recipe_contract"]["status"] = "run"
+    source_recipe_payload["entries"] = [
+        {
+            "entry_id": "whse_f_own",
+            "label": "Generalized Forest Cover Ownership",
+            "recommended_query": "WHSE_FOREST_VEGETATION.F_OWN",
+            "acquisition_strategy": "wfs_fetch",
+            "artifact_scope": "smoke_subset",
+            "artifact_path": "data/downloads/bcdc/smoke/F_OWN/F_OWN_smoke.gpkg",
+            "run_status": "fetched",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            source_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    recipe_payload["recipe_contract"]["status"] = "built"
+    recipe_payload["recipe_contract"]["recipe_build_status_report_path"] = (
+        "config/tsr/thlb_netdown.status.md"
+    )
+    recipe_payload["parent_steps"] = [
+        {
+            "parent_step_id": "thlb_parent_001_total_tsa_area",
+            "parent_label": "Total TSA area",
+            "parent_kind": "milestone",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "execution_class": "reference_only",
+            "benchmark_cumulative_area_ha": 100.0,
+            "row_order": 1,
+        },
+        {
+            "parent_step_id": "thlb_parent_002_land_not_administered_by_the_province",
+            "parent_label": "Land not administered by the Province",
+            "parent_kind": "transformation",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "execution_class": "drop_from_universe",
+            "benchmark_marginal_area_ha": 10.0,
+            "benchmark_cumulative_area_ha": 90.0,
+            "compiled_logic": [
+                {
+                    "step_id": "thlb_parent_002_compiled_01",
+                    "parent_step_id": "thlb_parent_002_land_not_administered_by_the_province",
+                    "label": "Exclude private ownership polygons",
+                    "step_status": "ready",
+                    "execution_status": "ready",
+                    "step_kind": "netdown_rule",
+                    "land_base_stage": "glb_to_aflb",
+                    "operation_type": "select_spatial_intersect",
+                    "linked_source_entry_ids": ["whse_f_own"],
+                }
+            ],
+            "row_order": 2,
+        },
+    ]
+    recipe_payload["steps"] = [
+        {
+            "step_id": "thlb_parent_002_compiled_01",
+            "parent_step_id": "thlb_parent_002_land_not_administered_by_the_province",
+            "label": "Exclude private ownership polygons",
+            "step_status": "ready",
+            "execution_status": "ready",
+            "step_kind": "netdown_rule",
+            "land_base_stage": "glb_to_aflb",
+        }
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1],
+            "MAP_ID": ["092O071"],
+        },
+        geometry=[box(0, 0, 1000, 1000)],
+        crs="EPSG:3005",
+    )
+    checkpoint.to_feather(checkpoint_path)
+
+    result = tsr_recipes.run_tsr_thlb_parent_step(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+        checkpoint_path=checkpoint_path,
+        map_ids=("092O071",),
+        auto_map_id_smoke_subset=False,
+    )
+
+    assert result.status == "blocked_extent_mismatch"
+    assert result.removed_area_ha == pytest.approx(0.0)
+    payload = json.loads(result.result_json_path.read_text(encoding="utf-8"))
+    item = next(
+        entry
+        for entry in payload["executed_items"]
+        if entry["parent_step_id"]
+        == "thlb_parent_002_land_not_administered_by_the_province"
+    )
+    assert item["execution_status"] == "blocked_extent_mismatch"
+    assert "smoke/aoi-scoped overlays" in " ".join(item["runtime_notes"]).lower()
 
 
 def test_build_tsr_thlb_netdown_recipe_populates_steps_from_latest_data_package(
@@ -2123,7 +2298,7 @@ def test_load_compiled_logic_geometries_treats_empty_bbox_hit_as_no_matching(
     )
     layer.to_file(artifact_path, driver="GPKG")
 
-    geometries, missing_sources, no_matching = (
+    geometries, missing_sources, no_matching, extent_mismatch_notes = (
         tsr_recipes._load_compiled_logic_geometries(
             instance_root=instance_root,
             compiled_item={
@@ -2146,6 +2321,7 @@ def test_load_compiled_logic_geometries_treats_empty_bbox_hit_as_no_matching(
     assert geometries.empty
     assert missing_sources == []
     assert no_matching is True
+    assert extent_mismatch_notes == []
 
 
 def test_apply_checkpoint_attribute_filters_preserves_geometry_for_later_stage() -> (

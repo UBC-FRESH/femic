@@ -65,6 +65,30 @@ Canonical Artifact Rules
   otherwise. Editing group assignments in that file does not, by itself,
   imply that ``forestmodel.xml`` or the other compiled track tables need to be
   regenerated.
+- AOI-scoped TSR GIS acquisitions are only canonical for the extent they were
+  fetched for. A clipped smoke/test overlay is not automatically a valid
+  production/full-TSA source layer just because it lives under the instance
+  ``data/`` tree.
+
+TSR AOI Acquisition Contract
+----------------------------
+
+For TSR source-layer workflows that acquire public GIS data by bbox/order:
+
+- record the requested AOI with the acquired artifact;
+- distinguish reviewed production/full-TSA acquisitions from smoke-scale or
+  otherwise AOI-scoped exploratory downloads;
+- keep smoke-scale downloads segregated under a smoke-specific subtree such as
+  ``data/downloads/bcdc/smoke/`` instead of mixing them into the production GIS
+  library; and
+- treat obvious bbox-coverage mismatches against the active checkpoint extent
+  as blockers for full-TSA netdown execution rather than as silent no-op or
+  generic missing-source conditions.
+
+Operational rule:
+
+- do not promote a smoke-clipped overlay into later full-TSA THLB validation
+  without reacquiring or otherwise reviewing a production-valid extent.
 
 Minimal Functional Patchworks Instance
 --------------------------------------

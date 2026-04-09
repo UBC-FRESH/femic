@@ -942,6 +942,33 @@ notes.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
 
+- 2026-04-08 (Issue `#141` guardrail follow-up: block smoke-scale overlays from
+  contaminating full-TSA THLB validation):
+  - Problem statement:
+    - later-stage TSA29 reconciliation exposed that clipped AOI artifacts from
+      smoke acquisitions had leaked into full-TSA step `017`/`018` production
+      runs, yielding materially false benchmark gaps while still looking
+      superficially runnable.
+  - Required implementation contract:
+    - source-layer acquisitions that carry an AOI must record whether they are
+      production-full-TSA, smoke-subset, or AOI-scoped-unknown;
+    - AOI-scoped smoke acquisitions must materialize under a separate
+      `data/downloads/bcdc/smoke/` root rather than cohabiting with the
+      production library;
+    - THLB spatial execution must compare source artifact extent against the
+      current checkpoint extent and block obvious mismatches instead of quietly
+      reusing the layer;
+    - runtime JSON/status surfaces must preserve that failure mode explicitly as
+      an extent-mismatch blocker, not collapse it into generic
+      missing-source noise.
+  - Validation targets for this pass:
+    - recipe-run test proving AOI metadata and smoke-root placement are
+      recorded;
+    - parent-step/workbench test proving a clipped overlay is marked
+      `blocked_extent_mismatch`;
+    - docs/contracts updated so future coding agents do not treat smoke-scale
+      artifacts as production-valid GIS inputs.
+
 - TSA29 THLB validation checkpoint: step 21 (`Cultural heritage and archaeological resources`) no longer falls through the generic candidate-layer heuristics. The recipe/workbench now uses a curated aspatial-reduction interpretation tied to TSA29 section 6.4.9, with no fake spatial candidate layers and no bogus road-feature linkage. Next ratchet should resume from this cleaned surface rather than the earlier junk draft-state artifact.
 
 - 2026-04-03 (Issue `#91` launched: TSA29 standalone DataLad publication is the next post-PoC lane):

@@ -502,6 +502,27 @@ The intended loop is still manual:
 3. record that decision under ``override_kind: replacement_layer`` only after
    review.
 
+AOI Scope Guardrail
+-------------------
+
+When a TSR source-layer acquisition uses an AOI-bounded fetch strategy such as
+WFS bbox or DWDS order, treat the requested extent as part of the data
+contract, not as disposable fetch trivia.
+
+- Acquisitions whose AOI matches the reviewed production bbox can live under
+  the normal instance download root.
+- Acquisitions whose AOI is smaller or otherwise differs from that reviewed
+  production bbox are smoke-scale artifacts and should live under
+  ``data/downloads/bcdc/smoke/``.
+- Do not reuse smoke-scale AOI overlays in full-TSA THLB validation just
+  because the file exists. FEMIC now compares obvious source-artifact bbox
+  coverage against the current checkpoint extent and blocks clear mismatches as
+  extent errors instead of quietly treating them as valid production layers.
+
+Operationally: if a clipped smoke artifact was useful for a bounded proof, keep
+it, but reacquire or promote a full-extent production artifact before drawing
+full-TSA conclusions from that recipe step.
+
 Windows PowerShell Notes
 ------------------------
 

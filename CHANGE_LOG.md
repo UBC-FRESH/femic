@@ -13023,3 +13023,40 @@
     - recorded user-directed full-TSA bridge acceptance for step `016`
       recreation features and step `019` buffered trails in the TSA29
       recipe/status/workbench surfaces.
+- 2026-04-08: Added TSR source-layer extent guardrails so smoke-scale GIS
+  overlays do not silently contaminate full-TSA THLB validation.
+  - Runtime/code changes:
+    - `src/femic/tsr_catalog/recipes.py` now records AOI-scoped acquisition
+      metadata for WFS/DWDS-style source-layer runs, including:
+      - requested bbox
+      - artifact bbox
+      - artifact scope (`production_full_tsa`, `smoke_subset`,
+        `aoi_scoped_unknown`)
+    - AOI-scoped non-production acquisitions now materialize under
+      `data/downloads/bcdc/smoke/` instead of cohabiting with the production
+      GIS library.
+    - THLB spatial execution now compares source-artifact extent against the
+      active checkpoint extent and blocks obvious mismatches as
+      `blocked_extent_mismatch` instead of quietly treating them as valid
+      production layers or collapsing them into generic missing-source noise.
+  - Regression coverage:
+    - `tests/test_tsr_recipes.py` now proves reused AOI artifacts preserve the
+      recorded scope/bbox metadata.
+    - Added a parent-step regression test proving a tiny smoke-scale overlay on
+      a full-TSA checkpoint is blocked explicitly as an extent mismatch.
+  - Docs/contracts:
+    - `docs/guides/tsr-intelligence-workflow.rst` now states that AOI-scoped
+      smoke artifacts must be kept separate and cannot be reused for full-TSA
+      conclusions without reacquisition/promotion.
+    - `docs/reference/contracts/stage-boundaries-and-canonical-artifacts.rst`
+      now makes the TSR AOI acquisition contract explicit, including the
+      smoke-download subtree and full-TSA mismatch-blocking rule.
+    - `ROADMAP.md` Detailed Next Steps Notes now records the guardrail plan and
+      validation targets under issue `#141`.
+  - Validation:
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`
