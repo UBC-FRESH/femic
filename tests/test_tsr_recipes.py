@@ -3164,7 +3164,7 @@ def test_default_workbench_checkpoint_path_prefers_step13_attribute_checkpoint(
     selected = tsr_recipes._default_workbench_checkpoint_path(
         instance_root=instance_root,
         target_parent={
-            "parent_step_id": "thlb_parent_014_sites_with_low_growing_timber_potential",
+            "parent_step_id": "thlb_parent_015_non_merchantable_timber_profiles",
             "land_base_stage": "lhlb_to_thlb",
         },
     )

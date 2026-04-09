@@ -4706,18 +4706,14 @@ def _find_curve_ready_thlb_checkpoint_path(*, instance_root: Path) -> Path:
 def _default_workbench_checkpoint_path(
     *, instance_root: Path, target_parent: dict[str, Any]
 ) -> Path:
-    parent_step_id = str(target_parent.get("parent_step_id", "")).strip()
-    if parent_step_id in {
-        "thlb_parent_013_areas_considered_inoperable",
-        "thlb_parent_014_sites_with_low_growing_timber_potential",
-    }:
+    stage = str(target_parent.get("land_base_stage", "")).strip()
+    if stage == "lhlb_to_thlb":
         enriched_path = (
             instance_root.expanduser().resolve()
             / _STEP13_ATTRIBUTE_CHECKPOINT_RELATIVE_PATH
         )
         if enriched_path.exists():
             return enriched_path
-    stage = str(target_parent.get("land_base_stage", "")).strip()
     if stage == "glb_to_aflb":
         return _find_tsr_checkpoint_path(instance_root=instance_root, mode="earliest")
     return _find_curve_ready_thlb_checkpoint_path(instance_root=instance_root)

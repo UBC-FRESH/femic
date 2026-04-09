@@ -14877,3 +14877,74 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       Forester's exact yield-table workflow; and
     - step `014` is now approved by user direction so the active validation
       lane can proceed beyond the low-productivity calibration seam.
+- 2026-04-09: Step `015` full-TSA validation now becomes the next active
+  blocker, and it exposed one more late-stage checkpoint-default seam.
+  - First full-TSA step-15 rerun on the accepted enriched checkpoint:
+    - `runtime/logs/tsr/notebook_runs/thlb_parent_015_non_merchantable_timber_profiles.20260409T034428Z.json`
+    - removed `103,629.462 ha`
+    - TSR benchmark `49,052 ha`
+    - marginal delta `+54,577.462 ha`
+    - cumulative remaining area `1,778,028.647 ha`
+    - cumulative delta `-102,699.353 ha`
+  - Interpretation:
+    - the current broadleaf-leading executable bridge materially overcuts the
+      TSR benchmark on the full TSA and should stay `benchmarked`, not
+      promoted, until reviewed further.
+  - Immediate implementation hardening:
+    - broaden the late-stage default checkpoint preference so step `015` and
+      later `LHLB -> THLB` parent-step runs automatically use the enriched
+      step-13 attribute checkpoint rather than silently falling back to raw
+      `checkpoint7`.
+- 2026-04-09: Continued the full-TSA step-by-step ledger through the remaining
+  executable later-stage parent steps after accepting step `014`.
+  - Checkpoint/default hardening:
+    - late `LHLB -> THLB` parent-step defaults now consistently use
+      `data/tsr/ria_vri_vclr1p_checkpoint7.step13_attrs.feather`.
+  - Full-TSA run ledger:
+    - step `015` non-merchantable timber profiles:
+      - removed `103,629.462 ha`
+      - benchmark `49,052 ha`
+      - marginal delta `+54,577.462 ha`
+      - interpretation: materially overcut; keep `benchmarked`
+    - step `016` recreation features:
+      - removed `7,562.895 ha`
+      - benchmark `9,598 ha`
+      - marginal delta `-2,035.105 ha`
+      - interpretation: reasonably close executable bridge
+    - step `017` growth and yield permanent sample plots:
+      - removed `247.099 ha`
+      - benchmark `3,577 ha`
+      - marginal delta `-3,329.901 ha`
+      - interpretation: executable bridge too weak on full TSA
+    - step `018` riparian areas:
+      - removed `1,787.772 ha`
+      - benchmark `54,833 ha`
+      - marginal delta `-53,045.228 ha`
+      - interpretation: major blocker; stream-class branches are currently zero,
+        only wetland buffers contribute, and lake/special S4 logic remain
+        manual
+    - step `019` buffered trails:
+      - removed `10,256.537 ha`
+      - benchmark `8,039 ha`
+      - marginal delta `+2,217.537 ha`
+      - interpretation: runnable bridge in the right order of magnitude
+    - step `020` wildlife tree retention areas:
+      - removed `33,646.905 ha`
+      - benchmark `94,417 ha`
+      - marginal delta `-60,770.095 ha`
+      - interpretation: future-WTRA aspatial bridge remains materially weak
+    - step `021` cultural heritage and archaeological resources:
+      - removed `11,956.187 ha`
+      - benchmark `34,205 ha`
+      - marginal delta `-22,248.813 ha`
+      - interpretation: aspatial bridge still under benchmark
+    - step `023` future roads:
+      - removed `13,461.641 ha`
+      - benchmark `22,754 ha`
+      - marginal delta `-9,292.359 ha`
+      - interpretation: early-stage aspatial bridge under benchmark but not
+        catastrophic
+  - Immediate next blocker after this ledger pass:
+    - step `018` riparian areas is the clearest high-signal refinement target
+      because the current stream-class executable path is effectively not
+      firing at all on the full TSA.

@@ -12934,3 +12934,46 @@
       curve family, not a claim of exact parity with the Chief Forester's yield
       tables; and
     - the user directed the lane to accept that bridge and proceed onward.
+- 2026-04-09: Continued the full-TSA TSA29 THLB validation ledger through the
+  remaining executable later-stage parent steps after accepting step `014`.
+  - Code hardening:
+    - broadened the late-stage default checkpoint preference in
+      `src/femic/tsr_catalog/recipes.py` so `LHLB -> THLB` parent-step runs now
+      default to `data/tsr/ria_vri_vclr1p_checkpoint7.step13_attrs.feather`
+      when it exists;
+    - updated `tests/test_tsr_recipes.py` to lock in that broader checkpoint
+      preference.
+  - Full-TSA run results:
+    - step `015` non-merchantable timber profiles:
+      - `external/femic-tsa29-instance/runtime/logs/tsr/notebook_runs/thlb_parent_015_non_merchantable_timber_profiles.20260409T034428Z.json`
+      - removed `103,629.462 ha` vs benchmark `49,052 ha`
+    - step `016` recreation features:
+      - `external/femic-tsa29-instance/runtime/logs/tsr/notebook_runs/thlb_parent_016_recreation_features.20260409T034739Z.json`
+      - removed `7,562.895 ha` vs benchmark `9,598 ha`
+    - step `017` growth and yield permanent sample plots:
+      - `external/femic-tsa29-instance/runtime/logs/tsr/notebook_runs/thlb_parent_017_growth_and_yield_permanent_sample_plots.20260409T035022Z.json`
+      - removed `247.099 ha` vs benchmark `3,577 ha`
+    - step `018` riparian areas:
+      - `external/femic-tsa29-instance/runtime/logs/tsr/notebook_runs/thlb_parent_018_riparian_areas.20260409T035309Z.json`
+      - removed `1,787.772 ha` vs benchmark `54,833 ha`
+      - stream-class executable branches returned zero; only wetland buffers
+        contributed material area; lake classes and special S4 width remain
+        manual
+    - step `019` buffered trails:
+      - `external/femic-tsa29-instance/runtime/logs/tsr/notebook_runs/thlb_parent_019_buffered_trails.20260409T035621Z.json`
+      - removed `10,256.537 ha` vs benchmark `8,039 ha`
+    - step `020` wildlife tree retention areas:
+      - `external/femic-tsa29-instance/runtime/logs/tsr/notebook_runs/thlb_parent_020_wildlife_tree_retention_areas.20260409T035939Z.json`
+      - removed `33,646.905 ha` vs benchmark `94,417 ha`
+    - step `021` cultural heritage and archaeological resources:
+      - `external/femic-tsa29-instance/runtime/logs/tsr/notebook_runs/thlb_parent_021_cultural_heritage_and_archaeological_resources.20260409T040302Z.json`
+      - removed `11,956.187 ha` vs benchmark `34,205 ha`
+    - step `023` future roads:
+      - `external/femic-tsa29-instance/runtime/logs/tsr/notebook_runs/thlb_parent_023_future_roads.20260409T041319Z.json`
+      - removed `13,461.641 ha` vs benchmark `22,754 ha`
+  - Interpretation:
+    - steps `016` and `019` are in the right order of magnitude as runnable
+      bridge passes;
+    - step `015` materially overcuts and steps `017`, `018`, `020`, `021`,
+      and `023` materially undercut their TSR marginal benchmarks; and
+    - step `018` is now the clearest next high-signal refinement target.
