@@ -14948,3 +14948,13 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - step `018` riparian areas is the clearest high-signal refinement target
       because the current stream-class executable path is effectively not
       firing at all on the full TSA.
+  - Follow-on refinement now queued:
+    - verify the live Cariboo stream-classification artifact schema against the
+      compiled step-18 filters and correct any field/value typing seam before
+      spending time on broader riparian redesign;
+    - if the stream branch begins firing after that correction, rerun the late
+      `LHLB -> THLB` chain from step `018` onward and refresh the cumulative
+      full-TSA ledger;
+    - promote steps `016` and `019` from smoke-only approvals to accepted
+      full-TSA bridge approvals if the refreshed ledger still leaves them in the
+      same close-to-benchmark range the user accepted in review.

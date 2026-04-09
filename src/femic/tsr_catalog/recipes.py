@@ -116,12 +116,12 @@ _THLB_NOTEBOOK_RUNNABLE_PARENT_LABELS = {
 }
 
 _RIPARIAN_STREAM_WIDTHS_M = {
-    "1": 60.0,
-    "2": 34.0,
-    "3": 24.0,
-    "4": 10.0,
-    "5": 10.0,
-    "6": 6.0,
+    1: 60.0,
+    2: 34.0,
+    3: 24.0,
+    4: 10.0,
+    5: 10.0,
+    6: 6.0,
 }
 
 _RIPARIAN_WETLAND_WIDTHS_M = {

@@ -3203,12 +3203,12 @@ def test_specialized_compiled_logic_for_riparian_uses_classed_buffers() -> None:
     ]
     assert len(stream_items) == 6
     assert {item["source_attribute_filters"][0]["value"] for item in stream_items} == {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
     }
     assert {item["buffer_distance_m"] for item in stream_items} == {
         6.0,

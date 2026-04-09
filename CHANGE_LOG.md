@@ -12977,3 +12977,49 @@
     - step `015` materially overcuts and steps `017`, `018`, `020`, `021`,
       and `023` materially undercut their TSR marginal benchmarks; and
     - step `018` is now the clearest next high-signal refinement target.
+- 2026-04-09: Corrected the step `018` riparian stream-branch execution seam
+  and refreshed the later-stage TSA29 full-TSA ledger.
+  - Root-cause diagnosis:
+    - the live Cariboo stream-classification GeoPackage stores
+      `STREAM_CLASS` as numeric values `1-6`, but the compiled step-18 filters
+      were using string values, so every stream branch filtered itself to zero
+      before buffering;
+    - direct spatial sanity checks against the live step-17 output confirmed
+      that the stream layer does intersect the active working land base, so the
+      problem was FEMIC filter typing rather than missing streams or broken line
+      buffering.
+  - Code/test change:
+    - updated `src/femic/tsr_catalog/recipes.py` so the compiled riparian
+      stream filters use numeric `STREAM_CLASS` values;
+    - updated `tests/test_tsr_recipes.py` to lock that numeric typing in.
+  - Refreshed full-TSA runs:
+    - step `018` riparian areas:
+      - `external/femic-tsa29-instance/runtime/logs/tsr/notebook_runs/thlb_parent_018_riparian_areas.20260409T053407Z.json`
+      - removed `2,790.391 ha` vs benchmark `54,833 ha`
+      - stream classes now contribute real area:
+        - S1 `80.974 ha`
+        - S2 `14.740 ha`
+        - S3 `113.135 ha`
+        - S4 `754.619 ha`
+        - S5 `0.008 ha`
+        - S6 `105.985 ha`
+      - interpretation: the zero-stream bug is fixed, but the public runnable
+        bridge still materially undercuts because lake classes and the special
+        S4 uplift remain out of scope and the public stream/wetland inputs are
+        still much weaker than the TSR's cited CNRR riparian GIS project
+    - step `019` buffered trails:
+      - `external/femic-tsa29-instance/runtime/logs/tsr/notebook_runs/thlb_parent_019_buffered_trails.20260409T053801Z.json`
+      - removed `10,244.748 ha` vs benchmark `8,039 ha`
+    - step `020` wildlife tree retention areas:
+      - `external/femic-tsa29-instance/runtime/logs/tsr/notebook_runs/thlb_parent_020_wildlife_tree_retention_areas.20260409T054754Z.json`
+      - removed `33,627.943 ha` vs benchmark `94,417 ha`
+    - step `021` cultural heritage and archaeological resources:
+      - `external/femic-tsa29-instance/runtime/logs/tsr/notebook_runs/thlb_parent_021_cultural_heritage_and_archaeological_resources.20260409T054354Z.json`
+      - removed `11,949.449 ha` vs benchmark `34,205 ha`
+      - cumulative remaining area `1,711,606.123 ha` vs TSR cumulative
+        benchmark `1,676,059 ha`
+      - cumulative delta `+35,547.123 ha`
+  - Review-surface update:
+    - recorded user-directed full-TSA bridge acceptance for step `016`
+      recreation features and step `019` buffered trails in the TSA29
+      recipe/status/workbench surfaces.
