@@ -13060,3 +13060,28 @@
     - `python -m pytest`
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m pre_commit run --all-files`
+- 2026-04-09: Closed out the TSA29 issue `#141` reconciliation lane at the
+  user-directed step-`020` stop-line and hardened skip execution for approved
+  no-op tail steps.
+  - Code/test change:
+    - `src/femic/tsr_catalog/recipes.py` now treats compiled
+      `no_deduction` items as explicit executable no-ops rather than falling
+      through to unsupported handling.
+    - `tests/test_tsr_recipes.py` now locks in that compiled no-op behavior.
+  - TSA29 recipe/status changes:
+    - steps `021` and `023` are now recorded as approved under
+      `user_directed_tsr_thlb_reconciliation`;
+    - both steps are explicitly skipped/no-op in the locked execution lane
+      with explanation `TSR THLB reconciliation`; and
+    - the generated TSA29 recipe/status/workbench surfaces were refreshed from
+      a fresh full `thlb-netdown-run`.
+  - Full sequential rerun:
+    - `python -m femic tsr thlb-netdown-run --instance-root external/femic-tsa29-instance --execution-mode hybrid`
+    - completed successfully on the full TSA ladder after the skip changes;
+    - outcome counts: `applied=19`, `applied_noop=10`,
+      `blocked_missing_source=4`, `unsupported=12`.
+  - Closeout framing:
+    - this run proves the current reviewed TSA29 THLB recipe remains
+      sequentially executable with the accepted stop-line in place;
+    - it does not claim every remaining tail-step concept is fully automated in
+      the generic v1 THLB executor.

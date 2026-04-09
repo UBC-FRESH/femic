@@ -7187,6 +7187,12 @@ def _execute_workbench_compiled_item(
         runtime_item["runtime_notes"] = runtime_notes
         return checkpoint, runtime_item
 
+    if operation_type == "no_deduction":
+        runtime_notes.append("No spatial or aspatial deduction applied for this rule.")
+        runtime_item["execution_status"] = "applied_noop"
+        runtime_item["runtime_notes"] = runtime_notes
+        return checkpoint, runtime_item
+
     if operation_type == "select_attribute":
         filters = [
             dict(item)
@@ -7444,6 +7450,8 @@ def _resolve_compiled_operation_type(compiled_item: dict[str, Any]) -> str:
         return "aspatial_area_reduction"
     if normalized_action == "reference_only":
         return "reference_only"
+    if normalized_action == "no_deduction":
+        return "no_deduction"
     return ""
 
 

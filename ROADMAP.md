@@ -14985,3 +14985,22 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - promote steps `016` and `019` from smoke-only approvals to accepted
       full-TSA bridge approvals if the refreshed ledger still leaves them in the
       same close-to-benchmark range the user accepted in review.
+- 2026-04-09: Issue `#141` closeout lane is now a user-directed TSR
+  reconciliation stop-line at step `020`.
+  - Approval/reconciliation decision:
+    - steps `021` and `023` are accepted as reviewed bridge logic but will be
+      skipped in the locked TSA29 execution lane;
+    - the rationale recorded in recipe/status surfaces must be
+      `TSR THLB reconciliation`; and
+    - the active validation target becomes “sequentially executable through the
+      accepted stop-line” rather than “continue cumulative THLB deductions past
+      step `020`.”
+  - Required implementation work:
+    - make compiled `no_deduction` steps executable as explicit no-op items so
+      reconciliation skips do not depend on metadata-only conventions;
+    - update TSA29 step `021` and step `023` metadata to record
+      user-directed approval plus skip rationale;
+    - rerun the full THLB netdown recipe in order from the fresh checkpoint to
+      prove the reconciled lane is sequentially executable end to end; and
+    - refresh the TSA29 recipe/status/workbench surfaces from that run before
+      closing issue `#141`.

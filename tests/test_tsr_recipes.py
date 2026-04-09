@@ -3976,6 +3976,41 @@ def test_run_tsr_thlb_parent_step_treats_no_matching_filtered_source_as_noop(
     )
 
 
+def test_execute_workbench_compiled_item_handles_no_deduction() -> None:
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "thlb_fact": [1.0],
+            "_row_id": [0],
+            "_stand_area_sqm": [100.0],
+        },
+        geometry=[box(0, 0, 10, 10)],
+        crs="EPSG:3005",
+    )
+
+    updated, runtime_item = tsr_recipes._execute_workbench_compiled_item(
+        checkpoint=checkpoint,
+        compiled_item={
+            "step_id": "noop_step",
+            "normalized_action": "no_deduction",
+            "compiled_operation_type": "no_deduction",
+            "notes": ["User-directed reconciliation stop-line."],
+            "land_base_stage": "lhlb_to_thlb",
+        },
+        instance_root=Path.cwd(),
+        source_entry_map={},
+        total_area_benchmark_ha=None,
+    )
+
+    assert runtime_item["execution_status"] == "applied_noop"
+    assert runtime_item["removed_area_ha"] == pytest.approx(0.0)
+    assert runtime_item["remaining_area_ha"] == pytest.approx(0.01)
+    assert (
+        "no spatial or aspatial deduction applied"
+        in " ".join(runtime_item["runtime_notes"]).lower()
+    )
+    assert updated["thlb_fact"].tolist() == pytest.approx([1.0])
+
+
 def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
     tmp_path: Path,
 ) -> None:
