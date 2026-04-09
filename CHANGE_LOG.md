@@ -12849,3 +12849,36 @@
       the time step `014` runs, so the next seam is about TSR step ordering
       and/or broader low-productivity semantics rather than branch
       executability.
+- 2026-04-09: Corrected TSA29 step `014` so the executable threshold now
+  matches the TSR's explicit `by 160 years` rule.
+  - Code changes:
+    - `curve_volume_threshold_exclusion` now supports explicit curve-metric
+      modes, including assigned curve volume at a configured age;
+    - TSA29 step `014` now evaluates both the non-steep `80 m3/ha` branch and
+      the steep `250 m3/ha` branch at age `160` instead of the earlier
+      CMAI/culmination proxy; and
+    - default parent-step execution for steps `013` and `014` now prefers the
+      enriched checkpoint
+      `data/tsr/ria_vri_vclr1p_checkpoint7.step13_attrs.feather` when it exists.
+  - Regression/doc follow-through:
+    - updated `tests/test_tsr_recipes.py` to lock in the new metric mode,
+      checkpoint preference, and step-14 parent-step behavior; and
+    - refreshed `docs/guides/tsr-intelligence-workflow.rst` so the workflow
+      guide now describes the age-160 contract.
+  - Full-TSA cached 8-bundle rerun result:
+    - governing result JSON:
+      `external/femic-tsa29-instance/runtime/logs/tsr/notebook_runs/thlb_parent_014_sites_with_low_growing_timber_potential.20260409T010419Z.json`
+    - removed `421,217.513 ha`
+    - TSR benchmark `321,044 ha`
+    - marginal delta `+100,173.513 ha`
+    - cumulative remaining area `1,789,669.209 ha`
+    - cumulative delta `-140,110.791 ha`
+    - non-steep `80 m3/ha` branch removed `421,217.513 ha`
+    - steep `250 m3/ha` branch removed `0.000 ha`
+  - Interpretation:
+    - the earlier near-zero step-14 result was a real semantic bug and is now
+      fixed;
+    - the corrected executable signal is in the expected scale regime implied
+      by the strata and yield-curve evidence; but
+    - step `014` still materially overcuts the TSR benchmark and remains
+      `benchmarked`, not approved.

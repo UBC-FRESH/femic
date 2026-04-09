@@ -3164,7 +3164,7 @@ def test_default_workbench_checkpoint_path_prefers_step13_attribute_checkpoint(
     selected = tsr_recipes._default_workbench_checkpoint_path(
         instance_root=instance_root,
         target_parent={
-            "parent_step_id": "thlb_parent_013_areas_considered_inoperable",
+            "parent_step_id": "thlb_parent_014_sites_with_low_growing_timber_potential",
             "land_base_stage": "lhlb_to_thlb",
         },
     )
@@ -3299,6 +3299,10 @@ def test_specialized_compiled_logic_for_low_growing_potential_uses_curve_thresho
             "value": True,
         }
     ]
+    assert non_steep_item["curve_volume_metric"] == "volume_at_age"
+    assert non_steep_item["curve_volume_age_years"] == pytest.approx(160.0)
+    assert steep_item["curve_volume_metric"] == "volume_at_age"
+    assert steep_item["curve_volume_age_years"] == pytest.approx(160.0)
 
 
 def test_specialized_compiled_logic_for_non_merchantable_profiles_uses_broadleaf_filter() -> (
@@ -3350,9 +3354,11 @@ def test_curve_volume_threshold_exclusion_respects_checkpoint_filters(
         "1001,40,20\n"
         "1001,80,40\n"
         "1001,120,60\n"
+        "1001,160,70\n"
         "1002,40,80\n"
         "1002,80,160\n"
-        "1002,120,200\n",
+        "1002,120,200\n"
+        "1002,160,220\n",
         encoding="utf-8",
     )
 
@@ -3382,6 +3388,8 @@ def test_curve_volume_threshold_exclusion_respects_checkpoint_filters(
         compiled_item={
             "curve_id_column": "curve1",
             "minimum_volume_m3_per_ha": 250.0,
+            "curve_volume_metric": "volume_at_age",
+            "curve_volume_age_years": 160.0,
             "checkpoint_attribute_mode": "any",
             "checkpoint_attribute_filters": [
                 {
@@ -3830,12 +3838,15 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
         "1001,40,20\n"
         "1001,80,40\n"
         "1001,120,60\n"
+        "1001,160,70\n"
         "1002,40,80\n"
         "1002,80,160\n"
         "1002,120,200\n"
+        "1002,160,200\n"
         "1003,40,120\n"
         "1003,80,240\n"
-        "1003,120,300\n",
+        "1003,120,300\n"
+        "1003,160,320\n",
         encoding="utf-8",
     )
 
@@ -3865,6 +3876,11 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
         crs="EPSG:3005",
     )
     checkpoint7.to_feather(checkpoint7_path)
+    enriched_checkpoint_path = (
+        instance_root / "data" / "tsr" / "ria_vri_vclr1p_checkpoint7.step13_attrs.feather"
+    )
+    enriched_checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint7.to_feather(enriched_checkpoint_path)
 
     recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
         init_result.thlb_netdown_recipe_path
@@ -3917,6 +3933,8 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
                     "compiled_operation_type": "curve_volume_threshold_exclusion",
                     "curve_id_column": "curve1",
                     "minimum_volume_m3_per_ha": 80.0,
+                    "curve_volume_metric": "volume_at_age",
+                    "curve_volume_age_years": 160.0,
                     "checkpoint_attribute_mode": "any",
                     "checkpoint_attribute_filters": [
                         {
@@ -3937,6 +3955,8 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
                     "compiled_operation_type": "curve_volume_threshold_exclusion",
                     "curve_id_column": "curve1",
                     "minimum_volume_m3_per_ha": 250.0,
+                    "curve_volume_metric": "volume_at_age",
+                    "curve_volume_age_years": 160.0,
                     "checkpoint_attribute_mode": "any",
                     "checkpoint_attribute_filters": [
                         {
@@ -3965,7 +3985,7 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
         auto_map_id_smoke_subset=False,
     )
 
-    assert result.checkpoint_path == checkpoint7_path.resolve()
+    assert result.checkpoint_path == enriched_checkpoint_path.resolve()
     assert result.executed_parent_step_ids == (
         "thlb_parent_014_sites_with_low_growing_timber_potential",
     )
@@ -3995,10 +4015,14 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
     assert non_steep_item["removed_area_ha"] == pytest.approx(0.01)
     assert non_steep_item["checkpoint_filter_row_count"] == 2
     assert non_steep_item["active_checkpoint_filter_row_count"] == 2
+    assert (
+        non_steep_item["curve_metric_description"] == "assigned curve volume at age 160"
+    )
     assert steep_item["execution_status"] == "applied"
     assert steep_item["removed_area_ha"] == pytest.approx(0.01)
     assert steep_item["checkpoint_filter_row_count"] == 2
     assert steep_item["active_checkpoint_filter_row_count"] == 2
+    assert steep_item["curve_metric_description"] == "assigned curve volume at age 160"
     assert "preserved geometry/fragments and set THLB state to 0" in " ".join(
         steep_item["runtime_notes"]
     )

@@ -360,8 +360,10 @@ The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
    For example, TSA29 step ``014`` (sites with low growing timber potential)
    now uses assigned bundle curves directly in the notebook bridge:
 
-   - treated / plantation states use volume at CMAI; and
-   - untreated / natural states use culmination volume.
+   - the executable threshold logic runs against assigned curve volume at age
+     ``160`` when the TSR text defines the rule that way; and
+   - the step can still carry other curve-metric modes explicitly when a
+     future TSR assumption needs them.
 
 6e. once the human+agent team agrees the THLB workflow is ready to freeze,
    lock it into deterministic reproducibility artifacts:

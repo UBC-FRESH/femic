@@ -14794,3 +14794,47 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - only promote step `014` to approved if the new executable split moves the
       result materially into the TSR benchmark regime for the `321,044 ha`
       target rather than merely making the branch runnable.
+- 2026-04-08: Immediate corrective follow-up for step `014` is to replace the
+  wrong curve metric with the TSR's explicit `by 160 years` test.
+  - Root cause from the first executable split:
+    - the current `curve_volume_threshold_exclusion` executor uses volume at
+      CMAI for treated curves and culmination volume for untreated curves; but
+    - TSA29 section `7.1.4` / step `014` says low-productivity stands are those
+      that do not achieve the minimum harvestable volume by age `160`.
+  - Active implementation contract:
+    - add explicit curve-threshold metric controls so step `014` can evaluate
+      assigned curve volume at age `160` without silently changing other steps'
+      semantics;
+    - update the step-14 recipe wording and diagnostics so the executable notes
+      say `volume at age 160`, not CMAI/culmination;
+    - rerun the full-TSA cached LU-parallel step-14 pass from the accepted
+      step-13 checkpoint; and
+    - compare the new result against the TSR `321,044 ha` benchmark before any
+      approval decision.
+- 2026-04-09: Corrected the TSA29 step-14 executable semantics and reran the
+  full-TSA validation on the accepted enriched checkpoint.
+  - Code-path fixes:
+    - `curve_volume_threshold_exclusion` now supports explicit curve-metric
+      modes, including assigned curve volume at a configured age;
+    - step `014` now evaluates both thresholds at age `160`, matching the TSR
+      wording instead of using the earlier CMAI/culmination proxy; and
+    - default notebook / CLI parent-step execution for steps `013` and `014`
+      now prefers `data/tsr/ria_vri_vclr1p_checkpoint7.step13_attrs.feather`
+      when it exists.
+  - Validation result on the accepted enriched checkpoint:
+    - total removed `421,217.513 ha`
+    - TSR benchmark `321,044 ha`
+    - marginal delta `+100,173.513 ha`
+    - cumulative remaining area `1,789,669.209 ha`
+    - cumulative delta `-140,110.791 ha`
+    - non-steep `80 m3/ha` branch removed `421,217.513 ha`
+    - steep `250 m3/ha` branch removed `0.000 ha`
+  - Interpretation:
+    - this fixes the earlier bogus near-zero step-14 result and brings the
+      executable signal into the expected scale regime implied by the strata and
+      yield-curve diagnostics;
+    - step `014` still overcuts materially and remains `benchmarked`, not
+      approved; and
+    - the next refinement seam is no longer the step-14 volume metric itself
+      but the TSR's site-index/harvest-history operationalization and its
+      interaction with the accepted step-13 overcut.

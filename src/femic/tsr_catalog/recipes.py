@@ -10,6 +10,7 @@ from functools import lru_cache
 import hashlib
 from importlib import resources as importlib_resources
 import json
+import math
 import shutil
 from pathlib import Path
 import re
@@ -140,6 +141,8 @@ _TSR_THLB_PARENT_STEP_EXECUTION_MODES = {
     TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL,
     TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL,
 }
+_CURVE_VOLUME_METRIC_AUTO = "treated_cmai_untreated_culmination"
+_CURVE_VOLUME_METRIC_AGE = "volume_at_age"
 
 
 @dataclass(frozen=True)
@@ -2963,12 +2966,13 @@ def _specialized_compiled_logic_for_parent_step(
                 "normalized_subject": "Non-steep 80 m3/ha threshold",
                 "normalized_predicate": (
                     "set THLB to 0 on non-steep stands where assigned curve volume "
-                    "falls below 80 m3/ha; treated curves use volume at CMAI and "
-                    "untreated curves use culmination volume"
+                    "at age 160 falls below 80 m3/ha"
                 ),
                 "linked_source_entry_ids": [],
                 "curve_id_column": "curve1",
                 "minimum_volume_m3_per_ha": 80.0,
+                "curve_volume_metric": _CURVE_VOLUME_METRIC_AGE,
+                "curve_volume_age_years": 160.0,
                 "checkpoint_attribute_mode": "any",
                 "checkpoint_attribute_filters": [
                     {
@@ -2979,7 +2983,7 @@ def _specialized_compiled_logic_for_parent_step(
                 ],
                 "notes": [
                     "Step 14 runs late in the pipeline on the curve-ready checkpoint rather than on checkpoint1.",
-                    "Notebook execution uses the current assigned bundle curves: treated curves use volume at CMAI, untreated curves use culmination volume.",
+                    "Notebook execution uses the current assigned bundle curves and evaluates volume at age 160, matching the TSR wording for low-productivity stands.",
                     "This branch reuses the accepted step-13 steep-slope flag and applies the non-steep 80 m3/ha threshold only where `femic_step13_steep_slope_flag == False`.",
                 ],
             }
@@ -2994,13 +2998,14 @@ def _specialized_compiled_logic_for_parent_step(
                 "normalized_action": "exclude",
                 "normalized_subject": "Steep-slope 250 m3/ha threshold",
                 "normalized_predicate": (
-                    "set THLB to 0 on steep stands where assigned curve volume falls "
-                    "below 250 m3/ha; treated curves use volume at CMAI and untreated "
-                    "curves use culmination volume"
+                    "set THLB to 0 on steep stands where assigned curve volume at "
+                    "age 160 falls below 250 m3/ha"
                 ),
                 "linked_source_entry_ids": [],
                 "curve_id_column": "curve1",
                 "minimum_volume_m3_per_ha": 250.0,
+                "curve_volume_metric": _CURVE_VOLUME_METRIC_AGE,
+                "curve_volume_age_years": 160.0,
                 "checkpoint_attribute_mode": "any",
                 "checkpoint_attribute_filters": [
                     {
@@ -3011,6 +3016,7 @@ def _specialized_compiled_logic_for_parent_step(
                 ],
                 "notes": [
                     "TSA29 section 6.4.4 raises the threshold to 250 m3/ha on steep slopes.",
+                    "Notebook execution uses the current assigned bundle curves and evaluates volume at age 160, matching the TSR wording for low-productivity stands.",
                     "This branch reuses the accepted step-13 steep-slope flag and applies the 250 m3/ha threshold only where `femic_step13_steep_slope_flag == True`.",
                     "Together with the non-steep 80 m3/ha branch, this keeps the step-14 partition mutually exclusive and avoids applying the 80 m3/ha threshold to steep stands.",
                 ],
@@ -4694,7 +4700,10 @@ def _default_workbench_checkpoint_path(
     *, instance_root: Path, target_parent: dict[str, Any]
 ) -> Path:
     parent_step_id = str(target_parent.get("parent_step_id", "")).strip()
-    if parent_step_id == "thlb_parent_013_areas_considered_inoperable":
+    if parent_step_id in {
+        "thlb_parent_013_areas_considered_inoperable",
+        "thlb_parent_014_sites_with_low_growing_timber_potential",
+    }:
         enriched_path = (
             instance_root.expanduser().resolve()
             / _STEP13_ATTRIBUTE_CHECKPOINT_RELATIVE_PATH
@@ -6733,6 +6742,19 @@ def _load_curve_metric_lookup(bundle_root_str: str) -> dict[int, dict[str, Any]]
             f"{curve_points_path}."
         )
     curve_points["mai"] = curve_points["y"] / curve_points["x"]
+    curve_point_series: dict[int, tuple[tuple[float, float], ...]] = {}
+    for curve_id, group in curve_points.groupby("curve_id", sort=False):
+        try:
+            curve_id_int = int(float(str(curve_id)))
+        except (TypeError, ValueError) as exc:
+            raise TsrRecipeError(
+                "Curve-driven THLB step encountered a non-numeric curve_id while "
+                "building metric lookup data."
+            ) from exc
+        ordered = group.sort_values("x")[["x", "y"]]
+        curve_point_series[curve_id_int] = tuple(
+            (float(x), float(y)) for x, y in ordered.itertuples(index=False, name=None)
+        )
     cmai_rows = curve_points.loc[
         curve_points.groupby("curve_id", sort=False)["mai"].idxmax()
     ][["curve_id", "x", "y"]].rename(columns={"x": "cmai_age", "y": "cmai_volume"})
@@ -6758,8 +6780,114 @@ def _load_curve_metric_lookup(bundle_root_str: str) -> dict[int, dict[str, Any]]
                 if pd.notna(row.get("culmination_volume"))
                 else None
             ),
+            "curve_points": curve_point_series.get(curve_id, ()),
         }
     return lookup
+
+
+def _interpolate_curve_volume_at_age(
+    curve_points: Sequence[tuple[float, float]],
+    *,
+    age_years: float,
+) -> float | None:
+    if not curve_points:
+        return None
+    if math.isnan(age_years) or age_years <= 0.0:
+        return None
+    if len(curve_points) == 1:
+        only_age, only_volume = curve_points[0]
+        return only_volume if only_age == age_years else None
+    lower_point: tuple[float, float] | None = None
+    upper_point: tuple[float, float] | None = None
+    for current_age, current_volume in curve_points:
+        if current_age == age_years:
+            return current_volume
+        if current_age < age_years:
+            lower_point = (current_age, current_volume)
+            continue
+        upper_point = (current_age, current_volume)
+        break
+    if lower_point is None or upper_point is None:
+        return None
+    lower_age, lower_volume = lower_point
+    upper_age, upper_volume = upper_point
+    if upper_age <= lower_age:
+        return None
+    age_fraction = (age_years - lower_age) / (upper_age - lower_age)
+    return lower_volume + ((upper_volume - lower_volume) * age_fraction)
+
+
+def _resolve_curve_metric_series(
+    metric_frame: pd.DataFrame,
+    *,
+    compiled_item: dict[str, Any],
+) -> tuple[pd.Series, str]:
+    metric_mode = (
+        str(compiled_item.get("curve_volume_metric", _CURVE_VOLUME_METRIC_AUTO)).strip()
+        or _CURVE_VOLUME_METRIC_AUTO
+    )
+    if metric_mode == _CURVE_VOLUME_METRIC_AUTO:
+        treated_mask = (
+            metric_frame["curve_type"]
+            .fillna("")
+            .str.casefold()
+            .str.startswith("treated")
+        )
+        metric_series = metric_frame["culmination_volume"].copy()
+        metric_series.loc[treated_mask] = metric_frame.loc[treated_mask, "cmai_volume"]
+        return (
+            metric_series,
+            "treated curves use volume at CMAI; untreated curves use culmination volume",
+        )
+    if metric_mode == _CURVE_VOLUME_METRIC_AGE:
+        raw_age = compiled_item.get("curve_volume_age_years")
+        if raw_age is None:
+            raise TsrRecipeError(
+                "Curve-driven THLB step with `volume_at_age` metric requires a "
+                "numeric `curve_volume_age_years`."
+            )
+        try:
+            age_years = float(raw_age)
+        except (TypeError, ValueError) as exc:
+            raise TsrRecipeError(
+                "Curve-driven THLB step with `volume_at_age` metric requires a "
+                "numeric `curve_volume_age_years`."
+            ) from exc
+        metric_series = metric_frame["curve_points"].map(
+            lambda value: _interpolate_curve_volume_at_age(
+                value if isinstance(value, tuple) else (),
+                age_years=age_years,
+            )
+        )
+        return (metric_series, f"assigned curve volume at age {age_years:g}")
+    raise TsrRecipeError(f"Unsupported curve volume metric mode: {metric_mode}")
+
+
+def _describe_curve_metric(compiled_item: dict[str, Any]) -> str:
+    metric_mode = (
+        str(compiled_item.get("curve_volume_metric", _CURVE_VOLUME_METRIC_AUTO)).strip()
+        or _CURVE_VOLUME_METRIC_AUTO
+    )
+    if metric_mode == _CURVE_VOLUME_METRIC_AUTO:
+        return (
+            "treated curves use volume at CMAI; untreated curves use culmination volume"
+        )
+    if metric_mode == _CURVE_VOLUME_METRIC_AGE:
+        raw_age = compiled_item.get("curve_volume_age_years")
+        if raw_age is None:
+            raise TsrRecipeError(
+                "Curve-driven THLB step with `volume_at_age` metric requires a "
+                "numeric `curve_volume_age_years`."
+            )
+        try:
+            age_years = float(raw_age)
+        except (TypeError, ValueError) as exc:
+            raise TsrRecipeError(
+                "Curve-driven THLB step with `volume_at_age` metric requires a "
+                "numeric `curve_volume_age_years`."
+            ) from exc
+        return f"assigned curve volume at age {age_years:g}"
+    raise TsrRecipeError(f"Unsupported curve volume metric mode: {metric_mode}")
 
 
 def _apply_curve_volume_threshold_exclusion(
@@ -6809,14 +6937,20 @@ def _apply_curve_volume_threshold_exclusion(
                     else None
                 )
             ),
+            "curve_points": curve_ids.map(
+                lambda value: (
+                    metrics_lookup.get(int(value), {}).get("curve_points")
+                    if pd.notna(value)
+                    else None
+                )
+            ),
         },
         index=checkpoint.index,
     )
-    treated_mask = (
-        metric_frame["curve_type"].fillna("").str.casefold().str.startswith("treated")
+    metric_series, _ = _resolve_curve_metric_series(
+        metric_frame,
+        compiled_item=compiled_item,
     )
-    metric_series = metric_frame["culmination_volume"].copy()
-    metric_series.loc[treated_mask] = metric_frame.loc[treated_mask, "cmai_volume"]
     filters = [
         dict(item)
         for item in compiled_item.get("checkpoint_attribute_filters", ())
@@ -6842,8 +6976,6 @@ def _apply_curve_volume_threshold_exclusion(
         checkpoint.loc[exclude_mask, "_stand_area_sqm"].sum() / 10000.0
     )
     missing_metric_count = int((scoped_active_mask & ~metric_available).sum())
-    treated_count = int((exclude_mask & treated_mask).sum())
-    untreated_count = int((exclude_mask & ~treated_mask).sum())
     scoped_row_count = int(subset_mask.sum())
     scoped_active_row_count = int(scoped_active_mask.sum())
     if preserve_geometry:
@@ -6855,7 +6987,7 @@ def _apply_curve_volume_threshold_exclusion(
             updated,
             removed_area_ha,
             missing_metric_count,
-            treated_count + untreated_count,
+            int(exclude_mask.sum()),
             scoped_row_count,
             scoped_active_row_count,
         )
@@ -6867,7 +6999,7 @@ def _apply_curve_volume_threshold_exclusion(
         remaining,
         removed_area_ha,
         missing_metric_count,
-        treated_count + untreated_count,
+        int(exclude_mask.sum()),
         scoped_row_count,
         scoped_active_row_count,
     )
@@ -6992,6 +7124,10 @@ def _execute_workbench_compiled_item(
         runtime_item["active_checkpoint_filter_row_count"] = scoped_active_row_count
         runtime_item["execution_status"] = (
             "applied" if removed_area_ha > 0 else "applied_noop"
+        )
+        runtime_item["curve_metric_description"] = _describe_curve_metric(compiled_item)
+        runtime_notes.append(
+            f"Curve threshold evaluated using {runtime_item['curve_metric_description']}."
         )
         if missing_metric_count:
             runtime_notes.append(
@@ -7567,6 +7703,7 @@ def _summarize_executed_items(
                 "label": label,
                 "compiled_operation_type": operation,
                 "minimum_volume_m3_per_ha": item.get("minimum_volume_m3_per_ha"),
+                "curve_metric_description": item.get("curve_metric_description"),
                 "removed_area_ha": 0.0,
                 "missing_curve_metric_row_count": 0,
                 "affected_fragment_count": 0,
