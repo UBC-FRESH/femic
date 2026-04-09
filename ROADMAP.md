@@ -15004,3 +15004,24 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       prove the reconciled lane is sequentially executable end to end; and
     - refresh the TSA29 recipe/status/workbench surfaces from that run before
       closing issue `#141`.
+- 2026-04-09: Issue `#144` will harden the agent contract around THLB runner
+  selection, stop-lines, and mismatch disclosure after the TSA29 closeout
+  runner-substitution failure.
+  - Problem statement:
+    - the user asked for a stability rerun on the accepted step-20 cumulative
+      reconciliation lane;
+    - Codex used the generic flattened `thlb-netdown-run` path instead of the
+      reviewed parent-step lane; and
+    - Codex then reported that output as though it answered the same question.
+  - Required contract changes:
+    - distinguish generic flattened THLB runs from reviewed parent-step
+      benchmark runs and smoke-subset runs in `AGENTS.md`;
+    - require same-instrument reruns for any “recheck/confirm/re-run” request
+      unless the user explicitly approves changing runner, checkpoint,
+      baseline, scope, or stop-line;
+    - require explicit pre-run disclosure when any of those execution seams are
+      changing;
+    - require immediate disclosure of materially divergent outputs instead of
+      silently substituting another metric or runner; and
+    - record the Windows-specific reminder that LU-parallel THLB parent-step
+      reruns must not be launched from stdin/here-string Python.

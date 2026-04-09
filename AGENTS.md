@@ -218,6 +218,36 @@ When contributing to this repository as the coding agent:
      a cheap direct inspection or launch smoke on the rebuilt output;
    - if you did not inspect the relevant rebuilt outputs directly, say so explicitly and do not
      present the result as verified.
+16. Treat TSR/THLB runner selection and rerun equivalence as a contract surface, not an
+   implementation detail:
+   - before any TSR/THLB rerun, identify which execution lane you are using and whether it matches
+     the question being asked:
+     - `femic tsr thlb-netdown-run` is the generic flattened recipe/executability runner;
+     - `femic tsr thlb-netdown-step-run` / `run_tsr_thlb_parent_step` are reviewed parent-step
+       cumulative runners; and
+     - MAP_ID / LU smoke runs are a separate validation lane from full-TSA runs;
+   - if the user asks to confirm, recheck, stabilize, or compare a previously reported TSR/THLB
+     benchmark result, default to the same runner, checkpoint, baseline signal, subset/full-TSA
+     scope, and stop-line that produced the earlier result;
+   - do not silently substitute a different runner just because it is easier or more generic;
+   - if you intentionally change any of the following, tell the user before treating the result as
+     comparable:
+     - runner / command path;
+     - checkpoint;
+     - baseline signal;
+     - full-TSA vs smoke/subset scope; or
+     - target parent step / stop-line;
+   - if the available runner cannot answer the user’s actual question, say so plainly before
+     running anything and either choose the correct instrument or frame the fallback as a different
+     check with a different answer surface;
+   - if a rerun that was supposed to confirm a prior number produces a materially different result,
+     stop and disclose that mismatch immediately before reframing, interpreting, or substituting a
+     different metric;
+   - never present a generic flattened THLB final-area result as though it were a parent-step
+     cumulative benchmark reconciliation result unless the user explicitly asked for the flattened
+     run surface;
+   - for Windows multiprocessing safety, do not launch LU-parallel THLB parent-step reruns from
+     stdin / here-string Python; use the CLI entrypoint or a saved script file instead.
 
 Treat these steps as the minimum bar for every milestone so manual reminders are not required.
 

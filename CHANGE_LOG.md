@@ -13085,3 +13085,17 @@
       sequentially executable with the accepted stop-line in place;
     - it does not claim every remaining tail-step concept is fully automated in
       the generic v1 THLB executor.
+- 2026-04-09: Added explicit THLB runner-selection and mismatch-disclosure
+  guardrails to `AGENTS.md` under issue `#144`.
+  - New contract rules now require Codex to:
+    - distinguish generic flattened THLB runs from reviewed parent-step
+      cumulative runs and smoke-subset runs;
+    - default to same-instrument reruns when the user asks to confirm or
+      recheck a previously reported benchmark result;
+    - disclose any change in runner, checkpoint, baseline, scope, or stop-line
+      before treating the result as comparable; and
+    - stop and report materially divergent outputs immediately instead of
+      silently substituting a different run surface.
+  - The AGENTS contract now also records the Windows-specific reminder that
+    LU-parallel THLB parent-step reruns must not be launched from stdin or
+    here-string Python.
