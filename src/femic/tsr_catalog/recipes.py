@@ -64,6 +64,7 @@ _TSR_THLB_EXECUTION_MODES = {
     TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
 }
 _RECONSTRUCTED_FRAGMENT_ROW_THRESHOLD = 10000
+_RECONSTRUCTED_FRAGMENT_BATCH_SIZE = 5000
 _RECONSTRUCTED_STAND_BINARY_EXCLUDE_THRESHOLD = 0.5
 _THLB_STAGE_ORDER = (
     "glb_to_aflb",
@@ -5900,6 +5901,126 @@ def _fragment_binary_exclusion_step(
     return rebuilt, affected_fragment_count, affected_area_ha
 
 
+def _chunk_reconstructed_candidate_rows(
+    candidate: gpd.GeoDataFrame,
+    *,
+    batch_size: int | None = None,
+) -> list[gpd.GeoDataFrame]:
+    if candidate.empty:
+        return []
+    resolved_batch_size = max(
+        1, int(batch_size or _RECONSTRUCTED_FRAGMENT_BATCH_SIZE)
+    )
+    ordered = candidate.sort_values("_row_id").reset_index(drop=True)
+    return [
+        ordered.iloc[start : start + resolved_batch_size].copy()
+        for start in range(0, len(ordered), resolved_batch_size)
+    ]
+
+
+def _fragment_binary_exclusion_step_chunked(
+    *,
+    checkpoint: gpd.GeoDataFrame,
+    exclusion_geometries: gpd.GeoDataFrame,
+    update_aflb_flag_on_exclusion: bool = True,
+    batch_size: int | None = None,
+) -> tuple[gpd.GeoDataFrame, int, int, float, int]:
+    if checkpoint.empty or exclusion_geometries.empty:
+        return checkpoint, 0, 0, 0.0, 0
+    active = checkpoint.loc[checkpoint["thlb_fact"] > 0].copy()
+    if active.empty:
+        return checkpoint, 0, 0, 0.0, 0
+    candidate_indices = active.sindex.query(
+        exclusion_geometries.geometry,
+        predicate="intersects",
+    )
+    if getattr(candidate_indices, "ndim", 1) == 2:
+        candidate_values = candidate_indices[1]
+    else:
+        candidate_values = candidate_indices
+    unique_indices = sorted({int(index) for index in candidate_values.tolist()})
+    if not unique_indices:
+        return checkpoint, 0, 0, 0.0, 0
+    candidate = active.iloc[unique_indices].copy()
+    untouched = checkpoint.drop(candidate.index).copy()
+    exclusion_sindex = exclusion_geometries.sindex
+    rebuilt_frames: list[gpd.GeoDataFrame] = [untouched]
+    affected_fragment_count = 0
+    affected_area_sqm = 0.0
+    batch_count = 0
+
+    for batch in _chunk_reconstructed_candidate_rows(candidate, batch_size=batch_size):
+        batch_count += 1
+        exclusion_indices = exclusion_sindex.query(
+            batch.geometry,
+            predicate="intersects",
+        )
+        if getattr(exclusion_indices, "ndim", 1) == 2:
+            exclusion_values = exclusion_indices[1]
+        else:
+            exclusion_values = exclusion_indices
+        unique_exclusion_indices = sorted(
+            {int(index) for index in exclusion_values.tolist()}
+        )
+        if not unique_exclusion_indices:
+            rebuilt_frames.append(batch)
+            continue
+        local_exclusions = exclusion_geometries.iloc[unique_exclusion_indices].copy()
+        mask_geometry = _resolve_union_geometry(local_exclusions)
+        if mask_geometry is None or getattr(mask_geometry, "is_empty", False):
+            rebuilt_frames.append(batch)
+            continue
+
+        mask_frame = gpd.GeoDataFrame(geometry=[mask_geometry], crs=BC_ALBERS_EPSG)
+        intersections = gpd.overlay(
+            batch,
+            mask_frame,
+            how="intersection",
+            keep_geom_type=False,
+        )
+        differences = gpd.overlay(
+            batch,
+            mask_frame,
+            how="difference",
+            keep_geom_type=False,
+        )
+
+        if not differences.empty:
+            differences = differences.copy()
+            differences["thlb_fact"] = 1.0
+            differences["thlb"] = 1
+            rebuilt_frames.append(differences)
+
+        if intersections.empty:
+            continue
+
+        intersections = intersections.copy()
+        intersections["thlb_fact"] = 0.0
+        intersections["thlb"] = 0
+        if (
+            update_aflb_flag_on_exclusion
+            and "FOR_MGMT_LAND_BASE_IND" in intersections.columns
+        ):
+            intersections["FOR_MGMT_LAND_BASE_IND"] = "N"
+        affected_fragment_count += int(len(intersections))
+        affected_area_sqm += float(intersections.geometry.area.sum())
+        rebuilt_frames.append(intersections)
+
+    rebuilt = gpd.GeoDataFrame(
+        pd.concat(rebuilt_frames, ignore_index=True),
+        crs=BC_ALBERS_EPSG,
+    )
+    rebuilt = rebuilt.loc[~rebuilt.geometry.is_empty].copy()
+    rebuilt = _assign_fragment_feature_ids(rebuilt)
+    return (
+        rebuilt,
+        int(len(candidate)),
+        affected_fragment_count,
+        float(affected_area_sqm / 10000.0),
+        batch_count,
+    )
+
+
 def _apply_binary_stand_exclusion(
     *,
     checkpoint: gpd.GeoDataFrame,
@@ -6259,10 +6380,15 @@ def _describe_thlb_step_logic(step: dict[str, Any]) -> str:
                 "geometry, and assign binary THLB {0,1} so excluded fragments are 0 and retained "
                 "fragments remain 1."
             )
+        if spatial_mode == "blocked_exact_overlay":
+            return (
+                "Exact fragment-overlay execution was required for this exclusion step, but the "
+                "current run blocked instead of silently falling back to a coarse approximation."
+            )
         if spatial_mode == "stand_binary_majority":
             return (
-                "Apply the current coarse stand-binary fallback: whole stands are netted down when "
-                "the exclusion mask trips the explicit stand-binary approximation."
+                "Apply the explicit debug stand-binary fallback: whole stands are netted down when "
+                "the user allows the coarse approximation path."
             )
         return (
             "Exclude the linked polygons from THLB where they intersect the working land base; "
@@ -6752,6 +6878,7 @@ def _build_tsr_thlb_status_report_markdown(
     output_relative_path: str,
     audit_relative_path: str,
     execution_mode: str,
+    allow_stand_binary_fallback: bool,
     baseline_signal: str,
     selected_map_ids: tuple[str, ...],
     input_area_ha: float,
@@ -6805,11 +6932,30 @@ def _build_tsr_thlb_status_report_markdown(
         if stage not in flat_stage_groups:
             stage = "context"
         flat_stage_groups[stage].append(step)
+    fragment_overlay_steps = [
+        step
+        for step in applied_steps
+        if str(step.get("spatial_application_mode", "")).strip() == "fragment_overlay"
+    ]
+    blocked_exact_overlay_steps = [
+        step
+        for step in applied_steps
+        if str(step.get("spatial_application_mode", "")).strip()
+        == "blocked_exact_overlay"
+    ]
+    stand_binary_steps = [
+        step
+        for step in applied_steps
+        if str(step.get("spatial_application_mode", "")).strip()
+        == "stand_binary_majority"
+    ]
     lines = [
         f"# THLB Netdown Status Report: TSA {recipe.tsa.tsa_code} ({recipe.tsa.tsa_name})",
         "",
         f"- Generated UTC: `{generated_utc}`",
         f"- Execution mode: `{execution_mode}`",
+        "- Debug stand-binary fallback: "
+        f"`{'enabled' if allow_stand_binary_fallback else 'disabled'}`",
         f"- Baseline signal: `{baseline_signal}`",
         f"- Recipe path: `{recipe_relative_path}`",
         f"- Checkpoint input: `{checkpoint_relative_path}`",
@@ -6826,6 +6972,15 @@ def _build_tsr_thlb_status_report_markdown(
         f"- AFLB / baseline managed area: `{baseline_managed_area_ha:.3f} ha`",
         "- LHLB current: `not yet materialized separately in the current runner`",
         f"- THLB / final managed area: `{final_managed_area_ha:.3f} ha`",
+        "- Exact fragment-overlay steps: "
+        f"`{len(fragment_overlay_steps)}` / "
+        f"`{sum(float(step.get('affected_area_ha', 0.0) or 0.0) for step in fragment_overlay_steps):.3f} ha`",
+        "- Blocked exact-overlay steps: "
+        f"`{len(blocked_exact_overlay_steps)}` / "
+        f"`{sum(float(step.get('candidate_row_count', 0.0) or 0.0) for step in blocked_exact_overlay_steps):.0f} candidate rows`",
+        "- Debug stand-binary fallback steps: "
+        f"`{len(stand_binary_steps)}` / "
+        f"`{sum(float(step.get('affected_area_ha', 0.0) or 0.0) for step in stand_binary_steps):.3f} ha`",
     ]
     if legacy_reference_managed_area_ha is not None:
         lines.append(
@@ -9991,6 +10146,7 @@ def run_tsr_thlb_netdown_recipe(
     execution_mode: str = TSR_THLB_EXECUTION_MODE_HYBRID,
     map_ids: Sequence[str] = (),
     auto_map_id_smoke_subset: bool = False,
+    allow_stand_binary_fallback: bool = False,
 ) -> TsrThlbNetdownRecipeRunResult:
     """Execute a THLB netdown recipe into either a hybrid or reconstructed checkpoint."""
 
@@ -10138,61 +10294,125 @@ def run_tsr_thlb_netdown_recipe(
                         updated_step["run_notes"] = [
                             "No active land-base geometries intersected the exclusion mask."
                         ]
-                    elif candidate_count > _RECONSTRUCTED_FRAGMENT_ROW_THRESHOLD:
-                        (
-                            checkpoint,
-                            affected_stand_count,
-                            affected_area_ha,
-                            overlap_area_ha,
-                        ) = _apply_binary_stand_exclusion(
-                            checkpoint=checkpoint,
-                            exclusion_geometries=exclusion_geometries,
-                        )
-                        if affected_stand_count == 0:
-                            updated_step["run_status"] = "applied_noop"
-                            updated_step["run_notes"] = [
-                                "Candidate rows were found, but none exceeded the stand-binary exclusion threshold."
-                            ]
-                        else:
-                            updated_step["run_status"] = "applied"
-                            updated_step["spatial_application_mode"] = (
-                                "stand_binary_majority"
-                            )
-                            updated_step["candidate_row_count"] = candidate_count
-                            updated_step["affected_stand_count"] = affected_stand_count
-                            updated_step["affected_area_ha"] = affected_area_ha
-                            updated_step["overlap_area_ha"] = overlap_area_ha
-                            updated_step["run_notes"] = [
-                                "Applied reconstructed stand-binary exclusion because the intersecting coarse-polygon workload exceeded the fragment overlay threshold.",
-                                "Representative-point containment was used as the coarse-polygon stand-binary approximation.",
-                            ]
                     else:
-                        (
-                            checkpoint,
-                            affected_fragment_count,
-                            affected_area_ha,
-                        ) = _fragment_binary_exclusion_step(
-                            checkpoint=checkpoint,
-                            exclusion_geometries=exclusion_geometries,
-                        )
-                        if affected_fragment_count == 0:
-                            updated_step["run_status"] = "applied_noop"
-                            updated_step["run_notes"] = [
-                                "No active fragment geometries intersected the exclusion mask."
-                            ]
-                        else:
-                            updated_step["run_status"] = "applied"
-                            updated_step["spatial_application_mode"] = (
-                                "fragment_overlay"
-                            )
-                            updated_step["candidate_row_count"] = candidate_count
-                            updated_step["affected_fragment_count"] = (
-                                affected_fragment_count
-                            )
-                            updated_step["affected_area_ha"] = affected_area_ha
-                            updated_step["run_notes"] = [
-                                "Applied fragment/resultant exclusion with binary THLB output in EPSG:3005."
-                            ]
+                        try:
+                            if (
+                                allow_stand_binary_fallback
+                                and candidate_count
+                                > _RECONSTRUCTED_FRAGMENT_ROW_THRESHOLD
+                            ):
+                                (
+                                    checkpoint,
+                                    affected_stand_count,
+                                    affected_area_ha,
+                                    overlap_area_ha,
+                                ) = _apply_binary_stand_exclusion(
+                                    checkpoint=checkpoint,
+                                    exclusion_geometries=exclusion_geometries,
+                                )
+                                if affected_stand_count == 0:
+                                    updated_step["run_status"] = "applied_noop"
+                                    updated_step["run_notes"] = [
+                                        "Candidate rows were found, but the explicit debug stand-binary fallback netted down no rows."
+                                    ]
+                                else:
+                                    updated_step["run_status"] = "applied"
+                                    updated_step["spatial_application_mode"] = (
+                                        "stand_binary_majority"
+                                    )
+                                    updated_step["candidate_row_count"] = (
+                                        candidate_count
+                                    )
+                                    updated_step["affected_stand_count"] = (
+                                        affected_stand_count
+                                    )
+                                    updated_step["affected_area_ha"] = affected_area_ha
+                                    updated_step["overlap_area_ha"] = overlap_area_ha
+                                    updated_step["run_notes"] = [
+                                        "Applied the user-enabled debug stand-binary fallback because the candidate-row workload exceeded the exact fragment-overlay threshold.",
+                                        "Representative-point containment was used as the coarse stand-binary approximation.",
+                                    ]
+                            else:
+                                (
+                                    checkpoint,
+                                    exact_candidate_count,
+                                    affected_fragment_count,
+                                    affected_area_ha,
+                                    fragment_batch_count,
+                                ) = _fragment_binary_exclusion_step_chunked(
+                                    checkpoint=checkpoint,
+                                    exclusion_geometries=exclusion_geometries,
+                                )
+                                if affected_fragment_count == 0:
+                                    updated_step["run_status"] = "applied_noop"
+                                    updated_step["run_notes"] = [
+                                        "No active fragment geometries intersected the exclusion mask."
+                                    ]
+                                else:
+                                    updated_step["run_status"] = "applied"
+                                    updated_step["spatial_application_mode"] = (
+                                        "fragment_overlay"
+                                    )
+                                    updated_step["candidate_row_count"] = (
+                                        exact_candidate_count
+                                    )
+                                    updated_step["affected_fragment_count"] = (
+                                        affected_fragment_count
+                                    )
+                                    updated_step["affected_area_ha"] = affected_area_ha
+                                    updated_step["fragment_batch_count"] = (
+                                        fragment_batch_count
+                                    )
+                                    updated_step["run_notes"] = [
+                                        "Applied exact fragment/resultant exclusion with binary THLB output in EPSG:3005.",
+                                        "Large candidate workloads are chunked deterministically instead of silently falling back to coarse stand-binary approximation.",
+                                    ]
+                        except Exception as exc:
+                            if allow_stand_binary_fallback:
+                                (
+                                    checkpoint,
+                                    affected_stand_count,
+                                    affected_area_ha,
+                                    overlap_area_ha,
+                                ) = _apply_binary_stand_exclusion(
+                                    checkpoint=checkpoint,
+                                    exclusion_geometries=exclusion_geometries,
+                                )
+                                if affected_stand_count == 0:
+                                    updated_step["run_status"] = "applied_noop"
+                                    updated_step["run_notes"] = [
+                                        "Exact fragment-overlay execution failed, and the explicit debug stand-binary fallback netted down no rows."
+                                    ]
+                                else:
+                                    updated_step["run_status"] = "applied"
+                                    updated_step["spatial_application_mode"] = (
+                                        "stand_binary_majority"
+                                    )
+                                    updated_step["candidate_row_count"] = (
+                                        candidate_count
+                                    )
+                                    updated_step["affected_stand_count"] = (
+                                        affected_stand_count
+                                    )
+                                    updated_step["affected_area_ha"] = affected_area_ha
+                                    updated_step["overlap_area_ha"] = overlap_area_ha
+                                    updated_step["fallback_trigger"] = (
+                                        "exact_overlay_exception"
+                                    )
+                                    updated_step["run_notes"] = [
+                                        "Exact fragment-overlay execution failed, so the user-enabled debug stand-binary fallback was used instead.",
+                                        f"Fallback reason: {exc}",
+                                    ]
+                            else:
+                                updated_step["run_status"] = "blocked_exact_overlay"
+                                updated_step["spatial_application_mode"] = (
+                                    "blocked_exact_overlay"
+                                )
+                                updated_step["candidate_row_count"] = candidate_count
+                                updated_step["run_notes"] = [
+                                    "Exact fragment-overlay execution was required for reconstructed mode, so this step was blocked instead of silently approximating it.",
+                                    f"Blocking reason: {exc}",
+                                ]
                 else:
                     exclusion_fraction = _compute_exclusion_fraction(
                         checkpoint=checkpoint,
@@ -10325,6 +10545,7 @@ def run_tsr_thlb_netdown_recipe(
         "selected_map_ids": list(selected_map_ids),
         "output_path": str(resolved_output_path.relative_to(instance_root).as_posix()),
         "execution_mode": execution_mode,
+        "allow_stand_binary_fallback": allow_stand_binary_fallback,
         "baseline_signal": baseline_signal,
         "input_area_ha": input_area_ha,
         "baseline_managed_area_ha": baseline_managed_area_ha,
@@ -10332,6 +10553,30 @@ def run_tsr_thlb_netdown_recipe(
         "legacy_reference_managed_area_ha": legacy_reference_managed_area_ha,
         "tsr_reported_aflb_area_ha": tsr_reported_aflb_area_ha,
         "tsr_reported_thlb_area_ha": tsr_reported_thlb_area_ha,
+        "fragment_overlay_step_count": int(
+            sum(
+                1
+                for step in applied_steps
+                if str(step.get("spatial_application_mode", "")).strip()
+                == "fragment_overlay"
+            )
+        ),
+        "blocked_exact_overlay_step_count": int(
+            sum(
+                1
+                for step in applied_steps
+                if str(step.get("spatial_application_mode", "")).strip()
+                == "blocked_exact_overlay"
+            )
+        ),
+        "stand_binary_fallback_step_count": int(
+            sum(
+                1
+                for step in applied_steps
+                if str(step.get("spatial_application_mode", "")).strip()
+                == "stand_binary_majority"
+            )
+        ),
         "step_count": len(applied_steps),
         "outcome_counts": dict(sorted(outcome_counts.items())),
         "steps": applied_steps,
@@ -10375,6 +10620,7 @@ def run_tsr_thlb_netdown_recipe(
             resolved_audit_path.relative_to(instance_root).as_posix()
         ),
         execution_mode=execution_mode,
+        allow_stand_binary_fallback=allow_stand_binary_fallback,
         baseline_signal=baseline_signal,
         selected_map_ids=selected_map_ids,
         input_area_ha=input_area_ha,

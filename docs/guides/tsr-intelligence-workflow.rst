@@ -446,16 +446,15 @@ However, it is important not to blur two different THLB states:
 - **Current milestone:** a reproducible hybrid bridge that starts from the
   existing checkpoint THLB signal and applies the supported TSR-derived
   exclusions into ``thlb_fact``.
-- **Promoted next target (`#128`):** a raw-land-base reconstruction path that
-  overlays the reviewed layers onto the VRI/resultant geometry, fragments the
-  land base, and assigns binary fragment-level THLB membership ``{0,1}``.
+- **Promoted reconstruction lane (`#128` / `#131`):** a raw-land-base
+  reconstructed mode that overlays the reviewed layers onto checkpoint1/VRI
+  geometry, fragments the land base, and assigns binary fragment-level THLB
+  membership ``{0,1}``.
 
-For coarse exclusions whose spatial scale is much larger than individual
-stands, a stand-level binary approximation may remain a defensible explicit
-fallback. For awkward fine-scale exclusions such as road or riparian buffers,
-future work may need fragment-level or fractional-overlap handling rather than
-magical stand-level guessing. The important contract is that FEMIC must make
-those approximations explicit, reviewable, and scriptable.
+Coarse approximation is no longer part of the default reconstructed contract.
+If a user intentionally enables the non-default stand-binary debug fallback,
+FEMIC must say so explicitly in the audit/status surface rather than presenting
+that output as normal fragment-first execution.
 
 You should not need to hand-scrub ``metadata/tsr/tsa_candidate_facts.json`` for
 this workflow. The intended review surface is the CSV produced by

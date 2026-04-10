@@ -13241,3 +13241,45 @@
     - `python -m pytest`
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m pre_commit run --all-files`
+- 2026-04-10: Implemented the core execution/runtime slice of issue `#131`,
+  promoting reconstructed THLB runs to fragment-first exact overlay by default.
+  - In `src/femic/tsr_catalog/recipes.py`:
+    - replaced the silent reconstructed candidate-threshold fallback with a
+      chunked exact fragment-overlay executor for reviewed spatial `exclude`
+      steps;
+    - kept the old stand-binary path only behind an explicit
+      `allow_stand_binary_fallback` runner/CLI seam;
+    - extended reconstructed audit/status reporting with exact-overlay,
+      blocked-exact-overlay, and debug-fallback counts; and
+    - refreshed the human-readable logic summaries so review surfaces now call
+      the debug fallback what it is.
+  - In `src/femic/cli/main.py` and `docs/reference/cli.rst`:
+    - added the explicit `--allow-stand-binary-fallback` debug flag to
+      `femic tsr thlb-netdown-run`;
+    - clarified that reconstructed mode is fragment-first exact overlay by
+      default, while hybrid mode remains the older stand-level bridge.
+  - In docs and tests:
+    - updated the reconstruction/workflow guides to reflect the new
+      reconstructed-mode contract;
+    - extended `tests/test_tsr_recipes.py` with coverage for:
+      - large candidate workloads that must stay exact by default;
+      - opt-in stand-binary fallback;
+      - blocked exact-overlay reporting; and
+      - downstream fragments-surface compatibility via
+        `build_fragments_geodataframe(...)`;
+    - extended `tests/test_cli_main.py` for the new CLI flag.
+  - Validation passed with:
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`
+  - Live TSA29 evidence:
+    - the reconstructed `MAP_ID` smoke run on `092O071` completed with
+      `fragment_overlay_step_count = 12`,
+      `blocked_exact_overlay_step_count = 0`, and
+      `stand_binary_fallback_step_count = 0`;
+    - the full-TSA reconstructed acceptance run still timed out after extended
+      attempts without producing a new final audit/status artifact, so `#131`
+      remains open for production-scale runtime closure.

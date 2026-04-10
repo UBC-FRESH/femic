@@ -108,8 +108,8 @@ raw land-base truth.
 Promoted fragment-first target
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The promoted next target under ``#128`` / ``#131`` is the
-**fragment-first reconstruction** path:
+The promoted runtime path under ``#128`` / ``#131`` is the
+**fragment-first reconstruction** lane:
 
 - start from the raw/resultant land-base geometry;
 - initialize the AFLB universe explicitly;
@@ -117,9 +117,17 @@ The promoted next target under ``#128`` / ``#131`` is the
 - fragment the geometry where needed; and
 - assign binary fragment-level THLB membership ``{0,1}``.
 
-That is the production-grade target for raw-land-base reconstruction. Until it
-lands, users should treat the hybrid bridge as the current executable milestone,
-not as final reconstructed land-base truth.
+That is now the default contract of
+``femic tsr thlb-netdown-run --execution-mode reconstructed``.
+
+Important boundary:
+
+- the hybrid bridge still exists as a separate executable lane;
+- reconstructed mode is fragment-first by default;
+- blocked or aspatial seams remain explicit for later follow-up under
+  ``#132``; and
+- the old coarse stand-binary approximation survives only as an explicit
+  non-default debug fallback, not as silent normal behavior.
 
 Fallback and Review Paths
 -------------------------

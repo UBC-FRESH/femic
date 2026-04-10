@@ -4,10 +4,12 @@ import json
 from pathlib import Path
 
 import geopandas as gpd
+import pandas as pd
 import pytest
 from shapely.geometry import LineString, box
 
 from femic import tsr_catalog
+from femic.fmg.patchworks import build_fragments_geodataframe
 from femic.tsr_catalog import recipes as tsr_recipes
 
 
@@ -894,6 +896,7 @@ def test_thlb_status_report_prefers_parent_steps_when_present() -> None:
         output_relative_path="data/tsr/thlb_reconstructed_checkpoint.feather",
         audit_relative_path="config/tsr/thlb_reconstructed.audit.json",
         execution_mode="reconstructed",
+        allow_stand_binary_fallback=False,
         baseline_signal="checkpoint1_aflb_initialization",
         selected_map_ids=("092O071",),
         input_area_ha=27072.529,
@@ -5160,3 +5163,463 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_can_auto_select_map_id_s
     assert result.baseline_managed_area_ha == pytest.approx(400.0)
     audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
     assert audit_payload["selected_map_ids"] == ["093J099"]
+
+
+def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_chunks_exact_overlay(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+    monkeypatch.setattr(tsr_recipes, "_RECONSTRUCTED_FRAGMENT_ROW_THRESHOLD", 2)
+    monkeypatch.setattr(tsr_recipes, "_RECONSTRUCTED_FRAGMENT_BATCH_SIZE", 1)
+
+    exclusion_path = (
+        instance_root / "data" / "downloads" / "bcdc" / "OGMA" / "OGMA.gpkg"
+    )
+    exclusion_path.parent.mkdir(parents=True, exist_ok=True)
+    exclusion = gpd.GeoDataFrame(
+        {"rule": ["ogma_a", "ogma_b", "ogma_c"]},
+        geometry=[box(0, 0, 5, 10), box(20, 0, 25, 10), box(40, 0, 45, 10)],
+        crs="EPSG:3005",
+    )
+    exclusion.to_file(exclusion_path, driver="GPKG")
+
+    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint1 = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [100, 200, 300],
+            "FOR_MGMT_LAND_BASE_IND": ["Y", "Y", "Y"],
+            "BCLCS_LEVEL_2": ["T", "T", "T"],
+            "NON_PRODUCTIVE_CD": [None, None, None],
+            "BEC_ZONE_CODE": ["SBS", "SBS", "SBS"],
+            "PROJ_AGE_1": [80, 80, 80],
+            "BASAL_AREA": [20.0, 20.0, 20.0],
+            "LIVE_STAND_VOLUME_125": [50.0, 50.0, 50.0],
+            "MAP_ID": ["093J034", "093J034", "093J034"],
+            "POLYGON_AREA": [0.01, 0.01, 0.01],
+            "FEATURE_AREA_SQM": [100.0, 100.0, 100.0],
+            "FEATURE_LENGTH_M": [40.0, 40.0, 40.0],
+            "GEOMETRY_AREA": [0.01, 0.01, 0.01],
+            "Shape_Area": [100.0, 100.0, 100.0],
+            "Shape_Length": [40.0, 40.0, 40.0],
+            "tsa_code": ["k3z", "k3z", "k3z"],
+            "au": [985501000, 985501000, 985501000],
+        },
+        geometry=[
+            box(0, 0, 10, 10),
+            box(20, 0, 30, 10),
+            box(40, 0, 50, 10),
+        ],
+        crs="EPSG:3005",
+    )
+    checkpoint1.to_feather(checkpoint1_path)
+
+    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint8 = gpd.GeoDataFrame(
+        {"FEATURE_ID": [1], "thlb_raw": [100.0]},
+        geometry=[box(0, 0, 10, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint8.to_feather(checkpoint8_path)
+
+    source_recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    source_recipe_payload["recipe_contract"]["status"] = "run"
+    source_recipe_payload["entries"] = [
+        {
+            "entry_id": "ogma",
+            "label": "OGMA",
+            "recommended_query": "WHSE_LAND_USE_PLANNING.RMP_OGMA_LEGAL_CURRENT_SVW",
+            "acquisition_strategy": "wfs_fetch",
+            "artifact_path": "data/downloads/bcdc/OGMA/OGMA.gpkg",
+            "run_status": "fetched",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            source_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["recipe_contract"]["status"] = "built"
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "thlb_step_001_land_base",
+            "order_index": 1,
+            "step_kind": "netdown_rule",
+            "label": "Timber harvesting land base",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "execution_class": "no_deduction",
+            "normalized_action": "use_land_base",
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 24,
+        },
+        {
+            "step_id": "thlb_step_002_ogma",
+            "order_index": 2,
+            "step_kind": "netdown_rule",
+            "label": "OGMA",
+            "land_base_stage": "lhlb_to_thlb",
+            "stage_label": "LHLB -> THLB",
+            "execution_class": "projected_harvest_exclusion",
+            "normalized_action": "exclude",
+            "linked_source_entry_ids": ["ogma"],
+            "step_status": "ready",
+            "page_number": 48,
+        },
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    result = tsr_recipes.run_tsr_thlb_netdown_recipe(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        execution_mode=tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+    )
+
+    assert result.final_managed_area_ha == pytest.approx(0.015)
+    output = gpd.read_feather(result.output_path)
+    assert set(output["SOURCE_FEATURE_ID"].tolist()) == {100, 200, 300}
+    assert output["FEATURE_ID"].is_unique
+    assert set(output["thlb"].tolist()) == {0, 1}
+
+    audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
+    assert audit_payload["allow_stand_binary_fallback"] is False
+    assert audit_payload["fragment_overlay_step_count"] == 1
+    assert audit_payload["stand_binary_fallback_step_count"] == 0
+    run_step = audit_payload["steps"][1]
+    assert run_step["spatial_application_mode"] == "fragment_overlay"
+    assert run_step["candidate_row_count"] == 3
+    assert run_step["fragment_batch_count"] == 3
+
+    fragments = build_fragments_geodataframe(
+        checkpoint_path=result.output_path,
+        au_table=pd.DataFrame([{"au_id": 985501000}]),
+        tsa_list=["k3z"],
+    )
+    assert not fragments.empty
+    assert set(fragments["IFM"].tolist()) == {"managed", "unmanaged"}
+
+
+def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_can_opt_into_stand_binary_fallback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+    monkeypatch.setattr(tsr_recipes, "_RECONSTRUCTED_FRAGMENT_ROW_THRESHOLD", 2)
+
+    exclusion_path = (
+        instance_root / "data" / "downloads" / "bcdc" / "OGMA" / "OGMA.gpkg"
+    )
+    exclusion_path.parent.mkdir(parents=True, exist_ok=True)
+    exclusion = gpd.GeoDataFrame(
+        {"rule": ["ogma_a", "ogma_b", "ogma_c"]},
+        geometry=[box(0, 0, 6, 10), box(20, 0, 26, 10), box(40, 0, 46, 10)],
+        crs="EPSG:3005",
+    )
+    exclusion.to_file(exclusion_path, driver="GPKG")
+
+    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint1 = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [100, 200, 300],
+            "FOR_MGMT_LAND_BASE_IND": ["Y", "Y", "Y"],
+            "BCLCS_LEVEL_2": ["T", "T", "T"],
+            "NON_PRODUCTIVE_CD": [None, None, None],
+            "BEC_ZONE_CODE": ["SBS", "SBS", "SBS"],
+            "PROJ_AGE_1": [80, 80, 80],
+            "BASAL_AREA": [20.0, 20.0, 20.0],
+            "LIVE_STAND_VOLUME_125": [50.0, 50.0, 50.0],
+            "MAP_ID": ["093J034", "093J034", "093J034"],
+            "POLYGON_AREA": [0.01, 0.01, 0.01],
+            "FEATURE_AREA_SQM": [100.0, 100.0, 100.0],
+            "FEATURE_LENGTH_M": [40.0, 40.0, 40.0],
+            "GEOMETRY_AREA": [0.01, 0.01, 0.01],
+            "Shape_Area": [100.0, 100.0, 100.0],
+            "Shape_Length": [40.0, 40.0, 40.0],
+        },
+        geometry=[
+            box(0, 0, 10, 10),
+            box(20, 0, 30, 10),
+            box(40, 0, 50, 10),
+        ],
+        crs="EPSG:3005",
+    )
+    checkpoint1.to_feather(checkpoint1_path)
+
+    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint8 = gpd.GeoDataFrame(
+        {"FEATURE_ID": [1], "thlb_raw": [100.0]},
+        geometry=[box(0, 0, 10, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint8.to_feather(checkpoint8_path)
+
+    source_recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    source_recipe_payload["recipe_contract"]["status"] = "run"
+    source_recipe_payload["entries"] = [
+        {
+            "entry_id": "ogma",
+            "label": "OGMA",
+            "recommended_query": "WHSE_LAND_USE_PLANNING.RMP_OGMA_LEGAL_CURRENT_SVW",
+            "acquisition_strategy": "wfs_fetch",
+            "artifact_path": "data/downloads/bcdc/OGMA/OGMA.gpkg",
+            "run_status": "fetched",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            source_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["recipe_contract"]["status"] = "built"
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "thlb_step_001_land_base",
+            "order_index": 1,
+            "step_kind": "netdown_rule",
+            "label": "Timber harvesting land base",
+            "normalized_action": "use_land_base",
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 24,
+        },
+        {
+            "step_id": "thlb_step_002_ogma",
+            "order_index": 2,
+            "step_kind": "netdown_rule",
+            "label": "OGMA",
+            "normalized_action": "exclude",
+            "linked_source_entry_ids": ["ogma"],
+            "step_status": "ready",
+            "page_number": 48,
+        },
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    result = tsr_recipes.run_tsr_thlb_netdown_recipe(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        execution_mode=tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+        allow_stand_binary_fallback=True,
+    )
+
+    assert result.final_managed_area_ha == pytest.approx(0.0)
+    audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
+    assert audit_payload["allow_stand_binary_fallback"] is True
+    assert audit_payload["stand_binary_fallback_step_count"] == 1
+    run_step = audit_payload["steps"][1]
+    assert run_step["spatial_application_mode"] == "stand_binary_majority"
+    assert run_step["affected_stand_count"] == 3
+
+
+def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_blocks_failed_exact_overlay(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    exclusion_path = (
+        instance_root / "data" / "downloads" / "bcdc" / "OGMA" / "OGMA.gpkg"
+    )
+    exclusion_path.parent.mkdir(parents=True, exist_ok=True)
+    exclusion = gpd.GeoDataFrame(
+        {"rule": ["ogma"]},
+        geometry=[box(0, 0, 5, 10)],
+        crs="EPSG:3005",
+    )
+    exclusion.to_file(exclusion_path, driver="GPKG")
+
+    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint1 = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [100],
+            "FOR_MGMT_LAND_BASE_IND": ["Y"],
+            "BCLCS_LEVEL_2": ["T"],
+            "NON_PRODUCTIVE_CD": [None],
+            "BEC_ZONE_CODE": ["SBS"],
+            "PROJ_AGE_1": [80],
+            "BASAL_AREA": [20.0],
+            "LIVE_STAND_VOLUME_125": [50.0],
+            "MAP_ID": ["093J034"],
+            "POLYGON_AREA": [0.01],
+            "FEATURE_AREA_SQM": [100.0],
+            "FEATURE_LENGTH_M": [40.0],
+            "GEOMETRY_AREA": [0.01],
+            "Shape_Area": [100.0],
+            "Shape_Length": [40.0],
+        },
+        geometry=[box(0, 0, 10, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint1.to_feather(checkpoint1_path)
+
+    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint8 = gpd.GeoDataFrame(
+        {"FEATURE_ID": [1], "thlb_raw": [100.0]},
+        geometry=[box(0, 0, 10, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint8.to_feather(checkpoint8_path)
+
+    source_recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    source_recipe_payload["recipe_contract"]["status"] = "run"
+    source_recipe_payload["entries"] = [
+        {
+            "entry_id": "ogma",
+            "label": "OGMA",
+            "recommended_query": "WHSE_LAND_USE_PLANNING.RMP_OGMA_LEGAL_CURRENT_SVW",
+            "acquisition_strategy": "wfs_fetch",
+            "artifact_path": "data/downloads/bcdc/OGMA/OGMA.gpkg",
+            "run_status": "fetched",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            source_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["recipe_contract"]["status"] = "built"
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "thlb_step_001_land_base",
+            "order_index": 1,
+            "step_kind": "netdown_rule",
+            "label": "Timber harvesting land base",
+            "normalized_action": "use_land_base",
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 24,
+        },
+        {
+            "step_id": "thlb_step_002_ogma",
+            "order_index": 2,
+            "step_kind": "netdown_rule",
+            "label": "OGMA",
+            "normalized_action": "exclude",
+            "linked_source_entry_ids": ["ogma"],
+            "step_status": "ready",
+            "page_number": 48,
+        },
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    def _raise_overlay(**_kwargs):
+        raise RuntimeError("synthetic exact-overlay failure")
+
+    monkeypatch.setattr(
+        tsr_recipes, "_fragment_binary_exclusion_step_chunked", _raise_overlay
+    )
+
+    result = tsr_recipes.run_tsr_thlb_netdown_recipe(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        execution_mode=tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+    )
+
+    assert result.final_managed_area_ha == pytest.approx(
+        result.baseline_managed_area_ha
+    )
+    audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
+    assert audit_payload["blocked_exact_overlay_step_count"] == 1
+    run_step = audit_payload["steps"][1]
+    assert run_step["run_status"] == "blocked_exact_overlay"
+    assert run_step["spatial_application_mode"] == "blocked_exact_overlay"

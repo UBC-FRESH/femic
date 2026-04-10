@@ -743,6 +743,12 @@ still being refined.
   ``data/tsr/thlb_netdown_checkpoint.feather`` under the instance root)
 - ``--audit-path PATH`` (optional; defaults to
   ``config/tsr/thlb_netdown.audit.json`` under the instance root)
+- ``--execution-mode [hybrid|reconstructed]`` (optional; defaults to
+  ``hybrid``)
+- ``--map-id TEXT`` (repeatable optional VRI mapsheet smoke subset)
+- ``--auto-map-id-smoke-subset`` (optional bounded reconstructed smoke helper)
+- ``--allow-stand-binary-fallback`` (optional non-default debug fallback for
+  reconstructed mode only)
 
 ``tsr thlb-netdown-run`` executes a bounded subset of the reviewed THLB recipe
 into a stand-level checkpoint that carries ``thlb_fact`` for downstream export
@@ -787,18 +793,16 @@ It also groups the reviewed steps by:
 
 Important current boundary:
 
-- this command is the **hybrid THLB bridge** landed in issue ``#126``;
-- it currently normalizes the baseline managed share from the existing
-  checkpoint THLB columns and applies supported reviewed exclusions on top;
-- it is therefore a reproducible executable milestone, but not yet the final
-  raw-land-base fragment reconstruction target promoted into issue ``#128``.
-
-The intended production-grade target for ``#128`` is different:
-
-- start from the raw/resultant land-base geometry;
-- overlay the reviewed exclusion layers and fragment the geometry; and
-- assign binary fragment-level THLB membership ``{0,1}`` instead of relying on
-  the legacy raster-derived baseline as the underlying truth.
+- ``--execution-mode hybrid`` is still the reviewed stand-level bridge from
+  issue ``#126``;
+- ``--execution-mode reconstructed`` is now the promoted fragment-first lane:
+  it starts from checkpoint1/AFLB initialization, fragments the working land
+  base where reviewed spatial exclusions intersect, and assigns binary
+  fragment-level THLB membership ``{0,1}``;
+- reconstructed mode keeps blocked/aspatial seams explicit instead of silently
+  substituting area bridges; and
+- the old coarse stand-binary approximation remains available only behind the
+  explicit ``--allow-stand-binary-fallback`` debug flag.
 
 For the conceptual distinction between those two modes, plus the comparison
 contract against TSR-reported THLB, see

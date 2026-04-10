@@ -8585,15 +8585,15 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 - [ ] P52.6 Promote THLB execution from hybrid bridge to raw-land-base fragment reconstruction (`#128`)
   - [x] P52.6a Restore and validate AFLB-style checkpoint1 land-base initialization for reconstructed THLB (`#129`).
   - [x] P52.6b Add a TSA29 `MAP_ID`-based smoke subset ladder for fast overlay proving-ground runs (`#130`).
-  - [ ] P52.6b1 Add stage-aware GLB/AFLB/LHLB/THLB parsing and recipe schema for TSR netdown logic (`#134`).
-  - [ ] P52.6b2 Improve THLB status reports and recipe review UX with stage groups, exact logic, and lock state (`#135`).
+  - [x] P52.6b1 Add stage-aware GLB/AFLB/LHLB/THLB parsing and recipe schema for TSR netdown logic (`#134`).
+  - [x] P52.6b2 Improve THLB status reports and recipe review UX with stage groups, exact logic, and lock state (`#135`).
   - [ ] P52.6b3 Add a generated THLB notebook workbench and lock/export flow (`#137`).
   - [ ] P52.6b4 Improve DWDS follow-up retrieval and artifact materialization after order submission (`#140`).
   - [ ] P52.6b5 Run full-TSA29 THLB step-by-step validation and reconcile the recipe against TSR benchmarks (`#141`).
   - [ ] P52.6b6 Benchmark LU-wise local-process parallel THLB execution for TSA-scale netdown (`#143`).
   - [ ] P52.6c Execute fragment-first TSR THLB reconstruction from reviewed recipe steps (`#131`).
   - [ ] P52.6d Add explicit end-of-workflow aspatial fallback for blocked TSR target-area steps (`#132`).
-  - [ ] P52.6e Document the reconstruction ladder and comparison contract (`#133`).
+  - [x] P52.6e Document the reconstruction ladder and comparison contract (`#133`).
   - [ ] P52.6f Model TSR Section 7.1.5 broadleaf volume exclusions in conifer-leading stands as a later yield-assumption lane, not a THLB area-netdown step (`#139`).
 
 ## Detailed Next Steps Notes
@@ -15208,3 +15208,68 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `#131` fragment-first reconstruction execution; then
     - `#132` explicit aspatial fallback only where reconstruction remains
       honestly blocked.
+- 2026-04-10: Issue `#131` is the next active runtime slice after the docs and
+  stage-aware review work closed.
+  - Governing execution contract:
+    - `femic tsr thlb-netdown-run --execution-mode reconstructed` must become
+      fragment-first by default for reviewed spatial `exclude` steps;
+    - checkpoint1 plus `FOR_MGMT_LAND_BASE_IND` remains the AFLB-style
+      reconstruction start surface;
+    - the current silent candidate-threshold switch to
+      `stand_binary_majority` is no longer acceptable on the main acceptance
+      path; and
+    - any coarse stand-binary behavior must survive only as an explicit
+      non-default debug escape hatch.
+  - Concrete implementation target:
+    - replace the threshold-triggered fallback with chunked exact overlay over
+      the active candidate rows, preserving fragment/resultant geometry and
+      binary `thlb_fact` / `thlb`;
+    - keep `SOURCE_FEATURE_ID` lineage stable and regenerate unique fragment
+      `FEATURE_ID`s after each reconstructed step;
+    - record exact fragment-overlay usage, blocked exact-overlay seams, and any
+      user-enabled stand-binary fallback clearly in the audit/status surfaces;
+    - add one explicit CLI flag for debug fallback instead of silent
+      approximation; and
+    - prove the resulting reconstructed checkpoint remains structurally
+      consumable by the existing fragments-oriented downstream surfaces.
+  - Acceptance target for this issue:
+    - one TSA29 `MAP_ID` smoke run and one full-TSA reconstructed run complete
+      without silent stand-binary fallback;
+    - reconstructed reporting makes the fragment-first vs debug-fallback
+      distinction obvious; and
+    - blocked/aspatial seams remain visible for follow-up under `#132` rather
+      than being patched over implicitly.
+- 2026-04-10: Issue `#131` implementation checkpoint landed in code, but the
+  full-TSA proving ground remains open.
+  - Delivered execution changes:
+    - reconstructed THLB now defaults to chunked exact fragment overlay for
+      reviewed spatial `exclude` steps instead of silently switching to
+      `stand_binary_majority` when candidate rows exceed a threshold;
+    - the old coarse path survives only behind an explicit
+      `--allow-stand-binary-fallback` debug flag on
+      `femic tsr thlb-netdown-run`;
+    - reconstructed audit/status reporting now records exact fragment-overlay
+      step counts, blocked exact-overlay counts, and any user-enabled fallback
+      usage separately; and
+    - the reconstructed output now has regression coverage proving it remains
+      consumable by the existing fragments-oriented Patchworks surface.
+  - Validation/evidence:
+    - focused reconstructed-mode tests now cover:
+      - threshold-overload exact overlay with no silent fallback;
+      - explicit opt-in stand-binary fallback;
+      - blocked exact-overlay reporting when exact execution fails; and
+      - downstream fragment-surface compatibility;
+    - full repo validation passed (`ruff`, `mypy`, `pytest`, `sphinx`, and
+      `pre-commit`);
+    - a real TSA29 `MAP_ID` smoke run (`092O071`) completed in reconstructed
+      mode with:
+      - `fragment_overlay_step_count = 12`;
+      - `blocked_exact_overlay_step_count = 0`; and
+      - `stand_binary_fallback_step_count = 0`.
+  - Remaining open seam for `#131`:
+    - the real full-TSA reconstructed run still timed out after extended wall
+      clock attempts without producing a new final audit/status artifact;
+    - that means the fragment-first correctness contract is now in place, but
+      the production-scale runtime proof is still incomplete; and
+    - keep `#131` open until the full-TSA reconstructed lane can complete, or
+      until a narrower performance/runtime split is spun out explicitly.

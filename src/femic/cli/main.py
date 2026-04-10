@@ -583,7 +583,8 @@ TSR_THLB_EXECUTION_MODE_OPTION = typer.Option(
     help=(
         "THLB execution mode: `hybrid` keeps the current stand-level bridge seeded "
         "from checkpoint THLB signals; `reconstructed` starts from the raw land-base "
-        "checkpoint and emits a fragment/resultant checkpoint with binary THLB."
+        "checkpoint and emits a fragment/resultant checkpoint with binary THLB via "
+        "fragment-first exact overlay."
     ),
 )
 TSR_THLB_MAP_ID_OPTION = typer.Option(
@@ -600,6 +601,14 @@ TSR_THLB_AUTO_MAP_ID_SMOKE_OPTION = typer.Option(
     help=(
         "Automatically select one dense TSA MAP_ID for a bounded THLB smoke run "
         "before scaling to the full TSA."
+    ),
+)
+TSR_THLB_ALLOW_STAND_BINARY_FALLBACK_OPTION = typer.Option(
+    False,
+    "--allow-stand-binary-fallback",
+    help=(
+        "Allow the non-default reconstructed debug fallback that approximates "
+        "large/failed exact-overlay steps with whole-stand binary exclusion."
     ),
 )
 TSR_THLB_WORKBENCH_PATH_OPTION = typer.Option(
@@ -3738,6 +3747,7 @@ def tsr_thlb_netdown_run(
     execution_mode: str = TSR_THLB_EXECUTION_MODE_OPTION,
     map_id: list[str] | None = TSR_THLB_MAP_ID_OPTION,
     auto_map_id_smoke_subset: bool = TSR_THLB_AUTO_MAP_ID_SMOKE_OPTION,
+    allow_stand_binary_fallback: bool = (TSR_THLB_ALLOW_STAND_BINARY_FALLBACK_OPTION),
 ) -> None:
     """Execute the reviewed THLB netdown recipe in hybrid or reconstructed mode."""
 
@@ -3787,6 +3797,7 @@ def tsr_thlb_netdown_run(
             execution_mode=execution_mode,
             map_ids=tuple(map_id or ()),
             auto_map_id_smoke_subset=auto_map_id_smoke_subset,
+            allow_stand_binary_fallback=allow_stand_binary_fallback,
         )
     except TsrRecipeError as exc:
         console.print(f"[red]TSR THLB recipe run error:[/red] {exc}")

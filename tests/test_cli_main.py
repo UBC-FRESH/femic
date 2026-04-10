@@ -5988,10 +5988,12 @@ def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
         execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
         map_id=["093J034", "093J044"],
         auto_map_id_smoke_subset=False,
+        allow_stand_binary_fallback=True,
     )
 
     assert captured_kwargs["map_ids"] == ("093J034", "093J044")
     assert captured_kwargs["auto_map_id_smoke_subset"] is False
+    assert captured_kwargs["allow_stand_binary_fallback"] is True
     assert any("selected_map_ids: 093J034, 093J044" in msg for msg in messages)
 
 
