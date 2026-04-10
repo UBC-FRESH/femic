@@ -13122,3 +13122,19 @@
       lane; and
     - preserved the accepted final cumulative closeout read as about
       `-11,003.768 ha` versus the TSR final cumulative THLB target.
+- 2026-04-10: Hardened repo-root scratch ignores so the Source Control dirty
+  indicator stays useful after the TSA29 closeout.
+  - Added root-level `.gitignore` entries for local `runtime/` and
+    `downloads/` scratch trees.
+  - This removes the flood of generated issue comment files, probe scripts,
+    manifests, temporary bundles, and ad-hoc download artifacts from normal
+    `git status` output without touching the tracked TSA29 instance/submodule
+    surfaces.
+  - Post-cleanup issue audit:
+    - umbrella issue `#122` remains open because the promoted reconstruction
+      track is still open;
+    - closed recipe-template tranche: `#123`–`#127`, plus TSA29 validation
+      issue `#141`;
+    - still-open reconstruction children: `#128`, `#131`, `#132`, `#133`,
+      `#134`, `#135`; and
+    - still-open adjacent follow-ons: `#137`, `#138`, `#139`.

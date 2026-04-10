@@ -15061,3 +15061,18 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       `-11,003.768 ha` versus the TSR final cumulative THLB target; and
     - update the relevant GitHub issue notes so this calibration lane can be
       treated as closed for now.
+- 2026-04-10: Repo hygiene follow-up after the TSA29 closeout should keep the
+  root checkout health signal readable again.
+  - Immediate hygiene action:
+    - ignore root-local `runtime/` and `downloads/` scratch trees so generated
+      issue comments, manifests, probes, and ad-hoc download bundles do not
+      flood Source Control with hundreds of fake dirty items.
+  - Issue audit read after the TSA29 closeout:
+    - umbrella issue `#122` remains open because the promoted reconstruction
+      track under `#128` is still open;
+    - the original recipe-template tranche (`#123`–`#127`) is closed;
+    - the full-TSA TSA29 validation lane (`#141`) is closed;
+    - the remaining active child/open seams are `#128`, `#131`, `#132`,
+      `#133`, `#134`, and `#135`; and
+    - adjacent follow-on workflow/tooling issues `#137`, `#138`, and `#139`
+      are also still open.
