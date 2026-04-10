@@ -13099,3 +13099,26 @@
   - The AGENTS contract now also records the Windows-specific reminder that
     LU-parallel THLB parent-step reruns must not be launched from stdin or
     here-string Python.
+- 2026-04-10: Closed out the TSA29 THLB calibration lane by accepting step `021`
+  as the last active tail deduction and step `023` as an explicit `0 ha`
+  no-deduction tail step.
+  - Same-instrument parent-step reruns established the governing closeout
+    baseline:
+    - step `021` removed `11,512.712 ha`;
+    - post-step-21 cumulative THLB was `1,649,049.232 ha`; and
+    - that left FEMIC `27,009.768 ha` below the TSR cumulative benchmark after
+      step `021`.
+  - Final closeout logic:
+    - because the TSR final cumulative target at step `023` is
+      `1,660,053.000 ha`, the accepted post-step-21 lane was already
+      `11,003.768 ha` below that target;
+    - any positive step-23 deduction would therefore worsen reconciliation; and
+    - step `023` is now accepted as a reviewed skipped/no-op tail step rather
+      than a forced calibrated deduction.
+  - Review-surface updates:
+    - updated the TSA29 recipe/status surfaces so step `021` is approved as the
+      last active aspatial bridge deduction;
+    - updated step `023` to `no_deduction` / skipped in the accepted closeout
+      lane; and
+    - preserved the accepted final cumulative closeout read as about
+      `-11,003.768 ha` versus the TSR final cumulative THLB target.

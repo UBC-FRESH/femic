@@ -15025,3 +15025,39 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       silently substituting another metric or runner; and
     - record the Windows-specific reminder that LU-parallel THLB parent-step
       reruns must not be launched from stdin/here-string Python.
+- 2026-04-09: Issue `#132` is now the active seam for calibrated aspatial tail
+  deductions after the step-20 TSA29 reconciliation stop-line proved close but
+  not exact.
+  - User-directed calibration target:
+    - restore step `021` to its last reviewed aspatial bridge deduction;
+    - restore step `023` as an active aspatial area reduction; and
+    - calibrate step `023` so the post-step-23 cumulative THLB lands on the
+      TSR cumulative target, using the already accepted step-20 delta plus the
+      last reviewed step-21 deduction.
+  - Immediate implementation work:
+    - revert the step `021` and step `023` skip/no-op state in the TSA29
+      recipe back to executable aspatial deductions;
+    - set the calibrated step-23 benchmark marginal area so the executable
+      removal target is about `58,301.123 ha`; and
+    - rerun the reviewed parent-step lane through step `023` with the CLI
+      runner, not the generic flattened THLB executor.
+- 2026-04-10: TSA29 THLB calibration/validation closeout is now settled after the
+  same-instrument parent-step reruns for steps `021` and `023`.
+  - Final closeout read:
+    - step `021` same-instrument rerun removed `11,512.712 ha` and left
+      cumulative THLB at `1,649,049.232 ha`, which is `27,009.768 ha` below
+      the TSR cumulative benchmark after step `021`;
+    - step `023` therefore cannot improve reconciliation as a positive
+      deduction, because the final TSR cumulative target (`1,660,053.000 ha`)
+      sits `11,003.768 ha` above the accepted post-step-21 result; and
+    - the accepted closeout keeps step `023` as an explicit `0 ha`
+      `no_deduction` tail step instead of forcing a fictional negative
+      deduction.
+  - Required closeout work:
+    - update the TSA29 recipe/status/workbench surfaces so step `021` is
+      approved as the last active tail deduction and step `023` is approved as
+      a skipped/no-op tail step;
+    - record the final accepted cumulative gap as approximately
+      `-11,003.768 ha` versus the TSR final cumulative THLB target; and
+    - update the relevant GitHub issue notes so this calibration lane can be
+      treated as closed for now.
