@@ -15273,3 +15273,9 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       the production-scale runtime proof is still incomplete; and
     - keep `#131` open until the full-TSA reconstructed lane can complete, or
       until a narrower performance/runtime split is spun out explicitly.
+  - Explicit follow-up note for the next pass:
+    - before changing the reconstructed executor again, first verify whether
+      the timeout came from the wrong validation sequence/runner choice versus
+      a genuinely too-short timeout budget for the intended full-TSA command;
+    - only treat this as a reconstruction-performance problem after confirming
+      the command path, stop-line, and timeout envelope were the intended ones.

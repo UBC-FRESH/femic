@@ -13283,3 +13283,11 @@
     - the full-TSA reconstructed acceptance run still timed out after extended
       attempts without producing a new final audit/status artifact, so `#131`
       remains open for production-scale runtime closure.
+- 2026-04-10: Parked an explicit `#131` follow-up note to revisit the timeout
+  diagnosis before changing the executor again.
+  - The next pass should first confirm whether the failed full-TSA
+    reconstructed validation came from:
+    - the wrong command/run sequence for the question being asked; or
+    - a timeout budget that was simply too short for the intended full-TSA run.
+  - Only after that check should the remaining `#131` seam be treated as a
+    true runtime/performance problem.
