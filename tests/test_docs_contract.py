@@ -66,6 +66,7 @@ GUIDE_PAGES = [
     "data-access-inventory",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
+    "tsr-thlb-reconstruction-ladder",
     "public-data-mirror-runbook",
     "case-onboarding",
     "stage-00-data-prep",
@@ -247,6 +248,7 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "config/tsr/thlb_netdown.recipe.yaml",
         "workbench/tsr/thlb_netdown.workbench.ipynb",
         "workbench/tsr/thlb_netdown.locked.py",
+        "tsr-thlb-reconstruction-ladder",
         "~/.femic/tsr/tsa_pdf_cache_manifest.json",
         "~/.femic/tsr/corpus",
     ):
@@ -399,12 +401,51 @@ def test_tsr_intelligence_workflow_guide_keeps_required_sections() -> None:
         "candidate facts are **not auto-adopted**",
         "femic data bcdc-resolve",
         "femic data bcdc-fetch",
+        "tsr-thlb-reconstruction-ladder",
         "review CSV",
         "adopt only reviewed facts into the overlay",
         "giant interactive pastes",
         "private`` / ``unavailable``",
     ):
         assert snippet in guide_text
+
+
+def test_tsr_thlb_reconstruction_ladder_guide_keeps_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "tsr-thlb-reconstruction-ladder.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Why AFLB and THLB Matter",
+        "The Reconstruction Ladder",
+        "Current FEMIC Execution Modes",
+        "Fallback and Review Paths",
+        "Comparison Contract",
+        "Worked TSA29 Read",
+        "How This Guide Fits the Other Docs",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "AFLB defines the modeled universe",
+        "THLB defines the harvest-eligible subset",
+        "Table 3 is the canonical backbone",
+        "Section ``6.2`` / ``6.3`` / ``6.4``",
+        "supporting rationale",
+        "older-cycle TSRs are **hints only**",
+        "hybrid executable bridge",
+        "fragment-first reconstruction",
+        "Legacy raster-derived THLB",
+        "TSR-reported THLB",
+        "no LLM available",
+        ".. figure:: ../_static/tsa29_thlb_ladder_adapted_figure3.svg",
+        "tsr-intelligence-workflow",
+        "interpret-rebuild-reports",
+        "../reference/cli",
+    ):
+        assert snippet in guide_text
+
+    figure_path = DOCS_ROOT / "_static" / "tsa29_thlb_ladder_adapted_figure3.svg"
+    assert figure_path.exists()
 
 
 def test_bcdc_examples_are_present_in_readme_and_agents() -> None:

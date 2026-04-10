@@ -647,6 +647,10 @@ The stage model is the guardrail that keeps the THLB recipe from confusing
 universe definition, legal exclusions, projected operational deductions,
 benchmark rows, and pure context.
 
+For the full reconstruction-ladder and benchmark-comparison contract behind
+those stage labels, see
+:doc:`../guides/tsr-thlb-reconstruction-ladder`.
+
 ``tsr thlb-netdown-workbench-build`` options
 
 - ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
@@ -795,6 +799,10 @@ The intended production-grade target for ``#128`` is different:
 - overlay the reviewed exclusion layers and fragment the geometry; and
 - assign binary fragment-level THLB membership ``{0,1}`` instead of relying on
   the legacy raster-derived baseline as the underlying truth.
+
+For the conceptual distinction between those two modes, plus the comparison
+contract against TSR-reported THLB, see
+:doc:`../guides/tsr-thlb-reconstruction-ladder`.
 
 ``tsr overlay-init`` options
 

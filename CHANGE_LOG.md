@@ -13210,3 +13210,34 @@
     - `python -m pytest`
     - `python -m sphinx -b html docs _build/html -W`
     - `python -m pre_commit run --all-files`
+- 2026-04-10: Started issue `#133` as a guide-first documentation slice for
+  the TSA29 THLB reconstruction ladder and comparison contract.
+  - Added the active plan to `ROADMAP.md` so the next implementation pass is
+    anchored to:
+    - one dedicated guide under `docs/guides/`;
+    - a static Figure-3-adapted diagram under `docs/_static/`;
+    - lighter cross-links from the TSR workflow guide and CLI reference; and
+    - focused docs-contract regression coverage in
+      `tests/test_docs_contract.py`.
+- 2026-04-10: Implemented issue `#133` as a dedicated THLB
+  reconstruction-ladder and comparison-contract guide.
+  - Added `docs/guides/tsr-thlb-reconstruction-ladder.rst` as the canonical
+    home for the AFLB/THLB ladder semantics, hybrid-vs-reconstructed
+    distinction, fallback/no-LLM review path, and reconstructed-vs-legacy-vs-
+    TSR comparison contract.
+  - Added the checked-in static figure
+    `docs/_static/tsa29_thlb_ladder_adapted_figure3.svg` as an attributed
+    Figure-3 adaptation for the TSA29 ladder.
+  - Cross-linked the new guide from:
+    - `docs/guides/tsr-intelligence-workflow.rst`
+    - `docs/reference/cli.rst`
+    - `docs/reference/contracts/stage-boundaries-and-canonical-artifacts.rst`
+  - Extended `tests/test_docs_contract.py` so the new guide, figure, and
+    cross-link contract are regression-tested.
+  - Validation passed with:
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`

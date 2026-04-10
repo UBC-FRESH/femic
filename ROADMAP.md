@@ -15168,3 +15168,43 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - the TSA29 submodule should show only intentional tracked edits in Source
       Control, with generated production inputs and runtime caches hidden by
       default.
+- 2026-04-10: Issue `#133` is now the next active documentation slice after
+  closing the parser (`#135`) and review UX (`#134`) work.
+  - Governing documentation contract:
+    - add one dedicated guide under `docs/guides/` as the canonical home for
+      the TSA29 THLB reconstruction ladder and comparison contract;
+    - make `AFLB defines the modeled universe` and `THLB defines the
+      harvest-eligible subset` unavoidable and explicit;
+    - explain the current distinction between the hybrid executable bridge and
+      the promoted fragment-first reconstruction target;
+    - document how to compare reconstructed THLB, legacy raster THLB, and
+      TSR-reported THLB without mixing incompatible runners or stop-lines; and
+    - keep CLI/reference docs as lighter cross-link surfaces rather than
+      duplicating the whole conceptual contract there.
+  - Required deliverables:
+    - new guide `docs/guides/tsr-thlb-reconstruction-ladder.rst`;
+    - static Figure-3-adapted ladder diagram under `docs/_static/`;
+    - guide-index wiring plus short pointers from
+      `docs/guides/tsr-intelligence-workflow.rst` and
+      `docs/reference/cli.rst`; and
+    - focused `tests/test_docs_contract.py` coverage for the new guide,
+      required phrases, and figure reference.
+- 2026-04-10: Issue `#133` implementation landed as a guide-first
+  reconstruction-contract docs pass.
+  - Delivered surfaces:
+    - new guide `docs/guides/tsr-thlb-reconstruction-ladder.rst`;
+    - static figure `docs/_static/tsa29_thlb_ladder_adapted_figure3.svg`;
+    - cross-links from `docs/guides/tsr-intelligence-workflow.rst`,
+      `docs/reference/cli.rst`, and
+      `docs/reference/contracts/stage-boundaries-and-canonical-artifacts.rst`;
+    - docs-contract regression coverage for the new guide and figure.
+  - Accepted documentation outcome:
+    - the ladder guide is now the canonical home for the conceptual
+      AFLB/THLB contract;
+    - the TSR workflow guide remains the operational run/build/review flow; and
+    - the CLI/reference docs now point to the guide instead of carrying a
+      duplicated conceptual explanation.
+  - Recommended next sequence after `#133`:
+    - `#131` fragment-first reconstruction execution; then
+    - `#132` explicit aspatial fallback only where reconstruction remains
+      honestly blocked.

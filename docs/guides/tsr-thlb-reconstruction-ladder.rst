@@ -1,0 +1,253 @@
+TSR THLB Reconstruction Ladder
+==============================
+
+Purpose
+-------
+
+Use this guide when you need the **conceptual contract** behind FEMIC's TSA29
+THLB reconstruction work, not just the command sequence.
+
+This guide exists because three different things can look similar in chat or in
+status reports while still meaning different things:
+
+- the current **hybrid executable bridge**;
+- the promoted **fragment-first reconstruction target**; and
+- the **TSR-reported benchmark areas** that FEMIC is trying to explain or
+  approach.
+
+If those are blurred together, users and helper agents start comparing
+incompatible quantities and then report false convergence or false regressions.
+
+Why AFLB and THLB Matter
+------------------------
+
+Two upstream contracts matter more than almost anything else in a timber supply
+workflow:
+
+- **AFLB defines the modeled universe.**
+- **THLB defines the harvest-eligible subset of that universe.**
+
+If AFLB is wrong, FEMIC is solving the wrong problem from the beginning. If
+THLB is wrong, the model may still run, but it is allocating harvest over the
+wrong eligible land base.
+
+That is why FEMIC must not casually treat AU-only, VDYP-only, or yield-only
+filters as though they were automatically valid AFLB or THLB logic.
+
+In particular:
+
+- young or regrowing productive stands are **not** automatically outside the
+  AFLB;
+- low current volume is **not** automatically an AFLB exclusion;
+- AU / VDYP / curve filters are **not** automatically valid THLB filters; and
+- productivity or economic exclusions must come from explicit reviewed TSR
+  logic with provenance.
+
+The Reconstruction Ladder
+-------------------------
+
+FEMIC now treats the TSA29 THLB story as a staged land-base ladder rather than
+as a flat list of snippets:
+
+- ``GLB -> AFLB``
+- ``AFLB -> LHLB``
+- ``LHLB -> THLB``
+
+Those stage labels are now first-class review metadata in the THLB recipe and
+status/workbench surfaces.
+
+Interpret them as follows:
+
+- ``GLB -> AFLB`` defines the modeled universe and drops polygons from the
+  working land base entirely.
+- ``AFLB -> LHLB`` applies legal or policy harvest exclusions to the remaining
+  land base.
+- ``LHLB -> THLB`` applies projected operational, productivity, or other later
+  harvest exclusions to the land base that remains.
+- ``Reference targets`` are benchmark or milestone rows, not deductions.
+- ``Context / interpretation`` rows are support material, not executable
+  exclusions.
+
+For TSA29 specifically, **Table 3 is the canonical backbone** for step order
+and benchmark areas. Section ``6.2`` / ``6.3`` / ``6.4`` provide the per-step
+supporting rationale and explanatory prose. In other words, Section ``6.2`` /
+``6.3`` / ``6.4`` provide the per-step supporting rationale, but they do not
+override the Table 3 backbone.
+
+When the current-cycle TSR wording is terse, older TSR cycles can still be
+useful hint documents. However, older-cycle TSRs are **hints only**, not silent
+replacements for the current-cycle record.
+
+.. figure:: ../_static/tsa29_thlb_ladder_adapted_figure3.svg
+   :alt: Adapted TSA29 land-base ladder showing GLB, AFLB, LHLB, THLB, and reference targets.
+   :align: center
+
+   Adapted from BC MoF (2024), *Williams Lake TSA Timber Supply Review Data
+   Package*, Figure 3.
+
+Current FEMIC Execution Modes
+-----------------------------
+
+FEMIC currently supports two different THLB stories, and they must not be
+confused.
+
+Hybrid executable bridge
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The current reviewed executable path is the **hybrid THLB bridge**:
+
+- it starts from an existing checkpoint that already carries a THLB-like signal;
+- it normalizes or preserves that checkpoint THLB signal as the execution
+  baseline; and
+- it applies reviewed TSR exclusions on top of that baseline.
+
+This path is useful because it is reproducible, reviewable, and already powers
+real TSA29 work. But it is **not** the same thing as reconstructing THLB from
+raw land-base truth.
+
+Promoted fragment-first target
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The promoted next target under ``#128`` / ``#131`` is the
+**fragment-first reconstruction** path:
+
+- start from the raw/resultant land-base geometry;
+- initialize the AFLB universe explicitly;
+- overlay the reviewed exclusion layers in stage order;
+- fragment the geometry where needed; and
+- assign binary fragment-level THLB membership ``{0,1}``.
+
+That is the production-grade target for raw-land-base reconstruction. Until it
+lands, users should treat the hybrid bridge as the current executable milestone,
+not as final reconstructed land-base truth.
+
+Fallback and Review Paths
+-------------------------
+
+FEMIC v1 needs two honest user paths.
+
+Preferred path
+~~~~~~~~~~~~~~
+
+The preferred path is:
+
+- reviewed recipe scaffolds;
+- LLM/coding-agent assistance to accelerate review and iteration; and
+- explicit overlays / overrides when public inputs do not finish the job.
+
+This path is usually the fastest way to converge on a benchmarked TSA29 read,
+but it still depends on reviewed artifacts and provenance-preserving edits.
+
+Fallback no-LLM path
+~~~~~~~~~~~~~~~~~~~~
+
+The fallback path is:
+
+- reviewed recipe scaffolds;
+- a human analyst with no LLM available; and
+- generated review/workbench surfaces that behave as a warm-start checklist
+  rather than dumping the user into raw JSON.
+
+That means the no-LLM path is not an afterthought. It is part of the FEMIC v1
+contract.
+
+Blocked or approximate seams must also stay explicit:
+
+- **blocked/manual** means FEMIC does not yet have a trustworthy executable
+  path for that clause;
+- **override/overlay** means the user intentionally substituted a reviewed
+  source or interpretation seam and kept provenance;
+- **aspatial fallback** means FEMIC is using a documented area-reduction bridge
+  rather than exact spatial truth; and
+- none of those should be presented as though they were the same as exact
+  fragment-level overlay.
+
+Comparison Contract
+-------------------
+
+When users say "how close are we?", the first question should be:
+
+**Close to which reference surface?**
+
+For TSA29 there are three different comparison surfaces:
+
+1. **Reconstructed THLB**
+   The fragment/resultant target path that starts from raw land-base geometry
+   and assigns binary THLB membership.
+2. **Legacy raster-derived THLB**
+   The historical checkpoint/raster signal that still seeds the hybrid bridge.
+3. **TSR-reported THLB**
+   The benchmark areas reported in the Williams Lake TSR package.
+
+Those comparisons are useful only when the runner, checkpoint, scope, and
+stop-line are compatible.
+
+Good comparison examples:
+
+- hybrid-vs-TSR for the same accepted parent-step stop-line;
+- reconstructed-vs-TSR for the same stage/step ledger; and
+- reconstructed-vs-legacy-raster to understand how much of the difference is
+  coming from the old baseline rather than from later exclusions.
+
+Bad comparison examples:
+
+- comparing a generic flattened full-recipe run against a reviewed parent-step
+  cumulative benchmark as though they were the same metric;
+- comparing a smoke-subset run to a full-TSA cumulative target without saying
+  it is a smoke-only proving ground; and
+- comparing a step-20 cumulative read to a step-23 TSR target without carrying
+  the downstream steps honestly.
+
+Cumulative comparisons are therefore meaningful only when:
+
+- the same runner family is used;
+- the same baseline/checkpoint family is used;
+- the same geographic scope is used; and
+- the same stop-line or final step is being compared.
+
+Accepted skips or no-op tail steps also need plain interpretation:
+
+- they mean FEMIC reviewed the clause and chose to record an explicit
+  ``no_deduction`` or skipped state for the accepted lane;
+- they do **not** mean the clause vanished from the TSR;
+- and they should stay visible in status/workbench surfaces so later reviewers
+  can see what was accepted, skipped, blocked, or still unresolved.
+
+Worked TSA29 Read
+-----------------
+
+The current accepted TSA29 closeout gives a compact example of the comparison
+contract.
+
+- The accepted lane stops treating step ``023`` as a positive deduction because
+  the same-instrument parent-step reruns showed the post-step-``021`` result
+  was already below the final TSR cumulative target.
+- That means an additional positive step-``023`` deduction would move FEMIC
+  farther away from the TSR cumulative target, not closer.
+- So the accepted closeout records step ``021`` as the last active tail
+  deduction and step ``023`` as an explicit reviewed ``0 ha`` no-op tail step.
+
+The important lesson is not the exact hectare number. The important lesson is
+the method:
+
+- compare like with like;
+- keep the runner and stop-line explicit;
+- distinguish reviewed no-op logic from blocked logic; and
+- keep the benchmark explanation auditable in the recipe/status/workbench
+  surfaces.
+
+How This Guide Fits the Other Docs
+----------------------------------
+
+Use the other docs for different jobs:
+
+- :doc:`tsr-intelligence-workflow` for the operational review/build/run flow;
+- :doc:`interpret-rebuild-reports` for reading FEMIC rebuild evidence more
+  generally;
+- :doc:`../reference/cli` for command syntax and option surfaces; and
+- :doc:`../reference/contracts/stage-boundaries-and-canonical-artifacts` for
+  adjacent stage-boundary contracts.
+
+Use **this** guide when you need the conceptual ladder, the benchmark
+comparison contract, and the hybrid-vs-reconstructed distinction stated
+plainly in one place.

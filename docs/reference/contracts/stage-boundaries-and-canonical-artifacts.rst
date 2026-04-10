@@ -238,6 +238,7 @@ See Also
 - :doc:`../../guides/stage-01a-vdyp-tipsy-input`
 - :doc:`../../guides/stage-01b-post-tipsy`
 - :doc:`../../guides/model-input-bundle-and-export`
+- :doc:`../../guides/tsr-thlb-reconstruction-ladder`
 - :doc:`../api/femic-pipeline-vdyp-stage`
 - :doc:`../api/femic-pipeline-tipsy`
 - :doc:`../api/femic-fmg-patchworks`
