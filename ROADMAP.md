@@ -15076,3 +15076,17 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       `#133`, `#134`, and `#135`; and
     - adjacent follow-on workflow/tooling issues `#137`, `#138`, and `#139`
       are also still open.
+- 2026-04-10: TSA29 instance-submodule hygiene also needed its own ignore pass
+  so VS Code Source Control would stop surfacing hundreds of generated GIS and
+  notebook cache files as fake dirty work.
+  - Submodule hygiene action:
+    - ignore untracked BCDC/DWDS download spill under `data/downloads/bcdc/`;
+    - ignore generated `data/tsr/*.feather` checkpoint artifacts;
+    - ignore notebook progress/partition/benchmark scratch under
+      `runtime/logs/tsr/`; and
+    - ignore frozen workbench exports, locked scripts, ArcGIS review-project
+      outputs, and ad-hoc `step9` scratch recipe variants.
+  - Desired outcome:
+    - the TSA29 submodule should show only intentional tracked edits in Source
+      Control, with generated production inputs and runtime caches hidden by
+      default.

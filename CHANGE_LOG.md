@@ -13138,3 +13138,15 @@
     - still-open reconstruction children: `#128`, `#131`, `#132`, `#133`,
       `#134`, `#135`; and
     - still-open adjacent follow-ons: `#137`, `#138`, `#139`.
+- 2026-04-10: Tightened TSA29 submodule ignores so VS Code stops treating
+  generated production-input caches and notebook runtime artifacts as live
+  review work.
+  - Updated the TSA29 instance `.gitignore` to hide:
+    - untracked BCDC/DWDS download spill under `data/downloads/bcdc/`;
+    - generated `data/tsr/*.feather` checkpoint artifacts;
+    - notebook progress / LU partition / benchmark scratch under
+      `runtime/logs/tsr/`;
+    - frozen workbench exports and locked notebook bridge artifacts; and
+    - ad-hoc step-variant scratch recipes under `config/tsr/`.
+  - After the ignore pass, the TSA29 submodule dirty signal collapsed from
+    hundreds of generated files to the intentional `.gitignore` change itself.
