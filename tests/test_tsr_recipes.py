@@ -760,6 +760,29 @@ def test_link_thlb_step_to_sources_demotes_stale_year_stamped_entries() -> None:
     assert linked == ("consolidated_cutblocks_2020",)
 
 
+def test_describe_exact_thlb_step_logic_reports_operation_details() -> None:
+    description = tsr_recipes._describe_exact_thlb_step_logic(
+        {
+            "compiled_operation_type": "curve_volume_threshold_exclusion",
+            "curve_volume_metric": "volume_at_age",
+            "curve_volume_age_years": 160.0,
+            "curve_volume_threshold_m3_per_ha": 67.1,
+            "checkpoint_attribute_mode": "all",
+            "checkpoint_attribute_filters": [
+                {
+                    "field": "femic_step13_steep_slope_flag",
+                    "operator": "eq",
+                    "value": False,
+                }
+            ],
+        }
+    )
+
+    assert "age 160" in description
+    assert "67.100 m3/ha" in description
+    assert "femic_step13_steep_slope_flag" in description
+
+
 def test_thlb_status_report_prefers_parent_steps_when_present() -> None:
     recipe = tsr_recipes.TsrThlbNetdownRecipeRecord(
         schema_version=1,
@@ -779,7 +802,21 @@ def test_thlb_status_report_prefers_parent_steps_when_present() -> None:
             source_layer_recipe_path="config/tsr/source_layers.recipe.yaml",
             source_layer_overrides_path="config/tsr/source_layer_overrides.yaml",
         ),
-        recipe_contract={},
+        recipe_contract={
+            "lock_state": {
+                "aflb": {
+                    "locked": True,
+                    "locked_utc": "2026-04-10T01:02:03+00:00",
+                    "locked_script_path": "workbench/tsr/thlb_netdown.locked.py",
+                    "frozen_status_report_path": "workbench/tsr/frozen/aflb.md",
+                    "note": "AFLB universe definition locked",
+                },
+                "thlb": {
+                    "locked": False,
+                    "note": "THLB lock remains inactive until explicitly locked after AFLB",
+                },
+            }
+        },
         parent_steps=(
             {
                 "parent_step_id": "thlb_parent_001_land_not_administered",
@@ -814,6 +851,7 @@ def test_thlb_status_report_prefers_parent_steps_when_present() -> None:
                 "compiled_logic": [
                     {
                         "step_id": "thlb_parent_001_land_not_administered_compiled_01",
+                        "label": "Exclude private and federal lands",
                     }
                 ],
             },
@@ -831,9 +869,18 @@ def test_thlb_status_report_prefers_parent_steps_when_present() -> None:
                 "run_status": "blocked_missing_source",
                 "step_status": "blocked_missing_source",
                 "normalized_action": "exclude",
+                "compiled_operation_type": "select_spatial_intersect",
                 "normalized_subject": "Land not administered by the Province",
                 "normalized_predicate": "",
-                "linked_source_entry_ids": [],
+                "linked_source_entry_ids": ["whse_f_own"],
+                "source_attribute_mode": "all",
+                "source_attribute_filters": [
+                    {
+                        "field": "OWNERSHIP_CODE",
+                        "operator": "in",
+                        "value": ["private", "federal"],
+                    }
+                ],
                 "notes": [],
                 "run_notes": ["No fetched polygon artifact was available."],
             },
@@ -860,14 +907,46 @@ def test_thlb_status_report_prefers_parent_steps_when_present() -> None:
         generated_utc="2026-04-05T20:34:26Z",
         runtime_report_relative_path="runtime/logs/tsr/example.md",
         applied_steps=recipe.steps,
-        source_entry_map={},
-        override_entries={},
+        source_entry_map={
+            "whse_f_own": {
+                "entry_id": "whse_f_own",
+                "recommended_query": "WHSE_FOREST_VEGETATION.F_OWN",
+                "current_public_status": "exact_hit",
+                "acquisition_strategy": "wfs_fetch",
+                "artifact_path": "data/downloads/bcdc/F_OWN/F_OWN.gpkg",
+                "matched_by": "object_name:WHSE_FOREST_VEGETATION.F_OWN",
+                "top_match_title": "Generalized Forest Cover Ownership",
+            }
+        },
+        override_entries={
+            "whse_forest_vegetation.f_own": tsr_recipes.TsrSourceLayerOverrideEntry(
+                query="WHSE_FOREST_VEGETATION.F_OWN",
+                current_public_status="exact_hit",
+                matched_by="object_name",
+                top_match_title="Generalized Forest Cover Ownership",
+                dataset_page_url="https://example.invalid/f_own",
+                suggested_fetch_strategy="wfs_fetch",
+                current_public_notes=(),
+                override_kind="replacement_layer",
+                override_value="local reviewed ownership layer",
+                notes="Use reviewed ownership mapping for TSA29.",
+            )
+        },
     )
 
+    assert "## Review Dashboard" in markdown
+    assert "## Locking / Convergence" in markdown
     assert "Benchmark marginal deduction" in markdown
     assert "Draft subrules:" in markdown
     assert "Supporting prose section" in markdown
     assert "Land not administered by the Province" in markdown
+    assert "Review logic mode: `user_overlay`" in markdown
+    assert "Exact FEMIC logic:" in markdown
+    assert "Intersect the working land base" in markdown
+    assert "AFLB lock state: `locked`" in markdown
+    assert "frozen status report" in markdown
+    assert "Active user overrides:" in markdown
+    assert "`None`" not in markdown
     assert "candidate fields" in markdown
     assert "candidate values" in markdown
     assert "field/value mapping notes" in markdown
@@ -985,12 +1064,129 @@ def test_thlb_recipe_build_report_uses_parent_steps_and_stage_counts() -> None:
     )
     assert "THLB Recipe Build Report" in markdown
     assert "Report mode: `recipe_build`" in markdown
+    assert "## Review Dashboard" in markdown
+    assert "## Stage Counts" in markdown
+    assert "## Locking / Convergence" in markdown
     assert "Selected TSR documents" in markdown
     assert "Backbone Milestones" in markdown
     assert "Total TSA area" in markdown
     assert "`GLB -> AFLB`: `1`" in markdown
     assert "candidate fields" in markdown
     assert "Current compiled status summary" in markdown
+
+
+def test_merge_preserved_thlb_parent_step_metadata_keeps_approved_review_logic() -> (
+    None
+):
+    merged = tsr_recipes._merge_preserved_thlb_parent_step_metadata(
+        existing_parent_steps=(
+            {
+                "parent_step_id": "thlb_parent_023_future_roads",
+                "ratchet_state": "approved",
+                "draft_subrules": [
+                    {
+                        "subrule_id": "draft_01",
+                        "candidate_operation_type": "no_deduction",
+                    }
+                ],
+                "compiled_logic": [
+                    {
+                        "step_id": "compiled_01",
+                        "compiled_operation_type": "no_deduction",
+                    }
+                ],
+            },
+        ),
+        built_parent_steps=(
+            {
+                "parent_step_id": "thlb_parent_023_future_roads",
+                "draft_subrules": [
+                    {
+                        "subrule_id": "draft_01",
+                        "candidate_operation_type": "aspatial_area_reduction",
+                    }
+                ],
+                "compiled_logic": [
+                    {
+                        "step_id": "compiled_01",
+                        "compiled_operation_type": "aspatial_area_reduction",
+                    }
+                ],
+            },
+        ),
+    )
+
+    assert merged[0]["draft_subrules"][0]["candidate_operation_type"] == "no_deduction"
+    assert merged[0]["compiled_logic"][0]["compiled_operation_type"] == "no_deduction"
+
+
+def test_merge_preserved_thlb_compiled_steps_keeps_approved_review_logic() -> None:
+    merged = tsr_recipes._merge_preserved_thlb_compiled_steps(
+        existing_steps=(
+            {
+                "step_id": "compiled_01",
+                "parent_step_id": "thlb_parent_023_future_roads",
+                "compiled_operation_type": "no_deduction",
+                "normalized_action": "no_deduction",
+            },
+        ),
+        built_steps=(
+            {
+                "step_id": "compiled_01",
+                "parent_step_id": "thlb_parent_023_future_roads",
+                "compiled_operation_type": "aspatial_area_reduction",
+                "normalized_action": "aspatial_area_reduction",
+                "stage_label": "LHLB -> THLB",
+            },
+        ),
+        parent_steps=(
+            {
+                "parent_step_id": "thlb_parent_023_future_roads",
+                "ratchet_state": "approved",
+                "compiled_logic": [
+                    {
+                        "step_id": "compiled_01",
+                        "compiled_operation_type": "no_deduction",
+                        "normalized_action": "no_deduction",
+                    }
+                ],
+            },
+        ),
+    )
+
+    assert merged[0]["compiled_operation_type"] == "no_deduction"
+    assert merged[0]["normalized_action"] == "no_deduction"
+    assert merged[0]["stage_label"] == "LHLB -> THLB"
+
+
+def test_format_thlb_lock_state_markdown_skips_placeholder_none_strings() -> None:
+    markdown_lines = tsr_recipes._format_thlb_lock_state_markdown(
+        {
+            "aflb": {
+                "locked": False,
+                "locked_utc": "None",
+                "locked_script_path": "null",
+                "frozen_status_report_path": "",
+                "frozen_audit_path": None,
+                "note": "None",
+            },
+            "thlb": {
+                "locked": True,
+                "locked_utc": "2026-04-10T00:00:00Z",
+                "locked_script_path": "scripts/example.py",
+                "frozen_status_report_path": "workbench/status.md",
+                "frozen_audit_path": "runtime/audit.json",
+                "note": "Pinned for review.",
+            },
+        }
+    )
+
+    markdown = "\n".join(markdown_lines)
+    assert "AFLB lock state: `unlocked`" in markdown
+    assert "THLB lock state: `locked`" in markdown
+    assert "`None`" not in markdown
+    assert "null" not in markdown
+    assert "Pinned for review." in markdown
 
 
 def test_build_tsr_source_layers_recipe_populates_entries(
@@ -1660,8 +1856,16 @@ def test_build_tsr_thlb_workbench_writes_generated_notebook_and_updates_recipe_c
     notebook_payload = json.loads(result.notebook_path.read_text(encoding="utf-8"))
     notebook_text = json.dumps(notebook_payload)
     assert "THLB Netdown Workbench: TSA 29 (Williams Lake)" in notebook_text
+    assert "Review Dashboard" in notebook_text
+    assert (
+        "Treat the exact FEMIC logic summaries as the executable contract."
+        in notebook_text
+    )
+    assert "Locking / Convergence" in notebook_text
     assert "Land not administered by the Province" in notebook_text
     assert "run_tsr_thlb_parent_step(" in notebook_text
+    assert "Review prompts" in notebook_text
+    assert "Lock impact if this step is accepted or revised:" in notebook_text
     assert "LANDSCAPE_UNIT_SCOPE" in notebook_text
     assert "Williams Lake" in notebook_text
     assert "Chimney" not in notebook_text
@@ -4665,7 +4869,7 @@ def test_run_tsr_thlb_netdown_recipe_writes_thlb_fact_checkpoint_and_audit(
     assert "## Stage-by-Stage THLB Steps" in status_text
     assert "### LHLB -> THLB" in status_text
     assert "Linked source layers:" in status_text
-    assert "Logic mode: `user_overlay`" in status_text
+    assert "Review logic mode: `user_overlay`" in status_text
     assert "user-overlay logic mode: `local_path`" in status_text
     recipe = tsr_catalog.load_tsr_thlb_netdown_recipe(
         init_result.thlb_netdown_recipe_path

@@ -942,6 +942,51 @@ notes.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
 
+- 2026-04-10 (Issue `#134` completed: stage-aware THLB review UX hardening is
+  now landed on top of the TSA29 table-first parser):
+  - Implemented review-surface changes:
+    - THLB recipe/status Markdown now opens with a shared review dashboard and
+      explicit lock/convergence summary;
+    - parent and compiled THLB rows now show deterministic exact FEMIC logic
+      summaries plus active user-override provenance where applicable; and
+    - the generated THLB workbench notebook now mirrors the same review
+      contract, including review prompts that treat exact logic and lock state
+      as first-class approval signals.
+  - TSA29 acceptance pass:
+    - rebuilt the THLB recipe/status/workbench surfaces against the live TSA29
+      instance;
+    - normalized placeholder lock metadata so generated reports no longer leak
+      literal `None`/`null` values into review surfaces; and
+    - hardened approved-step preservation so accepted user-reviewed no-op logic
+      such as step `023` survives rebuilds consistently in both parent-step and
+      flattened compiled-step render paths.
+  - Recommended next sequence after this UX pass:
+    - `#133` to document the reconstruction ladder/reconciliation contract more
+      explicitly for future TSA work; then
+    - `#131` to keep pushing execution/runtime seams now that parser/schema and
+      review-surface contracts are both cleaner.
+- 2026-04-10 (Issue `#134` active implementation: stage-aware THLB review UX
+  hardening on top of the TSA29 table-first parser):
+  - Governing contract for this slice:
+    - keep the existing THLB CLI/build/workbench commands;
+    - change the generated review surfaces so they read like a coherent
+      netdown-process dashboard instead of a mixed extraction dump; and
+    - keep execution semantics unchanged while making lock state, override
+      provenance, ratchet state, and exact compiled logic easier to review.
+  - Required implementation focus:
+    - front-load stage/backbone/benchmark/lock summaries in the THLB Markdown
+      reports;
+    - add deterministic human-readable exact-logic summaries for parent and
+      compiled THLB steps;
+    - make user-overlay logic visibly distinct from FEMIC core logic;
+    - reshape the generated THLB workbench notebook so it mirrors the same
+      stage-aware review contract; and
+    - refresh the TSA29 generated review surfaces as the acceptance pass.
+  - Acceptance surface for the issue:
+    - rebuild the TSA29 THLB recipe/status report and workbench notebook;
+    - verify the generated outputs clearly expose stage grouping, exact logic,
+      override state, and lock-state dependencies; and
+    - leave runner behavior to `#131` / `#132`.
 - 2026-04-10 (Issue `#135` active implementation: TSA29-first stage-aware THLB
   parser/schema hardening):
   - Governing contract for this slice:

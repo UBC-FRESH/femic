@@ -13179,3 +13179,34 @@
     - restored the generated TSA29 recipe/status files afterward so issue
       `#135` lands as parser/schema hardening without overwriting the separate
       user-reviewed THLB closeout state.
+- 2026-04-10: Hardened the TSA29 THLB review/report surfaces for issue `#134`
+  so the generated recipe/status/workbench outputs read like a stage-aware
+  netdown review dashboard instead of a flat extraction dump.
+  - Added shared review-surface helpers in
+    `src/femic/tsr_catalog/recipes.py` for:
+    - deterministic exact FEMIC logic summaries for compiled THLB operations;
+    - explicit user-override provenance summaries; and
+    - reusable lock/convergence reporting across Markdown reports and the
+      generated notebook.
+  - Reworked the THLB status report, recipe-build report, and generated
+    workbench notebook so they now front-load:
+    - a `Review Dashboard`;
+    - stage/backbone/benchmark context;
+    - exact FEMIC logic, review mode, and override state; and
+    - explicit AFLB/THLB lock-state visibility.
+  - Normalized placeholder lock metadata so generated surfaces do not leak
+    literal `None` / `null` strings into review output.
+  - Hardened approved-step rebuild preservation so accepted reviewed logic is
+    preserved consistently in both parent-step and flattened compiled-step
+    render paths, including the TSA29 step-23 no-op tail contract.
+  - Refreshed focused THLB report/notebook tests in
+    `tests/test_tsr_recipes.py`, then rebuilt the live TSA29 recipe/status/
+    workbench surfaces to confirm the new review UX renders against the current
+    accepted instance state.
+  - Validation passed with:
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`

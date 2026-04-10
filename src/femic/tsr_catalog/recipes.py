@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
+import copy
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import lru_cache
@@ -4643,7 +4644,11 @@ def build_tsr_thlb_netdown_recipe(
             existing_parent_steps=recipe.parent_steps,
             built_parent_steps=built_parent_steps,
         )
-        steps = [dict(item) for item in built_compiled_steps]
+        steps = _merge_preserved_thlb_compiled_steps(
+            existing_steps=recipe.steps,
+            built_steps=built_compiled_steps,
+            parent_steps=parent_steps,
+        )
         for step in steps:
             step_kind_counts.update([str(step.get("step_kind", ""))])
             status_counts.update([str(step.get("step_status", ""))])
@@ -6047,6 +6052,197 @@ def _lookup_override_for_source_entry(
     return override_entries.get(recommended_query)
 
 
+def _format_thlb_filter_value(value: Any) -> str:
+    if isinstance(value, (list, tuple, set)):
+        return ", ".join(f"`{item}`" for item in value)
+    return f"`{value}`"
+
+
+def _describe_thlb_filter(item: dict[str, Any]) -> str:
+    field = str(item.get("field", "")).strip()
+    operator = str(item.get("operator", "")).strip()
+    value = item.get("value")
+    if operator == "eq":
+        return f"`{field}` = {_format_thlb_filter_value(value)}"
+    if operator == "ne":
+        return f"`{field}` != {_format_thlb_filter_value(value)}"
+    if operator == "lt":
+        return f"`{field}` < {_format_thlb_filter_value(value)}"
+    if operator == "le":
+        return f"`{field}` <= {_format_thlb_filter_value(value)}"
+    if operator == "gt":
+        return f"`{field}` > {_format_thlb_filter_value(value)}"
+    if operator == "ge":
+        return f"`{field}` >= {_format_thlb_filter_value(value)}"
+    if operator == "in":
+        return f"`{field}` in [{_format_thlb_filter_value(value)}]"
+    if operator == "not_in":
+        return f"`{field}` not in [{_format_thlb_filter_value(value)}]"
+    if operator == "is_null":
+        return f"`{field}` is null"
+    if operator == "not_blank":
+        return f"`{field}` is not blank"
+    return f"`{field}` {operator} {_format_thlb_filter_value(value)}"
+
+
+def _describe_thlb_filters(
+    filters: Sequence[dict[str, Any]],
+    *,
+    mode: str,
+) -> str:
+    clauses = [
+        _describe_thlb_filter(item) for item in filters if isinstance(item, dict)
+    ]
+    if not clauses:
+        return ""
+    joiner = " and " if mode == "all" else " or "
+    return joiner.join(clauses)
+
+
+def _collect_thlb_step_override_summaries(
+    *,
+    step: dict[str, Any],
+    source_entry_map: dict[str, dict[str, Any]],
+    override_entries: dict[str, TsrSourceLayerOverrideEntry],
+) -> tuple[str, ...]:
+    summaries: list[str] = []
+    for entry_id in step.get("linked_source_entry_ids", ()):
+        source_entry = source_entry_map.get(str(entry_id).strip())
+        if source_entry is None:
+            continue
+        override_entry = _lookup_override_for_source_entry(
+            source_entry=source_entry,
+            override_entries=override_entries,
+        )
+        if override_entry is None or not override_entry.override_kind:
+            continue
+        summary = (
+            f"`{entry_id}` uses `{override_entry.override_kind}` from "
+            "`config/tsr/source_layer_overrides.yaml`"
+        )
+        if override_entry.override_value:
+            summary += f" with value `{override_entry.override_value}`"
+        summaries.append(summary)
+    return tuple(summaries)
+
+
+def _describe_exact_thlb_step_logic(step: dict[str, Any]) -> str:
+    operation_type = str(
+        step.get("compiled_operation_type", step.get("normalized_action", ""))
+    ).strip()
+    buffer_distance = step.get("buffer_distance_m")
+    source_filters = _describe_thlb_filters(
+        [
+            item
+            for item in step.get("source_attribute_filters", ())
+            if isinstance(item, dict)
+        ],
+        mode=str(step.get("source_attribute_mode", "all")).strip() or "all",
+    )
+    checkpoint_filters = _describe_thlb_filters(
+        [
+            item
+            for item in step.get("checkpoint_attribute_filters", ())
+            if isinstance(item, dict)
+        ],
+        mode=str(step.get("checkpoint_attribute_mode", "all")).strip() or "all",
+    )
+    if operation_type == "select_spatial_intersect":
+        detail = "Intersect the working land base with the linked source geometry."
+        if source_filters:
+            detail += f" Source rows are filtered by {source_filters}."
+        return detail
+    if operation_type == "buffer_then_intersect":
+        distance_text = (
+            f"{float(buffer_distance):.3f} m"
+            if buffer_distance is not None
+            else "the configured distance"
+        )
+        detail = f"Buffer the linked source geometry by {distance_text}, then intersect the working land base."
+        if source_filters:
+            detail += f" Source rows are filtered by {source_filters}."
+        return detail
+    if operation_type == "select_attribute":
+        detail = "Apply checkpoint attribute filtering to the working land base."
+        if checkpoint_filters:
+            detail += f" The active filter is {checkpoint_filters}."
+        return detail
+    if operation_type == "curve_volume_threshold_exclusion":
+        threshold = step.get("curve_volume_threshold_m3_per_ha")
+        metric = str(step.get("curve_volume_metric", "")).strip()
+        age = step.get("curve_volume_age_years")
+        threshold_text = (
+            f"{float(threshold):.3f} m3/ha"
+            if threshold is not None
+            else "the configured threshold"
+        )
+        metric_text = "assigned curve volume"
+        if metric == _CURVE_VOLUME_METRIC_AGE and age is not None:
+            metric_text = f"assigned curve volume at age {int(float(age))}"
+        elif metric == _CURVE_VOLUME_METRIC_AUTO:
+            metric_text = "treated CMAI / untreated culmination curve volume"
+        detail = f"Exclude rows whose {metric_text} falls below {threshold_text}."
+        if checkpoint_filters:
+            detail += f" This rule only evaluates rows where {checkpoint_filters}."
+        return detail
+    if operation_type in {"aspatial_reduction", "aspatial_area_reduction"}:
+        benchmark = step.get("benchmark_marginal_area_ha")
+        if benchmark is not None:
+            return (
+                "Apply an aspatial area reduction using the TSR benchmark target of "
+                f"{float(benchmark):.3f} ha."
+            )
+        return "Apply an aspatial area reduction using the configured TSR benchmark target."
+    if operation_type == "no_deduction":
+        return "Record this parent step as an explicit no-op: no executable land-base deduction is applied."
+    return _describe_thlb_step_logic(step)
+
+
+def _normalize_optional_thlb_review_value(value: Any) -> str:
+    normalized = str(value or "").strip()
+    if normalized.lower() in {"", "none", "null"}:
+        return ""
+    return normalized
+
+
+def _format_thlb_lock_state_markdown(
+    lock_state: dict[str, dict[str, Any]],
+) -> list[str]:
+    lines = ["## Locking / Convergence", ""]
+    for scope, label in (("aflb", "AFLB"), ("thlb", "THLB")):
+        payload = lock_state.get(scope, {})
+        status = "locked" if bool(payload.get("locked")) else "unlocked"
+        lines.append(f"- {label} lock state: `{status}`")
+        locked_utc = _normalize_optional_thlb_review_value(payload.get("locked_utc"))
+        if locked_utc:
+            lines.append(f"  - locked UTC: `{locked_utc}`")
+        locked_script_path = _normalize_optional_thlb_review_value(
+            payload.get("locked_script_path")
+        )
+        if locked_script_path:
+            lines.append(f"  - locked script: `{locked_script_path}`")
+        frozen_status_path = _normalize_optional_thlb_review_value(
+            payload.get("frozen_status_report_path")
+        )
+        if frozen_status_path:
+            lines.append(f"  - frozen status report: `{frozen_status_path}`")
+        frozen_audit_path = _normalize_optional_thlb_review_value(
+            payload.get("frozen_audit_path")
+        )
+        if frozen_audit_path:
+            lines.append(f"  - frozen audit: `{frozen_audit_path}`")
+        note = _normalize_optional_thlb_review_value(payload.get("note"))
+        if note:
+            lines.append(f"  - note: {note}")
+    lines.extend(
+        [
+            "- Lock dependency: cutting the AFLB lock automatically invalidates the THLB lock because THLB is downstream from the AFLB universe definition.",
+            "",
+        ]
+    )
+    return lines
+
+
 def _describe_thlb_step_logic(step: dict[str, Any]) -> str:
     normalized_action = str(step.get("normalized_action", "")).strip()
     spatial_mode = str(step.get("spatial_application_mode", "")).strip()
@@ -6100,6 +6296,14 @@ def _format_thlb_step_markdown(
 ) -> list[str]:
     label = str(step.get("label", "")).strip() or str(step.get("step_id", "")).strip()
     logic_mode = "femic_core"
+    exact_logic = _describe_exact_thlb_step_logic(step)
+    override_summaries = _collect_thlb_step_override_summaries(
+        step=step,
+        source_entry_map=source_entry_map,
+        override_entries=override_entries,
+    )
+    if override_summaries:
+        logic_mode = "user_overlay"
     heading_prefix = (
         heading_index_label
         if heading_index_label is not None
@@ -6114,6 +6318,8 @@ def _format_thlb_step_markdown(
         f"- Execution class: `{step.get('execution_class', '')}`",
         f"- Run status: `{step.get('run_status', step.get('step_status', 'unknown'))}`",
         f"- TSR provenance: `{step.get('provenance_id', '')}`",
+        f"- Review logic mode: `{logic_mode}`",
+        f"- Exact FEMIC logic: {exact_logic}",
     ]
     page_number = step.get("page_number")
     if page_number:
@@ -6122,6 +6328,10 @@ def _format_thlb_step_markdown(
     if raw_text:
         lines.append(f"- TSR text: `{raw_text}`")
     lines.append(f"- FEMIC proposed logic: {_describe_thlb_step_logic(step)}")
+    if override_summaries:
+        lines.append("- Active user overrides:")
+        for summary in override_summaries:
+            lines.append(f"  - {summary}")
 
     linked_source_ids = [
         str(value).strip()
@@ -6157,7 +6367,6 @@ def _format_thlb_step_markdown(
                 override_entries=override_entries,
             )
             if override_entry is not None and override_entry.override_kind:
-                logic_mode = "user_overlay"
                 lines.append(
                     "    - user-overlay logic mode: "
                     + f"`{override_entry.override_kind}` via `config/tsr/source_layer_overrides.yaml`"
@@ -6169,7 +6378,6 @@ def _format_thlb_step_markdown(
                 if override_entry.notes:
                     lines.append(f"    - override notes: {override_entry.notes}")
 
-    lines.append(f"- Logic mode: `{logic_mode}`")
     missing_source_ids = [
         str(value).strip()
         for value in step.get("missing_source_entry_ids", ())
@@ -6203,6 +6411,23 @@ def _format_thlb_parent_step_markdown(
         or str(parent_step.get("parent_step_id", "")).strip()
     )
     row_order = int(parent_step.get("row_order", 0))
+    compiled_steps = compiled_step_map.get(
+        str(parent_step.get("parent_step_id", "")), []
+    )
+    override_summaries: list[str] = []
+    exact_logic_summaries: list[str] = []
+    for compiled_step in compiled_steps:
+        exact_logic_summaries.append(
+            f"`{compiled_step.get('label', compiled_step.get('step_id', ''))}`: "
+            + _describe_exact_thlb_step_logic(compiled_step)
+        )
+        override_summaries.extend(
+            _collect_thlb_step_override_summaries(
+                step=compiled_step,
+                source_entry_map=source_entry_map,
+                override_entries=override_entries,
+            )
+        )
     lines = [
         f"### {row_order}. {label}",
         "",
@@ -6236,6 +6461,18 @@ def _format_thlb_parent_step_markdown(
         approved_by = str(parent_step.get("approved_by", "")).strip()
         if approved_by:
             lines.append(f"- Approved by: `{approved_by}`")
+    lines.append(
+        "- Review logic mode: "
+        + ("`user_overlay`" if override_summaries else "`femic_core`")
+    )
+    if exact_logic_summaries:
+        lines.append("- Exact FEMIC logic:")
+        for summary in exact_logic_summaries:
+            lines.append(f"  - {summary}")
+    if override_summaries:
+        lines.append("- Active user overrides:")
+        for summary in dict.fromkeys(override_summaries):
+            lines.append(f"  - {summary}")
     ratchet_note = str(parent_step.get("ratchet_note", "")).strip()
     if ratchet_note:
         lines.append(f"- Ratchet note: {ratchet_note}")
@@ -6308,9 +6545,6 @@ def _format_thlb_parent_step_markdown(
                 lines.append("    - field/value mapping notes:")
                 for note in field_mapping_notes:
                     lines.append(f"      - {note}")
-    compiled_steps = compiled_step_map.get(
-        str(parent_step.get("parent_step_id", "")), []
-    )
     if compiled_steps:
         status_counts: dict[str, int] = {}
         for compiled_step in compiled_steps:
@@ -6410,6 +6644,25 @@ _THLB_PARENT_STEP_PRESERVED_METADATA_KEYS = (
     "last_benchmark_marginal_delta_ha",
     "last_benchmark_cumulative_delta_ha",
 )
+_THLB_PARENT_STEP_PRESERVED_APPROVED_REVIEW_KEYS = (
+    "draft_subrules",
+    "compiled_logic",
+)
+_THLB_COMPILED_STEP_CORE_IDENTITY_KEYS = (
+    "step_id",
+    "parent_step_id",
+    "label",
+    "order_index",
+    "step_kind",
+    "land_base_stage",
+    "stage_label",
+    "execution_class",
+    "provenance_id",
+    "page_number",
+    "row_source_kind",
+    "benchmark_marginal_area_ha",
+    "benchmark_cumulative_area_ha",
+)
 
 
 def _merge_preserved_thlb_parent_step_metadata(
@@ -6430,7 +6683,63 @@ def _merge_preserved_thlb_parent_step_metadata(
             for key in _THLB_PARENT_STEP_PRESERVED_METADATA_KEYS:
                 if key in existing:
                     updated[key] = existing[key]
+            preserve_review_logic = bool(existing.get("approved", False)) or (
+                _infer_thlb_parent_step_ratchet_state(existing) == "approved"
+            )
+            if preserve_review_logic:
+                for key in _THLB_PARENT_STEP_PRESERVED_APPROVED_REVIEW_KEYS:
+                    if key in existing:
+                        updated[key] = copy.deepcopy(existing[key])
         updated["ratchet_state"] = _infer_thlb_parent_step_ratchet_state(updated)
+        merged.append(updated)
+    return merged
+
+
+def _merge_preserved_thlb_compiled_steps(
+    *,
+    existing_steps: Sequence[dict[str, Any]],
+    built_steps: Sequence[dict[str, Any]],
+    parent_steps: Sequence[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    existing_by_id = {
+        str(item.get("step_id", "")).strip(): dict(item)
+        for item in existing_steps
+        if isinstance(item, dict) and str(item.get("step_id", "")).strip()
+    }
+    approved_parent_ids = {
+        str(parent_step.get("parent_step_id", "")).strip()
+        for parent_step in parent_steps
+        if _infer_thlb_parent_step_ratchet_state(parent_step) == "approved"
+    }
+    approved_parent_step_logic_by_id: dict[str, dict[str, Any]] = {}
+    for parent_step in parent_steps:
+        parent_step_id = str(parent_step.get("parent_step_id", "")).strip()
+        if parent_step_id not in approved_parent_ids:
+            continue
+        for compiled_step in parent_step.get("compiled_logic", ()) or ():
+            if not isinstance(compiled_step, dict):
+                continue
+            step_id = str(compiled_step.get("step_id", "")).strip()
+            if step_id:
+                approved_parent_step_logic_by_id[step_id] = dict(compiled_step)
+    merged: list[dict[str, Any]] = []
+    for step in built_steps:
+        updated = dict(step)
+        step_id = str(updated.get("step_id", "")).strip()
+        parent_step_id = str(updated.get("parent_step_id", "")).strip()
+        approved_parent_step = approved_parent_step_logic_by_id.get(step_id)
+        if approved_parent_step is not None:
+            for key, value in approved_parent_step.items():
+                if key in _THLB_COMPILED_STEP_CORE_IDENTITY_KEYS:
+                    continue
+                updated[key] = copy.deepcopy(value)
+        elif parent_step_id in approved_parent_ids:
+            existing = existing_by_id.get(str(updated.get("step_id", "")).strip())
+            if existing is not None:
+                for key, value in existing.items():
+                    if key in _THLB_COMPILED_STEP_CORE_IDENTITY_KEYS:
+                        continue
+                    updated[key] = copy.deepcopy(value)
         merged.append(updated)
     return merged
 
@@ -6490,6 +6799,7 @@ def _build_tsr_thlb_status_report_markdown(
     flat_stage_groups: dict[str, list[dict[str, Any]]] = {
         stage: [] for stage in _THLB_STAGE_ORDER
     }
+    lock_state = _current_thlb_lock_state(dict(recipe.recipe_contract))
     for step in applied_steps:
         stage = str(step.get("land_base_stage", "context"))
         if stage not in flat_stage_groups:
@@ -6507,13 +6817,10 @@ def _build_tsr_thlb_status_report_markdown(
         f"- Audit JSON: `{audit_relative_path}`",
         f"- Runtime history copy: `{runtime_report_relative_path}`",
         "",
-        "## Scope",
+        "## Review Dashboard",
         "",
         f"- Selected MAP_ID subset: `{', '.join(selected_map_ids) if selected_map_ids else 'full input'}`",
         f"- Step count: `{step_count}`",
-        "",
-        "## Backbone Summary",
-        "",
         f"- Input checkpoint area: `{input_area_ha:.3f} ha`",
         f"- GLB / current input proxy: `{input_area_ha:.3f} ha`",
         f"- AFLB / baseline managed area: `{baseline_managed_area_ha:.3f} ha`",
@@ -6536,7 +6843,7 @@ def _build_tsr_thlb_status_report_markdown(
     lines.extend(
         [
             "",
-            "## Ratios",
+            "## Backbone Summary",
             "",
             f"- GLB:AFLB current proxy = `{_format_ratio(input_to_baseline_ratio)}`",
             "- AFLB:LHLB current = `n/a yet`",
@@ -6551,22 +6858,16 @@ def _build_tsr_thlb_status_report_markdown(
     for outcome, count in outcome_counts.items():
         lines.append(f"- `{outcome}`: `{count}`")
 
+    lines.extend([""])
+    lines.extend(_format_thlb_lock_state_markdown(lock_state))
     lines.extend(
         [
-            "",
-            "## Locking / Convergence",
-            "",
-            "- AFLB lock state: `unlocked`",
-            "- THLB lock state: `unlocked`",
-            "- Lock dependency: cutting the AFLB lock automatically invalidates the THLB lock because THLB is downstream from the AFLB universe definition.",
-            "- Current note: FEMIC now records benchmark ratios and runtime history for convergence review, but explicit user lock/cut-lock controls are not implemented yet.",
-            "",
             "## Interpretation",
             "",
             "- Non-AFLB polygons are excluded from the reconstruction universe before THLB logic applies.",
             "- Non-THLB polygons or fragments remain inside that working universe and are assigned THLB state downstream from AFLB initialization.",
             "- GLB -> AFLB rows define the modeled universe, AFLB -> LHLB rows define legal harvestability, and LHLB -> THLB rows define projected operational harvestability.",
-            "- AU/VDYP-oriented filters are not assumed to be valid THLB filters unless the TSR logic says so explicitly.",
+            "- Review the exact FEMIC logic summaries before trusting raw TSR prose; the compiled logic is the executable contract.",
             "- Legacy raster THLB values are reference-only in reconstructed mode.",
         ]
     )
@@ -6639,6 +6940,7 @@ def _build_tsr_thlb_recipe_build_report_markdown(
         stage: [] for stage in _THLB_STAGE_ORDER
     }
     milestone_parent_steps: list[dict[str, Any]] = []
+    lock_state = _current_thlb_lock_state(dict(recipe.recipe_contract))
     for parent_step in recipe.parent_steps:
         if str(parent_step.get("parent_kind", "")) == "milestone":
             milestone_parent_steps.append(dict(parent_step))
@@ -6656,7 +6958,7 @@ def _build_tsr_thlb_recipe_build_report_markdown(
         f"- Source-layer recipe path: `{source_layer_recipe_relative_path}`",
         f"- Runtime history copy: `{runtime_report_relative_path}`",
         "",
-        "## Scope",
+        "## Review Dashboard",
         "",
         f"- Parent step count: `{len(recipe.parent_steps)}`",
         f"- Compiled step count: `{len(recipe.steps)}`",
@@ -6705,13 +7007,9 @@ def _build_tsr_thlb_recipe_build_report_markdown(
             )
     else:
         lines.append("- No milestone rows parsed.")
-    lines.extend(
-        [
-            "",
-            "## Stage-by-Stage THLB Steps",
-            "",
-        ]
-    )
+    lines.extend([""])
+    lines.extend(_format_thlb_lock_state_markdown(lock_state))
+    lines.extend(["## Stage-by-Stage THLB Steps", ""])
     for stage in _THLB_STAGE_ORDER:
         parent_steps_for_stage = parent_stage_groups.get(stage, [])
         if not parent_steps_for_stage:
@@ -8986,6 +9284,9 @@ def _build_tsr_thlb_workbench_notebook(
     override_entries: dict[str, TsrSourceLayerOverrideEntry],
 ) -> nbformat.NotebookNode:
     milestones, parent_stage_groups = _parent_steps_grouped_by_stage(recipe)
+    lock_state_lines = _format_thlb_lock_state_markdown(
+        _current_thlb_lock_state(dict(recipe.recipe_contract))
+    )
     cells: list[nbformat.NotebookNode] = [
         new_markdown_cell(
             "\n".join(
@@ -9004,13 +9305,16 @@ def _build_tsr_thlb_workbench_notebook(
         new_markdown_cell(
             "\n".join(
                 [
-                    "## Backbone Summary",
+                    "## Review Dashboard",
                     "",
                     "Use the GLB -> AFLB -> LHLB -> THLB ladder as the governing structure.",
                     "Milestones are nodes. Parent steps are the transformation arcs between them.",
+                    "Treat the exact FEMIC logic summaries as the executable contract.",
+                    "Treat override and lock-state notes as first-class review signals, not footnotes.",
                 ]
             )
         ),
+        new_markdown_cell("\n".join(lock_state_lines)),
     ]
     if milestones:
         milestone_lines = ["## Backbone Milestones", ""]
@@ -9061,12 +9365,12 @@ def _build_tsr_thlb_workbench_notebook(
                 new_markdown_cell(
                     "\n".join(
                         [
-                            "### Interpretation notes",
+                            "### Review prompts",
                             "",
-                            "- Human review notes:",
-                            "- LLM draft notes:",
-                            "- Benchmark comparison:",
-                            "- Decision: good enough to keep going, or iterate again?",
+                            "- Benchmark fit / cumulative effect:",
+                            "- Core FEMIC logic vs any active override:",
+                            "- Lock impact if this step is accepted or revised:",
+                            "- Needed follow-up: accept, refine, skip, or block?",
                         ]
                     )
                 )
