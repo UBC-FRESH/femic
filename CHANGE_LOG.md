@@ -13291,3 +13291,32 @@
     - a timeout budget that was simply too short for the intended full-TSA run.
   - Only after that check should the remaining `#131` seam be treated as a
     true runtime/performance problem.
+- 2026-04-10: Diagnosed the reconstructed full-TSA timeout for issue `#131`
+  with cached prefix probes and one LU-parallel hot-step comparison.
+  - Added a resume-capable reconstructed diagnostic slice seam in
+    `src/femic/tsr_catalog/recipes.py` plus the helper script
+    `scripts/tsa29/reconstructed_timeout_diagnostic_slice.py` so reconstructed
+    prefix slices can reuse prior output without reinitializing checkpoint1.
+  - Added a focused regression in `tests/test_tsr_recipes.py` proving the
+    diagnostic slice runner can resume from a prior reconstructed prefix
+    output.
+  - Live diagnostic evidence on TSA29:
+    - the smallest failing prefix is the very first reconstructed exclusion
+      step, `thlb_parent_002_land_not_administered_by_the_province_compiled_01`;
+    - checkpoint load, AFLB initialization, source-layer load, and
+      candidate-row query are all fast for that step, while exact
+      fragment-overlay dominates runtime;
+    - sampled overlay batches show about `166-169 s` for full 5,000-row
+      batches and about `49 s` for the final 1,732-row batch across `14`
+      total batches, implying roughly `35-40 min` for reconstructed step 002
+      alone on full TSA;
+    - a matching LU-parallel parent-step probe for step 002 completed in about
+      `70 s`, so the timeout wall is specific to reconstructed exact fragment
+      overlay on checkpoint1, not the parent-step lane generally.
+  - Conclusion:
+    - the earlier full-TSA reconstructed timeout was **not** caused by the
+      wrong runner;
+    - the timeout envelope was simply too short for the current reconstructed
+      exact-overlay implementation; and
+    - the next `#131` pass should target performance/runtime structure for
+      reconstructed step 002 and similarly heavy early exclusions.

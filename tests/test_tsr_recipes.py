@@ -5623,3 +5623,160 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_blocks_failed_exact_over
     run_step = audit_payload["steps"][1]
     assert run_step["run_status"] == "blocked_exact_overlay"
     assert run_step["spatial_application_mode"] == "blocked_exact_overlay"
+
+
+def test_run_tsr_thlb_reconstructed_diagnostic_slice_can_resume_prefix_output(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    exclusion_path = (
+        instance_root / "data" / "downloads" / "bcdc" / "OGMA" / "OGMA.gpkg"
+    )
+    exclusion_path.parent.mkdir(parents=True, exist_ok=True)
+    exclusion = gpd.GeoDataFrame(
+        {"rule": ["ogma"]},
+        geometry=[box(0, 0, 5, 10)],
+        crs="EPSG:3005",
+    )
+    exclusion.to_file(exclusion_path, driver="GPKG")
+
+    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint1 = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [100],
+            "FOR_MGMT_LAND_BASE_IND": ["Y"],
+            "BCLCS_LEVEL_2": ["T"],
+            "NON_PRODUCTIVE_CD": [None],
+            "BEC_ZONE_CODE": ["SBS"],
+            "PROJ_AGE_1": [80],
+            "BASAL_AREA": [20.0],
+            "LIVE_STAND_VOLUME_125": [50.0],
+            "MAP_ID": ["093J034"],
+            "POLYGON_AREA": [0.01],
+            "FEATURE_AREA_SQM": [100.0],
+            "FEATURE_LENGTH_M": [40.0],
+            "GEOMETRY_AREA": [0.01],
+            "Shape_Area": [100.0],
+            "Shape_Length": [40.0],
+        },
+        geometry=[box(0, 0, 10, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint1.to_feather(checkpoint1_path)
+
+    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint8 = gpd.GeoDataFrame(
+        {"FEATURE_ID": [1], "thlb_raw": [100.0]},
+        geometry=[box(0, 0, 10, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint8.to_feather(checkpoint8_path)
+
+    source_recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    source_recipe_payload["recipe_contract"]["status"] = "run"
+    source_recipe_payload["entries"] = [
+        {
+            "entry_id": "ogma",
+            "label": "OGMA",
+            "recommended_query": "WHSE_LAND_USE_PLANNING.RMP_OGMA_LEGAL_CURRENT_SVW",
+            "acquisition_strategy": "wfs_fetch",
+            "artifact_path": "data/downloads/bcdc/OGMA/OGMA.gpkg",
+            "run_status": "fetched",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            source_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["recipe_contract"]["status"] = "built"
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "thlb_step_001_land_base",
+            "order_index": 1,
+            "step_kind": "netdown_rule",
+            "label": "Timber harvesting land base",
+            "normalized_action": "use_land_base",
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 24,
+        },
+        {
+            "step_id": "thlb_step_002_ogma",
+            "order_index": 2,
+            "step_kind": "netdown_rule",
+            "label": "OGMA",
+            "normalized_action": "exclude",
+            "linked_source_entry_ids": ["ogma"],
+            "step_status": "ready",
+            "page_number": 48,
+        },
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    diagnostics_root = instance_root / "runtime" / "logs" / "tsr" / "diagnostics"
+    first_result = tsr_recipes.run_tsr_thlb_reconstructed_diagnostic_slice(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        output_path=diagnostics_root / "prefix01.feather",
+        audit_path=diagnostics_root / "prefix01.audit.json",
+        diagnostic_path=diagnostics_root / "prefix01.diag.json",
+        start_index=0,
+        end_index=1,
+    )
+
+    assert first_result.executed_step_ids == ("thlb_step_001_land_base",)
+    assert first_result.resumed_from_checkpoint is False
+
+    second_result = tsr_recipes.run_tsr_thlb_reconstructed_diagnostic_slice(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        resume_checkpoint_path=first_result.output_path,
+        output_path=diagnostics_root / "prefix02.feather",
+        audit_path=diagnostics_root / "prefix02.audit.json",
+        diagnostic_path=diagnostics_root / "prefix02.diag.json",
+        start_index=1,
+        end_index=2,
+    )
+
+    assert second_result.executed_step_ids == ("thlb_step_002_ogma",)
+    assert second_result.resumed_from_checkpoint is True
+    assert second_result.final_managed_area_ha == pytest.approx(0.005)
+    diagnostic_payload = json.loads(
+        second_result.diagnostic_path.read_text(encoding="utf-8")
+    )
+    assert diagnostic_payload["baseline_signal"] == "resumed_reconstructed_checkpoint"

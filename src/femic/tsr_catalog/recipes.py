@@ -451,6 +451,28 @@ class TsrThlbNetdownRecipeRunResult:
 
 
 @dataclass(frozen=True)
+class TsrThlbReconstructedDiagnosticSliceResult:
+    """Summary of one reconstructed diagnostic slice execution."""
+
+    recipe_path: Path
+    checkpoint_path: Path
+    output_path: Path
+    audit_path: Path
+    diagnostic_path: Path
+    execution_mode: str
+    baseline_signal: str
+    executed_step_ids: tuple[str, ...]
+    start_index: int
+    end_index: int
+    step_count: int
+    outcome_counts: dict[str, int]
+    baseline_managed_area_ha: float
+    final_managed_area_ha: float
+    total_seconds: float
+    resumed_from_checkpoint: bool
+
+
+@dataclass(frozen=True)
 class TsrThlbWorkbenchBuildResult:
     """Summary of one THLB workbench notebook build pass."""
 
@@ -5822,6 +5844,28 @@ def _initialize_reconstructed_land_base(
     return reconstructed, signal_source
 
 
+def _resume_reconstructed_land_base(
+    checkpoint: gpd.GeoDataFrame,
+) -> tuple[gpd.GeoDataFrame, str]:
+    resumed = checkpoint.copy()
+    if "SOURCE_FEATURE_ID" not in resumed.columns and "FEATURE_ID" in resumed.columns:
+        resumed["SOURCE_FEATURE_ID"] = resumed["FEATURE_ID"]
+    if "thlb_fact" in resumed.columns:
+        thlb_fact = pd.to_numeric(resumed["thlb_fact"], errors="coerce").fillna(0.0)
+    elif "thlb_raw" in resumed.columns:
+        thlb_fact = pd.to_numeric(resumed["thlb_raw"], errors="coerce").fillna(0.0)
+    elif "thlb" in resumed.columns:
+        thlb_fact = pd.to_numeric(resumed["thlb"], errors="coerce").fillna(0.0)
+    else:
+        thlb_fact = resumed.geometry.map(lambda _value: 1.0).astype(float)
+    resumed["thlb_fact"] = thlb_fact.clip(lower=0.0, upper=1.0)
+    resumed["thlb"] = resumed["thlb_fact"].round().astype(int)
+    resumed = _update_geometry_measure_columns(resumed)
+    resumed["_row_id"] = range(len(resumed))
+    resumed["_stand_area_sqm"] = _resolve_effective_stand_area_sqm(resumed)
+    return resumed, "resumed_reconstructed_checkpoint"
+
+
 def _assign_fragment_feature_ids(checkpoint: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     updated = checkpoint.copy().reset_index(drop=True)
     updated["_row_id"] = range(len(updated))
@@ -5908,9 +5952,7 @@ def _chunk_reconstructed_candidate_rows(
 ) -> list[gpd.GeoDataFrame]:
     if candidate.empty:
         return []
-    resolved_batch_size = max(
-        1, int(batch_size or _RECONSTRUCTED_FRAGMENT_BATCH_SIZE)
-    )
+    resolved_batch_size = max(1, int(batch_size or _RECONSTRUCTED_FRAGMENT_BATCH_SIZE))
     ordered = candidate.sort_values("_row_id").reset_index(drop=True)
     return [
         ordered.iloc[start : start + resolved_batch_size].copy()
@@ -10077,6 +10119,344 @@ def _count_exclusion_candidate_rows(
     return len({int(index) for index in candidate_values.tolist()})
 
 
+def _select_reconstructed_diagnostic_steps(
+    steps: Sequence[dict[str, Any]],
+) -> tuple[dict[str, Any], ...]:
+    runnable_actions = {"use_land_base", "no_deduction", "exclude"}
+    selected: list[dict[str, Any]] = []
+    for step in steps:
+        normalized_action = str(step.get("normalized_action", "")).strip()
+        if normalized_action in runnable_actions:
+            selected.append(dict(step))
+    return tuple(selected)
+
+
+def _execute_tsr_thlb_recipe_steps(
+    *,
+    recipe_steps: Sequence[dict[str, Any]],
+    checkpoint: gpd.GeoDataFrame,
+    execution_mode: str,
+    instance_root: Path,
+    source_entry_map: dict[str, dict[str, Any]],
+    allow_stand_binary_fallback: bool,
+    total_area_benchmark_ha: float | None = None,
+) -> tuple[
+    gpd.GeoDataFrame, list[dict[str, Any]], dict[str, int], list[dict[str, Any]]
+]:
+    outcome_counts: Counter[str] = Counter()
+    applied_steps: list[dict[str, Any]] = []
+    diagnostic_steps: list[dict[str, Any]] = []
+
+    for step in recipe_steps:
+        step_start = perf_counter()
+        overlay_start = 0.0
+        step_profile: dict[str, Any] = {
+            "step_id": str(step.get("step_id", "")).strip(),
+            "label": str(step.get("label", "")).strip(),
+            "normalized_action": str(step.get("normalized_action", "")).strip(),
+            "source_load_seconds": 0.0,
+            "candidate_query_seconds": 0.0,
+            "overlay_seconds": 0.0,
+            "write_seconds": 0.0,
+        }
+        updated_step = dict(step)
+        normalized_action = str(step.get("normalized_action", "")).strip()
+        linked_source_entry_ids = tuple(
+            str(value).strip()
+            for value in step.get("linked_source_entry_ids", ())
+            if str(value).strip()
+        )
+        page_number = int(step.get("page_number") or 0)
+
+        if normalized_action in {
+            "section_heading",
+            "definition",
+            "increase_conditions",
+            "decrease_conditions",
+        }:
+            updated_step["run_status"] = "needs_review"
+            updated_step["run_notes"] = [
+                "Context-only THLB row; no execution attempted."
+            ]
+        elif normalized_action in {"use_land_base", "no_deduction"}:
+            updated_step["run_status"] = "applied_noop"
+            updated_step["run_notes"] = ["No spatial deduction applied for this rule."]
+        elif normalized_action == "exclude":
+            source_load_start = perf_counter()
+            exclusion_geometries, missing_sources, extent_mismatch_notes = (
+                _load_exclusion_geometries(
+                    instance_root=instance_root,
+                    linked_source_entry_ids=linked_source_entry_ids,
+                    source_entry_map=source_entry_map,
+                    bbox=(
+                        float(checkpoint.total_bounds[0]),
+                        float(checkpoint.total_bounds[1]),
+                        float(checkpoint.total_bounds[2]),
+                        float(checkpoint.total_bounds[3]),
+                    ),
+                )
+            )
+            step_profile["source_load_seconds"] = perf_counter() - source_load_start
+            if exclusion_geometries is None:
+                if extent_mismatch_notes:
+                    updated_step["run_status"] = "blocked_extent_mismatch"
+                    updated_step["run_notes"] = extent_mismatch_notes
+                else:
+                    updated_step["run_status"] = "blocked_missing_source"
+                    updated_step["run_notes"] = [
+                        "No fetched polygon artifact was available for the linked source entries."
+                    ]
+                    if missing_sources:
+                        updated_step["missing_source_entry_ids"] = missing_sources
+            else:
+                if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
+                    candidate_query_start = perf_counter()
+                    candidate_count = _count_exclusion_candidate_rows(
+                        checkpoint=checkpoint,
+                        exclusion_geometries=exclusion_geometries,
+                    )
+                    step_profile["candidate_query_seconds"] = (
+                        perf_counter() - candidate_query_start
+                    )
+                    if candidate_count == 0:
+                        updated_step["run_status"] = "applied_noop"
+                        updated_step["run_notes"] = [
+                            "No active land-base geometries intersected the exclusion mask."
+                        ]
+                    else:
+                        try:
+                            overlay_start = perf_counter()
+                            if (
+                                allow_stand_binary_fallback
+                                and candidate_count
+                                > _RECONSTRUCTED_FRAGMENT_ROW_THRESHOLD
+                            ):
+                                (
+                                    checkpoint,
+                                    affected_stand_count,
+                                    affected_area_ha,
+                                    overlap_area_ha,
+                                ) = _apply_binary_stand_exclusion(
+                                    checkpoint=checkpoint,
+                                    exclusion_geometries=exclusion_geometries,
+                                )
+                                step_profile["overlay_seconds"] = (
+                                    perf_counter() - overlay_start
+                                )
+                                if affected_stand_count == 0:
+                                    updated_step["run_status"] = "applied_noop"
+                                    updated_step["run_notes"] = [
+                                        "Candidate rows were found, but the explicit debug stand-binary fallback netted down no rows."
+                                    ]
+                                else:
+                                    updated_step["run_status"] = "applied"
+                                    updated_step["spatial_application_mode"] = (
+                                        "stand_binary_majority"
+                                    )
+                                    updated_step["candidate_row_count"] = (
+                                        candidate_count
+                                    )
+                                    updated_step["affected_stand_count"] = (
+                                        affected_stand_count
+                                    )
+                                    updated_step["affected_area_ha"] = affected_area_ha
+                                    updated_step["overlap_area_ha"] = overlap_area_ha
+                                    updated_step["run_notes"] = [
+                                        "Applied the user-enabled debug stand-binary fallback because the candidate-row workload exceeded the exact fragment-overlay threshold.",
+                                        "Representative-point containment was used as the coarse stand-binary approximation.",
+                                    ]
+                            else:
+                                (
+                                    checkpoint,
+                                    exact_candidate_count,
+                                    affected_fragment_count,
+                                    affected_area_ha,
+                                    fragment_batch_count,
+                                ) = _fragment_binary_exclusion_step_chunked(
+                                    checkpoint=checkpoint,
+                                    exclusion_geometries=exclusion_geometries,
+                                )
+                                step_profile["overlay_seconds"] = (
+                                    perf_counter() - overlay_start
+                                )
+                                if affected_fragment_count == 0:
+                                    updated_step["run_status"] = "applied_noop"
+                                    updated_step["run_notes"] = [
+                                        "No active fragment geometries intersected the exclusion mask."
+                                    ]
+                                else:
+                                    updated_step["run_status"] = "applied"
+                                    updated_step["spatial_application_mode"] = (
+                                        "fragment_overlay"
+                                    )
+                                    updated_step["candidate_row_count"] = (
+                                        exact_candidate_count
+                                    )
+                                    updated_step["affected_fragment_count"] = (
+                                        affected_fragment_count
+                                    )
+                                    updated_step["affected_area_ha"] = affected_area_ha
+                                    updated_step["fragment_batch_count"] = (
+                                        fragment_batch_count
+                                    )
+                                    updated_step["run_notes"] = [
+                                        "Applied exact fragment/resultant exclusion with binary THLB output in EPSG:3005.",
+                                        "Large candidate workloads are chunked deterministically instead of silently falling back to coarse stand-binary approximation.",
+                                    ]
+                        except Exception as exc:
+                            if overlay_start:
+                                step_profile["overlay_seconds"] = (
+                                    perf_counter() - overlay_start
+                                )
+                            if allow_stand_binary_fallback:
+                                fallback_start = perf_counter()
+                                (
+                                    checkpoint,
+                                    affected_stand_count,
+                                    affected_area_ha,
+                                    overlap_area_ha,
+                                ) = _apply_binary_stand_exclusion(
+                                    checkpoint=checkpoint,
+                                    exclusion_geometries=exclusion_geometries,
+                                )
+                                step_profile["overlay_seconds"] += (
+                                    perf_counter() - fallback_start
+                                )
+                                if affected_stand_count == 0:
+                                    updated_step["run_status"] = "applied_noop"
+                                    updated_step["run_notes"] = [
+                                        "Exact fragment-overlay execution failed, and the explicit debug stand-binary fallback netted down no rows."
+                                    ]
+                                else:
+                                    updated_step["run_status"] = "applied"
+                                    updated_step["spatial_application_mode"] = (
+                                        "stand_binary_majority"
+                                    )
+                                    updated_step["candidate_row_count"] = (
+                                        candidate_count
+                                    )
+                                    updated_step["affected_stand_count"] = (
+                                        affected_stand_count
+                                    )
+                                    updated_step["affected_area_ha"] = affected_area_ha
+                                    updated_step["overlap_area_ha"] = overlap_area_ha
+                                    updated_step["fallback_trigger"] = (
+                                        "exact_overlay_exception"
+                                    )
+                                    updated_step["run_notes"] = [
+                                        "Exact fragment-overlay execution failed, so the user-enabled debug stand-binary fallback was used instead.",
+                                        f"Fallback reason: {exc}",
+                                    ]
+                            else:
+                                updated_step["run_status"] = "blocked_exact_overlay"
+                                updated_step["spatial_application_mode"] = (
+                                    "blocked_exact_overlay"
+                                )
+                                updated_step["candidate_row_count"] = candidate_count
+                                updated_step["run_notes"] = [
+                                    "Exact fragment-overlay execution was required for reconstructed mode, so this step was blocked instead of silently approximating it.",
+                                    f"Blocking reason: {exc}",
+                                ]
+                else:
+                    overlay_start = perf_counter()
+                    exclusion_fraction = _compute_exclusion_fraction(
+                        checkpoint=checkpoint,
+                        exclusion_geometries=exclusion_geometries,
+                    )
+                    step_profile["overlay_seconds"] = perf_counter() - overlay_start
+                    if not exclusion_fraction:
+                        updated_step["run_status"] = "applied_noop"
+                        updated_step["run_notes"] = [
+                            "No stand geometries intersected the exclusion mask."
+                        ]
+                    else:
+                        ratios = (
+                            checkpoint["_row_id"].map(exclusion_fraction).fillna(0.0)
+                        )
+                        checkpoint["thlb_fact"] = (
+                            checkpoint["thlb_fact"] - ratios
+                        ).clip(lower=0.0, upper=1.0)
+                        updated_step["run_status"] = "applied"
+                        updated_step["affected_stand_count"] = int((ratios > 0).sum())
+                        updated_step["affected_area_ha"] = float(
+                            (
+                                checkpoint["_stand_area_sqm"]
+                                * ratios.clip(lower=0.0, upper=1.0)
+                            ).sum()
+                            / 10000.0
+                        )
+                        updated_step["run_notes"] = [
+                            "Applied stand-level exclusion using overlap fractions in EPSG:3005.",
+                            "Sequential stand-level subtraction may approximate overlapping exclusion masks.",
+                        ]
+                if missing_sources:
+                    updated_step["missing_source_entry_ids"] = missing_sources
+        elif normalized_action == "aspatial_reduction":
+            updated_step["run_status"] = "unsupported"
+            updated_step["run_notes"] = [
+                "Aspatial reduction steps are preserved for review but not executed in v1."
+            ]
+        elif normalized_action == "aspatial_area_reduction":
+            benchmark_marginal_area_ha = updated_step.get("benchmark_marginal_area_ha")
+            if benchmark_marginal_area_ha is None or total_area_benchmark_ha is None:
+                updated_step["run_status"] = "unsupported"
+                updated_step["run_notes"] = [
+                    "Aspatial area reduction requires TSR benchmark marginal area and total TSA area benchmark."
+                ]
+            else:
+                current_area_ha = float(
+                    _resolve_canonical_stand_area_sqm(checkpoint).sum() / 10000.0
+                )
+                target_removed_area_ha = (
+                    float(benchmark_marginal_area_ha)
+                    * current_area_ha
+                    / total_area_benchmark_ha
+                )
+                checkpoint, removed_area_ha, affected_row_count = (
+                    _apply_aspatial_area_reduction(
+                        checkpoint,
+                        target_removed_area_ha=target_removed_area_ha,
+                    )
+                )
+                updated_step["run_status"] = (
+                    "applied" if removed_area_ha > 0 else "applied_noop"
+                )
+                updated_step["affected_stand_count"] = affected_row_count
+                updated_step["affected_area_ha"] = removed_area_ha
+                updated_step["run_notes"] = [
+                    "Applied early-stage aspatial area reduction by shrinking stand-area attributes proportionally across the active AFLB subset.",
+                    "This step does not use THLB retention because future road footprint is treated as non-forested area.",
+                ]
+        else:
+            updated_step["run_status"] = "unsupported"
+            updated_step["run_notes"] = [
+                f"Normalized action `{normalized_action or 'unknown'}` is not executable in v1."
+            ]
+
+        updated_step["page_number"] = page_number
+        applied_steps.append(updated_step)
+        outcome_counts.update([str(updated_step.get("run_status", "unsupported"))])
+        step_profile["run_status"] = str(updated_step.get("run_status", "unsupported"))
+        step_profile["spatial_application_mode"] = str(
+            updated_step.get("spatial_application_mode", "")
+        ).strip()
+        step_profile["candidate_row_count"] = int(
+            updated_step.get("candidate_row_count") or 0
+        )
+        step_profile["fragment_batch_count"] = int(
+            updated_step.get("fragment_batch_count") or 0
+        )
+        step_profile["total_seconds"] = perf_counter() - step_start
+        diagnostic_steps.append(step_profile)
+
+    return (
+        checkpoint,
+        applied_steps,
+        dict(sorted(outcome_counts.items())),
+        diagnostic_steps,
+    )
+
+
 def _managed_area_ha(checkpoint: gpd.GeoDataFrame) -> float:
     return float(
         (checkpoint["_stand_area_sqm"] * checkpoint["thlb_fact"]).sum() / 10000.0
@@ -10232,264 +10612,17 @@ def run_tsr_thlb_netdown_recipe(
     tsr_reported_thlb_area_ha = land_base_benchmarks.get("thlb_area_ha")
     total_area_benchmark_ha = _resolve_tsr_total_area_benchmark(recipe)
 
-    outcome_counts: Counter[str] = Counter()
-    applied_steps: list[dict[str, Any]] = []
-
-    for step in recipe.steps:
-        updated_step = dict(step)
-        normalized_action = str(step.get("normalized_action", "")).strip()
-        linked_source_entry_ids = tuple(
-            str(value).strip()
-            for value in step.get("linked_source_entry_ids", ())
-            if str(value).strip()
+    checkpoint, applied_steps, outcome_counts, _diagnostic_steps = (
+        _execute_tsr_thlb_recipe_steps(
+            recipe_steps=recipe.steps,
+            checkpoint=checkpoint,
+            execution_mode=execution_mode,
+            instance_root=instance_root,
+            source_entry_map=source_entry_map,
+            allow_stand_binary_fallback=allow_stand_binary_fallback,
+            total_area_benchmark_ha=total_area_benchmark_ha,
         )
-        page_number = int(step.get("page_number") or 0)
-
-        if normalized_action in {
-            "section_heading",
-            "definition",
-            "increase_conditions",
-            "decrease_conditions",
-        }:
-            updated_step["run_status"] = "needs_review"
-            updated_step["run_notes"] = [
-                "Context-only THLB row; no execution attempted."
-            ]
-        elif normalized_action in {"use_land_base", "no_deduction"}:
-            updated_step["run_status"] = "applied_noop"
-            updated_step["run_notes"] = ["No spatial deduction applied for this rule."]
-        elif normalized_action == "exclude":
-            exclusion_geometries, missing_sources, extent_mismatch_notes = (
-                _load_exclusion_geometries(
-                    instance_root=instance_root,
-                    linked_source_entry_ids=linked_source_entry_ids,
-                    source_entry_map=source_entry_map,
-                    bbox=(
-                        float(checkpoint.total_bounds[0]),
-                        float(checkpoint.total_bounds[1]),
-                        float(checkpoint.total_bounds[2]),
-                        float(checkpoint.total_bounds[3]),
-                    ),
-                )
-            )
-            if exclusion_geometries is None:
-                if extent_mismatch_notes:
-                    updated_step["run_status"] = "blocked_extent_mismatch"
-                    updated_step["run_notes"] = extent_mismatch_notes
-                else:
-                    updated_step["run_status"] = "blocked_missing_source"
-                    updated_step["run_notes"] = [
-                        "No fetched polygon artifact was available for the linked source entries."
-                    ]
-                    if missing_sources:
-                        updated_step["missing_source_entry_ids"] = missing_sources
-            else:
-                if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
-                    candidate_count = _count_exclusion_candidate_rows(
-                        checkpoint=checkpoint,
-                        exclusion_geometries=exclusion_geometries,
-                    )
-                    if candidate_count == 0:
-                        updated_step["run_status"] = "applied_noop"
-                        updated_step["run_notes"] = [
-                            "No active land-base geometries intersected the exclusion mask."
-                        ]
-                    else:
-                        try:
-                            if (
-                                allow_stand_binary_fallback
-                                and candidate_count
-                                > _RECONSTRUCTED_FRAGMENT_ROW_THRESHOLD
-                            ):
-                                (
-                                    checkpoint,
-                                    affected_stand_count,
-                                    affected_area_ha,
-                                    overlap_area_ha,
-                                ) = _apply_binary_stand_exclusion(
-                                    checkpoint=checkpoint,
-                                    exclusion_geometries=exclusion_geometries,
-                                )
-                                if affected_stand_count == 0:
-                                    updated_step["run_status"] = "applied_noop"
-                                    updated_step["run_notes"] = [
-                                        "Candidate rows were found, but the explicit debug stand-binary fallback netted down no rows."
-                                    ]
-                                else:
-                                    updated_step["run_status"] = "applied"
-                                    updated_step["spatial_application_mode"] = (
-                                        "stand_binary_majority"
-                                    )
-                                    updated_step["candidate_row_count"] = (
-                                        candidate_count
-                                    )
-                                    updated_step["affected_stand_count"] = (
-                                        affected_stand_count
-                                    )
-                                    updated_step["affected_area_ha"] = affected_area_ha
-                                    updated_step["overlap_area_ha"] = overlap_area_ha
-                                    updated_step["run_notes"] = [
-                                        "Applied the user-enabled debug stand-binary fallback because the candidate-row workload exceeded the exact fragment-overlay threshold.",
-                                        "Representative-point containment was used as the coarse stand-binary approximation.",
-                                    ]
-                            else:
-                                (
-                                    checkpoint,
-                                    exact_candidate_count,
-                                    affected_fragment_count,
-                                    affected_area_ha,
-                                    fragment_batch_count,
-                                ) = _fragment_binary_exclusion_step_chunked(
-                                    checkpoint=checkpoint,
-                                    exclusion_geometries=exclusion_geometries,
-                                )
-                                if affected_fragment_count == 0:
-                                    updated_step["run_status"] = "applied_noop"
-                                    updated_step["run_notes"] = [
-                                        "No active fragment geometries intersected the exclusion mask."
-                                    ]
-                                else:
-                                    updated_step["run_status"] = "applied"
-                                    updated_step["spatial_application_mode"] = (
-                                        "fragment_overlay"
-                                    )
-                                    updated_step["candidate_row_count"] = (
-                                        exact_candidate_count
-                                    )
-                                    updated_step["affected_fragment_count"] = (
-                                        affected_fragment_count
-                                    )
-                                    updated_step["affected_area_ha"] = affected_area_ha
-                                    updated_step["fragment_batch_count"] = (
-                                        fragment_batch_count
-                                    )
-                                    updated_step["run_notes"] = [
-                                        "Applied exact fragment/resultant exclusion with binary THLB output in EPSG:3005.",
-                                        "Large candidate workloads are chunked deterministically instead of silently falling back to coarse stand-binary approximation.",
-                                    ]
-                        except Exception as exc:
-                            if allow_stand_binary_fallback:
-                                (
-                                    checkpoint,
-                                    affected_stand_count,
-                                    affected_area_ha,
-                                    overlap_area_ha,
-                                ) = _apply_binary_stand_exclusion(
-                                    checkpoint=checkpoint,
-                                    exclusion_geometries=exclusion_geometries,
-                                )
-                                if affected_stand_count == 0:
-                                    updated_step["run_status"] = "applied_noop"
-                                    updated_step["run_notes"] = [
-                                        "Exact fragment-overlay execution failed, and the explicit debug stand-binary fallback netted down no rows."
-                                    ]
-                                else:
-                                    updated_step["run_status"] = "applied"
-                                    updated_step["spatial_application_mode"] = (
-                                        "stand_binary_majority"
-                                    )
-                                    updated_step["candidate_row_count"] = (
-                                        candidate_count
-                                    )
-                                    updated_step["affected_stand_count"] = (
-                                        affected_stand_count
-                                    )
-                                    updated_step["affected_area_ha"] = affected_area_ha
-                                    updated_step["overlap_area_ha"] = overlap_area_ha
-                                    updated_step["fallback_trigger"] = (
-                                        "exact_overlay_exception"
-                                    )
-                                    updated_step["run_notes"] = [
-                                        "Exact fragment-overlay execution failed, so the user-enabled debug stand-binary fallback was used instead.",
-                                        f"Fallback reason: {exc}",
-                                    ]
-                            else:
-                                updated_step["run_status"] = "blocked_exact_overlay"
-                                updated_step["spatial_application_mode"] = (
-                                    "blocked_exact_overlay"
-                                )
-                                updated_step["candidate_row_count"] = candidate_count
-                                updated_step["run_notes"] = [
-                                    "Exact fragment-overlay execution was required for reconstructed mode, so this step was blocked instead of silently approximating it.",
-                                    f"Blocking reason: {exc}",
-                                ]
-                else:
-                    exclusion_fraction = _compute_exclusion_fraction(
-                        checkpoint=checkpoint,
-                        exclusion_geometries=exclusion_geometries,
-                    )
-                    if not exclusion_fraction:
-                        updated_step["run_status"] = "applied_noop"
-                        updated_step["run_notes"] = [
-                            "No stand geometries intersected the exclusion mask."
-                        ]
-                    else:
-                        ratios = (
-                            checkpoint["_row_id"].map(exclusion_fraction).fillna(0.0)
-                        )
-                        checkpoint["thlb_fact"] = (
-                            checkpoint["thlb_fact"] - ratios
-                        ).clip(lower=0.0, upper=1.0)
-                        updated_step["run_status"] = "applied"
-                        updated_step["affected_stand_count"] = int((ratios > 0).sum())
-                        updated_step["affected_area_ha"] = float(
-                            (
-                                checkpoint["_stand_area_sqm"]
-                                * ratios.clip(lower=0.0, upper=1.0)
-                            ).sum()
-                            / 10000.0
-                        )
-                        updated_step["run_notes"] = [
-                            "Applied stand-level exclusion using overlap fractions in EPSG:3005.",
-                            "Sequential stand-level subtraction may approximate overlapping exclusion masks.",
-                        ]
-                if missing_sources:
-                    updated_step["missing_source_entry_ids"] = missing_sources
-        elif normalized_action == "aspatial_reduction":
-            updated_step["run_status"] = "unsupported"
-            updated_step["run_notes"] = [
-                "Aspatial reduction steps are preserved for review but not executed in v1."
-            ]
-        elif normalized_action == "aspatial_area_reduction":
-            benchmark_marginal_area_ha = updated_step.get("benchmark_marginal_area_ha")
-            if benchmark_marginal_area_ha is None or total_area_benchmark_ha is None:
-                updated_step["run_status"] = "unsupported"
-                updated_step["run_notes"] = [
-                    "Aspatial area reduction requires TSR benchmark marginal area and total TSA area benchmark."
-                ]
-            else:
-                current_area_ha = float(
-                    _resolve_canonical_stand_area_sqm(checkpoint).sum() / 10000.0
-                )
-                target_removed_area_ha = (
-                    float(benchmark_marginal_area_ha)
-                    * current_area_ha
-                    / total_area_benchmark_ha
-                )
-                checkpoint, removed_area_ha, affected_row_count = (
-                    _apply_aspatial_area_reduction(
-                        checkpoint,
-                        target_removed_area_ha=target_removed_area_ha,
-                    )
-                )
-                updated_step["run_status"] = (
-                    "applied" if removed_area_ha > 0 else "applied_noop"
-                )
-                updated_step["affected_stand_count"] = affected_row_count
-                updated_step["affected_area_ha"] = removed_area_ha
-                updated_step["run_notes"] = [
-                    "Applied early-stage aspatial area reduction by shrinking stand-area attributes proportionally across the active AFLB subset.",
-                    "This step does not use THLB retention because future road footprint is treated as non-forested area.",
-                ]
-        else:
-            updated_step["run_status"] = "unsupported"
-            updated_step["run_notes"] = [
-                f"Normalized action `{normalized_action or 'unknown'}` is not executable in v1."
-            ]
-
-        updated_step["page_number"] = page_number
-        applied_steps.append(updated_step)
-        outcome_counts.update([str(updated_step.get("run_status", "unsupported"))])
+    )
 
     final_managed_area_ha = _managed_area_ha(checkpoint)
     if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
@@ -10672,4 +10805,169 @@ def run_tsr_thlb_netdown_recipe(
         legacy_reference_managed_area_ha=legacy_reference_managed_area_ha,
         tsr_reported_aflb_area_ha=tsr_reported_aflb_area_ha,
         tsr_reported_thlb_area_ha=tsr_reported_thlb_area_ha,
+    )
+
+
+def run_tsr_thlb_reconstructed_diagnostic_slice(
+    *,
+    recipe_path: Path,
+    output_path: Path,
+    audit_path: Path,
+    diagnostic_path: Path,
+    checkpoint_path: Path | None = None,
+    resume_checkpoint_path: Path | None = None,
+    start_index: int = 0,
+    end_index: int | None = None,
+    allow_stand_binary_fallback: bool = False,
+) -> TsrThlbReconstructedDiagnosticSliceResult:
+    """Run one reconstructed diagnostic step slice without mutating live recipe surfaces."""
+
+    resolved_recipe_path = recipe_path.expanduser().resolve()
+    recipe = load_tsr_thlb_netdown_recipe(resolved_recipe_path)
+    instance_root = resolved_recipe_path.parents[2]
+    source_layer_recipe_path = _resolve_instance_path(
+        instance_root, recipe.instance_inputs.source_layer_recipe_path
+    )
+    source_recipe = load_tsr_source_layers_recipe(source_layer_recipe_path)
+    source_entry_map = _load_source_recipe_entry_map(source_recipe)
+
+    if resume_checkpoint_path is not None and checkpoint_path is not None:
+        raise TsrRecipeError(
+            "Choose either `checkpoint_path` or `resume_checkpoint_path`, not both."
+        )
+    resolved_checkpoint_path = (
+        resume_checkpoint_path.expanduser().resolve()
+        if resume_checkpoint_path is not None
+        else (
+            checkpoint_path.expanduser().resolve()
+            if checkpoint_path is not None
+            else _find_tsr_checkpoint_path(instance_root=instance_root, mode="earliest")
+        )
+    )
+    checkpoint = _load_checkpoint_geodataframe(resolved_checkpoint_path)
+    if resume_checkpoint_path is not None:
+        checkpoint, baseline_signal = _resume_reconstructed_land_base(checkpoint)
+    else:
+        checkpoint, baseline_signal = _initialize_reconstructed_land_base(checkpoint)
+    baseline_managed_area_ha = _managed_area_ha(checkpoint)
+
+    executable_steps = _select_reconstructed_diagnostic_steps(recipe.steps)
+    bounded_start = max(0, int(start_index))
+    bounded_end = (
+        len(executable_steps)
+        if end_index is None
+        else min(len(executable_steps), max(bounded_start, int(end_index)))
+    )
+    selected_steps = executable_steps[bounded_start:bounded_end]
+    if not selected_steps:
+        raise TsrRecipeError(
+            "No reconstructed diagnostic steps were selected for the requested slice."
+        )
+
+    run_start = perf_counter()
+    checkpoint, applied_steps, outcome_counts, diagnostic_steps = (
+        _execute_tsr_thlb_recipe_steps(
+            recipe_steps=selected_steps,
+            checkpoint=checkpoint,
+            execution_mode=TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+            instance_root=instance_root,
+            source_entry_map=source_entry_map,
+            allow_stand_binary_fallback=allow_stand_binary_fallback,
+        )
+    )
+    execution_seconds = perf_counter() - run_start
+
+    checkpoint["thlb_fact"] = checkpoint["thlb_fact"].fillna(0.0).clip(0.0, 1.0)
+    checkpoint["thlb"] = checkpoint["thlb_fact"].round().astype(int)
+    checkpoint["thlb_raw"] = checkpoint["thlb_fact"]
+    checkpoint["thlb_area"] = (
+        checkpoint["_stand_area_sqm"] * checkpoint["thlb_fact"] / 10000.0
+    )
+    checkpoint = _update_geometry_measure_columns(checkpoint)
+    final_managed_area_ha = _managed_area_ha(checkpoint)
+
+    write_start = perf_counter()
+    output_frame = checkpoint.drop(
+        columns=["_row_id", "_stand_area_sqm"], errors="ignore"
+    )
+    resolved_output_path = output_path.expanduser().resolve()
+    resolved_output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_frame.to_feather(resolved_output_path)
+    output_write_seconds = perf_counter() - write_start
+
+    resolved_audit_path = audit_path.expanduser().resolve()
+    resolved_audit_path.parent.mkdir(parents=True, exist_ok=True)
+    audit_payload = {
+        "generated_utc": datetime.now(UTC).isoformat(),
+        "recipe_path": str(resolved_recipe_path.relative_to(instance_root).as_posix()),
+        "checkpoint_path": str(
+            resolved_checkpoint_path.relative_to(instance_root).as_posix()
+        ),
+        "output_path": str(resolved_output_path.relative_to(instance_root).as_posix()),
+        "execution_mode": TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+        "allow_stand_binary_fallback": allow_stand_binary_fallback,
+        "baseline_signal": baseline_signal,
+        "baseline_managed_area_ha": baseline_managed_area_ha,
+        "final_managed_area_ha": final_managed_area_ha,
+        "start_index": bounded_start,
+        "end_index": bounded_end,
+        "step_count": len(applied_steps),
+        "outcome_counts": outcome_counts,
+        "steps": applied_steps,
+    }
+    resolved_audit_path.write_text(
+        json.dumps(audit_payload, indent=2, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    resolved_diagnostic_path = diagnostic_path.expanduser().resolve()
+    resolved_diagnostic_path.parent.mkdir(parents=True, exist_ok=True)
+    diagnostic_payload = {
+        "generated_utc": datetime.now(UTC).isoformat(),
+        "recipe_path": str(resolved_recipe_path.relative_to(instance_root).as_posix()),
+        "checkpoint_path": str(
+            resolved_checkpoint_path.relative_to(instance_root).as_posix()
+        ),
+        "output_path": str(resolved_output_path.relative_to(instance_root).as_posix()),
+        "audit_path": str(resolved_audit_path.relative_to(instance_root).as_posix()),
+        "execution_mode": TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+        "allow_stand_binary_fallback": allow_stand_binary_fallback,
+        "baseline_signal": baseline_signal,
+        "resumed_from_checkpoint": resume_checkpoint_path is not None,
+        "start_index": bounded_start,
+        "end_index": bounded_end,
+        "selected_step_ids": [
+            str(step.get("step_id", "")).strip() for step in selected_steps
+        ],
+        "baseline_managed_area_ha": baseline_managed_area_ha,
+        "final_managed_area_ha": final_managed_area_ha,
+        "execution_seconds": execution_seconds,
+        "output_write_seconds": output_write_seconds,
+        "total_seconds": execution_seconds + output_write_seconds,
+        "step_profiles": diagnostic_steps,
+    }
+    resolved_diagnostic_path.write_text(
+        json.dumps(diagnostic_payload, indent=2, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    return TsrThlbReconstructedDiagnosticSliceResult(
+        recipe_path=resolved_recipe_path,
+        checkpoint_path=resolved_checkpoint_path,
+        output_path=resolved_output_path,
+        audit_path=resolved_audit_path,
+        diagnostic_path=resolved_diagnostic_path,
+        execution_mode=TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+        baseline_signal=baseline_signal,
+        executed_step_ids=tuple(
+            str(step.get("step_id", "")).strip() for step in selected_steps
+        ),
+        start_index=bounded_start,
+        end_index=bounded_end,
+        step_count=len(applied_steps),
+        outcome_counts=outcome_counts,
+        baseline_managed_area_ha=baseline_managed_area_ha,
+        final_managed_area_ha=final_managed_area_ha,
+        total_seconds=execution_seconds + output_write_seconds,
+        resumed_from_checkpoint=resume_checkpoint_path is not None,
     )

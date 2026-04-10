@@ -15279,3 +15279,37 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       a genuinely too-short timeout budget for the intended full-TSA command;
     - only treat this as a reconstruction-performance problem after confirming
       the command path, stop-line, and timeout envelope were the intended ones.
+- 2026-04-10: Reconstructed full-TSA timeout diagnosis now has a concrete
+  blocker and a bounded explanation.
+  - The governing command under diagnosis remained the correct instrument:
+    - `femic tsr thlb-netdown-run --execution-mode reconstructed`
+  - Diagnostic harness/probes completed:
+    - added a resume-capable reconstructed diagnostic slice seam in
+      `src/femic/tsr_catalog/recipes.py` plus
+      `scripts/tsa29/reconstructed_timeout_diagnostic_slice.py` so prefix
+      slices can reuse prior reconstructed output without reinitializing
+      checkpoint1 every time;
+    - first-8-step and first-step-only prefix probes both timed out, so the
+      smallest failing prefix is the very first reconstructed exclusion step:
+      `thlb_parent_002_land_not_administered_by_the_province_compiled_01`;
+    - isolated phase timing showed checkpoint load, AFLB initialization,
+      source-artifact load, and candidate-row query are all fast, while the
+      exact fragment overlay itself dominates runtime;
+    - sampled chunk timings for step 002 showed roughly:
+      - `~166-169 s` per full 5,000-row batch;
+      - `~49 s` for the final 1,732-row batch; and
+      - `14` batches total over `66,732` candidate rows, implying roughly
+        `35-40 min` for step 002 alone on full TSA.
+  - LU-parallel hot-step probe:
+    - the matching parent-step lane for step 002 completed in about `70 s`
+      with `8` workers and `132` LU chunks, so the rule is not fundamentally
+      impossible at TSA scale;
+    - the bottleneck is specific to reconstructed exact fragment overlay on
+      checkpoint1, not the generic parent-step lane.
+  - Decision:
+    - the earlier full-TSA reconstructed timeout did **not** come from the
+      wrong runner;
+    - the timeout budget was too short for the current exact-overlay runtime;
+    - the next `#131` pass should therefore focus on performance/runtime
+      structure for reconstructed step 002 and similarly heavy early spatial
+      exclusions, not on rerun selection semantics.
