@@ -153,6 +153,137 @@ _CURVE_VOLUME_METRIC_AGE = "volume_at_age"
 
 
 @dataclass(frozen=True)
+class _LandBaseSummaryRowClassification:
+    land_base_stage: str
+    execution_class: str
+    benchmark_role: str
+
+
+_TSA29_TABLE3_ROW_CLASSIFICATIONS: dict[str, _LandBaseSummaryRowClassification] = {
+    "total tsa area": _LandBaseSummaryRowClassification(
+        land_base_stage="reference_target",
+        execution_class="reference_only",
+        benchmark_role="reference_total",
+    ),
+    "land not administered by the province": _LandBaseSummaryRowClassification(
+        land_base_stage="glb_to_aflb",
+        execution_class="drop_from_universe",
+        benchmark_role="deduction",
+    ),
+    "non-forest": _LandBaseSummaryRowClassification(
+        land_base_stage="glb_to_aflb",
+        execution_class="drop_from_universe",
+        benchmark_role="deduction",
+    ),
+    "roads and landings": _LandBaseSummaryRowClassification(
+        land_base_stage="glb_to_aflb",
+        execution_class="drop_from_universe",
+        benchmark_role="deduction",
+    ),
+    "analysis forest land base": _LandBaseSummaryRowClassification(
+        land_base_stage="glb_to_aflb",
+        execution_class="reference_only",
+        benchmark_role="reference_cumulative",
+    ),
+    "parks, protected areas, area-base tenures": _LandBaseSummaryRowClassification(
+        land_base_stage="aflb_to_lhlb",
+        execution_class="legal_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "old growth management areas": _LandBaseSummaryRowClassification(
+        land_base_stage="aflb_to_lhlb",
+        execution_class="legal_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "wildlife habitat areas": _LandBaseSummaryRowClassification(
+        land_base_stage="aflb_to_lhlb",
+        execution_class="legal_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "critical habitat for fish": _LandBaseSummaryRowClassification(
+        land_base_stage="aflb_to_lhlb",
+        execution_class="legal_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "lakeshore management": _LandBaseSummaryRowClassification(
+        land_base_stage="aflb_to_lhlb",
+        execution_class="legal_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "community areas of special concern": _LandBaseSummaryRowClassification(
+        land_base_stage="aflb_to_lhlb",
+        execution_class="legal_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "proven aboriginal rights areas": _LandBaseSummaryRowClassification(
+        land_base_stage="aflb_to_lhlb",
+        execution_class="legal_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "areas considered inoperable": _LandBaseSummaryRowClassification(
+        land_base_stage="lhlb_to_thlb",
+        execution_class="projected_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "sites with low growing timber potential": _LandBaseSummaryRowClassification(
+        land_base_stage="lhlb_to_thlb",
+        execution_class="projected_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "non-merchantable timber profiles": _LandBaseSummaryRowClassification(
+        land_base_stage="lhlb_to_thlb",
+        execution_class="projected_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "recreation features": _LandBaseSummaryRowClassification(
+        land_base_stage="lhlb_to_thlb",
+        execution_class="projected_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "growth and yield permanent sample plots": _LandBaseSummaryRowClassification(
+        land_base_stage="lhlb_to_thlb",
+        execution_class="projected_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "riparian areas": _LandBaseSummaryRowClassification(
+        land_base_stage="lhlb_to_thlb",
+        execution_class="projected_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "buffered trails": _LandBaseSummaryRowClassification(
+        land_base_stage="lhlb_to_thlb",
+        execution_class="projected_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "wildlife tree retention areas": _LandBaseSummaryRowClassification(
+        land_base_stage="lhlb_to_thlb",
+        execution_class="projected_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "cultural heritage and archaeological resources": _LandBaseSummaryRowClassification(
+        land_base_stage="lhlb_to_thlb",
+        execution_class="projected_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "timber harvesting land base": _LandBaseSummaryRowClassification(
+        land_base_stage="lhlb_to_thlb",
+        execution_class="reference_only",
+        benchmark_role="reference_cumulative",
+    ),
+    "future roads": _LandBaseSummaryRowClassification(
+        land_base_stage="lhlb_to_thlb",
+        execution_class="projected_harvest_exclusion",
+        benchmark_role="deduction",
+    ),
+    "long-term thlb": _LandBaseSummaryRowClassification(
+        land_base_stage="reference_target",
+        execution_class="reference_only",
+        benchmark_role="reference_cumulative",
+    ),
+}
+
+
+@dataclass(frozen=True)
 class TsrRecipeCanonicalInputs:
     """Canonical shared inputs referenced by TSR recipes."""
 
@@ -1585,10 +1716,16 @@ def _extract_land_base_subsections(
             if heading_match:
                 if _is_toc_like_text(line):
                     continue
-                if current is not None:
-                    subsections.append(current)
                 section_number = heading_match.group("section")
                 title = _normalize_whitespace(heading_match.group("title"))
+                if (
+                    current is not None
+                    and str(current.get("section_number", "")) == section_number
+                    and str(current.get("title", "")) == title
+                ):
+                    continue
+                if current is not None:
+                    subsections.append(current)
                 current = {
                     "section_number": section_number,
                     "title": title,
@@ -1603,6 +1740,15 @@ def _extract_land_base_subsections(
             if re.match(r"^6\.[234]\s+", line) and not _is_toc_like_text(line):
                 continue
             if current is not None:
+                normalized_line = _normalize_whitespace(line)
+                current_heading = _normalize_whitespace(
+                    f"{current.get('section_number', '')} {current.get('title', '')}"
+                )
+                if normalized_line in {
+                    _normalize_whitespace(str(current.get("title", ""))),
+                    current_heading,
+                }:
+                    continue
                 current["lines"].append(line)
         if stop:
             break
@@ -1621,29 +1767,13 @@ def _infer_parent_row_stage(
     linked_subsection: dict[str, Any] | None,
     seen_aflb_row: bool,
     seen_thlb_row: bool,
+    tsa_code: str | None = None,
 ) -> tuple[str, str]:
     lower = label.casefold()
-    # Table 3 is the canonical roadmap for the Williams Lake TSA netdown
-    # ladder. A few rows need explicit overrides so subsection numbering does
-    # not drag them into the wrong stage group in the generated recipe/report.
-    explicit_stage_overrides: dict[str, tuple[str, str]] = {
-        "future roads": ("glb_to_aflb", "drop_from_universe"),
-        "proven aboriginal rights areas": ("aflb_to_lhlb", "legal_harvest_exclusion"),
-        "buffered trails": ("lhlb_to_thlb", "projected_harvest_exclusion"),
-    }
-    override = explicit_stage_overrides.get(lower)
-    if override is not None:
-        return override
-    if lower == "total tsa area":
-        return "reference_target", "reference_only"
-    if "analysis forest land base" in lower:
-        return "glb_to_aflb", "reference_only"
-    if "legally harvestable land base" in lower:
-        return "aflb_to_lhlb", "reference_only"
-    if "timber harvesting land base" in lower:
-        return "lhlb_to_thlb", "reference_only"
-    if "long-term thlb" in lower:
-        return "reference_target", "reference_only"
+    if str(tsa_code or "").strip() == "29":
+        classification = _TSA29_TABLE3_ROW_CLASSIFICATIONS.get(lower)
+        if classification is not None:
+            return classification.land_base_stage, classification.execution_class
     if linked_subsection is not None:
         stage = str(linked_subsection.get("land_base_stage", "context"))
     elif not seen_aflb_row:
@@ -1658,6 +1788,46 @@ def _infer_parent_row_stage(
         step_kind="netdown_rule" if stage != "context" else "context",
     )
     return stage, execution_class
+
+
+def _classify_land_base_summary_row(
+    *,
+    label: str,
+    linked_subsection: dict[str, Any] | None,
+    seen_aflb_row: bool,
+    seen_thlb_row: bool,
+    tsa_code: str | None = None,
+) -> _LandBaseSummaryRowClassification:
+    stage, execution_class = _infer_parent_row_stage(
+        label=label,
+        linked_subsection=linked_subsection,
+        seen_aflb_row=seen_aflb_row,
+        seen_thlb_row=seen_thlb_row,
+        tsa_code=tsa_code,
+    )
+    lower = label.casefold()
+    if str(tsa_code or "").strip() == "29":
+        classification = _TSA29_TABLE3_ROW_CLASSIFICATIONS.get(lower)
+        if classification is not None:
+            return classification
+    if lower == "total tsa area":
+        benchmark_role = "reference_total"
+    elif (
+        "analysis forest land base" in lower
+        or "legally harvestable land base" in lower
+        or "timber harvesting land base" in lower
+        or "long-term thlb" in lower
+    ):
+        benchmark_role = "reference_cumulative"
+    elif execution_class == "context_only":
+        benchmark_role = "context"
+    else:
+        benchmark_role = "deduction"
+    return _LandBaseSummaryRowClassification(
+        land_base_stage=stage,
+        execution_class=execution_class,
+        benchmark_role=benchmark_role,
+    )
 
 
 def _build_land_base_parent_step_id(row_order: int, label: str) -> str:
@@ -3624,6 +3794,7 @@ def _build_parent_steps_from_land_base_summary(
     summary_rows: Sequence[dict[str, Any]],
     subsections: Sequence[dict[str, Any]],
     source_index: tuple[dict[str, Any], ...],
+    tsa_code: str | None = None,
 ) -> tuple[tuple[dict[str, Any], ...], tuple[dict[str, Any], ...]]:
     parent_steps: list[dict[str, Any]] = []
     compiled_steps: list[dict[str, Any]] = []
@@ -3659,16 +3830,22 @@ def _build_parent_steps_from_land_base_summary(
                     subsections=subsections,
                     preferred_stages=None,
                 )
-        land_base_stage, execution_class = _infer_parent_row_stage(
+        classification = _classify_land_base_summary_row(
             label=label,
             linked_subsection=linked_subsection,
             seen_aflb_row=seen_aflb_row,
             seen_thlb_row=seen_thlb_row,
+            tsa_code=tsa_code,
         )
+        land_base_stage = classification.land_base_stage
+        execution_class = classification.execution_class
         stage_label = _THLB_STAGE_LABELS[land_base_stage]
         benchmark_marginal_area_ha: float | None = None
         benchmark_cumulative_area_ha: float | None = None
-        if lower == "analysis forest land base":
+        if classification.benchmark_role == "reference_total":
+            benchmark_cumulative_area_ha = numeric_tokens[0]
+            current_cumulative_area_ha = benchmark_cumulative_area_ha
+        elif lower == "analysis forest land base":
             benchmark_cumulative_area_ha = numeric_tokens[0]
             current_cumulative_area_ha = benchmark_cumulative_area_ha
             seen_aflb_row = True
@@ -3676,9 +3853,9 @@ def _build_parent_steps_from_land_base_summary(
             benchmark_cumulative_area_ha = numeric_tokens[0]
             current_cumulative_area_ha = benchmark_cumulative_area_ha
             seen_thlb_row = True
-        elif lower == "long-term thlb":
+        elif classification.benchmark_role == "reference_cumulative":
             benchmark_cumulative_area_ha = numeric_tokens[0]
-        else:
+        elif classification.benchmark_role == "deduction":
             if len(numeric_tokens) >= 3:
                 benchmark_marginal_area_ha = numeric_tokens[-3]
             elif len(numeric_tokens) >= 2:
@@ -4459,6 +4636,7 @@ def build_tsr_thlb_netdown_recipe(
                 summary_rows=summary_rows,
                 subsections=subsections,
                 source_index=source_index,
+                tsa_code=recipe.tsa.tsa_code,
             )
         )
         parent_steps = _merge_preserved_thlb_parent_step_metadata(

@@ -942,6 +942,39 @@ notes.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
 
+- 2026-04-10 (Issue `#135` active implementation: TSA29-first stage-aware THLB
+  parser/schema hardening):
+  - Governing contract for this slice:
+    - treat TSA29 Table 3 as the canonical ordered THLB parent-step backbone;
+    - treat Section 6.2 / 6.3 / 6.4 prose as supporting rationale and
+      provenance only, not the stage authority; and
+    - treat older-cycle TSR documents as hints only, never silent replacements
+      for current-cycle row meaning.
+  - Required implementation focus:
+    - introduce an explicit row-classification layer for TSA29 Table 3 parent
+      rows before draft-subrule generation;
+    - make stage assignment deterministic for the known milestone/reference and
+      operational rows (`GLB -> AFLB`, `AFLB -> LHLB`, `LHLB -> THLB`,
+      `reference_target`, `context`);
+    - keep benchmark marginal/cumulative propagation anchored on the Table 3
+      row model; and
+    - harden subsection extraction/matching so TOC-like noise and duplicate
+      headings cannot reclassify clearly table-derived parent rows.
+  - Acceptance surface for the issue:
+    - rebuild the TSA29 THLB recipe through the normal `thlb-netdown-build`
+      path;
+    - verify `parent_steps` and flattened `steps` stay stage-consistent; and
+    - refresh changelog / issue notes only after parser tests and the normal
+      lint/type/test/doc validation set pass.
+  - Completion checkpoint:
+    - landed an explicit TSA29 Table 3 row-classification layer so the known
+      Williams Lake parent rows no longer depend on subsection-stage drift for
+      their `land_base_stage` / `execution_class` semantics;
+    - hardened subsection parsing against duplicate heading echoes; and
+    - verified locally via `thlb-netdown-build` that the live TSA29 recipe
+      still places `Future roads` in `LHLB -> THLB`, then restored the
+      generated instance files so this issue does not overwrite the separate
+      user-reviewed THLB closeout surfaces.
 - 2026-04-08 (Issue `#141` guardrail follow-up: block smoke-scale overlays from
   contaminating full-TSA THLB validation):
   - Problem statement:

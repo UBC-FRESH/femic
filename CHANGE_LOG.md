@@ -13150,3 +13150,32 @@
     - ad-hoc step-variant scratch recipes under `config/tsr/`.
   - After the ignore pass, the TSA29 submodule dirty signal collapsed from
     hundreds of generated files to the intentional `.gitignore` change itself.
+- 2026-04-10: Hardened the TSA29 THLB parser/build path for issue `#135` so
+  Table 3 drives the parent-step backbone and stage semantics instead of
+  subsection heuristics.
+  - Added an explicit TSA29 Table 3 row-classification layer in
+    `src/femic/tsr_catalog/recipes.py` that assigns deterministic
+    `land_base_stage`, `execution_class`, and benchmark-role semantics to the
+    known Williams Lake parent rows.
+  - Updated subsection extraction so duplicate heading echoes and TOC-like
+    noise are less likely to contaminate subsection bodies or reclassify a
+    clearly table-derived row.
+  - Updated parent-step construction so benchmark marginal/cumulative values
+    stay anchored to the table-derived row model first, with Section 6.2/6.3/6.4
+    prose attached only as supporting provenance/detail.
+  - Refreshed focused parser tests in `tests/test_tsr_recipes.py`, including
+    the accepted late-stage TSA29 placement for `Future roads`.
+  - Validation passed with:
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `python -m mypy src`
+    - `python -m pytest`
+    - `python -m sphinx -b html docs _build/html -W`
+    - `python -m pre_commit run --all-files`
+  - Acceptance surface:
+    - ran `python -m femic tsr thlb-netdown-build --instance-root external/femic-tsa29-instance`
+      to verify the live TSA29 recipe still classifies `Future roads` under
+      `LHLB -> THLB` and anchors milestones to the table-first backbone; and
+    - restored the generated TSA29 recipe/status files afterward so issue
+      `#135` lands as parser/schema hardening without overwriting the separate
+      user-reviewed THLB closeout state.

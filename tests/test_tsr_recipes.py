@@ -287,6 +287,7 @@ The land base that will continually be required for WTRA will be modelled as an 
             summary_rows=summary_rows,
             subsections=subsections,
             source_index=source_index,
+            tsa_code="29",
         )
     )
 
@@ -582,7 +583,7 @@ In total, 22 754 hectares will be excluded from the forested land base at the ti
     assert "2.28% future RTL factor" in subrules[0]["candidate_values"]
 
 
-def test_infer_parent_row_stage_places_future_roads_in_glb_to_aflb() -> None:
+def test_infer_parent_row_stage_places_future_roads_in_lhlb_to_thlb_for_tsa29() -> None:
     stage, execution_class = tsr_recipes._infer_parent_row_stage(
         label="Future roads",
         linked_subsection={
@@ -592,10 +593,11 @@ def test_infer_parent_row_stage_places_future_roads_in_glb_to_aflb() -> None:
         },
         seen_aflb_row=True,
         seen_thlb_row=False,
+        tsa_code="29",
     )
 
-    assert stage == "glb_to_aflb"
-    assert execution_class == "drop_from_universe"
+    assert stage == "lhlb_to_thlb"
+    assert execution_class == "projected_harvest_exclusion"
 
 
 def test_infer_parent_row_stage_places_proven_aboriginal_rights_in_aflb_to_lhlb() -> (
@@ -610,6 +612,7 @@ def test_infer_parent_row_stage_places_proven_aboriginal_rights_in_aflb_to_lhlb(
         },
         seen_aflb_row=True,
         seen_thlb_row=False,
+        tsa_code="29",
     )
 
     assert stage == "aflb_to_lhlb"
@@ -626,10 +629,87 @@ def test_infer_parent_row_stage_places_buffered_trails_in_lhlb_to_thlb() -> None
         },
         seen_aflb_row=True,
         seen_thlb_row=False,
+        tsa_code="29",
     )
 
     assert stage == "lhlb_to_thlb"
     assert execution_class == "projected_harvest_exclusion"
+
+
+def test_extract_land_base_subsections_ignores_duplicate_heading_echoes() -> None:
+    pages = (
+        {
+            "page_number": 25,
+            "relative_path": "TSR_2024/Data_Package_2024/29ts_dpkg_2024.pdf",
+            "text": """
+6.2.1 Land not administered by the Province for TSA timber supply
+Certain types of lands do not contribute to timber supply.
+6.2.1 Land not administered by the Province for TSA timber supply
+This includes privately held lands and reserves.
+6.2.2 Land classified as non-forest
+Exclude non-forest areas from the AFLB.
+7. Current Forest Management Assumptions
+""",
+        },
+    )
+
+    subsections = tsr_recipes._extract_land_base_subsections(pages)
+
+    assert [subsection["section_number"] for subsection in subsections] == [
+        "6.2.1",
+        "6.2.2",
+    ]
+    assert (
+        "6.2.1 Land not administered by the Province for TSA timber supply"
+        not in (subsections[0]["body"])
+    )
+
+
+def test_build_parent_steps_from_land_base_summary_prefers_tsa29_table_stage_over_subsection_stage() -> (
+    None
+):
+    summary_rows = (
+        {
+            "parent_label": "Total TSA area",
+            "numeric_tokens": (4793635.0,),
+            "table_provenance": "TSR_2024/Data_Package_2024/29ts_dpkg_2024.pdf#page=24",
+        },
+        {
+            "parent_label": "Analysis forest land base",
+            "numeric_tokens": (3098168.0, 0.0, 100.0),
+            "table_provenance": "TSR_2024/Data_Package_2024/29ts_dpkg_2024.pdf#page=24",
+        },
+        {
+            "parent_label": "Future roads",
+            "numeric_tokens": (22754.0, 2.28, 0.73),
+            "table_provenance": "TSR_2024/Data_Package_2024/29ts_dpkg_2024.pdf#page=24",
+        },
+    )
+    subsections = (
+        {
+            "section_number": "6.2.3",
+            "title": "Roads and landings",
+            "provenance_id": "TSR_2024/Data_Package_2024/29ts_dpkg_2024.pdf#page=27",
+            "land_base_stage": "glb_to_aflb",
+            "body": "Future roads, trails and landings are described here.",
+        },
+    )
+
+    parent_steps, _compiled_steps = (
+        tsr_recipes._build_parent_steps_from_land_base_summary(
+            summary_rows=summary_rows,
+            subsections=subsections,
+            source_index=(),
+            tsa_code="29",
+        )
+    )
+
+    future_roads = next(
+        step for step in parent_steps if step["parent_label"] == "Future roads"
+    )
+    assert future_roads["land_base_stage"] == "lhlb_to_thlb"
+    assert future_roads["execution_class"] == "projected_harvest_exclusion"
+    assert future_roads["subsection_number"] == "6.2.3"
 
 
 def test_infer_semantic_candidate_layers_prefers_terrain_stability_for_inoperable_slopes() -> (
