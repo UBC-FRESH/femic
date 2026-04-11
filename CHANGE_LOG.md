@@ -13335,3 +13335,16 @@
       needs; and
     - defer more `#131` work until the stricter from-scratch rebuild path
       becomes worth the time again.
+- 2026-04-10: Cleaned up stale tracker state before picking the next modeling
+  slice.
+  - Closed `#133` because the reconstruction-ladder docs deliverable is already
+    complete in the repo, including the canonical guide, static ladder figure,
+    cross-links, and docs-contract regression coverage.
+  - Closed `#137` because the THLB workbench/lock bridge is also already in
+    place, including:
+    - `femic tsr thlb-netdown-workbench-build`;
+    - `femic tsr thlb-netdown-workbench-lock`;
+    - the generated TSA29 workbench/locked/frozen artifacts; and
+    - supporting CLI, recipe, docs, and test coverage.
+  - With `#133` and `#137` no longer cluttering the queue and `#131` parked,
+    the clean next active modeling slice is `#139`.

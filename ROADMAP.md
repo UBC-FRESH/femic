@@ -8587,7 +8587,7 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P52.6b Add a TSA29 `MAP_ID`-based smoke subset ladder for fast overlay proving-ground runs (`#130`).
   - [x] P52.6b1 Add stage-aware GLB/AFLB/LHLB/THLB parsing and recipe schema for TSR netdown logic (`#134`).
   - [x] P52.6b2 Improve THLB status reports and recipe review UX with stage groups, exact logic, and lock state (`#135`).
-  - [ ] P52.6b3 Add a generated THLB notebook workbench and lock/export flow (`#137`).
+  - [x] P52.6b3 Add a generated THLB notebook workbench and lock/export flow (`#137`).
   - [ ] P52.6b4 Improve DWDS follow-up retrieval and artifact materialization after order submission (`#140`).
   - [ ] P52.6b5 Run full-TSA29 THLB step-by-step validation and reconcile the recipe against TSR benchmarks (`#141`).
   - [ ] P52.6b6 Benchmark LU-wise local-process parallel THLB execution for TSA-scale netdown (`#143`).
@@ -15332,3 +15332,18 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       now”; and
     - circle back to `#131` later only if the stricter from-scratch rebuild
       becomes an actual pressing problem.
+- 2026-04-10: Cleaned up stale GitHub tracker state before selecting the next
+  active modeling slice.
+  - Closed `#133` because the documentation deliverable is already complete:
+    - `docs/guides/tsr-thlb-reconstruction-ladder.rst`;
+    - `docs/_static/tsa29_thlb_ladder_adapted_figure3.svg`;
+    - the workflow/CLI/contracts cross-links; and
+    - docs-contract regression coverage.
+  - Closed `#137` because the workbench/lock bridge is also already in place:
+    - `femic tsr thlb-netdown-workbench-build`;
+    - `femic tsr thlb-netdown-workbench-lock`;
+    - generated TSA29 workbench/locked/frozen artifacts; and
+    - CLI + recipe + docs + test coverage for that flow.
+  - With `#133` and `#137` closed and `#131` parked, the clean next active
+    modeling slice is `#139`: TSR section 7.1.5 broadleaf-volume exclusion as
+    a later yield-assumption lane rather than a THLB area-netdown rule.
