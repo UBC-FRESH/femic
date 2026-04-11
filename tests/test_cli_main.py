@@ -834,6 +834,7 @@ def test_tsa_post_tipsy_calls_workflow(monkeypatch: pytest.MonkeyPatch) -> None:
         managed_curve_y_scale,
         managed_curve_truncate_at_culm,
         managed_curve_max_age,
+        yield_assumptions_path,
     ):
         called["tsa_list"] = tsa_list
         called["run_id"] = run_id
@@ -845,6 +846,7 @@ def test_tsa_post_tipsy_calls_workflow(monkeypatch: pytest.MonkeyPatch) -> None:
         called["managed_curve_y_scale"] = managed_curve_y_scale
         called["managed_curve_truncate_at_culm"] = managed_curve_truncate_at_culm
         called["managed_curve_max_age"] = managed_curve_max_age
+        called["yield_assumptions_path"] = yield_assumptions_path
         message_fn("fake-progress")
         return SimpleNamespace(
             manifest_path=Path("vdyp_io/logs/run_manifest-post_tipsy_test.json"),
@@ -885,6 +887,7 @@ def test_tsa_post_tipsy_calls_workflow(monkeypatch: pytest.MonkeyPatch) -> None:
     assert called["managed_curve_y_scale"] is None
     assert called["managed_curve_truncate_at_culm"] is None
     assert called["managed_curve_max_age"] is None
+    assert called["yield_assumptions_path"] is None
     assert any("post-tipsy completed" in msg for msg in messages)
     assert any("Run manifest:" in msg for msg in messages)
     assert any("fake-progress" in msg for msg in messages)
@@ -909,6 +912,7 @@ def test_tsa_post_tipsy_uses_run_config_managed_curve_options(
                 "  managed_curve_y_scale: 1.2",
                 "  managed_curve_truncate_at_culm: true",
                 "  managed_curve_max_age: 300",
+                "  yield_assumptions_path: config/tsr/yield_assumptions.yaml",
                 "run:",
                 "  run_id: cfg_post_tipsy",
             ]
@@ -954,6 +958,9 @@ def test_tsa_post_tipsy_uses_run_config_managed_curve_options(
     assert called["managed_curve_y_scale"] == 1.2
     assert called["managed_curve_truncate_at_culm"] is True
     assert called["managed_curve_max_age"] == 300
+    assert called["yield_assumptions_path"] == (
+        Path.cwd() / "config" / "tsr" / "yield_assumptions.yaml"
+    )
 
 
 def test_export_patchworks_requires_tsa(monkeypatch: pytest.MonkeyPatch) -> None:

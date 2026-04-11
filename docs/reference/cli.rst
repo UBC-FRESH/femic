@@ -175,6 +175,7 @@ Subcommands
 - ``--run-id TEXT``
 - ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-config PATH`` (optional; load FMU/code selection and managed-curve mode defaults)
+- ``--yield-assumptions-path PATH`` (optional instance-local post-TIPSY yield assumptions YAML)
 - ``--instance-root PATH``
 
 ``tsa btc-post-tipsy`` options
@@ -184,6 +185,7 @@ Subcommands
 - ``--run-id TEXT``
 - ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-config PATH`` (optional; load FMU/code selection and managed-curve mode defaults)
+- ``--yield-assumptions-path PATH`` (optional instance-local post-TIPSY yield assumptions YAML)
 - ``--btc-exe PATH`` (optional explicit ``TIPSYbtc.exe`` override)
 - ``--scratch-dir PATH`` (optional scratch root for copied BTC installs and staged run files)
 - ``--report-preset TEXT`` (default: ``tsr-unattended-default``)

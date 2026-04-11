@@ -13,8 +13,10 @@ from typing import Any, Callable, Mapping, Sequence, cast
 import uuid
 
 import pandas as pd
+import yaml
 
 from femic.pipeline.bundle import (
+    BundleAssemblyResult,
     build_bundle_tables_from_curves,
     resolve_bundle_paths,
     write_bundle_tables,
@@ -27,6 +29,7 @@ from femic.pipeline.manifest import (
     collect_runtime_versions,
     write_manifest,
 )
+from femic.pipeline.vri import is_conifer_species_code, is_deciduous_species_code
 from femic.pipeline.tipsy import BTCRunResult, run_btc_cli
 from femic.pipeline.stages import load_legacy_module, run_legacy_subprocess
 from femic.workflows.legacy_resources import (
@@ -37,6 +40,9 @@ from femic.workflows.legacy_resources import (
 
 _LEGACY_NOISE_LINES = {"Error in sys.excepthook:", "Original exception was:"}
 _DEFAULT_SI_LEVELS = ("L", "M", "H")
+_DEFAULT_YIELD_ASSUMPTIONS_RELATIVE_PATH = Path("config/tsr/yield_assumptions.yaml")
+_BROADLEAF_VOLUME_EXCLUSION_RULE_TYPE = "broadleaf_volume_exclusion"
+_BROADLEAF_VOLUME_EXCLUSION_SCOPE = "untreated_only"
 _CANFI_MAP = {
     "AC": 1211,
     "AT": 1201,
@@ -72,6 +78,7 @@ class PostTipsyBundleResult:
     au_table_path: Path
     curve_table_path: Path
     curve_points_table_path: Path
+    yield_assumptions_summary: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -228,6 +235,289 @@ def _managed_curve_env_overrides(
     return env
 
 
+def _resolve_yield_assumptions_path(
+    *,
+    explicit_path: Path | None,
+    repo_root: Path,
+) -> Path | None:
+    if explicit_path is not None:
+        return Path(explicit_path)
+    default_path = repo_root / _DEFAULT_YIELD_ASSUMPTIONS_RELATIVE_PATH
+    if default_path.exists():
+        return default_path
+    return None
+
+
+def _load_yield_assumptions_rules(path: Path) -> list[dict[str, object]]:
+    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if raw is None:
+        return []
+    if not isinstance(raw, dict):
+        raise ValueError(f"Yield assumptions config must be a mapping: {path}")
+    rules = raw.get("rules", [])
+    if rules is None:
+        return []
+    if not isinstance(rules, list):
+        raise ValueError(f"`rules` must be a list in yield assumptions config: {path}")
+    normalized: list[dict[str, object]] = []
+    for idx, raw_rule in enumerate(rules, start=1):
+        if not isinstance(raw_rule, dict):
+            raise ValueError(f"Rule {idx} must be a mapping in {path}")
+        rule_type = str(raw_rule.get("rule_type", "")).strip().lower()
+        if rule_type != _BROADLEAF_VOLUME_EXCLUSION_RULE_TYPE:
+            raise ValueError(
+                f"Unsupported yield assumption rule_type {rule_type!r} in {path}"
+            )
+        scope = str(raw_rule.get("scope", "")).strip().lower()
+        if scope != _BROADLEAF_VOLUME_EXCLUSION_SCOPE:
+            raise ValueError(
+                f"Rule {idx} scope must be {_BROADLEAF_VOLUME_EXCLUSION_SCOPE!r} in {path}"
+            )
+        tsa_list_raw = raw_rule.get("tsa_list")
+        if not isinstance(tsa_list_raw, list) or not tsa_list_raw:
+            raise ValueError(f"Rule {idx} must declare non-empty tsa_list in {path}")
+        normalized.append(
+            {
+                "rule_type": rule_type,
+                "scope": scope,
+                "tsa_list": [str(tsa).zfill(2) for tsa in tsa_list_raw],
+            }
+        )
+    return normalized
+
+
+def _normalized_species_map_for_curve(
+    *,
+    base_curve_id: int,
+    curve_table: pd.DataFrame,
+    curve_points_table: pd.DataFrame,
+    curve_type_prefix: str,
+) -> dict[str, float]:
+    species_rows = curve_table.loc[
+        curve_table["curve_type"].astype(str).str.startswith(curve_type_prefix)
+    ].copy()
+    if species_rows.empty:
+        return {}
+    species_rows["base_curve_id"] = (
+        pd.to_numeric(species_rows["curve_id"], errors="coerce").fillna(0).astype(int)
+        // 1000
+    )
+    species_rows = species_rows.loc[species_rows["base_curve_id"] == int(base_curve_id)]
+    if species_rows.empty:
+        return {}
+    point_values = (
+        curve_points_table.loc[
+            curve_points_table["curve_id"].isin(species_rows["curve_id"]),
+            ["curve_id", "y"],
+        ]
+        .drop_duplicates(subset=["curve_id"])
+        .set_index("curve_id")["y"]
+        .to_dict()
+    )
+    species_map: dict[str, float] = {}
+    for row in species_rows.itertuples(index=False):
+        curve_type = str(getattr(row, "curve_type"))
+        species_code = curve_type.removeprefix(curve_type_prefix).strip().upper()
+        if not species_code:
+            continue
+        raw_value = point_values.get(getattr(row, "curve_id"))
+        if raw_value is None:
+            continue
+        try:
+            value = float(raw_value)
+        except (TypeError, ValueError):
+            continue
+        if value <= 0.0:
+            continue
+        species_map[species_code] = value
+    total = sum(species_map.values())
+    if total <= 0.0:
+        return {}
+    return {
+        species_code: float(value) / float(total)
+        for species_code, value in species_map.items()
+    }
+
+
+def _rounded_species_share_map(shares: dict[str, float]) -> dict[str, float]:
+    if not shares:
+        return {}
+    ordered_items = sorted(shares.items())
+    rounded: dict[str, float] = {}
+    running = 0.0
+    for idx, (species_code, value) in enumerate(ordered_items, start=1):
+        if idx == len(ordered_items):
+            rounded_value = round(max(0.0, 1.0 - running), 6)
+        else:
+            rounded_value = round(float(value), 6)
+            running += rounded_value
+        rounded[species_code] = rounded_value
+    return rounded
+
+
+def _apply_broadleaf_volume_exclusion_to_bundle(
+    *,
+    bundle: BundleAssemblyResult,
+    tsa_list: list[str],
+    assumptions_path: Path,
+    message_fn: Callable[[str], Any],
+) -> tuple[BundleAssemblyResult, dict[str, Any]]:
+    rules = _load_yield_assumptions_rules(assumptions_path)
+    matching_rules = [
+        rule
+        for rule in rules
+        if set(cast(list[str], rule["tsa_list"])).intersection(set(tsa_list))
+    ]
+    summary: dict[str, Any] = {
+        "assumptions_path": str(assumptions_path),
+        "rule_type": _BROADLEAF_VOLUME_EXCLUSION_RULE_TYPE,
+        "scope": _BROADLEAF_VOLUME_EXCLUSION_SCOPE,
+        "matched_tsa_list": sorted(
+            {
+                tsa
+                for rule in matching_rules
+                for tsa in cast(list[str], rule["tsa_list"])
+                if tsa in tsa_list
+            }
+        ),
+        "adjusted_au_count": 0,
+        "adjusted_au_ids": [],
+        "adjusted_aus": [],
+        "skipped_aus": [],
+        "total_untreated_volume_removed": 0.0,
+    }
+    if not matching_rules:
+        summary["status"] = "no_matching_rules"
+        return bundle, summary
+
+    au_table = bundle.au_table.copy()
+    curve_table = bundle.curve_table.copy()
+    curve_points_table = bundle.curve_points_table.copy()
+
+    for row in au_table.itertuples(index=False):
+        if str(getattr(row, "tsa")).zfill(2) not in summary["matched_tsa_list"]:
+            continue
+        untreated_curve_id = int(getattr(row, "untreated_curve_id"))
+        species_map = _normalized_species_map_for_curve(
+            base_curve_id=untreated_curve_id,
+            curve_table=curve_table,
+            curve_points_table=curve_points_table,
+            curve_type_prefix="untreated_species_prop_",
+        )
+        if not species_map:
+            summary["skipped_aus"].append(
+                {
+                    "tsa": str(getattr(row, "tsa")).zfill(2),
+                    "au_id": int(getattr(row, "au_id")),
+                    "reason": "missing_untreated_species_proportions",
+                }
+            )
+            continue
+        broadleaf_share = sum(
+            value
+            for species_code, value in species_map.items()
+            if is_deciduous_species_code(species_code)
+        )
+        if broadleaf_share <= 0.0:
+            continue
+        max_share = max(species_map.values())
+        leaders = [
+            species_code
+            for species_code, value in species_map.items()
+            if abs(float(value) - float(max_share)) <= 1e-9
+        ]
+        if any(is_deciduous_species_code(species_code) for species_code in leaders):
+            continue
+        if not all(is_conifer_species_code(species_code) for species_code in leaders):
+            continue
+        conifer_shares = {
+            species_code: value
+            for species_code, value in species_map.items()
+            if is_conifer_species_code(species_code)
+        }
+        conifer_share = sum(conifer_shares.values())
+        if conifer_share <= 0.0:
+            continue
+
+        total_mask = curve_points_table["curve_id"] == untreated_curve_id
+        total_before = pd.to_numeric(
+            curve_points_table.loc[total_mask, "y"], errors="coerce"
+        ).fillna(0.0)
+        total_after = (total_before * float(conifer_share)).round(2)
+        removed_volume = round(float((total_before - total_after).sum()), 6)
+        curve_points_table.loc[total_mask, "y"] = total_after
+
+        normalized_conifer = _rounded_species_share_map(
+            {
+                species_code: float(value) / float(conifer_share)
+                for species_code, value in conifer_shares.items()
+            }
+        )
+        species_rows = curve_table.loc[
+            curve_table["curve_type"]
+            .astype(str)
+            .str.startswith("untreated_species_prop_")
+        ].copy()
+        species_rows["base_curve_id"] = (
+            pd.to_numeric(species_rows["curve_id"], errors="coerce")
+            .fillna(0)
+            .astype(int)
+            // 1000
+        )
+        species_rows = species_rows.loc[
+            species_rows["base_curve_id"] == untreated_curve_id
+        ]
+        for species_row in species_rows.itertuples(index=False):
+            species_code = (
+                str(getattr(species_row, "curve_type"))
+                .removeprefix("untreated_species_prop_")
+                .strip()
+                .upper()
+            )
+            if is_deciduous_species_code(species_code):
+                new_value = 0.0
+            else:
+                new_value = normalized_conifer.get(species_code, 0.0)
+            curve_points_table.loc[
+                curve_points_table["curve_id"] == int(getattr(species_row, "curve_id")),
+                "y",
+            ] = round(float(new_value), 6)
+
+        summary["adjusted_au_ids"].append(int(getattr(row, "au_id")))
+        summary["adjusted_aus"].append(
+            {
+                "tsa": str(getattr(row, "tsa")).zfill(2),
+                "au_id": int(getattr(row, "au_id")),
+                "stratum_code": str(getattr(row, "stratum_code")),
+                "si_level": str(getattr(row, "si_level")),
+                "untreated_curve_id": untreated_curve_id,
+                "leading_species_code": sorted(leaders)[0],
+                "broadleaf_share": round(float(broadleaf_share), 6),
+                "conifer_share": round(float(conifer_share), 6),
+                "untreated_volume_removed": removed_volume,
+            }
+        )
+        summary["total_untreated_volume_removed"] = round(
+            float(summary["total_untreated_volume_removed"]) + removed_volume,
+            6,
+        )
+        message_fn(
+            "yield assumption broadleaf_volume_exclusion adjusted "
+            f"tsa={str(getattr(row, 'tsa')).zfill(2)} au_id={int(getattr(row, 'au_id'))} "
+            f"broadleaf_share={round(float(broadleaf_share), 6)}"
+        )
+
+    summary["adjusted_au_count"] = len(summary["adjusted_au_ids"])
+    summary["status"] = "applied" if summary["adjusted_au_count"] > 0 else "no_changes"
+    adjusted_bundle = BundleAssemblyResult(
+        au_table=au_table,
+        curve_table=curve_table,
+        curve_points_table=curve_points_table,
+        missing_au_curve_mappings=bundle.missing_au_curve_mappings,
+    )
+    return adjusted_bundle, summary
+
+
 @contextmanager
 def _temporary_env(overrides: Mapping[str, str]) -> Any:
     previous: dict[str, str | None] = {}
@@ -380,11 +670,16 @@ def run_post_tipsy_bundle(
     managed_curve_y_scale: float | None = None,
     managed_curve_truncate_at_culm: bool | None = None,
     managed_curve_max_age: int | None = None,
+    yield_assumptions_path: Path | None = None,
     tipsy_output_filename_template: str = "04_output-tsa{tsa}.out",
 ) -> PostTipsyBundleResult:
     """Run downstream 01b + bundle assembly from cached TSA artifacts only."""
     normalized_tsa_list = [str(tsa).zfill(2) for tsa in tsa_list]
     resolved_repo_root = repo_root if repo_root is not None else Path.cwd()
+    resolved_yield_assumptions_path = _resolve_yield_assumptions_path(
+        explicit_path=yield_assumptions_path,
+        repo_root=resolved_repo_root,
+    )
 
     if run_01b_fn is None:
         filesystem_script_root = (
@@ -530,6 +825,14 @@ def run_post_tipsy_bundle(
         pd_module=pd,
         message_fn=message_fn,
     )
+    yield_assumptions_summary: dict[str, Any] | None = None
+    if resolved_yield_assumptions_path is not None:
+        bundle, yield_assumptions_summary = _apply_broadleaf_volume_exclusion_to_bundle(
+            bundle=bundle,
+            tsa_list=normalized_tsa_list,
+            assumptions_path=resolved_yield_assumptions_path,
+            message_fn=message_fn,
+        )
     write_bundle_tables(
         paths=bundle_paths,
         au_table=bundle.au_table,
@@ -546,6 +849,7 @@ def run_post_tipsy_bundle(
         au_table_path=bundle_paths.au_table,
         curve_table_path=bundle_paths.curve_table,
         curve_points_table_path=bundle_paths.curve_points_table,
+        yield_assumptions_summary=yield_assumptions_summary,
     )
 
 
@@ -594,6 +898,8 @@ def _build_post_tipsy_manifest_payload(
             "curve_table_path": str(result.curve_table_path),
             "curve_points_table_path": str(result.curve_points_table_path),
         }
+        if result.yield_assumptions_summary is not None:
+            outputs["yield_assumptions"] = result.yield_assumptions_summary
     return {
         "run_id": run_id,
         "run_uuid": run_uuid,
@@ -639,6 +945,7 @@ def run_post_tipsy_bundle_with_manifest(
     managed_curve_y_scale: float | None = None,
     managed_curve_truncate_at_culm: bool | None = None,
     managed_curve_max_age: int | None = None,
+    yield_assumptions_path: Path | None = None,
     tipsy_output_filename_template: str = "04_output-tsa{tsa}.out",
 ) -> PostTipsyBundleRunResult:
     """Run post-TIPSY downstream assembly and emit run-manifest metadata."""
@@ -682,6 +989,7 @@ def run_post_tipsy_bundle_with_manifest(
             managed_curve_y_scale=managed_curve_y_scale,
             managed_curve_truncate_at_culm=managed_curve_truncate_at_culm,
             managed_curve_max_age=managed_curve_max_age,
+            yield_assumptions_path=yield_assumptions_path,
             tipsy_output_filename_template=tipsy_output_filename_template,
         )
     except Exception as exc:
@@ -746,6 +1054,7 @@ def run_btc_and_post_tipsy_bundle_with_manifest(
     managed_curve_y_scale: float | None = None,
     managed_curve_truncate_at_culm: bool | None = None,
     managed_curve_max_age: int | None = None,
+    yield_assumptions_path: Path | None = None,
 ) -> BTCPostTipsyRunResult:
     """Run unattended BTC for selected TSAs, then resume downstream post-TIPSY bundling."""
     normalized_tsa_list = [str(tsa).zfill(2) for tsa in tsa_list]
@@ -798,6 +1107,7 @@ def run_btc_and_post_tipsy_bundle_with_manifest(
         managed_curve_y_scale=managed_curve_y_scale,
         managed_curve_truncate_at_culm=managed_curve_truncate_at_culm,
         managed_curve_max_age=managed_curve_max_age,
+        yield_assumptions_path=yield_assumptions_path,
         tipsy_output_filename_template="04_output-tsa{tsa}.csv",
     )
     return BTCPostTipsyRunResult(

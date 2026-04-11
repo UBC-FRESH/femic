@@ -629,6 +629,15 @@ TSR_THLB_LOCK_SCOPE_OPTION = typer.Option(
     ),
     show_default=True,
 )
+YIELD_ASSUMPTIONS_PATH_OPTION = typer.Option(
+    None,
+    "--yield-assumptions-path",
+    help=(
+        "Optional TSR yield-assumptions YAML path. Defaults to "
+        "`config/tsr/yield_assumptions.yaml` under the instance root when present."
+    ),
+    show_default=False,
+)
 TSR_OVERWRITE_OPTION = typer.Option(
     False,
     "--overwrite",
@@ -5276,10 +5285,14 @@ def tsa_post_tipsy(
     run_id: str | None = RUN_ID_OPTION,
     log_dir: Path = LOG_DIR_OPTION,
     run_config: Path | None = RUN_CONFIG_OPTION,
+    yield_assumptions_path: Path | None = YIELD_ASSUMPTIONS_PATH_OPTION,
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
     """Build post-TIPSY bundle tables for selected FMU/code targets."""
     instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    explicit_yield_assumptions_path = (
+        yield_assumptions_path if isinstance(yield_assumptions_path, Path) else None
+    )
     resolved_log_dir = instance_context.resolve_path(Path(log_dir))
     resolved_run_config = (
         instance_context.resolve_path(run_config) if run_config is not None else None
@@ -5348,6 +5361,18 @@ def tsa_post_tipsy(
         managed_curve_max_age=(
             run_profile.managed_curve_max_age if run_profile is not None else None
         ),
+        yield_assumptions_path=(
+            instance_context.resolve_path(explicit_yield_assumptions_path)
+            if explicit_yield_assumptions_path is not None
+            else (
+                instance_context.resolve_path(run_profile.yield_assumptions_path)
+                if (
+                    run_profile is not None
+                    and run_profile.yield_assumptions_path is not None
+                )
+                else None
+            )
+        ),
     )
     result = run_result.result
     console.print(
@@ -5368,6 +5393,7 @@ def tsa_btc_post_tipsy(
     run_id: str | None = RUN_ID_OPTION,
     log_dir: Path = LOG_DIR_OPTION,
     run_config: Path | None = RUN_CONFIG_OPTION,
+    yield_assumptions_path: Path | None = YIELD_ASSUMPTIONS_PATH_OPTION,
     btc_exe: Path | None = typer.Option(
         None,
         "--btc-exe",
@@ -5399,6 +5425,9 @@ def tsa_btc_post_tipsy(
 ) -> None:
     """Run unattended BTC for selected FMU/code targets, then resume post-TIPSY bundle assembly."""
     instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    explicit_yield_assumptions_path = (
+        yield_assumptions_path if isinstance(yield_assumptions_path, Path) else None
+    )
     resolved_log_dir = instance_context.resolve_path(Path(log_dir))
     resolved_run_config = (
         instance_context.resolve_path(run_config) if run_config is not None else None
@@ -5476,6 +5505,18 @@ def tsa_btc_post_tipsy(
         ),
         managed_curve_max_age=(
             run_profile.managed_curve_max_age if run_profile is not None else None
+        ),
+        yield_assumptions_path=(
+            instance_context.resolve_path(explicit_yield_assumptions_path)
+            if explicit_yield_assumptions_path is not None
+            else (
+                instance_context.resolve_path(run_profile.yield_assumptions_path)
+                if (
+                    run_profile is not None
+                    and run_profile.yield_assumptions_path is not None
+                )
+                else None
+            )
         ),
     )
     for btc_result in run_result.btc_results:

@@ -8594,9 +8594,75 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [ ] P52.6c Execute fragment-first TSR THLB reconstruction from reviewed recipe steps (`#131`).
   - [ ] P52.6d Add explicit end-of-workflow aspatial fallback for blocked TSR target-area steps (`#132`).
   - [x] P52.6e Document the reconstruction ladder and comparison contract (`#133`).
-  - [ ] P52.6f Model TSR Section 7.1.5 broadleaf volume exclusions in conifer-leading stands as a later yield-assumption lane, not a THLB area-netdown step (`#139`).
+  - [x] P52.6f Model TSR Section 7.1.5 broadleaf volume exclusions in conifer-leading stands as a later yield-assumption lane, not a THLB area-netdown step (`#139`).
+  - [x] P52.6f1 Add a narrow TSA29-first `yield_assumptions_path` seam to post-TIPSY / BTC-post-TIPSY CLI, run-profile, and workflow manifests.
+  - [x] P52.6f2 Apply TSA29 section 7.1.5 untreated broadleaf-volume exclusion inside the assembled bundle tables before writing `model_input_bundle`.
+  - [x] P52.6f3 Prove the bundle adjustment on TSA29 and keep THLB step 15 wording explicitly limited to broadleaf-leading area exclusion.
 
 ## Detailed Next Steps Notes
+
+- 2026-04-10 (Issue `#139` active: model TSA29 section `7.1.5`
+  broadleaf-volume exclusions as a later post-TIPSY yield assumption):
+  - Governing split:
+    - THLB step `015` stays exactly what TSA29 section `6.4.5` says it is:
+      exclude broadleaf-leading stands from THLB area;
+    - TSA29 section `7.1.5` is a separate later yield assumption, not a THLB
+      polygon-removal rule.
+  - Implementation plan for this slice:
+    - add one narrow `yield_assumptions_path` seam to `tsa post-tipsy`,
+      `tsa btc-post-tipsy`, and `modes.yield_assumptions_path`;
+    - default to `config/tsr/yield_assumptions.yaml` under the instance root
+      when present, otherwise do nothing;
+    - after `build_bundle_tables_from_curves(...)` and before
+      `write_bundle_tables(...)`, inspect untreated species-proportion sidecar
+      curves, identify conifer-leading untreated AUs with non-zero broadleaf
+      share, scale the untreated total curve by the conifer share, zero the
+      untreated broadleaf sidecars, and renormalize the remaining untreated
+      conifer sidecars to sum to `1.0`;
+    - leave treated curves untouched and keep the rule completely separate
+      from THLB step `015`;
+    - record adjusted AUs, broadleaf share used, total untreated volume
+      removed, and the config path in the post-TIPSY manifest.
+  - Acceptance target:
+    - rerun TSA29 `post-tipsy` / `btc-post-tipsy`, inspect the regenerated
+      bundle tables directly, and confirm only the intended untreated
+      conifer-leading mixed AUs changed while THLB step `015` notes still read
+      as broadleaf-leading area exclusion only.
+- 2026-04-10 (Issue `#139` implemented: TSA29 broadleaf-volume exclusions now
+  run in the post-TIPSY bundle lane instead of the THLB netdown lane):
+  - Added the narrow `yield_assumptions_path` seam to:
+    - `femic tsa post-tipsy`;
+    - `femic tsa btc-post-tipsy`; and
+    - `modes.yield_assumptions_path` in run-profile YAML.
+  - Default behavior now auto-loads `config/tsr/yield_assumptions.yaml` from
+    the instance root when it exists, otherwise post-TIPSY behaves exactly as
+    before.
+  - Implemented the TSA29 section `7.1.5` rule after bundle assembly and
+    before bundle-table write:
+    - detect conifer-leading untreated AUs from untreated species-proportion
+      sidecars;
+    - remove the broadleaf share from the untreated total curve;
+    - zero untreated broadleaf species-proportion sidecars; and
+    - renormalize the remaining untreated conifer sidecars to `1.0`.
+  - Manifest/report evidence now records:
+    - the assumptions config path;
+    - adjusted AU ids and stratum labels;
+    - untreated broadleaf/conifer shares; and
+    - total untreated volume removed.
+  - TSA29 proving-ground result:
+    - `femic tsa btc-post-tipsy --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --tsa 29 --run-id issue139_btc_post_tipsy_20260410a`
+      completed successfully;
+    - the broadleaf-volume rule adjusted `6` untreated AUs:
+      `IDF_FD H`, `SBPS_PL M`, `SBPS_PL H`, `SBPS_SX H`, `SBS_SX M`, and
+      `SBS_SX H`;
+    - manifest summary recorded `69,020.56` untreated volume removed; and
+    - a scratch no-assumption comparison confirmed the treated curves for all
+      adjusted AUs were unchanged while the untreated curves differed exactly
+      where expected.
+  - THLB boundary remained intact:
+    - TSA29 step `015` wording in `config/tsr/thlb_netdown.status.md` still
+      describes only the broadleaf-leading stand area exclusion and continues
+      to defer section `7.1.5` to the later yield-assumption lane.
 
 - 2026-04-06 (Issue `#140` opened: improve DWDS follow-up retrieval and
   artifact materialization after order submission):

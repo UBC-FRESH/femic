@@ -1,0 +1,4 @@
+rules:
+  - rule_type: broadleaf_volume_exclusion
+    tsa_list: ["29"]
+    scope: untreated_only

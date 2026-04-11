@@ -1092,6 +1092,7 @@ def test_load_pipeline_run_profile_from_yaml(tmp_path: Path) -> None:
                 "  managed_curve_y_scale: 1.2",
                 "  managed_curve_truncate_at_culm: true",
                 "  managed_curve_max_age: 300",
+                "  yield_assumptions_path: config/tsr/yield_assumptions.yaml",
                 "run:",
                 "  run_id: cfg001",
                 "  log_dir: vdyp_io/custom_logs",
@@ -1126,6 +1127,7 @@ def test_load_pipeline_run_profile_from_yaml(tmp_path: Path) -> None:
     assert profile.managed_curve_y_scale == pytest.approx(1.2)
     assert profile.managed_curve_truncate_at_culm is True
     assert profile.managed_curve_max_age == 300
+    assert profile.yield_assumptions_path == Path("config/tsr/yield_assumptions.yaml")
 
 
 def test_resolve_effective_run_options_merges_profile_and_cli() -> None:
@@ -1166,6 +1168,7 @@ def test_resolve_effective_run_options_merges_profile_and_cli() -> None:
     assert resolved.managed_curve_y_scale is None
     assert resolved.managed_curve_truncate_at_culm is None
     assert resolved.managed_curve_max_age is None
+    assert resolved.yield_assumptions_path is None
 
 
 def test_load_pipeline_run_profile_rejects_invalid_root_type(tmp_path: Path) -> None:
@@ -1243,6 +1246,7 @@ def test_build_legacy_execution_plan_resolves_env_and_paths(tmp_path: Path) -> N
         managed_curve_y_scale=1.2,
         managed_curve_truncate_at_culm=True,
         managed_curve_max_age=300,
+        yield_assumptions_path=Path("config/tsr/yield_assumptions.yaml"),
     )
 
     plan = build_legacy_execution_plan(

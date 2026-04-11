@@ -108,6 +108,7 @@ class PipelineRunConfig:
     managed_curve_y_scale: float | None = None
     managed_curve_truncate_at_culm: bool | None = None
     managed_curve_max_age: int | None = None
+    yield_assumptions_path: Path | None = None
     instance_root: Path | None = None
 
 
@@ -140,6 +141,7 @@ class PipelineRunProfile:
     managed_curve_y_scale: float | None = None
     managed_curve_truncate_at_culm: bool | None = None
     managed_curve_max_age: int | None = None
+    yield_assumptions_path: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -171,6 +173,7 @@ class EffectiveRunOptions:
     managed_curve_y_scale: float | None
     managed_curve_truncate_at_culm: bool | None
     managed_curve_max_age: int | None
+    yield_assumptions_path: Path | None
 
 
 @dataclass(frozen=True)
@@ -709,6 +712,10 @@ def load_pipeline_run_profile(config_path: Path) -> PipelineRunProfile:
             modes.get("managed_curve_max_age"),
             field_name="modes.managed_curve_max_age",
         ),
+        yield_assumptions_path=_normalize_optional_path(
+            modes.get("yield_assumptions_path"),
+            field_name="modes.yield_assumptions_path",
+        ),
         resume=_normalize_optional_bool(modes.get("resume"), field_name="modes.resume"),
         dry_run=_normalize_optional_bool(
             modes.get("dry_run"), field_name="modes.dry_run"
@@ -784,6 +791,7 @@ def resolve_effective_run_options(
         managed_curve_y_scale=active_profile.managed_curve_y_scale,
         managed_curve_truncate_at_culm=active_profile.managed_curve_truncate_at_culm,
         managed_curve_max_age=active_profile.managed_curve_max_age,
+        yield_assumptions_path=active_profile.yield_assumptions_path,
     )
 
 
@@ -832,6 +840,7 @@ def build_pipeline_run_config(
     managed_curve_y_scale: float | None = None,
     managed_curve_truncate_at_culm: bool | None = None,
     managed_curve_max_age: int | None = None,
+    yield_assumptions_path: Path | None = None,
     instance_root: Path | None = None,
 ) -> PipelineRunConfig:
     """Create normalized pipeline run configuration from CLI inputs."""
@@ -861,6 +870,9 @@ def build_pipeline_run_config(
         managed_curve_y_scale=managed_curve_y_scale,
         managed_curve_truncate_at_culm=managed_curve_truncate_at_culm,
         managed_curve_max_age=managed_curve_max_age,
+        yield_assumptions_path=(
+            Path(yield_assumptions_path) if yield_assumptions_path is not None else None
+        ),
         instance_root=Path(instance_root) if instance_root is not None else None,
     )
 

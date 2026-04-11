@@ -13348,3 +13348,47 @@
     - supporting CLI, recipe, docs, and test coverage.
   - With `#133` and `#137` no longer cluttering the queue and `#131` parked,
     the clean next active modeling slice is `#139`.
+- 2026-04-10: Implemented issue `#139` as a later post-TIPSY yield assumption
+  instead of a THLB netdown rule.
+  - Added the narrow `yield_assumptions_path` seam to:
+    - `femic tsa post-tipsy`;
+    - `femic tsa btc-post-tipsy`; and
+    - `modes.yield_assumptions_path` in run-profile YAML.
+  - Default post-TIPSY behavior now auto-loads
+    `config/tsr/yield_assumptions.yaml` from the instance root when present,
+    otherwise no later yield adjustment is applied.
+  - In `src/femic/workflows/legacy.py`, after
+    `build_bundle_tables_from_curves(...)` and before `write_bundle_tables(...)`,
+    added the TSA29 section `7.1.5` untreated broadleaf-volume exclusion:
+    - identify conifer-leading untreated AUs from untreated species-proportion
+      sidecars;
+    - scale the untreated total curve by the untreated conifer share;
+    - zero untreated broadleaf species-proportion curves; and
+    - renormalize the remaining untreated conifer sidecars to sum to `1.0`.
+  - Added manifest/audit visibility for:
+    - assumptions config path;
+    - adjusted AU ids and stratum labels;
+    - untreated broadleaf/conifer shares; and
+    - total untreated volume removed.
+  - Added the instance/template config surface:
+    - `src/femic/resources/instance/config/tsr/yield_assumptions.yaml`
+    - `external/femic-tsa29-instance/config/tsr/yield_assumptions.yaml`
+  - Updated:
+    - `docs/guides/stage-01b-post-tipsy.rst`
+    - `docs/reference/run-config.rst`
+    - `docs/reference/cli.rst`
+    - run-profile templates/examples
+  - Extended tests for:
+    - run-profile loading;
+    - post-TIPSY workflow behavior and manifest outputs;
+    - CLI wiring for `post-tipsy` / `btc-post-tipsy`.
+  - TSA29 proving-ground result:
+    - `femic tsa btc-post-tipsy --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --tsa 29 --run-id issue139_btc_post_tipsy_20260410a`
+      completed successfully;
+    - the rule adjusted `6` untreated AUs and recorded
+      `69,020.56` untreated volume removed in the manifest; and
+    - a scratch no-assumption comparison confirmed treated curves were
+      unchanged for those AUs while the untreated curves differed as intended.
+  - THLB step `015` wording remained unchanged: it still describes only the
+    broadleaf-leading area exclusion and continues to defer section `7.1.5` to
+    the later yield-assumption lane.
