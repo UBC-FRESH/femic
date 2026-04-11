@@ -461,6 +461,14 @@ The current scriptable milestone is:
 9. ``femic tsr thlb-netdown-run``
 10. ``femic tsr thlb-netdown-workbench-lock``
 11. ``femic tsr overlay-init`` / ``overlay-report``
+12. ``femic tsr thlb-reconstruction-compare`` when you need a plain-language
+    strict-vs-reviewed-vs-TSR gap inventory from the current artifacts without
+    rerunning THLB execution.
+
+   .. code-block:: bash
+
+      python -m femic tsr thlb-reconstruction-compare \
+        --instance-root external/femic-tsa29-instance
 
 That chain is already a valid, reproducible TSA29 runbook.
 

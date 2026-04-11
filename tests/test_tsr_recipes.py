@@ -976,6 +976,9 @@ def test_thlb_status_report_prefers_parent_steps_when_present() -> None:
         step_count=1,
         generated_utc="2026-04-05T20:34:26Z",
         runtime_report_relative_path="runtime/logs/tsr/example.md",
+        reconstruction_comparison_markdown_relative_path=(
+            "config/tsr/thlb_reconstruction_comparison.md"
+        ),
         applied_steps=recipe.steps,
         diagnostic_steps=[
             {
@@ -1032,6 +1035,10 @@ def test_thlb_status_report_prefers_parent_steps_when_present() -> None:
     assert "Intersect the working land base" in markdown
     assert "AFLB lock state: `locked`" in markdown
     assert "frozen status report" in markdown
+    assert (
+        "Reconstruction comparison: `config/tsr/thlb_reconstruction_comparison.md`"
+        in markdown
+    )
     assert "Active user overrides:" in markdown
     assert "`None`" not in markdown
     assert "candidate fields" in markdown
@@ -1160,6 +1167,241 @@ def test_thlb_recipe_build_report_uses_parent_steps_and_stage_counts() -> None:
     assert "`GLB -> AFLB`: `1`" in markdown
     assert "candidate fields" in markdown
     assert "Current compiled status summary" in markdown
+
+
+def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> None:
+    recipe = tsr_recipes.TsrThlbNetdownRecipeRecord(
+        schema_version=1,
+        recipe_kind="thlb_netdown",
+        tsa=tsr_catalog.TsrOverlayTsaRecord(
+            tsa_id="tsa_29",
+            tsa_code="29",
+            tsa_name="Williams Lake",
+        ),
+        canonical_inputs=tsr_catalog.TsrRecipeCanonicalInputs(
+            registry_path="metadata/tsr/tsa_registry.json",
+            documents_path="metadata/tsr/tsa_documents.json",
+            candidate_facts_path="metadata/tsr/tsa_candidate_facts.json",
+        ),
+        instance_inputs=tsr_catalog.TsrThlbNetdownRecipeInstanceInputs(
+            overlay_path="config/tsr/overlay.yaml",
+            source_layer_recipe_path="config/tsr/source_layers.recipe.yaml",
+            source_layer_overrides_path="config/tsr/source_layer_overrides.yaml",
+        ),
+        recipe_contract={},
+        parent_steps=(
+            {
+                "parent_step_id": "thlb_parent_001_total_tsa_area",
+                "parent_label": "Total TSA area",
+                "parent_kind": "milestone",
+                "row_order": 1,
+                "land_base_stage": "reference_target",
+                "stage_label": "Reference targets",
+                "benchmark_cumulative_area_ha": 1000.0,
+            },
+            {
+                "parent_step_id": "thlb_parent_002_land_not_administered",
+                "parent_label": "Land not administered",
+                "parent_kind": "transformation",
+                "row_order": 2,
+                "land_base_stage": "glb_to_aflb",
+                "stage_label": "GLB -> AFLB",
+                "benchmark_marginal_area_ha": 200.0,
+                "benchmark_cumulative_area_ha": 800.0,
+                "last_notebook_run_status": "applied",
+                "last_removed_area_ha": 210.0,
+                "last_remaining_area_ha": 790.0,
+            },
+            {
+                "parent_step_id": "thlb_parent_003_reviewed_bridge",
+                "parent_label": "Reviewed bridge",
+                "parent_kind": "transformation",
+                "row_order": 3,
+                "land_base_stage": "aflb_to_lhlb",
+                "stage_label": "AFLB -> LHLB",
+                "benchmark_marginal_area_ha": 120.0,
+                "benchmark_cumulative_area_ha": 680.0,
+                "last_notebook_run_status": "applied",
+                "last_removed_area_ha": 125.0,
+                "last_remaining_area_ha": 665.0,
+            },
+            {
+                "parent_step_id": "thlb_parent_004_strict_overcut",
+                "parent_label": "Strict overcut",
+                "parent_kind": "transformation",
+                "row_order": 4,
+                "land_base_stage": "aflb_to_lhlb",
+                "stage_label": "AFLB -> LHLB",
+                "benchmark_marginal_area_ha": 75.0,
+                "benchmark_cumulative_area_ha": 605.0,
+                "last_notebook_run_status": "applied",
+                "last_removed_area_ha": 70.0,
+                "last_remaining_area_ha": 595.0,
+            },
+            {
+                "parent_step_id": "thlb_parent_005_strict_undercut",
+                "parent_label": "Strict undercut",
+                "parent_kind": "transformation",
+                "row_order": 5,
+                "land_base_stage": "lhlb_to_thlb",
+                "stage_label": "LHLB -> THLB",
+                "benchmark_marginal_area_ha": 300.0,
+                "benchmark_cumulative_area_ha": 305.0,
+                "last_notebook_run_status": "applied",
+                "last_removed_area_ha": 300.0,
+                "last_remaining_area_ha": 295.0,
+            },
+            {
+                "parent_step_id": "thlb_parent_006_manual_override",
+                "parent_label": "Manual override",
+                "parent_kind": "transformation",
+                "row_order": 6,
+                "land_base_stage": "lhlb_to_thlb",
+                "stage_label": "LHLB -> THLB",
+                "benchmark_marginal_area_ha": 90.0,
+                "benchmark_cumulative_area_ha": 215.0,
+                "last_notebook_run_status": "applied_noop",
+                "last_removed_area_ha": 0.0,
+                "last_remaining_area_ha": 295.0,
+                "approval_scope": "user-directed calibrated skip",
+                "compiled_logic": [
+                    {
+                        "step_id": "compiled_override_01",
+                        "compiled_operation_type": "no_deduction",
+                    }
+                ],
+            },
+            {
+                "parent_step_id": "thlb_parent_007_aspatial_bridge",
+                "parent_label": "Aspatial bridge",
+                "parent_kind": "transformation",
+                "row_order": 7,
+                "land_base_stage": "lhlb_to_thlb",
+                "stage_label": "LHLB -> THLB",
+                "benchmark_marginal_area_ha": 50.0,
+                "benchmark_cumulative_area_ha": 165.0,
+                "last_notebook_run_status": "applied",
+                "last_removed_area_ha": 45.0,
+                "last_remaining_area_ha": 250.0,
+            },
+            {
+                "parent_step_id": "thlb_parent_008_blocked_source",
+                "parent_label": "Blocked source",
+                "parent_kind": "transformation",
+                "row_order": 8,
+                "land_base_stage": "lhlb_to_thlb",
+                "stage_label": "LHLB -> THLB",
+                "benchmark_marginal_area_ha": 40.0,
+                "benchmark_cumulative_area_ha": 125.0,
+                "last_notebook_run_status": "blocked_missing_source",
+                "last_removed_area_ha": None,
+                "last_remaining_area_ha": None,
+            },
+        ),
+        steps=(),
+    )
+    reconstructed_audit_payload = {
+        "final_managed_area_ha": 100.0,
+        "tsr_reported_thlb_area_ha": 1000.0,
+        "steps": [
+            {
+                "step_id": "compiled_002",
+                "parent_step_id": "thlb_parent_002_land_not_administered",
+                "affected_area_ha": 205.0,
+                "run_status": "applied",
+                "spatial_application_mode": "fragment_overlay",
+            },
+            {
+                "step_id": "compiled_004",
+                "parent_step_id": "thlb_parent_004_strict_overcut",
+                "affected_area_ha": 200.0,
+                "run_status": "applied",
+                "spatial_application_mode": "fragment_overlay",
+            },
+            {
+                "step_id": "compiled_005",
+                "parent_step_id": "thlb_parent_005_strict_undercut",
+                "affected_area_ha": 101.0,
+                "run_status": "applied",
+                "spatial_application_mode": "fragment_overlay",
+            },
+            {
+                "step_id": "compiled_007",
+                "parent_step_id": "thlb_parent_007_aspatial_bridge",
+                "affected_area_ha": 48.0,
+                "run_status": "applied",
+                "spatial_application_mode": "aspatial_fallback",
+            },
+            {
+                "step_id": "compiled_008",
+                "parent_step_id": "thlb_parent_008_blocked_source",
+                "affected_area_ha": 0.0,
+                "run_status": "blocked_missing_source",
+                "spatial_application_mode": "blocked_exact_overlay",
+            },
+        ],
+    }
+
+    payload = tsr_recipes._build_tsr_thlb_reconstruction_comparison_payload(
+        recipe=recipe,
+        reconstructed_audit_payload=reconstructed_audit_payload,
+        recipe_relative_path="config/tsr/thlb_netdown.recipe.yaml",
+        reviewed_status_relative_path="config/tsr/thlb_netdown.status.md",
+        reconstructed_audit_relative_path="config/tsr/thlb_reconstructed.audit.json",
+        comparison_markdown_relative_path="config/tsr/thlb_reconstruction_comparison.md",
+        comparison_json_relative_path="config/tsr/thlb_reconstruction_comparison.json",
+    )
+    entries_by_id = {
+        str(item["parent_step_id"]): item
+        for item in payload["entries"]
+        if isinstance(item, dict)
+    }
+
+    assert payload["strict_vs_tsr_delta_ha"] == pytest.approx(-900.0)
+    assert payload["reviewed_vs_tsr_delta_ha"] == pytest.approx(-750.0)
+    assert (
+        entries_by_id["thlb_parent_001_total_tsa_area"]["comparison_bucket"]
+        == "not_comparable"
+    )
+    assert (
+        entries_by_id["thlb_parent_002_land_not_administered"]["comparison_bucket"]
+        == "close_match"
+    )
+    assert (
+        entries_by_id["thlb_parent_003_reviewed_bridge"]["comparison_bucket"]
+        == "reviewed_bridge_only"
+    )
+    assert (
+        entries_by_id["thlb_parent_004_strict_overcut"]["comparison_bucket"]
+        == "strict_overcut_candidate"
+    )
+    assert (
+        entries_by_id["thlb_parent_005_strict_undercut"]["comparison_bucket"]
+        == "strict_undercut_candidate"
+    )
+    assert (
+        entries_by_id["thlb_parent_006_manual_override"]["comparison_bucket"]
+        == "manual_or_reviewed_override"
+    )
+    assert (
+        entries_by_id["thlb_parent_007_aspatial_bridge"]["comparison_bucket"]
+        == "aspatial_bridge_difference"
+    )
+    assert (
+        entries_by_id["thlb_parent_008_blocked_source"]["comparison_bucket"]
+        == "blocked_or_missing_source"
+    )
+
+    markdown = tsr_recipes._build_tsr_thlb_reconstruction_comparison_markdown(
+        recipe=recipe,
+        comparison_payload=payload,
+    )
+
+    assert "THLB Reconstruction Comparison" in markdown
+    assert "Top 5 Parent-Step Contributors" in markdown
+    assert "Strict vs TSR delta" in markdown
+    assert "strict_overcut_candidate" in markdown
+    assert "reviewed bridge" in markdown.casefold()
 
 
 def test_merge_preserved_thlb_parent_step_metadata_keeps_approved_review_logic() -> (

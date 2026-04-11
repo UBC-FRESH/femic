@@ -100,6 +100,16 @@ _THLB_WARMSTART_STATUSES = {
     _THLB_WARMSTART_STATUS_MANUAL_OR_ASPATIAL,
     _THLB_WARMSTART_STATUS_NO_PATTERN_MATCH,
 }
+_THLB_RECONSTRUCTION_COMPARISON_BUCKETS = (
+    "close_match",
+    "reviewed_bridge_only",
+    "strict_overcut_candidate",
+    "strict_undercut_candidate",
+    "blocked_or_missing_source",
+    "manual_or_reviewed_override",
+    "aspatial_bridge_difference",
+    "not_comparable",
+)
 _THLB_JUNK_FRAGMENTS = {
     "stands",
     "forest stands",
@@ -532,6 +542,18 @@ class TsrThlbWarmstartBuildResult:
 
 
 @dataclass(frozen=True)
+class TsrThlbReconstructionComparisonBuildResult:
+    """Summary of one strict-vs-reviewed THLB comparison build pass."""
+
+    recipe_path: Path
+    markdown_path: Path
+    json_path: Path
+    tsa: TsrOverlayTsaRecord
+    parent_step_count: int
+    comparison_bucket_counts: dict[str, int]
+
+
+@dataclass(frozen=True)
 class TsrThlbParentStepRunResult:
     """Summary of one notebook-safe THLB parent-step execution pass."""
 
@@ -877,6 +899,32 @@ def default_tsr_thlb_warmstart_yaml_path(*, instance_root: Path) -> Path:
 
     return (
         instance_root.expanduser().resolve() / "config" / "tsr" / "thlb_warmstart.yaml"
+    )
+
+
+def default_tsr_thlb_reconstruction_comparison_markdown_path(
+    *, instance_root: Path
+) -> Path:
+    """Return the default strict-vs-reviewed THLB comparison Markdown path."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "config"
+        / "tsr"
+        / "thlb_reconstruction_comparison.md"
+    )
+
+
+def default_tsr_thlb_reconstruction_comparison_json_path(
+    *, instance_root: Path
+) -> Path:
+    """Return the default strict-vs-reviewed THLB comparison JSON path."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "config"
+        / "tsr"
+        / "thlb_reconstruction_comparison.json"
     )
 
 
@@ -8223,6 +8271,7 @@ def _build_tsr_thlb_status_report_markdown(
     generated_utc: str,
     runtime_report_relative_path: str,
     warmstart_markdown_relative_path: str | None = None,
+    reconstruction_comparison_markdown_relative_path: str | None = None,
     applied_steps: Sequence[dict[str, Any]],
     diagnostic_steps: Sequence[dict[str, Any]],
     source_entry_map: dict[str, dict[str, Any]],
@@ -8307,6 +8356,12 @@ def _build_tsr_thlb_status_report_markdown(
             f"- Warm-start checklist: `{warmstart_markdown_relative_path}`"
             if warmstart_markdown_relative_path
             else "- Warm-start checklist: `not generated yet`"
+        ),
+        (
+            "- Reconstruction comparison: "
+            f"`{reconstruction_comparison_markdown_relative_path}`"
+            if reconstruction_comparison_markdown_relative_path
+            else "- Reconstruction comparison: `not generated yet`"
         ),
         "",
         "## Review Dashboard",
@@ -11051,6 +11106,741 @@ def build_tsr_thlb_warmstart(
     )
 
 
+def _normalize_float_or_none(value: Any) -> float | None:
+    try:
+        if value is None or value == "":
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _resolve_reviewed_thlb_remaining_area_ha(
+    recipe: TsrThlbNetdownRecipeRecord,
+) -> float | None:
+    candidates: list[tuple[int, float]] = []
+    for parent_step in recipe.parent_steps:
+        remaining_area_ha = _normalize_float_or_none(
+            parent_step.get("last_remaining_area_ha")
+        )
+        if remaining_area_ha is None:
+            continue
+        candidates.append(
+            (int(parent_step.get("row_order", 0) or 0), remaining_area_ha)
+        )
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _aggregate_reconstructed_parent_step_results(
+    audit_payload: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
+    aggregated: dict[str, dict[str, Any]] = {}
+    raw_steps = audit_payload.get("steps", ())
+    if not isinstance(raw_steps, list):
+        return aggregated
+    for raw_step in raw_steps:
+        if not isinstance(raw_step, dict):
+            continue
+        parent_step_id = str(raw_step.get("parent_step_id", "")).strip()
+        if not parent_step_id:
+            continue
+        record = aggregated.setdefault(
+            parent_step_id,
+            {
+                "reconstructed_removed_area_ha": 0.0,
+                "statuses": set(),
+                "spatial_modes": set(),
+                "step_ids": [],
+                "notes": [],
+            },
+        )
+        record["reconstructed_removed_area_ha"] += (
+            _normalize_float_or_none(raw_step.get("affected_area_ha")) or 0.0
+        )
+        run_status = str(
+            raw_step.get("run_status", raw_step.get("step_status", ""))
+        ).strip()
+        if run_status:
+            status_set = record["statuses"]
+            if isinstance(status_set, set):
+                status_set.add(run_status)
+        spatial_application_mode = str(
+            raw_step.get("spatial_application_mode", "")
+        ).strip()
+        if spatial_application_mode:
+            mode_set = record["spatial_modes"]
+            if isinstance(mode_set, set):
+                mode_set.add(spatial_application_mode)
+        step_id = str(raw_step.get("step_id", "")).strip()
+        if step_id:
+            step_ids = record["step_ids"]
+            if isinstance(step_ids, list) and step_id not in step_ids:
+                step_ids.append(step_id)
+        notes = record["notes"]
+        if isinstance(notes, list):
+            for raw_note in raw_step.get("notes", ()):
+                note_text = str(raw_note).strip()
+                if note_text and note_text not in notes:
+                    notes.append(note_text)
+    for record in aggregated.values():
+        statuses = sorted(
+            value for value in record.get("statuses", set()) if isinstance(value, str)
+        )
+        spatial_modes = sorted(
+            value
+            for value in record.get("spatial_modes", set())
+            if isinstance(value, str)
+        )
+        if "blocked_exact_overlay" in spatial_modes:
+            reconstructed_status = "blocked_exact_overlay"
+        elif "aspatial_fallback" in spatial_modes:
+            reconstructed_status = "aspatial_fallback"
+        elif "fragment_overlay" in spatial_modes:
+            reconstructed_status = "fragment_overlay"
+        elif statuses:
+            reconstructed_status = "+".join(statuses)
+        else:
+            reconstructed_status = "not_executed"
+        record["reconstructed_status"] = reconstructed_status
+        record["statuses"] = statuses
+        record["spatial_modes"] = spatial_modes
+        record["reconstructed_removed_area_ha"] = float(
+            record.get("reconstructed_removed_area_ha", 0.0) or 0.0
+        )
+    return aggregated
+
+
+def _parent_step_has_reviewed_override(parent_step: dict[str, Any]) -> bool:
+    approval_scope = str(parent_step.get("approval_scope", "")).strip().casefold()
+    approval_note = str(parent_step.get("approval_note", "")).strip().casefold()
+    ratchet_note = str(parent_step.get("ratchet_note", "")).strip().casefold()
+    compiled_logic = [
+        dict(item)
+        for item in parent_step.get("compiled_logic", ())
+        if isinstance(item, dict)
+    ]
+    compiled_operations = {
+        str(item.get("compiled_operation_type", item.get("operation_type", "")))
+        .strip()
+        .casefold()
+        for item in compiled_logic
+        if str(
+            item.get("compiled_operation_type", item.get("operation_type", ""))
+        ).strip()
+    }
+    override_fragments = (
+        "skip",
+        "calibrat",
+        "bridge",
+        "user-directed",
+        "user directed",
+        "no-op",
+        "no_deduction",
+    )
+    text_surface = " ".join((approval_scope, approval_note, ratchet_note))
+    if any(fragment in text_surface for fragment in override_fragments):
+        return True
+    return "no_deduction" in compiled_operations
+
+
+def _comparison_difference_threshold(*values: float | None) -> float:
+    reference = max(
+        (abs(value) for value in values if value is not None),
+        default=0.0,
+    )
+    return max(100.0, reference * 0.05)
+
+
+def _comparison_actionability(bucket: str) -> str:
+    mapping = {
+        "close_match": "No immediate action; keep this as a reference step.",
+        "reviewed_bridge_only": (
+            "Decide whether the reviewed bridge should stay an accepted difference or be "
+            "translated into strict semantics."
+        ),
+        "strict_overcut_candidate": (
+            "Inspect strict source inputs and exact logic first; this step may be "
+            "cutting more area than the reviewed lane intended."
+        ),
+        "strict_undercut_candidate": (
+            "Inspect missing strict semantics, missing source layers, or reviewed bridge "
+            "logic the strict lane does not yet share."
+        ),
+        "blocked_or_missing_source": (
+            "Acquire or repair the missing source/blocked seam before treating this as a "
+            "real strict comparison."
+        ),
+        "manual_or_reviewed_override": (
+            "Review the accepted reviewed override before changing the strict lane."
+        ),
+        "aspatial_bridge_difference": (
+            "Decide whether this documented aspatial fallback should remain a bridge or "
+            "be replaced by exact spatial logic later."
+        ),
+        "not_comparable": "Reference/context row only; no direct corrective action.",
+    }
+    return mapping.get(bucket, "Inspect manually.")
+
+
+def _classify_thlb_reconstruction_gap_entry(
+    *,
+    parent_step: dict[str, Any],
+    benchmark_marginal_area_ha: float | None,
+    reconstructed_removed_area_ha: float | None,
+    reviewed_removed_area_ha: float | None,
+    reconstructed_status: str,
+    reconstructed_spatial_modes: Sequence[str],
+) -> tuple[str, str]:
+    if str(parent_step.get("parent_kind", "")).strip() == "milestone":
+        return (
+            "not_comparable",
+            "This is a backbone/reference row, so there is no direct removal comparison.",
+        )
+    if "blocked" in reconstructed_status or "missing_source" in reconstructed_status:
+        return (
+            "blocked_or_missing_source",
+            "The strict lane is still blocked here, so the area gap is not yet a clean "
+            "modeling comparison.",
+        )
+    if "aspatial_fallback" in reconstructed_spatial_modes:
+        return (
+            "aspatial_bridge_difference",
+            "The strict lane used a documented aspatial fallback here instead of exact "
+            "spatial reproduction.",
+        )
+    if _parent_step_has_reviewed_override(parent_step):
+        return (
+            "manual_or_reviewed_override",
+            "The reviewed lane is carrying an accepted override, skip, calibration, or "
+            "no-op choice that the strict lane does not automatically share.",
+        )
+    threshold = _comparison_difference_threshold(
+        benchmark_marginal_area_ha,
+        reconstructed_removed_area_ha,
+        reviewed_removed_area_ha,
+    )
+    strict_value = (
+        reconstructed_removed_area_ha
+        if reconstructed_removed_area_ha is not None
+        else 0.0
+    )
+    if reviewed_removed_area_ha is None and strict_value <= threshold:
+        return (
+            "not_comparable",
+            "No reviewed removal was recorded for this parent step, so there is not yet a "
+            "stable strict-vs-reviewed area comparison.",
+        )
+    if reviewed_removed_area_ha is None and strict_value > threshold:
+        return (
+            "strict_overcut_candidate",
+            "The strict lane removed material area here while the reviewed lane did not "
+            "record a comparable removal.",
+        )
+    reviewed_value = reviewed_removed_area_ha or 0.0
+    delta = strict_value - reviewed_value
+    if abs(delta) <= threshold:
+        return (
+            "close_match",
+            "The strict and reviewed lanes are close enough here that this parent step "
+            "does not look like a major driver of the remaining gap.",
+        )
+    if reviewed_value > threshold and strict_value <= threshold:
+        return (
+            "reviewed_bridge_only",
+            "The reviewed lane removed material area here, but the strict lane did not "
+            "produce a comparable removal.",
+        )
+    if delta > 0.0:
+        return (
+            "strict_overcut_candidate",
+            "The strict lane is removing materially more area than the reviewed lane here.",
+        )
+    return (
+        "strict_undercut_candidate",
+        "The strict lane is removing materially less area than the reviewed lane here.",
+    )
+
+
+def _build_tsr_thlb_reconstruction_comparison_payload(
+    *,
+    recipe: TsrThlbNetdownRecipeRecord,
+    reconstructed_audit_payload: dict[str, Any],
+    recipe_relative_path: str,
+    reviewed_status_relative_path: str,
+    reconstructed_audit_relative_path: str,
+    comparison_markdown_relative_path: str,
+    comparison_json_relative_path: str,
+) -> dict[str, Any]:
+    reconstructed_parent_map = _aggregate_reconstructed_parent_step_results(
+        reconstructed_audit_payload
+    )
+    milestones, parent_stage_groups = _parent_steps_grouped_by_stage(recipe)
+    entries: list[dict[str, Any]] = []
+    for parent_step in recipe.parent_steps:
+        item = dict(parent_step)
+        parent_step_id = str(item.get("parent_step_id", "")).strip()
+        reconstructed_entry = reconstructed_parent_map.get(parent_step_id, {})
+        benchmark_marginal_area_ha = _normalize_float_or_none(
+            item.get("benchmark_marginal_area_ha")
+        )
+        benchmark_cumulative_area_ha = _normalize_float_or_none(
+            item.get("benchmark_cumulative_area_ha")
+        )
+        reviewed_removed_area_ha = _normalize_float_or_none(
+            item.get("last_removed_area_ha")
+        )
+        reconstructed_removed_area_ha = _normalize_float_or_none(
+            reconstructed_entry.get("reconstructed_removed_area_ha")
+        )
+        reviewed_status = str(
+            item.get("last_notebook_run_status", "")
+        ).strip() or _infer_thlb_parent_step_ratchet_state(item)
+        reconstructed_status = str(
+            reconstructed_entry.get("reconstructed_status", "not_executed")
+        ).strip()
+        reconstructed_spatial_modes = tuple(
+            str(value).strip()
+            for value in reconstructed_entry.get("spatial_modes", ())
+            if str(value).strip()
+        )
+        comparison_bucket, plain_language_reason = (
+            _classify_thlb_reconstruction_gap_entry(
+                parent_step=item,
+                benchmark_marginal_area_ha=benchmark_marginal_area_ha,
+                reconstructed_removed_area_ha=reconstructed_removed_area_ha,
+                reviewed_removed_area_ha=reviewed_removed_area_ha,
+                reconstructed_status=reconstructed_status,
+                reconstructed_spatial_modes=reconstructed_spatial_modes,
+            )
+        )
+        supporting_notes: list[str] = []
+        if reconstructed_spatial_modes:
+            supporting_notes.append(
+                "strict spatial modes: "
+                + ", ".join(f"`{value}`" for value in reconstructed_spatial_modes)
+            )
+        reconstructed_step_ids = tuple(
+            str(value).strip()
+            for value in reconstructed_entry.get("step_ids", ())
+            if str(value).strip()
+        )
+        if reconstructed_step_ids:
+            supporting_notes.append(
+                "strict compiled steps: "
+                + ", ".join(f"`{value}`" for value in reconstructed_step_ids)
+            )
+        approval_scope = str(item.get("approval_scope", "")).strip()
+        if approval_scope:
+            supporting_notes.append(f"reviewed approval scope: `{approval_scope}`")
+        ratchet_state = _infer_thlb_parent_step_ratchet_state(item)
+        supporting_notes.append(f"reviewed ratchet state: `{ratchet_state}`")
+        for raw_note in reconstructed_entry.get("notes", ()):
+            note_text = str(raw_note).strip()
+            if note_text:
+                supporting_notes.append(f"strict note: {note_text}")
+        entries.append(
+            {
+                "parent_step_id": parent_step_id,
+                "parent_label": str(item.get("parent_label", "")).strip(),
+                "row_order": int(item.get("row_order", 0) or 0),
+                "parent_kind": str(item.get("parent_kind", "")).strip(),
+                "land_base_stage": str(item.get("land_base_stage", "")).strip(),
+                "stage_label": str(
+                    item.get(
+                        "stage_label",
+                        _stage_header_text(str(item.get("land_base_stage", ""))),
+                    )
+                ).strip(),
+                "benchmark_marginal_area_ha": benchmark_marginal_area_ha,
+                "benchmark_cumulative_area_ha": benchmark_cumulative_area_ha,
+                "reconstructed_removed_area_ha": reconstructed_removed_area_ha,
+                "reviewed_removed_area_ha": reviewed_removed_area_ha,
+                "reconstructed_status": reconstructed_status,
+                "reviewed_status": reviewed_status,
+                "comparison_bucket": comparison_bucket,
+                "plain_language_reason": plain_language_reason,
+                "actionability": _comparison_actionability(comparison_bucket),
+                "supporting_notes": supporting_notes,
+            }
+        )
+    bucket_counts = Counter(
+        str(item.get("comparison_bucket", "")).strip()
+        for item in entries
+        if str(item.get("comparison_bucket", "")).strip()
+    )
+    reviewed_final_managed_area_ha = _resolve_reviewed_thlb_remaining_area_ha(recipe)
+    reconstructed_final_managed_area_ha = _normalize_float_or_none(
+        reconstructed_audit_payload.get("final_managed_area_ha")
+    )
+    tsr_reported_thlb_area_ha = _normalize_float_or_none(
+        reconstructed_audit_payload.get("tsr_reported_thlb_area_ha")
+    )
+
+    def _parent_gap_delta(entry: dict[str, Any]) -> float:
+        reviewed_reference = _normalize_float_or_none(
+            entry.get("reviewed_removed_area_ha")
+        )
+        if reviewed_reference is None:
+            reviewed_reference = _normalize_float_or_none(
+                entry.get("benchmark_marginal_area_ha")
+            )
+        reconstructed_value = (
+            _normalize_float_or_none(entry.get("reconstructed_removed_area_ha")) or 0.0
+        )
+        return reconstructed_value - (reviewed_reference or 0.0)
+
+    top_gap_parent_steps = sorted(
+        [
+            item
+            for item in entries
+            if str(item.get("parent_kind", "")).strip() != "milestone"
+        ],
+        key=lambda item: abs(_parent_gap_delta(item)),
+        reverse=True,
+    )[:5]
+    return {
+        "generated_utc": datetime.now(UTC).isoformat(),
+        "artifact_kind": "thlb_reconstruction_comparison",
+        "tsa": recipe.tsa.to_dict(),
+        "recipe_path": recipe_relative_path,
+        "reviewed_status_path": reviewed_status_relative_path,
+        "reconstructed_audit_path": reconstructed_audit_relative_path,
+        "comparison_markdown_path": comparison_markdown_relative_path,
+        "comparison_json_path": comparison_json_relative_path,
+        "reconstructed_final_managed_area_ha": reconstructed_final_managed_area_ha,
+        "reviewed_final_managed_area_ha": reviewed_final_managed_area_ha,
+        "tsr_reported_thlb_area_ha": tsr_reported_thlb_area_ha,
+        "strict_vs_tsr_delta_ha": (
+            reconstructed_final_managed_area_ha - tsr_reported_thlb_area_ha
+            if reconstructed_final_managed_area_ha is not None
+            and tsr_reported_thlb_area_ha is not None
+            else None
+        ),
+        "reviewed_vs_tsr_delta_ha": (
+            reviewed_final_managed_area_ha - tsr_reported_thlb_area_ha
+            if reviewed_final_managed_area_ha is not None
+            and tsr_reported_thlb_area_ha is not None
+            else None
+        ),
+        "strict_vs_reviewed_delta_ha": (
+            reconstructed_final_managed_area_ha - reviewed_final_managed_area_ha
+            if reconstructed_final_managed_area_ha is not None
+            and reviewed_final_managed_area_ha is not None
+            else None
+        ),
+        "comparison_bucket_counts": dict(sorted(bucket_counts.items())),
+        "top_gap_parent_steps": [
+            {
+                "parent_step_id": str(item.get("parent_step_id", "")).strip(),
+                "parent_label": str(item.get("parent_label", "")).strip(),
+                "comparison_bucket": str(item.get("comparison_bucket", "")).strip(),
+                "strict_minus_reviewed_removed_area_ha": _parent_gap_delta(item),
+            }
+            for item in top_gap_parent_steps
+        ],
+        "milestone_count": len(milestones),
+        "parent_step_count": len(entries),
+        "stage_counts": {
+            stage: len(parent_stage_groups.get(stage, ()))
+            for stage in _THLB_STAGE_ORDER
+        },
+        "entries": entries,
+    }
+
+
+def _build_tsr_thlb_reconstruction_comparison_markdown(
+    *,
+    recipe: TsrThlbNetdownRecipeRecord,
+    comparison_payload: dict[str, Any],
+) -> str:
+    entries = [
+        dict(item)
+        for item in comparison_payload.get("entries", ())
+        if isinstance(item, dict)
+    ]
+    stage_groups: dict[str, list[dict[str, Any]]] = {
+        stage: [] for stage in _THLB_STAGE_ORDER
+    }
+    milestone_entries = [
+        item
+        for item in entries
+        if str(item.get("parent_kind", "")).strip() == "milestone"
+    ]
+    for item in entries:
+        if str(item.get("parent_kind", "")).strip() == "milestone":
+            continue
+        stage = str(item.get("land_base_stage", "context")).strip()
+        if stage not in stage_groups:
+            stage = "context"
+        stage_groups[stage].append(item)
+    lines = [
+        (
+            f"# THLB Reconstruction Comparison: TSA {recipe.tsa.tsa_code} "
+            f"({recipe.tsa.tsa_name})"
+        ),
+        "",
+        f"- Generated UTC: `{comparison_payload.get('generated_utc', '')}`",
+        f"- THLB recipe path: `{comparison_payload.get('recipe_path', '')}`",
+        "- Reviewed bridge status report: "
+        f"`{comparison_payload.get('reviewed_status_path', '')}`",
+        "- Reconstructed audit JSON: "
+        f"`{comparison_payload.get('reconstructed_audit_path', '')}`",
+        "",
+        "## Summary",
+        "",
+    ]
+    reconstructed_final = _normalize_float_or_none(
+        comparison_payload.get("reconstructed_final_managed_area_ha")
+    )
+    reviewed_final = _normalize_float_or_none(
+        comparison_payload.get("reviewed_final_managed_area_ha")
+    )
+    tsr_final = _normalize_float_or_none(
+        comparison_payload.get("tsr_reported_thlb_area_ha")
+    )
+    if reconstructed_final is not None:
+        lines.append(f"- Strict reconstructed THLB: `{reconstructed_final:.3f} ha`")
+    if reviewed_final is not None:
+        lines.append(f"- Reviewed bridge THLB: `{reviewed_final:.3f} ha`")
+    if tsr_final is not None:
+        lines.append(f"- TSR reported THLB: `{tsr_final:.3f} ha`")
+    for label, key in (
+        ("Strict vs TSR delta", "strict_vs_tsr_delta_ha"),
+        ("Reviewed vs TSR delta", "reviewed_vs_tsr_delta_ha"),
+        ("Strict vs reviewed delta", "strict_vs_reviewed_delta_ha"),
+    ):
+        value = _normalize_float_or_none(comparison_payload.get(key))
+        if value is not None:
+            lines.append(f"- {label}: `{value:.3f} ha`")
+    lines.extend(["", "## Bucket Counts", ""])
+    bucket_counts = comparison_payload.get("comparison_bucket_counts", {})
+    if isinstance(bucket_counts, dict):
+        for bucket_name, count in sorted(bucket_counts.items()):
+            lines.append(f"- `{bucket_name}`: `{count}`")
+    lines.extend(["", "## Top 5 Parent-Step Contributors", ""])
+    top_gap_parent_steps = comparison_payload.get("top_gap_parent_steps", ())
+    if isinstance(top_gap_parent_steps, list) and top_gap_parent_steps:
+        for item in top_gap_parent_steps:
+            if not isinstance(item, dict):
+                continue
+            delta = _normalize_float_or_none(
+                item.get("strict_minus_reviewed_removed_area_ha")
+            )
+            delta_text = f"{delta:.3f} ha" if delta is not None else "n/a"
+            lines.append(
+                "- "
+                f"`{item.get('parent_step_id', '')}` | "
+                f"{item.get('parent_label', '')} | "
+                f"bucket=`{item.get('comparison_bucket', '')}` | "
+                f"strict-reviewed removed-area delta=`{delta_text}`"
+            )
+    else:
+        lines.append("- No comparable parent-step contributors were available.")
+    lines.extend(
+        [
+            "",
+            "## Plain-Language Read",
+            "",
+            "- This report does not change THLB logic. It explains how the strict reconstructed lane differs from the reviewed TSA29 bridge lane and the TSR benchmark.",
+            "- When a reviewed bridge, skip, no-op, or calibration is the real reason for a difference, the report says so directly instead of pretending the strict lane is just wrong.",
+            "- When the strict lane is cutting much more or much less area than the reviewed lane, the report names that parent step as an overcut or undercut candidate.",
+        ]
+    )
+    if milestone_entries:
+        lines.extend(["", "## Backbone Milestones", ""])
+        for item in milestone_entries:
+            benchmark_cumulative = _normalize_float_or_none(
+                item.get("benchmark_cumulative_area_ha")
+            )
+            benchmark_text = (
+                f"{benchmark_cumulative:.3f} ha"
+                if benchmark_cumulative is not None
+                else "not parsed"
+            )
+            lines.append(
+                "- "
+                f"`{item.get('parent_step_id', '')}` | "
+                f"{item.get('parent_label', '')} | "
+                f"benchmark cumulative area=`{benchmark_text}`"
+            )
+    lines.extend(["", "## Parent-Step Comparison", ""])
+    for stage in _THLB_STAGE_ORDER:
+        stage_entries = stage_groups.get(stage, [])
+        if not stage_entries:
+            continue
+        lines.append(f"### {_stage_header_text(stage)}")
+        lines.append("")
+        for item in sorted(
+            stage_entries, key=lambda value: int(value.get("row_order", 0) or 0)
+        ):
+            lines.extend(
+                [
+                    f"#### {int(item.get('row_order', 0) or 0)}. {item.get('parent_label', '')}",
+                    "",
+                    f"- Parent step id: `{item.get('parent_step_id', '')}`",
+                    f"- Comparison bucket: `{item.get('comparison_bucket', '')}`",
+                    f"- Reconstructed status: `{item.get('reconstructed_status', '')}`",
+                    f"- Reviewed status: `{item.get('reviewed_status', '')}`",
+                ]
+            )
+            benchmark_marginal = _normalize_float_or_none(
+                item.get("benchmark_marginal_area_ha")
+            )
+            if benchmark_marginal is not None:
+                lines.append(
+                    f"- TSR benchmark marginal deduction: `{benchmark_marginal:.3f} ha`"
+                )
+            benchmark_cumulative = _normalize_float_or_none(
+                item.get("benchmark_cumulative_area_ha")
+            )
+            if benchmark_cumulative is not None:
+                lines.append(
+                    f"- TSR benchmark cumulative area: `{benchmark_cumulative:.3f} ha`"
+                )
+            reconstructed_removed = _normalize_float_or_none(
+                item.get("reconstructed_removed_area_ha")
+            )
+            lines.append(
+                "- Strict reconstructed removed area: "
+                + (
+                    f"`{reconstructed_removed:.3f} ha`"
+                    if reconstructed_removed is not None
+                    else "`not recorded`"
+                )
+            )
+            reviewed_removed = _normalize_float_or_none(
+                item.get("reviewed_removed_area_ha")
+            )
+            lines.append(
+                "- Reviewed bridge removed area: "
+                + (
+                    f"`{reviewed_removed:.3f} ha`"
+                    if reviewed_removed is not None
+                    else "`not recorded`"
+                )
+            )
+            lines.append(
+                f"- Plain-language reason: {item.get('plain_language_reason', '')}"
+            )
+            lines.append(f"- Actionability: {item.get('actionability', '')}")
+            supporting_notes = [
+                str(value).strip()
+                for value in item.get("supporting_notes", ())
+                if str(value).strip()
+            ]
+            if supporting_notes:
+                lines.append("- Supporting notes:")
+                for note in supporting_notes:
+                    lines.append(f"  - {note}")
+            lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def build_tsr_thlb_reconstruction_comparison(
+    *,
+    recipe_path: Path,
+    reconstructed_audit_path: Path | None = None,
+    reviewed_status_path: Path | None = None,
+    output_markdown_path: Path | None = None,
+    output_json_path: Path | None = None,
+) -> TsrThlbReconstructionComparisonBuildResult:
+    """Emit a TSA29-first strict-vs-reviewed THLB comparison report."""
+
+    (
+        recipe,
+        instance_root,
+        _source_recipe,
+        _source_entry_map,
+        _override_entries,
+    ) = _load_tsr_thlb_recipe_context(recipe_path)
+    resolved_recipe_path = recipe_path.expanduser().resolve()
+    resolved_reconstructed_audit_path = (
+        reconstructed_audit_path.expanduser().resolve()
+        if reconstructed_audit_path is not None
+        else default_tsr_thlb_reconstructed_audit_path(instance_root=instance_root)
+    )
+    resolved_reviewed_status_path = (
+        reviewed_status_path.expanduser().resolve()
+        if reviewed_status_path is not None
+        else default_tsr_thlb_netdown_status_report_path(instance_root=instance_root)
+    )
+    resolved_markdown_path = (
+        output_markdown_path.expanduser().resolve()
+        if output_markdown_path is not None
+        else default_tsr_thlb_reconstruction_comparison_markdown_path(
+            instance_root=instance_root
+        )
+    )
+    resolved_json_path = (
+        output_json_path.expanduser().resolve()
+        if output_json_path is not None
+        else default_tsr_thlb_reconstruction_comparison_json_path(
+            instance_root=instance_root
+        )
+    )
+    for candidate_path in (resolved_markdown_path, resolved_json_path):
+        try:
+            candidate_path.relative_to(instance_root)
+        except ValueError as exc:
+            raise TsrRecipeError(
+                "THLB reconstruction comparison artifact paths must live under the instance root."
+            ) from exc
+    reconstructed_audit_payload = json.loads(
+        resolved_reconstructed_audit_path.read_text(encoding="utf-8")
+    )
+    comparison_payload = _build_tsr_thlb_reconstruction_comparison_payload(
+        recipe=recipe,
+        reconstructed_audit_payload=reconstructed_audit_payload,
+        recipe_relative_path=str(
+            resolved_recipe_path.relative_to(instance_root).as_posix()
+        ),
+        reviewed_status_relative_path=str(
+            resolved_reviewed_status_path.relative_to(instance_root).as_posix()
+        ),
+        reconstructed_audit_relative_path=str(
+            resolved_reconstructed_audit_path.relative_to(instance_root).as_posix()
+        ),
+        comparison_markdown_relative_path=str(
+            resolved_markdown_path.relative_to(instance_root).as_posix()
+        ),
+        comparison_json_relative_path=str(
+            resolved_json_path.relative_to(instance_root).as_posix()
+        ),
+    )
+    markdown_text = _build_tsr_thlb_reconstruction_comparison_markdown(
+        recipe=recipe,
+        comparison_payload=comparison_payload,
+    )
+    resolved_json_path.parent.mkdir(parents=True, exist_ok=True)
+    resolved_json_path.write_text(
+        json.dumps(comparison_payload, indent=2, sort_keys=False),
+        encoding="utf-8",
+    )
+    resolved_markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    resolved_markdown_path.write_text(markdown_text, encoding="utf-8")
+    bucket_counts = Counter(
+        str(item.get("comparison_bucket", "")).strip()
+        for item in comparison_payload.get("entries", ())
+        if isinstance(item, dict) and str(item.get("comparison_bucket", "")).strip()
+    )
+    return TsrThlbReconstructionComparisonBuildResult(
+        recipe_path=resolved_recipe_path,
+        markdown_path=resolved_markdown_path,
+        json_path=resolved_json_path,
+        tsa=recipe.tsa,
+        parent_step_count=len(
+            [
+                item
+                for item in comparison_payload.get("entries", ())
+                if isinstance(item, dict)
+            ]
+        ),
+        comparison_bucket_counts=dict(sorted(bucket_counts.items())),
+    )
+
+
 def _build_tsr_thlb_locked_script_text(
     *,
     recipe: TsrThlbNetdownRecipeRecord,
@@ -12650,6 +13440,19 @@ def run_tsr_thlb_netdown_recipe(
                 .as_posix()
             )
             if default_tsr_thlb_warmstart_markdown_path(
+                instance_root=instance_root
+            ).exists()
+            else None
+        ),
+        reconstruction_comparison_markdown_relative_path=(
+            str(
+                default_tsr_thlb_reconstruction_comparison_markdown_path(
+                    instance_root=instance_root
+                )
+                .relative_to(instance_root)
+                .as_posix()
+            )
+            if default_tsr_thlb_reconstruction_comparison_markdown_path(
                 instance_root=instance_root
             ).exists()
             else None

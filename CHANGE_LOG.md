@@ -13571,3 +13571,40 @@
     - the remaining open seam is the large benchmark-reconciliation /
       semantics gap between the strict reconstructed THLB result and the
       TSR-reported THLB target.
+- 2026-04-11: Implemented the TSA29-first strict-vs-reviewed THLB comparison
+  artifact for `#128`.
+  - Added `femic tsr thlb-reconstruction-compare` in:
+    - `src/femic/cli/main.py`
+  - Added the comparison builder and parent-step bucketing/report logic in:
+    - `src/femic/tsr_catalog/recipes.py`
+    - `src/femic/tsr_catalog/__init__.py`
+  - Added docs and contract coverage in:
+    - `docs/reference/cli.rst`
+    - `docs/guides/tsr-intelligence-workflow.rst`
+    - `docs/guides/tsr-thlb-reconstruction-ladder.rst`
+    - `tests/test_cli_main.py`
+    - `tests/test_docs_contract.py`
+    - `tests/test_tsr_recipes.py`
+  - The new comparison artifacts are:
+    - `config/tsr/thlb_reconstruction_comparison.md`
+    - `config/tsr/thlb_reconstruction_comparison.json`
+  - The live TSA29 report now makes the top-level gap plain:
+    - strict reconstructed THLB: `903,685.409 ha`
+    - reviewed bridge THLB: `1,592,878.936 ha`
+    - TSR reported THLB: `1,660,053.000 ha`
+    - strict vs TSR delta: `-756,367.591 ha`
+    - reviewed vs TSR delta: `-67,174.064 ha`
+    - strict vs reviewed delta: `-689,193.528 ha`
+  - The top current parent-step contributors are now called out explicitly:
+    - `Non-forest` as `reviewed_bridge_only`
+    - `Critical habitat for fish`, `Land not administered by the Province`,
+      and `Wildlife habitat areas` as `strict_overcut_candidate`
+    - `Sites with low growing timber potential` as
+      `blocked_or_missing_source`
+  - Validation passed with:
+    - `ruff format src tests`
+    - `ruff check src tests`
+    - `mypy src`
+    - `pytest`
+    - `sphinx -b html docs _build/html -W`
+    - `pre-commit run --all-files`

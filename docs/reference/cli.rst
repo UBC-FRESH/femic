@@ -488,6 +488,7 @@ Subcommands
 - ``override-init``: ``python -m femic tsr override-init [OPTIONS]``
 - ``override-report``: ``python -m femic tsr override-report [OPTIONS]``
 - ``thlb-netdown-warmstart-build``: ``python -m femic tsr thlb-netdown-warmstart-build [OPTIONS]``
+- ``thlb-reconstruction-compare``: ``python -m femic tsr thlb-reconstruction-compare [OPTIONS]``
 
 ``tsr index`` options
 
@@ -703,6 +704,36 @@ THLB logic. Its job is to help a human analyst see:
 The canonical executable surface remains:
 
 - ``config/tsr/thlb_netdown.recipe.yaml``
+
+``tsr thlb-reconstruction-compare`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
+- ``--reconstructed-audit-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_reconstructed.audit.json`` under the instance root)
+- ``--reviewed-status-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.status.md`` under the instance root)
+- ``--output-markdown PATH`` (optional; defaults to
+  ``config/tsr/thlb_reconstruction_comparison.md`` under the instance root)
+- ``--output-json PATH`` (optional; defaults to
+  ``config/tsr/thlb_reconstruction_comparison.json`` under the instance root)
+
+``tsr thlb-reconstruction-compare`` is the explain-first comparison surface
+for the still-open strict-reconstruction gap under ``#128``. It reads the
+existing reviewed and reconstructed TSA29 artifacts and emits:
+
+- ``config/tsr/thlb_reconstruction_comparison.md``
+- ``config/tsr/thlb_reconstruction_comparison.json``
+
+The command does **not** rerun THLB execution. Its job is to show, in plain
+language:
+
+- strict reconstructed THLB vs TSR-reported THLB;
+- reviewed bridge THLB vs TSR-reported THLB;
+- strict reconstructed vs reviewed bridge deltas; and
+- which parent steps look like reviewed bridges, strict overcuts, strict
+  undercuts, blocked seams, or explicit aspatial differences.
 
 ``tsr thlb-netdown-workbench-build`` options
 

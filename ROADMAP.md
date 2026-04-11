@@ -8612,6 +8612,13 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P52.6h1 Add a packaged bounded THLB motif library plus a deterministic warm-start builder over the reviewed parent-step recipe.
   - [x] P52.6h2 Expose `femic tsr thlb-netdown-warmstart-build` and emit paired Markdown/YAML review artifacts under the instance root.
   - [x] P52.6h3 Prove the warm-start output on TSA29 and link the new artifact from the existing THLB review surfaces without making it canonical logic.
+- [x] P52.6i Build a TSA29-first strict-vs-reviewed THLB comparison artifact (`#128`).
+  - [x] P52.6i1 Add `femic tsr thlb-reconstruction-compare` to emit Markdown/JSON comparison artifacts without rerunning THLB execution.
+  - [x] P52.6i2 Compare three surfaces per parent step:
+    - strict reconstructed vs TSR benchmark;
+    - reviewed bridge lane vs TSR benchmark; and
+    - strict reconstructed vs reviewed bridge lane.
+  - [x] P52.6i3 Bucket the biggest parent-step differences in plain language so the next modeling follow-up is chosen from evidence instead of guesswork.
 
 ## Detailed Next Steps Notes
 
@@ -8624,10 +8631,62 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - stage-aware parser/report/workbench/docs improvements; and
     - the strict reconstructed runner now finishing end to end on full TSA29.
   - Remaining open work should live under `#128`, not keep the old recipe-template umbrella artificially open.
+  - `#128` should now be read narrowly:
+    - the strict reconstructed lane is operational and documented;
+    - the reviewed TSA29 bridge lane is still the benchmark-convergent working lane; and
+    - the remaining question is why strict reconstructed THLB still lands so far below TSR.
+- 2026-04-11 (`#128` should start with an explain-first comparison artifact):
+  - Governing problem statement:
+    - strict reconstructed full-TSA THLB currently lands at `903,685.409 ha`
+      versus the TSR-reported `1,660,053.000 ha`, so the next move should be
+      a parent-step comparison inventory, not another blind semantics edit.
+  - First deliverable:
+    - add `femic tsr thlb-reconstruction-compare` to emit
+      `config/tsr/thlb_reconstruction_comparison.{md,json}` from the existing
+      reviewed recipe/status and reconstructed audit/status surfaces.
+  - Comparison contract:
+    - group by parent step rather than compiled-step noise;
+    - compare strict reconstructed vs TSR, reviewed bridge vs TSR, and strict
+      vs reviewed together in the same report;
+    - classify each parent-step difference using a bounded bucket set such as:
+      - `close_match`;
+      - `reviewed_bridge_only`;
+      - `strict_overcut_candidate`;
+      - `strict_undercut_candidate`;
+      - `blocked_or_missing_source`;
+      - `manual_or_reviewed_override`;
+      - `aspatial_bridge_difference`; and
+      - `not_comparable`.
+  - Acceptance bar for this slice:
+    - the report must make the largest strict-gap contributors obvious in
+      plain language and identify whether the next corrective move should
+      target reviewed bridge choices, strict overcuts, strict undercuts, or
+      missing-source / blocked seams.
   - `#128` should now be read more narrowly:
     - runtime/usability of the strict reconstructed lane is solved;
     - docs/report/warm-start/fallback child work is solved; and
     - the remaining open problem is the large benchmark-reconciliation gap between the strict reconstructed THLB result and the TSR-reported THLB target.
+
+- 2026-04-11 (`#128` comparison artifact landed on TSA29):
+  - Added `femic tsr thlb-reconstruction-compare` and the new instance-local outputs:
+    - `config/tsr/thlb_reconstruction_comparison.md`
+    - `config/tsr/thlb_reconstruction_comparison.json`
+  - The report now compares three surfaces parent-step by parent-step:
+    - strict reconstructed vs TSR benchmark;
+    - reviewed bridge vs TSR benchmark; and
+    - strict reconstructed vs reviewed bridge.
+  - The live TSA29 comparison output currently reports:
+    - strict reconstructed THLB: `903,685.409 ha`
+    - reviewed bridge THLB: `1,592,878.936 ha`
+    - TSR reported THLB: `1,660,053.000 ha`
+    - strict vs TSR delta: `-756,367.591 ha`
+    - reviewed vs TSR delta: `-67,174.064 ha`
+    - strict vs reviewed delta: `-689,193.528 ha`
+  - The biggest current parent-step contributors are now explicit instead of hidden in chat:
+    - `Non-forest` shows up as a major `reviewed_bridge_only` difference;
+    - `Critical habitat for fish`, `Land not administered by the Province`, and `Wildlife habitat areas` show up as `strict_overcut_candidate` seams; and
+    - `Sites with low growing timber potential` remains a `blocked_or_missing_source` contributor in the strict lane.
+  - This means the next `#128` move should be chosen from this inventory rather than from another blind round of code edits.
 
 - 2026-04-11 (`#131` completed: LU-wise reconstructed THLB runtime is now operational on full TSA29):
   - Completion summary:

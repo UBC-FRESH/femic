@@ -172,6 +172,7 @@ from femic.tsr_catalog import (
     TsrSourceLayersRecipeRunResult,
     TsrThlbNetdownRecipeBuildResult,
     TsrThlbParentStepRunResult,
+    TsrThlbReconstructionComparisonBuildResult,
     TsrThlbNetdownRecipeRunResult,
     TsrThlbParallelBenchmarkResult,
     TsrThlbStep13AttributeCompileResult,
@@ -183,6 +184,7 @@ from femic.tsr_catalog import (
     TsrSourceLayerOverridesReport,
     TsrWrittenIndex,
     build_tsr_source_layers_recipe,
+    build_tsr_thlb_reconstruction_comparison,
     build_tsr_thlb_warmstart,
     build_tsr_thlb_workbench,
     build_tsr_thlb_netdown_recipe,
@@ -194,8 +196,11 @@ from femic.tsr_catalog import (
     default_tsr_thlb_netdown_audit_path,
     default_tsr_thlb_netdown_output_path,
     default_tsr_thlb_netdown_recipe_path,
+    default_tsr_thlb_netdown_status_report_path,
     default_tsr_thlb_step13_attribute_output_path,
     default_tsr_thlb_reconstructed_audit_path,
+    default_tsr_thlb_reconstruction_comparison_json_path,
+    default_tsr_thlb_reconstruction_comparison_markdown_path,
     default_tsr_thlb_reconstructed_output_path,
     default_tsr_thlb_warmstart_markdown_path,
     default_tsr_thlb_warmstart_yaml_path,
@@ -2657,6 +2662,20 @@ def _print_tsr_thlb_warmstart_build_summary(
         console.print(f"warmstart_status_{status}: {count}")
 
 
+def _print_tsr_thlb_reconstruction_comparison_summary(
+    result: TsrThlbReconstructionComparisonBuildResult,
+) -> None:
+    console.print(f"recipe_path: {result.recipe_path}")
+    console.print(f"markdown_path: {result.markdown_path}")
+    console.print(f"json_path: {result.json_path}")
+    console.print(f"tsa_id: {result.tsa.tsa_id}")
+    console.print(f"tsa_code: {result.tsa.tsa_code}")
+    console.print(f"tsa_name: {result.tsa.tsa_name}")
+    console.print(f"parent_step_count: {result.parent_step_count}")
+    for bucket_name, count in result.comparison_bucket_counts.items():
+        console.print(f"comparison_bucket_{bucket_name}: {count}")
+
+
 def _print_tsr_thlb_workbench_lock_summary(
     result: TsrThlbWorkbenchLockResult,
 ) -> None:
@@ -3607,6 +3626,94 @@ def tsr_thlb_netdown_warmstart_build(
         raise typer.Exit(code=1) from exc
 
     _print_tsr_thlb_warmstart_build_summary(result)
+
+
+@tsr_app.command("thlb-reconstruction-compare")
+def tsr_thlb_reconstruction_compare(
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    thlb_netdown_recipe_path: Path | None = TSR_THLB_NETDOWN_RECIPE_PATH_OPTION,
+    reconstructed_audit_path: Path | None = typer.Option(
+        None,
+        "--reconstructed-audit-path",
+        help=(
+            "Optional reconstructed THLB audit JSON path. Defaults to "
+            "`config/tsr/thlb_reconstructed.audit.json` under the instance root."
+        ),
+    ),
+    reviewed_status_path: Path | None = typer.Option(
+        None,
+        "--reviewed-status-path",
+        help=(
+            "Optional reviewed bridge status report path. Defaults to "
+            "`config/tsr/thlb_netdown.status.md` under the instance root."
+        ),
+    ),
+    output_markdown: Path | None = typer.Option(
+        None,
+        "--output-markdown",
+        help=(
+            "Optional comparison Markdown path. Defaults to "
+            "`config/tsr/thlb_reconstruction_comparison.md` under the instance root."
+        ),
+    ),
+    output_json: Path | None = typer.Option(
+        None,
+        "--output-json",
+        help=(
+            "Optional comparison JSON path. Defaults to "
+            "`config/tsr/thlb_reconstruction_comparison.json` under the instance root."
+        ),
+    ),
+) -> None:
+    """Emit a TSA29-first strict-vs-reviewed THLB comparison report."""
+
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_recipe_path = (
+        instance_context.resolve_path(thlb_netdown_recipe_path)
+        if thlb_netdown_recipe_path is not None
+        else default_tsr_thlb_netdown_recipe_path(instance_root=instance_context.root)
+    )
+    resolved_reconstructed_audit_path = (
+        instance_context.resolve_path(reconstructed_audit_path)
+        if reconstructed_audit_path is not None
+        else default_tsr_thlb_reconstructed_audit_path(
+            instance_root=instance_context.root
+        )
+    )
+    resolved_reviewed_status_path = (
+        instance_context.resolve_path(reviewed_status_path)
+        if reviewed_status_path is not None
+        else default_tsr_thlb_netdown_status_report_path(
+            instance_root=instance_context.root
+        )
+    )
+    resolved_output_markdown = (
+        instance_context.resolve_path(output_markdown)
+        if output_markdown is not None
+        else default_tsr_thlb_reconstruction_comparison_markdown_path(
+            instance_root=instance_context.root
+        )
+    )
+    resolved_output_json = (
+        instance_context.resolve_path(output_json)
+        if output_json is not None
+        else default_tsr_thlb_reconstruction_comparison_json_path(
+            instance_root=instance_context.root
+        )
+    )
+    try:
+        result = build_tsr_thlb_reconstruction_comparison(
+            recipe_path=resolved_recipe_path,
+            reconstructed_audit_path=resolved_reconstructed_audit_path,
+            reviewed_status_path=resolved_reviewed_status_path,
+            output_markdown_path=resolved_output_markdown,
+            output_json_path=resolved_output_json,
+        )
+    except TsrRecipeError as exc:
+        console.print(f"[red]THLB reconstruction comparison error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_thlb_reconstruction_comparison_summary(result)
 
 
 @tsr_app.command("thlb-netdown-workbench-build")

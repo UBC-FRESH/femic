@@ -203,6 +203,19 @@ Good comparison examples:
 - reconstructed-vs-legacy-raster to understand how much of the difference is
   coming from the old baseline rather than from later exclusions.
 
+The plain-language comparison surface for this is now:
+
+- ``python -m femic tsr thlb-reconstruction-compare --instance-root ...``
+
+That command reads the existing reviewed and reconstructed TSA29 artifacts and
+emits a parent-step report that shows:
+
+- strict reconstructed THLB vs TSR-reported THLB;
+- reviewed bridge THLB vs TSR-reported THLB;
+- strict reconstructed vs reviewed bridge deltas; and
+- which parent steps currently look like reviewed bridges, strict overcuts,
+  strict undercuts, blocked seams, or explicit aspatial differences.
+
 Bad comparison examples:
 
 - comparing a generic flattened full-recipe run against a reviewed parent-step

@@ -5750,6 +5750,85 @@ def test_tsr_thlb_warmstart_build_uses_default_paths(
     assert any("warmstart_status_compiled_ready: 6" in msg for msg in messages)
 
 
+def test_tsr_thlb_reconstruction_compare_uses_default_paths(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = tmp_path / "repo" / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_build(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbReconstructionComparisonBuildResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            markdown_path=instance_root
+            / "config"
+            / "tsr"
+            / "thlb_reconstruction_comparison.md",
+            json_path=instance_root
+            / "config"
+            / "tsr"
+            / "thlb_reconstruction_comparison.json",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            parent_step_count=20,
+            comparison_bucket_counts={
+                "close_match": 4,
+                "strict_overcut_candidate": 3,
+                "reviewed_bridge_only": 2,
+            },
+        )
+
+    monkeypatch.setattr(
+        cli_main, "build_tsr_thlb_reconstruction_comparison", _fake_build
+    )
+
+    cli_main.tsr_thlb_reconstruction_compare(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+        reconstructed_audit_path=None,
+        reviewed_status_path=None,
+        output_markdown=None,
+        output_json=None,
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert (
+        captured_kwargs["reconstructed_audit_path"]
+        == (
+            instance_root / "config" / "tsr" / "thlb_reconstructed.audit.json"
+        ).resolve()
+    )
+    assert (
+        captured_kwargs["reviewed_status_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.status.md").resolve()
+    )
+    assert (
+        captured_kwargs["output_markdown_path"]
+        == (
+            instance_root / "config" / "tsr" / "thlb_reconstruction_comparison.md"
+        ).resolve()
+    )
+    assert (
+        captured_kwargs["output_json_path"]
+        == (
+            instance_root / "config" / "tsr" / "thlb_reconstruction_comparison.json"
+        ).resolve()
+    )
+    assert any("comparison_bucket_close_match: 4" in msg for msg in messages)
+    assert any("markdown_path:" in msg for msg in messages)
+    assert any("json_path:" in msg for msg in messages)
+
+
 def test_tsr_thlb_workbench_lock_uses_default_paths(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
