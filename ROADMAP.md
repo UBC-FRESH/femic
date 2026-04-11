@@ -8602,8 +8602,54 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P52.6g1 Reuse the shared ArcGIS Pro Python runner seam and expose `femic prep arcgis-review-project`.
   - [x] P52.6g2 Discover instance-local review layers and emit a manifest-backed `.aprx` bundle with all layers off by default.
   - [x] P52.6g3 Prove the command on TSA29 with a real Windows/ArcGIS Pro project build.
+- [x] P52.6h Add explicit no-LLM THLB warm-start checklist/template artifacts (`#136`).
+  - [x] P52.6h1 Add a packaged bounded THLB motif library plus a deterministic warm-start builder over the reviewed parent-step recipe.
+  - [x] P52.6h2 Expose `femic tsr thlb-netdown-warmstart-build` and emit paired Markdown/YAML review artifacts under the instance root.
+  - [x] P52.6h3 Prove the warm-start output on TSA29 and link the new artifact from the existing THLB review surfaces without making it canonical logic.
 
 ## Detailed Next Steps Notes
+
+- 2026-04-11 (Issue `#136` active: add no-LLM THLB warm-start checklist templates from recurring TSR netdown patterns):
+  - Objective:
+    - keep the current THLB recipe/status/workbench surfaces as canonical reviewed state;
+    - add one explicit no-LLM warm-start artifact pair:
+      - editable YAML template under `config/tsr/`; and
+      - plain-language checklist Markdown under `workbench/tsr/`;
+    - seed the first version from a bounded packaged THLB motif library rather than a broad corpus-mining engine.
+  - Implementation direction:
+    - reuse the existing stage-aware parent-step structure, exact-logic summaries, source-linkage state, and override state already carried by the reviewed THLB recipe;
+    - classify each parent step into a small fixed warm-start status set (`compiled_ready`, `review_pattern_match`, `blocked_missing_source`, `manual_or_aspatial`, `no_pattern_match`);
+    - match recurring motifs deterministically from current parent-step fields such as stage, candidate operation type, candidate layers/fields/values, execution class, and linked source status;
+    - keep the new checklist/template explicitly non-canonical so it never auto-promotes into executable THLB logic.
+  - Acceptance target:
+    - `femic tsr thlb-netdown-warmstart-build --instance-root external/femic-tsa29-instance`
+      emits:
+      - `config/tsr/thlb_warmstart.yaml`; and
+      - `workbench/tsr/thlb_netdown.warmstart.md`;
+    - TSA29 late-step examples like steps `013`, `014`, `018`, `021`, and `023` render with plain-language review guidance that matches current accepted FEMIC state.
+- 2026-04-11: Issue `#136` is complete.
+  - Added a packaged bounded motif library at
+    `src/femic/resources/tsr/thlb_warmstart_patterns.yaml`.
+  - Added deterministic warm-start generation over the reviewed THLB recipe in
+    `src/femic/tsr_catalog/recipes.py`, with CLI wiring for:
+    - `femic tsr thlb-netdown-warmstart-build --instance-root PATH`
+  - Default warm-start outputs are now:
+    - `config/tsr/thlb_warmstart.yaml`
+    - `workbench/tsr/thlb_netdown.warmstart.md`
+  - The warm-start pair is explicitly non-canonical:
+    - canonical executable THLB logic remains
+      `config/tsr/thlb_netdown.recipe.yaml`
+  - TSA29 acceptance result:
+    - `femic tsr thlb-netdown-warmstart-build --instance-root external/femic-tsa29-instance`
+      emitted the paired artifacts successfully;
+    - emitted counts:
+      - `milestone_count = 4`
+      - `parent_step_count = 20`
+      - `warmstart_status_compiled_ready = 11`
+      - `warmstart_status_manual_or_aspatial = 9`
+    - refreshed TSA29 review surfaces now point to
+      `workbench/tsr/thlb_netdown.warmstart.md`
+      without promoting it into canonical THLB logic.
 
 - 2026-04-10 (Issue `#138` active: add a Windows ArcGIS Pro review-project
   emit command for FEMIC instances):

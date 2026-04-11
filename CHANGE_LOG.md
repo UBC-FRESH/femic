@@ -13453,3 +13453,34 @@
     - skipped `3` smoke-scoped cached BCDC artifacts; and
     - staged `77` GeoPackage-backed layers into ArcGIS-friendly helper
       shapefiles so the emitted project could load them reliably.
+- 2026-04-11: Implemented issue `#136` as a no-LLM THLB warm-start checklist
+  and template builder.
+  - Added a packaged bounded motif library at:
+    - `src/femic/resources/tsr/thlb_warmstart_patterns.yaml`
+  - Added deterministic warm-start generation over the reviewed parent-step
+    THLB recipe in:
+    - `src/femic/tsr_catalog/recipes.py`
+  - Added CLI support:
+    - `femic tsr thlb-netdown-warmstart-build --instance-root PATH`
+  - Default warm-start outputs:
+    - `config/tsr/thlb_warmstart.yaml`
+    - `workbench/tsr/thlb_netdown.warmstart.md`
+  - Kept the warm-start artifact explicitly non-canonical:
+    - canonical executable THLB logic remains
+      `config/tsr/thlb_netdown.recipe.yaml`
+  - Updated docs/tests for:
+    - `docs/reference/cli.rst`
+    - `docs/guides/tsr-intelligence-workflow.rst`
+    - `tests/test_tsr_recipes.py`
+    - `tests/test_cli_main.py`
+    - `tests/test_docs_contract.py`
+  - TSA29 acceptance result:
+    - `femic tsr thlb-netdown-warmstart-build --instance-root external/femic-tsa29-instance`
+      emitted the paired warm-start artifacts successfully;
+    - emitted counts:
+      - `milestone_count = 4`
+      - `parent_step_count = 20`
+      - `warmstart_status_compiled_ready = 11`
+      - `warmstart_status_manual_or_aspatial = 9`
+    - refreshed TSA29 THLB status/workbench surfaces now point to
+      `workbench/tsr/thlb_netdown.warmstart.md`.

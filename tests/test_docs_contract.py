@@ -238,6 +238,7 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "--manifest-path PATH",
         "--fact-family [source_layer_candidate|thlb_reference]",
         "thlb-netdown-build",
+        "thlb-netdown-warmstart-build",
         "thlb-netdown-workbench-build",
         "thlb-netdown-workbench-lock",
         "wfs_queryable",
@@ -250,7 +251,9 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "config/tsr/source_layer_overrides.yaml",
         "config/tsr/source_layers.recipe.yaml",
         "config/tsr/thlb_netdown.recipe.yaml",
+        "config/tsr/thlb_warmstart.yaml",
         "workbench/tsr/thlb_netdown.workbench.ipynb",
+        "workbench/tsr/thlb_netdown.warmstart.md",
         "workbench/tsr/thlb_netdown.locked.py",
         "tsr-thlb-reconstruction-ladder",
         "~/.femic/tsr/tsa_pdf_cache_manifest.json",
@@ -378,6 +381,7 @@ def test_tsr_intelligence_workflow_guide_keeps_required_sections() -> None:
         "python -m femic tsr source-layers-build",
         "python -m femic tsr source-layers-run",
         "python -m femic tsr thlb-netdown-build",
+        "python -m femic tsr thlb-netdown-warmstart-build",
         "python -m femic tsr thlb-netdown-workbench-build",
         "python -m femic tsr thlb-netdown-workbench-lock",
         "python -m femic tsr thlb-netdown-run",
@@ -400,7 +404,9 @@ def test_tsr_intelligence_workflow_guide_keeps_required_sections() -> None:
         "config/tsr/thlb_netdown.recipe.yaml",
         "config/tsr/thlb_netdown.audit.json",
         "config/tsr/thlb_netdown.status.md",
+        "config/tsr/thlb_warmstart.yaml",
         "workbench/tsr/thlb_netdown.workbench.ipynb",
+        "workbench/tsr/thlb_netdown.warmstart.md",
         "workbench/tsr/thlb_netdown.locked.py",
         "data/tsr/thlb_netdown_checkpoint.feather",
         "runtime/logs/tsr/",
@@ -420,6 +426,7 @@ def test_tsr_intelligence_workflow_guide_keeps_required_sections() -> None:
         "adopt only reviewed facts into the overlay",
         "giant interactive pastes",
         "private`` / ``unavailable``",
+        "These outputs are **not** canonical THLB logic",
     ):
         assert snippet in guide_text
 

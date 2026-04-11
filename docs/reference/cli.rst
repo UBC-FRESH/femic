@@ -487,6 +487,7 @@ Subcommands
 - ``overlay-report``: ``python -m femic tsr overlay-report [OPTIONS]``
 - ``override-init``: ``python -m femic tsr override-init [OPTIONS]``
 - ``override-report``: ``python -m femic tsr override-report [OPTIONS]``
+- ``thlb-netdown-warmstart-build``: ``python -m femic tsr thlb-netdown-warmstart-build [OPTIONS]``
 
 ``tsr index`` options
 
@@ -674,6 +675,34 @@ benchmark rows, and pure context.
 For the full reconstruction-ladder and benchmark-comparison contract behind
 those stage labels, see
 :doc:`../guides/tsr-thlb-reconstruction-ladder`.
+
+``tsr thlb-netdown-warmstart-build`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
+- ``--output-markdown PATH`` (optional; defaults to
+  ``workbench/tsr/thlb_netdown.warmstart.md`` under the instance root)
+- ``--output-yaml PATH`` (optional; defaults to
+  ``config/tsr/thlb_warmstart.yaml`` under the instance root)
+
+``tsr thlb-netdown-warmstart-build`` generates a non-canonical no-LLM review
+aid from the current reviewed THLB recipe:
+
+- ``workbench/tsr/thlb_netdown.warmstart.md``
+- ``config/tsr/thlb_warmstart.yaml``
+
+The artifact is intentionally a warm-start checklist/template, not executable
+THLB logic. Its job is to help a human analyst see:
+
+- what FEMIC already knows about each parent step;
+- which recurring THLB motif best matches the current row, if any; and
+- which likely layers, fields, values, and review questions should be checked
+  next.
+
+The canonical executable surface remains:
+
+- ``config/tsr/thlb_netdown.recipe.yaml``
 
 ``tsr thlb-netdown-workbench-build`` options
 

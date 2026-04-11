@@ -369,7 +369,30 @@ hybrid-vs-reconstructed semantics and benchmark comparison rules, see
    - the step can still carry other curve-metric modes explicitly when a
      future TSR assumption needs them.
 
-6e. once the human+agent team agrees the THLB workflow is ready to freeze,
+6e. if no LLM is available, generate the explicit warm-start checklist/template
+   pair before diving into manual THLB review:
+
+   .. code-block:: bash
+
+      python -m femic tsr thlb-netdown-warmstart-build \
+        --instance-root external/femic-tsa29-instance
+
+   This writes:
+
+   - ``workbench/tsr/thlb_netdown.warmstart.md``
+   - ``config/tsr/thlb_warmstart.yaml``
+
+   These outputs are **not** canonical THLB logic. They are a bounded review
+   aid that turns the current parent-step recipe into a plain-language
+   checklist for a human analyst:
+
+   - what the TSR row is doing;
+   - what FEMIC already has;
+   - which recurring motif best matches the row, if any; and
+   - which likely layers, fields, values, and review questions should be
+     inspected next.
+
+6f. once the human+agent team agrees the THLB workflow is ready to freeze,
    lock it into deterministic reproducibility artifacts:
 
    .. code-block:: bash

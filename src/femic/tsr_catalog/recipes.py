@@ -61,8 +61,10 @@ class TsrRecipeError(RuntimeError):
 
 
 _TSR_RECIPE_RESOURCE_PACKAGE = "femic.resources.tsr_recipes"
+_TSR_WARMSTART_RESOURCE_PACKAGE = "femic.resources.tsr"
 _SOURCE_LAYERS_RECIPE_RESOURCE = "source_layers.recipe.yaml"
 _THLB_NETDOWN_RECIPE_RESOURCE = "thlb_netdown.recipe.yaml"
+_THLB_WARMSTART_PATTERNS_RESOURCE = "thlb_warmstart_patterns.yaml"
 TSR_THLB_EXECUTION_MODE_HYBRID = "hybrid"
 TSR_THLB_EXECUTION_MODE_RECONSTRUCTED = "reconstructed"
 _TSR_THLB_EXECUTION_MODES = {
@@ -85,6 +87,18 @@ _THLB_STAGE_LABELS = {
     "lhlb_to_thlb": "LHLB -> THLB",
     "reference_target": "Reference targets",
     "context": "Context / interpretation",
+}
+_THLB_WARMSTART_STATUS_COMPILED_READY = "compiled_ready"
+_THLB_WARMSTART_STATUS_REVIEW_PATTERN_MATCH = "review_pattern_match"
+_THLB_WARMSTART_STATUS_BLOCKED_MISSING_SOURCE = "blocked_missing_source"
+_THLB_WARMSTART_STATUS_MANUAL_OR_ASPATIAL = "manual_or_aspatial"
+_THLB_WARMSTART_STATUS_NO_PATTERN_MATCH = "no_pattern_match"
+_THLB_WARMSTART_STATUSES = {
+    _THLB_WARMSTART_STATUS_COMPILED_READY,
+    _THLB_WARMSTART_STATUS_REVIEW_PATTERN_MATCH,
+    _THLB_WARMSTART_STATUS_BLOCKED_MISSING_SOURCE,
+    _THLB_WARMSTART_STATUS_MANUAL_OR_ASPATIAL,
+    _THLB_WARMSTART_STATUS_NO_PATTERN_MATCH,
 }
 _THLB_JUNK_FRAGMENTS = {
     "stands",
@@ -505,6 +519,19 @@ class TsrThlbWorkbenchLockResult:
 
 
 @dataclass(frozen=True)
+class TsrThlbWarmstartBuildResult:
+    """Summary of one THLB warm-start artifact build pass."""
+
+    recipe_path: Path
+    markdown_path: Path
+    yaml_path: Path
+    tsa: TsrOverlayTsaRecord
+    milestone_count: int
+    parent_step_count: int
+    warmstart_status_counts: dict[str, int]
+
+
+@dataclass(frozen=True)
 class TsrThlbParentStepRunResult:
     """Summary of one notebook-safe THLB parent-step execution pass."""
 
@@ -694,6 +721,21 @@ def _load_resource_yaml(resource_name: str) -> dict[str, Any]:
     return payload
 
 
+def _load_warmstart_patterns() -> tuple[dict[str, Any], ...]:
+    resource = importlib_resources.files(_TSR_WARMSTART_RESOURCE_PACKAGE).joinpath(
+        _THLB_WARMSTART_PATTERNS_RESOURCE
+    )
+    payload = yaml.safe_load(resource.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise TsrRecipeError("Invalid packaged THLB warm-start motif payload.")
+    motifs = payload.get("motifs")
+    if not isinstance(motifs, list):
+        raise TsrRecipeError(
+            "Packaged THLB warm-start motif payload is missing `motifs`."
+        )
+    return tuple(item for item in motifs if isinstance(item, dict))
+
+
 def _repo_relative(path: Path, *, source_root: Path) -> str:
     return path.expanduser().resolve().relative_to(source_root.resolve()).as_posix()
 
@@ -816,6 +858,25 @@ def default_tsr_thlb_workbench_locked_recipe_path(*, instance_root: Path) -> Pat
         / "workbench"
         / "tsr"
         / "thlb_netdown.locked.recipe.yaml"
+    )
+
+
+def default_tsr_thlb_warmstart_markdown_path(*, instance_root: Path) -> Path:
+    """Return the default generated THLB warm-start checklist path."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "workbench"
+        / "tsr"
+        / "thlb_netdown.warmstart.md"
+    )
+
+
+def default_tsr_thlb_warmstart_yaml_path(*, instance_root: Path) -> Path:
+    """Return the default editable THLB warm-start YAML path."""
+
+    return (
+        instance_root.expanduser().resolve() / "config" / "tsr" / "thlb_warmstart.yaml"
     )
 
 
@@ -4813,6 +4874,9 @@ def build_tsr_thlb_netdown_recipe(
         / f"thlb_recipe_build_status_report-{build_report_timestamp}.md"
     )
     build_generated_utc = datetime.now(UTC).isoformat()
+    warmstart_markdown_path = default_tsr_thlb_warmstart_markdown_path(
+        instance_root=instance_root
+    )
     build_status_report_markdown = _build_tsr_thlb_recipe_build_report_markdown(
         recipe=load_tsr_thlb_netdown_recipe(resolved_recipe_path),
         recipe_relative_path=str(
@@ -4824,6 +4888,11 @@ def build_tsr_thlb_netdown_recipe(
         generated_utc=build_generated_utc,
         runtime_report_relative_path=str(
             runtime_build_status_report_path.relative_to(instance_root).as_posix()
+        ),
+        warmstart_markdown_relative_path=(
+            str(warmstart_markdown_path.relative_to(instance_root).as_posix())
+            if warmstart_markdown_path.exists()
+            else None
         ),
         source_entry_map=_load_source_recipe_entry_map(source_recipe),
         override_entries=override_entries,
@@ -6573,6 +6642,567 @@ def _format_thlb_lock_state_markdown(
     return lines
 
 
+def _normalize_sequence_strings(values: Sequence[Any]) -> list[str]:
+    return [str(value).strip() for value in values if str(value).strip()]
+
+
+def _normalize_identifier_set(values: Sequence[str]) -> set[str]:
+    return {value.strip().casefold() for value in values if value.strip()}
+
+
+def _collect_parent_step_candidate_operation_types(
+    parent_step: dict[str, Any], compiled_steps: Sequence[dict[str, Any]]
+) -> list[str]:
+    operation_types: list[str] = []
+    for step in compiled_steps:
+        for key in ("compiled_operation_type", "operation_type", "normalized_action"):
+            value = str(step.get(key, "")).strip()
+            if value:
+                operation_types.append(value)
+    for subrule in parent_step.get("draft_subrules", ()):
+        if not isinstance(subrule, dict):
+            continue
+        value = str(subrule.get("candidate_operation_type", "")).strip()
+        if value:
+            operation_types.append(value)
+    return list(dict.fromkeys(operation_types))
+
+
+def _collect_parent_step_likely_source_layer_families(
+    parent_step: dict[str, Any],
+    compiled_steps: Sequence[dict[str, Any]],
+    source_entry_map: dict[str, dict[str, Any]],
+) -> list[str]:
+    families: list[str] = []
+    for subrule in parent_step.get("draft_subrules", ()):
+        if not isinstance(subrule, dict):
+            continue
+        families.extend(
+            _normalize_sequence_strings(subrule.get("candidate_layers", ()))
+        )
+    for step in compiled_steps:
+        for entry_id in _normalize_sequence_strings(
+            step.get("linked_source_entry_ids", ())
+        ):
+            source_entry = source_entry_map.get(entry_id, {})
+            recommended_query = str(source_entry.get("recommended_query", "")).strip()
+            if recommended_query:
+                families.append(recommended_query)
+            else:
+                families.append(entry_id)
+    return list(dict.fromkeys(families))
+
+
+def _collect_parent_step_likely_fields(parent_step: dict[str, Any]) -> list[str]:
+    fields: list[str] = []
+    for subrule in parent_step.get("draft_subrules", ()):
+        if not isinstance(subrule, dict):
+            continue
+        fields.extend(_normalize_sequence_strings(subrule.get("candidate_fields", ())))
+    return list(dict.fromkeys(fields))
+
+
+def _collect_parent_step_likely_values(parent_step: dict[str, Any]) -> list[str]:
+    values: list[str] = []
+    for subrule in parent_step.get("draft_subrules", ()):
+        if not isinstance(subrule, dict):
+            continue
+        values.extend(_normalize_sequence_strings(subrule.get("candidate_values", ())))
+    return list(dict.fromkeys(values))
+
+
+def _collect_parent_step_supporting_provenance(
+    parent_step: dict[str, Any],
+) -> list[str]:
+    values: list[str] = []
+    table_provenance = str(parent_step.get("table_provenance", "")).strip()
+    if table_provenance:
+        values.append(table_provenance)
+    subsection_number = str(parent_step.get("subsection_number", "")).strip()
+    subsection_title = str(parent_step.get("subsection_title", "")).strip()
+    if subsection_number or subsection_title:
+        values.append(
+            _normalize_whitespace(
+                " ".join(part for part in (subsection_number, subsection_title) if part)
+            )
+        )
+    values.extend(
+        _normalize_sequence_strings(parent_step.get("supporting_provenance_ids", ()))
+    )
+    return list(dict.fromkeys(values))
+
+
+def _summarize_parent_step_current_femic_state(
+    parent_step: dict[str, Any],
+    compiled_steps: Sequence[dict[str, Any]],
+    source_entry_map: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    status_counts: Counter[str] = Counter()
+    linked_source_statuses: dict[str, str] = {}
+    for step in compiled_steps:
+        status = str(step.get("run_status", step.get("step_status", ""))).strip()
+        if status:
+            status_counts.update([status])
+        for entry_id in _normalize_sequence_strings(
+            step.get("linked_source_entry_ids", ())
+        ):
+            source_entry = source_entry_map.get(entry_id, {})
+            linked_source_statuses[entry_id] = str(
+                source_entry.get("current_public_status", "")
+                or source_entry.get("run_status", "")
+            ).strip()
+    return {
+        "execution_class": str(parent_step.get("execution_class", "")).strip(),
+        "ratchet_state": _infer_thlb_parent_step_ratchet_state(parent_step),
+        "compiled_step_count": len(compiled_steps),
+        "compiled_status_summary": dict(sorted(status_counts.items())),
+        "linked_source_statuses": dict(sorted(linked_source_statuses.items())),
+    }
+
+
+def _is_parent_step_manual_or_aspatial(
+    parent_step: dict[str, Any], compiled_steps: Sequence[dict[str, Any]]
+) -> bool:
+    if "aspatial" in str(parent_step.get("execution_class", "")).strip().casefold():
+        return True
+    for step in compiled_steps:
+        operation = str(
+            step.get("compiled_operation_type", "") or step.get("operation_type", "")
+        ).strip()
+        status = str(step.get("run_status", step.get("step_status", ""))).strip()
+        if operation in {"aspatial_reduction", "no_deduction"}:
+            return True
+        if status in {"manual_review_required", "unsupported"}:
+            return True
+    for subrule in parent_step.get("draft_subrules", ()):
+        if not isinstance(subrule, dict):
+            continue
+        operation = str(subrule.get("candidate_operation_type", "")).strip()
+        review_status = str(subrule.get("review_status", "")).strip()
+        if (
+            operation == "aspatial_reduction"
+            or review_status == "manual_review_required"
+        ):
+            return True
+    return False
+
+
+def _is_parent_step_blocked_missing_source(
+    parent_step: dict[str, Any],
+    compiled_steps: Sequence[dict[str, Any]],
+    source_entry_map: dict[str, dict[str, Any]],
+) -> bool:
+    blocked_statuses = {"no_hit", "failed", "ordered", "followup_pending"}
+    for step in compiled_steps:
+        missing_ids = _normalize_sequence_strings(
+            step.get("missing_source_entry_ids", ())
+        )
+        if missing_ids:
+            return True
+        for entry_id in _normalize_sequence_strings(
+            step.get("linked_source_entry_ids", ())
+        ):
+            source_entry = source_entry_map.get(entry_id)
+            if source_entry is None:
+                return True
+            current_status = str(
+                source_entry.get("current_public_status", "")
+                or source_entry.get("run_status", "")
+            ).strip()
+            if current_status in blocked_statuses:
+                return True
+    if not compiled_steps:
+        for subrule in parent_step.get("draft_subrules", ()):
+            if not isinstance(subrule, dict):
+                continue
+            if _normalize_sequence_strings(subrule.get("candidate_layers", ())):
+                return False
+    return False
+
+
+def _match_warmstart_motif(
+    *,
+    parent_step: dict[str, Any],
+    compiled_steps: Sequence[dict[str, Any]],
+    source_entry_map: dict[str, dict[str, Any]],
+    patterns: Sequence[dict[str, Any]],
+) -> dict[str, Any] | None:
+    stage = str(parent_step.get("land_base_stage", "")).strip().casefold()
+    execution_class = str(parent_step.get("execution_class", "")).strip().casefold()
+    label = str(parent_step.get("parent_label", "")).strip().casefold()
+    operation_types = _normalize_identifier_set(
+        _collect_parent_step_candidate_operation_types(parent_step, compiled_steps)
+    )
+    source_families = _normalize_identifier_set(
+        _collect_parent_step_likely_source_layer_families(
+            parent_step, compiled_steps, source_entry_map
+        )
+    )
+    fields = _normalize_identifier_set(_collect_parent_step_likely_fields(parent_step))
+    best_score = 0
+    best_pattern: dict[str, Any] | None = None
+    for pattern in patterns:
+        score = 0
+        substantive_hit = False
+        stages = _normalize_identifier_set(pattern.get("land_base_stages", ()))
+        if stages and stage in stages:
+            score += 3
+        execution_classes = _normalize_identifier_set(
+            pattern.get("execution_classes", ())
+        )
+        if execution_classes and execution_class in execution_classes:
+            score += 3
+        pattern_operations = _normalize_identifier_set(
+            pattern.get("operation_types", ())
+        )
+        if pattern_operations and operation_types.intersection(pattern_operations):
+            score += 4
+            substantive_hit = True
+        for token in _normalize_sequence_strings(pattern.get("label_contains", ())):
+            if token.casefold() in label:
+                score += 2
+                substantive_hit = True
+        for token in _normalize_sequence_strings(pattern.get("source_prefixes", ())):
+            token_folded = token.casefold()
+            if any(item.startswith(token_folded) for item in source_families):
+                score += 1
+                substantive_hit = True
+        for token in _normalize_sequence_strings(pattern.get("field_contains", ())):
+            token_folded = token.casefold()
+            if any(token_folded in item for item in fields):
+                score += 1
+                substantive_hit = True
+        if substantive_hit and score > best_score:
+            best_score = score
+            best_pattern = pattern
+    return best_pattern if best_score > 0 else None
+
+
+def _derive_warmstart_status(
+    *,
+    parent_step: dict[str, Any],
+    compiled_steps: Sequence[dict[str, Any]],
+    source_entry_map: dict[str, dict[str, Any]],
+    matched_pattern: dict[str, Any] | None,
+) -> str:
+    if _is_parent_step_manual_or_aspatial(parent_step, compiled_steps):
+        return _THLB_WARMSTART_STATUS_MANUAL_OR_ASPATIAL
+    if _is_parent_step_blocked_missing_source(
+        parent_step, compiled_steps, source_entry_map
+    ):
+        return _THLB_WARMSTART_STATUS_BLOCKED_MISSING_SOURCE
+    if compiled_steps:
+        return _THLB_WARMSTART_STATUS_COMPILED_READY
+    if matched_pattern is not None:
+        return _THLB_WARMSTART_STATUS_REVIEW_PATTERN_MATCH
+    return _THLB_WARMSTART_STATUS_NO_PATTERN_MATCH
+
+
+def _build_generic_warmstart_review_questions(
+    *, parent_step: dict[str, Any], warmstart_status: str
+) -> list[str]:
+    questions = [
+        "Does the TSR row clearly belong in this stage of the GLB/AFLB/LHLB/THLB ladder?",
+        "Does the current FEMIC interpretation match the plain TSR text and benchmark row?",
+    ]
+    if warmstart_status == _THLB_WARMSTART_STATUS_BLOCKED_MISSING_SOURCE:
+        questions.append(
+            "Which reviewed source layer, override, or local artifact would unblock this rule?"
+        )
+    elif warmstart_status == _THLB_WARMSTART_STATUS_MANUAL_OR_ASPATIAL:
+        questions.append(
+            "Is this step intentionally manual/aspatial in the accepted lane, or does it need a better spatial interpretation later?"
+        )
+    elif warmstart_status == _THLB_WARMSTART_STATUS_COMPILED_READY:
+        questions.append(
+            "Is the existing compiled FEMIC logic still the right executable interpretation to keep?"
+        )
+    else:
+        questions.append(
+            "Which likely layers, fields, and values should a human inspect first to finish this rule?"
+        )
+    if str(parent_step.get("benchmark_marginal_area_ha", "")).strip():
+        questions.append(
+            "Is the benchmark marginal deduction directionally plausible relative to the current FEMIC state?"
+        )
+    return questions
+
+
+def _build_tsr_thlb_warmstart_payload(
+    *,
+    recipe: TsrThlbNetdownRecipeRecord,
+    source_entry_map: dict[str, dict[str, Any]],
+    patterns: Sequence[dict[str, Any]],
+) -> dict[str, Any]:
+    milestones, parent_stage_groups = _parent_steps_grouped_by_stage(recipe)
+    compiled_step_map: dict[str, list[dict[str, Any]]] = {}
+    for step in recipe.steps:
+        parent_step_id = str(step.get("parent_step_id", "")).strip()
+        if parent_step_id:
+            compiled_step_map.setdefault(parent_step_id, []).append(dict(step))
+
+    milestone_payload = [
+        {
+            "parent_step_id": str(item.get("parent_step_id", "")).strip(),
+            "parent_label": str(item.get("parent_label", "")).strip(),
+            "land_base_stage": str(item.get("land_base_stage", "")).strip(),
+            "benchmark_cumulative_area_ha": item.get("benchmark_cumulative_area_ha"),
+        }
+        for item in milestones
+    ]
+
+    entries: list[dict[str, Any]] = []
+    for stage in _THLB_STAGE_ORDER:
+        for parent_step in parent_stage_groups.get(stage, []):
+            parent_step_id = str(parent_step.get("parent_step_id", "")).strip()
+            compiled_steps = compiled_step_map.get(parent_step_id, [])
+            matched_pattern = _match_warmstart_motif(
+                parent_step=parent_step,
+                compiled_steps=compiled_steps,
+                source_entry_map=source_entry_map,
+                patterns=patterns,
+            )
+            warmstart_status = _derive_warmstart_status(
+                parent_step=parent_step,
+                compiled_steps=compiled_steps,
+                source_entry_map=source_entry_map,
+                matched_pattern=matched_pattern,
+            )
+            motif_id = (
+                str(matched_pattern.get("motif_id", "")).strip()
+                if matched_pattern
+                else ""
+            )
+            motif_summary = (
+                str(matched_pattern.get("motif_summary", "")).strip()
+                if matched_pattern
+                else ""
+            )
+            likely_source_layer_families = (
+                _collect_parent_step_likely_source_layer_families(
+                    parent_step,
+                    compiled_steps,
+                    source_entry_map,
+                )
+            )
+            likely_fields = _collect_parent_step_likely_fields(parent_step)
+            likely_values = _collect_parent_step_likely_values(parent_step)
+            likely_review_questions = (
+                _normalize_sequence_strings(
+                    matched_pattern.get("likely_review_questions", ())
+                )
+                if matched_pattern
+                else []
+            )
+            if not likely_review_questions:
+                likely_review_questions = _build_generic_warmstart_review_questions(
+                    parent_step=parent_step,
+                    warmstart_status=warmstart_status,
+                )
+            suggested_operation_class = ""
+            if matched_pattern is not None:
+                suggested_operation_class = str(
+                    matched_pattern.get("suggested_operation_class", "")
+                ).strip()
+            if not suggested_operation_class:
+                suggested_operation_class = (
+                    _collect_parent_step_candidate_operation_types(
+                        parent_step, compiled_steps
+                    )[0]
+                    if _collect_parent_step_candidate_operation_types(
+                        parent_step, compiled_steps
+                    )
+                    else str(parent_step.get("execution_class", "")).strip()
+                )
+            entries.append(
+                {
+                    "parent_step_id": parent_step_id,
+                    "parent_label": str(parent_step.get("parent_label", "")).strip(),
+                    "land_base_stage": str(
+                        parent_step.get("land_base_stage", "")
+                    ).strip(),
+                    "benchmark_marginal_area_ha": parent_step.get(
+                        "benchmark_marginal_area_ha"
+                    ),
+                    "benchmark_cumulative_area_ha": parent_step.get(
+                        "benchmark_cumulative_area_ha"
+                    ),
+                    "warmstart_status": warmstart_status,
+                    "motif_id": motif_id,
+                    "motif_summary": motif_summary,
+                    "suggested_operation_class": suggested_operation_class,
+                    "likely_source_layer_families": likely_source_layer_families,
+                    "likely_fields": likely_fields,
+                    "likely_values": likely_values,
+                    "likely_review_questions": likely_review_questions,
+                    "supporting_tsr_provenance": _collect_parent_step_supporting_provenance(
+                        parent_step
+                    ),
+                    "current_femic_state": _summarize_parent_step_current_femic_state(
+                        parent_step,
+                        compiled_steps,
+                        source_entry_map,
+                    ),
+                    "human_notes": "",
+                }
+            )
+    return {
+        "tsa": recipe.tsa.to_dict(),
+        "generated_utc": datetime.now(UTC).isoformat(),
+        "artifact_kind": "thlb_warmstart",
+        "canonical_recipe_kind": recipe.recipe_kind,
+        "non_canonical_warning": (
+            "Review aid only. Do not auto-promote warm-start suggestions into executable THLB logic."
+        ),
+        "milestones": milestone_payload,
+        "entries": entries,
+    }
+
+
+def _build_tsr_thlb_warmstart_markdown(
+    *,
+    recipe: TsrThlbNetdownRecipeRecord,
+    warmstart_payload: dict[str, Any],
+    recipe_relative_path: str,
+    yaml_relative_path: str,
+) -> str:
+    milestones = [
+        dict(item)
+        for item in warmstart_payload.get("milestones", ())
+        if isinstance(item, dict)
+    ]
+    entries = [
+        dict(item)
+        for item in warmstart_payload.get("entries", ())
+        if isinstance(item, dict)
+    ]
+    grouped_entries: dict[str, list[dict[str, Any]]] = {
+        stage: [] for stage in _THLB_STAGE_ORDER
+    }
+    for item in entries:
+        stage = str(item.get("land_base_stage", "context")).strip()
+        if stage not in grouped_entries:
+            stage = "context"
+        grouped_entries[stage].append(item)
+
+    lines = [
+        f"# THLB Warm-Start Checklist: TSA {recipe.tsa.tsa_code} ({recipe.tsa.tsa_name})",
+        "",
+        "- Review aid only: this checklist is not canonical executable THLB logic.",
+        f"- Canonical reviewed recipe: `{recipe_relative_path}`",
+        f"- Editable warm-start YAML: `{yaml_relative_path}`",
+        "",
+        "## How To Use This Checklist",
+        "",
+        "- Start from the backbone milestones so you stay oriented in the GLB/AFLB/LHLB/THLB ladder.",
+        "- Treat `compiled_ready` rows as already interpreted by FEMIC, but still review whether that interpretation is the right one to keep.",
+        "- Treat `blocked_missing_source` and `manual_or_aspatial` rows as honest seams, not hidden automation failures.",
+        "- Copy your own notes into the paired YAML file; do not treat this Markdown as the editable source.",
+        "",
+        "## Backbone Milestones",
+        "",
+    ]
+    for milestone in milestones:
+        label = str(milestone.get("parent_label", "")).strip()
+        stage = _stage_header_text(str(milestone.get("land_base_stage", "")).strip())
+        benchmark = milestone.get("benchmark_cumulative_area_ha")
+        benchmark_text = (
+            f"`{float(benchmark):.3f} ha`"
+            if benchmark is not None
+            else "`benchmark not parsed`"
+        )
+        lines.append(
+            f"- **{label}** (`{stage}`) -> remaining benchmark area {benchmark_text}"
+        )
+
+    lines.extend(["", "## Stage Checklist", ""])
+    for stage in _THLB_STAGE_ORDER:
+        stage_entries = grouped_entries.get(stage, [])
+        if not stage_entries:
+            continue
+        lines.append(f"### {_stage_header_text(stage)}")
+        lines.append("")
+        for entry in stage_entries:
+            lines.append(f"#### {entry.get('parent_label', '')}")
+            lines.append("")
+            lines.append(f"- Parent step id: `{entry.get('parent_step_id', '')}`")
+            lines.append(f"- Warm-start status: `{entry.get('warmstart_status', '')}`")
+            benchmark_marginal = entry.get("benchmark_marginal_area_ha")
+            if benchmark_marginal is not None:
+                lines.append(
+                    f"- TSR row effect: benchmark marginal deduction `{float(benchmark_marginal):.3f} ha`"
+                )
+            benchmark_cumulative = entry.get("benchmark_cumulative_area_ha")
+            if benchmark_cumulative is not None:
+                lines.append(
+                    f"- TSR benchmark remaining area after this row: `{float(benchmark_cumulative):.3f} ha`"
+                )
+            motif_summary = str(entry.get("motif_summary", "")).strip()
+            motif_id = str(entry.get("motif_id", "")).strip()
+            if motif_id or motif_summary:
+                lines.append(
+                    "- Recurring motif: "
+                    + f"`{motif_id or 'unlabeled'}`"
+                    + (f" | {motif_summary}" if motif_summary else "")
+                )
+            lines.append(
+                f"- Suggested operation class to inspect first: `{entry.get('suggested_operation_class', '')}`"
+            )
+            current_state = entry.get("current_femic_state", {})
+            if isinstance(current_state, dict):
+                lines.append(
+                    "- What FEMIC already has: "
+                    + f"execution_class=`{current_state.get('execution_class', '')}`, "
+                    + f"ratchet_state=`{current_state.get('ratchet_state', '')}`, "
+                    + f"compiled_step_count=`{current_state.get('compiled_step_count', 0)}`"
+                )
+                compiled_summary = current_state.get("compiled_status_summary", {})
+                if isinstance(compiled_summary, dict) and compiled_summary:
+                    lines.append(
+                        "- Current compiled statuses: "
+                        + ", ".join(
+                            f"`{status}`={count}"
+                            for status, count in sorted(compiled_summary.items())
+                        )
+                    )
+            likely_layers = _normalize_sequence_strings(
+                entry.get("likely_source_layer_families", ())
+            )
+            if likely_layers:
+                lines.append(
+                    "- Likely source-layer families to inspect: "
+                    + ", ".join(f"`{value}`" for value in likely_layers)
+                )
+            likely_fields = _normalize_sequence_strings(entry.get("likely_fields", ()))
+            if likely_fields:
+                lines.append(
+                    "- Likely fields to inspect: "
+                    + ", ".join(f"`{value}`" for value in likely_fields)
+                )
+            likely_values = _normalize_sequence_strings(entry.get("likely_values", ()))
+            if likely_values:
+                lines.append(
+                    "- Likely values to inspect: "
+                    + ", ".join(f"`{value}`" for value in likely_values)
+                )
+            provenance = _normalize_sequence_strings(
+                entry.get("supporting_tsr_provenance", ())
+            )
+            if provenance:
+                lines.append("- Supporting TSR provenance:")
+                for value in provenance:
+                    lines.append(f"  - `{value}`")
+            questions = _normalize_sequence_strings(
+                entry.get("likely_review_questions", ())
+            )
+            if questions:
+                lines.append("- Human review questions:")
+                for question in questions:
+                    lines.append(f"  - {question}")
+            lines.append("")
+    return "\n".join(lines) + "\n"
+
+
 def _describe_thlb_step_logic(step: dict[str, Any]) -> str:
     normalized_action = str(step.get("normalized_action", "")).strip()
     spatial_mode = str(step.get("spatial_application_mode", "")).strip()
@@ -7100,6 +7730,7 @@ def _build_tsr_thlb_status_report_markdown(
     step_count: int,
     generated_utc: str,
     runtime_report_relative_path: str,
+    warmstart_markdown_relative_path: str | None = None,
     applied_steps: Sequence[dict[str, Any]],
     source_entry_map: dict[str, dict[str, Any]],
     override_entries: dict[str, TsrSourceLayerOverrideEntry],
@@ -7171,6 +7802,11 @@ def _build_tsr_thlb_status_report_markdown(
         f"- Output checkpoint: `{output_relative_path}`",
         f"- Audit JSON: `{audit_relative_path}`",
         f"- Runtime history copy: `{runtime_report_relative_path}`",
+        (
+            f"- Warm-start checklist: `{warmstart_markdown_relative_path}`"
+            if warmstart_markdown_relative_path
+            else "- Warm-start checklist: `not generated yet`"
+        ),
         "",
         "## Review Dashboard",
         "",
@@ -7292,6 +7928,7 @@ def _build_tsr_thlb_recipe_build_report_markdown(
     source_layer_recipe_relative_path: str,
     generated_utc: str,
     runtime_report_relative_path: str,
+    warmstart_markdown_relative_path: str | None = None,
     source_entry_map: dict[str, dict[str, Any]],
     override_entries: dict[str, TsrSourceLayerOverrideEntry],
 ) -> str:
@@ -7321,6 +7958,11 @@ def _build_tsr_thlb_recipe_build_report_markdown(
         f"- THLB recipe path: `{recipe_relative_path}`",
         f"- Source-layer recipe path: `{source_layer_recipe_relative_path}`",
         f"- Runtime history copy: `{runtime_report_relative_path}`",
+        (
+            f"- Warm-start checklist: `{warmstart_markdown_relative_path}`"
+            if warmstart_markdown_relative_path
+            else "- Warm-start checklist: `not generated yet`"
+        ),
         "",
         "## Review Dashboard",
         "",
@@ -9214,6 +9856,19 @@ def run_tsr_thlb_parent_step(
             source_layer_recipe_relative_path=updated_recipe.instance_inputs.source_layer_recipe_path,
             generated_utc=datetime.now(UTC).isoformat(),
             runtime_report_relative_path=runtime_report_relative_path,
+            warmstart_markdown_relative_path=(
+                str(
+                    default_tsr_thlb_warmstart_markdown_path(
+                        instance_root=instance_root
+                    )
+                    .relative_to(instance_root)
+                    .as_posix()
+                )
+                if default_tsr_thlb_warmstart_markdown_path(
+                    instance_root=instance_root
+                ).exists()
+                else None
+            ),
             source_entry_map=source_entry_map,
             override_entries=override_entries,
         )
@@ -9644,6 +10299,7 @@ def _build_tsr_thlb_workbench_notebook(
     recipe: TsrThlbNetdownRecipeRecord,
     recipe_relative_path: str,
     status_report_relative_path: str,
+    warmstart_markdown_relative_path: str | None,
     source_entry_map: dict[str, dict[str, Any]],
     override_entries: dict[str, TsrSourceLayerOverrideEntry],
 ) -> nbformat.NotebookNode:
@@ -9661,6 +10317,11 @@ def _build_tsr_thlb_workbench_notebook(
                     "",
                     f"- Canonical recipe: `{recipe_relative_path}`",
                     f"- Current status report: `{status_report_relative_path}`",
+                    (
+                        f"- Warm-start checklist: `{warmstart_markdown_relative_path}`"
+                        if warmstart_markdown_relative_path
+                        else "- Warm-start checklist: `not generated yet`"
+                    ),
                     "- Canonicality contract: recipe YAML + script during iteration; "
                     "locked script + frozen report at approval time.",
                 ]
@@ -9758,6 +10419,86 @@ def _build_tsr_thlb_workbench_notebook(
     )
 
 
+def build_tsr_thlb_warmstart(
+    *,
+    recipe_path: Path,
+    markdown_path: Path | None = None,
+    yaml_path: Path | None = None,
+) -> TsrThlbWarmstartBuildResult:
+    """Generate non-canonical THLB warm-start checklist artifacts."""
+
+    (
+        recipe,
+        instance_root,
+        source_recipe,
+        source_entry_map,
+        _override_entries,
+    ) = _load_tsr_thlb_recipe_context(recipe_path)
+    resolved_recipe_path = recipe_path.expanduser().resolve()
+    resolved_markdown_path = (
+        markdown_path.expanduser().resolve()
+        if markdown_path is not None
+        else default_tsr_thlb_warmstart_markdown_path(instance_root=instance_root)
+    )
+    resolved_yaml_path = (
+        yaml_path.expanduser().resolve()
+        if yaml_path is not None
+        else default_tsr_thlb_warmstart_yaml_path(instance_root=instance_root)
+    )
+    for candidate_path in (resolved_markdown_path, resolved_yaml_path):
+        try:
+            candidate_path.relative_to(instance_root)
+        except ValueError as exc:
+            raise TsrRecipeError(
+                "THLB warm-start artifact paths must live under the instance root."
+            ) from exc
+
+    patterns = _load_warmstart_patterns()
+    warmstart_payload = _build_tsr_thlb_warmstart_payload(
+        recipe=recipe,
+        source_entry_map=source_entry_map,
+        patterns=patterns,
+    )
+    markdown_text = _build_tsr_thlb_warmstart_markdown(
+        recipe=recipe,
+        warmstart_payload=warmstart_payload,
+        recipe_relative_path=str(
+            resolved_recipe_path.relative_to(instance_root).as_posix()
+        ),
+        yaml_relative_path=str(
+            resolved_yaml_path.relative_to(instance_root).as_posix()
+        ),
+    )
+    resolved_yaml_path.parent.mkdir(parents=True, exist_ok=True)
+    resolved_yaml_path.write_text(
+        yaml.safe_dump(warmstart_payload, sort_keys=False, allow_unicode=False),
+        encoding="utf-8",
+    )
+    resolved_markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    resolved_markdown_path.write_text(markdown_text, encoding="utf-8")
+    milestones, _parent_stage_groups = _parent_steps_grouped_by_stage(recipe)
+    status_counts = Counter(
+        str(item.get("warmstart_status", "")).strip()
+        for item in warmstart_payload.get("entries", ())
+        if isinstance(item, dict) and str(item.get("warmstart_status", "")).strip()
+    )
+    return TsrThlbWarmstartBuildResult(
+        recipe_path=resolved_recipe_path,
+        markdown_path=resolved_markdown_path,
+        yaml_path=resolved_yaml_path,
+        tsa=recipe.tsa,
+        milestone_count=len(milestones),
+        parent_step_count=len(
+            [
+                item
+                for item in recipe.parent_steps
+                if str(item.get("parent_kind", "")).strip() != "milestone"
+            ]
+        ),
+        warmstart_status_counts=dict(sorted(status_counts.items())),
+    )
+
+
 def _build_tsr_thlb_locked_script_text(
     *,
     recipe: TsrThlbNetdownRecipeRecord,
@@ -9838,6 +10579,9 @@ def build_tsr_thlb_workbench(
         instance_root=instance_root,
         recipe_contract=dict(recipe.recipe_contract),
     )
+    warmstart_markdown_path = default_tsr_thlb_warmstart_markdown_path(
+        instance_root=instance_root
+    )
     notebook = _build_tsr_thlb_workbench_notebook(
         recipe=recipe,
         recipe_relative_path=str(
@@ -9845,6 +10589,11 @@ def build_tsr_thlb_workbench(
         ),
         status_report_relative_path=str(
             status_report_path.relative_to(instance_root).as_posix()
+        ),
+        warmstart_markdown_relative_path=(
+            str(warmstart_markdown_path.relative_to(instance_root).as_posix())
+            if warmstart_markdown_path.exists()
+            else None
         ),
         source_entry_map=source_entry_map,
         override_entries=override_entries,
@@ -10934,6 +11683,17 @@ def run_tsr_thlb_netdown_recipe(
         generated_utc=generated_utc,
         runtime_report_relative_path=str(
             runtime_status_report_path.relative_to(instance_root).as_posix()
+        ),
+        warmstart_markdown_relative_path=(
+            str(
+                default_tsr_thlb_warmstart_markdown_path(instance_root=instance_root)
+                .relative_to(instance_root)
+                .as_posix()
+            )
+            if default_tsr_thlb_warmstart_markdown_path(
+                instance_root=instance_root
+            ).exists()
+            else None
         ),
         applied_steps=applied_steps,
         source_entry_map=source_entry_map,

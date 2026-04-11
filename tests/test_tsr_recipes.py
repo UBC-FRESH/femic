@@ -2309,6 +2309,233 @@ def test_build_tsr_thlb_workbench_writes_generated_notebook_and_updates_recipe_c
     )
 
 
+def test_build_tsr_thlb_warmstart_writes_noncanonical_markdown_and_yaml(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+    source_recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    source_recipe_payload["recipe_contract"]["status"] = "built"
+    source_recipe_payload["entries"] = [
+        {
+            "entry_id": "whse_f_own",
+            "recommended_query": "WHSE_FOREST_VEGETATION.F_OWN",
+            "current_public_status": "exact_hit",
+            "artifact_path": "data/downloads/bcdc/F_OWN/F_OWN.gpkg",
+        },
+        {
+            "entry_id": "missing_streams",
+            "recommended_query": "REG_LAND_AND_NATURAL_RESOURCE.STREAM_CLASSIFICATION_CAR_LINE",
+            "current_public_status": "no_hit",
+        },
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            source_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+    recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    recipe_payload["recipe_contract"]["status"] = "built"
+    recipe_payload["parent_steps"] = [
+        {
+            "parent_step_id": "milestone_aflb",
+            "parent_label": "Analysis forest land base",
+            "parent_kind": "milestone",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "execution_class": "reference_only",
+            "benchmark_cumulative_area_ha": 3098168.0,
+            "row_order": 1,
+        },
+        {
+            "parent_step_id": "compiled_step",
+            "parent_label": "Land not administered by the Province",
+            "parent_kind": "transformation",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "execution_class": "drop_from_universe",
+            "benchmark_marginal_area_ha": 10.0,
+            "benchmark_cumulative_area_ha": 90.0,
+            "table_provenance": "TSR_2024/...#table=3,row=2",
+            "supporting_provenance_ids": ["TSR_2024/...#page=19"],
+            "draft_subrules": [
+                {
+                    "candidate_operation_type": "attribute_select",
+                    "candidate_layers": ["whse_forest_vegetation_f_own"],
+                    "candidate_fields": ["OWN"],
+                    "candidate_values": ["40", "50"],
+                }
+            ],
+            "compiled_logic": [
+                {
+                    "step_id": "compiled_001",
+                    "parent_step_id": "compiled_step",
+                    "label": "Exclude private land",
+                    "step_status": "ready",
+                    "run_status": "ready",
+                    "compiled_operation_type": "attribute_select",
+                    "linked_source_entry_ids": ["whse_f_own"],
+                }
+            ],
+            "row_order": 2,
+        },
+        {
+            "parent_step_id": "blocked_step",
+            "parent_label": "Riparian areas",
+            "parent_kind": "transformation",
+            "land_base_stage": "lhlb_to_thlb",
+            "stage_label": "LHLB -> THLB",
+            "execution_class": "projected_harvest_exclusion",
+            "benchmark_marginal_area_ha": 5.0,
+            "benchmark_cumulative_area_ha": 85.0,
+            "draft_subrules": [
+                {
+                    "candidate_operation_type": "buffer_intersect",
+                    "candidate_layers": ["stream_classification_car_line"],
+                    "candidate_fields": ["STREAM_CLASS"],
+                    "candidate_values": ["1", "2"],
+                }
+            ],
+            "compiled_logic": [
+                {
+                    "step_id": "compiled_002",
+                    "parent_step_id": "blocked_step",
+                    "label": "Buffer stream classes",
+                    "step_status": "needs_review",
+                    "compiled_operation_type": "buffer_intersect",
+                    "linked_source_entry_ids": ["missing_streams"],
+                }
+            ],
+            "row_order": 3,
+        },
+        {
+            "parent_step_id": "manual_step",
+            "parent_label": "Future roads",
+            "parent_kind": "transformation",
+            "land_base_stage": "lhlb_to_thlb",
+            "stage_label": "LHLB -> THLB",
+            "execution_class": "projected_harvest_exclusion",
+            "benchmark_marginal_area_ha": 3.0,
+            "benchmark_cumulative_area_ha": 82.0,
+            "compiled_logic": [
+                {
+                    "step_id": "compiled_003",
+                    "parent_step_id": "manual_step",
+                    "label": "Apply reviewed no-op tail step",
+                    "step_status": "ready",
+                    "compiled_operation_type": "no_deduction",
+                }
+            ],
+            "row_order": 4,
+        },
+        {
+            "parent_step_id": "unknown_step",
+            "parent_label": "Odd custom clause",
+            "parent_kind": "transformation",
+            "land_base_stage": "lhlb_to_thlb",
+            "stage_label": "LHLB -> THLB",
+            "execution_class": "projected_harvest_exclusion",
+            "benchmark_marginal_area_ha": 1.0,
+            "benchmark_cumulative_area_ha": 81.0,
+            "compiled_logic": [],
+            "draft_subrules": [],
+            "row_order": 5,
+        },
+    ]
+    recipe_payload["steps"] = [
+        {
+            "step_id": "compiled_001",
+            "parent_step_id": "compiled_step",
+            "label": "Exclude private land",
+            "step_status": "ready",
+            "run_status": "ready",
+            "compiled_operation_type": "attribute_select",
+        },
+        {
+            "step_id": "compiled_002",
+            "parent_step_id": "blocked_step",
+            "label": "Buffer stream classes",
+            "step_status": "needs_review",
+            "compiled_operation_type": "buffer_intersect",
+            "linked_source_entry_ids": ["missing_streams"],
+        },
+        {
+            "step_id": "compiled_003",
+            "parent_step_id": "manual_step",
+            "label": "Apply reviewed no-op tail step",
+            "step_status": "ready",
+            "compiled_operation_type": "no_deduction",
+        },
+    ]
+    original_recipe_text = tsr_recipes.yaml.safe_dump(
+        recipe_payload, sort_keys=False, allow_unicode=False
+    )
+    init_result.thlb_netdown_recipe_path.write_text(
+        original_recipe_text,
+        encoding="utf-8",
+    )
+
+    result = tsr_recipes.build_tsr_thlb_warmstart(
+        recipe_path=init_result.thlb_netdown_recipe_path
+    )
+
+    assert result.markdown_path.name == "thlb_netdown.warmstart.md"
+    assert result.yaml_path.name == "thlb_warmstart.yaml"
+    assert result.milestone_count == 1
+    assert result.parent_step_count == 4
+    assert result.warmstart_status_counts["compiled_ready"] == 1
+    assert result.warmstart_status_counts["blocked_missing_source"] == 1
+    assert result.warmstart_status_counts["manual_or_aspatial"] == 1
+    assert result.warmstart_status_counts["no_pattern_match"] == 1
+    payload = tsr_recipes.yaml.safe_load(result.yaml_path.read_text(encoding="utf-8"))
+    assert payload["artifact_kind"] == "thlb_warmstart"
+    assert "Review aid only" in payload["non_canonical_warning"]
+    assert payload["milestones"][0]["parent_label"] == "Analysis forest land base"
+    entries = {item["parent_step_id"]: item for item in payload["entries"]}
+    assert entries["compiled_step"]["warmstart_status"] == "compiled_ready"
+    assert entries["compiled_step"]["motif_id"] == "ownership_admin_exclusion"
+    assert entries["blocked_step"]["warmstart_status"] == "blocked_missing_source"
+    assert entries["manual_step"]["warmstart_status"] == "manual_or_aspatial"
+    assert entries["unknown_step"]["warmstart_status"] == "no_pattern_match"
+    markdown_text = result.markdown_path.read_text(encoding="utf-8")
+    assert "THLB Warm-Start Checklist: TSA 29 (Williams Lake)" in markdown_text
+    assert "Backbone Milestones" in markdown_text
+    assert "Warm-start status: `compiled_ready`" in markdown_text
+    assert "Warm-start status: `blocked_missing_source`" in markdown_text
+    assert "Warm-start status: `manual_or_aspatial`" in markdown_text
+    assert "Warm-start status: `no_pattern_match`" in markdown_text
+    assert (
+        init_result.thlb_netdown_recipe_path.read_text(encoding="utf-8")
+        == original_recipe_text
+    )
+
+
 def test_lock_tsr_thlb_workbench_requires_aflb_lock_before_thlb_only_lock(
     tmp_path: Path,
 ) -> None:

@@ -5690,6 +5690,66 @@ def test_tsr_thlb_workbench_build_uses_default_paths(
     assert any("compiled_logic_count: 9" in msg for msg in messages)
 
 
+def test_tsr_thlb_warmstart_build_uses_default_paths(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_build(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbWarmstartBuildResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            markdown_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "thlb_netdown.warmstart.md",
+            yaml_path=instance_root / "config" / "tsr" / "thlb_warmstart.yaml",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            milestone_count=4,
+            parent_step_count=12,
+            warmstart_status_counts={
+                "compiled_ready": 6,
+                "review_pattern_match": 3,
+                "blocked_missing_source": 2,
+                "manual_or_aspatial": 1,
+            },
+        )
+
+    monkeypatch.setattr(cli_main, "build_tsr_thlb_warmstart", _fake_build)
+
+    cli_main.tsr_thlb_netdown_warmstart_build(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+        output_markdown=None,
+        output_yaml=None,
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert (
+        captured_kwargs["markdown_path"]
+        == (instance_root / "workbench" / "tsr" / "thlb_netdown.warmstart.md").resolve()
+    )
+    assert (
+        captured_kwargs["yaml_path"]
+        == (instance_root / "config" / "tsr" / "thlb_warmstart.yaml").resolve()
+    )
+    assert any("markdown_path:" in msg for msg in messages)
+    assert any("yaml_path:" in msg for msg in messages)
+    assert any("warmstart_status_compiled_ready: 6" in msg for msg in messages)
+
+
 def test_tsr_thlb_workbench_lock_uses_default_paths(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

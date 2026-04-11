@@ -175,6 +175,7 @@ from femic.tsr_catalog import (
     TsrThlbNetdownRecipeRunResult,
     TsrThlbParallelBenchmarkResult,
     TsrThlbStep13AttributeCompileResult,
+    TsrThlbWarmstartBuildResult,
     TsrThlbWorkbenchBuildResult,
     TsrThlbWorkbenchLockResult,
     TsrSourceLayerOverridesError,
@@ -182,6 +183,7 @@ from femic.tsr_catalog import (
     TsrSourceLayerOverridesReport,
     TsrWrittenIndex,
     build_tsr_source_layers_recipe,
+    build_tsr_thlb_warmstart,
     build_tsr_thlb_workbench,
     build_tsr_thlb_netdown_recipe,
     compile_tsr_thlb_step13_attributes,
@@ -195,6 +197,8 @@ from femic.tsr_catalog import (
     default_tsr_thlb_step13_attribute_output_path,
     default_tsr_thlb_reconstructed_audit_path,
     default_tsr_thlb_reconstructed_output_path,
+    default_tsr_thlb_warmstart_markdown_path,
+    default_tsr_thlb_warmstart_yaml_path,
     default_tsr_thlb_workbench_notebook_path,
     extract_tsr_candidate_facts,
     fetch_tsr_pdfs,
@@ -2638,6 +2642,21 @@ def _print_tsr_thlb_workbench_build_summary(
         console.print(f"stage_{stage}: {count}")
 
 
+def _print_tsr_thlb_warmstart_build_summary(
+    result: TsrThlbWarmstartBuildResult,
+) -> None:
+    console.print(f"recipe_path: {result.recipe_path}")
+    console.print(f"markdown_path: {result.markdown_path}")
+    console.print(f"yaml_path: {result.yaml_path}")
+    console.print(f"tsa_id: {result.tsa.tsa_id}")
+    console.print(f"tsa_code: {result.tsa.tsa_code}")
+    console.print(f"tsa_name: {result.tsa.tsa_name}")
+    console.print(f"milestone_count: {result.milestone_count}")
+    console.print(f"parent_step_count: {result.parent_step_count}")
+    for status, count in result.warmstart_status_counts.items():
+        console.print(f"warmstart_status_{status}: {count}")
+
+
 def _print_tsr_thlb_workbench_lock_summary(
     result: TsrThlbWorkbenchLockResult,
 ) -> None:
@@ -3534,6 +3553,60 @@ def tsr_thlb_netdown_build(
         raise typer.Exit(code=1) from exc
 
     _print_tsr_thlb_netdown_recipe_build_summary(result)
+
+
+@tsr_app.command("thlb-netdown-warmstart-build")
+def tsr_thlb_netdown_warmstart_build(
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    thlb_netdown_recipe_path: Path | None = TSR_THLB_NETDOWN_RECIPE_PATH_OPTION,
+    output_markdown: Path | None = typer.Option(
+        None,
+        "--output-markdown",
+        help=(
+            "Optional warm-start checklist Markdown path. Defaults to "
+            "`workbench/tsr/thlb_netdown.warmstart.md` under the instance root."
+        ),
+    ),
+    output_yaml: Path | None = typer.Option(
+        None,
+        "--output-yaml",
+        help=(
+            "Optional editable warm-start YAML path. Defaults to "
+            "`config/tsr/thlb_warmstart.yaml` under the instance root."
+        ),
+    ),
+) -> None:
+    """Generate non-canonical THLB warm-start checklist/template artifacts."""
+
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_recipe_path = (
+        instance_context.resolve_path(thlb_netdown_recipe_path)
+        if thlb_netdown_recipe_path is not None
+        else default_tsr_thlb_netdown_recipe_path(instance_root=instance_context.root)
+    )
+    resolved_output_markdown = (
+        instance_context.resolve_path(output_markdown)
+        if output_markdown is not None
+        else default_tsr_thlb_warmstart_markdown_path(
+            instance_root=instance_context.root
+        )
+    )
+    resolved_output_yaml = (
+        instance_context.resolve_path(output_yaml)
+        if output_yaml is not None
+        else default_tsr_thlb_warmstart_yaml_path(instance_root=instance_context.root)
+    )
+    try:
+        result = build_tsr_thlb_warmstart(
+            recipe_path=resolved_recipe_path,
+            markdown_path=resolved_output_markdown,
+            yaml_path=resolved_output_yaml,
+        )
+    except TsrRecipeError as exc:
+        console.print(f"[red]TSR THLB warm-start build error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_thlb_warmstart_build_summary(result)
 
 
 @tsr_app.command("thlb-netdown-workbench-build")
