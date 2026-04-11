@@ -13320,3 +13320,18 @@
       exact-overlay implementation; and
     - the next `#131` pass should target performance/runtime structure for
       reconstructed step 002 and similarly heavy early exclusions.
+- 2026-04-10: Parked issue `#131` after the timeout diagnosis instead of
+  continuing to burn time on the stricter reconstructed lane.
+  - Plain-language decision:
+    - FEMIC already has a working TSA29 THLB workflow, and that is the lane
+      used to finish the recent TSA29 reconciliation/calibration work;
+    - `#131` is the stricter “rebuild THLB from the raw early geometry by
+      physically cutting polygons at each exclusion step” lane; and
+    - that stricter lane is interesting and now better understood, but it is
+      too runtime-expensive to keep pushing right now.
+  - So for now:
+    - keep the design, code checkpoint, and diagnostic evidence;
+    - treat the accepted TSA29 reconciliation lane as good enough for current
+      needs; and
+    - defer more `#131` work until the stricter from-scratch rebuild path
+      becomes worth the time again.

@@ -15313,3 +15313,22 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - the next `#131` pass should therefore focus on performance/runtime
       structure for reconstructed step 002 and similarly heavy early spatial
       exclusions, not on rerun selection semantics.
+- 2026-04-10: `#131` is now explicitly parked in favor of the working TSA29
+  reconciliation lane.
+  - Plain-language product read:
+    - FEMIC already has a working THLB workflow for TSA29, and that is the
+      workflow that was used to finish the four-day TSA29 reconciliation and
+      calibration pass;
+    - `#131` is trying to build a stricter from-scratch geometry-cutting
+      engine underneath that working workflow, not replace the fact that the
+      reviewed TSA29 lane already works for current needs; and
+    - the timeout diagnosis showed that this stricter lane is real but too
+      expensive to keep chasing right now.
+  - Current decision:
+    - keep the `#131` code/design checkpoint and diagnostic evidence;
+    - do **not** spend more immediate time trying to finish the full-TSA
+      reconstructed proving run;
+    - treat the accepted TSA29 THLB reconciliation lane as “good enough for
+      now”; and
+    - circle back to `#131` later only if the stricter from-scratch rebuild
+      becomes an actual pressing problem.
