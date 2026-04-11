@@ -13422,3 +13422,34 @@
       DWDS manifest advanced to `materialized` without a new order submission;
     - recovered artifact path:
       `data/downloads/bcdc/WHSE_FOREST_VEGETATION_GRY_PSP_STATUS_ACTIVE/GRY_PSP_STATUS_ACTIVE.gpkg`.
+- 2026-04-10: Implemented issue `#138` as a Windows ArcGIS Pro review-project
+  emit command for FEMIC instances.
+  - Added `femic prep arcgis-review-project --instance-root PATH` with
+    optional `--output-dir` and `--project-name`.
+  - Moved the shared ArcGIS Pro Python discovery/subprocess seam into
+    `src/femic/arcgis_pro.py` so the new review-project command and the
+    existing SiteProd fallback both use the same `propy.bat` / ArcGIS Python
+    resolution contract.
+  - Added `src/femic/arcgis_review.py` to:
+    - discover reviewable `.shp` / `.gpkg` layers under `data/` and `output/`;
+    - skip smoke-scoped cached BCDC overlays under
+      `data/downloads/bcdc/smoke`;
+    - emit a manifest-backed `.aprx` bundle with helper `.lyrx` files and all
+      layers off by default; and
+    - stage GeoPackage-backed layers as helper shapefiles inside the emitted
+      bundle when ArcGIS Pro compatibility requires it.
+  - Added focused regression coverage in:
+    - `tests/test_arcgis_review.py`;
+    - `tests/test_cli_main.py`; and
+    - `tests/test_docs_contract.py`.
+  - Updated user-facing docs in:
+    - `docs/reference/cli.rst`; and
+    - `docs/guides/geospatial-runtime-bootstrap.rst`.
+  - Real Windows/TSA29 proving-ground result:
+    - `femic prep arcgis-review-project --instance-root external/femic-tsa29-instance`
+      emitted a working ArcGIS Pro review bundle in
+      `runtime/logs/arcgis_review_acceptance_tsa29/`;
+    - the command produced `79` review layers;
+    - skipped `3` smoke-scoped cached BCDC artifacts; and
+    - staged `77` GeoPackage-backed layers into ArcGIS-friendly helper
+      shapefiles so the emitted project could load them reliably.

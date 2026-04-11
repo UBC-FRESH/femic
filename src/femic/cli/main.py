@@ -19,6 +19,7 @@ from rich.console import Console
 
 from femic import __version__
 from femic.account_surface import summarize_account_surface
+from femic.arcgis_review import build_arcgis_review_project
 from femic.bcdc_catalog import (
     BcdcCatalogError,
     BcdcResolveResult,
@@ -967,6 +968,21 @@ CASE_STRICT_WARNINGS_OPTION = typer.Option(
     False,
     "--strict-warnings",
     help="Fail preflight when warnings are present.",
+)
+ARCGIS_REVIEW_OUTPUT_DIR_OPTION = typer.Option(
+    None,
+    "--output-dir",
+    help=(
+        "Optional destination directory for emitted ArcGIS review-project files. "
+        "Defaults to workbench/arcgis_review under the instance root."
+    ),
+    show_default=False,
+)
+ARCGIS_REVIEW_PROJECT_NAME_OPTION = typer.Option(
+    None,
+    "--project-name",
+    help="Optional .aprx project name stem.",
+    show_default=False,
 )
 EXPORT_BUNDLE_DIR_OPTION = typer.Option(
     Path("data/model_input_bundle"),
@@ -5129,6 +5145,40 @@ def prep_geospatial_preflight(
         raise typer.Exit(code=1)
     if strict_warnings and result.warnings:
         raise typer.Exit(code=1)
+
+
+@prep_app.command("arcgis-review-project")
+def prep_arcgis_review_project(
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    output_dir: Path | None = ARCGIS_REVIEW_OUTPUT_DIR_OPTION,
+    project_name: str | None = ARCGIS_REVIEW_PROJECT_NAME_OPTION,
+) -> None:
+    """Emit a ready-to-open ArcGIS Pro review project for one FEMIC instance."""
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_output_dir = (
+        instance_context.resolve_path(output_dir) if output_dir is not None else None
+    )
+    try:
+        result = build_arcgis_review_project(
+            instance_root=instance_context.root,
+            output_dir=resolved_output_dir,
+            project_name=project_name,
+        )
+    except (FileNotFoundError, RuntimeError, subprocess.CalledProcessError) as exc:
+        console.print(f"[red]ArcGIS review-project emit failed:[/red] {exc}")
+        if isinstance(exc, subprocess.CalledProcessError):
+            if exc.stdout.strip():
+                console.print(exc.stdout.strip())
+            if exc.stderr.strip():
+                console.print(exc.stderr.strip())
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]ArcGIS review project emitted[/green]")
+    console.print(f"project_path={result.project_path}")
+    console.print(f"manifest_path={result.manifest_path}")
+    console.print(f"layer_count={result.layer_count}")
+    for note in result.skipped_notes:
+        console.print(f"[yellow]Note:[/yellow] {note}")
 
 
 @vdyp_app.command("run")

@@ -204,6 +204,10 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
 
     cli_text = (DOCS_ROOT / "reference" / "cli.rst").read_text(encoding="utf-8")
     for snippet in (
+        "- ``arcgis-review-project``: ``python -m femic prep arcgis-review-project [OPTIONS]``",
+        "prep arcgis-review-project",
+        "workbench/arcgis_review",
+        "all loaded layers off by default",
         "- ``data``",
         "- ``tsr``",
         "python -m femic data bcdc-resolve",
@@ -253,6 +257,16 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "~/.femic/tsr/corpus",
     ):
         assert snippet in cli_text
+
+    geospatial_text = (GUIDES_ROOT / "geospatial-runtime-bootstrap.rst").read_text(
+        encoding="utf-8"
+    )
+    for snippet in (
+        "femic prep arcgis-review-project",
+        "inspection aid only",
+        "visible = off",
+    ):
+        assert snippet in geospatial_text
 
 
 def test_tsr_api_page_is_wired_into_curated_modules() -> None:

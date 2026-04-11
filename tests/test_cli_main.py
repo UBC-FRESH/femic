@@ -8,7 +8,9 @@ from types import SimpleNamespace
 import pytest
 import typer
 import yaml
+from typer.testing import CliRunner
 
+from femic.arcgis_review import ArcgisReviewProjectResult
 from femic import bcdc_catalog
 from femic import tsr_catalog
 from femic.cli import main as cli_main
@@ -152,6 +154,74 @@ def test_preflight_checks_uses_source_root_fallback_for_shared_assets(
     assert not any("Missing required file" in msg for msg in messages)
     assert not any("Missing VDYP configuration directory" in msg for msg in messages)
     assert not any("Missing VDYP executable" in msg for msg in messages)
+
+
+def test_prep_arcgis_review_project_prints_emitted_paths(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    instance_root = tmp_path / "instance"
+    instance_root.mkdir(parents=True, exist_ok=True)
+    project_path = instance_root / "workbench" / "arcgis_review" / "tsa29_review.aprx"
+    manifest_path = (
+        instance_root / "workbench" / "arcgis_review" / "tsa29_review_manifest.json"
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "build_arcgis_review_project",
+        lambda *, instance_root, output_dir, project_name: ArcgisReviewProjectResult(
+            project_path=project_path,
+            manifest_path=manifest_path,
+            layer_count=3,
+            skipped_notes=(),
+        ),
+    )
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "prep",
+            "arcgis-review-project",
+            "--instance-root",
+            str(instance_root),
+        ],
+    )
+
+    assert result.exit_code == 0
+    normalized_stdout = result.stdout.replace("\n", "")
+    assert "ArcGIS review project emitted" in result.stdout
+    assert "project_path=" in normalized_stdout
+    assert str(project_path.name) in normalized_stdout
+    assert "manifest_path=" in normalized_stdout
+    assert str(manifest_path.name) in normalized_stdout
+    assert "layer_count=3" in normalized_stdout
+
+
+def test_prep_arcgis_review_project_surfaces_missing_arcgis(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    instance_root = tmp_path / "instance"
+    instance_root.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(
+        cli_main,
+        "build_arcgis_review_project",
+        lambda *, instance_root, output_dir, project_name: (_ for _ in ()).throw(
+            FileNotFoundError("ArcGIS Pro Python not found.")
+        ),
+    )
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "prep",
+            "arcgis-review-project",
+            "--instance-root",
+            str(instance_root),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "ArcGIS review-project emit failed" in result.stdout
+    assert "ArcGIS Pro Python not found." in result.stdout
 
 
 def test_preflight_checks_windows_requires_git_annex(

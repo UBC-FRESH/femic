@@ -251,6 +251,13 @@ Troubleshooting
   runtime dependency.
 - If ArcGIS Pro fallback is required, treat `propy.bat` as a path-resolved tool,
   not something guaranteed to be on `PATH`.
+- For manual GIS review on Windows, ``femic prep arcgis-review-project`` can
+  emit a ready-to-open ArcGIS Pro project from the instance's local ``.shp``
+  and ``.gpkg`` layers. This is an inspection aid only: it does not replace
+  FEMIC's canonical geoprocessing/runtime pipeline, all emitted layers default
+  to ``visible = off`` so the review project opens as a quiet workspace, and
+  GeoPackage-backed layers can be staged as helper shapefiles under the chosen
+  output directory when ArcGIS compatibility requires it.
 - If Linux VDYP runs but Windows does not, check the Windows-native VDYP config
   directory and parameter-file resolution before rerunning the full pipeline.
 - If Stage 00 cannot find ArcRasterRescue, set

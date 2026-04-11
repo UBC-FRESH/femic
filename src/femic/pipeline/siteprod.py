@@ -5,75 +5,12 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-import tempfile
 import time
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
+from femic.arcgis_pro import run_arcgis_python
 from femic.pipeline.io import resolve_windows_annex_pointer_payload_path
-
-
-def _find_arcgis_pro_python() -> Path | None:
-    candidates = [
-        Path(os.environ.get("ARCGIS_PRO_PYTHON", "")).expanduser()
-        if os.environ.get("ARCGIS_PRO_PYTHON")
-        else None,
-        Path(os.environ.get("ARCGIS_PRO_PYTHON_WRAPPER", "")).expanduser()
-        if os.environ.get("ARCGIS_PRO_PYTHON_WRAPPER")
-        else None,
-        Path(r"C:/Program Files/ArcGIS/Pro/bin/Python/Scripts/propy.bat"),
-        Path(r"C:/Program Files/ArcGIS/Pro/bin/Python/envs/arcgispro-py3/python.exe"),
-    ]
-    for candidate in candidates:
-        if candidate and candidate.exists():
-            return candidate
-    return None
-
-
-def _run_arcgis_python(
-    *, code: str, args: list[str]
-) -> subprocess.CompletedProcess[str]:
-    python_path = _find_arcgis_pro_python()
-    if python_path is None:
-        raise FileNotFoundError(
-            "ArcGIS Pro Python not found for Windows siteprod fallback"
-        )
-    if python_path.suffix.lower() == ".bat":
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            suffix=".py",
-            delete=False,
-            encoding="utf-8",
-        ) as script_file:
-            script_file.write(code)
-            script_path = Path(script_file.name)
-        cmd = [str(python_path), str(script_path), *args]
-        last_error: subprocess.CalledProcessError | None = None
-        try:
-            for attempt in range(3):
-                try:
-                    return subprocess.run(
-                        cmd,
-                        check=True,
-                        capture_output=True,
-                        text=True,
-                    )
-                except subprocess.CalledProcessError as exc:
-                    last_error = exc
-                    if exc.returncode != 246 or attempt == 2:
-                        raise
-                    time.sleep(2.0 * (attempt + 1))
-            assert last_error is not None
-            raise last_error
-        finally:
-            script_path.unlink(missing_ok=True)
-    cmd = [str(python_path), "-c", code, *args]
-    return subprocess.run(
-        cmd,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
 
 
 def _list_siteprod_layers_arcgis(
@@ -85,7 +22,7 @@ def _list_siteprod_layers_arcgis(
         "rasters=arcpy.ListRasters() or []; "
         "print(json.dumps(rasters))"
     )
-    result = _run_arcgis_python(code=code, args=[str(siteprod_gdb_path)])
+    result = run_arcgis_python(code=code, args=[str(siteprod_gdb_path)])
     rasters = json.loads(result.stdout.strip() or "[]")
     layer_species = {
         idx: str(name).removeprefix("Site_Prod_").upper()
@@ -108,7 +45,7 @@ def _export_siteprod_layer_arcgis(
         "raster='Site_Prod_' + sys.argv[2].title(); "
         "arcpy.management.CopyRaster(raster, sys.argv[3])"
     )
-    _run_arcgis_python(
+    run_arcgis_python(
         code=code,
         args=[str(site_prod_bc_gdb_path), str(species), str(destination)],
     )
@@ -129,7 +66,7 @@ def _export_siteprod_layers_arcgis_batch(
         "mapping=json.loads(sys.argv[2]); "
         "[arcpy.management.CopyRaster('Site_Prod_' + species.title(), dest) for species, dest in mapping.items()]"
     )
-    _run_arcgis_python(
+    run_arcgis_python(
         code=code,
         args=[str(site_prod_bc_gdb_path), payload],
     )

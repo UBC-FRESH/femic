@@ -62,6 +62,7 @@ Subcommands
 - ``run``: ``python -m femic prep run [OPTIONS]``
 - ``validate-case``: ``python -m femic prep validate-case [OPTIONS]``
 - ``geospatial-preflight``: ``python -m femic prep geospatial-preflight [OPTIONS]``
+- ``arcgis-review-project``: ``python -m femic prep arcgis-review-project [OPTIONS]``
 
 ``prep run`` options
 
@@ -103,6 +104,25 @@ case can actually read the annex-backed canonical TSA/FileGDB inputs.
 
 - ``--strict-warnings``
 - ``--skip-shapefile-smoke``
+
+``prep arcgis-review-project`` options
+
+- ``--instance-root PATH``
+- ``--output-dir PATH`` (optional; defaults to ``workbench/arcgis_review`` under the instance root)
+- ``--project-name TEXT`` (optional explicit `.aprx` name stem)
+
+``prep arcgis-review-project`` is a Windows/ArcGIS Pro inspection aid, not a
+new FEMIC GIS-processing backend. It discovers instance-local vector layers
+already on disk (for example downloaded BCDC GeoPackages plus local shapefile
+context layers such as stands or fragments), emits a ready-to-open `.aprx`,
+writes a manifest JSON, and keeps all loaded layers off by default at launch.
+When GeoPackage layers need ArcGIS-friendly staging, the emitted bundle also
+includes helper shapefile copies under the chosen output directory.
+
+Use it when a human needs to inspect an instance visually in ArcGIS Pro
+without hand-loading dozens of layers. It depends on a local ArcGIS Pro
+installation and the same path-resolved ``propy.bat`` / ArcGIS Pro Python seam
+already used by the Windows SiteProd fallback.
 
 VDYP
 ----

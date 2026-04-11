@@ -8593,13 +8593,72 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [ ] P52.6b6 Benchmark LU-wise local-process parallel THLB execution for TSA-scale netdown (`#143`).
   - [ ] P52.6c Execute fragment-first TSR THLB reconstruction from reviewed recipe steps (`#131`).
   - [ ] P52.6d Add explicit end-of-workflow aspatial fallback for blocked TSR target-area steps (`#132`).
-  - [x] P52.6e Document the reconstruction ladder and comparison contract (`#133`).
-  - [x] P52.6f Model TSR Section 7.1.5 broadleaf volume exclusions in conifer-leading stands as a later yield-assumption lane, not a THLB area-netdown step (`#139`).
+- [x] P52.6e Document the reconstruction ladder and comparison contract (`#133`).
+- [x] P52.6f Model TSR Section 7.1.5 broadleaf volume exclusions in conifer-leading stands as a later yield-assumption lane, not a THLB area-netdown step (`#139`).
   - [x] P52.6f1 Add a narrow TSA29-first `yield_assumptions_path` seam to post-TIPSY / BTC-post-TIPSY CLI, run-profile, and workflow manifests.
   - [x] P52.6f2 Apply TSA29 section 7.1.5 untreated broadleaf-volume exclusion inside the assembled bundle tables before writing `model_input_bundle`.
   - [x] P52.6f3 Prove the bundle adjustment on TSA29 and keep THLB step 15 wording explicitly limited to broadleaf-leading area exclusion.
+- [x] P52.6g Add an ArcGIS Pro review-project emit command for instance-local GIS inspection (`#138`).
+  - [x] P52.6g1 Reuse the shared ArcGIS Pro Python runner seam and expose `femic prep arcgis-review-project`.
+  - [x] P52.6g2 Discover instance-local review layers and emit a manifest-backed `.aprx` bundle with all layers off by default.
+  - [x] P52.6g3 Prove the command on TSA29 with a real Windows/ArcGIS Pro project build.
 
 ## Detailed Next Steps Notes
+
+- 2026-04-10 (Issue `#138` active: add a Windows ArcGIS Pro review-project
+  emit command for FEMIC instances):
+  - Objective:
+    - emit a ready-to-open ArcGIS Pro `.aprx` plus manifest for an existing
+      FEMIC instance so a human can inspect downloaded GIS layers and local
+      context layers visually without hand-loading them one by one.
+  - Implementation plan for this slice:
+    - add `femic prep arcgis-review-project --instance-root PATH` with
+      optional `--output-dir` and `--project-name`;
+    - reuse the existing ArcGIS Pro Python resolution/execution seam already
+      used by SiteProd fallback instead of duplicating `propy.bat`
+      discovery logic in an ad hoc script;
+    - generalize the TSA29 prototype script into core code that discovers
+      reviewable `.shp` / `.gpkg` layers from the instance, applies simple
+      deterministic naming/order/transparency defaults, and emits:
+      - one `.aprx`;
+      - one manifest JSON; and
+      - helper `.lyrx` files under the same output root;
+    - keep v1 intentionally review-oriented:
+      - all layers default to `visible = off`;
+      - no auto-launch of ArcGIS Pro; and
+      - no change to FEMIC's canonical processing pipeline.
+  - Acceptance target:
+    - unit/CLI tests cover layer discovery, classification, manifest shaping,
+      and clean ArcGIS-missing failure messages; and
+    - a real Windows/ArcGIS Pro TSA29 run emits a usable project bundle whose
+      manifest matches the loaded layers.
+- 2026-04-10 (Issue `#138` implemented: FEMIC can now emit a ready-to-open
+  ArcGIS Pro review project for an instance):
+  - Delivered command surface:
+    - added `femic prep arcgis-review-project --instance-root PATH` with
+      optional `--output-dir` and `--project-name`;
+    - reused the shared ArcGIS Pro Python runner seam now centralized in
+      `src/femic/arcgis_pro.py`; and
+    - kept the feature explicitly review-only rather than introducing a new
+      GIS processing backend.
+  - Review-project behavior:
+    - discover instance-local `.shp` / `.gpkg` layers under `data/` and
+      `output/`;
+    - skip smoke-scoped cached BCDC overlays under
+      `data/downloads/bcdc/smoke`;
+    - emit a manifest-backed `.aprx` plus helper `.lyrx` files under the
+      chosen output root;
+    - keep all layers off by default at launch; and
+    - stage GeoPackage layers as helper shapefiles inside the emitted bundle
+      when ArcGIS Pro compatibility requires it.
+  - Acceptance result on TSA29:
+    - a real Windows/ArcGIS Pro run emitted
+      `runtime/logs/arcgis_review_acceptance_tsa29_clean/tsa29_arcgis_review_20260410c.aprx`
+      and the matching manifest JSON;
+    - the project included `79` layers;
+    - the command skipped `3` smoke-scoped cached BCDC artifacts; and
+    - `77` GeoPackage-backed review layers were staged into the emitted bundle
+      so ArcGIS Pro could load them reliably.
 
 - 2026-04-10 (Issue `#139` active: model TSA29 section `7.1.5`
   broadleaf-volume exclusions as a later post-TIPSY yield assumption):
