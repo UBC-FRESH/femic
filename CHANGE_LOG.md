@@ -13554,3 +13554,20 @@
       usable on full TSA29;
     - it is still slower than the reviewed TSA29 bridge lane, but it no
       longer dies on the old step-002 runtime wall.
+- 2026-04-11: Reconciled the TSR recipe-template tracker state after closing
+  `#131`.
+  - Closed umbrella issue `#122` because the recipe-template program itself is
+    now complete:
+    - recipe schema/templates;
+    - source-layer build/run;
+    - reviewed THLB recipe extraction and execution bridge;
+    - TSA29 validation/reconciliation lane;
+    - parser/report/workbench/docs hardening; and
+    - a now-operational strict reconstructed runner.
+  - Updated issue `#128` to reflect the real remaining scope instead of stale
+    child-state drift:
+    - runtime/usability of the strict reconstructed lane is solved;
+    - docs/report/warm-start/aspatial-fallback child work is solved; and
+    - the remaining open seam is the large benchmark-reconciliation /
+      semantics gap between the strict reconstructed THLB result and the
+      TSR-reported THLB target.

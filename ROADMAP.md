@@ -8615,6 +8615,20 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
 
 ## Detailed Next Steps Notes
 
+- 2026-04-11 (Tracker hygiene after closing `#131`):
+  - `#122` now has enough delivered child work to close cleanly:
+    - recipe schema/templates;
+    - source-layer acquisition/build/run;
+    - THLB recipe extraction and reviewed execution bridge;
+    - TSA29 validation/reconciliation lane;
+    - stage-aware parser/report/workbench/docs improvements; and
+    - the strict reconstructed runner now finishing end to end on full TSA29.
+  - Remaining open work should live under `#128`, not keep the old recipe-template umbrella artificially open.
+  - `#128` should now be read more narrowly:
+    - runtime/usability of the strict reconstructed lane is solved;
+    - docs/report/warm-start/fallback child work is solved; and
+    - the remaining open problem is the large benchmark-reconciliation gap between the strict reconstructed THLB result and the TSR-reported THLB target.
+
 - 2026-04-11 (`#131` completed: LU-wise reconstructed THLB runtime is now operational on full TSA29):
   - Completion summary:
     - replaced the old reconstructed full-area row-batch exact overlay path with cached LU-wise decomposition over checkpoint1/AFLB;
