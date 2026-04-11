@@ -8588,7 +8588,7 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P52.6b1 Add stage-aware GLB/AFLB/LHLB/THLB parsing and recipe schema for TSR netdown logic (`#134`).
   - [x] P52.6b2 Improve THLB status reports and recipe review UX with stage groups, exact logic, and lock state (`#135`).
   - [x] P52.6b3 Add a generated THLB notebook workbench and lock/export flow (`#137`).
-  - [ ] P52.6b4 Improve DWDS follow-up retrieval and artifact materialization after order submission (`#140`).
+  - [x] P52.6b4 Improve DWDS follow-up retrieval and artifact materialization after order submission (`#140`).
   - [ ] P52.6b5 Run full-TSA29 THLB step-by-step validation and reconcile the recipe against TSR benchmarks (`#141`).
   - [ ] P52.6b6 Benchmark LU-wise local-process parallel THLB execution for TSA-scale netdown (`#143`).
   - [ ] P52.6c Execute fragment-first TSR THLB reconstruction from reviewed recipe steps (`#131`).
@@ -8663,6 +8663,48 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - TSA29 step `015` wording in `config/tsr/thlb_netdown.status.md` still
       describes only the broadleaf-leading stand area exclusion and continues
       to defer section `7.1.5` to the later yield-assumption lane.
+
+- 2026-04-10 (Issue `#140` active finish pass: wire DWDS follow-up back into
+  the TSR source-layer recipe runner):
+  - Current state:
+    - the DWDS helper seam is already real and live-proven in
+      `src/femic/bcdc_dwds.py`;
+    - `femic data bcdc-order-followup` already reloads saved manifests, retries
+      the public status seam, falls back through `pickupByGUID`, and
+      materializes the recovered artifact; but
+    - `femic tsr source-layers-run` still stops at `ordered` for `dwds_order`
+      entries and does not automatically reuse those saved manifests on rerun.
+  - Finish-pass target:
+    - persist one instance-relative `order_manifest_path` per DWDS-backed
+      source-layer recipe entry;
+    - teach `run_tsr_source_layers_recipe(...)` to follow up an existing saved
+      manifest before considering any new submission;
+    - promote recovered artifacts back into `artifact_path` automatically and
+      mark the entry `materialized`;
+    - keep `--allow-order` narrow so it only gates new DWDS submission; and
+    - reconcile roadmap / issue state so `P52.6b4` matches the real code state
+      after the TSR integration seam is finished.
+- 2026-04-10 (Issue `#140` finished: TSR source-layer reruns now reuse saved
+  DWDS manifests instead of stopping at `ordered`):
+  - Added per-entry `order_manifest_path` persistence for DWDS-backed
+    source-layer recipe entries.
+  - `run_tsr_source_layers_recipe(...)` now does this in order for
+    `dwds_order` entries:
+    - reuse an already materialized local artifact if the saved manifest still
+      points at one;
+    - otherwise follow up the saved DWDS manifest automatically and promote any
+      recovered artifact back into `artifact_path`;
+    - only submit a new DWDS order when no saved manifest exists and
+      `--allow-order` is explicitly enabled.
+  - Source-layer runner statuses are now honest about the DWDS lifecycle:
+    - `ordered`
+    - `followup_pending`
+    - `materialized`
+  - TSA29 proving-ground confirmation:
+    - a scratch source-layer recipe built from the real PSP case and a real live
+      DWDS manifest advanced cleanly to `materialized` without a new order
+      submission and recovered
+      `data/downloads/bcdc/WHSE_FOREST_VEGETATION_GRY_PSP_STATUS_ACTIVE/GRY_PSP_STATUS_ACTIVE.gpkg`.
 
 - 2026-04-06 (Issue `#140` opened: improve DWDS follow-up retrieval and
   artifact materialization after order submission):

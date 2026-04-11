@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import json
 from pathlib import Path
 
@@ -8,6 +9,7 @@ import pandas as pd
 import pytest
 from shapely.geometry import LineString, box
 
+from femic import bcdc_dwds
 from femic import tsr_catalog
 from femic.fmg.patchworks import build_fragments_geodataframe
 from femic.tsr_catalog import recipes as tsr_recipes
@@ -72,6 +74,39 @@ def _write_candidate_facts(tmp_path: Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload), encoding="utf-8")
     return path
+
+
+def _sample_dwds_order_result() -> bcdc_dwds.BcdcDwdsOrderResult:
+    return bcdc_dwds.BcdcDwdsOrderResult(
+        query="WHSE_FOREST_VEGETATION.GRY_PSP_STATUS_ACTIVE",
+        limit=5,
+        generated_utc="2026-04-10T00:00:00+00:00",
+        package_id="pkg-psp",
+        package_name="growth-and-yield-samples-all-status",
+        package_title="Growth and Yield Samples - All Status",
+        dataset_page_url="https://catalogue.data.gov.bc.ca/dataset/example",
+        resource_id="dwds-id",
+        resource_name="BC Geographic Warehouse Custom Download",
+        resource_url=None,
+        feature_type="WHSE_FOREST_VEGETATION.GRY_PSP_STATUS_ACTIVE",
+        matched_by="object_name:WHSE_FOREST_VEGETATION.GRY_PSP_STATUS_ACTIVE",
+        aoi_source="bbox",
+        bbox_epsg3005=(1.0, 2.0, 3.0, 4.0),
+        geomark_id=None,
+        geomark_url=None,
+        output_format="gpkg",
+        email_address="user@example.com",
+        clipping_method="clip_to_aoi",
+        ordering_application="FEMIC-BCDC-DWDS",
+        request_url="https://apps.gov.bc.ca/pub/dwds-ofi/order/createOrderFiltered",
+        request_payload={"featureItems": []},
+        order_id="2551000",
+        order_guid="guid-123",
+        submission_status="SUCCESS",
+        submission_description="submitted",
+        submission_value="2551000",
+        status_probe=None,
+    )
 
 
 def test_init_tsr_recipe_scaffolds_writes_both_instance_local_yaml_files(
@@ -1379,6 +1414,396 @@ def test_run_tsr_source_layers_recipe_reuses_existing_artifact(
     assert recipe.entries[0]["artifact_scope"] == "production_full_tsa"
     assert recipe.entries[0]["requested_bbox_epsg3005"] == [1.0, 2.0, 3.0, 4.0]
     assert recipe.entries[0]["artifact_extent_bbox_epsg3005"] == [1.0, 2.0, 3.0, 4.0]
+
+
+def test_run_tsr_source_layers_recipe_dwds_order_persists_manifest_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "submit_bcdc_dwds_order",
+        lambda *args, **kwargs: _sample_dwds_order_result(),
+    )
+    recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    recipe_payload["recipe_contract"]["status"] = "built"
+    recipe_payload["entries"] = [
+        {
+            "entry_id": "whse_forest_vegetation_gry_psp_status_active",
+            "label": "Growth and Yield Samples - All Status",
+            "recommended_query": "WHSE_FOREST_VEGETATION.GRY_PSP_STATUS_ACTIVE",
+            "acquisition_query": "WHSE_FOREST_VEGETATION.GRY_PSP_STATUS_ACTIVE",
+            "current_public_status": "exact_hit",
+            "acquisition_strategy": "dwds_order",
+            "artifact_path": "",
+            "override_kind": "",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    result = tsr_catalog.run_tsr_source_layers_recipe(
+        recipe_path=init_result.source_layers_recipe_path,
+        bbox_epsg3005=(1.0, 2.0, 3.0, 4.0),
+        allow_order=True,
+    )
+
+    assert result.outcome_counts["ordered"] == 1
+    recipe = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    )
+    entry = recipe.entries[0]
+    assert entry["run_status"] == "ordered"
+    assert entry["order_id"] == "2551000"
+    assert entry["submission_status"] == "SUCCESS"
+    assert entry["order_manifest_path"] == (
+        "runtime/logs/tsr/dwds_orders/"
+        "whse_forest_vegetation_gry_psp_status_active_order_manifest.json"
+    )
+    manifest_path = instance_root / entry["order_manifest_path"]
+    assert manifest_path.exists()
+    manifest_orders = bcdc_dwds.load_bcdc_dwds_manifest(manifest_path)
+    assert manifest_orders[0].order_id == "2551000"
+
+
+def test_run_tsr_source_layers_recipe_dwds_followup_materializes_without_resubmitting(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+    artifact_path = (
+        instance_root
+        / "data"
+        / "downloads"
+        / "bcdc"
+        / "WHSE_FOREST_VEGETATION_GRY_PSP_STATUS_ACTIVE"
+        / "GRY_PSP_STATUS_ACTIVE.gpkg"
+    )
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {"STATUS": ["ACTIVE"]},
+        geometry=[box(1, 2, 3, 4)],
+        crs="EPSG:3005",
+    ).to_file(artifact_path, driver="GPKG")
+    manifest_path = (
+        instance_root
+        / "runtime"
+        / "logs"
+        / "tsr"
+        / "dwds_orders"
+        / "whse_forest_vegetation_gry_psp_status_active_order_manifest.json"
+    )
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    bcdc_dwds.write_bcdc_dwds_manifest([_sample_dwds_order_result()], manifest_path)
+    monkeypatch.setattr(
+        tsr_recipes,
+        "submit_bcdc_dwds_order",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("submit_bcdc_dwds_order should not be called")
+        ),
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "follow_up_bcdc_dwds_order",
+        lambda order_result, **kwargs: replace(
+            order_result,
+            materialized_artifact_path=str(artifact_path),
+            materialized_download_url="https://distribution.data.gov.bc.ca/example.gpkg",
+        ),
+    )
+    recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    recipe_payload["recipe_contract"]["status"] = "run"
+    recipe_payload["entries"] = [
+        {
+            "entry_id": "whse_forest_vegetation_gry_psp_status_active",
+            "label": "Growth and Yield Samples - All Status",
+            "recommended_query": "WHSE_FOREST_VEGETATION.GRY_PSP_STATUS_ACTIVE",
+            "acquisition_query": "WHSE_FOREST_VEGETATION.GRY_PSP_STATUS_ACTIVE",
+            "current_public_status": "exact_hit",
+            "acquisition_strategy": "dwds_order",
+            "artifact_path": "",
+            "order_manifest_path": "runtime/logs/tsr/dwds_orders/whse_forest_vegetation_gry_psp_status_active_order_manifest.json",
+            "override_kind": "",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    result = tsr_catalog.run_tsr_source_layers_recipe(
+        recipe_path=init_result.source_layers_recipe_path,
+        bbox_epsg3005=(1.0, 2.0, 3.0, 4.0),
+        allow_order=False,
+    )
+
+    assert result.outcome_counts["materialized"] == 1
+    recipe = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    )
+    entry = recipe.entries[0]
+    assert entry["run_status"] == "materialized"
+    assert entry["artifact_path"] == (
+        "data/downloads/bcdc/WHSE_FOREST_VEGETATION_GRY_PSP_STATUS_ACTIVE/"
+        "GRY_PSP_STATUS_ACTIVE.gpkg"
+    )
+    assert entry["artifact_extent_bbox_epsg3005"] == [1.0, 2.0, 3.0, 4.0]
+    manifest_orders = bcdc_dwds.load_bcdc_dwds_manifest(manifest_path)
+    assert manifest_orders[0].materialized_artifact_path == str(artifact_path)
+
+
+def test_run_tsr_source_layers_recipe_reuses_materialized_dwds_manifest_artifact(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+    artifact_path = (
+        instance_root
+        / "data"
+        / "downloads"
+        / "bcdc"
+        / "WHSE_FOREST_VEGETATION_GRY_PSP_STATUS_ACTIVE"
+        / "GRY_PSP_STATUS_ACTIVE.gpkg"
+    )
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {"STATUS": ["ACTIVE"]},
+        geometry=[box(1, 2, 3, 4)],
+        crs="EPSG:3005",
+    ).to_file(artifact_path, driver="GPKG")
+    manifest_path = (
+        instance_root
+        / "runtime"
+        / "logs"
+        / "tsr"
+        / "dwds_orders"
+        / "whse_forest_vegetation_gry_psp_status_active_order_manifest.json"
+    )
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    bcdc_dwds.write_bcdc_dwds_manifest(
+        [
+            replace(
+                _sample_dwds_order_result(),
+                materialized_artifact_path=str(artifact_path),
+            )
+        ],
+        manifest_path,
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "follow_up_bcdc_dwds_order",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("follow_up_bcdc_dwds_order should not be called")
+        ),
+    )
+    recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    recipe_payload["recipe_contract"]["status"] = "run"
+    recipe_payload["entries"] = [
+        {
+            "entry_id": "whse_forest_vegetation_gry_psp_status_active",
+            "label": "Growth and Yield Samples - All Status",
+            "recommended_query": "WHSE_FOREST_VEGETATION.GRY_PSP_STATUS_ACTIVE",
+            "acquisition_query": "WHSE_FOREST_VEGETATION.GRY_PSP_STATUS_ACTIVE",
+            "current_public_status": "exact_hit",
+            "acquisition_strategy": "dwds_order",
+            "artifact_path": "",
+            "order_manifest_path": "runtime/logs/tsr/dwds_orders/whse_forest_vegetation_gry_psp_status_active_order_manifest.json",
+            "override_kind": "",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    result = tsr_catalog.run_tsr_source_layers_recipe(
+        recipe_path=init_result.source_layers_recipe_path,
+        bbox_epsg3005=(1.0, 2.0, 3.0, 4.0),
+        allow_order=False,
+    )
+
+    assert result.outcome_counts["materialized"] == 1
+    recipe = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    )
+    assert recipe.entries[0]["run_status"] == "materialized"
+    assert recipe.entries[0]["artifact_path"] == (
+        "data/downloads/bcdc/WHSE_FOREST_VEGETATION_GRY_PSP_STATUS_ACTIVE/"
+        "GRY_PSP_STATUS_ACTIVE.gpkg"
+    )
+
+
+def test_run_tsr_source_layers_recipe_dwds_followup_pending_does_not_resubmit(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+    manifest_path = (
+        instance_root
+        / "runtime"
+        / "logs"
+        / "tsr"
+        / "dwds_orders"
+        / "whse_forest_vegetation_gry_psp_status_active_order_manifest.json"
+    )
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    bcdc_dwds.write_bcdc_dwds_manifest([_sample_dwds_order_result()], manifest_path)
+    monkeypatch.setattr(
+        tsr_recipes,
+        "submit_bcdc_dwds_order",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("submit_bcdc_dwds_order should not be called")
+        ),
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "follow_up_bcdc_dwds_order",
+        lambda order_result, **kwargs: order_result,
+    )
+    recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    recipe_payload["recipe_contract"]["status"] = "run"
+    recipe_payload["entries"] = [
+        {
+            "entry_id": "whse_forest_vegetation_gry_psp_status_active",
+            "label": "Growth and Yield Samples - All Status",
+            "recommended_query": "WHSE_FOREST_VEGETATION.GRY_PSP_STATUS_ACTIVE",
+            "acquisition_query": "WHSE_FOREST_VEGETATION.GRY_PSP_STATUS_ACTIVE",
+            "current_public_status": "exact_hit",
+            "acquisition_strategy": "dwds_order",
+            "artifact_path": "",
+            "order_manifest_path": "runtime/logs/tsr/dwds_orders/whse_forest_vegetation_gry_psp_status_active_order_manifest.json",
+            "override_kind": "",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    result = tsr_catalog.run_tsr_source_layers_recipe(
+        recipe_path=init_result.source_layers_recipe_path,
+        bbox_epsg3005=(1.0, 2.0, 3.0, 4.0),
+        allow_order=False,
+    )
+
+    assert result.outcome_counts["followup_pending"] == 1
+    recipe = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    )
+    entry = recipe.entries[0]
+    assert entry["run_status"] == "followup_pending"
+    assert entry["artifact_path"] == ""
+    assert entry["order_manifest_path"] == (
+        "runtime/logs/tsr/dwds_orders/"
+        "whse_forest_vegetation_gry_psp_status_active_order_manifest.json"
+    )
 
 
 def test_run_tsr_thlb_parent_step_blocks_obvious_smoke_extent_mismatch(

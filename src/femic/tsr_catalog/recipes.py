@@ -32,7 +32,13 @@ from femic.bcdc_catalog import (
     download_direct_bcdc_resources,
     resolve_bcdc_candidates,
 )
-from femic.bcdc_dwds import BcdcDwdsError, submit_bcdc_dwds_order
+from femic.bcdc_dwds import (
+    BcdcDwdsError,
+    follow_up_bcdc_dwds_order,
+    load_bcdc_dwds_manifest,
+    submit_bcdc_dwds_order,
+    write_bcdc_dwds_manifest,
+)
 from femic.bcdc_fetch import (
     BC_ALBERS_EPSG,
     BcdcFetchError,
@@ -1149,6 +1155,45 @@ def _resolve_instance_path(instance_root: Path, relative_path: str) -> Path:
     return (instance_root / Path(relative_path)).expanduser().resolve()
 
 
+def _resolve_optional_instance_path(
+    *, instance_root: Path, value: str | None
+) -> Path | None:
+    if value is None:
+        return None
+    raw = str(value).strip()
+    if not raw:
+        return None
+    candidate = Path(raw).expanduser()
+    if candidate.is_absolute():
+        return candidate.resolve()
+    return (instance_root / candidate).resolve()
+
+
+def _render_instance_relative_path(
+    *, instance_root: Path, candidate: Path | str | None
+) -> str:
+    if candidate is None:
+        return ""
+    path = Path(candidate).expanduser()
+    if not path.is_absolute():
+        return path.as_posix()
+    try:
+        return path.resolve().relative_to(instance_root).as_posix()
+    except ValueError:
+        return str(candidate).replace("\\", "/")
+
+
+def _default_dwds_order_manifest_path(*, instance_root: Path, entry_id: str) -> Path:
+    return (
+        instance_root
+        / "runtime"
+        / "logs"
+        / "tsr"
+        / "dwds_orders"
+        / f"{entry_id}_order_manifest.json"
+    )
+
+
 def _load_override_map(
     overrides_path: Path,
 ) -> dict[str, TsrSourceLayerOverrideEntry]:
@@ -1261,6 +1306,22 @@ def _probe_vector_artifact_bounds(
     return float(minx), float(miny), float(maxx), float(maxy)
 
 
+def _record_source_artifact_details(
+    *,
+    updated_entry: dict[str, Any],
+    instance_root: Path,
+    artifact_path: Path,
+) -> None:
+    updated_entry["artifact_path"] = str(
+        artifact_path.resolve().relative_to(instance_root).as_posix()
+    )
+    artifact_bounds = _probe_vector_artifact_bounds(artifact_path)
+    if artifact_bounds is not None:
+        updated_entry["artifact_extent_bbox_epsg3005"] = [
+            float(value) for value in artifact_bounds
+        ]
+
+
 def _review_rows_for_recipe(
     candidate_facts_path: Path,
     *,
@@ -1334,6 +1395,7 @@ def _build_source_recipe_entry(
     resolve_result: Any,
     override_entry: TsrSourceLayerOverrideEntry | None,
     overlay_attempt: dict[str, Any] | None,
+    existing_entry: dict[str, Any] | None,
     instance_root: Path,
 ) -> dict[str, Any]:
     top_match = resolve_result.top_match
@@ -1381,33 +1443,28 @@ def _build_source_recipe_entry(
 
     artifact_path = ""
     prior_run_status = "pending"
+    order_manifest_path = ""
     if overlay_attempt is not None:
-        raw_artifact_path = str(overlay_attempt.get("saved_path", "")).replace(
-            "\\", "/"
+        raw_artifact_path = _render_instance_relative_path(
+            instance_root=instance_root,
+            candidate=overlay_attempt.get("saved_path"),
         )
         if raw_artifact_path:
-            artifact_candidate = Path(raw_artifact_path)
-            if artifact_candidate.is_absolute():
-                try:
-                    artifact_path = str(
-                        artifact_candidate.resolve()
-                        .relative_to(instance_root)
-                        .as_posix()
-                    )
-                except ValueError:
-                    artifact_path = raw_artifact_path
-            elif raw_artifact_path.startswith(f"external/{instance_root.name}/"):
-                artifact_path = raw_artifact_path.split(
-                    f"external/{instance_root.name}/", 1
-                )[1]
-            else:
-                artifact_path = raw_artifact_path
+            artifact_path = raw_artifact_path.removeprefix(
+                f"external/{instance_root.name}/"
+            )
         prior_run_status = str(overlay_attempt.get("acquisition_outcome", "pending"))
         prior_notes = str(overlay_attempt.get("notes", "")).strip()
         if prior_notes:
             notes.extend(
                 part.strip() for part in prior_notes.split(" | ") if part.strip()
             )
+    if existing_entry is not None:
+        if not artifact_path:
+            artifact_path = str(existing_entry.get("artifact_path", "")).strip()
+        if prior_run_status == "pending":
+            prior_run_status = str(existing_entry.get("run_status", "pending"))
+        order_manifest_path = str(existing_entry.get("order_manifest_path", "")).strip()
 
     return {
         "entry_id": _recipe_entry_id(row.recommended_query),
@@ -1456,13 +1513,26 @@ def _build_source_recipe_entry(
         else "",
         "order_id": overlay_attempt.get("order_id", "")
         if overlay_attempt is not None
-        else "",
+        else (
+            str(existing_entry.get("order_id", "")).strip()
+            if existing_entry is not None
+            else ""
+        ),
         "submission_status": overlay_attempt.get("submission_status", "")
         if overlay_attempt is not None
-        else "",
+        else (
+            str(existing_entry.get("submission_status", "")).strip()
+            if existing_entry is not None
+            else ""
+        ),
+        "order_manifest_path": order_manifest_path,
         "failure_message": overlay_attempt.get("failure_message", "")
         if overlay_attempt is not None
-        else "",
+        else (
+            str(existing_entry.get("failure_message", "")).strip()
+            if existing_entry is not None
+            else ""
+        ),
         "notes": notes,
     }
 
@@ -4566,6 +4636,10 @@ def build_tsr_source_layers_recipe(
     )
     override_map = _load_override_map(overrides_path)
     overlay_attempt_map = _load_overlay_attempt_map(overlay_path)
+    existing_entry_map = {
+        str(entry.get("recommended_query", "")).casefold(): entry
+        for entry in recipe.entries
+    }
 
     entries = []
     status_counts: Counter[str] = Counter()
@@ -4583,6 +4657,7 @@ def build_tsr_source_layers_recipe(
                 resolve_result=resolve_result,
                 overlay_attempt_map=overlay_attempt_map,
             ),
+            existing_entry=existing_entry_map.get(row.recommended_query.casefold()),
             instance_root=instance_root,
         )
         entries.append(entry)
@@ -4820,6 +4895,7 @@ def run_tsr_source_layers_recipe(
         updated = dict(entry)
         strategy = str(entry.get("acquisition_strategy", ""))
         artifact_path = str(entry.get("artifact_path", ""))
+        order_manifest_path = str(entry.get("order_manifest_path", "")).strip()
         query = str(
             entry.get("acquisition_query") or entry.get("recommended_query", "")
         )
@@ -4885,15 +4961,13 @@ def run_tsr_source_layers_recipe(
                         entry.get("recommended_query") or entry.get("entry_id") or query
                     ),
                 )
-                updated["artifact_path"] = str(
-                    fetch_result.saved_path.relative_to(instance_root).as_posix()
+                _record_source_artifact_details(
+                    updated_entry=updated,
+                    instance_root=instance_root,
+                    artifact_path=fetch_result.saved_path,
                 )
                 updated["feature_count"] = fetch_result.feature_count
-                artifact_bounds = _probe_vector_artifact_bounds(fetch_result.saved_path)
-                if artifact_bounds is not None:
-                    updated["artifact_extent_bbox_epsg3005"] = [
-                        float(value) for value in artifact_bounds
-                    ]
+                updated["failure_message"] = ""
                 updated["run_status"] = "fetched"
             except BcdcFetchError as exc:
                 updated["run_status"] = "failed"
@@ -4911,9 +4985,12 @@ def run_tsr_source_layers_recipe(
                 downloaded = download_result.downloaded
                 if downloaded:
                     saved_path = downloaded[0].saved_path
-                    updated["artifact_path"] = str(
-                        saved_path.relative_to(instance_root).as_posix()
+                    _record_source_artifact_details(
+                        updated_entry=updated,
+                        instance_root=instance_root,
+                        artifact_path=saved_path,
                     )
+                    updated["failure_message"] = ""
                     updated["run_status"] = "downloaded"
                 else:
                     updated["run_status"] = "failed"
@@ -4924,7 +5001,87 @@ def run_tsr_source_layers_recipe(
                 updated["run_status"] = "failed"
                 updated["failure_message"] = str(exc)
         elif strategy == "dwds_order":
-            if not allow_order:
+            manifest_candidate = _resolve_optional_instance_path(
+                instance_root=instance_root,
+                value=order_manifest_path,
+            )
+            if manifest_candidate is not None and manifest_candidate.exists():
+                try:
+                    orders = load_bcdc_dwds_manifest(manifest_candidate)
+                    if not orders:
+                        raise BcdcDwdsError(
+                            f"DWDS manifest contains no order results: {manifest_candidate}"
+                        )
+                    order_result = orders[0]
+                    updated["order_manifest_path"] = str(
+                        manifest_candidate.relative_to(instance_root).as_posix()
+                    )
+                    updated["order_id"] = order_result.order_id
+                    updated["submission_status"] = order_result.submission_status
+                    updated["failure_message"] = ""
+                    existing_materialized_path = _resolve_optional_instance_path(
+                        instance_root=instance_root,
+                        value=order_result.materialized_artifact_path,
+                    )
+                    if (
+                        existing_materialized_path is not None
+                        and existing_materialized_path.exists()
+                    ):
+                        _record_source_artifact_details(
+                            updated_entry=updated,
+                            instance_root=instance_root,
+                            artifact_path=existing_materialized_path,
+                        )
+                        updated["run_status"] = "materialized"
+                    else:
+                        order_result = follow_up_bcdc_dwds_order(
+                            order_result,
+                            download_root=base_download_root,
+                        )
+                        write_bcdc_dwds_manifest([order_result], manifest_candidate)
+                        updated["order_id"] = order_result.order_id
+                        updated["submission_status"] = order_result.submission_status
+                        updated["failure_message"] = ""
+                        if order_result.materialized_artifact_path:
+                            materialized_path = Path(
+                                order_result.materialized_artifact_path
+                            ).expanduser()
+                            if not materialized_path.is_absolute():
+                                materialized_path = instance_root / materialized_path
+                            _record_source_artifact_details(
+                                updated_entry=updated,
+                                instance_root=instance_root,
+                                artifact_path=materialized_path.resolve(),
+                            )
+                            updated["run_status"] = "materialized"
+                        else:
+                            updated["run_status"] = "followup_pending"
+                    if (
+                        order_result.materialized_artifact_path
+                        and updated.get("run_status") != "materialized"
+                    ):
+                        materialized_path = Path(
+                            order_result.materialized_artifact_path
+                        ).expanduser()
+                        if not materialized_path.is_absolute():
+                            materialized_path = instance_root / materialized_path
+                        if materialized_path.exists():
+                            _record_source_artifact_details(
+                                updated_entry=updated,
+                                instance_root=instance_root,
+                                artifact_path=materialized_path.resolve(),
+                            )
+                            updated["run_status"] = "materialized"
+                except BcdcDwdsError as exc:
+                    updated["run_status"] = "failed"
+                    updated["failure_message"] = str(exc)
+            elif manifest_candidate is not None and not manifest_candidate.exists():
+                updated["run_status"] = "failed"
+                updated["failure_message"] = (
+                    "Saved DWDS order manifest is missing; review the recipe entry or "
+                    "submit a new order explicitly."
+                )
+            elif not allow_order:
                 updated["run_status"] = "dwds_order_skipped"
             else:
                 assert bbox_epsg3005 is not None
@@ -4935,9 +5092,19 @@ def run_tsr_source_layers_recipe(
                         limit=limit,
                         geomark=geomark,
                     )
+                    manifest_path = _default_dwds_order_manifest_path(
+                        instance_root=instance_root,
+                        entry_id=str(entry.get("entry_id", "dwds_order")).strip()
+                        or "dwds_order",
+                    )
+                    write_bcdc_dwds_manifest([order_result], manifest_path)
                     updated["run_status"] = "ordered"
                     updated["order_id"] = order_result.order_id
                     updated["submission_status"] = order_result.submission_status
+                    updated["order_manifest_path"] = str(
+                        manifest_path.relative_to(instance_root).as_posix()
+                    )
+                    updated["failure_message"] = ""
                 except BcdcDwdsError as exc:
                     updated["run_status"] = "failed"
                     updated["failure_message"] = str(exc)

@@ -13392,3 +13392,33 @@
   - THLB step `015` wording remained unchanged: it still describes only the
     broadleaf-leading area exclusion and continues to defer section `7.1.5` to
     the later yield-assumption lane.
+- 2026-04-10: Finished the remaining `#140` TSR integration seam for DWDS
+  follow-up/materialization.
+  - `run_tsr_source_layers_recipe(...)` now persists one instance-relative
+    `order_manifest_path` for each DWDS-backed source-layer recipe entry when a
+    new order is submitted.
+  - On rerun, `dwds_order` entries now:
+    - reuse an already materialized local artifact when the saved manifest still
+      points at one;
+    - otherwise follow up the saved DWDS manifest automatically and promote any
+      recovered artifact back into `artifact_path`; and
+    - only submit a new DWDS order when no saved manifest exists and
+      `--allow-order` is explicitly enabled.
+  - Normalized DWDS runner status progression in the source-layer recipe to:
+    - `ordered`
+    - `followup_pending`
+    - `materialized`
+  - Updated docs to make the new contract explicit:
+    - `docs/reference/cli.rst`
+    - `docs/guides/bc-data-catalogue-discovery.rst`
+  - Added focused regression coverage for:
+    - first DWDS submission saving `order_manifest_path`;
+    - rerun follow-up materializing without re-submitting;
+    - reuse of a manifest that already points at a local materialized artifact;
+    - and follow-up-pending reruns that stay honest without duplicate order
+      submission.
+  - TSA29 proving-ground confirmation:
+    - a scratch source-layer recipe built from the real PSP case and a real live
+      DWDS manifest advanced to `materialized` without a new order submission;
+    - recovered artifact path:
+      `data/downloads/bcdc/WHSE_FOREST_VEGETATION_GRY_PSP_STATUS_ACTIVE/GRY_PSP_STATUS_ACTIVE.gpkg`.

@@ -603,8 +603,8 @@ the user re-run the TSA29-style discovery sequence manually every time.
   - ``--bbox minx,miny,maxx,maxy`` in ``EPSG:3005``
   - ``--geomark TEXT``
 - ``--limit INTEGER`` (optional BCDC package-match cap; defaults to ``5``)
-- ``--allow-order`` (optional; permit DWDS order submission for recipe entries
-  that still require ``dwds_order``)
+- ``--allow-order`` (optional; permit **new** DWDS order submission for recipe
+  entries that still require ``dwds_order``)
 
 ``tsr source-layers-run`` executes only the safe acquisition paths already
 trusted elsewhere in FEMIC:
@@ -612,6 +612,8 @@ trusted elsewhere in FEMIC:
 - WFS fetch via ``femic data bcdc-fetch``-equivalent logic;
 - direct-download reuse via ``femic data bcdc-resolve --download-direct``-equivalent
   logic; and
+- automatic DWDS manifest follow-up/materialization for ``dwds_order`` entries
+  that already carry a saved ``order_manifest_path``; and
 - explicit reviewed override mappings from
   ``config/tsr/source_layer_overrides.yaml``.
 

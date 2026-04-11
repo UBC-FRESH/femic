@@ -383,6 +383,12 @@ This follow-up path reloads the prior order manifest, retries the public
 the manifest so downstream workflows can consume a real file instead of only an
 ``order_id``.
 
+When a reviewed TSR source-layer recipe entry already carries that saved
+manifest as ``order_manifest_path``, rerunning
+``femic tsr source-layers-run`` now consumes the same follow-up seam
+automatically. ``--allow-order`` is still only required for **new** DWDS order
+submission.
+
 When the public ``/order/{id}`` seam still withholds a download URL, FEMIC now
 also uses the saved ``order_guid`` to try the stronger email-aligned retrieval
 path:
@@ -508,6 +514,10 @@ After ``bcdc-order-followup`` runs, the same manifest may also record:
   URL; and
 - any follow-up warnings when the public seam still does not expose a
   downloadable artifact.
+
+Reviewed TSR source-layer recipe entries may also store that saved manifest as
+``order_manifest_path`` so later reruns can progress from ``ordered`` to
+``materialized`` without a separate manual follow-up detour.
 
 Use that manifest as a review/promotion artifact before touching
 ``metadata/required_datasets.yaml`` or copying payloads into
