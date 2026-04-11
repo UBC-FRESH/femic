@@ -124,8 +124,11 @@ Important boundary:
 
 - the hybrid bridge still exists as a separate executable lane;
 - reconstructed mode is fragment-first by default;
-- blocked or aspatial seams remain explicit for later follow-up under
-  ``#132``; and
+- reconstructed mode now supports exact spatial overlay plus explicit
+  recipe-driven aspatial fallback where the reviewed recipe already carries a
+  TSR target-area deduction;
+- blocked exact-overlay seams still remain explicit instead of being silently
+  converted into fallback; and
 - the old coarse stand-binary approximation survives only as an explicit
   non-default debug fallback, not as silent normal behavior.
 

@@ -852,8 +852,12 @@ Important current boundary:
   it starts from checkpoint1/AFLB initialization, fragments the working land
   base where reviewed spatial exclusions intersect, and assigns binary
   fragment-level THLB membership ``{0,1}``;
-- reconstructed mode keeps blocked/aspatial seams explicit instead of silently
-  substituting area bridges; and
+- reconstructed mode now supports two honest deduction types: exact fragment
+  overlay where FEMIC has a reviewed spatial implementation, and explicit
+  recipe-driven aspatial fallback where the reviewed recipe already carries a
+  TSR target-area deduction;
+- blocked exact-overlay rows still remain explicit instead of being silently
+  converted into fallback; and
 - the old coarse stand-binary approximation remains available only behind the
   explicit ``--allow-stand-binary-fallback`` debug flag.
 

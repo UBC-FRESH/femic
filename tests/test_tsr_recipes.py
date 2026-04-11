@@ -5725,6 +5725,345 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     )
 
 
+def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_applies_explicit_aspatial_fallback(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    exclusion_path = (
+        instance_root / "data" / "downloads" / "bcdc" / "OGMA" / "OGMA.gpkg"
+    )
+    exclusion_path.parent.mkdir(parents=True, exist_ok=True)
+    exclusion = gpd.GeoDataFrame(
+        {"rule": ["ogma"]},
+        geometry=[box(0, 0, 50, 100)],
+        crs="EPSG:3005",
+    )
+    exclusion.to_file(exclusion_path, driver="GPKG")
+
+    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint1 = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [100],
+            "FOR_MGMT_LAND_BASE_IND": ["Y"],
+            "BCLCS_LEVEL_2": ["T"],
+            "NON_PRODUCTIVE_CD": [None],
+            "BEC_ZONE_CODE": ["SBS"],
+            "PROJ_AGE_1": [80],
+            "BASAL_AREA": [20.0],
+            "LIVE_STAND_VOLUME_125": [50.0],
+            "MAP_ID": ["093J034"],
+            "POLYGON_AREA": [1.0],
+            "FEATURE_AREA_SQM": [10000.0],
+            "FEATURE_LENGTH_M": [400.0],
+            "GEOMETRY_AREA": [1.0],
+            "Shape_Area": [10000.0],
+            "Shape_Length": [400.0],
+        },
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    )
+    checkpoint1.to_feather(checkpoint1_path)
+
+    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint8 = gpd.GeoDataFrame(
+        {"FEATURE_ID": [1], "thlb_raw": [100.0]},
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    )
+    checkpoint8.to_feather(checkpoint8_path)
+
+    source_recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    source_recipe_payload["recipe_contract"]["status"] = "run"
+    source_recipe_payload["entries"] = [
+        {
+            "entry_id": "ogma",
+            "label": "OGMA",
+            "recommended_query": "WHSE_LAND_USE_PLANNING.RMP_OGMA_LEGAL_CURRENT_SVW",
+            "acquisition_strategy": "wfs_fetch",
+            "artifact_path": "data/downloads/bcdc/OGMA/OGMA.gpkg",
+            "run_status": "fetched",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            source_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["recipe_contract"]["status"] = "built"
+    thlb_recipe_payload["parent_steps"] = [
+        {
+            "parent_step_id": "thlb_parent_001_total_tsa_area",
+            "parent_label": "Total TSA area",
+            "parent_kind": "milestone",
+            "land_base_stage": "reference_target",
+            "stage_label": "Reference targets",
+            "benchmark_cumulative_area_ha": 1.0,
+        }
+    ]
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "thlb_step_001_land_base",
+            "order_index": 1,
+            "step_kind": "netdown_rule",
+            "label": "Timber harvesting land base",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "execution_class": "no_deduction",
+            "normalized_action": "use_land_base",
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 24,
+        },
+        {
+            "step_id": "thlb_step_002_ogma",
+            "order_index": 2,
+            "step_kind": "netdown_rule",
+            "label": "OGMA",
+            "land_base_stage": "lhlb_to_thlb",
+            "stage_label": "LHLB -> THLB",
+            "execution_class": "projected_harvest_exclusion",
+            "normalized_action": "exclude",
+            "linked_source_entry_ids": ["ogma"],
+            "step_status": "ready",
+            "page_number": 48,
+        },
+        {
+            "step_id": "thlb_step_003_wtra",
+            "order_index": 3,
+            "step_kind": "netdown_rule",
+            "label": "WTRA",
+            "land_base_stage": "lhlb_to_thlb",
+            "stage_label": "LHLB -> THLB",
+            "execution_class": "aspatial_fallback_candidate",
+            "normalized_action": "aspatial_reduction",
+            "benchmark_marginal_area_ha": 0.25,
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 50,
+        },
+        {
+            "step_id": "thlb_step_004_manual",
+            "order_index": 4,
+            "step_kind": "netdown_rule",
+            "label": "Manual review seam",
+            "land_base_stage": "lhlb_to_thlb",
+            "stage_label": "LHLB -> THLB",
+            "execution_class": "manual_review_required",
+            "normalized_action": "review",
+            "linked_source_entry_ids": [],
+            "step_status": "manual_review_required",
+            "page_number": 55,
+        },
+        {
+            "step_id": "thlb_step_005_noop",
+            "order_index": 5,
+            "step_kind": "netdown_rule",
+            "label": "No-op tail",
+            "land_base_stage": "lhlb_to_thlb",
+            "stage_label": "LHLB -> THLB",
+            "execution_class": "no_deduction",
+            "normalized_action": "no_deduction",
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 56,
+        },
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    result = tsr_recipes.run_tsr_thlb_netdown_recipe(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        execution_mode=tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+    )
+
+    assert result.baseline_managed_area_ha == pytest.approx(1.0)
+    assert result.final_managed_area_ha == pytest.approx(0.375)
+
+    output = gpd.read_feather(result.output_path)
+    assert sorted(output["thlb_fact"].tolist()) == pytest.approx([0.0, 0.75])
+
+    audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
+    assert audit_payload["fragment_overlay_step_count"] == 1
+    assert audit_payload["aspatial_fallback_step_count"] == 1
+    assert audit_payload["aspatial_fallback_area_ha"] == pytest.approx(0.125)
+    assert audit_payload["blocked_exact_overlay_step_count"] == 0
+    assert audit_payload["stand_binary_fallback_step_count"] == 0
+    assert audit_payload["steps"][2]["spatial_application_mode"] == "aspatial_fallback"
+    assert audit_payload["steps"][2]["affected_area_ha"] == pytest.approx(0.125)
+    assert audit_payload["steps"][3]["run_status"] == "unsupported"
+    assert audit_payload["steps"][4]["run_status"] == "applied_noop"
+
+    reconstructed_status = result.status_report_path.read_text(encoding="utf-8")
+    assert "Explicit aspatial fallback steps: `1` / `0.125 ha`" in reconstructed_status
+    assert (
+        "explicit aspatial fallback means a TSR area target was applied honestly"
+        in reconstructed_status
+    )
+
+
+def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_executes_aspatial_area_fallback(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint1 = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [100],
+            "FOR_MGMT_LAND_BASE_IND": ["Y"],
+            "BCLCS_LEVEL_2": ["T"],
+            "NON_PRODUCTIVE_CD": [None],
+            "BEC_ZONE_CODE": ["SBS"],
+            "PROJ_AGE_1": [80],
+            "BASAL_AREA": [20.0],
+            "LIVE_STAND_VOLUME_125": [50.0],
+            "MAP_ID": ["093J034"],
+            "POLYGON_AREA": [1.0],
+            "FEATURE_AREA_SQM": [10000.0],
+            "FEATURE_LENGTH_M": [400.0],
+            "GEOMETRY_AREA": [1.0],
+            "Shape_Area": [10000.0],
+            "Shape_Length": [400.0],
+        },
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    )
+    checkpoint1.to_feather(checkpoint1_path)
+
+    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint8 = gpd.GeoDataFrame(
+        {"FEATURE_ID": [1], "thlb_raw": [100.0]},
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    )
+    checkpoint8.to_feather(checkpoint8_path)
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["recipe_contract"]["status"] = "built"
+    thlb_recipe_payload["parent_steps"] = [
+        {
+            "parent_step_id": "thlb_parent_001_total_tsa_area",
+            "parent_label": "Total TSA area",
+            "parent_kind": "milestone",
+            "land_base_stage": "reference_target",
+            "stage_label": "Reference targets",
+            "benchmark_cumulative_area_ha": 1.0,
+        }
+    ]
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "thlb_step_001_land_base",
+            "order_index": 1,
+            "step_kind": "netdown_rule",
+            "label": "Timber harvesting land base",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "execution_class": "no_deduction",
+            "normalized_action": "use_land_base",
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 24,
+        },
+        {
+            "step_id": "thlb_step_002_future_roads",
+            "order_index": 2,
+            "step_kind": "netdown_rule",
+            "label": "Future roads",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "execution_class": "aspatial_fallback_candidate",
+            "normalized_action": "aspatial_area_reduction",
+            "benchmark_marginal_area_ha": 0.25,
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 27,
+        },
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    result = tsr_recipes.run_tsr_thlb_netdown_recipe(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        execution_mode=tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+    )
+
+    assert result.baseline_managed_area_ha == pytest.approx(1.0)
+    assert result.final_managed_area_ha == pytest.approx(0.75)
+
+    audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
+    assert audit_payload["aspatial_fallback_step_count"] == 1
+    assert audit_payload["aspatial_fallback_area_ha"] == pytest.approx(0.25)
+    assert audit_payload["steps"][1]["spatial_application_mode"] == "aspatial_fallback"
+    assert audit_payload["steps"][1]["affected_area_ha"] == pytest.approx(0.25)
+
+    reconstructed_status = result.status_report_path.read_text(encoding="utf-8")
+    assert "Explicit aspatial fallback steps: `1` / `0.250 ha`" in reconstructed_status
+
+
 def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_can_auto_select_map_id_subset(
     tmp_path: Path,
 ) -> None:
@@ -6272,6 +6611,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_blocks_failed_exact_over
     )
     audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
     assert audit_payload["blocked_exact_overlay_step_count"] == 1
+    assert audit_payload["aspatial_fallback_step_count"] == 0
     run_step = audit_payload["steps"][1]
     assert run_step["run_status"] == "blocked_exact_overlay"
     assert run_step["spatial_application_mode"] == "blocked_exact_overlay"

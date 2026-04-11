@@ -13484,3 +13484,37 @@
       - `warmstart_status_manual_or_aspatial = 9`
     - refreshed TSA29 THLB status/workbench surfaces now point to
       `workbench/tsr/thlb_netdown.warmstart.md`.
+- 2026-04-11: Implemented issue `#132` as explicit reconstructed-mode
+  aspatial fallback for THLB target-area steps.
+  - Reconstructed THLB now executes recipe rows already compiled as:
+    - `aspatial_reduction`
+    - `aspatial_area_reduction`
+  - Kept the scope intentionally narrow:
+    - reconstructed runner only;
+    - no reviewed parent-step/notebook-lane behavior changes; and
+    - blocked spatial `exclude` rows are still not auto-converted into
+      fallback.
+  - Updated reconstructed audit/status reporting to separate:
+    - exact fragment overlay;
+    - explicit `aspatial_fallback`;
+    - blocked exact overlay; and
+    - debug stand-binary fallback.
+  - Updated docs in:
+    - `docs/reference/cli.rst`
+    - `docs/guides/tsr-intelligence-workflow.rst`
+    - `docs/guides/tsr-thlb-reconstruction-ladder.rst`
+  - Added regression coverage in:
+    - `tests/test_tsr_recipes.py`
+    - `tests/test_docs_contract.py`
+  - TSA29 reconstructed smoke proof:
+    - `femic tsr thlb-netdown-run --instance-root external/femic-tsa29-instance --execution-mode reconstructed --auto-map-id-smoke-subset`
+      completed successfully on `MAP_ID 092O071`;
+    - smoke result recorded:
+      - `fragment_overlay_step_count = 12`
+      - `aspatial_fallback_step_count = 1`
+      - `aspatial_fallback_area_ha = 297.242`
+      - `blocked_exact_overlay_step_count = 0`
+      - `stand_binary_fallback_step_count = 0`
+    - the live reconstructed TSA29 status/audit surfaces now show the
+      fallback bucket explicitly without presenting it as exact spatial
+      reproduction.

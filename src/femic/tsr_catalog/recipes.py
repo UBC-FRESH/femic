@@ -6529,6 +6529,7 @@ def _describe_exact_thlb_step_logic(step: dict[str, Any]) -> str:
     operation_type = str(
         step.get("compiled_operation_type", step.get("normalized_action", ""))
     ).strip()
+    spatial_mode = str(step.get("spatial_application_mode", "")).strip()
     buffer_distance = step.get("buffer_distance_m")
     source_filters = _describe_thlb_filters(
         [
@@ -6586,12 +6587,17 @@ def _describe_exact_thlb_step_logic(step: dict[str, Any]) -> str:
         return detail
     if operation_type in {"aspatial_reduction", "aspatial_area_reduction"}:
         benchmark = step.get("benchmark_marginal_area_ha")
+        prefix = "Apply an aspatial area reduction"
+        if spatial_mode == "aspatial_fallback":
+            prefix = (
+                "TSR area target applied as a documented aspatial deduction because "
+                "no exact spatial implementation is available in this lane"
+            )
         if benchmark is not None:
             return (
-                "Apply an aspatial area reduction using the TSR benchmark target of "
-                f"{float(benchmark):.3f} ha."
+                f"{prefix} using the TSR benchmark target of {float(benchmark):.3f} ha."
             )
-        return "Apply an aspatial area reduction using the configured TSR benchmark target."
+        return f"{prefix} using the configured TSR benchmark target."
     if operation_type == "no_deduction":
         return "Record this parent step as an explicit no-op: no executable land-base deduction is applied."
     return _describe_thlb_step_logic(step)
@@ -7234,9 +7240,24 @@ def _describe_thlb_step_logic(step: dict[str, Any]) -> str:
             "the exact execution mode depends on available data and current implementation support."
         )
     if normalized_action == "aspatial_reduction":
+        if spatial_mode == "aspatial_fallback":
+            return (
+                "TSR area target applied as a documented aspatial deduction because no "
+                "exact spatial implementation is available in this lane."
+            )
         return (
             "Apply a final aspatial THLB reduction of the TSR-cited magnitude after the spatially "
             "executable steps have completed."
+        )
+    if normalized_action == "aspatial_area_reduction":
+        if spatial_mode == "aspatial_fallback":
+            return (
+                "TSR area target applied as a documented aspatial area deduction because no "
+                "exact spatial implementation is available in this lane."
+            )
+        return (
+            "Apply an aspatial area reduction of the TSR-cited magnitude across the active "
+            "working land base."
         )
     if normalized_action in {
         "section_heading",
@@ -7789,6 +7810,11 @@ def _build_tsr_thlb_status_report_markdown(
         if str(step.get("spatial_application_mode", "")).strip()
         == "stand_binary_majority"
     ]
+    aspatial_fallback_steps = [
+        step
+        for step in applied_steps
+        if str(step.get("spatial_application_mode", "")).strip() == "aspatial_fallback"
+    ]
     lines = [
         f"# THLB Netdown Status Report: TSA {recipe.tsa.tsa_code} ({recipe.tsa.tsa_name})",
         "",
@@ -7820,6 +7846,9 @@ def _build_tsr_thlb_status_report_markdown(
         "- Exact fragment-overlay steps: "
         f"`{len(fragment_overlay_steps)}` / "
         f"`{sum(float(step.get('affected_area_ha', 0.0) or 0.0) for step in fragment_overlay_steps):.3f} ha`",
+        "- Explicit aspatial fallback steps: "
+        f"`{len(aspatial_fallback_steps)}` / "
+        f"`{sum(float(step.get('affected_area_ha', 0.0) or 0.0) for step in aspatial_fallback_steps):.3f} ha`",
         "- Blocked exact-overlay steps: "
         f"`{len(blocked_exact_overlay_steps)}` / "
         f"`{sum(float(step.get('candidate_row_count', 0.0) or 0.0) for step in blocked_exact_overlay_steps):.0f} candidate rows`",
@@ -7868,6 +7897,7 @@ def _build_tsr_thlb_status_report_markdown(
             "- Non-THLB polygons or fragments remain inside that working universe and are assigned THLB state downstream from AFLB initialization.",
             "- GLB -> AFLB rows define the modeled universe, AFLB -> LHLB rows define legal harvestability, and LHLB -> THLB rows define projected operational harvestability.",
             "- Review the exact FEMIC logic summaries before trusting raw TSR prose; the compiled logic is the executable contract.",
+            "- In reconstructed mode, explicit aspatial fallback means a TSR area target was applied honestly as a deduction bridge; it is not the same thing as exact spatial reproduction.",
             "- Legacy raster THLB values are reference-only in reconstructed mode.",
         ]
     )
@@ -11038,7 +11068,13 @@ def _count_exclusion_candidate_rows(
 def _select_reconstructed_diagnostic_steps(
     steps: Sequence[dict[str, Any]],
 ) -> tuple[dict[str, Any], ...]:
-    runnable_actions = {"use_land_base", "no_deduction", "exclude"}
+    runnable_actions = {
+        "use_land_base",
+        "no_deduction",
+        "exclude",
+        "aspatial_reduction",
+        "aspatial_area_reduction",
+    }
     selected: list[dict[str, Any]] = []
     for step in steps:
         normalized_action = str(step.get("normalized_action", "")).strip()
@@ -11308,10 +11344,46 @@ def _execute_tsr_thlb_recipe_steps(
                 if missing_sources:
                     updated_step["missing_source_entry_ids"] = missing_sources
         elif normalized_action == "aspatial_reduction":
-            updated_step["run_status"] = "unsupported"
-            updated_step["run_notes"] = [
-                "Aspatial reduction steps are preserved for review but not executed in v1."
-            ]
+            if execution_mode != TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
+                updated_step["run_status"] = "unsupported"
+                updated_step["run_notes"] = [
+                    "Aspatial reduction steps are preserved for review in this execution lane."
+                ]
+            else:
+                benchmark_marginal_area_ha = updated_step.get(
+                    "benchmark_marginal_area_ha"
+                )
+                if (
+                    benchmark_marginal_area_ha is None
+                    or total_area_benchmark_ha is None
+                ):
+                    updated_step["run_status"] = "unsupported"
+                    updated_step["run_notes"] = [
+                        "Aspatial reduction requires TSR benchmark marginal area and total TSA area benchmark."
+                    ]
+                else:
+                    current_managed_area_ha = _managed_area_ha(checkpoint)
+                    target_removed_area_ha = (
+                        float(benchmark_marginal_area_ha)
+                        * current_managed_area_ha
+                        / total_area_benchmark_ha
+                    )
+                    checkpoint, removed_area_ha, affected_row_count = (
+                        _apply_aspatial_thlb_reduction(
+                            checkpoint,
+                            target_removed_area_ha=target_removed_area_ha,
+                        )
+                    )
+                    updated_step["run_status"] = (
+                        "applied" if removed_area_ha > 0 else "applied_noop"
+                    )
+                    updated_step["spatial_application_mode"] = "aspatial_fallback"
+                    updated_step["affected_stand_count"] = affected_row_count
+                    updated_step["affected_area_ha"] = removed_area_ha
+                    updated_step["run_notes"] = [
+                        "Applied the TSR area target as a documented reconstructed-mode aspatial fallback because no exact spatial implementation is available for this recipe row.",
+                        "The deduction stayed recipe-driven; no blocked spatial row was auto-converted into fallback.",
+                    ]
         elif normalized_action == "aspatial_area_reduction":
             benchmark_marginal_area_ha = updated_step.get("benchmark_marginal_area_ha")
             if benchmark_marginal_area_ha is None or total_area_benchmark_ha is None:
@@ -11337,12 +11409,20 @@ def _execute_tsr_thlb_recipe_steps(
                 updated_step["run_status"] = (
                     "applied" if removed_area_ha > 0 else "applied_noop"
                 )
+                if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
+                    updated_step["spatial_application_mode"] = "aspatial_fallback"
                 updated_step["affected_stand_count"] = affected_row_count
                 updated_step["affected_area_ha"] = removed_area_ha
-                updated_step["run_notes"] = [
-                    "Applied early-stage aspatial area reduction by shrinking stand-area attributes proportionally across the active AFLB subset.",
-                    "This step does not use THLB retention because future road footprint is treated as non-forested area.",
-                ]
+                if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
+                    updated_step["run_notes"] = [
+                        "Applied the TSR area target as a documented reconstructed-mode aspatial fallback because no exact spatial implementation is available for this recipe row.",
+                        "This early-area deduction shrinks stand-area attributes across the active AFLB subset instead of changing THLB retention directly.",
+                    ]
+                else:
+                    updated_step["run_notes"] = [
+                        "Applied early-stage aspatial area reduction by shrinking stand-area attributes proportionally across the active AFLB subset.",
+                        "This step does not use THLB retention because future road footprint is treated as non-forested area.",
+                    ]
         else:
             updated_step["run_status"] = "unsupported"
             updated_step["run_notes"] = [
@@ -11608,6 +11688,22 @@ def run_tsr_thlb_netdown_recipe(
                 for step in applied_steps
                 if str(step.get("spatial_application_mode", "")).strip()
                 == "fragment_overlay"
+            )
+        ),
+        "aspatial_fallback_step_count": int(
+            sum(
+                1
+                for step in applied_steps
+                if str(step.get("spatial_application_mode", "")).strip()
+                == "aspatial_fallback"
+            )
+        ),
+        "aspatial_fallback_area_ha": float(
+            sum(
+                float(step.get("affected_area_ha", 0.0) or 0.0)
+                for step in applied_steps
+                if str(step.get("spatial_application_mode", "")).strip()
+                == "aspatial_fallback"
             )
         ),
         "blocked_exact_overlay_step_count": int(

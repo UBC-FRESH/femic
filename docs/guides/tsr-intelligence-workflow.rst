@@ -474,6 +474,12 @@ However, it is important not to blur two different THLB states:
   geometry, fragments the land base, and assigns binary fragment-level THLB
   membership ``{0,1}``.
 
+Reconstructed mode can now also apply a **recipe-driven aspatial fallback**
+when the reviewed THLB recipe already carries a TSR target-area deduction for a
+step that is intentionally not being reproduced as exact spatial geometry in
+that lane. That fallback stays explicit in the audit/status output and is not
+the same thing as exact spatial overlay.
+
 Coarse approximation is no longer part of the default reconstructed contract.
 If a user intentionally enables the non-default stand-binary debug fallback,
 FEMIC must say so explicitly in the audit/status surface rather than presenting

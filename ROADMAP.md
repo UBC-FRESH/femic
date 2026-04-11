@@ -8592,7 +8592,10 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [ ] P52.6b5 Run full-TSA29 THLB step-by-step validation and reconcile the recipe against TSR benchmarks (`#141`).
   - [ ] P52.6b6 Benchmark LU-wise local-process parallel THLB execution for TSA-scale netdown (`#143`).
   - [ ] P52.6c Execute fragment-first TSR THLB reconstruction from reviewed recipe steps (`#131`).
-  - [ ] P52.6d Add explicit end-of-workflow aspatial fallback for blocked TSR target-area steps (`#132`).
+  - [x] P52.6d Add explicit end-of-workflow aspatial fallback for blocked TSR target-area steps (`#132`).
+    - [x] P52.6d1 Extend reconstructed runner step selection/execution to include explicit `aspatial_reduction` and `aspatial_area_reduction` rows.
+    - [x] P52.6d2 Distinguish exact spatial overlay, explicit aspatial fallback, blocked exact overlay, and no-deduction rows in reconstructed audit/status outputs.
+    - [x] P52.6d3 Prove the reconstructed fallback contract on a TSA29 smoke run without changing the reviewed parent-step lane.
 - [x] P52.6e Document the reconstruction ladder and comparison contract (`#133`).
 - [x] P52.6f Model TSR Section 7.1.5 broadleaf volume exclusions in conifer-leading stands as a later yield-assumption lane, not a THLB area-netdown step (`#139`).
   - [x] P52.6f1 Add a narrow TSA29-first `yield_assumptions_path` seam to post-TIPSY / BTC-post-TIPSY CLI, run-profile, and workflow manifests.
@@ -8608,6 +8611,45 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P52.6h3 Prove the warm-start output on TSA29 and link the new artifact from the existing THLB review surfaces without making it canonical logic.
 
 ## Detailed Next Steps Notes
+
+- 2026-04-11 (Issue `#132` active: add explicit aspatial fallback for blocked THLB target-area steps in reconstructed mode only):
+  - Objective:
+    - keep the reviewed TSA29 parent-step/notebook lane unchanged;
+    - fill the missing seam in `femic tsr thlb-netdown-run --execution-mode reconstructed` so recipe rows already compiled as `aspatial_reduction` or `aspatial_area_reduction` execute honestly instead of remaining outside the reconstructed runnable set; and
+    - keep fallback explicit, recipe-driven, and visibly separate from exact spatial overlay.
+  - Implementation direction:
+    - expand reconstructed runnable actions from `use_land_base`, `no_deduction`, and `exclude` to also include `aspatial_reduction` and `aspatial_area_reduction`;
+    - reuse the existing aspatial reduction helpers already used by the reviewed parent-step lane instead of inventing a second deduction path;
+    - label those reconstructed rows as `aspatial_fallback` in runtime/audit/status surfaces;
+    - do not auto-convert blocked spatial `exclude` rows into fallback unless the recipe row itself is already compiled as aspatial; and
+    - keep `manual_review_required` and `reference_only` rows non-executable.
+  - Acceptance target:
+    - reconstructed tests prove `aspatial_reduction` and `aspatial_area_reduction` now execute in reconstructed mode;
+    - reconstructed audit/status reporting separates exact overlay, explicit aspatial fallback, blocked exact overlay, debug stand-binary fallback, and no-deduction rows; and
+    - a TSA29 reconstructed smoke run shows explicit aspatial fallback steps where the reviewed recipe already carries them, without changing the practical reviewed TSA29 lane.
+- 2026-04-11: Issue `#132` is complete.
+  - Reconstructed THLB now executes recipe rows already compiled as:
+    - `aspatial_reduction`
+    - `aspatial_area_reduction`
+  - The change is intentionally narrow:
+    - reconstructed runner only;
+    - no reviewed parent-step/notebook lane behavior changed; and
+    - blocked spatial `exclude` rows are still not auto-converted into fallback.
+  - Reconstructed audit/status reporting now separates:
+    - exact fragment overlay;
+    - explicit `aspatial_fallback`;
+    - blocked exact overlay; and
+    - debug stand-binary fallback.
+  - TSA29 reconstructed smoke proof:
+    - `femic tsr thlb-netdown-run --instance-root external/femic-tsa29-instance --execution-mode reconstructed --auto-map-id-smoke-subset`
+      completed successfully on `MAP_ID 092O071`;
+    - smoke result recorded:
+      - `fragment_overlay_step_count = 12`
+      - `aspatial_fallback_step_count = 1`
+      - `aspatial_fallback_area_ha = 297.242`
+      - `blocked_exact_overlay_step_count = 0`
+      - `stand_binary_fallback_step_count = 0`
+    - live reconstructed status/audit surfaces now show the fallback bucket explicitly without presenting it as exact spatial reproduction.
 
 - 2026-04-11 (Issue `#136` active: add no-LLM THLB warm-start checklist templates from recurring TSR netdown patterns):
   - Objective:
