@@ -916,6 +916,18 @@ def default_tsr_thlb_lu_partition_root(*, instance_root: Path) -> Path:
     )
 
 
+def default_tsr_thlb_reconstructed_lu_runtime_root(*, instance_root: Path) -> Path:
+    """Return the default runtime root for LU-wise reconstructed THLB state."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "runtime"
+        / "logs"
+        / "tsr"
+        / "reconstructed_lu"
+    )
+
+
 def resolve_tsr_workbench_instance_root(*, start: Path | None = None) -> Path:
     """Resolve the enclosing instance root for a generated THLB workbench."""
 
@@ -5524,6 +5536,8 @@ def _load_cached_landscape_unit_partition_selection(
     *,
     checkpoint_path: Path,
     instance_root: Path,
+    expected_row_count: int | None = None,
+    expected_area_ha: float | None = None,
 ) -> tuple[tuple[str, ...], Path] | None:
     partition_root = default_tsr_thlb_lu_partition_root(instance_root=instance_root)
     if not partition_root.exists():
@@ -5536,6 +5550,20 @@ def _load_cached_landscape_unit_partition_selection(
             continue
         if str(payload.get("checkpoint_path", "")).strip() != resolved_checkpoint:
             continue
+        if expected_row_count is not None:
+            cached_row_count = payload.get("input_row_count")
+            cached_area_ha = payload.get("input_area_ha")
+            if cached_row_count is None or cached_area_ha is None:
+                continue
+            if int(cached_row_count) != int(expected_row_count):
+                continue
+            if not math.isclose(
+                float(cached_area_ha),
+                float(expected_area_ha or 0.0),
+                rel_tol=0.0,
+                abs_tol=1e-6,
+            ):
+                continue
         selected_raw = payload.get("selected_landscape_units", [])
         if not isinstance(selected_raw, list):
             continue
@@ -5552,6 +5580,8 @@ def _load_cached_landscape_unit_partition_records(
     *,
     checkpoint_path: Path,
     instance_root: Path,
+    expected_row_count: int | None = None,
+    expected_area_ha: float | None = None,
 ) -> tuple[tuple[str, ...], list[dict[str, Any]]] | None:
     partition_root = default_tsr_thlb_lu_partition_root(instance_root=instance_root)
     if not partition_root.exists():
@@ -5564,6 +5594,20 @@ def _load_cached_landscape_unit_partition_records(
             continue
         if str(payload.get("checkpoint_path", "")).strip() != resolved_checkpoint:
             continue
+        if expected_row_count is not None:
+            cached_row_count = payload.get("input_row_count")
+            cached_area_ha = payload.get("input_area_ha")
+            if cached_row_count is None or cached_area_ha is None:
+                continue
+            if int(cached_row_count) != int(expected_row_count):
+                continue
+            if not math.isclose(
+                float(cached_area_ha),
+                float(expected_area_ha or 0.0),
+                rel_tol=0.0,
+                abs_tol=1e-6,
+            ):
+                continue
         selected_raw = payload.get("selected_landscape_units", [])
         records_raw = payload.get("chunk_records", [])
         if not isinstance(selected_raw, list) or not isinstance(records_raw, list):
@@ -5829,6 +5873,8 @@ def _materialize_checkpoint_landscape_unit_partitions(
         )
     metadata_payload = {
         "checkpoint_path": str(checkpoint_path.expanduser().resolve()),
+        "input_row_count": int(len(checkpoint)),
+        "input_area_ha": float(checkpoint.geometry.area.astype(float).sum() / 10000.0),
         "selected_landscape_units": list(selected_landscape_units),
         "chunk_records": [
             {
@@ -6297,6 +6343,431 @@ def _fragment_binary_exclusion_step_chunked(
         float(affected_area_sqm / 10000.0),
         batch_count,
     )
+
+
+def _load_lu_chunk_frame(chunk_path: Path) -> gpd.GeoDataFrame:
+    frame = gpd.read_feather(chunk_path)
+    return gpd.GeoDataFrame(frame, geometry="geometry", crs=BC_ALBERS_EPSG)
+
+
+def _write_lu_chunk_frame(chunk: gpd.GeoDataFrame, *, chunk_path: Path) -> None:
+    chunk_path.parent.mkdir(parents=True, exist_ok=True)
+    chunk.to_feather(chunk_path)
+
+
+def _prepare_reconstructed_lu_chunk_records(
+    *,
+    checkpoint: gpd.GeoDataFrame,
+    checkpoint_path: Path,
+    instance_root: Path,
+) -> tuple[gpd.GeoDataFrame, list[dict[str, Any]], dict[str, float]]:
+    profiling: dict[str, float] = {
+        "lu_layer_load_seconds": 0.0,
+        "lu_selection_cache_lookup_seconds": 0.0,
+        "lu_selection_seconds": 0.0,
+        "partition_materialize_seconds": 0.0,
+    }
+    lu_layer_started = perf_counter()
+    lu_layer = _load_landscape_unit_layer(instance_root)
+    profiling["lu_layer_load_seconds"] = perf_counter() - lu_layer_started
+
+    cache_lookup_started = perf_counter()
+    cached_partition = _load_cached_landscape_unit_partition_records(
+        checkpoint_path=checkpoint_path,
+        instance_root=instance_root,
+        expected_row_count=len(checkpoint),
+        expected_area_ha=float(checkpoint.geometry.area.astype(float).sum() / 10000.0),
+    )
+    profiling["lu_selection_cache_lookup_seconds"] = (
+        perf_counter() - cache_lookup_started
+    )
+
+    if cached_partition is not None:
+        selected_landscape_units, chunk_records = cached_partition
+        lu_select_started = perf_counter()
+        lu_frame, _selected_names = _select_landscape_unit_rows(
+            lu_layer,
+            landscape_units=selected_landscape_units,
+        )
+        profiling["lu_selection_seconds"] = perf_counter() - lu_select_started
+        if lu_frame.empty:
+            raise TsrRecipeError(
+                "Cached reconstructed LU partitions resolved no landscape-unit rows."
+            )
+        return lu_frame, [dict(item) for item in chunk_records], profiling
+
+    lu_select_started = perf_counter()
+    (
+        lu_frame,
+        selected_landscape_units,
+        lu_selection_profile,
+    ) = _select_intersecting_landscape_units_for_checkpoint(
+        checkpoint,
+        instance_root=instance_root,
+    )
+    profiling["lu_selection_seconds"] = perf_counter() - lu_select_started
+    for key, value in lu_selection_profile.items():
+        profiling[key] = float(value)
+
+    partition_started = perf_counter()
+    chunk_records = _materialize_checkpoint_landscape_unit_partitions(
+        checkpoint,
+        checkpoint_path=checkpoint_path,
+        lu_frame=lu_frame,
+        selected_landscape_units=selected_landscape_units,
+        instance_root=instance_root,
+    )
+    profiling["partition_materialize_seconds"] = perf_counter() - partition_started
+    if not chunk_records:
+        raise TsrRecipeError(
+            "Reconstructed LU decomposition produced no cached LU chunk files."
+        )
+    return lu_frame, [dict(item) for item in chunk_records], profiling
+
+
+def _select_intersecting_lu_names_for_exclusions(
+    *,
+    exclusion_geometries: gpd.GeoDataFrame,
+    lu_frame: gpd.GeoDataFrame,
+) -> tuple[set[str], float]:
+    if exclusion_geometries.empty or lu_frame.empty:
+        return set(), 0.0
+    select_started = perf_counter()
+    candidate_indices = lu_frame.sindex.query(
+        exclusion_geometries.geometry,
+        predicate="intersects",
+    )
+    if getattr(candidate_indices, "ndim", 1) == 2:
+        candidate_values = candidate_indices[1]
+    else:
+        candidate_values = candidate_indices
+    unique_indices = sorted({int(index) for index in candidate_values.tolist()})
+    if not unique_indices:
+        return set(), perf_counter() - select_started
+    lu_names = {
+        str(value).strip()
+        for value in lu_frame.iloc[unique_indices]
+        .get("LANDSCAPE_UNIT_NAME", pd.Series(dtype=str))
+        .fillna("")
+        .astype(str)
+        .tolist()
+        if str(value).strip()
+    }
+    return lu_names, perf_counter() - select_started
+
+
+def _apply_aspatial_thlb_keep_factor(
+    checkpoint: gpd.GeoDataFrame,
+    *,
+    keep_factor: float,
+) -> tuple[gpd.GeoDataFrame, int]:
+    updated = checkpoint.copy()
+    active_mask = updated["thlb_fact"].astype(float) > 0.0
+    if not active_mask.any():
+        return updated, 0
+    if "thlb" in updated.columns:
+        updated["thlb"] = updated["thlb"].astype(float)
+    updated.loc[active_mask, "thlb_fact"] = (
+        updated.loc[active_mask, "thlb_fact"].astype(float) * keep_factor
+    )
+    if "thlb" in updated.columns:
+        updated.loc[active_mask, "thlb"] = updated.loc[active_mask, "thlb_fact"].astype(
+            float
+        )
+    return updated, int(active_mask.sum())
+
+
+def _apply_aspatial_area_keep_factor(
+    checkpoint: gpd.GeoDataFrame,
+    *,
+    keep_factor: float,
+) -> tuple[gpd.GeoDataFrame, int]:
+    updated = checkpoint.copy()
+    canonical_area_sqm = _resolve_canonical_stand_area_sqm(updated)
+    active_mask = canonical_area_sqm.astype(float) > 0.0
+    if not active_mask.any():
+        return updated, 0
+    updated[TSR_EFFECTIVE_AREA_SQM_COLUMN] = (
+        canonical_area_sqm.astype(float) * keep_factor
+    )
+    updated.loc[active_mask, "_stand_area_sqm"] = updated.loc[
+        active_mask, TSR_EFFECTIVE_AREA_SQM_COLUMN
+    ].astype(float)
+    return updated, int(active_mask.sum())
+
+
+def _apply_reconstructed_lu_aspatial_thlb_reduction(
+    *,
+    chunk_records: Sequence[dict[str, Any]],
+    runtime_step_root: Path,
+    target_removed_area_ha: float,
+) -> tuple[list[dict[str, Any]], float, int, int]:
+    if not chunk_records or target_removed_area_ha <= 0.0:
+        return [dict(item) for item in chunk_records], 0.0, 0, 0
+    current_managed_area_ha = 0.0
+    frames_by_lu: dict[str, gpd.GeoDataFrame] = {}
+    for record in chunk_records:
+        lu_name = str(record.get("lu_name", "")).strip()
+        frame = _load_lu_chunk_frame(Path(record["chunk_path"]))
+        frames_by_lu[lu_name] = frame
+        current_managed_area_ha += _managed_area_ha(frame)
+    if current_managed_area_ha <= 0.0:
+        return [dict(item) for item in chunk_records], 0.0, 0, 0
+    removed_area_ha = min(float(target_removed_area_ha), current_managed_area_ha)
+    keep_factor = (current_managed_area_ha - removed_area_ha) / current_managed_area_ha
+    updated_records: list[dict[str, Any]] = []
+    affected_row_count = 0
+    touched_chunk_count = 0
+    for index, record in enumerate(chunk_records, start=1):
+        current_record = dict(record)
+        lu_name = str(current_record.get("lu_name", "")).strip()
+        updated_chunk, current_affected = _apply_aspatial_thlb_keep_factor(
+            frames_by_lu[lu_name],
+            keep_factor=keep_factor,
+        )
+        affected_row_count += current_affected
+        if current_affected > 0:
+            touched_chunk_count += 1
+        chunk_path = (
+            runtime_step_root
+            / f"{index:03d}_{_normalize_step_slug(lu_name or 'chunk')}.feather"
+        )
+        _write_lu_chunk_frame(updated_chunk, chunk_path=chunk_path)
+        current_record["chunk_path"] = chunk_path
+        updated_records.append(current_record)
+    return updated_records, removed_area_ha, affected_row_count, touched_chunk_count
+
+
+def _apply_reconstructed_lu_aspatial_area_reduction(
+    *,
+    chunk_records: Sequence[dict[str, Any]],
+    runtime_step_root: Path,
+    target_removed_area_ha: float,
+) -> tuple[list[dict[str, Any]], float, int, int]:
+    if not chunk_records or target_removed_area_ha <= 0.0:
+        return [dict(item) for item in chunk_records], 0.0, 0, 0
+    current_area_ha = 0.0
+    frames_by_lu: dict[str, gpd.GeoDataFrame] = {}
+    for record in chunk_records:
+        lu_name = str(record.get("lu_name", "")).strip()
+        frame = _load_lu_chunk_frame(Path(record["chunk_path"]))
+        frames_by_lu[lu_name] = frame
+        current_area_ha += float(
+            _resolve_canonical_stand_area_sqm(frame).sum() / 10000.0
+        )
+    if current_area_ha <= 0.0:
+        return [dict(item) for item in chunk_records], 0.0, 0, 0
+    removed_area_ha = min(float(target_removed_area_ha), current_area_ha)
+    keep_factor = (current_area_ha - removed_area_ha) / current_area_ha
+    updated_records: list[dict[str, Any]] = []
+    affected_row_count = 0
+    touched_chunk_count = 0
+    for index, record in enumerate(chunk_records, start=1):
+        current_record = dict(record)
+        lu_name = str(current_record.get("lu_name", "")).strip()
+        updated_chunk, current_affected = _apply_aspatial_area_keep_factor(
+            frames_by_lu[lu_name],
+            keep_factor=keep_factor,
+        )
+        affected_row_count += current_affected
+        if current_affected > 0:
+            touched_chunk_count += 1
+        chunk_path = (
+            runtime_step_root
+            / f"{index:03d}_{_normalize_step_slug(lu_name or 'chunk')}.feather"
+        )
+        _write_lu_chunk_frame(updated_chunk, chunk_path=chunk_path)
+        current_record["chunk_path"] = chunk_path
+        updated_records.append(current_record)
+    return updated_records, removed_area_ha, affected_row_count, touched_chunk_count
+
+
+def _execute_reconstructed_lu_exclusion_step(
+    *,
+    chunk_records: Sequence[dict[str, Any]],
+    exclusion_geometries: gpd.GeoDataFrame,
+    lu_frame: gpd.GeoDataFrame,
+    runtime_step_root: Path,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    lu_names, lu_selection_seconds = _select_intersecting_lu_names_for_exclusions(
+        exclusion_geometries=exclusion_geometries,
+        lu_frame=lu_frame,
+    )
+    if not lu_names:
+        return [dict(item) for item in chunk_records], {
+            "candidate_query_seconds": lu_selection_seconds,
+            "lu_chunk_count": 0,
+            "intersecting_exclusion_feature_count": 0,
+            "candidate_row_count": 0,
+            "affected_fragment_count": 0,
+            "affected_area_ha": 0.0,
+            "fragment_batch_count": 0,
+            "overlay_seconds": 0.0,
+            "write_seconds": 0.0,
+        }
+
+    exclusion_sindex = exclusion_geometries.sindex
+    updated_records: list[dict[str, Any]] = []
+    candidate_query_seconds = lu_selection_seconds
+    overlay_seconds = 0.0
+    write_seconds = 0.0
+    candidate_row_count = 0
+    affected_fragment_count = 0
+    affected_area_ha = 0.0
+    fragment_batch_count = 0
+    intersecting_feature_indices: set[int] = set()
+    touched_chunk_count = 0
+
+    for index, record in enumerate(chunk_records, start=1):
+        current_record = dict(record)
+        lu_name = str(current_record.get("lu_name", "")).strip()
+        if lu_name not in lu_names:
+            updated_records.append(current_record)
+            continue
+        chunk = _load_lu_chunk_frame(Path(current_record["chunk_path"]))
+        local_query_started = perf_counter()
+        local_exclusion_indices = exclusion_sindex.query(
+            chunk.geometry,
+            predicate="intersects",
+        )
+        candidate_query_seconds += perf_counter() - local_query_started
+        if getattr(local_exclusion_indices, "ndim", 1) == 2:
+            local_exclusion_values = local_exclusion_indices[1]
+        else:
+            local_exclusion_values = local_exclusion_indices
+        unique_exclusion_indices = sorted(
+            {int(value) for value in local_exclusion_values.tolist()}
+        )
+        if not unique_exclusion_indices:
+            updated_records.append(current_record)
+            continue
+        local_exclusions = exclusion_geometries.iloc[unique_exclusion_indices].copy()
+        intersecting_feature_indices.update(unique_exclusion_indices)
+
+        overlay_started = perf_counter()
+        (
+            updated_chunk,
+            current_candidate_count,
+            current_affected_fragment_count,
+            current_affected_area_ha,
+            current_fragment_batch_count,
+        ) = _fragment_binary_exclusion_step_chunked(
+            checkpoint=chunk,
+            exclusion_geometries=local_exclusions,
+        )
+        overlay_seconds += perf_counter() - overlay_started
+        candidate_row_count += int(current_candidate_count)
+        affected_fragment_count += int(current_affected_fragment_count)
+        affected_area_ha += float(current_affected_area_ha)
+        fragment_batch_count += int(current_fragment_batch_count)
+
+        if current_candidate_count > 0:
+            touched_chunk_count += 1
+        if current_affected_fragment_count <= 0:
+            updated_records.append(current_record)
+            continue
+
+        chunk_write_started = perf_counter()
+        chunk_path = (
+            runtime_step_root
+            / f"{index:03d}_{_normalize_step_slug(lu_name or 'chunk')}.feather"
+        )
+        _write_lu_chunk_frame(updated_chunk, chunk_path=chunk_path)
+        write_seconds += perf_counter() - chunk_write_started
+        current_record["chunk_path"] = chunk_path
+        updated_records.append(current_record)
+
+    return updated_records, {
+        "candidate_query_seconds": candidate_query_seconds,
+        "lu_chunk_count": touched_chunk_count,
+        "intersecting_exclusion_feature_count": len(intersecting_feature_indices),
+        "candidate_row_count": candidate_row_count,
+        "affected_fragment_count": affected_fragment_count,
+        "affected_area_ha": affected_area_ha,
+        "fragment_batch_count": fragment_batch_count,
+        "overlay_seconds": overlay_seconds,
+        "write_seconds": write_seconds,
+    }
+
+
+def _merge_reconstructed_lu_chunk_records(
+    chunk_records: Sequence[dict[str, Any]],
+) -> tuple[gpd.GeoDataFrame, float]:
+    if not chunk_records:
+        return gpd.GeoDataFrame(geometry=[], crs=BC_ALBERS_EPSG), 0.0
+    merge_started = perf_counter()
+    merged_frames = [
+        _load_lu_chunk_frame(Path(item["chunk_path"])) for item in chunk_records
+    ]
+    merged = gpd.GeoDataFrame(
+        pd.concat(merged_frames, ignore_index=True),
+        geometry="geometry",
+        crs=BC_ALBERS_EPSG,
+    )
+    merged = merged.loc[~merged.geometry.is_empty].copy()
+    merged = _assign_fragment_feature_ids(merged)
+    return merged, perf_counter() - merge_started
+
+
+def _summarize_reconstructed_diagnostics(
+    diagnostic_steps: Sequence[dict[str, Any]],
+    *,
+    top_n: int = 5,
+) -> dict[str, Any]:
+    total_runtime_seconds = 0.0
+    overlay_seconds = 0.0
+    candidate_query_seconds = 0.0
+    write_seconds = 0.0
+    merge_seconds = 0.0
+    source_load_seconds = 0.0
+    slowest_steps: list[dict[str, Any]] = []
+
+    for step in diagnostic_steps:
+        total_runtime_seconds += float(step.get("total_seconds", 0.0) or 0.0)
+        overlay_seconds += float(step.get("overlay_seconds", 0.0) or 0.0)
+        candidate_query_seconds += float(
+            step.get("candidate_query_seconds", 0.0) or 0.0
+        )
+        write_seconds += float(step.get("write_seconds", 0.0) or 0.0)
+        merge_seconds += float(step.get("merge_seconds", 0.0) or 0.0)
+        source_load_seconds += float(step.get("source_load_seconds", 0.0) or 0.0)
+
+        step_id = str(step.get("step_id", "")).strip()
+        normalized_action = str(step.get("normalized_action", "")).strip()
+        if not step_id or step_id.startswith("__"):
+            continue
+        slowest_steps.append(
+            {
+                "step_id": step_id,
+                "label": str(step.get("label", "")).strip(),
+                "normalized_action": normalized_action,
+                "spatial_application_mode": str(
+                    step.get("spatial_application_mode", "")
+                ).strip(),
+                "run_status": str(step.get("run_status", "")).strip(),
+                "total_seconds": float(step.get("total_seconds", 0.0) or 0.0),
+                "overlay_seconds": float(step.get("overlay_seconds", 0.0) or 0.0),
+                "candidate_query_seconds": float(
+                    step.get("candidate_query_seconds", 0.0) or 0.0
+                ),
+                "write_seconds": float(step.get("write_seconds", 0.0) or 0.0),
+                "lu_chunk_count": int(step.get("lu_chunk_count", 0) or 0),
+                "intersecting_exclusion_feature_count": int(
+                    step.get("intersecting_exclusion_feature_count", 0) or 0
+                ),
+            }
+        )
+
+    slowest_steps.sort(key=lambda item: item["total_seconds"], reverse=True)
+    return {
+        "total_runtime_seconds": total_runtime_seconds,
+        "source_load_seconds": source_load_seconds,
+        "candidate_query_seconds": candidate_query_seconds,
+        "overlay_seconds": overlay_seconds,
+        "write_seconds": write_seconds,
+        "merge_seconds": merge_seconds,
+        "slowest_steps": slowest_steps[:top_n],
+    }
 
 
 def _apply_binary_stand_exclusion(
@@ -7753,6 +8224,7 @@ def _build_tsr_thlb_status_report_markdown(
     runtime_report_relative_path: str,
     warmstart_markdown_relative_path: str | None = None,
     applied_steps: Sequence[dict[str, Any]],
+    diagnostic_steps: Sequence[dict[str, Any]],
     source_entry_map: dict[str, dict[str, Any]],
     override_entries: dict[str, TsrSourceLayerOverrideEntry],
 ) -> str:
@@ -7815,6 +8287,9 @@ def _build_tsr_thlb_status_report_markdown(
         for step in applied_steps
         if str(step.get("spatial_application_mode", "")).strip() == "aspatial_fallback"
     ]
+    reconstructed_timing_summary = _summarize_reconstructed_diagnostics(
+        diagnostic_steps
+    )
     lines = [
         f"# THLB Netdown Status Report: TSA {recipe.tsa.tsa_code} ({recipe.tsa.tsa_name})",
         "",
@@ -7856,6 +8331,17 @@ def _build_tsr_thlb_status_report_markdown(
         f"`{len(stand_binary_steps)}` / "
         f"`{sum(float(step.get('affected_area_ha', 0.0) or 0.0) for step in stand_binary_steps):.3f} ha`",
     ]
+    if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
+        lines.extend(
+            [
+                "- LU-wise exact-overlay chunks touched: "
+                f"`{sum(int(step.get('lu_chunk_count', 0) or 0) for step in fragment_overlay_steps)}`",
+                "- LU-wise intersecting exclusion features: "
+                f"`{sum(int(step.get('intersecting_exclusion_feature_count', 0) or 0) for step in fragment_overlay_steps)}`",
+                "- LU-wise reconstructed runtime: "
+                f"`{reconstructed_timing_summary['total_runtime_seconds'] / 60.0:.2f} min`",
+            ]
+        )
     if legacy_reference_managed_area_ha is not None:
         lines.append(
             f"- Legacy raster THLB reference: `{legacy_reference_managed_area_ha:.3f} ha`"
@@ -7886,6 +8372,38 @@ def _build_tsr_thlb_status_report_markdown(
     lines.extend(["", "## Outcomes", ""])
     for outcome, count in outcome_counts.items():
         lines.append(f"- `{outcome}`: `{count}`")
+
+    if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
+        lines.extend(
+            [
+                "",
+                "## Runtime Timing",
+                "",
+                "- Source-layer load time: "
+                f"`{reconstructed_timing_summary['source_load_seconds']:.2f} s`",
+                "- Candidate-query time: "
+                f"`{reconstructed_timing_summary['candidate_query_seconds']:.2f} s`",
+                "- Exact-overlay / fallback time: "
+                f"`{reconstructed_timing_summary['overlay_seconds']:.2f} s`",
+                "- Chunk-write time: "
+                f"`{reconstructed_timing_summary['write_seconds']:.2f} s`",
+                "- Final merge time: "
+                f"`{reconstructed_timing_summary['merge_seconds']:.2f} s`",
+            ]
+        )
+        if reconstructed_timing_summary["slowest_steps"]:
+            lines.extend(["", "### Slowest Steps", ""])
+            for item in reconstructed_timing_summary["slowest_steps"]:
+                lines.append(
+                    "- "
+                    f"`{item['step_id']}` | "
+                    f"mode=`{item['spatial_application_mode'] or 'n/a'}` | "
+                    f"status=`{item['run_status'] or 'n/a'}` | "
+                    f"total=`{item['total_seconds']:.2f} s` | "
+                    f"overlay=`{item['overlay_seconds']:.2f} s` | "
+                    f"LU chunks=`{item['lu_chunk_count']}` | "
+                    f"source features=`{item['intersecting_exclusion_feature_count']}`"
+                )
 
     lines.extend([""])
     lines.extend(_format_thlb_lock_state_markdown(lock_state))
@@ -9566,6 +10084,10 @@ def run_tsr_thlb_parent_step(
             cached_partition = _load_cached_landscape_unit_partition_records(
                 checkpoint_path=resolved_checkpoint_path,
                 instance_root=instance_root,
+                expected_row_count=len(checkpoint),
+                expected_area_ha=float(
+                    checkpoint.geometry.area.astype(float).sum() / 10000.0
+                ),
             )
             profiling["lu_selection_cache_lookup_seconds"] = (
                 perf_counter() - cache_lookup_started
@@ -11083,10 +11605,317 @@ def _select_reconstructed_diagnostic_steps(
     return tuple(selected)
 
 
+def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
+    *,
+    recipe_steps: Sequence[dict[str, Any]],
+    checkpoint: gpd.GeoDataFrame,
+    checkpoint_path: Path,
+    instance_root: Path,
+    source_entry_map: dict[str, dict[str, Any]],
+    total_area_benchmark_ha: float | None = None,
+) -> tuple[
+    gpd.GeoDataFrame, list[dict[str, Any]], dict[str, int], list[dict[str, Any]]
+]:
+    outcome_counts: Counter[str] = Counter()
+    applied_steps: list[dict[str, Any]] = []
+    diagnostic_steps: list[dict[str, Any]] = []
+
+    lu_frame, current_chunk_records, partition_profile = (
+        _prepare_reconstructed_lu_chunk_records(
+            checkpoint=checkpoint,
+            checkpoint_path=checkpoint_path,
+            instance_root=instance_root,
+        )
+    )
+    runtime_root = default_tsr_thlb_reconstructed_lu_runtime_root(
+        instance_root=instance_root
+    )
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    run_timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    run_root = runtime_root / f"{checkpoint_path.stem}.{run_timestamp}"
+    run_root.mkdir(parents=True, exist_ok=True)
+
+    diagnostic_steps.append(
+        {
+            "step_id": "__lu_partition_init__",
+            "label": "Landscape Unit partition initialization",
+            "normalized_action": "lu_partition_init",
+            **partition_profile,
+            "lu_chunk_count": len(current_chunk_records),
+            "total_seconds": float(sum(partition_profile.values())),
+        }
+    )
+
+    for step in recipe_steps:
+        step_start = perf_counter()
+        step_profile: dict[str, Any] = {
+            "step_id": str(step.get("step_id", "")).strip(),
+            "label": str(step.get("label", "")).strip(),
+            "normalized_action": str(step.get("normalized_action", "")).strip(),
+            "source_load_seconds": 0.0,
+            "candidate_query_seconds": 0.0,
+            "overlay_seconds": 0.0,
+            "write_seconds": 0.0,
+            "merge_seconds": 0.0,
+            "lu_chunk_count": 0,
+            "intersecting_exclusion_feature_count": 0,
+        }
+        updated_step = dict(step)
+        normalized_action = str(step.get("normalized_action", "")).strip()
+        linked_source_entry_ids = tuple(
+            str(value).strip()
+            for value in step.get("linked_source_entry_ids", ())
+            if str(value).strip()
+        )
+        page_number = int(step.get("page_number") or 0)
+        step_dir = run_root / (
+            f"{int(step.get('order_index') or 0):03d}_"
+            f"{_normalize_step_slug(step_profile['step_id'])}"
+        )
+        step_dir.mkdir(parents=True, exist_ok=True)
+
+        if normalized_action in {
+            "section_heading",
+            "definition",
+            "increase_conditions",
+            "decrease_conditions",
+        }:
+            updated_step["run_status"] = "needs_review"
+            updated_step["run_notes"] = [
+                "Context-only THLB row; no execution attempted."
+            ]
+        elif normalized_action in {"use_land_base", "no_deduction"}:
+            updated_step["run_status"] = "applied_noop"
+            updated_step["run_notes"] = ["No spatial deduction applied for this rule."]
+        elif normalized_action == "exclude":
+            source_load_start = perf_counter()
+            exclusion_geometries, missing_sources, extent_mismatch_notes = (
+                _load_exclusion_geometries(
+                    instance_root=instance_root,
+                    source_entry_map=source_entry_map,
+                    linked_source_entry_ids=linked_source_entry_ids,
+                    bbox=(
+                        float(checkpoint.total_bounds[0]),
+                        float(checkpoint.total_bounds[1]),
+                        float(checkpoint.total_bounds[2]),
+                        float(checkpoint.total_bounds[3]),
+                    ),
+                )
+            )
+            step_profile["source_load_seconds"] = perf_counter() - source_load_start
+            if exclusion_geometries is None:
+                if extent_mismatch_notes:
+                    updated_step["run_status"] = "blocked_extent_mismatch"
+                    updated_step["run_notes"] = extent_mismatch_notes
+                else:
+                    updated_step["run_status"] = "blocked_missing_source"
+                    updated_step["run_notes"] = [
+                        "No fetched polygon artifact was available for the linked source entries."
+                    ]
+                    if missing_sources:
+                        updated_step["missing_source_entry_ids"] = missing_sources
+            else:
+                try:
+                    (
+                        current_chunk_records,
+                        lu_step_profile,
+                    ) = _execute_reconstructed_lu_exclusion_step(
+                        chunk_records=current_chunk_records,
+                        exclusion_geometries=exclusion_geometries,
+                        lu_frame=lu_frame,
+                        runtime_step_root=step_dir,
+                    )
+                    step_profile["candidate_query_seconds"] = float(
+                        lu_step_profile["candidate_query_seconds"]
+                    )
+                    step_profile["overlay_seconds"] = float(
+                        lu_step_profile["overlay_seconds"]
+                    )
+                    step_profile["write_seconds"] = float(
+                        lu_step_profile["write_seconds"]
+                    )
+                    step_profile["lu_chunk_count"] = int(
+                        lu_step_profile["lu_chunk_count"]
+                    )
+                    step_profile["intersecting_exclusion_feature_count"] = int(
+                        lu_step_profile["intersecting_exclusion_feature_count"]
+                    )
+                    if int(lu_step_profile["affected_fragment_count"]) <= 0:
+                        updated_step["run_status"] = "applied_noop"
+                        updated_step["run_notes"] = [
+                            "No active LU-clipped fragment geometries intersected the exclusion mask."
+                        ]
+                    else:
+                        updated_step["run_status"] = "applied"
+                        updated_step["spatial_application_mode"] = "fragment_overlay"
+                        updated_step["candidate_row_count"] = int(
+                            lu_step_profile["candidate_row_count"]
+                        )
+                        updated_step["affected_fragment_count"] = int(
+                            lu_step_profile["affected_fragment_count"]
+                        )
+                        updated_step["affected_area_ha"] = float(
+                            lu_step_profile["affected_area_ha"]
+                        )
+                        updated_step["fragment_batch_count"] = int(
+                            lu_step_profile["fragment_batch_count"]
+                        )
+                        updated_step["lu_chunk_count"] = int(
+                            lu_step_profile["lu_chunk_count"]
+                        )
+                        updated_step["intersecting_exclusion_feature_count"] = int(
+                            lu_step_profile["intersecting_exclusion_feature_count"]
+                        )
+                        updated_step["run_notes"] = [
+                            "Applied exact LU-wise fragment/resultant exclusion with binary THLB output in EPSG:3005.",
+                            "The reconstructed lane now cuts one Landscape Unit chunk at a time instead of building one full-TSA exact-overlay workload.",
+                        ]
+                except Exception as exc:
+                    updated_step["run_status"] = "blocked_exact_overlay"
+                    updated_step["spatial_application_mode"] = "blocked_exact_overlay"
+                    updated_step["run_notes"] = [
+                        "Exact fragment-overlay execution was required for reconstructed mode, so this step was blocked instead of silently approximating it.",
+                        f"Blocking reason: {exc}",
+                    ]
+                if missing_sources:
+                    updated_step["missing_source_entry_ids"] = missing_sources
+        elif normalized_action == "aspatial_reduction":
+            benchmark_marginal_area_ha = updated_step.get("benchmark_marginal_area_ha")
+            if benchmark_marginal_area_ha is None or total_area_benchmark_ha is None:
+                updated_step["run_status"] = "unsupported"
+                updated_step["run_notes"] = [
+                    "Aspatial reduction requires TSR benchmark marginal area and total TSA area benchmark."
+                ]
+            else:
+                current_managed_area_ha = 0.0
+                for record in current_chunk_records:
+                    current_managed_area_ha += _managed_area_ha(
+                        _load_lu_chunk_frame(Path(record["chunk_path"]))
+                    )
+                target_removed_area_ha = (
+                    float(benchmark_marginal_area_ha)
+                    * current_managed_area_ha
+                    / total_area_benchmark_ha
+                )
+                fallback_started = perf_counter()
+                (
+                    current_chunk_records,
+                    removed_area_ha,
+                    affected_row_count,
+                    touched_chunk_count,
+                ) = _apply_reconstructed_lu_aspatial_thlb_reduction(
+                    chunk_records=current_chunk_records,
+                    runtime_step_root=step_dir,
+                    target_removed_area_ha=target_removed_area_ha,
+                )
+                step_profile["overlay_seconds"] = perf_counter() - fallback_started
+                step_profile["write_seconds"] = step_profile["overlay_seconds"]
+                step_profile["lu_chunk_count"] = touched_chunk_count
+                updated_step["run_status"] = (
+                    "applied" if removed_area_ha > 0 else "applied_noop"
+                )
+                updated_step["spatial_application_mode"] = "aspatial_fallback"
+                updated_step["affected_stand_count"] = affected_row_count
+                updated_step["affected_area_ha"] = removed_area_ha
+                updated_step["lu_chunk_count"] = touched_chunk_count
+                updated_step["run_notes"] = [
+                    "Applied the TSR area target as a documented reconstructed-mode aspatial fallback because no exact spatial implementation is available for this recipe row.",
+                    "The fallback was applied across the current LU-wise reconstructed state without changing the reviewed TSA29 parent-step lane.",
+                ]
+        elif normalized_action == "aspatial_area_reduction":
+            benchmark_marginal_area_ha = updated_step.get("benchmark_marginal_area_ha")
+            if benchmark_marginal_area_ha is None or total_area_benchmark_ha is None:
+                updated_step["run_status"] = "unsupported"
+                updated_step["run_notes"] = [
+                    "Aspatial area reduction requires TSR benchmark marginal area and total TSA area benchmark."
+                ]
+            else:
+                current_area_ha = 0.0
+                for record in current_chunk_records:
+                    current_area_ha += float(
+                        _resolve_canonical_stand_area_sqm(
+                            _load_lu_chunk_frame(Path(record["chunk_path"]))
+                        ).sum()
+                        / 10000.0
+                    )
+                target_removed_area_ha = (
+                    float(benchmark_marginal_area_ha)
+                    * current_area_ha
+                    / total_area_benchmark_ha
+                )
+                fallback_started = perf_counter()
+                (
+                    current_chunk_records,
+                    removed_area_ha,
+                    affected_row_count,
+                    touched_chunk_count,
+                ) = _apply_reconstructed_lu_aspatial_area_reduction(
+                    chunk_records=current_chunk_records,
+                    runtime_step_root=step_dir,
+                    target_removed_area_ha=target_removed_area_ha,
+                )
+                step_profile["overlay_seconds"] = perf_counter() - fallback_started
+                step_profile["write_seconds"] = step_profile["overlay_seconds"]
+                step_profile["lu_chunk_count"] = touched_chunk_count
+                updated_step["run_status"] = (
+                    "applied" if removed_area_ha > 0 else "applied_noop"
+                )
+                updated_step["spatial_application_mode"] = "aspatial_fallback"
+                updated_step["affected_stand_count"] = affected_row_count
+                updated_step["affected_area_ha"] = removed_area_ha
+                updated_step["lu_chunk_count"] = touched_chunk_count
+                updated_step["run_notes"] = [
+                    "Applied the TSR area target as a documented reconstructed-mode aspatial fallback because no exact spatial implementation is available for this recipe row.",
+                    "This early-area deduction scales active LU-wise reconstructed stand-area fields instead of claiming exact spatial reproduction.",
+                ]
+        else:
+            updated_step["run_status"] = "unsupported"
+            updated_step["run_notes"] = [
+                f"Normalized action `{normalized_action or 'unknown'}` is not executable in v1."
+            ]
+
+        updated_step["page_number"] = page_number
+        applied_steps.append(updated_step)
+        outcome_counts.update([str(updated_step.get("run_status", "unsupported"))])
+        step_profile["run_status"] = str(updated_step.get("run_status", "unsupported"))
+        step_profile["spatial_application_mode"] = str(
+            updated_step.get("spatial_application_mode", "")
+        ).strip()
+        step_profile["candidate_row_count"] = int(
+            updated_step.get("candidate_row_count") or 0
+        )
+        step_profile["fragment_batch_count"] = int(
+            updated_step.get("fragment_batch_count") or 0
+        )
+        step_profile["total_seconds"] = perf_counter() - step_start
+        diagnostic_steps.append(step_profile)
+
+    merged_checkpoint, merge_seconds = _merge_reconstructed_lu_chunk_records(
+        current_chunk_records
+    )
+    diagnostic_steps.append(
+        {
+            "step_id": "__lu_merge__",
+            "label": "Final reconstructed LU merge",
+            "normalized_action": "lu_merge",
+            "merge_seconds": merge_seconds,
+            "lu_chunk_count": len(current_chunk_records),
+            "total_seconds": merge_seconds,
+        }
+    )
+    return (
+        merged_checkpoint,
+        applied_steps,
+        dict(sorted(outcome_counts.items())),
+        diagnostic_steps,
+    )
+
+
 def _execute_tsr_thlb_recipe_steps(
     *,
     recipe_steps: Sequence[dict[str, Any]],
     checkpoint: gpd.GeoDataFrame,
+    checkpoint_path: Path,
     execution_mode: str,
     instance_root: Path,
     source_entry_map: dict[str, dict[str, Any]],
@@ -11095,6 +11924,18 @@ def _execute_tsr_thlb_recipe_steps(
 ) -> tuple[
     gpd.GeoDataFrame, list[dict[str, Any]], dict[str, int], list[dict[str, Any]]
 ]:
+    if (
+        execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+        and not allow_stand_binary_fallback
+    ):
+        return _execute_tsr_thlb_recipe_steps_reconstructed_lu(
+            recipe_steps=recipe_steps,
+            checkpoint=checkpoint,
+            checkpoint_path=checkpoint_path,
+            instance_root=instance_root,
+            source_entry_map=source_entry_map,
+            total_area_benchmark_ha=total_area_benchmark_ha,
+        )
     outcome_counts: Counter[str] = Counter()
     applied_steps: list[dict[str, Any]] = []
     diagnostic_steps: list[dict[str, Any]] = []
@@ -11612,6 +12453,7 @@ def run_tsr_thlb_netdown_recipe(
         _execute_tsr_thlb_recipe_steps(
             recipe_steps=recipe.steps,
             checkpoint=checkpoint,
+            checkpoint_path=resolved_checkpoint_path,
             execution_mode=execution_mode,
             instance_root=instance_root,
             source_entry_map=source_entry_map,
@@ -11621,6 +12463,9 @@ def run_tsr_thlb_netdown_recipe(
     )
 
     final_managed_area_ha = _managed_area_ha(checkpoint)
+    reconstructed_timing_summary = _summarize_reconstructed_diagnostics(
+        _diagnostic_steps
+    )
     if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
         checkpoint["thlb_fact"] = checkpoint["thlb_fact"].fillna(0.0).clip(0.0, 1.0)
         checkpoint["thlb"] = checkpoint["thlb_fact"].round().astype(int)
@@ -11722,8 +12567,26 @@ def run_tsr_thlb_netdown_recipe(
                 == "stand_binary_majority"
             )
         ),
+        "lu_fragment_overlay_chunk_count": int(
+            sum(
+                int(step.get("lu_chunk_count", 0) or 0)
+                for step in applied_steps
+                if str(step.get("spatial_application_mode", "")).strip()
+                == "fragment_overlay"
+            )
+        ),
+        "lu_fragment_overlay_feature_count": int(
+            sum(
+                int(step.get("intersecting_exclusion_feature_count", 0) or 0)
+                for step in applied_steps
+                if str(step.get("spatial_application_mode", "")).strip()
+                == "fragment_overlay"
+            )
+        ),
         "step_count": len(applied_steps),
         "outcome_counts": dict(sorted(outcome_counts.items())),
+        "reconstructed_timing_summary": reconstructed_timing_summary,
+        "diagnostic_steps": _diagnostic_steps,
         "steps": applied_steps,
     }
     resolved_audit_path.parent.mkdir(parents=True, exist_ok=True)
@@ -11792,6 +12655,7 @@ def run_tsr_thlb_netdown_recipe(
             else None
         ),
         applied_steps=applied_steps,
+        diagnostic_steps=_diagnostic_steps,
         source_entry_map=source_entry_map,
         override_entries=override_entries,
     )
@@ -11892,6 +12756,7 @@ def run_tsr_thlb_reconstructed_diagnostic_slice(
         _execute_tsr_thlb_recipe_steps(
             recipe_steps=selected_steps,
             checkpoint=checkpoint,
+            checkpoint_path=resolved_checkpoint_path,
             execution_mode=TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
             instance_root=instance_root,
             source_entry_map=source_entry_map,

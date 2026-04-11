@@ -76,6 +76,38 @@ def _write_candidate_facts(tmp_path: Path) -> Path:
     return path
 
 
+def _write_landscape_unit_layer(
+    instance_root: Path,
+    *,
+    geometries: list,
+    names: list[str] | None = None,
+    numbers: list[str] | None = None,
+) -> Path:
+    resolved_names = names or [
+        f"LU_{index + 1:02d}" for index in range(len(geometries))
+    ]
+    resolved_numbers = numbers or [str(index + 1) for index in range(len(geometries))]
+    lu_path = (
+        instance_root
+        / "data"
+        / "downloads"
+        / "bcdc"
+        / "WHSE_LAND_USE_PLANNING_RMP_LANDSCAPE_UNIT_SVW"
+        / "WHSE_LAND_USE_PLANNING_RMP_LANDSCAPE_UNIT_SVW.gpkg"
+    )
+    lu_path.parent.mkdir(parents=True, exist_ok=True)
+    lu_layer = gpd.GeoDataFrame(
+        {
+            "LANDSCAPE_UNIT_NAME": resolved_names,
+            "LANDSCAPE_UNIT_NUMBER": resolved_numbers,
+        },
+        geometry=geometries,
+        crs="EPSG:3005",
+    )
+    lu_layer.to_file(lu_path, driver="GPKG")
+    return lu_path
+
+
 def _sample_dwds_order_result() -> bcdc_dwds.BcdcDwdsOrderResult:
     return bcdc_dwds.BcdcDwdsOrderResult(
         query="WHSE_FOREST_VEGETATION.GRY_PSP_STATUS_ACTIVE",
@@ -945,6 +977,23 @@ def test_thlb_status_report_prefers_parent_steps_when_present() -> None:
         generated_utc="2026-04-05T20:34:26Z",
         runtime_report_relative_path="runtime/logs/tsr/example.md",
         applied_steps=recipe.steps,
+        diagnostic_steps=[
+            {
+                "step_id": "thlb_parent_001_land_not_administered_compiled_01",
+                "label": "Land not administered by the Province",
+                "normalized_action": "exclude",
+                "spatial_application_mode": "blocked_exact_overlay",
+                "run_status": "blocked_missing_source",
+                "total_seconds": 12.5,
+                "source_load_seconds": 0.5,
+                "candidate_query_seconds": 2.0,
+                "overlay_seconds": 0.0,
+                "write_seconds": 0.0,
+                "merge_seconds": 0.0,
+                "lu_chunk_count": 0,
+                "intersecting_exclusion_feature_count": 0,
+            }
+        ],
         source_entry_map={
             "whse_f_own": {
                 "entry_id": "whse_f_own",
@@ -5008,6 +5057,21 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
         crs="EPSG:3005",
     )
     checkpoint1.to_feather(checkpoint1_path)
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 20, 20)],
+        names=["Test LU"],
+    )
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 2100, 2100)],
+        names=["Test LU"],
+    )
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 2100, 2100)],
+        names=["Test LU"],
+    )
 
     checkpoint7_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint7.feather"
     checkpoint7 = gpd.GeoDataFrame(
@@ -5598,6 +5662,25 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
         crs="EPSG:3005",
     )
     checkpoint1.to_feather(checkpoint1_path)
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 20, 20)],
+        names=["Test LU"],
+    )
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[
+            box(-10, -10, 15, 20),
+            box(15, -10, 35, 20),
+            box(35, -10, 55, 20),
+        ],
+        names=["West", "Central", "East"],
+    )
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 40, 20)],
+        names=["Test LU"],
+    )
 
     checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
     checkpoint8 = gpd.GeoDataFrame(
@@ -5787,6 +5870,11 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_applies_explicit_aspatia
         crs="EPSG:3005",
     )
     checkpoint1.to_feather(checkpoint1_path)
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 110, 110)],
+        names=["Test LU"],
+    )
 
     checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
     checkpoint8 = gpd.GeoDataFrame(
@@ -5987,6 +6075,11 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_executes_aspatial_area_f
         crs="EPSG:3005",
     )
     checkpoint1.to_feather(checkpoint1_path)
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 110, 110)],
+        names=["Test LU"],
+    )
 
     checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
     checkpoint8 = gpd.GeoDataFrame(
@@ -6109,6 +6202,11 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_can_auto_select_map_id_s
         crs="EPSG:3005",
     )
     checkpoint1.to_feather(checkpoint1_path)
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 2100, 2100)],
+        names=["Test LU"],
+    )
 
     checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
     checkpoint8 = gpd.GeoDataFrame(
@@ -6226,6 +6324,15 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_chunks_exact_overlay(
         crs="EPSG:3005",
     )
     checkpoint1.to_feather(checkpoint1_path)
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[
+            box(-10, -10, 15, 20),
+            box(15, -10, 35, 20),
+            box(35, -10, 55, 20),
+        ],
+        names=["West", "Central", "East"],
+    )
 
     checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
     checkpoint8 = gpd.GeoDataFrame(
@@ -6310,10 +6417,23 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_chunks_exact_overlay(
     assert audit_payload["allow_stand_binary_fallback"] is False
     assert audit_payload["fragment_overlay_step_count"] == 1
     assert audit_payload["stand_binary_fallback_step_count"] == 0
+    assert audit_payload["lu_fragment_overlay_chunk_count"] == 3
+    assert audit_payload["lu_fragment_overlay_feature_count"] == 3
+    timing_summary = audit_payload["reconstructed_timing_summary"]
+    assert timing_summary["total_runtime_seconds"] > 0.0
+    assert timing_summary["overlay_seconds"] >= 0.0
+    assert timing_summary["candidate_query_seconds"] >= 0.0
+    assert timing_summary["slowest_steps"]
+    assert timing_summary["slowest_steps"][0]["step_id"] == "thlb_step_002_ogma"
     run_step = audit_payload["steps"][1]
     assert run_step["spatial_application_mode"] == "fragment_overlay"
     assert run_step["candidate_row_count"] == 3
     assert run_step["fragment_batch_count"] == 3
+    assert run_step["lu_chunk_count"] == 3
+    assert run_step["intersecting_exclusion_feature_count"] == 3
+    status_text = result.status_report_path.read_text(encoding="utf-8")
+    assert "## Runtime Timing" in status_text
+    assert "### Slowest Steps" in status_text
 
     fragments = build_fragments_geodataframe(
         checkpoint_path=result.output_path,
@@ -6322,6 +6442,158 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_chunks_exact_overlay(
     )
     assert not fragments.empty
     assert set(fragments["IFM"].tolist()) == {"managed", "unmanaged"}
+
+
+def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_respects_lu_boundary_crossing(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    exclusion_path = (
+        instance_root / "data" / "downloads" / "bcdc" / "OGMA" / "OGMA.gpkg"
+    )
+    exclusion_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {"rule": ["ogma"]},
+        geometry=[box(5, 0, 15, 10)],
+        crs="EPSG:3005",
+    ).to_file(exclusion_path, driver="GPKG")
+
+    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint1 = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [100],
+            "FOR_MGMT_LAND_BASE_IND": ["Y"],
+            "BCLCS_LEVEL_2": ["T"],
+            "NON_PRODUCTIVE_CD": [None],
+            "BEC_ZONE_CODE": ["SBS"],
+            "PROJ_AGE_1": [80],
+            "BASAL_AREA": [20.0],
+            "LIVE_STAND_VOLUME_125": [50.0],
+            "MAP_ID": ["093J034"],
+            "POLYGON_AREA": [0.02],
+            "FEATURE_AREA_SQM": [200.0],
+            "FEATURE_LENGTH_M": [60.0],
+            "GEOMETRY_AREA": [0.02],
+            "Shape_Area": [200.0],
+            "Shape_Length": [60.0],
+        },
+        geometry=[box(0, 0, 20, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint1.to_feather(checkpoint1_path)
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(0, -5, 10, 15), box(10, -5, 20, 15)],
+        names=["West", "East"],
+    )
+
+    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    gpd.GeoDataFrame(
+        {"FEATURE_ID": [1], "thlb_raw": [100.0]},
+        geometry=[box(0, 0, 20, 10)],
+        crs="EPSG:3005",
+    ).to_feather(checkpoint8_path)
+
+    source_recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    source_recipe_payload["recipe_contract"]["status"] = "run"
+    source_recipe_payload["entries"] = [
+        {
+            "entry_id": "ogma",
+            "label": "OGMA",
+            "recommended_query": "WHSE_LAND_USE_PLANNING.RMP_OGMA_LEGAL_CURRENT_SVW",
+            "acquisition_strategy": "wfs_fetch",
+            "artifact_path": "data/downloads/bcdc/OGMA/OGMA.gpkg",
+            "run_status": "fetched",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            source_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["recipe_contract"]["status"] = "built"
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "thlb_step_001_land_base",
+            "order_index": 1,
+            "step_kind": "netdown_rule",
+            "label": "Timber harvesting land base",
+            "normalized_action": "use_land_base",
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 24,
+        },
+        {
+            "step_id": "thlb_step_002_ogma",
+            "order_index": 2,
+            "step_kind": "netdown_rule",
+            "label": "OGMA",
+            "normalized_action": "exclude",
+            "linked_source_entry_ids": ["ogma"],
+            "step_status": "ready",
+            "page_number": 48,
+        },
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    result = tsr_recipes.run_tsr_thlb_netdown_recipe(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        execution_mode=tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+    )
+
+    assert result.baseline_managed_area_ha == pytest.approx(0.02)
+    assert result.final_managed_area_ha == pytest.approx(0.01)
+    output = gpd.read_feather(result.output_path)
+    assert output["FEATURE_ID"].is_unique
+    assert set(output["SOURCE_FEATURE_ID"].tolist()) == {100}
+    assert output.loc[
+        output["thlb_fact"] > 0.0
+    ].geometry.area.sum() / 10000.0 == pytest.approx(0.01)
+    audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
+    run_step = audit_payload["steps"][1]
+    assert run_step["spatial_application_mode"] == "fragment_overlay"
+    assert run_step["lu_chunk_count"] == 2
+    assert run_step["intersecting_exclusion_feature_count"] == 1
+    assert (
+        audit_payload["reconstructed_timing_summary"]["slowest_steps"][0]["step_id"]
+        == "thlb_step_002_ogma"
+    )
 
 
 def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_can_opt_into_stand_binary_fallback(
@@ -6531,6 +6803,11 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_blocks_failed_exact_over
         crs="EPSG:3005",
     )
     checkpoint1.to_feather(checkpoint1_path)
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 20, 20)],
+        names=["Test LU"],
+    )
 
     checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
     checkpoint8 = gpd.GeoDataFrame(
@@ -6679,6 +6956,11 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_can_resume_prefix_output(
         crs="EPSG:3005",
     )
     checkpoint1.to_feather(checkpoint1_path)
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 20, 20)],
+        names=["Test LU"],
+    )
 
     checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
     checkpoint8 = gpd.GeoDataFrame(

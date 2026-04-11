@@ -13518,3 +13518,39 @@
     - the live reconstructed TSA29 status/audit surfaces now show the
       fallback bucket explicitly without presenting it as exact spatial
       reproduction.
+- 2026-04-11: Closed issue `#131` by making reconstructed THLB run LU-wise
+  instead of trying to cut the whole TSA at once.
+  - Replaced the old reconstructed full-area row-batch exact overlay path
+    with cached LU-wise decomposition over checkpoint1/AFLB in:
+    - `src/femic/tsr_catalog/recipes.py`
+  - Carried LU chunk state forward across reconstructed steps so only touched
+    chunks are re-cut for each spatial exclusion.
+  - Kept explicit reconstructed aspatial fallback from `#132` working in the
+    same lane instead of regressing back to unsupported rows.
+  - Added reconstructed timing summaries to the audit/status surfaces so the
+    runner now reports:
+    - total LU-wise runtime;
+    - source-load / candidate-query / overlay / write / merge timing buckets;
+    - and the slowest reconstructed steps in plain language.
+  - Added LU-wise correctness/regression coverage in:
+    - `tests/test_tsr_recipes.py`
+  - TSA29 reconstructed proving results:
+    - smoke subset now completes cleanly with LU-wise exact overlay and no
+      silent stand-binary fallback;
+    - the real full-TSA command
+      `femic tsr thlb-netdown-run --instance-root external/femic-tsa29-instance --execution-mode reconstructed`
+      now finishes successfully;
+    - governing full-TSA result:
+      - runtime: about `96.09 min`
+      - `fragment_overlay_step_count = 17`
+      - `aspatial_fallback_step_count = 2`
+      - `blocked_exact_overlay_step_count = 0`
+      - `stand_binary_fallback_step_count = 0`
+      - `lu_fragment_overlay_chunk_count = 1025`
+      - `lu_fragment_overlay_feature_count = 108212`
+      - `final_managed_area_ha = 903685.409`
+  - Plain-language outcome:
+    - the strict geometry-first reconstructed THLB lane is now operationally
+      usable on full TSA29;
+    - it is still slower than the reviewed TSA29 bridge lane, but it no
+      longer dies on the old step-002 runtime wall.

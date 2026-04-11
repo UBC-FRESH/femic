@@ -124,6 +124,9 @@ Important boundary:
 
 - the hybrid bridge still exists as a separate executable lane;
 - reconstructed mode is fragment-first by default;
+- reconstructed exact spatial work is now LU-wise by default, so FEMIC cuts one
+  Landscape Unit chunk at a time instead of trying to cut the whole TSA in one
+  giant exact-overlay job;
 - reconstructed mode now supports exact spatial overlay plus explicit
   recipe-driven aspatial fallback where the reviewed recipe already carries a
   TSR target-area deduction;

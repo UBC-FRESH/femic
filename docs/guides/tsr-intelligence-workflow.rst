@@ -485,6 +485,10 @@ If a user intentionally enables the non-default stand-binary debug fallback,
 FEMIC must say so explicitly in the audit/status surface rather than presenting
 that output as normal fragment-first execution.
 
+The exact reconstructed spatial path is now LU-wise by default. In plain
+language, FEMIC cuts one Landscape Unit chunk at a time instead of trying to
+cut the whole TSA in one giant exact-overlay workload.
+
 You should not need to hand-scrub ``metadata/tsr/tsa_candidate_facts.json`` for
 this workflow. The intended review surface is the CSV produced by
 ``femic tsr facts-report``.

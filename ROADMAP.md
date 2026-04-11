@@ -8591,7 +8591,10 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P52.6b4 Improve DWDS follow-up retrieval and artifact materialization after order submission (`#140`).
   - [ ] P52.6b5 Run full-TSA29 THLB step-by-step validation and reconcile the recipe against TSR benchmarks (`#141`).
   - [ ] P52.6b6 Benchmark LU-wise local-process parallel THLB execution for TSA-scale netdown (`#143`).
-  - [ ] P52.6c Execute fragment-first TSR THLB reconstruction from reviewed recipe steps (`#131`).
+- [x] P52.6c Execute fragment-first TSR THLB reconstruction from reviewed recipe steps (`#131`).
+  - [x] P52.6c1 Replace reconstructed full-area row-batch exact overlay with LU-wise exact decomposition over cached checkpoint1 partitions.
+  - [x] P52.6c2 Carry reconstructed LU chunk state forward across steps so exact spatial exclusions update only touched LU chunks instead of rebuilding the full TSA each step.
+  - [x] P52.6c3 Prove the production reconstructed run finishes on full TSA29 with explicit exact-overlay vs aspatial-fallback reporting and no silent stand-binary fallback.
   - [x] P52.6d Add explicit end-of-workflow aspatial fallback for blocked TSR target-area steps (`#132`).
     - [x] P52.6d1 Extend reconstructed runner step selection/execution to include explicit `aspatial_reduction` and `aspatial_area_reduction` rows.
     - [x] P52.6d2 Distinguish exact spatial overlay, explicit aspatial fallback, blocked exact overlay, and no-deduction rows in reconstructed audit/status outputs.
@@ -8611,6 +8614,42 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - [x] P52.6h3 Prove the warm-start output on TSA29 and link the new artifact from the existing THLB review surfaces without making it canonical logic.
 
 ## Detailed Next Steps Notes
+
+- 2026-04-11 (`#131` completed: LU-wise reconstructed THLB runtime is now operational on full TSA29):
+  - Completion summary:
+    - replaced the old reconstructed full-area row-batch exact overlay path with cached LU-wise decomposition over checkpoint1/AFLB;
+    - carried LU chunk state forward through reconstructed steps so only touched chunks are re-cut;
+    - kept explicit reconstructed aspatial fallback from `#132` working in the same lane;
+    - added reconstructed timing summaries so the live audit/status surfaces show total runtime, timing buckets, and the slowest steps in plain language; and
+    - completed the real production command `femic tsr thlb-netdown-run --execution-mode reconstructed` on full TSA29 without silent stand-binary fallback.
+  - Governing full-TSA result:
+    - runtime finished in about `96.09 min`;
+    - exact fragment-overlay steps: `17`;
+    - explicit aspatial fallback steps: `2`;
+    - blocked exact-overlay steps: `0`;
+    - debug stand-binary fallback steps: `0`;
+    - LU-wise exact-overlay chunks touched: `1025`; and
+    - final reconstructed THLB managed area: `903685.409 ha`.
+  - Important plain-language read:
+    - the strict geometry-first reconstructed lane is now operationally usable;
+    - it is still slower than the reviewed TSA29 bridge lane, but it no longer dies on the old step-002 wall; and
+    - the next performance question, if it ever matters again, is optional LU-bundled parallelization rather than basic viability.
+
+- 2026-04-11 (Issue `#131` active again: LU-wise exact decomposition for reconstructed THLB runtime closure):
+  - Objective:
+    - keep the reviewed TSA29 parent-step lane untouched;
+    - make the strict reconstructed lane finish in practical time by cutting the land base one Landscape Unit at a time instead of trying to cut the whole TSA at once; and
+    - close `#131` with a real full-TSA reconstructed run rather than leaving it parked on timeout evidence.
+  - Implementation direction:
+    - reuse the existing LU partition/cache helpers already proven in the parent-step lane;
+    - initialize checkpoint1/AFLB once, materialize cached LU chunk files once, and then carry those chunk files forward as the reconstructed step state;
+    - for each spatial `exclude` step, load only the LU chunks touched by the exclusion geometry and run exact overlay inside those chunks instead of building one full-TSA candidate set;
+    - preserve exactness by clipping per LU, keeping `SOURCE_FEATURE_ID` lineage, and regenerating global `FEATURE_ID` values only when merged output is written;
+    - keep reconstructed explicit aspatial fallback from `#132` working in the same lane without auto-converting blocked spatial rows into fallback.
+  - Acceptance target:
+    - reconstructed tests prove LU-wise exact overlay returns the same binary THLB result as the current exact row-batch path on controlled inputs;
+    - TSA29 reconstructed smoke still completes with exact overlay and no silent stand-binary fallback; and
+    - the real full-TSA reconstructed run completes with practical wall time, clear audit/status reporting, and enough evidence to close `#131`.
 
 - 2026-04-11 (Issue `#132` active: add explicit aspatial fallback for blocked THLB target-area steps in reconstructed mode only):
   - Objective:
