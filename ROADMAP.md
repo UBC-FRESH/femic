@@ -8752,6 +8752,12 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Reassess the whole-ladder read only after working through the final parent step again; that is the point where we should answer:
     - is strict THLB now close enough overall, or
     - still fundamentally “fix me” status?
+- 2026-04-11 (`#128` strict-lane adjudication baseline artifact checkpoint):
+  - The first full successful LU-wise strict-reconstructed TSA29 state should be preserved as a restart point before step-by-step adjudication begins.
+  - Governing snapshot:
+    - `external/femic-tsa29-instance/runtime/logs/tsr/reconstructed_lu/ria_vri_vclr1p_checkpoint1.20260411T203327Z`
+  - Rationale:
+    - without a tracked checkpoint of the per-step/per-LU feather outputs, a bad mid-adjudication experiment could force another ~96 minute full strict rerun just to get back to the start of the game.
 
 - 2026-04-11 (`#131` completed: LU-wise reconstructed THLB runtime is now operational on full TSA29):
   - Completion summary:

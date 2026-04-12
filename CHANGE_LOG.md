@@ -13681,3 +13681,11 @@
       - defer low-priority seams;
     - only answer the whole-ladder “close enough or still broken?” question
       after working through the final parent step again.
+- 2026-04-11: Marked the first full successful LU-wise strict TSA29 snapshot
+  as the adjudication baseline restart point.
+  - Governing runtime artifact snapshot:
+    - `external/femic-tsa29-instance/runtime/logs/tsr/reconstructed_lu/ria_vri_vclr1p_checkpoint1.20260411T203327Z`
+  - Purpose:
+    - preserve the per-step/per-LU strict-lane feather state so the upcoming
+      step-by-step adjudication pass can restart from the top without forcing
+      another ~96 minute full reconstructed rerun if an experiment goes bad.
