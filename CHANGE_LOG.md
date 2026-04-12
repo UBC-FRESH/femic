@@ -13906,3 +13906,13 @@
 - Opened follow-on issue `#150` for THLB overlay GIGO protection and smoke-vs-
   production artifact separation after confirming that a truncated reused
   `F_OWN` artifact had been accepted as production input for TSA29 step 2.
+- Landed the first bounded `#150` guardrail fix in the source-layer reuse path.
+  - FEMIC now rejects existing overlay artifacts during `run_tsr_source_layers_recipe(...)`
+    when they are smoke-scoped for a production request, obviously clipped
+    relative to the requested AOI, or wildly oversized for that AOI.
+  - Instead of reusing those stale artifacts, FEMIC now refetches a clean
+    production-scope copy.
+  - Added regressions covering:
+    - valid production reuse still succeeds;
+    - smoke artifact reuse is rejected and refetched; and
+    - clipped production-path artifact reuse is rejected and refetched.

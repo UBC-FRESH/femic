@@ -16043,3 +16043,15 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Important boundary:
     - the command still does not auto-commit or auto-publish the public-data
       submodule.
+- 2026-04-12: Landed the first bounded `#150` GIGO guardrail fix for reused
+  TSR overlay artifacts.
+  - `run_tsr_source_layers_recipe(...)` no longer blindly reuses an existing
+    WFS/DWDS artifact when:
+    - the artifact lives under the `data/downloads/bcdc/smoke/` reuse well for
+      a production/full-TSA request; or
+    - the artifact bbox is obviously clipped relative to the requested AOI; or
+    - the artifact bbox wildly exceeds the requested AOI.
+  - In those cases FEMIC now rejects the stale artifact and refetches a clean
+    production-scope copy instead of pushing GIGO into THLB execution.
+  - The original load-time `blocked_extent_mismatch` guard remains in place as
+    a second line of defense inside THLB step execution.

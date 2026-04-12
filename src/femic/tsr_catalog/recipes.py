@@ -179,6 +179,8 @@ _EXTENT_AREA_BLOCK_THRESHOLD = 0.25
 _SOURCE_ARTIFACT_SCOPE_PRODUCTION = "production_full_tsa"
 _SOURCE_ARTIFACT_SCOPE_SMOKE = "smoke_subset"
 _SOURCE_ARTIFACT_SCOPE_AOI_UNKNOWN = "aoi_scoped_unknown"
+_EXTENT_COVERAGE_EXCESS_BLOCK_THRESHOLD = 1.5
+_EXTENT_AREA_EXCESS_BLOCK_THRESHOLD = 2.5
 _STEP14_CALIBRATED_NON_STEEP_THRESHOLD_M3_PER_HA = 67.1
 TSR_EFFECTIVE_AREA_SQM_COLUMN = "FEMIC_EFFECTIVE_AREA_SQM"
 TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL = "serial"
@@ -1411,6 +1413,21 @@ def _artifact_download_root_for_scope(
     if scope in {_SOURCE_ARTIFACT_SCOPE_SMOKE, _SOURCE_ARTIFACT_SCOPE_AOI_UNKNOWN}:
         return base_root / "smoke"
     return base_root
+
+
+def _infer_artifact_scope_from_path(
+    *,
+    instance_root: Path,
+    artifact_path: Path,
+) -> str | None:
+    base_root = (instance_root / "data" / "downloads" / "bcdc").resolve()
+    try:
+        relative = artifact_path.resolve().relative_to(base_root)
+    except ValueError:
+        return None
+    if relative.parts and relative.parts[0].casefold() == "smoke":
+        return _SOURCE_ARTIFACT_SCOPE_SMOKE
+    return _SOURCE_ARTIFACT_SCOPE_PRODUCTION
 
 
 def _probe_vector_artifact_bounds(
@@ -5140,10 +5157,31 @@ def run_tsr_source_layers_recipe(
                     updated["artifact_extent_bbox_epsg3005"] = [
                         float(value) for value in artifact_bounds
                     ]
-            updated["run_status"] = "reused"
-            outcome_counts.update(["reused"])
-            updated_entries.append(updated)
-            continue
+                reuse_rejected_reason, effective_scope = (
+                    _evaluate_existing_source_artifact_reuse(
+                        instance_root=instance_root,
+                        source_entry=updated,
+                        artifact_path=resolved_artifact_path,
+                        artifact_bbox_epsg3005=artifact_bounds,
+                        target_bbox_epsg3005=bbox_epsg3005
+                        if strategy in {"wfs_fetch", "dwds_order"}
+                        else None,
+                        requested_scope=artifact_scope,
+                    )
+                )
+                if effective_scope is not None and strategy in {
+                    "wfs_fetch",
+                    "dwds_order",
+                }:
+                    updated["rejected_artifact_scope"] = effective_scope
+                if reuse_rejected_reason is None:
+                    updated["run_status"] = "reused"
+                    outcome_counts.update(["reused"])
+                    updated_entries.append(updated)
+                    continue
+                updated["rejected_artifact_path"] = artifact_path
+                updated["rejected_artifact_reason"] = reuse_rejected_reason
+                updated["artifact_path"] = ""
 
         if strategy == "manual_review_required":
             updated["run_status"] = "manual_review_required"
@@ -5171,6 +5209,8 @@ def run_tsr_source_layers_recipe(
                     instance_root=instance_root,
                     artifact_path=fetch_result.saved_path,
                 )
+                if artifact_scope is not None:
+                    updated["artifact_scope"] = artifact_scope
                 updated["feature_count"] = fetch_result.feature_count
                 updated["failure_message"] = ""
                 updated["run_status"] = "fetched"
@@ -8306,7 +8346,9 @@ def _approval_scope_is_smoke_only(approval_scope: str) -> bool:
     return any(fragment in normalized for fragment in smoke_fragments)
 
 
-def _thlb_parent_step_preserves_approved_review_logic(parent_step: dict[str, Any]) -> bool:
+def _thlb_parent_step_preserves_approved_review_logic(
+    parent_step: dict[str, Any],
+) -> bool:
     if not (
         bool(parent_step.get("approved", False))
         or _infer_thlb_parent_step_ratchet_state(parent_step) == "approved"
@@ -12082,18 +12124,14 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
                 )
             else:
                 direction = (
-                    "below"
-                    if strict_vs_tsr_cumulative_delta_ha < 0.0
-                    else "above"
+                    "below" if strict_vs_tsr_cumulative_delta_ha < 0.0 else "above"
                 )
                 practical_meaning = (
                     "This is a milestone row. The current strict cumulative area "
                     f"checkpoint is materially {direction} the TSR cumulative target, "
                     "so inspect the prior deduction steps rather than trying to fix the milestone itself."
                 )
-            recommended_next_move = (
-                "Reference row only; inspect cumulative strict area carried into this checkpoint and fix prior deduction steps if needed."
-            )
+            recommended_next_move = "Reference row only; inspect cumulative strict area carried into this checkpoint and fix prior deduction steps if needed."
         adjudication_action = _comparison_queue_action(
             tsr_fit_class=tsr_fit_class,
             problem_ownership=problem_ownership,
@@ -12529,9 +12567,7 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
                 item.get("strict_vs_tsr_cumulative_delta_ha")
             )
             cumulative_delta_text = (
-                f"{cumulative_delta:.3f} ha"
-                if cumulative_delta is not None
-                else "n/a"
+                f"{cumulative_delta:.3f} ha" if cumulative_delta is not None else "n/a"
             )
             lines.append(
                 "- "
@@ -13146,7 +13182,20 @@ def _evaluate_source_extent_mismatch(
         or height_coverage >= _EXTENT_COVERAGE_BLOCK_THRESHOLD
         or area_coverage >= _EXTENT_AREA_BLOCK_THRESHOLD
     ):
-        return None
+        if (
+            width_coverage <= _EXTENT_COVERAGE_EXCESS_BLOCK_THRESHOLD
+            and height_coverage <= _EXTENT_COVERAGE_EXCESS_BLOCK_THRESHOLD
+            and area_coverage <= _EXTENT_AREA_EXCESS_BLOCK_THRESHOLD
+        ):
+            return None
+        entry_id = str(source_entry.get("entry_id", "")).strip() or "<unknown>"
+        scope_label = scope or "aoi-scoped/unknown"
+        return (
+            f"Source artifact `{entry_id}` appears far larger than the current checkpoint "
+            f"extent (bbox coverage: width {width_coverage:.1%}, height {height_coverage:.1%}, "
+            f"area {area_coverage:.1%}; scope `{scope_label}`). Do not reuse broad or wrong-scope "
+            "overlays for production runs."
+        )
     entry_id = str(source_entry.get("entry_id", "")).strip() or "<unknown>"
     scope_label = scope or "aoi-scoped/unknown"
     return (
@@ -13155,6 +13204,43 @@ def _evaluate_source_extent_mismatch(
         f"area {area_coverage:.1%}; scope `{scope_label}`). Do not reuse smoke/AOI-scoped "
         "overlays for full-TSA production runs."
     )
+
+
+def _evaluate_existing_source_artifact_reuse(
+    *,
+    instance_root: Path,
+    source_entry: dict[str, Any],
+    artifact_path: Path,
+    artifact_bbox_epsg3005: tuple[float, float, float, float] | None,
+    target_bbox_epsg3005: tuple[float, float, float, float] | None,
+    requested_scope: str | None,
+) -> tuple[str | None, str | None]:
+    path_scope = _infer_artifact_scope_from_path(
+        instance_root=instance_root,
+        artifact_path=artifact_path,
+    )
+    effective_scope = (
+        path_scope or str(source_entry.get("artifact_scope", "")).strip() or None
+    )
+    if requested_scope == _SOURCE_ARTIFACT_SCOPE_PRODUCTION and effective_scope in {
+        _SOURCE_ARTIFACT_SCOPE_SMOKE,
+        _SOURCE_ARTIFACT_SCOPE_AOI_UNKNOWN,
+    }:
+        entry_id = str(source_entry.get("entry_id", "")).strip() or "<unknown>"
+        return (
+            (
+                f"Existing source artifact `{entry_id}` is marked `{effective_scope}` and cannot "
+                "be reused for a production/full-TSA run. Refetch a production-scope artifact "
+                "instead of reusing smoke/subset data."
+            ),
+            effective_scope,
+        )
+    extent_mismatch_note = _evaluate_source_extent_mismatch(
+        source_entry={**source_entry, "artifact_scope": effective_scope or ""},
+        artifact_bbox_epsg3005=artifact_bbox_epsg3005,
+        target_bbox_epsg3005=target_bbox_epsg3005,
+    )
+    return extent_mismatch_note, effective_scope
 
 
 def _load_exclusion_geometries(
@@ -13408,7 +13494,9 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                     for item in step.get("checkpoint_attribute_filters", ())
                     if isinstance(item, dict)
                 ]
-                mode = str(step.get("checkpoint_attribute_mode", "any")).strip() or "any"
+                mode = (
+                    str(step.get("checkpoint_attribute_mode", "any")).strip() or "any"
+                )
                 overlay_started = perf_counter()
                 (
                     current_chunk_records,
@@ -13520,7 +13608,9 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                             ]
                         else:
                             updated_step["run_status"] = "applied"
-                            updated_step["spatial_application_mode"] = "fragment_overlay"
+                            updated_step["spatial_application_mode"] = (
+                                "fragment_overlay"
+                            )
                             updated_step["candidate_row_count"] = int(
                                 lu_step_profile["candidate_row_count"]
                             )
@@ -13545,7 +13635,9 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                             ]
                     except Exception as exc:
                         updated_step["run_status"] = "blocked_exact_overlay"
-                        updated_step["spatial_application_mode"] = "blocked_exact_overlay"
+                        updated_step["spatial_application_mode"] = (
+                            "blocked_exact_overlay"
+                        )
                         updated_step["run_notes"] = [
                             "Exact fragment-overlay execution was required for reconstructed mode, so this step was blocked instead of silently approximating it.",
                             f"Blocking reason: {exc}",
@@ -13772,7 +13864,9 @@ def _execute_tsr_thlb_recipe_steps(
                     for item in step.get("checkpoint_attribute_filters", ())
                     if isinstance(item, dict)
                 ]
-                mode = str(step.get("checkpoint_attribute_mode", "any")).strip() or "any"
+                mode = (
+                    str(step.get("checkpoint_attribute_mode", "any")).strip() or "any"
+                )
                 overlay_start = perf_counter()
                 checkpoint, removed_area_ha = _apply_checkpoint_attribute_filters(
                     checkpoint,
@@ -13992,13 +14086,17 @@ def _execute_tsr_thlb_recipe_steps(
                             ]
                         else:
                             ratios = (
-                                checkpoint["_row_id"].map(exclusion_fraction).fillna(0.0)
+                                checkpoint["_row_id"]
+                                .map(exclusion_fraction)
+                                .fillna(0.0)
                             )
                             checkpoint["thlb_fact"] = (
                                 checkpoint["thlb_fact"] - ratios
                             ).clip(lower=0.0, upper=1.0)
                             updated_step["run_status"] = "applied"
-                            updated_step["affected_stand_count"] = int((ratios > 0).sum())
+                            updated_step["affected_stand_count"] = int(
+                                (ratios > 0).sum()
+                            )
                             updated_step["affected_area_ha"] = float(
                                 (
                                     checkpoint["_stand_area_sqm"]

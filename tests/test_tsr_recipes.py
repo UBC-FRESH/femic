@@ -1930,6 +1930,212 @@ def test_run_tsr_source_layers_recipe_reuses_existing_artifact(
     assert recipe.entries[0]["artifact_extent_bbox_epsg3005"] == [1.0, 2.0, 3.0, 4.0]
 
 
+def test_run_tsr_source_layers_recipe_rejects_smoke_artifact_reuse_for_production(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+    smoke_path = (
+        instance_root
+        / "data"
+        / "downloads"
+        / "bcdc"
+        / "smoke"
+        / "F_OWN"
+        / "F_OWN_smoke.gpkg"
+    )
+    smoke_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {"OWNERSHIP_DESCRIPTION": ["Private"]},
+        geometry=[box(100.0, 100.0, 150.0, 150.0)],
+        crs="EPSG:3005",
+    ).to_file(smoke_path, driver="GPKG")
+    overlay_path = instance_root / "config" / "tsr" / "overlay.yaml"
+    overlay_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            {"bcdc_acquisition_review": {"bbox_epsg3005": [0.0, 0.0, 1000.0, 1000.0]}},
+            sort_keys=False,
+            allow_unicode=False,
+        ),
+        encoding="utf-8",
+    )
+    recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    recipe_payload["recipe_contract"]["status"] = "built"
+    recipe_payload["entries"] = [
+        {
+            "entry_id": "whse_f_own",
+            "label": "WHSE_FOREST_VEGETATION.F_OWN",
+            "recommended_query": "WHSE_FOREST_VEGETATION.F_OWN",
+            "current_public_status": "exact_hit",
+            "acquisition_strategy": "wfs_fetch",
+            "artifact_scope": "production_full_tsa",
+            "artifact_path": "data/downloads/bcdc/smoke/F_OWN/F_OWN_smoke.gpkg",
+            "override_kind": "",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    def _fake_fetch(*args, destination_root: Path, **kwargs):
+        saved_path = destination_root / "F_OWN" / "F_OWN.gpkg"
+        saved_path.parent.mkdir(parents=True, exist_ok=True)
+        gpd.GeoDataFrame(
+            {"OWNERSHIP_DESCRIPTION": ["Private"]},
+            geometry=[box(0.0, 0.0, 1000.0, 1000.0)],
+            crs="EPSG:3005",
+        ).to_file(saved_path, driver="GPKG")
+        return type(
+            "FetchResult",
+            (),
+            {"saved_path": saved_path, "feature_count": 1},
+        )()
+
+    monkeypatch.setattr(tsr_recipes, "fetch_bcdc_wfs_data", _fake_fetch)
+
+    result = tsr_catalog.run_tsr_source_layers_recipe(
+        recipe_path=init_result.source_layers_recipe_path,
+        bbox_epsg3005=(0.0, 0.0, 1000.0, 1000.0),
+    )
+
+    assert result.outcome_counts["fetched"] == 1
+    recipe = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    )
+    entry = recipe.entries[0]
+    assert entry["run_status"] == "fetched"
+    assert entry["artifact_scope"] == "production_full_tsa"
+    assert entry["artifact_path"] == "data/downloads/bcdc/F_OWN/F_OWN.gpkg"
+    assert "smoke" in str(entry["rejected_artifact_path"]).lower()
+    assert "cannot be reused" in entry["rejected_artifact_reason"]
+
+
+def test_run_tsr_source_layers_recipe_rejects_clipped_artifact_reuse_for_production(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+    artifact_path = (
+        instance_root / "data" / "downloads" / "bcdc" / "F_OWN" / "F_OWN.gpkg"
+    )
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {"OWNERSHIP_DESCRIPTION": ["Private"]},
+        geometry=[box(100.0, 100.0, 150.0, 150.0)],
+        crs="EPSG:3005",
+    ).to_file(artifact_path, driver="GPKG")
+    overlay_path = instance_root / "config" / "tsr" / "overlay.yaml"
+    overlay_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            {"bcdc_acquisition_review": {"bbox_epsg3005": [0.0, 0.0, 1000.0, 1000.0]}},
+            sort_keys=False,
+            allow_unicode=False,
+        ),
+        encoding="utf-8",
+    )
+    recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    recipe_payload["recipe_contract"]["status"] = "built"
+    recipe_payload["entries"] = [
+        {
+            "entry_id": "whse_f_own",
+            "label": "WHSE_FOREST_VEGETATION.F_OWN",
+            "recommended_query": "WHSE_FOREST_VEGETATION.F_OWN",
+            "current_public_status": "exact_hit",
+            "acquisition_strategy": "wfs_fetch",
+            "artifact_scope": "production_full_tsa",
+            "artifact_path": "data/downloads/bcdc/F_OWN/F_OWN.gpkg",
+            "override_kind": "",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    def _fake_fetch(*args, destination_root: Path, **kwargs):
+        saved_path = destination_root / "F_OWN" / "F_OWN.gpkg"
+        saved_path.parent.mkdir(parents=True, exist_ok=True)
+        gpd.GeoDataFrame(
+            {"OWNERSHIP_DESCRIPTION": ["Private"]},
+            geometry=[box(0.0, 0.0, 1000.0, 1000.0)],
+            crs="EPSG:3005",
+        ).to_file(saved_path, driver="GPKG")
+        return type(
+            "FetchResult",
+            (),
+            {"saved_path": saved_path, "feature_count": 1},
+        )()
+
+    monkeypatch.setattr(tsr_recipes, "fetch_bcdc_wfs_data", _fake_fetch)
+
+    result = tsr_catalog.run_tsr_source_layers_recipe(
+        recipe_path=init_result.source_layers_recipe_path,
+        bbox_epsg3005=(0.0, 0.0, 1000.0, 1000.0),
+    )
+
+    assert result.outcome_counts["fetched"] == 1
+    recipe = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    )
+    entry = recipe.entries[0]
+    assert entry["run_status"] == "fetched"
+    assert entry["artifact_path"] == "data/downloads/bcdc/F_OWN/F_OWN.gpkg"
+    assert "appears clipped" in entry["rejected_artifact_reason"]
+
+
 def test_run_tsr_source_layers_recipe_dwds_order_persists_manifest_path(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -7675,7 +7881,9 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_executes_aspatial_area_redu
 
     audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
     aspatial_step = next(
-        step for step in audit_payload["steps"] if step["step_id"] == "thlb_step_004_roads"
+        step
+        for step in audit_payload["steps"]
+        if step["step_id"] == "thlb_step_004_roads"
     )
     assert aspatial_step["run_status"] == "applied"
     assert aspatial_step["spatial_application_mode"] == "aspatial_fallback"
@@ -7818,9 +8026,7 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_lu_mode_respects_source_att
         / "thlb_netdown.recipe.yaml",
     )
 
-    source_path = (
-        instance_root / "data" / "downloads" / "bcdc" / "F_OWN" / "F_OWN.gpkg"
-    )
+    source_path = instance_root / "data" / "downloads" / "bcdc" / "F_OWN" / "F_OWN.gpkg"
     source_path.parent.mkdir(parents=True, exist_ok=True)
     gpd.GeoDataFrame(
         {
