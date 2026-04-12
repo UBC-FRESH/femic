@@ -11120,6 +11120,26 @@ def _resolve_reviewed_thlb_remaining_area_ha(
 ) -> float | None:
     candidates: list[tuple[int, float]] = []
     for parent_step in recipe.parent_steps:
+        normalized_action = str(parent_step.get("normalized_action", "")).strip()
+        compiled_logic = [
+            dict(item)
+            for item in parent_step.get("compiled_logic", ())
+            if isinstance(item, dict)
+        ]
+        compiled_operations = {
+            str(item.get("compiled_operation_type", item.get("operation_type", "")))
+            .strip()
+            .casefold()
+            for item in compiled_logic
+            if str(
+                item.get("compiled_operation_type", item.get("operation_type", ""))
+            ).strip()
+        }
+        if (
+            normalized_action == "no_deduction"
+            or "no_deduction" in compiled_operations
+        ):
+            continue
         remaining_area_ha = _normalize_float_or_none(
             parent_step.get("last_remaining_area_ha")
         )

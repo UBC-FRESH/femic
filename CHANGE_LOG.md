@@ -13608,3 +13608,18 @@
     - `pytest`
     - `sphinx -b html docs _build/html -W`
     - `pre-commit run --all-files`
+- 2026-04-11: Cleaned stale TSA29 reviewed step-23 tail-step residue after
+  the first `#128` comparison pass.
+  - The accepted reviewed closeout treats step 23 (`Future roads`) as an
+    explicit `0 ha` no-deduction tail step after step 21.
+  - Cleaned the TSA29 reviewed recipe surface so step 23 no longer carries the
+    stale experimental run fields that claimed:
+    - `56,170.296 ha` removed
+    - `1,592,878.936 ha` remaining
+  - Hardened the comparison helper so reviewed final THLB ignores
+    `no_deduction` tail rows when resolving the authoritative reviewed
+    cumulative state.
+  - Regenerated the live comparison artifact, which now reports the correct
+    reviewed closeout values:
+    - reviewed bridge THLB: `1,649,049.232 ha`
+    - reviewed vs TSR delta: `-11,003.768 ha`

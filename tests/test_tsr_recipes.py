@@ -1404,6 +1404,63 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
     assert "reviewed bridge" in markdown.casefold()
 
 
+def test_resolve_reviewed_thlb_remaining_area_ignores_tail_no_deduction_steps() -> (
+    None
+):
+    recipe = tsr_recipes.TsrThlbNetdownRecipeRecord(
+        schema_version=1,
+        recipe_kind="thlb_netdown",
+        tsa=tsr_catalog.TsrOverlayTsaRecord(
+            tsa_id="tsa_29",
+            tsa_code="29",
+            tsa_name="Williams Lake",
+        ),
+        canonical_inputs=tsr_catalog.TsrRecipeCanonicalInputs(
+            registry_path="metadata/tsr/tsa_registry.json",
+            documents_path="metadata/tsr/tsa_documents.json",
+            candidate_facts_path="metadata/tsr/tsa_candidate_facts.json",
+        ),
+        instance_inputs=tsr_catalog.TsrThlbNetdownRecipeInstanceInputs(
+            overlay_path="config/tsr/overlay.yaml",
+            source_layer_recipe_path="config/tsr/source_layers.recipe.yaml",
+            source_layer_overrides_path="config/tsr/source_layer_overrides.yaml",
+        ),
+        recipe_contract={},
+        parent_steps=(
+            {
+                "parent_step_id": "thlb_parent_021_cultural_heritage",
+                "parent_label": "Cultural heritage",
+                "parent_kind": "transformation",
+                "row_order": 21,
+                "land_base_stage": "lhlb_to_thlb",
+                "stage_label": "LHLB -> THLB",
+                "last_remaining_area_ha": 1649049.232214973,
+            },
+            {
+                "parent_step_id": "thlb_parent_023_future_roads",
+                "parent_label": "Future roads",
+                "parent_kind": "transformation",
+                "row_order": 23,
+                "land_base_stage": "lhlb_to_thlb",
+                "stage_label": "LHLB -> THLB",
+                "normalized_action": "no_deduction",
+                "last_remaining_area_ha": 1592878.9364607423,
+                "compiled_logic": [
+                    {
+                        "step_id": "thlb_parent_023_future_roads_compiled_01",
+                        "compiled_operation_type": "no_deduction",
+                    }
+                ],
+            },
+        ),
+        steps=(),
+    )
+
+    assert tsr_recipes._resolve_reviewed_thlb_remaining_area_ha(recipe) == pytest.approx(
+        1649049.232214973
+    )
+
+
 def test_merge_preserved_thlb_parent_step_metadata_keeps_approved_review_logic() -> (
     None
 ):
