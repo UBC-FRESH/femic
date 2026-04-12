@@ -15967,3 +15967,25 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - resolves the active TSA boundary row;
     - clips a fresh GLB artifact plus JSON/Markdown summary; and
     - makes the raw-vs-checkpoint boundary explicit in the user-facing contract.
+- 2026-04-12: Finished `#146` with a clean raw-source GLB build/report command.
+  - Added `femic prep glb-build --tsa ...` as the supported FEMIC path for
+    clipping a fresh GLB directly from raw source geometry instead of relying on
+    checkpoint feathers.
+  - Acceptance proof for TSA 29:
+    - boundary area: `4,933,664.215 ha`
+    - clipped stand geometry area: `4,933,664.212 ha`
+    - delta: `-0.003 ha`
+    - feature count: `317,735`
+  - Polish completed in the same slice:
+    - explicit `--output-dir` paths no longer get incorrectly re-rooted under
+      `--instance-root`; and
+    - scratch boundary export now uses a non-shapefile path so field-name
+      truncation warnings are gone.
+- 2026-04-12: Opened `#147` as a minor follow-up for the remaining scratch
+  boundary export dtype warnings in `prep glb-build`.
+  - Current state:
+    - the GLB result is correct and the issue is non-blocking;
+    - only a smaller `pyogrio` warning remains when some integer boundary
+      fields widen to float during scratch FileGDB export.
+  - Decision:
+    - treat `#147` as a queued cleanup task rather than holding open `#146`.

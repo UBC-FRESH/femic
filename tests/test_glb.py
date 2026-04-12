@@ -93,13 +93,15 @@ def test_build_tsa_raw_glb_writes_summary_with_mocked_arcgis(tmp_path: Path) -> 
     def _fake_arcgis_runner(
         *,
         source_feature_class_path: Path,
-        boundary_shapefile_path: Path,
+        boundary_layer_path: Path,
         output_gdb_path: Path,
         output_feature_class_name: str,
         summary_json_path: Path,
     ) -> None:
         assert source_feature_class_path.name == "VEG_COMP_LYR_R1_POLY"
-        assert boundary_shapefile_path.exists()
+        assert boundary_layer_path.parent.suffix == ".gdb"
+        assert boundary_layer_path.parent.exists()
+        assert boundary_layer_path.name == "tsa_29_boundary"
         output_gdb_path.mkdir(parents=True, exist_ok=True)
         summary_json_path.write_text(
             json.dumps(

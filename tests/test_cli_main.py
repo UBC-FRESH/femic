@@ -306,6 +306,53 @@ def test_prep_glb_build_surfaces_failures(
     assert "Raw 2024 VRI zip not found." in result.stdout
 
 
+def test_prep_glb_build_resolves_explicit_output_dir_from_cwd(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    instance_root = tmp_path / "instance"
+    instance_root.mkdir(parents=True, exist_ok=True)
+    repo_relative_output = Path("external/femic-tsa29-instance/runtime/logs/glb_build/test")
+    captured: dict[str, Path | None] = {}
+
+    def _fake_build(**kwargs: object) -> GlbBuildResult:
+        captured["output_dir"] = kwargs.get("output_dir")  # type: ignore[assignment]
+        return GlbBuildResult(
+            tsa_selector="29",
+            tsa_number="29",
+            tsa_name="Williams Lake TSA",
+            source_zip_path=tmp_path / "VEG_COMP_LYR_R1_POLY_2024.gdb.zip",
+            boundary_source_path=tmp_path / "tsa.gpkg",
+            output_dir=Path(kwargs["output_dir"]),  # type: ignore[index]
+            clipped_glb_gdb_path=Path(kwargs["output_dir"]) / "clipped_glb.gdb",  # type: ignore[index]
+            clipped_glb_feature_class="tsa_glb_vri_2024",
+            summary_json_path=Path(kwargs["output_dir"]) / "glb_summary.json",  # type: ignore[index]
+            summary_markdown_path=Path(kwargs["output_dir"]) / "glb_summary.md",  # type: ignore[index]
+            feature_count=1,
+            clipped_area_ha=1.0,
+            boundary_area_ha=1.0,
+            area_delta_ha=0.0,
+        )
+
+    monkeypatch.setattr(cli_main, "build_tsa_raw_glb", _fake_build)
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "prep",
+            "glb-build",
+            "--instance-root",
+            str(instance_root),
+            "--tsa",
+            "29",
+            "--output-dir",
+            str(repo_relative_output),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["output_dir"] == repo_relative_output.resolve()
+
+
 def test_preflight_checks_windows_requires_git_annex(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

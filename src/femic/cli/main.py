@@ -2124,6 +2124,11 @@ def _resolve_cli_output_path(
     return value.expanduser().resolve()
 
 
+def _resolve_explicit_cli_path(value: Path) -> Path:
+    """Resolve an explicit user-supplied path relative to the current shell CWD."""
+    return value.expanduser().resolve()
+
+
 def _write_bcdc_resolve_manifest(
     results: list[BcdcResolveResult],
     *,
@@ -5391,15 +5396,15 @@ def prep_glb_build(
     """Build and report a clean raw-source GLB clip for one TSA."""
     instance_context = _resolve_cli_instance_context(instance_root=instance_root)
     resolved_output_dir = (
-        instance_context.resolve_path(output_dir) if output_dir is not None else None
+        _resolve_explicit_cli_path(output_dir) if output_dir is not None else None
     )
     resolved_source_zip_path = (
-        instance_context.resolve_path(source_zip_path)
+        _resolve_explicit_cli_path(source_zip_path)
         if source_zip_path is not None
         else None
     )
     resolved_boundary_path = (
-        instance_context.resolve_path(boundary_path)
+        _resolve_explicit_cli_path(boundary_path)
         if boundary_path is not None
         else None
     )

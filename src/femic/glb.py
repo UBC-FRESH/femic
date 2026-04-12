@@ -37,7 +37,7 @@ class TsaBoundarySelection:
     tsa_number: str
     tsa_name: str
     area_ha: float
-    shapefile_path: Path
+    boundary_layer_path: Path
     source_path: Path
 
 
@@ -133,18 +133,20 @@ def _load_active_tsa_boundary(
         or selected.iloc[0].get("TSA_NUMBER_DESCRIPTION")
         or f"TSA {tsa_number}"
     )
-    shapefile_root = scratch_dir / "tsa_boundary"
-    if shapefile_root.exists():
-        shutil.rmtree(shapefile_root)
-    shapefile_root.mkdir(parents=True, exist_ok=True)
-    shapefile_path = shapefile_root / f"tsa_{tsa_number}_boundary.shp"
-    selected.to_file(shapefile_path)
+    boundary_layer_root = scratch_dir / "tsa_boundary"
+    if boundary_layer_root.exists():
+        shutil.rmtree(boundary_layer_root)
+    boundary_layer_root.mkdir(parents=True, exist_ok=True)
+    boundary_gdb_path = boundary_layer_root / "tsa_boundary.gdb"
+    boundary_layer_name = f"tsa_{tsa_number}_boundary"
+    selected.to_file(boundary_gdb_path, layer=boundary_layer_name, driver="OpenFileGDB")
+    boundary_layer_path = boundary_gdb_path / boundary_layer_name
     return TsaBoundarySelection(
         selector=tsa_selector,
         tsa_number=tsa_number,
         tsa_name=tsa_name,
         area_ha=boundary_area_ha,
-        shapefile_path=shapefile_path,
+        boundary_layer_path=boundary_layer_path,
         source_path=boundary_path,
     )
 
@@ -152,7 +154,7 @@ def _load_active_tsa_boundary(
 def _run_glb_clip_with_arcgis(
     *,
     source_feature_class_path: Path,
-    boundary_shapefile_path: Path,
+    boundary_layer_path: Path,
     output_gdb_path: Path,
     output_feature_class_name: str,
     summary_json_path: Path,
@@ -194,7 +196,7 @@ summary_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
         code=code,
         args=[
             str(source_feature_class_path),
-            str(boundary_shapefile_path),
+            str(boundary_layer_path),
             str(output_gdb_path),
             output_feature_class_name,
             str(summary_json_path),
@@ -292,7 +294,7 @@ def build_tsa_raw_glb(
         source_feature_class_path = extracted_gdb_path / DEFAULT_VRI_FEATURE_CLASS_NAME
         arcgis_runner(
             source_feature_class_path=source_feature_class_path,
-            boundary_shapefile_path=boundary_selection.shapefile_path,
+            boundary_layer_path=boundary_selection.boundary_layer_path,
             output_gdb_path=clipped_glb_gdb_path,
             output_feature_class_name=GLB_OUTPUT_FEATURE_CLASS_NAME,
             summary_json_path=summary_json_path,

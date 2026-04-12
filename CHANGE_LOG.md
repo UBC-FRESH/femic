@@ -13841,3 +13841,27 @@
 - 2026-04-12: Started the bounded implementation slice for `#146`.
   - Added the command/docs/test contract for a clean `prep glb-build` path instead of continuing to rely on ad hoc raw-GLB scratch clipping.
   - Kept the slice scoped to the new command seam, supporting module, and docs/tests only.
+- 2026-04-12: Finished `#146` with the new `femic prep glb-build --tsa ...` workflow.
+  - Core implementation:
+    - added `src/femic/glb.py`;
+    - wired the command in `src/femic/cli/main.py`;
+    - documented it in `docs/reference/cli.rst` and
+      `docs/guides/stage-00-data-prep.rst`;
+    - covered it with `tests/test_glb.py`, `tests/test_cli_main.py`, and
+      `tests/test_docs_contract.py`.
+  - TSA 29 acceptance result:
+    - boundary area `4,933,664.215 ha`
+    - clipped stand geometry area `4,933,664.212 ha`
+    - delta `-0.003 ha`
+    - feature count `317,735`
+  - Follow-on polish:
+    - removed shapefile scratch export in favor of a non-truncating scratch
+      boundary export path; and
+    - fixed explicit `--output-dir` resolution so it no longer double-prefixes
+      repo-relative paths under `--instance-root`.
+- 2026-04-12: Opened `#147` to track the remaining non-blocking scratch
+  boundary export dtype warnings in `prep glb-build`.
+  - The field-name truncation warning is gone and the GLB result is correct.
+  - The remaining warning is limited to integer boundary fields widening to
+    float during scratch FileGDB export, so it was split into a minor follow-up
+    instead of blocking `#146`.
