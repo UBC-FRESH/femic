@@ -8775,6 +8775,22 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Next-move rule:
     - do not spend time tuning step 2 yet;
     - revisit only after higher-priority strict-vs-TSR seams are worked through.
+- 2026-04-11 (`#128` step 3 adjudicated):
+  - Parent step:
+    - `thlb_parent_003_non_forest`
+  - Governing read:
+    - strict removed area: `1,690.701 ha`
+    - TSR benchmark marginal area: `1,105,908.000 ha`
+    - strict-vs-TSR delta: `-1,104,217.299 ha`
+  - Interpretation:
+    - this is a real seam, but not a simple “missing data” problem;
+    - the strict lane is only doing the narrow direct waterbody/FMLB-style check while the reviewed lane carries a much broader non-forest bridge;
+    - because reconstructed mode starts from `checkpoint1_aflb_initialization`, this early `GLB -> AFLB` stepwise delta is also a baseline-conditioned diagnostic rather than a literal raw-GLB replay.
+  - Adjudication action:
+    - `keep_reviewed_bridge`
+  - Next-move rule:
+    - do not rush into code edits for step 3 yet;
+    - first decide and document the intended strict non-forest semantics, then revisit whether that bridge should stay accepted or be translated into strict logic later.
 
 - 2026-04-11 (`#131` completed: LU-wise reconstructed THLB runtime is now operational on full TSA29):
   - Completion summary:

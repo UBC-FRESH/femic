@@ -11582,8 +11582,8 @@ def _tsa29_reconstruction_gap_interpretation_override(
         "thlb_parent_003_non_forest": (
             "model_endogenous",
             "reviewed_bridge_semantics",
-            "The strict lane is only doing a narrow direct waterbody removal here, while the reviewed lane is carrying a much broader non-forest interpretation.",
-            "Decide and document the intended strict non-forest semantics before changing code again; this is not just a missing-data problem.",
+            "The strict lane is only doing a narrow direct waterbody removal here, while the reviewed lane is carrying a much broader non-forest interpretation; in addition, this early GLB-to-AFLB comparison is conditioned by checkpoint1/AFLB initialization rather than a literal raw-GLB replay.",
+            "Decide and document the intended strict non-forest semantics before changing code again; this is not just a missing-data problem, and the current stepwise delta should be read as a baseline-conditioned diagnostic rather than a literal raw-GLB replay.",
         ),
         "thlb_parent_006_parks_protected_areas_area_base_tenures": (
             "mixed",
@@ -11783,6 +11783,9 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
     reconstructed_parent_map = _aggregate_reconstructed_parent_step_results(
         reconstructed_audit_payload
     )
+    reconstructed_baseline_signal = str(
+        reconstructed_audit_payload.get("baseline_signal", "")
+    ).strip()
     milestones, parent_stage_groups = _parent_steps_grouped_by_stage(recipe)
     entries: list[dict[str, Any]] = []
     for parent_step in recipe.parent_steps:
@@ -11902,6 +11905,13 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
             note_text = str(raw_note).strip()
             if note_text:
                 supporting_notes.append(f"strict note: {note_text}")
+        if (
+            reconstructed_baseline_signal == "checkpoint1_aflb_initialization"
+            and str(item.get("land_base_stage", "")).strip() == "glb_to_aflb"
+        ):
+            supporting_notes.append(
+                "strict note: Early GLB -> AFLB stepwise deltas in reconstructed mode are conditioned by checkpoint1/AFLB initialization rather than a literal raw-GLB replay."
+            )
         entries.append(
             {
                 "parent_step_id": parent_step_id,
@@ -12042,6 +12052,7 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
         "recipe_path": recipe_relative_path,
         "reviewed_status_path": reviewed_status_relative_path,
         "reconstructed_audit_path": reconstructed_audit_relative_path,
+        "reconstructed_baseline_signal": reconstructed_baseline_signal,
         "comparison_markdown_path": comparison_markdown_relative_path,
         "comparison_json_path": comparison_json_relative_path,
         "reconstructed_final_managed_area_ha": reconstructed_final_managed_area_ha,
@@ -12139,6 +12150,8 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
         f"`{comparison_payload.get('reviewed_status_path', '')}`",
         "- Reconstructed audit JSON: "
         f"`{comparison_payload.get('reconstructed_audit_path', '')}`",
+        "- Reconstructed baseline signal: "
+        f"`{comparison_payload.get('reconstructed_baseline_signal', '')}`",
         "",
         "## Summary",
         "",
@@ -12178,6 +12191,7 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
             "- The reviewed lane was accepted because its cumulative THLB was close enough to the TSR benchmark for practical exploratory modeling use.",
             "- Reviewed per-step behavior is therefore useful context, not automatic gold-standard truth for strict reconstruction.",
             "- A parent step is a top-priority strict-lane repair when strict is materially bad against TSR, not merely because strict differs from reviewed.",
+            "- For early `GLB -> AFLB` rows, strict stepwise marginal deductions are conditioned by `checkpoint1_aflb_initialization` in the current reconstructed lane, so treat those deltas as diagnostic rather than as a literal raw-GLB replay.",
             "",
             "## Strict-vs-TSR Fit Counts",
             "",

@@ -13710,3 +13710,20 @@
   - Rationale:
     - the strict-vs-reviewed gap is large, but strict is already close enough
       to the TSR benchmark that step 2 is not a top-priority repair.
+- 2026-04-11: Adjudicated TSA29 strict THLB step 3 as a reviewed-bridge seam
+  to keep for now.
+  - Step:
+    - `thlb_parent_003_non_forest`
+  - Evidence:
+    - strict removed `1,690.701 ha`
+    - TSR benchmark marginal area `1,105,908.000 ha`
+    - strict-vs-TSR delta `-1,104,217.299 ha`
+  - Decision:
+    - `keep_reviewed_bridge`
+  - Rationale:
+    - this is not a simple missing-data problem;
+    - the strict lane is only doing the narrow direct waterbody/FMLB-style check
+      while the reviewed lane carries a much broader non-forest bridge; and
+    - because reconstructed mode starts from `checkpoint1_aflb_initialization`,
+      this early `GLB -> AFLB` stepwise delta is a baseline-conditioned
+      diagnostic rather than a literal raw-GLB replay.
