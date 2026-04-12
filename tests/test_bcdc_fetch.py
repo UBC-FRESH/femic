@@ -186,6 +186,89 @@ def test_fetch_bcdc_wfs_data_writes_gpkg(
     assert result.saved_path.is_file()
 
 
+def test_fetch_bcdc_wfs_data_pages_large_results(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(
+        bcdc_fetch,
+        "resolve_bcdc_candidates",
+        lambda query, limit: _wfs_resolve_result(),
+    )
+
+    calls: list[str] = []
+
+    def _fake_fetch(url: str):
+        calls.append(url)
+        if "startIndex=10000" in url:
+            return {
+                "type": "FeatureCollection",
+                "numberMatched": 10005,
+                "numberReturned": 5,
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {"OWNERSHIP_DESCRIPTION": "Private"},
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [
+                                    [0.0, 0.0],
+                                    [0.0, 1.0],
+                                    [1.0, 1.0],
+                                    [1.0, 0.0],
+                                    [0.0, 0.0],
+                                ]
+                            ],
+                        },
+                    }
+                    for _ in range(5)
+                ],
+            }
+        return {
+            "type": "FeatureCollection",
+            "numberMatched": 10005,
+            "numberReturned": 10000,
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {"OWNERSHIP_DESCRIPTION": "Private"},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                                [0.0, 0.0],
+                                [0.0, 1.0],
+                                [1.0, 1.0],
+                                [1.0, 0.0],
+                                [0.0, 0.0],
+                            ]
+                        ],
+                    },
+                }
+                for _ in range(10000)
+            ],
+        }
+
+    monkeypatch.setattr(bcdc_fetch, "_fetch_json_payload", _fake_fetch)
+
+    result = bcdc_fetch.fetch_bcdc_wfs_data(
+        "WHSE_FOREST_VEGETATION.F_OWN",
+        destination_root=tmp_path,
+        bbox_epsg3005=(1170000.0, 450000.0, 1180000.0, 460000.0),
+        output_format="geojson",
+    )
+
+    assert result.feature_count == 10005
+    assert len(calls) == 2
+    assert "count=10000" in calls[0]
+    assert "startIndex=10000" in calls[1]
+    assert any(
+        "Paged WFS fetch assembled `10005` features" in warning
+        for warning in result.warnings
+    )
+
+
 def test_fetch_bcdc_wfs_data_rejects_direct_download_only(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

@@ -31,6 +31,7 @@ DEFAULT_WFS_OUTPUT_FORMAT = "gpkg"
 SUPPORTED_WFS_OUTPUT_FORMATS = {"gpkg", "geojson"}
 BC_ALBERS_EPSG = "EPSG:3005"
 WGS84_EPSG = "EPSG:4326"
+DEFAULT_WFS_PAGE_SIZE = 10000
 
 
 class BcdcFetchError(RuntimeError):
@@ -205,6 +206,8 @@ def _build_wfs_getfeature_url(
     *,
     typename: str,
     bbox_epsg3005: tuple[float, float, float, float],
+    count: int | None = None,
+    start_index: int | None = None,
 ) -> str:
     parsed = urlparse(base_url)
     params = dict(parse_qsl(parsed.query, keep_blank_values=True))
@@ -220,6 +223,10 @@ def _build_wfs_getfeature_url(
             "srsName": BC_ALBERS_EPSG,
         }
     )
+    if count is not None:
+        params["count"] = str(int(count))
+    if start_index is not None:
+        params["startIndex"] = str(int(start_index))
     return urlunparse(parsed._replace(query=urlencode(params)))
 
 
@@ -293,6 +300,80 @@ def _feature_count_from_payload(payload: dict[str, Any]) -> int:
     return 0
 
 
+def _coerce_number_matched(payload: dict[str, Any]) -> int | None:
+    raw = payload.get("numberMatched")
+    if isinstance(raw, int):
+        return raw
+    if isinstance(raw, str) and raw.isdigit():
+        return int(raw)
+    return None
+
+
+def _fetch_wfs_payload_paged(
+    *,
+    base_url: str,
+    typename: str,
+    bbox_epsg3005: tuple[float, float, float, float],
+    page_size: int = DEFAULT_WFS_PAGE_SIZE,
+) -> tuple[dict[str, Any], str, tuple[str, ...]]:
+    first_request_url = _build_wfs_getfeature_url(
+        base_url,
+        typename=typename,
+        bbox_epsg3005=bbox_epsg3005,
+        count=page_size,
+        start_index=0,
+    )
+    first_payload = _fetch_json_payload(first_request_url)
+    number_matched = _coerce_number_matched(first_payload)
+    first_features = first_payload.get("features", [])
+    if not isinstance(first_features, list):
+        raise BcdcFetchError(
+            "WFS response did not contain a valid GeoJSON feature list."
+        )
+    if number_matched is None or number_matched <= len(first_features):
+        return first_payload, first_request_url, ()
+
+    all_features = list(first_features)
+    start_index = len(first_features)
+    while start_index < number_matched:
+        page_url = _build_wfs_getfeature_url(
+            base_url,
+            typename=typename,
+            bbox_epsg3005=bbox_epsg3005,
+            count=page_size,
+            start_index=start_index,
+        )
+        page_payload = _fetch_json_payload(page_url)
+        page_features = page_payload.get("features", [])
+        if not isinstance(page_features, list):
+            raise BcdcFetchError(
+                "Paged WFS response did not contain a valid GeoJSON feature list."
+            )
+        if not page_features:
+            break
+        all_features.extend(page_features)
+        start_index += len(page_features)
+        if len(page_features) < page_size:
+            break
+
+    merged_payload = dict(first_payload)
+    merged_payload["features"] = all_features
+    merged_payload["numberReturned"] = len(all_features)
+    if number_matched is not None:
+        merged_payload["numberMatched"] = number_matched
+    warnings: list[str] = []
+    if len(all_features) != number_matched:
+        warnings.append(
+            f"Paged WFS fetch expected `{number_matched}` features but assembled "
+            f"`{len(all_features)}`."
+        )
+    else:
+        warnings.append(
+            f"Paged WFS fetch assembled `{len(all_features)}` features across multiple requests."
+        )
+    return merged_payload, first_request_url, tuple(warnings)
+
+
 def fetch_bcdc_wfs_data(
     query: str,
     *,
@@ -336,12 +417,11 @@ def fetch_bcdc_wfs_data(
 
     assert wfs_resource.url is not None
     assert wfs_resource.wfs_typename is not None
-    request_url = _build_wfs_getfeature_url(
-        wfs_resource.url,
+    payload, request_url, warnings = _fetch_wfs_payload_paged(
+        base_url=wfs_resource.url,
         typename=wfs_resource.wfs_typename,
         bbox_epsg3005=bbox_epsg3005,
     )
-    payload = _fetch_json_payload(request_url)
     saved_path = _save_wfs_payload(
         payload,
         destination_root=destination_root.expanduser().resolve(),
@@ -372,7 +452,7 @@ def fetch_bcdc_wfs_data(
         saved_path=saved_path,
         output_format=normalized_format,
         feature_count=_feature_count_from_payload(payload),
-        warnings=(),
+        warnings=warnings,
     )
 
 

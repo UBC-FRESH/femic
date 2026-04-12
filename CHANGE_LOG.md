@@ -13916,3 +13916,11 @@
     - valid production reuse still succeeds;
     - smoke artifact reuse is rejected and refetched; and
     - clipped production-path artifact reuse is rejected and refetched.
+- Confirmed the next blocker for TSA29 step 2 is an upstream WFS fetch cap, not
+  just stale reuse.
+  - A fresh `WHSE_FOREST_VEGETATION.F_OWN` fetch still returned:
+    - `numberMatched = 19717`
+    - `numberReturned = 10000`
+    - and the same clipped east-side bbox as the stale production artifact.
+  - That pins the next bounded fix on adding WFS pagination before further
+    step-2 semantics work.

@@ -16055,3 +16055,17 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     production-scope copy instead of pushing GIGO into THLB execution.
   - The original load-time `blocked_extent_mismatch` guard remains in place as
     a second line of defense inside THLB step execution.
+- 2026-04-12: Identified the next bounded blocker for `#149`.
+  - A fresh TSA29 `WHSE_FOREST_VEGETATION.F_OWN` WFS fetch still returned the
+    same bad artifact as the stale reused copy:
+    - `numberMatched = 19717`
+    - `numberReturned = 10000`
+    - bbox clipped to the east side of the TSA
+  - That proves the current WFS fetch helper is itself truncating production
+    overlay inputs for larger AOIs because it does only one unpaged
+    `GetFeature` request.
+  - Next bounded unit:
+    - add WFS pagination to `fetch_bcdc_wfs_data(...)`;
+    - refetch a valid full-TSA `F_OWN`; and
+    - rerun only step 2 against that valid overlay before resuming step-2
+      semantics work.
