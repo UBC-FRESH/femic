@@ -15948,3 +15948,16 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - With `#133` and `#137` closed and `#131` parked, the clean next active
     modeling slice is `#139`: TSR section 7.1.5 broadleaf-volume exclusion as
     a later yield-assumption lane rather than a THLB area-netdown rule.
+- 2026-04-12: Clarified the raw-source baseline contract for TSA29 strict THLB debugging.
+  - `checkpoint` artifacts are resume/debug intermediates only and must never be treated as raw source input when validating or rebuilding GLB baseline geometry.
+  - For the current TSA29 GLB rebuild, the governing raw source is the **2024 provincial VRI** clipped by the active TSA 29 boundary.
+  - Future strict-lane baseline work must rebuild and validate GLB from raw source first, then use checkpoints only after that clean GLB exists.
+- 2026-04-12: Opened follow-on issue `#146` to turn the verified TSA29 raw-GLB rebuild into a supported FEMIC workflow.
+  - Goal: add a clean command/workflow that builds and reports GLB for any named TSA directly from raw source geometry.
+  - Governing contract:
+    - use the most recent raw VRI by default (`2024` unless explicitly overridden);
+    - use the active TSA boundary row from the reviewed boundary source; and
+    - never substitute checkpoints for raw input during baseline validation.
+  - Tracker wiring:
+    - treat `#146` as a follow-on child of the closed `#122` TSR/THLB umbrella; and
+    - treat it as a practical prerequisite side quest for the still-open strict reconstruction work in `#128`.

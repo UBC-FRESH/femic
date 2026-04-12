@@ -258,6 +258,16 @@ When contributing to this repository as the coding agent:
      bounded unit of work before stopping and reporting;
    - a bounded unit means one of:
      - one code change;
+18. Treat "raw source input" and "checkpoint" as mutually exclusive concepts:
+   - a checkpoint is a derived intermediate artifact used for resume/debug only;
+   - a checkpoint is never an acceptable substitute for raw source input when the
+     task is to validate, rebuild, or debug the baseline geometry itself;
+   - if the developer asks to start from raw geometry, use the actual upstream
+     source dataset (for example the provincial VRI source plus the reviewed TSA
+     boundary), not an instance-local checkpoint feather;
+   - before diagnosing GLB/AFLB/THLB area mismatches, verify that the claimed
+     raw source is truly materialized and readable rather than an annex pointer,
+     cache stub, or other derived artifact.
      - one validation run;
      - one report rebuild; or
      - one issue/planning/docs update;

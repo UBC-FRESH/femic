@@ -13831,3 +13831,10 @@
     - reran the same raw-GLB `GLB -> AFLB` diagnostic slice (indices `0..6`) and stopped there
     - corrected step 3 strict removal is now `1,802,314.490 ha` (`1,798,325.607 ha` attribute + `3,988.883 ha` water) vs TSR `1,105,908.000 ha`
     - updated step-5 AFLB milestone remaining area after steps 2-4 is `3,273,312.070 ha` vs TSR `3,098,168.000 ha` (`+175,144.070 ha`)
+- 2026-04-12: Clarified the raw-source baseline contract for TSA29 strict THLB debugging.
+  - `checkpoint` artifacts are resume/debug intermediates only and are never valid substitutes for raw source input when validating or rebuilding GLB baseline geometry.
+  - The current TSA29 GLB rebuild must therefore start from the **2024 provincial VRI** clipped by the active TSA 29 boundary, not from `checkpoint1` or any other cached feather.
+- 2026-04-12: Opened issue `#146` for a clean raw-source GLB build/report workflow for named TSAs.
+  - This side quest turns the TSA29 raw-GLB proof into a supported FEMIC capability instead of a one-off debugging sequence.
+  - The issue is explicitly tied back to the old `#122` TSR/THLB umbrella and the active strict reconstruction issue `#128`.
+  - The core implementation target is a dedicated workflow that clips the raw 2024 VRI (by default) to an active TSA boundary and reports the GLB milestone area without routing through checkpoint feathers.
