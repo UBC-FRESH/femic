@@ -8815,6 +8815,35 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Next-move rule:
     - do not waste time tuning the current tiny spatial-only road result;
     - formalize an explicit aspatial AFLB reduction for existing roads, trails, and landings in the strict lane if we need this step to behave more like TSR.
+- 2026-04-11 (`#128` step 4 implementation target locked):
+  - Governing fallback target:
+    - use `50,434 ha` for the strict-lane step-4 aspatial AFLB deduction.
+  - Why this is the implementation target:
+    - `50,434 ha` is the live `benchmark_marginal_area_ha` already parsed into the recipe and comparison ledger for `thlb_parent_004_roads_and_landings`;
+    - the stepwise adjudication contract says strict-vs-TSR is the governing benchmark; and
+    - the Table 6 category totals in the TSR text sum to about `50,433 ha`, which aligns with the benchmark after rounding.
+  - Explicit non-target:
+    - do **not** use the conflicting prose sentence `32,526 ha` as the fallback target.
+  - Implementation rule:
+    - formalize step 4 as a documented `aspatial_area_reduction` in the strict lane;
+    - compute the remaining fallback as:
+      - `max(0, 50,434 ha - exact_step4_removed_area_ha)`
+    - for the current TSA29 strict run, the exact step-4 spatial substeps remove `0 ha`, so the effective fallback target is the full `50,434 ha`.
+- 2026-04-11 (`#128` step 4 implemented and validated):
+  - Implementation landed:
+    - step 4 compiled logic now uses a documented `aspatial_area_reduction` fallback in the strict lane;
+    - smoke-only approved review logic no longer freezes compiled logic during full-TSA rebuilds, so the old Williams Lake LU smoke placeholder does not override the new step-4 contract.
+  - Reconstructed runner fix landed:
+    - the diagnostic/resume runner now passes the TSR total-area benchmark through to `aspatial_area_reduction`, so step-only replay does not mislabel those rows as `unsupported`.
+  - Step-only validation rule followed:
+    - resume from the saved post-step-3 LU baseline;
+    - run reconstructed diagnostic indices `3:6` only;
+    - do not rerun downstream parent steps as part of step-4 validation.
+  - Validated result:
+    - step 4 exact road buffers still removed `0 ha`;
+    - step 4 fallback removed exactly `50,434 ha`;
+    - strict-vs-TSR delta for step 4 is now `0 ha`;
+    - step 4 should now be treated as `defer_low_priority` instead of an active strict-lane blocker.
 - 2026-04-11 (`#128` strict-lane baseline caveat for the remaining adjudication pass):
   - The current strict reconstructed lane is **not** yet a literal raw-GLB replay of the full TSA29 Table 3 ladder.
   - Current strict baseline:

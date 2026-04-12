@@ -13770,3 +13770,38 @@
       reconstructed run; and
     - the reviewed result is only a Williams Lake LU smoke proof, not a full-TSA
       bridge result, so the tiny reviewed number is not the real target either.
+- 2026-04-11: Locked the concrete step-4 implementation target before code
+  changes so the strict-lane repair cannot drift.
+  - Use `50,434 ha` as the step-4 aspatial AFLB fallback target in the strict
+    lane.
+  - Reason:
+    - it is the live TSR benchmark marginal area already parsed into the recipe
+      and comparison ledger; and
+    - it matches the Table 6 category totals far better than the conflicting
+      prose sentence that says `32,526 ha`.
+  - Implementation rule:
+    - treat step 4 as a documented `aspatial_area_reduction`;
+    - compute the remaining deduction as `max(0, 50,434 ha - exact_step4_removed_area_ha)`;
+    - for the current strict TSA29 run, the exact spatial substeps remove `0 ha`,
+      so the effective fallback is the full `50,434 ha`.
+- 2026-04-11: Implemented and validated the TSA29 strict-lane step-4 fallback.
+  - Code/reporting changes:
+    - step 4 compiled logic now includes a documented `aspatial_area_reduction`
+      fallback in the strict lane;
+    - smoke-only approved review logic no longer freezes compiled THLB logic
+      during full-TSA rebuilds; and
+    - the reconstructed diagnostic/resume runner now passes the TSR total-area
+      benchmark through to `aspatial_area_reduction` rows instead of falsely
+      marking them `unsupported`.
+  - Step-only validation:
+    - resumed from the saved post-step-3 LU baseline;
+    - ran reconstructed diagnostic indices `3:6` only.
+  - Validated outcome:
+    - `thlb_parent_004_roads_and_landings_compiled_01`: `applied_noop`
+    - `thlb_parent_004_roads_and_landings_compiled_02`: `applied_noop`
+    - `thlb_parent_004_roads_and_landings_compiled_03`: `applied` as
+      `aspatial_fallback` removing exactly `50,434.000 ha`
+    - step 4 strict-vs-TSR delta is now `0.000 ha`
+  - Practical meaning:
+    - step 4 is no longer an active strict-lane blocker and should now be
+      treated as `defer_low_priority`.

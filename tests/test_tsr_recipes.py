@@ -1578,6 +1578,59 @@ def test_merge_preserved_thlb_parent_step_metadata_keeps_approved_review_logic()
     assert merged[0]["compiled_logic"][0]["compiled_operation_type"] == "no_deduction"
 
 
+def test_merge_preserved_thlb_parent_step_metadata_does_not_freeze_smoke_only_logic() -> (
+    None
+):
+    merged = tsr_recipes._merge_preserved_thlb_parent_step_metadata(
+        existing_parent_steps=(
+            {
+                "parent_step_id": "thlb_parent_004_roads_and_landings",
+                "ratchet_state": "approved",
+                "approval_scope": "single_lu_smoke_subset_williams_lake",
+                "draft_subrules": [
+                    {
+                        "subrule_id": "draft_01",
+                        "candidate_operation_type": "exclude",
+                    }
+                ],
+                "compiled_logic": [
+                    {
+                        "step_id": "compiled_01",
+                        "compiled_operation_type": "manual_review_required",
+                    }
+                ],
+            },
+        ),
+        built_parent_steps=(
+            {
+                "parent_step_id": "thlb_parent_004_roads_and_landings",
+                "draft_subrules": [
+                    {
+                        "subrule_id": "draft_01",
+                        "candidate_operation_type": "aspatial_area_reduction",
+                    }
+                ],
+                "compiled_logic": [
+                    {
+                        "step_id": "compiled_01",
+                        "compiled_operation_type": "aspatial_area_reduction",
+                    }
+                ],
+            },
+        ),
+    )
+
+    assert merged[0]["approval_scope"] == "single_lu_smoke_subset_williams_lake"
+    assert (
+        merged[0]["draft_subrules"][0]["candidate_operation_type"]
+        == "aspatial_area_reduction"
+    )
+    assert (
+        merged[0]["compiled_logic"][0]["compiled_operation_type"]
+        == "aspatial_area_reduction"
+    )
+
+
 def test_merge_preserved_thlb_compiled_steps_keeps_approved_review_logic() -> None:
     merged = tsr_recipes._merge_preserved_thlb_compiled_steps(
         existing_steps=(
@@ -1615,6 +1668,46 @@ def test_merge_preserved_thlb_compiled_steps_keeps_approved_review_logic() -> No
     assert merged[0]["compiled_operation_type"] == "no_deduction"
     assert merged[0]["normalized_action"] == "no_deduction"
     assert merged[0]["stage_label"] == "LHLB -> THLB"
+
+
+def test_merge_preserved_thlb_compiled_steps_does_not_freeze_smoke_only_logic() -> None:
+    merged = tsr_recipes._merge_preserved_thlb_compiled_steps(
+        existing_steps=(
+            {
+                "step_id": "compiled_01",
+                "parent_step_id": "thlb_parent_004_roads_and_landings",
+                "compiled_operation_type": "manual_review_required",
+                "normalized_action": "review",
+            },
+        ),
+        built_steps=(
+            {
+                "step_id": "compiled_01",
+                "parent_step_id": "thlb_parent_004_roads_and_landings",
+                "compiled_operation_type": "aspatial_area_reduction",
+                "normalized_action": "aspatial_area_reduction",
+                "stage_label": "GLB -> AFLB",
+            },
+        ),
+        parent_steps=(
+            {
+                "parent_step_id": "thlb_parent_004_roads_and_landings",
+                "ratchet_state": "approved",
+                "approval_scope": "single_lu_smoke_subset_williams_lake",
+                "compiled_logic": [
+                    {
+                        "step_id": "compiled_01",
+                        "compiled_operation_type": "manual_review_required",
+                        "normalized_action": "review",
+                    }
+                ],
+            },
+        ),
+    )
+
+    assert merged[0]["compiled_operation_type"] == "aspatial_area_reduction"
+    assert merged[0]["normalized_action"] == "aspatial_area_reduction"
+    assert merged[0]["stage_label"] == "GLB -> AFLB"
 
 
 def test_format_thlb_lock_state_markdown_skips_placeholder_none_strings() -> None:
@@ -5120,6 +5213,44 @@ def test_specialized_compiled_logic_for_future_roads_uses_aspatial_area_reductio
     )
 
 
+def test_specialized_compiled_logic_for_roads_and_landings_uses_residual_aspatial_area_fallback() -> (
+    None
+):
+    items = tsr_recipes._specialized_compiled_logic_for_parent_step(
+        parent_step_id="thlb_parent_004_roads_and_landings",
+        parent_label="Roads and landings",
+        land_base_stage="glb_to_aflb",
+        stage_label="GLB -> AFLB",
+        execution_class="drop_from_universe",
+        benchmark_marginal_area_ha=50434.0,
+        benchmark_cumulative_area_ha=3345499.0,
+        table_provenance="TSR_2024/...#table=3,row=4",
+        row_order=4,
+        linked_subsection={
+            "body": (
+                "Existing roads, trails and landings are typically too small to "
+                "delineate and track efficiently in a landscape-level model so they "
+                "will be modelled non-spatially through partial reductions to the AFLB. "
+                "Table 6. Width and area of existing road to calculate reductions."
+            ),
+            "provenance_id": "TSR_2024/...#page=27",
+            "page_number": 27,
+        },
+    )
+
+    assert items is not None
+    assert len(items) == 3
+    fallback = items[2]
+    assert fallback["compiled_operation_type"] == "aspatial_area_reduction"
+    assert fallback["normalized_action"] == "aspatial_area_reduction"
+    assert fallback["benchmark_marginal_area_ha"] == pytest.approx(50434.0)
+    assert fallback["subtract_parent_exact_removed_area"] is True
+    assert (
+        fallback["normalized_subject"]
+        == "Existing roads, trails, and landings area reduction"
+    )
+
+
 def test_apply_aspatial_area_reduction_sets_effective_area_without_touching_canonical_area_or_thlb() -> (
     None
 ):
@@ -7425,3 +7556,126 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_can_resume_prefix_output(
         second_result.diagnostic_path.read_text(encoding="utf-8")
     )
     assert diagnostic_payload["baseline_signal"] == "resumed_reconstructed_checkpoint"
+
+
+def test_run_tsr_thlb_reconstructed_diagnostic_slice_executes_aspatial_area_reduction(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint1 = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2],
+            "FOR_MGMT_LAND_BASE_IND": ["Y", "Y"],
+            "BCLCS_LEVEL_2": ["T", "T"],
+            "NON_PRODUCTIVE_CD": [None, None],
+            "MAP_ID": ["093J034", "093J034"],
+            "FEATURE_AREA_SQM": [100.0, 100.0],
+            "Shape_Area": [100.0, 100.0],
+            "Shape_Length": [40.0, 40.0],
+        },
+        geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint1.to_feather(checkpoint1_path)
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 30, 20)],
+        names=["Test LU"],
+    )
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["parent_steps"] = [
+        {
+            "parent_step_id": "thlb_parent_001_total_tsa_area",
+            "parent_label": "Total TSA area",
+            "parent_kind": "milestone",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "benchmark_cumulative_area_ha": 200.0,
+            "row_order": 1,
+        },
+        {
+            "parent_step_id": "thlb_parent_004_roads_and_landings",
+            "parent_label": "Roads and landings",
+            "parent_kind": "transformation",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "benchmark_marginal_area_ha": 50.0,
+            "benchmark_cumulative_area_ha": 150.0,
+            "row_order": 4,
+        },
+    ]
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "thlb_step_001_land_base",
+            "parent_step_id": "thlb_parent_001_total_tsa_area",
+            "order_index": 1,
+            "step_kind": "netdown_rule",
+            "label": "Timber harvesting land base",
+            "normalized_action": "use_land_base",
+            "step_status": "ready",
+            "page_number": 24,
+        },
+        {
+            "step_id": "thlb_step_004_roads",
+            "parent_step_id": "thlb_parent_004_roads_and_landings",
+            "order_index": 4,
+            "step_kind": "netdown_rule",
+            "label": "Roads and landings fallback",
+            "normalized_action": "aspatial_area_reduction",
+            "compiled_operation_type": "aspatial_area_reduction",
+            "benchmark_marginal_area_ha": 50.0,
+            "benchmark_cumulative_area_ha": 100.0,
+            "step_status": "ready",
+            "page_number": 27,
+        },
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    diagnostics_root = instance_root / "runtime" / "logs" / "tsr" / "diagnostics"
+    result = tsr_recipes.run_tsr_thlb_reconstructed_diagnostic_slice(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        output_path=diagnostics_root / "aspatial.feather",
+        audit_path=diagnostics_root / "aspatial.audit.json",
+        diagnostic_path=diagnostics_root / "aspatial.diag.json",
+    )
+
+    audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
+    aspatial_step = next(
+        step for step in audit_payload["steps"] if step["step_id"] == "thlb_step_004_roads"
+    )
+    assert aspatial_step["run_status"] == "applied"
+    assert aspatial_step["spatial_application_mode"] == "aspatial_fallback"
+    assert aspatial_step["affected_area_ha"] == pytest.approx(0.005)

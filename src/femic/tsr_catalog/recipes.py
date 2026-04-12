@@ -2391,6 +2391,67 @@ def _build_draft_subrules_for_parent_step(
         return ()
     subsection_title = str(linked_subsection.get("title", "")).strip()
     subsection_body = str(linked_subsection.get("body", "")).strip()
+    if parent_step_id == "thlb_parent_004_roads_and_landings":
+        provenance_id = str(linked_subsection.get("provenance_id", ""))
+        return (
+            {
+                "subrule_id": f"{parent_step_id}_draft_01",
+                "human_summary": (
+                    "Use the permanent-road buffers as supporting evidence only; do not "
+                    "treat the tiny mapped overlap as the full existing-RTL deduction."
+                ),
+                "rationale": (
+                    "TSA29 section 6.2.3 says existing roads, trails, and landings are "
+                    "modeled non-spatially because the features are too small and "
+                    "incomplete to track reliably at landscape scale."
+                ),
+                "candidate_layers": [
+                    "whse_basemapping_dra_dgtl_road_atlas_mpar_sp",
+                    "whse_forest_tenure_ften_road_section_lines_svw",
+                ],
+                "candidate_fields": [],
+                "candidate_values": [
+                    "12.5 m public/FSR half-width",
+                    "7.5 m road-permit half-width",
+                ],
+                "candidate_operation_type": "review",
+                "field_mapping_notes": [
+                    "Keep the permanent-road buffers as context/supporting evidence only.",
+                    "Do not let these tiny spatial overlays stand in for the full step-4 TSR benchmark.",
+                ],
+                "confidence": "needs_review",
+                "review_status": "draft",
+                "prose_provenance": provenance_id,
+                "hint_provenance_ids": [],
+            },
+            {
+                "subrule_id": f"{parent_step_id}_draft_02",
+                "human_summary": (
+                    "Apply the existing RTL deduction as a documented AFLB-stage "
+                    "aspatial area reduction anchored to the TSR benchmark."
+                ),
+                "rationale": (
+                    "The TSR benchmark for existing roads, trails, and landings is "
+                    "50,434 ha, and Table 6 category totals align with that benchmark "
+                    "far better than the conflicting prose sentence that says 32,526 ha."
+                ),
+                "candidate_layers": [],
+                "candidate_fields": [],
+                "candidate_values": [
+                    "50,434 ha existing RTL benchmark",
+                    "Residual target after any exact permanent-road overlap already removed",
+                ],
+                "candidate_operation_type": "aspatial_area_reduction",
+                "field_mapping_notes": [
+                    "Use the parsed step benchmark as the governing target.",
+                    "Subtract any same-parent exact spatial removal first to avoid double-counting if those overlays ever become non-zero.",
+                ],
+                "confidence": "needs_review",
+                "review_status": "draft",
+                "prose_provenance": provenance_id,
+                "hint_provenance_ids": [],
+            },
+        )
     if parent_step_id == "thlb_parent_023_future_roads":
         provenance_id = str(linked_subsection.get("provenance_id", ""))
         return (
@@ -3071,25 +3132,35 @@ def _specialized_compiled_logic_for_parent_step(
                 ],
             }
         )
-        landing_item = _base_item(
-            "compiled_03", "Landings and temporary roads", "manual_review_required"
+        roads_fallback = _base_item(
+            "compiled_03",
+            "Existing roads, trails, and landings area reduction",
+            "aspatial_area_reduction",
         )
-        landing_item.update(
+        roads_fallback.update(
             {
-                "normalized_action": "review",
-                "normalized_subject": "Landings and temporary roads",
-                "normalized_predicate": "requires non-spatial or additional harvested-area treatment logic",
-                "linked_source_entry_ids": [
-                    "whse_forest_vegetation_veg_consolidated_cut_blocks_sp"
-                ],
-                "step_status": "manual_review_required",
-                "required": False,
+                "benchmark_marginal_area_ha": (
+                    benchmark_marginal_area_ha
+                    if benchmark_marginal_area_ha is not None
+                    else 50434.0
+                ),
+                "normalized_action": "aspatial_area_reduction",
+                "normalized_subject": "Existing roads, trails, and landings area reduction",
+                "normalized_predicate": (
+                    "apply the TSR-cited existing RTL deduction as a residual AFLB "
+                    "stand-area reduction after any exact permanent-road overlap "
+                    "already removed by the same parent step"
+                ),
+                "linked_source_entry_ids": [],
+                "subtract_parent_exact_removed_area": True,
                 "notes": [
-                    "Temporary roads and landings remain a review item in the notebook bridge until the non-spatial deduction path is formalized."
+                    "TSA29 section 6.2.3 says existing roads, trails, and landings are modeled non-spatially through partial AFLB reductions because the mapped features are too small and incomplete to track reliably at landscape scale.",
+                    "Use the TSR benchmark marginal deduction of 50,434 ha for this step; do not use the conflicting 32,526 ha prose sentence as the governing fallback target.",
+                    "Subtract any exact same-parent permanent-road overlap already removed so the fallback only fills the remaining benchmark gap.",
                 ],
             }
         )
-        return (road_atlas, road_section, landing_item)
+        return (road_atlas, road_section, roads_fallback)
 
     if lower == "parks, protected areas, area-base tenures":
         parks_item = _base_item(
@@ -6638,6 +6709,21 @@ def _apply_reconstructed_lu_aspatial_area_reduction(
     return updated_records, removed_area_ha, affected_row_count, touched_chunk_count
 
 
+def _resolve_parent_exact_removed_area_ha(
+    *,
+    applied_steps: Sequence[dict[str, Any]],
+    parent_step_id: str,
+) -> float:
+    total = 0.0
+    for step in applied_steps:
+        if str(step.get("parent_step_id", "")).strip() != parent_step_id:
+            continue
+        if str(step.get("normalized_action", "")).strip() != "exclude":
+            continue
+        total += float(step.get("affected_area_ha", 0.0) or 0.0)
+    return total
+
+
 def _execute_reconstructed_lu_exclusion_step(
     *,
     chunk_records: Sequence[dict[str, Any]],
@@ -8178,6 +8264,32 @@ _THLB_COMPILED_STEP_CORE_IDENTITY_KEYS = (
 )
 
 
+def _approval_scope_is_smoke_only(approval_scope: str) -> bool:
+    normalized = approval_scope.strip().casefold()
+    if not normalized:
+        return False
+    smoke_fragments = (
+        "single_lu_smoke_subset",
+        "smoke_subset",
+        "single_lu_smoke",
+        "map_id_smoke",
+        "smoke",
+    )
+    return any(fragment in normalized for fragment in smoke_fragments)
+
+
+def _thlb_parent_step_preserves_approved_review_logic(parent_step: dict[str, Any]) -> bool:
+    if not (
+        bool(parent_step.get("approved", False))
+        or _infer_thlb_parent_step_ratchet_state(parent_step) == "approved"
+    ):
+        return False
+    approval_scope = str(parent_step.get("approval_scope", "")).strip()
+    if _approval_scope_is_smoke_only(approval_scope):
+        return False
+    return True
+
+
 def _merge_preserved_thlb_parent_step_metadata(
     *,
     existing_parent_steps: Sequence[dict[str, Any]],
@@ -8196,8 +8308,8 @@ def _merge_preserved_thlb_parent_step_metadata(
             for key in _THLB_PARENT_STEP_PRESERVED_METADATA_KEYS:
                 if key in existing:
                     updated[key] = existing[key]
-            preserve_review_logic = bool(existing.get("approved", False)) or (
-                _infer_thlb_parent_step_ratchet_state(existing) == "approved"
+            preserve_review_logic = _thlb_parent_step_preserves_approved_review_logic(
+                existing
             )
             if preserve_review_logic:
                 for key in _THLB_PARENT_STEP_PRESERVED_APPROVED_REVIEW_KEYS:
@@ -8222,7 +8334,7 @@ def _merge_preserved_thlb_compiled_steps(
     approved_parent_ids = {
         str(parent_step.get("parent_step_id", "")).strip()
         for parent_step in parent_steps
-        if _infer_thlb_parent_step_ratchet_state(parent_step) == "approved"
+        if _thlb_parent_step_preserves_approved_review_logic(parent_step)
     }
     approved_parent_step_logic_by_id: dict[str, dict[str, Any]] = {}
     for parent_step in parent_steps:
@@ -11594,8 +11706,8 @@ def _tsa29_reconstruction_gap_interpretation_override(
         "thlb_parent_004_roads_and_landings": (
             "mixed",
             "accepted_aspatial_bridge",
-            "The TSR itself says existing roads, trails, and landings are modeled non-spatially through partial AFLB reductions because the features are too small and incomplete to track cleanly at landscape scale. The current strict lane only runs two narrow permanent-road buffer overlays and finds no active fragments, while the reviewed lane only has a Williams Lake smoke proof rather than a full-TSA bridge.",
-            "Formalize this step as a documented aspatial AFLB reduction in the strict lane instead of trying to force the current tiny spatial-only result to stand in for the full TSR deduction.",
+            "The TSR itself says existing roads, trails, and landings are modeled non-spatially through partial AFLB reductions because the features are too small and incomplete to track cleanly at landscape scale. The strict lane should therefore be judged against the documented aspatial benchmark first, with the narrow permanent-road overlays treated as supporting evidence only.",
+            "Keep the documented step-4 aspatial AFLB fallback in place unless you later adopt a better exact road-footprint contract.",
         ),
         "thlb_parent_006_parks_protected_areas_area_base_tenures": (
             "mixed",
@@ -13312,6 +13424,18 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                     "Aspatial area reduction requires TSR benchmark marginal area and total TSA area benchmark."
                 ]
             else:
+                residual_target_ha = float(benchmark_marginal_area_ha)
+                if bool(updated_step.get("subtract_parent_exact_removed_area")):
+                    residual_target_ha = max(
+                        0.0,
+                        residual_target_ha
+                        - _resolve_parent_exact_removed_area_ha(
+                            applied_steps=applied_steps,
+                            parent_step_id=str(
+                                updated_step.get("parent_step_id", "")
+                            ).strip(),
+                        ),
+                    )
                 current_area_ha = 0.0
                 for record in current_chunk_records:
                     current_area_ha += float(
@@ -13320,11 +13444,12 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                         ).sum()
                         / 10000.0
                     )
-                target_removed_area_ha = (
-                    float(benchmark_marginal_area_ha)
-                    * current_area_ha
-                    / total_area_benchmark_ha
-                )
+                if bool(updated_step.get("subtract_parent_exact_removed_area")):
+                    target_removed_area_ha = residual_target_ha
+                else:
+                    target_removed_area_ha = (
+                        residual_target_ha * current_area_ha / total_area_benchmark_ha
+                    )
                 fallback_started = perf_counter()
                 (
                     current_chunk_records,
@@ -13350,6 +13475,10 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                     "Applied the TSR area target as a documented reconstructed-mode aspatial fallback because no exact spatial implementation is available for this recipe row.",
                     "This early-area deduction scales active LU-wise reconstructed stand-area fields instead of claiming exact spatial reproduction.",
                 ]
+                if bool(updated_step.get("subtract_parent_exact_removed_area")):
+                    updated_step["run_notes"].append(
+                        f"Residual fallback target after same-parent exact removal: {target_removed_area_ha:.3f} ha."
+                    )
         else:
             updated_step["run_status"] = "unsupported"
             updated_step["run_notes"] = [
@@ -13715,14 +13844,27 @@ def _execute_tsr_thlb_recipe_steps(
                     "Aspatial area reduction requires TSR benchmark marginal area and total TSA area benchmark."
                 ]
             else:
+                residual_target_ha = float(benchmark_marginal_area_ha)
+                if bool(updated_step.get("subtract_parent_exact_removed_area")):
+                    residual_target_ha = max(
+                        0.0,
+                        residual_target_ha
+                        - _resolve_parent_exact_removed_area_ha(
+                            applied_steps=applied_steps,
+                            parent_step_id=str(
+                                updated_step.get("parent_step_id", "")
+                            ).strip(),
+                        ),
+                    )
                 current_area_ha = float(
                     _resolve_canonical_stand_area_sqm(checkpoint).sum() / 10000.0
                 )
-                target_removed_area_ha = (
-                    float(benchmark_marginal_area_ha)
-                    * current_area_ha
-                    / total_area_benchmark_ha
-                )
+                if bool(updated_step.get("subtract_parent_exact_removed_area")):
+                    target_removed_area_ha = residual_target_ha
+                else:
+                    target_removed_area_ha = (
+                        residual_target_ha * current_area_ha / total_area_benchmark_ha
+                    )
                 checkpoint, removed_area_ha, affected_row_count = (
                     _apply_aspatial_area_reduction(
                         checkpoint,
@@ -13741,6 +13883,10 @@ def _execute_tsr_thlb_recipe_steps(
                         "Applied the TSR area target as a documented reconstructed-mode aspatial fallback because no exact spatial implementation is available for this recipe row.",
                         "This early-area deduction shrinks stand-area attributes across the active AFLB subset instead of changing THLB retention directly.",
                     ]
+                    if bool(updated_step.get("subtract_parent_exact_removed_area")):
+                        updated_step["run_notes"].append(
+                            f"Residual fallback target after same-parent exact removal: {target_removed_area_ha:.3f} ha."
+                        )
                 else:
                     updated_step["run_notes"] = [
                         "Applied early-stage aspatial area reduction by shrinking stand-area attributes proportionally across the active AFLB subset.",
@@ -14232,6 +14378,7 @@ def run_tsr_thlb_reconstructed_diagnostic_slice(
     else:
         checkpoint, baseline_signal = _initialize_reconstructed_land_base(checkpoint)
     baseline_managed_area_ha = _managed_area_ha(checkpoint)
+    total_area_benchmark_ha = _resolve_tsr_total_area_benchmark(recipe)
 
     executable_steps = _select_reconstructed_diagnostic_steps(recipe.steps)
     bounded_start = max(0, int(start_index))
@@ -14256,6 +14403,7 @@ def run_tsr_thlb_reconstructed_diagnostic_slice(
             instance_root=instance_root,
             source_entry_map=source_entry_map,
             allow_stand_binary_fallback=allow_stand_binary_fallback,
+            total_area_benchmark_ha=total_area_benchmark_ha,
         )
     )
     execution_seconds = perf_counter() - run_start
