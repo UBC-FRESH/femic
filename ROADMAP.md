@@ -942,6 +942,21 @@ notes.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
 
+- 2026-04-12 raw-GLB strict AFLB bounded check:
+  - bounded reconstructed diagnostic slice only, indices `0..6` (`GLB -> AFLB` executable prefix only)
+  - baseline signal: `checkpoint1_raw_glb_initialization`
+  - raw strict baseline managed area: `5,158,940.544 ha`
+  - step 2 strict removed: `950,193.180 ha` vs TSR `697,033.000 ha`
+  - step 3 strict removed: `22,138.326 ha` vs TSR `1,105,908.000 ha`
+  - step 4 strict removed: `50,434.000 ha` vs TSR `50,434.000 ha`
+  - step 5 AFLB milestone remaining area after steps 2-4: `4,145,680.368 ha`
+  - step 5 AFLB delta vs TSR `3,098,168.000 ha`: `+1,047,512.368 ha`
+  - bounded artifacts only:
+    - `runtime/logs/tsr/reconstructed_diagnostics/raw_glb_glb_to_aflb_20260412T082632Z/glb_to_aflb.audit.json`
+    - `runtime/logs/tsr/reconstructed_diagnostics/raw_glb_glb_to_aflb_20260412T082632Z/glb_to_aflb.diag.json`
+    - `runtime/logs/tsr/reconstructed_diagnostics/raw_glb_glb_to_aflb_20260412T082632Z/glb_to_aflb_summary.{md,json}`
+  - restart the adjudication game from step 2 using this raw-GLB early-ladder result; do not use the older AFLB-conditioned early-step readouts.
+
 - 2026-04-10 (Issue `#134` completed: stage-aware THLB review UX hardening is
   now landed on top of the TSA29 table-first parser):
   - Implemented review-surface changes:

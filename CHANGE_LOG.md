@@ -13812,3 +13812,12 @@
     - stop after each bounded unit and wait instead of doing "while I'm here" follow-on work; and
     - treat `scope breach` as an immediate stop signal.
   - Mirrored the same rule in `ROADMAP.md` under the active `#128` adjudication notes so the current TSR/THLB game has a repo-tracked operating contract instead of relying on chat memory.
+- 2026-04-12: Ran the bounded raw-GLB strict `GLB -> AFLB` diagnostic slice only.
+  - Used reconstructed diagnostic indices `0..6` and stopped after the step-5 AFLB milestone read; did not rerun the full strict lane.
+  - Baseline signal: `checkpoint1_raw_glb_initialization`
+  - Raw strict baseline managed area: `5,158,940.544 ha`
+  - Step 2 strict removed: `950,193.180 ha` vs TSR `697,033.000 ha`
+  - Step 3 strict removed: `22,138.326 ha` vs TSR `1,105,908.000 ha`
+  - Step 4 strict removed: `50,434.000 ha` vs TSR `50,434.000 ha`
+  - Step-5 AFLB milestone remaining area after steps 2-4: `4,145,680.368 ha` vs TSR `3,098,168.000 ha` (`+1,047,512.368 ha`)
+  - Wrote bounded scratch artifacts only under `external/femic-tsa29-instance/runtime/logs/tsr/reconstructed_diagnostics/raw_glb_glb_to_aflb_20260412T082632Z/` and stopped there.
