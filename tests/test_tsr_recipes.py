@@ -7789,3 +7789,154 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_executes_select_attribute_w
     assert attr_step["run_status"] == "applied"
     assert attr_step["spatial_application_mode"] == "checkpoint_attribute_exclusion"
     assert attr_step["affected_area_ha"] == pytest.approx(0.01)
+
+
+def test_run_tsr_thlb_reconstructed_diagnostic_slice_lu_mode_respects_source_attribute_filters(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    source_path = (
+        instance_root / "data" / "downloads" / "bcdc" / "F_OWN" / "F_OWN.gpkg"
+    )
+    source_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {
+            "OWNER": ["exclude", "keep"],
+        },
+        geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10)],
+        crs="EPSG:3005",
+    ).to_file(source_path, driver="GPKG")
+
+    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2],
+            "MAP_ID": ["093J034", "093J034"],
+            "FEATURE_AREA_SQM": [100.0, 100.0],
+            "Shape_Area": [100.0, 100.0],
+            "Shape_Length": [40.0, 40.0],
+        },
+        geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint.to_feather(checkpoint_path)
+
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-5, -5, 25, 15)],
+        names=["Test LU"],
+    )
+
+    source_recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    source_recipe_payload["recipe_contract"]["status"] = "run"
+    source_recipe_payload["entries"] = [
+        {
+            "entry_id": "f_own",
+            "label": "Ownership",
+            "recommended_query": "WHSE_FOREST_VEGETATION.F_OWN",
+            "acquisition_strategy": "wfs_fetch",
+            "artifact_path": "data/downloads/bcdc/F_OWN/F_OWN.gpkg",
+            "run_status": "fetched",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            source_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["parent_steps"] = [
+        {
+            "parent_step_id": "thlb_parent_002_land_not_administered_by_the_province",
+            "parent_label": "Land not administered by the Province",
+            "parent_kind": "transformation",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "benchmark_marginal_area_ha": 100.0,
+            "benchmark_cumulative_area_ha": 100.0,
+            "row_order": 2,
+        },
+    ]
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "thlb_step_002_land_base",
+            "parent_step_id": "thlb_parent_002_land_not_administered_by_the_province",
+            "order_index": 1,
+            "step_kind": "netdown_rule",
+            "label": "Timber harvesting land base",
+            "normalized_action": "use_land_base",
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 24,
+        },
+        {
+            "step_id": "thlb_step_002_owner_filter",
+            "parent_step_id": "thlb_parent_002_land_not_administered_by_the_province",
+            "order_index": 2,
+            "step_kind": "netdown_rule",
+            "label": "Ownership filter",
+            "normalized_action": "exclude",
+            "compiled_operation_type": "select_spatial_intersect",
+            "linked_source_entry_ids": ["f_own"],
+            "source_attribute_filters": [
+                {"field": "OWNER", "operator": "eq", "value": "exclude"}
+            ],
+            "step_status": "ready",
+            "page_number": 25,
+        },
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    diagnostics_root = instance_root / "runtime" / "logs" / "tsr" / "diagnostics"
+    result = tsr_recipes.run_tsr_thlb_reconstructed_diagnostic_slice(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        output_path=diagnostics_root / "source_filter.feather",
+        audit_path=diagnostics_root / "source_filter.audit.json",
+        diagnostic_path=diagnostics_root / "source_filter.diag.json",
+    )
+
+    audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
+    filter_step = next(
+        step
+        for step in audit_payload["steps"]
+        if step["step_id"] == "thlb_step_002_owner_filter"
+    )
+    assert filter_step["run_status"] == "applied"
+    assert filter_step["spatial_application_mode"] == "fragment_overlay"
+    assert filter_step["affected_area_ha"] == pytest.approx(0.01)
+    assert filter_step["intersecting_exclusion_feature_count"] == 1

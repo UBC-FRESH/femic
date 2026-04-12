@@ -942,6 +942,19 @@ notes.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
 
+- `#128` strict THLB adjudication:
+  - the reconstructed LU-wise source-backed `exclude` bug is now resolved in code:
+    the LU execution lane was bypassing compiled `source_attribute_filters` and
+    loading raw source polygons directly, which could corrupt any source-backed
+    reconstructed exclusion step, not just TSA29 step 2;
+  - bounded verification on TSA29 step 2 now shows the LU path matches the
+    corrected filtered source logic, reducing the old bogus `936,055 ha`
+    removal to `195,843.189 ha`;
+  - next bounded follow-on is **step-2 ownership filtering semantics**, not LU
+    mechanics: determine which additional ownership categories / reviewed
+    discriminators are actually needed to reach the TSR step-2 benchmark
+    without reintroducing the old overcut.
+
 - 2026-04-12 raw-GLB strict AFLB bounded check:
   - bounded reconstructed diagnostic slice only, indices `0..6` (`GLB -> AFLB` executable prefix only)
   - baseline signal: `checkpoint1_raw_glb_initialization`

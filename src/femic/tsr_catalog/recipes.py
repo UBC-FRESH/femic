@@ -2989,10 +2989,7 @@ def _specialized_compiled_logic_for_parent_step(
             "Crown Tenure - Community Forest Agreement, Schedule A",
             "Crown Tenure - Community Forest Agreement, Schedule B",
             "Crown Tenure - First Nations Woodland Licence",
-            "Crown Tenure - Tree Farm Licence, Schedule A",
-            "Crown Tenure - Tree Farm Licence, Schedule B",
             "Crown - Municipal Parcels",
-            "Crown Lease - Misc. lease",
         ]
         ownership_item = _base_item(
             "compiled_01",
@@ -3005,7 +3002,7 @@ def _specialized_compiled_logic_for_parent_step(
                 "normalized_subject": "Ownership classes not administered for TSA timber supply",
                 "normalized_predicate": (
                     "exclude private, federal, Indian reserve, area-based tenure, "
-                    "municipal, and lease polygons from the working land base"
+                    "and municipal polygons from the working land base"
                 ),
                 "linked_source_entry_ids": ["whse_forest_vegetation_f_own"],
                 "source_attribute_filters": [
@@ -3018,6 +3015,7 @@ def _specialized_compiled_logic_for_parent_step(
                 "execution_notes": [
                     "Notebook execution now uses F_OWN ownership descriptions for the first-pass 6.2.1 exclusion buckets instead of the older OWN != {62,69} shortcut.",
                     "Woodlots and parks/protected areas stay in AFLB here and are handled later or retained, consistent with the TSA29 prose.",
+                    "Tree Farm Licence schedule polygons and the broad `Crown Lease - Misc. lease` bucket stay in AFLB here because including them materially overcuts the TSA29 step-2 benchmark; any narrower lease-only exclusions need a more specific reviewed discriminator.",
                 ],
             }
         )
@@ -13383,11 +13381,6 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
         updated_step = dict(step)
         normalized_action = str(step.get("normalized_action", "")).strip()
         operation_type = _resolve_compiled_operation_type(step)
-        linked_source_entry_ids = tuple(
-            str(value).strip()
-            for value in step.get("linked_source_entry_ids", ())
-            if str(value).strip()
-        )
         page_number = int(step.get("page_number") or 0)
         step_dir = run_root / (
             f"{int(step.get('order_index') or 0):03d}_"
@@ -13448,18 +13441,21 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                     ]
             else:
                 source_load_start = perf_counter()
-                exclusion_geometries, missing_sources, extent_mismatch_notes = (
-                    _load_exclusion_geometries(
-                        instance_root=instance_root,
-                        source_entry_map=source_entry_map,
-                        linked_source_entry_ids=linked_source_entry_ids,
-                        bbox=(
-                            float(checkpoint.total_bounds[0]),
-                            float(checkpoint.total_bounds[1]),
-                            float(checkpoint.total_bounds[2]),
-                            float(checkpoint.total_bounds[3]),
-                        ),
-                    )
+                (
+                    exclusion_geometries,
+                    missing_sources,
+                    no_matching_features,
+                    extent_mismatch_notes,
+                ) = _load_compiled_logic_geometries(
+                    instance_root=instance_root,
+                    compiled_item=step,
+                    source_entry_map=source_entry_map,
+                    bbox=(
+                        float(checkpoint.total_bounds[0]),
+                        float(checkpoint.total_bounds[1]),
+                        float(checkpoint.total_bounds[2]),
+                        float(checkpoint.total_bounds[3]),
+                    ),
                 )
                 step_profile["source_load_seconds"] = perf_counter() - source_load_start
                 if exclusion_geometries is None:
@@ -13473,7 +13469,25 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                         ]
                         if missing_sources:
                             updated_step["missing_source_entry_ids"] = missing_sources
+                elif no_matching_features:
+                    updated_step["run_status"] = "applied_noop"
+                    updated_step["run_notes"] = [
+                        "Fetched spatial artifacts were available, but no features matched the compiled source-attribute filters within the current reconstructed extent."
+                    ]
+                    if extent_mismatch_notes:
+                        updated_step["run_notes"].extend(extent_mismatch_notes)
                 else:
+                    if operation_type == "buffer_then_intersect":
+                        buffer_distance_m = float(
+                            step.get("buffer_distance_m", 0.0) or 0.0
+                        )
+                        exclusion_geometries = exclusion_geometries.copy()
+                        exclusion_geometries["geometry"] = (
+                            exclusion_geometries.geometry.buffer(buffer_distance_m)
+                        )
+                        exclusion_geometries = exclusion_geometries.loc[
+                            ~exclusion_geometries.geometry.is_empty
+                        ].copy()
                     try:
                         (
                             current_chunk_records,

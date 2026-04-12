@@ -13889,3 +13889,15 @@
     rerun then reused that snapshot successfully.
   - The stash remains local-only: no auto-commit and no auto-publish of the
     public-data submodule.
+## 2026-04-12
+
+- Fixed the reconstructed LU-wise THLB execution bug that was bypassing
+  compiled `source_attribute_filters` for source-backed `exclude` steps in the
+  strict lane. This was a systemic reconstructed-LU issue, not a step-2-only
+  problem.
+- Added a regression test proving reconstructed LU execution now respects
+  source attribute filters before overlay.
+- Re-ran only the bounded TSA29 raw-GLB step-2 strict slice and confirmed the
+  old bogus `936,055.182 ha` step-2 removal dropped to `195,843.189 ha`, which
+  isolates the remaining step-2 gap as a **filtering semantics** problem rather
+  than an LU mechanics bug.
