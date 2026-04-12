@@ -13901,3 +13901,5 @@
   old bogus `936,055.182 ha` step-2 removal dropped to `195,843.189 ha`, which
   isolates the remaining step-2 gap as a **filtering semantics** problem rather
   than an LU mechanics bug.
+- Opened follow-on issue `#149` to handle the now-isolated TSA29 step-2
+  ownership filtering semantics problem as its own bounded unit.

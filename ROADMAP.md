@@ -953,7 +953,9 @@ notes.
   - next bounded follow-on is **step-2 ownership filtering semantics**, not LU
     mechanics: determine which additional ownership categories / reviewed
     discriminators are actually needed to reach the TSR step-2 benchmark
-    without reintroducing the old overcut.
+    without reintroducing the old overcut;
+  - governing bounded follow-on issue: **#149** `Bug: correct TSA29 strict
+    step-2 ownership filtering semantics against TSR benchmark`.
 
 - 2026-04-12 raw-GLB strict AFLB bounded check:
   - bounded reconstructed diagnostic slice only, indices `0..6` (`GLB -> AFLB` executable prefix only)
