@@ -46,7 +46,6 @@ from femic.bcdc_fetch import (
     fetch_bcdc_wfs_data,
 )
 from femic.pipeline.tipsy_config import BROADLEAF_SPECIES_CODES
-from femic.pipeline.vri import initialize_aflb_land_base_records
 
 from .overlay import TsrOverlayTsaRecord
 from .report import TsrFactReviewRow, report_tsr_candidate_facts
@@ -6227,18 +6226,11 @@ def _resolve_canonical_stand_area_sqm(checkpoint: gpd.GeoDataFrame) -> pd.Series
 def _initialize_reconstructed_land_base(
     checkpoint: gpd.GeoDataFrame,
 ) -> tuple[gpd.GeoDataFrame, str]:
+    reconstructed = checkpoint.copy()
+    thlb_binary = reconstructed.geometry.map(lambda _value: 1.0).astype(float)
     if "FOR_MGMT_LAND_BASE_IND" in checkpoint.columns:
-        reconstructed = initialize_aflb_land_base_records(
-            f_table=checkpoint,
-            required_bclcs_level_2="T",
-            required_for_mgmt_land_base="Y",
-            excluded_bec_zones=(),
-        )
-        thlb_binary = reconstructed.geometry.map(lambda _value: 1.0).astype(float)
-        signal_source = "checkpoint1_aflb_initialization"
+        signal_source = "checkpoint1_raw_glb_initialization"
     else:
-        reconstructed = checkpoint.copy()
-        thlb_binary = reconstructed.geometry.map(lambda _value: 1.0).astype(float)
         signal_source = "default_one"
     if (
         "FEATURE_ID" in reconstructed.columns
@@ -11499,6 +11491,8 @@ def _comparison_queue_action(
     problem_ownership: str,
     difference_nature: str,
 ) -> str:
+    if problem_ownership == "not_applicable" or difference_nature == "reference_only":
+        return "not_applicable"
     if tsr_fit_class == "tsr_close_enough":
         return "defer_low_priority"
     if problem_ownership == "data_exogenous":
@@ -11525,6 +11519,7 @@ def _comparison_queue_action(
 
 def _comparison_queue_action_summary(action: str) -> str:
     mapping = {
+        "not_applicable": "Reference milestone only; no direct corrective action.",
         "fix_strict_logic": "Fix strict logic or semantics in FEMIC.",
         "improve_data_or_source": "Improve or replace the missing/weak source data.",
         "keep_reviewed_bridge": "Keep the reviewed bridge for now and do not force strict parity yet.",
@@ -11574,6 +11569,8 @@ def _build_tsr_fit_practical_meaning(
 
 
 def _comparison_actionability(bucket: str, adjudication_action: str) -> str:
+    if adjudication_action == "not_applicable":
+        return "Reference milestone only; inspect cumulative checkpoint area instead of step-local logic."
     if adjudication_action == "use_documented_aspatial_fallback":
         return (
             "Decide whether this documented aspatial fallback should remain the working "
@@ -11910,6 +11907,33 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
     reconstructed_baseline_signal = str(
         reconstructed_audit_payload.get("baseline_signal", "")
     ).strip()
+    reconstructed_baseline_managed_area_ha = _normalize_float_or_none(
+        reconstructed_audit_payload.get("baseline_managed_area_ha")
+    )
+    reconstructed_cumulative_area_by_parent_id: dict[str, float] = {}
+    if reconstructed_baseline_managed_area_ha is not None:
+        running_cumulative_area_ha = float(reconstructed_baseline_managed_area_ha)
+        for parent_step in sorted(
+            recipe.parent_steps, key=lambda item: int(item.get("row_order", 0) or 0)
+        ):
+            parent_step_id = str(parent_step.get("parent_step_id", "")).strip()
+            if not parent_step_id:
+                continue
+            if str(parent_step.get("parent_kind", "")).strip() == "milestone":
+                reconstructed_cumulative_area_by_parent_id[parent_step_id] = (
+                    running_cumulative_area_ha
+                )
+                continue
+            removed_area_ha = _normalize_float_or_none(
+                reconstructed_parent_map.get(parent_step_id, {}).get(
+                    "reconstructed_removed_area_ha"
+                )
+            )
+            if removed_area_ha is not None:
+                running_cumulative_area_ha -= float(removed_area_ha)
+            reconstructed_cumulative_area_by_parent_id[parent_step_id] = (
+                running_cumulative_area_ha
+            )
     milestones, parent_stage_groups = _parent_steps_grouped_by_stage(recipe)
     entries: list[dict[str, Any]] = []
     for parent_step in recipe.parent_steps:
@@ -11992,6 +12016,15 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
             and reconstructed_removed_area_ha is not None
             else None
         )
+        reconstructed_cumulative_area_ha = _normalize_float_or_none(
+            reconstructed_cumulative_area_by_parent_id.get(parent_step_id)
+        )
+        strict_vs_tsr_cumulative_delta_ha = (
+            reconstructed_cumulative_area_ha - benchmark_cumulative_area_ha
+            if reconstructed_cumulative_area_ha is not None
+            and benchmark_cumulative_area_ha is not None
+            else None
+        )
         reviewed_difference_role = comparison_bucket
         practical_meaning = _build_tsr_fit_practical_meaning(
             tsr_fit_class=tsr_fit_class,
@@ -11999,6 +12032,32 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
             strict_vs_reviewed_delta_ha=strict_vs_reviewed_delta_ha,
             problem_ownership=problem_ownership,
         )
+        if (
+            str(item.get("parent_kind", "")).strip() == "milestone"
+            and strict_vs_tsr_cumulative_delta_ha is not None
+        ):
+            if abs(strict_vs_tsr_cumulative_delta_ha) <= max(
+                25000.0, abs(benchmark_cumulative_area_ha or 0.0) * 0.01
+            ):
+                practical_meaning = (
+                    "This is a milestone row. The useful question here is whether the "
+                    "current strict cumulative area checkpoint is close enough to the "
+                    "TSR cumulative target, and it is."
+                )
+            else:
+                direction = (
+                    "below"
+                    if strict_vs_tsr_cumulative_delta_ha < 0.0
+                    else "above"
+                )
+                practical_meaning = (
+                    "This is a milestone row. The current strict cumulative area "
+                    f"checkpoint is materially {direction} the TSR cumulative target, "
+                    "so inspect the prior deduction steps rather than trying to fix the milestone itself."
+                )
+            recommended_next_move = (
+                "Reference row only; inspect cumulative strict area carried into this checkpoint and fix prior deduction steps if needed."
+            )
         adjudication_action = _comparison_queue_action(
             tsr_fit_class=tsr_fit_class,
             problem_ownership=problem_ownership,
@@ -12029,13 +12088,6 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
             note_text = str(raw_note).strip()
             if note_text:
                 supporting_notes.append(f"strict note: {note_text}")
-        if (
-            reconstructed_baseline_signal == "checkpoint1_aflb_initialization"
-            and str(item.get("land_base_stage", "")).strip() == "glb_to_aflb"
-        ):
-            supporting_notes.append(
-                "strict note: Early GLB -> AFLB stepwise deltas in reconstructed mode are conditioned by checkpoint1/AFLB initialization rather than a literal raw-GLB replay."
-            )
         entries.append(
             {
                 "parent_step_id": parent_step_id,
@@ -12054,6 +12106,8 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
                 "reconstructed_removed_area_ha": reconstructed_removed_area_ha,
                 "reviewed_removed_area_ha": reviewed_removed_area_ha,
                 "strict_vs_tsr_delta_ha": strict_vs_tsr_delta_ha,
+                "reconstructed_cumulative_area_ha": reconstructed_cumulative_area_ha,
+                "strict_vs_tsr_cumulative_delta_ha": strict_vs_tsr_cumulative_delta_ha,
                 "reviewed_vs_tsr_delta_ha": reviewed_vs_tsr_delta_ha,
                 "strict_vs_reviewed_delta_ha": strict_vs_reviewed_delta_ha,
                 "reconstructed_status": reconstructed_status,
@@ -12317,7 +12371,7 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
             "- The reviewed lane was accepted because its cumulative THLB was close enough to the TSR benchmark for practical exploratory modeling use.",
             "- Reviewed per-step behavior is therefore useful context, not automatic gold-standard truth for strict reconstruction.",
             "- A parent step is a top-priority strict-lane repair when strict is materially bad against TSR, not merely because strict differs from reviewed.",
-            "- For early `GLB -> AFLB` rows, strict stepwise marginal deductions are conditioned by `checkpoint1_aflb_initialization` in the current reconstructed lane, so treat those deltas as diagnostic rather than as a literal raw-GLB replay.",
+            "- The current strict lane now starts from raw checkpoint1 geometry rather than an AFLB-style prefiltered subset, so early `GLB -> AFLB` rows are intended to be read as real stepwise deductions.",
             "",
             "## Strict-vs-TSR Fit Counts",
             "",
@@ -12427,11 +12481,29 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
                 if benchmark_cumulative is not None
                 else "not parsed"
             )
+            reconstructed_cumulative = _normalize_float_or_none(
+                item.get("reconstructed_cumulative_area_ha")
+            )
+            reconstructed_text = (
+                f"{reconstructed_cumulative:.3f} ha"
+                if reconstructed_cumulative is not None
+                else "not recorded"
+            )
+            cumulative_delta = _normalize_float_or_none(
+                item.get("strict_vs_tsr_cumulative_delta_ha")
+            )
+            cumulative_delta_text = (
+                f"{cumulative_delta:.3f} ha"
+                if cumulative_delta is not None
+                else "n/a"
+            )
             lines.append(
                 "- "
                 f"`{item.get('parent_step_id', '')}` | "
                 f"{item.get('parent_label', '')} | "
-                f"benchmark cumulative area=`{benchmark_text}`"
+                f"benchmark cumulative area=`{benchmark_text}` | "
+                f"strict cumulative area=`{reconstructed_text}` | "
+                f"strict cumulative delta=`{cumulative_delta_text}`"
             )
     lines.extend(["", "## Parent-Step Comparison", ""])
     for stage in _THLB_STAGE_ORDER:
@@ -12469,6 +12541,22 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
             if benchmark_cumulative is not None:
                 lines.append(
                     f"- TSR benchmark cumulative area: `{benchmark_cumulative:.3f} ha`"
+                )
+            reconstructed_cumulative = _normalize_float_or_none(
+                item.get("reconstructed_cumulative_area_ha")
+            )
+            if reconstructed_cumulative is not None:
+                lines.append(
+                    "- Strict reconstructed cumulative area at this checkpoint: "
+                    f"`{reconstructed_cumulative:.3f} ha`"
+                )
+            strict_vs_tsr_cumulative_delta = _normalize_float_or_none(
+                item.get("strict_vs_tsr_cumulative_delta_ha")
+            )
+            if strict_vs_tsr_cumulative_delta is not None:
+                lines.append(
+                    "- Strict cumulative vs TSR cumulative delta: "
+                    f"`{strict_vs_tsr_cumulative_delta:.3f} ha`"
                 )
             reconstructed_removed = _normalize_float_or_none(
                 item.get("reconstructed_removed_area_ha")

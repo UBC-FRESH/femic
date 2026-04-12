@@ -885,8 +885,8 @@ Important current boundary:
 - ``--execution-mode hybrid`` is still the reviewed stand-level bridge from
   issue ``#126``;
 - ``--execution-mode reconstructed`` is now the promoted fragment-first lane:
-  it starts from checkpoint1/AFLB initialization, fragments the working land
-  base where reviewed spatial exclusions intersect, and assigns binary
+  it starts from raw checkpoint1 geometry, fragments the working land base
+  where reviewed spatial exclusions intersect, and assigns binary
   fragment-level THLB membership ``{0,1}``;
 - reconstructed exact spatial steps now run LU-wise by default:
   FEMIC cuts one Landscape Unit chunk at a time instead of trying to build one

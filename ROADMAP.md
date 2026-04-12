@@ -8858,6 +8858,17 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - rerun the full strict lane end to end from that raw GLB start;
     - confirm the resulting stepwise and cumulative behavior is sane before calling the strict lane “done”.
 
+- 2026-04-12 (`#128` active next move: raw-GLB reset before further stepwise adjudication):
+  - Pause the current one-step-at-a-time adjudication sequence here.
+  - Use `data/ria_vri_vclr1p_checkpoint1.feather` as the raw geometry universe, but stop pre-filtering it into AFLB during reconstructed initialization.
+  - Governing implementation order:
+    - switch reconstructed initialization to `checkpoint1_raw_glb_initialization`;
+    - rerun the full strict TSA29 lane from the top with the normal reconstructed command;
+    - rebuild the strict-vs-TSR comparison ledger from that new run;
+    - snapshot the new LU-wise strict baseline artifacts; and
+    - restart adjudication from step 2 on the rebuilt ledger.
+  - Do not continue adjudicating step 6+ from the old AFLB-conditioned strict run.
+
 - 2026-04-11 (`#131` completed: LU-wise reconstructed THLB runtime is now operational on full TSA29):
   - Completion summary:
     - replaced the old reconstructed full-area row-batch exact overlay path with cached LU-wise decomposition over checkpoint1/AFLB;

@@ -964,7 +964,7 @@ def test_thlb_status_report_prefers_parent_steps_when_present() -> None:
         audit_relative_path="config/tsr/thlb_reconstructed.audit.json",
         execution_mode="reconstructed",
         allow_stand_binary_fallback=False,
-        baseline_signal="checkpoint1_aflb_initialization",
+        baseline_signal="checkpoint1_raw_glb_initialization",
         selected_map_ids=("092O071",),
         input_area_ha=27072.529,
         baseline_managed_area_ha=26350.175,
@@ -1476,6 +1476,7 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
     assert "Strict vs TSR:" in markdown
     assert "Reviewed difference:" in markdown
     assert "reviewed bridge" in markdown.casefold()
+    assert "raw checkpoint1 geometry" in markdown
 
 
 def test_resolve_reviewed_thlb_remaining_area_ignores_tail_no_deduction_steps() -> None:
@@ -6262,24 +6263,24 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
 
     assert result.execution_mode == tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
     assert result.checkpoint_path == checkpoint1_path.resolve()
-    assert result.baseline_signal == "checkpoint1_aflb_initialization"
+    assert result.baseline_signal == "checkpoint1_raw_glb_initialization"
     assert result.input_area_ha == pytest.approx(0.02)
-    assert result.baseline_managed_area_ha == pytest.approx(0.01)
-    assert result.final_managed_area_ha == pytest.approx(0.005)
+    assert result.baseline_managed_area_ha == pytest.approx(0.02)
+    assert result.final_managed_area_ha == pytest.approx(0.015)
     assert result.legacy_reference_managed_area_ha == pytest.approx(0.01)
     assert result.selected_map_ids == ()
     assert result.tsr_reported_aflb_area_ha is None
 
     output = gpd.read_feather(result.output_path)
-    assert len(output) == 2
-    assert set(output["SOURCE_FEATURE_ID"].tolist()) == {100}
+    assert len(output) == 3
+    assert set(output["SOURCE_FEATURE_ID"].tolist()) == {100, 200}
     assert set(output["thlb"].tolist()) == {0, 1}
     assert set(output["thlb_fact"].tolist()) == {0.0, 1.0}
     assert output["FEATURE_ID"].is_unique
 
     managed = output.loc[output["thlb_fact"] > 0.0]
     unmanaged = output.loc[output["thlb_fact"] == 0.0]
-    assert managed.geometry.area.sum() / 10000.0 == pytest.approx(0.005)
+    assert managed.geometry.area.sum() / 10000.0 == pytest.approx(0.015)
     assert unmanaged.geometry.area.sum() / 10000.0 == pytest.approx(0.005)
 
     audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))

@@ -139,7 +139,8 @@ Worked Example: TSA29 Source Layers and THLB
 The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
 
 For the deeper conceptual contract behind the ladder itself, including
-hybrid-vs-reconstructed semantics and benchmark comparison rules, see
+hybrid-vs-reconstructed semantics, the raw-GLB reconstructed start contract,
+and benchmark comparison rules, see
 :doc:`tsr-thlb-reconstruction-ladder`.
 
 1. refresh the canonical TSR surfaces:

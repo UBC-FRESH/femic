@@ -6181,7 +6181,7 @@ def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
             / "tsr"
             / "thlb_reconstructed_status_report-20260405T000000Z.md",
             execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
-            baseline_signal="checkpoint1_aflb_initialization",
+            baseline_signal="checkpoint1_raw_glb_initialization",
             selected_map_ids=("093J034", "093J044"),
             step_count=2,
             outcome_counts={"applied": 1, "needs_review": 1},
