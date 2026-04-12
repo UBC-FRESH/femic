@@ -12300,6 +12300,8 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
             "- This report does not change THLB logic. It explains how the strict reconstructed lane fits against the TSR benchmark and uses the reviewed lane as supporting context.",
             "- The governing question is whether strict is close enough to TSR, not whether strict matches reviewed step-for-step.",
             "- Reviewed differences still matter, but mainly because they explain accepted bridges, skips, calibrations, or semantic differences that the strict lane does not automatically share.",
+            "- For the current TSA29 adjudication pass, this report is an active repair ledger: once a parent step is understood well enough to choose an actionable next move, land that change before moving to the next step.",
+            "- Only leave a step as analysis-only when the chosen action is explicitly to defer, keep a reviewed bridge for now, or wait on missing data/source improvements.",
         ]
     )
     if milestone_entries:

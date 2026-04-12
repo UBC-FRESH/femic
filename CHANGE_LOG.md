@@ -13737,6 +13737,18 @@
     - start the strict lane from a true raw-GLB geometry baseline; and
     - rerun the full strict lane at least once from that raw GLB start to
       confirm the stepwise and cumulative behavior is sane.
+- 2026-04-11: Tightened the written `#128` adjudication-pass contract so the
+  workflow cannot drift into passive analysis-only bookkeeping.
+  - The governing ledger is still
+    `config/tsr/thlb_reconstruction_comparison.{md,json}`.
+  - But the next-phase rule is now explicit:
+    - once a step is understood well enough to choose an action, implement that
+      action immediately if it is actionable now;
+    - only leave a step as analysis-only when the chosen action is explicitly
+      to defer, keep a bridge for now, or wait on missing data;
+    - do not move to the next step after choosing `fix_strict_logic` or
+      `use_documented_aspatial_fallback` unless the corresponding change has
+      actually been landed and checkpointed.
 - 2026-04-11: Adjudicated TSA29 strict THLB step 4 as a documented aspatial
   fallback seam, not a spatial-tuning problem.
   - Step:

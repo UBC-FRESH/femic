@@ -8748,7 +8748,13 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       - `keep_reviewed_bridge`
       - `use_documented_aspatial_fallback`
       - `defer_low_priority`
+  - This is an **active repair queue**, not a passive classification exercise:
+    - once a step has been understood well enough to choose an action, implement that action immediately if it is actionable now;
+    - only leave the step as analysis-only when the chosen action is explicitly:
+      - `defer_low_priority`; or
+      - a documented "wait for later" bridge/data decision such as `keep_reviewed_bridge` or `improve_data_or_source`.
   - Do not silently “fix ahead” on later steps while earlier-step interpretation is still unresolved.
+  - Do not move to the next parent step after deciding `fix_strict_logic` or `use_documented_aspatial_fallback` unless the corresponding code/report change has actually been landed and checkpointed.
   - Reassess the whole-ladder read only after working through the final parent step again; that is the point where we should answer:
     - is strict THLB now close enough overall, or
     - still fundamentally “fix me” status?
