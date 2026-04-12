@@ -13737,3 +13737,24 @@
     - start the strict lane from a true raw-GLB geometry baseline; and
     - rerun the full strict lane at least once from that raw GLB start to
       confirm the stepwise and cumulative behavior is sane.
+- 2026-04-11: Adjudicated TSA29 strict THLB step 4 as a documented aspatial
+  fallback seam, not a spatial-tuning problem.
+  - Step:
+    - `thlb_parent_004_roads_and_landings`
+  - Evidence:
+    - strict removed `0.000 ha`
+    - reviewed removed `1,557.111 ha`
+    - TSR benchmark marginal area `50,434.000 ha`
+    - strict-vs-TSR delta `-50,434.000 ha`
+  - Decision:
+    - `use_documented_aspatial_fallback`
+  - Rationale:
+    - TSA29 section 6.2.3 explicitly says existing roads, trails, and landings
+      are modeled non-spatially through partial AFLB reductions because the
+      features are too small and incomplete to delineate reliably at landscape
+      scale;
+    - the strict lane currently only executes the two narrow permanent-road
+      buffer rules, and those found no active LU-clipped fragments in the
+      reconstructed run; and
+    - the reviewed result is only a Williams Lake LU smoke proof, not a full-TSA
+      bridge result, so the tiny reviewed number is not the real target either.

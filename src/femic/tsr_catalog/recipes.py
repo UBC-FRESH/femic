@@ -11396,13 +11396,14 @@ def _comparison_queue_action(
             return "use_documented_aspatial_fallback"
         return "keep_reviewed_bridge"
     if difference_nature in {
-        "accepted_aspatial_bridge",
         "accepted_skip_or_noop",
         "accepted_reviewed_override",
         "reviewed_bridge_semantics",
         "missing_late_stage_semantics",
     }:
         return "keep_reviewed_bridge"
+    if difference_nature == "accepted_aspatial_bridge":
+        return "use_documented_aspatial_fallback"
     if difference_nature in {"missing_or_blocked_data", "weak_public_coverage"}:
         return "improve_data_or_source"
     if difference_nature == "close_match":
@@ -11460,7 +11461,12 @@ def _build_tsr_fit_practical_meaning(
     return reviewed_context
 
 
-def _comparison_actionability(bucket: str) -> str:
+def _comparison_actionability(bucket: str, adjudication_action: str) -> str:
+    if adjudication_action == "use_documented_aspatial_fallback":
+        return (
+            "Decide whether this documented aspatial fallback should remain the working "
+            "contract or be replaced by a better exact implementation later."
+        )
     mapping = {
         "close_match": "No immediate action; keep this as a reference step.",
         "reviewed_bridge_only": (
@@ -11584,6 +11590,12 @@ def _tsa29_reconstruction_gap_interpretation_override(
             "reviewed_bridge_semantics",
             "The strict lane is only doing a narrow direct waterbody removal here, while the reviewed lane is carrying a much broader non-forest interpretation; in addition, this early GLB-to-AFLB comparison is conditioned by checkpoint1/AFLB initialization rather than a literal raw-GLB replay.",
             "Decide and document the intended strict non-forest semantics before changing code again; this is not just a missing-data problem, and the current stepwise delta should be read as a baseline-conditioned diagnostic rather than a literal raw-GLB replay.",
+        ),
+        "thlb_parent_004_roads_and_landings": (
+            "mixed",
+            "accepted_aspatial_bridge",
+            "The TSR itself says existing roads, trails, and landings are modeled non-spatially through partial AFLB reductions because the features are too small and incomplete to track cleanly at landscape scale. The current strict lane only runs two narrow permanent-road buffer overlays and finds no active fragments, while the reviewed lane only has a Williams Lake smoke proof rather than a full-TSA bridge.",
+            "Formalize this step as a documented aspatial AFLB reduction in the strict lane instead of trying to force the current tiny spatial-only result to stand in for the full TSR deduction.",
         ),
         "thlb_parent_006_parks_protected_areas_area_base_tenures": (
             "mixed",
@@ -11948,7 +11960,9 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
                 "adjudication_action_summary": _comparison_queue_action_summary(
                     adjudication_action
                 ),
-                "actionability": _comparison_actionability(comparison_bucket),
+                "actionability": _comparison_actionability(
+                    comparison_bucket, adjudication_action
+                ),
                 "supporting_notes": supporting_notes,
             }
         )

@@ -8791,6 +8791,24 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Next-move rule:
     - do not rush into code edits for step 3 yet;
     - first decide and document the intended strict non-forest semantics, then revisit whether that bridge should stay accepted or be translated into strict logic later.
+- 2026-04-11 (`#128` step 4 adjudicated):
+  - Parent step:
+    - `thlb_parent_004_roads_and_landings`
+  - Governing read:
+    - strict removed area: `0.000 ha`
+    - reviewed removed area: `1,557.111 ha`
+    - TSR benchmark marginal area: `50,434.000 ha`
+    - strict-vs-TSR delta: `-50,434.000 ha`
+  - Interpretation:
+    - this is not just a case where the strict lane found no roads;
+    - TSA29 section 6.2.3 explicitly says existing roads, trails, and landings are modeled non-spatially through partial AFLB reductions because the features are too small and incomplete to delineate reliably at landscape scale;
+    - the current strict lane only executes the two narrow permanent-road buffer rules, and those buffers found no active LU-clipped fragments in the reconstructed run;
+    - the current reviewed result is only a Williams Lake LU smoke proof, not a full-TSA bridge result, so the tiny reviewed number is not the real target either.
+  - Adjudication action:
+    - `use_documented_aspatial_fallback`
+  - Next-move rule:
+    - do not waste time tuning the current tiny spatial-only road result;
+    - formalize an explicit aspatial AFLB reduction for existing roads, trails, and landings in the strict lane if we need this step to behave more like TSR.
 - 2026-04-11 (`#128` strict-lane baseline caveat for the remaining adjudication pass):
   - The current strict reconstructed lane is **not** yet a literal raw-GLB replay of the full TSA29 Table 3 ladder.
   - Current strict baseline:
