@@ -11,6 +11,7 @@ import yaml
 from typer.testing import CliRunner
 
 from femic.arcgis_review import ArcgisReviewProjectResult
+from femic.glb import GlbBuildResult
 from femic import bcdc_catalog
 from femic import tsr_catalog
 from femic.cli import main as cli_main
@@ -222,6 +223,87 @@ def test_prep_arcgis_review_project_surfaces_missing_arcgis(
     assert result.exit_code == 1
     assert "ArcGIS review-project emit failed" in result.stdout
     assert "ArcGIS Pro Python not found." in result.stdout
+
+
+def test_prep_glb_build_prints_emitted_paths(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    instance_root = tmp_path / "instance"
+    instance_root.mkdir(parents=True, exist_ok=True)
+    output_dir = instance_root / "runtime" / "logs" / "glb_build" / "tsa29"
+    clipped_glb_gdb_path = output_dir / "clipped_glb.gdb"
+    summary_json_path = output_dir / "glb_summary.json"
+    summary_markdown_path = output_dir / "glb_summary.md"
+    monkeypatch.setattr(
+        cli_main,
+        "build_tsa_raw_glb",
+        lambda **_: GlbBuildResult(
+            tsa_selector="29",
+            tsa_number="29",
+            tsa_name="Williams Lake TSA",
+            source_zip_path=tmp_path / "VEG_COMP_LYR_R1_POLY_2024.gdb.zip",
+            boundary_source_path=tmp_path / "tsa.gpkg",
+            output_dir=output_dir,
+            clipped_glb_gdb_path=clipped_glb_gdb_path,
+            clipped_glb_feature_class="tsa_glb_vri_2024",
+            summary_json_path=summary_json_path,
+            summary_markdown_path=summary_markdown_path,
+            feature_count=317735,
+            clipped_area_ha=4933664.212,
+            boundary_area_ha=4933664.215,
+            area_delta_ha=-0.003,
+        ),
+    )
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "prep",
+            "glb-build",
+            "--instance-root",
+            str(instance_root),
+            "--tsa",
+            "29",
+        ],
+    )
+
+    assert result.exit_code == 0
+    normalized_stdout = result.stdout.replace("\n", "")
+    assert "Raw-source GLB emitted" in result.stdout
+    assert "tsa_number=29" in normalized_stdout
+    assert "clipped_glb_gdb_path=" in normalized_stdout
+    assert "summary_json_path=" in normalized_stdout
+    assert "feature_count=317735" in normalized_stdout
+
+
+def test_prep_glb_build_surfaces_failures(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    instance_root = tmp_path / "instance"
+    instance_root.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(
+        cli_main,
+        "build_tsa_raw_glb",
+        lambda **_: (_ for _ in ()).throw(
+            FileNotFoundError("Raw 2024 VRI zip not found.")
+        ),
+    )
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "prep",
+            "glb-build",
+            "--instance-root",
+            str(instance_root),
+            "--tsa",
+            "29",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "GLB build failed" in result.stdout
+    assert "Raw 2024 VRI zip not found." in result.stdout
 
 
 def test_preflight_checks_windows_requires_git_annex(

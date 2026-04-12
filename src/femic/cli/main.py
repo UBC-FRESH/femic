@@ -72,6 +72,7 @@ from femic.fansier_workflow import (
     run_fansier_batch_and_parse,
 )
 from femic.geospatial_preflight import run_geospatial_preflight
+from femic.glb import build_tsa_raw_glb
 from femic.instance_bootstrap import bootstrap_instance_workspace
 from femic.instance_context import (
     INSTANCE_ROOT_ENV,
@@ -991,6 +992,24 @@ ARCGIS_REVIEW_PROJECT_NAME_OPTION = typer.Option(
     None,
     "--project-name",
     help="Optional .aprx project name stem.",
+    show_default=False,
+)
+GLB_BUILD_OUTPUT_DIR_OPTION = typer.Option(
+    None,
+    "--output-dir",
+    help="Optional destination directory for emitted GLB clip files.",
+    show_default=False,
+)
+GLB_BUILD_SOURCE_ZIP_OPTION = typer.Option(
+    None,
+    "--source-zip-path",
+    help="Optional explicit raw VRI zip override.",
+    show_default=False,
+)
+GLB_BUILD_BOUNDARY_PATH_OPTION = typer.Option(
+    None,
+    "--boundary-path",
+    help="Optional explicit TSA boundary layer override.",
     show_default=False,
 )
 EXPORT_BUNDLE_DIR_OPTION = typer.Option(
@@ -5359,6 +5378,67 @@ def prep_arcgis_review_project(
     console.print(f"layer_count={result.layer_count}")
     for note in result.skipped_notes:
         console.print(f"[yellow]Note:[/yellow] {note}")
+
+
+@prep_app.command("glb-build")
+def prep_glb_build(
+    tsa: str = typer.Option(..., "--tsa", help="TSA code, tsa_<code>, or TSA name."),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+    output_dir: Path | None = GLB_BUILD_OUTPUT_DIR_OPTION,
+    source_zip_path: Path | None = GLB_BUILD_SOURCE_ZIP_OPTION,
+    boundary_path: Path | None = GLB_BUILD_BOUNDARY_PATH_OPTION,
+) -> None:
+    """Build and report a clean raw-source GLB clip for one TSA."""
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_output_dir = (
+        instance_context.resolve_path(output_dir) if output_dir is not None else None
+    )
+    resolved_source_zip_path = (
+        instance_context.resolve_path(source_zip_path)
+        if source_zip_path is not None
+        else None
+    )
+    resolved_boundary_path = (
+        instance_context.resolve_path(boundary_path)
+        if boundary_path is not None
+        else None
+    )
+    try:
+        result = build_tsa_raw_glb(
+            source_root=_source_tree_root(),
+            instance_root=instance_context.root,
+            tsa=tsa,
+            output_dir=resolved_output_dir,
+            source_zip_path=resolved_source_zip_path,
+            boundary_path=resolved_boundary_path,
+        )
+    except (
+        FileNotFoundError,
+        RuntimeError,
+        ValueError,
+        subprocess.CalledProcessError,
+    ) as exc:
+        console.print(f"[red]GLB build failed:[/red] {exc}")
+        if isinstance(exc, subprocess.CalledProcessError):
+            if exc.stdout.strip():
+                console.print(exc.stdout.strip())
+            if exc.stderr.strip():
+                console.print(exc.stderr.strip())
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]Raw-source GLB emitted[/green]")
+    console.print(f"tsa_number={result.tsa_number}")
+    console.print(f"tsa_name={result.tsa_name}")
+    console.print(f"source_zip_path={result.source_zip_path}")
+    console.print(f"boundary_source_path={result.boundary_source_path}")
+    console.print(f"clipped_glb_gdb_path={result.clipped_glb_gdb_path}")
+    console.print(f"clipped_glb_feature_class={result.clipped_glb_feature_class}")
+    console.print(f"summary_json_path={result.summary_json_path}")
+    console.print(f"summary_markdown_path={result.summary_markdown_path}")
+    console.print(f"boundary_area_ha={result.boundary_area_ha:.3f}")
+    console.print(f"clipped_area_ha={result.clipped_area_ha:.3f}")
+    console.print(f"area_delta_ha={result.area_delta_ha:.3f}")
+    console.print(f"feature_count={result.feature_count}")
 
 
 @vdyp_app.command("run")

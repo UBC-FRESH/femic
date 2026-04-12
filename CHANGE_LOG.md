@@ -13838,3 +13838,6 @@
   - This side quest turns the TSA29 raw-GLB proof into a supported FEMIC capability instead of a one-off debugging sequence.
   - The issue is explicitly tied back to the old `#122` TSR/THLB umbrella and the active strict reconstruction issue `#128`.
   - The core implementation target is a dedicated workflow that clips the raw 2024 VRI (by default) to an active TSA boundary and reports the GLB milestone area without routing through checkpoint feathers.
+- 2026-04-12: Started the bounded implementation slice for `#146`.
+  - Added the command/docs/test contract for a clean `prep glb-build` path instead of continuing to rely on ad hoc raw-GLB scratch clipping.
+  - Kept the slice scoped to the new command seam, supporting module, and docs/tests only.

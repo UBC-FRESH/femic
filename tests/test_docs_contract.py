@@ -204,6 +204,11 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
 
     cli_text = (DOCS_ROOT / "reference" / "cli.rst").read_text(encoding="utf-8")
     for snippet in (
+        "- ``glb-build``: ``python -m femic prep glb-build [OPTIONS]``",
+        "prep glb-build",
+        "clean raw-source GLB workflow",
+        "canonical 2024 provincial VRI zip",
+        "not accepted as the source baseline for this command",
         "- ``arcgis-review-project``: ``python -m femic prep arcgis-review-project [OPTIONS]``",
         "prep arcgis-review-project",
         "workbench/arcgis_review",
@@ -275,6 +280,12 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "visible = off",
     ):
         assert snippet in geospatial_text
+    stage00_text = (GUIDES_ROOT / "stage-00-data-prep.rst").read_text(encoding="utf-8")
+    for snippet in (
+        "femic prep glb-build",
+        "validate or rebuild GLB baseline geometry itself",
+    ):
+        assert snippet in stage00_text
 
 
 def test_tsr_api_page_is_wired_into_curated_modules() -> None:

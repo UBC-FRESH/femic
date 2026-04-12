@@ -46,6 +46,9 @@ Checkpoint Semantics
 
 - Checkpoints are for runtime efficiency and recovery; they are not a substitute
   for source-of-truth raw data.
+- When the goal is to validate or rebuild GLB baseline geometry itself, start
+  from raw source geometry, not from an existing checkpoint. FEMIC's clean
+  user-facing path for that job is ``femic prep glb-build``.
 - Resume behavior must never silently reuse stale artifacts when debug-mode
   constraints (for example ``--debug-rows``) change the effective data population.
 

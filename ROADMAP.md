@@ -15961,3 +15961,9 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Tracker wiring:
     - treat `#146` as a follow-on child of the closed `#122` TSR/THLB umbrella; and
     - treat it as a practical prerequisite side quest for the still-open strict reconstruction work in `#128`.
+- 2026-04-12: Started the bounded implementation slice for `#146`.
+  - Add a supported `femic prep glb-build --tsa ...` path that:
+    - resolves the canonical raw 2024 VRI zip;
+    - resolves the active TSA boundary row;
+    - clips a fresh GLB artifact plus JSON/Markdown summary; and
+    - makes the raw-vs-checkpoint boundary explicit in the user-facing contract.

@@ -62,6 +62,7 @@ Subcommands
 - ``run``: ``python -m femic prep run [OPTIONS]``
 - ``validate-case``: ``python -m femic prep validate-case [OPTIONS]``
 - ``geospatial-preflight``: ``python -m femic prep geospatial-preflight [OPTIONS]``
+- ``glb-build``: ``python -m femic prep glb-build [OPTIONS]``
 - ``arcgis-review-project``: ``python -m femic prep arcgis-review-project [OPTIONS]``
 
 ``prep run`` options
@@ -104,6 +105,20 @@ case can actually read the annex-backed canonical TSA/FileGDB inputs.
 
 - ``--strict-warnings``
 - ``--skip-shapefile-smoke``
+
+``prep glb-build`` options
+
+- ``--tsa TEXT`` (required; TSA code, ``tsa_<code>``, or TSA name)
+- ``--instance-root PATH``
+- ``--output-dir PATH`` (optional explicit output directory for the GLB bundle)
+- ``--source-zip-path PATH`` (optional explicit raw VRI zip override)
+- ``--boundary-path PATH`` (optional explicit TSA boundary layer override)
+
+``prep glb-build`` is the clean raw-source GLB workflow for one named TSA. It
+uses the canonical 2024 provincial VRI zip by default, clips it with the
+active TSA boundary row, writes a clipped GLB artifact plus JSON/Markdown
+summary, and reports the clipped stand geometry area directly. Checkpoints are
+not accepted as the source baseline for this command.
 
 ``prep arcgis-review-project`` options
 
