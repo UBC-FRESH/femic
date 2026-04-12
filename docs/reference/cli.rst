@@ -729,11 +729,16 @@ existing reviewed and reconstructed TSA29 artifacts and emits:
 The command does **not** rerun THLB execution. Its job is to show, in plain
 language:
 
-- strict reconstructed THLB vs TSR-reported THLB;
-- reviewed bridge THLB vs TSR-reported THLB;
-- strict reconstructed vs reviewed bridge deltas; and
-- which parent steps look like reviewed bridges, strict overcuts, strict
-  undercuts, blocked seams, or explicit aspatial differences.
+- strict reconstructed THLB vs TSR-reported THLB as the primary benchmark;
+- reviewed bridge THLB vs TSR-reported THLB as context for why the reviewed
+  lane was accepted for practical exploratory use;
+- strict reconstructed vs reviewed bridge deltas as explanatory context rather
+  than the main score; and
+- which parent steps should be treated as:
+  - close enough to TSR;
+  - real strict overcut/undercut seams;
+  - missing-data seams;
+  - or accepted reviewed bridges / aspatial fallback territory.
 
 ``tsr thlb-netdown-workbench-build`` options
 

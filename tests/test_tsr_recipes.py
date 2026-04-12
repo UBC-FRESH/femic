@@ -1359,6 +1359,10 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
 
     assert payload["strict_vs_tsr_delta_ha"] == pytest.approx(-900.0)
     assert payload["reviewed_vs_tsr_delta_ha"] == pytest.approx(-750.0)
+    assert payload["tsr_fit_counts"] == {
+        "not_comparable_to_tsr": 2,
+        "tsr_close_enough": 6,
+    }
     assert payload["problem_ownership_counts"] == {
         "data_exogenous": 1,
         "mixed": 2,
@@ -1379,12 +1383,24 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
         == "close_match"
     )
     assert (
+        entries_by_id["thlb_parent_002_land_not_administered"]["tsr_fit_class"]
+        == "tsr_close_enough"
+    )
+    assert (
         entries_by_id["thlb_parent_002_land_not_administered"]["difference_nature"]
         == "close_match"
     )
     assert (
+        entries_by_id["thlb_parent_002_land_not_administered"]["adjudication_action"]
+        == "defer_low_priority"
+    )
+    assert (
         entries_by_id["thlb_parent_003_reviewed_bridge"]["comparison_bucket"]
         == "reviewed_bridge_only"
+    )
+    assert (
+        entries_by_id["thlb_parent_003_reviewed_bridge"]["tsr_fit_class"]
+        == "tsr_close_enough"
     )
     assert (
         entries_by_id["thlb_parent_003_reviewed_bridge"]["problem_ownership"] == "mixed"
@@ -1394,12 +1410,20 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
         == "strict_overcut_candidate"
     )
     assert (
+        entries_by_id["thlb_parent_004_strict_overcut"]["tsr_fit_class"]
+        == "tsr_close_enough"
+    )
+    assert (
         entries_by_id["thlb_parent_004_strict_overcut"]["problem_ownership"]
         == "model_endogenous"
     )
     assert (
         entries_by_id["thlb_parent_005_strict_undercut"]["comparison_bucket"]
         == "strict_undercut_candidate"
+    )
+    assert (
+        entries_by_id["thlb_parent_005_strict_undercut"]["tsr_fit_class"]
+        == "tsr_close_enough"
     )
     assert (
         entries_by_id["thlb_parent_005_strict_undercut"]["difference_nature"]
@@ -1436,14 +1460,21 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
     )
 
     assert "THLB Reconstruction Comparison" in markdown
-    assert "Top 5 Parent-Step Contributors" in markdown
+    assert "Top 5 Strict-vs-TSR Contributors" in markdown
+    assert "Top 5 Strict-vs-Reviewed Context Differences" in markdown
     assert "Problem Ownership Counts" in markdown
+    assert "Strict-vs-TSR Fit Counts" in markdown
+    assert "Stepwise Adjudication Queue" in markdown
     assert "Strict vs TSR delta" in markdown
-    assert "strict_overcut_candidate" in markdown
+    assert "Strict TSR fit: `tsr_close_enough`" in markdown
+    assert "Reviewed difference role: `close_match`" in markdown
     assert "Problem ownership: `model_endogenous`" in markdown
     assert "Difference nature: `accepted_aspatial_bridge`" in markdown
     assert "Engineering interpretation:" in markdown
     assert "Recommended next move:" in markdown
+    assert "Practical meaning:" in markdown
+    assert "Strict vs TSR:" in markdown
+    assert "Reviewed difference:" in markdown
     assert "reviewed bridge" in markdown.casefold()
 
 

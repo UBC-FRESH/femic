@@ -13644,3 +13644,27 @@
     - step 20 / 21 / 23 as `reviewed_bridge_choice`
   - This turns the comparison report into a real engineering triage surface
     instead of leaving that interpretation stranded in chat.
+- 2026-04-11: Recentered the `#128` TSA29 comparison artifact so
+  strict-vs-TSR is the governing score and strict-vs-reviewed is explanatory
+  context.
+  - Added new per-parent-step fields to the comparison payload/report:
+    - `tsr_fit_class`
+    - `tsr_fit_interpretation`
+    - `reviewed_difference_role`
+    - `practical_meaning`
+    - `adjudication_action`
+    - `adjudication_action_summary`
+  - Rebuilt the Markdown/JSON report so it now reads in the intended order:
+    - strict reconstructed THLB vs TSR THLB first;
+    - reviewed bridge THLB vs TSR THLB second;
+    - reviewed acceptance rationale as a plain-language methodology note;
+    - top strict-vs-TSR contributors;
+    - top strict-vs-reviewed contextual differences; and
+    - a stepwise adjudication queue for the next one-step-at-a-time pass.
+  - The report now makes the intended engineering distinction explicit:
+    - a step can differ materially from the reviewed lane and still be
+      low-priority if strict is close enough to TSR;
+    - a step becomes a real repair target when strict is materially high or
+      low against TSR itself.
+  - Updated the user-facing docs and agent-facing comparison contract so this
+    strict-vs-TSR-first interpretation is no longer stranded in chat.

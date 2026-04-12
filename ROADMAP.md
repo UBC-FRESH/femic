@@ -8619,6 +8619,7 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - reviewed bridge lane vs TSR benchmark; and
     - strict reconstructed vs reviewed bridge lane.
   - [x] P52.6i3 Bucket the biggest parent-step differences in plain language so the next modeling follow-up is chosen from evidence instead of guesswork.
+  - [x] P52.6i4 Recenter the TSA29 comparison artifact so strict-vs-TSR is the governing score, strict-vs-reviewed is explanatory context, and the report emits a stepwise adjudication queue.
 
 ## Detailed Next Steps Notes
 
@@ -8714,6 +8715,24 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - attack the largest `model_endogenous` seams first;
     - use `data_exogenous` seams to justify documented aspatial fallback or skip logic;
     - and leave `reviewed_bridge_choice` seams alone unless we intentionally reopen the accepted reviewed TSA29 bridge contract.
+- 2026-04-11 (`#128` comparison contract correction: strict-vs-TSR comes first):
+  - The report should not emotionally center strict-vs-reviewed deltas.
+  - Governing interpretation order:
+    - primary benchmark: strict reconstructed vs TSR;
+    - secondary context: strict reconstructed vs reviewed; and
+    - practical meaning: a step is a top-priority repair when strict is materially bad against TSR, not merely because strict differs from reviewed.
+  - Immediate implementation follow-up:
+    - add `tsr_fit_class` / `tsr_fit_interpretation` fields;
+    - demote the reviewed bucket language to explanatory context;
+    - add a stepwise adjudication queue that says whether to:
+      - fix strict logic;
+      - improve data/source coverage;
+      - keep the reviewed bridge;
+      - use documented aspatial fallback; or
+      - defer a low-priority seam.
+  - TSA29-first interpretation target:
+    - step 2 should read as close enough to TSR and therefore not a top-priority repair even though reviewed is much lighter;
+    - step 9 should still read as a real strict-lane problem because strict is badly high against TSR itself.
 
 - 2026-04-11 (`#131` completed: LU-wise reconstructed THLB runtime is now operational on full TSA29):
   - Completion summary:

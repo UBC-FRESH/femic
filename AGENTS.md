@@ -246,6 +246,11 @@ When contributing to this repository as the coding agent:
    - never present a generic flattened THLB final-area result as though it were a parent-step
      cumulative benchmark reconciliation result unless the user explicitly asked for the flattened
      run surface;
+   - for strict THLB reconstruction comparison work under `#128`-style analysis:
+     - treat strict-vs-TSR as the governing benchmark;
+     - treat strict-vs-reviewed as explanatory context only; and
+     - do not escalate a parent step to a top-priority repair merely because it differs from the
+       reviewed lane if the strict result is already close enough to TSR;
    - for Windows multiprocessing safety, do not launch LU-parallel THLB parent-step reruns from
      stdin / here-string Python; use the CLI entrypoint or a saved script file instead.
 

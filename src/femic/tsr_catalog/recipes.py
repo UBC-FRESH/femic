@@ -11278,6 +11278,188 @@ def _comparison_difference_threshold(*values: float | None) -> float:
     return max(100.0, reference * 0.05)
 
 
+def _classify_thlb_reconstruction_tsr_fit(
+    *,
+    parent_step: dict[str, Any],
+    benchmark_marginal_area_ha: float | None,
+    reconstructed_removed_area_ha: float | None,
+    reconstructed_status: str,
+) -> tuple[str, str]:
+    if str(parent_step.get("parent_kind", "")).strip() == "milestone":
+        return (
+            "not_comparable_to_tsr",
+            "This is a backbone milestone row, so there is no direct strict-vs-TSR "
+            "deduction comparison.",
+        )
+    if benchmark_marginal_area_ha is None:
+        return (
+            "not_comparable_to_tsr",
+            "No TSR benchmark marginal deduction was parsed for this parent step.",
+        )
+    if "blocked" in reconstructed_status or "missing_source" in reconstructed_status:
+        return (
+            "not_comparable_to_tsr",
+            "The strict lane is still blocked here, so strict-vs-TSR fit is not yet a "
+            "clean execution comparison.",
+        )
+    strict_value = (
+        reconstructed_removed_area_ha
+        if reconstructed_removed_area_ha is not None
+        else 0.0
+    )
+    delta = strict_value - benchmark_marginal_area_ha
+    close_threshold = max(25000.0, abs(benchmark_marginal_area_ha) * 0.10)
+    major_threshold = max(50000.0, abs(benchmark_marginal_area_ha) * 0.25)
+    if abs(delta) <= close_threshold:
+        return (
+            "tsr_close_enough",
+            "The strict lane is close enough to the TSR benchmark here for practical "
+            "exploratory use.",
+        )
+    if delta > 0.0:
+        if abs(delta) <= major_threshold:
+            return (
+                "strict_over_tsr_minor",
+                "The strict lane is somewhat above the TSR benchmark here, but not yet "
+                "in the worst problem tier.",
+            )
+        return (
+            "strict_over_tsr_major",
+            "The strict lane is materially above the TSR benchmark here, so this "
+            "looks like a real strict-lane overcut seam.",
+        )
+    if abs(delta) <= major_threshold:
+        return (
+            "strict_under_tsr_minor",
+            "The strict lane is somewhat below the TSR benchmark here, but not yet in "
+            "the worst problem tier.",
+        )
+    return (
+        "strict_under_tsr_major",
+        "The strict lane is materially below the TSR benchmark here, so this looks "
+        "like a real strict-lane undercut seam.",
+    )
+
+
+def _describe_reviewed_difference_role(
+    *,
+    role: str,
+    strict_vs_reviewed_delta_ha: float | None,
+) -> str:
+    if role == "close_match":
+        return "Reviewed and strict are also close enough here."
+    if role == "reviewed_bridge_only":
+        return (
+            "The reviewed lane is carrying a much broader bridge here while the strict "
+            "lane is not."
+        )
+    if role == "manual_or_reviewed_override":
+        return (
+            "The reviewed lane is using an accepted override, calibration, skip, or "
+            "no-op that the strict lane does not automatically share."
+        )
+    if role == "aspatial_bridge_difference":
+        return (
+            "The reviewed difference here is mostly about an explicit aspatial bridge "
+            "choice rather than exact spatial truth."
+        )
+    if role == "blocked_or_missing_source":
+        return (
+            "The reviewed difference here is not very informative yet because the "
+            "strict lane is still blocked or missing a needed source."
+        )
+    if role == "not_comparable":
+        return (
+            "There is no stable strict-vs-reviewed comparison for this parent step yet."
+        )
+    if strict_vs_reviewed_delta_ha is None:
+        return "The reviewed lane is providing contextual comparison only."
+    if strict_vs_reviewed_delta_ha > 0.0:
+        return "The reviewed lane is lighter here than the strict lane."
+    if strict_vs_reviewed_delta_ha < 0.0:
+        return "The reviewed lane is heavier here than the strict lane."
+    return "The reviewed lane is effectively aligned with the strict lane here."
+
+
+def _comparison_queue_action(
+    *,
+    tsr_fit_class: str,
+    problem_ownership: str,
+    difference_nature: str,
+) -> str:
+    if tsr_fit_class == "tsr_close_enough":
+        return "defer_low_priority"
+    if problem_ownership == "data_exogenous":
+        return "improve_data_or_source"
+    if problem_ownership == "reviewed_bridge_choice":
+        if difference_nature == "accepted_aspatial_bridge":
+            return "use_documented_aspatial_fallback"
+        return "keep_reviewed_bridge"
+    if difference_nature in {
+        "accepted_aspatial_bridge",
+        "accepted_skip_or_noop",
+        "accepted_reviewed_override",
+        "reviewed_bridge_semantics",
+        "missing_late_stage_semantics",
+    }:
+        return "keep_reviewed_bridge"
+    if difference_nature in {"missing_or_blocked_data", "weak_public_coverage"}:
+        return "improve_data_or_source"
+    if difference_nature == "close_match":
+        return "defer_low_priority"
+    return "fix_strict_logic"
+
+
+def _comparison_queue_action_summary(action: str) -> str:
+    mapping = {
+        "fix_strict_logic": "Fix strict logic or semantics in FEMIC.",
+        "improve_data_or_source": "Improve or replace the missing/weak source data.",
+        "keep_reviewed_bridge": "Keep the reviewed bridge for now and do not force strict parity yet.",
+        "use_documented_aspatial_fallback": "Keep or formalize a documented aspatial fallback.",
+        "defer_low_priority": "Defer; this is not a top-priority repair right now.",
+    }
+    return mapping.get(action, "Further review needed.")
+
+
+def _build_tsr_fit_practical_meaning(
+    *,
+    tsr_fit_class: str,
+    reviewed_difference_role: str,
+    strict_vs_reviewed_delta_ha: float | None,
+    problem_ownership: str,
+) -> str:
+    reviewed_context = _describe_reviewed_difference_role(
+        role=reviewed_difference_role,
+        strict_vs_reviewed_delta_ha=strict_vs_reviewed_delta_ha,
+    )
+    if tsr_fit_class == "tsr_close_enough":
+        return (
+            "Strict is close enough to TSR here, so this is not a top-priority repair. "
+            + reviewed_context
+        )
+    if tsr_fit_class == "strict_over_tsr_major":
+        return (
+            "Strict is badly high against TSR here, so this is a real problem to fix "
+            "even before looking at the reviewed lane."
+        )
+    if tsr_fit_class == "strict_under_tsr_major":
+        if problem_ownership == "data_exogenous":
+            return (
+                "Strict is badly low against TSR here, but the main reason looks "
+                "exogenous: the needed data or source contract is missing."
+            )
+        return (
+            "Strict is badly low against TSR here, so this is a real seam to fix or "
+            "bridge explicitly."
+        )
+    if tsr_fit_class in {"strict_over_tsr_minor", "strict_under_tsr_minor"}:
+        return (
+            "Strict is off TSR here, but not in the very worst tier. "
+            + reviewed_context
+        )
+    return reviewed_context
+
+
 def _comparison_actionability(bucket: str) -> str:
     mapping = {
         "close_match": "No immediate action; keep this as a reference step.",
@@ -11640,6 +11822,12 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
                 reconstructed_spatial_modes=reconstructed_spatial_modes,
             )
         )
+        tsr_fit_class, tsr_fit_interpretation = _classify_thlb_reconstruction_tsr_fit(
+            parent_step=item,
+            benchmark_marginal_area_ha=benchmark_marginal_area_ha,
+            reconstructed_removed_area_ha=reconstructed_removed_area_ha,
+            reconstructed_status=reconstructed_status,
+        )
         (
             problem_ownership,
             difference_nature,
@@ -11660,6 +11848,35 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
                 engineering_interpretation,
                 recommended_next_move,
             ) = override_interpretation
+        strict_vs_tsr_delta_ha = (
+            ((reconstructed_removed_area_ha or 0.0) - benchmark_marginal_area_ha)
+            if benchmark_marginal_area_ha is not None
+            else None
+        )
+        reviewed_vs_tsr_delta_ha = (
+            ((reviewed_removed_area_ha or 0.0) - benchmark_marginal_area_ha)
+            if benchmark_marginal_area_ha is not None
+            and reviewed_removed_area_ha is not None
+            else None
+        )
+        strict_vs_reviewed_delta_ha = (
+            (reconstructed_removed_area_ha or 0.0) - reviewed_removed_area_ha
+            if reviewed_removed_area_ha is not None
+            and reconstructed_removed_area_ha is not None
+            else None
+        )
+        reviewed_difference_role = comparison_bucket
+        practical_meaning = _build_tsr_fit_practical_meaning(
+            tsr_fit_class=tsr_fit_class,
+            reviewed_difference_role=reviewed_difference_role,
+            strict_vs_reviewed_delta_ha=strict_vs_reviewed_delta_ha,
+            problem_ownership=problem_ownership,
+        )
+        adjudication_action = _comparison_queue_action(
+            tsr_fit_class=tsr_fit_class,
+            problem_ownership=problem_ownership,
+            difference_nature=difference_nature,
+        )
         supporting_notes: list[str] = []
         if reconstructed_spatial_modes:
             supporting_notes.append(
@@ -11702,14 +11919,25 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
                 "benchmark_cumulative_area_ha": benchmark_cumulative_area_ha,
                 "reconstructed_removed_area_ha": reconstructed_removed_area_ha,
                 "reviewed_removed_area_ha": reviewed_removed_area_ha,
+                "strict_vs_tsr_delta_ha": strict_vs_tsr_delta_ha,
+                "reviewed_vs_tsr_delta_ha": reviewed_vs_tsr_delta_ha,
+                "strict_vs_reviewed_delta_ha": strict_vs_reviewed_delta_ha,
                 "reconstructed_status": reconstructed_status,
                 "reviewed_status": reviewed_status,
+                "tsr_fit_class": tsr_fit_class,
+                "tsr_fit_interpretation": tsr_fit_interpretation,
+                "reviewed_difference_role": reviewed_difference_role,
                 "comparison_bucket": comparison_bucket,
                 "problem_ownership": problem_ownership,
                 "difference_nature": difference_nature,
                 "plain_language_reason": plain_language_reason,
+                "practical_meaning": practical_meaning,
                 "engineering_interpretation": engineering_interpretation,
                 "recommended_next_move": recommended_next_move,
+                "adjudication_action": adjudication_action,
+                "adjudication_action_summary": _comparison_queue_action_summary(
+                    adjudication_action
+                ),
                 "actionability": _comparison_actionability(comparison_bucket),
                 "supporting_notes": supporting_notes,
             }
@@ -11724,6 +11952,16 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
         for item in entries
         if str(item.get("problem_ownership", "")).strip()
     )
+    tsr_fit_counts = Counter(
+        str(item.get("tsr_fit_class", "")).strip()
+        for item in entries
+        if str(item.get("tsr_fit_class", "")).strip()
+    )
+    adjudication_action_counts = Counter(
+        str(item.get("adjudication_action", "")).strip()
+        for item in entries
+        if str(item.get("adjudication_action", "")).strip()
+    )
     reviewed_final_managed_area_ha = _resolve_reviewed_thlb_remaining_area_ha(recipe)
     reconstructed_final_managed_area_ha = _normalize_float_or_none(
         reconstructed_audit_payload.get("final_managed_area_ha")
@@ -11732,7 +11970,7 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
         reconstructed_audit_payload.get("tsr_reported_thlb_area_ha")
     )
 
-    def _parent_gap_delta(entry: dict[str, Any]) -> float:
+    def _strict_vs_reviewed_gap_delta(entry: dict[str, Any]) -> float:
         reviewed_reference = _normalize_float_or_none(
             entry.get("reviewed_removed_area_ha")
         )
@@ -11745,15 +11983,58 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
         )
         return reconstructed_value - (reviewed_reference or 0.0)
 
-    top_gap_parent_steps = sorted(
+    def _strict_vs_tsr_gap_delta(entry: dict[str, Any]) -> float:
+        benchmark_reference = _normalize_float_or_none(
+            entry.get("benchmark_marginal_area_ha")
+        )
+        if benchmark_reference is None:
+            return 0.0
+        reconstructed_value = (
+            _normalize_float_or_none(entry.get("reconstructed_removed_area_ha")) or 0.0
+        )
+        return reconstructed_value - benchmark_reference
+
+    top_strict_vs_tsr_parent_steps = sorted(
         [
             item
             for item in entries
             if str(item.get("parent_kind", "")).strip() != "milestone"
         ],
-        key=lambda item: abs(_parent_gap_delta(item)),
+        key=lambda item: abs(_strict_vs_tsr_gap_delta(item)),
         reverse=True,
     )[:5]
+    top_strict_vs_reviewed_context_steps = sorted(
+        [
+            item
+            for item in entries
+            if str(item.get("parent_kind", "")).strip() != "milestone"
+        ],
+        key=lambda item: abs(_strict_vs_reviewed_gap_delta(item)),
+        reverse=True,
+    )[:5]
+    stepwise_adjudication_queue = [
+        {
+            "row_order": int(item.get("row_order", 0) or 0),
+            "parent_step_id": str(item.get("parent_step_id", "")).strip(),
+            "parent_label": str(item.get("parent_label", "")).strip(),
+            "tsr_fit_class": str(item.get("tsr_fit_class", "")).strip(),
+            "problem_ownership": str(item.get("problem_ownership", "")).strip(),
+            "difference_nature": str(item.get("difference_nature", "")).strip(),
+            "adjudication_action": str(item.get("adjudication_action", "")).strip(),
+            "adjudication_action_summary": str(
+                item.get("adjudication_action_summary", "")
+            ).strip(),
+            "recommended_next_move": str(item.get("recommended_next_move", "")).strip(),
+        }
+        for item in sorted(
+            [
+                entry
+                for entry in entries
+                if str(entry.get("parent_kind", "")).strip() != "milestone"
+            ],
+            key=lambda value: int(value.get("row_order", 0) or 0),
+        )
+    ]
     return {
         "generated_utc": datetime.now(UTC).isoformat(),
         "artifact_kind": "thlb_reconstruction_comparison",
@@ -11786,14 +12067,29 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
         ),
         "comparison_bucket_counts": dict(sorted(bucket_counts.items())),
         "problem_ownership_counts": dict(sorted(problem_ownership_counts.items())),
-        "top_gap_parent_steps": [
+        "tsr_fit_counts": dict(sorted(tsr_fit_counts.items())),
+        "adjudication_action_counts": dict(sorted(adjudication_action_counts.items())),
+        "top_strict_vs_tsr_parent_steps": [
             {
                 "parent_step_id": str(item.get("parent_step_id", "")).strip(),
                 "parent_label": str(item.get("parent_label", "")).strip(),
-                "comparison_bucket": str(item.get("comparison_bucket", "")).strip(),
-                "strict_minus_reviewed_removed_area_ha": _parent_gap_delta(item),
+                "tsr_fit_class": str(item.get("tsr_fit_class", "")).strip(),
+                "strict_minus_tsr_removed_area_ha": _strict_vs_tsr_gap_delta(item),
             }
-            for item in top_gap_parent_steps
+            for item in top_strict_vs_tsr_parent_steps
+        ],
+        "top_strict_vs_reviewed_context_steps": [
+            {
+                "parent_step_id": str(item.get("parent_step_id", "")).strip(),
+                "parent_label": str(item.get("parent_label", "")).strip(),
+                "reviewed_difference_role": str(
+                    item.get("reviewed_difference_role", "")
+                ).strip(),
+                "strict_minus_reviewed_removed_area_ha": _strict_vs_reviewed_gap_delta(
+                    item
+                ),
+            }
+            for item in top_strict_vs_reviewed_context_steps
         ],
         "milestone_count": len(milestones),
         "parent_step_count": len(entries),
@@ -11801,6 +12097,7 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
             stage: len(parent_stage_groups.get(stage, ()))
             for stage in _THLB_STAGE_ORDER
         },
+        "stepwise_adjudication_queue": stepwise_adjudication_queue,
         "entries": entries,
     }
 
@@ -11857,19 +12154,40 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
     )
     if reconstructed_final is not None:
         lines.append(f"- Strict reconstructed THLB: `{reconstructed_final:.3f} ha`")
-    if reviewed_final is not None:
-        lines.append(f"- Reviewed bridge THLB: `{reviewed_final:.3f} ha`")
     if tsr_final is not None:
         lines.append(f"- TSR reported THLB: `{tsr_final:.3f} ha`")
+    for label, key in (("Strict vs TSR delta", "strict_vs_tsr_delta_ha"),):
+        value = _normalize_float_or_none(comparison_payload.get(key))
+        if value is not None:
+            lines.append(f"- {label}: `{value:.3f} ha`")
+    lines.extend(["", "## Reviewed Bridge Context", ""])
+    if reviewed_final is not None:
+        lines.append(f"- Reviewed bridge THLB: `{reviewed_final:.3f} ha`")
     for label, key in (
-        ("Strict vs TSR delta", "strict_vs_tsr_delta_ha"),
         ("Reviewed vs TSR delta", "reviewed_vs_tsr_delta_ha"),
         ("Strict vs reviewed delta", "strict_vs_reviewed_delta_ha"),
     ):
         value = _normalize_float_or_none(comparison_payload.get(key))
         if value is not None:
             lines.append(f"- {label}: `{value:.3f} ha`")
-    lines.extend(["", "## Bucket Counts", ""])
+    lines.extend(
+        [
+            "",
+            "## Why Reviewed Was Accepted Anyway",
+            "",
+            "- The reviewed lane was accepted because its cumulative THLB was close enough to the TSR benchmark for practical exploratory modeling use.",
+            "- Reviewed per-step behavior is therefore useful context, not automatic gold-standard truth for strict reconstruction.",
+            "- A parent step is a top-priority strict-lane repair when strict is materially bad against TSR, not merely because strict differs from reviewed.",
+            "",
+            "## Strict-vs-TSR Fit Counts",
+            "",
+        ]
+    )
+    tsr_fit_counts = comparison_payload.get("tsr_fit_counts", {})
+    if isinstance(tsr_fit_counts, dict):
+        for fit_name, count in sorted(tsr_fit_counts.items()):
+            lines.append(f"- `{fit_name}`: `{count}`")
+    lines.extend(["", "## Reviewed-Difference Context Counts", ""])
     bucket_counts = comparison_payload.get("comparison_bucket_counts", {})
     if isinstance(bucket_counts, dict):
         for bucket_name, count in sorted(bucket_counts.items()):
@@ -11879,10 +12197,58 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
     if isinstance(problem_ownership_counts, dict):
         for ownership_name, count in sorted(problem_ownership_counts.items()):
             lines.append(f"- `{ownership_name}`: `{count}`")
-    lines.extend(["", "## Top 5 Parent-Step Contributors", ""])
-    top_gap_parent_steps = comparison_payload.get("top_gap_parent_steps", ())
-    if isinstance(top_gap_parent_steps, list) and top_gap_parent_steps:
-        for item in top_gap_parent_steps:
+    lines.extend(["", "## Stepwise Adjudication Queue", ""])
+    stepwise_adjudication_queue = comparison_payload.get(
+        "stepwise_adjudication_queue", ()
+    )
+    if isinstance(stepwise_adjudication_queue, list) and stepwise_adjudication_queue:
+        for item in stepwise_adjudication_queue:
+            if not isinstance(item, dict):
+                continue
+            lines.append(
+                "- "
+                f"{int(item.get('row_order', 0) or 0)}. "
+                f"`{item.get('parent_step_id', '')}` | "
+                f"{item.get('parent_label', '')} | "
+                f"action=`{item.get('adjudication_action', '')}` | "
+                f"tsr-fit=`{item.get('tsr_fit_class', '')}` | "
+                f"ownership=`{item.get('problem_ownership', '')}`"
+            )
+    else:
+        lines.append("- No adjudication queue entries were available.")
+    lines.extend(["", "## Top 5 Strict-vs-TSR Contributors", ""])
+    top_strict_vs_tsr_parent_steps = comparison_payload.get(
+        "top_strict_vs_tsr_parent_steps", ()
+    )
+    if (
+        isinstance(top_strict_vs_tsr_parent_steps, list)
+        and top_strict_vs_tsr_parent_steps
+    ):
+        for item in top_strict_vs_tsr_parent_steps:
+            if not isinstance(item, dict):
+                continue
+            delta = _normalize_float_or_none(
+                item.get("strict_minus_tsr_removed_area_ha")
+            )
+            delta_text = f"{delta:.3f} ha" if delta is not None else "n/a"
+            lines.append(
+                "- "
+                f"`{item.get('parent_step_id', '')}` | "
+                f"{item.get('parent_label', '')} | "
+                f"tsr-fit=`{item.get('tsr_fit_class', '')}` | "
+                f"strict-TSR marginal delta=`{delta_text}`"
+            )
+    else:
+        lines.append("- No strict-vs-TSR contributor list was available.")
+    lines.extend(["", "## Top 5 Strict-vs-Reviewed Context Differences", ""])
+    top_strict_vs_reviewed_context_steps = comparison_payload.get(
+        "top_strict_vs_reviewed_context_steps", ()
+    )
+    if (
+        isinstance(top_strict_vs_reviewed_context_steps, list)
+        and top_strict_vs_reviewed_context_steps
+    ):
+        for item in top_strict_vs_reviewed_context_steps:
             if not isinstance(item, dict):
                 continue
             delta = _normalize_float_or_none(
@@ -11893,19 +12259,19 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
                 "- "
                 f"`{item.get('parent_step_id', '')}` | "
                 f"{item.get('parent_label', '')} | "
-                f"bucket=`{item.get('comparison_bucket', '')}` | "
+                f"reviewed-role=`{item.get('reviewed_difference_role', '')}` | "
                 f"strict-reviewed removed-area delta=`{delta_text}`"
             )
     else:
-        lines.append("- No comparable parent-step contributors were available.")
+        lines.append("- No strict-vs-reviewed context list was available.")
     lines.extend(
         [
             "",
             "## Plain-Language Read",
             "",
-            "- This report does not change THLB logic. It explains how the strict reconstructed lane differs from the reviewed TSA29 bridge lane and the TSR benchmark.",
-            "- When a reviewed bridge, skip, no-op, or calibration is the real reason for a difference, the report says so directly instead of pretending the strict lane is just wrong.",
-            "- When the strict lane is cutting much more or much less area than the reviewed lane, the report names that parent step as an overcut or undercut candidate.",
+            "- This report does not change THLB logic. It explains how the strict reconstructed lane fits against the TSR benchmark and uses the reviewed lane as supporting context.",
+            "- The governing question is whether strict is close enough to TSR, not whether strict matches reviewed step-for-step.",
+            "- Reviewed differences still matter, but mainly because they explain accepted bridges, skips, calibrations, or semantic differences that the strict lane does not automatically share.",
         ]
     )
     if milestone_entries:
@@ -11940,7 +12306,8 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
                     f"#### {int(item.get('row_order', 0) or 0)}. {item.get('parent_label', '')}",
                     "",
                     f"- Parent step id: `{item.get('parent_step_id', '')}`",
-                    f"- Comparison bucket: `{item.get('comparison_bucket', '')}`",
+                    f"- Strict TSR fit: `{item.get('tsr_fit_class', '')}`",
+                    f"- Reviewed difference role: `{item.get('reviewed_difference_role', '')}`",
                     f"- Problem ownership: `{item.get('problem_ownership', '')}`",
                     f"- Difference nature: `{item.get('difference_nature', '')}`",
                     f"- Reconstructed status: `{item.get('reconstructed_status', '')}`",
@@ -11983,15 +12350,41 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
                     else "`not recorded`"
                 )
             )
-            lines.append(
-                f"- Plain-language reason: {item.get('plain_language_reason', '')}"
+            strict_vs_tsr_delta = _normalize_float_or_none(
+                item.get("strict_vs_tsr_delta_ha")
             )
+            if strict_vs_tsr_delta is not None:
+                lines.append(f"- Strict vs TSR delta: `{strict_vs_tsr_delta:.3f} ha`")
+            reviewed_vs_tsr_delta = _normalize_float_or_none(
+                item.get("reviewed_vs_tsr_delta_ha")
+            )
+            if reviewed_vs_tsr_delta is not None:
+                lines.append(
+                    f"- Reviewed vs TSR delta: `{reviewed_vs_tsr_delta:.3f} ha`"
+                )
+            strict_vs_reviewed_delta = _normalize_float_or_none(
+                item.get("strict_vs_reviewed_delta_ha")
+            )
+            if strict_vs_reviewed_delta is not None:
+                lines.append(
+                    f"- Strict vs reviewed delta: `{strict_vs_reviewed_delta:.3f} ha`"
+                )
+            lines.append(f"- Strict vs TSR: {item.get('tsr_fit_interpretation', '')}")
+            lines.append(
+                f"- Reviewed difference: {item.get('plain_language_reason', '')}"
+            )
+            lines.append(f"- Practical meaning: {item.get('practical_meaning', '')}")
             lines.append(
                 "- Engineering interpretation: "
                 f"{item.get('engineering_interpretation', '')}"
             )
             lines.append(
                 f"- Recommended next move: {item.get('recommended_next_move', '')}"
+            )
+            lines.append(
+                "- Adjudication queue action: "
+                f"`{item.get('adjudication_action', '')}`"
+                f" ({item.get('adjudication_action_summary', '')})"
             )
             lines.append(f"- Actionability: {item.get('actionability', '')}")
             supporting_notes = [
@@ -12015,7 +12408,7 @@ def build_tsr_thlb_reconstruction_comparison(
     output_markdown_path: Path | None = None,
     output_json_path: Path | None = None,
 ) -> TsrThlbReconstructionComparisonBuildResult:
-    """Emit a TSA29-first strict-vs-reviewed THLB comparison report."""
+    """Emit a TSA29-first THLB comparison report with strict-vs-TSR as primary."""
 
     (
         recipe,

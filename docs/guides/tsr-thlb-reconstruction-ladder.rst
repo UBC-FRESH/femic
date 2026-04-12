@@ -210,11 +210,25 @@ The plain-language comparison surface for this is now:
 That command reads the existing reviewed and reconstructed TSA29 artifacts and
 emits a parent-step report that shows:
 
-- strict reconstructed THLB vs TSR-reported THLB;
-- reviewed bridge THLB vs TSR-reported THLB;
-- strict reconstructed vs reviewed bridge deltas; and
-- which parent steps currently look like reviewed bridges, strict overcuts,
-  strict undercuts, blocked seams, or explicit aspatial differences.
+- strict reconstructed THLB vs TSR-reported THLB as the governing benchmark;
+- reviewed bridge THLB vs TSR-reported THLB as context for why the reviewed
+  lane was accepted;
+- strict reconstructed vs reviewed bridge deltas as explanatory context rather
+  than the main score; and
+- which parent steps currently look:
+  - close enough to TSR;
+  - materially high or low against TSR;
+  - blocked or missing-data driven;
+  - or like accepted reviewed bridge / fallback territory.
+
+Important practical interpretation:
+
+- the reviewed lane was accepted because its cumulative THLB is close enough
+  to the TSR benchmark for exploratory case-study use;
+- that does **not** make reviewed per-step behavior the automatic gold
+  standard for strict reconstruction; and
+- a strict parent step becomes a top-priority repair when it is materially bad
+  against TSR, not merely because it differs from the reviewed lane.
 
 Bad comparison examples:
 

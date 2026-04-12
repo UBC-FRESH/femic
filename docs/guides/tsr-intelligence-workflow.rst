@@ -256,8 +256,17 @@ hybrid-vs-reconstructed semantics and benchmark comparison rules, see
    The THLB recipe build step is intentionally about extracting
    **what the TSR says to do**, not applying the netdown yet.
 
-   The current goal is no longer a flat wall of THLB snippets. FEMIC now
-   treats the TSA land-base ladder itself as the organizing grammar:
+The current goal is no longer a flat wall of THLB snippets. FEMIC now
+treats the TSA land-base ladder itself as the organizing grammar:
+
+When comparing the strict reconstructed lane to the accepted reviewed TSA29
+lane, keep the benchmark order straight:
+
+- primary benchmark: strict reconstructed vs TSR;
+- secondary context: strict reconstructed vs reviewed; and
+- practical interpretation: reviewed was accepted because cumulative THLB was
+  close enough for exploratory use, not because every reviewed step is
+  automatically the gold standard for strict reconstruction.
 
    - ``Gross Land Base (GLB) -> Analysis Forest Land Base (AFLB)``
    - ``AFLB -> Legally Harvestable Land Base (LHLB)``
