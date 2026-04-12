@@ -956,6 +956,21 @@ notes.
     - `runtime/logs/tsr/reconstructed_diagnostics/raw_glb_glb_to_aflb_20260412T082632Z/glb_to_aflb.diag.json`
     - `runtime/logs/tsr/reconstructed_diagnostics/raw_glb_glb_to_aflb_20260412T082632Z/glb_to_aflb_summary.{md,json}`
   - restart the adjudication game from step 2 using this raw-GLB early-ladder result; do not use the older AFLB-conditioned early-step readouts.
+- 2026-04-12 step 3 strict fix:
+  - fixed reconstructed `select_attribute` execution so checkpoint-attribute exclusions no longer require fetched source polygons
+  - reran the same bounded raw-GLB `GLB -> AFLB` slice only, again using indices `0..6`
+  - corrected early-ladder read:
+    - step 2 strict removed: `950,193.180 ha` vs TSR `697,033.000 ha`
+    - step 3 strict removed: `1,802,314.490 ha` vs TSR `1,105,908.000 ha`
+      - attribute substep: `1,798,325.607 ha`
+      - water substep: `3,988.883 ha`
+    - step 4 strict removed: `50,434.000 ha` vs TSR `50,434.000 ha`
+    - step-5 AFLB milestone remaining area after steps 2-4: `3,273,312.070 ha`
+    - step-5 AFLB delta vs TSR `3,098,168.000 ha`: `+175,144.070 ha`
+  - bounded artifacts only:
+    - `runtime/logs/tsr/reconstructed_diagnostics/raw_glb_glb_to_aflb_step3fix_20260412T084715Z/glb_to_aflb.audit.json`
+    - `runtime/logs/tsr/reconstructed_diagnostics/raw_glb_glb_to_aflb_step3fix_20260412T084715Z/glb_to_aflb.diag.json`
+    - `runtime/logs/tsr/reconstructed_diagnostics/raw_glb_glb_to_aflb_step3fix_20260412T084715Z/glb_to_aflb_step3fix_summary.{md,json}`
 
 - 2026-04-10 (Issue `#134` completed: stage-aware THLB review UX hardening is
   now landed on top of the TSA29 table-first parser):

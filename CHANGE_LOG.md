@@ -13821,3 +13821,13 @@
   - Step 4 strict removed: `50,434.000 ha` vs TSR `50,434.000 ha`
   - Step-5 AFLB milestone remaining area after steps 2-4: `4,145,680.368 ha` vs TSR `3,098,168.000 ha` (`+1,047,512.368 ha`)
   - Wrote bounded scratch artifacts only under `external/femic-tsa29-instance/runtime/logs/tsr/reconstructed_diagnostics/raw_glb_glb_to_aflb_20260412T082632Z/` and stopped there.
+- 2026-04-12: Fixed strict step 3 so the checkpoint-attribute non-forest substep actually executes in reconstructed mode.
+  - Root cause: reconstructed `exclude` execution was wrongly treating `compiled_operation_type = select_attribute` rows like source-geometry steps and returning `blocked_missing_source` even when `linked_source_entry_ids` was empty.
+  - Fix: wired `select_attribute` through checkpoint-attribute exclusion directly in both reconstructed execution paths instead of requiring fetched polygons.
+  - Validation:
+    - targeted reconstructed diagnostic-slice tests passed
+    - targeted `ruff check` passed
+  - Bounded rerun only:
+    - reran the same raw-GLB `GLB -> AFLB` diagnostic slice (indices `0..6`) and stopped there
+    - corrected step 3 strict removal is now `1,802,314.490 ha` (`1,798,325.607 ha` attribute + `3,988.883 ha` water) vs TSR `1,105,908.000 ha`
+    - updated step-5 AFLB milestone remaining area after steps 2-4 is `3,273,312.070 ha` vs TSR `3,098,168.000 ha` (`+175,144.070 ha`)

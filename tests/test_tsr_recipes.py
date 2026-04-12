@@ -7680,3 +7680,112 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_executes_aspatial_area_redu
     assert aspatial_step["run_status"] == "applied"
     assert aspatial_step["spatial_application_mode"] == "aspatial_fallback"
     assert aspatial_step["affected_area_ha"] == pytest.approx(0.005)
+
+
+def test_run_tsr_thlb_reconstructed_diagnostic_slice_executes_select_attribute_without_sources(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint1 = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2],
+            "FOR_MGMT_LAND_BASE_IND": ["Y", "N"],
+            "BCLCS_LEVEL_2": ["T", "T"],
+            "NON_PRODUCTIVE_CD": [None, None],
+            "MAP_ID": ["093J034", "093J034"],
+            "FEATURE_AREA_SQM": [100.0, 100.0],
+            "Shape_Area": [100.0, 100.0],
+            "Shape_Length": [40.0, 40.0],
+        },
+        geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint1.to_feather(checkpoint1_path)
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 30, 20)],
+        names=["Test LU"],
+    )
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["parent_steps"] = [
+        {
+            "parent_step_id": "thlb_parent_003_non_forest",
+            "parent_label": "Non-forest",
+            "parent_kind": "transformation",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "benchmark_marginal_area_ha": 100.0,
+            "benchmark_cumulative_area_ha": 100.0,
+            "row_order": 3,
+        },
+    ]
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "thlb_step_003_non_forest_attr",
+            "parent_step_id": "thlb_parent_003_non_forest",
+            "order_index": 3,
+            "step_kind": "netdown_rule",
+            "label": "Non-forest",
+            "normalized_action": "exclude",
+            "compiled_operation_type": "select_attribute",
+            "checkpoint_attribute_mode": "any",
+            "checkpoint_attribute_filters": [
+                {"field": "FOR_MGMT_LAND_BASE_IND", "operator": "ne", "value": "Y"}
+            ],
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 26,
+        },
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    diagnostics_root = instance_root / "runtime" / "logs" / "tsr" / "diagnostics"
+    result = tsr_recipes.run_tsr_thlb_reconstructed_diagnostic_slice(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        output_path=diagnostics_root / "attr.feather",
+        audit_path=diagnostics_root / "attr.audit.json",
+        diagnostic_path=diagnostics_root / "attr.diag.json",
+    )
+
+    audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
+    attr_step = next(
+        step
+        for step in audit_payload["steps"]
+        if step["step_id"] == "thlb_step_003_non_forest_attr"
+    )
+    assert attr_step["run_status"] == "applied"
+    assert attr_step["spatial_application_mode"] == "checkpoint_attribute_exclusion"
+    assert attr_step["affected_area_ha"] == pytest.approx(0.01)
