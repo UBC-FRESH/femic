@@ -13689,3 +13689,12 @@
     - preserve the per-step/per-LU strict-lane feather state so the upcoming
       step-by-step adjudication pass can restart from the top without forcing
       another ~96 minute full reconstructed rerun if an experiment goes bad.
+- 2026-04-11: Cleaned residual TSA29 strict-lane snapshot spill so the repo can
+  start the adjudication pass from a genuinely clean tree.
+  - Added a TSA29 submodule ignore guard for future untracked
+    `runtime/logs/tsr/reconstructed_lu/` scratch spill.
+  - Preserved the tracked strict-lane baseline snapshot while removing older
+    partial/untracked LU snapshot directories.
+  - Committed the current `thlb_reconstruction_comparison.{md,json}` artifacts
+    so VS Code source control reflects the actual working ledger instead of
+    treating it as untracked noise.

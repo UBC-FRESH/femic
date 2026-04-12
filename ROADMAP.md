@@ -8758,6 +8758,8 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `external/femic-tsa29-instance/runtime/logs/tsr/reconstructed_lu/ria_vri_vclr1p_checkpoint1.20260411T203327Z`
   - Rationale:
     - without a tracked checkpoint of the per-step/per-LU feather outputs, a bad mid-adjudication experiment could force another ~96 minute full strict rerun just to get back to the start of the game.
+  - Hygiene follow-up:
+    - ignore future untracked `runtime/logs/tsr/reconstructed_lu/` scratch spill in the TSA29 submodule while keeping the tracked baseline snapshot and committed comparison artifacts as the clean adjudication starting point.
 
 - 2026-04-11 (`#131` completed: LU-wise reconstructed THLB runtime is now operational on full TSA29):
   - Completion summary:
