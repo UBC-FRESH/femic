@@ -8733,6 +8733,25 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - TSA29-first interpretation target:
     - step 2 should read as close enough to TSR and therefore not a top-priority repair even though reviewed is much lighter;
     - step 9 should still read as a real strict-lane problem because strict is badly high against TSR itself.
+- 2026-04-11 (`#128` next phase: one-step-at-a-time adjudication pass):
+  - Use `config/tsr/thlb_reconstruction_comparison.{md,json}` as the governing ledger.
+  - Work parent steps in row-order sequence, one step at a time, instead of jumping between whichever seam looks most exciting.
+  - For each parent step, answer in order:
+    - is strict close enough to TSR already?
+    - if not, is the gap mainly:
+      - FEMIC logic we own;
+      - missing/weak data we do not own;
+      - or an accepted reviewed bridge/fallback choice?
+    - what is the single next action:
+      - `fix_strict_logic`
+      - `improve_data_or_source`
+      - `keep_reviewed_bridge`
+      - `use_documented_aspatial_fallback`
+      - `defer_low_priority`
+  - Do not silently “fix ahead” on later steps while earlier-step interpretation is still unresolved.
+  - Reassess the whole-ladder read only after working through the final parent step again; that is the point where we should answer:
+    - is strict THLB now close enough overall, or
+    - still fundamentally “fix me” status?
 
 - 2026-04-11 (`#131` completed: LU-wise reconstructed THLB runtime is now operational on full TSA29):
   - Completion summary:

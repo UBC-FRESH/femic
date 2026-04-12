@@ -13668,3 +13668,16 @@
       low against TSR itself.
   - Updated the user-facing docs and agent-facing comparison contract so this
     strict-vs-TSR-first interpretation is no longer stranded in chat.
+- 2026-04-11: Captured the operating rules for the next `#128` adjudication
+  phase in repo planning notes.
+  - The next phase now has an explicit contract:
+    - use `thlb_reconstruction_comparison.{md,json}` as the governing ledger;
+    - work parent steps in row-order sequence, one at a time;
+    - decide for each step whether to:
+      - fix strict logic;
+      - improve data/source coverage;
+      - keep the reviewed bridge;
+      - use documented aspatial fallback; or
+      - defer low-priority seams;
+    - only answer the whole-ladder “close enough or still broken?” question
+      after working through the final parent step again.
