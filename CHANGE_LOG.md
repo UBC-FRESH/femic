@@ -13865,3 +13865,27 @@
   - The remaining warning is limited to integer boundary fields widening to
     float during scratch FileGDB export, so it was split into a minor follow-up
     instead of blocking `#146`.
+- 2026-04-12: Opened `#148` as a follow-on child of the old `#122` TSR/THLB
+  umbrella and a direct extension of `#146`.
+  - Scope:
+    - extend `femic prep glb-build` so successful raw-source GLB builds are
+      stashed into the local `external/femic-public-data` DataLad repo by
+      default;
+    - skip reuse when the snapshot already exists unless a force-update switch
+      is set; and
+    - keep the behavior local-only with no auto-commit or auto-publish.
+- 2026-04-12: Clarified the intended `#148` contract after the first stash-only
+  pass.
+  - `prep glb-build` should not just write a local public-data GLB snapshot;
+    it should also **consume** that confirmed-valid snapshot by default on
+    subsequent runs.
+  - Added `--force-rebuild-glb` as the explicit escape hatch for rerunning the
+    raw VRI clip instead of reusing the stored GLB baseline.
+- 2026-04-12: Finished `#148`.
+  - `femic prep glb-build` now reuses a compliant local GLB stash by default
+    and only reruns the raw VRI clip when `--force-rebuild-glb` is set.
+  - A forced TSA29 rebuild refreshed the local stash under
+    `external/femic-public-data/data/bc/tsa/glb/2024/tsa29/`, and a default
+    rerun then reused that snapshot successfully.
+  - The stash remains local-only: no auto-commit and no auto-publish of the
+    public-data submodule.

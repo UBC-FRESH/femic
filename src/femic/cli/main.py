@@ -1012,6 +1012,21 @@ GLB_BUILD_BOUNDARY_PATH_OPTION = typer.Option(
     help="Optional explicit TSA boundary layer override.",
     show_default=False,
 )
+GLB_BUILD_NO_STASH_PUBLIC_DATA_OPTION = typer.Option(
+    False,
+    "--no-stash-public-data-glb",
+    help="Disable the default local femic-public-data GLB stash.",
+)
+GLB_BUILD_FORCE_UPDATE_PUBLIC_DATA_OPTION = typer.Option(
+    False,
+    "--force-update-public-data-glb",
+    help="Overwrite an existing local femic-public-data GLB stash.",
+)
+GLB_BUILD_FORCE_REBUILD_OPTION = typer.Option(
+    False,
+    "--force-rebuild-glb",
+    help="Ignore any existing local stashed GLB and rebuild from raw source.",
+)
 EXPORT_BUNDLE_DIR_OPTION = typer.Option(
     Path("data/model_input_bundle"),
     "--bundle-dir",
@@ -5392,6 +5407,9 @@ def prep_glb_build(
     output_dir: Path | None = GLB_BUILD_OUTPUT_DIR_OPTION,
     source_zip_path: Path | None = GLB_BUILD_SOURCE_ZIP_OPTION,
     boundary_path: Path | None = GLB_BUILD_BOUNDARY_PATH_OPTION,
+    force_rebuild_glb: bool = GLB_BUILD_FORCE_REBUILD_OPTION,
+    no_stash_public_data_glb: bool = GLB_BUILD_NO_STASH_PUBLIC_DATA_OPTION,
+    force_update_public_data_glb: bool = GLB_BUILD_FORCE_UPDATE_PUBLIC_DATA_OPTION,
 ) -> None:
     """Build and report a clean raw-source GLB clip for one TSA."""
     instance_context = _resolve_cli_instance_context(instance_root=instance_root)
@@ -5404,9 +5422,7 @@ def prep_glb_build(
         else None
     )
     resolved_boundary_path = (
-        _resolve_explicit_cli_path(boundary_path)
-        if boundary_path is not None
-        else None
+        _resolve_explicit_cli_path(boundary_path) if boundary_path is not None else None
     )
     try:
         result = build_tsa_raw_glb(
@@ -5416,6 +5432,9 @@ def prep_glb_build(
             output_dir=resolved_output_dir,
             source_zip_path=resolved_source_zip_path,
             boundary_path=resolved_boundary_path,
+            force_rebuild_glb=force_rebuild_glb,
+            stash_public_data_glb=not no_stash_public_data_glb,
+            force_update_public_data_glb=force_update_public_data_glb,
         )
     except (
         FileNotFoundError,
@@ -5432,6 +5451,7 @@ def prep_glb_build(
         raise typer.Exit(code=1) from exc
 
     console.print("[green]Raw-source GLB emitted[/green]")
+    console.print(f"glb_source_mode={result.glb_source_mode}")
     console.print(f"tsa_number={result.tsa_number}")
     console.print(f"tsa_name={result.tsa_name}")
     console.print(f"source_zip_path={result.source_zip_path}")
@@ -5444,6 +5464,15 @@ def prep_glb_build(
     console.print(f"clipped_area_ha={result.clipped_area_ha:.3f}")
     console.print(f"area_delta_ha={result.area_delta_ha:.3f}")
     console.print(f"feature_count={result.feature_count}")
+    console.print(f"public_data_glb_stash_status={result.stash_result.status}")
+    if result.stash_result.archive_path is not None:
+        console.print(
+            f"public_data_glb_archive_path={result.stash_result.archive_path}"
+        )
+    if result.stash_result.summary_path is not None:
+        console.print(
+            f"public_data_glb_summary_path={result.stash_result.summary_path}"
+        )
 
 
 @vdyp_app.command("run")

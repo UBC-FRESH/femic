@@ -11,7 +11,7 @@ import yaml
 from typer.testing import CliRunner
 
 from femic.arcgis_review import ArcgisReviewProjectResult
-from femic.glb import GlbBuildResult
+from femic.glb import GlbBuildResult, GlbStashResult
 from femic import bcdc_catalog
 from femic import tsr_catalog
 from femic.cli import main as cli_main
@@ -238,6 +238,7 @@ def test_prep_glb_build_prints_emitted_paths(
         cli_main,
         "build_tsa_raw_glb",
         lambda **_: GlbBuildResult(
+            glb_source_mode="raw_build",
             tsa_selector="29",
             tsa_number="29",
             tsa_name="Williams Lake TSA",
@@ -252,6 +253,12 @@ def test_prep_glb_build_prints_emitted_paths(
             clipped_area_ha=4933664.212,
             boundary_area_ha=4933664.215,
             area_delta_ha=-0.003,
+            stash_result=GlbStashResult(
+                attempted=True,
+                status="stashed",
+                archive_path=output_dir / "tsa29_glb_vri_2024.gdb.zip",
+                summary_path=output_dir / "tsa29_glb_vri_2024.summary.json",
+            ),
         ),
     )
 
@@ -270,10 +277,12 @@ def test_prep_glb_build_prints_emitted_paths(
     assert result.exit_code == 0
     normalized_stdout = result.stdout.replace("\n", "")
     assert "Raw-source GLB emitted" in result.stdout
+    assert "glb_source_mode=raw_build" in normalized_stdout
     assert "tsa_number=29" in normalized_stdout
     assert "clipped_glb_gdb_path=" in normalized_stdout
     assert "summary_json_path=" in normalized_stdout
     assert "feature_count=317735" in normalized_stdout
+    assert "public_data_glb_stash_status=stashed" in normalized_stdout
 
 
 def test_prep_glb_build_surfaces_failures(
@@ -311,12 +320,15 @@ def test_prep_glb_build_resolves_explicit_output_dir_from_cwd(
 ) -> None:
     instance_root = tmp_path / "instance"
     instance_root.mkdir(parents=True, exist_ok=True)
-    repo_relative_output = Path("external/femic-tsa29-instance/runtime/logs/glb_build/test")
+    repo_relative_output = Path(
+        "external/femic-tsa29-instance/runtime/logs/glb_build/test"
+    )
     captured: dict[str, Path | None] = {}
 
     def _fake_build(**kwargs: object) -> GlbBuildResult:
         captured["output_dir"] = kwargs.get("output_dir")  # type: ignore[assignment]
         return GlbBuildResult(
+            glb_source_mode="raw_build",
             tsa_selector="29",
             tsa_number="29",
             tsa_name="Williams Lake TSA",
@@ -331,6 +343,7 @@ def test_prep_glb_build_resolves_explicit_output_dir_from_cwd(
             clipped_area_ha=1.0,
             boundary_area_ha=1.0,
             area_delta_ha=0.0,
+            stash_result=GlbStashResult(False, "disabled", None, None),
         )
 
     monkeypatch.setattr(cli_main, "build_tsa_raw_glb", _fake_build)
@@ -351,6 +364,58 @@ def test_prep_glb_build_resolves_explicit_output_dir_from_cwd(
 
     assert result.exit_code == 0
     assert captured["output_dir"] == repo_relative_output.resolve()
+
+
+def test_prep_glb_build_wires_stash_flags(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    instance_root = tmp_path / "instance"
+    instance_root.mkdir(parents=True, exist_ok=True)
+    captured: dict[str, object] = {}
+
+    def _fake_build(**kwargs: object) -> GlbBuildResult:
+        captured.update(kwargs)
+        output_dir = tmp_path / "out"
+        return GlbBuildResult(
+            glb_source_mode="raw_build",
+            tsa_selector="29",
+            tsa_number="29",
+            tsa_name="Williams Lake TSA",
+            source_zip_path=tmp_path / "VEG_COMP_LYR_R1_POLY_2024.gdb.zip",
+            boundary_source_path=tmp_path / "tsa.gpkg",
+            output_dir=output_dir,
+            clipped_glb_gdb_path=output_dir / "clipped_glb.gdb",
+            clipped_glb_feature_class="tsa_glb_vri_2024",
+            summary_json_path=output_dir / "glb_summary.json",
+            summary_markdown_path=output_dir / "glb_summary.md",
+            feature_count=1,
+            clipped_area_ha=1.0,
+            boundary_area_ha=1.0,
+            area_delta_ha=0.0,
+            stash_result=GlbStashResult(False, "disabled", None, None),
+        )
+
+    monkeypatch.setattr(cli_main, "build_tsa_raw_glb", _fake_build)
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "prep",
+            "glb-build",
+            "--instance-root",
+            str(instance_root),
+            "--tsa",
+            "29",
+            "--force-rebuild-glb",
+            "--no-stash-public-data-glb",
+            "--force-update-public-data-glb",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["force_rebuild_glb"] is True
+    assert captured["stash_public_data_glb"] is False
+    assert captured["force_update_public_data_glb"] is True
 
 
 def test_preflight_checks_windows_requires_git_annex(

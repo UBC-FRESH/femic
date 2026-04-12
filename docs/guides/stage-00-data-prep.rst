@@ -49,6 +49,14 @@ Checkpoint Semantics
 - When the goal is to validate or rebuild GLB baseline geometry itself, start
   from raw source geometry, not from an existing checkpoint. FEMIC's clean
   user-facing path for that job is ``femic prep glb-build``.
+- ``femic prep glb-build`` now also stashes a reusable zipped GLB snapshot into
+  the local ``external/femic-public-data`` DataLad repo by default unless the
+  caller explicitly disables that behavior. This stash is local only and does
+  not auto-commit or auto-publish the public-data submodule.
+- If a confirmed-valid stashed GLB already exists for the TSA/VRI combination,
+  ``femic prep glb-build`` now reuses that snapshot by default. Use
+  ``--force-rebuild-glb`` when you explicitly want to rerun the raw-source clip
+  instead of consuming the stored baseline.
 - Resume behavior must never silently reuse stale artifacts when debug-mode
   constraints (for example ``--debug-rows``) change the effective data population.
 

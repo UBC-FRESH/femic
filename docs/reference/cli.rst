@@ -113,12 +113,29 @@ case can actually read the annex-backed canonical TSA/FileGDB inputs.
 - ``--output-dir PATH`` (optional explicit output directory for the GLB bundle)
 - ``--source-zip-path PATH`` (optional explicit raw VRI zip override)
 - ``--boundary-path PATH`` (optional explicit TSA boundary layer override)
+- ``--force-rebuild-glb`` (ignore an existing local stashed GLB and rebuild)
+- ``--no-stash-public-data-glb`` (disable the default local public-data stash)
+- ``--force-update-public-data-glb`` (overwrite an existing local stashed GLB)
 
 ``prep glb-build`` is the clean raw-source GLB workflow for one named TSA. It
 uses the canonical 2024 provincial VRI zip by default, clips it with the
 active TSA boundary row, writes a clipped GLB artifact plus JSON/Markdown
 summary, and reports the clipped stand geometry area directly. Checkpoints are
 not accepted as the source baseline for this command.
+
+By default, successful runs also stash a reusable zipped GLB snapshot plus
+summary JSON into the local ``external/femic-public-data`` DataLad repo under a
+deterministic TSA/VRI path. That stash is local only in v1:
+
+- no auto-commit;
+- no auto-push; and
+- no Arbutus/GitHub publication.
+
+Use ``--no-stash-public-data-glb`` to disable the default stash or
+``--force-update-public-data-glb`` to replace an existing stored snapshot.
+When a local stashed GLB already exists, ``prep glb-build`` now reuses that
+confirmed-valid snapshot by default instead of rebuilding from raw source; use
+``--force-rebuild-glb`` to bypass the stash and run the raw clip again.
 
 ``prep arcgis-review-project`` options
 

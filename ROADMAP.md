@@ -15989,3 +15989,35 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       fields widen to float during scratch FileGDB export.
   - Decision:
     - treat `#147` as a queued cleanup task rather than holding open `#146`.
+- 2026-04-12: Opened `#148` as a small additive follow-on to `#146`.
+  - Goal: extend `femic prep glb-build` so confirmed-valid GLB snapshots are
+    stashed into the local `external/femic-public-data` DataLad repo by
+    default.
+  - Governing behavior:
+    - stash locally only;
+    - skip if the same TSA/VRI snapshot already exists;
+    - allow explicit overwrite via a force-update switch; and
+    - allow explicit opt-out via a disable-stash switch.
+  - Non-goals:
+    - no auto-commit;
+    - no auto-push / Arbutus publish; and
+    - do not treat derived GLB snapshots as upstream required datasets.
+- 2026-04-12: Expanded `#148` to cover the missing consume/reuse half of the
+  GLB stash contract.
+  - Default behavior now needs to be:
+    - reuse an existing confirmed-valid local GLB snapshot when one is already
+      present for the same TSA/VRI path; and
+    - only rerun the raw clip when the user explicitly sets
+      `--force-rebuild-glb`.
+- 2026-04-12: Finished `#148`.
+  - `femic prep glb-build` now:
+    - reuses an existing compliant local GLB stash by default;
+    - rebuilds from raw source only when `--force-rebuild-glb` is set; and
+    - updates the local stash only when `--force-update-public-data-glb` is set.
+  - Acceptance on TSA29:
+    - one forced raw rebuild refreshed the stash under
+      `external/femic-public-data/data/bc/tsa/glb/2024/tsa29/`; and
+    - one default rerun reused that stashed snapshot successfully.
+  - Important boundary:
+    - the command still does not auto-commit or auto-publish the public-data
+      submodule.
