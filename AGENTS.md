@@ -253,6 +253,32 @@ When contributing to this repository as the coding agent:
        reviewed lane if the strict result is already close enough to TSR;
    - for Windows multiprocessing safety, do not launch LU-parallel THLB parent-step reruns from
      stdin / here-string Python; use the CLI entrypoint or a saved script file instead.
+17. Treat developer-imposed scope boundaries as a hard execution contract:
+   - if the developer says `one step at a time`, `one bounded move`, or equivalent, do exactly one
+     bounded unit of work before stopping and reporting;
+   - a bounded unit means one of:
+     - one code change;
+     - one validation run;
+     - one report rebuild; or
+     - one issue/planning/docs update;
+     not a bundle of several of those unless the developer explicitly asks for the bundle;
+   - do not combine implementation plus broad rerun plus downstream validation into one "helpful"
+     bundle without explicit approval;
+   - before any expensive or broad command, state plainly:
+     - the exact command;
+     - the single question it answers; and
+     - why a smaller run is not enough;
+   - after each bounded unit:
+     - stop;
+     - report the result;
+     - and wait for the next instruction rather than doing "while I'm here" follow-on work;
+   - for active TSR/THLB adjudication work, do not run downstream parent steps or whole-lane suffixes
+     when the current question is about one parent step only;
+   - treat scope expansion as a correctness failure, not as initiative;
+   - if the developer says `scope breach`, immediately:
+     - stop any running background work;
+     - return to the last explicitly agreed bounded unit; and
+     - do not propose broader execution until the developer re-expands scope.
 
 Treat these steps as the minimum bar for every milestone so manual reminders are not required.
 

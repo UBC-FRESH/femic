@@ -13805,3 +13805,10 @@
   - Practical meaning:
     - step 4 is no longer an active strict-lane blocker and should now be
       treated as `defer_low_priority`.
+- 2026-04-12: Wrote the scope-discipline protocol down explicitly after repeated TSR/THLB adjudication drift.
+  - Added a hard execution rule to `AGENTS.md`:
+    - one bounded unit at a time;
+    - no broad or expensive commands without an explicit callout of the exact command and the single question it answers;
+    - stop after each bounded unit and wait instead of doing "while I'm here" follow-on work; and
+    - treat `scope breach` as an immediate stop signal.
+  - Mirrored the same rule in `ROADMAP.md` under the active `#128` adjudication notes so the current TSR/THLB game has a repo-tracked operating contract instead of relying on chat memory.

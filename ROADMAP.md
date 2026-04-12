@@ -8758,6 +8758,29 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Reassess the whole-ladder read only after working through the final parent step again; that is the point where we should answer:
     - is strict THLB now close enough overall, or
     - still fundamentally “fix me” status?
+- 2026-04-12 (Execution-discipline hardening after repeated scope drift):
+  - For the active TSR/THLB adjudication game, `one step at a time` now means one bounded unit only:
+    - one code change; or
+    - one validation run; or
+    - one report rebuild; or
+    - one docs/issue/planning update.
+  - Do **not** bundle implementation, broad rerun, and downstream validation together unless the developer explicitly asks for that bundle.
+  - Before any expensive or broad command, report:
+    - the exact command;
+    - the one question it answers; and
+    - why a smaller run is not enough.
+  - After each bounded unit:
+    - stop;
+    - report; and
+    - wait for the next instruction.
+  - For this adjudication track specifically:
+    - do not run downstream parent steps when the current question is about one parent step only;
+    - do not launch whole-lane reruns just because they would eventually be needed; and
+    - treat scope expansion as a correctness failure, not as initiative.
+  - `scope breach` is the explicit stop word:
+    - stop background work immediately;
+    - return to the last agreed bounded unit; and
+    - do not widen scope again until the developer does so explicitly.
 - 2026-04-11 (`#128` strict-lane adjudication baseline artifact checkpoint):
   - The first full successful LU-wise strict-reconstructed TSA29 state should be preserved as a restart point before step-by-step adjudication begins.
   - Governing snapshot:
