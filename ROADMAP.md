@@ -8760,6 +8760,21 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - without a tracked checkpoint of the per-step/per-LU feather outputs, a bad mid-adjudication experiment could force another ~96 minute full strict rerun just to get back to the start of the game.
   - Hygiene follow-up:
     - ignore future untracked `runtime/logs/tsr/reconstructed_lu/` scratch spill in the TSA29 submodule while keeping the tracked baseline snapshot and committed comparison artifacts as the clean adjudication starting point.
+- 2026-04-11 (`#128` step 2 adjudicated):
+  - Parent step:
+    - `thlb_parent_002_land_not_administered_by_the_province`
+  - Governing read:
+    - strict removed area: `713,594.208 ha`
+    - TSR benchmark marginal area: `697,033.000 ha`
+    - strict-vs-TSR delta: `+16,561.208 ha`
+  - Interpretation:
+    - strict is close enough to TSR here for practical exploratory use even though the reviewed bridge lane is much lighter;
+    - the large strict-vs-reviewed gap is not the governing benchmark for this step.
+  - Adjudication action:
+    - `defer_low_priority`
+  - Next-move rule:
+    - do not spend time tuning step 2 yet;
+    - revisit only after higher-priority strict-vs-TSR seams are worked through.
 
 - 2026-04-11 (`#131` completed: LU-wise reconstructed THLB runtime is now operational on full TSA29):
   - Completion summary:

@@ -13698,3 +13698,15 @@
   - Committed the current `thlb_reconstruction_comparison.{md,json}` artifacts
     so VS Code source control reflects the actual working ledger instead of
     treating it as untracked noise.
+- 2026-04-11: Adjudicated TSA29 strict THLB step 2 as low priority.
+  - Step:
+    - `thlb_parent_002_land_not_administered_by_the_province`
+  - Evidence:
+    - strict removed `713,594.208 ha`
+    - TSR benchmark marginal area `697,033.000 ha`
+    - strict-vs-TSR delta `+16,561.208 ha`
+  - Decision:
+    - `defer_low_priority`
+  - Rationale:
+    - the strict-vs-reviewed gap is large, but strict is already close enough
+      to the TSR benchmark that step 2 is not a top-priority repair.
