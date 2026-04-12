@@ -957,6 +957,13 @@ notes.
   - governing bounded follow-on issue: **#149** `Bug: correct TSA29 strict
     step-2 ownership filtering semantics against TSR benchmark`.
 
+- New pipeline guardrail follow-on opened as **#150**:
+  - add hard GIGO protection for THLB overlay steps so reused GIS overlay
+    artifacts cannot silently enter production runs when their extent/scope does
+    not match the active AOI/checkpoint extent;
+  - separate smoke-test / subset overlay artifacts from production-grade full-AOI
+    artifacts so reuse cannot "shit in the well" again.
+
 - 2026-04-12 raw-GLB strict AFLB bounded check:
   - bounded reconstructed diagnostic slice only, indices `0..6` (`GLB -> AFLB` executable prefix only)
   - baseline signal: `checkpoint1_raw_glb_initialization`

@@ -13903,3 +13903,6 @@
   than an LU mechanics bug.
 - Opened follow-on issue `#149` to handle the now-isolated TSA29 step-2
   ownership filtering semantics problem as its own bounded unit.
+- Opened follow-on issue `#150` for THLB overlay GIGO protection and smoke-vs-
+  production artifact separation after confirming that a truncated reused
+  `F_OWN` artifact had been accepted as production input for TSA29 step 2.
