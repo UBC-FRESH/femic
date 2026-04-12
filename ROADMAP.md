@@ -8791,6 +8791,19 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Next-move rule:
     - do not rush into code edits for step 3 yet;
     - first decide and document the intended strict non-forest semantics, then revisit whether that bridge should stay accepted or be translated into strict logic later.
+- 2026-04-11 (`#128` strict-lane baseline caveat for the remaining adjudication pass):
+  - The current strict reconstructed lane is **not** yet a literal raw-GLB replay of the full TSA29 Table 3 ladder.
+  - Current strict baseline:
+    - `checkpoint1_aflb_initialization`
+  - Practical consequence:
+    - early `GLB -> AFLB` parent-step marginal deltas are baseline-conditioned diagnostics, not literal raw-GLB stepwise replays.
+  - Working rule for the rest of the adjudication pass:
+    - keep using the current strict-vs-TSR ledger to sort out stepwise strict logic/seam problems;
+    - do **not** treat the current early-step marginal numbers as the final word on strict-lane correctness.
+  - Required closure task before `#128` can close:
+    - start the strict lane from a true raw-GLB geometry baseline;
+    - rerun the full strict lane end to end from that raw GLB start;
+    - confirm the resulting stepwise and cumulative behavior is sane before calling the strict lane “done”.
 
 - 2026-04-11 (`#131` completed: LU-wise reconstructed THLB runtime is now operational on full TSA29):
   - Completion summary:

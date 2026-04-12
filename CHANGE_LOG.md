@@ -13727,3 +13727,13 @@
     - because reconstructed mode starts from `checkpoint1_aflb_initialization`,
       this early `GLB -> AFLB` stepwise delta is a baseline-conditioned
       diagnostic rather than a literal raw-GLB replay.
+- 2026-04-11: Recorded the strict-baseline caveat so the remaining `#128`
+  adjudication pass does not lose sight of the real endgame.
+  - Current strict lane still starts from `checkpoint1_aflb_initialization`,
+    not a true raw-GLB replay.
+  - Therefore early `GLB -> AFLB` strict marginals are useful diagnostics for
+    sorting out logic seams, but they are not the final strict-lane proof.
+  - Before `#128` can close, FEMIC must:
+    - start the strict lane from a true raw-GLB geometry baseline; and
+    - rerun the full strict lane at least once from that raw GLB start to
+      confirm the stepwise and cumulative behavior is sane.
