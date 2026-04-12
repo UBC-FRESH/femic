@@ -13623,3 +13623,24 @@
     reviewed closeout values:
     - reviewed bridge THLB: `1,649,049.232 ha`
     - reviewed vs TSR delta: `-11,003.768 ha`
+- 2026-04-11: Extended the `#128` comparison artifact with engineering triage
+  fields so the report itself explains what kind of problem each parent step
+  is.
+  - Added per-parent-step comparison fields to the strict-vs-reviewed report:
+    - `problem_ownership`
+    - `difference_nature`
+    - `engineering_interpretation`
+    - `recommended_next_move`
+  - Regenerated the TSA29 comparison artifact so it now distinguishes, in the
+    persisted Markdown/JSON output, between:
+    - `model_endogenous` seams (strict logic too broad / too weak);
+    - `data_exogenous` seams (missing or blocked source inputs);
+    - `reviewed_bridge_choice` seams (accepted reviewed bridges / skips /
+      aspatial fallbacks); and
+    - `mixed` seams.
+  - The live TSA29 report now explicitly calls out examples such as:
+    - step 2 / 8 / 9 as `model_endogenous`
+    - step 10 / 12 as `data_exogenous`
+    - step 20 / 21 / 23 as `reviewed_bridge_choice`
+  - This turns the comparison report into a real engineering triage surface
+    instead of leaving that interpretation stranded in chat.

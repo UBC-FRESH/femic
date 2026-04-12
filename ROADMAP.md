@@ -8687,6 +8687,33 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `Critical habitat for fish`, `Land not administered by the Province`, and `Wildlife habitat areas` show up as `strict_overcut_candidate` seams; and
     - `Sites with low growing timber potential` remains a `blocked_or_missing_source` contributor in the strict lane.
   - This means the next `#128` move should be chosen from this inventory rather than from another blind round of code edits.
+- 2026-04-11 (`#128` comparison artifact needs engineering triage, not just buckets):
+  - The current strict-vs-reviewed report identifies where the biggest gaps are, but it still does not cleanly answer the engineering question:
+    - is this step wrong because FEMIC logic is too broad / too weak (`model_endogenous`)?
+    - wrong because the required public data is unavailable or blocked (`data_exogenous`)?
+    - different because the reviewed TSA29 lane is intentionally carrying an accepted bridge/skip/fallback (`reviewed_bridge_choice`)?
+    - or genuinely mixed?
+  - The next refinement to `thlb_reconstruction_comparison.{md,json}` should therefore add explicit per-parent-step fields such as:
+    - `problem_ownership`
+    - `difference_nature`
+    - `engineering_interpretation`
+    - `recommended_next_move`
+  - Because `#128` is explicitly TSA29-first, it is acceptable to seed deterministic per-step interpretation overrides for the major TSA29 seams when a generic bucket alone is too vague to support decision-making.
+- 2026-04-11 (`#128` engineering triage fields landed in the comparison artifact):
+  - The TSA29 comparison report now persists, for each parent step:
+    - `problem_ownership`
+    - `difference_nature`
+    - `engineering_interpretation`
+    - `recommended_next_move`
+  - This means the report itself now distinguishes between:
+    - strict-lane logic problems we own (`model_endogenous`);
+    - blocked/missing-data seams (`data_exogenous`);
+    - accepted reviewed bridges/skips/fallbacks (`reviewed_bridge_choice`);
+    - and genuinely mixed seams.
+  - The next `#128` move should therefore be chosen from the report itself, not reconstructed from chat:
+    - attack the largest `model_endogenous` seams first;
+    - use `data_exogenous` seams to justify documented aspatial fallback or skip logic;
+    - and leave `reviewed_bridge_choice` seams alone unless we intentionally reopen the accepted reviewed TSA29 bridge contract.
 
 - 2026-04-11 (`#131` completed: LU-wise reconstructed THLB runtime is now operational on full TSA29):
   - Completion summary:

@@ -110,6 +110,14 @@ _THLB_RECONSTRUCTION_COMPARISON_BUCKETS = (
     "aspatial_bridge_difference",
     "not_comparable",
 )
+
+_THLB_RECONSTRUCTION_PROBLEM_OWNERSHIP_VALUES = (
+    "model_endogenous",
+    "data_exogenous",
+    "reviewed_bridge_choice",
+    "mixed",
+    "not_applicable",
+)
 _THLB_JUNK_FRAGMENTS = {
     "stands",
     "forest stands",
@@ -11135,10 +11143,7 @@ def _resolve_reviewed_thlb_remaining_area_ha(
                 item.get("compiled_operation_type", item.get("operation_type", ""))
             ).strip()
         }
-        if (
-            normalized_action == "no_deduction"
-            or "no_deduction" in compiled_operations
-        ):
+        if normalized_action == "no_deduction" or "no_deduction" in compiled_operations:
             continue
         remaining_area_ha = _normalize_float_or_none(
             parent_step.get("last_remaining_area_ha")
@@ -11304,6 +11309,206 @@ def _comparison_actionability(bucket: str) -> str:
     return mapping.get(bucket, "Inspect manually.")
 
 
+def _default_reconstruction_gap_interpretation(
+    *,
+    bucket: str,
+    parent_step: dict[str, Any],
+) -> tuple[str, str, str, str]:
+    if str(parent_step.get("parent_kind", "")).strip() == "milestone":
+        return (
+            "not_applicable",
+            "reference_only",
+            "This is a backbone milestone row rather than a direct deduction step.",
+            "Reference row only; no corrective action.",
+        )
+    mapping = {
+        "close_match": (
+            "mixed",
+            "close_match",
+            "The strict and reviewed lanes are close enough here that this step does not look like a major source of the overall THLB gap.",
+            "No immediate action; treat this as a lower-priority reference step.",
+        ),
+        "reviewed_bridge_only": (
+            "mixed",
+            "reviewed_bridge_semantics",
+            "The reviewed lane is carrying a materially different interpreted bridge here, while the strict lane does not reproduce that same meaning yet.",
+            "Decide whether the reviewed bridge should be translated into strict semantics or retained as an accepted bridge difference.",
+        ),
+        "strict_overcut_candidate": (
+            "model_endogenous",
+            "strict_logic_overcut",
+            "The strict lane appears to be selecting too much area here relative to the reviewed lane.",
+            "Inspect strict source interpretation and selection logic first.",
+        ),
+        "strict_undercut_candidate": (
+            "model_endogenous",
+            "strict_logic_undercut",
+            "The strict lane appears to be selecting too little area here relative to the reviewed lane.",
+            "Inspect missing strict logic, missing semantics, or missing source wiring.",
+        ),
+        "blocked_or_missing_source": (
+            "data_exogenous",
+            "missing_or_blocked_data",
+            "The strict lane cannot execute this step cleanly with the currently available source inputs.",
+            "Acquire better data or keep this as an explicit documented fallback seam.",
+        ),
+        "manual_or_reviewed_override": (
+            "reviewed_bridge_choice",
+            "accepted_reviewed_override",
+            "The reviewed lane is intentionally carrying a skip, calibration, no-op, or reviewed bridge choice here.",
+            "Change this only if you intend to reopen the accepted reviewed TSA29 bridge choice.",
+        ),
+        "aspatial_bridge_difference": (
+            "reviewed_bridge_choice",
+            "accepted_aspatial_bridge",
+            "This step is currently handled as a documented aspatial bridge rather than an exact spatial reproduction.",
+            "Keep the fallback or replace it later with a defensible exact implementation.",
+        ),
+        "not_comparable": (
+            "not_applicable",
+            "not_comparable",
+            "There is no stable strict-vs-reviewed comparison surface here yet.",
+            "Reference/context only until a real comparable signal exists.",
+        ),
+    }
+    return mapping.get(
+        bucket,
+        (
+            "mixed",
+            "not_comparable",
+            "This step still needs manual interpretation.",
+            "Inspect manually.",
+        ),
+    )
+
+
+def _tsa29_reconstruction_gap_interpretation_override(
+    *,
+    recipe: TsrThlbNetdownRecipeRecord,
+    parent_step: dict[str, Any],
+) -> tuple[str, str, str, str] | None:
+    if str(recipe.tsa.tsa_id).strip() != "tsa_29":
+        return None
+    parent_step_id = str(parent_step.get("parent_step_id", "")).strip()
+    overrides: dict[str, tuple[str, str, str, str]] = {
+        "thlb_parent_002_land_not_administered_by_the_province": (
+            "model_endogenous",
+            "strict_logic_overcut",
+            "The strict lane is using a broader ownership interpretation than the reviewed bridge, so it is cutting too much area here.",
+            "Tighten the strict ownership mapping and separate the dedicated title/treaty exclusions from the generic F_OWN ownership classes.",
+        ),
+        "thlb_parent_003_non_forest": (
+            "model_endogenous",
+            "reviewed_bridge_semantics",
+            "The strict lane is only doing a narrow direct waterbody removal here, while the reviewed lane is carrying a much broader non-forest interpretation.",
+            "Decide and document the intended strict non-forest semantics before changing code again; this is not just a missing-data problem.",
+        ),
+        "thlb_parent_006_parks_protected_areas_area_base_tenures": (
+            "mixed",
+            "strict_logic_undercut",
+            "The strict lane is lighter than the reviewed lane here, likely because tenure and ownership semantics are still not fully aligned.",
+            "Refine the strict tenure/ownership logic first, then reassess whether any supporting data gaps remain material.",
+        ),
+        "thlb_parent_007_old_growth_management_areas": (
+            "model_endogenous",
+            "strict_logic_overcut",
+            "The strict lane is likely treating OGMA area too broadly relative to the reviewed TSA29 interpretation.",
+            "Tighten the OGMA logic before looking for new data; this looks like an over-selection problem.",
+        ),
+        "thlb_parent_008_wildlife_habitat_areas": (
+            "model_endogenous",
+            "strict_logic_overcut",
+            "The strict lane is selecting far more wildlife-area land than either the reviewed lane or the TSR benchmark supports.",
+            "Audit the strict no-harvest selection logic and keep conditional/modified zones out unless the TSR clearly says otherwise.",
+        ),
+        "thlb_parent_009_critical_habitat_for_fish": (
+            "model_endogenous",
+            "strict_logic_overcut",
+            "The strict lane is applying a much broader legal fish-objective surface than the reviewed lane or TSR benchmark supports.",
+            "Narrow the strict fish-habitat interpretation; this is one of the clearest strict overcut seams in the whole ladder.",
+        ),
+        "thlb_parent_010_lakeshore_management": (
+            "data_exogenous",
+            "missing_or_blocked_data",
+            "This step depends on a trusted Class A lake discriminator that the current public-input lane still does not have.",
+            "Keep the reviewed skip or a tiny aspatial fallback unless a trustworthy lake-class source appears.",
+        ),
+        "thlb_parent_011_community_areas_of_special_concern": (
+            "model_endogenous",
+            "reviewed_bridge_semantics",
+            "The strict literal source choice is not reproducing the reviewed meaning of this step at all.",
+            "Fix the strict semantics/source interpretation instead of treating this as a pure missing-data problem.",
+        ),
+        "thlb_parent_012_proven_aboriginal_rights_areas": (
+            "data_exogenous",
+            "missing_or_blocked_data",
+            "The strict lane still lacks a trustworthy public boundary source for this step.",
+            "Keep this as a reviewed skip or documented fallback until a real source is available.",
+        ),
+        "thlb_parent_013_areas_considered_inoperable": (
+            "reviewed_bridge_choice",
+            "accepted_reviewed_override",
+            "The reviewed lane uses accepted derived-attribute and calibrated bridge logic here that the strict checkpoint1 lane does not share.",
+            "Keep the accepted reviewed bridge unless you explicitly decide to port its late-stage derived attributes into strict semantics.",
+        ),
+        "thlb_parent_014_sites_with_low_growing_timber_potential": (
+            "mixed",
+            "missing_late_stage_semantics",
+            "The strict lane is blocked because this is late-stage curve-ready logic, not because the universe of land is inherently unknowable.",
+            "Bridge or port the late-stage curve logic explicitly; do not mislabel this as a simple raw-data problem.",
+        ),
+        "thlb_parent_015_non_merchantable_timber_profiles": (
+            "model_endogenous",
+            "missing_late_stage_semantics",
+            "The strict lane is missing the later broadleaf-leading yield logic that the reviewed lane applies here.",
+            "Port the reviewed late-stage logic or keep this as an explicit bridge/fallback step.",
+        ),
+        "thlb_parent_016_recreation_features": (
+            "mixed",
+            "partial_strict_logic",
+            "The strict lane only captures part of the reviewed recreation exclusion logic.",
+            "Low-priority cleanup: improve strict logic if this step later matters to the remaining gap.",
+        ),
+        "thlb_parent_017_growth_and_yield_permanent_sample_plots": (
+            "data_exogenous",
+            "weak_public_coverage",
+            "The strict lane undercuts here, but the public PSP geometry signal is weak and the absolute area is small.",
+            "Treat this as a lower-priority data-coverage seam unless a better PSP source becomes available.",
+        ),
+        "thlb_parent_018_riparian_areas": (
+            "mixed",
+            "missing_or_blocked_data",
+            "The strict lane is still missing some of the lake-class and special-case riparian inputs that the reviewed bridge used.",
+            "Improve source coverage first, then revisit the strict riparian logic if the gap remains large.",
+        ),
+        "thlb_parent_019_buffered_trails": (
+            "reviewed_bridge_choice",
+            "accepted_reviewed_override",
+            "The reviewed lane uses an accepted equivalent-corridor bridge here, while the strict lane currently does not reproduce that bridge.",
+            "Keep the accepted bridge unless you explicitly decide to formalize the same equivalent-corridor logic in strict mode.",
+        ),
+        "thlb_parent_020_wildlife_tree_retention_areas": (
+            "reviewed_bridge_choice",
+            "accepted_aspatial_bridge",
+            "This step is intentionally being modeled as an aspatial future-WTRA bridge rather than an exact mapped exclusion.",
+            "Keep the documented aspatial fallback unless a better exact contract is deliberately adopted later.",
+        ),
+        "thlb_parent_021_cultural_heritage_and_archaeological_resources": (
+            "reviewed_bridge_choice",
+            "accepted_aspatial_bridge",
+            "This step is intentionally being modeled as an aspatial THLB bridge rather than a single exact spatial layer.",
+            "Keep the documented aspatial fallback unless a defensible exact spatial contract is introduced later.",
+        ),
+        "thlb_parent_023_future_roads": (
+            "reviewed_bridge_choice",
+            "accepted_skip_or_noop",
+            "The accepted TSA29 closeout keeps this as an explicit 0 ha no-op tail step after step 21.",
+            "Leave it alone unless you intentionally reopen the reviewed closeout decision.",
+        ),
+    }
+    return overrides.get(parent_step_id)
+
+
 def _classify_thlb_reconstruction_gap_entry(
     *,
     parent_step: dict[str, Any],
@@ -11435,6 +11640,26 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
                 reconstructed_spatial_modes=reconstructed_spatial_modes,
             )
         )
+        (
+            problem_ownership,
+            difference_nature,
+            engineering_interpretation,
+            recommended_next_move,
+        ) = _default_reconstruction_gap_interpretation(
+            bucket=comparison_bucket,
+            parent_step=item,
+        )
+        override_interpretation = _tsa29_reconstruction_gap_interpretation_override(
+            recipe=recipe,
+            parent_step=item,
+        )
+        if override_interpretation is not None:
+            (
+                problem_ownership,
+                difference_nature,
+                engineering_interpretation,
+                recommended_next_move,
+            ) = override_interpretation
         supporting_notes: list[str] = []
         if reconstructed_spatial_modes:
             supporting_notes.append(
@@ -11480,7 +11705,11 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
                 "reconstructed_status": reconstructed_status,
                 "reviewed_status": reviewed_status,
                 "comparison_bucket": comparison_bucket,
+                "problem_ownership": problem_ownership,
+                "difference_nature": difference_nature,
                 "plain_language_reason": plain_language_reason,
+                "engineering_interpretation": engineering_interpretation,
+                "recommended_next_move": recommended_next_move,
                 "actionability": _comparison_actionability(comparison_bucket),
                 "supporting_notes": supporting_notes,
             }
@@ -11489,6 +11718,11 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
         str(item.get("comparison_bucket", "")).strip()
         for item in entries
         if str(item.get("comparison_bucket", "")).strip()
+    )
+    problem_ownership_counts = Counter(
+        str(item.get("problem_ownership", "")).strip()
+        for item in entries
+        if str(item.get("problem_ownership", "")).strip()
     )
     reviewed_final_managed_area_ha = _resolve_reviewed_thlb_remaining_area_ha(recipe)
     reconstructed_final_managed_area_ha = _normalize_float_or_none(
@@ -11551,6 +11785,7 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
             else None
         ),
         "comparison_bucket_counts": dict(sorted(bucket_counts.items())),
+        "problem_ownership_counts": dict(sorted(problem_ownership_counts.items())),
         "top_gap_parent_steps": [
             {
                 "parent_step_id": str(item.get("parent_step_id", "")).strip(),
@@ -11639,6 +11874,11 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
     if isinstance(bucket_counts, dict):
         for bucket_name, count in sorted(bucket_counts.items()):
             lines.append(f"- `{bucket_name}`: `{count}`")
+    lines.extend(["", "## Problem Ownership Counts", ""])
+    problem_ownership_counts = comparison_payload.get("problem_ownership_counts", {})
+    if isinstance(problem_ownership_counts, dict):
+        for ownership_name, count in sorted(problem_ownership_counts.items()):
+            lines.append(f"- `{ownership_name}`: `{count}`")
     lines.extend(["", "## Top 5 Parent-Step Contributors", ""])
     top_gap_parent_steps = comparison_payload.get("top_gap_parent_steps", ())
     if isinstance(top_gap_parent_steps, list) and top_gap_parent_steps:
@@ -11701,6 +11941,8 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
                     "",
                     f"- Parent step id: `{item.get('parent_step_id', '')}`",
                     f"- Comparison bucket: `{item.get('comparison_bucket', '')}`",
+                    f"- Problem ownership: `{item.get('problem_ownership', '')}`",
+                    f"- Difference nature: `{item.get('difference_nature', '')}`",
                     f"- Reconstructed status: `{item.get('reconstructed_status', '')}`",
                     f"- Reviewed status: `{item.get('reviewed_status', '')}`",
                 ]
@@ -11743,6 +11985,13 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
             )
             lines.append(
                 f"- Plain-language reason: {item.get('plain_language_reason', '')}"
+            )
+            lines.append(
+                "- Engineering interpretation: "
+                f"{item.get('engineering_interpretation', '')}"
+            )
+            lines.append(
+                f"- Recommended next move: {item.get('recommended_next_move', '')}"
             )
             lines.append(f"- Actionability: {item.get('actionability', '')}")
             supporting_notes = [

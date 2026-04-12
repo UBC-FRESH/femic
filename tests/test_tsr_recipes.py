@@ -1359,12 +1359,27 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
 
     assert payload["strict_vs_tsr_delta_ha"] == pytest.approx(-900.0)
     assert payload["reviewed_vs_tsr_delta_ha"] == pytest.approx(-750.0)
+    assert payload["problem_ownership_counts"] == {
+        "data_exogenous": 1,
+        "mixed": 2,
+        "model_endogenous": 2,
+        "not_applicable": 1,
+        "reviewed_bridge_choice": 2,
+    }
     assert (
         entries_by_id["thlb_parent_001_total_tsa_area"]["comparison_bucket"]
         == "not_comparable"
     )
     assert (
+        entries_by_id["thlb_parent_001_total_tsa_area"]["problem_ownership"]
+        == "not_applicable"
+    )
+    assert (
         entries_by_id["thlb_parent_002_land_not_administered"]["comparison_bucket"]
+        == "close_match"
+    )
+    assert (
+        entries_by_id["thlb_parent_002_land_not_administered"]["difference_nature"]
         == "close_match"
     )
     assert (
@@ -1372,24 +1387,47 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
         == "reviewed_bridge_only"
     )
     assert (
+        entries_by_id["thlb_parent_003_reviewed_bridge"]["problem_ownership"] == "mixed"
+    )
+    assert (
         entries_by_id["thlb_parent_004_strict_overcut"]["comparison_bucket"]
         == "strict_overcut_candidate"
+    )
+    assert (
+        entries_by_id["thlb_parent_004_strict_overcut"]["problem_ownership"]
+        == "model_endogenous"
     )
     assert (
         entries_by_id["thlb_parent_005_strict_undercut"]["comparison_bucket"]
         == "strict_undercut_candidate"
     )
     assert (
+        entries_by_id["thlb_parent_005_strict_undercut"]["difference_nature"]
+        == "strict_logic_undercut"
+    )
+    assert (
         entries_by_id["thlb_parent_006_manual_override"]["comparison_bucket"]
         == "manual_or_reviewed_override"
+    )
+    assert (
+        entries_by_id["thlb_parent_006_manual_override"]["problem_ownership"]
+        == "reviewed_bridge_choice"
     )
     assert (
         entries_by_id["thlb_parent_007_aspatial_bridge"]["comparison_bucket"]
         == "aspatial_bridge_difference"
     )
     assert (
+        entries_by_id["thlb_parent_007_aspatial_bridge"]["difference_nature"]
+        == "accepted_aspatial_bridge"
+    )
+    assert (
         entries_by_id["thlb_parent_008_blocked_source"]["comparison_bucket"]
         == "blocked_or_missing_source"
+    )
+    assert (
+        entries_by_id["thlb_parent_008_blocked_source"]["problem_ownership"]
+        == "data_exogenous"
     )
 
     markdown = tsr_recipes._build_tsr_thlb_reconstruction_comparison_markdown(
@@ -1399,14 +1437,17 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
 
     assert "THLB Reconstruction Comparison" in markdown
     assert "Top 5 Parent-Step Contributors" in markdown
+    assert "Problem Ownership Counts" in markdown
     assert "Strict vs TSR delta" in markdown
     assert "strict_overcut_candidate" in markdown
+    assert "Problem ownership: `model_endogenous`" in markdown
+    assert "Difference nature: `accepted_aspatial_bridge`" in markdown
+    assert "Engineering interpretation:" in markdown
+    assert "Recommended next move:" in markdown
     assert "reviewed bridge" in markdown.casefold()
 
 
-def test_resolve_reviewed_thlb_remaining_area_ignores_tail_no_deduction_steps() -> (
-    None
-):
+def test_resolve_reviewed_thlb_remaining_area_ignores_tail_no_deduction_steps() -> None:
     recipe = tsr_recipes.TsrThlbNetdownRecipeRecord(
         schema_version=1,
         recipe_kind="thlb_netdown",
@@ -1456,9 +1497,9 @@ def test_resolve_reviewed_thlb_remaining_area_ignores_tail_no_deduction_steps() 
         steps=(),
     )
 
-    assert tsr_recipes._resolve_reviewed_thlb_remaining_area_ha(recipe) == pytest.approx(
-        1649049.232214973
-    )
+    assert tsr_recipes._resolve_reviewed_thlb_remaining_area_ha(
+        recipe
+    ) == pytest.approx(1649049.232214973)
 
 
 def test_merge_preserved_thlb_parent_step_metadata_keeps_approved_review_logic() -> (
