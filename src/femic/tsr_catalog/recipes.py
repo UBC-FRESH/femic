@@ -5852,6 +5852,9 @@ def _clip_checkpoint_to_landscape_unit_chunks(
         checkpoint_bc = checkpoint_bc.set_crs(BC_ALBERS_EPSG)
     else:
         checkpoint_bc = checkpoint_bc.to_crs(BC_ALBERS_EPSG)
+    checkpoint_bc = _normalize_polygonal_overlay_frame(checkpoint_bc)
+    if checkpoint_bc.empty:
+        return []
     checkpoint_bc = checkpoint_bc.copy()
     checkpoint_bc["_orig_geom_area_sqm"] = checkpoint_bc.geometry.area.astype(float)
     lu_bc = lu_frame.copy()
@@ -5874,7 +5877,9 @@ def _clip_checkpoint_to_landscape_unit_chunks(
     )
     if overlay.empty:
         return []
-    overlay = overlay.loc[~overlay.geometry.is_empty].copy()
+    overlay = _normalize_polygonal_overlay_frame(overlay)
+    if overlay.empty:
+        return []
     clipped_area_sqm = overlay.geometry.area.astype(float)
     original_area_sqm = pd.to_numeric(
         overlay.get("_orig_geom_area_sqm", pd.Series(0.0, index=overlay.index)),

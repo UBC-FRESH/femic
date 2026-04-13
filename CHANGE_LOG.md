@@ -14090,3 +14090,28 @@
     post-step-5 LU cache and found that the only completed `step4_*` partition
     caches on disk are from the stale pre-clean path, so they are not safe to
     reuse as the official AFLB restart cache.
+- Opened `#157` to normalize polygonal THLB checkpoint outputs at restart boundaries.
+  - Geometry audit confirmed the bad geometry is not in the raw VRI or clean
+    GLB baseline:
+    - `tsa29_glb_vri_2024.feather` is 100% `MultiPolygon`; and
+    - locked step-2 output is only `Polygon`/`MultiPolygon`.
+  - The mixed geometry appears later, after exact overlay fragmentation:
+    - step-3 output contains `GeometryCollection`, `LineString`,
+      `MultiLineString`, `Point`, and `MultiPoint`; and
+    - the official `aflb_checkpoint.feather` contains
+      `GeometryCollection` and `MultiLineString`.
+  - That means GLB-time normalization is not the right fix surface. The new
+    issue is scoped to normalize restart/checkpoint-grade polygon outputs after
+    exact overlays so later cache/restart logic stops inheriting mixed-geometry
+    junk.
+- Fixed the LU cache writer so it no longer injects junk geometry into LU chunks.
+  - `_clip_checkpoint_to_landscape_unit_chunks(...)` now normalizes the
+    **overlay result** to polygon-only before any area scaling/accounting math
+    or chunk writes.
+  - Bounded one-LU replay on the official AFLB checkpoint (`Williams Lake`)
+    now writes a chunk that is 100% `MultiPolygon`.
+  - Before the patch, the written one-LU chunk contained `MultiLineString`,
+    `GeometryCollection`, `LineString`, `Point`, and `MultiPoint`.
+  - After the patch, the same one-LU materialization also improved from
+    `20.71 s` to `16.31 s`, confirming that the junk-geometry injection was
+    avoidable and is now fixed at the LU cache materialization surface.

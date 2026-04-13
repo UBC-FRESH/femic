@@ -7,7 +7,14 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 import pytest
-from shapely.geometry import GeometryCollection, LineString, MultiPolygon, Polygon, box
+from shapely.geometry import (
+    GeometryCollection,
+    LineString,
+    MultiLineString,
+    MultiPolygon,
+    Polygon,
+    box,
+)
 
 from femic import bcdc_dwds
 from femic import tsr_catalog
@@ -4630,6 +4637,49 @@ def test_materialize_checkpoint_landscape_unit_partitions_reuses_cached_chunks(
     )
 
     assert [item["lu_name"] for item in records_second] == ["East", "West"]
+
+
+def test_materialize_checkpoint_landscape_unit_partitions_normalizes_mixed_polygonal_checkpoint(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "instance"
+    checkpoint_path = instance_root / "data" / "aflb_checkpoint.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint = gpd.GeoDataFrame(
+        {"FEATURE_ID": [1, 2, 3, 4]},
+        geometry=[
+            box(0, 0, 10, 10),
+            MultiPolygon([box(10, 0, 20, 10)]),
+            GeometryCollection([box(20, 0, 30, 10), LineString([(20, 20), (21, 21)])]),
+            MultiLineString([[(30, 0), (31, 1)]]),
+        ],
+        crs="EPSG:3005",
+    )
+    checkpoint.to_feather(checkpoint_path)
+    lu_frame = gpd.GeoDataFrame(
+        {"LANDSCAPE_UNIT_NAME": ["One"]},
+        geometry=[box(-5, -5, 40, 20)],
+        crs="EPSG:3005",
+    )
+
+    records = tsr_recipes._materialize_checkpoint_landscape_unit_partitions(
+        checkpoint,
+        checkpoint_path=checkpoint_path,
+        lu_frame=lu_frame,
+        selected_landscape_units=("One",),
+        instance_root=instance_root,
+    )
+
+    assert len(records) == 1
+    chunk = gpd.read_feather(Path(records[0]["chunk_path"]))
+    assert set(chunk["FEATURE_ID"].tolist()) == {1, 2, 3}
+    assert set(chunk.geom_type.tolist()) == {"MultiPolygon"}
+    metadata = json.loads(
+        (Path(records[0]["chunk_path"]).parent / "partition_metadata.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert metadata["selected_landscape_units"] == ["One"]
 
 
 def test_load_cached_landscape_unit_partition_selection_returns_cached_names(

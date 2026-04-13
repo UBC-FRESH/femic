@@ -16298,3 +16298,32 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     reuse as the official AFLB restart cache.
   - Next bounded move under `#156` is to debug why the official AFLB cache slot
     is created but not populated, then return to the step-6-only run.
+- 2026-04-13: Opened `#157` to normalize polygonal THLB checkpoint outputs at restart boundaries.
+  - Bounded geometry audit showed the bad geometry is **not** coming from raw
+    VRI or the clean GLB:
+    - `tsa29_glb_vri_2024.feather` is 100% `MultiPolygon`; and
+    - locked step-2 output is only `Polygon`/`MultiPolygon`.
+  - The mixed geometry first appears after later exact overlays:
+    - step-3 output contains `GeometryCollection`, `LineString`,
+      `MultiLineString`, `Point`, and `MultiPoint`; and
+    - the official `aflb_checkpoint.feather` currently contains
+      `GeometryCollection` and `MultiLineString`.
+  - So GLB-time normalization is not the right fix surface; the real follow-on
+    is to normalize polygonal restart/checkpoint outputs after exact overlay
+    steps so later cache/restart logic is not fed mixed-geometry junk.
+- 2026-04-13: Fixed the LU cache writer so it no longer injects junk geometry into LU chunks.
+  - `_clip_checkpoint_to_landscape_unit_chunks(...)` now normalizes the
+    **overlay result** to polygon-only before any area scaling/accounting math
+    or feather writes.
+  - Bounded one-LU replay on the official AFLB checkpoint (`Williams Lake`)
+    now writes a chunk that is 100% `MultiPolygon`:
+    - before the patch, the written chunk contained `MultiLineString`,
+      `GeometryCollection`, `LineString`, `Point`, and `MultiPoint`;
+    - after the patch, the same chunk contains only `MultiPolygon`.
+  - One-LU AFLB materialization also got modestly faster:
+    - before: `20.71 s`;
+    - after: `16.31 s`.
+  - This confirms the junk-geometry injection was avoidable and has been fixed
+    at the LU cache materialization surface. The next bounded move under `#156`
+    is to retry the broader AFLB cache prewarm / step-6 restart path rather
+    than continue diagnosing one-LU output correctness.
