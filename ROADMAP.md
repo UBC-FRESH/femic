@@ -16255,3 +16255,34 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - This does **not** change the execution model for reconstructed diagnostic
     slices: they remain LU-wise but serial. The 8-core process-pool path still
     belongs only to the separate `lu_parallel` parent-step benchmark runner.
+- 2026-04-13: Open `#155` and switch reconstructed exact-overlay runs to LU-parallel auto mode by default.
+  - Scope:
+    - `femic tsr thlb-netdown-run --execution-mode reconstructed`; and
+    - reconstructed diagnostic slices used for bounded step-only adjudication.
+  - Required contract:
+    - exact LU-wise overlay defaults to `parallel_mode=auto`;
+    - `auto` resolves to `min(8, logical_cpu_count)`;
+    - explicit opt-out remains available via `parallel_mode=serial`;
+    - aspatial fallback steps may stay serial for now; and
+    - later AFLB restarts should benefit from both warmed LU caches and the new
+      default exact-overlay parallelism.
+  - Immediate bounded acceptance target:
+    - retry step 6 only from `data/tsr/aflb_checkpoint.feather`;
+    - preserve the already-settled semantics:
+      - parks/protected exact spatial; and
+      - woodlot/lease residual aspatial fallback; and
+    - record runtime plus exact/residual net deductions without touching step 7+.
+- 2026-04-13: Implemented `#155` default LU-parallel reconstructed exact-overlay execution.
+  - Reconstructed exact-overlay runs now default to `parallel_mode=auto`, which
+    resolves to `min(8, logical_cpu_count)` workers unless the user explicitly
+    opts into `serial` or overrides the worker/bundle counts.
+  - The new default applies to:
+    - `femic tsr thlb-netdown-run --execution-mode reconstructed`; and
+    - reconstructed diagnostic slices used for bounded step-only adjudication.
+  - Added LU-bundle worker execution for reconstructed exact-overlay chunks by
+    reusing the existing ProcessPool-style bundle pattern rather than a second
+    concurrency model.
+  - Targeted validation passed:
+    - `python -m pytest tests/test_tsr_recipes.py -k "parallel_auto_mode or aflb_checkpoint or can_restart_from_aflb_checkpoint" -q`
+    - `python -m pytest tests/test_cli_main.py -k "thlb_netdown_run" -q`
+    - `python -m ruff check src/femic/tsr_catalog/recipes.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_cli_main.py`

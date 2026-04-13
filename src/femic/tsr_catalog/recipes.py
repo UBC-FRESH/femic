@@ -12,6 +12,7 @@ import hashlib
 from importlib import resources as importlib_resources
 import json
 import math
+import os
 import shutil
 from pathlib import Path
 import re
@@ -190,6 +191,12 @@ _STEP14_CALIBRATED_NON_STEEP_THRESHOLD_M3_PER_HA = 67.1
 TSR_EFFECTIVE_AREA_SQM_COLUMN = "FEMIC_EFFECTIVE_AREA_SQM"
 TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL = "serial"
 TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL = "lu_parallel"
+TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_AUTO = "auto"
+TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_SERIAL = "serial"
+_TSR_THLB_RECONSTRUCTED_PARALLEL_MODES = {
+    TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_AUTO,
+    TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_SERIAL,
+}
 _TSR_THLB_PARENT_STEP_EXECUTION_MODES = {
     TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL,
     TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL,
@@ -6914,6 +6921,9 @@ def _execute_reconstructed_lu_exclusion_step(
     exclusion_geometries: gpd.GeoDataFrame,
     lu_frame: gpd.GeoDataFrame,
     runtime_step_root: Path,
+    parallel_mode: str = TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_SERIAL,
+    max_workers: int | None = None,
+    lu_bundle_count: int | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     lu_names, lu_selection_seconds = _select_intersecting_lu_names_for_exclusions(
         exclusion_geometries=exclusion_geometries,
@@ -6932,6 +6942,14 @@ def _execute_reconstructed_lu_exclusion_step(
             "write_seconds": 0.0,
         }
 
+    resolved_parallel_mode, worker_count, bundle_count = (
+        _resolve_reconstructed_parallel_settings(
+            parallel_mode=parallel_mode,
+            max_workers=max_workers,
+            lu_bundle_count=lu_bundle_count,
+            candidate_chunk_count=len(lu_names),
+        )
+    )
     exclusion_sindex = exclusion_geometries.sindex
     updated_records: list[dict[str, Any]] = []
     candidate_query_seconds = lu_selection_seconds
@@ -6943,6 +6961,91 @@ def _execute_reconstructed_lu_exclusion_step(
     fragment_batch_count = 0
     intersecting_feature_indices: set[int] = set()
     touched_chunk_count = 0
+
+    if resolved_parallel_mode == TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_AUTO:
+        touched_records = [
+            {
+                **dict(record),
+                "original_index": index,
+            }
+            for index, record in enumerate(chunk_records, start=1)
+            if str(record.get("lu_name", "")).strip() in lu_names
+        ]
+        if worker_count > 1 and len(touched_records) > 1:
+            exclusion_path = runtime_step_root / "_exclusion_geometries.feather"
+            exclusion_geometries.to_feather(exclusion_path)
+            bundles = _group_landscape_unit_chunk_records(
+                touched_records,
+                bundle_count=bundle_count,
+            )
+            worker_results: list[dict[str, Any]] = []
+            with ProcessPoolExecutor(max_workers=worker_count) as pool:
+                futures = [
+                    pool.submit(
+                        _run_reconstructed_lu_exclusion_bundle_worker,
+                        bundle_index=int(bundle["bundle_index"]),
+                        bundle_label=str(bundle["bundle_label"]),
+                        bundle_items=[
+                            dict(item) for item in bundle["chunk_records"]
+                        ],
+                        exclusion_path_str=str(exclusion_path),
+                        runtime_step_root_str=str(runtime_step_root),
+                    )
+                    for bundle in bundles
+                ]
+                for future in futures:
+                    worker_results.append(future.result())
+
+            updated_record_by_index: dict[int, dict[str, Any]] = {}
+            for result in worker_results:
+                candidate_query_seconds += float(
+                    result.get("candidate_query_seconds", 0.0) or 0.0
+                )
+                overlay_seconds += float(result.get("overlay_seconds", 0.0) or 0.0)
+                write_seconds += float(result.get("write_seconds", 0.0) or 0.0)
+                candidate_row_count += int(result.get("candidate_row_count", 0) or 0)
+                affected_fragment_count += int(
+                    result.get("affected_fragment_count", 0) or 0
+                )
+                affected_area_ha += float(result.get("affected_area_ha", 0.0) or 0.0)
+                fragment_batch_count += int(result.get("fragment_batch_count", 0) or 0)
+                touched_chunk_count += int(result.get("lu_chunk_count", 0) or 0)
+                intersecting_feature_indices.update(
+                    {
+                        int(value)
+                        for value in result.get(
+                            "intersecting_exclusion_feature_indices", ()
+                        )
+                    }
+                )
+                for item in result.get("updated_records", ()):
+                    original_index = int(item.get("original_index", 0) or 0)
+                    if original_index > 0:
+                        updated_record_by_index[original_index] = {
+                            key: value
+                            for key, value in dict(item).items()
+                            if key != "original_index"
+                        }
+
+            for index, record in enumerate(chunk_records, start=1):
+                updated_records.append(updated_record_by_index.get(index, dict(record)))
+
+            return updated_records, {
+                "candidate_query_seconds": candidate_query_seconds,
+                "lu_chunk_count": touched_chunk_count,
+                "intersecting_exclusion_feature_count": len(
+                    intersecting_feature_indices
+                ),
+                "candidate_row_count": candidate_row_count,
+                "affected_fragment_count": affected_fragment_count,
+                "affected_area_ha": affected_area_ha,
+                "fragment_batch_count": fragment_batch_count,
+                "overlay_seconds": overlay_seconds,
+                "write_seconds": write_seconds,
+                "parallel_mode": resolved_parallel_mode,
+                "worker_count": worker_count,
+                "lu_bundle_count": len(bundles),
+            }
 
     for index, record in enumerate(chunk_records, start=1):
         current_record = dict(record)
@@ -7013,6 +7116,145 @@ def _execute_reconstructed_lu_exclusion_step(
         "fragment_batch_count": fragment_batch_count,
         "overlay_seconds": overlay_seconds,
         "write_seconds": write_seconds,
+        "parallel_mode": resolved_parallel_mode,
+        "worker_count": worker_count,
+        "lu_bundle_count": bundle_count,
+    }
+
+
+def _resolve_reconstructed_parallel_settings(
+    *,
+    parallel_mode: str,
+    max_workers: int | None,
+    lu_bundle_count: int | None,
+    candidate_chunk_count: int,
+) -> tuple[str, int, int]:
+    resolved_mode = str(parallel_mode).strip().lower() or (
+        TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_AUTO
+    )
+    if resolved_mode not in _TSR_THLB_RECONSTRUCTED_PARALLEL_MODES:
+        raise TsrRecipeError(
+            "Unsupported reconstructed parallel mode: "
+            f"{parallel_mode}. Expected one of "
+            f"{sorted(_TSR_THLB_RECONSTRUCTED_PARALLEL_MODES)}."
+        )
+    if resolved_mode == TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_SERIAL:
+        return resolved_mode, 1, 1
+    logical_cpu_count = max(1, os.cpu_count() or 1)
+    resolved_worker_count = max(
+        1,
+        min(
+            int(max_workers) if max_workers is not None else min(8, logical_cpu_count),
+            max(1, int(candidate_chunk_count)),
+        ),
+    )
+    resolved_bundle_count = max(
+        1,
+        min(
+            int(lu_bundle_count)
+            if lu_bundle_count is not None
+            else resolved_worker_count,
+            max(1, int(candidate_chunk_count)),
+        ),
+    )
+    return resolved_mode, resolved_worker_count, resolved_bundle_count
+
+
+def _run_reconstructed_lu_exclusion_bundle_worker(
+    *,
+    bundle_index: int,
+    bundle_label: str,
+    bundle_items: Sequence[dict[str, Any]],
+    exclusion_path_str: str,
+    runtime_step_root_str: str,
+) -> dict[str, Any]:
+    del bundle_label
+    exclusion_geometries = gpd.read_feather(Path(exclusion_path_str))
+    exclusion_geometries = gpd.GeoDataFrame(
+        exclusion_geometries, geometry="geometry", crs=BC_ALBERS_EPSG
+    )
+    exclusion_sindex = exclusion_geometries.sindex
+    runtime_step_root = Path(runtime_step_root_str)
+    updated_records: list[dict[str, Any]] = []
+    candidate_query_seconds = 0.0
+    overlay_seconds = 0.0
+    write_seconds = 0.0
+    candidate_row_count = 0
+    affected_fragment_count = 0
+    affected_area_ha = 0.0
+    fragment_batch_count = 0
+    intersecting_feature_indices: set[int] = set()
+    touched_chunk_count = 0
+
+    for item in bundle_items:
+        current_record = dict(item)
+        chunk = _load_lu_chunk_frame(Path(current_record["chunk_path"]))
+        local_query_started = perf_counter()
+        local_exclusion_indices = exclusion_sindex.query(
+            chunk.geometry,
+            predicate="intersects",
+        )
+        candidate_query_seconds += perf_counter() - local_query_started
+        if getattr(local_exclusion_indices, "ndim", 1) == 2:
+            local_exclusion_values = local_exclusion_indices[1]
+        else:
+            local_exclusion_values = local_exclusion_indices
+        unique_exclusion_indices = sorted(
+            {int(value) for value in local_exclusion_values.tolist()}
+        )
+        if not unique_exclusion_indices:
+            updated_records.append(current_record)
+            continue
+        local_exclusions = exclusion_geometries.iloc[unique_exclusion_indices].copy()
+        intersecting_feature_indices.update(unique_exclusion_indices)
+
+        overlay_started = perf_counter()
+        (
+            updated_chunk,
+            current_candidate_count,
+            current_affected_fragment_count,
+            current_affected_area_ha,
+            current_fragment_batch_count,
+        ) = _fragment_binary_exclusion_step_chunked(
+            checkpoint=chunk,
+            exclusion_geometries=local_exclusions,
+        )
+        overlay_seconds += perf_counter() - overlay_started
+        candidate_row_count += int(current_candidate_count)
+        affected_fragment_count += int(current_affected_fragment_count)
+        affected_area_ha += float(current_affected_area_ha)
+        fragment_batch_count += int(current_fragment_batch_count)
+
+        if current_candidate_count > 0:
+            touched_chunk_count += 1
+        if current_affected_fragment_count <= 0:
+            updated_records.append(current_record)
+            continue
+
+        original_index = int(current_record.get("original_index", 0) or 0)
+        lu_name = str(current_record.get("lu_name", "")).strip()
+        chunk_write_started = perf_counter()
+        chunk_path = (
+            runtime_step_root
+            / f"{original_index:03d}_{_normalize_step_slug(lu_name or 'chunk')}.feather"
+        )
+        _write_lu_chunk_frame(updated_chunk, chunk_path=chunk_path)
+        write_seconds += perf_counter() - chunk_write_started
+        current_record["chunk_path"] = chunk_path
+        updated_records.append(current_record)
+
+    return {
+        "bundle_index": bundle_index,
+        "updated_records": updated_records,
+        "candidate_query_seconds": candidate_query_seconds,
+        "overlay_seconds": overlay_seconds,
+        "write_seconds": write_seconds,
+        "candidate_row_count": candidate_row_count,
+        "affected_fragment_count": affected_fragment_count,
+        "affected_area_ha": affected_area_ha,
+        "fragment_batch_count": fragment_batch_count,
+        "lu_chunk_count": touched_chunk_count,
+        "intersecting_exclusion_feature_indices": sorted(intersecting_feature_indices),
     }
 
 
@@ -13668,6 +13910,9 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
     instance_root: Path,
     source_entry_map: dict[str, dict[str, Any]],
     total_area_benchmark_ha: float | None = None,
+    parallel_mode: str = TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_AUTO,
+    max_workers: int | None = None,
+    lu_bundle_count: int | None = None,
 ) -> tuple[
     gpd.GeoDataFrame,
     list[dict[str, Any]],
@@ -13887,6 +14132,9 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                             exclusion_geometries=exclusion_geometries,
                             lu_frame=lu_frame,
                             runtime_step_root=step_dir,
+                            parallel_mode=parallel_mode,
+                            max_workers=max_workers,
+                            lu_bundle_count=lu_bundle_count,
                         )
                         step_profile["candidate_query_seconds"] = float(
                             lu_step_profile["candidate_query_seconds"]
@@ -13902,6 +14150,15 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                         )
                         step_profile["intersecting_exclusion_feature_count"] = int(
                             lu_step_profile["intersecting_exclusion_feature_count"]
+                        )
+                        step_profile["parallel_mode"] = str(
+                            lu_step_profile.get("parallel_mode", "")
+                        ).strip()
+                        step_profile["worker_count"] = int(
+                            lu_step_profile.get("worker_count", 0) or 0
+                        )
+                        step_profile["lu_bundle_count"] = int(
+                            lu_step_profile.get("lu_bundle_count", 0) or 0
                         )
                         if int(lu_step_profile["affected_fragment_count"]) <= 0:
                             updated_step["run_status"] = "applied_noop"
@@ -14123,6 +14380,9 @@ def _execute_tsr_thlb_recipe_steps(
     source_entry_map: dict[str, dict[str, Any]],
     allow_stand_binary_fallback: bool,
     total_area_benchmark_ha: float | None = None,
+    parallel_mode: str = TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_AUTO,
+    max_workers: int | None = None,
+    lu_bundle_count: int | None = None,
 ) -> tuple[
     gpd.GeoDataFrame,
     list[dict[str, Any]],
@@ -14141,6 +14401,9 @@ def _execute_tsr_thlb_recipe_steps(
             instance_root=instance_root,
             source_entry_map=source_entry_map,
             total_area_benchmark_ha=total_area_benchmark_ha,
+            parallel_mode=parallel_mode,
+            max_workers=max_workers,
+            lu_bundle_count=lu_bundle_count,
         )
     outcome_counts: Counter[str] = Counter()
     applied_steps: list[dict[str, Any]] = []
@@ -14777,6 +15040,9 @@ def run_tsr_thlb_netdown_recipe(
     auto_map_id_smoke_subset: bool = False,
     allow_stand_binary_fallback: bool = False,
     write_aflb_gpkg: bool = True,
+    parallel_mode: str = TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_AUTO,
+    max_workers: int | None = None,
+    lu_bundle_count: int | None = None,
 ) -> TsrThlbNetdownRecipeRunResult:
     """Execute a THLB netdown recipe into either a hybrid or reconstructed checkpoint."""
 
@@ -14893,6 +15159,9 @@ def run_tsr_thlb_netdown_recipe(
             source_entry_map=source_entry_map,
             allow_stand_binary_fallback=allow_stand_binary_fallback,
             total_area_benchmark_ha=total_area_benchmark_ha,
+            parallel_mode=parallel_mode,
+            max_workers=max_workers,
+            lu_bundle_count=lu_bundle_count,
         )
     )
 
@@ -15215,6 +15484,9 @@ def run_tsr_thlb_reconstructed_diagnostic_slice(
     start_index: int = 0,
     end_index: int | None = None,
     allow_stand_binary_fallback: bool = False,
+    parallel_mode: str = TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_AUTO,
+    max_workers: int | None = None,
+    lu_bundle_count: int | None = None,
 ) -> TsrThlbReconstructedDiagnosticSliceResult:
     """Run one reconstructed diagnostic step slice without mutating live recipe surfaces."""
 
@@ -15272,6 +15544,9 @@ def run_tsr_thlb_reconstructed_diagnostic_slice(
             source_entry_map=source_entry_map,
             allow_stand_binary_fallback=allow_stand_binary_fallback,
             total_area_benchmark_ha=total_area_benchmark_ha,
+            parallel_mode=parallel_mode,
+            max_workers=max_workers,
+            lu_bundle_count=lu_bundle_count,
         )
     )
     execution_seconds = perf_counter() - run_start
@@ -15305,6 +15580,9 @@ def run_tsr_thlb_reconstructed_diagnostic_slice(
         "output_path": str(resolved_output_path.relative_to(instance_root).as_posix()),
         "execution_mode": TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
         "allow_stand_binary_fallback": allow_stand_binary_fallback,
+        "parallel_mode": parallel_mode,
+        "max_workers": max_workers,
+        "lu_bundle_count": lu_bundle_count,
         "baseline_signal": baseline_signal,
         "baseline_managed_area_ha": baseline_managed_area_ha,
         "final_managed_area_ha": final_managed_area_ha,
@@ -15331,6 +15609,9 @@ def run_tsr_thlb_reconstructed_diagnostic_slice(
         "audit_path": str(resolved_audit_path.relative_to(instance_root).as_posix()),
         "execution_mode": TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
         "allow_stand_binary_fallback": allow_stand_binary_fallback,
+        "parallel_mode": parallel_mode,
+        "max_workers": max_workers,
+        "lu_bundle_count": lu_bundle_count,
         "baseline_signal": baseline_signal,
         "resumed_from_checkpoint": resume_checkpoint_path is not None,
         "start_index": bounded_start,

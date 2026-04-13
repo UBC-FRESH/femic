@@ -6311,6 +6311,9 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
         map_id=[],
         auto_map_id_smoke_subset=False,
         no_aflb_gpkg=False,
+        parallel_mode="auto",
+        max_workers=None,
+        lu_bundle_count=None,
     )
 
     assert (
@@ -6333,6 +6336,9 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
     )
     assert captured_kwargs["map_ids"] == ()
     assert captured_kwargs["auto_map_id_smoke_subset"] is False
+    assert captured_kwargs["parallel_mode"] == "auto"
+    assert captured_kwargs["max_workers"] is None
+    assert captured_kwargs["lu_bundle_count"] is None
     assert any("step_count: 3" in msg for msg in messages)
     assert any("execution_mode: hybrid" in msg for msg in messages)
     assert any("outcome_applied: 1" in msg for msg in messages)
@@ -6409,12 +6415,18 @@ def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
         auto_map_id_smoke_subset=False,
         allow_stand_binary_fallback=True,
         no_aflb_gpkg=False,
+        parallel_mode="auto",
+        max_workers=None,
+        lu_bundle_count=None,
     )
 
     assert captured_kwargs["map_ids"] == ("093J034", "093J044")
     assert captured_kwargs["auto_map_id_smoke_subset"] is False
     assert captured_kwargs["allow_stand_binary_fallback"] is True
     assert captured_kwargs["write_aflb_gpkg"] is True
+    assert captured_kwargs["parallel_mode"] == "auto"
+    assert captured_kwargs["max_workers"] is None
+    assert captured_kwargs["lu_bundle_count"] is None
     assert any("selected_map_ids: 093J034, 093J044" in msg for msg in messages)
 
 
@@ -6470,9 +6482,15 @@ def test_tsr_thlb_netdown_run_can_disable_aflb_gpkg(
         auto_map_id_smoke_subset=False,
         allow_stand_binary_fallback=False,
         no_aflb_gpkg=True,
+        parallel_mode="serial",
+        max_workers=3,
+        lu_bundle_count=2,
     )
 
     assert captured_kwargs["write_aflb_gpkg"] is False
+    assert captured_kwargs["parallel_mode"] == "serial"
+    assert captured_kwargs["max_workers"] == 3
+    assert captured_kwargs["lu_bundle_count"] == 2
 
 
 def test_tsr_facts_report_writes_review_csv(

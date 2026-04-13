@@ -598,6 +598,7 @@ TSR_THLB_EXECUTION_MODE_OPTION = typer.Option(
         "fragment-first exact overlay."
     ),
 )
+TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_DEFAULT = "auto"
 TSR_THLB_MAP_ID_OPTION = typer.Option(
     None,
     "--map-id",
@@ -629,6 +630,34 @@ TSR_THLB_NO_AFLB_GPKG_OPTION = typer.Option(
         "Do not write the default `data/tsr/aflb_checkpoint.gpkg` companion when "
         "a reconstructed run reaches the AFLB milestone."
     ),
+)
+TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_OPTION = typer.Option(
+    TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_DEFAULT,
+    "--parallel-mode",
+    help=(
+        "Reconstructed exact-overlay parallel mode: `auto` uses LU bundle workers "
+        "by default (capped at 8 workers); `serial` disables that parallel path."
+    ),
+)
+TSR_THLB_RECONSTRUCTED_MAX_WORKERS_OPTION = typer.Option(
+    None,
+    "--max-workers",
+    min=1,
+    help=(
+        "Optional worker override for reconstructed LU bundle execution when "
+        "`--parallel-mode auto` is in use."
+    ),
+    show_default=False,
+)
+TSR_THLB_RECONSTRUCTED_LU_BUNDLE_COUNT_OPTION = typer.Option(
+    None,
+    "--lu-bundle-count",
+    min=1,
+    help=(
+        "Optional LU bundle-count override for reconstructed exact-overlay runs "
+        "when `--parallel-mode auto` is in use."
+    ),
+    show_default=False,
 )
 TSR_THLB_WORKBENCH_PATH_OPTION = typer.Option(
     None,
@@ -4007,6 +4036,9 @@ def tsr_thlb_netdown_run(
     auto_map_id_smoke_subset: bool = TSR_THLB_AUTO_MAP_ID_SMOKE_OPTION,
     allow_stand_binary_fallback: bool = (TSR_THLB_ALLOW_STAND_BINARY_FALLBACK_OPTION),
     no_aflb_gpkg: bool = TSR_THLB_NO_AFLB_GPKG_OPTION,
+    parallel_mode: str = TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_DEFAULT,
+    max_workers: int | None = TSR_THLB_RECONSTRUCTED_MAX_WORKERS_OPTION,
+    lu_bundle_count: int | None = TSR_THLB_RECONSTRUCTED_LU_BUNDLE_COUNT_OPTION,
 ) -> None:
     """Execute the reviewed THLB netdown recipe in hybrid or reconstructed mode."""
 
@@ -4058,6 +4090,9 @@ def tsr_thlb_netdown_run(
             auto_map_id_smoke_subset=auto_map_id_smoke_subset,
             allow_stand_binary_fallback=allow_stand_binary_fallback,
             write_aflb_gpkg=not no_aflb_gpkg,
+            parallel_mode=parallel_mode,
+            max_workers=max_workers,
+            lu_bundle_count=lu_bundle_count,
         )
     except TsrRecipeError as exc:
         console.print(f"[red]TSR THLB recipe run error:[/red] {exc}")

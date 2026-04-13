@@ -8812,3 +8812,170 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_lu_mode_respects_source_att
     assert filter_step["spatial_application_mode"] == "fragment_overlay"
     assert filter_step["affected_area_ha"] == pytest.approx(0.01)
     assert filter_step["intersecting_exclusion_feature_count"] == 1
+
+
+def test_run_tsr_thlb_reconstructed_diagnostic_slice_can_use_parallel_auto_mode(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _ImmediateFuture:
+        def __init__(self, value: object) -> None:
+            self._value = value
+
+        def result(self) -> object:
+            return self._value
+
+    class _ImmediateExecutor:
+        def __init__(self, *, max_workers: int | None = None) -> None:
+            self.max_workers = max_workers
+
+        def __enter__(self) -> "_ImmediateExecutor":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+        def submit(self, fn, /, *args, **kwargs) -> _ImmediateFuture:
+            return _ImmediateFuture(fn(*args, **kwargs))
+
+    monkeypatch.setattr(tsr_recipes, "ProcessPoolExecutor", _ImmediateExecutor)
+
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root / "config" / "tsr" / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+    )
+
+    source_path = instance_root / "data" / "downloads" / "bcdc" / "parks" / "parks.gpkg"
+    source_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {"NAME": ["A", "B"]},
+        geometry=[box(0, 0, 10, 10), box(20, 0, 30, 10)],
+        crs="EPSG:3005",
+    ).to_file(source_path, driver="GPKG")
+
+    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2],
+            "MAP_ID": ["093J034", "093J034"],
+            "FEATURE_AREA_SQM": [100.0, 100.0],
+            "Shape_Area": [100.0, 100.0],
+            "Shape_Length": [40.0, 40.0],
+        },
+        geometry=[box(0, 0, 10, 10), box(20, 0, 30, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint.to_feather(checkpoint_path)
+
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-5, -5, 15, 15), box(15, -5, 35, 15)],
+        names=["LU_A", "LU_B"],
+    )
+
+    source_recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    source_recipe_payload["recipe_contract"]["status"] = "run"
+    source_recipe_payload["entries"] = [
+        {
+            "entry_id": "parks",
+            "label": "Parks",
+            "recommended_query": "WHSE_TANTALIS.TA_PARK_ECORES_PA_SVW",
+            "acquisition_strategy": "wfs_fetch",
+            "artifact_path": "data/downloads/bcdc/parks/parks.gpkg",
+            "run_status": "fetched",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            source_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["parent_steps"] = [
+        {
+            "parent_step_id": "thlb_parent_006_parks",
+            "parent_label": "Parks",
+            "parent_kind": "transformation",
+            "land_base_stage": "aflb_to_lhlb",
+            "stage_label": "AFLB -> LHLB",
+            "benchmark_marginal_area_ha": 200.0,
+            "benchmark_cumulative_area_ha": 0.0,
+            "row_order": 6,
+        }
+    ]
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "parks_land_base",
+            "parent_step_id": "thlb_parent_006_parks",
+            "order_index": 1,
+            "step_kind": "netdown_rule",
+            "label": "Land base",
+            "normalized_action": "use_land_base",
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 1,
+        },
+        {
+            "step_id": "parks_exact",
+            "parent_step_id": "thlb_parent_006_parks",
+            "order_index": 2,
+            "step_kind": "netdown_rule",
+            "label": "Parks exact",
+            "normalized_action": "exclude",
+            "compiled_operation_type": "select_spatial_intersect",
+            "linked_source_entry_ids": ["parks"],
+            "step_status": "ready",
+            "page_number": 2,
+        },
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    diagnostics_root = instance_root / "runtime" / "logs" / "tsr" / "diagnostics"
+    result = tsr_recipes.run_tsr_thlb_reconstructed_diagnostic_slice(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        output_path=diagnostics_root / "parallel_auto.feather",
+        audit_path=diagnostics_root / "parallel_auto.audit.json",
+        diagnostic_path=diagnostics_root / "parallel_auto.diag.json",
+        parallel_mode=tsr_recipes.TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_AUTO,
+        max_workers=2,
+        lu_bundle_count=2,
+    )
+
+    audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
+    filter_step = next(step for step in audit_payload["steps"] if step["step_id"] == "parks_exact")
+    assert filter_step["run_status"] == "applied"
+    assert filter_step["spatial_application_mode"] == "fragment_overlay"
+    assert filter_step["affected_area_ha"] == pytest.approx(0.02)
+
+    diag_payload = json.loads(result.diagnostic_path.read_text(encoding="utf-8"))
+    exact_profile = next(
+        step for step in diag_payload["step_profiles"] if step["step_id"] == "parks_exact"
+    )
+    assert exact_profile["parallel_mode"] == "auto"
+    assert exact_profile["worker_count"] == 2
+    assert exact_profile["lu_bundle_count"] == 2

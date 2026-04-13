@@ -14066,3 +14066,17 @@
   - This is a cache warm-up only; reconstructed diagnostic slices are still
     LU-wise **serial** runs, not the separate 8-core `lu_parallel`
     parent-step benchmark path.
+- Implemented `#155` default LU-parallel reconstructed exact-overlay execution.
+  - Reconstructed exact-overlay runs now default to `parallel_mode=auto`,
+    resolving to `min(8, logical_cpu_count)` workers unless the user
+    explicitly opts into `serial` or overrides the worker/bundle counts.
+  - The new default applies to:
+    - `femic tsr thlb-netdown-run --execution-mode reconstructed`; and
+    - reconstructed diagnostic slices used for bounded step-only adjudication.
+  - Added LU-bundle worker execution for reconstructed exact-overlay chunks so
+    AFLB restart runs can use the warmed LU cache and parallel exact-overlay
+    work instead of the old serial LU loop.
+  - Targeted validation passed:
+    - `python -m pytest tests/test_tsr_recipes.py -k "parallel_auto_mode or aflb_checkpoint or can_restart_from_aflb_checkpoint" -q`
+    - `python -m pytest tests/test_cli_main.py -k "thlb_netdown_run" -q`
+    - `python -m ruff check src/femic/tsr_catalog/recipes.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_cli_main.py`
