@@ -13938,3 +13938,24 @@
   - The bounded step-2-only diagnostic rerun with the repaired larger `F_OWN`
     input timed out under the short validation timeout, so the arithmetic
     reconciliation is the current governing result for this unit.
+- Locked down TSA29 strict step 2 against the TSR benchmark.
+  - Found and fixed the remaining `aspatial_area_reduction` bug: it had been
+    scaling against the full canonical GLB area, including rows already removed
+    by compiled_01, which diluted the treaty/title fallback by about `19.6k ha`.
+  - The reducer now scales only the still-active effective area in both LU and
+    non-LU execution paths.
+  - Final bounded step-2-only rerun from the clean raw GLB baseline:
+    - baseline area: `4,933,664.212 ha`
+    - compiled_01 exact overlay: `505,534.191 ha`
+    - compiled_02 aspatial fallback: `191,247.132 ha`
+    - total strict step-2 removal: `696,781.324 ha`
+    - TSR benchmark: `697,033.000 ha`
+    - remaining delta: `-251.676 ha`
+  - Step 2 is now effectively locked down.
+- Recorded the step-3 starting point for the next bounded unit.
+  - Current strict step 3 is a two-part rule:
+    - compiled_01 broad checkpoint-attribute non-forest proxy; and
+    - compiled_02 direct Freshwater Atlas water exclusion.
+  - The current recipe already notes that harvest-history, MPB, and recent-fire
+    exceptions are not auto-restored in compiled_01, which is the leading
+    hypothesis for the next step-3 semantics gap.

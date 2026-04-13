@@ -16084,3 +16084,31 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - The bounded step-2-only diagnostic rerun with the much larger valid `F_OWN`
     input timed out at the current short timeout budget, so the arithmetic
     reconciliation above is the current governing result for this unit.
+- 2026-04-12: Locked down TSA29 strict step 2 against the TSR benchmark.
+  - Found and fixed the remaining step-2 under-removal bug in
+    `aspatial_area_reduction`:
+    - the reducer had been scaling against the full canonical GLB area,
+      including rows already removed by step-2 compiled_01;
+    - that diluted the treaty/title fallback and under-removed by about `19.6k ha`;
+    - the reducer now scales only the still-active effective area in both the LU
+      and non-LU paths.
+  - Final bounded step-2-only rerun from the clean raw GLB baseline:
+    - baseline area: `4,933,664.212 ha`
+    - compiled_01 exact overlay: `505,534.191 ha`
+    - compiled_02 aspatial fallback: `191,247.132 ha`
+    - total strict step-2 removal: `696,781.324 ha`
+    - TSR step-2 benchmark: `697,033.000 ha`
+    - remaining delta: `-251.676 ha`
+  - Treat step 2 as effectively locked down.
+  - Next bounded unit starts at step 3 only.
+- 2026-04-12: Step 3 starting point after step-2 lock-down.
+  - TSR step 3 (`Non-forest`) is currently represented by:
+    - compiled_01 checkpoint-attribute proxy using
+      `BCLCS_LEVEL_2 != T`, `FOR_MGMT_LAND_BASE_IND != Y`,
+      `NON_PRODUCTIVE_CD not_blank`, and `CROWN_CLOSURE < 10`;
+    - compiled_02 direct Freshwater Atlas lakes/rivers/wetlands exclusion.
+  - The recipe itself already warns that harvest-history, MPB, and recent-fire
+    exceptions are not yet auto-restored in compiled_01.
+  - So the first step-3 hypothesis to test is not a source-layer bug; it is that
+    compiled_01 is still an over-broad FMLB proxy because it excludes the broad
+    checkpoint attributes without restoring the TSR-cited exceptions.

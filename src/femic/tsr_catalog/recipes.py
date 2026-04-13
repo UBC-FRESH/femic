@@ -6641,12 +6641,19 @@ def _apply_aspatial_area_keep_factor(
     keep_factor: float,
 ) -> tuple[gpd.GeoDataFrame, int]:
     updated = checkpoint.copy()
-    canonical_area_sqm = _resolve_canonical_stand_area_sqm(updated)
-    active_mask = canonical_area_sqm.astype(float) > 0.0
+    effective_area_sqm = _resolve_effective_stand_area_sqm(updated)
+    thlb_fact = (
+        pd.to_numeric(updated.get("thlb_fact", 1.0), errors="coerce")
+        .fillna(0.0)
+        .clip(lower=0.0)
+    )
+    active_mask = (effective_area_sqm.astype(float) > 0.0) & (thlb_fact > 0.0)
     if not active_mask.any():
         return updated, 0
-    updated[TSR_EFFECTIVE_AREA_SQM_COLUMN] = (
-        canonical_area_sqm.astype(float) * keep_factor
+    updated[TSR_EFFECTIVE_AREA_SQM_COLUMN] = effective_area_sqm.astype(float)
+    updated.loc[active_mask, TSR_EFFECTIVE_AREA_SQM_COLUMN] = (
+        updated.loc[active_mask, TSR_EFFECTIVE_AREA_SQM_COLUMN].astype(float)
+        * keep_factor
     )
     updated.loc[active_mask, "_stand_area_sqm"] = updated.loc[
         active_mask, TSR_EFFECTIVE_AREA_SQM_COLUMN
@@ -6710,9 +6717,7 @@ def _apply_reconstructed_lu_aspatial_area_reduction(
         lu_name = str(record.get("lu_name", "")).strip()
         frame = _load_lu_chunk_frame(Path(record["chunk_path"]))
         frames_by_lu[lu_name] = frame
-        current_area_ha += float(
-            _resolve_canonical_stand_area_sqm(frame).sum() / 10000.0
-        )
+        current_area_ha += _managed_area_ha(frame)
     if current_area_ha <= 0.0:
         return [dict(item) for item in chunk_records], 0.0, 0, 0
     removed_area_ha = min(float(target_removed_area_ha), current_area_ha)
@@ -14278,24 +14283,16 @@ def _apply_aspatial_area_reduction(
 ) -> tuple[gpd.GeoDataFrame, float, int]:
     if checkpoint.empty or target_removed_area_ha <= 0.0:
         return checkpoint, 0.0, 0
-    canonical_area_sqm = _resolve_canonical_stand_area_sqm(checkpoint)
-    current_area_ha = float(canonical_area_sqm.sum() / 10000.0)
+    current_area_ha = _managed_area_ha(checkpoint)
     if current_area_ha <= 0.0:
         return checkpoint, 0.0, 0
     removed_area_ha = min(float(target_removed_area_ha), current_area_ha)
     keep_factor = (current_area_ha - removed_area_ha) / current_area_ha
-    updated = checkpoint.copy()
-    active_mask = canonical_area_sqm.astype(float) > 0.0
-    if not active_mask.any():
-        return checkpoint, 0.0, 0
-
-    updated[TSR_EFFECTIVE_AREA_SQM_COLUMN] = (
-        canonical_area_sqm.astype(float) * keep_factor
+    updated, affected_row_count = _apply_aspatial_area_keep_factor(
+        checkpoint,
+        keep_factor=keep_factor,
     )
-    updated.loc[active_mask, "_stand_area_sqm"] = updated.loc[
-        active_mask, TSR_EFFECTIVE_AREA_SQM_COLUMN
-    ].astype(float)
-    return updated, removed_area_ha, int(active_mask.sum())
+    return updated, removed_area_ha, affected_row_count
 
 
 def run_tsr_thlb_netdown_recipe(

@@ -5520,9 +5520,38 @@ def test_apply_aspatial_area_reduction_is_idempotent_against_canonical_area() ->
 
     assert removed_area_ha == pytest.approx(0.01)
     assert updated[tsr_recipes.TSR_EFFECTIVE_AREA_SQM_COLUMN].tolist() == pytest.approx(
-        [50.0, 50.0]
+        [0.0, 0.0]
     )
-    assert updated["_stand_area_sqm"].tolist() == pytest.approx([50.0, 50.0])
+    assert updated["_stand_area_sqm"].tolist() == pytest.approx([0.0, 0.0])
+
+
+def test_apply_aspatial_area_reduction_targets_active_area_only() -> None:
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "_stand_area_sqm": [100.0, 100.0],
+            tsr_recipes.TSR_EFFECTIVE_AREA_SQM_COLUMN: [100.0, 100.0],
+            "FEATURE_AREA_SQM": [100.0, 100.0],
+            "thlb_fact": [1.0, 0.0],
+            "thlb": [1.0, 0.0],
+        },
+        geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10)],
+        crs="EPSG:3005",
+    )
+
+    updated, removed_area_ha, affected_row_count = (
+        tsr_recipes._apply_aspatial_area_reduction(
+            checkpoint,
+            target_removed_area_ha=0.005,
+        )
+    )
+
+    assert removed_area_ha == pytest.approx(0.005)
+    assert affected_row_count == 1
+    assert updated[tsr_recipes.TSR_EFFECTIVE_AREA_SQM_COLUMN].tolist() == pytest.approx(
+        [50.0, 100.0]
+    )
+    assert updated["_stand_area_sqm"].tolist() == pytest.approx([50.0, 100.0])
+    assert tsr_recipes._managed_area_ha(updated) == pytest.approx(0.005)
 
 
 def test_run_tsr_thlb_parent_step_treats_no_matching_filtered_source_as_noop(
