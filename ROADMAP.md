@@ -16069,3 +16069,18 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - refetch a valid full-TSA `F_OWN`; and
     - rerun only step 2 against that valid overlay before resuming step-2
       semantics work.
+- 2026-04-12: Converted the blocked treaty/title portion of TSA29 step 2 into
+  an explicit aspatial fallback in the reviewed recipe.
+  - `thlb_parent_002_land_not_administered_by_the_province_compiled_02` now
+    uses `aspatial_area_reduction` with a documented fallback target of
+    `191,246 ha` (`2,702 ha` NStQ ITA + `188,544 ha` Tsilhqot'in title).
+  - With the repaired paged `F_OWN` fetch and the current compiled_01
+    ownership filter set, the clean-GLB overlap math is:
+    - compiled_01 exact overlap: `505,534.191 ha`
+    - compiled_02 fallback: `191,246.000 ha`
+    - expected strict step-2 total: `696,780.191 ha`
+    - TSR step-2 benchmark: `697,033.000 ha`
+    - remaining delta: `-252.809 ha`
+  - The bounded step-2-only diagnostic rerun with the much larger valid `F_OWN`
+    input timed out at the current short timeout budget, so the arithmetic
+    reconciliation above is the current governing result for this unit.

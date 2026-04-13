@@ -3039,21 +3039,22 @@ def _specialized_compiled_logic_for_parent_step(
         treaty_item = _base_item(
             "compiled_02",
             "Treaty and title transfers requiring reviewed overlays",
-            "manual_review_required",
+            "aspatial_area_reduction",
         )
         treaty_item.update(
             {
-                "normalized_action": "review",
-                "normalized_subject": "Treaty and title transfers requiring reviewed overlays",
+                "benchmark_marginal_area_ha": 191246.0,
+                "normalized_action": "aspatial_area_reduction",
+                "normalized_subject": "Treaty and title transfer area reduction",
                 "normalized_predicate": (
-                    "review NStQ interim treaty parcels and Tsilhqot'in title lands "
-                    "with dedicated reviewed overlays before lock"
+                    "apply the documented NStQ interim treaty and Tsilhqot'in title "
+                    "excluded area as an AFLB aspatial fallback because the dedicated "
+                    "overlay polygons are not publicly materialized in this lane"
                 ),
-                "linked_source_entry_ids": ["whse_forest_vegetation_f_own"],
-                "step_status": "manual_review_required",
-                "required": False,
+                "linked_source_entry_ids": [],
                 "notes": [
-                    "The TSA29 prose cites dedicated NStQ and Tsilhqot'in title exclusions that are not yet separated cleanly from the generic F_OWN ownership classes in the notebook bridge."
+                    "The TSA29 prose cites separate excluded areas for NStQ Interim Treaty Agreement parcels (2,702 ha) and Tsilhqot'in title lands (188,544 ha).",
+                    "Because those dedicated overlay polygons are not publicly materialized in the current FEMIC source-layer lane, the strict runner uses the documented combined excluded area (191,246 ha) as an explicit AFLB aspatial fallback.",
                 ],
             }
         )

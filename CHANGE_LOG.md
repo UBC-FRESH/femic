@@ -13924,3 +13924,17 @@
     - and the same clipped east-side bbox as the stale production artifact.
   - That pins the next bounded fix on adding WFS pagination before further
     step-2 semantics work.
+- Added an explicit step-2 treaty/title aspatial fallback for TSA29 after the
+  valid `F_OWN` fetch was repaired.
+  - `thlb_parent_002_land_not_administered_by_the_province_compiled_02` now
+    uses `aspatial_area_reduction` with a documented fallback target of
+    `191,246 ha`.
+  - Clean-GLB overlap math with valid input now gives:
+    - compiled_01 exact overlap: `505,534.191 ha`
+    - compiled_02 fallback: `191,246.000 ha`
+    - expected strict step-2 total: `696,780.191 ha`
+    - TSR benchmark: `697,033.000 ha`
+    - remaining delta: `-252.809 ha`
+  - The bounded step-2-only diagnostic rerun with the repaired larger `F_OWN`
+    input timed out under the short validation timeout, so the arithmetic
+    reconciliation is the current governing result for this unit.
