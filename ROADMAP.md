@@ -16199,3 +16199,25 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - that net value now matches the reported
       `managed_area_before_step_ha - remaining_area_ha` exactly, so the early
       `GLB -> AFLB` ladder is arithmetically trustworthy again.
+- 2026-04-12: Locked TSA29 step 3 as good enough for the current `#128` pass.
+  - Added polygonal overlay normalization for exact polygon overlay so the FWA
+    final-water cleanup can proceed without mixed-geometry failures:
+    - `Polygon` is promoted to `MultiPolygon`;
+    - polygon parts are extracted from `GeometryCollection`; and
+    - non-polygonal fragments are dropped before exact overlay.
+  - Bounded rerun from the locked step-2 checkpoint, running only step 3:
+    - step-3 strict net deduction: `1,075,872.217 ha`
+    - TSR step-3 benchmark: `1,105,908.000 ha`
+    - step-3 delta: `-30,035.783 ha`
+    - post-step-3 remaining area: `3,161,010.672 ha`
+  - Projected step-5 AFLB after the already-settled step-4 fallback:
+    - after step 4 (`50,434.000 ha`): `3,110,576.672 ha`
+    - TSR AFLB target: `3,098,168.000 ha`
+    - projected delta: `+12,408.672 ha`
+  - Interpretation:
+    - step 3 is now close enough to stop chasing before moving on;
+    - the FWA substep is now executing, but almost all of its gross matched
+      water area was already removed by `compiled_01`, so its true net effect
+      is tiny; and
+    - step 4 remains the accepted documented aspatial roads/trails/landings
+      bridge and is fine as-is for this pass.

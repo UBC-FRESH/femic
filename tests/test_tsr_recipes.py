@@ -7,7 +7,7 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 import pytest
-from shapely.geometry import LineString, box
+from shapely.geometry import GeometryCollection, LineString, MultiPolygon, Polygon, box
 
 from femic import bcdc_dwds
 from femic import tsr_catalog
@@ -1557,6 +1557,34 @@ def test_apply_step_accounting_marks_milestones_non_marginal() -> None:
     assert runtime_item["marginal_not_applicable"] is True
     assert runtime_item["net_removed_area_ha"] is None
     assert runtime_item["removed_area_ha"] == pytest.approx(0.0)
+
+
+def test_normalize_polygonal_overlay_frame_promotes_polygons() -> None:
+    frame = gpd.GeoDataFrame(
+        {"value": [1, 2, 3, 4]},
+        geometry=[
+            Polygon([(0, 0), (1, 0), (1, 1), (0, 1)]),
+            MultiPolygon(
+                [
+                    Polygon([(2, 0), (3, 0), (3, 1), (2, 1)]),
+                    Polygon([(2, 2), (3, 2), (3, 3), (2, 3)]),
+                ]
+            ),
+            GeometryCollection(
+                [
+                    Polygon([(4, 0), (5, 0), (5, 1), (4, 1)]),
+                    LineString([(4, 4), (5, 5)]),
+                ]
+            ),
+            LineString([(6, 0), (7, 1)]),
+        ],
+        crs="EPSG:3005",
+    )
+
+    normalized = tsr_recipes._normalize_polygonal_overlay_frame(frame)
+
+    assert set(normalized.geom_type.tolist()) == {"MultiPolygon"}
+    assert normalized["value"].tolist() == [1, 2, 3]
 
 
 def test_resolve_reviewed_thlb_remaining_area_ignores_tail_no_deduction_steps() -> None:

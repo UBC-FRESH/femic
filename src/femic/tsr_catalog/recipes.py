@@ -21,7 +21,12 @@ from typing import Any, Sequence
 import geopandas as gpd  # type: ignore[import-untyped]
 import nbformat
 import pandas as pd
-from shapely.geometry import box  # type: ignore[import-untyped]
+from shapely.geometry import (
+    GeometryCollection,
+    MultiPolygon,
+    Polygon,
+    box,
+)  # type: ignore[import-untyped]
 import yaml
 from nbformat.v4 import new_code_cell, new_markdown_cell, new_notebook
 
@@ -6349,6 +6354,8 @@ def _fragment_binary_exclusion_step(
 
     untouched = checkpoint.drop(candidate.index).copy()
     mask_frame = gpd.GeoDataFrame(geometry=[mask_geometry], crs=BC_ALBERS_EPSG)
+    candidate = _normalize_polygonal_overlay_frame(candidate)
+    mask_frame = _normalize_polygonal_overlay_frame(mask_frame)
     intersections = gpd.overlay(
         candidate,
         mask_frame,
@@ -6458,6 +6465,8 @@ def _fragment_binary_exclusion_step_chunked(
             continue
 
         mask_frame = gpd.GeoDataFrame(geometry=[mask_geometry], crs=BC_ALBERS_EPSG)
+        batch = _normalize_polygonal_overlay_frame(batch)
+        mask_frame = _normalize_polygonal_overlay_frame(mask_frame)
         intersections = gpd.overlay(
             batch,
             mask_frame,
@@ -13481,9 +13490,13 @@ def _compute_exclusion_fraction(
     candidate = checkpoint.iloc[unique_indices][
         ["_row_id", "_stand_area_sqm", "geometry"]
     ].copy()
+    candidate = _normalize_polygonal_overlay_frame(candidate)
+    exclusion_geometries = _normalize_polygonal_overlay_frame(
+        exclusion_geometries[["geometry"]]
+    )
     intersections = gpd.overlay(
         candidate[["_row_id", "geometry"]],
-        exclusion_geometries[["geometry"]],
+        exclusion_geometries,
         how="intersection",
         keep_geom_type=False,
     )
@@ -14456,6 +14469,49 @@ def _managed_area_ha(checkpoint: gpd.GeoDataFrame) -> float:
     return float(
         (checkpoint["_stand_area_sqm"] * checkpoint["thlb_fact"]).sum() / 10000.0
     )
+
+
+def _normalize_polygonal_overlay_frame(
+    frame: gpd.GeoDataFrame,
+) -> gpd.GeoDataFrame:
+    if frame.empty:
+        return frame.copy()
+    normalized = frame.loc[~frame.geometry.is_empty].copy()
+    if normalized.empty:
+        return normalized
+
+    def _to_multipolygon(geometry: Any) -> Any:
+        if geometry is None:
+            return None
+        if isinstance(geometry, Polygon):
+            return MultiPolygon([geometry])
+        if isinstance(geometry, MultiPolygon):
+            return geometry
+        if isinstance(geometry, GeometryCollection):
+            polygon_parts: list[Polygon] = []
+            for part in geometry.geoms:
+                if isinstance(part, Polygon):
+                    polygon_parts.append(part)
+                elif isinstance(part, MultiPolygon):
+                    polygon_parts.extend(list(part.geoms))
+            if not polygon_parts:
+                return None
+            return MultiPolygon(polygon_parts)
+        return None
+
+    normalized["geometry"] = normalized.geometry.apply(_to_multipolygon)
+    normalized = normalized.loc[normalized.geometry.notna()].copy()
+    geom_types = {
+        str(value)
+        for value in normalized.geom_type.dropna().astype(str).tolist()
+        if str(value)
+    }
+    if geom_types and not geom_types.issubset({"MultiPolygon"}):
+        raise TsrRecipeError(
+            "Exact polygon overlay requires polygonal geometries, but the frame "
+            f"contained: {sorted(geom_types)}"
+        )
+    return normalized
 
 
 def _managed_area_ha_for_chunk_records(chunk_records: Sequence[dict[str, Any]]) -> float:
