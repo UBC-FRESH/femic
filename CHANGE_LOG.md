@@ -14115,3 +14115,22 @@
   - After the patch, the same one-LU materialization also improved from
     `20.71 s` to `16.31 s`, confirming that the junk-geometry injection was
     avoidable and is now fixed at the LU cache materialization surface.
+- AFLB full-cache prewarm and the bounded step-6-only restart both completed successfully.
+  - Official AFLB cache prewarm now completes for the restart checkpoint:
+    - selected LU count: `122`;
+    - cache dir: `runtime/logs/tsr/lu_partitions/aflb_checkpoint.0bac4044cb4b`;
+    - total prewarm time: about `10.7 min`; and
+    - sample cached chunk geometry is 100% `MultiPolygon`.
+  - The dominant cold-start costs are now clearly profiled as:
+    - LU selection `geometry.union_all()` (~`364 s`); and
+    - partition materialization (~`270 s`);
+    rather than chunk-write corruption or an endless stall.
+  - Bounded step-6-only rerun from `data/tsr/aflb_checkpoint.feather` finished
+    cleanly in LU-parallel auto mode:
+    - parks/protected exact net deduction: `186,451.995 ha`;
+    - woodlot/lease residual aspatial net deduction: `119,875.005 ha`;
+    - total step-6 net deduction: `306,327.000 ha`;
+    - TSR step-6 benchmark: `306,327.000 ha`; and
+    - post-step-6 remaining area: `2,804,249.672 ha`.
+  - This resolves the active step-6 semantics issue and also provides the
+    practical restart acceptance proof for the default LU-parallel path.

@@ -16327,3 +16327,24 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     at the LU cache materialization surface. The next bounded move under `#156`
     is to retry the broader AFLB cache prewarm / step-6 restart path rather
     than continue diagnosing one-LU output correctness.
+- 2026-04-13: AFLB full-cache prewarm and step-6-only restart both succeeded.
+  - Official AFLB cache prewarm now completes successfully for the restart
+    checkpoint:
+    - selected LU count: `122`;
+    - cache dir: `runtime/logs/tsr/lu_partitions/aflb_checkpoint.0bac4044cb4b`;
+    - total prewarm time: about `10.7 min`; and
+    - sample cached chunk geometry is 100% `MultiPolygon`.
+  - Profiling shows the main cold-start cost is now:
+    - LU selection `geometry.union_all()` (~`364 s`); and
+    - partition materialization (~`270 s`);
+    not chunk-write corruption or an endless hang.
+  - Bounded step-6-only rerun from `data/tsr/aflb_checkpoint.feather` then
+    completed cleanly in LU-parallel auto mode:
+    - parks/protected exact net deduction: `186,451.995 ha`;
+    - woodlot/lease residual aspatial net deduction: `119,875.005 ha`;
+    - total step-6 net deduction: `306,327.000 ha`;
+    - TSR step-6 benchmark: `306,327.000 ha`; and
+    - post-step-6 remaining area: `2,804,249.672 ha`.
+  - This closes the active step-6 semantics issue and also satisfies the
+    practical acceptance proof for default reconstructed LU-parallel restart
+    execution from AFLB.
