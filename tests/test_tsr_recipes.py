@@ -1594,6 +1594,93 @@ def test_normalize_polygonal_overlay_frame_promotes_polygons() -> None:
     assert normalized["value"].tolist() == [1, 2, 3]
 
 
+def test_fragment_binary_exclusion_preserves_fractional_thlb_state_on_difference() -> None:
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1],
+            "SOURCE_FEATURE_ID": [1],
+            "thlb_fact": [0.5],
+            "thlb": [0],
+            "thlb_raw": [0.5],
+            "thlb_area": [0.5],
+            "FEATURE_AREA_SQM": [10000.0],
+            "POLYGON_AREA": [1.0],
+        },
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    )
+    checkpoint["_row_id"] = [0]
+    checkpoint["_stand_area_sqm"] = [10000.0]
+    exclusion = gpd.GeoDataFrame(
+        {"name": ["mask"]},
+        geometry=[box(0, 0, 50, 100)],
+        crs="EPSG:3005",
+    )
+
+    updated, affected_fragment_count, affected_area_ha = (
+        tsr_recipes._fragment_binary_exclusion_step(
+            checkpoint=checkpoint,
+            exclusion_geometries=exclusion,
+        )
+    )
+
+    assert affected_fragment_count == 1
+    assert affected_area_ha == pytest.approx(0.5)
+    assert sorted(updated["thlb_fact"].tolist()) == pytest.approx([0.0, 0.5])
+    kept = updated.loc[updated["thlb_fact"] > 0].copy()
+    assert len(kept) == 1
+    assert kept.iloc[0].geometry.area == pytest.approx(5000.0)
+    assert kept.iloc[0]["thlb_fact"] == pytest.approx(0.5)
+    assert kept.iloc[0]["thlb_area"] == pytest.approx(0.25)
+
+
+def test_fragment_binary_exclusion_scales_effective_area_for_split_fragments() -> None:
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1],
+            "SOURCE_FEATURE_ID": [1],
+            "thlb_fact": [1.0],
+            "thlb": [1],
+            "thlb_raw": [1.0],
+            "thlb_area": [0.5],
+            "FEATURE_AREA_SQM": [10000.0],
+            "POLYGON_AREA": [1.0],
+            tsr_recipes.TSR_EFFECTIVE_AREA_SQM_COLUMN: [5000.0],
+        },
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    )
+    checkpoint["_row_id"] = [0]
+    checkpoint["_stand_area_sqm"] = [5000.0]
+    exclusion = gpd.GeoDataFrame(
+        {"name": ["mask"]},
+        geometry=[box(0, 0, 50, 100)],
+        crs="EPSG:3005",
+    )
+
+    updated, affected_fragment_count, affected_area_ha = (
+        tsr_recipes._fragment_binary_exclusion_step(
+            checkpoint=checkpoint,
+            exclusion_geometries=exclusion,
+        )
+    )
+
+    assert affected_fragment_count == 1
+    assert affected_area_ha == pytest.approx(0.5)
+    kept = updated.loc[updated["thlb_fact"] > 0].copy()
+    removed = updated.loc[updated["thlb_fact"] == 0].copy()
+    assert len(kept) == 1
+    assert len(removed) == 1
+    assert kept.iloc[0][tsr_recipes.TSR_EFFECTIVE_AREA_SQM_COLUMN] == pytest.approx(
+        2500.0
+    )
+    assert kept.iloc[0]["_stand_area_sqm"] == pytest.approx(2500.0)
+    assert removed.iloc[0][tsr_recipes.TSR_EFFECTIVE_AREA_SQM_COLUMN] == pytest.approx(
+        2500.0
+    )
+    assert tsr_recipes._managed_area_ha(updated) == pytest.approx(0.25)
+
+
 def test_resolve_reviewed_thlb_remaining_area_ignores_tail_no_deduction_steps() -> None:
     recipe = tsr_recipes.TsrThlbNetdownRecipeRecord(
         schema_version=1,

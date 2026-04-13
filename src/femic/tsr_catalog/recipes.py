@@ -5840,6 +5840,58 @@ def _scale_area_series_for_clip(
     return scaled.clip(lower=0.0)
 
 
+def _rescale_overlay_area_columns_for_clip(
+    overlay: gpd.GeoDataFrame,
+    *,
+    source_area_column: str = "_orig_geom_area_sqm",
+) -> gpd.GeoDataFrame:
+    if overlay.empty:
+        return overlay
+    scaled = overlay.copy()
+    clipped_area_sqm = scaled.geometry.area.astype(float)
+    original_area_sqm = pd.to_numeric(
+        scaled.get(source_area_column, pd.Series(0.0, index=scaled.index)),
+        errors="coerce",
+    ).fillna(0.0)
+    ratio = clipped_area_sqm / original_area_sqm.where(
+        original_area_sqm > 0.0, other=1.0
+    )
+    ratio = ratio.where(original_area_sqm > 0.0, other=0.0).fillna(0.0).clip(lower=0.0)
+    if "FEATURE_AREA_SQM" in scaled.columns:
+        scaled["FEATURE_AREA_SQM"] = _scale_area_series_for_clip(
+            scaled["FEATURE_AREA_SQM"], ratio=ratio, unit="sqm"
+        )
+    if "Shape_Area" in scaled.columns:
+        scaled["Shape_Area"] = _scale_area_series_for_clip(
+            scaled["Shape_Area"], ratio=ratio, unit="sqm"
+        )
+    if "POLYGON_AREA" in scaled.columns:
+        scaled["POLYGON_AREA"] = _scale_area_series_for_clip(
+            scaled["POLYGON_AREA"], ratio=ratio, unit="ha"
+        )
+    if "GEOMETRY_AREA" in scaled.columns:
+        scaled["GEOMETRY_AREA"] = _scale_area_series_for_clip(
+            scaled["GEOMETRY_AREA"], ratio=ratio, unit="ha"
+        )
+    if "AREA_HA" in scaled.columns:
+        scaled["AREA_HA"] = _scale_area_series_for_clip(
+            scaled["AREA_HA"], ratio=ratio, unit="ha"
+        )
+    if TSR_EFFECTIVE_AREA_SQM_COLUMN in scaled.columns:
+        scaled[TSR_EFFECTIVE_AREA_SQM_COLUMN] = _scale_area_series_for_clip(
+            scaled[TSR_EFFECTIVE_AREA_SQM_COLUMN], ratio=ratio, unit="sqm"
+        )
+    if "_stand_area_sqm" in scaled.columns:
+        scaled["_stand_area_sqm"] = _scale_area_series_for_clip(
+            scaled["_stand_area_sqm"], ratio=ratio, unit="sqm"
+        )
+    else:
+        scaled["_stand_area_sqm"] = clipped_area_sqm
+    return _update_geometry_measure_columns(
+        scaled.drop(columns=[source_area_column], errors="ignore")
+    )
+
+
 def _clip_checkpoint_to_landscape_unit_chunks(
     checkpoint: gpd.GeoDataFrame,
     *,
@@ -5880,46 +5932,10 @@ def _clip_checkpoint_to_landscape_unit_chunks(
     overlay = _normalize_polygonal_overlay_frame(overlay)
     if overlay.empty:
         return []
-    clipped_area_sqm = overlay.geometry.area.astype(float)
-    original_area_sqm = pd.to_numeric(
-        overlay.get("_orig_geom_area_sqm", pd.Series(0.0, index=overlay.index)),
-        errors="coerce",
-    ).fillna(0.0)
-    ratio = clipped_area_sqm / original_area_sqm.where(
-        original_area_sqm > 0.0, other=1.0
+    overlay = _rescale_overlay_area_columns_for_clip(
+        overlay,
+        source_area_column="_orig_geom_area_sqm",
     )
-    ratio = ratio.where(original_area_sqm > 0.0, other=0.0).fillna(0.0).clip(lower=0.0)
-    if "FEATURE_AREA_SQM" in overlay.columns:
-        overlay["FEATURE_AREA_SQM"] = _scale_area_series_for_clip(
-            overlay["FEATURE_AREA_SQM"], ratio=ratio, unit="sqm"
-        )
-    if "Shape_Area" in overlay.columns:
-        overlay["Shape_Area"] = _scale_area_series_for_clip(
-            overlay["Shape_Area"], ratio=ratio, unit="sqm"
-        )
-    if "POLYGON_AREA" in overlay.columns:
-        overlay["POLYGON_AREA"] = _scale_area_series_for_clip(
-            overlay["POLYGON_AREA"], ratio=ratio, unit="ha"
-        )
-    if "GEOMETRY_AREA" in overlay.columns:
-        overlay["GEOMETRY_AREA"] = _scale_area_series_for_clip(
-            overlay["GEOMETRY_AREA"], ratio=ratio, unit="ha"
-        )
-    if "AREA_HA" in overlay.columns:
-        overlay["AREA_HA"] = _scale_area_series_for_clip(
-            overlay["AREA_HA"], ratio=ratio, unit="ha"
-        )
-    if TSR_EFFECTIVE_AREA_SQM_COLUMN in overlay.columns:
-        overlay[TSR_EFFECTIVE_AREA_SQM_COLUMN] = _scale_area_series_for_clip(
-            overlay[TSR_EFFECTIVE_AREA_SQM_COLUMN], ratio=ratio, unit="sqm"
-        )
-    if "_stand_area_sqm" in overlay.columns:
-        overlay["_stand_area_sqm"] = _scale_area_series_for_clip(
-            overlay["_stand_area_sqm"], ratio=ratio, unit="sqm"
-        )
-    else:
-        overlay["_stand_area_sqm"] = clipped_area_sqm
-    overlay = _update_geometry_measure_columns(overlay)
 
     chunks: list[tuple[str, gpd.GeoDataFrame]] = []
     for lu_name, group in overlay.groupby("_lu_name", dropna=False):
@@ -6430,6 +6446,23 @@ def _assign_fragment_feature_ids(checkpoint: gpd.GeoDataFrame) -> gpd.GeoDataFra
     return updated
 
 
+def _synchronize_fragment_thlb_state(checkpoint: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    updated = checkpoint.copy()
+    if "thlb_fact" not in updated.columns:
+        return updated
+    updated["thlb_fact"] = (
+        pd.to_numeric(updated["thlb_fact"], errors="coerce").fillna(0.0).clip(0.0, 1.0)
+    )
+    updated["thlb"] = updated["thlb_fact"].round().astype(int)
+    if "thlb_raw" in updated.columns:
+        updated["thlb_raw"] = updated["thlb_fact"]
+    if "thlb_area" in updated.columns and "_stand_area_sqm" in updated.columns:
+        updated["thlb_area"] = (
+            updated["_stand_area_sqm"].astype(float) * updated["thlb_fact"] / 10000.0
+        )
+    return updated
+
+
 def _fragment_binary_exclusion_step(
     *,
     checkpoint: gpd.GeoDataFrame,
@@ -6453,6 +6486,7 @@ def _fragment_binary_exclusion_step(
     if not unique_indices:
         return checkpoint, 0, 0.0
     candidate = active.iloc[unique_indices].copy()
+    candidate["_orig_geom_area_sqm"] = candidate.geometry.area.astype(float)
     mask_geometry = _resolve_union_geometry(exclusion_geometries)
     if mask_geometry is None or getattr(mask_geometry, "is_empty", False):
         return checkpoint, 0, 0.0
@@ -6467,6 +6501,11 @@ def _fragment_binary_exclusion_step(
         how="intersection",
         keep_geom_type=False,
     )
+    intersections = _normalize_polygonal_overlay_frame(intersections)
+    intersections = _rescale_overlay_area_columns_for_clip(
+        intersections,
+        source_area_column="_orig_geom_area_sqm",
+    )
     if intersections.empty:
         return checkpoint, 0, 0.0
     differences = gpd.overlay(
@@ -6474,6 +6513,11 @@ def _fragment_binary_exclusion_step(
         mask_frame,
         how="difference",
         keep_geom_type=False,
+    )
+    differences = _normalize_polygonal_overlay_frame(differences)
+    differences = _rescale_overlay_area_columns_for_clip(
+        differences,
+        source_area_column="_orig_geom_area_sqm",
     )
 
     intersections = intersections.copy()
@@ -6487,8 +6531,7 @@ def _fragment_binary_exclusion_step(
 
     if not differences.empty:
         differences = differences.copy()
-        differences["thlb_fact"] = 1.0
-        differences["thlb"] = 1
+        differences = _synchronize_fragment_thlb_state(differences)
 
     affected_area_ha = float(intersections.geometry.area.sum() / 10000.0)
     affected_fragment_count = int(len(intersections))
@@ -6498,6 +6541,7 @@ def _fragment_binary_exclusion_step(
     )
     rebuilt = rebuilt.loc[~rebuilt.geometry.is_empty].copy()
     rebuilt = _assign_fragment_feature_ids(rebuilt)
+    rebuilt = _synchronize_fragment_thlb_state(rebuilt)
     return rebuilt, affected_fragment_count, affected_area_ha
 
 
@@ -6540,6 +6584,7 @@ def _fragment_binary_exclusion_step_chunked(
     if not unique_indices:
         return checkpoint, 0, 0, 0.0, 0
     candidate = active.iloc[unique_indices].copy()
+    candidate["_orig_geom_area_sqm"] = candidate.geometry.area.astype(float)
     untouched = checkpoint.drop(candidate.index).copy()
     exclusion_sindex = exclusion_geometries.sindex
     rebuilt_frames: list[gpd.GeoDataFrame] = [untouched]
@@ -6578,17 +6623,26 @@ def _fragment_binary_exclusion_step_chunked(
             how="intersection",
             keep_geom_type=False,
         )
+        intersections = _normalize_polygonal_overlay_frame(intersections)
+        intersections = _rescale_overlay_area_columns_for_clip(
+            intersections,
+            source_area_column="_orig_geom_area_sqm",
+        )
         differences = gpd.overlay(
             batch,
             mask_frame,
             how="difference",
             keep_geom_type=False,
         )
+        differences = _normalize_polygonal_overlay_frame(differences)
+        differences = _rescale_overlay_area_columns_for_clip(
+            differences,
+            source_area_column="_orig_geom_area_sqm",
+        )
 
         if not differences.empty:
             differences = differences.copy()
-            differences["thlb_fact"] = 1.0
-            differences["thlb"] = 1
+            differences = _synchronize_fragment_thlb_state(differences)
             rebuilt_frames.append(differences)
 
         if intersections.empty:
@@ -6612,6 +6666,7 @@ def _fragment_binary_exclusion_step_chunked(
     )
     rebuilt = rebuilt.loc[~rebuilt.geometry.is_empty].copy()
     rebuilt = _assign_fragment_feature_ids(rebuilt)
+    rebuilt = _synchronize_fragment_thlb_state(rebuilt)
     return (
         rebuilt,
         int(len(candidate)),

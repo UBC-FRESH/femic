@@ -16348,3 +16348,18 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - This closes the active step-6 semantics issue and also satisfies the
     practical acceptance proof for default reconstructed LU-parallel restart
     execution from AFLB.
+- 2026-04-13: Fixed exact fragment-overlay state loss for partially active stands and reran step 7 from AFLB.
+  - The exact fragment overlay helpers were incorrectly carrying full
+    pre-split effective area through clipped fragments, which suppressed net
+    removals after earlier aspatial area reductions.
+  - `_fragment_binary_exclusion_step(...)` and the chunked LU variant now:
+    - preserve incoming fractional `thlb_fact` on kept fragments; and
+    - rescale `FEMIC_EFFECTIVE_AREA_SQM` / `_stand_area_sqm` on both
+      difference and intersection outputs before rebuilding the checkpoint.
+  - Bounded step-7-only rerun from `data/tsr/aflb_checkpoint.feather` now lands at:
+    - strict net deduction: `223,638.262 ha`;
+    - TSR benchmark: `210,719.000 ha`; and
+    - delta: `+12,919.262 ha`.
+  - The earlier bogus `~44.5k ha` result is superseded; the remaining step-7
+    seam is now a much smaller semantics/tolerance question, not a broken exact
+    overlay state model.

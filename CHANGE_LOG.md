@@ -14134,3 +14134,17 @@
     - post-step-6 remaining area: `2,804,249.672 ha`.
   - This resolves the active step-6 semantics issue and also provides the
     practical restart acceptance proof for the default LU-parallel path.
+- Fixed exact fragment-overlay state loss for partially active stands in the
+  strict reconstructed lane.
+  - Kept fragments now preserve incoming fractional `thlb_fact` instead of
+    being reset to `1.0`.
+  - Clipped exact-overlay outputs now rescale
+    `FEMIC_EFFECTIVE_AREA_SQM` / `_stand_area_sqm` before checkpoint rebuild,
+    so later exact steps measure true net removal after earlier aspatial area
+    reductions.
+  - Bounded step-7-only rerun from `aflb_checkpoint.feather` now reports:
+    - strict net deduction: `223,638.262 ha`;
+    - TSR benchmark: `210,719.000 ha`; and
+    - delta: `+12,919.262 ha`.
+  - This supersedes the earlier bogus `44,467.973 ha` step-7 result and moves
+    step 7 into “close enough to adjudicate” territory.
