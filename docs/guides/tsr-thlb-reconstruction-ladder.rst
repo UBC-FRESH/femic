@@ -248,6 +248,35 @@ Cumulative comparisons are therefore meaningful only when:
 - the same geographic scope is used; and
 - the same stop-line or final step is being compared.
 
+THLB Accounting Directives
+--------------------------
+
+FEMIC stepwise accounting now has one shared rule across strict, reviewed, and
+comparison surfaces:
+
+- the canonical marginal metric is ``net_removed_area_ha``; and
+- it must equal the true before/after change in currently active managed area
+  caused by that step at the moment it runs.
+
+That means FEMIC must not present any of the following as though they were the
+main stepwise deduction:
+
+- gross candidate area;
+- gross matched overlay area;
+- gross area touched by an aspatial fallback or scaling operation; or
+- residual benchmark target area.
+
+Those values can still be useful diagnostics, but they are secondary.
+
+Important consequences:
+
+- milestone or reference rows do **not** have a marginal deduction;
+- milestone rows report only remaining/cumulative state and benchmark deltas;
+- exact overlay steps report net active-area change after applying to the
+  current state; and
+- aspatial fallback steps report the net change that actually landed on the
+  current active state, not just the requested target.
+
 Accepted skips or no-op tail steps also need plain interpretation:
 
 - they mean FEMIC reviewed the clause and chose to record an explicit

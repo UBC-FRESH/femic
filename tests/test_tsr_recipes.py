@@ -1209,6 +1209,7 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
                 "benchmark_marginal_area_ha": 200.0,
                 "benchmark_cumulative_area_ha": 800.0,
                 "last_notebook_run_status": "applied",
+                "last_net_removed_area_ha": 210.0,
                 "last_removed_area_ha": 210.0,
                 "last_remaining_area_ha": 790.0,
             },
@@ -1222,6 +1223,7 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
                 "benchmark_marginal_area_ha": 120.0,
                 "benchmark_cumulative_area_ha": 680.0,
                 "last_notebook_run_status": "applied",
+                "last_net_removed_area_ha": 125.0,
                 "last_removed_area_ha": 125.0,
                 "last_remaining_area_ha": 665.0,
             },
@@ -1235,6 +1237,7 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
                 "benchmark_marginal_area_ha": 75.0,
                 "benchmark_cumulative_area_ha": 605.0,
                 "last_notebook_run_status": "applied",
+                "last_net_removed_area_ha": 70.0,
                 "last_removed_area_ha": 70.0,
                 "last_remaining_area_ha": 595.0,
             },
@@ -1248,6 +1251,7 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
                 "benchmark_marginal_area_ha": 300.0,
                 "benchmark_cumulative_area_ha": 305.0,
                 "last_notebook_run_status": "applied",
+                "last_net_removed_area_ha": 300.0,
                 "last_removed_area_ha": 300.0,
                 "last_remaining_area_ha": 295.0,
             },
@@ -1261,6 +1265,7 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
                 "benchmark_marginal_area_ha": 90.0,
                 "benchmark_cumulative_area_ha": 215.0,
                 "last_notebook_run_status": "applied_noop",
+                "last_net_removed_area_ha": 0.0,
                 "last_removed_area_ha": 0.0,
                 "last_remaining_area_ha": 295.0,
                 "approval_scope": "user-directed calibrated skip",
@@ -1281,6 +1286,7 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
                 "benchmark_marginal_area_ha": 50.0,
                 "benchmark_cumulative_area_ha": 165.0,
                 "last_notebook_run_status": "applied",
+                "last_net_removed_area_ha": 45.0,
                 "last_removed_area_ha": 45.0,
                 "last_remaining_area_ha": 250.0,
             },
@@ -1307,6 +1313,7 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
             {
                 "step_id": "compiled_002",
                 "parent_step_id": "thlb_parent_002_land_not_administered",
+                "net_removed_area_ha": 205.0,
                 "affected_area_ha": 205.0,
                 "run_status": "applied",
                 "spatial_application_mode": "fragment_overlay",
@@ -1314,6 +1321,7 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
             {
                 "step_id": "compiled_004",
                 "parent_step_id": "thlb_parent_004_strict_overcut",
+                "net_removed_area_ha": 200.0,
                 "affected_area_ha": 200.0,
                 "run_status": "applied",
                 "spatial_application_mode": "fragment_overlay",
@@ -1321,6 +1329,7 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
             {
                 "step_id": "compiled_005",
                 "parent_step_id": "thlb_parent_005_strict_undercut",
+                "net_removed_area_ha": 101.0,
                 "affected_area_ha": 101.0,
                 "run_status": "applied",
                 "spatial_application_mode": "fragment_overlay",
@@ -1328,6 +1337,7 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
             {
                 "step_id": "compiled_007",
                 "parent_step_id": "thlb_parent_007_aspatial_bridge",
+                "net_removed_area_ha": 48.0,
                 "affected_area_ha": 48.0,
                 "run_status": "applied",
                 "spatial_application_mode": "aspatial_fallback",
@@ -1465,6 +1475,10 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
     assert "Problem Ownership Counts" in markdown
     assert "Strict-vs-TSR Fit Counts" in markdown
     assert "Stepwise Adjudication Queue" in markdown
+    assert "strict-TSR net deduction delta=" in markdown
+    assert "strict-reviewed net deduction delta=" in markdown
+    assert "Strict reconstructed net deduction:" in markdown
+    assert "Reviewed bridge net deduction:" in markdown
     assert "Strict vs TSR delta" in markdown
     assert "Strict TSR fit: `tsr_close_enough`" in markdown
     assert "Reviewed difference role: `close_match`" in markdown
@@ -1477,6 +1491,72 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
     assert "Reviewed difference:" in markdown
     assert "reviewed bridge" in markdown.casefold()
     assert "raw checkpoint1 geometry" in markdown
+
+
+def test_aggregate_reconstructed_parent_step_results_prefers_net_removed_area() -> None:
+    aggregated = tsr_recipes._aggregate_reconstructed_parent_step_results(
+        {
+            "steps": [
+                {
+                    "step_id": "compiled_003_attr",
+                    "parent_step_id": "thlb_parent_003_non_forest",
+                    "net_removed_area_ha": 120.0,
+                    "affected_area_ha": 180.0,
+                    "run_status": "applied",
+                    "spatial_application_mode": "checkpoint_attribute_exclusion",
+                },
+                {
+                    "step_id": "compiled_003_water",
+                    "parent_step_id": "thlb_parent_003_non_forest",
+                    "net_removed_area_ha": 15.0,
+                    "affected_area_ha": 15.0,
+                    "run_status": "applied",
+                    "spatial_application_mode": "fragment_overlay",
+                },
+            ]
+        }
+    )
+
+    entry = aggregated["thlb_parent_003_non_forest"]
+    assert entry["reconstructed_net_removed_area_ha"] == pytest.approx(135.0)
+    assert entry["reconstructed_removed_area_ha"] == pytest.approx(135.0)
+
+
+def test_apply_step_accounting_uses_true_before_after_net_change() -> None:
+    runtime_item = {
+        "affected_area_ha": 1.5,
+        "run_status": "applied",
+    }
+
+    tsr_recipes._apply_step_accounting(
+        runtime_item=runtime_item,
+        managed_area_before_step_ha=4.0,
+        managed_area_after_step_ha=2.75,
+    )
+
+    assert runtime_item["managed_area_before_step_ha"] == pytest.approx(4.0)
+    assert runtime_item["remaining_area_ha"] == pytest.approx(2.75)
+    assert runtime_item["gross_matched_area_ha"] == pytest.approx(1.5)
+    assert runtime_item["net_removed_area_ha"] == pytest.approx(1.25)
+    assert runtime_item["removed_area_ha"] == pytest.approx(1.25)
+    assert runtime_item["marginal_not_applicable"] is False
+
+
+def test_apply_step_accounting_marks_milestones_non_marginal() -> None:
+    runtime_item = {"run_status": "unsupported"}
+
+    tsr_recipes._apply_step_accounting(
+        runtime_item=runtime_item,
+        managed_area_before_step_ha=4.0,
+        managed_area_after_step_ha=4.0,
+        marginal_not_applicable=True,
+    )
+
+    assert runtime_item["managed_area_before_step_ha"] == pytest.approx(4.0)
+    assert runtime_item["remaining_area_ha"] == pytest.approx(4.0)
+    assert runtime_item["marginal_not_applicable"] is True
+    assert runtime_item["net_removed_area_ha"] is None
+    assert runtime_item["removed_area_ha"] == pytest.approx(0.0)
 
 
 def test_resolve_reviewed_thlb_remaining_area_ignores_tail_no_deduction_steps() -> None:

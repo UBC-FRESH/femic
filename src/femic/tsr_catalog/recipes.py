@@ -6800,7 +6800,9 @@ def _resolve_parent_exact_removed_area_ha(
             continue
         if str(step.get("normalized_action", "")).strip() != "exclude":
             continue
-        total += float(step.get("affected_area_ha", 0.0) or 0.0)
+        total += float(
+            step.get("net_removed_area_ha", step.get("removed_area_ha", 0.0)) or 0.0
+        )
     return total
 
 
@@ -8245,10 +8247,12 @@ def _format_thlb_parent_step_markdown(
     last_run_status = str(parent_step.get("last_notebook_run_status", "")).strip()
     if last_run_status:
         lines.append(f"- Last notebook run status: `{last_run_status}`")
-        last_removed_area_ha = parent_step.get("last_removed_area_ha")
+        last_removed_area_ha = parent_step.get(
+            "last_net_removed_area_ha", parent_step.get("last_removed_area_ha")
+        )
         if last_removed_area_ha is not None:
             lines.append(
-                f"- Last notebook removed area: `{float(last_removed_area_ha):.3f} ha`"
+                f"- Last notebook net deduction: `{float(last_removed_area_ha):.3f} ha`"
             )
         last_remaining_area_ha = parent_step.get("last_remaining_area_ha")
         if last_remaining_area_ha is not None:
@@ -8577,16 +8581,16 @@ def _build_tsr_thlb_status_report_markdown(
         f"- THLB / final managed area: `{final_managed_area_ha:.3f} ha`",
         "- Exact fragment-overlay steps: "
         f"`{len(fragment_overlay_steps)}` / "
-        f"`{sum(float(step.get('affected_area_ha', 0.0) or 0.0) for step in fragment_overlay_steps):.3f} ha`",
+        f"`{sum(float(step.get('net_removed_area_ha', step.get('removed_area_ha', 0.0)) or 0.0) for step in fragment_overlay_steps):.3f} ha net`",
         "- Explicit aspatial fallback steps: "
         f"`{len(aspatial_fallback_steps)}` / "
-        f"`{sum(float(step.get('affected_area_ha', 0.0) or 0.0) for step in aspatial_fallback_steps):.3f} ha`",
+        f"`{sum(float(step.get('net_removed_area_ha', step.get('removed_area_ha', 0.0)) or 0.0) for step in aspatial_fallback_steps):.3f} ha net`",
         "- Blocked exact-overlay steps: "
         f"`{len(blocked_exact_overlay_steps)}` / "
         f"`{sum(float(step.get('candidate_row_count', 0.0) or 0.0) for step in blocked_exact_overlay_steps):.0f} candidate rows`",
         "- Debug stand-binary fallback steps: "
         f"`{len(stand_binary_steps)}` / "
-        f"`{sum(float(step.get('affected_area_ha', 0.0) or 0.0) for step in stand_binary_steps):.3f} ha`",
+        f"`{sum(float(step.get('net_removed_area_ha', step.get('removed_area_ha', 0.0)) or 0.0) for step in stand_binary_steps):.3f} ha net`",
     ]
     if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
         lines.extend(
@@ -9513,22 +9517,35 @@ def _execute_workbench_compiled_item(
     operation_type = _resolve_compiled_operation_type(compiled_item)
     land_base_stage = str(compiled_item.get("land_base_stage", "")).strip()
     preserve_geometry = land_base_stage in {"aflb_to_lhlb", "lhlb_to_thlb"}
+    managed_area_before_step_ha = _managed_area_ha(checkpoint)
     runtime_item = dict(compiled_item)
     runtime_item["execution_status"] = "ready"
     runtime_item["removed_area_ha"] = 0.0
-    runtime_item["remaining_area_ha"] = _managed_area_ha(checkpoint)
+    runtime_item["remaining_area_ha"] = managed_area_before_step_ha
     runtime_notes: list[str] = list(runtime_item.get("notes", []))
+
+    def _finalize(
+        updated_frame: gpd.GeoDataFrame,
+        *,
+        marginal_not_applicable: bool = False,
+    ) -> tuple[gpd.GeoDataFrame, dict[str, Any]]:
+        _apply_step_accounting(
+            runtime_item=runtime_item,
+            managed_area_before_step_ha=managed_area_before_step_ha,
+            managed_area_after_step_ha=_managed_area_ha(updated_frame),
+            marginal_not_applicable=marginal_not_applicable,
+        )
+        runtime_item["runtime_notes"] = runtime_notes
+        return updated_frame, runtime_item
 
     if operation_type in {"reference_only", "manual_review_required"}:
         runtime_item["execution_status"] = operation_type
-        runtime_item["runtime_notes"] = runtime_notes
-        return checkpoint, runtime_item
+        return _finalize(checkpoint, marginal_not_applicable=True)
 
     if operation_type == "no_deduction":
         runtime_notes.append("No spatial or aspatial deduction applied for this rule.")
         runtime_item["execution_status"] = "applied_noop"
-        runtime_item["runtime_notes"] = runtime_notes
-        return checkpoint, runtime_item
+        return _finalize(checkpoint)
 
     if operation_type == "select_attribute":
         filters = [
@@ -9573,8 +9590,7 @@ def _execute_workbench_compiled_item(
             restoration_geometries=restoration_geometries,
             preserve_geometry=preserve_geometry,
         )
-        runtime_item["removed_area_ha"] = removed_area_ha
-        runtime_item["remaining_area_ha"] = _managed_area_ha(updated)
+        runtime_item["gross_matched_area_ha"] = removed_area_ha
         runtime_item["execution_status"] = (
             "applied" if removed_area_ha > 0 else "applied_noop"
         )
@@ -9582,8 +9598,7 @@ def _execute_workbench_compiled_item(
             runtime_notes.append(
                 "Later-stage exclusion preserved geometry and set THLB state to 0 on matched rows."
             )
-        runtime_item["runtime_notes"] = runtime_notes
-        return updated, runtime_item
+        return _finalize(updated)
 
     if operation_type == "curve_volume_threshold_exclusion":
         try:
@@ -9603,10 +9618,8 @@ def _execute_workbench_compiled_item(
         except TsrRecipeError as exc:
             runtime_item["execution_status"] = "unsupported"
             runtime_notes.append(str(exc))
-            runtime_item["runtime_notes"] = runtime_notes
-            return checkpoint, runtime_item
-        runtime_item["removed_area_ha"] = removed_area_ha
-        runtime_item["remaining_area_ha"] = _managed_area_ha(updated)
+            return _finalize(checkpoint, marginal_not_applicable=True)
+        runtime_item["gross_matched_area_ha"] = removed_area_ha
         runtime_item["affected_fragment_count"] = affected_row_count
         runtime_item["missing_curve_metric_row_count"] = missing_metric_count
         runtime_item["checkpoint_filter_row_count"] = scoped_row_count
@@ -9626,8 +9639,7 @@ def _execute_workbench_compiled_item(
             runtime_notes.append(
                 "Later-stage exclusion preserved geometry/fragments and set THLB state to 0 on excluded areas."
             )
-        runtime_item["runtime_notes"] = runtime_notes
-        return updated, runtime_item
+        return _finalize(updated)
 
     if operation_type == "aspatial_reduction":
         benchmark_marginal_area_ha = compiled_item.get("benchmark_marginal_area_ha")
@@ -9652,8 +9664,7 @@ def _execute_workbench_compiled_item(
             checkpoint,
             target_removed_area_ha=target_removed_area_ha,
         )
-        runtime_item["removed_area_ha"] = removed_area_ha
-        runtime_item["remaining_area_ha"] = _managed_area_ha(updated)
+        runtime_item["gross_touched_area_ha"] = removed_area_ha
         runtime_item["affected_fragment_count"] = affected_row_count
         runtime_item["execution_status"] = (
             "applied" if removed_area_ha > 0 else "applied_noop"
@@ -9664,8 +9675,7 @@ def _execute_workbench_compiled_item(
         runtime_notes.append(
             "Notebook execution scales the TSR benchmark marginal area to the current smoke subset before applying the reduction."
         )
-        runtime_item["runtime_notes"] = runtime_notes
-        return updated, runtime_item
+        return _finalize(updated)
 
     if operation_type == "aspatial_area_reduction":
         benchmark_marginal_area_ha = compiled_item.get("benchmark_marginal_area_ha")
@@ -9692,8 +9702,7 @@ def _execute_workbench_compiled_item(
             checkpoint,
             target_removed_area_ha=target_removed_area_ha,
         )
-        runtime_item["removed_area_ha"] = removed_area_ha
-        runtime_item["remaining_area_ha"] = _managed_area_ha(updated)
+        runtime_item["gross_touched_area_ha"] = removed_area_ha
         runtime_item["affected_fragment_count"] = affected_row_count
         runtime_item["execution_status"] = (
             "applied" if removed_area_ha > 0 else "applied_noop"
@@ -9704,8 +9713,7 @@ def _execute_workbench_compiled_item(
         runtime_notes.append(
             "Notebook execution scales the TSR benchmark marginal area to the current smoke subset before shrinking stand-area attributes."
         )
-        runtime_item["runtime_notes"] = runtime_notes
-        return updated, runtime_item
+        return _finalize(updated)
 
     if operation_type in {"select_spatial_intersect", "buffer_then_intersect"}:
         (
@@ -9734,8 +9742,7 @@ def _execute_workbench_compiled_item(
                 runtime_notes.append(
                     "No fetched spatial artifact was available for the linked source entries."
                 )
-            runtime_item["runtime_notes"] = runtime_notes
-            return checkpoint, runtime_item
+            return _finalize(checkpoint)
         if no_matching_features:
             runtime_item["execution_status"] = "applied_noop"
             runtime_notes.extend(extent_mismatch_notes)
@@ -9743,8 +9750,7 @@ def _execute_workbench_compiled_item(
                 "Fetched spatial artifacts were available, but no features matched the current "
                 "attribute filters within the smoke subset."
             )
-            runtime_item["runtime_notes"] = runtime_notes
-            return checkpoint, runtime_item
+            return _finalize(checkpoint)
         if operation_type == "buffer_then_intersect":
             buffer_distance_m = float(
                 compiled_item.get("buffer_distance_m", 0.0) or 0.0
@@ -9772,21 +9778,18 @@ def _execute_workbench_compiled_item(
             runtime_notes.append(
                 "Later-stage exclusion preserved geometry/fragments and set THLB state to 0 on excluded areas."
             )
-        runtime_item["removed_area_ha"] = affected_area_ha
-        runtime_item["remaining_area_ha"] = _managed_area_ha(updated)
+        runtime_item["gross_matched_area_ha"] = affected_area_ha
         runtime_item["affected_fragment_count"] = affected_fragment_count
         runtime_item["execution_status"] = (
             "applied" if affected_area_ha > 0 else "applied_noop"
         )
-        runtime_item["runtime_notes"] = runtime_notes
-        return updated, runtime_item
+        return _finalize(updated)
 
     runtime_item["execution_status"] = "unsupported"
     runtime_notes.append(
         f"Unsupported notebook compiled operation type: {operation_type}"
     )
-    runtime_item["runtime_notes"] = runtime_notes
-    return checkpoint, runtime_item
+    return _finalize(checkpoint, marginal_not_applicable=True)
 
 
 def _resolve_compiled_operation_type(compiled_item: dict[str, Any]) -> str:
@@ -10209,6 +10212,7 @@ def _summarize_executed_items(
                 "compiled_operation_type": operation,
                 "minimum_volume_m3_per_ha": item.get("minimum_volume_m3_per_ha"),
                 "curve_metric_description": item.get("curve_metric_description"),
+                "net_removed_area_ha": 0.0,
                 "removed_area_ha": 0.0,
                 "missing_curve_metric_row_count": 0,
                 "affected_fragment_count": 0,
@@ -10217,7 +10221,11 @@ def _summarize_executed_items(
                 "item_count": 0,
             },
         )
-        summary["removed_area_ha"] += float(item.get("removed_area_ha", 0.0) or 0.0)
+        current_removed_area_ha = float(
+            item.get("net_removed_area_ha", item.get("removed_area_ha", 0.0)) or 0.0
+        )
+        summary["net_removed_area_ha"] += current_removed_area_ha
+        summary["removed_area_ha"] += current_removed_area_ha
         summary["missing_curve_metric_row_count"] += int(
             item.get("missing_curve_metric_row_count", 0) or 0
         )
@@ -10696,6 +10704,7 @@ def run_tsr_thlb_parent_step(
             selected_landscape_units
         )
         payload_parent_step["last_input_area_ha"] = input_area_ha
+        payload_parent_step["last_net_removed_area_ha"] = target_removed_area_ha
         payload_parent_step["last_removed_area_ha"] = target_removed_area_ha
         payload_parent_step["last_remaining_area_ha"] = target_remaining_area_ha
         payload_parent_step["last_benchmark_marginal_delta_ha"] = (
@@ -10822,7 +10831,7 @@ def _summarize_parallel_benchmark_markdown(
                 [
                     f"- backend=`{item.execution_mode}` workers=`{item.worker_count}` lu_count=`{item.lu_count}`",
                     f"  - runtime: `{item.wall_time_seconds:.3f} s`",
-                    f"  - removed area: `{item.removed_area_ha:.3f} ha`",
+                    f"  - net deduction: `{item.removed_area_ha:.3f} ha`",
                     f"  - remaining area: `{item.remaining_area_ha:.3f} ha`",
                     f"  - output rows: `{item.output_row_count}`",
                     f"  - parity with serial: `{item.parity_with_serial}`",
@@ -11446,15 +11455,18 @@ def _aggregate_reconstructed_parent_step_results(
         record = aggregated.setdefault(
             parent_step_id,
             {
-                "reconstructed_removed_area_ha": 0.0,
+                "reconstructed_net_removed_area_ha": 0.0,
                 "statuses": set(),
                 "spatial_modes": set(),
                 "step_ids": [],
                 "notes": [],
             },
         )
-        record["reconstructed_removed_area_ha"] += (
-            _normalize_float_or_none(raw_step.get("affected_area_ha")) or 0.0
+        record["reconstructed_net_removed_area_ha"] += (
+            _normalize_float_or_none(
+                raw_step.get("net_removed_area_ha", raw_step.get("removed_area_ha"))
+            )
+            or 0.0
         )
         run_status = str(
             raw_step.get("run_status", raw_step.get("step_status", ""))
@@ -11503,9 +11515,12 @@ def _aggregate_reconstructed_parent_step_results(
         record["reconstructed_status"] = reconstructed_status
         record["statuses"] = statuses
         record["spatial_modes"] = spatial_modes
-        record["reconstructed_removed_area_ha"] = float(
-            record.get("reconstructed_removed_area_ha", 0.0) or 0.0
+        record["reconstructed_net_removed_area_ha"] = float(
+            record.get("reconstructed_net_removed_area_ha", 0.0) or 0.0
         )
+        record["reconstructed_removed_area_ha"] = record[
+            "reconstructed_net_removed_area_ha"
+        ]
     return aggregated
 
 
@@ -12115,10 +12130,13 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
             item.get("benchmark_cumulative_area_ha")
         )
         reviewed_removed_area_ha = _normalize_float_or_none(
-            item.get("last_removed_area_ha")
+            item.get("last_net_removed_area_ha", item.get("last_removed_area_ha"))
         )
         reconstructed_removed_area_ha = _normalize_float_or_none(
-            reconstructed_entry.get("reconstructed_removed_area_ha")
+            reconstructed_entry.get(
+                "reconstructed_net_removed_area_ha",
+                reconstructed_entry.get("reconstructed_removed_area_ha"),
+            )
         )
         reviewed_status = str(
             item.get("last_notebook_run_status", "")
@@ -12267,6 +12285,8 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
                 ).strip(),
                 "benchmark_marginal_area_ha": benchmark_marginal_area_ha,
                 "benchmark_cumulative_area_ha": benchmark_cumulative_area_ha,
+                "reconstructed_net_removed_area_ha": reconstructed_removed_area_ha,
+                "reviewed_net_removed_area_ha": reviewed_removed_area_ha,
                 "reconstructed_removed_area_ha": reconstructed_removed_area_ha,
                 "reviewed_removed_area_ha": reviewed_removed_area_ha,
                 "strict_vs_tsr_delta_ha": strict_vs_tsr_delta_ha,
@@ -12429,6 +12449,7 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
                 "parent_step_id": str(item.get("parent_step_id", "")).strip(),
                 "parent_label": str(item.get("parent_label", "")).strip(),
                 "tsr_fit_class": str(item.get("tsr_fit_class", "")).strip(),
+                "strict_minus_tsr_net_removed_area_ha": _strict_vs_tsr_gap_delta(item),
                 "strict_minus_tsr_removed_area_ha": _strict_vs_tsr_gap_delta(item),
             }
             for item in top_strict_vs_tsr_parent_steps
@@ -12440,6 +12461,9 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
                 "reviewed_difference_role": str(
                     item.get("reviewed_difference_role", "")
                 ).strip(),
+                "strict_minus_reviewed_net_removed_area_ha": _strict_vs_reviewed_gap_delta(
+                    item
+                ),
                 "strict_minus_reviewed_removed_area_ha": _strict_vs_reviewed_gap_delta(
                     item
                 ),
@@ -12586,7 +12610,10 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
             if not isinstance(item, dict):
                 continue
             delta = _normalize_float_or_none(
-                item.get("strict_minus_tsr_removed_area_ha")
+                item.get(
+                    "strict_minus_tsr_net_removed_area_ha",
+                    item.get("strict_minus_tsr_removed_area_ha"),
+                )
             )
             delta_text = f"{delta:.3f} ha" if delta is not None else "n/a"
             lines.append(
@@ -12594,7 +12621,7 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
                 f"`{item.get('parent_step_id', '')}` | "
                 f"{item.get('parent_label', '')} | "
                 f"tsr-fit=`{item.get('tsr_fit_class', '')}` | "
-                f"strict-TSR marginal delta=`{delta_text}`"
+                f"strict-TSR net deduction delta=`{delta_text}`"
             )
     else:
         lines.append("- No strict-vs-TSR contributor list was available.")
@@ -12610,7 +12637,10 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
             if not isinstance(item, dict):
                 continue
             delta = _normalize_float_or_none(
-                item.get("strict_minus_reviewed_removed_area_ha")
+                item.get(
+                    "strict_minus_reviewed_net_removed_area_ha",
+                    item.get("strict_minus_reviewed_removed_area_ha"),
+                )
             )
             delta_text = f"{delta:.3f} ha" if delta is not None else "n/a"
             lines.append(
@@ -12618,7 +12648,7 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
                 f"`{item.get('parent_step_id', '')}` | "
                 f"{item.get('parent_label', '')} | "
                 f"reviewed-role=`{item.get('reviewed_difference_role', '')}` | "
-                f"strict-reviewed removed-area delta=`{delta_text}`"
+                f"strict-reviewed net deduction delta=`{delta_text}`"
             )
     else:
         lines.append("- No strict-vs-reviewed context list was available.")
@@ -12721,10 +12751,13 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
                     f"`{strict_vs_tsr_cumulative_delta:.3f} ha`"
                 )
             reconstructed_removed = _normalize_float_or_none(
-                item.get("reconstructed_removed_area_ha")
+                item.get(
+                    "reconstructed_net_removed_area_ha",
+                    item.get("reconstructed_removed_area_ha"),
+                )
             )
             lines.append(
-                "- Strict reconstructed removed area: "
+                "- Strict reconstructed net deduction: "
                 + (
                     f"`{reconstructed_removed:.3f} ha`"
                     if reconstructed_removed is not None
@@ -12732,10 +12765,13 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
                 )
             )
             reviewed_removed = _normalize_float_or_none(
-                item.get("reviewed_removed_area_ha")
+                item.get(
+                    "reviewed_net_removed_area_ha",
+                    item.get("reviewed_removed_area_ha"),
+                )
             )
             lines.append(
-                "- Reviewed bridge removed area: "
+                "- Reviewed bridge net deduction: "
                 + (
                     f"`{reviewed_removed:.3f} ha`"
                     if reviewed_removed is not None
@@ -13542,6 +13578,9 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
 
     for step in recipe_steps:
         step_start = perf_counter()
+        managed_area_before_step_ha = _managed_area_ha_for_chunk_records(
+            current_chunk_records
+        )
         step_profile: dict[str, Any] = {
             "step_id": str(step.get("step_id", "")).strip(),
             "label": str(step.get("label", "")).strip(),
@@ -13880,6 +13919,17 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                 f"Normalized action `{normalized_action or 'unknown'}` is not executable in v1."
             ]
 
+        _apply_step_accounting(
+            runtime_item=updated_step,
+            managed_area_before_step_ha=managed_area_before_step_ha,
+            managed_area_after_step_ha=_managed_area_ha_for_chunk_records(
+                current_chunk_records
+            ),
+            marginal_not_applicable=normalized_action == "use_land_base"
+            or str(updated_step.get("run_status", "")).strip()
+            in {"needs_review", "manual_review_required"},
+        )
+
         updated_step["page_number"] = page_number
         applied_steps.append(updated_step)
         outcome_counts.update([str(updated_step.get("run_status", "unsupported"))])
@@ -13948,6 +13998,7 @@ def _execute_tsr_thlb_recipe_steps(
 
     for step in recipe_steps:
         step_start = perf_counter()
+        managed_area_before_step_ha = _managed_area_ha(checkpoint)
         overlay_start = 0.0
         step_profile: dict[str, Any] = {
             "step_id": str(step.get("step_id", "")).strip(),
@@ -14368,6 +14419,15 @@ def _execute_tsr_thlb_recipe_steps(
                 f"Normalized action `{normalized_action or 'unknown'}` is not executable in v1."
             ]
 
+        _apply_step_accounting(
+            runtime_item=updated_step,
+            managed_area_before_step_ha=managed_area_before_step_ha,
+            managed_area_after_step_ha=_managed_area_ha(checkpoint),
+            marginal_not_applicable=normalized_action == "use_land_base"
+            or str(updated_step.get("run_status", "")).strip()
+            in {"needs_review", "manual_review_required"},
+        )
+
         updated_step["page_number"] = page_number
         applied_steps.append(updated_step)
         outcome_counts.update([str(updated_step.get("run_status", "unsupported"))])
@@ -14396,6 +14456,53 @@ def _managed_area_ha(checkpoint: gpd.GeoDataFrame) -> float:
     return float(
         (checkpoint["_stand_area_sqm"] * checkpoint["thlb_fact"]).sum() / 10000.0
     )
+
+
+def _managed_area_ha_for_chunk_records(chunk_records: Sequence[dict[str, Any]]) -> float:
+    total = 0.0
+    for record in chunk_records:
+        total += _managed_area_ha(_load_lu_chunk_frame(Path(record["chunk_path"])))
+    return float(total)
+
+
+def _resolve_step_net_removed_area_ha(
+    *,
+    managed_area_before_step_ha: float,
+    managed_area_after_step_ha: float,
+) -> float:
+    net_removed_area_ha = float(managed_area_before_step_ha) - float(
+        managed_area_after_step_ha
+    )
+    if abs(net_removed_area_ha) < 1e-9:
+        return 0.0
+    return net_removed_area_ha
+
+
+def _apply_step_accounting(
+    *,
+    runtime_item: dict[str, Any],
+    managed_area_before_step_ha: float,
+    managed_area_after_step_ha: float,
+    marginal_not_applicable: bool = False,
+) -> None:
+    runtime_item["managed_area_before_step_ha"] = float(managed_area_before_step_ha)
+    runtime_item["remaining_area_ha"] = float(managed_area_after_step_ha)
+    if "affected_area_ha" in runtime_item:
+        runtime_item["gross_matched_area_ha"] = float(
+            runtime_item.get("affected_area_ha", 0.0) or 0.0
+        )
+    if marginal_not_applicable:
+        runtime_item["marginal_not_applicable"] = True
+        runtime_item["net_removed_area_ha"] = None
+        runtime_item["removed_area_ha"] = 0.0
+        return
+    net_removed_area_ha = _resolve_step_net_removed_area_ha(
+        managed_area_before_step_ha=managed_area_before_step_ha,
+        managed_area_after_step_ha=managed_area_after_step_ha,
+    )
+    runtime_item["marginal_not_applicable"] = False
+    runtime_item["net_removed_area_ha"] = net_removed_area_ha
+    runtime_item["removed_area_ha"] = net_removed_area_ha
 
 
 def _apply_aspatial_thlb_reduction(
@@ -14635,7 +14742,12 @@ def run_tsr_thlb_netdown_recipe(
         ),
         "aspatial_fallback_area_ha": float(
             sum(
-                float(step.get("affected_area_ha", 0.0) or 0.0)
+                float(
+                    step.get(
+                        "net_removed_area_ha", step.get("removed_area_ha", 0.0)
+                    )
+                    or 0.0
+                )
                 for step in applied_steps
                 if str(step.get("spatial_application_mode", "")).strip()
                 == "aspatial_fallback"

@@ -13988,3 +13988,22 @@
     - step 3 marginal attribution is still too high; and
     - the FWA final-water substep remains blocked on mixed geometry, so step 3
       is improved but not yet locked down.
+- Opened `#151` and normalized THLB accounting around true net deduction.
+  - FEMIC now treats `net_removed_area_ha` as the canonical stepwise marginal
+    metric across strict reconstructed, reviewed/status, and strict-vs-TSR
+    comparison surfaces.
+  - Stepwise reporting is now computed from before/after active managed-area
+    change instead of leaking gross matched area into user-facing "removed
+    area" values.
+  - Milestone/reference rows are now explicitly non-marginal; gross
+    candidate/matched/touched values remain available only as secondary
+    diagnostics.
+- Completed the bounded `#151` net-accounting acceptance proof on TSA29.
+  - Resumed from the locked step-2 checkpoint and reran only the step-3 slice
+    that had exposed the arithmetic contradiction.
+  - Step 3 `compiled_01` now reports:
+    - gross matched area: `1,510,018.858 ha`
+    - true net deduction: `1,004,484.667 ha`
+  - The reported marginal value now matches
+    `managed_area_before_step_ha - remaining_area_ha`, so the early
+    `GLB -> AFLB` strict ladder is again safe to reason about step by step.

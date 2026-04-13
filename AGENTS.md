@@ -251,6 +251,12 @@ When contributing to this repository as the coding agent:
      - treat strict-vs-reviewed as explanatory context only; and
      - do not escalate a parent step to a top-priority repair merely because it differs from the
        reviewed lane if the strict result is already close enough to TSR;
+   - for THLB stepwise accounting across strict, reviewed, and comparison surfaces:
+     - treat `net_removed_area_ha` as the canonical marginal metric;
+     - require that it equal the true before/after change in currently active managed area caused
+       by that step;
+     - treat gross candidate/matched/touched areas as secondary diagnostics only; and
+     - treat milestone/reference rows as cumulative checkpoints with no marginal deduction;
    - for Windows multiprocessing safety, do not launch LU-parallel THLB parent-step reruns from
      stdin / here-string Python; use the CLI entrypoint or a saved script file instead.
 17. Treat developer-imposed scope boundaries as a hard execution contract:

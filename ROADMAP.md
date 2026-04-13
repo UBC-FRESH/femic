@@ -16161,3 +16161,41 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - step 3 marginal attribution is still too high and `compiled_02` remains
       blocked on mixed-geometry FWA inputs, so step 3 is not fully locked down
       yet.
+- 2026-04-12: Opened `#151` to normalize THLB step accounting onto true net
+  deduction across all report surfaces.
+  - Governing accounting rule:
+    - the canonical stepwise marginal metric is `net_removed_area_ha`; and
+    - it must equal the true before/after change in currently active managed
+      area caused by that step at the moment it runs.
+  - Explicit non-canonical diagnostics:
+    - gross candidate area;
+    - gross matched overlay area;
+    - gross touched area; and
+    - residual benchmark targets
+    are still useful diagnostics, but they are not user-facing marginal
+    deduction values.
+  - Scope:
+    - strict reconstructed runner;
+    - reviewed parent-step / status / workbench/report surfaces; and
+    - strict-vs-TSR comparison artifacts.
+  - Required implementation seam:
+    - route all THLB step audit/report payloads through a shared net-accounting
+      helper so milestone rows stop pretending to have marginal deductions and
+      user-facing comparison surfaces can be trusted arithmetically.
+- 2026-04-12: Completed the bounded `#151` net-accounting fix.
+  - Canonical stepwise marginal values now come from before/after active
+    managed-area change in:
+    - strict reconstructed execution;
+    - reviewed parent-step/status surfaces; and
+    - strict-vs-TSR comparison payloads/markdown.
+  - Secondary diagnostics such as gross matched/touched area are preserved, but
+    no longer masquerade as the user-facing marginal deduction.
+  - Bounded TSA29 acceptance proof:
+    - resumed from the locked step-2 checkpoint and reran only the step-3
+      strict slice;
+    - step 3 `compiled_01` gross matched area was
+      `1,510,018.858 ha`, but the true net deduction was
+      `1,004,484.667 ha`; and
+    - that net value now matches the reported
+      `managed_area_before_step_ha - remaining_area_ha` exactly, so the early
+      `GLB -> AFLB` ladder is arithmetically trustworthy again.

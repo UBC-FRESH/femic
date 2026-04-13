@@ -143,6 +143,14 @@ hybrid-vs-reconstructed semantics, the raw-GLB reconstructed start contract,
 and benchmark comparison rules, see
 :doc:`tsr-thlb-reconstruction-ladder`.
 
+For THLB reporting specifically, the governing accounting rule is now:
+
+- stepwise marginal deduction means **true net active-area change at that
+  step**;
+- milestone rows are cumulative checkpoints, not deductions; and
+- gross matched/candidate/touched areas are diagnostics only, not the primary
+  reconciliation numbers.
+
 1. refresh the canonical TSR surfaces:
 
    .. code-block:: bash
