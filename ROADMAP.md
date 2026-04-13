@@ -16286,3 +16286,15 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `python -m pytest tests/test_tsr_recipes.py -k "parallel_auto_mode or aflb_checkpoint or can_restart_from_aflb_checkpoint" -q`
     - `python -m pytest tests/test_cli_main.py -k "thlb_netdown_run" -q`
     - `python -m ruff check src/femic/tsr_catalog/recipes.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_cli_main.py`
+- 2026-04-13: Opened `#156` for the unexpectedly slow AFLB LU-cache materialization seam.
+  - Bounded step-6 retries from `data/tsr/aflb_checkpoint.feather` are still
+    blocked because the expected `runtime/logs/tsr/lu_partitions/aflb_checkpoint.*`
+    cache slot exists but is empty/incomplete.
+  - A direct AFLB LU prewarm/count pass also timed out after about an hour, so
+    the problem is not just the step-6 overlay itself.
+  - We explicitly checked for a safe monkey-patch cache alias from an existing
+    post-step-5 LU cache and found that the only completed `step4_*` partition
+    caches on disk are from the stale pre-clean path, so they are not safe to
+    reuse as the official AFLB restart cache.
+  - Next bounded move under `#156` is to debug why the official AFLB cache slot
+    is created but not populated, then return to the step-6-only run.
