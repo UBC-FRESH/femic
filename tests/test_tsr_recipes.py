@@ -6607,6 +6607,13 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     assert result.execution_mode == tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
     assert result.checkpoint_path == checkpoint1_path.resolve()
     assert result.baseline_signal == "checkpoint1_raw_glb_initialization"
+    assert result.aflb_checkpoint_path == (
+        instance_root / "data" / "tsr" / "aflb_checkpoint.feather"
+    ).resolve()
+    assert result.aflb_gpkg_path == (
+        instance_root / "data" / "tsr" / "aflb_checkpoint.gpkg"
+    ).resolve()
+    assert result.aflb_checkpoint_area_ha == pytest.approx(0.02)
     assert result.input_area_ha == pytest.approx(0.02)
     assert result.baseline_managed_area_ha == pytest.approx(0.02)
     assert result.final_managed_area_ha == pytest.approx(0.015)
@@ -6631,11 +6638,15 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
         audit_payload["execution_mode"]
         == tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
     )
+    assert audit_payload["aflb_checkpoint_written"] is True
+    assert audit_payload["aflb_checkpoint_area_ha"] == pytest.approx(0.02)
     assert audit_payload["input_area_ha"] == pytest.approx(0.02)
     assert audit_payload["legacy_reference_managed_area_ha"] == pytest.approx(0.01)
     assert audit_payload["outcome_counts"]["applied"] == 1
     reconstructed_status = result.status_report_path.read_text(encoding="utf-8")
     assert "Execution mode: `reconstructed`" in reconstructed_status
+    assert "AFLB checkpoint Feather: `data/tsr/aflb_checkpoint.feather`" in reconstructed_status
+    assert "AFLB checkpoint GeoPackage: `data/tsr/aflb_checkpoint.gpkg`" in reconstructed_status
     assert "Legacy raster THLB reference: `0.010 ha`" in reconstructed_status
     assert "### GLB -> AFLB" in reconstructed_status
     assert "### LHLB -> THLB" in reconstructed_status
@@ -6652,6 +6663,146 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
         recipe.recipe_contract["status_report_path"]
         == "config/tsr/thlb_reconstructed.status.md"
     )
+    assert recipe.recipe_contract["aflb_checkpoint_path"] == "data/tsr/aflb_checkpoint.feather"
+    assert recipe.recipe_contract["aflb_gpkg_path"] == "data/tsr/aflb_checkpoint.gpkg"
+
+
+def test_run_tsr_thlb_netdown_recipe_can_restart_from_aflb_checkpoint(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root / "config" / "tsr" / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+    )
+
+    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint1 = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2],
+            "MAP_ID": ["093J034", "093J034"],
+            "POLYGON_AREA": [1.0, 1.0],
+            "FEATURE_AREA_SQM": [10000.0, 10000.0],
+            "FEATURE_LENGTH_M": [400.0, 400.0],
+            "GEOMETRY_AREA": [1.0, 1.0],
+            "Shape_Area": [10000.0, 10000.0],
+            "Shape_Length": [400.0, 400.0],
+        },
+        geometry=[box(0, 0, 100, 100), box(100, 0, 200, 100)],
+        crs="EPSG:3005",
+    )
+    checkpoint1.to_feather(checkpoint1_path)
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 210, 110)],
+        names=["Test LU"],
+    )
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["recipe_contract"]["status"] = "built"
+    thlb_recipe_payload["parent_steps"] = [
+        {
+            "parent_step_id": "thlb_parent_001_total_tsa_area",
+            "parent_label": "Total TSA area",
+            "parent_kind": "milestone",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "benchmark_cumulative_area_ha": 2.0,
+            "row_order": 1,
+        },
+        {
+            "parent_step_id": "thlb_parent_004_roads",
+            "parent_label": "Roads and landings",
+            "parent_kind": "transformation",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "benchmark_marginal_area_ha": 1.0,
+            "benchmark_cumulative_area_ha": 1.0,
+            "row_order": 4,
+        },
+        {
+            "parent_step_id": "thlb_parent_006_parks",
+            "parent_label": "Parks, protected areas, area-base tenures",
+            "parent_kind": "transformation",
+            "land_base_stage": "aflb_to_lhlb",
+            "stage_label": "AFLB -> LHLB",
+            "benchmark_marginal_area_ha": 0.0,
+            "benchmark_cumulative_area_ha": 1.0,
+            "row_order": 6,
+        },
+    ]
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "glb_land_base",
+            "order_index": 1,
+            "label": "GLB land base",
+            "normalized_action": "use_land_base",
+            "land_base_stage": "glb_to_aflb",
+            "step_status": "ready",
+            "page_number": 10,
+        },
+        {
+            "step_id": "glb_reduce",
+            "order_index": 2,
+            "label": "GLB reduction",
+            "normalized_action": "aspatial_area_reduction",
+            "compiled_operation_type": "aspatial_area_reduction",
+            "land_base_stage": "glb_to_aflb",
+            "benchmark_marginal_area_ha": 1.0,
+            "parent_step_id": "thlb_parent_004_roads",
+            "step_status": "ready",
+            "page_number": 11,
+        },
+        {
+            "step_id": "later_noop",
+            "order_index": 3,
+            "label": "Later stage noop",
+            "normalized_action": "no_deduction",
+            "land_base_stage": "aflb_to_lhlb",
+            "step_status": "ready",
+            "page_number": 12,
+        },
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    first = tsr_recipes.run_tsr_thlb_netdown_recipe(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        execution_mode=tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+    )
+
+    assert first.aflb_checkpoint_path is not None
+    assert first.aflb_checkpoint_area_ha == pytest.approx(1.0)
+
+    second = tsr_recipes.run_tsr_thlb_netdown_recipe(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        checkpoint_path=first.aflb_checkpoint_path,
+        execution_mode=tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+        write_aflb_gpkg=False,
+    )
+
+    assert second.baseline_signal == "aflb_checkpoint_restart"
+    assert second.baseline_managed_area_ha == pytest.approx(1.0)
+    assert second.final_managed_area_ha == pytest.approx(1.0)
 
 
 def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_applies_explicit_aspatial_fallback(

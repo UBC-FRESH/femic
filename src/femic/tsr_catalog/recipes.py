@@ -481,6 +481,8 @@ class TsrThlbNetdownRecipeRunResult:
     audit_path: Path
     status_report_path: Path
     runtime_status_report_path: Path
+    aflb_checkpoint_path: Path | None
+    aflb_gpkg_path: Path | None
     execution_mode: str
     baseline_signal: str
     selected_map_ids: tuple[str, ...]
@@ -492,6 +494,7 @@ class TsrThlbNetdownRecipeRunResult:
     legacy_reference_managed_area_ha: float | None
     tsr_reported_aflb_area_ha: float | None
     tsr_reported_thlb_area_ha: float | None
+    aflb_checkpoint_area_ha: float | None
 
 
 @dataclass(frozen=True)
@@ -840,6 +843,18 @@ def default_tsr_thlb_reconstructed_audit_path(*, instance_root: Path) -> Path:
         / "tsr"
         / "thlb_reconstructed.audit.json"
     )
+
+
+def default_tsr_aflb_checkpoint_path(*, instance_root: Path) -> Path:
+    """Return the default strict AFLB restart checkpoint feather path."""
+
+    return instance_root.expanduser().resolve() / "data" / "tsr" / "aflb_checkpoint.feather"
+
+
+def default_tsr_aflb_gpkg_path(*, instance_root: Path) -> Path:
+    """Return the default strict AFLB restart checkpoint GeoPackage path."""
+
+    return instance_root.expanduser().resolve() / "data" / "tsr" / "aflb_checkpoint.gpkg"
 
 
 def default_tsr_thlb_netdown_status_report_path(*, instance_root: Path) -> Path:
@@ -6246,6 +6261,87 @@ def _update_geometry_measure_columns(checkpoint: gpd.GeoDataFrame) -> gpd.GeoDat
     return updated
 
 
+def _is_glb_to_aflb_stage(step: dict[str, Any]) -> bool:
+    return str(step.get("land_base_stage", "")).strip() == "glb_to_aflb"
+
+
+def _is_applied_runtime_status(status: str) -> bool:
+    return status in {"applied", "applied_noop"}
+
+
+def _is_aflb_restart_checkpoint_path(path: Path) -> bool:
+    return path.name.casefold() == "aflb_checkpoint.feather"
+
+
+def _select_reconstructed_recipe_steps_for_checkpoint(
+    *,
+    recipe_steps: Sequence[dict[str, Any]],
+    checkpoint_path: Path,
+    execution_mode: str,
+) -> tuple[tuple[dict[str, Any], ...], str | None]:
+    if execution_mode != TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
+        return tuple(dict(step) for step in recipe_steps), None
+    if not _is_aflb_restart_checkpoint_path(checkpoint_path):
+        return tuple(dict(step) for step in recipe_steps), None
+    filtered = tuple(
+        dict(step)
+        for step in recipe_steps
+        if not _is_glb_to_aflb_stage(step)
+    )
+    return (
+        filtered,
+        "aflb_checkpoint_restart",
+    )
+
+
+def _prepare_reconstructed_restart_checkpoint_frame(
+    checkpoint: gpd.GeoDataFrame,
+) -> gpd.GeoDataFrame:
+    prepared = checkpoint.copy()
+    if prepared.crs is None:
+        prepared = prepared.set_crs(BC_ALBERS_EPSG)
+    else:
+        prepared = prepared.to_crs(BC_ALBERS_EPSG)
+    prepared = _update_geometry_measure_columns(prepared)
+    if "thlb_fact" in prepared.columns:
+        prepared["thlb_fact"] = (
+            pd.to_numeric(prepared["thlb_fact"], errors="coerce")
+            .fillna(0.0)
+            .clip(lower=0.0, upper=1.0)
+        )
+        prepared["thlb"] = prepared["thlb_fact"].round().astype(int)
+        prepared["thlb_raw"] = prepared["thlb_fact"]
+        if "_stand_area_sqm" not in prepared.columns:
+            prepared["_stand_area_sqm"] = _resolve_effective_stand_area_sqm(prepared)
+        prepared["thlb_area"] = (
+            prepared["_stand_area_sqm"] * prepared["thlb_fact"] / 10000.0
+        )
+    if "_row_id" not in prepared.columns:
+        prepared["_row_id"] = range(len(prepared))
+    if "_stand_area_sqm" not in prepared.columns:
+        prepared["_stand_area_sqm"] = _resolve_effective_stand_area_sqm(prepared)
+    return prepared
+
+
+def _write_aflb_checkpoint_artifacts(
+    *,
+    checkpoint: gpd.GeoDataFrame,
+    feather_path: Path,
+    gpkg_path: Path | None,
+) -> tuple[Path, Path | None, float]:
+    prepared = _prepare_reconstructed_restart_checkpoint_frame(checkpoint)
+    feather_path.parent.mkdir(parents=True, exist_ok=True)
+    prepared.to_feather(feather_path)
+    written_gpkg: Path | None = None
+    if gpkg_path is not None:
+        gpkg_path.parent.mkdir(parents=True, exist_ok=True)
+        if gpkg_path.exists():
+            gpkg_path.unlink()
+        prepared.to_file(gpkg_path, driver="GPKG", layer="aflb_checkpoint")
+        written_gpkg = gpkg_path
+    return feather_path, written_gpkg, _managed_area_ha(prepared)
+
+
 def _resolve_effective_stand_area_sqm(checkpoint: gpd.GeoDataFrame) -> pd.Series:
     if TSR_EFFECTIVE_AREA_SQM_COLUMN in checkpoint.columns:
         effective = pd.to_numeric(
@@ -8471,6 +8567,8 @@ def _build_tsr_thlb_status_report_markdown(
     checkpoint_relative_path: str,
     output_relative_path: str,
     audit_relative_path: str,
+    aflb_checkpoint_relative_path: str | None,
+    aflb_gpkg_relative_path: str | None,
     execution_mode: str,
     allow_stand_binary_fallback: bool,
     baseline_signal: str,
@@ -8481,6 +8579,7 @@ def _build_tsr_thlb_status_report_markdown(
     legacy_reference_managed_area_ha: float | None,
     tsr_reported_aflb_area_ha: float | None,
     tsr_reported_thlb_area_ha: float | None,
+    aflb_checkpoint_area_ha: float | None,
     outcome_counts: dict[str, int],
     step_count: int,
     generated_utc: str,
@@ -8566,6 +8665,16 @@ def _build_tsr_thlb_status_report_markdown(
         f"- Checkpoint input: `{checkpoint_relative_path}`",
         f"- Output checkpoint: `{output_relative_path}`",
         f"- Audit JSON: `{audit_relative_path}`",
+        (
+            f"- AFLB checkpoint Feather: `{aflb_checkpoint_relative_path}`"
+            if aflb_checkpoint_relative_path
+            else "- AFLB checkpoint Feather: `not written`"
+        ),
+        (
+            f"- AFLB checkpoint GeoPackage: `{aflb_gpkg_relative_path}`"
+            if aflb_gpkg_relative_path
+            else "- AFLB checkpoint GeoPackage: `not written`"
+        ),
         f"- Runtime history copy: `{runtime_report_relative_path}`",
         (
             f"- Warm-start checklist: `{warmstart_markdown_relative_path}`"
@@ -8586,6 +8695,11 @@ def _build_tsr_thlb_status_report_markdown(
         f"- Input checkpoint area: `{input_area_ha:.3f} ha`",
         f"- GLB / current input proxy: `{input_area_ha:.3f} ha`",
         f"- AFLB / baseline managed area: `{baseline_managed_area_ha:.3f} ha`",
+        (
+            f"- AFLB checkpoint area: `{aflb_checkpoint_area_ha:.3f} ha`"
+            if aflb_checkpoint_area_ha is not None
+            else "- AFLB checkpoint area: `not written`"
+        ),
         "- LHLB current: `not yet materialized separately in the current runner`",
         f"- THLB / final managed area: `{final_managed_area_ha:.3f} ha`",
         "- Exact fragment-overlay steps: "
@@ -8684,6 +8798,7 @@ def _build_tsr_thlb_status_report_markdown(
             "- Non-AFLB polygons are excluded from the reconstruction universe before THLB logic applies.",
             "- Non-THLB polygons or fragments remain inside that working universe and are assigned THLB state downstream from AFLB initialization.",
             "- GLB -> AFLB rows define the modeled universe, AFLB -> LHLB rows define legal harvestability, and LHLB -> THLB rows define projected operational harvestability.",
+            "- `data/tsr/aflb_checkpoint.feather` is the supported downstream restart checkpoint when you want to experiment below AFLB without rebuilding GLB -> AFLB.",
             "- Review the exact FEMIC logic summaries before trusting raw TSR prose; the compiled logic is the executable contract.",
             "- In reconstructed mode, explicit aspatial fallback means a TSR area target was applied honestly as a deduction bridge; it is not the same thing as exact spatial reproduction.",
             "- Legacy raster THLB values are reference-only in reconstructed mode.",
@@ -13557,11 +13672,17 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
     source_entry_map: dict[str, dict[str, Any]],
     total_area_benchmark_ha: float | None = None,
 ) -> tuple[
-    gpd.GeoDataFrame, list[dict[str, Any]], dict[str, int], list[dict[str, Any]]
+    gpd.GeoDataFrame,
+    list[dict[str, Any]],
+    dict[str, int],
+    list[dict[str, Any]],
+    gpd.GeoDataFrame | None,
 ]:
     outcome_counts: Counter[str] = Counter()
     applied_steps: list[dict[str, Any]] = []
     diagnostic_steps: list[dict[str, Any]] = []
+    aflb_checkpoint: gpd.GeoDataFrame | None = None
+    reached_glb_to_aflb = False
 
     lu_frame, current_chunk_records, partition_profile = (
         _prepare_reconstructed_lu_chunk_records(
@@ -13590,6 +13711,14 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
     )
 
     for step in recipe_steps:
+        if (
+            aflb_checkpoint is None
+            and reached_glb_to_aflb
+            and not _is_glb_to_aflb_stage(step)
+        ):
+            aflb_checkpoint, _ = _merge_reconstructed_lu_chunk_records(
+                current_chunk_records
+            )
         step_start = perf_counter()
         managed_area_before_step_ha = _managed_area_ha_for_chunk_records(
             current_chunk_records
@@ -13945,6 +14074,10 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
 
         updated_step["page_number"] = page_number
         applied_steps.append(updated_step)
+        if _is_glb_to_aflb_stage(step) and _is_applied_runtime_status(
+            str(updated_step.get("run_status", "")).strip()
+        ):
+            reached_glb_to_aflb = True
         outcome_counts.update([str(updated_step.get("run_status", "unsupported"))])
         step_profile["run_status"] = str(updated_step.get("run_status", "unsupported"))
         step_profile["spatial_application_mode"] = str(
@@ -13962,6 +14095,8 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
     merged_checkpoint, merge_seconds = _merge_reconstructed_lu_chunk_records(
         current_chunk_records
     )
+    if aflb_checkpoint is None and reached_glb_to_aflb:
+        aflb_checkpoint = merged_checkpoint.copy()
     diagnostic_steps.append(
         {
             "step_id": "__lu_merge__",
@@ -13977,6 +14112,7 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
         applied_steps,
         dict(sorted(outcome_counts.items())),
         diagnostic_steps,
+        aflb_checkpoint,
     )
 
 
@@ -13991,7 +14127,11 @@ def _execute_tsr_thlb_recipe_steps(
     allow_stand_binary_fallback: bool,
     total_area_benchmark_ha: float | None = None,
 ) -> tuple[
-    gpd.GeoDataFrame, list[dict[str, Any]], dict[str, int], list[dict[str, Any]]
+    gpd.GeoDataFrame,
+    list[dict[str, Any]],
+    dict[str, int],
+    list[dict[str, Any]],
+    gpd.GeoDataFrame | None,
 ]:
     if (
         execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
@@ -14008,8 +14148,17 @@ def _execute_tsr_thlb_recipe_steps(
     outcome_counts: Counter[str] = Counter()
     applied_steps: list[dict[str, Any]] = []
     diagnostic_steps: list[dict[str, Any]] = []
+    aflb_checkpoint: gpd.GeoDataFrame | None = None
+    reached_glb_to_aflb = False
 
     for step in recipe_steps:
+        if (
+            execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+            and aflb_checkpoint is None
+            and reached_glb_to_aflb
+            and not _is_glb_to_aflb_stage(step)
+        ):
+            aflb_checkpoint = checkpoint.copy()
         step_start = perf_counter()
         managed_area_before_step_ha = _managed_area_ha(checkpoint)
         overlay_start = 0.0
@@ -14443,6 +14592,12 @@ def _execute_tsr_thlb_recipe_steps(
 
         updated_step["page_number"] = page_number
         applied_steps.append(updated_step)
+        if (
+            execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+            and _is_glb_to_aflb_stage(step)
+            and _is_applied_runtime_status(str(updated_step.get("run_status", "")).strip())
+        ):
+            reached_glb_to_aflb = True
         outcome_counts.update([str(updated_step.get("run_status", "unsupported"))])
         step_profile["run_status"] = str(updated_step.get("run_status", "unsupported"))
         step_profile["spatial_application_mode"] = str(
@@ -14457,11 +14612,18 @@ def _execute_tsr_thlb_recipe_steps(
         step_profile["total_seconds"] = perf_counter() - step_start
         diagnostic_steps.append(step_profile)
 
+    if (
+        execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+        and aflb_checkpoint is None
+        and reached_glb_to_aflb
+    ):
+        aflb_checkpoint = checkpoint.copy()
     return (
         checkpoint,
         applied_steps,
         dict(sorted(outcome_counts.items())),
         diagnostic_steps,
+        aflb_checkpoint,
     )
 
 
@@ -14617,6 +14779,7 @@ def run_tsr_thlb_netdown_recipe(
     map_ids: Sequence[str] = (),
     auto_map_id_smoke_subset: bool = False,
     allow_stand_binary_fallback: bool = False,
+    write_aflb_gpkg: bool = True,
 ) -> TsrThlbNetdownRecipeRunResult:
     """Execute a THLB netdown recipe into either a hybrid or reconstructed checkpoint."""
 
@@ -14668,6 +14831,21 @@ def run_tsr_thlb_netdown_recipe(
             else default_tsr_thlb_netdown_audit_path(instance_root=instance_root)
         )
     )
+    resolved_aflb_checkpoint_path = default_tsr_aflb_checkpoint_path(
+        instance_root=instance_root
+    )
+    resolved_aflb_gpkg_path = (
+        default_tsr_aflb_gpkg_path(instance_root=instance_root)
+        if write_aflb_gpkg
+        else None
+    )
+    selected_recipe_steps, checkpoint_restart_mode = (
+        _select_reconstructed_recipe_steps_for_checkpoint(
+            recipe_steps=recipe.steps,
+            checkpoint_path=resolved_checkpoint_path,
+            execution_mode=execution_mode,
+        )
+    )
 
     checkpoint = _load_checkpoint_geodataframe(resolved_checkpoint_path)
     selected_map_ids: tuple[str, ...] = ()
@@ -14685,7 +14863,13 @@ def run_tsr_thlb_netdown_recipe(
         checkpoint = _filter_checkpoint_by_map_ids(checkpoint, map_ids=selected_map_ids)
     input_area_ha = float(checkpoint.geometry.area.sum() / 10000.0)
     if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
-        checkpoint, baseline_signal = _initialize_reconstructed_land_base(checkpoint)
+        if checkpoint_restart_mode == "aflb_checkpoint_restart":
+            checkpoint, _ = _resume_reconstructed_land_base(checkpoint)
+            baseline_signal = "aflb_checkpoint_restart"
+        else:
+            checkpoint, baseline_signal = _initialize_reconstructed_land_base(
+                checkpoint
+            )
     else:
         checkpoint["_row_id"] = range(len(checkpoint))
         checkpoint, baseline_signal = _normalize_checkpoint_thlb_fact(checkpoint)
@@ -14702,9 +14886,9 @@ def run_tsr_thlb_netdown_recipe(
     tsr_reported_thlb_area_ha = land_base_benchmarks.get("thlb_area_ha")
     total_area_benchmark_ha = _resolve_tsr_total_area_benchmark(recipe)
 
-    checkpoint, applied_steps, outcome_counts, _diagnostic_steps = (
+    checkpoint, applied_steps, outcome_counts, _diagnostic_steps, aflb_checkpoint = (
         _execute_tsr_thlb_recipe_steps(
-            recipe_steps=recipe.steps,
+            recipe_steps=selected_recipe_steps,
             checkpoint=checkpoint,
             checkpoint_path=resolved_checkpoint_path,
             execution_mode=execution_mode,
@@ -14756,6 +14940,32 @@ def run_tsr_thlb_netdown_recipe(
     payload["steps"] = applied_steps
     _write_recipe_yaml(resolved_recipe_path, payload)
 
+    written_aflb_checkpoint_path: Path | None = None
+    written_aflb_gpkg_path: Path | None = None
+    aflb_checkpoint_area_ha: float | None = None
+    if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED and aflb_checkpoint is not None:
+        (
+            written_aflb_checkpoint_path,
+            written_aflb_gpkg_path,
+            aflb_checkpoint_area_ha,
+        ) = _write_aflb_checkpoint_artifacts(
+            checkpoint=aflb_checkpoint,
+            feather_path=resolved_aflb_checkpoint_path,
+            gpkg_path=resolved_aflb_gpkg_path,
+        )
+        recipe_contract["aflb_checkpoint_path"] = str(
+            written_aflb_checkpoint_path.relative_to(instance_root).as_posix()
+        )
+        if written_aflb_gpkg_path is not None:
+            recipe_contract["aflb_gpkg_path"] = str(
+                written_aflb_gpkg_path.relative_to(instance_root).as_posix()
+            )
+        else:
+            recipe_contract.pop("aflb_gpkg_path", None)
+        recipe_contract["aflb_checkpoint_area_ha"] = float(aflb_checkpoint_area_ha)
+        payload["recipe_contract"] = recipe_contract
+        _write_recipe_yaml(resolved_recipe_path, payload)
+
     output_frame = checkpoint.drop(
         columns=["_row_id", "_stand_area_sqm"], errors="ignore"
     )
@@ -14777,6 +14987,18 @@ def run_tsr_thlb_netdown_recipe(
         "input_area_ha": input_area_ha,
         "baseline_managed_area_ha": baseline_managed_area_ha,
         "final_managed_area_ha": final_managed_area_ha,
+        "aflb_checkpoint_written": written_aflb_checkpoint_path is not None,
+        "aflb_checkpoint_path": (
+            str(written_aflb_checkpoint_path.relative_to(instance_root).as_posix())
+            if written_aflb_checkpoint_path is not None
+            else None
+        ),
+        "aflb_gpkg_path": (
+            str(written_aflb_gpkg_path.relative_to(instance_root).as_posix())
+            if written_aflb_gpkg_path is not None
+            else None
+        ),
+        "aflb_checkpoint_area_ha": aflb_checkpoint_area_ha,
         "legacy_reference_managed_area_ha": legacy_reference_managed_area_ha,
         "tsr_reported_aflb_area_ha": tsr_reported_aflb_area_ha,
         "tsr_reported_thlb_area_ha": tsr_reported_thlb_area_ha,
@@ -14885,6 +15107,16 @@ def run_tsr_thlb_netdown_recipe(
         audit_relative_path=str(
             resolved_audit_path.relative_to(instance_root).as_posix()
         ),
+        aflb_checkpoint_relative_path=(
+            str(written_aflb_checkpoint_path.relative_to(instance_root).as_posix())
+            if written_aflb_checkpoint_path is not None
+            else None
+        ),
+        aflb_gpkg_relative_path=(
+            str(written_aflb_gpkg_path.relative_to(instance_root).as_posix())
+            if written_aflb_gpkg_path is not None
+            else None
+        ),
         execution_mode=execution_mode,
         allow_stand_binary_fallback=allow_stand_binary_fallback,
         baseline_signal=baseline_signal,
@@ -14895,6 +15127,7 @@ def run_tsr_thlb_netdown_recipe(
         legacy_reference_managed_area_ha=legacy_reference_managed_area_ha,
         tsr_reported_aflb_area_ha=tsr_reported_aflb_area_ha,
         tsr_reported_thlb_area_ha=tsr_reported_thlb_area_ha,
+        aflb_checkpoint_area_ha=aflb_checkpoint_area_ha,
         outcome_counts=dict(sorted(outcome_counts.items())),
         step_count=len(applied_steps),
         generated_utc=generated_utc,
@@ -14952,6 +15185,8 @@ def run_tsr_thlb_netdown_recipe(
         audit_path=resolved_audit_path,
         status_report_path=status_report_path,
         runtime_status_report_path=runtime_status_report_path,
+        aflb_checkpoint_path=written_aflb_checkpoint_path,
+        aflb_gpkg_path=written_aflb_gpkg_path,
         execution_mode=execution_mode,
         baseline_signal=baseline_signal,
         selected_map_ids=selected_map_ids,
@@ -14963,6 +15198,7 @@ def run_tsr_thlb_netdown_recipe(
         legacy_reference_managed_area_ha=legacy_reference_managed_area_ha,
         tsr_reported_aflb_area_ha=tsr_reported_aflb_area_ha,
         tsr_reported_thlb_area_ha=tsr_reported_thlb_area_ha,
+        aflb_checkpoint_area_ha=aflb_checkpoint_area_ha,
     )
 
 
@@ -15024,7 +15260,7 @@ def run_tsr_thlb_reconstructed_diagnostic_slice(
         )
 
     run_start = perf_counter()
-    checkpoint, applied_steps, outcome_counts, diagnostic_steps = (
+    checkpoint, applied_steps, outcome_counts, diagnostic_steps, _aflb_checkpoint = (
         _execute_tsr_thlb_recipe_steps(
             recipe_steps=selected_steps,
             checkpoint=checkpoint,

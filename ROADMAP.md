@@ -942,6 +942,20 @@ notes.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
 
+- Implemented **#152**:
+  - strict reconstructed runs that reach the `GLB -> AFLB` boundary now emit:
+    - `data/tsr/aflb_checkpoint.feather` as the canonical restart artifact
+    - `data/tsr/aflb_checkpoint.gpkg` by default as the GIS-facing companion
+  - `femic tsr thlb-netdown-run` now supports `--no-aflb-gpkg` to suppress only
+    the GeoPackage companion export
+  - `--checkpoint-path data/tsr/aflb_checkpoint.feather` is now the documented
+    downstream restart seam for later `AFLB -> LHLB -> THLB` experimentation
+  - bounded TSA29 acceptance from the clean raw GLB baseline produced:
+    - `aflb_checkpoint_area_ha = 3,110,576.672`
+  - scope remained additive only:
+    - settled step-2/3/4 semantics were not changed by this side quest
+    - GLB build behavior was not changed
+
 - `#128` strict THLB adjudication:
   - the reconstructed LU-wise source-backed `exclude` bug is now resolved in code:
     the LU execution lane was bypassing compiled `source_attribute_filters` and

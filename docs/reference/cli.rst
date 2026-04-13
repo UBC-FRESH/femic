@@ -870,6 +870,9 @@ still being refined.
 - ``--auto-map-id-smoke-subset`` (optional bounded reconstructed smoke helper)
 - ``--allow-stand-binary-fallback`` (optional non-default debug fallback for
   reconstructed mode only)
+- ``--no-aflb-gpkg`` (optional; suppress the default
+  ``data/tsr/aflb_checkpoint.gpkg`` companion export when a reconstructed run
+  reaches the AFLB milestone)
 
 ``tsr thlb-netdown-run`` executes a bounded subset of the reviewed THLB recipe
 into a stand-level checkpoint that carries ``thlb_fact`` for downstream export
@@ -888,6 +891,10 @@ Current v1 execution contract:
   - ``config/tsr/thlb_netdown.audit.json``
   - ``config/tsr/thlb_netdown.status.md``
   - plus a timestamped history copy under ``runtime/logs/tsr/``
+- reconstructed runs that genuinely reach the AFLB milestone now also write:
+  ``data/tsr/aflb_checkpoint.feather`` as the canonical downstream restart
+  artifact, and ``data/tsr/aflb_checkpoint.gpkg`` by default as the GIS-facing
+  companion export
 
 This command is intentionally partial-success friendly: it should move the
 recipe forward where FEMIC has enough trustworthy information while keeping the
@@ -927,6 +934,9 @@ Important current boundary:
   overlay where FEMIC has a reviewed spatial implementation, and explicit
   recipe-driven aspatial fallback where the reviewed recipe already carries a
   TSR target-area deduction;
+- ``--checkpoint-path data/tsr/aflb_checkpoint.feather`` is now the supported
+  downstream restart seam when analysts want to explore ``AFLB -> LHLB ->
+  THLB`` logic without rebuilding the settled ``GLB -> AFLB`` ladder;
 - this is an explicit recipe-driven aspatial fallback, not a silent substitute
   for blocked spatial logic;
 - blocked exact-overlay rows still remain explicit instead of being silently

@@ -132,6 +132,13 @@ Important boundary:
 - reconstructed mode now supports exact spatial overlay plus explicit
   recipe-driven aspatial fallback where the reviewed recipe already carries a
   TSR target-area deduction;
+- when the reconstructed run reaches the AFLB milestone boundary, FEMIC now
+  emits ``data/tsr/aflb_checkpoint.feather`` as the canonical downstream
+  restart artifact and ``data/tsr/aflb_checkpoint.gpkg`` by default as the
+  GIS-facing companion;
+- later-stage experimentation should prefer restarting from
+  ``--checkpoint-path data/tsr/aflb_checkpoint.feather`` instead of rebuilding
+  GLB -> AFLB every time;
 - blocked exact-overlay seams still remain explicit instead of being silently
   converted into fallback; and
 - the old coarse stand-binary approximation survives only as an explicit

@@ -14021,3 +14021,31 @@
     - projected delta: `+12,408.672 ha`
   - Step 3 is now close enough to stop chasing before moving on, and step 4
     remains the accepted documented aspatial roads/trails/landings bridge.
+- Opened `#152` to emit an official AFLB checkpoint artifact for strict THLB
+  restarts.
+  - New contract:
+    - when the strict reconstructed `GLB -> AFLB` ladder reaches the step-5
+      AFLB milestone, FEMIC should emit:
+      - `data/tsr/aflb_checkpoint.feather` as the canonical restart artifact;
+      - `data/tsr/aflb_checkpoint.gpkg` by default as the GIS-facing companion.
+  - Planned additive CLI surface:
+    - `--no-aflb-gpkg` to suppress only the GPKG companion export.
+  - This side quest is explicitly additive only:
+    - it does not change settled step-2/3/4 semantics; and
+    - it does not change GLB build behavior.
+- Implemented and accepted `#152`:
+  - strict reconstructed runs that reach the `GLB -> AFLB` boundary now emit:
+    - `data/tsr/aflb_checkpoint.feather` as the canonical restart artifact
+    - `data/tsr/aflb_checkpoint.gpkg` by default as the GIS-facing companion
+  - `femic tsr thlb-netdown-run` now supports `--no-aflb-gpkg`
+  - `--checkpoint-path data/tsr/aflb_checkpoint.feather` is now the documented
+    downstream restart seam for later `AFLB -> LHLB -> THLB` experimentation
+  - Bounded TSA29 acceptance from the clean raw GLB baseline wrote both AFLB
+    artifacts and confirmed:
+    - `aflb_checkpoint_area_ha = 3,110,576.672`
+  - Validation passed:
+    - `python -m ruff check src/femic/tsr_catalog/recipes.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_cli_main.py`
+    - `python -m pytest tests/test_tsr_recipes.py -k "aflb_checkpoint or can_restart_from_aflb_checkpoint or fragments_binary_thlb" -q`
+    - `python -m pytest tests/test_cli_main.py -k "thlb_netdown_run" -q`
+    - `python -m mypy src`
+    - `python -m sphinx -b html docs _build/html -W`

@@ -6282,6 +6282,8 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
             / "logs"
             / "tsr"
             / "thlb_netdown_status_report-20260405T000000Z.md",
+            aflb_checkpoint_path=None,
+            aflb_gpkg_path=None,
             execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_HYBRID,
             baseline_signal="thlb_raw",
             selected_map_ids=(),
@@ -6293,6 +6295,7 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
             legacy_reference_managed_area_ha=None,
             tsr_reported_aflb_area_ha=3098168.0,
             tsr_reported_thlb_area_ha=1660053.0,
+            aflb_checkpoint_area_ha=None,
         )
 
     monkeypatch.setattr(cli_main, "run_tsr_thlb_netdown_recipe", _fake_run)
@@ -6306,6 +6309,7 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
         execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_HYBRID,
         map_id=[],
         auto_map_id_smoke_subset=False,
+        no_aflb_gpkg=False,
     )
 
     assert (
@@ -6374,6 +6378,8 @@ def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
             / "logs"
             / "tsr"
             / "thlb_reconstructed_status_report-20260405T000000Z.md",
+            aflb_checkpoint_path=instance_root / "data" / "tsr" / "aflb_checkpoint.feather",
+            aflb_gpkg_path=instance_root / "data" / "tsr" / "aflb_checkpoint.gpkg",
             execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
             baseline_signal="checkpoint1_raw_glb_initialization",
             selected_map_ids=("093J034", "093J044"),
@@ -6385,6 +6391,7 @@ def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
             legacy_reference_managed_area_ha=65000.0,
             tsr_reported_aflb_area_ha=3098168.0,
             tsr_reported_thlb_area_ha=66053.0,
+            aflb_checkpoint_area_ha=3098168.0,
         )
 
     monkeypatch.setattr(cli_main, "run_tsr_thlb_netdown_recipe", _fake_run)
@@ -6399,12 +6406,70 @@ def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
         map_id=["093J034", "093J044"],
         auto_map_id_smoke_subset=False,
         allow_stand_binary_fallback=True,
+        no_aflb_gpkg=False,
     )
 
     assert captured_kwargs["map_ids"] == ("093J034", "093J044")
     assert captured_kwargs["auto_map_id_smoke_subset"] is False
     assert captured_kwargs["allow_stand_binary_fallback"] is True
+    assert captured_kwargs["write_aflb_gpkg"] is True
     assert any("selected_map_ids: 093J034, 093J044" in msg for msg in messages)
+
+
+def test_tsr_thlb_netdown_run_can_disable_aflb_gpkg(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_run(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbNetdownRecipeRunResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            checkpoint_path=instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather",
+            output_path=instance_root / "data" / "tsr" / "thlb_reconstructed_checkpoint.feather",
+            audit_path=instance_root / "config" / "tsr" / "thlb_reconstructed.audit.json",
+            status_report_path=instance_root / "config" / "tsr" / "thlb_reconstructed.status.md",
+            runtime_status_report_path=instance_root / "runtime" / "logs" / "tsr" / "thlb_reconstructed_status_report-20260405T000000Z.md",
+            aflb_checkpoint_path=instance_root / "data" / "tsr" / "aflb_checkpoint.feather",
+            aflb_gpkg_path=None,
+            execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+            baseline_signal="checkpoint1_raw_glb_initialization",
+            selected_map_ids=(),
+            step_count=1,
+            outcome_counts={"applied": 1},
+            input_area_ha=1.0,
+            baseline_managed_area_ha=1.0,
+            final_managed_area_ha=1.0,
+            legacy_reference_managed_area_ha=None,
+            tsr_reported_aflb_area_ha=None,
+            tsr_reported_thlb_area_ha=None,
+            aflb_checkpoint_area_ha=1.0,
+        )
+
+    monkeypatch.setattr(cli_main, "run_tsr_thlb_netdown_recipe", _fake_run)
+
+    cli_main.tsr_thlb_netdown_run(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+        checkpoint_path=None,
+        output_path=None,
+        audit_path=None,
+        execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+        map_id=[],
+        auto_map_id_smoke_subset=False,
+        allow_stand_binary_fallback=False,
+        no_aflb_gpkg=True,
+    )
+
+    assert captured_kwargs["write_aflb_gpkg"] is False
 
 
 def test_tsr_facts_report_writes_review_csv(

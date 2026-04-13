@@ -57,6 +57,11 @@ Checkpoint Semantics
   ``femic prep glb-build`` now reuses that snapshot by default. Use
   ``--force-rebuild-glb`` when you explicitly want to rerun the raw-source clip
   instead of consuming the stored baseline.
+- Once the strict THLB ladder reaches the step-5 AFLB milestone, FEMIC now
+  treats AFLB as a first-class downstream restart checkpoint.
+  ``data/tsr/aflb_checkpoint.feather`` is the canonical restart artifact, and
+  ``data/tsr/aflb_checkpoint.gpkg`` is written by default as the GIS-facing
+  companion unless the caller explicitly disables it.
 - Resume behavior must never silently reuse stale artifacts when debug-mode
   constraints (for example ``--debug-rows``) change the effective data population.
 

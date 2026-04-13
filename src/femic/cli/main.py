@@ -622,6 +622,14 @@ TSR_THLB_ALLOW_STAND_BINARY_FALLBACK_OPTION = typer.Option(
         "large/failed exact-overlay steps with whole-stand binary exclusion."
     ),
 )
+TSR_THLB_NO_AFLB_GPKG_OPTION = typer.Option(
+    False,
+    "--no-aflb-gpkg",
+    help=(
+        "Do not write the default `data/tsr/aflb_checkpoint.gpkg` companion when "
+        "a reconstructed run reaches the AFLB milestone."
+    ),
+)
 TSR_THLB_WORKBENCH_PATH_OPTION = typer.Option(
     None,
     "--workbench-path",
@@ -2644,6 +2652,10 @@ def _print_tsr_thlb_netdown_recipe_run_summary(
     console.print(f"audit_path: {result.audit_path}")
     console.print(f"status_report_path: {result.status_report_path}")
     console.print(f"runtime_status_report_path: {result.runtime_status_report_path}")
+    if result.aflb_checkpoint_path is not None:
+        console.print(f"aflb_checkpoint_path: {result.aflb_checkpoint_path}")
+    if result.aflb_gpkg_path is not None:
+        console.print(f"aflb_gpkg_path: {result.aflb_gpkg_path}")
     console.print(f"execution_mode: {result.execution_mode}")
     console.print(f"baseline_signal: {result.baseline_signal}")
     if result.selected_map_ids:
@@ -2668,6 +2680,8 @@ def _print_tsr_thlb_netdown_recipe_run_summary(
         console.print(
             f"tsr_reported_thlb_area_ha: {result.tsr_reported_thlb_area_ha:.3f}"
         )
+    if result.aflb_checkpoint_area_ha is not None:
+        console.print(f"aflb_checkpoint_area_ha: {result.aflb_checkpoint_area_ha:.3f}")
     for outcome, count in result.outcome_counts.items():
         console.print(f"outcome_{outcome}: {count}")
 
@@ -3992,6 +4006,7 @@ def tsr_thlb_netdown_run(
     map_id: list[str] | None = TSR_THLB_MAP_ID_OPTION,
     auto_map_id_smoke_subset: bool = TSR_THLB_AUTO_MAP_ID_SMOKE_OPTION,
     allow_stand_binary_fallback: bool = (TSR_THLB_ALLOW_STAND_BINARY_FALLBACK_OPTION),
+    no_aflb_gpkg: bool = TSR_THLB_NO_AFLB_GPKG_OPTION,
 ) -> None:
     """Execute the reviewed THLB netdown recipe in hybrid or reconstructed mode."""
 
@@ -4042,6 +4057,7 @@ def tsr_thlb_netdown_run(
             map_ids=tuple(map_id or ()),
             auto_map_id_smoke_subset=auto_map_id_smoke_subset,
             allow_stand_binary_fallback=allow_stand_binary_fallback,
+            write_aflb_gpkg=not no_aflb_gpkg,
         )
     except TsrRecipeError as exc:
         console.print(f"[red]TSR THLB recipe run error:[/red] {exc}")
