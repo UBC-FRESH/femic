@@ -483,6 +483,7 @@ class TsrThlbNetdownRecipeRunResult:
     runtime_status_report_path: Path
     aflb_checkpoint_path: Path | None
     aflb_gpkg_path: Path | None
+    aflb_lu_cache_warmed: bool
     execution_mode: str
     baseline_signal: str
     selected_map_ids: tuple[str, ...]
@@ -3213,39 +3214,29 @@ def _specialized_compiled_logic_for_parent_step(
                 "linked_source_entry_ids": ["whse_tantalis_ta_park_ecores_pa_svw"],
             }
         )
-        excluded_tenure_descriptions = [
-            "Crown Lease - Misc. lease",
-            "Crown Tenure - Woodlot Licence, Schedule A",
-            "Crown Tenure - Woodlot Licence, Schedule B",
-        ]
         tenure_item = _base_item(
             "compiled_02",
             "Area-based tenures and woodlots",
-            "select_spatial_intersect",
+            "aspatial_area_reduction",
         )
         tenure_item.update(
             {
-                "normalized_action": "exclude",
+                "normalized_action": "aspatial_area_reduction",
                 "normalized_subject": "Area-based tenures and woodlots",
                 "normalized_predicate": (
-                    "exclude mapped area-based tenure and woodlot polygons from the "
-                    "working harvestable land base"
+                    "apply the residual TSR-cited woodlot and miscellaneous-lease "
+                    "deduction after subtracting the exact same-parent parks/protected "
+                    "areas removal"
                 ),
-                "linked_source_entry_ids": ["whse_forest_vegetation_f_own"],
-                "source_attribute_filters": [
-                    {
-                        "field": "OWNERSHIP_DESCRIPTION",
-                        "operator": "in",
-                        "value": excluded_tenure_descriptions,
-                    }
-                ],
+                "linked_source_entry_ids": [],
                 "step_status": "ready",
                 "required": True,
+                "subtract_parent_exact_removed_area": True,
                 "notes": [
-                    "TSA29 section 6.2.1 keeps woodlots in AFLB but removes them when defining the LHLB, so woodlot schedules A/B are included here.",
-                    "This first runnable pass uses the explicit F_OWN ownership descriptions for woodlots and the small miscellaneous crown-lease class cited in TSA29 Table 7.",
-                    "Community forest agreements and first nations woodland licences were already netted out upstream in TSA29 step 2 and are therefore intentionally excluded from this step-6 executable filter.",
-                    "FTEN managed-licence and TANTALIS crown-tenure layers remain supporting metadata/reference surfaces, but F_OWN is the executable ownership overlay in the TSA29 bridge.",
+                    "TSA29 Table 7 removes woodlots and a small crown/miscellaneous-lease remainder as part of step 6, but current public F_OWN is too blunt to separate the active subset TSR actually removed.",
+                    "Use the exact same-parent parks/protected removal first, then apply the residual aspatial target so total step-6 net deduction stays aligned to the TSR benchmark.",
+                    "Current public F_OWN remains supporting/reference provenance for this seam, but it is not the executable overlay source in the strict lane because it does not expose a reliable active/inactive woodlot status split.",
+                    "Community forest agreements and first nations woodland licences were already netted out upstream in TSA29 step 2 and are therefore intentionally excluded from this step-6 residual bridge.",
                 ],
             }
         )
@@ -6326,9 +6317,10 @@ def _prepare_reconstructed_restart_checkpoint_frame(
 def _write_aflb_checkpoint_artifacts(
     *,
     checkpoint: gpd.GeoDataFrame,
+    instance_root: Path,
     feather_path: Path,
     gpkg_path: Path | None,
-) -> tuple[Path, Path | None, float]:
+) -> tuple[Path, Path | None, float, bool]:
     prepared = _prepare_reconstructed_restart_checkpoint_frame(checkpoint)
     feather_path.parent.mkdir(parents=True, exist_ok=True)
     prepared.to_feather(feather_path)
@@ -6339,7 +6331,12 @@ def _write_aflb_checkpoint_artifacts(
             gpkg_path.unlink()
         prepared.to_file(gpkg_path, driver="GPKG", layer="aflb_checkpoint")
         written_gpkg = gpkg_path
-    return feather_path, written_gpkg, _managed_area_ha(prepared)
+    _prepare_reconstructed_lu_chunk_records(
+        checkpoint=prepared,
+        checkpoint_path=feather_path,
+        instance_root=instance_root,
+    )
+    return feather_path, written_gpkg, _managed_area_ha(prepared), True
 
 
 def _resolve_effective_stand_area_sqm(checkpoint: gpd.GeoDataFrame) -> pd.Series:
@@ -14943,13 +14940,16 @@ def run_tsr_thlb_netdown_recipe(
     written_aflb_checkpoint_path: Path | None = None
     written_aflb_gpkg_path: Path | None = None
     aflb_checkpoint_area_ha: float | None = None
+    aflb_lu_cache_warmed = False
     if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED and aflb_checkpoint is not None:
         (
             written_aflb_checkpoint_path,
             written_aflb_gpkg_path,
             aflb_checkpoint_area_ha,
+            aflb_lu_cache_warmed,
         ) = _write_aflb_checkpoint_artifacts(
             checkpoint=aflb_checkpoint,
+            instance_root=instance_root,
             feather_path=resolved_aflb_checkpoint_path,
             gpkg_path=resolved_aflb_gpkg_path,
         )
@@ -14988,6 +14988,7 @@ def run_tsr_thlb_netdown_recipe(
         "baseline_managed_area_ha": baseline_managed_area_ha,
         "final_managed_area_ha": final_managed_area_ha,
         "aflb_checkpoint_written": written_aflb_checkpoint_path is not None,
+        "aflb_lu_cache_warmed": aflb_lu_cache_warmed,
         "aflb_checkpoint_path": (
             str(written_aflb_checkpoint_path.relative_to(instance_root).as_posix())
             if written_aflb_checkpoint_path is not None
@@ -15187,6 +15188,7 @@ def run_tsr_thlb_netdown_recipe(
         runtime_status_report_path=runtime_status_report_path,
         aflb_checkpoint_path=written_aflb_checkpoint_path,
         aflb_gpkg_path=written_aflb_gpkg_path,
+        aflb_lu_cache_warmed=aflb_lu_cache_warmed,
         execution_mode=execution_mode,
         baseline_signal=baseline_signal,
         selected_map_ids=selected_map_ids,

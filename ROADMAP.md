@@ -942,6 +942,18 @@ notes.
   - 2026-03-21 update: Linux tasks (`P23.3a`, `P23.3b`, `P23.3c`) are now completed and documented; Phase 23 parity closeout criteria are satisfied.
 ## Detailed Next Steps Notes
 
+- Opened `#153` to restore `config/tsr/thlb_reconstruction_comparison.{md,json}`
+  as the trustworthy dashboard for the active TSA29 strict-lane adjudication
+  pass.
+  - Rebuild early-ladder rows and milestone values from the current locked clean
+    GLB, step-2, step-3, step-4, and AFLB checkpoint results.
+  - Mark later rows explicitly stale/unrefreshed until they are re-adjudicated.
+- Opened `#154` for the bounded TSA29 step-6 repair.
+  - Keep parks/protected areas as the exact spatial overlay.
+  - Replace the woodlot / miscellaneous-lease side with a documented residual
+    aspatial fallback calibrated to the TSR benchmark because current public
+    `F_OWN` is too blunt to separate the active subset TSR actually removed.
+
 - Implemented **#152**:
   - strict reconstructed runs that reach the `GLB -> AFLB` boundary now emit:
     - `data/tsr/aflb_checkpoint.feather` as the canonical restart artifact
@@ -16235,3 +16247,11 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
       is tiny; and
     - step 4 remains the accepted documented aspatial roads/trails/landings
       bridge and is fine as-is for this pass.
+- 2026-04-13: Warm AFLB LU partitions at checkpoint emit time.
+  - `data/tsr/aflb_checkpoint.feather` now immediately materializes its LU
+    partition cache under `runtime/logs/tsr/lu_partitions/...` when the AFLB
+    checkpoint is written, so later bounded restarts do not pay the first-run
+    LU cold-start cost from scratch.
+  - This does **not** change the execution model for reconstructed diagnostic
+    slices: they remain LU-wise but serial. The 8-core process-pool path still
+    belongs only to the separate `lu_parallel` parent-step benchmark runner.

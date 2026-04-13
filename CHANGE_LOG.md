@@ -14049,3 +14049,20 @@
     - `python -m pytest tests/test_cli_main.py -k "thlb_netdown_run" -q`
     - `python -m mypy src`
     - `python -m sphinx -b html docs _build/html -W`
+- Opened `#153` to restore the strict THLB reconstruction comparison dashboard
+  from the current locked bounded checkpoints.
+  - Scope is reporting-surface only: rebuild the early ladder and mark later
+    rows stale until re-adjudicated.
+- Opened `#154` for the bounded TSA29 step-6 repair.
+  - Parks/protected areas stay exact spatial.
+  - The woodlot / miscellaneous-lease side is being converted to a documented
+    residual aspatial bridge because public `F_OWN` is too blunt to separate the
+    active subset TSR actually removed.
+- Warmed AFLB LU partition cache by default when emitting the official AFLB
+  checkpoint artifact.
+  - `data/tsr/aflb_checkpoint.feather` now materializes its LU cache
+    immediately, so later AFLB restarts do not spend their first minutes
+    repartitioning that checkpoint from scratch.
+  - This is a cache warm-up only; reconstructed diagnostic slices are still
+    LU-wise **serial** runs, not the separate 8-core `lu_parallel`
+    parent-step benchmark path.

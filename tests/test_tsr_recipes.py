@@ -5566,6 +5566,43 @@ def test_specialized_compiled_logic_for_roads_and_landings_uses_residual_aspatia
     )
 
 
+def test_specialized_compiled_logic_for_step6_uses_residual_aspatial_fallback_for_tenures() -> (
+    None
+):
+    items = tsr_recipes._specialized_compiled_logic_for_parent_step(
+        parent_step_id="thlb_parent_006_parks_protected_areas_area_base_tenures",
+        parent_label="Parks, protected areas, area-base tenures",
+        land_base_stage="aflb_to_lhlb",
+        stage_label="AFLB -> LHLB",
+        execution_class="legal_harvest_exclusion",
+        benchmark_marginal_area_ha=306327.0,
+        benchmark_cumulative_area_ha=2791841.0,
+        table_provenance="TSR_2024/...#table=3,row=6",
+        row_order=6,
+        linked_subsection={
+            "body": (
+                "The parks, protected areas, and woodlots that were included in the AFLB "
+                "to contribute to forest management objectives in the context of TSA "
+                "timber supply, will be removed at this stage."
+            ),
+            "provenance_id": "TSR_2024/...#page=28",
+            "page_number": 28,
+        },
+    )
+
+    assert items is not None
+    assert len(items) == 2
+    parks_item, tenure_item = items
+    assert parks_item["compiled_operation_type"] == "select_spatial_intersect"
+    assert tenure_item["compiled_operation_type"] == "aspatial_area_reduction"
+    assert tenure_item["normalized_action"] == "aspatial_area_reduction"
+    assert tenure_item["linked_source_entry_ids"] == []
+    assert tenure_item["subtract_parent_exact_removed_area"] is True
+    assert (
+        tenure_item["normalized_subject"] == "Area-based tenures and woodlots"
+    )
+
+
 def test_apply_aspatial_area_reduction_sets_effective_area_without_touching_canonical_area_or_thlb() -> (
     None
 ):
@@ -6613,6 +6650,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     assert result.aflb_gpkg_path == (
         instance_root / "data" / "tsr" / "aflb_checkpoint.gpkg"
     ).resolve()
+    assert result.aflb_lu_cache_warmed is True
     assert result.aflb_checkpoint_area_ha == pytest.approx(0.02)
     assert result.input_area_ha == pytest.approx(0.02)
     assert result.baseline_managed_area_ha == pytest.approx(0.02)
@@ -6639,6 +6677,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
         == tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
     )
     assert audit_payload["aflb_checkpoint_written"] is True
+    assert audit_payload["aflb_lu_cache_warmed"] is True
     assert audit_payload["aflb_checkpoint_area_ha"] == pytest.approx(0.02)
     assert audit_payload["input_area_ha"] == pytest.approx(0.02)
     assert audit_payload["legacy_reference_managed_area_ha"] == pytest.approx(0.01)
@@ -6665,6 +6704,17 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     )
     assert recipe.recipe_contract["aflb_checkpoint_path"] == "data/tsr/aflb_checkpoint.feather"
     assert recipe.recipe_contract["aflb_gpkg_path"] == "data/tsr/aflb_checkpoint.gpkg"
+
+    cached_partition = tsr_recipes._load_cached_landscape_unit_partition_records(
+        checkpoint_path=result.aflb_checkpoint_path,
+        instance_root=instance_root,
+        expected_row_count=len(gpd.read_feather(result.aflb_checkpoint_path)),
+        expected_area_ha=float(
+            gpd.read_feather(result.aflb_checkpoint_path).geometry.area.astype(float).sum()
+            / 10000.0
+        ),
+    )
+    assert cached_partition is not None
 
 
 def test_run_tsr_thlb_netdown_recipe_can_restart_from_aflb_checkpoint(
@@ -6791,6 +6841,7 @@ def test_run_tsr_thlb_netdown_recipe_can_restart_from_aflb_checkpoint(
     )
 
     assert first.aflb_checkpoint_path is not None
+    assert first.aflb_lu_cache_warmed is True
     assert first.aflb_checkpoint_area_ha == pytest.approx(1.0)
 
     second = tsr_recipes.run_tsr_thlb_netdown_recipe(
@@ -8176,6 +8227,183 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_executes_aspatial_area_redu
     assert aspatial_step["run_status"] == "applied"
     assert aspatial_step["spatial_application_mode"] == "aspatial_fallback"
     assert aspatial_step["affected_area_ha"] == pytest.approx(0.005)
+
+
+def test_run_tsr_thlb_reconstructed_diagnostic_slice_step6_mixed_exact_and_residual_aspatial_fallback(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    checkpoint_path = instance_root / "data" / "tsr" / "aflb_checkpoint.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2],
+            "_stand_area_sqm": [100.0, 100.0],
+            "FEATURE_AREA_SQM": [100.0, 100.0],
+            "POLYGON_AREA": [0.01, 0.01],
+            "GEOMETRY_AREA": [0.01, 0.01],
+            "AREA_HA": [0.01, 0.01],
+            "Shape_Area": [100.0, 100.0],
+            "thlb_fact": [1.0, 1.0],
+            "thlb": [1, 1],
+            "thlb_raw": [1.0, 1.0],
+            "MAP_ID": ["093J034", "093J034"],
+        },
+        geometry=[box(0, 0, 10, 10), box(11, 0, 21, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint.to_feather(checkpoint_path)
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 30, 20)],
+        names=["Test LU"],
+    )
+
+    park_artifact_path = (
+        instance_root
+        / "data"
+        / "downloads"
+        / "bcdc"
+        / "PARKS"
+        / "PARKS.gpkg"
+    )
+    park_artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {"NAME": ["Test Park"]},
+        geometry=[box(0, 0, 10, 10)],
+        crs="EPSG:3005",
+    ).to_file(park_artifact_path, driver="GPKG")
+
+    source_recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    source_recipe_payload["recipe_contract"]["status"] = "built"
+    source_recipe_payload["entries"] = [
+        {
+            "entry_id": "whse_tantalis_ta_park_ecores_pa_svw",
+            "label": "WHSE_TANTALIS.TA_PARK_ECORES_PA_SVW",
+            "recommended_query": "WHSE_TANTALIS.TA_PARK_ECORES_PA_SVW",
+            "current_public_status": "exact_hit",
+            "acquisition_strategy": "wfs_fetch",
+            "artifact_path": "data/downloads/bcdc/PARKS/PARKS.gpkg",
+            "artifact_scope": "production_full_tsa",
+            "run_status": "reused",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            source_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["parent_steps"] = [
+        {
+            "parent_step_id": "thlb_parent_001_total_tsa_area",
+            "parent_label": "Total TSA area",
+            "parent_kind": "milestone",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "benchmark_cumulative_area_ha": 0.02,
+            "row_order": 1,
+        },
+        {
+            "parent_step_id": "thlb_parent_006_parks_protected_areas_area_base_tenures",
+            "parent_label": "Parks, protected areas, area-base tenures",
+            "parent_kind": "transformation",
+            "land_base_stage": "aflb_to_lhlb",
+            "stage_label": "AFLB -> LHLB",
+            "benchmark_marginal_area_ha": 0.02,
+            "benchmark_cumulative_area_ha": 0.0,
+            "row_order": 6,
+        },
+    ]
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "thlb_parent_006_parks_protected_areas_area_base_tenures_compiled_01",
+            "parent_step_id": "thlb_parent_006_parks_protected_areas_area_base_tenures",
+            "order_index": 6,
+            "step_kind": "netdown_rule",
+            "label": "Parks and protected areas",
+            "normalized_action": "exclude",
+            "compiled_operation_type": "select_spatial_intersect",
+            "linked_source_entry_ids": ["whse_tantalis_ta_park_ecores_pa_svw"],
+            "benchmark_marginal_area_ha": 0.02,
+            "benchmark_cumulative_area_ha": 0.0,
+            "step_status": "ready",
+            "page_number": 28,
+        },
+        {
+            "step_id": "thlb_parent_006_parks_protected_areas_area_base_tenures_compiled_02",
+            "parent_step_id": "thlb_parent_006_parks_protected_areas_area_base_tenures",
+            "order_index": 6,
+            "step_kind": "netdown_rule",
+            "label": "Area-based tenures and woodlots",
+            "normalized_action": "aspatial_area_reduction",
+            "compiled_operation_type": "aspatial_area_reduction",
+            "linked_source_entry_ids": [],
+            "benchmark_marginal_area_ha": 0.02,
+            "benchmark_cumulative_area_ha": 0.0,
+            "subtract_parent_exact_removed_area": True,
+            "step_status": "ready",
+            "page_number": 28,
+        },
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    diagnostics_root = instance_root / "runtime" / "logs" / "tsr" / "diagnostics"
+    result = tsr_recipes.run_tsr_thlb_reconstructed_diagnostic_slice(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        resume_checkpoint_path=checkpoint_path,
+        output_path=diagnostics_root / "step6.feather",
+        audit_path=diagnostics_root / "step6.audit.json",
+        diagnostic_path=diagnostics_root / "step6.diag.json",
+    )
+
+    assert result.final_managed_area_ha == pytest.approx(0.0)
+    audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
+    steps = {step["step_id"]: step for step in audit_payload["steps"]}
+    parks_step = steps[
+        "thlb_parent_006_parks_protected_areas_area_base_tenures_compiled_01"
+    ]
+    tenure_step = steps[
+        "thlb_parent_006_parks_protected_areas_area_base_tenures_compiled_02"
+    ]
+    assert parks_step["net_removed_area_ha"] == pytest.approx(0.01)
+    assert tenure_step["spatial_application_mode"] == "aspatial_fallback"
+    assert tenure_step["net_removed_area_ha"] == pytest.approx(0.01)
+    assert tenure_step["affected_area_ha"] == pytest.approx(0.01)
 
 
 def test_run_tsr_thlb_reconstructed_diagnostic_slice_executes_select_attribute_without_sources(
