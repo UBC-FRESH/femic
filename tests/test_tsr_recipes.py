@@ -5472,7 +5472,7 @@ def test_apply_aspatial_area_reduction_sets_effective_area_without_touching_cano
             "thlb_fact": [1.0, 1.0],
             "thlb": [1.0, 1.0],
         },
-        geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10)],
+        geometry=[box(0, 0, 10, 10), box(11, 0, 21, 10)],
         crs="EPSG:3005",
     )
 
@@ -5507,7 +5507,7 @@ def test_apply_aspatial_area_reduction_is_idempotent_against_canonical_area() ->
             "thlb_fact": [1.0, 1.0],
             "thlb": [1.0, 1.0],
         },
-        geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10)],
+        geometry=[box(0, 0, 10, 10), box(11, 0, 21, 10)],
         crs="EPSG:3005",
     )
 
@@ -5534,7 +5534,7 @@ def test_apply_aspatial_area_reduction_targets_active_area_only() -> None:
             "thlb_fact": [1.0, 0.0],
             "thlb": [1.0, 0.0],
         },
-        geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10)],
+        geometry=[box(0, 0, 10, 10), box(11, 0, 21, 10)],
         crs="EPSG:3005",
     )
 
@@ -5709,7 +5709,7 @@ def test_execute_workbench_compiled_item_handles_no_deduction() -> None:
             "_row_id": [0],
             "_stand_area_sqm": [100.0],
         },
-        geometry=[box(0, 0, 10, 10)],
+        geometry=[box(0, 0, 9.5, 10)],
         crs="EPSG:3005",
     )
 
@@ -8015,6 +8015,156 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_executes_select_attribute_w
         output_path=diagnostics_root / "attr.feather",
         audit_path=diagnostics_root / "attr.audit.json",
         diagnostic_path=diagnostics_root / "attr.diag.json",
+    )
+
+    audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
+    attr_step = next(
+        step
+        for step in audit_payload["steps"]
+        if step["step_id"] == "thlb_step_003_non_forest_attr"
+    )
+    assert attr_step["run_status"] == "applied"
+    assert attr_step["spatial_application_mode"] == "checkpoint_attribute_exclusion"
+    assert attr_step["affected_area_ha"] == pytest.approx(0.01)
+
+
+def test_run_tsr_thlb_reconstructed_diagnostic_slice_restores_harvested_select_attribute_rows(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    cutblock_path = (
+        instance_root
+        / "data"
+        / "downloads"
+        / "bcdc"
+        / "VEG_CONSOLIDATED_CUT_BLOCKS_SP"
+        / "VEG_CONSOLIDATED_CUT_BLOCKS_SP.gpkg"
+    )
+    cutblock_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {"HARVEST_START_YEAR_CALENDAR": [2018]},
+        geometry=[box(0, 0, 9.5, 10)],
+        crs="EPSG:3005",
+    ).to_file(cutblock_path, driver="GPKG")
+
+    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint1 = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2],
+            "FOR_MGMT_LAND_BASE_IND": ["N", "N"],
+            "BCLCS_LEVEL_2": ["T", "T"],
+            "NON_PRODUCTIVE_CD": [None, None],
+            "CROWN_CLOSURE": [50.0, 50.0],
+            "MAP_ID": ["093J034", "093J034"],
+            "FEATURE_AREA_SQM": [100.0, 100.0],
+            "Shape_Area": [100.0, 100.0],
+            "Shape_Length": [40.0, 40.0],
+        },
+        geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint1.to_feather(checkpoint1_path)
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 30, 20)],
+        names=["Test LU"],
+    )
+
+    source_recipe_payload = tsr_catalog.load_tsr_source_layers_recipe(
+        init_result.source_layers_recipe_path
+    ).to_dict()
+    source_recipe_payload["recipe_contract"]["status"] = "run"
+    source_recipe_payload["entries"] = [
+        {
+            "entry_id": "cutblocks",
+            "label": "Cutblocks",
+            "recommended_query": "VEG_CONSOLIDATED_CUT_BLOCKS_SP",
+            "acquisition_strategy": "wfs_fetch",
+            "artifact_path": (
+                "data/downloads/bcdc/VEG_CONSOLIDATED_CUT_BLOCKS_SP/"
+                "VEG_CONSOLIDATED_CUT_BLOCKS_SP.gpkg"
+            ),
+            "run_status": "fetched",
+        }
+    ]
+    init_result.source_layers_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            source_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["parent_steps"] = [
+        {
+            "parent_step_id": "thlb_parent_003_non_forest",
+            "parent_label": "Non-forest",
+            "parent_kind": "transformation",
+            "land_base_stage": "glb_to_aflb",
+            "stage_label": "GLB -> AFLB",
+            "benchmark_marginal_area_ha": 100.0,
+            "benchmark_cumulative_area_ha": 100.0,
+            "row_order": 3,
+        },
+    ]
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "thlb_step_003_non_forest_attr",
+            "parent_step_id": "thlb_parent_003_non_forest",
+            "order_index": 3,
+            "step_kind": "netdown_rule",
+            "label": "Non-forest",
+            "normalized_action": "exclude",
+            "compiled_operation_type": "select_attribute",
+            "checkpoint_attribute_mode": "any",
+            "checkpoint_attribute_filters": [
+                {"field": "FOR_MGMT_LAND_BASE_IND", "operator": "ne", "value": "Y"}
+            ],
+            "restoration_source_entry_ids": ["cutblocks"],
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 26,
+        },
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    diagnostics_root = instance_root / "runtime" / "logs" / "tsr" / "diagnostics"
+    result = tsr_recipes.run_tsr_thlb_reconstructed_diagnostic_slice(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        output_path=diagnostics_root / "attr_restore.feather",
+        audit_path=diagnostics_root / "attr_restore.audit.json",
+        diagnostic_path=diagnostics_root / "attr_restore.diag.json",
     )
 
     audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))

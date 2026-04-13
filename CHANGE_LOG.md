@@ -13959,3 +13959,32 @@
   - The current recipe already notes that harvest-history, MPB, and recent-fire
     exceptions are not auto-restored in compiled_01, which is the leading
     hypothesis for the next step-3 semantics gap.
+- Recorded the bounded step-3 reset contract on documented FMLB semantics.
+  - Use the clean raw 2024 VRI + active TSA boundary GLB only.
+  - Treat step 3 as an FMLB-style exclude-with-exceptions rule, not a generic
+    non-forest guess.
+  - First bounded pass is harvest-history restoration using the already-local
+    `WHSE_FOREST_VEGETATION.VEG_CONSOLIDATED_CUT_BLOCKS_SP` overlay.
+  - Fire and MPB exceptions stay explicitly deferred until harvest-history is
+    tested on its own.
+- Implemented the bounded step-3 harvest-history restoration pass.
+  - Added restoration-aware `select_attribute` execution so compiled rules can
+    restore intersecting harvested geometry from explicit
+    `restoration_source_entry_ids` before excluding candidate rows.
+  - Wired TSA29 step 3 compiled_01 to use
+    `WHSE_FOREST_VEGETATION.VEG_CONSOLIDATED_CUT_BLOCKS_SP` as the first-pass
+    harvest-history restoration source.
+  - Added a reconstructed diagnostic regression proving harvested candidate rows
+    are restored while otherwise identical non-harvested rows are still removed.
+  - Bounded rerun from the locked step-2 checkpoint, running only step 3:
+    - step-3 strict removed area: `1,581,401.156 ha`
+    - post-step-3 remaining area: `3,161,015.924 ha`
+    - projected step-5 AFLB area after the settled step-4 fallback:
+      `3,110,581.924 ha`
+    - projected step-5 delta vs TSR AFLB target: `+12,413.924 ha`
+  - Interpretation:
+    - harvest-history restoration was the dominant missing seam for the early
+      `GLB -> AFLB` cumulative path;
+    - step 3 marginal attribution is still too high; and
+    - the FWA final-water substep remains blocked on mixed geometry, so step 3
+      is improved but not yet locked down.

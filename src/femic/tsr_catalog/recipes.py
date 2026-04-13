@@ -3079,9 +3079,13 @@ def _specialized_compiled_logic_for_parent_step(
                     },
                     {"field": "CROWN_CLOSURE", "operator": "lt", "value": 10},
                 ],
+                "restoration_source_entry_ids": [
+                    "whse_forest_vegetation_veg_consolidated_cut_blocks_sp"
+                ],
                 "execution_notes": [
                     "Current notebook execution uses checkpoint attributes as the first-pass FMLB proxy.",
-                    "Harvest-history, MPB, and fire exceptions remain review-sensitive and are not yet auto-restored here.",
+                    "Harvest-history restoration is applied from WHSE_FOREST_VEGETATION.VEG_CONSOLIDATED_CUT_BLOCKS_SP before finalizing the exclusion.",
+                    "MPB and recent-fire restoration remain review-sensitive and are intentionally deferred until the right public layers are validated.",
                 ],
             }
         )
@@ -6751,6 +6755,7 @@ def _apply_reconstructed_lu_checkpoint_attribute_exclusion(
     runtime_step_root: Path,
     filters: Sequence[dict[str, Any]],
     mode: str,
+    restoration_geometries: gpd.GeoDataFrame | None = None,
 ) -> tuple[list[dict[str, Any]], float, int, int]:
     if not chunk_records or not filters:
         return [dict(item) for item in chunk_records], 0.0, 0, 0
@@ -6766,6 +6771,7 @@ def _apply_reconstructed_lu_checkpoint_attribute_exclusion(
             chunk,
             filters=filters,
             mode=mode,
+            restoration_geometries=restoration_geometries,
             preserve_geometry=False,
         )
         current_affected = max(len(chunk) - len(updated_chunk), 0)
@@ -9032,6 +9038,7 @@ def _apply_checkpoint_attribute_filters(
     *,
     filters: Sequence[dict[str, Any]],
     mode: str,
+    restoration_geometries: gpd.GeoDataFrame | None = None,
     preserve_geometry: bool = False,
 ) -> tuple[gpd.GeoDataFrame, float]:
     if not filters:
@@ -9047,6 +9054,26 @@ def _apply_checkpoint_attribute_filters(
         checkpoint["thlb_fact"] > 0 if "thlb_fact" in checkpoint.columns else True
     )
     effective_exclude_mask = exclude_mask & active_mask
+    if (
+        restoration_geometries is not None
+        and not restoration_geometries.empty
+        and bool(effective_exclude_mask.any())
+    ):
+        candidate_rows = checkpoint.loc[effective_exclude_mask, ["geometry"]].copy()
+        if not candidate_rows.empty:
+            candidate_rows = gpd.GeoDataFrame(
+                candidate_rows,
+                geometry="geometry",
+                crs=checkpoint.crs,
+            )
+            restored_rows = gpd.sjoin(
+                candidate_rows,
+                restoration_geometries[["geometry"]],
+                how="inner",
+                predicate="intersects",
+            )
+            if not restored_rows.empty:
+                effective_exclude_mask.loc[restored_rows.index.unique()] = False
     removed_area_ha = float(
         checkpoint.loc[effective_exclude_mask, "_stand_area_sqm"].sum() / 10000.0
     )
@@ -9446,6 +9473,35 @@ def _load_compiled_logic_geometries(
     return geometries, missing_sources, False, extent_mismatch_notes
 
 
+def _load_compiled_restoration_geometries(
+    *,
+    instance_root: Path,
+    compiled_item: dict[str, Any],
+    source_entry_map: dict[str, dict[str, Any]],
+    bbox: tuple[float, float, float, float] | None = None,
+) -> tuple[gpd.GeoDataFrame | None, list[str], bool, list[str]]:
+    restoration_source_entry_ids = tuple(
+        str(value).strip()
+        for value in compiled_item.get("restoration_source_entry_ids", ())
+        if str(value).strip()
+    )
+    if not restoration_source_entry_ids:
+        return None, [], False, []
+    restoration_item = dict(compiled_item)
+    restoration_item["linked_source_entry_ids"] = list(restoration_source_entry_ids)
+    restoration_item["source_attribute_filters"] = [
+        dict(item)
+        for item in compiled_item.get("restoration_source_attribute_filters", ())
+        if isinstance(item, dict)
+    ]
+    return _load_compiled_logic_geometries(
+        instance_root=instance_root,
+        compiled_item=restoration_item,
+        source_entry_map=source_entry_map,
+        bbox=bbox,
+    )
+
+
 def _execute_workbench_compiled_item(
     *,
     checkpoint: gpd.GeoDataFrame,
@@ -9483,10 +9539,38 @@ def _execute_workbench_compiled_item(
         mode = (
             str(compiled_item.get("checkpoint_attribute_mode", "any")).strip() or "any"
         )
+        bbox = (
+            float(checkpoint.total_bounds[0]),
+            float(checkpoint.total_bounds[1]),
+            float(checkpoint.total_bounds[2]),
+            float(checkpoint.total_bounds[3]),
+        )
+        (
+            restoration_geometries,
+            restoration_missing_sources,
+            restoration_empty,
+            restoration_extent_mismatch_notes,
+        ) = _load_compiled_restoration_geometries(
+            instance_root=instance_root,
+            compiled_item=compiled_item,
+            source_entry_map=source_entry_map,
+            bbox=bbox,
+        )
+        if restoration_missing_sources:
+            runtime_notes.append(
+                "Harvest-history restoration sources were unavailable; proceeding without restoration geometry."
+            )
+        if restoration_extent_mismatch_notes:
+            runtime_notes.extend(restoration_extent_mismatch_notes)
+        if restoration_empty and restoration_geometries is not None:
+            runtime_notes.append(
+                "Harvest-history restoration geometry loaded but did not intersect the current checkpoint extent."
+            )
         updated, removed_area_ha = _apply_checkpoint_attribute_filters(
             checkpoint,
             filters=filters,
             mode=mode,
+            restoration_geometries=restoration_geometries,
             preserve_geometry=preserve_geometry,
         )
         runtime_item["removed_area_ha"] = removed_area_ha
@@ -13503,6 +13587,26 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                 mode = (
                     str(step.get("checkpoint_attribute_mode", "any")).strip() or "any"
                 )
+                source_load_started = perf_counter()
+                (
+                    restoration_geometries,
+                    restoration_missing_sources,
+                    restoration_empty,
+                    restoration_extent_mismatch_notes,
+                ) = _load_compiled_restoration_geometries(
+                    instance_root=instance_root,
+                    compiled_item=step,
+                    source_entry_map=source_entry_map,
+                    bbox=(
+                        float(checkpoint.total_bounds[0]),
+                        float(checkpoint.total_bounds[1]),
+                        float(checkpoint.total_bounds[2]),
+                        float(checkpoint.total_bounds[3]),
+                    ),
+                )
+                step_profile["source_load_seconds"] = (
+                    perf_counter() - source_load_started
+                )
                 overlay_started = perf_counter()
                 (
                     current_chunk_records,
@@ -13514,25 +13618,39 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                     runtime_step_root=step_dir,
                     filters=filters,
                     mode=mode,
+                    restoration_geometries=restoration_geometries,
                 )
                 step_profile["overlay_seconds"] = perf_counter() - overlay_started
                 step_profile["write_seconds"] = float(step_profile["overlay_seconds"])
                 step_profile["lu_chunk_count"] = int(touched_chunk_count)
                 updated_step["affected_fragment_count"] = int(affected_row_count)
                 updated_step["affected_area_ha"] = float(removed_area_ha)
+                run_notes: list[str] = []
+                if restoration_missing_sources:
+                    run_notes.append(
+                        "Harvest-history restoration sources were unavailable; proceeding without restoration geometry."
+                    )
+                if restoration_extent_mismatch_notes:
+                    run_notes.extend(restoration_extent_mismatch_notes)
+                if restoration_empty and restoration_geometries is not None:
+                    run_notes.append(
+                        "Harvest-history restoration geometry loaded but did not intersect the current checkpoint extent."
+                    )
                 if affected_row_count > 0:
                     updated_step["run_status"] = "applied"
                     updated_step["spatial_application_mode"] = (
                         "checkpoint_attribute_exclusion"
                     )
-                    updated_step["run_notes"] = [
+                    run_notes.append(
                         "Applied checkpoint-attribute exclusion directly against LU chunk geometry without requiring fetched source polygons."
-                    ]
+                    )
+                    updated_step["run_notes"] = run_notes
                 else:
                     updated_step["run_status"] = "applied_noop"
-                    updated_step["run_notes"] = [
+                    run_notes.append(
                         "No active LU-clipped fragment rows matched the checkpoint attribute filters."
-                    ]
+                    )
+                    updated_step["run_notes"] = run_notes
             else:
                 source_load_start = perf_counter()
                 (
@@ -13873,11 +13991,30 @@ def _execute_tsr_thlb_recipe_steps(
                 mode = (
                     str(step.get("checkpoint_attribute_mode", "any")).strip() or "any"
                 )
+                source_load_start = perf_counter()
+                (
+                    restoration_geometries,
+                    restoration_missing_sources,
+                    restoration_empty,
+                    restoration_extent_mismatch_notes,
+                ) = _load_compiled_restoration_geometries(
+                    instance_root=instance_root,
+                    compiled_item=step,
+                    source_entry_map=source_entry_map,
+                    bbox=(
+                        float(checkpoint.total_bounds[0]),
+                        float(checkpoint.total_bounds[1]),
+                        float(checkpoint.total_bounds[2]),
+                        float(checkpoint.total_bounds[3]),
+                    ),
+                )
+                step_profile["source_load_seconds"] = perf_counter() - source_load_start
                 overlay_start = perf_counter()
                 checkpoint, removed_area_ha = _apply_checkpoint_attribute_filters(
                     checkpoint,
                     filters=filters,
                     mode=mode,
+                    restoration_geometries=restoration_geometries,
                     preserve_geometry=False,
                 )
                 step_profile["overlay_seconds"] = perf_counter() - overlay_start
@@ -13885,11 +14022,23 @@ def _execute_tsr_thlb_recipe_steps(
                 updated_step["run_status"] = (
                     "applied" if removed_area_ha > 0 else "applied_noop"
                 )
-                updated_step["run_notes"] = [
+                run_notes: list[str] = []
+                if restoration_missing_sources:
+                    run_notes.append(
+                        "Harvest-history restoration sources were unavailable; proceeding without restoration geometry."
+                    )
+                if restoration_extent_mismatch_notes:
+                    run_notes.extend(restoration_extent_mismatch_notes)
+                if restoration_empty and restoration_geometries is not None:
+                    run_notes.append(
+                        "Harvest-history restoration geometry loaded but did not intersect the current checkpoint extent."
+                    )
+                run_notes.append(
                     "Applied checkpoint-attribute exclusion directly against checkpoint geometry without requiring fetched source polygons."
                     if removed_area_ha > 0
                     else "No active checkpoint rows matched the checkpoint attribute filters."
-                ]
+                )
+                updated_step["run_notes"] = run_notes
             else:
                 source_load_start = perf_counter()
                 exclusion_geometries, missing_sources, extent_mismatch_notes = (

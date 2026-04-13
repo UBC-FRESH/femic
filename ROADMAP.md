@@ -16112,3 +16112,52 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - So the first step-3 hypothesis to test is not a source-layer bug; it is that
     compiled_01 is still an over-broad FMLB proxy because it excludes the broad
     checkpoint attributes without restoring the TSR-cited exceptions.
+- 2026-04-12: Step 3 is now explicitly reset onto documented FMLB semantics.
+  - Governing interpretation:
+    - use the clean raw 2024 VRI + active TSA boundary GLB only;
+    - treat step 3 as an FMLB-style exclude-with-exceptions rule, not a generic
+      "non-forest" guess; and
+    - keep harvested / previously forested stands in AFLB when a defensible
+      harvest-history overlay says they should stay in play.
+  - Bounded implementation order:
+    - first add harvest-history restoration to step 3 compiled_01 using the
+      already-local `WHSE_FOREST_VEGETATION.VEG_CONSOLIDATED_CUT_BLOCKS_SP`;
+    - rerun only step 3 from the locked clean-GLB / step-2 state and read the
+      step-5 AFLB milestone again; then
+    - consider fire / MPB follow-on only if the harvest-history correction
+      still leaves a material step-3 gap.
+  - Explicit deferrals for this bounded unit:
+    - do not treat `WHSE_LAND_AND_NATURAL_RESOURCE.PROT_CURRENT_FIRE` as a full
+      substitute for the TSR's "since 2017" fire exception;
+    - do not hand-wave MPB and fire together with the harvest-history exception;
+      and
+    - do not touch step 4+ or rerun the full strict lane in this slice.
+- 2026-04-12: Bounded step-3 harvest-history restoration result.
+  - Code change:
+    - `select_attribute` exclusions can now load optional
+      `restoration_source_entry_ids` and restore intersecting harvested geometry
+      before finalizing the exclusion.
+    - TSA29 step 3 compiled_01 now uses
+      `whse_forest_vegetation_veg_consolidated_cut_blocks_sp` as its first-pass
+      harvest-history restoration source.
+  - Targeted regression passed for the reconstructed diagnostic slice:
+    - a harvested candidate polygon is restored when it intersects the cutblock
+      overlay, while an otherwise identical non-harvested candidate is still
+      removed.
+  - Bounded acceptance rerun from the locked step-2 checkpoint:
+    - ran only step 3 compiled_01 and compiled_02;
+    - baseline signal: `resumed_reconstructed_checkpoint`;
+    - step-3 strict removed area: `1,581,401.156 ha`;
+    - post-step-3 remaining area: `3,161,015.924 ha`;
+    - projected step-5 AFLB area after the settled step-4 fallback:
+      `3,110,581.924 ha`;
+    - step-5 TSR AFLB target: `3,098,168.000 ha`;
+    - projected step-5 delta: `+12,413.924 ha`.
+  - Interpretation:
+    - harvest-history restoration was the dominant missing seam for getting the
+      early `GLB -> AFLB` cumulative path close to the TSR milestone;
+    - the early-ladder cumulative result is now close enough to continue
+      debugging within step 3 rather than restarting the baseline again; but
+    - step 3 marginal attribution is still too high and `compiled_02` remains
+      blocked on mixed-geometry FWA inputs, so step 3 is not fully locked down
+      yet.
