@@ -16394,3 +16394,16 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - That yields the current chained post-step-9 state:
     - remaining area `2,423,068.823 ha`; and
     - cumulative delta `+7,523.823 ha` versus the TSR step-9 cumulative target.
+- 2026-04-13: Locked step 11 and refreshed the TSA29 dashboard through step 11.
+  - Step 11 bounded chained replay result:
+    - strict net deduction `78,593.956 ha`;
+    - TSR benchmark `62,460.000 ha`; and
+    - stepwise delta `+16,133.956 ha`.
+  - Locked chained cumulative after step 11:
+    - remaining area `2,344,474.867 ha`;
+    - TSR cumulative target `2,352,758.000 ha`; and
+    - cumulative delta `-8,283.133 ha`.
+  - The governing TSA29 dashboard surfaces now treat steps `2` through `11` as
+    refreshed, with cumulative answers sourced from
+    `config/tsr/thlb_locked_chain_ledger.json` instead of branch-local
+    step-run artifacts.
