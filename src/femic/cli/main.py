@@ -631,6 +631,14 @@ TSR_THLB_NO_AFLB_GPKG_OPTION = typer.Option(
         "a reconstructed run reaches the AFLB milestone."
     ),
 )
+TSR_THLB_NO_LHLB_GPKG_OPTION = typer.Option(
+    False,
+    "--no-lhlb-gpkg",
+    help=(
+        "Do not write the default `data/tsr/lhlb_checkpoint.gpkg` companion when "
+        "a reconstructed run reaches the LHLB milestone."
+    ),
+)
 TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_OPTION = typer.Option(
     TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_DEFAULT,
     "--parallel-mode",
@@ -2685,6 +2693,10 @@ def _print_tsr_thlb_netdown_recipe_run_summary(
         console.print(f"aflb_checkpoint_path: {result.aflb_checkpoint_path}")
     if result.aflb_gpkg_path is not None:
         console.print(f"aflb_gpkg_path: {result.aflb_gpkg_path}")
+    if result.lhlb_checkpoint_path is not None:
+        console.print(f"lhlb_checkpoint_path: {result.lhlb_checkpoint_path}")
+    if result.lhlb_gpkg_path is not None:
+        console.print(f"lhlb_gpkg_path: {result.lhlb_gpkg_path}")
     console.print(f"execution_mode: {result.execution_mode}")
     console.print(f"baseline_signal: {result.baseline_signal}")
     if result.selected_map_ids:
@@ -2711,6 +2723,8 @@ def _print_tsr_thlb_netdown_recipe_run_summary(
         )
     if result.aflb_checkpoint_area_ha is not None:
         console.print(f"aflb_checkpoint_area_ha: {result.aflb_checkpoint_area_ha:.3f}")
+    if result.lhlb_checkpoint_area_ha is not None:
+        console.print(f"lhlb_checkpoint_area_ha: {result.lhlb_checkpoint_area_ha:.3f}")
     for outcome, count in result.outcome_counts.items():
         console.print(f"outcome_{outcome}: {count}")
 
@@ -4036,6 +4050,7 @@ def tsr_thlb_netdown_run(
     auto_map_id_smoke_subset: bool = TSR_THLB_AUTO_MAP_ID_SMOKE_OPTION,
     allow_stand_binary_fallback: bool = (TSR_THLB_ALLOW_STAND_BINARY_FALLBACK_OPTION),
     no_aflb_gpkg: bool = TSR_THLB_NO_AFLB_GPKG_OPTION,
+    no_lhlb_gpkg: bool = TSR_THLB_NO_LHLB_GPKG_OPTION,
     parallel_mode: str = TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_DEFAULT,
     max_workers: int | None = TSR_THLB_RECONSTRUCTED_MAX_WORKERS_OPTION,
     lu_bundle_count: int | None = TSR_THLB_RECONSTRUCTED_LU_BUNDLE_COUNT_OPTION,
@@ -4090,6 +4105,7 @@ def tsr_thlb_netdown_run(
             auto_map_id_smoke_subset=auto_map_id_smoke_subset,
             allow_stand_binary_fallback=allow_stand_binary_fallback,
             write_aflb_gpkg=not no_aflb_gpkg,
+            write_lhlb_gpkg=not no_lhlb_gpkg,
             parallel_mode=parallel_mode,
             max_workers=max_workers,
             lu_bundle_count=lu_bundle_count,

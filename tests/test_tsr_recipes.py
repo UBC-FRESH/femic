@@ -7008,6 +7008,14 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     ).resolve()
     assert result.aflb_lu_cache_warmed is True
     assert result.aflb_checkpoint_area_ha == pytest.approx(0.02)
+    assert result.lhlb_checkpoint_path == (
+        instance_root / "data" / "tsr" / "lhlb_checkpoint.feather"
+    ).resolve()
+    assert result.lhlb_gpkg_path == (
+        instance_root / "data" / "tsr" / "lhlb_checkpoint.gpkg"
+    ).resolve()
+    assert result.lhlb_lu_cache_warmed is True
+    assert result.lhlb_checkpoint_area_ha == pytest.approx(0.015)
     assert result.input_area_ha == pytest.approx(0.02)
     assert result.baseline_managed_area_ha == pytest.approx(0.02)
     assert result.final_managed_area_ha == pytest.approx(0.015)
@@ -7035,6 +7043,9 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     assert audit_payload["aflb_checkpoint_written"] is True
     assert audit_payload["aflb_lu_cache_warmed"] is True
     assert audit_payload["aflb_checkpoint_area_ha"] == pytest.approx(0.02)
+    assert audit_payload["lhlb_checkpoint_written"] is True
+    assert audit_payload["lhlb_lu_cache_warmed"] is True
+    assert audit_payload["lhlb_checkpoint_area_ha"] == pytest.approx(0.015)
     assert audit_payload["input_area_ha"] == pytest.approx(0.02)
     assert audit_payload["legacy_reference_managed_area_ha"] == pytest.approx(0.01)
     assert audit_payload["outcome_counts"]["applied"] == 1
@@ -7042,6 +7053,8 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     assert "Execution mode: `reconstructed`" in reconstructed_status
     assert "AFLB checkpoint Feather: `data/tsr/aflb_checkpoint.feather`" in reconstructed_status
     assert "AFLB checkpoint GeoPackage: `data/tsr/aflb_checkpoint.gpkg`" in reconstructed_status
+    assert "LHLB checkpoint Feather: `data/tsr/lhlb_checkpoint.feather`" in reconstructed_status
+    assert "LHLB checkpoint GeoPackage: `data/tsr/lhlb_checkpoint.gpkg`" in reconstructed_status
     assert "Legacy raster THLB reference: `0.010 ha`" in reconstructed_status
     assert "### GLB -> AFLB" in reconstructed_status
     assert "### LHLB -> THLB" in reconstructed_status
@@ -7060,6 +7073,8 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     )
     assert recipe.recipe_contract["aflb_checkpoint_path"] == "data/tsr/aflb_checkpoint.feather"
     assert recipe.recipe_contract["aflb_gpkg_path"] == "data/tsr/aflb_checkpoint.gpkg"
+    assert recipe.recipe_contract["lhlb_checkpoint_path"] == "data/tsr/lhlb_checkpoint.feather"
+    assert recipe.recipe_contract["lhlb_gpkg_path"] == "data/tsr/lhlb_checkpoint.gpkg"
 
     cached_partition = tsr_recipes._load_cached_landscape_unit_partition_records(
         checkpoint_path=result.aflb_checkpoint_path,
@@ -7151,6 +7166,16 @@ def test_run_tsr_thlb_netdown_recipe_can_restart_from_aflb_checkpoint(
             "benchmark_cumulative_area_ha": 1.0,
             "row_order": 6,
         },
+        {
+            "parent_step_id": "thlb_parent_013_later",
+            "parent_label": "Later THLB noop",
+            "parent_kind": "transformation",
+            "land_base_stage": "lhlb_to_thlb",
+            "stage_label": "LHLB -> THLB",
+            "benchmark_marginal_area_ha": 0.0,
+            "benchmark_cumulative_area_ha": 1.0,
+            "row_order": 13,
+        },
     ]
     thlb_recipe_payload["steps"] = [
         {
@@ -7179,7 +7204,8 @@ def test_run_tsr_thlb_netdown_recipe_can_restart_from_aflb_checkpoint(
             "order_index": 3,
             "label": "Later stage noop",
             "normalized_action": "no_deduction",
-            "land_base_stage": "aflb_to_lhlb",
+            "land_base_stage": "lhlb_to_thlb",
+            "parent_step_id": "thlb_parent_013_later",
             "step_status": "ready",
             "page_number": 12,
         },
@@ -7199,6 +7225,9 @@ def test_run_tsr_thlb_netdown_recipe_can_restart_from_aflb_checkpoint(
     assert first.aflb_checkpoint_path is not None
     assert first.aflb_lu_cache_warmed is True
     assert first.aflb_checkpoint_area_ha == pytest.approx(1.0)
+    assert first.lhlb_checkpoint_path is not None
+    assert first.lhlb_lu_cache_warmed is True
+    assert first.lhlb_checkpoint_area_ha == pytest.approx(1.0)
 
     second = tsr_recipes.run_tsr_thlb_netdown_recipe(
         recipe_path=init_result.thlb_netdown_recipe_path,
@@ -7210,6 +7239,18 @@ def test_run_tsr_thlb_netdown_recipe_can_restart_from_aflb_checkpoint(
     assert second.baseline_signal == "aflb_checkpoint_restart"
     assert second.baseline_managed_area_ha == pytest.approx(1.0)
     assert second.final_managed_area_ha == pytest.approx(1.0)
+
+    third = tsr_recipes.run_tsr_thlb_netdown_recipe(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        checkpoint_path=first.lhlb_checkpoint_path,
+        execution_mode=tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+        write_aflb_gpkg=False,
+        write_lhlb_gpkg=False,
+    )
+
+    assert third.baseline_signal == "lhlb_checkpoint_restart"
+    assert third.baseline_managed_area_ha == pytest.approx(1.0)
+    assert third.final_managed_area_ha == pytest.approx(1.0)
 
 
 def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_applies_explicit_aspatial_fallback(

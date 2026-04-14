@@ -14204,3 +14204,18 @@
     - TSR cumulative target `2,284,357.000 ha`; and
     - cumulative delta `-8,283.133 ha`.
   - The governing TSA29 dashboard surfaces now treat steps `2` through `12` as refreshed, with cumulative answers sourced from `config/tsr/thlb_locked_chain_ledger.json`.
+- Implemented official LHLB restart artifacts and CLI support.
+  - Reconstructed THLB runs that reach the post-step-12 boundary now emit:
+    - `data/tsr/lhlb_checkpoint.feather` as the canonical restart artifact; and
+    - `data/tsr/lhlb_checkpoint.gpkg` by default as the GIS-facing companion.
+  - Added `--no-lhlb-gpkg` to `femic tsr thlb-netdown-run`.
+  - Restart recognition now supports:
+    - `--checkpoint-path data/tsr/aflb_checkpoint.feather`; and
+    - `--checkpoint-path data/tsr/lhlb_checkpoint.feather`.
+  - The reconstructed diagnostic slice unpacking and restart boundary logic were fixed so LHLB is captured when the ladder crosses into `LHLB -> THLB`, even if there are no explicit executable `AFLB -> LHLB` deductions in a minimal recipe fixture.
+  - Validation passed:
+    - `python -m ruff check src/femic/tsr_catalog/recipes.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_cli_main.py`
+    - `python -m pytest tests/test_tsr_recipes.py -k "aflb_checkpoint or lhlb_checkpoint or restart_from_aflb_checkpoint" -q`
+    - `python -m pytest tests/test_cli_main.py -k "thlb_netdown_run" -q`
+    - `python -m sphinx -b html docs _build/html -W`
+  - Targeted `python -m mypy src/femic/tsr_catalog/recipes.py src/femic/cli/main.py` still reports the pre-existing local missing stub for `shapely.geometry`.

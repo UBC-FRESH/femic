@@ -62,6 +62,13 @@ Checkpoint Semantics
   ``data/tsr/aflb_checkpoint.feather`` is the canonical restart artifact, and
   ``data/tsr/aflb_checkpoint.gpkg`` is written by default as the GIS-facing
   companion unless the caller explicitly disables it.
+- Once the strict THLB ladder reaches the post-step-12 LHLB milestone, FEMIC
+  also writes ``data/tsr/lhlb_checkpoint.feather`` as the canonical restart
+  artifact and ``data/tsr/lhlb_checkpoint.gpkg`` by default as the GIS-facing
+  companion unless the caller explicitly disables it.
+- Users who want to experiment only with ``LHLB -> THLB`` logic should prefer
+  restarting from ``data/tsr/lhlb_checkpoint.feather`` instead of rebuilding
+  the settled upstream ladder.
 - Resume behavior must never silently reuse stale artifacts when debug-mode
   constraints (for example ``--debug-rows``) change the effective data population.
 

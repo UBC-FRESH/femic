@@ -139,6 +139,13 @@ Important boundary:
 - later-stage experimentation should prefer restarting from
   ``--checkpoint-path data/tsr/aflb_checkpoint.feather`` instead of rebuilding
   GLB -> AFLB every time;
+- when the reconstructed run reaches the LHLB milestone boundary, FEMIC now
+  emits ``data/tsr/lhlb_checkpoint.feather`` as the canonical downstream
+  restart artifact and ``data/tsr/lhlb_checkpoint.gpkg`` by default as the
+  GIS-facing companion;
+- THLB-only experimentation should prefer restarting from
+  ``--checkpoint-path data/tsr/lhlb_checkpoint.feather`` instead of rebuilding
+  AFLB -> LHLB every time;
 - blocked exact-overlay seams still remain explicit instead of being silently
   converted into fallback; and
 - the old coarse stand-binary approximation survives only as an explicit

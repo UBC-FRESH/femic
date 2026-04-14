@@ -873,6 +873,9 @@ still being refined.
 - ``--no-aflb-gpkg`` (optional; suppress the default
   ``data/tsr/aflb_checkpoint.gpkg`` companion export when a reconstructed run
   reaches the AFLB milestone)
+- ``--no-lhlb-gpkg`` (optional; suppress the default
+  ``data/tsr/lhlb_checkpoint.gpkg`` companion export when a reconstructed run
+  reaches the LHLB milestone)
 
 ``tsr thlb-netdown-run`` executes a bounded subset of the reviewed THLB recipe
 into a stand-level checkpoint that carries ``thlb_fact`` for downstream export
@@ -894,6 +897,10 @@ Current v1 execution contract:
 - reconstructed runs that genuinely reach the AFLB milestone now also write:
   ``data/tsr/aflb_checkpoint.feather`` as the canonical downstream restart
   artifact, and ``data/tsr/aflb_checkpoint.gpkg`` by default as the GIS-facing
+  companion export
+- reconstructed runs that genuinely reach the LHLB milestone now also write:
+  ``data/tsr/lhlb_checkpoint.feather`` as the canonical downstream restart
+  artifact, and ``data/tsr/lhlb_checkpoint.gpkg`` by default as the GIS-facing
   companion export
 
 This command is intentionally partial-success friendly: it should move the
@@ -937,6 +944,9 @@ Important current boundary:
 - ``--checkpoint-path data/tsr/aflb_checkpoint.feather`` is now the supported
   downstream restart seam when analysts want to explore ``AFLB -> LHLB ->
   THLB`` logic without rebuilding the settled ``GLB -> AFLB`` ladder;
+- ``--checkpoint-path data/tsr/lhlb_checkpoint.feather`` is now the supported
+  downstream restart seam when analysts want to explore only
+  ``LHLB -> THLB`` logic without rebuilding the settled upstream ladder;
 - this is an explicit recipe-driven aspatial fallback, not a silent substitute
   for blocked spatial logic;
 - blocked exact-overlay rows still remain explicit instead of being silently

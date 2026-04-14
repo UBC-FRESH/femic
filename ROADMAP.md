@@ -16420,3 +16420,25 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - TSR cumulative target `2,284,357.000 ha`; and
     - cumulative delta `-8,283.133 ha`.
   - The governing TSA29 dashboard surfaces now treat steps `2` through `12` as refreshed, with cumulative answers sourced from `config/tsr/thlb_locked_chain_ledger.json`.
+- Active side quest `#158`: emit an official LHLB checkpoint artifact after step 12.
+  - Goal: mirror the AFLB restart contract so users can warm-start `LHLB -> THLB` experimentation from a canonical `data/tsr/lhlb_checkpoint.feather` artifact with a default `data/tsr/lhlb_checkpoint.gpkg` companion.
+  - Required implementation surfaces:
+    - reconstructed runner capture/write path at the end of the `AFLB -> LHLB` boundary;
+    - CLI switch to disable the default LHLB GPKG companion;
+    - status/audit/report surfacing of the new checkpoint paths and area; and
+    - restart recognition for `--checkpoint-path data/tsr/lhlb_checkpoint.feather`.
+- 2026-04-13: Closed side quest `#158` by making LHLB a first-class strict restart artifact.
+  - Reconstructed THLB runs that genuinely reach the post-step-12 boundary now emit:
+    - `data/tsr/lhlb_checkpoint.feather` as the canonical restart artifact; and
+    - `data/tsr/lhlb_checkpoint.gpkg` by default as the GIS-facing companion.
+  - Added `--no-lhlb-gpkg` to `femic tsr thlb-netdown-run`.
+  - `--checkpoint-path data/tsr/lhlb_checkpoint.feather` is now the documented supported seam for downstream `LHLB -> THLB` experimentation.
+  - Restart recognition now distinguishes:
+    - `aflb_checkpoint_restart`; and
+    - `lhlb_checkpoint_restart`.
+  - Targeted validation passed:
+    - `ruff check src/femic/tsr_catalog/recipes.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_cli_main.py`
+    - `pytest tests/test_tsr_recipes.py -k "aflb_checkpoint or lhlb_checkpoint or restart_from_aflb_checkpoint" -q`
+    - `pytest tests/test_cli_main.py -k "thlb_netdown_run" -q`
+    - `sphinx -b html docs _build/html -W`
+  - Targeted `mypy` remains blocked only by the pre-existing local missing-stub gap for `shapely.geometry`.
