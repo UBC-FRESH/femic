@@ -14221,3 +14221,18 @@
   - Targeted `python -m mypy src/femic/tsr_catalog/recipes.py src/femic/cli/main.py` still reports the pre-existing local missing stub for `shapely.geometry`.
 - Added `types-shapely` to the dev dependency set so targeted `mypy` runs can type-check `shapely.geometry` imports instead of failing on a missing-stub environment gap.
 - Added an explicit `mypy` override for `shapely.*` so FEMIC type checks no longer depend on local stub-resolution quirks in the active environment.
+- Activated child issue `#159` to firewall the final strict `LHLB -> THLB` stretch behind an official curve-ready restart seam.
+  - The new plan is to start from `data/tsr/lhlb_checkpoint.feather`, deterministically build `data/tsr/lhlb_curve_ready_checkpoint.feather` plus a default GPKG companion, and make that enriched checkpoint the default strict restart baseline for steps `13+`.
+  - The first bounded proof for this child issue is to build the enriched checkpoint and then run **step 13 only** from it before touching later THLB steps.
+- Implemented the core `#159` late-stage restart seam and completed the first repaired step-13 bounded proof.
+  - Backfilled the missing official `data/tsr/lhlb_checkpoint.feather` artifact from the locked post-step-12 output so the final stage now has a sanctioned raw restart baseline.
+  - Reconstructed late-stage restarts now auto-promote raw `lhlb_checkpoint.feather` into:
+    - `data/tsr/lhlb_curve_ready_checkpoint.feather`; and
+    - `data/tsr/lhlb_curve_ready_checkpoint.gpkg` by default.
+  - Added CLI/report plumbing for the curve-ready checkpoint and its optional `--no-lhlb-curve-ready-gpkg` companion suppression.
+  - The first step-13-only proof from the curve-ready restart seam now reports:
+    - baseline managed area `2,309,812.453 ha`;
+    - exact terrain-stability overlay net deduction `3.533 ha`;
+    - steep-slope attribute exclusion net deduction `48,215.147 ha`; and
+    - total strict step-13 net deduction `48,218.679 ha`.
+  - The initial late-stage proof exposed a real bug where checkpoint-attribute exclusions reset surviving fractional state and inflated managed area; that bug is now fixed and the repaired run is the current step-13 source of truth.

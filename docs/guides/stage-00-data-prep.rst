@@ -63,12 +63,16 @@ Checkpoint Semantics
   ``data/tsr/aflb_checkpoint.gpkg`` is written by default as the GIS-facing
   companion unless the caller explicitly disables it.
 - Once the strict THLB ladder reaches the post-step-12 LHLB milestone, FEMIC
-  also writes ``data/tsr/lhlb_checkpoint.feather`` as the canonical restart
-  artifact and ``data/tsr/lhlb_checkpoint.gpkg`` by default as the GIS-facing
-  companion unless the caller explicitly disables it.
+  also writes ``data/tsr/lhlb_checkpoint.feather`` as the canonical raw
+  restart artifact and ``data/tsr/lhlb_checkpoint.gpkg`` by default as the
+  GIS-facing companion unless the caller explicitly disables it.
+- For strict ``LHLB -> THLB`` work, FEMIC deterministically promotes that raw
+  LHLB restart into ``data/tsr/lhlb_curve_ready_checkpoint.feather`` plus a
+  default ``data/tsr/lhlb_curve_ready_checkpoint.gpkg`` companion. That
+  enriched checkpoint is the supported restart seam for steps ``13+``.
 - Users who want to experiment only with ``LHLB -> THLB`` logic should prefer
-  restarting from ``data/tsr/lhlb_checkpoint.feather`` instead of rebuilding
-  the settled upstream ladder.
+  restarting from ``data/tsr/lhlb_curve_ready_checkpoint.feather`` instead of
+  rebuilding the settled upstream ladder.
 - Resume behavior must never silently reuse stale artifacts when debug-mode
   constraints (for example ``--debug-rows``) change the effective data population.
 

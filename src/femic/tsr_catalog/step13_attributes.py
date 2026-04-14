@@ -38,7 +38,7 @@ from .recipes import (
 )
 
 _STEP13_ATTRIBUTE_OUTPUT_RELATIVE_PATH = Path(
-    "data/tsr/ria_vri_vclr1p_checkpoint7.step13_attrs.feather"
+    "data/tsr/lhlb_curve_ready_checkpoint.feather"
 )
 _STEP13_ATTRIBUTE_AUDIT_BASENAME = "thlb_step13_compile_attributes"
 _STEP13_DEM_QUERY = "digital elevation model for british columbia cded 1 250 000"
@@ -527,8 +527,7 @@ def _load_highway_97_geometry(*, instance_root: Path) -> tuple[Path, LineString]
             "Highway profile artifact did not contain Highway 97 features."
         )
     unioned = unary_union(highway.geometry.tolist())
-    merged = linemerge(unioned) if not isinstance(unioned, LineString) else unioned
-    line = _coerce_primary_linestring(merged)
+    line = _coerce_primary_linestring(unioned)
     if line is None or line.is_empty:
         raise TsrRecipeError("Unable to derive a working Highway 97 line geometry.")
     return artifact_path, line
@@ -538,19 +537,22 @@ def _coerce_primary_linestring(geometry: object) -> LineString | None:
     if isinstance(geometry, LineString):
         return geometry
     if isinstance(geometry, MultiLineString):
-        parts = [part for part in geometry.geoms if isinstance(part, LineString)]
-        if not parts:
+        line_parts = [part for part in geometry.geoms if isinstance(part, LineString)]
+        if not line_parts:
             return None
-        return max(parts, key=lambda part: part.length)
+        return max(line_parts, key=lambda part: part.length)
     if isinstance(geometry, GeometryCollection):
-        parts = [
-            item
-            for item in geometry.geoms
-            if isinstance(item, (LineString, MultiLineString))
-        ]
+        parts: list[LineString] = []
+        for item in geometry.geoms:
+            if isinstance(item, LineString):
+                parts.append(item)
+            elif isinstance(item, MultiLineString):
+                parts.extend(
+                    part for part in item.geoms if isinstance(part, LineString)
+                )
         if not parts:
             return None
-        merged = linemerge(unary_union(parts))
+        merged = linemerge(parts)
         return _coerce_primary_linestring(merged)
     return None
 

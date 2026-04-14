@@ -876,6 +876,10 @@ still being refined.
 - ``--no-lhlb-gpkg`` (optional; suppress the default
   ``data/tsr/lhlb_checkpoint.gpkg`` companion export when a reconstructed run
   reaches the LHLB milestone)
+- ``--no-lhlb-curve-ready-gpkg`` (optional; suppress the default
+  ``data/tsr/lhlb_curve_ready_checkpoint.gpkg`` companion export when a
+  reconstructed run promotes the official LHLB checkpoint into the late-stage
+  curve-ready restart surface)
 
 ``tsr thlb-netdown-run`` executes a bounded subset of the reviewed THLB recipe
 into a stand-level checkpoint that carries ``thlb_fact`` for downstream export
@@ -899,9 +903,15 @@ Current v1 execution contract:
   artifact, and ``data/tsr/aflb_checkpoint.gpkg`` by default as the GIS-facing
   companion export
 - reconstructed runs that genuinely reach the LHLB milestone now also write:
-  ``data/tsr/lhlb_checkpoint.feather`` as the canonical downstream restart
-  artifact, and ``data/tsr/lhlb_checkpoint.gpkg`` by default as the GIS-facing
-  companion export
+  ``data/tsr/lhlb_checkpoint.feather`` as the canonical raw post-step-12
+  restart artifact, and ``data/tsr/lhlb_checkpoint.gpkg`` by default as the
+  GIS-facing companion export
+- reconstructed runs that need strict ``LHLB -> THLB`` execution now also
+  promote that raw LHLB restart into
+  ``data/tsr/lhlb_curve_ready_checkpoint.feather`` as the canonical late-stage
+  restart artifact for steps ``13+``, with
+  ``data/tsr/lhlb_curve_ready_checkpoint.gpkg`` written by default as the
+  GIS-facing companion export unless the caller disables it explicitly
 
 This command is intentionally partial-success friendly: it should move the
 recipe forward where FEMIC has enough trustworthy information while keeping the
@@ -945,8 +955,11 @@ Important current boundary:
   downstream restart seam when analysts want to explore ``AFLB -> LHLB ->
   THLB`` logic without rebuilding the settled ``GLB -> AFLB`` ladder;
 - ``--checkpoint-path data/tsr/lhlb_checkpoint.feather`` is now the supported
-  downstream restart seam when analysts want to explore only
-  ``LHLB -> THLB`` logic without rebuilding the settled upstream ladder;
+  raw post-step-12 restart seam when analysts want to inspect or rebuild the
+  stage boundary itself;
+- ``--checkpoint-path data/tsr/lhlb_curve_ready_checkpoint.feather`` is now the
+  supported downstream restart seam when analysts want to explore only
+  strict ``LHLB -> THLB`` logic without rebuilding the settled upstream ladder;
 - this is an explicit recipe-driven aspatial fallback, not a silent substitute
   for blocked spatial logic;
 - blocked exact-overlay rows still remain explicit instead of being silently

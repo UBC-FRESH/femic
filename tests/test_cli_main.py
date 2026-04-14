@@ -6288,6 +6288,9 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
             lhlb_checkpoint_path=None,
             lhlb_gpkg_path=None,
             lhlb_lu_cache_warmed=False,
+            lhlb_curve_ready_checkpoint_path=None,
+            lhlb_curve_ready_gpkg_path=None,
+            lhlb_curve_ready_lu_cache_warmed=False,
             execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_HYBRID,
             baseline_signal="thlb_raw",
             selected_map_ids=(),
@@ -6301,6 +6304,7 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
             tsr_reported_thlb_area_ha=1660053.0,
             aflb_checkpoint_area_ha=None,
             lhlb_checkpoint_area_ha=None,
+            lhlb_curve_ready_checkpoint_area_ha=None,
         )
 
     monkeypatch.setattr(cli_main, "run_tsr_thlb_netdown_recipe", _fake_run)
@@ -6316,6 +6320,7 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
         auto_map_id_smoke_subset=False,
         no_aflb_gpkg=False,
         no_lhlb_gpkg=False,
+        no_lhlb_curve_ready_gpkg=False,
         parallel_mode="auto",
         max_workers=None,
         lu_bundle_count=None,
@@ -6396,6 +6401,15 @@ def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
             lhlb_checkpoint_path=instance_root / "data" / "tsr" / "lhlb_checkpoint.feather",
             lhlb_gpkg_path=instance_root / "data" / "tsr" / "lhlb_checkpoint.gpkg",
             lhlb_lu_cache_warmed=True,
+            lhlb_curve_ready_checkpoint_path=instance_root
+            / "data"
+            / "tsr"
+            / "lhlb_curve_ready_checkpoint.feather",
+            lhlb_curve_ready_gpkg_path=instance_root
+            / "data"
+            / "tsr"
+            / "lhlb_curve_ready_checkpoint.gpkg",
+            lhlb_curve_ready_lu_cache_warmed=True,
             execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
             baseline_signal="checkpoint1_raw_glb_initialization",
             selected_map_ids=("093J034", "093J044"),
@@ -6409,6 +6423,7 @@ def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
             tsr_reported_thlb_area_ha=66053.0,
             aflb_checkpoint_area_ha=3098168.0,
             lhlb_checkpoint_area_ha=2284357.0,
+            lhlb_curve_ready_checkpoint_area_ha=2284357.0,
         )
 
     monkeypatch.setattr(cli_main, "run_tsr_thlb_netdown_recipe", _fake_run)
@@ -6425,6 +6440,7 @@ def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
         allow_stand_binary_fallback=True,
         no_aflb_gpkg=False,
         no_lhlb_gpkg=False,
+        no_lhlb_curve_ready_gpkg=False,
         parallel_mode="auto",
         max_workers=None,
         lu_bundle_count=None,
@@ -6435,6 +6451,7 @@ def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
     assert captured_kwargs["allow_stand_binary_fallback"] is True
     assert captured_kwargs["write_aflb_gpkg"] is True
     assert captured_kwargs["write_lhlb_gpkg"] is True
+    assert captured_kwargs["write_lhlb_curve_ready_gpkg"] is True
     assert captured_kwargs["parallel_mode"] == "auto"
     assert captured_kwargs["max_workers"] is None
     assert captured_kwargs["lu_bundle_count"] is None
@@ -6469,6 +6486,12 @@ def test_tsr_thlb_netdown_run_can_disable_aflb_gpkg(
             lhlb_checkpoint_path=instance_root / "data" / "tsr" / "lhlb_checkpoint.feather",
             lhlb_gpkg_path=None,
             lhlb_lu_cache_warmed=True,
+            lhlb_curve_ready_checkpoint_path=instance_root
+            / "data"
+            / "tsr"
+            / "lhlb_curve_ready_checkpoint.feather",
+            lhlb_curve_ready_gpkg_path=None,
+            lhlb_curve_ready_lu_cache_warmed=True,
             execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
             baseline_signal="checkpoint1_raw_glb_initialization",
             selected_map_ids=(),
@@ -6482,6 +6505,7 @@ def test_tsr_thlb_netdown_run_can_disable_aflb_gpkg(
             tsr_reported_thlb_area_ha=None,
             aflb_checkpoint_area_ha=1.0,
             lhlb_checkpoint_area_ha=0.75,
+            lhlb_curve_ready_checkpoint_area_ha=0.75,
         )
 
     monkeypatch.setattr(cli_main, "run_tsr_thlb_netdown_recipe", _fake_run)
@@ -6498,6 +6522,7 @@ def test_tsr_thlb_netdown_run_can_disable_aflb_gpkg(
         allow_stand_binary_fallback=False,
         no_aflb_gpkg=True,
         no_lhlb_gpkg=True,
+        no_lhlb_curve_ready_gpkg=True,
         parallel_mode="serial",
         max_workers=3,
         lu_bundle_count=2,
@@ -6505,6 +6530,7 @@ def test_tsr_thlb_netdown_run_can_disable_aflb_gpkg(
 
     assert captured_kwargs["write_aflb_gpkg"] is False
     assert captured_kwargs["write_lhlb_gpkg"] is False
+    assert captured_kwargs["write_lhlb_curve_ready_gpkg"] is False
     assert captured_kwargs["parallel_mode"] == "serial"
     assert captured_kwargs["max_workers"] == 3
     assert captured_kwargs["lu_bundle_count"] == 2

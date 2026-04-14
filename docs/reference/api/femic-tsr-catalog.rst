@@ -72,6 +72,9 @@ Important instance-local THLB artifacts in this lane include:
 - ``config/tsr/thlb_netdown.recipe.yaml``
 - ``workbench/tsr/thlb_netdown.workbench.ipynb``
 - ``workbench/tsr/thlb_netdown.locked.py``
+- ``data/tsr/lhlb_checkpoint.feather`` as the raw post-step-12 restart seam
+- ``data/tsr/lhlb_curve_ready_checkpoint.feather`` as the default strict
+  restart seam for steps ``13+``
 
 The matching Python entrypoints are:
 

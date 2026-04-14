@@ -639,6 +639,15 @@ TSR_THLB_NO_LHLB_GPKG_OPTION = typer.Option(
         "a reconstructed run reaches the LHLB milestone."
     ),
 )
+TSR_THLB_NO_LHLB_CURVE_READY_GPKG_OPTION = typer.Option(
+    False,
+    "--no-lhlb-curve-ready-gpkg",
+    help=(
+        "Do not write the default `data/tsr/lhlb_curve_ready_checkpoint.gpkg` "
+        "companion when a reconstructed run or LHLB restart materializes the "
+        "official curve-ready checkpoint."
+    ),
+)
 TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_OPTION = typer.Option(
     TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_DEFAULT,
     "--parallel-mode",
@@ -2697,6 +2706,15 @@ def _print_tsr_thlb_netdown_recipe_run_summary(
         console.print(f"lhlb_checkpoint_path: {result.lhlb_checkpoint_path}")
     if result.lhlb_gpkg_path is not None:
         console.print(f"lhlb_gpkg_path: {result.lhlb_gpkg_path}")
+    if result.lhlb_curve_ready_checkpoint_path is not None:
+        console.print(
+            "lhlb_curve_ready_checkpoint_path: "
+            f"{result.lhlb_curve_ready_checkpoint_path}"
+        )
+    if result.lhlb_curve_ready_gpkg_path is not None:
+        console.print(
+            f"lhlb_curve_ready_gpkg_path: {result.lhlb_curve_ready_gpkg_path}"
+        )
     console.print(f"execution_mode: {result.execution_mode}")
     console.print(f"baseline_signal: {result.baseline_signal}")
     if result.selected_map_ids:
@@ -2725,6 +2743,11 @@ def _print_tsr_thlb_netdown_recipe_run_summary(
         console.print(f"aflb_checkpoint_area_ha: {result.aflb_checkpoint_area_ha:.3f}")
     if result.lhlb_checkpoint_area_ha is not None:
         console.print(f"lhlb_checkpoint_area_ha: {result.lhlb_checkpoint_area_ha:.3f}")
+    if result.lhlb_curve_ready_checkpoint_area_ha is not None:
+        console.print(
+            "lhlb_curve_ready_checkpoint_area_ha: "
+            f"{result.lhlb_curve_ready_checkpoint_area_ha:.3f}"
+        )
     for outcome, count in result.outcome_counts.items():
         console.print(f"outcome_{outcome}: {count}")
 
@@ -3888,9 +3911,8 @@ def tsr_thlb_step13_compile_attributes(
         None,
         "--output-path",
         help=(
-            "Optional enriched checkpoint output path. Defaults to "
-            "`data/tsr/ria_vri_vclr1p_checkpoint7.step13_attrs.feather` under the "
-            "instance root."
+            "Optional curve-ready LHLB checkpoint output path. Defaults to "
+            "`data/tsr/lhlb_curve_ready_checkpoint.feather` under the instance root."
         ),
     ),
 ) -> None:
@@ -4051,6 +4073,7 @@ def tsr_thlb_netdown_run(
     allow_stand_binary_fallback: bool = (TSR_THLB_ALLOW_STAND_BINARY_FALLBACK_OPTION),
     no_aflb_gpkg: bool = TSR_THLB_NO_AFLB_GPKG_OPTION,
     no_lhlb_gpkg: bool = TSR_THLB_NO_LHLB_GPKG_OPTION,
+    no_lhlb_curve_ready_gpkg: bool = TSR_THLB_NO_LHLB_CURVE_READY_GPKG_OPTION,
     parallel_mode: str = TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_DEFAULT,
     max_workers: int | None = TSR_THLB_RECONSTRUCTED_MAX_WORKERS_OPTION,
     lu_bundle_count: int | None = TSR_THLB_RECONSTRUCTED_LU_BUNDLE_COUNT_OPTION,
@@ -4106,6 +4129,7 @@ def tsr_thlb_netdown_run(
             allow_stand_binary_fallback=allow_stand_binary_fallback,
             write_aflb_gpkg=not no_aflb_gpkg,
             write_lhlb_gpkg=not no_lhlb_gpkg,
+            write_lhlb_curve_ready_gpkg=not no_lhlb_curve_ready_gpkg,
             parallel_mode=parallel_mode,
             max_workers=max_workers,
             lu_bundle_count=lu_bundle_count,

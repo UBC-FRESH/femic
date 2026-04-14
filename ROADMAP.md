@@ -16442,3 +16442,26 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `pytest tests/test_cli_main.py -k "thlb_netdown_run" -q`
     - `sphinx -b html docs _build/html -W`
   - Targeted `mypy` remains blocked only by the pre-existing local missing-stub gap for `shapely.geometry`.
+- Active child issue `#159`: firewall strict `LHLB -> THLB` reconciliation behind an official curve-ready restart seam.
+  - Start only from `data/tsr/lhlb_checkpoint.feather`.
+  - Deterministically promote that raw LHLB restart into:
+    - `data/tsr/lhlb_curve_ready_checkpoint.feather`; and
+    - `data/tsr/lhlb_curve_ready_checkpoint.gpkg` by default.
+  - Reuse the existing step-13 attribute compiler rather than inventing a second enrichment pipeline.
+  - Make the enriched checkpoint the default strict restart baseline for steps `13+`.
+  - The first bounded acceptance unit is:
+    - build the enriched checkpoint from `lhlb_checkpoint.feather`; then
+    - run **step 13 only** from that enriched checkpoint; then
+    - stop and update both the locked chain ledger and the dashboard if step 13 is locked.
+- 2026-04-14: Implemented the core `#159` late-stage restart seam.
+  - `data/tsr/lhlb_checkpoint.feather` is now the canonical raw post-step-12 restart artifact.
+  - FEMIC now deterministically promotes that raw checkpoint into:
+    - `data/tsr/lhlb_curve_ready_checkpoint.feather`; and
+    - `data/tsr/lhlb_curve_ready_checkpoint.gpkg` by default.
+  - Reconstructed restarts from `lhlb_checkpoint.feather` now auto-promote to the curve-ready checkpoint before running steps `13+`.
+  - The official bounded step-13 proof from the curve-ready restart seam now reports:
+    - baseline managed area `2,309,812.453 ha`;
+    - step-13 exact terrain-stability overlay net deduction `3.533 ha`;
+    - step-13 steep-slope attribute exclusion net deduction `48,215.147 ha`; and
+    - total strict step-13 net deduction `48,218.679 ha`.
+  - The first attempt exposed a real bug where late-stage checkpoint-attribute exclusion reset surviving fractional state and inflated managed area. That bug is now fixed, and the repaired step-13 bounded run is the current source of truth.

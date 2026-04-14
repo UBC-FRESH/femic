@@ -177,7 +177,7 @@ _RIPARIAN_WETLAND_WIDTHS_M = {
     "w5": 18.0,
 }
 _STEP13_ATTRIBUTE_CHECKPOINT_RELATIVE_PATH = Path(
-    "data/tsr/ria_vri_vclr1p_checkpoint7.step13_attrs.feather"
+    "data/tsr/lhlb_curve_ready_checkpoint.feather"
 )
 
 _EXTENT_COVERAGE_BLOCK_THRESHOLD = 0.5
@@ -494,6 +494,9 @@ class TsrThlbNetdownRecipeRunResult:
     lhlb_checkpoint_path: Path | None
     lhlb_gpkg_path: Path | None
     lhlb_lu_cache_warmed: bool
+    lhlb_curve_ready_checkpoint_path: Path | None
+    lhlb_curve_ready_gpkg_path: Path | None
+    lhlb_curve_ready_lu_cache_warmed: bool
     execution_mode: str
     baseline_signal: str
     selected_map_ids: tuple[str, ...]
@@ -507,6 +510,7 @@ class TsrThlbNetdownRecipeRunResult:
     tsr_reported_thlb_area_ha: float | None
     aflb_checkpoint_area_ha: float | None
     lhlb_checkpoint_area_ha: float | None
+    lhlb_curve_ready_checkpoint_area_ha: float | None
 
 
 @dataclass(frozen=True)
@@ -879,6 +883,28 @@ def default_tsr_lhlb_gpkg_path(*, instance_root: Path) -> Path:
     """Return the default strict LHLB restart checkpoint GeoPackage path."""
 
     return instance_root.expanduser().resolve() / "data" / "tsr" / "lhlb_checkpoint.gpkg"
+
+
+def default_tsr_lhlb_curve_ready_checkpoint_path(*, instance_root: Path) -> Path:
+    """Return the default strict curve-ready LHLB restart checkpoint feather path."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "data"
+        / "tsr"
+        / "lhlb_curve_ready_checkpoint.feather"
+    )
+
+
+def default_tsr_lhlb_curve_ready_gpkg_path(*, instance_root: Path) -> Path:
+    """Return the default strict curve-ready LHLB restart checkpoint GeoPackage path."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "data"
+        / "tsr"
+        / "lhlb_curve_ready_checkpoint.gpkg"
+    )
 
 
 def default_tsr_thlb_netdown_status_report_path(*, instance_root: Path) -> Path:
@@ -5456,6 +5482,11 @@ def _feather_has_column(path: Path, column: str) -> bool:
 
 
 def _find_curve_ready_thlb_checkpoint_path(*, instance_root: Path) -> Path:
+    official_curve_ready_path = default_tsr_lhlb_curve_ready_checkpoint_path(
+        instance_root=instance_root
+    )
+    if official_curve_ready_path.exists():
+        return official_curve_ready_path
     candidates = sorted(
         instance_root.expanduser()
         .resolve()
@@ -6331,6 +6362,10 @@ def _is_lhlb_restart_checkpoint_path(path: Path) -> bool:
     return path.name.casefold() == "lhlb_checkpoint.feather"
 
 
+def _is_lhlb_curve_ready_restart_checkpoint_path(path: Path) -> bool:
+    return path.name.casefold() == "lhlb_curve_ready_checkpoint.feather"
+
+
 def _select_reconstructed_recipe_steps_for_checkpoint(
     *,
     recipe_steps: Sequence[dict[str, Any]],
@@ -6359,7 +6394,83 @@ def _select_reconstructed_recipe_steps_for_checkpoint(
             filtered,
             "lhlb_checkpoint_restart",
         )
+    if _is_lhlb_curve_ready_restart_checkpoint_path(checkpoint_path):
+        filtered = tuple(
+            dict(step)
+            for step in recipe_steps
+            if not _is_glb_to_aflb_stage(step) and not _is_aflb_to_lhlb_stage(step)
+        )
+        return (
+            filtered,
+            "lhlb_curve_ready_checkpoint_restart",
+        )
     return tuple(dict(step) for step in recipe_steps), None
+
+
+def _checkpoint_has_step13_enrichment(path: Path) -> bool:
+    return all(
+        _feather_has_column(path, column)
+        for column in (
+            "femic_slope_pct_median",
+            "femic_hwy97_side",
+            "femic_step13_steep_slope_flag",
+        )
+    )
+
+
+def _ensure_lhlb_curve_ready_checkpoint_artifacts(
+    *,
+    instance_root: Path,
+    checkpoint_path: Path,
+    write_gpkg: bool,
+) -> tuple[Path, Path | None, float, bool]:
+    resolved_checkpoint_path = checkpoint_path.expanduser().resolve()
+    curve_ready_path = default_tsr_lhlb_curve_ready_checkpoint_path(
+        instance_root=instance_root
+    )
+    curve_ready_gpkg_path = (
+        default_tsr_lhlb_curve_ready_gpkg_path(instance_root=instance_root)
+        if write_gpkg
+        else None
+    )
+    if not resolved_checkpoint_path.exists():
+        raise TsrRecipeError(
+            f"LHLB checkpoint feather not found for curve-ready promotion: {resolved_checkpoint_path}"
+        )
+
+    needs_compile = (
+        not curve_ready_path.exists()
+        or not _checkpoint_has_step13_enrichment(curve_ready_path)
+        or curve_ready_path.stat().st_mtime < resolved_checkpoint_path.stat().st_mtime
+    )
+    if needs_compile:
+        from .step13_attributes import compile_tsr_thlb_step13_attributes
+
+        compile_tsr_thlb_step13_attributes(
+            instance_root=instance_root,
+            checkpoint_path=resolved_checkpoint_path,
+            output_path=curve_ready_path,
+        )
+
+    curve_ready_checkpoint = _load_checkpoint_geodataframe(curve_ready_path)
+    (
+        written_curve_ready_path,
+        written_curve_ready_gpkg_path,
+        curve_ready_area_ha,
+        curve_ready_lu_cache_warmed,
+    ) = _write_reconstructed_restart_checkpoint_artifacts(
+        checkpoint=curve_ready_checkpoint,
+        instance_root=instance_root,
+        feather_path=curve_ready_path,
+        gpkg_path=curve_ready_gpkg_path,
+        gpkg_layer_name="lhlb_curve_ready_checkpoint",
+    )
+    return (
+        written_curve_ready_path,
+        written_curve_ready_gpkg_path,
+        curve_ready_area_ha,
+        curve_ready_lu_cache_warmed,
+    )
 
 
 def _prepare_reconstructed_restart_checkpoint_frame(
@@ -8920,6 +9031,8 @@ def _build_tsr_thlb_status_report_markdown(
     aflb_gpkg_relative_path: str | None,
     lhlb_checkpoint_relative_path: str | None,
     lhlb_gpkg_relative_path: str | None,
+    lhlb_curve_ready_checkpoint_relative_path: str | None,
+    lhlb_curve_ready_gpkg_relative_path: str | None,
     execution_mode: str,
     allow_stand_binary_fallback: bool,
     baseline_signal: str,
@@ -8932,6 +9045,7 @@ def _build_tsr_thlb_status_report_markdown(
     tsr_reported_thlb_area_ha: float | None,
     aflb_checkpoint_area_ha: float | None,
     lhlb_checkpoint_area_ha: float | None,
+    lhlb_curve_ready_checkpoint_area_ha: float | None,
     outcome_counts: dict[str, int],
     step_count: int,
     generated_utc: str,
@@ -9037,6 +9151,16 @@ def _build_tsr_thlb_status_report_markdown(
             if lhlb_gpkg_relative_path
             else "- LHLB checkpoint GeoPackage: `not written`"
         ),
+        (
+            f"- LHLB curve-ready checkpoint Feather: `{lhlb_curve_ready_checkpoint_relative_path}`"
+            if lhlb_curve_ready_checkpoint_relative_path
+            else "- LHLB curve-ready checkpoint Feather: `not written`"
+        ),
+        (
+            f"- LHLB curve-ready checkpoint GeoPackage: `{lhlb_curve_ready_gpkg_relative_path}`"
+            if lhlb_curve_ready_gpkg_relative_path
+            else "- LHLB curve-ready checkpoint GeoPackage: `not written`"
+        ),
         f"- Runtime history copy: `{runtime_report_relative_path}`",
         (
             f"- Warm-start checklist: `{warmstart_markdown_relative_path}`"
@@ -9066,6 +9190,11 @@ def _build_tsr_thlb_status_report_markdown(
             f"- LHLB checkpoint area: `{lhlb_checkpoint_area_ha:.3f} ha`"
             if lhlb_checkpoint_area_ha is not None
             else "- LHLB checkpoint area: `not written`"
+        ),
+        (
+            f"- LHLB curve-ready checkpoint area: `{lhlb_curve_ready_checkpoint_area_ha:.3f} ha`"
+            if lhlb_curve_ready_checkpoint_area_ha is not None
+            else "- LHLB curve-ready checkpoint area: `not written`"
         ),
         f"- THLB / final managed area: `{final_managed_area_ha:.3f} ha`",
         "- Exact fragment-overlay steps: "
@@ -9580,8 +9709,13 @@ def _apply_checkpoint_attribute_filters(
         return updated, removed_area_ha
     remaining = checkpoint.loc[~effective_exclude_mask].copy()
     remaining = _assign_fragment_feature_ids(remaining)
-    remaining["thlb_fact"] = 1.0
-    remaining["thlb"] = 1
+    if "thlb_fact" in remaining.columns:
+        remaining["thlb_fact"] = (
+            pd.to_numeric(remaining["thlb_fact"], errors="coerce")
+            .fillna(0.0)
+            .clip(lower=0.0, upper=1.0)
+        )
+        remaining["thlb"] = remaining["thlb_fact"].round().astype(int)
     return remaining, removed_area_ha
 
 
@@ -15349,6 +15483,7 @@ def run_tsr_thlb_netdown_recipe(
     allow_stand_binary_fallback: bool = False,
     write_aflb_gpkg: bool = True,
     write_lhlb_gpkg: bool = True,
+    write_lhlb_curve_ready_gpkg: bool = True,
     parallel_mode: str = TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_AUTO,
     max_workers: int | None = None,
     lu_bundle_count: int | None = None,
@@ -15419,6 +15554,26 @@ def run_tsr_thlb_netdown_recipe(
         if write_lhlb_gpkg
         else None
     )
+    resolved_lhlb_curve_ready_gpkg_path = (
+        default_tsr_lhlb_curve_ready_gpkg_path(instance_root=instance_root)
+        if write_lhlb_curve_ready_gpkg
+        else None
+    )
+    if (
+        execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+        and checkpoint_path is not None
+        and _is_lhlb_restart_checkpoint_path(resolved_checkpoint_path)
+    ):
+        (
+            resolved_checkpoint_path,
+            _promoted_lhlb_curve_ready_gpkg_path,
+            _promoted_lhlb_curve_ready_area_ha,
+            _promoted_lhlb_curve_ready_lu_cache_warmed,
+        ) = _ensure_lhlb_curve_ready_checkpoint_artifacts(
+            instance_root=instance_root,
+            checkpoint_path=resolved_checkpoint_path,
+            write_gpkg=write_lhlb_curve_ready_gpkg,
+        )
     selected_recipe_steps, checkpoint_restart_mode = (
         _select_reconstructed_recipe_steps_for_checkpoint(
             recipe_steps=recipe.steps,
@@ -15446,6 +15601,7 @@ def run_tsr_thlb_netdown_recipe(
         if checkpoint_restart_mode in {
             "aflb_checkpoint_restart",
             "lhlb_checkpoint_restart",
+            "lhlb_curve_ready_checkpoint_restart",
         }:
             checkpoint, _ = _resume_reconstructed_land_base(checkpoint)
             baseline_signal = checkpoint_restart_mode
@@ -15534,6 +15690,10 @@ def run_tsr_thlb_netdown_recipe(
     written_lhlb_gpkg_path: Path | None = None
     lhlb_checkpoint_area_ha: float | None = None
     lhlb_lu_cache_warmed = False
+    written_lhlb_curve_ready_checkpoint_path: Path | None = None
+    written_lhlb_curve_ready_gpkg_path: Path | None = None
+    lhlb_curve_ready_checkpoint_area_ha: float | None = None
+    lhlb_curve_ready_lu_cache_warmed = False
     if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED and aflb_checkpoint is not None:
         (
             written_aflb_checkpoint_path,
@@ -15584,6 +15744,45 @@ def run_tsr_thlb_netdown_recipe(
         recipe_contract["lhlb_checkpoint_area_ha"] = float(lhlb_checkpoint_area_ha)
         payload["recipe_contract"] = recipe_contract
         _write_recipe_yaml(resolved_recipe_path, payload)
+        (
+            written_lhlb_curve_ready_checkpoint_path,
+            written_lhlb_curve_ready_gpkg_path,
+            lhlb_curve_ready_checkpoint_area_ha,
+            lhlb_curve_ready_lu_cache_warmed,
+        ) = _ensure_lhlb_curve_ready_checkpoint_artifacts(
+            instance_root=instance_root,
+            checkpoint_path=written_lhlb_checkpoint_path,
+            write_gpkg=write_lhlb_curve_ready_gpkg,
+        )
+        recipe_contract["lhlb_curve_ready_checkpoint_path"] = str(
+            written_lhlb_curve_ready_checkpoint_path.relative_to(instance_root).as_posix()
+        )
+        if written_lhlb_curve_ready_gpkg_path is not None:
+            recipe_contract["lhlb_curve_ready_gpkg_path"] = str(
+                written_lhlb_curve_ready_gpkg_path.relative_to(instance_root).as_posix()
+            )
+        else:
+            recipe_contract.pop("lhlb_curve_ready_gpkg_path", None)
+        recipe_contract["lhlb_curve_ready_checkpoint_area_ha"] = float(
+            lhlb_curve_ready_checkpoint_area_ha
+        )
+        payload["recipe_contract"] = recipe_contract
+        _write_recipe_yaml(resolved_recipe_path, payload)
+    elif (
+        execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+        and checkpoint_restart_mode == "lhlb_curve_ready_checkpoint_restart"
+    ):
+        written_lhlb_curve_ready_checkpoint_path = resolved_checkpoint_path
+        written_lhlb_curve_ready_gpkg_path = (
+            resolved_lhlb_curve_ready_gpkg_path
+            if resolved_lhlb_curve_ready_gpkg_path is not None
+            and resolved_lhlb_curve_ready_gpkg_path.exists()
+            else None
+        )
+        lhlb_curve_ready_checkpoint_area_ha = _managed_area_ha(
+            _load_checkpoint_geodataframe(resolved_checkpoint_path)
+        )
+        lhlb_curve_ready_lu_cache_warmed = True
 
     output_frame = checkpoint.drop(
         columns=["_row_id", "_stand_area_sqm"], errors="ignore"
@@ -15632,6 +15831,27 @@ def run_tsr_thlb_netdown_recipe(
             else None
         ),
         "lhlb_checkpoint_area_ha": lhlb_checkpoint_area_ha,
+        "lhlb_curve_ready_checkpoint_written": (
+            written_lhlb_curve_ready_checkpoint_path is not None
+        ),
+        "lhlb_curve_ready_lu_cache_warmed": lhlb_curve_ready_lu_cache_warmed,
+        "lhlb_curve_ready_checkpoint_path": (
+            str(
+                written_lhlb_curve_ready_checkpoint_path.relative_to(
+                    instance_root
+                ).as_posix()
+            )
+            if written_lhlb_curve_ready_checkpoint_path is not None
+            else None
+        ),
+        "lhlb_curve_ready_gpkg_path": (
+            str(
+                written_lhlb_curve_ready_gpkg_path.relative_to(instance_root).as_posix()
+            )
+            if written_lhlb_curve_ready_gpkg_path is not None
+            else None
+        ),
+        "lhlb_curve_ready_checkpoint_area_ha": lhlb_curve_ready_checkpoint_area_ha,
         "legacy_reference_managed_area_ha": legacy_reference_managed_area_ha,
         "tsr_reported_aflb_area_ha": tsr_reported_aflb_area_ha,
         "tsr_reported_thlb_area_ha": tsr_reported_thlb_area_ha,
@@ -15760,6 +15980,22 @@ def run_tsr_thlb_netdown_recipe(
             if written_lhlb_gpkg_path is not None
             else None
         ),
+        lhlb_curve_ready_checkpoint_relative_path=(
+            str(
+                written_lhlb_curve_ready_checkpoint_path.relative_to(
+                    instance_root
+                ).as_posix()
+            )
+            if written_lhlb_curve_ready_checkpoint_path is not None
+            else None
+        ),
+        lhlb_curve_ready_gpkg_relative_path=(
+            str(
+                written_lhlb_curve_ready_gpkg_path.relative_to(instance_root).as_posix()
+            )
+            if written_lhlb_curve_ready_gpkg_path is not None
+            else None
+        ),
         execution_mode=execution_mode,
         allow_stand_binary_fallback=allow_stand_binary_fallback,
         baseline_signal=baseline_signal,
@@ -15772,6 +16008,7 @@ def run_tsr_thlb_netdown_recipe(
         tsr_reported_thlb_area_ha=tsr_reported_thlb_area_ha,
         aflb_checkpoint_area_ha=aflb_checkpoint_area_ha,
         lhlb_checkpoint_area_ha=lhlb_checkpoint_area_ha,
+        lhlb_curve_ready_checkpoint_area_ha=lhlb_curve_ready_checkpoint_area_ha,
         outcome_counts=dict(sorted(outcome_counts.items())),
         step_count=len(applied_steps),
         generated_utc=generated_utc,
@@ -15835,6 +16072,9 @@ def run_tsr_thlb_netdown_recipe(
         lhlb_checkpoint_path=written_lhlb_checkpoint_path,
         lhlb_gpkg_path=written_lhlb_gpkg_path,
         lhlb_lu_cache_warmed=lhlb_lu_cache_warmed,
+        lhlb_curve_ready_checkpoint_path=written_lhlb_curve_ready_checkpoint_path,
+        lhlb_curve_ready_gpkg_path=written_lhlb_curve_ready_gpkg_path,
+        lhlb_curve_ready_lu_cache_warmed=lhlb_curve_ready_lu_cache_warmed,
         execution_mode=execution_mode,
         baseline_signal=baseline_signal,
         selected_map_ids=selected_map_ids,
@@ -15848,6 +16088,7 @@ def run_tsr_thlb_netdown_recipe(
         tsr_reported_thlb_area_ha=tsr_reported_thlb_area_ha,
         aflb_checkpoint_area_ha=aflb_checkpoint_area_ha,
         lhlb_checkpoint_area_ha=lhlb_checkpoint_area_ha,
+        lhlb_curve_ready_checkpoint_area_ha=lhlb_curve_ready_checkpoint_area_ha,
     )
 
 
@@ -15890,9 +16131,35 @@ def run_tsr_thlb_reconstructed_diagnostic_slice(
             else _find_tsr_checkpoint_path(instance_root=instance_root, mode="earliest")
         )
     )
+    if _is_lhlb_restart_checkpoint_path(resolved_checkpoint_path):
+        (
+            resolved_checkpoint_path,
+            _diagnostic_curve_ready_gpkg_path,
+            _diagnostic_curve_ready_area_ha,
+            _diagnostic_curve_ready_lu_cache_warmed,
+        ) = _ensure_lhlb_curve_ready_checkpoint_artifacts(
+            instance_root=instance_root,
+            checkpoint_path=resolved_checkpoint_path,
+            write_gpkg=False,
+    )
+    diagnostic_restart_mode = (
+        "aflb_checkpoint_restart"
+        if _is_aflb_restart_checkpoint_path(resolved_checkpoint_path)
+        else (
+            "lhlb_checkpoint_restart"
+            if _is_lhlb_restart_checkpoint_path(resolved_checkpoint_path)
+            else (
+                "lhlb_curve_ready_checkpoint_restart"
+                if _is_lhlb_curve_ready_restart_checkpoint_path(resolved_checkpoint_path)
+                else None
+            )
+        )
+    )
     checkpoint = _load_checkpoint_geodataframe(resolved_checkpoint_path)
-    if resume_checkpoint_path is not None:
+    if resume_checkpoint_path is not None or diagnostic_restart_mode is not None:
         checkpoint, baseline_signal = _resume_reconstructed_land_base(checkpoint)
+        if diagnostic_restart_mode is not None:
+            baseline_signal = diagnostic_restart_mode
     else:
         checkpoint, baseline_signal = _initialize_reconstructed_land_base(checkpoint)
     baseline_managed_area_ha = _managed_area_ha(checkpoint)

@@ -4432,6 +4432,38 @@ def test_apply_checkpoint_attribute_filters_preserves_geometry_for_later_stage()
     assert updated["thlb"].tolist() == [0, 1]
 
 
+def test_apply_checkpoint_attribute_filters_preserves_fractional_state_on_remaining_rows() -> (
+    None
+):
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2, 3],
+            "ZONE": ["exclude", "keep", "keep"],
+            "thlb_fact": [1.0, 0.35, 0.8],
+            "thlb": [1, 0, 1],
+            "FEMIC_EFFECTIVE_AREA_SQM": [10000.0, 3500.0, 8000.0],
+        },
+        geometry=[
+            box(0, 0, 100, 100),
+            box(110, 0, 210, 100),
+            box(220, 0, 320, 100),
+        ],
+        crs="EPSG:3005",
+    )
+    checkpoint = tsr_recipes._assign_fragment_feature_ids(checkpoint)
+
+    updated, removed_area_ha = tsr_recipes._apply_checkpoint_attribute_filters(
+        checkpoint,
+        filters=[{"field": "ZONE", "operator": "eq", "value": "exclude"}],
+        mode="any",
+        preserve_geometry=False,
+    )
+
+    assert removed_area_ha == pytest.approx(1.0)
+    assert updated["thlb_fact"].tolist() == pytest.approx([0.35, 0.8])
+    assert updated["thlb"].tolist() == [0, 1]
+
+
 def test_run_tsr_thlb_parent_step_preserves_geometry_for_later_stage_spatial_exclusion(
     tmp_path: Path,
 ) -> None:
@@ -5456,7 +5488,7 @@ def test_default_workbench_checkpoint_path_prefers_step13_attribute_checkpoint(
         instance_root
         / "data"
         / "tsr"
-        / "ria_vri_vclr1p_checkpoint7.step13_attrs.feather"
+        / "lhlb_curve_ready_checkpoint.feather"
     )
     enriched_path.write_text("enriched", encoding="utf-8")
 
@@ -6333,7 +6365,7 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
         instance_root
         / "data"
         / "tsr"
-        / "ria_vri_vclr1p_checkpoint7.step13_attrs.feather"
+        / "lhlb_curve_ready_checkpoint.feather"
     )
     enriched_checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint7.to_feather(enriched_checkpoint_path)
@@ -7016,6 +7048,14 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     ).resolve()
     assert result.lhlb_lu_cache_warmed is True
     assert result.lhlb_checkpoint_area_ha == pytest.approx(0.015)
+    assert result.lhlb_curve_ready_checkpoint_path == (
+        instance_root / "data" / "tsr" / "lhlb_curve_ready_checkpoint.feather"
+    ).resolve()
+    assert result.lhlb_curve_ready_gpkg_path == (
+        instance_root / "data" / "tsr" / "lhlb_curve_ready_checkpoint.gpkg"
+    ).resolve()
+    assert result.lhlb_curve_ready_lu_cache_warmed is True
+    assert result.lhlb_curve_ready_checkpoint_area_ha == pytest.approx(0.015)
     assert result.input_area_ha == pytest.approx(0.02)
     assert result.baseline_managed_area_ha == pytest.approx(0.02)
     assert result.final_managed_area_ha == pytest.approx(0.015)
@@ -7046,6 +7086,9 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     assert audit_payload["lhlb_checkpoint_written"] is True
     assert audit_payload["lhlb_lu_cache_warmed"] is True
     assert audit_payload["lhlb_checkpoint_area_ha"] == pytest.approx(0.015)
+    assert audit_payload["lhlb_curve_ready_checkpoint_written"] is True
+    assert audit_payload["lhlb_curve_ready_lu_cache_warmed"] is True
+    assert audit_payload["lhlb_curve_ready_checkpoint_area_ha"] == pytest.approx(0.015)
     assert audit_payload["input_area_ha"] == pytest.approx(0.02)
     assert audit_payload["legacy_reference_managed_area_ha"] == pytest.approx(0.01)
     assert audit_payload["outcome_counts"]["applied"] == 1
@@ -7055,6 +7098,14 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     assert "AFLB checkpoint GeoPackage: `data/tsr/aflb_checkpoint.gpkg`" in reconstructed_status
     assert "LHLB checkpoint Feather: `data/tsr/lhlb_checkpoint.feather`" in reconstructed_status
     assert "LHLB checkpoint GeoPackage: `data/tsr/lhlb_checkpoint.gpkg`" in reconstructed_status
+    assert (
+        "LHLB curve-ready checkpoint Feather: `data/tsr/lhlb_curve_ready_checkpoint.feather`"
+        in reconstructed_status
+    )
+    assert (
+        "LHLB curve-ready checkpoint GeoPackage: `data/tsr/lhlb_curve_ready_checkpoint.gpkg`"
+        in reconstructed_status
+    )
     assert "Legacy raster THLB reference: `0.010 ha`" in reconstructed_status
     assert "### GLB -> AFLB" in reconstructed_status
     assert "### LHLB -> THLB" in reconstructed_status
@@ -7075,6 +7126,14 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     assert recipe.recipe_contract["aflb_gpkg_path"] == "data/tsr/aflb_checkpoint.gpkg"
     assert recipe.recipe_contract["lhlb_checkpoint_path"] == "data/tsr/lhlb_checkpoint.feather"
     assert recipe.recipe_contract["lhlb_gpkg_path"] == "data/tsr/lhlb_checkpoint.gpkg"
+    assert (
+        recipe.recipe_contract["lhlb_curve_ready_checkpoint_path"]
+        == "data/tsr/lhlb_curve_ready_checkpoint.feather"
+    )
+    assert (
+        recipe.recipe_contract["lhlb_curve_ready_gpkg_path"]
+        == "data/tsr/lhlb_curve_ready_checkpoint.gpkg"
+    )
 
     cached_partition = tsr_recipes._load_cached_landscape_unit_partition_records(
         checkpoint_path=result.aflb_checkpoint_path,
@@ -7089,6 +7148,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
 
 
 def test_run_tsr_thlb_netdown_recipe_can_restart_from_aflb_checkpoint(
+    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     source_root = tmp_path
@@ -7217,6 +7277,39 @@ def test_run_tsr_thlb_netdown_recipe_can_restart_from_aflb_checkpoint(
         encoding="utf-8",
     )
 
+    def _fake_ensure_curve_ready(
+        *,
+        instance_root: Path,
+        checkpoint_path: Path,
+        write_gpkg: bool,
+    ) -> tuple[Path, Path | None, float, bool]:
+        checkpoint = gpd.read_feather(checkpoint_path)
+        checkpoint["femic_slope_pct_median"] = 10.0
+        checkpoint["femic_hwy97_side"] = "east"
+        checkpoint["femic_step13_steep_slope_flag"] = False
+        output_path = (
+            instance_root / "data" / "tsr" / "lhlb_curve_ready_checkpoint.feather"
+        )
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        checkpoint.to_feather(output_path)
+        gpkg_path = (
+            instance_root / "data" / "tsr" / "lhlb_curve_ready_checkpoint.gpkg"
+        )
+        if write_gpkg:
+            checkpoint.to_file(
+                gpkg_path, driver="GPKG", layer="lhlb_curve_ready_checkpoint"
+            )
+            written_gpkg: Path | None = gpkg_path
+        else:
+            written_gpkg = None
+        return output_path.resolve(), written_gpkg, 1.0, True
+
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_ensure_lhlb_curve_ready_checkpoint_artifacts",
+        _fake_ensure_curve_ready,
+    )
+
     first = tsr_recipes.run_tsr_thlb_netdown_recipe(
         recipe_path=init_result.thlb_netdown_recipe_path,
         execution_mode=tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
@@ -7228,6 +7321,9 @@ def test_run_tsr_thlb_netdown_recipe_can_restart_from_aflb_checkpoint(
     assert first.lhlb_checkpoint_path is not None
     assert first.lhlb_lu_cache_warmed is True
     assert first.lhlb_checkpoint_area_ha == pytest.approx(1.0)
+    assert first.lhlb_curve_ready_checkpoint_path is not None
+    assert first.lhlb_curve_ready_lu_cache_warmed is True
+    assert first.lhlb_curve_ready_checkpoint_area_ha == pytest.approx(1.0)
 
     second = tsr_recipes.run_tsr_thlb_netdown_recipe(
         recipe_path=init_result.thlb_netdown_recipe_path,
@@ -7248,7 +7344,7 @@ def test_run_tsr_thlb_netdown_recipe_can_restart_from_aflb_checkpoint(
         write_lhlb_gpkg=False,
     )
 
-    assert third.baseline_signal == "lhlb_checkpoint_restart"
+    assert third.baseline_signal == "lhlb_curve_ready_checkpoint_restart"
     assert third.baseline_managed_area_ha == pytest.approx(1.0)
     assert third.final_managed_area_ha == pytest.approx(1.0)
 
