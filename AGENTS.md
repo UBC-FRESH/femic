@@ -257,6 +257,12 @@ When contributing to this repository as the coding agent:
        by that step;
      - treat gross candidate/matched/touched areas as secondary diagnostics only; and
      - treat milestone/reference rows as cumulative checkpoints with no marginal deduction;
+   - for THLB cumulative answers during step-by-step adjudication:
+     - use `config/tsr/thlb_locked_chain_ledger.json` as the canonical chained source for locked
+       cumulative remaining area and TSR cumulative deltas;
+     - do not answer cumulative questions from branch-local bounded step artifacts; and
+     - if a branch-local remaining area is mentioned for debugging, label it explicitly as
+       non-cumulative;
    - for Windows multiprocessing safety, do not launch LU-parallel THLB parent-step reruns from
      stdin / here-string Python; use the CLI entrypoint or a saved script file instead.
 17. Treat developer-imposed scope boundaries as a hard execution contract:

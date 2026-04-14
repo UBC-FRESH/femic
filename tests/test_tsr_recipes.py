@@ -1500,6 +1500,176 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
     assert "raw checkpoint1 geometry" in markdown
 
 
+def test_build_tsr_thlb_locked_chain_ledger_payload_tracks_chained_cumulative() -> None:
+    recipe = tsr_recipes.TsrThlbNetdownRecipeRecord(
+        schema_version=1,
+        recipe_kind="thlb_netdown",
+        tsa=tsr_catalog.TsrOverlayTsaRecord(
+            tsa_id="tsa_29",
+            tsa_code="29",
+            tsa_name="Williams Lake",
+        ),
+        canonical_inputs=tsr_catalog.TsrRecipeCanonicalInputs(
+            registry_path="metadata/tsr/tsa_registry.json",
+            documents_path="metadata/tsr/tsa_documents.json",
+            candidate_facts_path="metadata/tsr/tsa_candidate_facts.json",
+        ),
+        instance_inputs=tsr_catalog.TsrThlbNetdownRecipeInstanceInputs(
+            overlay_path="config/tsr/overlay.yaml",
+            source_layer_recipe_path="config/tsr/source_layers.recipe.yaml",
+            source_layer_overrides_path="config/tsr/source_layer_overrides.yaml",
+        ),
+        recipe_contract={},
+        parent_steps=(
+            {
+                "parent_step_id": "thlb_parent_001_total_tsa_area",
+                "parent_label": "Total TSA area",
+                "parent_kind": "milestone",
+                "row_order": 1,
+                "land_base_stage": "reference_target",
+                "benchmark_cumulative_area_ha": 1000.0,
+            },
+            {
+                "parent_step_id": "thlb_parent_002_first",
+                "parent_label": "First step",
+                "parent_kind": "transformation",
+                "row_order": 2,
+                "land_base_stage": "glb_to_aflb",
+                "benchmark_marginal_area_ha": 200.0,
+                "benchmark_cumulative_area_ha": 800.0,
+            },
+            {
+                "parent_step_id": "thlb_parent_003_second",
+                "parent_label": "Second step",
+                "parent_kind": "transformation",
+                "row_order": 3,
+                "land_base_stage": "glb_to_aflb",
+                "benchmark_marginal_area_ha": 50.0,
+                "benchmark_cumulative_area_ha": 750.0,
+            },
+            {
+                "parent_step_id": "thlb_parent_004_milestone",
+                "parent_label": "Milestone",
+                "parent_kind": "milestone",
+                "row_order": 4,
+                "land_base_stage": "glb_to_aflb",
+                "benchmark_cumulative_area_ha": 725.0,
+            },
+        ),
+        steps=(),
+    )
+
+    payload = tsr_recipes._build_tsr_thlb_locked_chain_ledger_payload(
+        recipe=recipe,
+        baseline_managed_area_ha=1000.0,
+        locked_step_entries=(
+            {
+                "parent_step_id": "thlb_parent_002_first",
+                "locked_net_removed_area_ha": 210.0,
+            },
+            {
+                "parent_step_id": "thlb_parent_003_second",
+                "locked_net_removed_area_ha": 55.0,
+                "locked_source_kind": "bounded_step_run",
+            },
+        ),
+        ledger_relative_path="config/tsr/thlb_locked_chain_ledger.json",
+    )
+
+    entries_by_id = {
+        str(item["parent_step_id"]): item
+        for item in payload["entries"]
+        if isinstance(item, dict)
+    }
+    assert payload["artifact_kind"] == "thlb_locked_chain_ledger"
+    assert payload["latest_locked_parent_step_id"] == "thlb_parent_003_second"
+    assert payload["latest_locked_row_order"] == 3
+    assert (
+        entries_by_id["thlb_parent_001_total_tsa_area"][
+            "locked_cumulative_remaining_area_ha"
+        ]
+        == pytest.approx(1000.0)
+    )
+    assert entries_by_id["thlb_parent_001_total_tsa_area"]["marginal_not_applicable"] is True
+    assert (
+        entries_by_id["thlb_parent_002_first"]["locked_cumulative_remaining_area_ha"]
+        == pytest.approx(790.0)
+    )
+    assert (
+        entries_by_id["thlb_parent_003_second"]["locked_cumulative_remaining_area_ha"]
+        == pytest.approx(735.0)
+    )
+    assert (
+        entries_by_id["thlb_parent_003_second"]["locked_cumulative_delta_ha"]
+        == pytest.approx(-15.0)
+    )
+
+
+def test_build_tsr_thlb_locked_chain_ledger_payload_rejects_missing_locked_step() -> None:
+    recipe = tsr_recipes.TsrThlbNetdownRecipeRecord(
+        schema_version=1,
+        recipe_kind="thlb_netdown",
+        tsa=tsr_catalog.TsrOverlayTsaRecord(
+            tsa_id="tsa_29",
+            tsa_code="29",
+            tsa_name="Williams Lake",
+        ),
+        canonical_inputs=tsr_catalog.TsrRecipeCanonicalInputs(
+            registry_path="metadata/tsr/tsa_registry.json",
+            documents_path="metadata/tsr/tsa_documents.json",
+            candidate_facts_path="metadata/tsr/tsa_candidate_facts.json",
+        ),
+        instance_inputs=tsr_catalog.TsrThlbNetdownRecipeInstanceInputs(
+            overlay_path="config/tsr/overlay.yaml",
+            source_layer_recipe_path="config/tsr/source_layers.recipe.yaml",
+            source_layer_overrides_path="config/tsr/source_layer_overrides.yaml",
+        ),
+        recipe_contract={},
+        parent_steps=(
+            {
+                "parent_step_id": "thlb_parent_001_total_tsa_area",
+                "parent_label": "Total TSA area",
+                "parent_kind": "milestone",
+                "row_order": 1,
+                "land_base_stage": "reference_target",
+                "benchmark_cumulative_area_ha": 1000.0,
+            },
+            {
+                "parent_step_id": "thlb_parent_002_first",
+                "parent_label": "First step",
+                "parent_kind": "transformation",
+                "row_order": 2,
+                "land_base_stage": "glb_to_aflb",
+                "benchmark_marginal_area_ha": 200.0,
+                "benchmark_cumulative_area_ha": 800.0,
+            },
+            {
+                "parent_step_id": "thlb_parent_003_second",
+                "parent_label": "Second step",
+                "parent_kind": "transformation",
+                "row_order": 3,
+                "land_base_stage": "glb_to_aflb",
+                "benchmark_marginal_area_ha": 50.0,
+                "benchmark_cumulative_area_ha": 750.0,
+            },
+        ),
+        steps=(),
+    )
+
+    with pytest.raises(tsr_recipes.TsrRecipeError):
+        tsr_recipes._build_tsr_thlb_locked_chain_ledger_payload(
+            recipe=recipe,
+            baseline_managed_area_ha=1000.0,
+            locked_step_entries=(
+                {
+                    "parent_step_id": "thlb_parent_003_second",
+                    "locked_net_removed_area_ha": 55.0,
+                },
+            ),
+            ledger_relative_path="config/tsr/thlb_locked_chain_ledger.json",
+        )
+
+
 def test_aggregate_reconstructed_parent_step_results_prefers_net_removed_area() -> None:
     aggregated = tsr_recipes._aggregate_reconstructed_parent_step_results(
         {
@@ -4182,6 +4352,55 @@ def test_load_compiled_logic_geometries_treats_empty_bbox_hit_as_no_matching(
     assert geometries.empty
     assert missing_sources == []
     assert no_matching is True
+    assert extent_mismatch_notes == []
+
+
+def test_load_compiled_logic_geometries_evaluates_extent_after_attribute_filtering(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "instance"
+    artifact_dir = instance_root / "data" / "downloads" / "bcdc" / "LEGAL"
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    artifact_path = artifact_dir / "LEGAL.gpkg"
+    layer = gpd.GeoDataFrame(
+        {
+            "PLAN": ["Other", "Target"],
+        },
+        geometry=[
+            box(0, 0, 1000, 1000),
+            box(100, 100, 200, 200),
+        ],
+        crs="EPSG:3005",
+    )
+    layer.to_file(artifact_path, driver="GPKG")
+
+    geometries, missing_sources, no_matching, extent_mismatch_notes = (
+        tsr_recipes._load_compiled_logic_geometries(
+            instance_root=instance_root,
+            compiled_item={
+                "compiled_operation_type": "select_spatial_intersect",
+                "linked_source_entry_ids": ["legal"],
+                "source_attribute_filters": [
+                    {"field": "PLAN", "operator": "eq", "value": "Target"}
+                ],
+            },
+            source_entry_map={
+                "legal": {
+                    "entry_id": "legal",
+                    "acquisition_strategy": "wfs_fetch",
+                    "artifact_scope": "production_full_tsa",
+                    "artifact_path": "data/downloads/bcdc/LEGAL/LEGAL.gpkg",
+                }
+            },
+            bbox=(90.0, 90.0, 210.0, 210.0),
+        )
+    )
+
+    assert geometries is not None
+    assert not geometries.empty
+    assert len(geometries) == 1
+    assert missing_sources == []
+    assert no_matching is False
     assert extent_mismatch_notes == []
 
 

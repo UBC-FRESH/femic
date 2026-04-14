@@ -255,6 +255,14 @@ Cumulative comparisons are therefore meaningful only when:
 - the same geographic scope is used; and
 - the same stop-line or final step is being compared.
 
+For the live TSA29 adjudication pass, FEMIC now carries one extra guardrail:
+
+- ``config/tsr/thlb_locked_chain_ledger.json`` is the canonical chained source
+  for locked cumulative remaining area and TSR cumulative deltas; and
+- branch-local bounded step outputs are valid for stepwise net deductions, but
+  they are **not** cumulative unless and until they are promoted into that
+  locked chain ledger.
+
 THLB Accounting Directives
 --------------------------
 

@@ -16375,3 +16375,22 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - The TSA29 reconstruction dashboard artifacts were refreshed so parent-step
     sections `2` through `8` are now the governing ledger while the broader
     dashboard rebuild follow-on remains open.
+- 2026-04-13: Added a canonical locked chained cumulative ledger for TSA29 through step 9.
+  - `config/tsr/thlb_locked_chain_ledger.json` is now the only sanctioned
+    source for locked cumulative remaining area and TSR cumulative deltas during
+    the active step-by-step adjudication pass.
+  - Branch-local bounded run artifacts remain valid for stepwise net deductions,
+    but they are not treated as cumulative unless they are promoted into this
+    locked chain ledger.
+  - The backfilled locked chain currently includes:
+    - clean GLB baseline `4,933,664.212 ha`;
+    - step `002` net deduction `696,781.324 ha`;
+    - step `003` net deduction `1,075,872.217 ha`;
+    - step `004` net deduction `50,434.000 ha`;
+    - step `006` net deduction `306,327.000 ha`;
+    - step `007` net deduction `223,638.262 ha`;
+    - step `008` net deduction `131,567.592 ha`; and
+    - step `009` net deduction `25,974.994 ha`.
+  - That yields the current chained post-step-9 state:
+    - remaining area `2,423,068.823 ha`; and
+    - cumulative delta `+7,523.823 ha` versus the TSR step-9 cumulative target.

@@ -965,6 +965,17 @@ def default_tsr_thlb_reconstruction_comparison_json_path(
     )
 
 
+def default_tsr_thlb_locked_chain_ledger_path(*, instance_root: Path) -> Path:
+    """Return the default locked chained THLB cumulative ledger JSON path."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "config"
+        / "tsr"
+        / "thlb_locked_chain_ledger.json"
+    )
+
+
 def default_tsr_thlb_notebook_runs_root(*, instance_root: Path) -> Path:
     """Return the default runtime root for notebook-driven THLB step runs."""
 
@@ -9888,6 +9899,7 @@ def _load_compiled_logic_geometries(
         preserve_attributes=bool(filters),
         allowed_geom_types=allowed_geom_types,
         bbox=bbox,
+        defer_extent_mismatch_check=bool(filters),
     )
     if geometries is None:
         return None, missing_sources, False, extent_mismatch_notes
@@ -9897,6 +9909,24 @@ def _load_compiled_logic_geometries(
         geometries = _apply_source_attribute_filters(geometries, filters=filters)
         if geometries.empty:
             return geometries, missing_sources, True, extent_mismatch_notes
+        if bbox is not None:
+            primary_source_entry = (
+                source_entry_map.get(linked_source_entry_ids[0], {})
+                if linked_source_entry_ids
+                else {}
+            )
+            extent_mismatch_note = _evaluate_source_extent_mismatch(
+                source_entry=primary_source_entry,
+                artifact_bbox_epsg3005=(
+                    float(geometries.total_bounds[0]),
+                    float(geometries.total_bounds[1]),
+                    float(geometries.total_bounds[2]),
+                    float(geometries.total_bounds[3]),
+                ),
+                target_bbox_epsg3005=bbox,
+            )
+            if extent_mismatch_note is not None:
+                return None, missing_sources, False, [extent_mismatch_note]
     return geometries, missing_sources, False, extent_mismatch_notes
 
 
@@ -12904,6 +12934,114 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
     }
 
 
+def _build_tsr_thlb_locked_chain_ledger_payload(
+    *,
+    recipe: TsrThlbNetdownRecipeRecord,
+    baseline_managed_area_ha: float,
+    locked_step_entries: Sequence[dict[str, Any]],
+    ledger_relative_path: str,
+) -> dict[str, Any]:
+    normalized_entries: dict[str, dict[str, Any]] = {}
+    latest_locked_row_order = 0
+    latest_locked_parent_step_id = ""
+    for entry in locked_step_entries:
+        parent_step_id = str(entry.get("parent_step_id", "")).strip()
+        if not parent_step_id:
+            raise TsrRecipeError(
+                "Locked THLB chain ledger entries must include `parent_step_id`."
+            )
+        matched_parent = next(
+            (
+                parent_step
+                for parent_step in recipe.parent_steps
+                if str(parent_step.get("parent_step_id", "")).strip() == parent_step_id
+            ),
+            None,
+        )
+        if matched_parent is None:
+            raise TsrRecipeError(
+                "Locked THLB chain ledger references unknown parent step "
+                f"`{parent_step_id}`."
+            )
+        row_order = int(matched_parent.get("row_order", 0) or 0)
+        if row_order > latest_locked_row_order:
+            latest_locked_row_order = row_order
+            latest_locked_parent_step_id = parent_step_id
+        normalized_entries[parent_step_id] = dict(entry)
+
+    running_cumulative_area_ha = float(baseline_managed_area_ha)
+    payload_entries: list[dict[str, Any]] = []
+    for parent_step in sorted(
+        recipe.parent_steps, key=lambda item: int(item.get("row_order", 0) or 0)
+    ):
+        row_order = int(parent_step.get("row_order", 0) or 0)
+        if row_order > latest_locked_row_order:
+            break
+        parent_step_id = str(parent_step.get("parent_step_id", "")).strip()
+        parent_kind = str(parent_step.get("parent_kind", "")).strip()
+        benchmark_cumulative_area_ha = _normalize_float_or_none(
+            parent_step.get("benchmark_cumulative_area_ha")
+        )
+        benchmark_marginal_area_ha = _normalize_float_or_none(
+            parent_step.get("benchmark_marginal_area_ha")
+        )
+        locked_entry = normalized_entries.get(parent_step_id)
+        locked_net_removed_area_ha: float | None = None
+        locked_source_kind = ""
+        locked_source_note = ""
+        if parent_kind != "milestone":
+            if locked_entry is None:
+                raise TsrRecipeError(
+                    "Locked THLB chain ledger is missing non-milestone parent step "
+                    f"`{parent_step_id}` before the latest locked row."
+                )
+            locked_net_removed_area_ha = _normalize_float_or_none(
+                locked_entry.get("locked_net_removed_area_ha")
+            )
+            if locked_net_removed_area_ha is None:
+                raise TsrRecipeError(
+                    "Locked THLB chain ledger entry for "
+                    f"`{parent_step_id}` must include `locked_net_removed_area_ha`."
+                )
+            running_cumulative_area_ha -= float(locked_net_removed_area_ha)
+            locked_source_kind = str(locked_entry.get("locked_source_kind", "")).strip()
+            locked_source_note = str(locked_entry.get("locked_source_note", "")).strip()
+        payload_entries.append(
+            {
+                "row_order": row_order,
+                "parent_step_id": parent_step_id,
+                "parent_label": str(parent_step.get("parent_label", "")).strip(),
+                "parent_kind": parent_kind,
+                "land_base_stage": str(parent_step.get("land_base_stage", "")).strip(),
+                "benchmark_marginal_area_ha": benchmark_marginal_area_ha,
+                "benchmark_cumulative_area_ha": benchmark_cumulative_area_ha,
+                "locked_net_removed_area_ha": locked_net_removed_area_ha,
+                "locked_cumulative_remaining_area_ha": running_cumulative_area_ha,
+                "tsr_cumulative_area_ha": benchmark_cumulative_area_ha,
+                "locked_cumulative_delta_ha": (
+                    running_cumulative_area_ha - benchmark_cumulative_area_ha
+                    if benchmark_cumulative_area_ha is not None
+                    else None
+                ),
+                "locked_source_kind": locked_source_kind or None,
+                "locked_source_note": locked_source_note or None,
+                "marginal_not_applicable": parent_kind == "milestone",
+            }
+        )
+
+    return {
+        "generated_utc": datetime.now(UTC).isoformat(),
+        "artifact_kind": "thlb_locked_chain_ledger",
+        "tsa": recipe.tsa.to_dict(),
+        "recipe_path": "config/tsr/thlb_netdown.recipe.yaml",
+        "ledger_path": ledger_relative_path,
+        "baseline_managed_area_ha": float(baseline_managed_area_ha),
+        "latest_locked_parent_step_id": latest_locked_parent_step_id,
+        "latest_locked_row_order": latest_locked_row_order,
+        "entries": payload_entries,
+    }
+
+
 def _build_tsr_thlb_reconstruction_comparison_markdown(
     *,
     recipe: TsrThlbNetdownRecipeRecord,
@@ -13800,6 +13938,7 @@ def _load_exclusion_geometries(
     preserve_attributes: bool = False,
     allowed_geom_types: tuple[str, ...] = ("Polygon", "MultiPolygon"),
     bbox: tuple[float, float, float, float] | None = None,
+    defer_extent_mismatch_check: bool = False,
 ) -> tuple[gpd.GeoDataFrame | None, list[str], list[str]]:
     frames: list[gpd.GeoDataFrame] = []
     missing_sources: list[str] = []
@@ -13843,19 +13982,20 @@ def _load_exclusion_geometries(
         layer = layer.loc[layer.geometry.geom_type.isin(list(allowed_geom_types))]
         if layer.empty:
             continue
-        extent_mismatch_note = _evaluate_source_extent_mismatch(
-            source_entry=source_entry,
-            artifact_bbox_epsg3005=(
-                float(layer.total_bounds[0]),
-                float(layer.total_bounds[1]),
-                float(layer.total_bounds[2]),
-                float(layer.total_bounds[3]),
-            ),
-            target_bbox_epsg3005=bbox,
-        )
-        if extent_mismatch_note is not None:
-            extent_mismatch_notes.append(extent_mismatch_note)
-            continue
+        if not defer_extent_mismatch_check:
+            extent_mismatch_note = _evaluate_source_extent_mismatch(
+                source_entry=source_entry,
+                artifact_bbox_epsg3005=(
+                    float(layer.total_bounds[0]),
+                    float(layer.total_bounds[1]),
+                    float(layer.total_bounds[2]),
+                    float(layer.total_bounds[3]),
+                ),
+                target_bbox_epsg3005=bbox,
+            )
+            if extent_mismatch_note is not None:
+                extent_mismatch_notes.append(extent_mismatch_note)
+                continue
         frames.append(layer)
     if not frames:
         if extent_mismatch_notes:
