@@ -4713,7 +4713,8 @@ def test_run_tsr_thlb_parent_step_step13_combines_attribute_and_spatial_exclusio
                     "execution_status": "ready",
                     "step_kind": "netdown_rule",
                     "land_base_stage": "lhlb_to_thlb",
-                    "compiled_operation_type": "select_attribute",
+                    "compiled_operation_type": "aspatial_area_reduction",
+                    "benchmark_marginal_area_ha": 1.0,
                     "checkpoint_attribute_mode": "any",
                     "checkpoint_attribute_filters": [
                         {
@@ -4759,8 +4760,9 @@ def test_run_tsr_thlb_parent_step_step13_combines_attribute_and_spatial_exclusio
     assert result.status == "applied"
     output = gpd.read_feather(result.output_path)
     assert len(output) == 3
-    assert sorted(output["thlb"].tolist()) == [0, 0, 1]
-    assert sorted(output["thlb_fact"].tolist()) == pytest.approx([0.0, 0.0, 1.0])
+    assert sorted(output["thlb"].tolist()) == [0, 1, 1]
+    assert sorted(output["thlb_fact"].tolist()) == pytest.approx([0.0, 1.0, 1.0])
+    assert result.removed_area_ha == pytest.approx(1.4)
 
 
 def test_run_tsr_thlb_parent_step_lu_parallel_matches_serial_removed_area(
@@ -5461,8 +5463,12 @@ def test_specialized_compiled_logic_for_inoperable_uses_terrain_plus_step13_flag
         }
     ]
     steep_item = next(
-        item for item in items if item["compiled_operation_type"] == "select_attribute"
+        item
+        for item in items
+        if item["compiled_operation_type"] == "aspatial_reduction"
     )
+    assert steep_item["benchmark_marginal_area_ha"] == pytest.approx(31974.0)
+    assert steep_item["direct_target_removed_area"] is True
     assert steep_item["linked_source_entry_ids"] == [
         "reg_land_and_natural_resource_terrain_stability",
         "whse_imagery_and_base_maps_mot_highway_profiles_sp",
@@ -6085,6 +6091,76 @@ def test_apply_aspatial_area_reduction_targets_active_area_only() -> None:
     )
     assert updated["_stand_area_sqm"].tolist() == pytest.approx([50.0, 100.0])
     assert tsr_recipes._managed_area_ha(updated) == pytest.approx(0.005)
+
+
+def test_apply_aspatial_area_reduction_respects_checkpoint_attribute_filters() -> None:
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "_stand_area_sqm": [100.0, 100.0],
+            tsr_recipes.TSR_EFFECTIVE_AREA_SQM_COLUMN: [100.0, 100.0],
+            "FEATURE_AREA_SQM": [100.0, 100.0],
+            "thlb_fact": [1.0, 1.0],
+            "thlb": [1.0, 1.0],
+            "femic_step13_steep_slope_flag": [True, False],
+        },
+        geometry=[box(0, 0, 10, 10), box(11, 0, 21, 10)],
+        crs="EPSG:3005",
+    )
+
+    updated, removed_area_ha, affected_row_count = tsr_recipes._apply_aspatial_area_reduction(
+        checkpoint,
+        target_removed_area_ha=0.01,
+        filters=(
+            {
+                "field": "femic_step13_steep_slope_flag",
+                "operator": "eq",
+                "value": True,
+            },
+        ),
+        mode="any",
+    )
+
+    assert removed_area_ha == pytest.approx(0.01)
+    assert affected_row_count == 1
+    assert updated[tsr_recipes.TSR_EFFECTIVE_AREA_SQM_COLUMN].tolist() == pytest.approx(
+        [0.0, 100.0]
+    )
+    assert updated["_stand_area_sqm"].tolist() == pytest.approx([0.0, 100.0])
+    assert tsr_recipes._managed_area_ha(updated) == pytest.approx(0.01)
+
+
+def test_apply_aspatial_thlb_reduction_respects_checkpoint_attribute_filters() -> None:
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "_stand_area_sqm": [100.0, 100.0],
+            tsr_recipes.TSR_EFFECTIVE_AREA_SQM_COLUMN: [100.0, 100.0],
+            "FEATURE_AREA_SQM": [100.0, 100.0],
+            "thlb_fact": [1.0, 1.0],
+            "thlb": [1.0, 1.0],
+            "femic_step13_steep_slope_flag": [True, False],
+        },
+        geometry=[box(0, 0, 10, 10), box(11, 0, 21, 10)],
+        crs="EPSG:3005",
+    )
+
+    updated, removed_area_ha, affected_row_count = tsr_recipes._apply_aspatial_thlb_reduction(
+        checkpoint,
+        target_removed_area_ha=0.005,
+        filters=(
+            {
+                "field": "femic_step13_steep_slope_flag",
+                "operator": "eq",
+                "value": True,
+            },
+        ),
+        mode="any",
+    )
+
+    assert removed_area_ha == pytest.approx(0.005)
+    assert affected_row_count == 1
+    assert updated["thlb_fact"].tolist() == pytest.approx([0.5, 1.0])
+    assert updated["thlb"].tolist() == pytest.approx([0.5, 1.0])
+    assert tsr_recipes._managed_area_ha(updated) == pytest.approx(0.015)
 
 
 def test_run_tsr_thlb_parent_step_treats_no_matching_filtered_source_as_noop(

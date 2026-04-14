@@ -16465,3 +16465,11 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - step-13 steep-slope attribute exclusion net deduction `48,215.147 ha`; and
     - total strict step-13 net deduction `48,218.679 ha`.
   - The first attempt exposed a real bug where late-stage checkpoint-attribute exclusion reset surviving fractional state and inflated managed area. That bug is now fixed, and the repaired step-13 bounded run is the current source of truth.
+  - Current bounded next step for `#159`:
+    - treat step 13 as locked with:
+      - exact unstable-terrain overlay `3,114.834 ha`;
+      - calibrated steep-slope rollback `31,974.000 ha`; and
+      - total strict net deduction `35,088.834 ha` versus TSR Table 16 total `33,533 ha`;
+    - the chained post-step-13 remaining area is now `2,240,985.033 ha`, which is `-9,838.967 ha` relative to the TSR cumulative target;
+    - keep the calibrated steep-slope rollback bridge in place unless later cumulative drift forces a reopen; and
+    - move on to **step 14 only** from the curve-ready LHLB restart.

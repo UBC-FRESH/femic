@@ -14236,3 +14236,15 @@
     - steep-slope attribute exclusion net deduction `48,215.147 ha`; and
     - total strict step-13 net deduction `48,218.679 ha`.
   - The initial late-stage proof exposed a real bug where checkpoint-attribute exclusions reset surviving fractional state and inflated managed area; that bug is now fixed and the repaired run is the current step-13 source of truth.
+- Locked step 13 with an exact+calibrated bridge result and refreshed the chained ledger/dashboard through that row.
+  - Step 13 now uses:
+    - exact unstable-terrain overlay `3,114.834 ha`; and
+    - direct-target steep-slope THLB rollback `31,974.000 ha`.
+  - Locked total strict step-13 deduction:
+    - `35,088.834 ha` versus TSR Table 16 total `33,533 ha`;
+    - stepwise delta `+1,555.834 ha`.
+  - Locked chained cumulative after step 13:
+    - remaining area `2,240,985.033 ha`;
+    - TSR cumulative target `2,250,824.000 ha`; and
+    - cumulative delta `-9,838.967 ha`.
+  - The governing TSA29 dashboard surfaces now treat step 13 as refreshed and locked, with cumulative answers sourced from `config/tsr/thlb_locked_chain_ledger.json`.

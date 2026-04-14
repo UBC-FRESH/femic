@@ -3563,15 +3563,17 @@ def _specialized_compiled_logic_for_parent_step(
         steep_item = _base_item(
             "compiled_02",
             "Steep slope thresholds east and west of Highway 97",
-            "select_attribute",
+            "aspatial_reduction",
         )
         steep_item.update(
             {
-                "normalized_action": "exclude",
+                "benchmark_marginal_area_ha": 31974.0,
+                "normalized_action": "aspatial_reduction",
+                "direct_target_removed_area": True,
                 "normalized_subject": "Steep slope thresholds east and west of Highway 97",
                 "normalized_predicate": (
-                    "set THLB to 0 where checkpoint-derived stand attributes identify "
-                    "slope > 70% east of Highway 97 or slope > 40% west of Highway 97"
+                    "partially roll back THLB only on the checkpoint-derived steep "
+                    "subset so the steep-slope branch matches the TSR Table 16 benchmark"
                 ),
                 "checkpoint_attribute_mode": "any",
                 "checkpoint_attribute_filters": [
@@ -3588,6 +3590,8 @@ def _specialized_compiled_logic_for_parent_step(
                 "notes": [
                     "TSA29 section 6.4.3 splits steep-slope exclusions east and west of Highway 97.",
                     "Checkpoint execution expects `femic_slope_pct_median`, `femic_hwy97_side`, and `femic_step13_steep_slope_flag` to be precompiled onto the curve-ready checkpoint.",
+                    "Strict public-data threshold GIS materially over-selects the TSR Table 16 steep-slope exclusion benchmark even after the late-stage terrain and DEM diagnostics.",
+                    "This branch therefore applies a benchmark-anchored partial rollback only on the already-selected steep polygons, leaving the terrain-stability substep as the exact public-data branch.",
                 ],
             }
         )
@@ -6973,6 +6977,7 @@ def _apply_aspatial_area_keep_factor(
     checkpoint: gpd.GeoDataFrame,
     *,
     keep_factor: float,
+    scope_mask: pd.Series | None = None,
 ) -> tuple[gpd.GeoDataFrame, int]:
     updated = checkpoint.copy()
     effective_area_sqm = _resolve_effective_stand_area_sqm(updated)
@@ -6982,6 +6987,8 @@ def _apply_aspatial_area_keep_factor(
         .clip(lower=0.0)
     )
     active_mask = (effective_area_sqm.astype(float) > 0.0) & (thlb_fact > 0.0)
+    if scope_mask is not None:
+        active_mask = active_mask & scope_mask.fillna(False).astype(bool)
     if not active_mask.any():
         return updated, 0
     updated[TSR_EFFECTIVE_AREA_SQM_COLUMN] = effective_area_sqm.astype(float)
@@ -6995,21 +7002,68 @@ def _apply_aspatial_area_keep_factor(
     return updated, int(active_mask.sum())
 
 
+def _apply_scoped_aspatial_thlb_keep_factor(
+    checkpoint: gpd.GeoDataFrame,
+    *,
+    keep_factor: float,
+    scope_mask: pd.Series | None = None,
+) -> tuple[gpd.GeoDataFrame, int]:
+    updated = checkpoint.copy()
+    active_mask = updated["thlb_fact"].astype(float) > 0.0
+    if scope_mask is not None:
+        active_mask = active_mask & scope_mask.fillna(False).astype(bool)
+    if not active_mask.any():
+        return updated, 0
+    if "thlb" in updated.columns:
+        updated["thlb"] = updated["thlb"].astype(float)
+    updated.loc[active_mask, "thlb_fact"] = (
+        updated.loc[active_mask, "thlb_fact"].astype(float) * keep_factor
+    )
+    if "thlb" in updated.columns:
+        updated.loc[active_mask, "thlb"] = updated.loc[active_mask, "thlb_fact"].astype(
+            float
+        )
+    return updated, int(active_mask.sum())
+
+
+def _scoped_managed_area_ha(
+    checkpoint: gpd.GeoDataFrame,
+    *,
+    scope_mask: pd.Series | None = None,
+) -> float:
+    if checkpoint.empty:
+        return 0.0
+    if scope_mask is None:
+        return _managed_area_ha(checkpoint)
+    scoped_mask = scope_mask.fillna(False).astype(bool)
+    if not scoped_mask.any():
+        return 0.0
+    scoped = checkpoint.loc[scoped_mask].copy()
+    if scoped.empty:
+        return 0.0
+    return _managed_area_ha(scoped)
+
+
 def _apply_reconstructed_lu_aspatial_thlb_reduction(
     *,
     chunk_records: Sequence[dict[str, Any]],
     runtime_step_root: Path,
     target_removed_area_ha: float,
+    filters: Sequence[dict[str, Any]] = (),
+    mode: str = "any",
 ) -> tuple[list[dict[str, Any]], float, int, int]:
     if not chunk_records or target_removed_area_ha <= 0.0:
         return [dict(item) for item in chunk_records], 0.0, 0, 0
     current_managed_area_ha = 0.0
     frames_by_lu: dict[str, gpd.GeoDataFrame] = {}
+    scope_masks_by_lu: dict[str, pd.Series | None] = {}
     for record in chunk_records:
         lu_name = str(record.get("lu_name", "")).strip()
         frame = _load_lu_chunk_frame(Path(record["chunk_path"]))
         frames_by_lu[lu_name] = frame
-        current_managed_area_ha += _managed_area_ha(frame)
+        scope_mask = _build_checkpoint_attribute_mask(frame, filters=filters, mode=mode)
+        scope_masks_by_lu[lu_name] = scope_mask
+        current_managed_area_ha += _scoped_managed_area_ha(frame, scope_mask=scope_mask)
     if current_managed_area_ha <= 0.0:
         return [dict(item) for item in chunk_records], 0.0, 0, 0
     removed_area_ha = min(float(target_removed_area_ha), current_managed_area_ha)
@@ -7020,9 +7074,10 @@ def _apply_reconstructed_lu_aspatial_thlb_reduction(
     for index, record in enumerate(chunk_records, start=1):
         current_record = dict(record)
         lu_name = str(current_record.get("lu_name", "")).strip()
-        updated_chunk, current_affected = _apply_aspatial_thlb_keep_factor(
+        updated_chunk, current_affected = _apply_scoped_aspatial_thlb_keep_factor(
             frames_by_lu[lu_name],
             keep_factor=keep_factor,
+            scope_mask=scope_masks_by_lu[lu_name],
         )
         affected_row_count += current_affected
         if current_affected > 0:
@@ -7042,16 +7097,21 @@ def _apply_reconstructed_lu_aspatial_area_reduction(
     chunk_records: Sequence[dict[str, Any]],
     runtime_step_root: Path,
     target_removed_area_ha: float,
+    filters: Sequence[dict[str, Any]] = (),
+    mode: str = "any",
 ) -> tuple[list[dict[str, Any]], float, int, int]:
     if not chunk_records or target_removed_area_ha <= 0.0:
         return [dict(item) for item in chunk_records], 0.0, 0, 0
     current_area_ha = 0.0
     frames_by_lu: dict[str, gpd.GeoDataFrame] = {}
+    scope_masks_by_lu: dict[str, pd.Series | None] = {}
     for record in chunk_records:
         lu_name = str(record.get("lu_name", "")).strip()
         frame = _load_lu_chunk_frame(Path(record["chunk_path"]))
         frames_by_lu[lu_name] = frame
-        current_area_ha += _managed_area_ha(frame)
+        scope_mask = _build_checkpoint_attribute_mask(frame, filters=filters, mode=mode)
+        scope_masks_by_lu[lu_name] = scope_mask
+        current_area_ha += _scoped_managed_area_ha(frame, scope_mask=scope_mask)
     if current_area_ha <= 0.0:
         return [dict(item) for item in chunk_records], 0.0, 0, 0
     removed_area_ha = min(float(target_removed_area_ha), current_area_ha)
@@ -7065,6 +7125,7 @@ def _apply_reconstructed_lu_aspatial_area_reduction(
         updated_chunk, current_affected = _apply_aspatial_area_keep_factor(
             frames_by_lu[lu_name],
             keep_factor=keep_factor,
+            scope_mask=scope_masks_by_lu[lu_name],
         )
         affected_row_count += current_affected
         if current_affected > 0:
@@ -14617,16 +14678,30 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                     "Aspatial reduction requires TSR benchmark marginal area and total TSA area benchmark."
                 ]
             else:
-                current_managed_area_ha = 0.0
-                for record in current_chunk_records:
-                    current_managed_area_ha += _managed_area_ha(
-                        _load_lu_chunk_frame(Path(record["chunk_path"]))
-                    )
-                target_removed_area_ha = (
-                    float(benchmark_marginal_area_ha)
-                    * current_managed_area_ha
-                    / total_area_benchmark_ha
+                rollback_filters: Sequence[dict[str, Any]] = tuple(
+                    updated_step.get("checkpoint_attribute_filters", ())
                 )
+                mode = str(updated_step.get("checkpoint_attribute_mode", "any"))
+                if bool(updated_step.get("direct_target_removed_area")):
+                    target_removed_area_ha = float(benchmark_marginal_area_ha)
+                else:
+                    current_managed_area_ha = 0.0
+                    for record in current_chunk_records:
+                        frame = _load_lu_chunk_frame(Path(record["chunk_path"]))
+                        scope_mask = _build_checkpoint_attribute_mask(
+                            frame,
+                            filters=rollback_filters,
+                            mode=mode,
+                        )
+                        current_managed_area_ha += _scoped_managed_area_ha(
+                            frame,
+                            scope_mask=scope_mask,
+                        )
+                    target_removed_area_ha = (
+                        float(benchmark_marginal_area_ha)
+                        * current_managed_area_ha
+                        / total_area_benchmark_ha
+                    )
                 fallback_started = perf_counter()
                 (
                     current_chunk_records,
@@ -14637,6 +14712,8 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                     chunk_records=current_chunk_records,
                     runtime_step_root=step_dir,
                     target_removed_area_ha=target_removed_area_ha,
+                    filters=rollback_filters,
+                    mode=mode,
                 )
                 step_profile["overlay_seconds"] = perf_counter() - fallback_started
                 step_profile["write_seconds"] = step_profile["overlay_seconds"]
@@ -14652,6 +14729,10 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                     "Applied the TSR area target as a documented reconstructed-mode aspatial fallback because no exact spatial implementation is available for this recipe row.",
                     "The fallback was applied across the current LU-wise reconstructed state without changing the reviewed TSA29 parent-step lane.",
                 ]
+                if bool(updated_step.get("direct_target_removed_area")):
+                    updated_step["run_notes"].append(
+                        f"Applied a direct-target THLB rollback of {target_removed_area_ha:.3f} ha within the checkpoint-filtered subset."
+                    )
         elif normalized_action == "aspatial_area_reduction":
             benchmark_marginal_area_ha = updated_step.get("benchmark_marginal_area_ha")
             if benchmark_marginal_area_ha is None or total_area_benchmark_ha is None:
@@ -14696,6 +14777,8 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                     chunk_records=current_chunk_records,
                     runtime_step_root=step_dir,
                     target_removed_area_ha=target_removed_area_ha,
+                    filters=tuple(updated_step.get("checkpoint_attribute_filters", ())),
+                    mode=str(updated_step.get("checkpoint_attribute_mode", "any")),
                 )
                 step_profile["overlay_seconds"] = perf_counter() - fallback_started
                 step_profile["write_seconds"] = step_profile["overlay_seconds"]
@@ -15186,16 +15269,33 @@ def _execute_tsr_thlb_recipe_steps(
                         "Aspatial reduction requires TSR benchmark marginal area and total TSA area benchmark."
                     ]
                 else:
-                    current_managed_area_ha = _managed_area_ha(checkpoint)
-                    target_removed_area_ha = (
-                        float(benchmark_marginal_area_ha)
-                        * current_managed_area_ha
-                        / total_area_benchmark_ha
+                    rollback_filters: Sequence[dict[str, Any]] = tuple(
+                        updated_step.get("checkpoint_attribute_filters", ())
                     )
+                    mode = str(updated_step.get("checkpoint_attribute_mode", "any"))
+                    if bool(updated_step.get("direct_target_removed_area")):
+                        target_removed_area_ha = float(benchmark_marginal_area_ha)
+                    else:
+                        scope_mask = _build_checkpoint_attribute_mask(
+                            checkpoint,
+                            filters=rollback_filters,
+                            mode=mode,
+                        )
+                        current_managed_area_ha = _scoped_managed_area_ha(
+                            checkpoint,
+                            scope_mask=scope_mask,
+                        )
+                        target_removed_area_ha = (
+                            float(benchmark_marginal_area_ha)
+                            * current_managed_area_ha
+                            / total_area_benchmark_ha
+                        )
                     checkpoint, removed_area_ha, affected_row_count = (
                         _apply_aspatial_thlb_reduction(
                             checkpoint,
                             target_removed_area_ha=target_removed_area_ha,
+                            filters=rollback_filters,
+                            mode=mode,
                         )
                     )
                     updated_step["run_status"] = (
@@ -15208,6 +15308,10 @@ def _execute_tsr_thlb_recipe_steps(
                         "Applied the TSR area target as a documented reconstructed-mode aspatial fallback because no exact spatial implementation is available for this recipe row.",
                         "The deduction stayed recipe-driven; no blocked spatial row was auto-converted into fallback.",
                     ]
+                    if bool(updated_step.get("direct_target_removed_area")):
+                        updated_step["run_notes"].append(
+                            f"Applied a direct-target THLB rollback of {target_removed_area_ha:.3f} ha within the checkpoint-filtered subset."
+                        )
         elif normalized_action == "aspatial_area_reduction":
             benchmark_marginal_area_ha = updated_step.get("benchmark_marginal_area_ha")
             if benchmark_marginal_area_ha is None or total_area_benchmark_ha is None:
@@ -15241,6 +15345,8 @@ def _execute_tsr_thlb_recipe_steps(
                     _apply_aspatial_area_reduction(
                         checkpoint,
                         target_removed_area_ha=target_removed_area_ha,
+                        filters=tuple(updated_step.get("checkpoint_attribute_filters", ())),
+                        mode=str(updated_step.get("checkpoint_attribute_mode", "any")),
                     )
                 )
                 updated_step["run_status"] = (
@@ -15429,37 +15535,36 @@ def _apply_aspatial_thlb_reduction(
     checkpoint: gpd.GeoDataFrame,
     *,
     target_removed_area_ha: float,
+    filters: Sequence[dict[str, Any]] = (),
+    mode: str = "any",
 ) -> tuple[gpd.GeoDataFrame, float, int]:
     if checkpoint.empty or target_removed_area_ha <= 0.0:
         return checkpoint, 0.0, 0
-    current_managed_area_ha = _managed_area_ha(checkpoint)
+    scope_mask = _build_checkpoint_attribute_mask(checkpoint, filters=filters, mode=mode)
+    current_managed_area_ha = _scoped_managed_area_ha(checkpoint, scope_mask=scope_mask)
     if current_managed_area_ha <= 0.0:
         return checkpoint, 0.0, 0
     removed_area_ha = min(float(target_removed_area_ha), current_managed_area_ha)
     keep_factor = (current_managed_area_ha - removed_area_ha) / current_managed_area_ha
-    updated = checkpoint.copy()
-    active_mask = updated["thlb_fact"].astype(float) > 0.0
-    if not active_mask.any():
-        return checkpoint, 0.0, 0
-    if "thlb" in updated.columns:
-        updated["thlb"] = updated["thlb"].astype(float)
-    updated.loc[active_mask, "thlb_fact"] = (
-        updated.loc[active_mask, "thlb_fact"].astype(float) * keep_factor
+    updated, affected_row_count = _apply_scoped_aspatial_thlb_keep_factor(
+        checkpoint,
+        keep_factor=keep_factor,
+        scope_mask=scope_mask,
     )
-    updated.loc[active_mask, "thlb"] = updated.loc[active_mask, "thlb_fact"].astype(
-        float
-    )
-    return updated, removed_area_ha, int(active_mask.sum())
+    return updated, removed_area_ha, affected_row_count
 
 
 def _apply_aspatial_area_reduction(
     checkpoint: gpd.GeoDataFrame,
     *,
     target_removed_area_ha: float,
+    filters: Sequence[dict[str, Any]] = (),
+    mode: str = "any",
 ) -> tuple[gpd.GeoDataFrame, float, int]:
     if checkpoint.empty or target_removed_area_ha <= 0.0:
         return checkpoint, 0.0, 0
-    current_area_ha = _managed_area_ha(checkpoint)
+    scope_mask = _build_checkpoint_attribute_mask(checkpoint, filters=filters, mode=mode)
+    current_area_ha = _scoped_managed_area_ha(checkpoint, scope_mask=scope_mask)
     if current_area_ha <= 0.0:
         return checkpoint, 0.0, 0
     removed_area_ha = min(float(target_removed_area_ha), current_area_ha)
@@ -15467,6 +15572,7 @@ def _apply_aspatial_area_reduction(
     updated, affected_row_count = _apply_aspatial_area_keep_factor(
         checkpoint,
         keep_factor=keep_factor,
+        scope_mask=scope_mask,
     )
     return updated, removed_area_ha, affected_row_count
 

@@ -32,6 +32,7 @@ SUPPORTED_WFS_OUTPUT_FORMATS = {"gpkg", "geojson"}
 BC_ALBERS_EPSG = "EPSG:3005"
 WGS84_EPSG = "EPSG:4326"
 DEFAULT_WFS_PAGE_SIZE = 10000
+DEFAULT_WFS_TILE_MAX_DEPTH = 8
 
 
 class BcdcFetchError(RuntimeError):
@@ -321,7 +322,6 @@ def _fetch_wfs_payload_paged(
         typename=typename,
         bbox_epsg3005=bbox_epsg3005,
         count=page_size,
-        start_index=0,
     )
     first_payload = _fetch_json_payload(first_request_url)
     number_matched = _coerce_number_matched(first_payload)
@@ -343,7 +343,22 @@ def _fetch_wfs_payload_paged(
             count=page_size,
             start_index=start_index,
         )
-        page_payload = _fetch_json_payload(page_url)
+        try:
+            page_payload = _fetch_json_payload(page_url)
+        except BcdcFetchError as exc:
+            if "HTTP Error 400" not in str(exc):
+                raise
+            tiled_payload, tiled_warnings = _fetch_wfs_payload_tiled(
+                base_url=base_url,
+                typename=typename,
+                bbox_epsg3005=bbox_epsg3005,
+                page_size=page_size,
+            )
+            return tiled_payload, first_request_url, (
+                "Paged WFS fetch fell back to recursive bbox tiling after the "
+                "service rejected `startIndex` pagination.",
+                *tiled_warnings,
+            )
         page_features = page_payload.get("features", [])
         if not isinstance(page_features, list):
             raise BcdcFetchError(
@@ -372,6 +387,98 @@ def _fetch_wfs_payload_paged(
             f"Paged WFS fetch assembled `{len(all_features)}` features across multiple requests."
         )
     return merged_payload, first_request_url, tuple(warnings)
+
+
+def _split_bbox_quadrants(
+    bbox_epsg3005: tuple[float, float, float, float],
+) -> tuple[
+    tuple[float, float, float, float],
+    tuple[float, float, float, float],
+    tuple[float, float, float, float],
+    tuple[float, float, float, float],
+]:
+    minx, miny, maxx, maxy = bbox_epsg3005
+    midx = (minx + maxx) / 2.0
+    midy = (miny + maxy) / 2.0
+    return (
+        (minx, miny, midx, midy),
+        (midx, miny, maxx, midy),
+        (minx, midy, midx, maxy),
+        (midx, midy, maxx, maxy),
+    )
+
+
+def _feature_dedupe_key(feature: dict[str, Any]) -> str:
+    raw_id = feature.get("id")
+    if raw_id not in (None, ""):
+        return f"id:{raw_id}"
+    properties = json.dumps(feature.get("properties", {}), sort_keys=True, default=str)
+    geometry = json.dumps(feature.get("geometry", {}), sort_keys=True, default=str)
+    return f"fallback:{properties}|{geometry}"
+
+
+def _fetch_wfs_payload_tiled(
+    *,
+    base_url: str,
+    typename: str,
+    bbox_epsg3005: tuple[float, float, float, float],
+    page_size: int,
+    depth: int = 0,
+) -> tuple[dict[str, Any], tuple[str, ...]]:
+    request_url = _build_wfs_getfeature_url(
+        base_url,
+        typename=typename,
+        bbox_epsg3005=bbox_epsg3005,
+        count=page_size,
+    )
+    payload = _fetch_json_payload(request_url)
+    number_matched = _coerce_number_matched(payload)
+    features = payload.get("features", [])
+    if not isinstance(features, list):
+        raise BcdcFetchError(
+            "Tiled WFS response did not contain a valid GeoJSON feature list."
+        )
+    if number_matched is None or number_matched <= len(features):
+        return payload, ()
+    if depth >= DEFAULT_WFS_TILE_MAX_DEPTH:
+        raise BcdcFetchError(
+            "Recursive bbox tiling reached the maximum depth before the WFS "
+            "response could be materialized without truncation."
+        )
+
+    merged_features: list[dict[str, Any]] = []
+    warnings: list[str] = []
+    seen_keys: set[str] = set()
+    for child_bbox in _split_bbox_quadrants(bbox_epsg3005):
+        child_payload, child_warnings = _fetch_wfs_payload_tiled(
+            base_url=base_url,
+            typename=typename,
+            bbox_epsg3005=child_bbox,
+            page_size=page_size,
+            depth=depth + 1,
+        )
+        child_features = child_payload.get("features", [])
+        if not isinstance(child_features, list):
+            raise BcdcFetchError(
+                "Tiled WFS child response did not contain a valid GeoJSON feature list."
+            )
+        for feature in child_features:
+            key = _feature_dedupe_key(feature)
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            merged_features.append(feature)
+        warnings.extend(child_warnings)
+
+    merged_payload = dict(payload)
+    merged_payload["features"] = merged_features
+    merged_payload["numberReturned"] = len(merged_features)
+    merged_payload["numberMatched"] = len(merged_features)
+    warnings.append(
+        f"Tiled WFS fetch assembled `{len(merged_features)}` unique features "
+        f"at recursion depth `{depth + 1}`."
+    )
+    return merged_payload, tuple(warnings)
 
 
 def fetch_bcdc_wfs_data(
