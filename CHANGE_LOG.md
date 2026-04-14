@@ -14193,3 +14193,14 @@
     step-run artifacts.
   - This supersedes the earlier bogus `44,467.973 ha` step-7 result and moves
     step 7 into “close enough to adjudicate” territory.
+- Locked step 12 as a benchmark-anchored public-data aspatial bridge and refreshed the TSA29 dashboard through step 12.
+  - Step 12 is now executed as `aspatial_area_reduction` instead of a manual-review skip because no trustworthy public exact PRA boundary is available.
+  - Locked step-12 result:
+    - strict net deduction `68,401.000 ha`;
+    - TSR benchmark `68,401.000 ha`; and
+    - stepwise delta `0.000 ha`.
+  - Locked chained cumulative after step 12:
+    - remaining area `2,276,073.867 ha`;
+    - TSR cumulative target `2,284,357.000 ha`; and
+    - cumulative delta `-8,283.133 ha`.
+  - The governing TSA29 dashboard surfaces now treat steps `2` through `12` as refreshed, with cumulative answers sourced from `config/tsr/thlb_locked_chain_ledger.json`.
