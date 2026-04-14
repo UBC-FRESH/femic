@@ -14219,3 +14219,5 @@
     - `python -m pytest tests/test_cli_main.py -k "thlb_netdown_run" -q`
     - `python -m sphinx -b html docs _build/html -W`
   - Targeted `python -m mypy src/femic/tsr_catalog/recipes.py src/femic/cli/main.py` still reports the pre-existing local missing stub for `shapely.geometry`.
+- Added `types-shapely` to the dev dependency set so targeted `mypy` runs can type-check `shapely.geometry` imports instead of failing on a missing-stub environment gap.
+- Added an explicit `mypy` override for `shapely.*` so FEMIC type checks no longer depend on local stub-resolution quirks in the active environment.

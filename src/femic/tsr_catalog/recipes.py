@@ -5717,9 +5717,9 @@ def _select_intersecting_landscape_units_for_checkpoint(
         checkpoint_bc = checkpoint_bc.set_crs(BC_ALBERS_EPSG)
     else:
         checkpoint_bc = checkpoint_bc.to_crs(BC_ALBERS_EPSG)
-    bbox = tuple(map(float, checkpoint_bc.total_bounds))
+    minx, miny, maxx, maxy = (float(value) for value in checkpoint_bc.total_bounds)
     bbox_started = perf_counter()
-    candidate = lu_layer.loc[lu_layer.geometry.intersects(box(*bbox))].copy()
+    candidate = lu_layer.loc[lu_layer.geometry.intersects(box(minx, miny, maxx, maxy))].copy()
     profiling["lu_bbox_filter_seconds"] = perf_counter() - bbox_started
     if candidate.empty:
         raise TsrRecipeError(
