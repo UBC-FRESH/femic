@@ -16363,3 +16363,15 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - The earlier bogus `~44.5k ha` result is superseded; the remaining step-7
     seam is now a much smaller semantics/tolerance question, not a broken exact
     overlay state model.
+- 2026-04-13: Locked step 8 as good enough and refreshed the dashboard through step 8.
+  - Bounded step-8-only rerun from the locked post-step-7 checkpoint now lands at:
+    - strict net deduction: `131,567.592 ha`;
+    - TSR benchmark: `154,056.000 ha`; and
+    - delta: `-22,488.408 ha`.
+  - Substep read:
+    - UWR no-harvest net deduction: `23.175 ha`; and
+    - WHA no-harvest net deduction: `131,544.417 ha`.
+  - Post-step-8 remaining area is `2,755,370.817 ha`.
+  - The TSA29 reconstruction dashboard artifacts were refreshed so parent-step
+    sections `2` through `8` are now the governing ledger while the broader
+    dashboard rebuild follow-on remains open.

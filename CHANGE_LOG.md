@@ -14146,5 +14146,18 @@
     - strict net deduction: `223,638.262 ha`;
     - TSR benchmark: `210,719.000 ha`; and
     - delta: `+12,919.262 ha`.
+  - Step 7 is now treated as close enough to adjudicate and no longer uses the
+    earlier bogus `44,467.973 ha` result.
+- Locked step 8 as good enough and refreshed the dashboard through step 8.
+  - Bounded step-8-only rerun from the locked post-step-7 checkpoint now reports:
+    - strict net deduction: `131,567.592 ha`;
+    - TSR benchmark: `154,056.000 ha`; and
+    - delta: `-22,488.408 ha`.
+  - Substep read:
+    - UWR no-harvest net deduction: `23.175 ha`; and
+    - WHA no-harvest net deduction: `131,544.417 ha`.
+  - Post-step-8 remaining area is `2,755,370.817 ha`.
+  - `thlb_reconstruction_comparison.{md,json}` was refreshed so parent-step
+    sections `2` through `8` are the current governing dashboard ledger.
   - This supersedes the earlier bogus `44,467.973 ha` step-7 result and moves
     step 7 into “close enough to adjudicate” territory.
