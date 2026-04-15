@@ -14277,3 +14277,15 @@
     - TSR cumulative target `1,929,780.000 ha`; and
     - cumulative delta `-3,386.406 ha`.
   - The governing next step is now **step 15 only** from the official `lhlb_curve_ready_checkpoint.feather` restart seam, with steps 13/14 frozen except when rerun solely to construct downstream state.
+- Locked step 15 with the repaired broadleaf-leading operability proxy and refreshed the governing ledger/dashboard.
+  - Locked strict step-15 net deduction:
+    - `48,308.452 ha`.
+  - TSR step-15 benchmark:
+    - `49,052.000 ha`.
+  - Locked stepwise delta:
+    - `-743.548 ha`.
+  - Locked chained cumulative after step 15:
+    - remaining area `1,878,085.142 ha`;
+    - TSR cumulative target `1,880,728.000 ha`; and
+    - cumulative delta `-2,642.858 ha`.
+  - The governing next step is now **step 16 only** from the official `lhlb_curve_ready_checkpoint.feather` restart seam.

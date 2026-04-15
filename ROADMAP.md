@@ -16511,3 +16511,16 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Governing follow-on:
     - move on to **step 15 only** from the official `lhlb_curve_ready_checkpoint.feather` restart seam; and
     - keep step 13/14 frozen except when rerun purely as state-construction dependencies.
+- 2026-04-15: Locked step 15 with the repaired broadleaf-leading operability proxy and refreshed the governing ledger/dashboard.
+  - Locked strict step-15 net deduction:
+    - `48,308.452 ha`.
+  - TSR step-15 benchmark:
+    - `49,052.000 ha`.
+  - Locked stepwise delta:
+    - `-743.548 ha`.
+  - Locked chained cumulative after step 15:
+    - remaining area `1,878,085.142 ha`;
+    - TSR cumulative target `1,880,728.000 ha`; and
+    - cumulative delta `-2,642.858 ha`.
+  - Governing follow-on:
+    - move on to **step 16 only** from the official `lhlb_curve_ready_checkpoint.feather` restart seam.
