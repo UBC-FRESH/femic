@@ -328,10 +328,23 @@ def assign_si_levels_from_stratum_quantiles(
                     )
                 if restricted:
                     level_quants = restricted
-        for si_level, quantiles in level_quants.items():
+        if not level_quants:
+            continue
+        quantile_triplets = {level: tuple(int(v) for v in values) for level, values in level_quants.items()}
+        min_q_lo = min(q_lo for q_lo, _q_mid, _q_hi in quantile_triplets.values())
+        max_q_hi = max(q_hi for _q_lo, _q_mid, q_hi in quantile_triplets.values())
+        for si_level, quantiles in quantile_triplets.items():
             q_lo, _q_mid, q_hi = [int(v) for v in quantiles]
-            si_lo = stratum_si_stats.loc[stratum_code].loc[f"{q_lo}%"]
-            si_hi = stratum_si_stats.loc[stratum_code].loc[f"{q_hi}%"]
+            si_lo = (
+                float("-inf")
+                if q_lo == min_q_lo
+                else stratum_si_stats.loc[stratum_code].loc[f"{q_lo}%"]
+            )
+            si_hi = (
+                float("inf")
+                if q_hi == max_q_hi
+                else stratum_si_stats.loc[stratum_code].loc[f"{q_hi}%"]
+            )
             table.loc[
                 (table[stratum_matched_col] == stratum_code)
                 & (table[site_index_col] >= si_lo)

@@ -476,6 +476,26 @@ def test_assign_si_levels_from_stratum_quantiles_respects_allowed_levels() -> No
     assert set(out["si_level"].dropna().unique()) == {"L", "H"}
 
 
+def test_assign_si_levels_from_stratum_quantiles_assigns_tail_rows() -> None:
+    f_table = pd.DataFrame(
+        {
+            "stratum_matched": ["S1"] * 8,
+            "SITE_INDEX": [1.0, 5.0, 10.0, 15.0, 20.0, 30.0, 40.0, 100.0],
+        }
+    )
+    base = {"L": [5, 20, 35], "M": [35, 50, 65], "H": [65, 80, 95]}
+
+    out, _stats = assign_si_levels_from_stratum_quantiles(
+        f_table=f_table,
+        si_levelquants=base,
+        message_fn=lambda _m: None,
+    )
+
+    assert out.loc[0, "si_level"] == "L"
+    assert out.loc[7, "si_level"] == "H"
+    assert out["si_level"].notna().all()
+
+
 def test_assign_si_levels_from_stratum_quantiles_handles_no_matched_rows() -> None:
     f_table = pd.DataFrame(
         {

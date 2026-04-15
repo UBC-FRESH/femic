@@ -5831,6 +5831,7 @@ def _load_cached_landscape_unit_partition_records(
     instance_root: Path,
     expected_row_count: int | None = None,
     expected_area_ha: float | None = None,
+    expected_columns: Sequence[str] | None = None,
 ) -> tuple[tuple[str, ...], list[dict[str, Any]]] | None:
     partition_root = default_tsr_thlb_lu_partition_root(instance_root=instance_root)
     if not partition_root.exists():
@@ -5856,6 +5857,16 @@ def _load_cached_landscape_unit_partition_records(
                 rel_tol=0.0,
                 abs_tol=1e-6,
             ):
+                continue
+        if expected_columns is not None:
+            cached_columns = payload.get("input_columns")
+            if not isinstance(cached_columns, list):
+                continue
+            if {
+                str(value).strip()
+                for value in cached_columns
+                if str(value).strip()
+            } != {str(value).strip() for value in expected_columns if str(value).strip()}:
                 continue
         selected_raw = payload.get("selected_landscape_units", [])
         records_raw = payload.get("chunk_records", [])
@@ -6093,10 +6104,23 @@ def _materialize_checkpoint_landscape_unit_partitions(
     ).hexdigest()[:12]
     partition_dir = partition_root / f"{checkpoint_path.stem}.{digest}"
     metadata_path = partition_dir / "partition_metadata.json"
+    checkpoint_columns = sorted(
+        {str(column).strip() for column in checkpoint.columns if str(column).strip()}
+    )
     if metadata_path.exists():
         payload = json.loads(metadata_path.read_text(encoding="utf-8"))
         records_raw = payload.get("chunk_records", [])
-        if isinstance(records_raw, list):
+        cached_columns = payload.get("input_columns")
+        if (
+            isinstance(records_raw, list)
+            and isinstance(cached_columns, list)
+            and {
+                str(value).strip()
+                for value in cached_columns
+                if str(value).strip()
+            }
+            == set(checkpoint_columns)
+        ):
             cached_records: list[dict[str, Any]] = []
             for item in records_raw:
                 if not isinstance(item, dict):
@@ -6145,6 +6169,7 @@ def _materialize_checkpoint_landscape_unit_partitions(
         "checkpoint_path": str(checkpoint_path.expanduser().resolve()),
         "input_row_count": int(len(checkpoint)),
         "input_area_ha": float(checkpoint.geometry.area.astype(float).sum() / 10000.0),
+        "input_columns": checkpoint_columns,
         "selected_landscape_units": list(selected_landscape_units),
         "chunk_records": [
             {
@@ -6418,6 +6443,12 @@ def _checkpoint_has_step13_enrichment(path: Path) -> bool:
             "femic_slope_pct_median",
             "femic_hwy97_side",
             "femic_step13_steep_slope_flag",
+            "stratum",
+            "stratum_matched",
+            "si_level",
+            "au",
+            "curve1",
+            "curve2",
         )
     )
 
@@ -6485,6 +6516,12 @@ def _prepare_reconstructed_restart_checkpoint_frame(
         prepared = prepared.set_crs(BC_ALBERS_EPSG)
     else:
         prepared = prepared.to_crs(BC_ALBERS_EPSG)
+    if "thlb_fact" not in prepared.columns and {
+        "thlb_raw",
+        "thlb_area",
+        "thlb",
+    }.intersection(prepared.columns):
+        prepared, _signal_source = _normalize_checkpoint_thlb_fact(prepared)
     prepared = _update_geometry_measure_columns(prepared)
     if "thlb_fact" in prepared.columns:
         prepared["thlb_fact"] = (
@@ -6873,6 +6910,7 @@ def _prepare_reconstructed_lu_chunk_records(
         instance_root=instance_root,
         expected_row_count=len(checkpoint),
         expected_area_ha=float(checkpoint.geometry.area.astype(float).sum() / 10000.0),
+        expected_columns=checkpoint.columns,
     )
     profiling["lu_selection_cache_lookup_seconds"] = (
         perf_counter() - cache_lookup_started
@@ -10099,6 +10137,7 @@ def _apply_curve_volume_threshold_exclusion(
         updated.loc[exclude_mask, "thlb_fact"] = 0.0
         updated.loc[exclude_mask, "thlb"] = 0
         updated = _assign_fragment_feature_ids(updated)
+        updated = _synchronize_fragment_thlb_state(updated)
         return (
             updated,
             removed_area_ha,
@@ -10109,8 +10148,7 @@ def _apply_curve_volume_threshold_exclusion(
         )
     remaining = checkpoint.loc[~exclude_mask].copy()
     remaining = _assign_fragment_feature_ids(remaining)
-    remaining["thlb_fact"] = 1.0
-    remaining["thlb"] = 1
+    remaining = _synchronize_fragment_thlb_state(remaining)
     return (
         remaining,
         removed_area_ha,
@@ -14541,6 +14579,89 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                         "No active LU-clipped fragment rows matched the checkpoint attribute filters."
                     )
                     updated_step["run_notes"] = run_notes
+            elif operation_type == "curve_volume_threshold_exclusion":
+                overlay_started = perf_counter()
+                checkpoint_before, _ = _merge_reconstructed_lu_chunk_records(
+                    current_chunk_records
+                )
+                managed_area_before_curve_ha = _managed_area_ha(checkpoint_before)
+                try:
+                    (
+                        checkpoint_after,
+                        _gross_removed_area_ha,
+                        missing_metric_count,
+                        affected_row_count,
+                        scoped_row_count,
+                        scoped_active_row_count,
+                    ) = _apply_curve_volume_threshold_exclusion(
+                        checkpoint_before,
+                        instance_root=instance_root,
+                        compiled_item=step,
+                        preserve_geometry=False,
+                    )
+                except TsrRecipeError as exc:
+                    step_profile["overlay_seconds"] = perf_counter() - overlay_started
+                    updated_step["run_status"] = "unsupported"
+                    updated_step["run_notes"] = [str(exc)]
+                else:
+                    managed_area_after_curve_ha = _managed_area_ha(checkpoint_after)
+                    removed_area_ha = max(
+                        0.0,
+                        managed_area_before_curve_ha - managed_area_after_curve_ha,
+                    )
+                    partition_started = perf_counter()
+                    current_chunk_records = _materialize_checkpoint_landscape_unit_partitions(
+                        checkpoint=checkpoint_after,
+                        checkpoint_path=step_dir / "curve_threshold_checkpoint.feather",
+                        lu_frame=lu_frame,
+                        selected_landscape_units=tuple(
+                            str(value).strip()
+                            for value in lu_frame.get(
+                                "LANDSCAPE_UNIT_NAME", pd.Series(dtype=str)
+                            )
+                            .fillna("")
+                            .astype(str)
+                            .tolist()
+                            if str(value).strip()
+                        ),
+                        instance_root=instance_root,
+                    )
+                    step_profile["write_seconds"] = perf_counter() - partition_started
+                    step_profile["overlay_seconds"] = perf_counter() - overlay_started
+                    step_profile["lu_chunk_count"] = len(current_chunk_records)
+                    updated_step["affected_fragment_count"] = int(affected_row_count)
+                    updated_step["affected_area_ha"] = float(removed_area_ha)
+                    updated_step["missing_curve_metric_row_count"] = int(
+                        missing_metric_count
+                    )
+                    updated_step["checkpoint_filter_row_count"] = int(scoped_row_count)
+                    updated_step["active_checkpoint_filter_row_count"] = int(
+                        scoped_active_row_count
+                    )
+                    updated_step["curve_metric_description"] = _describe_curve_metric(
+                        step
+                    )
+                    run_notes = [
+                        f"Curve threshold evaluated using {updated_step['curve_metric_description']}."
+                    ]
+                    if missing_metric_count:
+                        run_notes.append(
+                            f"{missing_metric_count} active scoped rows had no usable curve metric and were retained."
+                        )
+                    if removed_area_ha > 0:
+                        updated_step["run_status"] = "applied"
+                        updated_step["spatial_application_mode"] = (
+                            "curve_volume_threshold_exclusion"
+                        )
+                        run_notes.append(
+                            "Applied curve-threshold exclusion directly against the curve-ready checkpoint without requiring fetched source polygons."
+                        )
+                    else:
+                        updated_step["run_status"] = "applied_noop"
+                        run_notes.append(
+                            "No active curve-ready checkpoint rows fell below the configured curve threshold."
+                        )
+                    updated_step["run_notes"] = run_notes
             else:
                 source_load_start = perf_counter()
                 (
@@ -15024,6 +15145,59 @@ def _execute_tsr_thlb_recipe_steps(
                     else "No active checkpoint rows matched the checkpoint attribute filters."
                 )
                 updated_step["run_notes"] = run_notes
+            elif operation_type == "curve_volume_threshold_exclusion":
+                overlay_start = perf_counter()
+                try:
+                    (
+                        checkpoint,
+                        _gross_removed_area_ha,
+                        missing_metric_count,
+                        affected_row_count,
+                        scoped_row_count,
+                        scoped_active_row_count,
+                    ) = _apply_curve_volume_threshold_exclusion(
+                        checkpoint,
+                        instance_root=instance_root,
+                        compiled_item=step,
+                        preserve_geometry=False,
+                    )
+                except TsrRecipeError as exc:
+                    step_profile["overlay_seconds"] = perf_counter() - overlay_start
+                    updated_step["run_status"] = "unsupported"
+                    updated_step["run_notes"] = [str(exc)]
+                else:
+                    step_profile["overlay_seconds"] = perf_counter() - overlay_start
+                    removed_area_ha = max(
+                        0.0, managed_area_before_step_ha - _managed_area_ha(checkpoint)
+                    )
+                    updated_step["affected_area_ha"] = float(removed_area_ha)
+                    updated_step["affected_fragment_count"] = int(affected_row_count)
+                    updated_step["missing_curve_metric_row_count"] = int(
+                        missing_metric_count
+                    )
+                    updated_step["checkpoint_filter_row_count"] = int(scoped_row_count)
+                    updated_step["active_checkpoint_filter_row_count"] = int(
+                        scoped_active_row_count
+                    )
+                    updated_step["curve_metric_description"] = _describe_curve_metric(
+                        step
+                    )
+                    updated_step["run_status"] = (
+                        "applied" if removed_area_ha > 0 else "applied_noop"
+                    )
+                    run_notes = [
+                        f"Curve threshold evaluated using {updated_step['curve_metric_description']}."
+                    ]
+                    if missing_metric_count:
+                        run_notes.append(
+                            f"{missing_metric_count} active scoped rows had no usable curve metric and were retained."
+                        )
+                    run_notes.append(
+                        "Applied curve-threshold exclusion directly against checkpoint geometry without requiring fetched source polygons."
+                        if removed_area_ha > 0
+                        else "No active curve-ready checkpoint rows fell below the configured curve threshold."
+                    )
+                    updated_step["run_notes"] = run_notes
             else:
                 source_load_start = perf_counter()
                 exclusion_geometries, missing_sources, extent_mismatch_notes = (

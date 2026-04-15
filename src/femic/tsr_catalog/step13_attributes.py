@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 import json
 from pathlib import Path
 import re
-from typing import cast
+from typing import Callable, cast
 import urllib.request
 import zipfile
 
@@ -30,6 +30,15 @@ from shapely.ops import linemerge, nearest_points, split, unary_union  # type: i
 
 from femic.bcdc_catalog import resolve_bcdc_candidates
 from femic.bcdc_fetch import BC_ALBERS_EPSG
+from femic.pipeline.bundle import assign_curve_ids_from_au_table, tsa_curve_id_prefix
+from femic.pipeline.tsa import (
+    assign_au_ids_from_scsi,
+    assign_si_levels_from_stratum_quantiles,
+    assign_stratum_matches_from_au_table,
+    normalize_tsa_code,
+    validate_nonempty_au_assignment,
+)
+from femic.pipeline.vri import assign_stratum_codes_with_lexmatch
 
 from .recipes import (
     TsrRecipeError,
@@ -50,6 +59,14 @@ _STEP13_DEM_SOURCE_ENTRY_ID = "bc_dem_cded_250k"
 _STEP13_HIGHWAY_SOURCE_ENTRY_ID = "whse_imagery_and_base_maps_mot_highway_profiles_sp"
 _STEP13_DEFAULT_SLOPE_THRESHOLD_EAST = 70.0
 _STEP13_DEFAULT_SLOPE_THRESHOLD_WEST = 40.0
+_STEP13_STRAT_BEC_GROUPING = "zone"
+_STEP13_STRAT_SPECIES_COMBO_COUNT = 1
+_STEP13_STRAT_INCLUDE_TM_SPECIES2_FOR_SINGLE = True
+_STEP13_SI_LEVEL_QUANTILES: dict[str, list[int]] = {
+    "L": [5, 20, 35],
+    "M": [35, 50, 65],
+    "H": [65, 80, 95],
+}
 
 
 @dataclass(frozen=True)
@@ -71,6 +88,15 @@ class TsrThlbStep13AttributeCompileResult:
     slope_value_count: int
     highway_side_counts: dict[str, int]
     steep_slope_flag_count: int
+    curve_ready_row_count: int
+    missing_curve1_count: int
+
+
+def _row_apply(
+    df: pd.DataFrame, func: Callable[[pd.Series], object], axis: int = 1
+) -> pd.Series:
+    del axis
+    return cast(pd.Series, df.apply(func, axis="columns"))
 
 
 def default_tsr_thlb_step13_attribute_output_path(*, instance_root: Path) -> Path:
@@ -152,6 +178,10 @@ def compile_tsr_thlb_step13_attributes(
     enriched["femic_slope_pct_median"] = slope_series.astype(float)
     enriched["femic_hwy97_side"] = highway_side
     enriched["femic_step13_steep_slope_flag"] = steep_slope_flag
+    enriched = _assign_curve_ready_bundle_fields(
+        checkpoint=enriched,
+        instance_root=resolved_instance_root,
+    )
     resolved_output_path.parent.mkdir(parents=True, exist_ok=True)
     enriched.to_feather(resolved_output_path)
 
@@ -161,6 +191,7 @@ def compile_tsr_thlb_step13_attributes(
     }
     slope_value_count = int(slope_series.notna().sum())
     steep_slope_flag_count = int(steep_slope_flag.sum())
+    missing_curve1_count = int(pd.Series(enriched.get("curve1")).isna().sum())
     audit_payload = {
         "generated_utc": datetime.now(UTC).isoformat(),
         "instance_root": str(resolved_instance_root),
@@ -184,6 +215,8 @@ def compile_tsr_thlb_step13_attributes(
             "slope_value_count": slope_value_count,
             "highway_side_counts": side_counts,
             "steep_slope_flag_count": steep_slope_flag_count,
+            "curve_ready_row_count": int(len(enriched)),
+            "missing_curve1_count": missing_curve1_count,
         },
         "step13_rule": {
             "east_threshold_pct": _STEP13_DEFAULT_SLOPE_THRESHOLD_EAST,
@@ -213,7 +246,116 @@ def compile_tsr_thlb_step13_attributes(
         slope_value_count=slope_value_count,
         highway_side_counts=side_counts,
         steep_slope_flag_count=steep_slope_flag_count,
+        curve_ready_row_count=len(enriched),
+        missing_curve1_count=missing_curve1_count,
     )
+
+
+def _assign_curve_ready_bundle_fields(
+    *,
+    checkpoint: gpd.GeoDataFrame,
+    instance_root: Path,
+) -> gpd.GeoDataFrame:
+    bundle_root = instance_root / "data" / "model_input_bundle"
+    au_table_path = bundle_root / "au_table.csv"
+    if not au_table_path.exists():
+        raise TsrRecipeError(
+            "TSR late-stage curve-ready promotion requires `data/model_input_bundle/au_table.csv`."
+        )
+    au_table = pd.read_csv(au_table_path)
+    if au_table.empty:
+        raise TsrRecipeError(
+            "TSR late-stage curve-ready promotion requires a non-empty AU table."
+        )
+
+    tsa_values = sorted(
+        {
+            normalize_tsa_code(value)
+            for value in au_table.get("tsa", pd.Series(dtype=object)).dropna().tolist()
+        }
+    )
+    if not tsa_values:
+        raise TsrRecipeError(
+            "AU table does not contain any TSA codes for late-stage curve-ready promotion."
+        )
+    if len(tsa_values) != 1:
+        raise TsrRecipeError(
+            "TSR late-stage curve-ready promotion expects a single-TSA AU table, "
+            f"found {tsa_values!r}."
+        )
+    tsa_code = tsa_values[0]
+    au_table = au_table.copy()
+    au_table["tsa"] = au_table["tsa"].apply(normalize_tsa_code)
+
+    enriched = checkpoint.copy()
+    enriched["tsa_code"] = tsa_code
+    enriched = assign_stratum_codes_with_lexmatch(
+        f_table=enriched,
+        row_apply_fn=_row_apply,
+        bec_grouping=_STEP13_STRAT_BEC_GROUPING,
+        species_combo_count=_STEP13_STRAT_SPECIES_COMBO_COUNT,
+        include_tm_species2_for_single=_STEP13_STRAT_INCLUDE_TM_SPECIES2_FOR_SINGLE,
+    )
+    enriched = assign_stratum_matches_from_au_table(
+        f_table=enriched,
+        au_table=au_table,
+        tsa_list=[tsa_code],
+        stratum_col="stratum",
+        message_fn=lambda _msg: None,
+    )
+    allowed_levels_by_stratum = cast(
+        dict[str, list[str]],
+        au_table.groupby("stratum_code")["si_level"]
+        .apply(lambda s: sorted({str(value) for value in s.dropna().values}))
+        .to_dict(),
+    )
+    enriched, _ = assign_si_levels_from_stratum_quantiles(
+        f_table=enriched,
+        si_levelquants=_STEP13_SI_LEVEL_QUANTILES,
+        allowed_levels_by_stratum=allowed_levels_by_stratum,
+        stratum_matched_col="stratum_matched",
+        site_index_col="SITE_INDEX",
+        si_level_col="si_level",
+        message_fn=lambda _msg: None,
+    )
+
+    scsi_au = {
+        tsa_code: {
+            (str(row.stratum_code), str(row.si_level)): int(float(str(row.au_id)))
+            - 100000 * tsa_curve_id_prefix(tsa_code)
+            for row in au_table.itertuples(index=False)
+            if pd.notna(row.au_id) and pd.notna(row.stratum_code) and pd.notna(row.si_level)
+        }
+    }
+    enriched = assign_au_ids_from_scsi(
+        f_table=enriched,
+        scsi_au=scsi_au,
+        tsa_col="tsa_code",
+        stratum_matched_col="stratum_matched",
+        si_level_col="si_level",
+        au_col="au",
+    )
+    validate_nonempty_au_assignment(
+        f_table=enriched,
+        au_col="au",
+        site_index_col="SITE_INDEX",
+        stratum_matched_col="stratum_matched",
+        si_level_col="si_level",
+    )
+    enriched = assign_curve_ids_from_au_table(
+        f_table=enriched,
+        au_table=au_table,
+        pd_module=pd,
+        np_module=np,
+        au_col="au",
+        proj_age_col="PROJ_AGE_1",
+        managed_curve_col="treated_curve_id",
+        unmanaged_curve_col="untreated_curve_id",
+        curve1_col="curve1",
+        curve2_col="curve2",
+        managed_age_cutoff=60,
+    )
+    return enriched
 
 
 def _default_step13_attribute_audit_path(*, instance_root: Path) -> Path:

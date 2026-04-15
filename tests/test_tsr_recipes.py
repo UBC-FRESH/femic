@@ -20,6 +20,7 @@ from femic import bcdc_dwds
 from femic import tsr_catalog
 from femic.fmg.patchworks import build_fragments_geodataframe
 from femic.tsr_catalog import recipes as tsr_recipes
+from femic.tsr_catalog import step13_attributes as tsr_step13_attributes
 
 
 def _write_registry(tmp_path: Path) -> Path:
@@ -5076,6 +5077,7 @@ def test_load_cached_landscape_unit_partition_records_returns_records(
         json.dumps(
             {
                 "checkpoint_path": str(checkpoint_path),
+                "input_columns": ["VALUE", "geometry"],
                 "selected_landscape_units": ["West", "East"],
                 "chunk_records": [
                     {
@@ -5100,6 +5102,68 @@ def test_load_cached_landscape_unit_partition_records_returns_records(
     assert len(records) == 1
     assert records[0]["lu_name"] == "West"
     assert records[0]["chunk_path"] == chunk_path
+
+
+def test_load_cached_landscape_unit_partition_records_rejects_schema_mismatch(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "instance"
+    checkpoint_path = (instance_root / "data" / "checkpoint7.feather").resolve()
+    partition_root = tsr_recipes.default_tsr_thlb_lu_partition_root(
+        instance_root=instance_root
+    )
+    partition_dir = partition_root / "checkpoint7.cached"
+    partition_dir.mkdir(parents=True, exist_ok=True)
+    chunk_path = partition_dir / "001_west.feather"
+    gpd.GeoDataFrame(
+        {"VALUE": [1]},
+        geometry=[box(0, 0, 1, 1)],
+        crs="EPSG:3005",
+    ).to_feather(chunk_path)
+    (partition_dir / "partition_metadata.json").write_text(
+        json.dumps(
+            {
+                "checkpoint_path": str(checkpoint_path),
+                "input_columns": ["VALUE", "geometry"],
+                "selected_landscape_units": ["West"],
+                "chunk_records": [
+                    {
+                        "lu_name": "West",
+                        "chunk_path": "001_west.feather",
+                        "area_ha": 1.0,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    cached = tsr_recipes._load_cached_landscape_unit_partition_records(
+        checkpoint_path=checkpoint_path,
+        instance_root=instance_root,
+        expected_columns=["VALUE", "geometry", "curve1"],
+    )
+
+    assert cached is None
+
+
+def test_prepare_reconstructed_restart_checkpoint_frame_restores_thlb_fact() -> None:
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "SOURCE_FEATURE_ID": [1, 2],
+            "_stand_area_sqm": [100.0, 200.0],
+            "thlb_raw": [0.25, 0.75],
+            "thlb_area": [0.0025, 0.015],
+        },
+        geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10)],
+        crs="EPSG:3005",
+    )
+
+    prepared = tsr_recipes._prepare_reconstructed_restart_checkpoint_frame(checkpoint)
+
+    assert "thlb_fact" in prepared.columns
+    assert prepared["thlb_fact"].tolist() == pytest.approx([0.25, 0.75])
+    assert prepared["thlb"].tolist() == [0, 1]
 
 
 def test_build_thlb_parent_step_code_cell_defaults_step6_to_full_tsa_parallel() -> None:
@@ -9082,6 +9146,329 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_executes_select_attribute_w
     assert attr_step["run_status"] == "applied"
     assert attr_step["spatial_application_mode"] == "checkpoint_attribute_exclusion"
     assert attr_step["affected_area_ha"] == pytest.approx(0.01)
+
+
+def test_run_tsr_thlb_reconstructed_diagnostic_slice_executes_curve_threshold_without_sources(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    bundle_root = instance_root / "data" / "model_input_bundle"
+    bundle_root.mkdir(parents=True, exist_ok=True)
+    (bundle_root / "curve_table.csv").write_text(
+        "curve_id,curve_type\n1001,untreated\n1002,untreated\n",
+        encoding="utf-8",
+    )
+    (bundle_root / "curve_points_table.csv").write_text(
+        "curve_id,x,y\n"
+        "1001,40,20\n"
+        "1001,80,40\n"
+        "1001,120,60\n"
+        "1001,160,60\n"
+        "1002,40,80\n"
+        "1002,80,160\n"
+        "1002,120,200\n"
+        "1002,160,220\n",
+        encoding="utf-8",
+    )
+
+    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint1 = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2, 3],
+            "FOR_MGMT_LAND_BASE_IND": ["Y", "Y", "Y"],
+            "BCLCS_LEVEL_2": ["T", "T", "T"],
+            "NON_PRODUCTIVE_CD": [None, None, None],
+            "MAP_ID": ["093J034", "093J034", "093J034"],
+            "FEATURE_AREA_SQM": [100.0, 100.0, 100.0],
+            "Shape_Area": [100.0, 100.0, 100.0],
+            "Shape_Length": [40.0, 40.0, 40.0],
+            "curve1": [1001, 1002, 1001],
+            "femic_step13_steep_slope_flag": [False, True, True],
+        },
+        geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10), box(20, 0, 30, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint1.to_feather(checkpoint1_path)
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 40, 20)],
+        names=["Test LU"],
+    )
+
+    thlb_recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    thlb_recipe_payload["parent_steps"] = [
+        {
+            "parent_step_id": "thlb_parent_014_sites_with_low_growing_timber_potential",
+            "parent_label": "Sites with low growing timber potential",
+            "parent_kind": "transformation",
+            "land_base_stage": "lhlb_to_thlb",
+            "stage_label": "LHLB -> THLB",
+            "benchmark_marginal_area_ha": 1.0,
+            "benchmark_cumulative_area_ha": 0.0,
+            "row_order": 14,
+        },
+    ]
+    thlb_recipe_payload["steps"] = [
+        {
+            "step_id": "thlb_parent_014_compiled_01",
+            "parent_step_id": "thlb_parent_014_sites_with_low_growing_timber_potential",
+            "order_index": 14,
+            "step_kind": "netdown_rule",
+            "label": "Non-steep 67.1 m3/ha threshold",
+            "normalized_action": "exclude",
+            "compiled_operation_type": "curve_volume_threshold_exclusion",
+            "curve_id_column": "curve1",
+            "minimum_volume_m3_per_ha": 67.1,
+            "curve_volume_metric": "volume_at_age",
+            "curve_volume_age_years": 160.0,
+            "checkpoint_attribute_mode": "any",
+            "checkpoint_attribute_filters": [
+                {
+                    "field": "femic_step13_steep_slope_flag",
+                    "operator": "eq",
+                    "value": False,
+                }
+            ],
+            "linked_source_entry_ids": [],
+            "step_status": "ready",
+            "page_number": 33,
+        },
+    ]
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            thlb_recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    diagnostics_root = instance_root / "runtime" / "logs" / "tsr" / "diagnostics"
+    result = tsr_recipes.run_tsr_thlb_reconstructed_diagnostic_slice(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        output_path=diagnostics_root / "curve.feather",
+        audit_path=diagnostics_root / "curve.audit.json",
+        diagnostic_path=diagnostics_root / "curve.diag.json",
+    )
+
+    audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
+    curve_step = next(
+        step
+        for step in audit_payload["steps"]
+        if step["step_id"] == "thlb_parent_014_compiled_01"
+    )
+    assert curve_step["run_status"] == "applied"
+    assert curve_step["spatial_application_mode"] == "curve_volume_threshold_exclusion"
+    assert curve_step["affected_area_ha"] == pytest.approx(0.01)
+    assert curve_step["checkpoint_filter_row_count"] == 1
+    assert curve_step["active_checkpoint_filter_row_count"] == 1
+
+
+def test_apply_curve_volume_threshold_exclusion_preserves_fractional_state_on_survivors(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "instance"
+    bundle_root = instance_root / "data" / "model_input_bundle"
+    bundle_root.mkdir(parents=True, exist_ok=True)
+    (bundle_root / "curve_table.csv").write_text(
+        "curve_id,curve_type\n1001,untreated\n1002,untreated\n",
+        encoding="utf-8",
+    )
+    (bundle_root / "curve_points_table.csv").write_text(
+        "curve_id,x,y\n"
+        "1001,40,20\n"
+        "1001,80,40\n"
+        "1001,120,60\n"
+        "1001,160,60\n"
+        "1002,40,80\n"
+        "1002,80,160\n"
+        "1002,120,200\n"
+        "1002,160,220\n",
+        encoding="utf-8",
+    )
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2],
+            "FEATURE_AREA_SQM": [100.0, 100.0],
+            "_stand_area_sqm": [100.0, 100.0],
+            "thlb_fact": [0.4, 0.3],
+            "thlb": [0, 0],
+            "thlb_area": [0.004, 0.003],
+            "curve1": [1001, 1002],
+            "femic_step13_steep_slope_flag": [False, True],
+        },
+        geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10)],
+        crs="EPSG:3005",
+    )
+
+    updated, removed_area_ha, missing_metric_count, affected_row_count, _, _ = (
+        tsr_recipes._apply_curve_volume_threshold_exclusion(
+            checkpoint,
+            instance_root=instance_root,
+            compiled_item={
+                "curve_id_column": "curve1",
+                "minimum_volume_m3_per_ha": 67.1,
+                "curve_volume_metric": "volume_at_age",
+                "curve_volume_age_years": 160.0,
+                "checkpoint_attribute_filters": [],
+                "checkpoint_attribute_mode": "any",
+            },
+            preserve_geometry=False,
+        )
+    )
+
+    assert removed_area_ha == pytest.approx(0.01)
+    assert missing_metric_count == 0
+    assert affected_row_count == 1
+    assert len(updated) == 1
+    assert updated["thlb_fact"].iloc[0] == pytest.approx(0.3)
+
+
+def test_compile_tsr_thlb_step13_attributes_populates_curve_ready_fields(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    checkpoint_path = instance_root / "data" / "tsr" / "lhlb_checkpoint.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2],
+            "MAP_ID": ["093J034", "093J034"],
+            "FEATURE_AREA_SQM": [100.0, 100.0],
+            "SITE_INDEX": [10.0, 55.0],
+            "PROJ_AGE_1": [120.0, 20.0],
+            "BEC_ZONE_CODE": ["IDF", "IDF"],
+            "BEC_SUBZONE": ["xm", "xm"],
+            "BEC_VARIANT": [None, None],
+            "BEC_PHASE": [None, None],
+            "SPECIES_CD_1": ["FD", "FD"],
+            "SPECIES_PCT_1": [100.0, 100.0],
+            "BCLCS_LEVEL_4": ["TC", "TC"],
+        },
+        geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint.to_feather(checkpoint_path)
+
+    bundle_root = instance_root / "data" / "model_input_bundle"
+    bundle_root.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        {
+            "au_id": [2900001, 2900002, 2900003],
+            "tsa": [29, 29, 29],
+            "stratum_code": ["IDF_FD", "IDF_FD", "IDF_FD"],
+            "si_level": ["L", "M", "H"],
+            "untreated_curve_id": [2900001, 2900002, 2900003],
+            "treated_curve_id": [2920001, 2920002, 2920003],
+            "unmanaged_curve_id": [2900001, 2900002, 2900003],
+            "managed_curve_id": [2920001, 2920002, 2920003],
+        }
+    ).to_csv(bundle_root / "au_table.csv", index=False)
+
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "_prepare_dem_tile_paths",
+        lambda checkpoint, instance_root: (
+            "dataset-page",
+            "resource-root",
+            ("tile_1",),
+            (instance_root / "dummy.tif",),
+        ),
+    )
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "_build_slope_percent_raster",
+        lambda checkpoint, dem_paths: (None, None),
+    )
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "_summarize_polygon_median_raster_values",
+        lambda checkpoint, raster_values, transform: pd.Series(
+            [12.0, 48.0], index=checkpoint.index, dtype=float
+        ),
+    )
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "_load_highway_97_geometry",
+        lambda instance_root: (instance_root / "hwy97.gpkg", None),
+    )
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "_classify_checkpoint_side_of_highway",
+        lambda checkpoint, highway_geometry: pd.Series(
+            ["west", "west"], index=checkpoint.index, dtype="string"
+        ),
+    )
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "assign_si_levels_from_stratum_quantiles",
+        lambda **kwargs: (
+            kwargs["f_table"].assign(si_level=pd.Series(["L", "M"], dtype="string")),
+            pd.DataFrame(),
+        ),
+    )
+
+    result = tsr_step13_attributes.compile_tsr_thlb_step13_attributes(
+        instance_root=instance_root,
+        checkpoint_path=checkpoint_path,
+    )
+    enriched = gpd.read_feather(result.output_path)
+
+    for column in (
+        "femic_slope_pct_median",
+        "femic_hwy97_side",
+        "femic_step13_steep_slope_flag",
+        "tsa_code",
+        "stratum",
+        "stratum_matched",
+        "si_level",
+        "au",
+        "curve1",
+        "curve2",
+    ):
+        assert column in enriched.columns
+
+    assert enriched["tsa_code"].astype(str).unique().tolist() == ["29"]
+    assert enriched["si_level"].notna().sum() >= 1
+    assert enriched["au"].notna().sum() >= 1
+    assert set(enriched["curve1"].dropna().astype("Int64").tolist()) <= {
+        2900001,
+        2900002,
+        2900003,
+        2920001,
+        2920002,
+        2920003,
+    }
+    assert set(enriched["curve2"].dropna().astype("Int64").tolist()) <= {
+        2900001,
+        2900002,
+        2900003,
+    }
 
 
 def test_run_tsr_thlb_reconstructed_diagnostic_slice_restores_harvested_select_attribute_rows(

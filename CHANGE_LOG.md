@@ -14248,3 +14248,13 @@
     - TSR cumulative target `2,250,824.000 ha`; and
     - cumulative delta `-9,838.967 ha`.
   - The governing TSA29 dashboard surfaces now treat step 13 as refreshed and locked, with cumulative answers sourced from `config/tsr/thlb_locked_chain_ledger.json`.
+- Repaired the first real step-14 curve-ready semantics seam by fixing SI-level tail assignment.
+  - `assign_si_levels_from_stratum_quantiles(...)` no longer drops valid low/high `SITE_INDEX` tails outside the `5..95` percentile windows; the outer active bins are now open-ended so valid tail rows get `L`/`H` instead of falling through as `NaN`.
+  - Added helper and restart-state regressions so:
+    - SI-level tails stay assigned; and
+    - restart-grade checkpoints can rehydrate `thlb_fact` from `thlb_raw` / `thlb_area` when needed.
+  - The direct probe curve-ready checkpoint now reduces the missing-curve subset from `421,196.088 ha` to `137,778.100 ha`, with the remaining missing subset entirely rows lacking positive usable site index.
+  - A bounded step-13/14 replay from the repaired probe checkpoint now reports:
+    - step 13 total `35,088.834 ha`; and
+    - step 14 total `314,591.438 ha`, improving the TSR delta to about `-6,452.562 ha` from the earlier `-44,130.538 ha`.
+  - Step 14 is still **not locked** because the official `data/tsr/lhlb_curve_ready_checkpoint.feather` restart artifact is currently corrupted and must be repaired before the dashboard/locked ledger can be refreshed safely.

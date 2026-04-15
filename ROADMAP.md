@@ -16473,3 +16473,16 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - the chained post-step-13 remaining area is now `2,240,985.033 ha`, which is `-9,838.967 ha` relative to the TSR cumulative target;
     - keep the calibrated steep-slope rollback bridge in place unless later cumulative drift forces a reopen; and
     - move on to **step 14 only** from the curve-ready LHLB restart.
+- 2026-04-14: Repaired the first real step-14 curve-ready semantics seam.
+  - The late-stage SI-level compiler was dropping valid low/high `SITE_INDEX` tails because `assign_si_levels_from_stratum_quantiles(...)` only labeled rows inside the configured `5..95` percentile windows.
+  - The helper now makes the outer active bins open-ended, so valid positive-site-index rows below the lowest configured quantile are assigned `L` and rows above the highest configured quantile are assigned `H`.
+  - Targeted helper/regression validation passed:
+    - `pytest tests/test_pipeline_helpers.py -k "assign_si_levels_from_stratum_quantiles" -q`
+    - `ruff check src/femic/pipeline/tsa.py tests/test_pipeline_helpers.py`
+  - The direct probe curve-ready checkpoint now confirms the missing-curve subset shrank from `421,196.088 ha` to `137,778.100 ha`, and the remaining missing subset is now entirely rows with no positive usable site index.
+  - A bounded step-13/14 replay from the full-row probe checkpoint now reports:
+    - step 13 total still `35,088.834 ha` (`3,114.834 ha` terrain + `31,974.000 ha` steep rollback); and
+    - step 14 total `314,591.438 ha` (`302,224.876 ha` non-steep + `12,366.563 ha` steep), reducing the step-14 gap to about `-6,452.562 ha` vs the TSR benchmark `321,044 ha`.
+  - Important follow-on seam:
+    - the official `data/tsr/lhlb_curve_ready_checkpoint.feather` restart artifact is currently corrupted (`217,105` rows / `1.513M ha`) while a direct compile probe preserves the full `322,708` rows / `2.310M ha`;
+    - do not lock step 14 or refresh the dashboard/ledger yet; first repair the official curve-ready restart artifact path so the official restart surface matches the probe checkpoint behavior.
