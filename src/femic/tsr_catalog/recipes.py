@@ -79,6 +79,7 @@ _TSR_THLB_EXECUTION_MODES = {
 _RECONSTRUCTED_FRAGMENT_ROW_THRESHOLD = 10000
 _RECONSTRUCTED_FRAGMENT_BATCH_SIZE = 5000
 _RECONSTRUCTED_STAND_BINARY_EXCLUDE_THRESHOLD = 0.5
+_TSR_THLB_LU_PARTITION_CACHE_VERSION = 1
 _THLB_STAGE_ORDER = (
     "glb_to_aflb",
     "aflb_to_lhlb",
@@ -5797,6 +5798,8 @@ def _load_cached_landscape_unit_partition_selection(
             payload = json.loads(metadata_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
+        if int(payload.get("cache_version", -1) or -1) != _TSR_THLB_LU_PARTITION_CACHE_VERSION:
+            continue
         if str(payload.get("checkpoint_path", "")).strip() != resolved_checkpoint:
             continue
         if expected_row_count is not None:
@@ -5841,6 +5844,8 @@ def _load_cached_landscape_unit_partition_records(
         try:
             payload = json.loads(metadata_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
+            continue
+        if int(payload.get("cache_version", -1) or -1) != _TSR_THLB_LU_PARTITION_CACHE_VERSION:
             continue
         if str(payload.get("checkpoint_path", "")).strip() != resolved_checkpoint:
             continue
@@ -6104,6 +6109,8 @@ def _materialize_checkpoint_landscape_unit_partitions(
     ).hexdigest()[:12]
     partition_dir = partition_root / f"{checkpoint_path.stem}.{digest}"
     metadata_path = partition_dir / "partition_metadata.json"
+    checkpoint_row_count = int(len(checkpoint))
+    checkpoint_area_ha = float(checkpoint.geometry.area.astype(float).sum() / 10000.0)
     checkpoint_columns = sorted(
         {str(column).strip() for column in checkpoint.columns if str(column).strip()}
     )
@@ -6111,9 +6118,23 @@ def _materialize_checkpoint_landscape_unit_partitions(
         payload = json.loads(metadata_path.read_text(encoding="utf-8"))
         records_raw = payload.get("chunk_records", [])
         cached_columns = payload.get("input_columns")
+        cached_row_count = payload.get("input_row_count")
+        cached_area_ha = payload.get("input_area_ha")
         if (
+            int(payload.get("cache_version", -1) or -1)
+            == _TSR_THLB_LU_PARTITION_CACHE_VERSION
+            and
             isinstance(records_raw, list)
             and isinstance(cached_columns, list)
+            and cached_row_count is not None
+            and cached_area_ha is not None
+            and int(cached_row_count) == checkpoint_row_count
+            and math.isclose(
+                float(cached_area_ha),
+                checkpoint_area_ha,
+                rel_tol=0.0,
+                abs_tol=1e-6,
+            )
             and {
                 str(value).strip()
                 for value in cached_columns
@@ -6143,6 +6164,7 @@ def _materialize_checkpoint_landscape_unit_partitions(
                     key=lambda item: str(item.get("lu_name", "")).strip()
                 )
                 return cached_records
+        shutil.rmtree(partition_dir, ignore_errors=True)
 
     partition_dir.mkdir(parents=True, exist_ok=True)
     chunks = _clip_checkpoint_to_landscape_unit_chunks(checkpoint, lu_frame=lu_frame)
@@ -6166,9 +6188,10 @@ def _materialize_checkpoint_landscape_unit_partitions(
             }
         )
     metadata_payload = {
+        "cache_version": _TSR_THLB_LU_PARTITION_CACHE_VERSION,
         "checkpoint_path": str(checkpoint_path.expanduser().resolve()),
-        "input_row_count": int(len(checkpoint)),
-        "input_area_ha": float(checkpoint.geometry.area.astype(float).sum() / 10000.0),
+        "input_row_count": checkpoint_row_count,
+        "input_area_ha": checkpoint_area_ha,
         "input_columns": checkpoint_columns,
         "selected_landscape_units": list(selected_landscape_units),
         "chunk_records": [
@@ -6453,6 +6476,44 @@ def _checkpoint_has_step13_enrichment(path: Path) -> bool:
     )
 
 
+def _validate_reconstructed_restart_equivalence(
+    *,
+    source_checkpoint: gpd.GeoDataFrame,
+    candidate_checkpoint: gpd.GeoDataFrame,
+) -> tuple[bool, tuple[str, ...]]:
+    problems: list[str] = []
+    if len(candidate_checkpoint) != len(source_checkpoint):
+        problems.append(
+            "candidate row count does not match source checkpoint "
+            f"({len(candidate_checkpoint)} != {len(source_checkpoint)})"
+        )
+    if "_row_id" not in source_checkpoint.columns or "_row_id" not in candidate_checkpoint.columns:
+        problems.append("candidate or source checkpoint is missing `_row_id`")
+    else:
+        source_ids = set(pd.to_numeric(source_checkpoint["_row_id"], errors="coerce").dropna().astype(int))
+        candidate_ids = set(
+            pd.to_numeric(candidate_checkpoint["_row_id"], errors="coerce").dropna().astype(int)
+        )
+        if source_ids != candidate_ids:
+            problems.append("candidate `_row_id` coverage does not match source checkpoint")
+    required_state_columns = ("thlb_fact", "thlb_raw", "_stand_area_sqm")
+    for column in required_state_columns:
+        if column in source_checkpoint.columns and column not in candidate_checkpoint.columns:
+            problems.append(f"candidate checkpoint is missing required state column `{column}`")
+    source_prepared = _prepare_reconstructed_restart_checkpoint_frame(source_checkpoint)
+    candidate_prepared = _prepare_reconstructed_restart_checkpoint_frame(candidate_checkpoint)
+    managed_area_delta_ha = abs(_managed_area_ha(candidate_prepared) - _managed_area_ha(source_prepared))
+    if managed_area_delta_ha > 1e-6:
+        problems.append(
+            "candidate managed area does not match source checkpoint "
+            f"(delta {managed_area_delta_ha:.6f} ha)"
+        )
+    polygonal_candidate = _normalize_polygonal_overlay_frame(candidate_checkpoint)
+    if len(polygonal_candidate) != len(candidate_checkpoint):
+        problems.append("candidate checkpoint contains non-polygonal restart geometry")
+    return not problems, tuple(problems)
+
+
 def _ensure_lhlb_curve_ready_checkpoint_artifacts(
     *,
     instance_root: Path,
@@ -6472,22 +6533,56 @@ def _ensure_lhlb_curve_ready_checkpoint_artifacts(
         raise TsrRecipeError(
             f"LHLB checkpoint feather not found for curve-ready promotion: {resolved_checkpoint_path}"
         )
+    source_checkpoint = _load_checkpoint_geodataframe(resolved_checkpoint_path)
+    source_checkpoint_prepared = _prepare_reconstructed_restart_checkpoint_frame(source_checkpoint)
 
-    needs_compile = (
-        not curve_ready_path.exists()
-        or not _checkpoint_has_step13_enrichment(curve_ready_path)
-        or curve_ready_path.stat().st_mtime < resolved_checkpoint_path.stat().st_mtime
-    )
+    needs_compile = True
+    if curve_ready_path.exists() and _checkpoint_has_step13_enrichment(curve_ready_path):
+        if curve_ready_path.stat().st_mtime >= resolved_checkpoint_path.stat().st_mtime:
+            existing_curve_ready = _load_checkpoint_geodataframe(curve_ready_path)
+            valid_existing, _existing_problems = _validate_reconstructed_restart_equivalence(
+                source_checkpoint=source_checkpoint_prepared,
+                candidate_checkpoint=existing_curve_ready,
+            )
+            if valid_existing:
+                needs_compile = False
+
     if needs_compile:
         from .step13_attributes import compile_tsr_thlb_step13_attributes
 
+        temp_curve_ready_path = curve_ready_path.with_name(
+            f"{curve_ready_path.stem}.tmp{curve_ready_path.suffix}"
+        )
+        if temp_curve_ready_path.exists():
+            temp_curve_ready_path.unlink()
         compile_tsr_thlb_step13_attributes(
             instance_root=instance_root,
             checkpoint_path=resolved_checkpoint_path,
-            output_path=curve_ready_path,
+            output_path=temp_curve_ready_path,
         )
+        candidate_curve_ready = _load_checkpoint_geodataframe(temp_curve_ready_path)
+        valid_candidate, candidate_problems = _validate_reconstructed_restart_equivalence(
+            source_checkpoint=source_checkpoint_prepared,
+            candidate_checkpoint=candidate_curve_ready,
+        )
+        if not valid_candidate:
+            temp_curve_ready_path.unlink(missing_ok=True)
+            raise TsrRecipeError(
+                "Curve-ready checkpoint promotion produced a non-equivalent restart artifact: "
+                + "; ".join(candidate_problems)
+            )
+        temp_curve_ready_path.replace(curve_ready_path)
 
     curve_ready_checkpoint = _load_checkpoint_geodataframe(curve_ready_path)
+    valid_curve_ready, curve_ready_problems = _validate_reconstructed_restart_equivalence(
+        source_checkpoint=source_checkpoint_prepared,
+        candidate_checkpoint=curve_ready_checkpoint,
+    )
+    if not valid_curve_ready:
+        raise TsrRecipeError(
+            "Official curve-ready checkpoint failed restart validation: "
+            + "; ".join(curve_ready_problems)
+        )
     (
         written_curve_ready_path,
         written_curve_ready_gpkg_path,

@@ -16486,3 +16486,14 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Important follow-on seam:
     - the official `data/tsr/lhlb_curve_ready_checkpoint.feather` restart artifact is currently corrupted (`217,105` rows / `1.513M ha`) while a direct compile probe preserves the full `322,708` rows / `2.310M ha`;
     - do not lock step 14 or refresh the dashboard/ledger yet; first repair the official curve-ready restart artifact path so the official restart surface matches the probe checkpoint behavior.
+- 2026-04-14: Repaired the official `lhlb_curve_ready_checkpoint` restart artifact path and proved step 14 from the production surface.
+  - `_ensure_lhlb_curve_ready_checkpoint_artifacts(...)` now uses a validated compile-to-temp then atomic publish flow:
+    - compile the curve-ready checkpoint to a sibling temp feather;
+    - validate row count, `_row_id` coverage, managed area, required THLB state columns, and polygonal geometry against the source `lhlb_checkpoint.feather`; and
+    - only then publish to `data/tsr/lhlb_curve_ready_checkpoint.feather`.
+  - LU partition cache metadata is now versioned and the in-place partition reuse path refuses stale cache directories whose cache version, row count, area, or columns no longer match the current checkpoint.
+  - After invalidating the stale official LU cache lineage, the bounded official `step13+14` replay from `data/tsr/lhlb_checkpoint.feather` now matches the good direct probe result:
+    - step 13 total remains `35,088.834 ha`;
+    - step 14 total from the official restart surface is `314,591.438 ha` (`302,224.876 ha` non-steep + `12,366.563 ha` steep); and
+    - the step-14 TSR delta is now about `-6,452.562 ha`.
+  - Step 14 is still **not locked** in this slice; the dashboard and chained ledger stay untouched until the user explicitly accepts the official step-14 result.

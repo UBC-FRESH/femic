@@ -14258,3 +14258,10 @@
     - step 13 total `35,088.834 ha`; and
     - step 14 total `314,591.438 ha`, improving the TSR delta to about `-6,452.562 ha` from the earlier `-44,130.538 ha`.
   - Step 14 is still **not locked** because the official `data/tsr/lhlb_curve_ready_checkpoint.feather` restart artifact is currently corrupted and must be repaired before the dashboard/locked ledger can be refreshed safely.
+- Repaired the official `lhlb_curve_ready_checkpoint` restart artifact path and confirmed the official step-14 run now matches the good probe result.
+  - `data/tsr/lhlb_curve_ready_checkpoint.feather` is now published through a validated compile-to-temp then atomic replace flow, with row-count, `_row_id`, managed-area, THLB-state, and polygonality checks against the source `lhlb_checkpoint.feather`.
+  - LU partition cache metadata is now versioned, and stale in-place cache directories are rejected and rebuilt when their version, row count, area, or schema no longer match the current checkpoint.
+  - The bounded official `step13+14` replay from `data/tsr/lhlb_checkpoint.feather` now reports the same step-14 result as the direct probe:
+    - step 14 total `314,591.438 ha` (`302,224.876 ha` non-steep + `12,366.563 ha` steep);
+    - TSR step-14 delta `-6,452.562 ha`.
+  - Step 14 remains **unlocked** until the user explicitly accepts the official result; no dashboard or chained-ledger refresh was performed in this slice.
