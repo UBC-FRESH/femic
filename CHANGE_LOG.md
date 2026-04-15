@@ -14265,3 +14265,15 @@
     - step 14 total `314,591.438 ha` (`302,224.876 ha` non-steep + `12,366.563 ha` steep);
     - TSR step-14 delta `-6,452.562 ha`.
   - Step 14 remains **unlocked** until the user explicitly accepts the official result; no dashboard or chained-ledger refresh was performed in this slice.
+- Locked step 14 from the repaired official curve-ready restart seam and refreshed the governing ledger/dashboard.
+  - Locked strict step-14 net deduction:
+    - `314,591.438 ha` (`302,224.876 ha` non-steep + `12,366.563 ha` steep).
+  - TSR step-14 benchmark:
+    - `321,044.000 ha`.
+  - Locked stepwise delta:
+    - `-6,452.562 ha`.
+  - Locked chained cumulative after step 14:
+    - remaining area `1,926,393.594 ha`;
+    - TSR cumulative target `1,929,780.000 ha`; and
+    - cumulative delta `-3,386.406 ha`.
+  - The governing next step is now **step 15 only** from the official `lhlb_curve_ready_checkpoint.feather` restart seam, with steps 13/14 frozen except when rerun solely to construct downstream state.
