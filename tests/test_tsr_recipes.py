@@ -1363,6 +1363,7 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
     payload = tsr_recipes._build_tsr_thlb_reconstruction_comparison_payload(
         recipe=recipe,
         reconstructed_audit_payload=reconstructed_audit_payload,
+        locked_chain_payload=None,
         recipe_relative_path="config/tsr/thlb_netdown.recipe.yaml",
         reviewed_status_relative_path="config/tsr/thlb_netdown.status.md",
         reconstructed_audit_relative_path="config/tsr/thlb_reconstructed.audit.json",
@@ -1499,6 +1500,189 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
     assert "Reviewed difference:" in markdown
     assert "reviewed bridge" in markdown.casefold()
     assert "raw checkpoint1 geometry" in markdown
+
+
+def test_tsr_thlb_reconstruction_comparison_payload_prefers_locked_chain_summary() -> None:
+    recipe = tsr_recipes.TsrThlbNetdownRecipeRecord(
+        schema_version=1,
+        recipe_kind="thlb_netdown",
+        tsa=tsr_catalog.TsrOverlayTsaRecord(
+            tsa_id="tsa_29",
+            tsa_code="29",
+            tsa_name="Williams Lake",
+        ),
+        canonical_inputs=tsr_catalog.TsrRecipeCanonicalInputs(
+            registry_path="metadata/tsr/tsa_registry.json",
+            documents_path="metadata/tsr/tsa_documents.json",
+            candidate_facts_path="metadata/tsr/tsa_candidate_facts.json",
+        ),
+        instance_inputs=tsr_catalog.TsrThlbNetdownRecipeInstanceInputs(
+            overlay_path="config/tsr/overlay.yaml",
+            source_layer_recipe_path="config/tsr/source_layers.recipe.yaml",
+            source_layer_overrides_path="config/tsr/source_layer_overrides.yaml",
+        ),
+        recipe_contract={},
+        parent_steps=(
+            {
+                "parent_step_id": "thlb_parent_021_example",
+                "parent_label": "Example step",
+                "parent_kind": "transformation",
+                "row_order": 21,
+                "land_base_stage": "lhlb_to_thlb",
+                "stage_label": "LHLB -> THLB",
+                "benchmark_marginal_area_ha": 10.0,
+                "benchmark_cumulative_area_ha": 1671251.0,
+                "last_notebook_run_status": "applied",
+                "last_net_removed_area_ha": 10.0,
+            },
+            {
+                "parent_step_id": "thlb_parent_022_milestone",
+                "parent_label": "Long-term THLB area",
+                "parent_kind": "milestone",
+                "row_order": 22,
+                "land_base_stage": "lhlb_to_thlb",
+                "stage_label": "LHLB -> THLB",
+                "benchmark_cumulative_area_ha": 1682843.0,
+            },
+            {
+                "parent_step_id": "thlb_parent_023_future_roads",
+                "parent_label": "Future roads",
+                "parent_kind": "transformation",
+                "row_order": 23,
+                "land_base_stage": "lhlb_to_thlb",
+                "stage_label": "LHLB -> THLB",
+                "benchmark_marginal_area_ha": 22754.0,
+                "benchmark_cumulative_area_ha": 1662807.0,
+                "last_notebook_run_status": "applied",
+                "last_net_removed_area_ha": 22754.0,
+            },
+            {
+                "parent_step_id": "thlb_parent_024_final_milestone",
+                "parent_label": "Long-term THLB",
+                "parent_kind": "milestone",
+                "row_order": 24,
+                "land_base_stage": "lhlb_to_thlb",
+                "stage_label": "LHLB -> THLB",
+                "benchmark_cumulative_area_ha": 1660053.0,
+            },
+        ),
+        steps=(),
+    )
+    reconstructed_audit_payload = {
+        "baseline_signal": "checkpoint1_aflb_initialization",
+        "final_managed_area_ha": 2247992.122,
+        "tsr_reported_thlb_area_ha": 1660053.0,
+        "steps": [
+            {
+                "step_id": "compiled_old_21",
+                "parent_step_id": "thlb_parent_021_example",
+                "net_removed_area_ha": 100.0,
+                "affected_area_ha": 100.0,
+                "run_status": "applied",
+            },
+            {
+                "step_id": "compiled_old_23",
+                "parent_step_id": "thlb_parent_023_future_roads",
+                "net_removed_area_ha": 0.0,
+                "affected_area_ha": 0.0,
+                "run_status": "applied_noop",
+            },
+        ],
+    }
+    locked_chain_payload = {
+        "latest_locked_parent_step_id": "thlb_parent_023_future_roads",
+        "latest_locked_row_order": 23,
+        "entries": [
+            {
+                "row_order": 21,
+                "parent_step_id": "thlb_parent_021_example",
+                "locked_net_removed_area_ha": 34205.0,
+                "locked_cumulative_remaining_area_ha": 1671251.6217168132,
+                "locked_cumulative_delta_ha": -11591.378283186816,
+                "locked_source_kind": "direct_target_aspatial",
+                "locked_source_note": "Locked exact benchmark bridge.",
+            },
+            {
+                "row_order": 22,
+                "parent_step_id": "thlb_parent_022_milestone",
+                "locked_net_removed_area_ha": None,
+                "locked_cumulative_remaining_area_ha": 1671251.6217168132,
+                "locked_cumulative_delta_ha": -11591.378283186816,
+                "locked_source_kind": None,
+                "locked_source_note": None,
+            },
+            {
+                "row_order": 23,
+                "parent_step_id": "thlb_parent_023_future_roads",
+                "locked_net_removed_area_ha": 22754.0,
+                "locked_cumulative_remaining_area_ha": 1648497.6217168132,
+                "locked_cumulative_delta_ha": -1555.3782831868157,
+                "locked_source_kind": "direct_target_aspatial",
+                "locked_source_note": "Locked exact benchmark bridge.",
+            },
+        ],
+    }
+
+    payload = tsr_recipes._build_tsr_thlb_reconstruction_comparison_payload(
+        recipe=recipe,
+        reconstructed_audit_payload=reconstructed_audit_payload,
+        locked_chain_payload=locked_chain_payload,
+        recipe_relative_path="config/tsr/thlb_netdown.recipe.yaml",
+        reviewed_status_relative_path="config/tsr/thlb_netdown.status.md",
+        reconstructed_audit_relative_path="config/tsr/thlb_reconstructed.audit.json",
+        comparison_markdown_relative_path="config/tsr/thlb_reconstruction_comparison.md",
+        comparison_json_relative_path="config/tsr/thlb_reconstruction_comparison.json",
+    )
+
+    entries_by_id = {
+        str(item["parent_step_id"]): item
+        for item in payload["entries"]
+        if isinstance(item, dict)
+    }
+
+    assert payload["reconstructed_final_managed_area_ha"] == pytest.approx(1648497.6217168132)
+    assert payload["reconstructed_audit_final_managed_area_ha"] == pytest.approx(2247992.122)
+    assert payload["tsr_reported_thlb_area_ha"] == pytest.approx(1660053.0)
+    assert payload["strict_vs_tsr_delta_ha"] == pytest.approx(-11555.378283186816)
+    assert payload["locked_chain_latest_row_order"] == 24
+    assert payload["locked_chain_latest_parent_step_id"] == "thlb_parent_024_final_milestone"
+    assert payload["locked_chain_remaining_area_ha"] == pytest.approx(1648497.6217168132)
+    assert payload["locked_chain_tsr_cumulative_area_ha"] == pytest.approx(1660053.0)
+    assert payload["locked_chain_cumulative_delta_ha"] == pytest.approx(-11555.378283186816)
+    assert entries_by_id["thlb_parent_021_example"]["locked_row"] is True
+    assert (
+        entries_by_id["thlb_parent_021_example"]["reconstructed_removed_area_ha"]
+        == pytest.approx(34205.0)
+    )
+    assert entries_by_id["thlb_parent_022_milestone"]["locked_row"] is True
+    assert (
+        entries_by_id["thlb_parent_022_milestone"]["reconstructed_cumulative_area_ha"]
+        == pytest.approx(1671251.6217168132)
+    )
+    assert entries_by_id["thlb_parent_024_final_milestone"]["locked_row"] is True
+    assert (
+        entries_by_id["thlb_parent_024_final_milestone"]["locked_source_kind"]
+        == "locked_chain_milestone_projection"
+    )
+    assert (
+        entries_by_id["thlb_parent_024_final_milestone"]["reconstructed_cumulative_area_ha"]
+        == pytest.approx(1648497.6217168132)
+    )
+    assert (
+        entries_by_id["thlb_parent_024_final_milestone"]["strict_vs_tsr_cumulative_delta_ha"]
+        == pytest.approx(-11555.378283186816)
+    )
+
+    markdown = tsr_recipes._build_tsr_thlb_reconstruction_comparison_markdown(
+        recipe=recipe,
+        comparison_payload=payload,
+    )
+    assert "Locked strict chain THLB: `1648497.622 ha`" in markdown
+    assert "Generic reconstructed audit final area (secondary context only): `2247992.122 ha`" in markdown
+    assert "Locked rows are the governing ledger." in markdown
+    assert "Unlocked rows are stale/unrefreshed context only" in markdown
+    assert "Locked dashboard row: `yes`" in markdown
+    assert "strict cumulative delta=`-11555.378 ha`" in markdown
 
 
 def test_build_tsr_thlb_locked_chain_ledger_payload_tracks_chained_cumulative() -> None:

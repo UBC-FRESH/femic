@@ -14335,3 +14335,11 @@
 - Closed the governing GitHub issues after posting final wrap-up comments.
   - Closed `#159` for the late-stage `LHLB -> THLB` child workstream.
   - Closed `#128` for the full TSA29 strict TSR THLB reconciliation pass.
+- Rebuilt the TSA29 THLB dashboard from the locked chain ledger and removed the stale reconstructed-audit headline drift (`#153`).
+  - The comparison builder now prefers `thlb_locked_chain_ledger.json` whenever it exists and marks unlocked rows as stale context only.
+  - The TSA29 dashboard headline now reports the locked cumulative state instead of the stale `thlb_reconstructed.audit.json` summary:
+    - locked latest row `24` (`thlb_parent_024_long_term_thlb`);
+    - locked remaining area `1,648,497.622 ha`;
+    - TSR cumulative benchmark `1,660,053.000 ha`; and
+    - locked cumulative delta `-11,555.378 ha`.
+  - Milestone rows 22 and 24 now read as locked cumulative checkpoints, and rows 21 and 23 retain their locked `0.000 ha` stepwise deltas in the dashboard.

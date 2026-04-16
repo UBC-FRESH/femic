@@ -16580,3 +16580,15 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - GitHub status:
     - closed `#159` (late-stage `LHLB -> THLB` child issue);
     - closed `#128` (overall TSA29 strict TSR THLB reconciliation issue).
+- 2026-04-16: Rebuilt the TSA29 THLB dashboard from the locked chain ledger and removed the stale reconstructed-audit headline drift (`#153`).
+  - The comparison builder now overlays `thlb_locked_chain_ledger.json` onto the parent-step comparison payload whenever that ledger exists.
+  - Headline dashboard values now come from the latest locked cumulative checkpoint instead of stale `thlb_reconstructed.audit.json` values.
+  - The rebuilt TSA29 dashboard now reports:
+    - locked latest row `24` (`thlb_parent_024_long_term_thlb`);
+    - locked remaining area `1,648,497.622 ha`;
+    - TSR cumulative benchmark `1,660,053.000 ha`; and
+    - locked cumulative delta `-11,555.378 ha`.
+  - Milestone rows now act as locked cumulative checkpoint reads, with row 24 projected from the latest locked row rather than mixed branch-local audit state.
+  - Governing repo surfaces refreshed:
+    - `external/femic-tsa29-instance/config/tsr/thlb_reconstruction_comparison.{md,json}`;
+    - `external/femic-tsa29-instance/config/tsr/thlb_locked_chain_ledger.json` remains the canonical cumulative source.

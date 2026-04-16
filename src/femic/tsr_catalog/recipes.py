@@ -12924,6 +12924,7 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
     *,
     recipe: TsrThlbNetdownRecipeRecord,
     reconstructed_audit_payload: dict[str, Any],
+    locked_chain_payload: dict[str, Any] | None,
     recipe_relative_path: str,
     reviewed_status_relative_path: str,
     reconstructed_audit_relative_path: str,
@@ -12963,11 +12964,78 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
             reconstructed_cumulative_area_by_parent_id[parent_step_id] = (
                 running_cumulative_area_ha
             )
+    locked_chain_entries = [
+        dict(item)
+        for item in (locked_chain_payload or {}).get("entries", ())
+        if isinstance(item, dict)
+    ]
+    locked_chain_by_parent_id = {
+        str(item.get("parent_step_id", "")).strip(): item for item in locked_chain_entries
+    }
+    locked_chain_latest_row_order = int(
+        (locked_chain_payload or {}).get("latest_locked_row_order", 0) or 0
+    )
+    locked_chain_latest_parent_step_id = str(
+        (locked_chain_payload or {}).get("latest_locked_parent_step_id", "")
+    ).strip()
+
+    def _locked_chain_projection_entry_for_row(
+        *,
+        row_order: int,
+        parent_kind: str,
+    ) -> tuple[bool, dict[str, Any] | None, str | None, str | None]:
+        parent_step = next(
+            (
+                item
+                for item in recipe.parent_steps
+                if int(item.get("row_order", 0) or 0) == row_order
+            ),
+            None,
+        )
+        parent_step_id = (
+            str(parent_step.get("parent_step_id", "")).strip() if parent_step is not None else ""
+        )
+        direct_entry = locked_chain_by_parent_id.get(parent_step_id)
+        if direct_entry is not None:
+            return (
+                True,
+                direct_entry,
+                str(direct_entry.get("locked_source_kind", "")).strip() or None,
+                str(direct_entry.get("locked_source_note", "")).strip() or None,
+            )
+        if parent_kind != "milestone" or not locked_chain_entries:
+            return (False, None, None, None)
+        unlocked_transformations_before_row = [
+            item
+            for item in recipe.parent_steps
+            if str(item.get("parent_kind", "")).strip() != "milestone"
+            and int(item.get("row_order", 0) or 0) <= row_order
+            and int(item.get("row_order", 0) or 0) > locked_chain_latest_row_order
+        ]
+        if unlocked_transformations_before_row:
+            return (False, None, None, None)
+        prior_entries = [
+            item
+            for item in locked_chain_entries
+            if int(item.get("row_order", 0) or 0) <= row_order
+        ]
+        if not prior_entries:
+            return (False, None, None, None)
+        projected_entry = max(prior_entries, key=lambda item: int(item.get("row_order", 0) or 0))
+        return (
+            True,
+            projected_entry,
+            "locked_chain_milestone_projection",
+            "Projected cumulative checkpoint from the latest locked chain row.",
+        )
+
     milestones, parent_stage_groups = _parent_steps_grouped_by_stage(recipe)
     entries: list[dict[str, Any]] = []
     for parent_step in recipe.parent_steps:
         item = dict(parent_step)
         parent_step_id = str(item.get("parent_step_id", "")).strip()
+        row_order = int(item.get("row_order", 0) or 0)
+        parent_kind = str(item.get("parent_kind", "")).strip()
         reconstructed_entry = reconstructed_parent_map.get(parent_step_id, {})
         benchmark_marginal_area_ha = _normalize_float_or_none(
             item.get("benchmark_marginal_area_ha")
@@ -13057,6 +13125,42 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
             and benchmark_cumulative_area_ha is not None
             else None
         )
+        (
+            locked_row,
+            locked_row_entry,
+            locked_source_kind,
+            locked_source_note,
+        ) = _locked_chain_projection_entry_for_row(
+            row_order=row_order,
+            parent_kind=parent_kind,
+        )
+        if locked_row and locked_row_entry is not None:
+            reconstructed_cumulative_area_ha = _normalize_float_or_none(
+                locked_row_entry.get("locked_cumulative_remaining_area_ha")
+            )
+            strict_vs_tsr_cumulative_delta_ha = (
+                reconstructed_cumulative_area_ha - benchmark_cumulative_area_ha
+                if reconstructed_cumulative_area_ha is not None
+                and benchmark_cumulative_area_ha is not None
+                else _normalize_float_or_none(
+                    locked_row_entry.get("locked_cumulative_delta_ha")
+                )
+            )
+            if parent_kind != "milestone":
+                reconstructed_removed_area_ha = _normalize_float_or_none(
+                    locked_row_entry.get("locked_net_removed_area_ha")
+                )
+                strict_vs_tsr_delta_ha = (
+                    ((reconstructed_removed_area_ha or 0.0) - benchmark_marginal_area_ha)
+                    if benchmark_marginal_area_ha is not None
+                    else None
+                )
+                strict_vs_reviewed_delta_ha = (
+                    (reconstructed_removed_area_ha or 0.0) - reviewed_removed_area_ha
+                    if reviewed_removed_area_ha is not None
+                    and reconstructed_removed_area_ha is not None
+                    else None
+                )
         reviewed_difference_role = comparison_bucket
         practical_meaning = _build_tsr_fit_practical_meaning(
             tsr_fit_class=tsr_fit_class,
@@ -13120,8 +13224,8 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
             {
                 "parent_step_id": parent_step_id,
                 "parent_label": str(item.get("parent_label", "")).strip(),
-                "row_order": int(item.get("row_order", 0) or 0),
-                "parent_kind": str(item.get("parent_kind", "")).strip(),
+                "row_order": row_order,
+                "parent_kind": parent_kind,
                 "land_base_stage": str(item.get("land_base_stage", "")).strip(),
                 "stage_label": str(
                     item.get(
@@ -13142,6 +13246,9 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
                 "strict_vs_reviewed_delta_ha": strict_vs_reviewed_delta_ha,
                 "reconstructed_status": reconstructed_status,
                 "reviewed_status": reviewed_status,
+                "locked_row": locked_row,
+                "locked_source_kind": locked_source_kind,
+                "locked_source_note": locked_source_note,
                 "tsr_fit_class": tsr_fit_class,
                 "tsr_fit_interpretation": tsr_fit_interpretation,
                 "reviewed_difference_role": reviewed_difference_role,
@@ -13183,11 +13290,55 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
         if str(item.get("adjudication_action", "")).strip()
     )
     reviewed_final_managed_area_ha = _resolve_reviewed_thlb_remaining_area_ha(recipe)
-    reconstructed_final_managed_area_ha = _normalize_float_or_none(
+    reconstructed_audit_final_managed_area_ha = _normalize_float_or_none(
         reconstructed_audit_payload.get("final_managed_area_ha")
     )
     tsr_reported_thlb_area_ha = _normalize_float_or_none(
         reconstructed_audit_payload.get("tsr_reported_thlb_area_ha")
+    )
+    latest_locked_dashboard_entry = max(
+        [
+            item
+            for item in entries
+            if bool(item.get("locked_row"))
+            and _normalize_float_or_none(item.get("reconstructed_cumulative_area_ha"))
+            is not None
+            and _normalize_float_or_none(item.get("benchmark_cumulative_area_ha"))
+            is not None
+        ],
+        key=lambda item: int(item.get("row_order", 0) or 0),
+        default=None,
+    )
+    locked_chain_remaining_area_ha = (
+        _normalize_float_or_none(
+            latest_locked_dashboard_entry.get("reconstructed_cumulative_area_ha")
+        )
+        if latest_locked_dashboard_entry is not None
+        else None
+    )
+    locked_chain_tsr_cumulative_area_ha = (
+        _normalize_float_or_none(
+            latest_locked_dashboard_entry.get("benchmark_cumulative_area_ha")
+        )
+        if latest_locked_dashboard_entry is not None
+        else None
+    )
+    locked_chain_cumulative_delta_ha = (
+        _normalize_float_or_none(
+            latest_locked_dashboard_entry.get("strict_vs_tsr_cumulative_delta_ha")
+        )
+        if latest_locked_dashboard_entry is not None
+        else None
+    )
+    reconstructed_final_managed_area_ha = (
+        locked_chain_remaining_area_ha
+        if locked_chain_remaining_area_ha is not None
+        else reconstructed_audit_final_managed_area_ha
+    )
+    headline_tsr_area_ha = (
+        locked_chain_tsr_cumulative_area_ha
+        if locked_chain_tsr_cumulative_area_ha is not None
+        else tsr_reported_thlb_area_ha
     )
 
     def _strict_vs_reviewed_gap_delta(entry: dict[str, Any]) -> float:
@@ -13265,19 +13416,34 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
         "reconstructed_baseline_signal": reconstructed_baseline_signal,
         "comparison_markdown_path": comparison_markdown_relative_path,
         "comparison_json_path": comparison_json_relative_path,
+        "locked_chain_latest_row_order": (
+            int(latest_locked_dashboard_entry.get("row_order", 0) or 0)
+            if latest_locked_dashboard_entry is not None
+            else None
+        ),
+        "locked_chain_latest_parent_step_id": (
+            str(latest_locked_dashboard_entry.get("parent_step_id", "")).strip()
+            if latest_locked_dashboard_entry is not None
+            else (locked_chain_latest_parent_step_id or None)
+        ),
+        "locked_chain_remaining_area_ha": locked_chain_remaining_area_ha,
+        "locked_chain_tsr_cumulative_area_ha": locked_chain_tsr_cumulative_area_ha,
+        "locked_chain_cumulative_delta_ha": locked_chain_cumulative_delta_ha,
         "reconstructed_final_managed_area_ha": reconstructed_final_managed_area_ha,
+        "reconstructed_audit_final_managed_area_ha": reconstructed_audit_final_managed_area_ha,
         "reviewed_final_managed_area_ha": reviewed_final_managed_area_ha,
-        "tsr_reported_thlb_area_ha": tsr_reported_thlb_area_ha,
+        "tsr_reported_thlb_area_ha": headline_tsr_area_ha,
+        "reconstructed_audit_tsr_reported_thlb_area_ha": tsr_reported_thlb_area_ha,
         "strict_vs_tsr_delta_ha": (
-            reconstructed_final_managed_area_ha - tsr_reported_thlb_area_ha
+            reconstructed_final_managed_area_ha - headline_tsr_area_ha
             if reconstructed_final_managed_area_ha is not None
-            and tsr_reported_thlb_area_ha is not None
+            and headline_tsr_area_ha is not None
             else None
         ),
         "reviewed_vs_tsr_delta_ha": (
-            reviewed_final_managed_area_ha - tsr_reported_thlb_area_ha
+            reviewed_final_managed_area_ha - headline_tsr_area_ha
             if reviewed_final_managed_area_ha is not None
-            and tsr_reported_thlb_area_ha is not None
+            and headline_tsr_area_ha is not None
             else None
         ),
         "strict_vs_reviewed_delta_ha": (
@@ -13472,7 +13638,7 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
         f"`{comparison_payload.get('reviewed_status_path', '')}`",
         "- Reconstructed audit JSON: "
         f"`{comparison_payload.get('reconstructed_audit_path', '')}`",
-        "- Reconstructed baseline signal: "
+        "- Reconstructed baseline signal (context only): "
         f"`{comparison_payload.get('reconstructed_baseline_signal', '')}`",
         "",
         "## Summary",
@@ -13481,21 +13647,76 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
     reconstructed_final = _normalize_float_or_none(
         comparison_payload.get("reconstructed_final_managed_area_ha")
     )
+    reconstructed_audit_final = _normalize_float_or_none(
+        comparison_payload.get("reconstructed_audit_final_managed_area_ha")
+    )
     reviewed_final = _normalize_float_or_none(
         comparison_payload.get("reviewed_final_managed_area_ha")
     )
     tsr_final = _normalize_float_or_none(
         comparison_payload.get("tsr_reported_thlb_area_ha")
     )
+    locked_chain_latest_row_order = _normalize_float_or_none(
+        comparison_payload.get("locked_chain_latest_row_order")
+    )
+    locked_chain_latest_parent_step_id = str(
+        comparison_payload.get("locked_chain_latest_parent_step_id", "")
+    ).strip()
+    locked_chain_delta = _normalize_float_or_none(
+        comparison_payload.get("locked_chain_cumulative_delta_ha")
+    )
+    if locked_chain_latest_row_order is not None:
+        lines.append(
+            "- Locked strict chain latest row: "
+            f"`{int(locked_chain_latest_row_order)}`"
+            + (
+                f" (`{locked_chain_latest_parent_step_id}`)"
+                if locked_chain_latest_parent_step_id
+                else ""
+            )
+        )
     if reconstructed_final is not None:
-        lines.append(f"- Strict reconstructed THLB: `{reconstructed_final:.3f} ha`")
+        summary_label = (
+            "Locked strict chain THLB"
+            if locked_chain_latest_row_order is not None
+            else "Strict reconstructed THLB"
+        )
+        lines.append(f"- {summary_label}: `{reconstructed_final:.3f} ha`")
     if tsr_final is not None:
-        lines.append(f"- TSR reported THLB: `{tsr_final:.3f} ha`")
+        target_label = (
+            "TSR cumulative benchmark at the latest locked checkpoint"
+            if locked_chain_latest_row_order is not None
+            else "TSR reported THLB"
+        )
+        lines.append(f"- {target_label}: `{tsr_final:.3f} ha`")
+    if reconstructed_audit_final is not None and locked_chain_latest_row_order is not None:
+        lines.append(
+            "- Generic reconstructed audit final area (secondary context only): "
+            f"`{reconstructed_audit_final:.3f} ha`"
+        )
     for label, key in (("Strict vs TSR delta", "strict_vs_tsr_delta_ha"),):
         value = _normalize_float_or_none(comparison_payload.get(key))
         if value is not None:
             lines.append(f"- {label}: `{value:.3f} ha`")
-    lines.extend(["", "## Reviewed Bridge Context", ""])
+    if locked_chain_delta is not None:
+        lines.append(
+            "- Locked chain cumulative delta: "
+            f"`{locked_chain_delta:.3f} ha`"
+        )
+    lines.extend(
+        [
+            "",
+            "## Methodology",
+            "",
+            "- Locked rows are the governing ledger.",
+            "- Locked stepwise and cumulative values come from `thlb_locked_chain_ledger.json` when that ledger exists.",
+            "- Unlocked rows are stale/unrefreshed context only and must not be blended into the locked cumulative story.",
+            "- Generic reconstructed audit values are supporting context only; they do not override the locked chain summary.",
+            "",
+            "## Reviewed Bridge Context",
+            "",
+        ]
+    )
     if reviewed_final is not None:
         lines.append(f"- Reviewed bridge THLB: `{reviewed_final:.3f} ha`")
     for label, key in (
@@ -13672,8 +13893,15 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
                     f"- Difference nature: `{item.get('difference_nature', '')}`",
                     f"- Reconstructed status: `{item.get('reconstructed_status', '')}`",
                     f"- Reviewed status: `{item.get('reviewed_status', '')}`",
+                    f"- Locked dashboard row: `{'yes' if bool(item.get('locked_row')) else 'no'}`",
                 ]
             )
+            locked_source_kind = str(item.get("locked_source_kind", "")).strip()
+            locked_source_note = str(item.get("locked_source_note", "")).strip()
+            if locked_source_kind:
+                lines.append(f"- Locked source kind: `{locked_source_kind}`")
+            if locked_source_note:
+                lines.append(f"- Locked source note: {locked_source_note}")
             benchmark_marginal = _normalize_float_or_none(
                 item.get("benchmark_marginal_area_ha")
             )
@@ -13805,6 +14033,9 @@ def build_tsr_thlb_reconstruction_comparison(
         if reconstructed_audit_path is not None
         else default_tsr_thlb_reconstructed_audit_path(instance_root=instance_root)
     )
+    resolved_locked_chain_ledger_path = default_tsr_thlb_locked_chain_ledger_path(
+        instance_root=instance_root
+    )
     resolved_reviewed_status_path = (
         reviewed_status_path.expanduser().resolve()
         if reviewed_status_path is not None
@@ -13834,9 +14065,15 @@ def build_tsr_thlb_reconstruction_comparison(
     reconstructed_audit_payload = json.loads(
         resolved_reconstructed_audit_path.read_text(encoding="utf-8")
     )
+    locked_chain_payload = (
+        json.loads(resolved_locked_chain_ledger_path.read_text(encoding="utf-8"))
+        if resolved_locked_chain_ledger_path.exists()
+        else None
+    )
     comparison_payload = _build_tsr_thlb_reconstruction_comparison_payload(
         recipe=recipe,
         reconstructed_audit_payload=reconstructed_audit_payload,
+        locked_chain_payload=locked_chain_payload,
         recipe_relative_path=str(
             resolved_recipe_path.relative_to(instance_root).as_posix()
         ),
