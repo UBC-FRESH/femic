@@ -14343,3 +14343,11 @@
     - TSR cumulative benchmark `1,660,053.000 ha`; and
     - locked cumulative delta `-11,555.378 ha`.
   - Milestone rows 22 and 24 now read as locked cumulative checkpoints, and rows 21 and 23 retain their locked `0.000 ha` stepwise deltas in the dashboard.
+- Normalized restart-grade THLB checkpoints at the write boundary and closed `#157`.
+  - Restart writers now normalize persisted checkpoint geometry to polygon-only restart-safe output before geometry-measure recomputation and Feather/GPKG publish.
+  - Restart-equivalence validation now compares normalized restart projections instead of raw mixed-geometry frames, so line/point debris does not cause false restart mismatches.
+  - Verified on-disk TSA29 restart artifacts are polygon-only and managed-area-stable:
+    - `data/tsr/aflb_checkpoint.{feather,gpkg}` -> `271,146` features, `3,110,576.672 ha`, `MultiPolygon`;
+    - `data/tsr/lhlb_checkpoint.{feather,gpkg}` -> `322,708` features, `2,309,812.453 ha`, `MultiPolygon`;
+    - `data/tsr/lhlb_curve_ready_checkpoint.{feather,gpkg}` -> `322,708` features, `2,309,812.453 ha`, `MultiPolygon`.
+  - LU-cache normalization remains in place as a backstop, but restart-grade artifacts are now clean before cache preparation begins.

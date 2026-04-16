@@ -5207,6 +5207,88 @@ def test_materialize_checkpoint_landscape_unit_partitions_normalizes_mixed_polyg
     assert metadata["selected_landscape_units"] == ["One"]
 
 
+def test_write_reconstructed_restart_checkpoint_artifacts_normalizes_polygonal_output(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "instance"
+    feather_path = instance_root / "data" / "tsr" / "aflb_checkpoint.feather"
+    gpkg_path = instance_root / "data" / "tsr" / "aflb_checkpoint.gpkg"
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-5, -5, 40, 20)],
+        names=["Test LU"],
+    )
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2, 3, 4],
+            "thlb_fact": [1.0, 1.0, 0.5, 0.75],
+        },
+        geometry=[
+            box(0, 0, 10, 10),
+            MultiPolygon([box(10, 0, 20, 10)]),
+            GeometryCollection(
+                [box(20, 0, 30, 10), LineString([(20, 20), (21, 21)])]
+            ),
+            MultiLineString([[(30, 0), (31, 1)]]),
+        ],
+        crs="EPSG:3005",
+    )
+
+    written_feather, written_gpkg, area_ha, lu_cache_warmed = (
+        tsr_recipes._write_reconstructed_restart_checkpoint_artifacts(
+            checkpoint=checkpoint,
+            instance_root=instance_root,
+            feather_path=feather_path,
+            gpkg_path=gpkg_path,
+            gpkg_layer_name="aflb_checkpoint",
+        )
+    )
+
+    assert written_feather == feather_path
+    assert written_gpkg == gpkg_path
+    assert lu_cache_warmed is True
+    written = gpd.read_feather(written_feather)
+    assert set(written["FEATURE_ID"].tolist()) == {1, 2, 3}
+    assert set(written.geom_type.tolist()) == {"MultiPolygon"}
+    assert area_ha == pytest.approx(tsr_recipes._managed_area_ha(written))
+
+
+def test_validate_reconstructed_restart_equivalence_uses_normalized_restart_projection() -> None:
+    source_checkpoint = gpd.GeoDataFrame(
+        {
+            "_row_id": [1, 2, 3],
+            "FEATURE_ID": [10, 20, 30],
+            "thlb_fact": [1.0, 0.5, 1.0],
+        },
+        geometry=[
+            box(0, 0, 10, 10),
+            GeometryCollection([box(10, 0, 20, 10), LineString([(10, 10), (11, 11)])]),
+            MultiLineString([[(20, 0), (21, 1)]]),
+        ],
+        crs="EPSG:3005",
+    )
+    candidate_checkpoint = gpd.GeoDataFrame(
+        {
+            "_row_id": [1, 2],
+            "FEATURE_ID": [10, 20],
+            "thlb_fact": [1.0, 0.5],
+        },
+        geometry=[
+            MultiPolygon([box(0, 0, 10, 10)]),
+            MultiPolygon([box(10, 0, 20, 10)]),
+        ],
+        crs="EPSG:3005",
+    )
+
+    valid, problems = tsr_recipes._validate_reconstructed_restart_equivalence(
+        source_checkpoint=source_checkpoint,
+        candidate_checkpoint=candidate_checkpoint,
+    )
+
+    assert valid is True
+    assert problems == ()
+
+
 def test_materialize_checkpoint_landscape_unit_partitions_rebuilds_stale_in_place_cache(
     tmp_path: Path,
 ) -> None:

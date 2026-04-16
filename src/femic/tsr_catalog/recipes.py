@@ -6490,34 +6490,46 @@ def _validate_reconstructed_restart_equivalence(
     candidate_checkpoint: gpd.GeoDataFrame,
 ) -> tuple[bool, tuple[str, ...]]:
     problems: list[str] = []
-    if len(candidate_checkpoint) != len(source_checkpoint):
+    source_prepared = _prepare_reconstructed_restart_checkpoint_frame(
+        source_checkpoint,
+        normalize_polygonal_restart_geometry=True,
+    )
+    candidate_prepared = _prepare_reconstructed_restart_checkpoint_frame(
+        candidate_checkpoint,
+        normalize_polygonal_restart_geometry=True,
+    )
+    if len(candidate_prepared) != len(source_prepared):
         problems.append(
             "candidate row count does not match source checkpoint "
-            f"({len(candidate_checkpoint)} != {len(source_checkpoint)})"
+            f"({len(candidate_prepared)} != {len(source_prepared)})"
         )
-    if "_row_id" not in source_checkpoint.columns or "_row_id" not in candidate_checkpoint.columns:
+    if "_row_id" not in source_prepared.columns or "_row_id" not in candidate_prepared.columns:
         problems.append("candidate or source checkpoint is missing `_row_id`")
     else:
-        source_ids = set(pd.to_numeric(source_checkpoint["_row_id"], errors="coerce").dropna().astype(int))
+        source_ids = set(
+            pd.to_numeric(source_prepared["_row_id"], errors="coerce").dropna().astype(int)
+        )
         candidate_ids = set(
-            pd.to_numeric(candidate_checkpoint["_row_id"], errors="coerce").dropna().astype(int)
+            pd.to_numeric(candidate_prepared["_row_id"], errors="coerce").dropna().astype(int)
         )
         if source_ids != candidate_ids:
             problems.append("candidate `_row_id` coverage does not match source checkpoint")
     required_state_columns = ("thlb_fact", "thlb_raw", "_stand_area_sqm")
     for column in required_state_columns:
-        if column in source_checkpoint.columns and column not in candidate_checkpoint.columns:
+        if column in source_prepared.columns and column not in candidate_prepared.columns:
             problems.append(f"candidate checkpoint is missing required state column `{column}`")
-    source_prepared = _prepare_reconstructed_restart_checkpoint_frame(source_checkpoint)
-    candidate_prepared = _prepare_reconstructed_restart_checkpoint_frame(candidate_checkpoint)
     managed_area_delta_ha = abs(_managed_area_ha(candidate_prepared) - _managed_area_ha(source_prepared))
     if managed_area_delta_ha > 1e-6:
         problems.append(
             "candidate managed area does not match source checkpoint "
             f"(delta {managed_area_delta_ha:.6f} ha)"
         )
-    polygonal_candidate = _normalize_polygonal_overlay_frame(candidate_checkpoint)
-    if len(polygonal_candidate) != len(candidate_checkpoint):
+    candidate_geom_types = {
+        str(value)
+        for value in candidate_prepared.geom_type.dropna().astype(str).tolist()
+        if str(value)
+    }
+    if candidate_geom_types and not candidate_geom_types.issubset({"MultiPolygon"}):
         problems.append("candidate checkpoint contains non-polygonal restart geometry")
     return not problems, tuple(problems)
 
@@ -6613,18 +6625,24 @@ def _ensure_lhlb_curve_ready_checkpoint_artifacts(
 
 def _prepare_reconstructed_restart_checkpoint_frame(
     checkpoint: gpd.GeoDataFrame,
+    *,
+    normalize_polygonal_restart_geometry: bool = False,
 ) -> gpd.GeoDataFrame:
     prepared = checkpoint.copy()
     if prepared.crs is None:
         prepared = prepared.set_crs(BC_ALBERS_EPSG)
     else:
         prepared = prepared.to_crs(BC_ALBERS_EPSG)
+    if "_row_id" not in prepared.columns:
+        prepared["_row_id"] = range(len(prepared))
     if "thlb_fact" not in prepared.columns and {
         "thlb_raw",
         "thlb_area",
         "thlb",
     }.intersection(prepared.columns):
         prepared, _signal_source = _normalize_checkpoint_thlb_fact(prepared)
+    if normalize_polygonal_restart_geometry:
+        prepared = _normalize_polygonal_overlay_frame(prepared)
     prepared = _update_geometry_measure_columns(prepared)
     if "thlb_fact" in prepared.columns:
         prepared["thlb_fact"] = (
@@ -6639,8 +6657,6 @@ def _prepare_reconstructed_restart_checkpoint_frame(
         prepared["thlb_area"] = (
             prepared["_stand_area_sqm"] * prepared["thlb_fact"] / 10000.0
         )
-    if "_row_id" not in prepared.columns:
-        prepared["_row_id"] = range(len(prepared))
     if "_stand_area_sqm" not in prepared.columns:
         prepared["_stand_area_sqm"] = _resolve_effective_stand_area_sqm(prepared)
     return prepared
@@ -6654,7 +6670,10 @@ def _write_reconstructed_restart_checkpoint_artifacts(
     gpkg_path: Path | None,
     gpkg_layer_name: str,
 ) -> tuple[Path, Path | None, float, bool]:
-    prepared = _prepare_reconstructed_restart_checkpoint_frame(checkpoint)
+    prepared = _prepare_reconstructed_restart_checkpoint_frame(
+        checkpoint,
+        normalize_polygonal_restart_geometry=True,
+    )
     feather_path.parent.mkdir(parents=True, exist_ok=True)
     prepared.to_feather(feather_path)
     written_gpkg: Path | None = None

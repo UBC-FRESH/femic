@@ -16592,3 +16592,11 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Governing repo surfaces refreshed:
     - `external/femic-tsa29-instance/config/tsr/thlb_reconstruction_comparison.{md,json}`;
     - `external/femic-tsa29-instance/config/tsr/thlb_locked_chain_ledger.json` remains the canonical cumulative source.
+- 2026-04-16: Normalized restart-grade THLB checkpoints at the write boundary and closed `#157`.
+  - Restart writers now normalize persisted checkpoint geometry to polygon-only restart-safe output before geometry-measure recomputation and Feather/GPKG publish.
+  - Restart-equivalence validation now compares normalized restart projections instead of raw mixed-geometry frames, so line/point debris does not cause false restart mismatches.
+  - Verified on-disk TSA29 restart artifacts are polygon-only and managed-area-stable:
+    - `data/tsr/aflb_checkpoint.{feather,gpkg}` -> `271,146` features, `3,110,576.672 ha`, `MultiPolygon`;
+    - `data/tsr/lhlb_checkpoint.{feather,gpkg}` -> `322,708` features, `2,309,812.453 ha`, `MultiPolygon`;
+    - `data/tsr/lhlb_curve_ready_checkpoint.{feather,gpkg}` -> `322,708` features, `2,309,812.453 ha`, `MultiPolygon`.
+  - LU-cache normalization remains in place as a backstop, but restart-grade artifacts are now clean before cache preparation begins.
