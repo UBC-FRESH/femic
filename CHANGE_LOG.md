@@ -14332,3 +14332,6 @@
     - final cumulative delta `-1,555.378 ha`.
   - Net result:
     - the TSA29 strict `LHLB -> THLB` semantics pass now closes within about `1.56k ha` of the TSR long-term THLB benchmark.
+- Closed the governing GitHub issues after posting final wrap-up comments.
+  - Closed `#159` for the late-stage `LHLB -> THLB` child workstream.
+  - Closed `#128` for the full TSA29 strict TSR THLB reconciliation pass.

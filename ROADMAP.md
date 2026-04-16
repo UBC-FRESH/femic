@@ -16577,3 +16577,6 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Closeout interpretation:
     - the TSA29 strict `LHLB -> THLB` semantics pass is effectively complete;
     - remaining differences are now in the low-thousands-of-hectares range at the final milestone rather than the earlier large unresolved seams.
+  - GitHub status:
+    - closed `#159` (late-stage `LHLB -> THLB` child issue);
+    - closed `#128` (overall TSA29 strict TSR THLB reconciliation issue).
