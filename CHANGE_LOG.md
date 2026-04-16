@@ -14289,3 +14289,18 @@
     - TSR cumulative target `1,880,728.000 ha`; and
     - cumulative delta `-2,642.858 ha`.
   - The governing next step is now **step 16 only** from the official `lhlb_curve_ready_checkpoint.feather` restart seam.
+- Locked step 18 with a TSA29-only riparian subset hack and refreshed the governing ledger/dashboard.
+  - Locked strict step-18 net deduction:
+    - `57,651.598 ha`.
+  - TSR step-18 benchmark:
+    - `54,833.000 ha`.
+  - Locked stepwise delta:
+    - `+2,818.598 ha`.
+  - Locked chained cumulative after step 18:
+    - remaining area `1,810,375.644 ha`;
+    - TSR cumulative target `1,812,720.000 ha`; and
+    - cumulative delta `-2,344.356 ha`.
+  - TSA29 instance recipe note:
+    - only `S4` streams and `W5` wetlands remain active exact classes for step 18;
+    - the other riparian classes are explicit `no_deduction` placeholders in the TSA29 instance lane only.
+  - The governing next step is now **step 19 only** from the official `lhlb_curve_ready_checkpoint.feather` restart seam.

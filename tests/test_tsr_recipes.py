@@ -5876,8 +5876,14 @@ def test_specialized_compiled_logic_for_non_merchantable_profiles_uses_broadleaf
     assert len(items) == 1
     item = items[0]
     assert item["compiled_operation_type"] == "select_attribute"
+    assert item["checkpoint_attribute_mode"] == "all"
     assert item["checkpoint_attribute_filters"][0]["field"] == "SPECIES_CD_1"
     assert "AT" in item["checkpoint_attribute_filters"][0]["value"]
+    assert item["checkpoint_attribute_filters"][1] == {
+        "field": "PROJ_AGE_1",
+        "operator": "ge",
+        "value": 95.0,
+    }
     assert item["normalized_subject"] == "Broadleaf-leading stands"
 
 

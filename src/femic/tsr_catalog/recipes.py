@@ -3689,17 +3689,23 @@ def _specialized_compiled_logic_for_parent_step(
                     "defer broadleaf components in conifer-leading stands to the later broadleaf volume-exclusion assumption"
                 ),
                 "linked_source_entry_ids": [],
-                "checkpoint_attribute_mode": "any",
+                "checkpoint_attribute_mode": "all",
                 "checkpoint_attribute_filters": [
                     {
                         "field": "SPECIES_CD_1",
                         "operator": "in",
                         "value": sorted(BROADLEAF_SPECIES_CODES),
-                    }
+                    },
+                    {
+                        "field": "PROJ_AGE_1",
+                        "operator": "ge",
+                        "value": 95.0,
+                    },
                 ],
                 "notes": [
                     "TSA29 section 6.4.5 excludes broadleaf-leading stands from THLB.",
                     "Notebook execution uses the leading VRI species code on the late-stage curve-ready checkpoint surface.",
+                    "The strict lane currently uses `PROJ_AGE_1 >= 95` as the minimum-age proxy for the TSR's physically operable / minimum-harvestable-age screen.",
                     "The deciduous component of conifer-leading stands is explicitly deferred to the later broadleaf volume-exclusion assumption.",
                 ],
             }

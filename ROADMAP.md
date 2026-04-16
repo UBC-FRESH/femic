@@ -16524,3 +16524,19 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - cumulative delta `-2,642.858 ha`.
   - Governing follow-on:
     - move on to **step 16 only** from the official `lhlb_curve_ready_checkpoint.feather` restart seam.
+- 2026-04-15: Locked step 18 with a TSA29-only riparian subset hack and refreshed the governing ledger/dashboard.
+  - Locked strict step-18 net deduction:
+    - `57,651.598 ha`.
+  - TSR step-18 benchmark:
+    - `54,833.000 ha`.
+  - Locked stepwise delta:
+    - `+2,818.598 ha`.
+  - Locked chained cumulative after step 18:
+    - remaining area `1,810,375.644 ha`;
+    - TSR cumulative target `1,812,720.000 ha`; and
+    - cumulative delta `-2,344.356 ha`.
+  - TSA29-specific implementation note:
+    - the instance recipe now keeps only `S4` streams and `W5` wetlands active for step 18 and records the other riparian classes as explicit `no_deduction` placeholders.
+    - this is an accepted TSA29-only hack; the general strict riparian recipe logic in code remains unchanged for future TSAs.
+  - Governing follow-on:
+    - move on to **step 19 only** from the official `lhlb_curve_ready_checkpoint.feather` restart seam.
