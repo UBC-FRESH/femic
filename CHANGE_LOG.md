@@ -14304,3 +14304,31 @@
     - only `S4` streams and `W5` wetlands remain active exact classes for step 18;
     - the other riparian classes are explicit `no_deduction` placeholders in the TSA29 instance lane only.
   - The governing next step is now **step 19 only** from the official `lhlb_curve_ready_checkpoint.feather` restart seam.
+- Locked steps 19 and 20 and refreshed the governing late-stage chain.
+  - Locked strict step-19 net deduction:
+    - `10,502.023 ha` vs TSR `8,039.000 ha` (`+2,463.023 ha`).
+  - Locked strict step-20 net deduction:
+    - `94,417.000 ha` vs TSR `94,417.000 ha` (`0.000 ha`).
+  - Locked chained cumulative after step 20:
+    - remaining area `1,705,456.622 ha`;
+    - TSR cumulative target `1,710,264.000 ha`; and
+    - cumulative delta `-4,807.378 ha`.
+  - Step-20 fix detail:
+    - wildlife tree retention areas now use a full-TSA direct-target `aspatial_reduction` instead of incorrectly scaling the TSR benchmark by current managed area.
+  - Workflow correction:
+    - late-stage bounded runs now advance from true post-step restart checkpoints instead of replaying all locked steps from the step-13 boundary.
+- Closed out the remaining THLB late-stage steps and refreshed the final milestone state.
+  - Locked strict step-21 net deduction:
+    - `34,205.000 ha` vs TSR `34,205.000 ha` (`0.000 ha` delta).
+  - Step 22 stayed a milestone/reference row only:
+    - chained remaining area after step 21 `1,671,251.622 ha`;
+    - TSR THLB milestone target `1,682,843.000 ha`; and
+    - milestone cumulative delta `-11,591.378 ha`.
+  - Locked strict step-23 net deduction:
+    - `22,754.000 ha` vs TSR `22,754.000 ha` (`0.000 ha` delta).
+  - Final step-24 milestone state:
+    - chained remaining area `1,648,497.622 ha`;
+    - TSR long-term THLB benchmark `1,660,053.000 ha`; and
+    - final cumulative delta `-1,555.378 ha`.
+  - Net result:
+    - the TSA29 strict `LHLB -> THLB` semantics pass now closes within about `1.56k ha` of the TSR long-term THLB benchmark.

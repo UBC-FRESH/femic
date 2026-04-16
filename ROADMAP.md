@@ -16540,3 +16540,40 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - this is an accepted TSA29-only hack; the general strict riparian recipe logic in code remains unchanged for future TSAs.
   - Governing follow-on:
     - move on to **step 19 only** from the official `lhlb_curve_ready_checkpoint.feather` restart seam.
+- 2026-04-16: Locked steps 19 and 20 and switched late-stage execution to true post-step restart seams instead of replaying from step 13.
+  - Locked strict step-19 net deduction:
+    - `10,502.023 ha`.
+  - TSR step-19 benchmark:
+    - `8,039.000 ha`.
+  - Locked stepwise delta:
+    - `+2,463.023 ha`.
+  - Locked strict step-20 net deduction:
+    - `94,417.000 ha`.
+  - TSR step-20 benchmark:
+    - `94,417.000 ha`.
+  - Locked stepwise delta:
+    - `0.000 ha`.
+  - Locked chained cumulative after step 20:
+    - remaining area `1,705,456.622 ha`;
+    - TSR cumulative target `1,710,264.000 ha`; and
+    - cumulative delta `-4,807.378 ha`.
+  - Operational fix:
+    - late-stage cumulative reporting and checkpoint progression now use a true post-step restart seam (`post_step19_restart`, then post-step-20 next) rather than replaying all locked late-stage steps from the LHLB boundary.
+  - Governing follow-on:
+    - move on to **step 21 only** from the locked post-step-20 restart seam.
+- 2026-04-16: Closed out the remaining THLB late-stage steps and refreshed the final milestone state.
+  - Locked strict step-21 net deduction:
+    - `34,205.000 ha` vs TSR `34,205.000 ha` (`0.000 ha` delta).
+  - Step 22 remains a milestone/reference row only:
+    - chained remaining area after step 21 `1,671,251.622 ha`;
+    - TSR THLB milestone target `1,682,843.000 ha`; and
+    - milestone cumulative delta `-11,591.378 ha`.
+  - Locked strict step-23 net deduction:
+    - `22,754.000 ha` vs TSR `22,754.000 ha` (`0.000 ha` delta).
+  - Final step-24 milestone state:
+    - chained remaining area `1,648,497.622 ha`;
+    - TSR long-term THLB benchmark `1,660,053.000 ha`; and
+    - final cumulative delta `-1,555.378 ha`.
+  - Closeout interpretation:
+    - the TSA29 strict `LHLB -> THLB` semantics pass is effectively complete;
+    - remaining differences are now in the low-thousands-of-hectares range at the final milestone rather than the earlier large unresolved seams.

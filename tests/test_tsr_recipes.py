@@ -6066,8 +6066,13 @@ def test_specialized_compiled_logic_for_wtra_uses_aspatial_reduction() -> None:
     item = items[0]
     assert item["compiled_operation_type"] == "aspatial_reduction"
     assert item["normalized_action"] == "aspatial_reduction"
+    assert item["direct_target_removed_area"] is True
     assert item["linked_source_entry_ids"] == []
     assert item["normalized_subject"] == "Future wildlife tree retention area reduction"
+    assert any(
+        "anchored directly to the TSR benchmark area" in note
+        for note in item.get("notes", [])
+    )
 
 
 def test_specialized_compiled_logic_for_cultural_heritage_uses_aspatial_reduction() -> (
@@ -6094,6 +6099,7 @@ def test_specialized_compiled_logic_for_cultural_heritage_uses_aspatial_reductio
     assert len(items) == 1
     item = items[0]
     assert item["compiled_operation_type"] == "aspatial_reduction"
+    assert item["direct_target_removed_area"] is True
     assert item["linked_source_entry_ids"] == []
     assert (
         item["normalized_subject"]

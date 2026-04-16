@@ -3917,10 +3917,11 @@ def _specialized_compiled_logic_for_parent_step(
                     "factor after the spatially executable steps"
                 ),
                 "linked_source_entry_ids": [],
+                "direct_target_removed_area": True,
                 "notes": [
                     "TSA29 section 6.4.8 says existing mapped WTRA remain in THLB and are deferred from harvest for 80 years.",
                     "Notebook execution models only the future WTRA requirement here as an aspatial THLB reduction factor.",
-                    "The deduction magnitude is anchored to the TSR benchmark area and scaled to the current smoke subset.",
+                    "The deduction magnitude is anchored directly to the TSR benchmark area for the full-TSA strict lane.",
                 ],
             }
         )
@@ -3971,6 +3972,7 @@ def _specialized_compiled_logic_for_parent_step(
                     "aspatial factor anchored to current licensee and Tsilhqot'in practice"
                 ),
                 "linked_source_entry_ids": [],
+                "direct_target_removed_area": True,
                 "notes": [
                     "TSA29 section 6.4.9 models this as an aspatial THLB reduction rather than a single public spatial layer.",
                     "The deduction is anchored to the TSR benchmark area and informed by TNG plus FSP practice (Tolko #780, West Fraser #755, BCTS #828).",
