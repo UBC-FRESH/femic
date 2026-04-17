@@ -14351,3 +14351,12 @@
     - `data/tsr/lhlb_checkpoint.{feather,gpkg}` -> `322,708` features, `2,309,812.453 ha`, `MultiPolygon`;
     - `data/tsr/lhlb_curve_ready_checkpoint.{feather,gpkg}` -> `322,708` features, `2,309,812.453 ha`, `MultiPolygon`.
   - LU-cache normalization remains in place as a backstop, but restart-grade artifacts are now clean before cache preparation begins.
+- Prepared the full TSA29 TSR/THLB reconciliation batch for merge to `main`.
+  - Governing reconciliation issues `#128`, `#153`, `#157`, and `#159` are closed.
+  - Repository, TSA29 instance submodule, and public-data submodule are clean and checkpointed.
+  - Next action is a single GitHub PR from `feature/issue-122-tsr-recipe-templates` into `main` covering:
+    - clean raw GLB build + stash flow;
+    - strict THLB reconciliation through the locked chain;
+    - official AFLB/LHLB restart checkpoints;
+    - dashboard rebuild from the locked chain; and
+    - restart-boundary polygon normalization.
