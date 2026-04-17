@@ -300,6 +300,29 @@ def normalize_and_filter_checkpoint2_records(
     min_live_stand_volume: int = 1,
 ) -> Any:
     """Apply legacy checkpoint2 fillna defaults and row filters."""
+    table = normalize_vri_problem_values(
+        f_table=f_table,
+        species_slot_count=species_slot_count,
+        fill_token=fill_token,
+    )
+    table = table[table.BCLCS_LEVEL_2 == required_bclcs_level_2]
+    # Keep productive stands: NON_PRODUCTIVE_CD is null for productive land.
+    table = table[table.NON_PRODUCTIVE_CD.isna()]
+    table = table[table.FOR_MGMT_LAND_BASE_IND == required_for_mgmt_land_base]
+    table = table[~table.BEC_ZONE_CODE.isin(list(excluded_bec_zones))]
+    table = table[table.PROJ_AGE_1 >= min_proj_age]
+    table = table[table.BASAL_AREA >= min_basal_area]
+    table = table[table.LIVE_STAND_VOLUME_125 >= min_live_stand_volume]
+    return table
+
+
+def normalize_vri_problem_values(
+    *,
+    f_table: Any,
+    species_slot_count: int = 6,
+    fill_token: str = "X",
+) -> Any:
+    """Normalize null/problematic VRI values shared by downstream workflows."""
     table = f_table.copy()
     pd_module = __import__("pandas")
 
@@ -307,13 +330,16 @@ def normalize_and_filter_checkpoint2_records(
         species_col = f"SPECIES_CD_{idx}"
         species_pct_col = f"SPECIES_PCT_{idx}"
         live_vol_col = f"LIVE_VOL_PER_HA_SPP{idx}_125"
-        table[species_col] = table[species_col].fillna(fill_token)
-        table[species_pct_col] = pd_module.to_numeric(
-            table[species_pct_col], errors="coerce"
-        ).fillna(0)
-        table[live_vol_col] = pd_module.to_numeric(
-            table[live_vol_col], errors="coerce"
-        ).fillna(0)
+        if species_col in table.columns:
+            table[species_col] = table[species_col].fillna(fill_token)
+        if species_pct_col in table.columns:
+            table[species_pct_col] = pd_module.to_numeric(
+                table[species_pct_col], errors="coerce"
+            ).fillna(0)
+        if live_vol_col in table.columns:
+            table[live_vol_col] = pd_module.to_numeric(
+                table[live_vol_col], errors="coerce"
+            ).fillna(0)
 
     for column in (
         "SOIL_NUTRIENT_REGIME",
@@ -324,21 +350,45 @@ def normalize_and_filter_checkpoint2_records(
         "BCLCS_LEVEL_5",
         "BEC_VARIANT",
     ):
-        table[column] = table[column].fillna(fill_token)
-    table["LIVE_STAND_VOLUME_125"] = pd_module.to_numeric(
-        table["LIVE_STAND_VOLUME_125"], errors="coerce"
-    ).fillna(0)
-    table["PROJ_AGE_1"] = pd_module.to_numeric(table["PROJ_AGE_1"], errors="coerce")
-    table["BASAL_AREA"] = pd_module.to_numeric(table["BASAL_AREA"], errors="coerce")
+        if column in table.columns:
+            table[column] = table[column].fillna(fill_token)
+    if "LIVE_STAND_VOLUME_125" in table.columns:
+        table["LIVE_STAND_VOLUME_125"] = pd_module.to_numeric(
+            table["LIVE_STAND_VOLUME_125"], errors="coerce"
+        ).fillna(0)
+    if "PROJ_AGE_1" in table.columns:
+        table["PROJ_AGE_1"] = pd_module.to_numeric(table["PROJ_AGE_1"], errors="coerce")
+    if "BASAL_AREA" in table.columns:
+        table["BASAL_AREA"] = pd_module.to_numeric(table["BASAL_AREA"], errors="coerce")
+    return table
+
+
+def initialize_aflb_land_base_records(
+    *,
+    f_table: Any,
+    species_slot_count: int = 6,
+    fill_token: str = "X",
+    required_bclcs_level_2: str = "T",
+    required_for_mgmt_land_base: str = "Y",
+    excluded_bec_zones: Sequence[str] = (),
+) -> Any:
+    """Build an AFLB-style reconstruction start without AU/VDYP-only pruning.
+
+    This keeps productive/regrowing forest in play for THLB reconstruction,
+    leaving stricter age/volume filters to later yield/strata preparation.
+    """
+    table = normalize_vri_problem_values(
+        f_table=f_table,
+        species_slot_count=species_slot_count,
+        fill_token=fill_token,
+    )
 
     table = table[table.BCLCS_LEVEL_2 == required_bclcs_level_2]
     # Keep productive stands: NON_PRODUCTIVE_CD is null for productive land.
     table = table[table.NON_PRODUCTIVE_CD.isna()]
     table = table[table.FOR_MGMT_LAND_BASE_IND == required_for_mgmt_land_base]
-    table = table[~table.BEC_ZONE_CODE.isin(list(excluded_bec_zones))]
-    table = table[table.PROJ_AGE_1 >= min_proj_age]
-    table = table[table.BASAL_AREA >= min_basal_area]
-    table = table[table.LIVE_STAND_VOLUME_125 >= min_live_stand_volume]
+    if excluded_bec_zones:
+        table = table[~table.BEC_ZONE_CODE.isin(list(excluded_bec_zones))]
     return table
 
 

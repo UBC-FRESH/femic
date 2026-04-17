@@ -1,0 +1,109 @@
+motifs:
+  - motif_id: ownership_admin_exclusion
+    motif_summary: Exclude land outside the modeled provincial/Crown administration universe.
+    land_base_stages: [glb_to_aflb]
+    execution_classes: [drop_from_universe]
+    operation_types: [select_spatial_intersect, attribute_select, exclude]
+    label_contains: ["administered", "ownership", "province", "private", "federal"]
+    source_prefixes: ["WHSE_", "FADM_", "FTEN_"]
+    field_contains: ["own", "ownership", "admin"]
+    suggested_operation_class: attribute_select
+    likely_review_questions:
+      - Which ownership or administration fields actually separate Crown/provincial land from private or federal land?
+      - Does the chosen layer define universe membership cleanly, or only a later operational exclusion?
+  - motif_id: non_forest_non_productive_exclusion
+    motif_summary: Remove non-forest, non-productive, or obviously non-contributing land from the working universe.
+    land_base_stages: [glb_to_aflb]
+    execution_classes: [drop_from_universe]
+    operation_types: [attribute_select, select_spatial_intersect]
+    label_contains: ["non-forest", "non forest", "roads", "landings"]
+    source_prefixes: ["VEG_", "WHSE_", "CONSOLIDATED_"]
+    field_contains: ["crown", "cover", "land", "forest"]
+    suggested_operation_class: attribute_select
+    likely_review_questions:
+      - Is this rule best expressed as a direct attribute filter, or does it need multiple supporting layers?
+      - Are roads/landings represented directly in the chosen source, or only indirectly through another depletion layer?
+  - motif_id: reserve_protected_area_exclusion
+    motif_summary: Remove legally unavailable reserve or protected-area polygons from the harvestable land base.
+    land_base_stages: [aflb_to_lhlb]
+    execution_classes: [legal_harvest_exclusion]
+    operation_types: [select_spatial_intersect, buffer_intersect]
+    label_contains: ["park", "protected", "tenure", "ogma", "wildlife habitat", "community"]
+    source_prefixes: ["PROT_", "TA_", "WHA_", "RMP_", "OGMA", "REC_"]
+    field_contains: ["status", "designation", "tenure"]
+    suggested_operation_class: select_spatial_intersect
+    likely_review_questions:
+      - Which reviewed legal/reserve layer best matches the TSR clause?
+      - Does the TSR wording imply whole-polygon exclusion, or a filtered subset by designation/status?
+  - motif_id: line_or_polygon_buffer_exclusion
+    motif_summary: Apply a distance buffer around mapped features before excluding intersecting land.
+    land_base_stages: [aflb_to_lhlb, lhlb_to_thlb]
+    execution_classes: [legal_harvest_exclusion, projected_harvest_exclusion]
+    operation_types: [buffer_intersect]
+    label_contains: ["trail", "riparian", "lakeshore", "stream", "wetland", "buffer"]
+    source_prefixes: ["FWA_", "REG_", "REC_"]
+    field_contains: ["stream_class", "wetland", "class"]
+    suggested_operation_class: buffer_intersect
+    likely_review_questions:
+      - Is the feature geometry full-extent and production-valid, not a smoke-only clip?
+      - What exact class-to-buffer mapping does the TSR or supporting metadata require?
+  - motif_id: attribute_select_exclusion
+    motif_summary: Select mapped polygons by field/value logic and exclude the matching subset.
+    land_base_stages: [glb_to_aflb, aflb_to_lhlb, lhlb_to_thlb]
+    execution_classes: [drop_from_universe, legal_harvest_exclusion, projected_harvest_exclusion]
+    operation_types: [attribute_select, select_attribute]
+    label_contains: ["sample plots", "recreation", "cultural", "archaeological"]
+    source_prefixes: ["WHSE_", "FNIRS_", "REC_", "TA_"]
+    field_contains: ["class", "status", "type", "code"]
+    suggested_operation_class: attribute_select
+    likely_review_questions:
+      - Which exact field/value pairs make the TSR clause executable?
+      - Are the values documented in metadata, or do they need direct layer inspection first?
+  - motif_id: curve_threshold_exclusion
+    motif_summary: Exclude stands whose assigned curve metric falls below a threshold.
+    land_base_stages: [lhlb_to_thlb]
+    execution_classes: [projected_harvest_exclusion]
+    operation_types: [curve_volume_threshold_exclusion]
+    label_contains: ["growing timber potential", "merchantable", "minimum harvest age"]
+    source_prefixes: []
+    field_contains: []
+    suggested_operation_class: curve_volume_threshold_exclusion
+    likely_review_questions:
+      - Is the threshold defined on culmination, CMAI, or explicit volume at age?
+      - Does the TSR split the rule into steep/non-steep or treated/untreated branches?
+  - motif_id: derived_attribute_exclusion
+    motif_summary: Derive a stand attribute first, then run a simple filter on that derived field.
+    land_base_stages: [lhlb_to_thlb]
+    execution_classes: [projected_harvest_exclusion]
+    operation_types: [select_attribute]
+    label_contains: ["inoperable", "steep", "slope", "terrain"]
+    source_prefixes: ["DEM", "WHSE_", "MOT_"]
+    field_contains: ["slope", "terrain", "class"]
+    suggested_operation_class: derived_attribute_then_select
+    likely_review_questions:
+      - Which missing stand attribute makes this rule trivial once compiled?
+      - Is the attribute contract backed by real source metadata and layer values?
+  - motif_id: aspatial_target_area_bridge
+    motif_summary: Apply a reviewed aspatial area reduction rather than exact mapped geometry.
+    land_base_stages: [lhlb_to_thlb]
+    execution_classes: [projected_harvest_exclusion]
+    operation_types: [aspatial_reduction, no_deduction]
+    label_contains: ["future roads", "wildlife tree retention", "cultural heritage"]
+    source_prefixes: []
+    field_contains: []
+    suggested_operation_class: aspatial_reduction
+    likely_review_questions:
+      - Is this step intentionally treated as a target-area bridge rather than a mapped overlay?
+      - Is the accepted lane using a positive deduction, a reviewed no-op, or a temporary calibration bridge?
+  - motif_id: blocked_manual_review_seam
+    motif_summary: Keep the rule explicit as a reviewed seam when FEMIC does not yet have a trustworthy executable path.
+    land_base_stages: [glb_to_aflb, aflb_to_lhlb, lhlb_to_thlb]
+    execution_classes: [drop_from_universe, legal_harvest_exclusion, projected_harvest_exclusion]
+    operation_types: []
+    label_contains: ["manual", "review", "unavailable"]
+    source_prefixes: []
+    field_contains: []
+    suggested_operation_class: manual_review
+    likely_review_questions:
+      - Is the missing piece a source layer, a field/value mapping, or a deliberate policy decision to keep this non-executable for now?
+      - If the seam is accepted as manual, what evidence should the next reviewer check first?

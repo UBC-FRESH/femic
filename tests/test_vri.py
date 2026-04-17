@@ -9,6 +9,7 @@ from femic.pipeline.vri import (
     classify_stand_forest_type,
     derive_species_list_from_slots,
     filter_post_thlb_stands,
+    initialize_aflb_land_base_records,
     is_conifer_species_code,
     is_deciduous_species_code,
     normalize_and_filter_checkpoint2_records,
@@ -74,6 +75,58 @@ def test_normalize_and_filter_checkpoint2_records_filters_excluded_rows() -> Non
         LIVE_STAND_VOLUME_125=[10, 10, 0, 10]
     )
     out = normalize_and_filter_checkpoint2_records(f_table=frame)
+    assert len(out) == 1
+    assert out.iloc[0]["BEC_ZONE_CODE"] == "SBS"
+
+
+def test_initialize_aflb_land_base_records_keeps_young_and_low_volume_productive_stands() -> (
+    None
+):
+    young_regrowing = _base_row() | {
+        "PROJ_AGE_1": 5,
+        "LIVE_STAND_VOLUME_125": 0,
+        "BASAL_AREA": 1,
+    }
+    productive_mature = _base_row() | {
+        "PROJ_AGE_1": 80,
+        "LIVE_STAND_VOLUME_125": 200,
+        "BASAL_AREA": 25,
+    }
+    nonproductive = _base_row() | {
+        "NON_PRODUCTIVE_CD": "35",
+        "LIVE_STAND_VOLUME_125": 10,
+    }
+    not_managed = _base_row() | {
+        "FOR_MGMT_LAND_BASE_IND": "N",
+        "LIVE_STAND_VOLUME_125": 10,
+    }
+    non_treed = _base_row() | {
+        "BCLCS_LEVEL_2": "N",
+        "LIVE_STAND_VOLUME_125": 10,
+    }
+    frame = pd.DataFrame(
+        [young_regrowing, productive_mature, nonproductive, not_managed, non_treed]
+    )
+
+    out = initialize_aflb_land_base_records(f_table=frame)
+
+    assert len(out) == 2
+    assert set(out["PROJ_AGE_1"]) == {5, 80}
+    assert set(out["FOR_MGMT_LAND_BASE_IND"]) == {"Y"}
+
+
+def test_initialize_aflb_land_base_records_can_exclude_bec_zones_when_requested() -> (
+    None
+):
+    keep = _base_row() | {"BEC_ZONE_CODE": "SBS", "LIVE_STAND_VOLUME_125": 10}
+    drop = _base_row() | {"BEC_ZONE_CODE": "BAFA", "LIVE_STAND_VOLUME_125": 10}
+    frame = pd.DataFrame([keep, drop])
+
+    out = initialize_aflb_land_base_records(
+        f_table=frame,
+        excluded_bec_zones=("BAFA",),
+    )
+
     assert len(out) == 1
     assert out.iloc[0]["BEC_ZONE_CODE"] == "SBS"
 

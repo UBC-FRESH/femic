@@ -37,6 +37,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "datalad[full]",
+    "ipywidgets",
     "mypy",
     "pre-commit",
     "pytest",
@@ -44,6 +45,7 @@ dev = [
     "sphinx>=7.0",
     "sphinx-rtd-theme>=2.0",
     "types-PyYAML",
+    "types-shapely",
 ]
 
 [project.scripts]
@@ -72,6 +74,10 @@ extend-exclude = ["src/femic/resources/legacy/*.py"]
 
 [tool.mypy]
 exclude = ["^src/femic/resources/legacy/.*\\.py$"]
+
+[[tool.mypy.overrides]]
+module = ["shapely", "shapely.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

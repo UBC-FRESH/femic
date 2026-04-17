@@ -8,7 +8,10 @@ from types import SimpleNamespace
 import pytest
 import typer
 import yaml
+from typer.testing import CliRunner
 
+from femic.arcgis_review import ArcgisReviewProjectResult
+from femic.glb import GlbBuildResult, GlbStashResult
 from femic import bcdc_catalog
 from femic import tsr_catalog
 from femic.cli import main as cli_main
@@ -152,6 +155,267 @@ def test_preflight_checks_uses_source_root_fallback_for_shared_assets(
     assert not any("Missing required file" in msg for msg in messages)
     assert not any("Missing VDYP configuration directory" in msg for msg in messages)
     assert not any("Missing VDYP executable" in msg for msg in messages)
+
+
+def test_prep_arcgis_review_project_prints_emitted_paths(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    instance_root = tmp_path / "instance"
+    instance_root.mkdir(parents=True, exist_ok=True)
+    project_path = instance_root / "workbench" / "arcgis_review" / "tsa29_review.aprx"
+    manifest_path = (
+        instance_root / "workbench" / "arcgis_review" / "tsa29_review_manifest.json"
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "build_arcgis_review_project",
+        lambda *, instance_root, output_dir, project_name: ArcgisReviewProjectResult(
+            project_path=project_path,
+            manifest_path=manifest_path,
+            layer_count=3,
+            skipped_notes=(),
+        ),
+    )
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "prep",
+            "arcgis-review-project",
+            "--instance-root",
+            str(instance_root),
+        ],
+    )
+
+    assert result.exit_code == 0
+    normalized_stdout = result.stdout.replace("\n", "")
+    assert "ArcGIS review project emitted" in result.stdout
+    assert "project_path=" in normalized_stdout
+    assert str(project_path.name) in normalized_stdout
+    assert "manifest_path=" in normalized_stdout
+    assert str(manifest_path.name) in normalized_stdout
+    assert "layer_count=3" in normalized_stdout
+
+
+def test_prep_arcgis_review_project_surfaces_missing_arcgis(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    instance_root = tmp_path / "instance"
+    instance_root.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(
+        cli_main,
+        "build_arcgis_review_project",
+        lambda *, instance_root, output_dir, project_name: (_ for _ in ()).throw(
+            FileNotFoundError("ArcGIS Pro Python not found.")
+        ),
+    )
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "prep",
+            "arcgis-review-project",
+            "--instance-root",
+            str(instance_root),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "ArcGIS review-project emit failed" in result.stdout
+    assert "ArcGIS Pro Python not found." in result.stdout
+
+
+def test_prep_glb_build_prints_emitted_paths(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    instance_root = tmp_path / "instance"
+    instance_root.mkdir(parents=True, exist_ok=True)
+    output_dir = instance_root / "runtime" / "logs" / "glb_build" / "tsa29"
+    clipped_glb_gdb_path = output_dir / "clipped_glb.gdb"
+    summary_json_path = output_dir / "glb_summary.json"
+    summary_markdown_path = output_dir / "glb_summary.md"
+    monkeypatch.setattr(
+        cli_main,
+        "build_tsa_raw_glb",
+        lambda **_: GlbBuildResult(
+            glb_source_mode="raw_build",
+            tsa_selector="29",
+            tsa_number="29",
+            tsa_name="Williams Lake TSA",
+            source_zip_path=tmp_path / "VEG_COMP_LYR_R1_POLY_2024.gdb.zip",
+            boundary_source_path=tmp_path / "tsa.gpkg",
+            output_dir=output_dir,
+            clipped_glb_gdb_path=clipped_glb_gdb_path,
+            clipped_glb_feature_class="tsa_glb_vri_2024",
+            summary_json_path=summary_json_path,
+            summary_markdown_path=summary_markdown_path,
+            feature_count=317735,
+            clipped_area_ha=4933664.212,
+            boundary_area_ha=4933664.215,
+            area_delta_ha=-0.003,
+            stash_result=GlbStashResult(
+                attempted=True,
+                status="stashed",
+                archive_path=output_dir / "tsa29_glb_vri_2024.gdb.zip",
+                summary_path=output_dir / "tsa29_glb_vri_2024.summary.json",
+            ),
+        ),
+    )
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "prep",
+            "glb-build",
+            "--instance-root",
+            str(instance_root),
+            "--tsa",
+            "29",
+        ],
+    )
+
+    assert result.exit_code == 0
+    normalized_stdout = result.stdout.replace("\n", "")
+    assert "Raw-source GLB emitted" in result.stdout
+    assert "glb_source_mode=raw_build" in normalized_stdout
+    assert "tsa_number=29" in normalized_stdout
+    assert "clipped_glb_gdb_path=" in normalized_stdout
+    assert "summary_json_path=" in normalized_stdout
+    assert "feature_count=317735" in normalized_stdout
+    assert "public_data_glb_stash_status=stashed" in normalized_stdout
+
+
+def test_prep_glb_build_surfaces_failures(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    instance_root = tmp_path / "instance"
+    instance_root.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(
+        cli_main,
+        "build_tsa_raw_glb",
+        lambda **_: (_ for _ in ()).throw(
+            FileNotFoundError("Raw 2024 VRI zip not found.")
+        ),
+    )
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "prep",
+            "glb-build",
+            "--instance-root",
+            str(instance_root),
+            "--tsa",
+            "29",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "GLB build failed" in result.stdout
+    assert "Raw 2024 VRI zip not found." in result.stdout
+
+
+def test_prep_glb_build_resolves_explicit_output_dir_from_cwd(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    instance_root = tmp_path / "instance"
+    instance_root.mkdir(parents=True, exist_ok=True)
+    repo_relative_output = Path(
+        "external/femic-tsa29-instance/runtime/logs/glb_build/test"
+    )
+    captured: dict[str, Path | None] = {}
+
+    def _fake_build(**kwargs: object) -> GlbBuildResult:
+        captured["output_dir"] = kwargs.get("output_dir")  # type: ignore[assignment]
+        return GlbBuildResult(
+            glb_source_mode="raw_build",
+            tsa_selector="29",
+            tsa_number="29",
+            tsa_name="Williams Lake TSA",
+            source_zip_path=tmp_path / "VEG_COMP_LYR_R1_POLY_2024.gdb.zip",
+            boundary_source_path=tmp_path / "tsa.gpkg",
+            output_dir=Path(kwargs["output_dir"]),  # type: ignore[index]
+            clipped_glb_gdb_path=Path(kwargs["output_dir"]) / "clipped_glb.gdb",  # type: ignore[index]
+            clipped_glb_feature_class="tsa_glb_vri_2024",
+            summary_json_path=Path(kwargs["output_dir"]) / "glb_summary.json",  # type: ignore[index]
+            summary_markdown_path=Path(kwargs["output_dir"]) / "glb_summary.md",  # type: ignore[index]
+            feature_count=1,
+            clipped_area_ha=1.0,
+            boundary_area_ha=1.0,
+            area_delta_ha=0.0,
+            stash_result=GlbStashResult(False, "disabled", None, None),
+        )
+
+    monkeypatch.setattr(cli_main, "build_tsa_raw_glb", _fake_build)
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "prep",
+            "glb-build",
+            "--instance-root",
+            str(instance_root),
+            "--tsa",
+            "29",
+            "--output-dir",
+            str(repo_relative_output),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["output_dir"] == repo_relative_output.resolve()
+
+
+def test_prep_glb_build_wires_stash_flags(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    instance_root = tmp_path / "instance"
+    instance_root.mkdir(parents=True, exist_ok=True)
+    captured: dict[str, object] = {}
+
+    def _fake_build(**kwargs: object) -> GlbBuildResult:
+        captured.update(kwargs)
+        output_dir = tmp_path / "out"
+        return GlbBuildResult(
+            glb_source_mode="raw_build",
+            tsa_selector="29",
+            tsa_number="29",
+            tsa_name="Williams Lake TSA",
+            source_zip_path=tmp_path / "VEG_COMP_LYR_R1_POLY_2024.gdb.zip",
+            boundary_source_path=tmp_path / "tsa.gpkg",
+            output_dir=output_dir,
+            clipped_glb_gdb_path=output_dir / "clipped_glb.gdb",
+            clipped_glb_feature_class="tsa_glb_vri_2024",
+            summary_json_path=output_dir / "glb_summary.json",
+            summary_markdown_path=output_dir / "glb_summary.md",
+            feature_count=1,
+            clipped_area_ha=1.0,
+            boundary_area_ha=1.0,
+            area_delta_ha=0.0,
+            stash_result=GlbStashResult(False, "disabled", None, None),
+        )
+
+    monkeypatch.setattr(cli_main, "build_tsa_raw_glb", _fake_build)
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "prep",
+            "glb-build",
+            "--instance-root",
+            str(instance_root),
+            "--tsa",
+            "29",
+            "--force-rebuild-glb",
+            "--no-stash-public-data-glb",
+            "--force-update-public-data-glb",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["force_rebuild_glb"] is True
+    assert captured["stash_public_data_glb"] is False
+    assert captured["force_update_public_data_glb"] is True
 
 
 def test_preflight_checks_windows_requires_git_annex(
@@ -834,6 +1098,7 @@ def test_tsa_post_tipsy_calls_workflow(monkeypatch: pytest.MonkeyPatch) -> None:
         managed_curve_y_scale,
         managed_curve_truncate_at_culm,
         managed_curve_max_age,
+        yield_assumptions_path,
     ):
         called["tsa_list"] = tsa_list
         called["run_id"] = run_id
@@ -845,6 +1110,7 @@ def test_tsa_post_tipsy_calls_workflow(monkeypatch: pytest.MonkeyPatch) -> None:
         called["managed_curve_y_scale"] = managed_curve_y_scale
         called["managed_curve_truncate_at_culm"] = managed_curve_truncate_at_culm
         called["managed_curve_max_age"] = managed_curve_max_age
+        called["yield_assumptions_path"] = yield_assumptions_path
         message_fn("fake-progress")
         return SimpleNamespace(
             manifest_path=Path("vdyp_io/logs/run_manifest-post_tipsy_test.json"),
@@ -885,6 +1151,7 @@ def test_tsa_post_tipsy_calls_workflow(monkeypatch: pytest.MonkeyPatch) -> None:
     assert called["managed_curve_y_scale"] is None
     assert called["managed_curve_truncate_at_culm"] is None
     assert called["managed_curve_max_age"] is None
+    assert called["yield_assumptions_path"] is None
     assert any("post-tipsy completed" in msg for msg in messages)
     assert any("Run manifest:" in msg for msg in messages)
     assert any("fake-progress" in msg for msg in messages)
@@ -909,6 +1176,7 @@ def test_tsa_post_tipsy_uses_run_config_managed_curve_options(
                 "  managed_curve_y_scale: 1.2",
                 "  managed_curve_truncate_at_culm: true",
                 "  managed_curve_max_age: 300",
+                "  yield_assumptions_path: config/tsr/yield_assumptions.yaml",
                 "run:",
                 "  run_id: cfg_post_tipsy",
             ]
@@ -954,6 +1222,9 @@ def test_tsa_post_tipsy_uses_run_config_managed_curve_options(
     assert called["managed_curve_y_scale"] == 1.2
     assert called["managed_curve_truncate_at_culm"] is True
     assert called["managed_curve_max_age"] == 300
+    assert called["yield_assumptions_path"] == (
+        Path.cwd() / "config" / "tsr" / "yield_assumptions.yaml"
+    )
 
 
 def test_export_patchworks_requires_tsa(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -4512,6 +4783,183 @@ def test_data_bcdc_order_prints_summary_and_manifest(
     assert (tmp_path / "manifest.json").is_file()
 
 
+def test_data_bcdc_order_uses_git_email_when_flag_missing(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(cli_main, "_source_tree_root", lambda: tmp_path)
+
+    def _fake_run(*_args, **_kwargs):
+        return SimpleNamespace(
+            returncode=0, stdout="git-email@example.com\n", stderr=""
+        )
+
+    monkeypatch.setattr(cli_main.subprocess, "run", _fake_run)
+
+    captured_email: list[str | None] = []
+
+    def _fake_order(query: str, **kwargs):
+        captured_email.append(kwargs["email_address"])
+        return cli_main.BcdcDwdsOrderResult(
+            query=query,
+            limit=5,
+            generated_utc="2026-04-04T00:00:00+00:00",
+            package_id="pkg-f-own",
+            package_name="generalized-forest-cover-ownership",
+            package_title="Generalized Forest Cover Ownership",
+            dataset_page_url="https://catalogue.data.gov.bc.ca/dataset/generalized-forest-cover-ownership",
+            resource_id="dwds-id",
+            resource_name="BC Geographic Warehouse Custom Download",
+            resource_url=None,
+            feature_type="WHSE_FOREST_VEGETATION.F_OWN",
+            matched_by="object_name:WHSE_FOREST_VEGETATION.F_OWN",
+            aoi_source="bbox",
+            bbox_epsg3005=(1170000.0, 450000.0, 1180000.0, 460000.0),
+            geomark_id=None,
+            geomark_url=None,
+            output_format="fgdb",
+            email_address=kwargs["email_address"],
+            clipping_method="clip_to_aoi",
+            ordering_application="FEMIC-BCDC-DWDS",
+            request_url="https://apps.gov.bc.ca/pub/dwds-ofi/order/createOrderFiltered",
+            request_payload={"featureItems": []},
+            order_id="2551000",
+            order_guid="guid-123",
+            submission_status="SUCCESS",
+            submission_description="submitted",
+            submission_value="2551000",
+            status_probe=None,
+            warnings=(),
+        )
+
+    monkeypatch.setattr(cli_main, "submit_bcdc_dwds_order", _fake_order)
+
+    cli_main.data_bcdc_order(
+        queries=["WHSE_FOREST_VEGETATION.F_OWN"],
+        query_file=None,
+        manifest_path=None,
+        limit=5,
+        instance_root=None,
+        bbox="1170000,450000,1180000,460000",
+        geomark=None,
+        output_format="fgdb",
+        email=None,
+        clip=True,
+    )
+
+    assert captured_email == ["git-email@example.com"]
+    assert any("email: git-email@example.com" in msg for msg in messages)
+
+
+def test_data_bcdc_order_prefers_env_email_over_git(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(cli_main, "_source_tree_root", lambda: tmp_path)
+    monkeypatch.setenv(cli_main.BCDC_DWDS_EMAIL_ENV, "env-email@example.com")
+
+    def _fake_run(*_args, **_kwargs):
+        return SimpleNamespace(
+            returncode=0, stdout="git-email@example.com\n", stderr=""
+        )
+
+    monkeypatch.setattr(cli_main.subprocess, "run", _fake_run)
+    captured_email: list[str | None] = []
+
+    def _fake_order(query: str, **kwargs):
+        captured_email.append(kwargs["email_address"])
+        return cli_main.BcdcDwdsOrderResult(
+            query=query,
+            limit=5,
+            generated_utc="2026-04-04T00:00:00+00:00",
+            package_id="pkg-f-own",
+            package_name="generalized-forest-cover-ownership",
+            package_title="Generalized Forest Cover Ownership",
+            dataset_page_url="https://catalogue.data.gov.bc.ca/dataset/generalized-forest-cover-ownership",
+            resource_id="dwds-id",
+            resource_name="BC Geographic Warehouse Custom Download",
+            resource_url=None,
+            feature_type="WHSE_FOREST_VEGETATION.F_OWN",
+            matched_by="object_name:WHSE_FOREST_VEGETATION.F_OWN",
+            aoi_source="bbox",
+            bbox_epsg3005=(1170000.0, 450000.0, 1180000.0, 460000.0),
+            geomark_id=None,
+            geomark_url=None,
+            output_format="fgdb",
+            email_address=kwargs["email_address"],
+            clipping_method="clip_to_aoi",
+            ordering_application="FEMIC-BCDC-DWDS",
+            request_url="https://apps.gov.bc.ca/pub/dwds-ofi/order/createOrderFiltered",
+            request_payload={"featureItems": []},
+            order_id="2551000",
+            order_guid="guid-123",
+            submission_status="SUCCESS",
+            submission_description="submitted",
+            submission_value="2551000",
+            status_probe=None,
+            warnings=(),
+        )
+
+    monkeypatch.setattr(cli_main, "submit_bcdc_dwds_order", _fake_order)
+    monkeypatch.setattr(cli_main.console, "print", lambda *_args, **_kwargs: None)
+
+    cli_main.data_bcdc_order(
+        queries=["WHSE_FOREST_VEGETATION.F_OWN"],
+        query_file=None,
+        manifest_path=None,
+        limit=5,
+        instance_root=None,
+        bbox="1170000,450000,1180000,460000",
+        geomark=None,
+        output_format="fgdb",
+        email=None,
+        clip=True,
+    )
+
+    assert captured_email == ["env-email@example.com"]
+
+
+def test_data_bcdc_order_requires_resolvable_email(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(cli_main, "_source_tree_root", lambda: tmp_path)
+    monkeypatch.delenv(cli_main.BCDC_DWDS_EMAIL_ENV, raising=False)
+
+    def _fake_run(*_args, **_kwargs):
+        return SimpleNamespace(returncode=1, stdout="", stderr="")
+
+    monkeypatch.setattr(cli_main.subprocess, "run", _fake_run)
+    monkeypatch.setattr(
+        cli_main,
+        "submit_bcdc_dwds_order",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("submit_bcdc_dwds_order should not be called")
+        ),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.data_bcdc_order(
+            queries=["WHSE_FOREST_VEGETATION.F_OWN"],
+            query_file=None,
+            manifest_path=None,
+            limit=5,
+            instance_root=None,
+            bbox="1170000,450000,1180000,460000",
+            geomark=None,
+            output_format="fgdb",
+            email=None,
+            clip=True,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("DWDS orders need a notification email" in msg for msg in messages)
+
+
 def test_data_bcdc_order_requires_allow_bulk_for_large_plan(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -4721,6 +5169,124 @@ def test_data_bcdc_order_reports_order_error(
 
     assert exc_info.value.exit_code == 1
     assert any("BCDC order error:" in msg for msg in messages)
+
+
+def test_data_bcdc_order_followup_prints_materialization_summary(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    manifest_path = tmp_path / "order_manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "query": "WHSE_FOREST_VEGETATION.F_OWN",
+                "limit": 5,
+                "generated_utc": "2026-04-04T00:00:00+00:00",
+                "package_id": "pkg-f-own",
+                "package_name": "generalized-forest-cover-ownership",
+                "package_title": "Generalized Forest Cover Ownership",
+                "dataset_page_url": "https://catalogue.data.gov.bc.ca/dataset/generalized-forest-cover-ownership",
+                "resource_id": "dwds-id",
+                "resource_name": "BC Geographic Warehouse Custom Download",
+                "resource_url": None,
+                "feature_type": "WHSE_FOREST_VEGETATION.F_OWN",
+                "matched_by": "object_name:WHSE_FOREST_VEGETATION.F_OWN",
+                "aoi_source": "bbox",
+                "bbox_epsg3005": [1170000.0, 450000.0, 1180000.0, 460000.0],
+                "geomark_id": None,
+                "geomark_url": None,
+                "output_format": "fgdb",
+                "email_address": None,
+                "clipping_method": "clip_to_aoi",
+                "ordering_application": "FEMIC-BCDC-DWDS",
+                "request_url": "https://apps.gov.bc.ca/pub/dwds-ofi/order/createOrderFiltered",
+                "request_payload": {"featureItems": []},
+                "order_id": "2551000",
+                "order_guid": "guid-123",
+                "submission_status": "SUCCESS",
+                "submission_description": "submitted",
+                "submission_value": "2551000",
+                "status_probe": None,
+                "warnings": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "follow_up_bcdc_dwds_order",
+        lambda order, **_kwargs: cli_main.BcdcDwdsOrderResult(
+            **{
+                **order.__dict__,
+                "latest_followup_utc": "2026-04-06T00:00:00+00:00",
+                "latest_followup_status_probe": cli_main.BcdcDwdsStatusProbe(
+                    order_id=order.order_id,
+                    raw_payload={"Status": "SUCCESS"},
+                    status="SUCCESS",
+                    description="ready",
+                    value=order.order_id,
+                    download_url="https://example.invalid/order_2551000.zip",
+                ),
+                "status_probe": cli_main.BcdcDwdsStatusProbe(
+                    order_id=order.order_id,
+                    raw_payload={"Status": "SUCCESS"},
+                    status="SUCCESS",
+                    description="ready",
+                    value=order.order_id,
+                    download_url="https://example.invalid/order_2551000.zip",
+                ),
+                "materialized_artifact_path": str(tmp_path / "order_2551000.zip"),
+                "materialized_download_url": "https://example.invalid/order_2551000.zip",
+                "materialized_content_type": "application/zip",
+                "materialized_bytes": 1234,
+                "followup_warnings": (),
+            }
+        ),
+    )
+
+    cli_main.data_bcdc_order_followup(
+        order_manifest=manifest_path,
+        manifest_path=tmp_path / "followup_manifest.json",
+        download_root=tmp_path / "downloads",
+        instance_root=None,
+        download=True,
+        poll_status=True,
+    )
+
+    assert any("materialized_artifact_path:" in msg for msg in messages)
+    assert any("latest_followup_utc:" in msg for msg in messages)
+    assert any("manifest:" in msg for msg in messages)
+    assert (tmp_path / "followup_manifest.json").is_file()
+
+
+def test_data_bcdc_order_followup_reports_errors(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    manifest_path = tmp_path / "missing_status_manifest.json"
+    manifest_path.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(
+        cli_main,
+        "load_bcdc_dwds_manifest",
+        lambda _path: (_ for _ in ()).throw(cli_main.BcdcDwdsError("bad manifest")),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.data_bcdc_order_followup(
+            order_manifest=manifest_path,
+            manifest_path=None,
+            download_root=None,
+            instance_root=None,
+            download=True,
+            poll_status=True,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("BCDC order follow-up error:" in msg for msg in messages)
 
 
 def test_tsr_index_writes_canonical_registry_under_repo_metadata_root(
@@ -5069,6 +5635,905 @@ def test_tsr_overlay_init_reports_errors(monkeypatch: pytest.MonkeyPatch) -> Non
 
     assert exc_info.value.exit_code == 1
     assert any("TSR overlay init error:" in msg for msg in messages)
+
+
+def test_tsr_recipe_init_writes_instance_local_recipe_scaffolds(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    result = cli_main.TsrRecipeInitResult(
+        tsa=tsr_catalog.TsrOverlayTsaRecord(
+            tsa_id="tsa_29",
+            tsa_code="29",
+            tsa_name="Williams Lake",
+        ),
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+        created_source_layers_recipe=True,
+        created_thlb_netdown_recipe=True,
+    )
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_init(**kwargs):
+        captured_kwargs.update(kwargs)
+        return result
+
+    monkeypatch.setattr(cli_main, "init_tsr_recipe_scaffolds", _fake_init)
+
+    cli_main.tsr_recipe_init(
+        tsa="29",
+        instance_root=instance_root,
+        registry_path=None,
+        documents_path=None,
+        candidate_facts_path=None,
+        overlay_path=None,
+        overrides_path=None,
+        source_layers_recipe_path=None,
+        thlb_netdown_recipe_path=None,
+        overwrite=False,
+    )
+
+    assert captured_kwargs["instance_root"] == instance_root.resolve()
+    assert captured_kwargs["tsa"] == "29"
+    assert (
+        captured_kwargs["registry_path"]
+        == repo_root / "metadata" / "tsr" / "tsa_registry.json"
+    )
+    assert (
+        captured_kwargs["source_layers_recipe_path"]
+        == (instance_root / "config" / "tsr" / "source_layers.recipe.yaml").resolve()
+    )
+    assert (
+        captured_kwargs["thlb_netdown_recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert any("source_layers_recipe_path:" in msg for msg in messages)
+    assert any("thlb_netdown_recipe_path:" in msg for msg in messages)
+
+
+def test_tsr_recipe_init_reports_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    monkeypatch.setattr(
+        cli_main,
+        "init_tsr_recipe_scaffolds",
+        lambda **_kwargs: (_ for _ in ()).throw(cli_main.TsrRecipeError("boom")),
+    )
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.tsr_recipe_init(
+            tsa="29",
+            instance_root=Path("instance"),
+            registry_path=None,
+            documents_path=None,
+            candidate_facts_path=None,
+            overlay_path=None,
+            overrides_path=None,
+            source_layers_recipe_path=None,
+            thlb_netdown_recipe_path=None,
+            overwrite=False,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any("TSR recipe init error:" in msg for msg in messages)
+
+
+def test_tsr_source_layers_build_uses_default_recipe_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_build(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrSourceLayersRecipeBuildResult(
+            recipe_path=instance_root / "config" / "tsr" / "source_layers.recipe.yaml",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            entry_count=3,
+            status_counts={"exact_hit": 2, "alias_hit": 1},
+        )
+
+    monkeypatch.setattr(cli_main, "build_tsr_source_layers_recipe", _fake_build)
+
+    cli_main.tsr_source_layers_build(
+        instance_root=instance_root,
+        source_layers_recipe_path=None,
+        limit=5,
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "source_layers.recipe.yaml").resolve()
+    )
+    assert captured_kwargs["source_root"] == repo_root
+    assert any("entry_count: 3" in msg for msg in messages)
+
+
+def test_tsr_source_layers_run_requires_exactly_one_aoi(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    with pytest.raises(typer.Exit) as exc_info:
+        cli_main.tsr_source_layers_run(
+            instance_root=Path("instance"),
+            source_layers_recipe_path=None,
+            bbox=None,
+            geomark=None,
+            limit=5,
+            allow_order=False,
+        )
+
+    assert exc_info.value.exit_code == 1
+    assert any(
+        "Supply exactly one of `--bbox` or `--geomark`." in msg for msg in messages
+    )
+
+
+def test_tsr_thlb_netdown_build_uses_default_recipe_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_build(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbNetdownRecipeBuildResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            step_count=4,
+            step_kind_counts={"netdown_rule": 3, "reference_target": 1},
+            status_counts={"ready": 3, "needs_review": 1},
+            selected_document_paths=("TSR_2024/Data_Package_2024/29ts_dpkg_2024.pdf",),
+        )
+
+    monkeypatch.setattr(cli_main, "build_tsr_thlb_netdown_recipe", _fake_build)
+
+    cli_main.tsr_thlb_netdown_build(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert captured_kwargs["source_root"] == repo_root
+    assert any("step_count: 4" in msg for msg in messages)
+    assert any(
+        "selected_document_path: TSR_2024/Data_Package_2024/29ts_dpkg_2024.pdf" in msg
+        for msg in messages
+    )
+
+
+def test_tsr_thlb_workbench_build_uses_default_paths(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_build(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbWorkbenchBuildResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            notebook_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "thlb_netdown.workbench.ipynb",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            parent_step_count=5,
+            compiled_logic_count=9,
+            stage_counts={"glb_to_aflb": 2, "lhlb_to_thlb": 3},
+        )
+
+    monkeypatch.setattr(cli_main, "build_tsr_thlb_workbench", _fake_build)
+
+    cli_main.tsr_thlb_netdown_workbench_build(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+        workbench_path=None,
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert (
+        captured_kwargs["notebook_path"]
+        == (
+            instance_root / "workbench" / "tsr" / "thlb_netdown.workbench.ipynb"
+        ).resolve()
+    )
+    assert any("parent_step_count: 5" in msg for msg in messages)
+    assert any("compiled_logic_count: 9" in msg for msg in messages)
+
+
+def test_tsr_thlb_warmstart_build_uses_default_paths(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_build(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbWarmstartBuildResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            markdown_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "thlb_netdown.warmstart.md",
+            yaml_path=instance_root / "config" / "tsr" / "thlb_warmstart.yaml",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            milestone_count=4,
+            parent_step_count=12,
+            warmstart_status_counts={
+                "compiled_ready": 6,
+                "review_pattern_match": 3,
+                "blocked_missing_source": 2,
+                "manual_or_aspatial": 1,
+            },
+        )
+
+    monkeypatch.setattr(cli_main, "build_tsr_thlb_warmstart", _fake_build)
+
+    cli_main.tsr_thlb_netdown_warmstart_build(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+        output_markdown=None,
+        output_yaml=None,
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert (
+        captured_kwargs["markdown_path"]
+        == (instance_root / "workbench" / "tsr" / "thlb_netdown.warmstart.md").resolve()
+    )
+    assert (
+        captured_kwargs["yaml_path"]
+        == (instance_root / "config" / "tsr" / "thlb_warmstart.yaml").resolve()
+    )
+    assert any("markdown_path:" in msg for msg in messages)
+    assert any("yaml_path:" in msg for msg in messages)
+    assert any("warmstart_status_compiled_ready: 6" in msg for msg in messages)
+
+
+def test_tsr_thlb_reconstruction_compare_uses_default_paths(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = tmp_path / "repo" / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_build(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbReconstructionComparisonBuildResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            markdown_path=instance_root
+            / "config"
+            / "tsr"
+            / "thlb_reconstruction_comparison.md",
+            json_path=instance_root
+            / "config"
+            / "tsr"
+            / "thlb_reconstruction_comparison.json",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            parent_step_count=20,
+            comparison_bucket_counts={
+                "close_match": 4,
+                "strict_overcut_candidate": 3,
+                "reviewed_bridge_only": 2,
+            },
+        )
+
+    monkeypatch.setattr(
+        cli_main, "build_tsr_thlb_reconstruction_comparison", _fake_build
+    )
+
+    cli_main.tsr_thlb_reconstruction_compare(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+        reconstructed_audit_path=None,
+        reviewed_status_path=None,
+        output_markdown=None,
+        output_json=None,
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert (
+        captured_kwargs["reconstructed_audit_path"]
+        == (
+            instance_root / "config" / "tsr" / "thlb_reconstructed.audit.json"
+        ).resolve()
+    )
+    assert (
+        captured_kwargs["reviewed_status_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.status.md").resolve()
+    )
+    assert (
+        captured_kwargs["output_markdown_path"]
+        == (
+            instance_root / "config" / "tsr" / "thlb_reconstruction_comparison.md"
+        ).resolve()
+    )
+    assert (
+        captured_kwargs["output_json_path"]
+        == (
+            instance_root / "config" / "tsr" / "thlb_reconstruction_comparison.json"
+        ).resolve()
+    )
+    assert any("comparison_bucket_close_match: 4" in msg for msg in messages)
+    assert any("markdown_path:" in msg for msg in messages)
+    assert any("json_path:" in msg for msg in messages)
+
+
+def test_tsr_thlb_workbench_lock_uses_default_paths(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_lock(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbWorkbenchLockResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            notebook_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "thlb_netdown.workbench.ipynb",
+            locked_script_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "thlb_netdown.locked.py",
+            locked_recipe_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "thlb_netdown.locked.recipe.yaml",
+            frozen_status_report_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "frozen"
+            / "thlb_netdown.status.locked-20260405T000000Z.md",
+            frozen_audit_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "frozen"
+            / "thlb_netdown.audit.locked-20260405T000000Z.json",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            lock_scope="all",
+        )
+
+    monkeypatch.setattr(cli_main, "lock_tsr_thlb_workbench", _fake_lock)
+
+    cli_main.tsr_thlb_netdown_workbench_lock(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+        workbench_path=None,
+        lock_scope="all",
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert (
+        captured_kwargs["notebook_path"]
+        == (
+            instance_root / "workbench" / "tsr" / "thlb_netdown.workbench.ipynb"
+        ).resolve()
+    )
+    assert captured_kwargs["lock_scope"] == "all"
+    assert any("locked_script_path:" in msg for msg in messages)
+    assert any("lock_scope: all" in msg for msg in messages)
+
+
+def test_tsr_thlb_netdown_step_run_uses_default_recipe_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_run(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbParentStepRunResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+            parent_label="Land not administered by the Province",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            checkpoint_path=instance_root
+            / "data"
+            / "ria_vri_vclr1p_checkpoint1.feather",
+            selected_map_ids=("092O071",),
+            selected_landscape_units=(),
+            output_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "notebook_runs"
+            / "thlb_parent_002.feather",
+            result_json_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "notebook_runs"
+            / "thlb_parent_002.json",
+            status="applied",
+            executed_parent_step_ids=(
+                "thlb_parent_002_land_not_administered_by_the_province",
+            ),
+            input_area_ha=2.0,
+            removed_area_ha=1.0,
+            remaining_area_ha=1.0,
+            benchmark_marginal_area_ha=1.0,
+            benchmark_cumulative_area_ha=1.0,
+            benchmark_marginal_delta_ha=0.0,
+            benchmark_cumulative_delta_ha=0.0,
+            smoke_benchmark_scale_factor=None,
+            scaled_benchmark_marginal_area_ha=None,
+            scaled_benchmark_cumulative_area_ha=None,
+            scaled_benchmark_marginal_delta_ha=None,
+            scaled_benchmark_cumulative_delta_ha=None,
+            notes=("Used smoke subset 092O071",),
+        )
+
+    monkeypatch.setattr(cli_main, "run_tsr_thlb_parent_step", _fake_run)
+
+    cli_main.tsr_thlb_netdown_step_run(
+        instance_root=instance_root,
+        parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+        thlb_netdown_recipe_path=None,
+        checkpoint_path=None,
+        map_id=None,
+        landscape_unit=None,
+        auto_map_id_smoke_subset=True,
+        execution_mode=cli_main.TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL,
+        max_workers=None,
+        lu_bundle_count=None,
+        progress_root=None,
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert captured_kwargs["checkpoint_path"] is None
+    assert captured_kwargs["map_ids"] == ()
+    assert captured_kwargs["landscape_units"] == ()
+    assert captured_kwargs["auto_map_id_smoke_subset"] is True
+    assert captured_kwargs["lu_bundle_count"] is None
+    assert captured_kwargs["progress_root"] is None
+    assert any("parent_step_id:" in msg for msg in messages)
+    assert any("selected_map_ids: 092O071" in msg for msg in messages)
+    assert any("notes: Used smoke subset 092O071" in msg for msg in messages)
+
+
+def test_tsr_thlb_netdown_parallel_benchmark_uses_default_recipe_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_run(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbParallelBenchmarkResult(
+            summary_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "parallel_benchmarks"
+            / "summary.md",
+            parent_step_ids=("thlb_parent_007_old_growth_management_areas",),
+            landscape_units=("Williams Lake",),
+            run_results=(
+                tsr_catalog.TsrThlbParallelBenchmarkRunResult(
+                    parent_step_id="thlb_parent_007_old_growth_management_areas",
+                    parent_label="Old growth management areas",
+                    execution_mode="serial",
+                    worker_count=1,
+                    lu_count=1,
+                    wall_time_seconds=1.0,
+                    peak_memory_mb=None,
+                    status="applied",
+                    input_area_ha=2.0,
+                    removed_area_ha=0.5,
+                    remaining_area_ha=1.5,
+                    output_row_count=2,
+                    result_json_path=instance_root / "runtime" / "logs" / "serial.json",
+                    output_path=instance_root / "runtime" / "logs" / "serial.feather",
+                    parity_with_serial=True,
+                    parity_removed_area_delta_ha=0.0,
+                    parity_remaining_area_delta_ha=0.0,
+                    notes=(),
+                ),
+            ),
+        )
+
+    monkeypatch.setattr(cli_main, "run_tsr_thlb_parallel_benchmark", _fake_run)
+
+    cli_main.tsr_thlb_netdown_parallel_benchmark(
+        instance_root=instance_root,
+        parent_step_id=["thlb_parent_007_old_growth_management_areas"],
+        thlb_netdown_recipe_path=None,
+        checkpoint_path=None,
+        landscape_unit=["Williams Lake"],
+        worker_count=[1, 2],
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert captured_kwargs["checkpoint_path"] is None
+    assert captured_kwargs["landscape_units"] == ("Williams Lake",)
+    assert captured_kwargs["worker_counts"] == (1, 2)
+    assert any("summary_path:" in msg for msg in messages)
+    assert any("benchmark_run:" in msg for msg in messages)
+
+
+def test_tsr_thlb_netdown_run_uses_default_paths(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_run(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbNetdownRecipeRunResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            checkpoint_path=instance_root
+            / "data"
+            / "ria_vri_vclr1p_checkpoint8.feather",
+            output_path=instance_root
+            / "data"
+            / "tsr"
+            / "thlb_netdown_checkpoint.feather",
+            audit_path=instance_root / "config" / "tsr" / "thlb_netdown.audit.json",
+            status_report_path=instance_root
+            / "config"
+            / "tsr"
+            / "thlb_netdown.status.md",
+            runtime_status_report_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "thlb_netdown_status_report-20260405T000000Z.md",
+            aflb_checkpoint_path=None,
+            aflb_gpkg_path=None,
+            aflb_lu_cache_warmed=False,
+            lhlb_checkpoint_path=None,
+            lhlb_gpkg_path=None,
+            lhlb_lu_cache_warmed=False,
+            lhlb_curve_ready_checkpoint_path=None,
+            lhlb_curve_ready_gpkg_path=None,
+            lhlb_curve_ready_lu_cache_warmed=False,
+            execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_HYBRID,
+            baseline_signal="thlb_raw",
+            selected_map_ids=(),
+            step_count=3,
+            outcome_counts={"applied": 1, "unsupported": 2},
+            input_area_ha=1682843.0,
+            baseline_managed_area_ha=1682843.0,
+            final_managed_area_ha=1513233.574,
+            legacy_reference_managed_area_ha=None,
+            tsr_reported_aflb_area_ha=3098168.0,
+            tsr_reported_thlb_area_ha=1660053.0,
+            aflb_checkpoint_area_ha=None,
+            lhlb_checkpoint_area_ha=None,
+            lhlb_curve_ready_checkpoint_area_ha=None,
+        )
+
+    monkeypatch.setattr(cli_main, "run_tsr_thlb_netdown_recipe", _fake_run)
+
+    cli_main.tsr_thlb_netdown_run(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+        checkpoint_path=None,
+        output_path=None,
+        audit_path=None,
+        execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_HYBRID,
+        map_id=[],
+        auto_map_id_smoke_subset=False,
+        no_aflb_gpkg=False,
+        no_lhlb_gpkg=False,
+        no_lhlb_curve_ready_gpkg=False,
+        parallel_mode="auto",
+        max_workers=None,
+        lu_bundle_count=None,
+    )
+
+    assert (
+        captured_kwargs["recipe_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml").resolve()
+    )
+    assert captured_kwargs["checkpoint_path"] is None
+    assert (
+        captured_kwargs["output_path"]
+        == (
+            instance_root / "data" / "tsr" / "thlb_netdown_checkpoint.feather"
+        ).resolve()
+    )
+    assert (
+        captured_kwargs["audit_path"]
+        == (instance_root / "config" / "tsr" / "thlb_netdown.audit.json").resolve()
+    )
+    assert (
+        captured_kwargs["execution_mode"] == tsr_catalog.TSR_THLB_EXECUTION_MODE_HYBRID
+    )
+    assert captured_kwargs["map_ids"] == ()
+    assert captured_kwargs["auto_map_id_smoke_subset"] is False
+    assert captured_kwargs["parallel_mode"] == "auto"
+    assert captured_kwargs["max_workers"] is None
+    assert captured_kwargs["lu_bundle_count"] is None
+    assert any("step_count: 3" in msg for msg in messages)
+    assert any("execution_mode: hybrid" in msg for msg in messages)
+    assert any("outcome_applied: 1" in msg for msg in messages)
+    assert any("status_report_path:" in msg for msg in messages)
+    assert any("tsr_reported_aflb_area_ha:" in msg for msg in messages)
+
+
+def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_run(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbNetdownRecipeRunResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            checkpoint_path=instance_root
+            / "data"
+            / "ria_vri_vclr1p_checkpoint1.feather",
+            output_path=instance_root
+            / "data"
+            / "tsr"
+            / "thlb_reconstructed_checkpoint.feather",
+            audit_path=instance_root
+            / "config"
+            / "tsr"
+            / "thlb_reconstructed.audit.json",
+            status_report_path=instance_root
+            / "config"
+            / "tsr"
+            / "thlb_reconstructed.status.md",
+            runtime_status_report_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "thlb_reconstructed_status_report-20260405T000000Z.md",
+            aflb_checkpoint_path=instance_root / "data" / "tsr" / "aflb_checkpoint.feather",
+            aflb_gpkg_path=instance_root / "data" / "tsr" / "aflb_checkpoint.gpkg",
+            aflb_lu_cache_warmed=True,
+            lhlb_checkpoint_path=instance_root / "data" / "tsr" / "lhlb_checkpoint.feather",
+            lhlb_gpkg_path=instance_root / "data" / "tsr" / "lhlb_checkpoint.gpkg",
+            lhlb_lu_cache_warmed=True,
+            lhlb_curve_ready_checkpoint_path=instance_root
+            / "data"
+            / "tsr"
+            / "lhlb_curve_ready_checkpoint.feather",
+            lhlb_curve_ready_gpkg_path=instance_root
+            / "data"
+            / "tsr"
+            / "lhlb_curve_ready_checkpoint.gpkg",
+            lhlb_curve_ready_lu_cache_warmed=True,
+            execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+            baseline_signal="checkpoint1_raw_glb_initialization",
+            selected_map_ids=("093J034", "093J044"),
+            step_count=2,
+            outcome_counts={"applied": 1, "needs_review": 1},
+            input_area_ha=100000.0,
+            baseline_managed_area_ha=92345.0,
+            final_managed_area_ha=80123.0,
+            legacy_reference_managed_area_ha=65000.0,
+            tsr_reported_aflb_area_ha=3098168.0,
+            tsr_reported_thlb_area_ha=66053.0,
+            aflb_checkpoint_area_ha=3098168.0,
+            lhlb_checkpoint_area_ha=2284357.0,
+            lhlb_curve_ready_checkpoint_area_ha=2284357.0,
+        )
+
+    monkeypatch.setattr(cli_main, "run_tsr_thlb_netdown_recipe", _fake_run)
+
+    cli_main.tsr_thlb_netdown_run(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+        checkpoint_path=None,
+        output_path=None,
+        audit_path=None,
+        execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+        map_id=["093J034", "093J044"],
+        auto_map_id_smoke_subset=False,
+        allow_stand_binary_fallback=True,
+        no_aflb_gpkg=False,
+        no_lhlb_gpkg=False,
+        no_lhlb_curve_ready_gpkg=False,
+        parallel_mode="auto",
+        max_workers=None,
+        lu_bundle_count=None,
+    )
+
+    assert captured_kwargs["map_ids"] == ("093J034", "093J044")
+    assert captured_kwargs["auto_map_id_smoke_subset"] is False
+    assert captured_kwargs["allow_stand_binary_fallback"] is True
+    assert captured_kwargs["write_aflb_gpkg"] is True
+    assert captured_kwargs["write_lhlb_gpkg"] is True
+    assert captured_kwargs["write_lhlb_curve_ready_gpkg"] is True
+    assert captured_kwargs["parallel_mode"] == "auto"
+    assert captured_kwargs["max_workers"] is None
+    assert captured_kwargs["lu_bundle_count"] is None
+    assert any("selected_map_ids: 093J034, 093J044" in msg for msg in messages)
+
+
+def test_tsr_thlb_netdown_run_can_disable_aflb_gpkg(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_run(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbNetdownRecipeRunResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            checkpoint_path=instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather",
+            output_path=instance_root / "data" / "tsr" / "thlb_reconstructed_checkpoint.feather",
+            audit_path=instance_root / "config" / "tsr" / "thlb_reconstructed.audit.json",
+            status_report_path=instance_root / "config" / "tsr" / "thlb_reconstructed.status.md",
+            runtime_status_report_path=instance_root / "runtime" / "logs" / "tsr" / "thlb_reconstructed_status_report-20260405T000000Z.md",
+            aflb_checkpoint_path=instance_root / "data" / "tsr" / "aflb_checkpoint.feather",
+            aflb_gpkg_path=None,
+            aflb_lu_cache_warmed=True,
+            lhlb_checkpoint_path=instance_root / "data" / "tsr" / "lhlb_checkpoint.feather",
+            lhlb_gpkg_path=None,
+            lhlb_lu_cache_warmed=True,
+            lhlb_curve_ready_checkpoint_path=instance_root
+            / "data"
+            / "tsr"
+            / "lhlb_curve_ready_checkpoint.feather",
+            lhlb_curve_ready_gpkg_path=None,
+            lhlb_curve_ready_lu_cache_warmed=True,
+            execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+            baseline_signal="checkpoint1_raw_glb_initialization",
+            selected_map_ids=(),
+            step_count=1,
+            outcome_counts={"applied": 1},
+            input_area_ha=1.0,
+            baseline_managed_area_ha=1.0,
+            final_managed_area_ha=1.0,
+            legacy_reference_managed_area_ha=None,
+            tsr_reported_aflb_area_ha=None,
+            tsr_reported_thlb_area_ha=None,
+            aflb_checkpoint_area_ha=1.0,
+            lhlb_checkpoint_area_ha=0.75,
+            lhlb_curve_ready_checkpoint_area_ha=0.75,
+        )
+
+    monkeypatch.setattr(cli_main, "run_tsr_thlb_netdown_recipe", _fake_run)
+
+    cli_main.tsr_thlb_netdown_run(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+        checkpoint_path=None,
+        output_path=None,
+        audit_path=None,
+        execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+        map_id=[],
+        auto_map_id_smoke_subset=False,
+        allow_stand_binary_fallback=False,
+        no_aflb_gpkg=True,
+        no_lhlb_gpkg=True,
+        no_lhlb_curve_ready_gpkg=True,
+        parallel_mode="serial",
+        max_workers=3,
+        lu_bundle_count=2,
+    )
+
+    assert captured_kwargs["write_aflb_gpkg"] is False
+    assert captured_kwargs["write_lhlb_gpkg"] is False
+    assert captured_kwargs["write_lhlb_curve_ready_gpkg"] is False
+    assert captured_kwargs["parallel_mode"] == "serial"
+    assert captured_kwargs["max_workers"] == 3
+    assert captured_kwargs["lu_bundle_count"] == 2
 
 
 def test_tsr_facts_report_writes_review_csv(

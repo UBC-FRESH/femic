@@ -461,3 +461,80 @@ def test_tsa_btc_post_tipsy_cli_passes_indicator_bank(
 
     assert result.exit_code == 0
     assert captured["indicator_bank_names"] == ["stand-structure-basic"]
+
+
+def test_tsa_btc_post_tipsy_cli_passes_yield_assumptions_path(
+    monkeypatch, tmp_path: Path
+) -> None:
+    data_root = tmp_path / "data"
+    data_root.mkdir()
+    (data_root / "03_input-tsa29.csv").write_text(
+        "feature_id\n1000\n", encoding="utf-8"
+    )
+    captured: dict[str, object] = {}
+
+    def fake_btc_post_tipsy(**kwargs: object) -> BTCPostTipsyRunResult:
+        captured.update(kwargs)
+        btc_result = BTCRunResult(
+            run_id="btc_post_tipsy_test_tsa29",
+            mode="TSR",
+            manifest_path=tmp_path / "logs" / "btc_manifest.json",
+            stdout_log_path=tmp_path / "logs" / "btc_stdout.log",
+            stderr_log_path=tmp_path / "logs" / "btc_stderr.log",
+            output_csv_path=data_root / "04_output-tsa29.csv",
+            error_csv_path=data_root / "04_error-tsa29.csv",
+            executable_path=tmp_path / "btc" / "TIPSYbtc.exe",
+            install_root=tmp_path / "btc",
+            working_dir=tmp_path / "scratch" / "work",
+            command=("btc.exe", "/TSR", "MSYT.csv"),
+            copied_install=True,
+            exit_code=0,
+            duration_sec=1.0,
+            report_template_path=tmp_path / "btc" / "TimberSupply.rpt",
+        )
+        bundle_result = PostTipsyBundleResult(
+            tsa_list=["29"],
+            au_rows=1,
+            curve_rows=2,
+            curve_points_rows=4,
+            tipsy_curves_paths=[data_root / "tipsy_curves_tsa29.csv"],
+            tipsy_sppcomp_paths=[data_root / "tipsy_sppcomp_tsa29.csv"],
+            au_table_path=data_root / "model_input_bundle" / "au_table.csv",
+            curve_table_path=data_root / "model_input_bundle" / "curve_table.csv",
+            curve_points_table_path=data_root
+            / "model_input_bundle"
+            / "curve_points_table.csv",
+        )
+        post_tipsy = PostTipsyBundleRunResult(
+            manifest_path=tmp_path / "logs" / "run_manifest.json",
+            result=bundle_result,
+        )
+        return BTCPostTipsyRunResult(
+            btc_results=[btc_result],
+            post_tipsy_result=post_tipsy,
+        )
+
+    monkeypatch.setattr(
+        cli_main,
+        "run_btc_and_post_tipsy_bundle_with_manifest",
+        fake_btc_post_tipsy,
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "tsa",
+            "btc-post-tipsy",
+            "--instance-root",
+            str(tmp_path),
+            "--tsa",
+            "29",
+            "--yield-assumptions-path",
+            "config/tsr/yield_assumptions.yaml",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["yield_assumptions_path"] == (
+        tmp_path / "config" / "tsr" / "yield_assumptions.yaml"
+    )

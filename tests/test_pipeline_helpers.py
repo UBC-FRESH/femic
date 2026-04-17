@@ -476,6 +476,26 @@ def test_assign_si_levels_from_stratum_quantiles_respects_allowed_levels() -> No
     assert set(out["si_level"].dropna().unique()) == {"L", "H"}
 
 
+def test_assign_si_levels_from_stratum_quantiles_assigns_tail_rows() -> None:
+    f_table = pd.DataFrame(
+        {
+            "stratum_matched": ["S1"] * 8,
+            "SITE_INDEX": [1.0, 5.0, 10.0, 15.0, 20.0, 30.0, 40.0, 100.0],
+        }
+    )
+    base = {"L": [5, 20, 35], "M": [35, 50, 65], "H": [65, 80, 95]}
+
+    out, _stats = assign_si_levels_from_stratum_quantiles(
+        f_table=f_table,
+        si_levelquants=base,
+        message_fn=lambda _m: None,
+    )
+
+    assert out.loc[0, "si_level"] == "L"
+    assert out.loc[7, "si_level"] == "H"
+    assert out["si_level"].notna().all()
+
+
 def test_assign_si_levels_from_stratum_quantiles_handles_no_matched_rows() -> None:
     f_table = pd.DataFrame(
         {
@@ -1092,6 +1112,7 @@ def test_load_pipeline_run_profile_from_yaml(tmp_path: Path) -> None:
                 "  managed_curve_y_scale: 1.2",
                 "  managed_curve_truncate_at_culm: true",
                 "  managed_curve_max_age: 300",
+                "  yield_assumptions_path: config/tsr/yield_assumptions.yaml",
                 "run:",
                 "  run_id: cfg001",
                 "  log_dir: vdyp_io/custom_logs",
@@ -1126,6 +1147,7 @@ def test_load_pipeline_run_profile_from_yaml(tmp_path: Path) -> None:
     assert profile.managed_curve_y_scale == pytest.approx(1.2)
     assert profile.managed_curve_truncate_at_culm is True
     assert profile.managed_curve_max_age == 300
+    assert profile.yield_assumptions_path == Path("config/tsr/yield_assumptions.yaml")
 
 
 def test_resolve_effective_run_options_merges_profile_and_cli() -> None:
@@ -1166,6 +1188,7 @@ def test_resolve_effective_run_options_merges_profile_and_cli() -> None:
     assert resolved.managed_curve_y_scale is None
     assert resolved.managed_curve_truncate_at_culm is None
     assert resolved.managed_curve_max_age is None
+    assert resolved.yield_assumptions_path is None
 
 
 def test_load_pipeline_run_profile_rejects_invalid_root_type(tmp_path: Path) -> None:
@@ -1243,6 +1266,7 @@ def test_build_legacy_execution_plan_resolves_env_and_paths(tmp_path: Path) -> N
         managed_curve_y_scale=1.2,
         managed_curve_truncate_at_culm=True,
         managed_curve_max_age=300,
+        yield_assumptions_path=Path("config/tsr/yield_assumptions.yaml"),
     )
 
     plan = build_legacy_execution_plan(

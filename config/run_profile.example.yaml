@@ -32,6 +32,7 @@ modes:
   # managed_curve_y_scale: 1.2
   # managed_curve_truncate_at_culm: true
   # managed_curve_max_age: 300
+  # yield_assumptions_path: "config/tsr/yield_assumptions.yaml"
 run:
   run_id: "dev-profile"
   log_dir: "runtime/profile_logs"

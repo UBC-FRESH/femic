@@ -34,6 +34,7 @@ Schema
      managed_curve_y_scale: 1.2  # optional numeric; y' = y * scale
      managed_curve_truncate_at_culm: true  # optional bool; flatten after culmination
      managed_curve_max_age: 300  # optional positive int
+     yield_assumptions_path: "config/tsr/yield_assumptions.yaml"  # optional post-TIPSY yield adjustments
    run:
      run_id: "dev-profile"  # optional str
      log_dir: "vdyp_io/profile_logs"  # optional str path
@@ -58,6 +59,11 @@ Precedence
   unmanaged curves (instead of using raw TIPSY yields) using:
   ``x' = x * managed_curve_x_scale`` and ``y' = y * managed_curve_y_scale``, with
   optional post-culmination flattening via ``managed_curve_truncate_at_culm``.
+- ``modes.yield_assumptions_path`` points Stage 01b post-TIPSY bundling at an
+  instance-local TSR yield-assumptions file. In TSA29 this is used for the
+  later section ``7.1.5`` rule that removes broadleaf volume from
+  conifer-leading untreated curves without treating that assumption as a THLB
+  area netdown.
 - When ``selection.stratification.top_area_coverage`` is set, 01a selects the
   minimum number of descending-area strata needed to hit the requested
   cumulative area target, instead of using a fixed per-code top-N cutoff.

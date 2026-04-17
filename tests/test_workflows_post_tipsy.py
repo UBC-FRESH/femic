@@ -577,6 +577,11 @@ def test_run_post_tipsy_bundle_with_manifest_writes_manifest(
         / "data"
         / "model_input_bundle"
         / "curve_points_table.csv",
+        yield_assumptions_summary={
+            "assumptions_path": "config/tsr/yield_assumptions.yaml",
+            "adjusted_au_count": 1,
+            "total_untreated_volume_removed": 12.0,
+        },
     )
     for path in [
         *expected_result.tipsy_curves_paths,
@@ -612,6 +617,364 @@ def test_run_post_tipsy_bundle_with_manifest_writes_manifest(
     assert payload["status"] == "ok"
     assert payload["workflow"] == "tsa_post_tipsy"
     assert payload["run_id"] == "post_tipsy_manifest_test"
+    assert payload["outputs"]["yield_assumptions"]["adjusted_au_count"] == 1
+
+
+def test_run_post_tipsy_bundle_applies_broadleaf_volume_exclusion_to_conifer_leading_untreated_aus(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path
+    data_root = repo_root / "data"
+    data_root.mkdir(parents=True, exist_ok=True)
+    (repo_root / "config" / "tsr").mkdir(parents=True, exist_ok=True)
+    tsa = "29"
+
+    (repo_root / "config" / "tsr" / "yield_assumptions.yaml").write_text(
+        "\n".join(
+            [
+                "rules:",
+                "  - rule_type: broadleaf_volume_exclusion",
+                "    tsa_list: ['29']",
+                "    scope: untreated_only",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    pd.DataFrame(
+        {
+            "tsa_code": [tsa],
+            "SPECIES_CD_1": ["FDC"],
+            "SPECIES_PCT_1": [60.0],
+            "SPECIES_CD_2": ["AT"],
+            "SPECIES_PCT_2": [40.0],
+            "SPECIES_CD_3": [""],
+            "SPECIES_PCT_3": [0.0],
+            "SPECIES_CD_4": [""],
+            "SPECIES_PCT_4": [0.0],
+            "SPECIES_CD_5": [""],
+            "SPECIES_PCT_5": [0.0],
+            "SPECIES_CD_6": [""],
+            "SPECIES_PCT_6": [0.0],
+        }
+    ).to_feather(data_root / f"ria_vri_vclr1p_checkpoint1-tsa{tsa}.feather")
+
+    results_for_tsa = [
+        (
+            0,
+            "IDF_FDC+AT",
+            {
+                "L": {
+                    "species": {
+                        "FDC": {"pct": 60.0},
+                        "AT": {"pct": 40.0},
+                    }
+                }
+            },
+        )
+    ]
+    with (data_root / f"vdyp_prep-tsa{tsa}.pkl").open("wb") as fh:
+        pickle.dump(results_for_tsa, fh)
+
+    pd.DataFrame(
+        {
+            "stratum_code": ["IDF_FDC+AT", "IDF_FDC+AT"],
+            "si_level": ["L", "L"],
+            "age": [10, 20],
+            "volume": [10.0, 20.0],
+        }
+    ).to_feather(data_root / f"vdyp_curves_smooth-tsa{tsa}.feather")
+    pd.DataFrame({"AU": [21000]}).to_excel(
+        data_root / f"tipsy_params_tsa{tsa}.xlsx",
+        index=False,
+        sheet_name="TIPSY_inputTBL",
+    )
+    (data_root / f"04_output-tsa{tsa}.out").write_text(
+        "placeholder\n",
+        encoding="utf-8",
+    )
+
+    def _fake_run_01b(
+        *,
+        tsa: str,
+        results,
+        au_scsi,
+        tipsy_curves,
+        vdyp_curves_smooth,
+        runtime_config,
+    ) -> None:
+        _ = (results, au_scsi, vdyp_curves_smooth, runtime_config)
+        tipsy_df = pd.DataFrame(
+            {
+                "AU": [21000, 21000],
+                "Age": [10, 20],
+                "Yield": [12.0, 24.0],
+                "Height": [2.0, 4.0],
+                "DBHq": [1.0, 2.0],
+                "TPH": [900, 850],
+            }
+        ).set_index(["AU", "Age"])
+        tipsy_curves[tsa] = tipsy_df
+        tipsy_df.reset_index().to_csv(
+            data_root / f"tipsy_curves_tsa{tsa}.csv",
+            index=False,
+        )
+        pd.DataFrame({"AU": [21000], "FDC": [100.0]}).to_csv(
+            data_root / f"tipsy_sppcomp_tsa{tsa}.csv",
+            index=False,
+        )
+
+    result = run_post_tipsy_bundle(
+        tsa_list=[tsa],
+        repo_root=repo_root,
+        data_root=data_root,
+        run_01b_fn=_fake_run_01b,
+        message_fn=lambda _msg: None,
+    )
+
+    curve_table = pd.read_csv(result.curve_table_path)
+    curve_points_table = pd.read_csv(result.curve_points_table_path)
+    au_table = pd.read_csv(result.au_table_path)
+    untreated_curve_id = int(au_table.loc[0, "untreated_curve_id"])
+
+    untreated_points = curve_points_table.loc[
+        curve_points_table["curve_id"] == untreated_curve_id, "y"
+    ].tolist()
+    assert untreated_points == [6.0, 12.0]
+
+    untreated_fdc_curve_id = int(
+        curve_table.loc[
+            curve_table["curve_type"] == "untreated_species_prop_FDC", "curve_id"
+        ].iloc[0]
+    )
+    untreated_at_curve_id = int(
+        curve_table.loc[
+            curve_table["curve_type"] == "untreated_species_prop_AT", "curve_id"
+        ].iloc[0]
+    )
+    assert (
+        float(
+            curve_points_table.loc[
+                curve_points_table["curve_id"] == untreated_fdc_curve_id, "y"
+            ].iloc[0]
+        )
+        == 1.0
+    )
+    assert (
+        float(
+            curve_points_table.loc[
+                curve_points_table["curve_id"] == untreated_at_curve_id, "y"
+            ].iloc[0]
+        )
+        == 0.0
+    )
+    assert result.yield_assumptions_summary is not None
+    assert result.yield_assumptions_summary["adjusted_au_count"] == 1
+    assert result.yield_assumptions_summary["total_untreated_volume_removed"] == 12.0
+
+
+def test_run_post_tipsy_bundle_leaves_broadleaf_leading_untreated_aus_unchanged(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path
+    data_root = repo_root / "data"
+    data_root.mkdir(parents=True, exist_ok=True)
+    (repo_root / "config" / "tsr").mkdir(parents=True, exist_ok=True)
+    tsa = "29"
+
+    (repo_root / "config" / "tsr" / "yield_assumptions.yaml").write_text(
+        "\n".join(
+            [
+                "rules:",
+                "  - rule_type: broadleaf_volume_exclusion",
+                "    tsa_list: ['29']",
+                "    scope: untreated_only",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    pd.DataFrame(
+        {
+            "tsa_code": [tsa],
+            "SPECIES_CD_1": ["AT"],
+            "SPECIES_PCT_1": [60.0],
+            "SPECIES_CD_2": ["FDC"],
+            "SPECIES_PCT_2": [40.0],
+            "SPECIES_CD_3": [""],
+            "SPECIES_PCT_3": [0.0],
+            "SPECIES_CD_4": [""],
+            "SPECIES_PCT_4": [0.0],
+            "SPECIES_CD_5": [""],
+            "SPECIES_PCT_5": [0.0],
+            "SPECIES_CD_6": [""],
+            "SPECIES_PCT_6": [0.0],
+        }
+    ).to_feather(data_root / f"ria_vri_vclr1p_checkpoint1-tsa{tsa}.feather")
+
+    results_for_tsa = [
+        (
+            0,
+            "IDF_AT+FDC",
+            {
+                "L": {
+                    "species": {
+                        "AT": {"pct": 60.0},
+                        "FDC": {"pct": 40.0},
+                    }
+                }
+            },
+        )
+    ]
+    with (data_root / f"vdyp_prep-tsa{tsa}.pkl").open("wb") as fh:
+        pickle.dump(results_for_tsa, fh)
+    pd.DataFrame(
+        {
+            "stratum_code": ["IDF_AT+FDC", "IDF_AT+FDC"],
+            "si_level": ["L", "L"],
+            "age": [10, 20],
+            "volume": [10.0, 20.0],
+        }
+    ).to_feather(data_root / f"vdyp_curves_smooth-tsa{tsa}.feather")
+    pd.DataFrame({"AU": [21000]}).to_excel(
+        data_root / f"tipsy_params_tsa{tsa}.xlsx",
+        index=False,
+        sheet_name="TIPSY_inputTBL",
+    )
+    (data_root / f"04_output-tsa{tsa}.out").write_text(
+        "placeholder\n", encoding="utf-8"
+    )
+
+    def _fake_run_01b(
+        *,
+        tsa: str,
+        results,
+        au_scsi,
+        tipsy_curves,
+        vdyp_curves_smooth,
+        runtime_config,
+    ) -> None:
+        _ = (results, au_scsi, vdyp_curves_smooth, runtime_config)
+        tipsy_df = pd.DataFrame(
+            {
+                "AU": [21000, 21000],
+                "Age": [10, 20],
+                "Yield": [12.0, 24.0],
+                "Height": [2.0, 4.0],
+                "DBHq": [1.0, 2.0],
+                "TPH": [900, 850],
+            }
+        ).set_index(["AU", "Age"])
+        tipsy_curves[tsa] = tipsy_df
+        tipsy_df.reset_index().to_csv(
+            data_root / f"tipsy_curves_tsa{tsa}.csv",
+            index=False,
+        )
+        pd.DataFrame({"AU": [21000], "FDC": [100.0]}).to_csv(
+            data_root / f"tipsy_sppcomp_tsa{tsa}.csv",
+            index=False,
+        )
+
+    result = run_post_tipsy_bundle(
+        tsa_list=[tsa],
+        repo_root=repo_root,
+        data_root=data_root,
+        run_01b_fn=_fake_run_01b,
+        message_fn=lambda _msg: None,
+    )
+
+    au_table = pd.read_csv(result.au_table_path)
+    curve_points_table = pd.read_csv(result.curve_points_table_path)
+    untreated_curve_id = int(au_table.loc[0, "untreated_curve_id"])
+    untreated_points = curve_points_table.loc[
+        curve_points_table["curve_id"] == untreated_curve_id, "y"
+    ].tolist()
+    assert untreated_points == [10.0, 20.0]
+    assert result.yield_assumptions_summary is not None
+    assert result.yield_assumptions_summary["adjusted_au_count"] == 0
+
+
+def test_run_post_tipsy_bundle_reports_noop_when_species_props_are_unavailable(
+    tmp_path: Path,
+) -> None:
+    repo_root = tmp_path
+    data_root = repo_root / "data"
+    data_root.mkdir(parents=True, exist_ok=True)
+    (repo_root / "config" / "tsr").mkdir(parents=True, exist_ok=True)
+    tsa = "29"
+
+    (repo_root / "config" / "tsr" / "yield_assumptions.yaml").write_text(
+        "\n".join(
+            [
+                "rules:",
+                "  - rule_type: broadleaf_volume_exclusion",
+                "    tsa_list: ['29']",
+                "    scope: untreated_only",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    results_for_tsa = [(0, "IDF_FDC+HW", {"L": {}})]
+    with (data_root / f"vdyp_prep-tsa{tsa}.pkl").open("wb") as fh:
+        pickle.dump(results_for_tsa, fh)
+    pd.DataFrame(
+        {
+            "stratum_code": ["IDF_FDC+HW", "IDF_FDC+HW"],
+            "si_level": ["L", "L"],
+            "age": [10, 20],
+            "volume": [10.0, 20.0],
+        }
+    ).to_feather(data_root / f"vdyp_curves_smooth-tsa{tsa}.feather")
+    pd.DataFrame({"AU": [21000]}).to_excel(
+        data_root / f"tipsy_params_tsa{tsa}.xlsx",
+        index=False,
+        sheet_name="TIPSY_inputTBL",
+    )
+    (data_root / f"04_output-tsa{tsa}.out").write_text(
+        "placeholder\n", encoding="utf-8"
+    )
+
+    def _fake_run_01b(
+        *,
+        tsa: str,
+        results,
+        au_scsi,
+        tipsy_curves,
+        vdyp_curves_smooth,
+        runtime_config,
+    ) -> None:
+        _ = (results, au_scsi, vdyp_curves_smooth, runtime_config)
+        tipsy_df = pd.DataFrame(
+            {
+                "AU": [21000, 21000],
+                "Age": [10, 20],
+                "Yield": [12.0, 24.0],
+                "Height": [2.0, 4.0],
+                "DBHq": [1.0, 2.0],
+                "TPH": [900, 850],
+            }
+        ).set_index(["AU", "Age"])
+        tipsy_curves[tsa] = tipsy_df
+        tipsy_df.reset_index().to_csv(
+            data_root / f"tipsy_curves_tsa{tsa}.csv",
+            index=False,
+        )
+        pd.DataFrame({"AU": [21000], "FDC": [100.0]}).to_csv(
+            data_root / f"tipsy_sppcomp_tsa{tsa}.csv",
+            index=False,
+        )
+
+    result = run_post_tipsy_bundle(
+        tsa_list=[tsa],
+        repo_root=repo_root,
+        data_root=data_root,
+        run_01b_fn=_fake_run_01b,
+        message_fn=lambda _msg: None,
+    )
+
+    assert result.yield_assumptions_summary is not None
+    assert result.yield_assumptions_summary["adjusted_au_count"] == 0
+    assert result.yield_assumptions_summary["skipped_aus"][0]["reason"] == (
+        "missing_untreated_species_proportions"
+    )
 
 
 def test_run_post_tipsy_bundle_passes_custom_output_template_to_01b(

@@ -57,6 +57,43 @@ Core Responsibilities
 - Align/compare managed and untreated curves by AU.
 - Generate per-AU comparison plots for QA and tuning.
 - Publish updated bundle tables for export stages.
+- Apply any configured post-TIPSY yield assumptions before writing the final
+  bundle tables. For TSA29, this includes the later section ``7.1.5`` rule
+  that removes broadleaf volume from conifer-leading untreated curves while
+  leaving THLB step ``015`` as the separate broadleaf-leading area exclusion.
+
+Optional TSR Yield Assumptions
+------------------------------
+
+Stage 01b post-TIPSY bundling can apply a narrow instance-local TSR
+``yield_assumptions.yaml`` file before writing ``data/model_input_bundle``.
+
+- CLI seam:
+
+  - ``femic tsa post-tipsy --yield-assumptions-path <path>``
+  - ``femic tsa btc-post-tipsy --yield-assumptions-path <path>``
+
+- Run-profile seam:
+
+  - ``modes.yield_assumptions_path: config/tsr/yield_assumptions.yaml``
+
+- Default behavior:
+
+  - if ``config/tsr/yield_assumptions.yaml`` exists under the instance root,
+    the post-TIPSY workflow uses it automatically;
+  - otherwise no later yield-assumption adjustment is applied.
+
+TSA29 broadleaf rule split:
+
+- THLB step ``015`` still removes **broadleaf-leading stands** from THLB area.
+- TSA29 section ``7.1.5`` is a later bundle/yield assumption:
+
+  - for **conifer-leading untreated** AUs only,
+  - remove the broadleaf share from the untreated total curve,
+  - zero untreated broadleaf species-proportion sidecars, and
+  - renormalize the remaining untreated conifer sidecars to sum to ``1.0``.
+
+Treated curves are left unchanged.
 
 Interpretation Guide
 --------------------

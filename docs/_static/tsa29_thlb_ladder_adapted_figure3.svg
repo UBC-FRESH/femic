@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+  <title id="title">Adapted TSA29 THLB reconstruction ladder</title>
+  <desc id="desc">Diagram showing GLB to AFLB to LHLB to THLB transitions, with reference targets anchored beside the ladder.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#415a77"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .box { stroke: #16324f; stroke-width: 2; rx: 14; ry: 14; }
+      .ref { stroke: #5c677d; stroke-width: 2; stroke-dasharray: 8 6; rx: 12; ry: 12; }
+      .arrow { stroke: #415a77; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .title { font: 700 24px Arial, sans-serif; fill: #102a43; }
+      .subtitle { font: 400 14px Arial, sans-serif; fill: #334e68; }
+      .label { font: 700 19px Arial, sans-serif; fill: #102a43; }
+      .body { font: 400 14px Arial, sans-serif; fill: #243b53; }
+      .small { font: 400 13px Arial, sans-serif; fill: #52606d; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="960" height="520"/>
+
+  <text class="title" x="42" y="42">TSA29 THLB Reconstruction Ladder</text>
+  <text class="subtitle" x="42" y="66">Adapted from BC MoF (2024), Williams Lake TSA Timber Supply Review Data Package, Figure 3</text>
+
+  <rect class="box" x="48" y="112" width="220" height="96" fill="#d9efff"/>
+  <text class="label" x="72" y="148">Total TSA / GLB</text>
+  <text class="body" x="72" y="174">Gross land base before</text>
+  <text class="body" x="72" y="194">any AFLB filtering.</text>
+
+  <rect class="box" x="332" y="112" width="220" height="96" fill="#dff7e2"/>
+  <text class="label" x="356" y="148">AFLB</text>
+  <text class="body" x="356" y="174">Modeled universe after</text>
+  <text class="body" x="356" y="194">GLB -&gt; AFLB exclusions.</text>
+
+  <rect class="box" x="332" y="250" width="220" height="96" fill="#fff0c2"/>
+  <text class="label" x="356" y="286">LHLB</text>
+  <text class="body" x="356" y="312">Legally harvestable subset</text>
+  <text class="body" x="356" y="332">after policy/legal exclusions.</text>
+
+  <rect class="box" x="332" y="388" width="220" height="96" fill="#ffd9c2"/>
+  <text class="label" x="356" y="424">THLB</text>
+  <text class="body" x="356" y="450">Harvest-eligible subset after</text>
+  <text class="body" x="356" y="470">projected later deductions.</text>
+
+  <path class="arrow" d="M 268 160 L 320 160"/>
+  <path class="arrow" d="M 442 208 L 442 236"/>
+  <path class="arrow" d="M 442 346 L 442 374"/>
+
+  <text class="small" x="276" y="146">GLB -&gt; AFLB</text>
+  <text class="small" x="276" y="165">drop from universe</text>
+
+  <text class="small" x="466" y="228">AFLB -&gt; LHLB</text>
+  <text class="small" x="466" y="247">legal harvest exclusion</text>
+
+  <text class="small" x="466" y="366">LHLB -&gt; THLB</text>
+  <text class="small" x="466" y="385">projected harvest exclusion</text>
+
+  <rect class="ref" x="640" y="112" width="258" height="106" fill="#ffffff"/>
+  <text class="label" x="664" y="148">Reference Targets</text>
+  <text class="body" x="664" y="174">Table 3 benchmark rows stay visible</text>
+  <text class="body" x="664" y="194">beside the ladder, but they are not</text>
+  <text class="body" x="664" y="214">deduction steps.</text>
+
+  <rect class="ref" x="640" y="258" width="258" height="134" fill="#ffffff"/>
+  <text class="label" x="664" y="294">Context / Support</text>
+  <text class="body" x="664" y="320">Section 6.2 / 6.3 / 6.4 explain</text>
+  <text class="body" x="664" y="340">why a step exists, but Table 3 still</text>
+  <text class="body" x="664" y="360">anchors order and benchmark areas.</text>
+  <text class="body" x="664" y="386">Older cycles can help as hints, not</text>
+  <text class="body" x="664" y="406">as silent replacements.</text>
+
+  <path class="arrow" d="M 552 160 L 624 160"/>
+  <path class="arrow" d="M 552 316 L 624 316"/>
+</svg>

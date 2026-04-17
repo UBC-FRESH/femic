@@ -62,6 +62,8 @@ Subcommands
 - ``run``: ``python -m femic prep run [OPTIONS]``
 - ``validate-case``: ``python -m femic prep validate-case [OPTIONS]``
 - ``geospatial-preflight``: ``python -m femic prep geospatial-preflight [OPTIONS]``
+- ``glb-build``: ``python -m femic prep glb-build [OPTIONS]``
+- ``arcgis-review-project``: ``python -m femic prep arcgis-review-project [OPTIONS]``
 
 ``prep run`` options
 
@@ -103,6 +105,56 @@ case can actually read the annex-backed canonical TSA/FileGDB inputs.
 
 - ``--strict-warnings``
 - ``--skip-shapefile-smoke``
+
+``prep glb-build`` options
+
+- ``--tsa TEXT`` (required; TSA code, ``tsa_<code>``, or TSA name)
+- ``--instance-root PATH``
+- ``--output-dir PATH`` (optional explicit output directory for the GLB bundle)
+- ``--source-zip-path PATH`` (optional explicit raw VRI zip override)
+- ``--boundary-path PATH`` (optional explicit TSA boundary layer override)
+- ``--force-rebuild-glb`` (ignore an existing local stashed GLB and rebuild)
+- ``--no-stash-public-data-glb`` (disable the default local public-data stash)
+- ``--force-update-public-data-glb`` (overwrite an existing local stashed GLB)
+
+``prep glb-build`` is the clean raw-source GLB workflow for one named TSA. It
+uses the canonical 2024 provincial VRI zip by default, clips it with the
+active TSA boundary row, writes a clipped GLB artifact plus JSON/Markdown
+summary, and reports the clipped stand geometry area directly. Checkpoints are
+not accepted as the source baseline for this command.
+
+By default, successful runs also stash a reusable zipped GLB snapshot plus
+summary JSON into the local ``external/femic-public-data`` DataLad repo under a
+deterministic TSA/VRI path. That stash is local only in v1:
+
+- no auto-commit;
+- no auto-push; and
+- no Arbutus/GitHub publication.
+
+Use ``--no-stash-public-data-glb`` to disable the default stash or
+``--force-update-public-data-glb`` to replace an existing stored snapshot.
+When a local stashed GLB already exists, ``prep glb-build`` now reuses that
+confirmed-valid snapshot by default instead of rebuilding from raw source; use
+``--force-rebuild-glb`` to bypass the stash and run the raw clip again.
+
+``prep arcgis-review-project`` options
+
+- ``--instance-root PATH``
+- ``--output-dir PATH`` (optional; defaults to ``workbench/arcgis_review`` under the instance root)
+- ``--project-name TEXT`` (optional explicit `.aprx` name stem)
+
+``prep arcgis-review-project`` is a Windows/ArcGIS Pro inspection aid, not a
+new FEMIC GIS-processing backend. It discovers instance-local vector layers
+already on disk (for example downloaded BCDC GeoPackages plus local shapefile
+context layers such as stands or fragments), emits a ready-to-open `.aprx`,
+writes a manifest JSON, and keeps all loaded layers off by default at launch.
+When GeoPackage layers need ArcGIS-friendly staging, the emitted bundle also
+includes helper shapefile copies under the chosen output directory.
+
+Use it when a human needs to inspect an instance visually in ArcGIS Pro
+without hand-loading dozens of layers. It depends on a local ArcGIS Pro
+installation and the same path-resolved ``propy.bat`` / ArcGIS Pro Python seam
+already used by the Windows SiteProd fallback.
 
 VDYP
 ----
@@ -175,6 +227,7 @@ Subcommands
 - ``--run-id TEXT``
 - ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-config PATH`` (optional; load FMU/code selection and managed-curve mode defaults)
+- ``--yield-assumptions-path PATH`` (optional instance-local post-TIPSY yield assumptions YAML)
 - ``--instance-root PATH``
 
 ``tsa btc-post-tipsy`` options
@@ -184,6 +237,7 @@ Subcommands
 - ``--run-id TEXT``
 - ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-config PATH`` (optional; load FMU/code selection and managed-curve mode defaults)
+- ``--yield-assumptions-path PATH`` (optional instance-local post-TIPSY yield assumptions YAML)
 - ``--btc-exe PATH`` (optional explicit ``TIPSYbtc.exe`` override)
 - ``--scratch-dir PATH`` (optional scratch root for copied BTC installs and staged run files)
 - ``--report-preset TEXT`` (default: ``tsr-unattended-default``)
@@ -213,6 +267,7 @@ Subcommands
 - ``bcdc-resolve``: ``python -m femic data bcdc-resolve [OPTIONS] [QUERY]...``
 - ``bcdc-fetch``: ``python -m femic data bcdc-fetch [OPTIONS] [QUERY]...``
 - ``bcdc-order``: ``python -m femic data bcdc-order [OPTIONS] [QUERY]...``
+- ``bcdc-order-followup``: ``python -m femic data bcdc-order-followup [OPTIONS] ORDER_MANIFEST``
 
 ``data bcdc-resolve`` options
 
@@ -262,7 +317,7 @@ instead.
 - ``--bbox minx,miny,maxx,maxy`` (required unless ``--geomark`` is supplied; interpreted in ``EPSG:3005``)
 - ``--geomark TEXT`` (required unless ``--bbox`` is supplied; accepts a full Geomark URL or bare Geomark ID)
 - ``--output-format [fgdb|gpkg|geojson|shp]`` (default: ``fgdb``)
-- ``--email TEXT`` (optional DWDS notification email)
+- ``--email TEXT`` (optional DWDS notification email; defaults to ``FEMIC_BCDC_DWDS_EMAIL`` when set, otherwise ``git config user.email``)
 - ``--clip / --no-clip`` (default: ``--clip``)
 - ``--plan-only`` (preview deduplicated DWDS order activity without executing it)
 - ``--allow-bulk / --no-allow-bulk`` (explicitly allow larger DWDS order bursts that exceed FEMIC's default public-service threshold)
@@ -274,6 +329,24 @@ current public DWDS seam can submit orders successfully, but the public
 ``/order/{id}`` status lookup may still report successful live orders as
 missing, so FEMIC records that caveat in the manifest instead of pretending
 the full end-to-end download path is already solved.
+
+``data bcdc-order-followup`` options
+
+- ``ORDER_MANIFEST`` argument (required; manifest written by ``data bcdc-order``)
+- ``--manifest-path PATH`` (optional output manifest path; defaults to updating the input manifest in place)
+- ``--download-root PATH`` (optional destination root for downloaded DWDS artifacts)
+- ``--instance-root PATH`` (optional instance root used to resolve relative output paths)
+- ``--download / --no-download`` (default: ``--download``; materialize the artifact when a follow-up probe exposes a download URL)
+- ``--poll-status / --no-poll-status`` (default: ``--poll-status``; re-probe the public DWDS order seam before materialization)
+
+``data bcdc-order-followup`` is FEMIC's recovery lane for orders that were
+submitted successfully but did not immediately expose a downloadable artifact.
+It reloads an existing DWDS manifest, retries the public status seam, and
+downloads the artifact into the selected root if DWDS finally returns a
+download URL. When the public ``/order/{id}`` seam still returns the known
+false negative, FEMIC now also uses the saved ``order_guid`` to try the DWDS
+``pickupByGUID`` launcher page and extract the real
+``distribution.data.gov.bc.ca`` package URL.
 
 All three BCDC acquisition commands now apply soft good-citizen guardrails:
 duplicate queries are collapsed automatically, ``--plan-only`` previews the
@@ -439,10 +512,15 @@ Subcommands
 - ``fetch``: ``python -m femic tsr fetch [OPTIONS]``
 - ``extract``: ``python -m femic tsr extract [OPTIONS]``
 - ``facts-report``: ``python -m femic tsr facts-report [OPTIONS]``
+- ``recipe-init``: ``python -m femic tsr recipe-init [OPTIONS]``
+- ``source-layers-build``: ``python -m femic tsr source-layers-build [OPTIONS]``
+- ``source-layers-run``: ``python -m femic tsr source-layers-run [OPTIONS]``
 - ``overlay-init``: ``python -m femic tsr overlay-init [OPTIONS]``
 - ``overlay-report``: ``python -m femic tsr overlay-report [OPTIONS]``
 - ``override-init``: ``python -m femic tsr override-init [OPTIONS]``
 - ``override-report``: ``python -m femic tsr override-report [OPTIONS]``
+- ``thlb-netdown-warmstart-build``: ``python -m femic tsr thlb-netdown-warmstart-build [OPTIONS]``
+- ``thlb-reconstruction-compare``: ``python -m femic tsr thlb-reconstruction-compare [OPTIONS]``
 
 ``tsr index`` options
 
@@ -520,6 +598,378 @@ instance-local overlay. The first guided-review slice:
   - ``likely_noise``;
 - preserves provenance and source URLs; and
 - can write a CSV that is easier to sort/filter than the raw JSON fact pool.
+
+``tsr recipe-init`` options
+
+- ``--tsa TEXT`` (required TSA code, ``tsa_<code>``, or TSA name)
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--registry-path PATH`` (optional; defaults to
+  ``metadata/tsr/tsa_registry.json``)
+- ``--documents-path PATH`` (optional; defaults to
+  ``metadata/tsr/tsa_documents.json``)
+- ``--candidate-facts-path PATH`` (optional; defaults to
+  ``metadata/tsr/tsa_candidate_facts.json``)
+- ``--overlay-path PATH`` (optional; defaults to
+  ``config/tsr/overlay.yaml`` under the instance root)
+- ``--overrides-path PATH`` (optional; defaults to
+  ``config/tsr/source_layer_overrides.yaml`` under the instance root)
+- ``--source-layers-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/source_layers.recipe.yaml`` under the instance root)
+- ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
+- ``--overwrite`` (optional; replace existing recipe scaffold files)
+
+``tsr recipe-init`` initializes the two instance-local reviewed working
+recipes that later recipe build/run slices will own:
+
+- ``config/tsr/source_layers.recipe.yaml``
+- ``config/tsr/thlb_netdown.recipe.yaml``
+
+These recipe files are intentionally distinct from:
+
+- canonical shared TSR discovery JSON under ``metadata/tsr``;
+- the reviewed/adopted overlay at ``config/tsr/overlay.yaml``; and
+- the wall-moving escape hatch file at
+  ``config/tsr/source_layer_overrides.yaml``.
+
+``tsr source-layers-build`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--source-layers-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/source_layers.recipe.yaml`` under the instance root)
+- ``--limit INTEGER`` (optional BCDC package-match cap; defaults to ``5``)
+
+``tsr source-layers-build`` refreshes the reviewed source-layer recipe from:
+
+- canonical TSR source-layer candidate facts;
+- the existing guided review heuristics behind ``femic tsr facts-report``; and
+- current BCDC resolution metadata.
+
+The command records a deterministic reviewed acquisition plan instead of making
+the user re-run the TSA29-style discovery sequence manually every time.
+
+``tsr source-layers-run`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--source-layers-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/source_layers.recipe.yaml`` under the instance root)
+- exactly one AOI input:
+  - ``--bbox minx,miny,maxx,maxy`` in ``EPSG:3005``
+  - ``--geomark TEXT``
+- ``--limit INTEGER`` (optional BCDC package-match cap; defaults to ``5``)
+- ``--allow-order`` (optional; permit **new** DWDS order submission for recipe
+  entries that still require ``dwds_order``)
+
+``tsr source-layers-run`` executes only the safe acquisition paths already
+trusted elsewhere in FEMIC:
+
+- WFS fetch via ``femic data bcdc-fetch``-equivalent logic;
+- direct-download reuse via ``femic data bcdc-resolve --download-direct``-equivalent
+  logic; and
+- automatic DWDS manifest follow-up/materialization for ``dwds_order`` entries
+  that already carry a saved ``order_manifest_path``; and
+- explicit reviewed override mappings from
+  ``config/tsr/source_layer_overrides.yaml``.
+
+``tsr thlb-netdown-build`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
+
+``tsr thlb-netdown-build`` refreshes the reviewed THLB netdown recipe from:
+
+- canonical TSR ``thlb_reference`` facts;
+- the current source-layer recipe so THLB steps can link to stable logical
+  source ids instead of ad hoc filenames; and
+- the latest preferred TSR data-package document for the target TSA when
+  multiple cycles are present.
+
+The command is intentionally about **what the TSR says to do**, not about
+executing the netdown. It writes an ordered, reviewable
+``config/tsr/thlb_netdown.recipe.yaml`` that preserves:
+
+- raw TSR wording;
+- explicit land-base stage semantics:
+  - ``glb_to_aflb``
+  - ``aflb_to_lhlb``
+  - ``lhlb_to_thlb``
+  - ``reference_target``
+  - ``context``
+- normalized action/subject/predicate hints where the extraction is confident;
+- linked source-layer recipe entry ids when they can be derived conservatively;
+- per-step readiness/blocking state; and
+- the selected source TSR document paths used for the build.
+
+The stage model is the guardrail that keeps the THLB recipe from confusing
+universe definition, legal exclusions, projected operational deductions,
+benchmark rows, and pure context.
+
+For the full reconstruction-ladder and benchmark-comparison contract behind
+those stage labels, see
+:doc:`../guides/tsr-thlb-reconstruction-ladder`.
+
+``tsr thlb-netdown-warmstart-build`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
+- ``--output-markdown PATH`` (optional; defaults to
+  ``workbench/tsr/thlb_netdown.warmstart.md`` under the instance root)
+- ``--output-yaml PATH`` (optional; defaults to
+  ``config/tsr/thlb_warmstart.yaml`` under the instance root)
+
+``tsr thlb-netdown-warmstart-build`` generates a non-canonical no-LLM review
+aid from the current reviewed THLB recipe:
+
+- ``workbench/tsr/thlb_netdown.warmstart.md``
+- ``config/tsr/thlb_warmstart.yaml``
+
+The artifact is intentionally a warm-start checklist/template, not executable
+THLB logic. Its job is to help a human analyst see:
+
+- what FEMIC already knows about each parent step;
+- which recurring THLB motif best matches the current row, if any; and
+- which likely layers, fields, values, and review questions should be checked
+  next.
+
+The canonical executable surface remains:
+
+- ``config/tsr/thlb_netdown.recipe.yaml``
+
+``tsr thlb-reconstruction-compare`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
+- ``--reconstructed-audit-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_reconstructed.audit.json`` under the instance root)
+- ``--reviewed-status-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.status.md`` under the instance root)
+- ``--output-markdown PATH`` (optional; defaults to
+  ``config/tsr/thlb_reconstruction_comparison.md`` under the instance root)
+- ``--output-json PATH`` (optional; defaults to
+  ``config/tsr/thlb_reconstruction_comparison.json`` under the instance root)
+
+``tsr thlb-reconstruction-compare`` is the explain-first comparison surface
+for the still-open strict-reconstruction gap under ``#128``. It reads the
+existing reviewed and reconstructed TSA29 artifacts and emits:
+
+- ``config/tsr/thlb_reconstruction_comparison.md``
+- ``config/tsr/thlb_reconstruction_comparison.json``
+
+The command does **not** rerun THLB execution. Its job is to show, in plain
+language:
+
+- strict reconstructed THLB vs TSR-reported THLB as the primary benchmark;
+- reviewed bridge THLB vs TSR-reported THLB as context for why the reviewed
+  lane was accepted for practical exploratory use;
+- strict reconstructed vs reviewed bridge deltas as explanatory context rather
+  than the main score; and
+- which parent steps should be treated as:
+  - close enough to TSR;
+  - real strict overcut/undercut seams;
+  - missing-data seams;
+  - or accepted reviewed bridges / aspatial fallback territory.
+
+``tsr thlb-netdown-workbench-build`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
+- ``--workbench-path PATH`` (optional; defaults to
+  ``workbench/tsr/thlb_netdown.workbench.ipynb`` under the instance root)
+
+``tsr thlb-netdown-workbench-build`` generates a Jupyter notebook bridge
+artifact from the current reviewed THLB recipe. The notebook is intentionally
+**not** the canonical source of truth. Instead it is a structured work surface
+for:
+
+- LLM-assisted piloting of the THLB review/execution process; and
+- no-LLM human review when users need a warm-start workbench instead of raw
+  YAML or JSON.
+
+The notebook is generated from the same parent-step + draft-subrule structure
+already captured in ``config/tsr/thlb_netdown.recipe.yaml`` and organizes the
+workflow into a text -> code -> output -> interpretation ladder grouped by:
+
+- ``GLB -> AFLB``
+- ``AFLB -> LHLB``
+- ``LHLB -> THLB``
+
+The generated cells also respect the stage boundary in the underlying FEMIC
+pipeline:
+
+- ``GLB -> AFLB`` notebook steps default to the earliest checkpoint / raw
+  land-base surface; and
+- ``AFLB -> LHLB -> THLB`` notebook steps default to the curve-ready
+  pre-legacy-THLB checkpoint so late rules can consume compiled AU and
+  yield-curve state.
+
+``tsr thlb-netdown-workbench-lock`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
+- ``--workbench-path PATH`` (optional; defaults to
+  ``workbench/tsr/thlb_netdown.workbench.ipynb`` under the instance root)
+- ``--lock-scope [aflb|thlb|all]`` (optional; defaults to ``all``)
+
+``tsr thlb-netdown-workbench-lock`` freezes the current reviewed state into a
+deterministic reproducibility bundle:
+
+- ``workbench/tsr/thlb_netdown.locked.py``
+- a frozen recipe copy
+- a frozen Markdown status report copy
+- a frozen audit JSON copy when one exists
+
+Important lock contract:
+
+- AFLB lock freezes the modeled universe definition
+- THLB lock freezes the downstream harvest-eligibility logic
+- THLB cannot lock unless AFLB is already locked or locked in the same pass
+- cutting AFLB invalidates THLB because THLB is downstream from the AFLB
+  universe definition
+
+``tsr thlb-netdown-step-run`` options
+
+- ``PARENT_STEP_ID`` (required parent-step id from
+  ``config/tsr/thlb_netdown.recipe.yaml``)
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
+- ``--checkpoint-path PATH`` (optional; defaults to the earliest matching
+  checkpoint discovered by FEMIC)
+- ``--map-id TEXT`` (repeatable; optional explicit ``MAP_ID`` subset)
+- ``--auto-map-id-smoke-subset / --no-auto-map-id-smoke-subset`` (default:
+  ``--auto-map-id-smoke-subset``)
+
+``tsr thlb-netdown-step-run`` executes one parent step cumulatively on the
+small smoke subset and writes working artifacts under:
+
+- ``runtime/logs/tsr/notebook_runs/``
+
+This helper is the command-line twin of the generated notebook cells and keeps
+the small-area proving-ground discipline explicit while the recipe shape is
+still being refined.
+
+``tsr thlb-netdown-run`` options
+
+- ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
+- ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
+- ``--checkpoint-path PATH`` (optional; defaults to the latest
+  ``data/ria_vri_vclr1p_checkpoint*.feather`` under the instance root)
+- ``--output-path PATH`` (optional; defaults to
+  ``data/tsr/thlb_netdown_checkpoint.feather`` under the instance root)
+- ``--audit-path PATH`` (optional; defaults to
+  ``config/tsr/thlb_netdown.audit.json`` under the instance root)
+- ``--execution-mode [hybrid|reconstructed]`` (optional; defaults to
+  ``hybrid``)
+- ``--map-id TEXT`` (repeatable optional VRI mapsheet smoke subset)
+- ``--auto-map-id-smoke-subset`` (optional bounded reconstructed smoke helper)
+- ``--allow-stand-binary-fallback`` (optional non-default debug fallback for
+  reconstructed mode only)
+- ``--no-aflb-gpkg`` (optional; suppress the default
+  ``data/tsr/aflb_checkpoint.gpkg`` companion export when a reconstructed run
+  reaches the AFLB milestone)
+- ``--no-lhlb-gpkg`` (optional; suppress the default
+  ``data/tsr/lhlb_checkpoint.gpkg`` companion export when a reconstructed run
+  reaches the LHLB milestone)
+- ``--no-lhlb-curve-ready-gpkg`` (optional; suppress the default
+  ``data/tsr/lhlb_curve_ready_checkpoint.gpkg`` companion export when a
+  reconstructed run promotes the official LHLB checkpoint into the late-stage
+  curve-ready restart surface)
+
+``tsr thlb-netdown-run`` executes a bounded subset of the reviewed THLB recipe
+into a stand-level checkpoint that carries ``thlb_fact`` for downstream export
+and simulation flows.
+
+Current v1 execution contract:
+
+- ``use_land_base`` and ``no_deduction`` become explicit no-op audit rows;
+- ``exclude`` steps with fetched polygon sources are applied as stand-level
+  overlap deductions in ``EPSG:3005``;
+- unsupported or low-confidence actions remain explicit as
+  ``needs_review`` / ``unsupported`` / ``blocked_missing_source`` instead of
+  being guessed silently; and
+- the run writes both:
+  - ``data/tsr/thlb_netdown_checkpoint.feather``
+  - ``config/tsr/thlb_netdown.audit.json``
+  - ``config/tsr/thlb_netdown.status.md``
+  - plus a timestamped history copy under ``runtime/logs/tsr/``
+- reconstructed runs that genuinely reach the AFLB milestone now also write:
+  ``data/tsr/aflb_checkpoint.feather`` as the canonical downstream restart
+  artifact, and ``data/tsr/aflb_checkpoint.gpkg`` by default as the GIS-facing
+  companion export
+- reconstructed runs that genuinely reach the LHLB milestone now also write:
+  ``data/tsr/lhlb_checkpoint.feather`` as the canonical raw post-step-12
+  restart artifact, and ``data/tsr/lhlb_checkpoint.gpkg`` by default as the
+  GIS-facing companion export
+- reconstructed runs that need strict ``LHLB -> THLB`` execution now also
+  promote that raw LHLB restart into
+  ``data/tsr/lhlb_curve_ready_checkpoint.feather`` as the canonical late-stage
+  restart artifact for steps ``13+``, with
+  ``data/tsr/lhlb_curve_ready_checkpoint.gpkg`` written by default as the
+  GIS-facing companion export unless the caller disables it explicitly
+
+This command is intentionally partial-success friendly: it should move the
+recipe forward where FEMIC has enough trustworthy information while keeping the
+remaining wall visible and reproducible.
+
+The generated status report keeps benchmark ratios visible while the THLB logic
+converges:
+
+- a GLB/AFLB/LHLB/THLB backbone summary;
+- input checkpoint area;
+- AFLB / baseline managed area;
+- final THLB area;
+- current executable ratios such as the GLB:AFLB proxy and ``AFLB:THLB``; and
+- TSR AFLB / THLB benchmark values when they can be parsed from the selected
+  data package PDF.
+
+It also groups the reviewed steps by:
+
+- ``GLB -> AFLB``
+- ``AFLB -> LHLB``
+- ``LHLB -> THLB``
+- ``Reference targets``
+- ``Context / interpretation``
+
+Important current boundary:
+
+- ``--execution-mode hybrid`` is still the reviewed stand-level bridge from
+  issue ``#126``;
+- ``--execution-mode reconstructed`` is now the promoted fragment-first lane:
+  it starts from raw checkpoint1 geometry, fragments the working land base
+  where reviewed spatial exclusions intersect, and assigns binary
+  fragment-level THLB membership ``{0,1}``;
+- reconstructed exact spatial steps now run LU-wise by default:
+  FEMIC cuts one Landscape Unit chunk at a time instead of trying to build one
+  full-TSA exact-overlay workload;
+- reconstructed mode now supports two honest deduction types: exact fragment
+  overlay where FEMIC has a reviewed spatial implementation, and explicit
+  recipe-driven aspatial fallback where the reviewed recipe already carries a
+  TSR target-area deduction;
+- ``--checkpoint-path data/tsr/aflb_checkpoint.feather`` is now the supported
+  downstream restart seam when analysts want to explore ``AFLB -> LHLB ->
+  THLB`` logic without rebuilding the settled ``GLB -> AFLB`` ladder;
+- ``--checkpoint-path data/tsr/lhlb_checkpoint.feather`` is now the supported
+  raw post-step-12 restart seam when analysts want to inspect or rebuild the
+  stage boundary itself;
+- ``--checkpoint-path data/tsr/lhlb_curve_ready_checkpoint.feather`` is now the
+  supported downstream restart seam when analysts want to explore only
+  strict ``LHLB -> THLB`` logic without rebuilding the settled upstream ladder;
+- this is an explicit recipe-driven aspatial fallback, not a silent substitute
+  for blocked spatial logic;
+- blocked exact-overlay rows still remain explicit instead of being silently
+  converted into fallback; and
+- the old coarse stand-binary approximation remains available only behind the
+  explicit ``--allow-stand-binary-fallback`` debug flag.
+
+For the conceptual distinction between those two modes, plus the comparison
+contract against TSR-reported THLB, see
+:doc:`../guides/tsr-thlb-reconstruction-ladder`.
 
 ``tsr overlay-init`` options
 

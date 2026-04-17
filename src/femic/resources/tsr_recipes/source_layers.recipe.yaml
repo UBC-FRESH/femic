@@ -1,0 +1,22 @@
+schema_version: 1
+recipe_kind: source_layers
+tsa:
+  tsa_id: ""
+  tsa_code: ""
+  tsa_name: ""
+canonical_inputs:
+  registry_path: ""
+  documents_path: ""
+  candidate_facts_path: ""
+instance_inputs:
+  overlay_path: ""
+  source_layer_overrides_path: ""
+  download_root: ""
+recipe_contract:
+  status: scaffolded
+  last_built_utc: ""
+  last_run_utc: ""
+  notes:
+    - Review and refresh this file with `femic tsr source-layers-build`.
+    - Use `source_layer_overrides.yaml` only for unresolved public-acquisition wall cases.
+entries: []

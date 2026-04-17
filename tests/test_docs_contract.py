@@ -66,6 +66,7 @@ GUIDE_PAGES = [
     "data-access-inventory",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
+    "tsr-thlb-reconstruction-ladder",
     "public-data-mirror-runbook",
     "case-onboarding",
     "stage-00-data-prep",
@@ -203,6 +204,15 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
 
     cli_text = (DOCS_ROOT / "reference" / "cli.rst").read_text(encoding="utf-8")
     for snippet in (
+        "- ``glb-build``: ``python -m femic prep glb-build [OPTIONS]``",
+        "prep glb-build",
+        "clean raw-source GLB workflow",
+        "canonical 2024 provincial VRI zip",
+        "not accepted as the source baseline for this command",
+        "- ``arcgis-review-project``: ``python -m femic prep arcgis-review-project [OPTIONS]``",
+        "prep arcgis-review-project",
+        "workbench/arcgis_review",
+        "all loaded layers off by default",
         "- ``data``",
         "- ``tsr``",
         "python -m femic data bcdc-resolve",
@@ -212,6 +222,9 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "python -m femic tsr fetch",
         "python -m femic tsr extract",
         "python -m femic tsr facts-report",
+        "python -m femic tsr recipe-init",
+        "python -m femic tsr source-layers-build",
+        "python -m femic tsr source-layers-run",
         "python -m femic tsr overlay-init",
         "python -m femic tsr overlay-report",
         "python -m femic tsr override-init",
@@ -229,18 +242,50 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "--clip / --no-clip",
         "--manifest-path PATH",
         "--fact-family [source_layer_candidate|thlb_reference]",
+        "thlb-netdown-build",
+        "thlb-netdown-warmstart-build",
+        "thlb-reconstruction-compare",
+        "thlb-netdown-workbench-build",
+        "thlb-netdown-workbench-lock",
         "wfs_queryable",
         "wfs_typename",
         "suggested_fetch_strategy",
+        "explicit recipe-driven aspatial fallback",
+        "blocked exact-overlay rows still remain explicit",
         "metadata/tsr/tsa_registry.json",
         "metadata/tsr/tsa_documents.json",
         "metadata/tsr/tsa_candidate_facts.json",
         "config/tsr/overlay.yaml",
         "config/tsr/source_layer_overrides.yaml",
+        "config/tsr/source_layers.recipe.yaml",
+        "config/tsr/thlb_netdown.recipe.yaml",
+        "config/tsr/thlb_reconstruction_comparison.md",
+        "config/tsr/thlb_reconstruction_comparison.json",
+        "config/tsr/thlb_warmstart.yaml",
+        "workbench/tsr/thlb_netdown.workbench.ipynb",
+        "workbench/tsr/thlb_netdown.warmstart.md",
+        "workbench/tsr/thlb_netdown.locked.py",
+        "tsr-thlb-reconstruction-ladder",
         "~/.femic/tsr/tsa_pdf_cache_manifest.json",
         "~/.femic/tsr/corpus",
     ):
         assert snippet in cli_text
+
+    geospatial_text = (GUIDES_ROOT / "geospatial-runtime-bootstrap.rst").read_text(
+        encoding="utf-8"
+    )
+    for snippet in (
+        "femic prep arcgis-review-project",
+        "inspection aid only",
+        "visible = off",
+    ):
+        assert snippet in geospatial_text
+    stage00_text = (GUIDES_ROOT / "stage-00-data-prep.rst").read_text(encoding="utf-8")
+    for snippet in (
+        "femic prep glb-build",
+        "validate or rebuild GLB baseline geometry itself",
+    ):
+        assert snippet in stage00_text
 
 
 def test_tsr_api_page_is_wired_into_curated_modules() -> None:
@@ -258,12 +303,19 @@ def test_tsr_api_page_is_wired_into_curated_modules() -> None:
         "femic tsr fetch",
         "femic tsr extract",
         "femic tsr facts-report",
+        "femic tsr recipe-init",
+        "femic tsr source-layers-build",
+        "femic tsr source-layers-run",
+        "femic tsr thlb-netdown-build",
+        "femic tsr thlb-netdown-workbench-build",
+        "femic tsr thlb-netdown-workbench-lock",
         "femic tsr overlay-init",
         "femic tsr overlay-report",
         "femic tsr override-init",
         "femic tsr override-report",
         "extract_tsr_candidate_facts",
         "init_tsr_overlay",
+        "init_tsr_recipe_scaffolds",
         "build_tsr_overlay_report",
         "init_tsr_source_layer_overrides",
         "build_tsr_source_layer_override_report",
@@ -275,6 +327,13 @@ def test_tsr_api_page_is_wired_into_curated_modules() -> None:
         "metadata/tsr",
         "config/tsr/overlay.yaml",
         "config/tsr/source_layer_overrides.yaml",
+        "config/tsr/source_layers.recipe.yaml",
+        "config/tsr/thlb_netdown.recipe.yaml",
+        "workbench/tsr/thlb_netdown.workbench.ipynb",
+        "workbench/tsr/thlb_netdown.locked.py",
+        "GLB -> AFLB",
+        "AFLB -> LHLB",
+        "LHLB -> THLB",
         "replacement_family_candidates",
         "~/.femic/tsr/tsa_pdf_cache_manifest.json",
     ):
@@ -334,6 +393,17 @@ def test_tsr_intelligence_workflow_guide_keeps_required_sections() -> None:
         "python -m femic tsr fetch --tsa 29",
         "python -m femic tsr extract --tsa 29",
         "python -m femic tsr facts-report",
+        "python -m femic tsr recipe-init",
+        "python -m femic tsr source-layers-build",
+        "python -m femic tsr source-layers-run",
+        "python -m femic tsr thlb-netdown-build",
+        "python -m femic tsr thlb-netdown-warmstart-build",
+        "python -m femic tsr thlb-reconstruction-compare",
+        "python -m femic tsr thlb-netdown-workbench-build",
+        "python -m femic tsr thlb-netdown-workbench-lock",
+        "python -m femic tsr thlb-netdown-run",
+        "recipe-driven aspatial fallback",
+        "the same thing as exact spatial overlay",
         "--fact-family source_layer_candidate",
         "--fact-family thlb_reference",
         "tsa29_tsr_source_layers_review.csv",
@@ -349,20 +419,76 @@ def test_tsr_intelligence_workflow_guide_keeps_required_sections() -> None:
         "metadata/tsr/tsa_candidate_facts.json",
         "config/tsr/overlay.yaml",
         "config/tsr/source_layer_overrides.yaml",
+        "config/tsr/source_layers.recipe.yaml",
+        "config/tsr/thlb_netdown.recipe.yaml",
+        "config/tsr/thlb_netdown.audit.json",
+        "config/tsr/thlb_netdown.status.md",
+        "config/tsr/thlb_warmstart.yaml",
+        "workbench/tsr/thlb_netdown.workbench.ipynb",
+        "workbench/tsr/thlb_netdown.warmstart.md",
+        "workbench/tsr/thlb_netdown.locked.py",
+        "data/tsr/thlb_netdown_checkpoint.feather",
+        "runtime/logs/tsr/",
+        "Gross Land Base (GLB) -> Analysis Forest Land Base (AFLB)",
+        "AFLB -> Legally Harvestable Land Base (LHLB)",
+        "LHLB -> Timber Harvesting Land Base (THLB)",
         "replacement_family_candidates",
         "review-only suggestions",
+        "strict-vs-reviewed-vs-TSR gap inventory",
         "WLD_MULE_DEER_RNG_TOPO_CAR_SP",
         "~/.femic/tsr/corpus",
         "~/.femic/tsr/tsa_pdf_cache_manifest.json",
         "candidate facts are **not auto-adopted**",
         "femic data bcdc-resolve",
         "femic data bcdc-fetch",
+        "tsr-thlb-reconstruction-ladder",
         "review CSV",
         "adopt only reviewed facts into the overlay",
         "giant interactive pastes",
         "private`` / ``unavailable``",
+        "These outputs are **not** canonical THLB logic",
     ):
         assert snippet in guide_text
+
+
+def test_tsr_thlb_reconstruction_ladder_guide_keeps_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "tsr-thlb-reconstruction-ladder.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Why AFLB and THLB Matter",
+        "The Reconstruction Ladder",
+        "Current FEMIC Execution Modes",
+        "Fallback and Review Paths",
+        "Comparison Contract",
+        "Worked TSA29 Read",
+        "How This Guide Fits the Other Docs",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "AFLB defines the modeled universe",
+        "THLB defines the harvest-eligible subset",
+        "Table 3 is the canonical backbone",
+        "Section ``6.2`` / ``6.3`` / ``6.4``",
+        "supporting rationale",
+        "older-cycle TSRs are **hints only**",
+        "hybrid executable bridge",
+        "fragment-first reconstruction",
+        "Legacy raster-derived THLB",
+        "TSR-reported THLB",
+        "thlb-reconstruction-compare",
+        "strict reconstructed THLB vs TSR-reported THLB",
+        "no LLM available",
+        ".. figure:: ../_static/tsa29_thlb_ladder_adapted_figure3.svg",
+        "tsr-intelligence-workflow",
+        "interpret-rebuild-reports",
+        "../reference/cli",
+    ):
+        assert snippet in guide_text
+
+    figure_path = DOCS_ROOT / "_static" / "tsa29_thlb_ladder_adapted_figure3.svg"
+    assert figure_path.exists()
 
 
 def test_bcdc_examples_are_present_in_readme_and_agents() -> None:

@@ -13,6 +13,11 @@ Review document surfaces into three separate layers of knowledge:
 4. reviewed instance-local source-layer escape hatches under
    ``config/tsr/source_layer_overrides.yaml`` when the public catalogue cannot
    finish the job safely.
+5. reviewed instance-local working recipe scaffolds under:
+   - ``config/tsr/source_layers.recipe.yaml``
+   - ``config/tsr/thlb_netdown.recipe.yaml``
+   - ``config/tsr/thlb_netdown.audit.json``
+   - ``data/tsr/thlb_netdown_checkpoint.feather``
 
 This guide is intentionally about workflow and promotion discipline. It does
 **not** make FEMIC auto-adopt extracted candidate facts into a live instance.
@@ -39,9 +44,14 @@ Instance-local reviewed overlay:
 - ``config/tsr/overlay.yaml``
 - ``config/tsr/source_layer_overrides.yaml`` (when explicit source-layer
   overrides are needed)
+- ``config/tsr/source_layers.recipe.yaml``
+- ``config/tsr/thlb_netdown.recipe.yaml``
+- ``config/tsr/thlb_netdown.audit.json``
+- ``data/tsr/thlb_netdown_checkpoint.feather``
 
 Treat the canonical JSON artifacts as the shared discovery surface, and treat
-the overlay YAML as the reviewed/adopted per-instance surface.
+the overlay YAML plus recipe YAMLs as the reviewed/adopted per-instance
+surface.
 
 Minimal One-TSA Workflow
 ------------------------
@@ -64,9 +74,26 @@ Extract candidate facts only for that TSA:
 
    python -m femic tsr extract --tsa 29
 
-Initialize the reviewed overlay inside the target instance:
+Initialize the reviewed recipe scaffolds and overlay inside the target
+instance:
 
 .. code-block:: bash
+
+   python -m femic tsr recipe-init \
+     --instance-root external/femic-tsa29-instance \
+     --tsa 29
+
+   python -m femic tsr source-layers-build \
+     --instance-root external/femic-tsa29-instance
+
+   python -m femic tsr thlb-netdown-build \
+     --instance-root external/femic-tsa29-instance
+
+   python -m femic tsr thlb-netdown-workbench-build \
+     --instance-root external/femic-tsa29-instance
+
+   python -m femic tsr thlb-netdown-run \
+     --instance-root external/femic-tsa29-instance
 
    python -m femic tsr overlay-init \
      --instance-root external/femic-tsa29-instance \
@@ -110,6 +137,19 @@ Worked Example: TSA29 Source Layers and THLB
 --------------------------------------------
 
 The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
+
+For the deeper conceptual contract behind the ladder itself, including
+hybrid-vs-reconstructed semantics, the raw-GLB reconstructed start contract,
+and benchmark comparison rules, see
+:doc:`tsr-thlb-reconstruction-ladder`.
+
+For THLB reporting specifically, the governing accounting rule is now:
+
+- stepwise marginal deduction means **true net active-area change at that
+  step**;
+- milestone rows are cumulative checkpoints, not deductions; and
+- gross matched/candidate/touched areas are diagnostics only, not the primary
+  reconciliation numbers.
 
 1. refresh the canonical TSR surfaces:
 
@@ -172,6 +212,225 @@ The cleanest current end-to-end use case is TSA29 netdown/source-layer review.
    ``femic data bcdc-resolve --download-direct`` path instead of forcing
    ``bcdc-fetch``.
 
+6a. once the reviewed source-layer recipe exists, you can rerun the same
+   acquisition story through the instance-local recipe surface instead of
+   rebuilding the logic manually:
+
+   .. code-block:: bash
+
+      python -m femic tsr source-layers-build \
+        --instance-root external/femic-tsa29-instance
+
+      python -m femic tsr source-layers-run \
+        --instance-root external/femic-tsa29-instance \
+        --bbox 1015173.8086,653963.4944,1393139.0550,901924.5102
+
+   The build step refreshes ``config/tsr/source_layers.recipe.yaml`` from:
+
+   - TSR source-layer candidate facts;
+   - current BCDC public-resolution metadata; and
+   - reviewed override context from
+     ``config/tsr/source_layer_overrides.yaml`` when present.
+
+   The run step then executes only the safe acquisition paths already trusted
+   elsewhere in FEMIC and writes the resulting artifact paths back into the
+   recipe.
+
+6b. once the source-layer recipe is in a good state, build the reviewed THLB
+   netdown recipe:
+
+   .. code-block:: bash
+
+      python -m femic tsr thlb-netdown-build \
+        --instance-root external/femic-tsa29-instance
+
+   This refreshes ``config/tsr/thlb_netdown.recipe.yaml`` from the canonical
+   ``thlb_reference`` fact pool while preserving:
+
+   - raw TSR wording and provenance;
+   - explicit land-base stage semantics:
+     - ``glb_to_aflb``
+     - ``aflb_to_lhlb``
+     - ``lhlb_to_thlb``
+     - ``reference_target``
+     - ``context``
+   - normalized action hints such as ``exclude``, ``defer``,
+     ``aspatial_reduction``, and ``reference_target`` when the builder is
+     confident enough;
+   - linked source-layer recipe entry ids when the THLB text can be connected
+     conservatively to a logical source; and
+   - explicit ``ready`` / ``needs_review`` / ``blocked_missing_source`` step
+     status so the later execution slice has a stable contract to work from.
+
+   The THLB recipe build step is intentionally about extracting
+   **what the TSR says to do**, not applying the netdown yet.
+
+The current goal is no longer a flat wall of THLB snippets. FEMIC now
+treats the TSA land-base ladder itself as the organizing grammar:
+
+When comparing the strict reconstructed lane to the accepted reviewed TSA29
+lane, keep the benchmark order straight:
+
+- primary benchmark: strict reconstructed vs TSR;
+- secondary context: strict reconstructed vs reviewed; and
+- practical interpretation: reviewed was accepted because cumulative THLB was
+  close enough for exploratory use, not because every reviewed step is
+  automatically the gold standard for strict reconstruction.
+
+   - ``Gross Land Base (GLB) -> Analysis Forest Land Base (AFLB)``
+   - ``AFLB -> Legally Harvestable Land Base (LHLB)``
+   - ``LHLB -> Timber Harvesting Land Base (THLB)``
+
+   That staged backbone is the guardrail that helps the recipe stop confusing
+   headings, context, benchmark rows, legal exclusions, and projected
+   operational deductions.
+
+6c. execute the bounded supported subset of the THLB recipe into a stand-level
+   checkpoint:
+
+   .. code-block:: bash
+
+      python -m femic tsr thlb-netdown-run \
+        --instance-root external/femic-tsa29-instance
+
+   This writes:
+
+   - ``config/tsr/thlb_netdown.audit.json``
+   - ``config/tsr/thlb_netdown.status.md``
+   - ``data/tsr/thlb_netdown_checkpoint.feather``
+   - a versioned Markdown history copy under ``runtime/logs/tsr/``
+
+   The output checkpoint carries ``thlb_fact`` for downstream export logic.
+   The audit JSON records which THLB recipe steps were:
+
+   - ``applied``;
+   - ``applied_noop``;
+   - ``unsupported``; or
+   - ``blocked_missing_source``.
+
+   This keeps the run convergent and reproducible: supported steps move the
+   instance forward, and unsupported steps remain explicit instead of forcing
+   the user to rediscover what FEMIC did or did not apply.
+
+   The status report Markdown is the user-facing convergence surface for this
+   lane. It records, for each run:
+
+   - a backbone summary for GLB/AFLB/LHLB/THLB;
+   - input checkpoint area;
+   - AFLB / baseline managed area;
+   - final THLB area;
+   - the current executable ratios (currently a GLB/AFLB proxy plus
+     ``AFLB:THLB``);
+   - TSR benchmark AFLB and THLB values when FEMIC can parse them from the
+     selected TSR data package; and
+   - stage-grouped step ledgers for:
+     - ``GLB -> AFLB``
+     - ``AFLB -> LHLB``
+     - ``LHLB -> THLB``
+     - ``Reference targets``
+     - ``Context / interpretation``
+   - a stable latest report plus a timestamped runtime-history copy so users
+     and helper agents can compare successive runs while the recipe converges.
+
+   Important current boundary:
+
+   - this is the **hybrid THLB bridge** landed in issue ``#126``;
+   - FEMIC currently seeds ``thlb_fact`` from the existing checkpoint THLB
+     signal (``thlb_fact`` -> ``thlb_raw`` -> ``thlb_area`` -> ``thlb``) and
+     then applies the supported reviewed TSR exclusions on top;
+   - that is internally consistent and reproducible, but it is **not** yet the
+     full production-grade reconstruction target.
+
+   The promoted next target is issue ``#128``:
+
+   - start from the raw/resultant VRI land base;
+   - overlay the reviewed exclusion layers and fragment the geometry; and
+   - assign binary fragment-level THLB membership ``{0,1}`` the way BC
+     analysts commonly do when building a resultant/fragments surface.
+
+   Until that lane lands, treat ``thlb-netdown-run`` as the current approved
+   milestone, not as the final reconstructed land-base engine.
+
+6d. generate the notebook bridge artifact when you want a text-code-output
+   review surface for either an LLM coding agent or a human analyst:
+
+   .. code-block:: bash
+
+      python -m femic tsr thlb-netdown-workbench-build \
+        --instance-root external/femic-tsa29-instance
+
+   This writes:
+
+   - ``workbench/tsr/thlb_netdown.workbench.ipynb``
+
+   The notebook is generated from the current THLB recipe and is intended as
+   an interactive bridge medium, not the canonical source of truth. During
+   iteration, the authoritative machine-readable state remains:
+
+   - ``config/tsr/thlb_netdown.recipe.yaml``
+   - ``config/tsr/thlb_netdown.status.md``
+   - ``config/tsr/thlb_netdown.audit.json`` when a runtime pass has been run
+
+   Workbench execution follows the staged FEMIC pipeline boundary:
+
+   - ``GLB -> AFLB`` parent steps run against the earliest checkpoint / raw
+     land-base surface; and
+   - ``AFLB -> LHLB -> THLB`` parent steps run later against the curve-ready
+     checkpoint so late THLB rules can consume compiled AU / VDYP / TIPSY
+     outputs instead of trying to infer harvestability from raw VRI alone.
+
+   For example, TSA29 step ``014`` (sites with low growing timber potential)
+   now uses assigned bundle curves directly in the notebook bridge:
+
+   - the executable threshold logic runs against assigned curve volume at age
+     ``160`` when the TSR text defines the rule that way; and
+   - the step can still carry other curve-metric modes explicitly when a
+     future TSR assumption needs them.
+
+6e. if no LLM is available, generate the explicit warm-start checklist/template
+   pair before diving into manual THLB review:
+
+   .. code-block:: bash
+
+      python -m femic tsr thlb-netdown-warmstart-build \
+        --instance-root external/femic-tsa29-instance
+
+   This writes:
+
+   - ``workbench/tsr/thlb_netdown.warmstart.md``
+   - ``config/tsr/thlb_warmstart.yaml``
+
+   These outputs are **not** canonical THLB logic. They are a bounded review
+   aid that turns the current parent-step recipe into a plain-language
+   checklist for a human analyst:
+
+   - what the TSR row is doing;
+   - what FEMIC already has;
+   - which recurring motif best matches the row, if any; and
+   - which likely layers, fields, values, and review questions should be
+     inspected next.
+
+6f. once the human+agent team agrees the THLB workflow is ready to freeze,
+   lock it into deterministic reproducibility artifacts:
+
+   .. code-block:: bash
+
+      python -m femic tsr thlb-netdown-workbench-lock \
+        --instance-root external/femic-tsa29-instance \
+        --lock-scope all
+
+   This writes:
+
+   - ``workbench/tsr/thlb_netdown.locked.py``
+   - a frozen status report copy
+   - a frozen audit JSON copy when one exists
+
+   Lock hierarchy is explicit:
+
+   - AFLB lock freezes the modeled universe definition
+   - THLB lock freezes downstream harvest-eligibility logic
+   - cutting AFLB invalidates THLB
+
 7. initialize or refresh the reviewed overlay:
 
    .. code-block:: bash
@@ -199,6 +458,62 @@ The current intended human loop is:
 - adopt only reviewed facts into the overlay
 - record any remaining wall cases in ``source_layer_overrides.yaml`` rather
   than hoping the same public query will behave differently later
+
+Convergence And Reproducibility Contract
+----------------------------------------
+
+Phase 52 is being developed as action research on TSA29, but the accepted
+result still has to converge toward production-grade reproducibility rather
+than remaining clever one-off shell lore.
+
+The current scriptable milestone is:
+
+1. ``femic tsr index``
+2. ``femic tsr fetch --tsa 29``
+3. ``femic tsr extract --tsa 29``
+4. ``femic tsr recipe-init --instance-root ... --tsa 29``
+5. ``femic tsr source-layers-build``
+6. ``femic tsr source-layers-run``
+7. ``femic tsr thlb-netdown-build``
+8. ``femic tsr thlb-netdown-workbench-build``
+9. ``femic tsr thlb-netdown-run``
+10. ``femic tsr thlb-netdown-workbench-lock``
+11. ``femic tsr overlay-init`` / ``overlay-report``
+12. ``femic tsr thlb-reconstruction-compare`` when you need a plain-language
+    strict-vs-reviewed-vs-TSR gap inventory from the current artifacts without
+    rerunning THLB execution.
+
+   .. code-block:: bash
+
+      python -m femic tsr thlb-reconstruction-compare \
+        --instance-root external/femic-tsa29-instance
+
+That chain is already a valid, reproducible TSA29 runbook.
+
+However, it is important not to blur two different THLB states:
+
+- **Current milestone:** a reproducible hybrid bridge that starts from the
+  existing checkpoint THLB signal and applies the supported TSR-derived
+  exclusions into ``thlb_fact``.
+- **Promoted reconstruction lane (`#128` / `#131`):** a raw-land-base
+  reconstructed mode that overlays the reviewed layers onto checkpoint1/VRI
+  geometry, fragments the land base, and assigns binary fragment-level THLB
+  membership ``{0,1}``.
+
+Reconstructed mode can now also apply a **recipe-driven aspatial fallback**
+when the reviewed THLB recipe already carries a TSR target-area deduction for a
+step that is intentionally not being reproduced as exact spatial geometry in
+that lane. That fallback stays explicit in the audit/status output and is not
+the same thing as exact spatial overlay.
+
+Coarse approximation is no longer part of the default reconstructed contract.
+If a user intentionally enables the non-default stand-binary debug fallback,
+FEMIC must say so explicitly in the audit/status surface rather than presenting
+that output as normal fragment-first execution.
+
+The exact reconstructed spatial path is now LU-wise by default. In plain
+language, FEMIC cuts one Landscape Unit chunk at a time instead of trying to
+cut the whole TSA in one giant exact-overlay workload.
 
 You should not need to hand-scrub ``metadata/tsr/tsa_candidate_facts.json`` for
 this workflow. The intended review surface is the CSV produced by
@@ -248,6 +563,27 @@ The intended loop is still manual:
    your project;
 3. record that decision under ``override_kind: replacement_layer`` only after
    review.
+
+AOI Scope Guardrail
+-------------------
+
+When a TSR source-layer acquisition uses an AOI-bounded fetch strategy such as
+WFS bbox or DWDS order, treat the requested extent as part of the data
+contract, not as disposable fetch trivia.
+
+- Acquisitions whose AOI matches the reviewed production bbox can live under
+  the normal instance download root.
+- Acquisitions whose AOI is smaller or otherwise differs from that reviewed
+  production bbox are smoke-scale artifacts and should live under
+  ``data/downloads/bcdc/smoke/``.
+- Do not reuse smoke-scale AOI overlays in full-TSA THLB validation just
+  because the file exists. FEMIC now compares obvious source-artifact bbox
+  coverage against the current checkpoint extent and blocks clear mismatches as
+  extent errors instead of quietly treating them as valid production layers.
+
+Operationally: if a clipped smoke artifact was useful for a bounded proof, keep
+it, but reacquire or promote a full-extent production artifact before drawing
+full-TSA conclusions from that recipe step.
 
 Windows PowerShell Notes
 ------------------------

@@ -333,7 +333,10 @@ The intended split is:
 - ``bcdc-resolve`` = discovery and classification;
 - ``bcdc-fetch`` = automatable WFS subset download; and
 - ``bcdc-order`` = DWDS fallback order submission for datasets that need a
-  warehouse order and richer outputs such as File Geodatabase or GeoPackage.
+  warehouse order and richer outputs such as File Geodatabase or GeoPackage;
+- ``bcdc-order-followup`` = reload a prior DWDS manifest, retry the public
+  status seam, and materialize the artifact when DWDS finally exposes a
+  download URL.
 
 DWDS / FGDB Fallback
 --------------------
@@ -359,6 +362,46 @@ This path currently does three useful things:
 - writes a manifest recording the order id, order guid, AOI, payload, and any
   public-status caveats.
 
+If ``--email`` is omitted, FEMIC now resolves the DWDS notification address in
+this order:
+
+- explicit ``--email`` value;
+- ``FEMIC_BCDC_DWDS_EMAIL`` from the environment; then
+- ``git config user.email`` from the active repo.
+
+When DWDS accepts an order but the artifact is not immediately available, use
+``femic data bcdc-order-followup`` against that saved manifest:
+
+.. code-block:: text
+
+   & .\.venv\Scripts\python.exe -m femic data bcdc-order-followup `
+     runtime\logs\bcdc_f_own_dwds_manifest.json `
+     --download-root data\downloads\bcdc
+
+This follow-up path reloads the prior order manifest, retries the public
+``/order/{id}`` seam, and writes any newly materialized artifact path back into
+the manifest so downstream workflows can consume a real file instead of only an
+``order_id``.
+
+When a reviewed TSR source-layer recipe entry already carries that saved
+manifest as ``order_manifest_path``, rerunning
+``femic tsr source-layers-run`` now consumes the same follow-up seam
+automatically. ``--allow-order`` is still only required for **new** DWDS order
+submission.
+
+When the public ``/order/{id}`` seam still withholds a download URL, FEMIC now
+also uses the saved ``order_guid`` to try the stronger email-aligned retrieval
+path:
+
+- fetch the DWDS ``pickupByGUID`` launcher page;
+- parse the launcher HTML for the real
+  ``https://distribution.data.gov.bc.ca/...zip`` link; then
+- download/materialize that package into the selected root.
+
+This matches the live TSA29 PSP case: the emailed ``pickupByGUID`` URL was not
+the final package, but the launcher page did contain the real distribution zip
+link.
+
 Current caveats of the public fallback seam:
 
 - FEMIC submits the order through the public ``createOrderFiltered`` endpoint
@@ -369,7 +412,10 @@ Current caveats of the public fallback seam:
   and
 - the public ``/order/{id}`` status lookup may still report successful live
   orders as missing, so the manifest should be treated as the durable record of
-  submission until that seam is better behaved.
+  submission until that seam is better behaved; and
+- the emailed ``pickupByGUID`` page may be the only practical public bridge to
+  the real artifact, so notification email delivery is part of the usable DWDS
+  workflow, not just a courtesy.
 
 Worked Example: TSA29 Query File to Local Layers
 ------------------------------------------------
@@ -458,6 +504,20 @@ The new ``bcdc-order`` manifest records:
 - the DWDS order payload and ordering application;
 - the returned order id and order guid; and
 - any warnings from the public status probe.
+
+After ``bcdc-order-followup`` runs, the same manifest may also record:
+
+- the latest follow-up probe timestamp and payload;
+- the ``pickupByGUID`` launcher URL and the resolved distribution URL when that
+  fallback seam is used;
+- the materialized artifact path and content type when DWDS exposes a download
+  URL; and
+- any follow-up warnings when the public seam still does not expose a
+  downloadable artifact.
+
+Reviewed TSR source-layer recipe entries may also store that saved manifest as
+``order_manifest_path`` so later reruns can progress from ``ordered`` to
+``materialized`` without a separate manual follow-up detour.
 
 Use that manifest as a review/promotion artifact before touching
 ``metadata/required_datasets.yaml`` or copying payloads into

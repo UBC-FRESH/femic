@@ -46,6 +46,33 @@ Checkpoint Semantics
 
 - Checkpoints are for runtime efficiency and recovery; they are not a substitute
   for source-of-truth raw data.
+- When the goal is to validate or rebuild GLB baseline geometry itself, start
+  from raw source geometry, not from an existing checkpoint. FEMIC's clean
+  user-facing path for that job is ``femic prep glb-build``.
+- ``femic prep glb-build`` now also stashes a reusable zipped GLB snapshot into
+  the local ``external/femic-public-data`` DataLad repo by default unless the
+  caller explicitly disables that behavior. This stash is local only and does
+  not auto-commit or auto-publish the public-data submodule.
+- If a confirmed-valid stashed GLB already exists for the TSA/VRI combination,
+  ``femic prep glb-build`` now reuses that snapshot by default. Use
+  ``--force-rebuild-glb`` when you explicitly want to rerun the raw-source clip
+  instead of consuming the stored baseline.
+- Once the strict THLB ladder reaches the step-5 AFLB milestone, FEMIC now
+  treats AFLB as a first-class downstream restart checkpoint.
+  ``data/tsr/aflb_checkpoint.feather`` is the canonical restart artifact, and
+  ``data/tsr/aflb_checkpoint.gpkg`` is written by default as the GIS-facing
+  companion unless the caller explicitly disables it.
+- Once the strict THLB ladder reaches the post-step-12 LHLB milestone, FEMIC
+  also writes ``data/tsr/lhlb_checkpoint.feather`` as the canonical raw
+  restart artifact and ``data/tsr/lhlb_checkpoint.gpkg`` by default as the
+  GIS-facing companion unless the caller explicitly disables it.
+- For strict ``LHLB -> THLB`` work, FEMIC deterministically promotes that raw
+  LHLB restart into ``data/tsr/lhlb_curve_ready_checkpoint.feather`` plus a
+  default ``data/tsr/lhlb_curve_ready_checkpoint.gpkg`` companion. That
+  enriched checkpoint is the supported restart seam for steps ``13+``.
+- Users who want to experiment only with ``LHLB -> THLB`` logic should prefer
+  restarting from ``data/tsr/lhlb_curve_ready_checkpoint.feather`` instead of
+  rebuilding the settled upstream ladder.
 - Resume behavior must never silently reuse stale artifacts when debug-mode
   constraints (for example ``--debug-rows``) change the effective data population.
 

@@ -218,6 +218,89 @@ When contributing to this repository as the coding agent:
      a cheap direct inspection or launch smoke on the rebuilt output;
    - if you did not inspect the relevant rebuilt outputs directly, say so explicitly and do not
      present the result as verified.
+16. Treat TSR/THLB runner selection and rerun equivalence as a contract surface, not an
+   implementation detail:
+   - before any TSR/THLB rerun, identify which execution lane you are using and whether it matches
+     the question being asked:
+     - `femic tsr thlb-netdown-run` is the generic flattened recipe/executability runner;
+     - `femic tsr thlb-netdown-step-run` / `run_tsr_thlb_parent_step` are reviewed parent-step
+       cumulative runners; and
+     - MAP_ID / LU smoke runs are a separate validation lane from full-TSA runs;
+   - if the user asks to confirm, recheck, stabilize, or compare a previously reported TSR/THLB
+     benchmark result, default to the same runner, checkpoint, baseline signal, subset/full-TSA
+     scope, and stop-line that produced the earlier result;
+   - do not silently substitute a different runner just because it is easier or more generic;
+   - if you intentionally change any of the following, tell the user before treating the result as
+     comparable:
+     - runner / command path;
+     - checkpoint;
+     - baseline signal;
+     - full-TSA vs smoke/subset scope; or
+     - target parent step / stop-line;
+   - if the available runner cannot answer the user’s actual question, say so plainly before
+     running anything and either choose the correct instrument or frame the fallback as a different
+     check with a different answer surface;
+   - if a rerun that was supposed to confirm a prior number produces a materially different result,
+     stop and disclose that mismatch immediately before reframing, interpreting, or substituting a
+     different metric;
+   - never present a generic flattened THLB final-area result as though it were a parent-step
+     cumulative benchmark reconciliation result unless the user explicitly asked for the flattened
+     run surface;
+   - for strict THLB reconstruction comparison work under `#128`-style analysis:
+     - treat strict-vs-TSR as the governing benchmark;
+     - treat strict-vs-reviewed as explanatory context only; and
+     - do not escalate a parent step to a top-priority repair merely because it differs from the
+       reviewed lane if the strict result is already close enough to TSR;
+   - for THLB stepwise accounting across strict, reviewed, and comparison surfaces:
+     - treat `net_removed_area_ha` as the canonical marginal metric;
+     - require that it equal the true before/after change in currently active managed area caused
+       by that step;
+     - treat gross candidate/matched/touched areas as secondary diagnostics only; and
+     - treat milestone/reference rows as cumulative checkpoints with no marginal deduction;
+   - for THLB cumulative answers during step-by-step adjudication:
+     - use `config/tsr/thlb_locked_chain_ledger.json` as the canonical chained source for locked
+       cumulative remaining area and TSR cumulative deltas;
+     - do not answer cumulative questions from branch-local bounded step artifacts; and
+     - if a branch-local remaining area is mentioned for debugging, label it explicitly as
+       non-cumulative;
+   - for Windows multiprocessing safety, do not launch LU-parallel THLB parent-step reruns from
+     stdin / here-string Python; use the CLI entrypoint or a saved script file instead.
+17. Treat developer-imposed scope boundaries as a hard execution contract:
+   - if the developer says `one step at a time`, `one bounded move`, or equivalent, do exactly one
+     bounded unit of work before stopping and reporting;
+   - a bounded unit means one of:
+     - one code change;
+18. Treat "raw source input" and "checkpoint" as mutually exclusive concepts:
+   - a checkpoint is a derived intermediate artifact used for resume/debug only;
+   - a checkpoint is never an acceptable substitute for raw source input when the
+     task is to validate, rebuild, or debug the baseline geometry itself;
+   - if the developer asks to start from raw geometry, use the actual upstream
+     source dataset (for example the provincial VRI source plus the reviewed TSA
+     boundary), not an instance-local checkpoint feather;
+   - before diagnosing GLB/AFLB/THLB area mismatches, verify that the claimed
+     raw source is truly materialized and readable rather than an annex pointer,
+     cache stub, or other derived artifact.
+     - one validation run;
+     - one report rebuild; or
+     - one issue/planning/docs update;
+     not a bundle of several of those unless the developer explicitly asks for the bundle;
+   - do not combine implementation plus broad rerun plus downstream validation into one "helpful"
+     bundle without explicit approval;
+   - before any expensive or broad command, state plainly:
+     - the exact command;
+     - the single question it answers; and
+     - why a smaller run is not enough;
+   - after each bounded unit:
+     - stop;
+     - report the result;
+     - and wait for the next instruction rather than doing "while I'm here" follow-on work;
+   - for active TSR/THLB adjudication work, do not run downstream parent steps or whole-lane suffixes
+     when the current question is about one parent step only;
+   - treat scope expansion as a correctness failure, not as initiative;
+   - if the developer says `scope breach`, immediately:
+     - stop any running background work;
+     - return to the last explicitly agreed bounded unit; and
+     - do not propose broader execution until the developer re-expands scope.
 
 Treat these steps as the minimum bar for every milestone so manual reminders are not required.
 

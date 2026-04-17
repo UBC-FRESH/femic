@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
+from html import unescape
 import json
 from pathlib import Path
+import re
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote
+from urllib.parse import quote, urljoin, urlparse
 from urllib.request import Request, urlopen
 
 from femic.bcdc_catalog import (
@@ -20,8 +22,10 @@ from femic.bcdc_fetch import GeomarkBBox
 
 
 DWDS_BASE_URL = "https://apps.gov.bc.ca/pub/dwds-ofi"
+DWDS_PICKUP_BASE_URL = "https://apps.gov.bc.ca/pub/dwds-rasp"
 DWDS_CREATE_ORDER_FILTERED_URL = f"{DWDS_BASE_URL}/order/createOrderFiltered"
 DWDS_ORDER_STATUS_URL_TEMPLATE = f"{DWDS_BASE_URL}/order/{{order_id}}"
+DWDS_PICKUP_BY_GUID_URL_TEMPLATE = f"{DWDS_PICKUP_BASE_URL}/pickupByGUID/{{order_guid}}"
 DWDS_PRODUCT_ALLOWED_URL_TEMPLATE = (
     f"{DWDS_BASE_URL}/security/productAllowedByFeatureType/{{feature_type}}"
 )
@@ -98,6 +102,15 @@ class BcdcDwdsOrderResult:
     submission_value: str | None
     status_probe: BcdcDwdsStatusProbe | None
     warnings: tuple[str, ...] = ()
+    latest_followup_utc: str | None = None
+    latest_followup_status_probe: BcdcDwdsStatusProbe | None = None
+    latest_followup_pickup_url: str | None = None
+    latest_followup_pickup_download_url: str | None = None
+    materialized_artifact_path: str | None = None
+    materialized_download_url: str | None = None
+    materialized_content_type: str | None = None
+    materialized_bytes: int | None = None
+    followup_warnings: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -132,6 +145,19 @@ class BcdcDwdsOrderResult:
                 self.status_probe.to_dict() if self.status_probe is not None else None
             ),
             "warnings": list(self.warnings),
+            "latest_followup_utc": self.latest_followup_utc,
+            "latest_followup_status_probe": (
+                self.latest_followup_status_probe.to_dict()
+                if self.latest_followup_status_probe is not None
+                else None
+            ),
+            "latest_followup_pickup_url": self.latest_followup_pickup_url,
+            "latest_followup_pickup_download_url": self.latest_followup_pickup_download_url,
+            "materialized_artifact_path": self.materialized_artifact_path,
+            "materialized_download_url": self.materialized_download_url,
+            "materialized_content_type": self.materialized_content_type,
+            "materialized_bytes": self.materialized_bytes,
+            "followup_warnings": list(self.followup_warnings),
         }
 
 
@@ -169,6 +195,18 @@ def _post_json(url: str, payload: dict[str, object]) -> dict[str, Any]:
         raise BcdcDwdsError(
             f"Unable to parse DWDS order response from {url}: {exc}"
         ) from exc
+
+
+def _fetch_text(url: str) -> str:
+    request = Request(url, headers={"Accept": "text/html,*/*"}, method="GET")
+    try:
+        with urlopen(request) as response:
+            return response.read().decode("utf-8", errors="replace")
+    except HTTPError as exc:  # pragma: no cover - network branch
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise BcdcDwdsError(f"Unable to fetch DWDS text from {url}: {detail}") from exc
+    except URLError as exc:  # pragma: no cover - network branch
+        raise BcdcDwdsError(f"Unable to fetch DWDS text from {url}: {exc}") from exc
 
 
 def _select_dwds_feature_resource(match: BcdcPackageMatch) -> BcdcResourceMatch | None:
@@ -227,6 +265,245 @@ def _extract_download_url(payload: dict[str, Any]) -> str | None:
     return None
 
 
+def _extract_dwds_pickup_download_url(*, pickup_url: str, html_text: str) -> str | None:
+    pickup_link_match = re.search(
+        r"<a[^>]*id=['\"]pickup_link['\"][^>]*href\s*=\s*['\"]?([^'\">\s]+)",
+        html_text,
+        flags=re.IGNORECASE,
+    )
+    if pickup_link_match is not None:
+        candidate = urljoin(pickup_url, unescape(pickup_link_match.group(1).strip()))
+        parsed = urlparse(candidate)
+        if parsed.scheme in {"http", "https"} and parsed.netloc:
+            return candidate
+
+    href_matches = re.findall(r"href\s*=\s*['\"]?([^'\">\s]+)", html_text, flags=re.IGNORECASE)
+    for href in href_matches:
+        candidate = urljoin(pickup_url, unescape(href.strip()))
+        parsed = urlparse(candidate)
+        if parsed.scheme in {"http", "https"} and parsed.netloc:
+            return candidate
+    return None
+
+
+def _resolve_dwds_pickup_download_url(order_guid: str) -> tuple[str, str | None]:
+    pickup_url = DWDS_PICKUP_BY_GUID_URL_TEMPLATE.format(order_guid=quote(order_guid, safe="-"))
+    html_text = _fetch_text(pickup_url)
+    return pickup_url, _extract_dwds_pickup_download_url(
+        pickup_url=pickup_url,
+        html_text=html_text,
+    )
+
+
+def _status_probe_from_payload(payload: dict[str, Any] | None) -> BcdcDwdsStatusProbe | None:
+    if not isinstance(payload, dict):
+        return None
+    order_id = payload.get("order_id")
+    if order_id is None:
+        return None
+    return BcdcDwdsStatusProbe(
+        order_id=str(order_id),
+        raw_payload=dict(payload.get("raw_payload", {}))
+        if isinstance(payload.get("raw_payload"), dict)
+        else payload,
+        status=str(payload.get("status")) if payload.get("status") is not None else None,
+        description=(
+            str(payload.get("description"))
+            if payload.get("description") is not None
+            else None
+        ),
+        value=str(payload.get("value")) if payload.get("value") is not None else None,
+        download_url=(
+            str(payload.get("download_url"))
+            if payload.get("download_url") is not None
+            else None
+        ),
+    )
+
+
+def _order_result_from_payload(payload: dict[str, Any]) -> BcdcDwdsOrderResult:
+    bbox_payload = payload.get("bbox_epsg3005")
+    if not isinstance(bbox_payload, list | tuple) or len(bbox_payload) != 4:
+        raise BcdcDwdsError("DWDS manifest payload is missing a valid bbox_epsg3005 entry.")
+    return BcdcDwdsOrderResult(
+        query=str(payload["query"]),
+        limit=int(payload["limit"]),
+        generated_utc=str(payload["generated_utc"]),
+        package_id=str(payload["package_id"]),
+        package_name=str(payload["package_name"]),
+        package_title=str(payload["package_title"]),
+        dataset_page_url=str(payload["dataset_page_url"]),
+        resource_id=str(payload["resource_id"]),
+        resource_name=str(payload["resource_name"]),
+        resource_url=(
+            str(payload["resource_url"]) if payload.get("resource_url") is not None else None
+        ),
+        feature_type=str(payload["feature_type"]),
+        matched_by=str(payload["matched_by"]),
+        aoi_source=str(payload["aoi_source"]),
+        bbox_epsg3005=tuple(float(value) for value in bbox_payload),  # type: ignore[arg-type]
+        geomark_id=str(payload["geomark_id"]) if payload.get("geomark_id") is not None else None,
+        geomark_url=(
+            str(payload["geomark_url"]) if payload.get("geomark_url") is not None else None
+        ),
+        output_format=str(payload["output_format"]),
+        email_address=(
+            str(payload["email_address"]) if payload.get("email_address") is not None else None
+        ),
+        clipping_method=str(payload["clipping_method"]),
+        ordering_application=str(payload["ordering_application"]),
+        request_url=str(payload["request_url"]),
+        request_payload=(
+            dict(payload.get("request_payload", {}))
+            if isinstance(payload.get("request_payload"), dict)
+            else {}
+        ),
+        order_id=str(payload["order_id"]),
+        order_guid=str(payload["order_guid"]) if payload.get("order_guid") is not None else None,
+        submission_status=str(payload["submission_status"]),
+        submission_description=str(payload["submission_description"]),
+        submission_value=(
+            str(payload["submission_value"])
+            if payload.get("submission_value") is not None
+            else None
+        ),
+        status_probe=_status_probe_from_payload(payload.get("status_probe")),
+        warnings=tuple(str(item) for item in payload.get("warnings", [])),
+        latest_followup_utc=(
+            str(payload["latest_followup_utc"])
+            if payload.get("latest_followup_utc") is not None
+            else None
+        ),
+        latest_followup_status_probe=_status_probe_from_payload(
+            payload.get("latest_followup_status_probe")
+        ),
+        latest_followup_pickup_url=(
+            str(payload["latest_followup_pickup_url"])
+            if payload.get("latest_followup_pickup_url") is not None
+            else None
+        ),
+        latest_followup_pickup_download_url=(
+            str(payload["latest_followup_pickup_download_url"])
+            if payload.get("latest_followup_pickup_download_url") is not None
+            else None
+        ),
+        materialized_artifact_path=(
+            str(payload["materialized_artifact_path"])
+            if payload.get("materialized_artifact_path") is not None
+            else None
+        ),
+        materialized_download_url=(
+            str(payload["materialized_download_url"])
+            if payload.get("materialized_download_url") is not None
+            else None
+        ),
+        materialized_content_type=(
+            str(payload["materialized_content_type"])
+            if payload.get("materialized_content_type") is not None
+            else None
+        ),
+        materialized_bytes=(
+            int(payload["materialized_bytes"])
+            if payload.get("materialized_bytes") is not None
+            else None
+        ),
+        followup_warnings=tuple(str(item) for item in payload.get("followup_warnings", [])),
+    )
+
+
+def load_bcdc_dwds_manifest(path: Path) -> list[BcdcDwdsOrderResult]:
+    """Load one or more DWDS order results from a previously written manifest."""
+
+    resolved = path.expanduser().resolve()
+    if not resolved.exists():
+        raise BcdcDwdsError(f"DWDS manifest not found: {resolved}")
+    try:
+        payload = json.loads(resolved.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise BcdcDwdsError(f"Unable to parse DWDS manifest {resolved}: {exc}") from exc
+
+    if isinstance(payload, dict) and isinstance(payload.get("results"), list):
+        return [
+            _order_result_from_payload(item)
+            for item in payload["results"]
+            if isinstance(item, dict)
+        ]
+    if isinstance(payload, list):
+        return [_order_result_from_payload(item) for item in payload if isinstance(item, dict)]
+    if isinstance(payload, dict):
+        return [_order_result_from_payload(payload)]
+    raise BcdcDwdsError(f"Unsupported DWDS manifest payload shape in {resolved}")
+
+
+def _infer_dwds_download_filename(
+    *,
+    download_url: str,
+    feature_type: str,
+    output_format: str,
+    order_id: str,
+    content_disposition: str | None,
+    content_type: str | None,
+) -> str:
+    if content_disposition:
+        lower = content_disposition.lower()
+        marker = "filename="
+        if marker in lower:
+            raw = content_disposition[lower.index(marker) + len(marker) :].strip()
+            candidate = raw.strip().strip('"').strip("'")
+            if candidate:
+                return Path(candidate).name
+    parsed = urlparse(download_url)
+    if parsed.path:
+        candidate = Path(parsed.path).name
+        if candidate:
+            return candidate
+    default_suffix = {
+        "fgdb": ".zip",
+        "shp": ".zip",
+        "gpkg": ".gpkg",
+        "geojson": ".geojson",
+    }.get(output_format.casefold(), ".bin")
+    safe_feature_type = feature_type.replace(".", "_").replace(":", "_")
+    if content_type and "zip" in content_type.casefold() and default_suffix != ".zip":
+        default_suffix = ".zip"
+    return f"{safe_feature_type}__order_{order_id}{default_suffix}"
+
+
+def _download_dwds_artifact(
+    *,
+    download_url: str,
+    destination_root: Path,
+    feature_type: str,
+    output_format: str,
+    order_id: str,
+) -> tuple[Path, str | None, int]:
+    destination_root.mkdir(parents=True, exist_ok=True)
+    request = Request(download_url, headers={"Accept": "*/*"}, method="GET")
+    try:
+        with urlopen(request) as response:
+            content_type = response.headers.get("Content-Type")
+            filename = _infer_dwds_download_filename(
+                download_url=download_url,
+                feature_type=feature_type,
+                output_format=output_format,
+                order_id=order_id,
+                content_disposition=response.headers.get("Content-Disposition"),
+                content_type=content_type,
+            )
+            target_path = destination_root / filename
+            content = response.read()
+    except HTTPError as exc:  # pragma: no cover - network branch
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise BcdcDwdsError(
+            f"Unable to download DWDS artifact from {download_url}: HTTP {exc.code}: {detail}"
+        ) from exc
+    except URLError as exc:  # pragma: no cover - network branch
+        raise BcdcDwdsError(f"Unable to download DWDS artifact from {download_url}: {exc}") from exc
+
+    target_path.write_bytes(content)
+    return target_path.resolve(), content_type, len(content)
+
+
 def _probe_dwds_order_status(order_id: str) -> BcdcDwdsStatusProbe:
     payload = _fetch_json(DWDS_ORDER_STATUS_URL_TEMPLATE.format(order_id=order_id))
     return BcdcDwdsStatusProbe(
@@ -242,6 +519,75 @@ def _probe_dwds_order_status(order_id: str) -> BcdcDwdsStatusProbe:
         ),
         value=str(payload.get("Value")) if payload.get("Value") is not None else None,
         download_url=_extract_download_url(payload),
+    )
+
+
+def follow_up_bcdc_dwds_order(
+    order_result: BcdcDwdsOrderResult,
+    *,
+    download_root: Path | None = None,
+    poll_status: bool = True,
+) -> BcdcDwdsOrderResult:
+    """Re-probe a submitted DWDS order and materialize its artifact when ready."""
+
+    latest_probe = (
+        _probe_dwds_order_status(order_result.order_id)
+        if poll_status
+        else order_result.latest_followup_status_probe or order_result.status_probe
+    )
+    followup_warnings: list[str] = []
+    pickup_url = order_result.latest_followup_pickup_url
+    pickup_download_url = order_result.latest_followup_pickup_download_url
+    artifact_path = order_result.materialized_artifact_path
+    artifact_download_url = order_result.materialized_download_url
+    artifact_content_type = order_result.materialized_content_type
+    artifact_bytes = order_result.materialized_bytes
+
+    effective_download_url = latest_probe.download_url if latest_probe is not None else None
+    if effective_download_url is None and order_result.order_guid:
+        pickup_url, pickup_download_url = _resolve_dwds_pickup_download_url(
+            order_result.order_guid
+        )
+        effective_download_url = pickup_download_url
+    if effective_download_url is None:
+        if order_result.order_guid and pickup_url is not None:
+            followup_warnings.append(
+                "DWDS follow-up reached the pickup-by-GUID launcher page, but it did not expose a "
+                "final distribution download URL yet; keep the order manifest and retry later."
+            )
+        elif poll_status:
+            followup_warnings.append(
+                "DWDS follow-up did not expose a download URL yet; keep the order manifest and retry later."
+            )
+    elif download_root is None:
+        followup_warnings.append(
+            "DWDS follow-up found a download URL, but no download root was supplied for materialization."
+        )
+    else:
+        downloaded_path, content_type, byte_count = _download_dwds_artifact(
+            download_url=effective_download_url,
+            destination_root=download_root,
+            feature_type=order_result.feature_type,
+            output_format=order_result.output_format,
+            order_id=order_result.order_id,
+        )
+        artifact_path = str(downloaded_path)
+        artifact_download_url = effective_download_url
+        artifact_content_type = content_type
+        artifact_bytes = byte_count
+
+    return replace(
+        order_result,
+        status_probe=latest_probe,
+        latest_followup_utc=datetime.now(UTC).isoformat(),
+        latest_followup_status_probe=latest_probe,
+        latest_followup_pickup_url=pickup_url,
+        latest_followup_pickup_download_url=pickup_download_url,
+        materialized_artifact_path=artifact_path,
+        materialized_download_url=artifact_download_url,
+        materialized_content_type=artifact_content_type,
+        materialized_bytes=artifact_bytes,
+        followup_warnings=tuple(followup_warnings),
     )
 
 
