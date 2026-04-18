@@ -6,6 +6,8 @@ public but not consistently directly downloadable.
 
 Use this guide together with:
 
+- :doc:`github-datalad-arbutus-pattern` (why FEMIC uses this split-repo
+  pattern and what is wrapped in code vs runbooks)
 - ``metadata/required_datasets.yaml`` (authoritative inventory)
 - ``metadata/datalad_mirror_seed.csv`` (current mirror candidate list)
 
