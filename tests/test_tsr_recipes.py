@@ -84,6 +84,57 @@ def _write_candidate_facts(tmp_path: Path) -> Path:
     return path
 
 
+def _write_aflb_yield_bridge_fixture_inputs(
+    instance_root: Path,
+    *,
+    top_area_coverage: float | None = None,
+) -> Path:
+    tsr_root = instance_root / "data" / "tsr"
+    tsr_root.mkdir(parents=True, exist_ok=True)
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2, 3, 4],
+            "BEC_ZONE_CODE": ["IDF", "IDF", "IDF", "SBS"],
+            "SPECIES_CD_1": ["FD", "FD", "FD", "SB"],
+            "SITE_INDEX": [12.0, 20.0, 28.0, 36.0],
+            "CROWN_CLOSURE": [50.0, 55.0, 60.0, 65.0],
+            "FEATURE_AREA_SQM": [40.0, 40.0, 10.0, 10.0],
+            "thlb_fact": [1.0, 1.0, 1.0, 1.0],
+        },
+        geometry=[
+            box(0, 0, 40, 1),
+            box(40, 0, 80, 1),
+            box(80, 0, 90, 1),
+            box(90, 0, 100, 1),
+        ],
+        crs="EPSG:3005",
+    )
+    checkpoint.to_feather(tsr_root / "aflb_checkpoint.feather")
+
+    bundle_root = instance_root / "data" / "model_input_bundle"
+    bundle_root.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        {
+            "au_id": [2900001, 2900002, 2900003],
+            "tsa": [29, 29, 29],
+            "stratum_code": ["IDF_FD", "IDF_FD", "IDF_FD"],
+            "si_level": ["L", "M", "H"],
+        }
+    ).to_csv(bundle_root / "au_table.csv", index=False)
+
+    selection_payload: dict[str, object] = {"tsa": ["29"], "stratification": {}}
+    if top_area_coverage is not None:
+        selection_payload["stratification"] = {"top_area_coverage": top_area_coverage}
+    payload: dict[str, object] = {"selection": selection_payload}
+    run_config_path = instance_root / "config" / "run_profile.test.yaml"
+    run_config_path.parent.mkdir(parents=True, exist_ok=True)
+    run_config_path.write_text(
+        tsr_recipes.yaml.safe_dump(payload, sort_keys=False, allow_unicode=False),
+        encoding="utf-8",
+    )
+    return run_config_path
+
+
 def _write_landscape_unit_layer(
     instance_root: Path,
     *,
@@ -1502,7 +1553,9 @@ def test_tsr_thlb_reconstruction_comparison_payload_buckets_parent_steps() -> No
     assert "raw checkpoint1 geometry" in markdown
 
 
-def test_tsr_thlb_reconstruction_comparison_payload_prefers_locked_chain_summary() -> None:
+def test_tsr_thlb_reconstruction_comparison_payload_prefers_locked_chain_summary() -> (
+    None
+):
     recipe = tsr_recipes.TsrThlbNetdownRecipeRecord(
         schema_version=1,
         recipe_kind="thlb_netdown",
@@ -1640,45 +1693,55 @@ def test_tsr_thlb_reconstruction_comparison_payload_prefers_locked_chain_summary
         if isinstance(item, dict)
     }
 
-    assert payload["reconstructed_final_managed_area_ha"] == pytest.approx(1648497.6217168132)
-    assert payload["reconstructed_audit_final_managed_area_ha"] == pytest.approx(2247992.122)
+    assert payload["reconstructed_final_managed_area_ha"] == pytest.approx(
+        1648497.6217168132
+    )
+    assert payload["reconstructed_audit_final_managed_area_ha"] == pytest.approx(
+        2247992.122
+    )
     assert payload["tsr_reported_thlb_area_ha"] == pytest.approx(1660053.0)
     assert payload["strict_vs_tsr_delta_ha"] == pytest.approx(-11555.378283186816)
     assert payload["locked_chain_latest_row_order"] == 24
-    assert payload["locked_chain_latest_parent_step_id"] == "thlb_parent_024_final_milestone"
-    assert payload["locked_chain_remaining_area_ha"] == pytest.approx(1648497.6217168132)
+    assert (
+        payload["locked_chain_latest_parent_step_id"]
+        == "thlb_parent_024_final_milestone"
+    )
+    assert payload["locked_chain_remaining_area_ha"] == pytest.approx(
+        1648497.6217168132
+    )
     assert payload["locked_chain_tsr_cumulative_area_ha"] == pytest.approx(1660053.0)
-    assert payload["locked_chain_cumulative_delta_ha"] == pytest.approx(-11555.378283186816)
+    assert payload["locked_chain_cumulative_delta_ha"] == pytest.approx(
+        -11555.378283186816
+    )
     assert entries_by_id["thlb_parent_021_example"]["locked_row"] is True
-    assert (
-        entries_by_id["thlb_parent_021_example"]["reconstructed_removed_area_ha"]
-        == pytest.approx(34205.0)
-    )
+    assert entries_by_id["thlb_parent_021_example"][
+        "reconstructed_removed_area_ha"
+    ] == pytest.approx(34205.0)
     assert entries_by_id["thlb_parent_022_milestone"]["locked_row"] is True
-    assert (
-        entries_by_id["thlb_parent_022_milestone"]["reconstructed_cumulative_area_ha"]
-        == pytest.approx(1671251.6217168132)
-    )
+    assert entries_by_id["thlb_parent_022_milestone"][
+        "reconstructed_cumulative_area_ha"
+    ] == pytest.approx(1671251.6217168132)
     assert entries_by_id["thlb_parent_024_final_milestone"]["locked_row"] is True
     assert (
         entries_by_id["thlb_parent_024_final_milestone"]["locked_source_kind"]
         == "locked_chain_milestone_projection"
     )
-    assert (
-        entries_by_id["thlb_parent_024_final_milestone"]["reconstructed_cumulative_area_ha"]
-        == pytest.approx(1648497.6217168132)
-    )
-    assert (
-        entries_by_id["thlb_parent_024_final_milestone"]["strict_vs_tsr_cumulative_delta_ha"]
-        == pytest.approx(-11555.378283186816)
-    )
+    assert entries_by_id["thlb_parent_024_final_milestone"][
+        "reconstructed_cumulative_area_ha"
+    ] == pytest.approx(1648497.6217168132)
+    assert entries_by_id["thlb_parent_024_final_milestone"][
+        "strict_vs_tsr_cumulative_delta_ha"
+    ] == pytest.approx(-11555.378283186816)
 
     markdown = tsr_recipes._build_tsr_thlb_reconstruction_comparison_markdown(
         recipe=recipe,
         comparison_payload=payload,
     )
     assert "Locked strict chain THLB: `1648497.622 ha`" in markdown
-    assert "Generic reconstructed audit final area (secondary context only): `2247992.122 ha`" in markdown
+    assert (
+        "Generic reconstructed audit final area (secondary context only): `2247992.122 ha`"
+        in markdown
+    )
     assert "Locked rows are the governing ledger." in markdown
     assert "Unlocked rows are stale/unrefreshed context only" in markdown
     assert "Locked dashboard row: `yes`" in markdown
@@ -1769,28 +1832,27 @@ def test_build_tsr_thlb_locked_chain_ledger_payload_tracks_chained_cumulative() 
     assert payload["artifact_kind"] == "thlb_locked_chain_ledger"
     assert payload["latest_locked_parent_step_id"] == "thlb_parent_003_second"
     assert payload["latest_locked_row_order"] == 3
+    assert entries_by_id["thlb_parent_001_total_tsa_area"][
+        "locked_cumulative_remaining_area_ha"
+    ] == pytest.approx(1000.0)
     assert (
-        entries_by_id["thlb_parent_001_total_tsa_area"][
-            "locked_cumulative_remaining_area_ha"
-        ]
-        == pytest.approx(1000.0)
+        entries_by_id["thlb_parent_001_total_tsa_area"]["marginal_not_applicable"]
+        is True
     )
-    assert entries_by_id["thlb_parent_001_total_tsa_area"]["marginal_not_applicable"] is True
-    assert (
-        entries_by_id["thlb_parent_002_first"]["locked_cumulative_remaining_area_ha"]
-        == pytest.approx(790.0)
-    )
-    assert (
-        entries_by_id["thlb_parent_003_second"]["locked_cumulative_remaining_area_ha"]
-        == pytest.approx(735.0)
-    )
-    assert (
-        entries_by_id["thlb_parent_003_second"]["locked_cumulative_delta_ha"]
-        == pytest.approx(-15.0)
-    )
+    assert entries_by_id["thlb_parent_002_first"][
+        "locked_cumulative_remaining_area_ha"
+    ] == pytest.approx(790.0)
+    assert entries_by_id["thlb_parent_003_second"][
+        "locked_cumulative_remaining_area_ha"
+    ] == pytest.approx(735.0)
+    assert entries_by_id["thlb_parent_003_second"][
+        "locked_cumulative_delta_ha"
+    ] == pytest.approx(-15.0)
 
 
-def test_build_tsr_thlb_locked_chain_ledger_payload_rejects_missing_locked_step() -> None:
+def test_build_tsr_thlb_locked_chain_ledger_payload_rejects_missing_locked_step() -> (
+    None
+):
     recipe = tsr_recipes.TsrThlbNetdownRecipeRecord(
         schema_version=1,
         recipe_kind="thlb_netdown",
@@ -1949,7 +2011,9 @@ def test_normalize_polygonal_overlay_frame_promotes_polygons() -> None:
     assert normalized["value"].tolist() == [1, 2, 3]
 
 
-def test_fragment_binary_exclusion_preserves_fractional_thlb_state_on_difference() -> None:
+def test_fragment_binary_exclusion_preserves_fractional_thlb_state_on_difference() -> (
+    None
+):
     checkpoint = gpd.GeoDataFrame(
         {
             "FEATURE_ID": [1],
@@ -5226,9 +5290,7 @@ def test_write_reconstructed_restart_checkpoint_artifacts_normalizes_polygonal_o
         geometry=[
             box(0, 0, 10, 10),
             MultiPolygon([box(10, 0, 20, 10)]),
-            GeometryCollection(
-                [box(20, 0, 30, 10), LineString([(20, 20), (21, 21)])]
-            ),
+            GeometryCollection([box(20, 0, 30, 10), LineString([(20, 20), (21, 21)])]),
             MultiLineString([[(30, 0), (31, 1)]]),
         ],
         crs="EPSG:3005",
@@ -5253,7 +5315,9 @@ def test_write_reconstructed_restart_checkpoint_artifacts_normalizes_polygonal_o
     assert area_ha == pytest.approx(tsr_recipes._managed_area_ha(written))
 
 
-def test_validate_reconstructed_restart_equivalence_uses_normalized_restart_projection() -> None:
+def test_validate_reconstructed_restart_equivalence_uses_normalized_restart_projection() -> (
+    None
+):
     source_checkpoint = gpd.GeoDataFrame(
         {
             "_row_id": [1, 2, 3],
@@ -5962,10 +6026,7 @@ def test_default_workbench_checkpoint_path_prefers_step13_attribute_checkpoint(
         "base", encoding="utf-8"
     )
     enriched_path = (
-        instance_root
-        / "data"
-        / "tsr"
-        / "lhlb_curve_ready_checkpoint.feather"
+        instance_root / "data" / "tsr" / "lhlb_curve_ready_checkpoint.feather"
     )
     enriched_path.write_text("enriched", encoding="utf-8")
 
@@ -6475,9 +6536,7 @@ def test_specialized_compiled_logic_for_step6_uses_residual_aspatial_fallback_fo
     assert tenure_item["normalized_action"] == "aspatial_area_reduction"
     assert tenure_item["linked_source_entry_ids"] == []
     assert tenure_item["subtract_parent_exact_removed_area"] is True
-    assert (
-        tenure_item["normalized_subject"] == "Area-based tenures and woodlots"
-    )
+    assert tenure_item["normalized_subject"] == "Area-based tenures and woodlots"
 
 
 def test_apply_aspatial_area_reduction_sets_effective_area_without_touching_canonical_area_or_thlb() -> (
@@ -6590,17 +6649,19 @@ def test_apply_aspatial_area_reduction_respects_checkpoint_attribute_filters() -
         crs="EPSG:3005",
     )
 
-    updated, removed_area_ha, affected_row_count = tsr_recipes._apply_aspatial_area_reduction(
-        checkpoint,
-        target_removed_area_ha=0.01,
-        filters=(
-            {
-                "field": "femic_step13_steep_slope_flag",
-                "operator": "eq",
-                "value": True,
-            },
-        ),
-        mode="any",
+    updated, removed_area_ha, affected_row_count = (
+        tsr_recipes._apply_aspatial_area_reduction(
+            checkpoint,
+            target_removed_area_ha=0.01,
+            filters=(
+                {
+                    "field": "femic_step13_steep_slope_flag",
+                    "operator": "eq",
+                    "value": True,
+                },
+            ),
+            mode="any",
+        )
     )
 
     assert removed_area_ha == pytest.approx(0.01)
@@ -6626,17 +6687,19 @@ def test_apply_aspatial_thlb_reduction_respects_checkpoint_attribute_filters() -
         crs="EPSG:3005",
     )
 
-    updated, removed_area_ha, affected_row_count = tsr_recipes._apply_aspatial_thlb_reduction(
-        checkpoint,
-        target_removed_area_ha=0.005,
-        filters=(
-            {
-                "field": "femic_step13_steep_slope_flag",
-                "operator": "eq",
-                "value": True,
-            },
-        ),
-        mode="any",
+    updated, removed_area_ha, affected_row_count = (
+        tsr_recipes._apply_aspatial_thlb_reduction(
+            checkpoint,
+            target_removed_area_ha=0.005,
+            filters=(
+                {
+                    "field": "femic_step13_steep_slope_flag",
+                    "operator": "eq",
+                    "value": True,
+                },
+            ),
+            mode="any",
+        )
     )
 
     assert removed_area_ha == pytest.approx(0.005)
@@ -6921,10 +6984,7 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
     )
     checkpoint7.to_feather(checkpoint7_path)
     enriched_checkpoint_path = (
-        instance_root
-        / "data"
-        / "tsr"
-        / "lhlb_curve_ready_checkpoint.feather"
+        instance_root / "data" / "tsr" / "lhlb_curve_ready_checkpoint.feather"
     )
     enriched_checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint7.to_feather(enriched_checkpoint_path)
@@ -7591,28 +7651,38 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     assert result.execution_mode == tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
     assert result.checkpoint_path == checkpoint1_path.resolve()
     assert result.baseline_signal == "checkpoint1_raw_glb_initialization"
-    assert result.aflb_checkpoint_path == (
-        instance_root / "data" / "tsr" / "aflb_checkpoint.feather"
-    ).resolve()
-    assert result.aflb_gpkg_path == (
-        instance_root / "data" / "tsr" / "aflb_checkpoint.gpkg"
-    ).resolve()
+    assert (
+        result.aflb_checkpoint_path
+        == (instance_root / "data" / "tsr" / "aflb_checkpoint.feather").resolve()
+    )
+    assert (
+        result.aflb_gpkg_path
+        == (instance_root / "data" / "tsr" / "aflb_checkpoint.gpkg").resolve()
+    )
     assert result.aflb_lu_cache_warmed is True
     assert result.aflb_checkpoint_area_ha == pytest.approx(0.02)
-    assert result.lhlb_checkpoint_path == (
-        instance_root / "data" / "tsr" / "lhlb_checkpoint.feather"
-    ).resolve()
-    assert result.lhlb_gpkg_path == (
-        instance_root / "data" / "tsr" / "lhlb_checkpoint.gpkg"
-    ).resolve()
+    assert (
+        result.lhlb_checkpoint_path
+        == (instance_root / "data" / "tsr" / "lhlb_checkpoint.feather").resolve()
+    )
+    assert (
+        result.lhlb_gpkg_path
+        == (instance_root / "data" / "tsr" / "lhlb_checkpoint.gpkg").resolve()
+    )
     assert result.lhlb_lu_cache_warmed is True
     assert result.lhlb_checkpoint_area_ha == pytest.approx(0.015)
-    assert result.lhlb_curve_ready_checkpoint_path == (
-        instance_root / "data" / "tsr" / "lhlb_curve_ready_checkpoint.feather"
-    ).resolve()
-    assert result.lhlb_curve_ready_gpkg_path == (
-        instance_root / "data" / "tsr" / "lhlb_curve_ready_checkpoint.gpkg"
-    ).resolve()
+    assert (
+        result.lhlb_curve_ready_checkpoint_path
+        == (
+            instance_root / "data" / "tsr" / "lhlb_curve_ready_checkpoint.feather"
+        ).resolve()
+    )
+    assert (
+        result.lhlb_curve_ready_gpkg_path
+        == (
+            instance_root / "data" / "tsr" / "lhlb_curve_ready_checkpoint.gpkg"
+        ).resolve()
+    )
     assert result.lhlb_curve_ready_lu_cache_warmed is True
     assert result.lhlb_curve_ready_checkpoint_area_ha == pytest.approx(0.015)
     assert result.input_area_ha == pytest.approx(0.02)
@@ -7653,10 +7723,22 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     assert audit_payload["outcome_counts"]["applied"] == 1
     reconstructed_status = result.status_report_path.read_text(encoding="utf-8")
     assert "Execution mode: `reconstructed`" in reconstructed_status
-    assert "AFLB checkpoint Feather: `data/tsr/aflb_checkpoint.feather`" in reconstructed_status
-    assert "AFLB checkpoint GeoPackage: `data/tsr/aflb_checkpoint.gpkg`" in reconstructed_status
-    assert "LHLB checkpoint Feather: `data/tsr/lhlb_checkpoint.feather`" in reconstructed_status
-    assert "LHLB checkpoint GeoPackage: `data/tsr/lhlb_checkpoint.gpkg`" in reconstructed_status
+    assert (
+        "AFLB checkpoint Feather: `data/tsr/aflb_checkpoint.feather`"
+        in reconstructed_status
+    )
+    assert (
+        "AFLB checkpoint GeoPackage: `data/tsr/aflb_checkpoint.gpkg`"
+        in reconstructed_status
+    )
+    assert (
+        "LHLB checkpoint Feather: `data/tsr/lhlb_checkpoint.feather`"
+        in reconstructed_status
+    )
+    assert (
+        "LHLB checkpoint GeoPackage: `data/tsr/lhlb_checkpoint.gpkg`"
+        in reconstructed_status
+    )
     assert (
         "LHLB curve-ready checkpoint Feather: `data/tsr/lhlb_curve_ready_checkpoint.feather`"
         in reconstructed_status
@@ -7681,9 +7763,15 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
         recipe.recipe_contract["status_report_path"]
         == "config/tsr/thlb_reconstructed.status.md"
     )
-    assert recipe.recipe_contract["aflb_checkpoint_path"] == "data/tsr/aflb_checkpoint.feather"
+    assert (
+        recipe.recipe_contract["aflb_checkpoint_path"]
+        == "data/tsr/aflb_checkpoint.feather"
+    )
     assert recipe.recipe_contract["aflb_gpkg_path"] == "data/tsr/aflb_checkpoint.gpkg"
-    assert recipe.recipe_contract["lhlb_checkpoint_path"] == "data/tsr/lhlb_checkpoint.feather"
+    assert (
+        recipe.recipe_contract["lhlb_checkpoint_path"]
+        == "data/tsr/lhlb_checkpoint.feather"
+    )
     assert recipe.recipe_contract["lhlb_gpkg_path"] == "data/tsr/lhlb_checkpoint.gpkg"
     assert (
         recipe.recipe_contract["lhlb_curve_ready_checkpoint_path"]
@@ -7699,7 +7787,9 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
         instance_root=instance_root,
         expected_row_count=len(gpd.read_feather(result.aflb_checkpoint_path)),
         expected_area_ha=float(
-            gpd.read_feather(result.aflb_checkpoint_path).geometry.area.astype(float).sum()
+            gpd.read_feather(result.aflb_checkpoint_path)
+            .geometry.area.astype(float)
+            .sum()
             / 10000.0
         ),
     )
@@ -7724,8 +7814,14 @@ def test_run_tsr_thlb_netdown_recipe_can_restart_from_aflb_checkpoint(
         source_root=source_root,
         overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
         overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
-        source_layers_recipe_path=instance_root / "config" / "tsr" / "source_layers.recipe.yaml",
-        thlb_netdown_recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
     )
 
     checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
@@ -7851,9 +7947,7 @@ def test_run_tsr_thlb_netdown_recipe_can_restart_from_aflb_checkpoint(
         )
         output_path.parent.mkdir(parents=True, exist_ok=True)
         checkpoint.to_feather(output_path)
-        gpkg_path = (
-            instance_root / "data" / "tsr" / "lhlb_curve_ready_checkpoint.gpkg"
-        )
+        gpkg_path = instance_root / "data" / "tsr" / "lhlb_curve_ready_checkpoint.gpkg"
         if write_gpkg:
             checkpoint.to_file(
                 gpkg_path, driver="GPKG", layer="lhlb_curve_ready_checkpoint"
@@ -9335,12 +9429,7 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_step6_mixed_exact_and_resid
     )
 
     park_artifact_path = (
-        instance_root
-        / "data"
-        / "downloads"
-        / "bcdc"
-        / "PARKS"
-        / "PARKS.gpkg"
+        instance_root / "data" / "downloads" / "bcdc" / "PARKS" / "PARKS.gpkg"
     )
     park_artifact_path.parent.mkdir(parents=True, exist_ok=True)
     gpd.GeoDataFrame(
@@ -9890,6 +9979,99 @@ def test_compile_tsr_thlb_step13_attributes_populates_curve_ready_fields(
     }
 
 
+def test_build_tsr_aflb_yield_bridge_writes_default_artifacts(tmp_path: Path) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    run_config_path = _write_aflb_yield_bridge_fixture_inputs(
+        instance_root,
+        top_area_coverage=0.9,
+    )
+
+    result = tsr_recipes.build_tsr_aflb_yield_bridge(
+        instance_root=instance_root,
+        run_config_path=run_config_path,
+    )
+
+    assert (
+        result.strata_checkpoint_path
+        == tsr_recipes.default_tsr_aflb_strata_checkpoint_path(
+            instance_root=instance_root
+        )
+    )
+    assert result.au_checkpoint_path == tsr_recipes.default_tsr_aflb_au_checkpoint_path(
+        instance_root=instance_root
+    )
+    assert (
+        result.manifest_path
+        == tsr_recipes.default_tsr_aflb_yield_bridge_manifest_path(
+            instance_root=instance_root
+        )
+    )
+    assert result.strata_checkpoint_path.is_file()
+    assert result.au_checkpoint_path.is_file()
+    assert result.manifest_path.is_file()
+
+
+def test_build_tsr_aflb_yield_bridge_defaults_top_area_coverage_to_point_80(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    run_config_path = _write_aflb_yield_bridge_fixture_inputs(instance_root)
+
+    result = tsr_recipes.build_tsr_aflb_yield_bridge(
+        instance_root=instance_root,
+        run_config_path=run_config_path,
+    )
+    manifest_payload = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+
+    assert result.top_area_coverage == pytest.approx(0.80)
+    assert result.top_area_coverage_source == "default_0_80"
+    assert manifest_payload["selection"]["top_area_coverage_target"] == pytest.approx(
+        0.80
+    )
+    assert manifest_payload["selection"]["top_area_coverage_source"] == "default_0_80"
+
+
+def test_build_tsr_aflb_yield_bridge_manifest_and_au_checkpoint_fields(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    run_config_path = _write_aflb_yield_bridge_fixture_inputs(
+        instance_root,
+        top_area_coverage=0.8,
+    )
+
+    result = tsr_recipes.build_tsr_aflb_yield_bridge(
+        instance_root=instance_root,
+        run_config_path=run_config_path,
+    )
+    manifest_payload = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    au_checkpoint = gpd.read_feather(result.au_checkpoint_path)
+
+    assert manifest_payload["schema_version"] == 1
+    assert manifest_payload["artifact_kind"] == "aflb_yield_bridge"
+    assert (
+        manifest_payload["source"]["aflb_checkpoint_path"]
+        == "data/tsr/aflb_checkpoint.feather"
+    )
+    assert (
+        manifest_payload["artifacts"]["aflb_au_checkpoint_path"]
+        == "data/tsr/aflb_au_checkpoint.feather"
+    )
+    assert manifest_payload["selection"]["selected_strata_count"] == 1
+    assert manifest_payload["selection"]["selected_strata"] == ["IDF_FD"]
+
+    for column in (
+        "stratum",
+        "stratum_matched",
+        "si_level",
+        "au",
+        "stratum_selected",
+        "stratum_selection_target_coverage",
+    ):
+        assert column in au_checkpoint.columns
+    assert au_checkpoint["au"].notna().sum() >= 1
+
+
 def test_run_tsr_thlb_reconstructed_diagnostic_slice_restores_harvested_select_attribute_rows(
     tmp_path: Path,
 ) -> None:
@@ -10229,8 +10411,14 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_can_use_parallel_auto_mode(
         source_root=source_root,
         overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
         overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
-        source_layers_recipe_path=instance_root / "config" / "tsr" / "source_layers.recipe.yaml",
-        thlb_netdown_recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
     )
 
     source_path = instance_root / "data" / "downloads" / "bcdc" / "parks" / "parks.gpkg"
@@ -10342,14 +10530,18 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_can_use_parallel_auto_mode(
     )
 
     audit_payload = json.loads(result.audit_path.read_text(encoding="utf-8"))
-    filter_step = next(step for step in audit_payload["steps"] if step["step_id"] == "parks_exact")
+    filter_step = next(
+        step for step in audit_payload["steps"] if step["step_id"] == "parks_exact"
+    )
     assert filter_step["run_status"] == "applied"
     assert filter_step["spatial_application_mode"] == "fragment_overlay"
     assert filter_step["affected_area_ha"] == pytest.approx(0.02)
 
     diag_payload = json.loads(result.diagnostic_path.read_text(encoding="utf-8"))
     exact_profile = next(
-        step for step in diag_payload["step_profiles"] if step["step_id"] == "parks_exact"
+        step
+        for step in diag_payload["step_profiles"]
+        if step["step_id"] == "parks_exact"
     )
     assert exact_profile["parallel_mode"] == "auto"
     assert exact_profile["worker_count"] == 2

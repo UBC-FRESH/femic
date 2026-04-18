@@ -6356,6 +6356,66 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
     assert any("tsr_reported_aflb_area_ha:" in msg for msg in messages)
 
 
+def test_tsr_build_yield_bridge_resolves_instance_run_config_and_tsa(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_build(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrAflbYieldBridgeBuildResult(
+            instance_root=instance_root.resolve(),
+            tsa="29",
+            aflb_checkpoint_path=(
+                instance_root / "data" / "tsr" / "aflb_checkpoint.feather"
+            ).resolve(),
+            strata_checkpoint_path=(
+                instance_root / "data" / "tsr" / "aflb_strata_checkpoint.feather"
+            ).resolve(),
+            au_checkpoint_path=(
+                instance_root / "data" / "tsr" / "aflb_au_checkpoint.feather"
+            ).resolve(),
+            manifest_path=(
+                instance_root / "data" / "tsr" / "aflb_yield_bridge_manifest.json"
+            ).resolve(),
+            run_config_path=(
+                instance_root / "config" / "run_profile.test.yaml"
+            ).resolve(),
+            run_config_sha256="deadbeef",
+            au_table_path=(
+                instance_root / "data" / "model_input_bundle" / "au_table.csv"
+            ).resolve(),
+            top_area_coverage=0.8,
+            top_area_coverage_source="default_0_80",
+            selected_strata_count=1,
+            realized_coverage=0.9,
+            aflb_input_row_count=4,
+            au_assigned_row_count=4,
+        )
+
+    monkeypatch.setattr(cli_main, "build_tsr_aflb_yield_bridge", _fake_build)
+
+    cli_main.tsr_build_yield_bridge(
+        tsa=["29"],
+        run_config=Path("config/run_profile.test.yaml"),
+        instance_root=instance_root,
+    )
+
+    assert captured_kwargs["instance_root"] == instance_root.resolve()
+    assert captured_kwargs["tsa"] == "29"
+    assert (
+        captured_kwargs["run_config_path"]
+        == (instance_root / "config" / "run_profile.test.yaml").resolve()
+    )
+    assert any("aflb_yield_bridge_manifest_path:" in msg for msg in messages)
+    assert any("top_area_coverage_source: default_0_80" in msg for msg in messages)
+
+
 def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -6395,10 +6455,16 @@ def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
             / "logs"
             / "tsr"
             / "thlb_reconstructed_status_report-20260405T000000Z.md",
-            aflb_checkpoint_path=instance_root / "data" / "tsr" / "aflb_checkpoint.feather",
+            aflb_checkpoint_path=instance_root
+            / "data"
+            / "tsr"
+            / "aflb_checkpoint.feather",
             aflb_gpkg_path=instance_root / "data" / "tsr" / "aflb_checkpoint.gpkg",
             aflb_lu_cache_warmed=True,
-            lhlb_checkpoint_path=instance_root / "data" / "tsr" / "lhlb_checkpoint.feather",
+            lhlb_checkpoint_path=instance_root
+            / "data"
+            / "tsr"
+            / "lhlb_checkpoint.feather",
             lhlb_gpkg_path=instance_root / "data" / "tsr" / "lhlb_checkpoint.gpkg",
             lhlb_lu_cache_warmed=True,
             lhlb_curve_ready_checkpoint_path=instance_root
@@ -6475,15 +6541,36 @@ def test_tsr_thlb_netdown_run_can_disable_aflb_gpkg(
                 tsa_code="29",
                 tsa_name="Williams Lake",
             ),
-            checkpoint_path=instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather",
-            output_path=instance_root / "data" / "tsr" / "thlb_reconstructed_checkpoint.feather",
-            audit_path=instance_root / "config" / "tsr" / "thlb_reconstructed.audit.json",
-            status_report_path=instance_root / "config" / "tsr" / "thlb_reconstructed.status.md",
-            runtime_status_report_path=instance_root / "runtime" / "logs" / "tsr" / "thlb_reconstructed_status_report-20260405T000000Z.md",
-            aflb_checkpoint_path=instance_root / "data" / "tsr" / "aflb_checkpoint.feather",
+            checkpoint_path=instance_root
+            / "data"
+            / "ria_vri_vclr1p_checkpoint1.feather",
+            output_path=instance_root
+            / "data"
+            / "tsr"
+            / "thlb_reconstructed_checkpoint.feather",
+            audit_path=instance_root
+            / "config"
+            / "tsr"
+            / "thlb_reconstructed.audit.json",
+            status_report_path=instance_root
+            / "config"
+            / "tsr"
+            / "thlb_reconstructed.status.md",
+            runtime_status_report_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "thlb_reconstructed_status_report-20260405T000000Z.md",
+            aflb_checkpoint_path=instance_root
+            / "data"
+            / "tsr"
+            / "aflb_checkpoint.feather",
             aflb_gpkg_path=None,
             aflb_lu_cache_warmed=True,
-            lhlb_checkpoint_path=instance_root / "data" / "tsr" / "lhlb_checkpoint.feather",
+            lhlb_checkpoint_path=instance_root
+            / "data"
+            / "tsr"
+            / "lhlb_checkpoint.feather",
             lhlb_gpkg_path=None,
             lhlb_lu_cache_warmed=True,
             lhlb_curve_ready_checkpoint_path=instance_root

@@ -51,7 +51,19 @@ from femic.bcdc_fetch import (
     GeomarkBBox,
     fetch_bcdc_wfs_data,
 )
+from femic.pipeline.bundle import tsa_curve_id_prefix
+from femic.pipeline.io import file_sha256, load_pipeline_run_profile
+from femic.pipeline.tsa import (
+    apply_stratum_alias_map,
+    assign_au_ids_from_scsi,
+    assign_si_levels_from_stratum_quantiles,
+    build_strata_summary,
+    build_stratum_lexmatch_alias_map,
+    normalize_tsa_code,
+    validate_nonempty_au_assignment,
+)
 from femic.pipeline.tipsy_config import BROADLEAF_SPECIES_CODES
+from femic.pipeline.vri import assign_stratum_codes_with_lexmatch
 
 from .overlay import TsrOverlayTsaRecord
 from .report import TsrFactReviewRow, report_tsr_candidate_facts
@@ -204,6 +216,15 @@ _TSR_THLB_PARENT_STEP_EXECUTION_MODES = {
 }
 _CURVE_VOLUME_METRIC_AUTO = "treated_cmai_untreated_culmination"
 _CURVE_VOLUME_METRIC_AGE = "volume_at_age"
+_YIELD_BRIDGE_DEFAULT_TOP_AREA_COVERAGE = 0.80
+_YIELD_BRIDGE_DEFAULT_STRAT_BEC_GROUPING = "zone"
+_YIELD_BRIDGE_DEFAULT_STRAT_SPECIES_COMBO_COUNT = 1
+_YIELD_BRIDGE_DEFAULT_INCLUDE_TM_SPECIES2_FOR_SINGLE = True
+_YIELD_BRIDGE_SI_LEVEL_QUANTILES: dict[str, list[int]] = {
+    "L": [5, 20, 35],
+    "M": [35, 50, 65],
+    "H": [65, 80, 95],
+}
 
 
 @dataclass(frozen=True)
@@ -723,6 +744,27 @@ class TsrThlbParallelBenchmarkResult:
         }
 
 
+@dataclass(frozen=True)
+class TsrAflbYieldBridgeBuildResult:
+    """Summary of one bounded AFLB -> strata/AU yield-bridge build slice."""
+
+    instance_root: Path
+    tsa: str
+    aflb_checkpoint_path: Path
+    strata_checkpoint_path: Path
+    au_checkpoint_path: Path
+    manifest_path: Path
+    run_config_path: Path | None
+    run_config_sha256: str | None
+    au_table_path: Path
+    top_area_coverage: float
+    top_area_coverage_source: str
+    selected_strata_count: int
+    realized_coverage: float
+    aflb_input_row_count: int
+    au_assigned_row_count: int
+
+
 def _read_json_object(path: Path, *, description: str) -> dict[str, Any]:
     resolved = path.expanduser().resolve()
     if not resolved.exists():
@@ -865,25 +907,72 @@ def default_tsr_thlb_reconstructed_audit_path(*, instance_root: Path) -> Path:
 def default_tsr_aflb_checkpoint_path(*, instance_root: Path) -> Path:
     """Return the default strict AFLB restart checkpoint feather path."""
 
-    return instance_root.expanduser().resolve() / "data" / "tsr" / "aflb_checkpoint.feather"
+    return (
+        instance_root.expanduser().resolve()
+        / "data"
+        / "tsr"
+        / "aflb_checkpoint.feather"
+    )
+
+
+def default_tsr_aflb_strata_checkpoint_path(*, instance_root: Path) -> Path:
+    """Return the default AFLB-derived strata checkpoint feather path."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "data"
+        / "tsr"
+        / "aflb_strata_checkpoint.feather"
+    )
+
+
+def default_tsr_aflb_au_checkpoint_path(*, instance_root: Path) -> Path:
+    """Return the default AFLB-derived AU checkpoint feather path."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "data"
+        / "tsr"
+        / "aflb_au_checkpoint.feather"
+    )
+
+
+def default_tsr_aflb_yield_bridge_manifest_path(*, instance_root: Path) -> Path:
+    """Return the default AFLB-derived yield-bridge manifest JSON path."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "data"
+        / "tsr"
+        / "aflb_yield_bridge_manifest.json"
+    )
 
 
 def default_tsr_aflb_gpkg_path(*, instance_root: Path) -> Path:
     """Return the default strict AFLB restart checkpoint GeoPackage path."""
 
-    return instance_root.expanduser().resolve() / "data" / "tsr" / "aflb_checkpoint.gpkg"
+    return (
+        instance_root.expanduser().resolve() / "data" / "tsr" / "aflb_checkpoint.gpkg"
+    )
 
 
 def default_tsr_lhlb_checkpoint_path(*, instance_root: Path) -> Path:
     """Return the default strict LHLB restart checkpoint feather path."""
 
-    return instance_root.expanduser().resolve() / "data" / "tsr" / "lhlb_checkpoint.feather"
+    return (
+        instance_root.expanduser().resolve()
+        / "data"
+        / "tsr"
+        / "lhlb_checkpoint.feather"
+    )
 
 
 def default_tsr_lhlb_gpkg_path(*, instance_root: Path) -> Path:
     """Return the default strict LHLB restart checkpoint GeoPackage path."""
 
-    return instance_root.expanduser().resolve() / "data" / "tsr" / "lhlb_checkpoint.gpkg"
+    return (
+        instance_root.expanduser().resolve() / "data" / "tsr" / "lhlb_checkpoint.gpkg"
+    )
 
 
 def default_tsr_lhlb_curve_ready_checkpoint_path(*, instance_root: Path) -> Path:
@@ -5579,6 +5668,403 @@ def _load_checkpoint_geodataframe(path: Path) -> gpd.GeoDataFrame:
     return checkpoint
 
 
+def _yield_bridge_row_apply(frame: pd.DataFrame, func: Any, axis: int = 1) -> pd.Series:
+    return frame.apply(func, axis=axis)
+
+
+def _resolve_yield_bridge_tsa(
+    *,
+    explicit_tsa: str | None,
+    run_config_path: Path | None,
+    au_table: pd.DataFrame,
+) -> str:
+    if explicit_tsa is not None:
+        return normalize_tsa_code(explicit_tsa)
+    if run_config_path is not None:
+        try:
+            profile = load_pipeline_run_profile(run_config_path)
+        except (
+            FileNotFoundError,
+            ValueError,
+            json.JSONDecodeError,
+            yaml.YAMLError,
+        ) as exc:
+            raise TsrRecipeError(f"Invalid run config: {exc}") from exc
+        tsa_list = [normalize_tsa_code(value) for value in profile.tsa_list or []]
+        if len(tsa_list) == 1:
+            return tsa_list[0]
+        if len(tsa_list) > 1:
+            raise TsrRecipeError(
+                "Yield bridge build expects exactly one TSA from `--run-config` when "
+                "`--tsa` is omitted."
+            )
+    au_tsa_values = sorted(
+        {
+            normalize_tsa_code(value)
+            for value in au_table.get("tsa", pd.Series(dtype=object)).dropna().tolist()
+        }
+    )
+    if len(au_tsa_values) == 1:
+        return au_tsa_values[0]
+    raise TsrRecipeError(
+        "Yield bridge build requires exactly one TSA via `--tsa`, a single-TSA "
+        "`--run-config`, or a single-TSA `data/model_input_bundle/au_table.csv`."
+    )
+
+
+def _resolve_yield_bridge_top_area_coverage(
+    *,
+    run_config_path: Path | None,
+) -> tuple[float, str]:
+    if run_config_path is None:
+        return _YIELD_BRIDGE_DEFAULT_TOP_AREA_COVERAGE, "default_0_80"
+    try:
+        profile = load_pipeline_run_profile(run_config_path)
+    except (FileNotFoundError, ValueError, json.JSONDecodeError, yaml.YAMLError) as exc:
+        raise TsrRecipeError(f"Invalid run config: {exc}") from exc
+    configured = profile.strat_top_area_coverage
+    if configured is None:
+        return _YIELD_BRIDGE_DEFAULT_TOP_AREA_COVERAGE, "default_0_80"
+    return float(configured), "run_config"
+
+
+def _resolve_yield_bridge_stratification_settings(
+    *,
+    run_config_path: Path | None,
+) -> tuple[str, int, bool]:
+    if run_config_path is None:
+        return (
+            _YIELD_BRIDGE_DEFAULT_STRAT_BEC_GROUPING,
+            _YIELD_BRIDGE_DEFAULT_STRAT_SPECIES_COMBO_COUNT,
+            _YIELD_BRIDGE_DEFAULT_INCLUDE_TM_SPECIES2_FOR_SINGLE,
+        )
+    try:
+        profile = load_pipeline_run_profile(run_config_path)
+    except (FileNotFoundError, ValueError, json.JSONDecodeError, yaml.YAMLError) as exc:
+        raise TsrRecipeError(f"Invalid run config: {exc}") from exc
+    return (
+        profile.strat_bec_grouping or _YIELD_BRIDGE_DEFAULT_STRAT_BEC_GROUPING,
+        profile.strat_species_combo_count
+        or _YIELD_BRIDGE_DEFAULT_STRAT_SPECIES_COMBO_COUNT,
+        (
+            profile.strat_include_tm_species2_for_single
+            if profile.strat_include_tm_species2_for_single is not None
+            else _YIELD_BRIDGE_DEFAULT_INCLUDE_TM_SPECIES2_FOR_SINGLE
+        ),
+    )
+
+
+def _load_yield_bridge_au_table(*, instance_root: Path) -> tuple[Path, pd.DataFrame]:
+    au_table_path = instance_root / "data" / "model_input_bundle" / "au_table.csv"
+    if not au_table_path.exists():
+        raise TsrRecipeError(
+            "Yield bridge build requires `data/model_input_bundle/au_table.csv` to map "
+            "strata/SI bins onto AUs."
+        )
+    try:
+        au_table = pd.read_csv(au_table_path)
+    except Exception as exc:  # pragma: no cover - filesystem/runtime seam
+        raise TsrRecipeError(f"Unable to read AU table: {au_table_path}") from exc
+    if au_table.empty:
+        raise TsrRecipeError("Yield bridge build requires a non-empty AU table.")
+    if "tsa" not in au_table.columns:
+        raise TsrRecipeError("AU table is missing required `tsa` column.")
+    au_table = au_table.copy()
+    au_table["tsa"] = au_table["tsa"].apply(normalize_tsa_code)
+    required_columns = {"au_id", "stratum_code", "si_level"}
+    missing_columns = sorted(required_columns - set(au_table.columns))
+    if missing_columns:
+        raise TsrRecipeError(
+            "AU table is missing required yield-bridge columns: "
+            + ", ".join(missing_columns)
+        )
+    return au_table_path, au_table
+
+
+def build_tsr_aflb_yield_bridge(
+    *,
+    instance_root: Path,
+    tsa: str | None = None,
+    run_config_path: Path | None = None,
+) -> TsrAflbYieldBridgeBuildResult:
+    """Build the first bounded AFLB -> strata/AU yield-bridge artifacts."""
+
+    resolved_instance_root = instance_root.expanduser().resolve()
+    resolved_run_config_path = (
+        run_config_path.expanduser().resolve() if run_config_path is not None else None
+    )
+    resolved_aflb_checkpoint_path = default_tsr_aflb_checkpoint_path(
+        instance_root=resolved_instance_root
+    )
+    if not resolved_aflb_checkpoint_path.exists():
+        raise TsrRecipeError(
+            "AFLB checkpoint feather not found for yield-bridge build: "
+            f"{resolved_aflb_checkpoint_path}. Run `femic tsr thlb-netdown-run` far "
+            "enough to publish `data/tsr/aflb_checkpoint.feather`, then retry."
+        )
+    au_table_path, au_table = _load_yield_bridge_au_table(
+        instance_root=resolved_instance_root
+    )
+    resolved_tsa = _resolve_yield_bridge_tsa(
+        explicit_tsa=tsa,
+        run_config_path=resolved_run_config_path,
+        au_table=au_table,
+    )
+    au_table_for_tsa = au_table.loc[au_table["tsa"] == resolved_tsa].copy()
+    if au_table_for_tsa.empty:
+        raise TsrRecipeError(
+            "AU table does not contain any rows for the requested TSA "
+            f"`{resolved_tsa}`."
+        )
+    resolved_top_area_coverage, top_area_coverage_source = (
+        _resolve_yield_bridge_top_area_coverage(
+            run_config_path=resolved_run_config_path
+        )
+    )
+    (
+        strat_bec_grouping,
+        strat_species_combo_count,
+        strat_include_tm_species2_for_single,
+    ) = _resolve_yield_bridge_stratification_settings(
+        run_config_path=resolved_run_config_path
+    )
+    aflb_checkpoint = _prepare_reconstructed_restart_checkpoint_frame(
+        _load_checkpoint_geodataframe(resolved_aflb_checkpoint_path)
+    )
+    if aflb_checkpoint.empty:
+        raise TsrRecipeError(
+            "AFLB checkpoint is empty; cannot build yield-bridge artifacts."
+        )
+
+    bridge_area_sqm = (
+        aflb_checkpoint["_stand_area_sqm"] * aflb_checkpoint["thlb_fact"]
+        if {"_stand_area_sqm", "thlb_fact"}.issubset(aflb_checkpoint.columns)
+        else _resolve_effective_stand_area_sqm(aflb_checkpoint)
+    )
+    total_bridge_area_sqm = float(
+        pd.to_numeric(bridge_area_sqm, errors="coerce").fillna(0.0).sum()
+    )
+    if total_bridge_area_sqm <= 0.0:
+        raise TsrRecipeError(
+            "AFLB checkpoint has zero effective area; cannot build yield bridge."
+        )
+
+    strata_checkpoint = aflb_checkpoint.copy()
+    strata_checkpoint["tsa_code"] = resolved_tsa
+    strata_checkpoint = assign_stratum_codes_with_lexmatch(
+        f_table=strata_checkpoint,
+        row_apply_fn=_yield_bridge_row_apply,
+        bec_grouping=strat_bec_grouping,
+        species_combo_count=strat_species_combo_count,
+        include_tm_species2_for_single=strat_include_tm_species2_for_single,
+    )
+    strata_checkpoint["aflb_bridge_area_sqm"] = pd.to_numeric(
+        bridge_area_sqm, errors="coerce"
+    ).fillna(0.0)
+    strata_checkpoint["aflb_bridge_area_ha"] = (
+        strata_checkpoint["aflb_bridge_area_sqm"] / 10000.0
+    )
+    strata_checkpoint["totalarea_p"] = (
+        strata_checkpoint["aflb_bridge_area_sqm"] / total_bridge_area_sqm
+    )
+    strata_indexed = strata_checkpoint.set_index("stratum")
+    strata_summary, selected_strata_codes, site_index_iqr_mean = build_strata_summary(
+        f_table=strata_indexed,
+        stratum_col="stratum",
+        pd_module=pd,
+        tsa_code=resolved_tsa,
+        target_coverage=resolved_top_area_coverage,
+        min_standcount=1,
+    )
+    if not selected_strata_codes:
+        raise TsrRecipeError("Yield bridge build could not select any AFLB strata.")
+
+    strata_summary_export = strata_summary.reset_index()
+    strata_summary_export["selected_rank"] = range(1, len(strata_summary_export) + 1)
+    strata_summary_export["selected_cumulative_coverage"] = strata_summary_export[
+        "coverage"
+    ].cumsum()
+    selected_rank_map = dict(
+        zip(strata_summary_export["stratum"], strata_summary_export["selected_rank"])
+    )
+    selected_coverage_map = dict(
+        zip(strata_summary_export["stratum"], strata_summary_export["coverage"])
+    )
+    selected_cumulative_map = dict(
+        zip(
+            strata_summary_export["stratum"],
+            strata_summary_export["selected_cumulative_coverage"],
+        )
+    )
+    realized_coverage = float(strata_summary_export["coverage"].sum())
+    import distance
+
+    best_match = build_stratum_lexmatch_alias_map(
+        f_table=strata_indexed,
+        stratum_col="stratum",
+        selected_strata_codes=selected_strata_codes,
+        levenshtein_fn=distance.levenshtein,
+    )
+    apply_stratum_alias_map(
+        f_table=strata_checkpoint,
+        stratum_col="stratum",
+        selected_strata_codes=selected_strata_codes,
+        best_match=best_match,
+    )
+    strata_checkpoint["stratum_selected"] = strata_checkpoint["stratum"].isin(
+        selected_strata_codes
+    )
+    strata_checkpoint["stratum_selected_rank"] = strata_checkpoint["stratum"].map(
+        selected_rank_map
+    )
+    strata_checkpoint["stratum_selected_coverage"] = strata_checkpoint["stratum"].map(
+        selected_coverage_map
+    )
+    strata_checkpoint["stratum_selected_cumulative_coverage"] = strata_checkpoint[
+        "stratum"
+    ].map(selected_cumulative_map)
+    strata_checkpoint["stratum_selection_target_coverage"] = resolved_top_area_coverage
+    strata_checkpoint["stratum_selection_realized_coverage"] = realized_coverage
+
+    allowed_levels_by_stratum = {
+        str(stratum_code): sorted({str(value) for value in levels.dropna().values})
+        for stratum_code, levels in au_table_for_tsa.groupby("stratum_code")["si_level"]
+    }
+    au_checkpoint, _ = assign_si_levels_from_stratum_quantiles(
+        f_table=strata_checkpoint,
+        si_levelquants=_YIELD_BRIDGE_SI_LEVEL_QUANTILES,
+        allowed_levels_by_stratum=allowed_levels_by_stratum,
+        stratum_matched_col="stratum_matched",
+        site_index_col="SITE_INDEX",
+        si_level_col="si_level",
+        message_fn=lambda _msg: None,
+    )
+    scsi_au = {
+        resolved_tsa: {
+            (str(row.stratum_code), str(row.si_level)): int(float(str(row.au_id)))
+            - 100000 * tsa_curve_id_prefix(resolved_tsa)
+            for row in au_table_for_tsa.itertuples(index=False)
+            if pd.notna(row.au_id)
+            and pd.notna(row.stratum_code)
+            and pd.notna(row.si_level)
+        }
+    }
+    au_checkpoint = assign_au_ids_from_scsi(
+        f_table=au_checkpoint,
+        scsi_au=scsi_au,
+        tsa_col="tsa_code",
+        stratum_matched_col="stratum_matched",
+        si_level_col="si_level",
+        au_col="au",
+    )
+    try:
+        validate_nonempty_au_assignment(
+            f_table=au_checkpoint,
+            au_col="au",
+            site_index_col="SITE_INDEX",
+            stratum_matched_col="stratum_matched",
+            si_level_col="si_level",
+        )
+    except ValueError as exc:
+        raise TsrRecipeError(str(exc)) from exc
+
+    strata_checkpoint_path = default_tsr_aflb_strata_checkpoint_path(
+        instance_root=resolved_instance_root
+    )
+    au_checkpoint_path = default_tsr_aflb_au_checkpoint_path(
+        instance_root=resolved_instance_root
+    )
+    manifest_path = default_tsr_aflb_yield_bridge_manifest_path(
+        instance_root=resolved_instance_root
+    )
+    strata_checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    strata_checkpoint.to_feather(strata_checkpoint_path)
+    au_checkpoint.to_feather(au_checkpoint_path)
+
+    resolved_run_config_sha256 = (
+        file_sha256(resolved_run_config_path)
+        if resolved_run_config_path is not None
+        else None
+    )
+    manifest_payload = {
+        "schema_version": 1,
+        "artifact_kind": "aflb_yield_bridge",
+        "slice_status": "aflb_to_strata_au",
+        "tsa": resolved_tsa,
+        "source": {
+            "aflb_checkpoint_path": _render_instance_relative_path(
+                instance_root=resolved_instance_root,
+                candidate=resolved_aflb_checkpoint_path,
+            ),
+            "run_config_path": _render_instance_relative_path(
+                instance_root=resolved_instance_root,
+                candidate=resolved_run_config_path,
+            ),
+            "run_config_sha256": resolved_run_config_sha256,
+            "au_table_path": _render_instance_relative_path(
+                instance_root=resolved_instance_root,
+                candidate=au_table_path,
+            ),
+        },
+        "selection": {
+            "top_area_coverage_target": resolved_top_area_coverage,
+            "top_area_coverage_source": top_area_coverage_source,
+            "selected_strata_count": len(selected_strata_codes),
+            "realized_coverage": realized_coverage,
+            "selected_strata": list(selected_strata_codes),
+            "site_index_iqr_mean": site_index_iqr_mean,
+            "stratification": {
+                "bec_grouping": strat_bec_grouping,
+                "species_combo_count": strat_species_combo_count,
+                "include_tm_species2_for_single": (
+                    strat_include_tm_species2_for_single
+                ),
+            },
+        },
+        "artifacts": {
+            "aflb_strata_checkpoint_path": _render_instance_relative_path(
+                instance_root=resolved_instance_root,
+                candidate=strata_checkpoint_path,
+            ),
+            "aflb_au_checkpoint_path": _render_instance_relative_path(
+                instance_root=resolved_instance_root,
+                candidate=au_checkpoint_path,
+            ),
+            "aflb_yield_bridge_manifest_path": _render_instance_relative_path(
+                instance_root=resolved_instance_root,
+                candidate=manifest_path,
+            ),
+        },
+        "rows": {
+            "aflb_input_rows": int(len(aflb_checkpoint)),
+            "strata_checkpoint_rows": int(len(strata_checkpoint)),
+            "au_checkpoint_rows": int(len(au_checkpoint)),
+            "au_assigned_rows": int(au_checkpoint["au"].notna().sum()),
+        },
+    }
+    manifest_path.write_text(
+        json.dumps(manifest_payload, indent=2, sort_keys=False),
+        encoding="utf-8",
+    )
+    return TsrAflbYieldBridgeBuildResult(
+        instance_root=resolved_instance_root,
+        tsa=resolved_tsa,
+        aflb_checkpoint_path=resolved_aflb_checkpoint_path,
+        strata_checkpoint_path=strata_checkpoint_path,
+        au_checkpoint_path=au_checkpoint_path,
+        manifest_path=manifest_path,
+        run_config_path=resolved_run_config_path,
+        run_config_sha256=resolved_run_config_sha256,
+        au_table_path=au_table_path,
+        top_area_coverage=resolved_top_area_coverage,
+        top_area_coverage_source=top_area_coverage_source,
+        selected_strata_count=len(selected_strata_codes),
+        realized_coverage=realized_coverage,
+        aflb_input_row_count=len(aflb_checkpoint),
+        au_assigned_row_count=int(au_checkpoint["au"].notna().sum()),
+    )
+
+
 def _normalize_map_id_token(value: Any) -> str:
     text = str(value).strip().upper()
     return text
@@ -5763,7 +6249,9 @@ def _select_intersecting_landscape_units_for_checkpoint(
         checkpoint_bc = checkpoint_bc.to_crs(BC_ALBERS_EPSG)
     minx, miny, maxx, maxy = (float(value) for value in checkpoint_bc.total_bounds)
     bbox_started = perf_counter()
-    candidate = lu_layer.loc[lu_layer.geometry.intersects(box(minx, miny, maxx, maxy))].copy()
+    candidate = lu_layer.loc[
+        lu_layer.geometry.intersects(box(minx, miny, maxx, maxy))
+    ].copy()
     profiling["lu_bbox_filter_seconds"] = perf_counter() - bbox_started
     if candidate.empty:
         raise TsrRecipeError(
@@ -5806,7 +6294,10 @@ def _load_cached_landscape_unit_partition_selection(
             payload = json.loads(metadata_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
-        if int(payload.get("cache_version", -1) or -1) != _TSR_THLB_LU_PARTITION_CACHE_VERSION:
+        if (
+            int(payload.get("cache_version", -1) or -1)
+            != _TSR_THLB_LU_PARTITION_CACHE_VERSION
+        ):
             continue
         if str(payload.get("checkpoint_path", "")).strip() != resolved_checkpoint:
             continue
@@ -5853,7 +6344,10 @@ def _load_cached_landscape_unit_partition_records(
             payload = json.loads(metadata_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
-        if int(payload.get("cache_version", -1) or -1) != _TSR_THLB_LU_PARTITION_CACHE_VERSION:
+        if (
+            int(payload.get("cache_version", -1) or -1)
+            != _TSR_THLB_LU_PARTITION_CACHE_VERSION
+        ):
             continue
         if str(payload.get("checkpoint_path", "")).strip() != resolved_checkpoint:
             continue
@@ -5876,10 +6370,10 @@ def _load_cached_landscape_unit_partition_records(
             if not isinstance(cached_columns, list):
                 continue
             if {
-                str(value).strip()
-                for value in cached_columns
-                if str(value).strip()
-            } != {str(value).strip() for value in expected_columns if str(value).strip()}:
+                str(value).strip() for value in cached_columns if str(value).strip()
+            } != {
+                str(value).strip() for value in expected_columns if str(value).strip()
+            }:
                 continue
         selected_raw = payload.get("selected_landscape_units", [])
         records_raw = payload.get("chunk_records", [])
@@ -6131,8 +6625,7 @@ def _materialize_checkpoint_landscape_unit_partitions(
         if (
             int(payload.get("cache_version", -1) or -1)
             == _TSR_THLB_LU_PARTITION_CACHE_VERSION
-            and
-            isinstance(records_raw, list)
+            and isinstance(records_raw, list)
             and isinstance(cached_columns, list)
             and cached_row_count is not None
             and cached_area_ha is not None
@@ -6143,11 +6636,7 @@ def _materialize_checkpoint_landscape_unit_partitions(
                 rel_tol=0.0,
                 abs_tol=1e-6,
             )
-            and {
-                str(value).strip()
-                for value in cached_columns
-                if str(value).strip()
-            }
+            and {str(value).strip() for value in cached_columns if str(value).strip()}
             == set(checkpoint_columns)
         ):
             cached_records: list[dict[str, Any]] = []
@@ -6436,9 +6925,7 @@ def _select_reconstructed_recipe_steps_for_checkpoint(
         return tuple(dict(step) for step in recipe_steps), None
     if _is_aflb_restart_checkpoint_path(checkpoint_path):
         filtered = tuple(
-            dict(step)
-            for step in recipe_steps
-            if not _is_glb_to_aflb_stage(step)
+            dict(step) for step in recipe_steps if not _is_glb_to_aflb_stage(step)
         )
         return (
             filtered,
@@ -6503,22 +6990,38 @@ def _validate_reconstructed_restart_equivalence(
             "candidate row count does not match source checkpoint "
             f"({len(candidate_prepared)} != {len(source_prepared)})"
         )
-    if "_row_id" not in source_prepared.columns or "_row_id" not in candidate_prepared.columns:
+    if (
+        "_row_id" not in source_prepared.columns
+        or "_row_id" not in candidate_prepared.columns
+    ):
         problems.append("candidate or source checkpoint is missing `_row_id`")
     else:
         source_ids = set(
-            pd.to_numeric(source_prepared["_row_id"], errors="coerce").dropna().astype(int)
+            pd.to_numeric(source_prepared["_row_id"], errors="coerce")
+            .dropna()
+            .astype(int)
         )
         candidate_ids = set(
-            pd.to_numeric(candidate_prepared["_row_id"], errors="coerce").dropna().astype(int)
+            pd.to_numeric(candidate_prepared["_row_id"], errors="coerce")
+            .dropna()
+            .astype(int)
         )
         if source_ids != candidate_ids:
-            problems.append("candidate `_row_id` coverage does not match source checkpoint")
+            problems.append(
+                "candidate `_row_id` coverage does not match source checkpoint"
+            )
     required_state_columns = ("thlb_fact", "thlb_raw", "_stand_area_sqm")
     for column in required_state_columns:
-        if column in source_prepared.columns and column not in candidate_prepared.columns:
-            problems.append(f"candidate checkpoint is missing required state column `{column}`")
-    managed_area_delta_ha = abs(_managed_area_ha(candidate_prepared) - _managed_area_ha(source_prepared))
+        if (
+            column in source_prepared.columns
+            and column not in candidate_prepared.columns
+        ):
+            problems.append(
+                f"candidate checkpoint is missing required state column `{column}`"
+            )
+    managed_area_delta_ha = abs(
+        _managed_area_ha(candidate_prepared) - _managed_area_ha(source_prepared)
+    )
     if managed_area_delta_ha > 1e-6:
         problems.append(
             "candidate managed area does not match source checkpoint "
@@ -6554,15 +7057,21 @@ def _ensure_lhlb_curve_ready_checkpoint_artifacts(
             f"LHLB checkpoint feather not found for curve-ready promotion: {resolved_checkpoint_path}"
         )
     source_checkpoint = _load_checkpoint_geodataframe(resolved_checkpoint_path)
-    source_checkpoint_prepared = _prepare_reconstructed_restart_checkpoint_frame(source_checkpoint)
+    source_checkpoint_prepared = _prepare_reconstructed_restart_checkpoint_frame(
+        source_checkpoint
+    )
 
     needs_compile = True
-    if curve_ready_path.exists() and _checkpoint_has_step13_enrichment(curve_ready_path):
+    if curve_ready_path.exists() and _checkpoint_has_step13_enrichment(
+        curve_ready_path
+    ):
         if curve_ready_path.stat().st_mtime >= resolved_checkpoint_path.stat().st_mtime:
             existing_curve_ready = _load_checkpoint_geodataframe(curve_ready_path)
-            valid_existing, _existing_problems = _validate_reconstructed_restart_equivalence(
-                source_checkpoint=source_checkpoint_prepared,
-                candidate_checkpoint=existing_curve_ready,
+            valid_existing, _existing_problems = (
+                _validate_reconstructed_restart_equivalence(
+                    source_checkpoint=source_checkpoint_prepared,
+                    candidate_checkpoint=existing_curve_ready,
+                )
             )
             if valid_existing:
                 needs_compile = False
@@ -6581,9 +7090,11 @@ def _ensure_lhlb_curve_ready_checkpoint_artifacts(
             output_path=temp_curve_ready_path,
         )
         candidate_curve_ready = _load_checkpoint_geodataframe(temp_curve_ready_path)
-        valid_candidate, candidate_problems = _validate_reconstructed_restart_equivalence(
-            source_checkpoint=source_checkpoint_prepared,
-            candidate_checkpoint=candidate_curve_ready,
+        valid_candidate, candidate_problems = (
+            _validate_reconstructed_restart_equivalence(
+                source_checkpoint=source_checkpoint_prepared,
+                candidate_checkpoint=candidate_curve_ready,
+            )
         )
         if not valid_candidate:
             temp_curve_ready_path.unlink(missing_ok=True)
@@ -6594,9 +7105,11 @@ def _ensure_lhlb_curve_ready_checkpoint_artifacts(
         temp_curve_ready_path.replace(curve_ready_path)
 
     curve_ready_checkpoint = _load_checkpoint_geodataframe(curve_ready_path)
-    valid_curve_ready, curve_ready_problems = _validate_reconstructed_restart_equivalence(
-        source_checkpoint=source_checkpoint_prepared,
-        candidate_checkpoint=curve_ready_checkpoint,
+    valid_curve_ready, curve_ready_problems = (
+        _validate_reconstructed_restart_equivalence(
+            source_checkpoint=source_checkpoint_prepared,
+            candidate_checkpoint=curve_ready_checkpoint,
+        )
     )
     if not valid_curve_ready:
         raise TsrRecipeError(
@@ -7427,9 +7940,7 @@ def _execute_reconstructed_lu_exclusion_step(
                         _run_reconstructed_lu_exclusion_bundle_worker,
                         bundle_index=int(bundle["bundle_index"]),
                         bundle_label=str(bundle["bundle_label"]),
-                        bundle_items=[
-                            dict(item) for item in bundle["chunk_records"]
-                        ],
+                        bundle_items=[dict(item) for item in bundle["chunk_records"]],
                         exclusion_path_str=str(exclusion_path),
                         runtime_step_root_str=str(runtime_step_root),
                     )
@@ -12989,7 +13500,8 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
         if isinstance(item, dict)
     ]
     locked_chain_by_parent_id = {
-        str(item.get("parent_step_id", "")).strip(): item for item in locked_chain_entries
+        str(item.get("parent_step_id", "")).strip(): item
+        for item in locked_chain_entries
     }
     locked_chain_latest_row_order = int(
         (locked_chain_payload or {}).get("latest_locked_row_order", 0) or 0
@@ -13012,7 +13524,9 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
             None,
         )
         parent_step_id = (
-            str(parent_step.get("parent_step_id", "")).strip() if parent_step is not None else ""
+            str(parent_step.get("parent_step_id", "")).strip()
+            if parent_step is not None
+            else ""
         )
         direct_entry = locked_chain_by_parent_id.get(parent_step_id)
         if direct_entry is not None:
@@ -13040,7 +13554,9 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
         ]
         if not prior_entries:
             return (False, None, None, None)
-        projected_entry = max(prior_entries, key=lambda item: int(item.get("row_order", 0) or 0))
+        projected_entry = max(
+            prior_entries, key=lambda item: int(item.get("row_order", 0) or 0)
+        )
         return (
             True,
             projected_entry,
@@ -13170,7 +13686,10 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
                     locked_row_entry.get("locked_net_removed_area_ha")
                 )
                 strict_vs_tsr_delta_ha = (
-                    ((reconstructed_removed_area_ha or 0.0) - benchmark_marginal_area_ha)
+                    (
+                        (reconstructed_removed_area_ha or 0.0)
+                        - benchmark_marginal_area_ha
+                    )
                     if benchmark_marginal_area_ha is not None
                     else None
                 )
@@ -13708,7 +14227,10 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
             else "TSR reported THLB"
         )
         lines.append(f"- {target_label}: `{tsr_final:.3f} ha`")
-    if reconstructed_audit_final is not None and locked_chain_latest_row_order is not None:
+    if (
+        reconstructed_audit_final is not None
+        and locked_chain_latest_row_order is not None
+    ):
         lines.append(
             "- Generic reconstructed audit final area (secondary context only): "
             f"`{reconstructed_audit_final:.3f} ha`"
@@ -13718,10 +14240,7 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
         if value is not None:
             lines.append(f"- {label}: `{value:.3f} ha`")
     if locked_chain_delta is not None:
-        lines.append(
-            "- Locked chain cumulative delta: "
-            f"`{locked_chain_delta:.3f} ha`"
-        )
+        lines.append(f"- Locked chain cumulative delta: `{locked_chain_delta:.3f} ha`")
     lines.extend(
         [
             "",
@@ -14969,21 +15488,24 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                         managed_area_before_curve_ha - managed_area_after_curve_ha,
                     )
                     partition_started = perf_counter()
-                    current_chunk_records = _materialize_checkpoint_landscape_unit_partitions(
-                        checkpoint=checkpoint_after,
-                        checkpoint_path=step_dir / "curve_threshold_checkpoint.feather",
-                        lu_frame=lu_frame,
-                        selected_landscape_units=tuple(
-                            str(value).strip()
-                            for value in lu_frame.get(
-                                "LANDSCAPE_UNIT_NAME", pd.Series(dtype=str)
-                            )
-                            .fillna("")
-                            .astype(str)
-                            .tolist()
-                            if str(value).strip()
-                        ),
-                        instance_root=instance_root,
+                    current_chunk_records = (
+                        _materialize_checkpoint_landscape_unit_partitions(
+                            checkpoint=checkpoint_after,
+                            checkpoint_path=step_dir
+                            / "curve_threshold_checkpoint.feather",
+                            lu_frame=lu_frame,
+                            selected_landscape_units=tuple(
+                                str(value).strip()
+                                for value in lu_frame.get(
+                                    "LANDSCAPE_UNIT_NAME", pd.Series(dtype=str)
+                                )
+                                .fillna("")
+                                .astype(str)
+                                .tolist()
+                                if str(value).strip()
+                            ),
+                            instance_root=instance_root,
+                        )
                     )
                     step_profile["write_seconds"] = perf_counter() - partition_started
                     step_profile["overlay_seconds"] = perf_counter() - overlay_started
@@ -15878,7 +16400,9 @@ def _execute_tsr_thlb_recipe_steps(
                     _apply_aspatial_area_reduction(
                         checkpoint,
                         target_removed_area_ha=target_removed_area_ha,
-                        filters=tuple(updated_step.get("checkpoint_attribute_filters", ())),
+                        filters=tuple(
+                            updated_step.get("checkpoint_attribute_filters", ())
+                        ),
                         mode=str(updated_step.get("checkpoint_attribute_mode", "any")),
                     )
                 )
@@ -15923,13 +16447,17 @@ def _execute_tsr_thlb_recipe_steps(
         if (
             execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
             and _is_glb_to_aflb_stage(step)
-            and _is_applied_runtime_status(str(updated_step.get("run_status", "")).strip())
+            and _is_applied_runtime_status(
+                str(updated_step.get("run_status", "")).strip()
+            )
         ):
             reached_glb_to_aflb = True
         if (
             execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
             and _is_aflb_to_lhlb_stage(step)
-            and _is_applied_runtime_status(str(updated_step.get("run_status", "")).strip())
+            and _is_applied_runtime_status(
+                str(updated_step.get("run_status", "")).strip()
+            )
         ):
             reached_aflb_to_lhlb = True
         outcome_counts.update([str(updated_step.get("run_status", "unsupported"))])
@@ -16017,7 +16545,9 @@ def _normalize_polygonal_overlay_frame(
     return normalized
 
 
-def _managed_area_ha_for_chunk_records(chunk_records: Sequence[dict[str, Any]]) -> float:
+def _managed_area_ha_for_chunk_records(
+    chunk_records: Sequence[dict[str, Any]],
+) -> float:
     total = 0.0
     for record in chunk_records:
         total += _managed_area_ha(_load_lu_chunk_frame(Path(record["chunk_path"])))
@@ -16073,7 +16603,9 @@ def _apply_aspatial_thlb_reduction(
 ) -> tuple[gpd.GeoDataFrame, float, int]:
     if checkpoint.empty or target_removed_area_ha <= 0.0:
         return checkpoint, 0.0, 0
-    scope_mask = _build_checkpoint_attribute_mask(checkpoint, filters=filters, mode=mode)
+    scope_mask = _build_checkpoint_attribute_mask(
+        checkpoint, filters=filters, mode=mode
+    )
     current_managed_area_ha = _scoped_managed_area_ha(checkpoint, scope_mask=scope_mask)
     if current_managed_area_ha <= 0.0:
         return checkpoint, 0.0, 0
@@ -16096,7 +16628,9 @@ def _apply_aspatial_area_reduction(
 ) -> tuple[gpd.GeoDataFrame, float, int]:
     if checkpoint.empty or target_removed_area_ha <= 0.0:
         return checkpoint, 0.0, 0
-    scope_mask = _build_checkpoint_attribute_mask(checkpoint, filters=filters, mode=mode)
+    scope_mask = _build_checkpoint_attribute_mask(
+        checkpoint, filters=filters, mode=mode
+    )
     current_area_ha = _scoped_managed_area_ha(checkpoint, scope_mask=scope_mask)
     if current_area_ha <= 0.0:
         return checkpoint, 0.0, 0
@@ -16264,20 +16798,25 @@ def run_tsr_thlb_netdown_recipe(
     tsr_reported_thlb_area_ha = land_base_benchmarks.get("thlb_area_ha")
     total_area_benchmark_ha = _resolve_tsr_total_area_benchmark(recipe)
 
-    checkpoint, applied_steps, outcome_counts, _diagnostic_steps, aflb_checkpoint, lhlb_checkpoint = (
-        _execute_tsr_thlb_recipe_steps(
-            recipe_steps=selected_recipe_steps,
-            checkpoint=checkpoint,
-            checkpoint_path=resolved_checkpoint_path,
-            execution_mode=execution_mode,
-            instance_root=instance_root,
-            source_entry_map=source_entry_map,
-            allow_stand_binary_fallback=allow_stand_binary_fallback,
-            total_area_benchmark_ha=total_area_benchmark_ha,
-            parallel_mode=parallel_mode,
-            max_workers=max_workers,
-            lu_bundle_count=lu_bundle_count,
-        )
+    (
+        checkpoint,
+        applied_steps,
+        outcome_counts,
+        _diagnostic_steps,
+        aflb_checkpoint,
+        lhlb_checkpoint,
+    ) = _execute_tsr_thlb_recipe_steps(
+        recipe_steps=selected_recipe_steps,
+        checkpoint=checkpoint,
+        checkpoint_path=resolved_checkpoint_path,
+        execution_mode=execution_mode,
+        instance_root=instance_root,
+        source_entry_map=source_entry_map,
+        allow_stand_binary_fallback=allow_stand_binary_fallback,
+        total_area_benchmark_ha=total_area_benchmark_ha,
+        parallel_mode=parallel_mode,
+        max_workers=max_workers,
+        lu_bundle_count=lu_bundle_count,
     )
 
     final_managed_area_ha = _managed_area_ha(checkpoint)
@@ -16333,7 +16872,10 @@ def run_tsr_thlb_netdown_recipe(
     written_lhlb_curve_ready_gpkg_path: Path | None = None
     lhlb_curve_ready_checkpoint_area_ha: float | None = None
     lhlb_curve_ready_lu_cache_warmed = False
-    if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED and aflb_checkpoint is not None:
+    if (
+        execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+        and aflb_checkpoint is not None
+    ):
         (
             written_aflb_checkpoint_path,
             written_aflb_gpkg_path,
@@ -16358,7 +16900,10 @@ def run_tsr_thlb_netdown_recipe(
         recipe_contract["aflb_checkpoint_area_ha"] = float(aflb_checkpoint_area_ha)
         payload["recipe_contract"] = recipe_contract
         _write_recipe_yaml(resolved_recipe_path, payload)
-    if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED and lhlb_checkpoint is not None:
+    if (
+        execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+        and lhlb_checkpoint is not None
+    ):
         (
             written_lhlb_checkpoint_path,
             written_lhlb_gpkg_path,
@@ -16394,7 +16939,9 @@ def run_tsr_thlb_netdown_recipe(
             write_gpkg=write_lhlb_curve_ready_gpkg,
         )
         recipe_contract["lhlb_curve_ready_checkpoint_path"] = str(
-            written_lhlb_curve_ready_checkpoint_path.relative_to(instance_root).as_posix()
+            written_lhlb_curve_ready_checkpoint_path.relative_to(
+                instance_root
+            ).as_posix()
         )
         if written_lhlb_curve_ready_gpkg_path is not None:
             recipe_contract["lhlb_curve_ready_gpkg_path"] = str(
@@ -16513,9 +17060,7 @@ def run_tsr_thlb_netdown_recipe(
         "aspatial_fallback_area_ha": float(
             sum(
                 float(
-                    step.get(
-                        "net_removed_area_ha", step.get("removed_area_ha", 0.0)
-                    )
+                    step.get("net_removed_area_ha", step.get("removed_area_ha", 0.0))
                     or 0.0
                 )
                 for step in applied_steps
@@ -16780,7 +17325,7 @@ def run_tsr_thlb_reconstructed_diagnostic_slice(
             instance_root=instance_root,
             checkpoint_path=resolved_checkpoint_path,
             write_gpkg=False,
-    )
+        )
     diagnostic_restart_mode = (
         "aflb_checkpoint_restart"
         if _is_aflb_restart_checkpoint_path(resolved_checkpoint_path)
@@ -16789,7 +17334,9 @@ def run_tsr_thlb_reconstructed_diagnostic_slice(
             if _is_lhlb_restart_checkpoint_path(resolved_checkpoint_path)
             else (
                 "lhlb_curve_ready_checkpoint_restart"
-                if _is_lhlb_curve_ready_restart_checkpoint_path(resolved_checkpoint_path)
+                if _is_lhlb_curve_ready_restart_checkpoint_path(
+                    resolved_checkpoint_path
+                )
                 else None
             )
         )
@@ -16818,20 +17365,25 @@ def run_tsr_thlb_reconstructed_diagnostic_slice(
         )
 
     run_start = perf_counter()
-    checkpoint, applied_steps, outcome_counts, diagnostic_steps, _aflb_checkpoint, _lhlb_checkpoint = (
-        _execute_tsr_thlb_recipe_steps(
-            recipe_steps=selected_steps,
-            checkpoint=checkpoint,
-            checkpoint_path=resolved_checkpoint_path,
-            execution_mode=TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
-            instance_root=instance_root,
-            source_entry_map=source_entry_map,
-            allow_stand_binary_fallback=allow_stand_binary_fallback,
-            total_area_benchmark_ha=total_area_benchmark_ha,
-            parallel_mode=parallel_mode,
-            max_workers=max_workers,
-            lu_bundle_count=lu_bundle_count,
-        )
+    (
+        checkpoint,
+        applied_steps,
+        outcome_counts,
+        diagnostic_steps,
+        _aflb_checkpoint,
+        _lhlb_checkpoint,
+    ) = _execute_tsr_thlb_recipe_steps(
+        recipe_steps=selected_steps,
+        checkpoint=checkpoint,
+        checkpoint_path=resolved_checkpoint_path,
+        execution_mode=TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+        instance_root=instance_root,
+        source_entry_map=source_entry_map,
+        allow_stand_binary_fallback=allow_stand_binary_fallback,
+        total_area_benchmark_ha=total_area_benchmark_ha,
+        parallel_mode=parallel_mode,
+        max_workers=max_workers,
+        lu_bundle_count=lu_bundle_count,
     )
     execution_seconds = perf_counter() - run_start
 

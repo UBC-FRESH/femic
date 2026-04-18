@@ -14452,3 +14452,25 @@
   - `data/tsr/post_step*_restart/`
   - `workbench/arcgis_review/`
 - Started the real fix in the submodule itself by expanding `.gitignore` to cover those generated/runtime artifact roots so the submodule can keep itself clean without relying on the parent repo to hide untracked dirt.
+## 2026-04-18 - Implemented the first bounded `#164` AFLB yield-bridge artifact slice
+- Added a narrow new command surface:
+  - `femic tsr build-yield-bridge --instance-root ... --run-config ... --tsa ...`
+- The first slice now publishes the planned bounded artifacts under `data/tsr/`:
+  - `aflb_strata_checkpoint.feather`
+  - `aflb_au_checkpoint.feather`
+  - `aflb_yield_bridge_manifest.json`
+- The new build path:
+  - starts from the canonical `data/tsr/aflb_checkpoint.feather` seam;
+  - derives AFLB strata using the existing stratification helpers and run-config settings;
+  - falls back to `selection.stratification.top_area_coverage = 0.80` when not set;
+  - annotates rows with selected-strata metadata, `stratum_matched`, `si_level`, and `au`; and
+  - fails clearly if the AFLB checkpoint or AU table preconditions are missing locally.
+- Added focused regression coverage for:
+  - default artifact paths being written;
+  - the `0.80` top-area coverage fallback;
+  - manifest schema/content basics; and
+  - expected AU-checkpoint columns plus CLI wiring.
+- Targeted validation passed:
+  - `.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py src/femic/tsr_catalog/__init__.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_cli_main.py`
+  - `.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "yield_bridge" -q`
+  - `.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "yield_bridge" -q`

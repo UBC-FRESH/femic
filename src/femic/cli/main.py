@@ -156,6 +156,7 @@ from femic.tsr_catalog import (
     TSR_THLB_EXECUTION_MODE_HYBRID,
     TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
     TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL,
+    TsrAflbYieldBridgeBuildResult,
     TsrCacheError,
     TsrCatalogError,
     TsrExtractError,
@@ -184,6 +185,7 @@ from femic.tsr_catalog import (
     TsrSourceLayerOverridesInitResult,
     TsrSourceLayerOverridesReport,
     TsrWrittenIndex,
+    build_tsr_aflb_yield_bridge,
     build_tsr_source_layers_recipe,
     build_tsr_thlb_reconstruction_comparison,
     build_tsr_thlb_warmstart,
@@ -2890,6 +2892,26 @@ def _print_tsr_thlb_step13_attribute_compile_summary(
     console.print(f"steep_slope_flag_count: {result.steep_slope_flag_count}")
 
 
+def _print_tsr_aflb_yield_bridge_build_summary(
+    result: TsrAflbYieldBridgeBuildResult,
+) -> None:
+    console.print(f"tsa: {result.tsa}")
+    console.print(f"aflb_checkpoint_path: {result.aflb_checkpoint_path}")
+    console.print(f"aflb_strata_checkpoint_path: {result.strata_checkpoint_path}")
+    console.print(f"aflb_au_checkpoint_path: {result.au_checkpoint_path}")
+    console.print(f"aflb_yield_bridge_manifest_path: {result.manifest_path}")
+    if result.run_config_path is not None:
+        console.print(f"run_config_path: {result.run_config_path}")
+    if result.run_config_sha256 is not None:
+        console.print(f"run_config_sha256: {result.run_config_sha256}")
+    console.print(f"top_area_coverage: {result.top_area_coverage:.3f}")
+    console.print(f"top_area_coverage_source: {result.top_area_coverage_source}")
+    console.print(f"selected_strata_count: {result.selected_strata_count}")
+    console.print(f"realized_coverage: {result.realized_coverage:.3f}")
+    console.print(f"aflb_input_row_count: {result.aflb_input_row_count}")
+    console.print(f"au_assigned_row_count: {result.au_assigned_row_count}")
+
+
 def _print_tsr_source_layer_overrides_init_summary(
     result: TsrSourceLayerOverridesInitResult,
 ) -> None:
@@ -3942,6 +3964,37 @@ def tsr_thlb_step13_compile_attributes(
         raise typer.Exit(code=1) from exc
 
     _print_tsr_thlb_step13_attribute_compile_summary(result)
+
+
+@tsr_app.command("build-yield-bridge")
+def tsr_build_yield_bridge(
+    tsa: list[str] | None = TSA_OPTION,
+    run_config: Path | None = RUN_CONFIG_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Build the bounded AFLB -> strata/AU yield-bridge artifacts."""
+
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    if tsa and len(tsa) > 1:
+        console.print(
+            "[red]Yield bridge build currently supports exactly one TSA at a time.[/red]"
+        )
+        raise typer.Exit(code=1)
+    resolved_run_config = (
+        instance_context.resolve_path(run_config) if run_config is not None else None
+    )
+    resolved_tsa = tsa[0] if tsa else None
+    try:
+        result = build_tsr_aflb_yield_bridge(
+            instance_root=instance_context.root,
+            tsa=resolved_tsa,
+            run_config_path=resolved_run_config,
+        )
+    except TsrRecipeError as exc:
+        console.print(f"[red]TSR yield-bridge build error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    _print_tsr_aflb_yield_bridge_build_summary(result)
 
 
 @tsr_app.command("thlb-netdown-step-run")
