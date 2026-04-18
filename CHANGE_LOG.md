@@ -14537,3 +14537,32 @@
   - `.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "yield_bridge or compile_tsr_thlb_step13_attributes_populates_curve_ready_fields" -q`
   - `.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "yield_bridge" -q`
   - `.venv\Scripts\python.exe -m mypy src`
+## 2026-04-18 - Implemented `P53.2d.2` explicit THLB acceptance of `aflb_yield_ready_checkpoint` for `#164`
+- Extended reconstructed THLB restart recognition so:
+  - `data/tsr/aflb_yield_ready_checkpoint.feather` is now accepted as an explicit restart surface; and
+  - the resulting baseline signal is recorded as `aflb_yield_ready_checkpoint_restart` rather than plain AFLB restart.
+- Preserved the intended restart boundary:
+  - explicit yield-ready restarts skip only `GLB -> AFLB`; and
+  - downstream `AFLB -> LHLB` and `LHLB -> THLB` execution still runs normally.
+- Added yield-ready validation guardrails for explicit restarts so THLB commands now fail clearly when the checkpoint is missing:
+  - `stratum`;
+  - `stratum_matched`;
+  - `si_level`;
+  - `au`;
+  - `curve1`; or
+  - `curve2`.
+- Kept the command surface and discovery policy conservative:
+  - no new THLB command was introduced;
+  - default checkpoint auto-discovery order did not change; and
+  - THLB commands still do not auto-run `build-yield-bridge`.
+- Added focused regression coverage for:
+  - reconstructed restart-step selection for explicit yield-ready checkpoints;
+  - non-zero rejection of invalid yield-ready checkpoints;
+  - parent-step acceptance of explicit yield-ready checkpoints; and
+  - CLI forwarding and summary output for `thlb-netdown-run` and `thlb-netdown-step-run`.
+- Validation passed:
+  - `.venv\Scripts\python.exe -m ruff format src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py tests/test_cli_main.py`
+  - `.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py tests/test_cli_main.py`
+  - `.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "aflb_yield_ready or curve_ready_checkpoint_for_step14 or aflb_restart_artifacts" -q`
+  - `.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "yield_ready_checkpoint or thlb_netdown_run_passes_map_id_smoke_options or thlb_netdown_step_run_uses_default_recipe_path" -q`
+  - `.venv\Scripts\python.exe -m mypy src`

@@ -6179,6 +6179,88 @@ def test_tsr_thlb_netdown_step_run_uses_default_recipe_path(
     assert any("notes: Used smoke subset 092O071" in msg for msg in messages)
 
 
+def test_tsr_thlb_netdown_step_run_accepts_explicit_aflb_yield_ready_checkpoint(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_run(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbParentStepRunResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            parent_step_id="thlb_parent_014_sites_with_low_growing_timber_potential",
+            parent_label="Sites with low growing timber potential",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            checkpoint_path=instance_root
+            / "data"
+            / "tsr"
+            / "aflb_yield_ready_checkpoint.feather",
+            selected_map_ids=("092O071",),
+            selected_landscape_units=(),
+            output_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "notebook_runs"
+            / "thlb_parent_014.feather",
+            result_json_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "notebook_runs"
+            / "thlb_parent_014.json",
+            status="applied",
+            executed_parent_step_ids=(
+                "thlb_parent_014_sites_with_low_growing_timber_potential",
+            ),
+            input_area_ha=2.0,
+            removed_area_ha=1.0,
+            remaining_area_ha=1.0,
+            benchmark_marginal_area_ha=1.0,
+            benchmark_cumulative_area_ha=1.0,
+            benchmark_marginal_delta_ha=0.0,
+            benchmark_cumulative_delta_ha=0.0,
+            smoke_benchmark_scale_factor=None,
+            scaled_benchmark_marginal_area_ha=None,
+            scaled_benchmark_cumulative_area_ha=None,
+            scaled_benchmark_marginal_delta_ha=None,
+            scaled_benchmark_cumulative_delta_ha=None,
+            notes=("Explicit yield-ready checkpoint restart",),
+        )
+
+    monkeypatch.setattr(cli_main, "run_tsr_thlb_parent_step", _fake_run)
+
+    cli_main.tsr_thlb_netdown_step_run(
+        instance_root=instance_root,
+        parent_step_id="thlb_parent_014_sites_with_low_growing_timber_potential",
+        thlb_netdown_recipe_path=None,
+        checkpoint_path=Path("data/tsr/aflb_yield_ready_checkpoint.feather"),
+        map_id=["092O071"],
+        landscape_unit=None,
+        auto_map_id_smoke_subset=False,
+        execution_mode=cli_main.TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL,
+        max_workers=None,
+        lu_bundle_count=None,
+        progress_root=None,
+    )
+
+    assert (
+        captured_kwargs["checkpoint_path"]
+        == (
+            instance_root / "data" / "tsr" / "aflb_yield_ready_checkpoint.feather"
+        ).resolve()
+    )
+    assert captured_kwargs["map_ids"] == ("092O071",)
+    assert captured_kwargs["auto_map_id_smoke_subset"] is False
+
+
 def test_tsr_thlb_netdown_parallel_benchmark_uses_default_recipe_path(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -6694,6 +6776,112 @@ def test_tsr_thlb_netdown_run_can_disable_aflb_gpkg(
     assert captured_kwargs["parallel_mode"] == "serial"
     assert captured_kwargs["max_workers"] == 3
     assert captured_kwargs["lu_bundle_count"] == 2
+
+
+def test_tsr_thlb_netdown_run_accepts_explicit_aflb_yield_ready_checkpoint(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_run(**kwargs):
+        captured_kwargs.update(kwargs)
+        return cli_main.TsrThlbNetdownRecipeRunResult(
+            recipe_path=instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml",
+            tsa=tsr_catalog.TsrOverlayTsaRecord(
+                tsa_id="tsa_29",
+                tsa_code="29",
+                tsa_name="Williams Lake",
+            ),
+            checkpoint_path=instance_root
+            / "data"
+            / "tsr"
+            / "aflb_yield_ready_checkpoint.feather",
+            output_path=instance_root
+            / "data"
+            / "tsr"
+            / "thlb_reconstructed_checkpoint.feather",
+            audit_path=instance_root
+            / "config"
+            / "tsr"
+            / "thlb_reconstructed.audit.json",
+            status_report_path=instance_root
+            / "config"
+            / "tsr"
+            / "thlb_reconstructed.status.md",
+            runtime_status_report_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "thlb_reconstructed_status_report-20260405T000000Z.md",
+            aflb_checkpoint_path=instance_root
+            / "data"
+            / "tsr"
+            / "aflb_checkpoint.feather",
+            aflb_gpkg_path=None,
+            aflb_lu_cache_warmed=False,
+            lhlb_checkpoint_path=instance_root
+            / "data"
+            / "tsr"
+            / "lhlb_checkpoint.feather",
+            lhlb_gpkg_path=None,
+            lhlb_lu_cache_warmed=False,
+            lhlb_curve_ready_checkpoint_path=instance_root
+            / "data"
+            / "tsr"
+            / "lhlb_curve_ready_checkpoint.feather",
+            lhlb_curve_ready_gpkg_path=None,
+            lhlb_curve_ready_lu_cache_warmed=False,
+            execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+            baseline_signal="aflb_yield_ready_checkpoint_restart",
+            selected_map_ids=(),
+            step_count=2,
+            outcome_counts={"applied": 2},
+            input_area_ha=1.0,
+            baseline_managed_area_ha=1.0,
+            final_managed_area_ha=0.75,
+            legacy_reference_managed_area_ha=None,
+            tsr_reported_aflb_area_ha=None,
+            tsr_reported_thlb_area_ha=None,
+            aflb_checkpoint_area_ha=1.0,
+            lhlb_checkpoint_area_ha=0.9,
+            lhlb_curve_ready_checkpoint_area_ha=0.9,
+        )
+
+    monkeypatch.setattr(cli_main, "run_tsr_thlb_netdown_recipe", _fake_run)
+
+    cli_main.tsr_thlb_netdown_run(
+        instance_root=instance_root,
+        thlb_netdown_recipe_path=None,
+        checkpoint_path=Path("data/tsr/aflb_yield_ready_checkpoint.feather"),
+        output_path=None,
+        audit_path=None,
+        execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+        map_id=[],
+        auto_map_id_smoke_subset=False,
+        allow_stand_binary_fallback=False,
+        no_aflb_gpkg=True,
+        no_lhlb_gpkg=True,
+        no_lhlb_curve_ready_gpkg=True,
+        parallel_mode="serial",
+        max_workers=None,
+        lu_bundle_count=None,
+    )
+
+    assert (
+        captured_kwargs["checkpoint_path"]
+        == (
+            instance_root / "data" / "tsr" / "aflb_yield_ready_checkpoint.feather"
+        ).resolve()
+    )
+    assert any(
+        "baseline_signal: aflb_yield_ready_checkpoint_restart" in msg
+        for msg in messages
+    )
 
 
 def test_tsr_facts_report_writes_review_csv(

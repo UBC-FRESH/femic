@@ -5414,6 +5414,25 @@ def test_validate_reconstructed_restart_equivalence_uses_normalized_restart_proj
     assert problems == ()
 
 
+def test_select_reconstructed_recipe_steps_for_aflb_yield_ready_restart() -> None:
+    recipe_steps = (
+        {"step_id": "glb", "land_base_stage": "glb_to_aflb"},
+        {"step_id": "aflb", "land_base_stage": "aflb_to_lhlb"},
+        {"step_id": "lhlb", "land_base_stage": "lhlb_to_thlb"},
+    )
+
+    filtered, restart_mode = (
+        tsr_recipes._select_reconstructed_recipe_steps_for_checkpoint(
+            recipe_steps=recipe_steps,
+            checkpoint_path=Path("aflb_yield_ready_checkpoint.feather"),
+            execution_mode=tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+        )
+    )
+
+    assert restart_mode == "aflb_yield_ready_checkpoint_restart"
+    assert [step["step_id"] for step in filtered] == ["aflb", "lhlb"]
+
+
 def test_materialize_checkpoint_landscape_unit_partitions_rebuilds_stale_in_place_cache(
     tmp_path: Path,
 ) -> None:
@@ -7196,6 +7215,139 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
     )
 
 
+def test_run_tsr_thlb_parent_step_accepts_explicit_aflb_yield_ready_checkpoint(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    bundle_root = instance_root / "data" / "model_input_bundle"
+    bundle_root.mkdir(parents=True, exist_ok=True)
+    (bundle_root / "curve_table.csv").write_text(
+        "curve_id,curve_type\n1001,untreated\n1002,untreated\n",
+        encoding="utf-8",
+    )
+    (bundle_root / "curve_points_table.csv").write_text(
+        "curve_id,x,y\n"
+        "1001,40,20\n"
+        "1001,80,40\n"
+        "1001,120,60\n"
+        "1001,160,60\n"
+        "1002,40,80\n"
+        "1002,80,160\n"
+        "1002,120,200\n"
+        "1002,160,200\n",
+        encoding="utf-8",
+    )
+
+    yield_ready_path = (
+        instance_root / "data" / "tsr" / "aflb_yield_ready_checkpoint.feather"
+    )
+    yield_ready_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2],
+            "MAP_ID": ["092O071", "092O071"],
+            "femic_step13_steep_slope_flag": [False, True],
+            "stratum": ["IDF_FD", "IDF_FD"],
+            "stratum_matched": ["IDF_FD", "IDF_FD"],
+            "si_level": ["M", "M"],
+            "au": [1, 1],
+            "curve1": [1001, 1002],
+            "curve2": [1001, 1001],
+        },
+        geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint.to_feather(yield_ready_path)
+    _write_landscape_unit_layer(
+        instance_root,
+        geometries=[box(-10, -10, 30, 20)],
+        names=["Test LU"],
+    )
+
+    recipe_payload = tsr_catalog.load_tsr_thlb_netdown_recipe(
+        init_result.thlb_netdown_recipe_path
+    ).to_dict()
+    recipe_payload["recipe_contract"]["status"] = "built"
+    recipe_payload["parent_steps"] = [
+        {
+            "parent_step_id": "thlb_parent_014_sites_with_low_growing_timber_potential",
+            "parent_label": "Sites with low growing timber potential",
+            "parent_kind": "transformation",
+            "land_base_stage": "lhlb_to_thlb",
+            "stage_label": "LHLB -> THLB",
+            "execution_class": "projected_harvest_exclusion",
+            "benchmark_marginal_area_ha": 1.0,
+            "benchmark_cumulative_area_ha": 0.0,
+            "compiled_logic": [
+                {
+                    "step_id": "thlb_parent_014_compiled_01",
+                    "parent_step_id": "thlb_parent_014_sites_with_low_growing_timber_potential",
+                    "label": "Non-steep 67.1 m3/ha threshold",
+                    "step_status": "ready",
+                    "execution_status": "ready",
+                    "step_kind": "netdown_rule",
+                    "land_base_stage": "lhlb_to_thlb",
+                    "compiled_operation_type": "curve_volume_threshold_exclusion",
+                    "curve_id_column": "curve1",
+                    "minimum_volume_m3_per_ha": 67.1,
+                    "curve_volume_metric": "volume_at_age",
+                    "curve_volume_age_years": 160.0,
+                    "checkpoint_attribute_mode": "any",
+                    "checkpoint_attribute_filters": [
+                        {
+                            "field": "femic_step13_steep_slope_flag",
+                            "operator": "eq",
+                            "value": False,
+                        }
+                    ],
+                }
+            ],
+            "row_order": 14,
+        },
+    ]
+    recipe_payload["steps"] = []
+    init_result.thlb_netdown_recipe_path.write_text(
+        tsr_recipes.yaml.safe_dump(
+            recipe_payload, sort_keys=False, allow_unicode=False
+        ),
+        encoding="utf-8",
+    )
+
+    result = tsr_recipes.run_tsr_thlb_parent_step(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        parent_step_id="thlb_parent_014_sites_with_low_growing_timber_potential",
+        checkpoint_path=yield_ready_path,
+        map_ids=("092O071",),
+        auto_map_id_smoke_subset=False,
+    )
+
+    assert result.checkpoint_path == yield_ready_path.resolve()
+    assert result.status == "applied"
+
+
 def test_auto_select_smoke_map_ids_for_parent_step_prefers_tile_with_source_hits(
     tmp_path: Path,
 ) -> None:
@@ -8061,6 +8213,78 @@ def test_run_tsr_thlb_netdown_recipe_can_restart_from_aflb_checkpoint(
     assert third.baseline_signal == "lhlb_curve_ready_checkpoint_restart"
     assert third.baseline_managed_area_ha == pytest.approx(1.0)
     assert third.final_managed_area_ha == pytest.approx(1.0)
+
+    yield_ready_path = (
+        instance_root / "data" / "tsr" / "aflb_yield_ready_checkpoint.feather"
+    )
+    yield_ready_checkpoint = gpd.read_feather(first.aflb_checkpoint_path).copy()
+    yield_ready_checkpoint["stratum"] = "IDF_FD"
+    yield_ready_checkpoint["stratum_matched"] = "IDF_FD"
+    yield_ready_checkpoint["si_level"] = "M"
+    yield_ready_checkpoint["au"] = 1
+    yield_ready_checkpoint["curve1"] = 1001
+    yield_ready_checkpoint["curve2"] = 1001
+    yield_ready_checkpoint.to_feather(yield_ready_path)
+
+    fourth = tsr_recipes.run_tsr_thlb_netdown_recipe(
+        recipe_path=init_result.thlb_netdown_recipe_path,
+        checkpoint_path=yield_ready_path,
+        execution_mode=tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+        write_aflb_gpkg=False,
+    )
+
+    assert fourth.baseline_signal == "aflb_yield_ready_checkpoint_restart"
+    assert fourth.baseline_managed_area_ha == pytest.approx(1.0)
+    assert fourth.final_managed_area_ha == pytest.approx(1.0)
+
+
+def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_rejects_invalid_aflb_yield_ready_checkpoint(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    registry_path = _write_registry(tmp_path)
+    documents_path = _write_documents(tmp_path)
+    candidate_facts_path = _write_candidate_facts(tmp_path)
+    init_result = tsr_catalog.init_tsr_recipe_scaffolds(
+        instance_root=instance_root,
+        tsa="29",
+        registry_path=registry_path,
+        documents_path=documents_path,
+        candidate_facts_path=candidate_facts_path,
+        source_root=source_root,
+        overlay_path=instance_root / "config" / "tsr" / "overlay.yaml",
+        overrides_path=instance_root / "config" / "tsr" / "source_layer_overrides.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        thlb_netdown_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "thlb_netdown.recipe.yaml",
+    )
+
+    invalid_yield_ready_path = (
+        instance_root / "data" / "tsr" / "aflb_yield_ready_checkpoint.feather"
+    )
+    invalid_yield_ready_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {"FEATURE_ID": [1], "MAP_ID": ["092O071"]},
+        geometry=[box(0, 0, 10, 10)],
+        crs="EPSG:3005",
+    ).to_feather(invalid_yield_ready_path)
+
+    with pytest.raises(
+        tsr_recipes.TsrRecipeError,
+        match="missing required downstream-ready fields",
+    ):
+        tsr_recipes.run_tsr_thlb_netdown_recipe(
+            recipe_path=init_result.thlb_netdown_recipe_path,
+            checkpoint_path=invalid_yield_ready_path,
+            execution_mode=tsr_recipes.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+            write_aflb_gpkg=False,
+        )
 
 
 def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_applies_explicit_aspatial_fallback(

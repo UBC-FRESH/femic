@@ -16765,6 +16765,32 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - do not launch BTC/TIPSY/FANSIER;
     - do not resume downstream THLB execution yet; and
     - if cache sufficiency is not `sufficient`, stop after writing the manifest and bounded strata/AU artifacts with a clear remediation message.
+- 2026-04-18: The next bounded `#164` slice after `P53.2d.1` is `P53.2d.2`, focused on downstream THLB acceptance of the yield-ready restart seam.
+  - Implementation target:
+    - accept `data/tsr/aflb_yield_ready_checkpoint.feather` as an explicit `--checkpoint-path` surface for downstream reconstructed THLB runs without changing default checkpoint discovery order.
+  - Required behavior:
+    - recognize a distinct restart mode such as `aflb_yield_ready_checkpoint_restart`;
+    - skip only `GLB -> AFLB` steps, not `AFLB -> LHLB`;
+    - validate that the checkpoint carries downstream-ready fields (`stratum`, `stratum_matched`, `si_level`, `au`, `curve1`, `curve2`); and
+    - surface the new restart signal in THLB run metadata/audit output.
+  - Scope boundary:
+    - explicit checkpoint only;
+    - no auto-discovery preference changes;
+    - no auto-build of the yield bridge from THLB commands; and
+    - no new command surface.
+- 2026-04-18: Completed `P53.2d.2` under `#164` by teaching downstream THLB runners to accept the new yield-ready restart seam explicitly.
+  - Implemented behavior:
+    - reconstructed THLB runs now recognize `data/tsr/aflb_yield_ready_checkpoint.feather` as `aflb_yield_ready_checkpoint_restart`;
+    - explicit yield-ready restarts skip only `GLB -> AFLB` while still executing `AFLB -> LHLB` and `LHLB -> THLB`; and
+    - both `thlb-netdown-run` and `thlb-netdown-step-run` accept the explicit checkpoint path without adding new flags.
+  - Guardrails:
+    - explicit yield-ready checkpoints now fail fast unless they contain `stratum`, `stratum_matched`, `si_level`, `au`, `curve1`, and `curve2`;
+    - default checkpoint auto-discovery order remains unchanged; and
+    - THLB commands still do not auto-build the AFLB yield bridge.
+  - Validation:
+    - targeted recipe tests cover restart-mode recognition, invalid yield-ready rejection, and parent-step acceptance;
+    - targeted CLI tests cover explicit checkpoint forwarding and restart-signal summary output; and
+    - lint/type checks passed on the touched surface.
 - 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
   - Root cause:
     - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.

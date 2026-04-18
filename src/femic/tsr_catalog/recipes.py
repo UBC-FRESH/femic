@@ -7604,12 +7604,41 @@ def _is_aflb_restart_checkpoint_path(path: Path) -> bool:
     return path.name.casefold() == "aflb_checkpoint.feather"
 
 
+def _is_aflb_yield_ready_restart_checkpoint_path(path: Path) -> bool:
+    return path.name.casefold() == "aflb_yield_ready_checkpoint.feather"
+
+
 def _is_lhlb_restart_checkpoint_path(path: Path) -> bool:
     return path.name.casefold() == "lhlb_checkpoint.feather"
 
 
 def _is_lhlb_curve_ready_restart_checkpoint_path(path: Path) -> bool:
     return path.name.casefold() == "lhlb_curve_ready_checkpoint.feather"
+
+
+def _checkpoint_has_aflb_yield_ready_enrichment(path: Path) -> bool:
+    return all(
+        _feather_has_column(path, column)
+        for column in (
+            "stratum",
+            "stratum_matched",
+            "si_level",
+            "au",
+            "curve1",
+            "curve2",
+        )
+    )
+
+
+def _validate_aflb_yield_ready_restart_checkpoint_path(path: Path) -> None:
+    resolved = path.expanduser().resolve()
+    if not _checkpoint_has_aflb_yield_ready_enrichment(resolved):
+        raise TsrRecipeError(
+            "Explicit AFLB yield-ready restart checkpoint is missing required "
+            "downstream-ready fields (`stratum`, `stratum_matched`, `si_level`, "
+            "`au`, `curve1`, `curve2`): "
+            f"{resolved}"
+        )
 
 
 def _select_reconstructed_recipe_steps_for_checkpoint(
@@ -7620,6 +7649,14 @@ def _select_reconstructed_recipe_steps_for_checkpoint(
 ) -> tuple[tuple[dict[str, Any], ...], str | None]:
     if execution_mode != TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
         return tuple(dict(step) for step in recipe_steps), None
+    if _is_aflb_yield_ready_restart_checkpoint_path(checkpoint_path):
+        filtered = tuple(
+            dict(step) for step in recipe_steps if not _is_glb_to_aflb_stage(step)
+        )
+        return (
+            filtered,
+            "aflb_yield_ready_checkpoint_restart",
+        )
     if _is_aflb_restart_checkpoint_path(checkpoint_path):
         filtered = tuple(
             dict(step) for step in recipe_steps if not _is_glb_to_aflb_stage(step)
@@ -12354,6 +12391,10 @@ def run_tsr_thlb_parent_step(
             instance_root=instance_root, target_parent=target_parent
         )
     )
+    if checkpoint_path is not None and _is_aflb_yield_ready_restart_checkpoint_path(
+        resolved_checkpoint_path
+    ):
+        _validate_aflb_yield_ready_restart_checkpoint_path(resolved_checkpoint_path)
     profiling: dict[str, Any] = {
         "total_seconds": 0.0,
         "checkpoint_load_seconds": 0.0,
@@ -17390,6 +17431,12 @@ def run_tsr_thlb_netdown_recipe(
             ),
         )
     )
+    if (
+        execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
+        and checkpoint_path is not None
+        and _is_aflb_yield_ready_restart_checkpoint_path(resolved_checkpoint_path)
+    ):
+        _validate_aflb_yield_ready_restart_checkpoint_path(resolved_checkpoint_path)
     resolved_output_path = (
         output_path.expanduser().resolve()
         if output_path is not None
@@ -17470,6 +17517,7 @@ def run_tsr_thlb_netdown_recipe(
     if execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED:
         if checkpoint_restart_mode in {
             "aflb_checkpoint_restart",
+            "aflb_yield_ready_checkpoint_restart",
             "lhlb_checkpoint_restart",
             "lhlb_curve_ready_checkpoint_restart",
         }:
