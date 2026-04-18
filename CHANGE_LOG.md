@@ -14596,3 +14596,28 @@
   - `.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "yield_bridge" -q`
   - `.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "yield_bridge" -q`
   - `.venv\Scripts\python.exe -m mypy src`
+## 2026-04-18 - Real TSA29 proof for `#164` succeeded at the bridge layer but exposed one remaining downstream restart blocker
+- Real TSA29 upstream artifact recovery:
+  - reran the reconstructed THLB lane far enough to republish `data/tsr/aflb_checkpoint.feather`;
+  - that same run also republished `data/tsr/lhlb_checkpoint.feather`; and
+  - the long reconstructed command timed out before full completion, but the required restart artifacts were already written and the spawned THLB Python workers were stopped immediately after inspection.
+- Real TSA29 bridge proof succeeded:
+  - `.\.venv\Scripts\python.exe -m femic tsr build-yield-bridge --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --tsa 29`
+  - completed successfully;
+  - published `data/tsr/aflb_strata_checkpoint.feather`, `data/tsr/aflb_au_checkpoint.feather`, `data/tsr/aflb_yield_bridge_manifest.json`, and `data/tsr/aflb_yield_ready_checkpoint.feather`;
+  - recorded `slice_status = yield_ready_from_bridge_execution`;
+  - recorded `execution.path = btc_post_tipsy`; and
+  - produced a yield-ready checkpoint with `371627` rows and `288088` non-null `curve1`/`curve2` assignments.
+- Concrete bridge artifacts inspected successfully:
+  - rebuilt bundle tables existed under `data/model_input_bundle/`;
+  - the yield bridge runtime logs included fresh post-TIPSY and BTC manifests under `runtime/logs/tsr/yield_bridge/`; and
+  - the manifest carried the expected `schema_version = 4`, selected-strata metadata, handoff paths, and execution provenance.
+- Downstream THLB restart smoke did **not** pass yet:
+  - `.\.venv\Scripts\python.exe -m femic tsr thlb-netdown-run --instance-root external/femic-tsa29-instance --execution-mode reconstructed --checkpoint-path data/tsr/aflb_yield_ready_checkpoint.feather --map-id 093B023 --no-aflb-gpkg --no-lhlb-gpkg --no-lhlb-curve-ready-gpkg`
+  - failed during step-13 curve-ready enrichment;
+  - the current blocker is a `KeyError` raised from `assign_stratum_matches_from_au_table(...)` / `build_stratum_lexmatch_alias_map(...)`; and
+  - the missing-index strata reported in that real run included `MS_PLI`, `IDF_FD`, `MS_PL`, `ESSF_BL`, `ESSF_PL`, `ESSF_SE`, and `ESSF_PLI`.
+- Outcome:
+  - `#164` is not closeout-ready yet;
+  - the bridge itself is now proven on the real TSA29 instance; but
+  - one final downstream compatibility fix is still required so THLB can consume the real `aflb_yield_ready_checkpoint.feather` end-to-end.
