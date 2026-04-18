@@ -20,6 +20,7 @@ export modules.
    bc-data-catalogue-discovery
    tsr-intelligence-workflow
    tsr-thlb-reconstruction-ladder
+   github-datalad-arbutus-pattern
    public-data-mirror-runbook
    case-onboarding
    stage-00-data-prep

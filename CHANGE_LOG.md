@@ -14397,3 +14397,8 @@
   - `docs/reference/contracts/instance-and-data-roots.rst`
   - `docs/reference/contracts/repo-runtime-invariants.rst`
   - `docs/reference/cli.rst`
+- Follow-up cleanup:
+  - replaced the redundant second `#145` comment with a minimal closeout note so the issue thread no longer contains two overlapping summaries;
+  - promoted the reusable explanation into the docs as:
+    - `docs/guides/github-datalad-arbutus-pattern.rst`;
+  - linked the new guide from the guides index and the public-data mirror runbook so the explanation remains discoverable outside the closed GitHub issue.

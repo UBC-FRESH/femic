@@ -16660,3 +16660,13 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `docs/reference/contracts/instance-and-data-roots.rst`
     - `docs/reference/contracts/repo-runtime-invariants.rst`
     - `docs/reference/cli.rst`
+- 2026-04-18: Follow-up cleanup on `#145`: reduced comment duplication and promoted the durable explanation into Sphinx docs.
+  - Replaced the redundant second GitHub comment on `#145` with a minimal closeout note:
+    - “The first comment is the deliverable. Issue closed.”
+  - Added a durable public guide:
+    - `docs/guides/github-datalad-arbutus-pattern.rst`
+  - Linked that guide from:
+    - `docs/guides/index.rst`
+    - `docs/guides/public-data-mirror-runbook.rst`
+  - Purpose:
+    - keep the reusable GitHub + DataLad + Arbutus explanation in the docs rather than burying it in a closed issue thread.
