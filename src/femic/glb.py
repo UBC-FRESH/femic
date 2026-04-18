@@ -55,6 +55,24 @@ class TsaBoundarySelection:
     source_path: Path
 
 
+def _build_scratch_boundary_export_frame(
+    *,
+    selected_boundary: gpd.GeoDataFrame,
+    tsa_number: str,
+    tsa_name: str,
+) -> gpd.GeoDataFrame:
+    """Return a minimal typed boundary layer for scratch FileGDB export."""
+    export_frame = gpd.GeoDataFrame(
+        {
+            "TSA_NUMBER": [str(tsa_number)],
+            "TSA_NAME": [str(tsa_name)],
+        },
+        geometry=selected_boundary.geometry.reset_index(drop=True),
+        crs=selected_boundary.crs,
+    )
+    return export_frame
+
+
 @dataclass(frozen=True)
 class GlbBuildResult:
     """Summary of a raw-source GLB build."""
@@ -358,13 +376,22 @@ def _load_active_tsa_boundary(
         or selected.iloc[0].get("TSA_NUMBER_DESCRIPTION")
         or f"TSA {tsa_number}"
     )
+    staged_boundary = _build_scratch_boundary_export_frame(
+        selected_boundary=selected,
+        tsa_number=tsa_number,
+        tsa_name=tsa_name,
+    )
     boundary_layer_root = scratch_dir / "tsa_boundary"
     if boundary_layer_root.exists():
         shutil.rmtree(boundary_layer_root)
     boundary_layer_root.mkdir(parents=True, exist_ok=True)
     boundary_gdb_path = boundary_layer_root / "tsa_boundary.gdb"
     boundary_layer_name = f"tsa_{tsa_number}_boundary"
-    selected.to_file(boundary_gdb_path, layer=boundary_layer_name, driver="OpenFileGDB")
+    staged_boundary.to_file(
+        boundary_gdb_path,
+        layer=boundary_layer_name,
+        driver="OpenFileGDB",
+    )
     boundary_layer_path = boundary_gdb_path / boundary_layer_name
     return TsaBoundarySelection(
         selector=tsa_selector,

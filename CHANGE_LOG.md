@@ -14360,3 +14360,24 @@
     - official AFLB/LHLB restart checkpoints;
     - dashboard rebuild from the locked chain; and
     - restart-boundary polygon normalization.
+- Started `#147` on branch `feature/issue-147-glb-boundary-warning-cleanup`.
+  - Goal:
+    - remove the remaining scratch boundary export warnings in `prep glb-build` without changing the GLB clip result or the current FileGDB boundary staging contract.
+  - Planned implementation:
+    - slim the staged TSA boundary export in `src/femic/glb.py` to a minimal one-row schema with only geometry plus typed TSA identifier/name fields;
+    - explicitly stop carrying the noisy integer source fields (`FEATURE_CLASS_SKEY`, `OBJECT_VERSION_SKEY`, `OBJECTID`) into the scratch FileGDB layer;
+    - keep the current ArcGIS clip backend and scratch `.gdb` boundary container unchanged.
+  - Planned validation:
+    - strengthen `tests/test_glb.py` to assert the staged boundary export is intentionally slim;
+    - run a real `femic prep glb-build --tsa 29` acceptance check and confirm the GLB area/count are unchanged and the integer-widening warnings are gone.
+- Completed `#147` by slimming the staged GLB boundary export schema.
+  - `src/femic/glb.py` now publishes a minimal one-row scratch boundary layer with only:
+    - `TSA_NUMBER` as string;
+    - `TSA_NAME` as string; and
+    - polygon geometry.
+  - The scratch FileGDB export no longer carries the noisy integer source fields (`FEATURE_CLASS_SKEY`, `OBJECT_VERSION_SKEY`, `OBJECTID`) that triggered `pyogrio` widening warnings.
+  - `tests/test_glb.py` now asserts the staged boundary feature class contains only the slim schema while preserving the same `.gdb` layer path contract for the ArcGIS clip runner.
+  - Acceptance:
+    - `femic prep glb-build --instance-root external/femic-tsa29-instance --tsa 29 --force-rebuild-glb --no-stash-public-data-glb`
+    - still produced `317,735` features and `4,933,664.212 ha` clipped area against `4,933,664.215 ha` boundary area (`-0.003 ha` delta);
+    - emitted no scratch-boundary integer-widening warnings.
