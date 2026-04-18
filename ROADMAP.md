@@ -16670,3 +16670,30 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `docs/guides/public-data-mirror-runbook.rst`
   - Purpose:
     - keep the reusable GitHub + DataLad + Arbutus explanation in the docs rather than burying it in a closed issue thread.
+## Phase 53: Named Pipeline / Runbook Refactor
+
+- [ ] P53.1 Open the named-pipeline umbrella and define the architecture boundary (`#163`)
+  - [ ] P53.1a Treat named pipelines as the primary workflow abstraction:
+    - a pipeline is a sequence of named recipes plus optional overlays and overrides;
+    - pipelines may come from system, public-user-contributed, or local registries; and
+    - model instances should be reproducible from a runbook that points at a specific pipeline definition and restart seam policy.
+  - [ ] P53.1b Define the registry/runbook contracts needed to replace the legacy monolithic-script mental model without invalidating the recipe-based work already completed under `#122` and its children.
+  - [ ] P53.1c Identify the first bounded child seams needed to prove the architecture incrementally rather than attempting a one-shot rewrite.
+- [ ] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
+  - [ ] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
+  - [ ] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
+  - [ ] P53.2c Define cache-sufficiency checks for reusing local VDYP samples versus rerunning VDYP under the active sampling-intensity settings.
+  - [ ] P53.2d Compile TIPSY input parameters, run TIPSY (and optionally FANSIER), compile yield curves, and resume downstream THLB from a restart-safe yield bridge artifact.
+
+## Detailed Next Steps Notes
+
+- 2026-04-18: Opened the post-THLB-reconciliation umbrella for the deeper pipeline/runbook refactor.
+  - Governing umbrella issue:
+    - `#163` — refactor FEMIC around named pipelines built from recipe sequences.
+  - First concrete child issue:
+    - `#164` — add an explicit `AFLB -> strata/AU/yield -> THLB` interruption seam inside the THLB workflow.
+  - Working interpretation:
+    - the recently validated TSA29 strict THLB lane exposed that THLB is not logically one uninterrupted recipe chain;
+    - it must pause after AFLB to derive strata, define AUs, satisfy VDYP/TIPSY/FANSIER yield dependencies, and then resume late-stage THLB.
+  - Current bounded next step for this new arc:
+    - audit the current runtime path against the desired seam and document exactly where FEMIC already has reusable artifacts (`aflb_checkpoint`, strata/AU helpers, VDYP cache checks, BTC/TIPSY runners, yield-curve compile logic) versus where the interruption/resume contract is still implicit.

@@ -14402,3 +14402,20 @@
   - promoted the reusable explanation into the docs as:
     - `docs/guides/github-datalad-arbutus-pattern.rst`;
   - linked the new guide from the guides index and the public-data mirror runbook so the explanation remains discoverable outside the closed GitHub issue.
+## 2026-04-18 - Opened the named-pipeline / runbook refactor umbrella and first child seam
+- Created the new umbrella feature issue:
+  - `#163` — refactor FEMIC around named pipelines built from recipe sequences.
+- Created the first concrete child feature issue:
+  - `#164` — add an explicit `AFLB -> strata/AU/yield -> THLB` interruption seam inside the THLB workflow.
+- Captured the first planned execution seam explicitly:
+  - THLB should pause after AFLB;
+  - derive strata and AUs from that checkpoint;
+  - enforce a user-parameterizable top-N strata coverage rule with `80%` default;
+  - decide whether the local VDYP cache is sufficient for the active sampling intensity;
+  - run VDYP/TIPSY/(optionally FANSIER) as needed;
+  - compile yield curves; and
+  - resume downstream THLB from a restart-safe yield bridge artifact.
+- Updated planning surfaces:
+  - added `Phase 53` to `ROADMAP.md`;
+  - recorded the current bounded next step in the roadmap notes; and
+  - removed the now-adopted umbrella idea from `planning/incoming_ideas.md`.
