@@ -26,6 +26,9 @@ def _write_boundary_layer(path: Path) -> None:
             "TSA_NUMBER": [29],
             "TSA_NAME": ["Williams Lake TSA"],
             "TSB_NUMBER": [None],
+            "FEATURE_CLASS_SKEY": [123456],
+            "OBJECT_VERSION_SKEY": [7890],
+            "OBJECTID": [42],
             "geometry": [Polygon([(0, 0), (0, 1000), (1000, 1000), (1000, 0)])],
         },
         crs="EPSG:3005",
@@ -106,6 +109,13 @@ def test_build_tsa_raw_glb_writes_summary_with_mocked_arcgis(tmp_path: Path) -> 
         assert boundary_layer_path.parent.suffix == ".gdb"
         assert boundary_layer_path.parent.exists()
         assert boundary_layer_path.name == "tsa_29_boundary"
+        staged_boundary = gpd.read_file(
+            boundary_layer_path.parent,
+            layer=boundary_layer_path.name,
+        )
+        assert list(staged_boundary.columns) == ["TSA_NUMBER", "TSA_NAME", "geometry"]
+        assert staged_boundary.iloc[0]["TSA_NUMBER"] == "29"
+        assert staged_boundary.iloc[0]["TSA_NAME"] == "Williams Lake TSA"
         output_gdb_path.mkdir(parents=True, exist_ok=True)
         summary_json_path.write_text(
             json.dumps(
