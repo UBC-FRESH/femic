@@ -16720,3 +16720,17 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `planning/aflb_yield_bridge_seam.md`
   - Next bounded implementation step:
     - formalize the manifest schema and publish the first two restart seams (`aflb_strata_checkpoint` and `aflb_au_checkpoint`) before wiring the full VDYP/TIPSY resume bridge.
+- 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
+  - Root cause:
+    - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.
+  - High-volume offender roots observed inside `external/femic-tsa29-instance`:
+    - `runtime/logs/glb_build/`
+    - `runtime/logs/tsr/raw_glb_clip_*/`
+    - `runtime/logs/tsr/lu_partition_profiles/`
+    - `data/tsr/*.gpkg`
+    - `data/tsr/post_step*_restart/`
+    - `workbench/arcgis_review/`
+  - Required fix:
+    - teach the submodule to ignore its own generated artifacts correctly;
+    - clean the existing untracked set; and
+    - remove the parent masking config so CLI and VS Code report the same state.

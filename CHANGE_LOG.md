@@ -14440,3 +14440,15 @@
   - `data/tsr/aflb_yield_ready_checkpoint.feather`
 - Proposed the first dedicated command surface:
   - `femic tsr build-yield-bridge --instance-root ... --run-config ... --tsa ...`
+## 2026-04-18 - Opened `#165` to fix TSA29 submodule generated-artifact hygiene
+- Confirmed the apparent Git/VS Code mismatch was real but explained by two different status surfaces:
+  - parent repo config was masking submodule untracked files via `submodule.external/femic-tsa29-instance.ignore=untracked`;
+  - the TSA29 submodule itself still contained hundreds of generated untracked artifacts.
+- Identified the main offender roots inside `external/femic-tsa29-instance`:
+  - `runtime/logs/glb_build/`
+  - `runtime/logs/tsr/raw_glb_clip_*/`
+  - `runtime/logs/tsr/lu_partition_profiles/`
+  - `data/tsr/*.gpkg`
+  - `data/tsr/post_step*_restart/`
+  - `workbench/arcgis_review/`
+- Started the real fix in the submodule itself by expanding `.gitignore` to cover those generated/runtime artifact roots so the submodule can keep itself clean without relying on the parent repo to hide untracked dirt.
