@@ -30,7 +30,7 @@ from shapely.ops import linemerge, nearest_points, split, unary_union  # type: i
 
 from femic.bcdc_catalog import resolve_bcdc_candidates
 from femic.bcdc_fetch import BC_ALBERS_EPSG
-from femic.pipeline.bundle import assign_curve_ids_from_au_table, tsa_curve_id_prefix
+from femic.pipeline.bundle import tsa_curve_id_prefix
 from femic.pipeline.tsa import (
     assign_au_ids_from_scsi,
     assign_si_levels_from_stratum_quantiles,
@@ -42,6 +42,7 @@ from femic.pipeline.vri import assign_stratum_codes_with_lexmatch
 
 from .recipes import (
     TsrRecipeError,
+    _assign_curve_ready_fields_from_au_table,
     default_tsr_source_layers_recipe_path,
     load_tsr_source_layers_recipe,
 )
@@ -324,7 +325,9 @@ def _assign_curve_ready_bundle_fields(
             (str(row.stratum_code), str(row.si_level)): int(float(str(row.au_id)))
             - 100000 * tsa_curve_id_prefix(tsa_code)
             for row in au_table.itertuples(index=False)
-            if pd.notna(row.au_id) and pd.notna(row.stratum_code) and pd.notna(row.si_level)
+            if pd.notna(row.au_id)
+            and pd.notna(row.stratum_code)
+            and pd.notna(row.si_level)
         }
     }
     enriched = assign_au_ids_from_scsi(
@@ -342,17 +345,14 @@ def _assign_curve_ready_bundle_fields(
         stratum_matched_col="stratum_matched",
         si_level_col="si_level",
     )
-    enriched = assign_curve_ids_from_au_table(
-        f_table=enriched,
+    enriched = _assign_curve_ready_fields_from_au_table(
+        checkpoint=enriched,
         au_table=au_table,
-        pd_module=pd,
-        np_module=np,
-        au_col="au",
-        proj_age_col="PROJ_AGE_1",
         managed_curve_col="treated_curve_id",
         unmanaged_curve_col="untreated_curve_id",
         curve1_col="curve1",
         curve2_col="curve2",
+        proj_age_col="PROJ_AGE_1",
         managed_age_cutoff=60,
     )
     return enriched

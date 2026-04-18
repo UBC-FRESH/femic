@@ -14510,3 +14510,30 @@
   - `.venv\Scripts\python.exe -m pre_commit run --all-files`
 - Full-suite caveat:
   - `.venv\Scripts\python.exe -m pytest` still reports unrelated branch-level failures outside this slice in `tests/test_tsr_recipes.py` and `tests/test_tsr_step13_attributes.py`; the new yield-bridge coverage remains green.
+## 2026-04-18 - Parked current branch-level pytest failures and implemented `P53.2d.1` for `#164`
+- Opened parked bug `#166` to track the current unrelated full-suite pytest failures outside the active yield-bridge lane.
+- Extended `femic tsr build-yield-bridge` so a cache-sufficient local bridge now promotes:
+  - `data/tsr/aflb_yield_ready_checkpoint.feather`
+- Added a small shared curve-ready bundle helper so:
+  - AFLB yield-ready promotion; and
+  - late-stage TSR step13 curve-ready enrichment
+  use the same AU-table-to-curve mapping semantics.
+- The yield-bridge manifest now records:
+  - schema version `3`;
+  - yield-ready status and artifact path; and
+  - row-count metadata for the promoted yield-ready checkpoint.
+- The CLI now:
+  - prints `yield_ready_status`;
+  - prints the yield-ready checkpoint path on success; and
+  - exits non-zero with the first cache/blocking reason plus manifest path when local artifacts are not yet sufficient for yield-ready promotion.
+- Added focused regression coverage for:
+  - no-yield-ready output on insufficient or blocked cache states;
+  - successful writing of `aflb_yield_ready_checkpoint.feather` when local cache evidence is sufficient;
+  - expected downstream-ready fields (`stratum_matched`, `si_level`, `au`, `curve1`, `curve2`); and
+  - CLI success/failure reporting for yield-ready promotion.
+- Validation passed:
+  - `.venv\Scripts\python.exe -m ruff format src/femic/tsr_catalog/recipes.py src/femic/tsr_catalog/step13_attributes.py src/femic/tsr_catalog/__init__.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_cli_main.py`
+  - `.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py src/femic/tsr_catalog/step13_attributes.py src/femic/tsr_catalog/__init__.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_cli_main.py`
+  - `.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "yield_bridge or compile_tsr_thlb_step13_attributes_populates_curve_ready_fields" -q`
+  - `.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "yield_bridge" -q`
+  - `.venv\Scripts\python.exe -m mypy src`

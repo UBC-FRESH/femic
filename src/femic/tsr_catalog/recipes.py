@@ -12,6 +12,7 @@ import hashlib
 from importlib import resources as importlib_resources
 import json
 import math
+import numpy as np
 import os
 import shutil
 from pathlib import Path
@@ -51,7 +52,7 @@ from femic.bcdc_fetch import (
     GeomarkBBox,
     fetch_bcdc_wfs_data,
 )
-from femic.pipeline.bundle import tsa_curve_id_prefix
+from femic.pipeline.bundle import assign_curve_ids_from_au_table, tsa_curve_id_prefix
 from femic.pipeline.io import file_sha256, load_pipeline_run_profile
 from femic.pipeline.tsa import (
     apply_stratum_alias_map,
@@ -223,6 +224,9 @@ _YIELD_BRIDGE_DEFAULT_INCLUDE_TM_SPECIES2_FOR_SINGLE = True
 _YIELD_BRIDGE_CACHE_VERDICT_SUFFICIENT = "sufficient"
 _YIELD_BRIDGE_CACHE_VERDICT_INSUFFICIENT = "insufficient"
 _YIELD_BRIDGE_CACHE_VERDICT_BLOCKED_MISSING_INPUTS = "blocked_missing_inputs"
+_YIELD_READY_STATUS_READY_FROM_LOCAL_CACHE = "ready_from_local_cache"
+_YIELD_READY_STATUS_NOT_READY_CACHE_INSUFFICIENT = "not_ready_cache_insufficient"
+_YIELD_READY_STATUS_NOT_READY_MISSING_INPUTS = "not_ready_missing_inputs"
 _YIELD_BRIDGE_SI_LEVEL_QUANTILES: dict[str, list[int]] = {
     "L": [5, 20, 35],
     "M": [35, 50, 65],
@@ -756,6 +760,7 @@ class TsrAflbYieldBridgeBuildResult:
     aflb_checkpoint_path: Path
     strata_checkpoint_path: Path
     au_checkpoint_path: Path
+    yield_ready_checkpoint_path: Path | None
     manifest_path: Path
     run_config_path: Path | None
     run_config_sha256: str | None
@@ -769,6 +774,7 @@ class TsrAflbYieldBridgeBuildResult:
     cache_sufficiency_verdict: str = _YIELD_BRIDGE_CACHE_VERDICT_INSUFFICIENT
     cache_sufficiency_reasons: tuple[str, ...] = ()
     prior_manifest_found: bool = False
+    yield_ready_status: str = _YIELD_READY_STATUS_NOT_READY_CACHE_INSUFFICIENT
 
 
 @dataclass(frozen=True)
@@ -975,6 +981,17 @@ def default_tsr_aflb_yield_bridge_manifest_path(*, instance_root: Path) -> Path:
         / "data"
         / "tsr"
         / "aflb_yield_bridge_manifest.json"
+    )
+
+
+def default_tsr_aflb_yield_ready_checkpoint_path(*, instance_root: Path) -> Path:
+    """Return the default AFLB-derived yield-ready checkpoint feather path."""
+
+    return (
+        instance_root.expanduser().resolve()
+        / "data"
+        / "tsr"
+        / "aflb_yield_ready_checkpoint.feather"
     )
 
 
@@ -5815,6 +5832,49 @@ def _load_yield_bridge_au_table(*, instance_root: Path) -> tuple[Path, pd.DataFr
     return au_table_path, au_table
 
 
+def _assign_curve_ready_fields_from_au_table(
+    *,
+    checkpoint: gpd.GeoDataFrame,
+    au_table: pd.DataFrame,
+    managed_curve_col: str = "treated_curve_id",
+    unmanaged_curve_col: str = "untreated_curve_id",
+    curve1_col: str = "curve1",
+    curve2_col: str = "curve2",
+    proj_age_col: str = "PROJ_AGE_1",
+    managed_age_cutoff: int = 60,
+) -> gpd.GeoDataFrame:
+    required_au_columns = {"au_id", managed_curve_col, unmanaged_curve_col}
+    missing_au_columns = sorted(required_au_columns - set(au_table.columns))
+    if missing_au_columns:
+        raise TsrRecipeError(
+            "AU table is missing required curve-ready columns: "
+            + ", ".join(missing_au_columns)
+        )
+    required_checkpoint_columns = {"au", proj_age_col}
+    missing_checkpoint_columns = sorted(
+        required_checkpoint_columns - set(checkpoint.columns)
+    )
+    if missing_checkpoint_columns:
+        raise TsrRecipeError(
+            "Yield-ready promotion requires checkpoint columns: "
+            + ", ".join(missing_checkpoint_columns)
+        )
+    enriched = assign_curve_ids_from_au_table(
+        f_table=checkpoint.copy(),
+        au_table=au_table.copy(),
+        pd_module=pd,
+        np_module=np,
+        au_col="au",
+        proj_age_col=proj_age_col,
+        managed_curve_col=managed_curve_col,
+        unmanaged_curve_col=unmanaged_curve_col,
+        curve1_col=curve1_col,
+        curve2_col=curve2_col,
+        managed_age_cutoff=managed_age_cutoff,
+    )
+    return enriched
+
+
 def _render_instance_relative_paths(
     *, instance_root: Path, candidates: Sequence[Path]
 ) -> list[str]:
@@ -6024,6 +6084,7 @@ def _inspect_yield_bridge_cache_sufficiency(
     tsa: str,
     manifest_path: Path,
     au_table_path: Path,
+    au_table_for_tsa: pd.DataFrame,
     current_provenance: dict[str, Any],
 ) -> TsrAflbYieldBridgeCacheInspectionResult:
     checked_at_utc = datetime.now(UTC).isoformat()
@@ -6096,6 +6157,16 @@ def _inspect_yield_bridge_cache_sufficiency(
             candidate=tipsy_error_path,
         ),
     }
+    required_au_curve_columns = {"treated_curve_id", "untreated_curve_id"}
+    missing_au_curve_columns = sorted(
+        required_au_curve_columns - set(au_table_for_tsa.columns)
+    )
+    if missing_au_curve_columns:
+        blocked_reasons.append(
+            "AU table is missing required yield-ready curve columns: "
+            + ", ".join(missing_au_curve_columns)
+            + "."
+        )
 
     prior_manifest_found = manifest_path.exists()
     prior_manifest_summary: dict[str, Any] = {
@@ -6317,6 +6388,24 @@ def _inspect_yield_bridge_cache_sufficiency(
         prior_manifest_summary=prior_manifest_summary,
         optional_manifest_summary=optional_manifest_summary,
     )
+
+
+def _promote_yield_ready_checkpoint_from_local_cache(
+    *,
+    instance_root: Path,
+    au_checkpoint: gpd.GeoDataFrame,
+    au_table_for_tsa: pd.DataFrame,
+) -> tuple[Path, gpd.GeoDataFrame]:
+    yield_ready_checkpoint = _assign_curve_ready_fields_from_au_table(
+        checkpoint=au_checkpoint,
+        au_table=au_table_for_tsa,
+    )
+    yield_ready_checkpoint_path = default_tsr_aflb_yield_ready_checkpoint_path(
+        instance_root=instance_root
+    )
+    yield_ready_checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    yield_ready_checkpoint.to_feather(yield_ready_checkpoint_path)
+    return yield_ready_checkpoint_path, yield_ready_checkpoint
 
 
 def build_tsr_aflb_yield_bridge(
@@ -6544,15 +6633,34 @@ def build_tsr_aflb_yield_bridge(
         tsa=resolved_tsa,
         manifest_path=manifest_path,
         au_table_path=au_table_path,
+        au_table_for_tsa=au_table_for_tsa,
         current_provenance=current_provenance,
     )
+    yield_ready_checkpoint_path: Path | None = None
+    yield_ready_checkpoint: gpd.GeoDataFrame | None = None
+    if cache_inspection.verdict == _YIELD_BRIDGE_CACHE_VERDICT_SUFFICIENT:
+        yield_ready_checkpoint_path, yield_ready_checkpoint = (
+            _promote_yield_ready_checkpoint_from_local_cache(
+                instance_root=resolved_instance_root,
+                au_checkpoint=au_checkpoint,
+                au_table_for_tsa=au_table_for_tsa,
+            )
+        )
+        yield_ready_status = _YIELD_READY_STATUS_READY_FROM_LOCAL_CACHE
+        slice_status = "yield_ready_from_local_cache"
+    elif cache_inspection.verdict == _YIELD_BRIDGE_CACHE_VERDICT_BLOCKED_MISSING_INPUTS:
+        yield_ready_status = _YIELD_READY_STATUS_NOT_READY_MISSING_INPUTS
+        slice_status = "yield_ready_pending_missing_inputs"
+    else:
+        yield_ready_status = _YIELD_READY_STATUS_NOT_READY_CACHE_INSUFFICIENT
+        slice_status = "yield_ready_pending_cache"
 
     strata_checkpoint.to_feather(strata_checkpoint_path)
     au_checkpoint.to_feather(au_checkpoint_path)
     manifest_payload = {
-        "schema_version": 2,
+        "schema_version": 3,
         "artifact_kind": "aflb_yield_bridge",
-        "slice_status": "aflb_to_strata_au",
+        "slice_status": slice_status,
         "tsa": resolved_tsa,
         "source": {
             "aflb_checkpoint_path": current_provenance["aflb_checkpoint_path"],
@@ -6580,6 +6688,22 @@ def build_tsr_aflb_yield_bridge(
             "site_index_iqr_mean": site_index_iqr_mean,
         },
         "cache_sufficiency": cache_inspection.to_manifest_payload(),
+        "yield_ready": {
+            "status": yield_ready_status,
+            "source_au_checkpoint_path": _render_instance_relative_path(
+                instance_root=resolved_instance_root,
+                candidate=au_checkpoint_path,
+            ),
+            "aflb_yield_ready_checkpoint_path": _render_instance_relative_path(
+                instance_root=resolved_instance_root,
+                candidate=yield_ready_checkpoint_path,
+            ),
+            "yield_ready_row_count": (
+                int(len(yield_ready_checkpoint))
+                if yield_ready_checkpoint is not None
+                else 0
+            ),
+        },
         "artifacts": {
             "aflb_strata_checkpoint_path": _render_instance_relative_path(
                 instance_root=resolved_instance_root,
@@ -6593,12 +6717,21 @@ def build_tsr_aflb_yield_bridge(
                 instance_root=resolved_instance_root,
                 candidate=manifest_path,
             ),
+            "aflb_yield_ready_checkpoint_path": _render_instance_relative_path(
+                instance_root=resolved_instance_root,
+                candidate=yield_ready_checkpoint_path,
+            ),
         },
         "rows": {
             "aflb_input_rows": int(len(aflb_checkpoint)),
             "strata_checkpoint_rows": int(len(strata_checkpoint)),
             "au_checkpoint_rows": int(len(au_checkpoint)),
             "au_assigned_rows": int(au_checkpoint["au"].notna().sum()),
+            "yield_ready_checkpoint_rows": (
+                int(len(yield_ready_checkpoint))
+                if yield_ready_checkpoint is not None
+                else 0
+            ),
         },
     }
     manifest_path.write_text(
@@ -6611,6 +6744,7 @@ def build_tsr_aflb_yield_bridge(
         aflb_checkpoint_path=resolved_aflb_checkpoint_path,
         strata_checkpoint_path=strata_checkpoint_path,
         au_checkpoint_path=au_checkpoint_path,
+        yield_ready_checkpoint_path=yield_ready_checkpoint_path,
         manifest_path=manifest_path,
         run_config_path=resolved_run_config_path,
         run_config_sha256=resolved_run_config_sha256,
@@ -6624,6 +6758,7 @@ def build_tsr_aflb_yield_bridge(
         cache_sufficiency_verdict=cache_inspection.verdict,
         cache_sufficiency_reasons=cache_inspection.reasons,
         prior_manifest_found=cache_inspection.prior_manifest_found,
+        yield_ready_status=yield_ready_status,
     )
 
 

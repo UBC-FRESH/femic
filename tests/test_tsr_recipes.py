@@ -98,6 +98,7 @@ def _write_aflb_yield_bridge_fixture_inputs(
             "BEC_ZONE_CODE": ["IDF", "IDF", "IDF", "SBS"],
             "SPECIES_CD_1": ["FD", "FD", "FD", "SB"],
             "SITE_INDEX": [12.0, 20.0, 28.0, 36.0],
+            "PROJ_AGE_1": [40.0, 90.0, 30.0, 85.0],
             "CROWN_CLOSURE": [50.0, 55.0, 60.0, 65.0],
             "FEATURE_AREA_SQM": [40.0, 40.0, 10.0, 10.0],
             "thlb_fact": [1.0, 1.0, 1.0, 1.0],
@@ -120,6 +121,8 @@ def _write_aflb_yield_bridge_fixture_inputs(
             "tsa": [29, 29, 29],
             "stratum_code": ["IDF_FD", "IDF_FD", "IDF_FD"],
             "si_level": ["L", "M", "H"],
+            "untreated_curve_id": [2900001, 2900002, 2900003],
+            "treated_curve_id": [2920001, 2920002, 2920003],
         }
     ).to_csv(bundle_root / "au_table.csv", index=False)
     if include_curve_tables:
@@ -10069,6 +10072,8 @@ def test_build_tsr_aflb_yield_bridge_writes_default_artifacts(tmp_path: Path) ->
     assert result.manifest_path.is_file()
     assert result.cache_sufficiency_verdict == "insufficient"
     assert result.prior_manifest_found is False
+    assert result.yield_ready_checkpoint_path is None
+    assert result.yield_ready_status == "not_ready_cache_insufficient"
 
 
 def test_build_tsr_aflb_yield_bridge_defaults_top_area_coverage_to_point_80(
@@ -10090,6 +10095,7 @@ def test_build_tsr_aflb_yield_bridge_defaults_top_area_coverage_to_point_80(
     )
     assert manifest_payload["selection"]["top_area_coverage_source"] == "default_0_80"
     assert manifest_payload["cache_sufficiency"]["verdict"] == "insufficient"
+    assert manifest_payload["yield_ready"]["status"] == "not_ready_cache_insufficient"
 
 
 def test_build_tsr_aflb_yield_bridge_manifest_and_au_checkpoint_fields(
@@ -10108,7 +10114,7 @@ def test_build_tsr_aflb_yield_bridge_manifest_and_au_checkpoint_fields(
     manifest_payload = json.loads(result.manifest_path.read_text(encoding="utf-8"))
     au_checkpoint = gpd.read_feather(result.au_checkpoint_path)
 
-    assert manifest_payload["schema_version"] == 2
+    assert manifest_payload["schema_version"] == 3
     assert manifest_payload["artifact_kind"] == "aflb_yield_bridge"
     assert (
         manifest_payload["source"]["aflb_checkpoint_path"]
@@ -10124,6 +10130,8 @@ def test_build_tsr_aflb_yield_bridge_manifest_and_au_checkpoint_fields(
     assert len(manifest_payload["selection"]["au_signature"]) == 64
     assert manifest_payload["cache_sufficiency"]["prior_manifest_found"] is False
     assert manifest_payload["cache_sufficiency"]["verdict"] == "insufficient"
+    assert manifest_payload["yield_ready"]["status"] == "not_ready_cache_insufficient"
+    assert manifest_payload["artifacts"]["aflb_yield_ready_checkpoint_path"] == ""
 
     for column in (
         "stratum",
@@ -10156,6 +10164,7 @@ def test_build_tsr_aflb_yield_bridge_cache_is_insufficient_without_prior_manifes
         for reason in result.cache_sufficiency_reasons
     )
     assert manifest_payload["cache_sufficiency"]["prior_manifest_found"] is False
+    assert result.yield_ready_checkpoint_path is None
 
 
 def test_build_tsr_aflb_yield_bridge_cache_detects_selection_drift(
@@ -10239,6 +10248,8 @@ def test_build_tsr_aflb_yield_bridge_blocks_when_curve_bundle_missing(
         "curve table" in reason.lower() or "curve points table" in reason.lower()
         for reason in result.cache_sufficiency_reasons
     )
+    assert result.yield_ready_status == "not_ready_missing_inputs"
+    assert result.yield_ready_checkpoint_path is None
 
 
 def test_build_tsr_aflb_yield_bridge_cache_becomes_sufficient_with_matching_prior_manifest(
@@ -10257,10 +10268,24 @@ def test_build_tsr_aflb_yield_bridge_cache_becomes_sufficient_with_matching_prio
         run_config_path=run_config_path,
     )
     manifest_payload = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    yield_ready_checkpoint = gpd.read_feather(result.yield_ready_checkpoint_path)
 
     assert result.cache_sufficiency_verdict == "sufficient"
     assert result.prior_manifest_found is True
+    assert (
+        result.yield_ready_checkpoint_path
+        == tsr_recipes.default_tsr_aflb_yield_ready_checkpoint_path(
+            instance_root=instance_root
+        )
+    )
+    assert result.yield_ready_checkpoint_path.is_file()
+    assert result.yield_ready_status == "ready_from_local_cache"
     assert manifest_payload["cache_sufficiency"]["verdict"] == "sufficient"
+    assert manifest_payload["yield_ready"]["status"] == "ready_from_local_cache"
+    assert (
+        manifest_payload["artifacts"]["aflb_yield_ready_checkpoint_path"]
+        == "data/tsr/aflb_yield_ready_checkpoint.feather"
+    )
     assert (
         manifest_payload["cache_sufficiency"]["optional_manifests"][
             "post_tipsy_manifest_count"
@@ -10273,6 +10298,9 @@ def test_build_tsr_aflb_yield_bridge_cache_becomes_sufficient_with_matching_prio
         ]
         == 1
     )
+    for column in ("stratum_matched", "si_level", "au", "curve1", "curve2"):
+        assert column in yield_ready_checkpoint.columns
+    assert yield_ready_checkpoint["curve1"].notna().sum() >= 1
 
 
 def test_run_tsr_thlb_reconstructed_diagnostic_slice_restores_harvested_select_attribute_rows(

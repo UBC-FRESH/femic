@@ -2899,6 +2899,10 @@ def _print_tsr_aflb_yield_bridge_build_summary(
     console.print(f"aflb_checkpoint_path: {result.aflb_checkpoint_path}")
     console.print(f"aflb_strata_checkpoint_path: {result.strata_checkpoint_path}")
     console.print(f"aflb_au_checkpoint_path: {result.au_checkpoint_path}")
+    if result.yield_ready_checkpoint_path is not None:
+        console.print(
+            f"aflb_yield_ready_checkpoint_path: {result.yield_ready_checkpoint_path}"
+        )
     console.print(f"aflb_yield_bridge_manifest_path: {result.manifest_path}")
     if result.run_config_path is not None:
         console.print(f"run_config_path: {result.run_config_path}")
@@ -2916,6 +2920,7 @@ def _print_tsr_aflb_yield_bridge_build_summary(
             "cache_sufficiency_reason: " + result.cache_sufficiency_reasons[0]
         )
     console.print(f"prior_manifest_found: {result.prior_manifest_found}")
+    console.print(f"yield_ready_status: {result.yield_ready_status}")
 
 
 def _print_tsr_source_layer_overrides_init_summary(
@@ -4001,6 +4006,17 @@ def tsr_build_yield_bridge(
         raise typer.Exit(code=1) from exc
 
     _print_tsr_aflb_yield_bridge_build_summary(result)
+    if result.yield_ready_checkpoint_path is None:
+        detail = (
+            result.cache_sufficiency_reasons[0]
+            if result.cache_sufficiency_reasons
+            else "Local cache inputs are not yet sufficient for yield-ready promotion."
+        )
+        console.print(
+            "[red]TSR yield-ready promotion incomplete:[/red] "
+            f"{detail} Manifest: {result.manifest_path}"
+        )
+        raise typer.Exit(code=1)
 
 
 @tsr_app.command("thlb-netdown-step-run")

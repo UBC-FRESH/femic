@@ -16747,6 +16747,24 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - keep missing `curve_table.csv` / `curve_points_table.csv` in `blocked_missing_inputs`;
     - treat absent post-TIPSY/BTC evidence as `insufficient`, not blocked; and
     - do not publish `aflb_yield_ready_checkpoint.feather` yet.
+- 2026-04-18: Opened parked bug `#166` for branch-level full-suite pytest failures discovered during the `P53.2c.1` milestone sweep.
+  - Current policy:
+    - keep those failures out of the active yield-bridge delivery lane unless a future slice explicitly targets them.
+  - Current failing surfaces recorded in `#166`:
+    - the branch-level failures currently sit in `tests/test_tsr_recipes.py` and `tests/test_tsr_step13_attributes.py`.
+- 2026-04-18: The next bounded `#164` slice after cache inspection is `P53.2d.1`, still on `femic tsr build-yield-bridge`.
+  - Implementation target:
+    - promote a cache-sufficient AFLB AU checkpoint into `data/tsr/aflb_yield_ready_checkpoint.feather` using existing local bundle/cache artifacts only.
+  - Required outputs for this slice:
+    - `data/tsr/aflb_yield_ready_checkpoint.feather`;
+    - manifest `yield_ready` status/path metadata; and
+    - CLI/result reporting for `yield_ready_status`.
+  - Shared implementation seam:
+    - factor a small reusable AU-table-to-curve assignment helper so the AFLB yield-ready promotion and late-stage step13 curve-ready enrichment use the same bundle mapping semantics.
+  - Scope boundary:
+    - do not launch BTC/TIPSY/FANSIER;
+    - do not resume downstream THLB execution yet; and
+    - if cache sufficiency is not `sufficient`, stop after writing the manifest and bounded strata/AU artifacts with a clear remediation message.
 - 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
   - Root cause:
     - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.
