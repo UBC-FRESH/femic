@@ -14371,13 +14371,29 @@
     - strengthen `tests/test_glb.py` to assert the staged boundary export is intentionally slim;
     - run a real `femic prep glb-build --tsa 29` acceptance check and confirm the GLB area/count are unchanged and the integer-widening warnings are gone.
 - Completed `#147` by slimming the staged GLB boundary export schema.
-  - `src/femic/glb.py` now publishes a minimal one-row scratch boundary layer with only:
-    - `TSA_NUMBER` as string;
-    - `TSA_NAME` as string; and
-    - polygon geometry.
+- `src/femic/glb.py` now publishes a minimal one-row scratch boundary layer with only:
+  - `TSA_NUMBER` as string;
+  - `TSA_NAME` as string; and
+  - polygon geometry.
   - The scratch FileGDB export no longer carries the noisy integer source fields (`FEATURE_CLASS_SKEY`, `OBJECT_VERSION_SKEY`, `OBJECTID`) that triggered `pyogrio` widening warnings.
   - `tests/test_glb.py` now asserts the staged boundary feature class contains only the slim schema while preserving the same `.gdb` layer path contract for the ArcGIS clip runner.
-  - Acceptance:
-    - `femic prep glb-build --instance-root external/femic-tsa29-instance --tsa 29 --force-rebuild-glb --no-stash-public-data-glb`
-    - still produced `317,735` features and `4,933,664.212 ha` clipped area against `4,933,664.215 ha` boundary area (`-0.003 ha` delta);
-    - emitted no scratch-boundary integer-widening warnings.
+- Acceptance:
+  - `femic prep glb-build --instance-root external/femic-tsa29-instance --tsa 29 --force-rebuild-glb --no-stash-public-data-glb`
+  - still produced `317,735` features and `4,933,664.212 ha` clipped area against `4,933,664.215 ha` boundary area (`-0.003 ha` delta);
+  - emitted no scratch-boundary integer-widening warnings.
+## 2026-04-18 - Delivered `#145` student-facing FEMIC DataLad/GitHub/Arbutus workflow summary
+- Posted the requested deliverable as a single GitHub issue comment with public `main`-branch links:
+  - `#145` comment `4273055730`.
+- The summary explains:
+  - what FEMIC wraps in code today around submodules, `git-annex`, DataLad materialization, `FEMIC_EXTERNAL_DATA_ROOT`, and preflight commands;
+  - what remains intentionally operator/runbook territory for Arbutus credentials, special-remote bootstrap, dataset publication, and recovery;
+  - the best public entry-point docs for students/contributors; and
+  - how to copy the same split-repo pattern into another modelling project with large datasets.
+- Verified the linked public docs/entry points against the current repo before posting:
+  - `AGENTS.md`
+  - `docs/guides/developer-environment-bootstrap.rst`
+  - `docs/guides/public-data-mirror-runbook.rst`
+  - `docs/guides/deployment-instances.rst`
+  - `docs/reference/contracts/instance-and-data-roots.rst`
+  - `docs/reference/contracts/repo-runtime-invariants.rst`
+  - `docs/reference/cli.rst`

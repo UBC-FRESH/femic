@@ -16630,3 +16630,33 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `femic prep glb-build --instance-root external/femic-tsa29-instance --tsa 29 --force-rebuild-glb --no-stash-public-data-glb`
     - still produced `317,735` features and `4,933,664.212 ha` clipped area against `4,933,664.215 ha` boundary area (`-0.003 ha` delta);
     - emitted no scratch-boundary integer-widening warnings.
+- 2026-04-18: Started `#145` on branch `feature/issue-145-datalad-workflow-summary`.
+  - Goal:
+    - deliver the issue as a single student-facing GitHub comment with public `main`-branch links explaining FEMIC's split-repo GitHub + DataLad + Arbutus workflow.
+  - Verified source surfaces before drafting:
+    - `AGENTS.md`
+    - `docs/guides/developer-environment-bootstrap.rst`
+    - `docs/guides/public-data-mirror-runbook.rst`
+    - `docs/guides/deployment-instances.rst`
+    - `docs/reference/contracts/instance-and-data-roots.rst`
+    - `docs/reference/contracts/repo-runtime-invariants.rst`
+    - `docs/reference/cli.rst`
+    - `src/femic/cli/main.py` as supporting implementation context only.
+  - Planned closeout:
+    - post one plain-language issue comment covering what FEMIC wraps in code, what remains operator-runbook territory, the best public entry points, and how to copy the pattern into another modelling project.
+- 2026-04-18: Completed `#145` as a student-facing GitHub summary of FEMIC's GitHub + DataLad + Arbutus workflow pattern.
+  - Posted the deliverable as a single public-link GitHub issue comment:
+    - `#145` comment `4273055730`.
+  - The summary explains, in plain language:
+    - what FEMIC wraps in code today;
+    - what remains intentionally operator/runbook territory;
+    - the best public `main`-branch docs entry points; and
+    - how to copy the same split-repo pattern into another modelling project with large non-Git-friendly datasets.
+  - Governing public entry points used in the summary:
+    - `AGENTS.md`
+    - `docs/guides/developer-environment-bootstrap.rst`
+    - `docs/guides/public-data-mirror-runbook.rst`
+    - `docs/guides/deployment-instances.rst`
+    - `docs/reference/contracts/instance-and-data-roots.rst`
+    - `docs/reference/contracts/repo-runtime-invariants.rst`
+    - `docs/reference/cli.rst`
