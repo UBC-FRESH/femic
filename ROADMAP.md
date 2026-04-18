@@ -16697,3 +16697,26 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - it must pause after AFLB to derive strata, define AUs, satisfy VDYP/TIPSY/FANSIER yield dependencies, and then resume late-stage THLB.
   - Current bounded next step for this new arc:
     - audit the current runtime path against the desired seam and document exactly where FEMIC already has reusable artifacts (`aflb_checkpoint`, strata/AU helpers, VDYP cache checks, BTC/TIPSY runners, yield-curve compile logic) versus where the interruption/resume contract is still implicit.
+- 2026-04-18: Completed the first `#164` seam audit and turned it into a concrete artifact/command contract.
+  - Audit result:
+    - the repo already has most of the functional pieces:
+      - restart-grade THLB checkpoints (`aflb_checkpoint`, `lhlb_checkpoint`, `lhlb_curve_ready_checkpoint`);
+      - stratification and AU helpers in `src/femic/pipeline/tsa.py`;
+      - top-area coverage config in `selection.stratification.top_area_coverage`;
+      - VDYP prep/result caches; and
+      - BTC/TIPSY resume surfaces via `femic tsa post-tipsy` and `femic tsa btc-post-tipsy`.
+  - The missing contract is the explicit bridge between:
+    - `AFLB`
+    - strata/AU/yield compilation
+    - and downstream THLB continuation.
+  - Proposed new canonical artifacts for `#164`:
+    - `data/tsr/aflb_strata_checkpoint.feather`
+    - `data/tsr/aflb_au_checkpoint.feather`
+    - `data/tsr/aflb_yield_bridge_manifest.json`
+    - `data/tsr/aflb_yield_ready_checkpoint.feather`
+  - Proposed first command surface:
+    - `femic tsr build-yield-bridge --instance-root ... --run-config ... --tsa ...`
+  - Working spec note is now captured in:
+    - `planning/aflb_yield_bridge_seam.md`
+  - Next bounded implementation step:
+    - formalize the manifest schema and publish the first two restart seams (`aflb_strata_checkpoint` and `aflb_au_checkpoint`) before wiring the full VDYP/TIPSY resume bridge.

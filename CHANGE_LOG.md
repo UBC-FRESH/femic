@@ -14419,3 +14419,24 @@
   - added `Phase 53` to `ROADMAP.md`;
   - recorded the current bounded next step in the roadmap notes; and
   - removed the now-adopted umbrella idea from `planning/incoming_ideas.md`.
+## 2026-04-18 - Audited the AFLB -> strata/AU/yield -> THLB seam for `#164`
+- Confirmed the repo already has most of the functional building blocks needed for the first child seam:
+  - restart-grade THLB checkpoints:
+    - `data/tsr/aflb_checkpoint.feather`
+    - `data/tsr/lhlb_checkpoint.feather`
+    - `data/tsr/lhlb_curve_ready_checkpoint.feather`
+  - stratification and AU helpers in `src/femic/pipeline/tsa.py`
+  - top-area coverage config via `selection.stratification.top_area_coverage`
+  - VDYP prep/result cache surfaces
+  - BTC/TIPSY resume surfaces via `femic tsa post-tipsy` and `femic tsa btc-post-tipsy`
+- Captured the missing contract explicitly:
+  - there is still no canonical artifact seam that starts from AFLB, derives strata/AUs, satisfies VDYP/TIPSY/FANSIER yield dependencies, and then resumes downstream THLB from a restart-safe bridge artifact.
+- Wrote the first concrete seam specification in:
+  - `planning/aflb_yield_bridge_seam.md`
+- Proposed the first bounded implementation contract around new artifacts:
+  - `data/tsr/aflb_strata_checkpoint.feather`
+  - `data/tsr/aflb_au_checkpoint.feather`
+  - `data/tsr/aflb_yield_bridge_manifest.json`
+  - `data/tsr/aflb_yield_ready_checkpoint.feather`
+- Proposed the first dedicated command surface:
+  - `femic tsr build-yield-bridge --instance-root ... --run-config ... --tsa ...`
