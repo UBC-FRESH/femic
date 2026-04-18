@@ -196,6 +196,64 @@ def _write_yield_bridge_cache_evidence(
         )
 
 
+def _fake_yield_bridge_execution_result(
+    instance_root: Path,
+    *,
+    execution_path: str = "btc_post_tipsy",
+    curve_ids: tuple[int, int] = (2920002, 2900002),
+) -> tsr_recipes.TsrAflbYieldBridgeExecutionResult:
+    yield_ready_path = (
+        instance_root / "data" / "tsr" / "aflb_yield_ready_checkpoint.feather"
+    )
+    yield_ready_path.parent.mkdir(parents=True, exist_ok=True)
+    yield_ready = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1],
+            "MAP_ID": ["092O071"],
+            "PROJ_AGE_1": [45.0],
+            "stratum": ["IDF_FD"],
+            "stratum_matched": ["IDF_FD"],
+            "si_level": ["M"],
+            "au": [2],
+            "curve1": [curve_ids[0]],
+            "curve2": [curve_ids[1]],
+        },
+        geometry=[box(0, 0, 1, 1)],
+        crs="EPSG:3005",
+    )
+    yield_ready.to_feather(yield_ready_path)
+    return tsr_recipes.TsrAflbYieldBridgeExecutionResult(
+        execution_path=execution_path,
+        tipsy_params_excel_path=(
+            instance_root / "data" / "tipsy_params_tsa29.xlsx"
+        ).resolve(),
+        tipsy_input_dat_path=(instance_root / "data" / "02_input-tsa29.dat").resolve(),
+        btc_input_csv_path=(instance_root / "data" / "03_input-tsa29.csv").resolve(),
+        tipsy_output_path=(instance_root / "data" / "04_output-tsa29.csv").resolve(),
+        tipsy_error_path=(instance_root / "data" / "04_error-tsa29.csv").resolve(),
+        post_tipsy_manifest_path=(
+            instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "yield_bridge"
+            / "run_manifest-fixture.json"
+        ).resolve(),
+        btc_manifest_paths=(
+            (
+                instance_root
+                / "runtime"
+                / "logs"
+                / "tsr"
+                / "yield_bridge"
+                / "btc_manifest-fixture.json"
+            ).resolve(),
+        ),
+        yield_ready_checkpoint_path=yield_ready_path.resolve(),
+        yield_ready_checkpoint=yield_ready,
+    )
+
+
 def _write_landscape_unit_layer(
     instance_root: Path,
     *,
@@ -10298,6 +10356,7 @@ def test_build_tsr_aflb_yield_bridge_writes_default_artifacts(tmp_path: Path) ->
     assert result.prior_manifest_found is False
     assert result.yield_ready_checkpoint_path is None
     assert result.yield_ready_status == "not_ready_cache_insufficient"
+    assert result.execution_path is None
 
 
 def test_build_tsr_aflb_yield_bridge_defaults_top_area_coverage_to_point_80(
@@ -10338,7 +10397,7 @@ def test_build_tsr_aflb_yield_bridge_manifest_and_au_checkpoint_fields(
     manifest_payload = json.loads(result.manifest_path.read_text(encoding="utf-8"))
     au_checkpoint = gpd.read_feather(result.au_checkpoint_path)
 
-    assert manifest_payload["schema_version"] == 3
+    assert manifest_payload["schema_version"] == 4
     assert manifest_payload["artifact_kind"] == "aflb_yield_bridge"
     assert (
         manifest_payload["source"]["aflb_checkpoint_path"]
@@ -10354,6 +10413,7 @@ def test_build_tsr_aflb_yield_bridge_manifest_and_au_checkpoint_fields(
     assert len(manifest_payload["selection"]["au_signature"]) == 64
     assert manifest_payload["cache_sufficiency"]["prior_manifest_found"] is False
     assert manifest_payload["cache_sufficiency"]["verdict"] == "insufficient"
+    assert manifest_payload["execution"]["path"] is None
     assert manifest_payload["yield_ready"]["status"] == "not_ready_cache_insufficient"
     assert manifest_payload["artifacts"]["aflb_yield_ready_checkpoint_path"] == ""
 
@@ -10371,10 +10431,16 @@ def test_build_tsr_aflb_yield_bridge_manifest_and_au_checkpoint_fields(
 
 def test_build_tsr_aflb_yield_bridge_cache_is_insufficient_without_prior_manifest(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     instance_root = tmp_path / "external" / "femic-tsa29-instance"
     run_config_path = _write_aflb_yield_bridge_fixture_inputs(instance_root)
     _write_yield_bridge_cache_evidence(instance_root)
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_execute_yield_bridge_from_vdyp_cache",
+        lambda **_kwargs: _fake_yield_bridge_execution_result(instance_root),
+    )
 
     result = tsr_recipes.build_tsr_aflb_yield_bridge(
         instance_root=instance_root,
@@ -10388,11 +10454,14 @@ def test_build_tsr_aflb_yield_bridge_cache_is_insufficient_without_prior_manifes
         for reason in result.cache_sufficiency_reasons
     )
     assert manifest_payload["cache_sufficiency"]["prior_manifest_found"] is False
-    assert result.yield_ready_checkpoint_path is None
+    assert result.execution_path == "btc_post_tipsy"
+    assert result.yield_ready_status == "ready_from_bridge_execution"
+    assert result.yield_ready_checkpoint_path is not None
 
 
 def test_build_tsr_aflb_yield_bridge_cache_detects_selection_drift(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     instance_root = tmp_path / "external" / "femic-tsa29-instance"
     run_config_path = _write_aflb_yield_bridge_fixture_inputs(
@@ -10400,6 +10469,11 @@ def test_build_tsr_aflb_yield_bridge_cache_detects_selection_drift(
         top_area_coverage=0.80,
     )
     _write_yield_bridge_cache_evidence(instance_root)
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_execute_yield_bridge_from_vdyp_cache",
+        lambda **_kwargs: _fake_yield_bridge_execution_result(instance_root),
+    )
     tsr_recipes.build_tsr_aflb_yield_bridge(
         instance_root=instance_root,
         run_config_path=run_config_path,
@@ -10426,10 +10500,16 @@ def test_build_tsr_aflb_yield_bridge_cache_detects_selection_drift(
 
 def test_build_tsr_aflb_yield_bridge_cache_detects_missing_vdyp_files(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     instance_root = tmp_path / "external" / "femic-tsa29-instance"
     run_config_path = _write_aflb_yield_bridge_fixture_inputs(instance_root)
     _write_yield_bridge_cache_evidence(instance_root)
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_execute_yield_bridge_from_vdyp_cache",
+        lambda **_kwargs: _fake_yield_bridge_execution_result(instance_root),
+    )
     tsr_recipes.build_tsr_aflb_yield_bridge(
         instance_root=instance_root,
         run_config_path=run_config_path,
@@ -10478,10 +10558,16 @@ def test_build_tsr_aflb_yield_bridge_blocks_when_curve_bundle_missing(
 
 def test_build_tsr_aflb_yield_bridge_cache_becomes_sufficient_with_matching_prior_manifest(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     instance_root = tmp_path / "external" / "femic-tsa29-instance"
     run_config_path = _write_aflb_yield_bridge_fixture_inputs(instance_root)
     _write_yield_bridge_cache_evidence(instance_root)
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_execute_yield_bridge_from_vdyp_cache",
+        lambda **_kwargs: _fake_yield_bridge_execution_result(instance_root),
+    )
     tsr_recipes.build_tsr_aflb_yield_bridge(
         instance_root=instance_root,
         run_config_path=run_config_path,
@@ -10525,6 +10611,434 @@ def test_build_tsr_aflb_yield_bridge_cache_becomes_sufficient_with_matching_prio
     for column in ("stratum_matched", "si_level", "au", "curve1", "curve2"):
         assert column in yield_ready_checkpoint.columns
     assert yield_ready_checkpoint["curve1"].notna().sum() >= 1
+
+
+def test_write_yield_bridge_tipsy_handoff_artifacts_writes_02_and_03_inputs(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    data_root = instance_root / "data"
+    data_root.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame({"curve_id": [1], "curve_type": ["untreated"]}).to_feather(
+        data_root / "vdyp_curves_smooth-tsa29.feather"
+    )
+    (data_root / "tipsy_params_columns").write_text(
+        "\n".join(
+            [
+                "AU",
+                "TBLno",
+                "SI",
+                "Density",
+                "Proportion",
+                "SPP_1",
+                "PCT_1",
+                "GW_1",
+                "BEC",
+                "Regen_Delay",
+                "OAF1",
+                "OAF2",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    au_checkpoint = gpd.GeoDataFrame(
+        {
+            "stratum_matched": ["IDF_FD"],
+            "PROJ_AGE_1": [45.0],
+            "au": [1001],
+        },
+        geometry=[box(0, 0, 1, 1)],
+        crs="EPSG:3005",
+    )
+    planted_df = pd.DataFrame(
+        [
+            {
+                "AU": 1001,
+                "TBLno": 1,
+                "SI": 20,
+                "Density": 1200,
+                "Proportion": 1.0,
+                "SPP_1": "FD",
+                "PCT_1": 100,
+                "GW_1": 0,
+                "BEC": "IDFd",
+                "Regen_Delay": 0,
+                "OAF1": 85,
+                "OAF2": 95,
+            }
+        ]
+    )
+    natural_df = planted_df.copy()
+    natural_df["AU"] = 2001
+
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_load_yield_bridge_vdyp_prep_results",
+        lambda **_kwargs: [[1, "IDF_FD", {"M": {"species": {}}}]],
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_load_yield_bridge_vdyp_results",
+        lambda **_kwargs: {1: {"M": {}}},
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "save_vdyp_prep_checkpoint",
+        lambda *args, **kwargs: 1,
+    )
+    monkeypatch.setattr(tsr_recipes, "build_tipsy_exclusion", lambda: {"29": {}})
+    monkeypatch.setattr(
+        tsr_recipes, "get_legacy_tipsy_builders", lambda: {"29": object()}
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "resolve_tipsy_runtime_options",
+        lambda: (instance_root / "config" / "tipsy", True),
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "resolve_tipsy_param_builder",
+        lambda **_kwargs: (object(), "builder"),
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "build_tipsy_params_for_tsa",
+        lambda **_kwargs: ({}, {}, {1001: {}}),
+    )
+
+    def _fake_build_tipsy_input_table(*, table_key: str = "f", **_kwargs):
+        return natural_df.copy() if table_key == "e" else planted_df.copy()
+
+    monkeypatch.setattr(
+        tsr_recipes,
+        "build_tipsy_input_table",
+        _fake_build_tipsy_input_table,
+    )
+
+    excel_path, dat_path, btc_path = (
+        tsr_recipes._write_yield_bridge_tipsy_handoff_artifacts(
+            instance_root=instance_root,
+            tsa="29",
+            au_checkpoint=au_checkpoint,
+        )
+    )
+
+    assert excel_path.is_file()
+    assert dat_path.is_file()
+    assert btc_path.is_file()
+    assert "TBLno" in dat_path.read_text(encoding="utf-8")
+    btc_table = pd.read_csv(btc_path)
+    assert "feature_id" in btc_table.columns
+    assert len(btc_table) == 1
+
+
+def test_execute_yield_bridge_from_vdyp_cache_uses_btc_post_tipsy_for_tipsy_mode(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    au_checkpoint = gpd.GeoDataFrame(
+        {"au": [2], "PROJ_AGE_1": [45.0]},
+        geometry=[box(0, 0, 1, 1)],
+        crs="EPSG:3005",
+    )
+    (instance_root / "data" / "model_input_bundle").mkdir(parents=True, exist_ok=True)
+    called: dict[str, bool] = {"btc": False, "post": False}
+
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_resolve_yield_bridge_run_profile",
+        lambda **_kwargs: (
+            type(
+                "Profile",
+                (),
+                {
+                    "managed_curve_x_scale": None,
+                    "managed_curve_y_scale": None,
+                    "managed_curve_truncate_at_culm": None,
+                    "managed_curve_max_age": None,
+                    "yield_assumptions_path": None,
+                },
+            )(),
+            "tipsy",
+        ),
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_write_yield_bridge_tipsy_handoff_artifacts",
+        lambda **_kwargs: (
+            (instance_root / "data" / "tipsy_params_tsa29.xlsx").resolve(),
+            (instance_root / "data" / "02_input-tsa29.dat").resolve(),
+            (instance_root / "data" / "03_input-tsa29.csv").resolve(),
+        ),
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_load_yield_bridge_au_table",
+        lambda **_kwargs: (
+            (instance_root / "data" / "model_input_bundle" / "au_table.csv").resolve(),
+            pd.DataFrame(
+                {
+                    "tsa": ["29"],
+                    "au_id": [2],
+                    "stratum_code": ["IDF_FD"],
+                    "si_level": ["M"],
+                    "untreated_curve_id": [2900002],
+                    "treated_curve_id": [2920002],
+                }
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_promote_yield_ready_checkpoint_from_local_cache",
+        lambda **_kwargs: (
+            (
+                instance_root / "data" / "tsr" / "aflb_yield_ready_checkpoint.feather"
+            ).resolve(),
+            gpd.GeoDataFrame(
+                {
+                    "au": [2],
+                    "curve1": [2920002],
+                    "curve2": [2900002],
+                },
+                geometry=[box(0, 0, 1, 1)],
+                crs="EPSG:3005",
+            ),
+        ),
+    )
+
+    def _fake_btc(**_kwargs):
+        called["btc"] = True
+        return type(
+            "BTCPostTipsyResult",
+            (),
+            {
+                "btc_results": [
+                    type(
+                        "BTCRun",
+                        (),
+                        {
+                            "manifest_path": (
+                                instance_root
+                                / "runtime"
+                                / "logs"
+                                / "tsr"
+                                / "yield_bridge"
+                                / "btc_manifest-fixture.json"
+                            ).resolve()
+                        },
+                    )()
+                ],
+                "post_tipsy_result": type(
+                    "PostTipsyRun",
+                    (),
+                    {
+                        "manifest_path": (
+                            instance_root
+                            / "runtime"
+                            / "logs"
+                            / "tsr"
+                            / "yield_bridge"
+                            / "run_manifest-fixture.json"
+                        ).resolve()
+                    },
+                )(),
+            },
+        )()
+
+    monkeypatch.setattr(
+        tsr_recipes,
+        "run_btc_and_post_tipsy_bundle_with_manifest",
+        _fake_btc,
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "run_post_tipsy_bundle_with_manifest",
+        lambda **_kwargs: called.__setitem__("post", True),
+    )
+
+    result = tsr_recipes._execute_yield_bridge_from_vdyp_cache(
+        instance_root=instance_root,
+        tsa="29",
+        au_checkpoint=au_checkpoint,
+        run_config_path=None,
+    )
+
+    assert called["btc"] is True
+    assert called["post"] is False
+    assert result.execution_path == "btc_post_tipsy"
+
+
+def test_execute_yield_bridge_from_vdyp_cache_uses_post_tipsy_for_non_tipsy_mode(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    au_checkpoint = gpd.GeoDataFrame(
+        {"au": [2], "PROJ_AGE_1": [45.0]},
+        geometry=[box(0, 0, 1, 1)],
+        crs="EPSG:3005",
+    )
+    (instance_root / "data" / "model_input_bundle").mkdir(parents=True, exist_ok=True)
+    called: dict[str, bool] = {"btc": False, "post": False}
+
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_resolve_yield_bridge_run_profile",
+        lambda **_kwargs: (
+            type(
+                "Profile",
+                (),
+                {
+                    "managed_curve_x_scale": None,
+                    "managed_curve_y_scale": None,
+                    "managed_curve_truncate_at_culm": None,
+                    "managed_curve_max_age": None,
+                    "yield_assumptions_path": None,
+                },
+            )(),
+            "vdyp_transform",
+        ),
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_write_yield_bridge_tipsy_handoff_artifacts",
+        lambda **_kwargs: (
+            (instance_root / "data" / "tipsy_params_tsa29.xlsx").resolve(),
+            (instance_root / "data" / "02_input-tsa29.dat").resolve(),
+            (instance_root / "data" / "03_input-tsa29.csv").resolve(),
+        ),
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_load_yield_bridge_au_table",
+        lambda **_kwargs: (
+            (instance_root / "data" / "model_input_bundle" / "au_table.csv").resolve(),
+            pd.DataFrame(
+                {
+                    "tsa": ["29"],
+                    "au_id": [2],
+                    "stratum_code": ["IDF_FD"],
+                    "si_level": ["M"],
+                    "untreated_curve_id": [2900002],
+                    "treated_curve_id": [2920002],
+                }
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_promote_yield_ready_checkpoint_from_local_cache",
+        lambda **_kwargs: (
+            (
+                instance_root / "data" / "tsr" / "aflb_yield_ready_checkpoint.feather"
+            ).resolve(),
+            gpd.GeoDataFrame(
+                {
+                    "au": [2],
+                    "curve1": [2920002],
+                    "curve2": [2900002],
+                },
+                geometry=[box(0, 0, 1, 1)],
+                crs="EPSG:3005",
+            ),
+        ),
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "run_btc_and_post_tipsy_bundle_with_manifest",
+        lambda **_kwargs: called.__setitem__("btc", True),
+    )
+
+    def _fake_post(**_kwargs):
+        called["post"] = True
+        return type(
+            "PostTipsyRun",
+            (),
+            {
+                "manifest_path": (
+                    instance_root
+                    / "runtime"
+                    / "logs"
+                    / "tsr"
+                    / "yield_bridge"
+                    / "run_manifest-fixture.json"
+                ).resolve()
+            },
+        )()
+
+    monkeypatch.setattr(
+        tsr_recipes,
+        "run_post_tipsy_bundle_with_manifest",
+        _fake_post,
+    )
+
+    result = tsr_recipes._execute_yield_bridge_from_vdyp_cache(
+        instance_root=instance_root,
+        tsa="29",
+        au_checkpoint=au_checkpoint,
+        run_config_path=None,
+    )
+
+    assert called["btc"] is False
+    assert called["post"] is True
+    assert result.execution_path == "post_tipsy_resume"
+
+
+def test_build_tsr_aflb_yield_bridge_executes_from_vdyp_cache_when_insufficient(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    run_config_path = _write_aflb_yield_bridge_fixture_inputs(instance_root)
+    _write_yield_bridge_cache_evidence(instance_root)
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_execute_yield_bridge_from_vdyp_cache",
+        lambda **_kwargs: _fake_yield_bridge_execution_result(instance_root),
+    )
+
+    result = tsr_recipes.build_tsr_aflb_yield_bridge(
+        instance_root=instance_root,
+        run_config_path=run_config_path,
+    )
+    manifest_payload = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+
+    assert result.cache_sufficiency_verdict == "insufficient"
+    assert result.execution_path == "btc_post_tipsy"
+    assert result.yield_ready_status == "ready_from_bridge_execution"
+    assert result.yield_ready_checkpoint_path is not None
+    assert manifest_payload["execution"]["path"] == "btc_post_tipsy"
+    assert manifest_payload["yield_ready"]["status"] == "ready_from_bridge_execution"
+
+
+def test_build_tsr_aflb_yield_bridge_records_execution_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    run_config_path = _write_aflb_yield_bridge_fixture_inputs(instance_root)
+    _write_yield_bridge_cache_evidence(instance_root)
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_execute_yield_bridge_from_vdyp_cache",
+        lambda **_kwargs: (_ for _ in ()).throw(
+            tsr_recipes.TsrRecipeError("bridge exploded")
+        ),
+    )
+
+    result = tsr_recipes.build_tsr_aflb_yield_bridge(
+        instance_root=instance_root,
+        run_config_path=run_config_path,
+    )
+    manifest_payload = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+
+    assert result.yield_ready_checkpoint_path is None
+    assert result.yield_ready_status == "not_ready_execution_failed"
+    assert result.yield_ready_reason == "bridge exploded"
+    assert manifest_payload["execution"]["failure_reason"] == "bridge exploded"
 
 
 def test_run_tsr_thlb_reconstructed_diagnostic_slice_restores_harvested_select_attribute_rows(

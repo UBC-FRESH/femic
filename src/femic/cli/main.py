@@ -2920,6 +2920,8 @@ def _print_tsr_aflb_yield_bridge_build_summary(
             "cache_sufficiency_reason: " + result.cache_sufficiency_reasons[0]
         )
     console.print(f"prior_manifest_found: {result.prior_manifest_found}")
+    if result.execution_path is not None:
+        console.print(f"yield_bridge_execution_path: {result.execution_path}")
     console.print(f"yield_ready_status: {result.yield_ready_status}")
 
 
@@ -4007,7 +4009,7 @@ def tsr_build_yield_bridge(
 
     _print_tsr_aflb_yield_bridge_build_summary(result)
     if result.yield_ready_checkpoint_path is None:
-        detail = (
+        detail = result.yield_ready_reason or (
             result.cache_sufficiency_reasons[0]
             if result.cache_sufficiency_reasons
             else "Local cache inputs are not yet sufficient for yield-ready promotion."

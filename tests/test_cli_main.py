@@ -6485,6 +6485,7 @@ def test_tsr_build_yield_bridge_resolves_instance_run_config_and_tsa(
             cache_sufficiency_reasons=(),
             prior_manifest_found=True,
             yield_ready_status="ready_from_local_cache",
+            execution_path="local_cache",
         )
 
     monkeypatch.setattr(cli_main, "build_tsr_aflb_yield_bridge", _fake_build)
@@ -6506,7 +6507,72 @@ def test_tsr_build_yield_bridge_resolves_instance_run_config_and_tsa(
     assert any("top_area_coverage_source: default_0_80" in msg for msg in messages)
     assert any("cache_sufficiency_verdict: sufficient" in msg for msg in messages)
     assert any("prior_manifest_found: True" in msg for msg in messages)
+    assert any("yield_bridge_execution_path: local_cache" in msg for msg in messages)
     assert any("yield_ready_status: ready_from_local_cache" in msg for msg in messages)
+
+
+def test_tsr_build_yield_bridge_does_not_exit_when_execution_recovers_insufficient_cache(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    def _fake_build(**kwargs):
+        del kwargs
+        return cli_main.TsrAflbYieldBridgeBuildResult(
+            instance_root=instance_root.resolve(),
+            tsa="29",
+            aflb_checkpoint_path=(
+                instance_root / "data" / "tsr" / "aflb_checkpoint.feather"
+            ).resolve(),
+            strata_checkpoint_path=(
+                instance_root / "data" / "tsr" / "aflb_strata_checkpoint.feather"
+            ).resolve(),
+            au_checkpoint_path=(
+                instance_root / "data" / "tsr" / "aflb_au_checkpoint.feather"
+            ).resolve(),
+            yield_ready_checkpoint_path=(
+                instance_root / "data" / "tsr" / "aflb_yield_ready_checkpoint.feather"
+            ).resolve(),
+            manifest_path=(
+                instance_root / "data" / "tsr" / "aflb_yield_bridge_manifest.json"
+            ).resolve(),
+            run_config_path=(
+                instance_root / "config" / "run_profile.test.yaml"
+            ).resolve(),
+            run_config_sha256="deadbeef",
+            au_table_path=(
+                instance_root / "data" / "model_input_bundle" / "au_table.csv"
+            ).resolve(),
+            top_area_coverage=0.8,
+            top_area_coverage_source="default_0_80",
+            selected_strata_count=1,
+            realized_coverage=0.9,
+            aflb_input_row_count=4,
+            au_assigned_row_count=4,
+            cache_sufficiency_verdict="insufficient",
+            cache_sufficiency_reasons=("No prior yield-bridge manifest found.",),
+            prior_manifest_found=False,
+            yield_ready_status="ready_from_bridge_execution",
+            execution_path="btc_post_tipsy",
+        )
+
+    monkeypatch.setattr(cli_main, "build_tsr_aflb_yield_bridge", _fake_build)
+
+    cli_main.tsr_build_yield_bridge(
+        tsa=["29"],
+        run_config=Path("config/run_profile.test.yaml"),
+        instance_root=instance_root,
+    )
+
+    assert any("cache_sufficiency_verdict: insufficient" in msg for msg in messages)
+    assert any("yield_bridge_execution_path: btc_post_tipsy" in msg for msg in messages)
+    assert any(
+        "yield_ready_status: ready_from_bridge_execution" in msg for msg in messages
+    )
 
 
 def test_tsr_build_yield_bridge_exits_when_yield_ready_not_written(
@@ -6553,6 +6619,7 @@ def test_tsr_build_yield_bridge_exits_when_yield_ready_not_written(
             cache_sufficiency_reasons=("Missing VDYP results cache.",),
             prior_manifest_found=True,
             yield_ready_status="not_ready_cache_insufficient",
+            yield_ready_reason="Missing VDYP results cache.",
         )
 
     monkeypatch.setattr(cli_main, "build_tsr_aflb_yield_bridge", _fake_build)

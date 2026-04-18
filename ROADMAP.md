@@ -16791,6 +16791,38 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - targeted recipe tests cover restart-mode recognition, invalid yield-ready rejection, and parent-step acceptance;
     - targeted CLI tests cover explicit checkpoint forwarding and restart-signal summary output; and
     - lint/type checks passed on the touched surface.
+- 2026-04-18: The next bounded `#164` slice after THLB restart acceptance is `P53.2d.3`, still on `femic tsr build-yield-bridge`.
+  - Implementation target:
+    - execute the real AFLB yield bridge from existing VDYP cache when cache sufficiency is `insufficient`, rather than stopping after inspection.
+  - Required behavior:
+    - keep the existing fast path for `cache_sufficiency == sufficient`;
+    - treat `blocked_missing_inputs` as a hard stop;
+    - on `insufficient`, compile fresh bridge-owned `tipsy_params_tsaXX.xlsx`, `02_input-tsaXX.dat`, and `03_input-tsaXX.csv`;
+    - then run either `btc-post-tipsy` or `post-tipsy` helper workflows based on managed-curve mode; and
+    - republish `aflb_yield_ready_checkpoint.feather` from the rebuilt bundle outputs.
+  - Provenance/reporting requirements:
+    - extend the manifest with execution-path metadata (`local_cache`, `post_tipsy_resume`, or `btc_post_tipsy`);
+    - record 02/03/04 handoff paths plus post-TIPSY/BTC manifest evidence; and
+    - surface the execution path in CLI summary output.
+  - Scope boundary:
+    - reuse the existing VDYP cache only;
+    - do not add a new VDYP rerun lane yet;
+    - defer FANSIER; and
+    - keep the command surface unchanged.
+- 2026-04-18: Completed `P53.2d.3` under `#164` by turning the yield bridge into a real execution path when reusable VDYP cache exists.
+  - Implemented behavior:
+    - `femic tsr build-yield-bridge` still fast-paths `sufficient` cache cases to local promotion;
+    - `blocked_missing_inputs` remains a hard stop; and
+    - rebuildable `insufficient` cases now compile fresh `tipsy_params_tsaXX.xlsx`, `02_input-tsaXX.dat`, and `03_input-tsaXX.csv`, then run `btc-post-tipsy` or `post-tipsy` based on managed-curve mode before republishing `aflb_yield_ready_checkpoint.feather`.
+  - Provenance/reporting:
+    - the manifest now records execution-path metadata, bridge handoff artifact paths, post-TIPSY/BTC manifest evidence, and execution failure reasons;
+    - the CLI summary now prints `yield_bridge_execution_path`; and
+    - CLI failure messaging now prefers the bridge execution failure reason when yield-ready publication does not complete.
+  - Scope boundary preserved:
+    - no new CLI command;
+    - no VDYP rerun lane;
+    - FANSIER still deferred; and
+    - downstream THLB restart acceptance remains unchanged from `P53.2d.2`.
 - 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
   - Root cause:
     - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.

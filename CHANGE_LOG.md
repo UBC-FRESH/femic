@@ -14566,3 +14566,33 @@
   - `.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "aflb_yield_ready or curve_ready_checkpoint_for_step14 or aflb_restart_artifacts" -q`
   - `.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "yield_ready_checkpoint or thlb_netdown_run_passes_map_id_smoke_options or thlb_netdown_step_run_uses_default_recipe_path" -q`
   - `.venv\Scripts\python.exe -m mypy src`
+## 2026-04-18 - Implemented `P53.2d.3` real yield-bridge execution from existing VDYP cache for `#164`
+- Extended `femic tsr build-yield-bridge` so rebuildable `insufficient` cache cases no longer stop at inspection when the minimum reusable VDYP cache exists.
+- The yield-bridge execution path now:
+  - compiles fresh `tipsy_params_tsaXX.xlsx`;
+  - writes `02_input-tsaXX.dat`;
+  - writes `03_input-tsaXX.csv`;
+  - runs `btc-post-tipsy` when managed-curve mode is `tipsy` or unset; or
+  - runs `post-tipsy` directly for non-TIPSY managed-curve modes.
+- Successful bridge execution now republishes:
+  - `data/tsr/aflb_yield_ready_checkpoint.feather`
+  from the rebuilt bundle outputs rather than only from previously sufficient local cache.
+- The yield-bridge manifest now records:
+  - schema version `4`;
+  - execution-path metadata (`local_cache`, `post_tipsy_resume`, or `btc_post_tipsy`);
+  - 02/03/04 handoff artifact paths;
+  - post-TIPSY and BTC manifest evidence paths; and
+  - execution failure reasons when the bridge cannot finish yield-ready publication.
+- CLI summary output now prints `yield_bridge_execution_path`, and the incomplete-yield-ready error path now prefers the bridge execution failure reason over the earlier generic cache message.
+- Focused regression coverage now includes:
+  - handoff artifact writing for `02_input` and `03_input`;
+  - BTC/post-TIPSY branch selection for `tipsy` mode;
+  - post-TIPSY-only branch selection for non-`tipsy` modes;
+  - successful bridge execution from an `insufficient` cache verdict; and
+  - explicit execution-failure manifest/status reporting.
+- Validation passed:
+  - `.venv\Scripts\python.exe -m ruff format src/femic/tsr_catalog/recipes.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_cli_main.py`
+  - `.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_cli_main.py`
+  - `.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "yield_bridge" -q`
+  - `.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "yield_bridge" -q`
+  - `.venv\Scripts\python.exe -m mypy src`

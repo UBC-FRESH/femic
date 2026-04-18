@@ -14,6 +14,7 @@ import json
 import math
 import numpy as np
 import os
+import pickle
 import shutil
 from pathlib import Path
 import re
@@ -63,8 +64,26 @@ from femic.pipeline.tsa import (
     normalize_tsa_code,
     validate_nonempty_au_assignment,
 )
+from femic.pipeline.tipsy import (
+    DEFAULT_BTC_MSYT_COLUMNS,
+    build_btc_msyt_input_table,
+    build_tipsy_input_table,
+    build_tipsy_params_for_tsa,
+    write_btc_msyt_input_csv,
+    write_tipsy_input_exports,
+)
+from femic.pipeline.tipsy_config import (
+    resolve_tipsy_param_builder,
+    resolve_tipsy_runtime_options,
+)
 from femic.pipeline.tipsy_config import BROADLEAF_SPECIES_CODES
+from femic.pipeline.tipsy_legacy import build_tipsy_exclusion, get_legacy_tipsy_builders
 from femic.pipeline.vri import assign_stratum_codes_with_lexmatch
+from femic.pipeline.pre_vdyp import load_vdyp_prep_checkpoint, save_vdyp_prep_checkpoint
+from femic.workflows.legacy import (
+    run_btc_and_post_tipsy_bundle_with_manifest,
+    run_post_tipsy_bundle_with_manifest,
+)
 
 from .overlay import TsrOverlayTsaRecord
 from .report import TsrFactReviewRow, report_tsr_candidate_facts
@@ -224,9 +243,14 @@ _YIELD_BRIDGE_DEFAULT_INCLUDE_TM_SPECIES2_FOR_SINGLE = True
 _YIELD_BRIDGE_CACHE_VERDICT_SUFFICIENT = "sufficient"
 _YIELD_BRIDGE_CACHE_VERDICT_INSUFFICIENT = "insufficient"
 _YIELD_BRIDGE_CACHE_VERDICT_BLOCKED_MISSING_INPUTS = "blocked_missing_inputs"
+_YIELD_BRIDGE_EXECUTION_PATH_LOCAL_CACHE = "local_cache"
+_YIELD_BRIDGE_EXECUTION_PATH_POST_TIPSY_RESUME = "post_tipsy_resume"
+_YIELD_BRIDGE_EXECUTION_PATH_BTC_POST_TIPSY = "btc_post_tipsy"
 _YIELD_READY_STATUS_READY_FROM_LOCAL_CACHE = "ready_from_local_cache"
+_YIELD_READY_STATUS_READY_FROM_BRIDGE_EXECUTION = "ready_from_bridge_execution"
 _YIELD_READY_STATUS_NOT_READY_CACHE_INSUFFICIENT = "not_ready_cache_insufficient"
 _YIELD_READY_STATUS_NOT_READY_MISSING_INPUTS = "not_ready_missing_inputs"
+_YIELD_READY_STATUS_NOT_READY_EXECUTION_FAILED = "not_ready_execution_failed"
 _YIELD_BRIDGE_SI_LEVEL_QUANTILES: dict[str, list[int]] = {
     "L": [5, 20, 35],
     "M": [35, 50, 65],
@@ -775,6 +799,24 @@ class TsrAflbYieldBridgeBuildResult:
     cache_sufficiency_reasons: tuple[str, ...] = ()
     prior_manifest_found: bool = False
     yield_ready_status: str = _YIELD_READY_STATUS_NOT_READY_CACHE_INSUFFICIENT
+    execution_path: str | None = None
+    yield_ready_reason: str | None = None
+
+
+@dataclass(frozen=True)
+class TsrAflbYieldBridgeExecutionResult:
+    """Result payload for one AFLB yield-bridge execution pass."""
+
+    execution_path: str
+    tipsy_params_excel_path: Path
+    tipsy_input_dat_path: Path
+    btc_input_csv_path: Path
+    tipsy_output_path: Path | None
+    tipsy_error_path: Path | None
+    post_tipsy_manifest_path: Path
+    btc_manifest_paths: tuple[Path, ...]
+    yield_ready_checkpoint_path: Path
+    yield_ready_checkpoint: gpd.GeoDataFrame
 
 
 @dataclass(frozen=True)
@@ -6408,6 +6450,347 @@ def _promote_yield_ready_checkpoint_from_local_cache(
     return yield_ready_checkpoint_path, yield_ready_checkpoint
 
 
+def _yield_bridge_repo_root() -> Path:
+    return Path(__file__).resolve().parents[3]
+
+
+def _resolve_yield_bridge_run_profile(
+    *, run_config_path: Path | None
+) -> tuple[Any | None, str | None]:
+    if run_config_path is None:
+        return None, None
+    profile = load_pipeline_run_profile(run_config_path)
+    managed_curve_mode = (
+        str(profile.managed_curve_mode).strip().lower()
+        if profile.managed_curve_mode is not None
+        else "tipsy"
+    )
+    return profile, managed_curve_mode
+
+
+def _resolve_yield_bridge_run_profile_path(
+    *, instance_root: Path, candidate: Path | None
+) -> Path | None:
+    if candidate is None:
+        return None
+    expanded = candidate.expanduser()
+    if expanded.is_absolute():
+        return expanded.resolve()
+    return (instance_root / expanded).resolve()
+
+
+def _load_yield_bridge_tipsy_params_columns(*, instance_root: Path) -> tuple[str, ...]:
+    candidates = (
+        instance_root / "data" / "tipsy_params_columns",
+        _yield_bridge_repo_root() / "data" / "tipsy_params_columns",
+    )
+    for candidate in candidates:
+        if candidate.exists():
+            columns = tuple(
+                line.strip()
+                for line in candidate.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            )
+            if columns:
+                return columns
+    raise TsrRecipeError(
+        "Yield bridge execution requires `data/tipsy_params_columns`; neither the "
+        "instance data root nor the FEMIC source tree provides it."
+    )
+
+
+def _load_yield_bridge_vdyp_results(
+    *, instance_root: Path, tsa: str
+) -> dict[int, dict[str, Any]]:
+    path = instance_root / "data" / f"vdyp_results-tsa{tsa}.pkl"
+    if not path.exists():
+        raise TsrRecipeError(
+            f"Yield bridge execution requires existing VDYP results cache: {path}"
+        )
+    with path.open("rb") as handle:
+        payload = pickle.load(handle)
+    if not isinstance(payload, dict):
+        raise TsrRecipeError(f"Invalid VDYP results cache payload: {path}")
+    return payload
+
+
+def _load_yield_bridge_vdyp_prep_results(
+    *, instance_root: Path, tsa: str
+) -> list[list[Any]]:
+    path = instance_root / "data" / f"vdyp_prep-tsa{tsa}.pkl"
+    if not path.exists():
+        raise TsrRecipeError(
+            f"Yield bridge execution requires existing pre-VDYP checkpoint: {path}"
+        )
+    loaded = load_vdyp_prep_checkpoint(path)
+    if not isinstance(loaded, list):
+        raise TsrRecipeError(f"Invalid pre-VDYP checkpoint payload: {path}")
+    return loaded
+
+
+def _filter_yield_bridge_vdyp_prep_results(
+    *,
+    results_for_tsa: Sequence[list[Any] | tuple[Any, ...]],
+    au_checkpoint: gpd.GeoDataFrame,
+) -> list[tuple[int, str, dict[str, Any]]]:
+    selected_strata = {
+        str(value).strip()
+        for value in au_checkpoint["stratum_matched"].dropna().tolist()
+        if str(value).strip()
+    }
+    filtered: list[tuple[int, str, dict[str, Any]]] = []
+    for item in results_for_tsa:
+        if len(item) < 3:
+            continue
+        stratum_code = str(item[1]).strip()
+        if stratum_code not in selected_strata:
+            continue
+        filtered.append((int(item[0]), str(item[1]), copy.deepcopy(item[2])))
+    if not filtered:
+        raise TsrRecipeError(
+            "Yield bridge execution could not match any current AFLB-selected strata "
+            "against the persisted pre-VDYP checkpoint."
+        )
+    return filtered
+
+
+def _write_yield_bridge_tipsy_handoff_artifacts(
+    *,
+    instance_root: Path,
+    tsa: str,
+    au_checkpoint: gpd.GeoDataFrame,
+) -> tuple[Path, Path, Path]:
+    resolved_tsa = normalize_tsa_code(tsa)
+    data_root = instance_root / "data"
+    filtered_results_for_tsa = _filter_yield_bridge_vdyp_prep_results(
+        results_for_tsa=_load_yield_bridge_vdyp_prep_results(
+            instance_root=instance_root,
+            tsa=resolved_tsa,
+        ),
+        au_checkpoint=au_checkpoint,
+    )
+    save_vdyp_prep_checkpoint(
+        data_root / f"vdyp_prep-tsa{resolved_tsa}.pkl",
+        [list(item) for item in filtered_results_for_tsa],
+    )
+    vdyp_results_for_tsa = _load_yield_bridge_vdyp_results(
+        instance_root=instance_root,
+        tsa=resolved_tsa,
+    )
+    vdyp_curves_smooth_tsa = pd.read_feather(
+        data_root / f"vdyp_curves_smooth-tsa{resolved_tsa}.feather"
+    )
+    tipsy_exclusion = build_tipsy_exclusion()
+    legacy_tipsy_builders = get_legacy_tipsy_builders()
+    tipsy_config_dir, tipsy_use_legacy = resolve_tipsy_runtime_options()
+
+    def _missing_legacy_tipsy_builder(*_args: Any, **_kwargs: Any) -> Any:
+        raise TsrRecipeError(
+            f"No legacy TIPSY builder registered for TSA {resolved_tsa}."
+        )
+
+    tipsy_param_builder, _ = resolve_tipsy_param_builder(
+        tsa_code=resolved_tsa,
+        legacy_builder=legacy_tipsy_builders.get(
+            resolved_tsa, _missing_legacy_tipsy_builder
+        ),
+        config_dir=tipsy_config_dir,
+        use_legacy=tipsy_use_legacy,
+    )
+    exclusion = tipsy_exclusion.get(
+        resolved_tsa,
+        {
+            "min_si": lambda _s: 0.0,
+            "min_vol": lambda _s: 0.0,
+            "excl_bec": [],
+            "excl_leading_species": [],
+        },
+    )
+    _scsi_au, _au_scsi, tipsy_params = build_tipsy_params_for_tsa(
+        tsa=resolved_tsa,
+        results_for_tsa=filtered_results_for_tsa,
+        si_levels=tuple(_YIELD_BRIDGE_SI_LEVEL_QUANTILES.keys()),
+        vdyp_curves_smooth_tsa=vdyp_curves_smooth_tsa,
+        vdyp_results_for_tsa=vdyp_results_for_tsa,
+        exclusion=exclusion,
+        tipsy_param_builder=tipsy_param_builder,
+        message_fn=lambda *_args, **_kwargs: None,
+        verbose=False,
+    )
+    try:
+        tipsy_table = build_tipsy_input_table(
+            tipsy_params_for_tsa=tipsy_params,
+            tipsy_params_columns=_load_yield_bridge_tipsy_params_columns(
+                instance_root=instance_root
+            ),
+            pd_module=pd,
+        )
+        natural_tipsy_table = build_tipsy_input_table(
+            tipsy_params_for_tsa=tipsy_params,
+            tipsy_params_columns=_load_yield_bridge_tipsy_params_columns(
+                instance_root=instance_root
+            ),
+            pd_module=pd,
+            table_key="e",
+        )
+    except RuntimeError:
+        tipsy_table = pd.DataFrame(
+            columns=list(
+                _load_yield_bridge_tipsy_params_columns(instance_root=instance_root)
+            )
+        )
+        natural_tipsy_table = pd.DataFrame(columns=list(tipsy_table.columns))
+    tipsy_params_excel_path_str, tipsy_input_dat_path_str = write_tipsy_input_exports(
+        tipsy_table=tipsy_table,
+        tsa=resolved_tsa,
+        tipsy_params_path_prefix=str(data_root / "tipsy_params_tsa"),
+    )
+    try:
+        btc_msyt_df = build_btc_msyt_input_table(
+            tipsy_table=tipsy_table,
+            natural_tipsy_table=natural_tipsy_table,
+            pd_module=pd,
+        )
+    except RuntimeError:
+        btc_msyt_df = pd.DataFrame(columns=list(DEFAULT_BTC_MSYT_COLUMNS))
+    btc_input_csv_path = write_btc_msyt_input_csv(
+        btc_msyt_table=btc_msyt_df,
+        tsa=resolved_tsa,
+        output_root=data_root,
+    )
+    return (
+        Path(tipsy_params_excel_path_str).resolve(),
+        Path(tipsy_input_dat_path_str).resolve(),
+        btc_input_csv_path.resolve(),
+    )
+
+
+def _execute_yield_bridge_from_vdyp_cache(
+    *,
+    instance_root: Path,
+    tsa: str,
+    au_checkpoint: gpd.GeoDataFrame,
+    run_config_path: Path | None,
+) -> TsrAflbYieldBridgeExecutionResult:
+    run_profile, managed_curve_mode = _resolve_yield_bridge_run_profile(
+        run_config_path=run_config_path
+    )
+    tipsy_params_excel_path, tipsy_input_dat_path, btc_input_csv_path = (
+        _write_yield_bridge_tipsy_handoff_artifacts(
+            instance_root=instance_root,
+            tsa=tsa,
+            au_checkpoint=au_checkpoint,
+        )
+    )
+    log_dir = instance_root / "runtime" / "logs" / "tsr" / "yield_bridge"
+    resolved_yield_assumptions_path = _resolve_yield_bridge_run_profile_path(
+        instance_root=instance_root,
+        candidate=(
+            run_profile.yield_assumptions_path if run_profile is not None else None
+        ),
+    )
+    if managed_curve_mode == "tipsy":
+        workflow_result = run_btc_and_post_tipsy_bundle_with_manifest(
+            tsa_list=[normalize_tsa_code(tsa)],
+            log_dir=log_dir,
+            repo_root=instance_root,
+            data_root=(instance_root / "data"),
+            managed_curve_mode=managed_curve_mode,
+            managed_curve_x_scale=(
+                run_profile.managed_curve_x_scale if run_profile is not None else None
+            ),
+            managed_curve_y_scale=(
+                run_profile.managed_curve_y_scale if run_profile is not None else None
+            ),
+            managed_curve_truncate_at_culm=(
+                run_profile.managed_curve_truncate_at_culm
+                if run_profile is not None
+                else None
+            ),
+            managed_curve_max_age=(
+                run_profile.managed_curve_max_age if run_profile is not None else None
+            ),
+            yield_assumptions_path=resolved_yield_assumptions_path,
+            message_fn=lambda *_args, **_kwargs: None,
+        )
+        post_tipsy_result = workflow_result.post_tipsy_result
+        btc_manifest_paths = tuple(
+            item.manifest_path.resolve() for item in workflow_result.btc_results
+        )
+        execution_path = _YIELD_BRIDGE_EXECUTION_PATH_BTC_POST_TIPSY
+        tipsy_output_path = (
+            instance_root / "data" / f"04_output-tsa{normalize_tsa_code(tsa)}.csv"
+        ).resolve()
+        tipsy_error_path = (
+            instance_root / "data" / f"04_error-tsa{normalize_tsa_code(tsa)}.csv"
+        ).resolve()
+    else:
+        post_tipsy_result = run_post_tipsy_bundle_with_manifest(
+            tsa_list=[normalize_tsa_code(tsa)],
+            log_dir=log_dir,
+            repo_root=instance_root,
+            data_root=(instance_root / "data"),
+            managed_curve_mode=managed_curve_mode,
+            managed_curve_x_scale=(
+                run_profile.managed_curve_x_scale if run_profile is not None else None
+            ),
+            managed_curve_y_scale=(
+                run_profile.managed_curve_y_scale if run_profile is not None else None
+            ),
+            managed_curve_truncate_at_culm=(
+                run_profile.managed_curve_truncate_at_culm
+                if run_profile is not None
+                else None
+            ),
+            managed_curve_max_age=(
+                run_profile.managed_curve_max_age if run_profile is not None else None
+            ),
+            yield_assumptions_path=resolved_yield_assumptions_path,
+            message_fn=lambda *_args, **_kwargs: None,
+        )
+        btc_manifest_paths = ()
+        execution_path = _YIELD_BRIDGE_EXECUTION_PATH_POST_TIPSY_RESUME
+        tipsy_output_path = (
+            instance_root / "data" / f"04_output-tsa{normalize_tsa_code(tsa)}.out"
+        ).resolve()
+        tipsy_error_path = None
+    _, rebuilt_au_table = _load_yield_bridge_au_table(instance_root=instance_root)
+    rebuilt_au_table_for_tsa = rebuilt_au_table.loc[
+        rebuilt_au_table["tsa"] == normalize_tsa_code(tsa)
+    ].copy()
+    yield_ready_checkpoint_path, yield_ready_checkpoint = (
+        _promote_yield_ready_checkpoint_from_local_cache(
+            instance_root=instance_root,
+            au_checkpoint=au_checkpoint,
+            au_table_for_tsa=rebuilt_au_table_for_tsa,
+        )
+    )
+    return TsrAflbYieldBridgeExecutionResult(
+        execution_path=execution_path,
+        tipsy_params_excel_path=tipsy_params_excel_path,
+        tipsy_input_dat_path=tipsy_input_dat_path,
+        btc_input_csv_path=btc_input_csv_path,
+        tipsy_output_path=tipsy_output_path,
+        tipsy_error_path=tipsy_error_path,
+        post_tipsy_manifest_path=post_tipsy_result.manifest_path.resolve(),
+        btc_manifest_paths=btc_manifest_paths,
+        yield_ready_checkpoint_path=yield_ready_checkpoint_path.resolve(),
+        yield_ready_checkpoint=yield_ready_checkpoint,
+    )
+
+
+def _yield_bridge_has_minimum_execution_cache(*, instance_root: Path, tsa: str) -> bool:
+    data_root = instance_root / "data"
+    resolved_tsa = normalize_tsa_code(tsa)
+    return all(
+        path.exists()
+        for path in (
+            data_root / f"vdyp_results-tsa{resolved_tsa}.pkl",
+            data_root / f"vdyp_curves_smooth-tsa{resolved_tsa}.feather",
+        )
+    )
+
+
 def build_tsr_aflb_yield_bridge(
     *,
     instance_root: Path,
@@ -6638,6 +7021,9 @@ def build_tsr_aflb_yield_bridge(
     )
     yield_ready_checkpoint_path: Path | None = None
     yield_ready_checkpoint: gpd.GeoDataFrame | None = None
+    bridge_execution: TsrAflbYieldBridgeExecutionResult | None = None
+    execution_path: str | None = None
+    yield_ready_reason: str | None = None
     if cache_inspection.verdict == _YIELD_BRIDGE_CACHE_VERDICT_SUFFICIENT:
         yield_ready_checkpoint_path, yield_ready_checkpoint = (
             _promote_yield_ready_checkpoint_from_local_cache(
@@ -6646,19 +7032,54 @@ def build_tsr_aflb_yield_bridge(
                 au_table_for_tsa=au_table_for_tsa,
             )
         )
+        execution_path = _YIELD_BRIDGE_EXECUTION_PATH_LOCAL_CACHE
         yield_ready_status = _YIELD_READY_STATUS_READY_FROM_LOCAL_CACHE
         slice_status = "yield_ready_from_local_cache"
     elif cache_inspection.verdict == _YIELD_BRIDGE_CACHE_VERDICT_BLOCKED_MISSING_INPUTS:
+        yield_ready_reason = (
+            cache_inspection.reasons[0]
+            if cache_inspection.reasons
+            else "Yield bridge execution is blocked by missing inputs."
+        )
         yield_ready_status = _YIELD_READY_STATUS_NOT_READY_MISSING_INPUTS
         slice_status = "yield_ready_pending_missing_inputs"
     else:
-        yield_ready_status = _YIELD_READY_STATUS_NOT_READY_CACHE_INSUFFICIENT
-        slice_status = "yield_ready_pending_cache"
+        if not _yield_bridge_has_minimum_execution_cache(
+            instance_root=resolved_instance_root,
+            tsa=resolved_tsa,
+        ):
+            yield_ready_reason = (
+                cache_inspection.reasons[0]
+                if cache_inspection.reasons
+                else "Existing VDYP cache is required before yield-bridge execution."
+            )
+            yield_ready_status = _YIELD_READY_STATUS_NOT_READY_CACHE_INSUFFICIENT
+            slice_status = "yield_ready_pending_cache"
+        else:
+            try:
+                bridge_execution = _execute_yield_bridge_from_vdyp_cache(
+                    instance_root=resolved_instance_root,
+                    tsa=resolved_tsa,
+                    au_checkpoint=au_checkpoint,
+                    run_config_path=resolved_run_config_path,
+                )
+            except Exception as exc:
+                yield_ready_reason = str(exc)
+                yield_ready_status = _YIELD_READY_STATUS_NOT_READY_EXECUTION_FAILED
+                slice_status = "yield_ready_execution_failed"
+            else:
+                execution_path = bridge_execution.execution_path
+                yield_ready_checkpoint_path = (
+                    bridge_execution.yield_ready_checkpoint_path
+                )
+                yield_ready_checkpoint = bridge_execution.yield_ready_checkpoint
+                yield_ready_status = _YIELD_READY_STATUS_READY_FROM_BRIDGE_EXECUTION
+                slice_status = "yield_ready_from_bridge_execution"
 
     strata_checkpoint.to_feather(strata_checkpoint_path)
     au_checkpoint.to_feather(au_checkpoint_path)
     manifest_payload = {
-        "schema_version": 3,
+        "schema_version": 4,
         "artifact_kind": "aflb_yield_bridge",
         "slice_status": slice_status,
         "tsa": resolved_tsa,
@@ -6688,6 +7109,66 @@ def build_tsr_aflb_yield_bridge(
             "site_index_iqr_mean": site_index_iqr_mean,
         },
         "cache_sufficiency": cache_inspection.to_manifest_payload(),
+        "execution": {
+            "path": execution_path,
+            "tipsy_params_excel_path": _render_instance_relative_path(
+                instance_root=resolved_instance_root,
+                candidate=(
+                    bridge_execution.tipsy_params_excel_path
+                    if bridge_execution is not None
+                    else None
+                ),
+            ),
+            "tipsy_input_dat_path": _render_instance_relative_path(
+                instance_root=resolved_instance_root,
+                candidate=(
+                    bridge_execution.tipsy_input_dat_path
+                    if bridge_execution is not None
+                    else None
+                ),
+            ),
+            "btc_input_csv_path": _render_instance_relative_path(
+                instance_root=resolved_instance_root,
+                candidate=(
+                    bridge_execution.btc_input_csv_path
+                    if bridge_execution is not None
+                    else None
+                ),
+            ),
+            "tipsy_output_path": _render_instance_relative_path(
+                instance_root=resolved_instance_root,
+                candidate=(
+                    bridge_execution.tipsy_output_path
+                    if bridge_execution is not None
+                    else None
+                ),
+            ),
+            "tipsy_error_path": _render_instance_relative_path(
+                instance_root=resolved_instance_root,
+                candidate=(
+                    bridge_execution.tipsy_error_path
+                    if bridge_execution is not None
+                    else None
+                ),
+            ),
+            "post_tipsy_manifest_path": _render_instance_relative_path(
+                instance_root=resolved_instance_root,
+                candidate=(
+                    bridge_execution.post_tipsy_manifest_path
+                    if bridge_execution is not None
+                    else None
+                ),
+            ),
+            "btc_manifest_paths": _render_instance_relative_paths(
+                instance_root=resolved_instance_root,
+                candidates=(
+                    bridge_execution.btc_manifest_paths
+                    if bridge_execution is not None
+                    else ()
+                ),
+            ),
+            "failure_reason": yield_ready_reason,
+        },
         "yield_ready": {
             "status": yield_ready_status,
             "source_au_checkpoint_path": _render_instance_relative_path(
@@ -6759,6 +7240,8 @@ def build_tsr_aflb_yield_bridge(
         cache_sufficiency_reasons=cache_inspection.reasons,
         prior_manifest_found=cache_inspection.prior_manifest_found,
         yield_ready_status=yield_ready_status,
+        execution_path=execution_path,
+        yield_ready_reason=yield_ready_reason,
     )
 
 
