@@ -6396,6 +6396,11 @@ def test_tsr_build_yield_bridge_resolves_instance_run_config_and_tsa(
             realized_coverage=0.9,
             aflb_input_row_count=4,
             au_assigned_row_count=4,
+            cache_sufficiency_verdict="insufficient",
+            cache_sufficiency_reasons=(
+                "No prior yield-bridge manifest found for cache comparison.",
+            ),
+            prior_manifest_found=False,
         )
 
     monkeypatch.setattr(cli_main, "build_tsr_aflb_yield_bridge", _fake_build)
@@ -6414,6 +6419,8 @@ def test_tsr_build_yield_bridge_resolves_instance_run_config_and_tsa(
     )
     assert any("aflb_yield_bridge_manifest_path:" in msg for msg in messages)
     assert any("top_area_coverage_source: default_0_80" in msg for msg in messages)
+    assert any("cache_sufficiency_verdict: insufficient" in msg for msg in messages)
+    assert any("prior_manifest_found: False" in msg for msg in messages)
 
 
 def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(

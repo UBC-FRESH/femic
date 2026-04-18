@@ -88,6 +88,7 @@ def _write_aflb_yield_bridge_fixture_inputs(
     instance_root: Path,
     *,
     top_area_coverage: float | None = None,
+    include_curve_tables: bool = True,
 ) -> Path:
     tsr_root = instance_root / "data" / "tsr"
     tsr_root.mkdir(parents=True, exist_ok=True)
@@ -121,6 +122,20 @@ def _write_aflb_yield_bridge_fixture_inputs(
             "si_level": ["L", "M", "H"],
         }
     ).to_csv(bundle_root / "au_table.csv", index=False)
+    if include_curve_tables:
+        pd.DataFrame(
+            {
+                "curve_id": [2900001, 2900002, 2900003],
+                "curve_type": ["untreated", "untreated", "untreated"],
+            }
+        ).to_csv(bundle_root / "curve_table.csv", index=False)
+        pd.DataFrame(
+            {
+                "curve_id": [2900001, 2900002, 2900003],
+                "x": [10, 20, 30],
+                "y": [100.0, 150.0, 200.0],
+            }
+        ).to_csv(bundle_root / "curve_points_table.csv", index=False)
 
     selection_payload: dict[str, object] = {"tsa": ["29"], "stratification": {}}
     if top_area_coverage is not None:
@@ -133,6 +148,49 @@ def _write_aflb_yield_bridge_fixture_inputs(
         encoding="utf-8",
     )
     return run_config_path
+
+
+def _write_yield_bridge_cache_evidence(
+    instance_root: Path,
+    *,
+    tsa: str = "29",
+    include_vdyp: bool = True,
+    include_tipsy_outputs: bool = True,
+    include_runtime_manifests: bool = True,
+) -> None:
+    data_root = instance_root / "data"
+    data_root.mkdir(parents=True, exist_ok=True)
+    if include_vdyp:
+        (data_root / f"vdyp_results-tsa{tsa}.pkl").write_bytes(b"pickle")
+        gpd.GeoDataFrame(
+            {"curve_id": [2900001], "curve_type": ["untreated"]},
+            geometry=[box(0, 0, 1, 1)],
+            crs="EPSG:3005",
+        ).to_feather(data_root / f"vdyp_curves_smooth-tsa{tsa}.feather")
+    if include_tipsy_outputs:
+        (data_root / f"03_input-tsa{tsa}.csv").write_text(
+            "curve_id,au\n2900001,1\n",
+            encoding="utf-8",
+        )
+        (data_root / f"04_output-tsa{tsa}.csv").write_text(
+            "curve_id,volume\n2900001,10\n",
+            encoding="utf-8",
+        )
+        (data_root / f"04_error-tsa{tsa}.csv").write_text(
+            "curve_id,error\n",
+            encoding="utf-8",
+        )
+    if include_runtime_manifests:
+        log_dir = instance_root / "runtime" / "logs" / "yield_bridge_fixture"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        (log_dir / "run_manifest-fixture.json").write_text(
+            json.dumps({"stage": "post_tipsy"}, indent=2),
+            encoding="utf-8",
+        )
+        (log_dir / "btc_manifest-fixture.json").write_text(
+            json.dumps({"stage": "btc"}, indent=2),
+            encoding="utf-8",
+        )
 
 
 def _write_landscape_unit_layer(
@@ -10009,6 +10067,8 @@ def test_build_tsr_aflb_yield_bridge_writes_default_artifacts(tmp_path: Path) ->
     assert result.strata_checkpoint_path.is_file()
     assert result.au_checkpoint_path.is_file()
     assert result.manifest_path.is_file()
+    assert result.cache_sufficiency_verdict == "insufficient"
+    assert result.prior_manifest_found is False
 
 
 def test_build_tsr_aflb_yield_bridge_defaults_top_area_coverage_to_point_80(
@@ -10029,6 +10089,7 @@ def test_build_tsr_aflb_yield_bridge_defaults_top_area_coverage_to_point_80(
         0.80
     )
     assert manifest_payload["selection"]["top_area_coverage_source"] == "default_0_80"
+    assert manifest_payload["cache_sufficiency"]["verdict"] == "insufficient"
 
 
 def test_build_tsr_aflb_yield_bridge_manifest_and_au_checkpoint_fields(
@@ -10047,18 +10108,22 @@ def test_build_tsr_aflb_yield_bridge_manifest_and_au_checkpoint_fields(
     manifest_payload = json.loads(result.manifest_path.read_text(encoding="utf-8"))
     au_checkpoint = gpd.read_feather(result.au_checkpoint_path)
 
-    assert manifest_payload["schema_version"] == 1
+    assert manifest_payload["schema_version"] == 2
     assert manifest_payload["artifact_kind"] == "aflb_yield_bridge"
     assert (
         manifest_payload["source"]["aflb_checkpoint_path"]
         == "data/tsr/aflb_checkpoint.feather"
     )
+    assert len(manifest_payload["source"]["aflb_checkpoint_sha256"]) == 64
     assert (
         manifest_payload["artifacts"]["aflb_au_checkpoint_path"]
         == "data/tsr/aflb_au_checkpoint.feather"
     )
     assert manifest_payload["selection"]["selected_strata_count"] == 1
     assert manifest_payload["selection"]["selected_strata"] == ["IDF_FD"]
+    assert len(manifest_payload["selection"]["au_signature"]) == 64
+    assert manifest_payload["cache_sufficiency"]["prior_manifest_found"] is False
+    assert manifest_payload["cache_sufficiency"]["verdict"] == "insufficient"
 
     for column in (
         "stratum",
@@ -10070,6 +10135,144 @@ def test_build_tsr_aflb_yield_bridge_manifest_and_au_checkpoint_fields(
     ):
         assert column in au_checkpoint.columns
     assert au_checkpoint["au"].notna().sum() >= 1
+
+
+def test_build_tsr_aflb_yield_bridge_cache_is_insufficient_without_prior_manifest(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    run_config_path = _write_aflb_yield_bridge_fixture_inputs(instance_root)
+    _write_yield_bridge_cache_evidence(instance_root)
+
+    result = tsr_recipes.build_tsr_aflb_yield_bridge(
+        instance_root=instance_root,
+        run_config_path=run_config_path,
+    )
+    manifest_payload = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+
+    assert result.cache_sufficiency_verdict == "insufficient"
+    assert any(
+        "No prior yield-bridge manifest found" in reason
+        for reason in result.cache_sufficiency_reasons
+    )
+    assert manifest_payload["cache_sufficiency"]["prior_manifest_found"] is False
+
+
+def test_build_tsr_aflb_yield_bridge_cache_detects_selection_drift(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    run_config_path = _write_aflb_yield_bridge_fixture_inputs(
+        instance_root,
+        top_area_coverage=0.80,
+    )
+    _write_yield_bridge_cache_evidence(instance_root)
+    tsr_recipes.build_tsr_aflb_yield_bridge(
+        instance_root=instance_root,
+        run_config_path=run_config_path,
+    )
+
+    drifted_run_config_path = _write_aflb_yield_bridge_fixture_inputs(
+        instance_root,
+        top_area_coverage=0.95,
+    )
+    result = tsr_recipes.build_tsr_aflb_yield_bridge(
+        instance_root=instance_root,
+        run_config_path=drifted_run_config_path,
+    )
+
+    assert result.cache_sufficiency_verdict == "insufficient"
+    assert any(
+        "Stratification settings changed" in reason
+        or "Selected strata changed" in reason
+        or "Realized coverage changed" in reason
+        for reason in result.cache_sufficiency_reasons
+    )
+    assert result.prior_manifest_found is True
+
+
+def test_build_tsr_aflb_yield_bridge_cache_detects_missing_vdyp_files(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    run_config_path = _write_aflb_yield_bridge_fixture_inputs(instance_root)
+    _write_yield_bridge_cache_evidence(instance_root)
+    tsr_recipes.build_tsr_aflb_yield_bridge(
+        instance_root=instance_root,
+        run_config_path=run_config_path,
+    )
+    (instance_root / "data" / "vdyp_results-tsa29.pkl").unlink()
+    (instance_root / "data" / "vdyp_curves_smooth-tsa29.feather").unlink()
+
+    result = tsr_recipes.build_tsr_aflb_yield_bridge(
+        instance_root=instance_root,
+        run_config_path=run_config_path,
+    )
+
+    assert result.cache_sufficiency_verdict == "insufficient"
+    assert any(
+        "VDYP results cache" in reason for reason in result.cache_sufficiency_reasons
+    )
+    assert any(
+        "smoothed VDYP curves cache" in reason
+        for reason in result.cache_sufficiency_reasons
+    )
+
+
+def test_build_tsr_aflb_yield_bridge_blocks_when_curve_bundle_missing(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    run_config_path = _write_aflb_yield_bridge_fixture_inputs(
+        instance_root,
+        include_curve_tables=False,
+    )
+    _write_yield_bridge_cache_evidence(instance_root)
+
+    result = tsr_recipes.build_tsr_aflb_yield_bridge(
+        instance_root=instance_root,
+        run_config_path=run_config_path,
+    )
+
+    assert result.cache_sufficiency_verdict == "blocked_missing_inputs"
+    assert any(
+        "curve table" in reason.lower() or "curve points table" in reason.lower()
+        for reason in result.cache_sufficiency_reasons
+    )
+
+
+def test_build_tsr_aflb_yield_bridge_cache_becomes_sufficient_with_matching_prior_manifest(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    run_config_path = _write_aflb_yield_bridge_fixture_inputs(instance_root)
+    _write_yield_bridge_cache_evidence(instance_root)
+    tsr_recipes.build_tsr_aflb_yield_bridge(
+        instance_root=instance_root,
+        run_config_path=run_config_path,
+    )
+
+    result = tsr_recipes.build_tsr_aflb_yield_bridge(
+        instance_root=instance_root,
+        run_config_path=run_config_path,
+    )
+    manifest_payload = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+
+    assert result.cache_sufficiency_verdict == "sufficient"
+    assert result.prior_manifest_found is True
+    assert manifest_payload["cache_sufficiency"]["verdict"] == "sufficient"
+    assert (
+        manifest_payload["cache_sufficiency"]["optional_manifests"][
+            "post_tipsy_manifest_count"
+        ]
+        == 1
+    )
+    assert (
+        manifest_payload["cache_sufficiency"]["optional_manifests"][
+            "btc_manifest_count"
+        ]
+        == 1
+    )
 
 
 def test_run_tsr_thlb_reconstructed_diagnostic_slice_restores_harvested_select_attribute_rows(

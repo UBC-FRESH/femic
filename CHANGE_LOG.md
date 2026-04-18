@@ -14474,3 +14474,39 @@
   - `.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py src/femic/tsr_catalog/__init__.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_cli_main.py`
   - `.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "yield_bridge" -q`
   - `.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "yield_bridge" -q`
+## 2026-04-18 - Implemented `P53.2c.1` yield-bridge cache sufficiency inspection for `#164`
+- Extended `femic tsr build-yield-bridge` to inspect downstream yield-cache reuse without running VDYP, BTC, TIPSY, or FANSIER.
+- The yield-bridge manifest now carries the current reuse provenance needed for later resume logic:
+  - AFLB checkpoint path plus SHA256;
+  - run-config path plus SHA256 when present;
+  - stratification settings and realized selected-strata coverage; and
+  - a deterministic AU signature derived from `_row_id`, `stratum_matched`, `si_level`, and `au`.
+- Added a conservative `cache_sufficiency` block to `data/tsr/aflb_yield_bridge_manifest.json` with:
+  - `sufficient`, `insufficient`, and `blocked_missing_inputs` verdicts;
+  - explicit reasons;
+  - prior-manifest compatibility details;
+  - required evidence paths; and
+  - optional BTC/post-TIPSY manifest evidence summaries.
+- The new inspection logic:
+  - treats missing or malformed `curve_table.csv` / `curve_points_table.csv` as `blocked_missing_inputs`;
+  - treats missing prior-manifest, VDYP, TIPSY-handoff, or BTC/post-TIPSY evidence as conservative `insufficient`; and
+  - only reports `sufficient` when the current AFLB-derived selection matches the prior manifest and all inspected cache surfaces are present and coherent.
+- Added focused regression coverage for:
+  - no-prior-manifest insufficiency;
+  - strata/coverage drift against a previous manifest;
+  - missing VDYP cache files;
+  - blocked curve-bundle preconditions;
+  - a fully matching sufficient case; and
+  - CLI summary output for the new verdict fields.
+- Validation passed:
+  - `.venv\Scripts\python.exe -m ruff format src/femic/tsr_catalog/recipes.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_cli_main.py`
+  - `.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_cli_main.py`
+  - `.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "yield_bridge" -q`
+  - `.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "yield_bridge" -q`
+- Milestone hygiene also passed:
+  - `.venv\Scripts\python.exe -m sphinx -b html docs _build/html -W`
+  - `.venv\Scripts\python.exe -m ruff check src tests`
+  - `.venv\Scripts\python.exe -m mypy src`
+  - `.venv\Scripts\python.exe -m pre_commit run --all-files`
+- Full-suite caveat:
+  - `.venv\Scripts\python.exe -m pytest` still reports unrelated branch-level failures outside this slice in `tests/test_tsr_recipes.py` and `tests/test_tsr_step13_attributes.py`; the new yield-bridge coverage remains green.

@@ -17,7 +17,7 @@ import shutil
 from pathlib import Path
 import re
 from time import perf_counter
-from typing import Any, Sequence
+from typing import Any, Literal, Sequence
 
 import geopandas as gpd  # type: ignore[import-untyped]
 import nbformat
@@ -220,6 +220,9 @@ _YIELD_BRIDGE_DEFAULT_TOP_AREA_COVERAGE = 0.80
 _YIELD_BRIDGE_DEFAULT_STRAT_BEC_GROUPING = "zone"
 _YIELD_BRIDGE_DEFAULT_STRAT_SPECIES_COMBO_COUNT = 1
 _YIELD_BRIDGE_DEFAULT_INCLUDE_TM_SPECIES2_FOR_SINGLE = True
+_YIELD_BRIDGE_CACHE_VERDICT_SUFFICIENT = "sufficient"
+_YIELD_BRIDGE_CACHE_VERDICT_INSUFFICIENT = "insufficient"
+_YIELD_BRIDGE_CACHE_VERDICT_BLOCKED_MISSING_INPUTS = "blocked_missing_inputs"
 _YIELD_BRIDGE_SI_LEVEL_QUANTILES: dict[str, list[int]] = {
     "L": [5, 20, 35],
     "M": [35, 50, 65],
@@ -763,6 +766,33 @@ class TsrAflbYieldBridgeBuildResult:
     realized_coverage: float
     aflb_input_row_count: int
     au_assigned_row_count: int
+    cache_sufficiency_verdict: str = _YIELD_BRIDGE_CACHE_VERDICT_INSUFFICIENT
+    cache_sufficiency_reasons: tuple[str, ...] = ()
+    prior_manifest_found: bool = False
+
+
+@dataclass(frozen=True)
+class TsrAflbYieldBridgeCacheInspectionResult:
+    """Cache-sufficiency verdict for the bounded AFLB yield-bridge seam."""
+
+    verdict: str
+    reasons: tuple[str, ...]
+    checked_at_utc: str
+    prior_manifest_found: bool
+    evidence_paths: dict[str, Any]
+    prior_manifest_summary: dict[str, Any]
+    optional_manifest_summary: dict[str, Any]
+
+    def to_manifest_payload(self) -> dict[str, Any]:
+        return {
+            "verdict": self.verdict,
+            "reasons": list(self.reasons),
+            "checked_at_utc": self.checked_at_utc,
+            "prior_manifest_found": self.prior_manifest_found,
+            "evidence_paths": self.evidence_paths,
+            "prior_manifest": self.prior_manifest_summary,
+            "optional_manifests": self.optional_manifest_summary,
+        }
 
 
 def _read_json_object(path: Path, *, description: str) -> dict[str, Any]:
@@ -5668,7 +5698,11 @@ def _load_checkpoint_geodataframe(path: Path) -> gpd.GeoDataFrame:
     return checkpoint
 
 
-def _yield_bridge_row_apply(frame: pd.DataFrame, func: Any, axis: int = 1) -> pd.Series:
+def _yield_bridge_row_apply(
+    frame: pd.DataFrame,
+    func: Any,
+    axis: Literal["columns", 1] = 1,
+) -> pd.Series[Any]:
     return frame.apply(func, axis=axis)
 
 
@@ -5779,6 +5813,510 @@ def _load_yield_bridge_au_table(*, instance_root: Path) -> tuple[Path, pd.DataFr
             + ", ".join(missing_columns)
         )
     return au_table_path, au_table
+
+
+def _render_instance_relative_paths(
+    *, instance_root: Path, candidates: Sequence[Path]
+) -> list[str]:
+    return [
+        _render_instance_relative_path(instance_root=instance_root, candidate=path)
+        for path in candidates
+    ]
+
+
+def _normalize_yield_bridge_signature_value(value: Any) -> str:
+    if pd.isna(value):
+        return ""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        if value.is_integer():
+            return str(int(value))
+        return format(value, ".12g")
+    return str(value)
+
+
+def _compute_yield_bridge_au_signature(au_checkpoint: pd.DataFrame) -> str:
+    signature_frame = pd.DataFrame(index=au_checkpoint.index)
+    if "_row_id" in au_checkpoint.columns:
+        signature_frame["_row_id"] = au_checkpoint["_row_id"]
+    else:
+        signature_frame["_row_id"] = pd.Series(
+            range(len(au_checkpoint)), index=au_checkpoint.index
+        )
+    for column in ("stratum_matched", "si_level", "au"):
+        if column not in au_checkpoint.columns:
+            raise TsrRecipeError(
+                "Yield bridge AU signature requires column "
+                f"`{column}` in the AU checkpoint."
+            )
+        signature_frame[column] = au_checkpoint[column]
+    for column in signature_frame.columns:
+        signature_frame[column] = signature_frame[column].map(
+            _normalize_yield_bridge_signature_value
+        )
+    signature_frame = signature_frame.sort_values(
+        ["_row_id", "stratum_matched", "si_level", "au"],
+        kind="mergesort",
+    )
+    payload = json.dumps(
+        signature_frame.to_dict(orient="records"),
+        ensure_ascii=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _build_yield_bridge_current_provenance(
+    *,
+    instance_root: Path,
+    tsa: str,
+    aflb_checkpoint_path: Path,
+    run_config_path: Path | None,
+    run_config_sha256: str | None,
+    au_table_path: Path,
+    au_table_for_tsa: pd.DataFrame,
+    top_area_coverage: float,
+    top_area_coverage_source: str,
+    strat_bec_grouping: str,
+    strat_species_combo_count: int,
+    strat_include_tm_species2_for_single: bool,
+    selected_strata_codes: Sequence[str],
+    realized_coverage: float,
+    au_signature: str,
+) -> dict[str, Any]:
+    return {
+        "tsa": tsa,
+        "aflb_checkpoint_path": _render_instance_relative_path(
+            instance_root=instance_root,
+            candidate=aflb_checkpoint_path,
+        ),
+        "aflb_checkpoint_sha256": file_sha256(aflb_checkpoint_path),
+        "run_config_path": _render_instance_relative_path(
+            instance_root=instance_root,
+            candidate=run_config_path,
+        ),
+        "run_config_sha256": run_config_sha256,
+        "au_table_path": _render_instance_relative_path(
+            instance_root=instance_root,
+            candidate=au_table_path,
+        ),
+        "au_table_row_count_for_tsa": int(len(au_table_for_tsa)),
+        "stratification": {
+            "top_area_coverage_target": top_area_coverage,
+            "top_area_coverage_source": top_area_coverage_source,
+            "bec_grouping": strat_bec_grouping,
+            "species_combo_count": strat_species_combo_count,
+            "include_tm_species2_for_single": strat_include_tm_species2_for_single,
+        },
+        "selection": {
+            "selected_strata": [str(code) for code in selected_strata_codes],
+            "selected_strata_count": int(len(selected_strata_codes)),
+            "realized_coverage": realized_coverage,
+            "au_signature": au_signature,
+        },
+    }
+
+
+def _load_yield_bridge_bundle_csv(
+    *,
+    path: Path,
+    relative_path: str,
+    description: str,
+) -> tuple[pd.DataFrame | None, str | None]:
+    if not path.exists():
+        return None, f"Missing {description}: `{relative_path}`."
+    try:
+        return pd.read_csv(path), None
+    except Exception as exc:  # pragma: no cover - filesystem/runtime seam
+        return None, (
+            f"Unable to read {description} at `{relative_path}`: "
+            f"{exc.__class__.__name__}."
+        )
+
+
+def _inspect_yield_bridge_curve_bundle_tables(
+    *,
+    instance_root: Path,
+    curve_table_path: Path,
+    curve_points_table_path: Path,
+) -> tuple[list[str], dict[str, Any]]:
+    blocked_reasons: list[str] = []
+    curve_table_relative = _render_instance_relative_path(
+        instance_root=instance_root,
+        candidate=curve_table_path,
+    )
+    curve_points_relative = _render_instance_relative_path(
+        instance_root=instance_root,
+        candidate=curve_points_table_path,
+    )
+    curve_table, curve_table_error = _load_yield_bridge_bundle_csv(
+        path=curve_table_path,
+        relative_path=curve_table_relative,
+        description="yield bundle curve table",
+    )
+    curve_points_table, curve_points_error = _load_yield_bridge_bundle_csv(
+        path=curve_points_table_path,
+        relative_path=curve_points_relative,
+        description="yield bundle curve points table",
+    )
+    if curve_table_error is not None:
+        blocked_reasons.append(curve_table_error)
+    if curve_points_error is not None:
+        blocked_reasons.append(curve_points_error)
+    if blocked_reasons:
+        return blocked_reasons, {
+            "curve_table_path": curve_table_relative,
+            "curve_points_table_path": curve_points_relative,
+        }
+
+    assert curve_table is not None
+    assert curve_points_table is not None
+    required_curve_columns = {"curve_id", "curve_type"}
+    missing_curve_columns = sorted(required_curve_columns - set(curve_table.columns))
+    if missing_curve_columns:
+        blocked_reasons.append(
+            "Yield bundle curve table is missing required columns: "
+            + ", ".join(missing_curve_columns)
+            + "."
+        )
+    required_curve_points_columns = {"curve_id", "x", "y"}
+    missing_curve_points_columns = sorted(
+        required_curve_points_columns - set(curve_points_table.columns)
+    )
+    if missing_curve_points_columns:
+        blocked_reasons.append(
+            "Yield bundle curve points table is missing required columns: "
+            + ", ".join(missing_curve_points_columns)
+            + "."
+        )
+    if curve_table.empty:
+        blocked_reasons.append("Yield bundle curve table is empty.")
+    if curve_points_table.empty:
+        blocked_reasons.append("Yield bundle curve points table is empty.")
+
+    overlapping_curve_ids = set()
+    if not blocked_reasons:
+        overlapping_curve_ids = set(
+            pd.to_numeric(curve_table["curve_id"], errors="coerce").dropna()
+        ) & set(pd.to_numeric(curve_points_table["curve_id"], errors="coerce").dropna())
+        if not overlapping_curve_ids:
+            blocked_reasons.append(
+                "Yield bundle curve tables do not share any common `curve_id` values."
+            )
+
+    return blocked_reasons, {
+        "curve_table_path": curve_table_relative,
+        "curve_table_row_count": 0 if curve_table is None else int(len(curve_table)),
+        "curve_points_table_path": curve_points_relative,
+        "curve_points_table_row_count": (
+            0 if curve_points_table is None else int(len(curve_points_table))
+        ),
+        "shared_curve_id_count": int(len(overlapping_curve_ids)),
+    }
+
+
+def _inspect_yield_bridge_cache_sufficiency(
+    *,
+    instance_root: Path,
+    tsa: str,
+    manifest_path: Path,
+    au_table_path: Path,
+    current_provenance: dict[str, Any],
+) -> TsrAflbYieldBridgeCacheInspectionResult:
+    checked_at_utc = datetime.now(UTC).isoformat()
+    blocked_reasons: list[str] = []
+    insufficiency_reasons: list[str] = []
+
+    data_root = instance_root / "data"
+    bundle_root = data_root / "model_input_bundle"
+    vdyp_results_path = data_root / f"vdyp_results-tsa{tsa}.pkl"
+    vdyp_curves_path = data_root / f"vdyp_curves_smooth-tsa{tsa}.feather"
+    curve_table_path = bundle_root / "curve_table.csv"
+    curve_points_table_path = bundle_root / "curve_points_table.csv"
+    tipsy_input_path = data_root / f"03_input-tsa{tsa}.csv"
+    tipsy_output_out_path = data_root / f"04_output-tsa{tsa}.out"
+    tipsy_output_csv_path = data_root / f"04_output-tsa{tsa}.csv"
+    tipsy_error_path = data_root / f"04_error-tsa{tsa}.csv"
+    runtime_logs_root = instance_root / "runtime" / "logs"
+    post_tipsy_manifest_paths = (
+        tuple(sorted(runtime_logs_root.rglob("run_manifest-*.json")))
+        if runtime_logs_root.exists()
+        else ()
+    )
+    btc_manifest_paths = (
+        tuple(sorted(runtime_logs_root.rglob("btc_manifest-*.json")))
+        if runtime_logs_root.exists()
+        else ()
+    )
+    selected_tipsy_output_path = None
+    for candidate in (tipsy_output_out_path, tipsy_output_csv_path):
+        if candidate.exists():
+            selected_tipsy_output_path = candidate
+            break
+
+    evidence_paths = {
+        "prior_manifest_path": _render_instance_relative_path(
+            instance_root=instance_root,
+            candidate=manifest_path,
+        ),
+        "aflb_checkpoint_path": current_provenance["aflb_checkpoint_path"],
+        "au_table_path": _render_instance_relative_path(
+            instance_root=instance_root,
+            candidate=au_table_path,
+        ),
+        "vdyp_results_path": _render_instance_relative_path(
+            instance_root=instance_root,
+            candidate=vdyp_results_path,
+        ),
+        "vdyp_curves_path": _render_instance_relative_path(
+            instance_root=instance_root,
+            candidate=vdyp_curves_path,
+        ),
+        "curve_table_path": _render_instance_relative_path(
+            instance_root=instance_root,
+            candidate=curve_table_path,
+        ),
+        "curve_points_table_path": _render_instance_relative_path(
+            instance_root=instance_root,
+            candidate=curve_points_table_path,
+        ),
+        "tipsy_input_path": _render_instance_relative_path(
+            instance_root=instance_root,
+            candidate=tipsy_input_path,
+        ),
+        "tipsy_output_candidates": _render_instance_relative_paths(
+            instance_root=instance_root,
+            candidates=(tipsy_output_out_path, tipsy_output_csv_path),
+        ),
+        "tipsy_error_path": _render_instance_relative_path(
+            instance_root=instance_root,
+            candidate=tipsy_error_path,
+        ),
+    }
+
+    prior_manifest_found = manifest_path.exists()
+    prior_manifest_summary: dict[str, Any] = {
+        "path": evidence_paths["prior_manifest_path"],
+        "found": prior_manifest_found,
+        "compatible": None,
+        "mismatch_fields": [],
+    }
+    if not prior_manifest_found:
+        insufficiency_reasons.append(
+            "No prior yield-bridge manifest found for cache comparison."
+        )
+    else:
+        try:
+            prior_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            blocked_reasons.append(
+                "Prior yield-bridge manifest is malformed and cannot be inspected: "
+                f"`{prior_manifest_summary['path']}`."
+            )
+            prior_manifest_summary["parse_error"] = str(exc)
+            prior_manifest_summary["compatible"] = False
+        else:
+            if not isinstance(prior_payload, dict):
+                blocked_reasons.append(
+                    "Prior yield-bridge manifest payload is not a JSON object: "
+                    f"`{prior_manifest_summary['path']}`."
+                )
+                prior_manifest_summary["compatible"] = False
+            else:
+                prior_manifest_summary["schema_version"] = prior_payload.get(
+                    "schema_version"
+                )
+                prior_manifest_summary["artifact_kind"] = prior_payload.get(
+                    "artifact_kind"
+                )
+                missing_fields: list[str] = []
+                prior_source = prior_payload.get("source")
+                if not isinstance(prior_source, dict):
+                    missing_fields.extend(
+                        ("source.aflb_checkpoint_sha256", "source.run_config_sha256")
+                    )
+                    prior_source = {}
+                prior_stratification = prior_payload.get("stratification")
+                if not isinstance(prior_stratification, dict):
+                    missing_fields.append("stratification")
+                    prior_stratification = {}
+                prior_selection = prior_payload.get("selection")
+                if not isinstance(prior_selection, dict):
+                    missing_fields.extend(
+                        (
+                            "selection.selected_strata",
+                            "selection.selected_strata_count",
+                            "selection.realized_coverage",
+                            "selection.au_signature",
+                        )
+                    )
+                    prior_selection = {}
+                else:
+                    for field in (
+                        "selected_strata",
+                        "selected_strata_count",
+                        "realized_coverage",
+                        "au_signature",
+                    ):
+                        if field not in prior_selection:
+                            missing_fields.append(f"selection.{field}")
+                if "aflb_checkpoint_sha256" not in prior_source:
+                    missing_fields.append("source.aflb_checkpoint_sha256")
+                if not missing_fields:
+                    current_selected_strata = list(
+                        current_provenance["selection"]["selected_strata"]
+                    )
+                    prior_selected_strata_raw = prior_selection.get(
+                        "selected_strata", []
+                    )
+                    prior_selected_strata = (
+                        [str(value) for value in prior_selected_strata_raw]
+                        if isinstance(prior_selected_strata_raw, list)
+                        else []
+                    )
+                    mismatch_fields: list[str] = []
+                    if str(prior_source.get("aflb_checkpoint_sha256")) != str(
+                        current_provenance["aflb_checkpoint_sha256"]
+                    ):
+                        mismatch_fields.append("source.aflb_checkpoint_sha256")
+                        insufficiency_reasons.append(
+                            "AFLB checkpoint SHA256 changed since the prior "
+                            "yield-bridge manifest."
+                        )
+                    prior_run_config_sha256 = prior_source.get("run_config_sha256")
+                    current_run_config_sha256 = current_provenance["run_config_sha256"]
+                    if (
+                        prior_run_config_sha256
+                        and current_run_config_sha256
+                        and str(prior_run_config_sha256)
+                        != str(current_run_config_sha256)
+                    ):
+                        mismatch_fields.append("source.run_config_sha256")
+                        insufficiency_reasons.append(
+                            "Run-config SHA256 changed since the prior yield-bridge "
+                            "manifest."
+                        )
+                    if prior_stratification != current_provenance["stratification"]:
+                        mismatch_fields.append("stratification")
+                        insufficiency_reasons.append(
+                            "Stratification settings changed since the prior "
+                            "yield-bridge manifest."
+                        )
+                    if prior_selected_strata != current_selected_strata:
+                        mismatch_fields.append("selection.selected_strata")
+                        insufficiency_reasons.append(
+                            "Selected strata changed since the prior yield-bridge "
+                            "manifest."
+                        )
+                    if int(prior_selection.get("selected_strata_count", 0)) != int(
+                        current_provenance["selection"]["selected_strata_count"]
+                    ):
+                        mismatch_fields.append("selection.selected_strata_count")
+                    prior_realized_coverage = pd.to_numeric(
+                        pd.Series([prior_selection.get("realized_coverage")]),
+                        errors="coerce",
+                    ).iloc[0]
+                    if pd.isna(prior_realized_coverage) or not math.isclose(
+                        float(prior_realized_coverage),
+                        float(current_provenance["selection"]["realized_coverage"]),
+                        rel_tol=0.0,
+                        abs_tol=1e-9,
+                    ):
+                        mismatch_fields.append("selection.realized_coverage")
+                        insufficiency_reasons.append(
+                            "Realized coverage changed since the prior yield-bridge "
+                            "manifest."
+                        )
+                    if str(prior_selection.get("au_signature", "")) != str(
+                        current_provenance["selection"]["au_signature"]
+                    ):
+                        mismatch_fields.append("selection.au_signature")
+                        insufficiency_reasons.append(
+                            "AU signature changed since the prior yield-bridge "
+                            "manifest."
+                        )
+                    prior_manifest_summary["mismatch_fields"] = mismatch_fields
+                    prior_manifest_summary["compatible"] = not mismatch_fields
+                else:
+                    insufficiency_reasons.append(
+                        "Prior yield-bridge manifest is missing cache provenance "
+                        "fields required for comparison."
+                    )
+                    prior_manifest_summary["missing_fields"] = sorted(
+                        set(missing_fields)
+                    )
+                    prior_manifest_summary["compatible"] = False
+
+    for path, description in (
+        (vdyp_results_path, "VDYP results cache"),
+        (vdyp_curves_path, "smoothed VDYP curves cache"),
+        (tipsy_input_path, "TIPSY handoff input"),
+        (tipsy_error_path, "TIPSY error surface"),
+    ):
+        if not path.exists():
+            insufficiency_reasons.append(
+                f"Missing {description}: "
+                f"`{_render_instance_relative_path(instance_root=instance_root, candidate=path)}`."
+            )
+    if selected_tipsy_output_path is None:
+        insufficiency_reasons.append(
+            "Missing TIPSY handoff output: expected one of "
+            + ", ".join(
+                f"`{path}`" for path in evidence_paths["tipsy_output_candidates"]
+            )
+            + "."
+        )
+
+    curve_blocked_reasons, curve_bundle_evidence = (
+        _inspect_yield_bridge_curve_bundle_tables(
+            instance_root=instance_root,
+            curve_table_path=curve_table_path,
+            curve_points_table_path=curve_points_table_path,
+        )
+    )
+    blocked_reasons.extend(curve_blocked_reasons)
+    evidence_paths.update(curve_bundle_evidence)
+
+    optional_manifest_summary = {
+        "post_tipsy_manifest_count": len(post_tipsy_manifest_paths),
+        "post_tipsy_manifest_paths": _render_instance_relative_paths(
+            instance_root=instance_root,
+            candidates=post_tipsy_manifest_paths,
+        ),
+        "btc_manifest_count": len(btc_manifest_paths),
+        "btc_manifest_paths": _render_instance_relative_paths(
+            instance_root=instance_root,
+            candidates=btc_manifest_paths,
+        ),
+    }
+    if not post_tipsy_manifest_paths:
+        insufficiency_reasons.append(
+            "No post-TIPSY run manifest evidence found under `runtime/logs`."
+        )
+    if not btc_manifest_paths:
+        insufficiency_reasons.append(
+            "No BTC manifest evidence found under `runtime/logs`."
+        )
+
+    reasons = tuple(dict.fromkeys(blocked_reasons + insufficiency_reasons))
+    verdict = _YIELD_BRIDGE_CACHE_VERDICT_SUFFICIENT
+    if blocked_reasons:
+        verdict = _YIELD_BRIDGE_CACHE_VERDICT_BLOCKED_MISSING_INPUTS
+    elif insufficiency_reasons:
+        verdict = _YIELD_BRIDGE_CACHE_VERDICT_INSUFFICIENT
+
+    return TsrAflbYieldBridgeCacheInspectionResult(
+        verdict=verdict,
+        reasons=reasons,
+        checked_at_utc=checked_at_utc,
+        prior_manifest_found=prior_manifest_found,
+        evidence_paths=evidence_paths,
+        prior_manifest_summary=prior_manifest_summary,
+        optional_manifest_summary=optional_manifest_summary,
+    )
 
 
 def build_tsr_aflb_yield_bridge(
@@ -5897,7 +6435,7 @@ def build_tsr_aflb_yield_bridge(
         )
     )
     realized_coverage = float(strata_summary_export["coverage"].sum())
-    import distance
+    import distance  # type: ignore[import-untyped]
 
     best_match = build_stratum_lexmatch_alias_map(
         f_table=strata_indexed,
@@ -5978,49 +6516,70 @@ def build_tsr_aflb_yield_bridge(
         instance_root=resolved_instance_root
     )
     strata_checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
-    strata_checkpoint.to_feather(strata_checkpoint_path)
-    au_checkpoint.to_feather(au_checkpoint_path)
-
     resolved_run_config_sha256 = (
         file_sha256(resolved_run_config_path)
         if resolved_run_config_path is not None
         else None
     )
+    au_signature = _compute_yield_bridge_au_signature(au_checkpoint)
+    current_provenance = _build_yield_bridge_current_provenance(
+        instance_root=resolved_instance_root,
+        tsa=resolved_tsa,
+        aflb_checkpoint_path=resolved_aflb_checkpoint_path,
+        run_config_path=resolved_run_config_path,
+        run_config_sha256=resolved_run_config_sha256,
+        au_table_path=au_table_path,
+        au_table_for_tsa=au_table_for_tsa,
+        top_area_coverage=resolved_top_area_coverage,
+        top_area_coverage_source=top_area_coverage_source,
+        strat_bec_grouping=strat_bec_grouping,
+        strat_species_combo_count=strat_species_combo_count,
+        strat_include_tm_species2_for_single=strat_include_tm_species2_for_single,
+        selected_strata_codes=selected_strata_codes,
+        realized_coverage=realized_coverage,
+        au_signature=au_signature,
+    )
+    cache_inspection = _inspect_yield_bridge_cache_sufficiency(
+        instance_root=resolved_instance_root,
+        tsa=resolved_tsa,
+        manifest_path=manifest_path,
+        au_table_path=au_table_path,
+        current_provenance=current_provenance,
+    )
+
+    strata_checkpoint.to_feather(strata_checkpoint_path)
+    au_checkpoint.to_feather(au_checkpoint_path)
     manifest_payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "artifact_kind": "aflb_yield_bridge",
         "slice_status": "aflb_to_strata_au",
         "tsa": resolved_tsa,
         "source": {
-            "aflb_checkpoint_path": _render_instance_relative_path(
-                instance_root=resolved_instance_root,
-                candidate=resolved_aflb_checkpoint_path,
-            ),
-            "run_config_path": _render_instance_relative_path(
-                instance_root=resolved_instance_root,
-                candidate=resolved_run_config_path,
-            ),
-            "run_config_sha256": resolved_run_config_sha256,
-            "au_table_path": _render_instance_relative_path(
-                instance_root=resolved_instance_root,
-                candidate=au_table_path,
-            ),
+            "aflb_checkpoint_path": current_provenance["aflb_checkpoint_path"],
+            "aflb_checkpoint_sha256": current_provenance["aflb_checkpoint_sha256"],
+            "run_config_path": current_provenance["run_config_path"],
+            "run_config_sha256": current_provenance["run_config_sha256"],
+            "au_table_path": current_provenance["au_table_path"],
         },
+        "stratification": copy.deepcopy(current_provenance["stratification"]),
         "selection": {
-            "top_area_coverage_target": resolved_top_area_coverage,
-            "top_area_coverage_source": top_area_coverage_source,
-            "selected_strata_count": len(selected_strata_codes),
-            "realized_coverage": realized_coverage,
-            "selected_strata": list(selected_strata_codes),
+            "top_area_coverage_target": current_provenance["stratification"][
+                "top_area_coverage_target"
+            ],
+            "top_area_coverage_source": current_provenance["stratification"][
+                "top_area_coverage_source"
+            ],
+            "selected_strata_count": current_provenance["selection"][
+                "selected_strata_count"
+            ],
+            "realized_coverage": current_provenance["selection"]["realized_coverage"],
+            "selected_strata": copy.deepcopy(
+                current_provenance["selection"]["selected_strata"]
+            ),
+            "au_signature": current_provenance["selection"]["au_signature"],
             "site_index_iqr_mean": site_index_iqr_mean,
-            "stratification": {
-                "bec_grouping": strat_bec_grouping,
-                "species_combo_count": strat_species_combo_count,
-                "include_tm_species2_for_single": (
-                    strat_include_tm_species2_for_single
-                ),
-            },
         },
+        "cache_sufficiency": cache_inspection.to_manifest_payload(),
         "artifacts": {
             "aflb_strata_checkpoint_path": _render_instance_relative_path(
                 instance_root=resolved_instance_root,
@@ -6062,6 +6621,9 @@ def build_tsr_aflb_yield_bridge(
         realized_coverage=realized_coverage,
         aflb_input_row_count=len(aflb_checkpoint),
         au_assigned_row_count=int(au_checkpoint["au"].notna().sum()),
+        cache_sufficiency_verdict=cache_inspection.verdict,
+        cache_sufficiency_reasons=cache_inspection.reasons,
+        prior_manifest_found=cache_inspection.prior_manifest_found,
     )
 
 

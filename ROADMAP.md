@@ -16731,6 +16731,22 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - generalize into the broader named-pipeline registry under `#163`.
   - Current execution precondition:
     - local `external/femic-tsa29-instance/data/tsr/aflb_checkpoint.feather` may be absent after the generated-artifact hygiene cleanup, so the first command surface must either regenerate that upstream checkpoint explicitly or fail with a clear remediation message instead of assuming the file is still present.
+- 2026-04-18: The next bounded `#164` slice is `P53.2c.1`, still inside the existing `build-yield-bridge` command.
+  - Implementation target:
+    - add conservative cache-sufficiency inspection for the current AFLB-derived strata/AU selection without widening into VDYP/TIPSY/FANSIER execution.
+  - Required outputs for this slice:
+    - extend `data/tsr/aflb_yield_bridge_manifest.json` with stable provenance for the current AFLB/run-config/selection state; and
+    - add a three-state cache verdict (`sufficient`, `insufficient`, `blocked_missing_inputs`) plus evidence/reason details.
+  - Required inspection surfaces:
+    - prior `aflb_yield_bridge_manifest.json` when present;
+    - `data/vdyp_results-tsaXX.pkl`;
+    - `data/vdyp_curves_smooth-tsaXX.feather`;
+    - `data/model_input_bundle/{au_table,curve_table,curve_points_table}.csv`; and
+    - optional supporting evidence from post-TIPSY/BTC manifests and `03_input` / `04_output` / `04_error` handoff files.
+  - Scope boundary:
+    - keep missing `curve_table.csv` / `curve_points_table.csv` in `blocked_missing_inputs`;
+    - treat absent post-TIPSY/BTC evidence as `insufficient`, not blocked; and
+    - do not publish `aflb_yield_ready_checkpoint.feather` yet.
 - 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
   - Root cause:
     - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.

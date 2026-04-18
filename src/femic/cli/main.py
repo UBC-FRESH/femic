@@ -2910,6 +2910,12 @@ def _print_tsr_aflb_yield_bridge_build_summary(
     console.print(f"realized_coverage: {result.realized_coverage:.3f}")
     console.print(f"aflb_input_row_count: {result.aflb_input_row_count}")
     console.print(f"au_assigned_row_count: {result.au_assigned_row_count}")
+    console.print(f"cache_sufficiency_verdict: {result.cache_sufficiency_verdict}")
+    if result.cache_sufficiency_reasons:
+        console.print(
+            "cache_sufficiency_reason: " + result.cache_sufficiency_reasons[0]
+        )
+    console.print(f"prior_manifest_found: {result.prior_manifest_found}")
 
 
 def _print_tsr_source_layer_overrides_init_summary(
