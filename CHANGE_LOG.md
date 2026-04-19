@@ -14642,3 +14642,15 @@
 - Full-suite note:
   - full `pytest` still fails only on the same eight unrelated tests already parked under `#166`; and
   - those failures did not change during the `#164` closeout slice.
+## 2026-04-18 - Opened the next contract-first child under umbrella `#163`
+- Opened `#167`:
+  - `Feature: define named pipeline registry and runbook contracts`
+- Scope captured for the new child:
+  - named pipeline identity and naming rules;
+  - registry discovery/layering and lookup precedence;
+  - runbook contract fields for pipeline selection and restart seams; and
+  - compatibility mapping from current recipe-based TSR/THLB flows into the future named-pipeline model.
+- Rollout management decision:
+  - kept `#163` as umbrella-only;
+  - did not open multiple new feature children after closing `#164`; and
+  - deferred the likely runner-implementation child until the contract issue in `#167` is narrowed first.
