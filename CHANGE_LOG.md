@@ -14691,3 +14691,24 @@
   - kept `#168` intentionally narrow and TSR-only;
   - kept multi-family execution, registry mutation, and generic pipeline expansion out of scope; and
   - preserved `#167` as the contract-definition child that `#168` should implement against.
+## 2026-04-18 - Implemented the first proof-oriented named-pipeline runner for `#168`
+- Added named-pipeline proof-runner surfaces:
+  - new module `src/femic/named_pipelines.py` for built-in registry loading, registry layering, runbook loading, execution-plan resolution, and proof-runner dispatch;
+  - packaged built-in registry resource under `src/femic/resources/pipelines/registry.yaml`; and
+  - top-level CLI surface `femic pipelines run --runbook ... [--instance-root ...]`.
+- Bounded proof scope for this first runner:
+  - only `pipeline_id = tsr.thlb_reviewed`;
+  - only seams `scratch`, `aflb`, `aflb_yield_ready`, and `lhlb_curve_ready`; and
+  - orchestration-only delegation into the existing reviewed TSR THLB reconstructed lane.
+- Supporting repo updates:
+  - added targeted coverage in `tests/test_named_pipelines.py` and `tests/test_cli_main.py`;
+  - documented the new CLI surface in `docs/reference/cli.rst`; and
+  - packaged the built-in registry resource through `pyproject.toml`.
+- Validation for this slice:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py tests/test_cli_main.py -k "named_pipeline or pipelines_run" -q`
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "tsr_thlb_netdown_run_uses_default_paths or pipelines_run" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py src/femic/cli/main.py tests/test_named_pipelines.py tests/test_cli_main.py`
+  - `.\.venv\Scripts\python.exe -m pytest`
+- Full-suite note:
+  - full `pytest` returned only the same eight unrelated parked failures already tracked under `#166`; and
+  - the new proof-runner slice no longer introduces additional regressions after restoring the THLB CLI outcome-count summary.

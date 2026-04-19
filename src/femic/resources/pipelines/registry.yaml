@@ -1,0 +1,28 @@
+schema_version: 1
+registry_kind: pipeline_registry
+pipelines:
+  - pipeline_id: tsr.thlb_reviewed
+    label: TSR reviewed THLB proof lane
+    kind: tsr
+    summary: Resolve and run the reviewed TSR THLB proof lane from a runbook.
+    default_instance_runbook: runbooks/pipelines/tsr.thlb_reviewed.yaml
+    seams:
+      - seam_id: scratch
+        start_mode: scratch
+        stage_label: Full reviewed TSR THLB run
+      - seam_id: aflb
+        checkpoint_path: data/tsr/aflb_checkpoint.feather
+        checkpoint_kind: aflb_checkpoint
+        baseline_signal: aflb_checkpoint_restart
+      - seam_id: aflb_yield_ready
+        checkpoint_path: data/tsr/aflb_yield_ready_checkpoint.feather
+        checkpoint_kind: aflb_yield_ready_checkpoint
+        baseline_signal: aflb_yield_ready_checkpoint_restart
+      - seam_id: lhlb_curve_ready
+        checkpoint_path: data/tsr/lhlb_curve_ready_checkpoint.feather
+        checkpoint_kind: lhlb_curve_ready_checkpoint
+        baseline_signal: lhlb_curve_ready_checkpoint_restart
+    recipes:
+      - recipe_id: tsr.thlb_netdown
+        recipe_kind: tsr_thlb_netdown
+        default_recipe_path: config/tsr/thlb_netdown.recipe.yaml

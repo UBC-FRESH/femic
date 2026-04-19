@@ -16931,6 +16931,21 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
   - Rollout relationship:
     - `#167` remains the contract-definition child; and
     - `#168` is the first narrow execution child that should consume that contract without widening into multi-family pipeline work.
+- 2026-04-18: Implemented the first proof-oriented named-pipeline runner surface for `#168`.
+  - Delivered code surfaces:
+    - new module `src/femic/named_pipelines.py` for built-in registry loading, registry layering, runbook loading, runbook-to-plan resolution, and proof-runner dispatch;
+    - packaged built-in registry resource under `src/femic/resources/pipelines/registry.yaml`; and
+    - new CLI surface `femic pipelines run --runbook ... [--instance-root ...]`.
+  - Current bounded proof scope:
+    - only `pipeline_id = tsr.thlb_reviewed`;
+    - only seams `scratch`, `aflb`, `aflb_yield_ready`, and `lhlb_curve_ready`; and
+    - execution is orchestration-only, delegating into the existing reviewed TSR THLB lane via reconstructed mode.
+  - Validation state for this slice:
+    - focused named-pipeline and CLI tests passed;
+    - full `pytest` returned only the same eight unrelated parked failures tracked under `#166`; and
+    - no new runner-specific failures remained after restoring the existing THLB CLI outcome-count summary.
+  - Next bounded step for `#168`:
+    - pressure-test the new `femic pipelines run` surface with a checked-in proof runbook or real TSA29 smoke path without widening into registry-mutation commands or multi-family execution.
 - 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
   - Root cause:
     - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.

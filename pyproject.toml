@@ -65,6 +65,7 @@ femic = [
     "resources/instance/config/*",
     "resources/instance/config/tipsy/*",
     "resources/patchworks/*",
+    "resources/pipelines/*",
     "resources/instance/runbooks/*",
     "resources/legacy/*.py",
 ]

@@ -25,6 +25,7 @@ Commands
 - ``tipsy``
 - ``fansier``
 - ``data``
+- ``pipelines``
 - ``tsr``
 - ``export``
 - ``patchworks``
@@ -48,6 +49,33 @@ Run
 - ``--run-id TEXT``
 - ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-config PATH`` (YAML/JSON run profile)
+- ``--instance-root PATH`` (optional; defaults to CWD or ``FEMIC_INSTANCE_ROOT`` env)
+
+Pipelines
+---------
+
+.. code-block:: text
+
+   python -m femic pipelines [OPTIONS] COMMAND [ARGS]...
+
+Subcommands
+
+- ``run``: ``python -m femic pipelines run --runbook PATH [--instance-root PATH]``
+
+``pipelines run`` resolves one machine-readable runbook, loads the built-in +
+optional user + optional instance-local named-pipeline registries, and runs
+the first proof-oriented named pipeline surface.
+
+Current proof-runner scope:
+
+- one pipeline id: ``tsr.thlb_reviewed``
+- seams: ``scratch``, ``aflb``, ``aflb_yield_ready``, and ``lhlb_curve_ready``
+- delegation into the existing reviewed TSR THLB lane rather than a new
+  execution engine
+
+``pipelines run`` options
+
+- ``--runbook PATH`` (required; typically under ``runbooks/pipelines/``)
 - ``--instance-root PATH`` (optional; defaults to CWD or ``FEMIC_INSTANCE_ROOT`` env)
 
 Prep

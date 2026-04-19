@@ -122,6 +122,11 @@ from femic.patchworks_variants import (
     summarize_patchworks_variant_materialization_by_dataset,
     upsert_patchworks_user_variant_entry,
 )
+from femic.named_pipelines import (
+    NamedPipelineError,
+    NamedPipelineExecutionResult,
+    run_named_pipeline_runbook,
+)
 from femic.user_config import (
     FemicUserConfig,
     FemicUserConfigError,
@@ -337,6 +342,11 @@ data_app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
     help="Resolve and collect BC Data Catalogue source-data candidates.",
+)
+pipelines_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Resolve and run narrow proof-oriented named pipelines from runbooks.",
 )
 tsr_app = typer.Typer(
     add_completion=False,
@@ -2725,6 +2735,8 @@ def _print_tsr_thlb_netdown_recipe_run_summary(
     console.print(f"tsa_code: {result.tsa.tsa_code}")
     console.print(f"tsa_name: {result.tsa.tsa_name}")
     console.print(f"step_count: {result.step_count}")
+    for outcome, count in result.outcome_counts.items():
+        console.print(f"outcome_{outcome}: {count}")
     console.print(f"input_area_ha: {result.input_area_ha:.3f}")
     console.print(f"baseline_managed_area_ha: {result.baseline_managed_area_ha:.3f}")
     console.print(f"final_managed_area_ha: {result.final_managed_area_ha:.3f}")
@@ -2750,8 +2762,36 @@ def _print_tsr_thlb_netdown_recipe_run_summary(
             "lhlb_curve_ready_checkpoint_area_ha: "
             f"{result.lhlb_curve_ready_checkpoint_area_ha:.3f}"
         )
-    for outcome, count in result.outcome_counts.items():
-        console.print(f"outcome_{outcome}: {count}")
+
+
+def _print_named_pipeline_run_summary(result: NamedPipelineExecutionResult) -> None:
+    plan = result.plan
+    console.print(f"pipeline_id: {plan.pipeline_id}")
+    console.print(f"pipeline_label: {plan.pipeline_label}")
+    console.print(f"runbook_path: {plan.runbook_path}")
+    console.print(f"instance_root: {plan.instance_root}")
+    console.print(f"seam_id: {plan.seam_id}")
+    console.print(f"execution_mode: {plan.execution_mode}")
+    if plan.user_registry_path is not None:
+        console.print(f"user_registry_path: {plan.user_registry_path}")
+    if plan.instance_registry_path is not None:
+        console.print(f"instance_registry_path: {plan.instance_registry_path}")
+    for index, path in enumerate(plan.explicit_registry_paths, start=1):
+        console.print(f"explicit_registry_path_{index}: {path}")
+    if plan.run_profile_path is not None:
+        console.print(f"run_profile_path: {plan.run_profile_path}")
+    for index, path in enumerate(plan.overlay_paths, start=1):
+        console.print(f"overlay_path_{index}: {path}")
+    for index, path in enumerate(plan.parameter_files, start=1):
+        console.print(f"parameter_file_{index}: {path}")
+    console.print(f"thlb_netdown_recipe_path: {plan.thlb_netdown_recipe_path}")
+    console.print(f"source_layers_recipe_path: {plan.source_layers_recipe_path}")
+    console.print(
+        f"checkpoint_path: {plan.checkpoint_path}"
+        if plan.checkpoint_path is not None
+        else "checkpoint_path: <scratch>"
+    )
+    _print_tsr_thlb_netdown_recipe_run_summary(result.tsr_thlb_result)
 
 
 def _print_tsr_thlb_workbench_build_summary(
@@ -4342,6 +4382,36 @@ def tsr_override_report(
         raise typer.Exit(code=1) from exc
 
     _print_tsr_source_layer_overrides_report(result)
+
+
+@pipelines_app.command("run")
+def pipelines_run(
+    runbook: Path = typer.Option(
+        ...,
+        "--runbook",
+        help=(
+            "Path to a machine-readable pipeline runbook, typically under "
+            "`runbooks/pipelines/` in the target instance."
+        ),
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Run the first named-pipeline proof surface from a machine-readable runbook."""
+
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_runbook_path = instance_context.resolve_path(runbook)
+    try:
+        result = run_named_pipeline_runbook(
+            runbook_path=resolved_runbook_path,
+            instance_root=instance_context.root,
+        )
+    except NamedPipelineError as exc:
+        console.print(f"[red]Named pipeline run error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    except TsrRecipeError as exc:
+        console.print(f"[red]TSR proof-pipeline error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    _print_named_pipeline_run_summary(result)
 
 
 @instance_config_app.command("set-managed-external-root")
@@ -8401,6 +8471,7 @@ app.add_typer(tsa_app, name="tsa")
 app.add_typer(tipsy_app, name="tipsy")
 app.add_typer(fansier_app, name="fansier")
 app.add_typer(data_app, name="data")
+app.add_typer(pipelines_app, name="pipelines")
 app.add_typer(tsr_app, name="tsr")
 app.add_typer(export_app, name="export")
 patchworks_app.add_typer(patchworks_instances_app, name="instances")
