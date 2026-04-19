@@ -395,6 +395,44 @@
     - rerun the checked-in TSA29 strict named pipeline against the locked
       recipe surface and let this new validator tell us whether the run matches
       the locked-chain contract or fails on a specific parent-step mismatch.
+- 2026-04-19: The next bounded `#169` cleanup slice is to purge TSA29 legacy checkpoint fallback surfaces before any more strict validation.
+  - Governing problem:
+    - active TSA29 code/docs still contain legacy `ria_vri_vclr1p_checkpoint*.feather`
+      fallback paths and historical checkpoint1-era guidance that are now
+      incompatible with the validated strict lane contract.
+  - Bounded implementation target:
+    - hard-block active TSA29 strict/workbench code paths from auto-discovering
+      or accepting legacy `ria_vri_vclr1p_checkpoint*.feather` inputs;
+    - switch active step-13 default input away from checkpoint7 fallback;
+    - scrub active docs/notes that still advertise checkpoint1-era TSA29 strict
+      starts as current guidance; and
+    - delete the stale TSA29 `data/ria_vri_vclr1p_checkpoint*.feather` files so
+      they cannot be reused accidentally.
+  - Scope boundary:
+    - this slice is cleanup/guardrail work only;
+    - it does not attempt another strict validation run.
+- 2026-04-19: Completed the bounded `#169` TSA29 legacy checkpoint purge slice.
+  - Delivered guardrails:
+    - active TSA29 THLB/workbench code paths now reject legacy
+      `ria_vri_vclr1p_checkpoint*.feather` fallback discovery and explicit use;
+    - step-13 attribute compilation now defaults to
+      `data/tsr/lhlb_checkpoint.feather` instead of legacy checkpoint7; and
+    - the stale TSA29 `data/ria_vri_vclr1p_checkpoint1..8.feather` files plus
+      the old step9 checkpoint1-era TSA29 recipe variants were deleted.
+  - Docs/note cleanup:
+    - active TSA29-facing CLI/guides now say current strict validation must use
+      explicit validated `data/tsr/*.feather` seam checkpoints; and
+    - historical checkpoint1-era Phase 52 / comparison notes are now labeled as
+      audit-history context only rather than current execution guidance.
+  - Focused validation:
+    - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "find_tsr_checkpoint_path_rejects_tsa29_legacy_fallback or find_curve_ready_thlb_checkpoint_path_rejects_tsa29_legacy_fallback or default_workbench_checkpoint_path_prefers_step13_attribute_checkpoint" -q`
+    - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_step13_attributes.py -q`
+    - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py src/femic/tsr_catalog/step13_attributes.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_tsr_step13_attributes.py`
+    - `.\.venv\Scripts\python.exe -m mypy src`
+    - `.\.venv\Scripts\python.exe -m sphinx -b html docs _build/html -W`
+  - Next bounded step:
+    - return to `P53.1d4` only after using the validated strict-lane recipe and
+      explicit `data/tsr/*.feather` seam checkpoints as the sole TSA29 basis.
 - 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
   - Root cause:
     - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.

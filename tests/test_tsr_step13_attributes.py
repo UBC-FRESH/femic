@@ -99,17 +99,34 @@ def test_compile_tsr_thlb_step13_attributes_writes_output_and_audit(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     instance_root = tmp_path / "instance"
-    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint7.feather"
+    checkpoint_path = instance_root / "data" / "tsr" / "lhlb_checkpoint.feather"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint = gpd.GeoDataFrame(
         {
             "MAP_ID": ["092O071", "092O071"],
             "FEATURE_ID": [1, 2],
+            "SITE_INDEX": [18.0, 22.0],
+            "PROJ_AGE_1": [40, 80],
+            "stratum_matched": ["S1", "S1"],
+            "si_level": ["M", "M"],
+            "au": [1, 1],
         },
         geometry=[box(0, 0, 90, 100), box(110, 0, 200, 100)],
         crs="EPSG:3005",
     )
     checkpoint.to_feather(checkpoint_path)
+
+    au_table_path = instance_root / "data" / "model_input_bundle" / "au_table.csv"
+    au_table_path.parent.mkdir(parents=True, exist_ok=True)
+    au_table_path.write_text(
+        "\n".join(
+            [
+                "tsa,stratum_code,si_level,au_id,treated_curve_id,untreated_curve_id",
+                "29,S1,M,2900001,101,202",
+            ]
+        ),
+        encoding="utf-8",
+    )
 
     highway_path = (
         instance_root

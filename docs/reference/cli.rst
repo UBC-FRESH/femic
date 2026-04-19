@@ -835,13 +835,9 @@ workflow into a text -> code -> output -> interpretation ladder grouped by:
 - ``LHLB -> THLB``
 
 The generated cells also respect the stage boundary in the underlying FEMIC
-pipeline:
-
-- ``GLB -> AFLB`` notebook steps default to the earliest checkpoint / raw
-  land-base surface; and
-- ``AFLB -> LHLB -> THLB`` notebook steps default to the curve-ready
-  pre-legacy-THLB checkpoint so late rules can consume compiled AU and
-  yield-curve state.
+pipeline, but current TSA29 strict validation must stay on validated
+``data/tsr/*.feather`` seam checkpoints rather than legacy
+``ria_vri_vclr1p_checkpoint*.feather`` fallbacks.
 
 ``tsr thlb-netdown-workbench-lock`` options
 
@@ -875,8 +871,8 @@ Important lock contract:
 - ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
 - ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
   ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
-- ``--checkpoint-path PATH`` (optional; defaults to the earliest matching
-  checkpoint discovered by FEMIC)
+- ``--checkpoint-path PATH`` (optional; current TSA29 strict validation should
+  pass an explicit validated checkpoint path under ``data/tsr/``)
 - ``--map-id TEXT`` (repeatable; optional explicit ``MAP_ID`` subset)
 - ``--auto-map-id-smoke-subset / --no-auto-map-id-smoke-subset`` (default:
   ``--auto-map-id-smoke-subset``)
@@ -895,8 +891,8 @@ still being refined.
 - ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
 - ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
   ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
-- ``--checkpoint-path PATH`` (optional; defaults to the latest
-  ``data/ria_vri_vclr1p_checkpoint*.feather`` under the instance root)
+- ``--checkpoint-path PATH`` (optional; current TSA29 strict validation should
+  pass an explicit validated checkpoint path under ``data/tsr/``)
 - ``--output-path PATH`` (optional; defaults to
   ``data/tsr/thlb_netdown_checkpoint.feather`` under the instance root)
 - ``--audit-path PATH`` (optional; defaults to
@@ -978,9 +974,10 @@ Important current boundary:
 - ``--execution-mode hybrid`` is still the reviewed stand-level bridge from
   issue ``#126``;
 - ``--execution-mode reconstructed`` is now the promoted fragment-first lane:
-  it starts from raw checkpoint1 geometry, fragments the working land base
-  where reviewed spatial exclusions intersect, and assigns binary
-  fragment-level THLB membership ``{0,1}``;
+  for current TSA29 strict validation it must start from an explicit validated
+  ``data/tsr/*.feather`` seam checkpoint, fragment the working land base where
+  reviewed spatial exclusions intersect, and assign binary fragment-level THLB
+  membership ``{0,1}``;
 - reconstructed exact spatial steps now run LU-wise by default:
   FEMIC cuts one Landscape Unit chunk at a time instead of trying to build one
   full-TSA exact-overlay workload;

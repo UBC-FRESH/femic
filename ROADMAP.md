@@ -1396,6 +1396,8 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d1 Bind the checked-in TSA29 strict runbook to an explicit locked validation contract and fail fast if it still resolves the mutable live recipe.
     - [x] P53.1d2 Let the strict validation contract bind the checked-in TSA29 runbook to the required locked recipe path so the proof surface can execute against the right contract.
     - [x] P53.1d3 Validate strict named-pipeline run results against the locked-chain ledger immediately after execution so wrong-result runs fail as contract mismatches instead of looking superficially successful.
+    - [ ] P53.1d4 Rerun the checked-in TSA29 strict named pipeline against the locked recipe surface and record whether the validator reports a clean locked-chain match or the first specific parent-step mismatch.
+    - [x] P53.1d5 Purge TSA29 legacy `ria_vri_vclr1p_checkpoint*.feather` fallback surfaces from active code/docs and delete the stale checkpoint files so strict validation cannot silently drift onto them.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.

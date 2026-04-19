@@ -371,13 +371,10 @@ lane, keep the benchmark order straight:
    - ``config/tsr/thlb_netdown.status.md``
    - ``config/tsr/thlb_netdown.audit.json`` when a runtime pass has been run
 
-   Workbench execution follows the staged FEMIC pipeline boundary:
-
-   - ``GLB -> AFLB`` parent steps run against the earliest checkpoint / raw
-     land-base surface; and
-   - ``AFLB -> LHLB -> THLB`` parent steps run later against the curve-ready
-     checkpoint so late THLB rules can consume compiled AU / VDYP / TIPSY
-     outputs instead of trying to infer harvestability from raw VRI alone.
+   Workbench execution follows the staged FEMIC pipeline boundary, but current
+   TSA29 strict validation must stay on validated ``data/tsr/*.feather`` seam
+   checkpoints rather than legacy ``ria_vri_vclr1p_checkpoint*.feather``
+   fallback files.
 
    For example, TSA29 step ``014`` (sites with low growing timber potential)
    now uses assigned bundle curves directly in the notebook bridge:
@@ -496,9 +493,9 @@ However, it is important not to blur two different THLB states:
   existing checkpoint THLB signal and applies the supported TSR-derived
   exclusions into ``thlb_fact``.
 - **Promoted reconstruction lane (`#128` / `#131`):** a raw-land-base
-  reconstructed mode that overlays the reviewed layers onto checkpoint1/VRI
-  geometry, fragments the land base, and assigns binary fragment-level THLB
-  membership ``{0,1}``.
+  reconstructed mode that, for current TSA29 strict validation, must stay on
+  explicit validated ``data/tsr/*.feather`` seam checkpoints, fragment the
+  land base, and assign binary fragment-level THLB membership ``{0,1}``.
 
 Reconstructed mode can now also apply a **recipe-driven aspatial fallback**
 when the reviewed THLB recipe already carries a TSR target-area deduction for a

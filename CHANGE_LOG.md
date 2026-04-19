@@ -14839,3 +14839,17 @@
   - `.\.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "pipelines_run" -q`
   - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py src/femic/cli/main.py tests/test_named_pipelines.py tests/test_cli_main.py`
   - `.\.venv\Scripts\python.exe -m mypy src`
+## 2026-04-19 - Purged TSA29 legacy `ria_vri_vclr1p_checkpoint*.feather` fallback surfaces from active strict-validation paths
+- `#169` bounded cleanup slice:
+  - active TSA29 THLB/workbench code paths now reject legacy `ria_vri_vclr1p_checkpoint*.feather` fallback discovery and explicit use;
+  - step-13 attribute compilation now defaults to `data/tsr/lhlb_checkpoint.feather` instead of legacy checkpoint7 fallback; and
+  - the stale TSA29 `data/ria_vri_vclr1p_checkpoint1..8.feather` files plus the old step9 checkpoint1-era TSA29 recipe variants were deleted.
+- Docs/note cleanup:
+  - active TSA29-facing CLI/guides now say current strict validation must use explicit validated `data/tsr/*.feather` seam checkpoints; and
+  - historical checkpoint1-era Phase 52 / comparison notes are now labeled as audit-history context only rather than current execution guidance.
+- Focused validation:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "find_tsr_checkpoint_path_rejects_tsa29_legacy_fallback or find_curve_ready_thlb_checkpoint_path_rejects_tsa29_legacy_fallback or default_workbench_checkpoint_path_prefers_step13_attribute_checkpoint" -q`
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_step13_attributes.py -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py src/femic/tsr_catalog/step13_attributes.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_tsr_step13_attributes.py`
+  - `.\.venv\Scripts\python.exe -m mypy src`
+  - `.\.venv\Scripts\python.exe -m sphinx -b html docs _build/html -W`

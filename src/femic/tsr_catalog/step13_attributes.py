@@ -123,7 +123,7 @@ def compile_tsr_thlb_step13_attributes(
     resolved_checkpoint_path = (
         checkpoint_path.expanduser().resolve()
         if checkpoint_path is not None
-        else resolved_instance_root / "data" / "ria_vri_vclr1p_checkpoint7.feather"
+        else resolved_instance_root / "data" / "tsr" / "lhlb_checkpoint.feather"
     )
     if not resolved_checkpoint_path.exists():
         raise TsrRecipeError(

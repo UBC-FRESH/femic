@@ -2,6 +2,12 @@
 
 - Source: former `ROADMAP.md` lines `8702-10536`.
 - Governing lane: TSR/THLB reconstruction and comparison work centered on issue `#128` and its children.
+- Historical-boundary warning:
+  - this note preserves older checkpoint1-era reconstruction discussion for
+    audit history only; and
+  - it is not the governing basis for current TSA29 strict validation, which
+    must stay on the validated strict-lane recipe plus explicit `data/tsr/*`
+    seam checkpoints.
 
 ## Extracted Roadmap Notes
 

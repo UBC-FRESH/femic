@@ -6179,6 +6179,40 @@ def test_default_workbench_checkpoint_path_prefers_step13_attribute_checkpoint(
     assert selected == enriched_path.resolve()
 
 
+def test_find_tsr_checkpoint_path_rejects_tsa29_legacy_fallback(tmp_path: Path) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    data_root = instance_root / "data"
+    data_root.mkdir(parents=True)
+    (data_root / "ria_vri_vclr1p_checkpoint1.feather").write_text(
+        "legacy", encoding="utf-8"
+    )
+
+    with pytest.raises(tsr_recipes.TsrRecipeError) as excinfo:
+        tsr_recipes._find_tsr_checkpoint_path(instance_root=instance_root, mode="earliest")
+
+    assert "Legacy `data/ria_vri_vclr1p_checkpoint*.feather` fallback discovery is disabled for TSA29" in str(
+        excinfo.value
+    )
+
+
+def test_find_curve_ready_thlb_checkpoint_path_rejects_tsa29_legacy_fallback(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    data_root = instance_root / "data"
+    data_root.mkdir(parents=True)
+    (data_root / "ria_vri_vclr1p_checkpoint7.feather").write_text(
+        "legacy", encoding="utf-8"
+    )
+
+    with pytest.raises(tsr_recipes.TsrRecipeError) as excinfo:
+        tsr_recipes._find_curve_ready_thlb_checkpoint_path(instance_root=instance_root)
+
+    assert "Legacy curve-ready checkpoint fallback is disabled for TSA29" in str(
+        excinfo.value
+    )
+
+
 def test_specialized_compiled_logic_for_riparian_uses_classed_buffers() -> None:
     items = tsr_recipes._specialized_compiled_logic_for_parent_step(
         parent_step_id="thlb_parent_018_riparian_areas",

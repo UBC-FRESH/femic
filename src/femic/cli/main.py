@@ -578,7 +578,8 @@ TSR_THLB_CHECKPOINT_PATH_OPTION = typer.Option(
     "--checkpoint-path",
     help=(
         "Optional stand checkpoint feather used as the THLB netdown execution base. "
-        "Defaults to the latest `ria_vri_vclr1p_checkpoint*.feather` under the instance data root."
+        "Current TSA29 strict validation must use an explicit validated checkpoint "
+        "under `data/tsr/`; legacy `ria_vri_vclr1p_checkpoint*.feather` fallbacks are rejected."
     ),
     show_default=False,
 )

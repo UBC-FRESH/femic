@@ -5641,10 +5641,15 @@ def run_tsr_source_layers_recipe(
 
 
 def _find_tsr_checkpoint_path(*, instance_root: Path, mode: str) -> Path:
+    resolved_instance_root = instance_root.expanduser().resolve()
+    if resolved_instance_root.name.casefold() == "femic-tsa29-instance":
+        raise TsrRecipeError(
+            "Legacy `data/ria_vri_vclr1p_checkpoint*.feather` fallback discovery is "
+            "disabled for TSA29. Use an explicit strict-lane seam checkpoint under "
+            "`data/tsr/` instead."
+        )
     candidates = sorted(
-        instance_root.expanduser()
-        .resolve()
-        .glob("data/ria_vri_vclr1p_checkpoint*.feather")
+        resolved_instance_root.glob("data/ria_vri_vclr1p_checkpoint*.feather")
     )
     if not candidates:
         raise TsrRecipeError(
@@ -5678,10 +5683,15 @@ def _find_curve_ready_thlb_checkpoint_path(*, instance_root: Path) -> Path:
     )
     if official_curve_ready_path.exists():
         return official_curve_ready_path
+    resolved_instance_root = instance_root.expanduser().resolve()
+    if resolved_instance_root.name.casefold() == "femic-tsa29-instance":
+        raise TsrRecipeError(
+            "Legacy curve-ready checkpoint fallback is disabled for TSA29. "
+            "Publish `data/tsr/lhlb_curve_ready_checkpoint.feather` from the "
+            "validated strict lane instead."
+        )
     candidates = sorted(
-        instance_root.expanduser()
-        .resolve()
-        .glob("data/ria_vri_vclr1p_checkpoint*.feather")
+        resolved_instance_root.glob("data/ria_vri_vclr1p_checkpoint*.feather")
     )
     if not candidates:
         raise TsrRecipeError(
@@ -5722,6 +5732,22 @@ def _default_workbench_checkpoint_path(
     if stage == "glb_to_aflb":
         return _find_tsr_checkpoint_path(instance_root=instance_root, mode="earliest")
     return _find_curve_ready_thlb_checkpoint_path(instance_root=instance_root)
+
+
+def _reject_tsa29_legacy_checkpoint_path(*, instance_root: Path, checkpoint_path: Path) -> None:
+    resolved_instance_root = instance_root.expanduser().resolve()
+    if resolved_instance_root.name.casefold() != "femic-tsa29-instance":
+        return
+    if re.search(
+        r"ria_vri_vclr1p_checkpoint\d+(?:-tsa[\w-]+)?\.feather$",
+        checkpoint_path.name,
+        flags=re.IGNORECASE,
+    ):
+        raise TsrRecipeError(
+            "Legacy `ria_vri_vclr1p_checkpoint*.feather` inputs are disabled for "
+            "TSA29 strict/workbench validation. Use an explicit validated TSA29 "
+            "checkpoint under `data/tsr/` instead."
+        )
 
 
 def _additional_supporting_provenance_ids(*, parent_label: str) -> tuple[str, ...]:
@@ -12874,6 +12900,9 @@ def run_tsr_thlb_parent_step(
             instance_root=instance_root, target_parent=target_parent
         )
     )
+    _reject_tsa29_legacy_checkpoint_path(
+        instance_root=instance_root, checkpoint_path=resolved_checkpoint_path
+    )
     if checkpoint_path is not None and _is_aflb_yield_ready_restart_checkpoint_path(
         resolved_checkpoint_path
     ):
@@ -17914,6 +17943,9 @@ def run_tsr_thlb_netdown_recipe(
             ),
         )
     )
+    _reject_tsa29_legacy_checkpoint_path(
+        instance_root=instance_root, checkpoint_path=resolved_checkpoint_path
+    )
     if (
         execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
         and checkpoint_path is not None
@@ -18542,6 +18574,9 @@ def run_tsr_thlb_reconstructed_diagnostic_slice(
             if checkpoint_path is not None
             else _find_tsr_checkpoint_path(instance_root=instance_root, mode="earliest")
         )
+    )
+    _reject_tsa29_legacy_checkpoint_path(
+        instance_root=instance_root, checkpoint_path=resolved_checkpoint_path
     )
     if _is_lhlb_restart_checkpoint_path(resolved_checkpoint_path):
         (

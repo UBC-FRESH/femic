@@ -112,8 +112,9 @@ The promoted runtime path under ``#128`` / ``#131`` is the
 **fragment-first reconstruction** lane:
 
 - start from the raw/resultant land-base geometry;
-- for TSA29 today, that means raw ``checkpoint1`` geometry rather than an
-  AFLB-style prefiltered subset;
+- for current TSA29 strict validation, that means the validated strict-lane
+  seam checkpoints under ``data/tsr/`` rather than legacy
+  ``ria_vri_vclr1p_checkpoint*.feather`` fallback files;
 - initialize the AFLB universe explicitly;
 - overlay the reviewed exclusion layers in stage order;
 - fragment the geometry where needed; and
