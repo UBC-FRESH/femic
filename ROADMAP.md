@@ -16679,6 +16679,7 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - model instances should be reproducible from a runbook that points at a specific pipeline definition and restart seam policy.
   - [ ] P53.1b Define the registry/runbook contracts needed to replace the legacy monolithic-script mental model without invalidating the recipe-based work already completed under `#122` and its children (`#167`).
   - [ ] P53.1c Identify the first bounded child seams needed to prove the architecture incrementally rather than attempting a one-shot rewrite.
+  - [ ] P53.1d Validate the TSA29 strict named pipeline against the locked-chain contract (`#169`).
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -16994,6 +16995,16 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `final_managed_area_ha = 559,967.504`.
   - Closeout interpretation for `#168`:
     - the first named-pipeline proof runner is now demonstrated on the strict product lane rather than only on the reviewed scaffold lane.
+- 2026-04-19: Opened `#169` as the next active child under umbrella `#163`.
+  - Tracker split:
+    - `#168` stays closed as the first proof-runner/orchestration child; and
+    - `#169` is now the active strict reproducibility validation child.
+  - Governing strict validation contract:
+    - authoritative reference is the latest TSA29 locked-chain strict result, not the older frozen workbench snapshot and not the mutable live recipe;
+    - first proof target is chained-restart stepwise plus final reproduction through step `23`; and
+    - mutable live recipe drift must fail fast instead of silently becoming the validation surface.
+  - Immediate next bounded step for `#169`:
+    - define the TSA29-specific strict-validation contract surface and validation path before attempting broader multi-instance machinery.
 - 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
   - Root cause:
     - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.

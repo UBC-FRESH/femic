@@ -14769,3 +14769,13 @@
 - Full-suite note:
   - full `pytest` still returned only the same eight unrelated failures already parked under `#166`; and
   - the strict-pipeline pivot did not add any new full-suite regressions.
+## 2026-04-19 - Opened `#169` for TSA29 strict named-pipeline reproducibility against the locked-chain contract
+- GitHub tracker updates:
+  - opened `#169` as the new child under umbrella `#163` for validating `tsr.thlb_strict` against the latest TSA29 locked-chain strict result rather than the mutable live recipe;
+  - updated `#163` so its child-workstream list now shows `#164` closed, `#167` active, `#168` closed, and `#169` active; and
+  - updated `#168` so the closed issue now reflects the delivered strict proof-runner outcome and notes that locked-chain reproducibility validation moved to `#169`.
+- `ROADMAP.md` updates:
+  - added `P53.1d` under Phase 53 for strict reproducibility validation against the locked-chain contract; and
+  - updated `Detailed Next Steps Notes` so the governing reference is the latest TSA29 locked-chain strict result, the first proof target is chained-restart stepwise plus final agreement through step `23`, and mutable live recipe drift must fail fast instead of silently becoming the validation surface.
+- Scope boundary:
+  - tracker/planning hygiene only; no code or runtime behavior changed in this slice.
