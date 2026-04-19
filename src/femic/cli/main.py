@@ -2784,6 +2784,23 @@ def _print_named_pipeline_run_summary(result: NamedPipelineExecutionResult) -> N
         console.print(f"overlay_path_{index}: {path}")
     for index, path in enumerate(plan.parameter_files, start=1):
         console.print(f"parameter_file_{index}: {path}")
+    if plan.validation_contract is not None:
+        console.print(f"validation_contract_kind: {plan.validation_contract.contract_kind}")
+        if plan.validation_contract.locked_chain_ledger_path is not None:
+            console.print(
+                "validation_contract_locked_chain_ledger_path: "
+                f"{plan.validation_contract.locked_chain_ledger_path}"
+            )
+        if plan.validation_contract.comparison_report_path is not None:
+            console.print(
+                "validation_contract_comparison_report_path: "
+                f"{plan.validation_contract.comparison_report_path}"
+            )
+        if plan.validation_contract.required_recipe_path is not None:
+            console.print(
+                "validation_contract_required_recipe_path: "
+                f"{plan.validation_contract.required_recipe_path}"
+            )
     console.print(f"thlb_netdown_recipe_path: {plan.thlb_netdown_recipe_path}")
     console.print(f"source_layers_recipe_path: {plan.source_layers_recipe_path}")
     console.print(

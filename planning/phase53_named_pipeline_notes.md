@@ -332,6 +332,33 @@
   - Scope boundary:
     - this slice does not yet prove chained-restart reproduction against the locked-chain result;
     - it only prevents another false-positive strict smoke from the wrong execution surface.
+- 2026-04-19: The next bounded `#169` implementation slice is strict recipe rebinding through the validation contract.
+  - Governing need:
+    - the fail-fast guard now correctly rejects the mutable live recipe surface; and
+    - the checked-in TSA29 strict runbook still needs a bounded way to resolve the required locked recipe path without depending on mutable instance registry state.
+  - Bounded implementation target:
+    - let `validation_contract.required_recipe_path` explicitly bind the THLB recipe path for strict validation runbooks; and
+    - keep the rest of named-pipeline resolution unchanged.
+  - Scope boundary:
+    - this slice still does not run or prove the chained-restart locked-chain comparison;
+    - it only makes the checked-in strict validation runbook executable against the correct recipe surface.
+- 2026-04-19: Completed the bounded `#169` strict recipe rebinding slice.
+  - Delivered behavior:
+    - `build_named_pipeline_execution_plan(...)` now lets
+      `validation_contract.required_recipe_path` bind the THLB recipe path for
+      strict validation runbooks;
+    - the checked-in TSA29 strict runbook now resolves to
+      `workbench/tsr/thlb_netdown.locked.recipe.yaml` without depending on
+      mutable instance-local registry overrides; and
+    - missing required validation recipe files still fail before execution.
+  - Focused validation:
+    - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -q`
+    - `.\.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "pipelines_run" -q`
+    - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py src/femic/cli/main.py tests/test_named_pipelines.py tests/test_cli_main.py`
+    - `.\.venv\Scripts\python.exe -m mypy src`
+  - Next bounded step:
+    - use this locked recipe binding as the execution surface for the first
+      chained-restart stepwise comparison against the TSA29 locked-chain ledger.
 - 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
   - Root cause:
     - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.

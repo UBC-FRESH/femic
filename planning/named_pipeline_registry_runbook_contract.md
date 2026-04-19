@@ -259,6 +259,11 @@ validation_contract:
   required_recipe_path: workbench/tsr/thlb_netdown.locked.recipe.yaml
 ```
 
+For the first TSA29 strict-validation rollout, `required_recipe_path` is also
+allowed to bind the execution recipe directly so the checked-in strict runbook
+can execute against the locked contract surface without depending on mutable
+instance-local registry overrides.
+
 The first strict reproducibility rollout may use this block only as a
 fail-fast binding guard:
 

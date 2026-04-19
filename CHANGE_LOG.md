@@ -14813,3 +14813,16 @@
 - Scope boundary:
   - this slice does not yet prove chained-restart reproduction against the locked-chain result;
   - it only prevents the strict named-pipeline runner from silently using the wrong execution surface again.
+## 2026-04-19 - Let the strict validation contract bind the checked-in TSA29 runbook to the required locked recipe path
+- `#169` bounded slice:
+  - updated named-pipeline plan resolution so `validation_contract.required_recipe_path` now binds the THLB recipe path for strict validation runbooks;
+  - the checked-in TSA29 strict runbook now resolves directly to `workbench/tsr/thlb_netdown.locked.recipe.yaml` instead of depending on mutable instance-local registry overrides; and
+  - missing required validation recipe files still fail before execution with a targeted error.
+- Supporting follow-through:
+  - updated the named-pipeline contract note to record that the first TSA29 strict-validation rollout allows `required_recipe_path` to bind the execution recipe directly; and
+  - refreshed focused named-pipeline / CLI tests so they assert the locked recipe binding rather than the older mismatch-only guard behavior.
+- Focused validation:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -q`
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "pipelines_run" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py src/femic/cli/main.py tests/test_named_pipelines.py tests/test_cli_main.py`
+  - `.\.venv\Scripts\python.exe -m mypy src`

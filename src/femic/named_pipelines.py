@@ -739,26 +739,21 @@ def build_named_pipeline_execution_plan(
         )
     recipe = pipeline.get_recipe("tsr_thlb_netdown")
     thlb_recipe_path = (
-        _resolve_relative_to_instance(runbook.instance_root, recipe.default_recipe_path)
-        if recipe.default_recipe_path is not None
-        else default_tsr_thlb_netdown_recipe_path(instance_root=runbook.instance_root)
+        runbook.validation_contract.required_recipe_path
+        if (
+            runbook.validation_contract is not None
+            and runbook.validation_contract.required_recipe_path is not None
+        )
+        else (
+            _resolve_relative_to_instance(runbook.instance_root, recipe.default_recipe_path)
+            if recipe.default_recipe_path is not None
+            else default_tsr_thlb_netdown_recipe_path(instance_root=runbook.instance_root)
+        )
     )
     assert thlb_recipe_path is not None
     if not thlb_recipe_path.exists():
         raise NamedPipelineError(
             f"Resolved THLB recipe path not found: {thlb_recipe_path}"
-        )
-    if (
-        runbook.validation_contract is not None
-        and runbook.validation_contract.required_recipe_path is not None
-        and thlb_recipe_path != runbook.validation_contract.required_recipe_path
-    ):
-        raise NamedPipelineError(
-            "Strict validation contract mismatch: the resolved THLB recipe path "
-            f"`{thlb_recipe_path}` does not match the runbook-required validation "
-            f"recipe path `{runbook.validation_contract.required_recipe_path}`. "
-            "This runbook is bound to the locked validation contract and must not "
-            "fall back to the mutable live recipe surface."
         )
     thlb_recipe = load_tsr_thlb_netdown_recipe(thlb_recipe_path)
     source_layers_recipe_path = _resolve_relative_to_instance(

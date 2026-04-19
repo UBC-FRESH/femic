@@ -6978,10 +6978,25 @@ def test_pipelines_run_executes_named_pipeline_runbook(
                 run_profile_path=instance_root / "config" / "run_profile.tsa29.yaml",
                 overlay_paths=(instance_root / "config" / "tsr" / "overlay.yaml",),
                 parameter_files=(),
+                validation_contract=SimpleNamespace(
+                    contract_kind="tsa29_locked_chain_strict",
+                    locked_chain_ledger_path=instance_root
+                    / "config"
+                    / "tsr"
+                    / "thlb_locked_chain_ledger.json",
+                    comparison_report_path=instance_root
+                    / "config"
+                    / "tsr"
+                    / "thlb_reconstruction_comparison.md",
+                    required_recipe_path=instance_root
+                    / "workbench"
+                    / "tsr"
+                    / "thlb_netdown.locked.recipe.yaml",
+                ),
                 thlb_netdown_recipe_path=instance_root
-                / "config"
+                / "workbench"
                 / "tsr"
-                / "thlb_netdown.recipe.yaml",
+                / "thlb_netdown.locked.recipe.yaml",
                 source_layers_recipe_path=instance_root
                 / "config"
                 / "tsr"
@@ -7071,6 +7086,9 @@ def test_pipelines_run_executes_named_pipeline_runbook(
     assert any("pipeline_id: tsr.thlb_strict" in msg for msg in messages)
     assert any("seam_id: aflb_yield_ready" in msg for msg in messages)
     assert any(
+        "validation_contract_required_recipe_path:" in msg for msg in messages
+    )
+    assert any(
         "baseline_signal: aflb_yield_ready_checkpoint_restart" in msg
         for msg in messages
     )
@@ -7103,10 +7121,25 @@ def test_pipelines_run_accepts_checked_in_proof_runbook(
                 run_profile_path=instance_root / "config" / "run_profile.tsa29.yaml",
                 overlay_paths=(instance_root / "config" / "tsr" / "overlay.yaml",),
                 parameter_files=(),
+                validation_contract=SimpleNamespace(
+                    contract_kind="tsa29_locked_chain_strict",
+                    locked_chain_ledger_path=instance_root
+                    / "config"
+                    / "tsr"
+                    / "thlb_locked_chain_ledger.json",
+                    comparison_report_path=instance_root
+                    / "config"
+                    / "tsr"
+                    / "thlb_reconstruction_comparison.md",
+                    required_recipe_path=instance_root
+                    / "workbench"
+                    / "tsr"
+                    / "thlb_netdown.locked.recipe.yaml",
+                ),
                 thlb_netdown_recipe_path=instance_root
-                / "config"
+                / "workbench"
                 / "tsr"
-                / "thlb_netdown.recipe.yaml",
+                / "thlb_netdown.locked.recipe.yaml",
                 source_layers_recipe_path=instance_root
                 / "config"
                 / "tsr"
