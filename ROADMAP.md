@@ -1399,6 +1399,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [ ] P53.1d4 Rerun the checked-in TSA29 strict named pipeline against the locked recipe surface and record whether the validator reports a clean locked-chain match or the first specific parent-step mismatch.
     - [x] P53.1d5 Purge TSA29 legacy `ria_vri_vclr1p_checkpoint*.feather` fallback surfaces from active code/docs and delete the stale checkpoint files so strict validation cannot silently drift onto them.
     - [x] P53.1d6 Add always-on real-time user-observable runtime output for `femic pipelines run`, including parent-step events, compiled-step subevents, and mirrored live event logs under `runtime/logs/tsr/`.
+    - [x] P53.1d7 Add a strict preflight seam-benchmark gate so TSA29 strict named-pipeline runs abort before execution when the selected start surface already disagrees with the locked-chain reference for that seam.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.

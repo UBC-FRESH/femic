@@ -484,3 +484,49 @@
     - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "runtime_events or parent_progress" -q`
     - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py src/femic/cli/main.py src/femic/tsr_catalog/recipes.py tests/test_named_pipelines.py tests/test_cli_main.py tests/test_tsr_recipes.py`
     - `.\.venv\Scripts\python.exe -m mypy src`
+- 2026-04-19: The next bounded `#169` slice is a strict preflight seam-benchmark gate.
+  - Governing problem:
+    - the current TSA29 strict named-pipeline path is fail-fast on recipe/contract
+      wiring and post-run locked-chain divergence, but it still spends time
+      executing when the selected start seam already misses the validated strict
+      benchmark it is supposed to reproduce.
+  - Bounded implementation target:
+    - add a preflight validator in `run_named_pipeline_runbook(...)` for the
+      `tsa29_locked_chain_strict` contract;
+    - map `aflb` and `aflb_yield_ready` to locked row 5 and compare the explicit
+      `data/tsr/*.feather` seam checkpoint area against that locked cumulative
+      reference before execution;
+    - treat `scratch` as a targeted unsupported preflight seam in this slice
+      unless a trustworthy validated raw-start comparison surface is explicitly
+      defined; and
+    - emit explicit runtime preflight events and fail before
+      `run_tsr_thlb_netdown_recipe(...)` when the seam surface is already off the
+      validated strict reproduction path.
+  - Scope boundary:
+    - no new rerun campaign;
+    - no generic multi-instance seam-preflight framework; and
+    - no new runbook schema expansion.
+- 2026-04-19: Completed `P53.1d7` by making TSA29 strict validation reproducibility-first.
+  - What shipped:
+    - `run_named_pipeline_runbook(...)` now runs a seam-aware strict preflight before
+      `run_tsr_thlb_netdown_recipe(...)` whenever the validation contract is
+      `tsa29_locked_chain_strict`;
+    - `aflb` and `aflb_yield_ready` now map to locked row 5
+      (`thlb_parent_005_analysis_forest_land_base`) and are rejected before
+      execution when their explicit `data/tsr/*.feather` seam checkpoint area
+      already disagrees with the locked-chain reference; and
+    - `scratch` now fails with a targeted contract error instead of guessing or
+      consulting any legacy fallback surface.
+  - Runtime surface:
+    - the live event stream now emits `pipeline_validation_preflight_started`
+      before execution; and
+    - successful preflight writes seam/row/expected/actual/delta fields through
+      `pipeline_validation_preflight_finished`, while failures surface the same
+      mismatch in `pipeline_run_failed`.
+  - Acceptance signal:
+    - the checked-in TSA29 strict runbook now aborts immediately in preflight
+      instead of progressing into parent steps when started from the current
+      `aflb_yield_ready` seam; and
+    - the bounded acceptance run reported locked row 5 expected
+      `3110576.671 ha`, actual seam area `4378802.489 ha`, delta
+      `1268225.818 ha`.

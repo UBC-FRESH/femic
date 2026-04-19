@@ -14875,3 +14875,19 @@
   - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "legacy_reference_managed_area_ha_skips_tsa29_strict_seam" -q`
   - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
   - `.\.venv\Scripts\python.exe -m mypy src`
+## 2026-04-19 - Added a strict preflight seam-benchmark gate for TSA29 locked-chain validation
+- `#169` bounded reproducibility slice:
+  - `run_named_pipeline_runbook(...)` now runs a seam-aware strict preflight before `run_tsr_thlb_netdown_recipe(...)` whenever the validation contract is `tsa29_locked_chain_strict`;
+  - `aflb` and `aflb_yield_ready` now map to locked row 5 (`thlb_parent_005_analysis_forest_land_base`) and are rejected before execution when their explicit `data/tsr/*.feather` seam checkpoint area already disagrees with the locked-chain reference; and
+  - `scratch` now fails with a targeted contract error instead of guessing or consulting any legacy fallback surface.
+- Runtime observability:
+  - the live pipeline event stream now emits `pipeline_validation_preflight_started` before execution; and
+  - preflight failures surface seam/row/expected/actual/delta detail immediately in `pipeline_run_failed`.
+- Focused validation:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py tests/test_named_pipelines.py`
+  - `.\.venv\Scripts\python.exe -m mypy src`
+  - `.\.venv\Scripts\python.exe -m femic pipelines run --runbook runbooks/pipelines/tsa29.tsr.thlb_strict.aflb_yield_ready.yaml --instance-root external/femic-tsa29-instance`
+- Acceptance result:
+  - the checked-in TSA29 strict runbook now aborts immediately in preflight instead of progressing into parent steps when started from the current `aflb_yield_ready` seam; and
+  - the bounded acceptance run reported locked row 5 expected `3110576.671 ha`, actual seam area `4378802.489 ha`, delta `1268225.818 ha`.

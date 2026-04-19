@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from importlib import resources
+from importlib import import_module, resources
 import json
 from pathlib import Path
 from typing import Any, Callable, Mapping, cast
@@ -220,6 +220,11 @@ _RUNTIME_EVENT_IMPORTANT_FIELDS = (
     "validation_contract_kind",
     "locked_chain_ledger_path",
     "required_recipe_path",
+    "locked_row_order",
+    "locked_parent_step_id",
+    "expected_benchmark_area_ha",
+    "actual_start_area_ha",
+    "area_delta_ha",
     "parent_step_id",
     "parent_label",
     "row_order",
@@ -1125,6 +1130,146 @@ def _validate_tsa29_locked_chain_strict_result(
     )
 
 
+def _load_locked_chain_entries(
+    validation_contract: NamedPipelineValidationContract,
+) -> list[Mapping[str, Any]]:
+    if validation_contract.locked_chain_ledger_path is None:
+        raise NamedPipelineError(
+            "Strict validation contract requires `locked_chain_ledger_path`."
+        )
+    ledger_payload = _load_json_mapping(
+        path=validation_contract.locked_chain_ledger_path,
+        source_label=str(validation_contract.locked_chain_ledger_path),
+    )
+    ledger_entries = ledger_payload.get("entries")
+    if not isinstance(ledger_entries, list):
+        raise NamedPipelineError(
+            f"{validation_contract.locked_chain_ledger_path} field `entries` must be a list."
+        )
+    normalized_entries: list[Mapping[str, Any]] = []
+    for entry in ledger_entries:
+        if not isinstance(entry, dict):
+            raise NamedPipelineError(
+                f"{validation_contract.locked_chain_ledger_path} field `entries` must contain mappings."
+            )
+        normalized_entries.append(entry)
+    return normalized_entries
+
+
+def _resolve_tsa29_locked_chain_strict_row_order(*, seam_id: str) -> int:
+    if seam_id == "scratch":
+        return 1
+    if seam_id in {"aflb", "aflb_yield_ready"}:
+        return 5
+    raise NamedPipelineError(
+        "Strict validation preflight does not yet support seam "
+        f"`{seam_id}` for `tsa29_locked_chain_strict`."
+    )
+
+
+def _resolve_tsa29_locked_chain_entry(
+    *,
+    validation_contract: NamedPipelineValidationContract,
+    row_order: int,
+) -> Mapping[str, Any]:
+    for entry in _load_locked_chain_entries(validation_contract):
+        if _normalize_int_or_none(entry.get("row_order")) == row_order:
+            return entry
+    raise NamedPipelineError(
+        "Strict validation contract is missing locked-chain row "
+        f"`{row_order}` in {validation_contract.locked_chain_ledger_path}."
+    )
+
+
+def _managed_area_ha_from_checkpoint(checkpoint_path: Path) -> float:
+    if not checkpoint_path.exists():
+        raise NamedPipelineError(f"Strict validation checkpoint not found: {checkpoint_path}")
+    gpd = import_module("geopandas")
+    checkpoint = gpd.read_feather(checkpoint_path)
+    if "_stand_area_sqm" in checkpoint.columns and "thlb_fact" in checkpoint.columns:
+        return float(
+            (
+                checkpoint["_stand_area_sqm"].astype(float)
+                * checkpoint["thlb_fact"].astype(float)
+            ).sum()
+            / 10000.0
+        )
+    if "geometry" in checkpoint.columns:
+        return float(checkpoint.geometry.area.sum() / 10000.0)
+    raise NamedPipelineError(
+        "Strict validation checkpoint is missing both managed-area columns and geometry: "
+        f"{checkpoint_path}"
+    )
+
+
+def _validate_tsa29_locked_chain_strict_preflight(
+    *,
+    plan: NamedPipelineExecutionPlan,
+    tolerance_ha: float = 1e-3,
+) -> Mapping[str, Any]:
+    validation_contract = plan.validation_contract
+    if validation_contract is None:
+        raise NamedPipelineError("Strict validation contract is required for this preflight.")
+    locked_row_order = _resolve_tsa29_locked_chain_strict_row_order(seam_id=plan.seam_id)
+    locked_entry = _resolve_tsa29_locked_chain_entry(
+        validation_contract=validation_contract,
+        row_order=locked_row_order,
+    )
+    locked_parent_step_id = str(locked_entry.get("parent_step_id", "")).strip()
+    expected_benchmark_area_ha = _normalize_float_or_none(
+        locked_entry.get("locked_cumulative_remaining_area_ha")
+    )
+    if expected_benchmark_area_ha is None:
+        raise NamedPipelineError(
+            "Strict validation contract ledger entry is missing "
+            f"`locked_cumulative_remaining_area_ha` for row `{locked_row_order}`."
+        )
+
+    if plan.seam_id == "scratch":
+        raise NamedPipelineError(
+            "Strict validation preflight for seam `scratch` requires a validated raw-start "
+            "comparison surface for TSA29; none is currently defined. Refusing to guess or "
+            "use legacy checkpoint fallback."
+        )
+
+    if plan.checkpoint_path is None:
+        raise NamedPipelineError(
+            "Strict validation preflight requires an explicit checkpoint path for seam "
+            f"`{plan.seam_id}`."
+        )
+    actual_start_area_ha = _managed_area_ha_from_checkpoint(plan.checkpoint_path)
+
+    if plan.seam_id == "aflb_yield_ready":
+        aflb_checkpoint_path = plan.instance_root / "data" / "tsr" / "aflb_checkpoint.feather"
+        aflb_area_ha = _managed_area_ha_from_checkpoint(aflb_checkpoint_path)
+        aflb_delta_ha = actual_start_area_ha - aflb_area_ha
+        if abs(aflb_delta_ha) > tolerance_ha:
+            raise NamedPipelineError(
+                "Strict validation preflight mismatch for seam `aflb_yield_ready`: expected "
+                "yield-ready area to preserve AFLB area from "
+                f"`{aflb_checkpoint_path}`; AFLB `{aflb_area_ha:.3f} ha`, "
+                f"yield-ready `{actual_start_area_ha:.3f} ha`, "
+                f"delta `{aflb_delta_ha:.3f} ha`."
+            )
+
+    area_delta_ha = actual_start_area_ha - expected_benchmark_area_ha
+    if abs(area_delta_ha) > tolerance_ha:
+        raise NamedPipelineError(
+            "Strict validation preflight mismatch for seam "
+            f"`{plan.seam_id}` at locked row `{locked_row_order}` "
+            f"(`{locked_parent_step_id}`): expected `{expected_benchmark_area_ha:.3f} ha`, "
+            f"got `{actual_start_area_ha:.3f} ha`, delta `{area_delta_ha:.3f} ha`."
+        )
+
+    return {
+        "locked_row_order": locked_row_order,
+        "locked_parent_step_id": locked_parent_step_id,
+        "expected_benchmark_area_ha": expected_benchmark_area_ha,
+        "actual_start_area_ha": actual_start_area_ha,
+        "area_delta_ha": area_delta_ha,
+    }
+
+
 def run_named_pipeline_runbook(
     *,
     runbook_path: Path,
@@ -1189,6 +1334,24 @@ def run_named_pipeline_runbook(
         }
     )
     try:
+        if (
+            plan.validation_contract is not None
+            and plan.validation_contract.contract_kind == "tsa29_locked_chain_strict"
+        ):
+            runtime_logger.emit(
+                {
+                    "event_kind": "pipeline_validation_preflight_started",
+                    "validation_contract_kind": plan.validation_contract.contract_kind,
+                }
+            )
+            preflight_result = _validate_tsa29_locked_chain_strict_preflight(plan=plan)
+            runtime_logger.emit(
+                {
+                    "event_kind": "pipeline_validation_preflight_finished",
+                    "validation_contract_kind": plan.validation_contract.contract_kind,
+                    **preflight_result,
+                }
+            )
         tsr_result = run_tsr_thlb_netdown_recipe(
             recipe_path=plan.thlb_netdown_recipe_path,
             checkpoint_path=plan.checkpoint_path,
