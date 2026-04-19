@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from importlib import resources
 import json
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Callable, Mapping, cast
 
 import yaml
 
@@ -201,6 +202,127 @@ class NamedPipelineExecutionResult:
     plan: NamedPipelineExecutionPlan
     tsr_thlb_result: TsrThlbNetdownRecipeRunResult
     validation_result: NamedPipelineValidationResult | None = None
+    runtime_event_log_path: Path | None = None
+
+
+_RUNTIME_EVENT_CORE_FIELDS = (
+    "event_kind",
+    "timestamp_utc",
+    "pipeline_id",
+    "runbook_path",
+    "instance_root",
+    "execution_mode",
+    "seam_id",
+    "recipe_path",
+    "checkpoint_path",
+)
+_RUNTIME_EVENT_IMPORTANT_FIELDS = (
+    "validation_contract_kind",
+    "locked_chain_ledger_path",
+    "required_recipe_path",
+    "parent_step_id",
+    "parent_label",
+    "row_order",
+    "land_base_stage",
+    "compiled_step_id",
+    "compiled_step_label",
+    "run_status",
+    "remaining_area_ha",
+    "completed_lus",
+    "total_lus",
+    "fraction_complete",
+    "current_lu",
+    "bundle_label",
+    "bundle_status",
+    "validated_parent_step_count",
+    "latest_locked_row_order",
+    "latest_locked_parent_step_id",
+    "expected_final_managed_area_ha",
+    "actual_final_managed_area_ha",
+    "error",
+    "notes",
+)
+
+
+def default_named_pipeline_runtime_event_log_path(
+    *, instance_root: Path, pipeline_id: str
+) -> Path:
+    """Return the default runtime event log path for one named-pipeline run."""
+
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    slug = pipeline_id.strip().replace(".", "_") or "pipeline"
+    return (
+        instance_root
+        / "runtime"
+        / "logs"
+        / "tsr"
+        / f"named_pipeline_events-{slug}-{timestamp}.log"
+    )
+
+
+def _normalize_runtime_event_value(value: Any) -> str:
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, float):
+        return f"{value:.3f}"
+    if isinstance(value, (list, tuple)):
+        return json.dumps(
+            [_normalize_runtime_event_value(item) for item in value],
+            sort_keys=False,
+        )
+    if isinstance(value, dict):
+        return json.dumps(value, sort_keys=True)
+    return str(value)
+
+
+def format_named_pipeline_runtime_event_line(event: Mapping[str, Any]) -> str:
+    """Format one named-pipeline runtime event as stable key=value text."""
+
+    ordered_keys: list[str] = []
+    for key in (*_RUNTIME_EVENT_CORE_FIELDS, *_RUNTIME_EVENT_IMPORTANT_FIELDS):
+        if key in event and key not in ordered_keys:
+            ordered_keys.append(key)
+    for key in sorted(event):
+        if key not in ordered_keys:
+            ordered_keys.append(key)
+    parts: list[str] = []
+    for key in ordered_keys:
+        value = event.get(key)
+        if value in (None, "", (), [], {}):
+            continue
+        normalized = _normalize_runtime_event_value(value)
+        if any(char.isspace() for char in normalized) or any(
+            char in normalized for char in ['"', "=", "[", "]", "{", "}"]
+        ):
+            normalized = json.dumps(normalized)
+        parts.append(f"{key}={normalized}")
+    return " ".join(parts)
+
+
+class _NamedPipelineRuntimeEventLogger:
+    """Mirror runtime events to disk and optionally to a user-visible sink."""
+
+    def __init__(
+        self,
+        *,
+        log_path: Path,
+        default_fields: Mapping[str, Any],
+        line_sink: Callable[[str], None] | None = None,
+    ) -> None:
+        self.log_path = log_path
+        self.default_fields = dict(default_fields)
+        self.line_sink = line_sink
+        self.log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def emit(self, payload: Mapping[str, Any]) -> None:
+        event = dict(self.default_fields)
+        event.update(payload)
+        event["timestamp_utc"] = datetime.now(UTC).isoformat()
+        line = format_named_pipeline_runtime_event_line(event)
+        with self.log_path.open("a", encoding="utf-8") as handle:
+            handle.write(line + "\n")
+        if self.line_sink is not None:
+            self.line_sink(line)
 
 
 def _read_pipeline_resource_text(resource_name: str) -> str:
@@ -1007,6 +1129,7 @@ def run_named_pipeline_runbook(
     *,
     runbook_path: Path,
     instance_root: Path | None = None,
+    runtime_event_sink: Callable[[str], None] | None = None,
 ) -> NamedPipelineExecutionResult:
     """Run the first named-pipeline proof surface from one machine-readable runbook."""
 
@@ -1014,22 +1137,129 @@ def run_named_pipeline_runbook(
         runbook_path=runbook_path,
         instance_root=instance_root,
     )
-    tsr_result = run_tsr_thlb_netdown_recipe(
-        recipe_path=plan.thlb_netdown_recipe_path,
-        checkpoint_path=plan.checkpoint_path,
-        execution_mode=plan.execution_mode,
+    runtime_event_log_path = default_named_pipeline_runtime_event_log_path(
+        instance_root=plan.instance_root,
+        pipeline_id=plan.pipeline_id,
     )
-    validation_result: NamedPipelineValidationResult | None = None
-    if (
-        plan.validation_contract is not None
-        and plan.validation_contract.contract_kind == "tsa29_locked_chain_strict"
-    ):
-        validation_result = _validate_tsa29_locked_chain_strict_result(
-            plan=plan,
-            tsr_result=tsr_result,
+    runtime_logger = _NamedPipelineRuntimeEventLogger(
+        log_path=runtime_event_log_path,
+        default_fields={
+            "pipeline_id": plan.pipeline_id,
+            "runbook_path": plan.runbook_path,
+            "instance_root": plan.instance_root,
+            "execution_mode": plan.execution_mode,
+            "seam_id": plan.seam_id,
+            "recipe_path": plan.thlb_netdown_recipe_path,
+            "checkpoint_path": (
+                plan.checkpoint_path if plan.checkpoint_path is not None else "<scratch>"
+            ),
+        },
+        line_sink=runtime_event_sink,
+    )
+    runtime_logger.emit(
+        {
+            "event_kind": "pipeline_run_started",
+            "pipeline_label": plan.pipeline_label,
+        }
+    )
+    runtime_logger.emit(
+        {
+            "event_kind": "pipeline_preflight_resolved",
+            "run_profile_path": plan.run_profile_path,
+            "validation_contract_kind": (
+                plan.validation_contract.contract_kind
+                if plan.validation_contract is not None
+                else None
+            ),
+            "locked_chain_ledger_path": (
+                plan.validation_contract.locked_chain_ledger_path
+                if plan.validation_contract is not None
+                else None
+            ),
+            "comparison_report_path": (
+                plan.validation_contract.comparison_report_path
+                if plan.validation_contract is not None
+                else None
+            ),
+            "required_recipe_path": (
+                plan.validation_contract.required_recipe_path
+                if plan.validation_contract is not None
+                else None
+            ),
+        }
+    )
+    try:
+        tsr_result = run_tsr_thlb_netdown_recipe(
+            recipe_path=plan.thlb_netdown_recipe_path,
+            checkpoint_path=plan.checkpoint_path,
+            execution_mode=plan.execution_mode,
+            runtime_event_sink=runtime_logger.emit,
         )
+    except Exception as exc:
+        runtime_logger.emit(
+            {
+                "event_kind": "pipeline_run_failed",
+                "error": str(exc),
+            }
+        )
+        raise
+    validation_result: NamedPipelineValidationResult | None = None
+    try:
+        if (
+            plan.validation_contract is not None
+            and plan.validation_contract.contract_kind == "tsa29_locked_chain_strict"
+        ):
+            runtime_logger.emit(
+                {
+                    "event_kind": "pipeline_validation_started",
+                    "validation_contract_kind": plan.validation_contract.contract_kind,
+                }
+            )
+            validation_result = _validate_tsa29_locked_chain_strict_result(
+                plan=plan,
+                tsr_result=tsr_result,
+            )
+            runtime_logger.emit(
+                {
+                    "event_kind": "pipeline_validation_finished",
+                    "validation_contract_kind": validation_result.contract_kind,
+                    "validated_parent_step_count": (
+                        validation_result.validated_parent_step_count
+                    ),
+                    "latest_locked_row_order": (
+                        validation_result.latest_locked_row_order
+                    ),
+                    "latest_locked_parent_step_id": (
+                        validation_result.latest_locked_parent_step_id
+                    ),
+                    "expected_final_managed_area_ha": (
+                        validation_result.expected_final_managed_area_ha
+                    ),
+                    "actual_final_managed_area_ha": (
+                        validation_result.actual_final_managed_area_ha
+                    ),
+                }
+            )
+    except Exception as exc:
+        runtime_logger.emit(
+            {
+                "event_kind": "pipeline_run_failed",
+                "error": str(exc),
+            }
+        )
+        raise
+    runtime_logger.emit(
+        {
+            "event_kind": "pipeline_run_finished",
+            "step_count": tsr_result.step_count,
+            "final_managed_area_ha": tsr_result.final_managed_area_ha,
+            "runtime_status_report_path": tsr_result.runtime_status_report_path,
+            "audit_path": tsr_result.audit_path,
+        }
+    )
     return NamedPipelineExecutionResult(
         plan=plan,
         tsr_thlb_result=tsr_result,
         validation_result=validation_result,
+        runtime_event_log_path=runtime_event_log_path,
     )

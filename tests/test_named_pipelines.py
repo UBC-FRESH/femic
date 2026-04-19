@@ -420,7 +420,39 @@ def test_run_named_pipeline_runbook_dispatches_to_tsr_thlb_runner(
 
     def _fake_run(**kwargs: object) -> object:
         captured_kwargs.update(kwargs)
-        return "tsr-result"
+        runtime_event_sink = kwargs.get("runtime_event_sink")
+        if callable(runtime_event_sink):
+            runtime_event_sink(
+                {
+                    "event_kind": "parent_step_started",
+                    "parent_step_id": "thlb_parent_001_total_tsa_area",
+                    "parent_label": "Total TSA area",
+                    "row_order": 1,
+                    "land_base_stage": "glb",
+                }
+            )
+            runtime_event_sink(
+                {
+                    "event_kind": "compiled_step_finished",
+                    "parent_step_id": "thlb_parent_001_total_tsa_area",
+                    "compiled_step_id": "thlb_step_001_total_tsa_area",
+                    "compiled_step_label": "Total TSA area",
+                    "row_order": 1,
+                    "land_base_stage": "glb",
+                    "run_status": "applied_noop",
+                    "remaining_area_ha": 1000.0,
+                }
+            )
+        return SimpleNamespace(
+            step_count=1,
+            final_managed_area_ha=1000.0,
+            runtime_status_report_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "thlb_reconstructed_status_report-20260419T000000Z.md",
+            audit_path=instance_root / "config" / "tsr" / "thlb_reconstructed.audit.json",
+        )
 
     monkeypatch.setattr(named_pipelines, "run_tsr_thlb_netdown_recipe", _fake_run)
 
@@ -433,7 +465,14 @@ def test_run_named_pipeline_runbook_dispatches_to_tsr_thlb_runner(
     assert captured_kwargs["checkpoint_path"] is None
     assert captured_kwargs["execution_mode"] == "reconstructed"
     assert result.plan == plan
-    assert result.tsr_thlb_result == "tsr-result"
+    assert result.tsr_thlb_result.step_count == 1
+    assert result.runtime_event_log_path is not None
+    assert result.runtime_event_log_path.exists()
+    runtime_lines = result.runtime_event_log_path.read_text(encoding="utf-8").splitlines()
+    assert any("event_kind=pipeline_run_started" in line for line in runtime_lines)
+    assert any("event_kind=parent_step_started" in line for line in runtime_lines)
+    assert any("event_kind=compiled_step_finished" in line for line in runtime_lines)
+    assert any("event_kind=pipeline_run_finished" in line for line in runtime_lines)
 
 
 def test_run_named_pipeline_runbook_validates_tsa29_locked_chain_contract(
@@ -542,6 +581,12 @@ def test_run_named_pipeline_runbook_validates_tsa29_locked_chain_contract(
         lambda **kwargs: SimpleNamespace(
             audit_path=audit_path,
             final_managed_area_ha=800.0,
+            step_count=2,
+            runtime_status_report_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "thlb_reconstructed_status_report-20260419T000000Z.md",
         ),
     )
 
@@ -670,6 +715,12 @@ def test_run_named_pipeline_runbook_rejects_tsa29_locked_chain_mismatch(
         lambda **kwargs: SimpleNamespace(
             audit_path=audit_path,
             final_managed_area_ha=790.0,
+            step_count=2,
+            runtime_status_report_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "thlb_reconstructed_status_report-20260419T000000Z.md",
         ),
     )
 
@@ -680,3 +731,69 @@ def test_run_named_pipeline_runbook_rejects_tsa29_locked_chain_mismatch(
         )
 
     assert "Strict validation contract mismatch at row `2`" in str(excinfo.value)
+
+
+def test_run_named_pipeline_runbook_emits_pipeline_run_failed_event(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    instance_root = tmp_path / "instance"
+    runbook_path = instance_root / "runbooks" / "pipelines" / "tsa29.yaml"
+    plan = named_pipelines.NamedPipelineExecutionPlan(
+        runbook_path=runbook_path,
+        instance_root=instance_root,
+        pipeline_id="tsr.thlb_strict",
+        pipeline_label="TSR strict THLB product lane",
+        seam_id="aflb_yield_ready",
+        checkpoint_path=instance_root
+        / "data"
+        / "tsr"
+        / "aflb_yield_ready_checkpoint.feather",
+        run_profile_path=None,
+        overlay_paths=(),
+        parameter_files=(),
+        validation_contract=None,
+        user_registry_path=None,
+        instance_registry_path=None,
+        explicit_registry_paths=(),
+        thlb_netdown_recipe_path=instance_root
+        / "workbench"
+        / "tsr"
+        / "thlb_netdown.locked.recipe.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        execution_mode="reconstructed",
+    )
+    captured_lines: list[str] = []
+
+    monkeypatch.setattr(
+        named_pipelines,
+        "build_named_pipeline_execution_plan",
+        lambda **kwargs: plan,
+    )
+
+    def _fake_run(**kwargs: object) -> object:
+        runtime_event_sink = kwargs.get("runtime_event_sink")
+        if callable(runtime_event_sink):
+            runtime_event_sink(
+                {
+                    "event_kind": "compiled_step_started",
+                    "parent_step_id": "thlb_parent_001_total_tsa_area",
+                    "compiled_step_id": "thlb_step_001_total_tsa_area",
+                }
+            )
+        raise named_pipelines.NamedPipelineError("synthetic failure")
+
+    monkeypatch.setattr(named_pipelines, "run_tsr_thlb_netdown_recipe", _fake_run)
+
+    with pytest.raises(named_pipelines.NamedPipelineError, match="synthetic failure"):
+        named_pipelines.run_named_pipeline_runbook(
+            runbook_path=runbook_path,
+            instance_root=instance_root,
+            runtime_event_sink=captured_lines.append,
+        )
+
+    assert any("event_kind=pipeline_run_failed" in line for line in captured_lines)
+    assert any("error=\"synthetic failure\"" in line for line in captured_lines)

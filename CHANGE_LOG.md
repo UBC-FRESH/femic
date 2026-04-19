@@ -14853,3 +14853,17 @@
   - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py src/femic/tsr_catalog/step13_attributes.py src/femic/cli/main.py tests/test_tsr_recipes.py tests/test_tsr_step13_attributes.py`
   - `.\.venv\Scripts\python.exe -m mypy src`
   - `.\.venv\Scripts\python.exe -m sphinx -b html docs _build/html -W`
+## 2026-04-19 - Added always-on live runtime events to `femic pipelines run`
+- `#169` bounded observability slice:
+  - `run_named_pipeline_runbook(...)` now emits line-based pipeline start, preflight, validation, finish, and failure events and mirrors them to a runtime event log under `runtime/logs/tsr/`;
+  - `run_tsr_thlb_netdown_recipe(...)` now accepts a runtime event sink and emits parent-step plus compiled-step events from both reconstructed and hybrid THLB execution paths; and
+  - LU-parallel reconstructed exclusion work now surfaces `parent_step_progress` events by replaying the existing progress JSON snapshots instead of leaving that signal hidden in runtime files.
+- Supporting follow-through:
+  - the named-pipeline CLI now prints live event lines during execution and reports the mirrored runtime event log path in the final summary; and
+  - focused tests now cover runtime event logging, failure reporting, CLI forwarding, and progress-event emission.
+- Focused validation:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -q`
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "pipelines_run" -q`
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "runtime_events or parent_progress" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py src/femic/cli/main.py src/femic/tsr_catalog/recipes.py tests/test_named_pipelines.py tests/test_cli_main.py tests/test_tsr_recipes.py`
+  - `.\.venv\Scripts\python.exe -m mypy src`

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
 import copy
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -19,7 +19,7 @@ import shutil
 from pathlib import Path
 import re
 from time import perf_counter
-from typing import Any, Literal, Sequence
+from typing import Any, Callable, Literal, Mapping, Sequence
 
 import geopandas as gpd  # type: ignore[import-untyped]
 import nbformat
@@ -95,6 +95,9 @@ from .source_overrides import (
 
 class TsrRecipeError(RuntimeError):
     """Raised when TSR recipe initialization or loading fails."""
+
+
+TsrRuntimeEventSink = Callable[[dict[str, Any]], None]
 
 
 _TSR_RECIPE_RESOURCE_PACKAGE = "femic.resources.tsr_recipes"
@@ -7947,6 +7950,90 @@ def _write_tsr_thlb_parallel_progress(
     )
 
 
+def _emit_tsr_runtime_event(
+    event_sink: TsrRuntimeEventSink | None,
+    **payload: Any,
+) -> None:
+    if event_sink is None:
+        return
+    event_sink(dict(payload))
+
+
+def _resolve_runtime_step_notes(runtime_item: Mapping[str, Any]) -> tuple[str, ...]:
+    status = str(runtime_item.get("run_status", "")).strip()
+    spatial_application_mode = str(
+        runtime_item.get("spatial_application_mode", "")
+    ).strip()
+    if status in {"blocked_exact_overlay", "blocked_missing_source", "blocked_extent_mismatch"}:
+        return _dedupe_runtime_notes(runtime_item.get("run_notes", ()))
+    if status == "unsupported":
+        return _dedupe_runtime_notes(runtime_item.get("run_notes", ()))
+    if spatial_application_mode in {"aspatial_fallback", "stand_binary_majority"}:
+        return _dedupe_runtime_notes(runtime_item.get("run_notes", ()))
+    return ()
+
+
+def _build_runtime_parent_step_fields(step: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "parent_step_id": str(step.get("parent_step_id", "")).strip() or None,
+        "parent_label": str(step.get("parent_label", "")).strip() or None,
+        "row_order": int(step.get("order_index", 0) or 0) or None,
+        "land_base_stage": str(step.get("land_base_stage", "")).strip() or None,
+    }
+
+
+def _build_runtime_compiled_step_fields(step: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        **_build_runtime_parent_step_fields(step),
+        "compiled_step_id": str(step.get("step_id", "")).strip() or None,
+        "compiled_step_label": str(step.get("label", "")).strip() or None,
+    }
+
+
+def _runtime_remaining_area_ha(runtime_item: Mapping[str, Any]) -> float | None:
+    value = runtime_item.get("remaining_area_ha")
+    if value is None:
+        return None
+    return float(value)
+
+
+def _emit_parallel_progress_events_from_files(
+    *,
+    progress_paths: Sequence[Path],
+    event_sink: TsrRuntimeEventSink | None,
+    event_fields: Mapping[str, Any],
+    seen_updates_by_path: dict[Path, str],
+) -> None:
+    if event_sink is None:
+        return
+    for progress_path in progress_paths:
+        if not progress_path.exists():
+            continue
+        try:
+            payload = json.loads(progress_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(payload, dict):
+            continue
+        updated_utc = str(payload.get("updated_utc", "")).strip()
+        if not updated_utc or seen_updates_by_path.get(progress_path) == updated_utc:
+            continue
+        seen_updates_by_path[progress_path] = updated_utc
+        _emit_tsr_runtime_event(
+            event_sink,
+            event_kind="parent_step_progress",
+            **dict(event_fields),
+            bundle_index=int(payload.get("bundle_index", 0) or 0) or None,
+            bundle_label=str(payload.get("bundle_label", "")).strip() or None,
+            completed_lus=int(payload.get("completed_lus", 0) or 0),
+            total_lus=int(payload.get("total_lus", 0) or 0),
+            fraction_complete=float(payload.get("fraction_complete", 0.0) or 0.0),
+            current_lu=str(payload.get("current_lu", "")).strip() or None,
+            bundle_status=str(payload.get("status", "")).strip() or None,
+            notes=_dedupe_runtime_notes(payload.get("notes", ())),
+        )
+
+
 def _auto_select_smoke_map_ids_for_parent_step(
     *,
     checkpoint: gpd.GeoDataFrame,
@@ -9122,6 +9209,8 @@ def _execute_reconstructed_lu_exclusion_step(
     parallel_mode: str = TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_SERIAL,
     max_workers: int | None = None,
     lu_bundle_count: int | None = None,
+    runtime_event_sink: TsrRuntimeEventSink | None = None,
+    runtime_event_fields: Mapping[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     lu_names, lu_selection_seconds = _select_intersecting_lu_names_for_exclusions(
         exclusion_geometries=exclusion_geometries,
@@ -9177,8 +9266,13 @@ def _execute_reconstructed_lu_exclusion_step(
                 bundle_count=bundle_count,
             )
             worker_results: list[dict[str, Any]] = []
+            progress_paths = [
+                runtime_step_root / f"bundle_{int(bundle['bundle_index']):03d}.progress.json"
+                for bundle in bundles
+            ]
+            seen_progress_updates: dict[Path, str] = {}
             with ProcessPoolExecutor(max_workers=worker_count) as pool:
-                futures = [
+                future_to_progress_path = {
                     pool.submit(
                         _run_reconstructed_lu_exclusion_bundle_worker,
                         bundle_index=int(bundle["bundle_index"]),
@@ -9186,11 +9280,31 @@ def _execute_reconstructed_lu_exclusion_step(
                         bundle_items=[dict(item) for item in bundle["chunk_records"]],
                         exclusion_path_str=str(exclusion_path),
                         runtime_step_root_str=str(runtime_step_root),
+                        progress_path_str=str(progress_path),
+                    ): progress_path
+                    for bundle, progress_path in zip(bundles, progress_paths, strict=True)
+                }
+                pending_futures = set(future_to_progress_path)
+                while pending_futures:
+                    done_futures, pending_futures = wait(
+                        pending_futures,
+                        timeout=0.25,
+                        return_when=FIRST_COMPLETED,
                     )
-                    for bundle in bundles
-                ]
-                for future in futures:
-                    worker_results.append(future.result())
+                    _emit_parallel_progress_events_from_files(
+                        progress_paths=progress_paths,
+                        event_sink=runtime_event_sink,
+                        event_fields=runtime_event_fields or {},
+                        seen_updates_by_path=seen_progress_updates,
+                    )
+                    for future in done_futures:
+                        worker_results.append(future.result())
+                _emit_parallel_progress_events_from_files(
+                    progress_paths=progress_paths,
+                    event_sink=runtime_event_sink,
+                    event_fields=runtime_event_fields or {},
+                    seen_updates_by_path=seen_progress_updates,
+                )
 
             updated_record_by_index: dict[int, dict[str, Any]] = {}
             for result in worker_results:
@@ -9363,14 +9477,15 @@ def _run_reconstructed_lu_exclusion_bundle_worker(
     bundle_items: Sequence[dict[str, Any]],
     exclusion_path_str: str,
     runtime_step_root_str: str,
+    progress_path_str: str | None = None,
 ) -> dict[str, Any]:
-    del bundle_label
     exclusion_geometries = gpd.read_feather(Path(exclusion_path_str))
     exclusion_geometries = gpd.GeoDataFrame(
         exclusion_geometries, geometry="geometry", crs=BC_ALBERS_EPSG
     )
     exclusion_sindex = exclusion_geometries.sindex
     runtime_step_root = Path(runtime_step_root_str)
+    progress_target = Path(progress_path_str) if progress_path_str else None
     updated_records: list[dict[str, Any]] = []
     candidate_query_seconds = 0.0
     overlay_seconds = 0.0
@@ -9381,63 +9496,134 @@ def _run_reconstructed_lu_exclusion_bundle_worker(
     fragment_batch_count = 0
     intersecting_feature_indices: set[int] = set()
     touched_chunk_count = 0
+    lu_names = [
+        str(item.get("lu_name", "")).strip()
+        for item in bundle_items
+        if str(item.get("lu_name", "")).strip()
+    ]
+    completed_lus = 0
 
-    for item in bundle_items:
-        current_record = dict(item)
-        chunk = _load_lu_chunk_frame(Path(current_record["chunk_path"]))
-        local_query_started = perf_counter()
-        local_exclusion_indices = exclusion_sindex.query(
-            chunk.geometry,
-            predicate="intersects",
+    if progress_target is not None:
+        _write_tsr_thlb_parallel_progress(
+            progress_target,
+            bundle_index=bundle_index,
+            bundle_label=bundle_label,
+            lu_names=lu_names,
+            completed_lus=0,
+            total_lus=len(bundle_items),
+            current_lu=None,
+            status="running",
         )
-        candidate_query_seconds += perf_counter() - local_query_started
-        if getattr(local_exclusion_indices, "ndim", 1) == 2:
-            local_exclusion_values = local_exclusion_indices[1]
-        else:
-            local_exclusion_values = local_exclusion_indices
-        unique_exclusion_indices = sorted(
-            {int(value) for value in local_exclusion_values.tolist()}
-        )
-        if not unique_exclusion_indices:
+
+    try:
+        for item in bundle_items:
+            current_record = dict(item)
+            current_lu_name = str(current_record.get("lu_name", "")).strip() or None
+            if progress_target is not None:
+                _write_tsr_thlb_parallel_progress(
+                    progress_target,
+                    bundle_index=bundle_index,
+                    bundle_label=bundle_label,
+                    lu_names=lu_names,
+                    completed_lus=completed_lus,
+                    total_lus=len(bundle_items),
+                    current_lu=current_lu_name,
+                    status="running",
+                )
+            chunk = _load_lu_chunk_frame(Path(current_record["chunk_path"]))
+            local_query_started = perf_counter()
+            local_exclusion_indices = exclusion_sindex.query(
+                chunk.geometry,
+                predicate="intersects",
+            )
+            candidate_query_seconds += perf_counter() - local_query_started
+            if getattr(local_exclusion_indices, "ndim", 1) == 2:
+                local_exclusion_values = local_exclusion_indices[1]
+            else:
+                local_exclusion_values = local_exclusion_indices
+            unique_exclusion_indices = sorted(
+                {int(value) for value in local_exclusion_values.tolist()}
+            )
+            if not unique_exclusion_indices:
+                updated_records.append(current_record)
+                completed_lus += 1
+                continue
+            local_exclusions = exclusion_geometries.iloc[unique_exclusion_indices].copy()
+            intersecting_feature_indices.update(unique_exclusion_indices)
+
+            overlay_started = perf_counter()
+            (
+                updated_chunk,
+                current_candidate_count,
+                current_affected_fragment_count,
+                current_affected_area_ha,
+                current_fragment_batch_count,
+            ) = _fragment_binary_exclusion_step_chunked(
+                checkpoint=chunk,
+                exclusion_geometries=local_exclusions,
+            )
+            overlay_seconds += perf_counter() - overlay_started
+            candidate_row_count += int(current_candidate_count)
+            affected_fragment_count += int(current_affected_fragment_count)
+            affected_area_ha += float(current_affected_area_ha)
+            fragment_batch_count += int(current_fragment_batch_count)
+
+            if current_candidate_count > 0:
+                touched_chunk_count += 1
+            if current_affected_fragment_count <= 0:
+                updated_records.append(current_record)
+                completed_lus += 1
+                continue
+
+            original_index = int(current_record.get("original_index", 0) or 0)
+            lu_name = str(current_record.get("lu_name", "")).strip()
+            chunk_write_started = perf_counter()
+            chunk_path = (
+                runtime_step_root
+                / f"{original_index:03d}_{_normalize_step_slug(lu_name or 'chunk')}.feather"
+            )
+            _write_lu_chunk_frame(updated_chunk, chunk_path=chunk_path)
+            write_seconds += perf_counter() - chunk_write_started
+            current_record["chunk_path"] = chunk_path
             updated_records.append(current_record)
-            continue
-        local_exclusions = exclusion_geometries.iloc[unique_exclusion_indices].copy()
-        intersecting_feature_indices.update(unique_exclusion_indices)
+            completed_lus += 1
+            if progress_target is not None:
+                _write_tsr_thlb_parallel_progress(
+                    progress_target,
+                    bundle_index=bundle_index,
+                    bundle_label=bundle_label,
+                    lu_names=lu_names,
+                    completed_lus=completed_lus,
+                    total_lus=len(bundle_items),
+                    current_lu=current_lu_name,
+                    status="running",
+                )
+    except Exception as exc:
+        if progress_target is not None:
+            _write_tsr_thlb_parallel_progress(
+                progress_target,
+                bundle_index=bundle_index,
+                bundle_label=bundle_label,
+                lu_names=lu_names,
+                completed_lus=completed_lus,
+                total_lus=len(bundle_items),
+                current_lu=None,
+                status="failed",
+                notes=[str(exc)],
+            )
+        raise
 
-        overlay_started = perf_counter()
-        (
-            updated_chunk,
-            current_candidate_count,
-            current_affected_fragment_count,
-            current_affected_area_ha,
-            current_fragment_batch_count,
-        ) = _fragment_binary_exclusion_step_chunked(
-            checkpoint=chunk,
-            exclusion_geometries=local_exclusions,
+    if progress_target is not None:
+        _write_tsr_thlb_parallel_progress(
+            progress_target,
+            bundle_index=bundle_index,
+            bundle_label=bundle_label,
+            lu_names=lu_names,
+            completed_lus=len(bundle_items),
+            total_lus=len(bundle_items),
+            current_lu=None,
+            status="completed",
         )
-        overlay_seconds += perf_counter() - overlay_started
-        candidate_row_count += int(current_candidate_count)
-        affected_fragment_count += int(current_affected_fragment_count)
-        affected_area_ha += float(current_affected_area_ha)
-        fragment_batch_count += int(current_fragment_batch_count)
-
-        if current_candidate_count > 0:
-            touched_chunk_count += 1
-        if current_affected_fragment_count <= 0:
-            updated_records.append(current_record)
-            continue
-
-        original_index = int(current_record.get("original_index", 0) or 0)
-        lu_name = str(current_record.get("lu_name", "")).strip()
-        chunk_write_started = perf_counter()
-        chunk_path = (
-            runtime_step_root
-            / f"{original_index:03d}_{_normalize_step_slug(lu_name or 'chunk')}.feather"
-        )
-        _write_lu_chunk_frame(updated_chunk, chunk_path=chunk_path)
-        write_seconds += perf_counter() - chunk_write_started
-        current_record["chunk_path"] = chunk_path
-        updated_records.append(current_record)
 
     return {
         "bundle_index": bundle_index,
@@ -16531,6 +16717,7 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
     parallel_mode: str = TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_AUTO,
     max_workers: int | None = None,
     lu_bundle_count: int | None = None,
+    runtime_event_sink: TsrRuntimeEventSink | None = None,
 ) -> tuple[
     gpd.GeoDataFrame,
     list[dict[str, Any]],
@@ -16572,6 +16759,20 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
             "total_seconds": float(sum(partition_profile.values())),
         }
     )
+    active_parent_event_fields: dict[str, Any] | None = None
+
+    def _emit_active_parent_finished(
+        *, run_status: str | None = None, remaining_area_ha: float | None = None
+    ) -> None:
+        if active_parent_event_fields is None:
+            return
+        _emit_tsr_runtime_event(
+            runtime_event_sink,
+            event_kind="parent_step_finished",
+            **active_parent_event_fields,
+            run_status=run_status,
+            remaining_area_ha=remaining_area_ha,
+        )
 
     for step in recipe_steps:
         if (
@@ -16614,6 +16815,36 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
         normalized_action = str(step.get("normalized_action", "")).strip()
         operation_type = _resolve_compiled_operation_type(step)
         page_number = int(step.get("page_number") or 0)
+        step_event_fields = _build_runtime_compiled_step_fields(step)
+        current_parent_event_fields = {
+            key: value
+            for key, value in _build_runtime_parent_step_fields(step).items()
+            if value not in (None, "")
+        }
+        if current_parent_event_fields != active_parent_event_fields:
+            _emit_active_parent_finished(
+                run_status=(
+                    str(applied_steps[-1].get("run_status", "")).strip()
+                    if applied_steps
+                    else None
+                ),
+                remaining_area_ha=(
+                    _runtime_remaining_area_ha(applied_steps[-1])
+                    if applied_steps
+                    else None
+                ),
+            )
+            active_parent_event_fields = current_parent_event_fields
+            _emit_tsr_runtime_event(
+                runtime_event_sink,
+                event_kind="parent_step_started",
+                **active_parent_event_fields,
+            )
+        _emit_tsr_runtime_event(
+            runtime_event_sink,
+            event_kind="compiled_step_started",
+            **step_event_fields,
+        )
         step_dir = run_root / (
             f"{int(step.get('order_index') or 0):03d}_"
             f"{_normalize_step_slug(step_profile['step_id'])}"
@@ -16854,6 +17085,8 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                             parallel_mode=parallel_mode,
                             max_workers=max_workers,
                             lu_bundle_count=lu_bundle_count,
+                            runtime_event_sink=runtime_event_sink,
+                            runtime_event_fields=step_event_fields,
                         )
                         step_profile["candidate_query_seconds"] = float(
                             lu_step_profile["candidate_query_seconds"]
@@ -17069,6 +17302,18 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
 
         updated_step["page_number"] = page_number
         applied_steps.append(updated_step)
+        _emit_tsr_runtime_event(
+            runtime_event_sink,
+            event_kind="compiled_step_finished",
+            **step_event_fields,
+            run_status=str(updated_step.get("run_status", "")).strip() or None,
+            remaining_area_ha=(
+                float(updated_step["remaining_area_ha"])
+                if updated_step.get("remaining_area_ha") is not None
+                else None
+            ),
+            notes=_resolve_runtime_step_notes(updated_step),
+        )
         if _is_glb_to_aflb_stage(step) and _is_applied_runtime_status(
             str(updated_step.get("run_status", "")).strip()
         ):
@@ -17108,6 +17353,16 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
             "total_seconds": merge_seconds,
         }
     )
+    _emit_active_parent_finished(
+        run_status=(
+            str(applied_steps[-1].get("run_status", "")).strip()
+            if applied_steps
+            else None
+        ),
+        remaining_area_ha=(
+            _runtime_remaining_area_ha(applied_steps[-1]) if applied_steps else None
+        ),
+    )
     return (
         merged_checkpoint,
         applied_steps,
@@ -17131,6 +17386,7 @@ def _execute_tsr_thlb_recipe_steps(
     parallel_mode: str = TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_AUTO,
     max_workers: int | None = None,
     lu_bundle_count: int | None = None,
+    runtime_event_sink: TsrRuntimeEventSink | None = None,
 ) -> tuple[
     gpd.GeoDataFrame,
     list[dict[str, Any]],
@@ -17153,6 +17409,7 @@ def _execute_tsr_thlb_recipe_steps(
             parallel_mode=parallel_mode,
             max_workers=max_workers,
             lu_bundle_count=lu_bundle_count,
+            runtime_event_sink=runtime_event_sink,
         )
     outcome_counts: Counter[str] = Counter()
     applied_steps: list[dict[str, Any]] = []
@@ -17161,6 +17418,20 @@ def _execute_tsr_thlb_recipe_steps(
     lhlb_checkpoint: gpd.GeoDataFrame | None = None
     reached_glb_to_aflb = False
     reached_aflb_to_lhlb = False
+    active_parent_event_fields: dict[str, Any] | None = None
+
+    def _emit_active_parent_finished(
+        *, run_status: str | None = None, remaining_area_ha: float | None = None
+    ) -> None:
+        if active_parent_event_fields is None:
+            return
+        _emit_tsr_runtime_event(
+            runtime_event_sink,
+            event_kind="parent_step_finished",
+            **active_parent_event_fields,
+            run_status=run_status,
+            remaining_area_ha=remaining_area_ha,
+        )
 
     for step in recipe_steps:
         if (
@@ -17204,6 +17475,36 @@ def _execute_tsr_thlb_recipe_steps(
             if str(value).strip()
         )
         page_number = int(step.get("page_number") or 0)
+        step_event_fields = _build_runtime_compiled_step_fields(step)
+        current_parent_event_fields = {
+            key: value
+            for key, value in _build_runtime_parent_step_fields(step).items()
+            if value not in (None, "")
+        }
+        if current_parent_event_fields != active_parent_event_fields:
+            _emit_active_parent_finished(
+                run_status=(
+                    str(applied_steps[-1].get("run_status", "")).strip()
+                    if applied_steps
+                    else None
+                ),
+                remaining_area_ha=(
+                    _runtime_remaining_area_ha(applied_steps[-1])
+                    if applied_steps
+                    else None
+                ),
+            )
+            active_parent_event_fields = current_parent_event_fields
+            _emit_tsr_runtime_event(
+                runtime_event_sink,
+                event_kind="parent_step_started",
+                **active_parent_event_fields,
+            )
+        _emit_tsr_runtime_event(
+            runtime_event_sink,
+            event_kind="compiled_step_started",
+            **step_event_fields,
+        )
 
         if normalized_action in {
             "section_heading",
@@ -17694,6 +17995,18 @@ def _execute_tsr_thlb_recipe_steps(
 
         updated_step["page_number"] = page_number
         applied_steps.append(updated_step)
+        _emit_tsr_runtime_event(
+            runtime_event_sink,
+            event_kind="compiled_step_finished",
+            **step_event_fields,
+            run_status=str(updated_step.get("run_status", "")).strip() or None,
+            remaining_area_ha=(
+                float(updated_step["remaining_area_ha"])
+                if updated_step.get("remaining_area_ha") is not None
+                else None
+            ),
+            notes=_resolve_runtime_step_notes(updated_step),
+        )
         if (
             execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
             and _is_glb_to_aflb_stage(step)
@@ -17736,6 +18049,16 @@ def _execute_tsr_thlb_recipe_steps(
         and reached_aflb_to_lhlb
     ):
         lhlb_checkpoint = checkpoint.copy()
+    _emit_active_parent_finished(
+        run_status=(
+            str(applied_steps[-1].get("run_status", "")).strip()
+            if applied_steps
+            else None
+        ),
+        remaining_area_ha=(
+            _runtime_remaining_area_ha(applied_steps[-1]) if applied_steps else None
+        ),
+    )
     return (
         checkpoint,
         applied_steps,
@@ -17910,6 +18233,7 @@ def run_tsr_thlb_netdown_recipe(
     parallel_mode: str = TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_AUTO,
     max_workers: int | None = None,
     lu_bundle_count: int | None = None,
+    runtime_event_sink: TsrRuntimeEventSink | None = None,
 ) -> TsrThlbNetdownRecipeRunResult:
     """Execute a THLB netdown recipe into either a hybrid or reconstructed checkpoint."""
 
@@ -18077,6 +18401,7 @@ def run_tsr_thlb_netdown_recipe(
         parallel_mode=parallel_mode,
         max_workers=max_workers,
         lu_bundle_count=lu_bundle_count,
+        runtime_event_sink=runtime_event_sink,
     )
 
     final_managed_area_ha = _managed_area_ha(checkpoint)

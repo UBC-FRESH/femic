@@ -6964,6 +6964,12 @@ def test_pipelines_run_executes_named_pipeline_runbook(
 
     def _fake_run_named_pipeline_runbook(**kwargs: object) -> object:
         captured_kwargs.update(kwargs)
+        runtime_event_sink = kwargs.get("runtime_event_sink")
+        if callable(runtime_event_sink):
+            runtime_event_sink("event_kind=pipeline_run_started pipeline_id=tsr.thlb_strict")
+            runtime_event_sink(
+                "event_kind=compiled_step_finished compiled_step_id=thlb_step_001_total_tsa_area run_status=applied_noop remaining_area_ha=1.000"
+            )
         return SimpleNamespace(
             plan=SimpleNamespace(
                 pipeline_id="tsr.thlb_strict",
@@ -7006,6 +7012,11 @@ def test_pipelines_run_executes_named_pipeline_runbook(
                 / "tsr"
                 / "aflb_yield_ready_checkpoint.feather",
             ),
+            runtime_event_log_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "named_pipeline_events-tsr_thlb_strict-20260419T000000Z.log",
             validation_result=SimpleNamespace(
                 validated_parent_step_count=23,
                 latest_locked_row_order=23,
@@ -7093,7 +7104,10 @@ def test_pipelines_run_executes_named_pipeline_runbook(
     assert captured_kwargs["runbook_path"] == runbook_path.resolve()
     assert captured_kwargs["instance_root"] == instance_root.resolve()
     assert any("pipeline_id: tsr.thlb_strict" in msg for msg in messages)
+    assert any("event_kind=pipeline_run_started" in msg for msg in messages)
+    assert any("event_kind=compiled_step_finished" in msg for msg in messages)
     assert any("seam_id: aflb_yield_ready" in msg for msg in messages)
+    assert any("runtime_event_log_path:" in msg for msg in messages)
     assert any(
         "validation_contract_required_recipe_path:" in msg for msg in messages
     )
@@ -7117,6 +7131,9 @@ def test_pipelines_run_accepts_checked_in_proof_runbook(
 
     def _fake_run_named_pipeline_runbook(**kwargs: object) -> object:
         captured_kwargs.update(kwargs)
+        runtime_event_sink = kwargs.get("runtime_event_sink")
+        if callable(runtime_event_sink):
+            runtime_event_sink("event_kind=pipeline_run_started pipeline_id=tsr.thlb_strict")
         return SimpleNamespace(
             plan=SimpleNamespace(
                 pipeline_id="tsr.thlb_strict",
@@ -7159,6 +7176,11 @@ def test_pipelines_run_accepts_checked_in_proof_runbook(
                 / "tsr"
                 / "aflb_yield_ready_checkpoint.feather",
             ),
+            runtime_event_log_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "named_pipeline_events-tsr_thlb_strict-20260419T000000Z.log",
             validation_result=None,
             tsr_thlb_result=SimpleNamespace(
                 recipe_path=instance_root

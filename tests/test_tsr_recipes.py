@@ -11664,3 +11664,105 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_can_use_parallel_auto_mode(
     assert exact_profile["parallel_mode"] == "auto"
     assert exact_profile["worker_count"] == 2
     assert exact_profile["lu_bundle_count"] == 2
+
+
+def test_execute_tsr_thlb_recipe_steps_emits_runtime_events(
+    tmp_path: Path,
+) -> None:
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "_row_id": [1],
+            "_stand_area_sqm": [100.0],
+            "thlb_fact": [1.0],
+        },
+        geometry=[box(0, 0, 10, 10)],
+        crs="EPSG:3005",
+    )
+    runtime_events: list[dict[str, object]] = []
+
+    _, applied_steps, _, _, _, _ = tsr_recipes._execute_tsr_thlb_recipe_steps(
+        recipe_steps=[
+            {
+                "step_id": "thlb_step_001_total_tsa_area",
+                "parent_step_id": "thlb_parent_001_total_tsa_area",
+                "parent_label": "Total TSA area",
+                "order_index": 1,
+                "label": "Total TSA area",
+                "land_base_stage": "glb",
+                "normalized_action": "use_land_base",
+            },
+            {
+                "step_id": "thlb_step_002_reference",
+                "parent_step_id": "thlb_parent_002_reference",
+                "parent_label": "Reference target",
+                "order_index": 2,
+                "label": "Reference target",
+                "land_base_stage": "glb_to_aflb",
+                "normalized_action": "no_deduction",
+            },
+        ],
+        checkpoint=checkpoint,
+        checkpoint_path=tmp_path / "checkpoint.feather",
+        execution_mode=tsr_recipes.TSR_THLB_EXECUTION_MODE_HYBRID,
+        instance_root=tmp_path,
+        source_entry_map={},
+        allow_stand_binary_fallback=False,
+        runtime_event_sink=runtime_events.append,
+    )
+
+    assert [event["event_kind"] for event in runtime_events] == [
+        "parent_step_started",
+        "compiled_step_started",
+        "compiled_step_finished",
+        "parent_step_finished",
+        "parent_step_started",
+        "compiled_step_started",
+        "compiled_step_finished",
+        "parent_step_finished",
+    ]
+    assert runtime_events[2]["run_status"] == "applied_noop"
+    assert runtime_events[2]["remaining_area_ha"] == pytest.approx(0.01)
+    assert applied_steps[0]["run_status"] == "applied_noop"
+    assert applied_steps[1]["run_status"] == "applied_noop"
+
+
+def test_emit_parallel_progress_events_from_files_emits_parent_progress(
+    tmp_path: Path,
+) -> None:
+    progress_path = tmp_path / "bundle_001.progress.json"
+    progress_path.write_text(
+        json.dumps(
+            {
+                "bundle_index": 1,
+                "bundle_label": "bundle-001",
+                "completed_lus": 2,
+                "total_lus": 5,
+                "fraction_complete": 0.4,
+                "current_lu": "West",
+                "status": "running",
+                "notes": ["Applying exclusion geometry."],
+                "updated_utc": "2026-04-19T20:00:00+00:00",
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    runtime_events: list[dict[str, object]] = []
+
+    tsr_recipes._emit_parallel_progress_events_from_files(
+        progress_paths=[progress_path],
+        event_sink=runtime_events.append,
+        event_fields={
+            "parent_step_id": "thlb_parent_010_ogma",
+            "compiled_step_id": "thlb_step_010_ogma",
+        },
+        seen_updates_by_path={},
+    )
+
+    assert len(runtime_events) == 1
+    assert runtime_events[0]["event_kind"] == "parent_step_progress"
+    assert runtime_events[0]["parent_step_id"] == "thlb_parent_010_ogma"
+    assert runtime_events[0]["compiled_step_id"] == "thlb_step_010_ogma"
+    assert runtime_events[0]["completed_lus"] == 2
+    assert runtime_events[0]["total_lus"] == 5
+    assert runtime_events[0]["bundle_status"] == "running"

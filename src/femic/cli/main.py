@@ -2770,6 +2770,8 @@ def _print_named_pipeline_run_summary(result: NamedPipelineExecutionResult) -> N
     console.print(f"pipeline_id: {plan.pipeline_id}")
     console.print(f"pipeline_label: {plan.pipeline_label}")
     console.print(f"runbook_path: {plan.runbook_path}")
+    if result.runtime_event_log_path is not None:
+        console.print(f"runtime_event_log_path: {result.runtime_event_log_path}")
     console.print(f"instance_root: {plan.instance_root}")
     console.print(f"seam_id: {plan.seam_id}")
     console.print(f"execution_mode: {plan.execution_mode}")
@@ -4462,6 +4464,7 @@ def pipelines_run(
         result = run_named_pipeline_runbook(
             runbook_path=resolved_runbook_path,
             instance_root=instance_context.root,
+            runtime_event_sink=console.print,
         )
     except NamedPipelineError as exc:
         console.print(f"[red]Named pipeline run error:[/red] {exc}")

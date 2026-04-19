@@ -447,3 +447,40 @@
     - teach the submodule to ignore its own generated artifacts correctly;
     - clean the existing untracked set; and
     - remove the parent masking config so CLI and VS Code report the same state.
+- 2026-04-19: The next bounded `#169` observability slice is to add always-on
+  real-time user-visible runtime events for `femic pipelines run`.
+  - Governing problem:
+    - long TSA29 proof runs currently print a preflight/summary surface and then
+      go silent while the underlying THLB execution works, making it too easy to
+      lose trust in bounded runtime behavior.
+  - Bounded implementation target:
+    - add a structured runtime-event model spanning pipeline start/preflight,
+      parent-step start/progress/finish, compiled-step start/finish, validation,
+      and final success/failure;
+    - thread an event sink from `femic pipelines run` through
+      `run_named_pipeline_runbook(...)` into `run_tsr_thlb_netdown_recipe(...)`
+      and the inner reconstructed executor;
+    - mirror the same line-based event stream under `runtime/logs/tsr/`; and
+    - adapt existing LU-parallel progress snapshots into parent-step progress
+      events instead of leaving them notebook-only.
+  - Scope boundary:
+    - observability only; no scientific logic or strict-lane semantics change in
+      this slice.
+- 2026-04-19: Completed `P53.1d6` by adding always-on live runtime events to
+  `femic pipelines run`.
+  - What shipped:
+    - `run_named_pipeline_runbook(...)` now emits line-based pipeline
+      start/preflight/validation/finish/failure events and mirrors them to a
+      dedicated runtime event log under `runtime/logs/tsr/`;
+    - `run_tsr_thlb_netdown_recipe(...)` now accepts a runtime event sink and
+      emits parent-step start/finish plus compiled-step start/finish events from
+      both reconstructed and hybrid THLB execution paths; and
+    - LU-parallel reconstructed exclusion work now reuses existing per-bundle
+      progress JSON snapshots to surface `parent_step_progress` events instead
+      of leaving that state notebook-only.
+  - Focused validation:
+    - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -q`
+    - `.\.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "pipelines_run" -q`
+    - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "runtime_events or parent_progress" -q`
+    - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py src/femic/cli/main.py src/femic/tsr_catalog/recipes.py tests/test_named_pipelines.py tests/test_cli_main.py tests/test_tsr_recipes.py`
+    - `.\.venv\Scripts\python.exe -m mypy src`
