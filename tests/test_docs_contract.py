@@ -1970,6 +1970,45 @@ def test_phase_13_closure_policy_requires_rebuild_evidence_note() -> None:
     assert required_phrase in changelog_text.lower()
 
 
+def test_roadmap_is_a_compact_ordered_control_surface() -> None:
+    roadmap_lines = Path("ROADMAP.md").read_text(encoding="utf-8").splitlines()
+
+    assert "## Detailed Next Steps Notes" not in roadmap_lines
+
+    phase_numbers: list[int] = []
+    top_level_task_ids_by_phase: dict[int, set[str]] = {}
+    current_phase: int | None = None
+
+    phase_re = re.compile(r"^## Phase (\d+)(?::| )")
+    top_level_task_re = re.compile(r"^- \[[ x]\] (P\d+(?:\.[0-9A-Za-z]+)*)\b")
+
+    for line in roadmap_lines:
+        phase_match = phase_re.match(line)
+        if phase_match:
+            current_phase = int(phase_match.group(1))
+            phase_numbers.append(current_phase)
+            top_level_task_ids_by_phase.setdefault(current_phase, set())
+            continue
+
+        task_match = top_level_task_re.match(line)
+        if task_match and current_phase is not None:
+            task_id = task_match.group(1)
+            assert task_id not in top_level_task_ids_by_phase[current_phase]
+            top_level_task_ids_by_phase[current_phase].add(task_id)
+
+    assert phase_numbers == sorted(phase_numbers)
+    assert len(phase_numbers) == len(set(phase_numbers))
+
+
+def test_roadmap_linked_planning_notes_exist() -> None:
+    roadmap_text = Path("ROADMAP.md").read_text(encoding="utf-8")
+    planning_refs = sorted(set(re.findall(r"`(planning/[^`]+\.md)`", roadmap_text)))
+
+    assert planning_refs
+    missing = [ref for ref in planning_refs if not Path(ref).is_file()]
+    assert not missing
+
+
 def test_author_instance_rebuild_spec_guide_covers_core_sections() -> None:
     guide_text = (GUIDES_ROOT / "author-instance-rebuild-spec.rst").read_text()
     required_sections = [

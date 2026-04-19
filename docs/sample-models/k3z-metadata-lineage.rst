@@ -101,7 +101,8 @@ Use this policy for each rebuild intended for teaching/collaboration release:
    keep run-scoped manifests/logs under ``runtime/logs`` for rebuild events.
 4. Commit artifact + metadata updates together:
    model artifacts changed by rebuild, updates to this page and
-   ``lineage_registry.yaml``, `ROADMAP.md` Detailed Next Steps note, and
+   ``lineage_registry.yaml``, the governing ``ROADMAP.md`` phase/task entry,
+   any linked planning note, and
    matching `CHANGE_LOG.md` entry.
 5. Never hand-edit generated families in release prep:
    ``tracks/*.csv``, ``blocks/blocks.*``, and generated topology CSV.

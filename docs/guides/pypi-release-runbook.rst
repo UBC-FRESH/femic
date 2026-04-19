@@ -130,8 +130,8 @@ After successful PyPI publication:
 
 1. Create and push the matching git tag (for example ``v0.1.0``).
 2. Record artifact hashes from ``sha256sum dist/*`` in ``CHANGE_LOG.md``.
-3. Mark completed phase-18 checklist items in ``ROADMAP.md`` and update
-   ``Detailed Next Steps Notes`` with validation outcomes.
+3. Mark completed phase-18 checklist items in ``ROADMAP.md`` and update any
+   linked planning note with validation outcomes.
 4. Keep install instructions in ``README.md`` aligned with the published
    version.
 

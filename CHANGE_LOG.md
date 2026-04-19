@@ -14779,3 +14779,21 @@
   - updated `Detailed Next Steps Notes` so the governing reference is the latest TSA29 locked-chain strict result, the first proof target is chained-restart stepwise plus final agreement through step `23`, and mutable live recipe drift must fail fast instead of silently becoming the validation surface.
 - Scope boundary:
   - tracker/planning hygiene only; no code or runtime behavior changed in this slice.
+## 2026-04-19 - Rebuilt `ROADMAP.md` into a compact control surface and extracted the runaway narrative into planning notes
+- GitHub tracker update:
+  - opened `#170` to track the roadmap-control-surface cleanup task.
+- `ROADMAP.md` cleanup:
+  - rebuilt the roadmap as an ordered phase/task/subtask checklist surface only;
+  - removed all embedded `Detailed Next Steps Notes` blocks;
+  - folded the `Phase 23 Addendum` content into the main Phase 23 checklist as `P23.11`;
+  - promoted the hidden `P49` block into a proper `## Phase 49` header; and
+  - normalized the malformed duplicate late `P48.4` block to `P48.7` while preserving the existing `P49.*` numbering.
+- Planning-note extraction:
+  - added `planning/roadmap_notes_archive.md` to preserve the removed roadmap narrative and superseded duplicate structural fragments;
+  - added `planning/phase52_tsr_reconstruction_notes.md` for the extracted Phase 52 TSR/THLB narrative; and
+  - added `planning/phase53_named_pipeline_notes.md` for the extracted Phase 53 named-pipeline / strict reproducibility narrative.
+- Docs/test follow-through:
+  - updated the small number of live docs pages that explicitly referred to `ROADMAP.md` `Detailed Next Steps Notes`; and
+  - added a narrow docs-contract test guardrail that asserts the roadmap has no embedded `Detailed Next Steps Notes`, that phase headers are unique and strictly increasing, that top-level task IDs are unique within a phase, and that linked planning notes exist.
+- Scope boundary:
+  - roadmap/planning/docs/test hygiene only; no product or runtime behavior changed in this slice.

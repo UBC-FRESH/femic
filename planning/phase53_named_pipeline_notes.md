@@ -1,0 +1,338 @@
+# Phase 53 Named Pipeline Notes
+
+- Source: former `ROADMAP.md` lines `16689-17021`.
+- Governing lane: named-pipeline, yield-bridge, and strict reproducibility work under `#163`, `#164`, `#167`, `#168`, and `#169`.
+
+## Extracted Roadmap Notes
+
+- 2026-04-18: Opened the post-THLB-reconciliation umbrella for the deeper pipeline/runbook refactor.
+  - Governing umbrella issue:
+    - `#163` — refactor FEMIC around named pipelines built from recipe sequences.
+  - First concrete child issue:
+    - `#164` — add an explicit `AFLB -> strata/AU/yield -> THLB` interruption seam inside the THLB workflow.
+  - Working interpretation:
+    - the recently validated TSA29 strict THLB lane exposed that THLB is not logically one uninterrupted recipe chain;
+    - it must pause after AFLB to derive strata, define AUs, satisfy VDYP/TIPSY/FANSIER yield dependencies, and then resume late-stage THLB.
+  - Current bounded next step for this new arc:
+    - audit the current runtime path against the desired seam and document exactly where FEMIC already has reusable artifacts (`aflb_checkpoint`, strata/AU helpers, VDYP cache checks, BTC/TIPSY runners, yield-curve compile logic) versus where the interruption/resume contract is still implicit.
+- 2026-04-18: Completed the first `#164` seam audit and turned it into a concrete artifact/command contract.
+  - Audit result:
+    - the repo already has most of the functional pieces:
+      - restart-grade THLB checkpoints (`aflb_checkpoint`, `lhlb_checkpoint`, `lhlb_curve_ready_checkpoint`);
+      - stratification and AU helpers in `src/femic/pipeline/tsa.py`;
+      - top-area coverage config in `selection.stratification.top_area_coverage`;
+      - VDYP prep/result caches; and
+      - BTC/TIPSY resume surfaces via `femic tsa post-tipsy` and `femic tsa btc-post-tipsy`.
+  - The missing contract is the explicit bridge between:
+    - `AFLB`
+    - strata/AU/yield compilation
+    - and downstream THLB continuation.
+  - Proposed new canonical artifacts for `#164`:
+    - `data/tsr/aflb_strata_checkpoint.feather`
+    - `data/tsr/aflb_au_checkpoint.feather`
+    - `data/tsr/aflb_yield_bridge_manifest.json`
+    - `data/tsr/aflb_yield_ready_checkpoint.feather`
+  - Proposed first command surface:
+    - `femic tsr build-yield-bridge --instance-root ... --run-config ... --tsa ...`
+  - Working spec note is now captured in:
+    - `planning/aflb_yield_bridge_seam.md`
+  - Next bounded implementation step:
+    - formalize the manifest schema and publish the first two restart seams (`aflb_strata_checkpoint` and `aflb_au_checkpoint`) before wiring the full VDYP/TIPSY resume bridge.
+- 2026-04-18: Active `#164` implementation scope is the first artifact-only slice, not the full yield bridge.
+  - This bounded slice will publish only:
+    - `data/tsr/aflb_strata_checkpoint.feather`
+    - `data/tsr/aflb_au_checkpoint.feather`
+    - `data/tsr/aflb_yield_bridge_manifest.json`
+  - It will not yet:
+    - run VDYP/TIPSY/FANSIER;
+    - publish `aflb_yield_ready_checkpoint.feather`; or
+    - generalize into the broader named-pipeline registry under `#163`.
+  - Current execution precondition:
+    - local `external/femic-tsa29-instance/data/tsr/aflb_checkpoint.feather` may be absent after the generated-artifact hygiene cleanup, so the first command surface must either regenerate that upstream checkpoint explicitly or fail with a clear remediation message instead of assuming the file is still present.
+- 2026-04-18: The next bounded `#164` slice is `P53.2c.1`, still inside the existing `build-yield-bridge` command.
+  - Implementation target:
+    - add conservative cache-sufficiency inspection for the current AFLB-derived strata/AU selection without widening into VDYP/TIPSY/FANSIER execution.
+  - Required outputs for this slice:
+    - extend `data/tsr/aflb_yield_bridge_manifest.json` with stable provenance for the current AFLB/run-config/selection state; and
+    - add a three-state cache verdict (`sufficient`, `insufficient`, `blocked_missing_inputs`) plus evidence/reason details.
+  - Required inspection surfaces:
+    - prior `aflb_yield_bridge_manifest.json` when present;
+    - `data/vdyp_results-tsaXX.pkl`;
+    - `data/vdyp_curves_smooth-tsaXX.feather`;
+    - `data/model_input_bundle/{au_table,curve_table,curve_points_table}.csv`; and
+    - optional supporting evidence from post-TIPSY/BTC manifests and `03_input` / `04_output` / `04_error` handoff files.
+  - Scope boundary:
+    - keep missing `curve_table.csv` / `curve_points_table.csv` in `blocked_missing_inputs`;
+    - treat absent post-TIPSY/BTC evidence as `insufficient`, not blocked; and
+    - do not publish `aflb_yield_ready_checkpoint.feather` yet.
+- 2026-04-18: Opened parked bug `#166` for branch-level full-suite pytest failures discovered during the `P53.2c.1` milestone sweep.
+  - Current policy:
+    - keep those failures out of the active yield-bridge delivery lane unless a future slice explicitly targets them.
+  - Current failing surfaces recorded in `#166`:
+    - the branch-level failures currently sit in `tests/test_tsr_recipes.py` and `tests/test_tsr_step13_attributes.py`.
+- 2026-04-18: The next bounded `#164` slice after cache inspection is `P53.2d.1`, still on `femic tsr build-yield-bridge`.
+  - Implementation target:
+    - promote a cache-sufficient AFLB AU checkpoint into `data/tsr/aflb_yield_ready_checkpoint.feather` using existing local bundle/cache artifacts only.
+  - Required outputs for this slice:
+    - `data/tsr/aflb_yield_ready_checkpoint.feather`;
+    - manifest `yield_ready` status/path metadata; and
+    - CLI/result reporting for `yield_ready_status`.
+  - Shared implementation seam:
+    - factor a small reusable AU-table-to-curve assignment helper so the AFLB yield-ready promotion and late-stage step13 curve-ready enrichment use the same bundle mapping semantics.
+  - Scope boundary:
+    - do not launch BTC/TIPSY/FANSIER;
+    - do not resume downstream THLB execution yet; and
+    - if cache sufficiency is not `sufficient`, stop after writing the manifest and bounded strata/AU artifacts with a clear remediation message.
+- 2026-04-18: The next bounded `#164` slice after `P53.2d.1` is `P53.2d.2`, focused on downstream THLB acceptance of the yield-ready restart seam.
+  - Implementation target:
+    - accept `data/tsr/aflb_yield_ready_checkpoint.feather` as an explicit `--checkpoint-path` surface for downstream reconstructed THLB runs without changing default checkpoint discovery order.
+  - Required behavior:
+    - recognize a distinct restart mode such as `aflb_yield_ready_checkpoint_restart`;
+    - skip only `GLB -> AFLB` steps, not `AFLB -> LHLB`;
+    - validate that the checkpoint carries downstream-ready fields (`stratum`, `stratum_matched`, `si_level`, `au`, `curve1`, `curve2`); and
+    - surface the new restart signal in THLB run metadata/audit output.
+  - Scope boundary:
+    - explicit checkpoint only;
+    - no auto-discovery preference changes;
+    - no auto-build of the yield bridge from THLB commands; and
+    - no new command surface.
+- 2026-04-18: Completed `P53.2d.2` under `#164` by teaching downstream THLB runners to accept the new yield-ready restart seam explicitly.
+  - Implemented behavior:
+    - reconstructed THLB runs now recognize `data/tsr/aflb_yield_ready_checkpoint.feather` as `aflb_yield_ready_checkpoint_restart`;
+    - explicit yield-ready restarts skip only `GLB -> AFLB` while still executing `AFLB -> LHLB` and `LHLB -> THLB`; and
+    - both `thlb-netdown-run` and `thlb-netdown-step-run` accept the explicit checkpoint path without adding new flags.
+  - Guardrails:
+    - explicit yield-ready checkpoints now fail fast unless they contain `stratum`, `stratum_matched`, `si_level`, `au`, `curve1`, and `curve2`;
+    - default checkpoint auto-discovery order remains unchanged; and
+    - THLB commands still do not auto-build the AFLB yield bridge.
+  - Validation:
+    - targeted recipe tests cover restart-mode recognition, invalid yield-ready rejection, and parent-step acceptance;
+    - targeted CLI tests cover explicit checkpoint forwarding and restart-signal summary output; and
+    - lint/type checks passed on the touched surface.
+- 2026-04-18: The next bounded `#164` slice after THLB restart acceptance is `P53.2d.3`, still on `femic tsr build-yield-bridge`.
+  - Implementation target:
+    - execute the real AFLB yield bridge from existing VDYP cache when cache sufficiency is `insufficient`, rather than stopping after inspection.
+  - Required behavior:
+    - keep the existing fast path for `cache_sufficiency == sufficient`;
+    - treat `blocked_missing_inputs` as a hard stop;
+    - on `insufficient`, compile fresh bridge-owned `tipsy_params_tsaXX.xlsx`, `02_input-tsaXX.dat`, and `03_input-tsaXX.csv`;
+    - then run either `btc-post-tipsy` or `post-tipsy` helper workflows based on managed-curve mode; and
+    - republish `aflb_yield_ready_checkpoint.feather` from the rebuilt bundle outputs.
+  - Provenance/reporting requirements:
+    - extend the manifest with execution-path metadata (`local_cache`, `post_tipsy_resume`, or `btc_post_tipsy`);
+    - record 02/03/04 handoff paths plus post-TIPSY/BTC manifest evidence; and
+    - surface the execution path in CLI summary output.
+  - Scope boundary:
+    - reuse the existing VDYP cache only;
+    - do not add a new VDYP rerun lane yet;
+    - defer FANSIER; and
+    - keep the command surface unchanged.
+- 2026-04-18: Completed `P53.2d.3` under `#164` by turning the yield bridge into a real execution path when reusable VDYP cache exists.
+  - Implemented behavior:
+    - `femic tsr build-yield-bridge` still fast-paths `sufficient` cache cases to local promotion;
+    - `blocked_missing_inputs` remains a hard stop; and
+    - rebuildable `insufficient` cases now compile fresh `tipsy_params_tsaXX.xlsx`, `02_input-tsaXX.dat`, and `03_input-tsaXX.csv`, then run `btc-post-tipsy` or `post-tipsy` based on managed-curve mode before republishing `aflb_yield_ready_checkpoint.feather`.
+  - Provenance/reporting:
+    - the manifest now records execution-path metadata, bridge handoff artifact paths, post-TIPSY/BTC manifest evidence, and execution failure reasons;
+    - the CLI summary now prints `yield_bridge_execution_path`; and
+    - CLI failure messaging now prefers the bridge execution failure reason when yield-ready publication does not complete.
+  - Scope boundary preserved:
+    - no new CLI command;
+    - no VDYP rerun lane;
+    - FANSIER still deferred; and
+    - downstream THLB restart acceptance remains unchanged from `P53.2d.2`.
+- 2026-04-18: The next bounded `#164` slice after the execution bridge is `P53.2d.4`, focused on real TSA29 proof and issue closeout.
+  - Implementation target:
+    - run the bridge on the real TSA29 instance, inspect the concrete artifacts, smoke the downstream THLB restart seam from `aflb_yield_ready_checkpoint.feather`, and close the issue if the evidence is good.
+  - Required execution steps:
+    - regenerate `data/tsr/aflb_checkpoint.feather` first if the local TSA29 hygiene cleanup removed it;
+    - run `femic tsr build-yield-bridge --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --tsa 29`;
+    - inspect the rebuilt manifest, yield-ready checkpoint, bundle tables, and runtime manifests; and
+    - run one downstream THLB smoke from `--checkpoint-path data/tsr/aflb_yield_ready_checkpoint.feather`.
+  - Closeout requirements:
+    - mark the `P53.2*` issue-164 work complete in roadmap notes/checklists as appropriate;
+    - append the final validation summary to `CHANGE_LOG.md`; and
+    - post an explicit GitHub closeout note on `#164` before closing it.
+- 2026-04-18: `P53.2d.4` real TSA29 validation proved the bridge itself, but blocked issue closeout on one remaining downstream restart seam.
+  - Real TSA29 bridge proof succeeded:
+    - republished `data/tsr/aflb_checkpoint.feather` and `data/tsr/lhlb_checkpoint.feather` from the reconstructed THLB lane;
+    - `femic tsr build-yield-bridge --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --tsa 29` completed successfully;
+    - the bridge manifest recorded `slice_status = yield_ready_from_bridge_execution`;
+    - the execution path was `btc_post_tipsy`; and
+    - `data/tsr/aflb_yield_ready_checkpoint.feather` was published with `371627` rows.
+  - Remaining blocker before `#164` can close:
+    - downstream THLB smoke from `--checkpoint-path data/tsr/aflb_yield_ready_checkpoint.feather` failed during step-13 curve-ready enrichment;
+    - current failure surface is `KeyError` from `assign_stratum_matches_from_au_table(...)` / `build_stratum_lexmatch_alias_map(...)`; and
+    - the missing-index strata named in the real run included `MS_PLI`, `IDF_FD`, `MS_PL`, `ESSF_BL`, `ESSF_PL`, `ESSF_SE`, and `ESSF_PLI`.
+  - Immediate next bounded slice:
+    - repair the real-instance compatibility seam between the new AFLB yield-ready checkpoint and the downstream step-13/LHLB curve-ready enrichment path, then rerun the same explicit-yield-ready THLB smoke before attempting issue closeout again.
+- 2026-04-18: The next bounded `#164` slice after the real TSA29 proof blocker is `P53.2d.5`, focused on step-13 compatibility and closeout retry.
+  - Implementation target:
+    - teach late-stage curve-ready compilation to reuse precomputed yield-ready fields when the restart checkpoint already carries valid `stratum_matched`, `si_level`, `au`, `curve1`, and `curve2` assignments.
+  - Scope boundary:
+    - keep normal `lhlb_checkpoint.feather` step-13 compilation behavior unchanged;
+    - do not reopen the yield-bridge execution path; and
+    - rerun only the same explicit-yield-ready THLB smoke needed to answer the closeout question.
+- 2026-04-18: Completed `P53.2d.5` and closed the last real TSA29 blocker for `#164`.
+  - Step-13 compatibility fix:
+    - late-stage curve-ready compilation now reuses precomputed `stratum_matched`, `si_level`, and `au` assignments when a yield-ready restart checkpoint already carries them;
+    - the normal `lhlb_checkpoint.feather` step-13 derivation path remains unchanged; and
+    - a focused regression test now guards against step 13 recomputing those yield-ready fields.
+  - Real closeout validation passed:
+    - the same explicit restart smoke now succeeds:
+      - `femic tsr thlb-netdown-run --instance-root external/femic-tsa29-instance --execution-mode reconstructed --checkpoint-path data/tsr/aflb_yield_ready_checkpoint.feather --map-id 093B023 --no-aflb-gpkg --no-lhlb-gpkg --no-lhlb-curve-ready-gpkg`;
+    - the run reported `baseline_signal = aflb_yield_ready_checkpoint_restart`;
+    - it wrote `data/tsr/lhlb_curve_ready_checkpoint.feather`; and
+    - the previous step-13 `KeyError` did not recur.
+  - Validation status for issue closeout:
+    - targeted `#164` tests passed;
+    - `ruff check src tests` and `mypy src` passed;
+    - full `pytest` still fails only on the already-parked unrelated set tracked under `#166`; and
+    - `#164` is now closeout-ready because the explicit AFLB -> strata/AU/yield -> THLB seam itself is complete and the remaining branch-level failures are outside this issue's scope.
+- 2026-04-18: With `#164` closed, the next rollout-management move under umbrella `#163` is to open exactly one new child issue for the registry/runbook contract layer.
+  - Intended child scope:
+    - define named pipeline identity and naming rules;
+    - define registry discovery/layering and lookup precedence;
+    - define the runbook contract for selecting a pipeline and restart seam; and
+    - keep full named-pipeline runner implementation explicitly out of scope.
+  - Rollout constraint:
+    - do not open multiple new feature children under `#163` until the contract-first child has narrowed the next implementation seam.
+- 2026-04-18: Opened `#167` as the next active child under umbrella `#163`.
+  - Child issue:
+    - `#167` — define named pipeline registry and runbook contracts.
+  - Why this child now:
+    - `#164` already proved the interruption/resume seam pattern;
+    - the next unresolved architecture boundary is the contract for named pipeline identity, registry layering, and runbook seam selection; and
+    - the full named-pipeline runner should remain out of scope until `#167` is decision-complete.
+- 2026-04-18: Started `#167` by landing the first contract spec note for named pipeline registries and machine-readable runbooks.
+  - Spec note:
+    - `planning/named_pipeline_registry_runbook_contract.md`
+  - Current contract decisions captured there:
+    - default registry tiers and file locations (built-in, user, instance-local, explicit extras);
+    - merge order and override policy by `pipeline_id`;
+    - the first YAML contract shape for pipeline registries;
+    - the first YAML contract shape for machine-readable pipeline runbooks;
+    - restart object policy for scratch vs checkpoint-backed seams; and
+    - compatibility mapping from current TSR/THLB recipe surfaces into future named-pipeline ids and seam ids.
+  - Immediate next bounded step for `#167`:
+    - pressure-test the proposed contract against the current TSR THLB proof lane and identify the narrowest implementation child needed to load registries and resolve one runbook without broad workflow migration.
+- 2026-04-18: Pressure-tested the `#167` contract against the live TSA29 reviewed THLB proof lane.
+  - Pressure-test result:
+    - the current TSA29 lane already provides stable run-profile, recipe, overlay, and checkpoint surfaces that fit the proposed registry/runbook model without inventing a parallel config tree.
+  - Additional spec decisions now captured:
+    - the first runner child should target one proof pipeline id only: `tsr.thlb_reviewed`;
+    - the first runner child only needs seams `scratch`, `aflb`, `aflb_yield_ready`, and `lhlb_curve_ready`;
+    - the first runner should be orchestration-only and delegate to the existing TSR helpers/commands; and
+    - Patchworks/ws3 and broader multi-family execution remain out of scope for that first runner child.
+  - Immediate next bounded step for `#167`:
+    - open or draft the runner-implementation child using the now-pressure-tested minimum scope instead of a broad generic pipeline-execution ticket.
+- 2026-04-18: The next rollout-management move after the `#167` pressure test is to open one narrow runner child, not to start broad pipeline execution work.
+  - Intended child scope:
+    - registry loading and merge resolution;
+    - runbook loading and validation;
+    - one proof command for `tsr.thlb_reviewed`; and
+    - seam-aware delegation into the existing TSR reviewed THLB lane.
+  - Explicit non-goals for that child:
+    - no registry mutation commands;
+    - no multi-family pipeline runner;
+    - no replacement of existing `femic tsr ...` commands; and
+    - no Patchworks/ws3 pipeline execution.
+- 2026-04-18: Opened `#168` as the first named-pipeline runner implementation child under umbrella `#163`.
+  - Child issue:
+    - `#168` — implement the first named-pipeline proof runner from runbooks.
+  - Implementer-facing scope:
+    - load registry tiers plus explicit runbook registry paths;
+    - load one machine-readable runbook;
+    - resolve the proof pipeline id `tsr.thlb_reviewed`;
+    - support seams `scratch`, `aflb`, `aflb_yield_ready`, and `lhlb_curve_ready`; and
+    - delegate into the existing reviewed TSR THLB lane instead of inventing a new execution engine.
+  - Rollout relationship:
+    - `#167` remains the contract-definition child; and
+    - `#168` is the first narrow execution child that should consume that contract without widening into multi-family pipeline work.
+- 2026-04-18: Implemented the first proof-oriented named-pipeline runner surface for `#168`.
+  - Delivered code surfaces:
+    - new module `src/femic/named_pipelines.py` for built-in registry loading, registry layering, runbook loading, runbook-to-plan resolution, and proof-runner dispatch;
+    - packaged built-in registry resource under `src/femic/resources/pipelines/registry.yaml`; and
+    - new CLI surface `femic pipelines run --runbook ... [--instance-root ...]`.
+  - Current bounded proof scope:
+    - only `pipeline_id = tsr.thlb_reviewed`;
+    - only seams `scratch`, `aflb`, `aflb_yield_ready`, and `lhlb_curve_ready`; and
+    - execution is orchestration-only, delegating into the existing reviewed TSR THLB lane via reconstructed mode.
+  - Validation state for this slice:
+    - focused named-pipeline and CLI tests passed;
+    - full `pytest` returned only the same eight unrelated parked failures tracked under `#166`; and
+    - no new runner-specific failures remained after restoring the existing THLB CLI outcome-count summary.
+  - Next bounded step for `#168`:
+    - pressure-test the new `femic pipelines run` surface with a checked-in proof runbook or real TSA29 smoke path without widening into registry-mutation commands or multi-family execution.
+- 2026-04-19: The next bounded `#168` slice will use the checked-in proof-runbook option rather than mutating the TSA29 submodule.
+  - Implementation target:
+    - add one repo-tracked machine-readable proof runbook for `tsr.thlb_reviewed` that is intended to run with an explicit `--instance-root`.
+  - Scope boundary:
+    - do not modify `external/femic-tsa29-instance` just to host the runbook;
+    - do not broaden into registry-mutation commands or automatic default-runbook discovery; and
+    - keep validation focused on runbook loading, plan resolution, CLI wiring, and proof-command delegation.
+- 2026-04-19: Added the first checked-in proof runbook for `#168` and taught the CLI to accept repo-tracked runbook paths cleanly.
+  - Delivered surfaces:
+    - repo-tracked machine-readable runbook `runbooks/pipelines/tsa29.tsr.thlb_reviewed.aflb_yield_ready.yaml`;
+    - `femic pipelines run` now prefers an existing cwd/repo-relative runbook path before falling back to the instance root; and
+    - focused coverage now validates both the checked-in runbook contract and the CLI wiring for that path.
+  - Validation state for this slice:
+    - focused named-pipeline / CLI tests passed;
+    - `ruff check src tests`, `mypy src`, `sphinx-build -b html docs _build/html -W`, and `pre-commit run --all-files` passed; and
+    - full `pytest` still returned only the same eight unrelated failures parked under `#166`.
+  - Next bounded step for `#168`:
+    - use the checked-in proof runbook for one real TSA29 runner smoke (`femic pipelines run --runbook ... --instance-root external/femic-tsa29-instance`) without widening into broader pipeline-engine work.
+- 2026-04-19: Pivot the active `#168` proof target from the reviewed scaffold lane to the strict product lane.
+  - Product decision:
+    - the strict reconstructed THLB lane is the real named-pipeline target;
+    - the reviewed lane should be treated as legacy scaffolding or explanatory context, not the primary product proof.
+  - Immediate implementation target:
+    - add `pipeline_id = tsr.thlb_strict`;
+    - add a checked-in TSA29 strict proof runbook; and
+    - retarget the next real smoke to that strict runbook with the same bounded restart seam set.
+  - Scope boundary:
+    - do not widen into a generic multi-family pipeline engine;
+    - do not add registry-mutation commands; and
+    - keep the strict pipeline implementation on the existing reconstructed TSR THLB runner surface rather than inventing a new execution engine.
+- 2026-04-19: The strict TSA29 named-pipeline smoke completed successfully from the checked-in strict runbook.
+  - Smoke command:
+    - `femic pipelines run --runbook runbooks/pipelines/tsa29.tsr.thlb_strict.aflb_yield_ready.yaml --instance-root external/femic-tsa29-instance`
+  - Observed strict-lane runtime evidence:
+    - LU-wise reconstructed runtime artifacts advanced through parent-step directories such as step `006`, `008`, `011`, `013`, `016`, `018`, `019`, `021`, and `023`;
+    - later strict restart artifacts were written for `curve_threshold_checkpoint`, `lhlb_checkpoint`, `thlb_step13_compile_attributes`, `lhlb_curve_ready_checkpoint`, and the final `thlb_reconstructed_status_report`; and
+    - the wrapper process exited cleanly after writing the final summary.
+  - End-of-run strict summary:
+    - pipeline id `tsr.thlb_strict`;
+    - baseline signal `aflb_yield_ready_checkpoint_restart`;
+    - full input (not MAP_ID subset);
+    - `step_count = 37`;
+    - `outcome_applied = 21`;
+    - `outcome_applied_noop = 9`;
+    - `outcome_unsupported = 7`; and
+    - `final_managed_area_ha = 559,967.504`.
+  - Closeout interpretation for `#168`:
+    - the first named-pipeline proof runner is now demonstrated on the strict product lane rather than only on the reviewed scaffold lane.
+- 2026-04-19: Opened `#169` as the next active child under umbrella `#163`.
+  - Tracker split:
+    - `#168` stays closed as the first proof-runner/orchestration child; and
+    - `#169` is now the active strict reproducibility validation child.
+  - Governing strict validation contract:
+    - authoritative reference is the latest TSA29 locked-chain strict result, not the older frozen workbench snapshot and not the mutable live recipe;
+    - first proof target is chained-restart stepwise plus final reproduction through step `23`; and
+    - mutable live recipe drift must fail fast instead of silently becoming the validation surface.
+  - Immediate next bounded step for `#169`:
+    - define the TSA29-specific strict-validation contract surface and validation path before attempting broader multi-instance machinery.
+- 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
+  - Root cause:
+    - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.
+  - High-volume offender roots observed inside `external/femic-tsa29-instance`:
+    - `runtime/logs/glb_build/`
+    - `runtime/logs/tsr/raw_glb_clip_*/`
+    - `runtime/logs/tsr/lu_partition_profiles/`
+    - `data/tsr/*.gpkg`
+    - `data/tsr/post_step*_restart/`
+    - `workbench/arcgis_review/`
+  - Required fix:
+    - teach the submodule to ignore its own generated artifacts correctly;
+    - clean the existing untracked set; and
+    - remove the parent masking config so CLI and VS Code report the same state.
