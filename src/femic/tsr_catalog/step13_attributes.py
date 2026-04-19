@@ -68,6 +68,11 @@ _STEP13_SI_LEVEL_QUANTILES: dict[str, list[int]] = {
     "M": [35, 50, 65],
     "H": [65, 80, 95],
 }
+_STEP13_PRECOMPUTED_ASSIGNMENT_COLUMNS = (
+    "stratum_matched",
+    "si_level",
+    "au",
+)
 
 
 @dataclass(frozen=True)
@@ -290,54 +295,55 @@ def _assign_curve_ready_bundle_fields(
 
     enriched = checkpoint.copy()
     enriched["tsa_code"] = tsa_code
-    enriched = assign_stratum_codes_with_lexmatch(
-        f_table=enriched,
-        row_apply_fn=_row_apply,
-        bec_grouping=_STEP13_STRAT_BEC_GROUPING,
-        species_combo_count=_STEP13_STRAT_SPECIES_COMBO_COUNT,
-        include_tm_species2_for_single=_STEP13_STRAT_INCLUDE_TM_SPECIES2_FOR_SINGLE,
-    )
-    enriched = assign_stratum_matches_from_au_table(
-        f_table=enriched,
-        au_table=au_table,
-        tsa_list=[tsa_code],
-        stratum_col="stratum",
-        message_fn=lambda _msg: None,
-    )
-    allowed_levels_by_stratum = cast(
-        dict[str, list[str]],
-        au_table.groupby("stratum_code")["si_level"]
-        .apply(lambda s: sorted({str(value) for value in s.dropna().values}))
-        .to_dict(),
-    )
-    enriched, _ = assign_si_levels_from_stratum_quantiles(
-        f_table=enriched,
-        si_levelquants=_STEP13_SI_LEVEL_QUANTILES,
-        allowed_levels_by_stratum=allowed_levels_by_stratum,
-        stratum_matched_col="stratum_matched",
-        site_index_col="SITE_INDEX",
-        si_level_col="si_level",
-        message_fn=lambda _msg: None,
-    )
+    if not _checkpoint_has_precomputed_step13_assignments(enriched):
+        enriched = assign_stratum_codes_with_lexmatch(
+            f_table=enriched,
+            row_apply_fn=_row_apply,
+            bec_grouping=_STEP13_STRAT_BEC_GROUPING,
+            species_combo_count=_STEP13_STRAT_SPECIES_COMBO_COUNT,
+            include_tm_species2_for_single=_STEP13_STRAT_INCLUDE_TM_SPECIES2_FOR_SINGLE,
+        )
+        enriched = assign_stratum_matches_from_au_table(
+            f_table=enriched,
+            au_table=au_table,
+            tsa_list=[tsa_code],
+            stratum_col="stratum",
+            message_fn=lambda _msg: None,
+        )
+        allowed_levels_by_stratum = cast(
+            dict[str, list[str]],
+            au_table.groupby("stratum_code")["si_level"]
+            .apply(lambda s: sorted({str(value) for value in s.dropna().values}))
+            .to_dict(),
+        )
+        enriched, _ = assign_si_levels_from_stratum_quantiles(
+            f_table=enriched,
+            si_levelquants=_STEP13_SI_LEVEL_QUANTILES,
+            allowed_levels_by_stratum=allowed_levels_by_stratum,
+            stratum_matched_col="stratum_matched",
+            site_index_col="SITE_INDEX",
+            si_level_col="si_level",
+            message_fn=lambda _msg: None,
+        )
 
-    scsi_au = {
-        tsa_code: {
-            (str(row.stratum_code), str(row.si_level)): int(float(str(row.au_id)))
-            - 100000 * tsa_curve_id_prefix(tsa_code)
-            for row in au_table.itertuples(index=False)
-            if pd.notna(row.au_id)
-            and pd.notna(row.stratum_code)
-            and pd.notna(row.si_level)
+        scsi_au = {
+            tsa_code: {
+                (str(row.stratum_code), str(row.si_level)): int(float(str(row.au_id)))
+                - 100000 * tsa_curve_id_prefix(tsa_code)
+                for row in au_table.itertuples(index=False)
+                if pd.notna(row.au_id)
+                and pd.notna(row.stratum_code)
+                and pd.notna(row.si_level)
+            }
         }
-    }
-    enriched = assign_au_ids_from_scsi(
-        f_table=enriched,
-        scsi_au=scsi_au,
-        tsa_col="tsa_code",
-        stratum_matched_col="stratum_matched",
-        si_level_col="si_level",
-        au_col="au",
-    )
+        enriched = assign_au_ids_from_scsi(
+            f_table=enriched,
+            scsi_au=scsi_au,
+            tsa_col="tsa_code",
+            stratum_matched_col="stratum_matched",
+            si_level_col="si_level",
+            au_col="au",
+        )
     validate_nonempty_au_assignment(
         f_table=enriched,
         au_col="au",
@@ -356,6 +362,17 @@ def _assign_curve_ready_bundle_fields(
         managed_age_cutoff=60,
     )
     return enriched
+
+
+def _checkpoint_has_precomputed_step13_assignments(
+    checkpoint: pd.DataFrame,
+) -> bool:
+    for column in _STEP13_PRECOMPUTED_ASSIGNMENT_COLUMNS:
+        if column not in checkpoint.columns:
+            return False
+        if not pd.Series(checkpoint[column]).notna().any():
+            return False
+    return True
 
 
 def _default_step13_attribute_audit_path(*, instance_root: Path) -> Path:

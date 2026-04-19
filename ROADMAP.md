@@ -16679,11 +16679,11 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - model instances should be reproducible from a runbook that points at a specific pipeline definition and restart seam policy.
   - [ ] P53.1b Define the registry/runbook contracts needed to replace the legacy monolithic-script mental model without invalidating the recipe-based work already completed under `#122` and its children.
   - [ ] P53.1c Identify the first bounded child seams needed to prove the architecture incrementally rather than attempting a one-shot rewrite.
-- [ ] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
-  - [ ] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
-  - [ ] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
-  - [ ] P53.2c Define cache-sufficiency checks for reusing local VDYP samples versus rerunning VDYP under the active sampling-intensity settings.
-  - [ ] P53.2d Compile TIPSY input parameters, run TIPSY (and optionally FANSIER), compile yield curves, and resume downstream THLB from a restart-safe yield bridge artifact.
+- [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
+  - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
+  - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
+  - [x] P53.2c Define cache-sufficiency checks for reusing local VDYP samples versus rerunning VDYP under the active sampling-intensity settings.
+  - [x] P53.2d Compile TIPSY input parameters, run TIPSY (and optionally FANSIER), compile yield curves, and resume downstream THLB from a restart-safe yield bridge artifact.
 
 ## Detailed Next Steps Notes
 
@@ -16848,6 +16848,29 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - the missing-index strata named in the real run included `MS_PLI`, `IDF_FD`, `MS_PL`, `ESSF_BL`, `ESSF_PL`, `ESSF_SE`, and `ESSF_PLI`.
   - Immediate next bounded slice:
     - repair the real-instance compatibility seam between the new AFLB yield-ready checkpoint and the downstream step-13/LHLB curve-ready enrichment path, then rerun the same explicit-yield-ready THLB smoke before attempting issue closeout again.
+- 2026-04-18: The next bounded `#164` slice after the real TSA29 proof blocker is `P53.2d.5`, focused on step-13 compatibility and closeout retry.
+  - Implementation target:
+    - teach late-stage curve-ready compilation to reuse precomputed yield-ready fields when the restart checkpoint already carries valid `stratum_matched`, `si_level`, `au`, `curve1`, and `curve2` assignments.
+  - Scope boundary:
+    - keep normal `lhlb_checkpoint.feather` step-13 compilation behavior unchanged;
+    - do not reopen the yield-bridge execution path; and
+    - rerun only the same explicit-yield-ready THLB smoke needed to answer the closeout question.
+- 2026-04-18: Completed `P53.2d.5` and closed the last real TSA29 blocker for `#164`.
+  - Step-13 compatibility fix:
+    - late-stage curve-ready compilation now reuses precomputed `stratum_matched`, `si_level`, and `au` assignments when a yield-ready restart checkpoint already carries them;
+    - the normal `lhlb_checkpoint.feather` step-13 derivation path remains unchanged; and
+    - a focused regression test now guards against step 13 recomputing those yield-ready fields.
+  - Real closeout validation passed:
+    - the same explicit restart smoke now succeeds:
+      - `femic tsr thlb-netdown-run --instance-root external/femic-tsa29-instance --execution-mode reconstructed --checkpoint-path data/tsr/aflb_yield_ready_checkpoint.feather --map-id 093B023 --no-aflb-gpkg --no-lhlb-gpkg --no-lhlb-curve-ready-gpkg`;
+    - the run reported `baseline_signal = aflb_yield_ready_checkpoint_restart`;
+    - it wrote `data/tsr/lhlb_curve_ready_checkpoint.feather`; and
+    - the previous step-13 `KeyError` did not recur.
+  - Validation status for issue closeout:
+    - targeted `#164` tests passed;
+    - `ruff check src tests` and `mypy src` passed;
+    - full `pytest` still fails only on the already-parked unrelated set tracked under `#166`; and
+    - `#164` is now closeout-ready because the explicit AFLB -> strata/AU/yield -> THLB seam itself is complete and the remaining branch-level failures are outside this issue's scope.
 - 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
   - Root cause:
     - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.

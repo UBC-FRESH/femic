@@ -14621,3 +14621,24 @@
   - `#164` is not closeout-ready yet;
   - the bridge itself is now proven on the real TSA29 instance; but
   - one final downstream compatibility fix is still required so THLB can consume the real `aflb_yield_ready_checkpoint.feather` end-to-end.
+## 2026-04-18 - Closed the last real TSA29 blocker for `#164` and made the explicit yield-ready restart seam pass downstream THLB smoke
+- Step-13 compatibility fix:
+  - `compile_tsr_thlb_step13_attributes(...)` now reuses precomputed `stratum_matched`, `si_level`, and `au` assignments when the input checkpoint is already yield-ready;
+  - it still refreshes curve IDs from the current AU table; and
+  - the legacy `lhlb_checkpoint.feather` path still derives those fields normally.
+- New focused regression coverage:
+  - added a test proving step 13 does not call the stratum/SI/AU reassignment helpers when given a precomputed `aflb_yield_ready_checkpoint.feather`.
+- Real TSA29 closeout smoke passed:
+  - `.\.venv\Scripts\python.exe -m femic tsr thlb-netdown-run --instance-root external/femic-tsa29-instance --execution-mode reconstructed --checkpoint-path data/tsr/aflb_yield_ready_checkpoint.feather --map-id 093B023 --no-aflb-gpkg --no-lhlb-gpkg --no-lhlb-curve-ready-gpkg`
+  - completed successfully;
+  - reported `baseline_signal: aflb_yield_ready_checkpoint_restart`; and
+  - wrote the downstream `data/tsr/lhlb_curve_ready_checkpoint.feather` without reproducing the prior step-13 `KeyError`.
+- Validation for this closeout slice:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "compile_tsr_thlb_step13_attributes or aflb_yield_ready or curve_ready_checkpoint_for_step14 or aflb_restart_artifacts" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src tests`
+  - `.\.venv\Scripts\python.exe -m mypy src`
+  - `.\.venv\Scripts\python.exe -m pytest`
+  - `.\.venv\Scripts\python.exe -m pre_commit run --all-files -v`
+- Full-suite note:
+  - full `pytest` still fails only on the same eight unrelated tests already parked under `#166`; and
+  - those failures did not change during the `#164` closeout slice.

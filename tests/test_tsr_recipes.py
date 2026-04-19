@@ -10322,6 +10322,121 @@ def test_compile_tsr_thlb_step13_attributes_populates_curve_ready_fields(
     }
 
 
+def test_compile_tsr_thlb_step13_attributes_reuses_precomputed_yield_ready_fields(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    checkpoint_path = (
+        instance_root / "data" / "tsr" / "aflb_yield_ready_checkpoint.feather"
+    )
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2],
+            "MAP_ID": ["093J034", "093J034"],
+            "FEATURE_AREA_SQM": [100.0, 100.0],
+            "SITE_INDEX": [10.0, 55.0],
+            "PROJ_AGE_1": [120.0, 20.0],
+            "stratum": ["IDF_FD", "IDF_FD"],
+            "stratum_matched": ["IDF_FD", "IDF_FD"],
+            "si_level": ["L", "M"],
+            "au": [2900001, 2900002],
+            "curve1": [2900001, 2920002],
+            "curve2": [2900001, 2900002],
+        },
+        geometry=[box(0, 0, 10, 10), box(10, 0, 20, 10)],
+        crs="EPSG:3005",
+    )
+    checkpoint.to_feather(checkpoint_path)
+
+    bundle_root = instance_root / "data" / "model_input_bundle"
+    bundle_root.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        {
+            "au_id": [2900001, 2900002],
+            "tsa": [29, 29],
+            "stratum_code": ["IDF_FD", "IDF_FD"],
+            "si_level": ["L", "M"],
+            "untreated_curve_id": [2900001, 2900002],
+            "treated_curve_id": [2920001, 2920002],
+            "unmanaged_curve_id": [2900001, 2900002],
+            "managed_curve_id": [2920001, 2920002],
+        }
+    ).to_csv(bundle_root / "au_table.csv", index=False)
+
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "_prepare_dem_tile_paths",
+        lambda checkpoint, instance_root: (
+            "dataset-page",
+            "resource-root",
+            ("tile_1",),
+            (instance_root / "dummy.tif",),
+        ),
+    )
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "_build_slope_percent_raster",
+        lambda checkpoint, dem_paths: (None, None),
+    )
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "_summarize_polygon_median_raster_values",
+        lambda checkpoint, raster_values, transform: pd.Series(
+            [12.0, 48.0], index=checkpoint.index, dtype=float
+        ),
+    )
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "_load_highway_97_geometry",
+        lambda instance_root: (instance_root / "hwy97.gpkg", None),
+    )
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "_classify_checkpoint_side_of_highway",
+        lambda checkpoint, highway_geometry: pd.Series(
+            ["west", "west"], index=checkpoint.index, dtype="string"
+        ),
+    )
+
+    def _unexpected_call(*args: object, **kwargs: object) -> object:
+        raise AssertionError("step-13 recomputed preassigned yield-ready fields")
+
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "assign_stratum_codes_with_lexmatch",
+        _unexpected_call,
+    )
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "assign_stratum_matches_from_au_table",
+        _unexpected_call,
+    )
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "assign_si_levels_from_stratum_quantiles",
+        _unexpected_call,
+    )
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "assign_au_ids_from_scsi",
+        _unexpected_call,
+    )
+
+    result = tsr_step13_attributes.compile_tsr_thlb_step13_attributes(
+        instance_root=instance_root,
+        checkpoint_path=checkpoint_path,
+    )
+    enriched = gpd.read_feather(result.output_path)
+
+    assert enriched["stratum_matched"].tolist() == ["IDF_FD", "IDF_FD"]
+    assert enriched["si_level"].tolist() == ["L", "M"]
+    assert enriched["au"].astype("Int64").tolist() == [2900001, 2900002]
+    assert enriched["curve1"].astype("Int64").tolist() == [2900001, 2920002]
+    assert enriched["curve2"].astype("Int64").tolist() == [2900001, 2900002]
+
+
 def test_build_tsr_aflb_yield_bridge_writes_default_artifacts(tmp_path: Path) -> None:
     instance_root = tmp_path / "external" / "femic-tsa29-instance"
     run_config_path = _write_aflb_yield_bridge_fixture_inputs(
