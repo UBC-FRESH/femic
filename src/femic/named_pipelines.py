@@ -36,6 +36,7 @@ _PIPELINE_RUNBOOK_ALLOWED_KEYS = {
     "overlay_paths",
     "parameter_files",
     "restart",
+    "validation_contract",
     "notes",
 }
 
@@ -129,6 +130,17 @@ class NamedPipelineRestart:
 
 
 @dataclass(frozen=True)
+class NamedPipelineValidationContract:
+    """Resolved validation contract for one named-pipeline runbook."""
+
+    contract_kind: str
+    locked_chain_ledger_path: Path | None = None
+    comparison_report_path: Path | None = None
+    required_recipe_path: Path | None = None
+    notes: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class NamedPipelineRunbook:
     """Machine-readable pipeline runbook."""
 
@@ -141,6 +153,7 @@ class NamedPipelineRunbook:
     overlay_paths: tuple[Path, ...]
     parameter_files: tuple[Path, ...]
     restart: NamedPipelineRestart
+    validation_contract: NamedPipelineValidationContract | None = None
     notes: tuple[str, ...] = ()
 
 
@@ -157,6 +170,7 @@ class NamedPipelineExecutionPlan:
     run_profile_path: Path | None
     overlay_paths: tuple[Path, ...]
     parameter_files: tuple[Path, ...]
+    validation_contract: NamedPipelineValidationContract | None
     user_registry_path: Path | None
     instance_registry_path: Path | None
     explicit_registry_paths: tuple[Path, ...]
@@ -557,6 +571,44 @@ def load_named_pipeline_runbook(
         ),
     )
 
+    validation_contract_payload = payload.get("validation_contract")
+    validation_contract: NamedPipelineValidationContract | None = None
+    if validation_contract_payload not in (None, ""):
+        if not isinstance(validation_contract_payload, dict):
+            raise NamedPipelineError(
+                f"{resolved_runbook_path} field `validation_contract` must be a mapping."
+            )
+        validation_contract = NamedPipelineValidationContract(
+            contract_kind=_normalize_string(
+                validation_contract_payload.get("contract_kind"),
+                field_name="validation_contract.contract_kind",
+                source_label=str(resolved_runbook_path),
+            ),
+            locked_chain_ledger_path=_resolve_relative_to_instance(
+                resolved_instance_root,
+                _normalize_optional_path(
+                    validation_contract_payload.get("locked_chain_ledger_path")
+                ),
+            ),
+            comparison_report_path=_resolve_relative_to_instance(
+                resolved_instance_root,
+                _normalize_optional_path(
+                    validation_contract_payload.get("comparison_report_path")
+                ),
+            ),
+            required_recipe_path=_resolve_relative_to_instance(
+                resolved_instance_root,
+                _normalize_optional_path(
+                    validation_contract_payload.get("required_recipe_path")
+                ),
+            ),
+            notes=_normalize_string_tuple(
+                validation_contract_payload.get("notes"),
+                field_name="validation_contract.notes",
+                source_label=str(resolved_runbook_path),
+            ),
+        )
+
     return NamedPipelineRunbook(
         path=resolved_runbook_path,
         label=_normalize_string(
@@ -613,6 +665,7 @@ def load_named_pipeline_runbook(
             )
         ),
         restart=restart,
+        validation_contract=validation_contract,
         notes=_normalize_string_tuple(
             payload.get("notes"),
             field_name="notes",
@@ -656,6 +709,28 @@ def build_named_pipeline_execution_plan(
     for overlay_path in runbook.overlay_paths:
         if not overlay_path.exists():
             raise NamedPipelineError(f"Resolved overlay path not found: {overlay_path}")
+    if runbook.validation_contract is not None:
+        if runbook.validation_contract.locked_chain_ledger_path is not None and (
+            not runbook.validation_contract.locked_chain_ledger_path.exists()
+        ):
+            raise NamedPipelineError(
+                "Resolved locked-chain ledger path not found: "
+                f"{runbook.validation_contract.locked_chain_ledger_path}"
+            )
+        if runbook.validation_contract.comparison_report_path is not None and (
+            not runbook.validation_contract.comparison_report_path.exists()
+        ):
+            raise NamedPipelineError(
+                "Resolved strict comparison report path not found: "
+                f"{runbook.validation_contract.comparison_report_path}"
+            )
+        if runbook.validation_contract.required_recipe_path is not None and (
+            not runbook.validation_contract.required_recipe_path.exists()
+        ):
+            raise NamedPipelineError(
+                "Resolved required validation recipe path not found: "
+                f"{runbook.validation_contract.required_recipe_path}"
+            )
 
     if pipeline.pipeline_id not in _SUPPORTED_TSR_THLB_PIPELINE_IDS:
         raise NamedPipelineError(
@@ -672,6 +747,18 @@ def build_named_pipeline_execution_plan(
     if not thlb_recipe_path.exists():
         raise NamedPipelineError(
             f"Resolved THLB recipe path not found: {thlb_recipe_path}"
+        )
+    if (
+        runbook.validation_contract is not None
+        and runbook.validation_contract.required_recipe_path is not None
+        and thlb_recipe_path != runbook.validation_contract.required_recipe_path
+    ):
+        raise NamedPipelineError(
+            "Strict validation contract mismatch: the resolved THLB recipe path "
+            f"`{thlb_recipe_path}` does not match the runbook-required validation "
+            f"recipe path `{runbook.validation_contract.required_recipe_path}`. "
+            "This runbook is bound to the locked validation contract and must not "
+            "fall back to the mutable live recipe surface."
         )
     thlb_recipe = load_tsr_thlb_netdown_recipe(thlb_recipe_path)
     source_layers_recipe_path = _resolve_relative_to_instance(
@@ -693,6 +780,7 @@ def build_named_pipeline_execution_plan(
         run_profile_path=runbook.run_profile,
         overlay_paths=runbook.overlay_paths,
         parameter_files=runbook.parameter_files,
+        validation_contract=runbook.validation_contract,
         user_registry_path=registry.user_registry_path,
         instance_registry_path=registry.instance_registry_path,
         explicit_registry_paths=registry.explicit_registry_paths,

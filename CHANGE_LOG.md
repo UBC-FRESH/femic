@@ -14797,3 +14797,19 @@
   - added a narrow docs-contract test guardrail that asserts the roadmap has no embedded `Detailed Next Steps Notes`, that phase headers are unique and strictly increasing, that top-level task IDs are unique within a phase, and that linked planning notes exist.
 - Scope boundary:
   - roadmap/planning/docs/test hygiene only; no product or runtime behavior changed in this slice.
+## 2026-04-19 - Bound the checked-in TSA29 strict runbook to an explicit locked validation contract and made the runner fail fast on live-recipe drift
+- `#169` bounded slice:
+  - added a runbook-level `validation_contract` block to the named-pipeline contract surface;
+  - extended the checked-in TSA29 strict runbook so it now points at the locked-chain ledger, the strict comparison report, and the required strict validation recipe path; and
+  - taught the named-pipeline runner to error before execution when that validation contract is active but the resolved strict THLB recipe path still points at the mutable live recipe surface.
+- Planning/roadmap updates:
+  - marked `P53.1d1` complete in `ROADMAP.md`; and
+  - appended the matching `#169` bounded-step note to `planning/phase53_named_pipeline_notes.md`.
+- Focused validation:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -q`
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "pipelines_run" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py tests/test_named_pipelines.py`
+  - `.\.venv\Scripts\python.exe -m mypy src`
+- Scope boundary:
+  - this slice does not yet prove chained-restart reproduction against the locked-chain result;
+  - it only prevents the strict named-pipeline runner from silently using the wrong execution surface again.

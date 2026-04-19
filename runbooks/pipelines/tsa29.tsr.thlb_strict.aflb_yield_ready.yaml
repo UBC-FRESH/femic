@@ -8,6 +8,14 @@ overlay_paths:
   - config/tsr/overlay.yaml
 restart:
   seam_id: aflb_yield_ready
+validation_contract:
+  contract_kind: tsa29_locked_chain_strict
+  locked_chain_ledger_path: config/tsr/thlb_locked_chain_ledger.json
+  comparison_report_path: config/tsr/thlb_reconstruction_comparison.md
+  required_recipe_path: workbench/tsr/thlb_netdown.locked.recipe.yaml
+  notes:
+    - This runbook is for locked-contract strict validation, not mutable live-recipe smoke execution.
+    - Fail fast if the named-pipeline resolution still points at config/tsr/thlb_netdown.recipe.yaml.
 notes:
   - Repo-tracked strict-lane proof runbook for the named-pipeline runner slice under #168.
   - Invoke with an explicit instance root, for example:

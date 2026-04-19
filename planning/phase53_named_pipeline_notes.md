@@ -322,6 +322,16 @@
     - mutable live recipe drift must fail fast instead of silently becoming the validation surface.
   - Immediate next bounded step for `#169`:
     - define the TSA29-specific strict-validation contract surface and validation path before attempting broader multi-instance machinery.
+- 2026-04-19: The next bounded `#169` implementation slice is strict contract binding plus fail-fast runner enforcement.
+  - Governing mismatch:
+    - the checked-in TSA29 strict runbook currently resolves the mutable live THLB recipe path via the built-in registry; and
+    - that live execution surface is not the same thing as the latest locked-chain strict reference.
+  - Bounded implementation target:
+    - add a runbook-level validation contract block that points at the locked-chain ledger/comparison artifacts and the required recipe path; and
+    - teach the named-pipeline runner to error before execution when that contract is active but the resolved strict recipe path still points at the mutable live recipe.
+  - Scope boundary:
+    - this slice does not yet prove chained-restart reproduction against the locked-chain result;
+    - it only prevents another false-positive strict smoke from the wrong execution surface.
 - 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
   - Root cause:
     - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.

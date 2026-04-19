@@ -242,7 +242,30 @@ restart:
 - `registry_paths`
 - `overlay_paths`
 - `parameter_files`
+- `validation_contract`
 - `notes`
+
+### Optional strict-validation contract block
+
+When a runbook is intended to validate reproducibility against a locked
+reference surface rather than merely launch the current live recipe lane, it
+may declare:
+
+```yaml
+validation_contract:
+  contract_kind: tsa29_locked_chain_strict
+  locked_chain_ledger_path: config/tsr/thlb_locked_chain_ledger.json
+  comparison_report_path: config/tsr/thlb_reconstruction_comparison.md
+  required_recipe_path: workbench/tsr/thlb_netdown.locked.recipe.yaml
+```
+
+The first strict reproducibility rollout may use this block only as a
+fail-fast binding guard:
+
+- the runbook points at the authoritative locked-chain reference artifacts; and
+- FEMIC refuses to execute if named-pipeline resolution still falls back to a
+  mutable live recipe path instead of the runbook-required strict validation
+  recipe surface.
 
 ### Restart object contract
 
