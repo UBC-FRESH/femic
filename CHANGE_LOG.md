@@ -14826,3 +14826,16 @@
   - `.\.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "pipelines_run" -q`
   - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py src/femic/cli/main.py tests/test_named_pipelines.py tests/test_cli_main.py`
   - `.\.venv\Scripts\python.exe -m mypy src`
+## 2026-04-19 - Added post-run strict locked-chain validation to the TSA29 named-pipeline proof surface
+- `#169` bounded slice:
+  - `run_named_pipeline_runbook(...)` now validates `tsa29_locked_chain_strict` runs against the locked-chain ledger immediately after execution;
+  - the validator loads the THLB audit JSON plus the locked ledger, compares per-parent-step marginal and cumulative values through the latest locked row, and raises a contract mismatch on the first divergence; and
+  - successful strict validations now report a compact validation summary so "execution completed" and "locked contract reproduced" are distinct outcomes.
+- Supporting follow-through:
+  - updated the named-pipeline CLI summary to print strict-validation result details; and
+  - added focused tests for both matching and mismatched strict locked-chain validations.
+- Focused validation:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -q`
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "pipelines_run" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py src/femic/cli/main.py tests/test_named_pipelines.py tests/test_cli_main.py`
+  - `.\.venv\Scripts\python.exe -m mypy src`

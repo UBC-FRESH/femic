@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from importlib import resources
+import json
 from pathlib import Path
 from typing import Any, cast
 
@@ -180,11 +181,26 @@ class NamedPipelineExecutionPlan:
 
 
 @dataclass(frozen=True)
+class NamedPipelineValidationResult:
+    """Validation summary for one named-pipeline execution."""
+
+    contract_kind: str
+    validated_parent_step_count: int
+    latest_locked_row_order: int | None = None
+    latest_locked_parent_step_id: str | None = None
+    expected_final_managed_area_ha: float | None = None
+    actual_final_managed_area_ha: float | None = None
+    max_abs_marginal_delta_ha: float | None = None
+    max_abs_cumulative_delta_ha: float | None = None
+
+
+@dataclass(frozen=True)
 class NamedPipelineExecutionResult:
     """Result of running one named-pipeline proof surface."""
 
     plan: NamedPipelineExecutionPlan
     tsr_thlb_result: TsrThlbNetdownRecipeRunResult
+    validation_result: NamedPipelineValidationResult | None = None
 
 
 def _read_pipeline_resource_text(resource_name: str) -> str:
@@ -207,6 +223,16 @@ def _load_yaml_mapping(*, text: str, source_label: str) -> dict[str, Any]:
     return cast(dict[str, Any], payload)
 
 
+def _load_json_mapping(*, path: Path, source_label: str) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise NamedPipelineError(f"Invalid JSON in {source_label}: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise NamedPipelineError(f"{source_label} must be a mapping.")
+    return cast(dict[str, Any], payload)
+
+
 def _normalize_string(value: Any, *, field_name: str, source_label: str) -> str:
     normalized = str(value or "").strip()
     if not normalized:
@@ -218,6 +244,24 @@ def _normalize_optional_path(value: Any) -> Path | None:
     if value in (None, ""):
         return None
     return Path(str(value))
+
+
+def _normalize_float_or_none(value: Any) -> float | None:
+    if value in (None, ""):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError) as exc:
+        raise NamedPipelineError(f"Expected float-compatible value, got {value!r}.") from exc
+
+
+def _normalize_int_or_none(value: Any) -> int | None:
+    if value in (None, ""):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError) as exc:
+        raise NamedPipelineError(f"Expected int-compatible value, got {value!r}.") from exc
 
 
 def _normalize_string_tuple(
@@ -785,6 +829,180 @@ def build_named_pipeline_execution_plan(
     )
 
 
+def _validate_tsa29_locked_chain_strict_result(
+    *,
+    plan: NamedPipelineExecutionPlan,
+    tsr_result: TsrThlbNetdownRecipeRunResult,
+    tolerance_ha: float = 1e-3,
+) -> NamedPipelineValidationResult:
+    validation_contract = plan.validation_contract
+    if validation_contract is None:
+        raise NamedPipelineError("Strict validation contract is required for this validator.")
+    if validation_contract.locked_chain_ledger_path is None:
+        raise NamedPipelineError(
+            "Strict validation contract requires `locked_chain_ledger_path`."
+        )
+    ledger_payload = _load_json_mapping(
+        path=validation_contract.locked_chain_ledger_path,
+        source_label=str(validation_contract.locked_chain_ledger_path),
+    )
+    audit_path = getattr(tsr_result, "audit_path", None)
+    if audit_path in (None, ""):
+        raise NamedPipelineError(
+            "Strict validation contract requires a THLB run result with an `audit_path`."
+        )
+    resolved_audit_path = Path(str(audit_path)).expanduser().resolve()
+    if not resolved_audit_path.exists():
+        raise NamedPipelineError(
+            f"Resolved strict validation audit path not found: {resolved_audit_path}"
+        )
+    audit_payload = _load_json_mapping(
+        path=resolved_audit_path,
+        source_label=str(resolved_audit_path),
+    )
+    ledger_entries = ledger_payload.get("entries")
+    if not isinstance(ledger_entries, list):
+        raise NamedPipelineError(
+            f"{validation_contract.locked_chain_ledger_path} field `entries` must be a list."
+        )
+    audit_steps = audit_payload.get("steps")
+    if not isinstance(audit_steps, list):
+        raise NamedPipelineError(f"{resolved_audit_path} field `steps` must be a list.")
+
+    parent_step_totals: dict[str, dict[str, float | int | str | None]] = {}
+    for step in audit_steps:
+        if not isinstance(step, dict):
+            raise NamedPipelineError(
+                f"{resolved_audit_path} field `steps` must contain mappings."
+            )
+        parent_step_id = str(step.get("parent_step_id", "")).strip()
+        if not parent_step_id:
+            continue
+        entry = parent_step_totals.setdefault(
+            parent_step_id,
+            {
+                "row_order": _normalize_int_or_none(step.get("order_index")),
+                "parent_label": str(step.get("parent_label", "")).strip() or None,
+                "net_removed_area_ha": 0.0,
+                "remaining_area_ha": None,
+            },
+        )
+        net_removed_area_ha = _normalize_float_or_none(
+            step.get("net_removed_area_ha", step.get("removed_area_ha"))
+        )
+        if net_removed_area_ha is not None:
+            entry["net_removed_area_ha"] = float(entry["net_removed_area_ha"] or 0.0) + float(
+                net_removed_area_ha
+            )
+        remaining_area_ha = _normalize_float_or_none(step.get("remaining_area_ha"))
+        if remaining_area_ha is not None:
+            entry["remaining_area_ha"] = remaining_area_ha
+
+    validated_parent_step_count = 0
+    max_abs_marginal_delta_ha = 0.0
+    max_abs_cumulative_delta_ha = 0.0
+    latest_locked_row_order: int | None = None
+    latest_locked_parent_step_id: str | None = None
+    expected_final_managed_area_ha: float | None = None
+
+    for ledger_entry in ledger_entries:
+        if not isinstance(ledger_entry, dict):
+            raise NamedPipelineError(
+                f"{validation_contract.locked_chain_ledger_path} field `entries` must contain mappings."
+            )
+        parent_step_id = str(ledger_entry.get("parent_step_id", "")).strip()
+        row_order = _normalize_int_or_none(ledger_entry.get("row_order"))
+        if not parent_step_id or row_order is None:
+            raise NamedPipelineError(
+                f"{validation_contract.locked_chain_ledger_path} contains an invalid ledger entry."
+            )
+        parent_audit = parent_step_totals.get(parent_step_id)
+        if parent_audit is None:
+            raise NamedPipelineError(
+                "Strict validation contract mismatch: missing audited parent step "
+                f"`{parent_step_id}` for locked ledger row `{row_order}`."
+            )
+        expected_net_removed_area_ha = _normalize_float_or_none(
+            ledger_entry.get("locked_net_removed_area_ha")
+        )
+        actual_net_removed_area_ha = _normalize_float_or_none(
+            parent_audit.get("net_removed_area_ha")
+        )
+        expected_marginal_compare = (
+            0.0 if expected_net_removed_area_ha is None else expected_net_removed_area_ha
+        )
+        actual_marginal_compare = (
+            0.0 if actual_net_removed_area_ha is None else actual_net_removed_area_ha
+        )
+        marginal_delta_ha = abs(actual_marginal_compare - expected_marginal_compare)
+        max_abs_marginal_delta_ha = max(max_abs_marginal_delta_ha, marginal_delta_ha)
+        if marginal_delta_ha > tolerance_ha:
+            raise NamedPipelineError(
+                "Strict validation contract mismatch at row "
+                f"`{row_order}` (`{parent_step_id}`): expected locked marginal "
+                f"`{expected_marginal_compare:.3f} ha`, got "
+                f"`{actual_marginal_compare:.3f} ha`."
+            )
+        expected_cumulative_remaining_area_ha = _normalize_float_or_none(
+            ledger_entry.get("locked_cumulative_remaining_area_ha")
+        )
+        actual_cumulative_remaining_area_ha = _normalize_float_or_none(
+            parent_audit.get("remaining_area_ha")
+        )
+        if expected_cumulative_remaining_area_ha is None:
+            raise NamedPipelineError(
+                "Strict validation contract ledger entry is missing "
+                f"`locked_cumulative_remaining_area_ha` for `{parent_step_id}`."
+            )
+        if actual_cumulative_remaining_area_ha is None:
+            raise NamedPipelineError(
+                "Strict validation contract mismatch: audited parent step "
+                f"`{parent_step_id}` is missing `remaining_area_ha`."
+            )
+        cumulative_delta_ha = abs(
+            actual_cumulative_remaining_area_ha - expected_cumulative_remaining_area_ha
+        )
+        max_abs_cumulative_delta_ha = max(max_abs_cumulative_delta_ha, cumulative_delta_ha)
+        if cumulative_delta_ha > tolerance_ha:
+            raise NamedPipelineError(
+                "Strict validation contract mismatch at row "
+                f"`{row_order}` (`{parent_step_id}`): expected locked cumulative "
+                f"`{expected_cumulative_remaining_area_ha:.3f} ha`, got "
+                f"`{actual_cumulative_remaining_area_ha:.3f} ha`."
+            )
+        latest_locked_row_order = row_order
+        latest_locked_parent_step_id = parent_step_id
+        expected_final_managed_area_ha = expected_cumulative_remaining_area_ha
+        validated_parent_step_count += 1
+
+    actual_final_managed_area_ha = _normalize_float_or_none(
+        getattr(tsr_result, "final_managed_area_ha", None)
+    )
+    if expected_final_managed_area_ha is None or actual_final_managed_area_ha is None:
+        raise NamedPipelineError(
+            "Strict validation contract requires both expected and actual final managed area."
+        )
+    final_delta_ha = abs(actual_final_managed_area_ha - expected_final_managed_area_ha)
+    max_abs_cumulative_delta_ha = max(max_abs_cumulative_delta_ha, final_delta_ha)
+    if final_delta_ha > tolerance_ha:
+        raise NamedPipelineError(
+            "Strict validation contract mismatch at final managed area: expected "
+            f"`{expected_final_managed_area_ha:.3f} ha`, got "
+            f"`{actual_final_managed_area_ha:.3f} ha`."
+        )
+
+    return NamedPipelineValidationResult(
+        contract_kind=validation_contract.contract_kind,
+        validated_parent_step_count=validated_parent_step_count,
+        latest_locked_row_order=latest_locked_row_order,
+        latest_locked_parent_step_id=latest_locked_parent_step_id,
+        expected_final_managed_area_ha=expected_final_managed_area_ha,
+        actual_final_managed_area_ha=actual_final_managed_area_ha,
+        max_abs_marginal_delta_ha=max_abs_marginal_delta_ha,
+        max_abs_cumulative_delta_ha=max_abs_cumulative_delta_ha,
+    )
+
+
 def run_named_pipeline_runbook(
     *,
     runbook_path: Path,
@@ -801,4 +1019,17 @@ def run_named_pipeline_runbook(
         checkpoint_path=plan.checkpoint_path,
         execution_mode=plan.execution_mode,
     )
-    return NamedPipelineExecutionResult(plan=plan, tsr_thlb_result=tsr_result)
+    validation_result: NamedPipelineValidationResult | None = None
+    if (
+        plan.validation_contract is not None
+        and plan.validation_contract.contract_kind == "tsa29_locked_chain_strict"
+    ):
+        validation_result = _validate_tsa29_locked_chain_strict_result(
+            plan=plan,
+            tsr_result=tsr_result,
+        )
+    return NamedPipelineExecutionResult(
+        plan=plan,
+        tsr_thlb_result=tsr_result,
+        validation_result=validation_result,
+    )

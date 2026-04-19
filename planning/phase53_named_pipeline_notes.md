@@ -359,6 +359,42 @@
   - Next bounded step:
     - use this locked recipe binding as the execution surface for the first
       chained-restart stepwise comparison against the TSA29 locked-chain ledger.
+- 2026-04-19: The next bounded `#169` implementation slice is post-run strict contract scoring against the locked-chain ledger.
+  - Governing need:
+    - the strict runbook can now resolve the correct locked recipe surface; and
+    - the runner still needs to distinguish "executed successfully" from
+      "reproduced the validated strict result surface correctly."
+  - Bounded implementation target:
+    - after `run_tsr_thlb_netdown_recipe(...)` returns for the
+      `tsa29_locked_chain_strict` contract, load the run audit JSON plus the
+      locked-chain ledger;
+    - compare per-parent-step marginal and cumulative values against the locked
+      ledger up to the latest locked row; and
+    - fail fast on the first contract mismatch instead of treating the run as a
+      successful strict validation.
+  - Scope boundary:
+    - this slice does not yet rerun the real TSA29 instance; and
+    - it does not add generic multi-instance validation machinery beyond the
+      current TSA29 strict contract kind.
+- 2026-04-19: Completed the bounded `#169` post-run strict contract scoring slice.
+  - Delivered behavior:
+    - `run_named_pipeline_runbook(...)` now validates
+      `tsa29_locked_chain_strict` runs against the locked-chain ledger
+      immediately after execution;
+    - the validator loads the locked ledger plus the THLB audit JSON, compares
+      per-parent-step marginal and cumulative values up to the latest locked
+      row, and raises a contract mismatch on the first divergence; and
+    - successful strict validations now report a compact validation summary so
+      "run completed" and "locked contract reproduced" are distinct surfaces.
+  - Focused validation:
+    - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -q`
+    - `.\.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "pipelines_run" -q`
+    - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py src/femic/cli/main.py tests/test_named_pipelines.py tests/test_cli_main.py`
+    - `.\.venv\Scripts\python.exe -m mypy src`
+  - Next bounded step:
+    - rerun the checked-in TSA29 strict named pipeline against the locked
+      recipe surface and let this new validator tell us whether the run matches
+      the locked-chain contract or fails on a specific parent-step mismatch.
 - 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
   - Root cause:
     - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.

@@ -2801,6 +2801,41 @@ def _print_named_pipeline_run_summary(result: NamedPipelineExecutionResult) -> N
                 "validation_contract_required_recipe_path: "
                 f"{plan.validation_contract.required_recipe_path}"
             )
+    if result.validation_result is not None:
+        console.print(
+            "validation_parent_step_count: "
+            f"{result.validation_result.validated_parent_step_count}"
+        )
+        if result.validation_result.latest_locked_row_order is not None:
+            console.print(
+                "validation_latest_locked_row_order: "
+                f"{result.validation_result.latest_locked_row_order}"
+            )
+        if result.validation_result.latest_locked_parent_step_id is not None:
+            console.print(
+                "validation_latest_locked_parent_step_id: "
+                f"{result.validation_result.latest_locked_parent_step_id}"
+            )
+        if result.validation_result.expected_final_managed_area_ha is not None:
+            console.print(
+                "validation_expected_final_managed_area_ha: "
+                f"{result.validation_result.expected_final_managed_area_ha:.3f}"
+            )
+        if result.validation_result.actual_final_managed_area_ha is not None:
+            console.print(
+                "validation_actual_final_managed_area_ha: "
+                f"{result.validation_result.actual_final_managed_area_ha:.3f}"
+            )
+        if result.validation_result.max_abs_marginal_delta_ha is not None:
+            console.print(
+                "validation_max_abs_marginal_delta_ha: "
+                f"{result.validation_result.max_abs_marginal_delta_ha:.3f}"
+            )
+        if result.validation_result.max_abs_cumulative_delta_ha is not None:
+            console.print(
+                "validation_max_abs_cumulative_delta_ha: "
+                f"{result.validation_result.max_abs_cumulative_delta_ha:.3f}"
+            )
     console.print(f"thlb_netdown_recipe_path: {plan.thlb_netdown_recipe_path}")
     console.print(f"source_layers_recipe_path: {plan.source_layers_recipe_path}")
     console.print(

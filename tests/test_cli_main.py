@@ -7006,6 +7006,15 @@ def test_pipelines_run_executes_named_pipeline_runbook(
                 / "tsr"
                 / "aflb_yield_ready_checkpoint.feather",
             ),
+            validation_result=SimpleNamespace(
+                validated_parent_step_count=23,
+                latest_locked_row_order=23,
+                latest_locked_parent_step_id="thlb_parent_023_future_roads",
+                expected_final_managed_area_ha=1648497.622,
+                actual_final_managed_area_ha=1648497.622,
+                max_abs_marginal_delta_ha=0.0,
+                max_abs_cumulative_delta_ha=0.0,
+            ),
             tsr_thlb_result=cli_main.TsrThlbNetdownRecipeRunResult(
                 recipe_path=instance_root
                 / "config"
@@ -7088,6 +7097,7 @@ def test_pipelines_run_executes_named_pipeline_runbook(
     assert any(
         "validation_contract_required_recipe_path:" in msg for msg in messages
     )
+    assert any("validation_parent_step_count: 23" in msg for msg in messages)
     assert any(
         "baseline_signal: aflb_yield_ready_checkpoint_restart" in msg
         for msg in messages
@@ -7149,6 +7159,7 @@ def test_pipelines_run_accepts_checked_in_proof_runbook(
                 / "tsr"
                 / "aflb_yield_ready_checkpoint.feather",
             ),
+            validation_result=None,
             tsr_thlb_result=SimpleNamespace(
                 recipe_path=instance_root
                 / "config"

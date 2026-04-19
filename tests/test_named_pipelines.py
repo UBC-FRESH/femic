@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -433,3 +434,249 @@ def test_run_named_pipeline_runbook_dispatches_to_tsr_thlb_runner(
     assert captured_kwargs["execution_mode"] == "reconstructed"
     assert result.plan == plan
     assert result.tsr_thlb_result == "tsr-result"
+
+
+def test_run_named_pipeline_runbook_validates_tsa29_locked_chain_contract(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    instance_root = tmp_path / "instance"
+    (instance_root / "config" / "tsr").mkdir(parents=True, exist_ok=True)
+    audit_path = instance_root / "config" / "tsr" / "thlb_reconstructed.audit.json"
+    ledger_path = instance_root / "config" / "tsr" / "thlb_locked_chain_ledger.json"
+    comparison_path = (
+        instance_root / "config" / "tsr" / "thlb_reconstruction_comparison.md"
+    )
+    comparison_path.write_text("# comparison\n", encoding="utf-8")
+    audit_path.write_text(
+        json.dumps(
+            {
+                "steps": [
+                    {
+                        "parent_step_id": "thlb_parent_001_total_tsa_area",
+                        "order_index": 1,
+                        "parent_label": "Total TSA area",
+                        "net_removed_area_ha": 0.0,
+                        "remaining_area_ha": 1000.0,
+                    },
+                    {
+                        "parent_step_id": "thlb_parent_002_non_forest",
+                        "order_index": 2,
+                        "parent_label": "Non-forest",
+                        "net_removed_area_ha": 200.0,
+                        "remaining_area_ha": 800.0,
+                    },
+                ]
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    ledger_path.write_text(
+        json.dumps(
+            {
+                "entries": [
+                    {
+                        "row_order": 1,
+                        "parent_step_id": "thlb_parent_001_total_tsa_area",
+                        "locked_net_removed_area_ha": None,
+                        "locked_cumulative_remaining_area_ha": 1000.0,
+                    },
+                    {
+                        "row_order": 2,
+                        "parent_step_id": "thlb_parent_002_non_forest",
+                        "locked_net_removed_area_ha": 200.0,
+                        "locked_cumulative_remaining_area_ha": 800.0,
+                    },
+                ]
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    plan = named_pipelines.NamedPipelineExecutionPlan(
+        runbook_path=instance_root / "runbooks" / "pipelines" / "tsa29.yaml",
+        instance_root=instance_root,
+        pipeline_id="tsr.thlb_strict",
+        pipeline_label="TSR strict THLB product lane",
+        seam_id="aflb_yield_ready",
+        checkpoint_path=instance_root
+        / "data"
+        / "tsr"
+        / "aflb_yield_ready_checkpoint.feather",
+        run_profile_path=None,
+        overlay_paths=(),
+        parameter_files=(),
+        validation_contract=named_pipelines.NamedPipelineValidationContract(
+            contract_kind="tsa29_locked_chain_strict",
+            locked_chain_ledger_path=ledger_path,
+            comparison_report_path=comparison_path,
+            required_recipe_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "thlb_netdown.locked.recipe.yaml",
+        ),
+        user_registry_path=None,
+        instance_registry_path=None,
+        explicit_registry_paths=(),
+        thlb_netdown_recipe_path=instance_root
+        / "workbench"
+        / "tsr"
+        / "thlb_netdown.locked.recipe.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        execution_mode="reconstructed",
+    )
+
+    monkeypatch.setattr(
+        named_pipelines,
+        "build_named_pipeline_execution_plan",
+        lambda **kwargs: plan,
+    )
+    monkeypatch.setattr(
+        named_pipelines,
+        "run_tsr_thlb_netdown_recipe",
+        lambda **kwargs: SimpleNamespace(
+            audit_path=audit_path,
+            final_managed_area_ha=800.0,
+        ),
+    )
+
+    result = named_pipelines.run_named_pipeline_runbook(
+        runbook_path=plan.runbook_path,
+        instance_root=instance_root,
+    )
+
+    assert result.validation_result is not None
+    assert result.validation_result.contract_kind == "tsa29_locked_chain_strict"
+    assert result.validation_result.validated_parent_step_count == 2
+    assert result.validation_result.latest_locked_row_order == 2
+    assert (
+        result.validation_result.latest_locked_parent_step_id
+        == "thlb_parent_002_non_forest"
+    )
+    assert result.validation_result.expected_final_managed_area_ha == pytest.approx(800.0)
+    assert result.validation_result.actual_final_managed_area_ha == pytest.approx(800.0)
+    assert result.validation_result.max_abs_marginal_delta_ha == pytest.approx(0.0)
+    assert result.validation_result.max_abs_cumulative_delta_ha == pytest.approx(0.0)
+
+
+def test_run_named_pipeline_runbook_rejects_tsa29_locked_chain_mismatch(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    instance_root = tmp_path / "instance"
+    (instance_root / "config" / "tsr").mkdir(parents=True, exist_ok=True)
+    audit_path = instance_root / "config" / "tsr" / "thlb_reconstructed.audit.json"
+    ledger_path = instance_root / "config" / "tsr" / "thlb_locked_chain_ledger.json"
+    comparison_path = (
+        instance_root / "config" / "tsr" / "thlb_reconstruction_comparison.md"
+    )
+    comparison_path.write_text("# comparison\n", encoding="utf-8")
+    audit_path.write_text(
+        json.dumps(
+            {
+                "steps": [
+                    {
+                        "parent_step_id": "thlb_parent_001_total_tsa_area",
+                        "order_index": 1,
+                        "parent_label": "Total TSA area",
+                        "net_removed_area_ha": 0.0,
+                        "remaining_area_ha": 1000.0,
+                    },
+                    {
+                        "parent_step_id": "thlb_parent_002_non_forest",
+                        "order_index": 2,
+                        "parent_label": "Non-forest",
+                        "net_removed_area_ha": 210.0,
+                        "remaining_area_ha": 790.0,
+                    },
+                ]
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    ledger_path.write_text(
+        json.dumps(
+            {
+                "entries": [
+                    {
+                        "row_order": 1,
+                        "parent_step_id": "thlb_parent_001_total_tsa_area",
+                        "locked_net_removed_area_ha": None,
+                        "locked_cumulative_remaining_area_ha": 1000.0,
+                    },
+                    {
+                        "row_order": 2,
+                        "parent_step_id": "thlb_parent_002_non_forest",
+                        "locked_net_removed_area_ha": 200.0,
+                        "locked_cumulative_remaining_area_ha": 800.0,
+                    },
+                ]
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    plan = named_pipelines.NamedPipelineExecutionPlan(
+        runbook_path=instance_root / "runbooks" / "pipelines" / "tsa29.yaml",
+        instance_root=instance_root,
+        pipeline_id="tsr.thlb_strict",
+        pipeline_label="TSR strict THLB product lane",
+        seam_id="aflb_yield_ready",
+        checkpoint_path=instance_root
+        / "data"
+        / "tsr"
+        / "aflb_yield_ready_checkpoint.feather",
+        run_profile_path=None,
+        overlay_paths=(),
+        parameter_files=(),
+        validation_contract=named_pipelines.NamedPipelineValidationContract(
+            contract_kind="tsa29_locked_chain_strict",
+            locked_chain_ledger_path=ledger_path,
+            comparison_report_path=comparison_path,
+            required_recipe_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "thlb_netdown.locked.recipe.yaml",
+        ),
+        user_registry_path=None,
+        instance_registry_path=None,
+        explicit_registry_paths=(),
+        thlb_netdown_recipe_path=instance_root
+        / "workbench"
+        / "tsr"
+        / "thlb_netdown.locked.recipe.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        execution_mode="reconstructed",
+    )
+
+    monkeypatch.setattr(
+        named_pipelines,
+        "build_named_pipeline_execution_plan",
+        lambda **kwargs: plan,
+    )
+    monkeypatch.setattr(
+        named_pipelines,
+        "run_tsr_thlb_netdown_recipe",
+        lambda **kwargs: SimpleNamespace(
+            audit_path=audit_path,
+            final_managed_area_ha=790.0,
+        ),
+    )
+
+    with pytest.raises(named_pipelines.NamedPipelineError) as excinfo:
+        named_pipelines.run_named_pipeline_runbook(
+            runbook_path=plan.runbook_path,
+            instance_root=instance_root,
+        )
+
+    assert "Strict validation contract mismatch at row `2`" in str(excinfo.value)
