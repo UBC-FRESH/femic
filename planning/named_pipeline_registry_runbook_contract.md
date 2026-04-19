@@ -298,6 +298,113 @@ Current surfaces that should map directly rather than be renamed away:
 The first runner issue should build on those exact surfaces instead of creating
 parallel config trees.
 
+TSA29 Proof-Lane Pressure Test
+------------------------------
+
+The current TSA29 reviewed THLB lane is a strong enough real-world example to
+pressure-test the proposed registry and runbook contract.
+
+### Observed current inputs
+
+From the live TSA29 instance and docs, the proof lane already has these stable
+machine-readable inputs:
+
+- run profile:
+  - `config/run_profile.tsa29.yaml`
+- instance overlay:
+  - `config/tsr/overlay.yaml`
+- source-layer recipe:
+  - `config/tsr/source_layers.recipe.yaml`
+- THLB recipe:
+  - `config/tsr/thlb_netdown.recipe.yaml`
+- restart-grade checkpoints:
+  - `data/tsr/aflb_checkpoint.feather`
+  - `data/tsr/aflb_yield_ready_checkpoint.feather`
+  - `data/tsr/lhlb_checkpoint.feather`
+  - `data/tsr/lhlb_curve_ready_checkpoint.feather`
+
+### Observed current command chain
+
+The current reproducible reviewed TSR THLB path documented in
+`docs/guides/tsr-intelligence-workflow.rst` is:
+
+1. `femic tsr index`
+2. `femic tsr fetch --tsa 29`
+3. `femic tsr extract --tsa 29`
+4. `femic tsr recipe-init --instance-root ... --tsa 29`
+5. `femic tsr source-layers-build`
+6. `femic tsr source-layers-run`
+7. `femic tsr thlb-netdown-build`
+8. `femic tsr thlb-netdown-workbench-build`
+9. `femic tsr thlb-netdown-run`
+10. `femic tsr thlb-netdown-workbench-lock`
+11. `femic tsr overlay-init` / `overlay-report`
+
+The named-pipeline runner does **not** need to wrap all of that in its first
+implementation slice. It only needs to prove one stable, reviewable pipeline
+surface from the currently accepted chain.
+
+### Recommended proof pipeline for the first runner child
+
+The first runner child should target one pipeline id only:
+
+- `tsr.thlb_reviewed`
+
+That proof pipeline should resolve to the already accepted reviewed THLB lane:
+
+- source-layer recipe surface;
+- THLB netdown recipe surface;
+- optional yield-bridge seam selection; and
+- explicit reconstructed THLB execution.
+
+### Recommended initial seam set for `tsr.thlb_reviewed`
+
+Required seams for the first runner child:
+
+- `scratch`
+- `aflb`
+- `aflb_yield_ready`
+- `lhlb_curve_ready`
+
+These seams are sufficient because:
+
+- `scratch` covers full reviewed execution;
+- `aflb` and `aflb_yield_ready` are now proven restart seams under `#164`; and
+- `lhlb_curve_ready` already exists as the supported downstream restart seam
+  for late THLB exploration.
+
+### Worked runbook example for the proof lane
+
+Recommended instance-local runbook example:
+
+```yaml
+schema_version: 1
+runbook_kind: femic_pipeline_runbook
+label: TSA29 reviewed TSR THLB proof lane
+pipeline_id: tsr.thlb_reviewed
+instance_root: .
+run_profile: config/run_profile.tsa29.yaml
+overlay_paths:
+  - config/tsr/overlay.yaml
+restart:
+  seam_id: aflb_yield_ready
+  checkpoint_path: data/tsr/aflb_yield_ready_checkpoint.feather
+```
+
+### Pressure-test conclusions
+
+The pressure test narrows the contract in three useful ways:
+
+1. The first runner does not need generic recipe mutation.
+   - It only needs to resolve known recipe/config/checkpoint paths from a
+     pipeline entry and a runbook.
+2. The first runner should be read-mostly and orchestration-only.
+   - It should call proven existing recipe/CLI helpers instead of inventing a
+     new execution engine.
+3. The first runner can stay TSR-only.
+   - Patchworks/ws3 and other workflow families should remain out of scope
+     until the contract is proven by the TSR THLB lane.
+
 Out Of Scope For `#167`
 -----------------------
 
@@ -319,9 +426,48 @@ The next feature child after `#167` should implement:
 
 - pipeline registry loading and resolution;
 - runbook loading/validation;
-- one concrete named-pipeline execution surface for the TSR THLB proof lane;
+- one concrete named-pipeline execution surface for the `tsr.thlb_reviewed`
+  proof lane;
 - seam-aware restart selection from the runbook contract; and
 - read-only inspection/listing commands if needed to make that runner usable.
+
+Minimum Scope For The Runner Child
+----------------------------------
+
+The next implementation child should stay intentionally narrow.
+
+### In scope
+
+- load and merge pipeline registries from the default tiers plus explicit extra
+  runbook registry paths;
+- load one machine-readable runbook from `runbooks/pipelines/*.yaml`;
+- resolve one pipeline id, one restart seam, and the concrete instance-local
+  config/checkpoint paths for that runbook;
+- expose one proof command that launches the existing reviewed TSR THLB lane by
+  delegating to current FEMIC helpers rather than reimplementing them; and
+- emit a small summary showing the resolved pipeline id, seam id, recipe paths,
+  run profile, and checkpoint path actually used.
+
+### Out of scope
+
+- registry-editing commands;
+- generalized multi-family pipeline execution;
+- replacement of existing `femic tsr ...` commands;
+- broad migration of historic runbooks/instances; and
+- speculative support for remote registry distribution.
+
+### Recommended proof command surface
+
+The next child may choose the exact command name, but it should implement only
+one proof-oriented surface equivalent in spirit to:
+
+- `femic pipelines run --runbook runbooks/pipelines/tsr.thlb_reviewed.yaml`
+
+That command should:
+
+- resolve the runbook and pipeline;
+- map the selected seam to the existing TSR THLB execution path; and
+- delegate into the already-proven helper/CLI surfaces.
 
 Acceptance Criteria For Closing `#167`
 --------------------------------------

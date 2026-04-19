@@ -14667,3 +14667,14 @@
 - Intended follow-on from this spec:
   - keep `#167` contract-first; and
   - use this note to scope the next implementation child around registry loading, runbook loading, and one TSR THLB proof-lane runner rather than broad legacy-workflow migration.
+## 2026-04-18 - Pressure-tested the `#167` contract against the live TSA29 reviewed THLB proof lane
+- Expanded `planning/named_pipeline_registry_runbook_contract.md` with:
+  - the observed TSA29 proof-lane inputs and current command chain;
+  - a worked runbook example for the reviewed TSR THLB lane;
+  - the recommended proof pipeline id `tsr.thlb_reviewed`;
+  - the minimum seam set for the first runner child; and
+  - a bounded minimum-scope definition for the follow-on runner-implementation child.
+- Key narrowing decisions from the pressure test:
+  - the first runner child should stay TSR-only;
+  - it should resolve existing recipe/config/checkpoint surfaces rather than inventing a new execution engine; and
+  - it should wrap only one proof command around the current reviewed TSR THLB lane before any broader workflow-family rollout.

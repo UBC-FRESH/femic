@@ -16898,6 +16898,16 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - compatibility mapping from current TSR/THLB recipe surfaces into future named-pipeline ids and seam ids.
   - Immediate next bounded step for `#167`:
     - pressure-test the proposed contract against the current TSR THLB proof lane and identify the narrowest implementation child needed to load registries and resolve one runbook without broad workflow migration.
+- 2026-04-18: Pressure-tested the `#167` contract against the live TSA29 reviewed THLB proof lane.
+  - Pressure-test result:
+    - the current TSA29 lane already provides stable run-profile, recipe, overlay, and checkpoint surfaces that fit the proposed registry/runbook model without inventing a parallel config tree.
+  - Additional spec decisions now captured:
+    - the first runner child should target one proof pipeline id only: `tsr.thlb_reviewed`;
+    - the first runner child only needs seams `scratch`, `aflb`, `aflb_yield_ready`, and `lhlb_curve_ready`;
+    - the first runner should be orchestration-only and delegate to the existing TSR helpers/commands; and
+    - Patchworks/ws3 and broader multi-family execution remain out of scope for that first runner child.
+  - Immediate next bounded step for `#167`:
+    - open or draft the runner-implementation child using the now-pressure-tested minimum scope instead of a broad generic pipeline-execution ticket.
 - 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
   - Root cause:
     - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.
