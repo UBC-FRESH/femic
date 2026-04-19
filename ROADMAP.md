@@ -16908,6 +16908,29 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - Patchworks/ws3 and broader multi-family execution remain out of scope for that first runner child.
   - Immediate next bounded step for `#167`:
     - open or draft the runner-implementation child using the now-pressure-tested minimum scope instead of a broad generic pipeline-execution ticket.
+- 2026-04-18: The next rollout-management move after the `#167` pressure test is to open one narrow runner child, not to start broad pipeline execution work.
+  - Intended child scope:
+    - registry loading and merge resolution;
+    - runbook loading and validation;
+    - one proof command for `tsr.thlb_reviewed`; and
+    - seam-aware delegation into the existing TSR reviewed THLB lane.
+  - Explicit non-goals for that child:
+    - no registry mutation commands;
+    - no multi-family pipeline runner;
+    - no replacement of existing `femic tsr ...` commands; and
+    - no Patchworks/ws3 pipeline execution.
+- 2026-04-18: Opened `#168` as the first named-pipeline runner implementation child under umbrella `#163`.
+  - Child issue:
+    - `#168` — implement the first named-pipeline proof runner from runbooks.
+  - Implementer-facing scope:
+    - load registry tiers plus explicit runbook registry paths;
+    - load one machine-readable runbook;
+    - resolve the proof pipeline id `tsr.thlb_reviewed`;
+    - support seams `scratch`, `aflb`, `aflb_yield_ready`, and `lhlb_curve_ready`; and
+    - delegate into the existing reviewed TSR THLB lane instead of inventing a new execution engine.
+  - Rollout relationship:
+    - `#167` remains the contract-definition child; and
+    - `#168` is the first narrow execution child that should consume that contract without widening into multi-family pipeline work.
 - 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
   - Root cause:
     - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.

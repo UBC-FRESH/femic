@@ -14678,3 +14678,16 @@
   - the first runner child should stay TSR-only;
   - it should resolve existing recipe/config/checkpoint surfaces rather than inventing a new execution engine; and
   - it should wrap only one proof command around the current reviewed TSR THLB lane before any broader workflow-family rollout.
+## 2026-04-18 - Opened the first narrow runner child under `#163`
+- Opened `#168`:
+  - `Feature: implement the first named-pipeline proof runner from runbooks`
+- Scope fixed for the new child:
+  - registry loading and merge resolution;
+  - runbook loading and validation;
+  - one proof pipeline id: `tsr.thlb_reviewed`;
+  - seam-aware delegation for `scratch`, `aflb`, `aflb_yield_ready`, and `lhlb_curve_ready`; and
+  - one proof command that wraps the existing reviewed TSR THLB lane.
+- Rollout management result:
+  - kept `#168` intentionally narrow and TSR-only;
+  - kept multi-family execution, registry mutation, and generic pipeline expansion out of scope; and
+  - preserved `#167` as the contract-definition child that `#168` should implement against.
