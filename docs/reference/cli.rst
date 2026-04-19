@@ -78,6 +78,14 @@ Current proof-runner scope:
 - ``--runbook PATH`` (required; typically under ``runbooks/pipelines/``)
 - ``--instance-root PATH`` (optional; defaults to CWD or ``FEMIC_INSTANCE_ROOT`` env)
 
+Example proof-runner invocation
+
+.. code-block:: text
+
+   python -m femic pipelines run ^
+     --runbook runbooks/pipelines/tsa29.tsr.thlb_reviewed.aflb_yield_ready.yaml ^
+     --instance-root external/femic-tsa29-instance
+
 Prep
 ----
 

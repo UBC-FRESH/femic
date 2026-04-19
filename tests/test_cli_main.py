@@ -7076,6 +7076,113 @@ def test_pipelines_run_executes_named_pipeline_runbook(
     )
 
 
+def test_pipelines_run_accepts_checked_in_proof_runbook(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    runbook = Path("runbooks/pipelines/tsa29.tsr.thlb_reviewed.aflb_yield_ready.yaml")
+    captured_kwargs: dict[str, object] = {}
+
+    monkeypatch.setattr(cli_main.console, "print", lambda _message: None)
+
+    def _fake_run_named_pipeline_runbook(**kwargs: object) -> object:
+        captured_kwargs.update(kwargs)
+        return SimpleNamespace(
+            plan=SimpleNamespace(
+                pipeline_id="tsr.thlb_reviewed",
+                pipeline_label="TSR reviewed THLB proof lane",
+                runbook_path=runbook.resolve(),
+                instance_root=instance_root,
+                seam_id="aflb_yield_ready",
+                execution_mode="reconstructed",
+                user_registry_path=None,
+                instance_registry_path=None,
+                explicit_registry_paths=(),
+                run_profile_path=instance_root / "config" / "run_profile.tsa29.yaml",
+                overlay_paths=(instance_root / "config" / "tsr" / "overlay.yaml",),
+                parameter_files=(),
+                thlb_netdown_recipe_path=instance_root
+                / "config"
+                / "tsr"
+                / "thlb_netdown.recipe.yaml",
+                source_layers_recipe_path=instance_root
+                / "config"
+                / "tsr"
+                / "source_layers.recipe.yaml",
+                checkpoint_path=instance_root
+                / "data"
+                / "tsr"
+                / "aflb_yield_ready_checkpoint.feather",
+            ),
+            tsr_thlb_result=SimpleNamespace(
+                recipe_path=instance_root
+                / "config"
+                / "tsr"
+                / "thlb_netdown.recipe.yaml",
+                checkpoint_path=instance_root
+                / "data"
+                / "tsr"
+                / "aflb_yield_ready_checkpoint.feather",
+                output_path=instance_root
+                / "data"
+                / "tsr"
+                / "thlb_reconstructed_checkpoint.feather",
+                audit_path=instance_root
+                / "config"
+                / "tsr"
+                / "thlb_reconstructed.audit.json",
+                status_report_path=instance_root
+                / "config"
+                / "tsr"
+                / "thlb_reconstructed.status.md",
+                runtime_status_report_path=instance_root
+                / "runtime"
+                / "logs"
+                / "tsr"
+                / "thlb_reconstructed_status_report-20260405T000000Z.md",
+                aflb_checkpoint_path=None,
+                aflb_gpkg_path=None,
+                aflb_lu_cache_warmed=False,
+                lhlb_checkpoint_path=None,
+                lhlb_gpkg_path=None,
+                lhlb_lu_cache_warmed=False,
+                lhlb_curve_ready_checkpoint_path=None,
+                lhlb_curve_ready_gpkg_path=None,
+                lhlb_curve_ready_lu_cache_warmed=False,
+                execution_mode=tsr_catalog.TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+                baseline_signal="aflb_yield_ready_checkpoint_restart",
+                selected_map_ids=(),
+                tsa=tsr_catalog.TsrOverlayTsaRecord(
+                    tsa_id="tsa_29",
+                    tsa_code="29",
+                    tsa_name="Williams Lake",
+                ),
+                step_count=1,
+                outcome_counts={"applied": 1},
+                input_area_ha=1.0,
+                baseline_managed_area_ha=1.0,
+                final_managed_area_ha=1.0,
+                legacy_reference_managed_area_ha=None,
+                tsr_reported_aflb_area_ha=None,
+                tsr_reported_thlb_area_ha=None,
+                aflb_checkpoint_area_ha=None,
+                lhlb_checkpoint_area_ha=None,
+                lhlb_curve_ready_checkpoint_area_ha=None,
+            ),
+        )
+
+    monkeypatch.setattr(
+        cli_main, "run_named_pipeline_runbook", _fake_run_named_pipeline_runbook
+    )
+
+    cli_main.pipelines_run(runbook=runbook, instance_root=instance_root)
+
+    assert captured_kwargs["runbook_path"] == runbook.resolve()
+    assert captured_kwargs["instance_root"] == instance_root.resolve()
+
+
 def test_tsr_facts_report_writes_review_csv(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

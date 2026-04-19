@@ -16946,6 +16946,24 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - no new runner-specific failures remained after restoring the existing THLB CLI outcome-count summary.
   - Next bounded step for `#168`:
     - pressure-test the new `femic pipelines run` surface with a checked-in proof runbook or real TSA29 smoke path without widening into registry-mutation commands or multi-family execution.
+- 2026-04-19: The next bounded `#168` slice will use the checked-in proof-runbook option rather than mutating the TSA29 submodule.
+  - Implementation target:
+    - add one repo-tracked machine-readable proof runbook for `tsr.thlb_reviewed` that is intended to run with an explicit `--instance-root`.
+  - Scope boundary:
+    - do not modify `external/femic-tsa29-instance` just to host the runbook;
+    - do not broaden into registry-mutation commands or automatic default-runbook discovery; and
+    - keep validation focused on runbook loading, plan resolution, CLI wiring, and proof-command delegation.
+- 2026-04-19: Added the first checked-in proof runbook for `#168` and taught the CLI to accept repo-tracked runbook paths cleanly.
+  - Delivered surfaces:
+    - repo-tracked machine-readable runbook `runbooks/pipelines/tsa29.tsr.thlb_reviewed.aflb_yield_ready.yaml`;
+    - `femic pipelines run` now prefers an existing cwd/repo-relative runbook path before falling back to the instance root; and
+    - focused coverage now validates both the checked-in runbook contract and the CLI wiring for that path.
+  - Validation state for this slice:
+    - focused named-pipeline / CLI tests passed;
+    - `ruff check src tests`, `mypy src`, `sphinx-build -b html docs _build/html -W`, and `pre-commit run --all-files` passed; and
+    - full `pytest` still returned only the same eight unrelated failures parked under `#166`.
+  - Next bounded step for `#168`:
+    - use the checked-in proof runbook for one real TSA29 runner smoke (`femic pipelines run --runbook ... --instance-root external/femic-tsa29-instance`) without widening into broader pipeline-engine work.
 - 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
   - Root cause:
     - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.

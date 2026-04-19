@@ -14712,3 +14712,24 @@
 - Full-suite note:
   - full `pytest` returned only the same eight unrelated parked failures already tracked under `#166`; and
   - the new proof-runner slice no longer introduces additional regressions after restoring the THLB CLI outcome-count summary.
+## 2026-04-19 - Added the first checked-in proof runbook for `#168`
+- Added the repo-tracked proof artifact:
+  - `runbooks/pipelines/tsa29.tsr.thlb_reviewed.aflb_yield_ready.yaml`
+- CLI tightening for the proof surface:
+  - `femic pipelines run` now prefers an existing cwd/repo-relative runbook path before falling back to resolving the runbook under the selected instance root;
+  - this keeps repo-tracked proof runbooks usable alongside explicit `--instance-root` selection.
+- Focused coverage added for this slice:
+  - `tests/test_named_pipelines.py` now validates that the checked-in proof runbook resolves correctly with an explicit instance root; and
+  - `tests/test_cli_main.py` now validates that the CLI accepts the checked-in proof runbook path and forwards it to the runner.
+- Docs update:
+  - `docs/reference/cli.rst` now includes an example invocation using the checked-in proof runbook with `--instance-root external/femic-tsa29-instance`.
+- Validation for this slice:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py tests/test_cli_main.py -k "checked_in_proof_runbook or pipelines_run" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src tests`
+  - `.\.venv\Scripts\python.exe -m mypy src`
+  - `.\.venv\Scripts\python.exe -m sphinx -b html docs _build/html -W`
+  - `.\.venv\Scripts\python.exe -m pytest`
+  - `.\.venv\Scripts\python.exe -m pre_commit run --all-files`
+- Full-suite note:
+  - full `pytest` still returned only the same eight unrelated failures already parked under `#166`; and
+  - the checked-in proof runbook slice did not add any new full-suite regressions.

@@ -195,3 +195,60 @@ def test_run_named_pipeline_runbook_dispatches_to_tsr_thlb_runner(
     assert captured_kwargs["execution_mode"] == "reconstructed"
     assert result.plan == plan
     assert result.tsr_thlb_result == "tsr-result"
+
+
+def test_checked_in_proof_runbook_resolves_with_explicit_instance_root(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    runbook_path = (
+        repo_root
+        / "runbooks"
+        / "pipelines"
+        / "tsa29.tsr.thlb_reviewed.aflb_yield_ready.yaml"
+    )
+    instance_root = tmp_path / "instance"
+    (instance_root / "config" / "tsr").mkdir(parents=True, exist_ok=True)
+    (instance_root / "data" / "tsr").mkdir(parents=True, exist_ok=True)
+    (instance_root / "config" / "run_profile.tsa29.yaml").write_text(
+        "selection:\n  tsa:\n    - '29'\n",
+        encoding="utf-8",
+    )
+    (instance_root / "config" / "tsr" / "overlay.yaml").write_text(
+        "schema_version: 1\n",
+        encoding="utf-8",
+    )
+    thlb_recipe_path = instance_root / "config" / "tsr" / "thlb_netdown.recipe.yaml"
+    thlb_recipe_path.write_text("schema_version: 1\n", encoding="utf-8")
+    source_layers_recipe_path = (
+        instance_root / "config" / "tsr" / "source_layers.recipe.yaml"
+    )
+    source_layers_recipe_path.write_text("schema_version: 1\n", encoding="utf-8")
+    checkpoint_path = (
+        instance_root / "data" / "tsr" / "aflb_yield_ready_checkpoint.feather"
+    )
+    checkpoint_path.write_text("checkpoint\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        named_pipelines,
+        "load_tsr_thlb_netdown_recipe",
+        lambda path: SimpleNamespace(
+            instance_inputs=SimpleNamespace(
+                source_layer_recipe_path="config/tsr/source_layers.recipe.yaml"
+            )
+        ),
+    )
+
+    plan = named_pipelines.build_named_pipeline_execution_plan(
+        runbook_path=runbook_path,
+        instance_root=instance_root,
+    )
+
+    assert plan.runbook_path == runbook_path.resolve()
+    assert plan.instance_root == instance_root.resolve()
+    assert plan.pipeline_id == "tsr.thlb_reviewed"
+    assert plan.seam_id == "aflb_yield_ready"
+    assert plan.checkpoint_path == checkpoint_path.resolve()
+    assert plan.thlb_netdown_recipe_path == thlb_recipe_path.resolve()
+    assert plan.source_layers_recipe_path == source_layers_recipe_path.resolve()

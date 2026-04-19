@@ -1,0 +1,14 @@
+schema_version: 1
+runbook_kind: femic_pipeline_runbook
+label: TSA29 TSR THLB reviewed proof lane from AFLB yield-ready seam
+pipeline_id: tsr.thlb_reviewed
+instance_root: .
+run_profile: config/run_profile.tsa29.yaml
+overlay_paths:
+  - config/tsr/overlay.yaml
+restart:
+  seam_id: aflb_yield_ready
+notes:
+  - Repo-tracked proof runbook for the first named-pipeline runner slice under #168.
+  - Invoke with an explicit instance root, for example:
+  - femic pipelines run --runbook runbooks/pipelines/tsa29.tsr.thlb_reviewed.aflb_yield_ready.yaml --instance-root external/femic-tsa29-instance

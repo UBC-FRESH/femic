@@ -4390,8 +4390,8 @@ def pipelines_run(
         ...,
         "--runbook",
         help=(
-            "Path to a machine-readable pipeline runbook, typically under "
-            "`runbooks/pipelines/` in the target instance."
+            "Path to a machine-readable pipeline runbook, either repo-relative "
+            "or under `runbooks/pipelines/` in the target instance."
         ),
     ),
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
@@ -4399,7 +4399,12 @@ def pipelines_run(
     """Run the first named-pipeline proof surface from a machine-readable runbook."""
 
     instance_context = _resolve_cli_instance_context(instance_root=instance_root)
-    resolved_runbook_path = instance_context.resolve_path(runbook)
+    cwd_runbook_path = runbook.expanduser().resolve()
+    resolved_runbook_path = (
+        cwd_runbook_path
+        if cwd_runbook_path.exists()
+        else instance_context.resolve_path(runbook)
+    )
     try:
         result = run_named_pipeline_runbook(
             runbook_path=resolved_runbook_path,
