@@ -14654,3 +14654,16 @@
   - kept `#163` as umbrella-only;
   - did not open multiple new feature children after closing `#164`; and
   - deferred the likely runner-implementation child until the contract issue in `#167` is narrowed first.
+## 2026-04-18 - Started `#167` with the first named-pipeline registry/runbook contract spec
+- Added planning note:
+  - `planning/named_pipeline_registry_runbook_contract.md`
+- Contract decisions captured in the first spec draft:
+  - default registry discovery tiers and file locations for built-in, user, instance-local, and explicit extra registries;
+  - merge order and override policy by `pipeline_id`;
+  - initial YAML shape for `pipeline_registry` documents;
+  - initial YAML shape for machine-readable `femic_pipeline_runbook` documents under `runbooks/pipelines/`;
+  - restart policy for `scratch` vs checkpoint-backed seams; and
+  - compatibility mapping from current TSR/THLB recipe and checkpoint surfaces into future named-pipeline ids and seam ids.
+- Intended follow-on from this spec:
+  - keep `#167` contract-first; and
+  - use this note to scope the next implementation child around registry loading, runbook loading, and one TSR THLB proof-lane runner rather than broad legacy-workflow migration.

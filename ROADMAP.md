@@ -16886,6 +16886,18 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - `#164` already proved the interruption/resume seam pattern;
     - the next unresolved architecture boundary is the contract for named pipeline identity, registry layering, and runbook seam selection; and
     - the full named-pipeline runner should remain out of scope until `#167` is decision-complete.
+- 2026-04-18: Started `#167` by landing the first contract spec note for named pipeline registries and machine-readable runbooks.
+  - Spec note:
+    - `planning/named_pipeline_registry_runbook_contract.md`
+  - Current contract decisions captured there:
+    - default registry tiers and file locations (built-in, user, instance-local, explicit extras);
+    - merge order and override policy by `pipeline_id`;
+    - the first YAML contract shape for pipeline registries;
+    - the first YAML contract shape for machine-readable pipeline runbooks;
+    - restart object policy for scratch vs checkpoint-backed seams; and
+    - compatibility mapping from current TSR/THLB recipe surfaces into future named-pipeline ids and seam ids.
+  - Immediate next bounded step for `#167`:
+    - pressure-test the proposed contract against the current TSR THLB proof lane and identify the narrowest implementation child needed to load registries and resolve one runbook without broad workflow migration.
 - 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
   - Root cause:
     - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.
