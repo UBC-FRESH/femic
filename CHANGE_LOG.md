@@ -14867,3 +14867,11 @@
   - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "runtime_events or parent_progress" -q`
   - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py src/femic/cli/main.py src/femic/tsr_catalog/recipes.py tests/test_named_pipelines.py tests/test_cli_main.py tests/test_tsr_recipes.py`
   - `.\.venv\Scripts\python.exe -m mypy src`
+## 2026-04-19 - Stopped strict TSA29 seam runs from consulting legacy checkpoint fallback during diagnostic summary
+- `#169` bounded debug fix:
+  - `_compute_legacy_reference_managed_area_ha(...)` now returns `None` for validated TSA29 `data/tsr/*.feather` seam checkpoints instead of trying to discover legacy `ria_vri_vclr1p_checkpoint*.feather` inputs; and
+  - this removes the false fast-fail where an explicit strict seam run died in diagnostic summary code before the actual strict pipeline work could continue.
+- Focused validation:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "legacy_reference_managed_area_ha_skips_tsa29_strict_seam" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
+  - `.\.venv\Scripts\python.exe -m mypy src`

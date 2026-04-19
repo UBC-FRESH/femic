@@ -11766,3 +11766,22 @@ def test_emit_parallel_progress_events_from_files_emits_parent_progress(
     assert runtime_events[0]["completed_lus"] == 2
     assert runtime_events[0]["total_lus"] == 5
     assert runtime_events[0]["bundle_status"] == "running"
+
+
+def test_compute_legacy_reference_managed_area_ha_skips_tsa29_strict_seam(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    checkpoint_path = (
+        instance_root / "data" / "tsr" / "aflb_yield_ready_checkpoint.feather"
+    )
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint_path.write_bytes(b"placeholder")
+
+    assert (
+        tsr_recipes._compute_legacy_reference_managed_area_ha(
+            instance_root=instance_root,
+            checkpoint_path=checkpoint_path,
+        )
+        is None
+    )

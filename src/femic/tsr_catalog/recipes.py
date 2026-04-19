@@ -5753,6 +5753,21 @@ def _reject_tsa29_legacy_checkpoint_path(*, instance_root: Path, checkpoint_path
         )
 
 
+def _is_tsa29_strict_seam_checkpoint_path(
+    *, instance_root: Path, checkpoint_path: Path
+) -> bool:
+    resolved_instance_root = instance_root.expanduser().resolve()
+    if resolved_instance_root.name.casefold() != "femic-tsa29-instance":
+        return False
+    resolved_checkpoint_path = checkpoint_path.expanduser().resolve()
+    strict_root = (resolved_instance_root / "data" / "tsr").resolve()
+    try:
+        resolved_checkpoint_path.relative_to(strict_root)
+    except ValueError:
+        return False
+    return resolved_checkpoint_path.suffix.casefold() == ".feather"
+
+
 def _additional_supporting_provenance_ids(*, parent_label: str) -> tuple[str, ...]:
     return _THLB_ADDITIONAL_SUPPORTING_PROVENANCE_IDS.get(
         parent_label.strip().casefold(),
@@ -9767,9 +9782,12 @@ def _compute_legacy_reference_managed_area_ha(
     instance_root: Path,
     checkpoint_path: Path,
 ) -> float | None:
-    latest_checkpoint = _find_tsr_checkpoint_path(
-        instance_root=instance_root, mode="latest"
-    )
+    if _is_tsa29_strict_seam_checkpoint_path(
+        instance_root=instance_root,
+        checkpoint_path=checkpoint_path,
+    ):
+        return None
+    latest_checkpoint = _find_tsr_checkpoint_path(instance_root=instance_root, mode="latest")
     if latest_checkpoint == checkpoint_path:
         return None
     comparison = _load_checkpoint_geodataframe(latest_checkpoint)
