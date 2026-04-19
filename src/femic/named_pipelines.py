@@ -21,6 +21,7 @@ from femic.user_config import DEFAULT_FEMIC_CONFIG_HOME
 
 PIPELINE_REGISTRY_RESOURCE_PACKAGE = "femic.resources.pipelines"
 PIPELINE_REGISTRY_RESOURCE_NAME = "registry.yaml"
+_SUPPORTED_TSR_THLB_PIPELINE_IDS = {"tsr.thlb_strict", "tsr.thlb_reviewed"}
 DEFAULT_NAMED_PIPELINE_USER_REGISTRY_PATH = DEFAULT_FEMIC_CONFIG_HOME / "pipelines.yaml"
 DEFAULT_NAMED_PIPELINE_INSTANCE_REGISTRY_RELATIVE_PATH = Path("config/pipelines.yaml")
 _PIPELINE_REGISTRY_ALLOWED_KEYS = {"schema_version", "registry_kind", "pipelines"}
@@ -656,9 +657,10 @@ def build_named_pipeline_execution_plan(
         if not overlay_path.exists():
             raise NamedPipelineError(f"Resolved overlay path not found: {overlay_path}")
 
-    if pipeline.pipeline_id != "tsr.thlb_reviewed":
+    if pipeline.pipeline_id not in _SUPPORTED_TSR_THLB_PIPELINE_IDS:
         raise NamedPipelineError(
-            "The first proof runner only supports pipeline `tsr.thlb_reviewed`."
+            "The first proof runner only supports pipelines "
+            "`tsr.thlb_strict` and `tsr.thlb_reviewed`."
         )
     recipe = pipeline.get_recipe("tsr_thlb_netdown")
     thlb_recipe_path = (

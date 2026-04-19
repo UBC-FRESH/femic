@@ -14733,3 +14733,39 @@
 - Full-suite note:
   - full `pytest` still returned only the same eight unrelated failures already parked under `#166`; and
   - the checked-in proof runbook slice did not add any new full-suite regressions.
+## 2026-04-19 - Pivoted `#168` to the strict product lane and completed the real TSA29 smoke
+- Contract/product pivot:
+  - added built-in pipeline id `tsr.thlb_strict` as the primary product lane;
+  - kept `tsr.thlb_reviewed` available as legacy scaffolding/context; and
+  - relaxed the proof-runner guard so the current orchestration surface accepts both ids while the primary checked-in proof artifact now targets strict.
+- New repo-tracked strict proof artifact:
+  - `runbooks/pipelines/tsa29.tsr.thlb_strict.aflb_yield_ready.yaml`
+- Supporting contract/docs/test updates:
+  - updated `src/femic/resources/pipelines/registry.yaml`;
+  - updated `planning/named_pipeline_registry_runbook_contract.md` so the primary proof target is now `tsr.thlb_strict`;
+  - updated `docs/reference/cli.rst` to show the strict runbook invocation; and
+  - retargeted the focused named-pipeline / CLI tests to the strict pipeline id and strict checked-in proof runbook.
+- Real strict TSA29 smoke command:
+  - `.\.venv\Scripts\python.exe -m femic pipelines run --runbook runbooks/pipelines/tsa29.tsr.thlb_strict.aflb_yield_ready.yaml --instance-root external/femic-tsa29-instance`
+- Runtime evidence from that smoke:
+  - live runtime files advanced through strict reconstructed parent-step directories such as `006`, `008`, `011`, `013`, `016`, `018`, `019`, `021`, and `023`;
+  - later runtime surfaces wrote `curve_threshold_checkpoint`, `lhlb_checkpoint`, `thlb_step13_compile_attributes`, `lhlb_curve_ready_checkpoint`, and the final `thlb_reconstructed_status_report-20260419T090907Z.md`; and
+  - the monitored wrapper process exited cleanly with no stderr output.
+- End-of-run strict summary:
+  - `pipeline_id: tsr.thlb_strict`
+  - `baseline_signal: aflb_yield_ready_checkpoint_restart`
+  - `step_count: 37`
+  - `outcome_applied: 21`
+  - `outcome_applied_noop: 9`
+  - `outcome_unsupported: 7`
+  - `final_managed_area_ha: 559967.504`
+- Validation for this closeout slice:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py tests/test_cli_main.py -k "named_pipeline or pipelines_run" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src tests`
+  - `.\.venv\Scripts\python.exe -m mypy src`
+  - `.\.venv\Scripts\python.exe -m sphinx -b html docs _build/html -W`
+  - `.\.venv\Scripts\python.exe -m pytest`
+  - `.\.venv\Scripts\python.exe -m pre_commit run --all-files`
+- Full-suite note:
+  - full `pytest` still returned only the same eight unrelated failures already parked under `#166`; and
+  - the strict-pipeline pivot did not add any new full-suite regressions.

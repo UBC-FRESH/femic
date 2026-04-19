@@ -346,18 +346,27 @@ surface from the currently accepted chain.
 
 ### Recommended proof pipeline for the first runner child
 
-The first runner child should target one pipeline id only:
+The first runner child originally targeted the reviewed scaffold lane, but the
+product-facing proof target should now be the strict reconstructed lane.
+
+Primary product pipeline id:
+
+- `tsr.thlb_strict`
+
+Optional legacy/scaffolding context pipeline id:
 
 - `tsr.thlb_reviewed`
 
-That proof pipeline should resolve to the already accepted reviewed THLB lane:
+The primary proof pipeline should resolve to the existing strict reconstructed
+TSR THLB lane, while still allowing the reviewed lane to remain as historical
+context if needed. Required shared surfaces:
 
 - source-layer recipe surface;
 - THLB netdown recipe surface;
 - optional yield-bridge seam selection; and
 - explicit reconstructed THLB execution.
 
-### Recommended initial seam set for `tsr.thlb_reviewed`
+### Recommended initial seam set for the TSR THLB product lane
 
 Required seams for the first runner child:
 
@@ -380,8 +389,8 @@ Recommended instance-local runbook example:
 ```yaml
 schema_version: 1
 runbook_kind: femic_pipeline_runbook
-label: TSA29 reviewed TSR THLB proof lane
-pipeline_id: tsr.thlb_reviewed
+label: TSA29 strict TSR THLB product lane
+pipeline_id: tsr.thlb_strict
 instance_root: .
 run_profile: config/run_profile.tsa29.yaml
 overlay_paths:
@@ -426,8 +435,8 @@ The next feature child after `#167` should implement:
 
 - pipeline registry loading and resolution;
 - runbook loading/validation;
-- one concrete named-pipeline execution surface for the `tsr.thlb_reviewed`
-  proof lane;
+- one concrete named-pipeline execution surface for the `tsr.thlb_strict`
+  product lane;
 - seam-aware restart selection from the runbook contract; and
 - read-only inspection/listing commands if needed to make that runner usable.
 
@@ -443,7 +452,8 @@ The next implementation child should stay intentionally narrow.
 - load one machine-readable runbook from `runbooks/pipelines/*.yaml`;
 - resolve one pipeline id, one restart seam, and the concrete instance-local
   config/checkpoint paths for that runbook;
-- expose one proof command that launches the existing reviewed TSR THLB lane by
+- expose one proof command that launches the existing strict reconstructed TSR
+  THLB lane by
   delegating to current FEMIC helpers rather than reimplementing them; and
 - emit a small summary showing the resolved pipeline id, seam id, recipe paths,
   run profile, and checkpoint path actually used.
@@ -461,7 +471,7 @@ The next implementation child should stay intentionally narrow.
 The next child may choose the exact command name, but it should implement only
 one proof-oriented surface equivalent in spirit to:
 
-- `femic pipelines run --runbook runbooks/pipelines/tsr.thlb_reviewed.yaml`
+- `femic pipelines run --runbook runbooks/pipelines/tsr.thlb_strict.yaml`
 
 That command should:
 

@@ -16964,6 +16964,36 @@ run_id=k3z_post_tipsy_true_tipsy_20260321_d, rebuilt external/femic-k3z-instance
     - full `pytest` still returned only the same eight unrelated failures parked under `#166`.
   - Next bounded step for `#168`:
     - use the checked-in proof runbook for one real TSA29 runner smoke (`femic pipelines run --runbook ... --instance-root external/femic-tsa29-instance`) without widening into broader pipeline-engine work.
+- 2026-04-19: Pivot the active `#168` proof target from the reviewed scaffold lane to the strict product lane.
+  - Product decision:
+    - the strict reconstructed THLB lane is the real named-pipeline target;
+    - the reviewed lane should be treated as legacy scaffolding or explanatory context, not the primary product proof.
+  - Immediate implementation target:
+    - add `pipeline_id = tsr.thlb_strict`;
+    - add a checked-in TSA29 strict proof runbook; and
+    - retarget the next real smoke to that strict runbook with the same bounded restart seam set.
+  - Scope boundary:
+    - do not widen into a generic multi-family pipeline engine;
+    - do not add registry-mutation commands; and
+    - keep the strict pipeline implementation on the existing reconstructed TSR THLB runner surface rather than inventing a new execution engine.
+- 2026-04-19: The strict TSA29 named-pipeline smoke completed successfully from the checked-in strict runbook.
+  - Smoke command:
+    - `femic pipelines run --runbook runbooks/pipelines/tsa29.tsr.thlb_strict.aflb_yield_ready.yaml --instance-root external/femic-tsa29-instance`
+  - Observed strict-lane runtime evidence:
+    - LU-wise reconstructed runtime artifacts advanced through parent-step directories such as step `006`, `008`, `011`, `013`, `016`, `018`, `019`, `021`, and `023`;
+    - later strict restart artifacts were written for `curve_threshold_checkpoint`, `lhlb_checkpoint`, `thlb_step13_compile_attributes`, `lhlb_curve_ready_checkpoint`, and the final `thlb_reconstructed_status_report`; and
+    - the wrapper process exited cleanly after writing the final summary.
+  - End-of-run strict summary:
+    - pipeline id `tsr.thlb_strict`;
+    - baseline signal `aflb_yield_ready_checkpoint_restart`;
+    - full input (not MAP_ID subset);
+    - `step_count = 37`;
+    - `outcome_applied = 21`;
+    - `outcome_applied_noop = 9`;
+    - `outcome_unsupported = 7`; and
+    - `final_managed_area_ha = 559,967.504`.
+  - Closeout interpretation for `#168`:
+    - the first named-pipeline proof runner is now demonstrated on the strict product lane rather than only on the reviewed scaffold lane.
 - 2026-04-18: Opened `#165` to fix the TSA29 submodule generated-artifact hygiene seam that made VS Code SCM and parent `git status` disagree.
   - Root cause:
     - the parent repo had a local config override `submodule.external/femic-tsa29-instance.ignore=untracked`, so parent `git status` could look clean while the submodule itself still had hundreds of untracked generated artifacts.

@@ -8,12 +8,12 @@ import pytest
 from femic import named_pipelines
 
 
-def test_load_named_pipeline_registry_includes_builtin_tsr_thlb_reviewed() -> None:
+def test_load_named_pipeline_registry_includes_builtin_tsr_thlb_strict() -> None:
     registry = named_pipelines.load_named_pipeline_registry()
 
-    pipeline = registry.get_pipeline("tsr.thlb_reviewed")
+    pipeline = registry.get_pipeline("tsr.thlb_strict")
 
-    assert pipeline.label == "TSR reviewed THLB proof lane"
+    assert pipeline.label == "TSR strict THLB product lane"
     assert pipeline.get_seam("scratch").start_mode == "scratch"
     assert pipeline.get_seam("aflb_yield_ready").checkpoint_path == Path(
         "data/tsr/aflb_yield_ready_checkpoint.feather"
@@ -33,7 +33,7 @@ def test_load_named_pipeline_registry_explicit_overlay_can_override_builtin(
                 "schema_version: 1",
                 "registry_kind: pipeline_registry",
                 "pipelines:",
-                "  - pipeline_id: tsr.thlb_reviewed",
+                "  - pipeline_id: tsr.thlb_strict",
                 '    label: "Overridden proof lane"',
                 "    kind: tsr",
                 '    summary: "Override."',
@@ -56,7 +56,7 @@ def test_load_named_pipeline_registry_explicit_overlay_can_override_builtin(
         explicit_registry_paths=(overlay_path,)
     )
 
-    pipeline = registry.get_pipeline("tsr.thlb_reviewed")
+    pipeline = registry.get_pipeline("tsr.thlb_strict")
     assert pipeline.label == "Overridden proof lane"
     assert pipeline.source_kind == "explicit"
     assert pipeline.registry_path == overlay_path.resolve()
@@ -98,7 +98,7 @@ def test_build_named_pipeline_execution_plan_resolves_runbook_and_seam(
                 "schema_version: 1",
                 "runbook_kind: femic_pipeline_runbook",
                 'label: "TSA29 proof lane"',
-                "pipeline_id: tsr.thlb_reviewed",
+                "pipeline_id: tsr.thlb_strict",
                 "instance_root: .",
                 "run_profile: config/run_profile.tsa29.yaml",
                 "overlay_paths:",
@@ -127,7 +127,7 @@ def test_build_named_pipeline_execution_plan_resolves_runbook_and_seam(
     )
 
     assert plan.instance_root == instance_root.resolve()
-    assert plan.pipeline_id == "tsr.thlb_reviewed"
+    assert plan.pipeline_id == "tsr.thlb_strict"
     assert plan.seam_id == "aflb_yield_ready"
     assert plan.checkpoint_path == checkpoint_path.resolve()
     assert (
@@ -151,8 +151,8 @@ def test_run_named_pipeline_runbook_dispatches_to_tsr_thlb_runner(
     plan = named_pipelines.NamedPipelineExecutionPlan(
         runbook_path=runbook_path,
         instance_root=instance_root,
-        pipeline_id="tsr.thlb_reviewed",
-        pipeline_label="TSR reviewed THLB proof lane",
+        pipeline_id="tsr.thlb_strict",
+        pipeline_label="TSR strict THLB product lane",
         seam_id="scratch",
         checkpoint_path=None,
         run_profile_path=None,
@@ -206,7 +206,7 @@ def test_checked_in_proof_runbook_resolves_with_explicit_instance_root(
         repo_root
         / "runbooks"
         / "pipelines"
-        / "tsa29.tsr.thlb_reviewed.aflb_yield_ready.yaml"
+        / "tsa29.tsr.thlb_strict.aflb_yield_ready.yaml"
     )
     instance_root = tmp_path / "instance"
     (instance_root / "config" / "tsr").mkdir(parents=True, exist_ok=True)
@@ -247,7 +247,7 @@ def test_checked_in_proof_runbook_resolves_with_explicit_instance_root(
 
     assert plan.runbook_path == runbook_path.resolve()
     assert plan.instance_root == instance_root.resolve()
-    assert plan.pipeline_id == "tsr.thlb_reviewed"
+    assert plan.pipeline_id == "tsr.thlb_strict"
     assert plan.seam_id == "aflb_yield_ready"
     assert plan.checkpoint_path == checkpoint_path.resolve()
     assert plan.thlb_netdown_recipe_path == thlb_recipe_path.resolve()

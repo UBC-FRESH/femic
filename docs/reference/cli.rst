@@ -68,9 +68,10 @@ the first proof-oriented named pipeline surface.
 
 Current proof-runner scope:
 
-- one pipeline id: ``tsr.thlb_reviewed``
+- primary product pipeline id: ``tsr.thlb_strict``
+- legacy scaffold pipeline id: ``tsr.thlb_reviewed``
 - seams: ``scratch``, ``aflb``, ``aflb_yield_ready``, and ``lhlb_curve_ready``
-- delegation into the existing reviewed TSR THLB lane rather than a new
+- delegation into the existing strict reconstructed TSR THLB lane rather than a new
   execution engine
 
 ``pipelines run`` options
@@ -83,7 +84,7 @@ Example proof-runner invocation
 .. code-block:: text
 
    python -m femic pipelines run ^
-     --runbook runbooks/pipelines/tsa29.tsr.thlb_reviewed.aflb_yield_ready.yaml ^
+     --runbook runbooks/pipelines/tsa29.tsr.thlb_strict.aflb_yield_ready.yaml ^
      --instance-root external/femic-tsa29-instance
 
 Prep

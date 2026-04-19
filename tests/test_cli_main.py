@@ -6966,8 +6966,8 @@ def test_pipelines_run_executes_named_pipeline_runbook(
         captured_kwargs.update(kwargs)
         return SimpleNamespace(
             plan=SimpleNamespace(
-                pipeline_id="tsr.thlb_reviewed",
-                pipeline_label="TSR reviewed THLB proof lane",
+                pipeline_id="tsr.thlb_strict",
+                pipeline_label="TSR strict THLB product lane",
                 runbook_path=runbook_path,
                 instance_root=instance_root,
                 seam_id="aflb_yield_ready",
@@ -7068,7 +7068,7 @@ def test_pipelines_run_executes_named_pipeline_runbook(
 
     assert captured_kwargs["runbook_path"] == runbook_path.resolve()
     assert captured_kwargs["instance_root"] == instance_root.resolve()
-    assert any("pipeline_id: tsr.thlb_reviewed" in msg for msg in messages)
+    assert any("pipeline_id: tsr.thlb_strict" in msg for msg in messages)
     assert any("seam_id: aflb_yield_ready" in msg for msg in messages)
     assert any(
         "baseline_signal: aflb_yield_ready_checkpoint_restart" in msg
@@ -7082,7 +7082,7 @@ def test_pipelines_run_accepts_checked_in_proof_runbook(
 ) -> None:
     repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
     instance_root = repo_root / "external" / "femic-tsa29-instance"
-    runbook = Path("runbooks/pipelines/tsa29.tsr.thlb_reviewed.aflb_yield_ready.yaml")
+    runbook = Path("runbooks/pipelines/tsa29.tsr.thlb_strict.aflb_yield_ready.yaml")
     captured_kwargs: dict[str, object] = {}
 
     monkeypatch.setattr(cli_main.console, "print", lambda _message: None)
@@ -7091,8 +7091,8 @@ def test_pipelines_run_accepts_checked_in_proof_runbook(
         captured_kwargs.update(kwargs)
         return SimpleNamespace(
             plan=SimpleNamespace(
-                pipeline_id="tsr.thlb_reviewed",
-                pipeline_label="TSR reviewed THLB proof lane",
+                pipeline_id="tsr.thlb_strict",
+                pipeline_label="TSR strict THLB product lane",
                 runbook_path=runbook.resolve(),
                 instance_root=instance_root,
                 seam_id="aflb_yield_ready",
