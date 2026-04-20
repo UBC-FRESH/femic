@@ -259,9 +259,31 @@ def test_run_tsr_thlb_locked_parent_step_executes_one_locked_step(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    class _ImmediateFuture:
+        def __init__(self, value: object) -> None:
+            self._value = value
+
+        def result(self) -> object:
+            return self._value
+
+    class _ImmediateExecutor:
+        def __init__(self, *, max_workers: int | None = None) -> None:
+            self.max_workers = max_workers
+
+        def __enter__(self) -> "_ImmediateExecutor":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+        def submit(self, fn, /, *args, **kwargs) -> _ImmediateFuture:
+            return _ImmediateFuture(fn(*args, **kwargs))
+
     instance_root = tmp_path / "instance"
     checkpoint_path = instance_root / "data" / "tsr" / "glb_checkpoint.feather"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    chunk_path = instance_root / "runtime" / "logs" / "tsr" / "strict_chunk.feather"
+    chunk_path.parent.mkdir(parents=True, exist_ok=True)
     gpd.GeoDataFrame(
         {
             "FEATURE_AREA_SQM": [10000.0],
@@ -270,6 +292,17 @@ def test_run_tsr_thlb_locked_parent_step_executes_one_locked_step(
         geometry=[box(0, 0, 100, 100)],
         crs="EPSG:3005",
     ).to_feather(checkpoint_path)
+    gpd.GeoDataFrame(
+        {
+            "FEATURE_AREA_SQM": [10000.0],
+            "_stand_area_sqm": [10000.0],
+            "_row_id": [0],
+            "thlb_fact": [1.0],
+            "thlb": [1],
+        },
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    ).to_feather(chunk_path)
 
     tsa = tsr_catalog.TsrOverlayTsaRecord(
         tsa_id="tsa_29",
@@ -311,6 +344,20 @@ def test_run_tsr_thlb_locked_parent_step_executes_one_locked_step(
         tsr_recipes,
         "_resolve_tsr_total_area_benchmark",
         lambda recipe: 1.0,
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_load_cached_landscape_unit_partition_records",
+        lambda **kwargs: (
+            ("Test LU",),
+            [{"lu_name": "Test LU", "chunk_path": chunk_path}],
+        ),
+    )
+    monkeypatch.setattr(tsr_recipes, "ProcessPoolExecutor", _ImmediateExecutor)
+    monkeypatch.setattr(
+        tsr_recipes,
+        "wait",
+        lambda futures, timeout=None, return_when=None: (set(futures), set()),
     )
 
     def _fake_execute(
@@ -359,6 +406,10 @@ def test_run_tsr_thlb_locked_parent_step_executes_one_locked_step(
     assert result.remaining_area_ha == pytest.approx(0.8)
     assert result.benchmark_marginal_delta_ha == pytest.approx(0.0)
     assert result.benchmark_cumulative_delta_ha == pytest.approx(0.0)
+    assert result.execution_mode == tsr_recipes.TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL
+    assert result.worker_count == 1
+    assert result.lu_chunk_count == 1
+    assert result.lu_bundle_count == 1
     assert any(
         event.get("event_kind") == "compiled_step_started"
         and event.get("compiled_step_id") == "thlb_parent_002_compiled_01"

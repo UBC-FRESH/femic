@@ -558,3 +558,13 @@
     - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "run_tsr_thlb_locked_parent_step_executes_one_locked_step" -q`
     - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py src/femic/tsr_catalog/recipes.py src/femic/tsr_catalog/__init__.py tests/test_named_pipelines.py tests/test_tsr_recipes.py`
     - `.\.venv\Scripts\python.exe -m mypy src`
+- 2026-04-19: Completed `P53.1d10d` by LU-parallelizing the strict locked-step executor.
+  - What shipped:
+    - `run_tsr_thlb_locked_parent_step(...)` now reuses the existing LU partition/bundle worker machinery, emits `parent_step_progress` events from bundle progress files, and returns strict-step results with `execution_mode=lu_parallel` instead of forcing one monolithic serial pass;
+    - strict bounded transformation steps now run from cached or freshly materialized LU chunks and merge the bundle outputs back into the deterministic strict-chain checkpoint; and
+    - the focused strict-step unit test now proves the locked executor uses LU chunk/bundle execution metadata rather than silently falling back to serial mode.
+  - Focused validation:
+    - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "run_tsr_thlb_locked_parent_step_executes_one_locked_step" -q`
+    - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -q`
+    - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py src/femic/named_pipelines.py tests/test_named_pipelines.py`
+    - `.\.venv\Scripts\python.exe -m mypy src`

@@ -13156,6 +13156,8 @@ def run_tsr_thlb_locked_parent_step(
     recipe_path: Path,
     parent_step_id: str,
     checkpoint_path: Path,
+    max_workers: int | None = None,
+    lu_bundle_count: int | None = None,
     runtime_event_sink: Callable[[dict[str, Any]], None] | None = None,
 ) -> TsrThlbParentStepRunResult:
     """Execute one approved locked THLB parent step from one explicit checkpoint."""
@@ -13196,21 +13198,42 @@ def run_tsr_thlb_locked_parent_step(
     input_area_ha = _managed_area_ha(checkpoint)
     profiling["input_prepare_seconds"] = perf_counter() - input_prepare_started
 
-    execute_started = perf_counter()
-    working = checkpoint
+    execution_plan = [
+        {
+            "parent_step_id": parent_step_id,
+            "parent_label": str(target_parent.get("parent_label", "")).strip(),
+            "compiled_logic": compiled_logic,
+        }
+    ]
+    row_order = _locked_step_row_order(target_parent.get("row_order"))
+    if row_order is None:
+        raise TsrRecipeError(
+            f"Locked strict parent step `{parent_step_id}` is missing `row_order`."
+        )
+    strict_chain_root = (
+        instance_root / "runtime" / "logs" / "tsr" / "strict_chain"
+    ).resolve()
+    strict_chain_root.mkdir(parents=True, exist_ok=True)
+    strict_step_slug = f"{int(row_order):02d}_{parent_step_id.strip()}"
+    resolved_progress_root = strict_chain_root / f"{strict_step_slug}.parallel"
+
+    worker_count = 1
+    resolved_lu_bundle_count: int | None = None
+    selected_landscape_units: tuple[str, ...] = ()
+    lu_chunk_count: int | None = None
     executed_items: list[dict[str, Any]] = []
     removed_area_ha = 0.0
     statuses: set[str] = set()
     notes: list[str] = []
-    for compiled_item in compiled_logic:
-        if runtime_event_sink is not None:
+    if runtime_event_sink is not None:
+        for compiled_item in compiled_logic:
             runtime_event_sink(
                 {
                     "event_kind": "compiled_step_started",
                     "parent_step_id": parent_step_id,
                     "parent_label": str(target_parent.get("parent_label", "")).strip()
                     or None,
-                    "row_order": _locked_step_row_order(target_parent.get("row_order")),
+                    "row_order": row_order,
                     "land_base_stage": str(
                         target_parent.get("land_base_stage", "")
                     ).strip()
@@ -13225,67 +13248,194 @@ def run_tsr_thlb_locked_parent_step(
                     or None,
                 }
             )
-        working, runtime_item = _execute_workbench_compiled_item(
-            checkpoint=working,
-            compiled_item=dict(compiled_item),
+
+    total_area_benchmark_ha = _resolve_tsr_total_area_benchmark(recipe)
+    execute_started = perf_counter()
+    working: gpd.GeoDataFrame
+    cache_lookup_started = perf_counter()
+    cached_partition = _load_cached_landscape_unit_partition_records(
+        checkpoint_path=resolved_checkpoint_path,
+        instance_root=instance_root,
+        expected_row_count=len(checkpoint),
+        expected_area_ha=float(checkpoint.geometry.area.astype(float).sum() / 10000.0),
+    )
+    profiling["lu_selection_cache_lookup_seconds"] = (
+        perf_counter() - cache_lookup_started
+    )
+    chunk_records: list[dict[str, Any]] | None = None
+    if cached_partition is not None:
+        selected_landscape_units, chunk_records = cached_partition
+    else:
+        lu_select_started = perf_counter()
+        (
+            lu_frame,
+            selected_landscape_units,
+            lu_selection_profile,
+        ) = _select_intersecting_landscape_units_for_checkpoint(
+            checkpoint,
             instance_root=instance_root,
-            source_entry_map=source_entry_map,
-            total_area_benchmark_ha=_resolve_tsr_total_area_benchmark(recipe),
         )
-        executed_items.append(runtime_item)
-        current_removed_area = float(
-            runtime_item.get(
-                "net_removed_area_ha", runtime_item.get("removed_area_ha", 0.0)
+        profiling["lu_selection_seconds"] = perf_counter() - lu_select_started
+        for key, value in lu_selection_profile.items():
+            profiling[key] = float(value)
+        partition_started = perf_counter()
+        chunk_records = _materialize_checkpoint_landscape_unit_partitions(
+            checkpoint,
+            checkpoint_path=resolved_checkpoint_path,
+            lu_frame=lu_frame,
+            selected_landscape_units=selected_landscape_units,
+            instance_root=instance_root,
+        )
+        profiling["partition_materialize_seconds"] = (
+            perf_counter() - partition_started
+        )
+    if not chunk_records:
+        raise TsrRecipeError(
+            "Locked strict THLB execution produced no LU chunks for "
+            f"`{parent_step_id}`."
+        )
+    lu_chunk_count = len(chunk_records)
+    resolved_lu_bundle_count = max(
+        1,
+        min(
+            int(lu_bundle_count) if lu_bundle_count is not None else lu_chunk_count,
+            lu_chunk_count,
+        ),
+    )
+    worker_count = max(
+        1,
+        min(max_workers or resolved_lu_bundle_count, resolved_lu_bundle_count),
+    )
+    resolved_progress_root.mkdir(parents=True, exist_ok=True)
+    bundle_group_started = perf_counter()
+    bundles = _group_landscape_unit_chunk_records(
+        chunk_records,
+        bundle_count=resolved_lu_bundle_count,
+    )
+    profiling["bundle_group_seconds"] = perf_counter() - bundle_group_started
+    progress_paths = [
+        resolved_progress_root / f"bundle_{int(bundle['bundle_index']):02d}.json"
+        for bundle in bundles
+    ]
+    seen_progress_updates: dict[Path, str] = {}
+    worker_results: list[dict[str, Any]] = []
+    worker_pool_started = perf_counter()
+    with ProcessPoolExecutor(max_workers=worker_count) as pool:
+        future_to_progress_path = {
+            pool.submit(
+                _run_tsr_thlb_parent_step_bundle_worker,
+                bundle_index=int(bundle["bundle_index"]),
+                bundle_label=str(bundle["bundle_label"]),
+                bundle_items=[
+                    (str(item["lu_name"]), str(Path(item["chunk_path"])))
+                    for item in bundle["chunk_records"]
+                ],
+                output_path=str(
+                    resolved_progress_root
+                    / f"bundle_{int(bundle['bundle_index']):02d}.output.feather"
+                ),
+                execution_plan=execution_plan,
+                target_parent_id=parent_step_id,
+                instance_root=str(instance_root),
+                source_entry_map=source_entry_map,
+                total_area_benchmark_ha=total_area_benchmark_ha,
+                progress_path=str(
+                    resolved_progress_root
+                    / f"bundle_{int(bundle['bundle_index']):02d}.json"
+                ),
+            ): progress_path
+            for bundle, progress_path in zip(bundles, progress_paths, strict=True)
+        }
+        pending_futures = set(future_to_progress_path)
+        while pending_futures:
+            done_futures, pending_futures = wait(
+                pending_futures,
+                timeout=0.25,
+                return_when=FIRST_COMPLETED,
             )
-            or 0.0
-        )
-        removed_area_ha += current_removed_area
-        status = str(runtime_item.get("execution_status", "")).strip()
-        if status:
-            statuses.add(status)
-        for note in runtime_item.get("runtime_notes", ()):
-            note_text = str(note).strip()
-            if note_text and note_text not in notes:
-                notes.append(note_text)
-        if runtime_event_sink is not None:
-            runtime_event_sink(
-                {
-                    "event_kind": "compiled_step_finished",
+            _emit_parallel_progress_events_from_files(
+                progress_paths=progress_paths,
+                event_sink=runtime_event_sink,
+                event_fields={
                     "parent_step_id": parent_step_id,
                     "parent_label": str(target_parent.get("parent_label", "")).strip()
                     or None,
-                    "row_order": _locked_step_row_order(target_parent.get("row_order")),
+                    "row_order": row_order,
                     "land_base_stage": str(
                         target_parent.get("land_base_stage", "")
                     ).strip()
                     or None,
-                    "compiled_step_id": str(runtime_item.get("step_id", "")).strip()
-                    or None,
-                    "compiled_step_label": str(runtime_item.get("label", "")).strip()
-                    or None,
-                    "run_status": status or None,
-                    "remaining_area_ha": runtime_item.get("remaining_area_ha"),
                     "locked_execution_class": str(
                         target_parent.get("execution_class", "")
                     ).strip()
                     or None,
-                    "notes": tuple(
-                        str(value).strip()
-                        for value in runtime_item.get("runtime_notes", ())
-                        if str(value).strip()
-                    )
-                    or None,
-                }
+                },
+                seen_updates_by_path=seen_progress_updates,
             )
+            for future in done_futures:
+                worker_results.append(future.result())
+        _emit_parallel_progress_events_from_files(
+            progress_paths=progress_paths,
+            event_sink=runtime_event_sink,
+            event_fields={
+                "parent_step_id": parent_step_id,
+                "parent_label": str(target_parent.get("parent_label", "")).strip()
+                or None,
+                "row_order": row_order,
+                "land_base_stage": str(target_parent.get("land_base_stage", "")).strip()
+                or None,
+                "locked_execution_class": str(
+                    target_parent.get("execution_class", "")
+                ).strip()
+                or None,
+            },
+            seen_updates_by_path=seen_progress_updates,
+        )
+    profiling["worker_pool_seconds"] = perf_counter() - worker_pool_started
+    merge_read_started = perf_counter()
+    merged_frames = [
+        gpd.read_feather(Path(worker_result["output_path"]))
+        for worker_result in worker_results
+    ]
+    profiling["merge_read_seconds"] = perf_counter() - merge_read_started
+    merge_concat_started = perf_counter()
+    working = gpd.GeoDataFrame(
+        pd.concat(merged_frames, ignore_index=True),
+        geometry="geometry",
+        crs=BC_ALBERS_EPSG,
+    )
+    working = working.loc[~working.geometry.is_empty].copy()
+    working = _assign_fragment_feature_ids(working)
+    profiling["merge_concat_seconds"] = perf_counter() - merge_concat_started
+    for worker_result in worker_results:
+        executed_items.extend(
+            item
+            for item in worker_result.get("executed_items", [])
+            if isinstance(item, dict)
+        )
+        removed_area_ha += float(worker_result.get("removed_area_ha", 0.0) or 0.0)
+        status = str(worker_result.get("status", "")).strip()
+        if status:
+            statuses.add(status)
+        notes.extend(
+            str(value).strip()
+            for value in worker_result.get("notes", [])
+            if str(value).strip()
+        )
+    profiling["worker_bundles"] = [
+        {
+            "bundle_index": int(worker_result.get("bundle_index", 0) or 0),
+            "bundle_label": str(worker_result.get("bundle_label", "")).strip(),
+            "completed_lus": int(worker_result.get("completed_lus", 0) or 0),
+            "lu_names": list(worker_result.get("lu_names", [])),
+            "profiling": worker_result.get("profiling", {}),
+        }
+        for worker_result in worker_results
+    ]
     profiling["execute_seconds"] = perf_counter() - execute_started
 
     final_status = _combine_parent_step_statuses(statuses)
     remaining_area_ha = _managed_area_ha(working)
-    row_order = _locked_step_row_order(target_parent.get("row_order"))
-    if row_order is None:
-        raise TsrRecipeError(
-            f"Locked strict parent step `{parent_step_id}` is missing `row_order`."
-        )
     output_path = default_tsr_thlb_strict_chain_checkpoint_path(
         instance_root=instance_root,
         parent_step_id=parent_step_id,
@@ -13323,7 +13473,7 @@ def run_tsr_thlb_locked_parent_step(
         tsa=recipe.tsa,
         checkpoint_path=resolved_checkpoint_path,
         selected_map_ids=(),
-        selected_landscape_units=(),
+        selected_landscape_units=selected_landscape_units,
         output_path=output_path,
         result_json_path=result_json_path,
         status=final_status,
@@ -13345,11 +13495,11 @@ def run_tsr_thlb_locked_parent_step(
         scaled_benchmark_marginal_delta_ha=None,
         scaled_benchmark_cumulative_delta_ha=None,
         notes=_dedupe_runtime_notes(notes),
-        execution_mode=TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL,
-        worker_count=1,
-        lu_chunk_count=None,
-        lu_bundle_count=None,
-        progress_root=None,
+        execution_mode=TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL,
+        worker_count=worker_count,
+        lu_chunk_count=lu_chunk_count,
+        lu_bundle_count=resolved_lu_bundle_count,
+        progress_root=resolved_progress_root,
         profiling=profiling,
     )
     profiling["total_seconds"] = perf_counter() - total_started
@@ -13370,6 +13520,39 @@ def run_tsr_thlb_locked_parent_step(
         encoding="utf-8",
     )
     profiling["result_json_write_seconds"] = perf_counter() - result_json_write_started
+
+    if runtime_event_sink is not None:
+        for runtime_item in executed_items:
+            status = str(runtime_item.get("execution_status", "")).strip()
+            runtime_event_sink(
+                {
+                    "event_kind": "compiled_step_finished",
+                    "parent_step_id": parent_step_id,
+                    "parent_label": str(target_parent.get("parent_label", "")).strip()
+                    or None,
+                    "row_order": row_order,
+                    "land_base_stage": str(
+                        target_parent.get("land_base_stage", "")
+                    ).strip()
+                    or None,
+                    "compiled_step_id": str(runtime_item.get("step_id", "")).strip()
+                    or None,
+                    "compiled_step_label": str(runtime_item.get("label", "")).strip()
+                    or None,
+                    "run_status": status or None,
+                    "remaining_area_ha": runtime_item.get("remaining_area_ha"),
+                    "locked_execution_class": str(
+                        target_parent.get("execution_class", "")
+                    ).strip()
+                    or None,
+                    "notes": tuple(
+                        str(value).strip()
+                        for value in runtime_item.get("runtime_notes", ())
+                        if str(value).strip()
+                    )
+                    or None,
+                }
+            )
     return result
 
 
