@@ -7336,6 +7336,116 @@ def test_pipelines_run_handles_scratch_preflight_only_result(
     )
 
 
+def test_pipelines_run_handles_scratch_parent_step_result(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    runbook = Path("runbooks/pipelines/tsa29.tsr.thlb_strict.scratch_to_step2.yaml")
+    messages: list[str] = []
+
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    def _fake_run_named_pipeline_runbook(**kwargs: object) -> object:
+        runtime_event_sink = kwargs.get("runtime_event_sink")
+        if callable(runtime_event_sink):
+            runtime_event_sink(
+                "event_kind=parent_step_finished "
+                "parent_step_id=thlb_parent_002_land_not_administered_by_the_province "
+                "run_status=applied remaining_area_ha=4236882.888"
+            )
+        return SimpleNamespace(
+            plan=SimpleNamespace(
+                pipeline_id="tsr.thlb_strict",
+                pipeline_label="TSR strict THLB product lane",
+                runbook_path=runbook.resolve(),
+                instance_root=instance_root,
+                seam_id="scratch",
+                execution_mode="reconstructed",
+                user_registry_path=None,
+                instance_registry_path=None,
+                explicit_registry_paths=(),
+                run_profile_path=instance_root / "config" / "run_profile.tsa29.yaml",
+                overlay_paths=(instance_root / "config" / "tsr" / "overlay.yaml",),
+                parameter_files=(),
+                validation_contract=SimpleNamespace(
+                    contract_kind="tsa29_locked_chain_strict",
+                    locked_chain_ledger_path=instance_root
+                    / "config"
+                    / "tsr"
+                    / "thlb_locked_chain_ledger.json",
+                    comparison_report_path=instance_root
+                    / "config"
+                    / "tsr"
+                    / "thlb_reconstruction_comparison.md",
+                    required_recipe_path=instance_root
+                    / "workbench"
+                    / "tsr"
+                    / "thlb_netdown.locked.recipe.yaml",
+                ),
+                target_parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+                thlb_netdown_recipe_path=instance_root
+                / "workbench"
+                / "tsr"
+                / "thlb_netdown.locked.recipe.yaml",
+                source_layers_recipe_path=instance_root
+                / "config"
+                / "tsr"
+                / "source_layers.recipe.yaml",
+                checkpoint_path=None,
+            ),
+            runtime_event_log_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "named_pipeline_events-tsr_thlb_strict-20260420T000000Z.log",
+            validation_result=SimpleNamespace(
+                validated_parent_step_count=2,
+                latest_locked_row_order=2,
+                latest_locked_parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+                expected_final_managed_area_ha=4236882.888,
+                actual_final_managed_area_ha=4236882.888,
+                max_abs_marginal_delta_ha=0.0,
+                max_abs_cumulative_delta_ha=0.0,
+            ),
+            tsr_thlb_result=None,
+                tsr_parent_step_result=SimpleNamespace(
+                    recipe_path=instance_root / "workbench" / "tsr" / "thlb_netdown.locked.recipe.yaml",
+                    parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+                    parent_label="Land not administered by the Province",
+                    tsa=SimpleNamespace(tsa_id="tsa_29", tsa_code="29", tsa_name="Williams Lake"),
+                    checkpoint_path=instance_root / "data" / "tsr" / "glb_checkpoint.feather",
+                    selected_map_ids=(),
+                    selected_landscape_units=(),
+                execution_mode="serial",
+                worker_count=None,
+                lu_chunk_count=None,
+                output_path=instance_root / "data" / "tsr" / "glb_to_aflb_step2.feather",
+                result_json_path=instance_root / "runtime" / "logs" / "tsr" / "step2.json",
+                status="applied",
+                input_area_ha=4933664.212,
+                removed_area_ha=696781.324,
+                remaining_area_ha=4236882.888,
+                benchmark_marginal_area_ha=697033.0,
+                benchmark_cumulative_area_ha=4236602.0,
+                benchmark_marginal_delta_ha=-251.676,
+                benchmark_cumulative_delta_ha=280.888,
+                notes=(),
+            ),
+        )
+
+    monkeypatch.setattr(
+        cli_main, "run_named_pipeline_runbook", _fake_run_named_pipeline_runbook
+    )
+
+    cli_main.pipelines_run(runbook=runbook, instance_root=instance_root)
+
+    assert any("target_parent_step_id:" in msg for msg in messages)
+    assert any("parent_step_id: thlb_parent_002_land_not_administered_by_the_province" in msg for msg in messages)
+    assert any("remaining_area_ha: 4236882.888" in msg for msg in messages)
+
+
 def test_tsr_facts_report_writes_review_csv(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

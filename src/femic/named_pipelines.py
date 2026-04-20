@@ -14,9 +14,11 @@ import yaml
 from femic.glb import build_tsa_raw_glb
 from femic.tsr_catalog import (
     TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
+    TsrThlbParentStepRunResult,
     TsrThlbNetdownRecipeRunResult,
     default_tsr_thlb_netdown_recipe_path,
     load_tsr_thlb_netdown_recipe,
+    run_tsr_thlb_parent_step,
     run_tsr_thlb_netdown_recipe,
 )
 from femic.user_config import DEFAULT_FEMIC_CONFIG_HOME
@@ -40,6 +42,7 @@ _PIPELINE_RUNBOOK_ALLOWED_KEYS = {
     "parameter_files",
     "restart",
     "validation_contract",
+    "target_parent_step_id",
     "notes",
 }
 
@@ -157,6 +160,7 @@ class NamedPipelineRunbook:
     parameter_files: tuple[Path, ...]
     restart: NamedPipelineRestart
     validation_contract: NamedPipelineValidationContract | None = None
+    target_parent_step_id: str | None = None
     notes: tuple[str, ...] = ()
 
 
@@ -180,6 +184,7 @@ class NamedPipelineExecutionPlan:
     thlb_netdown_recipe_path: Path
     source_layers_recipe_path: Path
     execution_mode: str
+    target_parent_step_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -202,6 +207,7 @@ class NamedPipelineExecutionResult:
 
     plan: NamedPipelineExecutionPlan
     tsr_thlb_result: TsrThlbNetdownRecipeRunResult | None
+    tsr_parent_step_result: TsrThlbParentStepRunResult | None = None
     validation_result: NamedPipelineValidationResult | None = None
     runtime_event_log_path: Path | None = None
 
@@ -840,6 +846,15 @@ def load_named_pipeline_runbook(
         ),
         restart=restart,
         validation_contract=validation_contract,
+        target_parent_step_id=(
+            _normalize_string(
+                payload.get("target_parent_step_id"),
+                field_name="target_parent_step_id",
+                source_label=str(resolved_runbook_path),
+            )
+            if payload.get("target_parent_step_id") not in (None, "")
+            else None
+        ),
         notes=_normalize_string_tuple(
             payload.get("notes"),
             field_name="notes",
@@ -950,6 +965,7 @@ def build_named_pipeline_execution_plan(
         overlay_paths=runbook.overlay_paths,
         parameter_files=runbook.parameter_files,
         validation_contract=runbook.validation_contract,
+        target_parent_step_id=runbook.target_parent_step_id,
         user_registry_path=registry.user_registry_path,
         instance_registry_path=registry.instance_registry_path,
         explicit_registry_paths=registry.explicit_registry_paths,
@@ -1184,6 +1200,59 @@ def _resolve_tsa29_locked_chain_entry(
     )
 
 
+def _resolve_tsa29_locked_chain_entry_by_parent_step_id(
+    *,
+    validation_contract: NamedPipelineValidationContract,
+    parent_step_id: str,
+) -> Mapping[str, Any]:
+    normalized_parent_step_id = parent_step_id.strip()
+    for entry in _load_locked_chain_entries(validation_contract):
+        if str(entry.get("parent_step_id", "")).strip() == normalized_parent_step_id:
+            return entry
+    raise NamedPipelineError(
+        "Strict validation contract is missing parent step "
+        f"`{normalized_parent_step_id}` in {validation_contract.locked_chain_ledger_path}."
+    )
+
+
+def _is_reference_only_parent_step(parent_step: Mapping[str, Any]) -> bool:
+    parent_kind = str(parent_step.get("parent_kind", "")).strip().casefold()
+    execution_class = str(parent_step.get("execution_class", "")).strip().casefold()
+    return parent_kind == "milestone" or execution_class == "reference_only"
+
+
+def _resolve_locked_parent_step_sequence(
+    *,
+    recipe_path: Path,
+    stop_after_parent_step_id: str | None = None,
+) -> tuple[Mapping[str, Any], ...]:
+    recipe = load_tsr_thlb_netdown_recipe(recipe_path)
+    sequence: list[Mapping[str, Any]] = []
+    normalized_stop_after = (
+        stop_after_parent_step_id.strip() if stop_after_parent_step_id is not None else None
+    )
+    found_stop_after = normalized_stop_after is None
+    for parent_step in recipe.parent_steps:
+        parent_step_id = str(parent_step.get("parent_step_id", "")).strip()
+        row_order = _normalize_int_or_none(parent_step.get("row_order"))
+        if not parent_step_id or row_order is None:
+            raise NamedPipelineError(
+                f"Locked THLB recipe contains an invalid parent-step entry: {parent_step!r}"
+            )
+        if row_order <= 1:
+            continue
+        sequence.append(parent_step)
+        if normalized_stop_after is not None and parent_step_id == normalized_stop_after:
+            found_stop_after = True
+            break
+    if not found_stop_after:
+        raise NamedPipelineError(
+            "Strict scratch pipeline stop target is not present in the locked recipe: "
+            f"`{normalized_stop_after}`."
+        )
+    return tuple(sequence)
+
+
 def _source_tree_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
@@ -1207,6 +1276,37 @@ def _managed_area_ha_from_checkpoint(checkpoint_path: Path) -> float:
         "Strict validation checkpoint is missing both managed-area columns and geometry: "
         f"{checkpoint_path}"
     )
+
+
+def _materialize_tsa29_glb_checkpoint_from_result(
+    *,
+    instance_root: Path,
+    clipped_glb_gdb_path: Path,
+    clipped_glb_feature_class: str,
+) -> Path:
+    gpd = import_module("geopandas")
+    checkpoint = gpd.read_file(
+        clipped_glb_gdb_path,
+        layer=clipped_glb_feature_class,
+    )
+    if len(checkpoint) == 0:
+        raise NamedPipelineError(
+            "Raw-source GLB build produced no features for TSA29; cannot materialize "
+            "step-001 checkpoint."
+        )
+    area_sqm = checkpoint.geometry.area.astype(float)
+    if "FEATURE_AREA_SQM" in checkpoint.columns:
+        checkpoint["FEATURE_AREA_SQM"] = area_sqm
+    if "POLYGON_AREA" in checkpoint.columns:
+        checkpoint["POLYGON_AREA"] = area_sqm / 10000.0
+    if "Shape_Area" in checkpoint.columns:
+        checkpoint["Shape_Area"] = area_sqm
+    if "GEOMETRY_AREA" in checkpoint.columns:
+        checkpoint["GEOMETRY_AREA"] = area_sqm / 10000.0
+    checkpoint_path = instance_root / "data" / "tsr" / "glb_checkpoint.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint.to_feather(checkpoint_path)
+    return checkpoint_path
 
 
 def _validate_tsa29_locked_chain_strict_preflight(
@@ -1254,6 +1354,8 @@ def _validate_tsa29_locked_chain_strict_preflight(
             "expected_benchmark_area_ha": expected_benchmark_area_ha,
             "actual_start_area_ha": actual_start_area_ha,
             "area_delta_ha": area_delta_ha,
+            "clipped_glb_gdb_path": glb_result.clipped_glb_gdb_path,
+            "clipped_glb_feature_class": glb_result.clipped_glb_feature_class,
             "summary_json_path": glb_result.summary_json_path,
             "summary_markdown_path": glb_result.summary_markdown_path,
         }
@@ -1294,6 +1396,154 @@ def _validate_tsa29_locked_chain_strict_preflight(
         "actual_start_area_ha": actual_start_area_ha,
         "area_delta_ha": area_delta_ha,
     }
+
+
+def _validate_tsa29_locked_chain_parent_step(
+    *,
+    validation_contract: NamedPipelineValidationContract,
+    parent_step_id: str,
+    removed_area_ha: float | None,
+    remaining_area_ha: float,
+    tolerance_ha: float = 1e-3,
+) -> NamedPipelineValidationResult:
+    locked_entry = _resolve_tsa29_locked_chain_entry_by_parent_step_id(
+        validation_contract=validation_contract,
+        parent_step_id=parent_step_id,
+    )
+    row_order = _normalize_int_or_none(locked_entry.get("row_order"))
+    if row_order is None:
+        raise NamedPipelineError(
+            "Strict validation contract ledger entry is missing row order for "
+            f"`{parent_step_id}`."
+        )
+    expected_removed_ha = _normalize_float_or_none(
+        locked_entry.get("locked_net_removed_area_ha")
+    )
+    expected_remaining_ha = _normalize_float_or_none(
+        locked_entry.get("locked_cumulative_remaining_area_ha")
+    )
+    locked_parent_step_id = str(locked_entry.get("parent_step_id", "")).strip() or None
+    if expected_removed_ha is None or expected_remaining_ha is None:
+        if expected_remaining_ha is None:
+            raise NamedPipelineError(
+                "Strict validation contract ledger entry is missing locked cumulative "
+                f"value for row `{row_order}`."
+            )
+        expected_removed_ha = 0.0
+    actual_removed_ha = 0.0 if removed_area_ha is None else removed_area_ha
+    marginal_delta_ha = actual_removed_ha - expected_removed_ha
+    cumulative_delta_ha = remaining_area_ha - expected_remaining_ha
+    if abs(marginal_delta_ha) > tolerance_ha or abs(cumulative_delta_ha) > tolerance_ha:
+        raise NamedPipelineError(
+            "Strict validation mismatch at row "
+            f"`{row_order}` (`{locked_parent_step_id}`): expected marginal "
+            f"`{expected_removed_ha:.3f} ha`, got `{actual_removed_ha:.3f} ha`, "
+            f"delta `{marginal_delta_ha:.3f} ha`; expected cumulative "
+            f"`{expected_remaining_ha:.3f} ha`, got `{remaining_area_ha:.3f} ha`, "
+            f"delta `{cumulative_delta_ha:.3f} ha`."
+        )
+    return NamedPipelineValidationResult(
+        contract_kind=validation_contract.contract_kind,
+        validated_parent_step_count=row_order,
+        latest_locked_row_order=row_order,
+        latest_locked_parent_step_id=locked_parent_step_id,
+        expected_final_managed_area_ha=expected_remaining_ha,
+        actual_final_managed_area_ha=remaining_area_ha,
+        max_abs_marginal_delta_ha=abs(marginal_delta_ha),
+        max_abs_cumulative_delta_ha=abs(cumulative_delta_ha),
+    )
+
+
+def _run_tsa29_strict_scratch_sequence(
+    *,
+    plan: NamedPipelineExecutionPlan,
+    glb_checkpoint_path: Path,
+    runtime_logger: "_NamedPipelineRuntimeEventLogger",
+) -> tuple[TsrThlbParentStepRunResult | None, NamedPipelineValidationResult]:
+    validation_contract = plan.validation_contract
+    if validation_contract is None:
+        raise NamedPipelineError(
+            "Strict scratch pipeline sequencing requires a validation contract."
+        )
+    current_checkpoint_path = glb_checkpoint_path
+    sequence = _resolve_locked_parent_step_sequence(
+        recipe_path=plan.thlb_netdown_recipe_path,
+        stop_after_parent_step_id=plan.target_parent_step_id,
+    )
+    latest_validation = NamedPipelineValidationResult(
+        contract_kind=validation_contract.contract_kind,
+        validated_parent_step_count=1,
+        latest_locked_row_order=1,
+        latest_locked_parent_step_id="thlb_parent_001_total_tsa_area",
+        expected_final_managed_area_ha=_managed_area_ha_from_checkpoint(glb_checkpoint_path),
+        actual_final_managed_area_ha=_managed_area_ha_from_checkpoint(glb_checkpoint_path),
+        max_abs_marginal_delta_ha=0.0,
+        max_abs_cumulative_delta_ha=0.0,
+    )
+    last_parent_step_result: TsrThlbParentStepRunResult | None = None
+    for parent_step in sequence:
+        parent_step_id = str(parent_step.get("parent_step_id", "")).strip()
+        parent_label = str(parent_step.get("parent_label", "")).strip() or None
+        row_order = _normalize_int_or_none(parent_step.get("row_order"))
+        land_base_stage = str(parent_step.get("land_base_stage", "")).strip() or None
+        runtime_logger.emit(
+            {
+                "event_kind": "parent_step_started",
+                "parent_step_id": parent_step_id,
+                "parent_label": parent_label,
+                "row_order": row_order,
+                "land_base_stage": land_base_stage,
+                "checkpoint_path": current_checkpoint_path,
+            }
+        )
+        if _is_reference_only_parent_step(parent_step):
+            remaining_area_ha = _managed_area_ha_from_checkpoint(current_checkpoint_path)
+            latest_validation = _validate_tsa29_locked_chain_parent_step(
+                validation_contract=validation_contract,
+                parent_step_id=parent_step_id,
+                removed_area_ha=None,
+                remaining_area_ha=remaining_area_ha,
+            )
+            runtime_logger.emit(
+                {
+                    "event_kind": "parent_step_finished",
+                    "parent_step_id": parent_step_id,
+                    "parent_label": parent_label,
+                    "row_order": row_order,
+                    "land_base_stage": land_base_stage,
+                    "run_status": "reference_validated",
+                    "remaining_area_ha": remaining_area_ha,
+                    "checkpoint_path": current_checkpoint_path,
+                }
+            )
+            continue
+        parent_step_result = run_tsr_thlb_parent_step(
+            recipe_path=plan.thlb_netdown_recipe_path,
+            parent_step_id=parent_step_id,
+            checkpoint_path=current_checkpoint_path,
+            auto_map_id_smoke_subset=False,
+        )
+        last_parent_step_result = parent_step_result
+        current_checkpoint_path = parent_step_result.output_path
+        latest_validation = _validate_tsa29_locked_chain_parent_step(
+            validation_contract=validation_contract,
+            parent_step_id=parent_step_id,
+            removed_area_ha=parent_step_result.removed_area_ha,
+            remaining_area_ha=parent_step_result.remaining_area_ha,
+        )
+        runtime_logger.emit(
+            {
+                "event_kind": "parent_step_finished",
+                "parent_step_id": parent_step_result.parent_step_id,
+                "parent_label": parent_step_result.parent_label,
+                "row_order": row_order,
+                "land_base_stage": land_base_stage,
+                "run_status": parent_step_result.status,
+                "remaining_area_ha": parent_step_result.remaining_area_ha,
+                "checkpoint_path": current_checkpoint_path,
+            }
+        )
+    return last_parent_step_result, latest_validation
 
 
 def run_named_pipeline_runbook(
@@ -1380,6 +1630,58 @@ def run_named_pipeline_runbook(
                 }
             )
             if plan.seam_id == "scratch":
+                glb_checkpoint_path = _materialize_tsa29_glb_checkpoint_from_result(
+                    instance_root=plan.instance_root,
+                    clipped_glb_gdb_path=cast(Path, preflight_result["clipped_glb_gdb_path"]),
+                    clipped_glb_feature_class=cast(
+                        str, preflight_result["clipped_glb_feature_class"]
+                    ),
+                )
+                runtime_logger.emit(
+                    {
+                        "event_kind": "pipeline_preflight_resolved",
+                        "notes": f"glb_checkpoint_path={glb_checkpoint_path}",
+                    }
+                )
+                if plan.target_parent_step_id is not None:
+                    parent_step_result, validation_result = (
+                        _run_tsa29_strict_scratch_sequence(
+                            plan=plan,
+                            glb_checkpoint_path=glb_checkpoint_path,
+                            runtime_logger=runtime_logger,
+                        )
+                    )
+                    runtime_logger.emit(
+                        {
+                            "event_kind": "pipeline_run_finished",
+                            "validated_parent_step_count": (
+                                validation_result.validated_parent_step_count
+                            ),
+                            "latest_locked_row_order": (
+                                validation_result.latest_locked_row_order
+                            ),
+                            "latest_locked_parent_step_id": (
+                                validation_result.latest_locked_parent_step_id
+                            ),
+                            "expected_final_managed_area_ha": (
+                                validation_result.expected_final_managed_area_ha
+                            ),
+                            "actual_final_managed_area_ha": (
+                                validation_result.actual_final_managed_area_ha
+                            ),
+                            "notes": (
+                                "strict scratch seam executed the locked parent-step "
+                                "sequence through the requested stop target"
+                            ),
+                        }
+                    )
+                    return NamedPipelineExecutionResult(
+                        plan=plan,
+                        tsr_thlb_result=None,
+                        tsr_parent_step_result=parent_step_result,
+                        validation_result=validation_result,
+                        runtime_event_log_path=runtime_event_log_path,
+                    )
                 validation_result = NamedPipelineValidationResult(
                     contract_kind=plan.validation_contract.contract_kind,
                     validated_parent_step_count=1,

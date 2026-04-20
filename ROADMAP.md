@@ -1401,6 +1401,9 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d6 Add always-on real-time user-observable runtime output for `femic pipelines run`, including parent-step events, compiled-step subevents, and mirrored live event logs under `runtime/logs/tsr/`.
     - [x] P53.1d7 Add a strict preflight seam-benchmark gate so TSA29 strict named-pipeline runs abort before execution when the selected start surface already disagrees with the locked-chain reference for that seam.
     - [x] P53.1d8 Wire the strict `scratch` seam to the raw-source GLB builder so named-pipeline step 001 validates from clipped VRI/TSA geometry and stops there before step 002.
+    - [ ] P53.1d9 Add a bounded strict row-2 named-pipeline runbook that materializes the GLB checkpoint from step 001, runs only `thlb_parent_002_*`, and validates that single step against the locked chain.
+      - [x] P53.1d9a Normalize the materialized `glb_checkpoint.feather` area columns from clipped geometry so step-002 input area cannot drift back onto preserved source-layer area attributes.
+      - [x] P53.1d9b Sequence strict scratch pipelines over the locked parent-step recipe order so milestone rows validate in place and each transformation row chains its bounded output checkpoint into the next locked step.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.

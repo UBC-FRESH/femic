@@ -14905,3 +14905,21 @@
 - Acceptance result:
   - locked row 1 expected `4933664.212 ha`, actual raw GLB `4933664.212 ha`, delta `0.000 ha`; and
   - the named pipeline stopped after step 001 with `validated_parent_step_count=1` instead of entering step 002.
+## 2026-04-19 - Normalized step-002 GLB checkpoint area columns from clipped geometry
+- `#169` bounded row-2 handoff fix:
+  - `_materialize_tsa29_glb_checkpoint_from_result(...)` now recomputes `FEATURE_AREA_SQM`, `POLYGON_AREA`, `Shape_Area`, and `GEOMETRY_AREA` from the clipped GLB geometry before writing `data/tsr/glb_checkpoint.feather`; and
+  - this prevents the step-002 named-pipeline handoff from reusing preserved source-layer area attributes that inflated the row-2 input surface back into the old bad checkpoint-area regime.
+- Focused validation:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -k "materialize_tsa29_glb_checkpoint_normalizes_area_columns or executes_target_parent_step_from_scratch" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py tests/test_named_pipelines.py`
+  - `.\.venv\Scripts\python.exe -m mypy src`
+## 2026-04-19 - Sequenced strict scratch pipelines over the locked parent-step recipe order
+- `#169` bounded strict-sequencing slice:
+  - `run_named_pipeline_runbook(...)` no longer special-cases row 2 after scratch preflight; it now walks the locked parent-step recipe order from row 2 onward, chaining each bounded step output checkpoint into the next locked step;
+  - milestone / reference-only rows are now validated in place against the locked ledger instead of being routed through the executable parent-step bridge; and
+  - a checked-in full strict runbook now targets `thlb_parent_024_long_term_thlb`, making the tested pipeline surface explicitly "all validated strict steps in order" instead of only the row-2 proof lane.
+- Focused validation:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -k "executes_target_parent_step_from_scratch or sequences_locked_parent_steps_from_scratch or materialize_tsa29_glb_checkpoint_normalizes_area_columns" -q`
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "pipelines_run" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py tests/test_named_pipelines.py tests/test_cli_main.py`
+  - `.\.venv\Scripts\python.exe -m mypy src`

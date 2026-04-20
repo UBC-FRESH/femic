@@ -2846,8 +2846,15 @@ def _print_named_pipeline_run_summary(result: NamedPipelineExecutionResult) -> N
         if plan.checkpoint_path is not None
         else "checkpoint_path: <scratch>"
     )
-    if result.tsr_thlb_result is not None:
-        _print_tsr_thlb_netdown_recipe_run_summary(result.tsr_thlb_result)
+    target_parent_step_id = getattr(plan, "target_parent_step_id", None)
+    if target_parent_step_id is not None:
+        console.print(f"target_parent_step_id: {target_parent_step_id}")
+    tsr_thlb_result = getattr(result, "tsr_thlb_result", None)
+    if tsr_thlb_result is not None:
+        _print_tsr_thlb_netdown_recipe_run_summary(tsr_thlb_result)
+    tsr_parent_step_result = getattr(result, "tsr_parent_step_result", None)
+    if tsr_parent_step_result is not None:
+        _print_tsr_thlb_parent_step_run_summary(tsr_parent_step_result)
 
 
 def _print_tsr_thlb_workbench_build_summary(

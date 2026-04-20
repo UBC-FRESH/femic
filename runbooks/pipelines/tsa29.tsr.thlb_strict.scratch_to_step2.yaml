@@ -1,0 +1,19 @@
+schema_version: 1
+runbook_kind: femic_pipeline_runbook
+label: TSA29 TSR THLB strict lane through step 002 from scratch
+pipeline_id: tsr.thlb_strict
+instance_root: .
+run_profile: config/run_profile.tsa29.yaml
+overlay_paths:
+  - config/tsr/overlay.yaml
+restart:
+  seam_id: scratch
+validation_contract:
+  contract_kind: tsa29_locked_chain_strict
+  locked_chain_ledger_path: config/tsr/thlb_locked_chain_ledger.json
+  comparison_report_path: config/tsr/thlb_reconstruction_comparison.md
+  required_recipe_path: workbench/tsr/thlb_netdown.locked.recipe.yaml
+target_parent_step_id: thlb_parent_002_land_not_administered_by_the_province
+notes:
+  - Repo-tracked bounded strict runbook for row-2 validation under #169.
+  - This runbook must validate row 1 from raw-source GLB, execute only row 2 on the full TSA, and stop before step 003.

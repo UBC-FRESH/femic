@@ -1,0 +1,17 @@
+schema_version: 1
+runbook_kind: femic_pipeline_runbook
+label: "TSA29 strict THLB scratch-to-final locked chain"
+pipeline_id: tsr.thlb_strict
+instance_root: external/femic-tsa29-instance
+run_profile: config/run_profile.tsa29.yaml
+restart:
+  seam_id: scratch
+validation_contract:
+  contract_kind: tsa29_locked_chain_strict
+  locked_chain_ledger_path: config/tsr/thlb_locked_chain_ledger.json
+  comparison_report_path: config/tsr/thlb_reconstruction_comparison.md
+  required_recipe_path: workbench/tsr/thlb_netdown.locked.recipe.yaml
+target_parent_step_id: thlb_parent_024_long_term_thlb
+notes:
+  - "Execute the locked strict TSA29 parent-step sequence from raw-source GLB through the final locked parent step."
+  - "Each bounded parent step must chain its output checkpoint into the next locked parent step."
