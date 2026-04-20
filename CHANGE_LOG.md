@@ -14980,3 +14980,11 @@
   - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "run_tsr_thlb_locked_parent_step_executes_one_locked_step or run_tsr_thlb_locked_parent_step_passes_expected_columns_to_cache_lookup" -q`
   - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
   - `.\.venv\Scripts\python.exe -m mypy src`
+## 2026-04-19 - Synced locked row-2 fallback logic and unblocked production F_OWN overlays on LU bundles
+- `#169` bounded row-2 repair:
+  - synced `external/femic-tsa29-instance/workbench/tsr/thlb_netdown.locked.recipe.yaml` so `thlb_parent_002_land_not_administered_by_the_province_compiled_02` now uses the accepted strict `aspatial_area_reduction` fallback with the documented combined NStQ + Tsilhqot'in target of `191,246 ha`; and
+  - updated `_evaluate_source_extent_mismatch(...)` so a reviewed `production_full_tsa` overlay is no longer falsely blocked just because a single LU bundle bbox is much smaller than the full-TSA source extent.
+- Focused validation:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "evaluate_source_extent_mismatch_allows_production_full_tsa_overlay_for_lu_bundle or tsa29_locked_recipe_step2_uses_aspatial_area_reduction" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
+  - `.\.venv\Scripts\python.exe -m mypy src`

@@ -17070,6 +17070,11 @@ def _evaluate_source_extent_mismatch(
         or height_coverage >= _EXTENT_COVERAGE_BLOCK_THRESHOLD
         or area_coverage >= _EXTENT_AREA_BLOCK_THRESHOLD
     ):
+        # A production/full-TSA source is expected to be broader than one LU bundle.
+        # That mismatch should only be blocked when the source is smoke/AOI-scoped
+        # or otherwise unknown, not when it is the reviewed full-TSA overlay.
+        if scope == _SOURCE_ARTIFACT_SCOPE_PRODUCTION:
+            return None
         if (
             width_coverage <= _EXTENT_COVERAGE_EXCESS_BLOCK_THRESHOLD
             and height_coverage <= _EXTENT_COVERAGE_EXCESS_BLOCK_THRESHOLD

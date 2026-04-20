@@ -5267,6 +5267,22 @@ def test_load_compiled_logic_geometries_evaluates_extent_after_attribute_filteri
     assert extent_mismatch_notes == []
 
 
+def test_evaluate_source_extent_mismatch_allows_production_full_tsa_overlay_for_lu_bundle() -> (
+    None
+):
+    note = tsr_recipes._evaluate_source_extent_mismatch(
+        source_entry={
+            "entry_id": "whse_forest_vegetation_f_own",
+            "acquisition_strategy": "wfs_fetch",
+            "artifact_scope": "production_full_tsa",
+        },
+        artifact_bbox_epsg3005=(0.0, 0.0, 1000.0, 1000.0),
+        target_bbox_epsg3005=(100.0, 100.0, 200.0, 200.0),
+    )
+
+    assert note is None
+
+
 def test_apply_checkpoint_attribute_filters_preserves_geometry_for_later_stage() -> (
     None
 ):
@@ -7134,6 +7150,32 @@ def test_specialized_compiled_logic_for_future_roads_uses_aspatial_area_reductio
         item["normalized_subject"]
         == "Future roads, trails, and landings area reduction"
     )
+
+
+def test_specialized_compiled_logic_for_step2_uses_aspatial_area_reduction_fallback() -> (
+    None
+):
+    items = tsr_recipes._specialized_compiled_logic_for_parent_step(
+        parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+        parent_label="Land not administered by the Province",
+        land_base_stage="glb_to_aflb",
+        stage_label="GLB -> AFLB",
+        execution_class="drop_from_universe",
+        benchmark_marginal_area_ha=697033.0,
+        benchmark_cumulative_area_ha=4236602.0,
+        table_provenance="TSR_2024/...#table=4,row=2",
+        row_order=2,
+        linked_subsection=None,
+    )
+
+    assert items is not None
+    assert len(items) == 2
+    ownership_item, treaty_item = items
+    assert ownership_item["compiled_operation_type"] == "select_spatial_intersect"
+    assert treaty_item["compiled_operation_type"] == "aspatial_area_reduction"
+    assert treaty_item["normalized_action"] == "aspatial_area_reduction"
+    assert treaty_item["benchmark_marginal_area_ha"] == pytest.approx(191246.0)
+    assert treaty_item["linked_source_entry_ids"] == []
 
 
 def test_specialized_compiled_logic_for_roads_and_landings_uses_residual_aspatial_area_fallback() -> (

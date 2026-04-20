@@ -596,3 +596,14 @@
     - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "run_tsr_thlb_locked_parent_step_executes_one_locked_step or run_tsr_thlb_locked_parent_step_passes_expected_columns_to_cache_lookup" -q`
     - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
     - `.\.venv\Scripts\python.exe -m mypy src`
+- 2026-04-19: Completed `P53.1d10h` by syncing the locked row-2 fallback contract and unblocking production F_OWN overlays on LU bundles.
+  - Diagnosis:
+    - the accepted strict row-2 treaty/title fallback already existed in `src/femic/tsr_catalog/recipes.py`, but `external/femic-tsa29-instance/workbench/tsr/thlb_netdown.locked.recipe.yaml` still carried stale `manual_review_required` metadata for `thlb_parent_002_land_not_administered_by_the_province_compiled_02`; and
+    - the strict extent-mismatch guard was still treating a valid `production_full_tsa` F_OWN artifact as wrong-scope merely because one LU bundle bbox is much smaller than the full-TSA source extent.
+  - Fix:
+    - synced the locked row-2 `compiled_02` entry to the accepted `aspatial_area_reduction` contract with the documented combined NStQ + Tsilhqot'in fallback target of `191,246 ha`; and
+    - updated `_evaluate_source_extent_mismatch(...)` so a reviewed `production_full_tsa` overlay is allowed to be broader than a single LU bundle while smoke/AOI-scoped artifacts still fail reuse checks.
+  - Focused validation:
+    - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "evaluate_source_extent_mismatch_allows_production_full_tsa_overlay_for_lu_bundle or tsa29_locked_recipe_step2_uses_aspatial_area_reduction" -q`
+    - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
+    - `.\.venv\Scripts\python.exe -m mypy src`
