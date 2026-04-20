@@ -416,6 +416,11 @@ def test_run_tsr_thlb_locked_parent_step_executes_one_locked_step(
         for event in captured_events
     )
     assert any(
+        event.get("event_kind") == "parent_step_progress"
+        and event.get("bundle_status") == "lu_partition_cache_hit"
+        for event in captured_events
+    )
+    assert any(
         event.get("event_kind") == "compiled_step_finished"
         and event.get("remaining_area_ha") == 0.8
         for event in captured_events

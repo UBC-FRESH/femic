@@ -8055,6 +8055,38 @@ def _emit_parallel_progress_events_from_files(
         )
 
 
+def _emit_locked_step_progress(
+    event_sink: TsrRuntimeEventSink | None,
+    *,
+    parent_step_id: str,
+    parent_label: str | None,
+    row_order: int | None,
+    land_base_stage: str | None,
+    locked_execution_class: str | None,
+    bundle_status: str,
+    notes: Sequence[str] = (),
+    completed_lus: int | None = None,
+    total_lus: int | None = None,
+    fraction_complete: float | None = None,
+) -> None:
+    if event_sink is None:
+        return
+    _emit_tsr_runtime_event(
+        event_sink,
+        event_kind="parent_step_progress",
+        parent_step_id=parent_step_id,
+        parent_label=parent_label,
+        row_order=row_order,
+        land_base_stage=land_base_stage,
+        locked_execution_class=locked_execution_class,
+        bundle_status=bundle_status,
+        completed_lus=completed_lus,
+        total_lus=total_lus,
+        fraction_complete=fraction_complete,
+        notes=_dedupe_runtime_notes(notes),
+    )
+
+
 def _auto_select_smoke_map_ids_for_parent_step(
     *,
     checkpoint: gpd.GeoDataFrame,
@@ -13216,6 +13248,11 @@ def run_tsr_thlb_locked_parent_step(
     strict_chain_root.mkdir(parents=True, exist_ok=True)
     strict_step_slug = f"{int(row_order):02d}_{parent_step_id.strip()}"
     resolved_progress_root = strict_chain_root / f"{strict_step_slug}.parallel"
+    parent_label = str(target_parent.get("parent_label", "")).strip() or None
+    land_base_stage = str(target_parent.get("land_base_stage", "")).strip() or None
+    locked_execution_class = (
+        str(target_parent.get("execution_class", "")).strip() or None
+    )
 
     worker_count = 1
     resolved_lu_bundle_count: int | None = None
@@ -13265,7 +13302,32 @@ def run_tsr_thlb_locked_parent_step(
     chunk_records: list[dict[str, Any]] | None = None
     if cached_partition is not None:
         selected_landscape_units, chunk_records = cached_partition
+        _emit_locked_step_progress(
+            runtime_event_sink,
+            parent_step_id=parent_step_id,
+            parent_label=parent_label,
+            row_order=row_order,
+            land_base_stage=land_base_stage,
+            locked_execution_class=locked_execution_class,
+            bundle_status="lu_partition_cache_hit",
+            notes=(
+                f"reused cached LU partition records for {len(chunk_records)} chunks",
+            ),
+            completed_lus=len(chunk_records),
+            total_lus=len(chunk_records),
+            fraction_complete=1.0,
+        )
     else:
+        _emit_locked_step_progress(
+            runtime_event_sink,
+            parent_step_id=parent_step_id,
+            parent_label=parent_label,
+            row_order=row_order,
+            land_base_stage=land_base_stage,
+            locked_execution_class=locked_execution_class,
+            bundle_status="lu_selection_started",
+            notes=("selecting intersecting landscape units for strict step input",),
+        )
         lu_select_started = perf_counter()
         (
             lu_frame,
@@ -13278,6 +13340,31 @@ def run_tsr_thlb_locked_parent_step(
         profiling["lu_selection_seconds"] = perf_counter() - lu_select_started
         for key, value in lu_selection_profile.items():
             profiling[key] = float(value)
+        _emit_locked_step_progress(
+            runtime_event_sink,
+            parent_step_id=parent_step_id,
+            parent_label=parent_label,
+            row_order=row_order,
+            land_base_stage=land_base_stage,
+            locked_execution_class=locked_execution_class,
+            bundle_status="lu_selection_finished",
+            notes=(
+                f"selected {len(selected_landscape_units)} landscape units for strict step input",
+            ),
+            completed_lus=len(selected_landscape_units),
+            total_lus=len(selected_landscape_units),
+            fraction_complete=1.0,
+        )
+        _emit_locked_step_progress(
+            runtime_event_sink,
+            parent_step_id=parent_step_id,
+            parent_label=parent_label,
+            row_order=row_order,
+            land_base_stage=land_base_stage,
+            locked_execution_class=locked_execution_class,
+            bundle_status="lu_partition_materialize_started",
+            notes=("materializing LU partition chunks for strict step input",),
+        )
         partition_started = perf_counter()
         chunk_records = _materialize_checkpoint_landscape_unit_partitions(
             checkpoint,
@@ -13288,6 +13375,21 @@ def run_tsr_thlb_locked_parent_step(
         )
         profiling["partition_materialize_seconds"] = (
             perf_counter() - partition_started
+        )
+        _emit_locked_step_progress(
+            runtime_event_sink,
+            parent_step_id=parent_step_id,
+            parent_label=parent_label,
+            row_order=row_order,
+            land_base_stage=land_base_stage,
+            locked_execution_class=locked_execution_class,
+            bundle_status="lu_partition_materialize_finished",
+            notes=(
+                f"materialized {len(chunk_records)} LU partition chunks for strict step input",
+            ),
+            completed_lus=len(chunk_records),
+            total_lus=len(chunk_records),
+            fraction_complete=1.0,
         )
     if not chunk_records:
         raise TsrRecipeError(
@@ -13358,17 +13460,10 @@ def run_tsr_thlb_locked_parent_step(
                 event_sink=runtime_event_sink,
                 event_fields={
                     "parent_step_id": parent_step_id,
-                    "parent_label": str(target_parent.get("parent_label", "")).strip()
-                    or None,
+                    "parent_label": parent_label,
                     "row_order": row_order,
-                    "land_base_stage": str(
-                        target_parent.get("land_base_stage", "")
-                    ).strip()
-                    or None,
-                    "locked_execution_class": str(
-                        target_parent.get("execution_class", "")
-                    ).strip()
-                    or None,
+                    "land_base_stage": land_base_stage,
+                    "locked_execution_class": locked_execution_class,
                 },
                 seen_updates_by_path=seen_progress_updates,
             )
@@ -13379,15 +13474,10 @@ def run_tsr_thlb_locked_parent_step(
             event_sink=runtime_event_sink,
             event_fields={
                 "parent_step_id": parent_step_id,
-                "parent_label": str(target_parent.get("parent_label", "")).strip()
-                or None,
+                "parent_label": parent_label,
                 "row_order": row_order,
-                "land_base_stage": str(target_parent.get("land_base_stage", "")).strip()
-                or None,
-                "locked_execution_class": str(
-                    target_parent.get("execution_class", "")
-                ).strip()
-                or None,
+                "land_base_stage": land_base_stage,
+                "locked_execution_class": locked_execution_class,
             },
             seen_updates_by_path=seen_progress_updates,
         )

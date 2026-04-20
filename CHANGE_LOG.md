@@ -14954,3 +14954,12 @@
   - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -q`
   - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py src/femic/named_pipelines.py tests/test_named_pipelines.py`
   - `.\.venv\Scripts\python.exe -m mypy src`
+## 2026-04-19 - Surfaced strict LU partition warmup progress
+- `#169` bounded diagnostic fix:
+  - diagnosed that the strict `glb -> step2` run was spending several minutes before bundle worker launch selecting intersecting landscape units and materializing LU partition chunks for the first time, with no runtime events during that warmup phase;
+  - confirmed that the `glb_checkpoint.feather` partition cache now exists and covers 132 selected LUs / 131 chunk records, so repeated strict step-2 runs no longer need to rebuild the LU partition cache; and
+  - updated `run_tsr_thlb_locked_parent_step(...)` to emit explicit `parent_step_progress` events for LU cache hits, LU selection start/finish, and LU partition materialization start/finish so the strict runner no longer appears hung before bundle workers begin reporting progress.
+- Focused validation:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "run_tsr_thlb_locked_parent_step_executes_one_locked_step" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
+  - `.\.venv\Scripts\python.exe -m mypy src`
