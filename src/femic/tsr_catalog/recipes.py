@@ -13397,16 +13397,13 @@ def run_tsr_thlb_locked_parent_step(
             f"`{parent_step_id}`."
         )
     lu_chunk_count = len(chunk_records)
-    resolved_lu_bundle_count = max(
-        1,
-        min(
-            int(lu_bundle_count) if lu_bundle_count is not None else lu_chunk_count,
-            lu_chunk_count,
-        ),
-    )
-    worker_count = max(
-        1,
-        min(max_workers or resolved_lu_bundle_count, resolved_lu_bundle_count),
+    _resolved_parallel_mode, worker_count, resolved_lu_bundle_count = (
+        _resolve_reconstructed_parallel_settings(
+            parallel_mode=TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_AUTO,
+            max_workers=max_workers,
+            lu_bundle_count=lu_bundle_count,
+            candidate_chunk_count=lu_chunk_count,
+        )
     )
     resolved_progress_root.mkdir(parents=True, exist_ok=True)
     bundle_group_started = perf_counter()

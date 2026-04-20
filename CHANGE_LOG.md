@@ -14963,3 +14963,12 @@
   - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "run_tsr_thlb_locked_parent_step_executes_one_locked_step" -q`
   - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
   - `.\.venv\Scripts\python.exe -m mypy src`
+## 2026-04-19 - Restored strict LU worker sizing to the documented 8-worker pattern
+- `#169` bounded strict-runner fix:
+  - updated `run_tsr_thlb_locked_parent_step(...)` to reuse the existing CPU-aware reconstructed parallel settings helper instead of defaulting worker count from LU chunk count;
+  - this brings the strict `glb -> step2` path back onto the documented Windows workstation pattern of `min(8, cpu_count)` workers with bundle count defaulting to worker count; and
+  - added a focused regression test proving the strict executor now caps a 131-chunk run at `8` workers / `8` bundles on an 8-core machine.
+- Focused validation:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "run_tsr_thlb_locked_parent_step_executes_one_locked_step or run_tsr_thlb_locked_parent_step_uses_cpu_aware_parallel_defaults" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
+  - `.\.venv\Scripts\python.exe -m mypy src`

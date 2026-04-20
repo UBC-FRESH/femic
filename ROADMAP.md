@@ -1408,9 +1408,10 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d10 Rebuild `tsr.thlb_strict` to execute only locked validated step logic.
       - [x] P53.1d10a Replace strict transformation-step execution with a dedicated locked-step executor that uses only the locked recipe parent-step contract and explicit checkpoints.
       - [x] P53.1d10b Hard-ban the old broad parent-step runner from `tsr.thlb_strict` and fail immediately if strict execution tries to reach it.
-      - [x] P53.1d10c Chain deterministic strict-step checkpoints under `data/tsr/strict_chain/` and validate milestone rows in place against the locked ledger.
-      - [x] P53.1d10d LU-parallelize the strict locked-step executor so bounded strict transformation runs use cached LU partitions/bundles instead of one monolithic serial pass.
-      - [x] P53.1d10e Emit explicit progress events for LU partition cache lookup/materialization so strict LU-wise steps do not appear hung before worker bundles start.
+    - [x] P53.1d10c Chain deterministic strict-step checkpoints under `data/tsr/strict_chain/` and validate milestone rows in place against the locked ledger.
+    - [x] P53.1d10d LU-parallelize the strict locked-step executor so bounded strict transformation runs use cached LU partitions/bundles instead of one monolithic serial pass.
+    - [x] P53.1d10e Emit explicit progress events for LU partition cache lookup/materialization so strict LU-wise steps do not appear hung before worker bundles start.
+    - [x] P53.1d10f Reuse the established CPU-aware LU worker/bundle sizing helper in the strict locked-step executor so Windows step runs default back to the documented `8 workers / 8 bundles` pattern instead of one worker per LU chunk.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.

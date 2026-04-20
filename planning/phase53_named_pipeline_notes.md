@@ -578,3 +578,12 @@
     - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "run_tsr_thlb_locked_parent_step_executes_one_locked_step" -q`
     - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
     - `.\.venv\Scripts\python.exe -m mypy src`
+- 2026-04-19: Completed `P53.1d10f` by restoring the strict executor to the documented CPU-aware LU worker sizing path.
+  - Diagnosis:
+    - the strict locked-step executor had drifted onto a bad rule that defaulted `worker_count` from LU chunk count, which attempted to launch 131 workers for the 131 cached step-2 chunks and immediately tripped Python's Windows `ProcessPoolExecutor` cap.
+  - Fix:
+    - `run_tsr_thlb_locked_parent_step(...)` now reuses `_resolve_reconstructed_parallel_settings(...)`, which restores the documented `min(8, cpu_count)` worker cap and the matching default of `bundle_count = worker_count`.
+  - Focused validation:
+    - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "run_tsr_thlb_locked_parent_step_executes_one_locked_step or run_tsr_thlb_locked_parent_step_uses_cpu_aware_parallel_defaults" -q`
+    - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
+    - `.\.venv\Scripts\python.exe -m mypy src`
