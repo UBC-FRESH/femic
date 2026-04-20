@@ -2846,7 +2846,8 @@ def _print_named_pipeline_run_summary(result: NamedPipelineExecutionResult) -> N
         if plan.checkpoint_path is not None
         else "checkpoint_path: <scratch>"
     )
-    _print_tsr_thlb_netdown_recipe_run_summary(result.tsr_thlb_result)
+    if result.tsr_thlb_result is not None:
+        _print_tsr_thlb_netdown_recipe_run_summary(result.tsr_thlb_result)
 
 
 def _print_tsr_thlb_workbench_build_summary(

@@ -530,3 +530,19 @@
     - the bounded acceptance run reported locked row 5 expected
       `3110576.671 ha`, actual seam area `4378802.489 ha`, delta
       `1268225.818 ha`.
+- 2026-04-19: Completed `P53.1d8` by wiring strict `scratch` to the raw-source GLB builder.
+  - What shipped:
+    - `tsa29_locked_chain_strict` preflight for seam `scratch` now calls the
+      raw-source GLB builder instead of erroring out as undefined;
+    - the checked-in runbook
+      `runbooks/pipelines/tsa29.tsr.thlb_strict.scratch.yaml` now validates
+      locked-chain row 1 from the clipped VRI/TSA boundary build path; and
+    - successful scratch preflight stops after row 1 instead of spilling into
+      step 002 or the downstream THLB executor.
+  - Acceptance signal:
+    - `femic pipelines run --runbook runbooks/pipelines/tsa29.tsr.thlb_strict.scratch.yaml --instance-root external/femic-tsa29-instance`
+      completed in bounded step-001 mode;
+    - locked row 1 expected `4933664.212 ha`, actual raw GLB `4933664.212 ha`,
+      delta `0.000 ha`; and
+    - the runtime event stream and mirrored event log both show
+      `validated_parent_step_count=1` and an immediate stop before step 002.

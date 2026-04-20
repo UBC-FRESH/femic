@@ -845,7 +845,7 @@ def test_run_named_pipeline_runbook_rejects_tsa29_preflight_mismatch_before_exec
     assert not any("event_kind=parent_step_started" in line for line in captured_lines)
 
 
-def test_run_named_pipeline_runbook_rejects_tsa29_preflight_scratch_without_raw_surface(
+def test_run_named_pipeline_runbook_validates_tsa29_preflight_scratch_with_raw_glb_builder(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -907,6 +907,7 @@ def test_run_named_pipeline_runbook_rejects_tsa29_preflight_scratch_without_raw_
         execution_mode="reconstructed",
     )
     run_called = False
+    captured_lines: list[str] = []
 
     monkeypatch.setattr(
         named_pipelines,
@@ -920,15 +921,45 @@ def test_run_named_pipeline_runbook_rejects_tsa29_preflight_scratch_without_raw_
         raise AssertionError("downstream runner should not be called")
 
     monkeypatch.setattr(named_pipelines, "run_tsr_thlb_netdown_recipe", _fake_run)
+    monkeypatch.setattr(
+        named_pipelines,
+        "build_tsa_raw_glb",
+        lambda **kwargs: SimpleNamespace(
+            clipped_area_ha=1000.0,
+            summary_json_path=instance_root
+            / "runtime"
+            / "logs"
+            / "glb_build"
+            / "glb_summary.json",
+            summary_markdown_path=instance_root
+            / "runtime"
+            / "logs"
+            / "glb_build"
+            / "glb_summary.md",
+        ),
+    )
 
-    with pytest.raises(named_pipelines.NamedPipelineError) as excinfo:
-        named_pipelines.run_named_pipeline_runbook(
-            runbook_path=plan.runbook_path,
-            instance_root=instance_root,
-        )
+    result = named_pipelines.run_named_pipeline_runbook(
+        runbook_path=plan.runbook_path,
+        instance_root=instance_root,
+        runtime_event_sink=captured_lines.append,
+    )
 
-    assert "validated raw-start comparison surface for TSA29" in str(excinfo.value)
     assert run_called is False
+    assert result.tsr_thlb_result is None
+    assert result.validation_result is not None
+    assert result.validation_result.validated_parent_step_count == 1
+    assert result.validation_result.latest_locked_row_order == 1
+    assert result.validation_result.expected_final_managed_area_ha == pytest.approx(1000.0)
+    assert result.validation_result.actual_final_managed_area_ha == pytest.approx(1000.0)
+    assert any(
+        "event_kind=pipeline_validation_preflight_started" in line for line in captured_lines
+    )
+    assert any(
+        "event_kind=pipeline_validation_preflight_finished" in line for line in captured_lines
+    )
+    assert any("event_kind=pipeline_run_finished" in line for line in captured_lines)
+    assert not any("event_kind=parent_step_started" in line for line in captured_lines)
 
 
 def test_resolve_tsa29_locked_chain_strict_row_order() -> None:

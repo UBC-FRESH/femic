@@ -11,6 +11,7 @@ from typing import Any, Callable, Mapping, cast
 
 import yaml
 
+from femic.glb import build_tsa_raw_glb
 from femic.tsr_catalog import (
     TSR_THLB_EXECUTION_MODE_RECONSTRUCTED,
     TsrThlbNetdownRecipeRunResult,
@@ -200,7 +201,7 @@ class NamedPipelineExecutionResult:
     """Result of running one named-pipeline proof surface."""
 
     plan: NamedPipelineExecutionPlan
-    tsr_thlb_result: TsrThlbNetdownRecipeRunResult
+    tsr_thlb_result: TsrThlbNetdownRecipeRunResult | None
     validation_result: NamedPipelineValidationResult | None = None
     runtime_event_log_path: Path | None = None
 
@@ -225,6 +226,8 @@ _RUNTIME_EVENT_IMPORTANT_FIELDS = (
     "expected_benchmark_area_ha",
     "actual_start_area_ha",
     "area_delta_ha",
+    "summary_json_path",
+    "summary_markdown_path",
     "parent_step_id",
     "parent_label",
     "row_order",
@@ -1181,6 +1184,10 @@ def _resolve_tsa29_locked_chain_entry(
     )
 
 
+def _source_tree_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
 def _managed_area_ha_from_checkpoint(checkpoint_path: Path) -> float:
     if not checkpoint_path.exists():
         raise NamedPipelineError(f"Strict validation checkpoint not found: {checkpoint_path}")
@@ -1226,11 +1233,30 @@ def _validate_tsa29_locked_chain_strict_preflight(
         )
 
     if plan.seam_id == "scratch":
-        raise NamedPipelineError(
-            "Strict validation preflight for seam `scratch` requires a validated raw-start "
-            "comparison surface for TSA29; none is currently defined. Refusing to guess or "
-            "use legacy checkpoint fallback."
+        glb_result = build_tsa_raw_glb(
+            source_root=_source_tree_root(),
+            instance_root=plan.instance_root,
+            tsa="29",
+            stash_public_data_glb=False,
         )
+        actual_start_area_ha = float(glb_result.clipped_area_ha)
+        area_delta_ha = actual_start_area_ha - expected_benchmark_area_ha
+        if abs(area_delta_ha) > tolerance_ha:
+            raise NamedPipelineError(
+                "Strict validation preflight mismatch for seam "
+                f"`{plan.seam_id}` at locked row `{locked_row_order}` "
+                f"(`{locked_parent_step_id}`): expected `{expected_benchmark_area_ha:.3f} ha`, "
+                f"got `{actual_start_area_ha:.3f} ha`, delta `{area_delta_ha:.3f} ha`."
+            )
+        return {
+            "locked_row_order": locked_row_order,
+            "locked_parent_step_id": locked_parent_step_id,
+            "expected_benchmark_area_ha": expected_benchmark_area_ha,
+            "actual_start_area_ha": actual_start_area_ha,
+            "area_delta_ha": area_delta_ha,
+            "summary_json_path": glb_result.summary_json_path,
+            "summary_markdown_path": glb_result.summary_markdown_path,
+        }
 
     if plan.checkpoint_path is None:
         raise NamedPipelineError(
@@ -1333,6 +1359,7 @@ def run_named_pipeline_runbook(
             ),
         }
     )
+    validation_result: NamedPipelineValidationResult | None = None
     try:
         if (
             plan.validation_contract is not None
@@ -1352,6 +1379,55 @@ def run_named_pipeline_runbook(
                     **preflight_result,
                 }
             )
+            if plan.seam_id == "scratch":
+                validation_result = NamedPipelineValidationResult(
+                    contract_kind=plan.validation_contract.contract_kind,
+                    validated_parent_step_count=1,
+                    latest_locked_row_order=cast(
+                        int | None, preflight_result.get("locked_row_order")
+                    ),
+                    latest_locked_parent_step_id=cast(
+                        str | None, preflight_result.get("locked_parent_step_id")
+                    ),
+                    expected_final_managed_area_ha=cast(
+                        float | None, preflight_result.get("expected_benchmark_area_ha")
+                    ),
+                    actual_final_managed_area_ha=cast(
+                        float | None, preflight_result.get("actual_start_area_ha")
+                    ),
+                    max_abs_marginal_delta_ha=0.0,
+                    max_abs_cumulative_delta_ha=abs(
+                        cast(float, preflight_result.get("area_delta_ha", 0.0))
+                    ),
+                )
+                runtime_logger.emit(
+                    {
+                        "event_kind": "pipeline_run_finished",
+                        "validated_parent_step_count": 1,
+                        "latest_locked_row_order": (
+                            validation_result.latest_locked_row_order
+                        ),
+                        "latest_locked_parent_step_id": (
+                            validation_result.latest_locked_parent_step_id
+                        ),
+                        "expected_final_managed_area_ha": (
+                            validation_result.expected_final_managed_area_ha
+                        ),
+                        "actual_final_managed_area_ha": (
+                            validation_result.actual_final_managed_area_ha
+                        ),
+                        "notes": (
+                            "strict scratch seam validated locked-chain row 1 and "
+                            "stopped before step 002"
+                        ),
+                    }
+                )
+                return NamedPipelineExecutionResult(
+                    plan=plan,
+                    tsr_thlb_result=None,
+                    validation_result=validation_result,
+                    runtime_event_log_path=runtime_event_log_path,
+                )
         tsr_result = run_tsr_thlb_netdown_recipe(
             recipe_path=plan.thlb_netdown_recipe_path,
             checkpoint_path=plan.checkpoint_path,
@@ -1366,7 +1442,6 @@ def run_named_pipeline_runbook(
             }
         )
         raise
-    validation_result: NamedPipelineValidationResult | None = None
     try:
         if (
             plan.validation_contract is not None

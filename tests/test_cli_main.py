@@ -7249,6 +7249,93 @@ def test_pipelines_run_accepts_checked_in_proof_runbook(
     assert captured_kwargs["instance_root"] == instance_root.resolve()
 
 
+def test_pipelines_run_handles_scratch_preflight_only_result(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-tsa29-instance"
+    runbook = Path("runbooks/pipelines/tsa29.tsr.thlb_strict.scratch.yaml")
+    messages: list[str] = []
+
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+
+    def _fake_run_named_pipeline_runbook(**kwargs: object) -> object:
+        runtime_event_sink = kwargs.get("runtime_event_sink")
+        if callable(runtime_event_sink):
+            runtime_event_sink(
+                "event_kind=pipeline_validation_preflight_finished "
+                "locked_row_order=1 actual_start_area_ha=4933664.212"
+            )
+        return SimpleNamespace(
+            plan=SimpleNamespace(
+                pipeline_id="tsr.thlb_strict",
+                pipeline_label="TSR strict THLB product lane",
+                runbook_path=runbook.resolve(),
+                instance_root=instance_root,
+                seam_id="scratch",
+                execution_mode="reconstructed",
+                user_registry_path=None,
+                instance_registry_path=None,
+                explicit_registry_paths=(),
+                run_profile_path=instance_root / "config" / "run_profile.tsa29.yaml",
+                overlay_paths=(instance_root / "config" / "tsr" / "overlay.yaml",),
+                parameter_files=(),
+                validation_contract=SimpleNamespace(
+                    contract_kind="tsa29_locked_chain_strict",
+                    locked_chain_ledger_path=instance_root
+                    / "config"
+                    / "tsr"
+                    / "thlb_locked_chain_ledger.json",
+                    comparison_report_path=instance_root
+                    / "config"
+                    / "tsr"
+                    / "thlb_reconstruction_comparison.md",
+                    required_recipe_path=instance_root
+                    / "workbench"
+                    / "tsr"
+                    / "thlb_netdown.locked.recipe.yaml",
+                ),
+                thlb_netdown_recipe_path=instance_root
+                / "workbench"
+                / "tsr"
+                / "thlb_netdown.locked.recipe.yaml",
+                source_layers_recipe_path=instance_root
+                / "config"
+                / "tsr"
+                / "source_layers.recipe.yaml",
+                checkpoint_path=None,
+            ),
+            runtime_event_log_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "named_pipeline_events-tsr_thlb_strict-20260419T000000Z.log",
+            validation_result=SimpleNamespace(
+                validated_parent_step_count=1,
+                latest_locked_row_order=1,
+                latest_locked_parent_step_id="thlb_parent_001_total_tsa_area",
+                expected_final_managed_area_ha=4933664.212,
+                actual_final_managed_area_ha=4933664.212,
+                max_abs_marginal_delta_ha=0.0,
+                max_abs_cumulative_delta_ha=0.0,
+            ),
+            tsr_thlb_result=None,
+        )
+
+    monkeypatch.setattr(
+        cli_main, "run_named_pipeline_runbook", _fake_run_named_pipeline_runbook
+    )
+
+    cli_main.pipelines_run(runbook=runbook, instance_root=instance_root)
+
+    assert any("checkpoint_path: <scratch>" in msg for msg in messages)
+    assert any("validation_parent_step_count: 1" in msg for msg in messages)
+    assert any(
+        "event_kind=pipeline_validation_preflight_finished" in msg for msg in messages
+    )
+
+
 def test_tsr_facts_report_writes_review_csv(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

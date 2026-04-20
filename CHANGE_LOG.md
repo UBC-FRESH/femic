@@ -14891,3 +14891,17 @@
 - Acceptance result:
   - the checked-in TSA29 strict runbook now aborts immediately in preflight instead of progressing into parent steps when started from the current `aflb_yield_ready` seam; and
   - the bounded acceptance run reported locked row 5 expected `3110576.671 ha`, actual seam area `4378802.489 ha`, delta `1268225.818 ha`.
+## 2026-04-19 - Wired strict scratch validation to the raw-source GLB builder
+- `#169` bounded step-001 slice:
+  - `tsa29_locked_chain_strict` preflight for seam `scratch` now uses the raw-source GLB builder instead of treating scratch as undefined;
+  - the checked-in runbook `runbooks/pipelines/tsa29.tsr.thlb_strict.scratch.yaml` now validates locked-chain row 1 from clipped VRI/TSA geometry and stops before step 002; and
+  - `run_named_pipeline_runbook(...)` now returns a clean preflight-only success summary when row 1 is validated from scratch.
+- Focused validation:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -q`
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "pipelines_run" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py src/femic/cli/main.py tests/test_named_pipelines.py tests/test_cli_main.py`
+  - `.\.venv\Scripts\python.exe -m mypy src`
+  - `.\.venv\Scripts\python.exe -m femic pipelines run --runbook runbooks/pipelines/tsa29.tsr.thlb_strict.scratch.yaml --instance-root external/femic-tsa29-instance`
+- Acceptance result:
+  - locked row 1 expected `4933664.212 ha`, actual raw GLB `4933664.212 ha`, delta `0.000 ha`; and
+  - the named pipeline stopped after step 001 with `validated_parent_step_count=1` instead of entering step 002.
