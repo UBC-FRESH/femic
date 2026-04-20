@@ -14972,3 +14972,11 @@
   - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "run_tsr_thlb_locked_parent_step_executes_one_locked_step or run_tsr_thlb_locked_parent_step_uses_cpu_aware_parallel_defaults" -q`
   - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
   - `.\.venv\Scripts\python.exe -m mypy src`
+## 2026-04-19 - Made strict LU cache reuse schema-aware
+- `#169` bounded strict-runner fix:
+  - updated the strict locked-step executor to pass `expected_columns` into `_load_cached_landscape_unit_partition_records(...)` so cache reuse now requires an exact match with the current checkpoint schema, including strict-state columns like `_row_id`, `_stand_area_sqm`, `thlb_fact`, and `thlb`; and
+  - added a focused regression test proving strict execution supplies the current checkpoint column set to cache lookup instead of reusing stale LU chunk caches on row count + area alone.
+- Focused validation:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "run_tsr_thlb_locked_parent_step_executes_one_locked_step or run_tsr_thlb_locked_parent_step_passes_expected_columns_to_cache_lookup" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
+  - `.\.venv\Scripts\python.exe -m mypy src`

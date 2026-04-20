@@ -13295,6 +13295,7 @@ def run_tsr_thlb_locked_parent_step(
         instance_root=instance_root,
         expected_row_count=len(checkpoint),
         expected_area_ha=float(checkpoint.geometry.area.astype(float).sum() / 10000.0),
+        expected_columns=tuple(str(column).strip() for column in checkpoint.columns),
     )
     profiling["lu_selection_cache_lookup_seconds"] = (
         perf_counter() - cache_lookup_started
