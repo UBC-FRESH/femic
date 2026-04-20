@@ -10,6 +10,10 @@ pipelines:
       - seam_id: scratch
         start_mode: scratch
         stage_label: Full strict TSR THLB run
+      - seam_id: glb
+        checkpoint_path: data/tsr/glb_checkpoint.feather
+        checkpoint_kind: glb_checkpoint
+        baseline_signal: glb_checkpoint_restart
       - seam_id: aflb
         checkpoint_path: data/tsr/aflb_checkpoint.feather
         checkpoint_kind: aflb_checkpoint

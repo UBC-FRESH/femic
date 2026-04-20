@@ -14923,3 +14923,12 @@
   - `.\.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "pipelines_run" -q`
   - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py tests/test_named_pipelines.py tests/test_cli_main.py`
   - `.\.venv\Scripts\python.exe -m mypy src`
+## 2026-04-19 - Added an explicit strict GLB seam for stepwise validation
+- `#169` bounded GLB-seam slice:
+  - the built-in strict pipeline registry now defines a `glb` seam at `data/tsr/glb_checkpoint.feather`;
+  - `tsa29_locked_chain_strict` preflight now treats `glb` as a row-1 validation surface, so downstream step validation can start from the saved validated GLB checkpoint instead of rebuilding scratch; and
+  - the checked-in runbook `runbooks/pipelines/tsa29.tsr.thlb_strict.glb_to_step2.yaml` now targets step 2 from the saved GLB seam rather than re-running row 1 first.
+- Focused validation:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -k "includes_builtin_tsr_thlb_strict or resolve_tsa29_locked_chain_strict_row_order or executes_from_glb_seam_without_rebuilding_scratch" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py src/femic/resources/pipelines/registry.yaml tests/test_named_pipelines.py`
+  - `.\.venv\Scripts\python.exe -m mypy src`

@@ -18,6 +18,7 @@ def test_load_named_pipeline_registry_includes_builtin_tsr_thlb_strict() -> None
 
     assert pipeline.label == "TSR strict THLB product lane"
     assert pipeline.get_seam("scratch").start_mode == "scratch"
+    assert pipeline.get_seam("glb").checkpoint_path == Path("data/tsr/glb_checkpoint.feather")
     assert pipeline.get_seam("aflb_yield_ready").checkpoint_path == Path(
         "data/tsr/aflb_yield_ready_checkpoint.feather"
     )
@@ -1367,6 +1368,7 @@ def test_materialize_tsa29_glb_checkpoint_normalizes_area_columns(tmp_path: Path
 
 def test_resolve_tsa29_locked_chain_strict_row_order() -> None:
     assert named_pipelines._resolve_tsa29_locked_chain_strict_row_order(seam_id="scratch") == 1
+    assert named_pipelines._resolve_tsa29_locked_chain_strict_row_order(seam_id="glb") == 1
     assert named_pipelines._resolve_tsa29_locked_chain_strict_row_order(seam_id="aflb") == 5
     assert (
         named_pipelines._resolve_tsa29_locked_chain_strict_row_order(
@@ -1451,3 +1453,164 @@ def test_run_named_pipeline_runbook_emits_pipeline_run_failed_event(
 
     assert any("event_kind=pipeline_run_failed" in line for line in captured_lines)
     assert any("error=\"synthetic failure\"" in line for line in captured_lines)
+
+
+def test_run_named_pipeline_runbook_executes_from_glb_seam_without_rebuilding_scratch(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    instance_root = tmp_path / "instance"
+    (instance_root / "config" / "tsr").mkdir(parents=True, exist_ok=True)
+    (instance_root / "workbench" / "tsr").mkdir(parents=True, exist_ok=True)
+    (instance_root / "data" / "tsr").mkdir(parents=True, exist_ok=True)
+    ledger_path = instance_root / "config" / "tsr" / "thlb_locked_chain_ledger.json"
+    comparison_path = instance_root / "config" / "tsr" / "thlb_reconstruction_comparison.md"
+    comparison_path.write_text("# comparison\n", encoding="utf-8")
+    ledger_path.write_text(
+        json.dumps(
+            {
+                "entries": [
+                    {
+                        "row_order": 1,
+                        "parent_step_id": "thlb_parent_001_total_tsa_area",
+                        "locked_net_removed_area_ha": None,
+                        "locked_cumulative_remaining_area_ha": 1000.0,
+                    },
+                    {
+                        "row_order": 2,
+                        "parent_step_id": "thlb_parent_002_land_not_administered_by_the_province",
+                        "locked_net_removed_area_ha": 200.0,
+                        "locked_cumulative_remaining_area_ha": 800.0,
+                    },
+                ]
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    glb_checkpoint_path = instance_root / "data" / "tsr" / "glb_checkpoint.feather"
+    glb_checkpoint_path.write_text("stub\n", encoding="utf-8")
+    plan = named_pipelines.NamedPipelineExecutionPlan(
+        runbook_path=instance_root / "runbooks" / "pipelines" / "tsa29.yaml",
+        instance_root=instance_root,
+        pipeline_id="tsr.thlb_strict",
+        pipeline_label="TSR strict THLB product lane",
+        seam_id="glb",
+        checkpoint_path=glb_checkpoint_path,
+        run_profile_path=None,
+        overlay_paths=(),
+        parameter_files=(),
+        validation_contract=named_pipelines.NamedPipelineValidationContract(
+            contract_kind="tsa29_locked_chain_strict",
+            locked_chain_ledger_path=ledger_path,
+            comparison_report_path=comparison_path,
+            required_recipe_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "thlb_netdown.locked.recipe.yaml",
+        ),
+        target_parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+        user_registry_path=None,
+        instance_registry_path=None,
+        explicit_registry_paths=(),
+        thlb_netdown_recipe_path=instance_root
+        / "workbench"
+        / "tsr"
+        / "thlb_netdown.locked.recipe.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        execution_mode="reconstructed",
+    )
+    captured_lines: list[str] = []
+    build_raw_glb_called = False
+
+    monkeypatch.setattr(
+        named_pipelines,
+        "build_named_pipeline_execution_plan",
+        lambda **kwargs: plan,
+    )
+
+    def _fail_build_raw_glb(**kwargs: object) -> object:
+        nonlocal build_raw_glb_called
+        build_raw_glb_called = True
+        raise AssertionError("glb seam must not rebuild scratch")
+
+    monkeypatch.setattr(named_pipelines, "build_tsa_raw_glb", _fail_build_raw_glb)
+    monkeypatch.setattr(
+        named_pipelines,
+        "_managed_area_ha_from_checkpoint",
+        lambda path: 1000.0 if path == glb_checkpoint_path else 800.0,
+    )
+    monkeypatch.setattr(
+        named_pipelines,
+        "load_tsr_thlb_netdown_recipe",
+        lambda path: SimpleNamespace(
+            parent_steps=(
+                {
+                    "parent_step_id": "thlb_parent_001_total_tsa_area",
+                    "parent_label": "Total TSA area",
+                    "row_order": 1,
+                    "parent_kind": "milestone",
+                    "execution_class": "reference_only",
+                    "land_base_stage": "reference_target",
+                },
+                {
+                    "parent_step_id": "thlb_parent_002_land_not_administered_by_the_province",
+                    "parent_label": "Land not administered by the Province",
+                    "row_order": 2,
+                    "parent_kind": "transformation",
+                    "execution_class": "bounded_step_run",
+                    "land_base_stage": "glb_to_aflb",
+                },
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        named_pipelines,
+        "run_tsr_thlb_parent_step",
+        lambda **kwargs: SimpleNamespace(
+            parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+            parent_label="Land not administered by the Province",
+            recipe_path=plan.thlb_netdown_recipe_path,
+            tsa=SimpleNamespace(tsa_id="tsa_29", tsa_code="29", tsa_name="Williams Lake"),
+            checkpoint_path=glb_checkpoint_path,
+            selected_map_ids=(),
+            selected_landscape_units=(),
+            output_path=instance_root / "data" / "tsr" / "glb_to_aflb_step2.feather",
+            result_json_path=instance_root / "runtime" / "logs" / "tsr" / "step2.json",
+            status="applied",
+            executed_parent_step_ids=("thlb_parent_002_land_not_administered_by_the_province",),
+            input_area_ha=1000.0,
+            removed_area_ha=200.0,
+            remaining_area_ha=800.0,
+            benchmark_marginal_area_ha=200.0,
+            benchmark_cumulative_area_ha=800.0,
+            benchmark_marginal_delta_ha=0.0,
+            benchmark_cumulative_delta_ha=0.0,
+            smoke_benchmark_scale_factor=None,
+            scaled_benchmark_marginal_area_ha=None,
+            scaled_benchmark_cumulative_area_ha=None,
+            scaled_benchmark_marginal_delta_ha=None,
+            scaled_benchmark_cumulative_delta_ha=None,
+            notes=(),
+            execution_mode="serial",
+            worker_count=None,
+            lu_chunk_count=None,
+            lu_bundle_count=None,
+            progress_root=None,
+            profiling=None,
+        ),
+    )
+
+    result = named_pipelines.run_named_pipeline_runbook(
+        runbook_path=plan.runbook_path,
+        instance_root=instance_root,
+        runtime_event_sink=captured_lines.append,
+    )
+
+    assert build_raw_glb_called is False
+    assert result.validation_result is not None
+    assert result.validation_result.validated_parent_step_count == 2
+    assert any("checkpoint_path=" + str(glb_checkpoint_path) in line for line in captured_lines)

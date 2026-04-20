@@ -1176,7 +1176,7 @@ def _load_locked_chain_entries(
 
 
 def _resolve_tsa29_locked_chain_strict_row_order(*, seam_id: str) -> int:
-    if seam_id == "scratch":
+    if seam_id in {"scratch", "glb"}:
         return 1
     if seam_id in {"aflb", "aflb_yield_ready"}:
         return 5
@@ -1454,29 +1454,32 @@ def _validate_tsa29_locked_chain_parent_step(
     )
 
 
-def _run_tsa29_strict_scratch_sequence(
+def _run_tsa29_strict_sequence_from_checkpoint(
     *,
     plan: NamedPipelineExecutionPlan,
-    glb_checkpoint_path: Path,
+    start_checkpoint_path: Path,
+    start_validated_row_order: int,
+    start_validated_parent_step_id: str,
+    start_remaining_area_ha: float,
     runtime_logger: "_NamedPipelineRuntimeEventLogger",
 ) -> tuple[TsrThlbParentStepRunResult | None, NamedPipelineValidationResult]:
     validation_contract = plan.validation_contract
     if validation_contract is None:
         raise NamedPipelineError(
-            "Strict scratch pipeline sequencing requires a validation contract."
+            "Strict pipeline sequencing requires a validation contract."
         )
-    current_checkpoint_path = glb_checkpoint_path
+    current_checkpoint_path = start_checkpoint_path
     sequence = _resolve_locked_parent_step_sequence(
         recipe_path=plan.thlb_netdown_recipe_path,
         stop_after_parent_step_id=plan.target_parent_step_id,
     )
     latest_validation = NamedPipelineValidationResult(
         contract_kind=validation_contract.contract_kind,
-        validated_parent_step_count=1,
-        latest_locked_row_order=1,
-        latest_locked_parent_step_id="thlb_parent_001_total_tsa_area",
-        expected_final_managed_area_ha=_managed_area_ha_from_checkpoint(glb_checkpoint_path),
-        actual_final_managed_area_ha=_managed_area_ha_from_checkpoint(glb_checkpoint_path),
+        validated_parent_step_count=start_validated_row_order,
+        latest_locked_row_order=start_validated_row_order,
+        latest_locked_parent_step_id=start_validated_parent_step_id,
+        expected_final_managed_area_ha=start_remaining_area_ha,
+        actual_final_managed_area_ha=start_remaining_area_ha,
         max_abs_marginal_delta_ha=0.0,
         max_abs_cumulative_delta_ha=0.0,
     )
@@ -1629,25 +1632,39 @@ def run_named_pipeline_runbook(
                     **preflight_result,
                 }
             )
-            if plan.seam_id == "scratch":
-                glb_checkpoint_path = _materialize_tsa29_glb_checkpoint_from_result(
-                    instance_root=plan.instance_root,
-                    clipped_glb_gdb_path=cast(Path, preflight_result["clipped_glb_gdb_path"]),
-                    clipped_glb_feature_class=cast(
-                        str, preflight_result["clipped_glb_feature_class"]
-                    ),
-                )
-                runtime_logger.emit(
-                    {
-                        "event_kind": "pipeline_preflight_resolved",
-                        "notes": f"glb_checkpoint_path={glb_checkpoint_path}",
-                    }
-                )
+            if plan.seam_id in {"scratch", "glb"}:
+                start_checkpoint_path = plan.checkpoint_path
+                if plan.seam_id == "scratch":
+                    glb_checkpoint_path = _materialize_tsa29_glb_checkpoint_from_result(
+                        instance_root=plan.instance_root,
+                        clipped_glb_gdb_path=cast(
+                            Path, preflight_result["clipped_glb_gdb_path"]
+                        ),
+                        clipped_glb_feature_class=cast(
+                            str, preflight_result["clipped_glb_feature_class"]
+                        ),
+                    )
+                    start_checkpoint_path = glb_checkpoint_path
+                    runtime_logger.emit(
+                        {
+                            "event_kind": "pipeline_preflight_resolved",
+                            "notes": f"glb_checkpoint_path={glb_checkpoint_path}",
+                        }
+                    )
                 if plan.target_parent_step_id is not None:
                     parent_step_result, validation_result = (
-                        _run_tsa29_strict_scratch_sequence(
+                        _run_tsa29_strict_sequence_from_checkpoint(
                             plan=plan,
-                            glb_checkpoint_path=glb_checkpoint_path,
+                            start_checkpoint_path=cast(Path, start_checkpoint_path),
+                            start_validated_row_order=cast(
+                                int, preflight_result["locked_row_order"]
+                            ),
+                            start_validated_parent_step_id=cast(
+                                str, preflight_result["locked_parent_step_id"]
+                            ),
+                            start_remaining_area_ha=cast(
+                                float, preflight_result["actual_start_area_ha"]
+                            ),
                             runtime_logger=runtime_logger,
                         )
                     )
