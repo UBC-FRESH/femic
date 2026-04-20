@@ -1405,6 +1405,10 @@ Notes: `planning/phase53_named_pipeline_notes.md`
       - [x] P53.1d9a Normalize the materialized `glb_checkpoint.feather` area columns from clipped geometry so step-002 input area cannot drift back onto preserved source-layer area attributes.
       - [x] P53.1d9b Sequence strict scratch pipelines over the locked parent-step recipe order so milestone rows validate in place and each transformation row chains its bounded output checkpoint into the next locked step.
       - [x] P53.1d9c Add an explicit strict `glb` seam so step-002 validation can start from the saved validated GLB checkpoint without rebuilding row 1.
+    - [x] P53.1d10 Rebuild `tsr.thlb_strict` to execute only locked validated step logic.
+      - [x] P53.1d10a Replace strict transformation-step execution with a dedicated locked-step executor that uses only the locked recipe parent-step contract and explicit checkpoints.
+      - [x] P53.1d10b Hard-ban the old broad parent-step runner from `tsr.thlb_strict` and fail immediately if strict execution tries to reach it.
+      - [x] P53.1d10c Chain deterministic strict-step checkpoints under `data/tsr/strict_chain/` and validate milestone rows in place against the locked ledger.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.

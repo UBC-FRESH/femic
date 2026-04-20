@@ -18,7 +18,7 @@ from femic.tsr_catalog import (
     TsrThlbNetdownRecipeRunResult,
     default_tsr_thlb_netdown_recipe_path,
     load_tsr_thlb_netdown_recipe,
-    run_tsr_thlb_parent_step,
+    run_tsr_thlb_locked_parent_step,
     run_tsr_thlb_netdown_recipe,
 )
 from femic.user_config import DEFAULT_FEMIC_CONFIG_HOME
@@ -242,6 +242,8 @@ _RUNTIME_EVENT_IMPORTANT_FIELDS = (
     "compiled_step_label",
     "run_status",
     "remaining_area_ha",
+    "locked_execution_class",
+    "output_checkpoint_path",
     "completed_lus",
     "total_lus",
     "fraction_complete",
@@ -388,7 +390,9 @@ def _normalize_float_or_none(value: Any) -> float | None:
     try:
         return float(value)
     except (TypeError, ValueError) as exc:
-        raise NamedPipelineError(f"Expected float-compatible value, got {value!r}.") from exc
+        raise NamedPipelineError(
+            f"Expected float-compatible value, got {value!r}."
+        ) from exc
 
 
 def _normalize_int_or_none(value: Any) -> int | None:
@@ -397,7 +401,9 @@ def _normalize_int_or_none(value: Any) -> int | None:
     try:
         return int(value)
     except (TypeError, ValueError) as exc:
-        raise NamedPipelineError(f"Expected int-compatible value, got {value!r}.") from exc
+        raise NamedPipelineError(
+            f"Expected int-compatible value, got {value!r}."
+        ) from exc
 
 
 def _normalize_string_tuple(
@@ -934,9 +940,13 @@ def build_named_pipeline_execution_plan(
             and runbook.validation_contract.required_recipe_path is not None
         )
         else (
-            _resolve_relative_to_instance(runbook.instance_root, recipe.default_recipe_path)
+            _resolve_relative_to_instance(
+                runbook.instance_root, recipe.default_recipe_path
+            )
             if recipe.default_recipe_path is not None
-            else default_tsr_thlb_netdown_recipe_path(instance_root=runbook.instance_root)
+            else default_tsr_thlb_netdown_recipe_path(
+                instance_root=runbook.instance_root
+            )
         )
     )
     assert thlb_recipe_path is not None
@@ -983,7 +993,9 @@ def _validate_tsa29_locked_chain_strict_result(
 ) -> NamedPipelineValidationResult:
     validation_contract = plan.validation_contract
     if validation_contract is None:
-        raise NamedPipelineError("Strict validation contract is required for this validator.")
+        raise NamedPipelineError(
+            "Strict validation contract is required for this validator."
+        )
     if validation_contract.locked_chain_ledger_path is None:
         raise NamedPipelineError(
             "Strict validation contract requires `locked_chain_ledger_path`."
@@ -1037,9 +1049,9 @@ def _validate_tsa29_locked_chain_strict_result(
             step.get("net_removed_area_ha", step.get("removed_area_ha"))
         )
         if net_removed_area_ha is not None:
-            entry["net_removed_area_ha"] = float(entry["net_removed_area_ha"] or 0.0) + float(
-                net_removed_area_ha
-            )
+            entry["net_removed_area_ha"] = float(
+                entry["net_removed_area_ha"] or 0.0
+            ) + float(net_removed_area_ha)
         remaining_area_ha = _normalize_float_or_none(step.get("remaining_area_ha"))
         if remaining_area_ha is not None:
             entry["remaining_area_ha"] = remaining_area_ha
@@ -1075,7 +1087,9 @@ def _validate_tsa29_locked_chain_strict_result(
             parent_audit.get("net_removed_area_ha")
         )
         expected_marginal_compare = (
-            0.0 if expected_net_removed_area_ha is None else expected_net_removed_area_ha
+            0.0
+            if expected_net_removed_area_ha is None
+            else expected_net_removed_area_ha
         )
         actual_marginal_compare = (
             0.0 if actual_net_removed_area_ha is None else actual_net_removed_area_ha
@@ -1108,7 +1122,9 @@ def _validate_tsa29_locked_chain_strict_result(
         cumulative_delta_ha = abs(
             actual_cumulative_remaining_area_ha - expected_cumulative_remaining_area_ha
         )
-        max_abs_cumulative_delta_ha = max(max_abs_cumulative_delta_ha, cumulative_delta_ha)
+        max_abs_cumulative_delta_ha = max(
+            max_abs_cumulative_delta_ha, cumulative_delta_ha
+        )
         if cumulative_delta_ha > tolerance_ha:
             raise NamedPipelineError(
                 "Strict validation contract mismatch at row "
@@ -1224,12 +1240,15 @@ def _is_reference_only_parent_step(parent_step: Mapping[str, Any]) -> bool:
 def _resolve_locked_parent_step_sequence(
     *,
     recipe_path: Path,
+    start_after_row_order: int = 1,
     stop_after_parent_step_id: str | None = None,
 ) -> tuple[Mapping[str, Any], ...]:
     recipe = load_tsr_thlb_netdown_recipe(recipe_path)
     sequence: list[Mapping[str, Any]] = []
     normalized_stop_after = (
-        stop_after_parent_step_id.strip() if stop_after_parent_step_id is not None else None
+        stop_after_parent_step_id.strip()
+        if stop_after_parent_step_id is not None
+        else None
     )
     found_stop_after = normalized_stop_after is None
     for parent_step in recipe.parent_steps:
@@ -1239,10 +1258,13 @@ def _resolve_locked_parent_step_sequence(
             raise NamedPipelineError(
                 f"Locked THLB recipe contains an invalid parent-step entry: {parent_step!r}"
             )
-        if row_order <= 1:
+        if row_order <= start_after_row_order:
             continue
         sequence.append(parent_step)
-        if normalized_stop_after is not None and parent_step_id == normalized_stop_after:
+        if (
+            normalized_stop_after is not None
+            and parent_step_id == normalized_stop_after
+        ):
             found_stop_after = True
             break
     if not found_stop_after:
@@ -1253,13 +1275,37 @@ def _resolve_locked_parent_step_sequence(
     return tuple(sequence)
 
 
+def _validate_locked_strict_parent_step_execution_contract(
+    parent_step: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    parent_step_id = str(parent_step.get("parent_step_id", "")).strip()
+    ratchet_state = str(parent_step.get("ratchet_state", "")).strip().casefold()
+    approved = bool(parent_step.get("approved", False)) or ratchet_state == "approved"
+    compiled_logic = [
+        item for item in parent_step.get("compiled_logic", ()) if isinstance(item, dict)
+    ]
+    if not approved:
+        raise NamedPipelineError(
+            "Strict pipeline step is not approved on the locked recipe surface: "
+            f"`{parent_step_id}`."
+        )
+    if not compiled_logic:
+        raise NamedPipelineError(
+            "Strict pipeline step is missing locked compiled logic: "
+            f"`{parent_step_id}`."
+        )
+    return parent_step
+
+
 def _source_tree_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
 def _managed_area_ha_from_checkpoint(checkpoint_path: Path) -> float:
     if not checkpoint_path.exists():
-        raise NamedPipelineError(f"Strict validation checkpoint not found: {checkpoint_path}")
+        raise NamedPipelineError(
+            f"Strict validation checkpoint not found: {checkpoint_path}"
+        )
     gpd = import_module("geopandas")
     checkpoint = gpd.read_feather(checkpoint_path)
     if "_stand_area_sqm" in checkpoint.columns and "thlb_fact" in checkpoint.columns:
@@ -1316,8 +1362,12 @@ def _validate_tsa29_locked_chain_strict_preflight(
 ) -> Mapping[str, Any]:
     validation_contract = plan.validation_contract
     if validation_contract is None:
-        raise NamedPipelineError("Strict validation contract is required for this preflight.")
-    locked_row_order = _resolve_tsa29_locked_chain_strict_row_order(seam_id=plan.seam_id)
+        raise NamedPipelineError(
+            "Strict validation contract is required for this preflight."
+        )
+    locked_row_order = _resolve_tsa29_locked_chain_strict_row_order(
+        seam_id=plan.seam_id
+    )
     locked_entry = _resolve_tsa29_locked_chain_entry(
         validation_contract=validation_contract,
         row_order=locked_row_order,
@@ -1368,7 +1418,9 @@ def _validate_tsa29_locked_chain_strict_preflight(
     actual_start_area_ha = _managed_area_ha_from_checkpoint(plan.checkpoint_path)
 
     if plan.seam_id == "aflb_yield_ready":
-        aflb_checkpoint_path = plan.instance_root / "data" / "tsr" / "aflb_checkpoint.feather"
+        aflb_checkpoint_path = (
+            plan.instance_root / "data" / "tsr" / "aflb_checkpoint.feather"
+        )
         aflb_area_ha = _managed_area_ha_from_checkpoint(aflb_checkpoint_path)
         aflb_delta_ha = actual_start_area_ha - aflb_area_ha
         if abs(aflb_delta_ha) > tolerance_ha:
@@ -1471,6 +1523,7 @@ def _run_tsa29_strict_sequence_from_checkpoint(
     current_checkpoint_path = start_checkpoint_path
     sequence = _resolve_locked_parent_step_sequence(
         recipe_path=plan.thlb_netdown_recipe_path,
+        start_after_row_order=start_validated_row_order,
         stop_after_parent_step_id=plan.target_parent_step_id,
     )
     latest_validation = NamedPipelineValidationResult(
@@ -1496,11 +1549,17 @@ def _run_tsa29_strict_sequence_from_checkpoint(
                 "parent_label": parent_label,
                 "row_order": row_order,
                 "land_base_stage": land_base_stage,
+                "locked_execution_class": str(
+                    parent_step.get("execution_class", "")
+                ).strip()
+                or None,
                 "checkpoint_path": current_checkpoint_path,
             }
         )
         if _is_reference_only_parent_step(parent_step):
-            remaining_area_ha = _managed_area_ha_from_checkpoint(current_checkpoint_path)
+            remaining_area_ha = _managed_area_ha_from_checkpoint(
+                current_checkpoint_path
+            )
             latest_validation = _validate_tsa29_locked_chain_parent_step(
                 validation_contract=validation_contract,
                 parent_step_id=parent_step_id,
@@ -1517,14 +1576,21 @@ def _run_tsa29_strict_sequence_from_checkpoint(
                     "run_status": "reference_validated",
                     "remaining_area_ha": remaining_area_ha,
                     "checkpoint_path": current_checkpoint_path,
+                    "locked_execution_class": str(
+                        parent_step.get("execution_class", "")
+                    ).strip()
+                    or None,
                 }
             )
             continue
-        parent_step_result = run_tsr_thlb_parent_step(
+        locked_parent_step = _validate_locked_strict_parent_step_execution_contract(
+            parent_step
+        )
+        parent_step_result = run_tsr_thlb_locked_parent_step(
             recipe_path=plan.thlb_netdown_recipe_path,
             parent_step_id=parent_step_id,
             checkpoint_path=current_checkpoint_path,
-            auto_map_id_smoke_subset=False,
+            runtime_event_sink=runtime_logger.emit,
         )
         last_parent_step_result = parent_step_result
         current_checkpoint_path = parent_step_result.output_path
@@ -1544,6 +1610,11 @@ def _run_tsa29_strict_sequence_from_checkpoint(
                 "run_status": parent_step_result.status,
                 "remaining_area_ha": parent_step_result.remaining_area_ha,
                 "checkpoint_path": current_checkpoint_path,
+                "output_checkpoint_path": parent_step_result.output_path,
+                "locked_execution_class": str(
+                    locked_parent_step.get("execution_class", "")
+                ).strip()
+                or None,
             }
         )
     return last_parent_step_result, latest_validation
@@ -1575,7 +1646,9 @@ def run_named_pipeline_runbook(
             "seam_id": plan.seam_id,
             "recipe_path": plan.thlb_netdown_recipe_path,
             "checkpoint_path": (
-                plan.checkpoint_path if plan.checkpoint_path is not None else "<scratch>"
+                plan.checkpoint_path
+                if plan.checkpoint_path is not None
+                else "<scratch>"
             ),
         },
         line_sink=runtime_event_sink,

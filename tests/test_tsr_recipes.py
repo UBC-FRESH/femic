@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import geopandas as gpd
 import pandas as pd
@@ -251,6 +252,122 @@ def _fake_yield_bridge_execution_result(
         ),
         yield_ready_checkpoint_path=yield_ready_path.resolve(),
         yield_ready_checkpoint=yield_ready,
+    )
+
+
+def test_run_tsr_thlb_locked_parent_step_executes_one_locked_step(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    instance_root = tmp_path / "instance"
+    checkpoint_path = instance_root / "data" / "tsr" / "glb_checkpoint.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {
+            "FEATURE_AREA_SQM": [10000.0],
+            "thlb_fact": [1.0],
+        },
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    ).to_feather(checkpoint_path)
+
+    tsa = tsr_catalog.TsrOverlayTsaRecord(
+        tsa_id="tsa_29",
+        tsa_code="29",
+        tsa_name="Williams Lake",
+    )
+    recipe = SimpleNamespace(tsa=tsa)
+    parent_step = {
+        "parent_step_id": "thlb_parent_002_land_not_administered_by_the_province",
+        "parent_label": "Land not administered by the Province",
+        "row_order": 2,
+        "parent_kind": "transformation",
+        "execution_class": "bounded_step_run",
+        "land_base_stage": "glb_to_aflb",
+        "approved": True,
+        "ratchet_state": "approved",
+        "last_notebook_run_status": "applied",
+        "benchmark_marginal_area_ha": 0.2,
+        "benchmark_cumulative_area_ha": 0.8,
+        "compiled_logic": (
+            {
+                "step_id": "thlb_parent_002_compiled_01",
+                "label": "Ownership filter",
+            },
+        ),
+    }
+
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_load_tsr_thlb_recipe_context",
+        lambda recipe_path: (recipe, instance_root, None, {}, {}),
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_resolve_tsr_thlb_parent_step",
+        lambda recipe, parent_step_id: parent_step,
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_resolve_tsr_total_area_benchmark",
+        lambda recipe: 1.0,
+    )
+
+    def _fake_execute(
+        *,
+        checkpoint,
+        compiled_item,
+        instance_root,
+        source_entry_map,
+        total_area_benchmark_ha,
+    ):
+        updated = checkpoint.copy()
+        updated["thlb_fact"] = [0.8]
+        return updated, {
+            "step_id": "thlb_parent_002_compiled_01",
+            "label": "Ownership filter",
+            "execution_status": "applied",
+            "removed_area_ha": 0.2,
+            "net_removed_area_ha": 0.2,
+            "remaining_area_ha": 0.8,
+            "runtime_notes": ["bounded locked step"],
+        }
+
+    monkeypatch.setattr(tsr_recipes, "_execute_workbench_compiled_item", _fake_execute)
+
+    captured_events: list[dict[str, object]] = []
+    result = tsr_recipes.run_tsr_thlb_locked_parent_step(
+        recipe_path=instance_root
+        / "workbench"
+        / "tsr"
+        / "thlb_netdown.locked.recipe.yaml",
+        parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+        checkpoint_path=checkpoint_path,
+        runtime_event_sink=captured_events.append,
+    )
+
+    assert (
+        result.output_path
+        == tsr_recipes.default_tsr_thlb_strict_chain_checkpoint_path(
+            instance_root=instance_root,
+            parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+            row_order=2,
+        )
+    )
+    assert result.output_path.exists()
+    assert result.removed_area_ha == pytest.approx(0.2)
+    assert result.remaining_area_ha == pytest.approx(0.8)
+    assert result.benchmark_marginal_delta_ha == pytest.approx(0.0)
+    assert result.benchmark_cumulative_delta_ha == pytest.approx(0.0)
+    assert any(
+        event.get("event_kind") == "compiled_step_started"
+        and event.get("compiled_step_id") == "thlb_parent_002_compiled_01"
+        for event in captured_events
+    )
+    assert any(
+        event.get("event_kind") == "compiled_step_finished"
+        and event.get("remaining_area_ha") == 0.8
+        for event in captured_events
     )
 
 
@@ -6188,10 +6305,13 @@ def test_find_tsr_checkpoint_path_rejects_tsa29_legacy_fallback(tmp_path: Path) 
     )
 
     with pytest.raises(tsr_recipes.TsrRecipeError) as excinfo:
-        tsr_recipes._find_tsr_checkpoint_path(instance_root=instance_root, mode="earliest")
+        tsr_recipes._find_tsr_checkpoint_path(
+            instance_root=instance_root, mode="earliest"
+        )
 
-    assert "Legacy `data/ria_vri_vclr1p_checkpoint*.feather` fallback discovery is disabled for TSA29" in str(
-        excinfo.value
+    assert (
+        "Legacy `data/ria_vri_vclr1p_checkpoint*.feather` fallback discovery is disabled for TSA29"
+        in str(excinfo.value)
     )
 
 

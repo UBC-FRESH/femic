@@ -5737,7 +5737,9 @@ def _default_workbench_checkpoint_path(
     return _find_curve_ready_thlb_checkpoint_path(instance_root=instance_root)
 
 
-def _reject_tsa29_legacy_checkpoint_path(*, instance_root: Path, checkpoint_path: Path) -> None:
+def _reject_tsa29_legacy_checkpoint_path(
+    *, instance_root: Path, checkpoint_path: Path
+) -> None:
     resolved_instance_root = instance_root.expanduser().resolve()
     if resolved_instance_root.name.casefold() != "femic-tsa29-instance":
         return
@@ -7979,7 +7981,11 @@ def _resolve_runtime_step_notes(runtime_item: Mapping[str, Any]) -> tuple[str, .
     spatial_application_mode = str(
         runtime_item.get("spatial_application_mode", "")
     ).strip()
-    if status in {"blocked_exact_overlay", "blocked_missing_source", "blocked_extent_mismatch"}:
+    if status in {
+        "blocked_exact_overlay",
+        "blocked_missing_source",
+        "blocked_extent_mismatch",
+    }:
         return _dedupe_runtime_notes(runtime_item.get("run_notes", ()))
     if status == "unsupported":
         return _dedupe_runtime_notes(runtime_item.get("run_notes", ()))
@@ -9282,7 +9288,8 @@ def _execute_reconstructed_lu_exclusion_step(
             )
             worker_results: list[dict[str, Any]] = []
             progress_paths = [
-                runtime_step_root / f"bundle_{int(bundle['bundle_index']):03d}.progress.json"
+                runtime_step_root
+                / f"bundle_{int(bundle['bundle_index']):03d}.progress.json"
                 for bundle in bundles
             ]
             seen_progress_updates: dict[Path, str] = {}
@@ -9297,7 +9304,9 @@ def _execute_reconstructed_lu_exclusion_step(
                         runtime_step_root_str=str(runtime_step_root),
                         progress_path_str=str(progress_path),
                     ): progress_path
-                    for bundle, progress_path in zip(bundles, progress_paths, strict=True)
+                    for bundle, progress_path in zip(
+                        bundles, progress_paths, strict=True
+                    )
                 }
                 pending_futures = set(future_to_progress_path)
                 while pending_futures:
@@ -9563,7 +9572,9 @@ def _run_reconstructed_lu_exclusion_bundle_worker(
                 updated_records.append(current_record)
                 completed_lus += 1
                 continue
-            local_exclusions = exclusion_geometries.iloc[unique_exclusion_indices].copy()
+            local_exclusions = exclusion_geometries.iloc[
+                unique_exclusion_indices
+            ].copy()
             intersecting_feature_indices.update(unique_exclusion_indices)
 
             overlay_started = perf_counter()
@@ -9787,7 +9798,9 @@ def _compute_legacy_reference_managed_area_ha(
         checkpoint_path=checkpoint_path,
     ):
         return None
-    latest_checkpoint = _find_tsr_checkpoint_path(instance_root=instance_root, mode="latest")
+    latest_checkpoint = _find_tsr_checkpoint_path(
+        instance_root=instance_root, mode="latest"
+    )
     if latest_checkpoint == checkpoint_path:
         return None
     comparison = _load_checkpoint_geodataframe(latest_checkpoint)
@@ -13063,6 +13076,301 @@ def _summarize_executed_items(
         )
         summary["item_count"] += 1
     return list(summary_map.values())
+
+
+def _locked_step_row_order(value: Any) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _validate_locked_strict_parent_step_contract(
+    parent_step: Mapping[str, Any],
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    resolved_parent_step = dict(parent_step)
+    parent_step_id = str(resolved_parent_step.get("parent_step_id", "")).strip()
+    if not parent_step_id:
+        raise TsrRecipeError("Locked strict parent step is missing `parent_step_id`.")
+    if str(resolved_parent_step.get("parent_kind", "")).strip() == "milestone":
+        raise TsrRecipeError(
+            f"Locked strict parent step `{parent_step_id}` is a milestone and is not executable."
+        )
+    execution_class = str(resolved_parent_step.get("execution_class", "")).strip()
+    if execution_class == "reference_only":
+        raise TsrRecipeError(
+            f"Locked strict parent step `{parent_step_id}` is `reference_only` and is not executable."
+        )
+    ratchet_state = (
+        str(resolved_parent_step.get("ratchet_state", "")).strip().casefold()
+    )
+    approved = (
+        bool(resolved_parent_step.get("approved", False)) or ratchet_state == "approved"
+    )
+    if not approved:
+        raise TsrRecipeError(
+            "Locked strict parent step "
+            f"`{parent_step_id}` is not approved on the locked recipe surface."
+        )
+    last_notebook_run_status = str(
+        resolved_parent_step.get("last_notebook_run_status", "")
+    ).strip()
+    if last_notebook_run_status and last_notebook_run_status not in {
+        "applied",
+        "applied_noop",
+    }:
+        raise TsrRecipeError(
+            "Locked strict parent step "
+            f"`{parent_step_id}` has unsupported locked status "
+            f"`{last_notebook_run_status}`."
+        )
+    compiled_logic = [
+        dict(item)
+        for item in resolved_parent_step.get("compiled_logic", ())
+        if isinstance(item, dict)
+    ]
+    if not compiled_logic:
+        raise TsrRecipeError(
+            "Locked strict parent step "
+            f"`{parent_step_id}` is missing locked `compiled_logic`."
+        )
+    return resolved_parent_step, compiled_logic
+
+
+def default_tsr_thlb_strict_chain_checkpoint_path(
+    *, instance_root: Path, parent_step_id: str, row_order: int
+) -> Path:
+    slug = f"{int(row_order):02d}_{parent_step_id.strip()}"
+    return instance_root / "data" / "tsr" / "strict_chain" / f"{slug}.feather"
+
+
+def default_tsr_thlb_strict_chain_result_json_path(
+    *, instance_root: Path, parent_step_id: str, row_order: int
+) -> Path:
+    slug = f"{int(row_order):02d}_{parent_step_id.strip()}"
+    return instance_root / "runtime" / "logs" / "tsr" / "strict_chain" / f"{slug}.json"
+
+
+def run_tsr_thlb_locked_parent_step(
+    *,
+    recipe_path: Path,
+    parent_step_id: str,
+    checkpoint_path: Path,
+    runtime_event_sink: Callable[[dict[str, Any]], None] | None = None,
+) -> TsrThlbParentStepRunResult:
+    """Execute one approved locked THLB parent step from one explicit checkpoint."""
+
+    total_started = perf_counter()
+    recipe, instance_root, _source_recipe, source_entry_map, _override_entries = (
+        _load_tsr_thlb_recipe_context(recipe_path)
+    )
+    target_parent = _resolve_tsr_thlb_parent_step(recipe, parent_step_id=parent_step_id)
+    target_parent, compiled_logic = _validate_locked_strict_parent_step_contract(
+        target_parent
+    )
+    resolved_checkpoint_path = checkpoint_path.expanduser().resolve()
+    _reject_tsa29_legacy_checkpoint_path(
+        instance_root=instance_root,
+        checkpoint_path=resolved_checkpoint_path,
+    )
+    if _is_aflb_yield_ready_restart_checkpoint_path(resolved_checkpoint_path):
+        _validate_aflb_yield_ready_restart_checkpoint_path(resolved_checkpoint_path)
+    profiling: dict[str, Any] = {
+        "total_seconds": 0.0,
+        "checkpoint_load_seconds": 0.0,
+        "input_prepare_seconds": 0.0,
+        "execute_seconds": 0.0,
+        "output_write_seconds": 0.0,
+        "result_json_write_seconds": 0.0,
+    }
+    checkpoint_load_started = perf_counter()
+    checkpoint = _load_checkpoint_geodataframe(resolved_checkpoint_path)
+    profiling["checkpoint_load_seconds"] = perf_counter() - checkpoint_load_started
+
+    input_prepare_started = perf_counter()
+    checkpoint = checkpoint.copy()
+    checkpoint["_row_id"] = range(len(checkpoint))
+    checkpoint["_stand_area_sqm"] = _resolve_effective_stand_area_sqm(checkpoint)
+    checkpoint["thlb_fact"] = 1.0
+    checkpoint["thlb"] = 1
+    input_area_ha = _managed_area_ha(checkpoint)
+    profiling["input_prepare_seconds"] = perf_counter() - input_prepare_started
+
+    execute_started = perf_counter()
+    working = checkpoint
+    executed_items: list[dict[str, Any]] = []
+    removed_area_ha = 0.0
+    statuses: set[str] = set()
+    notes: list[str] = []
+    for compiled_item in compiled_logic:
+        if runtime_event_sink is not None:
+            runtime_event_sink(
+                {
+                    "event_kind": "compiled_step_started",
+                    "parent_step_id": parent_step_id,
+                    "parent_label": str(target_parent.get("parent_label", "")).strip()
+                    or None,
+                    "row_order": _locked_step_row_order(target_parent.get("row_order")),
+                    "land_base_stage": str(
+                        target_parent.get("land_base_stage", "")
+                    ).strip()
+                    or None,
+                    "compiled_step_id": str(compiled_item.get("step_id", "")).strip()
+                    or None,
+                    "compiled_step_label": str(compiled_item.get("label", "")).strip()
+                    or None,
+                    "locked_execution_class": str(
+                        target_parent.get("execution_class", "")
+                    ).strip()
+                    or None,
+                }
+            )
+        working, runtime_item = _execute_workbench_compiled_item(
+            checkpoint=working,
+            compiled_item=dict(compiled_item),
+            instance_root=instance_root,
+            source_entry_map=source_entry_map,
+            total_area_benchmark_ha=_resolve_tsr_total_area_benchmark(recipe),
+        )
+        executed_items.append(runtime_item)
+        current_removed_area = float(
+            runtime_item.get(
+                "net_removed_area_ha", runtime_item.get("removed_area_ha", 0.0)
+            )
+            or 0.0
+        )
+        removed_area_ha += current_removed_area
+        status = str(runtime_item.get("execution_status", "")).strip()
+        if status:
+            statuses.add(status)
+        for note in runtime_item.get("runtime_notes", ()):
+            note_text = str(note).strip()
+            if note_text and note_text not in notes:
+                notes.append(note_text)
+        if runtime_event_sink is not None:
+            runtime_event_sink(
+                {
+                    "event_kind": "compiled_step_finished",
+                    "parent_step_id": parent_step_id,
+                    "parent_label": str(target_parent.get("parent_label", "")).strip()
+                    or None,
+                    "row_order": _locked_step_row_order(target_parent.get("row_order")),
+                    "land_base_stage": str(
+                        target_parent.get("land_base_stage", "")
+                    ).strip()
+                    or None,
+                    "compiled_step_id": str(runtime_item.get("step_id", "")).strip()
+                    or None,
+                    "compiled_step_label": str(runtime_item.get("label", "")).strip()
+                    or None,
+                    "run_status": status or None,
+                    "remaining_area_ha": runtime_item.get("remaining_area_ha"),
+                    "locked_execution_class": str(
+                        target_parent.get("execution_class", "")
+                    ).strip()
+                    or None,
+                    "notes": tuple(
+                        str(value).strip()
+                        for value in runtime_item.get("runtime_notes", ())
+                        if str(value).strip()
+                    )
+                    or None,
+                }
+            )
+    profiling["execute_seconds"] = perf_counter() - execute_started
+
+    final_status = _combine_parent_step_statuses(statuses)
+    remaining_area_ha = _managed_area_ha(working)
+    row_order = _locked_step_row_order(target_parent.get("row_order"))
+    if row_order is None:
+        raise TsrRecipeError(
+            f"Locked strict parent step `{parent_step_id}` is missing `row_order`."
+        )
+    output_path = default_tsr_thlb_strict_chain_checkpoint_path(
+        instance_root=instance_root,
+        parent_step_id=parent_step_id,
+        row_order=row_order,
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_write_started = perf_counter()
+    working.drop(columns=["_row_id", "_stand_area_sqm"], errors="ignore").to_feather(
+        output_path
+    )
+    profiling["output_write_seconds"] = perf_counter() - output_write_started
+
+    result_json_path = default_tsr_thlb_strict_chain_result_json_path(
+        instance_root=instance_root,
+        parent_step_id=parent_step_id,
+        row_order=row_order,
+    )
+    result_json_path.parent.mkdir(parents=True, exist_ok=True)
+    benchmark_marginal_area_ha = target_parent.get("benchmark_marginal_area_ha")
+    benchmark_cumulative_area_ha = target_parent.get("benchmark_cumulative_area_ha")
+    benchmark_marginal_delta_ha = (
+        removed_area_ha - float(benchmark_marginal_area_ha)
+        if benchmark_marginal_area_ha is not None
+        else None
+    )
+    benchmark_cumulative_delta_ha = (
+        remaining_area_ha - float(benchmark_cumulative_area_ha)
+        if benchmark_cumulative_area_ha is not None
+        else None
+    )
+    result = TsrThlbParentStepRunResult(
+        recipe_path=recipe_path.expanduser().resolve(),
+        parent_step_id=parent_step_id,
+        parent_label=str(target_parent.get("parent_label", "")).strip(),
+        tsa=recipe.tsa,
+        checkpoint_path=resolved_checkpoint_path,
+        selected_map_ids=(),
+        selected_landscape_units=(),
+        output_path=output_path,
+        result_json_path=result_json_path,
+        status=final_status,
+        executed_parent_step_ids=(parent_step_id,),
+        input_area_ha=input_area_ha,
+        removed_area_ha=removed_area_ha,
+        remaining_area_ha=remaining_area_ha,
+        benchmark_marginal_area_ha=float(benchmark_marginal_area_ha)
+        if benchmark_marginal_area_ha is not None
+        else None,
+        benchmark_cumulative_area_ha=float(benchmark_cumulative_area_ha)
+        if benchmark_cumulative_area_ha is not None
+        else None,
+        benchmark_marginal_delta_ha=benchmark_marginal_delta_ha,
+        benchmark_cumulative_delta_ha=benchmark_cumulative_delta_ha,
+        smoke_benchmark_scale_factor=None,
+        scaled_benchmark_marginal_area_ha=None,
+        scaled_benchmark_cumulative_area_ha=None,
+        scaled_benchmark_marginal_delta_ha=None,
+        scaled_benchmark_cumulative_delta_ha=None,
+        notes=_dedupe_runtime_notes(notes),
+        execution_mode=TSR_THLB_PARENT_STEP_EXECUTION_MODE_SERIAL,
+        worker_count=1,
+        lu_chunk_count=None,
+        lu_bundle_count=None,
+        progress_root=None,
+        profiling=profiling,
+    )
+    profiling["total_seconds"] = perf_counter() - total_started
+    result_json_write_started = perf_counter()
+    result_json_path.write_text(
+        json.dumps(
+            {
+                **result.to_dict(),
+                "locked_execution_class": str(
+                    target_parent.get("execution_class", "")
+                ).strip(),
+                "executed_items": executed_items,
+                "executed_item_summaries": _summarize_executed_items(executed_items),
+            },
+            indent=2,
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    profiling["result_json_write_seconds"] = perf_counter() - result_json_write_started
+    return result
 
 
 def run_tsr_thlb_parent_step(

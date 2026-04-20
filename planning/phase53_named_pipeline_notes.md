@@ -546,3 +546,15 @@
       delta `0.000 ha`; and
     - the runtime event stream and mirrored event log both show
       `validated_parent_step_count=1` and an immediate stop before step 002.
+- 2026-04-19: Completed `P53.1d10` by rebuilding `tsr.thlb_strict` to execute only locked validated step logic.
+  - What shipped:
+    - `src/femic/tsr_catalog/recipes.py` now exposes `run_tsr_thlb_locked_parent_step(...)`, a direct locked-step executor that runs exactly one approved locked parent step from one explicit checkpoint to the next checkpoint, emits compiled-step runtime events, and writes deterministic outputs under `data/tsr/strict_chain/`;
+    - `src/femic/named_pipelines.py` now sequences `tsa29_locked_chain_strict` over that locked-step executor, validates milestone rows in place against `thlb_locked_chain_ledger.json`, and starts later seams from the already validated row order instead of replaying upstream rows; and
+    - strict transformation rows now fail before execution if the locked recipe surface does not mark them approved or if their locked compiled logic is missing.
+  - Guardrail:
+    - `tsr.thlb_strict` no longer has a reachable path back to `run_tsr_thlb_parent_step(...)`; strict tests now monkeypatch that old runner to explode and prove the locked-step executor is the only path used.
+  - Focused validation:
+    - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -q`
+    - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "run_tsr_thlb_locked_parent_step_executes_one_locked_step" -q`
+    - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py src/femic/tsr_catalog/recipes.py src/femic/tsr_catalog/__init__.py tests/test_named_pipelines.py tests/test_tsr_recipes.py`
+    - `.\.venv\Scripts\python.exe -m mypy src`
