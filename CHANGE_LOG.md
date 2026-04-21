@@ -15001,3 +15001,21 @@
   - actual remaining `4,236,732.527 ha`
   - vs locked row 2: `+150.361 ha` marginal / `-150.361 ha` cumulative
   - vs TSR row 2: `-101.315 ha` marginal / `+130.527 ha` cumulative
+## 2026-04-21 - Bootstrapped `femic-mkrf-instance` as a private DataLad-backed standalone instance
+- `#171` thin-baseline instance bootstrap:
+  - created the private `UBC-FRESH/femic-mkrf-instance` repository and added `Phase 54` / `P54.1` plus `planning/mkrf_instance_bootstrap.md` to track the work in-repo;
+  - scaffolded the standard FEMIC instance layout for `mkrf`, renamed the starter config surfaces to `run_profile.mkrf.yaml`, `silviculture.mkrf.yaml`, and `config/tipsy/tsamkrf.yaml`, and added a private/WIP `README.md`, metadata ledgers, and a thin-baseline runbook boundary;
+  - initialized the repo as a large-only DataLad/git-annex dataset with TSA29-style `.gitattributes` so small canonical text stays in Git while bulky payloads can be annexed later;
+  - created the dedicated private-first Arbutus bucket and wired the named `arbutus-s3` special remote without anonymous/public publication settings;
+  - published one non-sensitive annex-backed smoke artifact at `data/annex_smoke/mkrf_bootstrap_smoke.bin`, uploaded it to `arbutus-s3`, pushed `main` and `git-annex`, and set the repo default branch to `main`; and
+  - linked the new repository back into FEMIC as submodule `external/femic-mkrf-instance`.
+- Validation:
+  - `gh auth status`
+  - `git annex version`
+  - `.\.venv\Scripts\python.exe -m datalad --version`
+  - `F:\projects\femic\.venv\Scripts\python.exe -m femic instance validate-spec --spec config/rebuild.spec.yaml` in both the standalone bootstrap checkout and `external/femic-mkrf-instance`
+  - `F:\projects\femic\.venv\Scripts\python.exe -m femic instance rebuild --spec config/rebuild.spec.yaml --dry-run --run-id mkrf_dryrun`
+  - `git annex copy --to arbutus-s3 data/annex_smoke/mkrf_bootstrap_smoke.bin`
+  - fresh-clone smoke: `git clone`, `git annex enableremote arbutus-s3`, and DataLad `get(...)` for `data/annex_smoke/mkrf_bootstrap_smoke.bin`
+- Thin-baseline boundary:
+  - full `femic prep validate-case --run-config config/run_profile.mkrf.yaml --tipsy-config-dir config/tipsy` is still expected to fail until the real MKRF boundary and checkpoint inputs are published, so the repo docs/runbook now call that out explicitly.

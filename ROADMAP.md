@@ -1420,3 +1420,14 @@ Notes: `planning/phase53_named_pipeline_notes.md`
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
   - [x] P53.2c Define cache-sufficiency checks for reusing local VDYP samples versus rerunning VDYP under the active sampling-intensity settings.
   - [x] P53.2d Compile TIPSY input parameters, run TIPSY (and optionally FANSIER), compile yield curves, and resume downstream THLB from a restart-safe yield bridge artifact.
+
+## Phase 54: Bootstrap MKRF Standalone Instance
+Notes: `planning/mkrf_instance_bootstrap.md`
+
+- [x] P54.1 Bootstrap `femic-mkrf-instance` as a private standalone FEMIC repository (`#171`)
+  - [x] P54.1a Create the private `UBC-FRESH/femic-mkrf-instance` repository and record the thin-baseline publication contract.
+  - [x] P54.1b Scaffold the standard FEMIC instance skeleton for `mkrf`, including rebuild spec, allowlist, runbook, and private/WIP README guidance.
+  - [x] P54.1c Initialize the repo as a large-only DataLad/git-annex dataset with `.gitattributes` / ignore policy that keeps small canonical text in Git and annexes bulky payload families.
+  - [x] P54.1d Create and validate the dedicated Arbutus bucket / `arbutus-s3` special remote for the instance without exposing anonymous public access.
+  - [x] P54.1e Publish a thin baseline plus one non-sensitive annex smoke artifact, then cold-clone and materialization-smoke the repo.
+  - [x] P54.1f Link `femic-mkrf-instance` back into FEMIC as submodule `external/femic-mkrf-instance` and update parent docs/changelog pointers only as needed.
