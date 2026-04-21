@@ -3307,6 +3307,7 @@ def _specialized_compiled_logic_for_parent_step(
         treaty_item.update(
             {
                 "benchmark_marginal_area_ha": 191246.0,
+                "direct_target_removed_area": True,
                 "normalized_action": "aspatial_area_reduction",
                 "normalized_subject": "Treaty and title transfer area reduction",
                 "normalized_predicate": (
@@ -12561,11 +12562,14 @@ def _execute_workbench_compiled_item(
             )
             runtime_item["runtime_notes"] = runtime_notes
             return checkpoint, runtime_item
-        target_removed_area_ha = (
-            float(benchmark_marginal_area_ha)
-            * current_area_ha
-            / total_area_benchmark_ha
-        )
+        if bool(compiled_item.get("direct_target_removed_area")):
+            target_removed_area_ha = float(benchmark_marginal_area_ha)
+        else:
+            target_removed_area_ha = (
+                float(benchmark_marginal_area_ha)
+                * current_area_ha
+                / total_area_benchmark_ha
+            )
         updated, removed_area_ha, affected_row_count = _apply_aspatial_area_reduction(
             checkpoint,
             target_removed_area_ha=target_removed_area_ha,
@@ -12578,9 +12582,14 @@ def _execute_workbench_compiled_item(
         runtime_notes.append(
             "Early-stage aspatial area reduction preserved geometry and reduced stand-area fields across the active AFLB subset."
         )
-        runtime_notes.append(
-            "Notebook execution scales the TSR benchmark marginal area to the current smoke subset before shrinking stand-area attributes."
-        )
+        if bool(compiled_item.get("direct_target_removed_area")):
+            runtime_notes.append(
+                f"Applied a direct-target area reduction of {target_removed_area_ha:.3f} ha within the active checkpoint subset."
+            )
+        else:
+            runtime_notes.append(
+                "Notebook execution scales the TSR benchmark marginal area to the current smoke subset before shrinking stand-area attributes."
+            )
         return _finalize(updated)
 
     if operation_type in {"select_spatial_intersect", "buffer_then_intersect"}:
@@ -13262,7 +13271,16 @@ def run_tsr_thlb_locked_parent_step(
     removed_area_ha = 0.0
     statuses: set[str] = set()
     notes: list[str] = []
-    if runtime_event_sink is not None:
+    total_area_benchmark_ha = _resolve_tsr_total_area_benchmark(recipe)
+    use_reconstructed_lu_executor = any(
+        _resolve_compiled_operation_type(item) == "aspatial_area_reduction"
+        and (
+            bool(item.get("subtract_parent_exact_removed_area"))
+            or bool(item.get("direct_target_removed_area"))
+        )
+        for item in compiled_logic
+    )
+    if runtime_event_sink is not None and not use_reconstructed_lu_executor:
         for compiled_item in compiled_logic:
             runtime_event_sink(
                 {
@@ -13286,173 +13304,286 @@ def run_tsr_thlb_locked_parent_step(
                 }
             )
 
-    total_area_benchmark_ha = _resolve_tsr_total_area_benchmark(recipe)
     execute_started = perf_counter()
     working: gpd.GeoDataFrame
-    cache_lookup_started = perf_counter()
-    cached_partition = _load_cached_landscape_unit_partition_records(
-        checkpoint_path=resolved_checkpoint_path,
-        instance_root=instance_root,
-        expected_row_count=len(checkpoint),
-        expected_area_ha=float(checkpoint.geometry.area.astype(float).sum() / 10000.0),
-        expected_columns=tuple(str(column).strip() for column in checkpoint.columns),
-    )
-    profiling["lu_selection_cache_lookup_seconds"] = (
-        perf_counter() - cache_lookup_started
-    )
-    chunk_records: list[dict[str, Any]] | None = None
-    if cached_partition is not None:
-        selected_landscape_units, chunk_records = cached_partition
-        _emit_locked_step_progress(
-            runtime_event_sink,
-            parent_step_id=parent_step_id,
-            parent_label=parent_label,
-            row_order=row_order,
-            land_base_stage=land_base_stage,
-            locked_execution_class=locked_execution_class,
-            bundle_status="lu_partition_cache_hit",
-            notes=(
-                f"reused cached LU partition records for {len(chunk_records)} chunks",
-            ),
-            completed_lus=len(chunk_records),
-            total_lus=len(chunk_records),
-            fraction_complete=1.0,
-        )
-    else:
-        _emit_locked_step_progress(
-            runtime_event_sink,
-            parent_step_id=parent_step_id,
-            parent_label=parent_label,
-            row_order=row_order,
-            land_base_stage=land_base_stage,
-            locked_execution_class=locked_execution_class,
-            bundle_status="lu_selection_started",
-            notes=("selecting intersecting landscape units for strict step input",),
-        )
-        lu_select_started = perf_counter()
+    if use_reconstructed_lu_executor:
         (
-            lu_frame,
-            selected_landscape_units,
-            lu_selection_profile,
-        ) = _select_intersecting_landscape_units_for_checkpoint(
-            checkpoint,
-            instance_root=instance_root,
-        )
-        profiling["lu_selection_seconds"] = perf_counter() - lu_select_started
-        for key, value in lu_selection_profile.items():
-            profiling[key] = float(value)
-        _emit_locked_step_progress(
-            runtime_event_sink,
-            parent_step_id=parent_step_id,
-            parent_label=parent_label,
-            row_order=row_order,
-            land_base_stage=land_base_stage,
-            locked_execution_class=locked_execution_class,
-            bundle_status="lu_selection_finished",
-            notes=(
-                f"selected {len(selected_landscape_units)} landscape units for strict step input",
-            ),
-            completed_lus=len(selected_landscape_units),
-            total_lus=len(selected_landscape_units),
-            fraction_complete=1.0,
-        )
-        _emit_locked_step_progress(
-            runtime_event_sink,
-            parent_step_id=parent_step_id,
-            parent_label=parent_label,
-            row_order=row_order,
-            land_base_stage=land_base_stage,
-            locked_execution_class=locked_execution_class,
-            bundle_status="lu_partition_materialize_started",
-            notes=("materializing LU partition chunks for strict step input",),
-        )
-        partition_started = perf_counter()
-        chunk_records = _materialize_checkpoint_landscape_unit_partitions(
-            checkpoint,
+            working,
+            applied_steps,
+            _outcome_counts,
+            diagnostic_steps,
+            _aflb_checkpoint,
+            _lhlb_checkpoint,
+        ) = _execute_tsr_thlb_recipe_steps_reconstructed_lu(
+            recipe_steps=compiled_logic,
+            checkpoint=checkpoint,
             checkpoint_path=resolved_checkpoint_path,
-            lu_frame=lu_frame,
-            selected_landscape_units=selected_landscape_units,
             instance_root=instance_root,
-        )
-        profiling["partition_materialize_seconds"] = (
-            perf_counter() - partition_started
-        )
-        _emit_locked_step_progress(
-            runtime_event_sink,
-            parent_step_id=parent_step_id,
-            parent_label=parent_label,
-            row_order=row_order,
-            land_base_stage=land_base_stage,
-            locked_execution_class=locked_execution_class,
-            bundle_status="lu_partition_materialize_finished",
-            notes=(
-                f"materialized {len(chunk_records)} LU partition chunks for strict step input",
-            ),
-            completed_lus=len(chunk_records),
-            total_lus=len(chunk_records),
-            fraction_complete=1.0,
-        )
-    if not chunk_records:
-        raise TsrRecipeError(
-            "Locked strict THLB execution produced no LU chunks for "
-            f"`{parent_step_id}`."
-        )
-    lu_chunk_count = len(chunk_records)
-    _resolved_parallel_mode, worker_count, resolved_lu_bundle_count = (
-        _resolve_reconstructed_parallel_settings(
+            source_entry_map=source_entry_map,
+            total_area_benchmark_ha=total_area_benchmark_ha,
             parallel_mode=TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_AUTO,
             max_workers=max_workers,
             lu_bundle_count=lu_bundle_count,
-            candidate_chunk_count=lu_chunk_count,
+            runtime_event_sink=runtime_event_sink,
         )
-    )
-    resolved_progress_root.mkdir(parents=True, exist_ok=True)
-    bundle_group_started = perf_counter()
-    bundles = _group_landscape_unit_chunk_records(
-        chunk_records,
-        bundle_count=resolved_lu_bundle_count,
-    )
-    profiling["bundle_group_seconds"] = perf_counter() - bundle_group_started
-    progress_paths = [
-        resolved_progress_root / f"bundle_{int(bundle['bundle_index']):02d}.json"
-        for bundle in bundles
-    ]
-    seen_progress_updates: dict[Path, str] = {}
-    worker_results: list[dict[str, Any]] = []
-    worker_pool_started = perf_counter()
-    with ProcessPoolExecutor(max_workers=worker_count) as pool:
-        future_to_progress_path = {
-            pool.submit(
-                _run_tsr_thlb_parent_step_bundle_worker,
-                bundle_index=int(bundle["bundle_index"]),
-                bundle_label=str(bundle["bundle_label"]),
-                bundle_items=[
-                    (str(item["lu_name"]), str(Path(item["chunk_path"])))
-                    for item in bundle["chunk_records"]
-                ],
-                output_path=str(
-                    resolved_progress_root
-                    / f"bundle_{int(bundle['bundle_index']):02d}.output.feather"
-                ),
-                execution_plan=execution_plan,
-                target_parent_id=parent_step_id,
-                instance_root=str(instance_root),
-                source_entry_map=source_entry_map,
-                total_area_benchmark_ha=total_area_benchmark_ha,
-                progress_path=str(
-                    resolved_progress_root
-                    / f"bundle_{int(bundle['bundle_index']):02d}.json"
-                ),
-            ): progress_path
-            for bundle, progress_path in zip(bundles, progress_paths, strict=True)
+        executed_items = [dict(step) for step in applied_steps]
+        statuses = {
+            str(step.get("run_status", "")).strip()
+            for step in applied_steps
+            if str(step.get("run_status", "")).strip()
         }
-        pending_futures = set(future_to_progress_path)
-        while pending_futures:
-            done_futures, pending_futures = wait(
-                pending_futures,
-                timeout=0.25,
-                return_when=FIRST_COMPLETED,
+        notes = [
+            str(note).strip()
+            for step in applied_steps
+            for note in step.get("run_notes", ())
+            if str(note).strip()
+        ]
+        partition_init = next(
+            (
+                step
+                for step in diagnostic_steps
+                if str(step.get("step_id", "")).strip() == "__lu_partition_init__"
+            ),
+            None,
+        )
+        if partition_init is not None:
+            lu_chunk_count = int(partition_init.get("lu_chunk_count", 0) or 0)
+            selected_landscape_units = tuple(
+                str(value).strip()
+                for value in partition_init.get("selected_landscape_units", ())
+                if str(value).strip()
             )
+            for key in (
+                "lu_selection_cache_lookup_seconds",
+                "lu_selection_seconds",
+                "partition_materialize_seconds",
+                "intersect_filter_seconds",
+            ):
+                if key in partition_init:
+                    profiling[key] = float(partition_init.get(key, 0.0) or 0.0)
+        step_profiles = [
+            step
+            for step in diagnostic_steps
+            if str(step.get("parent_step_id", "")).strip() == parent_step_id
+        ]
+        if step_profiles:
+            worker_count = max(
+                int(step.get("worker_count", 0) or 0) for step in step_profiles
+            )
+            resolved_lu_bundle_count = max(
+                int(step.get("lu_bundle_count", 0) or 0) for step in step_profiles
+            )
+        profiling["execute_seconds"] = perf_counter() - execute_started
+    else:
+        if runtime_event_sink is not None:
+            for compiled_item in compiled_logic:
+                runtime_event_sink(
+                    {
+                        "event_kind": "compiled_step_started",
+                        "parent_step_id": parent_step_id,
+                        "parent_label": str(
+                            target_parent.get("parent_label", "")
+                        ).strip()
+                        or None,
+                        "row_order": row_order,
+                        "land_base_stage": str(
+                            target_parent.get("land_base_stage", "")
+                        ).strip()
+                        or None,
+                        "compiled_step_id": str(compiled_item.get("step_id", "")).strip()
+                        or None,
+                        "compiled_step_label": str(
+                            compiled_item.get("label", "")
+                        ).strip()
+                        or None,
+                        "locked_execution_class": str(
+                            target_parent.get("execution_class", "")
+                        ).strip()
+                        or None,
+                    }
+                )
+        cache_lookup_started = perf_counter()
+        cached_partition = _load_cached_landscape_unit_partition_records(
+            checkpoint_path=resolved_checkpoint_path,
+            instance_root=instance_root,
+            expected_row_count=len(checkpoint),
+            expected_area_ha=float(
+                checkpoint.geometry.area.astype(float).sum() / 10000.0
+            ),
+            expected_columns=tuple(
+                str(column).strip() for column in checkpoint.columns
+            ),
+        )
+        profiling["lu_selection_cache_lookup_seconds"] = (
+            perf_counter() - cache_lookup_started
+        )
+        chunk_records: list[dict[str, Any]] | None = None
+        if cached_partition is not None:
+            selected_landscape_units, chunk_records = cached_partition
+            _emit_locked_step_progress(
+                runtime_event_sink,
+                parent_step_id=parent_step_id,
+                parent_label=parent_label,
+                row_order=row_order,
+                land_base_stage=land_base_stage,
+                locked_execution_class=locked_execution_class,
+                bundle_status="lu_partition_cache_hit",
+                notes=(
+                    f"reused cached LU partition records for {len(chunk_records)} chunks",
+                ),
+                completed_lus=len(chunk_records),
+                total_lus=len(chunk_records),
+                fraction_complete=1.0,
+            )
+        else:
+            _emit_locked_step_progress(
+                runtime_event_sink,
+                parent_step_id=parent_step_id,
+                parent_label=parent_label,
+                row_order=row_order,
+                land_base_stage=land_base_stage,
+                locked_execution_class=locked_execution_class,
+                bundle_status="lu_selection_started",
+                notes=("selecting intersecting landscape units for strict step input",),
+            )
+            lu_select_started = perf_counter()
+            (
+                lu_frame,
+                selected_landscape_units,
+                lu_selection_profile,
+            ) = _select_intersecting_landscape_units_for_checkpoint(
+                checkpoint,
+                instance_root=instance_root,
+            )
+            profiling["lu_selection_seconds"] = perf_counter() - lu_select_started
+            for key, value in lu_selection_profile.items():
+                profiling[key] = float(value)
+            _emit_locked_step_progress(
+                runtime_event_sink,
+                parent_step_id=parent_step_id,
+                parent_label=parent_label,
+                row_order=row_order,
+                land_base_stage=land_base_stage,
+                locked_execution_class=locked_execution_class,
+                bundle_status="lu_selection_finished",
+                notes=(
+                    f"selected {len(selected_landscape_units)} landscape units for strict step input",
+                ),
+                completed_lus=len(selected_landscape_units),
+                total_lus=len(selected_landscape_units),
+                fraction_complete=1.0,
+            )
+            _emit_locked_step_progress(
+                runtime_event_sink,
+                parent_step_id=parent_step_id,
+                parent_label=parent_label,
+                row_order=row_order,
+                land_base_stage=land_base_stage,
+                locked_execution_class=locked_execution_class,
+                bundle_status="lu_partition_materialize_started",
+                notes=("materializing LU partition chunks for strict step input",),
+            )
+            partition_started = perf_counter()
+            chunk_records = _materialize_checkpoint_landscape_unit_partitions(
+                checkpoint,
+                checkpoint_path=resolved_checkpoint_path,
+                lu_frame=lu_frame,
+                selected_landscape_units=selected_landscape_units,
+                instance_root=instance_root,
+            )
+            profiling["partition_materialize_seconds"] = (
+                perf_counter() - partition_started
+            )
+            _emit_locked_step_progress(
+                runtime_event_sink,
+                parent_step_id=parent_step_id,
+                parent_label=parent_label,
+                row_order=row_order,
+                land_base_stage=land_base_stage,
+                locked_execution_class=locked_execution_class,
+                bundle_status="lu_partition_materialize_finished",
+                notes=(
+                    f"materialized {len(chunk_records)} LU partition chunks for strict step input",
+                ),
+                completed_lus=len(chunk_records),
+                total_lus=len(chunk_records),
+                fraction_complete=1.0,
+            )
+        if not chunk_records:
+            raise TsrRecipeError(
+                "Locked strict THLB execution produced no LU chunks for "
+                f"`{parent_step_id}`."
+            )
+        lu_chunk_count = len(chunk_records)
+        _resolved_parallel_mode, worker_count, resolved_lu_bundle_count = (
+            _resolve_reconstructed_parallel_settings(
+                parallel_mode=TSR_THLB_RECONSTRUCTED_PARALLEL_MODE_AUTO,
+                max_workers=max_workers,
+                lu_bundle_count=lu_bundle_count,
+                candidate_chunk_count=lu_chunk_count,
+            )
+        )
+        resolved_progress_root.mkdir(parents=True, exist_ok=True)
+        bundle_group_started = perf_counter()
+        bundles = _group_landscape_unit_chunk_records(
+            chunk_records,
+            bundle_count=resolved_lu_bundle_count,
+        )
+        profiling["bundle_group_seconds"] = perf_counter() - bundle_group_started
+        progress_paths = [
+            resolved_progress_root / f"bundle_{int(bundle['bundle_index']):02d}.json"
+            for bundle in bundles
+        ]
+        seen_progress_updates: dict[Path, str] = {}
+        worker_results: list[dict[str, Any]] = []
+        worker_pool_started = perf_counter()
+        with ProcessPoolExecutor(max_workers=worker_count) as pool:
+            future_to_progress_path = {
+                pool.submit(
+                    _run_tsr_thlb_parent_step_bundle_worker,
+                    bundle_index=int(bundle["bundle_index"]),
+                    bundle_label=str(bundle["bundle_label"]),
+                    bundle_items=[
+                        (str(item["lu_name"]), str(Path(item["chunk_path"])))
+                        for item in bundle["chunk_records"]
+                    ],
+                    output_path=str(
+                        resolved_progress_root
+                        / f"bundle_{int(bundle['bundle_index']):02d}.output.feather"
+                    ),
+                    execution_plan=execution_plan,
+                    target_parent_id=parent_step_id,
+                    instance_root=str(instance_root),
+                    source_entry_map=source_entry_map,
+                    total_area_benchmark_ha=total_area_benchmark_ha,
+                    progress_path=str(
+                        resolved_progress_root
+                        / f"bundle_{int(bundle['bundle_index']):02d}.json"
+                    ),
+                ): progress_path
+                for bundle, progress_path in zip(bundles, progress_paths, strict=True)
+            }
+            pending_futures = set(future_to_progress_path)
+            while pending_futures:
+                done_futures, pending_futures = wait(
+                    pending_futures,
+                    timeout=0.25,
+                    return_when=FIRST_COMPLETED,
+                )
+                _emit_parallel_progress_events_from_files(
+                    progress_paths=progress_paths,
+                    event_sink=runtime_event_sink,
+                    event_fields={
+                        "parent_step_id": parent_step_id,
+                        "parent_label": parent_label,
+                        "row_order": row_order,
+                        "land_base_stage": land_base_stage,
+                        "locked_execution_class": locked_execution_class,
+                    },
+                    seen_updates_by_path=seen_progress_updates,
+                )
+                for future in done_futures:
+                    worker_results.append(future.result())
             _emit_parallel_progress_events_from_files(
                 progress_paths=progress_paths,
                 event_sink=runtime_event_sink,
@@ -13465,65 +13596,55 @@ def run_tsr_thlb_locked_parent_step(
                 },
                 seen_updates_by_path=seen_progress_updates,
             )
-            for future in done_futures:
-                worker_results.append(future.result())
-        _emit_parallel_progress_events_from_files(
-            progress_paths=progress_paths,
-            event_sink=runtime_event_sink,
-            event_fields={
-                "parent_step_id": parent_step_id,
-                "parent_label": parent_label,
-                "row_order": row_order,
-                "land_base_stage": land_base_stage,
-                "locked_execution_class": locked_execution_class,
-            },
-            seen_updates_by_path=seen_progress_updates,
+        profiling["worker_pool_seconds"] = perf_counter() - worker_pool_started
+        merge_read_started = perf_counter()
+        merged_frames = [
+            gpd.read_feather(Path(worker_result["output_path"]))
+            for worker_result in worker_results
+        ]
+        profiling["merge_read_seconds"] = perf_counter() - merge_read_started
+        merge_concat_started = perf_counter()
+        working = gpd.GeoDataFrame(
+            pd.concat(merged_frames, ignore_index=True),
+            geometry="geometry",
+            crs=BC_ALBERS_EPSG,
         )
-    profiling["worker_pool_seconds"] = perf_counter() - worker_pool_started
-    merge_read_started = perf_counter()
-    merged_frames = [
-        gpd.read_feather(Path(worker_result["output_path"]))
-        for worker_result in worker_results
-    ]
-    profiling["merge_read_seconds"] = perf_counter() - merge_read_started
-    merge_concat_started = perf_counter()
-    working = gpd.GeoDataFrame(
-        pd.concat(merged_frames, ignore_index=True),
-        geometry="geometry",
-        crs=BC_ALBERS_EPSG,
-    )
-    working = working.loc[~working.geometry.is_empty].copy()
-    working = _assign_fragment_feature_ids(working)
-    profiling["merge_concat_seconds"] = perf_counter() - merge_concat_started
-    for worker_result in worker_results:
-        executed_items.extend(
-            item
-            for item in worker_result.get("executed_items", [])
-            if isinstance(item, dict)
-        )
-        removed_area_ha += float(worker_result.get("removed_area_ha", 0.0) or 0.0)
-        status = str(worker_result.get("status", "")).strip()
-        if status:
-            statuses.add(status)
-        notes.extend(
-            str(value).strip()
-            for value in worker_result.get("notes", [])
-            if str(value).strip()
-        )
-    profiling["worker_bundles"] = [
-        {
-            "bundle_index": int(worker_result.get("bundle_index", 0) or 0),
-            "bundle_label": str(worker_result.get("bundle_label", "")).strip(),
-            "completed_lus": int(worker_result.get("completed_lus", 0) or 0),
-            "lu_names": list(worker_result.get("lu_names", [])),
-            "profiling": worker_result.get("profiling", {}),
-        }
-        for worker_result in worker_results
-    ]
-    profiling["execute_seconds"] = perf_counter() - execute_started
+        working = working.loc[~working.geometry.is_empty].copy()
+        working = _assign_fragment_feature_ids(working)
+        profiling["merge_concat_seconds"] = perf_counter() - merge_concat_started
+        for worker_result in worker_results:
+            executed_items.extend(
+                item
+                for item in worker_result.get("executed_items", [])
+                if isinstance(item, dict)
+            )
+            removed_area_ha += float(worker_result.get("removed_area_ha", 0.0) or 0.0)
+            status = str(worker_result.get("status", "")).strip()
+            if status:
+                statuses.add(status)
+            notes.extend(
+                str(value).strip()
+                for value in worker_result.get("notes", [])
+                if str(value).strip()
+            )
+        profiling["worker_bundles"] = [
+            {
+                "bundle_index": int(worker_result.get("bundle_index", 0) or 0),
+                "bundle_label": str(worker_result.get("bundle_label", "")).strip(),
+                "completed_lus": int(worker_result.get("completed_lus", 0) or 0),
+                "lu_names": list(worker_result.get("lu_names", [])),
+                "profiling": worker_result.get("profiling", {}),
+            }
+            for worker_result in worker_results
+        ]
+        profiling["execute_seconds"] = perf_counter() - execute_started
 
     final_status = _combine_parent_step_statuses(statuses)
     remaining_area_ha = _managed_area_ha(working)
+    removed_area_ha = _resolve_step_net_removed_area_ha(
+        managed_area_before_step_ha=input_area_ha,
+        managed_area_after_step_ha=remaining_area_ha,
+    )
     output_path = default_tsr_thlb_strict_chain_checkpoint_path(
         instance_root=instance_root,
         parent_step_id=parent_step_id,
@@ -17828,18 +17949,6 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                     "Aspatial area reduction requires TSR benchmark marginal area and total TSA area benchmark."
                 ]
             else:
-                residual_target_ha = float(benchmark_marginal_area_ha)
-                if bool(updated_step.get("subtract_parent_exact_removed_area")):
-                    residual_target_ha = max(
-                        0.0,
-                        residual_target_ha
-                        - _resolve_parent_exact_removed_area_ha(
-                            applied_steps=applied_steps,
-                            parent_step_id=str(
-                                updated_step.get("parent_step_id", "")
-                            ).strip(),
-                        ),
-                    )
                 current_area_ha = 0.0
                 for record in current_chunk_records:
                     current_area_ha += float(
@@ -17848,11 +17957,13 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                         ).sum()
                         / 10000.0
                     )
-                if bool(updated_step.get("subtract_parent_exact_removed_area")):
-                    target_removed_area_ha = residual_target_ha
+                if bool(updated_step.get("direct_target_removed_area")):
+                    target_removed_area_ha = float(benchmark_marginal_area_ha)
                 else:
                     target_removed_area_ha = (
-                        residual_target_ha * current_area_ha / total_area_benchmark_ha
+                        float(benchmark_marginal_area_ha)
+                        * current_area_ha
+                        / total_area_benchmark_ha
                     )
                 fallback_started = perf_counter()
                 (
@@ -17881,9 +17992,9 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                     "Applied the TSR area target as a documented reconstructed-mode aspatial fallback because no exact spatial implementation is available for this recipe row.",
                     "This early-area deduction scales active LU-wise reconstructed stand-area fields instead of claiming exact spatial reproduction.",
                 ]
-                if bool(updated_step.get("subtract_parent_exact_removed_area")):
+                if bool(updated_step.get("direct_target_removed_area")):
                     updated_step["run_notes"].append(
-                        f"Residual fallback target after same-parent exact removal: {target_removed_area_ha:.3f} ha."
+                        f"Applied a direct-target area reduction of {target_removed_area_ha:.3f} ha within the active checkpoint subset."
                     )
         else:
             updated_step["run_status"] = "unsupported"
@@ -18528,26 +18639,16 @@ def _execute_tsr_thlb_recipe_steps(
                     "Aspatial area reduction requires TSR benchmark marginal area and total TSA area benchmark."
                 ]
             else:
-                residual_target_ha = float(benchmark_marginal_area_ha)
-                if bool(updated_step.get("subtract_parent_exact_removed_area")):
-                    residual_target_ha = max(
-                        0.0,
-                        residual_target_ha
-                        - _resolve_parent_exact_removed_area_ha(
-                            applied_steps=applied_steps,
-                            parent_step_id=str(
-                                updated_step.get("parent_step_id", "")
-                            ).strip(),
-                        ),
-                    )
                 current_area_ha = float(
                     _resolve_canonical_stand_area_sqm(checkpoint).sum() / 10000.0
                 )
-                if bool(updated_step.get("subtract_parent_exact_removed_area")):
-                    target_removed_area_ha = residual_target_ha
+                if bool(updated_step.get("direct_target_removed_area")):
+                    target_removed_area_ha = float(benchmark_marginal_area_ha)
                 else:
                     target_removed_area_ha = (
-                        residual_target_ha * current_area_ha / total_area_benchmark_ha
+                        float(benchmark_marginal_area_ha)
+                        * current_area_ha
+                        / total_area_benchmark_ha
                     )
                 checkpoint, removed_area_ha, affected_row_count = (
                     _apply_aspatial_area_reduction(
@@ -18571,9 +18672,9 @@ def _execute_tsr_thlb_recipe_steps(
                         "Applied the TSR area target as a documented reconstructed-mode aspatial fallback because no exact spatial implementation is available for this recipe row.",
                         "This early-area deduction shrinks stand-area attributes across the active AFLB subset instead of changing THLB retention directly.",
                     ]
-                    if bool(updated_step.get("subtract_parent_exact_removed_area")):
+                    if bool(updated_step.get("direct_target_removed_area")):
                         updated_step["run_notes"].append(
-                            f"Residual fallback target after same-parent exact removal: {target_removed_area_ha:.3f} ha."
+                            f"Applied a direct-target area reduction of {target_removed_area_ha:.3f} ha within the active checkpoint subset."
                         )
                 else:
                     updated_step["run_notes"] = [

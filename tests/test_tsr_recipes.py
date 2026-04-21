@@ -367,6 +367,7 @@ def test_run_tsr_thlb_locked_parent_step_executes_one_locked_step(
         instance_root,
         source_entry_map,
         total_area_benchmark_ha,
+        applied_steps=(),
     ):
         updated = checkpoint.copy()
         updated["thlb_fact"] = [0.8]
@@ -425,6 +426,163 @@ def test_run_tsr_thlb_locked_parent_step_executes_one_locked_step(
         and event.get("remaining_area_ha") == 0.8
         for event in captured_events
     )
+
+
+def test_run_tsr_thlb_locked_parent_step_uses_true_before_after_net_change(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _ImmediateFuture:
+        def __init__(self, value: object) -> None:
+            self._value = value
+
+        def result(self) -> object:
+            return self._value
+
+    class _ImmediateExecutor:
+        def __init__(self, *, max_workers: int | None = None) -> None:
+            self.max_workers = max_workers
+
+        def __enter__(self) -> "_ImmediateExecutor":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+        def submit(self, fn, /, *args, **kwargs) -> _ImmediateFuture:
+            return _ImmediateFuture(fn(*args, **kwargs))
+
+    instance_root = tmp_path / "instance"
+    checkpoint_path = instance_root / "data" / "tsr" / "glb_checkpoint.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    chunk_path = instance_root / "runtime" / "logs" / "tsr" / "strict_chunk.feather"
+    chunk_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {
+            "FEATURE_AREA_SQM": [10000.0],
+            "_stand_area_sqm": [10000.0],
+            "_row_id": [0],
+            "thlb_fact": [1.0],
+            "thlb": [1],
+        },
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    ).to_feather(checkpoint_path)
+    gpd.GeoDataFrame(
+        {
+            "FEATURE_AREA_SQM": [10000.0],
+            "_stand_area_sqm": [10000.0],
+            "_row_id": [0],
+            "thlb_fact": [1.0],
+            "thlb": [1],
+        },
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    ).to_feather(chunk_path)
+
+    tsa = tsr_catalog.TsrOverlayTsaRecord(
+        tsa_id="tsa_29",
+        tsa_code="29",
+        tsa_name="Williams Lake",
+    )
+    recipe = SimpleNamespace(tsa=tsa)
+    parent_step = {
+        "parent_step_id": "thlb_parent_002_land_not_administered_by_the_province",
+        "parent_label": "Land not administered by the Province",
+        "row_order": 2,
+        "parent_kind": "transformation",
+        "execution_class": "bounded_step_run",
+        "land_base_stage": "glb_to_aflb",
+        "approved": True,
+        "ratchet_state": "approved",
+        "last_notebook_run_status": "applied",
+        "benchmark_marginal_area_ha": 0.3,
+        "benchmark_cumulative_area_ha": 0.7,
+        "compiled_logic": (
+            {
+                "step_id": "thlb_parent_002_compiled_01",
+                "label": "Ownership filter",
+            },
+            {
+                "step_id": "thlb_parent_002_compiled_02",
+                "label": "Treaty/title fallback",
+            },
+        ),
+    }
+
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_load_tsr_thlb_recipe_context",
+        lambda recipe_path: (recipe, instance_root, None, {}, {}),
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_resolve_tsr_thlb_parent_step",
+        lambda recipe, parent_step_id: parent_step,
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_resolve_tsr_total_area_benchmark",
+        lambda recipe: 1.0,
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_load_cached_landscape_unit_partition_records",
+        lambda **kwargs: (("Test LU",), [{"lu_name": "Test LU", "chunk_path": chunk_path}]),
+    )
+    monkeypatch.setattr(tsr_recipes, "ProcessPoolExecutor", _ImmediateExecutor)
+    monkeypatch.setattr(
+        tsr_recipes,
+        "wait",
+        lambda futures, timeout=None, return_when=None: (set(futures), set()),
+    )
+
+    def _fake_execute(
+        *,
+        checkpoint,
+        compiled_item,
+        instance_root,
+        source_entry_map,
+        total_area_benchmark_ha,
+    ):
+        updated = checkpoint.copy()
+        if compiled_item["step_id"] == "thlb_parent_002_compiled_01":
+            updated["thlb_fact"] = [0.8]
+            return updated, {
+                "step_id": "thlb_parent_002_compiled_01",
+                "label": "Ownership filter",
+                "execution_status": "applied",
+                "removed_area_ha": 0.2,
+                "net_removed_area_ha": 0.2,
+                "remaining_area_ha": 0.8,
+                "runtime_notes": [],
+            }
+        updated["thlb_fact"] = [0.7]
+        return updated, {
+            "step_id": "thlb_parent_002_compiled_02",
+            "label": "Treaty/title fallback",
+            "execution_status": "applied",
+            "removed_area_ha": 0.1,
+            "net_removed_area_ha": 0.1,
+            "remaining_area_ha": 0.7,
+            "runtime_notes": [],
+        }
+
+    monkeypatch.setattr(tsr_recipes, "_execute_workbench_compiled_item", _fake_execute)
+
+    result = tsr_recipes.run_tsr_thlb_locked_parent_step(
+        recipe_path=instance_root
+        / "workbench"
+        / "tsr"
+        / "thlb_netdown.locked.recipe.yaml",
+        parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+        checkpoint_path=checkpoint_path,
+    )
+
+    assert result.removed_area_ha == pytest.approx(0.3)
+    assert result.remaining_area_ha == pytest.approx(0.7)
+    assert result.benchmark_marginal_delta_ha == pytest.approx(0.0)
+    assert result.benchmark_cumulative_delta_ha == pytest.approx(0.0)
 
 
 def test_run_tsr_thlb_locked_parent_step_uses_cpu_aware_parallel_defaults(
@@ -548,6 +706,7 @@ def test_run_tsr_thlb_locked_parent_step_uses_cpu_aware_parallel_defaults(
         instance_root,
         source_entry_map,
         total_area_benchmark_ha,
+        applied_steps=(),
     ):
         updated = checkpoint.copy()
         updated["thlb_fact"] = 0.0
@@ -717,6 +876,7 @@ def test_run_tsr_thlb_locked_parent_step_passes_expected_columns_to_cache_lookup
         instance_root,
         source_entry_map,
         total_area_benchmark_ha,
+        applied_steps=(),
     ):
         updated = checkpoint.copy()
         updated["thlb_fact"] = [0.8]
@@ -7175,6 +7335,7 @@ def test_specialized_compiled_logic_for_step2_uses_aspatial_area_reduction_fallb
     assert treaty_item["compiled_operation_type"] == "aspatial_area_reduction"
     assert treaty_item["normalized_action"] == "aspatial_area_reduction"
     assert treaty_item["benchmark_marginal_area_ha"] == pytest.approx(191246.0)
+    assert treaty_item["direct_target_removed_area"] is True
     assert treaty_item["linked_source_entry_ids"] == []
 
 
@@ -7602,6 +7763,41 @@ def test_execute_workbench_compiled_item_handles_no_deduction() -> None:
         in " ".join(runtime_item["runtime_notes"]).lower()
     )
     assert updated["thlb_fact"].tolist() == pytest.approx([1.0])
+
+
+def test_execute_workbench_compiled_item_uses_direct_target_area_reduction() -> None:
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "thlb_fact": [1.0, 1.0],
+            "_row_id": [0, 1],
+            "_stand_area_sqm": [50000.0, 50000.0],
+        },
+        geometry=[box(0, 0, 100, 500), box(100, 0, 200, 500)],
+        crs="EPSG:3005",
+    )
+
+    updated, runtime_item = tsr_recipes._execute_workbench_compiled_item(
+        checkpoint=checkpoint,
+        compiled_item={
+            "step_id": "row2_compiled_02",
+            "parent_step_id": "thlb_parent_002_land_not_administered_by_the_province",
+            "normalized_action": "aspatial_area_reduction",
+            "compiled_operation_type": "aspatial_area_reduction",
+            "benchmark_marginal_area_ha": 10.0,
+            "direct_target_removed_area": True,
+        },
+        instance_root=Path.cwd(),
+        source_entry_map={},
+        total_area_benchmark_ha=100.0,
+    )
+
+    assert runtime_item["execution_status"] == "applied"
+    assert runtime_item["removed_area_ha"] == pytest.approx(10.0)
+    assert runtime_item["remaining_area_ha"] == pytest.approx(0.0)
+    assert "Applied a direct-target area reduction of 10.000 ha within the active checkpoint subset." in (
+        runtime_item["runtime_notes"]
+    )
+    assert updated["_stand_area_sqm"].sum() / 10000.0 == pytest.approx(0.0)
 
 
 def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(

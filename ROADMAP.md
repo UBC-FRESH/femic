@@ -1414,6 +1414,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d10f Reuse the established CPU-aware LU worker/bundle sizing helper in the strict locked-step executor so Windows step runs default back to the documented `8 workers / 8 bundles` pattern instead of one worker per LU chunk.
     - [x] P53.1d10g Make strict LU cache reuse schema-aware so `tsr.thlb_strict` refuses stale chunk caches unless they match the current checkpoint column set, including strict-state columns such as `thlb_fact`.
     - [x] P53.1d10h Sync locked row-2 aspatial fallback metadata and stop falsely blocking production full-TSA F_OWN overlays on LU bundles.
+    - [x] P53.1d10i Correct strict row-2 parent-step accounting to use the true before/after net change so direct-target aspatial deductions are included in marginal validation.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.

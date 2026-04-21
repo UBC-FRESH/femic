@@ -607,3 +607,12 @@
     - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "evaluate_source_extent_mismatch_allows_production_full_tsa_overlay_for_lu_bundle or tsa29_locked_recipe_step2_uses_aspatial_area_reduction" -q`
     - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
     - `.\.venv\Scripts\python.exe -m mypy src`
+- 2026-04-21: Completed `P53.1d10i` by correcting strict row-2 parent-step accounting to use the true before/after net change.
+  - Diagnosis:
+    - row 2 was now executing the right GIS and aspatial logic, but strict validation still only credited the exact overlay removal from `compiled_01`, which dropped the `compiled_02` direct-target deduction out of the parent-step marginal.
+  - Fix:
+    - `run_tsr_thlb_locked_parent_step(...)` now computes the parent-step marginal from the true checkpoint before/after net change instead of summing only exact same-parent removal helpers.
+  - Outcome:
+    - bounded `glb -> step2` rerun now lands at `696,931.685 ha` removed / `4,236,732.527 ha` remaining;
+    - versus the locked chain this is `+150.361 ha` marginal / `-150.361 ha` cumulative; and
+    - versus the TSR step-wise benchmark this is `-101.315 ha` marginal / `+130.527 ha` cumulative.

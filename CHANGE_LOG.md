@@ -14988,3 +14988,16 @@
   - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "evaluate_source_extent_mismatch_allows_production_full_tsa_overlay_for_lu_bundle or tsa29_locked_recipe_step2_uses_aspatial_area_reduction" -q`
   - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
   - `.\.venv\Scripts\python.exe -m mypy src`
+## 2026-04-21 - Corrected strict row-2 parent-step accounting
+- `#169` bounded row-2 accounting fix:
+  - updated `run_tsr_thlb_locked_parent_step(...)` so the step marginal now uses the true checkpoint before/after net change instead of only summing the exact overlay removal helper; and
+  - added a focused regression test proving a parent step with multiple compiled items reports the full net change, not just the first exact drop.
+- Focused validation:
+  - `.\.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py -k "run_tsr_thlb_locked_parent_step_executes_one_locked_step or run_tsr_thlb_locked_parent_step_uses_true_before_after_net_change or execute_workbench_compiled_item_uses_direct_target_area_reduction" -q`
+  - `.\.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
+  - `.\.venv\Scripts\python.exe -m mypy src`
+- Bounded `glb -> step2` rerun result:
+  - actual removed `696,931.685 ha`
+  - actual remaining `4,236,732.527 ha`
+  - vs locked row 2: `+150.361 ha` marginal / `-150.361 ha` cumulative
+  - vs TSR row 2: `-101.315 ha` marginal / `+130.527 ha` cumulative
