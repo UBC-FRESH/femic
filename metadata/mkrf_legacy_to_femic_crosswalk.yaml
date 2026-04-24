@@ -1,0 +1,118 @@
+schema_version: 1
+
+legacy_case:
+  case_id: mkrf_legacy_2016
+  authoritative_root: MKRF_Cosmin_Model/MKRF
+  compiled_bundle_root: MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF
+  upstream_prep_root: MKRF_Cosmin_Model/MKRF/03_MappingAnalysisData
+  operator_context_root: MKRF_Cosmin_Model/MKRF/05_Documents
+
+reference_templates:
+  plain_git_snapshot: external/femic-k3z-instance
+  datalad_runtime_split: external/femic-tsa29-instance
+
+crosswalk:
+  compiled_runtime_package:
+    disposition: future_instance_runtime_payload
+    legacy_components:
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/baseMKRF.pin
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/Tracks/*.csv
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/Spatial/fragments.*
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/Spatial/topo_frag100.csv
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/Targets/*.bsh
+    candidate_femic_homes:
+      - models/mkrf_patchworks_model/analysis/
+      - models/mkrf_patchworks_model/tracks/
+      - output/patchworks_mkrf_validated/fragments/
+    notes:
+      - Treat this as the closest analogue to the checked-in K3Z/TSA29 Patchworks runtime surface.
+      - Preserve the compiled-package anatomy before attempting any FEMIC exporter rebuild.
+
+  editable_model_sources:
+    disposition: future_rebuild_source_and_recovery_evidence
+    legacy_components:
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/baseMKRF.xml
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/Curves.xml
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/002_base.xlsm
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/001_makeCurves_XML.py
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/003_MakeAccounts.py
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/CSV/*
+    candidate_femic_homes:
+      - output/patchworks_mkrf_validated/forestmodel.xml
+      - data/legacy_mkrf/xml_builders/
+      - evidence/legacy_mkrf/xml_recovery/
+    notes:
+      - Keep the editable XML plus builder chain intact as historical recovery evidence.
+      - Do not yet decide whether the workbook chain or the checked-in XML is the governing source of truth.
+
+  scenario_and_control_scripts:
+    disposition: future_runbook_and_analysis_support
+    legacy_components:
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/runME.bsh
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/ScenarioSet.bsh
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/Scripts/*.bsh
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/Targets/000_Targets_Builder.xlsx
+    candidate_femic_homes:
+      - runbooks/legacy_patchworks_scripts/
+      - docs/legacy_mkrf/
+      - data/legacy_mkrf/targets/
+    notes:
+      - These are valuable for reconstructing target logic and scenario choreography even if FEMIC later replaces them with native config.
+
+  upstream_mapping_and_yield_prep:
+    disposition: future_raw_input_and_lineage_surface
+    legacy_components:
+      - MKRF_Cosmin_Model/MKRF/03_MappingAnalysisData/Source.gdb
+      - MKRF_Cosmin_Model/MKRF/03_MappingAnalysisData/Resultant.gdb
+      - MKRF_Cosmin_Model/MKRF/03_MappingAnalysisData/Resultant_info_v1.xlsx
+      - MKRF_Cosmin_Model/MKRF/03_MappingAnalysisData/00_Stats/*.csv
+      - MKRF_Cosmin_Model/MKRF/03_MappingAnalysisData/03_Yields/VDYP/*
+    candidate_femic_homes:
+      - data/legacy_mkrf/source_geodatabases/
+      - data/legacy_mkrf/resultant_geodatabases/
+      - data/legacy_mkrf/yields/vdyp/
+      - docs/legacy_mkrf/
+    notes:
+      - Treat this lane as upstream lineage and preprocessing evidence, not as a ready-to-run FEMIC contract yet.
+      - It likely informs future stage-00 and stage-01 recovery work.
+
+  historical_outputs_and_reports:
+    disposition: archival_evidence
+    legacy_components:
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/Outputs/001_Base/*
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/Outputs/z_Comparisons/*
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/patchworksLog.csv
+      - MKRF_Cosmin_Model/MKRF/05_Documents/MKRF_Modeling_Notes.pdf
+    candidate_femic_homes:
+      - evidence/legacy_mkrf/
+      - docs/legacy_mkrf/
+    notes:
+      - Preserve these as benchmark and interpretation artifacts.
+      - Do not yet assume they are canonical enough for automated regression baselines.
+
+unresolved_seams:
+  - seam_id: roads_runtime_surface
+    status: unresolved
+    legacy_signal:
+      - baseMKRF.pin references ../roads/access.shp and related route files when routes are enabled
+    reason:
+      - no in-scope roads folder was inventoried in the authoritative first-pass corpus
+  - seam_id: governing_editable_source
+    status: unresolved
+    legacy_signal:
+      - both baseMKRF.xml/Curves.xml and the workbook/script builder chain are present
+    reason:
+      - milestone one does not yet adjudicate which surface should be treated as the governing editable source
+  - seam_id: orthos_operational_role
+    status: unresolved
+    legacy_signal:
+      - 03_MappingAnalysisData/Orthos_2016 is present
+    reason:
+      - not yet clear whether it is contextual QA only or part of a reproducible preprocessing contract
+
+next_bounded_step:
+  recommendation: import_compiled_package_metadata_into_instance
+  description:
+    Import only the stable compiled-package anatomy into external/femic-mkrf-instance
+    as review metadata and docs, without attempting a runnable FEMIC rebuild or
+    publishing the full upstream mapping-analysis payload yet.

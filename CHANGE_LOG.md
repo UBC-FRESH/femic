@@ -15019,3 +15019,19 @@
   - fresh-clone smoke: `git clone`, `git annex enableremote arbutus-s3`, and DataLad `get(...)` for `data/annex_smoke/mkrf_bootstrap_smoke.bin`
 - Thin-baseline boundary:
   - full `femic prep validate-case --run-config config/run_profile.mkrf.yaml --tipsy-config-dir config/tipsy` is still expected to fail until the real MKRF boundary and checkpoint inputs are published, so the repo docs/runbook now call that out explicitly.
+## 2026-04-24 - Launched the MKRF legacy Patchworks archaeology lane in the parent FEMIC repo
+- `#172` bounded milestone-one archaeology package:
+  - opened the umbrella issue and created the issue-backed branch `feature/issue-172-mkrf-legacy-decompile`;
+  - added `Phase 55` / `P55.1` to `ROADMAP.md` plus the canonical work log `planning/mkrf_legacy_decompile.md`;
+  - published `metadata/mkrf_legacy_artifact_manifest.csv` as the first-pass bagging/tagging map for the in-scope legacy corpus under `MKRF_Cosmin_Model/MKRF`;
+  - published `metadata/mkrf_legacy_to_femic_crosswalk.yaml` to map the legacy compiled bundle, upstream mapping/yield lane, and document/reporting lane into future FEMIC-style homes; and
+  - recorded the discovered compiled-model anatomy, unresolved seams, and the recommended next bounded step in the planning note instead of jumping straight into a rebuild.
+- First-pass corpus captured:
+  - `04_Models/PW_MKRF` as the compiled legacy Patchworks package;
+  - `03_MappingAnalysisData` as the upstream mapping/yield-prep lane; and
+  - `05_Documents/MKRF_Modeling_Notes.pdf` as the operator/context lane.
+- Focused validation:
+  - verified the new issue-backed branch name and linked `#172` roadmap phase/task;
+  - checked manifest coverage for `PW_MKRF` `Documentation`, `Outputs`, `Scripts`, `Spatial`, `Targets`, `Tracks`, and `XML`;
+  - checked manifest coverage for `03_MappingAnalysisData` plus the `05_Documents` lane; and
+  - confirmed the crosswalk and planning note agree that the next bounded move is to import compiled-package metadata into `external/femic-mkrf-instance` without attempting a runnable rebuild yet.

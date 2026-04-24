@@ -1431,3 +1431,12 @@ Notes: `planning/mkrf_instance_bootstrap.md`
   - [x] P54.1d Create and validate the dedicated Arbutus bucket / `arbutus-s3` special remote for the instance without exposing anonymous public access.
   - [x] P54.1e Publish a thin baseline plus one non-sensitive annex smoke artifact, then cold-clone and materialization-smoke the repo.
   - [x] P54.1f Link `femic-mkrf-instance` back into FEMIC as submodule `external/femic-mkrf-instance` and update parent docs/changelog pointers only as needed.
+
+## Phase 55: Recover the Legacy 2016 MKRF Patchworks Model into FEMIC-Ready Metadata
+Notes: `planning/mkrf_legacy_decompile.md`
+
+- [x] P55.1 Launch the MKRF legacy archaeology lane in the parent FEMIC repo (`#172`)
+  - [x] P55.1a Open the umbrella issue and create the issue-backed feature branch for the archaeology-first milestone.
+  - [x] P55.1b Inventory the authoritative legacy corpus under `MKRF_Cosmin_Model/MKRF`, including the compiled `PW_MKRF` bundle, `03_MappingAnalysisData`, and `05_Documents`.
+  - [x] P55.1c Publish the first-pass artifact manifest and bagging/tagging map in the parent repo as reviewable metadata surfaces.
+  - [x] P55.1d Record the compiled-model anatomy, FEMIC crosswalk, unresolved seams, and next bounded step in the planning note.
