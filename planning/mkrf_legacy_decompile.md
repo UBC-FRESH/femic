@@ -141,17 +141,17 @@ Recommended recovery interpretation:
 
 Do exactly one next bounded move:
 
-**import exactly one bulky compiled runtime family into `external/femic-mkrf-instance`
-as archival reference payload**, starting with either tracks or fragments, but
-not both in the same slice.
+**import the spatial compiled runtime family into
+`external/femic-mkrf-instance` as archival reference payload**, starting with
+`Spatial/fragments.*` plus `Spatial/topo_frag100.csv`.
 
-The archival control-layer intake is now complete. The next bounded move should:
+The archival control-layer intake and the archival track-table intake are now
+complete. The next bounded move should:
 
-- choose one family:
-  - `Tracks/*.csv`, or
+- import exactly one family:
   - `Spatial/fragments.*` plus `topo_frag100.csv`;
 - preserve the archival/reference framing instead of claiming a runnable rebuild
   surface;
 - continue to defer `03_MappingAnalysisData` and `Outputs/*`; and
 - keep the governing editable-source seam unresolved until the first bulky
-  compiled family is reviewed in-instance.
+  spatial family is reviewed in-instance.

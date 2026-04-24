@@ -15063,3 +15063,15 @@
 - Focused validation:
   - `F:\\projects\\femic\\.venv\\Scripts\\python.exe -m femic instance validate-spec --spec config/rebuild.spec.yaml`
   - reviewed the copied archival control tree against the legacy source folder to confirm the expected entrypoints, `Scripts/*.bsh`, and `Targets/*.bsh` families are present.
+## 2026-04-24 - Copied the legacy MKRF compiled track tables into `femic-mkrf-instance` as archival references
+- `#172` bounded archival-track slice:
+  - copied the legacy `Tracks/*.csv` family into `external/femic-mkrf-instance/data/legacy_mkrf/compiled_tracks/`;
+  - updated the MKRF instance README, quickstart, rebuild runbook, legacy compiled-package reference note, and lineage metadata so the copied track tables are treated as archival references under review rather than an accepted runnable surface; and
+  - updated the machine-readable legacy compiled-package reference YAML so the track family now points at the copied archival lane and the next bounded move narrows to the spatial runtime family.
+- Scope boundary preserved:
+  - no `Spatial/fragments.*`, `topo_frag100.csv`, `Outputs/*`, or `03_MappingAnalysisData/*` payloads were imported by this slice;
+  - no claim was made that the copied track tables are sufficient to run the legacy model; and
+  - the governing editable-source seam still remains unresolved.
+- Focused validation:
+  - `F:\\projects\\femic\\.venv\\Scripts\\python.exe -m femic instance validate-spec --spec config/rebuild.spec.yaml`
+  - confirmed the archival track-table intake contains 13 copied `Tracks/*.csv` files under `external/femic-mkrf-instance/data/legacy_mkrf/compiled_tracks/`.

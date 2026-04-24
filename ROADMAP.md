@@ -1448,3 +1448,19 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P55.3a Copy the legacy control entrypoints (`baseMKRF.pin`, `runME.bsh`, `ScenarioSet.bsh`) into an archival lane inside the MKRF instance.
   - [x] P55.3b Copy the selected legacy `Scripts/*.bsh` and `Targets/*.bsh` files into the same archival/reference lane.
   - [x] P55.3c Update instance-local metadata/docs so the copied controls are explicitly archival-only and the next bounded move narrows to one bulky compiled family.
+- [x] P55.4 Import the compiled legacy track tables into `femic-mkrf-instance` as archival reference payload (`#172`)
+  - [x] P55.4a Copy the legacy `Tracks/*.csv` family into an archival lane inside the MKRF instance without claiming a runnable rebuild surface.
+  - [x] P55.4b Update instance-local metadata/docs so the archival track tables are part of the review contract and the next bounded move narrows to the spatial runtime family.
+
+## Detailed Next Steps Notes
+
+- Active MKRF bounded move after `P55.4`:
+  import the legacy spatial runtime family into `external/femic-mkrf-instance`
+  as archival reference payload, limited to `Spatial/fragments.*` plus
+  `Spatial/topo_frag100.csv`.
+- Keep the same boundary for the next slice:
+  no `03_MappingAnalysisData/*`, no `Outputs/*`, and no claim that the archival
+  legacy payload is yet a runnable FEMIC or Patchworks rebuild surface.
+- Keep the governing editable-source seam unresolved until the archival spatial
+  family is reviewed in-instance alongside the already imported controls and
+  track tables.
