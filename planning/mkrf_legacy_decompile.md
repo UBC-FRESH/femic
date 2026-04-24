@@ -179,23 +179,56 @@ For FEMIC recovery, that means the workbook **data surfaces** are the real
 source evidence worth preserving, while the VBA itself should be treated as a
 serialization reference to replace rather than a long-term runtime dependency.
 
+## Workbook surface map
+
+The governing workbook now breaks down into a clearer set of FEMIC-facing
+source families:
+
+- `Input Variables`
+  problem description, horizon, input field bindings, constants, unmanaged
+  query, and XML include-fragment hooks
+- `Codes`
+  workbook registry and enum surface for active sheet families and allowed
+  option values
+- `Curve Library`
+  age-by-curve point library used by `dumpCurves`
+- `Netdown`
+  aspatial netdown rules and retention feature assignments
+- `Attrib`
+  general attribute assignment surface
+- `Treat`
+  currently active stratum bundle containing criteria, features, succession,
+  products, treatments, and factor logic
+- `Post Renewal Succession`
+  supporting treatment-response lookup surface
+- `Lookups`
+  lookup-table / CSV bridge support surface
+
+One useful caution from this pass: the `Codes` registry advertises constants
+and lookup families such as `Harv costs`, `Unharvested Vol`, `Roads_Landings`,
+`SilvCosts_Lookup`, and `NaturSuccn`, but the reviewed workbook tab list does
+not expose those exact names as discrete worksheets. For now those should be
+treated as evidence of intended surfaces, not yet as confirmed sheet-level
+payloads.
+
 ## Recommended next bounded step
 
 Do exactly one next bounded move:
 
-**extract the governing workbook data surfaces into a reviewable FEMIC-facing
-input map**, starting with the named ranges and sheet blocks that feed the SPS
-serializer in `XML/002_base.xlsm`.
+**materialize the governing workbook-owned values into tracked review tables**,
+starting with `Input Variables`, `Netdown`, `Curve Library`, `Attrib`, and the
+active stratum sheet `Treat`.
 
 The archival control-layer intake, the archival track-table intake, the
 archival spatial-runtime intake, and the editable-source authority review are
 now complete. The next bounded move should:
 
 - focus on exactly one seam:
-  - convert the workbook-owned named ranges and sheet blocks into a reviewable
-    FEMIC-style inventory of tables, fields, and intended config surfaces;
+  - export the workbook-owned values for the main active surfaces into tracked
+    CSV/YAML review artifacts;
 - preserve the evidence/review framing instead of claiming a runnable rebuild
-  surface, a finalized rebuild recipe, or a VBA reimplementation;
+  surface, a finalized rebuild recipe, workbook publication, or a VBA
+  reimplementation;
 - continue to defer `03_MappingAnalysisData/*` and `Outputs/*`; and
 - keep road-network discovery and reporting-surface import outside that next
-  slice unless the workbook-surface extraction proves they are required.
+  slice unless the tracked table extraction proves they are required.

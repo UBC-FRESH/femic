@@ -46,6 +46,7 @@ crosswalk:
       - "Treat baseMKRF.xml as a generated ForestModel artifact emitted by the SPS spreadsheet tool."
       - "Treat Curves.xml as a generated curve fragment emitted by 001_makeCurves_XML.py from XML/CSV/CURVE_TABLE.csv."
       - "Preserve the workbook data surfaces and replace the SPS VBA serializer with FEMIC-native builders."
+      - "Break the workbook into FEMIC-facing source families such as Input Variables, Codes, Curve Library, Netdown, Attrib, Treat, Post Renewal Succession, and Lookups."
 
   scenario_and_control_scripts:
     disposition: future_runbook_and_analysis_support
@@ -115,8 +116,8 @@ unresolved_seams:
       - not yet clear whether it is contextual QA only or part of a reproducible preprocessing contract
 
 next_bounded_step:
-  recommendation: extract_workbook_surfaces_into_femic_input_map
+  recommendation: materialize_workbook_values_into_tracked_review_tables
   description:
-    Extract the governing workbook sheets, named ranges, and builder-side table
-    surfaces into a reviewable FEMIC-facing input map, without yet attempting
-    to execute or reimplement the SPS VBA serializer.
+    Export the governing workbook-owned values for the main active surfaces
+    into tracked CSV/YAML review artifacts, without yet attempting to execute
+    or reimplement the SPS VBA serializer.

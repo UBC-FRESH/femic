@@ -15098,3 +15098,13 @@
   - no workbook payload was copied into `external/femic-mkrf-instance` by this slice;
   - no VBA was reimplemented or adopted as a FEMIC runtime dependency; and
   - no `03_MappingAnalysisData/*` or `Outputs/*` payloads were imported by this slice.
+## 2026-04-24 - Mapped the governing MKRF workbook surfaces into FEMIC-facing input families
+- `#172` bounded workbook-surface slice:
+  - published `metadata/mkrf_xlsm_surface_map.yaml` as the parent-side surface-family inventory for `002_base.xlsm`;
+  - added `external/femic-mkrf-instance/runbooks/LEGACY_XLSM_SURFACE_MAP.md` and `external/femic-mkrf-instance/metadata/legacy_xlsm_surface_map.yaml` so the MKRF instance now carries the same workbook-surface map locally;
+  - classified the major workbook surfaces into future FEMIC-facing families such as Input Variables, Codes, Curve Library, Netdown, Attrib, Treat, Post Renewal Succession, and Lookups; and
+  - recorded the `Codes` registry mismatch where constants/lookup families are advertised but not all appear as discrete materialized worksheet tabs in the reviewed workbook copy.
+- Scope boundary preserved:
+  - no workbook payload was copied into `external/femic-mkrf-instance`;
+  - no workbook values were yet materialized into tracked CSV/YAML review tables; and
+  - no VBA reimplementation or runnable rebuild claim was made by this slice.

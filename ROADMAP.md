@@ -1458,17 +1458,21 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P55.6a Extract and review the embedded VBA from `XML/002_base.xlsm` so the workbook-driven XML builder flow is inspectable.
   - [x] P55.6b Record the authority chain across `002_base.xlsm`, `baseMKRF.xml`, `Curves.xml`, `001_makeCurves_XML.py`, and `003_MakeAccounts.py`.
   - [x] P55.6c Update parent and instance metadata/docs so the workbook data surfaces are now treated as the governing editable-source seam and the next bounded move narrows to workbook-surface extraction.
+- [x] P55.7 Map the governing MKRF workbook surfaces into FEMIC-facing input families (`#172`)
+  - [x] P55.7a Inventory the materialized workbook tabs, named ranges, and `Codes` registry surfaces that feed the SPS XML serializer.
+  - [x] P55.7b Classify each workbook surface by XML role and likely future FEMIC home.
+  - [x] P55.7c Update parent and instance metadata/docs so the next bounded move narrows to materializing workbook-owned values into tracked review tables.
 
 ## Detailed Next Steps Notes
 
-- Active MKRF bounded move after `P55.6`:
-  extract the workbook data surfaces from `XML/002_base.xlsm` into a
-  reviewable FEMIC-facing input map, limited to the named ranges / sheet
-  blocks that currently drive the SPS XML serializer.
+- Active MKRF bounded move after `P55.7`:
+  materialize the governing workbook-owned values into tracked review tables,
+  starting with `Input Variables`, `Netdown`, `Curve Library`, `Attrib`, and
+  the active stratum sheet `Treat`.
 - Keep the same boundary for the next slice:
   no `03_MappingAnalysisData/*`, no `Outputs/*`, and no claim that the
   archival legacy payload is yet a runnable FEMIC or Patchworks rebuild
   surface.
-- Keep VBA reimplementation, road-network discovery, and reporting-output
-  intake out of the next slice unless the workbook-surface extraction proves
-  they are required.
+- Keep VBA reimplementation, road-network discovery, reporting-output intake,
+  and direct workbook publication out of the next slice unless the tracked
+  table extraction proves they are required.

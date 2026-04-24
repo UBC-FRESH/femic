@@ -1,0 +1,191 @@
+schema_version: 1
+
+workbook:
+  case_id: mkrf_legacy_2016
+  source_workbook: MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/002_base.xlsm
+  review_artifacts:
+    - runtime/scratch/mkrf_xlsm_surface_inventory.json
+    - runtime/scratch/mkrf_xlsm_sheet_previews.json
+    - runtime/scratch/002_base_olevba_code.txt
+
+surface_families:
+  - surface_id: input_variables
+    workbook_sheet: Input Variables
+    source_type: materialized_sheet_plus_named_ranges
+    controlling_ranges:
+      - probDesc
+      - horizon
+      - startYear
+      - maxAge
+      - exclude
+      - blockKey
+      - areaExpr
+      - ageExpr
+      - inpColumns
+      - inpConstants
+      - treatmentEligibility
+      - beforeCurves
+      - afterCurves
+      - afterRetention
+      - afterUnmanaged
+      - afterStratum
+      - afterAttributes
+    xml_sections:
+      - dumpProlog
+      - dumpUnmanaged
+      - includeFragment
+    observed_preview:
+      - "Problem description -> Base TFL26"
+      - "Starting year of analysis -> 2020"
+      - "Forecasting horizon -> 300"
+      - "Maximum inventory age -> 350"
+    future_femic_home:
+      - config/legacy_xml_builder/input_variables.yaml
+      - config/legacy_xml_builder/input_columns.csv
+      - config/legacy_xml_builder/include_fragments.yaml
+    disposition: future_primary_config_surface
+
+  - surface_id: codes_registry
+    workbook_sheet: Codes
+    source_type: materialized_sheet_plus_named_range_registry
+    controlling_ranges:
+      - outcomes
+      - allOutcomes
+      - curves
+      - curvesheets
+      - attributesheets
+      - constantssheets
+      - lookupssheets
+      - columns
+      - allChoices
+      - treatments
+      - curveType
+      - attributeType
+      - scaleMethod
+      - manualMethod
+    xml_sections:
+      - workbook_sheet_family_discovery
+    observed_preview:
+      - "Registry exposes one active stratum sheet: Treat"
+      - "Registry exposes one active attribute sheet: Attrib"
+      - "Registry exposes one active curve sheet: Curve Library"
+      - "Registry advertises constants and lookups families beyond the materialized tab list"
+    future_femic_home:
+      - metadata/legacy_xml_builder/sheet_registry.yaml
+      - config/legacy_xml_builder/enums.yaml
+    disposition: future_registry_and_enum_surface
+
+  - surface_id: curve_library
+    workbook_sheet: Curve Library
+    source_type: materialized_curves_sheet
+    controlling_ranges:
+      - curveNames
+    xml_sections:
+      - dumpCurves
+    observed_preview:
+      - "Age axis in first column"
+      - "Named curves include zero, age, le10, lt20, gt60, lt80, gt250"
+    future_femic_home:
+      - data/legacy_mkrf/curve_tables/curve_library.csv
+      - config/legacy_xml_builder/curve_registry.yaml
+    disposition: future_curve_table_surface
+
+  - surface_id: netdown
+    workbook_sheet: Netdown
+    source_type: materialized_sheet_plus_named_ranges
+    controlling_ranges:
+      - netdownCriteria
+      - netdownNames
+      - netdownFactors
+    xml_sections:
+      - dumpRetention
+    observed_preview:
+      - "Aspatial netdown criteria and reassignment surface"
+      - "Feature-area retention account appears in preview headers"
+    future_femic_home:
+      - config/legacy_xml_builder/netdown_rules.csv
+      - config/legacy_xml_builder/netdown_features.csv
+    disposition: future_netdown_rule_surface
+
+  - surface_id: attributes
+    workbook_sheet: Attrib
+    source_type: materialized_attributes_sheet
+    controlling_ranges:
+      - attributes
+    xml_sections:
+      - dumpAttributes
+    observed_preview:
+      - "General attributes applied after strata-specific definitions"
+      - "Selection columns begin at the far-right criteria region in VBA"
+    future_femic_home:
+      - config/legacy_xml_builder/general_attributes.csv
+    disposition: future_general_attribute_surface
+
+  - surface_id: active_stratum
+    workbook_sheet: Treat
+    source_type: materialized_stratum_sheet
+    controlling_ranges:
+      - stratumCriteria
+      - stratumFeatures
+      - stratumSuccession
+      - stratumProducts
+      - stratumTreatments
+      - stratumFactors
+    xml_sections:
+      - dumpStratum
+    observed_preview:
+      - "Only one active stratum sheet is currently registered: Treat"
+      - "Sheet contains selection criteria, treatment options, product factors, and renewal transitions"
+    future_femic_home:
+      - config/legacy_xml_builder/strata/Treat/
+      - config/legacy_xml_builder/strata_registry.yaml
+    disposition: future_stratum_bundle_surface
+
+  - surface_id: post_renewal_succession
+    workbook_sheet: Post Renewal Succession
+    source_type: materialized_support_sheet
+    controlling_ranges:
+      - TreatmentResponses
+    xml_sections:
+      - supporting_formula_source_for_stratum_transitions
+    observed_preview:
+      - "Maps treatment and current FU combinations to new FU and yield-curve labels"
+    future_femic_home:
+      - config/legacy_xml_builder/post_renewal_succession.csv
+    disposition: future_transition_lookup_surface
+
+  - surface_id: lookups
+    workbook_sheet: Lookups
+    source_type: materialized_lookup_sheet
+    controlling_ranges: []
+    xml_sections:
+      - indirect_formula_support
+    observed_preview:
+      - "Sheet documents LookupTable-style formula usage"
+      - "Preview references CSV-backed sources such as MHA.csv and FACTORS.csv"
+    future_femic_home:
+      - data/legacy_mkrf/xml_builder_lookups/
+      - config/legacy_xml_builder/lookup_registry.yaml
+    disposition: future_lookup_surface
+
+registry_mismatches:
+  - mismatch_id: constants_sheet_registry_vs_materialized_tabs
+    signal:
+      - Codes registry lists Harv costs, Unharvested Vol, and Roads_Landings under constantssheets
+      - openpyxl materialized tab list does not expose those names as workbook sheets
+    interpretation:
+      - Treat the Codes registry as evidence of intended surfaces, but do not assume every advertised family is currently materialized as a tab.
+
+  - mismatch_id: lookup_sheet_registry_vs_materialized_tabs
+    signal:
+      - Codes registry lists SilvCosts_Lookup, NaturSuccn, FUSuccessn, Operability_Limits, and Silv_Costs
+      - openpyxl materialized tab list exposes Lookups and Post Renewal Succession, not those exact names
+    interpretation:
+      - Additional lookup families may be represented as named blocks, formulas, or stale registry references rather than discrete sheets.
+
+next_bounded_step:
+  recommendation: materialize_workbook_values_into_tracked_review_tables
+  description:
+    Export the governing workbook-owned values for Input Variables, Netdown,
+    Curve Library, Attrib, Treat, and supporting lookup/transition surfaces
+    into tracked CSV/YAML review artifacts without yet reimplementing the VBA.
