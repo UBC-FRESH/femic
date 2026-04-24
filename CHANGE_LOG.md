@@ -15075,3 +15075,16 @@
 - Focused validation:
   - `F:\\projects\\femic\\.venv\\Scripts\\python.exe -m femic instance validate-spec --spec config/rebuild.spec.yaml`
   - confirmed the archival track-table intake contains 13 copied `Tracks/*.csv` files under `external/femic-mkrf-instance/data/legacy_mkrf/compiled_tracks/`.
+## 2026-04-24 - Copied the legacy MKRF compiled spatial runtime family into `femic-mkrf-instance` as archival references
+- `#172` bounded archival-spatial slice:
+  - copied the legacy `Spatial/fragments.*` shapefile sidecar set plus `topo_frag100.csv` into `external/femic-mkrf-instance/data/legacy_mkrf/compiled_spatial/`;
+  - updated the MKRF instance README, quickstart, rebuild runbook, legacy compiled-package reference note, and lineage metadata so the copied spatial runtime files are treated as archival references under review rather than an accepted runnable surface; and
+  - updated the machine-readable legacy compiled-package reference YAML so the spatial family now points at the copied archival lane and the next bounded move narrows to the governing editable-source seam.
+- Scope boundary preserved:
+  - `Spatial/patchworksLog.csv` was intentionally left out of this slice;
+  - no `Outputs/*` or `03_MappingAnalysisData/*` payloads were imported by this slice; and
+  - no claim was made that the copied spatial runtime files are sufficient to run the legacy model.
+- Focused validation:
+  - `F:\\projects\\femic\\.venv\\Scripts\\python.exe -m femic instance validate-spec --spec config/rebuild.spec.yaml`
+  - confirmed the archival spatial intake contains 9 copied files under `external/femic-mkrf-instance/data/legacy_mkrf/compiled_spatial/`
+  - confirmed the binary shapefile payload pieces (`fragments.dbf`, `fragments.sbn`, `fragments.sbx`, `fragments.shp`, `fragments.shx`) are git-annex-backed before publication.

@@ -141,17 +141,19 @@ Recommended recovery interpretation:
 
 Do exactly one next bounded move:
 
-**import the spatial compiled runtime family into
-`external/femic-mkrf-instance` as archival reference payload**, starting with
-`Spatial/fragments.*` plus `Spatial/topo_frag100.csv`.
+**resolve the governing editable-source seam for the legacy MKRF model**,
+starting with the authority relationship among `XML/baseMKRF.xml`,
+`XML/Curves.xml`, `XML/002_base.xlsm`, `XML/001_makeCurves_XML.py`, and
+`XML/003_MakeAccounts.py`.
 
-The archival control-layer intake and the archival track-table intake are now
-complete. The next bounded move should:
+The archival control-layer intake, the archival track-table intake, and the
+archival spatial-runtime intake are now complete. The next bounded move should:
 
-- import exactly one family:
-  - `Spatial/fragments.*` plus `topo_frag100.csv`;
-- preserve the archival/reference framing instead of claiming a runnable rebuild
-  surface;
-- continue to defer `03_MappingAnalysisData` and `Outputs/*`; and
-- keep the governing editable-source seam unresolved until the first bulky
-  spatial family is reviewed in-instance.
+- focus on exactly one seam:
+  - determine whether the checked-in XML files or the workbook/script builder
+    chain should be treated as the governing editable-source authority;
+- preserve the evidence/review framing instead of claiming a runnable rebuild
+  surface or a finalized rebuild recipe;
+- continue to defer `03_MappingAnalysisData/*` and `Outputs/*`; and
+- keep road-network discovery and reporting-surface import outside that next
+  slice unless the editable-source review proves they are required.

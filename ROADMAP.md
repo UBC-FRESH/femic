@@ -1451,16 +1451,19 @@ Notes: `planning/mkrf_legacy_decompile.md`
 - [x] P55.4 Import the compiled legacy track tables into `femic-mkrf-instance` as archival reference payload (`#172`)
   - [x] P55.4a Copy the legacy `Tracks/*.csv` family into an archival lane inside the MKRF instance without claiming a runnable rebuild surface.
   - [x] P55.4b Update instance-local metadata/docs so the archival track tables are part of the review contract and the next bounded move narrows to the spatial runtime family.
+- [x] P55.5 Import the compiled legacy spatial runtime family into `femic-mkrf-instance` as archival reference payload (`#172`)
+  - [x] P55.5a Copy `Spatial/fragments.*` plus `Spatial/topo_frag100.csv` into an archival lane inside the MKRF instance without claiming a runnable rebuild surface.
+  - [x] P55.5b Update instance-local metadata/docs so the archival spatial family is part of the review contract and the next bounded move narrows again.
 
 ## Detailed Next Steps Notes
 
-- Active MKRF bounded move after `P55.4`:
-  import the legacy spatial runtime family into `external/femic-mkrf-instance`
-  as archival reference payload, limited to `Spatial/fragments.*` plus
-  `Spatial/topo_frag100.csv`.
+- Active MKRF bounded move after `P55.5`:
+  resolve the governing editable-source seam for the legacy MKRF XML builder
+  lane, limited to `XML/baseMKRF.xml`, `XML/Curves.xml`, `XML/002_base.xlsm`,
+  `XML/001_makeCurves_XML.py`, and `XML/003_MakeAccounts.py`.
 - Keep the same boundary for the next slice:
-  no `03_MappingAnalysisData/*`, no `Outputs/*`, and no claim that the archival
-  legacy payload is yet a runnable FEMIC or Patchworks rebuild surface.
-- Keep the governing editable-source seam unresolved until the archival spatial
-  family is reviewed in-instance alongside the already imported controls and
-  track tables.
+  no `03_MappingAnalysisData/*`, no `Outputs/*`, and no claim that the
+  archival legacy payload is yet a runnable FEMIC or Patchworks rebuild
+  surface.
+- Keep the road-network and reporting-output seams out of the next slice unless
+  the editable-source review proves they are required.
