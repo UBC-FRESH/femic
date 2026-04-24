@@ -15035,3 +15035,17 @@
   - checked manifest coverage for `PW_MKRF` `Documentation`, `Outputs`, `Scripts`, `Spatial`, `Targets`, `Tracks`, and `XML`;
   - checked manifest coverage for `03_MappingAnalysisData` plus the `05_Documents` lane; and
   - confirmed the crosswalk and planning note agree that the next bounded move is to import compiled-package metadata into `external/femic-mkrf-instance` without attempting a runnable rebuild yet.
+## 2026-04-24 - Imported the stable legacy MKRF compiled-package anatomy into `femic-mkrf-instance` as review metadata
+- `#172` bounded instance-intake slice:
+  - added `external/femic-mkrf-instance/runbooks/LEGACY_COMPILED_PACKAGE_REFERENCE.md` as the instance-local reference note for the stable compiled `PW_MKRF` package anatomy;
+  - added `external/femic-mkrf-instance/metadata/legacy_compiled_package_reference.yaml` as the machine-readable entrypoint/family bagging map for the compiled legacy package;
+  - updated the MKRF instance `README.md`, `QUICKSTART.md`, and `runbooks/REBUILD_RUNBOOK.md` so the compiled-package metadata intake is now part of the thin-baseline contract; and
+  - updated `external/femic-mkrf-instance/metadata/lineage_registry.yaml` so the new instance-local reference note and YAML are tracked as published reference metadata artifacts.
+- Scope boundary preserved:
+  - no bulky legacy payloads were copied into the instance;
+  - no upstream `03_MappingAnalysisData` content was imported;
+  - no runnable FEMIC/legacy rebuild surface was claimed; and
+  - the governing editable-source seam (`baseMKRF.xml` versus workbook/script builder chain) remains unresolved.
+- Focused validation:
+  - `F:\\projects\\femic\\.venv\\Scripts\\python.exe -m femic instance validate-spec --spec config/rebuild.spec.yaml`
+  - reviewed the new instance-local reference note and YAML against the parent archaeology outputs for agreement on entrypoints, stable compiled families, and current boundary.

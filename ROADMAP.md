@@ -1440,3 +1440,7 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P55.1b Inventory the authoritative legacy corpus under `MKRF_Cosmin_Model/MKRF`, including the compiled `PW_MKRF` bundle, `03_MappingAnalysisData`, and `05_Documents`.
   - [x] P55.1c Publish the first-pass artifact manifest and bagging/tagging map in the parent repo as reviewable metadata surfaces.
   - [x] P55.1d Record the compiled-model anatomy, FEMIC crosswalk, unresolved seams, and next bounded step in the planning note.
+- [x] P55.2 Import the stable compiled-package anatomy into `femic-mkrf-instance` as review metadata (`#172`)
+  - [x] P55.2a Add instance-local metadata summarizing the compiled `PW_MKRF` package entrypoints and stable families without publishing bulky legacy payloads.
+  - [x] P55.2b Add an instance-local reference note documenting the compiled package anatomy and current review-only boundary.
+  - [x] P55.2c Update the MKRF instance README/runbook/lineage metadata so the compiled-package intake is part of the thin-baseline contract.

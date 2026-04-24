@@ -141,14 +141,15 @@ Recommended recovery interpretation:
 
 Do exactly one next bounded move:
 
-**import the compiled Patchworks package anatomy into `external/femic-mkrf-instance` as
-review metadata only**, not as a runnable rebuild yet.
+**import the small compiled control surfaces into `external/femic-mkrf-instance`
+as inert archival reference files**, not the full runtime package yet.
 
-That next step should:
+The metadata-only intake is now complete. The next bounded move should:
 
-- copy or summarize the stable compiled-package shape
-  (`baseMKRF.pin`, tracks family, fragments family, topology sidecar, target
-  scripts) into instance-local docs/metadata;
-- avoid publishing the bulky upstream mapping-analysis payload yet; and
-- keep actual FEMIC-side rebuild logic deferred until the compiled runtime
-  package anatomy is fully agreed.
+- copy only the small compiled control files such as `baseMKRF.pin`,
+  `runME.bsh`, `ScenarioSet.bsh`, and selected `.bsh` control scripts into a
+  clearly archival/reference lane inside the MKRF instance;
+- continue to defer bulky tracks, fragments, topology, outputs, and upstream
+  mapping-analysis payloads; and
+- leave the actual FEMIC rebuild/export interpretation deferred until the
+  archival control surfaces are reviewed in-instance.
