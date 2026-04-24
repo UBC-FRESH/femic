@@ -1454,16 +1454,21 @@ Notes: `planning/mkrf_legacy_decompile.md`
 - [x] P55.5 Import the compiled legacy spatial runtime family into `femic-mkrf-instance` as archival reference payload (`#172`)
   - [x] P55.5a Copy `Spatial/fragments.*` plus `Spatial/topo_frag100.csv` into an archival lane inside the MKRF instance without claiming a runnable rebuild surface.
   - [x] P55.5b Update instance-local metadata/docs so the archival spatial family is part of the review contract and the next bounded move narrows again.
+- [x] P55.6 Resolve the governing editable-source seam for the legacy MKRF XML builder lane (`#172`)
+  - [x] P55.6a Extract and review the embedded VBA from `XML/002_base.xlsm` so the workbook-driven XML builder flow is inspectable.
+  - [x] P55.6b Record the authority chain across `002_base.xlsm`, `baseMKRF.xml`, `Curves.xml`, `001_makeCurves_XML.py`, and `003_MakeAccounts.py`.
+  - [x] P55.6c Update parent and instance metadata/docs so the workbook data surfaces are now treated as the governing editable-source seam and the next bounded move narrows to workbook-surface extraction.
 
 ## Detailed Next Steps Notes
 
-- Active MKRF bounded move after `P55.5`:
-  resolve the governing editable-source seam for the legacy MKRF XML builder
-  lane, limited to `XML/baseMKRF.xml`, `XML/Curves.xml`, `XML/002_base.xlsm`,
-  `XML/001_makeCurves_XML.py`, and `XML/003_MakeAccounts.py`.
+- Active MKRF bounded move after `P55.6`:
+  extract the workbook data surfaces from `XML/002_base.xlsm` into a
+  reviewable FEMIC-facing input map, limited to the named ranges / sheet
+  blocks that currently drive the SPS XML serializer.
 - Keep the same boundary for the next slice:
   no `03_MappingAnalysisData/*`, no `Outputs/*`, and no claim that the
   archival legacy payload is yet a runnable FEMIC or Patchworks rebuild
   surface.
-- Keep the road-network and reporting-output seams out of the next slice unless
-  the editable-source review proves they are required.
+- Keep VBA reimplementation, road-network discovery, and reporting-output
+  intake out of the next slice unless the workbook-surface extraction proves
+  they are required.

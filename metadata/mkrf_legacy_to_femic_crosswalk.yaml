@@ -42,8 +42,10 @@ crosswalk:
       - data/legacy_mkrf/xml_builders/
       - evidence/legacy_mkrf/xml_recovery/
     notes:
-      - Keep the editable XML plus builder chain intact as historical recovery evidence.
-      - Do not yet decide whether the workbook chain or the checked-in XML is the governing source of truth.
+      - "Treat 002_base.xlsm plus the XML/CSV lane as the governing editable-source evidence for the core model structure."
+      - "Treat baseMKRF.xml as a generated ForestModel artifact emitted by the SPS spreadsheet tool."
+      - "Treat Curves.xml as a generated curve fragment emitted by 001_makeCurves_XML.py from XML/CSV/CURVE_TABLE.csv."
+      - "Preserve the workbook data surfaces and replace the SPS VBA serializer with FEMIC-native builders."
 
   scenario_and_control_scripts:
     disposition: future_runbook_and_analysis_support
@@ -98,11 +100,13 @@ unresolved_seams:
     reason:
       - no in-scope roads folder was inventoried in the authoritative first-pass corpus
   - seam_id: governing_editable_source
-    status: unresolved
+    status: resolved
     legacy_signal:
-      - both baseMKRF.xml/Curves.xml and the workbook/script builder chain are present
+      - "baseMKRF.xml identifies the SPS spreadsheet tool and records 002_base.xlsm in the generated header"
+      - "baseMKRF.xml includes Curves.xml through the beforeCurves entity"
+      - "002_base.xlsm contains the ForestModel.bas VBA builder with DumpXML(...)"
     reason:
-      - milestone one does not yet adjudicate which surface should be treated as the governing editable source
+      - the governing editable-source seam is the workbook-driven parameter lane, not the checked-in generated XML
   - seam_id: orthos_operational_role
     status: unresolved
     legacy_signal:
@@ -111,8 +115,8 @@ unresolved_seams:
       - not yet clear whether it is contextual QA only or part of a reproducible preprocessing contract
 
 next_bounded_step:
-  recommendation: import_compiled_package_metadata_into_instance
+  recommendation: extract_workbook_surfaces_into_femic_input_map
   description:
-    Import only the stable compiled-package anatomy into external/femic-mkrf-instance
-    as review metadata and docs, without attempting a runnable FEMIC rebuild or
-    publishing the full upstream mapping-analysis payload yet.
+    Extract the governing workbook sheets, named ranges, and builder-side table
+    surfaces into a reviewable FEMIC-facing input map, without yet attempting
+    to execute or reimplement the SPS VBA serializer.

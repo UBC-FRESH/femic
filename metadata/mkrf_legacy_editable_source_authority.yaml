@@ -1,0 +1,149 @@
+schema_version: 1
+
+review:
+  case_id: mkrf_legacy_2016
+  legacy_root: MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML
+  conclusion:
+    governing_editable_source:
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/002_base.xlsm
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/CSV/*
+    generated_artifacts:
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/baseMKRF.xml
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/Curves.xml
+    helper_scripts:
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/001_makeCurves_XML.py
+      - MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/003_MakeAccounts.py
+
+authority_chain:
+  - component_id: workbook_builder
+    legacy_path: MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/002_base.xlsm
+    role: authoritative_parameter_store_and_core_xml_serializer
+    status: resolved_governing_editable_source
+    evidence:
+      - "The embedded VBA module ForestModel.bas exposes DumpXML(filename) as the top-level XML writer."
+      - "DumpXML(...) writes the ForestModel file by calling dumpProlog, dumpCurves, dumpRetention, dumpUnmanaged, dumpStratum, and dumpAttributes."
+      - "The VBA reads workbook-owned surfaces such as Input Variables, Netdown, curveNames, stratum*, attributes, and constantValues."
+    candidate_femic_home:
+      - config/legacy_xml_builder/
+      - data/legacy_mkrf/xml_builder_tables/
+      - evidence/legacy_mkrf/xml_builder_review/
+    migration_direction:
+      - Preserve the workbook data surfaces.
+      - Replace the SPS VBA serializer with FEMIC-native builders.
+
+  - component_id: base_xml
+    legacy_path: MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/baseMKRF.xml
+    role: generated_core_forestmodel_artifact
+    status: resolved_generated_from_workbook_builder
+    evidence:
+      - "The XML header identifies Simple ForestModel Spreadsheet Tool."
+      - "The XML header records Program version: 25-April-2019, ...\\002_base.xlsm."
+      - "The XML declares <!ENTITY beforeCurves SYSTEM \"Curves.xml\" >, showing it is assembled with external curve content."
+    candidate_femic_home:
+      - output/patchworks_mkrf_validated/forestmodel.xml
+
+  - component_id: curves_xml
+    legacy_path: MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/Curves.xml
+    role: generated_curve_fragment
+    status: resolved_generated_from_curve_table_pipeline
+    evidence:
+      - "baseMKRF.xml includes Curves.xml through the beforeCurves entity."
+      - "001_makeCurves_XML.py writes Curves.xml from CSV\\CURVE_TABLE.csv."
+    candidate_femic_home:
+      - output/patchworks_mkrf_validated/curve_sources/Curves.xml
+      - data/legacy_mkrf/curve_tables/
+
+  - component_id: make_curves_script
+    legacy_path: MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/001_makeCurves_XML.py
+    role: curve_fragment_generator
+    status: resolved_helper_script
+    evidence:
+      - "Reads CSV\\CURVE_TABLE.csv."
+      - "Writes Curves.xml."
+    candidate_femic_home:
+      - src/femic/patchworks/exporters/
+      - evidence/legacy_mkrf/xml_builder_review/
+
+  - component_id: make_accounts_script
+    legacy_path: MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/003_MakeAccounts.py
+    role: post_matrix_account_export_helper
+    status: resolved_helper_script
+    evidence:
+      - "Reads Tracks\\protoaccounts.csv."
+      - "Writes Tracks\\accounts.csv."
+    candidate_femic_home:
+      - src/femic/patchworks/exporters/
+      - evidence/legacy_mkrf/xml_builder_review/
+
+governing_workbook_surfaces:
+  input_variables:
+    sheet: Input Variables
+    ranges:
+      - probDesc
+      - horizon
+      - startYear
+      - maxAge
+      - exclude
+      - blockKey
+      - areaExpr
+      - ageExpr
+      - inpColumns
+      - inpConstants
+      - treatmentEligibility
+      - beforeCurves
+      - afterCurves
+      - afterRetention
+      - afterUnmanaged
+      - afterStratum
+      - afterAttributes
+  netdown:
+    sheet: Netdown
+    ranges:
+      - netdownCriteria
+      - netdownNames
+      - netdownFactors
+  curve_library:
+    sheet_type: Curves
+    ranges:
+      - curveNames
+  stratum_sheets:
+    sheet_type: Stratum
+    ranges:
+      - stratumCriteria
+      - stratumFeatures
+      - stratumSuccession
+      - stratumProducts
+      - stratumTreatments
+      - stratumFactors
+  attribute_sheets:
+    sheet_type: Attributes
+    ranges:
+      - attributes
+  constant_sheets:
+    sheet_type: Constants
+    ranges:
+      - constantValues
+
+workbook_mechanics:
+  sheet_classification:
+    mechanism: worksheet CustomProperties("SPSType")
+    observed_types:
+      - Stratum
+      - Curves
+      - Attributes
+      - Constants
+      - Lookups
+  xml_sections_emitted:
+    - prolog_and_input_output_definitions
+    - built_in_and_library_curves
+    - aspatial_netdown_retention
+    - unmanaged_track_placeholder
+    - stratum_succession_features_tracks_products
+    - general_attributes
+
+next_bounded_step:
+  recommendation: extract_workbook_surfaces_into_femic_input_map
+  description:
+    Convert the governing workbook sheets and named ranges into a reviewable
+    FEMIC-facing inventory of tables, fields, and intended config surfaces
+    without yet attempting to execute or reimplement the SPS VBA.

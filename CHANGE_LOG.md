@@ -15088,3 +15088,13 @@
   - `F:\\projects\\femic\\.venv\\Scripts\\python.exe -m femic instance validate-spec --spec config/rebuild.spec.yaml`
   - confirmed the archival spatial intake contains 9 copied files under `external/femic-mkrf-instance/data/legacy_mkrf/compiled_spatial/`
   - confirmed the binary shapefile payload pieces (`fragments.dbf`, `fragments.sbn`, `fragments.sbx`, `fragments.shp`, `fragments.shx`) are git-annex-backed before publication.
+## 2026-04-24 - Resolved the legacy MKRF XML-builder authority seam
+- `#172` bounded editable-source review slice:
+  - extracted the embedded VBA from `XML/002_base.xlsm` into scratch review artifacts so the SPS workbook-driven XML builder flow is inspectable;
+  - confirmed the main SPS builder module exposes `DumpXML(...)`, which emits the XML by calling `dumpProlog`, `dumpCurves`, `dumpRetention`, `dumpUnmanaged`, `dumpStratum`, and `dumpAttributes`;
+  - confirmed `baseMKRF.xml` carries the SPS generator fingerprint and records `002_base.xlsm` in the generated header; and
+  - updated parent and instance metadata/docs so the workbook data surfaces are now treated as the governing editable-source seam for the core XML builder lane.
+- Scope boundary preserved:
+  - no workbook payload was copied into `external/femic-mkrf-instance` by this slice;
+  - no VBA was reimplemented or adopted as a FEMIC runtime dependency; and
+  - no `03_MappingAnalysisData/*` or `Outputs/*` payloads were imported by this slice.

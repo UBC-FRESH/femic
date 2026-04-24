@@ -51,13 +51,15 @@ The PIN hard-codes the major runtime seams:
 ### Editable / builder-side source surfaces
 
 - `04_Models/PW_MKRF/XML/baseMKRF.xml`
-  main editable legacy model XML
+  generated core ForestModel XML artifact
 - `04_Models/PW_MKRF/XML/Curves.xml`
-  curve-heavy XML companion
+  generated curve-fragment companion included by entity
 - `04_Models/PW_MKRF/XML/002_base.xlsm`
-  workbook-backed XML builder dependency
+  governing workbook-backed parameter store and SPS XML serializer
 - `04_Models/PW_MKRF/XML/001_makeCurves_XML.py`
+  helper script that writes `Curves.xml` from `XML/CSV/CURVE_TABLE.csv`
 - `04_Models/PW_MKRF/XML/003_MakeAccounts.py`
+  helper script that writes `Tracks/accounts.csv` from `Tracks/protoaccounts.csv`
 - `04_Models/PW_MKRF/XML/CSV/*`
   builder-side CSV feed surface
 
@@ -131,29 +133,69 @@ Recommended recovery interpretation:
 - whether road-network inputs under the legacy PIN's `../roads/` expectation
   exist elsewhere in the planning workspace and are required for route-aware
   reconstruction
-- whether `XML/baseMKRF.xml` or the workbook/script builder chain should be
-  treated as the governing editable source of truth
 - whether the `Source.gdb` / `Resultant.gdb` datasets can be mapped cleanly
   onto a future FEMIC stage-00/stage-01 contract without additional external
   missing dependencies
+
+## Editable-source authority review
+
+The governing editable-source seam is now narrow enough to state explicitly:
+
+- `XML/002_base.xlsm`
+  governing workbook-backed parameter store and SPS XML serializer for the core
+  ForestModel structure
+- `XML/baseMKRF.xml`
+  generated core ForestModel XML artifact emitted by the spreadsheet tool
+- `XML/Curves.xml`
+  generated curve-fragment artifact included into `baseMKRF.xml` through the
+  `beforeCurves` entity
+- `XML/001_makeCurves_XML.py`
+  helper generator that writes `Curves.xml` from `XML/CSV/CURVE_TABLE.csv`
+- `XML/003_MakeAccounts.py`
+  helper post-processor that writes `Tracks/accounts.csv` from
+  `Tracks/protoaccounts.csv`
+
+The SPS VBA in `002_base.xlsm` exposes a top-level `DumpXML(filename)` routine
+that writes the XML by calling:
+
+- `dumpProlog`
+- `dumpCurves`
+- `dumpRetention`
+- `dumpUnmanaged`
+- `dumpStratum`
+- `dumpAttributes`
+
+Those routines pull workbook-owned data surfaces such as:
+
+- `Input Variables`
+- `Netdown`
+- `curveNames`
+- `stratumCriteria`, `stratumFeatures`, `stratumSuccession`,
+  `stratumProducts`, `stratumTreatments`, `stratumFactors`
+- `attributes`
+- `constantValues`
+
+For FEMIC recovery, that means the workbook **data surfaces** are the real
+source evidence worth preserving, while the VBA itself should be treated as a
+serialization reference to replace rather than a long-term runtime dependency.
 
 ## Recommended next bounded step
 
 Do exactly one next bounded move:
 
-**resolve the governing editable-source seam for the legacy MKRF model**,
-starting with the authority relationship among `XML/baseMKRF.xml`,
-`XML/Curves.xml`, `XML/002_base.xlsm`, `XML/001_makeCurves_XML.py`, and
-`XML/003_MakeAccounts.py`.
+**extract the governing workbook data surfaces into a reviewable FEMIC-facing
+input map**, starting with the named ranges and sheet blocks that feed the SPS
+serializer in `XML/002_base.xlsm`.
 
-The archival control-layer intake, the archival track-table intake, and the
-archival spatial-runtime intake are now complete. The next bounded move should:
+The archival control-layer intake, the archival track-table intake, the
+archival spatial-runtime intake, and the editable-source authority review are
+now complete. The next bounded move should:
 
 - focus on exactly one seam:
-  - determine whether the checked-in XML files or the workbook/script builder
-    chain should be treated as the governing editable-source authority;
+  - convert the workbook-owned named ranges and sheet blocks into a reviewable
+    FEMIC-style inventory of tables, fields, and intended config surfaces;
 - preserve the evidence/review framing instead of claiming a runnable rebuild
-  surface or a finalized rebuild recipe;
+  surface, a finalized rebuild recipe, or a VBA reimplementation;
 - continue to defer `03_MappingAnalysisData/*` and `Outputs/*`; and
 - keep road-network discovery and reporting-surface import outside that next
-  slice unless the editable-source review proves they are required.
+  slice unless the workbook-surface extraction proves they are required.
