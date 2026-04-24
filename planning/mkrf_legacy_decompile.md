@@ -141,15 +141,17 @@ Recommended recovery interpretation:
 
 Do exactly one next bounded move:
 
-**import the small compiled control surfaces into `external/femic-mkrf-instance`
-as inert archival reference files**, not the full runtime package yet.
+**import exactly one bulky compiled runtime family into `external/femic-mkrf-instance`
+as archival reference payload**, starting with either tracks or fragments, but
+not both in the same slice.
 
-The metadata-only intake is now complete. The next bounded move should:
+The archival control-layer intake is now complete. The next bounded move should:
 
-- copy only the small compiled control files such as `baseMKRF.pin`,
-  `runME.bsh`, `ScenarioSet.bsh`, and selected `.bsh` control scripts into a
-  clearly archival/reference lane inside the MKRF instance;
-- continue to defer bulky tracks, fragments, topology, outputs, and upstream
-  mapping-analysis payloads; and
-- leave the actual FEMIC rebuild/export interpretation deferred until the
-  archival control surfaces are reviewed in-instance.
+- choose one family:
+  - `Tracks/*.csv`, or
+  - `Spatial/fragments.*` plus `topo_frag100.csv`;
+- preserve the archival/reference framing instead of claiming a runnable rebuild
+  surface;
+- continue to defer `03_MappingAnalysisData` and `Outputs/*`; and
+- keep the governing editable-source seam unresolved until the first bulky
+  compiled family is reviewed in-instance.

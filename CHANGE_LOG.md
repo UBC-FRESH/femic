@@ -15049,3 +15049,17 @@
 - Focused validation:
   - `F:\\projects\\femic\\.venv\\Scripts\\python.exe -m femic instance validate-spec --spec config/rebuild.spec.yaml`
   - reviewed the new instance-local reference note and YAML against the parent archaeology outputs for agreement on entrypoints, stable compiled families, and current boundary.
+## 2026-04-24 - Copied the small legacy MKRF control layer into `femic-mkrf-instance` as archival references
+- `#172` bounded archival-control slice:
+  - copied `baseMKRF.pin`, `runME.bsh`, and `ScenarioSet.bsh` into `external/femic-mkrf-instance/data/legacy_mkrf/compiled_controls/entrypoints/`;
+  - copied the legacy `Scripts/*.bsh` family into `external/femic-mkrf-instance/data/legacy_mkrf/compiled_controls/scripts/`;
+  - copied the legacy `Targets/*.bsh` family into `external/femic-mkrf-instance/data/legacy_mkrf/compiled_controls/targets/`;
+  - updated the MKRF instance README, quickstart, rebuild runbook, legacy compiled-package reference note, and lineage metadata so these copied files are treated as inert archival references rather than a runnable rebuild surface; and
+  - updated the machine-readable legacy compiled-package reference YAML so it now points at the copied archival files and narrows the next bounded move to importing exactly one bulky compiled runtime family.
+- Scope boundary preserved:
+  - no `Tracks/*.csv`, `Spatial/fragments.*`, `topo_frag100.csv`, `Outputs/*`, or `03_MappingAnalysisData/*` payloads were imported by this slice;
+  - no claim was made that the copied control layer is sufficient to run the legacy model; and
+  - the governing editable-source seam still remains unresolved.
+- Focused validation:
+  - `F:\\projects\\femic\\.venv\\Scripts\\python.exe -m femic instance validate-spec --spec config/rebuild.spec.yaml`
+  - reviewed the copied archival control tree against the legacy source folder to confirm the expected entrypoints, `Scripts/*.bsh`, and `Targets/*.bsh` families are present.

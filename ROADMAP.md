@@ -1444,3 +1444,7 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P55.2a Add instance-local metadata summarizing the compiled `PW_MKRF` package entrypoints and stable families without publishing bulky legacy payloads.
   - [x] P55.2b Add an instance-local reference note documenting the compiled package anatomy and current review-only boundary.
   - [x] P55.2c Update the MKRF instance README/runbook/lineage metadata so the compiled-package intake is part of the thin-baseline contract.
+- [x] P55.3 Import the small compiled control layer into `femic-mkrf-instance` as archival reference files (`#172`)
+  - [x] P55.3a Copy the legacy control entrypoints (`baseMKRF.pin`, `runME.bsh`, `ScenarioSet.bsh`) into an archival lane inside the MKRF instance.
+  - [x] P55.3b Copy the selected legacy `Scripts/*.bsh` and `Targets/*.bsh` files into the same archival/reference lane.
+  - [x] P55.3c Update instance-local metadata/docs so the copied controls are explicitly archival-only and the next bounded move narrows to one bulky compiled family.
