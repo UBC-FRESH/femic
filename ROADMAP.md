@@ -1462,17 +1462,22 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P55.7a Inventory the materialized workbook tabs, named ranges, and `Codes` registry surfaces that feed the SPS XML serializer.
   - [x] P55.7b Classify each workbook surface by XML role and likely future FEMIC home.
   - [x] P55.7c Update parent and instance metadata/docs so the next bounded move narrows to materializing workbook-owned values into tracked review tables.
+- [x] P55.8 Materialize the governing MKRF workbook-owned values into tracked review tables (`#172`)
+  - [x] P55.8a Export the active workbook surfaces (`Input Variables`, `Netdown`, `Curve Library`, `Attrib`, and `Treat`) into tracked CSV/YAML review artifacts.
+  - [x] P55.8b Keep the extracted tables explicitly labeled as review evidence, not live FEMIC config.
+  - [x] P55.8c Update parent and instance metadata/docs so the next bounded move narrows to one specific workbook-surface refactor seam.
 
 ## Detailed Next Steps Notes
 
-- Active MKRF bounded move after `P55.7`:
-  materialize the governing workbook-owned values into tracked review tables,
-  starting with `Input Variables`, `Netdown`, `Curve Library`, `Attrib`, and
-  the active stratum sheet `Treat`.
+- Active MKRF bounded move after `P55.8`:
+  draft the first FEMIC-native config translation for the workbook
+  `Input Variables` surface, including scalar problem settings, input-field
+  bindings, constants, and XML include-fragment hooks.
 - Keep the same boundary for the next slice:
   no `03_MappingAnalysisData/*`, no `Outputs/*`, and no claim that the
   archival legacy payload is yet a runnable FEMIC or Patchworks rebuild
   surface.
 - Keep VBA reimplementation, road-network discovery, reporting-output intake,
-  and direct workbook publication out of the next slice unless the tracked
-  table extraction proves they are required.
+  direct workbook publication, and broader `Treat` stratum refactoring out of
+  the next slice unless `Input Variables` translation proves they are
+  required.

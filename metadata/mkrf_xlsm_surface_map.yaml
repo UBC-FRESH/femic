@@ -184,8 +184,9 @@ registry_mismatches:
       - Additional lookup families may be represented as named blocks, formulas, or stale registry references rather than discrete sheets.
 
 next_bounded_step:
-  recommendation: materialize_workbook_values_into_tracked_review_tables
+  recommendation: draft_input_variables_femic_config_translation
   description:
-    Export the governing workbook-owned values for Input Variables, Netdown,
-    Curve Library, Attrib, Treat, and supporting lookup/transition surfaces
-    into tracked CSV/YAML review artifacts without yet reimplementing the VBA.
+    Use the tracked review extracts under metadata/mkrf_xlsm_review/ to draft
+    the first FEMIC-native translation of the Input Variables surface,
+    including scalar problem settings, input-field bindings, constants, and
+    XML include-fragment hooks, without yet broadening into the full workbook.

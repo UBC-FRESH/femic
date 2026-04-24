@@ -211,24 +211,57 @@ not expose those exact names as discrete worksheets. For now those should be
 treated as evidence of intended surfaces, not yet as confirmed sheet-level
 payloads.
 
+## Workbook value extracts
+
+The governing workbook-owned values are now materialized into tracked review
+artifacts under `metadata/mkrf_xlsm_review/`.
+
+Primary sheet-level review extracts now present:
+
+- `metadata/mkrf_xlsm_review/input_variables.review.csv`
+- `metadata/mkrf_xlsm_review/netdown.review.csv`
+- `metadata/mkrf_xlsm_review/curve_library.review.csv`
+- `metadata/mkrf_xlsm_review/attrib.review.csv`
+- `metadata/mkrf_xlsm_review/treat.review.csv`
+- `metadata/mkrf_xlsm_review/extract_manifest.yaml`
+
+Named-range and supporting review extracts now present:
+
+- `metadata/mkrf_xlsm_review/ranges/input_variables_*.review.yaml`
+- `metadata/mkrf_xlsm_review/ranges/input_variables_columns.review.csv`
+- `metadata/mkrf_xlsm_review/ranges/input_variables_constants.review.csv`
+- `metadata/mkrf_xlsm_review/ranges/netdown_criteria.review.csv`
+- `metadata/mkrf_xlsm_review/ranges/netdown_names.review.csv`
+- `metadata/mkrf_xlsm_review/ranges/netdown_factors.review.csv`
+- `metadata/mkrf_xlsm_review/ranges/curve_names.review.csv`
+- `metadata/mkrf_xlsm_review/ranges/attrib_attributes.review.csv`
+- `metadata/mkrf_xlsm_review/ranges/treat_stratum_*.review.csv`
+- `metadata/mkrf_xlsm_review/ranges/lookups_spp_comp.review.csv`
+- `metadata/mkrf_xlsm_review/ranges/post_renewal_treatment_responses.review.csv`
+
+These files preserve workbook values and formulas as review evidence only.
+They are not yet treated as live FEMIC config, not a workbook publication
+surface, and not a VBA reimplementation.
+
 ## Recommended next bounded step
 
 Do exactly one next bounded move:
 
-**materialize the governing workbook-owned values into tracked review tables**,
-starting with `Input Variables`, `Netdown`, `Curve Library`, `Attrib`, and the
-active stratum sheet `Treat`.
+**draft the first FEMIC-native config translation for the workbook
+`Input Variables` surface**, including scalar problem settings, input-field
+bindings, constants, and XML include-fragment hooks.
 
 The archival control-layer intake, the archival track-table intake, the
 archival spatial-runtime intake, and the editable-source authority review are
 now complete. The next bounded move should:
 
 - focus on exactly one seam:
-  - export the workbook-owned values for the main active surfaces into tracked
-    CSV/YAML review artifacts;
+  - translate only the `Input Variables` review extracts into a first-pass
+    FEMIC-native config shape without broadening into the full workbook;
 - preserve the evidence/review framing instead of claiming a runnable rebuild
   surface, a finalized rebuild recipe, workbook publication, or a VBA
   reimplementation;
 - continue to defer `03_MappingAnalysisData/*` and `Outputs/*`; and
-- keep road-network discovery and reporting-surface import outside that next
-  slice unless the tracked table extraction proves they are required.
+- keep road-network discovery, reporting-surface import, direct workbook
+  publication, and broader `Treat` stratum refactoring outside that next slice
+  unless `Input Variables` translation proves they are required.

@@ -1,0 +1,6 @@
+schema_version: 1
+sheet: Input Variables
+range_name: areaExpr
+workbook_ref: '''Input Variables''!$D$18'
+value: area()/10000
+note: Review extract from governing MKRF workbook surface.

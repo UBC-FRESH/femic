@@ -15108,3 +15108,13 @@
   - no workbook payload was copied into `external/femic-mkrf-instance`;
   - no workbook values were yet materialized into tracked CSV/YAML review tables; and
   - no VBA reimplementation or runnable rebuild claim was made by this slice.
+## 2026-04-24 - Materialized the governing MKRF workbook-owned values into tracked review tables
+- `#172` bounded workbook-extract slice:
+  - exported the active workbook surfaces from `002_base.xlsm` into tracked review artifacts under `metadata/mkrf_xlsm_review/`, including sheet-level extracts for `Input Variables`, `Netdown`, `Curve Library`, `Attrib`, and `Treat`;
+  - added named-range review extracts for the main workbook-owned scalar/config seams plus supporting `Treat`, `Lookups`, and `Post Renewal Succession` ranges;
+  - published `metadata/mkrf_xlsm_review/extract_manifest.yaml` as the machine-readable inventory for those review extracts; and
+  - updated parent and instance metadata/docs so the instance now points at the parent-side review extracts while keeping them explicitly framed as evidence rather than live FEMIC config.
+- Scope boundary preserved:
+  - no workbook payload was copied into `external/femic-mkrf-instance`;
+  - no VBA was reimplemented or adopted as a FEMIC runtime dependency; and
+  - no `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.
