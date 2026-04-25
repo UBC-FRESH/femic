@@ -118,8 +118,8 @@ unresolved_seams:
       - not yet clear whether it is contextual QA only or part of a reproducible preprocessing contract
 
 next_bounded_step:
-  recommendation: operationalize_treatment_eligibility_expression
+  recommendation: operationalize_matrix_builder_constants_seam
   description:
-    Operationalize the remaining staged Input Variables
-    treatment-eligibility seam before broadening into Netdown or other
-    workbook surfaces.
+    Operationalize the remaining staged legacy matrix-builder constants seam
+    before broadening into include hooks, Netdown, or other workbook
+    surfaces.

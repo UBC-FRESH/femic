@@ -1478,18 +1478,21 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P55.11a Make the workbook-owned additional stratification column bindings live in the opt-in MKRF fragments export surface.
   - [x] P55.11b Pass through and validate the checkpoint source columns required by those live additional stratification bindings.
   - [x] P55.11c Update parent and instance metadata/docs so the next bounded move narrows to the remaining staged `Input Variables` semantics.
+- [x] P55.12 Operationalize the translated MKRF `treatment_eligibility_expression` seam (`#172`)
+  - [x] P55.12a Make the workbook-owned treatment-eligibility expression live as an opt-in MKRF fragments/export field.
+  - [x] P55.12b Evaluate the treatment-eligibility expression against the live additional stratification bindings and legacy constants with clear failure handling for unresolved symbols.
+  - [x] P55.12c Update parent and instance metadata/docs so the next bounded move narrows to the remaining staged workbook semantics.
 
 ## Detailed Next Steps Notes
 
-- Active MKRF bounded move after `P55.11`:
-  operationalize the remaining staged `Input Variables`
-  `treatment_eligibility_expression` seam before broadening into `Netdown` or
-  `Treat`.
+- Active MKRF bounded move after `P55.12`:
+  operationalize the remaining staged legacy matrix-builder constants seam
+  before broadening into include hooks, `Netdown`, or `Treat`.
 - Keep the same boundary for the next slice:
   no `03_MappingAnalysisData/*`, no `Outputs/*`, and no claim that the
   archival legacy payload is yet a runnable FEMIC or Patchworks rebuild
   surface.
 - Keep VBA reimplementation, road-network discovery, reporting-output intake,
-  direct workbook publication, live activation of include hooks/constants, and
-  broader `Treat` stratum refactoring out of the next slice unless the
-  treatment-eligibility contract work proves they are required.
+  direct workbook publication, live activation of include hooks, and broader
+  `Treat` stratum refactoring out of the next slice unless the constants
+  contract work proves they are required.

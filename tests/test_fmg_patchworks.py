@@ -3285,6 +3285,9 @@ def test_export_patchworks_package_uses_legacy_input_variables_config(
                 "      source_expression: CT_eligib",
                 "    - key: aux",
                 "      source_expression: AU_EX",
+                '  treatment_eligibility_expression: "status in unmanaged"',
+                "  constants:",
+                "    unmanaged: \"'N'\"",
             ]
         )
         + "\n",
@@ -3349,6 +3352,7 @@ def test_export_patchworks_package_uses_legacy_input_variables_config(
     assert gdf.loc[0, "oper"] == "Operable"
     assert gdf.loc[0, "ct"] == "eligible"
     assert gdf.loc[0, "aux"] == pytest.approx(985501000.0)
+    assert gdf.loc[0, "treat_inel"] == "Y"
 
 
 def test_export_patchworks_package_rejects_invalid_legacy_input_variables_config(
@@ -3468,6 +3472,58 @@ def test_export_patchworks_package_rejects_missing_legacy_stratification_source_
         ValueError,
         match="required legacy export source columns missing from checkpoint: "
         "CT_eligib",
+    ):
+        export_patchworks_package(
+            bundle_dir=bundle_dir,
+            checkpoint_path=checkpoint_path,
+            output_dir=output_dir,
+            tsa_list=["k3z"],
+            legacy_input_variables_config_path=config_path,
+        )
+
+
+def test_export_patchworks_package_rejects_unresolved_legacy_treatment_eligibility_symbol(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _write_bundle_tables(bundle_dir)
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    output_dir = tmp_path / "patchworks_export"
+    config_path = tmp_path / "input_variables.mkrf.yaml"
+    config_path.write_text(
+        "\n".join(
+            [
+                "description: Base TFL26",
+                "start_year: 2020",
+                "horizon_years: 300",
+                "staged:",
+                '  treatment_eligibility_expression: "status in unmanaged"',
+                "  constants:",
+                "    unmanaged: \"'N'\"",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "k3z",
+                "au": 985501000,
+                "PROJ_AGE_1": 74,
+                "thlb_raw": 1,
+                "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+            }
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="legacy treatment eligibility expression references unresolved symbol "
+        "'status'",
     ):
         export_patchworks_package(
             bundle_dir=bundle_dir,

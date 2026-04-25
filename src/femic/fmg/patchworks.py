@@ -56,6 +56,7 @@ DEFAULT_LEGACY_INPUT_VARIABLES_CONFIG_PATH: Path | None = None
 DEFAULT_RETENTION_VALUE = 0.0
 DEFAULT_SILV_STATE_NATURAL = "baseline"
 DEFAULT_SILV_STATE_PLANTED = "cc_pl"
+DEFAULT_LEGACY_TREATMENT_ELIGIBILITY_FIELD = "treat_inel"
 DEFAULT_PASS_THROUGH_SUCCESSION_BREAKUP = "1000"
 DEFAULT_PASS_THROUGH_SUCCESSION_RENEW = "1000"
 SUPPORTED_BTC_INDICATOR_BANKS = {"stand-structure-basic", "log-grades"}
@@ -115,6 +116,11 @@ REQUIRED_FRAGMENT_COLUMNS = {
 _LEGACY_EXPRESSION_IDENTIFIER_PATTERN = re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*\b")
 _LEGACY_EXPRESSION_FUNCTION_PATTERN = re.compile(
     r"^(?P<func>Int|string|Number)\((?P<column>[A-Za-z_][A-Za-z0-9_]*)\)$",
+    flags=re.IGNORECASE,
+)
+_LEGACY_MEMBERSHIP_EXPRESSION_PATTERN = re.compile(
+    r"^(?P<left>[A-Za-z_][A-Za-z0-9_]*)\s+in\s+"
+    r"(?P<right>[A-Za-z_][A-Za-z0-9_]*|'[^']*'|\"[^\"]*\")$",
     flags=re.IGNORECASE,
 )
 _LEGACY_EXPRESSION_QUOTED_LITERAL_PATTERN = re.compile(r"'[^']*'|\"[^\"]*\"")
@@ -1363,6 +1369,7 @@ def _load_legacy_input_variables_config(
             "unique_record_label_expression",
             "polygon_area_expression",
             "stand_age_expression",
+            "treatment_eligibility_expression",
         ):
             raw_value = staged.get(field_name)
             if raw_value is not None and not isinstance(raw_value, str):
@@ -1400,6 +1407,11 @@ def _load_legacy_input_variables_config(
                         f"staged.additional_stratification_columns[{index}].source_expression "
                         "must be a non-empty string"
                     )
+        raw_constants = staged.get("constants")
+        if raw_constants is not None and not isinstance(raw_constants, dict):
+            raise ValueError(
+                "legacy input-variables field staged.constants must be a mapping/object"
+            )
     return payload
 
 
@@ -1417,6 +1429,17 @@ def _normalize_optional_expression(value: Any) -> str | None:
         return None
     text = str(value).strip()
     return text or None
+
+
+def _normalize_legacy_constant_literal(value: Any) -> Any:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        text = value.strip()
+        if len(text) >= 2 and text[0] == text[-1] and text[0] in {"'", '"'}:
+            return text[1:-1]
+        return text
+    return value
 
 
 def _legacy_expression_is_area_ha(expression: str) -> bool:
@@ -1533,6 +1556,85 @@ def _build_live_legacy_additional_stratification_contract(
             if column_name not in required_columns:
                 required_columns.append(column_name)
     return tuple(live_columns), tuple(required_columns)
+
+
+def _build_live_legacy_constants_contract(
+    *,
+    legacy_input_variables_config: dict[str, Any] | None,
+) -> dict[str, Any]:
+    staged = _legacy_input_variables_staged_mapping(legacy_input_variables_config)
+    raw_constants = staged.get("constants")
+    if not isinstance(raw_constants, dict):
+        return {}
+    return {
+        str(key).strip(): _normalize_legacy_constant_literal(value)
+        for key, value in raw_constants.items()
+        if str(key).strip()
+    }
+
+
+def _resolve_legacy_treatment_expression_operand(
+    *,
+    token: str,
+    scoped: pd.DataFrame,
+    exported: pd.DataFrame,
+    legacy_constants: dict[str, Any],
+) -> pd.Series | Any:
+    normalized = str(token).strip()
+    if (
+        len(normalized) >= 2
+        and normalized[0] == normalized[-1]
+        and normalized[0] in {"'", '"'}
+    ):
+        return normalized[1:-1]
+    if normalized in exported.columns:
+        return exported[normalized]
+    if normalized in scoped.columns:
+        return scoped[normalized]
+    if normalized in legacy_constants:
+        return legacy_constants[normalized]
+    raise ValueError(
+        "legacy treatment eligibility expression references unresolved symbol "
+        f"{normalized!r}"
+    )
+
+
+def _evaluate_legacy_treatment_eligibility_expression(
+    *,
+    expression: str,
+    scoped: pd.DataFrame,
+    exported: pd.DataFrame,
+    legacy_constants: dict[str, Any],
+) -> pd.Series:
+    text = str(expression).strip()
+    if not text:
+        raise ValueError("legacy treatment eligibility expression must not be blank")
+    membership_match = _LEGACY_MEMBERSHIP_EXPRESSION_PATTERN.fullmatch(text)
+    if membership_match is None:
+        raise ValueError(
+            "unsupported legacy treatment eligibility expression "
+            f"{expression!r}; expected <field> in <constant_or_literal>"
+        )
+    left_operand = _resolve_legacy_treatment_expression_operand(
+        token=str(membership_match.group("left")),
+        scoped=scoped,
+        exported=exported,
+        legacy_constants=legacy_constants,
+    )
+    right_operand = _resolve_legacy_treatment_expression_operand(
+        token=str(membership_match.group("right")),
+        scoped=scoped,
+        exported=exported,
+        legacy_constants=legacy_constants,
+    )
+    if not isinstance(left_operand, pd.Series):
+        left_operand = pd.Series([left_operand] * len(exported), index=exported.index)
+    if isinstance(right_operand, pd.Series):
+        right_series = right_operand.reindex(exported.index)
+    else:
+        right_series = pd.Series([right_operand] * len(exported), index=exported.index)
+    left_series = left_operand.reindex(exported.index)
+    return left_series.astype(str) == right_series.astype(str)
 
 
 def _resolve_legacy_additional_export_field_name(
@@ -4943,6 +5045,14 @@ def build_fragments_geodataframe(
     ) = _build_live_legacy_additional_stratification_contract(
         legacy_input_variables_config=legacy_input_variables_config
     )
+    legacy_constants = _build_live_legacy_constants_contract(
+        legacy_input_variables_config=legacy_input_variables_config
+    )
+    live_treatment_eligibility_expression = _normalize_optional_expression(
+        _legacy_input_variables_staged_mapping(legacy_input_variables_config).get(
+            "treatment_eligibility_expression"
+        )
+    )
     required_legacy_source_columns: list[str] = []
     for column_name in (
         *required_live_source_columns,
@@ -5074,6 +5184,18 @@ def build_fragments_geodataframe(
             expression=source_expression,
             scoped=scoped,
             area_ha=total_area_ha,
+        )
+    if live_treatment_eligibility_expression is not None:
+        treatment_ineligible = _evaluate_legacy_treatment_eligibility_expression(
+            expression=live_treatment_eligibility_expression,
+            scoped=scoped,
+            exported=out,
+            legacy_constants=legacy_constants,
+        )
+        out[DEFAULT_LEGACY_TREATMENT_ELIGIBILITY_FIELD] = np.where(
+            treatment_ineligible.to_numpy(),
+            "Y",
+            "N",
         )
     out["AREA_HA"] = pd.to_numeric(out["AREA_HA"], errors="coerce").fillna(0.0)
     gpd = _gpd_module()

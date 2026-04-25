@@ -264,11 +264,11 @@ Live now in exporter behavior:
 - `polygon_area_expression`
 - `stand_age_expression`
 - `additional_stratification_columns`
+- `treatment_eligibility_expression`
 
 Preserved but still staged only:
 
 - `max_inventory_age`
-- treatment-eligibility expression
 - include-fragment hooks
 - matrix-builder constants
 
@@ -280,18 +280,26 @@ The live additional-stratification bindings now materialize into fragments
 fields `status`, `au_1`, `auf`, `oper`, `ct`, and `aux`, with `au_1`
 deliberately renamed from workbook key `au` to avoid colliding with the base
 required `AU` fragments field.
+The live treatment-eligibility seam now materializes as fragments field
+`treat_inel`, which is written as `Y` when the legacy workbook expression
+evaluates true and `N` otherwise. In the current MKRF translation that means
+`status in unmanaged` is evaluated against the live `status` binding plus the
+translated legacy constants surface. This remains narrower than a full legacy
+unmanaged-track rebuild: the expression currently drives an exported review
+field, not a regenerated Patchworks select/track block.
 The remaining staged fields stay lineage evidence only until the current
-checkpoint-first exporter can safely absorb those legacy matrix-builder
-semantics.
+checkpoint-first exporter can safely absorb the rest of those legacy
+matrix-builder semantics.
 
 ## Recommended next bounded step
 
 Do exactly one next bounded move:
 
-**operationalize the remaining staged `Input Variables`
-`treatment_eligibility_expression` seam**, deciding whether that workbook
-expression should become a live fragments/export field, a treatment-surface
-filter, or remain staged while we broaden into `Netdown` or `Treat`.
+**operationalize the remaining staged legacy matrix-builder constants seam**,
+starting with the constants already touched by the live treatment-eligibility
+path and deciding which constant families should become explicit FEMIC-native
+export/build inputs before broadening into include hooks, `Netdown`, or
+`Treat`.
 
 The archival control-layer intake, the archival track-table intake, the
 archival spatial-runtime intake, and the editable-source authority review are

@@ -15148,3 +15148,13 @@
   - `max_inventory_age`, treatment eligibility, include hooks, and constants remain staged only;
   - no workbook payload was copied into `external/femic-mkrf-instance`; and
   - no `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.
+## 2026-04-24 - Operationalized the MKRF treatment-eligibility seam
+- `#172` bounded reconstruction slice:
+  - made the workbook-owned `treatment_eligibility_expression` live in the opt-in MKRF fragments export path as review field `treat_inel`;
+  - evaluated that expression against the live additional stratification bindings plus the translated legacy constants surface, with a focused failure path for unresolved symbols;
+  - added focused exporter regression tests covering the live treatment-eligibility review flag and the unresolved-symbol failure path; and
+  - updated parent and instance planning/lineage docs so the next bounded move narrows to the remaining legacy matrix-builder constants seam.
+- Scope boundary preserved:
+  - `max_inventory_age`, include hooks, and the broader matrix-builder constants seam remain staged only;
+  - no workbook payload was copied into `external/femic-mkrf-instance`; and
+  - no `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.
