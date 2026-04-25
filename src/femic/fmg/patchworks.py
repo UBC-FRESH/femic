@@ -37,6 +37,7 @@ from .core import (
 
 DEFAULT_START_YEAR = 2026
 DEFAULT_HORIZON_YEARS = 300
+DEFAULT_FORESTMODEL_DESCRIPTION = "FEMIC Patchworks export"
 DEFAULT_CC_MIN_AGE = 0
 DEFAULT_CC_MAX_AGE = 1000
 DEFAULT_CC_TRANSITION_IFM: str | None = None
@@ -47,6 +48,7 @@ DEFAULT_IFM_THRESHOLD: float | None = None
 DEFAULT_IFM_TARGET_MANAGED_SHARE: float | None = None
 DEFAULT_SERAL_STAGE_CONFIG_PATH: Path | None = None
 DEFAULT_SILVICULTURE_CONFIG_PATH: Path | None = None
+DEFAULT_LEGACY_INPUT_VARIABLES_CONFIG_PATH: Path | None = None
 DEFAULT_RETENTION_VALUE = 0.0
 DEFAULT_SILV_STATE_NATURAL = "baseline"
 DEFAULT_SILV_STATE_PLANTED = "cc_pl"
@@ -1303,6 +1305,40 @@ def _load_silviculture_config(
     return payload
 
 
+def _load_legacy_input_variables_config(
+    *,
+    legacy_input_variables_config_path: Path | None,
+) -> dict[str, Any] | None:
+    if legacy_input_variables_config_path is None:
+        return None
+    resolved = legacy_input_variables_config_path.expanduser().resolve()
+    if not resolved.exists():
+        raise FileNotFoundError(f"legacy input-variables config not found: {resolved}")
+    payload = yaml.safe_load(resolved.read_text(encoding="utf-8"))
+    if payload is None:
+        return {}
+    if not isinstance(payload, dict):
+        raise ValueError(
+            "legacy input-variables config must contain a top-level "
+            f"mapping/object (found {type(payload).__name__})"
+        )
+    description = payload.get("description")
+    if description is not None and not isinstance(description, str):
+        raise ValueError("legacy input-variables field description must be a string")
+    start_year = payload.get("start_year")
+    if start_year is not None and not isinstance(start_year, int):
+        raise ValueError("legacy input-variables field start_year must be an integer")
+    horizon_years = payload.get("horizon_years")
+    if horizon_years is not None and not isinstance(horizon_years, int):
+        raise ValueError(
+            "legacy input-variables field horizon_years must be an integer"
+        )
+    staged = payload.get("staged")
+    if staged is not None and not isinstance(staged, dict):
+        raise ValueError("legacy input-variables field staged must be a mapping/object")
+    return payload
+
+
 def _evaluate_curve_on_integer_ages(
     *,
     points: tuple[CurvePoint, ...],
@@ -2437,6 +2473,7 @@ def build_forestmodel_xml_tree(
     au_table: pd.DataFrame,
     curve_table: pd.DataFrame,
     curve_points_table: pd.DataFrame,
+    forestmodel_description: str = DEFAULT_FORESTMODEL_DESCRIPTION,
     start_year: int = DEFAULT_START_YEAR,
     horizon_years: int = DEFAULT_HORIZON_YEARS,
     cc_min_age: int = DEFAULT_CC_MIN_AGE,
@@ -2454,6 +2491,7 @@ def build_forestmodel_xml_tree(
     )
     return build_forestmodel_xml_tree_from_context(
         context=context,
+        forestmodel_description=forestmodel_description,
         start_year=start_year,
         horizon_years=horizon_years,
         cc_min_age=cc_min_age,
@@ -2467,6 +2505,7 @@ def build_forestmodel_xml_tree(
 def build_forestmodel_xml_tree_from_context(
     *,
     context: BundleModelContext,
+    forestmodel_description: str = DEFAULT_FORESTMODEL_DESCRIPTION,
     start_year: int = DEFAULT_START_YEAR,
     horizon_years: int = DEFAULT_HORIZON_YEARS,
     cc_min_age: int = DEFAULT_CC_MIN_AGE,
@@ -2478,6 +2517,7 @@ def build_forestmodel_xml_tree_from_context(
     """Build a Patchworks ForestModel XML tree from shared FMG context."""
     definition = build_patchworks_forestmodel_definition(
         context=context,
+        forestmodel_description=forestmodel_description,
         start_year=start_year,
         horizon_years=horizon_years,
         cc_min_age=cc_min_age,
@@ -2492,6 +2532,7 @@ def build_forestmodel_xml_tree_from_context(
 def build_patchworks_forestmodel_definition(
     *,
     context: BundleModelContext,
+    forestmodel_description: str = DEFAULT_FORESTMODEL_DESCRIPTION,
     start_year: int = DEFAULT_START_YEAR,
     horizon_years: int = DEFAULT_HORIZON_YEARS,
     cc_min_age: int = DEFAULT_CC_MIN_AGE,
@@ -4286,7 +4327,7 @@ def build_patchworks_forestmodel_definition(
                     current_source_points = curves[fert_curve_ref]
 
     return ForestModelDefinition(
-        description="FEMIC Patchworks export",
+        description=str(forestmodel_description),
         horizon=int(horizon_years),
         year=int(start_year),
         match="multi",
@@ -4967,6 +5008,7 @@ def export_patchworks_package(
     checkpoint_path: Path,
     output_dir: Path,
     tsa_list: Iterable[str],
+    forestmodel_description: str = DEFAULT_FORESTMODEL_DESCRIPTION,
     start_year: int = DEFAULT_START_YEAR,
     horizon_years: int = DEFAULT_HORIZON_YEARS,
     cc_min_age: int = DEFAULT_CC_MIN_AGE,
@@ -4979,6 +5021,9 @@ def export_patchworks_package(
     ifm_target_managed_share: float | None = DEFAULT_IFM_TARGET_MANAGED_SHARE,
     seral_stage_config_path: Path | None = DEFAULT_SERAL_STAGE_CONFIG_PATH,
     silviculture_config_path: Path | None = DEFAULT_SILVICULTURE_CONFIG_PATH,
+    legacy_input_variables_config_path: Path | None = (
+        DEFAULT_LEGACY_INPUT_VARIABLES_CONFIG_PATH
+    ),
 ) -> PatchworksExportResult:
     """Export Patchworks package artifacts from FEMIC outputs."""
     normalized_tsa = sorted({normalize_tsa_code(tsa) for tsa in tsa_list})
@@ -4995,11 +5040,30 @@ def export_patchworks_package(
     silviculture_config = _load_silviculture_config(
         silviculture_config_path=silviculture_config_path,
     )
+    legacy_input_variables_config = _load_legacy_input_variables_config(
+        legacy_input_variables_config_path=legacy_input_variables_config_path,
+    )
+    resolved_description = (
+        str(legacy_input_variables_config.get("description", forestmodel_description))
+        if legacy_input_variables_config is not None
+        else str(forestmodel_description)
+    )
+    resolved_start_year = (
+        int(legacy_input_variables_config.get("start_year", start_year))
+        if legacy_input_variables_config is not None
+        else int(start_year)
+    )
+    resolved_horizon_years = (
+        int(legacy_input_variables_config.get("horizon_years", horizon_years))
+        if legacy_input_variables_config is not None
+        else int(horizon_years)
+    )
 
     root = build_forestmodel_xml_tree_from_context(
         context=context,
-        start_year=start_year,
-        horizon_years=horizon_years,
+        forestmodel_description=resolved_description,
+        start_year=resolved_start_year,
+        horizon_years=resolved_horizon_years,
         cc_min_age=cc_min_age,
         cc_max_age=cc_max_age,
         cc_transition_ifm=cc_transition_ifm,

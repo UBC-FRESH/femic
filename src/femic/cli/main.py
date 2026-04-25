@@ -1196,6 +1196,16 @@ EXPORT_SILVICULTURE_CONFIG_OPTION = typer.Option(
     ),
     show_default=False,
 )
+EXPORT_LEGACY_INPUT_VARIABLES_CONFIG_OPTION = typer.Option(
+    None,
+    "--legacy-input-variables-config",
+    help=(
+        "Optional MKRF-first translated Input Variables YAML. When provided, "
+        "its live fields override the default ForestModel description/start/"
+        "horizon export values."
+    ),
+    show_default=False,
+)
 EXPORT_WOODSTOCK_OUTPUT_DIR_OPTION = typer.Option(
     DEFAULT_WOODSTOCK_OUTPUT_DIR,
     "--output-dir",
@@ -6844,6 +6854,9 @@ def export_patchworks(
     ifm_target_managed_share: float | None = (EXPORT_IFM_TARGET_MANAGED_SHARE_OPTION),
     seral_stage_config: Path | None = EXPORT_SERAL_STAGE_CONFIG_OPTION,
     silviculture_config: Path | None = EXPORT_SILVICULTURE_CONFIG_OPTION,
+    legacy_input_variables_config: Path | None = (
+        EXPORT_LEGACY_INPUT_VARIABLES_CONFIG_OPTION
+    ),
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
     """Export a Patchworks model package for the selected FMU/code targets."""
@@ -6859,6 +6872,11 @@ def export_patchworks(
     resolved_silviculture_config = (
         instance_context.resolve_path(silviculture_config)
         if isinstance(silviculture_config, Path)
+        else None
+    )
+    resolved_legacy_input_variables_config = (
+        instance_context.resolve_path(legacy_input_variables_config)
+        if isinstance(legacy_input_variables_config, Path)
         else None
     )
     targets = (
@@ -6889,6 +6907,7 @@ def export_patchworks(
             ifm_target_managed_share=ifm_target_managed_share,
             seral_stage_config_path=resolved_seral_stage_config,
             silviculture_config_path=resolved_silviculture_config,
+            legacy_input_variables_config_path=resolved_legacy_input_variables_config,
         )
     except (FileNotFoundError, ValueError) as exc:
         console.print(f"[red]Patchworks export failed:[/red] {exc}")
@@ -7021,6 +7040,9 @@ def export_dual(
     ifm_target_managed_share: float | None = (EXPORT_IFM_TARGET_MANAGED_SHARE_OPTION),
     seral_stage_config: Path | None = EXPORT_SERAL_STAGE_CONFIG_OPTION,
     silviculture_config: Path | None = EXPORT_SILVICULTURE_CONFIG_OPTION,
+    legacy_input_variables_config: Path | None = (
+        EXPORT_LEGACY_INPUT_VARIABLES_CONFIG_OPTION
+    ),
     with_ws3_smoke: bool = EXPORT_DUAL_WITH_WS3_SMOKE_OPTION,
     ws3_command: str | None = EXPORT_DUAL_WS3_COMMAND_OPTION,
     ws3_workdir: Path | None = EXPORT_DUAL_WS3_WORKDIR_OPTION,
@@ -7048,6 +7070,11 @@ def export_dual(
     resolved_silviculture_config = (
         instance_context.resolve_path(silviculture_config)
         if isinstance(silviculture_config, Path)
+        else None
+    )
+    resolved_legacy_input_variables_config = (
+        instance_context.resolve_path(legacy_input_variables_config)
+        if isinstance(legacy_input_variables_config, Path)
         else None
     )
     resolved_ws3_report = instance_context.resolve_path(ws3_report)
@@ -7095,6 +7122,7 @@ def export_dual(
             ifm_target_managed_share=ifm_target_managed_share,
             seral_stage_config_path=resolved_seral_stage_config,
             silviculture_config_path=resolved_silviculture_config,
+            legacy_input_variables_config_path=resolved_legacy_input_variables_config,
         )
         woodstock_result = export_woodstock_package(
             bundle_dir=resolved_bundle_dir,

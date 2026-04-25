@@ -1261,6 +1261,7 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
         ifm_target_managed_share,
         seral_stage_config_path,
         silviculture_config_path,
+        legacy_input_variables_config_path,
     ):
         called.update(
             {
@@ -1280,6 +1281,9 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
                 "ifm_target_managed_share": ifm_target_managed_share,
                 "seral_stage_config_path": seral_stage_config_path,
                 "silviculture_config_path": silviculture_config_path,
+                "legacy_input_variables_config_path": (
+                    legacy_input_variables_config_path
+                ),
             }
         )
         return SimpleNamespace(
@@ -1312,6 +1316,9 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
         ifm_target_managed_share=None,
         seral_stage_config=Path("config/seral.k3z.yaml"),
         silviculture_config=Path("config/silviculture.k3z.yaml"),
+        legacy_input_variables_config=Path(
+            "config/legacy_xml_builder/input_variables.mkrf.yaml"
+        ),
     )
 
     assert called["tsa_list"] == ["k3z"]
@@ -1329,6 +1336,11 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
         Path(called["silviculture_config_path"])
         .as_posix()
         .endswith("config/silviculture.k3z.yaml")
+    )
+    assert (
+        Path(called["legacy_input_variables_config_path"])
+        .as_posix()
+        .endswith("config/legacy_xml_builder/input_variables.mkrf.yaml")
     )
     assert any("patchworks export completed" in msg for msg in messages)
 
@@ -3960,6 +3972,7 @@ def test_export_dual_runs_patchworks_and_woodstock(
         ifm_threshold=None,
         ifm_target_managed_share=None,
         seral_stage_config=None,
+        legacy_input_variables_config=None,
         with_ws3_smoke=False,
         ws3_command=None,
         ws3_workdir=None,

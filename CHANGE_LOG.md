@@ -15118,3 +15118,13 @@
   - no workbook payload was copied into `external/femic-mkrf-instance`;
   - no VBA was reimplemented or adopted as a FEMIC runtime dependency; and
   - no `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.
+## 2026-04-24 - Rolled out the first FEMIC-native MKRF Input Variables translation
+- `#172` bounded reconstruction slice:
+  - added the first MKRF-first translated `Input Variables` config under `external/femic-mkrf-instance/config/legacy_xml_builder/input_variables.mkrf.yaml`;
+  - added instance-local lineage/status metadata and a translation note so every legacy Input Variables seam is explicitly classified as `live_export` or `staged_only`;
+  - wired the translated live subset into Patchworks export as an explicit opt-in config path; and
+  - proved the translated config can drive ForestModel `description`, `year`, and `horizon` semantics without changing default K3Z/TSA29 behavior.
+- Scope boundary preserved:
+  - legacy exclude/query expressions, block/area/age expressions, include hooks, and constants remain staged only;
+  - no workbook payload was copied into `external/femic-mkrf-instance`; and
+  - no `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.

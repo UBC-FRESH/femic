@@ -1466,18 +1466,22 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P55.8a Export the active workbook surfaces (`Input Variables`, `Netdown`, `Curve Library`, `Attrib`, and `Treat`) into tracked CSV/YAML review artifacts.
   - [x] P55.8b Keep the extracted tables explicitly labeled as review evidence, not live FEMIC config.
   - [x] P55.8c Update parent and instance metadata/docs so the next bounded move narrows to one specific workbook-surface refactor seam.
+- [x] P55.9 Roll out the first FEMIC-native MKRF `Input Variables` translation (`#172`)
+  - [x] P55.9a Add the normalized MKRF-first `Input Variables` config contract plus lineage metadata under `external/femic-mkrf-instance/config/legacy_xml_builder/`.
+  - [x] P55.9b Wire the live subset (`description`, `start_year`, `horizon_years`) into the existing Patchworks exporter as an explicit opt-in input path without changing default K3Z/TSA29 behavior.
+  - [x] P55.9c Keep unsupported legacy expressions/constants/include hooks explicit in docs/metadata and narrow the next bounded move based on what this first live translation reveals.
 
 ## Detailed Next Steps Notes
 
-- Active MKRF bounded move after `P55.8`:
-  draft the first FEMIC-native config translation for the workbook
-  `Input Variables` surface, including scalar problem settings, input-field
-  bindings, constants, and XML include-fragment hooks.
+- Active MKRF bounded move after `P55.9`:
+  extend the currently staged `Input Variables` fields into an explicit
+  block-layout/export contract, starting with the legacy exclude, block-key,
+  polygon-area, and stand-age expressions.
 - Keep the same boundary for the next slice:
   no `03_MappingAnalysisData/*`, no `Outputs/*`, and no claim that the
   archival legacy payload is yet a runnable FEMIC or Patchworks rebuild
   surface.
 - Keep VBA reimplementation, road-network discovery, reporting-output intake,
-  direct workbook publication, and broader `Treat` stratum refactoring out of
-  the next slice unless `Input Variables` translation proves they are
-  required.
+  direct workbook publication, live activation of include hooks/constants, and
+  broader `Treat` stratum refactoring out of the next slice unless the block-
+  layout contract work proves they are required.

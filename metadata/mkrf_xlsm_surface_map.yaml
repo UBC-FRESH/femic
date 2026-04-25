@@ -184,9 +184,9 @@ registry_mismatches:
       - Additional lookup families may be represented as named blocks, formulas, or stale registry references rather than discrete sheets.
 
 next_bounded_step:
-  recommendation: draft_input_variables_femic_config_translation
+  recommendation: extend_staged_input_variables_into_export_contract
   description:
-    Use the tracked review extracts under metadata/mkrf_xlsm_review/ to draft
-    the first FEMIC-native translation of the Input Variables surface,
-    including scalar problem settings, input-field bindings, constants, and
-    XML include-fragment hooks, without yet broadening into the full workbook.
+    Extend the currently staged Input Variables fields into an explicit
+    block-layout/export contract, starting with the legacy exclude, block-key,
+    polygon-area, and stand-age expression seam, while keeping include hooks
+    and constants preserved but inactive.

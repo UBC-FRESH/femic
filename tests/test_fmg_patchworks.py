@@ -3252,6 +3252,80 @@ def test_export_patchworks_package_decodes_wkb_geometry(
     assert gdf.geometry.iloc[0].geom_type == "Polygon"
 
 
+def test_export_patchworks_package_uses_legacy_input_variables_config(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _write_bundle_tables(bundle_dir)
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    output_dir = tmp_path / "patchworks_export"
+    config_path = tmp_path / "input_variables.mkrf.yaml"
+    config_path.write_text(
+        "\n".join(
+            [
+                "description: Base TFL26",
+                "start_year: 2020",
+                "horizon_years: 300",
+                "staged:",
+                "  max_inventory_age: 350",
+                "  exclude_expression: \"CONTCLAS eq 'X'\"",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "k3z",
+                "au": 985501000,
+                "PROJ_AGE_1": 74,
+                "FEATURE_AREA_SQM": 12000.0,
+                "thlb_raw": 1,
+                "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+            }
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    result = export_patchworks_package(
+        bundle_dir=bundle_dir,
+        checkpoint_path=checkpoint_path,
+        output_dir=output_dir,
+        tsa_list=["k3z"],
+        forestmodel_description="override description",
+        start_year=2099,
+        horizon_years=999,
+        legacy_input_variables_config_path=config_path,
+    )
+
+    root = et.parse(result.forestmodel_xml_path).getroot()
+    assert root.attrib["description"] == "Base TFL26"
+    assert root.attrib["year"] == "2020"
+    assert root.attrib["horizon"] == "300"
+
+
+def test_export_patchworks_package_rejects_invalid_legacy_input_variables_config(
+    tmp_path: Path,
+) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _write_bundle_tables(bundle_dir)
+    config_path = tmp_path / "input_variables.invalid.yaml"
+    config_path.write_text("start_year: not-an-integer\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="start_year"):
+        export_patchworks_package(
+            bundle_dir=bundle_dir,
+            checkpoint_path=tmp_path / "checkpoint7.feather",
+            output_dir=tmp_path / "patchworks_export",
+            tsa_list=["k3z"],
+            legacy_input_variables_config_path=config_path,
+        )
+
+
 def test_validate_forestmodel_xml_tree_rejects_missing_curve_ref() -> None:
     au_table = pd.DataFrame(
         [

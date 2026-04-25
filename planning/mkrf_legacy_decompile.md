@@ -243,25 +243,58 @@ These files preserve workbook values and formulas as review evidence only.
 They are not yet treated as live FEMIC config, not a workbook publication
 surface, and not a VBA reimplementation.
 
+## First live Input Variables translation
+
+The first MKRF-first FEMIC-native translation of the workbook `Input Variables`
+surface now lives in the instance at:
+
+- `external/femic-mkrf-instance/config/legacy_xml_builder/input_variables.mkrf.yaml`
+- `external/femic-mkrf-instance/metadata/legacy_input_variables_translation.yaml`
+- `external/femic-mkrf-instance/runbooks/LEGACY_INPUT_VARIABLES_TRANSLATION.md`
+
+That translation is intentionally narrow.
+
+Live now in exporter behavior:
+
+- `description`
+- `start_year`
+- `horizon_years`
+
+Preserved but still staged only:
+
+- `max_inventory_age`
+- exclude/query expressions
+- record/area/age expressions
+- additional stratification column bindings
+- treatment-eligibility expression
+- include-fragment hooks
+- matrix-builder constants
+
+The live subset is wired through the existing Patchworks export flow as an
+explicit opt-in config path. The staged fields remain lineage evidence only
+until the current checkpoint-first exporter can safely absorb those legacy
+matrix-builder semantics.
+
 ## Recommended next bounded step
 
 Do exactly one next bounded move:
 
-**draft the first FEMIC-native config translation for the workbook
-`Input Variables` surface**, including scalar problem settings, input-field
-bindings, constants, and XML include-fragment hooks.
+**extend the currently staged `Input Variables` fields into a real
+block-layout/export contract**, starting with the legacy exclude, block-key,
+polygon-area, and stand-age expressions.
 
 The archival control-layer intake, the archival track-table intake, the
 archival spatial-runtime intake, and the editable-source authority review are
 now complete. The next bounded move should:
 
 - focus on exactly one seam:
-  - translate only the `Input Variables` review extracts into a first-pass
-    FEMIC-native config shape without broadening into the full workbook;
+  - turn the staged legacy matrix-builder expressions into an explicit FEMIC
+    contract instead of broadening immediately into `Netdown` or `Treat`;
 - preserve the evidence/review framing instead of claiming a runnable rebuild
   surface, a finalized rebuild recipe, workbook publication, or a VBA
   reimplementation;
 - continue to defer `03_MappingAnalysisData/*` and `Outputs/*`; and
 - keep road-network discovery, reporting-surface import, direct workbook
-  publication, and broader `Treat` stratum refactoring outside that next slice
-  unless `Input Variables` translation proves they are required.
+  publication, live activation of include hooks/constants, and broader `Treat`
+  stratum refactoring outside that next slice unless the block-layout contract
+  work proves they are required.
