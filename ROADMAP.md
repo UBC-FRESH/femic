@@ -1470,18 +1470,23 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P55.9a Add the normalized MKRF-first `Input Variables` config contract plus lineage metadata under `external/femic-mkrf-instance/config/legacy_xml_builder/`.
   - [x] P55.9b Wire the live subset (`description`, `start_year`, `horizon_years`) into the existing Patchworks exporter as an explicit opt-in input path without changing default K3Z/TSA29 behavior.
   - [x] P55.9c Keep unsupported legacy expressions/constants/include hooks explicit in docs/metadata and narrow the next bounded move based on what this first live translation reveals.
+- [x] P55.10 Extend the translated MKRF `Input Variables` seam into a block-layout/export contract (`#172`)
+  - [x] P55.10a Make the legacy block/area/age/exclude expressions live in Patchworks export as an explicit opt-in MKRF-first contract.
+  - [x] P55.10b Pass through and validate the checkpoint source columns required by those live legacy expressions in the exported fragments surface.
+  - [x] P55.10c Update parent and instance metadata/docs so the next bounded move narrows to the remaining staged `Input Variables` surfaces.
 
 ## Detailed Next Steps Notes
 
-- Active MKRF bounded move after `P55.9`:
-  extend the currently staged `Input Variables` fields into an explicit
-  block-layout/export contract, starting with the legacy exclude, block-key,
-  polygon-area, and stand-age expressions.
+- Active MKRF bounded move after `P55.10`:
+  operationalize the remaining staged `Input Variables` seam for
+  `additional_stratification_columns`, deciding which workbook-owned
+  column-expression bindings should become live checkpoint/export fields before
+  broadening into `Netdown` or `Treat`.
 - Keep the same boundary for the next slice:
   no `03_MappingAnalysisData/*`, no `Outputs/*`, and no claim that the
   archival legacy payload is yet a runnable FEMIC or Patchworks rebuild
   surface.
 - Keep VBA reimplementation, road-network discovery, reporting-output intake,
   direct workbook publication, live activation of include hooks/constants, and
-  broader `Treat` stratum refactoring out of the next slice unless the block-
-  layout contract work proves they are required.
+  broader `Treat` stratum refactoring out of the next slice unless the
+  additional-stratification-column contract work proves they are required.

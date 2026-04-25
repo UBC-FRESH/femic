@@ -3269,6 +3269,9 @@ def test_export_patchworks_package_uses_legacy_input_variables_config(
                 "staged:",
                 "  max_inventory_age: 350",
                 "  exclude_expression: \"CONTCLAS eq 'X'\"",
+                "  unique_record_label_expression: Int(RES_KEY)",
+                "  polygon_area_expression: area()/10000",
+                "  stand_age_expression: Int(AGE_2020)",
             ]
         )
         + "\n",
@@ -3281,7 +3284,9 @@ def test_export_patchworks_package_uses_legacy_input_variables_config(
                 "tsa_code": "k3z",
                 "au": 985501000,
                 "PROJ_AGE_1": 74,
-                "FEATURE_AREA_SQM": 12000.0,
+                "RES_KEY": 101.0,
+                "AGE_2020": 88.0,
+                "CONTCLAS": "N",
                 "thlb_raw": 1,
                 "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
             }
@@ -3306,6 +3311,21 @@ def test_export_patchworks_package_uses_legacy_input_variables_config(
     assert root.attrib["description"] == "Base TFL26"
     assert root.attrib["year"] == "2020"
     assert root.attrib["horizon"] == "300"
+    input_node = root.find("./input")
+    assert input_node is not None
+    assert input_node.attrib["block"] == "Int(RES_KEY)"
+    assert input_node.attrib["area"] == "area()/10000"
+    assert input_node.attrib["age"] == "Int(AGE_2020)"
+    assert input_node.attrib["exclude"] == "CONTCLAS eq 'X'"
+
+    gdf = gpd.read_file(result.fragments_shapefile_path)
+    assert gdf.shape[0] == 1
+    assert int(gdf.loc[0, "BLOCK"]) == 101
+    assert float(gdf.loc[0, "AREA_HA"]) == pytest.approx(1.0)
+    assert int(gdf.loc[0, "F_AGE"]) == 88
+    assert gdf.loc[0, "RES_KEY"] == pytest.approx(101.0)
+    assert gdf.loc[0, "AGE_2020"] == pytest.approx(88.0)
+    assert gdf.loc[0, "CONTCLAS"] == "N"
 
 
 def test_export_patchworks_package_rejects_invalid_legacy_input_variables_config(
@@ -3321,6 +3341,60 @@ def test_export_patchworks_package_rejects_invalid_legacy_input_variables_config
             bundle_dir=bundle_dir,
             checkpoint_path=tmp_path / "checkpoint7.feather",
             output_dir=tmp_path / "patchworks_export",
+            tsa_list=["k3z"],
+            legacy_input_variables_config_path=config_path,
+        )
+
+
+def test_export_patchworks_package_rejects_missing_legacy_expression_source_column(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _write_bundle_tables(bundle_dir)
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    output_dir = tmp_path / "patchworks_export"
+    config_path = tmp_path / "input_variables.mkrf.yaml"
+    config_path.write_text(
+        "\n".join(
+            [
+                "description: Base TFL26",
+                "start_year: 2020",
+                "horizon_years: 300",
+                "staged:",
+                "  exclude_expression: \"CONTCLAS eq 'X'\"",
+                "  unique_record_label_expression: Int(RES_KEY)",
+                "  polygon_area_expression: area()/10000",
+                "  stand_age_expression: Int(AGE_2020)",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "k3z",
+                "au": 985501000,
+                "PROJ_AGE_1": 74,
+                "RES_KEY": 101.0,
+                "thlb_raw": 1,
+                "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+            }
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="required legacy expression source columns missing from checkpoint: "
+        "AGE_2020, CONTCLAS",
+    ):
+        export_patchworks_package(
+            bundle_dir=bundle_dir,
+            checkpoint_path=checkpoint_path,
+            output_dir=output_dir,
             tsa_list=["k3z"],
             legacy_input_variables_config_path=config_path,
         )

@@ -184,9 +184,8 @@ registry_mismatches:
       - Additional lookup families may be represented as named blocks, formulas, or stale registry references rather than discrete sheets.
 
 next_bounded_step:
-  recommendation: extend_staged_input_variables_into_export_contract
+  recommendation: operationalize_additional_stratification_columns
   description:
-    Extend the currently staged Input Variables fields into an explicit
-    block-layout/export contract, starting with the legacy exclude, block-key,
-    polygon-area, and stand-age expression seam, while keeping include hooks
-    and constants preserved but inactive.
+    Operationalize the remaining staged Input Variables
+    additional-stratification column bindings while keeping treatment
+    eligibility, include hooks, and constants preserved but inactive.

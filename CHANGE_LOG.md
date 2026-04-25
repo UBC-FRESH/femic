@@ -15128,3 +15128,13 @@
   - legacy exclude/query expressions, block/area/age expressions, include hooks, and constants remain staged only;
   - no workbook payload was copied into `external/femic-mkrf-instance`; and
   - no `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.
+## 2026-04-24 - Extended the MKRF Input Variables translation into a block-layout/export contract
+- `#172` bounded reconstruction slice:
+  - made the legacy block, area, age, and exclude expressions live in the opt-in MKRF Patchworks export path;
+  - updated fragments export so it requires and passes through the checkpoint source columns referenced by those live expressions;
+  - added focused exporter regression tests covering the live XML input expressions and the missing-source-column failure path; and
+  - updated parent and instance planning/lineage docs so the next bounded move narrows to the remaining `additional_stratification_columns` seam.
+- Scope boundary preserved:
+  - treatment eligibility, include hooks, constants, and max-inventory-age semantics remain staged only;
+  - no workbook payload was copied into `external/femic-mkrf-instance`; and
+  - no `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.

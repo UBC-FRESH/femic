@@ -38,6 +38,10 @@ from .core import (
 DEFAULT_START_YEAR = 2026
 DEFAULT_HORIZON_YEARS = 300
 DEFAULT_FORESTMODEL_DESCRIPTION = "FEMIC Patchworks export"
+DEFAULT_INPUT_ATTRIBUTE_BLOCK = "BLOCK"
+DEFAULT_INPUT_ATTRIBUTE_AREA = "AREA_HA"
+DEFAULT_INPUT_ATTRIBUTE_AGE = "F_AGE"
+DEFAULT_INPUT_ATTRIBUTE_EXCLUDE = "BLOCK=0"
 DEFAULT_CC_MIN_AGE = 0
 DEFAULT_CC_MAX_AGE = 1000
 DEFAULT_CC_TRANSITION_IFM: str | None = None
@@ -107,6 +111,23 @@ REQUIRED_FRAGMENT_COLUMNS = {
     "RETENTION",
     "TSA",
     "geometry",
+}
+_LEGACY_EXPRESSION_IDENTIFIER_PATTERN = re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*\b")
+_LEGACY_EXPRESSION_FUNCTION_PATTERN = re.compile(
+    r"^(?P<func>Int|string|Number)\((?P<column>[A-Za-z_][A-Za-z0-9_]*)\)$",
+    flags=re.IGNORECASE,
+)
+_LEGACY_EXPRESSION_QUOTED_LITERAL_PATTERN = re.compile(r"'[^']*'|\"[^\"]*\"")
+_LEGACY_EXPRESSION_KEYWORDS = {
+    "and",
+    "area",
+    "eq",
+    "in",
+    "int",
+    "not",
+    "number",
+    "or",
+    "string",
 }
 IFM_SIGNAL_PRIORITY = ("thlb", "thlb_fact", "thlb_area", "thlb_raw")
 IFM_PROPORTIONAL_SIGNAL_PRIORITY = ("thlb_fact", "thlb_raw", "thlb_area", "thlb")
@@ -1336,7 +1357,125 @@ def _load_legacy_input_variables_config(
     staged = payload.get("staged")
     if staged is not None and not isinstance(staged, dict):
         raise ValueError("legacy input-variables field staged must be a mapping/object")
+    if isinstance(staged, dict):
+        for field_name in (
+            "exclude_expression",
+            "unique_record_label_expression",
+            "polygon_area_expression",
+            "stand_age_expression",
+        ):
+            raw_value = staged.get(field_name)
+            if raw_value is not None and not isinstance(raw_value, str):
+                raise ValueError(
+                    f"legacy input-variables field staged.{field_name} must be a string"
+                )
     return payload
+
+
+def _legacy_input_variables_staged_mapping(
+    legacy_input_variables_config: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if legacy_input_variables_config is None:
+        return {}
+    staged = legacy_input_variables_config.get("staged")
+    return dict(staged) if isinstance(staged, dict) else {}
+
+
+def _normalize_optional_expression(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _legacy_expression_is_area_ha(expression: str) -> bool:
+    normalized = re.sub(r"\s+", "", str(expression).strip()).lower()
+    return normalized == "area()/10000"
+
+
+def _extract_legacy_expression_source_columns(
+    expression: str | None,
+) -> tuple[str, ...]:
+    if expression is None:
+        return ()
+    text = str(expression).strip()
+    if not text or _legacy_expression_is_area_ha(text):
+        return ()
+    cleaned = _LEGACY_EXPRESSION_QUOTED_LITERAL_PATTERN.sub(" ", text)
+    columns: list[str] = []
+    for token in _LEGACY_EXPRESSION_IDENTIFIER_PATTERN.findall(cleaned):
+        if token.lower() in _LEGACY_EXPRESSION_KEYWORDS:
+            continue
+        if token not in columns:
+            columns.append(token)
+    return tuple(columns)
+
+
+def _evaluate_legacy_export_expression(
+    *,
+    expression: str,
+    scoped: pd.DataFrame,
+    area_ha: pd.Series,
+) -> pd.Series:
+    text = str(expression).strip()
+    if not text:
+        raise ValueError("legacy export expression must not be blank")
+    if _legacy_expression_is_area_ha(text):
+        return pd.to_numeric(area_ha, errors="coerce").fillna(0.0)
+    func_match = _LEGACY_EXPRESSION_FUNCTION_PATTERN.fullmatch(text)
+    if func_match is not None:
+        column_name = str(func_match.group("column"))
+        func_name = str(func_match.group("func")).lower()
+        if column_name not in scoped.columns:
+            raise ValueError(
+                f"legacy export expression references missing checkpoint column "
+                f"{column_name!r}"
+            )
+        series = scoped[column_name]
+        if func_name in {"int", "number"}:
+            return pd.to_numeric(series, errors="coerce")
+        if func_name == "string":
+            return series.astype(str)
+    if text in scoped.columns:
+        return scoped[text]
+    raise ValueError(
+        f"unsupported legacy export expression {expression!r}; "
+        "expected area()/10000, <COLUMN>, or Int(<COLUMN>)/Number(<COLUMN>)/string(<COLUMN>)"
+    )
+
+
+def _build_live_legacy_input_attribute_contract(
+    *,
+    legacy_input_variables_config: dict[str, Any] | None,
+) -> tuple[dict[str, str], tuple[str, ...]]:
+    staged = _legacy_input_variables_staged_mapping(legacy_input_variables_config)
+    block_expression = _normalize_optional_expression(
+        staged.get("unique_record_label_expression")
+    )
+    area_expression = _normalize_optional_expression(
+        staged.get("polygon_area_expression")
+    )
+    age_expression = _normalize_optional_expression(staged.get("stand_age_expression"))
+    exclude_expression = _normalize_optional_expression(
+        staged.get("exclude_expression")
+    )
+    input_attributes = {
+        "block": block_expression or DEFAULT_INPUT_ATTRIBUTE_BLOCK,
+        "area": area_expression or DEFAULT_INPUT_ATTRIBUTE_AREA,
+        "age": age_expression or DEFAULT_INPUT_ATTRIBUTE_AGE,
+        "exclude": exclude_expression or DEFAULT_INPUT_ATTRIBUTE_EXCLUDE,
+    }
+    required_columns: list[str] = []
+    for expression in (
+        block_expression,
+        area_expression,
+        age_expression,
+        exclude_expression,
+    ):
+        for column_name in _extract_legacy_expression_source_columns(expression):
+            if column_name not in required_columns:
+                required_columns.append(column_name)
+    return input_attributes, tuple(required_columns)
 
 
 def _evaluate_curve_on_integer_ages(
@@ -2474,6 +2613,7 @@ def build_forestmodel_xml_tree(
     curve_table: pd.DataFrame,
     curve_points_table: pd.DataFrame,
     forestmodel_description: str = DEFAULT_FORESTMODEL_DESCRIPTION,
+    input_attributes: dict[str, str] | None = None,
     start_year: int = DEFAULT_START_YEAR,
     horizon_years: int = DEFAULT_HORIZON_YEARS,
     cc_min_age: int = DEFAULT_CC_MIN_AGE,
@@ -2492,6 +2632,7 @@ def build_forestmodel_xml_tree(
     return build_forestmodel_xml_tree_from_context(
         context=context,
         forestmodel_description=forestmodel_description,
+        input_attributes=input_attributes,
         start_year=start_year,
         horizon_years=horizon_years,
         cc_min_age=cc_min_age,
@@ -2506,6 +2647,7 @@ def build_forestmodel_xml_tree_from_context(
     *,
     context: BundleModelContext,
     forestmodel_description: str = DEFAULT_FORESTMODEL_DESCRIPTION,
+    input_attributes: dict[str, str] | None = None,
     start_year: int = DEFAULT_START_YEAR,
     horizon_years: int = DEFAULT_HORIZON_YEARS,
     cc_min_age: int = DEFAULT_CC_MIN_AGE,
@@ -2518,6 +2660,7 @@ def build_forestmodel_xml_tree_from_context(
     definition = build_patchworks_forestmodel_definition(
         context=context,
         forestmodel_description=forestmodel_description,
+        input_attributes=input_attributes,
         start_year=start_year,
         horizon_years=horizon_years,
         cc_min_age=cc_min_age,
@@ -2533,6 +2676,7 @@ def build_patchworks_forestmodel_definition(
     *,
     context: BundleModelContext,
     forestmodel_description: str = DEFAULT_FORESTMODEL_DESCRIPTION,
+    input_attributes: dict[str, str] | None = None,
     start_year: int = DEFAULT_START_YEAR,
     horizon_years: int = DEFAULT_HORIZON_YEARS,
     cc_min_age: int = DEFAULT_CC_MIN_AGE,
@@ -4326,17 +4470,27 @@ def build_patchworks_forestmodel_definition(
                     )
                     current_source_points = curves[fert_curve_ref]
 
+    resolved_input_attributes = {
+        "block": DEFAULT_INPUT_ATTRIBUTE_BLOCK,
+        "area": DEFAULT_INPUT_ATTRIBUTE_AREA,
+        "age": DEFAULT_INPUT_ATTRIBUTE_AGE,
+        "exclude": DEFAULT_INPUT_ATTRIBUTE_EXCLUDE,
+    }
+    if input_attributes:
+        resolved_input_attributes.update(
+            {
+                str(key): str(value)
+                for key, value in input_attributes.items()
+                if value is not None and str(value).strip()
+            }
+        )
+
     return ForestModelDefinition(
         description=str(forestmodel_description),
         horizon=int(horizon_years),
         year=int(start_year),
         match="multi",
-        input_attributes={
-            "block": "BLOCK",
-            "area": "AREA_HA",
-            "age": "F_AGE",
-            "exclude": "BLOCK=0",
-        },
+        input_attributes=resolved_input_attributes,
         output_attributes={
             "messages": "messages.csv",
             "blocks": "blocks.csv",
@@ -4669,6 +4823,7 @@ def build_fragments_geodataframe(
     ifm_threshold: float | None = DEFAULT_IFM_THRESHOLD,
     ifm_target_managed_share: float | None = DEFAULT_IFM_TARGET_MANAGED_SHARE,
     silviculture_config: dict[str, Any] | None = None,
+    legacy_input_variables_config: dict[str, Any] | None = None,
 ) -> Any:
     """Build Patchworks fragments GeoDataFrame from FEMIC checkpoint output."""
     df = pd.read_feather(checkpoint_path)
@@ -4694,6 +4849,22 @@ def build_fragments_geodataframe(
     if scoped.empty:
         raise ValueError("no checkpoint rows matched selected TSA/AU export filters")
 
+    live_input_attributes, required_live_source_columns = (
+        _build_live_legacy_input_attribute_contract(
+            legacy_input_variables_config=legacy_input_variables_config
+        )
+    )
+    missing_live_source_columns = sorted(
+        column_name
+        for column_name in required_live_source_columns
+        if column_name not in scoped.columns
+    )
+    if missing_live_source_columns:
+        raise ValueError(
+            "required legacy expression source columns missing from checkpoint: "
+            + ", ".join(missing_live_source_columns)
+        )
+
     if "FEMIC_EFFECTIVE_AREA_SQM" in scoped.columns:
         total_area_ha = (
             pd.to_numeric(scoped["FEMIC_EFFECTIVE_AREA_SQM"], errors="coerce") * 0.0001
@@ -4714,9 +4885,47 @@ def build_fragments_geodataframe(
     total_area_ha = (
         pd.to_numeric(total_area_ha, errors="coerce").fillna(0.0).clip(lower=0.0)
     )
-
-    age = pd.to_numeric(scoped["PROJ_AGE_1"], errors="coerce").fillna(0).astype(int)
     fragment_ids = np.arange(1, len(scoped) + 1, dtype=int)
+    block_values = pd.Series(fragment_ids, index=scoped.index, dtype="int64")
+    if live_input_attributes.get("block") != DEFAULT_INPUT_ATTRIBUTE_BLOCK:
+        block_candidate = _evaluate_legacy_export_expression(
+            expression=live_input_attributes["block"],
+            scoped=scoped,
+            area_ha=total_area_ha,
+        )
+        if pd.to_numeric(block_candidate, errors="coerce").isna().any():
+            raise ValueError(
+                "legacy block expression must resolve to numeric values for fragments export"
+            )
+        block_values = (
+            pd.to_numeric(block_candidate, errors="coerce").fillna(0).astype(int)
+        )
+    area_values = (
+        pd.to_numeric(total_area_ha, errors="coerce").fillna(0.0).astype(float)
+    )
+    if live_input_attributes.get("area") != DEFAULT_INPUT_ATTRIBUTE_AREA:
+        area_candidate = _evaluate_legacy_export_expression(
+            expression=live_input_attributes["area"],
+            scoped=scoped,
+            area_ha=total_area_ha,
+        )
+        area_values = (
+            pd.to_numeric(area_candidate, errors="coerce").fillna(0.0).clip(lower=0.0)
+        )
+    age_values = (
+        pd.to_numeric(scoped["PROJ_AGE_1"], errors="coerce").fillna(0).astype(int)
+    )
+    if live_input_attributes.get("age") != DEFAULT_INPUT_ATTRIBUTE_AGE:
+        age_candidate = _evaluate_legacy_export_expression(
+            expression=live_input_attributes["age"],
+            scoped=scoped,
+            area_ha=total_area_ha,
+        )
+        if pd.to_numeric(age_candidate, errors="coerce").isna().any():
+            raise ValueError(
+                "legacy age expression must resolve to numeric values for fragments export"
+            )
+        age_values = pd.to_numeric(age_candidate, errors="coerce").fillna(0).astype(int)
     au_values = scoped["au"].astype(int)
     retention_overrides = _resolve_retention_overrides_by_au(
         au_table=au_table,
@@ -4737,14 +4946,16 @@ def build_fragments_geodataframe(
     out = pd.DataFrame(
         {
             FRAGMENT_ID_COLUMN: fragment_ids,
-            "BLOCK": fragment_ids,
-            "AREA_HA": total_area_ha.astype(float),
-            "F_AGE": age,
+            "BLOCK": block_values.astype(int),
+            "AREA_HA": area_values.astype(float),
+            "F_AGE": age_values.astype(int),
             "AU": au_values,
             "IFM": ifm_values.to_numpy(),
-            "ORIGIN": np.where(age <= ORIGIN_PLANTED_MAX_AGE, "planted", "natural"),
+            "ORIGIN": np.where(
+                age_values <= ORIGIN_PLANTED_MAX_AGE, "planted", "natural"
+            ),
             "SILV_STATE": np.where(
-                age <= ORIGIN_PLANTED_MAX_AGE,
+                age_values <= ORIGIN_PLANTED_MAX_AGE,
                 DEFAULT_SILV_STATE_PLANTED,
                 DEFAULT_SILV_STATE_NATURAL,
             ),
@@ -4753,6 +4964,8 @@ def build_fragments_geodataframe(
             "geometry": scoped["geometry"],
         }
     )
+    for column_name in required_live_source_columns:
+        out[column_name] = scoped[column_name]
     out["AREA_HA"] = pd.to_numeric(out["AREA_HA"], errors="coerce").fillna(0.0)
     gpd = _gpd_module()
     return gpd.GeoDataFrame(out, geometry="geometry", crs=fragments_crs)
@@ -5058,10 +5271,16 @@ def export_patchworks_package(
         if legacy_input_variables_config is not None
         else int(horizon_years)
     )
+    resolved_input_attributes, _required_live_source_columns = (
+        _build_live_legacy_input_attribute_contract(
+            legacy_input_variables_config=legacy_input_variables_config
+        )
+    )
 
     root = build_forestmodel_xml_tree_from_context(
         context=context,
         forestmodel_description=resolved_description,
+        input_attributes=resolved_input_attributes,
         start_year=resolved_start_year,
         horizon_years=resolved_horizon_years,
         cc_min_age=cc_min_age,
@@ -5084,6 +5303,7 @@ def export_patchworks_package(
         ifm_threshold=ifm_threshold,
         ifm_target_managed_share=ifm_target_managed_share,
         silviculture_config=silviculture_config,
+        legacy_input_variables_config=legacy_input_variables_config,
     )
     validate_fragments_geodataframe(fragments_gdf=fragments_gdf)
     fragments_path = output_dir / "fragments" / "fragments.shp"

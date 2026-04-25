@@ -259,37 +259,44 @@ Live now in exporter behavior:
 - `description`
 - `start_year`
 - `horizon_years`
+- `exclude_expression`
+- `unique_record_label_expression`
+- `polygon_area_expression`
+- `stand_age_expression`
 
 Preserved but still staged only:
 
 - `max_inventory_age`
-- exclude/query expressions
-- record/area/age expressions
 - additional stratification column bindings
 - treatment-eligibility expression
 - include-fragment hooks
 - matrix-builder constants
 
 The live subset is wired through the existing Patchworks export flow as an
-explicit opt-in config path. The staged fields remain lineage evidence only
-until the current checkpoint-first exporter can safely absorb those legacy
-matrix-builder semantics.
+explicit opt-in config path. The exported ForestModel XML now carries the
+legacy block/area/age/exclude expressions directly, and the fragments export
+now requires and passes through the referenced checkpoint source columns.
+The remaining staged fields stay lineage evidence only until the current
+checkpoint-first exporter can safely absorb those legacy matrix-builder
+semantics.
 
 ## Recommended next bounded step
 
 Do exactly one next bounded move:
 
-**extend the currently staged `Input Variables` fields into a real
-block-layout/export contract**, starting with the legacy exclude, block-key,
-polygon-area, and stand-age expressions.
+**operationalize the remaining staged `Input Variables` seam for
+`additional_stratification_columns`**, deciding which workbook-owned
+column-expression bindings should become live checkpoint/export fields before
+we broaden into `Netdown` or `Treat`.
 
 The archival control-layer intake, the archival track-table intake, the
 archival spatial-runtime intake, and the editable-source authority review are
 now complete. The next bounded move should:
 
 - focus on exactly one seam:
-  - turn the staged legacy matrix-builder expressions into an explicit FEMIC
-    contract instead of broadening immediately into `Netdown` or `Treat`;
+  - turn the remaining staged additional-stratification column bindings into
+    an explicit FEMIC contract instead of broadening immediately into
+    `Netdown` or `Treat`;
 - preserve the evidence/review framing instead of claiming a runnable rebuild
   surface, a finalized rebuild recipe, workbook publication, or a VBA
   reimplementation;
