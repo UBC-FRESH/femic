@@ -48,7 +48,7 @@ crosswalk:
       - "Preserve the workbook data surfaces and replace the SPS VBA serializer with FEMIC-native builders."
       - "Break the workbook into FEMIC-facing source families such as Input Variables, Codes, Curve Library, Netdown, Attrib, Treat, Post Renewal Succession, and Lookups."
       - "Tracked workbook review extracts now live under metadata/mkrf_xlsm_review/ as parent-side evidence surfaces."
-      - "The first MKRF-first translated Input Variables config now lives under external/femic-mkrf-instance/config/legacy_xml_builder/ and now makes description/year/horizon plus the legacy block/area/age/exclude expressions live in exporter behavior."
+      - "The first MKRF-first translated Input Variables config now lives under external/femic-mkrf-instance/config/legacy_xml_builder/ and now makes description/year/horizon plus the legacy block/area/age/exclude expressions and additional stratification fragment bindings live in exporter behavior."
 
   scenario_and_control_scripts:
     disposition: future_runbook_and_analysis_support
@@ -118,8 +118,8 @@ unresolved_seams:
       - not yet clear whether it is contextual QA only or part of a reproducible preprocessing contract
 
 next_bounded_step:
-  recommendation: operationalize_additional_stratification_columns
+  recommendation: operationalize_treatment_eligibility_expression
   description:
     Operationalize the remaining staged Input Variables
-    additional-stratification column bindings before broadening into Netdown
-    or other workbook surfaces.
+    treatment-eligibility seam before broadening into Netdown or other
+    workbook surfaces.

@@ -184,8 +184,8 @@ registry_mismatches:
       - Additional lookup families may be represented as named blocks, formulas, or stale registry references rather than discrete sheets.
 
 next_bounded_step:
-  recommendation: operationalize_additional_stratification_columns
+  recommendation: operationalize_treatment_eligibility_expression
   description:
     Operationalize the remaining staged Input Variables
-    additional-stratification column bindings while keeping treatment
-    eligibility, include hooks, and constants preserved but inactive.
+    treatment-eligibility seam while keeping include hooks and constants
+    preserved but inactive.

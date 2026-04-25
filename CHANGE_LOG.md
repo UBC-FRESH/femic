@@ -15138,3 +15138,13 @@
   - treatment eligibility, include hooks, constants, and max-inventory-age semantics remain staged only;
   - no workbook payload was copied into `external/femic-mkrf-instance`; and
   - no `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.
+## 2026-04-24 - Operationalized the MKRF additional stratification column seam
+- `#172` bounded reconstruction slice:
+  - made the workbook-owned `additional_stratification_columns` bindings live in the opt-in MKRF fragments export path;
+  - updated fragments export so it now requires and passes through the checkpoint source columns referenced by those live additional stratification bindings;
+  - added focused exporter regression tests covering the live stratification fragment fields and the missing-source-column failure path; and
+  - updated parent and instance planning/lineage docs so the next bounded move narrows to the remaining `treatment_eligibility_expression` seam.
+- Scope boundary preserved:
+  - `max_inventory_age`, treatment eligibility, include hooks, and constants remain staged only;
+  - no workbook payload was copied into `external/femic-mkrf-instance`; and
+  - no `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.

@@ -3272,6 +3272,19 @@ def test_export_patchworks_package_uses_legacy_input_variables_config(
                 "  unique_record_label_expression: Int(RES_KEY)",
                 "  polygon_area_expression: area()/10000",
                 "  stand_age_expression: Int(AGE_2020)",
+                "  additional_stratification_columns:",
+                "    - key: status",
+                "      source_expression: CONTCLAS",
+                "    - key: au",
+                "      source_expression: string(AU_EX)",
+                "    - key: auf",
+                "      source_expression: string(AU_FU)",
+                "    - key: oper",
+                "      source_expression: Operabilit",
+                "    - key: ct",
+                "      source_expression: CT_eligib",
+                "    - key: aux",
+                "      source_expression: AU_EX",
             ]
         )
         + "\n",
@@ -3287,6 +3300,10 @@ def test_export_patchworks_package_uses_legacy_input_variables_config(
                 "RES_KEY": 101.0,
                 "AGE_2020": 88.0,
                 "CONTCLAS": "N",
+                "AU_EX": 985501000,
+                "AU_FU": 985501221,
+                "Operabilit": "Operable",
+                "CT_eligib": "eligible",
                 "thlb_raw": 1,
                 "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
             }
@@ -3326,6 +3343,12 @@ def test_export_patchworks_package_uses_legacy_input_variables_config(
     assert gdf.loc[0, "RES_KEY"] == pytest.approx(101.0)
     assert gdf.loc[0, "AGE_2020"] == pytest.approx(88.0)
     assert gdf.loc[0, "CONTCLAS"] == "N"
+    assert gdf.loc[0, "status"] == "N"
+    assert gdf.loc[0, "au_1"] == "985501000"
+    assert gdf.loc[0, "auf"] == "985501221"
+    assert gdf.loc[0, "oper"] == "Operable"
+    assert gdf.loc[0, "ct"] == "eligible"
+    assert gdf.loc[0, "aux"] == pytest.approx(985501000.0)
 
 
 def test_export_patchworks_package_rejects_invalid_legacy_input_variables_config(
@@ -3388,8 +3411,63 @@ def test_export_patchworks_package_rejects_missing_legacy_expression_source_colu
 
     with pytest.raises(
         ValueError,
-        match="required legacy expression source columns missing from checkpoint: "
+        match="required legacy export source columns missing from checkpoint: "
         "AGE_2020, CONTCLAS",
+    ):
+        export_patchworks_package(
+            bundle_dir=bundle_dir,
+            checkpoint_path=checkpoint_path,
+            output_dir=output_dir,
+            tsa_list=["k3z"],
+            legacy_input_variables_config_path=config_path,
+        )
+
+
+def test_export_patchworks_package_rejects_missing_legacy_stratification_source_column(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _write_bundle_tables(bundle_dir)
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    output_dir = tmp_path / "patchworks_export"
+    config_path = tmp_path / "input_variables.mkrf.yaml"
+    config_path.write_text(
+        "\n".join(
+            [
+                "description: Base TFL26",
+                "start_year: 2020",
+                "horizon_years: 300",
+                "staged:",
+                "  additional_stratification_columns:",
+                "    - key: oper",
+                "      source_expression: Operabilit",
+                "    - key: ct",
+                "      source_expression: CT_eligib",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "k3z",
+                "au": 985501000,
+                "PROJ_AGE_1": 74,
+                "Operabilit": "Operable",
+                "thlb_raw": 1,
+                "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+            }
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="required legacy export source columns missing from checkpoint: "
+        "CT_eligib",
     ):
         export_patchworks_package(
             bundle_dir=bundle_dir,

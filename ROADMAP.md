@@ -1474,14 +1474,17 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P55.10a Make the legacy block/area/age/exclude expressions live in Patchworks export as an explicit opt-in MKRF-first contract.
   - [x] P55.10b Pass through and validate the checkpoint source columns required by those live legacy expressions in the exported fragments surface.
   - [x] P55.10c Update parent and instance metadata/docs so the next bounded move narrows to the remaining staged `Input Variables` surfaces.
+- [x] P55.11 Operationalize the translated MKRF `additional_stratification_columns` seam (`#172`)
+  - [x] P55.11a Make the workbook-owned additional stratification column bindings live in the opt-in MKRF fragments export surface.
+  - [x] P55.11b Pass through and validate the checkpoint source columns required by those live additional stratification bindings.
+  - [x] P55.11c Update parent and instance metadata/docs so the next bounded move narrows to the remaining staged `Input Variables` semantics.
 
 ## Detailed Next Steps Notes
 
-- Active MKRF bounded move after `P55.10`:
-  operationalize the remaining staged `Input Variables` seam for
-  `additional_stratification_columns`, deciding which workbook-owned
-  column-expression bindings should become live checkpoint/export fields before
-  broadening into `Netdown` or `Treat`.
+- Active MKRF bounded move after `P55.11`:
+  operationalize the remaining staged `Input Variables`
+  `treatment_eligibility_expression` seam before broadening into `Netdown` or
+  `Treat`.
 - Keep the same boundary for the next slice:
   no `03_MappingAnalysisData/*`, no `Outputs/*`, and no claim that the
   archival legacy payload is yet a runnable FEMIC or Patchworks rebuild
@@ -1489,4 +1492,4 @@ Notes: `planning/mkrf_legacy_decompile.md`
 - Keep VBA reimplementation, road-network discovery, reporting-output intake,
   direct workbook publication, live activation of include hooks/constants, and
   broader `Treat` stratum refactoring out of the next slice unless the
-  additional-stratification-column contract work proves they are required.
+  treatment-eligibility contract work proves they are required.

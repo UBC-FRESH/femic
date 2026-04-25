@@ -1369,6 +1369,37 @@ def _load_legacy_input_variables_config(
                 raise ValueError(
                     f"legacy input-variables field staged.{field_name} must be a string"
                 )
+        raw_additional_columns = staged.get("additional_stratification_columns")
+        if raw_additional_columns is not None:
+            if not isinstance(raw_additional_columns, list):
+                raise ValueError(
+                    "legacy input-variables field staged.additional_stratification_columns "
+                    "must be a list"
+                )
+            for index, item in enumerate(raw_additional_columns):
+                if not isinstance(item, dict):
+                    raise ValueError(
+                        "legacy input-variables field "
+                        f"staged.additional_stratification_columns[{index}] "
+                        "must be a mapping/object"
+                    )
+                key = item.get("key")
+                source_expression = item.get("source_expression")
+                if not isinstance(key, str) or not key.strip():
+                    raise ValueError(
+                        "legacy input-variables field "
+                        f"staged.additional_stratification_columns[{index}].key "
+                        "must be a non-empty string"
+                    )
+                if (
+                    not isinstance(source_expression, str)
+                    or not source_expression.strip()
+                ):
+                    raise ValueError(
+                        "legacy input-variables field "
+                        f"staged.additional_stratification_columns[{index}].source_expression "
+                        "must be a non-empty string"
+                    )
     return payload
 
 
@@ -1476,6 +1507,58 @@ def _build_live_legacy_input_attribute_contract(
             if column_name not in required_columns:
                 required_columns.append(column_name)
     return input_attributes, tuple(required_columns)
+
+
+def _build_live_legacy_additional_stratification_contract(
+    *,
+    legacy_input_variables_config: dict[str, Any] | None,
+) -> tuple[tuple[tuple[str, str], ...], tuple[str, ...]]:
+    staged = _legacy_input_variables_staged_mapping(legacy_input_variables_config)
+    raw_columns = staged.get("additional_stratification_columns")
+    if not isinstance(raw_columns, list):
+        return (), ()
+    live_columns: list[tuple[str, str]] = []
+    required_columns: list[str] = []
+    for item in raw_columns:
+        if not isinstance(item, dict):
+            continue
+        key = str(item.get("key", "")).strip()
+        source_expression = _normalize_optional_expression(
+            item.get("source_expression")
+        )
+        if not key or source_expression is None:
+            continue
+        live_columns.append((key, source_expression))
+        for column_name in _extract_legacy_expression_source_columns(source_expression):
+            if column_name not in required_columns:
+                required_columns.append(column_name)
+    return tuple(live_columns), tuple(required_columns)
+
+
+def _resolve_legacy_additional_export_field_name(
+    *,
+    requested_key: str,
+    used_names: set[str],
+) -> str:
+    candidate = str(requested_key).strip()
+    if not candidate:
+        raise ValueError(
+            "legacy additional stratification column key must not be blank"
+        )
+    if len(candidate) > 10:
+        candidate = candidate[:10]
+    if candidate.casefold() not in used_names:
+        used_names.add(candidate.casefold())
+        return candidate
+    suffix_index = 1
+    while True:
+        suffix = f"_{suffix_index}"
+        stem = candidate[: max(0, 10 - len(suffix))]
+        resolved = f"{stem}{suffix}"
+        if resolved.casefold() not in used_names:
+            used_names.add(resolved.casefold())
+            return resolved
+        suffix_index += 1
 
 
 def _evaluate_curve_on_integer_ages(
@@ -4854,14 +4937,27 @@ def build_fragments_geodataframe(
             legacy_input_variables_config=legacy_input_variables_config
         )
     )
+    (
+        live_additional_stratification_columns,
+        required_live_additional_source_columns,
+    ) = _build_live_legacy_additional_stratification_contract(
+        legacy_input_variables_config=legacy_input_variables_config
+    )
+    required_legacy_source_columns: list[str] = []
+    for column_name in (
+        *required_live_source_columns,
+        *required_live_additional_source_columns,
+    ):
+        if column_name not in required_legacy_source_columns:
+            required_legacy_source_columns.append(column_name)
     missing_live_source_columns = sorted(
         column_name
-        for column_name in required_live_source_columns
+        for column_name in required_legacy_source_columns
         if column_name not in scoped.columns
     )
     if missing_live_source_columns:
         raise ValueError(
-            "required legacy expression source columns missing from checkpoint: "
+            "required legacy export source columns missing from checkpoint: "
             + ", ".join(missing_live_source_columns)
         )
 
@@ -4966,6 +5062,19 @@ def build_fragments_geodataframe(
     )
     for column_name in required_live_source_columns:
         out[column_name] = scoped[column_name]
+    used_fragment_field_names = {
+        str(column_name).casefold() for column_name in out.columns
+    }
+    for key, source_expression in live_additional_stratification_columns:
+        export_field_name = _resolve_legacy_additional_export_field_name(
+            requested_key=key,
+            used_names=used_fragment_field_names,
+        )
+        out[export_field_name] = _evaluate_legacy_export_expression(
+            expression=source_expression,
+            scoped=scoped,
+            area_ha=total_area_ha,
+        )
     out["AREA_HA"] = pd.to_numeric(out["AREA_HA"], errors="coerce").fillna(0.0)
     gpd = _gpd_module()
     return gpd.GeoDataFrame(out, geometry="geometry", crs=fragments_crs)
