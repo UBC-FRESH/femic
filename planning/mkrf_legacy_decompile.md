@@ -359,10 +359,10 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-`P56.5` is the active next bounded implementation move. Resolve the real MKRF
-source-input publication boundary, including fragments/checkpoint/boundary
-requirements and the `Base TFL26` literal-description mismatch, before any
-builder activation or matrix-build execution.
+`P56.6` is the active next bounded implementation move. Publish rebuild-
+readiness milestone criteria that tie legacy evidence, source-input
+publication, future FEMIC-generated XML, and matrix-build proof together before
+any runnable rebuild claim.
 
 Completed `P56.1` planning boundary:
 
@@ -399,9 +399,13 @@ Remaining Phase 56 sequence after `P56.1`:
   and Patchworks matrix-build handoff. Archival legacy evidence remains
   separate from future FEMIC-regenerated outputs; no builder was activated.
 - `P56.5`:
-  resolve the real MKRF source-input publication boundary, including
-  fragments/checkpoint/boundary requirements and the `Base TFL26` literal-
-  description mismatch.
+  completed. `metadata/legacy_source_input_publication_boundary.yaml` records
+  the fragments/topology requirements for a future matrix-build candidate,
+  separates compiled runtime evidence from raw source reproducibility, and
+  keeps the `Base TFL26` literal-description mismatch as source evidence only.
+  Roads are not required under the current `useRoutes=false` PIN, outputs are
+  validation evidence rather than source inputs, and direct workbook
+  publication is not required for the current FEMIC contract.
 - `P56.6`:
   publish rebuild-readiness milestone criteria requiring both legacy evidence
   reconciliation and future FEMIC-generated XML plus matrix-build proof before

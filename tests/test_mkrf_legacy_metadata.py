@@ -485,7 +485,7 @@ def test_mkrf_rebuild_readiness_records_no_go_contract_gaps() -> None:
         "available_generated_review_artifact_after_p56_2"
     )
     assert reconciliation["next_bounded_step"]["recommendation"] == (
-        "resolve_real_mkrf_source_input_publication_boundary"
+        "publish_rebuild_readiness_milestone_criteria"
     )
 
 
@@ -562,8 +562,8 @@ def test_mkrf_generated_xml_reconciliation_records_p56_2_boundary() -> None:
         for gap in remaining_gaps
     )
     assert reconciliation["next_bounded_step"] == {
-        "recommendation": "resolve_real_mkrf_source_input_publication_boundary",
-        "roadmap_task": "P56.5",
+        "recommendation": "publish_rebuild_readiness_milestone_criteria",
+        "roadmap_task": "P56.6",
     }
 
 
@@ -628,8 +628,8 @@ def test_mkrf_compiled_track_evidence_reconciliation_records_p56_3_boundary() ->
         "No runnable FEMIC/Patchworks rebuild claim is introduced.",
     ]
     assert reconciliation["next_bounded_step"] == {
-        "recommendation": "resolve_real_mkrf_source_input_publication_boundary",
-        "roadmap_task": "P56.5",
+        "recommendation": "publish_rebuild_readiness_milestone_criteria",
+        "roadmap_task": "P56.6",
     }
 
 
@@ -688,6 +688,97 @@ def test_mkrf_builder_activation_plan_records_p56_4_boundary() -> None:
         "No runnable FEMIC/Patchworks rebuild claim is introduced.",
     ]
     assert plan["next_bounded_step"] == {
-        "recommendation": "resolve_real_mkrf_source_input_publication_boundary",
-        "roadmap_task": "P56.5",
+        "recommendation": "publish_rebuild_readiness_milestone_criteria",
+        "roadmap_task": "P56.6",
+    }
+
+
+def test_mkrf_source_input_publication_boundary_records_p56_5_decision() -> None:
+    boundary_path = Path(
+        "external/femic-mkrf-instance/metadata/"
+        "legacy_source_input_publication_boundary.yaml"
+    )
+
+    if not boundary_path.exists():
+        pytest.skip("MKRF instance submodule is not materialized")
+
+    boundary = yaml.safe_load(boundary_path.read_text(encoding="utf-8"))
+
+    assert boundary["phase"] == "P56.5"
+    assert boundary["decision"] == {
+        "source_input_publication_boundary": "resolved_for_next_readiness_gate",
+        "payload_intake": "not_started",
+        "matrix_build": "not_run",
+        "builder_activation": "not_started",
+        "runnable_rebuild_claim": "no_go",
+    }
+
+    fragments = boundary["required_for_future_matrix_build_candidate"][
+        "compiled_runtime_inputs"
+    ]["fragments"]
+    assert (
+        fragments["publication_status"] == "requires_git_annex_for_instance_publication"
+    )
+    assert fragments["readable_legacy_source"]["feature_count"] == 1763
+    assert fragments["readable_legacy_source"]["geometry_type"] == "Polygon"
+    assert fragments["readable_legacy_source"]["crs"] == "EPSG:3005"
+    assert fragments["readable_legacy_source"]["required_fields"] == [
+        "RES_KEY",
+        "CONTCLAS",
+        "AGE_2020",
+        "AU_EX",
+        "AU_FU",
+        "Operabilit",
+        "CT_eligib",
+    ]
+
+    field_contract = boundary["field_contract"]
+    assert field_contract["base_mkrf_xml_input"] == {
+        "block": "Int(RES_KEY)",
+        "area": "area()/10000",
+        "age": "Int(AGE_2020)",
+        "exclude": "CONTCLAS eq 'X'",
+    }
+    assert field_contract["additional_stratification"]["ct"] == "CT_eligib"
+
+    lanes = boundary["publication_lanes"]
+    assert lanes["archival_runtime_candidate_lane"]["status"] == (
+        "blocked_pending_git_annex_for_fragments"
+    )
+    assert lanes["raw_source_reproducibility_lane"]["status"] == (
+        "deferred_to_later_phase_or_task"
+    )
+    assert lanes["current_femic_run_profile_lane"]["status"] == (
+        "template_not_runnable_source_boundary"
+    )
+
+    assert boundary["explicit_non_requirements_for_next_gate"]["roads"]["status"] == (
+        "not_required_for_current_legacy_pin"
+    )
+    assert boundary["explicit_non_requirements_for_next_gate"]["outputs"]["status"] == (
+        "not_required_as_source_input"
+    )
+    assert (
+        boundary["explicit_non_requirements_for_next_gate"][
+            "direct_workbook_publication"
+        ]["status"]
+        == "not_required_for_current_femic_contract"
+    )
+
+    assert boundary["identity_boundary"] == {
+        "generated_xml_literal_description": "Base TFL26",
+        "accepted_case_identity": "mkrf_legacy_2016",
+        "status": "mismatch_recorded_not_accepted_identity",
+        "decision": [
+            "Preserve `Base TFL26` as a literal legacy artifact value.",
+            "Do not use `Base TFL26` as the MKRF case identity.",
+            (
+                "Carry the mismatch into rebuild-readiness criteria as a required "
+                "caveat or correction before any user-facing runnable claim."
+            ),
+        ],
+    }
+    assert boundary["next_bounded_step"] == {
+        "recommendation": "publish_rebuild_readiness_milestone_criteria",
+        "roadmap_task": "P56.6",
     }

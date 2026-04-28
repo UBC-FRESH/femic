@@ -1530,10 +1530,10 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P56.4a Define activation order for curve, retention, attribute, stratum, full XML emission, and matrix-build handoff surfaces.
   - [x] P56.4b Separate legacy compiled-output evidence from future FEMIC-regenerated XML and track outputs.
   - [x] P56.4c Preserve default exporter behavior and keep MKRF activation opt-in until validation gates are met.
-- [ ] P56.5 Resolve real MKRF source-input publication boundary (`#172`)
-  - [ ] P56.5a Identify fragments/checkpoint/boundary inputs required by the MKRF run profile.
-  - [ ] P56.5b Decide whether `03_MappingAnalysisData/*`, roads, outputs, or direct workbook publication are required for reproducibility.
-  - [ ] P56.5c Keep raw source inputs distinct from checkpoints, compiled artifacts, and the `Base TFL26` literal-description mismatch.
+- [x] P56.5 Resolve real MKRF source-input publication boundary (`#172`)
+  - [x] P56.5a Identify fragments/checkpoint/boundary inputs required by the MKRF run profile.
+  - [x] P56.5b Decide whether `03_MappingAnalysisData/*`, roads, outputs, or direct workbook publication are required for reproducibility.
+  - [x] P56.5c Keep raw source inputs distinct from checkpoints, compiled artifacts, and the `Base TFL26` literal-description mismatch.
 - [ ] P56.6 Publish rebuild-readiness milestone criteria (`#172`)
   - [ ] P56.6a Define acceptance criteria for moving from metadata recovery to runnable rebuild candidate.
   - [ ] P56.6b Publish a go/no-go checklist requiring legacy evidence reconciliation plus future FEMIC-generated XML and matrix-build proof.

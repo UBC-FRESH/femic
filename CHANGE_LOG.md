@@ -15304,3 +15304,15 @@
   - no fragments were regenerated;
   - no Patchworks matrix build was run; and
   - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Resolved the MKRF source-input publication boundary
+- `#172` / `P56.5` bounded boundary slice:
+  - added `metadata/legacy_source_input_publication_boundary.yaml` and `runbooks/LEGACY_SOURCE_INPUT_PUBLICATION_BOUNDARY.md` to the MKRF instance;
+  - recorded the fragments/topology requirements for a future matrix-build candidate, including required fragment fields from the generated XML/input contract;
+  - separated compiled runtime evidence from the raw source reproducibility lane under `03_MappingAnalysisData/*`; and
+  - preserved the `Base TFL26` literal-description mismatch as source evidence only, not accepted MKRF identity.
+- Scope boundary preserved:
+  - no `03_MappingAnalysisData/*`, outputs, roads, or direct workbook payloads were ingested;
+  - no ForestModel XML was generated;
+  - no fragments were regenerated;
+  - no Patchworks matrix build was run; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
