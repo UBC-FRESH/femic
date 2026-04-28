@@ -359,9 +359,9 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-`P57.3` is the active next bounded implementation move. Implement the opt-in
-MKRF XML emission seam into the materialized runtime model directory before
-rewiring runtime config or running Patchworks matrix build.
+`P57.4` is the active next bounded implementation move. Add the explicit
+Attrib compatibility-passthrough seam on top of the emitted MKRF runtime XML
+before rewiring runtime config or running Patchworks matrix build.
 
 Completed `P57.1` runnable-boundary plan:
 
@@ -388,10 +388,13 @@ Remaining Phase 57 sequence after `P57.1`:
   `InitialTargets/00_Target_Descriptions.bsh` seam. No XML emission, runtime
   config rewiring, matrix build, or launch proof was started in this slice.
 - `P57.3`:
-  implement opt-in MKRF XML emission from translated contracts, including
-  Input Variables, output table bindings, defines/constants, Curve Library
-  curves, generated yield curves from `CSV/CURVE_TABLE.csv`, Netdown retention
-  rules, unmanaged tracks, default succession, and CC/CT treatments.
+  completed. The MKRF instance now carries
+  `models/mkrf_patchworks_model/XML/baseMKRF.xml` emitted from the recovered
+  Input Variables, Curve Library, Netdown, Treat, and generated curve-table
+  contracts. The emitted XML includes output table bindings, legacy define and
+  live-constant fields, inlined `Yield_*` curves, unmanaged/netdown/treatment
+  sections, and no Attrib compatibility-passthrough yet. Default non-MKRF
+  exporter behavior remains unchanged.
 - `P57.4`:
   add the explicit compatibility-passthrough seam for deferred Attrib formulas
   and validate its required curves, defines, and labels against the emitted XML

@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 from collections import Counter
 from pathlib import Path
+import xml.etree.ElementTree as et
 
 import pytest
 import yaml
@@ -930,3 +931,76 @@ def test_mkrf_runtime_model_layout_records_p57_2_boundary() -> None:
     placeholder_text = placeholder.read_text(encoding="utf-8")
     assert "InitialTargets/00_Target_Descriptions.bsh" in placeholder_text
     assert "target-description lane" in placeholder_text
+
+
+def test_mkrf_runtime_xml_emission_records_p57_3_boundary() -> None:
+    emission_path = Path(
+        "external/femic-mkrf-instance/metadata/legacy_runtime_xml_emission.yaml"
+    )
+
+    if not emission_path.exists():
+        pytest.skip("MKRF instance submodule is not materialized")
+
+    emission = yaml.safe_load(emission_path.read_text(encoding="utf-8"))
+
+    assert emission["phase"] == "P57.3"
+    assert emission["status"] == "runtime_xml_emitted_pre_passthrough"
+    assert emission["decision"] == {
+        "runtime_xml_emission": "materialized",
+        "emission_mode": "opt_in_mkrf_contract_builder",
+        "generated_yield_curves": "inlined_from_curve_table_csv",
+        "attribute_passthrough": "not_started",
+        "matrix_build": "not_run",
+        "launch_proof": "not_run",
+        "runnable_rebuild_claim": "no_go",
+    }
+    assert emission["emitted_artifact"]["path"] == (
+        "models/mkrf_patchworks_model/XML/baseMKRF.xml"
+    )
+    assert emission["emitted_artifact"]["forest_model"] == {
+        "description": "Base TFL26",
+        "horizon_years": 300,
+        "start_year": 2020,
+        "match": "multi",
+    }
+    assert emission["emitted_artifact"]["structure_counts"] == {
+        "defines": 11,
+        "curves": 1057,
+        "selects": 6,
+        "retentions": 2,
+        "treatments": 2,
+    }
+    assert emission["emitted_contract"]["define_fields"] == [
+        "status",
+        "au",
+        "auf",
+        "oper",
+        "ct",
+        "aux",
+        "treatment",
+        "managed",
+        "unmanaged",
+        "operable",
+        "lowoper",
+    ]
+    assert emission["emitted_contract"]["inlined_generated_curve_source"] == {
+        "curve_count": 1049,
+        "producer": "data/legacy_mkrf/generated_xml/CSV/CURVE_TABLE.csv",
+    }
+    assert emission["next_bounded_step"] == {
+        "recommendation": "implement_attrib_compatibility_passthrough",
+        "roadmap_task": "P57.4",
+    }
+
+    runtime_xml = Path(
+        "external/femic-mkrf-instance/models/mkrf_patchworks_model/XML/baseMKRF.xml"
+    )
+    assert runtime_xml.exists()
+    root = et.parse(runtime_xml).getroot()
+    assert root.attrib == {
+        "description": "Base TFL26",
+        "horizon": "300",
+        "year": "2020",
+        "match": "multi",
+    }
+    assert root.find("./curve[@id='Yield_1']") is not None

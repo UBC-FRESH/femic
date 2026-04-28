@@ -15354,3 +15354,14 @@
   - no Patchworks runtime config was rewired;
   - no Patchworks matrix build or launch was run; and
   - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Emitted the first FEMIC-managed MKRF runtime XML
+- `#172` / `P57.3` bounded XML-emission slice:
+  - added a dedicated opt-in MKRF XML builder/emitter in `src/femic/fmg/patchworks.py` that reads the recovered Input Variables, Curve Library, Netdown, Treat, and generated curve-table contracts without changing the default Patchworks exporter path;
+  - emitted `external/femic-mkrf-instance/models/mkrf_patchworks_model/XML/baseMKRF.xml` with legacy input/output bindings, stratification defines, live scalar constants, Curve Library curves, inlined `Yield_*` curves, the two Netdown rules, the unmanaged catch-track, default succession, and `CC` / `CT` treatment sections;
+  - added instance-local emission lineage surfaces in `metadata/legacy_runtime_xml_emission.yaml` and `runbooks/LEGACY_RUNTIME_XML_EMISSION.md`; and
+  - moved the active next bounded move to `P57.4` Attrib compatibility passthrough.
+- Scope boundary preserved:
+  - no Attrib compatibility-passthrough XML blocks were emitted;
+  - no runtime Patchworks config was rewired;
+  - no Patchworks matrix build or launch was run; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.

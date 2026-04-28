@@ -1550,10 +1550,10 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P57.2a Create the MKRF model layout with `XML/`, `Spatial/`, `Tracks/`, `Scripts/`, `Targets/`, and analysis entrypoint surfaces.
   - [x] P57.2b Copy or materialize legacy `fragments.*` and `topo_frag100.csv` as runtime inputs using DataLad/git-annex where required.
   - [x] P57.2c Sanitize copied control scripts so runtime paths are instance-relative and do not expose machine-specific source paths.
-- [ ] P57.3 Implement opt-in MKRF XML emission from translated contracts (`#172`)
-  - [ ] P57.3a Emit Input Variables, output table bindings, defines/constants, Curve Library curves, and generated yield curves from `CSV/CURVE_TABLE.csv`.
-  - [ ] P57.3b Emit Netdown retention rules, unmanaged tracks, default succession, and CC/CT treatment definitions.
-  - [ ] P57.3c Keep the MKRF builder opt-in and preserve default non-MKRF exporter behavior.
+- [x] P57.3 Implement opt-in MKRF XML emission from translated contracts (`#172`)
+  - [x] P57.3a Emit Input Variables, output table bindings, defines/constants, Curve Library curves, and generated yield curves from `CSV/CURVE_TABLE.csv`.
+  - [x] P57.3b Emit Netdown retention rules, unmanaged tracks, default succession, and CC/CT treatment definitions.
+  - [x] P57.3c Keep the MKRF builder opt-in and preserve default non-MKRF exporter behavior.
 - [ ] P57.4 Add explicit compatibility passthrough for deferred Attrib formulas (`#172`)
   - [ ] P57.4a Extract the deferred formula-heavy Attrib XML blocks from reconciled `baseMKRF.xml` under a named compatibility contract.
   - [ ] P57.4b Inline passthrough blocks only after validating their required curves, defines, and labels against the emitted XML surface.

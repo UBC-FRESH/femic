@@ -59,6 +59,24 @@ DEFAULT_SILV_STATE_PLANTED = "cc_pl"
 DEFAULT_LEGACY_TREATMENT_ELIGIBILITY_FIELD = "treat_inel"
 DEFAULT_PASS_THROUGH_SUCCESSION_BREAKUP = "1000"
 DEFAULT_PASS_THROUGH_SUCCESSION_RENEW = "1000"
+DEFAULT_LEGACY_MKRF_OUTPUT_ATTRIBUTES = {
+    "messages": "messages.csv",
+    "blocks": "blocks.csv",
+    "features": "features.csv",
+    "products": "products.csv",
+    "treatments": "treatments.csv",
+    "curves": "curves.csv",
+    "tracknames": "tracknames.csv",
+}
+DEFAULT_LEGACY_MKRF_REQUIRED_DEFINE_FIELDS = (
+    "status",
+    "au",
+    "auf",
+    "oper",
+    "ct",
+    "aux",
+    "treatment",
+)
 SUPPORTED_BTC_INDICATOR_BANKS = {"stand-structure-basic", "log-grades"}
 STAND_STRUCTURE_BASIC_FEATURE_COLUMNS = (
     ("MAI", "feature.MAI.managed.{au_token}"),
@@ -1440,6 +1458,60 @@ def _load_legacy_input_variables_config(
     return payload
 
 
+def _load_legacy_mkrf_yaml_contract(
+    *,
+    path: Path,
+    contract_label: str,
+) -> dict[str, Any]:
+    resolved = path.expanduser().resolve()
+    if not resolved.exists():
+        raise FileNotFoundError(f"{contract_label} not found: {resolved}")
+    payload = yaml.safe_load(resolved.read_text(encoding="utf-8"))
+    if payload is None:
+        raise ValueError(f"{contract_label} must not be empty: {resolved}")
+    if not isinstance(payload, dict):
+        raise ValueError(
+            f"{contract_label} must contain a top-level mapping/object "
+            f"(found {type(payload).__name__})"
+        )
+    return payload
+
+
+def _load_legacy_mkrf_curve_table(
+    *,
+    curve_table_csv_path: Path,
+) -> dict[str, tuple[CurvePoint, ...]]:
+    resolved = curve_table_csv_path.expanduser().resolve()
+    if not resolved.exists():
+        raise FileNotFoundError(f"legacy MKRF curve table not found: {resolved}")
+    curve_table = pd.read_csv(resolved)
+    required_columns = {"Curve_ID", "Age", "Value"}
+    missing_columns = sorted(required_columns.difference(curve_table.columns))
+    if missing_columns:
+        raise ValueError(
+            "legacy MKRF curve table missing required columns: "
+            + ", ".join(missing_columns)
+        )
+    grouped: dict[str, list[CurvePoint]] = {}
+    for row in curve_table.itertuples(index=False):
+        curve_id = str(getattr(row, "Curve_ID", "")).strip()
+        if not curve_id:
+            raise ValueError("legacy MKRF curve table contains blank Curve_ID value")
+        age_value = pd.to_numeric([getattr(row, "Age", None)], errors="coerce")[0]
+        curve_value = pd.to_numeric([getattr(row, "Value", None)], errors="coerce")[0]
+        if pd.isna(age_value) or pd.isna(curve_value):
+            raise ValueError(
+                f"legacy MKRF curve table contains non-numeric point for {curve_id!r}"
+            )
+        grouped.setdefault(curve_id, []).append(
+            CurvePoint(x=float(age_value), y=float(curve_value))
+        )
+    return {
+        curve_id: tuple(sorted(points, key=lambda point: float(point.x)))
+        for curve_id, points in sorted(grouped.items())
+    }
+
+
 def _legacy_input_variables_staged_mapping(
     legacy_input_variables_config: dict[str, Any] | None,
 ) -> dict[str, Any]:
@@ -1583,6 +1655,34 @@ def _build_live_legacy_additional_stratification_contract(
     return tuple(live_columns), tuple(required_columns)
 
 
+def _build_legacy_define_column_contract(
+    *,
+    legacy_input_variables_config: dict[str, Any] | None,
+) -> tuple[tuple[tuple[str, str], ...], tuple[str, ...]]:
+    staged = _legacy_input_variables_staged_mapping(legacy_input_variables_config)
+    raw_columns = staged.get("additional_stratification_columns")
+    if not isinstance(raw_columns, list):
+        return (), ()
+    live_columns: list[tuple[str, str]] = []
+    required_fields: list[str] = []
+    for item in raw_columns:
+        if not isinstance(item, dict):
+            continue
+        key = str(item.get("key", "")).strip()
+        source_expression = _normalize_optional_expression(
+            item.get("source_expression")
+        )
+        if not key or source_expression is None:
+            continue
+        if (
+            key not in required_fields
+            and key in DEFAULT_LEGACY_MKRF_REQUIRED_DEFINE_FIELDS
+        ):
+            required_fields.append(key)
+        live_columns.append((key, source_expression))
+    return tuple(live_columns), tuple(required_fields)
+
+
 def _build_live_legacy_constants_contract(
     *,
     legacy_input_variables_config: dict[str, Any] | None,
@@ -1608,6 +1708,316 @@ def _build_live_legacy_constants_contract(
         if str(key).strip()
         and (live_constant_keys is None or str(key).strip() in live_constant_keys)
     }
+
+
+def _build_legacy_mkrf_define_constants_contract(
+    *,
+    legacy_input_variables_config: dict[str, Any] | None,
+) -> tuple[tuple[tuple[str, str], ...], tuple[str, ...]]:
+    staged = _legacy_input_variables_staged_mapping(legacy_input_variables_config)
+    raw_constants = staged.get("constants")
+    if not isinstance(raw_constants, dict):
+        return (), ()
+    raw_constant_contract = staged.get("constant_contract")
+    constant_order: list[str] = []
+    if isinstance(raw_constant_contract, list):
+        for item in raw_constant_contract:
+            if not isinstance(item, dict):
+                continue
+            key = str(item.get("key", "")).strip()
+            status = str(item.get("status", "")).strip()
+            if not key or status not in {"live_export", "live_build_input"}:
+                continue
+            constant_order.append(key)
+    else:
+        constant_order = [str(key).strip() for key in raw_constants if str(key).strip()]
+    entries: list[tuple[str, str]] = []
+    required_fields: list[str] = []
+    for key in constant_order:
+        if key not in raw_constants:
+            continue
+        value = _normalize_optional_expression(raw_constants.get(key))
+        if value is None:
+            continue
+        entries.append((key, value))
+        required_fields.append(key)
+    return tuple(entries), tuple(required_fields)
+
+
+def _append_legacy_mkrf_curve_node(
+    *,
+    root: et.Element,
+    curve_id: str,
+    points: tuple[CurvePoint, ...],
+) -> None:
+    curve_node = et.SubElement(root, "curve", {"id": curve_id})
+    for point in points:
+        et.SubElement(
+            curve_node,
+            "point",
+            {
+                "x": _format_xml_x(float(point.x)),
+                "y": _format_xml_y(curve_id, float(point.y)),
+            },
+        )
+
+
+def _legacy_mkrf_track_statement_from_selection(selection: dict[str, Any]) -> str:
+    parts: list[str] = []
+    status_key = _normalize_optional_expression(selection.get("status"))
+    if status_key is not None:
+        parts.append(f"status in {status_key}")
+    for expression in selection.get("additional_expressions", []) or []:
+        normalized = _normalize_optional_expression(expression)
+        if normalized is not None:
+            parts.append(normalized)
+    return " and ".join(parts)
+
+
+def build_legacy_mkrf_forestmodel_xml_tree(
+    *,
+    legacy_input_variables_config: dict[str, Any],
+    legacy_curve_library_config: dict[str, Any],
+    legacy_netdown_config: dict[str, Any],
+    legacy_treat_config: dict[str, Any],
+    generated_curve_table_by_id: dict[str, tuple[CurvePoint, ...]],
+) -> et.Element:
+    """Build the opt-in MKRF ForestModel XML tree from recovered legacy contracts."""
+    description = str(
+        legacy_input_variables_config.get(
+            "description", DEFAULT_FORESTMODEL_DESCRIPTION
+        )
+    )
+    start_year = int(
+        legacy_input_variables_config.get("start_year", DEFAULT_START_YEAR)
+    )
+    horizon_years = int(
+        legacy_input_variables_config.get("horizon_years", DEFAULT_HORIZON_YEARS)
+    )
+    input_attributes, _required_input_columns = (
+        _build_live_legacy_input_attribute_contract(
+            legacy_input_variables_config=legacy_input_variables_config
+        )
+    )
+    define_columns, required_define_fields = _build_legacy_define_column_contract(
+        legacy_input_variables_config=legacy_input_variables_config
+    )
+    define_constants, required_constant_fields = (
+        _build_legacy_mkrf_define_constants_contract(
+            legacy_input_variables_config=legacy_input_variables_config
+        )
+    )
+
+    root = et.Element(
+        "ForestModel",
+        {
+            "description": description,
+            "horizon": str(horizon_years),
+            "year": str(start_year),
+            "match": "multi",
+        },
+    )
+    et.SubElement(root, "input", dict(input_attributes))
+    et.SubElement(root, "output", dict(DEFAULT_LEGACY_MKRF_OUTPUT_ATTRIBUTES))
+
+    for field, column in define_columns:
+        et.SubElement(root, "define", {"field": field, "column": column})
+    et.SubElement(root, "define", {"field": "treatment"})
+    for field, value in define_constants:
+        et.SubElement(root, "define", {"field": field, "constant": value})
+
+    _append_legacy_mkrf_curve_node(
+        root=root,
+        curve_id="one",
+        points=(CurvePoint(x=0.0, y=1.0),),
+    )
+    for curve in legacy_curve_library_config.get("curves", []) or []:
+        curve_id = _normalize_optional_expression(curve.get("curve_id"))
+        if curve_id is None:
+            raise ValueError(
+                "legacy MKRF curve-library contract contains blank curve_id"
+            )
+        raw_points = curve.get("points")
+        if not isinstance(raw_points, list) or not raw_points:
+            raise ValueError(
+                f"legacy MKRF curve-library contract {curve_id!r} must contain points"
+            )
+        points = tuple(
+            CurvePoint(x=float(point["age"]), y=float(point["value"]))
+            for point in raw_points
+            if isinstance(point, dict)
+        )
+        _append_legacy_mkrf_curve_node(root=root, curve_id=curve_id, points=points)
+    for curve_id, points in generated_curve_table_by_id.items():
+        _append_legacy_mkrf_curve_node(root=root, curve_id=curve_id, points=points)
+
+    for rule in legacy_netdown_config.get("rules", []) or []:
+        if str(rule.get("status", "")).strip() != "review_to_build_candidate":
+            continue
+        statement = _normalize_optional_expression(rule.get("selection_expression"))
+        if statement is None:
+            raise ValueError("legacy MKRF netdown rule is missing selection_expression")
+        select_node = et.SubElement(root, "select", {"statement": statement})
+        retention_node = et.SubElement(
+            select_node,
+            "retention",
+            {"factor": str(rule["netdown_proportion"])},
+        )
+        reassignment = rule.get("reassignment")
+        if not isinstance(reassignment, dict):
+            raise ValueError("legacy MKRF netdown rule missing reassignment mapping")
+        field = _normalize_optional_expression(reassignment.get("field"))
+        value = _normalize_optional_expression(reassignment.get("value"))
+        if field is None or value is None:
+            raise ValueError(
+                "legacy MKRF netdown reassignment must define field and value"
+            )
+        et.SubElement(retention_node, "assign", {"field": field, "value": value})
+        features_node = et.SubElement(retention_node, "features")
+        for feature_assignment in rule.get("feature_assignments", []) or []:
+            if not isinstance(feature_assignment, dict):
+                continue
+            label = _normalize_optional_expression(feature_assignment.get("feature"))
+            if label is None:
+                continue
+            attribute_attrs = {"label": label}
+            factor_value = pd.to_numeric(
+                [feature_assignment.get("value", None)], errors="coerce"
+            )[0]
+            if not pd.isna(factor_value) and not math.isclose(
+                float(factor_value), 1.0, rel_tol=0.0, abs_tol=1e-12
+            ):
+                attribute_attrs["factor"] = _format_xml_y(
+                    "legacy_mkrf_factor", float(factor_value)
+                )
+            attribute_node = et.SubElement(features_node, "attribute", attribute_attrs)
+            et.SubElement(attribute_node, "curve", {"idref": "one"})
+
+    unmanaged_statement = "status in unmanaged"
+    unmanaged_select = et.SubElement(root, "select", {"statement": unmanaged_statement})
+    et.SubElement(unmanaged_select, "track")
+
+    succession_select = et.SubElement(root, "select")
+    succession = legacy_treat_config.get("stratum", {}).get("succession", {})
+    breakup_at = succession.get(
+        "breakup_at", int(DEFAULT_PASS_THROUGH_SUCCESSION_BREAKUP)
+    )
+    renewal_age = succession.get(
+        "renewal_age", int(DEFAULT_PASS_THROUGH_SUCCESSION_RENEW)
+    )
+    et.SubElement(
+        succession_select,
+        "succession",
+        {"breakup": str(breakup_at), "renew": str(renewal_age)},
+    )
+
+    for treatment in legacy_treat_config.get("treatments", []) or []:
+        treatment_id = _normalize_optional_expression(treatment.get("treatment_id"))
+        if treatment_id is None:
+            raise ValueError("legacy MKRF treat contract contains blank treatment_id")
+        if "blocked_by_stratum_builder" not in str(treatment.get("status", "")).strip():
+            continue
+        selection = treatment.get("selection")
+        if not isinstance(selection, dict):
+            raise ValueError(
+                f"legacy MKRF treatment {treatment_id!r} missing selection mapping"
+            )
+        statement = _legacy_mkrf_track_statement_from_selection(selection)
+        select_node = et.SubElement(root, "select", {"statement": statement})
+        track_node = et.SubElement(select_node, "track")
+        treatment_attrs = {"label": treatment_id}
+        min_age = _normalize_optional_expression(
+            treatment.get("minimum_operable_age_expression")
+        ) or _normalize_optional_expression(treatment.get("minimum_operable_age"))
+        max_age = _normalize_optional_expression(treatment.get("maximum_operable_age"))
+        adjust = _normalize_optional_expression(treatment.get("scheduling_method"))
+        retain = _normalize_optional_expression(treatment.get("retention"))
+        if min_age is not None:
+            treatment_attrs["minage"] = min_age
+        if max_age is not None and max_age not in {"", "0"}:
+            treatment_attrs["maxage"] = max_age
+        if adjust is not None:
+            treatment_attrs["adjust"] = adjust
+        if retain is not None and retain not in {"", "0", "0.0"}:
+            treatment_attrs["retain"] = retain
+        treatment_node = et.SubElement(track_node, "treatment", treatment_attrs)
+        produce_node = et.SubElement(treatment_node, "produce")
+        et.SubElement(
+            produce_node,
+            "assign",
+            {"field": "treatment", "value": _as_quoted_literal(treatment_id)},
+        )
+        renew = treatment.get("renew")
+        if not isinstance(renew, dict):
+            raise ValueError(
+                f"legacy MKRF treatment {treatment_id!r} missing renew mapping"
+            )
+        renew_au = _normalize_optional_expression(renew.get("au"))
+        if renew_au is None:
+            raise ValueError(f"legacy MKRF treatment {treatment_id!r} missing renew.au")
+        transition_node = et.SubElement(treatment_node, "transition")
+        et.SubElement(transition_node, "assign", {"field": "au", "value": renew_au})
+
+    validate_forestmodel_xml_tree(
+        root=root,
+        required_define_fields=(
+            *required_define_fields,
+            *required_constant_fields,
+            "treatment",
+        ),
+        required_curve_ids=(
+            "one",
+            *[
+                str(curve["curve_id"])
+                for curve in legacy_curve_library_config.get("curves", []) or []
+                if isinstance(curve, dict) and curve.get("curve_id")
+            ],
+        ),
+    )
+    return root
+
+
+def emit_legacy_mkrf_forestmodel_xml(
+    *,
+    legacy_input_variables_config_path: Path,
+    legacy_curve_library_config_path: Path,
+    legacy_netdown_config_path: Path,
+    legacy_treat_config_path: Path,
+    generated_curve_table_csv_path: Path,
+    output_path: Path,
+) -> Path:
+    """Emit the opt-in MKRF runtime ForestModel XML from recovered contracts."""
+    legacy_input_variables_config = _load_legacy_input_variables_config(
+        legacy_input_variables_config_path=legacy_input_variables_config_path
+    )
+    if legacy_input_variables_config is None:
+        raise ValueError(
+            "legacy MKRF input-variables config is required for XML emission"
+        )
+    legacy_curve_library_config = _load_legacy_mkrf_yaml_contract(
+        path=legacy_curve_library_config_path,
+        contract_label="legacy MKRF curve-library contract",
+    )
+    legacy_netdown_config = _load_legacy_mkrf_yaml_contract(
+        path=legacy_netdown_config_path,
+        contract_label="legacy MKRF netdown contract",
+    )
+    legacy_treat_config = _load_legacy_mkrf_yaml_contract(
+        path=legacy_treat_config_path,
+        contract_label="legacy MKRF treat contract",
+    )
+    generated_curve_table_by_id = _load_legacy_mkrf_curve_table(
+        curve_table_csv_path=generated_curve_table_csv_path
+    )
+    root = build_legacy_mkrf_forestmodel_xml_tree(
+        legacy_input_variables_config=legacy_input_variables_config,
+        legacy_curve_library_config=legacy_curve_library_config,
+        legacy_netdown_config=legacy_netdown_config,
+        legacy_treat_config=legacy_treat_config,
+        generated_curve_table_by_id=generated_curve_table_by_id,
+    )
+    write_forestmodel_xml(root=root, path=output_path)
+    return output_path
 
 
 def _resolve_legacy_treatment_expression_operand(
@@ -4957,7 +5367,13 @@ def write_forestmodel_xml(*, root: et.Element, path: Path) -> None:
     path.write_text(payload, encoding="utf-8")
 
 
-def validate_forestmodel_xml_tree(*, root: et.Element) -> None:
+def validate_forestmodel_xml_tree(
+    *,
+    root: et.Element,
+    required_define_fields: Iterable[str] | None = None,
+    required_curve_ids: Iterable[str] | None = ("unity",),
+    require_cc_treatment: bool = True,
+) -> None:
     """Validate required ForestModel structure and curve references."""
     issues: list[str] = []
     if root.tag != "ForestModel":
@@ -4986,7 +5402,12 @@ def validate_forestmodel_xml_tree(*, root: et.Element) -> None:
         for field in [node.get("field")]
         if field is not None
     }
-    for field in ("AU", "IFM", "ORIGIN", "SILV_STATE", "RETENTION", "treatment"):
+    resolved_required_define_fields = tuple(
+        required_define_fields
+        if required_define_fields is not None
+        else ("AU", "IFM", "ORIGIN", "SILV_STATE", "RETENTION", "treatment")
+    )
+    for field in resolved_required_define_fields:
         if field not in define_fields:
             issues.append(f"missing define field: {field}")
 
@@ -4996,10 +5417,12 @@ def validate_forestmodel_xml_tree(*, root: et.Element) -> None:
         for curve_id in [node.get("id")]
         if isinstance(curve_id, str)
     }
-    if "unity" not in curve_ids:
-        issues.append("missing required curve id 'unity'")
-    if not root.findall("./curve[@id='unity']/point"):
-        issues.append("unity curve missing point(s)")
+    resolved_required_curve_ids = tuple(required_curve_ids or ())
+    for curve_id in resolved_required_curve_ids:
+        if curve_id not in curve_ids:
+            issues.append(f"missing required curve id {curve_id!r}")
+        elif not root.findall(f"./curve[@id='{curve_id}']/point"):
+            issues.append(f"required curve {curve_id!r} missing point(s)")
 
     idrefs = {
         idref
@@ -5027,7 +5450,7 @@ def validate_forestmodel_xml_tree(*, root: et.Element) -> None:
         if identifier_pattern.fullmatch(factor) and factor not in define_fields:
             issues.append(f"retention factor references undefined field: {factor}")
 
-    if not root.findall(".//treatment[@label='CC']"):
+    if require_cc_treatment and not root.findall(".//treatment[@label='CC']"):
         issues.append("missing required CC treatment definition")
 
     if issues:
