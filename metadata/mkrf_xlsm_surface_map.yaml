@@ -88,7 +88,9 @@ surface_families:
     future_femic_home:
       - data/legacy_mkrf/curve_tables/curve_library.csv
       - config/legacy_xml_builder/curve_registry.yaml
-    disposition: future_curve_table_surface
+      - external/femic-mkrf-instance/config/legacy_xml_builder/curve_library.mkrf.yaml
+      - external/femic-mkrf-instance/metadata/legacy_curve_library_translation.yaml
+    disposition: translated_review_to_build_contract
 
   - surface_id: netdown
     workbook_sheet: Netdown
@@ -184,8 +186,9 @@ registry_mismatches:
       - Additional lookup families may be represented as named blocks, formulas, or stale registry references rather than discrete sheets.
 
 next_bounded_step:
-  recommendation: translate_curve_library_review_to_build_contract
+  recommendation: translate_netdown_review_to_build_contract
   description:
-    Translate the legacy Curve Library surface into an explicit review-to-build
+    Translate the legacy Netdown surface into an explicit review-to-build
     contract while keeping generated XML fragments inactive until their source
-    tables are accepted.
+    tables are accepted and reconciled. The Curve Library surface now has a
+    translated review-to-build contract in the MKRF instance.

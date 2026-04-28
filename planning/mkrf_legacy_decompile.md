@@ -304,7 +304,7 @@ Do exactly one next bounded move at a time. The roadmap is now the control
 surface for Phase 55 sequencing; implementation should not invent the next
 slice in chat.
 
-Completed Input Variables classification:
+Completed Input Variables and Curve Library classification:
 
 - `P55.14`:
   `max_inventory_age` is review metadata only because the current
@@ -313,18 +313,23 @@ Completed Input Variables classification:
   workbook value points at generated `Curves.xml`; activation requires the
   `P55.15` Curve Library review-to-build contract. The remaining include
   hooks are blank in the workbook and are preserved as review metadata.
+- `P55.15`:
+  the workbook `Curve Library` / `curveNames` surface is translated into
+  `config/legacy_xml_builder/curve_library.mkrf.yaml` in the MKRF instance.
+  The contract preserves the legacy curve IDs `zero`, `age`, `le10`, `lt20`,
+  `gt60`, `lt80`, and `gt250`; preserves the workbook `Age` axis and nonblank
+  curve points; and treats blank cells as absent points, not zeroes. It is a
+  review-to-build contract only: `beforeCurves` remains inactive until a later
+  generated `Curves.xml` fragment-equivalence pass.
 
 Active next bounded move:
-
-- `P55.15`:
-  translate the legacy `Curve Library` surface into an explicit review-to-build
-  contract.
-
-Planned follow-on sequence after `P55.15`:
 
 - `P55.16`:
   translate the legacy `Netdown` surface into an explicit review-to-build
   contract.
+
+Planned follow-on sequence after `P55.16`:
+
 - `P55.17`:
   translate the legacy `Attrib` surface into an explicit review-to-build
   contract, including formula dependencies such as `frd`.
@@ -335,8 +340,8 @@ Planned follow-on sequence after `P55.15`:
   reconcile the workbook-derived ForestModel contract against compiled legacy
   outputs and publish a rebuild-readiness go/no-go note.
 
-Do not start `Netdown`, `Attrib`, `Treat`, reconciliation, or upstream mapping
-work until `P55.15` is closed and the roadmap is updated again.
+Do not start `Attrib`, `Treat`, reconciliation, or upstream mapping work until
+`P55.16` is closed and the roadmap is updated again.
 
 Hard boundaries for this sequence:
 

@@ -15186,3 +15186,13 @@
   - no include hooks were activated;
   - no exporter behavior changed; and
   - no `Netdown`, `Attrib`, `Treat`, `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.
+## 2026-04-28 - Translated the MKRF Curve Library contract
+- `#172` / `P55.15` bounded reconstruction slice:
+  - added `config/legacy_xml_builder/curve_library.mkrf.yaml` to the MKRF instance as the explicit review-to-build contract for the legacy workbook `Curve Library` / `curveNames` surface;
+  - preserved the workbook curve IDs `zero`, `age`, `le10`, `lt20`, `gt60`, `lt80`, and `gt250`, the reviewed `Age` axis, and every nonblank curve point while treating blank cells as absent points;
+  - added `metadata/legacy_curve_library_translation.yaml` and `runbooks/LEGACY_CURVE_LIBRARY_TRANSLATION.md` to record the live-vs-deferred boundary; and
+  - updated parent and instance planning/lineage docs so the next bounded move is `P55.16` Netdown translation.
+- Scope boundary preserved:
+  - `beforeCurves` remains inactive pending generated `Curves.xml` fragment reconciliation;
+  - no exporter behavior changed; and
+  - no `Netdown`, `Attrib`, `Treat`, `03_MappingAnalysisData/*`, `Outputs/*`, direct workbook publication, or runnable rebuild claim was introduced by this slice.

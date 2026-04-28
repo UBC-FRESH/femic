@@ -1490,10 +1490,10 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P55.14a Decide and document whether `max_inventory_age` is a live exporter/build input or review metadata only.
   - [x] P55.14b Classify each legacy include-fragment hook (`beforeCurves`, `afterCurves`, `afterRetention`, `afterUnmanaged`, `afterStratum`, `afterAttributes`) as live, preserved review metadata, or blocked by missing source/runtime context.
   - [x] P55.14c Update the translated Input Variables contract and lineage surfaces without activating include hooks, `Netdown`, `Treat`, or upstream mapping data.
-- [ ] P55.15 Translate the legacy `Curve Library` surface into an explicit review-to-build contract (`#172`)
-  - [ ] P55.15a Map workbook curve names and curve table extract columns to FEMIC-native curve registry/table fields.
-  - [ ] P55.15b Decide which curve rows can become live Patchworks XML curve inputs from tracked extracts and which remain review evidence.
-  - [ ] P55.15c Add focused validation that the translated curve contract preserves legacy curve identifiers, age axes, and generated-XML include expectations.
+- [x] P55.15 Translate the legacy `Curve Library` surface into an explicit review-to-build contract (`#172`)
+  - [x] P55.15a Map workbook curve names and curve table extract columns to FEMIC-native curve registry/table fields.
+  - [x] P55.15b Decide which curve rows can become live Patchworks XML curve inputs from tracked extracts and which remain review evidence.
+  - [x] P55.15c Add focused validation that the translated curve contract preserves legacy curve identifiers, age axes, and generated-XML include expectations.
 - [ ] P55.16 Translate the legacy `Netdown` surface into an explicit review-to-build contract (`#172`)
   - [ ] P55.16a Map workbook `netdownCriteria`, `netdownNames`, and `netdownFactors` into candidate FEMIC netdown rule metadata.
   - [ ] P55.16b Decide which netdown rules can safely become live retention/export behavior from current checkpoint fields.
