@@ -301,7 +301,7 @@ matrix-builder semantics.
 ## Planned recovery sequence
 
 Do exactly one next bounded move at a time. The roadmap is now the control
-surface for Phase 55 sequencing; implementation should not invent the next
+surface for Phase 55/56 sequencing; implementation should not invent the next
 slice in chat.
 
 Completed Phase 55 workbook-contract recovery:
@@ -358,12 +358,21 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-`P56.1` is the active next bounded move. It is planning only: convert the
-P55.19 no-go blockers into an ordered Phase 56 gap-closure boundary without
-starting generated XML ingestion, compiled-track materialization, source-input
-intake, direct workbook publication, or builder activation.
+`P56.2` is the active next bounded implementation move. Reconcile generated XML
+artifacts (`baseMKRF.xml`, `Curves.xml`, and/or `CSV/CURVE_TABLE.csv`) against
+the translated workbook-derived contracts as explicit review artifacts.
 
-Planned Phase 56 sequence after `P56.1`:
+Completed `P56.1` planning boundary:
+
+- generated XML reconciliation is scheduled under `P56.2`;
+- pointer-only compiled track table resolution is scheduled under `P56.3`;
+- curve, retention, attribute, stratum, and full XML builder activation-order
+  design is scheduled under `P56.4`;
+- real MKRF source-input publication boundaries, including checkpoint and
+  boundary requirements, are scheduled under `P56.5`; and
+- runnable rebuild-readiness milestone criteria are scheduled under `P56.6`.
+
+Remaining Phase 56 sequence after `P56.1`:
 
 - `P56.2`:
   reconcile generated XML artifacts (`baseMKRF.xml`, `Curves.xml`, and/or

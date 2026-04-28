@@ -1514,10 +1514,10 @@ Notes: `planning/mkrf_legacy_decompile.md`
 ## Phase 56: Close MKRF Rebuild Readiness Gaps
 Notes: `planning/mkrf_legacy_decompile.md`
 
-- [ ] P56.1 Plan post-P55 rebuild gap closure from the no-go readiness review (`#172`)
-  - [ ] P56.1a Convert the P55.19 no-go blockers into an ordered implementation boundary without starting payload intake or builder activation.
-  - [ ] P56.1b Decide which blockers require generated XML, compiled track materialization, builder design, source-input publication, or readiness criteria.
-  - [ ] P56.1c Update planning/lineage notes so P56.2 is the next bounded implementation move.
+- [x] P56.1 Plan post-P55 rebuild gap closure from the no-go readiness review (`#172`)
+  - [x] P56.1a Convert the P55.19 no-go blockers into an ordered implementation boundary without starting payload intake or builder activation.
+  - [x] P56.1b Decide which blockers require generated XML, compiled track materialization, builder design, source-input publication, or readiness criteria.
+  - [x] P56.1c Update planning/lineage notes so P56.2 is the next bounded implementation move.
 - [ ] P56.2 Reconcile generated XML artifacts (`#172`)
   - [ ] P56.2a Locate/materialize `baseMKRF.xml`, `Curves.xml`, and/or `CSV/CURVE_TABLE.csv` as explicit review artifacts.
   - [ ] P56.2b Compare generated XML fragments against translated contracts without activating `beforeCurves` or XML builders.
