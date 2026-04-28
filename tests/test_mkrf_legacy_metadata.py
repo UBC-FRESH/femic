@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -252,4 +253,129 @@ def test_mkrf_attributes_contract_classifies_review_rows() -> None:
     )
     assert contract["review_only"]["incomplete_template_rows"]["count"] == len(
         incomplete_rows
+    )
+
+
+def test_mkrf_treat_contract_preserves_treatments_and_review_only_rows() -> None:
+    ranges_root = Path("metadata/mkrf_xlsm_review/ranges")
+    contract_path = Path(
+        "external/femic-mkrf-instance/config/legacy_xml_builder/strata/treat.mkrf.yaml"
+    )
+    treatments_path = Path(
+        "external/femic-mkrf-instance/data/legacy_mkrf/compiled_tracks/treatments.csv"
+    )
+
+    if not contract_path.exists():
+        pytest.skip("MKRF instance submodule is not materialized")
+
+    criteria_rows = list(
+        csv.reader(
+            (ranges_root / "treat_stratum_criteria.review.csv").open(
+                newline="", encoding="utf-8-sig"
+            )
+        )
+    )
+    succession_rows = list(
+        csv.reader(
+            (ranges_root / "treat_stratum_succession.review.csv").open(
+                newline="", encoding="utf-8-sig"
+            )
+        )
+    )
+    features_rows = list(
+        csv.reader(
+            (ranges_root / "treat_stratum_features.review.csv").open(
+                newline="", encoding="utf-8-sig"
+            )
+        )
+    )
+    products_rows = list(
+        csv.reader(
+            (ranges_root / "treat_stratum_products.review.csv").open(
+                newline="", encoding="utf-8-sig"
+            )
+        )
+    )
+    factors_rows = list(
+        csv.reader(
+            (ranges_root / "treat_stratum_factors.review.csv").open(
+                newline="", encoding="utf-8-sig"
+            )
+        )
+    )
+    treatment_rows = list(
+        csv.reader(
+            (ranges_root / "treat_stratum_treatments.review.csv").open(
+                newline="", encoding="utf-8-sig"
+            )
+        )
+    )
+
+    contract = yaml.safe_load(contract_path.read_text(encoding="utf-8"))
+
+    assert contract["build_boundary"]["live_exporter_input"] is False
+    assert (
+        contract["build_boundary"]["dump_stratum_status"]
+        == "blocked_pending_stratum_builder_acceptance"
+    )
+    assert not any(any(cell.strip() for cell in row) for row in criteria_rows)
+    assert contract["stratum"]["selection_criteria"]["status"] == "empty"
+    assert succession_rows[0][2] == "Breakup at"
+    assert succession_rows[0][9] == "Renewal age"
+    assert succession_rows[1][2] == "999"
+    assert succession_rows[1][9] == "0"
+    assert contract["stratum"]["succession"] == {
+        "status": "review_to_build_candidate_default_rule",
+        "breakup_at": 999,
+        "renewal_age": 0,
+    }
+
+    named_feature_rows = [row for row in features_rows[1:] if row[4].strip()]
+    named_product_rows = [row for row in products_rows if len(row) > 2 and row[2].strip()]
+    assert named_feature_rows == []
+    assert named_product_rows == []
+    assert contract["stratum"]["feature_rows"]["named_feature_count"] == 0
+    assert contract["stratum"]["product_rows"]["named_product_count"] == 0
+    assert contract["stratum"]["feature_rows"]["row_count"] == len(features_rows) - 1
+    assert contract["stratum"]["product_rows"]["row_count"] == len(products_rows)
+
+    assert treatment_rows[0][2:4] == ["CC", "CT"]
+    assert treatment_rows[1][2:4] == ["managed", "managed"]
+    assert treatment_rows[5][2] == "if(oper in operable, 60, 150)"
+    assert treatment_rows[5][3] == "40"
+    assert treatment_rows[6][3] == "150"
+    assert treatment_rows[8][2] == "auf"
+    assert treatment_rows[8][3] == " 'thn_'+au"
+    assert treatment_rows[17][2:4] == ["0", "20"]
+    assert factors_rows[1][2:4] == ["1", "1"]
+
+    assert {treatment["treatment_id"] for treatment in contract["treatments"]} == {
+        "CC",
+        "CT",
+    }
+    ct_contract = next(
+        treatment
+        for treatment in contract["treatments"]
+        if treatment["treatment_id"] == "CT"
+    )
+    assert ct_contract["selection"]["additional_expressions"] == [
+        "oper in operable",
+        "ct eq 'Y'",
+        "not startswith(au,'t')",
+    ]
+    assert ct_contract["maximum_operable_age"] == 150
+    assert ct_contract["retention"] == 20
+
+    compiled_rows = list(
+        csv.DictReader(treatments_path.open(newline="", encoding="utf-8-sig"))
+    )
+    compiled_counts = Counter(row["TREATMENT"] for row in compiled_rows)
+    assert dict(compiled_counts) == {"CC": 1434, "CT": 590}
+    assert (
+        contract["compiled_track_crosscheck"]["treatments_csv"]["row_count"]
+        == len(compiled_rows)
+    )
+    assert (
+        contract["compiled_track_crosscheck"]["treatments_csv"]["treatment_counts"]
+        == dict(compiled_counts)
     )

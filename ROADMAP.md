@@ -1502,10 +1502,10 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P55.17a Map workbook `attributes` rows to candidate Patchworks feature/product/account builders and identify formula dependencies such as `frd`.
   - [x] P55.17b Decide which attribute rows are live-build candidates versus review-only formulas pending `Netdown`, curve, or `Treat` dependencies.
   - [x] P55.17c Add focused validation for any activated attribute/account rows against the reviewed workbook extracts.
-- [ ] P55.18 Translate the legacy `Treat` stratum bundle into an explicit review-to-build contract (`#172`)
-  - [ ] P55.18a Map `stratumCriteria`, `stratumFeatures`, `stratumSuccession`, `stratumProducts`, `stratumTreatments`, and `stratumFactors` into FEMIC-native stratum metadata.
-  - [ ] P55.18b Decide which treatment/state/product rows can be activated without relying on unreviewed include hooks or upstream mapping data.
-  - [ ] P55.18c Validate activated stratum semantics against workbook extracts and copied archival track tables without claiming full legacy rebuild equivalence.
+- [x] P55.18 Translate the legacy `Treat` stratum bundle into an explicit review-to-build contract (`#172`)
+  - [x] P55.18a Map `stratumCriteria`, `stratumFeatures`, `stratumSuccession`, `stratumProducts`, `stratumTreatments`, and `stratumFactors` into FEMIC-native stratum metadata.
+  - [x] P55.18b Decide which treatment/state/product rows can be activated without relying on unreviewed include hooks or upstream mapping data.
+  - [x] P55.18c Validate activated stratum semantics against workbook extracts and copied archival track tables without claiming full legacy rebuild equivalence.
 - [ ] P55.19 Reconcile the workbook-derived ForestModel contract against compiled legacy outputs (`#172`)
   - [ ] P55.19a Compare the translated build contract to archival `baseMKRF.xml`, `Curves.xml`, and copied `Tracks/*.csv` at the contract surface level.
   - [ ] P55.19b Identify remaining gaps that require `03_MappingAnalysisData/*`, road-network discovery, report/output intake, or direct workbook publication.

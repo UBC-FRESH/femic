@@ -118,10 +118,10 @@ unresolved_seams:
       - not yet clear whether it is contextual QA only or part of a reproducible preprocessing contract
 
 next_bounded_step:
-  recommendation: translate_treat_review_to_build_contract
+  recommendation: reconcile_workbook_contract_against_compiled_outputs
   description:
-    Translate the legacy Treat stratum bundle into an explicit review-to-build
-    contract before broadening into reconciliation or upstream mapping
-    surfaces. The Curve Library, Netdown, and Attrib contracts now live in the
-    MKRF instance as review-to-build metadata and do not activate beforeCurves,
-    dumpRetention, or dumpAttributes.
+    Reconcile the translated workbook-derived ForestModel contract against
+    compiled legacy outputs before broadening into upstream mapping surfaces.
+    The Curve Library, Netdown, Attrib, and Treat contracts now live in the MKRF
+    instance as review-to-build metadata and do not activate beforeCurves,
+    dumpRetention, dumpAttributes, or dumpStratum.

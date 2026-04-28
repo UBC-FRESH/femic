@@ -145,7 +145,9 @@ surface_families:
     future_femic_home:
       - config/legacy_xml_builder/strata/Treat/
       - config/legacy_xml_builder/strata_registry.yaml
-    disposition: future_stratum_bundle_surface
+      - external/femic-mkrf-instance/config/legacy_xml_builder/strata/treat.mkrf.yaml
+      - external/femic-mkrf-instance/metadata/legacy_treat_translation.yaml
+    disposition: translated_review_to_build_contract
 
   - surface_id: post_renewal_succession
     workbook_sheet: Post Renewal Succession
@@ -190,10 +192,10 @@ registry_mismatches:
       - Additional lookup families may be represented as named blocks, formulas, or stale registry references rather than discrete sheets.
 
 next_bounded_step:
-  recommendation: translate_treat_review_to_build_contract
+  recommendation: reconcile_workbook_contract_against_compiled_outputs
   description:
-    Translate the legacy Treat stratum bundle into an explicit review-to-build
-    contract while keeping generated XML fragments inactive until their source
-    tables are accepted and reconciled. The Curve Library, Netdown, and Attrib
-    surfaces now have translated review-to-build contracts in the MKRF
-    instance.
+    Reconcile the translated workbook-derived ForestModel contract against
+    compiled legacy outputs while keeping generated XML fragments inactive until
+    their source tables are accepted and reconciled. The Curve Library, Netdown,
+    Attrib, and Treat surfaces now have translated review-to-build contracts in
+    the MKRF instance.

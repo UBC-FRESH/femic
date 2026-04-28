@@ -15216,3 +15216,13 @@
   - `dumpAttributes` remains inactive;
   - `frd`, `Yield_*`, `LookupTable`, `treatment`, and attribute-reference dependencies remain explicit blockers; and
   - no `Treat`, `03_MappingAnalysisData/*`, `Outputs/*`, direct workbook publication, or runnable rebuild claim was introduced by this slice.
+## 2026-04-28 - Translated the MKRF Treat contract
+- `#172` / `P55.18` bounded reconstruction slice:
+  - added `config/legacy_xml_builder/strata/treat.mkrf.yaml` to the MKRF instance as the explicit review-to-build contract for the legacy workbook `Treat` stratum bundle;
+  - preserved the empty/default stratum criteria surface, default succession rule (`breakup_at = 999`, `renewal_age = 0`), and `CC`/`CT` treatment definitions;
+  - classified feature and product template rows as review metadata because they have no `Feature Name` or `Product Name` values; and
+  - updated parent and instance planning/lineage docs so the next bounded move is `P55.19` workbook-vs-compiled-output reconciliation.
+- Scope boundary preserved:
+  - `dumpStratum` remains inactive;
+  - copied compiled track tables were used only as archival cross-check evidence; and
+  - no `03_MappingAnalysisData/*`, `Outputs/*`, direct workbook publication, or runnable rebuild claim was introduced by this slice.
