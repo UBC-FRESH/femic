@@ -15268,3 +15268,15 @@
   - no XML builder, curve builder, retention builder, attribute builder, stratum builder, or full ForestModel emission behavior was activated;
   - no pointer-only compiled track payloads, upstream mapping data, roads, outputs, direct workbook payload, or new raw/source inputs were ingested; and
   - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Corrected Phase 56 backend sequencing
+- `#172` planning/metadata correction:
+  - replanned the remaining Phase 56 backend so `curves.csv`, `features.csv`, and `products.csv` are treated as existing legacy compiled-output evidence, not missing files or regeneration targets;
+  - clarified that current instance copies are pointer files while the legacy planning corpus has readable source CSVs;
+  - revised `P56.3` as an archival evidence import/verification and contract-surface comparison step, not a matrix-build step; and
+  - updated later Phase 56 tasks so builder activation, source-input publication, and rebuild-readiness criteria remain separate from legacy compiled-output evidence review.
+- Scope boundary preserved:
+  - no ForestModel XML was generated;
+  - no fragments were regenerated;
+  - no Patchworks matrix build was run;
+  - no compiled track payloads were imported; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this correction.

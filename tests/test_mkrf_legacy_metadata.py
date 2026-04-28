@@ -424,10 +424,48 @@ def test_mkrf_rebuild_readiness_records_no_go_contract_gaps() -> None:
     assert track_tables["materialized_tables"]["accounts.csv"]["rows"] == 60
     assert track_tables["materialized_tables"]["treatments.csv"]["rows"] == 2024
     assert track_tables["materialized_tables"]["strata.csv"]["rows"] == 2116
-    assert set(track_tables["pointer_only_tables"]) == {
-        "curves.csv",
-        "features.csv",
-        "products.csv",
+    assert track_tables["legacy_source_tables"] == {
+        "curves.csv": {
+            "legacy_path": (
+                "MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/Tracks/curves.csv"
+            ),
+            "status": "legacy_source_available",
+            "size_bytes": 4767897,
+            "row_count": 283654,
+        },
+        "features.csv": {
+            "legacy_path": (
+                "MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/Tracks/features.csv"
+            ),
+            "status": "legacy_source_available",
+            "size_bytes": 1177960,
+            "row_count": 29364,
+        },
+        "products.csv": {
+            "legacy_path": (
+                "MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/Tracks/products.csv"
+            ),
+            "status": "legacy_source_available",
+            "size_bytes": 1321697,
+            "row_count": 28336,
+        },
+    }
+    assert track_tables["instance_pointer_only_tables"] == {
+        "curves.csv": {
+            "instance_path": "data/legacy_mkrf/compiled_tracks/curves.csv",
+            "status": "instance_pointer_only",
+            "publication_status": "requires_git_annex_for_instance_publication",
+        },
+        "features.csv": {
+            "instance_path": "data/legacy_mkrf/compiled_tracks/features.csv",
+            "status": "instance_pointer_only",
+            "publication_status": "requires_git_annex_for_instance_publication",
+        },
+        "products.csv": {
+            "instance_path": "data/legacy_mkrf/compiled_tracks/products.csv",
+            "status": "instance_pointer_only",
+            "publication_status": "requires_git_annex_for_instance_publication",
+        },
     }
     assert track_tables["observed_contract"]["treatments"]["treatment_counts"] == {
         "CC": 1434,
@@ -447,7 +485,7 @@ def test_mkrf_rebuild_readiness_records_no_go_contract_gaps() -> None:
         "available_generated_review_artifact_after_p56_2"
     )
     assert reconciliation["next_bounded_step"]["recommendation"] == (
-        "materialize_or_resolve_pointer_only_compiled_track_tables"
+        "import_or_verify_existing_legacy_compiled_track_table_evidence"
     )
 
 
@@ -520,9 +558,12 @@ def test_mkrf_generated_xml_reconciliation_records_p56_2_boundary() -> None:
     remaining_gaps = set(reconciliation["remaining_gaps"])
     assert any("beforeCurves remains inactive" in gap for gap in remaining_gaps)
     assert any(
-        "P56.2 does not materialize pointer-only" in gap for gap in remaining_gaps
+        "P56.2 does not import or verify the existing legacy compiled" in gap
+        for gap in remaining_gaps
     )
     assert reconciliation["next_bounded_step"] == {
-        "recommendation": "materialize_or_resolve_pointer_only_compiled_track_tables",
+        "recommendation": (
+            "import_or_verify_existing_legacy_compiled_track_table_evidence"
+        ),
         "roadmap_task": "P56.3",
     }

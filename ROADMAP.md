@@ -1516,25 +1516,25 @@ Notes: `planning/mkrf_legacy_decompile.md`
 
 - [x] P56.1 Plan post-P55 rebuild gap closure from the no-go readiness review (`#172`)
   - [x] P56.1a Convert the P55.19 no-go blockers into an ordered implementation boundary without starting payload intake or builder activation.
-  - [x] P56.1b Decide which blockers require generated XML, compiled track materialization, builder design, source-input publication, or readiness criteria.
+  - [x] P56.1b Decide which blockers require generated XML, compiled track evidence publication, builder design, source-input publication, or readiness criteria.
   - [x] P56.1c Update planning/lineage notes so P56.2 is the next bounded implementation move.
 - [x] P56.2 Reconcile generated XML artifacts (`#172`)
   - [x] P56.2a Locate/materialize `baseMKRF.xml`, `Curves.xml`, and/or `CSV/CURVE_TABLE.csv` as explicit review artifacts.
   - [x] P56.2b Compare generated XML fragments against translated contracts without activating `beforeCurves` or XML builders.
   - [x] P56.2c Record generator/input gaps and decide whether direct workbook publication is required.
-- [ ] P56.3 Materialize or resolve pointer-only compiled track tables (`#172`)
-  - [ ] P56.3a Resolve `Tracks/curves.csv`, `features.csv`, and `products.csv` materialization status.
-  - [ ] P56.3b Compare materialized tables to translated Curve Library, Attrib, Treat, and account surfaces at contract level.
-  - [ ] P56.3c Keep missing/pointer-only tables explicit rather than substituting other compiled artifacts.
-- [ ] P56.4 Design builder activation order (`#172`)
-  - [ ] P56.4a Define activation order for curve, retention, attribute, stratum, and full XML emission builders.
-  - [ ] P56.4b Specify validation gates required before any live builder seam is activated.
-  - [ ] P56.4c Preserve default exporter behavior and keep MKRF activation opt-in.
+- [ ] P56.3 Import or verify existing legacy compiled track-table evidence (`#172`)
+  - [ ] P56.3a Confirm readable legacy source CSVs for `Tracks/curves.csv`, `features.csv`, and `products.csv`.
+  - [ ] P56.3b Import them into the MKRF instance as archival/reference evidence only if DataLad/git-annex can track them correctly.
+  - [ ] P56.3c Compare their contract surfaces to Curve Library, Attrib, Treat, and account metadata without running matrix build.
+- [ ] P56.4 Design builder activation and matrix-build handoff order (`#172`)
+  - [ ] P56.4a Define activation order for curve, retention, attribute, stratum, full XML emission, and matrix-build handoff surfaces.
+  - [ ] P56.4b Separate legacy compiled-output evidence from future FEMIC-regenerated XML and track outputs.
+  - [ ] P56.4c Preserve default exporter behavior and keep MKRF activation opt-in until validation gates are met.
 - [ ] P56.5 Resolve real MKRF source-input publication boundary (`#172`)
-  - [ ] P56.5a Identify boundary/checkpoint inputs required by the MKRF run profile.
+  - [ ] P56.5a Identify fragments/checkpoint/boundary inputs required by the MKRF run profile.
   - [ ] P56.5b Decide whether `03_MappingAnalysisData/*`, roads, outputs, or direct workbook publication are required for reproducibility.
-  - [ ] P56.5c Keep raw source inputs distinct from checkpoints and compiled artifacts.
+  - [ ] P56.5c Keep raw source inputs distinct from checkpoints, compiled artifacts, and the `Base TFL26` literal-description mismatch.
 - [ ] P56.6 Publish rebuild-readiness milestone criteria (`#172`)
   - [ ] P56.6a Define acceptance criteria for moving from metadata recovery to runnable rebuild candidate.
-  - [ ] P56.6b Publish a go/no-go checklist tying generated XML, builders, source inputs, and compiled-output comparison together.
+  - [ ] P56.6b Publish a go/no-go checklist requiring legacy evidence reconciliation plus future FEMIC-generated XML and matrix-build proof.
   - [ ] P56.6c Keep runnable rebuild claims blocked until all readiness criteria are met.

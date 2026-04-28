@@ -352,22 +352,25 @@ Completed Phase 55 workbook-contract recovery:
   `metadata/legacy_workbook_compiled_reconciliation.yaml`. The review records
   a metadata-recovery go decision and a runnable-rebuild no-go decision. The
   no-go blockers are generated `baseMKRF.xml` / `Curves.xml` reconciliation,
-  pointer-only compiled track tables, inactive curve/retention/attribute/
-  stratum builders, unpublished boundary/checkpoint inputs, and unresolved
+  instance pointer-only copies of otherwise available legacy compiled track
+  tables, inactive curve/retention/attribute/stratum builders, unpublished
+  boundary/checkpoint inputs, and unresolved
   upstream mapping / road / output / workbook publication requirements.
 
 Active next bounded move:
 
-`P56.3` is the active next bounded implementation move. Materialize or resolve
-the pointer-only compiled track tables (`curves.csv`, `features.csv`, and
-`products.csv`) without substituting other compiled artifacts.
+`P56.3` is the active next bounded implementation move. Import or verify the
+existing legacy compiled track-table evidence for `curves.csv`, `features.csv`,
+and `products.csv` without generating ForestModel XML, regenerating fragments,
+or running Patchworks matrix build.
 
 Completed `P56.1` planning boundary:
 
 - generated XML reconciliation is scheduled under `P56.2`;
-- pointer-only compiled track table resolution is scheduled under `P56.3`;
-- curve, retention, attribute, stratum, and full XML builder activation-order
-  design is scheduled under `P56.4`;
+- legacy compiled track evidence publication and review is scheduled under
+  `P56.3`;
+- curve, retention, attribute, stratum, full XML emission, and matrix-build
+  handoff design is scheduled under `P56.4`;
 - real MKRF source-input publication boundaries, including checkpoint and
   boundary requirements, are scheduled under `P56.5`; and
 - runnable rebuild-readiness milestone criteria are scheduled under `P56.6`.
@@ -382,17 +385,24 @@ Remaining Phase 56 sequence after `P56.1`:
   `Curves.xml` matches `CSV/CURVE_TABLE.csv` by curve identifier, age, and
   numeric value. `beforeCurves` and XML builders remain inactive.
 - `P56.3`:
-  materialize or resolve pointer-only compiled track tables (`curves.csv`,
-  `features.csv`, and `products.csv`) without substituting other artifacts.
+  import or verify existing legacy compiled track-table evidence for
+  `curves.csv`, `features.csv`, and `products.csv`. The legacy planning corpus
+  has readable source CSVs; the current instance paths are annex pointer files.
+  P56.3 may publish them as archival/reference evidence only if DataLad/git-
+  annex can track them correctly. It must not regenerate them or claim they are
+  FEMIC-produced outputs.
 - `P56.4`:
-  design the activation order for curve, retention, attribute, stratum, and
-  full XML emission builders.
+  design the activation and matrix-build handoff order for curve, retention,
+  attribute, stratum, full XML emission, and future FEMIC-regenerated track
+  outputs while keeping legacy compiled-output evidence separate.
 - `P56.5`:
   resolve the real MKRF source-input publication boundary, including
-  checkpoint and boundary requirements.
+  fragments/checkpoint/boundary requirements and the `Base TFL26` literal-
+  description mismatch.
 - `P56.6`:
-  publish rebuild-readiness milestone criteria before any runnable rebuild
-  claim.
+  publish rebuild-readiness milestone criteria requiring both legacy evidence
+  reconciliation and future FEMIC-generated XML plus matrix-build proof before
+  any runnable rebuild claim.
 
 Hard boundaries for this sequence:
 
@@ -401,7 +411,9 @@ Hard boundaries for this sequence:
 - no road-network discovery;
 - no direct workbook publication;
 - no generated XML builder activation;
-- no compiled-track payload materialization outside `P56.3`;
+- no compiled-track payload publication outside `P56.3`;
+- no Patchworks matrix build before the builder handoff and source-input
+  boundary are explicitly scheduled;
 - no curve, retention, attribute, stratum, or full XML builder activation;
 - no VBA runtime dependency;
 - no substitution of compiled artifacts for raw source inputs; and
