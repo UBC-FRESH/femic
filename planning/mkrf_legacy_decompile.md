@@ -359,10 +359,9 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-`P57.2` is the active next bounded implementation move. Materialize the
-minimal MKRF runtime model directory from the accepted legacy runtime input
-lane before implementing XML builder behavior or running Patchworks matrix
-build.
+`P57.3` is the active next bounded implementation move. Implement the opt-in
+MKRF XML emission seam into the materialized runtime model directory before
+rewiring runtime config or running Patchworks matrix build.
 
 Completed `P57.1` runnable-boundary plan:
 
@@ -380,11 +379,14 @@ Completed `P57.1` runnable-boundary plan:
 Remaining Phase 57 sequence after `P57.1`:
 
 - `P57.2`:
-  materialize the generated MKRF runtime model directory with `XML/`,
-  `Spatial/`, `Tracks/`, `Scripts/`, `Targets/`, and analysis entrypoint
-  surfaces. Copy or materialize accepted legacy fragments/topology using
-  DataLad/git-annex where required and sanitize copied controls to use
-  instance-relative paths only.
+  completed. The MKRF instance now carries a materialized
+  `models/mkrf_patchworks_model/` runtime scaffold with `analysis/`, `XML/`,
+  `Spatial/`, `Tracks/`, `Scripts/`, `Targets/`, and `InitialTargets/`
+  surfaces. The scaffold uses accepted compiled `fragments.*` and
+  `topo_frag100.csv` runtime inputs, sanitized instance-relative control
+  paths, and an explicit fail-fast placeholder for the unrecovered
+  `InitialTargets/00_Target_Descriptions.bsh` seam. No XML emission, runtime
+  config rewiring, matrix build, or launch proof was started in this slice.
 - `P57.3`:
   implement opt-in MKRF XML emission from translated contracts, including
   Input Variables, output table bindings, defines/constants, Curve Library

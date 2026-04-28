@@ -15342,3 +15342,15 @@
   - no fragments were regenerated;
   - no Patchworks matrix build or launch was run; and
   - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Materialized the MKRF runtime model scaffold
+- `#172` / `P57.2` bounded runtime-layout slice:
+  - materialized `external/femic-mkrf-instance/models/mkrf_patchworks_model/` with `analysis/`, `XML/`, `Spatial/`, `Tracks/`, `Scripts/`, `Targets/`, and `InitialTargets/` surfaces;
+  - copied accepted compiled `Spatial/fragments.*` and `Spatial/topo_frag100.csv` into the runtime scaffold and recorded the annex-remote materialization blocker for the archival copy lane;
+  - sanitized the copied analysis/control scripts to use instance-relative runtime paths only; and
+  - added explicit instance metadata and runbook surfaces documenting the remaining missing target-description seam and the pre-XML/no-run boundary.
+- Scope boundary preserved:
+  - no FEMIC-generated ForestModel XML was written;
+  - no runtime `Tracks/*.csv` outputs were generated;
+  - no Patchworks runtime config was rewired;
+  - no Patchworks matrix build or launch was run; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.

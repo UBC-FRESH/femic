@@ -849,3 +849,84 @@ def test_mkrf_rebuild_readiness_criteria_close_phase_56() -> None:
             ],
         },
     }
+
+
+def test_mkrf_runtime_model_layout_records_p57_2_boundary() -> None:
+    layout_path = Path(
+        "external/femic-mkrf-instance/metadata/legacy_runtime_model_layout.yaml"
+    )
+
+    if not layout_path.exists():
+        pytest.skip("MKRF instance submodule is not materialized")
+
+    layout = yaml.safe_load(layout_path.read_text(encoding="utf-8"))
+
+    assert layout["phase"] == "P57.2"
+    assert layout["status"] == "runtime_model_directory_materialized_pre_xml"
+    assert layout["decision"] == {
+        "runtime_model_directory": "materialized",
+        "accepted_runtime_input_lane": "legacy_compiled_spatial_and_controls",
+        "spatial_payload_source": "local_planning_corpus_compiled_runtime_copy",
+        "archival_annex_remote_materialization": "blocked_in_active_shell",
+        "xml_emission": "not_started",
+        "matrix_build": "not_run",
+        "launch_proof": "not_run",
+        "runnable_rebuild_claim": "no_go",
+    }
+
+    assert layout["model_layout"] == {
+        "model_root": "models/mkrf_patchworks_model",
+        "analysis_root": "models/mkrf_patchworks_model/analysis",
+        "xml_root": "models/mkrf_patchworks_model/XML",
+        "spatial_root": "models/mkrf_patchworks_model/Spatial",
+        "tracks_root": "models/mkrf_patchworks_model/Tracks",
+        "scripts_root": "models/mkrf_patchworks_model/Scripts",
+        "targets_root": "models/mkrf_patchworks_model/Targets",
+        "initial_targets_root": "models/mkrf_patchworks_model/InitialTargets",
+    }
+
+    spatial_contract = layout["materialized_inputs"]["spatial_runtime"]["contract"]
+    assert spatial_contract == {
+        "crs": "EPSG:3005",
+        "feature_count": 1763,
+        "block_key": "RES_KEY",
+    }
+    assert layout["materialized_inputs"]["scenario_controller"]["known_gap"] == [
+        (
+            "the legacy target-description file was not recovered in the compiled "
+            "control slice and is represented by a fail-fast placeholder"
+        )
+    ]
+    assert layout["future_output_staging"] == {
+        "xml_root": {
+            "path": "models/mkrf_patchworks_model/XML",
+            "producer": "P57.3_femic_opt_in_mkrf_xml_emission",
+        },
+        "tracks_root": {
+            "path": "models/mkrf_patchworks_model/Tracks",
+            "producer": "P57.6_patchworks_matrix_build",
+        },
+    }
+    assert layout["scope_boundary"] == [
+        "No FEMIC-generated ForestModel XML was written into the runtime model directory.",
+        "No legacy compiled track tables were copied into runtime `Tracks/` as generated output.",
+        "No Patchworks runtime config was rewired.",
+        "No Patchworks matrix build was run.",
+        "No Patchworks launch proof was run.",
+        "No runnable FEMIC/Patchworks rebuild claim is introduced.",
+    ]
+    assert layout["next_bounded_step"] == {
+        "recommendation": "implement_opt_in_mkrf_xml_emission",
+        "roadmap_task": "P57.3",
+    }
+
+    runtime_root = Path("external/femic-mkrf-instance/models/mkrf_patchworks_model")
+    assert (runtime_root / "analysis" / "base.pin").exists()
+    assert (runtime_root / "analysis" / "ScenarioSet.bsh").exists()
+    assert (runtime_root / "Spatial" / "fragments.shp").exists()
+    assert (runtime_root / "Spatial" / "topo_frag100.csv").exists()
+    placeholder = runtime_root / "InitialTargets" / "00_Target_Descriptions.bsh"
+    assert placeholder.exists()
+    placeholder_text = placeholder.read_text(encoding="utf-8")
+    assert "InitialTargets/00_Target_Descriptions.bsh" in placeholder_text
+    assert "target-description lane" in placeholder_text

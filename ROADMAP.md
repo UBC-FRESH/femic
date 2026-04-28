@@ -1546,10 +1546,10 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P57.1a Define minimal runnable as FEMIC-managed XML emission, Patchworks matrix build, generated-track inspection, and Patchworks launch proof.
   - [x] P57.1b Adopt the existing legacy compiled fragments/topology as accepted runtime inputs for the first runnable proof without claiming raw-source reconstruction.
   - [x] P57.1c Record the compatibility-passthrough boundary for deferred formula-heavy Attrib XML blocks.
-- [ ] P57.2 Materialize the runtime model directory from accepted legacy runtime inputs (`#172`)
-  - [ ] P57.2a Create the MKRF model layout with `XML/`, `Spatial/`, `Tracks/`, `Scripts/`, `Targets/`, and analysis entrypoint surfaces.
-  - [ ] P57.2b Copy or materialize legacy `fragments.*` and `topo_frag100.csv` as runtime inputs using DataLad/git-annex where required.
-  - [ ] P57.2c Sanitize copied control scripts so runtime paths are instance-relative and do not expose machine-specific source paths.
+- [x] P57.2 Materialize the runtime model directory from accepted legacy runtime inputs (`#172`)
+  - [x] P57.2a Create the MKRF model layout with `XML/`, `Spatial/`, `Tracks/`, `Scripts/`, `Targets/`, and analysis entrypoint surfaces.
+  - [x] P57.2b Copy or materialize legacy `fragments.*` and `topo_frag100.csv` as runtime inputs using DataLad/git-annex where required.
+  - [x] P57.2c Sanitize copied control scripts so runtime paths are instance-relative and do not expose machine-specific source paths.
 - [ ] P57.3 Implement opt-in MKRF XML emission from translated contracts (`#172`)
   - [ ] P57.3a Emit Input Variables, output table bindings, defines/constants, Curve Library curves, and generated yield curves from `CSV/CURVE_TABLE.csv`.
   - [ ] P57.3b Emit Netdown retention rules, unmanaged tracks, default succession, and CC/CT treatment definitions.
