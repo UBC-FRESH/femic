@@ -19,7 +19,9 @@ def test_mkrf_curve_library_contract_matches_review_extract() -> None:
 
     rows = list(csv.reader(extract_path.open(newline="", encoding="utf-8-sig")))
     header = rows[5]
-    active_columns = [(index, value) for index, value in enumerate(header) if value.strip()]
+    active_columns = [
+        (index, value) for index, value in enumerate(header) if value.strip()
+    ]
 
     assert active_columns == [
         (0, "Age"),
@@ -53,9 +55,8 @@ def test_mkrf_curve_library_contract_matches_review_extract() -> None:
     assert {
         curve["curve_id"]: curve["points"] for curve in contract["curves"]
     } == expected_points
-    assert (
-        contract["validation_contract"]["required_curve_ids"]
-        == list(expected_points.keys())
+    assert contract["validation_contract"]["required_curve_ids"] == list(
+        expected_points.keys()
     )
 
 
@@ -74,11 +75,11 @@ def test_mkrf_netdown_contract_matches_complete_review_rows() -> None:
         csv.reader(criteria_path.open(newline="", encoding="utf-8-sig"))
     )
     names_rows = list(csv.reader(names_path.open(newline="", encoding="utf-8-sig")))
-    factors_rows = list(
-        csv.reader(factors_path.open(newline="", encoding="utf-8-sig"))
-    )
+    factors_rows = list(csv.reader(factors_path.open(newline="", encoding="utf-8-sig")))
 
-    assert [(index, value) for index, value in enumerate(criteria_rows[0]) if value] == [
+    assert [
+        (index, value) for index, value in enumerate(criteria_rows[0]) if value
+    ] == [
         (4, "status"),
         (8, "Netdown"),
     ]
@@ -225,9 +226,7 @@ def test_mkrf_attributes_contract_classifies_review_rows() -> None:
     assert len(complete_rows) == contract["row_summary"]["complete_attribute_rows"]
     assert len(incomplete_rows) == contract["row_summary"]["incomplete_template_rows"]
 
-    contract_rows = {
-        row["row_offset"]: row for row in contract["attribute_rows"]
-    }
+    contract_rows = {row["row_offset"]: row for row in contract["attribute_rows"]}
     assert sorted(contract_rows) == sorted(complete_rows)
     assert contract_rows[9]["attribute_name"] == "%f.yield.%m.merch.total"
     assert (
@@ -331,7 +330,9 @@ def test_mkrf_treat_contract_preserves_treatments_and_review_only_rows() -> None
     }
 
     named_feature_rows = [row for row in features_rows[1:] if row[4].strip()]
-    named_product_rows = [row for row in products_rows if len(row) > 2 and row[2].strip()]
+    named_product_rows = [
+        row for row in products_rows if len(row) > 2 and row[2].strip()
+    ]
     assert named_feature_rows == []
     assert named_product_rows == []
     assert contract["stratum"]["feature_rows"]["named_feature_count"] == 0
@@ -371,14 +372,12 @@ def test_mkrf_treat_contract_preserves_treatments_and_review_only_rows() -> None
     )
     compiled_counts = Counter(row["TREATMENT"] for row in compiled_rows)
     assert dict(compiled_counts) == {"CC": 1434, "CT": 590}
-    assert (
-        contract["compiled_track_crosscheck"]["treatments_csv"]["row_count"]
-        == len(compiled_rows)
+    assert contract["compiled_track_crosscheck"]["treatments_csv"]["row_count"] == len(
+        compiled_rows
     )
-    assert (
-        contract["compiled_track_crosscheck"]["treatments_csv"]["treatment_counts"]
-        == dict(compiled_counts)
-    )
+    assert contract["compiled_track_crosscheck"]["treatments_csv"][
+        "treatment_counts"
+    ] == dict(compiled_counts)
 
 
 def test_mkrf_rebuild_readiness_records_no_go_contract_gaps() -> None:
@@ -438,8 +437,92 @@ def test_mkrf_rebuild_readiness_records_no_go_contract_gaps() -> None:
     generated_xml = reconciliation["compiled_output_evidence"][
         "generated_xml_artifacts"
     ]
-    assert generated_xml["base_mkrf_xml"]["status"] == "not_tracked_in_instance"
-    assert generated_xml["curves_xml"]["status"] == "not_tracked_in_instance"
-    assert reconciliation["next_bounded_step"]["recommendation"] == (
-        "plan_post_p55_mkrf_rebuild_gap_closure"
+    assert generated_xml["base_mkrf_xml"]["status"] == (
+        "available_generated_review_artifact_after_p56_2"
     )
+    assert generated_xml["curves_xml"]["status"] == (
+        "located_and_reconciled_from_legacy_path_not_copied_after_p56_2"
+    )
+    assert generated_xml["curve_table_csv"]["status"] == (
+        "available_generated_review_artifact_after_p56_2"
+    )
+    assert reconciliation["next_bounded_step"]["recommendation"] == (
+        "materialize_or_resolve_pointer_only_compiled_track_tables"
+    )
+
+
+def test_mkrf_generated_xml_reconciliation_records_p56_2_boundary() -> None:
+    reconciliation_path = Path(
+        "external/femic-mkrf-instance/metadata/legacy_generated_xml_reconciliation.yaml"
+    )
+
+    if not reconciliation_path.exists():
+        pytest.skip("MKRF instance submodule is not materialized")
+
+    reconciliation = yaml.safe_load(reconciliation_path.read_text(encoding="utf-8"))
+
+    assert reconciliation["phase"] == "P56.2"
+    assert reconciliation["decision"] == {
+        "generated_xml_review_artifacts": (
+            "base_xml_and_curve_table_materialized_for_review"
+        ),
+        "before_curves_activation": "blocked",
+        "xml_builder_activation": "not_started",
+        "runnable_rebuild_claim": "no_go",
+    }
+
+    source_artifacts = reconciliation["source_artifacts"]
+    assert source_artifacts["base_mkrf_xml"]["instance_path"] == (
+        "data/legacy_mkrf/generated_xml/baseMKRF.xml"
+    )
+    assert source_artifacts["curves_xml"]["instance_path"] is None
+    assert source_artifacts["curves_xml"]["status"] == (
+        "located_and_reconciled_from_legacy_path_not_copied"
+    )
+    assert source_artifacts["curve_table_csv"]["instance_path"] == (
+        "data/legacy_mkrf/generated_xml/CSV/CURVE_TABLE.csv"
+    )
+
+    base_contract = reconciliation["base_mkrf_xml_contract"]
+    assert base_contract["forest_model"] == {
+        "generated_literal_description": "Base TFL26",
+        "horizon_years": 300,
+        "start_year": 2020,
+        "max_inventory_age": 350,
+        "match": "multi",
+    }
+    assert base_contract["identity_check"]["status"] == (
+        "legacy_description_mismatch_recorded"
+    )
+    assert base_contract["input"] == {
+        "block": "Int(RES_KEY)",
+        "area": "area()/10000",
+        "age": "Int(AGE_2020)",
+        "exclude": "CONTCLAS eq 'X'",
+    }
+    assert base_contract["base_curve_ids"] == [
+        "one",
+        "zero",
+        "age",
+        "le10",
+        "lt20",
+        "gt60",
+        "lt80",
+        "gt250",
+    ]
+
+    curves = reconciliation["curves_xml_reconciliation"]
+    assert curves["curve_count"] == 1049
+    assert curves["point_count"] == 37764
+    assert curves["points_per_curve"] == 36
+    assert curves["equivalence"]["status"] == "matched_by_curve_age_value_sets"
+
+    remaining_gaps = set(reconciliation["remaining_gaps"])
+    assert any("beforeCurves remains inactive" in gap for gap in remaining_gaps)
+    assert any(
+        "P56.2 does not materialize pointer-only" in gap for gap in remaining_gaps
+    )
+    assert reconciliation["next_bounded_step"] == {
+        "recommendation": "materialize_or_resolve_pointer_only_compiled_track_tables",
+        "roadmap_task": "P56.3",
+    }

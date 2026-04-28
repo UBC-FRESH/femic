@@ -15254,3 +15254,17 @@
   - no generated XML, upstream mapping data, roads, outputs, direct workbook payload, or new raw/source artifacts were ingested;
   - no pointer-only compiled track payloads were materialized; and
   - no curve, retention, attribute, stratum, full XML builder behavior, or runnable FEMIC/Patchworks rebuild claim was activated.
+## 2026-04-28 - Reconciled the MKRF generated XML review artifacts
+- `#172` / `P56.2` bounded reconstruction slice:
+  - copied inert generated-review artifacts into the MKRF instance under `data/legacy_mkrf/generated_xml/`: `baseMKRF.xml` and `CSV/CURVE_TABLE.csv`;
+  - added `metadata/legacy_generated_xml_reconciliation.yaml` and `runbooks/LEGACY_GENERATED_XML_RECONCILIATION.md`;
+  - recorded that `baseMKRF.xml` matches the translated Input Variables contract and generated built-in Curve Library curves; and
+  - recorded that located `Curves.xml` and tracked `CSV/CURVE_TABLE.csv` match by curve identifier, age, and numeric value.
+- Source-identity caveat:
+  - preserved the generated XML literal description `Base TFL26` as source evidence only, not as accepted MKRF case identity; and
+  - flagged the description mismatch for later source-input publication and rebuild-readiness criteria work.
+- Scope boundary preserved:
+  - `beforeCurves` remains inactive;
+  - no XML builder, curve builder, retention builder, attribute builder, stratum builder, or full ForestModel emission behavior was activated;
+  - no pointer-only compiled track payloads, upstream mapping data, roads, outputs, direct workbook payload, or new raw/source inputs were ingested; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.

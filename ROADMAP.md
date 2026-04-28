@@ -1518,10 +1518,10 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P56.1a Convert the P55.19 no-go blockers into an ordered implementation boundary without starting payload intake or builder activation.
   - [x] P56.1b Decide which blockers require generated XML, compiled track materialization, builder design, source-input publication, or readiness criteria.
   - [x] P56.1c Update planning/lineage notes so P56.2 is the next bounded implementation move.
-- [ ] P56.2 Reconcile generated XML artifacts (`#172`)
-  - [ ] P56.2a Locate/materialize `baseMKRF.xml`, `Curves.xml`, and/or `CSV/CURVE_TABLE.csv` as explicit review artifacts.
-  - [ ] P56.2b Compare generated XML fragments against translated contracts without activating `beforeCurves` or XML builders.
-  - [ ] P56.2c Record generator/input gaps and decide whether direct workbook publication is required.
+- [x] P56.2 Reconcile generated XML artifacts (`#172`)
+  - [x] P56.2a Locate/materialize `baseMKRF.xml`, `Curves.xml`, and/or `CSV/CURVE_TABLE.csv` as explicit review artifacts.
+  - [x] P56.2b Compare generated XML fragments against translated contracts without activating `beforeCurves` or XML builders.
+  - [x] P56.2c Record generator/input gaps and decide whether direct workbook publication is required.
 - [ ] P56.3 Materialize or resolve pointer-only compiled track tables (`#172`)
   - [ ] P56.3a Resolve `Tracks/curves.csv`, `features.csv`, and `products.csv` materialization status.
   - [ ] P56.3b Compare materialized tables to translated Curve Library, Attrib, Treat, and account surfaces at contract level.

@@ -358,9 +358,9 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-`P56.2` is the active next bounded implementation move. Reconcile generated XML
-artifacts (`baseMKRF.xml`, `Curves.xml`, and/or `CSV/CURVE_TABLE.csv`) against
-the translated workbook-derived contracts as explicit review artifacts.
+`P56.3` is the active next bounded implementation move. Materialize or resolve
+the pointer-only compiled track tables (`curves.csv`, `features.csv`, and
+`products.csv`) without substituting other compiled artifacts.
 
 Completed `P56.1` planning boundary:
 
@@ -375,8 +375,12 @@ Completed `P56.1` planning boundary:
 Remaining Phase 56 sequence after `P56.1`:
 
 - `P56.2`:
-  reconcile generated XML artifacts (`baseMKRF.xml`, `Curves.xml`, and/or
-  `CSV/CURVE_TABLE.csv`) against the translated contracts.
+  completed. Generated `baseMKRF.xml` and `CSV/CURVE_TABLE.csv` are now inert
+  review artifacts in the MKRF instance under
+  `data/legacy_mkrf/generated_xml/`. `baseMKRF.xml` matches the translated
+  Input Variables and built-in Curve Library contract surfaces. Located
+  `Curves.xml` matches `CSV/CURVE_TABLE.csv` by curve identifier, age, and
+  numeric value. `beforeCurves` and XML builders remain inactive.
 - `P56.3`:
   materialize or resolve pointer-only compiled track tables (`curves.csv`,
   `features.csv`, and `products.csv`) without substituting other artifacts.
@@ -396,8 +400,8 @@ Hard boundaries for this sequence:
 - no `Outputs/*` intake;
 - no road-network discovery;
 - no direct workbook publication;
-- no generated XML ingestion;
-- no compiled-track payload materialization outside the task that schedules it;
+- no generated XML builder activation;
+- no compiled-track payload materialization outside `P56.3`;
 - no curve, retention, attribute, stratum, or full XML builder activation;
 - no VBA runtime dependency;
 - no substitution of compiled artifacts for raw source inputs; and
