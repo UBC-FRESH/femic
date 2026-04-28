@@ -15280,3 +15280,15 @@
   - no Patchworks matrix build was run;
   - no compiled track payloads were imported; and
   - no runnable FEMIC/Patchworks rebuild claim was introduced by this correction.
+## 2026-04-28 - Verified existing MKRF compiled track evidence boundary
+- `#172` / `P56.3` bounded reconstruction slice:
+  - added `metadata/legacy_compiled_track_evidence_reconciliation.yaml` and `runbooks/LEGACY_COMPILED_TRACK_EVIDENCE_RECONCILIATION.md` to the MKRF instance;
+  - confirmed readable legacy source CSVs for `Tracks/curves.csv`, `features.csv`, and `products.csv`;
+  - recorded that current instance paths remain pointer files because `git annex` is unavailable in the active shell; and
+  - compared the contract surfaces to Curve Library, Attrib, Treat, and account metadata without running matrix build.
+- Scope boundary preserved:
+  - no ForestModel XML was generated;
+  - no fragments were regenerated;
+  - no Patchworks matrix build was run;
+  - no compiled track payloads were imported as normal Git blobs; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.

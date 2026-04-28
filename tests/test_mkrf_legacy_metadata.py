@@ -485,7 +485,7 @@ def test_mkrf_rebuild_readiness_records_no_go_contract_gaps() -> None:
         "available_generated_review_artifact_after_p56_2"
     )
     assert reconciliation["next_bounded_step"]["recommendation"] == (
-        "import_or_verify_existing_legacy_compiled_track_table_evidence"
+        "design_builder_activation_and_matrix_build_handoff_order"
     )
 
 
@@ -558,12 +558,76 @@ def test_mkrf_generated_xml_reconciliation_records_p56_2_boundary() -> None:
     remaining_gaps = set(reconciliation["remaining_gaps"])
     assert any("beforeCurves remains inactive" in gap for gap in remaining_gaps)
     assert any(
-        "P56.2 does not import or verify the existing legacy compiled" in gap
+        "P56.3 verified existing legacy compiled curves/features/products" in gap
         for gap in remaining_gaps
     )
     assert reconciliation["next_bounded_step"] == {
-        "recommendation": (
-            "import_or_verify_existing_legacy_compiled_track_table_evidence"
-        ),
-        "roadmap_task": "P56.3",
+        "recommendation": "design_builder_activation_and_matrix_build_handoff_order",
+        "roadmap_task": "P56.4",
+    }
+
+
+def test_mkrf_compiled_track_evidence_reconciliation_records_p56_3_boundary() -> None:
+    reconciliation_path = Path(
+        "external/femic-mkrf-instance/metadata/"
+        "legacy_compiled_track_evidence_reconciliation.yaml"
+    )
+
+    if not reconciliation_path.exists():
+        pytest.skip("MKRF instance submodule is not materialized")
+
+    reconciliation = yaml.safe_load(reconciliation_path.read_text(encoding="utf-8"))
+
+    assert reconciliation["phase"] == "P56.3"
+    assert reconciliation["decision"] == {
+        "legacy_compiled_track_evidence": "available_in_planning_corpus",
+        "instance_publication": "blocked_pending_git_annex",
+        "matrix_build": "not_run",
+        "femic_regenerated_outputs": "not_claimed",
+        "runnable_rebuild_claim": "no_go",
+    }
+    assert reconciliation["tooling_boundary"]["git_annex"] == (
+        "unavailable_in_active_shell"
+    )
+
+    source_tables = reconciliation["source_tables"]
+    assert source_tables["curves_csv"]["source_status"] == "legacy_source_available"
+    assert source_tables["curves_csv"]["instance_status"] == "instance_pointer_only"
+    assert source_tables["curves_csv"]["row_count"] == 283654
+    assert source_tables["curves_csv"]["unique_curve_count"] == 10172
+
+    assert source_tables["features_csv"]["row_count"] == 29364
+    assert source_tables["features_csv"]["unique_track_count"] == 2116
+    assert source_tables["features_csv"]["unique_label_count"] == 38
+    assert (
+        source_tables["features_csv"]["observed_key_labels"][
+            "feature.area.managed.seral.le10"
+        ]["row_count"]
+        == 1434
+    )
+
+    assert source_tables["products_csv"]["row_count"] == 28336
+    assert source_tables["products_csv"]["unique_track_count"] == 1434
+    assert source_tables["products_csv"]["treatment_row_counts"] == {
+        "CC": 20076,
+        "CT": 8260,
+    }
+    assert (
+        source_tables["products_csv"]["observed_key_labels"][
+            "product.area.managed.treat.CT"
+        ]["row_count"]
+        == 590
+    )
+
+    assert reconciliation["scope_boundary"] == [
+        "No ForestModel XML was generated.",
+        "No fragments were regenerated.",
+        "No Patchworks matrix build was run.",
+        "No compiled track payloads were imported into the instance in this slice.",
+        "No future FEMIC-regenerated track outputs are claimed.",
+        "No runnable FEMIC/Patchworks rebuild claim is introduced.",
+    ]
+    assert reconciliation["next_bounded_step"] == {
+        "recommendation": "design_builder_activation_and_matrix_build_handoff_order",
+        "roadmap_task": "P56.4",
     }

@@ -1522,10 +1522,10 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P56.2a Locate/materialize `baseMKRF.xml`, `Curves.xml`, and/or `CSV/CURVE_TABLE.csv` as explicit review artifacts.
   - [x] P56.2b Compare generated XML fragments against translated contracts without activating `beforeCurves` or XML builders.
   - [x] P56.2c Record generator/input gaps and decide whether direct workbook publication is required.
-- [ ] P56.3 Import or verify existing legacy compiled track-table evidence (`#172`)
-  - [ ] P56.3a Confirm readable legacy source CSVs for `Tracks/curves.csv`, `features.csv`, and `products.csv`.
-  - [ ] P56.3b Import them into the MKRF instance as archival/reference evidence only if DataLad/git-annex can track them correctly.
-  - [ ] P56.3c Compare their contract surfaces to Curve Library, Attrib, Treat, and account metadata without running matrix build.
+- [x] P56.3 Import or verify existing legacy compiled track-table evidence (`#172`)
+  - [x] P56.3a Confirm readable legacy source CSVs for `Tracks/curves.csv`, `features.csv`, and `products.csv`.
+  - [x] P56.3b Import them into the MKRF instance as archival/reference evidence only if DataLad/git-annex can track them correctly.
+  - [x] P56.3c Compare their contract surfaces to Curve Library, Attrib, Treat, and account metadata without running matrix build.
 - [ ] P56.4 Design builder activation and matrix-build handoff order (`#172`)
   - [ ] P56.4a Define activation order for curve, retention, attribute, stratum, full XML emission, and matrix-build handoff surfaces.
   - [ ] P56.4b Separate legacy compiled-output evidence from future FEMIC-regenerated XML and track outputs.

@@ -359,10 +359,10 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-`P56.3` is the active next bounded implementation move. Import or verify the
-existing legacy compiled track-table evidence for `curves.csv`, `features.csv`,
-and `products.csv` without generating ForestModel XML, regenerating fragments,
-or running Patchworks matrix build.
+`P56.4` is the active next bounded implementation move. Design the builder
+activation and matrix-build handoff order while keeping archival legacy
+compiled-output evidence separate from future FEMIC-regenerated XML and track
+outputs.
 
 Completed `P56.1` planning boundary:
 
@@ -385,12 +385,13 @@ Remaining Phase 56 sequence after `P56.1`:
   `Curves.xml` matches `CSV/CURVE_TABLE.csv` by curve identifier, age, and
   numeric value. `beforeCurves` and XML builders remain inactive.
 - `P56.3`:
-  import or verify existing legacy compiled track-table evidence for
-  `curves.csv`, `features.csv`, and `products.csv`. The legacy planning corpus
-  has readable source CSVs; the current instance paths are annex pointer files.
-  P56.3 may publish them as archival/reference evidence only if DataLad/git-
-  annex can track them correctly. It must not regenerate them or claim they are
-  FEMIC-produced outputs.
+  completed. The legacy planning corpus has readable source CSVs for
+  `curves.csv`, `features.csv`, and `products.csv`; the current instance paths
+  remain pointer files because `git annex` is unavailable in the active shell.
+  `metadata/legacy_compiled_track_evidence_reconciliation.yaml` records the
+  contract-level evidence boundary and leaves payload publication blocked
+  pending DataLad/git-annex availability. No ForestModel XML, fragments, or
+  matrix-build outputs were generated.
 - `P56.4`:
   design the activation and matrix-build handoff order for curve, retention,
   attribute, stratum, full XML emission, and future FEMIC-regenerated track
@@ -411,7 +412,8 @@ Hard boundaries for this sequence:
 - no road-network discovery;
 - no direct workbook publication;
 - no generated XML builder activation;
-- no compiled-track payload publication outside `P56.3`;
+- no compiled-track payload publication until DataLad/git-annex can track the
+  legacy evidence correctly;
 - no Patchworks matrix build before the builder handoff and source-input
   boundary are explicitly scheduled;
 - no curve, retention, attribute, stratum, or full XML builder activation;
