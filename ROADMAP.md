@@ -1538,3 +1538,43 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P56.6a Define acceptance criteria for moving from metadata recovery to runnable rebuild candidate.
   - [x] P56.6b Publish a go/no-go checklist requiring legacy evidence reconciliation plus future FEMIC-generated XML and matrix-build proof.
   - [x] P56.6c Keep runnable rebuild claims blocked until all readiness criteria are met.
+
+## Phase 57: Build Minimal Runnable MKRF Patchworks Instance
+Notes: `planning/mkrf_legacy_decompile.md`
+
+- [x] P57.1 Plan the runnable MKRF model boundary and acceptance gates (`#172`)
+  - [x] P57.1a Define minimal runnable as FEMIC-managed XML emission, Patchworks matrix build, generated-track inspection, and Patchworks launch proof.
+  - [x] P57.1b Adopt the existing legacy compiled fragments/topology as accepted runtime inputs for the first runnable proof without claiming raw-source reconstruction.
+  - [x] P57.1c Record the compatibility-passthrough boundary for deferred formula-heavy Attrib XML blocks.
+- [ ] P57.2 Materialize the runtime model directory from accepted legacy runtime inputs (`#172`)
+  - [ ] P57.2a Create the MKRF model layout with `XML/`, `Spatial/`, `Tracks/`, `Scripts/`, `Targets/`, and analysis entrypoint surfaces.
+  - [ ] P57.2b Copy or materialize legacy `fragments.*` and `topo_frag100.csv` as runtime inputs using DataLad/git-annex where required.
+  - [ ] P57.2c Sanitize copied control scripts so runtime paths are instance-relative and do not expose machine-specific source paths.
+- [ ] P57.3 Implement opt-in MKRF XML emission from translated contracts (`#172`)
+  - [ ] P57.3a Emit Input Variables, output table bindings, defines/constants, Curve Library curves, and generated yield curves from `CSV/CURVE_TABLE.csv`.
+  - [ ] P57.3b Emit Netdown retention rules, unmanaged tracks, default succession, and CC/CT treatment definitions.
+  - [ ] P57.3c Keep the MKRF builder opt-in and preserve default non-MKRF exporter behavior.
+- [ ] P57.4 Add explicit compatibility passthrough for deferred Attrib formulas (`#172`)
+  - [ ] P57.4a Extract the deferred formula-heavy Attrib XML blocks from reconciled `baseMKRF.xml` under a named compatibility contract.
+  - [ ] P57.4b Inline passthrough blocks only after validating their required curves, defines, and labels against the emitted XML surface.
+  - [ ] P57.4c Keep passthrough status visible as a runnable-minimum caveat rather than claiming fully native Attrib reimplementation.
+- [ ] P57.5 Wire MKRF Patchworks runtime config to the generated model directory (`#172`)
+  - [ ] P57.5a Point matrix-builder paths at the generated MKRF XML, accepted fragments, and generated `Tracks/` directory.
+  - [ ] P57.5b Add or update the MKRF Patchworks variant/launch registration surface if needed for launch proof.
+  - [ ] P57.5c Validate Patchworks preflight without starting matrix build.
+- [ ] P57.6 Run matrix build against FEMIC-emitted XML and accepted spatial inputs (`#172`)
+  - [ ] P57.6a Run Patchworks matrix builder from the generated model directory.
+  - [ ] P57.6b Require generated `Tracks/{curves,features,products,treatments,accounts,blocks}.csv` evidence.
+  - [ ] P57.6c Preserve logs/manifests as runtime evidence without overwriting archival legacy evidence.
+- [ ] P57.7 Compare generated track tables against legacy compiled evidence (`#172`)
+  - [ ] P57.7a Compare generated curves/features/products/treatments/accounts/blocks surfaces to legacy compiled tracks at the accepted smoke level.
+  - [ ] P57.7b Record expected differences caused by compatibility passthrough or accepted runtime-boundary caveats.
+  - [ ] P57.7c Keep raw-source reconstruction and exact legacy equivalence out of the minimal runnable claim.
+- [ ] P57.8 Prove Patchworks launch with the generated model (`#172`)
+  - [ ] P57.8a Launch the generated MKRF PIN through the Patchworks runtime seam.
+  - [ ] P57.8b Capture launch logs/manifests and inspect the most relevant generated model surfaces.
+  - [ ] P57.8c Do not claim launch success unless the generated model opens/runs from the generated runtime directory.
+- [ ] P57.9 Publish minimal runnable closeout docs and caveats (`#172`)
+  - [ ] P57.9a Update instance README/runbook/lineage metadata with the runnable proof boundary.
+  - [ ] P57.9b Update parent planning/changelog and tests with the minimal runnable status.
+  - [ ] P57.9c Record next-phase caveats for native Attrib completion, raw-source reconstruction, and broader scenario/runtime validation.

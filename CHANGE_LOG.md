@@ -15329,3 +15329,16 @@
   - no Patchworks matrix build was run;
   - no source payloads, roads, outputs, or direct workbook payloads were ingested; and
   - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Planned the minimal runnable MKRF Patchworks phase
+- `#172` / `P57.1` bounded planning slice:
+  - added Phase 57 to `ROADMAP.md` as the ordered path toward a minimally runnable MKRF Patchworks model instance;
+  - defined minimal runnable as FEMIC-managed XML emission, Patchworks matrix build, generated-track inspection, and Patchworks launch proof;
+  - adopted the existing legacy compiled fragments/topology as the first runtime input lane without claiming raw-source reconstruction; and
+  - recorded the compatibility-passthrough boundary for deferred formula-heavy Attrib XML blocks.
+- Scope boundary preserved:
+  - no runtime model directory was materialized;
+  - no XML builder behavior was implemented;
+  - no ForestModel XML was generated;
+  - no fragments were regenerated;
+  - no Patchworks matrix build or launch was run; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.

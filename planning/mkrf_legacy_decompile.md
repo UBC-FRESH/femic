@@ -359,10 +359,56 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-Phase 56 is closed. The next move should be a new roadmap-planned MKRF
-implementation phase that starts with the first selected builder activation
-gate from `metadata/legacy_builder_activation_plan.yaml`, not ad hoc matrix
-build execution.
+`P57.2` is the active next bounded implementation move. Materialize the
+minimal MKRF runtime model directory from the accepted legacy runtime input
+lane before implementing XML builder behavior or running Patchworks matrix
+build.
+
+Completed `P57.1` runnable-boundary plan:
+
+- minimal runnable means FEMIC-managed MKRF XML emission, Patchworks matrix
+  build, generated-track inspection, and Patchworks launch proof;
+- the first runnable proof adopts the existing legacy compiled
+  `Spatial/fragments.*` and `Spatial/topo_frag100.csv` runtime inputs without
+  claiming raw-source reconstruction from `03_MappingAnalysisData/*`;
+- formula-heavy Attrib XML blocks that remain deferred in the native metadata
+  translation may be carried through an explicit compatibility-passthrough
+  contract from the reconciled legacy `baseMKRF.xml`; and
+- the runnable-minimum caveat must remain visible until a later phase replaces
+  the passthrough with fully native FEMIC metadata and builder semantics.
+
+Remaining Phase 57 sequence after `P57.1`:
+
+- `P57.2`:
+  materialize the generated MKRF runtime model directory with `XML/`,
+  `Spatial/`, `Tracks/`, `Scripts/`, `Targets/`, and analysis entrypoint
+  surfaces. Copy or materialize accepted legacy fragments/topology using
+  DataLad/git-annex where required and sanitize copied controls to use
+  instance-relative paths only.
+- `P57.3`:
+  implement opt-in MKRF XML emission from translated contracts, including
+  Input Variables, output table bindings, defines/constants, Curve Library
+  curves, generated yield curves from `CSV/CURVE_TABLE.csv`, Netdown retention
+  rules, unmanaged tracks, default succession, and CC/CT treatments.
+- `P57.4`:
+  add the explicit compatibility-passthrough seam for deferred Attrib formulas
+  and validate its required curves, defines, and labels against the emitted XML
+  surface before it can participate in runtime proof.
+- `P57.5`:
+  wire the MKRF Patchworks runtime config to the generated model directory and
+  validate Patchworks preflight without starting matrix build.
+- `P57.6`:
+  run Patchworks matrix build against FEMIC-emitted XML and accepted spatial
+  inputs, preserving generated tracks/logs/manifests as runtime evidence.
+- `P57.7`:
+  compare generated track tables against legacy compiled evidence at the
+  accepted minimal-runnable smoke level, without claiming raw-source
+  reconstruction or exact legacy equivalence.
+- `P57.8`:
+  prove Patchworks launch from the generated runtime directory.
+- `P57.9`:
+  publish the minimal runnable closeout docs, metadata, changelog entry, and
+  next-phase caveats.
 
 Completed `P56.1` planning boundary:
 
