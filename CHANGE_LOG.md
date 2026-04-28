@@ -15226,3 +15226,13 @@
   - `dumpStratum` remains inactive;
   - copied compiled track tables were used only as archival cross-check evidence; and
   - no `03_MappingAnalysisData/*`, `Outputs/*`, direct workbook publication, or runnable rebuild claim was introduced by this slice.
+## 2026-04-28 - Reconciled the MKRF workbook contract against compiled outputs
+- `#172` / `P55.19` bounded reconstruction slice:
+  - added `metadata/legacy_workbook_compiled_reconciliation.yaml` and `runbooks/LEGACY_REBUILD_READINESS_REVIEW.md` to the MKRF instance;
+  - compared the translated workbook-derived contract to the available `baseMKRF.pin` and copied `Tracks/*.csv` evidence at the contract surface level;
+  - recorded that generated `baseMKRF.xml` / `Curves.xml` are not tracked in the instance and that `curves.csv`, `features.csv`, and `products.csv` are pointer-only in the current working copy; and
+  - closed Phase 55 with a metadata-recovery go decision and a runnable-rebuild no-go decision.
+- Scope boundary preserved:
+  - no generated XML, upstream mapping data, roads, outputs, direct workbook payload, or new raw/source artifacts were ingested;
+  - no curve, retention, attribute, stratum, or full XML builder behavior was activated; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.

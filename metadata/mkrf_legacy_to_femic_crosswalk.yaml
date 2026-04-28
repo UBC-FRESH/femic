@@ -118,10 +118,10 @@ unresolved_seams:
       - not yet clear whether it is contextual QA only or part of a reproducible preprocessing contract
 
 next_bounded_step:
-  recommendation: reconcile_workbook_contract_against_compiled_outputs
+  recommendation: plan_post_p55_mkrf_rebuild_gap_closure
   description:
-    Reconcile the translated workbook-derived ForestModel contract against
-    compiled legacy outputs before broadening into upstream mapping surfaces.
-    The Curve Library, Netdown, Attrib, and Treat contracts now live in the MKRF
-    instance as review-to-build metadata and do not activate beforeCurves,
-    dumpRetention, dumpAttributes, or dumpStratum.
+    Plan the next MKRF recovery phase from the P55.19 no-go readiness review
+    before ingesting generated XML payloads, upstream mapping surfaces, direct
+    workbook artifacts, roads, or outputs. The workbook-derived contract now
+    lives in the MKRF instance as FEMIC-ready metadata, but no runnable rebuild
+    claim is made.

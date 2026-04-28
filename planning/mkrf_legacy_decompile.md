@@ -304,7 +304,7 @@ Do exactly one next bounded move at a time. The roadmap is now the control
 surface for Phase 55 sequencing; implementation should not invent the next
 slice in chat.
 
-Completed Input Variables, Curve Library, Netdown, Attrib, and Treat classification:
+Completed Phase 55 workbook-contract recovery:
 
 - `P55.14`:
   `max_inventory_age` is review metadata only because the current
@@ -346,15 +346,23 @@ Completed Input Variables, Curve Library, Netdown, Attrib, and Treat classificat
   carry template/default values but no `Feature Name` or `Product Name`.
   Copied compiled track tables are cross-check evidence only. It does not
   activate `dumpStratum`.
+- `P55.19`:
+  the translated workbook-derived contract is reconciled against the available
+  compiled legacy outputs at the contract surface level in
+  `metadata/legacy_workbook_compiled_reconciliation.yaml`. The review records
+  a metadata-recovery go decision and a runnable-rebuild no-go decision. The
+  no-go blockers are generated `baseMKRF.xml` / `Curves.xml` reconciliation,
+  pointer-only compiled track tables, inactive curve/retention/attribute/
+  stratum builders, unpublished boundary/checkpoint inputs, and unresolved
+  upstream mapping / road / output / workbook publication requirements.
 
 Active next bounded move:
 
-- `P55.19`:
-  reconcile the workbook-derived ForestModel contract against compiled legacy
-  outputs and publish a rebuild-readiness go/no-go note.
+Phase 55 is closed. The next move should be a new roadmap-planned MKRF recovery
+phase for post-P55 rebuild gap closure, not ad hoc implementation.
 
-Do not start upstream mapping work until `P55.19` is closed and the roadmap is
-updated again.
+Do not start upstream mapping work until the next recovery phase is planned in
+`ROADMAP.md` and scoped against the P55.19 readiness blockers.
 
 Hard boundaries for this sequence:
 

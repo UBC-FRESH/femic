@@ -379,3 +379,67 @@ def test_mkrf_treat_contract_preserves_treatments_and_review_only_rows() -> None
         contract["compiled_track_crosscheck"]["treatments_csv"]["treatment_counts"]
         == dict(compiled_counts)
     )
+
+
+def test_mkrf_rebuild_readiness_records_no_go_contract_gaps() -> None:
+    reconciliation_path = Path(
+        "external/femic-mkrf-instance/metadata/"
+        "legacy_workbook_compiled_reconciliation.yaml"
+    )
+
+    if not reconciliation_path.exists():
+        pytest.skip("MKRF instance submodule is not materialized")
+
+    reconciliation = yaml.safe_load(reconciliation_path.read_text(encoding="utf-8"))
+
+    assert reconciliation["decision"] == "no_go_for_runnable_rebuild"
+    assert reconciliation["go_no_go"] == {
+        "rebuild_claim": "no_go",
+        "metadata_recovery_claim": "go",
+        "rationale": [
+            (
+                "Phase 55 recovered the workbook-owned source contract into "
+                "FEMIC-ready metadata surfaces."
+            ),
+            (
+                "The current instance is not a runnable legacy Patchworks rebuild "
+                "because generated XML fragments, builder activation, and several "
+                "compiled matrix tables remain unreconciled."
+            ),
+            (
+                "Compiled archival outputs are sufficient as review evidence for "
+                "planning the next recovery phase, not as substitute raw/source inputs."
+            ),
+        ],
+    }
+
+    pin_contract = reconciliation["compiled_output_evidence"]["pin_entrypoint"][
+        "observed_contract"
+    ]
+    assert pin_contract["horizon_years"] == 300
+    assert pin_contract["block_key"] == "RES_KEY"
+    assert pin_contract["use_routes"] is False
+    assert pin_contract["use_patches"] is True
+
+    track_tables = reconciliation["compiled_output_evidence"]["track_tables"]
+    assert track_tables["materialized_tables"]["accounts.csv"]["rows"] == 60
+    assert track_tables["materialized_tables"]["treatments.csv"]["rows"] == 2024
+    assert track_tables["materialized_tables"]["strata.csv"]["rows"] == 2116
+    assert set(track_tables["pointer_only_tables"]) == {
+        "curves.csv",
+        "features.csv",
+        "products.csv",
+    }
+    assert track_tables["observed_contract"]["treatments"]["treatment_counts"] == {
+        "CC": 1434,
+        "CT": 590,
+    }
+
+    generated_xml = reconciliation["compiled_output_evidence"][
+        "generated_xml_artifacts"
+    ]
+    assert generated_xml["base_mkrf_xml"]["status"] == "not_tracked_in_instance"
+    assert generated_xml["curves_xml"]["status"] == "not_tracked_in_instance"
+    assert reconciliation["next_bounded_step"]["recommendation"] == (
+        "plan_post_p55_mkrf_rebuild_gap_closure"
+    )

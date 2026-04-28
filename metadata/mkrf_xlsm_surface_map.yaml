@@ -192,10 +192,10 @@ registry_mismatches:
       - Additional lookup families may be represented as named blocks, formulas, or stale registry references rather than discrete sheets.
 
 next_bounded_step:
-  recommendation: reconcile_workbook_contract_against_compiled_outputs
+  recommendation: plan_post_p55_mkrf_rebuild_gap_closure
   description:
-    Reconcile the translated workbook-derived ForestModel contract against
-    compiled legacy outputs while keeping generated XML fragments inactive until
-    their source tables are accepted and reconciled. The Curve Library, Netdown,
-    Attrib, and Treat surfaces now have translated review-to-build contracts in
-    the MKRF instance.
+    Plan the next MKRF recovery phase from the P55.19 no-go readiness review.
+    The Curve Library, Netdown, Attrib, and Treat surfaces now have translated
+    review-to-build contracts in the MKRF instance, but generated XML
+    fragments, builders, pointer-only track tables, and upstream inputs remain
+    unreconciled.

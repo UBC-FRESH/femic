@@ -1506,7 +1506,7 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P55.18a Map `stratumCriteria`, `stratumFeatures`, `stratumSuccession`, `stratumProducts`, `stratumTreatments`, and `stratumFactors` into FEMIC-native stratum metadata.
   - [x] P55.18b Decide which treatment/state/product rows can be activated without relying on unreviewed include hooks or upstream mapping data.
   - [x] P55.18c Validate activated stratum semantics against workbook extracts and copied archival track tables without claiming full legacy rebuild equivalence.
-- [ ] P55.19 Reconcile the workbook-derived ForestModel contract against compiled legacy outputs (`#172`)
-  - [ ] P55.19a Compare the translated build contract to archival `baseMKRF.xml`, `Curves.xml`, and copied `Tracks/*.csv` at the contract surface level.
-  - [ ] P55.19b Identify remaining gaps that require `03_MappingAnalysisData/*`, road-network discovery, report/output intake, or direct workbook publication.
-  - [ ] P55.19c Publish a go/no-go rebuild readiness note before any claim that the MKRF instance has a runnable FEMIC rebuild surface.
+- [x] P55.19 Reconcile the workbook-derived ForestModel contract against compiled legacy outputs (`#172`)
+  - [x] P55.19a Compare the translated build contract to archival `baseMKRF.xml`, `Curves.xml`, and copied `Tracks/*.csv` at the contract surface level.
+  - [x] P55.19b Identify remaining gaps that require `03_MappingAnalysisData/*`, road-network discovery, report/output intake, or direct workbook publication.
+  - [x] P55.19c Publish a go/no-go rebuild readiness note before any claim that the MKRF instance has a runnable FEMIC rebuild surface.
