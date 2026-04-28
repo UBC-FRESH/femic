@@ -15168,3 +15168,11 @@
   - formula-like `frd` remains review metadata only;
   - no include hooks, `Netdown`, `Treat`, `03_MappingAnalysisData/*`, or `Outputs/*` were activated; and
   - no runnable MKRF rebuild claim was introduced by this slice.
+## 2026-04-27 - Planned the remaining Phase 55 MKRF recovery sequence
+- `#172` planning hygiene slice:
+  - expanded `ROADMAP.md` beyond the immediate next step so Phase 55 now has explicit pending tasks `P55.14` through `P55.19`;
+  - set `P55.14` as the only active next bounded move, limited to remaining `Input Variables` semantics (`max_inventory_age` and include-fragment hook classification);
+  - ordered the follow-on recovery sequence as `Curve Library`, `Netdown`, `Attrib`, `Treat`, then compiled-output reconciliation/readiness; and
+  - updated `planning/mkrf_legacy_decompile.md` so the planning note carries the detailed execution boundaries while `ROADMAP.md` remains the compact ordered control surface.
+- Scope boundary preserved:
+  - no implementation, export behavior, source-data intake, include-hook activation, `Netdown`, `Treat`, `03_MappingAnalysisData/*`, or `Outputs/*` work was started by this planning slice.

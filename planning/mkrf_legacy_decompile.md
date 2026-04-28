@@ -294,26 +294,51 @@ The remaining staged fields stay lineage evidence only until the current
 checkpoint-first exporter can safely absorb the rest of those legacy
 matrix-builder semantics.
 
-## Recommended next bounded step
+## Planned recovery sequence
 
-Do exactly one next bounded move:
+Do exactly one next bounded move at a time. The roadmap is now the control
+surface for Phase 55 sequencing; implementation should not invent the next
+slice in chat.
 
-**review the remaining staged `Input Variables` semantics without broadening
-into include hooks, `Netdown`, or `Treat`**, now that the scalar constants
-contract has been made explicit.
+Active next bounded move:
 
-The archival control-layer intake, the archival track-table intake, the
-archival spatial-runtime intake, and the editable-source authority review are
-now complete. The next bounded move should:
+- `P55.14`:
+  adjudicate the remaining staged `Input Variables` semantics. This includes
+  deciding whether `max_inventory_age` is a live exporter/build input or review
+  metadata only, and classifying each include-fragment hook as live, preserved
+  review metadata, or blocked by missing source/runtime context.
 
-- focus on exactly one seam:
-  - decide whether `max_inventory_age` has a safe checkpoint-first consumer or
-    should remain review metadata;
-- preserve the evidence/review framing instead of claiming a runnable rebuild
-  surface, a finalized rebuild recipe, workbook publication, or a VBA
-  reimplementation;
-- continue to defer `03_MappingAnalysisData/*` and `Outputs/*`; and
-- keep road-network discovery, reporting-surface import, direct workbook
-  publication, live activation of include hooks, and broader `Treat` stratum
-  refactoring outside that next slice unless the remaining Input Variables
-  work proves they are required.
+Do not start `Curve Library`, `Netdown`, `Attrib`, `Treat`, reconciliation, or
+upstream mapping work until `P55.14` is closed and the roadmap is updated
+again. `P55.14` must not silently activate XML include hooks or treat generated
+XML fragments as editable source.
+
+Planned follow-on sequence after `P55.14`:
+
+- `P55.15`:
+  translate the legacy `Curve Library` surface into an explicit review-to-build
+  contract.
+- `P55.16`:
+  translate the legacy `Netdown` surface into an explicit review-to-build
+  contract.
+- `P55.17`:
+  translate the legacy `Attrib` surface into an explicit review-to-build
+  contract, including formula dependencies such as `frd`.
+- `P55.18`:
+  translate the legacy `Treat` stratum bundle into an explicit review-to-build
+  contract.
+- `P55.19`:
+  reconcile the workbook-derived ForestModel contract against compiled legacy
+  outputs and publish a rebuild-readiness go/no-go note.
+
+Hard boundaries for this sequence:
+
+- no `03_MappingAnalysisData/*` intake;
+- no `Outputs/*` intake;
+- no road-network discovery;
+- no direct workbook publication;
+- no VBA runtime dependency;
+- no substitution of compiled artifacts for raw source inputs; and
+- no claim that the archival legacy payload is a runnable FEMIC/Patchworks
+  rebuild surface until a later roadmap task explicitly establishes that
+  contract.

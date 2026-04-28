@@ -1486,18 +1486,27 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P55.13a Add an explicit MKRF-first constants contract for `managed`, `unmanaged`, `operable`, `lowoper`, and deferred `frd`.
   - [x] P55.13b Restrict live legacy expression symbol resolution to constants marked as live export/build inputs when the contract is present.
   - [x] P55.13c Update parent and instance metadata/docs so deferred formula-like constants remain review evidence only.
-
-## Detailed Next Steps Notes
-
-- Active MKRF bounded move after `P55.13`:
-  review the remaining staged `Input Variables` semantics, starting with
-  whether `max_inventory_age` has a safe checkpoint-first consumer, before
-  broadening into include hooks, `Netdown`, or `Treat`.
-- Keep the same boundary for the next slice:
-  no `03_MappingAnalysisData/*`, no `Outputs/*`, and no claim that the
-  archival legacy payload is yet a runnable FEMIC or Patchworks rebuild
-  surface.
-- Keep VBA reimplementation, road-network discovery, reporting-output intake,
-  direct workbook publication, live activation of include hooks, and broader
-  `Treat` stratum refactoring out of the next slice unless the remaining
-  `Input Variables` work proves they are required.
+- [ ] P55.14 Adjudicate the remaining staged MKRF `Input Variables` semantics (`#172`)
+  - [ ] P55.14a Decide and document whether `max_inventory_age` is a live exporter/build input or review metadata only.
+  - [ ] P55.14b Classify each legacy include-fragment hook (`beforeCurves`, `afterCurves`, `afterRetention`, `afterUnmanaged`, `afterStratum`, `afterAttributes`) as live, preserved review metadata, or blocked by missing source/runtime context.
+  - [ ] P55.14c Update the translated Input Variables contract and lineage surfaces without activating include hooks, `Netdown`, `Treat`, or upstream mapping data.
+- [ ] P55.15 Translate the legacy `Curve Library` surface into an explicit review-to-build contract (`#172`)
+  - [ ] P55.15a Map workbook curve names and curve table extract columns to FEMIC-native curve registry/table fields.
+  - [ ] P55.15b Decide which curve rows can become live Patchworks XML curve inputs from tracked extracts and which remain review evidence.
+  - [ ] P55.15c Add focused validation that the translated curve contract preserves legacy curve identifiers, age axes, and generated-XML include expectations.
+- [ ] P55.16 Translate the legacy `Netdown` surface into an explicit review-to-build contract (`#172`)
+  - [ ] P55.16a Map workbook `netdownCriteria`, `netdownNames`, and `netdownFactors` into candidate FEMIC netdown rule metadata.
+  - [ ] P55.16b Decide which netdown rules can safely become live retention/export behavior from current checkpoint fields.
+  - [ ] P55.16c Keep missing upstream/source-field requirements explicit rather than substituting compiled spatial or track artifacts as raw inputs.
+- [ ] P55.17 Translate the legacy `Attrib` surface into an explicit review-to-build contract (`#172`)
+  - [ ] P55.17a Map workbook `attributes` rows to candidate Patchworks feature/product/account builders and identify formula dependencies such as `frd`.
+  - [ ] P55.17b Decide which attribute rows are live-build candidates versus review-only formulas pending `Netdown`, curve, or `Treat` dependencies.
+  - [ ] P55.17c Add focused validation for any activated attribute/account rows against the reviewed workbook extracts.
+- [ ] P55.18 Translate the legacy `Treat` stratum bundle into an explicit review-to-build contract (`#172`)
+  - [ ] P55.18a Map `stratumCriteria`, `stratumFeatures`, `stratumSuccession`, `stratumProducts`, `stratumTreatments`, and `stratumFactors` into FEMIC-native stratum metadata.
+  - [ ] P55.18b Decide which treatment/state/product rows can be activated without relying on unreviewed include hooks or upstream mapping data.
+  - [ ] P55.18c Validate activated stratum semantics against workbook extracts and copied archival track tables without claiming full legacy rebuild equivalence.
+- [ ] P55.19 Reconcile the workbook-derived ForestModel contract against compiled legacy outputs (`#172`)
+  - [ ] P55.19a Compare the translated build contract to archival `baseMKRF.xml`, `Curves.xml`, and copied `Tracks/*.csv` at the contract surface level.
+  - [ ] P55.19b Identify remaining gaps that require `03_MappingAnalysisData/*`, road-network discovery, report/output intake, or direct workbook publication.
+  - [ ] P55.19c Publish a go/no-go rebuild readiness note before any claim that the MKRF instance has a runnable FEMIC rebuild surface.
