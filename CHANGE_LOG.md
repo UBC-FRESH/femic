@@ -15236,3 +15236,12 @@
   - no generated XML, upstream mapping data, roads, outputs, direct workbook payload, or new raw/source artifacts were ingested;
   - no curve, retention, attribute, stratum, or full XML builder behavior was activated; and
   - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Planned Phase 56 MKRF rebuild gap closure
+- `#172` planning-only slice:
+  - added `Phase 56` to `ROADMAP.md` as the ordered post-P55 rebuild gap-closure sequence;
+  - converted the P55.19 no-go blockers into bounded tasks for generated XML reconciliation, pointer-only compiled track-table resolution, builder activation design, source-input publication boundaries, and rebuild-readiness criteria; and
+  - updated `planning/mkrf_legacy_decompile.md` so `P56.1` is the active next bounded move.
+- Scope boundary preserved:
+  - no generated XML, upstream mapping data, roads, outputs, direct workbook payload, or new raw/source artifacts were ingested;
+  - no curve, retention, attribute, stratum, or full XML builder behavior was activated; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this planning slice.

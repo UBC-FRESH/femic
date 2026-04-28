@@ -358,11 +358,28 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-Phase 55 is closed. The next move should be a new roadmap-planned MKRF recovery
-phase for post-P55 rebuild gap closure, not ad hoc implementation.
+`P56.1` is the active next bounded move. It is planning only: convert the
+P55.19 no-go blockers into an ordered Phase 56 gap-closure boundary without
+starting generated XML ingestion, compiled-track materialization, source-input
+intake, direct workbook publication, or builder activation.
 
-Do not start upstream mapping work until the next recovery phase is planned in
-`ROADMAP.md` and scoped against the P55.19 readiness blockers.
+Planned Phase 56 sequence after `P56.1`:
+
+- `P56.2`:
+  reconcile generated XML artifacts (`baseMKRF.xml`, `Curves.xml`, and/or
+  `CSV/CURVE_TABLE.csv`) against the translated contracts.
+- `P56.3`:
+  materialize or resolve pointer-only compiled track tables (`curves.csv`,
+  `features.csv`, and `products.csv`) without substituting other artifacts.
+- `P56.4`:
+  design the activation order for curve, retention, attribute, stratum, and
+  full XML emission builders.
+- `P56.5`:
+  resolve the real MKRF source-input publication boundary, including
+  checkpoint and boundary requirements.
+- `P56.6`:
+  publish rebuild-readiness milestone criteria before any runnable rebuild
+  claim.
 
 Hard boundaries for this sequence:
 
@@ -370,6 +387,9 @@ Hard boundaries for this sequence:
 - no `Outputs/*` intake;
 - no road-network discovery;
 - no direct workbook publication;
+- no generated XML ingestion;
+- no compiled-track payload materialization outside the task that schedules it;
+- no curve, retention, attribute, stratum, or full XML builder activation;
 - no VBA runtime dependency;
 - no substitution of compiled artifacts for raw source inputs; and
 - no claim that the archival legacy payload is a runnable FEMIC/Patchworks
