@@ -169,3 +169,87 @@ def test_mkrf_netdown_contract_matches_complete_review_rows() -> None:
             "reassignment, or feature-factor rows."
         ),
     }
+
+
+def test_mkrf_attributes_contract_classifies_review_rows() -> None:
+    extract_path = Path("metadata/mkrf_xlsm_review/ranges/attrib_attributes.review.csv")
+    contract_path = Path(
+        "external/femic-mkrf-instance/config/legacy_xml_builder/attributes.mkrf.yaml"
+    )
+
+    if not contract_path.exists():
+        pytest.skip("MKRF instance submodule is not materialized")
+
+    rows = list(csv.reader(extract_path.open(newline="", encoding="utf-8-sig")))
+
+    assert rows[0][:9] == [
+        "Applies to",
+        "Curve or Expression",
+        "Attribute Name",
+        "Factor",
+        "Future",
+        "Cycle",
+        "Ignore",
+        "Output",
+        "Scale",
+    ]
+
+    complete_rows = {
+        row_offset: row
+        for row_offset, row in enumerate(rows[1:], start=1)
+        if len(row) > 2 and row[2].strip()
+    }
+    incomplete_rows = [
+        row_offset
+        for row_offset, row in enumerate(rows[1:], start=1)
+        if any(cell.strip() for cell in row) and not (len(row) > 2 and row[2].strip())
+    ]
+
+    contract = yaml.safe_load(contract_path.read_text(encoding="utf-8"))
+
+    assert contract["build_boundary"]["live_exporter_input"] is False
+    assert (
+        contract["build_boundary"]["dump_attributes_status"]
+        == "blocked_pending_attribute_builder_acceptance"
+    )
+    assert contract["row_summary"] == {
+        "complete_attribute_rows": 16,
+        "incomplete_template_rows": 143,
+        "rows_with_frd_dependency": 14,
+        "rows_with_yield_curve_dependency": 11,
+        "rows_with_lookup_table_dependency": 8,
+        "rows_with_attribute_reference_dependency": 1,
+        "rows_with_curve_library_dependency": 1,
+    }
+    assert len(complete_rows) == contract["row_summary"]["complete_attribute_rows"]
+    assert len(incomplete_rows) == contract["row_summary"]["incomplete_template_rows"]
+
+    contract_rows = {
+        row["row_offset"]: row for row in contract["attribute_rows"]
+    }
+    assert sorted(contract_rows) == sorted(complete_rows)
+    assert contract_rows[9]["attribute_name"] == "%f.yield.%m.merch.total"
+    assert (
+        contract_rows[9]["status"]
+        == "review_to_build_candidate_blocked_by_attribute_dependency"
+    )
+    assert contract_rows[21] == {
+        "row_offset": 21,
+        "family_id": "seral_area_le10",
+        "applies_to": "feature",
+        "curve_or_expression": "le10",
+        "attribute_name": "%f.area.%m.seral.le10",
+        "factor_expression": "1",
+        "selection_expression": "status ne 'X'",
+        "status": "review_to_build_candidate",
+    }
+
+    workbook_attribute_names = {
+        row[2].strip().strip("'") for row in complete_rows.values()
+    }
+    assert set(contract["validation_contract"]["required_attribute_names"]).issubset(
+        workbook_attribute_names
+    )
+    assert contract["review_only"]["incomplete_template_rows"]["count"] == len(
+        incomplete_rows
+    )

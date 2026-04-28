@@ -15206,3 +15206,13 @@
   - `dumpRetention` and proportional fragment area splitting remain inactive;
   - the unmatched feature-factor row and 85 trailing `0.07` values remain review metadata only; and
   - no `Attrib`, `Treat`, `03_MappingAnalysisData/*`, `Outputs/*`, compiled-artifact substitution, direct workbook publication, or runnable rebuild claim was introduced by this slice.
+## 2026-04-28 - Translated the MKRF Attrib contract
+- `#172` / `P55.17` bounded reconstruction slice:
+  - added `config/legacy_xml_builder/attributes.mkrf.yaml` to the MKRF instance as the explicit review-to-build contract for the legacy workbook `Attrib` / `attributes` surface;
+  - preserved 16 rows with nonblank `Attribute Name` values and grouped them into area accounting, yield aggregate, merchantable-yield, individual-species yield, and `le10` seral-area families;
+  - classified 143 rows with blank `Attribute Name` values as incomplete template/default rows; and
+  - updated parent and instance planning/lineage docs so the next bounded move is `P55.18` Treat translation.
+- Scope boundary preserved:
+  - `dumpAttributes` remains inactive;
+  - `frd`, `Yield_*`, `LookupTable`, `treatment`, and attribute-reference dependencies remain explicit blockers; and
+  - no `Treat`, `03_MappingAnalysisData/*`, `Outputs/*`, direct workbook publication, or runnable rebuild claim was introduced by this slice.

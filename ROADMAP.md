@@ -1498,10 +1498,10 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P55.16a Map workbook `netdownCriteria`, `netdownNames`, and `netdownFactors` into candidate FEMIC netdown rule metadata.
   - [x] P55.16b Decide which netdown rules can safely become live retention/export behavior from current checkpoint fields.
   - [x] P55.16c Keep missing upstream/source-field requirements explicit rather than substituting compiled spatial or track artifacts as raw inputs.
-- [ ] P55.17 Translate the legacy `Attrib` surface into an explicit review-to-build contract (`#172`)
-  - [ ] P55.17a Map workbook `attributes` rows to candidate Patchworks feature/product/account builders and identify formula dependencies such as `frd`.
-  - [ ] P55.17b Decide which attribute rows are live-build candidates versus review-only formulas pending `Netdown`, curve, or `Treat` dependencies.
-  - [ ] P55.17c Add focused validation for any activated attribute/account rows against the reviewed workbook extracts.
+- [x] P55.17 Translate the legacy `Attrib` surface into an explicit review-to-build contract (`#172`)
+  - [x] P55.17a Map workbook `attributes` rows to candidate Patchworks feature/product/account builders and identify formula dependencies such as `frd`.
+  - [x] P55.17b Decide which attribute rows are live-build candidates versus review-only formulas pending `Netdown`, curve, or `Treat` dependencies.
+  - [x] P55.17c Add focused validation for any activated attribute/account rows against the reviewed workbook extracts.
 - [ ] P55.18 Translate the legacy `Treat` stratum bundle into an explicit review-to-build contract (`#172`)
   - [ ] P55.18a Map `stratumCriteria`, `stratumFeatures`, `stratumSuccession`, `stratumProducts`, `stratumTreatments`, and `stratumFactors` into FEMIC-native stratum metadata.
   - [ ] P55.18b Decide which treatment/state/product rows can be activated without relying on unreviewed include hooks or upstream mapping data.

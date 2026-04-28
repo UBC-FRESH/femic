@@ -304,7 +304,7 @@ Do exactly one next bounded move at a time. The roadmap is now the control
 surface for Phase 55 sequencing; implementation should not invent the next
 slice in chat.
 
-Completed Input Variables, Curve Library, and Netdown classification:
+Completed Input Variables, Curve Library, Netdown, and Attrib classification:
 
 - `P55.14`:
   `max_inventory_age` is review metadata only because the current
@@ -330,24 +330,28 @@ Completed Input Variables, Curve Library, and Netdown classification:
   unmatched feature-factor row plus 85 trailing `0.07` values as review-only
   metadata. It does not activate `dumpRetention` or proportional fragment area
   splitting.
+- `P55.17`:
+  the workbook `Attrib` / `attributes` surface is translated into
+  `config/legacy_xml_builder/attributes.mkrf.yaml` in the MKRF instance. The
+  contract preserves 16 rows with nonblank `Attribute Name` values, classifies
+  143 rows as incomplete template/default rows, and keeps formula dependencies
+  such as `frd`, `Yield_*`, `LookupTable`, `treatment`, and attribute
+  references blocked. It does not activate `dumpAttributes`.
 
 Active next bounded move:
-
-- `P55.17`:
-  translate the legacy `Attrib` surface into an explicit review-to-build
-  contract.
-
-Planned follow-on sequence after `P55.17`:
 
 - `P55.18`:
   translate the legacy `Treat` stratum bundle into an explicit review-to-build
   contract.
+
+Planned follow-on sequence after `P55.18`:
+
 - `P55.19`:
   reconcile the workbook-derived ForestModel contract against compiled legacy
   outputs and publish a rebuild-readiness go/no-go note.
 
-Do not start `Treat`, reconciliation, or upstream mapping work until `P55.17`
-is closed and the roadmap is updated again.
+Do not start reconciliation or upstream mapping work until `P55.18` is closed
+and the roadmap is updated again.
 
 Hard boundaries for this sequence:
 
