@@ -270,7 +270,7 @@ Preserved but still staged only:
 
 - `max_inventory_age`
 - include-fragment hooks
-- matrix-builder constants
+- formula-like or otherwise unclaimed matrix-builder constants such as `frd`
 
 The live subset is wired through the existing Patchworks export flow as an
 explicit opt-in config path. The exported ForestModel XML now carries the
@@ -284,7 +284,10 @@ The live treatment-eligibility seam now materializes as fragments field
 `treat_inel`, which is written as `Y` when the legacy workbook expression
 evaluates true and `N` otherwise. In the current MKRF translation that means
 `status in unmanaged` is evaluated against the live `status` binding plus the
-translated legacy constants surface. This remains narrower than a full legacy
+translated legacy constants contract. That contract now exposes only scalar
+legacy expression symbols: `managed`, `unmanaged`, `operable`, and `lowoper`.
+Formula-like workbook entries such as `frd` remain preserved but deferred until
+a live builder consumer is identified. This remains narrower than a full legacy
 unmanaged-track rebuild: the expression currently drives an exported review
 field, not a regenerated Patchworks select/track block.
 The remaining staged fields stay lineage evidence only until the current
@@ -295,25 +298,22 @@ matrix-builder semantics.
 
 Do exactly one next bounded move:
 
-**operationalize the remaining staged legacy matrix-builder constants seam**,
-starting with the constants already touched by the live treatment-eligibility
-path and deciding which constant families should become explicit FEMIC-native
-export/build inputs before broadening into include hooks, `Netdown`, or
-`Treat`.
+**review the remaining staged `Input Variables` semantics without broadening
+into include hooks, `Netdown`, or `Treat`**, now that the scalar constants
+contract has been made explicit.
 
 The archival control-layer intake, the archival track-table intake, the
 archival spatial-runtime intake, and the editable-source authority review are
 now complete. The next bounded move should:
 
 - focus on exactly one seam:
-  - turn the remaining staged treatment-eligibility seam into an explicit
-    FEMIC contract instead of broadening immediately into `Netdown` or
-    `Treat`;
+  - decide whether `max_inventory_age` has a safe checkpoint-first consumer or
+    should remain review metadata;
 - preserve the evidence/review framing instead of claiming a runnable rebuild
   surface, a finalized rebuild recipe, workbook publication, or a VBA
   reimplementation;
 - continue to defer `03_MappingAnalysisData/*` and `Outputs/*`; and
 - keep road-network discovery, reporting-surface import, direct workbook
-  publication, live activation of include hooks/constants, and broader `Treat`
-  stratum refactoring outside that next slice unless the block-layout contract
+  publication, live activation of include hooks, and broader `Treat` stratum
+  refactoring outside that next slice unless the remaining Input Variables
   work proves they are required.

@@ -15158,3 +15158,13 @@
   - `max_inventory_age`, include hooks, and the broader matrix-builder constants seam remain staged only;
   - no workbook payload was copied into `external/femic-mkrf-instance`; and
   - no `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.
+## 2026-04-27 - Operationalized the MKRF legacy constants contract
+- `#172` / `P55.13` bounded reconstruction slice:
+  - added an explicit `staged.constant_contract` to the MKRF Input Variables translation for `managed`, `unmanaged`, `operable`, `lowoper`, and deferred `frd`;
+  - restricted live legacy expression symbol resolution so, when the contract is present, only constants marked `live_export` or `live_build_input` can drive exporter behavior;
+  - added focused regression coverage proving a live scalar constant can drive `treat_inel` while deferred `frd` remains unresolved as a live expression symbol; and
+  - updated parent and instance planning/lineage docs so the next bounded move narrows to the remaining staged `Input Variables` semantics instead of broadening into include hooks, `Netdown`, or `Treat`.
+- Scope boundary preserved:
+  - formula-like `frd` remains review metadata only;
+  - no include hooks, `Netdown`, `Treat`, `03_MappingAnalysisData/*`, or `Outputs/*` were activated; and
+  - no runnable MKRF rebuild claim was introduced by this slice.

@@ -184,7 +184,7 @@ registry_mismatches:
       - Additional lookup families may be represented as named blocks, formulas, or stale registry references rather than discrete sheets.
 
 next_bounded_step:
-  recommendation: operationalize_matrix_builder_constants_seam
+  recommendation: review_remaining_input_variables_semantics
   description:
-    Operationalize the remaining staged legacy matrix-builder constants seam
-    while keeping include hooks preserved but inactive.
+    Review the remaining staged Input Variables semantics, starting with
+    max_inventory_age, while keeping include hooks preserved but inactive.

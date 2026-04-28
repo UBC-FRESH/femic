@@ -1482,17 +1482,22 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P55.12a Make the workbook-owned treatment-eligibility expression live as an opt-in MKRF fragments/export field.
   - [x] P55.12b Evaluate the treatment-eligibility expression against the live additional stratification bindings and legacy constants with clear failure handling for unresolved symbols.
   - [x] P55.12c Update parent and instance metadata/docs so the next bounded move narrows to the remaining staged workbook semantics.
+- [x] P55.13 Operationalize the remaining legacy matrix-builder constants seam (`#172`)
+  - [x] P55.13a Add an explicit MKRF-first constants contract for `managed`, `unmanaged`, `operable`, `lowoper`, and deferred `frd`.
+  - [x] P55.13b Restrict live legacy expression symbol resolution to constants marked as live export/build inputs when the contract is present.
+  - [x] P55.13c Update parent and instance metadata/docs so deferred formula-like constants remain review evidence only.
 
 ## Detailed Next Steps Notes
 
-- Active MKRF bounded move after `P55.12`:
-  operationalize the remaining staged legacy matrix-builder constants seam
-  before broadening into include hooks, `Netdown`, or `Treat`.
+- Active MKRF bounded move after `P55.13`:
+  review the remaining staged `Input Variables` semantics, starting with
+  whether `max_inventory_age` has a safe checkpoint-first consumer, before
+  broadening into include hooks, `Netdown`, or `Treat`.
 - Keep the same boundary for the next slice:
   no `03_MappingAnalysisData/*`, no `Outputs/*`, and no claim that the
   archival legacy payload is yet a runnable FEMIC or Patchworks rebuild
   surface.
 - Keep VBA reimplementation, road-network discovery, reporting-output intake,
   direct workbook publication, live activation of include hooks, and broader
-  `Treat` stratum refactoring out of the next slice unless the constants
-  contract work proves they are required.
+  `Treat` stratum refactoring out of the next slice unless the remaining
+  `Input Variables` work proves they are required.

@@ -1412,6 +1412,31 @@ def _load_legacy_input_variables_config(
             raise ValueError(
                 "legacy input-variables field staged.constants must be a mapping/object"
             )
+        raw_constant_contract = staged.get("constant_contract")
+        if raw_constant_contract is not None:
+            if not isinstance(raw_constant_contract, list):
+                raise ValueError(
+                    "legacy input-variables field staged.constant_contract must be a list"
+                )
+            for index, item in enumerate(raw_constant_contract):
+                if not isinstance(item, dict):
+                    raise ValueError(
+                        "legacy input-variables field "
+                        f"staged.constant_contract[{index}] must be a mapping/object"
+                    )
+                key = item.get("key")
+                status = item.get("status")
+                if not isinstance(key, str) or not key.strip():
+                    raise ValueError(
+                        "legacy input-variables field "
+                        f"staged.constant_contract[{index}].key must be a non-empty string"
+                    )
+                if not isinstance(status, str) or not status.strip():
+                    raise ValueError(
+                        "legacy input-variables field "
+                        f"staged.constant_contract[{index}].status "
+                        "must be a non-empty string"
+                    )
     return payload
 
 
@@ -1566,10 +1591,22 @@ def _build_live_legacy_constants_contract(
     raw_constants = staged.get("constants")
     if not isinstance(raw_constants, dict):
         return {}
+    raw_constant_contract = staged.get("constant_contract")
+    live_constant_keys: set[str] | None = None
+    if isinstance(raw_constant_contract, list):
+        live_constant_keys = {
+            str(item.get("key", "")).strip()
+            for item in raw_constant_contract
+            if isinstance(item, dict)
+            and str(item.get("status", "")).strip()
+            in {"live_export", "live_build_input"}
+            and str(item.get("key", "")).strip()
+        }
     return {
         str(key).strip(): _normalize_legacy_constant_literal(value)
         for key, value in raw_constants.items()
         if str(key).strip()
+        and (live_constant_keys is None or str(key).strip() in live_constant_keys)
     }
 
 

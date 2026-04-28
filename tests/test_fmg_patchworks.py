@@ -3288,6 +3288,9 @@ def test_export_patchworks_package_uses_legacy_input_variables_config(
                 '  treatment_eligibility_expression: "status in unmanaged"',
                 "  constants:",
                 "    unmanaged: \"'N'\"",
+                "  constant_contract:",
+                "    - key: unmanaged",
+                "      status: live_export",
             ]
         )
         + "\n",
@@ -3500,6 +3503,9 @@ def test_export_patchworks_package_rejects_unresolved_legacy_treatment_eligibili
                 '  treatment_eligibility_expression: "status in unmanaged"',
                 "  constants:",
                 "    unmanaged: \"'N'\"",
+                "  constant_contract:",
+                "    - key: unmanaged",
+                "      status: live_export",
             ]
         )
         + "\n",
@@ -3529,6 +3535,86 @@ def test_export_patchworks_package_rejects_unresolved_legacy_treatment_eligibili
             bundle_dir=bundle_dir,
             checkpoint_path=checkpoint_path,
             output_dir=output_dir,
+            tsa_list=["k3z"],
+            legacy_input_variables_config_path=config_path,
+        )
+
+
+def test_export_patchworks_package_respects_legacy_constant_contract(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _write_bundle_tables(bundle_dir)
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    output_dir = tmp_path / "patchworks_export"
+    config_path = tmp_path / "input_variables.mkrf.yaml"
+    config_path.write_text(
+        "\n".join(
+            [
+                "description: Base TFL26",
+                "start_year: 2020",
+                "horizon_years: 300",
+                "staged:",
+                "  additional_stratification_columns:",
+                "    - key: oper",
+                "      source_expression: Operabilit",
+                '  treatment_eligibility_expression: "oper in lowoper"',
+                "  constants:",
+                "    lowoper: \"'Low Operability'\"",
+                "    frd: =2.7/100",
+                "  constant_contract:",
+                "    - key: lowoper",
+                "      status: live_export",
+                "    - key: frd",
+                "      status: deferred",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "k3z",
+                "au": 985501000,
+                "PROJ_AGE_1": 74,
+                "Operabilit": "Low Operability",
+                "thlb_raw": 1,
+                "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+            }
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    result = export_patchworks_package(
+        bundle_dir=bundle_dir,
+        checkpoint_path=checkpoint_path,
+        output_dir=output_dir,
+        tsa_list=["k3z"],
+        legacy_input_variables_config_path=config_path,
+    )
+
+    gdf = gpd.read_file(result.fragments_shapefile_path)
+    assert gdf.loc[0, "oper"] == "Low Operability"
+    assert gdf.loc[0, "treat_inel"] == "Y"
+
+    config_path.write_text(
+        config_path.read_text(encoding="utf-8").replace(
+            '"oper in lowoper"', '"oper in frd"'
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(
+        ValueError,
+        match="legacy treatment eligibility expression references unresolved symbol "
+        "'frd'",
+    ):
+        export_patchworks_package(
+            bundle_dir=bundle_dir,
+            checkpoint_path=checkpoint_path,
+            output_dir=output_dir / "deferred",
             tsa_list=["k3z"],
             legacy_input_variables_config_path=config_path,
         )
