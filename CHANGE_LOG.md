@@ -15176,3 +15176,13 @@
   - updated `planning/mkrf_legacy_decompile.md` so the planning note carries the detailed execution boundaries while `ROADMAP.md` remains the compact ordered control surface.
 - Scope boundary preserved:
   - no implementation, export behavior, source-data intake, include-hook activation, `Netdown`, `Treat`, `03_MappingAnalysisData/*`, or `Outputs/*` work was started by this planning slice.
+## 2026-04-28 - Adjudicated the remaining MKRF Input Variables semantics
+- `#172` / `P55.14` bounded reconstruction slice:
+  - classified `max_inventory_age` as review metadata because the current checkpoint-first exporter derives curve evaluation spans from `horizon_years` and source curve ages;
+  - classified `beforeCurves` / `before_curves` as blocked because the workbook value points at generated `Curves.xml`, which requires the `P55.15` Curve Library review-to-build contract before activation;
+  - classified the blank `afterCurves`, `afterRetention`, `afterUnmanaged`, `afterStratum`, and `afterAttributes` hooks as preserved review metadata; and
+  - updated parent and instance planning/lineage docs so the next bounded move is `P55.15` Curve Library translation.
+- Scope boundary preserved:
+  - no include hooks were activated;
+  - no exporter behavior changed; and
+  - no `Netdown`, `Attrib`, `Treat`, `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.

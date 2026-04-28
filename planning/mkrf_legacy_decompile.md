@@ -266,10 +266,14 @@ Live now in exporter behavior:
 - `additional_stratification_columns`
 - `treatment_eligibility_expression`
 
-Preserved but still staged only:
+Inactive after P55.14 classification:
 
 - `max_inventory_age`
-- include-fragment hooks
+  review metadata only
+- `beforeCurves`
+  blocked until the Curve Library review-to-build contract is translated
+- blank include-fragment hooks
+  review metadata only
 - formula-like or otherwise unclaimed matrix-builder constants such as `frd`
 
 The live subset is wired through the existing Patchworks export flow as an
@@ -300,24 +304,24 @@ Do exactly one next bounded move at a time. The roadmap is now the control
 surface for Phase 55 sequencing; implementation should not invent the next
 slice in chat.
 
-Active next bounded move:
+Completed Input Variables classification:
 
 - `P55.14`:
-  adjudicate the remaining staged `Input Variables` semantics. This includes
-  deciding whether `max_inventory_age` is a live exporter/build input or review
-  metadata only, and classifying each include-fragment hook as live, preserved
-  review metadata, or blocked by missing source/runtime context.
+  `max_inventory_age` is review metadata only because the current
+  checkpoint-first exporter derives curve evaluation spans from
+  `horizon_years` and source curve ages. `beforeCurves` is blocked because the
+  workbook value points at generated `Curves.xml`; activation requires the
+  `P55.15` Curve Library review-to-build contract. The remaining include
+  hooks are blank in the workbook and are preserved as review metadata.
 
-Do not start `Curve Library`, `Netdown`, `Attrib`, `Treat`, reconciliation, or
-upstream mapping work until `P55.14` is closed and the roadmap is updated
-again. `P55.14` must not silently activate XML include hooks or treat generated
-XML fragments as editable source.
-
-Planned follow-on sequence after `P55.14`:
+Active next bounded move:
 
 - `P55.15`:
   translate the legacy `Curve Library` surface into an explicit review-to-build
   contract.
+
+Planned follow-on sequence after `P55.15`:
+
 - `P55.16`:
   translate the legacy `Netdown` surface into an explicit review-to-build
   contract.
@@ -330,6 +334,9 @@ Planned follow-on sequence after `P55.14`:
 - `P55.19`:
   reconcile the workbook-derived ForestModel contract against compiled legacy
   outputs and publish a rebuild-readiness go/no-go note.
+
+Do not start `Netdown`, `Attrib`, `Treat`, reconciliation, or upstream mapping
+work until `P55.15` is closed and the roadmap is updated again.
 
 Hard boundaries for this sequence:
 

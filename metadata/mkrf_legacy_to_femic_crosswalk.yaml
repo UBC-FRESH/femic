@@ -118,8 +118,8 @@ unresolved_seams:
       - not yet clear whether it is contextual QA only or part of a reproducible preprocessing contract
 
 next_bounded_step:
-  recommendation: review_remaining_input_variables_semantics
+  recommendation: translate_curve_library_review_to_build_contract
   description:
-    Review the remaining staged Input Variables semantics, starting with
-    max_inventory_age, before broadening into include hooks, Netdown, or other
-    workbook surfaces.
+    Translate the legacy Curve Library surface into an explicit review-to-build
+    contract before broadening into Netdown, Attrib, Treat, or upstream mapping
+    surfaces.

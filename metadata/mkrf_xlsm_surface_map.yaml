@@ -184,7 +184,8 @@ registry_mismatches:
       - Additional lookup families may be represented as named blocks, formulas, or stale registry references rather than discrete sheets.
 
 next_bounded_step:
-  recommendation: review_remaining_input_variables_semantics
+  recommendation: translate_curve_library_review_to_build_contract
   description:
-    Review the remaining staged Input Variables semantics, starting with
-    max_inventory_age, while keeping include hooks preserved but inactive.
+    Translate the legacy Curve Library surface into an explicit review-to-build
+    contract while keeping generated XML fragments inactive until their source
+    tables are accepted.
