@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+import copy
 import importlib
 from importlib import resources as importlib_resources
 import math
@@ -1512,6 +1513,16 @@ def _load_legacy_mkrf_curve_table(
     }
 
 
+def _load_legacy_mkrf_base_xml_root(*, legacy_base_xml_path: Path) -> et.Element:
+    resolved = legacy_base_xml_path.expanduser().resolve()
+    if not resolved.exists():
+        raise FileNotFoundError(f"legacy MKRF base XML not found: {resolved}")
+    text = resolved.read_text(encoding="latin-1")
+    text = re.sub(r"<!DOCTYPE.*?\]>\s*", "", text, flags=re.DOTALL)
+    text = re.sub(r"&[A-Za-z_][A-Za-z0-9_]*;", "", text)
+    return et.fromstring(text)
+
+
 def _legacy_input_variables_staged_mapping(
     legacy_input_variables_config: dict[str, Any] | None,
 ) -> dict[str, Any]:
@@ -1713,6 +1724,7 @@ def _build_live_legacy_constants_contract(
 def _build_legacy_mkrf_define_constants_contract(
     *,
     legacy_input_variables_config: dict[str, Any] | None,
+    compatibility_required_constant_keys: Iterable[str] = (),
 ) -> tuple[tuple[tuple[str, str], ...], tuple[str, ...]]:
     staged = _legacy_input_variables_staged_mapping(legacy_input_variables_config)
     raw_constants = staged.get("constants")
@@ -1731,6 +1743,10 @@ def _build_legacy_mkrf_define_constants_contract(
             constant_order.append(key)
     else:
         constant_order = [str(key).strip() for key in raw_constants if str(key).strip()]
+    for key in compatibility_required_constant_keys:
+        normalized_key = str(key).strip()
+        if normalized_key and normalized_key not in constant_order:
+            constant_order.append(normalized_key)
     entries: list[tuple[str, str]] = []
     required_fields: list[str] = []
     for key in constant_order:
@@ -1762,6 +1778,132 @@ def _append_legacy_mkrf_curve_node(
         )
 
 
+def _normalize_passthrough_label(value: str | None) -> str:
+    return str(value or "").strip()
+
+
+def _extract_legacy_mkrf_attribute_passthrough_selects(
+    *,
+    legacy_base_xml_path: Path,
+    legacy_attributes_config: dict[str, Any],
+) -> tuple[et.Element, ...]:
+    legacy_root = _load_legacy_mkrf_base_xml_root(
+        legacy_base_xml_path=legacy_base_xml_path
+    )
+    validation_contract = legacy_attributes_config.get("validation_contract", {})
+    required_attribute_names = {
+        _normalize_passthrough_label(value)
+        for value in validation_contract.get("required_attribute_names", []) or []
+        if _normalize_passthrough_label(value)
+    }
+    passthrough_selects: list[et.Element] = []
+    for select in legacy_root.findall("./select"):
+        labels = [
+            _normalize_passthrough_label(attribute.get("label"))
+            for attribute in select.findall(".//attribute")
+        ]
+        expressions = [
+            _normalize_passthrough_label(expression.get("statement"))
+            for expression in select.findall(".//expression")
+        ]
+        if (
+            any(label in required_attribute_names for label in labels)
+            or any("%f." in label for label in labels)
+            or any("curveId('Yield_" in expression for expression in expressions)
+            or any(
+                "attribute('feature.yield.%m.total')" in expression
+                for expression in expressions
+            )
+        ):
+            passthrough_selects.append(copy.deepcopy(select))
+    if len(passthrough_selects) != 5:
+        raise ValueError(
+            "legacy MKRF Attrib passthrough extraction expected 5 select blocks "
+            f"but found {len(passthrough_selects)}"
+        )
+    return tuple(passthrough_selects)
+
+
+def _validate_legacy_mkrf_attribute_passthrough(
+    *,
+    emitted_root: et.Element,
+    passthrough_selects: tuple[et.Element, ...],
+    legacy_attributes_config: dict[str, Any],
+) -> None:
+    define_fields = {
+        str(node.get("field")).strip()
+        for node in emitted_root.findall("./define")
+        if node.get("field")
+    }
+    required_define_fields = {"status", "au", "aux", "treatment", "frd", "managed"}
+    missing_define_fields = sorted(required_define_fields.difference(define_fields))
+    if missing_define_fields:
+        raise ValueError(
+            "legacy MKRF Attrib passthrough missing required define fields in "
+            "emitted XML: " + ", ".join(missing_define_fields)
+        )
+
+    curve_ids = {
+        str(node.get("id")).strip()
+        for node in emitted_root.findall("./curve")
+        if node.get("id")
+    }
+    missing_static_curves = sorted({"one", "le10"}.difference(curve_ids))
+    if missing_static_curves:
+        raise ValueError(
+            "legacy MKRF Attrib passthrough missing required emitted curves: "
+            + ", ".join(missing_static_curves)
+        )
+    generated_yield_curve_count = sum(
+        1 for curve_id in curve_ids if curve_id.startswith("Yield_")
+    )
+    if generated_yield_curve_count <= 0:
+        raise ValueError(
+            "legacy MKRF Attrib passthrough requires emitted `Yield_*` curves"
+        )
+
+    validation_contract = legacy_attributes_config.get("validation_contract", {})
+    expected_attribute_names = {
+        _normalize_passthrough_label(value)
+        for value in validation_contract.get("required_attribute_names", []) or []
+        if _normalize_passthrough_label(value)
+    }
+    passthrough_attribute_names = {
+        _normalize_passthrough_label(attribute.get("label"))
+        for select in passthrough_selects
+        for attribute in select.findall(".//attribute")
+        if _normalize_passthrough_label(attribute.get("label"))
+    }
+    missing_attribute_names = sorted(
+        expected_attribute_names.difference(passthrough_attribute_names)
+    )
+    if missing_attribute_names:
+        raise ValueError(
+            "legacy MKRF Attrib passthrough missing expected attribute labels: "
+            + ", ".join(missing_attribute_names)
+        )
+
+
+def _append_legacy_mkrf_attribute_passthrough(
+    *,
+    root: et.Element,
+    legacy_base_xml_path: Path,
+    legacy_attributes_config: dict[str, Any],
+) -> tuple[et.Element, ...]:
+    passthrough_selects = _extract_legacy_mkrf_attribute_passthrough_selects(
+        legacy_base_xml_path=legacy_base_xml_path,
+        legacy_attributes_config=legacy_attributes_config,
+    )
+    _validate_legacy_mkrf_attribute_passthrough(
+        emitted_root=root,
+        passthrough_selects=passthrough_selects,
+        legacy_attributes_config=legacy_attributes_config,
+    )
+    for select in passthrough_selects:
+        root.append(copy.deepcopy(select))
+    return passthrough_selects
+
+
 def _legacy_mkrf_track_statement_from_selection(selection: dict[str, Any]) -> str:
     parts: list[str] = []
     status_key = _normalize_optional_expression(selection.get("status"))
@@ -1781,6 +1923,7 @@ def build_legacy_mkrf_forestmodel_xml_tree(
     legacy_netdown_config: dict[str, Any],
     legacy_treat_config: dict[str, Any],
     generated_curve_table_by_id: dict[str, tuple[CurvePoint, ...]],
+    compatibility_required_constant_keys: Iterable[str] = (),
 ) -> et.Element:
     """Build the opt-in MKRF ForestModel XML tree from recovered legacy contracts."""
     description = str(
@@ -1804,7 +1947,8 @@ def build_legacy_mkrf_forestmodel_xml_tree(
     )
     define_constants, required_constant_fields = (
         _build_legacy_mkrf_define_constants_contract(
-            legacy_input_variables_config=legacy_input_variables_config
+            legacy_input_variables_config=legacy_input_variables_config,
+            compatibility_required_constant_keys=compatibility_required_constant_keys,
         )
     )
 
@@ -1866,13 +2010,17 @@ def build_legacy_mkrf_forestmodel_xml_tree(
         reassignment = rule.get("reassignment")
         if not isinstance(reassignment, dict):
             raise ValueError("legacy MKRF netdown rule missing reassignment mapping")
-        field = _normalize_optional_expression(reassignment.get("field"))
-        value = _normalize_optional_expression(reassignment.get("value"))
-        if field is None or value is None:
+        assign_field = _normalize_optional_expression(reassignment.get("field"))
+        assign_value = _normalize_optional_expression(reassignment.get("value"))
+        if assign_field is None or assign_value is None:
             raise ValueError(
                 "legacy MKRF netdown reassignment must define field and value"
             )
-        et.SubElement(retention_node, "assign", {"field": field, "value": value})
+        et.SubElement(
+            retention_node,
+            "assign",
+            {"field": assign_field, "value": assign_value},
+        )
         features_node = et.SubElement(retention_node, "features")
         for feature_assignment in rule.get("feature_assignments", []) or []:
             if not isinstance(feature_assignment, dict):
@@ -1985,6 +2133,8 @@ def emit_legacy_mkrf_forestmodel_xml(
     legacy_treat_config_path: Path,
     generated_curve_table_csv_path: Path,
     output_path: Path,
+    legacy_attributes_config_path: Path | None = None,
+    legacy_base_xml_path: Path | None = None,
 ) -> Path:
     """Emit the opt-in MKRF runtime ForestModel XML from recovered contracts."""
     legacy_input_variables_config = _load_legacy_input_variables_config(
@@ -2015,7 +2165,52 @@ def emit_legacy_mkrf_forestmodel_xml(
         legacy_netdown_config=legacy_netdown_config,
         legacy_treat_config=legacy_treat_config,
         generated_curve_table_by_id=generated_curve_table_by_id,
+        compatibility_required_constant_keys=("frd",)
+        if legacy_attributes_config_path is not None or legacy_base_xml_path is not None
+        else (),
     )
+    if legacy_attributes_config_path is not None or legacy_base_xml_path is not None:
+        if legacy_attributes_config_path is None or legacy_base_xml_path is None:
+            raise ValueError(
+                "legacy MKRF Attrib passthrough requires both "
+                "legacy_attributes_config_path and legacy_base_xml_path"
+            )
+        legacy_attributes_config = _load_legacy_mkrf_yaml_contract(
+            path=legacy_attributes_config_path,
+            contract_label="legacy MKRF attributes contract",
+        )
+        _append_legacy_mkrf_attribute_passthrough(
+            root=root,
+            legacy_base_xml_path=legacy_base_xml_path,
+            legacy_attributes_config=legacy_attributes_config,
+        )
+        validate_forestmodel_xml_tree(
+            root=root,
+            required_define_fields=(
+                "status",
+                "au",
+                "auf",
+                "oper",
+                "ct",
+                "aux",
+                "treatment",
+                "managed",
+                "unmanaged",
+                "operable",
+                "lowoper",
+                "frd",
+            ),
+            required_curve_ids=(
+                "one",
+                "zero",
+                "age",
+                "le10",
+                "lt20",
+                "gt60",
+                "lt80",
+                "gt250",
+            ),
+        )
     write_forestmodel_xml(root=root, path=output_path)
     return output_path
 

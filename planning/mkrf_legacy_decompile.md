@@ -359,9 +359,9 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-`P57.4` is the active next bounded implementation move. Add the explicit
-Attrib compatibility-passthrough seam on top of the emitted MKRF runtime XML
-before rewiring runtime config or running Patchworks matrix build.
+`P57.5` is the active next bounded implementation move. Wire the MKRF
+Patchworks runtime config to the generated model directory and stop after
+preflight, before starting matrix build.
 
 Completed `P57.1` runnable-boundary plan:
 
@@ -396,9 +396,13 @@ Remaining Phase 57 sequence after `P57.1`:
   sections, and no Attrib compatibility-passthrough yet. Default non-MKRF
   exporter behavior remains unchanged.
 - `P57.4`:
-  add the explicit compatibility-passthrough seam for deferred Attrib formulas
-  and validate its required curves, defines, and labels against the emitted XML
-  surface before it can participate in runtime proof.
+  completed. The emitted runtime XML now carries the five deferred
+  formula-heavy Attrib `<select>` blocks through an explicit compatibility
+  contract extracted from reconciled legacy `baseMKRF.xml`. The emitted XML
+  validates the required `frd` constant, `one` / `le10` static curves, and
+  generated `Yield_*` curve family, while keeping the passthrough clearly
+  labeled as a runnable-minimum caveat rather than a native FEMIC Attrib
+  builder.
 - `P57.5`:
   wire the MKRF Patchworks runtime config to the generated model directory and
   validate Patchworks preflight without starting matrix build.

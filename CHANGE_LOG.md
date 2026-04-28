@@ -15365,3 +15365,14 @@
   - no runtime Patchworks config was rewired;
   - no Patchworks matrix build or launch was run; and
   - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Added MKRF Attrib compatibility passthrough
+- `#172` / `P57.4` bounded XML-compatibility slice:
+  - extended the opt-in MKRF XML emitter so the runtime XML can materialize the compatibility-required deferred constant `frd` and append five extracted Attrib passthrough `<select>` blocks from reconciled legacy `baseMKRF.xml`;
+  - regenerated `external/femic-mkrf-instance/models/mkrf_patchworks_model/XML/baseMKRF.xml` with the validated deferred Attrib compatibility blocks and recorded the result in `metadata/legacy_runtime_xml_emission.yaml`, `metadata/legacy_attribute_passthrough.yaml`, and `runbooks/LEGACY_ATTRIBUTE_PASSTHROUGH.md`;
+  - updated instance lineage/readme surfaces to treat the passthrough as an explicit runnable-minimum caveat rather than a native attribute-builder implementation; and
+  - moved the active next bounded move to `P57.5` runtime config wiring and preflight.
+- Scope boundary preserved:
+  - no native FEMIC Attrib builder was implemented;
+  - no runtime Patchworks config was rewired;
+  - no Patchworks matrix build or launch was run; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.

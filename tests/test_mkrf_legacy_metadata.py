@@ -933,7 +933,7 @@ def test_mkrf_runtime_model_layout_records_p57_2_boundary() -> None:
     assert "target-description lane" in placeholder_text
 
 
-def test_mkrf_runtime_xml_emission_records_p57_3_boundary() -> None:
+def test_mkrf_runtime_xml_emission_records_p57_4_boundary() -> None:
     emission_path = Path(
         "external/femic-mkrf-instance/metadata/legacy_runtime_xml_emission.yaml"
     )
@@ -943,13 +943,13 @@ def test_mkrf_runtime_xml_emission_records_p57_3_boundary() -> None:
 
     emission = yaml.safe_load(emission_path.read_text(encoding="utf-8"))
 
-    assert emission["phase"] == "P57.3"
-    assert emission["status"] == "runtime_xml_emitted_pre_passthrough"
+    assert emission["phase"] == "P57.4"
+    assert emission["status"] == "runtime_xml_emitted_with_attribute_passthrough"
     assert emission["decision"] == {
         "runtime_xml_emission": "materialized",
         "emission_mode": "opt_in_mkrf_contract_builder",
         "generated_yield_curves": "inlined_from_curve_table_csv",
-        "attribute_passthrough": "not_started",
+        "attribute_passthrough": "materialized_via_compatibility_contract",
         "matrix_build": "not_run",
         "launch_proof": "not_run",
         "runnable_rebuild_claim": "no_go",
@@ -964,9 +964,9 @@ def test_mkrf_runtime_xml_emission_records_p57_3_boundary() -> None:
         "match": "multi",
     }
     assert emission["emitted_artifact"]["structure_counts"] == {
-        "defines": 11,
+        "defines": 12,
         "curves": 1057,
-        "selects": 6,
+        "selects": 11,
         "retentions": 2,
         "treatments": 2,
     }
@@ -982,14 +982,15 @@ def test_mkrf_runtime_xml_emission_records_p57_3_boundary() -> None:
         "unmanaged",
         "operable",
         "lowoper",
+        "frd",
     ]
     assert emission["emitted_contract"]["inlined_generated_curve_source"] == {
         "curve_count": 1049,
         "producer": "data/legacy_mkrf/generated_xml/CSV/CURVE_TABLE.csv",
     }
     assert emission["next_bounded_step"] == {
-        "recommendation": "implement_attrib_compatibility_passthrough",
-        "roadmap_task": "P57.4",
+        "recommendation": "wire_runtime_config_to_generated_model_directory",
+        "roadmap_task": "P57.5",
     }
 
     runtime_xml = Path(
@@ -1004,3 +1005,60 @@ def test_mkrf_runtime_xml_emission_records_p57_3_boundary() -> None:
         "match": "multi",
     }
     assert root.find("./curve[@id='Yield_1']") is not None
+    assert len(root.findall("./select")) == 11
+    assert root.find("./define[@field='frd']") is not None
+    assert root.find(".//features/attribute[@label='%f.area.%m.seral.le10']") is not None
+
+
+def test_mkrf_attribute_passthrough_records_p57_4_boundary() -> None:
+    passthrough_path = Path(
+        "external/femic-mkrf-instance/metadata/legacy_attribute_passthrough.yaml"
+    )
+
+    if not passthrough_path.exists():
+        pytest.skip("MKRF instance submodule is not materialized")
+
+    passthrough = yaml.safe_load(passthrough_path.read_text(encoding="utf-8"))
+
+    assert passthrough["phase"] == "P57.4"
+    assert passthrough["status"] == "attribute_passthrough_materialized_for_runtime_xml"
+    assert passthrough["decision"] == {
+        "passthrough_mode": "extracted_legacy_select_blocks",
+        "source_of_truth": "data/legacy_mkrf/generated_xml/baseMKRF.xml",
+        "native_attribute_builder": "not_implemented",
+        "compatibility_constant_dependencies": "materialized",
+        "matrix_build": "not_run",
+        "launch_proof": "not_run",
+        "runnable_rebuild_claim": "no_go",
+    }
+    assert passthrough["compatibility_contract"]["extracted_select_block_count"] == 5
+    assert passthrough["compatibility_contract"]["validated_dependencies"] == {
+        "define_fields": ["status", "au", "aux", "treatment", "managed", "frd"],
+        "curve_ids": ["one", "le10"],
+        "generated_curve_family": "Yield_*",
+        "required_attribute_labels": [
+            "%f.area.%m.total",
+            "%f.yield.%m.total",
+            "%f.yield.%m.merch.total",
+            "%f.yield.%m.indsp.Ba",
+            "%f.yield.%m.indsp.Cw",
+            "%f.yield.%m.indsp.Dec",
+            "%f.yield.%m.indsp.Fd",
+            "%f.yield.%m.indsp.Hw",
+            "%f.yield.%m.indsp.Oth",
+            "%f.yield.%m.indsp.Dr",
+            "%f.yield.%m.indsp.Yc",
+            "%f.area.%m.seral.le10",
+        ],
+    }
+    assert [block["block_id"] for block in passthrough["compatibility_contract"]["extracted_blocks"]] == [
+        "feature_area_and_total_yield",
+        "merchantable_total_yield",
+        "individual_species_yield",
+        "seral_le10_area",
+        "product_area_and_yield_family",
+    ]
+    assert passthrough["next_bounded_step"] == {
+        "recommendation": "wire_runtime_config_to_generated_model_directory",
+        "roadmap_task": "P57.5",
+    }

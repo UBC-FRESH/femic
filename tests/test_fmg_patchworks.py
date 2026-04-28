@@ -3809,6 +3809,89 @@ def test_emit_legacy_mkrf_forestmodel_xml_writes_runtime_base_xml(
     assert root.find("./curve[@id='Yield_1']") is not None
 
 
+def test_emit_legacy_mkrf_forestmodel_xml_appends_attrib_passthrough_blocks(
+    tmp_path: Path,
+) -> None:
+    instance_root = Path("external/femic-mkrf-instance")
+    input_variables_path = (
+        instance_root / "config/legacy_xml_builder/input_variables.mkrf.yaml"
+    )
+    curve_library_path = (
+        instance_root / "config/legacy_xml_builder/curve_library.mkrf.yaml"
+    )
+    netdown_path = instance_root / "config/legacy_xml_builder/netdown.mkrf.yaml"
+    treat_path = instance_root / "config/legacy_xml_builder/strata/treat.mkrf.yaml"
+    attributes_path = instance_root / "config/legacy_xml_builder/attributes.mkrf.yaml"
+    legacy_base_xml_path = instance_root / "data/legacy_mkrf/generated_xml/baseMKRF.xml"
+    curve_table_path = (
+        instance_root / "data/legacy_mkrf/generated_xml/CSV/CURVE_TABLE.csv"
+    )
+    if not all(
+        path.exists()
+        for path in (
+            input_variables_path,
+            curve_library_path,
+            netdown_path,
+            treat_path,
+            attributes_path,
+            legacy_base_xml_path,
+            curve_table_path,
+        )
+    ):
+        pytest.skip("MKRF instance contracts are not materialized")
+
+    output_path = tmp_path / "XML" / "baseMKRF.xml"
+    emitted = emit_legacy_mkrf_forestmodel_xml(
+        legacy_input_variables_config_path=input_variables_path,
+        legacy_curve_library_config_path=curve_library_path,
+        legacy_netdown_config_path=netdown_path,
+        legacy_treat_config_path=treat_path,
+        generated_curve_table_csv_path=curve_table_path,
+        output_path=output_path,
+        legacy_attributes_config_path=attributes_path,
+        legacy_base_xml_path=legacy_base_xml_path,
+    )
+
+    assert emitted == output_path
+    root = et.parse(emitted).getroot()
+    validate_forestmodel_xml_tree(
+        root=root,
+        required_define_fields=(
+            "status",
+            "au",
+            "auf",
+            "oper",
+            "ct",
+            "aux",
+            "treatment",
+            "managed",
+            "unmanaged",
+            "operable",
+            "lowoper",
+            "frd",
+        ),
+        required_curve_ids=(
+            "one",
+            "zero",
+            "age",
+            "le10",
+            "lt20",
+            "gt60",
+            "lt80",
+            "gt250",
+        ),
+    )
+    assert len(root.findall("./select")) == 11
+    assert root.find("./define[@field='frd']") is not None
+    assert root.find(".//features/attribute[@label='%f.area.%m.total']") is not None
+    assert (
+        root.find(".//features/attribute[@label='%f.yield.%m.merch.total']") is not None
+    )
+    assert (
+        root.find(".//features/attribute[@label='%f.area.%m.seral.le10']") is not None
+    )
+
+
 def test_validate_forestmodel_xml_tree_rejects_missing_curve_ref() -> None:
     au_table = pd.DataFrame(
         [
