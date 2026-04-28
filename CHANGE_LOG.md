@@ -15316,3 +15316,16 @@
   - no fragments were regenerated;
   - no Patchworks matrix build was run; and
   - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Published MKRF rebuild-readiness criteria
+- `#172` / `P56.6` bounded readiness slice:
+  - added `metadata/legacy_rebuild_readiness_criteria.yaml` and `runbooks/LEGACY_REBUILD_READINESS_CRITERIA.md` to the MKRF instance;
+  - defined metadata recovery as complete for Phase 56 while keeping runnable rebuild candidate readiness no-go;
+  - published required future gates for source-input publication, builder activation, FEMIC-generated XML, Patchworks matrix build, output comparison, and identity resolution; and
+  - closed Phase 56 with the next phase pointed at the first selected builder activation gate.
+- Scope boundary preserved:
+  - no builder was activated;
+  - no ForestModel XML was generated;
+  - no fragments were regenerated;
+  - no Patchworks matrix build was run;
+  - no source payloads, roads, outputs, or direct workbook payloads were ingested; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.

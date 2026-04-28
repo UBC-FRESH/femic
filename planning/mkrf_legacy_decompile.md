@@ -359,10 +359,10 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-`P56.6` is the active next bounded implementation move. Publish rebuild-
-readiness milestone criteria that tie legacy evidence, source-input
-publication, future FEMIC-generated XML, and matrix-build proof together before
-any runnable rebuild claim.
+Phase 56 is closed. The next move should be a new roadmap-planned MKRF
+implementation phase that starts with the first selected builder activation
+gate from `metadata/legacy_builder_activation_plan.yaml`, not ad hoc matrix
+build execution.
 
 Completed `P56.1` planning boundary:
 
@@ -407,9 +407,11 @@ Remaining Phase 56 sequence after `P56.1`:
   validation evidence rather than source inputs, and direct workbook
   publication is not required for the current FEMIC contract.
 - `P56.6`:
-  publish rebuild-readiness milestone criteria requiring both legacy evidence
-  reconciliation and future FEMIC-generated XML plus matrix-build proof before
-  any runnable rebuild claim.
+  completed. `metadata/legacy_rebuild_readiness_criteria.yaml` records
+  metadata recovery as complete for Phase 56 and runnable rebuild candidate
+  readiness as no-go. Future runnable claims require source-input publication,
+  builder activation, FEMIC-generated XML, Patchworks matrix-build output,
+  direct comparison against legacy evidence, and identity-gate resolution.
 
 Hard boundaries for this sequence:
 
@@ -428,3 +430,11 @@ Hard boundaries for this sequence:
 - no claim that the archival legacy payload is a runnable FEMIC/Patchworks
   rebuild surface until a later roadmap task explicitly establishes that
   contract.
+
+Phase 56 closeout:
+
+- metadata recovery through the rebuild-readiness planning/evidence boundary is
+  complete;
+- runnable FEMIC/Patchworks rebuild readiness remains no-go; and
+- the next roadmap phase should implement the first selected builder activation
+  gate before any XML-generation, fragment-regeneration, or matrix-build claim.
