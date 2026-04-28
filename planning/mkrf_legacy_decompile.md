@@ -359,10 +359,10 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-`P56.4` is the active next bounded implementation move. Design the builder
-activation and matrix-build handoff order while keeping archival legacy
-compiled-output evidence separate from future FEMIC-regenerated XML and track
-outputs.
+`P56.5` is the active next bounded implementation move. Resolve the real MKRF
+source-input publication boundary, including fragments/checkpoint/boundary
+requirements and the `Base TFL26` literal-description mismatch, before any
+builder activation or matrix-build execution.
 
 Completed `P56.1` planning boundary:
 
@@ -393,9 +393,11 @@ Remaining Phase 56 sequence after `P56.1`:
   pending DataLad/git-annex availability. No ForestModel XML, fragments, or
   matrix-build outputs were generated.
 - `P56.4`:
-  design the activation and matrix-build handoff order for curve, retention,
-  attribute, stratum, full XML emission, and future FEMIC-regenerated track
-  outputs while keeping legacy compiled-output evidence separate.
+  completed. `metadata/legacy_builder_activation_plan.yaml` records the
+  design-only activation order: curve emission, retention/netdown emission,
+  attribute emission, stratum/treat emission, full ForestModel XML emission,
+  and Patchworks matrix-build handoff. Archival legacy evidence remains
+  separate from future FEMIC-regenerated outputs; no builder was activated.
 - `P56.5`:
   resolve the real MKRF source-input publication boundary, including
   fragments/checkpoint/boundary requirements and the `Base TFL26` literal-

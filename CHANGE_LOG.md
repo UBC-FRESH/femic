@@ -15292,3 +15292,15 @@
   - no Patchworks matrix build was run;
   - no compiled track payloads were imported as normal Git blobs; and
   - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Designed the MKRF builder activation handoff order
+- `#172` / `P56.4` bounded design slice:
+  - added `metadata/legacy_builder_activation_plan.yaml` and `runbooks/LEGACY_BUILDER_ACTIVATION_PLAN.md` to the MKRF instance;
+  - defined the future activation order as curve emission, retention/netdown emission, attribute emission, stratum/treat emission, full ForestModel XML emission, then Patchworks matrix-build handoff;
+  - kept archival legacy evidence separate from future FEMIC-regenerated XML and track outputs; and
+  - set `P56.5` source-input publication boundary resolution as the next bounded move.
+- Scope boundary preserved:
+  - no builder was activated;
+  - no ForestModel XML was generated;
+  - no fragments were regenerated;
+  - no Patchworks matrix build was run; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.

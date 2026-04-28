@@ -1526,10 +1526,10 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P56.3a Confirm readable legacy source CSVs for `Tracks/curves.csv`, `features.csv`, and `products.csv`.
   - [x] P56.3b Import them into the MKRF instance as archival/reference evidence only if DataLad/git-annex can track them correctly.
   - [x] P56.3c Compare their contract surfaces to Curve Library, Attrib, Treat, and account metadata without running matrix build.
-- [ ] P56.4 Design builder activation and matrix-build handoff order (`#172`)
-  - [ ] P56.4a Define activation order for curve, retention, attribute, stratum, full XML emission, and matrix-build handoff surfaces.
-  - [ ] P56.4b Separate legacy compiled-output evidence from future FEMIC-regenerated XML and track outputs.
-  - [ ] P56.4c Preserve default exporter behavior and keep MKRF activation opt-in until validation gates are met.
+- [x] P56.4 Design builder activation and matrix-build handoff order (`#172`)
+  - [x] P56.4a Define activation order for curve, retention, attribute, stratum, full XML emission, and matrix-build handoff surfaces.
+  - [x] P56.4b Separate legacy compiled-output evidence from future FEMIC-regenerated XML and track outputs.
+  - [x] P56.4c Preserve default exporter behavior and keep MKRF activation opt-in until validation gates are met.
 - [ ] P56.5 Resolve real MKRF source-input publication boundary (`#172`)
   - [ ] P56.5a Identify fragments/checkpoint/boundary inputs required by the MKRF run profile.
   - [ ] P56.5b Decide whether `03_MappingAnalysisData/*`, roads, outputs, or direct workbook publication are required for reproducibility.
