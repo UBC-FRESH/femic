@@ -118,9 +118,10 @@ unresolved_seams:
       - not yet clear whether it is contextual QA only or part of a reproducible preprocessing contract
 
 next_bounded_step:
-  recommendation: translate_netdown_review_to_build_contract
+  recommendation: translate_attrib_review_to_build_contract
   description:
-    Translate the legacy Netdown surface into an explicit review-to-build
-    contract before broadening into Attrib, Treat, reconciliation, or upstream
-    mapping surfaces. The Curve Library contract now lives in the MKRF instance
-    as review-to-build metadata and does not activate beforeCurves.
+    Translate the legacy Attrib surface into an explicit review-to-build
+    contract before broadening into Treat, reconciliation, or upstream mapping
+    surfaces. The Curve Library and Netdown contracts now live in the MKRF
+    instance as review-to-build metadata and do not activate beforeCurves or
+    dumpRetention.

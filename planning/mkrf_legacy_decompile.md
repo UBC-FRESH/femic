@@ -304,7 +304,7 @@ Do exactly one next bounded move at a time. The roadmap is now the control
 surface for Phase 55 sequencing; implementation should not invent the next
 slice in chat.
 
-Completed Input Variables and Curve Library classification:
+Completed Input Variables, Curve Library, and Netdown classification:
 
 - `P55.14`:
   `max_inventory_age` is review metadata only because the current
@@ -321,18 +321,24 @@ Completed Input Variables and Curve Library classification:
   curve points; and treats blank cells as absent points, not zeroes. It is a
   review-to-build contract only: `beforeCurves` remains inactive until a later
   generated `Curves.xml` fragment-equivalence pass.
+- `P55.16`:
+  the workbook `Netdown` / `netdownCriteria`, `netdownNames`, and
+  `netdownFactors` surfaces are translated into
+  `config/legacy_xml_builder/netdown.mkrf.yaml` in the MKRF instance. The
+  contract preserves the two complete proportional reassignment rules, keeps
+  their `feature.area.retention.total` factor assignments, and preserves the
+  unmatched feature-factor row plus 85 trailing `0.07` values as review-only
+  metadata. It does not activate `dumpRetention` or proportional fragment area
+  splitting.
 
 Active next bounded move:
 
-- `P55.16`:
-  translate the legacy `Netdown` surface into an explicit review-to-build
-  contract.
-
-Planned follow-on sequence after `P55.16`:
-
 - `P55.17`:
   translate the legacy `Attrib` surface into an explicit review-to-build
-  contract, including formula dependencies such as `frd`.
+  contract.
+
+Planned follow-on sequence after `P55.17`:
+
 - `P55.18`:
   translate the legacy `Treat` stratum bundle into an explicit review-to-build
   contract.
@@ -340,8 +346,8 @@ Planned follow-on sequence after `P55.16`:
   reconcile the workbook-derived ForestModel contract against compiled legacy
   outputs and publish a rebuild-readiness go/no-go note.
 
-Do not start `Attrib`, `Treat`, reconciliation, or upstream mapping work until
-`P55.16` is closed and the roadmap is updated again.
+Do not start `Treat`, reconciliation, or upstream mapping work until `P55.17`
+is closed and the roadmap is updated again.
 
 Hard boundaries for this sequence:
 

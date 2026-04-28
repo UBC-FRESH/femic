@@ -15196,3 +15196,13 @@
   - `beforeCurves` remains inactive pending generated `Curves.xml` fragment reconciliation;
   - no exporter behavior changed; and
   - no `Netdown`, `Attrib`, `Treat`, `03_MappingAnalysisData/*`, `Outputs/*`, direct workbook publication, or runnable rebuild claim was introduced by this slice.
+## 2026-04-28 - Translated the MKRF Netdown contract
+- `#172` / `P55.16` bounded reconstruction slice:
+  - added `config/legacy_xml_builder/netdown.mkrf.yaml` to the MKRF instance as the explicit review-to-build contract for the legacy workbook `Netdown` surface;
+  - preserved the two complete proportional reassignment rules for `status in managed and oper in operable` and `status in managed and oper in lowoper`;
+  - preserved the shared reassignment to `status = unmanaged`, the `0.1` and `0.2` netdown proportions, and the `feature.area.retention.total` factor assignments; and
+  - updated parent and instance planning/lineage docs so the next bounded move is `P55.17` Attrib translation.
+- Scope boundary preserved:
+  - `dumpRetention` and proportional fragment area splitting remain inactive;
+  - the unmatched feature-factor row and 85 trailing `0.07` values remain review metadata only; and
+  - no `Attrib`, `Treat`, `03_MappingAnalysisData/*`, `Outputs/*`, compiled-artifact substitution, direct workbook publication, or runnable rebuild claim was introduced by this slice.

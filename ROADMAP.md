@@ -1494,10 +1494,10 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P55.15a Map workbook curve names and curve table extract columns to FEMIC-native curve registry/table fields.
   - [x] P55.15b Decide which curve rows can become live Patchworks XML curve inputs from tracked extracts and which remain review evidence.
   - [x] P55.15c Add focused validation that the translated curve contract preserves legacy curve identifiers, age axes, and generated-XML include expectations.
-- [ ] P55.16 Translate the legacy `Netdown` surface into an explicit review-to-build contract (`#172`)
-  - [ ] P55.16a Map workbook `netdownCriteria`, `netdownNames`, and `netdownFactors` into candidate FEMIC netdown rule metadata.
-  - [ ] P55.16b Decide which netdown rules can safely become live retention/export behavior from current checkpoint fields.
-  - [ ] P55.16c Keep missing upstream/source-field requirements explicit rather than substituting compiled spatial or track artifacts as raw inputs.
+- [x] P55.16 Translate the legacy `Netdown` surface into an explicit review-to-build contract (`#172`)
+  - [x] P55.16a Map workbook `netdownCriteria`, `netdownNames`, and `netdownFactors` into candidate FEMIC netdown rule metadata.
+  - [x] P55.16b Decide which netdown rules can safely become live retention/export behavior from current checkpoint fields.
+  - [x] P55.16c Keep missing upstream/source-field requirements explicit rather than substituting compiled spatial or track artifacts as raw inputs.
 - [ ] P55.17 Translate the legacy `Attrib` surface into an explicit review-to-build contract (`#172`)
   - [ ] P55.17a Map workbook `attributes` rows to candidate Patchworks feature/product/account builders and identify formula dependencies such as `frd`.
   - [ ] P55.17b Decide which attribute rows are live-build candidates versus review-only formulas pending `Netdown`, curve, or `Treat` dependencies.
