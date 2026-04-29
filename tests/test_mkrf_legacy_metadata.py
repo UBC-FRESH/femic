@@ -712,7 +712,7 @@ def test_mkrf_source_input_publication_boundary_records_p56_5_decision() -> None
     boundary = yaml.safe_load(boundary_path.read_text(encoding="utf-8"))
 
     assert boundary["phase"] == "P56.5"
-    assert boundary["last_updated_phase"] == "P58.3a"
+    assert boundary["last_updated_phase"] == "P58.3b"
     assert boundary["decision"] == {
         "source_input_publication_boundary": "resolved_for_next_readiness_gate",
         "payload_intake": "not_started",
@@ -754,7 +754,7 @@ def test_mkrf_source_input_publication_boundary_records_p56_5_decision() -> None
         "blocked_pending_git_annex_for_fragments"
     )
     assert lanes["raw_source_reproducibility_lane"]["status"] == (
-        "resultant_to_fragments_publication_boundary_reconstructed"
+        "resultant_boundary_reconstructed_and_substitute_separation_explicit"
     )
     reconstructed = lanes["raw_source_reproducibility_lane"][
         "reconstructed_fragments_publication_boundary"
@@ -804,6 +804,67 @@ def test_mkrf_source_input_publication_boundary_records_p56_5_decision() -> None
             ),
         ],
     }
+    assert lanes["raw_source_reproducibility_lane"]["substitute_boundary"] == {
+        "raw_source_rule": {
+            "status": "required_for_source_faithful_claim",
+            "definition": [
+                (
+                    "Raw source means the upstream "
+                    "`03_MappingAnalysisData/*` surfaces that feed "
+                    "`Resultant.gdb/Resultant`, not later published runtime "
+                    "artifacts."
+                ),
+                (
+                    "A source-faithful rebuild claim must start from those "
+                    "upstream source surfaces or a fully documented "
+                    "reproduction of them."
+                ),
+            ],
+        },
+        "compiled_runtime_substitutes": {
+            "status": "not_acceptable_as_raw_source",
+            "rejected_surfaces": [
+                "MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/Spatial/fragments.*",
+                "MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/Spatial/topo_frag100.csv",
+                "data/legacy_mkrf/compiled_spatial/fragments.*",
+                "data/legacy_mkrf/compiled_spatial/topo_frag100.csv",
+            ],
+            "rationale": [
+                (
+                    "These are compiled runtime publications used for "
+                    "matrix-build and launch validation, not upstream source "
+                    "inputs."
+                ),
+                (
+                    "They may serve as comparison evidence, but not as "
+                    "substitutes for source-faithful reconstruction."
+                ),
+            ],
+        },
+        "checkpoint_derived_substitutes": {
+            "status": "not_acceptable_as_raw_source",
+            "rejected_classes": [
+                "instance-local restart or resume checkpoints",
+                "exported fragments derived from previously compiled runtime lanes",
+                (
+                    "any derived boundary/checkpoint artifact created for "
+                    "debugging or restart convenience"
+                ),
+            ],
+            "rationale": [
+                (
+                    "Checkpoints are derived intermediates. They can support "
+                    "resume or debugging, but they do not answer raw-source "
+                    "provenance questions."
+                ),
+                (
+                    "P58.3 explicitly keeps checkpoint-derived artifacts "
+                    "separate from the upstream mapping and yield-prep "
+                    "source lane."
+                ),
+            ],
+        },
+    }
     assert lanes["current_femic_run_profile_lane"]["status"] == (
         "template_not_runnable_source_boundary"
     )
@@ -835,8 +896,8 @@ def test_mkrf_source_input_publication_boundary_records_p56_5_decision() -> None
         ],
     }
     assert boundary["next_bounded_step"] == {
-        "recommendation": "separate_raw_source_reconstruction_from_compiled_runtime_substitutes",
-        "roadmap_task": "P58.3b",
+        "recommendation": "publish_reproducibility_boundary_before_source_faithful_claim",
+        "roadmap_task": "P58.3c",
     }
 
 

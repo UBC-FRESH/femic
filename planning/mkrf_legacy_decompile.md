@@ -363,6 +363,24 @@ Active next bounded move:
 from the legacy planning corpus now that the native Attrib builder is live and
 matrix-build-proven.
 
+Current `P58.3` state:
+
+- `P58.3a`:
+  completed. The true upstream source publication boundary behind runtime
+  `fragments.*` is now narrowed to `03_MappingAnalysisData/Resultant.gdb/Resultant`
+  filtered to `CONTCLAS != 'X'`, projected to the runtime field subset, and
+  written through shapefile naming/type normalization.
+- `P58.3b`:
+  completed. Raw-source reconstruction is now kept explicitly separate from:
+  - compiled runtime `Spatial/fragments.*` / `topo_frag100.csv`;
+  - instance archival copies of those runtime files; and
+  - checkpoint-derived or resume/debug artifacts.
+  Those surfaces remain useful for runtime validation or debugging, but they do
+  not count as raw source for a source-faithful MKRF rebuild claim.
+- `P58.3c`:
+  active next bounded move. Publish the reproducibility boundary clearly before
+  making any source-faithful rebuild claim.
+
 Completed `P57.1` runnable-boundary plan:
 
 - minimal runnable means FEMIC-managed MKRF XML emission, Patchworks matrix

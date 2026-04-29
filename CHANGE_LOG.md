@@ -15417,3 +15417,14 @@
   - raw-source reconstruction from `03_MappingAnalysisData/*` is still out of scope for the current runnable claim;
   - the accepted `500/501` versus `650/651` merchantable-tail variance remains documented for very-old-stand behavior; and
   - broader scenario/runtime validation beyond matrix build plus launch proof remains a later phase.
+## 2026-04-29 - Separated MKRF raw-source reconstruction from runtime/checkpoint substitutes
+- `#172` / `P58.3b` bounded raw-source-boundary slice:
+  - updated the MKRF source-input publication boundary so the reconstructed `Resultant.gdb/Resultant -> fragments.*` publication contract now carries an explicit substitute boundary;
+  - recorded that compiled runtime `Spatial/fragments.*` / `topo_frag100.csv`, instance archival copies of those files, and checkpoint-derived artifacts are not acceptable substitutes for raw source in any source-faithful rebuild claim;
+  - updated the MKRF runbook/planning surfaces so `P58.3c` is now the active next bounded move; and
+  - added focused metadata regression coverage for the new raw-vs-runtime-vs-checkpoint boundary.
+- Scope boundary preserved:
+  - no upstream raw-source payload was ingested into the instance;
+  - no fragments were regenerated from source;
+  - no matrix build or launch was rerun; and
+  - no source-faithful MKRF rebuild claim was introduced by this slice.

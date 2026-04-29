@@ -1591,8 +1591,8 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P58.2b Prove the native Attrib surfaces preserve the accepted minimal-runnable behavior before removing the passthrough.
   - [x] P58.2c Keep any remaining unsupported formula dependencies explicit rather than silently collapsing them into static constants or copied XML.
 - [ ] P58.3 Reconstruct the raw-source input lane from the legacy planning corpus (`#172`)
-  - [ ] P58.3a Materialize and review the true upstream source surfaces under `03_MappingAnalysisData/*` that are required for reproducible fragments/topology generation.
-  - [ ] P58.3b Separate raw-source reconstruction from checkpoint-derived or compiled-runtime substitutes.
+  - [x] P58.3a Materialize and review the true upstream source surfaces under `03_MappingAnalysisData/*` that are required for reproducible fragments/topology generation.
+  - [x] P58.3b Separate raw-source reconstruction from checkpoint-derived or compiled-runtime substitutes.
   - [ ] P58.3c Publish the reproducibility boundary before claiming a source-faithful MKRF rebuild.
 - [ ] P58.4 Broaden scenario and runtime validation beyond the minimal launch proof (`#172`)
   - [ ] P58.4a Resolve the `InitialTargets` / scenario-target seam enough to exercise a representative nontrivial runtime path.
