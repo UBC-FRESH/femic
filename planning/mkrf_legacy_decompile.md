@@ -480,8 +480,36 @@ Planned Phase 58 sequence after minimal runnable closeout:
   reconstruction is pinned for the later from-scratch FEMIC-native rebuild
   phase.
 - `P58.5`:
-  tighten any remaining legacy-fidelity caveats only where they change real
-  model behavior or validation conclusions.
+  close Phase 58 as the PoC benchmark lane: accept the current merch-tail
+  variance as non-blocking for PoC, treat exact compiled curve-id parity as
+  non-essential unless it changes a later rebuild acceptance gate, and pin the
+  unresolved `THLB4070(...)` / `UWR(...)` / missing `InitialTargets`
+  helper-library seams to the later from-scratch rebuild rather than spending
+  more time on PoC fidelity cleanup.
+- `P59.1`:
+  define the target contract and acceptance gates for the real from-scratch
+  MKRF rebuild under child issue `#173`, using K3Z/TSA29-style FEMIC instance
+  structure and workflow conventions as the governing default. The current PoC
+  lane remains benchmark/reference evidence only, not the architecture target.
+- `P59.2`:
+  define the canonical FEMIC-native MKRF instance layout and rebuild sequence
+  before new source-driven implementation begins.
+- `P59.3`:
+  reconstruct the raw-source geometry-to-runtime pipeline from
+  `03_MappingAnalysisData/*` as a source-faithful lane, not by reusing PoC
+  runtime/checkpoint substitutes.
+- `P59.4`:
+  rebuild the target/control lane from reviewed source contracts instead of
+  legacy checkpoint loading or unexplained compiled helper seams.
+- `P59.5`:
+  rebuild the full MKRF runtime package from source-faithful inputs and publish
+  the new canonical runtime outputs.
+- `P59.6`:
+  validate the rebuilt model against the accepted PoC benchmark surfaces and
+  the legacy evidence that still matters for acceptance.
+- `P59.7`:
+  publish closeout docs and decide whether the umbrella legacy-recovery issue
+  `#172` can close once the from-scratch rebuild is complete.
 
 Completed `P56.1` planning boundary:
 

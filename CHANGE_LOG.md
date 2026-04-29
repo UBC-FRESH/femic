@@ -15466,3 +15466,13 @@
   - the real runtime proof is the checkpoint-backed Patchworks GUI run with active targets that saved a representative scenario under `analysis/scenarios/foo`.
 - Remaining caveat:
   - this PoC proof does not claim source-faithful reconstruction of `THLB4070(...)` / `UWR(...)`, full `InitialTargets` helper recovery, or a hardened headless-launcher automation contract.
+## 2026-04-29 - Closed Phase 58 as the MKRF PoC benchmark lane and opened the from-scratch rebuild phase
+- `#172` / `P58.5` closeout:
+  - closed Phase 58 as the end of the MKRF PoC / reverse-engineering benchmark lane;
+  - recorded that the accepted `500/501` versus `650/651` merch-tail variance remains a deferred fidelity question for the later rebuild, not a PoC blocker;
+  - recorded that exact compiled curve-id preservation is not required for the PoC benchmark lane; and
+  - pinned unresolved legacy helper seams `THLB4070(...)`, `UWR(...)`, and the missing `InitialTargets/00_Target_Descriptions.bsh` library to the later from-scratch rebuild instead of spending more effort on PoC cleanup.
+- Opened the next implementation lane:
+  - created child issue `#173` (`Feature: rebuild MKRF from scratch on a FEMIC-native instance pattern`);
+  - added `Phase 59` to `ROADMAP.md` as the active from-scratch MKRF rebuild phase under `#173`; and
+  - updated `planning/mkrf_legacy_decompile.md` so the next bounded move is `P59.1`, not more PoC archaeology.

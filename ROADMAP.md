@@ -1590,11 +1590,11 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P58.2a Rebuild the currently deferred formula-heavy Attrib feature/product surfaces from the translated workbook contract instead of copying legacy `<select>` blocks.
   - [x] P58.2b Prove the native Attrib surfaces preserve the accepted minimal-runnable behavior before removing the passthrough.
   - [x] P58.2c Keep any remaining unsupported formula dependencies explicit rather than silently collapsing them into static constants or copied XML.
-- [ ] P58.3 Reconstruct the raw-source input lane from the legacy planning corpus (`#172`)
+- [x] P58.3 Reconstruct the raw-source input lane from the legacy planning corpus (`#172`)
   - [x] P58.3a Materialize and review the true upstream source surfaces under `03_MappingAnalysisData/*` that are required for reproducible fragments/topology generation.
   - [x] P58.3b Separate raw-source reconstruction from checkpoint-derived or compiled-runtime substitutes.
   - [x] P58.3c Publish the reproducibility boundary before claiming a source-faithful MKRF rebuild.
-- [ ] P58.4 Broaden scenario and runtime validation beyond the minimal launch proof (`#172`)
+- [x] P58.4 Broaden scenario and runtime validation beyond the minimal launch proof (`#172`)
   - [x] P58.4a Resolve the `InitialTargets` / scenario-target seam enough to exercise a representative nontrivial runtime path.
     - PoC boundary recorded on 2026-04-29: the active AAC-max `ScenarioSet.bsh` helper names `THLB4070(...)` and `UWR(...)` remain unmapped in the recovered corpus, so the PoC lane accepts them as deferred missing legacy seams instead of blocking completion.
     - For the PoC runtime benchmark, use the legacy `Outputs/001_Base/scenario/{targetSummary,targetStatus}.csv` checkpoint surfaces as the accepted target-control lane loaded through `analysis/base.pin`.
@@ -1602,7 +1602,39 @@ Notes: `planning/mkrf_legacy_decompile.md`
     - PoC smoke boundary recorded on 2026-04-29: generated MKRF XML and generated track tables remained on the accepted runtime lane, and the checkpoint-backed `analysis/base.pin` loaded in Patchworks GUI with active targets and a saved representative scenario under `analysis/scenarios/foo`.
   - [x] P58.4c Record which runtime behaviors remain unvalidated after the broadened smoke suite.
     - Remaining PoC caveats recorded on 2026-04-29: the runtime proof covers the accepted benchmark lane only, not source-faithful reconstruction of `THLB4070(...)` / `UWR(...)`, not full helper-library recovery under `InitialTargets/00_Target_Descriptions.bsh`, and not headless-launcher automation guarantees.
-- [ ] P58.5 Tighten legacy-fidelity caveats that remain non-blocking today (`#172`)
-  - [ ] P58.5a Decide whether the accepted `500/501` versus `650/651` merch-tail variance should remain accepted or be eliminated in a later fidelity lane.
-  - [ ] P58.5b Decide whether exact compiled curve-id preservation matters for any downstream regression surface.
-  - [ ] P58.5c Keep low-value legacy-faithfulness work out of the critical path unless it changes real model behavior or validation conclusions.
+- [x] P58.5 Close Phase 58 as the PoC / reverse-engineering benchmark lane (`#172`)
+  - [x] P58.5a Record that the accepted `500/501` versus `650/651` merch-tail variance remains a deferred fidelity question for the later from-scratch rebuild rather than a PoC blocker.
+  - [x] P58.5b Record that exact compiled curve-id preservation is not required for the PoC benchmark lane and belongs to later comparison work only if it affects a real rebuild acceptance gate.
+  - [x] P58.5c Pin unresolved legacy helper seams `THLB4070(...)`, `UWR(...)`, and the missing `InitialTargets/00_Target_Descriptions.bsh` library to the later from-scratch rebuild instead of spending more PoC effort on them.
+
+## Phase 59: From-Scratch MKRF FEMIC-Native Rebuild
+Notes: `planning/mkrf_legacy_decompile.md`
+
+- [ ] P59.1 Define the target instance contract and acceptance gates for the new MKRF rebuild (`#173`)
+  - [ ] P59.1a Make K3Z/TSA29-style FEMIC instance organization and workflow conventions the governing default for the new MKRF rebuild.
+  - [ ] P59.1b Treat PoC artifacts as benchmark/reference evidence only, not as the target architecture contract.
+  - [ ] P59.1c Require that any legacy behavior carried forward into the new rebuild be justified by source evidence or benchmark necessity.
+- [ ] P59.2 Define the canonical FEMIC-native MKRF instance layout using K3Z/TSA29 patterns (`#173`)
+  - [ ] P59.2a Decide the canonical repo/instance/runtime/doc surface layout before source-driven rebuild work starts.
+  - [ ] P59.2b Define the rebuild sequencing and validation contracts for the new instance lane.
+  - [ ] P59.2c Keep benchmark/reference artifacts clearly separated from the new source-faithful build surfaces.
+- [ ] P59.3 Reconstruct the raw-source geometry-to-runtime pipeline from `03_MappingAnalysisData/*` (`#173`)
+  - [ ] P59.3a Rebuild the geometry publication path from upstream source surfaces rather than accepted compiled-runtime substitutes.
+  - [ ] P59.3b Rebuild the runtime spatial/package handoff with explicit lineage and acceptance checks.
+  - [ ] P59.3c Keep checkpoint-derived or compiled-runtime artifacts out of the source-faithful rebuild claim surface.
+- [ ] P59.4 Rebuild the target/control lane from reviewed source contracts instead of legacy checkpoint loading (`#173`)
+  - [ ] P59.4a Replace the PoC checkpoint-backed target-control lane with a source-driven FEMIC-native control surface.
+  - [ ] P59.4b Reconstruct or replace legacy scenario-target semantics only where they are justified by source evidence or benchmark necessity.
+  - [ ] P59.4c Keep unexplained legacy compiled control seams out of the new build unless they become required by a documented acceptance gate.
+- [ ] P59.5 Rebuild the full MKRF runtime package from source-faithful inputs (`#173`)
+  - [ ] P59.5a Generate the runtime XML, tracks, and control surfaces from the new FEMIC-native rebuild lane.
+  - [ ] P59.5b Re-run Matrix Builder and runtime assembly against the rebuilt source-faithful package.
+  - [ ] P59.5c Keep generated outputs and lineage surfaces synchronized as the new canonical MKRF runtime package.
+- [ ] P59.6 Validate the rebuilt model against the PoC benchmark and legacy evidence (`#173`)
+  - [ ] P59.6a Compare the rebuilt runtime against the accepted PoC benchmark surfaces.
+  - [ ] P59.6b Compare the rebuilt runtime against relevant legacy evidence where it still matters for acceptance.
+  - [ ] P59.6c Record which observed differences are accepted redesign choices versus unresolved regressions.
+- [ ] P59.7 Publish closeout docs and decide whether `#172` can close (`#173`)
+  - [ ] P59.7a Update the parent and instance docs/runbooks to teach the new MKRF rebuild lane.
+  - [ ] P59.7b Record the final claim boundary between benchmark archaeology and the new source-faithful rebuild.
+  - [ ] P59.7c Decide whether the umbrella legacy-recovery issue `#172` can close once the from-scratch rebuild phase is complete.
