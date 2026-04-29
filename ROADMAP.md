@@ -1595,10 +1595,13 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P58.3b Separate raw-source reconstruction from checkpoint-derived or compiled-runtime substitutes.
   - [x] P58.3c Publish the reproducibility boundary before claiming a source-faithful MKRF rebuild.
 - [ ] P58.4 Broaden scenario and runtime validation beyond the minimal launch proof (`#172`)
-  - [ ] P58.4a Resolve the `InitialTargets` / scenario-target seam enough to exercise a representative nontrivial runtime path.
-    - Blocker recorded on 2026-04-29: `000_Targets_Builder.xlsx` plus the recovered target fragments deterministically cover `Harvest`, `grn`, `biod`, `wat`, and `vqo`, but the active AAC-max `ScenarioSet.bsh` helper names `THLB4070(...)` and `UWR(...)` still do not map to any recovered workbook sheet, generated target family, or adjacent legacy control artifact.
-  - [ ] P58.4b Define and run a bounded smoke suite over generated XML, generated tracks, and at least one representative launch/runtime scenario.
-  - [ ] P58.4c Record which runtime behaviors remain unvalidated after the broadened smoke suite.
+  - [x] P58.4a Resolve the `InitialTargets` / scenario-target seam enough to exercise a representative nontrivial runtime path.
+    - PoC boundary recorded on 2026-04-29: the active AAC-max `ScenarioSet.bsh` helper names `THLB4070(...)` and `UWR(...)` remain unmapped in the recovered corpus, so the PoC lane accepts them as deferred missing legacy seams instead of blocking completion.
+    - For the PoC runtime benchmark, use the legacy `Outputs/001_Base/scenario/{targetSummary,targetStatus}.csv` checkpoint surfaces as the accepted target-control lane loaded through `analysis/base.pin`.
+  - [x] P58.4b Define and run a bounded smoke suite over generated XML, generated tracks, and at least one representative launch/runtime scenario.
+    - PoC smoke boundary recorded on 2026-04-29: generated MKRF XML and generated track tables remained on the accepted runtime lane, and the checkpoint-backed `analysis/base.pin` loaded in Patchworks GUI with active targets and a saved representative scenario under `analysis/scenarios/foo`.
+  - [x] P58.4c Record which runtime behaviors remain unvalidated after the broadened smoke suite.
+    - Remaining PoC caveats recorded on 2026-04-29: the runtime proof covers the accepted benchmark lane only, not source-faithful reconstruction of `THLB4070(...)` / `UWR(...)`, not full helper-library recovery under `InitialTargets/00_Target_Descriptions.bsh`, and not headless-launcher automation guarantees.
 - [ ] P58.5 Tighten legacy-fidelity caveats that remain non-blocking today (`#172`)
   - [ ] P58.5a Decide whether the accepted `500/501` versus `650/651` merch-tail variance should remain accepted or be eliminated in a later fidelity lane.
   - [ ] P58.5b Decide whether exact compiled curve-id preservation matters for any downstream regression surface.

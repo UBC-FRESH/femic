@@ -15450,3 +15450,19 @@
   - no partial scenario-target library was left active in the runtime scaffold;
   - no broadened scenario run was claimed as valid; and
   - `P58.4a` remains blocked pending corpus evidence for the unresolved helper families.
+## 2026-04-29 - Accepted the PoC target-control checkpoint lane and pinned the missing helper seam
+- `#172` / `P58.4a` PoC boundary decision:
+  - accepted `THLB4070(...)` and `UWR(...)` as deferred missing legacy helper seams for the benchmark-only PoC stage instead of continuing to block completion on their unresolved provenance;
+  - copied the legacy `Outputs/001_Base/scenario/targetSummary.csv` and `targetStatus.csv` surfaces into `models/mkrf_patchworks_model/analysis/` as `initialTargetSummary.csv` and `initialTargetStatus.csv`;
+  - updated `analysis/base.pin` to load those legacy checkpoint target surfaces directly during runtime setup; and
+  - updated roadmap/planning notes so full `InitialTargets` helper reconstruction is now explicitly pinned for the later from-scratch FEMIC-native rebuild phase rather than this PoC benchmark stage.
+- Scope boundary preserved:
+  - the `InitialTargets/00_Target_Descriptions.bsh` helper library remains unresolved and fail-fast;
+  - no source-faithful claim was made for `THLB4070` or `UWR`;
+  - the accepted checkpoint lane is benchmark/runtime-control evidence only; and
+  - full helper reconstruction is pinned for the later from-scratch FEMIC-native rebuild phase.
+- Validation note:
+  - generated MKRF XML and generated track tables stayed on the accepted runtime lane; and
+  - the real runtime proof is the checkpoint-backed Patchworks GUI run with active targets that saved a representative scenario under `analysis/scenarios/foo`.
+- Remaining caveat:
+  - this PoC proof does not claim source-faithful reconstruction of `THLB4070(...)` / `UWR(...)`, full `InitialTargets` helper recovery, or a hardened headless-launcher automation contract.
