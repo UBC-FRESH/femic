@@ -1638,3 +1638,26 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [ ] P59.7a Update the parent and instance docs/runbooks to teach the new MKRF rebuild lane.
   - [ ] P59.7b Record the final claim boundary between benchmark archaeology and the new source-faithful rebuild.
   - [ ] P59.7c Decide whether the umbrella legacy-recovery issue `#172` can close once the from-scratch rebuild phase is complete.
+
+## Phase 60: First-Class Windows Arbutus Auth Workflow
+
+- [x] P60.1 Plan and define the Windows Arbutus auth workflow contract (`#174`)
+  - [x] P60.1a Add the first-class auth workflow to the roadmap before implementation starts.
+  - [x] P60.1b Define the user-local file contract for shared credentials, profile registry, and status marker.
+  - [x] P60.1c Preserve legacy single-bucket `S3_BUCKET_NAME` compatibility only as a migration bridge.
+- [x] P60.2 Add multi-profile Windows Arbutus auth status/init commands (`#174`)
+  - [x] P60.2a Add `femic prep arbutus-auth-status` as the non-mutating auth/profile/marker probe.
+  - [x] P60.2b Add `femic prep arbutus-auth-init` to scaffold missing local files, prompt for missing values, and validate `HeadBucket`.
+  - [x] P60.2c Keep secrets out of CLI flags, command output, and persisted non-secret marker files.
+- [x] P60.3 Persist a non-secret known-working marker for the current environment (`#174`)
+  - [x] P60.3a Write `%USERPROFILE%\\.config\\femic\\arbutus-status.yaml` only after successful validation.
+  - [x] P60.3b Mark saved state stale when host/user, env file mtime, profile config, shell env, or validation results drift.
+  - [x] P60.3c Support optional dataset/remote validation without treating it as globally required for every profile.
+- [x] P60.4 Integrate the workflow into existing validation and docs (`#174`)
+  - [x] P60.4a Update `prep validate-case` Windows Arbutus messaging to point at the new status/init workflow and current marker state.
+  - [x] P60.4b Add a dedicated Windows Arbutus auth/bootstrap guide and update existing developer/public-data docs.
+  - [x] P60.4c Update `AGENTS.md` so agents check the status command/marker first instead of improvising auth recovery.
+- [x] P60.5 Validate, document, and publish the workflow (`#174`)
+  - [x] P60.5a Add focused tests for fresh bootstrap, stale/current markers, legacy compatibility, and dataset remote checks.
+  - [x] P60.5b Run targeted CLI/docs validation and keep Sphinx warning-free.
+  - [x] P60.5c Post matching GitHub progress comments so the issue trail documents the workflow end to end.

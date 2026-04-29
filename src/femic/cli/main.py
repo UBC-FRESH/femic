@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import os
 import csv
+import getpass
+import platform
 import subprocess
 import sys
 from datetime import UTC, datetime
@@ -357,6 +359,15 @@ console = Console()
 
 WINDOWS_ARBUTUS_ENV_FILE_RELATIVE = Path(".config") / "femic" / "arbutus.env"
 WINDOWS_ARBUTUS_LOADER_RELATIVE = Path(".config") / "femic" / "load-arbutus-env.ps1"
+WINDOWS_ARBUTUS_LOADER_SH_RELATIVE = Path(".config") / "femic" / "load-arbutus-env.sh"
+WINDOWS_ARBUTUS_PROFILES_FILE_RELATIVE = (
+    Path(".config") / "femic" / "arbutus-profiles.yaml"
+)
+WINDOWS_ARBUTUS_STATUS_FILE_RELATIVE = Path(".config") / "femic" / "arbutus-status.yaml"
+WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME = "arbutus-s3"
+WINDOWS_ARBUTUS_LEGACY_PROFILE_NAME = "legacy-default"
+WINDOWS_ARBUTUS_PUBLIC_DATA_PROFILE_NAME = "public-data"
+WINDOWS_ARBUTUS_STATUS_SCHEMA_VERSION = 1
 WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET = "ubc-fresh-femic-public-data"
 WINDOWS_CANONICAL_TSA_BOUNDARY_RELATIVE = Path("data") / "bc" / "tsa" / "FADM_TSA.gdb"
 WINDOWS_ARBUTUS_REQUIRED_ENV_KEYS = (
@@ -1768,6 +1779,564 @@ def _resolve_windows_user_local_path(relative_path: Path) -> Path | None:
     return Path(userprofile) / relative_path
 
 
+def _windows_arbutus_loader_paths() -> dict[str, Path | None]:
+    """Return the user-local Windows Arbutus helper paths."""
+    return {
+        "env_file": _resolve_windows_user_local_path(WINDOWS_ARBUTUS_ENV_FILE_RELATIVE),
+        "loader_ps1": _resolve_windows_user_local_path(WINDOWS_ARBUTUS_LOADER_RELATIVE),
+        "loader_sh": _resolve_windows_user_local_path(
+            WINDOWS_ARBUTUS_LOADER_SH_RELATIVE
+        ),
+        "profiles_file": _resolve_windows_user_local_path(
+            WINDOWS_ARBUTUS_PROFILES_FILE_RELATIVE
+        ),
+        "status_file": _resolve_windows_user_local_path(
+            WINDOWS_ARBUTUS_STATUS_FILE_RELATIVE
+        ),
+    }
+
+
+def _windows_arbutus_file_mtime_utc(path: Path) -> str:
+    """Return a deterministic UTC timestamp string for a local file."""
+    return datetime.fromtimestamp(path.stat().st_mtime, UTC).isoformat()
+
+
+def _windows_arbutus_access_key_suffix(access_key_id: str) -> str:
+    """Return a non-secret access-key suffix for status markers."""
+    value = str(access_key_id).strip()
+    if not value:
+        return ""
+    return value[-4:]
+
+
+def _windows_arbutus_current_identity() -> dict[str, str]:
+    """Return the non-secret host/user identity for the current environment."""
+    return {
+        "host": platform.node().strip(),
+        "user": getpass.getuser().strip(),
+    }
+
+
+def _windows_arbutus_loader_template_ps1() -> str:
+    """Return the canonical PowerShell loader script."""
+    return """$envFile = Join-Path $env:USERPROFILE '.config\\femic\\arbutus.env'
+if (-not (Test-Path $envFile)) {
+    throw "Arbutus env file not found: $envFile"
+}
+
+$loaded = New-Object System.Collections.Generic.List[string]
+foreach ($line in Get-Content -LiteralPath $envFile) {
+    $trimmed = $line.Trim()
+    if (-not $trimmed -or $trimmed.StartsWith('#')) {
+        continue
+    }
+
+    $parts = $trimmed -split '=', 2
+    if ($parts.Count -ne 2) {
+        throw "Invalid line in ${envFile}: $line"
+    }
+
+    $name = $parts[0].Trim()
+    $value = $parts[1].Trim()
+    if (-not $name) {
+        throw "Missing variable name in ${envFile}: $line"
+    }
+
+    Set-Item -Path ("Env:{0}" -f $name) -Value $value
+    $loaded.Add($name)
+}
+
+if ($loaded.Count -eq 0) {
+    Write-Host 'Loaded Arbutus env vars: none'
+} else {
+    Write-Host ('Loaded Arbutus env vars: ' + ($loaded -join ', '))
+}
+"""
+
+
+def _windows_arbutus_loader_template_sh() -> str:
+    """Return the canonical POSIX-shell loader script."""
+    return """#!/usr/bin/env bash
+set -euo pipefail
+
+env_file="${HOME}/.config/femic/arbutus.env"
+if [[ ! -f "$env_file" ]]; then
+  echo "Arbutus env file not found: $env_file" >&2
+  return 1 2>/dev/null || exit 1
+fi
+
+loaded=()
+while IFS= read -r line || [[ -n "$line" ]]; do
+  trimmed="${line#${line%%[![:space:]]*}}"
+  if [[ -z "$trimmed" || "${trimmed:0:1}" == "#" ]]; then
+    continue
+  fi
+
+  key="${trimmed%%=*}"
+  if [[ "$trimmed" != *"="* || -z "$key" ]]; then
+    echo "Invalid line in $env_file: $line" >&2
+    return 1 2>/dev/null || exit 1
+  fi
+
+  value="${trimmed#*=}"
+  export "$key=$value"
+  loaded+=("$key")
+done < "$env_file"
+
+if [[ ${#loaded[@]} -eq 0 ]]; then
+  echo "Loaded Arbutus env vars: none"
+else
+  printf 'Loaded Arbutus env vars: %s\\n' "$(IFS=', '; echo "${loaded[*]}")"
+fi
+"""
+
+
+def _windows_arbutus_profiles_template() -> str:
+    """Return the default multi-profile registry scaffold."""
+    return (
+        "profiles:\n"
+        "  public-data:\n"
+        f"    bucket_name: {WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET}\n"
+        f"    remote_name: {WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME}\n"
+        "    dataset_path_hint: external/femic-public-data\n"
+        "    note: Known public-data mirror workflow.\n"
+    )
+
+
+def _windows_arbutus_env_template(existing_values: dict[str, str] | None = None) -> str:
+    """Return the shared Arbutus env-file scaffold."""
+    values = dict(existing_values or {})
+    lines = [
+        "# Fill in the secret values locally. Do not commit this file.",
+        f"AWS_ACCESS_KEY_ID={values.get('AWS_ACCESS_KEY_ID', '')}",
+        f"AWS_SECRET_ACCESS_KEY={values.get('AWS_SECRET_ACCESS_KEY', '')}",
+        f"AWS_DEFAULT_REGION={values.get('AWS_DEFAULT_REGION', '')}",
+        f"S3_ENDPOINT_URL={values.get('S3_ENDPOINT_URL', '')}",
+    ]
+    legacy_bucket = values.get("S3_BUCKET_NAME", "").strip()
+    if legacy_bucket:
+        lines.append(f"S3_BUCKET_NAME={legacy_bucket}")
+    return "\n".join(lines) + "\n"
+
+
+def _scaffold_windows_arbutus_files(
+    *,
+    force_refresh_loaders: bool,
+    env_values: dict[str, str] | None = None,
+) -> dict[str, Path]:
+    """Create missing Windows Arbutus auth scaffolding under USERPROFILE."""
+    paths = _windows_arbutus_loader_paths()
+    resolved = {key: value for key, value in paths.items() if value is not None}
+    if len(resolved) != len(paths):
+        raise ValueError(
+            "USERPROFILE is not set; cannot scaffold Windows Arbutus auth files."
+        )
+
+    env_file = resolved["env_file"]
+    loader_ps1 = resolved["loader_ps1"]
+    loader_sh = resolved["loader_sh"]
+    profiles_file = resolved["profiles_file"]
+    status_file = resolved["status_file"]
+
+    env_file.parent.mkdir(parents=True, exist_ok=True)
+    if not env_file.exists():
+        env_file.write_text(
+            _windows_arbutus_env_template(env_values),
+            encoding="utf-8",
+        )
+    if force_refresh_loaders or not loader_ps1.exists():
+        loader_ps1.write_text(_windows_arbutus_loader_template_ps1(), encoding="utf-8")
+    if force_refresh_loaders or not loader_sh.exists():
+        loader_sh.write_text(_windows_arbutus_loader_template_sh(), encoding="utf-8")
+    if not profiles_file.exists():
+        profiles_file.write_text(_windows_arbutus_profiles_template(), encoding="utf-8")
+    if not status_file.exists():
+        status_file.write_text(
+            f"schema_version: {WINDOWS_ARBUTUS_STATUS_SCHEMA_VERSION}\nprofiles: {{}}\n",
+            encoding="utf-8",
+        )
+    return resolved
+
+
+def _write_simple_env_file(env_file: Path, values: dict[str, str]) -> None:
+    """Write a simple KEY=VALUE env file without shell quoting."""
+    env_file.write_text(_windows_arbutus_env_template(values), encoding="utf-8")
+
+
+def _load_windows_arbutus_profiles(
+    profiles_file: Path,
+    *,
+    env_values: dict[str, str] | None = None,
+) -> tuple[dict[str, dict[str, str]], list[str]]:
+    """Load the Windows Arbutus profile registry with legacy fallback support."""
+    profiles: dict[str, dict[str, str]] = {}
+    errors: list[str] = []
+    if profiles_file.exists():
+        try:
+            payload = yaml.safe_load(profiles_file.read_text(encoding="utf-8")) or {}
+        except yaml.YAMLError as exc:
+            return {}, [f"Invalid YAML in {profiles_file}: {exc}"]
+        raw_profiles = payload.get("profiles", payload)
+        if raw_profiles is None:
+            raw_profiles = {}
+        if not isinstance(raw_profiles, dict):
+            return {}, [
+                f"Invalid profile registry in {profiles_file}: expected a mapping."
+            ]
+        for name, raw_entry in raw_profiles.items():
+            if not isinstance(raw_entry, dict):
+                errors.append(
+                    f"Invalid profile entry `{name}` in {profiles_file}: expected a mapping."
+                )
+                continue
+            bucket_name = str(
+                raw_entry.get("bucket_name", raw_entry.get("bucket", ""))
+            ).strip()
+            remote_name = str(
+                raw_entry.get(
+                    "remote_name",
+                    raw_entry.get("remote", WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME),
+                )
+            ).strip()
+            dataset_path_hint = str(
+                raw_entry.get("dataset_path_hint", raw_entry.get("dataset_path", ""))
+            ).strip()
+            note = str(raw_entry.get("note", "")).strip()
+            if not bucket_name:
+                errors.append(
+                    f"Invalid profile entry `{name}` in {profiles_file}: missing bucket_name."
+                )
+                continue
+            profiles[str(name).strip()] = {
+                "bucket_name": bucket_name,
+                "remote_name": remote_name or WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME,
+                "dataset_path_hint": dataset_path_hint,
+                "note": note,
+            }
+
+    legacy_bucket = str((env_values or {}).get("S3_BUCKET_NAME", "")).strip()
+    if legacy_bucket and WINDOWS_ARBUTUS_LEGACY_PROFILE_NAME not in profiles:
+        profiles[WINDOWS_ARBUTUS_LEGACY_PROFILE_NAME] = {
+            "bucket_name": legacy_bucket,
+            "remote_name": WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME,
+            "dataset_path_hint": "",
+            "note": "Legacy single-bucket env compatibility profile.",
+        }
+    return profiles, errors
+
+
+def _write_windows_arbutus_profiles(
+    profiles_file: Path,
+    profiles: dict[str, dict[str, str]],
+) -> None:
+    """Persist the Windows Arbutus profile registry."""
+    payload = {
+        "profiles": {
+            name: {
+                "bucket_name": entry["bucket_name"],
+                "remote_name": entry["remote_name"],
+                "dataset_path_hint": entry.get("dataset_path_hint", ""),
+                "note": entry.get("note", ""),
+            }
+            for name, entry in sorted(profiles.items())
+        }
+    }
+    profiles_file.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+
+def _load_windows_arbutus_status(
+    status_file: Path,
+) -> tuple[dict[str, Any], list[str]]:
+    """Load the Windows Arbutus status marker file."""
+    if not status_file.exists():
+        return {
+            "schema_version": WINDOWS_ARBUTUS_STATUS_SCHEMA_VERSION,
+            "profiles": {},
+        }, []
+    try:
+        payload = yaml.safe_load(status_file.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError as exc:
+        return {}, [f"Invalid YAML in {status_file}: {exc}"]
+    if not isinstance(payload, dict):
+        return {}, [f"Invalid status marker in {status_file}: expected a mapping."]
+    profiles = payload.get("profiles", {})
+    if profiles is None:
+        profiles = {}
+    if not isinstance(profiles, dict):
+        return {}, [
+            f"Invalid status marker in {status_file}: `profiles` must be a mapping."
+        ]
+    payload["profiles"] = profiles
+    return payload, []
+
+
+def _write_windows_arbutus_status(
+    status_file: Path,
+    payload: dict[str, Any],
+) -> None:
+    """Persist the Windows Arbutus status marker file."""
+    status_file.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+
+def _select_windows_arbutus_profile(
+    *,
+    requested_profile: str | None,
+    profiles: dict[str, dict[str, str]],
+    bucket_name_override: str | None = None,
+    remote_name_override: str | None = None,
+    dataset_path_override: Path | None = None,
+) -> tuple[str | None, dict[str, str] | None, list[str]]:
+    """Choose the active Windows Arbutus profile."""
+    if requested_profile:
+        entry = profiles.get(requested_profile)
+        if entry is None:
+            if bucket_name_override:
+                return (
+                    requested_profile,
+                    {
+                        "bucket_name": bucket_name_override,
+                        "remote_name": remote_name_override
+                        or WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME,
+                        "dataset_path_hint": (
+                            str(dataset_path_override)
+                            if dataset_path_override is not None
+                            else ""
+                        ),
+                        "note": "",
+                    },
+                    [],
+                )
+            return None, None, [f"Unknown Arbutus profile `{requested_profile}`."]
+        selected = dict(entry)
+        if bucket_name_override:
+            selected["bucket_name"] = bucket_name_override
+        if remote_name_override:
+            selected["remote_name"] = remote_name_override
+        if dataset_path_override is not None:
+            selected["dataset_path_hint"] = str(dataset_path_override)
+        return requested_profile, selected, []
+
+    if bucket_name_override:
+        return (
+            "default",
+            {
+                "bucket_name": bucket_name_override,
+                "remote_name": remote_name_override
+                or WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME,
+                "dataset_path_hint": str(dataset_path_override)
+                if dataset_path_override
+                else "",
+                "note": "",
+            },
+            [],
+        )
+
+    if len(profiles) == 1:
+        profile_name, entry = next(iter(profiles.items()))
+        return profile_name, dict(entry), []
+
+    if WINDOWS_ARBUTUS_LEGACY_PROFILE_NAME in profiles:
+        return (
+            WINDOWS_ARBUTUS_LEGACY_PROFILE_NAME,
+            dict(profiles[WINDOWS_ARBUTUS_LEGACY_PROFILE_NAME]),
+            [],
+        )
+
+    if not profiles:
+        return None, None, ["No Arbutus profiles are configured yet."]
+    return None, None, ["Multiple Arbutus profiles exist; pass --profile explicitly."]
+
+
+def _current_arbutus_env_values() -> dict[str, str]:
+    """Return the currently loaded Arbutus-related environment values."""
+    return {
+        key: str(os.environ.get(key, "")).strip()
+        for key in WINDOWS_ARBUTUS_REQUIRED_ENV_KEYS
+    }
+
+
+def _shell_matches_arbutus_env_file(env_values: dict[str, str]) -> bool:
+    """Return whether the current shell matches the parsed shared env-file values."""
+    current_values = _current_arbutus_env_values()
+    return all(
+        current_values.get(key, "") == str(env_values.get(key, "")).strip()
+        for key in env_values
+    )
+
+
+def _merge_arbutus_validation_env_values(env_values: dict[str, str]) -> dict[str, str]:
+    """Return the effective env values used for validation probes."""
+    current_values = _current_arbutus_env_values()
+    return {
+        key: str(env_values.get(key, "")).strip() or current_values.get(key, "")
+        for key in WINDOWS_ARBUTUS_REQUIRED_ENV_KEYS
+    }
+
+
+def _probe_windows_arbutus_dataset_remote(
+    *,
+    dataset_path: Path,
+    remote_name: str,
+    env_values: dict[str, str],
+) -> tuple[bool | None, str]:
+    """Probe whether a dataset can enable the named Arbutus special remote."""
+    resolved_dataset_path = dataset_path.resolve()
+    if shutil.which("git") is None:
+        return None, "git not found on PATH; cannot probe `git annex enableremote`."
+    if not resolved_dataset_path.exists():
+        return False, f"dataset path does not exist: {resolved_dataset_path}"
+    command = [
+        "git",
+        "-C",
+        str(resolved_dataset_path),
+        "annex",
+        "enableremote",
+        remote_name,
+    ]
+    env = dict(os.environ)
+    env.update(env_values)
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=resolved_dataset_path,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+    except OSError as exc:
+        return False, f"`git annex enableremote {remote_name}` failed to start: {exc}"
+    except subprocess.TimeoutExpired:
+        return False, f"`git annex enableremote {remote_name}` timed out."
+    if completed.returncode == 0:
+        return True, ""
+    detail = (
+        completed.stderr.strip()
+        or completed.stdout.strip()
+        or f"exit={completed.returncode}"
+    )
+    return False, detail
+
+
+def _format_windows_arbutus_loader_guidance(
+    loader_path: Path, env_file: Path
+) -> list[str]:
+    """Return the canonical PowerShell loader guidance."""
+    loader_relative = WINDOWS_ARBUTUS_LOADER_RELATIVE.as_posix().replace("/", "\\")
+    env_relative = WINDOWS_ARBUTUS_ENV_FILE_RELATIVE.as_posix().replace("/", "\\")
+    loader_display = f"$env:USERPROFILE\\{loader_relative}"
+    env_display = f"$env:USERPROFILE\\{env_relative}"
+    inline_loader = (
+        f"$envFile = '{env_file}'; "
+        "Get-Content -LiteralPath $envFile | ForEach-Object { "
+        "$trimmed = $_.Trim(); "
+        "if (-not $trimmed -or $trimmed.StartsWith('#')) { return }; "
+        "$parts = $trimmed -split '=', 2; "
+        'if ($parts.Count -ne 2) { throw "Invalid line in $envFile: $_" }; '
+        "$name = $parts[0].Trim(); "
+        "$value = $parts[1].Trim(); "
+        'Set-Item -Path ("Env:{0}" -f $name) -Value $value }'
+    )
+    return [
+        "Load the current PowerShell session with:",
+        f"  Set-ExecutionPolicy -Scope Process Bypass -Force; . {loader_display}",
+        "If the loader script still cannot be dot-sourced, use the inline fallback:",
+        f"  {inline_loader}",
+        f"Shared env file path: {env_display}",
+        f"Loader script path: {loader_path}",
+    ]
+
+
+def _build_windows_arbutus_status_record(
+    *,
+    profile_name: str,
+    profile: dict[str, str],
+    env_file: Path,
+    loader_paths: list[Path],
+    dataset_path: Path | None,
+    env_values: dict[str, str],
+    validation_checks: dict[str, bool],
+) -> dict[str, Any]:
+    """Build a non-secret known-working status record."""
+    identity = _windows_arbutus_current_identity()
+    return {
+        "schema_version": WINDOWS_ARBUTUS_STATUS_SCHEMA_VERSION,
+        "profile_name": profile_name,
+        "bucket_name": profile["bucket_name"],
+        "endpoint_url": env_values["S3_ENDPOINT_URL"],
+        "remote_name": profile["remote_name"],
+        "dataset_path": str(dataset_path) if dataset_path is not None else "",
+        "access_key_suffix": _windows_arbutus_access_key_suffix(
+            env_values["AWS_ACCESS_KEY_ID"]
+        ),
+        "host_identity": identity["host"],
+        "user_identity": identity["user"],
+        "env_file_path": str(env_file),
+        "env_file_mtime_utc": _windows_arbutus_file_mtime_utc(env_file),
+        "loader_paths_present": [str(path) for path in loader_paths if path.exists()],
+        "validation_timestamp_utc": datetime.now(UTC).isoformat(),
+        "validation_checks": validation_checks,
+    }
+
+
+def _windows_arbutus_status_stale_reasons(
+    *,
+    record: dict[str, Any] | None,
+    profile_name: str,
+    profile: dict[str, str],
+    env_file: Path,
+    env_values: dict[str, str],
+    dataset_path: Path | None,
+    head_bucket_ok: bool | None,
+    dataset_ok: bool | None,
+) -> list[str]:
+    """Return the reasons a saved Arbutus status marker is stale."""
+    reasons: list[str] = []
+    if not record:
+        return ["No saved known-working marker exists for this profile."]
+    current_identity = _windows_arbutus_current_identity()
+    if str(record.get("schema_version", "")) != str(
+        WINDOWS_ARBUTUS_STATUS_SCHEMA_VERSION
+    ):
+        reasons.append(
+            "Status marker schema version differs from the current workflow."
+        )
+    if str(record.get("profile_name", "")) != profile_name:
+        reasons.append("Status marker profile name differs from the selected profile.")
+    if str(record.get("bucket_name", "")) != profile["bucket_name"]:
+        reasons.append("Status marker bucket differs from the selected profile.")
+    if str(record.get("remote_name", "")) != profile["remote_name"]:
+        reasons.append("Status marker remote differs from the selected profile.")
+    if str(record.get("endpoint_url", "")) != env_values["S3_ENDPOINT_URL"]:
+        reasons.append(
+            "Status marker endpoint differs from the current shared env values."
+        )
+    if str(record.get("host_identity", "")) != current_identity["host"]:
+        reasons.append(
+            "Status marker host identity differs from the current environment."
+        )
+    if str(record.get("user_identity", "")) != current_identity["user"]:
+        reasons.append(
+            "Status marker user identity differs from the current environment."
+        )
+    if not env_file.exists():
+        reasons.append("Shared env file is missing.")
+    elif str(record.get("env_file_mtime_utc", "")) != _windows_arbutus_file_mtime_utc(
+        env_file
+    ):
+        reasons.append("Shared env file mtime differs from the last validated state.")
+    if not _shell_matches_arbutus_env_file(env_values):
+        reasons.append("Current shell does not match the shared Arbutus env file.")
+    if head_bucket_ok is not True:
+        reasons.append("Current HeadBucket probe is not passing.")
+    if dataset_path is not None and dataset_ok is not True:
+        reasons.append(
+            "Dataset remote validation is not passing for the requested dataset."
+        )
+    return reasons
+
+
 def _parse_simple_env_file(env_file: Path) -> tuple[dict[str, str], list[str]]:
     """Parse a simple KEY=VALUE env file, preserving literal values."""
     values: dict[str, str] = {}
@@ -1805,14 +2374,6 @@ def _validate_windows_arbutus_env_file(env_file: Path) -> list[str]:
                 "with no surrounding quotes."
             )
     return errors
-
-
-def _current_arbutus_env_values() -> dict[str, str]:
-    """Return the currently loaded Arbutus-related environment values."""
-    return {
-        key: str(os.environ.get(key, "")).strip()
-        for key in WINDOWS_ARBUTUS_REQUIRED_ENV_KEYS
-    }
 
 
 def _probe_windows_arbutus_bucket(
@@ -1858,6 +2419,228 @@ def _probe_windows_arbutus_bucket(
     except BotoCoreError as exc:
         return False, f"bucket={bucket_name} probe_failed={exc}"
     return True, ""
+
+
+def _evaluate_windows_arbutus_auth_status(
+    *,
+    profile_name: str | None,
+    bucket_name: str | None = None,
+    dataset_path: Path | None = None,
+    remote_name: str | None = None,
+) -> dict[str, Any]:
+    """Evaluate Windows Arbutus auth/profile/marker state without mutating it."""
+    result: dict[str, Any] = {
+        "errors": [],
+        "warnings": [],
+        "env_file": None,
+        "loader_ps1": None,
+        "loader_sh": None,
+        "profiles_file": None,
+        "status_file": None,
+        "parsed_env_values": {},
+        "effective_env_values": {},
+        "profiles": {},
+        "selected_profile_name": None,
+        "selected_profile": None,
+        "env_file_exists": False,
+        "profiles_file_exists": False,
+        "status_file_exists": False,
+        "shell_env_loaded": False,
+        "head_bucket_ok": None,
+        "head_bucket_detail": "",
+        "dataset_ok": None,
+        "dataset_detail": "",
+        "status_record": None,
+        "status_marker_current": False,
+        "status_marker_stale_reasons": [],
+    }
+    if os.name != "nt":
+        result["errors"].append(
+            "Windows Arbutus auth workflow commands are only supported on Windows."
+        )
+        return result
+
+    paths = _windows_arbutus_loader_paths()
+    env_file = paths["env_file"]
+    loader_ps1 = paths["loader_ps1"]
+    loader_sh = paths["loader_sh"]
+    profiles_file = paths["profiles_file"]
+    status_file = paths["status_file"]
+    result.update(
+        {
+            "env_file": env_file,
+            "loader_ps1": loader_ps1,
+            "loader_sh": loader_sh,
+            "profiles_file": profiles_file,
+            "status_file": status_file,
+        }
+    )
+    if any(path is None for path in paths.values()):
+        result["errors"].append(
+            "USERPROFILE is not set; cannot resolve Windows Arbutus auth files."
+        )
+        return result
+    assert env_file is not None
+    assert loader_ps1 is not None
+    assert loader_sh is not None
+    assert profiles_file is not None
+    assert status_file is not None
+
+    result["env_file_exists"] = env_file.exists()
+    result["profiles_file_exists"] = profiles_file.exists()
+    result["status_file_exists"] = status_file.exists()
+
+    parsed_env_values: dict[str, str] = {}
+    if env_file.exists():
+        env_parse_errors = _validate_windows_arbutus_env_file(env_file)
+        result["errors"].extend(env_parse_errors)
+        parsed_env_values, parse_errors = _parse_simple_env_file(env_file)
+        result["errors"].extend(parse_errors)
+    else:
+        result["errors"].append(
+            f"Missing shared Arbutus env file: {env_file}. "
+            "Run `femic prep arbutus-auth-init` to scaffold it."
+        )
+    result["parsed_env_values"] = parsed_env_values
+
+    profiles, profile_errors = _load_windows_arbutus_profiles(
+        profiles_file,
+        env_values=parsed_env_values,
+    )
+    result["profiles"] = profiles
+    result["errors"].extend(profile_errors)
+    if not profiles_file.exists():
+        legacy_bucket = str(parsed_env_values.get("S3_BUCKET_NAME", "")).strip()
+        if legacy_bucket:
+            result["warnings"].append(
+                f"Missing Arbutus profile registry: {profiles_file}. "
+                "Using legacy single-bucket compatibility from `S3_BUCKET_NAME`; "
+                "run `femic prep arbutus-auth-init` to migrate to the "
+                "multi-profile workflow."
+            )
+        else:
+            result["errors"].append(
+                f"Missing Arbutus profile registry: {profiles_file}. "
+                "Run `femic prep arbutus-auth-init` to scaffold it."
+            )
+
+    selected_profile_name, selected_profile, selection_errors = (
+        _select_windows_arbutus_profile(
+            requested_profile=profile_name,
+            profiles=profiles,
+            bucket_name_override=bucket_name,
+            remote_name_override=remote_name,
+            dataset_path_override=dataset_path,
+        )
+    )
+    result["selected_profile_name"] = selected_profile_name
+    result["selected_profile"] = selected_profile
+    result["errors"].extend(selection_errors)
+
+    effective_env_values = _merge_arbutus_validation_env_values(parsed_env_values)
+    result["effective_env_values"] = effective_env_values
+    shell_env_loaded = (
+        _shell_matches_arbutus_env_file(effective_env_values)
+        if parsed_env_values
+        else all(_current_arbutus_env_values().values())
+    )
+    result["shell_env_loaded"] = shell_env_loaded
+
+    missing_values = [
+        key for key, value in effective_env_values.items() if not str(value).strip()
+    ]
+    if missing_values:
+        result["errors"].append(
+            "Missing shared Arbutus auth values: " + ", ".join(missing_values) + "."
+        )
+
+    if selected_profile is not None and not missing_values:
+        head_bucket_ok, head_bucket_detail = _probe_windows_arbutus_bucket(
+            bucket_name=selected_profile["bucket_name"],
+            env_values=effective_env_values,
+        )
+        result["head_bucket_ok"] = head_bucket_ok
+        result["head_bucket_detail"] = head_bucket_detail
+        if head_bucket_ok is None:
+            result["warnings"].append(head_bucket_detail)
+        elif not head_bucket_ok:
+            result["errors"].append(
+                "HeadBucket probe failed for "
+                f"{selected_profile['bucket_name']}: {head_bucket_detail}"
+            )
+        if dataset_path is not None:
+            dataset_ok, dataset_detail = _probe_windows_arbutus_dataset_remote(
+                dataset_path=dataset_path,
+                remote_name=selected_profile["remote_name"],
+                env_values=effective_env_values,
+            )
+            result["dataset_ok"] = dataset_ok
+            result["dataset_detail"] = dataset_detail
+            if dataset_ok is None:
+                result["warnings"].append(dataset_detail)
+            elif not dataset_ok:
+                result["errors"].append(
+                    "Dataset remote probe failed for "
+                    f"{dataset_path} remote={selected_profile['remote_name']}: "
+                    f"{dataset_detail}"
+                )
+
+    status_payload, status_errors = _load_windows_arbutus_status(status_file)
+    result["errors"].extend(status_errors)
+    status_record = None
+    if selected_profile_name:
+        status_record = status_payload.get("profiles", {}).get(selected_profile_name)
+    result["status_record"] = status_record
+    if selected_profile_name and selected_profile and env_file.exists():
+        stale_reasons = _windows_arbutus_status_stale_reasons(
+            record=status_record,
+            profile_name=selected_profile_name,
+            profile=selected_profile,
+            env_file=env_file,
+            env_values=effective_env_values,
+            dataset_path=dataset_path,
+            head_bucket_ok=result["head_bucket_ok"],
+            dataset_ok=result["dataset_ok"],
+        )
+        result["status_marker_stale_reasons"] = stale_reasons
+        result["status_marker_current"] = not stale_reasons
+    return result
+
+
+def _windows_public_data_marker_note() -> str | None:
+    """Return a concise note when the public-data Arbutus marker is current."""
+    if os.name != "nt":
+        return None
+    paths = _windows_arbutus_loader_paths()
+    profiles_file = paths["profiles_file"]
+    env_file = paths["env_file"]
+    if profiles_file is None or env_file is None:
+        return None
+    parsed_env_values: dict[str, str] = {}
+    if env_file.exists():
+        parsed_env_values, _ = _parse_simple_env_file(env_file)
+    profiles, _ = _load_windows_arbutus_profiles(
+        profiles_file,
+        env_values=parsed_env_values,
+    )
+    candidate_profile = None
+    if WINDOWS_ARBUTUS_PUBLIC_DATA_PROFILE_NAME in profiles:
+        candidate_profile = WINDOWS_ARBUTUS_PUBLIC_DATA_PROFILE_NAME
+    elif (
+        WINDOWS_ARBUTUS_LEGACY_PROFILE_NAME in profiles
+        and profiles[WINDOWS_ARBUTUS_LEGACY_PROFILE_NAME]["bucket_name"]
+        == WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET
+    ):
+        candidate_profile = WINDOWS_ARBUTUS_LEGACY_PROFILE_NAME
+    if candidate_profile is None:
+        return None
+    result = _evaluate_windows_arbutus_auth_status(profile_name=candidate_profile)
+    if not result["status_marker_current"]:
+        return None
+    return (
+        "Windows Arbutus auth marker is current for profile "
+        f"{candidate_profile} bucket={WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET}."
+    )
 
 
 def _collect_filegdb_member_files(
@@ -2090,13 +2873,21 @@ def _validate_windows_annex_runtime(
                     "Windows Arbutus auth env vars are not loaded in this shell: "
                     f"{missing_display}. If you use the documented local loader, run "
                     "`Set-ExecutionPolicy -Scope Process Bypass -Force` and then "
-                    f"source {arbutus_loader} before rerunning `femic prep validate-case`."
+                    f"source {arbutus_loader} before rerunning `femic prep validate-case`. "
+                    "Use `femic prep arbutus-auth-status --profile public-data` to inspect "
+                    "current vs stale state, or `femic prep arbutus-auth-init --profile "
+                    f"public-data --bucket {WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET} --dataset "
+                    "external/femic-public-data` to scaffold/refresh the local workflow."
                 )
             else:
                 errors.append(
                     "Windows Arbutus auth env vars are not loaded in this shell: "
                     f"{missing_display}. Load the documented Arbutus auth env before "
-                    "rerunning `femic prep validate-case`."
+                    "rerunning `femic prep validate-case`. Use `femic prep "
+                    "arbutus-auth-status --profile public-data` or "
+                    "`femic prep arbutus-auth-init --profile public-data --bucket "
+                    f"{WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET} --dataset "
+                    "external/femic-public-data`."
                 )
         else:
             bucket_ok, bucket_detail = _probe_windows_arbutus_bucket(
@@ -2110,7 +2901,12 @@ def _validate_windows_annex_runtime(
                     "Windows Arbutus bucket visibility probe failed for "
                     f"{WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET}: {bucket_detail} "
                     "Stop before `git annex initremote` or other Arbutus bootstrap "
-                    "work and re-check the loaded env values."
+                    "work and re-check the loaded env values. Use `femic prep "
+                    "arbutus-auth-status --profile public-data` for the current "
+                    "state, or rerun `femic prep arbutus-auth-init --profile "
+                    f"public-data --bucket {WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET} "
+                    "--dataset external/femic-public-data` if the local profile "
+                    "needs to be refreshed."
                 )
 
     errors.extend(
@@ -2798,7 +3594,9 @@ def _print_named_pipeline_run_summary(result: NamedPipelineExecutionResult) -> N
     for index, path in enumerate(plan.parameter_files, start=1):
         console.print(f"parameter_file_{index}: {path}")
     if plan.validation_contract is not None:
-        console.print(f"validation_contract_kind: {plan.validation_contract.contract_kind}")
+        console.print(
+            f"validation_contract_kind: {plan.validation_contract.contract_kind}"
+        )
         if plan.validation_contract.locked_chain_ledger_path is not None:
             console.print(
                 "validation_contract_locked_chain_ledger_path: "
@@ -5511,6 +6309,282 @@ def prep_run(
     _emit_stub("femic prep run")
 
 
+@prep_app.command("arbutus-auth-status")
+def prep_arbutus_auth_status(
+    profile: str | None = typer.Option(
+        None,
+        "--profile",
+        help="Named Arbutus profile to evaluate.",
+        show_default=False,
+    ),
+    dataset: Path | None = typer.Option(
+        None,
+        "--dataset",
+        help="Optional dataset path for `git annex enableremote` validation.",
+        show_default=False,
+    ),
+    remote: str | None = typer.Option(
+        None,
+        "--remote",
+        help="Optional remote override. Defaults to the profile remote or `arbutus-s3`.",
+        show_default=False,
+    ),
+) -> None:
+    """Report Windows Arbutus auth/profile/marker status without mutating it."""
+    result = _evaluate_windows_arbutus_auth_status(
+        profile_name=profile,
+        dataset_path=dataset,
+        remote_name=remote,
+    )
+    env_file = result["env_file"]
+    profiles_file = result["profiles_file"]
+    status_file = result["status_file"]
+    if env_file is not None:
+        console.print(f"env_file={env_file} exists={result['env_file_exists']}")
+    if profiles_file is not None:
+        console.print(
+            f"profiles_file={profiles_file} exists={result['profiles_file_exists']}"
+        )
+    if status_file is not None:
+        console.print(
+            f"status_file={status_file} exists={result['status_file_exists']}"
+        )
+
+    selected_profile_name = result["selected_profile_name"]
+    selected_profile = result["selected_profile"]
+    if selected_profile_name and selected_profile:
+        console.print(
+            "selected_profile="
+            f"{selected_profile_name} "
+            f"bucket={selected_profile['bucket_name']} "
+            f"remote={selected_profile['remote_name']}"
+        )
+
+    console.print(f"shell_env_loaded={result['shell_env_loaded']}")
+    head_bucket_ok = result["head_bucket_ok"]
+    if head_bucket_ok is not None and selected_profile:
+        console.print(
+            f"head_bucket_ok={head_bucket_ok} bucket={selected_profile['bucket_name']}"
+        )
+    if dataset is not None:
+        console.print(f"dataset_remote_ok={result['dataset_ok']} dataset={dataset}")
+
+    if result["status_marker_current"]:
+        console.print(
+            "[green]Windows Arbutus auth status is current[/green] "
+            f"profile={selected_profile_name}"
+        )
+        raise typer.Exit(code=0)
+
+    if result["status_marker_stale_reasons"]:
+        console.print("[yellow]Saved known-working marker is stale[/yellow]")
+        for reason in result["status_marker_stale_reasons"]:
+            console.print(f"[yellow]-[/yellow] {reason}")
+
+    for message in result["warnings"]:
+        console.print(f"[yellow]Warning:[/yellow] {message}")
+    for message in result["errors"]:
+        console.print(f"[red]Error:[/red] {message}")
+
+    if env_file is not None:
+        loader_path = result["loader_ps1"]
+        if loader_path is not None:
+            for line in _format_windows_arbutus_loader_guidance(loader_path, env_file):
+                console.print(line)
+    raise typer.Exit(code=1)
+
+
+@prep_app.command("arbutus-auth-init")
+def prep_arbutus_auth_init(
+    profile: str | None = typer.Option(
+        None,
+        "--profile",
+        help="Named Arbutus profile to create or refresh.",
+        show_default=False,
+    ),
+    bucket: str | None = typer.Option(
+        None,
+        "--bucket",
+        help="Bucket name for the selected profile.",
+        show_default=False,
+    ),
+    dataset: Path | None = typer.Option(
+        None,
+        "--dataset",
+        help="Optional dataset path for `git annex enableremote` validation.",
+        show_default=False,
+    ),
+    remote: str = typer.Option(
+        WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME,
+        "--remote",
+        help="Remote name for the selected profile.",
+    ),
+    force_refresh_loaders: bool = typer.Option(
+        False,
+        "--force-refresh-loaders",
+        help="Rewrite the local loader scripts even if they already exist.",
+    ),
+) -> None:
+    """Scaffold, validate, and persist Windows Arbutus auth/profile state."""
+    if os.name != "nt":
+        console.print(
+            "[red]Error:[/red] Windows Arbutus auth init is only supported on Windows."
+        )
+        raise typer.Exit(code=1)
+
+    paths = _scaffold_windows_arbutus_files(
+        force_refresh_loaders=force_refresh_loaders,
+    )
+    env_file = paths["env_file"]
+    loader_ps1 = paths["loader_ps1"]
+    profiles_file = paths["profiles_file"]
+    status_file = paths["status_file"]
+
+    current_env_values, parse_errors = _parse_simple_env_file(env_file)
+    validation_errors = _validate_windows_arbutus_env_file(env_file)
+    if parse_errors or validation_errors:
+        for message in parse_errors + validation_errors:
+            console.print(f"[red]Error:[/red] {message}")
+        raise typer.Exit(code=1)
+
+    profiles, profile_errors = _load_windows_arbutus_profiles(
+        profiles_file,
+        env_values=current_env_values,
+    )
+    if profile_errors:
+        for message in profile_errors:
+            console.print(f"[red]Error:[/red] {message}")
+        raise typer.Exit(code=1)
+
+    target_profile_name = profile or (
+        next(iter(profiles.keys()))
+        if len(profiles) == 1
+        else WINDOWS_ARBUTUS_PUBLIC_DATA_PROFILE_NAME
+    )
+    existing_profile = profiles.get(target_profile_name, {})
+
+    required_missing: list[str] = [
+        key
+        for key in WINDOWS_ARBUTUS_REQUIRED_ENV_KEYS
+        if not str(current_env_values.get(key, "")).strip()
+    ]
+    missing_profile_fields: list[str] = []
+    effective_bucket = bucket or str(existing_profile.get("bucket_name", "")).strip()
+    if not effective_bucket:
+        missing_profile_fields.append("bucket_name")
+
+    interactive = sys.stdin.isatty() and sys.stdout.isatty()
+    if not interactive and (required_missing or missing_profile_fields):
+        console.print(
+            "[red]Error:[/red] Missing Arbutus bootstrap values in non-interactive mode: "
+            + ", ".join(required_missing + missing_profile_fields)
+            + f". Fill {env_file} and {profiles_file}, then rerun "
+            "`femic prep arbutus-auth-init`."
+        )
+        raise typer.Exit(code=1)
+
+    prompt_labels = {
+        "AWS_ACCESS_KEY_ID": "AWS access key ID",
+        "AWS_SECRET_ACCESS_KEY": "AWS secret access key",
+        "AWS_DEFAULT_REGION": "AWS default region",
+        "S3_ENDPOINT_URL": "S3 endpoint URL",
+    }
+    for key in required_missing:
+        hide_input = key == "AWS_SECRET_ACCESS_KEY"
+        current_env_values[key] = typer.prompt(
+            prompt_labels[key],
+            hide_input=hide_input,
+        ).strip()
+    if not effective_bucket:
+        effective_bucket = typer.prompt("Arbutus bucket name").strip()
+
+    current_env_values["AWS_ACCESS_KEY_ID"] = str(
+        current_env_values.get("AWS_ACCESS_KEY_ID", "")
+    ).strip()
+    current_env_values["AWS_SECRET_ACCESS_KEY"] = str(
+        current_env_values.get("AWS_SECRET_ACCESS_KEY", "")
+    ).strip()
+    current_env_values["AWS_DEFAULT_REGION"] = str(
+        current_env_values.get("AWS_DEFAULT_REGION", "")
+    ).strip()
+    current_env_values["S3_ENDPOINT_URL"] = str(
+        current_env_values.get("S3_ENDPOINT_URL", "")
+    ).strip()
+
+    _write_simple_env_file(env_file, current_env_values)
+
+    profiles[target_profile_name] = {
+        "bucket_name": effective_bucket,
+        "remote_name": remote or WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME,
+        "dataset_path_hint": str(dataset)
+        if dataset is not None
+        else str(existing_profile.get("dataset_path_hint", "")).strip(),
+        "note": str(existing_profile.get("note", "")).strip(),
+    }
+    _write_windows_arbutus_profiles(profiles_file, profiles)
+
+    result = _evaluate_windows_arbutus_auth_status(
+        profile_name=target_profile_name,
+        dataset_path=dataset,
+        remote_name=remote,
+    )
+    for message in result["warnings"]:
+        console.print(f"[yellow]Warning:[/yellow] {message}")
+    if result["errors"]:
+        for message in result["errors"]:
+            console.print(f"[red]Error:[/red] {message}")
+        if loader_ps1 is not None:
+            for line in _format_windows_arbutus_loader_guidance(loader_ps1, env_file):
+                console.print(line)
+        raise typer.Exit(code=1)
+
+    selected_profile = result["selected_profile"]
+    selected_profile_name = result["selected_profile_name"]
+    if not selected_profile or not selected_profile_name:
+        console.print(
+            "[red]Error:[/red] Failed to select an Arbutus profile after init."
+        )
+        raise typer.Exit(code=1)
+
+    status_payload, status_errors = _load_windows_arbutus_status(status_file)
+    if status_errors:
+        for message in status_errors:
+            console.print(f"[red]Error:[/red] {message}")
+        raise typer.Exit(code=1)
+    validation_checks = {
+        "env_file_parse": True,
+        "shell_env_loaded": bool(result["shell_env_loaded"]),
+        "head_bucket": result["head_bucket_ok"] is True,
+        "git_annex_enableremote": result["dataset_ok"] is True
+        if dataset is not None
+        else False,
+    }
+    status_payload.setdefault("profiles", {})
+    status_payload["schema_version"] = WINDOWS_ARBUTUS_STATUS_SCHEMA_VERSION
+    status_payload["profiles"][selected_profile_name] = (
+        _build_windows_arbutus_status_record(
+            profile_name=selected_profile_name,
+            profile=selected_profile,
+            env_file=env_file,
+            loader_paths=[
+                path for path in (loader_ps1, paths["loader_sh"]) if path is not None
+            ],
+            dataset_path=dataset,
+            env_values=result["effective_env_values"],
+            validation_checks=validation_checks,
+        )
+    )
+    _write_windows_arbutus_status(status_file, status_payload)
+
+    console.print(
+        "[green]Windows Arbutus auth initialized[/green] "
+        f"profile={selected_profile_name} bucket={selected_profile['bucket_name']} "
+        f"remote={selected_profile['remote_name']}"
+    )
+    for line in _format_windows_arbutus_loader_guidance(loader_ps1, env_file):
+        console.print(line)
+
+
 @prep_app.command("validate-case")
 def prep_validate_case(
     run_config: Path = CASE_RUN_CONFIG_OPTION,
@@ -5645,6 +6719,9 @@ def prep_validate_case(
         raise typer.Exit(code=1)
 
     targets = ", ".join(sorted(case_codes)) if case_codes else "<none>"
+    marker_note = _windows_public_data_marker_note()
+    if marker_note:
+        console.print(f"[green]{marker_note}[/green]")
     console.print(
         f"[green]Case preflight passed[/green] run_config={resolved_run_config} "
         f"targets=[{targets}] tipsy_config_dir={resolved_tipsy_config_dir}"

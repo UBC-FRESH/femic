@@ -15476,3 +15476,25 @@
   - created child issue `#173` (`Feature: rebuild MKRF from scratch on a FEMIC-native instance pattern`);
   - added `Phase 59` to `ROADMAP.md` as the active from-scratch MKRF rebuild phase under `#173`; and
   - updated `planning/mkrf_legacy_decompile.md` so the next bounded move is `P59.1`, not more PoC archaeology.
+## 2026-04-29 - Opened the Windows Arbutus auth workflow implementation lane
+- `#174` / `P60.1` planning slice:
+  - opened issue `#174` (`Feature: add first-class Windows Arbutus auth workflow`);
+  - added `Phase 60` to `ROADMAP.md` for the repo-wide Windows Arbutus auth/status/bootstrap workflow;
+  - defined the planned contracts for user-local shared credentials, profile registry, and non-secret known-working status marker; and
+  - kept legacy single-bucket `S3_BUCKET_NAME` support as a migration bridge rather than the long-term recommended workflow.
+## 2026-04-29 - Implemented the first-class Windows Arbutus auth workflow
+- `#174` / `P60.2`-`P60.5` implementation slice:
+  - added `femic prep arbutus-auth-status` and `femic prep arbutus-auth-init` for the Windows Arbutus auth/profile/bootstrap workflow;
+  - added user-local profile/status support under `%USERPROFILE%\.config\femic` with `arbutus-profiles.yaml` and `arbutus-status.yaml`, while keeping legacy single-bucket `S3_BUCKET_NAME` compatibility as a migration bridge;
+  - updated `prep validate-case` to point operators and agents at the new auth workflow instead of improvised loader/bucket debugging;
+  - added a dedicated Windows Arbutus auth guide plus updates to bootstrap/public-data/CLI/agent docs; and
+  - validated the workflow with focused CLI tests, docs checks, a clean Sphinx build, and a real Windows-local status/init smoke against `external/femic-mkrf-instance`.
+- Validation notes:
+  - `pytest tests/test_cli_main.py -k "arbutus or validate_windows_annex_runtime"`
+  - `pytest tests/test_docs_contract.py::test_roadmap_is_a_compact_ordered_control_surface`
+  - `ruff check src/femic/cli/main.py tests/test_cli_main.py`
+  - `mypy src/femic/cli/main.py`
+  - `sphinx-build -b html docs _build/html -W`
+  - `git diff --check`
+- Remaining repo-wide type-check caveat:
+  - full `mypy src` still reports the pre-existing `pandas` stub/import gaps and unrelated existing type findings outside this new auth workflow slice.

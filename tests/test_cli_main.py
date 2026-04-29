@@ -818,6 +818,276 @@ def test_validate_windows_annex_runtime_passes_with_visible_public_bucket(
     assert warnings == []
 
 
+def test_arbutus_auth_status_reports_missing_scaffolding(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    userprofile = tmp_path / "user"
+    userprofile.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setenv("USERPROFILE", str(userprofile))
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.app, ["prep", "arbutus-auth-status"])
+
+    assert result.exit_code == 1
+    assert "Missing shared Arbutus env file" in result.stdout
+    assert "Missing Arbutus profile registry" in result.stdout
+
+
+def test_arbutus_auth_init_scaffolds_files_then_fails_noninteractive_when_values_missing(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    userprofile = tmp_path / "user"
+    userprofile.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setenv("USERPROFILE", str(userprofile))
+    monkeypatch.setattr(cli_main.sys.stdin, "isatty", lambda: False)
+    monkeypatch.setattr(cli_main.sys.stdout, "isatty", lambda: False)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.app,
+        ["prep", "arbutus-auth-init", "--profile", "public-data"],
+    )
+
+    env_file = userprofile / ".config" / "femic" / "arbutus.env"
+    profiles_file = userprofile / ".config" / "femic" / "arbutus-profiles.yaml"
+    loader_ps1 = userprofile / ".config" / "femic" / "load-arbutus-env.ps1"
+    loader_sh = userprofile / ".config" / "femic" / "load-arbutus-env.sh"
+
+    assert result.exit_code == 1
+    assert env_file.exists()
+    assert profiles_file.exists()
+    assert loader_ps1.exists()
+    assert loader_sh.exists()
+    assert "Missing Arbutus bootstrap values in non-interactive mode" in result.stdout
+
+
+def test_arbutus_auth_status_reports_current_marker(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    userprofile = tmp_path / "user"
+    config_root = userprofile / ".config" / "femic"
+    config_root.mkdir(parents=True, exist_ok=True)
+    env_file = config_root / "arbutus.env"
+    profiles_file = config_root / "arbutus-profiles.yaml"
+    status_file = config_root / "arbutus-status.yaml"
+    env_values = {
+        "AWS_ACCESS_KEY_ID": "abc123456",
+        "AWS_SECRET_ACCESS_KEY": "secret123456",
+        "AWS_DEFAULT_REGION": "ca-west-1",
+        "S3_ENDPOINT_URL": "https://object-arbutus.cloud.computecanada.ca",
+    }
+    env_file.write_text(
+        cli_main._windows_arbutus_env_template(env_values), encoding="utf-8"
+    )
+    profiles_file.write_text(
+        yaml.safe_dump(
+            {
+                "profiles": {
+                    "public-data": {
+                        "bucket_name": cli_main.WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET,
+                        "remote_name": cli_main.WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME,
+                        "dataset_path_hint": "external/femic-public-data",
+                        "note": "",
+                    }
+                }
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    loader_ps1 = config_root / "load-arbutus-env.ps1"
+    loader_ps1.write_text("# loader\n", encoding="utf-8")
+    loader_sh = config_root / "load-arbutus-env.sh"
+    loader_sh.write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setenv("USERPROFILE", str(userprofile))
+    for key, value in env_values.items():
+        monkeypatch.setenv(key, value)
+    monkeypatch.setattr(
+        cli_main,
+        "_probe_windows_arbutus_bucket",
+        lambda bucket_name, env_values: (True, ""),
+    )
+
+    record = cli_main._build_windows_arbutus_status_record(
+        profile_name="public-data",
+        profile={
+            "bucket_name": cli_main.WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET,
+            "remote_name": cli_main.WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME,
+            "dataset_path_hint": "external/femic-public-data",
+            "note": "",
+        },
+        env_file=env_file,
+        loader_paths=[loader_ps1, loader_sh],
+        dataset_path=None,
+        env_values=env_values,
+        validation_checks={
+            "env_file_parse": True,
+            "shell_env_loaded": True,
+            "head_bucket": True,
+            "git_annex_enableremote": False,
+        },
+    )
+    status_file.write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": cli_main.WINDOWS_ARBUTUS_STATUS_SCHEMA_VERSION,
+                "profiles": {"public-data": record},
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.app,
+        ["prep", "arbutus-auth-status", "--profile", "public-data"],
+    )
+
+    assert result.exit_code == 0
+    assert "Windows Arbutus auth status is current" in result.stdout
+
+
+def test_arbutus_auth_status_reports_stale_marker_when_env_file_changes(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    userprofile = tmp_path / "user"
+    config_root = userprofile / ".config" / "femic"
+    config_root.mkdir(parents=True, exist_ok=True)
+    env_file = config_root / "arbutus.env"
+    profiles_file = config_root / "arbutus-profiles.yaml"
+    status_file = config_root / "arbutus-status.yaml"
+    loader_ps1 = config_root / "load-arbutus-env.ps1"
+    loader_ps1.write_text("# loader\n", encoding="utf-8")
+    env_values = {
+        "AWS_ACCESS_KEY_ID": "abc123456",
+        "AWS_SECRET_ACCESS_KEY": "secret123456",
+        "AWS_DEFAULT_REGION": "ca-west-1",
+        "S3_ENDPOINT_URL": "https://object-arbutus.cloud.computecanada.ca",
+    }
+    env_file.write_text(
+        cli_main._windows_arbutus_env_template(env_values), encoding="utf-8"
+    )
+    profiles_file.write_text(
+        yaml.safe_dump(
+            {
+                "profiles": {
+                    "public-data": {
+                        "bucket_name": cli_main.WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET,
+                        "remote_name": cli_main.WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME,
+                    }
+                }
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setenv("USERPROFILE", str(userprofile))
+    for key, value in env_values.items():
+        monkeypatch.setenv(key, value)
+    monkeypatch.setattr(
+        cli_main,
+        "_probe_windows_arbutus_bucket",
+        lambda bucket_name, env_values: (True, ""),
+    )
+    record = cli_main._build_windows_arbutus_status_record(
+        profile_name="public-data",
+        profile={
+            "bucket_name": cli_main.WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET,
+            "remote_name": cli_main.WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME,
+            "dataset_path_hint": "",
+            "note": "",
+        },
+        env_file=env_file,
+        loader_paths=[loader_ps1],
+        dataset_path=None,
+        env_values=env_values,
+        validation_checks={
+            "env_file_parse": True,
+            "shell_env_loaded": True,
+            "head_bucket": True,
+            "git_annex_enableremote": False,
+        },
+    )
+    status_file.write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": cli_main.WINDOWS_ARBUTUS_STATUS_SCHEMA_VERSION,
+                "profiles": {"public-data": record},
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    env_file.write_text(
+        cli_main._windows_arbutus_env_template(
+            env_values | {"AWS_DEFAULT_REGION": "ca-west-2"}
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("AWS_DEFAULT_REGION", "ca-west-2")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.app,
+        ["prep", "arbutus-auth-status", "--profile", "public-data"],
+    )
+
+    assert result.exit_code == 1
+    assert "Saved known-working marker is stale" in result.stdout
+    assert (
+        "mtime differs" in result.stdout or "shared Arbutus env file" in result.stdout
+    )
+
+
+def test_arbutus_auth_status_uses_legacy_single_bucket_compatibility(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    userprofile = tmp_path / "user"
+    config_root = userprofile / ".config" / "femic"
+    config_root.mkdir(parents=True, exist_ok=True)
+    env_file = config_root / "arbutus.env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "AWS_ACCESS_KEY_ID=abc123456",
+                "AWS_SECRET_ACCESS_KEY=secret123456",
+                "AWS_DEFAULT_REGION=ca-west-1",
+                "S3_ENDPOINT_URL=https://object-arbutus.cloud.computecanada.ca",
+                "S3_BUCKET_NAME=legacy-bucket",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setenv("USERPROFILE", str(userprofile))
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "abc123456")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "secret123456")
+    monkeypatch.setenv("AWS_DEFAULT_REGION", "ca-west-1")
+    monkeypatch.setenv(
+        "S3_ENDPOINT_URL",
+        "https://object-arbutus.cloud.computecanada.ca",
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_probe_windows_arbutus_bucket",
+        lambda bucket_name, env_values: (True, ""),
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.app, ["prep", "arbutus-auth-status"])
+
+    assert result.exit_code == 1
+    assert "selected_profile=legacy-default bucket=legacy-bucket" in result.stdout
+
+
 def test_validate_windows_public_data_tsa_boundary_reports_missing_geospatial_runtime(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -6979,7 +7249,9 @@ def test_pipelines_run_executes_named_pipeline_runbook(
         captured_kwargs.update(kwargs)
         runtime_event_sink = kwargs.get("runtime_event_sink")
         if callable(runtime_event_sink):
-            runtime_event_sink("event_kind=pipeline_run_started pipeline_id=tsr.thlb_strict")
+            runtime_event_sink(
+                "event_kind=pipeline_run_started pipeline_id=tsr.thlb_strict"
+            )
             runtime_event_sink(
                 "event_kind=compiled_step_finished compiled_step_id=thlb_step_001_total_tsa_area run_status=applied_noop remaining_area_ha=1.000"
             )
@@ -7121,9 +7393,7 @@ def test_pipelines_run_executes_named_pipeline_runbook(
     assert any("event_kind=compiled_step_finished" in msg for msg in messages)
     assert any("seam_id: aflb_yield_ready" in msg for msg in messages)
     assert any("runtime_event_log_path:" in msg for msg in messages)
-    assert any(
-        "validation_contract_required_recipe_path:" in msg for msg in messages
-    )
+    assert any("validation_contract_required_recipe_path:" in msg for msg in messages)
     assert any("validation_parent_step_count: 23" in msg for msg in messages)
     assert any(
         "baseline_signal: aflb_yield_ready_checkpoint_restart" in msg
@@ -7146,7 +7416,9 @@ def test_pipelines_run_accepts_checked_in_proof_runbook(
         captured_kwargs.update(kwargs)
         runtime_event_sink = kwargs.get("runtime_event_sink")
         if callable(runtime_event_sink):
-            runtime_event_sink("event_kind=pipeline_run_started pipeline_id=tsr.thlb_strict")
+            runtime_event_sink(
+                "event_kind=pipeline_run_started pipeline_id=tsr.thlb_strict"
+            )
         return SimpleNamespace(
             plan=SimpleNamespace(
                 pipeline_id="tsr.thlb_strict",
@@ -7423,19 +7695,34 @@ def test_pipelines_run_handles_scratch_parent_step_result(
                 max_abs_cumulative_delta_ha=0.0,
             ),
             tsr_thlb_result=None,
-                tsr_parent_step_result=SimpleNamespace(
-                    recipe_path=instance_root / "workbench" / "tsr" / "thlb_netdown.locked.recipe.yaml",
-                    parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
-                    parent_label="Land not administered by the Province",
-                    tsa=SimpleNamespace(tsa_id="tsa_29", tsa_code="29", tsa_name="Williams Lake"),
-                    checkpoint_path=instance_root / "data" / "tsr" / "glb_checkpoint.feather",
-                    selected_map_ids=(),
-                    selected_landscape_units=(),
+            tsr_parent_step_result=SimpleNamespace(
+                recipe_path=instance_root
+                / "workbench"
+                / "tsr"
+                / "thlb_netdown.locked.recipe.yaml",
+                parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+                parent_label="Land not administered by the Province",
+                tsa=SimpleNamespace(
+                    tsa_id="tsa_29", tsa_code="29", tsa_name="Williams Lake"
+                ),
+                checkpoint_path=instance_root
+                / "data"
+                / "tsr"
+                / "glb_checkpoint.feather",
+                selected_map_ids=(),
+                selected_landscape_units=(),
                 execution_mode="serial",
                 worker_count=None,
                 lu_chunk_count=None,
-                output_path=instance_root / "data" / "tsr" / "glb_to_aflb_step2.feather",
-                result_json_path=instance_root / "runtime" / "logs" / "tsr" / "step2.json",
+                output_path=instance_root
+                / "data"
+                / "tsr"
+                / "glb_to_aflb_step2.feather",
+                result_json_path=instance_root
+                / "runtime"
+                / "logs"
+                / "tsr"
+                / "step2.json",
                 status="applied",
                 input_area_ha=4933664.212,
                 removed_area_ha=696781.324,
@@ -7455,7 +7742,10 @@ def test_pipelines_run_handles_scratch_parent_step_result(
     cli_main.pipelines_run(runbook=runbook, instance_root=instance_root)
 
     assert any("target_parent_step_id:" in msg for msg in messages)
-    assert any("parent_step_id: thlb_parent_002_land_not_administered_by_the_province" in msg for msg in messages)
+    assert any(
+        "parent_step_id: thlb_parent_002_land_not_administered_by_the_province" in msg
+        for msg in messages
+    )
     assert any("remaining_area_ha: 4236882.888" in msg for msg in messages)
 
 

@@ -35,6 +35,10 @@ the repo root:
      `docs/guides/public-data-mirror-runbook.rst` first and do not improvise
      the auth/bootstrap order
    - Windows-specific Arbutus reminders:
+     - check `femic prep arbutus-auth-status` before improvising any local
+       Arbutus recovery steps
+     - use `femic prep arbutus-auth-init` to scaffold the local auth/profile
+       files when the workflow is missing or stale
      - `%USERPROFILE%\.config\femic\arbutus.env` must use plain `KEY=VALUE`
        lines with no quotes
      - interactive loader usage needs an execution-policy-bypassed session

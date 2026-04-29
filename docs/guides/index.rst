@@ -21,6 +21,7 @@ export modules.
    tsr-intelligence-workflow
    tsr-thlb-reconstruction-ladder
    github-datalad-arbutus-pattern
+   windows-arbutus-auth-workflow
    public-data-mirror-runbook
    case-onboarding
    stage-00-data-prep
