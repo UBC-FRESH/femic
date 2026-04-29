@@ -15498,3 +15498,13 @@
   - `git diff --check`
 - Remaining repo-wide type-check caveat:
   - full `mypy src` still reports the pre-existing `pandas` stub/import gaps and unrelated existing type findings outside this new auth workflow slice.
+## 2026-04-29 - Reopened the MKRF PoC closeout sequence and inserted the docs phase ahead of the rebuild
+- planning/issue-hygiene slice:
+  - opened child issue `#175` (`Documentation: publish MKRF PoC technical docs`);
+  - reopened Phase 58 in `ROADMAP.md` with:
+    - `P58.6` for one representative legacy-vs-PoC benchmark scenario/KPI comparison; and
+    - `P58.7` for explicitly recasting the current `models/mkrf_patchworks_model` package as a PoC intermediate surface rather than the final canonical MKRF model;
+  - inserted new `Phase 59` for MKRF PoC user-facing Sphinx docs under `#175`;
+  - renumbered the from-scratch MKRF rebuild phase from `Phase 59` to `Phase 60`;
+  - renumbered the already-completed Windows Arbutus auth workflow from `Phase 60` to `Phase 61` so the roadmap stays sequential; and
+  - updated `planning/mkrf_legacy_decompile.md` so the active next bounded move is now `P58.6`, not the from-scratch rebuild contract.

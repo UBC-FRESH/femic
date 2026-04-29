@@ -1606,58 +1606,82 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P58.5a Record that the accepted `500/501` versus `650/651` merch-tail variance remains a deferred fidelity question for the later from-scratch rebuild rather than a PoC blocker.
   - [x] P58.5b Record that exact compiled curve-id preservation is not required for the PoC benchmark lane and belongs to later comparison work only if it affects a real rebuild acceptance gate.
   - [x] P58.5c Pin unresolved legacy helper seams `THLB4070(...)`, `UWR(...)`, and the missing `InitialTargets/00_Target_Descriptions.bsh` library to the later from-scratch rebuild instead of spending more PoC effort on them.
+- [ ] P58.6 Benchmark one representative scenario on legacy versus the PoC FEMIC instance (`#172`)
+  - [ ] P58.6a Run one representative benchmark scenario on both the legacy MKRF package and the current PoC FEMIC lane.
+  - [ ] P58.6b Compare a small KPI set and record whether the outputs generally line up without requiring exact parity.
+  - [ ] P58.6c Record the accepted benchmark variances explicitly so the PoC lane closes on a real side-by-side behavior check, not launch proof alone.
+- [ ] P58.7 Recast the current runtime package explicitly as the MKRF PoC intermediate (`#172`)
+  - [ ] P58.7a Rename the current `models/mkrf_patchworks_model` surface to an explicit PoC path such as `models/mkrf_patchworks_model_poc`.
+  - [ ] P58.7b Update runtime config, lineage metadata, planning notes, issue trail, and docs so the current checked-in model is clearly benchmark/intermediate only.
+  - [ ] P58.7c Keep the future from-scratch rebuild lane separate from the PoC runtime package and avoid implying the PoC path is the final canonical MKRF model.
 
-## Phase 59: From-Scratch MKRF FEMIC-Native Rebuild
+## Phase 59: Publish MKRF PoC User-Facing Technical Docs
 Notes: `planning/mkrf_legacy_decompile.md`
 
-- [ ] P59.1 Define the target instance contract and acceptance gates for the new MKRF rebuild (`#173`)
-  - [ ] P59.1a Make K3Z/TSA29-style FEMIC instance organization and workflow conventions the governing default for the new MKRF rebuild.
-  - [ ] P59.1b Treat PoC artifacts as benchmark/reference evidence only, not as the target architecture contract.
-  - [ ] P59.1c Require that any legacy behavior carried forward into the new rebuild be justified by source evidence or benchmark necessity.
-- [ ] P59.2 Define the canonical FEMIC-native MKRF instance layout using K3Z/TSA29 patterns (`#173`)
-  - [ ] P59.2a Decide the canonical repo/instance/runtime/doc surface layout before source-driven rebuild work starts.
-  - [ ] P59.2b Define the rebuild sequencing and validation contracts for the new instance lane.
-  - [ ] P59.2c Keep benchmark/reference artifacts clearly separated from the new source-faithful build surfaces.
-- [ ] P59.3 Reconstruct the raw-source geometry-to-runtime pipeline from `03_MappingAnalysisData/*` (`#173`)
-  - [ ] P59.3a Rebuild the geometry publication path from upstream source surfaces rather than accepted compiled-runtime substitutes.
-  - [ ] P59.3b Rebuild the runtime spatial/package handoff with explicit lineage and acceptance checks.
-  - [ ] P59.3c Keep checkpoint-derived or compiled-runtime artifacts out of the source-faithful rebuild claim surface.
-- [ ] P59.4 Rebuild the target/control lane from reviewed source contracts instead of legacy checkpoint loading (`#173`)
-  - [ ] P59.4a Replace the PoC checkpoint-backed target-control lane with a source-driven FEMIC-native control surface.
-  - [ ] P59.4b Reconstruct or replace legacy scenario-target semantics only where they are justified by source evidence or benchmark necessity.
-  - [ ] P59.4c Keep unexplained legacy compiled control seams out of the new build unless they become required by a documented acceptance gate.
-- [ ] P59.5 Rebuild the full MKRF runtime package from source-faithful inputs (`#173`)
-  - [ ] P59.5a Generate the runtime XML, tracks, and control surfaces from the new FEMIC-native rebuild lane.
-  - [ ] P59.5b Re-run Matrix Builder and runtime assembly against the rebuilt source-faithful package.
-  - [ ] P59.5c Keep generated outputs and lineage surfaces synchronized as the new canonical MKRF runtime package.
-- [ ] P59.6 Validate the rebuilt model against the PoC benchmark and legacy evidence (`#173`)
-  - [ ] P59.6a Compare the rebuilt runtime against the accepted PoC benchmark surfaces.
-  - [ ] P59.6b Compare the rebuilt runtime against relevant legacy evidence where it still matters for acceptance.
-  - [ ] P59.6c Record which observed differences are accepted redesign choices versus unresolved regressions.
-- [ ] P59.7 Publish closeout docs and decide whether `#172` can close (`#173`)
-  - [ ] P59.7a Update the parent and instance docs/runbooks to teach the new MKRF rebuild lane.
-  - [ ] P59.7b Record the final claim boundary between benchmark archaeology and the new source-faithful rebuild.
-  - [ ] P59.7c Decide whether the umbrella legacy-recovery issue `#172` can close once the from-scratch rebuild phase is complete.
+- [ ] P59.1 Publish MKRF PoC Sphinx docs using the K3Z instance docs as the template (`#175`)
+  - [ ] P59.1a Match the K3Z instance docs scope, depth, formatting, and structure rather than inventing a one-off MKRF docs shape.
+  - [ ] P59.1b Make the docs explicit that the current MKRF model is a PoC benchmark/intermediate, not the final canonical rebuild.
+  - [ ] P59.1c Publish the docs through the existing Sphinx/GitHub Pages workflow with the same operator-facing quality bar as K3Z.
+- [ ] P59.2 Document the MKRF PoC benchmark/runtime lane and accepted claim boundary (`#175`)
+  - [ ] P59.2a Teach the accepted runtime package, generated XML/tracks, spatial lane, and representative benchmark scenario surfaces.
+  - [ ] P59.2b Record the accepted PoC caveats, including unresolved helper seams and accepted benchmark variances.
+  - [ ] P59.2c Distinguish clearly between benchmark/reference evidence and the later from-scratch rebuild contract.
+- [ ] P59.3 Publish closeout docs metadata and handoff to the real rebuild phase (`#175`)
+  - [ ] P59.3a Update parent and instance docs/runbooks so the PoC documentation lane is complete and auditable.
+  - [ ] P59.3b Link the finished PoC docs lane to the next from-scratch rebuild phase without blurring the two contracts.
+  - [ ] P59.3c Confirm the PoC docs are good enough that the team can stop treating the benchmark lane as under-documented.
 
-## Phase 60: First-Class Windows Arbutus Auth Workflow
+## Phase 60: From-Scratch MKRF FEMIC-Native Rebuild
+Notes: `planning/mkrf_legacy_decompile.md`
 
-- [x] P60.1 Plan and define the Windows Arbutus auth workflow contract (`#174`)
-  - [x] P60.1a Add the first-class auth workflow to the roadmap before implementation starts.
-  - [x] P60.1b Define the user-local file contract for shared credentials, profile registry, and status marker.
-  - [x] P60.1c Preserve legacy single-bucket `S3_BUCKET_NAME` compatibility only as a migration bridge.
-- [x] P60.2 Add multi-profile Windows Arbutus auth status/init commands (`#174`)
-  - [x] P60.2a Add `femic prep arbutus-auth-status` as the non-mutating auth/profile/marker probe.
-  - [x] P60.2b Add `femic prep arbutus-auth-init` to scaffold missing local files, prompt for missing values, and validate `HeadBucket`.
-  - [x] P60.2c Keep secrets out of CLI flags, command output, and persisted non-secret marker files.
-- [x] P60.3 Persist a non-secret known-working marker for the current environment (`#174`)
-  - [x] P60.3a Write `%USERPROFILE%\\.config\\femic\\arbutus-status.yaml` only after successful validation.
-  - [x] P60.3b Mark saved state stale when host/user, env file mtime, profile config, shell env, or validation results drift.
-  - [x] P60.3c Support optional dataset/remote validation without treating it as globally required for every profile.
-- [x] P60.4 Integrate the workflow into existing validation and docs (`#174`)
-  - [x] P60.4a Update `prep validate-case` Windows Arbutus messaging to point at the new status/init workflow and current marker state.
-  - [x] P60.4b Add a dedicated Windows Arbutus auth/bootstrap guide and update existing developer/public-data docs.
-  - [x] P60.4c Update `AGENTS.md` so agents check the status command/marker first instead of improvising auth recovery.
-- [x] P60.5 Validate, document, and publish the workflow (`#174`)
-  - [x] P60.5a Add focused tests for fresh bootstrap, stale/current markers, legacy compatibility, and dataset remote checks.
-  - [x] P60.5b Run targeted CLI/docs validation and keep Sphinx warning-free.
-  - [x] P60.5c Post matching GitHub progress comments so the issue trail documents the workflow end to end.
+- [ ] P60.1 Define the target instance contract and acceptance gates for the new MKRF rebuild (`#173`)
+  - [ ] P60.1a Make K3Z/TSA29-style FEMIC instance organization and workflow conventions the governing default for the new MKRF rebuild.
+  - [ ] P60.1b Treat PoC artifacts as benchmark/reference evidence only, not as the target architecture contract.
+  - [ ] P60.1c Require that any legacy behavior carried forward into the new rebuild be justified by source evidence or benchmark necessity.
+- [ ] P60.2 Define the canonical FEMIC-native MKRF instance layout using K3Z/TSA29 patterns (`#173`)
+  - [ ] P60.2a Decide the canonical repo/instance/runtime/doc surface layout before source-driven rebuild work starts.
+  - [ ] P60.2b Define the rebuild sequencing and validation contracts for the new instance lane.
+  - [ ] P60.2c Keep benchmark/reference artifacts clearly separated from the new source-faithful build surfaces.
+- [ ] P60.3 Reconstruct the raw-source geometry-to-runtime pipeline from `03_MappingAnalysisData/*` (`#173`)
+  - [ ] P60.3a Rebuild the geometry publication path from upstream source surfaces rather than accepted compiled-runtime substitutes.
+  - [ ] P60.3b Rebuild the runtime spatial/package handoff with explicit lineage and acceptance checks.
+  - [ ] P60.3c Keep checkpoint-derived or compiled-runtime artifacts out of the source-faithful rebuild claim surface.
+- [ ] P60.4 Rebuild the target/control lane from reviewed source contracts instead of legacy checkpoint loading (`#173`)
+  - [ ] P60.4a Replace the PoC checkpoint-backed target-control lane with a source-driven FEMIC-native control surface.
+  - [ ] P60.4b Reconstruct or replace legacy scenario-target semantics only where they are justified by source evidence or benchmark necessity.
+  - [ ] P60.4c Keep unexplained legacy compiled control seams out of the new build unless they become required by a documented acceptance gate.
+- [ ] P60.5 Rebuild the full MKRF runtime package from source-faithful inputs (`#173`)
+  - [ ] P60.5a Generate the runtime XML, tracks, and control surfaces from the new FEMIC-native rebuild lane.
+  - [ ] P60.5b Re-run Matrix Builder and runtime assembly against the rebuilt source-faithful package.
+  - [ ] P60.5c Keep generated outputs and lineage surfaces synchronized as the new canonical MKRF runtime package.
+- [ ] P60.6 Validate the rebuilt model against the PoC benchmark and legacy evidence (`#173`)
+  - [ ] P60.6a Compare the rebuilt runtime against the accepted PoC benchmark surfaces.
+  - [ ] P60.6b Compare the rebuilt runtime against relevant legacy evidence where it still matters for acceptance.
+  - [ ] P60.6c Record which observed differences are accepted redesign choices versus unresolved regressions.
+- [ ] P60.7 Publish closeout docs and decide whether `#172` can close (`#173`)
+  - [ ] P60.7a Update the parent and instance docs/runbooks to teach the new MKRF rebuild lane.
+  - [ ] P60.7b Record the final claim boundary between benchmark archaeology and the new source-faithful rebuild.
+  - [ ] P60.7c Decide whether the umbrella legacy-recovery issue `#172` can close once the from-scratch rebuild phase is complete.
+
+## Phase 61: First-Class Windows Arbutus Auth Workflow
+
+- [x] P61.1 Plan and define the Windows Arbutus auth workflow contract (`#174`)
+  - [x] P61.1a Add the first-class auth workflow to the roadmap before implementation starts.
+  - [x] P61.1b Define the user-local file contract for shared credentials, profile registry, and status marker.
+  - [x] P61.1c Preserve legacy single-bucket `S3_BUCKET_NAME` compatibility only as a migration bridge.
+- [x] P61.2 Add multi-profile Windows Arbutus auth status/init commands (`#174`)
+  - [x] P61.2a Add `femic prep arbutus-auth-status` as the non-mutating auth/profile/marker probe.
+  - [x] P61.2b Add `femic prep arbutus-auth-init` to scaffold missing local files, prompt for missing values, and validate `HeadBucket`.
+  - [x] P61.2c Keep secrets out of CLI flags, command output, and persisted non-secret marker files.
+- [x] P61.3 Persist a non-secret known-working marker for the current environment (`#174`)
+  - [x] P61.3a Write `%USERPROFILE%\\.config\\femic\\arbutus-status.yaml` only after successful validation.
+  - [x] P61.3b Mark saved state stale when host/user, env file mtime, profile config, shell env, or validation results drift.
+  - [x] P61.3c Support optional dataset/remote validation without treating it as globally required for every profile.
+- [x] P61.4 Integrate the workflow into existing validation and docs (`#174`)
+  - [x] P61.4a Update `prep validate-case` Windows Arbutus messaging to point at the new status/init workflow and current marker state.
+  - [x] P61.4b Add a dedicated Windows Arbutus auth/bootstrap guide and update existing developer/public-data docs.
+  - [x] P61.4c Update `AGENTS.md` so agents check the status command/marker first instead of improvising auth recovery.
+- [x] P61.5 Validate, document, and publish the workflow (`#174`)
+  - [x] P61.5a Add focused tests for fresh bootstrap, stale/current markers, legacy compatibility, and dataset remote checks.
+  - [x] P61.5b Run targeted CLI/docs validation and keep Sphinx warning-free.
+  - [x] P61.5c Post matching GitHub progress comments so the issue trail documents the workflow end to end.
