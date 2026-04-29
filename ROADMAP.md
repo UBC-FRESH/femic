@@ -1578,3 +1578,27 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P57.9a Update instance README/runbook/lineage metadata with the runnable proof boundary.
   - [x] P57.9b Update parent planning/changelog and tests with the minimal runnable status.
   - [x] P57.9c Record next-phase caveats for native Attrib completion, raw-source reconstruction, and broader scenario/runtime validation.
+
+## Phase 58: Harden MKRF Beyond the Minimal Runnable Boundary
+Notes: `planning/mkrf_legacy_decompile.md`
+
+- [ ] P58.1 Plan the post-minimal-runnable hardening sequence (`#172`)
+  - [ ] P58.1a Convert the remaining minimal-runnable caveats into an ordered bounded sequence without starting new rebuild lanes ad hoc.
+  - [ ] P58.1b Keep native Attrib replacement, raw-source reconstruction, and broader runtime/scenario validation as distinct contracts.
+  - [ ] P58.1c Publish the next active bounded move before any further MKRF implementation.
+- [ ] P58.2 Replace the MKRF Attrib compatibility passthrough with a native FEMIC builder (`#172`)
+  - [ ] P58.2a Rebuild the currently deferred formula-heavy Attrib feature/product surfaces from the translated workbook contract instead of copying legacy `<select>` blocks.
+  - [ ] P58.2b Prove the native Attrib surfaces preserve the accepted minimal-runnable behavior before removing the passthrough.
+  - [ ] P58.2c Keep any remaining unsupported formula dependencies explicit rather than silently collapsing them into static constants or copied XML.
+- [ ] P58.3 Reconstruct the raw-source input lane from the legacy planning corpus (`#172`)
+  - [ ] P58.3a Materialize and review the true upstream source surfaces under `03_MappingAnalysisData/*` that are required for reproducible fragments/topology generation.
+  - [ ] P58.3b Separate raw-source reconstruction from checkpoint-derived or compiled-runtime substitutes.
+  - [ ] P58.3c Publish the reproducibility boundary before claiming a source-faithful MKRF rebuild.
+- [ ] P58.4 Broaden scenario and runtime validation beyond the minimal launch proof (`#172`)
+  - [ ] P58.4a Resolve the `InitialTargets` / scenario-target seam enough to exercise a representative nontrivial runtime path.
+  - [ ] P58.4b Define and run a bounded smoke suite over generated XML, generated tracks, and at least one representative launch/runtime scenario.
+  - [ ] P58.4c Record which runtime behaviors remain unvalidated after the broadened smoke suite.
+- [ ] P58.5 Tighten legacy-fidelity caveats that remain non-blocking today (`#172`)
+  - [ ] P58.5a Decide whether the accepted `500/501` versus `650/651` merch-tail variance should remain accepted or be eliminated in a later fidelity lane.
+  - [ ] P58.5b Decide whether exact compiled curve-id preservation matters for any downstream regression surface.
+  - [ ] P58.5c Keep low-value legacy-faithfulness work out of the critical path unless it changes real model behavior or validation conclusions.

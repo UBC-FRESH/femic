@@ -15398,3 +15398,12 @@
   - raw-source reconstruction from `03_MappingAnalysisData/*` is still out of scope for the current runnable claim;
   - the accepted merch-tail variance remains documented for very-old-stand behavior; and
   - broader scenario/runtime validation beyond matrix build plus launch proof remains a later phase.
+## 2026-04-29 - Planned the post-minimal-runnable MKRF hardening phase
+- `#172` / `P58.1` planning slice:
+  - added Phase 58 to `ROADMAP.md` as the ordered post-minimal-runnable hardening sequence;
+  - separated the remaining MKRF follow-on work into distinct native Attrib replacement, raw-source reconstruction, broader runtime/scenario validation, and residual legacy-fidelity lanes; and
+  - updated `planning/mkrf_legacy_decompile.md` so `P58.1` is the only active next bounded move.
+- Scope boundary preserved:
+  - no new MKRF implementation was started;
+  - no XML emission, matrix build, or launch was rerun; and
+  - no new runnable claim beyond the completed Phase 57 minimal-runnable closeout was introduced.

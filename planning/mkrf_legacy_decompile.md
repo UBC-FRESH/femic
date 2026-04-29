@@ -359,9 +359,8 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-Phase 57 is now complete. The next bounded move is to plan the post-minimal-
-runnable Phase 58 sequence for native Attrib replacement, raw-source
-reconstruction, and broader scenario/runtime validation.
+`P58.1` is the active next bounded move. Plan the post-minimal-runnable
+hardening sequence before starting any further MKRF implementation.
 
 Completed `P57.1` runnable-boundary plan:
 
@@ -429,6 +428,27 @@ Remaining Phase 57 sequence after `P57.1`:
   Patchworks instance with explicit caveats for compatibility-passthrough
   Attrib logic, accepted merch-tail variance, no raw-source reconstruction
   claim, and no broader scenario/runtime validation claim yet.
+
+Planned Phase 58 sequence after minimal runnable closeout:
+
+- `P58.1`:
+  plan the post-minimal-runnable hardening sequence so the remaining caveats
+  turn into an ordered bounded implementation path rather than ad hoc follow-on
+  work.
+- `P58.2`:
+  replace the explicit Attrib compatibility passthrough with a native FEMIC
+  builder driven by the translated workbook contract.
+- `P58.3`:
+  reconstruct the raw-source input lane from `03_MappingAnalysisData/*`
+  without substituting checkpoints or compiled runtime artifacts for the true
+  source surfaces.
+- `P58.4`:
+  broaden scenario/runtime validation beyond the minimal launch proof, starting
+  with the unresolved `InitialTargets` seam and a representative nontrivial
+  runtime path.
+- `P58.5`:
+  tighten any remaining legacy-fidelity caveats only where they change real
+  model behavior or validation conclusions.
 
 Completed `P56.1` planning boundary:
 
