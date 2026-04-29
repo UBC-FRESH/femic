@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 from dataclasses import dataclass, replace
 import copy
 import importlib
@@ -1546,8 +1547,54 @@ def _normalize_legacy_constant_literal(value: Any) -> Any:
         text = value.strip()
         if len(text) >= 2 and text[0] == text[-1] and text[0] in {"'", '"'}:
             return text[1:-1]
+        if text.startswith("="):
+            return _evaluate_legacy_constant_formula(text)
         return text
     return value
+
+
+def _format_legacy_define_constant_value(value: Any) -> str | None:
+    normalized = _normalize_optional_expression(value)
+    if normalized is None:
+        return None
+    if re.fullmatch(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)", normalized):
+        return normalized
+    if len(normalized) >= 2 and normalized[0] == normalized[-1] and normalized[0] == "'":
+        return normalized
+    escaped = normalized.replace("'", "''")
+    return f"'{escaped}'"
+
+
+def _evaluate_legacy_constant_formula(expression: str) -> str:
+    text = str(expression).strip()
+    if not text.startswith("="):
+        return text
+    parsed = ast.parse(text[1:], mode="eval")
+
+    def _evaluate(node: ast.AST) -> float:
+        if isinstance(node, ast.Expression):
+            return _evaluate(node.body)
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+            return float(node.value)
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
+            value = _evaluate(node.operand)
+            return value if isinstance(node.op, ast.UAdd) else -value
+        if isinstance(node, ast.BinOp) and isinstance(
+            node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div)
+        ):
+            left = _evaluate(node.left)
+            right = _evaluate(node.right)
+            if isinstance(node.op, ast.Add):
+                return left + right
+            if isinstance(node.op, ast.Sub):
+                return left - right
+            if isinstance(node.op, ast.Mult):
+                return left * right
+            return left / right
+        raise ValueError(f"unsupported legacy constant formula {expression!r}")
+
+    value = _evaluate(parsed)
+    return format(value, ".15g")
 
 
 def _legacy_expression_is_area_ha(expression: str) -> bool:
@@ -1752,7 +1799,8 @@ def _build_legacy_mkrf_define_constants_contract(
     for key in constant_order:
         if key not in raw_constants:
             continue
-        value = _normalize_optional_expression(raw_constants.get(key))
+        normalized_value = _normalize_legacy_constant_literal(raw_constants.get(key))
+        value = _format_legacy_define_constant_value(normalized_value)
         if value is None:
             continue
         entries.append((key, value))
@@ -1776,6 +1824,15 @@ def _append_legacy_mkrf_curve_node(
                 "y": _format_xml_y(curve_id, float(point.y)),
             },
         )
+
+
+def _append_legacy_mkrf_curves(
+    *,
+    root: et.Element,
+    curves_by_id: dict[str, tuple[CurvePoint, ...]],
+) -> None:
+    for curve_id, points in curves_by_id.items():
+        _append_legacy_mkrf_curve_node(root=root, curve_id=curve_id, points=points)
 
 
 def _normalize_passthrough_label(value: str | None) -> str:
@@ -1829,6 +1886,7 @@ def _validate_legacy_mkrf_attribute_passthrough(
     emitted_root: et.Element,
     passthrough_selects: tuple[et.Element, ...],
     legacy_attributes_config: dict[str, Any],
+    require_generated_yield_curves: bool = True,
 ) -> None:
     define_fields = {
         str(node.get("field")).strip()
@@ -1857,7 +1915,7 @@ def _validate_legacy_mkrf_attribute_passthrough(
     generated_yield_curve_count = sum(
         1 for curve_id in curve_ids if curve_id.startswith("Yield_")
     )
-    if generated_yield_curve_count <= 0:
+    if require_generated_yield_curves and generated_yield_curve_count <= 0:
         raise ValueError(
             "legacy MKRF Attrib passthrough requires emitted `Yield_*` curves"
         )
@@ -1889,6 +1947,7 @@ def _append_legacy_mkrf_attribute_passthrough(
     root: et.Element,
     legacy_base_xml_path: Path,
     legacy_attributes_config: dict[str, Any],
+    require_generated_yield_curves: bool = True,
 ) -> tuple[et.Element, ...]:
     passthrough_selects = _extract_legacy_mkrf_attribute_passthrough_selects(
         legacy_base_xml_path=legacy_base_xml_path,
@@ -1898,6 +1957,7 @@ def _append_legacy_mkrf_attribute_passthrough(
         emitted_root=root,
         passthrough_selects=passthrough_selects,
         legacy_attributes_config=legacy_attributes_config,
+        require_generated_yield_curves=require_generated_yield_curves,
     )
     for select in passthrough_selects:
         root.append(copy.deepcopy(select))
@@ -1914,6 +1974,31 @@ def _legacy_mkrf_track_statement_from_selection(selection: dict[str, Any]) -> st
         if normalized is not None:
             parts.append(normalized)
     return " and ".join(parts)
+
+
+def _normalize_legacy_mkrf_runtime_input_attributes(
+    input_attributes: dict[str, str],
+) -> dict[str, str]:
+    normalized = dict(input_attributes)
+    area_expression = _normalize_optional_expression(normalized.get("area"))
+    if area_expression is not None and _legacy_expression_is_area_ha(area_expression):
+        normalized["area"] = "Shape_Area/10000"
+    return normalized
+
+
+def _reorder_legacy_mkrf_root_children(*, root: et.Element) -> None:
+    tag_order = {
+        "curve": 0,
+        "define": 1,
+        "input": 2,
+        "output": 3,
+        "select": 4,
+    }
+    ordered_children = sorted(
+        list(root),
+        key=lambda node: tag_order.get(node.tag, 99),
+    )
+    root[:] = ordered_children
 
 
 def build_legacy_mkrf_forestmodel_xml_tree(
@@ -1942,6 +2027,7 @@ def build_legacy_mkrf_forestmodel_xml_tree(
             legacy_input_variables_config=legacy_input_variables_config
         )
     )
+    input_attributes = _normalize_legacy_mkrf_runtime_input_attributes(input_attributes)
     define_columns, required_define_fields = _build_legacy_define_column_contract(
         legacy_input_variables_config=legacy_input_variables_config
     )
@@ -1958,6 +2044,7 @@ def build_legacy_mkrf_forestmodel_xml_tree(
             "description": description,
             "horizon": str(horizon_years),
             "year": str(start_year),
+            "maxage": "350",
             "match": "multi",
         },
     )
@@ -1992,8 +2079,7 @@ def build_legacy_mkrf_forestmodel_xml_tree(
             if isinstance(point, dict)
         )
         _append_legacy_mkrf_curve_node(root=root, curve_id=curve_id, points=points)
-    for curve_id, points in generated_curve_table_by_id.items():
-        _append_legacy_mkrf_curve_node(root=root, curve_id=curve_id, points=points)
+    _append_legacy_mkrf_curves(root=root, curves_by_id=generated_curve_table_by_id)
 
     for rule in legacy_netdown_config.get("rules", []) or []:
         if str(rule.get("status", "")).strip() != "review_to_build_candidate":
@@ -2105,6 +2191,8 @@ def build_legacy_mkrf_forestmodel_xml_tree(
             raise ValueError(f"legacy MKRF treatment {treatment_id!r} missing renew.au")
         transition_node = et.SubElement(treatment_node, "transition")
         et.SubElement(transition_node, "assign", {"field": "au", "value": renew_au})
+
+    _reorder_legacy_mkrf_root_children(root=root)
 
     validate_forestmodel_xml_tree(
         root=root,

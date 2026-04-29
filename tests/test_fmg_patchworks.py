@@ -3679,16 +3679,26 @@ def test_build_legacy_mkrf_forestmodel_xml_tree_emits_recovered_contract_section
         "description": "Base TFL26",
         "horizon": "300",
         "year": "2020",
+        "maxage": "350",
         "match": "multi",
     }
     input_node = root.find("./input")
     assert input_node is not None
     assert input_node.attrib == {
         "block": "Int(RES_KEY)",
-        "area": "area()/10000",
+        "area": "Shape_Area/10000",
         "age": "Int(AGE_2020)",
         "exclude": "CONTCLAS eq 'X'",
     }
+    root_tags = [child.tag for child in list(root)]
+    first_define_index = root_tags.index("define")
+    first_input_index = root_tags.index("input")
+    first_output_index = root_tags.index("output")
+    assert all(tag == "curve" for tag in root_tags[:first_define_index])
+    assert all(
+        tag == "define" for tag in root_tags[first_define_index:first_input_index]
+    )
+    assert root_tags[first_input_index : first_output_index + 1] == ["input", "output"]
     output_node = root.find("./output")
     assert output_node is not None
     assert output_node.attrib["features"] == "features.csv"
@@ -3706,6 +3716,7 @@ def test_build_legacy_mkrf_forestmodel_xml_tree_emits_recovered_contract_section
         "operable",
         "lowoper",
     ]
+    assert root.find("./define[@field='frd']") is None
     assert root.find("./curve[@id='one']") is not None
     assert root.find("./curve[@id='zero']") is not None
     assert root.find("./curve[@id='Yield_1']") is not None

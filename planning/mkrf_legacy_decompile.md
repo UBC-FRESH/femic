@@ -359,9 +359,9 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-`P57.6` is the active next bounded implementation move. Run Patchworks matrix
-build against the FEMIC-emitted MKRF XML and accepted spatial inputs, then stop
-before track-evidence comparison or launch proof.
+Phase 57 is now complete. The next bounded move is to plan the post-minimal-
+runnable Phase 58 sequence for native Attrib replacement, raw-source
+reconstruction, and broader scenario/runtime validation.
 
 Completed `P57.1` runnable-boundary plan:
 
@@ -412,17 +412,23 @@ Remaining Phase 57 sequence after `P57.1`:
   `femic patchworks preflight --config external/femic-mkrf-instance/config/patchworks.runtime.windows.yaml`
   passed in the active Windows shell without starting matrix build.
 - `P57.6`:
-  run Patchworks matrix build against FEMIC-emitted XML and accepted spatial
-  inputs, preserving generated tracks/logs/manifests as runtime evidence.
+  completed. Patchworks matrix build now runs against the FEMIC-emitted MKRF
+  XML and accepted spatial inputs, and writes generated runtime track tables
+  under `models/mkrf_patchworks_model/Tracks/`.
 - `P57.7`:
-  compare generated track tables against legacy compiled evidence at the
-  accepted minimal-runnable smoke level, without claiming raw-source
-  reconstruction or exact legacy equivalence.
+  completed. The generated track smoke comparison is good enough for the
+  minimal runnable claim. Track cohort identity, row counts, label sets, and
+  representative total-yield curve shapes match the legacy compiled evidence at
+  the accepted smoke level. The remaining merch-tail `500/501` versus
+  `650/651` difference is recorded as an accepted non-blocking variance.
 - `P57.8`:
-  prove Patchworks launch from the generated runtime directory.
+  completed. Patchworks launch was proven from the generated runtime directory
+  using the generated `analysis/base.pin` and instance-relative runtime config.
 - `P57.9`:
-  publish the minimal runnable closeout docs, metadata, changelog entry, and
-  next-phase caveats.
+  completed. Phase 57 is now closed out as a minimally runnable MKRF
+  Patchworks instance with explicit caveats for compatibility-passthrough
+  Attrib logic, accepted merch-tail variance, no raw-source reconstruction
+  claim, and no broader scenario/runtime validation claim yet.
 
 Completed `P56.1` planning boundary:
 

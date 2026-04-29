@@ -15387,3 +15387,14 @@
   - no runtime `Tracks/*.csv` outputs were generated;
   - no Patchworks launch proof was run; and
   - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-29 - Closed Phase 57 with a minimally runnable MKRF instance
+- `#172` / `P57.6`-`P57.9` minimal-runnable closeout:
+  - ran Patchworks matrix build against the FEMIC-emitted MKRF XML and accepted compiled spatial runtime inputs, producing generated runtime `Tracks/*.csv` outputs under `models/mkrf_patchworks_model/Tracks/`;
+  - compared the generated track surfaces to legacy compiled evidence at the accepted smoke level and recorded the remaining `feature.yield.managed.merch.total` terminal-tail variance (`500/501` generated versus `650/651` legacy) as developer-approved and non-blocking for the minimal runnable phase;
+  - proved that the generated MKRF model launches from the generated runtime directory through the Patchworks runtime seam; and
+  - updated roadmap/planning and instance lineage/readme/runbook surfaces so Phase 57 now closes as a minimally runnable MKRF Patchworks instance with explicit caveats.
+- Current caveat boundary:
+  - formula-heavy Attrib logic still relies on the explicit compatibility passthrough rather than a fully native FEMIC builder;
+  - raw-source reconstruction from `03_MappingAnalysisData/*` is still out of scope for the current runnable claim;
+  - the accepted merch-tail variance remains documented for very-old-stand behavior; and
+  - broader scenario/runtime validation beyond matrix build plus launch proof remains a later phase.

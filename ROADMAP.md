@@ -1562,19 +1562,19 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P57.5a Point matrix-builder paths at the generated MKRF XML, accepted fragments, and generated `Tracks/` directory.
   - [x] P57.5b Add or update the MKRF Patchworks variant/launch registration surface if needed for launch proof.
   - [x] P57.5c Validate Patchworks preflight without starting matrix build.
-- [ ] P57.6 Run matrix build against FEMIC-emitted XML and accepted spatial inputs (`#172`)
-  - [ ] P57.6a Run Patchworks matrix builder from the generated model directory.
-  - [ ] P57.6b Require generated `Tracks/{curves,features,products,treatments,accounts,blocks}.csv` evidence.
-  - [ ] P57.6c Preserve logs/manifests as runtime evidence without overwriting archival legacy evidence.
-- [ ] P57.7 Compare generated track tables against legacy compiled evidence (`#172`)
-  - [ ] P57.7a Compare generated curves/features/products/treatments/accounts/blocks surfaces to legacy compiled tracks at the accepted smoke level.
-  - [ ] P57.7b Record expected differences caused by compatibility passthrough or accepted runtime-boundary caveats.
-  - [ ] P57.7c Keep raw-source reconstruction and exact legacy equivalence out of the minimal runnable claim.
-- [ ] P57.8 Prove Patchworks launch with the generated model (`#172`)
-  - [ ] P57.8a Launch the generated MKRF PIN through the Patchworks runtime seam.
-  - [ ] P57.8b Capture launch logs/manifests and inspect the most relevant generated model surfaces.
-  - [ ] P57.8c Do not claim launch success unless the generated model opens/runs from the generated runtime directory.
-- [ ] P57.9 Publish minimal runnable closeout docs and caveats (`#172`)
-  - [ ] P57.9a Update instance README/runbook/lineage metadata with the runnable proof boundary.
-  - [ ] P57.9b Update parent planning/changelog and tests with the minimal runnable status.
-  - [ ] P57.9c Record next-phase caveats for native Attrib completion, raw-source reconstruction, and broader scenario/runtime validation.
+- [x] P57.6 Run matrix build against FEMIC-emitted XML and accepted spatial inputs (`#172`)
+  - [x] P57.6a Run Patchworks matrix builder from the generated model directory.
+  - [x] P57.6b Require generated `Tracks/{curves,features,products,treatments,accounts,blocks}.csv` evidence.
+  - [x] P57.6c Preserve logs/manifests as runtime evidence without overwriting archival legacy evidence.
+- [x] P57.7 Compare generated track tables against legacy compiled evidence (`#172`)
+  - [x] P57.7a Compare generated curves/features/products/treatments/accounts/blocks surfaces to legacy compiled tracks at the accepted smoke level.
+  - [x] P57.7b Record expected differences caused by compatibility passthrough or accepted runtime-boundary caveats.
+  - [x] P57.7c Keep raw-source reconstruction and exact legacy equivalence out of the minimal runnable claim.
+- [x] P57.8 Prove Patchworks launch with the generated model (`#172`)
+  - [x] P57.8a Launch the generated MKRF PIN through the Patchworks runtime seam.
+  - [x] P57.8b Capture launch logs/manifests and inspect the most relevant generated model surfaces.
+  - [x] P57.8c Do not claim launch success unless the generated model opens/runs from the generated runtime directory.
+- [x] P57.9 Publish minimal runnable closeout docs and caveats (`#172`)
+  - [x] P57.9a Update instance README/runbook/lineage metadata with the runnable proof boundary.
+  - [x] P57.9b Update parent planning/changelog and tests with the minimal runnable status.
+  - [x] P57.9c Record next-phase caveats for native Attrib completion, raw-source reconstruction, and broader scenario/runtime validation.

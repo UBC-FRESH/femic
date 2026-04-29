@@ -944,15 +944,18 @@ def test_mkrf_runtime_xml_emission_records_p57_4_boundary() -> None:
     emission = yaml.safe_load(emission_path.read_text(encoding="utf-8"))
 
     assert emission["phase"] == "P57.4"
-    assert emission["status"] == "runtime_xml_emitted_with_attribute_passthrough"
+    assert (
+        emission["status"]
+        == "runtime_xml_emitted_with_attribute_passthrough_for_minimal_runnable"
+    )
     assert emission["decision"] == {
         "runtime_xml_emission": "materialized",
         "emission_mode": "opt_in_mkrf_contract_builder",
         "generated_yield_curves": "inlined_from_curve_table_csv",
         "attribute_passthrough": "materialized_via_compatibility_contract",
-        "matrix_build": "not_run",
-        "launch_proof": "not_run",
-        "runnable_rebuild_claim": "no_go",
+        "matrix_build": "passed",
+        "launch_proof": "passed",
+        "runnable_rebuild_claim": "minimal_runnable",
     }
     assert emission["emitted_artifact"]["path"] == (
         "models/mkrf_patchworks_model/XML/baseMKRF.xml"
@@ -961,6 +964,7 @@ def test_mkrf_runtime_xml_emission_records_p57_4_boundary() -> None:
         "description": "Base TFL26",
         "horizon_years": 300,
         "start_year": 2020,
+        "max_age": 350,
         "match": "multi",
     }
     assert emission["emitted_artifact"]["structure_counts"] == {
@@ -984,13 +988,19 @@ def test_mkrf_runtime_xml_emission_records_p57_4_boundary() -> None:
         "lowoper",
         "frd",
     ]
+    assert emission["emitted_contract"]["input"] == {
+        "block": "Int(RES_KEY)",
+        "area": "Shape_Area/10000",
+        "age": "Int(AGE_2020)",
+        "exclude": "CONTCLAS eq 'X'",
+    }
     assert emission["emitted_contract"]["inlined_generated_curve_source"] == {
         "curve_count": 1049,
         "producer": "data/legacy_mkrf/generated_xml/CSV/CURVE_TABLE.csv",
     }
     assert emission["next_bounded_step"] == {
-        "recommendation": "wire_runtime_config_to_generated_model_directory",
-        "roadmap_task": "P57.5",
+        "recommendation": "plan_post_minimal_runnable_phase_sequence",
+        "roadmap_task": "phase_58_planning",
     }
 
     runtime_xml = Path(
@@ -1002,6 +1012,7 @@ def test_mkrf_runtime_xml_emission_records_p57_4_boundary() -> None:
         "description": "Base TFL26",
         "horizon": "300",
         "year": "2020",
+        "maxage": "350",
         "match": "multi",
     }
     assert root.find("./curve[@id='Yield_1']") is not None
