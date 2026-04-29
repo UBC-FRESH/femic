@@ -1007,7 +1007,9 @@ def test_mkrf_runtime_xml_emission_records_p57_4_boundary() -> None:
     assert root.find("./curve[@id='Yield_1']") is not None
     assert len(root.findall("./select")) == 11
     assert root.find("./define[@field='frd']") is not None
-    assert root.find(".//features/attribute[@label='%f.area.%m.seral.le10']") is not None
+    assert (
+        root.find(".//features/attribute[@label='%f.area.%m.seral.le10']") is not None
+    )
 
 
 def test_mkrf_attribute_passthrough_records_p57_4_boundary() -> None:
@@ -1051,7 +1053,10 @@ def test_mkrf_attribute_passthrough_records_p57_4_boundary() -> None:
             "%f.area.%m.seral.le10",
         ],
     }
-    assert [block["block_id"] for block in passthrough["compatibility_contract"]["extracted_blocks"]] == [
+    assert [
+        block["block_id"]
+        for block in passthrough["compatibility_contract"]["extracted_blocks"]
+    ] == [
         "feature_area_and_total_yield",
         "merchantable_total_yield",
         "individual_species_yield",
@@ -1061,4 +1066,65 @@ def test_mkrf_attribute_passthrough_records_p57_4_boundary() -> None:
     assert passthrough["next_bounded_step"] == {
         "recommendation": "wire_runtime_config_to_generated_model_directory",
         "roadmap_task": "P57.5",
+    }
+
+
+def test_mkrf_runtime_config_points_to_generated_runtime_model() -> None:
+    config_path = Path(
+        "external/femic-mkrf-instance/config/patchworks.runtime.windows.yaml"
+    )
+
+    if not config_path.exists():
+        pytest.skip("MKRF instance submodule is not materialized")
+
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+
+    assert config["matrix_builder"] == {
+        "fragments_path": "../models/mkrf_patchworks_model/Spatial/fragments.dbf",
+        "output_dir": "../models/mkrf_patchworks_model/Tracks",
+        "forestmodel_xml_path": "../models/mkrf_patchworks_model/XML/baseMKRF.xml",
+        "auto_close_window_on_success": True,
+        "auto_close_settle_seconds": 2.0,
+        "auto_close_timeout_seconds": 10.0,
+    }
+
+
+def test_mkrf_runtime_config_wiring_records_p57_5_boundary() -> None:
+    wiring_path = Path(
+        "external/femic-mkrf-instance/metadata/legacy_runtime_config_wiring.yaml"
+    )
+
+    if not wiring_path.exists():
+        pytest.skip("MKRF instance submodule is not materialized")
+
+    wiring = yaml.safe_load(wiring_path.read_text(encoding="utf-8"))
+
+    assert wiring["phase"] == "P57.5"
+    assert wiring["status"] == "runtime_config_wired_and_preflight_validated"
+    assert wiring["decision"] == {
+        "runtime_config_wiring": "materialized",
+        "variant_registration": "builtin_registry_updated",
+        "preflight": "passed",
+        "matrix_build": "not_run",
+        "launch_proof": "not_run",
+        "runnable_rebuild_claim": "no_go",
+    }
+    assert wiring["runtime_surfaces"] == {
+        "runtime_config": "config/patchworks.runtime.windows.yaml",
+        "analysis_pin": "models/mkrf_patchworks_model/analysis/base.pin",
+        "fragments_path": "models/mkrf_patchworks_model/Spatial/fragments.dbf",
+        "forestmodel_xml_path": "models/mkrf_patchworks_model/XML/baseMKRF.xml",
+        "tracks_output_dir": "models/mkrf_patchworks_model/Tracks",
+        "builtin_variant": {
+            "variant_id": "mkrf.base",
+            "instance_id": "mkrf",
+            "analysis_pin": "external/femic-mkrf-instance/models/mkrf_patchworks_model/analysis/base.pin",
+            "runtime_config": "external/femic-mkrf-instance/config/patchworks.runtime.windows.yaml",
+        },
+    }
+    assert wiring["preflight_result"]["status"] == "passed"
+    assert wiring["preflight_result"]["license_host"] == "auth.spatial.ca"
+    assert wiring["next_bounded_step"] == {
+        "recommendation": "run_matrix_build_against_emitted_xml_and_accepted_spatial_inputs",
+        "roadmap_task": "P57.6",
     }

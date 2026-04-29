@@ -15376,3 +15376,14 @@
   - no runtime Patchworks config was rewired;
   - no Patchworks matrix build or launch was run; and
   - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Wired the MKRF Patchworks runtime config
+- `#172` / `P57.5` bounded runtime-wiring slice:
+  - rewired `external/femic-mkrf-instance/config/patchworks.runtime.windows.yaml` to the generated MKRF runtime XML, accepted fragments dataset, and runtime `Tracks/` output directory;
+  - registered `mkrf.base` in the builtin Patchworks variant registry as the minimal MKRF launch surface for later proof steps;
+  - recorded the runtime wiring and passed preflight result in `metadata/legacy_runtime_config_wiring.yaml` and `runbooks/LEGACY_RUNTIME_CONFIG_WIRING.md`; and
+  - moved the active next bounded move to `P57.6` matrix build.
+- Scope boundary preserved:
+  - no Patchworks matrix build was run;
+  - no runtime `Tracks/*.csv` outputs were generated;
+  - no Patchworks launch proof was run; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.

@@ -359,9 +359,9 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-`P57.5` is the active next bounded implementation move. Wire the MKRF
-Patchworks runtime config to the generated model directory and stop after
-preflight, before starting matrix build.
+`P57.6` is the active next bounded implementation move. Run Patchworks matrix
+build against the FEMIC-emitted MKRF XML and accepted spatial inputs, then stop
+before track-evidence comparison or launch proof.
 
 Completed `P57.1` runnable-boundary plan:
 
@@ -404,8 +404,13 @@ Remaining Phase 57 sequence after `P57.1`:
   labeled as a runnable-minimum caveat rather than a native FEMIC Attrib
   builder.
 - `P57.5`:
-  wire the MKRF Patchworks runtime config to the generated model directory and
-  validate Patchworks preflight without starting matrix build.
+  completed. The instance runtime config now points at the generated
+  `models/mkrf_patchworks_model/XML/baseMKRF.xml`, accepted
+  `models/mkrf_patchworks_model/Spatial/fragments.dbf`, and runtime
+  `models/mkrf_patchworks_model/Tracks/` directory. The builtin Patchworks
+  registry now exposes `mkrf.base`, and
+  `femic patchworks preflight --config external/femic-mkrf-instance/config/patchworks.runtime.windows.yaml`
+  passed in the active Windows shell without starting matrix build.
 - `P57.6`:
   run Patchworks matrix build against FEMIC-emitted XML and accepted spatial
   inputs, preserving generated tracks/logs/manifests as runtime evidence.

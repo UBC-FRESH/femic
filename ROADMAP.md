@@ -1558,10 +1558,10 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P57.4a Extract the deferred formula-heavy Attrib XML blocks from reconciled `baseMKRF.xml` under a named compatibility contract.
   - [x] P57.4b Inline passthrough blocks only after validating their required curves, defines, and labels against the emitted XML surface.
   - [x] P57.4c Keep passthrough status visible as a runnable-minimum caveat rather than claiming fully native Attrib reimplementation.
-- [ ] P57.5 Wire MKRF Patchworks runtime config to the generated model directory (`#172`)
-  - [ ] P57.5a Point matrix-builder paths at the generated MKRF XML, accepted fragments, and generated `Tracks/` directory.
-  - [ ] P57.5b Add or update the MKRF Patchworks variant/launch registration surface if needed for launch proof.
-  - [ ] P57.5c Validate Patchworks preflight without starting matrix build.
+- [x] P57.5 Wire MKRF Patchworks runtime config to the generated model directory (`#172`)
+  - [x] P57.5a Point matrix-builder paths at the generated MKRF XML, accepted fragments, and generated `Tracks/` directory.
+  - [x] P57.5b Add or update the MKRF Patchworks variant/launch registration surface if needed for launch proof.
+  - [x] P57.5c Validate Patchworks preflight without starting matrix build.
 - [ ] P57.6 Run matrix build against FEMIC-emitted XML and accepted spatial inputs (`#172`)
   - [ ] P57.6a Run Patchworks matrix builder from the generated model directory.
   - [ ] P57.6b Require generated `Tracks/{curves,features,products,treatments,accounts,blocks}.csv` evidence.
