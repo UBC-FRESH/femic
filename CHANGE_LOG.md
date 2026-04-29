@@ -15439,3 +15439,14 @@
   - no fragments or topology were regenerated from source;
   - no matrix build or launch was rerun; and
   - no source-faithful MKRF rebuild claim was introduced by this slice.
+## 2026-04-29 - Hit the P58.4a source-evidence blocker in the MKRF target-description lane
+- `#172` / `P58.4a` bounded scenario-target reconstruction investigation:
+  - confirmed from `000_Targets_Builder.xlsx` that the legacy corpus deterministically covers the `Harvest`, `grn`, `biod`, `wat`, and `vqo` target families needed for a rebuilt `InitialTargets/00_Target_Descriptions.bsh`;
+  - confirmed from the legacy Patchworks sample interface pattern that the missing MKRF helper names are expected to return `TargetDescription`/`objective(...)` bundles, not ad hoc script fragments;
+  - traced the active AAC-max `ScenarioSet.bsh` helper names `THLB4070(...)` and `UWR(...)` back through the recovered workbook, target fragments, outputs, and adjacent control scripts and did not find a deterministic source-family mapping for either helper; and
+  - reverted the exploratory partial `GRNUP` / `BIOD` reconstruction so the instance remains on the explicit fail-fast `00_Target_Descriptions.bsh` scaffold until the unresolved helper provenance is recovered.
+- Scope boundary preserved:
+  - no inferred `THLB4070` or `UWR` helper semantics were introduced;
+  - no partial scenario-target library was left active in the runtime scaffold;
+  - no broadened scenario run was claimed as valid; and
+  - `P58.4a` remains blocked pending corpus evidence for the unresolved helper families.

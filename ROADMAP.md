@@ -1596,6 +1596,7 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P58.3c Publish the reproducibility boundary before claiming a source-faithful MKRF rebuild.
 - [ ] P58.4 Broaden scenario and runtime validation beyond the minimal launch proof (`#172`)
   - [ ] P58.4a Resolve the `InitialTargets` / scenario-target seam enough to exercise a representative nontrivial runtime path.
+    - Blocker recorded on 2026-04-29: `000_Targets_Builder.xlsx` plus the recovered target fragments deterministically cover `Harvest`, `grn`, `biod`, `wat`, and `vqo`, but the active AAC-max `ScenarioSet.bsh` helper names `THLB4070(...)` and `UWR(...)` still do not map to any recovered workbook sheet, generated target family, or adjacent legacy control artifact.
   - [ ] P58.4b Define and run a bounded smoke suite over generated XML, generated tracks, and at least one representative launch/runtime scenario.
   - [ ] P58.4c Record which runtime behaviors remain unvalidated after the broadened smoke suite.
 - [ ] P58.5 Tighten legacy-fidelity caveats that remain non-blocking today (`#172`)

@@ -471,7 +471,12 @@ Planned Phase 58 sequence after minimal runnable closeout:
 - `P58.4`:
   broaden scenario/runtime validation beyond the minimal launch proof, starting
   with the unresolved `InitialTargets` seam and a representative nontrivial
-  runtime path.
+  runtime path. Current blocker: the missing target-description library is only
+  source-faithfully reconstructable for the `Harvest`, `grn`, `biod`, `wat`,
+  and `vqo` families from `000_Targets_Builder.xlsx`; the active AAC-max
+  helper names `THLB4070(...)` and `UWR(...)` still lack a deterministic source
+  mapping in the recovered corpus, so `P58.4a` cannot advance past the
+  fail-fast scaffold yet.
 - `P58.5`:
   tighten any remaining legacy-fidelity caveats only where they change real
   model behavior or validation conclusions.
