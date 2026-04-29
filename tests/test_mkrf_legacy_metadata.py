@@ -1043,6 +1043,74 @@ def test_mkrf_runtime_model_layout_records_p57_2_boundary() -> None:
     assert "target-description lane" in placeholder_text
 
 
+def test_mkrf_source_reproducibility_boundary_records_p58_3c() -> None:
+    boundary_path = Path(
+        "external/femic-mkrf-instance/metadata/"
+        "legacy_source_reproducibility_boundary.yaml"
+    )
+
+    if not boundary_path.exists():
+        pytest.skip("MKRF instance submodule is not materialized")
+
+    boundary = yaml.safe_load(boundary_path.read_text(encoding="utf-8"))
+
+    assert boundary["phase"] == "P58.3c"
+    assert boundary["status"] == (
+        "reproducibility_boundary_published_no_source_faithful_claim"
+    )
+    assert boundary["decision"] == {
+        "raw_source_publication_boundary": "published",
+        "source_faithful_rebuild_claim": "not_permitted_yet",
+        "compiled_runtime_substitution": "rejected",
+        "checkpoint_substitution": "rejected",
+        "matrix_build_dependency": "unchanged",
+        "runnable_minimal_claim": "unchanged",
+    }
+    assert boundary["raw_source_lane"]["authoritative_upstream_families"] == [
+        "MKRF_Cosmin_Model/MKRF/03_MappingAnalysisData/Source.gdb",
+        "MKRF_Cosmin_Model/MKRF/03_MappingAnalysisData/Resultant.gdb",
+        "MKRF_Cosmin_Model/MKRF/03_MappingAnalysisData/Resultant_info_v1.xlsx",
+        "MKRF_Cosmin_Model/MKRF/03_MappingAnalysisData/03_Yields/VDYP/*",
+    ]
+    assert boundary["raw_source_lane"]["reconstructed_publication_contract"][
+        "published_runtime_target"
+    ] == {
+        "path_glob": "MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/Spatial/fragments.*",
+        "feature_count": 1763,
+        "geometry_type": "Polygon",
+        "filter_expression": "CONTCLAS != 'X'",
+        "excluded_feature_count": 110,
+    }
+    assert boundary["rejected_substitutes"]["compiled_runtime"]["status"] == (
+        "not_raw_source"
+    )
+    assert boundary["rejected_substitutes"]["checkpoint_derived"]["status"] == (
+        "not_raw_source"
+    )
+    assert boundary["claim_boundary"]["allowed_now"] == [
+        (
+            "minimally_runnable_patchworks_instance_from_femic_managed_xml_plus_"
+            "accepted_compiled_spatial_inputs"
+        ),
+        "raw_source_publication_boundary_reconstructed_at_contract_level",
+    ]
+    assert boundary["claim_boundary"]["not_allowed_yet"] == [
+        "source_faithful_mkrf_rebuild",
+        (
+            "claim_that_runtime_fragments_or_topology_were_regenerated_from_"
+            "upstream_mapping_inputs"
+        ),
+        (
+            "claim_that_checkpoint_or_compiled_runtime_surfaces_are_equivalent_"
+            "to_raw_source"
+        ),
+    ]
+    assert boundary["next_bounded_step"] == {
+        "recommendation": "broaden_runtime_and_scenario_validation_beyond_minimal_launch",
+        "roadmap_task": "P58.4",
+    }
+
+
 def test_mkrf_runtime_xml_emission_records_p58_2_boundary() -> None:
     emission_path = Path(
         "external/femic-mkrf-instance/metadata/legacy_runtime_xml_emission.yaml"

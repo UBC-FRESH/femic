@@ -15428,3 +15428,14 @@
   - no fragments were regenerated from source;
   - no matrix build or launch was rerun; and
   - no source-faithful MKRF rebuild claim was introduced by this slice.
+## 2026-04-29 - Published the MKRF source reproducibility boundary
+- `#172` / `P58.3c` bounded reproducibility-boundary slice:
+  - added `metadata/legacy_source_reproducibility_boundary.yaml` and `runbooks/LEGACY_SOURCE_REPRODUCIBILITY_BOUNDARY.md` to the MKRF instance;
+  - published the explicit claim boundary between the current minimally runnable MKRF instance and any future source-faithful rebuild claim;
+  - recorded that raw source means the upstream `03_MappingAnalysisData/*` lane, while compiled runtime files and checkpoint-derived artifacts remain invalid substitutes for that claim surface; and
+  - updated roadmap/planning plus instance lineage metadata so the active next bounded move is now `P58.4`.
+- Scope boundary preserved:
+  - no upstream raw-source payload was ingested into the instance;
+  - no fragments or topology were regenerated from source;
+  - no matrix build or launch was rerun; and
+  - no source-faithful MKRF rebuild claim was introduced by this slice.

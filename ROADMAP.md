@@ -1593,7 +1593,7 @@ Notes: `planning/mkrf_legacy_decompile.md`
 - [ ] P58.3 Reconstruct the raw-source input lane from the legacy planning corpus (`#172`)
   - [x] P58.3a Materialize and review the true upstream source surfaces under `03_MappingAnalysisData/*` that are required for reproducible fragments/topology generation.
   - [x] P58.3b Separate raw-source reconstruction from checkpoint-derived or compiled-runtime substitutes.
-  - [ ] P58.3c Publish the reproducibility boundary before claiming a source-faithful MKRF rebuild.
+  - [x] P58.3c Publish the reproducibility boundary before claiming a source-faithful MKRF rebuild.
 - [ ] P58.4 Broaden scenario and runtime validation beyond the minimal launch proof (`#172`)
   - [ ] P58.4a Resolve the `InitialTargets` / scenario-target seam enough to exercise a representative nontrivial runtime path.
   - [ ] P58.4b Define and run a bounded smoke suite over generated XML, generated tracks, and at least one representative launch/runtime scenario.

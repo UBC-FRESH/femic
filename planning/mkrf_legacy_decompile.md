@@ -378,8 +378,14 @@ Current `P58.3` state:
   Those surfaces remain useful for runtime validation or debugging, but they do
   not count as raw source for a source-faithful MKRF rebuild claim.
 - `P58.3c`:
-  active next bounded move. Publish the reproducibility boundary clearly before
-  making any source-faithful rebuild claim.
+  completed. The reproducibility boundary is now published as a distinct MKRF
+  metadata/runbook surface that states:
+  - the current claim is minimally runnable, not source-faithful;
+  - raw source means the upstream `03_MappingAnalysisData/*` lane;
+  - compiled runtime and checkpoint-derived artifacts are not acceptable raw
+    source substitutes; and
+  - additional future gates are still required before any source-faithful
+    rebuild claim.
 
 Completed `P57.1` runnable-boundary plan:
 
