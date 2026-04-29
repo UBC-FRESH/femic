@@ -143,6 +143,8 @@ When contributing to this repository as the coding agent:
 12. Treat GitHub issue hygiene as a required part of the development workflow:
    - before starting a new feature, bug, docs push, or other non-trivial task, ensure `gh` is
      available in the active shell and authenticated as the intended active GitHub user;
+   - if `gh` is unavailable or unauthenticated, treat that as a workflow blocker for issue hygiene:
+     stop, report the blocker clearly, and do not pretend the GitHub side of the workflow is current;
    - start with a non-mutating audit before editing issue state:
      - `gh issue list --state open`
      - `gh issue list --state closed`
@@ -162,6 +164,15 @@ When contributing to this repository as the coding agent:
    - when work status changes materially, update the issue accordingly (comment, retitle, relabel,
      close on merge, or otherwise reconcile status) so the GitHub tracker reflects reality and does
      not leave dropped or duplicated work behind.
+   - treat progress comments as mandatory, not optional:
+     - when a roadmap task, roadmap subtask bundle, phase closeout, or equivalent milestone is
+       completed, post a matching GitHub progress comment on the governing issue;
+     - when the workflow uses parent/child issues, keep both the active child issue and the parent
+       issue current with concise progress comments whenever status changes materially;
+     - local updates in `ROADMAP.md`, `CHANGE_LOG.md`, commits, or chat do not substitute for the
+       required GitHub comment trail;
+     - before declaring a milestone wrapped up, verify that the required GitHub comment(s) were
+       actually posted successfully from the active shell/session.
    - prefer `gh issue edit` for issue titles, bodies, and labels, but prefer `gh api graphql` for
      maintainer-authored comment edits and any metadata surface that `gh issue edit` handles
      poorly; document the exact successful command pattern in repo notes/docs if you need the
