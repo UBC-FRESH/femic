@@ -712,6 +712,7 @@ def test_mkrf_source_input_publication_boundary_records_p56_5_decision() -> None
     boundary = yaml.safe_load(boundary_path.read_text(encoding="utf-8"))
 
     assert boundary["phase"] == "P56.5"
+    assert boundary["last_updated_phase"] == "P58.3a"
     assert boundary["decision"] == {
         "source_input_publication_boundary": "resolved_for_next_readiness_gate",
         "payload_intake": "not_started",
@@ -753,8 +754,56 @@ def test_mkrf_source_input_publication_boundary_records_p56_5_decision() -> None
         "blocked_pending_git_annex_for_fragments"
     )
     assert lanes["raw_source_reproducibility_lane"]["status"] == (
-        "deferred_to_later_phase_or_task"
+        "resultant_to_fragments_publication_boundary_reconstructed"
     )
+    reconstructed = lanes["raw_source_reproducibility_lane"][
+        "reconstructed_fragments_publication_boundary"
+    ]
+    assert reconstructed["source_feature_class"] == {
+        "path": (
+            "MKRF_Cosmin_Model/MKRF/03_MappingAnalysisData/"
+            "Resultant.gdb/Resultant"
+        ),
+        "feature_count": 1873,
+        "geometry_type": "MultiPolygon",
+    }
+    assert reconstructed["runtime_publication"] == {
+        "target_glob": "MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/Spatial/fragments.*",
+        "published_feature_count": 1763,
+        "geometry_type": "Polygon",
+        "filter": {
+            "expression": "CONTCLAS != 'X'",
+            "excluded_feature_count": 110,
+            "excluded_rollup": "2_Non_Forest",
+            "excluded_netdown_counts": {
+                "2_11_Non_Forest": 97,
+                "2_10_Roads": 13,
+            },
+        },
+    }
+    assert reconstructed["field_projection"] == [
+        {"source": "Operability", "published": "Operabilit"},
+        {"source": "Shape_Length", "published": "Shape_Leng"},
+        {"source": "Shape_Area", "published": "Shape_Area"},
+        {"source": "CONTCLAS", "published": "CONTCLAS"},
+        {"source": "AGE_2020", "published": "AGE_2020"},
+        {"source": "AU_EX", "published": "AU_EX"},
+        {"source": "AU_FU", "published": "AU_FU"},
+        {"source": "RES_KEY", "published": "RES_KEY"},
+        {"source": "CT_eligib", "published": "CT_eligib"},
+    ]
+    assert reconstructed["verification"] == {
+        "shared_res_key_count": 1763,
+        "core_field_mismatches": 0,
+        "true_multipart_shared_features": 0,
+        "note": [
+            "Resultant rows carried single-part multipolygon geometries only.",
+            (
+                "No value drift was observed across the published runtime field "
+                "subset."
+            ),
+        ],
+    }
     assert lanes["current_femic_run_profile_lane"]["status"] == (
         "template_not_runnable_source_boundary"
     )
@@ -786,8 +835,8 @@ def test_mkrf_source_input_publication_boundary_records_p56_5_decision() -> None
         ],
     }
     assert boundary["next_bounded_step"] == {
-        "recommendation": "implement_first_builder_activation_gate",
-        "roadmap_task": "future_phase",
+        "recommendation": "separate_raw_source_reconstruction_from_compiled_runtime_substitutes",
+        "roadmap_task": "P58.3b",
     }
 
 
