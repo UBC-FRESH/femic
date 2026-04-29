@@ -15407,3 +15407,13 @@
   - no new MKRF implementation was started;
   - no XML emission, matrix build, or launch was rerun; and
   - no new runnable claim beyond the completed Phase 57 minimal-runnable closeout was introduced.
+## 2026-04-29 - Replaced the MKRF Attrib passthrough with a native builder
+- `#172` / `P58.2` bounded native-Attrib slice:
+  - replaced the MKRF runtime XML Attrib passthrough with a native FEMIC builder driven by `config/legacy_xml_builder/attributes.mkrf.yaml`, `metadata/mkrf_xlsm_review/ranges/attrib_attributes.review.csv`, and `metadata/mkrf_xlsm_review/ranges/lookups_spp_comp.review.csv`;
+  - regenerated `external/femic-mkrf-instance/models/mkrf_patchworks_model/XML/baseMKRF.xml` and reran Patchworks matrix build against the regenerated runtime XML;
+  - confirmed the rebuilt runtime track lane still compiles cleanly, including representative Attrib-backed `features.csv` and `products.csv` surfaces; and
+  - updated roadmap/planning and instance lineage/runbook surfaces so `P58.3` raw-source reconstruction is now the active next bounded move.
+- Current boundary:
+  - raw-source reconstruction from `03_MappingAnalysisData/*` is still out of scope for the current runnable claim;
+  - the accepted `500/501` versus `650/651` merchantable-tail variance remains documented for very-old-stand behavior; and
+  - broader scenario/runtime validation beyond matrix build plus launch proof remains a later phase.

@@ -3820,7 +3820,7 @@ def test_emit_legacy_mkrf_forestmodel_xml_writes_runtime_base_xml(
     assert root.find("./curve[@id='Yield_1']") is not None
 
 
-def test_emit_legacy_mkrf_forestmodel_xml_appends_attrib_passthrough_blocks(
+def test_emit_legacy_mkrf_forestmodel_xml_emits_native_attrib_blocks(
     tmp_path: Path,
 ) -> None:
     instance_root = Path("external/femic-mkrf-instance")
@@ -3833,7 +3833,6 @@ def test_emit_legacy_mkrf_forestmodel_xml_appends_attrib_passthrough_blocks(
     netdown_path = instance_root / "config/legacy_xml_builder/netdown.mkrf.yaml"
     treat_path = instance_root / "config/legacy_xml_builder/strata/treat.mkrf.yaml"
     attributes_path = instance_root / "config/legacy_xml_builder/attributes.mkrf.yaml"
-    legacy_base_xml_path = instance_root / "data/legacy_mkrf/generated_xml/baseMKRF.xml"
     curve_table_path = (
         instance_root / "data/legacy_mkrf/generated_xml/CSV/CURVE_TABLE.csv"
     )
@@ -3845,7 +3844,6 @@ def test_emit_legacy_mkrf_forestmodel_xml_appends_attrib_passthrough_blocks(
             netdown_path,
             treat_path,
             attributes_path,
-            legacy_base_xml_path,
             curve_table_path,
         )
     ):
@@ -3860,7 +3858,6 @@ def test_emit_legacy_mkrf_forestmodel_xml_appends_attrib_passthrough_blocks(
         generated_curve_table_csv_path=curve_table_path,
         output_path=output_path,
         legacy_attributes_config_path=attributes_path,
-        legacy_base_xml_path=legacy_base_xml_path,
     )
 
     assert emitted == output_path
@@ -3901,6 +3898,9 @@ def test_emit_legacy_mkrf_forestmodel_xml_appends_attrib_passthrough_blocks(
     assert (
         root.find(".//features/attribute[@label='%f.area.%m.seral.le10']") is not None
     )
+    ba_species = root.find(".//features/attribute[@label='%f.yield.%m.indsp.Ba']")
+    assert ba_species is not None
+    assert "Number(lookupTable(au,'" in ba_species.attrib["factor"]
 
 
 def test_validate_forestmodel_xml_tree_rejects_missing_curve_ref() -> None:

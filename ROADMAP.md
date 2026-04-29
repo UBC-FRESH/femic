@@ -1582,14 +1582,14 @@ Notes: `planning/mkrf_legacy_decompile.md`
 ## Phase 58: Harden MKRF Beyond the Minimal Runnable Boundary
 Notes: `planning/mkrf_legacy_decompile.md`
 
-- [ ] P58.1 Plan the post-minimal-runnable hardening sequence (`#172`)
-  - [ ] P58.1a Convert the remaining minimal-runnable caveats into an ordered bounded sequence without starting new rebuild lanes ad hoc.
-  - [ ] P58.1b Keep native Attrib replacement, raw-source reconstruction, and broader runtime/scenario validation as distinct contracts.
-  - [ ] P58.1c Publish the next active bounded move before any further MKRF implementation.
-- [ ] P58.2 Replace the MKRF Attrib compatibility passthrough with a native FEMIC builder (`#172`)
-  - [ ] P58.2a Rebuild the currently deferred formula-heavy Attrib feature/product surfaces from the translated workbook contract instead of copying legacy `<select>` blocks.
-  - [ ] P58.2b Prove the native Attrib surfaces preserve the accepted minimal-runnable behavior before removing the passthrough.
-  - [ ] P58.2c Keep any remaining unsupported formula dependencies explicit rather than silently collapsing them into static constants or copied XML.
+- [x] P58.1 Plan the post-minimal-runnable hardening sequence (`#172`)
+  - [x] P58.1a Convert the remaining minimal-runnable caveats into an ordered bounded sequence without starting new rebuild lanes ad hoc.
+  - [x] P58.1b Keep native Attrib replacement, raw-source reconstruction, and broader runtime/scenario validation as distinct contracts.
+  - [x] P58.1c Publish the next active bounded move before any further MKRF implementation.
+- [x] P58.2 Replace the MKRF Attrib compatibility passthrough with a native FEMIC builder (`#172`)
+  - [x] P58.2a Rebuild the currently deferred formula-heavy Attrib feature/product surfaces from the translated workbook contract instead of copying legacy `<select>` blocks.
+  - [x] P58.2b Prove the native Attrib surfaces preserve the accepted minimal-runnable behavior before removing the passthrough.
+  - [x] P58.2c Keep any remaining unsupported formula dependencies explicit rather than silently collapsing them into static constants or copied XML.
 - [ ] P58.3 Reconstruct the raw-source input lane from the legacy planning corpus (`#172`)
   - [ ] P58.3a Materialize and review the true upstream source surfaces under `03_MappingAnalysisData/*` that are required for reproducible fragments/topology generation.
   - [ ] P58.3b Separate raw-source reconstruction from checkpoint-derived or compiled-runtime substitutes.

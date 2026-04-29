@@ -61,6 +61,12 @@ DEFAULT_SILV_STATE_PLANTED = "cc_pl"
 DEFAULT_LEGACY_TREATMENT_ELIGIBILITY_FIELD = "treat_inel"
 DEFAULT_PASS_THROUGH_SUCCESSION_BREAKUP = "1000"
 DEFAULT_PASS_THROUGH_SUCCESSION_RENEW = "1000"
+DEFAULT_LEGACY_MKRF_ATTRIB_REVIEW_EXTRACT = Path(
+    "metadata/mkrf_xlsm_review/ranges/attrib_attributes.review.csv"
+)
+DEFAULT_LEGACY_MKRF_SPP_COMP_REVIEW_EXTRACT = Path(
+    "metadata/mkrf_xlsm_review/ranges/lookups_spp_comp.review.csv"
+)
 DEFAULT_LEGACY_MKRF_OUTPUT_ATTRIBUTES = {
     "messages": "messages.csv",
     "blocks": "blocks.csv",
@@ -166,6 +172,15 @@ SERAL_STAGE_ORDER = (
 )
 OG2_MIN_AGE_ZERO = 249
 OG2_MIN_AGE_ONE = 250
+_LEGACY_MKRF_REPO_ROOT = Path(__file__).resolve().parents[3]
+_LEGACY_MKRF_REVIEW_FORMULA_PATTERN = re.compile(r'^="(?P<expression>.*)"$')
+_LEGACY_MKRF_LOOKUP_FACTOR_PATTERN = re.compile(
+    r'^="(?P<prefix>.*)"&CONCATENATE\("Number\(",'
+    r'LookupTable\(Lookups!SPP_COMP,"au","(?P<species>[^"]+)"\),'
+    r'"\)/100"\)$'
+)
+_LEGACY_MKRF_LOOKUP_REF_PATTERN = re.compile(r"^=[A-Z]+(?P<row>\d+)$")
+_LEGACY_MKRF_THN_AU_PATTERN = re.compile(r'^="thn_"&N(?P<row>\d+)$')
 
 
 @dataclass(frozen=True)
@@ -1835,6 +1850,256 @@ def _append_legacy_mkrf_curves(
         _append_legacy_mkrf_curve_node(root=root, curve_id=curve_id, points=points)
 
 
+def _load_legacy_mkrf_attribute_review_table(
+    *,
+    legacy_attributes_config: dict[str, Any],
+) -> pd.DataFrame:
+    source = legacy_attributes_config.get("source", {})
+    review_extract = (
+        source.get("parent_review_extracts", {}) or {}
+    ).get("range_extract") or str(DEFAULT_LEGACY_MKRF_ATTRIB_REVIEW_EXTRACT)
+    review_path = _LEGACY_MKRF_REPO_ROOT / str(review_extract)
+    if not review_path.exists():
+        raise ValueError(
+            "legacy MKRF Attrib review extract is missing: "
+            f"{review_path.as_posix()}"
+        )
+    return pd.read_csv(review_path, dtype=str).fillna("")
+
+
+def _resolve_legacy_mkrf_review_formula(value: str | None) -> str | None:
+    normalized = _normalize_optional_expression(value)
+    if normalized is None:
+        return None
+    match = _LEGACY_MKRF_REVIEW_FORMULA_PATTERN.match(normalized)
+    if match is not None:
+        return match.group("expression")
+    return normalized
+
+
+def _load_legacy_mkrf_species_lookup_contract() -> dict[str, tuple[str, str]]:
+    review_path = _LEGACY_MKRF_REPO_ROOT / DEFAULT_LEGACY_MKRF_SPP_COMP_REVIEW_EXTRACT
+    if not review_path.exists():
+        raise ValueError(
+            "legacy MKRF SPP_COMP review extract is missing: "
+            f"{review_path.as_posix()}"
+        )
+    table = pd.read_csv(review_path, dtype=str).fillna("")
+    value_columns = [column for column in table.columns if column != "au"]
+    resolved_rows: list[dict[str, str]] = []
+    for _, row in table.iterrows():
+        raw_au = str(row["au"]).strip()
+        thn_match = _LEGACY_MKRF_THN_AU_PATTERN.match(raw_au)
+        if thn_match is not None:
+            source_index = int(thn_match.group("row")) - 7
+            source_row = resolved_rows[source_index]
+            resolved_au = f"thn_{source_row['au']}"
+        else:
+            resolved_au = raw_au
+
+        resolved_row = {"au": resolved_au}
+        for column in value_columns:
+            raw_value = str(row[column]).strip()
+            ref_match = _LEGACY_MKRF_LOOKUP_REF_PATTERN.match(raw_value)
+            if ref_match is not None:
+                source_index = int(ref_match.group("row")) - 7
+                resolved_row[column] = resolved_rows[source_index][column]
+            else:
+                resolved_row[column] = raw_value
+        resolved_rows.append(resolved_row)
+
+    species_lookup: dict[str, tuple[str, str]] = {}
+    au_values = ",".join(row["au"] for row in resolved_rows)
+    for column in value_columns:
+        species_lookup[column] = (
+            au_values,
+            ",".join(row[column] for row in resolved_rows),
+        )
+    return species_lookup
+
+
+def _resolve_legacy_mkrf_factor_expression(
+    *,
+    raw_factor: str | None,
+    species_lookup_contract: dict[str, tuple[str, str]],
+) -> str | None:
+    normalized = _normalize_optional_expression(raw_factor)
+    if normalized is None:
+        return None
+    lookup_match = _LEGACY_MKRF_LOOKUP_FACTOR_PATTERN.match(normalized)
+    if lookup_match is not None:
+        species = lookup_match.group("species")
+        if species not in species_lookup_contract:
+            raise ValueError(
+                "legacy MKRF Attrib species lookup is missing review values for "
+                f"{species!r}"
+            )
+        au_values, species_values = species_lookup_contract[species]
+        return (
+            f"{lookup_match.group('prefix')}"
+            f"Number(lookupTable(au,'{au_values}','{species_values}'))/100"
+        )
+    return _resolve_legacy_mkrf_review_formula(normalized)
+
+
+def _append_legacy_mkrf_native_attribute(
+    *,
+    parent: et.Element,
+    label: str,
+    curve_or_expression: str,
+    factor_expression: str | None,
+) -> None:
+    attribute_attrs = {"label": label}
+    normalized_factor = _normalize_optional_expression(factor_expression)
+    if normalized_factor is not None and normalized_factor != "1":
+        attribute_attrs["factor"] = normalized_factor
+    attribute_node = et.SubElement(parent, "attribute", attribute_attrs)
+    if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", curve_or_expression):
+        et.SubElement(attribute_node, "curve", {"idref": curve_or_expression})
+        return
+    et.SubElement(
+        attribute_node,
+        "expression",
+        {
+            "statement": curve_or_expression,
+            "by": "1",
+            "ignoreMissingAttributes": "false",
+        },
+    )
+
+
+def _build_legacy_mkrf_native_attribute_selects(
+    *,
+    legacy_attributes_config: dict[str, Any],
+) -> tuple[et.Element, ...]:
+    review_table = _load_legacy_mkrf_attribute_review_table(
+        legacy_attributes_config=legacy_attributes_config
+    )
+    species_lookup_contract = _load_legacy_mkrf_species_lookup_contract()
+    configured_rows = {
+        int(entry["row_offset"]): entry
+        for entry in legacy_attributes_config.get("attribute_rows", []) or []
+        if isinstance(entry, dict) and entry.get("row_offset") is not None
+    }
+    review_rows: dict[int, dict[str, str]] = {}
+    for row_offset, row_config in configured_rows.items():
+        if row_offset <= 0 or row_offset > len(review_table.index):
+            raise ValueError(
+                "legacy MKRF Attrib contract row_offset is outside the review "
+                f"extract: {row_offset}"
+            )
+        row = review_table.iloc[row_offset - 1]
+        review_rows[row_offset] = {
+            "applies_to": _normalize_optional_expression(row.get("Applies to"))
+            or str(row_config.get("applies_to", "")).strip(),
+            "curve_or_expression": _resolve_legacy_mkrf_review_formula(
+                row.get("Curve or Expression")
+            )
+            or _normalize_optional_expression(row_config.get("curve_or_expression")),
+            "attribute_name": _normalize_optional_expression(row.get("Attribute Name"))
+            or _normalize_optional_expression(row_config.get("attribute_name")),
+            "factor_expression": _resolve_legacy_mkrf_factor_expression(
+                raw_factor=row.get("Factor"),
+                species_lookup_contract=species_lookup_contract,
+            )
+            or _normalize_optional_expression(row_config.get("factor_expression")),
+            "selection_expression": _normalize_optional_expression(row.get("Unnamed: 9"))
+            or _normalize_optional_expression(row_config.get("selection_expression"))
+            or "",
+        }
+
+    block_specs = (
+        ("", "features", (1, 2, 5, 6)),
+        ("status in managed", "features", (9,)),
+        ("", "features", (11, 12, 13, 14, 15, 16, 17, 18)),
+        ("status ne 'X'", "features", (21,)),
+        ("", "products", (1, 2, 3, 5, 6, 7, 11, 12, 13, 14, 15, 16, 17, 18)),
+    )
+    select_nodes: list[et.Element] = []
+    for statement, container_tag, row_offsets in block_specs:
+        select_node = et.Element("select", {"statement": statement})
+        container = et.SubElement(select_node, container_tag)
+        for row_offset in row_offsets:
+            row = review_rows[row_offset]
+            applies_to = row["applies_to"]
+            if container_tag == "features" and applies_to not in {"both", "feature"}:
+                continue
+            if container_tag == "products" and applies_to not in {"both", "product"}:
+                continue
+            curve_or_expression = row["curve_or_expression"]
+            label = row["attribute_name"]
+            if curve_or_expression is None or label is None:
+                raise ValueError(
+                    "legacy MKRF Attrib row is missing curve/expression or label: "
+                    f"{row_offset}"
+                )
+            _append_legacy_mkrf_native_attribute(
+                parent=container,
+                label=label,
+                curve_or_expression=curve_or_expression,
+                factor_expression=row["factor_expression"],
+            )
+        select_nodes.append(select_node)
+    return tuple(select_nodes)
+
+
+def _validate_legacy_mkrf_native_attributes(
+    *,
+    emitted_root: et.Element,
+    selects: tuple[et.Element, ...],
+    legacy_attributes_config: dict[str, Any],
+) -> None:
+    required_define_fields = {"status", "au", "aux", "treatment", "frd", "managed"}
+    define_fields = {
+        str(node.get("field")).strip()
+        for node in emitted_root.findall("./define")
+        if node.get("field")
+    }
+    missing_define_fields = sorted(required_define_fields.difference(define_fields))
+    if missing_define_fields:
+        raise ValueError(
+            "native MKRF Attrib builder missing required define fields: "
+            + ", ".join(missing_define_fields)
+        )
+
+    curve_ids = {
+        str(node.get("id")).strip()
+        for node in emitted_root.findall("./curve")
+        if node.get("id")
+    }
+    missing_curve_ids = sorted({"one", "le10"}.difference(curve_ids))
+    if missing_curve_ids:
+        raise ValueError(
+            "native MKRF Attrib builder missing required curves: "
+            + ", ".join(missing_curve_ids)
+        )
+    if not any(curve_id.startswith("Yield_") for curve_id in curve_ids):
+        raise ValueError(
+            "native MKRF Attrib builder requires emitted `Yield_*` curves"
+        )
+
+    validation_contract = legacy_attributes_config.get("validation_contract", {})
+    expected_attribute_names = {
+        _normalize_passthrough_label(value)
+        for value in validation_contract.get("required_attribute_names", []) or []
+        if _normalize_passthrough_label(value)
+    }
+    emitted_attribute_names = {
+        _normalize_passthrough_label(attribute.get("label"))
+        for select in selects
+        for attribute in select.findall(".//attribute")
+        if _normalize_passthrough_label(attribute.get("label"))
+    }
+    missing_attribute_names = sorted(
+        expected_attribute_names.difference(emitted_attribute_names)
+    )
+    if missing_attribute_names:
+        raise ValueError(
+            "native MKRF Attrib builder missing expected attribute labels: "
+            + ", ".join(missing_attribute_names)
+        )
+
+
 def _normalize_passthrough_label(value: str | None) -> str:
     return str(value or "").strip()
 
@@ -2254,24 +2519,24 @@ def emit_legacy_mkrf_forestmodel_xml(
         legacy_treat_config=legacy_treat_config,
         generated_curve_table_by_id=generated_curve_table_by_id,
         compatibility_required_constant_keys=("frd",)
-        if legacy_attributes_config_path is not None or legacy_base_xml_path is not None
+        if legacy_attributes_config_path is not None
         else (),
     )
-    if legacy_attributes_config_path is not None or legacy_base_xml_path is not None:
-        if legacy_attributes_config_path is None or legacy_base_xml_path is None:
-            raise ValueError(
-                "legacy MKRF Attrib passthrough requires both "
-                "legacy_attributes_config_path and legacy_base_xml_path"
-            )
+    if legacy_attributes_config_path is not None:
         legacy_attributes_config = _load_legacy_mkrf_yaml_contract(
             path=legacy_attributes_config_path,
             contract_label="legacy MKRF attributes contract",
         )
-        _append_legacy_mkrf_attribute_passthrough(
-            root=root,
-            legacy_base_xml_path=legacy_base_xml_path,
+        native_attribute_selects = _build_legacy_mkrf_native_attribute_selects(
+            legacy_attributes_config=legacy_attributes_config
+        )
+        _validate_legacy_mkrf_native_attributes(
+            emitted_root=root,
+            selects=native_attribute_selects,
             legacy_attributes_config=legacy_attributes_config,
         )
+        for select in native_attribute_selects:
+            root.append(copy.deepcopy(select))
         validate_forestmodel_xml_tree(
             root=root,
             required_define_fields=(

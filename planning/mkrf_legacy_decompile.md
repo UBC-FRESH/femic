@@ -359,8 +359,9 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-`P58.1` is the active next bounded move. Plan the post-minimal-runnable
-hardening sequence before starting any further MKRF implementation.
+`P58.3` is the active next bounded move. Reconstruct the raw-source input lane
+from the legacy planning corpus now that the native Attrib builder is live and
+matrix-build-proven.
 
 Completed `P57.1` runnable-boundary plan:
 
@@ -432,12 +433,13 @@ Remaining Phase 57 sequence after `P57.1`:
 Planned Phase 58 sequence after minimal runnable closeout:
 
 - `P58.1`:
-  plan the post-minimal-runnable hardening sequence so the remaining caveats
-  turn into an ordered bounded implementation path rather than ad hoc follow-on
-  work.
+  completed. The post-minimal-runnable hardening sequence now turns the
+  remaining caveats into an ordered bounded implementation path rather than ad
+  hoc follow-on work.
 - `P58.2`:
-  replace the explicit Attrib compatibility passthrough with a native FEMIC
-  builder driven by the translated workbook contract.
+  completed. The explicit Attrib compatibility passthrough is replaced by a
+  native FEMIC builder driven by the translated workbook contract and proven by
+  a clean MKRF matrix build against regenerated runtime XML.
 - `P58.3`:
   reconstruct the raw-source input lane from `03_MappingAnalysisData/*`
   without substituting checkpoints or compiled runtime artifacts for the true

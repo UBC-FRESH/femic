@@ -933,7 +933,7 @@ def test_mkrf_runtime_model_layout_records_p57_2_boundary() -> None:
     assert "target-description lane" in placeholder_text
 
 
-def test_mkrf_runtime_xml_emission_records_p57_4_boundary() -> None:
+def test_mkrf_runtime_xml_emission_records_p58_2_boundary() -> None:
     emission_path = Path(
         "external/femic-mkrf-instance/metadata/legacy_runtime_xml_emission.yaml"
     )
@@ -943,22 +943,22 @@ def test_mkrf_runtime_xml_emission_records_p57_4_boundary() -> None:
 
     emission = yaml.safe_load(emission_path.read_text(encoding="utf-8"))
 
-    assert emission["phase"] == "P57.4"
-    assert (
-        emission["status"]
-        == "runtime_xml_emitted_with_attribute_passthrough_for_minimal_runnable"
-    )
+    assert emission["phase"] == "P58.2"
+    assert emission["status"] == "runtime_xml_emitted_with_native_attribute_builder"
     assert emission["decision"] == {
         "runtime_xml_emission": "materialized",
         "emission_mode": "opt_in_mkrf_contract_builder",
         "generated_yield_curves": "inlined_from_curve_table_csv",
-        "attribute_passthrough": "materialized_via_compatibility_contract",
+        "native_attribute_builder": "materialized",
         "matrix_build": "passed",
         "launch_proof": "passed",
         "runnable_rebuild_claim": "minimal_runnable",
     }
     assert emission["emitted_artifact"]["path"] == (
         "models/mkrf_patchworks_model/XML/baseMKRF.xml"
+    )
+    assert emission["emitted_artifact"]["sha256"] == (
+        "18b22086c44faa9dcd61ddfcf71156d15efee7b7bdcf09b9c7a27cf6bc1cb6e7"
     )
     assert emission["emitted_artifact"]["forest_model"] == {
         "description": "Base TFL26",
@@ -998,9 +998,26 @@ def test_mkrf_runtime_xml_emission_records_p57_4_boundary() -> None:
         "curve_count": 1049,
         "producer": "data/legacy_mkrf/generated_xml/CSV/CURVE_TABLE.csv",
     }
+    assert emission["phase"] == "P58.2"
+    assert emission["status"] == "runtime_xml_emitted_with_native_attribute_builder"
+    assert emission["decision"] == {
+        "runtime_xml_emission": "materialized",
+        "emission_mode": "opt_in_mkrf_contract_builder",
+        "generated_yield_curves": "inlined_from_curve_table_csv",
+        "native_attribute_builder": "materialized",
+        "matrix_build": "passed",
+        "launch_proof": "passed",
+        "runnable_rebuild_claim": "minimal_runnable",
+    }
+    assert emission["inputs"]["attribute_review_extract"] == (
+        "metadata/mkrf_xlsm_review/ranges/attrib_attributes.review.csv"
+    )
+    assert emission["inputs"]["species_lookup_review_extract"] == (
+        "metadata/mkrf_xlsm_review/ranges/lookups_spp_comp.review.csv"
+    )
     assert emission["next_bounded_step"] == {
-        "recommendation": "plan_post_minimal_runnable_phase_sequence",
-        "roadmap_task": "phase_58_planning",
+        "recommendation": "reconstruct_raw_source_input_lane",
+        "roadmap_task": "P58.3",
     }
 
     runtime_xml = Path(
@@ -1021,6 +1038,7 @@ def test_mkrf_runtime_xml_emission_records_p57_4_boundary() -> None:
     assert (
         root.find(".//features/attribute[@label='%f.area.%m.seral.le10']") is not None
     )
+    assert root.find(".//features/attribute[@label='%f.yield.%m.indsp.Ba']") is not None
 
 
 def test_mkrf_attribute_passthrough_records_p57_4_boundary() -> None:
