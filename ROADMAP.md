@@ -1627,7 +1627,7 @@ Notes: `planning/mkrf_legacy_decompile.md`
     `troubleshooting`, and MKRF-specific PoC pages for benchmark results,
     legacy evidence/runbook boundaries, and accepted caveats/deferred seams.
 - [ ] P59.2 Document the MKRF PoC benchmark/runtime lane and accepted claim boundary (`#175`)
-  - [ ] P59.2a Teach the accepted runtime package, generated XML/tracks, spatial lane, and representative benchmark scenario surfaces.
+  - [x] P59.2a Teach the accepted runtime package, generated XML/tracks, spatial lane, and representative benchmark scenario surfaces.
   - [ ] P59.2b Record the accepted PoC caveats, including unresolved helper seams and accepted benchmark variances.
   - [ ] P59.2c Distinguish clearly between benchmark/reference evidence and the later from-scratch rebuild contract.
 - [ ] P59.3 Publish closeout docs metadata and handoff to the real rebuild phase (`#175`)

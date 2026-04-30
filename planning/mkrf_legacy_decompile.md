@@ -425,6 +425,28 @@ private reference to the original legacy analyst notes. The next bounded move
 should document the accepted benchmark/runtime lane and its claim boundary more
 explicitly under `P59.2`.
 
+`P59.2a` is now complete. The standalone docs now teach the concrete accepted
+runtime package and benchmark surfaces:
+
+- the current PoC package root:
+  `models/mkrf_patchworks_model_poc/`
+- runtime launch surface:
+  `analysis/base.pin`
+- generated runtime XML:
+  `XML/baseMKRF.xml`
+- generated runtime tracks:
+  `Tracks/*.csv`
+- accepted runtime spatial lane:
+  `Spatial/fragments.*` and `Spatial/topo_frag100.csv`
+- representative accepted benchmark saved stage:
+  `runtime/logs/headless_stage/p58_6_poc_smoke_r4/`
+- benchmark comparison reports:
+  `Forest_Attributes/yield.csv`,
+  `Harvest_Attributes/harvestVolumeControls.csv`, and
+  `Harvest_Attributes/yield_treat.csv`
+
+The active next bounded move is `P59.2b`.
+
 Current `P58.3` state:
 
 - `P58.3a`:

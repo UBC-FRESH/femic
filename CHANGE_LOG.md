@@ -15573,3 +15573,16 @@
     copy of the original legacy analyst report under
     `docs/reference/MKRF_Modeling_Notes.pdf`; and
   - moved the active docs lane from `P59.1` to `P59.2`.
+## 2026-04-29 - Documented the accepted MKRF PoC runtime and benchmark surfaces
+- `#175` / `P59.2a` docs slice:
+  - updated the standalone MKRF docs so they teach the accepted PoC runtime
+    package root, launch surface, generated XML/tracks, accepted spatial lane,
+    and checkpoint target-control files as the current operator/runtime
+    boundary;
+  - recorded the representative accepted benchmark scenario surface as the
+    stabilized FEMIC headless saved stage under
+    `runtime/logs/headless_stage/p58_6_poc_smoke_r4/`; and
+  - made the report-pair benchmark surface explicit in the docs:
+    `Forest_Attributes/yield.csv`,
+    `Harvest_Attributes/harvestVolumeControls.csv`, and
+    `Harvest_Attributes/yield_treat.csv`.
