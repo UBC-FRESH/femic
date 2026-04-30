@@ -441,3 +441,54 @@ The runtime spatial/package handoff is not acceptable if it:
 So `P60.3b` is not "put files under `Spatial/`." It is the contract that the
 new canonical runtime package receives its own source-driven spatial runtime
 lane, with explicit lineage and acceptance checks.
+
+## `P60.3c` Claim-surface exclusion rule for checkpoints and compiled-runtime artifacts
+
+The source-faithful rebuild claim surface must exclude checkpoint-derived and
+compiled-runtime artifacts as causal inputs.
+
+### Rejected input classes for source-faithful claims
+
+The following are not acceptable as upstream rebuild inputs:
+
+- legacy compiled runtime `Spatial/fragments.*`;
+- legacy compiled runtime `Spatial/topo_frag100.csv`;
+- archival instance copies of those compiled runtime artifacts;
+- checkpoint-derived geometry exports or restart artifacts; and
+- any convenience copy of a previously generated runtime spatial package.
+
+These remain valid only as:
+
+- benchmark/reference evidence;
+- debug aids; or
+- comparison targets for rebuilt outputs.
+
+### Required claim-language rule
+
+If a later Phase 60 result depends on any of the rejected classes above, it may
+be described as:
+
+- a benchmark comparison;
+- a PoC/runtime validation step; or
+- a debug/recovery aid.
+
+It may not be described as:
+
+- a source-faithful rebuild input;
+- a raw-source publication step; or
+- evidence that the canonical rebuild was generated from upstream source
+  surfaces.
+
+### Naming rule for canonical rebuild outputs
+
+Where FEMIC controls new path creation in the canonical rebuild lane, use
+all-lowercase names for new files and directories.
+
+Preserve mixed-case only when it is part of:
+
+- archival legacy evidence;
+- upstream source payloads we are not renaming; or
+- external tool/runtime contracts outside FEMIC control.
+
+This keeps the new canonical rebuild lane from inheriting the legacy model's
+mixed-case path surface as an avoidable source of path errors.

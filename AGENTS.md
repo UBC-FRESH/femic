@@ -146,6 +146,13 @@ When contributing to this repository as the coding agent:
      `C:\Program Files\...` over personal workstation locations;
    - before finalizing a docs/planning hygiene pass, do a quick search for leaked personal-path
      fragments if there is any chance examples were copied from a live shell session.
+10a. Use all-lowercase names for new files and directories whenever FEMIC controls the path:
+   - new canonical runtime package paths, docs files, metadata files, runbooks, config files, and
+     generated artifact directories should default to lowercase names;
+   - preserve mixed-case only when it is part of archival legacy evidence, upstream source payloads
+     we are not renaming, or external tool/runtime contracts outside FEMIC control;
+   - do not carry legacy mixed-case pathing forward into new canonical rebuild surfaces unless there
+     is a concrete external-contract reason to do so.
 11. Commit early and often using roadmap task/subtask granularity:
    - prefer small, thematic commits over large mixed commits;
    - create at least one commit per completed roadmap task (or tightly related subtask bundle);

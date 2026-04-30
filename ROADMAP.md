@@ -1646,10 +1646,10 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P60.2a Decide the canonical repo/instance/runtime/doc surface layout before source-driven rebuild work starts.
   - [x] P60.2b Define the rebuild sequencing and validation contracts for the new instance lane.
   - [x] P60.2c Keep benchmark/reference artifacts clearly separated from the new source-faithful build surfaces.
-- [ ] P60.3 Reconstruct the raw-source geometry-to-runtime pipeline from `03_MappingAnalysisData/*` (`#173`)
+- [x] P60.3 Reconstruct the raw-source geometry-to-runtime pipeline from `03_MappingAnalysisData/*` (`#173`)
   - [x] P60.3a Rebuild the geometry publication path from upstream source surfaces rather than accepted compiled-runtime substitutes.
   - [x] P60.3b Rebuild the runtime spatial/package handoff with explicit lineage and acceptance checks.
-  - [ ] P60.3c Keep checkpoint-derived or compiled-runtime artifacts out of the source-faithful rebuild claim surface.
+  - [x] P60.3c Keep checkpoint-derived or compiled-runtime artifacts out of the source-faithful rebuild claim surface.
 - [ ] P60.4 Rebuild the target/control lane from reviewed source contracts instead of legacy checkpoint loading (`#173`)
   - [ ] P60.4a Replace the PoC checkpoint-backed target-control lane with a source-driven FEMIC-native control surface.
   - [ ] P60.4b Reconstruct or replace legacy scenario-target semantics only where they are justified by source evidence or benchmark necessity.

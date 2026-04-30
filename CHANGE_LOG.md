@@ -15727,3 +15727,13 @@
   - fixed the acceptance and rejection rules so the rebuild lane cannot satisfy
     the spatial runtime handoff by copying PoC, archival, or checkpoint-derived
     runtime artifacts into the canonical package.
+## 2026-04-30 - Excluded checkpoints and compiled-runtime artifacts from the MKRF rebuild claim surface
+- `#173` / `P60.3c` planning slice:
+  - fixed checkpoint-derived and compiled-runtime artifacts as rejected input
+    classes for any source-faithful MKRF rebuild claim;
+  - required claim-language separation between benchmark/debug use and
+    source-faithful rebuild use; and
+  - fixed lowercase naming as the default for new FEMIC-controlled files and
+    directories in the canonical rebuild lane, while preserving mixed-case only
+    for legacy evidence, upstream payloads, or external runtime contracts we do
+    not control.
