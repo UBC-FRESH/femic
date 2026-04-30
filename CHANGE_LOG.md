@@ -15748,3 +15748,13 @@
   - recorded that `P60.4a` is only satisfied when the canonical rebuild can
     point to a distinct source-driven control authority rather than reusing
     checkpoint state as source.
+## 2026-04-30 - Classified MKRF scenario-target semantics by carry-forward status
+- `#173` / `P60.4b` planning slice:
+  - fixed the source-evidenced target families that may carry forward into the
+    canonical rebuild lane: harvest, flow, patch, grn, biod, wat/ECA-like
+    watershed targets, vqo, and Routes;
+  - fixed unresolved helper families such as `THLB4070(...)` and `UWR(...)` as
+    deferred by default rather than canonical rebuild requirements; and
+  - recorded that the rebuild may preserve target-family intent while replacing
+    checkpoint-era or legacy helper-wrapper shapes with FEMIC-native control
+    contracts unless source evidence or benchmark necessity requires otherwise.

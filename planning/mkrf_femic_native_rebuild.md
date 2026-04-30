@@ -567,3 +567,99 @@ source-driven control authority and say:
 
 It is not enough to keep the PoC checkpoint files around and reinterpret them
 as source.
+
+## `P60.4b` Scenario-target semantic carry-forward matrix
+
+Legacy scenario-target semantics should be preserved, replaced, or deferred
+according to the carry-forward gate:
+
+- preserve only if justified by reviewed source evidence; or
+- preserve only if benchmark necessity makes them part of the accepted PoC
+  comparison surface.
+
+Everything else is replaceable or deferrable in the canonical rebuild lane.
+
+### Preserve as source-evidenced target families
+
+The following target families are justified by reviewed source evidence from
+the legacy corpus and may carry forward as canonical semantic families in the
+rebuild lane:
+
+- `Harvest`
+  - workbook authority present in `000_Targets_Builder.xlsx`;
+- `flow`
+  - workbook authority present in `Harvest` plus recovered `07_flow.bsh`;
+- `patch`
+  - recovered script evidence present in `06_patch.bsh`;
+- `grn`
+  - workbook authority present in `000_Targets_Builder.xlsx`;
+- `biod`
+  - workbook authority present in `000_Targets_Builder.xlsx`;
+- `wat` / ECA-like watershed target families
+  - workbook authority present in `wat` and `ECA_targets`;
+- `vqo`
+  - workbook authority present in `vqo` and `VQO_targets`; and
+- `Routes`
+  - workbook authority present, though not currently active in the accepted
+    PoC scenario lane.
+
+These families should be reconstructed from their reviewed source contracts,
+not by copying checkpoint target state.
+
+### Preserve as benchmark-facing scenario semantics only when needed
+
+Some semantics are not source-authoritative architecture by themselves, but may
+still matter as acceptance surfaces if the rebuild is compared back to the PoC
+benchmark lane.
+
+For now, the accepted benchmark requires only:
+
+- a harvested scenario lane that can generate the report-pair KPI surfaces used
+  in the PoC benchmark; and
+- enough target/control semantics to reproduce a meaningful harvested run for
+  benchmark comparison.
+
+That means benchmark necessity does **not** currently force the canonical
+rebuild to inherit every legacy helper/function name or checkpoint-era control
+wrapper as-is.
+
+### Deferred unresolved helper semantics
+
+The following helper families remain deferred because the current recovered
+legacy corpus does not support a source-faithful reconstruction of their exact
+helper semantics:
+
+- `THLB4070(...)`
+- `UWR(...)`
+
+These may remain:
+
+- benchmark/deferred seams documented from the PoC lane; and
+- future reconstruction targets only if new source evidence appears or a later
+  acceptance gate proves they are benchmark-critical.
+
+They are **not** default requirements for the canonical rebuild architecture.
+
+### Replacement rule for helper/interface shape
+
+Even where a target family is preserved, the exact legacy helper/interface
+shape does not need to be preserved unless:
+
+- source evidence explicitly requires it; or
+- benchmark necessity requires it for accepted comparison behavior.
+
+So the canonical rebuild may:
+
+- preserve target-family intent and parameterization; while
+- replacing the legacy helper/wrapper shape with a FEMIC-native control
+  contract.
+
+### Practical carry-forward decision
+
+For `P60.4b`, the rebuild lane should proceed as follows:
+
+- reconstruct source-evidenced target families from workbook/script evidence;
+- keep unresolved helper families such as `THLB4070(...)` and `UWR(...)`
+  deferred by default;
+- do not inherit checkpoint-era helper wrappers as architecture; and
+- require any future exception to satisfy the existing carry-forward gate.
