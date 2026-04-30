@@ -15662,3 +15662,10 @@
     lane, and reconstructed helper seams do not become the canonical rebuild
     architecture by default; and
   - moved the active implementation edge to `P60.1c`.
+## 2026-04-30 - Required explicit justification for any legacy behavior carried into the rebuild
+- `#173` / `P60.1c` planning slice:
+  - recorded that any legacy behavior carried forward into the new rebuild must
+    be justified either by reviewed source evidence or by benchmark necessity;
+  - made explicit that legacy behavior satisfying neither test should be treated
+    as removable PoC/legacy residue, not as a default rebuild requirement; and
+  - moved the active implementation edge to `P60.2`.

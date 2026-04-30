@@ -502,7 +502,7 @@ between:
 - the team can now treat the PoC benchmark lane as documented well enough to
   move forward rather than as a lingering documentation gap.
 
-The active next bounded move is `P60.1c`.
+The active next bounded move is `P60.2`.
 
 Current `P58.3` state:
 
@@ -690,6 +690,16 @@ Planned Phase 58 sequence after minimal runnable closeout:
     runnable; and
   - carry PoC behavior forward only when it remains necessary as benchmark
     evidence or is later justified by source-faithful review.
+- `P60.1c`:
+  completed. Any legacy behavior carried forward into the new rebuild must now
+  satisfy at least one of two tests:
+  - it is justified by source evidence from the reviewed upstream corpus
+    (`03_MappingAnalysisData/*`, reviewed workbook contracts, or other explicit
+    legacy analyst documentation); or
+  - it is justified as benchmark necessity because dropping it would break the
+    accepted PoC comparison surface the team still cares about.
+  Legacy behavior that satisfies neither test should be treated as removable
+  PoC/legacy residue, not as a default rebuild requirement.
 - `P60.2`:
   define the canonical FEMIC-native MKRF instance layout and rebuild sequence
   before new source-driven implementation begins.
