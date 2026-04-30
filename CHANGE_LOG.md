@@ -15539,3 +15539,27 @@
   - updated the instance README, PoC model README surfaces, and rebuild runbook so they state plainly that the current MKRF package is a PoC benchmark/intermediate surface, not the final canonical rebuild;
   - kept the docs aligned with the renamed PoC package path `models/mkrf_patchworks_model_poc`; and
   - moved the active docs lane forward to `P59.1c`.
+## 2026-04-29 - Fixed the MKRF PoC standalone docs chapter plan before authoring the instance docs tree
+- `#175` / `P59.1c` planning slice:
+  - mapped the recovered K3Z standalone docs surface onto a narrower MKRF PoC chapter plan before creating `external/femic-mkrf-instance/docs/`;
+  - kept the K3Z-like operator pages that match the current PoC surface:
+    `index`, `getting-started`, `model-anatomy`, `data-package-crosswalk`,
+    `metadata-and-lineage`, `operator-runbook`, `rebuild-and-qa`, and
+    `troubleshooting`;
+  - added explicit MKRF PoC-only pages for benchmark results, legacy
+    evidence/runbook boundaries, and accepted caveats/deferred seams; and
+  - deferred broader K3Z chapters such as subvariants, old-growth logic,
+    assumptions registry, and yield-comparison/appendix material to the later
+    canonical rebuild lane if they become relevant there.
+## 2026-04-29 - Scaffolded the standalone MKRF PoC docs tree
+- `#175` / `P59.1c` instance-docs scaffold slice:
+  - created `external/femic-mkrf-instance/docs/` with a standalone Sphinx
+    configuration, requirements file, and `index.rst`;
+  - added the first-pass chapter files from the fixed MKRF PoC chapter plan:
+    `getting-started`, `model-anatomy`, `data-package-crosswalk`,
+    `benchmark-results`, `evidence-and-boundaries`,
+    `caveats-and-deferred-seams`, `metadata-and-lineage`,
+    `operator-runbook`, `rebuild-and-qa`, and `troubleshooting`; and
+  - built the standalone instance docs successfully with
+    `sphinx -b html external/femic-mkrf-instance/docs external/femic-mkrf-instance/docs/_build/html -W`,
+    then removed the generated `_build/` output from the worktree.

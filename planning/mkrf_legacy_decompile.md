@@ -364,6 +364,58 @@ docs now state explicitly that the current MKRF runtime package is a PoC
 benchmark/intermediate, not the final canonical rebuild. The next slice should
 publish the docs lane with the same operator-facing quality bar as K3Z.
 
+The recovered K3Z standalone docs template is broader than the MKRF PoC needs.
+The current chapter plan for `external/femic-mkrf-instance/docs/` is:
+
+- keep/adapt from K3Z:
+  - `index`
+  - `getting-started`
+  - `model-anatomy`
+  - `data-package-crosswalk`
+  - `metadata-and-lineage`
+  - `operator-runbook`
+  - `rebuild-and-qa`
+  - `troubleshooting`
+- add MKRF-specific PoC chapters for:
+  - benchmark results / accepted comparison surface;
+  - legacy evidence, generated runtime package, and runbook boundaries; and
+  - accepted caveats / deferred seams that are intentionally left to the
+    from-scratch rebuild lane.
+- defer from the K3Z template until the later canonical rebuild if they still
+  become relevant:
+  - `variants-and-subvariants`
+  - `overlay-subvariants-workflow`
+  - `silviculture-logic`
+  - `old-growth-attributes`
+  - `land-base-and-netdown`
+  - `assumptions-registry`
+  - `base-case-analysis`
+  - `yield-curve-comparisons`
+  - `figure-appendix`
+  - `edit-policy-and-scenarios`
+  - `docs-ownership-and-release`
+
+The first-pass standalone docs scaffold is now in place under
+`external/femic-mkrf-instance/docs/` with:
+
+- `conf.py`
+- `requirements.txt`
+- `index.rst`
+- `getting-started.rst`
+- `model-anatomy.rst`
+- `data-package-crosswalk.rst`
+- `benchmark-results.rst`
+- `evidence-and-boundaries.rst`
+- `caveats-and-deferred-seams.rst`
+- `metadata-and-lineage.rst`
+- `operator-runbook.rst`
+- `rebuild-and-qa.rst`
+- `troubleshooting.rst`
+
+Those pages currently form the publish surface skeleton. The next bounded move
+should refine the content quality and publication wiring rather than changing
+the chapter structure again.
+
 Current `P58.3` state:
 
 - `P58.3a`:
