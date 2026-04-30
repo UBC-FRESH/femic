@@ -15680,3 +15680,10 @@
     under `models/`, separate from the current PoC package; and
   - kept the parent FEMIC repo in the pointer/lineage role rather than the
     canonical rebuild docs/runtime owner.
+## 2026-04-30 - Split the active MKRF rebuild planning note away from the legacy decompile note
+- `#173` planning hygiene:
+  - created `planning/mkrf_femic_native_rebuild.md` as the active planning note
+    for the from-scratch MKRF rebuild lane;
+  - repointed `Phase 60` in `ROADMAP.md` to the new rebuild-planning note; and
+  - left `planning/mkrf_legacy_decompile.md` in place as the closed
+    archaeology/PoC planning record for `P55`-`P59`.

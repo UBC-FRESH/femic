@@ -2,6 +2,12 @@
 
 Issue: `#172`
 
+Status:
+- authoritative planning note for completed legacy archaeology / PoC phases
+  (`P55`-`P59`);
+- superseded as the active rebuild-planning surface by
+  `planning/mkrf_femic_native_rebuild.md` for `P60+`.
+
 ## Summary
 
 This note records the first archaeology pass over the authoritative legacy
@@ -502,7 +508,9 @@ between:
 - the team can now treat the PoC benchmark lane as documented well enough to
   move forward rather than as a lingering documentation gap.
 
-The active next bounded move is `P60.2b`.
+Active rebuild planning for `P60+` now lives in:
+
+- `planning/mkrf_femic_native_rebuild.md`
 
 Current `P58.3` state:
 
@@ -659,69 +667,6 @@ Planned Phase 58 sequence after minimal runnable closeout:
 - `P59.2`:
   document the accepted PoC benchmark/runtime lane and claim boundary clearly
   enough that users can understand what the current MKRF model is and is not.
-- `P59.3`:
-  complete the PoC docs lane and hand off cleanly to the later from-scratch
-  rebuild phase.
-- `P60.1`:
-  define the target contract and acceptance gates for the real from-scratch
-  MKRF rebuild under child issue `#173`, using K3Z/TSA29-style FEMIC instance
-  structure and workflow conventions as the governing default. The current PoC
-  lane remains benchmark/reference evidence only, not the architecture target.
-- `P60.1a`:
-  completed. The governing default for the new MKRF rebuild is now the
-  standalone K3Z/TSA29 FEMIC instance pattern rather than the current MKRF PoC
-  package layout. Concretely, the rebuild should target:
-  - a snapshot-style standalone instance repo;
-  - canonical contract surfaces such as
-    `config/rebuild.spec.yaml`, `config/rebuild.allowlist.yaml`, and case-local
-    runtime/run-config surfaces under `config/`;
-  - a standalone docs tree under `docs/` with repo-local publication wiring on
-    `main`; and
-  - operator/runbook material that lives with the instance repo, while the
-    parent FEMIC repo keeps the pointer/lineage role.
-- `P60.1b`:
-  completed. The current MKRF PoC lane is now treated explicitly as
-  benchmark/reference evidence only. For the from-scratch rebuild, that means:
-  - use the PoC package, accepted benchmark reports, and reviewed translations
-    as comparison and acceptance evidence;
-  - do not inherit the PoC runtime package path, checkpoint target-control
-    lane, or reconstructed helper seams as the target architecture by default;
-  - do not treat the PoC package layout as canonical just because it is
-    runnable; and
-  - carry PoC behavior forward only when it remains necessary as benchmark
-    evidence or is later justified by source-faithful review.
-- `P60.1c`:
-  completed. Any legacy behavior carried forward into the new rebuild must now
-  satisfy at least one of two tests:
-  - it is justified by source evidence from the reviewed upstream corpus
-    (`03_MappingAnalysisData/*`, reviewed workbook contracts, or other explicit
-    legacy analyst documentation); or
-  - it is justified as benchmark necessity because dropping it would break the
-    accepted PoC comparison surface the team still cares about.
-  Legacy behavior that satisfies neither test should be treated as removable
-  PoC/legacy residue, not as a default rebuild requirement.
-- `P60.2`:
-  define the canonical FEMIC-native MKRF instance layout and rebuild sequence
-  before new source-driven implementation begins.
-- `P60.2a`:
-  completed. The canonical layout for the new MKRF rebuild is now fixed at the
-  same structural level as the K3Z/TSA29 standalone-instance pattern:
-  - top-level standalone instance surfaces:
-    `.github/`, `config/`, `data/`, `docs/`, `models/`, `metadata/`,
-    `runbooks/`, plus root repo docs such as `README.md` and `QUICKSTART.md`;
-  - canonical rebuild contracts under `config/`:
-    `rebuild.spec.yaml`, `rebuild.allowlist.yaml`, case-local run/runtime
-    configs, and any source-driven model config families;
-  - canonical runtime package under `models/`:
-    a future rebuild package distinct from the current PoC package and not
-    named as a PoC surface;
-  - standalone docs under `docs/` with repo-local publication wiring on
-    `main`; and
-  - parent FEMIC repo limited to pointer/lineage integration, not ownership of
-    the canonical rebuild docs or runtime package.
-  The current `models/mkrf_patchworks_model_poc/` package remains comparison
-  evidence only and should coexist beside, not inside, the future canonical
-  rebuild surface.
 - `P60.3`:
   reconstruct the raw-source geometry-to-runtime pipeline from
   `03_MappingAnalysisData/*` as a source-faithful lane, not by reusing PoC

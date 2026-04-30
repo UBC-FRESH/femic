@@ -1636,7 +1636,7 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P59.3c Confirm the PoC docs are good enough that the team can stop treating the benchmark lane as under-documented.
 
 ## Phase 60: From-Scratch MKRF FEMIC-Native Rebuild
-Notes: `planning/mkrf_legacy_decompile.md`
+Notes: `planning/mkrf_femic_native_rebuild.md`
 
 - [ ] P60.1 Define the target instance contract and acceptance gates for the new MKRF rebuild (`#173`)
   - [x] P60.1a Make K3Z/TSA29-style FEMIC instance organization and workflow conventions the governing default for the new MKRF rebuild.
