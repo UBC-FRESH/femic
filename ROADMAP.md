@@ -1611,7 +1611,7 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P58.6b Compare a small KPI set and record whether the outputs generally line up without requiring exact parity.
   - [x] P58.6c Record the accepted benchmark variances explicitly so the PoC lane closes on a real side-by-side behavior check, not launch proof alone.
 - [x] P58.7 Recast the current runtime package explicitly as the MKRF PoC intermediate (`#172`)
-  - [x] P58.7a Keep the current `models/mkrf_patchworks_model` path in place for the PoC closeout, but record explicitly that it is benchmark/intermediate only rather than the final canonical MKRF model path.
+  - [x] P58.7a Rename the current runtime package to `models/mkrf_patchworks_model_poc` so the PoC surface can coexist cleanly with the later canonical rebuild in the same instance repo.
   - [x] P58.7b Update roadmap, planning notes, changelog, and issue trail so the current checked-in runtime package is treated as the MKRF PoC intermediate.
   - [x] P58.7c Keep the future from-scratch rebuild lane separate from the PoC runtime package and avoid implying the current checked-in path is the final canonical MKRF model.
 

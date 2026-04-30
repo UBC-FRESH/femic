@@ -59,7 +59,7 @@ def test_load_patchworks_variant_registry_includes_builtin_mkrf_base() -> None:
     assert variant.runtime_config.name == "patchworks.runtime.windows.yaml"
 
     instance = next(item for item in registry.instances if item.instance_id == "mkrf")
-    assert instance.label == "MKRF minimal runnable instance"
+    assert instance.label == "MKRF PoC intermediate instance"
     assert instance.default_variant_id == "mkrf.base"
 
 

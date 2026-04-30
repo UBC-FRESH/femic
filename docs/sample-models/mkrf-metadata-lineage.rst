@@ -6,7 +6,7 @@ Scope
 
 This page documents the current metadata inventory and benchmark/runtime
 lineage for the tracked MKRF PoC package at
-``external/femic-mkrf-instance/models/mkrf_patchworks_model``.
+``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc``.
 
 The current MKRF package is a PoC benchmark/intermediate surface. It is not a
 source-faithful rebuild and it is not the final canonical instance layout for
@@ -31,16 +31,16 @@ The key tracked artifact families in the current MKRF PoC package are:
      - Current in-repo path
      - Current status
    * - Runtime model package
-     - ``external/femic-mkrf-instance/models/mkrf_patchworks_model``
+     - ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc``
      - Accepted MKRF PoC intermediate runtime surface
    * - ForestModel XML
-     - ``external/femic-mkrf-instance/models/mkrf_patchworks_model/XML/baseMKRF.xml``
+     - ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/XML/baseMKRF.xml``
      - FEMIC-emitted PoC XML from translated legacy contracts
    * - Generated tracks
-     - ``external/femic-mkrf-instance/models/mkrf_patchworks_model/Tracks/*.csv``
+     - ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/Tracks/*.csv``
      - Matrix-built PoC runtime tables
    * - Accepted spatial runtime lane
-     - ``external/femic-mkrf-instance/models/mkrf_patchworks_model/Spatial/*``
+     - ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/Spatial/*``
      - Accepted compiled runtime inputs, not raw-source reconstruction
    * - Legacy compiled evidence
      - ``external/femic-mkrf-instance/data/legacy_mkrf/*``
@@ -60,7 +60,7 @@ Current accepted lineage for the MKRF PoC package:
    evidence review, and runtime boundary metadata.
 2. Runtime package materialization:
    accepted compiled spatial runtime inputs plus sanitized runtime/control
-   scaffold under ``models/mkrf_patchworks_model``.
+   scaffold under ``models/mkrf_patchworks_model_poc``.
 3. ForestModel XML emission:
    FEMIC-generated ``XML/baseMKRF.xml`` from translated legacy contracts.
 4. Matrix stage:

@@ -986,14 +986,14 @@ def test_mkrf_runtime_model_layout_records_p57_2_boundary() -> None:
     }
 
     assert layout["model_layout"] == {
-        "model_root": "models/mkrf_patchworks_model",
-        "analysis_root": "models/mkrf_patchworks_model/analysis",
-        "xml_root": "models/mkrf_patchworks_model/XML",
-        "spatial_root": "models/mkrf_patchworks_model/Spatial",
-        "tracks_root": "models/mkrf_patchworks_model/Tracks",
-        "scripts_root": "models/mkrf_patchworks_model/Scripts",
-        "targets_root": "models/mkrf_patchworks_model/Targets",
-        "initial_targets_root": "models/mkrf_patchworks_model/InitialTargets",
+        "model_root": "models/mkrf_patchworks_model_poc",
+        "analysis_root": "models/mkrf_patchworks_model_poc/analysis",
+        "xml_root": "models/mkrf_patchworks_model_poc/XML",
+        "spatial_root": "models/mkrf_patchworks_model_poc/Spatial",
+        "tracks_root": "models/mkrf_patchworks_model_poc/Tracks",
+        "scripts_root": "models/mkrf_patchworks_model_poc/Scripts",
+        "targets_root": "models/mkrf_patchworks_model_poc/Targets",
+        "initial_targets_root": "models/mkrf_patchworks_model_poc/InitialTargets",
     }
 
     spatial_contract = layout["materialized_inputs"]["spatial_runtime"]["contract"]
@@ -1010,11 +1010,11 @@ def test_mkrf_runtime_model_layout_records_p57_2_boundary() -> None:
     ]
     assert layout["future_output_staging"] == {
         "xml_root": {
-            "path": "models/mkrf_patchworks_model/XML",
+            "path": "models/mkrf_patchworks_model_poc/XML",
             "producer": "P57.3_femic_opt_in_mkrf_xml_emission",
         },
         "tracks_root": {
-            "path": "models/mkrf_patchworks_model/Tracks",
+            "path": "models/mkrf_patchworks_model_poc/Tracks",
             "producer": "P57.6_patchworks_matrix_build",
         },
     }
@@ -1031,7 +1031,7 @@ def test_mkrf_runtime_model_layout_records_p57_2_boundary() -> None:
         "roadmap_task": "P57.3",
     }
 
-    runtime_root = Path("external/femic-mkrf-instance/models/mkrf_patchworks_model")
+    runtime_root = Path("external/femic-mkrf-instance/models/mkrf_patchworks_model_poc")
     assert (runtime_root / "analysis" / "base.pin").exists()
     assert (runtime_root / "analysis" / "ScenarioSet.bsh").exists()
     assert (runtime_root / "Spatial" / "fragments.shp").exists()
@@ -1133,7 +1133,7 @@ def test_mkrf_runtime_xml_emission_records_p58_2_boundary() -> None:
         "runnable_rebuild_claim": "minimal_runnable",
     }
     assert emission["emitted_artifact"]["path"] == (
-        "models/mkrf_patchworks_model/XML/baseMKRF.xml"
+        "models/mkrf_patchworks_model_poc/XML/baseMKRF.xml"
     )
     assert emission["emitted_artifact"]["sha256"] == (
         "18b22086c44faa9dcd61ddfcf71156d15efee7b7bdcf09b9c7a27cf6bc1cb6e7"
@@ -1199,7 +1199,7 @@ def test_mkrf_runtime_xml_emission_records_p58_2_boundary() -> None:
     }
 
     runtime_xml = Path(
-        "external/femic-mkrf-instance/models/mkrf_patchworks_model/XML/baseMKRF.xml"
+        "external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/XML/baseMKRF.xml"
     )
     assert runtime_xml.exists()
     root = et.parse(runtime_xml).getroot()
@@ -1287,9 +1287,9 @@ def test_mkrf_runtime_config_points_to_generated_runtime_model() -> None:
     config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
 
     assert config["matrix_builder"] == {
-        "fragments_path": "../models/mkrf_patchworks_model/Spatial/fragments.dbf",
-        "output_dir": "../models/mkrf_patchworks_model/Tracks",
-        "forestmodel_xml_path": "../models/mkrf_patchworks_model/XML/baseMKRF.xml",
+        "fragments_path": "../models/mkrf_patchworks_model_poc/Spatial/fragments.dbf",
+        "output_dir": "../models/mkrf_patchworks_model_poc/Tracks",
+        "forestmodel_xml_path": "../models/mkrf_patchworks_model_poc/XML/baseMKRF.xml",
         "auto_close_window_on_success": True,
         "auto_close_settle_seconds": 2.0,
         "auto_close_timeout_seconds": 10.0,
@@ -1318,14 +1318,14 @@ def test_mkrf_runtime_config_wiring_records_p57_5_boundary() -> None:
     }
     assert wiring["runtime_surfaces"] == {
         "runtime_config": "config/patchworks.runtime.windows.yaml",
-        "analysis_pin": "models/mkrf_patchworks_model/analysis/base.pin",
-        "fragments_path": "models/mkrf_patchworks_model/Spatial/fragments.dbf",
-        "forestmodel_xml_path": "models/mkrf_patchworks_model/XML/baseMKRF.xml",
-        "tracks_output_dir": "models/mkrf_patchworks_model/Tracks",
+        "analysis_pin": "models/mkrf_patchworks_model_poc/analysis/base.pin",
+        "fragments_path": "models/mkrf_patchworks_model_poc/Spatial/fragments.dbf",
+        "forestmodel_xml_path": "models/mkrf_patchworks_model_poc/XML/baseMKRF.xml",
+        "tracks_output_dir": "models/mkrf_patchworks_model_poc/Tracks",
         "builtin_variant": {
             "variant_id": "mkrf.base",
             "instance_id": "mkrf",
-            "analysis_pin": "external/femic-mkrf-instance/models/mkrf_patchworks_model/analysis/base.pin",
+            "analysis_pin": "external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/analysis/base.pin",
             "runtime_config": "external/femic-mkrf-instance/config/patchworks.runtime.windows.yaml",
         },
     }

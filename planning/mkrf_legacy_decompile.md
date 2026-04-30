@@ -405,7 +405,7 @@ Remaining Phase 57 sequence after `P57.1`:
 
 - `P57.2`:
   completed. The MKRF instance now carries a materialized
-  `models/mkrf_patchworks_model/` runtime scaffold with `analysis/`, `XML/`,
+  `models/mkrf_patchworks_model_poc/` runtime scaffold with `analysis/`, `XML/`,
   `Spatial/`, `Tracks/`, `Scripts/`, `Targets/`, and `InitialTargets/`
   surfaces. The scaffold uses accepted compiled `fragments.*` and
   `topo_frag100.csv` runtime inputs, sanitized instance-relative control
@@ -414,7 +414,7 @@ Remaining Phase 57 sequence after `P57.1`:
   config rewiring, matrix build, or launch proof was started in this slice.
 - `P57.3`:
   completed. The MKRF instance now carries
-  `models/mkrf_patchworks_model/XML/baseMKRF.xml` emitted from the recovered
+  `models/mkrf_patchworks_model_poc/XML/baseMKRF.xml` emitted from the recovered
   Input Variables, Curve Library, Netdown, Treat, and generated curve-table
   contracts. The emitted XML includes output table bindings, legacy define and
   live-constant fields, inlined `Yield_*` curves, unmanaged/netdown/treatment
@@ -430,16 +430,16 @@ Remaining Phase 57 sequence after `P57.1`:
   builder.
 - `P57.5`:
   completed. The instance runtime config now points at the generated
-  `models/mkrf_patchworks_model/XML/baseMKRF.xml`, accepted
-  `models/mkrf_patchworks_model/Spatial/fragments.dbf`, and runtime
-  `models/mkrf_patchworks_model/Tracks/` directory. The builtin Patchworks
+  `models/mkrf_patchworks_model_poc/XML/baseMKRF.xml`, accepted
+  `models/mkrf_patchworks_model_poc/Spatial/fragments.dbf`, and runtime
+  `models/mkrf_patchworks_model_poc/Tracks/` directory. The builtin Patchworks
   registry now exposes `mkrf.base`, and
   `femic patchworks preflight --config external/femic-mkrf-instance/config/patchworks.runtime.windows.yaml`
   passed in the active Windows shell without starting matrix build.
 - `P57.6`:
   completed. Patchworks matrix build now runs against the FEMIC-emitted MKRF
   XML and accepted spatial inputs, and writes generated runtime track tables
-  under `models/mkrf_patchworks_model/Tracks/`.
+  under `models/mkrf_patchworks_model_poc/Tracks/`.
 - `P57.7`:
   completed. The generated track smoke comparison is good enough for the
   minimal runnable claim. Track cohort identity, row counts, label sets, and
@@ -502,8 +502,8 @@ Planned Phase 58 sequence after minimal runnable closeout:
     further PoC tuning.
 - `P58.7`:
   completed. The current runtime package under
-  `external/femic-mkrf-instance/models/mkrf_patchworks_model` remains at the
-  same path for the PoC closeout, but is now treated explicitly as benchmark /
+  `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc` has now been
+  renamed to an explicit PoC path and is treated explicitly as benchmark /
   intermediate evidence only. The later from-scratch rebuild lane remains
   separate and is not constrained to preserve the current PoC path as the
   final canonical MKRF model.

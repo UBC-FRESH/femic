@@ -54,7 +54,7 @@ FEMIC-Local Integration Notes
 - MKRF PoC instance runtime root in this repository:
   ``external/femic-mkrf-instance``
 - Current PoC runtime package path:
-  ``external/femic-mkrf-instance/models/mkrf_patchworks_model``
+  ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc``
 - Rebuild contract files:
   ``external/femic-mkrf-instance/config/rebuild.spec.yaml`` and
   ``external/femic-mkrf-instance/config/rebuild.allowlist.yaml``

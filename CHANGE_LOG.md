@@ -15344,7 +15344,7 @@
   - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
 ## 2026-04-28 - Materialized the MKRF runtime model scaffold
 - `#172` / `P57.2` bounded runtime-layout slice:
-  - materialized `external/femic-mkrf-instance/models/mkrf_patchworks_model/` with `analysis/`, `XML/`, `Spatial/`, `Tracks/`, `Scripts/`, `Targets/`, and `InitialTargets/` surfaces;
+  - materialized `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/` with `analysis/`, `XML/`, `Spatial/`, `Tracks/`, `Scripts/`, `Targets/`, and `InitialTargets/` surfaces;
   - copied accepted compiled `Spatial/fragments.*` and `Spatial/topo_frag100.csv` into the runtime scaffold and recorded the annex-remote materialization blocker for the archival copy lane;
   - sanitized the copied analysis/control scripts to use instance-relative runtime paths only; and
   - added explicit instance metadata and runbook surfaces documenting the remaining missing target-description seam and the pre-XML/no-run boundary.
@@ -15357,7 +15357,7 @@
 ## 2026-04-28 - Emitted the first FEMIC-managed MKRF runtime XML
 - `#172` / `P57.3` bounded XML-emission slice:
   - added a dedicated opt-in MKRF XML builder/emitter in `src/femic/fmg/patchworks.py` that reads the recovered Input Variables, Curve Library, Netdown, Treat, and generated curve-table contracts without changing the default Patchworks exporter path;
-  - emitted `external/femic-mkrf-instance/models/mkrf_patchworks_model/XML/baseMKRF.xml` with legacy input/output bindings, stratification defines, live scalar constants, Curve Library curves, inlined `Yield_*` curves, the two Netdown rules, the unmanaged catch-track, default succession, and `CC` / `CT` treatment sections;
+  - emitted `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/XML/baseMKRF.xml` with legacy input/output bindings, stratification defines, live scalar constants, Curve Library curves, inlined `Yield_*` curves, the two Netdown rules, the unmanaged catch-track, default succession, and `CC` / `CT` treatment sections;
   - added instance-local emission lineage surfaces in `metadata/legacy_runtime_xml_emission.yaml` and `runbooks/LEGACY_RUNTIME_XML_EMISSION.md`; and
   - moved the active next bounded move to `P57.4` Attrib compatibility passthrough.
 - Scope boundary preserved:
@@ -15368,7 +15368,7 @@
 ## 2026-04-28 - Added MKRF Attrib compatibility passthrough
 - `#172` / `P57.4` bounded XML-compatibility slice:
   - extended the opt-in MKRF XML emitter so the runtime XML can materialize the compatibility-required deferred constant `frd` and append five extracted Attrib passthrough `<select>` blocks from reconciled legacy `baseMKRF.xml`;
-  - regenerated `external/femic-mkrf-instance/models/mkrf_patchworks_model/XML/baseMKRF.xml` with the validated deferred Attrib compatibility blocks and recorded the result in `metadata/legacy_runtime_xml_emission.yaml`, `metadata/legacy_attribute_passthrough.yaml`, and `runbooks/LEGACY_ATTRIBUTE_PASSTHROUGH.md`;
+  - regenerated `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/XML/baseMKRF.xml` with the validated deferred Attrib compatibility blocks and recorded the result in `metadata/legacy_runtime_xml_emission.yaml`, `metadata/legacy_attribute_passthrough.yaml`, and `runbooks/LEGACY_ATTRIBUTE_PASSTHROUGH.md`;
   - updated instance lineage/readme surfaces to treat the passthrough as an explicit runnable-minimum caveat rather than a native attribute-builder implementation; and
   - moved the active next bounded move to `P57.5` runtime config wiring and preflight.
 - Scope boundary preserved:
@@ -15389,7 +15389,7 @@
   - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
 ## 2026-04-29 - Closed Phase 57 with a minimally runnable MKRF instance
 - `#172` / `P57.6`-`P57.9` minimal-runnable closeout:
-  - ran Patchworks matrix build against the FEMIC-emitted MKRF XML and accepted compiled spatial runtime inputs, producing generated runtime `Tracks/*.csv` outputs under `models/mkrf_patchworks_model/Tracks/`;
+  - ran Patchworks matrix build against the FEMIC-emitted MKRF XML and accepted compiled spatial runtime inputs, producing generated runtime `Tracks/*.csv` outputs under `models/mkrf_patchworks_model_poc/Tracks/`;
   - compared the generated track surfaces to legacy compiled evidence at the accepted smoke level and recorded the remaining `feature.yield.managed.merch.total` terminal-tail variance (`500/501` generated versus `650/651` legacy) as developer-approved and non-blocking for the minimal runnable phase;
   - proved that the generated MKRF model launches from the generated runtime directory through the Patchworks runtime seam; and
   - updated roadmap/planning and instance lineage/readme/runbook surfaces so Phase 57 now closes as a minimally runnable MKRF Patchworks instance with explicit caveats.
@@ -15410,7 +15410,7 @@
 ## 2026-04-29 - Replaced the MKRF Attrib passthrough with a native builder
 - `#172` / `P58.2` bounded native-Attrib slice:
   - replaced the MKRF runtime XML Attrib passthrough with a native FEMIC builder driven by `config/legacy_xml_builder/attributes.mkrf.yaml`, `metadata/mkrf_xlsm_review/ranges/attrib_attributes.review.csv`, and `metadata/mkrf_xlsm_review/ranges/lookups_spp_comp.review.csv`;
-  - regenerated `external/femic-mkrf-instance/models/mkrf_patchworks_model/XML/baseMKRF.xml` and reran Patchworks matrix build against the regenerated runtime XML;
+  - regenerated `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/XML/baseMKRF.xml` and reran Patchworks matrix build against the regenerated runtime XML;
   - confirmed the rebuilt runtime track lane still compiles cleanly, including representative Attrib-backed `features.csv` and `products.csv` surfaces; and
   - updated roadmap/planning and instance lineage/runbook surfaces so `P58.3` raw-source reconstruction is now the active next bounded move.
 - Current boundary:
@@ -15453,7 +15453,7 @@
 ## 2026-04-29 - Accepted the PoC target-control checkpoint lane and pinned the missing helper seam
 - `#172` / `P58.4a` PoC boundary decision:
   - accepted `THLB4070(...)` and `UWR(...)` as deferred missing legacy helper seams for the benchmark-only PoC stage instead of continuing to block completion on their unresolved provenance;
-  - copied the legacy `Outputs/001_Base/scenario/targetSummary.csv` and `targetStatus.csv` surfaces into `models/mkrf_patchworks_model/analysis/` as `initialTargetSummary.csv` and `initialTargetStatus.csv`;
+  - copied the legacy `Outputs/001_Base/scenario/targetSummary.csv` and `targetStatus.csv` surfaces into `models/mkrf_patchworks_model_poc/analysis/` as `initialTargetSummary.csv` and `initialTargetStatus.csv`;
   - updated `analysis/base.pin` to load those legacy checkpoint target surfaces directly during runtime setup; and
   - updated roadmap/planning notes so full `InitialTargets` helper reconstruction is now explicitly pinned for the later from-scratch FEMIC-native rebuild phase rather than this PoC benchmark stage.
 - Scope boundary preserved:
@@ -15503,7 +15503,7 @@
   - opened child issue `#175` (`Documentation: publish MKRF PoC technical docs`);
   - reopened Phase 58 in `ROADMAP.md` with:
     - `P58.6` for one representative legacy-vs-PoC benchmark scenario/KPI comparison; and
-    - `P58.7` for explicitly recasting the current `models/mkrf_patchworks_model` package as a PoC intermediate surface rather than the final canonical MKRF model;
+    - `P58.7` for explicitly recasting the current `models/mkrf_patchworks_model_poc` package as a PoC intermediate surface rather than the final canonical MKRF model;
   - inserted new `Phase 59` for MKRF PoC user-facing Sphinx docs under `#175`;
   - renumbered the from-scratch MKRF rebuild phase from `Phase 59` to `Phase 60`;
   - renumbered the already-completed Windows Arbutus auth workflow from `Phase 60` to `Phase 61` so the roadmap stays sequential; and
@@ -15521,7 +15521,7 @@
     - longer-horizon divergence remained larger but was accepted as non-blocking for the PoC benchmark lane;
   - treated that result as sufficient benchmark-level agreement for the reverse-engineering / PoC stage rather than chasing exact parity.
 - `#172` / `P58.7` PoC intermediate closeout:
-  - recorded explicitly that `external/femic-mkrf-instance/models/mkrf_patchworks_model` is the current MKRF PoC intermediate runtime package, not the final canonical rebuild path; and
+  - recorded explicitly that `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc` is the current MKRF PoC intermediate runtime package, not the final canonical rebuild path; and
   - moved the active next lane to `Phase 59` MKRF PoC user-facing docs under `#175`.
 ## 2026-04-29 - Added the parent Sphinx scaffolding for MKRF PoC docs
 - `#175` / `P59.1a` docs scaffolding slice:
@@ -15529,3 +15529,8 @@
   - added `docs/sample-models/mkrf-metadata-lineage.rst` as the retained parent-side metadata/lineage summary for the current PoC package;
   - updated `docs/sample-models/index.rst` to register MKRF alongside the other sample-model pages; and
   - validated the new pages with a warning-clean `sphinx-build -b html docs _build/html -W`.
+## 2026-04-29 - Renamed the MKRF runtime package to an explicit PoC path
+- `#172` / `P58.7a` path-separation slice:
+  - renamed `external/femic-mkrf-instance/models/mkrf_patchworks_model` to `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc` so the current PoC package can coexist cleanly with the later canonical rebuild in the same instance repo;
+  - updated the tracked runtime config, lineage metadata, runbooks, tests, sample-model docs, and roadmap/planning references to the new PoC path; and
+  - kept the current runtime package explicitly positioned as benchmark/intermediate evidence rather than the final canonical MKRF model path.
