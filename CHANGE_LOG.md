@@ -15802,3 +15802,13 @@
   - rejected shortcut validation paths such as using the PoC package, copying
     prior `tracks/`, or treating static XML presence as a runtime rebuild
     proof.
+## 2026-04-30 - Inserted an explicit MKRF AU build and first-growth curve phase
+- `#173` planning amendment:
+  - inserted a new top-level `P60.5` for canonical AU-table publication,
+    stand-to-AU assignment lineage, and AU-wise first-growth VDYP curve
+    synthesis with FEMIC NLLS;
+  - moved runtime-package generation to `P60.6`, benchmark validation to
+    `P60.7`, and closeout/docs to `P60.8`; and
+  - made the runtime-generation contract explicitly consume the AU-wise
+    first-growth lane instead of implying that AU build work happens inside the
+    runtime package step.

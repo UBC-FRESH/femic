@@ -107,11 +107,13 @@ Planned immediately after:
   rebuild the target/control lane from reviewed source contracts instead of
   checkpoint loading;
 - `P60.5`
-  rebuild the full MKRF runtime package from source-faithful inputs;
+  build the canonical AU table and AU-wise first-growth curve lane;
 - `P60.6`
+  rebuild the full MKRF runtime package from source-faithful inputs;
+- `P60.7`
   validate the rebuilt model against the accepted PoC benchmark and relevant
   legacy evidence; and
-- `P60.7`
+- `P60.8`
   publish closeout docs and decide whether umbrella issue `#172` can close.
 
 In shorthand:
@@ -124,12 +126,15 @@ In shorthand:
   rebuild the target/control lane from reviewed source contracts instead of
   legacy checkpoint loading or unexplained compiled helper seams;
 - `P60.5`
+  build the canonical AU table, assign stands to AUs, and compile AU-wise
+  first-growth VDYP curves with FEMIC NLLS before runtime generation;
+- `P60.6`
   rebuild the full MKRF runtime package from source-faithful inputs and publish
   the new canonical runtime outputs;
-- `P60.6`
+- `P60.7`
   validate the rebuilt model against the accepted PoC benchmark surfaces and
   the legacy evidence that still matters for acceptance; and
-- `P60.7`
+- `P60.8`
   publish closeout docs and decide whether umbrella legacy-recovery issue
   `#172` can close once the from-scratch rebuild is complete.
 
@@ -782,11 +787,57 @@ In other words, `P60.5a` should consume the AU-wise first-growth lane, not
 recreate a stand-wise unmanaged curve contract inside the canonical runtime
 package.
 
-## `P60.5a` Canonical runtime-package generation contract
+## `P60.5` Canonical AU table and AU-wise first-growth curve lane
+
+The canonical rebuild lane needs an explicit upstream model-input step between
+source/control reconstruction and runtime-package generation.
+
+This step exists to make AU definition, stand assignment, and unmanaged
+first-growth curve synthesis explicit instead of hiding them inside runtime
+generation.
+
+### `P60.5a` Canonical AU table publication
+
+The rebuild lane should publish a canonical AU table built from source-driven
+geometry using:
+
+- `bec_zone`
+- `bec_subzone`
+- `bec_variant`
+- `leading_species_1`
+- `leading_species_2`
+
+The AU table should be a canonical generated surface with its own lineage and
+acceptance checks, not an implied side effect of later runtime generation.
+
+### `P60.5b` Stand-to-AU assignment lineage
+
+The rebuild lane should assign source stands/records to the canonical AUs and
+publish:
+
+- assignment lineage from source records into AU ids;
+- diagnostics for unmatched/merged/sparse cases; and
+- explicit evidence that the runtime lane is using the canonical AU table
+  rather than reusing legacy AU assignments.
+
+### `P60.5c` AU-wise first-growth VDYP curve synthesis
+
+The rebuild lane should compile AU-wise unmanaged/first-growth VDYP curves by:
+
+- aggregating stand-level first-growth evidence to the canonical AU level;
+- fitting AU-wise curves with the existing FEMIC NLLS functions and policy
+  style already used for K3Z; and
+- publishing curve-fit diagnostics and acceptance checks for the canonical
+  AU-wise unmanaged curve lane.
+
+The legacy one-curve-per-stand first-growth implementation remains benchmark
+evidence only. It is not a canonical rebuild input or output surface.
+
+## `P60.6a` Canonical runtime-package generation contract
 
 The canonical rebuild lane must generate a new runtime package from the
 source-faithful geometry, control, AU, and curve surfaces already defined in
-`P60.3` and `P60.4`.
+`P60.3`, `P60.4`, and `P60.5`.
 
 This is the first step where the rebuild lane becomes a full runnable package
 rather than a collection of upstream contracts.
@@ -856,9 +907,9 @@ That means the canonical XML and track-generation lane may not:
 - bypass the AU-wise NLLS-fitted first-growth surface while still claiming a
   canonical rebuild runtime package.
 
-### Acceptance rule for `P60.5a`
+### Acceptance rule for `P60.6a`
 
-`P60.5a` is only satisfied when the rebuild lane can point to all of the
+`P60.6a` is only satisfied when the rebuild lane can point to all of the
 following:
 
 - a path-distinct canonical runtime package under
@@ -871,7 +922,7 @@ following:
   source-faithful rebuild lane rather than copied from benchmark/reference
   artifacts.
 
-## `P60.5b` Matrix Builder and runtime-assembly acceptance contract
+## `P60.6b` Matrix Builder and runtime-assembly acceptance contract
 
 After the canonical runtime package has been generated, the rebuild lane must
 prove that Patchworks can assemble and use that package as a real runtime
@@ -892,7 +943,7 @@ The canonical rebuild lane should, in order:
 
 ### Required generated evidence
 
-`P60.5b` should leave behind, at minimum:
+`P60.6b` should leave behind, at minimum:
 
 - preflight logs/manifests tied to the canonical package path;
 - Matrix Builder logs/manifests tied to the canonical package path;
@@ -917,7 +968,7 @@ all of the following are true:
 
 ### Explicit rejection rules
 
-`P60.5b` is not satisfied by any of the following:
+`P60.6b` is not satisfied by any of the following:
 
 - running Matrix Builder against the PoC package and reinterpreting the result
   as a canonical rebuild check;
