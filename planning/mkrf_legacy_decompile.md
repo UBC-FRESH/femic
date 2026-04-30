@@ -502,7 +502,7 @@ between:
 - the team can now treat the PoC benchmark lane as documented well enough to
   move forward rather than as a lingering documentation gap.
 
-The active next bounded move is `P60.1b`.
+The active next bounded move is `P60.1c`.
 
 Current `P58.3` state:
 
@@ -679,6 +679,17 @@ Planned Phase 58 sequence after minimal runnable closeout:
     `main`; and
   - operator/runbook material that lives with the instance repo, while the
     parent FEMIC repo keeps the pointer/lineage role.
+- `P60.1b`:
+  completed. The current MKRF PoC lane is now treated explicitly as
+  benchmark/reference evidence only. For the from-scratch rebuild, that means:
+  - use the PoC package, accepted benchmark reports, and reviewed translations
+    as comparison and acceptance evidence;
+  - do not inherit the PoC runtime package path, checkpoint target-control
+    lane, or reconstructed helper seams as the target architecture by default;
+  - do not treat the PoC package layout as canonical just because it is
+    runnable; and
+  - carry PoC behavior forward only when it remains necessary as benchmark
+    evidence or is later justified by source-faithful review.
 - `P60.2`:
   define the canonical FEMIC-native MKRF instance layout and rebuild sequence
   before new source-driven implementation begins.

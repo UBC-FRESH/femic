@@ -15653,3 +15653,12 @@
     material that lives with the instance repo; and
   - kept the parent FEMIC repo in the K3Z/TSA29 role: pointer/lineage pages,
     not the canonical user-facing rebuild docs surface.
+## 2026-04-30 - Treated MKRF PoC artifacts as benchmark evidence, not rebuild architecture
+- `#173` / `P60.1b` planning slice:
+  - recorded that the current MKRF PoC package, benchmark reports, and reviewed
+    translations are comparison/acceptance evidence only for the from-scratch
+    rebuild;
+  - made explicit that the PoC runtime package path, checkpoint target-control
+    lane, and reconstructed helper seams do not become the canonical rebuild
+    architecture by default; and
+  - moved the active implementation edge to `P60.1c`.
