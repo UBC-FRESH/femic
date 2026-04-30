@@ -1040,7 +1040,7 @@ Historical roadmap narrative and superseded structural snapshots: `planning/road
 - [x] P41.2 Apply treatment-specific utilization factors in the account-promotion layer
   - [x] P41.2a Add runtime-config support for harvested-volume utilization factors by treatment type.
   - [x] P41.2b Apply `CC = 0.85` and `CT = 0.75` to the active K3Z runtime surfaces while leaving standing yield curves and fragment-level `RETENTION` untouched.
-- [ ] P41.3 Revalidate, document, and close out the utilization change
+- [x] P41.3 Revalidate, document, and close out the utilization change
   - [x] P41.3a Rerun the relevant K3Z validation steps, including account-surface checks and any targeted live checks needed to confirm the recovered-volume contract.
   - [x] P41.3b Update user-facing docs, `CHANGE_LOG.md`, and GitHub issue #31 with the final utilization-factor behavior and validation results.
 
@@ -1256,7 +1256,7 @@ Historical roadmap narrative and superseded structural snapshots: `planning/road
     FEMIC handoff contract.
   - [ ] P48.6c Record a concrete linkage map:
 
-- [ ] P48.7 Triage and repair the post-cutover K3Z QMD regression
+- [x] P48.7 Triage and repair the post-cutover K3Z QMD regression
   - [x] P48.7a Reproduce the current K3Z launch-time symptom on the shipped
     `base` and `ctfert_l15h5` surfaces, and confirm whether the empty values
     affect:
@@ -1349,7 +1349,7 @@ Notes: `planning/phase52_tsr_reconstruction_notes.md`
   - [x] P52.5a Add worked docs for recipe init/build/run/report and the relationship between canonical TSR JSON, reviewed recipes, and user overrides.
   - [x] P52.5b Record the TSA29 proving-ground case from fresh clone through source-layer acquisition and THLB recipe execution.
   - [x] P52.5c Make the convergence and reproducibility contract explicit: when a user approves the finished instance, FEMIC should expose the fully scripted steps needed to rebuild that same product from a clean environment.
-- [ ] P52.6 Promote THLB execution from hybrid bridge to raw-land-base fragment reconstruction (`#128`)
+- [x] P52.6 Promote THLB execution from hybrid bridge to raw-land-base fragment reconstruction (`#128`)
   - [x] P52.6a Restore and validate AFLB-style checkpoint1 land-base initialization for reconstructed THLB (`#129`).
   - [x] P52.6b Add a TSA29 `MAP_ID`-based smoke subset ladder for fast overlay proving-ground runs (`#130`).
   - [x] P52.6b1 Add stage-aware GLB/AFLB/LHLB/THLB parsing and recipe schema for TSR netdown logic (`#134`).
@@ -1618,7 +1618,7 @@ Notes: `planning/mkrf_legacy_decompile.md`
 ## Phase 59: Publish MKRF PoC User-Facing Technical Docs
 Notes: `planning/mkrf_legacy_decompile.md`
 
-- [ ] P59.1 Publish MKRF PoC Sphinx docs using the K3Z instance docs as the template (`#175`)
+- [x] P59.1 Publish MKRF PoC Sphinx docs using the K3Z instance docs as the template (`#175`)
   - [x] P59.1a Match the K3Z instance docs scope, depth, formatting, and structure rather than inventing a one-off MKRF docs shape.
   - [x] P59.1b Make the docs explicit that the current MKRF model is a PoC benchmark/intermediate, not the final canonical rebuild.
   - [x] P59.1c Publish the docs through the existing Sphinx/GitHub Pages workflow with the same operator-facing quality bar as K3Z, using a standalone MKRF PoC chapter set built from:
@@ -1626,11 +1626,11 @@ Notes: `planning/mkrf_legacy_decompile.md`
     `metadata-and-lineage`, `operator-runbook`, `rebuild-and-qa`,
     `troubleshooting`, and MKRF-specific PoC pages for benchmark results,
     legacy evidence/runbook boundaries, and accepted caveats/deferred seams.
-- [ ] P59.2 Document the MKRF PoC benchmark/runtime lane and accepted claim boundary (`#175`)
+- [x] P59.2 Document the MKRF PoC benchmark/runtime lane and accepted claim boundary (`#175`)
   - [x] P59.2a Teach the accepted runtime package, generated XML/tracks, spatial lane, and representative benchmark scenario surfaces.
   - [x] P59.2b Record the accepted PoC caveats, including unresolved helper seams and accepted benchmark variances.
   - [x] P59.2c Distinguish clearly between benchmark/reference evidence and the later from-scratch rebuild contract.
-- [ ] P59.3 Publish closeout docs metadata and handoff to the real rebuild phase (`#175`)
+- [x] P59.3 Publish closeout docs metadata and handoff to the real rebuild phase (`#175`)
   - [x] P59.3a Update parent and instance docs/runbooks so the PoC documentation lane is complete and auditable.
   - [x] P59.3b Link the finished PoC docs lane to the next from-scratch rebuild phase without blurring the two contracts.
   - [x] P59.3c Confirm the PoC docs are good enough that the team can stop treating the benchmark lane as under-documented.
@@ -1638,7 +1638,7 @@ Notes: `planning/mkrf_legacy_decompile.md`
 ## Phase 60: From-Scratch MKRF FEMIC-Native Rebuild
 Notes: `planning/mkrf_femic_native_rebuild.md`
 
-- [ ] P60.1 Define the target instance contract and acceptance gates for the new MKRF rebuild (`#173`)
+- [x] P60.1 Define the target instance contract and acceptance gates for the new MKRF rebuild (`#173`)
   - [x] P60.1a Make K3Z/TSA29-style FEMIC instance organization and workflow conventions the governing default for the new MKRF rebuild.
   - [x] P60.1b Treat PoC artifacts as benchmark/reference evidence only, not as the target architecture contract.
   - [x] P60.1c Require that any legacy behavior carried forward into the new rebuild be justified by source evidence or benchmark necessity.

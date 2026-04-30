@@ -120,6 +120,13 @@ When contributing to this repository as the coding agent:
 6. Whenever you plan or complete work, update the "Detailed Next Steps Notes" section in
    `ROADMAP.md` so the leading edge of the implementation plan stays current. Consult that section
    before proposing new next steps to ensure we continue in sequence rather than jumping around.
+6a. Keep roadmap parent-task status synchronized with child subtasks:
+   - if every listed child subtask under a roadmap task is checked off, check off the parent task
+     in the same change set unless the parent line explicitly covers additional still-open scope;
+   - do not leave top-level roadmap tasks unchecked after all of their child subtasks are marked
+     complete;
+   - when a parent task intentionally stays open despite completed children, add a brief note in
+     the roadmap/planning surface explaining why.
 7. After each deliverable or roadmap milestone, append the same progress summary reported to the user
    to `CHANGE_LOG.md` (Markdown format, newest entries last) so the repository carries an auditable
    narrative of changes.
