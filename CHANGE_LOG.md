@@ -15884,3 +15884,13 @@
     - `external/femic-mkrf-instance/plots/strata-tsamkrf.pdf`
   - updated the MKRF instance `.gitignore` so these committed plot artifacts
     are kept while `docs/_build/` and other generated surfaces stay ignored.
+## 2026-04-30 - Reopened the MKRF AU lane for top-N coverage selection
+- `#173` / Phase 60 planning amendment:
+  - reopened `P60.5` to add `P60.5d`, an explicit top-N AU selection step
+    before runtime generation;
+  - fixed the default canonical rule to select the smallest AU subset whose
+    cumulative covered area reaches at least `80%` of the assignment universe;
+  - fixed the canonical selected-AU publication surface at
+    `data/model_input_bundle/selected_au_table.csv`; and
+  - required downstream runtime generation to consume that explicit selected
+    AU subset by default rather than silently using the full AU universe.

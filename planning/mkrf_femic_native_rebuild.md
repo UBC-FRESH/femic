@@ -86,17 +86,15 @@ Completed:
   `.github/`, `config/`, `data/`, `docs/`, `models/`, `metadata/`,
   `runbooks/`, plus root repo docs.
 
-Active next bounded move:
+Completed:
 
+- `P60.2a`
+  fixed the canonical top-level layout contract;
 - `P60.2b`
-  define the authoritative rebuild sequencing and validation contract for the
-  canonical MKRF rebuild lane.
-
-Planned immediately after:
-
+  fixed the authoritative rebuild sequencing and validation contract; and
 - `P60.2c`
-  keep benchmark/reference artifacts clearly separated from the new
-  source-faithful build surfaces.
+  fixed the separation boundary between benchmark/reference artifacts and the
+  new source-faithful build surfaces.
 
 ### Downstream phases
 
@@ -115,6 +113,14 @@ Planned immediately after:
   legacy evidence; and
 - `P60.8`
   publish closeout docs and decide whether umbrella issue `#172` can close.
+
+### Current active edge
+
+The current active implementation edge is:
+
+- `P60.5d`
+  publish the canonical top-N AU selection using the default `80%`
+  cumulative-area coverage rule before the runtime package is generated.
 
 In shorthand:
 
@@ -1001,6 +1007,53 @@ visible per AU:
 
 The legacy one-curve-per-stand first-growth implementation remains benchmark
 evidence only. It is not a canonical rebuild input or output surface.
+
+### `P60.5d` Canonical top-N AU selection by cumulative area coverage
+
+The canonical rebuild lane should not assume that the full AU universe becomes
+the runtime selection surface by default.
+
+Instead, the rebuild lane should publish an explicit top-N AU selection using
+the same cumulative-area coverage pattern already used elsewhere in FEMIC.
+
+#### Selection rule
+
+Default canonical rule:
+
+- sort canonical AUs by descending covered area; then
+- select the smallest top-N AU subset whose cumulative area reaches at least
+  `80%` of the covered area in the assignment universe.
+
+This is the default rule-of-thumb for the canonical rebuild lane unless a
+later acceptance gate proves that a different coverage threshold is required.
+
+#### Canonical publication surface
+
+The rebuild lane should publish the selected AU subset as a generated
+model-input artifact under a lowercase FEMIC-controlled path.
+
+Default publication surface:
+
+- `data/model_input_bundle/selected_au_table.csv`
+
+This surface should remain distinct from the full AU universe in
+`au_table.csv`.
+
+#### Required lineage and diagnostics
+
+`P60.5d` should leave behind enough evidence to answer:
+
+- total AU count in the full universe;
+- selected AU count in the canonical top-N subset;
+- total covered area in the assignment universe;
+- cumulative covered area captured by the selected subset; and
+- which AUs were excluded by the cutoff.
+
+#### Runtime dependency rule
+
+Unless a later acceptance gate says otherwise, downstream runtime generation in
+`P60.6+` should consume the explicit selected AU subset rather than silently
+using the full AU universe.
 
 ## `P60.6a` Canonical runtime-package generation contract
 
