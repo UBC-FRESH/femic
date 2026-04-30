@@ -188,6 +188,7 @@ def build_mkrf_au_distribution_plot(
     *,
     resultant_gdb: Path,
     assignment_csv: Path,
+    selected_au_csv: Path | None = None,
     output_dir: Path,
     layer: str = "Resultant",
     tsa_code: str = "mkrf",
@@ -198,6 +199,12 @@ def build_mkrf_au_distribution_plot(
 
     output_dir.mkdir(parents=True, exist_ok=True)
     assignment = pd.read_csv(assignment_csv)
+    if selected_au_csv is not None:
+        selected_au_table = pd.read_csv(selected_au_csv)
+        assignment = _filter_assignment_to_selected_aus(
+            assignment,
+            selected_au_table,
+        )
     source_table = gpd.read_file(resultant_gdb, layer=layer, ignore_geometry=True)
     source_subset = source_table[["RES_KEY", "TCL_1_ESTIMATED_SITE_INDEX"]].copy()
     source_subset = source_subset.rename(
@@ -270,6 +277,16 @@ def _build_selected_au_label_map(selected_au_table: pd.DataFrame) -> dict[str, s
         rank = int(row["selected_rank"]) - 1
         labels[au_id] = f"{rank:02d}-{_format_mkrf_au_label(au_id)}"
     return labels
+
+
+def _filter_assignment_to_selected_aus(
+    assignment: pd.DataFrame,
+    selected_au_table: pd.DataFrame,
+) -> pd.DataFrame:
+    selected_ids = set(selected_au_table["au_id"].astype(str))
+    return assignment.loc[
+        assignment["au_id"].astype(str).isin(selected_ids)
+    ].copy()
 
 
 def _classify_site_index_levels(site_index: pd.Series) -> pd.Series:
@@ -481,6 +498,7 @@ def build_mkrf_all_plots(
     strata = build_mkrf_au_distribution_plot(
         resultant_gdb=resultant_gdb,
         assignment_csv=assignment_csv,
+        selected_au_csv=selected_au_csv,
         output_dir=output_dir,
         layer=layer,
         tsa_code=tsa_code,

@@ -6290,6 +6290,11 @@ def instance_mkrf_plot_au_distribution(
         "--assignment-csv",
         help="Instance-relative stand-to-AU assignment CSV.",
     ),
+    selected_au_csv: Path = typer.Option(
+        Path("data/model_input_bundle/selected_au_table.csv"),
+        "--selected-au-csv",
+        help="Instance-relative selected-AU table CSV used to filter the plotted subset.",
+    ),
     output_dir: Path = typer.Option(
         Path("plots"),
         "--output-dir",
@@ -6302,6 +6307,7 @@ def instance_mkrf_plot_au_distribution(
     result = build_mkrf_au_distribution_plot(
         resultant_gdb=resultant_gdb,
         assignment_csv=context.resolve_path(assignment_csv),
+        selected_au_csv=context.resolve_path(selected_au_csv),
         output_dir=context.resolve_path(output_dir),
     )
     console.print(

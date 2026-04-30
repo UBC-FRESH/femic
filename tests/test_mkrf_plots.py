@@ -5,6 +5,7 @@ import pandas as pd
 from femic.workflows.mkrf import (
     _build_tipsy_legacy_au_table,
     _classify_site_index_levels,
+    _filter_assignment_to_selected_aus,
 )
 
 
@@ -41,3 +42,24 @@ def test_build_tipsy_legacy_au_table_derives_bec_and_species_pair() -> None:
         "cwh_vm_2_cw_hw",
         "mhm_m_1_fdc_dr",
     ]
+
+
+def test_filter_assignment_to_selected_aus_keeps_only_selected_rows() -> None:
+    assignment = pd.DataFrame(
+        [
+            {"res_key": 1, "au_id": "a"},
+            {"res_key": 2, "au_id": "b"},
+            {"res_key": 3, "au_id": "c"},
+        ]
+    )
+    selected = pd.DataFrame(
+        [
+            {"au_id": "b", "selected_rank": 1},
+            {"au_id": "c", "selected_rank": 2},
+        ]
+    )
+
+    filtered = _filter_assignment_to_selected_aus(assignment, selected)
+
+    assert list(filtered["res_key"]) == [2, 3]
+    assert list(filtered["au_id"]) == ["b", "c"]
