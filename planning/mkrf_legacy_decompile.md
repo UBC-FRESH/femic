@@ -457,10 +457,24 @@ claim boundary in the form operators actually need:
   - larger long-horizon divergence accepted for PoC
 - unresolved but deferred seams:
   - missing legacy `00_Target_Descriptions.bsh`
-  - unresolved helper families such as `THLB4070(...)` and `UWR(...)`
-  - broader source-faithful target/control reconstruction
+- unresolved helper families such as `THLB4070(...)` and `UWR(...)`
+- broader source-faithful target/control reconstruction
 
-The active next bounded move is `P59.2c`.
+`P59.2c` is now complete. The standalone docs now distinguish explicitly
+between:
+
+- benchmark/reference evidence the PoC is meant to preserve:
+  - archival compiled package evidence;
+  - the PoC runtime package;
+  - accepted benchmark saved-stage/report surfaces; and
+  - reviewed builder/runtime contract translations; and
+- the later canonical rebuild contract:
+  - raw-source reconstruction from `03_MappingAnalysisData/*`;
+  - final target/control architecture;
+  - future canonical runtime package pathing; and
+  - any stronger identity claim than the accepted PoC benchmark claim.
+
+The active next bounded move is `P59.3a`.
 
 Current `P58.3` state:
 

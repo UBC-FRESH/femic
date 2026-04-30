@@ -15597,3 +15597,16 @@
     - not exact legacy-equivalence and not source-faithful rebuild; and
   - made the deferred helper seams and unresolved target-control recovery
     boundary explicit in the operator-facing docs.
+## 2026-04-29 - Separated MKRF benchmark evidence from the later canonical rebuild contract
+- `#175` / `P59.2c` docs slice:
+  - updated the standalone MKRF docs so benchmark/reference evidence is
+    described as its own lane rather than being allowed to blur into the later
+    canonical rebuild contract;
+  - made the preserved PoC evidence surfaces explicit:
+    archival compiled package evidence, the PoC runtime package, accepted
+    benchmark saved-stage/report surfaces, and reviewed builder/runtime
+    translations; and
+  - made the later rebuild-only contract surfaces explicit:
+    raw-source reconstruction, final target/control architecture, future
+    canonical package pathing, and any stronger identity claim than the
+    accepted PoC benchmark claim.
