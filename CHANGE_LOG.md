@@ -15687,3 +15687,15 @@
   - repointed `Phase 60` in `ROADMAP.md` to the new rebuild-planning note; and
   - left `planning/mkrf_legacy_decompile.md` in place as the closed
     archaeology/PoC planning record for `P55`-`P59`.
+## 2026-04-30 - Defined the MKRF canonical rebuild sequencing and validation contract
+- `#173` / `P60.2b` planning slice:
+  - fixed the authoritative rebuild sequence for the future canonical MKRF
+    lane: contract validation, geospatial/source validation, upstream compile,
+    post-yield/model-input bundle, Patchworks preflight, canonical
+    geometry/topology publication, matrix build, and benchmark acceptance
+    validation;
+  - recorded the required gate types for that lane: contract, source,
+    publication, runtime, and acceptance; and
+  - fixed the minimum evidence surfaces and explicit non-goals so the later
+    source-faithful rebuild cannot silently reuse PoC/checkpoint surfaces while
+    making stronger identity claims.

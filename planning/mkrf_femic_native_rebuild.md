@@ -145,3 +145,89 @@ In shorthand:
   - canonical generated outputs, and
   - benchmark comparison surfaces,
   not ad hoc convenience artifacts.
+
+## `P60.2b` Rebuild sequencing and validation contract
+
+The canonical MKRF rebuild lane should use the same high-level sequencing
+discipline as the standalone K3Z/TSA29 pattern, while keeping the PoC package
+and checkpoint-driven surfaces out of the claim boundary.
+
+### Authoritative rebuild sequence
+
+The ordered rebuild sequence for the future canonical MKRF lane is:
+
+1. validate instance case and runtime contracts
+   - case/config sanity;
+   - required external/runtime prerequisites; and
+   - docs/runtime path agreement for the active instance lane.
+2. validate geospatial runtime readiness
+   - shapefile/GDAL/Fiona I/O;
+   - required upstream source surfaces materialized and readable; and
+   - no checkpoint-derived substitutes standing in for claimed raw source.
+3. compile the upstream source lane
+   - source-driven preparation from `03_MappingAnalysisData/*`;
+   - reviewed source-input contracts only; and
+   - explicit lineage capture for the produced intermediate artifacts.
+4. complete the post-yield/model-input bundle lane
+   - normalized model-input tables;
+   - canonical bundle/config surfaces under `config/`; and
+   - explicit publication of the generated inputs that will feed the canonical
+     runtime package.
+5. run Patchworks preflight against the canonical rebuild package
+   - runtime config;
+   - XML/track/control prerequisites; and
+   - launch/runtime prerequisites such as licensing and JVM wiring.
+6. publish the canonical geometry/block/topology runtime surfaces
+   - source-faithful runtime spatial handoff under the rebuild package;
+   - explicit block/topology generation where required; and
+   - separation from accepted PoC compiled-runtime evidence.
+7. run Matrix Builder for the canonical rebuild package
+   - regenerate runtime tracks from the canonical rebuild package;
+   - synchronize XML/tracks/accounts/control surfaces to the same contract; and
+   - record runtime manifests/logs as rebuild evidence.
+8. run acceptance validation against benchmark/reference surfaces
+   - compare selected outputs against the accepted PoC benchmark surfaces;
+   - compare legacy evidence where it still matters for acceptance; and
+   - record accepted redesign choices versus unresolved regressions.
+
+### Required validation gates
+
+Each phase above must answer a distinct question and emit explicit evidence:
+
+- **contract gate**
+  - are the rebuild inputs/config/runtime assumptions explicit and valid?
+- **source gate**
+  - are the claimed raw-source inputs materialized and actually being used?
+- **publication gate**
+  - were canonical rebuild artifacts generated into the intended package
+    surfaces rather than borrowed from PoC/checkpoint evidence?
+- **runtime gate**
+  - can the canonical rebuild package pass Patchworks preflight and matrix build?
+- **acceptance gate**
+  - does the rebuilt package behave acceptably against the benchmark/reference
+    surfaces the team still cares about?
+
+### Required evidence surfaces
+
+The rebuild lane should leave behind, at minimum:
+
+- rebuild-spec / allowlist / run-config state under `config/`;
+- lineage and evidence ledgers under `metadata/`;
+- runtime logs/manifests for preflight, matrix build, and representative runs;
+- canonical generated runtime artifacts under the new rebuild package in
+  `models/`; and
+- benchmark comparison summaries that tie rebuilt outputs back to the accepted
+  PoC evidence surface.
+
+### Explicit non-goals for this contract
+
+This sequencing contract does not allow:
+
+- treating `models/mkrf_patchworks_model_poc/` as the canonical rebuild
+  package;
+- using checkpoint-derived or compiled-runtime artifacts as substitutes for raw
+  source while claiming a source-faithful rebuild;
+- skipping Patchworks preflight/matrix-build and treating static file presence
+  as rebuild validation; or
+- treating unexplained legacy seams as required by default just because they
+  existed in the PoC lane.
