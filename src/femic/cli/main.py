@@ -273,6 +273,8 @@ from femic.workflows.mkrf import (
     build_mkrf_au_distribution_plot,
     build_mkrf_au_input_bundle,
     build_mkrf_first_growth_input_bundle,
+    build_mkrf_managed_au_curves,
+    build_mkrf_managed_au_input_bundle,
     build_mkrf_selected_au_input_bundle,
 )
 
@@ -6451,6 +6453,121 @@ def instance_mkrf_recompile_plots(
     )
     console.print(f"strata_png: {result.strata_png}")
     console.print(f"strata_pdf: {result.strata_pdf}")
+
+
+@instance_app.command("mkrf-build-managed-au-inputs")
+def instance_mkrf_build_managed_au_inputs(
+    man_si_by_au_csv: Path = typer.Option(
+        ...,
+        "--man-si-by-au-csv",
+        exists=True,
+        dir_okay=False,
+        file_okay=True,
+        resolve_path=True,
+        help="Path to the upstream MKRF ManSI_by_AU.csv file.",
+    ),
+    tipsy_spp_comp_csv: Path = typer.Option(
+        ...,
+        "--tipsy-spp-comp-csv",
+        exists=True,
+        dir_okay=False,
+        file_okay=True,
+        resolve_path=True,
+        help="Path to the upstream MKRF TIPSY_SPP_Comp.csv file.",
+    ),
+    selected_au_csv: Path = typer.Option(
+        Path("data/model_input_bundle/selected_au_table.csv"),
+        "--selected-au-csv",
+        help="Instance-relative selected-AU table CSV.",
+    ),
+    assignment_csv: Path = typer.Option(
+        Path("data/model_input_bundle/stand_au_assignment.csv"),
+        "--assignment-csv",
+        help="Instance-relative stand-to-AU assignment CSV.",
+    ),
+    output_dir: Path = typer.Option(
+        Path("data/model_input_bundle"),
+        "--output-dir",
+        help="Instance-relative output directory for managed AU bundle artifacts.",
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Build the provisional managed AU bootstrap and BTC MSYT surfaces."""
+    context = _resolve_cli_instance_context(instance_root=instance_root)
+    result = build_mkrf_managed_au_input_bundle(
+        selected_au_csv=context.resolve_path(selected_au_csv),
+        assignment_csv=context.resolve_path(assignment_csv),
+        man_si_by_au_csv=man_si_by_au_csv,
+        tipsy_spp_comp_csv=tipsy_spp_comp_csv,
+        output_dir=context.resolve_path(output_dir),
+    )
+    console.print(
+        "[green]mkrf managed au inputs built[/green] "
+        f"selected_aus={result.selected_au_count} "
+        f"included_aus={result.included_au_count} "
+        f"unmatched_aus={result.unmatched_au_count} "
+        f"direct={result.direct_au_count} "
+        f"lexmatch={result.lexmatch_au_count}"
+    )
+    console.print(f"bootstrap_table: {result.bootstrap_table_path}")
+    console.print(f"managed_au_msyt: {result.msyt_path}")
+
+
+@instance_app.command("mkrf-build-managed-au-curves")
+def instance_mkrf_build_managed_au_curves(
+    bootstrap_csv: Path = typer.Option(
+        Path("data/model_input_bundle/managed_au_bootstrap_table.csv"),
+        "--bootstrap-csv",
+        help="Instance-relative managed AU bootstrap table CSV.",
+    ),
+    msyt_csv: Path = typer.Option(
+        Path("data/model_input_bundle/managed_au_msyt.csv"),
+        "--msyt-csv",
+        help="Instance-relative managed AU BTC MSYT.csv input.",
+    ),
+    output_dir: Path = typer.Option(
+        Path("data/model_input_bundle"),
+        "--output-dir",
+        help="Instance-relative output directory for managed AU BTC artifacts.",
+    ),
+    log_dir: Path = typer.Option(
+        Path("runtime/logs/managed_au_btc"),
+        "--log-dir",
+        help="Instance-relative output directory for BTC runtime logs.",
+    ),
+    run_id: str = typer.Option(
+        "mkrf_managed_au_curves",
+        "--run-id",
+        help="Run identifier for the managed AU BTC attempt.",
+    ),
+    btc_executable: Path | None = typer.Option(
+        None,
+        "--btc-executable",
+        exists=False,
+        resolve_path=True,
+        help="Optional explicit TIPSYbtc.exe path override.",
+        show_default=False,
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Attempt a BTC compile for the provisional managed AU lane."""
+    context = _resolve_cli_instance_context(instance_root=instance_root)
+    result = build_mkrf_managed_au_curves(
+        bootstrap_csv=context.resolve_path(bootstrap_csv),
+        msyt_csv=context.resolve_path(msyt_csv),
+        output_dir=context.resolve_path(output_dir),
+        log_dir=context.resolve_path(log_dir),
+        run_id=run_id,
+        executable_path=btc_executable,
+    )
+    color = "green" if result.status == "completed" else "yellow"
+    console.print(
+        f"[{color}]mkrf managed au btc attempt {result.status}[/{color}] "
+        f"included_aus={result.included_au_count} curve_aus={result.curve_au_count}"
+    )
+    console.print(f"manifest: {result.manifest_path}")
+    if result.curves_path is not None:
+        console.print(f"managed_au_curves: {result.curves_path}")
 
 
 @app.command("run")

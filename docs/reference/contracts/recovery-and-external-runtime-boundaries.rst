@@ -57,6 +57,19 @@ The unattended BTC seam has one especially important hidden rule:
 For unattended FEMIC BTC ``/TSR`` work, this live user-overlay path is the
 **only known-valid runtime seam**.
 
+When a Windows FEMIC environment is missing ``TIPSYbtc.exe``, the standard
+recovery path is to install TIPSY 4.7 from the BC Government distribution
+package:
+
+- ``https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/software/tipsy47.msi``
+
+After a normal install, FEMIC expects BTC at:
+
+- ``C:\\Program Files\\TIPSY 4.7\\BTC\\TIPSYbtc.exe``
+
+If FEMIC does not auto-discover BTC after install, set either
+``FEMIC_BATCHTIPSY_EXE`` or pass ``--btc-exe`` explicitly.
+
 Operational consequences:
 
 - a broken user-overlay ``TimberSupply.rpt`` can make apparently normal stock

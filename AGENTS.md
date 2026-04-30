@@ -59,6 +59,14 @@ the repo root:
    - BatchTIPSY freshness: treat `02_input-tsaXX.dat` as canonical; XLSX is a
      mirror only. Do not assume a stale block means rerun is required without
      checking whether DAT content actually changed.
+   - BatchTIPSY/BTC runtime install:
+     - if `TIPSYbtc.exe` is missing from the current Windows dev environment,
+       install TIPSY 4.7 from:
+       `https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/software/tipsy47.msi`
+     - default expected installed path is:
+       `C:\Program Files\TIPSY 4.7\BTC\TIPSYbtc.exe`
+     - if FEMIC cannot auto-discover it after install, set either
+       `FEMIC_BATCHTIPSY_EXE` or pass `--btc-exe`.
    - BC Data Catalogue discovery quickstart:
      - resolve/classify one likely BCDC layer:
        - `& .\.venv\Scripts\python.exe -m femic data bcdc-resolve WHSE_FOREST_VEGETATION.F_OWN`

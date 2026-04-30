@@ -107,21 +107,23 @@ Completed:
 - `P60.5`
   build the canonical AU table and AU-wise first-growth curve lane;
 - `P60.6`
-  rebuild the full MKRF runtime package from source-faithful inputs;
+  build the provisional managed AU-wise TIPSY/BTC bootstrap lane;
 - `P60.7`
+  rebuild the full MKRF runtime package from source-faithful inputs;
+- `P60.8`
   validate the rebuilt model against the accepted PoC benchmark and relevant
   legacy evidence; and
-- `P60.8`
+- `P60.9`
   publish closeout docs and decide whether umbrella issue `#172` can close.
 
 ### Current active edge
 
 The current active implementation edge is:
 
-- `P60.6a`
+- `P60.7a`
   generate the canonical runtime XML, tracks, and control surfaces from the
   new FEMIC-native rebuild lane, consuming the explicit selected-AU subset and
-  AU-wise unmanaged/first-growth curves.
+  AU-wise unmanaged/first-growth and managed curves.
 
 In shorthand:
 
@@ -136,12 +138,15 @@ In shorthand:
   build the canonical AU table, assign stands to AUs, and compile AU-wise
   first-growth VDYP curves with FEMIC NLLS before runtime generation;
 - `P60.6`
+  bootstrap the AU-wise managed/planted lane from legacy TIPSY evidence and
+  keep it explicitly provisional;
+- `P60.7`
   rebuild the full MKRF runtime package from source-faithful inputs and publish
   the new canonical runtime outputs;
-- `P60.7`
+- `P60.8`
   validate the rebuilt model against the accepted PoC benchmark surfaces and
   the legacy evidence that still matters for acceptance; and
-- `P60.8`
+- `P60.9`
   publish closeout docs and decide whether umbrella legacy-recovery issue
   `#172` can close once the from-scratch rebuild is complete.
 
@@ -1104,7 +1109,96 @@ using the checked-in FEMIC command path and now includes:
 - `14` selected AUs in the default top-N subset; and
 - realized covered-area share `0.808706` for the default `80%` cutoff.
 
-## `P60.6a` Canonical runtime-package generation contract
+## `P60.6` Provisional managed AU-wise TIPSY/BTC bootstrap lane
+
+The canonical rebuild now has a distinct managed/planted bootstrap lane between
+the AU-wise unmanaged first-growth work and the final runtime-package
+generation step.
+
+This lane is intentionally provisional:
+
+- it is valid as rebuild scaffolding and diagnostic evidence;
+- it is not yet the final reviewed MKRF managed-rule contract; and
+- it must later be replaced or confirmed by reviewed managed configuration
+  before final Phase 60 closeout.
+
+### Published managed bootstrap surfaces
+
+The managed bootstrap lane must publish, at minimum:
+
+- `data/model_input_bundle/managed_au_bootstrap_table.csv`
+- `data/model_input_bundle/managed_au_msyt.csv`
+- `data/model_input_bundle/managed_au_run_manifest.json`
+
+If BTC is available and runs successfully, it should also publish:
+
+- `data/model_input_bundle/managed_au_curves.csv`
+
+### Current implemented result
+
+The current managed bootstrap attempt is now reproducible through checked-in
+FEMIC code and CLI commands:
+
+- `femic instance mkrf-build-managed-au-inputs`
+- `femic instance mkrf-build-managed-au-curves`
+
+Current observed MKRF result:
+
+- selected canonical AUs: `31`
+- included managed bootstrap AUs: `4`
+- unmatched selected AUs: `27`
+- direct managed AU mappings: `4`
+- lexmatch-managed AU mappings: `0`
+- compiled managed/planted curves: `4`
+
+The managed BTC lane now runs successfully through the checked-in builder path,
+but only when it uses the same copied-install/live-overlay unattended TSR mode
+as the known-good direct `femic tipsy run-btc` path. The generated
+`managed_au_run_manifest.json` records the successful BTC run and the canonical
+`managed_au_curves.csv` output.
+
+### Managed SI and species payload rule
+
+The canonical AU identity remains unchanged:
+
+- `bec_zone`
+- `bec_subzone`
+- `bec_variant`
+- `leading_species_1`
+- `leading_species_2`
+
+Managed site index is treated as an AU attribute rather than a new AU key
+dimension.
+
+The bootstrap lane currently derives one deterministic `managed_si` per
+selected canonical AU from:
+
+1. `ManSI_by_AU.csv`
+2. `TIPSY_SPP_Comp.csv`
+3. the existing managed AU lexmatch bridge into the selected canonical AU set
+
+If multiple legacy managed candidates map into one canonical AU, the chosen
+`managed_si` is the weighted median of candidate `SI` values.
+
+### Claim boundary for `P60.6`
+
+The accepted claim for this lane is:
+
+- reproducible AU-wise managed/planted BTC input generation exists;
+- reproducible AU-wise managed/planted BTC curve compilation exists for the
+  currently included managed AUs;
+- the AU-wise planted lane is structurally compatible with the canonical
+  rebuild architecture; and
+- a real BTC attempt can be made and leave behind explicit success or blocker
+  evidence.
+
+The following are still *not* claimed:
+
+- reviewed production MKRF TIPSY rule semantics;
+- final canonical managed silviculture behavior; or
+- benchmark parity on planted-stand behavior.
+
+## `P60.7a` Canonical runtime-package generation contract
 
 The canonical rebuild lane must generate a new runtime package from the
 source-faithful geometry, control, AU, and curve surfaces already defined in
@@ -1147,7 +1241,7 @@ defaulting back to the legacy naming pattern.
 
 ### Required generated runtime surfaces
 
-`P60.5a` should publish, at minimum:
+`P60.7a` should publish, at minimum:
 
 - canonical runtime XML under `xml/`;
 - canonical runtime tracks under `tracks/`;
@@ -1170,7 +1264,9 @@ The canonical runtime package must consume:
 
 - the canonical AU table defined by
   `bec_zone + bec_subzone + bec_variant + ordered top-2 leading species`; and
-- the AU-wise unmanaged/first-growth curves produced by the `P60.4d` contract.
+- the AU-wise unmanaged/first-growth curves produced by `P60.5`; and
+- the AU-wise managed/planted curve lane or explicit managed blocker evidence
+  produced by `P60.6`.
 
 That means the canonical XML and track-generation lane may not:
 
@@ -1178,9 +1274,9 @@ That means the canonical XML and track-generation lane may not:
 - bypass the AU-wise NLLS-fitted first-growth surface while still claiming a
   canonical rebuild runtime package.
 
-### Acceptance rule for `P60.6a`
+### Acceptance rule for `P60.7a`
 
-`P60.6a` is only satisfied when the rebuild lane can point to all of the
+`P60.7a` is only satisfied when the rebuild lane can point to all of the
 following:
 
 - a path-distinct canonical runtime package under
@@ -1193,7 +1289,7 @@ following:
   source-faithful rebuild lane rather than copied from benchmark/reference
   artifacts.
 
-## `P60.6b` Matrix Builder and runtime-assembly acceptance contract
+## `P60.7b` Matrix Builder and runtime-assembly acceptance contract
 
 After the canonical runtime package has been generated, the rebuild lane must
 prove that Patchworks can assemble and use that package as a real runtime
@@ -1214,7 +1310,7 @@ The canonical rebuild lane should, in order:
 
 ### Required generated evidence
 
-`P60.6b` should leave behind, at minimum:
+`P60.7b` should leave behind, at minimum:
 
 - preflight logs/manifests tied to the canonical package path;
 - Matrix Builder logs/manifests tied to the canonical package path;
@@ -1239,7 +1335,7 @@ all of the following are true:
 
 ### Explicit rejection rules
 
-`P60.6b` is not satisfied by any of the following:
+`P60.7b` is not satisfied by any of the following:
 
 - running Matrix Builder against the PoC package and reinterpreting the result
   as a canonical rebuild check;

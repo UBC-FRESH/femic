@@ -15920,3 +15920,26 @@
     - `4` `tipsy_vdyp_tsamkrf-*.png` plots; and
   - kept the AU/curve/plot logic in checked-in Python workflow code rather
     than ephemeral shell-only scripts.
+## 2026-04-30 - Implemented the MKRF managed AU bootstrap lane
+- `#173` / `P60.6` implementation slice:
+  - added checked-in managed-lane pipeline/workflow/CLI support:
+    - `femic instance mkrf-build-managed-au-inputs`
+    - `femic instance mkrf-build-managed-au-curves`
+  - published:
+    - `external/femic-mkrf-instance/data/model_input_bundle/managed_au_bootstrap_table.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/managed_au_msyt.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/managed_au_curves.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/managed_au_run_manifest.json`
+  - current selected canonical AUs: `31`
+  - current included managed bootstrap AUs: `4`
+  - current unmatched selected AUs: `27`
+  - current direct mappings: `4`
+  - current lexmatch mappings: `0`
+  - current compiled managed/planted curves: `4`
+  - found and fixed the real BTC seam:
+    the managed builder had been bypassing the copied-install/live-overlay
+    unattended TSR mode that the direct `femic tipsy run-btc` path uses
+    successfully; and
+  - shifted the downstream runtime/build/validation/closeout tasks so the
+    managed bootstrap lane is explicit instead of buried inside runtime-package
+    generation.

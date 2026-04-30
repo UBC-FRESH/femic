@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-import math
 
 import geopandas as gpd
 import numpy as np
@@ -13,11 +12,18 @@ import pandas as pd
 from femic.pipeline.mkrf_au import (
     build_mkrf_au_tables,
     build_mkrf_selected_au_table,
-    parse_mkrf_bec,
 )
 from femic.pipeline.mkrf_first_growth import (
     build_mkrf_first_growth_curves,
     collapse_stand_assignments,
+)
+from femic.pipeline.mkrf_managed import (
+    build_mkrf_legacy_managed_au_table,
+    build_mkrf_managed_alias_map,
+    build_mkrf_managed_au_bootstrap_table,
+    build_mkrf_managed_au_msyt_table,
+    parse_mkrf_managed_au_curves,
+    write_mkrf_managed_run_manifest,
 )
 from femic.pipeline.plots import (
     StrataDistributionPlotMetadata,
@@ -26,7 +32,7 @@ from femic.pipeline.plots import (
     resolve_strata_plot_ordering,
     strata_plot_paths,
 )
-from femic.pipeline.tsa import build_stratum_lexmatch_alias_map
+from femic.pipeline.tipsy import run_btc_cli
 
 
 @dataclass(frozen=True)
@@ -94,6 +100,32 @@ class MkrfPlotRebuildResult:
     lmh_plot_count: int
     fitdiag_plot_count: int
     tipsy_vdyp_plot_count: int
+
+
+@dataclass(frozen=True)
+class MkrfManagedAuBootstrapResult:
+    """Result payload for MKRF managed AU bootstrap publication."""
+
+    output_dir: Path
+    bootstrap_table_path: Path
+    msyt_path: Path
+    selected_au_count: int
+    included_au_count: int
+    unmatched_au_count: int
+    direct_au_count: int
+    lexmatch_au_count: int
+
+
+@dataclass(frozen=True)
+class MkrfManagedAuCurvesResult:
+    """Result payload for MKRF managed AU BTC attempt."""
+
+    output_dir: Path
+    manifest_path: Path
+    curves_path: Path | None
+    status: str
+    included_au_count: int
+    curve_au_count: int
 
 
 def build_mkrf_au_input_bundle(
@@ -354,96 +386,6 @@ def _tipsy_vdyp_plot_path(*, output_dir: Path, tsa_code: str, au_label: str) -> 
     return output_dir / f"tipsy_vdyp_tsa{tsa}-{au_label}.png"
 
 
-def _tipsy_species_pair(row: pd.Series) -> tuple[str, str]:
-    species_map = {
-        "BA": "ba",
-        "CW": "cw",
-        "DR": "dr",
-        "FD": "fdc",
-        "HW": "hw",
-        "YC": "yc",
-    }
-    ranked: list[tuple[str, float]] = []
-    for column, species_code in species_map.items():
-        raw = row.get(column)
-        try:
-            share = float(raw)
-        except (TypeError, ValueError):
-            share = 0.0
-        if not math.isfinite(share) or share <= 0.0:
-            continue
-        ranked.append((species_code, share))
-    ranked.sort(key=lambda item: (-item[1], item[0]))
-    if not ranked:
-        return ("x", "x")
-    if len(ranked) == 1:
-        return (ranked[0][0], "x")
-    return (ranked[0][0], ranked[1][0])
-
-
-def _build_tipsy_legacy_au_table(
-    *,
-    man_si_by_au: pd.DataFrame,
-    tipsy_spp_comp: pd.DataFrame,
-) -> pd.DataFrame:
-    merged = man_si_by_au.merge(tipsy_spp_comp, on="AU", how="inner")
-    bec_parts = merged["BEC"].apply(parse_mkrf_bec)
-    merged[["bec_zone", "bec_subzone", "bec_variant"]] = pd.DataFrame(
-        bec_parts.tolist(),
-        index=merged.index,
-    )
-    species_pairs = merged.apply(_tipsy_species_pair, axis=1)
-    merged["leading_species_1"] = [pair[0] for pair in species_pairs]
-    merged["leading_species_2"] = [pair[1] for pair in species_pairs]
-    merged["legacy_candidate_au_id"] = (
-        merged["bec_zone"].astype(str)
-        + "_"
-        + merged["bec_subzone"].astype(str)
-        + "_"
-        + merged["bec_variant"].astype(str)
-        + "_"
-        + merged["leading_species_1"].astype(str)
-        + "_"
-        + merged["leading_species_2"].astype(str)
-    )
-    return merged
-
-
-def _build_tipsy_alias_map(
-    *,
-    selected_au_table: pd.DataFrame,
-    legacy_au_table: pd.DataFrame,
-) -> dict[str, str]:
-    selected_frame = pd.DataFrame(
-        {
-            "stratum": selected_au_table["au_id"],
-            "stratum_lexmatch": selected_au_table["au_id"],
-            "totalarea_p": selected_au_table["covered_area_ha"],
-        }
-    ).set_index("stratum")
-    candidate_counts = (
-        legacy_au_table.groupby("legacy_candidate_au_id", as_index=False)
-        .size()
-        .rename(columns={"size": "count"})
-    )
-    candidate_frame = pd.DataFrame(
-        {
-            "stratum": candidate_counts["legacy_candidate_au_id"],
-            "stratum_lexmatch": candidate_counts["legacy_candidate_au_id"],
-            "totalarea_p": candidate_counts["count"].astype(float),
-        }
-    ).set_index("stratum")
-    alias_map = build_stratum_lexmatch_alias_map(
-        f_table=pd.concat([selected_frame, candidate_frame], axis=0),
-        stratum_col="stratum",
-        selected_strata_codes=list(selected_au_table["au_id"]),
-        levenshtein_fn=__import__("distance").levenshtein,
-    )
-    for selected_id in selected_au_table["au_id"].astype(str):
-        alias_map[selected_id] = selected_id
-    return alias_map
-
-
 def build_mkrf_selected_au_input_bundle(
     *,
     au_table_csv: Path,
@@ -474,6 +416,126 @@ def build_mkrf_selected_au_input_bundle(
         selected_au_count=int(len(selected)),
         total_au_count=int(len(au_table)),
         realized_coverage=realized_coverage,
+    )
+
+
+def build_mkrf_managed_au_input_bundle(
+    *,
+    selected_au_csv: Path,
+    assignment_csv: Path,
+    man_si_by_au_csv: Path,
+    tipsy_spp_comp_csv: Path,
+    output_dir: Path,
+) -> MkrfManagedAuBootstrapResult:
+    """Build the provisional managed AU bootstrap and BTC MSYT input tables."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    selected_au_table = pd.read_csv(selected_au_csv)
+    assignment = pd.read_csv(assignment_csv)
+    man_si_by_au = pd.read_csv(man_si_by_au_csv)
+    tipsy_spp_comp = pd.read_csv(tipsy_spp_comp_csv)
+
+    bootstrap_table = build_mkrf_managed_au_bootstrap_table(
+        selected_au_table=selected_au_table,
+        assignment=assignment,
+        man_si_by_au=man_si_by_au,
+        tipsy_spp_comp=tipsy_spp_comp,
+    )
+    bootstrap_path = output_dir / "managed_au_bootstrap_table.csv"
+    bootstrap_table.to_csv(bootstrap_path, index=False)
+
+    msyt_table = build_mkrf_managed_au_msyt_table(bootstrap_table=bootstrap_table)
+    msyt_path = output_dir / "managed_au_msyt.csv"
+    msyt_table.to_csv(msyt_path, index=False)
+
+    included = bootstrap_table["bootstrap_status"].isin(["direct", "lexmatch"])
+    return MkrfManagedAuBootstrapResult(
+        output_dir=output_dir,
+        bootstrap_table_path=bootstrap_path,
+        msyt_path=msyt_path,
+        selected_au_count=int(len(selected_au_table)),
+        included_au_count=int(included.sum()),
+        unmatched_au_count=int((bootstrap_table["bootstrap_status"] == "unmatched").sum()),
+        direct_au_count=int((bootstrap_table["bootstrap_status"] == "direct").sum()),
+        lexmatch_au_count=int((bootstrap_table["bootstrap_status"] == "lexmatch").sum()),
+    )
+
+
+def build_mkrf_managed_au_curves(
+    *,
+    bootstrap_csv: Path,
+    msyt_csv: Path,
+    output_dir: Path,
+    log_dir: Path,
+    run_id: str = "mkrf_managed_au_curves",
+    executable_path: Path | None = None,
+) -> MkrfManagedAuCurvesResult:
+    """Attempt a BTC compile for the provisional managed AU lane."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    log_dir.mkdir(parents=True, exist_ok=True)
+    bootstrap_table = pd.read_csv(bootstrap_csv)
+    manifest_path = output_dir / "managed_au_run_manifest.json"
+    included_count = int(
+        bootstrap_table["bootstrap_status"].isin(["direct", "lexmatch"]).sum()
+    )
+    try:
+        btc_result = run_btc_cli(
+            input_csv=msyt_csv,
+            mode="TSR",
+            executable_path=executable_path,
+            report_preset_name="tsr-unattended-default",
+            log_dir=log_dir,
+            run_id=run_id,
+        )
+    except FileNotFoundError as exc:
+        write_mkrf_managed_run_manifest(
+            manifest_path=manifest_path,
+            payload={
+                "status": "blocked",
+                "reason": "missing_btc_runtime",
+                "message": str(exc),
+                "msyt_csv": str(msyt_csv),
+                "bootstrap_csv": str(bootstrap_csv),
+                "included_au_count": included_count,
+            },
+        )
+        return MkrfManagedAuCurvesResult(
+            output_dir=output_dir,
+            manifest_path=manifest_path,
+            curves_path=None,
+            status="blocked",
+            included_au_count=included_count,
+            curve_au_count=0,
+        )
+
+    curves = parse_mkrf_managed_au_curves(
+        output_csv=btc_result.output_csv_path,
+        bootstrap_table=bootstrap_table,
+    )
+    curves_path = output_dir / "managed_au_curves.csv"
+    curves.to_csv(curves_path, index=False)
+    write_mkrf_managed_run_manifest(
+        manifest_path=manifest_path,
+        payload={
+            "status": "completed",
+            "msyt_csv": str(msyt_csv),
+            "bootstrap_csv": str(bootstrap_csv),
+            "curves_csv": str(curves_path),
+            "included_au_count": included_count,
+            "curve_au_count": int(curves["au_id"].nunique()),
+            "btc_manifest_path": str(btc_result.manifest_path),
+            "btc_stdout_log_path": str(btc_result.stdout_log_path),
+            "btc_stderr_log_path": str(btc_result.stderr_log_path),
+            "btc_output_csv_path": str(btc_result.output_csv_path),
+            "btc_error_csv_path": str(btc_result.error_csv_path),
+        },
+    )
+    return MkrfManagedAuCurvesResult(
+        output_dir=output_dir,
+        manifest_path=manifest_path,
+        curves_path=curves_path,
+        status="completed",
+        included_au_count=included_count,
+        curve_au_count=int(curves["au_id"].nunique()),
     )
 
 
@@ -736,11 +798,11 @@ def build_mkrf_all_plots(
             fitdiag_plot_count += 1
             plt.close(fig)
 
-    legacy_tipsy = _build_tipsy_legacy_au_table(
+    legacy_tipsy = build_mkrf_legacy_managed_au_table(
         man_si_by_au=man_si_by_au,
         tipsy_spp_comp=tipsy_spp_comp,
     )
-    alias_map = _build_tipsy_alias_map(
+    alias_map = build_mkrf_managed_alias_map(
         selected_au_table=selected_au_table,
         legacy_au_table=legacy_tipsy,
     )
