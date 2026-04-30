@@ -15610,3 +15610,11 @@
     raw-source reconstruction, final target/control architecture, future
     canonical package pathing, and any stronger identity claim than the
     accepted PoC benchmark claim.
+## 2026-04-30 - Made the MKRF PoC docs lane explicit and auditable
+- `#175` / `P59.3a` docs slice:
+  - updated the instance README so it points explicitly at the standalone
+    `docs/` tree as the canonical operator-facing PoC docs surface;
+  - updated the rebuild runbook so it is framed as the rebuild-boundary
+    companion to the standalone docs, not a substitute for them; and
+  - updated the parent MKRF sample-model pointer page so it links directly to
+    the standalone PoC docs root inside the instance repo.

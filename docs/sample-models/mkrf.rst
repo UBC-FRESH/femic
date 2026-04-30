@@ -12,6 +12,8 @@ Canonical PoC Docs
 ------------------
 
 - Linked submodule path in FEMIC: ``external/femic-mkrf-instance``
+- Standalone PoC docs root:
+  ``external/femic-mkrf-instance/docs/index.rst``
 - Current instance README:
   ``external/femic-mkrf-instance/README.md``
 - Current rebuild runbook:

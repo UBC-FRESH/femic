@@ -474,7 +474,16 @@ between:
   - future canonical runtime package pathing; and
   - any stronger identity claim than the accepted PoC benchmark claim.
 
-The active next bounded move is `P59.3a`.
+`P59.3a` is now complete:
+
+- the instance README points explicitly at the standalone `docs/` tree as the
+  canonical operator-facing PoC docs surface;
+- the rebuild runbook states it is the rebuild-boundary companion to that docs
+  surface, not a replacement for it; and
+- the parent MKRF sample-model pointer page now links directly to the
+  standalone PoC docs root inside the instance repo.
+
+The active next bounded move is `P59.3b`.
 
 Current `P58.3` state:
 
