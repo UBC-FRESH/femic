@@ -15791,3 +15791,14 @@
     surfaces must be generated into the canonical package with package-local
     lineage evidence, not copied from PoC, checkpoint, or archival runtime
     surfaces.
+## 2026-04-30 - Defined the MKRF Matrix Builder and runtime-assembly acceptance contract
+- `#173` / `P60.5b` planning slice:
+  - required the canonical rebuild lane to run Patchworks preflight, Matrix
+    Builder, and runtime assembly against the canonical package under
+    `models/mkrf_patchworks_model/`;
+  - fixed the minimum evidence surface as preflight manifests, Matrix Builder
+    manifests, regenerated canonical `tracks/`, and runtime-stage or
+    launch evidence tied to that same canonical package; and
+  - rejected shortcut validation paths such as using the PoC package, copying
+    prior `tracks/`, or treating static XML presence as a runtime rebuild
+    proof.
