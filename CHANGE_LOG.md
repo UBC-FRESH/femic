@@ -15857,3 +15857,19 @@
   - stopped ignoring `data/model_input_bundle/` in the MKRF instance repo so
     canonical rebuild inputs can be versioned instead of treated as disposable
     runtime spill.
+## 2026-04-30 - Extended MKRF first-growth synthesis with lexmatch fallback
+- `#173` / actual `P60.5c` implementation slice:
+  - added a checked-in MKRF AU-wise first-growth synthesis module and CLI
+    wiring that now requires the upstream `Resultant.gdb` source surface when
+    unmatched VDYP stands need fallback assignment;
+  - reused FEMIC's built-in lexicographical alias helper to tuck unmatched
+    VDYP stands into similar non-empty canonical AUs instead of silently
+    dropping them;
+  - regenerated `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_curves.csv`
+    and `first_growth_au_fit_diagnostics.csv` from the upstream
+    `VDYP_Yields.csv` plus `Resultant.gdb`;
+  - produced `63` AU-wise first-growth curves with `1021` assigned source
+    stands, `21` lexmatch-assigned stands, and `2` residual unmatched source
+    stands that still do not appear in `Resultant.gdb`; and
+  - exposed per-AU lexmatch diagnostics so alias use is reviewable instead of
+    hidden in shell-only glue logic.

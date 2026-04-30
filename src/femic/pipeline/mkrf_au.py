@@ -82,11 +82,9 @@ def ordered_top_two_species(row: Any) -> OrderedSpeciesPair:
     )
 
 
-def build_mkrf_au_tables(source_table: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Build canonical MKRF AU and stand-assignment tables from Resultant records."""
+def annotate_mkrf_au_keys(source_table: pd.DataFrame) -> pd.DataFrame:
+    """Annotate MKRF source rows with canonical AU-key fields."""
     table = source_table.copy()
-    if "CONTCLAS" in table.columns:
-        table = table.loc[table["CONTCLAS"] != "X"].copy()
 
     bec_parts = table["BEC"].apply(parse_mkrf_bec)
     table[["bec_zone", "bec_subzone", "bec_variant"]] = pd.DataFrame(
@@ -122,6 +120,17 @@ def build_mkrf_au_tables(source_table: pd.DataFrame) -> tuple[pd.DataFrame, pd.D
         + "_"
         + table["leading_species_2"].astype(str)
     )
+    return table
+
+
+def build_mkrf_assignment_rows(source_table: pd.DataFrame) -> pd.DataFrame:
+    """Build fragment-level MKRF assignment rows from source geometry rows."""
+    table = annotate_mkrf_au_keys(source_table)
+    shape_area = (
+        table["Shape_Area"]
+        if "Shape_Area" in table.columns
+        else pd.Series(0.0, index=table.index)
+    )
 
     assignment = pd.DataFrame(
         {
@@ -138,11 +147,24 @@ def build_mkrf_au_tables(source_table: pd.DataFrame) -> tuple[pd.DataFrame, pd.D
             "leading_species_2_share": table["leading_species_2_share"],
             "species_count": table["species_count"].astype(int),
             "tie_break_used": table["tie_break_used"].astype(bool),
+            "shape_area_ha": (
+                pd.to_numeric(shape_area, errors="coerce").fillna(0.0)
+                / 10000.0
+            ),
             "au_id": table["au_id"],
             "assignment_status": "assigned",
         }
     ).sort_values(["au_id", "res_key"], kind="stable")
+    return assignment.reset_index(drop=True)
 
+
+def build_mkrf_au_tables(source_table: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Build canonical MKRF AU and stand-assignment tables from Resultant records."""
+    table = source_table.copy()
+    if "CONTCLAS" in table.columns:
+        table = table.loc[table["CONTCLAS"] != "X"].copy()
+
+    assignment = build_mkrf_assignment_rows(table)
     au_table = (
         assignment.groupby(
             [
@@ -165,4 +187,4 @@ def build_mkrf_au_tables(source_table: pd.DataFrame) -> tuple[pd.DataFrame, pd.D
 
     au_table["tie_break_record_count"] = au_table["tie_break_record_count"].astype(int)
     au_table["stand_count"] = au_table["stand_count"].astype(int)
-    return au_table.reset_index(drop=True), assignment.reset_index(drop=True)
+    return au_table.reset_index(drop=True), assignment

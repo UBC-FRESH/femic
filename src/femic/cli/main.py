@@ -268,7 +268,10 @@ from femic.workflows.legacy import (
     run_data_prep,
     run_post_tipsy_bundle_with_manifest,
 )
-from femic.workflows.mkrf import build_mkrf_au_input_bundle
+from femic.workflows.mkrf import (
+    build_mkrf_au_input_bundle,
+    build_mkrf_first_growth_input_bundle,
+)
 
 app = typer.Typer(
     add_completion=False,
@@ -6215,6 +6218,57 @@ def instance_mkrf_build_au_inputs(
     )
     console.print(f"au_table: {result.au_table_path}")
     console.print(f"stand_assignment: {result.stand_assignment_path}")
+
+
+@instance_app.command("mkrf-build-first-growth-curves")
+def instance_mkrf_build_first_growth_curves(
+    vdyp_yields_csv: Path = typer.Option(
+        ...,
+        "--vdyp-yields-csv",
+        exists=True,
+        dir_okay=False,
+        file_okay=True,
+        resolve_path=True,
+        help="Path to the upstream MKRF VDYP_Yields.csv file.",
+    ),
+    assignment_csv: Path = typer.Option(
+        Path("data/model_input_bundle/stand_au_assignment.csv"),
+        "--assignment-csv",
+        help="Instance-relative stand-to-AU assignment CSV.",
+    ),
+    resultant_gdb: Path = typer.Option(
+        ...,
+        "--resultant-gdb",
+        exists=True,
+        dir_okay=True,
+        file_okay=True,
+        resolve_path=True,
+        help="Path to the upstream MKRF Resultant.gdb used for lexmatch fallback.",
+    ),
+    output_dir: Path = typer.Option(
+        Path("data/model_input_bundle"),
+        "--output-dir",
+        help="Instance-relative output directory for AU-wise first-growth CSVs.",
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Build MKRF AU-wise first-growth curves from VDYP stand evidence."""
+    context = _resolve_cli_instance_context(instance_root=instance_root)
+    result = build_mkrf_first_growth_input_bundle(
+        vdyp_yields_csv=vdyp_yields_csv,
+        assignment_csv=context.resolve_path(assignment_csv),
+        resultant_gdb=resultant_gdb,
+        output_dir=context.resolve_path(output_dir),
+    )
+    console.print(
+        "[green]mkrf first-growth curves built[/green] "
+        f"aus={result.au_count} assigned_stands={result.assigned_stand_count} "
+        f"raw_unmatched_source_stands={result.raw_unmatched_source_stand_count} "
+        f"residual_unmatched_source_stands={result.residual_unmatched_source_stand_count} "
+        f"lexmatch_assigned_stands={result.lexmatch_assigned_stand_count}"
+    )
+    console.print(f"curves: {result.curves_path}")
+    console.print(f"diagnostics: {result.diagnostics_path}")
 
 
 @app.command("run")
