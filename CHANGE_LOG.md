@@ -15669,3 +15669,14 @@
   - made explicit that legacy behavior satisfying neither test should be treated
     as removable PoC/legacy residue, not as a default rebuild requirement; and
   - moved the active implementation edge to `P60.2`.
+## 2026-04-30 - Fixed the canonical layout contract for the from-scratch MKRF instance
+- `#173` / `P60.2a` planning slice:
+  - fixed the canonical MKRF rebuild layout at the same structural level as the
+    standalone K3Z/TSA29 instance pattern;
+  - recorded the governing top-level surfaces:
+    `.github/`, `config/`, `data/`, `docs/`, `models/`, `metadata/`,
+    `runbooks/`, plus root repo docs;
+  - fixed the future canonical runtime package as a distinct rebuild surface
+    under `models/`, separate from the current PoC package; and
+  - kept the parent FEMIC repo in the pointer/lineage role rather than the
+    canonical rebuild docs/runtime owner.

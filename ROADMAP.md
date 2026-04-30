@@ -1643,7 +1643,7 @@ Notes: `planning/mkrf_legacy_decompile.md`
   - [x] P60.1b Treat PoC artifacts as benchmark/reference evidence only, not as the target architecture contract.
   - [x] P60.1c Require that any legacy behavior carried forward into the new rebuild be justified by source evidence or benchmark necessity.
 - [ ] P60.2 Define the canonical FEMIC-native MKRF instance layout using K3Z/TSA29 patterns (`#173`)
-  - [ ] P60.2a Decide the canonical repo/instance/runtime/doc surface layout before source-driven rebuild work starts.
+  - [x] P60.2a Decide the canonical repo/instance/runtime/doc surface layout before source-driven rebuild work starts.
   - [ ] P60.2b Define the rebuild sequencing and validation contracts for the new instance lane.
   - [ ] P60.2c Keep benchmark/reference artifacts clearly separated from the new source-faithful build surfaces.
 - [ ] P60.3 Reconstruct the raw-source geometry-to-runtime pipeline from `03_MappingAnalysisData/*` (`#173`)

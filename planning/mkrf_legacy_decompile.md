@@ -502,7 +502,7 @@ between:
 - the team can now treat the PoC benchmark lane as documented well enough to
   move forward rather than as a lingering documentation gap.
 
-The active next bounded move is `P60.2`.
+The active next bounded move is `P60.2b`.
 
 Current `P58.3` state:
 
@@ -703,6 +703,25 @@ Planned Phase 58 sequence after minimal runnable closeout:
 - `P60.2`:
   define the canonical FEMIC-native MKRF instance layout and rebuild sequence
   before new source-driven implementation begins.
+- `P60.2a`:
+  completed. The canonical layout for the new MKRF rebuild is now fixed at the
+  same structural level as the K3Z/TSA29 standalone-instance pattern:
+  - top-level standalone instance surfaces:
+    `.github/`, `config/`, `data/`, `docs/`, `models/`, `metadata/`,
+    `runbooks/`, plus root repo docs such as `README.md` and `QUICKSTART.md`;
+  - canonical rebuild contracts under `config/`:
+    `rebuild.spec.yaml`, `rebuild.allowlist.yaml`, case-local run/runtime
+    configs, and any source-driven model config families;
+  - canonical runtime package under `models/`:
+    a future rebuild package distinct from the current PoC package and not
+    named as a PoC surface;
+  - standalone docs under `docs/` with repo-local publication wiring on
+    `main`; and
+  - parent FEMIC repo limited to pointer/lineage integration, not ownership of
+    the canonical rebuild docs or runtime package.
+  The current `models/mkrf_patchworks_model_poc/` package remains comparison
+  evidence only and should coexist beside, not inside, the future canonical
+  rebuild surface.
 - `P60.3`:
   reconstruct the raw-source geometry-to-runtime pipeline from
   `03_MappingAnalysisData/*` as a source-faithful lane, not by reusing PoC
