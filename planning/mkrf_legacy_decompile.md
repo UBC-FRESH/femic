@@ -359,9 +359,9 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-`P58.3` is the active next bounded move. Reconstruct the raw-source input lane
-from the legacy planning corpus now that the native Attrib builder is live and
-matrix-build-proven.
+`P59.1` is the active next bounded move. Publish user-facing MKRF PoC Sphinx
+docs using the K3Z instance docs as the template now that the PoC benchmark
+lane is closed.
 
 Current `P58.3` state:
 
@@ -486,16 +486,26 @@ Planned Phase 58 sequence after minimal runnable closeout:
   `THLB4070(...)` / `UWR(...)` / missing `InitialTargets` helper-library seams
   were pinned for later work.
 - `P58.6`:
-  benchmark one representative scenario on the legacy MKRF package and the
-  current PoC FEMIC instance, then compare a small KPI set to confirm that the
-  outputs generally line up without requiring strict parity.
+  completed. Ran one representative PoC benchmark scenario through the FEMIC
+  headless lane and compared saved summary reports against the pre-existing
+  legacy `Outputs/001_Base` scenario bundle. After increasing the PoC run to
+  `1000000` iterations, the accepted KPI comparison showed that the models
+  generally line up in the early periods without requiring strict parity:
+  - `Forest_Attributes/yield.csv` total growing stock matched almost exactly at
+    period `0`, then stayed within roughly `+1%` to `+4%` through periods `1`
+    to `5`;
+  - `Harvest_Attributes/harvestVolumeControls.csv` current harvested volume was
+    roughly `-5%` to `-8%` versus legacy through the same early periods; and
+  - longer-horizon divergence remained larger, which is accepted for the PoC
+    benchmark lane and pinned for the later from-scratch rebuild rather than
+    further PoC tuning.
 - `P58.7`:
-  re-label the current runtime package explicitly as the MKRF PoC intermediate.
-  The current path under `external/femic-mkrf-instance/models/mkrf_patchworks_model`
-  should not remain ambiguous: it is benchmark/intermediate evidence, not the
-  final canonical MKRF model. Plan to rename it to an explicit PoC path and
-  update runtime config, lineage metadata, planning notes, docs, and issue
-  trail accordingly.
+  completed. The current runtime package under
+  `external/femic-mkrf-instance/models/mkrf_patchworks_model` remains at the
+  same path for the PoC closeout, but is now treated explicitly as benchmark /
+  intermediate evidence only. The later from-scratch rebuild lane remains
+  separate and is not constrained to preserve the current PoC path as the
+  final canonical MKRF model.
 - `P59.1`:
   publish user-facing MKRF PoC technical docs under child issue `#175`, using
   the K3Z instance docs as the template for scope, depth, formatting, and

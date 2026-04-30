@@ -15508,3 +15508,18 @@
   - renumbered the from-scratch MKRF rebuild phase from `Phase 59` to `Phase 60`;
   - renumbered the already-completed Windows Arbutus auth workflow from `Phase 60` to `Phase 61` so the roadmap stays sequential; and
   - updated `planning/mkrf_legacy_decompile.md` so the active next bounded move is now `P58.6`, not the from-scratch rebuild contract.
+## 2026-04-29 - Closed the MKRF PoC benchmark lane on a real side-by-side scenario comparison
+- `#172` / `P58.6` benchmark closeout:
+  - ran one representative PoC benchmark scenario through the FEMIC headless lane and saved a full report bundle under `runtime/logs/headless_stage/p58_6_poc_smoke_r4/`;
+  - compared the saved PoC summary reports against the pre-existing legacy `Outputs/001_Base` report bundle using:
+    - `Forest_Attributes/yield.csv`,
+    - `Harvest_Attributes/harvestVolumeControls.csv`, and
+    - `Harvest_Attributes/yield_treat.csv`;
+  - after increasing the PoC run to `1000000` iterations, the models generally lined up in the early periods:
+    - total growing stock was nearly identical at period `0` and roughly `+1%` to `+4%` high in PoC through periods `1` to `5`;
+    - harvested volume was roughly `-5%` to `-8%` low in PoC through the same early periods; and
+    - longer-horizon divergence remained larger but was accepted as non-blocking for the PoC benchmark lane;
+  - treated that result as sufficient benchmark-level agreement for the reverse-engineering / PoC stage rather than chasing exact parity.
+- `#172` / `P58.7` PoC intermediate closeout:
+  - recorded explicitly that `external/femic-mkrf-instance/models/mkrf_patchworks_model` is the current MKRF PoC intermediate runtime package, not the final canonical rebuild path; and
+  - moved the active next lane to `Phase 59` MKRF PoC user-facing docs under `#175`.
