@@ -62,6 +62,111 @@ class MkrfFirstGrowthBuildResult:
     lexmatch_assigned_stand_count: int
 
 
+def _parse_mkrf_au_id(au_id: str) -> tuple[str, str, str, str, str] | None:
+    parts = str(au_id).split("_")
+    if len(parts) != 5:
+        return None
+    return (parts[0], parts[1], parts[2], parts[3], parts[4])
+
+
+def _apply_young_skewed_sibling_borrow(
+    *,
+    curves: pd.DataFrame,
+    diagnostics: pd.DataFrame,
+    assignment: pd.DataFrame,
+    source_table: pd.DataFrame,
+    min_first_growth_age: float = 80.0,
+    max_old_support_count: int = 1,
+    low_terminal_threshold: float = 100.0,
+    sibling_terminal_threshold: float = 100.0,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Borrow a sane sibling curve for clearly too-young low-terminal cases."""
+    if curves.empty or diagnostics.empty:
+        return curves, diagnostics
+
+    stand_assignment = collapse_stand_assignments(assignment)
+    source_subset = source_table.copy()
+    source_subset["forest_cover_id"] = pd.to_numeric(
+        source_subset["FOREST_COVER_ID"], errors="coerce"
+    )
+    source_subset["AGE_2020"] = pd.to_numeric(source_subset["AGE_2020"], errors="coerce")
+    age_rows = stand_assignment.merge(
+        source_subset[["forest_cover_id", "AGE_2020"]],
+        on="forest_cover_id",
+        how="left",
+    )
+    old_support = (
+        age_rows.groupby("au_id", as_index=False)["AGE_2020"]
+        .apply(lambda s: int((pd.to_numeric(s, errors="coerce") >= min_first_growth_age).sum()))
+        .rename(columns={"AGE_2020": "age_gte_80_count"})
+    )
+
+    terminal_curves = (
+        curves.sort_values(["au_id", "age"], kind="stable")
+        .groupby("au_id", as_index=False)
+        .tail(1)[["au_id", "volume"]]
+        .rename(columns={"volume": "terminal_volume"})
+    )
+
+    diagnostics_out = diagnostics.copy()
+    for column in ["borrowed_from_au_id", "borrow_reason"]:
+        if column not in diagnostics_out.columns:
+            diagnostics_out[column] = ""
+
+    summary = diagnostics_out.merge(old_support, on="au_id", how="left").merge(
+        terminal_curves, on="au_id", how="left"
+    )
+    summary["age_gte_80_count"] = (
+        pd.to_numeric(summary["age_gte_80_count"], errors="coerce").fillna(0).astype(int)
+    )
+    summary["terminal_volume"] = pd.to_numeric(summary["terminal_volume"], errors="coerce")
+
+    curves_out = curves.copy()
+    terminal_lookup = {
+        str(row["au_id"]): float(row["terminal_volume"])
+        for _, row in summary.dropna(subset=["terminal_volume"]).iterrows()
+    }
+
+    for _, row in summary.iterrows():
+        au_id = str(row["au_id"])
+        terminal_volume = pd.to_numeric(row["terminal_volume"], errors="coerce")
+        if pd.isna(terminal_volume):
+            continue
+        if int(row["age_gte_80_count"]) > max_old_support_count:
+            continue
+        if float(terminal_volume) >= low_terminal_threshold:
+            continue
+
+        parsed = _parse_mkrf_au_id(au_id)
+        if parsed is None:
+            continue
+        bec_zone, bec_subzone, bec_variant, sp1, sp2 = parsed
+        sibling_au_id = f"{bec_zone}_{bec_subzone}_{bec_variant}_{sp2}_{sp1}"
+        sibling_terminal = terminal_lookup.get(sibling_au_id)
+        if sibling_terminal is None or sibling_terminal < sibling_terminal_threshold:
+            continue
+
+        sibling_curve = curves_out.loc[curves_out["au_id"] == sibling_au_id].copy()
+        if sibling_curve.empty:
+            continue
+        curves_out = curves_out.loc[curves_out["au_id"] != au_id].copy()
+        sibling_curve["au_id"] = au_id
+        curves_out = pd.concat([curves_out, sibling_curve], ignore_index=True, sort=False)
+        diagnostics_out.loc[diagnostics_out["au_id"] == au_id, "selected_path"] = (
+            "borrowed_young_skewed_sibling"
+        )
+        diagnostics_out.loc[diagnostics_out["au_id"] == au_id, "borrowed_from_au_id"] = (
+            sibling_au_id
+        )
+        diagnostics_out.loc[diagnostics_out["au_id"] == au_id, "borrow_reason"] = (
+            f"old_support<={max_old_support_count}_and_terminal<{low_terminal_threshold:g}"
+        )
+
+    curves_out = curves_out.sort_values(["au_id", "age"], kind="stable").reset_index(drop=True)
+    diagnostics_out = diagnostics_out.sort_values("au_id", kind="stable").reset_index(drop=True)
+    return curves_out, diagnostics_out
+
+
 @dataclass(frozen=True)
 class MkrfAuPlotResult:
     """Result payload for MKRF AU distribution plot generation."""
@@ -179,6 +284,12 @@ def build_mkrf_first_growth_input_bundle(
     source_table = gpd.read_file(resultant_gdb, layer=layer, ignore_geometry=True)
     curves, diagnostics = build_mkrf_first_growth_curves(
         vdyp_yields=vdyp_yields,
+        assignment=assignment,
+        source_table=source_table,
+    )
+    curves, diagnostics = _apply_young_skewed_sibling_borrow(
+        curves=curves,
+        diagnostics=diagnostics,
         assignment=assignment,
         source_table=source_table,
     )

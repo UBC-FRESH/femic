@@ -15993,3 +15993,9 @@
   - `7` units with no first-growth left after the age-floor rule;
   - `2` young-skewed units; and
   - `2` true mixed-population units still needing grouping fixes.
+- 2026-04-30 - Applied a targeted sibling-borrow override for the clearly
+  too-young `cwh_dm_x_dr_cw` first-growth case, reducing the surviving flagged
+  set to:
+  - `7` units with no first-growth left after the age-floor rule;
+  - `1` young-skewed unit; and
+  - `2` true mixed-population units.

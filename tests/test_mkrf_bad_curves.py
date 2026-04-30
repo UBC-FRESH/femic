@@ -5,7 +5,10 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from femic.workflows.mkrf import build_mkrf_bad_curve_audit
+from femic.workflows.mkrf import (
+    _apply_young_skewed_sibling_borrow,
+    build_mkrf_bad_curve_audit,
+)
 
 
 def test_build_mkrf_bad_curve_audit_writes_summary_and_detail(
@@ -100,3 +103,63 @@ def test_build_mkrf_bad_curve_audit_writes_summary_and_detail(
     )
     assert detail["au_id"].tolist() == ["au_bad", "au_bad"]
     assert detail["forest_cover_id"].tolist() == [101, 102]
+
+
+def test_apply_young_skewed_sibling_borrow_replaces_only_target_curve() -> None:
+    curves = pd.DataFrame(
+        [
+            {"au_id": "cwh_dm_x_dr_cw", "age": 1, "volume": 1.0},
+            {"au_id": "cwh_dm_x_dr_cw", "age": 299, "volume": 8.0},
+            {"au_id": "cwh_dm_x_cw_dr", "age": 1, "volume": 1.0},
+            {"au_id": "cwh_dm_x_cw_dr", "age": 299, "volume": 170.0},
+        ]
+    )
+    diagnostics = pd.DataFrame(
+        [
+            {
+                "au_id": "cwh_dm_x_dr_cw",
+                "source_stand_count": 10,
+                "selected_path": "primary_nlls",
+                "accepted": True,
+            },
+            {
+                "au_id": "cwh_dm_x_cw_dr",
+                "source_stand_count": 10,
+                "selected_path": "primary_nlls",
+                "accepted": True,
+            },
+        ]
+    )
+    assignment = pd.DataFrame(
+        [
+            {"res_key": 1, "forest_cover_id": 101, "au_id": "cwh_dm_x_dr_cw", "shape_area_ha": 1.0},
+            {"res_key": 2, "forest_cover_id": 201, "au_id": "cwh_dm_x_cw_dr", "shape_area_ha": 1.0},
+            {"res_key": 3, "forest_cover_id": 202, "au_id": "cwh_dm_x_cw_dr", "shape_area_ha": 1.0},
+        ]
+    )
+    source_table = pd.DataFrame(
+        [
+            {"FOREST_COVER_ID": 101, "AGE_2020": 49},
+            {"FOREST_COVER_ID": 201, "AGE_2020": 110},
+            {"FOREST_COVER_ID": 202, "AGE_2020": 120},
+        ]
+    )
+
+    updated_curves, updated_diagnostics = _apply_young_skewed_sibling_borrow(
+        curves=curves,
+        diagnostics=diagnostics,
+        assignment=assignment,
+        source_table=source_table,
+    )
+
+    borrowed_terminal = (
+        updated_curves.loc[updated_curves["au_id"] == "cwh_dm_x_dr_cw"]
+        .sort_values("age", kind="stable")
+        .iloc[-1]["volume"]
+    )
+    assert borrowed_terminal == 170.0
+    row = updated_diagnostics.loc[
+        updated_diagnostics["au_id"] == "cwh_dm_x_dr_cw"
+    ].iloc[0]
+    assert row["selected_path"] == "borrowed_young_skewed_sibling"
+    assert row["borrowed_from_au_id"] == "cwh_dm_x_cw_dr"
