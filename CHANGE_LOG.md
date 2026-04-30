@@ -15586,3 +15586,14 @@
     `Forest_Attributes/yield.csv`,
     `Harvest_Attributes/harvestVolumeControls.csv`, and
     `Harvest_Attributes/yield_treat.csv`.
+## 2026-04-29 - Recorded the accepted MKRF PoC caveats and claim boundary explicitly
+- `#175` / `P59.2b` docs slice:
+  - updated the standalone docs so the accepted benchmark variances are stated
+    directly, not only implied by the benchmark summary tables;
+  - recorded the accepted PoC claim boundary as:
+    - runnable FEMIC-managed benchmark package,
+    - generated runtime XML/tracks,
+    - benchmark-level behavioral similarity,
+    - not exact legacy-equivalence and not source-faithful rebuild; and
+  - made the deferred helper seams and unresolved target-control recovery
+    boundary explicit in the operator-facing docs.

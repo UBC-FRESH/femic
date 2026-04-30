@@ -445,7 +445,22 @@ runtime package and benchmark surfaces:
   `Harvest_Attributes/harvestVolumeControls.csv`, and
   `Harvest_Attributes/yield_treat.csv`
 
-The active next bounded move is `P59.2b`.
+`P59.2b` is now complete. The standalone docs now also state the accepted PoC
+claim boundary in the form operators actually need:
+
+- accepted benchmark variances:
+  - early-period total growing stock roughly `+1%` to `+4%`
+  - early-period harvested volume roughly `-5%` to `-8%`
+- accepted non-blocking caveats:
+  - merchantable-yield tail variance (`500/501` vs `650/651`)
+  - exact compiled curve-id parity not required
+  - larger long-horizon divergence accepted for PoC
+- unresolved but deferred seams:
+  - missing legacy `00_Target_Descriptions.bsh`
+  - unresolved helper families such as `THLB4070(...)` and `UWR(...)`
+  - broader source-faithful target/control reconstruction
+
+The active next bounded move is `P59.2c`.
 
 Current `P58.3` state:
 
