@@ -168,6 +168,100 @@ def _apply_young_skewed_sibling_borrow(
     return curves_out, diagnostics_out
 
 
+def _apply_insufficient_support_merge(
+    *,
+    curves: pd.DataFrame,
+    diagnostics: pd.DataFrame,
+    assignment: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Borrow a larger accepted curve from the same BEC bucket for sparse units."""
+    if diagnostics.empty:
+        return curves, diagnostics
+
+    area_by_au = (
+        assignment.groupby("au_id", as_index=False)["shape_area_ha"]
+        .sum()
+        .rename(columns={"shape_area_ha": "covered_area_ha"})
+    )
+    terminal_curves = (
+        curves.sort_values(["au_id", "age"], kind="stable")
+        .groupby("au_id", as_index=False)
+        .tail(1)[["au_id", "volume"]]
+        .rename(columns={"volume": "terminal_volume"})
+    )
+
+    diagnostics_out = diagnostics.copy()
+    for column in ["borrowed_from_au_id", "borrow_reason"]:
+        if column not in diagnostics_out.columns:
+            diagnostics_out[column] = ""
+
+    summary = diagnostics_out.merge(area_by_au, on="au_id", how="left").merge(
+        terminal_curves, on="au_id", how="left"
+    )
+    summary["covered_area_ha"] = pd.to_numeric(summary["covered_area_ha"], errors="coerce").fillna(0.0)
+    summary["terminal_volume"] = pd.to_numeric(summary["terminal_volume"], errors="coerce")
+
+    curves_out = curves.copy()
+    for _, row in summary.sort_values(["covered_area_ha", "au_id"], ascending=[False, True]).iterrows():
+        target_au_id = str(row["au_id"])
+        if str(row.get("selected_path", "")) != "insufficient_source_stands":
+            continue
+
+        parsed_target = _parse_mkrf_au_id(target_au_id)
+        if parsed_target is None:
+            continue
+        target_zone, target_subzone, target_variant, target_sp1, target_sp2 = parsed_target
+
+        candidates: list[tuple[int, float, str]] = []
+        for _, candidate in summary.iterrows():
+            candidate_au_id = str(candidate["au_id"])
+            if candidate_au_id == target_au_id:
+                continue
+            if not bool(candidate.get("accepted", False)):
+                continue
+            candidate_terminal = pd.to_numeric(candidate.get("terminal_volume"), errors="coerce")
+            if pd.isna(candidate_terminal) or float(candidate_terminal) <= 0.0:
+                continue
+            parsed_candidate = _parse_mkrf_au_id(candidate_au_id)
+            if parsed_candidate is None:
+                continue
+            cand_zone, cand_subzone, cand_variant, cand_sp1, cand_sp2 = parsed_candidate
+            if (cand_zone, cand_subzone, cand_variant) != (
+                target_zone,
+                target_subzone,
+                target_variant,
+            ):
+                continue
+            shared_species = len({target_sp1, target_sp2} & {cand_sp1, cand_sp2})
+            candidate_area = float(pd.to_numeric(candidate["covered_area_ha"], errors="coerce"))
+            candidates.append((shared_species, candidate_area, candidate_au_id))
+
+        if not candidates:
+            continue
+
+        _, _, source_au_id = max(candidates, key=lambda item: (item[0], item[1], item[2]))
+        source_curve = curves_out.loc[curves_out["au_id"] == source_au_id].copy()
+        if source_curve.empty:
+            continue
+        curves_out = curves_out.loc[curves_out["au_id"] != target_au_id].copy()
+        source_curve["au_id"] = target_au_id
+        curves_out = pd.concat([curves_out, source_curve], ignore_index=True, sort=False)
+        diagnostics_out.loc[diagnostics_out["au_id"] == target_au_id, "selected_path"] = (
+            "borrowed_insufficient_support_neighbor"
+        )
+        diagnostics_out.loc[diagnostics_out["au_id"] == target_au_id, "borrowed_from_au_id"] = (
+            source_au_id
+        )
+        diagnostics_out.loc[diagnostics_out["au_id"] == target_au_id, "borrow_reason"] = (
+            "insufficient_source_stands_same_bec_largest_neighbor"
+        )
+        diagnostics_out.loc[diagnostics_out["au_id"] == target_au_id, "accepted"] = True
+
+    curves_out = curves_out.sort_values(["au_id", "age"], kind="stable").reset_index(drop=True)
+    diagnostics_out = diagnostics_out.sort_values("au_id", kind="stable").reset_index(drop=True)
+    return curves_out, diagnostics_out
+
+
 @dataclass(frozen=True)
 class MkrfAuPlotResult:
     """Result payload for MKRF AU distribution plot generation."""
@@ -293,6 +387,11 @@ def build_mkrf_first_growth_input_bundle(
         diagnostics=diagnostics,
         assignment=assignment,
         source_table=source_table,
+    )
+    curves, diagnostics = _apply_insufficient_support_merge(
+        curves=curves,
+        diagnostics=diagnostics,
+        assignment=assignment,
     )
 
     curves_path = output_dir / "first_growth_au_curves.csv"

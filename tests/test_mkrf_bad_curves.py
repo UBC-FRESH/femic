@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from femic.workflows.mkrf import (
+    _apply_insufficient_support_merge,
     _apply_young_skewed_sibling_borrow,
     build_mkrf_bad_curve_audit,
 )
@@ -163,6 +164,65 @@ def test_apply_young_skewed_sibling_borrow_replaces_only_target_curve() -> None:
     ].iloc[0]
     assert row["selected_path"] == "borrowed_young_skewed_sibling"
     assert row["borrowed_from_au_id"] == "cwh_dm_x_cw_dr"
+
+
+def test_apply_insufficient_support_merge_uses_largest_same_bec_neighbor() -> None:
+    curves = pd.DataFrame(
+        [
+            {"au_id": "cwh_vm_1_hw_cw", "age": 1, "volume": 1.0},
+            {"au_id": "cwh_vm_1_hw_cw", "age": 299, "volume": 260.0},
+            {"au_id": "cwh_vm_1_cw_hw", "age": 1, "volume": 1.0},
+            {"au_id": "cwh_vm_1_cw_hw", "age": 299, "volume": 180.0},
+        ]
+    )
+    diagnostics = pd.DataFrame(
+        [
+            {
+                "au_id": "cwh_vm_1_fdc_cw",
+                "source_stand_count": 1,
+                "selected_path": "insufficient_source_stands",
+                "accepted": False,
+            },
+            {
+                "au_id": "cwh_vm_1_hw_cw",
+                "source_stand_count": 10,
+                "selected_path": "primary_nlls",
+                "accepted": True,
+            },
+            {
+                "au_id": "cwh_vm_1_cw_hw",
+                "source_stand_count": 8,
+                "selected_path": "primary_nlls",
+                "accepted": True,
+            },
+        ]
+    )
+    assignment = pd.DataFrame(
+        [
+            {"res_key": 1, "forest_cover_id": 101, "au_id": "cwh_vm_1_fdc_cw", "shape_area_ha": 10.0},
+            {"res_key": 2, "forest_cover_id": 201, "au_id": "cwh_vm_1_hw_cw", "shape_area_ha": 50.0},
+            {"res_key": 3, "forest_cover_id": 202, "au_id": "cwh_vm_1_hw_cw", "shape_area_ha": 50.0},
+            {"res_key": 4, "forest_cover_id": 301, "au_id": "cwh_vm_1_cw_hw", "shape_area_ha": 20.0},
+        ]
+    )
+
+    updated_curves, updated_diagnostics = _apply_insufficient_support_merge(
+        curves=curves,
+        diagnostics=diagnostics,
+        assignment=assignment,
+    )
+
+    borrowed_terminal = (
+        updated_curves.loc[updated_curves["au_id"] == "cwh_vm_1_fdc_cw"]
+        .sort_values("age", kind="stable")
+        .iloc[-1]["volume"]
+    )
+    assert borrowed_terminal == 260.0
+    row = updated_diagnostics.loc[
+        updated_diagnostics["au_id"] == "cwh_vm_1_fdc_cw"
+    ].iloc[0]
+    assert row["selected_path"] == "borrowed_insufficient_support_neighbor"
+    assert row["borrowed_from_au_id"] == "cwh_vm_1_hw_cw"
 
 
 def test_build_mkrf_bad_curve_audit_classifies_insufficient_source_stands(

@@ -16017,3 +16017,24 @@
       - `1` `mixed_population`;
   - `cwh_vm_1_dr_hw` now lands in `insufficient_source_stands` with no fitted
     first-growth curve, which is the intended correction for that case.
+## 2026-04-30 - Merged most MKRF insufficient-support units into larger neighbors
+- `#177` / `P60.7b` correction slice:
+  - added a deterministic post-fit merge rule for `insufficient_source_stands`
+    units:
+    - same BEC bucket required;
+    - prefer more shared species; then
+    - prefer larger covered area;
+  - regenerated:
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_curves.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_fit_diagnostics.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_summary.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_detail.csv`
+  - current audit result after this merge step:
+    - `9` flagged units out of `31` selected units, split into:
+      - `2` `insufficient_source_stands`
+      - `5` `no_first_growth_after_age_floor`
+      - `2` `mixed_population`;
+  - merged examples:
+    - `cwh_vm_1_dr_hw -> cwh_vm_1_hw_cw`
+    - `cwh_vm_1_fdc_cw -> cwh_vm_1_hw_cw`
+    - `cwh_dm_x_dr_cw -> cwh_dm_x_hw_cw`.
