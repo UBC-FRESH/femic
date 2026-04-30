@@ -1633,7 +1633,7 @@ Notes: `planning/mkrf_legacy_decompile.md`
 - [ ] P59.3 Publish closeout docs metadata and handoff to the real rebuild phase (`#175`)
   - [x] P59.3a Update parent and instance docs/runbooks so the PoC documentation lane is complete and auditable.
   - [x] P59.3b Link the finished PoC docs lane to the next from-scratch rebuild phase without blurring the two contracts.
-  - [ ] P59.3c Confirm the PoC docs are good enough that the team can stop treating the benchmark lane as under-documented.
+  - [x] P59.3c Confirm the PoC docs are good enough that the team can stop treating the benchmark lane as under-documented.
 
 ## Phase 60: From-Scratch MKRF FEMIC-Native Rebuild
 Notes: `planning/mkrf_legacy_decompile.md`

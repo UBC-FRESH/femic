@@ -493,7 +493,16 @@ between:
 - the parent MKRF pointer page now distinguishes clearly between the finished
   PoC docs lane and the later canonical rebuild contract.
 
-The active next bounded move is `P59.3c`.
+`P59.3c` is now complete:
+
+- the standalone docs now state explicitly what "good enough" means for the
+  current PoC lane: runtime orientation, benchmark interpretation, claim
+  boundary reading, and handoff to the later rebuild without reopening PoC
+  archaeology by default; and
+- the team can now treat the PoC benchmark lane as documented well enough to
+  move forward rather than as a lingering documentation gap.
+
+The active next bounded move is `P60.1`.
 
 Current `P58.3` state:
 

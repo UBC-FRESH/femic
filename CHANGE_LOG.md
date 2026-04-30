@@ -15626,3 +15626,12 @@
     benchmark/reference evidence, not as an architecture lock-in; and
   - updated the parent MKRF pointer page so the finished PoC docs lane and the
     later canonical rebuild contract are clearly distinguished.
+## 2026-04-30 - Closed the MKRF PoC docs lane as sufficient for the benchmark phase
+- `#175` / `P59.3c` docs slice:
+  - updated the standalone docs so they now state explicitly what "good enough"
+    means for the current PoC lane: runtime orientation, benchmark
+    interpretation, claim-boundary reading, and rebuild handoff;
+  - closed the remaining "under-documented benchmark lane" concern for the PoC
+    docs surface; and
+  - advanced the active implementation edge from the PoC docs phase to the
+    later from-scratch rebuild phase under `#173`.
