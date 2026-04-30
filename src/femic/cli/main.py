@@ -6383,33 +6383,6 @@ def instance_mkrf_recompile_plots(
         resolve_path=True,
         help="Path to the upstream MKRF VDYP_Yields.csv file.",
     ),
-    tipsy_yields_csv: Path = typer.Option(
-        ...,
-        "--tipsy-yields-csv",
-        exists=True,
-        dir_okay=False,
-        file_okay=True,
-        resolve_path=True,
-        help="Path to the upstream MKRF TIPSY_Yields.csv file.",
-    ),
-    tipsy_spp_comp_csv: Path = typer.Option(
-        ...,
-        "--tipsy-spp-comp-csv",
-        exists=True,
-        dir_okay=False,
-        file_okay=True,
-        resolve_path=True,
-        help="Path to the upstream MKRF TIPSY_SPP_Comp.csv file.",
-    ),
-    man_si_by_au_csv: Path = typer.Option(
-        ...,
-        "--man-si-by-au-csv",
-        exists=True,
-        dir_okay=False,
-        file_okay=True,
-        resolve_path=True,
-        help="Path to the upstream MKRF ManSI_by_AU.csv file.",
-    ),
     assignment_csv: Path = typer.Option(
         Path("data/model_input_bundle/stand_au_assignment.csv"),
         "--assignment-csv",
@@ -6425,6 +6398,11 @@ def instance_mkrf_recompile_plots(
         "--first-growth-curves-csv",
         help="Instance-relative AU-wise first-growth curves CSV.",
     ),
+    managed_curves_csv: Path = typer.Option(
+        Path("data/model_input_bundle/managed_au_curves.csv"),
+        "--managed-curves-csv",
+        help="Instance-relative AU-wise managed curves CSV.",
+    ),
     output_dir: Path = typer.Option(
         Path("plots"),
         "--output-dir",
@@ -6439,10 +6417,8 @@ def instance_mkrf_recompile_plots(
         assignment_csv=context.resolve_path(assignment_csv),
         selected_au_csv=context.resolve_path(selected_au_csv),
         first_growth_curves_csv=context.resolve_path(first_growth_curves_csv),
+        managed_curves_csv=context.resolve_path(managed_curves_csv),
         vdyp_yields_csv=vdyp_yields_csv,
-        tipsy_yields_csv=tipsy_yields_csv,
-        tipsy_spp_comp_csv=tipsy_spp_comp_csv,
-        man_si_by_au_csv=man_si_by_au_csv,
         output_dir=context.resolve_path(output_dir),
     )
     console.print(

@@ -15943,3 +15943,14 @@
   - shifted the downstream runtime/build/validation/closeout tasks so the
     managed bootstrap lane is explicit instead of buried inside runtime-package
     generation.
+## 2026-04-30 - Switched MKRF managed comparison plots to rebuilt managed curves
+- `#173` follow-up fix:
+  - changed the canonical MKRF `tipsy_vdyp_tsamkrf-*.png` plot lane to consume
+    `managed_au_curves.csv` instead of legacy `TIPSY_Yields.csv`;
+  - updated `femic instance mkrf-recompile-plots` so the main plot command now
+    reads the managed-curve bundle directly from the instance;
+  - rebuilt the full selected-unit plot bundle against:
+    - `first_growth_au_curves.csv`; and
+    - `managed_au_curves.csv`; and
+  - kept the legacy TIPSY surface out of the canonical comparison plots so the
+    managed-vs-first-growth plots now reflect the actual rebuilt managed lane.

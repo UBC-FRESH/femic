@@ -18,8 +18,6 @@ from femic.pipeline.mkrf_first_growth import (
     collapse_stand_assignments,
 )
 from femic.pipeline.mkrf_managed import (
-    build_mkrf_legacy_managed_au_table,
-    build_mkrf_managed_alias_map,
     build_mkrf_managed_au_bootstrap_table,
     build_mkrf_managed_au_msyt_table,
     parse_mkrf_managed_au_curves,
@@ -546,9 +544,7 @@ def build_mkrf_all_plots(
     selected_au_csv: Path,
     first_growth_curves_csv: Path,
     vdyp_yields_csv: Path,
-    tipsy_yields_csv: Path,
-    tipsy_spp_comp_csv: Path,
-    man_si_by_au_csv: Path,
+    managed_curves_csv: Path,
     output_dir: Path,
     layer: str = "Resultant",
     tsa_code: str = "mkrf",
@@ -569,10 +565,8 @@ def build_mkrf_all_plots(
     assignment = pd.read_csv(assignment_csv)
     selected_au_table = pd.read_csv(selected_au_csv)
     first_growth_curves = pd.read_csv(first_growth_curves_csv)
+    managed_curves = pd.read_csv(managed_curves_csv)
     vdyp_yields = pd.read_csv(vdyp_yields_csv)
-    tipsy_yields = pd.read_csv(tipsy_yields_csv)
-    tipsy_spp_comp = pd.read_csv(tipsy_spp_comp_csv)
-    man_si_by_au = pd.read_csv(man_si_by_au_csv)
     source_table = gpd.read_file(resultant_gdb, layer=layer, ignore_geometry=True)
 
     selected_ids = list(
@@ -798,31 +792,10 @@ def build_mkrf_all_plots(
             fitdiag_plot_count += 1
             plt.close(fig)
 
-    legacy_tipsy = build_mkrf_legacy_managed_au_table(
-        man_si_by_au=man_si_by_au,
-        tipsy_spp_comp=tipsy_spp_comp,
-    )
-    alias_map = build_mkrf_managed_alias_map(
-        selected_au_table=selected_au_table,
-        legacy_au_table=legacy_tipsy,
-    )
-    legacy_tipsy["au_id"] = legacy_tipsy["legacy_candidate_au_id"].map(
-        lambda value: alias_map.get(str(value), str(value))
-    )
-
     tipsy_vdyp_plot_count = 0
     for au_id in selected_ids:
         label = label_map[str(au_id)]
-        candidates = legacy_tipsy.loc[legacy_tipsy["au_id"] == str(au_id)].copy()
-        if candidates.empty:
-            continue
-        target_si = canonical_median_si.get(str(au_id), float("nan"))
-        candidates["si_distance"] = (
-            pd.to_numeric(candidates["SI"], errors="coerce").fillna(float("inf")) - target_si
-        ).abs()
-        candidates = candidates.sort_values(["si_distance", "AU"], kind="stable")
-        legacy_au = int(candidates.iloc[0]["AU"])
-        tipsy_curve = tipsy_yields.loc[tipsy_yields["AU"] == legacy_au].copy()
+        tipsy_curve = managed_curves.loc[managed_curves["au_id"] == str(au_id)].copy()
         vdyp_curve = first_growth_curves.loc[first_growth_curves["au_id"] == str(au_id)].copy()
         if tipsy_curve.empty or vdyp_curve.empty:
             continue
@@ -835,16 +808,16 @@ def build_mkrf_all_plots(
             label="VDYP first-growth",
         )
         ax.plot(
-            pd.to_numeric(tipsy_curve["Age"], errors="coerce"),
-            pd.to_numeric(tipsy_curve["Yield"], errors="coerce"),
+            pd.to_numeric(tipsy_curve["age"], errors="coerce"),
+            pd.to_numeric(tipsy_curve["volume"], errors="coerce"),
             color="tab:green",
             linewidth=2.0,
             linestyle="--",
-            label=f"TIPSY legacy AU {legacy_au}",
+            label="TIPSY managed",
         )
         ymax = max(
             float(vdyp_curve["volume"].max()),
-            float(pd.to_numeric(tipsy_curve["Yield"], errors="coerce").max()),
+            float(pd.to_numeric(tipsy_curve["volume"], errors="coerce").max()),
             1.0,
         )
         ax.set_title(f"TIPSY vs VDYP: {label}")
