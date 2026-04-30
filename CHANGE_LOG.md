@@ -15618,3 +15618,11 @@
     companion to the standalone docs, not a substitute for them; and
   - updated the parent MKRF sample-model pointer page so it links directly to
     the standalone PoC docs root inside the instance repo.
+## 2026-04-30 - Linked the MKRF PoC docs lane to the later canonical rebuild
+- `#175` / `P59.3b` docs slice:
+  - updated the standalone PoC docs so the next architecture-defining lane is
+    stated explicitly as Phase 60 / `#173`;
+  - made the handoff rule explicit: the PoC docs set carries forward as
+    benchmark/reference evidence, not as an architecture lock-in; and
+  - updated the parent MKRF pointer page so the finished PoC docs lane and the
+    later canonical rebuild contract are clearly distinguished.

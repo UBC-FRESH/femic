@@ -483,7 +483,17 @@ between:
 - the parent MKRF sample-model pointer page now links directly to the
   standalone PoC docs root inside the instance repo.
 
-The active next bounded move is `P59.3b`.
+`P59.3b` is now complete:
+
+- the standalone PoC docs now state explicitly that the next
+  architecture-defining lane is the from-scratch rebuild under `#173` / Phase
+  60;
+- the docs handoff preserves the PoC lane as benchmark/reference evidence only;
+  and
+- the parent MKRF pointer page now distinguishes clearly between the finished
+  PoC docs lane and the later canonical rebuild contract.
+
+The active next bounded move is `P59.3c`.
 
 Current `P58.3` state:
 

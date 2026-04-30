@@ -40,6 +40,12 @@ appropriate for:
 It is not the source of truth for the later from-scratch MKRF rebuild contract.
 That later rebuild remains a separate roadmap phase under issue ``#173``.
 
+The practical handoff is:
+
+- use the current PoC docs lane for runtime, benchmark, and lineage reference;
+  and
+- use Phase 60 / ``#173`` for any future architecture-defining rebuild work.
+
 Submodule Sync Commands
 -----------------------
 
