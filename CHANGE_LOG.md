@@ -15767,3 +15767,12 @@
     or future reconstruction candidates; and
   - required any future re-entry into the canonical rebuild lane to be justified
     by reviewed source evidence or by a documented benchmark/acceptance gate.
+## 2026-04-30 - Amended the MKRF rebuild contract for AU-wise first-growth curves
+- `#173` / `P60.4d` planning slice:
+  - replaced the earlier broader AU rule in the canonical rebuild lane with a
+    key built from `bec_zone + bec_subzone + bec_variant + ordered top-2 leading species`;
+  - required VDYP-derived first-growth evidence to be consolidated into AU-wise
+    unmanaged curves using FEMIC NLLS functions and policy style rather than
+    carrying forward the legacy one-curve-per-stand first-growth behavior; and
+  - made `P60.5a` depend on published AU tables, AU-wise first-growth lineage,
+    and curve-fit diagnostics before runtime XML/track generation.

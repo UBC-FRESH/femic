@@ -719,3 +719,65 @@ For `P60.4c` and later implementation work:
   control contracts; and
 - refuse to smuggle unresolved compiled helper seams back into the build just
   because they existed in the PoC or legacy runtime package.
+
+## `P60.4d` Canonical AU key and AU-wise first-growth curve contract
+
+The canonical rebuild lane should not inherit the legacy one-curve-per-stand
+first-growth behavior. It should move to the same AU-wise unmanaged-curve
+discipline already used elsewhere in FEMIC.
+
+### Canonical AU identity rule
+
+For the Phase 60 rebuild lane, the canonical AU key should be built from:
+
+- `bec_zone`
+- `bec_subzone`
+- `bec_variant`
+- `leading_species_1`
+- `leading_species_2`
+
+This replaces the earlier broader AU rule for the canonical rebuild lane unless
+some later acceptance gate explicitly requires another dimension back in.
+
+### Ordered top-2 species rule
+
+`leading_species_1` and `leading_species_2` should be the top two species by
+share, in descending share order.
+
+That means:
+
+- `cw+hw` and `hw+cw` are different AU keys when dominance flips; and
+- the canonical rebuild is not using an unordered species pair.
+
+### First-growth curve consolidation rule
+
+VDYP-derived first-growth evidence may begin as stand-level evidence, but the
+canonical rebuild must consolidate it to one unmanaged/first-growth curve per
+AU.
+
+The required curve-consolidation behavior is:
+
+- aggregate stand-level first-growth evidence to the canonical AU level;
+- fit AU-wise unmanaged/first-growth curves using the existing FEMIC NLLS
+  functions and policy style already used for K3Z; and
+- publish AU-wise unmanaged/first-growth curves as the runtime-facing surface
+  consumed by the canonical XML/track-generation lane.
+
+The legacy one-curve-per-stand first-growth implementation remains valid only
+as benchmark/reference evidence. It is not part of the canonical rebuild
+architecture unless a later benchmark gate proves the AU-wise NLLS approach is
+insufficient.
+
+### Publication and acceptance rule
+
+Before `P60.5a` can be considered satisfied, the rebuild lane should publish:
+
+- an explicit AU table proving the canonical AU key is being used;
+- traceable lineage from stand-level VDYP first-growth evidence into AU-wise
+  first-growth surfaces; and
+- curve-fit diagnostics and acceptance checks for the AU-wise NLLS-fitted
+  unmanaged curves.
+
+In other words, `P60.5a` should consume the AU-wise first-growth lane, not
+recreate a stand-wise unmanaged curve contract inside the canonical runtime
+package.

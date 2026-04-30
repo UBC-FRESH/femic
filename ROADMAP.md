@@ -1650,12 +1650,13 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P60.3a Rebuild the geometry publication path from upstream source surfaces rather than accepted compiled-runtime substitutes.
   - [x] P60.3b Rebuild the runtime spatial/package handoff with explicit lineage and acceptance checks.
   - [x] P60.3c Keep checkpoint-derived or compiled-runtime artifacts out of the source-faithful rebuild claim surface.
-- [ ] P60.4 Rebuild the target/control lane from reviewed source contracts instead of legacy checkpoint loading (`#173`)
+- [x] P60.4 Rebuild the target/control lane from reviewed source contracts instead of legacy checkpoint loading (`#173`)
   - [x] P60.4a Replace the PoC checkpoint-backed target-control lane with a source-driven FEMIC-native control surface.
   - [x] P60.4b Reconstruct or replace legacy scenario-target semantics only where they are justified by source evidence or benchmark necessity.
   - [x] P60.4c Keep unexplained legacy compiled control seams out of the new build unless they become required by a documented acceptance gate.
+  - [x] P60.4d Define the canonical AU key and AU-wise first-growth curve lane before runtime generation.
 - [ ] P60.5 Rebuild the full MKRF runtime package from source-faithful inputs (`#173`)
-  - [ ] P60.5a Generate the runtime XML, tracks, and control surfaces from the new FEMIC-native rebuild lane.
+  - [ ] P60.5a Generate the runtime XML, tracks, and control surfaces from the new FEMIC-native rebuild lane, consuming AU-wise unmanaged/first-growth curves rather than legacy stand-wise first-growth curves.
   - [ ] P60.5b Re-run Matrix Builder and runtime assembly against the rebuilt source-faithful package.
   - [ ] P60.5c Keep generated outputs and lineage surfaces synchronized as the new canonical MKRF runtime package.
 - [ ] P60.6 Validate the rebuilt model against the PoC benchmark and legacy evidence (`#173`)
