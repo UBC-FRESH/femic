@@ -15758,3 +15758,12 @@
   - recorded that the rebuild may preserve target-family intent while replacing
     checkpoint-era or legacy helper-wrapper shapes with FEMIC-native control
     contracts unless source evidence or benchmark necessity requires otherwise.
+## 2026-04-30 - Excluded unexplained compiled control seams from the MKRF canonical rebuild
+- `#173` / `P60.4c` planning slice:
+  - fixed missing helper-wrapper layers such as `InitialTargets/00_Target_Descriptions.bsh`
+    and unresolved helper families such as `THLB4070(...)` / `UWR(...)` as
+    excluded from the canonical rebuild by default;
+  - allowed those seams to remain only as benchmark caveats, archaeology notes,
+    or future reconstruction candidates; and
+  - required any future re-entry into the canonical rebuild lane to be justified
+    by reviewed source evidence or by a documented benchmark/acceptance gate.

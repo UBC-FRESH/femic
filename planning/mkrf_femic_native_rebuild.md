@@ -663,3 +663,59 @@ For `P60.4b`, the rebuild lane should proceed as follows:
   deferred by default;
 - do not inherit checkpoint-era helper wrappers as architecture; and
 - require any future exception to satisfy the existing carry-forward gate.
+
+## `P60.4c` Exclusion rule for unexplained compiled control seams
+
+Unexplained compiled control seams from the legacy package must stay out of the
+canonical rebuild unless a later acceptance gate proves they are required.
+
+### Excluded by default
+
+The following should be treated as excluded from the canonical rebuild
+architecture unless later justified explicitly:
+
+- missing legacy helper-wrapper layers such as
+  `InitialTargets/00_Target_Descriptions.bsh`;
+- unresolved helper families such as:
+  - `THLB4070(...)`
+  - `UWR(...)`
+- checkpoint-era target-state reload surfaces used only to recover prior
+  scenario state; and
+- any compiled control/helper seam that is visible in the legacy runtime lane
+  but not reconstructable from reviewed source evidence.
+
+### Allowed role for these seams
+
+These seams may remain in project knowledge only as:
+
+- benchmark caveats;
+- deferred archaeology notes;
+- comparison/debug context; or
+- future reconstruction candidates if stronger evidence appears.
+
+They are not canonical rebuild requirements by default.
+
+### Acceptance-gate exception rule
+
+A previously excluded control seam may enter the canonical rebuild lane only if
+the team can point to a documented acceptance gate showing one of:
+
+- reviewed source evidence now exists for the seam; or
+- benchmark necessity now shows that removing the seam breaks an accepted
+  comparison surface the rebuild must preserve.
+
+Without one of those two justifications, the correct action is:
+
+- leave the seam out of the canonical build; and
+- record the omission as an intentional redesign boundary, not an accidental
+  gap.
+
+### Practical rule for later implementation
+
+For `P60.4c` and later implementation work:
+
+- reconstruct source-evidenced control families;
+- replace legacy helper/interface shape where appropriate with FEMIC-native
+  control contracts; and
+- refuse to smuggle unresolved compiled helper seams back into the build just
+  because they existed in the PoC or legacy runtime package.
