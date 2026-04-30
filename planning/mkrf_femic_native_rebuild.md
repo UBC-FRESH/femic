@@ -810,6 +810,66 @@ geometry using:
 The AU table should be a canonical generated surface with its own lineage and
 acceptance checks, not an implied side effect of later runtime generation.
 
+### Source fields and deterministic keying rule
+
+`P60.5a` should derive the AU key from the published source geometry lane,
+using reviewed source fields that can populate:
+
+- `bec_zone`
+- `bec_subzone`
+- `bec_variant`
+- top-2 leading species by share
+
+The two leading species must be ordered by descending share, with a stable
+deterministic tie-break if shares are equal.
+
+Default tie-break rule:
+
+- if the first two species shares are equal, break the tie by species code in
+  ascending lexical order so AU assignment remains deterministic.
+
+### Canonical AU publication surface
+
+The rebuild lane should publish a canonical AU table as a generated model-input
+surface under a lowercase FEMIC-controlled path.
+
+Default publication surface:
+
+- `data/model_input_bundle/au_table.csv`
+
+The AU table should include, at minimum:
+
+- a stable canonical `au_id`;
+- `bec_zone`
+- `bec_subzone`
+- `bec_variant`
+- `leading_species_1`
+- `leading_species_2`
+- enough provenance fields to tie each AU back to the reviewed source geometry
+  and the stand/record assignment lane that follows in `P60.5b`.
+
+### AU identifier rule
+
+The canonical `au_id` should be deterministic and derived from the AU key
+rather than inherited from legacy numeric AU identifiers.
+
+That means the rebuild lane should not reuse:
+
+- legacy numeric AU ids from the PoC/runtime package; or
+- stand-wise legacy identifiers masquerading as canonical AU ids.
+
+### Acceptance rule for `P60.5a`
+
+`P60.5a` is only satisfied when the rebuild lane can point to:
+
+- a generated `data/model_input_bundle/au_table.csv` built from the reviewed
+  source geometry lane;
+- an explicit mapping rule from source geometry fields into
+  `bec_zone + bec_subzone + bec_variant + ordered top-2 leading species`;
+- deterministic species-order handling, including the tie-break rule; and
+- lineage evidence showing the AU table is canonical rebuild output rather than
+  a reinterpretation of legacy or PoC AU surfaces.
+
 ### `P60.5b` Stand-to-AU assignment lineage
 
 The rebuild lane should assign source stands/records to the canonical AUs and

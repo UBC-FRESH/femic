@@ -15812,3 +15812,13 @@
   - made the runtime-generation contract explicitly consume the AU-wise
     first-growth lane instead of implying that AU build work happens inside the
     runtime package step.
+## 2026-04-30 - Defined the MKRF canonical AU-table publication contract
+- `#173` / `P60.5a` planning slice:
+  - fixed the canonical AU publication surface at
+    `data/model_input_bundle/au_table.csv`;
+  - required the AU key to be built from
+    `bec_zone + bec_subzone + bec_variant + ordered top-2 leading species`;
+  - fixed a deterministic tie-break rule for equal top-2 species shares using
+    ascending lexical species-code order; and
+  - required a stable canonical `au_id` derived from the new AU key rather
+    than inherited legacy numeric AU ids.
