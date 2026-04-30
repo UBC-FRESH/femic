@@ -15894,3 +15894,14 @@
     `data/model_input_bundle/selected_au_table.csv`; and
   - required downstream runtime generation to consume that explicit selected
     AU subset by default rather than silently using the full AU universe.
+## 2026-04-30 - Materialized the MKRF top-N AU selection bundle
+- `#173` / actual `P60.5d` implementation slice:
+  - added checked-in pipeline/workflow/CLI support for canonical AU subset
+    selection using the default `80%` cumulative-area coverage rule;
+  - added the operator command:
+    `femic instance mkrf-select-aus`;
+  - generated and versioned:
+    `external/femic-mkrf-instance/data/model_input_bundle/selected_au_table.csv`;
+  - produced `14` selected AUs from the full `66`-AU universe; and
+  - realized cumulative covered-area share `0.808706` for the default
+    `80%` cutoff.

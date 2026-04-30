@@ -118,9 +118,10 @@ Completed:
 
 The current active implementation edge is:
 
-- `P60.5d`
-  publish the canonical top-N AU selection using the default `80%`
-  cumulative-area coverage rule before the runtime package is generated.
+- `P60.6a`
+  generate the canonical runtime XML, tracks, and control surfaces from the
+  new FEMIC-native rebuild lane, consuming the explicit selected-AU subset and
+  AU-wise unmanaged/first-growth curves.
 
 In shorthand:
 
@@ -1054,6 +1055,14 @@ This surface should remain distinct from the full AU universe in
 Unless a later acceptance gate says otherwise, downstream runtime generation in
 `P60.6+` should consume the explicit selected AU subset rather than silently
 using the full AU universe.
+
+#### Implemented baseline result
+
+The first implemented MKRF run of this selection rule produced:
+
+- `66` canonical AUs in the full published AU universe;
+- `14` selected AUs in the default top-N subset; and
+- realized covered-area share `0.808706` for the default `80%` cutoff.
 
 ## `P60.6a` Canonical runtime-package generation contract
 

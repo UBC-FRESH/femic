@@ -2,7 +2,15 @@ from __future__ import annotations
 
 import pandas as pd
 
-from femic.pipeline.mkrf_au import build_mkrf_au_tables, ordered_top_two_species, parse_mkrf_bec
+from pathlib import Path
+
+from femic.pipeline.mkrf_au import (
+    build_mkrf_au_tables,
+    build_mkrf_selected_au_table,
+    ordered_top_two_species,
+    parse_mkrf_bec,
+)
+from femic.workflows.mkrf import build_mkrf_selected_au_input_bundle
 
 
 def test_parse_mkrf_bec_splits_zone_subzone_variant() -> None:
@@ -66,3 +74,122 @@ def test_build_mkrf_au_tables_filters_non_forest_and_groups_assignments() -> Non
     assert list(assignment["au_id"].unique()) == ["cwh_vm_2_hw_cw"]
     assert list(au_table["au_id"]) == ["cwh_vm_2_hw_cw"]
     assert list(au_table["stand_count"]) == [2]
+
+
+def test_build_mkrf_selected_au_table_uses_smallest_prefix_meeting_coverage() -> None:
+    au_table = pd.DataFrame(
+        [
+            {
+                "au_id": "au_c",
+                "bec_zone": "cwh",
+                "bec_subzone": "vm",
+                "bec_variant": "2",
+                "leading_species_1": "cw",
+                "leading_species_2": "hw",
+                "stand_count": 1,
+                "tie_break_record_count": 0,
+            },
+            {
+                "au_id": "au_a",
+                "bec_zone": "cwh",
+                "bec_subzone": "vm",
+                "bec_variant": "2",
+                "leading_species_1": "hw",
+                "leading_species_2": "cw",
+                "stand_count": 1,
+                "tie_break_record_count": 0,
+            },
+            {
+                "au_id": "au_b",
+                "bec_zone": "cwh",
+                "bec_subzone": "vm",
+                "bec_variant": "2",
+                "leading_species_1": "fdc",
+                "leading_species_2": "hw",
+                "stand_count": 1,
+                "tie_break_record_count": 0,
+            },
+        ]
+    )
+    assignment = pd.DataFrame(
+        [
+            {"au_id": "au_a", "shape_area_ha": 50.0},
+            {"au_id": "au_b", "shape_area_ha": 30.0},
+            {"au_id": "au_c", "shape_area_ha": 20.0},
+        ]
+    )
+
+    selected = build_mkrf_selected_au_table(au_table, assignment, target_coverage=0.8)
+
+    assert list(selected["au_id"]) == ["au_a", "au_b"]
+    assert list(selected["selected_rank"]) == [1, 2]
+    assert list(selected["covered_area_ha"]) == [50.0, 30.0]
+    assert list(selected["covered_area_share"]) == [0.5, 0.3]
+    assert list(selected["cumulative_covered_area_share"]) == [0.5, 0.8]
+    assert selected["target_coverage"].tolist() == [0.8, 0.8]
+
+
+def test_build_mkrf_selected_au_input_bundle_writes_selected_csv(
+    tmp_path: Path,
+) -> None:
+    bundle_dir = tmp_path / "data" / "model_input_bundle"
+    bundle_dir.mkdir(parents=True)
+    au_table_csv = bundle_dir / "au_table.csv"
+    assignment_csv = bundle_dir / "stand_au_assignment.csv"
+    output_csv = bundle_dir / "selected_au_table.csv"
+
+    pd.DataFrame(
+        [
+            {
+                "au_id": "au_a",
+                "bec_zone": "cwh",
+                "bec_subzone": "vm",
+                "bec_variant": "2",
+                "leading_species_1": "hw",
+                "leading_species_2": "cw",
+                "stand_count": 1,
+                "tie_break_record_count": 0,
+            },
+            {
+                "au_id": "au_b",
+                "bec_zone": "cwh",
+                "bec_subzone": "vm",
+                "bec_variant": "2",
+                "leading_species_1": "fdc",
+                "leading_species_2": "hw",
+                "stand_count": 1,
+                "tie_break_record_count": 0,
+            },
+            {
+                "au_id": "au_c",
+                "bec_zone": "cwh",
+                "bec_subzone": "vm",
+                "bec_variant": "2",
+                "leading_species_1": "cw",
+                "leading_species_2": "hw",
+                "stand_count": 1,
+                "tie_break_record_count": 0,
+            },
+        ]
+    ).to_csv(au_table_csv, index=False)
+    pd.DataFrame(
+        [
+            {"au_id": "au_a", "shape_area_ha": 50.0},
+            {"au_id": "au_b", "shape_area_ha": 30.0},
+            {"au_id": "au_c", "shape_area_ha": 20.0},
+        ]
+    ).to_csv(assignment_csv, index=False)
+
+    result = build_mkrf_selected_au_input_bundle(
+        au_table_csv=au_table_csv,
+        assignment_csv=assignment_csv,
+        output_path=output_csv,
+        target_coverage=0.8,
+    )
+
+    written = pd.read_csv(output_csv)
+    assert output_csv.exists()
+    assert list(written["au_id"]) == ["au_a", "au_b"]
+    assert result.selected_au_count == 2
+    assert result.total_au_count == 3
+    assert result.realized_coverage == 0.8

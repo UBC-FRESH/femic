@@ -8,7 +8,7 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 
-from femic.pipeline.mkrf_au import build_mkrf_au_tables
+from femic.pipeline.mkrf_au import build_mkrf_au_tables, build_mkrf_selected_au_table
 from femic.pipeline.mkrf_first_growth import build_mkrf_first_growth_curves
 from femic.pipeline.plots import (
     StrataDistributionPlotMetadata,
@@ -59,6 +59,19 @@ class MkrfAuPlotResult:
     au_count: int
     point_count: int
     metadata: StrataDistributionPlotMetadata
+
+
+@dataclass(frozen=True)
+class MkrfSelectedAuBuildResult:
+    """Result payload for MKRF top-N AU subset publication."""
+
+    au_table_csv: Path
+    assignment_csv: Path
+    output_path: Path
+    target_coverage: float
+    selected_au_count: int
+    total_au_count: int
+    realized_coverage: float
 
 
 def build_mkrf_au_input_bundle(
@@ -114,11 +127,15 @@ def build_mkrf_first_growth_input_bundle(
         pd.to_numeric(vdyp_yields["FEATURE_ID"], errors="coerce").dropna().astype(int)
     )
     assigned_feature_ids = set(
-        pd.to_numeric(assignment["forest_cover_id"], errors="coerce").dropna().astype(int)
+        pd.to_numeric(assignment["forest_cover_id"], errors="coerce")
+        .dropna()
+        .astype(int)
     )
     raw_unmatched_feature_ids = vdyp_feature_ids - assigned_feature_ids
     source_feature_ids = set(
-        pd.to_numeric(source_table["FOREST_COVER_ID"], errors="coerce").dropna().astype(int)
+        pd.to_numeric(source_table["FOREST_COVER_ID"], errors="coerce")
+        .dropna()
+        .astype(int)
     )
     residual_unmatched_feature_ids = raw_unmatched_feature_ids - source_feature_ids
 
@@ -178,9 +195,9 @@ def build_mkrf_au_distribution_plot(
     strata_df = pd.DataFrame(
         {
             "totalarea_p": abundance / float(abundance.sum()),
-            "site_index_median": plot_frame.groupby("au_id")["SITE_INDEX"].median().reindex(
-                abundance.index
-            ),
+            "site_index_median": plot_frame.groupby("au_id")["SITE_INDEX"]
+            .median()
+            .reindex(abundance.index),
         }
     )
 
@@ -220,4 +237,37 @@ def build_mkrf_au_distribution_plot(
         au_count=int(assignment["au_id"].nunique()),
         point_count=int(plot_frame["SITE_INDEX"].notna().sum()),
         metadata=metadata,
+    )
+
+
+def build_mkrf_selected_au_input_bundle(
+    *,
+    au_table_csv: Path,
+    assignment_csv: Path,
+    output_path: Path,
+    target_coverage: float = 0.8,
+) -> MkrfSelectedAuBuildResult:
+    """Publish the canonical top-N AU subset by cumulative covered-area share."""
+    au_table = pd.read_csv(au_table_csv)
+    assignment = pd.read_csv(assignment_csv)
+    selected = build_mkrf_selected_au_table(
+        au_table=au_table,
+        assignment=assignment,
+        target_coverage=target_coverage,
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    selected.to_csv(output_path, index=False)
+    realized_coverage = (
+        float(selected["cumulative_covered_area_share"].iloc[-1])
+        if not selected.empty
+        else 0.0
+    )
+    return MkrfSelectedAuBuildResult(
+        au_table_csv=au_table_csv,
+        assignment_csv=assignment_csv,
+        output_path=output_path,
+        target_coverage=float(target_coverage),
+        selected_au_count=int(len(selected)),
+        total_au_count=int(len(au_table)),
+        realized_coverage=realized_coverage,
     )

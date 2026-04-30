@@ -148,8 +148,7 @@ def build_mkrf_assignment_rows(source_table: pd.DataFrame) -> pd.DataFrame:
             "species_count": table["species_count"].astype(int),
             "tie_break_used": table["tie_break_used"].astype(bool),
             "shape_area_ha": (
-                pd.to_numeric(shape_area, errors="coerce").fillna(0.0)
-                / 10000.0
+                pd.to_numeric(shape_area, errors="coerce").fillna(0.0) / 10000.0
             ),
             "au_id": table["au_id"],
             "assignment_status": "assigned",
@@ -158,7 +157,9 @@ def build_mkrf_assignment_rows(source_table: pd.DataFrame) -> pd.DataFrame:
     return assignment.reset_index(drop=True)
 
 
-def build_mkrf_au_tables(source_table: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+def build_mkrf_au_tables(
+    source_table: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Build canonical MKRF AU and stand-assignment tables from Resultant records."""
     table = source_table.copy()
     if "CONTCLAS" in table.columns:
@@ -188,3 +189,56 @@ def build_mkrf_au_tables(source_table: pd.DataFrame) -> tuple[pd.DataFrame, pd.D
     au_table["tie_break_record_count"] = au_table["tie_break_record_count"].astype(int)
     au_table["stand_count"] = au_table["stand_count"].astype(int)
     return au_table.reset_index(drop=True), assignment
+
+
+def build_mkrf_selected_au_table(
+    au_table: pd.DataFrame,
+    assignment: pd.DataFrame,
+    *,
+    target_coverage: float = 0.8,
+) -> pd.DataFrame:
+    """Select the smallest top-N AU subset reaching the target covered-area share."""
+    if not 0.0 < float(target_coverage) <= 1.0:
+        raise ValueError("target_coverage must be in the interval (0, 1].")
+
+    if au_table.empty:
+        selected = au_table.copy()
+        selected["covered_area_ha"] = pd.Series(dtype=float)
+        selected["covered_area_share"] = pd.Series(dtype=float)
+        selected["cumulative_covered_area_share"] = pd.Series(dtype=float)
+        selected["selected_rank"] = pd.Series(dtype=int)
+        selected["target_coverage"] = float(target_coverage)
+        return selected
+
+    area_by_au = (
+        assignment.groupby("au_id", as_index=True)["shape_area_ha"]
+        .sum()
+        .rename("covered_area_ha")
+    )
+    selected = au_table.merge(area_by_au, on="au_id", how="left")
+    selected["covered_area_ha"] = pd.to_numeric(
+        selected["covered_area_ha"], errors="coerce"
+    ).fillna(0.0)
+    selected = selected.sort_values(
+        ["covered_area_ha", "au_id"],
+        ascending=[False, True],
+        kind="stable",
+    ).reset_index(drop=True)
+
+    total_area = float(selected["covered_area_ha"].sum())
+    if total_area <= 0.0:
+        selected["covered_area_share"] = 0.0
+        selected["cumulative_covered_area_share"] = 0.0
+        selected["selected_rank"] = pd.Series(range(1, len(selected) + 1), dtype=int)
+        selected["target_coverage"] = float(target_coverage)
+        return selected.iloc[0:0].copy()
+
+    selected["covered_area_share"] = selected["covered_area_ha"] / total_area
+    selected["cumulative_covered_area_share"] = selected["covered_area_share"].cumsum()
+    cutoff_idx = (
+        selected["cumulative_covered_area_share"].ge(float(target_coverage)).idxmax()
+    )
+    selected = selected.iloc[: cutoff_idx + 1].copy()
+    selected["selected_rank"] = pd.Series(range(1, len(selected) + 1), dtype=int)
+    selected["target_coverage"] = float(target_coverage)
+    return selected.reset_index(drop=True)

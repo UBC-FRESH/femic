@@ -269,9 +269,10 @@ from femic.workflows.legacy import (
     run_post_tipsy_bundle_with_manifest,
 )
 from femic.workflows.mkrf import (
-    build_mkrf_au_input_bundle,
     build_mkrf_au_distribution_plot,
+    build_mkrf_au_input_bundle,
     build_mkrf_first_growth_input_bundle,
+    build_mkrf_selected_au_input_bundle,
 )
 
 app = typer.Typer(
@@ -6308,6 +6309,49 @@ def instance_mkrf_plot_au_distribution(
     )
     console.print(f"png: {result.png_path}")
     console.print(f"pdf: {result.pdf_path}")
+
+
+@instance_app.command("mkrf-select-aus")
+def instance_mkrf_select_aus(
+    au_table_csv: Path = typer.Option(
+        Path("data/model_input_bundle/au_table.csv"),
+        "--au-table-csv",
+        help="Instance-relative canonical AU table CSV.",
+    ),
+    assignment_csv: Path = typer.Option(
+        Path("data/model_input_bundle/stand_au_assignment.csv"),
+        "--assignment-csv",
+        help="Instance-relative stand-to-AU assignment CSV.",
+    ),
+    output_csv: Path = typer.Option(
+        Path("data/model_input_bundle/selected_au_table.csv"),
+        "--output-csv",
+        help="Instance-relative output CSV for the selected top-N AU subset.",
+    ),
+    target_coverage: float = typer.Option(
+        0.8,
+        "--target-coverage",
+        min=0.0,
+        max=1.0,
+        help="Cumulative covered-area share cutoff for the selected AU subset.",
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Publish the canonical top-N AU subset by cumulative covered-area share."""
+    context = _resolve_cli_instance_context(instance_root=instance_root)
+    result = build_mkrf_selected_au_input_bundle(
+        au_table_csv=context.resolve_path(au_table_csv),
+        assignment_csv=context.resolve_path(assignment_csv),
+        output_path=context.resolve_path(output_csv),
+        target_coverage=target_coverage,
+    )
+    console.print(
+        "[green]mkrf selected au table built[/green] "
+        f"selected_aus={result.selected_au_count} total_aus={result.total_au_count} "
+        f"target_coverage={result.target_coverage:.3f} "
+        f"realized_coverage={result.realized_coverage:.6f}"
+    )
+    console.print(f"selected_au_table: {result.output_path}")
 
 
 @app.command("run")
