@@ -880,6 +880,63 @@ publish:
 - explicit evidence that the runtime lane is using the canonical AU table
   rather than reusing legacy AU assignments.
 
+### Source-to-AU assignment inputs
+
+`P60.5b` should use the published source geometry lane and the canonical AU
+table from `P60.5a` to assign source records into canonical AU ids.
+
+The assignment contract should be explicit about:
+
+- which source records are being assigned;
+- which fields are used to populate the canonical AU key;
+- how leading-species shares are converted into
+  `leading_species_1` / `leading_species_2`; and
+- how records that do not fit the canonical AU key are surfaced for review.
+
+### Required assignment publication surface
+
+The rebuild lane should publish a canonical stand-to-AU assignment surface as a
+generated model-input artifact under a lowercase FEMIC-controlled path.
+
+Default publication surface:
+
+- `data/model_input_bundle/stand_au_assignment.csv`
+
+The assignment surface should include, at minimum:
+
+- a stable source record identifier;
+- the canonical `au_id`;
+- the AU key fields used for the assignment;
+- enough source-side provenance to connect the assignment back to the published
+  source geometry lane; and
+- explicit status fields for accepted, unmatched, or exceptional assignment
+  outcomes.
+
+### Required diagnostics
+
+`P60.5b` should publish diagnostics that make assignment quality reviewable
+before AU-wise curve compilation begins.
+
+At minimum, diagnostics should answer:
+
+- how many source records were assigned;
+- how many were unmatched;
+- whether any records were dropped because the top-2 species key could not be
+  resolved cleanly;
+- whether any very small or sparse AU groups were created; and
+- whether any deterministic tie-breaks were used for equal species shares.
+
+### Acceptance rule for `P60.5b`
+
+`P60.5b` is only satisfied when the rebuild lane can point to:
+
+- a generated `data/model_input_bundle/stand_au_assignment.csv`;
+- explicit lineage from source records into canonical `au_id` values;
+- diagnostics that make unmatched/sparse/exception cases visible; and
+- evidence that later AU-wise first-growth curve synthesis will consume this
+  assignment surface rather than legacy AU mappings or stand-wise runtime
+  identifiers.
+
 ### `P60.5c` AU-wise first-growth VDYP curve synthesis
 
 The rebuild lane should compile AU-wise unmanaged/first-growth VDYP curves by:

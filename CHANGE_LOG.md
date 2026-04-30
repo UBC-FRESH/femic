@@ -15822,3 +15822,14 @@
     ascending lexical species-code order; and
   - required a stable canonical `au_id` derived from the new AU key rather
     than inherited legacy numeric AU ids.
+## 2026-04-30 - Defined the MKRF stand-to-AU assignment lineage contract
+- `#173` / `P60.5b` planning slice:
+  - fixed the canonical stand-to-AU publication surface at
+    `data/model_input_bundle/stand_au_assignment.csv`;
+  - required explicit lineage from source records into canonical `au_id`
+    values using the published AU key fields;
+  - required diagnostics for unmatched, sparse, and exceptional assignment
+    cases before AU-wise curve synthesis; and
+  - required later AU-wise first-growth curve synthesis to consume this
+    published assignment surface rather than legacy AU mappings or stand-wise
+    runtime identifiers.
