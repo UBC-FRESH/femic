@@ -15717,3 +15717,13 @@
     projection into `fragments.*`; and
   - made explicit that the legacy `fragments.*` payloads remain comparison
     targets only, not acceptable raw-source substitutes for the rebuild claim.
+## 2026-04-30 - Defined the MKRF canonical runtime spatial handoff contract
+- `#173` / `P60.3b` planning slice:
+  - fixed the required canonical runtime spatial outputs under the future
+    rebuild package: `Spatial/fragments.*` and `Spatial/topo_frag100.csv`;
+  - recorded the minimum lineage evidence that must accompany that handoff:
+    source, filter, field projection, output identity, and run/manifest
+    provenance; and
+  - fixed the acceptance and rejection rules so the rebuild lane cannot satisfy
+    the spatial runtime handoff by copying PoC, archival, or checkpoint-derived
+    runtime artifacts into the canonical package.

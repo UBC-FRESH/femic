@@ -373,3 +373,71 @@ Not allowed:
 This means the remaining work in `P60.3a` is implementation and verification of
 that publication from upstream source surfaces, not further ambiguity about the
 starting contract.
+
+## `P60.3b` Runtime spatial/package handoff contract
+
+Once the source-driven geometry publication step is rebuilt, the canonical MKRF
+rebuild lane must publish an explicit runtime spatial handoff under the future
+rebuild package in `models/`.
+
+### Required runtime spatial package surfaces
+
+The canonical rebuild package must publish, at minimum:
+
+- `Spatial/fragments.*`
+  - the runtime block-geometry surface used by Patchworks;
+- `Spatial/topo_frag100.csv`
+  - the topology sidecar required by the runtime package; and
+- package-local lineage evidence showing exactly which source-driven
+  publication run produced those files.
+
+These are canonical rebuild outputs only when they are generated from the
+source-faithful lane established in `P60.3a`.
+
+### Required lineage for the handoff
+
+The runtime spatial handoff must leave behind enough evidence to answer:
+
+- which upstream source feature class was used;
+- which filter/publication rule was applied;
+- which field projection was applied;
+- which runtime package path received the published outputs; and
+- which rebuild run/log/manifest produced the handoff.
+
+At minimum, the lineage surface for the handoff should capture:
+
+- source feature count before publication;
+- published feature count after publication;
+- excluded feature count and reason;
+- runtime field projection;
+- output checksums / artifact identity; and
+- the exact rebuild run or manifest ID that produced the package.
+
+### Required acceptance checks
+
+The runtime spatial handoff should not be treated as accepted unless all of the
+following are true:
+
+- the published runtime geometry surface is path-distinct from the PoC package;
+- the published row count and field projection match the intended publication
+  rule for the canonical rebuild lane;
+- the runtime package contains both `fragments.*` and `topo_frag100.csv`;
+- topology generation is tied explicitly to the published runtime geometry
+  surface rather than borrowed from an archival compiled-runtime lane; and
+- the handoff leaves enough evidence to compare the rebuilt publication against
+  the recovered legacy publication contract from `P60.3a`.
+
+### Non-goals and rejection cases
+
+The runtime spatial/package handoff is not acceptable if it:
+
+- copies `Spatial/fragments.*` or `topo_frag100.csv` forward from the PoC
+  package;
+- copies those files from archival compiled legacy evidence;
+- uses checkpoint-derived geometry artifacts as the runtime publication source;
+  or
+- publishes runtime spatial outputs without a traceable source/run lineage.
+
+So `P60.3b` is not "put files under `Spatial/`." It is the contract that the
+new canonical runtime package receives its own source-driven spatial runtime
+lane, with explicit lineage and acceptance checks.
