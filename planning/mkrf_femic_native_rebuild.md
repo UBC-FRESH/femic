@@ -290,3 +290,86 @@ For `P60.3+`, every new generated artifact should answer one of two questions:
 
 If the answer is unclear, the artifact boundary is wrong and should be fixed
 before stronger rebuild claims are made.
+
+## `P60.3a` Starting source contract for geometry publication
+
+Before any source-driven geometry rebuild work starts, the canonical upstream
+starting contract is now fixed to the publication boundary already recovered
+from the legacy evidence review.
+
+### Upstream starting surface
+
+The starting geometry source for the rebuild lane is:
+
+- `03_MappingAnalysisData/Resultant.gdb/Resultant`
+
+Recovered legacy evidence says:
+
+- source feature count: `1873`
+- source geometry type: `MultiPolygon`
+
+This is the authoritative immediate precursor to legacy runtime
+`Spatial/fragments.*`.
+
+### Recovered legacy publication rule
+
+The legacy runtime publication from `Resultant` to `fragments.*` was:
+
+- filter:
+  - `CONTCLAS != 'X'`
+- excluded rows:
+  - `110`
+- published runtime rows:
+  - `1763`
+- published geometry family:
+  - shapefile `Polygon`
+
+The excluded rows were all non-forest runtime exclusions, not part of the
+managed runtime fragment surface.
+
+### Recovered field projection
+
+The recovered runtime field projection from `Resultant` to `fragments.*` is:
+
+- `Operability -> Operabilit`
+- `Shape_Length -> Shape_Leng`
+- `Shape_Area -> Shape_Area`
+- `CONTCLAS -> CONTCLAS`
+- `AGE_2020 -> AGE_2020`
+- `AU_EX -> AU_EX`
+- `AU_FU -> AU_FU`
+- `RES_KEY -> RES_KEY`
+- `CT_eligib -> CT_eligib`
+
+Recovered verification from the legacy evidence lane:
+
+- shared `RES_KEY` count: `1763`
+- core-field mismatches: `0`
+- true multipart shared features: `0`
+
+So the legacy publication appears to have been:
+
+- a narrowed runtime publication of `Resultant`; not
+- an independently derived geometry family.
+
+### What this means for the rebuild lane
+
+`P60.3a` may start from the recovered `Resultant -> fragments` publication
+contract above, but it may not treat the existing compiled `fragments.*`
+payloads as the source of truth.
+
+Allowed use of the recovered contract:
+
+- as the starting hypothesis for source-driven publication logic; and
+- as a comparison target for the rebuilt publication step.
+
+Not allowed:
+
+- treating legacy `Spatial/fragments.*` as raw source;
+- treating archival instance copies of `fragments.*` as raw source; or
+- treating checkpoint-derived geometry artifacts as substitutes for
+  `Resultant.gdb/Resultant`.
+
+This means the remaining work in `P60.3a` is implementation and verification of
+that publication from upstream source surfaces, not further ambiguity about the
+starting contract.

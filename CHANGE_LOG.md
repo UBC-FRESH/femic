@@ -15708,3 +15708,12 @@
     surfaces only; and
   - required path-distinct canonical rebuild outputs, claim-language
     separation, and explicit artifact labeling for later `P60.3+` work.
+## 2026-04-30 - Fixed the MKRF `P60.3a` upstream geometry publication starting contract
+- `#173` / `P60.3a` planning slice:
+  - fixed `03_MappingAnalysisData/Resultant.gdb/Resultant` as the canonical
+    upstream starting surface for the geometry publication rebuild lane;
+  - recorded the recovered legacy publication rule:
+    `CONTCLAS != 'X'`, `1873 -> 1763` rows, and the exact runtime field
+    projection into `fragments.*`; and
+  - made explicit that the legacy `fragments.*` payloads remain comparison
+    targets only, not acceptable raw-source substitutes for the rebuild claim.
