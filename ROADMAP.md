@@ -1659,7 +1659,8 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P60.5a Define and publish the canonical AU table from source geometry using `bec_zone + bec_subzone + bec_variant + ordered top-2 leading species`.
   - [x] P60.5b Assign source stands/records to the canonical AUs and publish assignment lineage and diagnostics.
   - [x] P60.5c Compile AU-wise first-growth VDYP curves with FEMIC NLLS and publish fit diagnostics and acceptance checks.
-  - [x] P60.5d Publish the canonical top-N AU selection using an `80%` cumulative-area coverage rule so downstream runtime generation consumes an explicit selected AU subset rather than the full AU universe by default.
+  - [x] P60.5d Publish the canonical top-N AU selection using a `95%` cumulative-area coverage rule so downstream runtime generation consumes an explicit selected AU subset rather than the full AU universe by default.
+  - [x] P60.5e Recompile the canonical AU strata, diagnostic VDYP, and VDYP-vs-TIPSY plots from the selected-AU bundle.
 - [ ] P60.6 Rebuild the full MKRF runtime package from source-faithful inputs (`#173`)
   - [ ] P60.6a Generate the runtime XML, tracks, and control surfaces from the new FEMIC-native rebuild lane, consuming AU-wise unmanaged/first-growth curves rather than legacy stand-wise first-growth curves.
   - [ ] P60.6b Re-run Matrix Builder and runtime assembly against the rebuilt source-faithful package.

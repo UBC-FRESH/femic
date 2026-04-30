@@ -269,6 +269,7 @@ from femic.workflows.legacy import (
     run_post_tipsy_bundle_with_manifest,
 )
 from femic.workflows.mkrf import (
+    build_mkrf_all_plots,
     build_mkrf_au_distribution_plot,
     build_mkrf_au_input_bundle,
     build_mkrf_first_growth_input_bundle,
@@ -6329,7 +6330,7 @@ def instance_mkrf_select_aus(
         help="Instance-relative output CSV for the selected top-N AU subset.",
     ),
     target_coverage: float = typer.Option(
-        0.8,
+        0.95,
         "--target-coverage",
         min=0.0,
         max=1.0,
@@ -6352,6 +6353,98 @@ def instance_mkrf_select_aus(
         f"realized_coverage={result.realized_coverage:.6f}"
     )
     console.print(f"selected_au_table: {result.output_path}")
+
+
+@instance_app.command("mkrf-recompile-plots")
+def instance_mkrf_recompile_plots(
+    resultant_gdb: Path = typer.Option(
+        ...,
+        "--resultant-gdb",
+        exists=True,
+        dir_okay=True,
+        file_okay=True,
+        resolve_path=True,
+        help="Path to the upstream MKRF Resultant.gdb source surface.",
+    ),
+    vdyp_yields_csv: Path = typer.Option(
+        ...,
+        "--vdyp-yields-csv",
+        exists=True,
+        dir_okay=False,
+        file_okay=True,
+        resolve_path=True,
+        help="Path to the upstream MKRF VDYP_Yields.csv file.",
+    ),
+    tipsy_yields_csv: Path = typer.Option(
+        ...,
+        "--tipsy-yields-csv",
+        exists=True,
+        dir_okay=False,
+        file_okay=True,
+        resolve_path=True,
+        help="Path to the upstream MKRF TIPSY_Yields.csv file.",
+    ),
+    tipsy_spp_comp_csv: Path = typer.Option(
+        ...,
+        "--tipsy-spp-comp-csv",
+        exists=True,
+        dir_okay=False,
+        file_okay=True,
+        resolve_path=True,
+        help="Path to the upstream MKRF TIPSY_SPP_Comp.csv file.",
+    ),
+    man_si_by_au_csv: Path = typer.Option(
+        ...,
+        "--man-si-by-au-csv",
+        exists=True,
+        dir_okay=False,
+        file_okay=True,
+        resolve_path=True,
+        help="Path to the upstream MKRF ManSI_by_AU.csv file.",
+    ),
+    assignment_csv: Path = typer.Option(
+        Path("data/model_input_bundle/stand_au_assignment.csv"),
+        "--assignment-csv",
+        help="Instance-relative stand-to-AU assignment CSV.",
+    ),
+    selected_au_csv: Path = typer.Option(
+        Path("data/model_input_bundle/selected_au_table.csv"),
+        "--selected-au-csv",
+        help="Instance-relative selected-AU table CSV.",
+    ),
+    first_growth_curves_csv: Path = typer.Option(
+        Path("data/model_input_bundle/first_growth_au_curves.csv"),
+        "--first-growth-curves-csv",
+        help="Instance-relative AU-wise first-growth curves CSV.",
+    ),
+    output_dir: Path = typer.Option(
+        Path("plots"),
+        "--output-dir",
+        help="Instance-relative output directory for regenerated plots.",
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Rebuild the MKRF AU strata, VDYP diagnostics, and TIPSY comparison plots."""
+    context = _resolve_cli_instance_context(instance_root=instance_root)
+    result = build_mkrf_all_plots(
+        resultant_gdb=resultant_gdb,
+        assignment_csv=context.resolve_path(assignment_csv),
+        selected_au_csv=context.resolve_path(selected_au_csv),
+        first_growth_curves_csv=context.resolve_path(first_growth_curves_csv),
+        vdyp_yields_csv=vdyp_yields_csv,
+        tipsy_yields_csv=tipsy_yields_csv,
+        tipsy_spp_comp_csv=tipsy_spp_comp_csv,
+        man_si_by_au_csv=man_si_by_au_csv,
+        output_dir=context.resolve_path(output_dir),
+    )
+    console.print(
+        "[green]mkrf plots rebuilt[/green] "
+        f"lmh={result.lmh_plot_count} "
+        f"fitdiag={result.fitdiag_plot_count} "
+        f"tipsy_vdyp={result.tipsy_vdyp_plot_count}"
+    )
+    console.print(f"strata_png: {result.strata_png}")
+    console.print(f"strata_pdf: {result.strata_pdf}")
 
 
 @app.command("run")

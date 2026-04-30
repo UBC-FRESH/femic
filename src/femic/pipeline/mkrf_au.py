@@ -195,7 +195,7 @@ def build_mkrf_selected_au_table(
     au_table: pd.DataFrame,
     assignment: pd.DataFrame,
     *,
-    target_coverage: float = 0.8,
+    target_coverage: float = 0.95,
 ) -> pd.DataFrame:
     """Select the smallest top-N AU subset reaching the target covered-area share."""
     if not 0.0 < float(target_coverage) <= 1.0:

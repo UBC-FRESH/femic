@@ -15897,11 +15897,26 @@
 ## 2026-04-30 - Materialized the MKRF top-N AU selection bundle
 - `#173` / actual `P60.5d` implementation slice:
   - added checked-in pipeline/workflow/CLI support for canonical AU subset
-    selection using the default `80%` cumulative-area coverage rule;
+    selection using the canonical cumulative-area coverage rule;
   - added the operator command:
     `femic instance mkrf-select-aus`;
   - generated and versioned:
     `external/femic-mkrf-instance/data/model_input_bundle/selected_au_table.csv`;
-  - produced `14` selected AUs from the full `66`-AU universe; and
-  - realized cumulative covered-area share `0.808706` for the default
-    `80%` cutoff.
+  - first produced `14` selected AUs at the provisional `80%` cutoff, then
+    rebuilt the canonical bundle at the new `95%` cutoff;
+  - current canonical result is `31` selected AUs from the full `66`-AU
+    universe; and
+  - current realized cumulative covered-area share is `0.950222`.
+## 2026-04-30 - Recompiled MKRF AU diagnostic and comparison plots
+- `#173` / `P60.5e` implementation slice:
+  - added checked-in plot rebuild support in the FEMIC workflow/CLI:
+    `femic instance mkrf-recompile-plots`;
+  - raised the MKRF strata site-index axis upper bound from `40` to `50`;
+  - regenerated the selected-AU plot bundle against the current `95%`
+    `selected_au_table.csv`;
+  - produced:
+    - `31` `vdyp_lmh_tsamkrf-*.png` plots;
+    - `87` `vdyp_fitdiag_tsamkrf-*.png` plots; and
+    - `4` `tipsy_vdyp_tsamkrf-*.png` plots; and
+  - kept the AU/curve/plot logic in checked-in Python workflow code rather
+    than ephemeral shell-only scripts.

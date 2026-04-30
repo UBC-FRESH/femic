@@ -1023,7 +1023,7 @@ Default canonical rule:
 
 - sort canonical AUs by descending covered area; then
 - select the smallest top-N AU subset whose cumulative area reaches at least
-  `80%` of the covered area in the assignment universe.
+  `95%` of the covered area in the assignment universe.
 
 This is the default rule-of-thumb for the canonical rebuild lane unless a
 later acceptance gate proves that a different coverage threshold is required.
@@ -1058,7 +1058,47 @@ using the full AU universe.
 
 #### Implemented baseline result
 
-The first implemented MKRF run of this selection rule produced:
+The earlier provisional `80%` cutoff is no longer the governing contract for
+the canonical rebuild lane.
+
+The current MKRF selected-AU bundle now reflects the `95%` rule:
+
+- `66` canonical AUs in the full published AU universe;
+- `31` selected AUs in the canonical top-N subset; and
+- realized covered-area share `0.950222` for the current `95%` cutoff.
+
+### `P60.5e` Canonical AU and yield diagnostic plot bundle
+
+The canonical AU input lane should publish a reproducible diagnostic plot set
+for the selected AU bundle rather than relying on ad hoc inspection.
+
+At minimum, that plot set should include:
+
+- an updated strata/site-index distribution plot for the selected AU lane,
+  with the site-index axis sized for productive MKRF values;
+- AU-wise VDYP diagnostic fit plots for the selected AU subset;
+- AU-wise VDYP low/medium/high site-index comparison plots for the selected
+  AU subset; and
+- AU-wise VDYP-vs-TIPSY comparison plots using the same logic pattern as the
+  existing K3Z diagnostic surface.
+
+These plots should be regenerated from checked-in builder commands, not from
+ephemeral shell scripts.
+
+The diagnostic plot bundle should stay synchronized with the current selected
+AU cutoff. Regenerating plots against a stale `selected_au_table.csv` does not
+satisfy `P60.5e`.
+
+#### Implemented baseline result
+
+The current MKRF plot bundle has been regenerated from the selected-AU lane
+using the checked-in FEMIC command path and now includes:
+
+- `plots/strata-tsamkrf.png` and `plots/strata-tsamkrf.pdf` with site-index
+  axis upper bound `50`;
+- `31` AU-wise `vdyp_lmh_tsamkrf-*.png` plots;
+- `87` AU-wise `vdyp_fitdiag_tsamkrf-*.png` plots; and
+- `4` `tipsy_vdyp_tsamkrf-*.png` comparison plots.
 
 - `66` canonical AUs in the full published AU universe;
 - `14` selected AUs in the default top-N subset; and
