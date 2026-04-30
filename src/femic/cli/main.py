@@ -269,6 +269,7 @@ from femic.workflows.legacy import (
     run_post_tipsy_bundle_with_manifest,
 )
 from femic.workflows.mkrf import (
+    build_mkrf_bad_curve_audit,
     build_mkrf_all_plots,
     build_mkrf_au_distribution_plot,
     build_mkrf_au_input_bundle,
@@ -6429,6 +6430,67 @@ def instance_mkrf_recompile_plots(
     )
     console.print(f"strata_png: {result.strata_png}")
     console.print(f"strata_pdf: {result.strata_pdf}")
+
+
+@instance_app.command("mkrf-audit-bad-curves")
+def instance_mkrf_audit_bad_curves(
+    resultant_gdb: Path = typer.Option(
+        ...,
+        "--resultant-gdb",
+        exists=True,
+        dir_okay=True,
+        file_okay=True,
+        resolve_path=True,
+        help="Path to the upstream MKRF Resultant.gdb source surface.",
+    ),
+    vdyp_yields_csv: Path = typer.Option(
+        ...,
+        "--vdyp-yields-csv",
+        exists=True,
+        dir_okay=False,
+        file_okay=True,
+        resolve_path=True,
+        help="Path to the upstream MKRF VDYP_Yields.csv file.",
+    ),
+    assignment_csv: Path = typer.Option(
+        Path("data/model_input_bundle/stand_au_assignment.csv"),
+        "--assignment-csv",
+        help="Instance-relative stand-to-AU assignment CSV.",
+    ),
+    selected_au_csv: Path = typer.Option(
+        Path("data/model_input_bundle/selected_au_table.csv"),
+        "--selected-au-csv",
+        help="Instance-relative selected-AU table CSV.",
+    ),
+    first_growth_curves_csv: Path = typer.Option(
+        Path("data/model_input_bundle/first_growth_au_curves.csv"),
+        "--first-growth-curves-csv",
+        help="Instance-relative AU-wise first-growth curves CSV.",
+    ),
+    output_dir: Path = typer.Option(
+        Path("data/model_input_bundle"),
+        "--output-dir",
+        help="Instance-relative output directory for bad-curve audit CSVs.",
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Audit suspicious MKRF first-growth curve cases against source-stand evidence."""
+    context = _resolve_cli_instance_context(instance_root=instance_root)
+    result = build_mkrf_bad_curve_audit(
+        resultant_gdb=resultant_gdb,
+        assignment_csv=context.resolve_path(assignment_csv),
+        selected_au_csv=context.resolve_path(selected_au_csv),
+        first_growth_curves_csv=context.resolve_path(first_growth_curves_csv),
+        vdyp_yields_csv=vdyp_yields_csv,
+        output_dir=context.resolve_path(output_dir),
+    )
+    console.print(
+        "[green]mkrf bad-curve audit built[/green] "
+        f"flagged_aus={result.flagged_au_count} "
+        f"selected_aus={result.total_selected_au_count}"
+    )
+    console.print(f"summary_csv: {result.summary_path}")
+    console.print(f"detail_csv: {result.detail_path}")
 
 
 @instance_app.command("mkrf-build-managed-au-inputs")

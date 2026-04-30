@@ -1667,7 +1667,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P60.6c Attempt BTC and publish AU-wise managed/planted curves or an explicit blocker manifest.
   - [x] P60.6d Record the provisional claim boundary for the managed bootstrap lane.
 - [ ] P60.7 Fix bad curve cases before canonical runtime generation (`#177`)
-  - [ ] P60.7a Audit the bad first-growth and managed comparison cases against raw source rows, assignment lineage, and fit diagnostics.
+  - [x] P60.7a Audit the bad first-growth and managed comparison cases against raw source rows, assignment lineage, and fit diagnostics.
   - [ ] P60.7b Correct the source field choice, grouping, assignment, or fit logic as needed and regenerate the affected curve bundles.
   - [ ] P60.7c Rebuild the canonical diagnostic/comparison plots and record the curve-quality acceptance gate for downstream runtime generation.
 - [ ] P60.8 Rebuild the full MKRF runtime package from source-faithful inputs (`#173`)

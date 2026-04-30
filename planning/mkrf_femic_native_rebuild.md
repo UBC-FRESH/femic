@@ -122,10 +122,10 @@ Completed:
 
 The current active implementation edge is:
 
-- `P60.7a`
-  audit the bad first-growth and managed comparison cases against raw source
-  rows, assignment lineage, and fit diagnostics before runtime generation
-  continues.
+- `P60.7b`
+  correct the flagged bad-curve cases by fixing source-field choice,
+  grouping, assignment, or fit logic and regenerating the affected curve
+  bundles before runtime generation continues.
 
 In shorthand:
 
@@ -1235,6 +1235,17 @@ The goal is to determine whether each bad case comes from:
 - wrong grouping or stand-to-unit assignment;
 - bad fit or aggregation behavior; or
 - a truly expected source-data pattern that should be documented explicitly.
+
+Published audit outputs:
+
+- `data/model_input_bundle/bad_curve_audit_summary.csv`
+- `data/model_input_bundle/bad_curve_audit_detail.csv`
+
+Current audit result:
+
+- `15` flagged units out of `31` selected units
+
+Those outputs are now the canonical input to `P60.7b`.
 
 ### `P60.7b` Correction contract
 

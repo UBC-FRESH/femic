@@ -126,6 +126,17 @@ class MkrfManagedAuCurvesResult:
     curve_au_count: int
 
 
+@dataclass(frozen=True)
+class MkrfBadCurveAuditResult:
+    """Result payload for MKRF bad-curve audit publication."""
+
+    output_dir: Path
+    summary_path: Path
+    detail_path: Path
+    flagged_au_count: int
+    total_selected_au_count: int
+
+
 def build_mkrf_au_input_bundle(
     *,
     resultant_gdb: Path,
@@ -842,4 +853,173 @@ def build_mkrf_all_plots(
         lmh_plot_count=lmh_plot_count,
         fitdiag_plot_count=fitdiag_plot_count,
         tipsy_vdyp_plot_count=tipsy_vdyp_plot_count,
+    )
+
+
+def build_mkrf_bad_curve_audit(
+    *,
+    resultant_gdb: Path,
+    assignment_csv: Path,
+    selected_au_csv: Path,
+    first_growth_curves_csv: Path,
+    vdyp_yields_csv: Path,
+    output_dir: Path,
+    layer: str = "Resultant",
+    low_terminal_threshold: float = 100.0,
+    large_area_threshold: float = 50.0,
+    low_large_area_threshold: float = 200.0,
+    low_terminal_stand_threshold: float = 20.0,
+    high_terminal_stand_threshold: float = 300.0,
+) -> MkrfBadCurveAuditResult:
+    """Audit bad first-growth curve cases against source-stand evidence."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    assignment = pd.read_csv(assignment_csv)
+    selected_au_table = pd.read_csv(selected_au_csv)
+    first_growth_curves = pd.read_csv(first_growth_curves_csv)
+    vdyp_yields = pd.read_csv(vdyp_yields_csv)
+    source_table = gpd.read_file(resultant_gdb, layer=layer, ignore_geometry=True)
+
+    terminal_curves = (
+        first_growth_curves.sort_values(["au_id", "age"], kind="stable")
+        .groupby("au_id", as_index=False)
+        .tail(1)[["au_id", "age", "volume"]]
+        .rename(columns={"age": "terminal_age", "volume": "terminal_volume"})
+    )
+    selected = selected_au_table.merge(terminal_curves, on="au_id", how="left")
+    selected["flagged"] = (
+        pd.to_numeric(selected["terminal_volume"], errors="coerce").fillna(0.0)
+        < low_terminal_threshold
+    ) | (
+        (pd.to_numeric(selected["covered_area_ha"], errors="coerce").fillna(0.0) > large_area_threshold)
+        & (
+            pd.to_numeric(selected["terminal_volume"], errors="coerce").fillna(0.0)
+            < low_large_area_threshold
+        )
+    )
+
+    source_subset = source_table.copy()
+    source_subset["forest_cover_id"] = pd.to_numeric(
+        source_subset["FOREST_COVER_ID"], errors="coerce"
+    )
+    keep_columns = {
+        "forest_cover_id",
+        "TCL_1_ESTIMATED_SITE_INDEX",
+        "AGE_2020",
+        "BEC_ZONE_CODE",
+        "BEC_SUBZONE",
+        "BEC_VARIANT",
+    }
+    source_subset = source_subset[[c for c in source_subset.columns if c in keep_columns]].copy()
+    terminal_stands = (
+        vdyp_yields.sort_values(["FEATURE_ID", "PRJ_TOTAL_AGE"], kind="stable")
+        .groupby("FEATURE_ID", as_index=False)
+        .tail(1)[["FEATURE_ID", "PRJ_TOTAL_AGE", "PRJ_VOL_DWB"]]
+        .rename(
+            columns={
+                "FEATURE_ID": "forest_cover_id",
+                "PRJ_TOTAL_AGE": "terminal_vdyp_age",
+                "PRJ_VOL_DWB": "terminal_vdyp_volume",
+            }
+        )
+    )
+
+    detail_rows: list[dict[str, object]] = []
+    summary_rows: list[dict[str, object]] = []
+    flagged_ids = set(selected.loc[selected["flagged"], "au_id"].astype(str))
+
+    for _, selected_row in selected.sort_values(["selected_rank", "au_id"], kind="stable").iterrows():
+        au_id = str(selected_row["au_id"])
+        assignment_rows = assignment.loc[assignment["au_id"].astype(str) == au_id].copy()
+        joined = assignment_rows.merge(source_subset, on="forest_cover_id", how="left").merge(
+            terminal_stands,
+            on="forest_cover_id",
+            how="left",
+        )
+        si = pd.to_numeric(joined.get("TCL_1_ESTIMATED_SITE_INDEX"), errors="coerce")
+        age = pd.to_numeric(joined.get("AGE_2020"), errors="coerce")
+        terminal = pd.to_numeric(joined.get("terminal_vdyp_volume"), errors="coerce")
+
+        low_count = int((terminal.fillna(0.0) < low_terminal_stand_threshold).sum())
+        high_count = int((terminal.fillna(0.0) > high_terminal_stand_threshold).sum())
+        if low_count > 0 and high_count > 0:
+            pattern = "mixed_low_high"
+        elif low_count > 0:
+            pattern = "mostly_low"
+        elif high_count > 0:
+            pattern = "mostly_high"
+        else:
+            pattern = "midrange"
+
+        summary_rows.append(
+            {
+                "selected_rank": int(selected_row["selected_rank"]),
+                "au_id": au_id,
+                "covered_area_ha": float(selected_row["covered_area_ha"]),
+                "terminal_age": float(selected_row["terminal_age"]),
+                "terminal_volume": float(selected_row["terminal_volume"]),
+                "flagged": bool(selected_row["flagged"]),
+                "stand_count": int(len(joined)),
+                "site_index_min": float(si.min()) if len(si.dropna()) else np.nan,
+                "site_index_median": float(si.median()) if len(si.dropna()) else np.nan,
+                "site_index_max": float(si.max()) if len(si.dropna()) else np.nan,
+                "age_2020_min": float(age.min()) if len(age.dropna()) else np.nan,
+                "age_2020_median": float(age.median()) if len(age.dropna()) else np.nan,
+                "age_2020_max": float(age.max()) if len(age.dropna()) else np.nan,
+                "terminal_vdyp_min": float(terminal.min()) if len(terminal.dropna()) else np.nan,
+                "terminal_vdyp_p25": float(terminal.quantile(0.25)) if len(terminal.dropna()) else np.nan,
+                "terminal_vdyp_median": float(terminal.median()) if len(terminal.dropna()) else np.nan,
+                "terminal_vdyp_p75": float(terminal.quantile(0.75)) if len(terminal.dropna()) else np.nan,
+                "terminal_vdyp_max": float(terminal.max()) if len(terminal.dropna()) else np.nan,
+                "low_terminal_stand_count": low_count,
+                "high_terminal_stand_count": high_count,
+                "population_pattern": pattern,
+            }
+        )
+
+        if au_id not in flagged_ids:
+            continue
+        for _, row in joined.sort_values(
+            ["terminal_vdyp_volume", "forest_cover_id"], kind="stable", na_position="last"
+        ).iterrows():
+            detail_rows.append(
+                {
+                    "au_id": au_id,
+                    "selected_rank": int(selected_row["selected_rank"]),
+                    "forest_cover_id": int(row["forest_cover_id"]),
+                    "shape_area_ha": float(row["shape_area_ha"]),
+                    "site_index": row.get("TCL_1_ESTIMATED_SITE_INDEX"),
+                    "age_2020": row.get("AGE_2020"),
+                    "terminal_vdyp_age": row.get("terminal_vdyp_age"),
+                    "terminal_vdyp_volume": row.get("terminal_vdyp_volume"),
+                }
+            )
+
+    summary_frame = pd.DataFrame(summary_rows)
+    if not summary_frame.empty:
+        summary_frame = summary_frame.sort_values(
+            ["flagged", "terminal_volume", "selected_rank"],
+            ascending=[False, True, True],
+            kind="stable",
+        )
+
+    detail_frame = pd.DataFrame(detail_rows)
+    if not detail_frame.empty:
+        detail_frame = detail_frame.sort_values(
+            ["selected_rank", "terminal_vdyp_volume", "forest_cover_id"],
+            kind="stable",
+            na_position="last",
+        )
+
+    summary_path = output_dir / "bad_curve_audit_summary.csv"
+    detail_path = output_dir / "bad_curve_audit_detail.csv"
+    summary_frame.to_csv(summary_path, index=False)
+    detail_frame.to_csv(detail_path, index=False)
+
+    return MkrfBadCurveAuditResult(
+        output_dir=output_dir,
+        summary_path=summary_path,
+        detail_path=detail_path,
+        flagged_au_count=int(summary_frame["flagged"].astype(bool).sum()),
+        total_selected_au_count=int(len(summary_frame)),
     )

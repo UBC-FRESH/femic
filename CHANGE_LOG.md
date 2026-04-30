@@ -15961,3 +15961,15 @@
   - inserted new `P60.7` in the roadmap as a blocking bad-curve task; and
   - shifted canonical runtime generation, benchmark validation, and closeout
     down one block so the rebuild lane cannot keep moving on bad curves.
+## 2026-04-30 - Published the MKRF bad-curve audit bundle
+- `#177` / `P60.7a` implementation slice:
+  - added a checked-in `femic instance mkrf-audit-bad-curves` workflow that
+    audits selected-unit first-growth curves against raw VDYP rows, stand
+    assignment lineage, and source-side site-index/age context;
+  - published:
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_summary.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_detail.csv`
+  - current audit result:
+    - `15` flagged units out of `31` selected units; and
+  - moved the active rebuild edge to `P60.7b`, where the flagged cases must be
+    corrected before canonical runtime generation can continue.
