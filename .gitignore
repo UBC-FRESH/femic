@@ -65,6 +65,7 @@ config/credentials/*.sh
 
 # Local reference docs (do not track)
 reference/myVPN Setup for GNU:Linux | UBC IT.pdf
+reference/UserGuide.pdf
 
 # Sphinx autosummary generated API stubs
 docs/reference/api/generated/
