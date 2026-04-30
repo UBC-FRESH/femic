@@ -231,3 +231,62 @@ This sequencing contract does not allow:
   as rebuild validation; or
 - treating unexplained legacy seams as required by default just because they
   existed in the PoC lane.
+
+## `P60.2c` Benchmark/reference separation contract
+
+The canonical rebuild lane must keep the accepted PoC evidence surfaces and the
+new source-faithful build surfaces distinct in both pathing and claim language.
+
+### Benchmark/reference evidence surface
+
+The following remain benchmark/reference evidence only:
+
+- `models/mkrf_patchworks_model_poc/` and its generated runtime artifacts;
+- accepted PoC benchmark saved-stage and report surfaces;
+- accepted compiled legacy runtime evidence preserved for comparison;
+- reviewed archaeology outputs such as workbook/XML/runtime translations; and
+- any checkpoint target-state or helper seams that exist only to preserve PoC
+  comparability.
+
+These surfaces may be used for:
+
+- comparison;
+- acceptance-gate benchmarking; and
+- lineage/documentation.
+
+They may not be used as substitutes for canonical rebuild outputs when making a
+source-faithful claim.
+
+### Canonical rebuild surface
+
+The future canonical MKRF rebuild lane must publish its own distinct surfaces:
+
+- source-driven contracts under `config/`;
+- source-faithful generated metadata and ledgers under `metadata/`;
+- canonical generated runtime artifacts under a rebuild package in `models/`;
+- rebuild-owned docs/runbooks under the standalone instance repo; and
+- rebuild-owned runtime logs/manifests and acceptance summaries.
+
+The canonical rebuild package must not reuse the PoC package path or hide new
+generated artifacts inside PoC evidence directories.
+
+### Required separation rules
+
+- PoC and canonical rebuild runtime packages must remain path-distinct.
+- Acceptance summaries must say explicitly whether they describe:
+  - PoC benchmark/reference evidence; or
+  - canonical rebuild outputs.
+- Raw-source publication claims must point back to the upstream source lane,
+  not to PoC compiled-runtime or checkpoint artifacts.
+- If a PoC artifact is copied or reused for comparison, it must remain labeled
+  as benchmark/reference evidence rather than being silently promoted.
+
+### Practical implication for later phases
+
+For `P60.3+`, every new generated artifact should answer one of two questions:
+
+- is this a benchmark/reference surface preserved from the PoC lane? or
+- is this a canonical rebuild output generated from the source-faithful lane?
+
+If the answer is unclear, the artifact boundary is wrong and should be fixed
+before stronger rebuild claims are made.

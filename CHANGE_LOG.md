@@ -15699,3 +15699,12 @@
   - fixed the minimum evidence surfaces and explicit non-goals so the later
     source-faithful rebuild cannot silently reuse PoC/checkpoint surfaces while
     making stronger identity claims.
+## 2026-04-30 - Separated MKRF PoC benchmark evidence from canonical rebuild surfaces
+- `#173` / `P60.2c` planning slice:
+  - fixed the explicit boundary between benchmark/reference evidence and future
+    canonical rebuild outputs;
+  - recorded that the PoC package, accepted saved stages/reports, compiled
+    legacy runtime evidence, and archaeology translations remain comparison
+    surfaces only; and
+  - required path-distinct canonical rebuild outputs, claim-language
+    separation, and explicit artifact labeling for later `P60.3+` work.
