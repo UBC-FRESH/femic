@@ -15635,3 +15635,11 @@
     docs surface; and
   - advanced the active implementation edge from the PoC docs phase to the
     later from-scratch rebuild phase under `#173`.
+## 2026-04-30 - Added GitHub Pages publication for the standalone MKRF instance docs
+- docs publication follow-up:
+  - added a repo-local `docs-pages.yml` workflow in `external/femic-mkrf-instance`
+    so standalone MKRF docs will build and deploy on `main` pushes in the
+    instance repo;
+  - updated the instance docs ownership/release page so GitHub Pages is stated
+    as the expected public publication path, with `.readthedocs.yaml` retained
+    as the standalone build contract and secondary hosting option.
