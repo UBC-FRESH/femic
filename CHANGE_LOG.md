@@ -15776,3 +15776,18 @@
     carrying forward the legacy one-curve-per-stand first-growth behavior; and
   - made `P60.5a` depend on published AU tables, AU-wise first-growth lineage,
     and curve-fit diagnostics before runtime XML/track generation.
+## 2026-04-30 - Defined the MKRF canonical runtime-package generation contract
+- `#173` / `P60.5a` planning slice:
+  - fixed the canonical rebuild package root at
+    `models/mkrf_patchworks_model/`, distinct from
+    `models/mkrf_patchworks_model_poc/`;
+  - required lowercase FEMIC-controlled package layout under
+    `analysis/`, `xml/`, `tracks/`, `spatial/`, `scripts/`, `targets/`, and
+    `initial_targets/` unless a later external runtime contract forces a
+    documented exception;
+  - required the canonical package to consume the AU-wise AU table and
+    AU-wise NLLS-fitted unmanaged/first-growth curves defined by `P60.4d`; and
+  - fixed the acceptance rule so XML, tracks, spatial outputs, and control
+    surfaces must be generated into the canonical package with package-local
+    lineage evidence, not copied from PoC, checkpoint, or archival runtime
+    surfaces.

@@ -781,3 +781,92 @@ Before `P60.5a` can be considered satisfied, the rebuild lane should publish:
 In other words, `P60.5a` should consume the AU-wise first-growth lane, not
 recreate a stand-wise unmanaged curve contract inside the canonical runtime
 package.
+
+## `P60.5a` Canonical runtime-package generation contract
+
+The canonical rebuild lane must generate a new runtime package from the
+source-faithful geometry, control, AU, and curve surfaces already defined in
+`P60.3` and `P60.4`.
+
+This is the first step where the rebuild lane becomes a full runnable package
+rather than a collection of upstream contracts.
+
+### Canonical package root
+
+The canonical rebuild runtime package should live at:
+
+- `models/mkrf_patchworks_model/`
+
+This path is distinct from the accepted PoC package:
+
+- `models/mkrf_patchworks_model_poc/`
+
+The rebuild lane must not overwrite, borrow from, or silently alias the PoC
+package path.
+
+### Lowercase package layout
+
+Because this is a new FEMIC-controlled runtime surface, the canonical rebuild
+package should use lowercase names wherever FEMIC controls the path.
+
+The minimum package layout should therefore be:
+
+- `models/mkrf_patchworks_model/analysis/`
+- `models/mkrf_patchworks_model/xml/`
+- `models/mkrf_patchworks_model/tracks/`
+- `models/mkrf_patchworks_model/spatial/`
+- `models/mkrf_patchworks_model/scripts/`
+- `models/mkrf_patchworks_model/targets/`
+- `models/mkrf_patchworks_model/initial_targets/`
+
+If Patchworks or another external runtime contract later proves that some path
+must stay mixed-case, record that as an explicit runtime exception rather than
+defaulting back to the legacy naming pattern.
+
+### Required generated runtime surfaces
+
+`P60.5a` should publish, at minimum:
+
+- canonical runtime XML under `xml/`;
+- canonical runtime tracks under `tracks/`;
+- canonical runtime spatial publication under `spatial/`;
+- canonical runtime control/analysis surfaces under `analysis/`,
+  `scripts/`, `targets/`, and `initial_targets/`; and
+- package-local lineage evidence that ties those outputs back to the source
+  contracts already fixed in `P60.3` and `P60.4`.
+
+Those runtime outputs must be generated from the canonical rebuild lane, not
+copied from:
+
+- the PoC package;
+- archival compiled legacy runtime evidence; or
+- checkpoint-derived helper/runtime surfaces.
+
+### Curve and AU dependency rule
+
+The canonical runtime package must consume:
+
+- the canonical AU table defined by
+  `bec_zone + bec_subzone + bec_variant + ordered top-2 leading species`; and
+- the AU-wise unmanaged/first-growth curves produced by the `P60.4d` contract.
+
+That means the canonical XML and track-generation lane may not:
+
+- emit one unmanaged/first-growth curve per stand; or
+- bypass the AU-wise NLLS-fitted first-growth surface while still claiming a
+  canonical rebuild runtime package.
+
+### Acceptance rule for `P60.5a`
+
+`P60.5a` is only satisfied when the rebuild lane can point to all of the
+following:
+
+- a path-distinct canonical runtime package under
+  `models/mkrf_patchworks_model/`;
+- explicit AU tables and AU-wise first-growth lineage feeding the runtime
+  generation step;
+- generated XML, tracks, spatial outputs, and control surfaces inside that
+  canonical package; and
+- package-local lineage evidence showing those outputs were generated from the
+  source-faithful rebuild lane rather than copied from benchmark/reference
+  artifacts.
