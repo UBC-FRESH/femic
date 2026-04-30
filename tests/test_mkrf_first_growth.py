@@ -7,6 +7,7 @@ from femic.pipeline.mkrf_first_growth import (
     build_mkrf_first_growth_curves,
     collapse_stand_assignments,
 )
+from femic.workflows.mkrf import _format_mkrf_au_label
 
 
 def test_collapse_stand_assignments_uses_area_and_lexical_tie_break() -> None:
@@ -194,3 +195,7 @@ def test_build_mkrf_first_growth_curves_lexmatches_unmatched_stands() -> None:
     assert int(row["source_stand_count"]) == 2
     assert int(row["lexmatch_stand_count"]) == 1
     assert int(row["lexmatch_alias_stand_count"]) == 1
+
+
+def test_format_mkrf_au_label_uses_k3z_style_display_shape() -> None:
+    assert _format_mkrf_au_label("cwh_vm_1_cw_hw") == "CWHvm1_CW+HW"

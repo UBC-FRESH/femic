@@ -15873,3 +15873,14 @@
     stands that still do not appear in `Resultant.gdb`; and
   - exposed per-AU lexmatch diagnostics so alias use is reviewable instead of
     hidden in shell-only glue logic.
+## 2026-04-30 - Added the first MKRF AU distribution plot
+- `#173` / follow-on implementation slice:
+  - added a checked-in MKRF AU distribution plotting workflow and CLI command:
+    `femic instance mkrf-plot-au-distribution`;
+  - reused the same FEMIC strata-distribution plotting helper seam used for
+    K3Z, with an MKRF-specific AU label formatter;
+  - generated and versioned:
+    - `external/femic-mkrf-instance/plots/strata-tsamkrf.png`
+    - `external/femic-mkrf-instance/plots/strata-tsamkrf.pdf`
+  - updated the MKRF instance `.gitignore` so these committed plot artifacts
+    are kept while `docs/_build/` and other generated surfaces stay ignored.

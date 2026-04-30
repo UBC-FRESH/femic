@@ -270,6 +270,7 @@ from femic.workflows.legacy import (
 )
 from femic.workflows.mkrf import (
     build_mkrf_au_input_bundle,
+    build_mkrf_au_distribution_plot,
     build_mkrf_first_growth_input_bundle,
 )
 
@@ -6269,6 +6270,44 @@ def instance_mkrf_build_first_growth_curves(
     )
     console.print(f"curves: {result.curves_path}")
     console.print(f"diagnostics: {result.diagnostics_path}")
+
+
+@instance_app.command("mkrf-plot-au-distribution")
+def instance_mkrf_plot_au_distribution(
+    resultant_gdb: Path = typer.Option(
+        ...,
+        "--resultant-gdb",
+        exists=True,
+        dir_okay=True,
+        file_okay=True,
+        resolve_path=True,
+        help="Path to the upstream MKRF Resultant.gdb source surface.",
+    ),
+    assignment_csv: Path = typer.Option(
+        Path("data/model_input_bundle/stand_au_assignment.csv"),
+        "--assignment-csv",
+        help="Instance-relative stand-to-AU assignment CSV.",
+    ),
+    output_dir: Path = typer.Option(
+        Path("plots"),
+        "--output-dir",
+        help="Instance-relative output directory for AU distribution plots.",
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Build the MKRF AU abundance/site-index distribution plot."""
+    context = _resolve_cli_instance_context(instance_root=instance_root)
+    result = build_mkrf_au_distribution_plot(
+        resultant_gdb=resultant_gdb,
+        assignment_csv=context.resolve_path(assignment_csv),
+        output_dir=context.resolve_path(output_dir),
+    )
+    console.print(
+        "[green]mkrf au distribution plot built[/green] "
+        f"aus={result.au_count} site_index_points={result.point_count}"
+    )
+    console.print(f"png: {result.png_path}")
+    console.print(f"pdf: {result.pdf_path}")
 
 
 @app.command("run")
