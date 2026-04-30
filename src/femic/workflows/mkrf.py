@@ -951,6 +951,18 @@ def build_mkrf_bad_curve_audit(
         si = pd.to_numeric(joined.get("TCL_1_ESTIMATED_SITE_INDEX"), errors="coerce")
         age = pd.to_numeric(joined.get("AGE_2020"), errors="coerce")
         terminal = pd.to_numeric(joined.get("terminal_vdyp_volume"), errors="coerce")
+        stand_count = int(len(joined))
+        valid_age = age.dropna()
+
+        def _share(count: int) -> float:
+            if stand_count == 0:
+                return 0.0
+            return float(count) / float(stand_count)
+
+        age_lt_20_count = int((valid_age < 20.0).sum())
+        age_lt_30_count = int((valid_age < 30.0).sum())
+        age_lt_80_count = int((valid_age < 80.0).sum())
+        age_gte_80_count = int((valid_age >= 80.0).sum())
 
         low_count = int((terminal.fillna(0.0) < low_terminal_stand_threshold).sum())
         high_count = int((terminal.fillna(0.0) > high_terminal_stand_threshold).sum())
@@ -963,6 +975,16 @@ def build_mkrf_bad_curve_audit(
         else:
             pattern = "midrange"
 
+        terminal_volume = pd.to_numeric(selected_row["terminal_volume"], errors="coerce")
+        if pd.isna(terminal_volume):
+            issue_class = "no_first_growth_after_age_floor"
+        elif low_count > 0 and high_count > 0:
+            issue_class = "mixed_population"
+        elif _share(age_lt_80_count) >= 0.5:
+            issue_class = "young_skewed_population"
+        else:
+            issue_class = "persistently_low_old_unit"
+
         summary_rows.append(
             {
                 "selected_rank": int(selected_row["selected_rank"]),
@@ -971,13 +993,21 @@ def build_mkrf_bad_curve_audit(
                 "terminal_age": float(selected_row["terminal_age"]),
                 "terminal_volume": float(selected_row["terminal_volume"]),
                 "flagged": bool(selected_row["flagged"]),
-                "stand_count": int(len(joined)),
+                "stand_count": stand_count,
                 "site_index_min": float(si.min()) if len(si.dropna()) else np.nan,
                 "site_index_median": float(si.median()) if len(si.dropna()) else np.nan,
                 "site_index_max": float(si.max()) if len(si.dropna()) else np.nan,
                 "age_2020_min": float(age.min()) if len(age.dropna()) else np.nan,
                 "age_2020_median": float(age.median()) if len(age.dropna()) else np.nan,
                 "age_2020_max": float(age.max()) if len(age.dropna()) else np.nan,
+                "age_lt_20_count": age_lt_20_count,
+                "age_lt_20_share": _share(age_lt_20_count),
+                "age_lt_30_count": age_lt_30_count,
+                "age_lt_30_share": _share(age_lt_30_count),
+                "age_lt_80_count": age_lt_80_count,
+                "age_lt_80_share": _share(age_lt_80_count),
+                "age_gte_80_count": age_gte_80_count,
+                "age_gte_80_share": _share(age_gte_80_count),
                 "terminal_vdyp_min": float(terminal.min()) if len(terminal.dropna()) else np.nan,
                 "terminal_vdyp_p25": float(terminal.quantile(0.25)) if len(terminal.dropna()) else np.nan,
                 "terminal_vdyp_median": float(terminal.median()) if len(terminal.dropna()) else np.nan,
@@ -986,6 +1016,7 @@ def build_mkrf_bad_curve_audit(
                 "low_terminal_stand_count": low_count,
                 "high_terminal_stand_count": high_count,
                 "population_pattern": pattern,
+                "curve_issue_class": issue_class,
             }
         )
 

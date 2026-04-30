@@ -15987,3 +15987,9 @@
     - `11` flagged units out of `31` selected units; and
   - stale managed-vs-first-growth plot files are now removed on rebuild, so the
     plot surface reflects only the current surviving comparison cases.
+- 2026-04-30 - Extended the MKRF bad-curve audit with explicit age-share
+  diagnostics and issue classes so the surviving flagged cases are now
+  separated into:
+  - `7` units with no first-growth left after the age-floor rule;
+  - `2` young-skewed units; and
+  - `2` true mixed-population units still needing grouping fixes.

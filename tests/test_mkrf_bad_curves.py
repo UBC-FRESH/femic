@@ -92,5 +92,11 @@ def test_build_mkrf_bad_curve_audit_writes_summary_and_detail(
     assert result.total_selected_au_count == 2
     assert summary.loc[summary["au_id"] == "au_bad", "flagged"].item() is True
     assert summary.loc[summary["au_id"] == "au_bad", "population_pattern"].item() == "mixed_low_high"
+    assert summary.loc[summary["au_id"] == "au_bad", "age_lt_80_count"].item() == 1
+    assert summary.loc[summary["au_id"] == "au_bad", "age_gte_80_count"].item() == 1
+    assert (
+        summary.loc[summary["au_id"] == "au_bad", "curve_issue_class"].item()
+        == "mixed_population"
+    )
     assert detail["au_id"].tolist() == ["au_bad", "au_bad"]
     assert detail["forest_cover_id"].tolist() == [101, 102]
