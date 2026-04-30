@@ -359,10 +359,10 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-`P59.1b` is the active next bounded move. The parent Sphinx scaffolding now
-exists; the next slice should make the docs explicit that the current MKRF
-runtime package is a PoC benchmark/intermediate, not the final canonical
-rebuild.
+`P59.1c` is the active next bounded move. The key parent and instance-facing
+docs now state explicitly that the current MKRF runtime package is a PoC
+benchmark/intermediate, not the final canonical rebuild. The next slice should
+publish the docs lane with the same operator-facing quality bar as K3Z.
 
 Current `P58.3` state:
 
@@ -511,8 +511,11 @@ Planned Phase 58 sequence after minimal runnable closeout:
   in progress. Parent Sphinx scaffolding now exists under
   `docs/sample-models/{mkrf,mkrf-metadata-lineage}.rst` and
   `docs/sample-models/index.rst`, matching the K3Z-style parent-doc shape for
-  pointer + lineage coverage. Remaining work in this task is to make the PoC
-  status explicit throughout the docs and complete the publish-quality surface.
+  pointer + lineage coverage. The parent and key instance-facing docs now say
+  explicitly that the current package under
+  `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc` is a PoC
+  benchmark/intermediate, not the final canonical rebuild. Remaining work in
+  this task is to complete the publish-quality surface.
 - `P59.2`:
   document the accepted PoC benchmark/runtime lane and claim boundary clearly
   enough that users can understand what the current MKRF model is and is not.

@@ -15534,3 +15534,8 @@
   - renamed `external/femic-mkrf-instance/models/mkrf_patchworks_model` to `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc` so the current PoC package can coexist cleanly with the later canonical rebuild in the same instance repo;
   - updated the tracked runtime config, lineage metadata, runbooks, tests, sample-model docs, and roadmap/planning references to the new PoC path; and
   - kept the current runtime package explicitly positioned as benchmark/intermediate evidence rather than the final canonical MKRF model path.
+## 2026-04-29 - Made the key MKRF docs explicit that the current package is PoC-only
+- `#175` / `P59.1b` PoC-positioning docs slice:
+  - updated the instance README, PoC model README surfaces, and rebuild runbook so they state plainly that the current MKRF package is a PoC benchmark/intermediate surface, not the final canonical rebuild;
+  - kept the docs aligned with the renamed PoC package path `models/mkrf_patchworks_model_poc`; and
+  - moved the active docs lane forward to `P59.1c`.
