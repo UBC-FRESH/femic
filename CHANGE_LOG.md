@@ -15523,3 +15523,9 @@
 - `#172` / `P58.7` PoC intermediate closeout:
   - recorded explicitly that `external/femic-mkrf-instance/models/mkrf_patchworks_model` is the current MKRF PoC intermediate runtime package, not the final canonical rebuild path; and
   - moved the active next lane to `Phase 59` MKRF PoC user-facing docs under `#175`.
+## 2026-04-29 - Added the parent Sphinx scaffolding for MKRF PoC docs
+- `#175` / `P59.1a` docs scaffolding slice:
+  - added `docs/sample-models/mkrf.rst` as the MKRF PoC pointer page in the parent Sphinx docs;
+  - added `docs/sample-models/mkrf-metadata-lineage.rst` as the retained parent-side metadata/lineage summary for the current PoC package;
+  - updated `docs/sample-models/index.rst` to register MKRF alongside the other sample-model pages; and
+  - validated the new pages with a warning-clean `sphinx-build -b html docs _build/html -W`.

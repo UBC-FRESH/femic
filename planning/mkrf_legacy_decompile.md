@@ -359,9 +359,10 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-`P59.1` is the active next bounded move. Publish user-facing MKRF PoC Sphinx
-docs using the K3Z instance docs as the template now that the PoC benchmark
-lane is closed.
+`P59.1b` is the active next bounded move. The parent Sphinx scaffolding now
+exists; the next slice should make the docs explicit that the current MKRF
+runtime package is a PoC benchmark/intermediate, not the final canonical
+rebuild.
 
 Current `P58.3` state:
 
@@ -507,9 +508,11 @@ Planned Phase 58 sequence after minimal runnable closeout:
   separate and is not constrained to preserve the current PoC path as the
   final canonical MKRF model.
 - `P59.1`:
-  publish user-facing MKRF PoC technical docs under child issue `#175`, using
-  the K3Z instance docs as the template for scope, depth, formatting, and
-  implementation shape.
+  in progress. Parent Sphinx scaffolding now exists under
+  `docs/sample-models/{mkrf,mkrf-metadata-lineage}.rst` and
+  `docs/sample-models/index.rst`, matching the K3Z-style parent-doc shape for
+  pointer + lineage coverage. Remaining work in this task is to make the PoC
+  status explicit throughout the docs and complete the publish-quality surface.
 - `P59.2`:
   document the accepted PoC benchmark/runtime lane and claim boundary clearly
   enough that users can understand what the current MKRF model is and is not.

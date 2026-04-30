@@ -9,4 +9,6 @@ repository.
 
    k3z
    tsa29
+   mkrf
    k3z-metadata-lineage
+   mkrf-metadata-lineage
