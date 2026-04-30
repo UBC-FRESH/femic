@@ -15845,3 +15845,15 @@
     warnings, acceptance status, and fallback/rescue use per AU; and
   - checked parent `P60.5` complete once AU table, stand assignment, and
     AU-wise first-growth synthesis contracts were all defined.
+## 2026-04-30 - Materialized the first real MKRF AU input bundle artifacts
+- `#173` / actual `P60.5a`-`P60.5b` implementation slice:
+  - added a checked-in MKRF AU builder module and CLI entrypoint:
+    `femic instance mkrf-build-au-inputs`;
+  - materialized `external/femic-mkrf-instance/data/model_input_bundle/au_table.csv`
+    and `stand_au_assignment.csv` from the upstream
+    `03_MappingAnalysisData/Resultant.gdb/Resultant` source surface;
+  - published the first real canonical AU input bundle with `1763` assigned
+    source rows grouped into `66` canonical AUs; and
+  - stopped ignoring `data/model_input_bundle/` in the MKRF instance repo so
+    canonical rebuild inputs can be versioned instead of treated as disposable
+    runtime spill.

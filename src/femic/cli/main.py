@@ -268,6 +268,7 @@ from femic.workflows.legacy import (
     run_data_prep,
     run_post_tipsy_bundle_with_manifest,
 )
+from femic.workflows.mkrf import build_mkrf_au_input_bundle
 
 app = typer.Typer(
     add_completion=False,
@@ -6182,6 +6183,38 @@ def instance_account_surface(
         )
         for step in diagnosis.get("recommended_next_checks", []):
             console.print(f"- {step}")
+
+
+@instance_app.command("mkrf-build-au-inputs")
+def instance_mkrf_build_au_inputs(
+    resultant_gdb: Path = typer.Option(
+        ...,
+        "--resultant-gdb",
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        resolve_path=True,
+        help="Path to the upstream MKRF Resultant.gdb directory.",
+    ),
+    output_dir: Path = typer.Option(
+        Path("data/model_input_bundle"),
+        "--output-dir",
+        help="Instance-relative output directory for AU input bundle CSVs.",
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Build MKRF AU and stand-assignment inputs from Resultant.gdb."""
+    context = _resolve_cli_instance_context(instance_root=instance_root)
+    result = build_mkrf_au_input_bundle(
+        resultant_gdb=resultant_gdb,
+        output_dir=context.resolve_path(output_dir),
+    )
+    console.print(
+        "[green]mkrf au inputs built[/green] "
+        f"source_rows={result.source_row_count} aus={result.au_count}"
+    )
+    console.print(f"au_table: {result.au_table_path}")
+    console.print(f"stand_assignment: {result.stand_assignment_path}")
 
 
 @app.command("run")
