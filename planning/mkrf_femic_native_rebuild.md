@@ -492,3 +492,78 @@ Preserve mixed-case only when it is part of:
 
 This keeps the new canonical rebuild lane from inheriting the legacy model's
 mixed-case path surface as an avoidable source of path errors.
+
+## `P60.4a` Source-driven control-surface replacement contract
+
+The canonical MKRF rebuild must replace the PoC checkpoint-backed
+target-control lane with a source-driven FEMIC-native control surface.
+
+### Rejected control inputs for the canonical rebuild
+
+The following PoC/legacy control inputs are not acceptable as canonical rebuild
+inputs:
+
+- `analysis/initialTargetSummary.csv`
+- `analysis/initialTargetStatus.csv`
+- saved scenario target-state exports used only to reload a prior scenario
+  state;
+- fail-fast or partial helper reconstructions in legacy-style
+  `InitialTargets/*.bsh`; and
+- any control surface that exists only because the PoC needed a runnable
+  checkpoint-backed lane.
+
+Those files remain valid only as:
+
+- benchmark/reference evidence;
+- runtime smoke aids; or
+- comparison surfaces for acceptance gates.
+
+### Source-driven control authorities
+
+The replacement control lane should be driven from the reviewed source
+authorities already recovered in the archaeology program:
+
+- `Targets/000_Targets_Builder.xlsx`
+  - primary target-family content authority;
+- recovered target script fragments such as:
+  - `Targets/01_harvest.bsh`
+  - `Targets/06_patch.bsh`
+  - `Targets/07_flow.bsh`
+- `ScenarioSet.bsh`
+  - authority for scenario composition and required helper families; and
+- original legacy analyst documentation where it clarifies target intent or
+  scenario interpretation.
+
+The workbook-generated target families already evidenced in the legacy corpus
+include, at minimum:
+
+- `Harvest`
+- `grn`
+- `biod`
+- `wat`
+- `vqo`
+- `Routes`
+- `patch`
+
+### Required replacement outcome
+
+The canonical rebuild lane must publish a new control surface that:
+
+- is generated from reviewed source contracts rather than scenario checkpoints;
+- can express the target families the team still intends to preserve;
+- makes helper/function reconstruction explicit rather than hidden inside an
+  inherited checkpoint lane; and
+- keeps benchmark-only legacy helper mysteries separate from the canonical
+  architecture unless they later satisfy the carry-forward gate.
+
+### Acceptance rule for `P60.4a`
+
+`P60.4a` is only satisfied when the rebuild lane can point to a distinct
+source-driven control authority and say:
+
+- these are the source tables/contracts that define the new control lane; and
+- these checkpoint-backed target-state files are no longer the causal input for
+  canonical rebuild runs.
+
+It is not enough to keep the PoC checkpoint files around and reinterpret them
+as source.

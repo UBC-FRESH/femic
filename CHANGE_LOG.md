@@ -15737,3 +15737,14 @@
     directories in the canonical rebuild lane, while preserving mixed-case only
     for legacy evidence, upstream payloads, or external runtime contracts we do
     not control.
+## 2026-04-30 - Fixed the MKRF source-driven control replacement contract
+- `#173` / `P60.4a` planning slice:
+  - rejected the PoC checkpoint-backed target-state lane
+    (`initialTargetSummary.csv` / `initialTargetStatus.csv`) as a canonical
+    rebuild input surface;
+  - fixed the reviewed control authorities for the replacement lane around
+    `Targets/000_Targets_Builder.xlsx`, the recovered target script fragments,
+    and `ScenarioSet.bsh`; and
+  - recorded that `P60.4a` is only satisfied when the canonical rebuild can
+    point to a distinct source-driven control authority rather than reusing
+    checkpoint state as source.

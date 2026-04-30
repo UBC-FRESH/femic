@@ -1651,7 +1651,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P60.3b Rebuild the runtime spatial/package handoff with explicit lineage and acceptance checks.
   - [x] P60.3c Keep checkpoint-derived or compiled-runtime artifacts out of the source-faithful rebuild claim surface.
 - [ ] P60.4 Rebuild the target/control lane from reviewed source contracts instead of legacy checkpoint loading (`#173`)
-  - [ ] P60.4a Replace the PoC checkpoint-backed target-control lane with a source-driven FEMIC-native control surface.
+  - [x] P60.4a Replace the PoC checkpoint-backed target-control lane with a source-driven FEMIC-native control surface.
   - [ ] P60.4b Reconstruct or replace legacy scenario-target semantics only where they are justified by source evidence or benchmark necessity.
   - [ ] P60.4c Keep unexplained legacy compiled control seams out of the new build unless they become required by a documented acceptance gate.
 - [ ] P60.5 Rebuild the full MKRF runtime package from source-faithful inputs (`#173`)
