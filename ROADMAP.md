@@ -1666,18 +1666,22 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P60.6b Build an AU-wise BTC `msyt.csv` input surface for planted stands.
   - [x] P60.6c Attempt BTC and publish AU-wise managed/planted curves or an explicit blocker manifest.
   - [x] P60.6d Record the provisional claim boundary for the managed bootstrap lane.
-- [ ] P60.7 Rebuild the full MKRF runtime package from source-faithful inputs (`#173`)
-  - [ ] P60.7a Generate the runtime XML, tracks, and control surfaces from the new FEMIC-native rebuild lane, consuming AU-wise unmanaged/first-growth curves rather than legacy stand-wise first-growth curves.
-  - [ ] P60.7b Re-run Matrix Builder and runtime assembly against the rebuilt source-faithful package.
-  - [ ] P60.7c Keep generated outputs and lineage surfaces synchronized as the new canonical MKRF runtime package.
-- [ ] P60.8 Validate the rebuilt model against the PoC benchmark and legacy evidence (`#173`)
-  - [ ] P60.8a Compare the rebuilt runtime against the accepted PoC benchmark surfaces.
-  - [ ] P60.8b Compare the rebuilt runtime against relevant legacy evidence where it still matters for acceptance.
-  - [ ] P60.8c Record which observed differences are accepted redesign choices versus unresolved regressions.
-- [ ] P60.9 Publish closeout docs and decide whether `#172` can close (`#173`)
-  - [ ] P60.9a Update the parent and instance docs/runbooks to teach the new MKRF rebuild lane.
-  - [ ] P60.9b Record the final claim boundary between benchmark archaeology and the new source-faithful rebuild.
-  - [ ] P60.9c Decide whether the umbrella legacy-recovery issue `#172` can close once the from-scratch rebuild phase is complete.
+- [ ] P60.7 Fix bad curve cases before canonical runtime generation (`#177`)
+  - [ ] P60.7a Audit the bad first-growth and managed comparison cases against raw source rows, assignment lineage, and fit diagnostics.
+  - [ ] P60.7b Correct the source field choice, grouping, assignment, or fit logic as needed and regenerate the affected curve bundles.
+  - [ ] P60.7c Rebuild the canonical diagnostic/comparison plots and record the curve-quality acceptance gate for downstream runtime generation.
+- [ ] P60.8 Rebuild the full MKRF runtime package from source-faithful inputs (`#173`)
+  - [ ] P60.8a Generate the runtime XML, tracks, and control surfaces from the new FEMIC-native rebuild lane, consuming AU-wise unmanaged/first-growth curves rather than legacy stand-wise first-growth curves.
+  - [ ] P60.8b Re-run Matrix Builder and runtime assembly against the rebuilt source-faithful package.
+  - [ ] P60.8c Keep generated outputs and lineage surfaces synchronized as the new canonical MKRF runtime package.
+- [ ] P60.9 Validate the rebuilt model against the PoC benchmark and legacy evidence (`#173`)
+  - [ ] P60.9a Compare the rebuilt runtime against the accepted PoC benchmark surfaces.
+  - [ ] P60.9b Compare the rebuilt runtime against relevant legacy evidence where it still matters for acceptance.
+  - [ ] P60.9c Record which observed differences are accepted redesign choices versus unresolved regressions.
+- [ ] P60.10 Publish closeout docs and decide whether `#172` can close (`#173`)
+  - [ ] P60.10a Update the parent and instance docs/runbooks to teach the new MKRF rebuild lane.
+  - [ ] P60.10b Record the final claim boundary between benchmark archaeology and the new source-faithful rebuild.
+  - [ ] P60.10c Decide whether the umbrella legacy-recovery issue `#172` can close once the from-scratch rebuild phase is complete.
 
 ## Phase 61: First-Class Windows Arbutus Auth Workflow
 

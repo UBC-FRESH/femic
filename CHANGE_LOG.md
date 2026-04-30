@@ -15954,3 +15954,10 @@
     - `managed_au_curves.csv`; and
   - kept the legacy TIPSY surface out of the canonical comparison plots so the
     managed-vs-first-growth plots now reflect the actual rebuilt managed lane.
+## 2026-04-30 - Inserted an MKRF bad-curve gate before runtime generation
+- `#177` planning/control slice:
+  - opened a dedicated child issue to lasso bad first-growth and managed curve
+    cases before continuing canonical runtime generation;
+  - inserted new `P60.7` in the roadmap as a blocking bad-curve task; and
+  - shifted canonical runtime generation, benchmark validation, and closeout
+    down one block so the rebuild lane cannot keep moving on bad curves.

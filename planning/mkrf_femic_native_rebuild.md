@@ -109,11 +109,13 @@ Completed:
 - `P60.6`
   build the provisional managed AU-wise TIPSY/BTC bootstrap lane;
 - `P60.7`
-  rebuild the full MKRF runtime package from source-faithful inputs;
+  fix bad curve cases before runtime generation continues;
 - `P60.8`
+  rebuild the full MKRF runtime package from source-faithful inputs;
+- `P60.9`
   validate the rebuilt model against the accepted PoC benchmark and relevant
   legacy evidence; and
-- `P60.9`
+- `P60.10`
   publish closeout docs and decide whether umbrella issue `#172` can close.
 
 ### Current active edge
@@ -121,9 +123,9 @@ Completed:
 The current active implementation edge is:
 
 - `P60.7a`
-  generate the canonical runtime XML, tracks, and control surfaces from the
-  new FEMIC-native rebuild lane, consuming the explicit selected-AU subset and
-  AU-wise unmanaged/first-growth and managed curves.
+  audit the bad first-growth and managed comparison cases against raw source
+  rows, assignment lineage, and fit diagnostics before runtime generation
+  continues.
 
 In shorthand:
 
@@ -141,12 +143,15 @@ In shorthand:
   bootstrap the AU-wise managed/planted lane from legacy TIPSY evidence and
   keep it explicitly provisional;
 - `P60.7`
+  fix bad curve cases and record the curve-quality acceptance gate before
+  runtime generation continues;
+- `P60.8`
   rebuild the full MKRF runtime package from source-faithful inputs and publish
   the new canonical runtime outputs;
-- `P60.8`
+- `P60.9`
   validate the rebuilt model against the accepted PoC benchmark surfaces and
   the legacy evidence that still matters for acceptance; and
-- `P60.9`
+- `P60.10`
   publish closeout docs and decide whether umbrella legacy-recovery issue
   `#172` can close once the from-scratch rebuild is complete.
 
@@ -1198,7 +1203,66 @@ The following are still *not* claimed:
 - final canonical managed silviculture behavior; or
 - benchmark parity on planted-stand behavior.
 
-## `P60.7a` Canonical runtime-package generation contract
+## `P60.7` Bad-curve gate before runtime generation
+
+Canonical runtime generation is blocked until the rebuilt curve lane is good
+enough to trust as a canonical input surface.
+
+This gate exists because the current selected-unit comparison plots already
+show obviously bad cases, including:
+
+- `tipsy_vdyp_tsamkrf-11-CWHvm1_CW+FDC.png`
+- `tipsy_vdyp_tsamkrf-12-CWHdmx_CW+FDC.png`
+
+In those cases the rebuilt first-growth curve is effectively near-null while
+the rebuilt managed curve is large. That is not an acceptable input state for
+canonical runtime generation.
+
+### `P60.7a` Audit contract
+
+Audit the bad curve cases against:
+
+- raw VDYP source rows;
+- stand-to-unit assignment lineage;
+- first-growth fit diagnostics;
+- managed bootstrap lineage; and
+- comparison plot outputs.
+
+The goal is to determine whether each bad case comes from:
+
+- wrong source field choice;
+- wrong units or scaling interpretation;
+- wrong grouping or stand-to-unit assignment;
+- bad fit or aggregation behavior; or
+- a truly expected source-data pattern that should be documented explicitly.
+
+### `P60.7b` Correction contract
+
+If the bad cases are not expected source patterns, fix the relevant source
+ingestion, assignment, grouping, or curve-fit logic and regenerate:
+
+- `first_growth_au_curves.csv`
+- `first_growth_au_fit_diagnostics.csv`
+- `managed_au_curves.csv` if the managed side is implicated; and
+- the selected-unit diagnostic/comparison plots.
+
+The corrected outputs must be published through checked-in FEMIC builders, not
+shell-only ad hoc fixes.
+
+### `P60.7c` Acceptance gate
+
+Before runtime generation continues, the rebuild lane must record a
+curve-quality acceptance gate that says:
+
+- which bad cases were audited;
+- which were fixed;
+- which, if any, remain as accepted source-data oddities; and
+- why the remaining curve bundle is trustworthy enough to drive canonical XML
+  and track generation.
+
+Until that gate is satisfied, `P60.8` runtime-package work is blocked.
+
+## `P60.8a` Canonical runtime-package generation contract
 
 The canonical rebuild lane must generate a new runtime package from the
 source-faithful geometry, control, AU, and curve surfaces already defined in
@@ -1241,7 +1305,7 @@ defaulting back to the legacy naming pattern.
 
 ### Required generated runtime surfaces
 
-`P60.7a` should publish, at minimum:
+`P60.8a` should publish, at minimum:
 
 - canonical runtime XML under `xml/`;
 - canonical runtime tracks under `tracks/`;
@@ -1274,9 +1338,9 @@ That means the canonical XML and track-generation lane may not:
 - bypass the AU-wise NLLS-fitted first-growth surface while still claiming a
   canonical rebuild runtime package.
 
-### Acceptance rule for `P60.7a`
+### Acceptance rule for `P60.8a`
 
-`P60.7a` is only satisfied when the rebuild lane can point to all of the
+`P60.8a` is only satisfied when the rebuild lane can point to all of the
 following:
 
 - a path-distinct canonical runtime package under
@@ -1289,7 +1353,7 @@ following:
   source-faithful rebuild lane rather than copied from benchmark/reference
   artifacts.
 
-## `P60.7b` Matrix Builder and runtime-assembly acceptance contract
+## `P60.8b` Matrix Builder and runtime-assembly acceptance contract
 
 After the canonical runtime package has been generated, the rebuild lane must
 prove that Patchworks can assemble and use that package as a real runtime
@@ -1310,7 +1374,7 @@ The canonical rebuild lane should, in order:
 
 ### Required generated evidence
 
-`P60.7b` should leave behind, at minimum:
+`P60.8b` should leave behind, at minimum:
 
 - preflight logs/manifests tied to the canonical package path;
 - Matrix Builder logs/manifests tied to the canonical package path;
@@ -1335,7 +1399,7 @@ all of the following are true:
 
 ### Explicit rejection rules
 
-`P60.7b` is not satisfied by any of the following:
+`P60.8b` is not satisfied by any of the following:
 
 - running Matrix Builder against the PoC package and reinterpreting the result
   as a canonical rebuild check;
