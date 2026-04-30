@@ -15563,3 +15563,13 @@
   - built the standalone instance docs successfully with
     `sphinx -b html external/femic-mkrf-instance/docs external/femic-mkrf-instance/docs/_build/html -W`,
     then removed the generated `_build/` output from the worktree.
+## 2026-04-29 - Closed the MKRF PoC standalone docs publication task
+- `#175` / `P59.1c` closeout:
+  - enriched the standalone MKRF PoC docs with the original analyst narrative
+    from `MKRF_Modeling_Notes.pdf`, the accepted benchmark framing, the PoC
+    claim boundary, and the lineage/runbook interpretation needed for operators;
+  - added the missing standalone publication wiring:
+    `.readthedocs.yaml`, `docs/docs-ownership-and-release.rst`, and a private
+    copy of the original legacy analyst report under
+    `docs/reference/MKRF_Modeling_Notes.pdf`; and
+  - moved the active docs lane from `P59.1` to `P59.2`.

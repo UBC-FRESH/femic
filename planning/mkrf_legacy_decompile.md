@@ -359,10 +359,17 @@ Completed Phase 55 workbook-contract recovery:
 
 Active next bounded move:
 
-`P59.1c` is the active next bounded move. The key parent and instance-facing
-docs now state explicitly that the current MKRF runtime package is a PoC
-benchmark/intermediate, not the final canonical rebuild. The next slice should
-publish the docs lane with the same operator-facing quality bar as K3Z.
+`P59.2` is the active next bounded move. `P59.1` is now complete:
+
+- the parent FEMIC docs carry MKRF pointer and lineage pages;
+- the current MKRF runtime package is clearly labeled as the PoC benchmark/
+  intermediate rather than the final canonical rebuild;
+- the standalone instance docs now exist under `external/femic-mkrf-instance/docs/`;
+- the standalone docs have K3Z-style release wiring via `.readthedocs.yaml`
+  and `docs/docs-ownership-and-release.rst`; and
+- the original private legacy analyst report now lives in the private instance
+  docs tree as `docs/reference/MKRF_Modeling_Notes.pdf` and is referenced from
+  the published pages.
 
 The recovered K3Z standalone docs template is broader than the MKRF PoC needs.
 The current chapter plan for `external/femic-mkrf-instance/docs/` is:
@@ -412,9 +419,11 @@ The first-pass standalone docs scaffold is now in place under
 - `rebuild-and-qa.rst`
 - `troubleshooting.rst`
 
-Those pages currently form the publish surface skeleton. The next bounded move
-should refine the content quality and publication wiring rather than changing
-the chapter structure again.
+Those pages no longer form only a skeleton. They now carry the accepted PoC
+operator narrative, benchmark framing, lineage explanation, release wiring, and
+private reference to the original legacy analyst notes. The next bounded move
+should document the accepted benchmark/runtime lane and its claim boundary more
+explicitly under `P59.2`.
 
 Current `P58.3` state:
 

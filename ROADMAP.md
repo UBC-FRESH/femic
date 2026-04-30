@@ -1621,7 +1621,7 @@ Notes: `planning/mkrf_legacy_decompile.md`
 - [ ] P59.1 Publish MKRF PoC Sphinx docs using the K3Z instance docs as the template (`#175`)
   - [x] P59.1a Match the K3Z instance docs scope, depth, formatting, and structure rather than inventing a one-off MKRF docs shape.
   - [x] P59.1b Make the docs explicit that the current MKRF model is a PoC benchmark/intermediate, not the final canonical rebuild.
-  - [ ] P59.1c Publish the docs through the existing Sphinx/GitHub Pages workflow with the same operator-facing quality bar as K3Z, using a standalone MKRF PoC chapter set built from:
+  - [x] P59.1c Publish the docs through the existing Sphinx/GitHub Pages workflow with the same operator-facing quality bar as K3Z, using a standalone MKRF PoC chapter set built from:
     `index`, `getting-started`, `model-anatomy`, `data-package-crosswalk`,
     `metadata-and-lineage`, `operator-runbook`, `rebuild-and-qa`,
     `troubleshooting`, and MKRF-specific PoC pages for benchmark results,
