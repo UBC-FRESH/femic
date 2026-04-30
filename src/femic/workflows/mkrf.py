@@ -14,6 +14,7 @@ from femic.pipeline.mkrf_au import (
     build_mkrf_selected_au_table,
 )
 from femic.pipeline.mkrf_first_growth import (
+    _MIN_FIRST_GROWTH_SOURCE_STANDS,
     build_mkrf_first_growth_curves,
     collapse_stand_assignments,
     _resolve_eligible_first_growth_feature_ids,
@@ -1064,6 +1065,15 @@ def build_mkrf_bad_curve_audit(
         terminal = pd.to_numeric(joined.get("terminal_vdyp_volume"), errors="coerce")
         stand_count = int(len(joined))
         valid_age = age.dropna()
+        old_support_stand_count = int(
+            joined.loc[
+                pd.to_numeric(joined.get("AGE_2020"), errors="coerce") >= 80.0,
+                "forest_cover_id",
+            ]
+            .dropna()
+            .astype(int)
+            .nunique()
+        )
 
         def _share(count: int) -> float:
             if stand_count == 0:
@@ -1088,7 +1098,12 @@ def build_mkrf_bad_curve_audit(
 
         terminal_volume = pd.to_numeric(selected_row["terminal_volume"], errors="coerce")
         if pd.isna(terminal_volume):
-            issue_class = "no_first_growth_after_age_floor"
+            if age_gte_80_count == 0:
+                issue_class = "no_first_growth_after_age_floor"
+            elif old_support_stand_count < _MIN_FIRST_GROWTH_SOURCE_STANDS:
+                issue_class = "insufficient_source_stands"
+            else:
+                issue_class = "missing_first_growth_curve"
         elif low_count > 0 and high_count > 0:
             issue_class = "mixed_population"
         elif _share(age_lt_80_count) >= 0.5:
@@ -1119,6 +1134,7 @@ def build_mkrf_bad_curve_audit(
                 "age_lt_80_share": _share(age_lt_80_count),
                 "age_gte_80_count": age_gte_80_count,
                 "age_gte_80_share": _share(age_gte_80_count),
+                "old_support_stand_count": old_support_stand_count,
                 "terminal_vdyp_min": float(terminal.min()) if len(terminal.dropna()) else np.nan,
                 "terminal_vdyp_p25": float(terminal.quantile(0.25)) if len(terminal.dropna()) else np.nan,
                 "terminal_vdyp_median": float(terminal.median()) if len(terminal.dropna()) else np.nan,

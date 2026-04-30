@@ -163,3 +163,119 @@ def test_apply_young_skewed_sibling_borrow_replaces_only_target_curve() -> None:
     ].iloc[0]
     assert row["selected_path"] == "borrowed_young_skewed_sibling"
     assert row["borrowed_from_au_id"] == "cwh_dm_x_cw_dr"
+
+
+def test_build_mkrf_bad_curve_audit_classifies_insufficient_source_stands(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assignment_csv = tmp_path / "stand_au_assignment.csv"
+    selected_au_csv = tmp_path / "selected_au_table.csv"
+    first_growth_curves_csv = tmp_path / "first_growth_au_curves.csv"
+    vdyp_yields_csv = tmp_path / "vdyp_yields.csv"
+    output_dir = tmp_path / "out"
+
+    pd.DataFrame(
+        [{"res_key": 1, "forest_cover_id": 101, "shape_area_ha": 10.0, "au_id": "au_sparse"}]
+    ).to_csv(assignment_csv, index=False)
+    pd.DataFrame(
+        [{"au_id": "au_sparse", "selected_rank": 1, "covered_area_ha": 80.0}]
+    ).to_csv(selected_au_csv, index=False)
+    pd.DataFrame(columns=["au_id", "age", "volume"]).to_csv(first_growth_curves_csv, index=False)
+    pd.DataFrame(
+        [{"FEATURE_ID": 101, "PRJ_TOTAL_AGE": 350, "PRJ_VOL_DWB": 250.0}]
+    ).to_csv(vdyp_yields_csv, index=False)
+
+    source_table = pd.DataFrame(
+        [
+            {
+                "FOREST_COVER_ID": 101,
+                "TCL_1_ESTIMATED_SITE_INDEX": 28.0,
+                "AGE_2020": 90,
+                "BEC_ZONE_CODE": "CWH",
+                "BEC_SUBZONE": "vm",
+                "BEC_VARIANT": "1",
+            }
+        ]
+    )
+    monkeypatch.setattr("femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table)
+
+    result = build_mkrf_bad_curve_audit(
+        resultant_gdb=tmp_path / "resultant.gdb",
+        assignment_csv=assignment_csv,
+        selected_au_csv=selected_au_csv,
+        first_growth_curves_csv=first_growth_curves_csv,
+        vdyp_yields_csv=vdyp_yields_csv,
+        output_dir=output_dir,
+    )
+
+    summary = pd.read_csv(result.summary_path)
+    assert (
+        summary.loc[summary["au_id"] == "au_sparse", "curve_issue_class"].item()
+        == "insufficient_source_stands"
+    )
+    assert summary.loc[summary["au_id"] == "au_sparse", "old_support_stand_count"].item() == 1
+
+
+def test_build_mkrf_bad_curve_audit_uses_unique_old_support_stands(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assignment_csv = tmp_path / "stand_au_assignment.csv"
+    selected_au_csv = tmp_path / "selected_au_table.csv"
+    first_growth_curves_csv = tmp_path / "first_growth_au_curves.csv"
+    vdyp_yields_csv = tmp_path / "vdyp_yields.csv"
+    output_dir = tmp_path / "out"
+
+    pd.DataFrame(
+        [
+            {"res_key": 1, "forest_cover_id": 101, "shape_area_ha": 10.0, "au_id": "au_dup"},
+            {"res_key": 2, "forest_cover_id": 101, "shape_area_ha": 5.0, "au_id": "au_dup"},
+            {"res_key": 3, "forest_cover_id": 102, "shape_area_ha": 5.0, "au_id": "au_dup"},
+        ]
+    ).to_csv(assignment_csv, index=False)
+    pd.DataFrame(
+        [{"au_id": "au_dup", "selected_rank": 1, "covered_area_ha": 20.0}]
+    ).to_csv(selected_au_csv, index=False)
+    pd.DataFrame(columns=["au_id", "age", "volume"]).to_csv(first_growth_curves_csv, index=False)
+    pd.DataFrame(
+        [
+            {"FEATURE_ID": 101, "PRJ_TOTAL_AGE": 350, "PRJ_VOL_DWB": 250.0},
+            {"FEATURE_ID": 102, "PRJ_TOTAL_AGE": 350, "PRJ_VOL_DWB": 260.0},
+        ]
+    ).to_csv(vdyp_yields_csv, index=False)
+
+    source_table = pd.DataFrame(
+        [
+            {
+                "FOREST_COVER_ID": 101,
+                "TCL_1_ESTIMATED_SITE_INDEX": 28.0,
+                "AGE_2020": 90,
+                "BEC_ZONE_CODE": "CWH",
+                "BEC_SUBZONE": "vm",
+                "BEC_VARIANT": "1",
+            },
+            {
+                "FOREST_COVER_ID": 102,
+                "TCL_1_ESTIMATED_SITE_INDEX": 30.0,
+                "AGE_2020": 40,
+                "BEC_ZONE_CODE": "CWH",
+                "BEC_SUBZONE": "vm",
+                "BEC_VARIANT": "1",
+            },
+        ]
+    )
+    monkeypatch.setattr("femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table)
+
+    result = build_mkrf_bad_curve_audit(
+        resultant_gdb=tmp_path / "resultant.gdb",
+        assignment_csv=assignment_csv,
+        selected_au_csv=selected_au_csv,
+        first_growth_curves_csv=first_growth_curves_csv,
+        vdyp_yields_csv=vdyp_yields_csv,
+        output_dir=output_dir,
+    )
+
+    summary = pd.read_csv(result.summary_path)
+    row = summary.loc[summary["au_id"] == "au_dup"].iloc[0]
+    assert row["age_gte_80_count"] == 2
+    assert row["old_support_stand_count"] == 1
+    assert row["curve_issue_class"] == "insufficient_source_stands"

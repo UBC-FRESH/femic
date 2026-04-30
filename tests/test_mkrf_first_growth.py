@@ -109,6 +109,7 @@ def test_build_mkrf_first_growth_curves_groups_stands_by_au() -> None:
         vdyp_yields=vdyp_yields,
         assignment=assignment,
         process_vdyp_out_fn=_fake_process,
+        min_source_stands=1,
     )
 
     assert sorted(curves["au_id"].unique().tolist()) == [
@@ -188,6 +189,7 @@ def test_build_mkrf_first_growth_curves_lexmatches_unmatched_stands() -> None:
         source_table=source_table,
         process_vdyp_out_fn=_fake_process,
         levenshtein_fn=lambda a, b: 0 if a == b else 1,
+        min_source_stands=1,
     )
 
     assert curves["au_id"].unique().tolist() == ["cwh_vm_1_cw_hw"]
@@ -232,11 +234,47 @@ def test_build_mkrf_first_growth_curves_excludes_stands_younger_than_80() -> Non
         assignment=assignment,
         source_table=source_table,
         process_vdyp_out_fn=_fake_process,
+        min_source_stands=1,
     )
 
     assert curves["au_id"].unique().tolist() == ["cwh_vm_1_cw_fdc"]
     row = diagnostics.iloc[0]
     assert int(row["source_stand_count"]) == 1
+
+
+def test_build_mkrf_first_growth_curves_rejects_single_old_stand_support() -> None:
+    assignment = pd.DataFrame(
+        [
+            {"res_key": 1, "forest_cover_id": 10, "au_id": "cwh_vm_1_dr_hw", "shape_area_ha": 1.0},
+            {"res_key": 2, "forest_cover_id": 11, "au_id": "cwh_vm_1_dr_hw", "shape_area_ha": 1.0},
+        ]
+    )
+    source_table = pd.DataFrame(
+        [
+            {"FOREST_COVER_ID": 10, "AGE_2020": 79},
+            {"FOREST_COVER_ID": 11, "AGE_2020": 84},
+        ]
+    )
+    vdyp_yields = pd.DataFrame(
+        [
+            {"FEATURE_ID": 10, "PRJ_TOTAL_AGE": 50, "PRJ_VOL_DWB": 180.0},
+            {"FEATURE_ID": 10, "PRJ_TOTAL_AGE": 100, "PRJ_VOL_DWB": 240.0},
+            {"FEATURE_ID": 11, "PRJ_TOTAL_AGE": 50, "PRJ_VOL_DWB": 210.0},
+            {"FEATURE_ID": 11, "PRJ_TOTAL_AGE": 100, "PRJ_VOL_DWB": 280.0},
+        ]
+    )
+
+    curves, diagnostics = build_mkrf_first_growth_curves(
+        vdyp_yields=vdyp_yields,
+        assignment=assignment,
+        source_table=source_table,
+    )
+
+    assert curves.empty
+    row = diagnostics.iloc[0]
+    assert int(row["source_stand_count"]) == 1
+    assert row["selected_path"] == "insufficient_source_stands"
+    assert bool(row["accepted"]) is False
 
 
 def test_format_mkrf_au_label_uses_k3z_style_display_shape() -> None:

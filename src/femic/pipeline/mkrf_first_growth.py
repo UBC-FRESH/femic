@@ -23,6 +23,7 @@ from femic.pipeline.vdyp_stage import build_curve_fit_adapter
 
 _TAIL_START_AGE = 150.0
 _MIN_FIRST_GROWTH_AGE = 80.0
+_MIN_FIRST_GROWTH_SOURCE_STANDS = 2
 
 
 @dataclass(frozen=True)
@@ -292,6 +293,7 @@ def build_mkrf_first_growth_curves(
     levenshtein_fn: Callable[[str, str], int] | None = None,
     process_vdyp_out_fn: Callable[..., tuple[np.ndarray, np.ndarray]] = process_vdyp_out,
     min_first_growth_age: float = _MIN_FIRST_GROWTH_AGE,
+    min_source_stands: int = _MIN_FIRST_GROWTH_SOURCE_STANDS,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Build AU-wise first-growth curves and fit diagnostics from VDYP stand evidence."""
     stand_assignment = collapse_stand_assignments(assignment)
@@ -340,26 +342,6 @@ def build_mkrf_first_growth_curves(
 
     for au_id, au_rows in joined.groupby("au_id", sort=True):
         feature_ids = sorted({int(v) for v in au_rows["FEATURE_ID"].tolist()})
-        vdyp_out = {feature_id: feature_tables[feature_id] for feature_id in feature_ids}
-        events: list[dict[str, Any]] = []
-        x_curve, y_curve = process_vdyp_out_fn(
-            vdyp_out,
-            curve_fit_fn=curve_fit_fn,
-            body_fit_func=legacy_fit_func1,
-            body_fit_func_bounds_func=legacy_fit_func1_bounds_func,
-            toe_fit_func=legacy_fit_func1,
-            toe_fit_func_bounds_func=legacy_fit_func1_bounds_func,
-            log_event=events.append,
-            curve_context={"au_id": str(au_id)},
-        )
-        binned = build_observed_bins_for_fit(
-            vdyp_out_concat=pd.concat(vdyp_out.values()),
-            volume_flavour="Vdwb",
-            min_age=30,
-            max_age=350,
-            bin_years=5,
-        )
-        metrics = _fit_quality(binned=binned, x_curve=x_curve, y_curve=y_curve)
         assignment_rows = stand_assignment.loc[
             stand_assignment["au_id"] == str(au_id)
         ].copy()
@@ -376,6 +358,36 @@ def build_mkrf_first_growth_curves(
         lexmatch_count = int(assignment_status.eq("lexmatch_assigned").sum())
         lexmatch_alias_count = int(lexmatch_used.astype(bool).sum())
         sparse_warning = len(feature_ids) < 5
+        binned = pd.DataFrame(columns=["age_bin", "median_volume"])
+        if len(feature_ids) < min_source_stands:
+            x_curve = np.asarray([], dtype=float)
+            y_curve = np.asarray([], dtype=float)
+            metrics = {"rmse": np.nan, "mape": np.nan, "tail_rmse": np.nan}
+            selected_path = "insufficient_source_stands"
+            accepted = False
+        else:
+            vdyp_out = {feature_id: feature_tables[feature_id] for feature_id in feature_ids}
+            events: list[dict[str, Any]] = []
+            x_curve, y_curve = process_vdyp_out_fn(
+                vdyp_out,
+                curve_fit_fn=curve_fit_fn,
+                body_fit_func=legacy_fit_func1,
+                body_fit_func_bounds_func=legacy_fit_func1_bounds_func,
+                toe_fit_func=legacy_fit_func1,
+                toe_fit_func_bounds_func=legacy_fit_func1_bounds_func,
+                log_event=events.append,
+                curve_context={"au_id": str(au_id)},
+            )
+            binned = build_observed_bins_for_fit(
+                vdyp_out_concat=pd.concat(vdyp_out.values()),
+                volume_flavour="Vdwb",
+                min_age=30,
+                max_age=350,
+                bin_years=5,
+            )
+            metrics = _fit_quality(binned=binned, x_curve=x_curve, y_curve=y_curve)
+            selected_path = _selected_path_from_events(events)
+            accepted = True
 
         for age, volume in zip(np.asarray(x_curve, dtype=float), np.asarray(y_curve, dtype=float)):
             if not math.isfinite(float(volume)) or float(volume) <= 0.0:
@@ -403,14 +415,16 @@ def build_mkrf_first_growth_curves(
                 "lexmatch_stand_count": lexmatch_count,
                 "lexmatch_alias_stand_count": lexmatch_alias_count,
                 "sparse_warning": sparse_warning,
-                "selected_path": _selected_path_from_events(events),
+                "selected_path": selected_path,
                 "rmse": round(metrics["rmse"], 6),
                 "mape": round(metrics["mape"], 6),
                 "tail_rmse": round(metrics["tail_rmse"], 6),
-                "accepted": True,
+                "accepted": accepted,
             }
         )
 
-    curves = pd.DataFrame(curve_rows).sort_values(["au_id", "age"], kind="stable")
+    curves = pd.DataFrame(curve_rows, columns=["au_id", "age", "volume"]).sort_values(
+        ["au_id", "age"], kind="stable"
+    )
     diagnostics = pd.DataFrame(diagnostic_rows).sort_values("au_id", kind="stable")
     return curves.reset_index(drop=True), diagnostics.reset_index(drop=True)

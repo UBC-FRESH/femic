@@ -15999,3 +15999,21 @@
   - `7` units with no first-growth left after the age-floor rule;
   - `1` young-skewed unit; and
   - `2` true mixed-population units.
+## 2026-04-30 - Reclassified MKRF single-old-stand first-growth failures
+- `#177` / `P60.7b` correction slice:
+  - changed the canonical first-growth builder so units with fewer than `2`
+    unique old-enough source stands no longer get a fitted VDYP first-growth
+    curve;
+  - added audit logic that classifies missing curves against unique old-support
+    stand counts rather than fragment-row counts;
+  - regenerated:
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_curves.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_fit_diagnostics.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_summary.csv`
+  - current audit result after this correction:
+    - `14` flagged units out of `31` selected units, split into:
+      - `8` `insufficient_source_stands`
+      - `5` `no_first_growth_after_age_floor`
+      - `1` `mixed_population`;
+  - `cwh_vm_1_dr_hw` now lands in `insufficient_source_stands` with no fitted
+    first-growth curve, which is the intended correction for that case.
