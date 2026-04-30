@@ -22,6 +22,7 @@ from femic.pipeline.vdyp_stage import build_curve_fit_adapter
 
 
 _TAIL_START_AGE = 150.0
+_MIN_FIRST_GROWTH_AGE = 80.0
 
 
 @dataclass(frozen=True)
@@ -259,6 +260,30 @@ def _expand_stand_assignment_with_lexmatch(
     )
 
 
+def _resolve_eligible_first_growth_feature_ids(
+    *,
+    vdyp_yields: pd.DataFrame,
+    source_table: pd.DataFrame | None,
+    min_first_growth_age: float,
+) -> set[int]:
+    vdyp_feature_ids = set(
+        pd.to_numeric(vdyp_yields["FEATURE_ID"], errors="coerce").dropna().astype(int)
+    )
+    if source_table is None or "AGE_2020" not in source_table.columns:
+        return vdyp_feature_ids
+    source_age = source_table.copy()
+    source_age["forest_cover_id"] = pd.to_numeric(
+        source_age["FOREST_COVER_ID"], errors="coerce"
+    )
+    source_age["age_2020"] = pd.to_numeric(source_age["AGE_2020"], errors="coerce")
+    eligible = source_age.loc[
+        source_age["forest_cover_id"].notna()
+        & source_age["age_2020"].ge(float(min_first_growth_age)),
+        "forest_cover_id",
+    ]
+    return vdyp_feature_ids & set(eligible.astype(int))
+
+
 def build_mkrf_first_growth_curves(
     *,
     vdyp_yields: pd.DataFrame,
@@ -266,16 +291,25 @@ def build_mkrf_first_growth_curves(
     source_table: pd.DataFrame | None = None,
     levenshtein_fn: Callable[[str, str], int] | None = None,
     process_vdyp_out_fn: Callable[..., tuple[np.ndarray, np.ndarray]] = process_vdyp_out,
+    min_first_growth_age: float = _MIN_FIRST_GROWTH_AGE,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Build AU-wise first-growth curves and fit diagnostics from VDYP stand evidence."""
     stand_assignment = collapse_stand_assignments(assignment)
-    vdyp_feature_ids = set(
-        pd.to_numeric(vdyp_yields["FEATURE_ID"], errors="coerce").dropna().astype(int)
+    eligible_feature_ids = _resolve_eligible_first_growth_feature_ids(
+        vdyp_yields=vdyp_yields,
+        source_table=source_table,
+        min_first_growth_age=min_first_growth_age,
     )
+    stand_assignment = stand_assignment.loc[
+        pd.to_numeric(stand_assignment["forest_cover_id"], errors="coerce")
+        .fillna(-1)
+        .astype(int)
+        .isin(eligible_feature_ids)
+    ].copy()
     assigned_feature_ids = set(
         pd.to_numeric(stand_assignment["forest_cover_id"], errors="coerce").dropna().astype(int)
     )
-    unmatched_feature_ids = vdyp_feature_ids - assigned_feature_ids
+    unmatched_feature_ids = eligible_feature_ids - assigned_feature_ids
     if unmatched_feature_ids:
         if source_table is None:
             raise ValueError(

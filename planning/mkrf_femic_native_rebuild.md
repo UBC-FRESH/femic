@@ -1260,6 +1260,15 @@ ingestion, assignment, grouping, or curve-fit logic and regenerate:
 The corrected outputs must be published through checked-in FEMIC builders, not
 shell-only ad hoc fixes.
 
+Current correction rule now in force:
+
+- stands with `AGE_2020 < 80` are not treated as first-growth stands for the
+  canonical VDYP first-growth lane;
+- they are excluded from `first_growth_au_curves.csv` synthesis and associated
+  first-growth diagnostics; and
+- they remain candidates for the managed/planted lane instead of being used to
+  anchor first-growth VDYP curves.
+
 ### `P60.7c` Acceptance gate
 
 Before runtime generation continues, the rebuild lane must record a

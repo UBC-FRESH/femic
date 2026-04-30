@@ -16,6 +16,7 @@ from femic.pipeline.mkrf_au import (
 from femic.pipeline.mkrf_first_growth import (
     build_mkrf_first_growth_curves,
     collapse_stand_assignments,
+    _resolve_eligible_first_growth_feature_ids,
 )
 from femic.pipeline.mkrf_managed import (
     build_mkrf_managed_au_bootstrap_table,
@@ -186,8 +187,10 @@ def build_mkrf_first_growth_input_bundle(
     diagnostics_path = output_dir / "first_growth_au_fit_diagnostics.csv"
     curves.to_csv(curves_path, index=False)
     diagnostics.to_csv(diagnostics_path, index=False)
-    vdyp_feature_ids = set(
-        pd.to_numeric(vdyp_yields["FEATURE_ID"], errors="coerce").dropna().astype(int)
+    vdyp_feature_ids = _resolve_eligible_first_growth_feature_ids(
+        vdyp_yields=vdyp_yields,
+        source_table=source_table,
+        min_first_growth_age=80.0,
     )
     assigned_feature_ids = set(
         pd.to_numeric(assignment["forest_cover_id"], errors="coerce")
@@ -564,6 +567,15 @@ def build_mkrf_all_plots(
     import matplotlib.pyplot as plt
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    for pattern in (
+        "strata-tsa*.png",
+        "strata-tsa*.pdf",
+        "vdyp_lmh_tsa*.png",
+        "vdyp_fitdiag_tsa*.png",
+        "tipsy_vdyp_tsa*.png",
+    ):
+        for path in output_dir.glob(pattern):
+            path.unlink()
     strata = build_mkrf_au_distribution_plot(
         resultant_gdb=resultant_gdb,
         assignment_csv=assignment_csv,

@@ -15973,3 +15973,17 @@
     - `15` flagged units out of `31` selected units; and
   - moved the active rebuild edge to `P60.7b`, where the flagged cases must be
     corrected before canonical runtime generation can continue.
+## 2026-04-30 - Applied the MKRF first-growth age-floor correction
+- `#177` / `P60.7b` correction slice:
+  - changed the canonical first-growth builder so only stands with
+    `AGE_2020 >= 80` contribute to the VDYP first-growth lane;
+  - regenerated:
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_curves.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_fit_diagnostics.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_summary.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_detail.csv`
+    - the selected-unit plot bundle;
+  - current audit result after the age floor:
+    - `11` flagged units out of `31` selected units; and
+  - stale managed-vs-first-growth plot files are now removed on rebuild, so the
+    plot surface reflects only the current surviving comparison cases.

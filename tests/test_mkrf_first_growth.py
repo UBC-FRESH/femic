@@ -197,5 +197,47 @@ def test_build_mkrf_first_growth_curves_lexmatches_unmatched_stands() -> None:
     assert int(row["lexmatch_alias_stand_count"]) == 1
 
 
+def test_build_mkrf_first_growth_curves_excludes_stands_younger_than_80() -> None:
+    assignment = pd.DataFrame(
+        [
+            {"res_key": 1, "forest_cover_id": 10, "au_id": "cwh_vm_1_cw_fdc", "shape_area_ha": 2.0},
+            {"res_key": 2, "forest_cover_id": 11, "au_id": "cwh_vm_1_cw_fdc", "shape_area_ha": 2.0},
+        ]
+    )
+    source_table = pd.DataFrame(
+        [
+            {"FOREST_COVER_ID": 10, "AGE_2020": 40},
+            {"FOREST_COVER_ID": 11, "AGE_2020": 120},
+        ]
+    )
+    vdyp_yields = pd.DataFrame(
+        [
+            {"FEATURE_ID": 10, "PRJ_TOTAL_AGE": 0, "PRJ_VOL_DWB": 5.0},
+            {"FEATURE_ID": 10, "PRJ_TOTAL_AGE": 50, "PRJ_VOL_DWB": 35.0},
+            {"FEATURE_ID": 10, "PRJ_TOTAL_AGE": 100, "PRJ_VOL_DWB": 70.0},
+            {"FEATURE_ID": 11, "PRJ_TOTAL_AGE": 0, "PRJ_VOL_DWB": 8.0},
+            {"FEATURE_ID": 11, "PRJ_TOTAL_AGE": 50, "PRJ_VOL_DWB": 40.0},
+            {"FEATURE_ID": 11, "PRJ_TOTAL_AGE": 100, "PRJ_VOL_DWB": 80.0},
+        ]
+    )
+
+    def _fake_process(vdyp_out, **_kwargs):
+        assert sorted(vdyp_out.keys()) == [11]
+        x = np.array([1.0, 100.0, 200.0])
+        y = np.array([1e-6, 80.0, 120.0], dtype=float)
+        return x, y
+
+    curves, diagnostics = build_mkrf_first_growth_curves(
+        vdyp_yields=vdyp_yields,
+        assignment=assignment,
+        source_table=source_table,
+        process_vdyp_out_fn=_fake_process,
+    )
+
+    assert curves["au_id"].unique().tolist() == ["cwh_vm_1_cw_fdc"]
+    row = diagnostics.iloc[0]
+    assert int(row["source_stand_count"]) == 1
+
+
 def test_format_mkrf_au_label_uses_k3z_style_display_shape() -> None:
     assert _format_mkrf_au_label("cwh_vm_1_cw_hw") == "CWHvm1_CW+HW"
