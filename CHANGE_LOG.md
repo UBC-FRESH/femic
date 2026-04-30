@@ -15833,3 +15833,15 @@
   - required later AU-wise first-growth curve synthesis to consume this
     published assignment surface rather than legacy AU mappings or stand-wise
     runtime identifiers.
+## 2026-04-30 - Defined the MKRF AU-wise first-growth VDYP curve contract
+- `#173` / `P60.5c` planning slice:
+  - fixed the canonical AU-wise unmanaged/first-growth curve publication
+    surfaces at `data/model_input_bundle/first_growth_au_curves.csv` and
+    `data/model_input_bundle/first_growth_au_fit_diagnostics.csv`;
+  - required explicit lineage from stand-level unmanaged/first-growth VDYP
+    evidence through canonical `au_id` assignment into one accepted AU-wise
+    curve per AU;
+  - required fit diagnostics to expose sample counts, fit family, sparse-sample
+    warnings, acceptance status, and fallback/rescue use per AU; and
+  - checked parent `P60.5` complete once AU table, stand assignment, and
+    AU-wise first-growth synthesis contracts were all defined.

@@ -1655,10 +1655,10 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P60.4b Reconstruct or replace legacy scenario-target semantics only where they are justified by source evidence or benchmark necessity.
   - [x] P60.4c Keep unexplained legacy compiled control seams out of the new build unless they become required by a documented acceptance gate.
   - [x] P60.4d Define the canonical AU key and AU-wise first-growth curve lane before runtime generation.
-- [ ] P60.5 Build the canonical AU table and AU-wise first-growth curve lane (`#173`)
+- [x] P60.5 Build the canonical AU table and AU-wise first-growth curve lane (`#173`)
   - [x] P60.5a Define and publish the canonical AU table from source geometry using `bec_zone + bec_subzone + bec_variant + ordered top-2 leading species`.
   - [x] P60.5b Assign source stands/records to the canonical AUs and publish assignment lineage and diagnostics.
-  - [ ] P60.5c Compile AU-wise first-growth VDYP curves with FEMIC NLLS and publish fit diagnostics and acceptance checks.
+  - [x] P60.5c Compile AU-wise first-growth VDYP curves with FEMIC NLLS and publish fit diagnostics and acceptance checks.
 - [ ] P60.6 Rebuild the full MKRF runtime package from source-faithful inputs (`#173`)
   - [ ] P60.6a Generate the runtime XML, tracks, and control surfaces from the new FEMIC-native rebuild lane, consuming AU-wise unmanaged/first-growth curves rather than legacy stand-wise first-growth curves.
   - [ ] P60.6b Re-run Matrix Builder and runtime assembly against the rebuilt source-faithful package.

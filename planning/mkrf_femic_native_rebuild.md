@@ -941,11 +941,63 @@ At minimum, diagnostics should answer:
 
 The rebuild lane should compile AU-wise unmanaged/first-growth VDYP curves by:
 
-- aggregating stand-level first-growth evidence to the canonical AU level;
-- fitting AU-wise curves with the existing FEMIC NLLS functions and policy
-  style already used for K3Z; and
-- publishing curve-fit diagnostics and acceptance checks for the canonical
-  AU-wise unmanaged curve lane.
+- starting from stand-level VDYP unmanaged/first-growth evidence;
+- joining that evidence to the canonical AU assignment surface published by
+  `P60.5b`;
+- aggregating the unmanaged/first-growth evidence to one AU-wise fitting lane
+  per canonical `au_id`;
+- fitting one unmanaged/first-growth curve per canonical AU with the existing
+  FEMIC NLLS functions and policy style already used for K3Z; and
+- publishing both the AU-wise curve surface and its fit diagnostics as explicit
+  canonical model-input artifacts.
+
+### Canonical publication surfaces
+
+`P60.5c` should publish, at minimum:
+
+- `data/model_input_bundle/first_growth_au_curves.csv`
+- `data/model_input_bundle/first_growth_au_fit_diagnostics.csv`
+
+The first file is the canonical runtime-facing unmanaged/first-growth curve
+surface. The second file is the review/debug surface that proves how each AU
+curve was fit and whether it satisfied the acceptance gate.
+
+### Required lineage
+
+The AU-wise first-growth lane should leave behind traceable lineage showing:
+
+- the source unmanaged/first-growth records used for each AU fit;
+- the canonical `au_id` each source record was assigned to;
+- the sample counts contributing to each AU fit;
+- the age/value domain used for fitting; and
+- the exact FEMIC NLLS policy family used for the accepted fit.
+
+### Required diagnostics
+
+`P60.5c` should publish diagnostics that make fit quality reviewable rather
+than implicit. At minimum, the diagnostics surface should make the following
+visible per AU:
+
+- AU identifier and AU key fields;
+- contributing stand/record count;
+- fitted function/policy family;
+- acceptance status;
+- sparse-sample warning status;
+- fit-quality metrics sufficient to compare accepted vs rejected candidate
+  fits; and
+- any fallback/rescue path that was required before acceptance.
+
+### Acceptance rule for `P60.5c`
+
+`P60.5c` is only satisfied when the rebuild lane can point to:
+
+- a generated `data/model_input_bundle/first_growth_au_curves.csv`;
+- a generated
+  `data/model_input_bundle/first_growth_au_fit_diagnostics.csv`;
+- explicit lineage from stand-level unmanaged/first-growth VDYP evidence into
+  canonical `au_id`-indexed AU curves; and
+- evidence that later runtime generation will consume this AU-wise curve
+  surface instead of the legacy stand-wise unmanaged curve inventory.
 
 The legacy one-curve-per-stand first-growth implementation remains benchmark
 evidence only. It is not a canonical rebuild input or output surface.
