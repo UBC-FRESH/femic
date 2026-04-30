@@ -15643,3 +15643,13 @@
   - updated the instance docs ownership/release page so GitHub Pages is stated
     as the expected public publication path, with `.readthedocs.yaml` retained
     as the standalone build contract and secondary hosting option.
+## 2026-04-30 - Set the governing instance pattern for the from-scratch MKRF rebuild
+- `#173` / `P60.1a` planning slice:
+  - made the standalone K3Z/TSA29 FEMIC instance pattern the governing default
+    for the new MKRF rebuild;
+  - recorded that the target architecture should be a snapshot-style standalone
+    instance with canonical contract surfaces under `config/`, standalone docs
+    under `docs/`, repo-local docs publication wiring, and operator/runbook
+    material that lives with the instance repo; and
+  - kept the parent FEMIC repo in the K3Z/TSA29 role: pointer/lineage pages,
+    not the canonical user-facing rebuild docs surface.

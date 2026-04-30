@@ -1639,7 +1639,7 @@ Notes: `planning/mkrf_legacy_decompile.md`
 Notes: `planning/mkrf_legacy_decompile.md`
 
 - [ ] P60.1 Define the target instance contract and acceptance gates for the new MKRF rebuild (`#173`)
-  - [ ] P60.1a Make K3Z/TSA29-style FEMIC instance organization and workflow conventions the governing default for the new MKRF rebuild.
+  - [x] P60.1a Make K3Z/TSA29-style FEMIC instance organization and workflow conventions the governing default for the new MKRF rebuild.
   - [ ] P60.1b Treat PoC artifacts as benchmark/reference evidence only, not as the target architecture contract.
   - [ ] P60.1c Require that any legacy behavior carried forward into the new rebuild be justified by source evidence or benchmark necessity.
 - [ ] P60.2 Define the canonical FEMIC-native MKRF instance layout using K3Z/TSA29 patterns (`#173`)

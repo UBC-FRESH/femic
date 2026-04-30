@@ -502,7 +502,7 @@ between:
 - the team can now treat the PoC benchmark lane as documented well enough to
   move forward rather than as a lingering documentation gap.
 
-The active next bounded move is `P60.1`.
+The active next bounded move is `P60.1b`.
 
 Current `P58.3` state:
 
@@ -667,6 +667,18 @@ Planned Phase 58 sequence after minimal runnable closeout:
   MKRF rebuild under child issue `#173`, using K3Z/TSA29-style FEMIC instance
   structure and workflow conventions as the governing default. The current PoC
   lane remains benchmark/reference evidence only, not the architecture target.
+- `P60.1a`:
+  completed. The governing default for the new MKRF rebuild is now the
+  standalone K3Z/TSA29 FEMIC instance pattern rather than the current MKRF PoC
+  package layout. Concretely, the rebuild should target:
+  - a snapshot-style standalone instance repo;
+  - canonical contract surfaces such as
+    `config/rebuild.spec.yaml`, `config/rebuild.allowlist.yaml`, and case-local
+    runtime/run-config surfaces under `config/`;
+  - a standalone docs tree under `docs/` with repo-local publication wiring on
+    `main`; and
+  - operator/runbook material that lives with the instance repo, while the
+    parent FEMIC repo keeps the pointer/lineage role.
 - `P60.2`:
   define the canonical FEMIC-native MKRF instance layout and rebuild sequence
   before new source-driven implementation begins.
