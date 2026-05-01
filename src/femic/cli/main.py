@@ -6495,23 +6495,19 @@ def instance_mkrf_audit_bad_curves(
 
 @instance_app.command("mkrf-build-managed-au-inputs")
 def instance_mkrf_build_managed_au_inputs(
-    man_si_by_au_csv: Path = typer.Option(
+    resultant_gdb: Path = typer.Option(
         ...,
-        "--man-si-by-au-csv",
+        "--resultant-gdb",
         exists=True,
-        dir_okay=False,
+        dir_okay=True,
         file_okay=True,
         resolve_path=True,
-        help="Path to the upstream MKRF ManSI_by_AU.csv file.",
+        help="Path to the upstream MKRF Resultant.gdb source surface.",
     ),
-    tipsy_spp_comp_csv: Path = typer.Option(
-        ...,
-        "--tipsy-spp-comp-csv",
-        exists=True,
-        dir_okay=False,
-        file_okay=True,
-        resolve_path=True,
-        help="Path to the upstream MKRF TIPSY_SPP_Comp.csv file.",
+    tipsy_rules_yaml: Path = typer.Option(
+        Path("config/tipsy/tsamkrf.yaml"),
+        "--tipsy-rules-yaml",
+        help="Instance-relative managed-rule YAML used for expert planting specs.",
     ),
     selected_au_csv: Path = typer.Option(
         Path("data/model_input_bundle/selected_au_table.csv"),
@@ -6530,13 +6526,13 @@ def instance_mkrf_build_managed_au_inputs(
     ),
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
-    """Build the provisional managed AU bootstrap and BTC MSYT surfaces."""
+    """Build the expert-rule managed AU bootstrap and BTC MSYT surfaces."""
     context = _resolve_cli_instance_context(instance_root=instance_root)
     result = build_mkrf_managed_au_input_bundle(
+        resultant_gdb=resultant_gdb,
         selected_au_csv=context.resolve_path(selected_au_csv),
         assignment_csv=context.resolve_path(assignment_csv),
-        man_si_by_au_csv=man_si_by_au_csv,
-        tipsy_spp_comp_csv=tipsy_spp_comp_csv,
+        tipsy_rules_yaml=context.resolve_path(tipsy_rules_yaml),
         output_dir=context.resolve_path(output_dir),
     )
     console.print(
@@ -6544,9 +6540,10 @@ def instance_mkrf_build_managed_au_inputs(
         f"selected_aus={result.selected_au_count} "
         f"included_aus={result.included_au_count} "
         f"unmatched_aus={result.unmatched_au_count} "
-        f"direct={result.direct_au_count} "
-        f"lexmatch={result.lexmatch_au_count}"
+        f"logging_origin_si={result.logging_origin_si_au_count} "
+        f"all_stands_fallback={result.all_stands_si_fallback_au_count}"
     )
+    console.print(f"stand_origin_assignment: {result.stand_origin_assignment_path}")
     console.print(f"bootstrap_table: {result.bootstrap_table_path}")
     console.print(f"managed_au_msyt: {result.msyt_path}")
 

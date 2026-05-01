@@ -107,7 +107,7 @@ Completed:
 - `P60.5`
   build the canonical AU table and AU-wise first-growth curve lane;
 - `P60.6`
-  build the provisional managed AU-wise TIPSY/BTC bootstrap lane;
+  build the provisional expert-rule managed AU-wise TIPSY/BTC lane;
 - `P60.7`
   fix bad curve cases before runtime generation continues;
 - `P60.8`
@@ -140,8 +140,8 @@ In shorthand:
   build the canonical AU table, assign stands to AUs, and compile AU-wise
   first-growth VDYP curves with FEMIC NLLS before runtime generation;
 - `P60.6`
-  bootstrap the AU-wise managed/planted lane from legacy TIPSY evidence and
-  keep it explicitly provisional;
+  bootstrap the AU-wise managed/planted lane from expert planting rules plus
+  stand-derived managed site index and keep it explicitly provisional;
 - `P60.7`
   fix bad curve cases and record the curve-quality acceptance gate before
   runtime generation continues;
@@ -1114,7 +1114,7 @@ using the checked-in FEMIC command path and now includes:
 - `14` selected AUs in the default top-N subset; and
 - realized covered-area share `0.808706` for the default `80%` cutoff.
 
-## `P60.6` Provisional managed AU-wise TIPSY/BTC bootstrap lane
+## `P60.6` Provisional expert-rule managed AU-wise TIPSY/BTC lane
 
 The canonical rebuild now has a distinct managed/planted bootstrap lane between
 the AU-wise unmanaged first-growth work and the final runtime-package
@@ -1131,6 +1131,7 @@ This lane is intentionally provisional:
 
 The managed bootstrap lane must publish, at minimum:
 
+- `data/model_input_bundle/stand_origin_assignment.csv`
 - `data/model_input_bundle/managed_au_bootstrap_table.csv`
 - `data/model_input_bundle/managed_au_msyt.csv`
 - `data/model_input_bundle/managed_au_run_manifest.json`
@@ -1150,11 +1151,11 @@ FEMIC code and CLI commands:
 Current observed MKRF result:
 
 - selected canonical AUs: `31`
-- included managed bootstrap AUs: `4`
-- unmatched selected AUs: `27`
-- direct managed AU mappings: `4`
-- lexmatch-managed AU mappings: `0`
-- compiled managed/planted curves: `4`
+- included managed bootstrap AUs: `31`
+- unmatched selected AUs: `0`
+- AUs using logging-origin median managed SI: `29`
+- AUs using all-stand median managed SI fallback: `2`
+- compiled managed/planted curves: `31`
 
 The managed BTC lane now runs successfully through the checked-in builder path,
 but only when it uses the same copied-install/live-overlay unattended TSR mode
@@ -1162,7 +1163,7 @@ as the known-good direct `femic tipsy run-btc` path. The generated
 `managed_au_run_manifest.json` records the successful BTC run and the canonical
 `managed_au_curves.csv` output.
 
-### Managed SI and species payload rule
+### Managed origin, SI, and species payload rule
 
 The canonical AU identity remains unchanged:
 
@@ -1175,23 +1176,62 @@ The canonical AU identity remains unchanged:
 Managed site index is treated as an AU attribute rather than a new AU key
 dimension.
 
-The bootstrap lane currently derives one deterministic `managed_si` per
-selected canonical AU from:
+The managed lane now uses `AGE_2020` to classify stand origin explicitly:
 
-1. `ManSI_by_AU.csv`
-2. `TIPSY_SPP_Comp.csv`
-3. the existing managed AU lexmatch bridge into the selected canonical AU set
+- `AGE_2020 >= 80` -> `fire_origin`
+- `AGE_2020 < 80` -> `logging_origin`
 
-If multiple legacy managed candidates map into one canonical AU, the chosen
-`managed_si` is the weighted median of candidate `SI` values.
+That classification is published in:
+
+- `data/model_input_bundle/stand_origin_assignment.csv`
+
+The managed lane now derives one deterministic `managed_si` per selected
+canonical AU from assigned stands rather than legacy managed-AU lookup:
+
+1. median site index of assigned `logging_origin` stands, if present;
+2. else median site index of all assigned stands; or
+3. else leave the AU unmatched.
+
+The canonical expert-rule authority for species mix, density, and CT/clearcut
+metadata is now:
+
+- `config/tipsy/tsamkrf.yaml`
+
+The current first-pass managed planting rules are:
+
+- `cwh_dm_x`
+  - density: `1500 sph`
+  - mix: `FD 45 / CW 45 / PW 10`
+  - baseline system: `clearcut`
+  - `ct_eligible = true`
+  - `ct_target_age = 40`
+  - `ct_on_fire_origin = false`
+- `cwh_vm_1`
+  - density: `1500 sph`
+  - mix: `FD 45 / CW 45 / PW 10`
+  - baseline system: `clearcut`
+  - `ct_eligible = true`
+  - `ct_target_age = 40`
+  - `ct_on_fire_origin = false`
+- `cwh_vm_2`
+  - density: `1500 sph`
+  - mix: `CW 70 / FD 15 / PW 5 / BA 5 / SS 5`
+  - baseline system: `clearcut`
+  - `ct_eligible = true`
+  - `ct_target_age = 40`
+  - `ct_on_fire_origin = false`
+
+The vm2 rule is intentionally provisional until the AU key carries an
+elevation discriminator that can support a separate high-elevation
+`YC`-bearing family.
 
 ### Claim boundary for `P60.6`
 
 The accepted claim for this lane is:
 
 - reproducible AU-wise managed/planted BTC input generation exists;
-- reproducible AU-wise managed/planted BTC curve compilation exists for the
-  currently included managed AUs;
+- reproducible AU-wise managed/planted BTC curve compilation now exists for
+  the full current selected AU subset;
 - the AU-wise planted lane is structurally compatible with the canonical
   rebuild architecture; and
 - a real BTC attempt can be made and leave behind explicit success or blocker
@@ -1199,7 +1239,7 @@ The accepted claim for this lane is:
 
 The following are still *not* claimed:
 
-- reviewed production MKRF TIPSY rule semantics;
+- reviewed final MKRF TIPSY rule semantics;
 - final canonical managed silviculture behavior; or
 - benchmark parity on planted-stand behavior.
 

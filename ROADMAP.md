@@ -1666,6 +1666,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P60.6b Build an AU-wise BTC `msyt.csv` input surface for planted stands.
   - [x] P60.6c Attempt BTC and publish AU-wise managed/planted curves or an explicit blocker manifest.
   - [x] P60.6d Record the provisional claim boundary for the managed bootstrap lane.
+  - [x] P60.6e Replace the legacy-managed bootstrap ceiling with an expert-rule managed compile driven by `AGE_2020` origin classes and MKRF planning guidance captured in `config/tipsy/tsamkrf.yaml`.
 - [ ] P60.7 Fix bad curve cases before canonical runtime generation (`#177`)
   - [x] P60.7a Audit the bad first-growth and managed comparison cases against raw source rows, assignment lineage, and fit diagnostics.
   - [ ] P60.7b Correct the source field choice, grouping, assignment, or fit logic as needed and regenerate the affected curve bundles.
@@ -1684,6 +1685,10 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [ ] P60.10c Decide whether the umbrella legacy-recovery issue `#172` can close once the from-scratch rebuild phase is complete.
 
 ## Phase 61: First-Class Windows Arbutus Auth Workflow
+
+- Active next-step notes for the current Phase 60 edge:
+  - `P60.6e` is now complete: `config/tipsy/tsamkrf.yaml` is the active MKRF managed-rule authority, `AGE_2020` origin classes are published, the managed AU bootstrap/MSYT/BTC lane has been rebuilt from expert planting rules plus stand-derived managed site index, the managed species universe now supports `PW`, `SS`, and `YC`, and the managed-vs-first-growth plot bundle has been rerun against the rebuilt managed curves.
+  - The active edge returns to `P60.7`: keep the bad-curve gate in force before starting any `P60.8` runtime-package generation work.
 
 - [x] P61.1 Plan and define the Windows Arbutus auth workflow contract (`#174`)
   - [x] P61.1a Add the first-class auth workflow to the roadmap before implementation starts.

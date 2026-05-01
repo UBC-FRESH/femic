@@ -16038,3 +16038,32 @@
     - `cwh_vm_1_dr_hw -> cwh_vm_1_hw_cw`
     - `cwh_vm_1_fdc_cw -> cwh_vm_1_hw_cw`
     - `cwh_dm_x_dr_cw -> cwh_dm_x_hw_cw`.
+## 2026-04-30 - Rebuilt the MKRF managed lane from expert planting rules
+- `#173` / `P60.6e` implementation slice:
+  - promoted `external/femic-mkrf-instance/config/tipsy/tsamkrf.yaml` from a
+    template to the active MKRF managed-rule authority using Anna Tobiasz's
+    first-pass MKRF planting guidance;
+  - replaced the legacy-managed bootstrap ceiling with explicit stand-origin
+    classification from `AGE_2020`:
+    - `AGE_2020 >= 80` -> `fire_origin`
+    - `AGE_2020 < 80` -> `logging_origin`;
+  - published:
+    - `external/femic-mkrf-instance/data/model_input_bundle/stand_origin_assignment.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/managed_au_bootstrap_table.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/managed_au_msyt.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/managed_au_curves.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/managed_au_run_manifest.json`;
+  - rebuilt the managed lane so it now covers all `31` selected AUs:
+    - `31` included managed bootstrap AUs
+    - `0` unmatched selected AUs
+    - `29` AUs using logging-origin median managed SI
+    - `2` AUs using all-stand median managed SI fallback
+    - `31` compiled managed/planted curves;
+  - expanded the managed species universe to support `PW`, `SS`, and `YC`;
+  - reran the MKRF comparison plot bundle against the rebuilt managed curves,
+    producing:
+    - `28` `vdyp_lmh_tsamkrf-*.png`
+    - `80` `vdyp_fitdiag_tsamkrf-*.png`
+    - `24` `tipsy_vdyp_tsamkrf-*.png`; and
+  - kept CT/clearcut intent in the managed bootstrap/config metadata only,
+    without yet rewiring the runtime treatment lane.

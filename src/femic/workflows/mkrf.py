@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from pathlib import Path
 
 import geopandas as gpd
@@ -20,8 +21,10 @@ from femic.pipeline.mkrf_first_growth import (
     _resolve_eligible_first_growth_feature_ids,
 )
 from femic.pipeline.mkrf_managed import (
+    build_mkrf_stand_origin_assignment,
     build_mkrf_managed_au_bootstrap_table,
     build_mkrf_managed_au_msyt_table,
+    load_mkrf_managed_rule_config,
     parse_mkrf_managed_au_curves,
     write_mkrf_managed_run_manifest,
 )
@@ -306,13 +309,14 @@ class MkrfManagedAuBootstrapResult:
     """Result payload for MKRF managed AU bootstrap publication."""
 
     output_dir: Path
+    stand_origin_assignment_path: Path
     bootstrap_table_path: Path
     msyt_path: Path
     selected_au_count: int
     included_au_count: int
     unmatched_au_count: int
-    direct_au_count: int
-    lexmatch_au_count: int
+    logging_origin_si_au_count: int
+    all_stands_si_fallback_au_count: int
 
 
 @dataclass(frozen=True)
@@ -336,6 +340,16 @@ class MkrfBadCurveAuditResult:
     detail_path: Path
     flagged_au_count: int
     total_selected_au_count: int
+
+
+def _manifest_path_value(path: Path | str | None) -> str | None:
+    if path is None:
+        return None
+    candidate = Path(path)
+    try:
+        return os.path.relpath(candidate.resolve(), Path.cwd().resolve()).replace("\\", "/")
+    except Exception:
+        return candidate.name
 
 
 def build_mkrf_au_input_bundle(
@@ -644,24 +658,31 @@ def build_mkrf_selected_au_input_bundle(
 
 def build_mkrf_managed_au_input_bundle(
     *,
+    resultant_gdb: Path,
     selected_au_csv: Path,
     assignment_csv: Path,
-    man_si_by_au_csv: Path,
-    tipsy_spp_comp_csv: Path,
+    tipsy_rules_yaml: Path,
     output_dir: Path,
+    layer: str = "Resultant",
 ) -> MkrfManagedAuBootstrapResult:
-    """Build the provisional managed AU bootstrap and BTC MSYT input tables."""
+    """Build the expert-rule managed AU bootstrap and BTC MSYT input tables."""
     output_dir.mkdir(parents=True, exist_ok=True)
     selected_au_table = pd.read_csv(selected_au_csv)
     assignment = pd.read_csv(assignment_csv)
-    man_si_by_au = pd.read_csv(man_si_by_au_csv)
-    tipsy_spp_comp = pd.read_csv(tipsy_spp_comp_csv)
+    source_table = gpd.read_file(resultant_gdb, layer=layer, ignore_geometry=True)
+    rule_config = load_mkrf_managed_rule_config(tipsy_rules_yaml)
+    stand_origin_assignment = build_mkrf_stand_origin_assignment(
+        assignment=assignment,
+        source_table=source_table,
+        fire_origin_min_age=rule_config.fire_origin_min_age,
+    )
+    stand_origin_assignment_path = output_dir / "stand_origin_assignment.csv"
+    stand_origin_assignment.to_csv(stand_origin_assignment_path, index=False)
 
     bootstrap_table = build_mkrf_managed_au_bootstrap_table(
         selected_au_table=selected_au_table,
-        assignment=assignment,
-        man_si_by_au=man_si_by_au,
-        tipsy_spp_comp=tipsy_spp_comp,
+        stand_origin_assignment=stand_origin_assignment,
+        rule_config=rule_config,
     )
     bootstrap_path = output_dir / "managed_au_bootstrap_table.csv"
     bootstrap_table.to_csv(bootstrap_path, index=False)
@@ -670,16 +691,21 @@ def build_mkrf_managed_au_input_bundle(
     msyt_path = output_dir / "managed_au_msyt.csv"
     msyt_table.to_csv(msyt_path, index=False)
 
-    included = bootstrap_table["bootstrap_status"].isin(["direct", "lexmatch"])
+    included = bootstrap_table["included_in_msyt"].fillna(False)
     return MkrfManagedAuBootstrapResult(
         output_dir=output_dir,
+        stand_origin_assignment_path=stand_origin_assignment_path,
         bootstrap_table_path=bootstrap_path,
         msyt_path=msyt_path,
         selected_au_count=int(len(selected_au_table)),
         included_au_count=int(included.sum()),
         unmatched_au_count=int((bootstrap_table["bootstrap_status"] == "unmatched").sum()),
-        direct_au_count=int((bootstrap_table["bootstrap_status"] == "direct").sum()),
-        lexmatch_au_count=int((bootstrap_table["bootstrap_status"] == "lexmatch").sum()),
+        logging_origin_si_au_count=int(
+            (bootstrap_table["managed_si_source"] == "logging_origin_median").sum()
+        ),
+        all_stands_si_fallback_au_count=int(
+            (bootstrap_table["managed_si_source"] == "all_stands_median").sum()
+        ),
     )
 
 
@@ -698,7 +724,7 @@ def build_mkrf_managed_au_curves(
     bootstrap_table = pd.read_csv(bootstrap_csv)
     manifest_path = output_dir / "managed_au_run_manifest.json"
     included_count = int(
-        bootstrap_table["bootstrap_status"].isin(["direct", "lexmatch"]).sum()
+        bootstrap_table["included_in_msyt"].fillna(False).sum()
     )
     try:
         btc_result = run_btc_cli(
@@ -716,8 +742,8 @@ def build_mkrf_managed_au_curves(
                 "status": "blocked",
                 "reason": "missing_btc_runtime",
                 "message": str(exc),
-                "msyt_csv": str(msyt_csv),
-                "bootstrap_csv": str(bootstrap_csv),
+                "msyt_csv": _manifest_path_value(msyt_csv),
+                "bootstrap_csv": _manifest_path_value(bootstrap_csv),
                 "included_au_count": included_count,
             },
         )
@@ -740,16 +766,16 @@ def build_mkrf_managed_au_curves(
         manifest_path=manifest_path,
         payload={
             "status": "completed",
-            "msyt_csv": str(msyt_csv),
-            "bootstrap_csv": str(bootstrap_csv),
-            "curves_csv": str(curves_path),
+            "msyt_csv": _manifest_path_value(msyt_csv),
+            "bootstrap_csv": _manifest_path_value(bootstrap_csv),
+            "curves_csv": _manifest_path_value(curves_path),
             "included_au_count": included_count,
             "curve_au_count": int(curves["au_id"].nunique()),
-            "btc_manifest_path": str(btc_result.manifest_path),
-            "btc_stdout_log_path": str(btc_result.stdout_log_path),
-            "btc_stderr_log_path": str(btc_result.stderr_log_path),
-            "btc_output_csv_path": str(btc_result.output_csv_path),
-            "btc_error_csv_path": str(btc_result.error_csv_path),
+            "btc_manifest_path": _manifest_path_value(btc_result.manifest_path),
+            "btc_stdout_log_path": _manifest_path_value(btc_result.stdout_log_path),
+            "btc_stderr_log_path": _manifest_path_value(btc_result.stderr_log_path),
+            "btc_output_csv_path": _manifest_path_value(btc_result.output_csv_path),
+            "btc_error_csv_path": _manifest_path_value(btc_result.error_csv_path),
         },
     )
     return MkrfManagedAuCurvesResult(
