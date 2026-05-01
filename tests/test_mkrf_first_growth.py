@@ -277,5 +277,53 @@ def test_build_mkrf_first_growth_curves_rejects_single_old_stand_support() -> No
     assert bool(row["accepted"]) is False
 
 
+def test_build_mkrf_first_growth_curves_rescues_severe_right_tail_underfit() -> None:
+    assignment = pd.DataFrame(
+        [
+            {"res_key": 1, "forest_cover_id": 10, "au_id": "cwh_vm_1_cw_hw", "shape_area_ha": 1.0},
+            {"res_key": 2, "forest_cover_id": 11, "au_id": "cwh_vm_1_cw_hw", "shape_area_ha": 1.0},
+        ]
+    )
+    source_table = pd.DataFrame(
+        [
+            {"FOREST_COVER_ID": 10, "AGE_2020": 90},
+            {"FOREST_COVER_ID": 11, "AGE_2020": 95},
+        ]
+    )
+    vdyp_yields = pd.DataFrame(
+        [
+            {"FEATURE_ID": 10, "PRJ_TOTAL_AGE": 30, "PRJ_VOL_DWB": 40.0},
+            {"FEATURE_ID": 10, "PRJ_TOTAL_AGE": 80, "PRJ_VOL_DWB": 280.0},
+            {"FEATURE_ID": 10, "PRJ_TOTAL_AGE": 150, "PRJ_VOL_DWB": 360.0},
+            {"FEATURE_ID": 10, "PRJ_TOTAL_AGE": 300, "PRJ_VOL_DWB": 320.0},
+            {"FEATURE_ID": 11, "PRJ_TOTAL_AGE": 30, "PRJ_VOL_DWB": 50.0},
+            {"FEATURE_ID": 11, "PRJ_TOTAL_AGE": 80, "PRJ_VOL_DWB": 300.0},
+            {"FEATURE_ID": 11, "PRJ_TOTAL_AGE": 150, "PRJ_VOL_DWB": 380.0},
+            {"FEATURE_ID": 11, "PRJ_TOTAL_AGE": 300, "PRJ_VOL_DWB": 340.0},
+        ]
+    )
+
+    def _underfit_process(_vdyp_out, **_kwargs):
+        x = np.array([1.0, 80.0, 150.0, 299.0])
+        y = np.array([1e-6, 240.0, 300.0, 150.0], dtype=float)
+        return x, y
+
+    curves, diagnostics = build_mkrf_first_growth_curves(
+        vdyp_yields=vdyp_yields,
+        assignment=assignment,
+        source_table=source_table,
+        process_vdyp_out_fn=_underfit_process,
+    )
+
+    row = diagnostics.iloc[0]
+    assert row["selected_path"] == "observed_bin_tail_rescue"
+    terminal = (
+        curves.loc[curves["au_id"] == "cwh_vm_1_cw_hw"]
+        .sort_values("age", kind="stable")
+        .iloc[-1]["volume"]
+    )
+    assert terminal > 200.0
+
+
 def test_format_mkrf_au_label_uses_k3z_style_display_shape() -> None:
     assert _format_mkrf_au_label("cwh_vm_1_cw_hw") == "CWHvm1_CW+HW"

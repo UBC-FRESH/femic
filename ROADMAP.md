@@ -1669,7 +1669,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P60.6e Replace the legacy-managed bootstrap ceiling with an expert-rule managed compile driven by `AGE_2020` origin classes and MKRF planning guidance captured in `config/tipsy/tsamkrf.yaml`.
 - [ ] P60.7 Fix bad curve cases before canonical runtime generation (`#177`)
   - [x] P60.7a Audit the bad first-growth and managed comparison cases against raw source rows, assignment lineage, and fit diagnostics.
-  - [ ] P60.7b Correct the source field choice, grouping, assignment, or fit logic as needed and regenerate the affected curve bundles.
+  - [x] P60.7b Correct the source field choice, grouping, assignment, or fit logic as needed and regenerate the affected curve bundles.
   - [ ] P60.7c Rebuild the canonical diagnostic/comparison plots and record the curve-quality acceptance gate for downstream runtime generation.
 - [ ] P60.8 Rebuild the full MKRF runtime package from source-faithful inputs (`#173`)
   - [ ] P60.8a Generate the runtime XML, tracks, and control surfaces from the new FEMIC-native rebuild lane, consuming AU-wise unmanaged/first-growth curves rather than legacy stand-wise first-growth curves.
@@ -1688,7 +1688,8 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
 
 - Active next-step notes for the current Phase 60 edge:
   - `P60.6e` is now complete: `config/tipsy/tsamkrf.yaml` is the active MKRF managed-rule authority, `AGE_2020` origin classes are published, the managed AU bootstrap/MSYT/BTC lane has been rebuilt from expert planting rules plus stand-derived managed site index, the managed species universe now supports `PW`, `SS`, and `YC`, and the managed-vs-first-growth plot bundle has been rerun against the rebuilt managed curves.
-  - The active edge returns to `P60.7`: keep the bad-curve gate in force before starting any `P60.8` runtime-package generation work.
+  - `P60.7b` is now complete: the bad-curve correction lane applied the `AGE_2020 >= 80` first-growth floor, reclassified managed-only units, merged insufficient-support units onto sane same-BEC neighbors, tightened donor selection to reject low-terminal donors, and added a right-tail underfit rescue for the surviving `cwh_vm_1_cw_hw` fit pathology; the audit surface is now at `0` flagged AUs out of `31`.
+  - The active edge stays on `P60.7`: rebuild the canonical diagnostic/comparison plots and record the curve-quality acceptance gate in `P60.7c` before starting any `P60.8` runtime-package generation work.
 
 - [x] P61.1 Plan and define the Windows Arbutus auth workflow contract (`#174`)
   - [x] P61.1a Add the first-class auth workflow to the roadmap before implementation starts.

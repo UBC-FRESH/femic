@@ -1309,6 +1309,16 @@ Current correction rule now in force:
 - they remain candidates for the managed/planted lane instead of being used to
   anchor first-growth VDYP curves.
 
+Implemented `P60.7b` correction outcomes now in force:
+
+- insufficient-support cases borrow only from sane same-BEC donors, using
+  fragment-level old-support accounting aligned with the audit surface;
+- units with no old-support stands are reclassified as managed-only after the
+  age-floor rule instead of being kept as first-growth blockers; and
+- severe right-tail underfit against observed 5-year VDYP medians triggers an
+  `observed_bin_tail_rescue` fit path, which cleared the final surviving bad
+  first-growth blocker (`cwh_vm_1_cw_hw`).
+
 ### `P60.7c` Acceptance gate
 
 Before runtime generation continues, the rebuild lane must record a

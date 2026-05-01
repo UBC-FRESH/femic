@@ -16067,3 +16067,26 @@
     - `24` `tipsy_vdyp_tsamkrf-*.png`; and
   - kept CT/clearcut intent in the managed bootstrap/config metadata only,
     without yet rewiring the runtime treatment lane.
+## 2026-04-30 - Cleared the MKRF bad-curve blocker surface
+- `#177` / `P60.7b` correction slice:
+  - applied the confirmed `AGE_2020 >= 80` first-growth floor through the
+    canonical MKRF first-growth builder and kept younger units in the
+    managed/planted lane instead of forcing bad first-growth fits;
+  - reclassified zero-old-support units as managed-only after the age floor,
+    converted single-old-stand cases into explicit insufficient-support
+    outcomes, and merged insufficient-support units onto sane same-BEC
+    neighbors using fragment-level old-support accounting aligned with the
+    audit surface;
+  - tightened insufficient-support donor selection so low-terminal donor curves
+    are rejected instead of propagating near-zero first-growth curves;
+  - added a narrow `observed_bin_tail_rescue` path for severe right-tail
+    underfit against observed 5-year VDYP medians, which resolved the final
+    surviving `cwh_vm_1_cw_hw` fit pathology;
+  - regenerated:
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_curves.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_fit_diagnostics.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_summary.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_detail.csv`; and
+  - reduced the MKRF bad-curve audit from `15` flagged selected units at the
+    start of the correction lane to `0` flagged units out of `31` selected
+    units, moving the active edge to `P60.7c`.

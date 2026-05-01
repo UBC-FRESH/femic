@@ -24,6 +24,9 @@ from femic.pipeline.vdyp_stage import build_curve_fit_adapter
 _TAIL_START_AGE = 150.0
 _MIN_FIRST_GROWTH_AGE = 80.0
 _MIN_FIRST_GROWTH_SOURCE_STANDS = 2
+_TAIL_RESCUE_CHECK_AGE = 300.0
+_TAIL_RESCUE_MIN_OBSERVED_VOLUME = 200.0
+_TAIL_RESCUE_MIN_RATIO = 0.75
 
 
 @dataclass(frozen=True)
@@ -161,6 +164,51 @@ def _selected_path_from_events(events: list[dict[str, Any]]) -> str:
         ):
             return str(event.get("selected_path", "primary_nlls"))
     return "primary_nlls"
+
+
+def _apply_right_tail_underfit_rescue(
+    *,
+    binned: pd.DataFrame,
+    x_curve: np.ndarray,
+    y_curve: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, bool]:
+    """Replace severe right-tail underfit with interpolated observed-bin medians."""
+    if binned.empty or len(x_curve) == 0 or len(y_curve) == 0:
+        return x_curve, y_curve, False
+
+    observed_tail = binned.loc[
+        pd.to_numeric(binned["age_bin"], errors="coerce") >= _TAIL_RESCUE_CHECK_AGE,
+        ["age_bin", "median_volume"],
+    ].copy()
+    if observed_tail.empty:
+        return x_curve, y_curve, False
+
+    observed_tail = observed_tail.sort_values("age_bin", kind="stable")
+    observed_tail_volume = float(
+        pd.to_numeric(observed_tail["median_volume"], errors="coerce").iloc[0]
+    )
+    if observed_tail_volume < _TAIL_RESCUE_MIN_OBSERVED_VOLUME:
+        return x_curve, y_curve, False
+
+    fitted_tail_volume = float(np.interp([_TAIL_RESCUE_CHECK_AGE], x_curve, y_curve)[0])
+    if fitted_tail_volume >= (_TAIL_RESCUE_MIN_RATIO * observed_tail_volume):
+        return x_curve, y_curve, False
+
+    anchors = binned.loc[:, ["age_bin", "median_volume"]].copy()
+    anchors["age_bin"] = pd.to_numeric(anchors["age_bin"], errors="coerce")
+    anchors["median_volume"] = pd.to_numeric(anchors["median_volume"], errors="coerce")
+    anchors = anchors.dropna().sort_values("age_bin", kind="stable")
+    anchors = anchors.loc[anchors["age_bin"] >= 30.0].copy()
+    if anchors.empty:
+        return x_curve, y_curve, False
+
+    anchor_ages = np.concatenate([[1.0], anchors["age_bin"].to_numpy(dtype=float)])
+    anchor_volumes = np.concatenate([[1e-6], anchors["median_volume"].to_numpy(dtype=float)])
+    rescue_x = np.asarray(x_curve, dtype=float)
+    rescue_y = np.interp(rescue_x, anchor_ages, anchor_volumes)
+    rescue_y = np.nan_to_num(rescue_y, nan=0.0, posinf=0.0, neginf=0.0)
+    rescue_y = np.maximum(rescue_y, 1e-6)
+    return rescue_x, rescue_y, True
 
 
 def _build_au_lexmatch_alias_map(
@@ -385,8 +433,15 @@ def build_mkrf_first_growth_curves(
                 max_age=350,
                 bin_years=5,
             )
+            x_curve, y_curve, rescued_tail = _apply_right_tail_underfit_rescue(
+                binned=binned,
+                x_curve=np.asarray(x_curve, dtype=float),
+                y_curve=np.asarray(y_curve, dtype=float),
+            )
             metrics = _fit_quality(binned=binned, x_curve=x_curve, y_curve=y_curve)
             selected_path = _selected_path_from_events(events)
+            if rescued_tail:
+                selected_path = "observed_bin_tail_rescue"
             accepted = True
 
         for age, volume in zip(np.asarray(x_curve, dtype=float), np.asarray(y_curve, dtype=float)):

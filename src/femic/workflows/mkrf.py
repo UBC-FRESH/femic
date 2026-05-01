@@ -176,15 +176,43 @@ def _apply_insufficient_support_merge(
     curves: pd.DataFrame,
     diagnostics: pd.DataFrame,
     assignment: pd.DataFrame,
+    source_table: pd.DataFrame,
+    min_first_growth_age: float = 80.0,
+    min_source_stands: int = _MIN_FIRST_GROWTH_SOURCE_STANDS,
+    min_donor_terminal_volume: float = 100.0,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Borrow a larger accepted curve from the same BEC bucket for sparse units."""
-    if diagnostics.empty:
+    """Borrow a larger accepted curve from the same BEC bucket for sparse units.
+
+    Old-support stand counts intentionally use fragment-level assignment rows so
+    this helper stays aligned with the bad-curve audit surface.
+    """
+    if diagnostics.empty and curves.empty:
         return curves, diagnostics
 
     area_by_au = (
         assignment.groupby("au_id", as_index=False)["shape_area_ha"]
         .sum()
         .rename(columns={"shape_area_ha": "covered_area_ha"})
+    )
+    assignment_rows = assignment.copy()
+    assignment_rows["forest_cover_id"] = pd.to_numeric(
+        assignment_rows["forest_cover_id"], errors="coerce"
+    )
+    source_subset = source_table.copy()
+    source_subset["forest_cover_id"] = pd.to_numeric(
+        source_subset["FOREST_COVER_ID"], errors="coerce"
+    )
+    source_subset["AGE_2020"] = pd.to_numeric(source_subset["AGE_2020"], errors="coerce")
+    age_rows = assignment_rows.merge(
+        source_subset[["forest_cover_id", "AGE_2020"]],
+        on="forest_cover_id",
+        how="left",
+    )
+    old_support = (
+        age_rows.loc[age_rows["AGE_2020"] >= min_first_growth_age]
+        .groupby("au_id", as_index=False)["forest_cover_id"]
+        .nunique()
+        .rename(columns={"forest_cover_id": "old_support_stand_count"})
     )
     terminal_curves = (
         curves.sort_values(["au_id", "age"], kind="stable")
@@ -198,16 +226,33 @@ def _apply_insufficient_support_merge(
         if column not in diagnostics_out.columns:
             diagnostics_out[column] = ""
 
-    summary = diagnostics_out.merge(area_by_au, on="au_id", how="left").merge(
+    base_summary = (
+        pd.DataFrame({"au_id": sorted(assignment["au_id"].astype(str).unique())})
+        .merge(diagnostics_out, on="au_id", how="left")
+        .merge(old_support, on="au_id", how="left")
+    )
+    summary = base_summary.merge(area_by_au, on="au_id", how="left").merge(
         terminal_curves, on="au_id", how="left"
     )
     summary["covered_area_ha"] = pd.to_numeric(summary["covered_area_ha"], errors="coerce").fillna(0.0)
     summary["terminal_volume"] = pd.to_numeric(summary["terminal_volume"], errors="coerce")
+    summary["old_support_stand_count"] = (
+        pd.to_numeric(summary["old_support_stand_count"], errors="coerce")
+        .fillna(0)
+        .astype(int)
+    )
+    summary["accepted"] = summary["accepted"].fillna(False)
 
     curves_out = curves.copy()
     for _, row in summary.sort_values(["covered_area_ha", "au_id"], ascending=[False, True]).iterrows():
         target_au_id = str(row["au_id"])
-        if str(row.get("selected_path", "")) != "insufficient_source_stands":
+        target_selected_path = str(row.get("selected_path", ""))
+        has_missing_curve = pd.isna(row.get("terminal_volume"))
+        insufficient_support = 0 < int(row["old_support_stand_count"]) < int(min_source_stands)
+        if not (
+            target_selected_path == "insufficient_source_stands"
+            or (has_missing_curve and insufficient_support)
+        ):
             continue
 
         parsed_target = _parse_mkrf_au_id(target_au_id)
@@ -223,7 +268,11 @@ def _apply_insufficient_support_merge(
             if not bool(candidate.get("accepted", False)):
                 continue
             candidate_terminal = pd.to_numeric(candidate.get("terminal_volume"), errors="coerce")
-            if pd.isna(candidate_terminal) or float(candidate_terminal) <= 0.0:
+            if (
+                pd.isna(candidate_terminal)
+                or float(candidate_terminal) <= 0.0
+                or float(candidate_terminal) < float(min_donor_terminal_volume)
+            ):
                 continue
             parsed_candidate = _parse_mkrf_au_id(candidate_au_id)
             if parsed_candidate is None:
@@ -249,16 +298,36 @@ def _apply_insufficient_support_merge(
         curves_out = curves_out.loc[curves_out["au_id"] != target_au_id].copy()
         source_curve["au_id"] = target_au_id
         curves_out = pd.concat([curves_out, source_curve], ignore_index=True, sort=False)
-        diagnostics_out.loc[diagnostics_out["au_id"] == target_au_id, "selected_path"] = (
-            "borrowed_insufficient_support_neighbor"
-        )
-        diagnostics_out.loc[diagnostics_out["au_id"] == target_au_id, "borrowed_from_au_id"] = (
-            source_au_id
-        )
-        diagnostics_out.loc[diagnostics_out["au_id"] == target_au_id, "borrow_reason"] = (
-            "insufficient_source_stands_same_bec_largest_neighbor"
-        )
-        diagnostics_out.loc[diagnostics_out["au_id"] == target_au_id, "accepted"] = True
+        target_mask = diagnostics_out["au_id"] == target_au_id
+        if not target_mask.any():
+            diagnostics_out = pd.concat(
+                [
+                    diagnostics_out,
+                    pd.DataFrame(
+                        [
+                            {
+                                "au_id": target_au_id,
+                                "selected_path": "borrowed_insufficient_support_neighbor",
+                                "accepted": True,
+                                "borrowed_from_au_id": source_au_id,
+                                "borrow_reason": "insufficient_source_stands_same_bec_largest_neighbor",
+                                "source_stand_count": 0,
+                            }
+                        ]
+                    ),
+                ],
+                ignore_index=True,
+                sort=False,
+            )
+        else:
+            diagnostics_out.loc[target_mask, "selected_path"] = (
+                "borrowed_insufficient_support_neighbor"
+            )
+            diagnostics_out.loc[target_mask, "borrowed_from_au_id"] = source_au_id
+            diagnostics_out.loc[target_mask, "borrow_reason"] = (
+                "insufficient_source_stands_same_bec_largest_neighbor"
+            )
+            diagnostics_out.loc[target_mask, "accepted"] = True
 
     curves_out = curves_out.sort_values(["au_id", "age"], kind="stable").reset_index(drop=True)
     diagnostics_out = diagnostics_out.sort_values("au_id", kind="stable").reset_index(drop=True)
@@ -406,6 +475,7 @@ def build_mkrf_first_growth_input_bundle(
         curves=curves,
         diagnostics=diagnostics,
         assignment=assignment,
+        source_table=source_table,
     )
 
     curves_path = output_dir / "first_growth_au_curves.csv"
@@ -1136,16 +1206,6 @@ def build_mkrf_bad_curve_audit(
         .rename(columns={"age": "terminal_age", "volume": "terminal_volume"})
     )
     selected = selected_au_table.merge(terminal_curves, on="au_id", how="left")
-    selected["flagged"] = (
-        pd.to_numeric(selected["terminal_volume"], errors="coerce").fillna(0.0)
-        < low_terminal_threshold
-    ) | (
-        (pd.to_numeric(selected["covered_area_ha"], errors="coerce").fillna(0.0) > large_area_threshold)
-        & (
-            pd.to_numeric(selected["terminal_volume"], errors="coerce").fillna(0.0)
-            < low_large_area_threshold
-        )
-    )
 
     source_subset = source_table.copy()
     source_subset["forest_cover_id"] = pd.to_numeric(
@@ -1175,8 +1235,6 @@ def build_mkrf_bad_curve_audit(
 
     detail_rows: list[dict[str, object]] = []
     summary_rows: list[dict[str, object]] = []
-    flagged_ids = set(selected.loc[selected["flagged"], "au_id"].astype(str))
-
     for _, selected_row in selected.sort_values(["selected_rank", "au_id"], kind="stable").iterrows():
         au_id = str(selected_row["au_id"])
         assignment_rows = assignment.loc[assignment["au_id"].astype(str) == au_id].copy()
@@ -1222,9 +1280,22 @@ def build_mkrf_bad_curve_audit(
             pattern = "midrange"
 
         terminal_volume = pd.to_numeric(selected_row["terminal_volume"], errors="coerce")
+        initial_flag = (
+            float(pd.to_numeric(pd.Series([selected_row["terminal_volume"]]), errors="coerce").fillna(0.0).iloc[0])
+            < low_terminal_threshold
+        ) or (
+            float(pd.to_numeric(pd.Series([selected_row["covered_area_ha"]]), errors="coerce").fillna(0.0).iloc[0])
+            > large_area_threshold
+            and float(
+                pd.to_numeric(pd.Series([selected_row["terminal_volume"]]), errors="coerce")
+                .fillna(0.0)
+                .iloc[0]
+            )
+            < low_large_area_threshold
+        )
         if pd.isna(terminal_volume):
             if age_gte_80_count == 0:
-                issue_class = "no_first_growth_after_age_floor"
+                issue_class = "managed_only_after_age_floor"
             elif old_support_stand_count < _MIN_FIRST_GROWTH_SOURCE_STANDS:
                 issue_class = "insufficient_source_stands"
             else:
@@ -1236,6 +1307,10 @@ def build_mkrf_bad_curve_audit(
         else:
             issue_class = "persistently_low_old_unit"
 
+        flagged = bool(initial_flag)
+        if issue_class == "managed_only_after_age_floor":
+            flagged = False
+
         summary_rows.append(
             {
                 "selected_rank": int(selected_row["selected_rank"]),
@@ -1243,7 +1318,7 @@ def build_mkrf_bad_curve_audit(
                 "covered_area_ha": float(selected_row["covered_area_ha"]),
                 "terminal_age": float(selected_row["terminal_age"]),
                 "terminal_volume": float(selected_row["terminal_volume"]),
-                "flagged": bool(selected_row["flagged"]),
+                "flagged": flagged,
                 "stand_count": stand_count,
                 "site_index_min": float(si.min()) if len(si.dropna()) else np.nan,
                 "site_index_median": float(si.median()) if len(si.dropna()) else np.nan,
@@ -1272,7 +1347,7 @@ def build_mkrf_bad_curve_audit(
             }
         )
 
-        if au_id not in flagged_ids:
+        if not flagged:
             continue
         for _, row in joined.sort_values(
             ["terminal_vdyp_volume", "forest_cover_id"], kind="stable", na_position="last"
