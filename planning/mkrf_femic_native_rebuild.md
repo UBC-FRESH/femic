@@ -1311,13 +1311,64 @@ Current correction rule now in force:
 
 Implemented `P60.7b` correction outcomes now in force:
 
-- insufficient-support cases borrow only from sane same-BEC donors, using
-  fragment-level old-support accounting aligned with the audit surface;
 - units with no old-support stands are reclassified as managed-only after the
   age-floor rule instead of being kept as first-growth blockers; and
-- severe right-tail underfit against observed 5-year VDYP medians triggers an
-  `observed_bin_tail_rescue` fit path, which cleared the final surviving bad
-  first-growth blocker (`cwh_vm_1_cw_hw`).
+- severe right-tail underfit against observed 5-year VDYP medians originally
+  triggered an `observed_bin_tail_rescue` fit path to clear the final surviving
+  bad first-growth blocker (`cwh_vm_1_cw_hw`).
+
+Follow-on modeling constraint from the subsequent review discussion now in
+force:
+
+- canonical first-growth AU curves must be AU-local only;
+- do not publish whole-curve sibling or same-BEC borrowing into the canonical
+  `first_growth_au_curves.csv` surface; and
+- if an AU has insufficient first-growth support, leave that as an explicit
+  missing/flagged/managed-only condition rather than silently substituting a
+  different AU's curve.
+
+Current post-switch surface:
+
+- `20` selected AUs publish AU-local `smoothed_bin_pchip` first-growth curves;
+- `11` selected AUs remain `insufficient_source_stands` in
+  `first_growth_au_fit_diagnostics.csv`;
+- the rebuilt bad-curve audit now reports `8` flagged selected AUs, all in the
+  `insufficient_source_stands` class; and
+- the rebuilt comparison plot bundle now publishes `18`
+  `tipsy_vdyp_tsamkrf-*.png` files, because borrowed first-growth comparison
+  surfaces are no longer emitted.
+
+- smooth first-growth curves are preferred for the canonical MKRF rebuild lane
+  because Patchworks-style long-horizon harvest scheduling is better served by
+  smooth volume and MAI shapes than by piecewise linear connect-the-dots
+  constructions;
+- the `observed_bin_tail_rescue` seam is therefore treated only as an interim
+  blocker-clearing move, not as the desired long-run curve-family contract; and
+- the correction lane should replace that piecewise-linear tail rescue with a
+  smoother data-shaped construction that stays close to the observed 5-year
+  median bins without reverting to the earlier global NLLS underfit behavior.
+
+Adopted MKRF first-growth curve-family refinement after the subsequent
+case-by-case review discussion:
+
+- the working compromise is now a **strongly smoothed observed-bin PCHIP**
+  pattern for accepted first-growth AU curves;
+- rationale:
+  - the earlier raw-bin / connect-the-dots shapes were very accurate and very
+    precise against the binned medians, but visually too lumpy;
+  - the smoother global NLLS family was visually appealing but gave away too
+    much accuracy/precision on real MKRF cases;
+  - three one-case prototypes (`CWHvm1_HW+CW-H`, `CWHvm2_HW+CW-H`,
+    `CWHdmx_HW+CW-H`) showed that a stronger median-bin smoothing pass still
+    stayed very close to the observed bins while materially reducing visible
+    lumpiness;
+- implementation rule:
+  - build 5-year observed median bins from the age-floor-filtered VDYP support
+    set;
+  - apply a strong local weighted smoother to those median bins;
+  - fit a monotone shape-preserving PCHIP through the smoothed anchors; and
+  - use that construction as the canonical accepted first-growth curve family
+    wherever the AU has enough source support to fit directly.
 
 ### `P60.7c` Acceptance gate
 
@@ -1327,6 +1378,8 @@ curve-quality acceptance gate that says:
 - which bad cases were audited;
 - which were fixed;
 - which, if any, remain as accepted source-data oddities; and
+- whether any rescued curves rely on a smooth shape-preserving tail override,
+  and why that override is acceptable for estate-model use;
 - why the remaining curve bundle is trustworthy enough to drive canonical XML
   and track generation.
 

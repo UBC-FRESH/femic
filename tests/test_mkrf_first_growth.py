@@ -98,17 +98,9 @@ def test_build_mkrf_first_growth_curves_groups_stands_by_au() -> None:
         ]
     )
 
-    def _fake_process(vdyp_out, **_kwargs):
-        feature_ids = sorted(vdyp_out.keys())
-        max_volume = sum(float(table["Vdwb"].max()) for table in vdyp_out.values())
-        x = np.array([1.0, 100.0, 200.0])
-        y = np.array([1e-6, max_volume / len(feature_ids), max_volume], dtype=float)
-        return x, y
-
     curves, diagnostics = build_mkrf_first_growth_curves(
         vdyp_yields=vdyp_yields,
         assignment=assignment,
-        process_vdyp_out_fn=_fake_process,
         min_source_stands=1,
     )
 
@@ -121,7 +113,7 @@ def test_build_mkrf_first_growth_curves_groups_stands_by_au() -> None:
     hw_cw = diagnostics.loc[diagnostics["au_id"] == "cwh_vm_2_hw_cw"].iloc[0]
     assert int(hw_cw["source_stand_count"]) == 2
     assert int(hw_cw["ambiguous_stand_count"]) == 0
-    assert hw_cw["selected_path"] == "primary_nlls"
+    assert hw_cw["selected_path"] == "smoothed_bin_pchip"
     assert bool(hw_cw["accepted"]) is True
 
 
@@ -176,18 +168,10 @@ def test_build_mkrf_first_growth_curves_lexmatches_unmatched_stands() -> None:
         ]
     )
 
-    def _fake_process(vdyp_out, **_kwargs):
-        feature_ids = sorted(vdyp_out.keys())
-        max_volume = sum(float(table["Vdwb"].max()) for table in vdyp_out.values())
-        x = np.array([1.0, 100.0, 200.0])
-        y = np.array([1e-6, max_volume / len(feature_ids), max_volume], dtype=float)
-        return x, y
-
     curves, diagnostics = build_mkrf_first_growth_curves(
         vdyp_yields=vdyp_yields,
         assignment=assignment,
         source_table=source_table,
-        process_vdyp_out_fn=_fake_process,
         levenshtein_fn=lambda a, b: 0 if a == b else 1,
         min_source_stands=1,
     )
@@ -223,17 +207,10 @@ def test_build_mkrf_first_growth_curves_excludes_stands_younger_than_80() -> Non
         ]
     )
 
-    def _fake_process(vdyp_out, **_kwargs):
-        assert sorted(vdyp_out.keys()) == [11]
-        x = np.array([1.0, 100.0, 200.0])
-        y = np.array([1e-6, 80.0, 120.0], dtype=float)
-        return x, y
-
     curves, diagnostics = build_mkrf_first_growth_curves(
         vdyp_yields=vdyp_yields,
         assignment=assignment,
         source_table=source_table,
-        process_vdyp_out_fn=_fake_process,
         min_source_stands=1,
     )
 
@@ -277,7 +254,7 @@ def test_build_mkrf_first_growth_curves_rejects_single_old_stand_support() -> No
     assert bool(row["accepted"]) is False
 
 
-def test_build_mkrf_first_growth_curves_rescues_severe_right_tail_underfit() -> None:
+def test_build_mkrf_first_growth_curves_uses_smoothed_bin_pchip_curve_family() -> None:
     assignment = pd.DataFrame(
         [
             {"res_key": 1, "forest_cover_id": 10, "au_id": "cwh_vm_1_cw_hw", "shape_area_ha": 1.0},
@@ -303,26 +280,25 @@ def test_build_mkrf_first_growth_curves_rescues_severe_right_tail_underfit() -> 
         ]
     )
 
-    def _underfit_process(_vdyp_out, **_kwargs):
-        x = np.array([1.0, 80.0, 150.0, 299.0])
-        y = np.array([1e-6, 240.0, 300.0, 150.0], dtype=float)
-        return x, y
-
     curves, diagnostics = build_mkrf_first_growth_curves(
         vdyp_yields=vdyp_yields,
         assignment=assignment,
         source_table=source_table,
-        process_vdyp_out_fn=_underfit_process,
     )
 
     row = diagnostics.iloc[0]
-    assert row["selected_path"] == "observed_bin_tail_rescue"
+    assert row["selected_path"] == "smoothed_bin_pchip"
     terminal = (
         curves.loc[curves["au_id"] == "cwh_vm_1_cw_hw"]
         .sort_values("age", kind="stable")
         .iloc[-1]["volume"]
     )
     assert terminal > 200.0
+    mid = curves.loc[
+        (curves["au_id"] == "cwh_vm_1_cw_hw") & (curves["age"] == 150),
+        "volume",
+    ].iloc[0]
+    assert mid > 250.0
 
 
 def test_format_mkrf_au_label_uses_k3z_style_display_shape() -> None:

@@ -1688,8 +1688,14 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
 
 - Active next-step notes for the current Phase 60 edge:
   - `P60.6e` is now complete: `config/tipsy/tsamkrf.yaml` is the active MKRF managed-rule authority, `AGE_2020` origin classes are published, the managed AU bootstrap/MSYT/BTC lane has been rebuilt from expert planting rules plus stand-derived managed site index, the managed species universe now supports `PW`, `SS`, and `YC`, and the managed-vs-first-growth plot bundle has been rerun against the rebuilt managed curves.
-  - `P60.7b` is now complete: the bad-curve correction lane applied the `AGE_2020 >= 80` first-growth floor, reclassified managed-only units, merged insufficient-support units onto sane same-BEC neighbors, tightened donor selection to reject low-terminal donors, and added a right-tail underfit rescue for the surviving `cwh_vm_1_cw_hw` fit pathology; the audit surface is now at `0` flagged AUs out of `31`.
-  - The active edge stays on `P60.7`: rebuild the canonical diagnostic/comparison plots and record the curve-quality acceptance gate in `P60.7c` before starting any `P60.8` runtime-package generation work.
+  - `P60.7b` is complete as a blocker-clearing correction lane, and the follow-on curve-family refinement now targets a strongly smoothed observed-bin PCHIP pattern rather than either global NLLS or raw connect-the-dots curves.
+  - Canonical MKRF first-growth curves must now be AU-local only: no more whole-curve borrowing from sibling or same-BEC neighbors. If an AU lacks valid first-growth support, it should remain missing / managed-only / flagged rather than silently inheriting another AU's curve.
+  - Current no-borrow canonical first-growth state:
+    - `20` AUs publish AU-local `smoothed_bin_pchip` first-growth curves;
+    - `11` AUs remain `insufficient_source_stands`;
+    - the current bad-curve audit reports `8` flagged selected AUs, all in `insufficient_source_stands`;
+    - the current plot bundle publishes `18` managed-vs-first-growth comparison plots.
+  - The active edge stays on `P60.7`: record and review the explicit insufficient-support surface under the no-borrow contract, then decide what runtime policy those AUs should follow before starting any `P60.8` runtime-package generation work.
 
 - [x] P61.1 Plan and define the Windows Arbutus auth workflow contract (`#174`)
   - [x] P61.1a Add the first-class auth workflow to the roadmap before implementation starts.

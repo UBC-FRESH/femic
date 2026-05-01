@@ -16090,3 +16090,22 @@
   - reduced the MKRF bad-curve audit from `15` flagged selected units at the
     start of the correction lane to `0` flagged units out of `31` selected
     units, moving the active edge to `P60.7c`.
+## 2026-04-30 - Switched MKRF first-growth publication to local smoothed curves only
+- `#177` / `P60.7c` refinement slice:
+  - documented the reviewed curve-family decision in the roadmap/planning
+    surface: use strongly smoothed observed-bin PCHIP where AU-local
+    first-growth support is adequate;
+  - removed canonical publication of borrowed first-growth curves from the MKRF
+    bundle builder, so AU curves are now either AU-local or explicitly missing;
+  - rebuilt:
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_curves.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_fit_diagnostics.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_summary.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_detail.csv`
+    - `external/femic-mkrf-instance/plots/*`;
+  - current explicit first-growth state is:
+    - `20` AU-local `smoothed_bin_pchip` curves
+    - `11` `insufficient_source_stands` diagnostics rows
+    - `8` flagged selected AUs in the bad-curve audit, all `insufficient_source_stands`; and
+  - the comparison bundle now publishes `18` managed-vs-first-growth plots
+    because borrowed comparison surfaces are no longer emitted.

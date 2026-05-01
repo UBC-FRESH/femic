@@ -465,18 +465,6 @@ def build_mkrf_first_growth_input_bundle(
         assignment=assignment,
         source_table=source_table,
     )
-    curves, diagnostics = _apply_young_skewed_sibling_borrow(
-        curves=curves,
-        diagnostics=diagnostics,
-        assignment=assignment,
-        source_table=source_table,
-    )
-    curves, diagnostics = _apply_insufficient_support_merge(
-        curves=curves,
-        diagnostics=diagnostics,
-        assignment=assignment,
-        source_table=source_table,
-    )
 
     curves_path = output_dir / "first_growth_au_curves.csv"
     diagnostics_path = output_dir / "first_growth_au_fit_diagnostics.csv"
@@ -952,6 +940,11 @@ def build_mkrf_all_plots(
 
     lmh_curves = pd.DataFrame(columns=["au_id", "age", "volume"])
     lmh_diagnostics = pd.DataFrame(columns=["au_id", "rmse", "mape", "tail_rmse"])
+    eligible_first_growth_feature_ids = _resolve_eligible_first_growth_feature_ids(
+        vdyp_yields=vdyp_yields,
+        source_table=source_table,
+        min_first_growth_age=80.0,
+    )
     if level_assignment_rows:
         level_assignment = pd.DataFrame(level_assignment_rows)
         lmh_curves, lmh_diagnostics = build_mkrf_first_growth_curves(
@@ -959,6 +952,7 @@ def build_mkrf_all_plots(
                 vdyp_yields["FEATURE_ID"].isin(level_assignment["forest_cover_id"])
             ].copy(),
             assignment=level_assignment,
+            source_table=source_table,
         )
 
     lmh_plot_count = 0
@@ -1003,7 +997,11 @@ def build_mkrf_all_plots(
             curve = au_curves.loc[au_curves["au_id"] == temp_au_id]
             if curve.empty:
                 continue
-            stand_ids = stand_level_map.get((str(au_id), level), [])
+            stand_ids = [
+                stand_id
+                for stand_id in stand_level_map.get((str(au_id), level), [])
+                if stand_id in eligible_first_growth_feature_ids
+            ]
             if not stand_ids:
                 continue
             raw_subset = vdyp_yields.loc[vdyp_yields["FEATURE_ID"].isin(stand_ids)].copy()
