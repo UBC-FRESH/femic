@@ -1667,10 +1667,10 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P60.6c Attempt BTC and publish AU-wise managed/planted curves or an explicit blocker manifest.
   - [x] P60.6d Record the provisional claim boundary for the managed bootstrap lane.
   - [x] P60.6e Replace the legacy-managed bootstrap ceiling with an expert-rule managed compile driven by `AGE_2020` origin classes and MKRF planning guidance captured in `config/tipsy/tsamkrf.yaml`.
-- [ ] P60.7 Fix bad curve cases before canonical runtime generation (`#177`)
+- [x] P60.7 Fix bad curve cases before canonical runtime generation (`#177`)
   - [x] P60.7a Audit the bad first-growth and managed comparison cases against raw source rows, assignment lineage, and fit diagnostics.
   - [x] P60.7b Correct the source field choice, grouping, assignment, or fit logic as needed and regenerate the affected curve bundles.
-  - [ ] P60.7c Rebuild the canonical diagnostic/comparison plots and record the curve-quality acceptance gate for downstream runtime generation.
+  - [x] P60.7c Rebuild the canonical diagnostic/comparison plots and record the curve-quality acceptance gate for downstream runtime generation.
 - [ ] P60.8 Rebuild the full MKRF runtime package from source-faithful inputs (`#173`)
   - [ ] P60.8a Generate the runtime XML, tracks, and control surfaces from the new FEMIC-native rebuild lane, consuming AU-wise unmanaged/first-growth curves rather than legacy stand-wise first-growth curves.
   - [ ] P60.8b Re-run Matrix Builder and runtime assembly against the rebuilt source-faithful package.
@@ -1695,7 +1695,17 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     - `11` AUs remain `insufficient_source_stands`;
     - the current bad-curve audit reports `8` flagged selected AUs, all in `insufficient_source_stands`;
     - the current plot bundle publishes `18` managed-vs-first-growth comparison plots.
-  - The active edge stays on `P60.7`: record and review the explicit insufficient-support surface under the no-borrow contract, then decide what runtime policy those AUs should follow before starting any `P60.8` runtime-package generation work.
+  - Runtime policy is fixed for the `8` flagged insufficient-support AUs: because all `8` already have managed curves, `P60.8` must treat them as managed-only runtime units and must not require, synthesize, or borrow canonical first-growth curves for them.
+  - `P60.7c` acceptance gate is now satisfied:
+    - curve family accepted for direct first-growth AUs: `smoothed_bin_pchip`;
+    - borrowed first-growth publication: forbidden in the canonical bundle;
+    - explicit insufficient-support surface: accepted and visible rather than masked;
+    - current accepted state:
+      - `20` AU-local first-growth curves;
+      - `11` `insufficient_source_stands`;
+      - `8` flagged selected AUs, all insufficient-support and all covered by managed curves;
+      - `18` managed-vs-first-growth comparison plots in the canonical bundle.
+  - The active edge now moves to `P60.8`: rebuild the full canonical MKRF runtime package from the accepted no-borrow curve/control surface.
 
 - [x] P61.1 Plan and define the Windows Arbutus auth workflow contract (`#174`)
   - [x] P61.1a Add the first-class auth workflow to the roadmap before implementation starts.

@@ -16109,3 +16109,15 @@
     - `8` flagged selected AUs in the bad-curve audit, all `insufficient_source_stands`; and
   - the comparison bundle now publishes `18` managed-vs-first-growth plots
     because borrowed comparison surfaces are no longer emitted.
+## 2026-04-30 - Closed the MKRF curve-quality acceptance gate
+- `#177` / `P60.7c` closeout slice:
+  - recorded the explicit curve-quality acceptance gate in the roadmap and
+    Phase 60 planning notes;
+  - marked `P60.7` / `P60.7c` complete on the roadmap;
+  - locked the accepted downstream runtime contract to:
+    - `20` AU-local `smoothed_bin_pchip` first-growth curves;
+    - `11` explicit `insufficient_source_stands`;
+    - `8` flagged selected AUs, all insufficient-support and all covered by
+      managed curves; and
+    - managed-only runtime treatment for those `8` flagged AUs; and
+  - moved the active implementation edge from `P60.7` to `P60.8`.

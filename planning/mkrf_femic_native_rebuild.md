@@ -1338,6 +1338,17 @@ Current post-switch surface:
   `tipsy_vdyp_tsamkrf-*.png` files, because borrowed first-growth comparison
   surfaces are no longer emitted.
 
+Runtime-policy consequence now accepted for `P60.8`:
+
+- the `8` flagged insufficient-support AUs are not awaiting a better first-growth
+  fit policy;
+- all `8` already have managed/planted curves in `managed_au_curves.csv`; and
+- the canonical runtime package must therefore treat those `8` AUs as
+  managed-only runtime units:
+  - do not require first-growth curves for them;
+  - do not synthesize fallback first-growth curves for them; and
+  - do not revive sibling/same-BEC borrowing as a runtime convenience seam.
+
 - smooth first-growth curves are preferred for the canonical MKRF rebuild lane
   because Patchworks-style long-horizon harvest scheduling is better served by
   smooth volume and MAI shapes than by piecewise linear connect-the-dots
@@ -1372,18 +1383,42 @@ case-by-case review discussion:
 
 ### `P60.7c` Acceptance gate
 
-Before runtime generation continues, the rebuild lane must record a
-curve-quality acceptance gate that says:
+The curve-quality gate is now satisfied for the current MKRF rebuild lane.
 
-- which bad cases were audited;
-- which were fixed;
-- which, if any, remain as accepted source-data oddities; and
-- whether any rescued curves rely on a smooth shape-preserving tail override,
-  and why that override is acceptable for estate-model use;
-- why the remaining curve bundle is trustworthy enough to drive canonical XML
-  and track generation.
+Accepted gate conditions now in force:
 
-Until that gate is satisfied, `P60.8` runtime-package work is blocked.
+- all previously visible bad-curve cases were audited against raw source rows,
+  assignment lineage, and fit behavior;
+- the accepted direct-fit curve family is now:
+  - strongly smoothed observed-bin PCHIP (`smoothed_bin_pchip`);
+- whole-curve sibling / same-BEC borrowing is not part of the canonical
+  first-growth publication contract;
+- the canonical first-growth bundle now distinguishes clearly between:
+  - `20` AU-local first-growth curves; and
+  - `11` `insufficient_source_stands` rows that do not publish canonical
+    first-growth curves;
+- within that insufficient-support surface, the currently flagged selected AUs
+  are:
+  - `8` selected AUs;
+  - all in `insufficient_source_stands`; and
+  - all already covered by managed/planted curves in
+    `managed_au_curves.csv`; and
+- the canonical comparison surface now publishes only the comparisons that
+  remain meaningful under the no-borrow contract:
+  - `18` `tipsy_vdyp_tsamkrf-*.png` plots.
+
+Why this is acceptable for downstream runtime generation:
+
+- direct first-growth curves are now smooth and AU-local where the source
+  support is adequate;
+- weak-support AUs are explicit and auditable rather than hidden behind
+  borrowed curves;
+- the runtime policy for those weak-support AUs is explicit:
+  - treat them as managed-only runtime units; and
+  - do not require, synthesize, or borrow canonical first-growth curves for
+    them.
+
+This completes `P60.7c` and clears the way for `P60.8` runtime-package work.
 
 ## `P60.8a` Canonical runtime-package generation contract
 
