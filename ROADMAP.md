@@ -1746,6 +1746,10 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P63.4a Carry the PoC treatment-layer themes into the canonical generated `analysis/base.pin`.
   - [x] P63.4b Carry the PoC patch-layer themes into the canonical generated `analysis/base.pin` using canonical field names and guards.
   - [x] P63.4c Regenerate the canonical runtime package and verify the generated `analysis/base.pin` exposes the new map-layer block.
+- [x] P63.5 Expand canonical MKRF docs for treatment logic, AU/yield mapping, and non-top-N AU remap (`#173`)
+  - [x] P63.5a Add standalone instance docs pages for canonical treatment/state logic and AU/yield-curve mapping.
+  - [x] P63.5b Update the existing guide pages so operators land on those new logic docs instead of shallow package-only descriptions.
+  - [x] P63.5c Rebuild the standalone instance docs and verify the new treatment/AU/remap explanations render warning-clean.
 
 ### Detailed Next Steps Notes
 
@@ -1777,3 +1781,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - the generated `models/mkrf_patchworks_model/analysis/base.pin` now carries the PoC-style default block theme, current/latest treatment themes, and guarded patch themes using canonical field names;
   - the canonical runtime package was regenerated after the generator change so the emitted `analysis/base.pin` now exposes those layer definitions directly; and
   - focused runtime-package validation now asserts the generated `base.pin` keeps the `CURRENTTREATMENT`, `LASTTREATMENT`, `product.area.managed.treat.CC.size`, and `feature.area.managed.seral.le10.size` map-layer block.
+- Active docs logic-expansion edge:
+  - the standalone instance docs now include explicit canonical logic pages for `CC`/`CT`, managed/unmanaged versus natural/treated semantics, and the `EM/EN/FM/THN` state families;
+  - the docs now also include one concrete AU/yield page for the stratification -> AU -> selected top-N AU -> natural/treated curve mapping chain; and
+  - the non-top-N behavior is now documented explicitly as runtime AU remap/imputation onto the selected AU set, with the exact mechanics and audit surfaces linked from the technical/lineage lane.

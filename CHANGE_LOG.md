@@ -16353,3 +16353,17 @@
   - added focused runtime-package assertions so the generated `base.pin` keeps
     the `CURRENTTREATMENT`, `LASTTREATMENT`, and canonical patch-theme fields
     in future rebuilds.
+## 2026-05-02 - Expanded canonical MKRF instance docs for treatment logic and AU/yield mapping
+- `#173` / `P63.5` docs follow-up:
+  - added standalone instance docs pages for canonical treatment/state logic
+    and for the stratification -> AU -> selected top-N AU -> yield-curve
+    mapping chain;
+  - documented the canonical `CC` and `CT` treatment behavior directly from the
+    generated runtime, including the managed/unmanaged versus natural/treated
+    semantic split and the current `THN` thinning logic;
+  - documented non-top-N AU handling explicitly as runtime AU remap/imputation
+    onto the selected canonical AU set, with the technical audit surfaces
+    linked from the lineage docs; and
+  - updated the existing guide pages so operators now land on those logic docs
+    instead of only seeing package anatomy and figure pages, then rebuilt the
+    standalone instance Sphinx docs warning-clean.
