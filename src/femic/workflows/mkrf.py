@@ -3136,8 +3136,136 @@ def initialize_mkrf_runtime_package(
             int PatchWorks_Init() {
                femicConfigureHeadlessFromArgs();
 
-               if (!femicHeadlessMode)
+               if (!femicHeadlessMode) {
                   classic_GUI(control);
+
+                  DefaultTheme def = new DefaultTheme(
+                     blockData,
+                     new PolygonSymbol(new Color(204, 204, 255))
+                  );
+                  Layer defLayer = new GeoRelLayer(blockData, def);
+                  layers.add(defLayer);
+
+                  UniqueValueTheme currTreatTheme = new UniqueValueTheme(blockData);
+                  currTreatTheme.setFieldname("CURRENTTREATMENT");
+                  currTreatTheme.addElement(
+                     new ThemeElement(
+                        "CC",
+                        PolygonSymbol.getDefault(Symbol.FILL, Symbol.GEMS, 0)
+                     ),
+                     "CC"
+                  );
+                  currTreatTheme.addElement(
+                     new ThemeElement(
+                        "CT",
+                        PolygonSymbol.getDefault(Symbol.FILL, Symbol.GEMS, 1)
+                     ),
+                     "CT"
+                  );
+                  currTreatTheme.setCaption("Current Treatments");
+                  currTreatTheme.setUnclassified(new ThemeElement("", PolygonSymbol.erase));
+                  blockData.addTheme(currTreatTheme);
+                  GeoRelLayer currTreatLayer = new GeoRelLayer(blockData, currTreatTheme);
+                  currTreatLayer.setVisible(false);
+                  layers.add(currTreatLayer);
+
+                  UniqueValueTheme latestTreatTheme = new UniqueValueTheme(blockData);
+                  latestTreatTheme.setFieldname("LASTTREATMENT");
+                  latestTreatTheme.addElement(
+                     new ThemeElement(
+                        "CC",
+                        PolygonSymbol.getDefault(Symbol.FILL, Symbol.GEMS, 0)
+                     ),
+                     "CC"
+                  );
+                  latestTreatTheme.addElement(
+                     new ThemeElement(
+                        "CT",
+                        PolygonSymbol.getDefault(Symbol.FILL, Symbol.GEMS, 1)
+                     ),
+                     "CT"
+                  );
+                  latestTreatTheme.setCaption("Latest Treatments");
+                  latestTreatTheme.setUnclassified(new ThemeElement("", PolygonSymbol.erase));
+                  blockData.addTheme(latestTreatTheme);
+                  GeoRelLayer latestTreatLayer = new GeoRelLayer(blockData, latestTreatTheme);
+                  latestTreatLayer.setVisible(false);
+                  layers.add(latestTreatLayer);
+
+                  if (usePatches) {
+                     NumericTheme patch0Theme = new NumericTheme(blockData);
+                     patch0Theme.setFieldname("product.area.managed.treat.CC.size");
+                     patch0Theme.addElement(
+                        new ThemeElement(
+                           "0_1",
+                           PolygonSymbol.getDefault(Symbol.FILL, Symbol.APPLE, 0)
+                        ),
+                        "0.001 - 1.0"
+                     );
+                     patch0Theme.addElement(
+                        new ThemeElement(
+                           "1_5",
+                           PolygonSymbol.getDefault(Symbol.FILL, Symbol.APPLE, 1)
+                        ),
+                        "1.0 - 5.0"
+                     );
+                     patch0Theme.addElement(
+                        new ThemeElement(
+                           "5_40",
+                           PolygonSymbol.getDefault(Symbol.FILL, Symbol.APPLE, 2)
+                        ),
+                        "5.0 - 40.0"
+                     );
+                     patch0Theme.addElement(
+                        new ThemeElement(
+                           "40_50",
+                           PolygonSymbol.getDefault(Symbol.FILL, Symbol.APPLE, 3)
+                        ),
+                        "40.0 - 50.0"
+                     );
+                     patch0Theme.addElement(
+                        new ThemeElement(
+                           "50plus",
+                           PolygonSymbol.getDefault(Symbol.FILL, Symbol.APPLE, 4)
+                        ),
+                        "50.0 - 99999.0"
+                     );
+                     patch0Theme.setCaption("patch.grpblk patches");
+                     patch0Theme.setUnclassified(new ThemeElement("", PolygonSymbol.erase));
+                     blockData.addTheme(patch0Theme);
+                     GeoRelLayer patch0Layer = new GeoRelLayer(blockData, patch0Theme);
+                     layers.add(patch0Layer);
+
+                     NumericTheme patch1Theme = new NumericTheme(blockData);
+                     patch1Theme.setFieldname("feature.area.managed.seral.le10.size");
+                     patch1Theme.addElement(
+                        new ThemeElement(
+                           "0_40",
+                           PolygonSymbol.getDefault(Symbol.FILL, Symbol.APPLE, 0)
+                        ),
+                        "0.001 - 40.0"
+                     );
+                     patch1Theme.addElement(
+                        new ThemeElement(
+                           "40_50",
+                           PolygonSymbol.getDefault(Symbol.FILL, Symbol.APPLE, 1)
+                        ),
+                        "40.0 - 50.0"
+                     );
+                     patch1Theme.addElement(
+                        new ThemeElement(
+                           "50plus",
+                           PolygonSymbol.getDefault(Symbol.FILL, Symbol.APPLE, 2)
+                        ),
+                        "50.0 - 99999.0"
+                     );
+                     patch1Theme.setCaption("patch.sepblk patches");
+                     patch1Theme.setUnclassified(new ThemeElement("", PolygonSymbol.erase));
+                     blockData.addTheme(patch1Theme);
+                     GeoRelLayer patch1Layer = new GeoRelLayer(blockData, patch1Theme);
+                     layers.add(patch1Layer);
+                  }
+               }
 
                if (femicHeadlessMode)
                   femicQueueHeadlessStage();

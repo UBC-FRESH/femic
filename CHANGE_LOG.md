@@ -16339,3 +16339,17 @@
     republishing from `main`; and
   - verified live `_static/mkrf-figures/...` URLs now return actual PNG bytes
     rather than annex pointer text.
+## 2026-05-02 - Added PoC-style map layers to the canonical MKRF base.pin
+- `#173` / `P63.4` control-lane GUI follow-up:
+  - carried the PoC default block theme plus current/latest treatment layers
+    into the canonical generated
+    `external/femic-mkrf-instance/models/mkrf_patchworks_model/analysis/base.pin`;
+  - carried the guarded patch-layer themes into the canonical generated
+    `base.pin` using canonical field names
+    `product.area.managed.treat.CC.size` and
+    `feature.area.managed.seral.le10.size`;
+  - regenerated the canonical runtime package so the emitted `analysis/base.pin`
+    now contains those layer definitions directly; and
+  - added focused runtime-package assertions so the generated `base.pin` keeps
+    the `CURRENTTREATMENT`, `LASTTREATMENT`, and canonical patch-theme fields
+    in future rebuilds.

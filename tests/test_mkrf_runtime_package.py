@@ -365,6 +365,10 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert 'sourceRelative("../scripts/targets/flowtargets.bsh");' in analysis_pin_text
     assert 'block_shape = "../spatial/fragments.shp";' in analysis_pin_text
     assert "setupYieldFlowTargets(control, periods, tracks_path_prefix);" in analysis_pin_text
+    assert 'currTreatTheme.setFieldname("CURRENTTREATMENT");' in analysis_pin_text
+    assert 'latestTreatTheme.setFieldname("LASTTREATMENT");' in analysis_pin_text
+    assert 'patch0Theme.setFieldname("product.area.managed.treat.CC.size");' in analysis_pin_text
+    assert 'patch1Theme.setFieldname("feature.area.managed.seral.le10.size");' in analysis_pin_text
     assert "femicQueueHeadlessStage();" in analysis_pin_text
 
     headless_common_text = result.headless_runtime_common_path.read_text(encoding="utf-8")
@@ -403,7 +407,7 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert '<attribute label="product.yield.managed.total">' in forestmodel_text
     assert '<attribute label="product.yield.managed.indsp.Ba">' in forestmodel_text
     assert '<attribute label="\'product.yield.managed.treat.\'+treatment">' in forestmodel_text
-    assert "if(origin eq 'natural' and lookupTable(Int(FOREST_COV),'101,102','Y,N') eq 'Y'," in forestmodel_text
+    assert "if(origin eq 'natural' and hasnatcurve eq 'Y'," in forestmodel_text
     assert "curveId(lookupTable(au,'cwh_vm_1_dr_hw,cwh_vm_1_hw_cw'," in forestmodel_text
     assert "if(treatment eq 'CT' or statecode eq 'THN',0.6,1)" in forestmodel_text
     assert '<curve idref="unity"' in forestmodel_text

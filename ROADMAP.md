@@ -1738,10 +1738,14 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P63.2a Audit the existing `plots/` artifact set and select the subset that belongs in the public operator docs.
   - [x] P63.2b Add MKRF docs pages and toctree links for strata distribution plus yield-curve/fit-diagnostic figures, following the proven K3Z figure-gallery pattern.
   - [x] P63.2c Rebuild the standalone instance docs and verify the rendered figure pages publish cleanly.
-- [ ] P63.3 Fix MKRF docs image publication by moving published figure assets off annex-backed `plots/` (`femic-mkrf-instance#6`)
+- [x] P63.3 Fix MKRF docs image publication by moving published figure assets off annex-backed `plots/` (`femic-mkrf-instance#6`)
   - [x] P63.3a Copy the published MKRF figure subset into a docs-owned non-annex asset path.
   - [x] P63.3b Override the instance annex rules for the published docs figure asset path so those PNGs are committed as regular git files.
   - [x] P63.3c Repoint/republish the standalone figure pages and verify the live `_static` figure URLs return actual PNG payloads rather than annex pointer text.
+- [x] P63.4 Add canonical MKRF `base.pin` map-layer parity for operator GUI use (`#173`)
+  - [x] P63.4a Carry the PoC treatment-layer themes into the canonical generated `analysis/base.pin`.
+  - [x] P63.4b Carry the PoC patch-layer themes into the canonical generated `analysis/base.pin` using canonical field names and guards.
+  - [x] P63.4c Regenerate the canonical runtime package and verify the generated `analysis/base.pin` exposes the new map-layer block.
 
 ### Detailed Next Steps Notes
 
@@ -1769,3 +1773,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - resolved by overriding annex for `docs/_static/mkrf-figures/*.png`, de-annexing the published figure files, and republishing the instance docs from `main`;
   - live MKRF figure URLs under `_static/mkrf-figures/` now return actual PNG bytes rather than annex pointer text; and
   - the standalone GitHub Pages figure surfaces are now usable in the browser.
+- Canonical control-lane GUI parity:
+  - the generated `models/mkrf_patchworks_model/analysis/base.pin` now carries the PoC-style default block theme, current/latest treatment themes, and guarded patch themes using canonical field names;
+  - the canonical runtime package was regenerated after the generator change so the emitted `analysis/base.pin` now exposes those layer definitions directly; and
+  - focused runtime-package validation now asserts the generated `base.pin` keeps the `CURRENTTREATMENT`, `LASTTREATMENT`, `product.area.managed.treat.CC.size`, and `feature.area.managed.seral.le10.size` map-layer block.
