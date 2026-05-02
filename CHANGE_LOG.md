@@ -16367,3 +16367,13 @@
   - updated the existing guide pages so operators now land on those logic docs
     instead of only seeing package anatomy and figure pages, then rebuilt the
     standalone instance Sphinx docs warning-clean.
+## 2026-05-02 - Clarified MKRF treatment docs wording
+- `#173` docs wording follow-up:
+  - rewrote the canonical `CC` and `CT` treatment bullets so the docs explain
+    post-treatment field updates in plain language instead of raw assignment
+    fragments;
+  - replaced the ambiguous prose `retention 20` with an explicit description of
+    the treatment `retain="20"` attribute as a 20-year post-treatment
+    re-entry lock for automated scheduling; and
+  - removed the stale `CT followed by clearcut twenty years later` wording from
+    `model-anatomy.rst`.
