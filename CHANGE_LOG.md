@@ -16332,7 +16332,10 @@
     `external/femic-mkrf-instance/docs/_static/mkrf-figures/` as a docs-owned
     non-annex asset surface;
   - repointed `yield-curve-comparisons.rst` and `figure-appendix.rst` at the
-    docs-owned assets so standalone publication no longer depends on annex
-    content; and
-  - rebuilt and republished the standalone instance docs from `main` with the
-    corrected figure asset path.
+    docs-owned assets, then discovered the instance annex rules were still
+    annexing those PNGs on commit;
+  - fixed that by exempting `docs/_static/mkrf-figures/*.png` in the instance
+    `.gitattributes`, de-annexing the published docs figure files, and
+    republishing from `main`; and
+  - verified live `_static/mkrf-figures/...` URLs now return actual PNG bytes
+    rather than annex pointer text.
