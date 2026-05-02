@@ -16121,3 +16121,176 @@
       managed curves; and
     - managed-only runtime treatment for those `8` flagged AUs; and
   - moved the active implementation edge from `P60.7` to `P60.8`.
+## 2026-05-01 - Recorded the missing MKRF runtime spatial source-lane contract
+- Added `external/femic-mkrf-instance/config/source_inputs.mkrf_rebuild.yaml`
+  to fix the expected instance-local source location for the canonical MKRF
+  spatial publisher:
+  `data/source/03_MappingAnalysisData/Resultant.gdb`.
+- Updated roadmap/planning notes so `P60.8a` is explicitly blocked on
+  materializing that upstream source payload, not on more XML/control
+  scaffolding.
+- Re-stated the no-substitute boundary at the instance contract surface:
+  archival compiled spatial files, PoC spatial files, and checkpoint-derived
+  geometry artifacts are not acceptable substitutes for the missing
+  `Resultant.gdb` source lane.
+## 2026-05-01 - Cleared the MKRF canonical runtime-package rebuild lane
+- `#173` / `P60.8a`-`P60.8b` milestone:
+  - materialized the canonical MKRF runtime package under
+    `external/femic-mkrf-instance/models/mkrf_patchworks_model/`;
+  - published source-faithful runtime spatial outputs from
+    `data/source/03_MappingAnalysisData/Resultant.gdb`;
+  - normalized runtime AU assignment onto the selected canonical AU set and
+    published the remap audit at
+    `analysis/runtime_au_remap_audit.csv`;
+  - rebuilt the canonical `forestmodel.xml` and legal top-level product
+    surface so Patchworks preflight and Matrix Builder run cleanly against the
+    source-faithful package; and
+  - verified the rebuilt runtime surface now emits populated managed
+    area/yield features, products, and accounts in `tracks/`.
+## 2026-05-01 - Advanced MKRF PoC-parity rollout on the clean canonical runtime
+- `#173` / `P60.9a` parity slice:
+  - updated the canonical runtime-package generator and tests so the new
+    first-growth-aware `au` / `hasfg` contract is validated directly rather
+    than through a stale exact-string assertion;
+  - rebuilt the canonical package and reran Matrix Builder cleanly through
+    runs `mkrf_rebuild_p60_9a_20260501c` and `mkrf_rebuild_p60_9a_20260501d`;
+  - confirmed managed parity breadth now emits in the canonical runtime,
+    including managed `EN/EM/FM/THN`, managed `merch.total`, and managed
+    `indsp.{Ba,Cw,Dec,Dr,Fd,Hw,Oth,Yc}` families across `features.csv`,
+    `products.csv`, and `accounts.csv`;
+  - added unmanaged-yield fallback emission for unmanaged `EM` states so the
+    canonical runtime now emits `feature.yield.unmanaged.state.EM` without
+    reopening unmanaged `indsp.*`; and
+  - reduced the canonical-vs-PoC family diff to:
+    - accepted redesign: `feature.area.unmanaged.state.THN` and
+      `feature.yield.unmanaged.state.THN`, because the PoC emits those from a
+      special numeric unmanaged AU family that the canonical rebuild does not
+      preserve after runtime AU normalization; and
+    - accepted/source-blocked for now: unmanaged
+      `feature.yield.unmanaged.indsp.*`.
+- `#173` / `P60.9a` parity closeout update:
+  - corrected the unmanaged species-share source contract so canonical runtime
+    regeneration reads `stand_au_assignment.csv` for unmanaged species-share
+    aggregation while preserving `stand_origin_assignment.csv` for runtime AU
+    normalization;
+  - regenerated the canonical runtime package and reran Matrix Builder cleanly
+    through run `mkrf_rebuild_p60_9a_20260501e`;
+  - confirmed unmanaged `feature.yield.unmanaged.indsp.{Ba,Cw,Dec,Dr,Fd,Hw,Oth,Yc}`
+    now materializes in canonical `features.csv` and `accounts.csv`; and
+  - confirmed unmanaged products remain absent in the canonical runtime, which
+    is PoC-consistent because the accepted PoC `products.csv` is managed-only.
+- `#173` / `P60.8` closeout status update:
+  - marked `P60.8c` complete because the canonical package stayed synchronized
+    through the completed `P60.9a` parity reruns; and
+  - closed `P60.8` as a finished runtime-package milestone so the active edge
+    now sits on `P60.9b` and `P60.9c`.
+- `#173` / `P60.9b` acceptance-boundary update:
+  - recorded that the next acceptance question is no longer runtime-surface
+    parity but legacy control-lane evidence;
+  - made explicit that the canonical rebuild does not yet publish rebuilt
+    `base.pin`, `ScenarioSet.bsh`, `InitialTargets`, `Scripts`, or `Targets`
+    surfaces under `models/mkrf_patchworks_model`; and
+  - pinned `THLB4070(...)`, `UWR(...)`, and
+    `InitialTargets/00_Target_Descriptions.bsh` as legacy/PoC benchmark seams
+    rather than current canonical regressions unless a later control-lane
+    rebuild task reopens them.
+- `#173` / `P60.9` closeout status update:
+  - marked `P60.9b` and `P60.9c` complete now that the legacy control-lane
+    evidence and remaining differences are explicitly classified;
+  - closed `P60.9` as the acceptance milestone for the canonical rebuild
+  runtime surface; and
+  - moved the active edge to `P60.10` closeout docs and final claim-boundary
+  publication.
+- `#173` / `P60.10a` planning update:
+  - identified the exact docs/runbook closeout surfaces that still need the
+    canonical rebuild lane taught directly;
+  - pinned the parent docs targets to `docs/sample-models/mkrf.rst` and
+  `docs/sample-models/mkrf-metadata-lineage.rst`; and
+  - pinned the instance closeout set to `README.md` plus the still-PoC-framed
+  MKRF docs pages under `external/femic-mkrf-instance/docs/`.
+- `#173` / `P60.10a` docs closeout update:
+  - updated the parent MKRF pointer docs so they now present
+    `models/mkrf_patchworks_model/` as the active canonical rebuild lane and
+    keep `models/mkrf_patchworks_model_poc/` as benchmark/reference evidence;
+  - updated the targeted instance README/docs surfaces to teach the canonical
+    rebuild lane first and keep the retained PoC/control seams explicitly out
+    of the canonical claim boundary; and
+  - verified that both the parent docs tree and the standalone instance docs
+    tree build cleanly with Sphinx warnings treated as errors.
+- `#173` / `P60.10b` claim-boundary closeout update:
+  - recorded that the canonical MKRF rebuild claim now covers the
+    `models/mkrf_patchworks_model/` runtime/package lane, including canonical
+    XML, spatial, tracks, analysis, and the accepted runtime Patchworks config;
+  - fixed the retained PoC and legacy surfaces, including
+    `models/mkrf_patchworks_model_poc/`, legacy compiled controls/tracks, and
+    benchmark report/control artifacts, as benchmark/reference evidence only
+    rather than part of the canonical rebuild claim; and
+  - fixed `THLB4070(...)`, `UWR(...)`, and
+    `InitialTargets/00_Target_Descriptions.bsh` as accepted legacy-only
+    control-lane seams outside the canonical rebuild claim boundary for this
+    phase unless a later task explicitly reopens source-faithful control-lane
+    reconstruction.
+- `#173` / `P60.10c` canonical runnable-control update:
+  - generated a minimal canonical analysis/control lane for
+    `models/mkrf_patchworks_model/`, including `analysis/base.pin`,
+    `analysis/headless_runtime_common.bsh`, and
+    `scripts/targets/flowtargets.bsh`;
+  - repointed the built-in `mkrf.base` Patchworks variant at the canonical
+  rebuild package and retained the PoC control lane separately as
+    `mkrf.poc_base`; and
+  - ran the real canonical even-flow harvest-volume smoke
+    `mkrf_canonical_evenflow_smoke`, which completed successfully and produced
+    sane saved-stage outputs under
+    `runtime/logs/headless_stage/mkrf_canonical_evenflow_smoke/`, including a
+    non-empty schedule plus active `product.yield.managed.total` and
+    `flow.even.product.yield.managed.total` targets.
+## 2026-05-02 - Repaired MKRF Patchworks semantics drift and added runtime sanity auditing
+- `#173` / `P60.10e` semantic-repair closeout:
+  - repaired the canonical MKRF runtime generator so Patchworks IFM
+    (`managed/unmanaged`) is now decoupled from curve provenance
+    (`natural/treated`), with explicit runtime `origin` semantics driven by
+    the reviewed 2020 age rule;
+  - stopped using first-growth / `hasfg` availability as a proxy for IFM
+    state, unmanaged-vs-managed yield logic, or species-family emission while
+    preserving `EM/EN/FM/THN` output families for compatibility;
+  - published deterministic species-share audit output at
+    `external/femic-mkrf-instance/models/mkrf_patchworks_model/analysis/runtime_species_share_audit.csv`
+    plus the new CLI/runtime helper `femic instance mkrf-audit-runtime-sanity`;
+  - regenerated the canonical package, reran Matrix Builder cleanly through
+    `mkrf_rebuild_p60_10e_20260502c`, reran the canonical even-flow smoke as
+    `mkrf_canonical_evenflow_semantic_smoke_20260502a`, and verified the
+    resulting saved-stage sanity audit completed with zero failures; and
+  - updated parent repo agent-facing guardrails in `AGENTS.md`,
+    `docs/reference/contracts/patchworks-model-semantics.rst`,
+    `docs/reference/patchworks-export.rst`, and
+    `docs/guides/vscode-coding-agent-onboarding.rst` so future Patchworks
+    instance work starts from the correct IFM/origin/retention semantics.
+## 2026-05-02 - Raised canonical MKRF smoke validation to the real 100000-iteration baseline
+- `#173` / follow-on `v0` checkpoint hygiene:
+  - confirmed the earlier canonical semantic smoke sample had only used
+    `20000` iterations and reran the canonical headless even-flow scenario at
+    an explicit `100000` iterations as
+    `mkrf_canonical_evenflow_semantic_smoke_20260502b`;
+  - reran `femic instance mkrf-audit-runtime-sanity` against that stronger
+    saved stage and confirmed `rows=24 failures=0`;
+  - verified the active even-flow target remains numerically sane at the
+    stronger iteration budget, with stable
+    `product.yield.managed.total` and near-zero
+    `flow.even.product.yield.managed.total` residuals;
+  - updated the built-in canonical MKRF scenario registry so
+    `mkrf.base` `even_flow_smoke` now defaults to `100000` iterations rather
+    than `20000`; and
+  - updated the parent MKRF sample-model docs plus the instance
+    `rebuild-and-qa` / `operator-runbook` pages so the repaired IFM/origin
+    semantics and the stronger `v0` validation lane are documented directly.
+## 2026-05-02 - Closed the MKRF archaeology umbrella after the canonical rebuild handoff
+- `#173` / `P60.10d` closeout:
+  - audited umbrella issue `#172` against the completed `P55`-`P59`
+    archaeology/PoC benchmark scope and the completed `P60` canonical rebuild
+    scope;
+  - confirmed that no remaining technical work still belongs to the
+    archaeology umbrella rather than the canonical rebuild record under
+    `#173`;
+  - posted the final closeout comment on `#172` and closed the issue; and
+  - marked `P60.10d` and parent `P60.10` complete in the roadmap/planning
+    surfaces so the repo state now matches the GitHub tracker.

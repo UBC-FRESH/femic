@@ -27,6 +27,7 @@ Contract Pages
 .. toctree::
    :maxdepth: 1
 
+   patchworks-model-semantics
    repo-runtime-invariants
    instance-and-data-roots
    stage-boundaries-and-canonical-artifacts

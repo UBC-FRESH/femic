@@ -1,18 +1,24 @@
-MKRF PoC Example Instance (Pointer)
-===================================
+MKRF Example Instance (Pointer)
+===============================
 
 Purpose
 -------
 
-FEMIC keeps this page as a short pointer for the current MKRF PoC instance.
-The checked-in MKRF runtime package is benchmark/intermediate evidence, not the
-final canonical rebuild.
+FEMIC keeps this page as a short pointer for the current MKRF instance.
 
-Canonical PoC Docs
-------------------
+The active canonical rebuild runtime package now lives at:
+
+- ``external/femic-mkrf-instance/models/mkrf_patchworks_model``
+
+The retained PoC benchmark package remains alongside it as comparison evidence:
+
+- ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc``
+
+Canonical MKRF Docs
+-------------------
 
 - Linked submodule path in FEMIC: ``external/femic-mkrf-instance``
-- Standalone PoC docs root:
+- Standalone instance docs root:
   ``external/femic-mkrf-instance/docs/index.rst``
 - Current instance README:
   ``external/femic-mkrf-instance/README.md``
@@ -21,30 +27,66 @@ Canonical PoC Docs
 
 Use the current MKRF instance surfaces as source of truth for:
 
-- the accepted PoC runtime package and rebuild boundary,
-- legacy recovery and metadata lineage notes,
+- the canonical rebuild runtime package and claim boundary,
+- retained PoC benchmark/reference evidence,
 - generated XML / tracks / spatial runtime evidence, and
-- benchmark-only caveats that remain deferred to the later from-scratch rebuild.
+- accepted legacy-only helper/control seams that remain outside the canonical
+  rebuild claim boundary.
 
 Current Scope Boundary
 ----------------------
 
-The current MKRF instance in FEMIC is a PoC benchmark surface only. It is
-appropriate for:
+The current MKRF instance in FEMIC now contains two distinct lanes:
 
-- reverse-engineering and comparison against the legacy compiled package,
-- minimal runnable Patchworks validation,
-- accepted benchmark scenario comparison, and
-- operator-facing documentation of the current intermediate runtime package.
+- a canonical rebuild runtime package under
+  ``external/femic-mkrf-instance/models/mkrf_patchworks_model``; and
+- a retained PoC benchmark/intermediate package under
+  ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc``.
 
-It is not the source of truth for the later from-scratch MKRF rebuild contract.
-That later rebuild remains a separate roadmap phase under issue ``#173``.
+The canonical rebuild lane is now the source of truth for:
+
+- source-faithful runtime spatial publication,
+- canonical ForestModel / tracks / products / accounts generation, and
+- the accepted runtime-surface comparison against the PoC benchmark package.
+
+It now also carries the reviewed Patchworks semantics contract used for the
+current ``v0`` checkpoint:
+
+- ``managed`` / ``unmanaged`` means treatment eligibility only;
+- ``natural`` / ``treated`` origin means curve provenance only; and
+- retention can move area between managed and unmanaged without changing
+  origin.
+
+The PoC lane remains appropriate only for:
+
+- benchmark/reference comparison against the older compiled package behavior,
+- retained control-lane evidence such as ``analysis/base.pin`` and
+  ``ScenarioSet.bsh``, and
+- legacy/benchmark-only caveats that are not part of the canonical rebuild
+  claim boundary.
 
 The practical handoff is:
 
-- use the current PoC docs lane for runtime, benchmark, and lineage reference;
-  and
-- use Phase 60 / ``#173`` for any future architecture-defining rebuild work.
+- use the canonical rebuild package for current runtime/package reference;
+- use the PoC package only for benchmark/reference comparison; and
+- use Phase 60 / ``#173`` for the remaining closeout/docs claim-boundary work.
+
+Current ``v0`` checkpoint signal
+--------------------------------
+
+The canonical rebuild lane has now passed a stronger runtime sanity check than
+the earlier short smoke runs:
+
+- Matrix Builder is clean against the canonical package;
+- the canonical even-flow harvest-volume smoke is now treated as a
+  ``100000``-iteration validation lane rather than a short scheduler sample;
+- the saved-stage runtime sanity audit confirms that emitted ``indsp.*``
+  species signals agree with the published source-share audit; and
+- the active even-flow target ``product.yield.managed.total`` produces a
+  numerically stable solution in the saved stage.
+
+This is the current basis for treating the canonical MKRF rebuild as a
+defensible ``version 0`` checkpoint.
 
 Submodule Sync Commands
 -----------------------
@@ -59,9 +101,11 @@ From the FEMIC workspace top-level directory:
 FEMIC-Local Integration Notes
 -----------------------------
 
-- MKRF PoC instance runtime root in this repository:
+- MKRF instance runtime root in this repository:
   ``external/femic-mkrf-instance``
-- Current PoC runtime package path:
+- Current canonical rebuild runtime package path:
+  ``external/femic-mkrf-instance/models/mkrf_patchworks_model``
+- Retained PoC benchmark package path:
   ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc``
 - Rebuild contract files:
   ``external/femic-mkrf-instance/config/rebuild.spec.yaml`` and

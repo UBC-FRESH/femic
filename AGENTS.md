@@ -91,10 +91,35 @@ the repo root:
 
 For the compact docs source of truth behind these operating notes, see:
 - `docs/reference/contracts/index.rst`
+- `docs/reference/contracts/patchworks-model-semantics.rst`
 - `docs/reference/contracts/repo-runtime-invariants.rst`
 - `docs/reference/contracts/instance-and-data-roots.rst`
 - `docs/reference/contracts/stage-boundaries-and-canonical-artifacts.rst`
 - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
+
+## Patchworks Model Semantics Guardrails
+
+These rules are repo-level contracts, not case-specific heuristics:
+
+- `managed` / `unmanaged` in Patchworks means treatment eligibility only:
+  - `managed` area may receive scheduled treatments;
+  - `unmanaged` area may not.
+- `natural` / `treated` origin means curve provenance only:
+  - natural-origin area belongs on the untreated / VDYP-style curve lane;
+  - treated-origin area belongs on the treated / plantation / TIPSY-style
+    curve lane.
+- Do not infer `managed = treated` or `unmanaged = natural`.
+- Retention is orthogonal to origin:
+  - retention may move area from `managed` to `unmanaged`;
+  - retention does not, by itself, change origin.
+- Do not use first-growth curve availability, `hasfg`, or similar curve-family
+  presence as a proxy for Patchworks IFM state.
+- After Patchworks-facing rebuilds, validate species-share and runtime-signal
+  sanity explicitly:
+  - compare published source-share tables against rebuilt `indsp.*` outputs;
+  - treat "Matrix Builder succeeded" as necessary but not sufficient; and
+  - fail the sanity check when nonzero source share produces zero runtime
+    signal, or vice versa.
 
 Do not treat symlinked pointer files in `external/femic-public-data` as usable
 inputs until `datalad get` has completed.

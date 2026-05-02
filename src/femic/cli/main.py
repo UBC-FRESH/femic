@@ -269,6 +269,7 @@ from femic.workflows.legacy import (
     run_post_tipsy_bundle_with_manifest,
 )
 from femic.workflows.mkrf import (
+    audit_mkrf_runtime_sanity,
     build_mkrf_bad_curve_audit,
     build_mkrf_all_plots,
     build_mkrf_au_distribution_plot,
@@ -277,6 +278,8 @@ from femic.workflows.mkrf import (
     build_mkrf_managed_au_curves,
     build_mkrf_managed_au_input_bundle,
     build_mkrf_selected_au_input_bundle,
+    initialize_mkrf_runtime_package,
+    publish_mkrf_runtime_spatial_handoff,
 )
 
 app = typer.Typer(
@@ -6605,6 +6608,163 @@ def instance_mkrf_build_managed_au_curves(
         console.print(f"managed_au_curves: {result.curves_path}")
 
 
+@instance_app.command("mkrf-init-runtime-package")
+def instance_mkrf_init_runtime_package(
+    package_root: Path = typer.Option(
+        Path("models/mkrf_patchworks_model"),
+        "--package-root",
+        help="Instance-relative canonical MKRF runtime-package root.",
+    ),
+    selected_au_csv: Path = typer.Option(
+        Path("data/model_input_bundle/selected_au_table.csv"),
+        "--selected-au-csv",
+        help="Instance-relative selected-AU table CSV.",
+    ),
+    stand_origin_assignment_csv: Path = typer.Option(
+        Path("data/model_input_bundle/stand_origin_assignment.csv"),
+        "--stand-origin-assignment-csv",
+        help="Instance-relative stand-to-rebuild-AU assignment CSV.",
+    ),
+    stand_au_assignment_csv: Path = typer.Option(
+        Path("data/model_input_bundle/stand_au_assignment.csv"),
+        "--stand-au-assignment-csv",
+        help="Instance-relative stand-to-AU/species-share assignment CSV.",
+    ),
+    managed_bootstrap_csv: Path = typer.Option(
+        Path("data/model_input_bundle/managed_au_bootstrap_table.csv"),
+        "--managed-bootstrap-csv",
+        help="Instance-relative managed AU bootstrap/species-composition CSV.",
+    ),
+    first_growth_curves_csv: Path = typer.Option(
+        Path("data/model_input_bundle/first_growth_au_curves.csv"),
+        "--first-growth-curves-csv",
+        help="Instance-relative AU-wise first-growth curves CSV.",
+    ),
+    first_growth_diagnostics_csv: Path = typer.Option(
+        Path("data/model_input_bundle/first_growth_au_fit_diagnostics.csv"),
+        "--first-growth-diagnostics-csv",
+        help="Instance-relative AU-wise first-growth diagnostics CSV.",
+    ),
+    managed_curves_csv: Path = typer.Option(
+        Path("data/model_input_bundle/managed_au_curves.csv"),
+        "--managed-curves-csv",
+        help="Instance-relative managed AU curves CSV.",
+    ),
+    managed_run_manifest_json: Path = typer.Option(
+        Path("data/model_input_bundle/managed_au_run_manifest.json"),
+        "--managed-run-manifest-json",
+        help="Instance-relative managed AU run manifest JSON.",
+    ),
+    bad_curve_audit_summary_csv: Path = typer.Option(
+        Path("data/model_input_bundle/bad_curve_audit_summary.csv"),
+        "--bad-curve-audit-summary-csv",
+        help="Instance-relative bad-curve audit summary CSV.",
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Initialize the canonical MKRF runtime-package root and lineage manifest."""
+    context = _resolve_cli_instance_context(instance_root=instance_root)
+    result = initialize_mkrf_runtime_package(
+        package_root=context.resolve_path(package_root),
+        selected_au_csv=context.resolve_path(selected_au_csv),
+        stand_origin_assignment_csv=context.resolve_path(stand_origin_assignment_csv),
+        stand_au_assignment_csv=context.resolve_path(stand_au_assignment_csv),
+        managed_bootstrap_csv=context.resolve_path(managed_bootstrap_csv),
+        first_growth_curves_csv=context.resolve_path(first_growth_curves_csv),
+        first_growth_diagnostics_csv=context.resolve_path(first_growth_diagnostics_csv),
+        managed_curves_csv=context.resolve_path(managed_curves_csv),
+        managed_run_manifest_json=context.resolve_path(managed_run_manifest_json),
+        bad_curve_audit_summary_csv=context.resolve_path(bad_curve_audit_summary_csv),
+    )
+    console.print(
+        "[green]mkrf runtime package initialized[/green] "
+        f"selected_aus={result.selected_au_count} "
+        f"first_growth_aus={result.first_growth_curve_au_count} "
+        f"managed_curve_aus={result.managed_curve_au_count} "
+        f"first_growth_missing_aus={result.first_growth_missing_au_count}"
+    )
+    console.print(f"package_root: {result.package_root}")
+    console.print(f"manifest: {result.manifest_path}")
+    console.print(f"curve_status_csv: {result.curve_status_path}")
+    console.print(f"analysis_au_runtime_status_csv: {result.analysis_au_runtime_status_path}")
+    console.print(f"analysis_au_curve_refs_csv: {result.analysis_au_curve_refs_path}")
+    console.print(f"runtime_species_share_audit_csv: {result.species_share_audit_path}")
+    console.print(f"analysis_pin: {result.analysis_pin_path}")
+    console.print(f"headless_runtime_common_bsh: {result.headless_runtime_common_path}")
+    console.print(f"flow_targets_bsh: {result.flow_targets_script_path}")
+    console.print(f"xml_contract: {result.xml_contract_path}")
+    console.print(f"xml_curve_bank: {result.xml_curve_bank_path}")
+    console.print(f"forestmodel_xml: {result.forestmodel_xml_path}")
+
+
+@instance_app.command("mkrf-audit-runtime-sanity")
+def instance_mkrf_audit_runtime_sanity(
+    package_root: Path = typer.Option(
+        Path("models/mkrf_patchworks_model"),
+        "--package-root",
+        help="Instance-relative canonical MKRF runtime-package root.",
+    ),
+    stage_dir: Path = typer.Option(
+        ...,
+        "--stage-dir",
+        exists=True,
+        dir_okay=True,
+        file_okay=False,
+        resolve_path=True,
+        help="Absolute or repo-relative saved headless stage directory to audit.",
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Audit canonical MKRF runtime signal against published species-share sources."""
+    context = _resolve_cli_instance_context(instance_root=instance_root)
+    result = audit_mkrf_runtime_sanity(
+        package_root=context.resolve_path(package_root),
+        stage_dir=stage_dir.resolve(),
+    )
+    color = "green" if result.failure_count == 0 else "yellow"
+    console.print(
+        f"[{color}]mkrf runtime sanity audit complete[/{color}] "
+        f"rows={result.row_count} failures={result.failure_count}"
+    )
+    console.print(f"stage_dir: {result.stage_dir}")
+    console.print(f"audit_csv: {result.audit_csv_path}")
+    console.print(f"summary_json: {result.summary_json_path}")
+
+
+@instance_app.command("mkrf-publish-runtime-spatial")
+def instance_mkrf_publish_runtime_spatial(
+    resultant_gdb: Path = typer.Option(
+        ...,
+        "--resultant-gdb",
+        exists=True,
+        dir_okay=True,
+        file_okay=True,
+        resolve_path=True,
+        help="Path to the upstream MKRF Resultant.gdb source surface.",
+    ),
+    package_root: Path = typer.Option(
+        Path("models/mkrf_patchworks_model"),
+        "--package-root",
+        help="Instance-relative canonical MKRF runtime-package root.",
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Publish canonical MKRF runtime fragments from Resultant.gdb."""
+    context = _resolve_cli_instance_context(instance_root=instance_root)
+    result = publish_mkrf_runtime_spatial_handoff(
+        resultant_gdb=resultant_gdb,
+        package_root=context.resolve_path(package_root),
+    )
+    console.print(
+        "[green]mkrf runtime spatial published[/green] "
+        f"source_features={result.source_feature_count} "
+        f"published_features={result.published_feature_count} "
+        f"excluded_features={result.excluded_feature_count}"
+    )
+    console.print(f"fragments: {result.fragments_path}")
+    console.print(f"manifest: {result.manifest_path}")
+
+
 @app.command("run")
 def run_all(
     data_root: Path = DATA_ROOT_OPTION,
@@ -8831,6 +8991,8 @@ def patchworks_matrix_build(
             pass
     for failure in result.failures:
         console.print(f"[red]Runtime failure:[/red] {failure}")
+    for warning in result.warnings:
+        console.print(f"[yellow]Runtime warning:[/yellow] {warning}")
     if result.returncode != 0:
         raise typer.Exit(code=result.returncode)
 

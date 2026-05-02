@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 import os
 from pathlib import Path
+from textwrap import dedent
+import xml.etree.ElementTree as et
 
 import geopandas as gpd
 import numpy as np
@@ -36,6 +39,7 @@ from femic.pipeline.plots import (
     strata_plot_paths,
 )
 from femic.pipeline.tipsy import run_btc_cli
+from femic.fmg.patchworks import validate_forestmodel_xml_tree, write_forestmodel_xml
 
 
 @dataclass(frozen=True)
@@ -71,6 +75,269 @@ def _parse_mkrf_au_id(au_id: str) -> tuple[str, str, str, str, str] | None:
     if len(parts) != 5:
         return None
     return (parts[0], parts[1], parts[2], parts[3], parts[4])
+
+
+def _normalize_species_bucket(species_code: str) -> str:
+    code = str(species_code).strip().upper()
+    if code in {"BA"}:
+        return "Ba"
+    if code in {"CW"}:
+        return "Cw"
+    if code in {"DR"}:
+        return "Dr"
+    if code in {"FD", "FDC"}:
+        return "Fd"
+    if code in {"HW"}:
+        return "Hw"
+    if code in {"YC"}:
+        return "Yc"
+    if code in {"AC", "ACT", "AT", "EP", "MB"}:
+        return "Dec"
+    if code:
+        return "Oth"
+    return ""
+
+
+_SPECIES_BUCKETS = ("Ba", "Cw", "Dec", "Dr", "Fd", "Hw", "Oth", "Yc")
+
+
+def _build_lookup_expr(keys: list[str], values: list[str], *, key_expr: str) -> str:
+    return f"lookupTable({key_expr},'{','.join(keys)}','{','.join(values)}')"
+
+
+def _build_managed_species_share_table(
+    managed_bootstrap_table: pd.DataFrame,
+) -> pd.DataFrame:
+    rows: list[dict[str, object]] = []
+    for row in managed_bootstrap_table.itertuples(index=False):
+        shares = {bucket: 0.0 for bucket in _SPECIES_BUCKETS}
+        for index in range(1, 6):
+            species_code = getattr(row, f"managed_species_{index}", "")
+            pct_value = pd.to_numeric(
+                getattr(row, f"managed_pct_{index}", 0.0), errors="coerce"
+            )
+            if pd.isna(pct_value) or float(pct_value) <= 0:
+                continue
+            bucket = _normalize_species_bucket(str(species_code))
+            if bucket:
+                shares[bucket] += float(pct_value)
+        row_payload = {"au_id": str(row.au_id).strip()}
+        row_payload.update({f"share_{bucket.lower()}": shares[bucket] for bucket in shares})
+        rows.append(row_payload)
+    return pd.DataFrame(rows)
+
+
+def _build_unmanaged_species_share_table(
+    stand_assignment: pd.DataFrame,
+    *,
+    selected_au_table: pd.DataFrame | None = None,
+) -> pd.DataFrame:
+    rows = stand_assignment.copy()
+    rows["au_id"] = rows["au_id"].astype(str).str.strip()
+    if selected_au_table is not None:
+        selected_ids = set(selected_au_table["au_id"].astype(str).str.strip())
+        rows = rows.loc[rows["au_id"].isin(selected_ids)].copy()
+
+    rows["shape_area_ha"] = pd.to_numeric(rows["shape_area_ha"], errors="coerce").fillna(0.0)
+    rows["leading_species_1_share"] = pd.to_numeric(
+        rows["leading_species_1_share"], errors="coerce"
+    ).fillna(0.0)
+    rows["leading_species_2_share"] = pd.to_numeric(
+        rows["leading_species_2_share"], errors="coerce"
+    ).fillna(0.0)
+
+    payload_rows: list[dict[str, object]] = []
+    for row in rows.itertuples(index=False):
+        area_ha = float(row.shape_area_ha)
+        if area_ha <= 0:
+            continue
+
+        shares = {bucket: 0.0 for bucket in _SPECIES_BUCKETS}
+        species_1 = _normalize_species_bucket(getattr(row, "leading_species_1", ""))
+        species_2 = _normalize_species_bucket(getattr(row, "leading_species_2", ""))
+        species_1_share = max(float(row.leading_species_1_share), 0.0)
+        species_2_share = max(float(row.leading_species_2_share), 0.0)
+
+        if species_1:
+            shares[species_1] += area_ha * species_1_share / 100.0
+        if species_2:
+            shares[species_2] += area_ha * species_2_share / 100.0
+
+        residual_share = max(0.0, 100.0 - species_1_share - species_2_share)
+        shares["Oth"] += area_ha * residual_share / 100.0
+
+        payload = {
+            "au_id": str(row.au_id).strip(),
+            "area_ha": area_ha,
+        }
+        payload.update({f"share_{bucket.lower()}_ha": shares[bucket] for bucket in _SPECIES_BUCKETS})
+        payload_rows.append(payload)
+
+    if not payload_rows:
+        return pd.DataFrame(
+            columns=["au_id", "area_ha", *[f"share_{bucket.lower()}" for bucket in _SPECIES_BUCKETS]]
+        )
+
+    aggregated = pd.DataFrame(payload_rows).groupby("au_id", as_index=False).sum(numeric_only=True)
+    for bucket in _SPECIES_BUCKETS:
+        area_column = f"share_{bucket.lower()}_ha"
+        share_column = f"share_{bucket.lower()}"
+        aggregated[share_column] = np.where(
+            aggregated["area_ha"].gt(0),
+            aggregated[area_column] / aggregated["area_ha"] * 100.0,
+            0.0,
+        )
+
+    return aggregated[["au_id", *[f"share_{bucket.lower()}" for bucket in _SPECIES_BUCKETS]]]
+
+
+def _build_species_share_audit_table(
+    *,
+    managed_species_shares: pd.DataFrame,
+    unmanaged_species_shares: pd.DataFrame,
+) -> pd.DataFrame:
+    rows: list[dict[str, object]] = []
+    for origin_lane, source_name, frame in (
+        ("treated", "managed_bootstrap", managed_species_shares),
+        ("natural", "stand_au_assignment", unmanaged_species_shares),
+    ):
+        if frame.empty:
+            continue
+        working = frame.copy()
+        working["au_id"] = working["au_id"].astype(str).str.strip()
+        for row in working.itertuples(index=False):
+            for bucket in _SPECIES_BUCKETS:
+                share_pct = float(pd.to_numeric(getattr(row, f"share_{bucket.lower()}", 0.0), errors="coerce") or 0.0)
+                rows.append(
+                    {
+                        "origin_lane": origin_lane,
+                        "source_name": source_name,
+                        "au_id": str(row.au_id).strip(),
+                        "species_bucket": bucket,
+                        "share_pct": share_pct,
+                        "share_class": "nonzero" if share_pct > 0 else "zero",
+                    }
+                )
+    return pd.DataFrame(rows).sort_values(
+        ["origin_lane", "source_name", "au_id", "species_bucket"],
+        kind="stable",
+    )
+
+
+def _normalize_runtime_au_assignments(
+    *,
+    selected_au_table: pd.DataFrame,
+    stand_origin_assignment: pd.DataFrame,
+    managed_curves: pd.DataFrame,
+    first_growth_diagnostics: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Normalize raw stand-origin AU assignments onto the canonical selected AU set."""
+    selected = selected_au_table.copy()
+    selected["au_id"] = selected["au_id"].astype(str).str.strip()
+    selected_parts = selected["au_id"].map(_parse_mkrf_au_id)
+    selected = selected.loc[selected_parts.notna()].copy()
+    selected[["bec_zone", "bec_subzone", "bec_variant", "leading_species_1", "leading_species_2"]] = (
+        pd.DataFrame(selected_parts.loc[selected.index].tolist(), index=selected.index)
+    )
+    if "selected_rank" in selected.columns:
+        selected["selected_rank"] = pd.to_numeric(
+            selected["selected_rank"], errors="coerce"
+        ).fillna(10**9)
+    else:
+        selected["selected_rank"] = float(10**9)
+
+    managed_ids = set(managed_curves["au_id"].astype(str).str.strip().unique())
+    fg_paths = (
+        first_growth_diagnostics[["au_id", "selected_path"]]
+        .drop_duplicates(subset=["au_id"], keep="last")
+        .assign(
+            au_id=lambda df: df["au_id"].astype(str).str.strip(),
+            selected_path=lambda df: df["selected_path"].astype(str).str.strip(),
+        )
+    )
+    selected = selected.merge(fg_paths, on="au_id", how="left")
+    selected["has_managed_curve"] = selected["au_id"].isin(managed_ids)
+    selected["has_first_growth_curve"] = selected["selected_path"].notna() & (
+        ~selected["selected_path"].eq("insufficient_source_stands")
+    )
+    selected["runtime_coverage_rank"] = np.where(
+        selected["has_first_growth_curve"] & selected["has_managed_curve"],
+        2,
+        np.where(selected["has_managed_curve"], 1, 0),
+    )
+
+    selected_by_bec: dict[tuple[str, str, str], list[dict[str, object]]] = {}
+    for row in selected.itertuples(index=False):
+        key = (str(row.bec_zone), str(row.bec_subzone), str(row.bec_variant))
+        selected_by_bec.setdefault(key, []).append(
+            {
+                "au_id": str(row.au_id),
+                "leading_species_1": str(row.leading_species_1),
+                "leading_species_2": str(row.leading_species_2),
+                "runtime_coverage_rank": int(row.runtime_coverage_rank),
+                "selected_rank": float(row.selected_rank),
+            }
+        )
+
+    def choose_canonical_au(raw_au_id: str) -> tuple[str, str]:
+        parsed = _parse_mkrf_au_id(raw_au_id)
+        if parsed is None:
+            return raw_au_id, "unparsed_raw_au_id"
+        bec_zone, bec_subzone, bec_variant, raw_sp1, raw_sp2 = parsed
+        candidates = selected_by_bec.get((bec_zone, bec_subzone, bec_variant), [])
+        if not candidates:
+            return raw_au_id, "no_selected_au_same_bec"
+
+        def score(candidate: dict[str, object]) -> tuple[int, int, int, int, float, str]:
+            cand_sp1 = str(candidate["leading_species_1"])
+            cand_sp2 = str(candidate["leading_species_2"])
+            overlap = len({raw_sp1, raw_sp2} & {cand_sp1, cand_sp2})
+            return (
+                int(cand_sp1 == raw_sp1),
+                int(candidate["runtime_coverage_rank"]),
+                int(cand_sp2 == raw_sp2),
+                overlap,
+                -float(candidate["selected_rank"]),
+                str(candidate["au_id"]),
+            )
+
+        best = max(candidates, key=score)
+        return str(best["au_id"]), "same_bec_species_coverage_rank"
+
+    normalized = (
+        stand_origin_assignment.copy()
+        .assign(
+            forest_cover_id=lambda df: pd.to_numeric(df["forest_cover_id"], errors="coerce"),
+            raw_au_id=lambda df: df["au_id"].astype(str).str.strip(),
+        )
+        .dropna(subset=["forest_cover_id"])
+        .loc[lambda df: df["raw_au_id"].ne("")]
+    )
+    normalized["au_id"] = normalized["raw_au_id"]
+    normalized["remap_reason"] = "already_selected"
+    selected_ids = set(selected["au_id"])
+    remap_mask = ~normalized["raw_au_id"].isin(selected_ids)
+    remap_targets = normalized.loc[remap_mask, "raw_au_id"].map(choose_canonical_au)
+    normalized.loc[remap_mask, "au_id"] = remap_targets.map(lambda item: item[0])
+    normalized.loc[remap_mask, "remap_reason"] = remap_targets.map(lambda item: item[1])
+    normalized["was_remapped"] = normalized["raw_au_id"] != normalized["au_id"]
+
+    remap_audit = (
+        normalized.groupby(
+            ["raw_au_id", "au_id", "was_remapped", "remap_reason"], dropna=False, as_index=False
+        )
+        .agg(
+            forest_cover_id_count=("forest_cover_id", "nunique"),
+            assignment_row_count=("forest_cover_id", "size"),
+        )
+        .sort_values(
+            ["was_remapped", "forest_cover_id_count", "raw_au_id"],
+            ascending=[False, False, True],
+            kind="stable",
+        )
+        .reset_index(drop=True)
+    )
+    return normalized, remap_audit
 
 
 def _apply_young_skewed_sibling_borrow(
@@ -411,6 +678,55 @@ class MkrfBadCurveAuditResult:
     total_selected_au_count: int
 
 
+@dataclass(frozen=True)
+class MkrfRuntimePackageInitResult:
+    """Result payload for MKRF canonical runtime-package initialization."""
+
+    package_root: Path
+    readme_path: Path
+    manifest_path: Path
+    curve_status_path: Path
+    analysis_au_runtime_status_path: Path
+    analysis_au_curve_refs_path: Path
+    runtime_au_remap_audit_path: Path
+    species_share_audit_path: Path
+    analysis_pin_path: Path
+    headless_runtime_common_path: Path
+    flow_targets_script_path: Path
+    xml_contract_path: Path
+    xml_curve_bank_path: Path
+    forestmodel_xml_path: Path
+    selected_au_count: int
+    first_growth_curve_au_count: int
+    first_growth_missing_au_count: int
+    managed_curve_au_count: int
+
+
+@dataclass(frozen=True)
+class MkrfRuntimeSanityAuditResult:
+    """Result payload for MKRF canonical runtime-sanity auditing."""
+
+    package_root: Path
+    stage_dir: Path
+    audit_csv_path: Path
+    summary_json_path: Path
+    row_count: int
+    failure_count: int
+
+
+@dataclass(frozen=True)
+class MkrfRuntimeSpatialPublishResult:
+    """Result payload for MKRF source-faithful runtime spatial publication."""
+
+    package_root: Path
+    spatial_dir: Path
+    fragments_path: Path
+    manifest_path: Path
+    source_feature_count: int
+    published_feature_count: int
+    excluded_feature_count: int
+
+
 def _manifest_path_value(path: Path | str | None) -> str | None:
     if path is None:
         return None
@@ -419,6 +735,45 @@ def _manifest_path_value(path: Path | str | None) -> str | None:
         return os.path.relpath(candidate.resolve(), Path.cwd().resolve()).replace("\\", "/")
     except Exception:
         return candidate.name
+
+
+_MKRF_RUNTIME_FRAGMENT_FIELD_MAP: tuple[tuple[str, str], ...] = (
+    ("FOREST_COVER_ID", "FOREST_COV"),
+    ("Operability", "Operabilit"),
+    ("Shape_Length", "Shape_Leng"),
+    ("Shape_Area", "Shape_Area"),
+    ("CONTCLAS", "CONTCLAS"),
+    ("AGE_2020", "AGE_2020"),
+    ("AU_EX", "AU_EX"),
+    ("AU_FU", "AU_FU"),
+    ("RES_KEY", "RES_KEY"),
+    ("CT_eligib", "CT_eligib"),
+)
+
+
+def _project_mkrf_runtime_fragments(*, source_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Project MKRF Resultant rows into the recovered runtime fragments field surface."""
+    missing = sorted(
+        source_name
+        for source_name, _target_name in _MKRF_RUNTIME_FRAGMENT_FIELD_MAP
+        if source_name not in source_gdf.columns
+    )
+    if missing:
+        raise ValueError(
+            "Resultant layer missing required MKRF runtime fragment columns: "
+            + ", ".join(missing)
+        )
+
+    filtered = source_gdf.loc[source_gdf["CONTCLAS"].astype(str) != "X"].copy()
+    projected = gpd.GeoDataFrame(
+        {
+            target_name: filtered[source_name]
+            for source_name, target_name in _MKRF_RUNTIME_FRAGMENT_FIELD_MAP
+        },
+        geometry=filtered.geometry,
+        crs=source_gdf.crs,
+    )
+    return projected
 
 
 def build_mkrf_au_input_bundle(
@@ -444,6 +799,65 @@ def build_mkrf_au_input_bundle(
         stand_assignment_path=stand_assignment_path,
         source_row_count=len(assignment),
         au_count=len(au_table),
+    )
+
+
+def publish_mkrf_runtime_spatial_handoff(
+    *,
+    resultant_gdb: Path,
+    package_root: Path,
+    layer: str = "Resultant",
+) -> MkrfRuntimeSpatialPublishResult:
+    """Publish MKRF source-faithful runtime fragments from Resultant.gdb."""
+    package_root = package_root.resolve()
+    spatial_dir = package_root / "spatial"
+    spatial_dir.mkdir(parents=True, exist_ok=True)
+    fragments_path = spatial_dir / "fragments.shp"
+    manifest_path = spatial_dir / "runtime_spatial_manifest.json"
+
+    source_gdf = gpd.read_file(resultant_gdb, layer=layer)
+    source_feature_count = int(len(source_gdf))
+    published_gdf = _project_mkrf_runtime_fragments(source_gdf=source_gdf)
+    published_feature_count = int(len(published_gdf))
+    excluded_feature_count = int(source_feature_count - published_feature_count)
+
+    published_gdf.to_file(fragments_path)
+
+    excluded_rows = source_gdf.loc[source_gdf["CONTCLAS"].astype(str) == "X"].copy()
+    excluded_reason_counts = (
+        excluded_rows["CONTCLAS"].astype(str).value_counts(dropna=False).to_dict()
+        if not excluded_rows.empty
+        else {}
+    )
+    manifest_payload = {
+        "schema_version": 1,
+        "source_layer": layer,
+        "source_resultant_gdb": str(resultant_gdb.resolve()),
+        "publication_rule": "CONTCLAS != 'X'",
+        "field_projection": [
+            {"source": source_name, "target": target_name}
+            for source_name, target_name in _MKRF_RUNTIME_FRAGMENT_FIELD_MAP
+        ],
+        "package_root": str(package_root),
+        "fragments_path": str(fragments_path.resolve()),
+        "source_feature_count": source_feature_count,
+        "published_feature_count": published_feature_count,
+        "excluded_feature_count": excluded_feature_count,
+        "excluded_reason_counts": excluded_reason_counts,
+    }
+    manifest_path.write_text(
+        json.dumps(manifest_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    return MkrfRuntimeSpatialPublishResult(
+        package_root=package_root,
+        spatial_dir=spatial_dir,
+        fragments_path=fragments_path,
+        manifest_path=manifest_path,
+        source_feature_count=source_feature_count,
+        published_feature_count=published_feature_count,
+        excluded_feature_count=excluded_feature_count,
     )
 
 
@@ -1390,4 +1804,1591 @@ def build_mkrf_bad_curve_audit(
         detail_path=detail_path,
         flagged_au_count=int(summary_frame["flagged"].astype(bool).sum()),
         total_selected_au_count=int(len(summary_frame)),
+    )
+
+
+def initialize_mkrf_runtime_package(
+    *,
+    package_root: Path,
+    selected_au_csv: Path,
+    stand_origin_assignment_csv: Path,
+    stand_au_assignment_csv: Path,
+    managed_bootstrap_csv: Path,
+    first_growth_curves_csv: Path,
+    first_growth_diagnostics_csv: Path,
+    managed_curves_csv: Path,
+    managed_run_manifest_json: Path,
+    bad_curve_audit_summary_csv: Path,
+) -> MkrfRuntimePackageInitResult:
+    """Initialize the canonical MKRF runtime-package root and write an init manifest."""
+    package_root = package_root.resolve()
+    readme_path = package_root / "README.md"
+    analysis_dir = package_root / "analysis"
+    analysis_pin_path = analysis_dir / "base.pin"
+    headless_runtime_common_path = analysis_dir / "headless_runtime_common.bsh"
+    xml_dir = package_root / "xml"
+    tracks_dir = package_root / "tracks"
+    targets_dir = package_root / "scripts" / "targets"
+    flow_targets_script_path = targets_dir / "flowtargets.bsh"
+    manifest_path = analysis_dir / "runtime_package_init_manifest.json"
+    curve_status_path = analysis_dir / "runtime_curve_status.csv"
+    analysis_au_runtime_status_path = analysis_dir / "au_runtime_status.csv"
+    analysis_au_curve_refs_path = analysis_dir / "au_curve_refs.csv"
+    runtime_au_remap_audit_path = analysis_dir / "runtime_au_remap_audit.csv"
+    species_share_audit_path = analysis_dir / "runtime_species_share_audit.csv"
+    xml_contract_path = xml_dir / "runtime_curve_contract.xml"
+    xml_curve_bank_path = xml_dir / "runtime_curve_bank.xml"
+    forestmodel_xml_path = xml_dir / "forestmodel.xml"
+    required_dirs = (
+        analysis_dir,
+        xml_dir,
+        tracks_dir,
+        package_root / "spatial",
+        package_root / "scripts",
+        targets_dir,
+        package_root / "targets",
+        package_root / "initial_targets",
+    )
+    for directory in required_dirs:
+        directory.mkdir(parents=True, exist_ok=True)
+
+    selected_au = pd.read_csv(selected_au_csv)
+    stand_origin_assignment = pd.read_csv(stand_origin_assignment_csv)
+    stand_au_assignment = pd.read_csv(stand_au_assignment_csv)
+    managed_bootstrap = pd.read_csv(managed_bootstrap_csv)
+    first_growth_curves = pd.read_csv(first_growth_curves_csv)
+    first_growth_diagnostics = pd.read_csv(first_growth_diagnostics_csv)
+    managed_curves = pd.read_csv(managed_curves_csv)
+    bad_curve_summary = pd.read_csv(bad_curve_audit_summary_csv)
+    managed_manifest = json.loads(managed_run_manifest_json.read_text(encoding="utf-8"))
+
+    normalized_assignment, remap_audit = _normalize_runtime_au_assignments(
+        selected_au_table=selected_au,
+        stand_origin_assignment=stand_origin_assignment,
+        managed_curves=managed_curves,
+        first_growth_diagnostics=first_growth_diagnostics,
+    )
+    remap_audit.to_csv(runtime_au_remap_audit_path, index=False)
+    au_lookup = (
+        normalized_assignment[["forest_cover_id", "au_id"]]
+        .drop_duplicates(subset=["forest_cover_id"], keep="first")
+        .sort_values("forest_cover_id", kind="stable")
+    )
+    forest_cover_ids = au_lookup["forest_cover_id"].astype(int).astype(str).tolist()
+    rebuild_au_ids = au_lookup["au_id"].tolist()
+    au_lookup_expr = _build_lookup_expr(
+        forest_cover_ids,
+        rebuild_au_ids,
+        key_expr="Int(FOREST_COV)",
+    )
+    forest_cover_origin_lookup = (
+        normalized_assignment[["forest_cover_id", "origin_class"]]
+        .drop_duplicates(subset=["forest_cover_id"], keep="first")
+        .assign(
+            forest_cover_id=lambda df: df["forest_cover_id"].astype(int).astype(str),
+            runtime_origin=lambda df: np.where(
+                df["origin_class"].astype(str).eq("fire_origin"),
+                "natural",
+                "treated",
+            ),
+        )
+        .sort_values("forest_cover_id", kind="stable")
+    )
+    origin_lookup_expr = _build_lookup_expr(
+        forest_cover_origin_lookup["forest_cover_id"].tolist(),
+        forest_cover_origin_lookup["runtime_origin"].tolist(),
+        key_expr="Int(FOREST_COV)",
+    )
+
+    selected_au_count = int(selected_au["au_id"].astype(str).nunique())
+    first_growth_curve_au_count = int(first_growth_curves["au_id"].astype(str).nunique())
+    first_growth_missing_au_count = int(
+        first_growth_diagnostics.loc[
+            first_growth_diagnostics["selected_path"]
+            .astype(str)
+            .eq("insufficient_source_stands"),
+            "au_id",
+        ]
+        .astype(str)
+        .nunique()
+    )
+    managed_curve_au_count = int(managed_curves["au_id"].astype(str).nunique())
+    flagged_au_count = int(bad_curve_summary["flagged"].fillna(False).astype(bool).sum())
+
+    first_growth_path_by_au = (
+        first_growth_diagnostics[["au_id", "selected_path"]]
+        .drop_duplicates(subset=["au_id"], keep="last")
+        .assign(
+            au_id=lambda df: df["au_id"].astype(str),
+            selected_path=lambda df: df["selected_path"].astype(str),
+        )
+    )
+    managed_curve_aus = set(managed_curves["au_id"].astype(str).unique())
+    bad_curve_flagged = (
+        bad_curve_summary[["au_id", "flagged"]]
+        .drop_duplicates(subset=["au_id"], keep="last")
+        .assign(
+            au_id=lambda df: df["au_id"].astype(str),
+            flagged=lambda df: df["flagged"].fillna(False).astype(bool),
+        )
+    )
+    runtime_curve_status = (
+        selected_au[["au_id"]]
+        .assign(au_id=lambda df: df["au_id"].astype(str))
+        .merge(first_growth_path_by_au, on="au_id", how="left")
+        .merge(bad_curve_flagged, on="au_id", how="left")
+    )
+    runtime_curve_status["flagged_bad_curve"] = (
+        runtime_curve_status["flagged"].fillna(False).astype(bool)
+    )
+    runtime_curve_status = runtime_curve_status.drop(columns=["flagged"])
+    runtime_curve_status["has_first_growth_curve"] = runtime_curve_status["selected_path"].notna() & (
+        ~runtime_curve_status["selected_path"].eq("insufficient_source_stands")
+    )
+    runtime_curve_status["has_managed_curve"] = runtime_curve_status["au_id"].isin(managed_curve_aus)
+    runtime_curve_status["runtime_curve_mode"] = np.where(
+        runtime_curve_status["has_first_growth_curve"] & runtime_curve_status["has_managed_curve"],
+        "first_growth_and_managed",
+        np.where(
+            (~runtime_curve_status["has_first_growth_curve"])
+            & runtime_curve_status["has_managed_curve"]
+            & runtime_curve_status["selected_path"].fillna("").eq("insufficient_source_stands"),
+            "managed_only",
+            "incomplete",
+        ),
+    )
+    runtime_curve_status["runtime_curve_note"] = np.where(
+        runtime_curve_status["runtime_curve_mode"].eq("managed_only"),
+        "insufficient_source_stands_managed_only",
+        "",
+    )
+    runtime_curve_status = runtime_curve_status.rename(
+        columns={"selected_path": "first_growth_selected_path"}
+    ).sort_values("au_id", kind="stable")
+    runtime_curve_status.to_csv(curve_status_path, index=False)
+    tracks_status = (
+        selected_au.assign(au_id=lambda df: df["au_id"].astype(str))
+        .merge(
+            runtime_curve_status[
+                [
+                    "au_id",
+                    "first_growth_selected_path",
+                    "has_first_growth_curve",
+                    "has_managed_curve",
+                    "runtime_curve_mode",
+                    "runtime_curve_note",
+                    "flagged_bad_curve",
+                ]
+            ],
+            on="au_id",
+            how="left",
+        )
+    )
+    tracks_sort_columns = ["au_id"]
+    if "selected_rank" in tracks_status.columns:
+        tracks_sort_columns = ["selected_rank", "au_id"]
+    tracks_status = tracks_status.sort_values(tracks_sort_columns, kind="stable")
+    tracks_status.to_csv(analysis_au_runtime_status_path, index=False)
+    curve_ref_rows: list[dict[str, object]] = []
+    for row in runtime_curve_status.sort_values("au_id", kind="stable").itertuples(index=False):
+        au_token = str(row.au_id).upper().replace("-", "_")
+        curve_ref_rows.append(
+            {
+                "au_id": str(row.au_id),
+                "runtime_curve_mode": str(row.runtime_curve_mode),
+                "first_growth_selected_path": (
+                    str(row.first_growth_selected_path)
+                    if pd.notna(row.first_growth_selected_path)
+                    else ""
+                ),
+                "has_first_growth_curve": bool(row.has_first_growth_curve),
+                "has_managed_curve": bool(row.has_managed_curve),
+                "first_growth_curve_id": (
+                    f"FG_{au_token}" if bool(row.has_first_growth_curve) else ""
+                ),
+                "managed_curve_id": f"MG_{au_token}" if bool(row.has_managed_curve) else "",
+                "flagged_bad_curve": bool(row.flagged_bad_curve),
+                "runtime_curve_note": (
+                    str(row.runtime_curve_note)
+                    if pd.notna(row.runtime_curve_note) and str(row.runtime_curve_note).strip()
+                    else ""
+                ),
+            }
+        )
+    pd.DataFrame(curve_ref_rows).to_csv(analysis_au_curve_refs_path, index=False)
+    managed_curve_lookup_rows = [row for row in curve_ref_rows if row["managed_curve_id"]]
+    managed_curve_au_ids = [str(row["au_id"]) for row in managed_curve_lookup_rows]
+    managed_curve_ids = [str(row["managed_curve_id"]) for row in managed_curve_lookup_rows]
+    first_growth_curve_lookup_rows = [row for row in curve_ref_rows if row["first_growth_curve_id"]]
+    first_growth_curve_au_ids = [str(row["au_id"]) for row in first_growth_curve_lookup_rows]
+    first_growth_curve_ids = [str(row["first_growth_curve_id"]) for row in first_growth_curve_lookup_rows]
+    runtime_base_au_expr = "au"
+    runtime_state_expr = "statecode"
+    managed_curve_lookup_expr = _build_lookup_expr(
+        managed_curve_au_ids,
+        managed_curve_ids,
+        key_expr=runtime_base_au_expr,
+    )
+    first_growth_curve_lookup_expr = _build_lookup_expr(
+        first_growth_curve_au_ids,
+        first_growth_curve_ids,
+        key_expr=runtime_base_au_expr,
+    )
+    forest_cover_fg_lookup = (
+        normalized_assignment[["forest_cover_id", "au_id"]]
+        .drop_duplicates(subset=["forest_cover_id"], keep="first")
+        .merge(
+            runtime_curve_status[["au_id", "has_first_growth_curve"]],
+            on="au_id",
+            how="left",
+        )
+        .assign(
+            forest_cover_id=lambda df: df["forest_cover_id"].astype(int).astype(str),
+            has_first_growth_curve=lambda df: np.where(
+                df["has_first_growth_curve"].fillna(False).astype(bool), "Y", "N"
+            ),
+        )
+        .sort_values("forest_cover_id", kind="stable")
+    )
+    has_first_growth_lookup_expr = _build_lookup_expr(
+        forest_cover_fg_lookup["forest_cover_id"].tolist(),
+        forest_cover_fg_lookup["has_first_growth_curve"].tolist(),
+        key_expr="Int(FOREST_COV)",
+    )
+    managed_species_shares = _build_managed_species_share_table(managed_bootstrap)
+    managed_species_shares = managed_species_shares.assign(
+        au_id=lambda df: df["au_id"].astype(str)
+    ).sort_values("au_id", kind="stable")
+    unmanaged_share_assignment = stand_au_assignment.merge(
+        normalized_assignment[["forest_cover_id", "au_id"]]
+        .drop_duplicates(subset=["forest_cover_id"], keep="first")
+        .rename(columns={"au_id": "runtime_au_id"}),
+        on="forest_cover_id",
+        how="left",
+    )
+    unmanaged_share_assignment["au_id"] = (
+        unmanaged_share_assignment["runtime_au_id"]
+        .fillna(unmanaged_share_assignment["au_id"])
+        .astype(str)
+        .str.strip()
+    )
+    unmanaged_share_assignment = unmanaged_share_assignment.drop(columns=["runtime_au_id"])
+    unmanaged_species_shares = _build_unmanaged_species_share_table(
+        unmanaged_share_assignment,
+        selected_au_table=selected_au,
+    )
+    unmanaged_species_shares = unmanaged_species_shares.assign(
+        au_id=lambda df: df["au_id"].astype(str)
+    ).sort_values("au_id", kind="stable")
+    managed_share_label_map = {
+        "share_ba": "Ba",
+        "share_cw": "Cw",
+        "share_dec": "Dec",
+        "share_dr": "Dr",
+        "share_fd": "Fd",
+        "share_hw": "Hw",
+        "share_oth": "Oth",
+        "share_yc": "Yc",
+    }
+    managed_share_lookup_exprs: dict[str, str] = {}
+    managed_share_keys = managed_species_shares["au_id"].tolist()
+    for share_column in managed_share_label_map:
+        managed_share_values = [
+            str(float(value))
+            for value in managed_species_shares[share_column].fillna(0.0).tolist()
+        ]
+        lookup_expr = _build_lookup_expr(
+            managed_share_keys,
+            managed_share_values,
+            key_expr=runtime_base_au_expr,
+        )
+        managed_share_lookup_exprs[share_column] = f"Number({lookup_expr})/100"
+    unmanaged_share_lookup_exprs: dict[str, str] = {}
+    unmanaged_share_keys = unmanaged_species_shares["au_id"].tolist()
+    for share_column in managed_share_label_map:
+        unmanaged_share_values = [
+            str(float(value))
+            for value in unmanaged_species_shares[share_column].fillna(0.0).tolist()
+        ]
+        lookup_expr = _build_lookup_expr(
+            unmanaged_share_keys,
+            unmanaged_share_values,
+            key_expr=runtime_base_au_expr,
+        )
+        unmanaged_share_lookup_exprs[share_column] = f"Number({lookup_expr})/100"
+    species_share_audit = _build_species_share_audit_table(
+        managed_species_shares=managed_species_shares,
+        unmanaged_species_shares=unmanaged_species_shares,
+    )
+    species_share_audit.to_csv(species_share_audit_path, index=False)
+    origin_share_lookup_exprs = {
+        share_column: (
+            f"if(origin eq 'natural',{unmanaged_share_lookup_exprs[share_column]},"
+            f"{managed_share_lookup_exprs[share_column]})"
+        )
+        for share_column in managed_share_label_map
+    }
+    origin_curve_lookup_expr = (
+        "if(origin eq 'natural' and hasnatcurve eq 'Y',"
+        f"curveId({first_growth_curve_lookup_expr}),"
+        f"curveId({managed_curve_lookup_expr}))"
+    )
+    thinning_factor_expr = "if(treatment eq 'CT' or statecode eq 'THN',0.6,1)"
+    for obsolete_path in (
+        tracks_dir / "au_runtime_status.csv",
+        tracks_dir / "au_curve_refs.csv",
+    ):
+        if obsolete_path.exists():
+            obsolete_path.unlink()
+
+    root = et.Element(
+        "mkrfRuntimeCurveContract",
+        {
+            "schemaVersion": "1",
+            "runtimeGenerationStatus": "initialized_only",
+        },
+    )
+    counts_node = et.SubElement(root, "counts")
+    counts_node.set("selectedAuCount", str(selected_au_count))
+    counts_node.set("firstGrowthCurveAuCount", str(first_growth_curve_au_count))
+    counts_node.set("firstGrowthMissingAuCount", str(first_growth_missing_au_count))
+    counts_node.set("managedCurveAuCount", str(managed_curve_au_count))
+    counts_node.set(
+        "managedOnlyRuntimeAuCount",
+        str(int(runtime_curve_status["runtime_curve_mode"].eq("managed_only").sum())),
+    )
+    policy_node = et.SubElement(root, "policy")
+    policy_node.set("firstGrowthCurveFamily", "smoothed_bin_pchip")
+    policy_node.set("firstGrowthBorrowingAllowed", "false")
+    policy_node.set("managedOnlyRuntimeUnitsAllowed", "true")
+    policy_node.set("insufficientSupportFallbackGeneration", "forbidden")
+    policy_node.set("insufficientSupportBorrowing", "forbidden")
+    source_node = et.SubElement(root, "sourceContracts")
+    for tag, path in (
+        ("selectedAuCsv", selected_au_csv),
+        ("standOriginAssignmentCsv", stand_origin_assignment_csv),
+        ("standAuAssignmentCsv", stand_au_assignment_csv),
+        ("managedBootstrapCsv", managed_bootstrap_csv),
+        ("firstGrowthCurvesCsv", first_growth_curves_csv),
+        ("firstGrowthDiagnosticsCsv", first_growth_diagnostics_csv),
+        ("managedCurvesCsv", managed_curves_csv),
+        ("managedRunManifestJson", managed_run_manifest_json),
+        ("badCurveAuditSummaryCsv", bad_curve_audit_summary_csv),
+        ("runtimeCurveStatusCsv", curve_status_path),
+        ("speciesShareAuditCsv", species_share_audit_path),
+    ):
+        child = et.SubElement(source_node, tag)
+        child.text = str(path.resolve())
+    aus_node = et.SubElement(root, "analysisUnits")
+    for row in runtime_curve_status.itertuples(index=False):
+        au_node = et.SubElement(aus_node, "au")
+        au_node.set("id", str(row.au_id))
+        au_node.set("runtimeCurveMode", str(row.runtime_curve_mode))
+        au_node.set("hasManagedCurve", "true" if bool(row.has_managed_curve) else "false")
+        au_node.set(
+            "hasFirstGrowthCurve", "true" if bool(row.has_first_growth_curve) else "false"
+        )
+        au_node.set("flaggedBadCurve", "true" if bool(row.flagged_bad_curve) else "false")
+        if pd.notna(row.first_growth_selected_path):
+            au_node.set("firstGrowthSelectedPath", str(row.first_growth_selected_path))
+        if pd.notna(row.runtime_curve_note) and str(row.runtime_curve_note).strip():
+            au_node.set("note", str(row.runtime_curve_note))
+    et.ElementTree(root).write(xml_contract_path, encoding="utf-8", xml_declaration=True)
+
+    first_growth_by_au = {
+        str(au_id): group.sort_values("age", kind="stable")
+        for au_id, group in first_growth_curves.groupby("au_id", sort=True)
+    }
+    managed_by_au = {
+        str(au_id): group.sort_values("age", kind="stable")
+        for au_id, group in managed_curves.groupby("au_id", sort=True)
+    }
+    curve_bank_root = et.Element(
+        "mkrfRuntimeCurveBank",
+        {
+            "schemaVersion": "1",
+            "curveFamily": "au_wise_runtime_curve_bank",
+        },
+    )
+    for row in runtime_curve_status.itertuples(index=False):
+        au_bank_node = et.SubElement(
+            curve_bank_root,
+            "analysisUnit",
+            {
+                "id": str(row.au_id),
+                "runtimeCurveMode": str(row.runtime_curve_mode),
+            },
+        )
+        if bool(row.has_first_growth_curve):
+            fg_group = first_growth_by_au.get(str(row.au_id))
+            if fg_group is not None and not fg_group.empty:
+                fg_node = et.SubElement(
+                    au_bank_node,
+                    "firstGrowthCurve",
+                    {
+                        "selectedPath": str(row.first_growth_selected_path),
+                    },
+                )
+                for curve_row in fg_group.itertuples(index=False):
+                    point_node = et.SubElement(fg_node, "point")
+                    point_node.set("age", str(float(curve_row.age)))
+                    point_node.set("volume", str(float(curve_row.volume)))
+        if bool(row.has_managed_curve):
+            managed_group = managed_by_au.get(str(row.au_id))
+            if managed_group is not None and not managed_group.empty:
+                managed_node = et.SubElement(au_bank_node, "managedCurve")
+                for curve_row in managed_group.itertuples(index=False):
+                    point_node = et.SubElement(managed_node, "point")
+                    point_node.set("age", str(float(curve_row.age)))
+                    point_node.set("volume", str(float(curve_row.volume)))
+    et.ElementTree(curve_bank_root).write(
+        xml_curve_bank_path, encoding="utf-8", xml_declaration=True
+    )
+
+    forestmodel_root = et.Element(
+        "ForestModel",
+        {
+            "description": "MKRF canonical rebuild",
+            "horizon": "300",
+            "year": "2020",
+            "match": "multi",
+        },
+    )
+    forestmodel_root.append(
+        et.Comment(
+            "Generated from accepted MKRF AU-wise runtime curve surfaces. Not yet runnable."
+        )
+    )
+    forestmodel_root.append(
+        et.Comment(
+            f"Curve contract: {xml_contract_path.name}; curve bank: {xml_curve_bank_path.name}"
+        )
+    )
+    curve_node = et.SubElement(forestmodel_root, "curve", {"id": "unity"})
+    et.SubElement(curve_node, "point", {"x": "0", "y": "1"})
+    le10_curve = et.SubElement(forestmodel_root, "curve", {"id": "le10"})
+    et.SubElement(le10_curve, "point", {"x": "10", "y": "1"})
+    et.SubElement(le10_curve, "point", {"x": "11", "y": "0"})
+    for row in runtime_curve_status.itertuples(index=False):
+        au_token = str(row.au_id).upper().replace("-", "_")
+        if bool(row.has_first_growth_curve):
+            fg_group = first_growth_by_au.get(str(row.au_id))
+            if fg_group is not None and not fg_group.empty:
+                fg_curve = et.SubElement(forestmodel_root, "curve", {"id": f"FG_{au_token}"})
+                for curve_row in fg_group.itertuples(index=False):
+                    et.SubElement(
+                        fg_curve,
+                        "point",
+                        {"x": str(float(curve_row.age)), "y": str(float(curve_row.volume))},
+                    )
+        if bool(row.has_managed_curve):
+            managed_group = managed_by_au.get(str(row.au_id))
+            if managed_group is not None and not managed_group.empty:
+                mg_curve = et.SubElement(forestmodel_root, "curve", {"id": f"MG_{au_token}"})
+                for curve_row in managed_group.itertuples(index=False):
+                    et.SubElement(
+                        mg_curve,
+                        "point",
+                        {"x": str(float(curve_row.age)), "y": str(float(curve_row.volume))},
+                    )
+    define_specs = (
+        {"field": "status", "column": "CONTCLAS"},
+        {"field": "origin", "column": origin_lookup_expr},
+        {
+            "field": "statecode",
+            "column": f"if({origin_lookup_expr} eq 'natural','EN','EM')",
+        },
+        {"field": "au", "column": au_lookup_expr},
+        {"field": "auf", "column": au_lookup_expr},
+        {"field": "oper", "column": "Operabilit"},
+        {"field": "ct", "column": "CT_eligib"},
+        {"field": "aux", "column": "Int(FOREST_COV)"},
+        {"field": "hasnatcurve", "column": has_first_growth_lookup_expr},
+        {"field": "treatment"},
+        {"field": "managed", "constant": "'C'"},
+        {"field": "unmanaged", "constant": "'N'"},
+        {"field": "operable", "constant": "'Operable'"},
+        {"field": "lowoper", "constant": "'Low Operability'"},
+        {"field": "frd", "constant": "0.027"},
+    )
+    for define_spec in define_specs:
+        et.SubElement(forestmodel_root, "define", define_spec)
+    et.SubElement(
+        forestmodel_root,
+        "input",
+        {
+            "block": "Int(RES_KEY)",
+            "area": "Shape_Area/10000",
+            "age": "Int(AGE_2020)",
+            "exclude": "CONTCLAS eq 'X'",
+        },
+    )
+    et.SubElement(
+        forestmodel_root,
+        "output",
+        {
+            "messages": "messages.csv",
+            "blocks": "blocks.csv",
+            "features": "features.csv",
+            "products": "products.csv",
+            "treatments": "treatments.csv",
+            "curves": "curves.csv",
+            "tracknames": "tracknames.csv",
+        },
+    )
+    forestmodel_root.append(
+        et.Comment(
+            "Runtime references: "
+            f"{xml_contract_path.name}, {xml_curve_bank_path.name}, {curve_status_path.name}"
+        )
+    )
+    managed_operable_select = et.SubElement(
+        forestmodel_root,
+        "select",
+        {"statement": "status in managed and oper in operable"},
+    )
+    managed_operable_retention = et.SubElement(
+        managed_operable_select, "retention", {"factor": "0.1"}
+    )
+    et.SubElement(
+        managed_operable_retention,
+        "assign",
+        {"field": "status", "value": "unmanaged"},
+    )
+    managed_operable_features = et.SubElement(managed_operable_retention, "features")
+    managed_operable_attr = et.SubElement(
+        managed_operable_features,
+        "attribute",
+        {"label": "feature.area.retention.total"},
+    )
+    et.SubElement(managed_operable_attr, "curve", {"idref": "unity"})
+
+    managed_lowoper_select = et.SubElement(
+        forestmodel_root,
+        "select",
+        {"statement": "status in managed and oper in lowoper"},
+    )
+    managed_lowoper_retention = et.SubElement(
+        managed_lowoper_select, "retention", {"factor": "0.2"}
+    )
+    et.SubElement(
+        managed_lowoper_retention,
+        "assign",
+        {"field": "status", "value": "unmanaged"},
+    )
+    managed_lowoper_features = et.SubElement(managed_lowoper_retention, "features")
+    managed_lowoper_attr = et.SubElement(
+        managed_lowoper_features,
+        "attribute",
+        {"label": "feature.area.retention.total"},
+    )
+    et.SubElement(managed_lowoper_attr, "curve", {"idref": "unity"})
+
+    unmanaged_select = et.SubElement(
+        forestmodel_root,
+        "select",
+        {"statement": "status in unmanaged"},
+    )
+    et.SubElement(unmanaged_select, "track")
+
+    succession_select = et.SubElement(forestmodel_root, "select")
+    et.SubElement(succession_select, "succession", {"breakup": "999", "renew": "0"})
+
+    managed_cc_select = et.SubElement(
+        forestmodel_root,
+        "select",
+        {"statement": "status in managed"},
+    )
+    managed_cc_track = et.SubElement(managed_cc_select, "track")
+    managed_cc_treatment = et.SubElement(
+        managed_cc_track,
+        "treatment",
+        {"label": "CC", "minage": "if(oper in operable, 60, 150)"},
+    )
+    managed_cc_produce = et.SubElement(managed_cc_treatment, "produce")
+    et.SubElement(
+        managed_cc_produce,
+        "assign",
+        {"field": "treatment", "value": "'CC'"},
+    )
+    managed_cc_transition = et.SubElement(managed_cc_treatment, "transition")
+    et.SubElement(
+        managed_cc_transition,
+        "assign",
+        {"field": "au", "value": "auf"},
+    )
+    et.SubElement(
+        managed_cc_transition,
+        "assign",
+        {"field": "origin", "value": "'treated'"},
+    )
+    et.SubElement(
+        managed_cc_transition,
+        "assign",
+        {"field": "statecode", "value": "'FM'"},
+    )
+
+    ct_select = et.SubElement(
+        forestmodel_root,
+        "select",
+        {"statement": "status in managed and oper in operable and ct eq 'Y' and statecode ne 'THN'"},
+    )
+    ct_track = et.SubElement(ct_select, "track")
+    ct_treatment = et.SubElement(
+        ct_track,
+        "treatment",
+        {"label": "CT", "minage": "40", "maxage": "150", "retain": "20"},
+    )
+    ct_produce = et.SubElement(ct_treatment, "produce")
+    et.SubElement(
+        ct_produce,
+        "assign",
+        {"field": "treatment", "value": "'CT'"},
+    )
+    ct_transition = et.SubElement(ct_treatment, "transition")
+    et.SubElement(
+        ct_transition,
+        "assign",
+        {"field": "au", "value": "auf"},
+    )
+    et.SubElement(
+        ct_transition,
+        "assign",
+        {"field": "statecode", "value": "'THN'"},
+    )
+    area_features_select = et.SubElement(forestmodel_root, "select")
+    area_features = et.SubElement(area_features_select, "features")
+    area_total_attr = et.SubElement(
+        area_features,
+        "attribute",
+        {"label": "%f.area.%m.total"},
+    )
+    et.SubElement(area_total_attr, "curve", {"idref": "unity"})
+    area_state_attr = et.SubElement(
+        area_features,
+        "attribute",
+        {"label": f"'%f.area.%m.state.'+{runtime_state_expr}"},
+    )
+    et.SubElement(area_state_attr, "curve", {"idref": "unity"})
+    area_seral_select = et.SubElement(
+        forestmodel_root,
+        "select",
+        {"statement": "status ne 'X'"},
+    )
+    area_seral_features = et.SubElement(area_seral_select, "features")
+    area_seral_attr = et.SubElement(
+        area_seral_features,
+        "attribute",
+        {"label": "%f.area.%m.seral.le10"},
+    )
+    et.SubElement(area_seral_attr, "curve", {"idref": "le10"})
+    managed_yield_select = et.SubElement(
+        forestmodel_root,
+        "select",
+        {"statement": "status in managed"},
+    )
+    managed_yield_features = et.SubElement(managed_yield_select, "features")
+    managed_yield_total = et.SubElement(
+        managed_yield_features,
+        "attribute",
+        {"label": "%f.yield.%m.total"},
+    )
+    et.SubElement(
+        managed_yield_total,
+        "expression",
+        {
+            "statement": f"{origin_curve_lookup_expr}*{thinning_factor_expr}",
+            "by": "1",
+            "ignoreMissingAttributes": "false",
+        },
+    )
+    managed_yield_state = et.SubElement(
+        managed_yield_features,
+        "attribute",
+        {"label": f"'%f.yield.%m.state.'+{runtime_state_expr}"},
+    )
+    et.SubElement(
+        managed_yield_state,
+        "expression",
+        {
+            "statement": f"{origin_curve_lookup_expr}*{thinning_factor_expr}",
+            "by": "1",
+            "ignoreMissingAttributes": "false",
+        },
+    )
+    managed_yield_merch_select = et.SubElement(
+        forestmodel_root,
+        "select",
+        {"statement": "status in managed"},
+    )
+    managed_yield_merch_features = et.SubElement(managed_yield_merch_select, "features")
+    managed_yield_merch_attr = et.SubElement(
+        managed_yield_merch_features,
+        "attribute",
+        {"label": "%f.yield.%m.merch.total"},
+    )
+    et.SubElement(
+        managed_yield_merch_attr,
+        "expression",
+        {
+            "statement": "operable(attribute('feature.yield.%m.total'))",
+            "by": "1",
+            "ignoreMissingAttributes": "false",
+        },
+    )
+    managed_indsp_select = et.SubElement(
+        forestmodel_root,
+        "select",
+        {"statement": "status in managed"},
+    )
+    managed_indsp_features = et.SubElement(managed_indsp_select, "features")
+    for share_column, species_label in managed_share_label_map.items():
+        managed_indsp_attr = et.SubElement(
+            managed_indsp_features,
+            "attribute",
+            {"label": f"%f.yield.%m.indsp.{species_label}"},
+        )
+        et.SubElement(
+            managed_indsp_attr,
+            "expression",
+            {
+                "statement": (
+                    f"{origin_curve_lookup_expr}*{thinning_factor_expr}"
+                    f"*({origin_share_lookup_exprs[share_column]})"
+                ),
+                "by": "1",
+                "ignoreMissingAttributes": "false",
+            },
+        )
+    unmanaged_yield_select = et.SubElement(
+        forestmodel_root,
+        "select",
+        {"statement": "status in unmanaged"},
+    )
+    unmanaged_yield_features = et.SubElement(unmanaged_yield_select, "features")
+    unmanaged_yield_total = et.SubElement(
+        unmanaged_yield_features,
+        "attribute",
+        {"label": "%f.yield.%m.total"},
+    )
+    et.SubElement(
+        unmanaged_yield_total,
+        "expression",
+        {
+            "statement": f"{origin_curve_lookup_expr}*{thinning_factor_expr}",
+            "by": "1",
+            "ignoreMissingAttributes": "false",
+        },
+    )
+    unmanaged_yield_state = et.SubElement(
+        unmanaged_yield_features,
+        "attribute",
+        {"label": f"'%f.yield.%m.state.'+{runtime_state_expr}"},
+    )
+    et.SubElement(
+        unmanaged_yield_state,
+        "expression",
+        {
+            "statement": f"{origin_curve_lookup_expr}*{thinning_factor_expr}",
+            "by": "1",
+            "ignoreMissingAttributes": "false",
+        },
+    )
+    for share_column, species_label in managed_share_label_map.items():
+        unmanaged_yield_indsp = et.SubElement(
+            unmanaged_yield_features,
+            "attribute",
+            {"label": f"%f.yield.%m.indsp.{species_label}"},
+        )
+        et.SubElement(
+            unmanaged_yield_indsp,
+            "expression",
+            {
+                "statement": (
+                    f"{origin_curve_lookup_expr}*{thinning_factor_expr}"
+                    f"*({origin_share_lookup_exprs[share_column]})"
+                ),
+                "by": "1",
+                "ignoreMissingAttributes": "false",
+            },
+        )
+    products_select = et.SubElement(
+        forestmodel_root,
+        "select",
+        {"statement": ""},
+    )
+    products_node = et.SubElement(products_select, "products")
+    product_area_total = et.SubElement(
+        products_node,
+        "attribute",
+        {"label": "product.area.managed.total"},
+    )
+    et.SubElement(product_area_total, "curve", {"idref": "unity"})
+    product_area_state = et.SubElement(
+        products_node,
+        "attribute",
+        {"label": f"'product.area.managed.state.'+{runtime_state_expr}"},
+    )
+    et.SubElement(product_area_state, "curve", {"idref": "unity"})
+    product_area_treat = et.SubElement(
+        products_node,
+        "attribute",
+        {"label": "'product.area.managed.treat.'+treatment"},
+    )
+    et.SubElement(product_area_treat, "curve", {"idref": "unity"})
+    product_yield_total = et.SubElement(
+        products_node,
+        "attribute",
+        {"label": "product.yield.managed.total"},
+    )
+    et.SubElement(
+        product_yield_total,
+        "expression",
+        {
+            "statement": f"{origin_curve_lookup_expr}*{thinning_factor_expr}",
+            "by": "1",
+            "ignoreMissingAttributes": "false",
+        },
+    )
+    product_yield_state = et.SubElement(
+        products_node,
+        "attribute",
+        {"label": f"'product.yield.managed.state.'+{runtime_state_expr}"},
+    )
+    et.SubElement(
+        product_yield_state,
+        "expression",
+        {
+            "statement": f"{origin_curve_lookup_expr}*{thinning_factor_expr}",
+            "by": "1",
+            "ignoreMissingAttributes": "false",
+        },
+    )
+    for share_column, species_label in managed_share_label_map.items():
+        product_indsp_attr = et.SubElement(
+            products_node,
+            "attribute",
+            {"label": f"product.yield.managed.indsp.{species_label}"},
+        )
+        et.SubElement(
+            product_indsp_attr,
+            "expression",
+            {
+                "statement": (
+                    f"{origin_curve_lookup_expr}*{thinning_factor_expr}"
+                    f"*({origin_share_lookup_exprs[share_column]})"
+                ),
+                "by": "1",
+                "ignoreMissingAttributes": "false",
+            },
+        )
+    product_yield_treat = et.SubElement(
+        products_node,
+        "attribute",
+        {"label": "'product.yield.managed.treat.'+treatment"},
+    )
+    et.SubElement(
+        product_yield_treat,
+        "expression",
+        {
+            "statement": f"{origin_curve_lookup_expr}*{thinning_factor_expr}",
+            "by": "1",
+            "ignoreMissingAttributes": "false",
+        },
+    )
+    validate_forestmodel_xml_tree(
+        root=forestmodel_root,
+        required_define_fields=(
+            "status",
+            "origin",
+            "statecode",
+            "au",
+            "auf",
+            "oper",
+            "ct",
+            "aux",
+            "hasnatcurve",
+            "treatment",
+            "managed",
+            "unmanaged",
+            "operable",
+            "lowoper",
+            "frd",
+        ),
+        required_curve_ids=("unity", "le10"),
+        require_cc_treatment=True,
+    )
+    write_forestmodel_xml(root=forestmodel_root, path=forestmodel_xml_path)
+
+    headless_runtime_common_path.write_text(
+        dedent(
+            """
+            /*
+             * Shared helpers for FEMIC-triggered no-GUI Patchworks runs.
+             * MKRF canonical runtime variant: lowercase managed yield targets.
+             */
+
+            boolean femicHeadlessMode = false;
+            String femicHeadlessStageLabel = "headless_runs/femic";
+            int femicHeadlessIterations = 1;
+            double femicHeadlessImprovement = 0.0d;
+            String femicHeadlessTraceLogPath = null;
+            String femicHeadlessScenarioMode = "none";
+            String femicHeadlessScenarioTargetLabel = null;
+            Double femicHeadlessScenarioMinAnnual = null;
+
+            String femicThrowableToString(Throwable ex) {
+               java.io.StringWriter sw = new java.io.StringWriter();
+               java.io.PrintWriter pw = new java.io.PrintWriter(sw);
+               ex.printStackTrace(pw);
+               pw.flush();
+               return sw.toString();
+            }
+
+            void femicHeadlessTrace(String message) {
+               String line = "[FEMIC headless] " + message;
+               print(line);
+               if (femicHeadlessTraceLogPath == null || femicHeadlessTraceLogPath.trim().length() == 0)
+                  return;
+
+               java.io.PrintWriter writer = null;
+               try {
+                  java.io.File traceFile = new java.io.File(femicHeadlessTraceLogPath);
+                  java.io.File parent = traceFile.getParentFile();
+                  if (parent != null)
+                     parent.mkdirs();
+                  writer = new java.io.PrintWriter(new java.io.FileWriter(traceFile, true));
+                  writer.println(line);
+                  writer.flush();
+               } catch (Throwable ex) {
+                  print("[FEMIC headless] trace write failed: " + ex);
+               } finally {
+                  if (writer != null)
+                     writer.close();
+               }
+            }
+
+            boolean femicConfigureHeadlessFromArgs() {
+               if (args == void || args.length < 2)
+                  return false;
+
+               if (!"__femic_headless__".equals(args[1]))
+                  return false;
+
+               femicHeadlessMode = true;
+
+               if (args.length >= 3 && args[2] != null && args[2].trim().length() > 0)
+                  femicHeadlessStageLabel = args[2].trim();
+
+               if (args.length >= 4 && args[3] != null && args[3].trim().length() > 0)
+                  femicHeadlessIterations = Integer.parseInt(args[3].trim());
+
+               if (args.length >= 5 && args[4] != null && args[4].trim().length() > 0)
+                  femicHeadlessImprovement = Double.parseDouble(args[4].trim());
+
+               if (args.length >= 6 && args[5] != null && args[5].trim().length() > 0)
+                  femicHeadlessTraceLogPath = args[5].trim();
+
+               if (args.length >= 7 && args[6] != null && args[6].trim().length() > 0)
+                  femicHeadlessScenarioMode = args[6].trim();
+
+               if (args.length >= 8 && args[7] != null && args[7].trim().length() > 0)
+                  femicHeadlessScenarioTargetLabel = args[7].trim();
+
+               if (args.length >= 9 && args[8] != null && args[8].trim().length() > 0)
+                  femicHeadlessScenarioMinAnnual = new Double(Double.parseDouble(args[8].trim()));
+
+               femicHeadlessTrace("mode enabled: stage="
+                                  + femicHeadlessStageLabel
+                                  + " iterations="
+                                  + femicHeadlessIterations
+                                  + " improvement="
+                                  + femicHeadlessImprovement
+                                  + " scenario_mode="
+                                  + femicHeadlessScenarioMode
+                                  + " scenario_target="
+                                  + femicHeadlessScenarioTargetLabel
+                                  + " scenario_min_annual="
+                                  + femicHeadlessScenarioMinAnnual
+                                  + " trace="
+                                  + femicHeadlessTraceLogPath);
+               return true;
+            }
+
+            void femicConfigureHeadlessScenario() {
+               String mode = femicHeadlessScenarioMode == null ? "none" : femicHeadlessScenarioMode.trim();
+               if (mode.length() == 0 || "none".equalsIgnoreCase(mode)) {
+                  femicHeadlessTrace("no headless scenario mode requested");
+                  return;
+               }
+
+               if ("max-even-flow-smoke".equalsIgnoreCase(mode)) {
+                  String targetLabel = femicHeadlessScenarioTargetLabel;
+                  if (targetLabel == null || targetLabel.trim().length() == 0)
+                     targetLabel = "product.yield.managed.total";
+
+                  double minAnnual = 1000.0d;
+                  if (femicHeadlessScenarioMinAnnual != null)
+                     minAnnual = femicHeadlessScenarioMinAnnual.doubleValue();
+
+                  Target target = control.getTarget(targetLabel);
+                  if (target == null)
+                     throw new IllegalStateException("Missing headless scenario target: " + targetLabel);
+
+                  femicHeadlessTrace("validated max-even-flow smoke target="
+                                     + targetLabel
+                                     + " minAnnual="
+                                     + minAnnual);
+                  return;
+               }
+
+               throw new IllegalStateException("Unsupported FEMIC headless scenario mode: " + mode);
+            }
+
+            void femicConfigureHeadlessBaseHarvestTarget(String targetLabel, double minAnnual) {
+               Target target = control.getTarget(targetLabel);
+               if (target == null)
+                  throw new IllegalStateException("Missing headless scenario target: " + targetLabel);
+
+               target.setActive(true);
+               target.setMinActive(true);
+               target.setMaxActive(true);
+               target.setLinear(true);
+
+               target.setMaximum(200000f, 0);
+               for (int i = 1; i < Horizon.periods; i++) {
+                  target.setMinimum((float)(minAnnual * Horizon.intervals[i]), i);
+                  target.setMaximum(200000f, i);
+               }
+            }
+
+            void femicConfigureHeadlessEvenFlowTarget(String targetLabel) {
+               Target target = control.getTarget(targetLabel);
+               if (target == null)
+                  throw new IllegalStateException("Missing headless scenario target: " + targetLabel);
+
+               target.setActive(true);
+               target.setMinActive(true);
+               target.setMaxActive(true);
+
+               for (int i = 0; i < Horizon.periods; i++) {
+                  target.setMinimum(0f, i);
+                  target.setMaximum(0f, i);
+                  target.setMinWeight(100f, i);
+                  target.setMaxWeight(100f, i);
+               }
+            }
+
+            void femicWaitHeadlessIterations(int waitCount) {
+               if (waitCount <= 0) {
+                  femicHeadlessTrace("wait count <= 0; skipping scheduler wait");
+                  return;
+               }
+
+               if (femicHeadlessImprovement > 0.0d)
+                  femicHeadlessTrace("waiting for progress: attempts="
+                                     + waitCount
+                                     + " improvement="
+                                     + femicHeadlessImprovement);
+               else
+                  femicHeadlessTrace("waiting for iterations: attempts=" + waitCount);
+
+               if (femicHeadlessImprovement > 0.0d)
+                  control.waitForProgress(waitCount, femicHeadlessImprovement);
+               else
+                  control.waitForIterations(waitCount);
+
+               femicHeadlessTrace("wait completed; isSuspended=" + control.isSuspended());
+            }
+
+            void femicRunHeadlessStage() {
+               try {
+                  femicHeadlessTrace("run stage entered; isSuspended=" + control.isSuspended());
+                  femicConfigureHeadlessScenario();
+
+                  if ("max-even-flow-smoke".equalsIgnoreCase(femicHeadlessScenarioMode)) {
+                     String requestedTargetLabel = femicHeadlessScenarioTargetLabel;
+                     if (requestedTargetLabel == null || requestedTargetLabel.trim().length() == 0)
+                        requestedTargetLabel = "product.yield.managed.total";
+
+                     String baseTargetLabel = requestedTargetLabel;
+                     if (requestedTargetLabel.startsWith("flow.even."))
+                        baseTargetLabel = requestedTargetLabel.substring("flow.even.".length());
+
+                     String flowTargetLabel = "flow.even." + baseTargetLabel;
+                     double minAnnual = 1000.0d;
+                     if (femicHeadlessScenarioMinAnnual != null)
+                        minAnnual = femicHeadlessScenarioMinAnnual.doubleValue();
+
+                     femicConfigureHeadlessBaseHarvestTarget(baseTargetLabel, minAnnual);
+                     femicHeadlessTrace("seeded underlying harvest target="
+                                        + baseTargetLabel
+                                        + " minAnnual="
+                                        + minAnnual
+                                        + " linear=true max=200000");
+
+                     int seedIterations = femicHeadlessIterations;
+                     int flowIterations = 0;
+                     if (control.getTarget(flowTargetLabel) != null && femicHeadlessIterations > 1) {
+                        seedIterations = Math.max(1, femicHeadlessIterations / 2);
+                        flowIterations = femicHeadlessIterations - seedIterations;
+                     }
+
+                     femicHeadlessTrace("delegating scheduler start to waitFor*; initial isSuspended="
+                                        + control.isSuspended());
+                     femicWaitHeadlessIterations(seedIterations);
+
+                     if (flowIterations > 0) {
+                        if (!control.isSuspended()) {
+                           femicHeadlessTrace("issuing suspend between seed and flow phases");
+                           control.suspend();
+                        }
+
+                        femicConfigureHeadlessEvenFlowTarget(flowTargetLabel);
+                        femicHeadlessTrace("activated even-flow companion target="
+                                           + flowTargetLabel
+                                           + " target=0 weight=100 after seed phase");
+                        femicHeadlessTrace("delegating scheduler restart to waitFor* after seed phase; initial isSuspended="
+                                           + control.isSuspended());
+                        femicWaitHeadlessIterations(flowIterations);
+                     }
+                  } else if (femicHeadlessIterations > 0) {
+                     femicHeadlessTrace("delegating scheduler start to waitFor*; initial isSuspended="
+                                        + control.isSuspended());
+                     femicWaitHeadlessIterations(femicHeadlessIterations);
+                  } else {
+                     femicHeadlessTrace("iterations <= 0; skipping scheduler wait");
+                  }
+               } finally {
+                  if (!control.isSuspended()) {
+                     femicHeadlessTrace("issuing suspend after wait");
+                     control.suspend();
+                  } else {
+                     femicHeadlessTrace("scheduler already suspended before cleanup");
+                  }
+               }
+
+               femicHeadlessTrace("saving stage " + femicHeadlessStageLabel);
+               reportWriter.saveStage(femicHeadlessStageLabel);
+               femicHeadlessTrace("saveStage completed");
+            }
+
+            void femicQueueHeadlessStage() {
+               if (!femicHeadlessMode)
+                  return;
+
+               Runnable worker = new Runnable() {
+                  public void run() {
+                     try {
+                        femicHeadlessTrace("worker thread started");
+                        femicHeadlessTrace("waiting until initialized");
+                        control.waitUntilInitialized();
+                        femicHeadlessTrace("waitUntilInitialized completed");
+                        femicRunHeadlessStage();
+                     } catch (InterruptedException ex) {
+                        femicHeadlessTrace("stage interrupted: " + ex);
+                     } catch (Throwable ex) {
+                        femicHeadlessTrace("stage failed: " + ex);
+                        femicHeadlessTrace(femicThrowableToString(ex));
+                        ex.printStackTrace();
+                     }
+                  }
+               };
+
+               Thread headlessThread = new Thread(worker, "femic-headless-stage");
+               headlessThread.setDaemon(false);
+               femicHeadlessTrace("starting worker thread");
+               headlessThread.start();
+            }
+            """
+        ).strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    flow_targets_script_path.write_text(
+        dedent(
+            """
+            /*************************************************************
+             *
+             * Configure flow ratio accounts for managed yield accounts.
+             * MKRF canonical runtime variant: lowercase managed yield accounts.
+             *
+             *************************************************************/
+
+            _resolveAccountsFile(String tracksPathPrefix) {
+               String accountsPath = "../tracks/accounts.csv";
+               if (tracksPathPrefix != null) {
+                  accountsPath = tracksPathPrefix + "accounts.csv";
+               }
+
+               File accountsFile = AttributeStore.absoluteFile(accountsPath);
+               if (accountsFile == null) {
+                  accountsFile = new File(accountsPath).getAbsoluteFile();
+               }
+               return accountsFile;
+            }
+
+            _collectAccounts(String prefix, String tracksPathPrefix) {
+               TreeSet out = new TreeSet();
+               File accountsFile = _resolveAccountsFile(tracksPathPrefix);
+               if (!accountsFile.exists()) {
+                  throw new IllegalStateException("Missing tracks/accounts.csv: " + accountsFile.getPath());
+               }
+
+               BufferedReader reader = new BufferedReader(new FileReader(accountsFile));
+               try {
+                  String line = null;
+                  boolean first = true;
+                  while ((line = reader.readLine()) != null) {
+                     if (first) {
+                        first = false;
+                        continue;
+                     }
+                     String[] parts = line.split(",");
+                     if (parts.length < 3) {
+                        continue;
+                     }
+                     String account = parts[2].trim();
+                     if (account.startsWith(prefix)) {
+                        out.add(account);
+                     }
+                  }
+               } finally {
+                  reader.close();
+               }
+
+               return out;
+            }
+
+            setupYieldFlowTargets(control, int periods) {
+               setupYieldFlowTargets(control, periods, null);
+            }
+
+            setupYieldFlowTargets(control, int periods, String tracksPathPrefix) {
+               FlowSpec evenflow = new FlowSpec().even();
+               int ndyStart = Math.max(1, periods - 9);
+               FlowSpec ndyflow = new FlowSpec().ndy(ndyStart, periods, -1);
+
+               TreeSet productAccounts = _collectAccounts("product.yield.managed.", tracksPathPrefix);
+               TreeSet featureAccounts = _collectAccounts("feature.yield.managed.", tracksPathPrefix);
+
+               for (Iterator it = productAccounts.iterator(); it.hasNext();) {
+                  String account = (String)it.next();
+                  control.addFlowRatioAccount("flow.even." + account, account, evenflow, 100);
+               }
+
+               for (Iterator it = featureAccounts.iterator(); it.hasNext();) {
+                  String account = (String)it.next();
+                  control.addFlowRatioAccount("flow.ndy." + account, account, ndyflow, 100);
+               }
+
+               print("Configured flow targets: even=" + productAccounts.size() + " ndy=" + featureAccounts.size());
+            }
+            """
+        ).strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    analysis_pin_path.write_text(
+        dedent(
+            """
+            /*
+             * Minimal canonical MKRF Patchworks control lane.
+             * Generated by FEMIC for headless/runtime smoke use.
+             */
+
+            int periods = 30;
+            Horizon.setHorizon(periods, 10);
+
+            boolean useRoutes = false;
+            boolean usePatches = false;
+
+            String tracks_path_prefix = "../tracks/";
+            sourceRelative("headless_runtime_common.bsh");
+            sourceRelative("../scripts/targets/flowtargets.bsh");
+
+            blocks = tracks_path_prefix + "blocks.csv";
+            curves = tracks_path_prefix + "curves.csv";
+            features = tracks_path_prefix + "features.csv";
+            products = tracks_path_prefix + "products.csv";
+            tracknames = tracks_path_prefix + "tracknames.csv";
+            treatments = tracks_path_prefix + "treatments.csv";
+            accounts = tracks_path_prefix + "accounts.csv";
+            stratas = tracks_path_prefix + "strata.csv";
+            if (
+                AttributeStore.absoluteFile(tracks_path_prefix + "packages.csv").exists()
+                && AttributeStore.absoluteFile(tracks_path_prefix + "packageSequences.csv").exists()
+            ) {
+               packages = tracks_path_prefix + "packages.csv";
+               sequences = tracks_path_prefix + "packageSequences.csv";
+            }
+
+            block_shape = "../spatial/fragments.shp";
+            block_key = "RES_KEY";
+
+            int Patchworks_TargetInit() {
+               setupYieldFlowTargets(control, periods, tracks_path_prefix);
+               return 1;
+            }
+
+            int PatchWorks_Init() {
+               femicConfigureHeadlessFromArgs();
+
+               if (!femicHeadlessMode)
+                  classic_GUI(control);
+
+               if (femicHeadlessMode)
+                  femicQueueHeadlessStage();
+
+               return 1;
+            }
+            """
+        ).strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    manifest_payload = {
+        "schema_version": 1,
+        "package_root": str(package_root),
+        "runtime_generation_status": "initialized_only",
+        "source_contracts": {
+            "selected_au_csv": str(selected_au_csv.resolve()),
+            "stand_origin_assignment_csv": str(stand_origin_assignment_csv.resolve()),
+            "stand_au_assignment_csv": str(stand_au_assignment_csv.resolve()),
+            "managed_bootstrap_csv": str(managed_bootstrap_csv.resolve()),
+            "first_growth_curves_csv": str(first_growth_curves_csv.resolve()),
+            "first_growth_diagnostics_csv": str(first_growth_diagnostics_csv.resolve()),
+            "managed_curves_csv": str(managed_curves_csv.resolve()),
+            "managed_run_manifest_json": str(managed_run_manifest_json.resolve()),
+            "bad_curve_audit_summary_csv": str(bad_curve_audit_summary_csv.resolve()),
+            "runtime_curve_status_csv": str(curve_status_path.resolve()),
+            "analysis_au_runtime_status_csv": str(analysis_au_runtime_status_path.resolve()),
+            "analysis_au_curve_refs_csv": str(analysis_au_curve_refs_path.resolve()),
+            "runtime_au_remap_audit_csv": str(runtime_au_remap_audit_path.resolve()),
+            "runtime_species_share_audit_csv": str(species_share_audit_path.resolve()),
+            "runtime_curve_contract_xml": str(xml_contract_path.resolve()),
+            "runtime_curve_bank_xml": str(xml_curve_bank_path.resolve()),
+            "forestmodel_xml": str(forestmodel_xml_path.resolve()),
+            "analysis_pin": str(analysis_pin_path.resolve()),
+            "headless_runtime_common_bsh": str(headless_runtime_common_path.resolve()),
+            "flow_targets_bsh": str(flow_targets_script_path.resolve()),
+        },
+        "counts": {
+            "selected_au_count": selected_au_count,
+            "first_growth_curve_au_count": first_growth_curve_au_count,
+            "first_growth_missing_au_count": first_growth_missing_au_count,
+            "managed_curve_au_count": managed_curve_au_count,
+            "bad_curve_flagged_au_count": flagged_au_count,
+            "managed_only_runtime_au_count": int(
+                runtime_curve_status["runtime_curve_mode"].eq("managed_only").sum()
+            ),
+        },
+        "runtime_au_normalization": {
+            "selected_passthrough_count": int((~remap_audit["was_remapped"]).sum()),
+            "remapped_source_au_count": int(remap_audit["was_remapped"].sum()),
+            "remapped_forest_cover_id_count": int(
+                remap_audit.loc[remap_audit["was_remapped"], "forest_cover_id_count"].sum()
+            ),
+        },
+        "curve_policy": {
+            "first_growth_curve_family": "smoothed_bin_pchip",
+            "first_growth_borrowing_allowed": False,
+            "managed_only_runtime_units_allowed": True,
+        },
+        "managed_only_runtime_policy": {
+            "insufficient_support_requires_first_growth_curve": False,
+            "insufficient_support_fallback_generation": "forbidden",
+            "insufficient_support_borrowing": "forbidden",
+        },
+        "managed_run_summary": {
+            "status": managed_manifest.get("status"),
+            "curve_au_count": managed_manifest.get("curve_au_count"),
+            "included_au_count": managed_manifest.get("included_au_count"),
+        },
+    }
+    manifest_path.write_text(
+        json.dumps(manifest_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    if not readme_path.exists():
+        readme_path.write_text(
+            "\n".join(
+                [
+                    "# MKRF Patchworks Canonical Rebuild Package",
+                    "",
+                    "This directory is the target home for the source-faithful MKRF rebuild package",
+                    "tracked under `P60.8+`.",
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+    return MkrfRuntimePackageInitResult(
+        package_root=package_root,
+        readme_path=readme_path,
+        manifest_path=manifest_path,
+        curve_status_path=curve_status_path,
+        analysis_au_runtime_status_path=analysis_au_runtime_status_path,
+        analysis_au_curve_refs_path=analysis_au_curve_refs_path,
+        runtime_au_remap_audit_path=runtime_au_remap_audit_path,
+        species_share_audit_path=species_share_audit_path,
+        analysis_pin_path=analysis_pin_path,
+        headless_runtime_common_path=headless_runtime_common_path,
+        flow_targets_script_path=flow_targets_script_path,
+        xml_contract_path=xml_contract_path,
+        xml_curve_bank_path=xml_curve_bank_path,
+        forestmodel_xml_path=forestmodel_xml_path,
+        selected_au_count=selected_au_count,
+        first_growth_curve_au_count=first_growth_curve_au_count,
+        first_growth_missing_au_count=first_growth_missing_au_count,
+        managed_curve_au_count=managed_curve_au_count,
+    )
+
+
+def _read_track_attribute_labels(csv_path: Path) -> set[str]:
+    if not csv_path.exists():
+        return set()
+    frame = pd.read_csv(csv_path)
+    for column in ("ATTRIBUTE", "attribute", "LABEL", "label"):
+        if column in frame.columns:
+            return set(frame[column].astype(str).str.strip())
+    return set()
+
+
+def _target_signal_status(target_csv_path: Path) -> tuple[bool, float | None]:
+    if not target_csv_path.exists():
+        return False, None
+    frame = pd.read_csv(target_csv_path)
+    if "CURRENT" not in frame.columns:
+        return False, None
+    current = pd.to_numeric(frame["CURRENT"], errors="coerce").fillna(0.0)
+    max_signal = float(current.abs().max()) if not current.empty else 0.0
+    return bool(max_signal > 0), max_signal
+
+
+def audit_mkrf_runtime_sanity(
+    *,
+    package_root: Path,
+    stage_dir: Path,
+) -> MkrfRuntimeSanityAuditResult:
+    """Audit canonical MKRF runtime signal against published species-share sources."""
+    package_root = package_root.resolve()
+    stage_dir = stage_dir.resolve()
+    analysis_dir = package_root / "analysis"
+    tracks_dir = package_root / "tracks"
+    targets_dir = stage_dir / "targets"
+    sanity_dir = stage_dir / "sanity"
+    sanity_dir.mkdir(parents=True, exist_ok=True)
+    audit_csv_path = sanity_dir / "mkrf_runtime_sanity_audit.csv"
+    summary_json_path = sanity_dir / "mkrf_runtime_sanity_summary.json"
+    species_share_audit_path = analysis_dir / "runtime_species_share_audit.csv"
+
+    species_share_audit = pd.read_csv(species_share_audit_path)
+    accounts_labels = _read_track_attribute_labels(tracks_dir / "accounts.csv")
+    feature_labels = _read_track_attribute_labels(tracks_dir / "features.csv")
+    product_labels = _read_track_attribute_labels(tracks_dir / "products.csv")
+
+    rows: list[dict[str, object]] = []
+    for ifm_lane, surface in (
+        ("managed", "feature"),
+        ("unmanaged", "feature"),
+        ("managed", "product"),
+    ):
+        for bucket in _SPECIES_BUCKETS:
+            label = f"{surface}.yield.{ifm_lane}.indsp.{bucket}"
+            target_csv_path = targets_dir / f"{label.replace('.', '_')}.csv"
+            target_has_signal, target_max_current = _target_signal_status(target_csv_path)
+            track_labels = feature_labels if surface == "feature" else product_labels
+            account_present = label in accounts_labels
+            track_present = label in track_labels
+            target_file_present = target_csv_path.exists()
+            source_rows = species_share_audit.loc[
+                species_share_audit["species_bucket"].astype(str).eq(bucket)
+            ].copy()
+            natural_nonzero = bool(
+                pd.to_numeric(
+                    source_rows.loc[
+                        source_rows["origin_lane"].astype(str).eq("natural"), "share_pct"
+                    ],
+                    errors="coerce",
+                )
+                .fillna(0.0)
+                .gt(0)
+                .any()
+            )
+            treated_nonzero = bool(
+                pd.to_numeric(
+                    source_rows.loc[
+                        source_rows["origin_lane"].astype(str).eq("treated"), "share_pct"
+                    ],
+                    errors="coerce",
+                )
+                .fillna(0.0)
+                .gt(0)
+                .any()
+            )
+            any_source_nonzero = natural_nonzero or treated_nonzero
+            if not account_present and not track_present and not target_file_present:
+                audit_status = "not_emitted"
+            elif target_has_signal and not any_source_nonzero:
+                audit_status = "fail_signal_without_source_share"
+            elif account_present and track_present and not target_file_present:
+                audit_status = "fail_missing_target_output"
+            elif (not target_has_signal) and any_source_nonzero:
+                audit_status = "fail_zero_signal_with_source_share"
+            elif target_has_signal and any_source_nonzero:
+                audit_status = "pass_signal_matches_source_share"
+            else:
+                audit_status = "pass_zero_signal_zero_source_share"
+            rows.append(
+                {
+                    "surface": surface,
+                    "ifm_lane": ifm_lane,
+                    "species_bucket": bucket,
+                    "target_label": label,
+                    "target_csv_path": str(target_csv_path),
+                    "account_present": account_present,
+                    "track_present": track_present,
+                    "target_file_present": target_file_present,
+                    "target_has_signal": target_has_signal,
+                    "target_max_current": target_max_current,
+                    "natural_source_nonzero": natural_nonzero,
+                    "treated_source_nonzero": treated_nonzero,
+                    "any_source_nonzero": any_source_nonzero,
+                    "audit_status": audit_status,
+                }
+            )
+
+    audit_frame = pd.DataFrame(rows).sort_values(
+        ["surface", "ifm_lane", "species_bucket"],
+        kind="stable",
+    )
+    audit_frame.to_csv(audit_csv_path, index=False)
+    failure_count = int(audit_frame["audit_status"].astype(str).str.startswith("fail_").sum())
+    summary_payload = {
+        "schema_version": 1,
+        "package_root": str(package_root),
+        "stage_dir": str(stage_dir),
+        "row_count": int(len(audit_frame)),
+        "failure_count": failure_count,
+        "failures": audit_frame.loc[
+            audit_frame["audit_status"].astype(str).str.startswith("fail_")
+        ].to_dict(orient="records"),
+    }
+    summary_json_path.write_text(
+        json.dumps(summary_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return MkrfRuntimeSanityAuditResult(
+        package_root=package_root,
+        stage_dir=stage_dir,
+        audit_csv_path=audit_csv_path,
+        summary_json_path=summary_json_path,
+        row_count=int(len(audit_frame)),
+        failure_count=failure_count,
     )

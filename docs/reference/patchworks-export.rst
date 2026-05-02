@@ -12,6 +12,21 @@ Terminology:
 - In this exporter, ``BLOCK`` is one-to-one with fragment rows (one fragment per
   block id).
 
+Patchworks semantics guardrail
+------------------------------
+
+Before reading the rest of this page, keep this separation fixed:
+
+- ``managed`` / ``unmanaged`` means Patchworks treatment eligibility;
+- ``natural`` / ``treated`` (or equivalent origin labels) means curve
+  provenance; and
+- retention is an orthogonal area-reallocation surface.
+
+Do not use curve-family availability, ``hasfg``, or any first-growth versus
+plantation shortcut as a proxy for IFM. If a model needs both IFM and origin,
+it should publish both explicitly. The compact repo-wide statement of this
+contract lives at :doc:`contracts/patchworks-model-semantics`.
+
 ForestModel XML requirements
 ----------------------------
 
@@ -149,6 +164,9 @@ This keeps retention orthogonal to both:
 - ``IFM`` as the managed/unmanaged regime field, and
 - ``ORIGIN`` as the natural/planted composition field
 
+This is intentional. Retention may change treatment eligibility without
+changing curve provenance.
+
 When ``RETENTION = 0.0`` everywhere, retention wiring is present but behavior is
 unchanged relative to the pre-retention model.
 
@@ -203,6 +221,13 @@ Managed/unmanaged assignment:
 - ``--ifm-threshold`` and ``--ifm-target-managed-share`` are mutually
   exclusive, and both are only valid when ``--ifm-mode legacy_binary`` is in
   effect.
+
+Important semantic boundary:
+
+- IFM assignment chooses the managed versus unmanaged lane only.
+- It does not, by itself, choose the natural versus treated curve family.
+- Natural/treated origin should come from the case's reviewed origin contract,
+  not from THLB or other IFM signals.
 
 The fragments dataset must also carry a CRS.
 

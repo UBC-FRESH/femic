@@ -1205,6 +1205,150 @@ def test_run_patchworks_command_windows_auto_closes_patchworks_shells(
     assert force_stop_calls == [4321, 14000, 15000]
 
 
+def test_run_patchworks_command_windows_aborts_on_live_fatal_stderr(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg_path = _write_runtime_config(tmp_path)
+    cfg = load_patchworks_runtime_config(cfg_path)
+    cfg.jar_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.jar_path.touch()
+    cfg.fragments_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.fragments_path.touch()
+    cfg.forestmodel_xml_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.forestmodel_xml_path.touch()
+    cfg.matrix_output_dir.mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(
+        "femic.patchworks_runtime.run_patchworks_preflight",
+        lambda **_kwargs: SimpleNamespace(
+            ok=True,
+            launcher_executable="java",
+            host_mode="windows",
+        ),
+    )
+    monkeypatch.setattr(
+        "femic.patchworks_runtime.format_command_for_display",
+        lambda command: " ".join(command),
+    )
+    monkeypatch.setattr(
+        "femic.patchworks_runtime._find_windows_matrix_builder_process_ids",
+        lambda **_kwargs: {4321},
+    )
+    monkeypatch.setattr(
+        "femic.patchworks_runtime._find_windows_patchworks_shell_process_ids",
+        lambda **_kwargs: set(),
+    )
+    force_stop_calls: list[int] = []
+    monkeypatch.setattr(
+        "femic.patchworks_runtime._force_stop_windows_process",
+        lambda pid: force_stop_calls.append(pid) is None or True,
+    )
+    monkeypatch.setattr(
+        "femic.patchworks_runtime._close_windows_process_main_windows",
+        lambda _pid: 0,
+    )
+    monkeypatch.setattr(
+        "femic.patchworks_runtime._matrix_output_state",
+        lambda _path: (False, 0, 0.0),
+    )
+    monkeypatch.setattr("femic.patchworks_runtime.time.sleep", lambda _seconds: None)
+
+    class _FakePopen:
+        def __init__(
+            self,
+            _command,
+            *,
+            stdout,
+            stderr,
+            text,
+            env,
+            cwd,
+        ) -> None:
+            del text, env, cwd
+            self.pid = 4321
+            self._returncode: int | None = None
+            stdout.write("")
+            stdout.flush()
+            stderr.write("Fatal error loading XML model\nUndefined column \"AGE\"\n")
+            stderr.flush()
+
+        def poll(self) -> int | None:
+            return self._returncode
+
+        def wait(self, timeout=None) -> int:
+            del timeout
+            self._returncode = 1
+            return 1
+
+        def terminate(self) -> None:
+            self._returncode = 1
+
+        def kill(self) -> None:
+            self._returncode = 1
+
+    monkeypatch.setattr("femic.patchworks_runtime.subprocess.Popen", _FakePopen)
+
+    result = run_patchworks_command(
+        config=cfg,
+        interactive=False,
+        log_dir=tmp_path / "logs",
+        run_id="pwfatal_live",
+    )
+
+    assert result.returncode == 1
+    assert any("fatal stderr signatures detected" in x for x in result.failures)
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["windows_automation"]["close_attempted"] is True
+    assert (
+        "fatal error loading xml model"
+        in manifest["windows_automation"]["fatal_stderr_matches"]
+    )
+    assert "undefined column" in manifest["windows_automation"]["fatal_stderr_matches"]
+    assert force_stop_calls == [4321]
+
+
+def test_run_patchworks_command_collects_warning_lines(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg_path = _write_runtime_config(tmp_path)
+    cfg = load_patchworks_runtime_config(cfg_path)
+    cfg.jar_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.jar_path.touch()
+    cfg.fragments_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.fragments_path.touch()
+    cfg.forestmodel_xml_path.parent.mkdir(parents=True, exist_ok=True)
+    cfg.forestmodel_xml_path.touch()
+    cfg.matrix_output_dir.mkdir(parents=True, exist_ok=True)
+    (cfg.matrix_output_dir / "tracks.csv").write_text("ok", encoding="utf-8")
+
+    monkeypatch.setattr(
+        "femic.patchworks_runtime.find_wine_executable", lambda: "/usr/bin/wine64"
+    )
+    monkeypatch.setattr("femic.patchworks_runtime.is_windows_host", lambda: False)
+    monkeypatch.setattr(
+        "femic.patchworks_runtime.subprocess.run",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            returncode=0,
+            stdout="Processing completed. Review warnings and exit when finished.\n",
+            stderr="",
+        ),
+    )
+
+    result = run_patchworks_command(
+        config=cfg,
+        interactive=False,
+        log_dir=tmp_path / "logs",
+        run_id="pwwarn",
+    )
+
+    assert result.returncode == 0
+    assert result.warnings == ("Processing completed. Review warnings and exit when finished.",)
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["warnings"] == [
+        "Processing completed. Review warnings and exit when finished."
+    ]
+
+
 def test_run_patchworks_command_normalizes_qmd_account_sums(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

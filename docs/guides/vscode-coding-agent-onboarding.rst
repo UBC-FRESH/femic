@@ -375,6 +375,7 @@ If you are onboarding a new student or developer, a good first session is:
 
    - ``AGENTS.md``
    - ``docs/reference/contracts/index.rst``
+   - ``docs/reference/contracts/patchworks-model-semantics.rst``
    - ``docs/guides/deployment-instances.rst``
    - ``docs/guides/case-onboarding.rst``
 
@@ -394,6 +395,24 @@ If you are onboarding a new student or developer, a good first session is:
 
 This sequence helps a newcomer learn the repo contracts before they have to
 debug generated artifacts or external runtime tools.
+
+Patchworks model rule of thumb
+------------------------------
+
+When a new coding agent or student touches a Patchworks instance, require them
+to state these rules back in repo terms before they start rewriting model
+logic:
+
+- ``managed`` / ``unmanaged`` means treatment eligibility;
+- ``natural`` / ``treated`` means curve provenance;
+- retention can move area between managed and unmanaged without changing
+  origin; and
+- successful Matrix Builder output is not enough if rebuilt runtime signal
+  disagrees with published source-share inputs.
+
+If the agent cannot restate those rules cleanly, stop and point them at
+``docs/reference/contracts/patchworks-model-semantics.rst`` before they touch
+instance runtime semantics.
 
 Looking Ahead
 -------------

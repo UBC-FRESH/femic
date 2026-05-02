@@ -1,16 +1,19 @@
-MKRF PoC Metadata and Lineage
-=============================
+MKRF Metadata and Lineage
+=========================
 
 Scope
 -----
 
-This page documents the current metadata inventory and benchmark/runtime
-lineage for the tracked MKRF PoC package at
-``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc``.
+This page documents the current metadata inventory and runtime/benchmark
+lineage for the MKRF instance surfaces.
 
-The current MKRF package is a PoC benchmark/intermediate surface. It is not a
-source-faithful rebuild and it is not the final canonical instance layout for
-the later from-scratch MKRF rebuild.
+The active canonical rebuild package now lives at:
+
+- ``external/femic-mkrf-instance/models/mkrf_patchworks_model``
+
+The retained benchmark/reference PoC package remains at:
+
+- ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc``
 
 Machine-readable companion registries:
 
@@ -19,10 +22,10 @@ Machine-readable companion registries:
 - ``external/femic-mkrf-instance/metadata/legacy_runtime_track_reconciliation.yaml``
 - ``external/femic-mkrf-instance/metadata/legacy_source_reproducibility_boundary.yaml``
 
-Current PoC Artifact Families
------------------------------
+Current Artifact Families
+-------------------------
 
-The key tracked artifact families in the current MKRF PoC package are:
+The key tracked artifact families in the current MKRF instance are:
 
 .. list-table::
    :header-rows: 1
@@ -31,17 +34,17 @@ The key tracked artifact families in the current MKRF PoC package are:
      - Current in-repo path
      - Current status
    * - Runtime model package
+     - ``external/femic-mkrf-instance/models/mkrf_patchworks_model``
+     - Canonical FEMIC-native rebuild runtime surface
+   * - PoC benchmark package
      - ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc``
-     - Accepted MKRF PoC intermediate runtime surface
-   * - ForestModel XML
-     - ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/XML/baseMKRF.xml``
-     - FEMIC-emitted PoC XML from translated legacy contracts
-   * - Generated tracks
-     - ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/Tracks/*.csv``
-     - Matrix-built PoC runtime tables
-   * - Accepted spatial runtime lane
-     - ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/Spatial/*``
-     - Accepted compiled runtime inputs, not raw-source reconstruction
+     - Accepted MKRF benchmark/intermediate reference surface
+   * - Canonical rebuild XML / tracks / spatial
+     - ``external/femic-mkrf-instance/models/mkrf_patchworks_model/{xml,tracks,spatial}/*``
+     - Source-faithful canonical rebuild runtime artifacts
+   * - PoC XML / tracks / spatial
+     - ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/{XML,Tracks,Spatial}/*``
+     - Benchmark/reference runtime artifacts
    * - Legacy compiled evidence
      - ``external/femic-mkrf-instance/data/legacy_mkrf/*``
      - Archival/reference evidence only
@@ -50,31 +53,46 @@ The key tracked artifact families in the current MKRF PoC package are:
        ``external/femic-mkrf-instance/runbooks/*``
      - Phase 55-58 reverse-engineering and boundary records
 
-Build-Lineage Chain
--------------------
-
-Current accepted lineage for the MKRF PoC package:
-
-1. Legacy recovery lane:
-   workbook review extracts, generated XML reconciliation, compiled track
-   evidence review, and runtime boundary metadata.
-2. Runtime package materialization:
-   accepted compiled spatial runtime inputs plus sanitized runtime/control
-   scaffold under ``models/mkrf_patchworks_model_poc``.
-3. ForestModel XML emission:
-   FEMIC-generated ``XML/baseMKRF.xml`` from translated legacy contracts.
-4. Matrix stage:
-   Patchworks Matrix Builder regenerates ``Tracks/*.csv`` from the emitted XML
-   and accepted spatial runtime inputs.
-5. Launch / benchmark stage:
-   the current PoC lane is accepted after Patchworks launch proof plus one
-   representative legacy-vs-PoC benchmark scenario comparison.
-
-Accepted PoC Benchmark Result
+Canonical Build-Lineage Chain
 -----------------------------
 
-The accepted benchmark comparison for the PoC lane uses one representative
-legacy scenario output bundle and one representative PoC headless-run stage.
+Current accepted lineage for the canonical rebuild package:
+
+1. Raw-source geometry lane:
+   source-faithful publication from ``03_MappingAnalysisData/*`` into the
+   canonical runtime spatial surface.
+2. Canonical runtime package materialization:
+   FEMIC emits the rebuild-owned XML, analysis, lineage, and control metadata
+   under ``models/mkrf_patchworks_model``.
+3. Matrix stage:
+   Patchworks Matrix Builder regenerates ``tracks/*.csv`` from the emitted XML
+   and canonical runtime spatial inputs.
+4. Benchmark-validation stage:
+   the canonical runtime surface is compared back to the accepted PoC package
+   by family presence and accepted-difference classification.
+5. Runtime-sanity stage:
+   the canonical even-flow saved stage is audited against the published
+   species-share surface so emitted ``indsp.*`` signals are explained by source
+   inputs rather than hidden runtime heuristics.
+
+Retained PoC / Legacy Reference Chain
+-------------------------------------
+
+The retained PoC/legacy evidence chain still matters for benchmark/reference
+only:
+
+1. legacy compiled-package evidence under ``data/legacy_mkrf/*``;
+2. PoC package materialization under
+   ``models/mkrf_patchworks_model_poc``; and
+3. accepted benchmark/control surfaces such as the PoC
+   ``analysis/base.pin`` / ``ScenarioSet.bsh`` lane.
+
+Accepted Benchmark Result
+-------------------------
+
+The accepted benchmark comparison for the rebuild lane uses the retained PoC
+runtime package as the comparison target for runtime-surface parity and keeps
+the older legacy scenario/control lane only as benchmark/reference evidence.
 
 Compared report pairs:
 
@@ -94,28 +112,44 @@ Accepted interpretation:
 Current Boundary
 ----------------
 
-Use the current MKRF PoC package as evidence for:
+Use the current canonical rebuild package as evidence for:
 
-- reverse-engineering and benchmark comparison,
-- accepted runtime XML/track generation,
-- accepted compiled spatial runtime usage, and
-- operator-facing PoC documentation.
+- source-faithful runtime spatial publication,
+- accepted canonical runtime XML/track/product/account generation, and
+- accepted PoC-parity runtime-surface comparison; and
+- explicit IFM/origin semantics where:
+  - ``managed`` / ``unmanaged`` means treatment eligibility; and
+  - ``natural`` / ``treated`` means curve provenance.
 
-Do not use it as evidence for:
+Use the retained PoC / legacy surfaces as evidence for:
 
-- source-faithful reconstruction from ``03_MappingAnalysisData/*``,
-- final canonical MKRF model layout,
+- benchmark/reference comparison,
+- legacy control-lane context, and
+- accepted legacy-only helper/control seams that remain outside the canonical
+  claim boundary.
+
+Do not use the canonical rebuild package as evidence for:
+
+- a rebuilt source-faithful control/entrypoint lane,
 - complete recovery of legacy helper/control seams, or
 - exact legacy-equivalence across all long-horizon outputs.
 
-Deferred to the Later Rebuild
------------------------------
+Current validation evidence added in the closeout slice:
 
-The later from-scratch MKRF rebuild phase remains responsible for:
+- ``external/femic-mkrf-instance/models/mkrf_patchworks_model/analysis/runtime_species_share_audit.csv``
+- canonical even-flow saved stage under
+  ``runtime/logs/headless_stage/mkrf_canonical_evenflow_semantic_smoke_20260502b/``
+- saved-stage sanity outputs under that stage's ``sanity/`` directory
 
-- the canonical FEMIC-native instance layout,
-- raw-source geometry-to-runtime reconstruction,
-- source-faithful target/control reconstruction,
-- any decision about unresolved legacy helper seams such as
-  ``THLB4070(...)`` and ``UWR(...)``, and
-- final rebuild acceptance gates beyond the current PoC benchmark.
+Those surfaces are now part of the accepted ``v0`` runtime sanity evidence for
+the canonical rebuild lane.
+
+Accepted Legacy-Only Seams
+--------------------------
+
+The following control-lane seams remain accepted legacy-only benchmark evidence
+unless a later task explicitly reopens source-faithful control-lane rebuild:
+
+- ``THLB4070(...)``
+- ``UWR(...)``
+- ``InitialTargets/00_Target_Descriptions.bsh``

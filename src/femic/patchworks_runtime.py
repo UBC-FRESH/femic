@@ -31,6 +31,14 @@ FATAL_MATRIX_STDERR_PATTERNS = (
     "$display is set correctly",
     "sps home directory not found, installation not complete",
     "ip helper library getadaptersaddresses function failed",
+    "fatal error loading xml model",
+    "error while parsing forestmodel",
+    "undefined column",
+    "error compiling age expression",
+)
+MATRIX_WARNING_LINE_PATTERNS = (
+    "review warnings and exit when finished",
+    "warning",
 )
 PATCHWORKS_HEADLESS_SUCCESS_MARKER = "[FEMIC headless] saveStage completed"
 PATCHWORKS_HEADLESS_FAILURE_MARKERS = (
@@ -116,6 +124,7 @@ class PatchworksExecutionResult:
     stderr_log_path: Path
     manifest_path: Path
     failures: tuple[str, ...]
+    warnings: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -708,6 +717,23 @@ def _detect_fatal_output(output_text: str) -> tuple[str, ...]:
     )
 
 
+def _collect_warning_output(output_text: str) -> tuple[str, ...]:
+    warnings: list[str] = []
+    seen: set[str] = set()
+    for raw_line in output_text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        line_lower = line.lower()
+        if not any(pattern in line_lower for pattern in MATRIX_WARNING_LINE_PATTERNS):
+            continue
+        if line_lower in seen:
+            continue
+        seen.add(line_lower)
+        warnings.append(line)
+    return tuple(warnings)
+
+
 def _resolve_run_id(run_id: str | None) -> str:
     if run_id and run_id.strip():
         return run_id.strip()
@@ -1098,6 +1124,24 @@ def _run_windows_matrix_builder_with_auto_close(
     closed_shell_window_count = 0
     force_stopped_shell_pids: list[int] = []
     launched_pid: int | None = None
+    fatal_stderr_matches: tuple[str, ...] = ()
+
+    def _current_target_pids() -> set[int]:
+        target_pids = (
+            _find_windows_matrix_builder_process_ids(
+                fragments_path=fragments_path,
+                matrix_output_dir=matrix_output_dir,
+                forestmodel_xml_path=forestmodel_xml_path,
+            )
+            - baseline_process_ids
+        )
+        if launched_pid is not None:
+            target_pids.add(launched_pid)
+        return {pid for pid in target_pids if pid > 0}
+
+    def _current_shell_pids() -> set[int]:
+        shell_pids = _find_windows_patchworks_shell_process_ids() - baseline_shell_process_ids
+        return {pid for pid in shell_pids if pid > 0}
 
     with (
         stdout_log_path.open("w", encoding="utf-8") as stdout_handle,
@@ -1115,6 +1159,48 @@ def _run_windows_matrix_builder_with_auto_close(
         while True:
             returncode = proc.poll()
             if returncode is not None:
+                break
+
+            fatal_stderr_matches = _detect_fatal_output(
+                _read_text_if_exists(stderr_log_path)
+            )
+            if fatal_stderr_matches:
+                close_attempted = True
+                close_method = "fatal_stderr"
+                for pid in sorted(_current_target_pids()):
+                    closed_window_count += _close_windows_process_main_windows(pid)
+                try:
+                    returncode = proc.wait(timeout=0.5)
+                except subprocess.TimeoutExpired:
+                    pass
+                if proc.poll() is None:
+                    proc.terminate()
+                    try:
+                        returncode = proc.wait(timeout=auto_close_timeout_seconds)
+                    except subprocess.TimeoutExpired:
+                        pass
+                for pid in sorted(_current_target_pids()):
+                    if _force_stop_windows_process(pid):
+                        force_stopped_pids.append(pid)
+                if force_stopped_pids:
+                    close_method = "fatal_stderr_force_stop"
+                if proc.poll() is None:
+                    proc.kill()
+                    close_method = "fatal_stderr_kill"
+                    returncode = proc.wait(timeout=auto_close_timeout_seconds)
+
+                for pid in sorted(_current_shell_pids()):
+                    closed_shell_window_count += _close_windows_process_main_windows(
+                        pid
+                    )
+                if closed_shell_window_count:
+                    shell_close_method = "wm_close"
+                time.sleep(0.25)
+                for pid in sorted(_current_shell_pids()):
+                    if _force_stop_windows_process(pid):
+                        force_stopped_shell_pids.append(pid)
+                if force_stopped_shell_pids:
+                    shell_close_method = "force_stop"
                 break
 
             observed_state = _matrix_output_state(matrix_output_dir)
@@ -1139,36 +1225,14 @@ def _run_windows_matrix_builder_with_auto_close(
                 and stable_long_enough
             ):
                 close_attempted = True
-                target_pids = (
-                    _find_windows_matrix_builder_process_ids(
-                        fragments_path=fragments_path,
-                        matrix_output_dir=matrix_output_dir,
-                        forestmodel_xml_path=forestmodel_xml_path,
-                    )
-                    - baseline_process_ids
-                )
-                if launched_pid is not None:
-                    target_pids.add(launched_pid)
-                target_pids = {pid for pid in target_pids if pid > 0}
-                for pid in sorted(target_pids):
+                for pid in sorted(_current_target_pids()):
                     closed_window_count += _close_windows_process_main_windows(pid)
                 close_method = "wm_close" if closed_window_count else "force_stop"
                 try:
                     returncode = proc.wait(timeout=auto_close_timeout_seconds)
                 except subprocess.TimeoutExpired:
                     pass
-                lingering_pids = (
-                    _find_windows_matrix_builder_process_ids(
-                        fragments_path=fragments_path,
-                        matrix_output_dir=matrix_output_dir,
-                        forestmodel_xml_path=forestmodel_xml_path,
-                    )
-                    - baseline_process_ids
-                )
-                if launched_pid is not None:
-                    lingering_pids.add(launched_pid)
-                lingering_pids = {pid for pid in lingering_pids if pid > 0}
-                for pid in sorted(lingering_pids):
+                for pid in sorted(_current_target_pids()):
                     if _force_stop_windows_process(pid):
                         force_stopped_pids.append(pid)
                 if force_stopped_pids:
@@ -1180,11 +1244,7 @@ def _run_windows_matrix_builder_with_auto_close(
                     close_method = "kill"
                     returncode = proc.wait(timeout=auto_close_timeout_seconds)
 
-                current_shell_pids = (
-                    _find_windows_patchworks_shell_process_ids()
-                    - baseline_shell_process_ids
-                )
-                current_shell_pids = {pid for pid in current_shell_pids if pid > 0}
+                current_shell_pids = _current_shell_pids()
                 for pid in sorted(current_shell_pids):
                     closed_shell_window_count += _close_windows_process_main_windows(
                         pid
@@ -1194,12 +1254,7 @@ def _run_windows_matrix_builder_with_auto_close(
                         "wm_close" if closed_shell_window_count else "force_stop"
                     )
                 time.sleep(0.25)
-                lingering_shell_pids = (
-                    _find_windows_patchworks_shell_process_ids()
-                    - baseline_shell_process_ids
-                )
-                lingering_shell_pids = {pid for pid in lingering_shell_pids if pid > 0}
-                for pid in sorted(lingering_shell_pids):
+                for pid in sorted(_current_shell_pids()):
                     if _force_stop_windows_process(pid):
                         force_stopped_shell_pids.append(pid)
                 if force_stopped_shell_pids:
@@ -1227,19 +1282,15 @@ def _run_windows_matrix_builder_with_auto_close(
         "close_method": close_method,
         "closed_window_count": closed_window_count,
         "force_stopped_pids": force_stopped_pids,
+        "fatal_stderr_matches": list(fatal_stderr_matches),
         "shell_close_method": shell_close_method,
         "closed_shell_window_count": closed_shell_window_count,
         "force_stopped_shell_pids": force_stopped_shell_pids,
         "remaining_process_ids": sorted(
-            _find_windows_matrix_builder_process_ids(
-                fragments_path=fragments_path,
-                matrix_output_dir=matrix_output_dir,
-                forestmodel_xml_path=forestmodel_xml_path,
-            )
-            - baseline_process_ids
+            _current_target_pids()
         ),
         "remaining_shell_process_ids": sorted(
-            _find_windows_patchworks_shell_process_ids() - baseline_shell_process_ids
+            _current_shell_pids()
         ),
     }
 
@@ -1798,6 +1849,7 @@ def run_patchworks_command(
     accounts_excluded_row_count = 0
     output_for_scan = stderr_text + "\n" + stdout_text
     fatal_stderr_matches = _detect_fatal_output(output_for_scan)
+    warning_messages = _collect_warning_output(output_for_scan)
     if fatal_stderr_matches:
         failures.append(
             "fatal stderr signatures detected: " + ", ".join(fatal_stderr_matches)
@@ -1882,6 +1934,7 @@ def run_patchworks_command(
             "stderr": str(stderr_log),
         },
         "windows_automation": windows_automation,
+        "warnings": list(warning_messages),
         "failures": failures,
     }
     manifest_path.write_text(json.dumps(manifest_payload, indent=2), encoding="utf-8")
@@ -1895,6 +1948,7 @@ def run_patchworks_command(
         stderr_log_path=stderr_log,
         manifest_path=manifest_path,
         failures=tuple(failures),
+        warnings=warning_messages,
     )
 
 

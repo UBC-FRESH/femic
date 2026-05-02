@@ -1671,41 +1671,26 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P60.7a Audit the bad first-growth and managed comparison cases against raw source rows, assignment lineage, and fit diagnostics.
   - [x] P60.7b Correct the source field choice, grouping, assignment, or fit logic as needed and regenerate the affected curve bundles.
   - [x] P60.7c Rebuild the canonical diagnostic/comparison plots and record the curve-quality acceptance gate for downstream runtime generation.
-- [ ] P60.8 Rebuild the full MKRF runtime package from source-faithful inputs (`#173`)
-  - [ ] P60.8a Generate the runtime XML, tracks, and control surfaces from the new FEMIC-native rebuild lane, consuming AU-wise unmanaged/first-growth curves rather than legacy stand-wise first-growth curves.
-  - [ ] P60.8b Re-run Matrix Builder and runtime assembly against the rebuilt source-faithful package.
-  - [ ] P60.8c Keep generated outputs and lineage surfaces synchronized as the new canonical MKRF runtime package.
-- [ ] P60.9 Validate the rebuilt model against the PoC benchmark and legacy evidence (`#173`)
-  - [ ] P60.9a Compare the rebuilt runtime against the accepted PoC benchmark surfaces.
-  - [ ] P60.9b Compare the rebuilt runtime against relevant legacy evidence where it still matters for acceptance.
-  - [ ] P60.9c Record which observed differences are accepted redesign choices versus unresolved regressions.
-- [ ] P60.10 Publish closeout docs and decide whether `#172` can close (`#173`)
-  - [ ] P60.10a Update the parent and instance docs/runbooks to teach the new MKRF rebuild lane.
-  - [ ] P60.10b Record the final claim boundary between benchmark archaeology and the new source-faithful rebuild.
-  - [ ] P60.10c Decide whether the umbrella legacy-recovery issue `#172` can close once the from-scratch rebuild phase is complete.
+- [x] P60.8 Rebuild the full MKRF runtime package from source-faithful inputs (`#173`)
+  - [x] P60.8a Generate the runtime XML, tracks, and control surfaces from the new FEMIC-native rebuild lane, consuming AU-wise unmanaged/first-growth curves rather than legacy stand-wise first-growth curves.
+  - [x] P60.8b Re-run Matrix Builder and runtime assembly against the rebuilt source-faithful package.
+  - [x] P60.8c Keep generated outputs and lineage surfaces synchronized as the new canonical MKRF runtime package.
+- [x] P60.9 Validate the rebuilt model against the PoC benchmark and legacy evidence (`#173`)
+  - [x] P60.9a Compare the rebuilt runtime against the accepted PoC benchmark surfaces.
+    - [x] P60.9a1 Add PoC-style state/seral parity families to the canonical rebuild runtime surface.
+    - [x] P60.9a2 Add managed yield/product breadth parity for merch-total and species-split families from rebuild-owned managed payloads.
+    - [x] P60.9a3 Add unmanaged yield parity families from the canonical first-growth/runtime curve lane, including rebuild-owned unmanaged `indsp.*` feature/account parity from `stand_au_assignment.csv` species-share aggregation.
+    - [x] P60.9a4 Compare canonical vs PoC `accounts.csv`, `features.csv`, and `products.csv` by family presence and record achieved parity versus accepted/source-blocked gaps.
+  - [x] P60.9b Compare the rebuilt model against the legacy control/entrypoint evidence that still matters for acceptance, especially the benchmark `base.pin` / `ScenarioSet.bsh` / target-description helper lane.
+  - [x] P60.9c Record which observed differences are accepted redesign choices versus unresolved regressions.
+- [x] P60.10 Publish closeout docs and decide whether `#172` can close (`#173`)
+  - [x] P60.10a Update the parent and instance docs/runbooks to teach the new MKRF rebuild lane, especially the parent pointer docs and the still-PoC-framed instance docs surfaces.
+  - [x] P60.10b Record the final claim boundary between benchmark archaeology and the new source-faithful rebuild.
+  - [x] P60.10c Publish a minimal canonical runnable control lane for `models/mkrf_patchworks_model/` and prove one real even-flow harvest-volume smoke on the canonical package.
+  - [x] P60.10d Decide whether the umbrella legacy-recovery issue `#172` can close once the from-scratch rebuild phase is complete.
+  - [x] P60.10e Repair MKRF runtime semantics so IFM (`managed/unmanaged`) is decoupled from curve provenance (`natural/treated`), add species-signal sanity audits, and update parent agent-facing Patchworks guardrails.
 
 ## Phase 61: First-Class Windows Arbutus Auth Workflow
-
-- Active next-step notes for the current Phase 60 edge:
-  - `P60.6e` is now complete: `config/tipsy/tsamkrf.yaml` is the active MKRF managed-rule authority, `AGE_2020` origin classes are published, the managed AU bootstrap/MSYT/BTC lane has been rebuilt from expert planting rules plus stand-derived managed site index, the managed species universe now supports `PW`, `SS`, and `YC`, and the managed-vs-first-growth plot bundle has been rerun against the rebuilt managed curves.
-  - `P60.7b` is complete as a blocker-clearing correction lane, and the follow-on curve-family refinement now targets a strongly smoothed observed-bin PCHIP pattern rather than either global NLLS or raw connect-the-dots curves.
-  - Canonical MKRF first-growth curves must now be AU-local only: no more whole-curve borrowing from sibling or same-BEC neighbors. If an AU lacks valid first-growth support, it should remain missing / managed-only / flagged rather than silently inheriting another AU's curve.
-  - Current no-borrow canonical first-growth state:
-    - `20` AUs publish AU-local `smoothed_bin_pchip` first-growth curves;
-    - `11` AUs remain `insufficient_source_stands`;
-    - the current bad-curve audit reports `8` flagged selected AUs, all in `insufficient_source_stands`;
-    - the current plot bundle publishes `18` managed-vs-first-growth comparison plots.
-  - Runtime policy is fixed for the `8` flagged insufficient-support AUs: because all `8` already have managed curves, `P60.8` must treat them as managed-only runtime units and must not require, synthesize, or borrow canonical first-growth curves for them.
-  - `P60.7c` acceptance gate is now satisfied:
-    - curve family accepted for direct first-growth AUs: `smoothed_bin_pchip`;
-    - borrowed first-growth publication: forbidden in the canonical bundle;
-    - explicit insufficient-support surface: accepted and visible rather than masked;
-    - current accepted state:
-      - `20` AU-local first-growth curves;
-      - `11` `insufficient_source_stands`;
-      - `8` flagged selected AUs, all insufficient-support and all covered by managed curves;
-      - `18` managed-vs-first-growth comparison plots in the canonical bundle.
-  - The active edge now moves to `P60.8`: rebuild the full canonical MKRF runtime package from the accepted no-borrow curve/control surface.
 
 - [x] P61.1 Plan and define the Windows Arbutus auth workflow contract (`#174`)
   - [x] P61.1a Add the first-class auth workflow to the roadmap before implementation starts.
@@ -1727,3 +1712,118 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P61.5a Add focused tests for fresh bootstrap, stale/current markers, legacy compatibility, and dataset remote checks.
   - [x] P61.5b Run targeted CLI/docs validation and keep Sphinx warning-free.
   - [x] P61.5c Post matching GitHub progress comments so the issue trail documents the workflow end to end.
+
+## Phase 62: Publish the First Canonical MKRF Alpha Release
+
+- [ ] P62.1 Prepare and merge the MKRF canonical `v0.0.1a1` release PR lane (`#173`)
+  - [ ] P62.1a Commit and push the current parent and instance repo releaseable state on explicit branches.
+  - [ ] P62.1b Open and merge the required GitHub PRs so both repos have the canonical `v0` checkpoint on their default branches.
+  - [ ] P62.1c Keep the release note, docs, and submodule pointer surfaces synchronized across both repos.
+- [ ] P62.2 Publish the `femic-mkrf-instance` `v0.0.1a1` alpha release (`#173`)
+  - [ ] P62.2a Create the GitHub release/tag `v0.0.1a1` in `femic-mkrf-instance`.
+  - [ ] P62.2b Mark it explicitly as an alpha / pre-release for developers and very curious testers rather than a production-ready build.
+  - [ ] P62.2c Summarize the release as the first canonical MKRF rebuild checkpoint after the archaeology -> PoC -> canonical-lane sequence.
+- [ ] P62.3 Publish the `v0.0.1a1` release announcement and open the next legacy-publication feature issue
+  - [ ] P62.3a Post a `femic-mkrf-instance` repository discussion announcement for `v0.0.1a1`.
+  - [ ] P62.3b Summarize the major work completed so far and the cautionary alpha-release boundary.
+  - [ ] P62.3c Open the follow-on feature issue to publish the full legacy MKRF model inside `femic-mkrf-instance` as a recorded/reference surface for later canonical rebuild iterations.
+
+### Detailed Next Steps Notes
+
+- Active next-step notes for the current Phase 60 edge:
+  - `P60.8a` is complete:
+    - the canonical MKRF runtime package now exists at `external/femic-mkrf-instance/models/mkrf_patchworks_model/`;
+    - the canonical source-faithful spatial publisher now materializes `spatial/fragments.*` from `data/source/03_MappingAnalysisData/Resultant.gdb`;
+    - the package now publishes rebuild-owned XML, analysis, and lineage surfaces including `xml/forestmodel.xml`, `analysis/runtime_curve_status.csv`, and `analysis/runtime_au_remap_audit.csv`; and
+    - runtime AU lookup now normalizes raw `stand_origin_assignment.csv` assignments onto the selected canonical AU set before XML/runtime publication.
+  - `P60.8b` is complete:
+    - Patchworks preflight now passes against `config/patchworks.runtime.mkrf_rebuild.windows.yaml`;
+    - Matrix Builder now runs cleanly against the canonical rebuild package;
+    - the canonical `tracks/` outputs are now Matrix-Builder-owned again rather than pseudo-track placeholders; and
+    - the rebuilt runtime surface now emits managed area/yield feature, product, and account outputs.
+  - Current canonical runtime smoke state after the clean rebuild:
+    - `products.csv` is populated and includes `product.area.managed.*` and `product.yield.managed.*`;
+    - `features.csv` is populated and includes `feature.area.*` and `feature.yield.managed.*`; and
+    - `accounts.csv` is populated and aligned with the managed feature/product surface.
+  - `P60.8c` is complete:
+    - follow-on `P60.9a` runtime changes were carried through the canonical rebuild order;
+    - regenerated XML/package surfaces and reran Matrix Builder remained synchronized throughout the parity rollout; and
+    - the canonical package is now the stable synchronized runtime baseline for further acceptance work.
+  - `P60.9` is complete:
+    - runtime-surface parity against the accepted PoC benchmark package is in place for the canonical rebuild claim boundary;
+    - the remaining control-lane differences are now explicitly classified rather than left ambiguous; and
+    - unresolved helper seams such as `THLB4070(...)`, `UWR(...)`, and `InitialTargets/00_Target_Descriptions.bsh` are accepted legacy-only benchmark seams unless a later task explicitly reopens source-faithful control-lane reconstruction.
+  - `P60.10` is complete:
+    - the final docs/runbook claim boundary for the source-faithful rebuild is published; and
+    - umbrella issue `#172` is now closed because no remaining rebuild scope belongs to the archaeology/PoC umbrella.
+  - `P60.10a` concrete docs target list is now explicit:
+    - parent docs:
+      - `docs/sample-models/mkrf.rst`
+      - `docs/sample-models/mkrf-metadata-lineage.rst`
+    - instance docs/readmes:
+      - `external/femic-mkrf-instance/README.md`
+      - `external/femic-mkrf-instance/docs/index.rst`
+      - `external/femic-mkrf-instance/docs/getting-started.rst`
+      - `external/femic-mkrf-instance/docs/operator-runbook.rst`
+      - `external/femic-mkrf-instance/docs/evidence-and-boundaries.rst`
+      - `external/femic-mkrf-instance/docs/rebuild-and-qa.rst`
+      - `external/femic-mkrf-instance/docs/data-package-crosswalk.rst`
+      - `external/femic-mkrf-instance/docs/metadata-and-lineage.rst`
+    - these surfaces still describe the MKRF lane primarily as PoC-only and need the canonical `models/mkrf_patchworks_model/` rebuild lane and final claim boundary taught directly.
+  - `P60.10a` is complete:
+    - the parent pointer docs now teach the canonical rebuild lane first;
+    - the instance README, docs index, getting-started, evidence/boundaries, rebuild/QA, operator-runbook, data-package crosswalk, and metadata/lineage pages now point to `models/mkrf_patchworks_model/` as the active runtime/package lane; and
+    - both parent and instance Sphinx trees build cleanly with `-W` after the docs updates.
+  - `P60.10b` is complete:
+    - the canonical rebuild claim boundary now explicitly covers the runtime/package lane under `external/femic-mkrf-instance/models/mkrf_patchworks_model/`, including canonical XML, spatial, tracks, analysis, and the accepted Patchworks rebuild config;
+    - retained PoC and legacy surfaces, including `models/mkrf_patchworks_model_poc/`, legacy compiled controls/tracks, and benchmark report/control artifacts, are now explicitly benchmark/reference evidence only rather than part of the canonical rebuild claim; and
+    - unresolved control-lane seams `THLB4070(...)`, `UWR(...)`, and `InitialTargets/00_Target_Descriptions.bsh` remain outside the canonical rebuild claim boundary for this phase unless a later task explicitly reopens source-faithful control-lane reconstruction.
+  - `P60.10c` is complete:
+    - the canonical package now publishes a minimal runnable control lane under `models/mkrf_patchworks_model/`, including `analysis/base.pin`, `analysis/headless_runtime_common.bsh`, and `scripts/targets/flowtargets.bsh`;
+    - the built-in `mkrf.base` variant now launches the canonical package rather than the PoC package, while the PoC lane remains available separately as `mkrf.poc_base`; and
+    - a real headless even-flow harvest-volume smoke run `mkrf_canonical_evenflow_smoke` completed successfully on the canonical package, with non-empty `schedule.csv`, active `product.yield.managed.total` / `flow.even.product.yield.managed.total` targets, and sane saved-stage outputs under `runtime/logs/headless_stage/mkrf_canonical_evenflow_smoke/`.
+  - `P60.10d` is complete:
+    - audited umbrella issue `#172` against the finished `P55`-`P59` archaeology/PoC scope and the finished `P60` canonical rebuild scope under `#173`;
+    - posted the final closeout comment on `#172`; and
+    - closed `#172` because no remaining technical work belongs to that archaeology umbrella.
+  - `P60.10e` is complete:
+    - the canonical MKRF runtime package now publishes explicit runtime `origin` semantics using the reviewed 2020 age rule (`AGE_2020 >= 80` -> `natural`, otherwise `treated`) rather than inferring IFM/state from first-growth availability;
+    - IFM and curve provenance are now decoupled in the runtime generator:
+      - `managed/unmanaged` controls treatment eligibility;
+      - `natural/treated` controls curve-family selection; and
+      - retention/treatment transitions preserve or change origin only where the XML now says so explicitly;
+    - the canonical analysis surface now includes `analysis/runtime_species_share_audit.csv`, and the new `femic instance mkrf-audit-runtime-sanity` helper now audits source-share versus saved-stage `indsp.*` signal directly;
+    - the canonical semantic smoke run `mkrf_canonical_evenflow_semantic_smoke_20260502a` now passes that sanity audit with zero failures, including nonzero managed `Hw` / `Dr` species signal where the earlier conflated model emitted zeros; and
+    - parent repo guardrails now state the Patchworks semantics contract explicitly in:
+      - `AGENTS.md`
+      - `docs/reference/contracts/patchworks-model-semantics.rst`
+      - `docs/reference/patchworks-export.rst`
+      - `docs/guides/vscode-coding-agent-onboarding.rst`
+  - Current `v0` validation baseline:
+    - the canonical MKRF even-flow smoke should now be treated as a `100000`-iteration validation lane rather than the earlier `20000`-iteration sample;
+    - the stronger saved stage `mkrf_canonical_evenflow_semantic_smoke_20260502b` passes the runtime sanity audit with zero failures;
+    - active total-yield even-flow residuals remain effectively zero at that stronger iteration budget; and
+    - the parent MKRF sample-model docs plus the instance `rebuild-and-qa` / `operator-runbook` pages now teach this stronger checkpoint and the repaired IFM/origin semantics directly.
+  - Phase 60 closeout state:
+    - `P60.10a` through `P60.10e` are complete;
+    - the archaeology umbrella `#172` is closed;
+    - `#173` now carries the full canonical rebuild closeout record; and
+    - do not reopen runtime/package semantics unless a new sanity check turns up a concrete regression.
+  - `P62` is now the active publication lane:
+    - merge the current MKRF `v0` checkpoint in both the parent repo and `femic-mkrf-instance`;
+    - publish `femic-mkrf-instance` tag/release `v0.0.1a1` as an explicit alpha / pre-release rather than a production-ready build;
+    - post the matching repository discussion announcement in `femic-mkrf-instance`; and
+    - open the follow-on feature issue to publish the entire legacy MKRF model inside `femic-mkrf-instance` as a recorded/reference surface for later canonical-lane iterations.
+  - Active `P60.9a` rollout order is now fixed:
+    - first land PoC-style state/seral parity families;
+    - then land managed yield/product breadth parity for `merch.total` and managed `indsp.*` families from rebuild-owned managed payloads;
+    - then land unmanaged total/state yield parity from canonical first-growth curves; and
+    - then validate whether unmanaged `indsp.*` can be supported from rebuild-owned species-share inputs.
+  - Current `P60.9a` benchmark state after clean run `mkrf_rebuild_p60_9a_20260501e`:
+    - managed parity breadth is present in the canonical runtime surface, including managed `EN/EM/FM/THN`, `merch.total`, and managed `indsp.*` families in `accounts.csv`, `features.csv`, and `products.csv`;
+    - unmanaged total/state yield parity is present for the canonical rebuild-owned runtime lanes;
+    - unmanaged `feature.yield.unmanaged.indsp.*` now materializes in `accounts.csv` and `features.csv` from rebuild-owned `stand_au_assignment.csv` species-share aggregation;
+    - unmanaged products remain absent in the canonical runtime, and that is PoC-consistent because the accepted PoC `products.csv` is managed-only too; and
+    - canonical vs PoC `accounts.csv` family diff is now down to:
+      - accepted redesign: `feature.area.unmanaged.state.THN` and `feature.yield.unmanaged.state.THN`, because the PoC emits those families from special numeric unmanaged AU codes such as `2201` and `2204` and the canonical rebuild does not carry an equivalent special-AU lane after runtime AU normalization; and
+      - no remaining unmanaged `indsp.*` parity gap on the feature/account surface.

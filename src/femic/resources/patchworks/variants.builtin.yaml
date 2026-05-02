@@ -3,7 +3,7 @@ instances:
     label: K3Z example instance
     default_scenario_set_id: k3z.proving_ground
   - instance_id: mkrf
-    label: MKRF PoC intermediate instance
+    label: MKRF canonical rebuild instance
 
 variants:
   - variant_id: k3z.base
@@ -146,16 +146,34 @@ variants:
     analysis_pin: external/femic-k3z-instance/models/k3z_patchworks_model/analysis/overlay_scenario2_sum.pin
     runtime_config: external/femic-k3z-instance/config/patchworks.runtime.overlay.scenario2_sum.windows.yaml
   - variant_id: mkrf.base
-    label: MKRF PoC base
+    label: MKRF canonical rebuild base
     instance_id: mkrf
     variant_family: baseline
     kind: patchworks
     instance_root: external/femic-mkrf-instance
+    analysis_pin: external/femic-mkrf-instance/models/mkrf_patchworks_model/analysis/base.pin
+    runtime_config: external/femic-mkrf-instance/config/patchworks.runtime.mkrf_rebuild.windows.yaml
+    default: true
+    default_scenario_id: even_flow_smoke
+    notes:
+      - Canonical MKRF rebuild launch surface backed by the FEMIC-native runtime package.
+    scenarios:
+      - scenario_id: even_flow_smoke
+        label: MKRF base even-flow smoke
+        mode: max-even-flow-smoke
+        target: product.yield.managed.total
+        iterations: 100000
+        improvement: 0.0
+  - variant_id: mkrf.poc_base
+    label: MKRF PoC base
+    instance_id: mkrf
+    variant_family: benchmark
+    kind: patchworks
+    instance_root: external/femic-mkrf-instance
     analysis_pin: external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/analysis/base.pin
     runtime_config: external/femic-mkrf-instance/config/patchworks.runtime.windows.yaml
-    default: true
     notes:
-      - MKRF PoC benchmark launch surface backed by FEMIC-emitted runtime XML.
+      - Retained PoC benchmark launch surface backed by the older checkpoint-oriented control lane.
 
 scenario_sets:
   - scenario_set_id: k3z.proving_ground
