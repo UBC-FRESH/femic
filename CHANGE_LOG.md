@@ -16294,3 +16294,19 @@
   - posted the final closeout comment on `#172` and closed the issue; and
   - marked `P60.10d` and parent `P60.10` complete in the roadmap/planning
     surfaces so the repo state now matches the GitHub tracker.
+## 2026-05-02 - Published the first canonical MKRF alpha release
+- `#173` / `P62` publication closeout:
+  - committed and merged the instance release PR
+    `UBC-FRESH/femic-mkrf-instance#2` and the parent release PR `#179`;
+  - published `femic-mkrf-instance` release `v0.0.1a1` as an explicit
+    alpha/pre-release for developers and cautious reviewers rather than a
+    production-ready planning package;
+  - posted the matching instance discussion announcement at
+    `UBC-FRESH/femic-mkrf-instance#3`;
+  - opened follow-on archival/reference issue
+    `UBC-FRESH/femic-mkrf-instance#1` to publish the full legacy MKRF model
+    inside the instance repo; and
+  - documented the Basecamp project/message-board URLs in the instance README
+    and confirmed that direct Basecamp API posting remains blocked in the
+    current environment without Basecamp authentication, with an
+    unauthenticated message-board POST attempt returning `401 Unauthorized`.

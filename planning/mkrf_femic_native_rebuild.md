@@ -7,6 +7,17 @@ Issue: `#173`
 This note is the active planning surface for the from-scratch MKRF rebuild
 lane.
 
+Current publication status:
+
+- the first canonical MKRF alpha release is now published as
+  `femic-mkrf-instance` release `v0.0.1a1`;
+- instance PR `UBC-FRESH/femic-mkrf-instance#2` and parent PR `#179` are
+  merged;
+- instance discussion announcement
+  `UBC-FRESH/femic-mkrf-instance#3` is posted; and
+- follow-on archival/reference publication work is tracked in
+  `UBC-FRESH/femic-mkrf-instance#1`.
+
 It starts after the legacy archaeology / PoC benchmark program recorded in:
 
 - `planning/mkrf_legacy_decompile.md`
