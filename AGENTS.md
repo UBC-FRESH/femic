@@ -35,6 +35,10 @@ the repo root:
      `docs/guides/public-data-mirror-runbook.rst` first and do not improvise
      the auth/bootstrap order
    - Windows-specific Arbutus reminders:
+     - check `femic prep arbutus-auth-status` before improvising any local
+       Arbutus recovery steps
+     - use `femic prep arbutus-auth-init` to scaffold the local auth/profile
+       files when the workflow is missing or stale
      - `%USERPROFILE%\.config\femic\arbutus.env` must use plain `KEY=VALUE`
        lines with no quotes
      - interactive loader usage needs an execution-policy-bypassed session
@@ -55,6 +59,14 @@ the repo root:
    - BatchTIPSY freshness: treat `02_input-tsaXX.dat` as canonical; XLSX is a
      mirror only. Do not assume a stale block means rerun is required without
      checking whether DAT content actually changed.
+   - BatchTIPSY/BTC runtime install:
+     - if `TIPSYbtc.exe` is missing from the current Windows dev environment,
+       install TIPSY 4.7 from:
+       `https://www2.gov.bc.ca/assets/gov/farming-natural-resources-and-industry/forestry/stewardship/forest-analysis-inventory/software/tipsy47.msi`
+     - default expected installed path is:
+       `C:\Program Files\TIPSY 4.7\BTC\TIPSYbtc.exe`
+     - if FEMIC cannot auto-discover it after install, set either
+       `FEMIC_BATCHTIPSY_EXE` or pass `--btc-exe`.
    - BC Data Catalogue discovery quickstart:
      - resolve/classify one likely BCDC layer:
        - `& .\.venv\Scripts\python.exe -m femic data bcdc-resolve WHSE_FOREST_VEGETATION.F_OWN`
@@ -79,10 +91,35 @@ the repo root:
 
 For the compact docs source of truth behind these operating notes, see:
 - `docs/reference/contracts/index.rst`
+- `docs/reference/contracts/patchworks-model-semantics.rst`
 - `docs/reference/contracts/repo-runtime-invariants.rst`
 - `docs/reference/contracts/instance-and-data-roots.rst`
 - `docs/reference/contracts/stage-boundaries-and-canonical-artifacts.rst`
 - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
+
+## Patchworks Model Semantics Guardrails
+
+These rules are repo-level contracts, not case-specific heuristics:
+
+- `managed` / `unmanaged` in Patchworks means treatment eligibility only:
+  - `managed` area may receive scheduled treatments;
+  - `unmanaged` area may not.
+- `natural` / `treated` origin means curve provenance only:
+  - natural-origin area belongs on the untreated / VDYP-style curve lane;
+  - treated-origin area belongs on the treated / plantation / TIPSY-style
+    curve lane.
+- Do not infer `managed = treated` or `unmanaged = natural`.
+- Retention is orthogonal to origin:
+  - retention may move area from `managed` to `unmanaged`;
+  - retention does not, by itself, change origin.
+- Do not use first-growth curve availability, `hasfg`, or similar curve-family
+  presence as a proxy for Patchworks IFM state.
+- After Patchworks-facing rebuilds, validate species-share and runtime-signal
+  sanity explicitly:
+  - compare published source-share tables against rebuilt `indsp.*` outputs;
+  - treat "Matrix Builder succeeded" as necessary but not sufficient; and
+  - fail the sanity check when nonzero source share produces zero runtime
+    signal, or vice versa.
 
 Do not treat symlinked pointer files in `external/femic-public-data` as usable
 inputs until `datalad get` has completed.
@@ -116,6 +153,13 @@ When contributing to this repository as the coding agent:
 6. Whenever you plan or complete work, update the "Detailed Next Steps Notes" section in
    `ROADMAP.md` so the leading edge of the implementation plan stays current. Consult that section
    before proposing new next steps to ensure we continue in sequence rather than jumping around.
+6a. Keep roadmap parent-task status synchronized with child subtasks:
+   - if every listed child subtask under a roadmap task is checked off, check off the parent task
+     in the same change set unless the parent line explicitly covers additional still-open scope;
+   - do not leave top-level roadmap tasks unchecked after all of their child subtasks are marked
+     complete;
+   - when a parent task intentionally stays open despite completed children, add a brief note in
+     the roadmap/planning surface explaining why.
 7. After each deliverable or roadmap milestone, append the same progress summary reported to the user
    to `CHANGE_LOG.md` (Markdown format, newest entries last) so the repository carries an auditable
    narrative of changes.
@@ -135,6 +179,13 @@ When contributing to this repository as the coding agent:
      `C:\Program Files\...` over personal workstation locations;
    - before finalizing a docs/planning hygiene pass, do a quick search for leaked personal-path
      fragments if there is any chance examples were copied from a live shell session.
+10a. Use all-lowercase names for new files and directories whenever FEMIC controls the path:
+   - new canonical runtime package paths, docs files, metadata files, runbooks, config files, and
+     generated artifact directories should default to lowercase names;
+   - preserve mixed-case only when it is part of archival legacy evidence, upstream source payloads
+     we are not renaming, or external tool/runtime contracts outside FEMIC control;
+   - do not carry legacy mixed-case pathing forward into new canonical rebuild surfaces unless there
+     is a concrete external-contract reason to do so.
 11. Commit early and often using roadmap task/subtask granularity:
    - prefer small, thematic commits over large mixed commits;
    - create at least one commit per completed roadmap task (or tightly related subtask bundle);
@@ -143,6 +194,8 @@ When contributing to this repository as the coding agent:
 12. Treat GitHub issue hygiene as a required part of the development workflow:
    - before starting a new feature, bug, docs push, or other non-trivial task, ensure `gh` is
      available in the active shell and authenticated as the intended active GitHub user;
+   - if `gh` is unavailable or unauthenticated, treat that as a workflow blocker for issue hygiene:
+     stop, report the blocker clearly, and do not pretend the GitHub side of the workflow is current;
    - start with a non-mutating audit before editing issue state:
      - `gh issue list --state open`
      - `gh issue list --state closed`
@@ -162,6 +215,15 @@ When contributing to this repository as the coding agent:
    - when work status changes materially, update the issue accordingly (comment, retitle, relabel,
      close on merge, or otherwise reconcile status) so the GitHub tracker reflects reality and does
      not leave dropped or duplicated work behind.
+   - treat progress comments as mandatory, not optional:
+     - when a roadmap task, roadmap subtask bundle, phase closeout, or equivalent milestone is
+       completed, post a matching GitHub progress comment on the governing issue;
+     - when the workflow uses parent/child issues, keep both the active child issue and the parent
+       issue current with concise progress comments whenever status changes materially;
+     - local updates in `ROADMAP.md`, `CHANGE_LOG.md`, commits, or chat do not substitute for the
+       required GitHub comment trail;
+     - before declaring a milestone wrapped up, verify that the required GitHub comment(s) were
+       actually posted successfully from the active shell/session.
    - prefer `gh issue edit` for issue titles, bodies, and labels, but prefer `gh api graphql` for
      maintainer-authored comment edits and any metadata surface that `gh issue edit` handles
      poorly; document the exact successful command pattern in repo notes/docs if you need the

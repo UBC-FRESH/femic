@@ -1,0 +1,6 @@
+schema_version: 1
+sheet: Input Variables
+range_name: exclude
+workbook_ref: '''Input Variables''!$D$14'
+value: CONTCLAS eq 'X'
+note: Review extract from governing MKRF workbook surface.

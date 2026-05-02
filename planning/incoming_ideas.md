@@ -55,6 +55,8 @@ Good queue hygiene
 
 ---
 
+[bug] `legacy_generated_xml_reconciliation.yaml` cites "Base TFL26" as the "description". TFL 26 is the Mission Community Forest. We are building a model for Malkolkm Knapp Research Forest (MKRF).
+
 [feature] LLM coding-agent supported "legacy model based FEMIC instance warm-start" module that expedites building a new FEMIC-style model instance from canonical source data (possibly with multiple output format target, e.g., ws3, Patchworks, Woodstock, etc.) by basing it on a known-valid legacy instance (in one of same input data formats we already know how to output).
 
 [feature] Clean up FEMIC package root dir file structure to move stuff that does not arguably belong there (especially the core `*.py` files, but also `*.feather`, `ria_maptiles.csv`, `vdyp_params` and `vdyp_params_landp`, etc.).

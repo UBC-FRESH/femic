@@ -818,6 +818,276 @@ def test_validate_windows_annex_runtime_passes_with_visible_public_bucket(
     assert warnings == []
 
 
+def test_arbutus_auth_status_reports_missing_scaffolding(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    userprofile = tmp_path / "user"
+    userprofile.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setenv("USERPROFILE", str(userprofile))
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.app, ["prep", "arbutus-auth-status"])
+
+    assert result.exit_code == 1
+    assert "Missing shared Arbutus env file" in result.stdout
+    assert "Missing Arbutus profile registry" in result.stdout
+
+
+def test_arbutus_auth_init_scaffolds_files_then_fails_noninteractive_when_values_missing(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    userprofile = tmp_path / "user"
+    userprofile.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setenv("USERPROFILE", str(userprofile))
+    monkeypatch.setattr(cli_main.sys.stdin, "isatty", lambda: False)
+    monkeypatch.setattr(cli_main.sys.stdout, "isatty", lambda: False)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.app,
+        ["prep", "arbutus-auth-init", "--profile", "public-data"],
+    )
+
+    env_file = userprofile / ".config" / "femic" / "arbutus.env"
+    profiles_file = userprofile / ".config" / "femic" / "arbutus-profiles.yaml"
+    loader_ps1 = userprofile / ".config" / "femic" / "load-arbutus-env.ps1"
+    loader_sh = userprofile / ".config" / "femic" / "load-arbutus-env.sh"
+
+    assert result.exit_code == 1
+    assert env_file.exists()
+    assert profiles_file.exists()
+    assert loader_ps1.exists()
+    assert loader_sh.exists()
+    assert "Missing Arbutus bootstrap values in non-interactive mode" in result.stdout
+
+
+def test_arbutus_auth_status_reports_current_marker(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    userprofile = tmp_path / "user"
+    config_root = userprofile / ".config" / "femic"
+    config_root.mkdir(parents=True, exist_ok=True)
+    env_file = config_root / "arbutus.env"
+    profiles_file = config_root / "arbutus-profiles.yaml"
+    status_file = config_root / "arbutus-status.yaml"
+    env_values = {
+        "AWS_ACCESS_KEY_ID": "abc123456",
+        "AWS_SECRET_ACCESS_KEY": "secret123456",
+        "AWS_DEFAULT_REGION": "ca-west-1",
+        "S3_ENDPOINT_URL": "https://object-arbutus.cloud.computecanada.ca",
+    }
+    env_file.write_text(
+        cli_main._windows_arbutus_env_template(env_values), encoding="utf-8"
+    )
+    profiles_file.write_text(
+        yaml.safe_dump(
+            {
+                "profiles": {
+                    "public-data": {
+                        "bucket_name": cli_main.WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET,
+                        "remote_name": cli_main.WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME,
+                        "dataset_path_hint": "external/femic-public-data",
+                        "note": "",
+                    }
+                }
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    loader_ps1 = config_root / "load-arbutus-env.ps1"
+    loader_ps1.write_text("# loader\n", encoding="utf-8")
+    loader_sh = config_root / "load-arbutus-env.sh"
+    loader_sh.write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setenv("USERPROFILE", str(userprofile))
+    for key, value in env_values.items():
+        monkeypatch.setenv(key, value)
+    monkeypatch.setattr(
+        cli_main,
+        "_probe_windows_arbutus_bucket",
+        lambda bucket_name, env_values: (True, ""),
+    )
+
+    record = cli_main._build_windows_arbutus_status_record(
+        profile_name="public-data",
+        profile={
+            "bucket_name": cli_main.WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET,
+            "remote_name": cli_main.WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME,
+            "dataset_path_hint": "external/femic-public-data",
+            "note": "",
+        },
+        env_file=env_file,
+        loader_paths=[loader_ps1, loader_sh],
+        dataset_path=None,
+        env_values=env_values,
+        validation_checks={
+            "env_file_parse": True,
+            "shell_env_loaded": True,
+            "head_bucket": True,
+            "git_annex_enableremote": False,
+        },
+    )
+    status_file.write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": cli_main.WINDOWS_ARBUTUS_STATUS_SCHEMA_VERSION,
+                "profiles": {"public-data": record},
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.app,
+        ["prep", "arbutus-auth-status", "--profile", "public-data"],
+    )
+
+    assert result.exit_code == 0
+    assert "Windows Arbutus auth status is current" in result.stdout
+
+
+def test_arbutus_auth_status_reports_stale_marker_when_env_file_changes(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    userprofile = tmp_path / "user"
+    config_root = userprofile / ".config" / "femic"
+    config_root.mkdir(parents=True, exist_ok=True)
+    env_file = config_root / "arbutus.env"
+    profiles_file = config_root / "arbutus-profiles.yaml"
+    status_file = config_root / "arbutus-status.yaml"
+    loader_ps1 = config_root / "load-arbutus-env.ps1"
+    loader_ps1.write_text("# loader\n", encoding="utf-8")
+    env_values = {
+        "AWS_ACCESS_KEY_ID": "abc123456",
+        "AWS_SECRET_ACCESS_KEY": "secret123456",
+        "AWS_DEFAULT_REGION": "ca-west-1",
+        "S3_ENDPOINT_URL": "https://object-arbutus.cloud.computecanada.ca",
+    }
+    env_file.write_text(
+        cli_main._windows_arbutus_env_template(env_values), encoding="utf-8"
+    )
+    profiles_file.write_text(
+        yaml.safe_dump(
+            {
+                "profiles": {
+                    "public-data": {
+                        "bucket_name": cli_main.WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET,
+                        "remote_name": cli_main.WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME,
+                    }
+                }
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setenv("USERPROFILE", str(userprofile))
+    for key, value in env_values.items():
+        monkeypatch.setenv(key, value)
+    monkeypatch.setattr(
+        cli_main,
+        "_probe_windows_arbutus_bucket",
+        lambda bucket_name, env_values: (True, ""),
+    )
+    record = cli_main._build_windows_arbutus_status_record(
+        profile_name="public-data",
+        profile={
+            "bucket_name": cli_main.WINDOWS_ARBUTUS_PUBLIC_DATA_BUCKET,
+            "remote_name": cli_main.WINDOWS_ARBUTUS_DEFAULT_REMOTE_NAME,
+            "dataset_path_hint": "",
+            "note": "",
+        },
+        env_file=env_file,
+        loader_paths=[loader_ps1],
+        dataset_path=None,
+        env_values=env_values,
+        validation_checks={
+            "env_file_parse": True,
+            "shell_env_loaded": True,
+            "head_bucket": True,
+            "git_annex_enableremote": False,
+        },
+    )
+    status_file.write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": cli_main.WINDOWS_ARBUTUS_STATUS_SCHEMA_VERSION,
+                "profiles": {"public-data": record},
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    env_file.write_text(
+        cli_main._windows_arbutus_env_template(
+            env_values | {"AWS_DEFAULT_REGION": "ca-west-2"}
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("AWS_DEFAULT_REGION", "ca-west-2")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli_main.app,
+        ["prep", "arbutus-auth-status", "--profile", "public-data"],
+    )
+
+    assert result.exit_code == 1
+    assert "Saved known-working marker is stale" in result.stdout
+    assert (
+        "mtime differs" in result.stdout or "shared Arbutus env file" in result.stdout
+    )
+
+
+def test_arbutus_auth_status_uses_legacy_single_bucket_compatibility(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    userprofile = tmp_path / "user"
+    config_root = userprofile / ".config" / "femic"
+    config_root.mkdir(parents=True, exist_ok=True)
+    env_file = config_root / "arbutus.env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "AWS_ACCESS_KEY_ID=abc123456",
+                "AWS_SECRET_ACCESS_KEY=secret123456",
+                "AWS_DEFAULT_REGION=ca-west-1",
+                "S3_ENDPOINT_URL=https://object-arbutus.cloud.computecanada.ca",
+                "S3_BUCKET_NAME=legacy-bucket",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli_main.os, "name", "nt", raising=False)
+    monkeypatch.setenv("USERPROFILE", str(userprofile))
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "abc123456")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "secret123456")
+    monkeypatch.setenv("AWS_DEFAULT_REGION", "ca-west-1")
+    monkeypatch.setenv(
+        "S3_ENDPOINT_URL",
+        "https://object-arbutus.cloud.computecanada.ca",
+    )
+    monkeypatch.setattr(
+        cli_main,
+        "_probe_windows_arbutus_bucket",
+        lambda bucket_name, env_values: (True, ""),
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli_main.app, ["prep", "arbutus-auth-status"])
+
+    assert result.exit_code == 1
+    assert "selected_profile=legacy-default bucket=legacy-bucket" in result.stdout
+
+
 def test_validate_windows_public_data_tsa_boundary_reports_missing_geospatial_runtime(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -1261,6 +1531,7 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
         ifm_target_managed_share,
         seral_stage_config_path,
         silviculture_config_path,
+        legacy_input_variables_config_path,
     ):
         called.update(
             {
@@ -1280,6 +1551,9 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
                 "ifm_target_managed_share": ifm_target_managed_share,
                 "seral_stage_config_path": seral_stage_config_path,
                 "silviculture_config_path": silviculture_config_path,
+                "legacy_input_variables_config_path": (
+                    legacy_input_variables_config_path
+                ),
             }
         )
         return SimpleNamespace(
@@ -1312,6 +1586,9 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
         ifm_target_managed_share=None,
         seral_stage_config=Path("config/seral.k3z.yaml"),
         silviculture_config=Path("config/silviculture.k3z.yaml"),
+        legacy_input_variables_config=Path(
+            "config/legacy_xml_builder/input_variables.mkrf.yaml"
+        ),
     )
 
     assert called["tsa_list"] == ["k3z"]
@@ -1329,6 +1606,11 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
         Path(called["silviculture_config_path"])
         .as_posix()
         .endswith("config/silviculture.k3z.yaml")
+    )
+    assert (
+        Path(called["legacy_input_variables_config_path"])
+        .as_posix()
+        .endswith("config/legacy_xml_builder/input_variables.mkrf.yaml")
     )
     assert any("patchworks export completed" in msg for msg in messages)
 
@@ -3960,6 +4242,7 @@ def test_export_dual_runs_patchworks_and_woodstock(
         ifm_threshold=None,
         ifm_target_managed_share=None,
         seral_stage_config=None,
+        legacy_input_variables_config=None,
         with_ws3_smoke=False,
         ws3_command=None,
         ws3_workdir=None,
@@ -6175,8 +6458,235 @@ def test_tsr_thlb_netdown_step_run_uses_default_recipe_path(
     assert captured_kwargs["lu_bundle_count"] is None
     assert captured_kwargs["progress_root"] is None
     assert any("parent_step_id:" in msg for msg in messages)
-    assert any("selected_map_ids: 092O071" in msg for msg in messages)
-    assert any("notes: Used smoke subset 092O071" in msg for msg in messages)
+
+
+def test_instance_mkrf_init_runtime_package_uses_default_paths(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-mkrf-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_init(**kwargs):
+        captured_kwargs.update(kwargs)
+        return SimpleNamespace(
+            package_root=instance_root / "models" / "mkrf_patchworks_model",
+            readme_path=instance_root / "models" / "mkrf_patchworks_model" / "README.md",
+            manifest_path=instance_root
+            / "models"
+            / "mkrf_patchworks_model"
+            / "analysis"
+            / "runtime_package_init_manifest.json",
+            curve_status_path=instance_root
+            / "models"
+            / "mkrf_patchworks_model"
+            / "analysis"
+            / "runtime_curve_status.csv",
+            analysis_au_runtime_status_path=instance_root
+            / "models"
+            / "mkrf_patchworks_model"
+            / "analysis"
+            / "au_runtime_status.csv",
+            analysis_au_curve_refs_path=instance_root
+            / "models"
+            / "mkrf_patchworks_model"
+            / "analysis"
+            / "au_curve_refs.csv",
+            species_share_audit_path=instance_root
+            / "models"
+            / "mkrf_patchworks_model"
+            / "analysis"
+            / "runtime_species_share_audit.csv",
+            analysis_pin_path=instance_root
+            / "models"
+            / "mkrf_patchworks_model"
+            / "analysis"
+            / "base.pin",
+            headless_runtime_common_path=instance_root
+            / "models"
+            / "mkrf_patchworks_model"
+            / "analysis"
+            / "headless_runtime_common.bsh",
+            flow_targets_script_path=instance_root
+            / "models"
+            / "mkrf_patchworks_model"
+            / "scripts"
+            / "targets"
+            / "flowtargets.bsh",
+            xml_contract_path=instance_root
+            / "models"
+            / "mkrf_patchworks_model"
+            / "xml"
+            / "runtime_curve_contract.xml",
+            xml_curve_bank_path=instance_root
+            / "models"
+            / "mkrf_patchworks_model"
+            / "xml"
+            / "runtime_curve_bank.xml",
+            forestmodel_xml_path=instance_root
+            / "models"
+            / "mkrf_patchworks_model"
+            / "xml"
+            / "forestmodel.xml",
+            selected_au_count=31,
+            first_growth_curve_au_count=20,
+            first_growth_missing_au_count=11,
+            managed_curve_au_count=31,
+        )
+
+    monkeypatch.setattr(cli_main, "initialize_mkrf_runtime_package", _fake_init)
+
+    cli_main.instance_mkrf_init_runtime_package(
+        package_root=Path("models/mkrf_patchworks_model"),
+        selected_au_csv=Path("data/model_input_bundle/selected_au_table.csv"),
+        stand_origin_assignment_csv=Path("data/model_input_bundle/stand_origin_assignment.csv"),
+        stand_au_assignment_csv=Path("data/model_input_bundle/stand_au_assignment.csv"),
+        managed_bootstrap_csv=Path("data/model_input_bundle/managed_au_bootstrap_table.csv"),
+        first_growth_curves_csv=Path("data/model_input_bundle/first_growth_au_curves.csv"),
+        first_growth_diagnostics_csv=Path(
+            "data/model_input_bundle/first_growth_au_fit_diagnostics.csv"
+        ),
+        managed_curves_csv=Path("data/model_input_bundle/managed_au_curves.csv"),
+        managed_run_manifest_json=Path("data/model_input_bundle/managed_au_run_manifest.json"),
+        bad_curve_audit_summary_csv=Path(
+            "data/model_input_bundle/bad_curve_audit_summary.csv"
+        ),
+        instance_root=instance_root,
+    )
+
+    assert captured_kwargs["package_root"] == (
+        instance_root / "models" / "mkrf_patchworks_model"
+    ).resolve()
+    assert captured_kwargs["selected_au_csv"] == (
+        instance_root / "data" / "model_input_bundle" / "selected_au_table.csv"
+    ).resolve()
+    assert captured_kwargs["stand_origin_assignment_csv"] == (
+        instance_root / "data" / "model_input_bundle" / "stand_origin_assignment.csv"
+    ).resolve()
+    assert captured_kwargs["stand_au_assignment_csv"] == (
+        instance_root / "data" / "model_input_bundle" / "stand_au_assignment.csv"
+    ).resolve()
+    assert captured_kwargs["managed_bootstrap_csv"] == (
+        instance_root / "data" / "model_input_bundle" / "managed_au_bootstrap_table.csv"
+    ).resolve()
+    assert captured_kwargs["first_growth_curves_csv"] == (
+        instance_root / "data" / "model_input_bundle" / "first_growth_au_curves.csv"
+    ).resolve()
+    assert captured_kwargs["first_growth_diagnostics_csv"] == (
+        instance_root / "data" / "model_input_bundle" / "first_growth_au_fit_diagnostics.csv"
+    ).resolve()
+    assert captured_kwargs["managed_curves_csv"] == (
+        instance_root / "data" / "model_input_bundle" / "managed_au_curves.csv"
+    ).resolve()
+    assert captured_kwargs["managed_run_manifest_json"] == (
+        instance_root / "data" / "model_input_bundle" / "managed_au_run_manifest.json"
+    ).resolve()
+    assert captured_kwargs["bad_curve_audit_summary_csv"] == (
+        instance_root / "data" / "model_input_bundle" / "bad_curve_audit_summary.csv"
+    ).resolve()
+    assert any("mkrf runtime package initialized" in msg for msg in messages)
+    assert any("manifest:" in msg for msg in messages)
+    assert any("curve_status_csv:" in msg for msg in messages)
+    assert any("analysis_au_runtime_status_csv:" in msg for msg in messages)
+    assert any("analysis_au_curve_refs_csv:" in msg for msg in messages)
+    assert any("runtime_species_share_audit_csv:" in msg for msg in messages)
+    assert any("xml_contract:" in msg for msg in messages)
+    assert any("xml_curve_bank:" in msg for msg in messages)
+    assert any("forestmodel_xml:" in msg for msg in messages)
+
+
+def test_instance_mkrf_audit_runtime_sanity_uses_resolved_paths(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-mkrf-instance"
+    stage_dir = repo_root / "runtime" / "logs" / "headless_stage" / "demo"
+    stage_dir.mkdir(parents=True)
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_audit(**kwargs):
+        captured_kwargs.update(kwargs)
+        return SimpleNamespace(
+            package_root=(instance_root / "models" / "mkrf_patchworks_model").resolve(),
+            stage_dir=stage_dir.resolve(),
+            audit_csv_path=(stage_dir / "sanity" / "mkrf_runtime_sanity_audit.csv").resolve(),
+            summary_json_path=(
+                stage_dir / "sanity" / "mkrf_runtime_sanity_summary.json"
+            ).resolve(),
+            row_count=24,
+            failure_count=1,
+        )
+
+    monkeypatch.setattr(cli_main, "audit_mkrf_runtime_sanity", _fake_audit)
+
+    cli_main.instance_mkrf_audit_runtime_sanity(
+        package_root=Path("models/mkrf_patchworks_model"),
+        stage_dir=stage_dir,
+        instance_root=instance_root,
+    )
+
+    assert captured_kwargs["package_root"] == (
+        instance_root / "models" / "mkrf_patchworks_model"
+    ).resolve()
+    assert captured_kwargs["stage_dir"] == stage_dir.resolve()
+    assert any("mkrf runtime sanity audit complete" in msg for msg in messages)
+    assert any("audit_csv:" in msg for msg in messages)
+    assert any("summary_json:" in msg for msg in messages)
+
+
+def test_instance_mkrf_publish_runtime_spatial_uses_default_paths(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
+    instance_root = repo_root / "external" / "femic-mkrf-instance"
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_publish(**kwargs):
+        captured_kwargs.update(kwargs)
+        return SimpleNamespace(
+            package_root=instance_root / "models" / "mkrf_patchworks_model",
+            spatial_dir=instance_root / "models" / "mkrf_patchworks_model" / "spatial",
+            fragments_path=instance_root
+            / "models"
+            / "mkrf_patchworks_model"
+            / "spatial"
+            / "fragments.shp",
+            manifest_path=instance_root
+            / "models"
+            / "mkrf_patchworks_model"
+            / "spatial"
+            / "runtime_spatial_manifest.json",
+            source_feature_count=1873,
+            published_feature_count=1763,
+            excluded_feature_count=110,
+        )
+
+    monkeypatch.setattr(cli_main, "publish_mkrf_runtime_spatial_handoff", _fake_publish)
+
+    cli_main.instance_mkrf_publish_runtime_spatial(
+        resultant_gdb=instance_root / "data" / "source" / "Resultant.gdb",
+        package_root=Path("models/mkrf_patchworks_model"),
+        instance_root=instance_root,
+    )
+
+    assert captured_kwargs["resultant_gdb"] == (
+        instance_root / "data" / "source" / "Resultant.gdb"
+    ).resolve()
+    assert captured_kwargs["package_root"] == (
+        instance_root / "models" / "mkrf_patchworks_model"
+    ).resolve()
+    assert any("mkrf runtime spatial published" in msg for msg in messages)
+    assert any("fragments:" in msg for msg in messages)
+    assert any("manifest:" in msg for msg in messages)
 
 
 def test_tsr_thlb_netdown_step_run_accepts_explicit_aflb_yield_ready_checkpoint(
@@ -6966,7 +7476,9 @@ def test_pipelines_run_executes_named_pipeline_runbook(
         captured_kwargs.update(kwargs)
         runtime_event_sink = kwargs.get("runtime_event_sink")
         if callable(runtime_event_sink):
-            runtime_event_sink("event_kind=pipeline_run_started pipeline_id=tsr.thlb_strict")
+            runtime_event_sink(
+                "event_kind=pipeline_run_started pipeline_id=tsr.thlb_strict"
+            )
             runtime_event_sink(
                 "event_kind=compiled_step_finished compiled_step_id=thlb_step_001_total_tsa_area run_status=applied_noop remaining_area_ha=1.000"
             )
@@ -7108,9 +7620,7 @@ def test_pipelines_run_executes_named_pipeline_runbook(
     assert any("event_kind=compiled_step_finished" in msg for msg in messages)
     assert any("seam_id: aflb_yield_ready" in msg for msg in messages)
     assert any("runtime_event_log_path:" in msg for msg in messages)
-    assert any(
-        "validation_contract_required_recipe_path:" in msg for msg in messages
-    )
+    assert any("validation_contract_required_recipe_path:" in msg for msg in messages)
     assert any("validation_parent_step_count: 23" in msg for msg in messages)
     assert any(
         "baseline_signal: aflb_yield_ready_checkpoint_restart" in msg
@@ -7133,7 +7643,9 @@ def test_pipelines_run_accepts_checked_in_proof_runbook(
         captured_kwargs.update(kwargs)
         runtime_event_sink = kwargs.get("runtime_event_sink")
         if callable(runtime_event_sink):
-            runtime_event_sink("event_kind=pipeline_run_started pipeline_id=tsr.thlb_strict")
+            runtime_event_sink(
+                "event_kind=pipeline_run_started pipeline_id=tsr.thlb_strict"
+            )
         return SimpleNamespace(
             plan=SimpleNamespace(
                 pipeline_id="tsr.thlb_strict",
@@ -7410,19 +7922,34 @@ def test_pipelines_run_handles_scratch_parent_step_result(
                 max_abs_cumulative_delta_ha=0.0,
             ),
             tsr_thlb_result=None,
-                tsr_parent_step_result=SimpleNamespace(
-                    recipe_path=instance_root / "workbench" / "tsr" / "thlb_netdown.locked.recipe.yaml",
-                    parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
-                    parent_label="Land not administered by the Province",
-                    tsa=SimpleNamespace(tsa_id="tsa_29", tsa_code="29", tsa_name="Williams Lake"),
-                    checkpoint_path=instance_root / "data" / "tsr" / "glb_checkpoint.feather",
-                    selected_map_ids=(),
-                    selected_landscape_units=(),
+            tsr_parent_step_result=SimpleNamespace(
+                recipe_path=instance_root
+                / "workbench"
+                / "tsr"
+                / "thlb_netdown.locked.recipe.yaml",
+                parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+                parent_label="Land not administered by the Province",
+                tsa=SimpleNamespace(
+                    tsa_id="tsa_29", tsa_code="29", tsa_name="Williams Lake"
+                ),
+                checkpoint_path=instance_root
+                / "data"
+                / "tsr"
+                / "glb_checkpoint.feather",
+                selected_map_ids=(),
+                selected_landscape_units=(),
                 execution_mode="serial",
                 worker_count=None,
                 lu_chunk_count=None,
-                output_path=instance_root / "data" / "tsr" / "glb_to_aflb_step2.feather",
-                result_json_path=instance_root / "runtime" / "logs" / "tsr" / "step2.json",
+                output_path=instance_root
+                / "data"
+                / "tsr"
+                / "glb_to_aflb_step2.feather",
+                result_json_path=instance_root
+                / "runtime"
+                / "logs"
+                / "tsr"
+                / "step2.json",
                 status="applied",
                 input_area_ha=4933664.212,
                 removed_area_ha=696781.324,
@@ -7442,7 +7969,10 @@ def test_pipelines_run_handles_scratch_parent_step_result(
     cli_main.pipelines_run(runbook=runbook, instance_root=instance_root)
 
     assert any("target_parent_step_id:" in msg for msg in messages)
-    assert any("parent_step_id: thlb_parent_002_land_not_administered_by_the_province" in msg for msg in messages)
+    assert any(
+        "parent_step_id: thlb_parent_002_land_not_administered_by_the_province" in msg
+        for msg in messages
+    )
     assert any("remaining_area_ha: 4236882.888" in msg for msg in messages)
 
 

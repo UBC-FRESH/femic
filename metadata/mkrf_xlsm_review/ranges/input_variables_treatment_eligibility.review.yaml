@@ -1,0 +1,6 @@
+schema_version: 1
+sheet: Input Variables
+range_name: treatmentEligibility
+workbook_ref: '''Input Variables''!$D$42'
+value: status in unmanaged
+note: Review extract from governing MKRF workbook surface.

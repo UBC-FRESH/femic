@@ -268,6 +268,18 @@ Recommended smoke checks on Windows:
 If you are creating/publishing a new DataLad dataset with an Arbutus special
 remote from Windows, the common low-cost failure checks are:
 
+- start with:
+
+  .. code-block:: powershell
+
+     femic prep arbutus-auth-status --profile public-data --dataset external/femic-public-data
+
+  or, when bootstrapping a new local setup:
+
+  .. code-block:: powershell
+
+     femic prep arbutus-auth-init --profile public-data --bucket ubc-fresh-femic-public-data --dataset external/femic-public-data
+
 - confirm ``%USERPROFILE%\.config\femic\arbutus.env`` uses plain
   ``KEY=VALUE`` with no quotes;
 - use ``Set-ExecutionPolicy -Scope Process Bypass -Force`` before dot-sourcing
@@ -303,6 +315,8 @@ Acceptance Checks
   - ``.venv\Scripts\datalad.exe get -r external/femic-public-data/data``
   - ``git -C external/femic-public-data annex version``
 - Windows maintainer bootstrap for a new dataset can run:
+  - ``femic prep arbutus-auth-init`` scaffolds or refreshes the local files
+  - ``femic prep arbutus-auth-status`` reports current marker state
   - load local Arbutus env file without quoted values
   - direct ``HeadBucket`` probe returns ``head_ok``
   - ``git annex initremote arbutus-s3 ...`` succeeds

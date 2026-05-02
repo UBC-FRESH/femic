@@ -1,0 +1,22 @@
+Treatment name,,CC,CT,,,,,,,,,,,,
+status,,managed,managed,,,,,,,,,,,,
+,,,oper in operable,,,,,,,,,,,,
+,,,ct eq 'Y',,,,,,,,,,,,
+,,,"not startswith(au,'t')",,,,,,,,,,,,
+Minimum operable age,,"if(oper in operable, 60, 150)",40,60,60,60,60,60,60,60,60,60,60,60,60
+Maximum operable age,,,150,,,,,,,,,,,,
+Operability expression,,,,,,,,,,,,,,,
+au,,auf, 'thn_'+au,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+Age after treatment,,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Absolute or relative,,absolute,relative,absolute,absolute,absolute,absolute,absolute,absolute,absolute,absolute,absolute,absolute,absolute,absolute
+Regen curve,,,,,,,,,,,,,,,
+Retention,,0,20,0,0,0,0,0,0,0,0,0,0,0,0
+Scheduling method,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,

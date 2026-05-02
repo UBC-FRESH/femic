@@ -49,6 +49,20 @@ def test_load_patchworks_variant_registry_includes_builtin_k3z_base() -> None:
     assert registry.iter_scenario_sets(instance_id="k3z") == (scenario_set,)
 
 
+def test_load_patchworks_variant_registry_includes_builtin_mkrf_base() -> None:
+    registry = load_patchworks_variant_registry()
+
+    variant = registry.get_variant("mkrf.base")
+    assert variant.instance_id == "mkrf"
+    assert variant.default is True
+    assert variant.analysis_pin.name == "base.pin"
+    assert variant.runtime_config.name == "patchworks.runtime.windows.yaml"
+
+    instance = next(item for item in registry.instances if item.instance_id == "mkrf")
+    assert instance.label == "MKRF PoC intermediate instance"
+    assert instance.default_variant_id == "mkrf.base"
+
+
 def test_load_patchworks_variant_registry_uses_managed_root_for_builtins(
     tmp_path: Path,
 ) -> None:

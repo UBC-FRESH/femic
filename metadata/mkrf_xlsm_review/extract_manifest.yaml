@@ -1,0 +1,317 @@
+schema_version: 1
+case_id: mkrf_legacy_2016
+source_workbook: MKRF_Cosmin_Model/MKRF/04_Models/PW_MKRF/XML/002_base.xlsm
+extraction_mode: trimmed_used_range_with_formulas_preserved
+notes:
+- These files are review extracts, not live FEMIC config surfaces.
+- Workbook formulas are preserved as literal strings where present.
+- This slice exports only the active surfaces requested for first-pass review.
+- Named-range review extracts were added for active workbook surfaces and Treat subranges.
+artifacts:
+- sheet: Input Variables
+  path: metadata/mkrf_xlsm_review/input_variables.review.csv
+  role: problem_and_include_config_surface
+  trimmed_range:
+    min_row: 2
+    max_row: 56
+    min_col: 2
+    max_col: 6
+  shape:
+    rows: 55
+    cols: 5
+  future_femic_home:
+  - config/legacy_xml_builder/input_variables.yaml
+  - config/legacy_xml_builder/input_columns.csv
+- sheet: Netdown
+  path: metadata/mkrf_xlsm_review/netdown.review.csv
+  role: aspatial_netdown_rule_surface
+  trimmed_range:
+    min_row: 2
+    max_row: 100
+    min_col: 2
+    max_col: 12
+  shape:
+    rows: 99
+    cols: 11
+  future_femic_home:
+  - config/legacy_xml_builder/netdown_rules.csv
+- sheet: Curve Library
+  path: metadata/mkrf_xlsm_review/curve_library.review.csv
+  role: curve_point_library_surface
+  trimmed_range:
+    min_row: 2
+    max_row: 34
+    min_col: 1
+    max_col: 8
+  shape:
+    rows: 33
+    cols: 8
+  future_femic_home:
+  - data/legacy_mkrf/curve_tables/curve_library.csv
+- sheet: Attrib
+  path: metadata/mkrf_xlsm_review/attrib.review.csv
+  role: general_attribute_surface
+  trimmed_range:
+    min_row: 2
+    max_row: 166
+    min_col: 2
+    max_col: 11
+  shape:
+    rows: 165
+    cols: 10
+  future_femic_home:
+  - config/legacy_xml_builder/general_attributes.csv
+- sheet: Treat
+  path: metadata/mkrf_xlsm_review/treat.review.csv
+  role: active_stratum_bundle_surface
+  trimmed_range:
+    min_row: 1
+    max_row: 207
+    min_col: 2
+    max_col: 28
+  shape:
+    rows: 207
+    cols: 27
+  future_femic_home:
+  - config/legacy_xml_builder/strata/Treat/
+range_artifacts:
+- sheet: Input Variables
+  range_name: probDesc
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_prob_desc.review.yaml
+  mode: yaml_scalar
+  workbook_ref: '''Input Variables''!$D$6'
+  shape:
+    rows: 1
+    cols: 1
+- sheet: Input Variables
+  range_name: horizon
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_horizon.review.yaml
+  mode: yaml_scalar
+  workbook_ref: '''Input Variables''!$D$10'
+  shape:
+    rows: 1
+    cols: 1
+- sheet: Input Variables
+  range_name: startYear
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_start_year.review.yaml
+  mode: yaml_scalar
+  workbook_ref: '''Input Variables''!$D$8'
+  shape:
+    rows: 1
+    cols: 1
+- sheet: Input Variables
+  range_name: maxAge
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_max_age.review.yaml
+  mode: yaml_scalar
+  workbook_ref: '''Input Variables''!$D$12'
+  shape:
+    rows: 1
+    cols: 1
+- sheet: Input Variables
+  range_name: exclude
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_exclude.review.yaml
+  mode: yaml_scalar
+  workbook_ref: '''Input Variables''!$D$14'
+  shape:
+    rows: 1
+    cols: 1
+- sheet: Input Variables
+  range_name: blockKey
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_block_key.review.yaml
+  mode: yaml_scalar
+  workbook_ref: '''Input Variables''!$D$16'
+  shape:
+    rows: 1
+    cols: 1
+- sheet: Input Variables
+  range_name: areaExpr
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_area_expr.review.yaml
+  mode: yaml_scalar
+  workbook_ref: '''Input Variables''!$D$18'
+  shape:
+    rows: 1
+    cols: 1
+- sheet: Input Variables
+  range_name: ageExpr
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_age_expr.review.yaml
+  mode: yaml_scalar
+  workbook_ref: '''Input Variables''!$D$20'
+  shape:
+    rows: 1
+    cols: 1
+- sheet: Input Variables
+  range_name: treatmentEligibility
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_treatment_eligibility.review.yaml
+  mode: yaml_scalar
+  workbook_ref: '''Input Variables''!$D$42'
+  shape:
+    rows: 1
+    cols: 1
+- sheet: Input Variables
+  range_name: beforeCurves
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_before_curves.review.yaml
+  mode: yaml_scalar
+  workbook_ref: '''Input Variables''!$D$44'
+  shape:
+    rows: 1
+    cols: 1
+- sheet: Input Variables
+  range_name: afterCurves
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_after_curves.review.yaml
+  mode: yaml_scalar
+  workbook_ref: '''Input Variables''!$D$45'
+  shape:
+    rows: 1
+    cols: 1
+- sheet: Input Variables
+  range_name: afterRetention
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_after_retention.review.yaml
+  mode: yaml_scalar
+  workbook_ref: '''Input Variables''!$D$46'
+  shape:
+    rows: 1
+    cols: 1
+- sheet: Input Variables
+  range_name: afterUnmanaged
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_after_unmanaged.review.yaml
+  mode: yaml_scalar
+  workbook_ref: '''Input Variables''!$D$47'
+  shape:
+    rows: 1
+    cols: 1
+- sheet: Input Variables
+  range_name: afterStratum
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_after_stratum.review.yaml
+  mode: yaml_scalar
+  workbook_ref: '''Input Variables''!$D$48'
+  shape:
+    rows: 1
+    cols: 1
+- sheet: Input Variables
+  range_name: afterAttributes
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_after_attributes.review.yaml
+  mode: yaml_scalar
+  workbook_ref: '''Input Variables''!$D$49'
+  shape:
+    rows: 1
+    cols: 1
+- sheet: Input Variables
+  range_name: inpColumns
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_columns.review.csv
+  mode: csv_range
+  workbook_ref: '''Input Variables''!$D$24:$E$40'
+  shape:
+    rows: 17
+    cols: 2
+- sheet: Input Variables
+  range_name: inpConstants
+  path: metadata/mkrf_xlsm_review/ranges/input_variables_constants.review.csv
+  mode: csv_range
+  workbook_ref: '''Input Variables''!$D$52:$E$65'
+  shape:
+    rows: 14
+    cols: 2
+- sheet: Netdown
+  range_name: netDownCriteria
+  path: metadata/mkrf_xlsm_review/ranges/netdown_criteria.review.csv
+  mode: csv_range
+  workbook_ref: Netdown!$B$8:$J$100
+  shape:
+    rows: 93
+    cols: 9
+- sheet: Netdown
+  range_name: netdownNames
+  path: metadata/mkrf_xlsm_review/ranges/netdown_names.review.csv
+  mode: csv_range
+  workbook_ref: Netdown!$L$6:$P$6
+  shape:
+    rows: 1
+    cols: 5
+- sheet: Netdown
+  range_name: netdownFactors
+  path: metadata/mkrf_xlsm_review/ranges/netdown_factors.review.csv
+  mode: csv_range
+  workbook_ref: Netdown!$L$9:$P$100
+  shape:
+    rows: 92
+    cols: 5
+- sheet: Curve Library
+  range_name: curveNames
+  path: metadata/mkrf_xlsm_review/ranges/curve_names.review.csv
+  mode: csv_range
+  workbook_ref: '''Curve Library''!$A$7:$DD$85'
+  shape:
+    rows: 79
+    cols: 108
+- sheet: Attrib
+  range_name: attributes
+  path: metadata/mkrf_xlsm_review/ranges/attrib_attributes.review.csv
+  mode: csv_range
+  workbook_ref: Attrib!$B$7:$P$166
+  shape:
+    rows: 160
+    cols: 15
+- sheet: Treat
+  range_name: stratumCriteria
+  path: metadata/mkrf_xlsm_review/ranges/treat_stratum_criteria.review.csv
+  mode: csv_range
+  workbook_ref: Treat!$B$6:$C$12
+  shape:
+    rows: 7
+    cols: 2
+- sheet: Treat
+  range_name: stratumSuccession
+  path: metadata/mkrf_xlsm_review/ranges/treat_stratum_succession.review.csv
+  mode: csv_range
+  workbook_ref: Treat!$B$16:$K$26
+  shape:
+    rows: 11
+    cols: 10
+- sheet: Treat
+  range_name: stratumFeatures
+  path: metadata/mkrf_xlsm_review/ranges/treat_stratum_features.review.csv
+  mode: csv_range
+  workbook_ref: Treat!$B$30:$K$73
+  shape:
+    rows: 44
+    cols: 10
+- sheet: Treat
+  range_name: stratumTreatments
+  path: metadata/mkrf_xlsm_review/ranges/treat_stratum_treatments.review.csv
+  mode: csv_range
+  workbook_ref: Treat!$M$77:$AB$98
+  shape:
+    rows: 22
+    cols: 16
+- sheet: Treat
+  range_name: stratumFactors
+  path: metadata/mkrf_xlsm_review/ranges/treat_stratum_factors.review.csv
+  mode: csv_range
+  workbook_ref: Treat!$M$101:$AB$207
+  shape:
+    rows: 107
+    cols: 16
+- sheet: Treat
+  range_name: stratumProducts
+  path: metadata/mkrf_xlsm_review/ranges/treat_stratum_products.review.csv
+  mode: csv_range
+  workbook_ref: Treat!$B$102:$J$207
+  shape:
+    rows: 106
+    cols: 9
+- sheet: Lookups
+  range_name: SPP_COMP
+  path: metadata/mkrf_xlsm_review/ranges/lookups_spp_comp.review.csv
+  mode: csv_range
+  workbook_ref: Lookups!$N$6:$V$2098
+  shape:
+    rows: 2093
+    cols: 9
+- sheet: Post Renewal Succession
+  range_name: TreatmentResponses
+  path: metadata/mkrf_xlsm_review/ranges/post_renewal_treatment_responses.review.csv
+  mode: csv_range
+  workbook_ref: '''Post Renewal Succession''!$I$3:$M$100'
+  shape:
+    rows: 98
+    cols: 5

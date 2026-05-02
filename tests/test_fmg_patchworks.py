@@ -31,7 +31,9 @@ from femic.fmg.patchworks import (
     build_fragments_geodataframe,
     build_forestmodel_xml_tree_from_context,
     build_patchworks_forestmodel_definition,
+    build_legacy_mkrf_forestmodel_xml_tree,
     build_forestmodel_xml_tree,
+    emit_legacy_mkrf_forestmodel_xml,
     export_patchworks_package,
     validate_forestmodel_xml_tree,
     validate_fragments_geodataframe,
@@ -3250,6 +3252,655 @@ def test_export_patchworks_package_decodes_wkb_geometry(
     assert gdf.loc[0, "SILV_STATE"] == "baseline"
     assert float(gdf.loc[0, "RETENTION"]) == pytest.approx(0.0)
     assert gdf.geometry.iloc[0].geom_type == "Polygon"
+
+
+def test_export_patchworks_package_uses_legacy_input_variables_config(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _write_bundle_tables(bundle_dir)
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    output_dir = tmp_path / "patchworks_export"
+    config_path = tmp_path / "input_variables.mkrf.yaml"
+    config_path.write_text(
+        "\n".join(
+            [
+                "description: Base TFL26",
+                "start_year: 2020",
+                "horizon_years: 300",
+                "staged:",
+                "  max_inventory_age: 350",
+                "  exclude_expression: \"CONTCLAS eq 'X'\"",
+                "  unique_record_label_expression: Int(RES_KEY)",
+                "  polygon_area_expression: area()/10000",
+                "  stand_age_expression: Int(AGE_2020)",
+                "  additional_stratification_columns:",
+                "    - key: status",
+                "      source_expression: CONTCLAS",
+                "    - key: au",
+                "      source_expression: string(AU_EX)",
+                "    - key: auf",
+                "      source_expression: string(AU_FU)",
+                "    - key: oper",
+                "      source_expression: Operabilit",
+                "    - key: ct",
+                "      source_expression: CT_eligib",
+                "    - key: aux",
+                "      source_expression: AU_EX",
+                '  treatment_eligibility_expression: "status in unmanaged"',
+                "  constants:",
+                "    unmanaged: \"'N'\"",
+                "  constant_contract:",
+                "    - key: unmanaged",
+                "      status: live_export",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "k3z",
+                "au": 985501000,
+                "PROJ_AGE_1": 74,
+                "RES_KEY": 101.0,
+                "AGE_2020": 88.0,
+                "CONTCLAS": "N",
+                "AU_EX": 985501000,
+                "AU_FU": 985501221,
+                "Operabilit": "Operable",
+                "CT_eligib": "eligible",
+                "thlb_raw": 1,
+                "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+            }
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    result = export_patchworks_package(
+        bundle_dir=bundle_dir,
+        checkpoint_path=checkpoint_path,
+        output_dir=output_dir,
+        tsa_list=["k3z"],
+        forestmodel_description="override description",
+        start_year=2099,
+        horizon_years=999,
+        legacy_input_variables_config_path=config_path,
+    )
+
+    root = et.parse(result.forestmodel_xml_path).getroot()
+    assert root.attrib["description"] == "Base TFL26"
+    assert root.attrib["year"] == "2020"
+    assert root.attrib["horizon"] == "300"
+    input_node = root.find("./input")
+    assert input_node is not None
+    assert input_node.attrib["block"] == "Int(RES_KEY)"
+    assert input_node.attrib["area"] == "area()/10000"
+    assert input_node.attrib["age"] == "Int(AGE_2020)"
+    assert input_node.attrib["exclude"] == "CONTCLAS eq 'X'"
+
+    gdf = gpd.read_file(result.fragments_shapefile_path)
+    assert gdf.shape[0] == 1
+    assert int(gdf.loc[0, "BLOCK"]) == 101
+    assert float(gdf.loc[0, "AREA_HA"]) == pytest.approx(1.0)
+    assert int(gdf.loc[0, "F_AGE"]) == 88
+    assert gdf.loc[0, "RES_KEY"] == pytest.approx(101.0)
+    assert gdf.loc[0, "AGE_2020"] == pytest.approx(88.0)
+    assert gdf.loc[0, "CONTCLAS"] == "N"
+    assert gdf.loc[0, "status"] == "N"
+    assert gdf.loc[0, "au_1"] == "985501000"
+    assert gdf.loc[0, "auf"] == "985501221"
+    assert gdf.loc[0, "oper"] == "Operable"
+    assert gdf.loc[0, "ct"] == "eligible"
+    assert gdf.loc[0, "aux"] == pytest.approx(985501000.0)
+    assert gdf.loc[0, "treat_inel"] == "Y"
+
+
+def test_export_patchworks_package_rejects_invalid_legacy_input_variables_config(
+    tmp_path: Path,
+) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _write_bundle_tables(bundle_dir)
+    config_path = tmp_path / "input_variables.invalid.yaml"
+    config_path.write_text("start_year: not-an-integer\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="start_year"):
+        export_patchworks_package(
+            bundle_dir=bundle_dir,
+            checkpoint_path=tmp_path / "checkpoint7.feather",
+            output_dir=tmp_path / "patchworks_export",
+            tsa_list=["k3z"],
+            legacy_input_variables_config_path=config_path,
+        )
+
+
+def test_export_patchworks_package_rejects_missing_legacy_expression_source_column(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _write_bundle_tables(bundle_dir)
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    output_dir = tmp_path / "patchworks_export"
+    config_path = tmp_path / "input_variables.mkrf.yaml"
+    config_path.write_text(
+        "\n".join(
+            [
+                "description: Base TFL26",
+                "start_year: 2020",
+                "horizon_years: 300",
+                "staged:",
+                "  exclude_expression: \"CONTCLAS eq 'X'\"",
+                "  unique_record_label_expression: Int(RES_KEY)",
+                "  polygon_area_expression: area()/10000",
+                "  stand_age_expression: Int(AGE_2020)",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "k3z",
+                "au": 985501000,
+                "PROJ_AGE_1": 74,
+                "RES_KEY": 101.0,
+                "thlb_raw": 1,
+                "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+            }
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="required legacy export source columns missing from checkpoint: "
+        "AGE_2020, CONTCLAS",
+    ):
+        export_patchworks_package(
+            bundle_dir=bundle_dir,
+            checkpoint_path=checkpoint_path,
+            output_dir=output_dir,
+            tsa_list=["k3z"],
+            legacy_input_variables_config_path=config_path,
+        )
+
+
+def test_export_patchworks_package_rejects_missing_legacy_stratification_source_column(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _write_bundle_tables(bundle_dir)
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    output_dir = tmp_path / "patchworks_export"
+    config_path = tmp_path / "input_variables.mkrf.yaml"
+    config_path.write_text(
+        "\n".join(
+            [
+                "description: Base TFL26",
+                "start_year: 2020",
+                "horizon_years: 300",
+                "staged:",
+                "  additional_stratification_columns:",
+                "    - key: oper",
+                "      source_expression: Operabilit",
+                "    - key: ct",
+                "      source_expression: CT_eligib",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "k3z",
+                "au": 985501000,
+                "PROJ_AGE_1": 74,
+                "Operabilit": "Operable",
+                "thlb_raw": 1,
+                "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+            }
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="required legacy export source columns missing from checkpoint: "
+        "CT_eligib",
+    ):
+        export_patchworks_package(
+            bundle_dir=bundle_dir,
+            checkpoint_path=checkpoint_path,
+            output_dir=output_dir,
+            tsa_list=["k3z"],
+            legacy_input_variables_config_path=config_path,
+        )
+
+
+def test_export_patchworks_package_rejects_unresolved_legacy_treatment_eligibility_symbol(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _write_bundle_tables(bundle_dir)
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    output_dir = tmp_path / "patchworks_export"
+    config_path = tmp_path / "input_variables.mkrf.yaml"
+    config_path.write_text(
+        "\n".join(
+            [
+                "description: Base TFL26",
+                "start_year: 2020",
+                "horizon_years: 300",
+                "staged:",
+                '  treatment_eligibility_expression: "status in unmanaged"',
+                "  constants:",
+                "    unmanaged: \"'N'\"",
+                "  constant_contract:",
+                "    - key: unmanaged",
+                "      status: live_export",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "k3z",
+                "au": 985501000,
+                "PROJ_AGE_1": 74,
+                "thlb_raw": 1,
+                "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+            }
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="legacy treatment eligibility expression references unresolved symbol "
+        "'status'",
+    ):
+        export_patchworks_package(
+            bundle_dir=bundle_dir,
+            checkpoint_path=checkpoint_path,
+            output_dir=output_dir,
+            tsa_list=["k3z"],
+            legacy_input_variables_config_path=config_path,
+        )
+
+
+def test_export_patchworks_package_respects_legacy_constant_contract(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _write_bundle_tables(bundle_dir)
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    output_dir = tmp_path / "patchworks_export"
+    config_path = tmp_path / "input_variables.mkrf.yaml"
+    config_path.write_text(
+        "\n".join(
+            [
+                "description: Base TFL26",
+                "start_year: 2020",
+                "horizon_years: 300",
+                "staged:",
+                "  additional_stratification_columns:",
+                "    - key: oper",
+                "      source_expression: Operabilit",
+                '  treatment_eligibility_expression: "oper in lowoper"',
+                "  constants:",
+                "    lowoper: \"'Low Operability'\"",
+                "    frd: =2.7/100",
+                "  constant_contract:",
+                "    - key: lowoper",
+                "      status: live_export",
+                "    - key: frd",
+                "      status: deferred",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "k3z",
+                "au": 985501000,
+                "PROJ_AGE_1": 74,
+                "Operabilit": "Low Operability",
+                "thlb_raw": 1,
+                "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+            }
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    result = export_patchworks_package(
+        bundle_dir=bundle_dir,
+        checkpoint_path=checkpoint_path,
+        output_dir=output_dir,
+        tsa_list=["k3z"],
+        legacy_input_variables_config_path=config_path,
+    )
+
+    gdf = gpd.read_file(result.fragments_shapefile_path)
+    assert gdf.loc[0, "oper"] == "Low Operability"
+    assert gdf.loc[0, "treat_inel"] == "Y"
+
+    config_path.write_text(
+        config_path.read_text(encoding="utf-8").replace(
+            '"oper in lowoper"', '"oper in frd"'
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(
+        ValueError,
+        match="legacy treatment eligibility expression references unresolved symbol "
+        "'frd'",
+    ):
+        export_patchworks_package(
+            bundle_dir=bundle_dir,
+            checkpoint_path=checkpoint_path,
+            output_dir=output_dir / "deferred",
+            tsa_list=["k3z"],
+            legacy_input_variables_config_path=config_path,
+        )
+
+
+def test_build_legacy_mkrf_forestmodel_xml_tree_emits_recovered_contract_sections() -> (
+    None
+):
+    instance_root = Path("external/femic-mkrf-instance")
+    input_variables_path = (
+        instance_root / "config/legacy_xml_builder/input_variables.mkrf.yaml"
+    )
+    curve_library_path = (
+        instance_root / "config/legacy_xml_builder/curve_library.mkrf.yaml"
+    )
+    netdown_path = instance_root / "config/legacy_xml_builder/netdown.mkrf.yaml"
+    treat_path = instance_root / "config/legacy_xml_builder/strata/treat.mkrf.yaml"
+    curve_table_path = (
+        instance_root / "data/legacy_mkrf/generated_xml/CSV/CURVE_TABLE.csv"
+    )
+    if not all(
+        path.exists()
+        for path in (
+            input_variables_path,
+            curve_library_path,
+            netdown_path,
+            treat_path,
+            curve_table_path,
+        )
+    ):
+        pytest.skip("MKRF instance contracts are not materialized")
+
+    import yaml
+
+    root = build_legacy_mkrf_forestmodel_xml_tree(
+        legacy_input_variables_config=yaml.safe_load(
+            input_variables_path.read_text(encoding="utf-8")
+        ),
+        legacy_curve_library_config=yaml.safe_load(
+            curve_library_path.read_text(encoding="utf-8")
+        ),
+        legacy_netdown_config=yaml.safe_load(netdown_path.read_text(encoding="utf-8")),
+        legacy_treat_config=yaml.safe_load(treat_path.read_text(encoding="utf-8")),
+        generated_curve_table_by_id={
+            curve_id: tuple(points)
+            for curve_id, points in {
+                "Yield_1": (
+                    CurvePoint(x=0.0, y=27.9345),
+                    CurvePoint(x=10.0, y=27.9345),
+                ),
+                "Yield_2": (
+                    CurvePoint(x=0.0, y=30.0),
+                    CurvePoint(x=10.0, y=31.5),
+                ),
+            }.items()
+        },
+    )
+
+    assert root.attrib == {
+        "description": "Base TFL26",
+        "horizon": "300",
+        "year": "2020",
+        "maxage": "350",
+        "match": "multi",
+    }
+    input_node = root.find("./input")
+    assert input_node is not None
+    assert input_node.attrib == {
+        "block": "Int(RES_KEY)",
+        "area": "Shape_Area/10000",
+        "age": "Int(AGE_2020)",
+        "exclude": "CONTCLAS eq 'X'",
+    }
+    root_tags = [child.tag for child in list(root)]
+    first_define_index = root_tags.index("define")
+    first_input_index = root_tags.index("input")
+    first_output_index = root_tags.index("output")
+    assert all(tag == "curve" for tag in root_tags[:first_define_index])
+    assert all(
+        tag == "define" for tag in root_tags[first_define_index:first_input_index]
+    )
+    assert root_tags[first_input_index : first_output_index + 1] == ["input", "output"]
+    output_node = root.find("./output")
+    assert output_node is not None
+    assert output_node.attrib["features"] == "features.csv"
+    define_fields = [node.attrib["field"] for node in root.findall("./define")]
+    assert define_fields == [
+        "status",
+        "au",
+        "auf",
+        "oper",
+        "ct",
+        "aux",
+        "treatment",
+        "managed",
+        "unmanaged",
+        "operable",
+        "lowoper",
+    ]
+    assert root.find("./define[@field='frd']") is None
+    assert root.find("./curve[@id='one']") is not None
+    assert root.find("./curve[@id='zero']") is not None
+    assert root.find("./curve[@id='Yield_1']") is not None
+    assert root.find("./curve[@id='Yield_2']") is not None
+    retention_selects = root.findall("./select[retention]")
+    assert [node.attrib["statement"] for node in retention_selects] == [
+        "status in managed and oper in operable",
+        "status in managed and oper in lowoper",
+    ]
+    unmanaged_select = root.find("./select[@statement='status in unmanaged']")
+    assert unmanaged_select is not None
+    assert unmanaged_select.find("./track") is not None
+    succession = root.find("./select/succession")
+    assert succession is not None
+    assert succession.attrib == {"breakup": "999", "renew": "0"}
+    cc_treatment = root.find("./select[@statement='status in managed']/track/treatment")
+    assert cc_treatment is not None
+    assert cc_treatment.attrib == {
+        "label": "CC",
+        "minage": "if(oper in operable, 60, 150)",
+    }
+    ct_treatment = root.find(
+        "./select[@statement=\"status in managed and oper in operable and ct eq 'Y' "
+        "and not startswith(au,'t')\"]/track/treatment"
+    )
+    assert ct_treatment is not None
+    assert ct_treatment.attrib == {
+        "label": "CT",
+        "minage": "40",
+        "maxage": "150",
+        "retain": "20",
+    }
+
+
+def test_emit_legacy_mkrf_forestmodel_xml_writes_runtime_base_xml(
+    tmp_path: Path,
+) -> None:
+    instance_root = Path("external/femic-mkrf-instance")
+    input_variables_path = (
+        instance_root / "config/legacy_xml_builder/input_variables.mkrf.yaml"
+    )
+    curve_library_path = (
+        instance_root / "config/legacy_xml_builder/curve_library.mkrf.yaml"
+    )
+    netdown_path = instance_root / "config/legacy_xml_builder/netdown.mkrf.yaml"
+    treat_path = instance_root / "config/legacy_xml_builder/strata/treat.mkrf.yaml"
+    curve_table_path = (
+        instance_root / "data/legacy_mkrf/generated_xml/CSV/CURVE_TABLE.csv"
+    )
+    if not all(
+        path.exists()
+        for path in (
+            input_variables_path,
+            curve_library_path,
+            netdown_path,
+            treat_path,
+            curve_table_path,
+        )
+    ):
+        pytest.skip("MKRF instance contracts are not materialized")
+
+    output_path = tmp_path / "XML" / "baseMKRF.xml"
+    emitted = emit_legacy_mkrf_forestmodel_xml(
+        legacy_input_variables_config_path=input_variables_path,
+        legacy_curve_library_config_path=curve_library_path,
+        legacy_netdown_config_path=netdown_path,
+        legacy_treat_config_path=treat_path,
+        generated_curve_table_csv_path=curve_table_path,
+        output_path=output_path,
+    )
+
+    assert emitted == output_path
+    assert emitted.exists()
+    root = et.parse(emitted).getroot()
+    validate_forestmodel_xml_tree(
+        root=root,
+        required_define_fields=(
+            "status",
+            "au",
+            "auf",
+            "oper",
+            "ct",
+            "aux",
+            "treatment",
+            "managed",
+            "unmanaged",
+            "operable",
+            "lowoper",
+        ),
+        required_curve_ids=(
+            "one",
+            "zero",
+            "age",
+            "le10",
+            "lt20",
+            "gt60",
+            "lt80",
+            "gt250",
+        ),
+    )
+    assert root.find("./curve[@id='Yield_1']") is not None
+
+
+def test_emit_legacy_mkrf_forestmodel_xml_emits_native_attrib_blocks(
+    tmp_path: Path,
+) -> None:
+    instance_root = Path("external/femic-mkrf-instance")
+    input_variables_path = (
+        instance_root / "config/legacy_xml_builder/input_variables.mkrf.yaml"
+    )
+    curve_library_path = (
+        instance_root / "config/legacy_xml_builder/curve_library.mkrf.yaml"
+    )
+    netdown_path = instance_root / "config/legacy_xml_builder/netdown.mkrf.yaml"
+    treat_path = instance_root / "config/legacy_xml_builder/strata/treat.mkrf.yaml"
+    attributes_path = instance_root / "config/legacy_xml_builder/attributes.mkrf.yaml"
+    curve_table_path = (
+        instance_root / "data/legacy_mkrf/generated_xml/CSV/CURVE_TABLE.csv"
+    )
+    if not all(
+        path.exists()
+        for path in (
+            input_variables_path,
+            curve_library_path,
+            netdown_path,
+            treat_path,
+            attributes_path,
+            curve_table_path,
+        )
+    ):
+        pytest.skip("MKRF instance contracts are not materialized")
+
+    output_path = tmp_path / "XML" / "baseMKRF.xml"
+    emitted = emit_legacy_mkrf_forestmodel_xml(
+        legacy_input_variables_config_path=input_variables_path,
+        legacy_curve_library_config_path=curve_library_path,
+        legacy_netdown_config_path=netdown_path,
+        legacy_treat_config_path=treat_path,
+        generated_curve_table_csv_path=curve_table_path,
+        output_path=output_path,
+        legacy_attributes_config_path=attributes_path,
+    )
+
+    assert emitted == output_path
+    root = et.parse(emitted).getroot()
+    validate_forestmodel_xml_tree(
+        root=root,
+        required_define_fields=(
+            "status",
+            "au",
+            "auf",
+            "oper",
+            "ct",
+            "aux",
+            "treatment",
+            "managed",
+            "unmanaged",
+            "operable",
+            "lowoper",
+            "frd",
+        ),
+        required_curve_ids=(
+            "one",
+            "zero",
+            "age",
+            "le10",
+            "lt20",
+            "gt60",
+            "lt80",
+            "gt250",
+        ),
+    )
+    assert len(root.findall("./select")) == 11
+    assert root.find("./define[@field='frd']") is not None
+    assert root.find(".//features/attribute[@label='%f.area.%m.total']") is not None
+    assert (
+        root.find(".//features/attribute[@label='%f.yield.%m.merch.total']") is not None
+    )
+    assert (
+        root.find(".//features/attribute[@label='%f.area.%m.seral.le10']") is not None
+    )
+    ba_species = root.find(".//features/attribute[@label='%f.yield.%m.indsp.Ba']")
+    assert ba_species is not None
+    assert "Number(lookupTable(au,'" in ba_species.attrib["factor"]
 
 
 def test_validate_forestmodel_xml_tree_rejects_missing_curve_ref() -> None:

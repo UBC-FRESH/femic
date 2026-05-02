@@ -1,0 +1,6 @@
+schema_version: 1
+sheet: Input Variables
+range_name: afterStratum
+workbook_ref: '''Input Variables''!$D$48'
+value: ''
+note: Review extract from governing MKRF workbook surface.

@@ -97,6 +97,8 @@ Prep
 Subcommands
 
 - ``run``: ``python -m femic prep run [OPTIONS]``
+- ``arbutus-auth-status``: ``python -m femic prep arbutus-auth-status [OPTIONS]``
+- ``arbutus-auth-init``: ``python -m femic prep arbutus-auth-init [OPTIONS]``
 - ``validate-case``: ``python -m femic prep validate-case [OPTIONS]``
 - ``geospatial-preflight``: ``python -m femic prep geospatial-preflight [OPTIONS]``
 - ``glb-build``: ``python -m femic prep glb-build [OPTIONS]``
@@ -110,6 +112,39 @@ Subcommands
 - ``--resume``
 - ``--dry-run``
 - ``--verbose`` / ``-v``
+
+``prep arbutus-auth-status`` options
+
+- ``--profile TEXT`` (optional named Arbutus profile)
+- ``--dataset PATH`` (optional dataset path for ``git annex enableremote`` validation)
+- ``--remote TEXT`` (optional remote override)
+
+Use ``prep arbutus-auth-status`` as the non-mutating Windows auth/profile/marker
+probe. It reports:
+
+- whether the user-local auth files exist;
+- whether the current shell is loaded with the shared Arbutus env values;
+- whether the selected bucket passes ``HeadBucket``; and
+- whether the saved non-secret known-working marker is current or stale.
+
+When ``--dataset`` is supplied, the command can also validate
+``git annex enableremote <remote>`` for that dataset.
+
+``prep arbutus-auth-init`` options
+
+- ``--profile TEXT`` (optional named profile to create or refresh)
+- ``--bucket TEXT`` (optional bucket name for the selected profile)
+- ``--dataset PATH`` (optional dataset path for ``git annex enableremote`` validation)
+- ``--remote TEXT`` (default: ``arbutus-s3``)
+- ``--force-refresh-loaders``
+
+Use ``prep arbutus-auth-init`` to scaffold and validate the Windows local
+workflow under ``%USERPROFILE%\.config\femic``. The command:
+
+- creates missing local auth/profile/status files;
+- prompts interactively for missing shared values when the session allows it;
+- validates ``HeadBucket`` for the selected profile; and
+- writes a non-secret known-working marker only after validation succeeds.
 
 ``prep validate-case`` options
 
@@ -130,8 +165,14 @@ when that mirror is in play. It can fail fast on:
 - unreadable canonical ``data/bc/tsa/FADM_TSA.gdb`` inputs that are more likely
   annex materialization/unlock problems than generic Windows GDAL ghosts.
 
-For the canonical maintainer/bootstrap runbook, including the exact Windows
-auth-file and remote-publication sequence, see
+``prep validate-case`` is no longer the primary auth/bootstrap workflow.
+Use:
+
+- ``prep arbutus-auth-status`` for current-vs-stale Windows auth state; and
+- ``prep arbutus-auth-init`` to scaffold or refresh the local workflow.
+
+For the canonical Windows auth/bootstrap runbook and publication sequence, see
+``docs/guides/windows-arbutus-auth-workflow.rst`` and
 ``docs/guides/public-data-mirror-runbook.rst``.
 
 ``prep geospatial-preflight`` remains the generic Fiona/GDAL/shapefile smoke

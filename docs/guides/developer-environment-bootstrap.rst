@@ -160,8 +160,19 @@ before they turn into noisy ``git-annex`` errors:
 - inability to see the known Arbutus public-data bucket from the currently
   loaded Windows session.
 
+The primary Windows auth/bootstrap workflow now lives in:
+
+- ``femic prep arbutus-auth-status``
+- ``femic prep arbutus-auth-init``
+
+Use those commands to detect missing scaffolding, validate current-vs-stale
+status, and scaffold the local ``%USERPROFILE%\.config\femic`` auth files
+before relying on ``validate-case`` as a case-preflight seam.
+
 For the exact maintainer/bootstrap sequence, including execution-policy-safe
-loader usage and Arbutus remote publication order, see
+loader usage, profile registry/status marker behavior, and Arbutus remote
+publication order, see:
+``docs/guides/windows-arbutus-auth-workflow.rst`` and
 ``docs/guides/public-data-mirror-runbook.rst``.
 
 Related Guides
@@ -169,6 +180,7 @@ Related Guides
 
 - ``docs/guides/geospatial-runtime-bootstrap.rst``
 - ``docs/guides/deployment-instances.rst``
+- ``docs/guides/windows-arbutus-auth-workflow.rst``
 - ``docs/guides/public-data-mirror-runbook.rst``
 - ``docs/guides/cross-platform-runtime-smoke.rst``
 - ``docs/guides/vscode-coding-agent-onboarding.rst``

@@ -15001,3 +15001,1296 @@
   - actual remaining `4,236,732.527 ha`
   - vs locked row 2: `+150.361 ha` marginal / `-150.361 ha` cumulative
   - vs TSR row 2: `-101.315 ha` marginal / `+130.527 ha` cumulative
+## 2026-04-21 - Bootstrapped `femic-mkrf-instance` as a private DataLad-backed standalone instance
+- `#171` thin-baseline instance bootstrap:
+  - created the private `UBC-FRESH/femic-mkrf-instance` repository and added `Phase 54` / `P54.1` plus `planning/mkrf_instance_bootstrap.md` to track the work in-repo;
+  - scaffolded the standard FEMIC instance layout for `mkrf`, renamed the starter config surfaces to `run_profile.mkrf.yaml`, `silviculture.mkrf.yaml`, and `config/tipsy/tsamkrf.yaml`, and added a private/WIP `README.md`, metadata ledgers, and a thin-baseline runbook boundary;
+  - initialized the repo as a large-only DataLad/git-annex dataset with TSA29-style `.gitattributes` so small canonical text stays in Git while bulky payloads can be annexed later;
+  - created the dedicated private-first Arbutus bucket and wired the named `arbutus-s3` special remote without anonymous/public publication settings;
+  - published one non-sensitive annex-backed smoke artifact at `data/annex_smoke/mkrf_bootstrap_smoke.bin`, uploaded it to `arbutus-s3`, pushed `main` and `git-annex`, and set the repo default branch to `main`; and
+  - linked the new repository back into FEMIC as submodule `external/femic-mkrf-instance`.
+- Validation:
+  - `gh auth status`
+  - `git annex version`
+  - `.\.venv\Scripts\python.exe -m datalad --version`
+  - `F:\projects\femic\.venv\Scripts\python.exe -m femic instance validate-spec --spec config/rebuild.spec.yaml` in both the standalone bootstrap checkout and `external/femic-mkrf-instance`
+  - `F:\projects\femic\.venv\Scripts\python.exe -m femic instance rebuild --spec config/rebuild.spec.yaml --dry-run --run-id mkrf_dryrun`
+  - `git annex copy --to arbutus-s3 data/annex_smoke/mkrf_bootstrap_smoke.bin`
+  - fresh-clone smoke: `git clone`, `git annex enableremote arbutus-s3`, and DataLad `get(...)` for `data/annex_smoke/mkrf_bootstrap_smoke.bin`
+- Thin-baseline boundary:
+  - full `femic prep validate-case --run-config config/run_profile.mkrf.yaml --tipsy-config-dir config/tipsy` is still expected to fail until the real MKRF boundary and checkpoint inputs are published, so the repo docs/runbook now call that out explicitly.
+## 2026-04-24 - Launched the MKRF legacy Patchworks archaeology lane in the parent FEMIC repo
+- `#172` bounded milestone-one archaeology package:
+  - opened the umbrella issue and created the issue-backed branch `feature/issue-172-mkrf-legacy-decompile`;
+  - added `Phase 55` / `P55.1` to `ROADMAP.md` plus the canonical work log `planning/mkrf_legacy_decompile.md`;
+  - published `metadata/mkrf_legacy_artifact_manifest.csv` as the first-pass bagging/tagging map for the in-scope legacy corpus under `MKRF_Cosmin_Model/MKRF`;
+  - published `metadata/mkrf_legacy_to_femic_crosswalk.yaml` to map the legacy compiled bundle, upstream mapping/yield lane, and document/reporting lane into future FEMIC-style homes; and
+  - recorded the discovered compiled-model anatomy, unresolved seams, and the recommended next bounded step in the planning note instead of jumping straight into a rebuild.
+- First-pass corpus captured:
+  - `04_Models/PW_MKRF` as the compiled legacy Patchworks package;
+  - `03_MappingAnalysisData` as the upstream mapping/yield-prep lane; and
+  - `05_Documents/MKRF_Modeling_Notes.pdf` as the operator/context lane.
+- Focused validation:
+  - verified the new issue-backed branch name and linked `#172` roadmap phase/task;
+  - checked manifest coverage for `PW_MKRF` `Documentation`, `Outputs`, `Scripts`, `Spatial`, `Targets`, `Tracks`, and `XML`;
+  - checked manifest coverage for `03_MappingAnalysisData` plus the `05_Documents` lane; and
+  - confirmed the crosswalk and planning note agree that the next bounded move is to import compiled-package metadata into `external/femic-mkrf-instance` without attempting a runnable rebuild yet.
+## 2026-04-24 - Imported the stable legacy MKRF compiled-package anatomy into `femic-mkrf-instance` as review metadata
+- `#172` bounded instance-intake slice:
+  - added `external/femic-mkrf-instance/runbooks/LEGACY_COMPILED_PACKAGE_REFERENCE.md` as the instance-local reference note for the stable compiled `PW_MKRF` package anatomy;
+  - added `external/femic-mkrf-instance/metadata/legacy_compiled_package_reference.yaml` as the machine-readable entrypoint/family bagging map for the compiled legacy package;
+  - updated the MKRF instance `README.md`, `QUICKSTART.md`, and `runbooks/REBUILD_RUNBOOK.md` so the compiled-package metadata intake is now part of the thin-baseline contract; and
+  - updated `external/femic-mkrf-instance/metadata/lineage_registry.yaml` so the new instance-local reference note and YAML are tracked as published reference metadata artifacts.
+- Scope boundary preserved:
+  - no bulky legacy payloads were copied into the instance;
+  - no upstream `03_MappingAnalysisData` content was imported;
+  - no runnable FEMIC/legacy rebuild surface was claimed; and
+  - the governing editable-source seam (`baseMKRF.xml` versus workbook/script builder chain) remains unresolved.
+- Focused validation:
+  - `F:\\projects\\femic\\.venv\\Scripts\\python.exe -m femic instance validate-spec --spec config/rebuild.spec.yaml`
+  - reviewed the new instance-local reference note and YAML against the parent archaeology outputs for agreement on entrypoints, stable compiled families, and current boundary.
+## 2026-04-24 - Copied the small legacy MKRF control layer into `femic-mkrf-instance` as archival references
+- `#172` bounded archival-control slice:
+  - copied `baseMKRF.pin`, `runME.bsh`, and `ScenarioSet.bsh` into `external/femic-mkrf-instance/data/legacy_mkrf/compiled_controls/entrypoints/`;
+  - copied the legacy `Scripts/*.bsh` family into `external/femic-mkrf-instance/data/legacy_mkrf/compiled_controls/scripts/`;
+  - copied the legacy `Targets/*.bsh` family into `external/femic-mkrf-instance/data/legacy_mkrf/compiled_controls/targets/`;
+  - updated the MKRF instance README, quickstart, rebuild runbook, legacy compiled-package reference note, and lineage metadata so these copied files are treated as inert archival references rather than a runnable rebuild surface; and
+  - updated the machine-readable legacy compiled-package reference YAML so it now points at the copied archival files and narrows the next bounded move to importing exactly one bulky compiled runtime family.
+- Scope boundary preserved:
+  - no `Tracks/*.csv`, `Spatial/fragments.*`, `topo_frag100.csv`, `Outputs/*`, or `03_MappingAnalysisData/*` payloads were imported by this slice;
+  - no claim was made that the copied control layer is sufficient to run the legacy model; and
+  - the governing editable-source seam still remains unresolved.
+- Focused validation:
+  - `F:\\projects\\femic\\.venv\\Scripts\\python.exe -m femic instance validate-spec --spec config/rebuild.spec.yaml`
+  - reviewed the copied archival control tree against the legacy source folder to confirm the expected entrypoints, `Scripts/*.bsh`, and `Targets/*.bsh` families are present.
+## 2026-04-24 - Copied the legacy MKRF compiled track tables into `femic-mkrf-instance` as archival references
+- `#172` bounded archival-track slice:
+  - copied the legacy `Tracks/*.csv` family into `external/femic-mkrf-instance/data/legacy_mkrf/compiled_tracks/`;
+  - updated the MKRF instance README, quickstart, rebuild runbook, legacy compiled-package reference note, and lineage metadata so the copied track tables are treated as archival references under review rather than an accepted runnable surface; and
+  - updated the machine-readable legacy compiled-package reference YAML so the track family now points at the copied archival lane and the next bounded move narrows to the spatial runtime family.
+- Scope boundary preserved:
+  - no `Spatial/fragments.*`, `topo_frag100.csv`, `Outputs/*`, or `03_MappingAnalysisData/*` payloads were imported by this slice;
+  - no claim was made that the copied track tables are sufficient to run the legacy model; and
+  - the governing editable-source seam still remains unresolved.
+- Focused validation:
+  - `F:\\projects\\femic\\.venv\\Scripts\\python.exe -m femic instance validate-spec --spec config/rebuild.spec.yaml`
+  - confirmed the archival track-table intake contains 13 copied `Tracks/*.csv` files under `external/femic-mkrf-instance/data/legacy_mkrf/compiled_tracks/`.
+## 2026-04-24 - Copied the legacy MKRF compiled spatial runtime family into `femic-mkrf-instance` as archival references
+- `#172` bounded archival-spatial slice:
+  - copied the legacy `Spatial/fragments.*` shapefile sidecar set plus `topo_frag100.csv` into `external/femic-mkrf-instance/data/legacy_mkrf/compiled_spatial/`;
+  - updated the MKRF instance README, quickstart, rebuild runbook, legacy compiled-package reference note, and lineage metadata so the copied spatial runtime files are treated as archival references under review rather than an accepted runnable surface; and
+  - updated the machine-readable legacy compiled-package reference YAML so the spatial family now points at the copied archival lane and the next bounded move narrows to the governing editable-source seam.
+- Scope boundary preserved:
+  - `Spatial/patchworksLog.csv` was intentionally left out of this slice;
+  - no `Outputs/*` or `03_MappingAnalysisData/*` payloads were imported by this slice; and
+  - no claim was made that the copied spatial runtime files are sufficient to run the legacy model.
+- Focused validation:
+  - `F:\\projects\\femic\\.venv\\Scripts\\python.exe -m femic instance validate-spec --spec config/rebuild.spec.yaml`
+  - confirmed the archival spatial intake contains 9 copied files under `external/femic-mkrf-instance/data/legacy_mkrf/compiled_spatial/`
+  - confirmed the binary shapefile payload pieces (`fragments.dbf`, `fragments.sbn`, `fragments.sbx`, `fragments.shp`, `fragments.shx`) are git-annex-backed before publication.
+## 2026-04-24 - Resolved the legacy MKRF XML-builder authority seam
+- `#172` bounded editable-source review slice:
+  - extracted the embedded VBA from `XML/002_base.xlsm` into scratch review artifacts so the SPS workbook-driven XML builder flow is inspectable;
+  - confirmed the main SPS builder module exposes `DumpXML(...)`, which emits the XML by calling `dumpProlog`, `dumpCurves`, `dumpRetention`, `dumpUnmanaged`, `dumpStratum`, and `dumpAttributes`;
+  - confirmed `baseMKRF.xml` carries the SPS generator fingerprint and records `002_base.xlsm` in the generated header; and
+  - updated parent and instance metadata/docs so the workbook data surfaces are now treated as the governing editable-source seam for the core XML builder lane.
+- Scope boundary preserved:
+  - no workbook payload was copied into `external/femic-mkrf-instance` by this slice;
+  - no VBA was reimplemented or adopted as a FEMIC runtime dependency; and
+  - no `03_MappingAnalysisData/*` or `Outputs/*` payloads were imported by this slice.
+## 2026-04-24 - Mapped the governing MKRF workbook surfaces into FEMIC-facing input families
+- `#172` bounded workbook-surface slice:
+  - published `metadata/mkrf_xlsm_surface_map.yaml` as the parent-side surface-family inventory for `002_base.xlsm`;
+  - added `external/femic-mkrf-instance/runbooks/LEGACY_XLSM_SURFACE_MAP.md` and `external/femic-mkrf-instance/metadata/legacy_xlsm_surface_map.yaml` so the MKRF instance now carries the same workbook-surface map locally;
+  - classified the major workbook surfaces into future FEMIC-facing families such as Input Variables, Codes, Curve Library, Netdown, Attrib, Treat, Post Renewal Succession, and Lookups; and
+  - recorded the `Codes` registry mismatch where constants/lookup families are advertised but not all appear as discrete materialized worksheet tabs in the reviewed workbook copy.
+- Scope boundary preserved:
+  - no workbook payload was copied into `external/femic-mkrf-instance`;
+  - no workbook values were yet materialized into tracked CSV/YAML review tables; and
+  - no VBA reimplementation or runnable rebuild claim was made by this slice.
+## 2026-04-24 - Materialized the governing MKRF workbook-owned values into tracked review tables
+- `#172` bounded workbook-extract slice:
+  - exported the active workbook surfaces from `002_base.xlsm` into tracked review artifacts under `metadata/mkrf_xlsm_review/`, including sheet-level extracts for `Input Variables`, `Netdown`, `Curve Library`, `Attrib`, and `Treat`;
+  - added named-range review extracts for the main workbook-owned scalar/config seams plus supporting `Treat`, `Lookups`, and `Post Renewal Succession` ranges;
+  - published `metadata/mkrf_xlsm_review/extract_manifest.yaml` as the machine-readable inventory for those review extracts; and
+  - updated parent and instance metadata/docs so the instance now points at the parent-side review extracts while keeping them explicitly framed as evidence rather than live FEMIC config.
+- Scope boundary preserved:
+  - no workbook payload was copied into `external/femic-mkrf-instance`;
+  - no VBA was reimplemented or adopted as a FEMIC runtime dependency; and
+  - no `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.
+## 2026-04-24 - Rolled out the first FEMIC-native MKRF Input Variables translation
+- `#172` bounded reconstruction slice:
+  - added the first MKRF-first translated `Input Variables` config under `external/femic-mkrf-instance/config/legacy_xml_builder/input_variables.mkrf.yaml`;
+  - added instance-local lineage/status metadata and a translation note so every legacy Input Variables seam is explicitly classified as `live_export` or `staged_only`;
+  - wired the translated live subset into Patchworks export as an explicit opt-in config path; and
+  - proved the translated config can drive ForestModel `description`, `year`, and `horizon` semantics without changing default K3Z/TSA29 behavior.
+- Scope boundary preserved:
+  - legacy exclude/query expressions, block/area/age expressions, include hooks, and constants remain staged only;
+  - no workbook payload was copied into `external/femic-mkrf-instance`; and
+  - no `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.
+## 2026-04-24 - Extended the MKRF Input Variables translation into a block-layout/export contract
+- `#172` bounded reconstruction slice:
+  - made the legacy block, area, age, and exclude expressions live in the opt-in MKRF Patchworks export path;
+  - updated fragments export so it requires and passes through the checkpoint source columns referenced by those live expressions;
+  - added focused exporter regression tests covering the live XML input expressions and the missing-source-column failure path; and
+  - updated parent and instance planning/lineage docs so the next bounded move narrows to the remaining `additional_stratification_columns` seam.
+- Scope boundary preserved:
+  - treatment eligibility, include hooks, constants, and max-inventory-age semantics remain staged only;
+  - no workbook payload was copied into `external/femic-mkrf-instance`; and
+  - no `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.
+## 2026-04-24 - Operationalized the MKRF additional stratification column seam
+- `#172` bounded reconstruction slice:
+  - made the workbook-owned `additional_stratification_columns` bindings live in the opt-in MKRF fragments export path;
+  - updated fragments export so it now requires and passes through the checkpoint source columns referenced by those live additional stratification bindings;
+  - added focused exporter regression tests covering the live stratification fragment fields and the missing-source-column failure path; and
+  - updated parent and instance planning/lineage docs so the next bounded move narrows to the remaining `treatment_eligibility_expression` seam.
+- Scope boundary preserved:
+  - `max_inventory_age`, treatment eligibility, include hooks, and constants remain staged only;
+  - no workbook payload was copied into `external/femic-mkrf-instance`; and
+  - no `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.
+## 2026-04-24 - Operationalized the MKRF treatment-eligibility seam
+- `#172` bounded reconstruction slice:
+  - made the workbook-owned `treatment_eligibility_expression` live in the opt-in MKRF fragments export path as review field `treat_inel`;
+  - evaluated that expression against the live additional stratification bindings plus the translated legacy constants surface, with a focused failure path for unresolved symbols;
+  - added focused exporter regression tests covering the live treatment-eligibility review flag and the unresolved-symbol failure path; and
+  - updated parent and instance planning/lineage docs so the next bounded move narrows to the remaining legacy matrix-builder constants seam.
+- Scope boundary preserved:
+  - `max_inventory_age`, include hooks, and the broader matrix-builder constants seam remain staged only;
+  - no workbook payload was copied into `external/femic-mkrf-instance`; and
+  - no `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.
+## 2026-04-27 - Operationalized the MKRF legacy constants contract
+- `#172` / `P55.13` bounded reconstruction slice:
+  - added an explicit `staged.constant_contract` to the MKRF Input Variables translation for `managed`, `unmanaged`, `operable`, `lowoper`, and deferred `frd`;
+  - restricted live legacy expression symbol resolution so, when the contract is present, only constants marked `live_export` or `live_build_input` can drive exporter behavior;
+  - added focused regression coverage proving a live scalar constant can drive `treat_inel` while deferred `frd` remains unresolved as a live expression symbol; and
+  - updated parent and instance planning/lineage docs so the next bounded move narrows to the remaining staged `Input Variables` semantics instead of broadening into include hooks, `Netdown`, or `Treat`.
+- Scope boundary preserved:
+  - formula-like `frd` remains review metadata only;
+  - no include hooks, `Netdown`, `Treat`, `03_MappingAnalysisData/*`, or `Outputs/*` were activated; and
+  - no runnable MKRF rebuild claim was introduced by this slice.
+## 2026-04-27 - Planned the remaining Phase 55 MKRF recovery sequence
+- `#172` planning hygiene slice:
+  - expanded `ROADMAP.md` beyond the immediate next step so Phase 55 now has explicit pending tasks `P55.14` through `P55.19`;
+  - set `P55.14` as the only active next bounded move, limited to remaining `Input Variables` semantics (`max_inventory_age` and include-fragment hook classification);
+  - ordered the follow-on recovery sequence as `Curve Library`, `Netdown`, `Attrib`, `Treat`, then compiled-output reconciliation/readiness; and
+  - updated `planning/mkrf_legacy_decompile.md` so the planning note carries the detailed execution boundaries while `ROADMAP.md` remains the compact ordered control surface.
+- Scope boundary preserved:
+  - no implementation, export behavior, source-data intake, include-hook activation, `Netdown`, `Treat`, `03_MappingAnalysisData/*`, or `Outputs/*` work was started by this planning slice.
+## 2026-04-28 - Adjudicated the remaining MKRF Input Variables semantics
+- `#172` / `P55.14` bounded reconstruction slice:
+  - classified `max_inventory_age` as review metadata because the current checkpoint-first exporter derives curve evaluation spans from `horizon_years` and source curve ages;
+  - classified `beforeCurves` / `before_curves` as blocked because the workbook value points at generated `Curves.xml`, which requires the `P55.15` Curve Library review-to-build contract before activation;
+  - classified the blank `afterCurves`, `afterRetention`, `afterUnmanaged`, `afterStratum`, and `afterAttributes` hooks as preserved review metadata; and
+  - updated parent and instance planning/lineage docs so the next bounded move is `P55.15` Curve Library translation.
+- Scope boundary preserved:
+  - no include hooks were activated;
+  - no exporter behavior changed; and
+  - no `Netdown`, `Attrib`, `Treat`, `03_MappingAnalysisData/*`, `Outputs/*`, or runnable rebuild claim was introduced by this slice.
+## 2026-04-28 - Translated the MKRF Curve Library contract
+- `#172` / `P55.15` bounded reconstruction slice:
+  - added `config/legacy_xml_builder/curve_library.mkrf.yaml` to the MKRF instance as the explicit review-to-build contract for the legacy workbook `Curve Library` / `curveNames` surface;
+  - preserved the workbook curve IDs `zero`, `age`, `le10`, `lt20`, `gt60`, `lt80`, and `gt250`, the reviewed `Age` axis, and every nonblank curve point while treating blank cells as absent points;
+  - added `metadata/legacy_curve_library_translation.yaml` and `runbooks/LEGACY_CURVE_LIBRARY_TRANSLATION.md` to record the live-vs-deferred boundary; and
+  - updated parent and instance planning/lineage docs so the next bounded move is `P55.16` Netdown translation.
+- Scope boundary preserved:
+  - `beforeCurves` remains inactive pending generated `Curves.xml` fragment reconciliation;
+  - no exporter behavior changed; and
+  - no `Netdown`, `Attrib`, `Treat`, `03_MappingAnalysisData/*`, `Outputs/*`, direct workbook publication, or runnable rebuild claim was introduced by this slice.
+## 2026-04-28 - Translated the MKRF Netdown contract
+- `#172` / `P55.16` bounded reconstruction slice:
+  - added `config/legacy_xml_builder/netdown.mkrf.yaml` to the MKRF instance as the explicit review-to-build contract for the legacy workbook `Netdown` surface;
+  - preserved the two complete proportional reassignment rules for `status in managed and oper in operable` and `status in managed and oper in lowoper`;
+  - preserved the shared reassignment to `status = unmanaged`, the `0.1` and `0.2` netdown proportions, and the `feature.area.retention.total` factor assignments; and
+  - updated parent and instance planning/lineage docs so the next bounded move is `P55.17` Attrib translation.
+- Scope boundary preserved:
+  - `dumpRetention` and proportional fragment area splitting remain inactive;
+  - the unmatched feature-factor row and 85 trailing `0.07` values remain review metadata only; and
+  - no `Attrib`, `Treat`, `03_MappingAnalysisData/*`, `Outputs/*`, compiled-artifact substitution, direct workbook publication, or runnable rebuild claim was introduced by this slice.
+## 2026-04-28 - Translated the MKRF Attrib contract
+- `#172` / `P55.17` bounded reconstruction slice:
+  - added `config/legacy_xml_builder/attributes.mkrf.yaml` to the MKRF instance as the explicit review-to-build contract for the legacy workbook `Attrib` / `attributes` surface;
+  - preserved 16 rows with nonblank `Attribute Name` values and grouped them into area accounting, yield aggregate, merchantable-yield, individual-species yield, and `le10` seral-area families;
+  - classified 143 rows with blank `Attribute Name` values as incomplete template/default rows; and
+  - updated parent and instance planning/lineage docs so the next bounded move is `P55.18` Treat translation.
+- Scope boundary preserved:
+  - `dumpAttributes` remains inactive;
+  - `frd`, `Yield_*`, `LookupTable`, `treatment`, and attribute-reference dependencies remain explicit blockers; and
+  - no `Treat`, `03_MappingAnalysisData/*`, `Outputs/*`, direct workbook publication, or runnable rebuild claim was introduced by this slice.
+## 2026-04-28 - Translated the MKRF Treat contract
+- `#172` / `P55.18` bounded reconstruction slice:
+  - added `config/legacy_xml_builder/strata/treat.mkrf.yaml` to the MKRF instance as the explicit review-to-build contract for the legacy workbook `Treat` stratum bundle;
+  - preserved the empty/default stratum criteria surface, default succession rule (`breakup_at = 999`, `renewal_age = 0`), and `CC`/`CT` treatment definitions;
+  - classified feature and product template rows as review metadata because they have no `Feature Name` or `Product Name` values; and
+  - updated parent and instance planning/lineage docs so the next bounded move is `P55.19` workbook-vs-compiled-output reconciliation.
+- Scope boundary preserved:
+  - `dumpStratum` remains inactive;
+  - copied compiled track tables were used only as archival cross-check evidence; and
+  - no `03_MappingAnalysisData/*`, `Outputs/*`, direct workbook publication, or runnable rebuild claim was introduced by this slice.
+## 2026-04-28 - Reconciled the MKRF workbook contract against compiled outputs
+- `#172` / `P55.19` bounded reconstruction slice:
+  - added `metadata/legacy_workbook_compiled_reconciliation.yaml` and `runbooks/LEGACY_REBUILD_READINESS_REVIEW.md` to the MKRF instance;
+  - compared the translated workbook-derived contract to the available `baseMKRF.pin` and copied `Tracks/*.csv` evidence at the contract surface level;
+  - recorded that generated `baseMKRF.xml` / `Curves.xml` are not tracked in the instance and that `curves.csv`, `features.csv`, and `products.csv` are pointer-only in the current working copy; and
+  - closed Phase 55 with a metadata-recovery go decision and a runnable-rebuild no-go decision.
+- Scope boundary preserved:
+  - no generated XML, upstream mapping data, roads, outputs, direct workbook payload, or new raw/source artifacts were ingested;
+  - no curve, retention, attribute, stratum, or full XML builder behavior was activated; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Planned Phase 56 MKRF rebuild gap closure
+- `#172` planning-only slice:
+  - added `Phase 56` to `ROADMAP.md` as the ordered post-P55 rebuild gap-closure sequence;
+  - converted the P55.19 no-go blockers into bounded tasks for generated XML reconciliation, pointer-only compiled track-table resolution, builder activation design, source-input publication boundaries, and rebuild-readiness criteria; and
+  - updated `planning/mkrf_legacy_decompile.md` so `P56.1` is the active next bounded move.
+- Scope boundary preserved:
+  - no generated XML, upstream mapping data, roads, outputs, direct workbook payload, or new raw/source artifacts were ingested;
+  - no curve, retention, attribute, stratum, or full XML builder behavior was activated; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this planning slice.
+## 2026-04-28 - Closed the P56.1 MKRF rebuild gap-closure planning boundary
+- `#172` / `P56.1` planning-only slice:
+  - marked `P56.1` complete in `ROADMAP.md`;
+  - recorded the ordered post-P55 blocker ownership in `planning/mkrf_legacy_decompile.md`; and
+  - set `P56.2` generated XML artifact reconciliation as the active next bounded implementation move.
+- Scope boundary preserved:
+  - no generated XML, upstream mapping data, roads, outputs, direct workbook payload, or new raw/source artifacts were ingested;
+  - no pointer-only compiled track payloads were materialized; and
+  - no curve, retention, attribute, stratum, full XML builder behavior, or runnable FEMIC/Patchworks rebuild claim was activated.
+## 2026-04-28 - Reconciled the MKRF generated XML review artifacts
+- `#172` / `P56.2` bounded reconstruction slice:
+  - copied inert generated-review artifacts into the MKRF instance under `data/legacy_mkrf/generated_xml/`: `baseMKRF.xml` and `CSV/CURVE_TABLE.csv`;
+  - added `metadata/legacy_generated_xml_reconciliation.yaml` and `runbooks/LEGACY_GENERATED_XML_RECONCILIATION.md`;
+  - recorded that `baseMKRF.xml` matches the translated Input Variables contract and generated built-in Curve Library curves; and
+  - recorded that located `Curves.xml` and tracked `CSV/CURVE_TABLE.csv` match by curve identifier, age, and numeric value.
+- Source-identity caveat:
+  - preserved the generated XML literal description `Base TFL26` as source evidence only, not as accepted MKRF case identity; and
+  - flagged the description mismatch for later source-input publication and rebuild-readiness criteria work.
+- Scope boundary preserved:
+  - `beforeCurves` remains inactive;
+  - no XML builder, curve builder, retention builder, attribute builder, stratum builder, or full ForestModel emission behavior was activated;
+  - no pointer-only compiled track payloads, upstream mapping data, roads, outputs, direct workbook payload, or new raw/source inputs were ingested; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Corrected Phase 56 backend sequencing
+- `#172` planning/metadata correction:
+  - replanned the remaining Phase 56 backend so `curves.csv`, `features.csv`, and `products.csv` are treated as existing legacy compiled-output evidence, not missing files or regeneration targets;
+  - clarified that current instance copies are pointer files while the legacy planning corpus has readable source CSVs;
+  - revised `P56.3` as an archival evidence import/verification and contract-surface comparison step, not a matrix-build step; and
+  - updated later Phase 56 tasks so builder activation, source-input publication, and rebuild-readiness criteria remain separate from legacy compiled-output evidence review.
+- Scope boundary preserved:
+  - no ForestModel XML was generated;
+  - no fragments were regenerated;
+  - no Patchworks matrix build was run;
+  - no compiled track payloads were imported; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this correction.
+## 2026-04-28 - Verified existing MKRF compiled track evidence boundary
+- `#172` / `P56.3` bounded reconstruction slice:
+  - added `metadata/legacy_compiled_track_evidence_reconciliation.yaml` and `runbooks/LEGACY_COMPILED_TRACK_EVIDENCE_RECONCILIATION.md` to the MKRF instance;
+  - confirmed readable legacy source CSVs for `Tracks/curves.csv`, `features.csv`, and `products.csv`;
+  - recorded that current instance paths remain pointer files because `git annex` is unavailable in the active shell; and
+  - compared the contract surfaces to Curve Library, Attrib, Treat, and account metadata without running matrix build.
+- Scope boundary preserved:
+  - no ForestModel XML was generated;
+  - no fragments were regenerated;
+  - no Patchworks matrix build was run;
+  - no compiled track payloads were imported as normal Git blobs; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Designed the MKRF builder activation handoff order
+- `#172` / `P56.4` bounded design slice:
+  - added `metadata/legacy_builder_activation_plan.yaml` and `runbooks/LEGACY_BUILDER_ACTIVATION_PLAN.md` to the MKRF instance;
+  - defined the future activation order as curve emission, retention/netdown emission, attribute emission, stratum/treat emission, full ForestModel XML emission, then Patchworks matrix-build handoff;
+  - kept archival legacy evidence separate from future FEMIC-regenerated XML and track outputs; and
+  - set `P56.5` source-input publication boundary resolution as the next bounded move.
+- Scope boundary preserved:
+  - no builder was activated;
+  - no ForestModel XML was generated;
+  - no fragments were regenerated;
+  - no Patchworks matrix build was run; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Resolved the MKRF source-input publication boundary
+- `#172` / `P56.5` bounded boundary slice:
+  - added `metadata/legacy_source_input_publication_boundary.yaml` and `runbooks/LEGACY_SOURCE_INPUT_PUBLICATION_BOUNDARY.md` to the MKRF instance;
+  - recorded the fragments/topology requirements for a future matrix-build candidate, including required fragment fields from the generated XML/input contract;
+  - separated compiled runtime evidence from the raw source reproducibility lane under `03_MappingAnalysisData/*`; and
+  - preserved the `Base TFL26` literal-description mismatch as source evidence only, not accepted MKRF identity.
+- Scope boundary preserved:
+  - no `03_MappingAnalysisData/*`, outputs, roads, or direct workbook payloads were ingested;
+  - no ForestModel XML was generated;
+  - no fragments were regenerated;
+  - no Patchworks matrix build was run; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Published MKRF rebuild-readiness criteria
+- `#172` / `P56.6` bounded readiness slice:
+  - added `metadata/legacy_rebuild_readiness_criteria.yaml` and `runbooks/LEGACY_REBUILD_READINESS_CRITERIA.md` to the MKRF instance;
+  - defined metadata recovery as complete for Phase 56 while keeping runnable rebuild candidate readiness no-go;
+  - published required future gates for source-input publication, builder activation, FEMIC-generated XML, Patchworks matrix build, output comparison, and identity resolution; and
+  - closed Phase 56 with the next phase pointed at the first selected builder activation gate.
+- Scope boundary preserved:
+  - no builder was activated;
+  - no ForestModel XML was generated;
+  - no fragments were regenerated;
+  - no Patchworks matrix build was run;
+  - no source payloads, roads, outputs, or direct workbook payloads were ingested; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Planned the minimal runnable MKRF Patchworks phase
+- `#172` / `P57.1` bounded planning slice:
+  - added Phase 57 to `ROADMAP.md` as the ordered path toward a minimally runnable MKRF Patchworks model instance;
+  - defined minimal runnable as FEMIC-managed XML emission, Patchworks matrix build, generated-track inspection, and Patchworks launch proof;
+  - adopted the existing legacy compiled fragments/topology as the first runtime input lane without claiming raw-source reconstruction; and
+  - recorded the compatibility-passthrough boundary for deferred formula-heavy Attrib XML blocks.
+- Scope boundary preserved:
+  - no runtime model directory was materialized;
+  - no XML builder behavior was implemented;
+  - no ForestModel XML was generated;
+  - no fragments were regenerated;
+  - no Patchworks matrix build or launch was run; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Materialized the MKRF runtime model scaffold
+- `#172` / `P57.2` bounded runtime-layout slice:
+  - materialized `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/` with `analysis/`, `XML/`, `Spatial/`, `Tracks/`, `Scripts/`, `Targets/`, and `InitialTargets/` surfaces;
+  - copied accepted compiled `Spatial/fragments.*` and `Spatial/topo_frag100.csv` into the runtime scaffold and recorded the annex-remote materialization blocker for the archival copy lane;
+  - sanitized the copied analysis/control scripts to use instance-relative runtime paths only; and
+  - added explicit instance metadata and runbook surfaces documenting the remaining missing target-description seam and the pre-XML/no-run boundary.
+- Scope boundary preserved:
+  - no FEMIC-generated ForestModel XML was written;
+  - no runtime `Tracks/*.csv` outputs were generated;
+  - no Patchworks runtime config was rewired;
+  - no Patchworks matrix build or launch was run; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Emitted the first FEMIC-managed MKRF runtime XML
+- `#172` / `P57.3` bounded XML-emission slice:
+  - added a dedicated opt-in MKRF XML builder/emitter in `src/femic/fmg/patchworks.py` that reads the recovered Input Variables, Curve Library, Netdown, Treat, and generated curve-table contracts without changing the default Patchworks exporter path;
+  - emitted `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/XML/baseMKRF.xml` with legacy input/output bindings, stratification defines, live scalar constants, Curve Library curves, inlined `Yield_*` curves, the two Netdown rules, the unmanaged catch-track, default succession, and `CC` / `CT` treatment sections;
+  - added instance-local emission lineage surfaces in `metadata/legacy_runtime_xml_emission.yaml` and `runbooks/LEGACY_RUNTIME_XML_EMISSION.md`; and
+  - moved the active next bounded move to `P57.4` Attrib compatibility passthrough.
+- Scope boundary preserved:
+  - no Attrib compatibility-passthrough XML blocks were emitted;
+  - no runtime Patchworks config was rewired;
+  - no Patchworks matrix build or launch was run; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Added MKRF Attrib compatibility passthrough
+- `#172` / `P57.4` bounded XML-compatibility slice:
+  - extended the opt-in MKRF XML emitter so the runtime XML can materialize the compatibility-required deferred constant `frd` and append five extracted Attrib passthrough `<select>` blocks from reconciled legacy `baseMKRF.xml`;
+  - regenerated `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/XML/baseMKRF.xml` with the validated deferred Attrib compatibility blocks and recorded the result in `metadata/legacy_runtime_xml_emission.yaml`, `metadata/legacy_attribute_passthrough.yaml`, and `runbooks/LEGACY_ATTRIBUTE_PASSTHROUGH.md`;
+  - updated instance lineage/readme surfaces to treat the passthrough as an explicit runnable-minimum caveat rather than a native attribute-builder implementation; and
+  - moved the active next bounded move to `P57.5` runtime config wiring and preflight.
+- Scope boundary preserved:
+  - no native FEMIC Attrib builder was implemented;
+  - no runtime Patchworks config was rewired;
+  - no Patchworks matrix build or launch was run; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-28 - Wired the MKRF Patchworks runtime config
+- `#172` / `P57.5` bounded runtime-wiring slice:
+  - rewired `external/femic-mkrf-instance/config/patchworks.runtime.windows.yaml` to the generated MKRF runtime XML, accepted fragments dataset, and runtime `Tracks/` output directory;
+  - registered `mkrf.base` in the builtin Patchworks variant registry as the minimal MKRF launch surface for later proof steps;
+  - recorded the runtime wiring and passed preflight result in `metadata/legacy_runtime_config_wiring.yaml` and `runbooks/LEGACY_RUNTIME_CONFIG_WIRING.md`; and
+  - moved the active next bounded move to `P57.6` matrix build.
+- Scope boundary preserved:
+  - no Patchworks matrix build was run;
+  - no runtime `Tracks/*.csv` outputs were generated;
+  - no Patchworks launch proof was run; and
+  - no runnable FEMIC/Patchworks rebuild claim was introduced by this slice.
+## 2026-04-29 - Closed Phase 57 with a minimally runnable MKRF instance
+- `#172` / `P57.6`-`P57.9` minimal-runnable closeout:
+  - ran Patchworks matrix build against the FEMIC-emitted MKRF XML and accepted compiled spatial runtime inputs, producing generated runtime `Tracks/*.csv` outputs under `models/mkrf_patchworks_model_poc/Tracks/`;
+  - compared the generated track surfaces to legacy compiled evidence at the accepted smoke level and recorded the remaining `feature.yield.managed.merch.total` terminal-tail variance (`500/501` generated versus `650/651` legacy) as developer-approved and non-blocking for the minimal runnable phase;
+  - proved that the generated MKRF model launches from the generated runtime directory through the Patchworks runtime seam; and
+  - updated roadmap/planning and instance lineage/readme/runbook surfaces so Phase 57 now closes as a minimally runnable MKRF Patchworks instance with explicit caveats.
+- Current caveat boundary:
+  - formula-heavy Attrib logic still relies on the explicit compatibility passthrough rather than a fully native FEMIC builder;
+  - raw-source reconstruction from `03_MappingAnalysisData/*` is still out of scope for the current runnable claim;
+  - the accepted merch-tail variance remains documented for very-old-stand behavior; and
+  - broader scenario/runtime validation beyond matrix build plus launch proof remains a later phase.
+## 2026-04-29 - Planned the post-minimal-runnable MKRF hardening phase
+- `#172` / `P58.1` planning slice:
+  - added Phase 58 to `ROADMAP.md` as the ordered post-minimal-runnable hardening sequence;
+  - separated the remaining MKRF follow-on work into distinct native Attrib replacement, raw-source reconstruction, broader runtime/scenario validation, and residual legacy-fidelity lanes; and
+  - updated `planning/mkrf_legacy_decompile.md` so `P58.1` is the only active next bounded move.
+- Scope boundary preserved:
+  - no new MKRF implementation was started;
+  - no XML emission, matrix build, or launch was rerun; and
+  - no new runnable claim beyond the completed Phase 57 minimal-runnable closeout was introduced.
+## 2026-04-29 - Replaced the MKRF Attrib passthrough with a native builder
+- `#172` / `P58.2` bounded native-Attrib slice:
+  - replaced the MKRF runtime XML Attrib passthrough with a native FEMIC builder driven by `config/legacy_xml_builder/attributes.mkrf.yaml`, `metadata/mkrf_xlsm_review/ranges/attrib_attributes.review.csv`, and `metadata/mkrf_xlsm_review/ranges/lookups_spp_comp.review.csv`;
+  - regenerated `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/XML/baseMKRF.xml` and reran Patchworks matrix build against the regenerated runtime XML;
+  - confirmed the rebuilt runtime track lane still compiles cleanly, including representative Attrib-backed `features.csv` and `products.csv` surfaces; and
+  - updated roadmap/planning and instance lineage/runbook surfaces so `P58.3` raw-source reconstruction is now the active next bounded move.
+- Current boundary:
+  - raw-source reconstruction from `03_MappingAnalysisData/*` is still out of scope for the current runnable claim;
+  - the accepted `500/501` versus `650/651` merchantable-tail variance remains documented for very-old-stand behavior; and
+  - broader scenario/runtime validation beyond matrix build plus launch proof remains a later phase.
+## 2026-04-29 - Separated MKRF raw-source reconstruction from runtime/checkpoint substitutes
+- `#172` / `P58.3b` bounded raw-source-boundary slice:
+  - updated the MKRF source-input publication boundary so the reconstructed `Resultant.gdb/Resultant -> fragments.*` publication contract now carries an explicit substitute boundary;
+  - recorded that compiled runtime `Spatial/fragments.*` / `topo_frag100.csv`, instance archival copies of those files, and checkpoint-derived artifacts are not acceptable substitutes for raw source in any source-faithful rebuild claim;
+  - updated the MKRF runbook/planning surfaces so `P58.3c` is now the active next bounded move; and
+  - added focused metadata regression coverage for the new raw-vs-runtime-vs-checkpoint boundary.
+- Scope boundary preserved:
+  - no upstream raw-source payload was ingested into the instance;
+  - no fragments were regenerated from source;
+  - no matrix build or launch was rerun; and
+  - no source-faithful MKRF rebuild claim was introduced by this slice.
+## 2026-04-29 - Published the MKRF source reproducibility boundary
+- `#172` / `P58.3c` bounded reproducibility-boundary slice:
+  - added `metadata/legacy_source_reproducibility_boundary.yaml` and `runbooks/LEGACY_SOURCE_REPRODUCIBILITY_BOUNDARY.md` to the MKRF instance;
+  - published the explicit claim boundary between the current minimally runnable MKRF instance and any future source-faithful rebuild claim;
+  - recorded that raw source means the upstream `03_MappingAnalysisData/*` lane, while compiled runtime files and checkpoint-derived artifacts remain invalid substitutes for that claim surface; and
+  - updated roadmap/planning plus instance lineage metadata so the active next bounded move is now `P58.4`.
+- Scope boundary preserved:
+  - no upstream raw-source payload was ingested into the instance;
+  - no fragments or topology were regenerated from source;
+  - no matrix build or launch was rerun; and
+  - no source-faithful MKRF rebuild claim was introduced by this slice.
+## 2026-04-29 - Hit the P58.4a source-evidence blocker in the MKRF target-description lane
+- `#172` / `P58.4a` bounded scenario-target reconstruction investigation:
+  - confirmed from `000_Targets_Builder.xlsx` that the legacy corpus deterministically covers the `Harvest`, `grn`, `biod`, `wat`, and `vqo` target families needed for a rebuilt `InitialTargets/00_Target_Descriptions.bsh`;
+  - confirmed from the legacy Patchworks sample interface pattern that the missing MKRF helper names are expected to return `TargetDescription`/`objective(...)` bundles, not ad hoc script fragments;
+  - traced the active AAC-max `ScenarioSet.bsh` helper names `THLB4070(...)` and `UWR(...)` back through the recovered workbook, target fragments, outputs, and adjacent control scripts and did not find a deterministic source-family mapping for either helper; and
+  - reverted the exploratory partial `GRNUP` / `BIOD` reconstruction so the instance remains on the explicit fail-fast `00_Target_Descriptions.bsh` scaffold until the unresolved helper provenance is recovered.
+- Scope boundary preserved:
+  - no inferred `THLB4070` or `UWR` helper semantics were introduced;
+  - no partial scenario-target library was left active in the runtime scaffold;
+  - no broadened scenario run was claimed as valid; and
+  - `P58.4a` remains blocked pending corpus evidence for the unresolved helper families.
+## 2026-04-29 - Accepted the PoC target-control checkpoint lane and pinned the missing helper seam
+- `#172` / `P58.4a` PoC boundary decision:
+  - accepted `THLB4070(...)` and `UWR(...)` as deferred missing legacy helper seams for the benchmark-only PoC stage instead of continuing to block completion on their unresolved provenance;
+  - copied the legacy `Outputs/001_Base/scenario/targetSummary.csv` and `targetStatus.csv` surfaces into `models/mkrf_patchworks_model_poc/analysis/` as `initialTargetSummary.csv` and `initialTargetStatus.csv`;
+  - updated `analysis/base.pin` to load those legacy checkpoint target surfaces directly during runtime setup; and
+  - updated roadmap/planning notes so full `InitialTargets` helper reconstruction is now explicitly pinned for the later from-scratch FEMIC-native rebuild phase rather than this PoC benchmark stage.
+- Scope boundary preserved:
+  - the `InitialTargets/00_Target_Descriptions.bsh` helper library remains unresolved and fail-fast;
+  - no source-faithful claim was made for `THLB4070` or `UWR`;
+  - the accepted checkpoint lane is benchmark/runtime-control evidence only; and
+  - full helper reconstruction is pinned for the later from-scratch FEMIC-native rebuild phase.
+- Validation note:
+  - generated MKRF XML and generated track tables stayed on the accepted runtime lane; and
+  - the real runtime proof is the checkpoint-backed Patchworks GUI run with active targets that saved a representative scenario under `analysis/scenarios/foo`.
+- Remaining caveat:
+  - this PoC proof does not claim source-faithful reconstruction of `THLB4070(...)` / `UWR(...)`, full `InitialTargets` helper recovery, or a hardened headless-launcher automation contract.
+## 2026-04-29 - Closed Phase 58 as the MKRF PoC benchmark lane and opened the from-scratch rebuild phase
+- `#172` / `P58.5` closeout:
+  - closed Phase 58 as the end of the MKRF PoC / reverse-engineering benchmark lane;
+  - recorded that the accepted `500/501` versus `650/651` merch-tail variance remains a deferred fidelity question for the later rebuild, not a PoC blocker;
+  - recorded that exact compiled curve-id preservation is not required for the PoC benchmark lane; and
+  - pinned unresolved legacy helper seams `THLB4070(...)`, `UWR(...)`, and the missing `InitialTargets/00_Target_Descriptions.bsh` library to the later from-scratch rebuild instead of spending more effort on PoC cleanup.
+- Opened the next implementation lane:
+  - created child issue `#173` (`Feature: rebuild MKRF from scratch on a FEMIC-native instance pattern`);
+  - added `Phase 59` to `ROADMAP.md` as the active from-scratch MKRF rebuild phase under `#173`; and
+  - updated `planning/mkrf_legacy_decompile.md` so the next bounded move is `P59.1`, not more PoC archaeology.
+## 2026-04-29 - Opened the Windows Arbutus auth workflow implementation lane
+- `#174` / `P60.1` planning slice:
+  - opened issue `#174` (`Feature: add first-class Windows Arbutus auth workflow`);
+  - added `Phase 60` to `ROADMAP.md` for the repo-wide Windows Arbutus auth/status/bootstrap workflow;
+  - defined the planned contracts for user-local shared credentials, profile registry, and non-secret known-working status marker; and
+  - kept legacy single-bucket `S3_BUCKET_NAME` support as a migration bridge rather than the long-term recommended workflow.
+## 2026-04-29 - Implemented the first-class Windows Arbutus auth workflow
+- `#174` / `P60.2`-`P60.5` implementation slice:
+  - added `femic prep arbutus-auth-status` and `femic prep arbutus-auth-init` for the Windows Arbutus auth/profile/bootstrap workflow;
+  - added user-local profile/status support under `%USERPROFILE%\.config\femic` with `arbutus-profiles.yaml` and `arbutus-status.yaml`, while keeping legacy single-bucket `S3_BUCKET_NAME` compatibility as a migration bridge;
+  - updated `prep validate-case` to point operators and agents at the new auth workflow instead of improvised loader/bucket debugging;
+  - added a dedicated Windows Arbutus auth guide plus updates to bootstrap/public-data/CLI/agent docs; and
+  - validated the workflow with focused CLI tests, docs checks, a clean Sphinx build, and a real Windows-local status/init smoke against `external/femic-mkrf-instance`.
+- Validation notes:
+  - `pytest tests/test_cli_main.py -k "arbutus or validate_windows_annex_runtime"`
+  - `pytest tests/test_docs_contract.py::test_roadmap_is_a_compact_ordered_control_surface`
+  - `ruff check src/femic/cli/main.py tests/test_cli_main.py`
+  - `mypy src/femic/cli/main.py`
+  - `sphinx-build -b html docs _build/html -W`
+  - `git diff --check`
+- Remaining repo-wide type-check caveat:
+  - full `mypy src` still reports the pre-existing `pandas` stub/import gaps and unrelated existing type findings outside this new auth workflow slice.
+## 2026-04-29 - Reopened the MKRF PoC closeout sequence and inserted the docs phase ahead of the rebuild
+- planning/issue-hygiene slice:
+  - opened child issue `#175` (`Documentation: publish MKRF PoC technical docs`);
+  - reopened Phase 58 in `ROADMAP.md` with:
+    - `P58.6` for one representative legacy-vs-PoC benchmark scenario/KPI comparison; and
+    - `P58.7` for explicitly recasting the current `models/mkrf_patchworks_model_poc` package as a PoC intermediate surface rather than the final canonical MKRF model;
+  - inserted new `Phase 59` for MKRF PoC user-facing Sphinx docs under `#175`;
+  - renumbered the from-scratch MKRF rebuild phase from `Phase 59` to `Phase 60`;
+  - renumbered the already-completed Windows Arbutus auth workflow from `Phase 60` to `Phase 61` so the roadmap stays sequential; and
+  - updated `planning/mkrf_legacy_decompile.md` so the active next bounded move is now `P58.6`, not the from-scratch rebuild contract.
+## 2026-04-29 - Closed the MKRF PoC benchmark lane on a real side-by-side scenario comparison
+- `#172` / `P58.6` benchmark closeout:
+  - ran one representative PoC benchmark scenario through the FEMIC headless lane and saved a full report bundle under `runtime/logs/headless_stage/p58_6_poc_smoke_r4/`;
+  - compared the saved PoC summary reports against the pre-existing legacy `Outputs/001_Base` report bundle using:
+    - `Forest_Attributes/yield.csv`,
+    - `Harvest_Attributes/harvestVolumeControls.csv`, and
+    - `Harvest_Attributes/yield_treat.csv`;
+  - after increasing the PoC run to `1000000` iterations, the models generally lined up in the early periods:
+    - total growing stock was nearly identical at period `0` and roughly `+1%` to `+4%` high in PoC through periods `1` to `5`;
+    - harvested volume was roughly `-5%` to `-8%` low in PoC through the same early periods; and
+    - longer-horizon divergence remained larger but was accepted as non-blocking for the PoC benchmark lane;
+  - treated that result as sufficient benchmark-level agreement for the reverse-engineering / PoC stage rather than chasing exact parity.
+- `#172` / `P58.7` PoC intermediate closeout:
+  - recorded explicitly that `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc` is the current MKRF PoC intermediate runtime package, not the final canonical rebuild path; and
+  - moved the active next lane to `Phase 59` MKRF PoC user-facing docs under `#175`.
+## 2026-04-29 - Added the parent Sphinx scaffolding for MKRF PoC docs
+- `#175` / `P59.1a` docs scaffolding slice:
+  - added `docs/sample-models/mkrf.rst` as the MKRF PoC pointer page in the parent Sphinx docs;
+  - added `docs/sample-models/mkrf-metadata-lineage.rst` as the retained parent-side metadata/lineage summary for the current PoC package;
+  - updated `docs/sample-models/index.rst` to register MKRF alongside the other sample-model pages; and
+  - validated the new pages with a warning-clean `sphinx-build -b html docs _build/html -W`.
+## 2026-04-29 - Renamed the MKRF runtime package to an explicit PoC path
+- `#172` / `P58.7a` path-separation slice:
+  - renamed `external/femic-mkrf-instance/models/mkrf_patchworks_model` to `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc` so the current PoC package can coexist cleanly with the later canonical rebuild in the same instance repo;
+  - updated the tracked runtime config, lineage metadata, runbooks, tests, sample-model docs, and roadmap/planning references to the new PoC path; and
+  - kept the current runtime package explicitly positioned as benchmark/intermediate evidence rather than the final canonical MKRF model path.
+## 2026-04-29 - Made the key MKRF docs explicit that the current package is PoC-only
+- `#175` / `P59.1b` PoC-positioning docs slice:
+  - updated the instance README, PoC model README surfaces, and rebuild runbook so they state plainly that the current MKRF package is a PoC benchmark/intermediate surface, not the final canonical rebuild;
+  - kept the docs aligned with the renamed PoC package path `models/mkrf_patchworks_model_poc`; and
+  - moved the active docs lane forward to `P59.1c`.
+## 2026-04-29 - Fixed the MKRF PoC standalone docs chapter plan before authoring the instance docs tree
+- `#175` / `P59.1c` planning slice:
+  - mapped the recovered K3Z standalone docs surface onto a narrower MKRF PoC chapter plan before creating `external/femic-mkrf-instance/docs/`;
+  - kept the K3Z-like operator pages that match the current PoC surface:
+    `index`, `getting-started`, `model-anatomy`, `data-package-crosswalk`,
+    `metadata-and-lineage`, `operator-runbook`, `rebuild-and-qa`, and
+    `troubleshooting`;
+  - added explicit MKRF PoC-only pages for benchmark results, legacy
+    evidence/runbook boundaries, and accepted caveats/deferred seams; and
+  - deferred broader K3Z chapters such as subvariants, old-growth logic,
+    assumptions registry, and yield-comparison/appendix material to the later
+    canonical rebuild lane if they become relevant there.
+## 2026-04-29 - Scaffolded the standalone MKRF PoC docs tree
+- `#175` / `P59.1c` instance-docs scaffold slice:
+  - created `external/femic-mkrf-instance/docs/` with a standalone Sphinx
+    configuration, requirements file, and `index.rst`;
+  - added the first-pass chapter files from the fixed MKRF PoC chapter plan:
+    `getting-started`, `model-anatomy`, `data-package-crosswalk`,
+    `benchmark-results`, `evidence-and-boundaries`,
+    `caveats-and-deferred-seams`, `metadata-and-lineage`,
+    `operator-runbook`, `rebuild-and-qa`, and `troubleshooting`; and
+  - built the standalone instance docs successfully with
+    `sphinx -b html external/femic-mkrf-instance/docs external/femic-mkrf-instance/docs/_build/html -W`,
+    then removed the generated `_build/` output from the worktree.
+## 2026-04-29 - Closed the MKRF PoC standalone docs publication task
+- `#175` / `P59.1c` closeout:
+  - enriched the standalone MKRF PoC docs with the original analyst narrative
+    from `MKRF_Modeling_Notes.pdf`, the accepted benchmark framing, the PoC
+    claim boundary, and the lineage/runbook interpretation needed for operators;
+  - added the missing standalone publication wiring:
+    `.readthedocs.yaml`, `docs/docs-ownership-and-release.rst`, and a private
+    copy of the original legacy analyst report under
+    `docs/reference/MKRF_Modeling_Notes.pdf`; and
+  - moved the active docs lane from `P59.1` to `P59.2`.
+## 2026-04-29 - Documented the accepted MKRF PoC runtime and benchmark surfaces
+- `#175` / `P59.2a` docs slice:
+  - updated the standalone MKRF docs so they teach the accepted PoC runtime
+    package root, launch surface, generated XML/tracks, accepted spatial lane,
+    and checkpoint target-control files as the current operator/runtime
+    boundary;
+  - recorded the representative accepted benchmark scenario surface as the
+    stabilized FEMIC headless saved stage under
+    `runtime/logs/headless_stage/p58_6_poc_smoke_r4/`; and
+  - made the report-pair benchmark surface explicit in the docs:
+    `Forest_Attributes/yield.csv`,
+    `Harvest_Attributes/harvestVolumeControls.csv`, and
+    `Harvest_Attributes/yield_treat.csv`.
+## 2026-04-29 - Recorded the accepted MKRF PoC caveats and claim boundary explicitly
+- `#175` / `P59.2b` docs slice:
+  - updated the standalone docs so the accepted benchmark variances are stated
+    directly, not only implied by the benchmark summary tables;
+  - recorded the accepted PoC claim boundary as:
+    - runnable FEMIC-managed benchmark package,
+    - generated runtime XML/tracks,
+    - benchmark-level behavioral similarity,
+    - not exact legacy-equivalence and not source-faithful rebuild; and
+  - made the deferred helper seams and unresolved target-control recovery
+    boundary explicit in the operator-facing docs.
+## 2026-04-29 - Separated MKRF benchmark evidence from the later canonical rebuild contract
+- `#175` / `P59.2c` docs slice:
+  - updated the standalone MKRF docs so benchmark/reference evidence is
+    described as its own lane rather than being allowed to blur into the later
+    canonical rebuild contract;
+  - made the preserved PoC evidence surfaces explicit:
+    archival compiled package evidence, the PoC runtime package, accepted
+    benchmark saved-stage/report surfaces, and reviewed builder/runtime
+    translations; and
+  - made the later rebuild-only contract surfaces explicit:
+    raw-source reconstruction, final target/control architecture, future
+    canonical package pathing, and any stronger identity claim than the
+    accepted PoC benchmark claim.
+## 2026-04-30 - Made the MKRF PoC docs lane explicit and auditable
+- `#175` / `P59.3a` docs slice:
+  - updated the instance README so it points explicitly at the standalone
+    `docs/` tree as the canonical operator-facing PoC docs surface;
+  - updated the rebuild runbook so it is framed as the rebuild-boundary
+    companion to the standalone docs, not a substitute for them; and
+  - updated the parent MKRF sample-model pointer page so it links directly to
+    the standalone PoC docs root inside the instance repo.
+## 2026-04-30 - Linked the MKRF PoC docs lane to the later canonical rebuild
+- `#175` / `P59.3b` docs slice:
+  - updated the standalone PoC docs so the next architecture-defining lane is
+    stated explicitly as Phase 60 / `#173`;
+  - made the handoff rule explicit: the PoC docs set carries forward as
+    benchmark/reference evidence, not as an architecture lock-in; and
+  - updated the parent MKRF pointer page so the finished PoC docs lane and the
+    later canonical rebuild contract are clearly distinguished.
+## 2026-04-30 - Closed the MKRF PoC docs lane as sufficient for the benchmark phase
+- `#175` / `P59.3c` docs slice:
+  - updated the standalone docs so they now state explicitly what "good enough"
+    means for the current PoC lane: runtime orientation, benchmark
+    interpretation, claim-boundary reading, and rebuild handoff;
+  - closed the remaining "under-documented benchmark lane" concern for the PoC
+    docs surface; and
+  - advanced the active implementation edge from the PoC docs phase to the
+    later from-scratch rebuild phase under `#173`.
+## 2026-04-30 - Added GitHub Pages publication for the standalone MKRF instance docs
+- docs publication follow-up:
+  - added a repo-local `docs-pages.yml` workflow in `external/femic-mkrf-instance`
+    so standalone MKRF docs will build and deploy on `main` pushes in the
+    instance repo;
+  - updated the instance docs ownership/release page so GitHub Pages is stated
+    as the expected public publication path, with `.readthedocs.yaml` retained
+    as the standalone build contract and secondary hosting option.
+## 2026-04-30 - Set the governing instance pattern for the from-scratch MKRF rebuild
+- `#173` / `P60.1a` planning slice:
+  - made the standalone K3Z/TSA29 FEMIC instance pattern the governing default
+    for the new MKRF rebuild;
+  - recorded that the target architecture should be a snapshot-style standalone
+    instance with canonical contract surfaces under `config/`, standalone docs
+    under `docs/`, repo-local docs publication wiring, and operator/runbook
+    material that lives with the instance repo; and
+  - kept the parent FEMIC repo in the K3Z/TSA29 role: pointer/lineage pages,
+    not the canonical user-facing rebuild docs surface.
+## 2026-04-30 - Treated MKRF PoC artifacts as benchmark evidence, not rebuild architecture
+- `#173` / `P60.1b` planning slice:
+  - recorded that the current MKRF PoC package, benchmark reports, and reviewed
+    translations are comparison/acceptance evidence only for the from-scratch
+    rebuild;
+  - made explicit that the PoC runtime package path, checkpoint target-control
+    lane, and reconstructed helper seams do not become the canonical rebuild
+    architecture by default; and
+  - moved the active implementation edge to `P60.1c`.
+## 2026-04-30 - Required explicit justification for any legacy behavior carried into the rebuild
+- `#173` / `P60.1c` planning slice:
+  - recorded that any legacy behavior carried forward into the new rebuild must
+    be justified either by reviewed source evidence or by benchmark necessity;
+  - made explicit that legacy behavior satisfying neither test should be treated
+    as removable PoC/legacy residue, not as a default rebuild requirement; and
+  - moved the active implementation edge to `P60.2`.
+## 2026-04-30 - Fixed the canonical layout contract for the from-scratch MKRF instance
+- `#173` / `P60.2a` planning slice:
+  - fixed the canonical MKRF rebuild layout at the same structural level as the
+    standalone K3Z/TSA29 instance pattern;
+  - recorded the governing top-level surfaces:
+    `.github/`, `config/`, `data/`, `docs/`, `models/`, `metadata/`,
+    `runbooks/`, plus root repo docs;
+  - fixed the future canonical runtime package as a distinct rebuild surface
+    under `models/`, separate from the current PoC package; and
+  - kept the parent FEMIC repo in the pointer/lineage role rather than the
+    canonical rebuild docs/runtime owner.
+## 2026-04-30 - Split the active MKRF rebuild planning note away from the legacy decompile note
+- `#173` planning hygiene:
+  - created `planning/mkrf_femic_native_rebuild.md` as the active planning note
+    for the from-scratch MKRF rebuild lane;
+  - repointed `Phase 60` in `ROADMAP.md` to the new rebuild-planning note; and
+  - left `planning/mkrf_legacy_decompile.md` in place as the closed
+    archaeology/PoC planning record for `P55`-`P59`.
+## 2026-04-30 - Defined the MKRF canonical rebuild sequencing and validation contract
+- `#173` / `P60.2b` planning slice:
+  - fixed the authoritative rebuild sequence for the future canonical MKRF
+    lane: contract validation, geospatial/source validation, upstream compile,
+    post-yield/model-input bundle, Patchworks preflight, canonical
+    geometry/topology publication, matrix build, and benchmark acceptance
+    validation;
+  - recorded the required gate types for that lane: contract, source,
+    publication, runtime, and acceptance; and
+  - fixed the minimum evidence surfaces and explicit non-goals so the later
+    source-faithful rebuild cannot silently reuse PoC/checkpoint surfaces while
+    making stronger identity claims.
+## 2026-04-30 - Separated MKRF PoC benchmark evidence from canonical rebuild surfaces
+- `#173` / `P60.2c` planning slice:
+  - fixed the explicit boundary between benchmark/reference evidence and future
+    canonical rebuild outputs;
+  - recorded that the PoC package, accepted saved stages/reports, compiled
+    legacy runtime evidence, and archaeology translations remain comparison
+    surfaces only; and
+  - required path-distinct canonical rebuild outputs, claim-language
+    separation, and explicit artifact labeling for later `P60.3+` work.
+## 2026-04-30 - Fixed the MKRF `P60.3a` upstream geometry publication starting contract
+- `#173` / `P60.3a` planning slice:
+  - fixed `03_MappingAnalysisData/Resultant.gdb/Resultant` as the canonical
+    upstream starting surface for the geometry publication rebuild lane;
+  - recorded the recovered legacy publication rule:
+    `CONTCLAS != 'X'`, `1873 -> 1763` rows, and the exact runtime field
+    projection into `fragments.*`; and
+  - made explicit that the legacy `fragments.*` payloads remain comparison
+    targets only, not acceptable raw-source substitutes for the rebuild claim.
+## 2026-04-30 - Defined the MKRF canonical runtime spatial handoff contract
+- `#173` / `P60.3b` planning slice:
+  - fixed the required canonical runtime spatial outputs under the future
+    rebuild package: `Spatial/fragments.*` and `Spatial/topo_frag100.csv`;
+  - recorded the minimum lineage evidence that must accompany that handoff:
+    source, filter, field projection, output identity, and run/manifest
+    provenance; and
+  - fixed the acceptance and rejection rules so the rebuild lane cannot satisfy
+    the spatial runtime handoff by copying PoC, archival, or checkpoint-derived
+    runtime artifacts into the canonical package.
+## 2026-04-30 - Excluded checkpoints and compiled-runtime artifacts from the MKRF rebuild claim surface
+- `#173` / `P60.3c` planning slice:
+  - fixed checkpoint-derived and compiled-runtime artifacts as rejected input
+    classes for any source-faithful MKRF rebuild claim;
+  - required claim-language separation between benchmark/debug use and
+    source-faithful rebuild use; and
+  - fixed lowercase naming as the default for new FEMIC-controlled files and
+    directories in the canonical rebuild lane, while preserving mixed-case only
+    for legacy evidence, upstream payloads, or external runtime contracts we do
+    not control.
+## 2026-04-30 - Fixed the MKRF source-driven control replacement contract
+- `#173` / `P60.4a` planning slice:
+  - rejected the PoC checkpoint-backed target-state lane
+    (`initialTargetSummary.csv` / `initialTargetStatus.csv`) as a canonical
+    rebuild input surface;
+  - fixed the reviewed control authorities for the replacement lane around
+    `Targets/000_Targets_Builder.xlsx`, the recovered target script fragments,
+    and `ScenarioSet.bsh`; and
+  - recorded that `P60.4a` is only satisfied when the canonical rebuild can
+    point to a distinct source-driven control authority rather than reusing
+    checkpoint state as source.
+## 2026-04-30 - Classified MKRF scenario-target semantics by carry-forward status
+- `#173` / `P60.4b` planning slice:
+  - fixed the source-evidenced target families that may carry forward into the
+    canonical rebuild lane: harvest, flow, patch, grn, biod, wat/ECA-like
+    watershed targets, vqo, and Routes;
+  - fixed unresolved helper families such as `THLB4070(...)` and `UWR(...)` as
+    deferred by default rather than canonical rebuild requirements; and
+  - recorded that the rebuild may preserve target-family intent while replacing
+    checkpoint-era or legacy helper-wrapper shapes with FEMIC-native control
+    contracts unless source evidence or benchmark necessity requires otherwise.
+## 2026-04-30 - Excluded unexplained compiled control seams from the MKRF canonical rebuild
+- `#173` / `P60.4c` planning slice:
+  - fixed missing helper-wrapper layers such as `InitialTargets/00_Target_Descriptions.bsh`
+    and unresolved helper families such as `THLB4070(...)` / `UWR(...)` as
+    excluded from the canonical rebuild by default;
+  - allowed those seams to remain only as benchmark caveats, archaeology notes,
+    or future reconstruction candidates; and
+  - required any future re-entry into the canonical rebuild lane to be justified
+    by reviewed source evidence or by a documented benchmark/acceptance gate.
+## 2026-04-30 - Amended the MKRF rebuild contract for AU-wise first-growth curves
+- `#173` / `P60.4d` planning slice:
+  - replaced the earlier broader AU rule in the canonical rebuild lane with a
+    key built from `bec_zone + bec_subzone + bec_variant + ordered top-2 leading species`;
+  - required VDYP-derived first-growth evidence to be consolidated into AU-wise
+    unmanaged curves using FEMIC NLLS functions and policy style rather than
+    carrying forward the legacy one-curve-per-stand first-growth behavior; and
+  - made `P60.5a` depend on published AU tables, AU-wise first-growth lineage,
+    and curve-fit diagnostics before runtime XML/track generation.
+## 2026-04-30 - Defined the MKRF canonical runtime-package generation contract
+- `#173` / `P60.5a` planning slice:
+  - fixed the canonical rebuild package root at
+    `models/mkrf_patchworks_model/`, distinct from
+    `models/mkrf_patchworks_model_poc/`;
+  - required lowercase FEMIC-controlled package layout under
+    `analysis/`, `xml/`, `tracks/`, `spatial/`, `scripts/`, `targets/`, and
+    `initial_targets/` unless a later external runtime contract forces a
+    documented exception;
+  - required the canonical package to consume the AU-wise AU table and
+    AU-wise NLLS-fitted unmanaged/first-growth curves defined by `P60.4d`; and
+  - fixed the acceptance rule so XML, tracks, spatial outputs, and control
+    surfaces must be generated into the canonical package with package-local
+    lineage evidence, not copied from PoC, checkpoint, or archival runtime
+    surfaces.
+## 2026-04-30 - Defined the MKRF Matrix Builder and runtime-assembly acceptance contract
+- `#173` / `P60.5b` planning slice:
+  - required the canonical rebuild lane to run Patchworks preflight, Matrix
+    Builder, and runtime assembly against the canonical package under
+    `models/mkrf_patchworks_model/`;
+  - fixed the minimum evidence surface as preflight manifests, Matrix Builder
+    manifests, regenerated canonical `tracks/`, and runtime-stage or
+    launch evidence tied to that same canonical package; and
+  - rejected shortcut validation paths such as using the PoC package, copying
+    prior `tracks/`, or treating static XML presence as a runtime rebuild
+    proof.
+## 2026-04-30 - Inserted an explicit MKRF AU build and first-growth curve phase
+- `#173` planning amendment:
+  - inserted a new top-level `P60.5` for canonical AU-table publication,
+    stand-to-AU assignment lineage, and AU-wise first-growth VDYP curve
+    synthesis with FEMIC NLLS;
+  - moved runtime-package generation to `P60.6`, benchmark validation to
+    `P60.7`, and closeout/docs to `P60.8`; and
+  - made the runtime-generation contract explicitly consume the AU-wise
+    first-growth lane instead of implying that AU build work happens inside the
+    runtime package step.
+## 2026-04-30 - Defined the MKRF canonical AU-table publication contract
+- `#173` / `P60.5a` planning slice:
+  - fixed the canonical AU publication surface at
+    `data/model_input_bundle/au_table.csv`;
+  - required the AU key to be built from
+    `bec_zone + bec_subzone + bec_variant + ordered top-2 leading species`;
+  - fixed a deterministic tie-break rule for equal top-2 species shares using
+    ascending lexical species-code order; and
+  - required a stable canonical `au_id` derived from the new AU key rather
+    than inherited legacy numeric AU ids.
+## 2026-04-30 - Defined the MKRF stand-to-AU assignment lineage contract
+- `#173` / `P60.5b` planning slice:
+  - fixed the canonical stand-to-AU publication surface at
+    `data/model_input_bundle/stand_au_assignment.csv`;
+  - required explicit lineage from source records into canonical `au_id`
+    values using the published AU key fields;
+  - required diagnostics for unmatched, sparse, and exceptional assignment
+    cases before AU-wise curve synthesis; and
+  - required later AU-wise first-growth curve synthesis to consume this
+    published assignment surface rather than legacy AU mappings or stand-wise
+    runtime identifiers.
+## 2026-04-30 - Defined the MKRF AU-wise first-growth VDYP curve contract
+- `#173` / `P60.5c` planning slice:
+  - fixed the canonical AU-wise unmanaged/first-growth curve publication
+    surfaces at `data/model_input_bundle/first_growth_au_curves.csv` and
+    `data/model_input_bundle/first_growth_au_fit_diagnostics.csv`;
+  - required explicit lineage from stand-level unmanaged/first-growth VDYP
+    evidence through canonical `au_id` assignment into one accepted AU-wise
+    curve per AU;
+  - required fit diagnostics to expose sample counts, fit family, sparse-sample
+    warnings, acceptance status, and fallback/rescue use per AU; and
+  - checked parent `P60.5` complete once AU table, stand assignment, and
+    AU-wise first-growth synthesis contracts were all defined.
+## 2026-04-30 - Materialized the first real MKRF AU input bundle artifacts
+- `#173` / actual `P60.5a`-`P60.5b` implementation slice:
+  - added a checked-in MKRF AU builder module and CLI entrypoint:
+    `femic instance mkrf-build-au-inputs`;
+  - materialized `external/femic-mkrf-instance/data/model_input_bundle/au_table.csv`
+    and `stand_au_assignment.csv` from the upstream
+    `03_MappingAnalysisData/Resultant.gdb/Resultant` source surface;
+  - published the first real canonical AU input bundle with `1763` assigned
+    source rows grouped into `66` canonical AUs; and
+  - stopped ignoring `data/model_input_bundle/` in the MKRF instance repo so
+    canonical rebuild inputs can be versioned instead of treated as disposable
+    runtime spill.
+## 2026-04-30 - Extended MKRF first-growth synthesis with lexmatch fallback
+- `#173` / actual `P60.5c` implementation slice:
+  - added a checked-in MKRF AU-wise first-growth synthesis module and CLI
+    wiring that now requires the upstream `Resultant.gdb` source surface when
+    unmatched VDYP stands need fallback assignment;
+  - reused FEMIC's built-in lexicographical alias helper to tuck unmatched
+    VDYP stands into similar non-empty canonical AUs instead of silently
+    dropping them;
+  - regenerated `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_curves.csv`
+    and `first_growth_au_fit_diagnostics.csv` from the upstream
+    `VDYP_Yields.csv` plus `Resultant.gdb`;
+  - produced `63` AU-wise first-growth curves with `1021` assigned source
+    stands, `21` lexmatch-assigned stands, and `2` residual unmatched source
+    stands that still do not appear in `Resultant.gdb`; and
+  - exposed per-AU lexmatch diagnostics so alias use is reviewable instead of
+    hidden in shell-only glue logic.
+## 2026-04-30 - Added the first MKRF AU distribution plot
+- `#173` / follow-on implementation slice:
+  - added a checked-in MKRF AU distribution plotting workflow and CLI command:
+    `femic instance mkrf-plot-au-distribution`;
+  - reused the same FEMIC strata-distribution plotting helper seam used for
+    K3Z, with an MKRF-specific AU label formatter;
+  - generated and versioned:
+    - `external/femic-mkrf-instance/plots/strata-tsamkrf.png`
+    - `external/femic-mkrf-instance/plots/strata-tsamkrf.pdf`
+  - updated the MKRF instance `.gitignore` so these committed plot artifacts
+    are kept while `docs/_build/` and other generated surfaces stay ignored.
+## 2026-04-30 - Reopened the MKRF AU lane for top-N coverage selection
+- `#173` / Phase 60 planning amendment:
+  - reopened `P60.5` to add `P60.5d`, an explicit top-N AU selection step
+    before runtime generation;
+  - fixed the default canonical rule to select the smallest AU subset whose
+    cumulative covered area reaches at least `80%` of the assignment universe;
+  - fixed the canonical selected-AU publication surface at
+    `data/model_input_bundle/selected_au_table.csv`; and
+  - required downstream runtime generation to consume that explicit selected
+    AU subset by default rather than silently using the full AU universe.
+## 2026-04-30 - Materialized the MKRF top-N AU selection bundle
+- `#173` / actual `P60.5d` implementation slice:
+  - added checked-in pipeline/workflow/CLI support for canonical AU subset
+    selection using the canonical cumulative-area coverage rule;
+  - added the operator command:
+    `femic instance mkrf-select-aus`;
+  - generated and versioned:
+    `external/femic-mkrf-instance/data/model_input_bundle/selected_au_table.csv`;
+  - first produced `14` selected AUs at the provisional `80%` cutoff, then
+    rebuilt the canonical bundle at the new `95%` cutoff;
+  - current canonical result is `31` selected AUs from the full `66`-AU
+    universe; and
+  - current realized cumulative covered-area share is `0.950222`.
+## 2026-04-30 - Recompiled MKRF AU diagnostic and comparison plots
+- `#173` / `P60.5e` implementation slice:
+  - added checked-in plot rebuild support in the FEMIC workflow/CLI:
+    `femic instance mkrf-recompile-plots`;
+  - raised the MKRF strata site-index axis upper bound from `40` to `50`;
+  - regenerated the selected-AU plot bundle against the current `95%`
+    `selected_au_table.csv`;
+  - produced:
+    - `31` `vdyp_lmh_tsamkrf-*.png` plots;
+    - `87` `vdyp_fitdiag_tsamkrf-*.png` plots; and
+    - `4` `tipsy_vdyp_tsamkrf-*.png` plots; and
+  - kept the AU/curve/plot logic in checked-in Python workflow code rather
+    than ephemeral shell-only scripts.
+## 2026-04-30 - Implemented the MKRF managed AU bootstrap lane
+- `#173` / `P60.6` implementation slice:
+  - added checked-in managed-lane pipeline/workflow/CLI support:
+    - `femic instance mkrf-build-managed-au-inputs`
+    - `femic instance mkrf-build-managed-au-curves`
+  - published:
+    - `external/femic-mkrf-instance/data/model_input_bundle/managed_au_bootstrap_table.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/managed_au_msyt.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/managed_au_curves.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/managed_au_run_manifest.json`
+  - current selected canonical AUs: `31`
+  - current included managed bootstrap AUs: `4`
+  - current unmatched selected AUs: `27`
+  - current direct mappings: `4`
+  - current lexmatch mappings: `0`
+  - current compiled managed/planted curves: `4`
+  - found and fixed the real BTC seam:
+    the managed builder had been bypassing the copied-install/live-overlay
+    unattended TSR mode that the direct `femic tipsy run-btc` path uses
+    successfully; and
+  - shifted the downstream runtime/build/validation/closeout tasks so the
+    managed bootstrap lane is explicit instead of buried inside runtime-package
+    generation.
+## 2026-04-30 - Switched MKRF managed comparison plots to rebuilt managed curves
+- `#173` follow-up fix:
+  - changed the canonical MKRF `tipsy_vdyp_tsamkrf-*.png` plot lane to consume
+    `managed_au_curves.csv` instead of legacy `TIPSY_Yields.csv`;
+  - updated `femic instance mkrf-recompile-plots` so the main plot command now
+    reads the managed-curve bundle directly from the instance;
+  - rebuilt the full selected-unit plot bundle against:
+    - `first_growth_au_curves.csv`; and
+    - `managed_au_curves.csv`; and
+  - kept the legacy TIPSY surface out of the canonical comparison plots so the
+    managed-vs-first-growth plots now reflect the actual rebuilt managed lane.
+## 2026-04-30 - Inserted an MKRF bad-curve gate before runtime generation
+- `#177` planning/control slice:
+  - opened a dedicated child issue to lasso bad first-growth and managed curve
+    cases before continuing canonical runtime generation;
+  - inserted new `P60.7` in the roadmap as a blocking bad-curve task; and
+  - shifted canonical runtime generation, benchmark validation, and closeout
+    down one block so the rebuild lane cannot keep moving on bad curves.
+## 2026-04-30 - Published the MKRF bad-curve audit bundle
+- `#177` / `P60.7a` implementation slice:
+  - added a checked-in `femic instance mkrf-audit-bad-curves` workflow that
+    audits selected-unit first-growth curves against raw VDYP rows, stand
+    assignment lineage, and source-side site-index/age context;
+  - published:
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_summary.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_detail.csv`
+  - current audit result:
+    - `15` flagged units out of `31` selected units; and
+  - moved the active rebuild edge to `P60.7b`, where the flagged cases must be
+    corrected before canonical runtime generation can continue.
+## 2026-04-30 - Applied the MKRF first-growth age-floor correction
+- `#177` / `P60.7b` correction slice:
+  - changed the canonical first-growth builder so only stands with
+    `AGE_2020 >= 80` contribute to the VDYP first-growth lane;
+  - regenerated:
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_curves.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_fit_diagnostics.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_summary.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_detail.csv`
+    - the selected-unit plot bundle;
+  - current audit result after the age floor:
+    - `11` flagged units out of `31` selected units; and
+  - stale managed-vs-first-growth plot files are now removed on rebuild, so the
+    plot surface reflects only the current surviving comparison cases.
+- 2026-04-30 - Extended the MKRF bad-curve audit with explicit age-share
+  diagnostics and issue classes so the surviving flagged cases are now
+  separated into:
+  - `7` units with no first-growth left after the age-floor rule;
+  - `2` young-skewed units; and
+  - `2` true mixed-population units still needing grouping fixes.
+- 2026-04-30 - Applied a targeted sibling-borrow override for the clearly
+  too-young `cwh_dm_x_dr_cw` first-growth case, reducing the surviving flagged
+  set to:
+  - `7` units with no first-growth left after the age-floor rule;
+  - `1` young-skewed unit; and
+  - `2` true mixed-population units.
+## 2026-04-30 - Reclassified MKRF single-old-stand first-growth failures
+- `#177` / `P60.7b` correction slice:
+  - changed the canonical first-growth builder so units with fewer than `2`
+    unique old-enough source stands no longer get a fitted VDYP first-growth
+    curve;
+  - added audit logic that classifies missing curves against unique old-support
+    stand counts rather than fragment-row counts;
+  - regenerated:
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_curves.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_fit_diagnostics.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_summary.csv`
+  - current audit result after this correction:
+    - `14` flagged units out of `31` selected units, split into:
+      - `8` `insufficient_source_stands`
+      - `5` `no_first_growth_after_age_floor`
+      - `1` `mixed_population`;
+  - `cwh_vm_1_dr_hw` now lands in `insufficient_source_stands` with no fitted
+    first-growth curve, which is the intended correction for that case.
+## 2026-04-30 - Merged most MKRF insufficient-support units into larger neighbors
+- `#177` / `P60.7b` correction slice:
+  - added a deterministic post-fit merge rule for `insufficient_source_stands`
+    units:
+    - same BEC bucket required;
+    - prefer more shared species; then
+    - prefer larger covered area;
+  - regenerated:
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_curves.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_fit_diagnostics.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_summary.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_detail.csv`
+  - current audit result after this merge step:
+    - `9` flagged units out of `31` selected units, split into:
+      - `2` `insufficient_source_stands`
+      - `5` `no_first_growth_after_age_floor`
+      - `2` `mixed_population`;
+  - merged examples:
+    - `cwh_vm_1_dr_hw -> cwh_vm_1_hw_cw`
+    - `cwh_vm_1_fdc_cw -> cwh_vm_1_hw_cw`
+    - `cwh_dm_x_dr_cw -> cwh_dm_x_hw_cw`.
+## 2026-04-30 - Rebuilt the MKRF managed lane from expert planting rules
+- `#173` / `P60.6e` implementation slice:
+  - promoted `external/femic-mkrf-instance/config/tipsy/tsamkrf.yaml` from a
+    template to the active MKRF managed-rule authority using Anna Tobiasz's
+    first-pass MKRF planting guidance;
+  - replaced the legacy-managed bootstrap ceiling with explicit stand-origin
+    classification from `AGE_2020`:
+    - `AGE_2020 >= 80` -> `fire_origin`
+    - `AGE_2020 < 80` -> `logging_origin`;
+  - published:
+    - `external/femic-mkrf-instance/data/model_input_bundle/stand_origin_assignment.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/managed_au_bootstrap_table.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/managed_au_msyt.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/managed_au_curves.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/managed_au_run_manifest.json`;
+  - rebuilt the managed lane so it now covers all `31` selected AUs:
+    - `31` included managed bootstrap AUs
+    - `0` unmatched selected AUs
+    - `29` AUs using logging-origin median managed SI
+    - `2` AUs using all-stand median managed SI fallback
+    - `31` compiled managed/planted curves;
+  - expanded the managed species universe to support `PW`, `SS`, and `YC`;
+  - reran the MKRF comparison plot bundle against the rebuilt managed curves,
+    producing:
+    - `28` `vdyp_lmh_tsamkrf-*.png`
+    - `80` `vdyp_fitdiag_tsamkrf-*.png`
+    - `24` `tipsy_vdyp_tsamkrf-*.png`; and
+  - kept CT/clearcut intent in the managed bootstrap/config metadata only,
+    without yet rewiring the runtime treatment lane.
+## 2026-04-30 - Cleared the MKRF bad-curve blocker surface
+- `#177` / `P60.7b` correction slice:
+  - applied the confirmed `AGE_2020 >= 80` first-growth floor through the
+    canonical MKRF first-growth builder and kept younger units in the
+    managed/planted lane instead of forcing bad first-growth fits;
+  - reclassified zero-old-support units as managed-only after the age floor,
+    converted single-old-stand cases into explicit insufficient-support
+    outcomes, and merged insufficient-support units onto sane same-BEC
+    neighbors using fragment-level old-support accounting aligned with the
+    audit surface;
+  - tightened insufficient-support donor selection so low-terminal donor curves
+    are rejected instead of propagating near-zero first-growth curves;
+  - added a narrow `observed_bin_tail_rescue` path for severe right-tail
+    underfit against observed 5-year VDYP medians, which resolved the final
+    surviving `cwh_vm_1_cw_hw` fit pathology;
+  - regenerated:
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_curves.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_fit_diagnostics.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_summary.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_detail.csv`; and
+  - reduced the MKRF bad-curve audit from `15` flagged selected units at the
+    start of the correction lane to `0` flagged units out of `31` selected
+    units, moving the active edge to `P60.7c`.
+## 2026-04-30 - Switched MKRF first-growth publication to local smoothed curves only
+- `#177` / `P60.7c` refinement slice:
+  - documented the reviewed curve-family decision in the roadmap/planning
+    surface: use strongly smoothed observed-bin PCHIP where AU-local
+    first-growth support is adequate;
+  - removed canonical publication of borrowed first-growth curves from the MKRF
+    bundle builder, so AU curves are now either AU-local or explicitly missing;
+  - rebuilt:
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_curves.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/first_growth_au_fit_diagnostics.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_summary.csv`
+    - `external/femic-mkrf-instance/data/model_input_bundle/bad_curve_audit_detail.csv`
+    - `external/femic-mkrf-instance/plots/*`;
+  - current explicit first-growth state is:
+    - `20` AU-local `smoothed_bin_pchip` curves
+    - `11` `insufficient_source_stands` diagnostics rows
+    - `8` flagged selected AUs in the bad-curve audit, all `insufficient_source_stands`; and
+  - the comparison bundle now publishes `18` managed-vs-first-growth plots
+    because borrowed comparison surfaces are no longer emitted.
+## 2026-04-30 - Closed the MKRF curve-quality acceptance gate
+- `#177` / `P60.7c` closeout slice:
+  - recorded the explicit curve-quality acceptance gate in the roadmap and
+    Phase 60 planning notes;
+  - marked `P60.7` / `P60.7c` complete on the roadmap;
+  - locked the accepted downstream runtime contract to:
+    - `20` AU-local `smoothed_bin_pchip` first-growth curves;
+    - `11` explicit `insufficient_source_stands`;
+    - `8` flagged selected AUs, all insufficient-support and all covered by
+      managed curves; and
+    - managed-only runtime treatment for those `8` flagged AUs; and
+  - moved the active implementation edge from `P60.7` to `P60.8`.
+## 2026-05-01 - Recorded the missing MKRF runtime spatial source-lane contract
+- Added `external/femic-mkrf-instance/config/source_inputs.mkrf_rebuild.yaml`
+  to fix the expected instance-local source location for the canonical MKRF
+  spatial publisher:
+  `data/source/03_MappingAnalysisData/Resultant.gdb`.
+- Updated roadmap/planning notes so `P60.8a` is explicitly blocked on
+  materializing that upstream source payload, not on more XML/control
+  scaffolding.
+- Re-stated the no-substitute boundary at the instance contract surface:
+  archival compiled spatial files, PoC spatial files, and checkpoint-derived
+  geometry artifacts are not acceptable substitutes for the missing
+  `Resultant.gdb` source lane.
+## 2026-05-01 - Cleared the MKRF canonical runtime-package rebuild lane
+- `#173` / `P60.8a`-`P60.8b` milestone:
+  - materialized the canonical MKRF runtime package under
+    `external/femic-mkrf-instance/models/mkrf_patchworks_model/`;
+  - published source-faithful runtime spatial outputs from
+    `data/source/03_MappingAnalysisData/Resultant.gdb`;
+  - normalized runtime AU assignment onto the selected canonical AU set and
+    published the remap audit at
+    `analysis/runtime_au_remap_audit.csv`;
+  - rebuilt the canonical `forestmodel.xml` and legal top-level product
+    surface so Patchworks preflight and Matrix Builder run cleanly against the
+    source-faithful package; and
+  - verified the rebuilt runtime surface now emits populated managed
+    area/yield features, products, and accounts in `tracks/`.
+## 2026-05-01 - Advanced MKRF PoC-parity rollout on the clean canonical runtime
+- `#173` / `P60.9a` parity slice:
+  - updated the canonical runtime-package generator and tests so the new
+    first-growth-aware `au` / `hasfg` contract is validated directly rather
+    than through a stale exact-string assertion;
+  - rebuilt the canonical package and reran Matrix Builder cleanly through
+    runs `mkrf_rebuild_p60_9a_20260501c` and `mkrf_rebuild_p60_9a_20260501d`;
+  - confirmed managed parity breadth now emits in the canonical runtime,
+    including managed `EN/EM/FM/THN`, managed `merch.total`, and managed
+    `indsp.{Ba,Cw,Dec,Dr,Fd,Hw,Oth,Yc}` families across `features.csv`,
+    `products.csv`, and `accounts.csv`;
+  - added unmanaged-yield fallback emission for unmanaged `EM` states so the
+    canonical runtime now emits `feature.yield.unmanaged.state.EM` without
+    reopening unmanaged `indsp.*`; and
+  - reduced the canonical-vs-PoC family diff to:
+    - accepted redesign: `feature.area.unmanaged.state.THN` and
+      `feature.yield.unmanaged.state.THN`, because the PoC emits those from a
+      special numeric unmanaged AU family that the canonical rebuild does not
+      preserve after runtime AU normalization; and
+    - accepted/source-blocked for now: unmanaged
+      `feature.yield.unmanaged.indsp.*`.
+- `#173` / `P60.9a` parity closeout update:
+  - corrected the unmanaged species-share source contract so canonical runtime
+    regeneration reads `stand_au_assignment.csv` for unmanaged species-share
+    aggregation while preserving `stand_origin_assignment.csv` for runtime AU
+    normalization;
+  - regenerated the canonical runtime package and reran Matrix Builder cleanly
+    through run `mkrf_rebuild_p60_9a_20260501e`;
+  - confirmed unmanaged `feature.yield.unmanaged.indsp.{Ba,Cw,Dec,Dr,Fd,Hw,Oth,Yc}`
+    now materializes in canonical `features.csv` and `accounts.csv`; and
+  - confirmed unmanaged products remain absent in the canonical runtime, which
+    is PoC-consistent because the accepted PoC `products.csv` is managed-only.
+- `#173` / `P60.8` closeout status update:
+  - marked `P60.8c` complete because the canonical package stayed synchronized
+    through the completed `P60.9a` parity reruns; and
+  - closed `P60.8` as a finished runtime-package milestone so the active edge
+    now sits on `P60.9b` and `P60.9c`.
+- `#173` / `P60.9b` acceptance-boundary update:
+  - recorded that the next acceptance question is no longer runtime-surface
+    parity but legacy control-lane evidence;
+  - made explicit that the canonical rebuild does not yet publish rebuilt
+    `base.pin`, `ScenarioSet.bsh`, `InitialTargets`, `Scripts`, or `Targets`
+    surfaces under `models/mkrf_patchworks_model`; and
+  - pinned `THLB4070(...)`, `UWR(...)`, and
+    `InitialTargets/00_Target_Descriptions.bsh` as legacy/PoC benchmark seams
+    rather than current canonical regressions unless a later control-lane
+    rebuild task reopens them.
+- `#173` / `P60.9` closeout status update:
+  - marked `P60.9b` and `P60.9c` complete now that the legacy control-lane
+    evidence and remaining differences are explicitly classified;
+  - closed `P60.9` as the acceptance milestone for the canonical rebuild
+  runtime surface; and
+  - moved the active edge to `P60.10` closeout docs and final claim-boundary
+  publication.
+- `#173` / `P60.10a` planning update:
+  - identified the exact docs/runbook closeout surfaces that still need the
+    canonical rebuild lane taught directly;
+  - pinned the parent docs targets to `docs/sample-models/mkrf.rst` and
+  `docs/sample-models/mkrf-metadata-lineage.rst`; and
+  - pinned the instance closeout set to `README.md` plus the still-PoC-framed
+  MKRF docs pages under `external/femic-mkrf-instance/docs/`.
+- `#173` / `P60.10a` docs closeout update:
+  - updated the parent MKRF pointer docs so they now present
+    `models/mkrf_patchworks_model/` as the active canonical rebuild lane and
+    keep `models/mkrf_patchworks_model_poc/` as benchmark/reference evidence;
+  - updated the targeted instance README/docs surfaces to teach the canonical
+    rebuild lane first and keep the retained PoC/control seams explicitly out
+    of the canonical claim boundary; and
+  - verified that both the parent docs tree and the standalone instance docs
+    tree build cleanly with Sphinx warnings treated as errors.
+- `#173` / `P60.10b` claim-boundary closeout update:
+  - recorded that the canonical MKRF rebuild claim now covers the
+    `models/mkrf_patchworks_model/` runtime/package lane, including canonical
+    XML, spatial, tracks, analysis, and the accepted runtime Patchworks config;
+  - fixed the retained PoC and legacy surfaces, including
+    `models/mkrf_patchworks_model_poc/`, legacy compiled controls/tracks, and
+    benchmark report/control artifacts, as benchmark/reference evidence only
+    rather than part of the canonical rebuild claim; and
+  - fixed `THLB4070(...)`, `UWR(...)`, and
+    `InitialTargets/00_Target_Descriptions.bsh` as accepted legacy-only
+    control-lane seams outside the canonical rebuild claim boundary for this
+    phase unless a later task explicitly reopens source-faithful control-lane
+    reconstruction.
+- `#173` / `P60.10c` canonical runnable-control update:
+  - generated a minimal canonical analysis/control lane for
+    `models/mkrf_patchworks_model/`, including `analysis/base.pin`,
+    `analysis/headless_runtime_common.bsh`, and
+    `scripts/targets/flowtargets.bsh`;
+  - repointed the built-in `mkrf.base` Patchworks variant at the canonical
+  rebuild package and retained the PoC control lane separately as
+    `mkrf.poc_base`; and
+  - ran the real canonical even-flow harvest-volume smoke
+    `mkrf_canonical_evenflow_smoke`, which completed successfully and produced
+    sane saved-stage outputs under
+    `runtime/logs/headless_stage/mkrf_canonical_evenflow_smoke/`, including a
+    non-empty schedule plus active `product.yield.managed.total` and
+    `flow.even.product.yield.managed.total` targets.
+## 2026-05-02 - Repaired MKRF Patchworks semantics drift and added runtime sanity auditing
+- `#173` / `P60.10e` semantic-repair closeout:
+  - repaired the canonical MKRF runtime generator so Patchworks IFM
+    (`managed/unmanaged`) is now decoupled from curve provenance
+    (`natural/treated`), with explicit runtime `origin` semantics driven by
+    the reviewed 2020 age rule;
+  - stopped using first-growth / `hasfg` availability as a proxy for IFM
+    state, unmanaged-vs-managed yield logic, or species-family emission while
+    preserving `EM/EN/FM/THN` output families for compatibility;
+  - published deterministic species-share audit output at
+    `external/femic-mkrf-instance/models/mkrf_patchworks_model/analysis/runtime_species_share_audit.csv`
+    plus the new CLI/runtime helper `femic instance mkrf-audit-runtime-sanity`;
+  - regenerated the canonical package, reran Matrix Builder cleanly through
+    `mkrf_rebuild_p60_10e_20260502c`, reran the canonical even-flow smoke as
+    `mkrf_canonical_evenflow_semantic_smoke_20260502a`, and verified the
+    resulting saved-stage sanity audit completed with zero failures; and
+  - updated parent repo agent-facing guardrails in `AGENTS.md`,
+    `docs/reference/contracts/patchworks-model-semantics.rst`,
+    `docs/reference/patchworks-export.rst`, and
+    `docs/guides/vscode-coding-agent-onboarding.rst` so future Patchworks
+    instance work starts from the correct IFM/origin/retention semantics.
+## 2026-05-02 - Raised canonical MKRF smoke validation to the real 100000-iteration baseline
+- `#173` / follow-on `v0` checkpoint hygiene:
+  - confirmed the earlier canonical semantic smoke sample had only used
+    `20000` iterations and reran the canonical headless even-flow scenario at
+    an explicit `100000` iterations as
+    `mkrf_canonical_evenflow_semantic_smoke_20260502b`;
+  - reran `femic instance mkrf-audit-runtime-sanity` against that stronger
+    saved stage and confirmed `rows=24 failures=0`;
+  - verified the active even-flow target remains numerically sane at the
+    stronger iteration budget, with stable
+    `product.yield.managed.total` and near-zero
+    `flow.even.product.yield.managed.total` residuals;
+  - updated the built-in canonical MKRF scenario registry so
+    `mkrf.base` `even_flow_smoke` now defaults to `100000` iterations rather
+    than `20000`; and
+  - updated the parent MKRF sample-model docs plus the instance
+    `rebuild-and-qa` / `operator-runbook` pages so the repaired IFM/origin
+    semantics and the stronger `v0` validation lane are documented directly.
+## 2026-05-02 - Closed the MKRF archaeology umbrella after the canonical rebuild handoff
+- `#173` / `P60.10d` closeout:
+  - audited umbrella issue `#172` against the completed `P55`-`P59`
+    archaeology/PoC benchmark scope and the completed `P60` canonical rebuild
+    scope;
+  - confirmed that no remaining technical work still belongs to the
+    archaeology umbrella rather than the canonical rebuild record under
+    `#173`;
+  - posted the final closeout comment on `#172` and closed the issue; and
+  - marked `P60.10d` and parent `P60.10` complete in the roadmap/planning
+    surfaces so the repo state now matches the GitHub tracker.
