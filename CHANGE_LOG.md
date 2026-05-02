@@ -16323,3 +16323,16 @@
     `getting-started` and `model-anatomy` orientation flow; and
   - rebuilt the standalone instance Sphinx docs and confirmed the new figure
     pages publish warning-clean.
+## 2026-05-02 - Fixed MKRF published docs images by moving figure assets off annex-backed plots
+- `femic-mkrf-instance#6` / `P63.3` docs publication repair:
+  - confirmed the live GitHub Pages image URLs were serving git-annex pointer
+    payloads instead of real PNG bytes because the figure pages referenced
+    annex-backed `plots/` files;
+  - copied the published MKRF figure subset into
+    `external/femic-mkrf-instance/docs/_static/mkrf-figures/` as a docs-owned
+    non-annex asset surface;
+  - repointed `yield-curve-comparisons.rst` and `figure-appendix.rst` at the
+    docs-owned assets so standalone publication no longer depends on annex
+    content; and
+  - rebuilt and republished the standalone instance docs from `main` with the
+    corrected figure asset path.

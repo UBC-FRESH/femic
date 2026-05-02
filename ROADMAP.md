@@ -1738,6 +1738,10 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P63.2a Audit the existing `plots/` artifact set and select the subset that belongs in the public operator docs.
   - [x] P63.2b Add MKRF docs pages and toctree links for strata distribution plus yield-curve/fit-diagnostic figures, following the proven K3Z figure-gallery pattern.
   - [x] P63.2c Rebuild the standalone instance docs and verify the rendered figure pages publish cleanly.
+- [x] P63.3 Fix MKRF docs image publication by moving published figure assets off annex-backed `plots/` (`femic-mkrf-instance#6`)
+  - [x] P63.3a Copy the published MKRF figure subset into a docs-owned non-annex asset path.
+  - [x] P63.3b Repoint the standalone figure pages at the docs-owned assets so GitHub Pages serves real image bytes instead of annex pointer files.
+  - [x] P63.3c Rebuild and republish the standalone instance docs, then verify the live `_images` or `_static` figure URLs return actual PNG payloads.
 
 ### Detailed Next Steps Notes
 
@@ -1761,3 +1765,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
       - `docs/yield-curve-comparisons.rst` renders the checked-in treated TIPSY-vs-VDYP overlay gallery;
       - `docs/figure-appendix.rst` renders the strata distribution plus current VDYP envelope and fit-diagnostic figures; and
       - the standalone instance Sphinx build remains warning-clean after wiring those new pages into the guide toctree and anatomy/getting-started flow.
+- Active docs publication bug:
+  - resolved by moving the published figure subset into `docs/_static/mkrf-figures/`;
+  - `yield-curve-comparisons.rst` and `figure-appendix.rst` now publish from that docs-owned non-annex asset surface instead of from annex-backed `plots/`; and
+  - the standalone instance docs have been rebuilt and republished from `main` with the corrected asset path.
