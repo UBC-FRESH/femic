@@ -1728,6 +1728,17 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P62.3b Summarize the major work completed so far and the cautionary alpha-release boundary.
   - [x] P62.3c Open the follow-on feature issue to publish the full legacy MKRF model inside `femic-mkrf-instance` as a recorded/reference surface for later canonical rebuild iterations.
 
+## Phase 63: Post-Release MKRF Docs Cleanup
+
+- [x] P63.1 Fix stale PoC-only framing that survived the canonical `v0.0.1a1` release (`femic-mkrf-instance#4`)
+  - [x] P63.1a Audit the published instance docs for pages that still teach `models/mkrf_patchworks_model_poc/` as the active package.
+  - [x] P63.1b Update the affected pages so `models/mkrf_patchworks_model/` is the active runtime/package lane and the PoC package is benchmark/reference evidence only.
+  - [x] P63.1c Rebuild instance docs and verify the published operator-facing pages no longer drift back to PoC-only framing.
+- [x] P63.2 Publish MKRF strata and yield-curve figure surfaces in the standalone instance docs (`femic-mkrf-instance#5`)
+  - [x] P63.2a Audit the existing `plots/` artifact set and select the subset that belongs in the public operator docs.
+  - [x] P63.2b Add MKRF docs pages and toctree links for strata distribution plus yield-curve/fit-diagnostic figures, following the proven K3Z figure-gallery pattern.
+  - [x] P63.2c Rebuild the standalone instance docs and verify the rendered figure pages publish cleanly.
+
 ### Detailed Next Steps Notes
 
 - Phase 62 publication lane is complete:
@@ -1740,3 +1751,13 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - direct Basecamp API posting is still blocked in the current environment without Basecamp authentication;
   - a direct unauthenticated message-board POST attempt returned `401 Unauthorized`; and
   - once valid Basecamp auth exists in the active environment, mirror the `v0.0.1a1` GitHub release/discussion announcement into the MKRF Basecamp message board.
+- Active next docs edge:
+  - `femic-mkrf-instance#4` is now closed at the implementation surface:
+    - `docs/model-anatomy.rst` now teaches `models/mkrf_patchworks_model/` as the active package and keeps the PoC package explicitly benchmark/reference-only;
+    - `docs/docs-ownership-and-release.rst` now treats the canonical release lane as the active publication surface instead of describing the docs set as PoC-only; and
+    - the instance Sphinx build is warning-clean after the fix.
+- Next docs feature edge:
+    - the missing MKRF figure lane is now in place:
+      - `docs/yield-curve-comparisons.rst` renders the checked-in treated TIPSY-vs-VDYP overlay gallery;
+      - `docs/figure-appendix.rst` renders the strata distribution plus current VDYP envelope and fit-diagnostic figures; and
+      - the standalone instance Sphinx build remains warning-clean after wiring those new pages into the guide toctree and anatomy/getting-started flow.

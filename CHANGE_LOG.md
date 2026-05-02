@@ -16310,3 +16310,16 @@
     and confirmed that direct Basecamp API posting remains blocked in the
     current environment without Basecamp authentication, with an
     unauthenticated message-board POST attempt returning `401 Unauthorized`.
+## 2026-05-02 - Added MKRF figure-gallery docs for strata and yield curves
+- `femic-mkrf-instance#5` / `P63.2` docs follow-up:
+  - audited the existing MKRF `plots/` artifact set and selected the checked-in
+    strata, treated overlay, VDYP envelope, and representative fit-diagnostic
+    figures for publication in the standalone docs;
+  - added `external/femic-mkrf-instance/docs/yield-curve-comparisons.rst` and
+    `external/femic-mkrf-instance/docs/figure-appendix.rst` so the standalone
+    guide now renders the existing figure surfaces inline instead of leaving
+    them as orphaned plot files;
+  - wired those new pages into the standalone docs toctree plus the
+    `getting-started` and `model-anatomy` orientation flow; and
+  - rebuilt the standalone instance Sphinx docs and confirmed the new figure
+    pages publish warning-clean.
