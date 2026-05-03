@@ -1871,3 +1871,19 @@ replace the legacy proportional-gap model with:
 
 Those are valid later enhancements, but they are not part of the legacy-parity
 repair governed by `#180`.
+
+### Implementation closeout
+
+The CT legacy-parity implementation branch now matches that contract:
+
+- the canonical generator emits the legacy/PoC CT select statement plus
+  `retain="20"` and `au='thn_'+au`;
+- the canonical yield/product logic now separates:
+  - treatment-year CT extraction = `0.4 * base curve`; and
+  - post-thin THN standing yield = `0.6 * base curve(x)`;
+- the canonical runtime package has been regenerated from that repaired
+  generator;
+- Matrix Builder completed cleanly on the rebuilt canonical package;
+- the canonical `100000`-iteration even-flow smoke completed cleanly; and
+- representative rebuilt CT-active runtime outputs now prove the expected
+  `0.4` / `0.6` split directly.
