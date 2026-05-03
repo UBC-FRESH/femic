@@ -1417,6 +1417,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d10h Sync locked row-2 aspatial fallback metadata and stop falsely blocking production full-TSA F_OWN overlays on LU bundles.
     - [x] P53.1d10i Correct strict row-2 parent-step accounting to use the true before/after net change so direct-target aspatial deductions are included in marginal validation.
     - [x] P53.1d11 Preserve strict-chain checkpoint THLB state across locked parent-step handoff so each step starts from the previous step's managed-area state instead of reinitializing to GLB.
+    - [x] P53.1d12 Validate strict row 4 from the row-3 checkpoint and record the first roads-and-landings mismatch.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -1838,9 +1839,11 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     incoming `thlb_fact` / `thlb` state, LU partition cache reuse is bound to
     checkpoint file content, and the bounded scratch-to-row-3 validation now
     lands exactly on the locked row-3 cumulative area `3,161,010.671 ha`; and
-  - the next bounded validation move is to advance exactly one more parent
-    step, through row 4, and stop on either a clean locked-chain match or the
-    first row-4 mismatch.
+  - `P53.1d12` is recorded: row 4 runs from the row-3 checkpoint and reports
+    a near-target roads-and-landings aspatial fallback, but the rebuilt feather
+    does not carry the row-4 deduction in `thlb_fact`, so the next bounded
+    repair is to make row-4 aspatial area fallback update the chained output
+    state before advancing to row 5.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

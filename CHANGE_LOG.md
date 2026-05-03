@@ -16544,3 +16544,18 @@
     leaves `3,161,010.671 ha`; and
   - confirmed the named-pipeline validator reports maximum marginal and
     cumulative locked-chain deltas of `0.000 ha` through row 3.
+## 2026-05-03 - Recorded the TSA29 strict row-4 mismatch
+- `#169` / `P53.1d12` validation run:
+  - executed only row 4 `thlb_parent_004_roads_and_landings` from the
+    validated row-3 strict-chain checkpoint;
+  - inspected the rebuilt row-4 JSON and feather outputs;
+  - captured the row-4 validator signal:
+    - locked marginal `50,434.000 ha`, actual reported marginal
+      `50,434.299 ha`, delta `+0.299 ha`;
+    - locked cumulative `3,110,576.671 ha`, actual reported cumulative
+      `3,110,576.373 ha`, delta `-0.298 ha`;
+  - confirmed the rebuilt feather still carries row-3 `thlb_fact` weighted
+    area `3,161,010.671 ha`, so the row-4 reported aspatial fallback has not
+    been written into the chained output state; and
+  - narrowed the next repair target to row-4 aspatial area fallback state
+    persistence before any row-5 validation.

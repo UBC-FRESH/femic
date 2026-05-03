@@ -726,3 +726,28 @@
       locked-chain deltas of `0.000 ha`; and
     - inspected row-3 JSON and feather outputs confirm the rebuilt feather's
       `thlb_fact` weighted area is `3,161,010.671 ha`.
+- 2026-05-03: Completed `P53.1d12` by validating strict row 4 from the
+  row-3 strict-chain checkpoint and recording the first row-4 mismatch.
+  - Run surface:
+    - executed only `thlb_parent_004_roads_and_landings` from
+      `data/tsr/strict_chain/03_thlb_parent_003_non_forest.feather`.
+  - Result JSON:
+    - `runtime/logs/tsr/strict_chain/04_thlb_parent_004_roads_and_landings.json`.
+  - Output feather:
+    - `data/tsr/strict_chain/04_thlb_parent_004_roads_and_landings.feather`.
+  - Validator comparison:
+    - input area `3,161,010.671 ha`;
+    - locked row-4 marginal `50,434.000 ha`, actual reported marginal
+      `50,434.299 ha`, delta `+0.299 ha`;
+    - locked row-4 cumulative `3,110,576.671 ha`, actual reported cumulative
+      `3,110,576.373 ha`, delta `-0.298 ha`.
+  - Output inspection:
+    - the rebuilt row-4 feather still has `thlb_fact` weighted area
+      `3,161,010.671 ha`, matching the row-3 input area rather than the
+      reported row-4 remaining area;
+    - row-4 `compiled_01` and `compiled_02` report no exact spatial removal;
+    - row-4 `compiled_03` reports the aspatial fallback removal
+      `50,434.299 ha`.
+  - Next bounded repair:
+    - make the row-4 aspatial area fallback write the deducted state into the
+      chained output checkpoint before advancing to row 5.
