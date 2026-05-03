@@ -407,7 +407,10 @@ def test_run_tsr_thlb_locked_parent_step_executes_one_locked_step(
     assert result.remaining_area_ha == pytest.approx(0.8)
     assert result.benchmark_marginal_delta_ha == pytest.approx(0.0)
     assert result.benchmark_cumulative_delta_ha == pytest.approx(0.0)
-    assert result.execution_mode == tsr_recipes.TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL
+    assert (
+        result.execution_mode
+        == tsr_recipes.TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL
+    )
     assert result.worker_count == 1
     assert result.lu_chunk_count == 1
     assert result.lu_bundle_count == 1
@@ -528,7 +531,10 @@ def test_run_tsr_thlb_locked_parent_step_uses_true_before_after_net_change(
     monkeypatch.setattr(
         tsr_recipes,
         "_load_cached_landscape_unit_partition_records",
-        lambda **kwargs: (("Test LU",), [{"lu_name": "Test LU", "chunk_path": chunk_path}]),
+        lambda **kwargs: (
+            ("Test LU",),
+            [{"lu_name": "Test LU", "chunk_path": chunk_path}],
+        ),
     )
     monkeypatch.setattr(tsr_recipes, "ProcessPoolExecutor", _ImmediateExecutor)
     monkeypatch.setattr(
@@ -583,6 +589,34 @@ def test_run_tsr_thlb_locked_parent_step_uses_true_before_after_net_change(
     assert result.remaining_area_ha == pytest.approx(0.7)
     assert result.benchmark_marginal_delta_ha == pytest.approx(0.0)
     assert result.benchmark_cumulative_delta_ha == pytest.approx(0.0)
+
+
+def test_locked_strict_execution_does_not_double_count_row2_residual_fallback() -> None:
+    parent_step = {
+        "parent_step_id": "thlb_parent_002_land_not_administered_by_the_province",
+        "benchmark_marginal_area_ha": 697033.0,
+    }
+    compiled_logic = (
+        {
+            "step_id": "thlb_parent_002_compiled_01",
+            "label": "Ownership classes not administered for TSA timber supply",
+            "compiled_operation_type": "aspatial_reduction",
+            "benchmark_marginal_area_ha": 697033.0,
+        },
+        {
+            "step_id": "thlb_parent_002_compiled_02",
+            "label": "Treaty and title transfers requiring reviewed overlays",
+            "compiled_operation_type": "aspatial_area_reduction",
+            "benchmark_marginal_area_ha": 191246.0,
+            "direct_target_removed_area": True,
+        },
+    )
+
+    selected = tsr_recipes._compiled_logic_for_locked_strict_execution(
+        parent_step, compiled_logic
+    )
+
+    assert [item["step_id"] for item in selected] == ["thlb_parent_002_compiled_01"]
 
 
 def test_run_tsr_thlb_locked_parent_step_uses_cpu_aware_parallel_defaults(
@@ -732,7 +766,10 @@ def test_run_tsr_thlb_locked_parent_step_uses_cpu_aware_parallel_defaults(
     )
 
     assert seen_max_workers == [8]
-    assert result.execution_mode == tsr_recipes.TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL
+    assert (
+        result.execution_mode
+        == tsr_recipes.TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL
+    )
     assert result.worker_count == 8
     assert result.lu_chunk_count == 131
     assert result.lu_bundle_count == 8
@@ -836,7 +873,9 @@ def test_run_tsr_thlb_locked_parent_step_passes_expected_columns_to_cache_lookup
         if expected_columns is None:
             seen_expected_columns.append(None)
         else:
-            seen_expected_columns.append(tuple(str(value) for value in expected_columns))
+            seen_expected_columns.append(
+                tuple(str(value) for value in expected_columns)
+            )
         return None
 
     monkeypatch.setattr(
@@ -7794,8 +7833,9 @@ def test_execute_workbench_compiled_item_uses_direct_target_area_reduction() -> 
     assert runtime_item["execution_status"] == "applied"
     assert runtime_item["removed_area_ha"] == pytest.approx(10.0)
     assert runtime_item["remaining_area_ha"] == pytest.approx(0.0)
-    assert "Applied a direct-target area reduction of 10.000 ha within the active checkpoint subset." in (
-        runtime_item["runtime_notes"]
+    assert (
+        "Applied a direct-target area reduction of 10.000 ha within the active checkpoint subset."
+        in (runtime_item["runtime_notes"])
     )
     assert updated["_stand_area_sqm"].sum() / 10000.0 == pytest.approx(0.0)
 

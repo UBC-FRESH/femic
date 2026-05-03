@@ -616,3 +616,25 @@
     - bounded `glb -> step2` rerun now lands at `696,931.685 ha` removed / `4,236,732.527 ha` remaining;
     - versus the locked chain this is `+150.361 ha` marginal / `-150.361 ha` cumulative; and
     - versus the TSR step-wise benchmark this is `-101.315 ha` marginal / `+130.527 ha` cumulative.
+- 2026-05-03: Reopened `P53.1d9` after a fresh TSA29 strict named-pipeline
+  row-2 rerun under `#169` found the first current locked-chain mismatch.
+  - Run surface:
+    - `runbooks/pipelines/tsa29.tsr.thlb_strict.glb_to_step2.yaml` now starts
+      from the materialized strict GLB checkpoint and reaches row-2 validation.
+  - Current mismatch:
+    - row 2
+      `thlb_parent_002_land_not_administered_by_the_province` removes
+      `888,284.260 ha` against locked `696,781.324 ha`;
+    - cumulative remaining area is `4,045,379.953 ha` against locked
+      `4,236,882.888 ha`.
+  - Diagnosis:
+    - `compiled_01` removes `697,037.127 ha`;
+    - `compiled_02` then removes another `191,247.132 ha`;
+    - `compiled_02` is the documented `191,246 ha` NStQ/Tsilhqot'in residual
+      fallback, so the row-2 named pipeline is double-counting that fallback
+      after applying the parent-level marginal.
+  - Next bounded repair:
+    - `P53.1d9d` should make strict row-2 execution treat the
+      direct-target residual as non-additive when the parent-level row-2
+      marginal has already been applied, then rerun only the same
+      `glb -> step 002` runbook and inspect the rebuilt result JSON/feather.

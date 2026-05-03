@@ -16484,3 +16484,16 @@
     - `CT40`: `73.64 + 691.16 = 764.8`
     - `CT100`: `305.92 + 589.38 = 895.3`; and
   - kept the intended release boundary for this redesign at `v0.0.2a1`.
+## 2026-05-03 - Scoped TSA29 strict row-2 fallback accounting repair
+- `#169` / `P53.1d9d` implementation slice:
+  - updated `ROADMAP.md` and `planning/phase53_named_pipeline_notes.md` so the
+    active Phase 53 edge records the current row-2 mismatch and the narrow
+    fallback-accounting repair target;
+  - added strict locked-execution normalization for row 2 so the
+    NStQ/Tsilhqot'in direct-target residual fallback is not applied as an
+    additional full deduction when the locked row-2 parent already carries the
+    parent-level aspatial marginal contract;
+  - added a focused regression test proving that the row-2 residual fallback is
+    excluded from locked strict execution in that non-additive contract shape;
+  - formatted and linted the touched code/tests; and
+  - reran the focused locked-parent-step tests successfully.

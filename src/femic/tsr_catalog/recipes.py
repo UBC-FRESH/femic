@@ -13178,6 +13178,58 @@ def _validate_locked_strict_parent_step_contract(
     return resolved_parent_step, compiled_logic
 
 
+def _is_strict_row2_non_additive_residual_fallback(
+    *, parent_step: Mapping[str, Any], compiled_item: Mapping[str, Any]
+) -> bool:
+    parent_step_id = str(parent_step.get("parent_step_id", "")).strip()
+    if parent_step_id != "thlb_parent_002_land_not_administered_by_the_province":
+        return False
+    if _resolve_compiled_operation_type(compiled_item) != "aspatial_area_reduction":
+        return False
+    if not bool(compiled_item.get("direct_target_removed_area")):
+        return False
+    label = str(compiled_item.get("label", "")).strip().casefold()
+    return "treaty" in label and "title" in label
+
+
+def _has_parent_level_aspatial_marginal_contract(
+    *, parent_step: Mapping[str, Any], compiled_logic: Sequence[Mapping[str, Any]]
+) -> bool:
+    parent_benchmark = _normalize_float_or_none(
+        parent_step.get("benchmark_marginal_area_ha")
+    )
+    if parent_benchmark is None:
+        return False
+    for compiled_item in compiled_logic:
+        if _resolve_compiled_operation_type(compiled_item) != "aspatial_reduction":
+            continue
+        item_benchmark = _normalize_float_or_none(
+            compiled_item.get("benchmark_marginal_area_ha")
+        )
+        if item_benchmark is None:
+            continue
+        if abs(item_benchmark - parent_benchmark) <= 1e-6:
+            return True
+    return False
+
+
+def _compiled_logic_for_locked_strict_execution(
+    parent_step: Mapping[str, Any], compiled_logic: Sequence[Mapping[str, Any]]
+) -> list[dict[str, Any]]:
+    normalized = [dict(item) for item in compiled_logic]
+    if not _has_parent_level_aspatial_marginal_contract(
+        parent_step=parent_step, compiled_logic=normalized
+    ):
+        return normalized
+    return [
+        item
+        for item in normalized
+        if not _is_strict_row2_non_additive_residual_fallback(
+            parent_step=parent_step, compiled_item=item
+        )
+    ]
+
+
 def default_tsr_thlb_strict_chain_checkpoint_path(
     *, instance_root: Path, parent_step_id: str, row_order: int
 ) -> Path:
@@ -13210,6 +13262,9 @@ def run_tsr_thlb_locked_parent_step(
     target_parent = _resolve_tsr_thlb_parent_step(recipe, parent_step_id=parent_step_id)
     target_parent, compiled_logic = _validate_locked_strict_parent_step_contract(
         target_parent
+    )
+    compiled_logic = _compiled_logic_for_locked_strict_execution(
+        target_parent, compiled_logic
     )
     resolved_checkpoint_path = checkpoint_path.expanduser().resolve()
     _reject_tsa29_legacy_checkpoint_path(
@@ -13390,7 +13445,9 @@ def run_tsr_thlb_locked_parent_step(
                             target_parent.get("land_base_stage", "")
                         ).strip()
                         or None,
-                        "compiled_step_id": str(compiled_item.get("step_id", "")).strip()
+                        "compiled_step_id": str(
+                            compiled_item.get("step_id", "")
+                        ).strip()
                         or None,
                         "compiled_step_label": str(
                             compiled_item.get("label", "")
