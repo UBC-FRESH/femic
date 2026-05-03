@@ -1802,3 +1802,88 @@ all of the following are true:
 - validating only XML presence without a Matrix Builder run; or
 - validating only Matrix Builder completion without any runtime-assembly or
   launch evidence tied to the canonical package.
+
+## Post-`v0.0.1a1` CT legacy-parity follow-up (`#180`)
+
+The next MKRF follow-up after the canonical `v0.0.1a1` alpha release is not a
+new silviculture redesign. It is a legacy-parity repair for commercial
+thinning (`CT`) semantics in the canonical lane.
+
+### Governing behavioral contract
+
+Use the source XML as the contract surface, not compiled runtime outputs as the
+primary source of truth:
+
+- legacy source XML:
+  `external/femic-mkrf-instance/data/legacy_mkrf/generated_xml/baseMKRF.xml`
+- PoC benchmark XML:
+  `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/XML/baseMKRF.xml`
+
+Both surfaces implement the same CT approximation:
+
+- CT eligibility:
+  `status in managed and oper in operable and ct eq 'Y' and not startswith(au,'t')`
+- treatment contract:
+  `label="CT"`, `minage="40"`, `maxage="150"`, `retain="20"`
+- transition:
+  `treatment='CT'` and `au='thn_'+au`
+- treatment-year extracted harvest/product signal:
+  `0.4 * base curve`
+- post-thin standing THN signal for later ages:
+  `0.6 * base curve(x)`
+
+This is a constant proportional gap model. It is not the constant absolute gap
+formulation `f(x) - 0.4 * f(x_ct)`.
+
+### Current canonical divergence
+
+The current canonical generator still diverges from the legacy/PoC contract in
+the place that matters most for CT economics:
+
+- it already carries the `0.6` residual/thinned standing logic; but
+- it does not yet emit a distinct `0.4` CT treatment-year extraction surface;
+- and it currently uses the simplified `au=auf` + `statecode='THN'` treatment
+  contract instead of the legacy/PoC `au='thn_'+au` transition.
+
+That means CT is still modeled as an obviously degraded option in the canonical
+lane because the removed commercial volume is not being represented correctly.
+
+### Required repair sequence
+
+The CT parity follow-up should proceed in this order:
+
+1. update instance and parent docs so they explain the exact legacy/PoC CT
+   contract and the current canonical divergence clearly;
+2. repair the canonical runtime generator so CT matches the legacy/PoC select,
+   transition, and `0.4`/`0.6` split exactly; and
+3. regenerate the canonical runtime package, rerun Matrix Builder, rerun the
+   `100000`-iteration even-flow smoke, and inspect representative CT-active
+   outputs before claiming parity.
+
+### Out-of-scope improvement work
+
+Do not redesign CT response curves in this follow-up. In particular, do not
+replace the legacy proportional-gap model with:
+
+- a constant absolute gap model;
+- a post-thin growth boost / rebound model; or
+- any new end-user CT calibration knobs.
+
+Those are valid later enhancements, but they are not part of the legacy-parity
+repair governed by `#180`.
+
+### Implementation closeout
+
+The CT legacy-parity implementation branch now matches that contract:
+
+- the canonical generator emits the legacy/PoC CT select statement plus
+  `retain="20"` and `au='thn_'+au`;
+- the canonical yield/product logic now separates:
+  - treatment-year CT extraction = `0.4 * base curve`; and
+  - post-thin THN standing yield = `0.6 * base curve(x)`;
+- the canonical runtime package has been regenerated from that repaired
+  generator;
+- Matrix Builder completed cleanly on the rebuilt canonical package;
+- the canonical `100000`-iteration even-flow smoke completed cleanly; and
+- representative rebuilt CT-active runtime outputs now prove the expected
+  `0.4` / `0.6` split directly.

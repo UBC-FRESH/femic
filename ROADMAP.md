@@ -1751,8 +1751,46 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P63.5b Update the existing guide pages so operators land on those new logic docs instead of shallow package-only descriptions.
   - [x] P63.5c Rebuild the standalone instance docs and verify the new treatment/AU/remap explanations render warning-clean.
 
+## Phase 64: Restore MKRF CT Legacy Parity
+
+- [x] P64.1 Record the CT legacy-parity contract and current divergence (`#180`)
+  - [x] P64.1a Update the roadmap/planning surfaces so the post-`v0.0.1a1` CT follow-up is governed by `#180`.
+  - [x] P64.1b Document the exact legacy and PoC CT behavior from source XML, including the `0.4` treatment-year extraction and `0.6` thinned standing lane.
+  - [x] P64.1c Record the current canonical CT divergence explicitly so the runtime repair is judged against the legacy/PoC contract rather than ad hoc interpretation.
+- [x] P64.2 Repair canonical MKRF CT runtime logic to match legacy/PoC (`#180`)
+  - [x] P64.2a Emit the legacy/PoC CT select statement and transition contract in the canonical generator, including `retain="20"` and `au='thn_'+au`.
+  - [x] P64.2b Drive THN state/yield behavior from the thinned AU lane while preserving canonical CC regeneration behavior back to the treated/post-clearcut lane.
+  - [x] P64.2c Split CT treatment-year extracted products (`0.4 * base curve`) from post-CT standing THN yields (`0.6 * base curve(x)`).
+- [x] P64.3 Prove CT parity in tests, rebuilt runtime outputs, and published docs (`#180`)
+  - [x] P64.3a Add focused regression coverage for CT select/transition semantics and the legacy `0.4`/`0.6` split.
+  - [x] P64.3b Regenerate the canonical runtime package, rerun Matrix Builder, and rerun the canonical even-flow smoke at `100000` iterations.
+  - [x] P64.3c Inspect representative rebuilt CT-active outputs, keep parent/instance docs warning-clean, and record the parity result in repo/GitHub surfaces.
+
 ### Detailed Next Steps Notes
 
+- Phase 64 CT legacy-parity follow-up is complete on the implementation branch:
+  - legacy and PoC CT semantics are now documented directly from source XML as
+    a constant proportional split:
+    - treatment-year CT harvest/product signal = `0.4 * base curve`
+    - post-thin THN standing signal for later ages = `0.6 * base curve(x)`;
+  - the canonical generator now emits the same CT select/transition contract:
+    - `status in managed and oper in operable and ct eq 'Y' and not startswith(au,'thn_')`
+    - `retain="20"`
+    - `au='thn_'+au`;
+  - rebuilt runtime outputs now prove the intended split on representative CT
+    tracks, including one direct rebuilt example where:
+    - age 40: `184.1 = 73.64 + 110.46`
+    - age 60: `398.3 = 159.32 + 238.98`
+    - age 100: `764.8 = 305.92 + 458.88`; and
+  - the canonical Matrix Builder run, `100000`-iteration even-flow smoke, and
+    runtime sanity audit are all clean after the repair.
+- Out-of-scope future follow-up remains open by design:
+  - do not treat legacy CT parity as an endorsement of the proportional-gap
+    silviculture model as ideal;
+  - a constant absolute gap or post-thin growth-response model is still a valid
+    later enhancement; and
+  - any such redesign should open a new issue/phase rather than mutating the
+    legacy-parity contract under `#180`.
 - Phase 62 publication lane is complete:
   - instance PR `UBC-FRESH/femic-mkrf-instance#2` merged and parent PR `#179` merged;
   - `femic-mkrf-instance` release `v0.0.1a1` is published as an alpha pre-release;

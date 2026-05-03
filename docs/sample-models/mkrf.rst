@@ -71,6 +71,22 @@ The practical handoff is:
 - use the PoC package only for benchmark/reference comparison; and
 - use Phase 60 / ``#173`` for the remaining closeout/docs claim-boundary work.
 
+Commercial thinning follow-up
+-----------------------------
+
+The post-release CT follow-up is now governed by ``#180`` rather than the
+original rebuild-closeout issue.
+
+That follow-up uses the legacy source XML and accepted PoC XML as the
+behavioral contract for CT:
+
+- treatment-year CT extraction = ``0.4 * base curve``; and
+- post-thin THN standing yield for later ages = ``0.6 * base curve(x)``.
+
+This is a constant proportional gap model, not a constant absolute gap model.
+Use the standalone instance treatment/state page for the exact current
+canonical CT wording and evidence pointers.
+
 Current ``v0`` checkpoint signal
 --------------------------------
 

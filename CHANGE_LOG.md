@@ -16367,3 +16367,41 @@
   - updated the existing guide pages so operators now land on those logic docs
     instead of only seeing package anatomy and figure pages, then rebuilt the
     standalone instance Sphinx docs warning-clean.
+## 2026-05-02 - Clarified MKRF treatment docs wording
+- `#173` docs wording follow-up:
+  - rewrote the canonical `CC` and `CT` treatment bullets so the docs explain
+    post-treatment field updates in plain language instead of raw assignment
+    fragments;
+  - replaced the ambiguous prose `retention 20` with an explicit description of
+    the treatment `retain="20"` attribute as a 20-year post-treatment
+    re-entry lock for automated scheduling; and
+  - removed the stale `CT followed by clearcut twenty years later` wording from
+    `model-anatomy.rst`.
+## 2026-05-02 - Restored MKRF CT legacy parity in the canonical runtime lane
+- `#180` / `P64` CT legacy-parity follow-up:
+  - opened the new parent feature issue and feature branch for the post-release
+    CT parity repair, then recorded the contract and active edge in
+    `ROADMAP.md` and `planning/mkrf_femic_native_rebuild.md`;
+  - updated the instance and parent MKRF docs so they now state plainly that
+    legacy and PoC CT use a constant proportional split rather than a constant
+    absolute gap:
+    - treatment-year CT harvest/product signal = `0.4 * base curve`
+    - post-thin THN standing signal for later ages = `0.6 * base curve(x)`;
+  - repaired the canonical MKRF runtime generator so CT now:
+    - uses the legacy/PoC select statement
+      `status in managed and oper in operable and ct eq 'Y' and not startswith(au,'thn_')`;
+    - emits `retain="20"` and transitions to `au='thn_'+au`;
+    - drives THN state labels from the thinned AU lane; and
+    - separates CT treatment-year extracted products (`0.4`) from post-CT THN
+      standing yields (`0.6`);
+  - regenerated the canonical runtime package, reran Matrix Builder as
+    `mkrf_ct_parity_matrix_20260502a`, reran the canonical even-flow smoke as
+    `mkrf_ct_parity_smoke_20260502a`, and reran
+    `femic instance mkrf-audit-runtime-sanity` with zero failures;
+  - verified one representative rebuilt CT track directly from the rebuilt
+    runtime outputs:
+    - age 40: `184.1 = 73.64 + 110.46`
+    - age 60: `398.3 = 159.32 + 238.98`
+    - age 100: `764.8 = 305.92 + 458.88`; and
+  - kept focused tests, parent docs, instance docs, and `git diff --check`
+    clean after the repair.

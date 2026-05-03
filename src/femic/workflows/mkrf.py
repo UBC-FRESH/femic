@@ -2022,8 +2022,8 @@ def initialize_mkrf_runtime_package(
     first_growth_curve_lookup_rows = [row for row in curve_ref_rows if row["first_growth_curve_id"]]
     first_growth_curve_au_ids = [str(row["au_id"]) for row in first_growth_curve_lookup_rows]
     first_growth_curve_ids = [str(row["first_growth_curve_id"]) for row in first_growth_curve_lookup_rows]
-    runtime_base_au_expr = "au"
-    runtime_state_expr = "statecode"
+    runtime_base_au_expr = "if(startswith(au,'thn_'),substring(au,4),au)"
+    runtime_state_expr = "if(startswith(au,'thn_'),'THN',statecode)"
     managed_curve_lookup_expr = _build_lookup_expr(
         managed_curve_au_ids,
         managed_curve_ids,
@@ -2133,7 +2133,8 @@ def initialize_mkrf_runtime_package(
         f"curveId({first_growth_curve_lookup_expr}),"
         f"curveId({managed_curve_lookup_expr}))"
     )
-    thinning_factor_expr = "if(treatment eq 'CT' or statecode eq 'THN',0.6,1)"
+    standing_thinning_factor_expr = "if(startswith(au,'thn_'),0.6,1)"
+    ct_extraction_factor_expr = "if(treatment eq 'CT',0.4,1)"
     for obsolete_path in (
         tracks_dir / "au_runtime_status.csv",
         tracks_dir / "au_curve_refs.csv",
@@ -2431,7 +2432,12 @@ def initialize_mkrf_runtime_package(
     ct_select = et.SubElement(
         forestmodel_root,
         "select",
-        {"statement": "status in managed and oper in operable and ct eq 'Y' and statecode ne 'THN'"},
+        {
+            "statement": (
+                "status in managed and oper in operable and ct eq 'Y' "
+                "and not startswith(au,'thn_')"
+            )
+        },
     )
     ct_track = et.SubElement(ct_select, "track")
     ct_treatment = et.SubElement(
@@ -2449,12 +2455,7 @@ def initialize_mkrf_runtime_package(
     et.SubElement(
         ct_transition,
         "assign",
-        {"field": "au", "value": "auf"},
-    )
-    et.SubElement(
-        ct_transition,
-        "assign",
-        {"field": "statecode", "value": "'THN'"},
+        {"field": "au", "value": "'thn_'+au"},
     )
     area_features_select = et.SubElement(forestmodel_root, "select")
     area_features = et.SubElement(area_features_select, "features")
@@ -2497,7 +2498,7 @@ def initialize_mkrf_runtime_package(
         managed_yield_total,
         "expression",
         {
-            "statement": f"{origin_curve_lookup_expr}*{thinning_factor_expr}",
+            "statement": f"{origin_curve_lookup_expr}*{standing_thinning_factor_expr}",
             "by": "1",
             "ignoreMissingAttributes": "false",
         },
@@ -2511,7 +2512,7 @@ def initialize_mkrf_runtime_package(
         managed_yield_state,
         "expression",
         {
-            "statement": f"{origin_curve_lookup_expr}*{thinning_factor_expr}",
+            "statement": f"{origin_curve_lookup_expr}*{standing_thinning_factor_expr}",
             "by": "1",
             "ignoreMissingAttributes": "false",
         },
@@ -2553,7 +2554,7 @@ def initialize_mkrf_runtime_package(
             "expression",
             {
                 "statement": (
-                    f"{origin_curve_lookup_expr}*{thinning_factor_expr}"
+                    f"{origin_curve_lookup_expr}*{standing_thinning_factor_expr}"
                     f"*({origin_share_lookup_exprs[share_column]})"
                 ),
                 "by": "1",
@@ -2575,7 +2576,7 @@ def initialize_mkrf_runtime_package(
         unmanaged_yield_total,
         "expression",
         {
-            "statement": f"{origin_curve_lookup_expr}*{thinning_factor_expr}",
+            "statement": f"{origin_curve_lookup_expr}*{standing_thinning_factor_expr}",
             "by": "1",
             "ignoreMissingAttributes": "false",
         },
@@ -2589,7 +2590,7 @@ def initialize_mkrf_runtime_package(
         unmanaged_yield_state,
         "expression",
         {
-            "statement": f"{origin_curve_lookup_expr}*{thinning_factor_expr}",
+            "statement": f"{origin_curve_lookup_expr}*{standing_thinning_factor_expr}",
             "by": "1",
             "ignoreMissingAttributes": "false",
         },
@@ -2605,7 +2606,7 @@ def initialize_mkrf_runtime_package(
             "expression",
             {
                 "statement": (
-                    f"{origin_curve_lookup_expr}*{thinning_factor_expr}"
+                    f"{origin_curve_lookup_expr}*{standing_thinning_factor_expr}"
                     f"*({origin_share_lookup_exprs[share_column]})"
                 ),
                 "by": "1",
@@ -2645,7 +2646,7 @@ def initialize_mkrf_runtime_package(
         product_yield_total,
         "expression",
         {
-            "statement": f"{origin_curve_lookup_expr}*{thinning_factor_expr}",
+            "statement": f"{origin_curve_lookup_expr}*{ct_extraction_factor_expr}",
             "by": "1",
             "ignoreMissingAttributes": "false",
         },
@@ -2659,7 +2660,7 @@ def initialize_mkrf_runtime_package(
         product_yield_state,
         "expression",
         {
-            "statement": f"{origin_curve_lookup_expr}*{thinning_factor_expr}",
+            "statement": f"{origin_curve_lookup_expr}*{ct_extraction_factor_expr}",
             "by": "1",
             "ignoreMissingAttributes": "false",
         },
@@ -2675,7 +2676,7 @@ def initialize_mkrf_runtime_package(
             "expression",
             {
                 "statement": (
-                    f"{origin_curve_lookup_expr}*{thinning_factor_expr}"
+                    f"{origin_curve_lookup_expr}*{ct_extraction_factor_expr}"
                     f"*({origin_share_lookup_exprs[share_column]})"
                 ),
                 "by": "1",
@@ -2691,7 +2692,7 @@ def initialize_mkrf_runtime_package(
         product_yield_treat,
         "expression",
         {
-            "statement": f"{origin_curve_lookup_expr}*{thinning_factor_expr}",
+            "statement": f"{origin_curve_lookup_expr}*{ct_extraction_factor_expr}",
             "by": "1",
             "ignoreMissingAttributes": "false",
         },
