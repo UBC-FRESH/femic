@@ -1781,8 +1781,32 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P65.3b Push the instance and parent pointer updates required for the published docs/metadata state.
   - [x] P65.3c Close `femic-mkrf-instance#1` once the archival lane is documented and the canonical lane remains the default.
 
+## Phase 66: Redesign MKRF CT Response Beyond Legacy Parity
+
+- [ ] P66.1 Record the redesign contract and release framing (`#182`)
+  - [ ] P66.1a Update roadmap/planning surfaces so the next MKRF modeling lane is governed by `#182`.
+  - [ ] P66.1b Record the legacy proportional-gap CT model as benchmark/reference only and the constant-absolute-gap CT model as the new canonical target.
+  - [ ] P66.1c Record that the release boundary for this redesign is `v0.0.2a1`, not a continuation of `v0.0.1a1`.
+- [ ] P66.2 Replace canonical MKRF CT with a constant-absolute-gap standing-yield model (`#182`)
+  - [ ] P66.2a Rework canonical CT standing-yield logic so post-CT THN standing volume is anchored to CT-age removed volume rather than a constant proportional gap.
+  - [ ] P66.2b Preserve the CT treatment-year extraction signal, thinned AU transition contract, and CC follow-on behavior unless the redesign proves one of those contracts must change.
+  - [ ] P66.2c Keep the redesign as the canonical MKRF default rather than shipping it as an experimental sidecar variant.
+- [ ] P66.3 Prove the redesign against runtime outputs, docs, and release framing (`#182`)
+  - [ ] P66.3a Add focused regression coverage for the constant-absolute-gap CT behavior and its difference from the legacy proportional-gap rule.
+  - [ ] P66.3b Regenerate the canonical runtime package, rerun Matrix Builder, and rerun the canonical `100000`-iteration even-flow smoke.
+  - [ ] P66.3c Inspect representative CT-vs-no-CT full-rotation harvested-volume behavior, rebuild parent/instance docs warning-clean, and record the `v0.0.2a1` framing in repo/GitHub surfaces.
+
 ### Detailed Next Steps Notes
 
+- Phase 66 CT redesign beyond legacy parity is now the active MKRF edge:
+  - the legacy proportional-gap CT model is now complete and retained only as a
+    benchmark/reference contract;
+  - the next canonical target is a constant-absolute-gap CT standing-yield
+    response anchored at CT age;
+  - the decision bar is CT-vs-no-CT full-rotation harvested-volume behavior,
+    not legacy-output mimicry; and
+  - this redesign is intended to ship as `v0.0.2a1` so it is not conflated
+    with the earlier `v0.0.1a1` alpha release.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

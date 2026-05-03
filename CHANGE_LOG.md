@@ -16429,3 +16429,18 @@
   - rebuilt the standalone instance docs warning-clean; and
   - pushed the instance docs commit, posted a final closeout comment on
     `femic-mkrf-instance#1`, and closed the issue.
+## 2026-05-03 - Opened the next MKRF CT redesign lane beyond legacy parity
+- `#182` / `P66` kickoff:
+  - opened the new parent feature issue
+    `Feature: redesign MKRF CT response beyond legacy parity`;
+  - created the working branch
+    `feature/issue-182-mkrf-ct-response-redesign`;
+  - updated `ROADMAP.md` so Phase 66 now governs the next MKRF modeling lane;
+  - updated `planning/mkrf_femic_native_rebuild.md` so the redesign contract is
+    explicit:
+    - legacy proportional-gap CT stays benchmark/reference only
+    - the new canonical target is a constant-absolute-gap CT model
+    - the primary decision bar is CT-vs-no-CT full-rotation harvested-volume
+      behavior; and
+  - recorded the intended redesign release boundary as `v0.0.2a1` rather than
+    a continuation of `v0.0.1a1`.
