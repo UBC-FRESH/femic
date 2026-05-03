@@ -887,5 +887,47 @@
     - row 5 runtime event finished as `reference_validated`; and
     - no row-6 transformation was attempted.
   - Next bounded validation:
-    - validate row 6 only from the row-5 reference milestone / row-4
-      checkpoint state.
+    - validate the production strict named-pipeline AFLB -> LHLB stage through
+      row 12, stopping before row 13 / LHLB -> THLB.
+- 2026-05-03: The immediate `P53.1d17` validation target is the production
+  strict named-pipeline AFLB -> LHLB stage.
+  - Boundary:
+    - rows 6 through 12 are `land_base_stage = aflb_to_lhlb`;
+    - row 13 is the first `lhlb_to_thlb` transformation and must not run in
+      this slice.
+  - Bounded run surface:
+    - add a checked-in strict runbook that starts at seam `glb` and stops at
+      `thlb_parent_012_proven_aboriginal_rights_areas`;
+    - execute it through `femic pipelines run`; and
+    - inspect the rebuilt stage outputs rather than relying only on command
+      success.
+  - Acceptance:
+    - the production one-pass run must validate through locked row 12 and stop
+      before row 13, or report the first specific AFLB -> LHLB mismatch.
+- 2026-05-03: Completed `P53.1d17` by running the production strict
+  AFLB -> LHLB stage validation and recording the first row-6 blocker.
+  - Run surface:
+    - added checked-in runbook
+      `runbooks/pipelines/tsa29.tsr.thlb_strict.glb_to_lhlb.yaml`;
+    - ran `femic pipelines run` from seam `glb`;
+    - targeted `thlb_parent_012_proven_aboriginal_rights_areas`; and
+    - intended to stop before row 13 / LHLB -> THLB.
+  - Result:
+    - GLB -> AFLB prefix still validated through row 5;
+    - row 5 finished as `reference_validated` at `3,110,576.671 ha`;
+    - row 6 `thlb_parent_006_parks_protected_areas_area_base_tenures`
+      started, then the strict locked contract guard failed before execution;
+    - no row-6 JSON or feather output was written.
+  - Failure:
+    - `Strict pipeline step is not approved on the locked recipe surface:
+      thlb_parent_006_parks_protected_areas_area_base_tenures`.
+  - Contract evidence:
+    - row 6 is the first `aflb_to_lhlb` transformation;
+    - recipe row 6 has `ratchet_state: benchmarked`, not `approved`;
+    - compiled row-6 logic is present and `ready`;
+    - locked ledger row 6 carries `locked_net_removed_area_ha = 306,327.000`
+      and `locked_cumulative_remaining_area_ha = 2,804,249.671`; and
+    - locked source kind is `exact_plus_residual_bridge`.
+  - Next bounded repair:
+    - reconcile strict row-6 locked recipe approval/ratchet-state semantics,
+      then rerun the same AFLB -> LHLB stage validation.

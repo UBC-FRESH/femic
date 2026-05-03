@@ -16616,3 +16616,18 @@
     chained carried areas of `4,236,882.888 ha`, `3,161,010.671 ha`, and
     `3,110,576.671 ha`; and
   - confirmed row 5 finished as `reference_validated`.
+## 2026-05-03 - Recorded the TSA29 strict AFLB to LHLB stage blocker
+- `#169` / `P53.1d17` validation run:
+  - added checked-in runbook
+    `runbooks/pipelines/tsa29.tsr.thlb_strict.glb_to_lhlb.yaml`;
+  - ran the production strict pipeline from seam `glb`, targeting row 12
+    `thlb_parent_012_proven_aboriginal_rights_areas`;
+  - confirmed the already-validated GLB -> AFLB prefix still reaches row 5
+    cleanly at `3,110,576.671 ha`;
+  - captured the first AFLB -> LHLB blocker at row 6 before row-6 execution:
+    `thlb_parent_006_parks_protected_areas_area_base_tenures` has
+    `ratchet_state: benchmarked`, while the strict locked executor currently
+    requires approved transformation steps;
+  - confirmed no row-6 JSON or feather output was written; and
+  - narrowed the next repair target to row-6 locked recipe
+    approval/ratchet-state semantics before rerunning the AFLB -> LHLB stage.

@@ -1422,7 +1422,8 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d14 Validate strict row 5 as a reference-only milestone from the validated row-4 checkpoint and record the first checkpoint-area helper mismatch before advancing to row 6.
     - [x] P53.1d15 Make strict reference-only checkpoint-area validation honor carried `thlb_fact` state when `_stand_area_sqm` is absent, then rerun row 5 only.
     - [x] P53.1d16 Validate the production strict named-pipeline GLB -> AFLB single-pass runbook through row 5 before advancing into AFLB -> LHLB.
-    - [ ] P53.1d17 Validate strict row 6 from the row-5 reference milestone / row-4 checkpoint state and stop on either a clean locked-chain match or the first row-6 mismatch.
+    - [x] P53.1d17 Validate the production strict named-pipeline AFLB -> LHLB stage through row 12 and record the first row-6 locked-state blocker before advancing into LHLB -> THLB.
+    - [ ] P53.1d18 Reconcile strict row-6 locked recipe approval/ratchet-state semantics so the AFLB -> LHLB stage can execute from the validated row-5 state.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -1868,8 +1869,14 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     rebuilt row-2 through row-4 JSON/feather outputs, and confirmed the run
     lands on locked row 5 at `3,110,576.671 ha` with `0.000 ha` reported
     maximum locked-chain delta; and
-  - the next bounded validation move is `P53.1d17`: validate row 6 only from
-    the row-5 reference milestone / row-4 checkpoint state, then stop.
+  - `P53.1d17` is complete: the production strict named-pipeline AFLB -> LHLB
+    stage run reached row 5 cleanly, then failed at row 6 before any row-6
+    output was written because
+    `thlb_parent_006_parks_protected_areas_area_base_tenures` has
+    `ratchet_state: benchmarked` while the strict executor currently accepts
+    only explicitly approved locked transformation steps; and
+  - the next bounded repair is `P53.1d18`: reconcile row-6 locked recipe
+    approval/ratchet-state semantics, then rerun the AFLB -> LHLB stage.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered
