@@ -16602,3 +16602,17 @@
     `3,110,576.671 ha`; and
   - confirmed row 5 matches the locked chain with residual cumulative delta
     `0.000359 ha` from source precision.
+## 2026-05-03 - Validated TSA29 strict GLB to AFLB production named pipeline
+- `#169` / `P53.1d16` validation run:
+  - added checked-in runbook
+    `runbooks/pipelines/tsa29.tsr.thlb_strict.glb_to_aflb.yaml`;
+  - ran the production `femic pipelines run` path from seam `glb` through
+    `thlb_parent_005_analysis_forest_land_base`;
+  - stopped before any row-6 AFLB -> LHLB transformation;
+  - confirmed the production pipeline summary reports row 5 expected and
+    actual managed area `3,110,576.671 ha`, with maximum marginal/cumulative
+    locked-chain deltas reported as `0.000 ha`;
+  - inspected rebuilt row-2, row-3, and row-4 JSON/feather outputs, confirming
+    chained carried areas of `4,236,882.888 ha`, `3,161,010.671 ha`, and
+    `3,110,576.671 ha`; and
+  - confirmed row 5 finished as `reference_validated`.

@@ -1421,7 +1421,8 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d13 Persist strict row-4 aspatial area fallback deductions into chained THLB state before any row-5 validation.
     - [x] P53.1d14 Validate strict row 5 as a reference-only milestone from the validated row-4 checkpoint and record the first checkpoint-area helper mismatch before advancing to row 6.
     - [x] P53.1d15 Make strict reference-only checkpoint-area validation honor carried `thlb_fact` state when `_stand_area_sqm` is absent, then rerun row 5 only.
-    - [ ] P53.1d16 Validate strict row 6 from the row-5 reference milestone / row-4 checkpoint state and stop on either a clean locked-chain match or the first row-6 mismatch.
+    - [x] P53.1d16 Validate the production strict named-pipeline GLB -> AFLB single-pass runbook through row 5 before advancing into AFLB -> LHLB.
+    - [ ] P53.1d17 Validate strict row 6 from the row-5 reference milestone / row-4 checkpoint state and stop on either a clean locked-chain match or the first row-6 mismatch.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -1861,7 +1862,13 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     now honors carried `thlb_fact` state using `FEATURE_AREA_SQM` when
     `_stand_area_sqm` is absent, and row 5 validates cleanly from the row-4
     checkpoint with only `0.000359 ha` source-precision residual; and
-  - the next bounded validation move is `P53.1d16`: validate row 6 only from
+  - before moving into AFLB -> LHLB, the next bounded validation move is
+    complete: `P53.1d16` ran the production strict named-pipeline GLB -> AFLB
+    stage in one pass from the validated GLB seam through row 5, inspected the
+    rebuilt row-2 through row-4 JSON/feather outputs, and confirmed the run
+    lands on locked row 5 at `3,110,576.671 ha` with `0.000 ha` reported
+    maximum locked-chain delta; and
+  - the next bounded validation move is `P53.1d17`: validate row 6 only from
     the row-5 reference milestone / row-4 checkpoint state, then stop.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a

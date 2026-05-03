@@ -843,5 +843,49 @@
     - the validated carried managed area is
       `FEATURE_AREA_SQM * thlb_fact = 3,110,576.671 ha`.
   - Next bounded validation:
+    - validate the production strict named-pipeline GLB -> AFLB stage in one
+      pass from the validated GLB seam through row 5 before moving on to row 6
+      / AFLB -> LHLB.
+- 2026-05-03: The immediate `P53.1d16` validation target is the production
+  strict named-pipeline GLB -> AFLB stage in a single pass.
+  - Reason:
+    - the stepwise row-2 through row-5 chain now validates cleanly, but the
+      original problem was that the production named-pipeline stage run was not
+      yielding the expected AFLB result.
+  - Bounded run surface:
+    - add a checked-in strict runbook that starts at seam `glb` and stops at
+      `thlb_parent_005_analysis_forest_land_base`;
+    - execute it through `femic pipelines run`; and
+    - inspect the resulting row-2, row-3, row-4, and row-5 validation signals,
+      including the row-4 feather carried `thlb_fact` area.
+  - Acceptance:
+    - the one-pass GLB -> AFLB run must report locked row-5 cumulative
+      `3,110,576.671 ha` with only source-precision residual before any
+      AFLB -> LHLB row is attempted.
+- 2026-05-03: Completed `P53.1d16` by validating the production strict
+  named-pipeline GLB -> AFLB stage in a single pass.
+  - Run surface:
+    - added checked-in runbook
+      `runbooks/pipelines/tsa29.tsr.thlb_strict.glb_to_aflb.yaml`;
+    - ran `femic pipelines run` from seam `glb`; and
+    - stopped at `thlb_parent_005_analysis_forest_land_base` before any row-6
+      AFLB -> LHLB transformation.
+  - Production pipeline result:
+    - validated parent-step count `5`;
+    - latest locked parent step `thlb_parent_005_analysis_forest_land_base`;
+    - expected final managed area `3,110,576.671 ha`;
+    - actual final managed area `3,110,576.671 ha`;
+    - maximum marginal and cumulative locked-chain deltas reported as
+      `0.000 ha`.
+  - Output inspection:
+    - row-2 JSON/feather: `696,781.324 ha` removed and
+      `4,236,882.888 ha` carried in `FEATURE_AREA_SQM * thlb_fact`;
+    - row-3 JSON/feather: `1,075,872.217 ha` removed and
+      `3,161,010.671 ha` carried in `FEATURE_AREA_SQM * thlb_fact`;
+    - row-4 JSON/feather: `50,434.000 ha` removed and
+      `3,110,576.671 ha` carried in `FEATURE_AREA_SQM * thlb_fact`;
+    - row 5 runtime event finished as `reference_validated`; and
+    - no row-6 transformation was attempted.
+  - Next bounded validation:
     - validate row 6 only from the row-5 reference milestone / row-4
       checkpoint state.

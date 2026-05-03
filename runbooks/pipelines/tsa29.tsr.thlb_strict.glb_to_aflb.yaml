@@ -1,0 +1,19 @@
+schema_version: 1
+runbook_kind: femic_pipeline_runbook
+label: TSA29 TSR THLB strict lane from validated GLB through AFLB
+pipeline_id: tsr.thlb_strict
+instance_root: .
+run_profile: config/run_profile.tsa29.yaml
+overlay_paths:
+  - config/tsr/overlay.yaml
+restart:
+  seam_id: glb
+validation_contract:
+  contract_kind: tsa29_locked_chain_strict
+  locked_chain_ledger_path: config/tsr/thlb_locked_chain_ledger.json
+  comparison_report_path: config/tsr/thlb_reconstruction_comparison.md
+  required_recipe_path: workbench/tsr/thlb_netdown.locked.recipe.yaml
+target_parent_step_id: thlb_parent_005_analysis_forest_land_base
+notes:
+  - Repo-tracked bounded strict runbook for GLB to AFLB validation from the saved validated GLB checkpoint.
+  - This runbook starts from data/tsr/glb_checkpoint.feather, executes rows 2 through 4, validates row 5 as the AFLB reference milestone, and stops before row 6.
