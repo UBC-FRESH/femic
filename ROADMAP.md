@@ -1785,24 +1785,29 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
 
 - [ ] P66.1 Record the redesign contract and release framing (`#182`)
   - [ ] P66.1a Update roadmap/planning surfaces so the next MKRF modeling lane is governed by `#182`.
-  - [ ] P66.1b Record the legacy proportional-gap CT model as benchmark/reference only and the constant-absolute-gap CT model as the new canonical target.
+  - [ ] P66.1b Record the legacy proportional-gap CT model as benchmark/reference only and the bucketed constant-absolute-gap CT model as the new canonical target.
   - [ ] P66.1c Record that the release boundary for this redesign is `v0.0.2a1`, not a continuation of `v0.0.1a1`.
-- [ ] P66.2 Replace canonical MKRF CT with a constant-absolute-gap standing-yield model (`#182`)
-  - [ ] P66.2a Rework canonical CT standing-yield logic so post-CT THN standing volume is anchored to CT-age removed volume rather than a constant proportional gap.
-  - [ ] P66.2b Preserve the CT treatment-year extraction signal, thinned AU transition contract, and CC follow-on behavior unless the redesign proves one of those contracts must change.
-  - [ ] P66.2c Keep the redesign as the canonical MKRF default rather than shipping it as an experimental sidecar variant.
+- [ ] P66.2 Replace canonical MKRF CT with a bucketed constant-absolute-gap standing-yield model (`#182`)
+  - [ ] P66.2a Replace the single schedulable `CT` treatment with 10-year midpoint CT bucket treatments (`CT40`, `CT50`, `CT60`, ...) covering age windows such as `35-44`, `45-54`, and `55-64`.
+  - [ ] P66.2b Emit per-bucket thinned AU/state lanes so each bucket uses a precompiled constant-absolute-gap post-CT standing response anchored to the bucket midpoint age.
+  - [ ] P66.2c Preserve explicit CT treatment-year extraction, thinned-lane semantics, and CC follow-on behavior while keeping the bucketed redesign as the canonical default rather than an experimental sidecar.
 - [ ] P66.3 Prove the redesign against runtime outputs, docs, and release framing (`#182`)
-  - [ ] P66.3a Add focused regression coverage for the constant-absolute-gap CT behavior and its difference from the legacy proportional-gap rule.
+  - [ ] P66.3a Add focused regression coverage for the bucketed constant-absolute-gap CT behavior and its difference from the legacy proportional-gap rule.
   - [ ] P66.3b Regenerate the canonical runtime package, rerun Matrix Builder, and rerun the canonical `100000`-iteration even-flow smoke.
-  - [ ] P66.3c Inspect representative CT-vs-no-CT full-rotation harvested-volume behavior, rebuild parent/instance docs warning-clean, and record the `v0.0.2a1` framing in repo/GitHub surfaces.
+  - [ ] P66.3c Inspect representative lower-bucket and higher-bucket CT outputs, confirm CT-vs-no-CT full-rotation harvested-volume behavior, rebuild parent/instance docs warning-clean, and record the `v0.0.2a1` framing in repo/GitHub surfaces.
 
 ### Detailed Next Steps Notes
 
 - Phase 66 CT redesign beyond legacy parity is now the active MKRF edge:
   - the legacy proportional-gap CT model is now complete and retained only as a
     benchmark/reference contract;
-  - the next canonical target is a constant-absolute-gap CT standing-yield
-    response anchored at CT age;
+  - the next canonical target is a bucketed constant-absolute-gap CT
+    standing-yield response anchored at representative CT midpoint ages;
+  - the locked discretization contract is:
+    - 10-year midpoint treatment buckets;
+    - labels `CT40`, `CT50`, `CT60`, ...;
+    - age windows `35-44`, `45-54`, `55-64`, ...; and
+    - per-bucket thinned AU/state lanes for auditability;
   - the decision bar is CT-vs-no-CT full-rotation harvested-volume behavior,
     not legacy-output mimicry; and
   - this redesign is intended to ship as `v0.0.2a1` so it is not conflated

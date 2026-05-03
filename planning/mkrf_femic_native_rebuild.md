@@ -1970,12 +1970,25 @@ Treat the current legacy/PoC CT behavior as benchmark/reference only:
 - post-thin standing THN yield for later ages:
   `0.6 * base curve(x)`
 
-The next canonical target is instead a constant-absolute-gap model:
+The next canonical target is instead a bucketed constant-absolute-gap model:
 
 - CT treatment-year extraction remains anchored at CT age; and
 - post-CT THN standing volume should follow
   `base curve(x) - 0.4 * base curve(x_ct)` rather than a constant proportional
   gap.
+
+Because canonical ForestModel XML does not expose a clean dynamic "age at
+which CT was applied" state hook for this use case, the redesign will
+discretize CT into precompiled treatment buckets rather than a single
+continuous-age treatment.
+
+Locked bucket contract:
+
+- 10-year midpoint buckets;
+- treatment labels `CT40`, `CT50`, `CT60`, ...;
+- age windows `35-44`, `45-54`, `55-64`, ...; and
+- per-bucket thinned AU/state lanes so extracted and residual curves stay
+  auditable by bucket anchor age.
 
 ### Required runtime boundary
 
@@ -1984,7 +1997,7 @@ runtime contract:
 
 - CT eligibility remains
   `status in managed and oper in operable and ct eq 'Y' and not startswith(au,'thn_')`;
-- CT remains a transition to `au='thn_'+au`;
+- CT remains a transition to bucket-specific `thn_` AU/state lanes;
 - CC remains valid from the thinned lane and returns the stand to the
   treated/post-clearcut pathway; and
 - no new end-user CT knobs are introduced in this phase.
@@ -1999,6 +2012,8 @@ The redesign should be treated as successful only if:
 - CT treatment-year extraction remains explicit and nonzero;
 - post-CT standing volume no longer drifts farther behind untreated curves
   solely because of the old proportional-gap artifact; and
+- representative lower-bucket and higher-bucket CT outputs both remain
+  numerically coherent under the precompiled bucket response contract; and
 - the resulting CT + CC full-rotation harvested-volume behavior is defensible
   relative to the no-CT baseline.
 

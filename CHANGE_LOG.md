@@ -16444,3 +16444,15 @@
       behavior; and
   - recorded the intended redesign release boundary as `v0.0.2a1` rather than
     a continuation of `v0.0.1a1`.
+## 2026-05-03 - Locked Phase 66 to a bucketed CT redesign contract
+- `#182` / `P66` planning refinement:
+  - updated `ROADMAP.md` and `planning/mkrf_femic_native_rebuild.md` so the
+    canonical CT redesign is now explicitly a bucketed constant-absolute-gap
+    model rather than a generic continuous-age target;
+  - locked the discretization contract to 10-year midpoint buckets with
+    labels `CT40`, `CT50`, `CT60`, ... and age windows `35-44`, `45-54`,
+    `55-64`, ...;
+  - locked the post-treatment runtime shape to per-bucket thinned AU/state
+    lanes so extracted and residual CT surfaces remain auditable by bucket; and
+  - kept `v0.0.2a1` as the release boundary for this redesign rather than a
+    continuation of the earlier `v0.0.1a1` alpha line.
