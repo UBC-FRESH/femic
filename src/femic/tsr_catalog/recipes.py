@@ -7561,6 +7561,7 @@ def _load_cached_landscape_unit_partition_records(
     expected_row_count: int | None = None,
     expected_area_ha: float | None = None,
     expected_columns: Sequence[str] | None = None,
+    expected_checkpoint_sha256: str | None = None,
 ) -> tuple[tuple[str, ...], list[dict[str, Any]]] | None:
     partition_root = default_tsr_thlb_lu_partition_root(instance_root=instance_root)
     if not partition_root.exists():
@@ -7578,6 +7579,10 @@ def _load_cached_landscape_unit_partition_records(
             continue
         if str(payload.get("checkpoint_path", "")).strip() != resolved_checkpoint:
             continue
+        if expected_checkpoint_sha256 is not None:
+            cached_checkpoint_sha256 = str(payload.get("checkpoint_sha256", "")).strip()
+            if cached_checkpoint_sha256 != expected_checkpoint_sha256:
+                continue
         if expected_row_count is not None:
             cached_row_count = payload.get("input_row_count")
             cached_area_ha = payload.get("input_area_ha")
@@ -7840,6 +7845,7 @@ def _materialize_checkpoint_landscape_unit_partitions(
     metadata_path = partition_dir / "partition_metadata.json"
     checkpoint_row_count = int(len(checkpoint))
     checkpoint_area_ha = float(checkpoint.geometry.area.astype(float).sum() / 10000.0)
+    checkpoint_sha256 = file_sha256(checkpoint_path)
     checkpoint_columns = sorted(
         {str(column).strip() for column in checkpoint.columns if str(column).strip()}
     )
@@ -7856,6 +7862,7 @@ def _materialize_checkpoint_landscape_unit_partitions(
             and isinstance(cached_columns, list)
             and cached_row_count is not None
             and cached_area_ha is not None
+            and str(payload.get("checkpoint_sha256", "")).strip() == checkpoint_sha256
             and int(cached_row_count) == checkpoint_row_count
             and math.isclose(
                 float(cached_area_ha),
@@ -7914,6 +7921,7 @@ def _materialize_checkpoint_landscape_unit_partitions(
     metadata_payload = {
         "cache_version": _TSR_THLB_LU_PARTITION_CACHE_VERSION,
         "checkpoint_path": str(checkpoint_path.expanduser().resolve()),
+        "checkpoint_sha256": checkpoint_sha256,
         "input_row_count": checkpoint_row_count,
         "input_area_ha": checkpoint_area_ha,
         "input_columns": checkpoint_columns,
@@ -8930,6 +8938,7 @@ def _prepare_reconstructed_lu_chunk_records(
         expected_row_count=len(checkpoint),
         expected_area_ha=float(checkpoint.geometry.area.astype(float).sum() / 10000.0),
         expected_columns=checkpoint.columns,
+        expected_checkpoint_sha256=file_sha256(checkpoint_path),
     )
     profiling["lu_selection_cache_lookup_seconds"] = (
         perf_counter() - cache_lookup_started
@@ -13296,6 +13305,32 @@ def _locked_chain_entry_for_parent_step(
     return None
 
 
+def _prepare_locked_parent_step_checkpoint(
+    checkpoint: gpd.GeoDataFrame,
+) -> gpd.GeoDataFrame:
+    prepared = checkpoint.copy()
+    prepared["_row_id"] = range(len(prepared))
+    prepared["_stand_area_sqm"] = _resolve_effective_stand_area_sqm(prepared)
+    if "thlb_fact" in prepared.columns:
+        prepared["thlb_fact"] = (
+            pd.to_numeric(prepared["thlb_fact"], errors="coerce")
+            .fillna(0.0)
+            .clip(lower=0.0, upper=1.0)
+        )
+    else:
+        prepared["thlb_fact"] = 1.0
+    if "thlb" in prepared.columns:
+        fallback_thlb = (prepared["thlb_fact"] > 0.0).astype(int)
+        prepared["thlb"] = (
+            pd.to_numeric(prepared["thlb"], errors="coerce")
+            .fillna(fallback_thlb)
+            .astype(int)
+        )
+    else:
+        prepared["thlb"] = (prepared["thlb_fact"] > 0.0).astype(int)
+    return prepared
+
+
 def default_tsr_thlb_strict_chain_checkpoint_path(
     *, instance_root: Path, parent_step_id: str, row_order: int
 ) -> Path:
@@ -13361,11 +13396,7 @@ def run_tsr_thlb_locked_parent_step(
     profiling["checkpoint_load_seconds"] = perf_counter() - checkpoint_load_started
 
     input_prepare_started = perf_counter()
-    checkpoint = checkpoint.copy()
-    checkpoint["_row_id"] = range(len(checkpoint))
-    checkpoint["_stand_area_sqm"] = _resolve_effective_stand_area_sqm(checkpoint)
-    checkpoint["thlb_fact"] = 1.0
-    checkpoint["thlb"] = 1
+    checkpoint = _prepare_locked_parent_step_checkpoint(checkpoint)
     input_area_ha = _managed_area_ha(checkpoint)
     for compiled_item in compiled_logic:
         if _resolve_compiled_operation_type(
@@ -13552,6 +13583,7 @@ def run_tsr_thlb_locked_parent_step(
             expected_columns=tuple(
                 str(column).strip() for column in checkpoint.columns
             ),
+            expected_checkpoint_sha256=file_sha256(resolved_checkpoint_path),
         )
         profiling["lu_selection_cache_lookup_seconds"] = (
             perf_counter() - cache_lookup_started
@@ -14100,6 +14132,7 @@ def run_tsr_thlb_parent_step(
                 expected_area_ha=float(
                     checkpoint.geometry.area.astype(float).sum() / 10000.0
                 ),
+                expected_checkpoint_sha256=file_sha256(resolved_checkpoint_path),
             )
             profiling["lu_selection_cache_lookup_seconds"] = (
                 perf_counter() - cache_lookup_started

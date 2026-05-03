@@ -1416,6 +1416,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d10g Make strict LU cache reuse schema-aware so `tsr.thlb_strict` refuses stale chunk caches unless they match the current checkpoint column set, including strict-state columns such as `thlb_fact`.
     - [x] P53.1d10h Sync locked row-2 aspatial fallback metadata and stop falsely blocking production full-TSA F_OWN overlays on LU bundles.
     - [x] P53.1d10i Correct strict row-2 parent-step accounting to use the true before/after net change so direct-target aspatial deductions are included in marginal validation.
+    - [x] P53.1d11 Preserve strict-chain checkpoint THLB state across locked parent-step handoff so each step starts from the previous step's managed-area state instead of reinitializing to GLB.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -1831,7 +1832,15 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `P53.1d4` is now recorded: the checked-in scratch-to-final strict runbook
     reaches row 3, where the row-3 marginal matches the locked chain but the
     cumulative result is high by exactly the row-2 deduction because row 3
-    starts from the GLB area rather than the row-2 strict-chain checkpoint.
+    reinitializes THLB state after loading the row-2 strict-chain checkpoint;
+    and
+  - `P53.1d11` is complete: the strict locked-step executor now preserves
+    incoming `thlb_fact` / `thlb` state, LU partition cache reuse is bound to
+    checkpoint file content, and the bounded scratch-to-row-3 validation now
+    lands exactly on the locked row-3 cumulative area `3,161,010.671 ha`; and
+  - the next bounded validation move is to advance exactly one more parent
+    step, through row 4, and stop on either a clean locked-chain match or the
+    first row-4 mismatch.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

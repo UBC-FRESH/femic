@@ -16529,3 +16529,18 @@
     starts from GLB area instead of the row-2 strict-chain checkpoint; and
   - narrowed the next repair target to strict-chain checkpoint handoff between
     row 2 and row 3.
+## 2026-05-03 - Fixed strict-chain checkpoint handoff through TSA29 row 3
+- `#169` / `P53.1d11` implementation and validation:
+  - changed the strict locked parent-step executor so it preserves incoming
+    `thlb_fact` / `thlb` state on chained checkpoints and initializes those
+    fields only for raw GLB-style inputs;
+  - added checkpoint file checksums to LU partition cache metadata so changed
+    THLB state cannot reuse stale same-path/same-schema chunks;
+  - added focused regression tests for strict checkpoint-state preservation,
+    raw GLB initialization, and stale LU state-cache rejection;
+  - reran bounded scratch-to-row-3 strict validation successfully;
+  - inspected rebuilt row-3 JSON/feather outputs, confirming row 3 starts from
+    row-2 remaining area `4,236,882.888 ha`, removes `1,075,872.217 ha`, and
+    leaves `3,161,010.671 ha`; and
+  - confirmed the named-pipeline validator reports maximum marginal and
+    cumulative locked-chain deltas of `0.000 ha` through row 3.

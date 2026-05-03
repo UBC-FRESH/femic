@@ -697,3 +697,32 @@
       cumulative validator signal; and
     - the next repair should be the narrow strict-chain checkpoint handoff
       between row 2 and row 3, not another row-2 fallback-accounting change.
+- 2026-05-03: The immediate `P53.1d11` repair is to preserve THLB state across
+  strict locked-step handoff.
+  - Root cause:
+    - the outer named-pipeline sequence does pass each strict step's output
+      path into the next step, but `run_tsr_thlb_locked_parent_step(...)`
+      currently resets loaded checkpoint `thlb_fact` and `thlb` columns to
+      fully active during input preparation.
+  - Bounded implementation target:
+    - preserve existing `thlb_fact` / `thlb` columns when a strict-chain
+      checkpoint already carries them;
+    - initialize those columns only for raw GLB-style inputs that do not yet
+      carry THLB state; and
+    - rerun only the scratch-to-step-3 path to prove row 2 feeds row 3 before
+      advancing to later parent steps.
+- 2026-05-03: Completed `P53.1d11` and validated strict handoff through row 3.
+  - Fix:
+    - `run_tsr_thlb_locked_parent_step(...)` now preserves incoming
+      `thlb_fact` / `thlb` state when loading strict-chain checkpoints;
+    - raw GLB-style inputs still initialize to fully active THLB state; and
+    - LU partition cache metadata now includes the checkpoint file checksum so
+      same-path, same-schema, same-area caches cannot hide changed THLB state.
+  - Bounded validation:
+    - reran scratch through `thlb_parent_003_non_forest` only;
+    - row 3 consumed the row-2 checkpoint with input area `4,236,882.888 ha`;
+    - row 3 removed `1,075,872.217 ha` and left `3,161,010.671 ha`;
+    - the named-pipeline validator reported maximum marginal and cumulative
+      locked-chain deltas of `0.000 ha`; and
+    - inspected row-3 JSON and feather outputs confirm the rebuilt feather's
+      `thlb_fact` weighted area is `3,161,010.671 ha`.

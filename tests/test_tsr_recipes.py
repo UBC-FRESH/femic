@@ -700,6 +700,39 @@ def test_execute_workbench_compiled_item_apportions_direct_target_aspatial_reduc
     assert updated["thlb_fact"].sum() == pytest.approx(0.75)
 
 
+def test_prepare_locked_parent_step_checkpoint_preserves_thlb_state() -> None:
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_AREA_SQM": [10000.0, 20000.0],
+            "thlb_fact": [0.25, 0.0],
+            "thlb": [1, 0],
+        },
+        geometry=[box(0, 0, 100, 100), box(100, 0, 300, 100)],
+        crs="EPSG:3005",
+    )
+
+    prepared = tsr_recipes._prepare_locked_parent_step_checkpoint(checkpoint)
+
+    assert prepared["thlb_fact"].tolist() == pytest.approx([0.25, 0.0])
+    assert prepared["thlb"].tolist() == [1, 0]
+    assert prepared["_stand_area_sqm"].tolist() == pytest.approx([10000.0, 20000.0])
+    assert prepared["_row_id"].tolist() == [0, 1]
+
+
+def test_prepare_locked_parent_step_checkpoint_initializes_raw_glb_state() -> None:
+    checkpoint = gpd.GeoDataFrame(
+        {"FEATURE_AREA_SQM": [10000.0]},
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    )
+
+    prepared = tsr_recipes._prepare_locked_parent_step_checkpoint(checkpoint)
+
+    assert prepared["thlb_fact"].tolist() == pytest.approx([1.0])
+    assert prepared["thlb"].tolist() == [1]
+    assert prepared["_stand_area_sqm"].tolist() == pytest.approx([10000.0])
+
+
 def test_run_tsr_thlb_locked_parent_step_uses_cpu_aware_parallel_defaults(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -6329,6 +6362,55 @@ def test_materialize_checkpoint_landscape_unit_partitions_rebuilds_stale_in_plac
     assert metadata["input_row_count"] == 2
 
 
+def test_materialize_checkpoint_landscape_unit_partitions_rebuilds_stale_state_cache(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "instance"
+    checkpoint_path = instance_root / "data" / "strict_chain" / "02_row2.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    lu_frame = gpd.GeoDataFrame(
+        {"LANDSCAPE_UNIT_NAME": ["One"]},
+        geometry=[box(-5, -5, 20, 20)],
+        crs="EPSG:3005",
+    )
+    stale_checkpoint = gpd.GeoDataFrame(
+        {"FEATURE_ID": [1], "thlb_fact": [1.0]},
+        geometry=[box(0, 0, 10, 10)],
+        crs="EPSG:3005",
+    )
+    current_checkpoint = gpd.GeoDataFrame(
+        {"FEATURE_ID": [1], "thlb_fact": [0.4]},
+        geometry=[box(0, 0, 10, 10)],
+        crs="EPSG:3005",
+    )
+
+    stale_checkpoint.to_feather(checkpoint_path)
+    tsr_recipes._materialize_checkpoint_landscape_unit_partitions(
+        stale_checkpoint,
+        checkpoint_path=checkpoint_path,
+        lu_frame=lu_frame,
+        selected_landscape_units=("One",),
+        instance_root=instance_root,
+    )
+    current_checkpoint.to_feather(checkpoint_path)
+    records = tsr_recipes._materialize_checkpoint_landscape_unit_partitions(
+        current_checkpoint,
+        checkpoint_path=checkpoint_path,
+        lu_frame=lu_frame,
+        selected_landscape_units=("One",),
+        instance_root=instance_root,
+    )
+
+    chunk = gpd.read_feather(Path(records[0]["chunk_path"]))
+    assert chunk["thlb_fact"].tolist() == pytest.approx([0.4])
+    metadata = json.loads(
+        (Path(records[0]["chunk_path"]).parent / "partition_metadata.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert metadata["checkpoint_sha256"] == tsr_recipes.file_sha256(checkpoint_path)
+
+
 def test_load_cached_landscape_unit_partition_selection_returns_cached_names(
     tmp_path: Path,
 ) -> None:
@@ -6450,6 +6532,57 @@ def test_load_cached_landscape_unit_partition_records_rejects_schema_mismatch(
         checkpoint_path=checkpoint_path,
         instance_root=instance_root,
         expected_columns=["VALUE", "geometry", "curve1"],
+    )
+
+    assert cached is None
+
+
+def test_load_cached_landscape_unit_partition_records_rejects_checksum_mismatch(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "instance"
+    checkpoint_path = (instance_root / "data" / "checkpoint7.feather").resolve()
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {"VALUE": [1]},
+        geometry=[box(0, 0, 1, 1)],
+        crs="EPSG:3005",
+    ).to_feather(checkpoint_path)
+    partition_root = tsr_recipes.default_tsr_thlb_lu_partition_root(
+        instance_root=instance_root
+    )
+    partition_dir = partition_root / "checkpoint7.cached"
+    partition_dir.mkdir(parents=True, exist_ok=True)
+    chunk_path = partition_dir / "001_west.feather"
+    gpd.GeoDataFrame(
+        {"VALUE": [1]},
+        geometry=[box(0, 0, 1, 1)],
+        crs="EPSG:3005",
+    ).to_feather(chunk_path)
+    (partition_dir / "partition_metadata.json").write_text(
+        json.dumps(
+            {
+                "cache_version": tsr_recipes._TSR_THLB_LU_PARTITION_CACHE_VERSION,
+                "checkpoint_path": str(checkpoint_path),
+                "checkpoint_sha256": "not-the-current-checksum",
+                "input_columns": ["VALUE", "geometry"],
+                "selected_landscape_units": ["West"],
+                "chunk_records": [
+                    {
+                        "lu_name": "West",
+                        "chunk_path": "001_west.feather",
+                        "area_ha": 1.0,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    cached = tsr_recipes._load_cached_landscape_unit_partition_records(
+        checkpoint_path=checkpoint_path,
+        instance_root=instance_root,
+        expected_checkpoint_sha256=tsr_recipes.file_sha256(checkpoint_path),
     )
 
     assert cached is None
