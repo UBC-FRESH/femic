@@ -16456,3 +16456,31 @@
     lanes so extracted and residual CT surfaces remain auditable by bucket; and
   - kept `v0.0.2a1` as the release boundary for this redesign rather than a
     continuation of the earlier `v0.0.1a1` alpha line.
+## 2026-05-03 - Implemented the Phase 66 bucketed MKRF CT redesign
+- `#182` / `P66` implementation:
+  - replaced the single canonical `CT` treatment with bucketed treatments
+    `CT40`, `CT50`, `CT60`, ... across 10-year age windows;
+  - emitted per-bucket thinned AU/state lanes (`thn040_`, `thn050_`, ...)
+    and bucket-anchored extracted/residual CT curve families in the canonical
+    runtime XML;
+  - changed canonical CT extracted-product logic to
+    `0.4 * base_curve(x_ct_bucket)`;
+  - changed canonical post-CT standing logic to
+    `max(0, base_curve(x) - 0.4 * base_curve(x_ct_bucket))`;
+  - fixed non-CT products on thinned lanes so follow-on `CC` harvests the
+    residual standing curve rather than the untreated base curve;
+  - updated the instance/operator/parent MKRF docs so the canonical CT
+    contract now describes the bucketed constant-absolute-gap design and keeps
+    the old `0.4` / `0.6` proportional split as legacy/PoC reference only;
+  - reran focused runtime-package tests successfully;
+  - regenerated the canonical runtime package successfully;
+  - reran Patchworks Matrix Builder successfully as
+    `mkrf_ct_bucket_matrix_20260502b`;
+  - reran the canonical `100000`-iteration smoke successfully as
+    `mkrf_ct_bucket_smoke_20260502b`;
+  - reran the runtime sanity audit successfully with `rows=24 failures=0`;
+  - confirmed representative rebuilt track arithmetic for lower and higher CT
+    buckets:
+    - `CT40`: `73.64 + 691.16 = 764.8`
+    - `CT100`: `305.92 + 589.38 = 895.3`; and
+  - kept the intended release boundary for this redesign at `v0.0.2a1`.

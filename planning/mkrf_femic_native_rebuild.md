@@ -1996,8 +1996,9 @@ Unless the redesign proves otherwise, preserve the rest of the accepted CT
 runtime contract:
 
 - CT eligibility remains
-  `status in managed and oper in operable and ct eq 'Y' and not startswith(au,'thn_')`;
-- CT remains a transition to bucket-specific `thn_` AU/state lanes;
+  `status in managed and oper in operable and ct eq 'Y' and not startswith(au,'thn')`;
+- CT remains a transition to bucket-specific `thn040_`, `thn050_`, ... AU/state
+  lanes;
 - CC remains valid from the thinned lane and returns the stand to the
   treated/post-clearcut pathway; and
 - no new end-user CT knobs are introduced in this phase.
@@ -2023,3 +2024,36 @@ This redesign is intended to ship as MKRF release `v0.0.2a1`.
 
 That release tag must remain distinct from `v0.0.1a1`, which now refers to the
 legacy-parity CT checkpoint rather than the redesign.
+
+### Implementation result
+
+Phase 66 is now implemented on the active `#182` branch.
+
+The canonical MKRF runtime lane now:
+
+- emits bucketed CT treatments `CT40`, `CT50`, `CT60`, ... with 10-year age
+  windows and per-bucket thinned AU/state lanes;
+- uses bucket-anchored CT extracted-product curves:
+  `0.4 * base_curve(x_ct_bucket)`;
+- uses bucketed constant-absolute-gap post-CT standing curves:
+  `max(0, base_curve(x) - 0.4 * base_curve(x_ct_bucket))`; and
+- harvests the residual standing lane for non-CT products on thinned tracks so
+  follow-on `CC` behavior is numerically coherent.
+
+Representative rebuilt track checks from the canonical runtime package now show
+the intended constant-gap arithmetic:
+
+- `CT40` example:
+  - age `60`: `73.64 + 324.66 = 398.3`
+  - age `100`: `73.64 + 691.16 = 764.8`
+- `CT100` example:
+  - age `100`: `305.92 + 458.88 = 764.8`
+  - age `120`: `305.92 + 589.38 = 895.3`
+
+Validation completed for the MKRF lane:
+
+- focused runtime-package tests passed;
+- canonical runtime package regeneration passed;
+- Matrix Builder run `mkrf_ct_bucket_matrix_20260502b` passed;
+- canonical even-flow smoke `mkrf_ct_bucket_smoke_20260502b` passed; and
+- runtime sanity audit reported `rows=24 failures=0`.

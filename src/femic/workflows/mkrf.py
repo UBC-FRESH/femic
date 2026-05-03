@@ -99,10 +99,35 @@ def _normalize_species_bucket(species_code: str) -> str:
 
 
 _SPECIES_BUCKETS = ("Ba", "Cw", "Dec", "Dr", "Fd", "Hw", "Oth", "Yc")
+_MKRF_CT_BUCKET_ANCHORS = tuple(range(40, 151, 10))
+_MKRF_CT_BUCKET_WIDTH = 10
+_MKRF_CT_BUCKET_PREFIX_WIDTH = 3
 
 
 def _build_lookup_expr(keys: list[str], values: list[str], *, key_expr: str) -> str:
     return f"lookupTable({key_expr},'{','.join(keys)}','{','.join(values)}')"
+
+
+def _mkrf_ct_bucket_label(anchor_age: int) -> str:
+    return f"CT{int(anchor_age)}"
+
+
+def _mkrf_ct_bucket_prefix(anchor_age: int) -> str:
+    return f"thn{int(anchor_age):0{_MKRF_CT_BUCKET_PREFIX_WIDTH}d}_"
+
+
+def _mkrf_ct_bucket_specs() -> tuple[dict[str, int | str], ...]:
+    half_width = _MKRF_CT_BUCKET_WIDTH // 2
+    return tuple(
+        {
+            "anchor_age": int(anchor_age),
+            "label": _mkrf_ct_bucket_label(anchor_age),
+            "prefix": _mkrf_ct_bucket_prefix(anchor_age),
+            "min_age": int(anchor_age) - half_width,
+            "max_age": int(anchor_age) + half_width - 1,
+        }
+        for anchor_age in _MKRF_CT_BUCKET_ANCHORS
+    )
 
 
 def _build_managed_species_share_table(
@@ -2022,8 +2047,11 @@ def initialize_mkrf_runtime_package(
     first_growth_curve_lookup_rows = [row for row in curve_ref_rows if row["first_growth_curve_id"]]
     first_growth_curve_au_ids = [str(row["au_id"]) for row in first_growth_curve_lookup_rows]
     first_growth_curve_ids = [str(row["first_growth_curve_id"]) for row in first_growth_curve_lookup_rows]
-    runtime_base_au_expr = "if(startswith(au,'thn_'),substring(au,4),au)"
-    runtime_state_expr = "if(startswith(au,'thn_'),'THN',statecode)"
+    ct_bucket_specs = _mkrf_ct_bucket_specs()
+    runtime_base_au_expr = (
+        f"if(startswith(au,'thn'),substring(au,{len(_mkrf_ct_bucket_prefix(40))}),au)"
+    )
+    runtime_state_expr = "if(startswith(au,'thn'),'THN',statecode)"
     managed_curve_lookup_expr = _build_lookup_expr(
         managed_curve_au_ids,
         managed_curve_ids,
@@ -2128,13 +2156,93 @@ def initialize_mkrf_runtime_package(
         )
         for share_column in managed_share_label_map
     }
+    first_growth_by_au = {
+        str(au_id): group.sort_values("age", kind="stable")
+        for au_id, group in first_growth_curves.groupby("au_id", sort=True)
+    }
+    managed_by_au = {
+        str(au_id): group.sort_values("age", kind="stable")
+        for au_id, group in managed_curves.groupby("au_id", sort=True)
+    }
+
+    def _curve_group_value_at_age(curve_group: pd.DataFrame, age: int) -> float:
+        if curve_group.empty:
+            return 0.0
+        x_vals = curve_group["age"].astype(float).to_numpy()
+        y_vals = curve_group["volume"].astype(float).to_numpy()
+        return float(np.interp(float(age), x_vals, y_vals))
+
+    bucketed_thn_keys: list[str] = []
+    natural_bucketed_thn_curve_ids: list[str] = []
+    treated_bucketed_thn_curve_ids: list[str] = []
+    ct_product_keys: list[str] = []
+    natural_ct_product_curve_ids: list[str] = []
+    treated_ct_product_curve_ids: list[str] = []
+    for row in runtime_curve_status.sort_values("au_id", kind="stable").itertuples(index=False):
+        au_id = str(row.au_id)
+        managed_group = managed_by_au.get(au_id)
+        if managed_group is None or managed_group.empty:
+            continue
+        natural_group = first_growth_by_au.get(au_id, managed_group)
+        au_token = au_id.upper().replace("-", "_")
+        for bucket_spec in ct_bucket_specs:
+            anchor_age = int(bucket_spec["anchor_age"])
+            bucket_prefix = str(bucket_spec["prefix"])
+            bucket_label = str(bucket_spec["label"])
+            natural_gap = round(_curve_group_value_at_age(natural_group, anchor_age) * 0.4, 6)
+            treated_gap = round(_curve_group_value_at_age(managed_group, anchor_age) * 0.4, 6)
+            natural_residual_curve_id = f"THN{anchor_age:03d}_FG_{au_token}"
+            treated_residual_curve_id = f"THN{anchor_age:03d}_MG_{au_token}"
+            natural_extraction_curve_id = f"CT{anchor_age:03d}_FG_{au_token}"
+            treated_extraction_curve_id = f"CT{anchor_age:03d}_MG_{au_token}"
+            bucketed_thn_keys.append(f"{bucket_prefix}{au_id}")
+            natural_bucketed_thn_curve_ids.append(natural_residual_curve_id)
+            treated_bucketed_thn_curve_ids.append(treated_residual_curve_id)
+            ct_product_keys.append(f"{bucket_label}|{au_id}")
+            natural_ct_product_curve_ids.append(natural_extraction_curve_id)
+            treated_ct_product_curve_ids.append(treated_extraction_curve_id)
     origin_curve_lookup_expr = (
         "if(origin eq 'natural' and hasnatcurve eq 'Y',"
         f"curveId({first_growth_curve_lookup_expr}),"
         f"curveId({managed_curve_lookup_expr}))"
     )
-    standing_thinning_factor_expr = "if(startswith(au,'thn_'),0.6,1)"
-    ct_extraction_factor_expr = "if(treatment eq 'CT',0.4,1)"
+    natural_bucketed_thn_curve_lookup_expr = _build_lookup_expr(
+        bucketed_thn_keys,
+        natural_bucketed_thn_curve_ids,
+        key_expr="au",
+    )
+    treated_bucketed_thn_curve_lookup_expr = _build_lookup_expr(
+        bucketed_thn_keys,
+        treated_bucketed_thn_curve_ids,
+        key_expr="au",
+    )
+    ct_product_key_expr = f"treatment+'|'+{runtime_base_au_expr}"
+    natural_ct_product_curve_lookup_expr = _build_lookup_expr(
+        ct_product_keys,
+        natural_ct_product_curve_ids,
+        key_expr=ct_product_key_expr,
+    )
+    treated_ct_product_curve_lookup_expr = _build_lookup_expr(
+        ct_product_keys,
+        treated_ct_product_curve_ids,
+        key_expr=ct_product_key_expr,
+    )
+    standing_curve_expr = (
+        f"if(startswith(au,'thn'),"
+        "curveId("
+        f"if(origin eq 'natural',{natural_bucketed_thn_curve_lookup_expr},"
+        f"{treated_bucketed_thn_curve_lookup_expr})"
+        "),"
+        f"{origin_curve_lookup_expr})"
+    )
+    product_curve_expr = (
+        "if(startswith(treatment,'CT'),"
+        "curveId("
+        f"if(origin eq 'natural',{natural_ct_product_curve_lookup_expr},"
+        f"{treated_ct_product_curve_lookup_expr})"
+        "),"
+        f"{standing_curve_expr})"
+    )
     for obsolete_path in (
         tracks_dir / "au_runtime_status.csv",
         tracks_dir / "au_curve_refs.csv",
@@ -2196,14 +2304,6 @@ def initialize_mkrf_runtime_package(
             au_node.set("note", str(row.runtime_curve_note))
     et.ElementTree(root).write(xml_contract_path, encoding="utf-8", xml_declaration=True)
 
-    first_growth_by_au = {
-        str(au_id): group.sort_values("age", kind="stable")
-        for au_id, group in first_growth_curves.groupby("au_id", sort=True)
-    }
-    managed_by_au = {
-        str(au_id): group.sort_values("age", kind="stable")
-        for au_id, group in managed_curves.groupby("au_id", sort=True)
-    }
     curve_bank_root = et.Element(
         "mkrfRuntimeCurveBank",
         {
@@ -2292,6 +2392,77 @@ def initialize_mkrf_runtime_package(
                         "point",
                         {"x": str(float(curve_row.age)), "y": str(float(curve_row.volume))},
                     )
+        managed_group = managed_by_au.get(str(row.au_id))
+        if managed_group is None or managed_group.empty:
+            continue
+        natural_group = first_growth_by_au.get(str(row.au_id), managed_group)
+        for bucket_spec in ct_bucket_specs:
+            anchor_age = int(bucket_spec["anchor_age"])
+            natural_gap = round(_curve_group_value_at_age(natural_group, anchor_age) * 0.4, 6)
+            treated_gap = round(_curve_group_value_at_age(managed_group, anchor_age) * 0.4, 6)
+            natural_residual_curve = et.SubElement(
+                forestmodel_root,
+                "curve",
+                {"id": f"THN{anchor_age:03d}_FG_{au_token}"},
+            )
+            treated_residual_curve = et.SubElement(
+                forestmodel_root,
+                "curve",
+                {"id": f"THN{anchor_age:03d}_MG_{au_token}"},
+            )
+            natural_extraction_curve = et.SubElement(
+                forestmodel_root,
+                "curve",
+                {"id": f"CT{anchor_age:03d}_FG_{au_token}"},
+            )
+            treated_extraction_curve = et.SubElement(
+                forestmodel_root,
+                "curve",
+                {"id": f"CT{anchor_age:03d}_MG_{au_token}"},
+            )
+            age_values = sorted(
+                {
+                    float(point.age)
+                    for point in natural_group.itertuples(index=False)
+                    if np.isfinite(float(point.age))
+                }
+                | {
+                    float(point.age)
+                    for point in managed_group.itertuples(index=False)
+                    if np.isfinite(float(point.age))
+                }
+            )
+            if not age_values:
+                age_values = [0.0, 100.0]
+            for age_value in age_values:
+                natural_volume = _curve_group_value_at_age(natural_group, int(age_value))
+                treated_volume = _curve_group_value_at_age(managed_group, int(age_value))
+                et.SubElement(
+                    natural_residual_curve,
+                    "point",
+                    {
+                        "x": str(float(age_value)),
+                        "y": str(max(0.0, natural_volume - natural_gap)),
+                    },
+                )
+                et.SubElement(
+                    treated_residual_curve,
+                    "point",
+                    {
+                        "x": str(float(age_value)),
+                        "y": str(max(0.0, treated_volume - treated_gap)),
+                    },
+                )
+                et.SubElement(
+                    natural_extraction_curve,
+                    "point",
+                    {"x": str(float(age_value)), "y": str(max(0.0, natural_gap))},
+                )
+                et.SubElement(
+                    treated_extraction_curve,
+                    "point",
+                    {"x": str(float(age_value)), "y": str(max(0.0, treated_gap))},
+                )
     define_specs = (
         {"field": "status", "column": "CONTCLAS"},
         {"field": "origin", "column": origin_lookup_expr},
@@ -2435,28 +2606,34 @@ def initialize_mkrf_runtime_package(
         {
             "statement": (
                 "status in managed and oper in operable and ct eq 'Y' "
-                "and not startswith(au,'thn_')"
+                "and not startswith(au,'thn')"
             )
         },
     )
     ct_track = et.SubElement(ct_select, "track")
-    ct_treatment = et.SubElement(
-        ct_track,
-        "treatment",
-        {"label": "CT", "minage": "40", "maxage": "150", "retain": "20"},
-    )
-    ct_produce = et.SubElement(ct_treatment, "produce")
-    et.SubElement(
-        ct_produce,
-        "assign",
-        {"field": "treatment", "value": "'CT'"},
-    )
-    ct_transition = et.SubElement(ct_treatment, "transition")
-    et.SubElement(
-        ct_transition,
-        "assign",
-        {"field": "au", "value": "'thn_'+au"},
-    )
+    for bucket_spec in ct_bucket_specs:
+        ct_treatment = et.SubElement(
+            ct_track,
+            "treatment",
+            {
+                "label": str(bucket_spec["label"]),
+                "minage": str(int(bucket_spec["min_age"])),
+                "maxage": str(int(bucket_spec["max_age"])),
+                "retain": "20",
+            },
+        )
+        ct_produce = et.SubElement(ct_treatment, "produce")
+        et.SubElement(
+            ct_produce,
+            "assign",
+            {"field": "treatment", "value": f"'{str(bucket_spec['label'])}'"},
+        )
+        ct_transition = et.SubElement(ct_treatment, "transition")
+        et.SubElement(
+            ct_transition,
+            "assign",
+            {"field": "au", "value": f"'{str(bucket_spec['prefix'])}'+au"},
+        )
     area_features_select = et.SubElement(forestmodel_root, "select")
     area_features = et.SubElement(area_features_select, "features")
     area_total_attr = et.SubElement(
@@ -2498,7 +2675,7 @@ def initialize_mkrf_runtime_package(
         managed_yield_total,
         "expression",
         {
-            "statement": f"{origin_curve_lookup_expr}*{standing_thinning_factor_expr}",
+            "statement": standing_curve_expr,
             "by": "1",
             "ignoreMissingAttributes": "false",
         },
@@ -2512,7 +2689,7 @@ def initialize_mkrf_runtime_package(
         managed_yield_state,
         "expression",
         {
-            "statement": f"{origin_curve_lookup_expr}*{standing_thinning_factor_expr}",
+            "statement": standing_curve_expr,
             "by": "1",
             "ignoreMissingAttributes": "false",
         },
@@ -2554,8 +2731,7 @@ def initialize_mkrf_runtime_package(
             "expression",
             {
                 "statement": (
-                    f"{origin_curve_lookup_expr}*{standing_thinning_factor_expr}"
-                    f"*({origin_share_lookup_exprs[share_column]})"
+                    f"{standing_curve_expr}*({origin_share_lookup_exprs[share_column]})"
                 ),
                 "by": "1",
                 "ignoreMissingAttributes": "false",
@@ -2576,7 +2752,7 @@ def initialize_mkrf_runtime_package(
         unmanaged_yield_total,
         "expression",
         {
-            "statement": f"{origin_curve_lookup_expr}*{standing_thinning_factor_expr}",
+            "statement": standing_curve_expr,
             "by": "1",
             "ignoreMissingAttributes": "false",
         },
@@ -2590,7 +2766,7 @@ def initialize_mkrf_runtime_package(
         unmanaged_yield_state,
         "expression",
         {
-            "statement": f"{origin_curve_lookup_expr}*{standing_thinning_factor_expr}",
+            "statement": standing_curve_expr,
             "by": "1",
             "ignoreMissingAttributes": "false",
         },
@@ -2606,8 +2782,7 @@ def initialize_mkrf_runtime_package(
             "expression",
             {
                 "statement": (
-                    f"{origin_curve_lookup_expr}*{standing_thinning_factor_expr}"
-                    f"*({origin_share_lookup_exprs[share_column]})"
+                    f"{standing_curve_expr}*({origin_share_lookup_exprs[share_column]})"
                 ),
                 "by": "1",
                 "ignoreMissingAttributes": "false",
@@ -2646,7 +2821,7 @@ def initialize_mkrf_runtime_package(
         product_yield_total,
         "expression",
         {
-            "statement": f"{origin_curve_lookup_expr}*{ct_extraction_factor_expr}",
+            "statement": product_curve_expr,
             "by": "1",
             "ignoreMissingAttributes": "false",
         },
@@ -2660,7 +2835,7 @@ def initialize_mkrf_runtime_package(
         product_yield_state,
         "expression",
         {
-            "statement": f"{origin_curve_lookup_expr}*{ct_extraction_factor_expr}",
+            "statement": product_curve_expr,
             "by": "1",
             "ignoreMissingAttributes": "false",
         },
@@ -2676,8 +2851,7 @@ def initialize_mkrf_runtime_package(
             "expression",
             {
                 "statement": (
-                    f"{origin_curve_lookup_expr}*{ct_extraction_factor_expr}"
-                    f"*({origin_share_lookup_exprs[share_column]})"
+                    f"{product_curve_expr}*({origin_share_lookup_exprs[share_column]})"
                 ),
                 "by": "1",
                 "ignoreMissingAttributes": "false",
@@ -2692,7 +2866,7 @@ def initialize_mkrf_runtime_package(
         product_yield_treat,
         "expression",
         {
-            "statement": f"{origin_curve_lookup_expr}*{ct_extraction_factor_expr}",
+            "statement": product_curve_expr,
             "by": "1",
             "ignoreMissingAttributes": "false",
         },

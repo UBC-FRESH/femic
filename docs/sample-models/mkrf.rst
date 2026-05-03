@@ -74,18 +74,24 @@ The practical handoff is:
 Commercial thinning follow-up
 -----------------------------
 
-The post-release CT follow-up is now governed by ``#180`` rather than the
-original rebuild-closeout issue.
+The current post-release CT redesign is governed by ``#182`` rather than the
+earlier legacy-parity follow-up issue.
 
-That follow-up uses the legacy source XML and accepted PoC XML as the
-behavioral contract for CT:
+Legacy and PoC CT behavior remains documented as benchmark/reference:
 
 - treatment-year CT extraction = ``0.4 * base curve``; and
 - post-thin THN standing yield for later ages = ``0.6 * base curve(x)``.
 
-This is a constant proportional gap model, not a constant absolute gap model.
+That is a constant proportional gap model, not the current canonical target.
+
+The active canonical redesign now uses bucketed CT treatments
+(``CT40``, ``CT50``, ``CT60``, ...) and bucket-specific thinned lanes so the
+canonical runtime can approximate a constant-absolute-gap response legally in
+ForestModel XML. The intended release boundary for that redesign is
+``v0.0.2a1`` so it is not conflated with the original ``v0.0.1a1`` alpha line.
+
 Use the standalone instance treatment/state page for the exact current
-canonical CT wording and evidence pointers.
+canonical CT wording, bucket layout, and evidence pointers.
 
 Current ``v0`` checkpoint signal
 --------------------------------
