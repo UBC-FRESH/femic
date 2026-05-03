@@ -1781,8 +1781,41 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P65.3b Push the instance and parent pointer updates required for the published docs/metadata state.
   - [x] P65.3c Close `femic-mkrf-instance#1` once the archival lane is documented and the canonical lane remains the default.
 
+## Phase 66: Redesign MKRF CT Response Beyond Legacy Parity
+
+- [x] P66.1 Record the redesign contract and release framing (`#182`)
+  - [x] P66.1a Update roadmap/planning surfaces so the next MKRF modeling lane is governed by `#182`.
+  - [x] P66.1b Record the legacy proportional-gap CT model as benchmark/reference only and the bucketed constant-absolute-gap CT model as the new canonical target.
+  - [x] P66.1c Record that the release boundary for this redesign is `v0.0.2a1`, not a continuation of `v0.0.1a1`.
+- [x] P66.2 Replace canonical MKRF CT with a bucketed constant-absolute-gap standing-yield model (`#182`)
+  - [x] P66.2a Replace the single schedulable `CT` treatment with 10-year midpoint CT bucket treatments (`CT40`, `CT50`, `CT60`, ...) covering age windows such as `35-44`, `45-54`, and `55-64`.
+  - [x] P66.2b Emit per-bucket thinned AU/state lanes so each bucket uses a precompiled constant-absolute-gap post-CT standing response anchored to the bucket midpoint age.
+  - [x] P66.2c Preserve explicit CT treatment-year extraction, thinned-lane semantics, and CC follow-on behavior while keeping the bucketed redesign as the canonical default rather than an experimental sidecar.
+- [x] P66.3 Prove the redesign against runtime outputs, docs, and release framing (`#182`)
+  - [x] P66.3a Add focused regression coverage for the bucketed constant-absolute-gap CT behavior and its difference from the legacy proportional-gap rule.
+  - [x] P66.3b Regenerate the canonical runtime package, rerun Matrix Builder, and rerun the canonical `100000`-iteration even-flow smoke.
+  - [x] P66.3c Inspect representative lower-bucket and higher-bucket CT outputs, confirm CT-vs-no-CT full-rotation harvested-volume behavior, rebuild parent/instance docs warning-clean, and record the `v0.0.2a1` framing in repo/GitHub surfaces.
+
 ### Detailed Next Steps Notes
 
+- Phase 66 bucketed CT redesign is now implemented on `#182`:
+  - the canonical MKRF lane now emits `CT40`, `CT50`, `CT60`, ... bucket
+    treatments with per-bucket `thn040_`, `thn050_`, ... thinned lanes;
+  - treatment-year CT extraction is now bucket-anchored at
+    `0.4 * base_curve(x_ct_bucket)`;
+  - post-CT standing yield now follows the bucketed constant-absolute-gap rule
+    `max(0, base_curve(x) - 0.4 * base_curve(x_ct_bucket))`;
+  - non-CT products from thinned lanes now harvest the residual standing lane
+    rather than the untreated base curve;
+  - canonical validation is complete on the MKRF lane:
+    - focused runtime-package tests passed;
+    - canonical runtime package regeneration passed;
+    - Matrix Builder run `mkrf_ct_bucket_matrix_20260502b` passed;
+    - canonical even-flow smoke `mkrf_ct_bucket_smoke_20260502b` passed;
+    - runtime sanity audit reported `rows=24 failures=0`; and
+    - representative rebuilt track checks confirmed constant-gap arithmetic for
+      lower and higher CT buckets; and
+  - the intended release boundary for this redesign remains `v0.0.2a1`.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

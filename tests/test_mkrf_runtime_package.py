@@ -385,12 +385,12 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert '<attribute label="%f.area.%m.total">' in forestmodel_text
     assert '<attribute label="%f.area.%m.seral.le10">' in forestmodel_text
     assert (
-        "<attribute label=\"'%f.area.%m.state.'+if(startswith(au,'thn_'),'THN',statecode)\""
+        "<attribute label=\"'%f.area.%m.state.'+if(startswith(au,'thn'),'THN',statecode)\""
         in forestmodel_text
     )
     assert '<attribute label="%f.yield.%m.total">' in forestmodel_text
     assert (
-        "<attribute label=\"'%f.yield.%m.state.'+if(startswith(au,'thn_'),'THN',statecode)\""
+        "<attribute label=\"'%f.yield.%m.state.'+if(startswith(au,'thn'),'THN',statecode)\""
         in forestmodel_text
     )
     assert '<attribute label="%f.yield.%m.merch.total">' in forestmodel_text
@@ -401,8 +401,8 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert 'select statement="status in unmanaged"' in forestmodel_text
     assert "hasfg eq" not in forestmodel_text
     assert "startswith(au,'em_')" not in forestmodel_text
-    assert "startswith(au,'thn_')" in forestmodel_text
-    assert "substring(au,4)" in forestmodel_text
+    assert "startswith(au,'thn')" in forestmodel_text
+    assert "substring(au,7)" in forestmodel_text
     assert forestmodel_text.count('<attribute label="%f.yield.%m.indsp.Ba">') == 2
     assert forestmodel_text.count('<attribute label="%f.yield.%m.indsp.Cw">') == 2
     assert forestmodel_text.count('<attribute label="%f.yield.%m.indsp.Dr">') == 2
@@ -415,23 +415,26 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert '<attribute label="product.yield.managed.indsp.Ba">' in forestmodel_text
     assert '<attribute label="\'product.yield.managed.treat.\'+treatment">' in forestmodel_text
     assert "if(origin eq 'natural' and hasnatcurve eq 'Y'," in forestmodel_text
-    assert (
-        "curveId(lookupTable(if(startswith(au,'thn_'),substring(au,4),au),"
-        "'cwh_vm_1_dr_hw,cwh_vm_1_hw_cw',"
-        in forestmodel_text
-    )
-    assert "if(startswith(au,'thn_'),0.6,1)" in forestmodel_text
-    assert "if(treatment eq 'CT',0.4,1)" in forestmodel_text
+    assert "lookupTable(treatment+'|'+if(startswith(au,'thn'),substring(au,7),au)," in forestmodel_text
+    assert "'CT40|cwh_vm_1_dr_hw,CT50|cwh_vm_1_dr_hw" in forestmodel_text
+    assert "startswith(treatment,'CT')" in forestmodel_text
+    assert "if(startswith(au,'thn'),curveId(" in forestmodel_text
+    assert "),if(startswith(au,'thn'),curveId(" in forestmodel_text
+    assert "if(startswith(au,'thn_'),0.6,1)" not in forestmodel_text
+    assert "if(treatment eq 'CT',0.4,1)" not in forestmodel_text
     assert '<curve idref="unity"' in forestmodel_text
     assert '<curve idref="le10"' in forestmodel_text
     assert 'select statement="status in managed and oper in operable"' in forestmodel_text
     assert 'select statement="status in managed"' in forestmodel_text
-    assert "not startswith(au,'thn_')" in forestmodel_text
-    assert "'thn_'+au" in forestmodel_text
+    assert "not startswith(au,'thn')" in forestmodel_text
+    assert "'thn040_'+au" in forestmodel_text
+    assert "'thn150_'+au" in forestmodel_text
     assert 'field="statecode" value="\'THN\'"' not in forestmodel_text
     assert "<track>" in forestmodel_text
     assert 'treatment label="CC"' in forestmodel_text
-    assert 'treatment label="CT"' in forestmodel_text
+    assert 'treatment label="CT"' not in forestmodel_text
+    assert 'treatment label="CT40" minage="35" maxage="44" retain="20"' in forestmodel_text
+    assert 'treatment label="CT150" minage="145" maxage="154" retain="20"' in forestmodel_text
 
 
 def test_audit_mkrf_runtime_sanity_flags_zero_signal_with_nonzero_source_share(

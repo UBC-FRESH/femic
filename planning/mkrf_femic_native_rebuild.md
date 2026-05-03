@@ -23,6 +23,8 @@ Current post-release status:
 - the CT legacy-parity repair under `#180` is complete; and
 - the follow-on archival/reference publication issue
   `UBC-FRESH/femic-mkrf-instance#1` is now also complete.
+- the next MKRF modeling lane is the post-legacy CT redesign governed by
+  `#182`.
 
 It starts after the legacy archaeology / PoC benchmark program recorded in:
 
@@ -1953,3 +1955,105 @@ The archival-publication issue is now complete:
   lane; and
 - `femic-mkrf-instance#1` is closed after the standalone docs rebuilt
   warning-clean.
+
+## Post-legacy MKRF CT redesign (`#182`)
+
+The next MKRF modeling phase is no longer about legacy parity or publication.
+It is a canonical CT redesign beyond the legacy proportional-gap model.
+
+### Governing redesign contract
+
+Treat the current legacy/PoC CT behavior as benchmark/reference only:
+
+- treatment-year CT extraction:
+  `0.4 * base curve`
+- post-thin standing THN yield for later ages:
+  `0.6 * base curve(x)`
+
+The next canonical target is instead a bucketed constant-absolute-gap model:
+
+- CT treatment-year extraction remains anchored at CT age; and
+- post-CT THN standing volume should follow
+  `base curve(x) - 0.4 * base curve(x_ct)` rather than a constant proportional
+  gap.
+
+Because canonical ForestModel XML does not expose a clean dynamic "age at
+which CT was applied" state hook for this use case, the redesign will
+discretize CT into precompiled treatment buckets rather than a single
+continuous-age treatment.
+
+Locked bucket contract:
+
+- 10-year midpoint buckets;
+- treatment labels `CT40`, `CT50`, `CT60`, ...;
+- age windows `35-44`, `45-54`, `55-64`, ...; and
+- per-bucket thinned AU/state lanes so extracted and residual curves stay
+  auditable by bucket anchor age.
+
+### Required runtime boundary
+
+Unless the redesign proves otherwise, preserve the rest of the accepted CT
+runtime contract:
+
+- CT eligibility remains
+  `status in managed and oper in operable and ct eq 'Y' and not startswith(au,'thn')`;
+- CT remains a transition to bucket-specific `thn040_`, `thn050_`, ... AU/state
+  lanes;
+- CC remains valid from the thinned lane and returns the stand to the
+  treated/post-clearcut pathway; and
+- no new end-user CT knobs are introduced in this phase.
+
+### Decision bar
+
+Judge the redesign primarily on CT-vs-no-CT full-rotation harvested-volume
+behavior.
+
+The redesign should be treated as successful only if:
+
+- CT treatment-year extraction remains explicit and nonzero;
+- post-CT standing volume no longer drifts farther behind untreated curves
+  solely because of the old proportional-gap artifact; and
+- representative lower-bucket and higher-bucket CT outputs both remain
+  numerically coherent under the precompiled bucket response contract; and
+- the resulting CT + CC full-rotation harvested-volume behavior is defensible
+  relative to the no-CT baseline.
+
+### Release framing
+
+This redesign is intended to ship as MKRF release `v0.0.2a1`.
+
+That release tag must remain distinct from `v0.0.1a1`, which now refers to the
+legacy-parity CT checkpoint rather than the redesign.
+
+### Implementation result
+
+Phase 66 is now implemented on the active `#182` branch.
+
+The canonical MKRF runtime lane now:
+
+- emits bucketed CT treatments `CT40`, `CT50`, `CT60`, ... with 10-year age
+  windows and per-bucket thinned AU/state lanes;
+- uses bucket-anchored CT extracted-product curves:
+  `0.4 * base_curve(x_ct_bucket)`;
+- uses bucketed constant-absolute-gap post-CT standing curves:
+  `max(0, base_curve(x) - 0.4 * base_curve(x_ct_bucket))`; and
+- harvests the residual standing lane for non-CT products on thinned tracks so
+  follow-on `CC` behavior is numerically coherent.
+
+Representative rebuilt track checks from the canonical runtime package now show
+the intended constant-gap arithmetic:
+
+- `CT40` example:
+  - age `60`: `73.64 + 324.66 = 398.3`
+  - age `100`: `73.64 + 691.16 = 764.8`
+- `CT100` example:
+  - age `100`: `305.92 + 458.88 = 764.8`
+  - age `120`: `305.92 + 589.38 = 895.3`
+
+Validation completed for the MKRF lane:
+
+- focused runtime-package tests passed;
+- canonical runtime package regeneration passed;
+- Matrix Builder run `mkrf_ct_bucket_matrix_20260502b` passed;
+- canonical even-flow smoke `mkrf_ct_bucket_smoke_20260502b` passed; and
+- runtime sanity audit reported `rows=24 failures=0`.
