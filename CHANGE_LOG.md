@@ -16559,3 +16559,17 @@
     been written into the chained output state; and
   - narrowed the next repair target to row-4 aspatial area fallback state
     persistence before any row-5 validation.
+## 2026-05-03 - Fixed TSA29 strict row-4 chained-state persistence
+- `#169` / `P53.1d13` implementation and validation:
+  - made strict locked `aspatial_area_reduction` fallbacks persist deductions
+    into `thlb_fact` / `thlb` for chained checkpoints;
+  - kept generic aspatial-area behavior unchanged outside the strict locked
+    proof path;
+  - normalized strict fallback targets to the locked ledger marginal rather
+    than rescaling already-locked row targets;
+  - added focused tests for direct compiled-item and reconstructed LU fallback
+    state persistence;
+  - reran only row 4 from the validated row-3 checkpoint; and
+  - inspected the rebuilt row-4 JSON/feather outputs, confirming row 4 removes
+    `50,434.000 ha` and the output feather carries `3,110,576.671 ha`
+    `thlb_fact` weighted area for row 5.

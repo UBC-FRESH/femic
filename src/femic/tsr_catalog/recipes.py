@@ -9165,6 +9165,7 @@ def _apply_reconstructed_lu_aspatial_area_reduction(
     target_removed_area_ha: float,
     filters: Sequence[dict[str, Any]] = (),
     mode: str = "any",
+    persist_to_thlb_state: bool = False,
 ) -> tuple[list[dict[str, Any]], float, int, int]:
     if not chunk_records or target_removed_area_ha <= 0.0:
         return [dict(item) for item in chunk_records], 0.0, 0, 0
@@ -9188,11 +9189,18 @@ def _apply_reconstructed_lu_aspatial_area_reduction(
     for index, record in enumerate(chunk_records, start=1):
         current_record = dict(record)
         lu_name = str(current_record.get("lu_name", "")).strip()
-        updated_chunk, current_affected = _apply_aspatial_area_keep_factor(
-            frames_by_lu[lu_name],
-            keep_factor=keep_factor,
-            scope_mask=scope_masks_by_lu[lu_name],
-        )
+        if persist_to_thlb_state:
+            updated_chunk, current_affected = _apply_scoped_aspatial_thlb_keep_factor(
+                frames_by_lu[lu_name],
+                keep_factor=keep_factor,
+                scope_mask=scope_masks_by_lu[lu_name],
+            )
+        else:
+            updated_chunk, current_affected = _apply_aspatial_area_keep_factor(
+                frames_by_lu[lu_name],
+                keep_factor=keep_factor,
+                scope_mask=scope_masks_by_lu[lu_name],
+            )
         affected_row_count += current_affected
         if current_affected > 0:
             touched_chunk_count += 1
@@ -12597,10 +12605,24 @@ def _execute_workbench_compiled_item(
                 * current_area_ha
                 / total_area_benchmark_ha
             )
-        updated, removed_area_ha, affected_row_count = _apply_aspatial_area_reduction(
-            checkpoint,
-            target_removed_area_ha=target_removed_area_ha,
-        )
+        if bool(compiled_item.get("persist_area_reduction_to_thlb_state")):
+            (
+                updated,
+                removed_area_ha,
+                affected_row_count,
+            ) = _apply_aspatial_thlb_reduction(
+                checkpoint,
+                target_removed_area_ha=target_removed_area_ha,
+            )
+        else:
+            (
+                updated,
+                removed_area_ha,
+                affected_row_count,
+            ) = _apply_aspatial_area_reduction(
+                checkpoint,
+                target_removed_area_ha=target_removed_area_ha,
+            )
         runtime_item["gross_touched_area_ha"] = removed_area_ha
         runtime_item["affected_fragment_count"] = affected_row_count
         runtime_item["execution_status"] = (
@@ -12609,6 +12631,10 @@ def _execute_workbench_compiled_item(
         runtime_notes.append(
             "Early-stage aspatial area reduction preserved geometry and reduced stand-area fields across the active AFLB subset."
         )
+        if bool(compiled_item.get("persist_area_reduction_to_thlb_state")):
+            runtime_notes.append(
+                "Strict locked execution persisted this aspatial area reduction into THLB state for chained validation."
+            )
         if bool(compiled_item.get("direct_target_removed_area")):
             runtime_notes.append(
                 f"Applied a direct-target area reduction of {target_removed_area_ha:.3f} ha within the active checkpoint subset."
@@ -13367,14 +13393,15 @@ def run_tsr_thlb_locked_parent_step(
     locked_entry = _locked_chain_entry_for_parent_step(
         instance_root=instance_root, parent_step_id=parent_step_id
     )
+    locked_net_removed_area_ha = (
+        _normalize_float_or_none(locked_entry.get("locked_net_removed_area_ha"))
+        if locked_entry is not None
+        else None
+    )
     compiled_logic = _compiled_logic_for_locked_strict_execution(
         target_parent,
         compiled_logic,
-        locked_net_removed_area_ha=(
-            _normalize_float_or_none(locked_entry.get("locked_net_removed_area_ha"))
-            if locked_entry is not None
-            else None
-        ),
+        locked_net_removed_area_ha=locked_net_removed_area_ha,
     )
     resolved_checkpoint_path = checkpoint_path.expanduser().resolve()
     _reject_tsa29_legacy_checkpoint_path(
@@ -13399,6 +13426,19 @@ def run_tsr_thlb_locked_parent_step(
     checkpoint = _prepare_locked_parent_step_checkpoint(checkpoint)
     input_area_ha = _managed_area_ha(checkpoint)
     for compiled_item in compiled_logic:
+        if _resolve_compiled_operation_type(compiled_item) == "aspatial_area_reduction":
+            compiled_item["persist_area_reduction_to_thlb_state"] = True
+            if (
+                locked_net_removed_area_ha is not None
+                and _normalize_float_or_none(
+                    compiled_item.get("benchmark_marginal_area_ha")
+                )
+                is not None
+            ):
+                compiled_item["benchmark_marginal_area_ha"] = float(
+                    locked_net_removed_area_ha
+                )
+                compiled_item["direct_target_removed_area"] = True
         if _resolve_compiled_operation_type(
             compiled_item
         ) == "aspatial_reduction" and bool(
@@ -18149,6 +18189,9 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                     target_removed_area_ha=target_removed_area_ha,
                     filters=tuple(updated_step.get("checkpoint_attribute_filters", ())),
                     mode=str(updated_step.get("checkpoint_attribute_mode", "any")),
+                    persist_to_thlb_state=bool(
+                        updated_step.get("persist_area_reduction_to_thlb_state")
+                    ),
                 )
                 step_profile["overlay_seconds"] = perf_counter() - fallback_started
                 step_profile["write_seconds"] = step_profile["overlay_seconds"]
@@ -18164,6 +18207,10 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                     "Applied the TSR area target as a documented reconstructed-mode aspatial fallback because no exact spatial implementation is available for this recipe row.",
                     "This early-area deduction scales active LU-wise reconstructed stand-area fields instead of claiming exact spatial reproduction.",
                 ]
+                if bool(updated_step.get("persist_area_reduction_to_thlb_state")):
+                    updated_step["run_notes"].append(
+                        "Strict locked execution persisted this aspatial area reduction into THLB state for chained validation."
+                    )
                 if bool(updated_step.get("direct_target_removed_area")):
                     updated_step["run_notes"].append(
                         f"Applied a direct-target area reduction of {target_removed_area_ha:.3f} ha within the active checkpoint subset."

@@ -1418,6 +1418,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d10i Correct strict row-2 parent-step accounting to use the true before/after net change so direct-target aspatial deductions are included in marginal validation.
     - [x] P53.1d11 Preserve strict-chain checkpoint THLB state across locked parent-step handoff so each step starts from the previous step's managed-area state instead of reinitializing to GLB.
     - [x] P53.1d12 Validate strict row 4 from the row-3 checkpoint and record the first roads-and-landings mismatch.
+    - [x] P53.1d13 Persist strict row-4 aspatial area fallback deductions into chained THLB state before any row-5 validation.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -1844,6 +1845,12 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     does not carry the row-4 deduction in `thlb_fact`, so the next bounded
     repair is to make row-4 aspatial area fallback update the chained output
     state before advancing to row 5.
+  - `P53.1d13` is complete: strict `aspatial_area_reduction` now persists
+    fallback area deductions into chained `thlb_fact` / `thlb` state, row 4
+    rerun from the row-3 checkpoint removes the locked `50,434.000 ha`, and
+    the rebuilt row-4 feather carries `3,110,576.671 ha` weighted area; and
+  - the next bounded validation move is row 5 only, starting from the
+    validated row-4 checkpoint.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

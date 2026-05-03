@@ -751,3 +751,38 @@
   - Next bounded repair:
     - make the row-4 aspatial area fallback write the deducted state into the
       chained output checkpoint before advancing to row 5.
+- 2026-05-03: The immediate `P53.1d13` repair is to persist strict row-4
+  aspatial area fallback deductions into chained THLB state.
+  - Root cause:
+    - `_apply_aspatial_area_reduction(...)` currently shrinks
+      `FEMIC_EFFECTIVE_AREA_SQM` / `_stand_area_sqm` while deliberately leaving
+      `thlb_fact` unchanged;
+    - strict chained validation carries managed area via `_stand_area_sqm *
+      thlb_fact`, so the row-4 JSON can report the fallback removal while the
+      output feather still carries the row-3 managed area.
+  - Bounded implementation target:
+    - add strict locked-step behavior that persists `aspatial_area_reduction`
+      fallbacks into `thlb_fact` / `thlb` state for chained checkpoints;
+    - keep canonical geometry/source area fields unchanged; and
+    - rerun only row 4 from the validated row-3 checkpoint.
+- 2026-05-03: Completed `P53.1d13` by persisting the row-4 aspatial area
+  fallback into chained THLB state.
+  - Fix:
+    - strict locked execution now marks `aspatial_area_reduction` fallbacks as
+      THLB-state-persistent;
+    - reconstructed LU fallback execution writes those deductions into
+      `thlb_fact` / `thlb` instead of only shrinking effective area fields; and
+    - locked strict fallback targets use the locked ledger marginal directly
+      rather than rescaling the already-locked value.
+  - Bounded validation:
+    - reran only `thlb_parent_004_roads_and_landings` from
+      `data/tsr/strict_chain/03_thlb_parent_003_non_forest.feather`;
+    - row-4 input area was `3,161,010.671 ha`;
+    - row 4 removed `50,434.000 ha`;
+    - row-4 output remaining area was `3,110,576.671 ha`, with residual
+      cumulative delta `0.000359 ha` from source precision.
+  - Output inspection:
+    - rebuilt row-4 feather `thlb_fact` weighted area is
+      `3,110,576.671 ha`;
+    - canonical source area fields remain unchanged; and
+    - `thlb_fact` now carries the row-4 deduction for the next chained step.

@@ -700,6 +700,44 @@ def test_execute_workbench_compiled_item_apportions_direct_target_aspatial_reduc
     assert updated["thlb_fact"].sum() == pytest.approx(0.75)
 
 
+def test_execute_workbench_compiled_item_persists_aspatial_area_reduction_to_thlb_state() -> (
+    None
+):
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_AREA_SQM": [10000.0, 10000.0],
+            "thlb_fact": [0.5, 0.5],
+            "thlb": [1, 1],
+            "_row_id": [0, 1],
+            "_stand_area_sqm": [10000.0, 10000.0],
+        },
+        geometry=[box(0, 0, 100, 100), box(100, 0, 200, 100)],
+        crs="EPSG:3005",
+    )
+
+    updated, runtime_item = tsr_recipes._execute_workbench_compiled_item(
+        checkpoint=checkpoint,
+        compiled_item={
+            "step_id": "row4_compiled_03",
+            "parent_step_id": "thlb_parent_004_roads_and_landings",
+            "normalized_action": "aspatial_area_reduction",
+            "compiled_operation_type": "aspatial_area_reduction",
+            "benchmark_marginal_area_ha": 0.25,
+            "direct_target_removed_area": True,
+            "persist_area_reduction_to_thlb_state": True,
+        },
+        instance_root=Path.cwd(),
+        source_entry_map={},
+        total_area_benchmark_ha=100.0,
+    )
+
+    assert runtime_item["execution_status"] == "applied"
+    assert runtime_item["removed_area_ha"] == pytest.approx(0.25)
+    assert runtime_item["remaining_area_ha"] == pytest.approx(0.75)
+    assert updated["thlb_fact"].tolist() == pytest.approx([0.375, 0.375])
+    assert updated["FEATURE_AREA_SQM"].tolist() == pytest.approx([10000.0, 10000.0])
+
+
 def test_prepare_locked_parent_step_checkpoint_preserves_thlb_state() -> None:
     checkpoint = gpd.GeoDataFrame(
         {
@@ -7797,6 +7835,41 @@ def test_apply_aspatial_area_reduction_respects_checkpoint_attribute_filters() -
     )
     assert updated["_stand_area_sqm"].tolist() == pytest.approx([0.0, 100.0])
     assert tsr_recipes._managed_area_ha(updated) == pytest.approx(0.01)
+
+
+def test_reconstructed_lu_aspatial_area_reduction_can_persist_to_thlb_state(
+    tmp_path: Path,
+) -> None:
+    chunk_path = tmp_path / "chunk.feather"
+    runtime_step_root = tmp_path / "runtime"
+    runtime_step_root.mkdir()
+    gpd.GeoDataFrame(
+        {
+            "FEATURE_AREA_SQM": [10000.0, 10000.0],
+            "_stand_area_sqm": [10000.0, 10000.0],
+            "thlb_fact": [0.5, 0.5],
+            "thlb": [1, 1],
+        },
+        geometry=[box(0, 0, 100, 100), box(100, 0, 200, 100)],
+        crs="EPSG:3005",
+    ).to_feather(chunk_path)
+
+    records, removed_area_ha, affected_row_count, touched_chunk_count = (
+        tsr_recipes._apply_reconstructed_lu_aspatial_area_reduction(
+            chunk_records=({"lu_name": "One", "chunk_path": chunk_path},),
+            runtime_step_root=runtime_step_root,
+            target_removed_area_ha=0.25,
+            persist_to_thlb_state=True,
+        )
+    )
+
+    updated = gpd.read_feather(Path(records[0]["chunk_path"]))
+    assert removed_area_ha == pytest.approx(0.25)
+    assert affected_row_count == 2
+    assert touched_chunk_count == 1
+    assert updated["thlb_fact"].tolist() == pytest.approx([0.375, 0.375])
+    assert updated["FEATURE_AREA_SQM"].tolist() == pytest.approx([10000.0, 10000.0])
+    assert updated["_stand_area_sqm"].tolist() == pytest.approx([10000.0, 10000.0])
 
 
 def test_apply_aspatial_thlb_reduction_respects_checkpoint_attribute_filters() -> None:
