@@ -1628,6 +1628,25 @@ def test_managed_area_ha_from_checkpoint_uses_explicit_tsr_checkpoint(
     ) == pytest.approx(812.5)
 
 
+def test_managed_area_ha_from_checkpoint_uses_feature_area_with_thlb_fact(
+    tmp_path: Path,
+) -> None:
+    checkpoint_path = tmp_path / "data" / "tsr" / "strict_row4_checkpoint.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {
+            "FEATURE_AREA_SQM": [10000.0, 20000.0],
+            "thlb_fact": [0.25, 0.5],
+        },
+        geometry=[box(0.0, 0.0, 100.0, 100.0), box(100.0, 0.0, 300.0, 100.0)],
+        crs="EPSG:3005",
+    ).to_feather(checkpoint_path)
+
+    assert named_pipelines._managed_area_ha_from_checkpoint(
+        checkpoint_path
+    ) == pytest.approx(1.25)
+
+
 def test_run_named_pipeline_runbook_emits_pipeline_run_failed_event(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

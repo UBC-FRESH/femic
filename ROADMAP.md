@@ -1420,7 +1420,8 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d12 Validate strict row 4 from the row-3 checkpoint and record the first roads-and-landings mismatch.
     - [x] P53.1d13 Persist strict row-4 aspatial area fallback deductions into chained THLB state before any row-5 validation.
     - [x] P53.1d14 Validate strict row 5 as a reference-only milestone from the validated row-4 checkpoint and record the first checkpoint-area helper mismatch before advancing to row 6.
-    - [ ] P53.1d15 Make strict reference-only checkpoint-area validation honor carried `thlb_fact` state when `_stand_area_sqm` is absent, then rerun row 5 only.
+    - [x] P53.1d15 Make strict reference-only checkpoint-area validation honor carried `thlb_fact` state when `_stand_area_sqm` is absent, then rerun row 5 only.
+    - [ ] P53.1d16 Validate strict row 6 from the row-5 reference milestone / row-4 checkpoint state and stop on either a clean locked-chain match or the first row-6 mismatch.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -1856,9 +1857,12 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     transformation because `_managed_area_ha_from_checkpoint(...)` fell back to
     full GLB geometry area when `_stand_area_sqm` was absent, even though the
     checkpoint carries the chained state in `FEATURE_AREA_SQM * thlb_fact`;
-  - the next bounded repair is `P53.1d15`: update strict reference-only
-    checkpoint-area validation to honor carried `thlb_fact` state without
-    requiring `_stand_area_sqm`, then rerun row 5 only.
+  - `P53.1d15` is complete: strict reference-only checkpoint-area validation
+    now honors carried `thlb_fact` state using `FEATURE_AREA_SQM` when
+    `_stand_area_sqm` is absent, and row 5 validates cleanly from the row-4
+    checkpoint with only `0.000359 ha` source-precision residual; and
+  - the next bounded validation move is `P53.1d16`: validate row 6 only from
+    the row-5 reference milestone / row-4 checkpoint state, then stop.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

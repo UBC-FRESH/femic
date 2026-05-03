@@ -1308,14 +1308,20 @@ def _managed_area_ha_from_checkpoint(checkpoint_path: Path) -> float:
         )
     gpd = import_module("geopandas")
     checkpoint = gpd.read_feather(checkpoint_path)
-    if "_stand_area_sqm" in checkpoint.columns and "thlb_fact" in checkpoint.columns:
-        return float(
-            (
-                checkpoint["_stand_area_sqm"].astype(float)
-                * checkpoint["thlb_fact"].astype(float)
-            ).sum()
-            / 10000.0
-        )
+    if "thlb_fact" in checkpoint.columns:
+        thlb_fact = checkpoint["thlb_fact"].astype(float)
+        for area_column in ("_stand_area_sqm", "FEATURE_AREA_SQM", "Shape_Area"):
+            if area_column in checkpoint.columns:
+                return float(
+                    (checkpoint[area_column].astype(float) * thlb_fact).sum() / 10000.0
+                )
+        for area_column in ("POLYGON_AREA", "GEOMETRY_AREA"):
+            if area_column in checkpoint.columns:
+                return float((checkpoint[area_column].astype(float) * thlb_fact).sum())
+        if "geometry" in checkpoint.columns:
+            return float(
+                (checkpoint.geometry.area.astype(float) * thlb_fact).sum() / 10000.0
+            )
     if "geometry" in checkpoint.columns:
         return float(checkpoint.geometry.area.sum() / 10000.0)
     raise NamedPipelineError(

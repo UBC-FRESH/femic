@@ -16588,3 +16588,17 @@
   - narrowed the next repair target to strict reference-only checkpoint-area
     validation, which currently ignores carried `thlb_fact` state when
     `_stand_area_sqm` is absent and falls back to full geometry/GLB area.
+## 2026-05-03 - Fixed TSA29 strict row-5 reference checkpoint validation
+- `#169` / `P53.1d15` implementation and validation:
+  - updated `_managed_area_ha_from_checkpoint(...)` so strict reference-only
+    validation honors carried `thlb_fact` state with `FEATURE_AREA_SQM` when
+    `_stand_area_sqm` is absent;
+  - added a focused regression test for that checkpoint shape;
+  - reran the row-5 reference validation only from
+    `data/tsr/strict_chain/04_thlb_parent_004_roads_and_landings.feather`;
+  - confirmed row 5 finished as `reference_validated`;
+  - inspected the row-4 checkpoint and confirmed raw area remains
+    `4,933,664.212 ha` while carried managed area is
+    `3,110,576.671 ha`; and
+  - confirmed row 5 matches the locked chain with residual cumulative delta
+    `0.000359 ha` from source precision.

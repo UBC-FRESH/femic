@@ -818,3 +818,30 @@
     - make strict reference-only checkpoint-area validation honor
       `FEATURE_AREA_SQM * thlb_fact` when `_stand_area_sqm` is absent, then
       rerun row 5 only.
+- 2026-05-03: Completed `P53.1d15` by fixing strict reference-only
+  checkpoint-area validation and rerunning row 5 only.
+  - Fix:
+    - `_managed_area_ha_from_checkpoint(...)` now uses carried `thlb_fact`
+      state with `_stand_area_sqm`, `FEATURE_AREA_SQM`, or other available
+      area fields before falling back to unmanaged geometry area.
+  - Focused checks:
+    - added a regression test for checkpoints with `FEATURE_AREA_SQM` and
+      `thlb_fact` but no `_stand_area_sqm`;
+    - ran the existing explicit checkpoint-area test and the new regression
+      test; and
+    - ran `ruff check` on the touched code/tests.
+  - Bounded validation:
+    - reran only `thlb_parent_005_analysis_forest_land_base` from
+      `data/tsr/strict_chain/04_thlb_parent_004_roads_and_landings.feather`;
+    - row 5 finished as `reference_validated`;
+    - actual carried area was `3,110,576.671359 ha`;
+    - locked row-5 cumulative was `3,110,576.671000 ha`; and
+    - residual cumulative delta was `0.000359 ha`.
+  - Output inspection:
+    - the row-4 checkpoint still has raw `FEATURE_AREA_SQM` sum
+      `4,933,664.212 ha`; and
+    - the validated carried managed area is
+      `FEATURE_AREA_SQM * thlb_fact = 3,110,576.671 ha`.
+  - Next bounded validation:
+    - validate row 6 only from the row-5 reference milestone / row-4
+      checkpoint state.
