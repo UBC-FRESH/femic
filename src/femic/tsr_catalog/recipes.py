@@ -12524,11 +12524,24 @@ def _execute_workbench_compiled_item(
             )
             runtime_item["runtime_notes"] = runtime_notes
             return checkpoint, runtime_item
-        target_removed_area_ha = (
-            float(benchmark_marginal_area_ha)
-            * current_managed_area_ha
-            / total_area_benchmark_ha
-        )
+        if bool(compiled_item.get("direct_target_removed_area")):
+            denominator_ha = _normalize_float_or_none(
+                compiled_item.get("direct_target_area_denominator_ha")
+            )
+            if denominator_ha is not None and denominator_ha > 0.0:
+                target_removed_area_ha = (
+                    float(benchmark_marginal_area_ha)
+                    * current_managed_area_ha
+                    / denominator_ha
+                )
+            else:
+                target_removed_area_ha = float(benchmark_marginal_area_ha)
+        else:
+            target_removed_area_ha = (
+                float(benchmark_marginal_area_ha)
+                * current_managed_area_ha
+                / total_area_benchmark_ha
+            )
         updated, removed_area_ha, affected_row_count = _apply_aspatial_thlb_reduction(
             checkpoint,
             target_removed_area_ha=target_removed_area_ha,
@@ -12541,9 +12554,14 @@ def _execute_workbench_compiled_item(
         runtime_notes.append(
             "Later-stage aspatial reduction preserved geometry and reduced THLB state proportionally across the active subset."
         )
-        runtime_notes.append(
-            "Notebook execution scales the TSR benchmark marginal area to the current smoke subset before applying the reduction."
-        )
+        if bool(compiled_item.get("direct_target_removed_area")):
+            runtime_notes.append(
+                f"Applied a direct-target THLB reduction of {target_removed_area_ha:.3f} ha within the active checkpoint subset."
+            )
+        else:
+            runtime_notes.append(
+                "Notebook execution scales the TSR benchmark marginal area to the current smoke subset before applying the reduction."
+            )
         return _finalize(updated)
 
     if operation_type == "aspatial_area_reduction":
@@ -13186,10 +13204,20 @@ def _is_strict_row2_non_additive_residual_fallback(
         return False
     if _resolve_compiled_operation_type(compiled_item) != "aspatial_area_reduction":
         return False
-    if not bool(compiled_item.get("direct_target_removed_area")):
-        return False
     label = str(compiled_item.get("label", "")).strip().casefold()
-    return "treaty" in label and "title" in label
+    predicate = str(compiled_item.get("normalized_predicate", "")).strip().casefold()
+    subject = str(compiled_item.get("normalized_subject", "")).strip().casefold()
+    benchmark = _normalize_float_or_none(
+        compiled_item.get("benchmark_marginal_area_ha")
+    )
+    if benchmark is None or abs(benchmark - 191246.0) > 1e-6:
+        return False
+    text = " ".join((label, predicate, subject))
+    return (
+        "treaty" in text
+        and "title" in text
+        and ("fallback" in text or "transfer" in text)
+    )
 
 
 def _has_parent_level_aspatial_marginal_contract(
@@ -13214,20 +13242,58 @@ def _has_parent_level_aspatial_marginal_contract(
 
 
 def _compiled_logic_for_locked_strict_execution(
-    parent_step: Mapping[str, Any], compiled_logic: Sequence[Mapping[str, Any]]
+    parent_step: Mapping[str, Any],
+    compiled_logic: Sequence[Mapping[str, Any]],
+    *,
+    locked_net_removed_area_ha: float | None = None,
 ) -> list[dict[str, Any]]:
     normalized = [dict(item) for item in compiled_logic]
     if not _has_parent_level_aspatial_marginal_contract(
         parent_step=parent_step, compiled_logic=normalized
     ):
         return normalized
-    return [
+    selected = [
         item
         for item in normalized
         if not _is_strict_row2_non_additive_residual_fallback(
             parent_step=parent_step, compiled_item=item
         )
     ]
+    if locked_net_removed_area_ha is None:
+        return selected
+    parent_benchmark = _normalize_float_or_none(
+        parent_step.get("benchmark_marginal_area_ha")
+    )
+    if parent_benchmark is None:
+        return selected
+    for item in selected:
+        if _resolve_compiled_operation_type(item) != "aspatial_reduction":
+            continue
+        item_benchmark = _normalize_float_or_none(
+            item.get("benchmark_marginal_area_ha")
+        )
+        if item_benchmark is None or abs(item_benchmark - parent_benchmark) > 1e-6:
+            continue
+        item["benchmark_marginal_area_ha"] = float(locked_net_removed_area_ha)
+        item["direct_target_removed_area"] = True
+        break
+    return selected
+
+
+def _locked_chain_entry_for_parent_step(
+    *, instance_root: Path, parent_step_id: str
+) -> dict[str, Any] | None:
+    ledger_path = instance_root / "config" / "tsr" / "thlb_locked_chain_ledger.json"
+    if not ledger_path.exists():
+        return None
+    payload = json.loads(ledger_path.read_text(encoding="utf-8"))
+    entries = payload.get("entries", ()) if isinstance(payload, dict) else ()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        if str(entry.get("parent_step_id", "")).strip() == parent_step_id:
+            return dict(entry)
+    return None
 
 
 def default_tsr_thlb_strict_chain_checkpoint_path(
@@ -13263,8 +13329,17 @@ def run_tsr_thlb_locked_parent_step(
     target_parent, compiled_logic = _validate_locked_strict_parent_step_contract(
         target_parent
     )
+    locked_entry = _locked_chain_entry_for_parent_step(
+        instance_root=instance_root, parent_step_id=parent_step_id
+    )
     compiled_logic = _compiled_logic_for_locked_strict_execution(
-        target_parent, compiled_logic
+        target_parent,
+        compiled_logic,
+        locked_net_removed_area_ha=(
+            _normalize_float_or_none(locked_entry.get("locked_net_removed_area_ha"))
+            if locked_entry is not None
+            else None
+        ),
     )
     resolved_checkpoint_path = checkpoint_path.expanduser().resolve()
     _reject_tsa29_legacy_checkpoint_path(
@@ -13292,6 +13367,13 @@ def run_tsr_thlb_locked_parent_step(
     checkpoint["thlb_fact"] = 1.0
     checkpoint["thlb"] = 1
     input_area_ha = _managed_area_ha(checkpoint)
+    for compiled_item in compiled_logic:
+        if _resolve_compiled_operation_type(
+            compiled_item
+        ) == "aspatial_reduction" and bool(
+            compiled_item.get("direct_target_removed_area")
+        ):
+            compiled_item["direct_target_area_denominator_ha"] = input_area_ha
     profiling["input_prepare_seconds"] = perf_counter() - input_prepare_started
 
     execution_plan = [

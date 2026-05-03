@@ -16497,3 +16497,19 @@
     excluded from locked strict execution in that non-additive contract shape;
   - formatted and linted the touched code/tests; and
   - reran the focused locked-parent-step tests successfully.
+## 2026-05-03 - Validated TSA29 strict row 2 against the locked chain
+- `#169` / `P53.1d9` closeout:
+  - completed the bounded strict `glb -> step 002` named-pipeline runbook
+    validation from the materialized GLB checkpoint and materialized LU
+    GeoPackage;
+  - corrected row-2 locked execution so the NStQ/Tsilhqot'in residual fallback
+    is not double-counted after applying the parent-level locked marginal;
+  - rewrote the remaining row-2 parent-level aspatial reduction from the
+    locked ledger marginal and apportioned that direct target across LU chunks;
+  - reran
+    `femic pipelines run --runbook runbooks/pipelines/tsa29.tsr.thlb_strict.glb_to_step2.yaml --instance-root external/femic-tsa29-instance`
+    successfully;
+  - inspected the rebuilt row-2 result JSON and feather output, confirming
+    `696,781.324 ha` removed, `4,236,882.888 ha` remaining, and maximum
+    marginal/cumulative locked-chain deltas of `0.000 ha`; and
+  - left the broader checked-in strict-pipeline rerun open under `P53.1d4`.

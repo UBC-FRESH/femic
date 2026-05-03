@@ -1401,11 +1401,11 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d6 Add always-on real-time user-observable runtime output for `femic pipelines run`, including parent-step events, compiled-step subevents, and mirrored live event logs under `runtime/logs/tsr/`.
     - [x] P53.1d7 Add a strict preflight seam-benchmark gate so TSA29 strict named-pipeline runs abort before execution when the selected start surface already disagrees with the locked-chain reference for that seam.
     - [x] P53.1d8 Wire the strict `scratch` seam to the raw-source GLB builder so named-pipeline step 001 validates from clipped VRI/TSA geometry and stops there before step 002.
-    - [ ] P53.1d9 Add a bounded strict row-2 named-pipeline runbook that materializes the GLB checkpoint from step 001, runs only `thlb_parent_002_*`, and validates that single step against the locked chain.
+    - [x] P53.1d9 Add a bounded strict row-2 named-pipeline runbook that materializes the GLB checkpoint from step 001, runs only `thlb_parent_002_*`, and validates that single step against the locked chain.
       - [x] P53.1d9a Normalize the materialized `glb_checkpoint.feather` area columns from clipped geometry so step-002 input area cannot drift back onto preserved source-layer area attributes.
       - [x] P53.1d9b Sequence strict scratch pipelines over the locked parent-step recipe order so milestone rows validate in place and each transformation row chains its bounded output checkpoint into the next locked step.
       - [x] P53.1d9c Add an explicit strict `glb` seam so step-002 validation can start from the saved validated GLB checkpoint without rebuilding row 1.
-      - [ ] P53.1d9d Fix strict row-2 named-pipeline fallback accounting so the NStQ/Tsilhqot'in direct-target residual is not double-counted when the locked row-2 parent already carries the combined parent-level marginal contract.
+      - [x] P53.1d9d Fix strict row-2 named-pipeline fallback accounting so the NStQ/Tsilhqot'in direct-target residual is not double-counted when the locked row-2 parent already carries the combined parent-level marginal contract.
     - [x] P53.1d10 Rebuild `tsr.thlb_strict` to execute only locked validated step logic.
       - [x] P53.1d10a Replace strict transformation-step execution with a dedicated locked-step executor that uses only the locked recipe parent-step contract and explicit checkpoints.
       - [x] P53.1d10b Hard-ban the old broad parent-step runner from `tsr.thlb_strict` and fail immediately if strict execution tries to reach it.
@@ -1817,19 +1817,20 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     - representative rebuilt track checks confirmed constant-gap arithmetic for
       lower and higher CT buckets; and
   - the intended release boundary for this redesign remains `v0.0.2a1`.
-- Phase 53 TSA29 strict named-pipeline validation is the active resumed lane:
-  - `#169` row-2 validation now reaches the locked-chain comparator from the
-    materialized GLB checkpoint and materialized LU GeoPackage;
-  - the first specific mismatch is row 2,
-    `thlb_parent_002_land_not_administered_by_the_province`, where the
-    named-pipeline run removes `888,284.260 ha` against locked
-    `696,781.324 ha`;
-  - diagnosis shows the excess is the `191,246 ha` NStQ/Tsilhqot'in
-    direct-target residual being applied after the parent-level row-2
-    marginal has already been applied; and
-  - the immediate bounded implementation target is `P53.1d9d`: repair that
-    fallback accounting, rerun only the `glb -> step 002` runbook, and inspect
-    the rebuilt row-2 result before updating `#169`.
+- Phase 53 TSA29 strict named-pipeline validation remains the active resumed lane:
+  - `#169` / `P53.1d9` is now complete: the bounded `glb -> step 002`
+    runbook validates cleanly against the locked chain from the materialized
+    GLB checkpoint and materialized LU GeoPackage;
+  - inspected rebuilt outputs show row 2
+    `thlb_parent_002_land_not_administered_by_the_province` removed
+    `696,781.324 ha`, left `4,236,882.888 ha`, and reported maximum marginal
+    and cumulative locked-chain deltas of `0.000 ha`;
+  - the strict executor now treats the NStQ/Tsilhqot'in fallback residual as
+    non-additive when the locked row-2 parent-level marginal already carries
+    the combined contract; and
+  - the next bounded validation target is `P53.1d4`: rerun the checked-in
+    TSA29 strict named pipeline against the locked recipe surface and record
+    the clean locked-chain match or the first remaining parent-step mismatch.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

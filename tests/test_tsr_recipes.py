@@ -608,15 +608,96 @@ def test_locked_strict_execution_does_not_double_count_row2_residual_fallback() 
             "label": "Treaty and title transfers requiring reviewed overlays",
             "compiled_operation_type": "aspatial_area_reduction",
             "benchmark_marginal_area_ha": 191246.0,
-            "direct_target_removed_area": True,
+            "normalized_predicate": (
+                "apply the documented NStQ interim treaty and Tsilhqot'in "
+                "title excluded area as an AFLB aspatial fallback because the "
+                "dedicated overlay polygons are not publicly materialized in this lane"
+            ),
         },
     )
 
     selected = tsr_recipes._compiled_logic_for_locked_strict_execution(
-        parent_step, compiled_logic
+        parent_step,
+        compiled_logic,
+        locked_net_removed_area_ha=696781.324,
     )
 
     assert [item["step_id"] for item in selected] == ["thlb_parent_002_compiled_01"]
+    assert selected[0]["benchmark_marginal_area_ha"] == pytest.approx(696781.324)
+    assert selected[0]["direct_target_removed_area"] is True
+
+
+def test_execute_workbench_compiled_item_uses_direct_target_aspatial_reduction() -> (
+    None
+):
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_AREA_SQM": [10000.0, 10000.0],
+            "thlb_fact": [1.0, 1.0],
+            "thlb": [1, 1],
+            "_row_id": [0, 1],
+            "_stand_area_sqm": [10000.0, 10000.0],
+        },
+        geometry=[box(0, 0, 100, 100), box(100, 0, 200, 100)],
+        crs="EPSG:3005",
+    )
+
+    updated, runtime_item = tsr_recipes._execute_workbench_compiled_item(
+        checkpoint=checkpoint,
+        compiled_item={
+            "step_id": "row2_compiled_01",
+            "parent_step_id": "thlb_parent_002_land_not_administered_by_the_province",
+            "normalized_action": "aspatial_reduction",
+            "compiled_operation_type": "aspatial_reduction",
+            "benchmark_marginal_area_ha": 0.5,
+            "direct_target_removed_area": True,
+        },
+        instance_root=Path.cwd(),
+        source_entry_map={},
+        total_area_benchmark_ha=100.0,
+    )
+
+    assert runtime_item["execution_status"] == "applied"
+    assert runtime_item["removed_area_ha"] == pytest.approx(0.5)
+    assert runtime_item["remaining_area_ha"] == pytest.approx(1.5)
+    assert updated["thlb_fact"].sum() == pytest.approx(1.5)
+
+
+def test_execute_workbench_compiled_item_apportions_direct_target_aspatial_reduction() -> (
+    None
+):
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_AREA_SQM": [10000.0],
+            "thlb_fact": [1.0],
+            "thlb": [1],
+            "_row_id": [0],
+            "_stand_area_sqm": [10000.0],
+        },
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    )
+
+    updated, runtime_item = tsr_recipes._execute_workbench_compiled_item(
+        checkpoint=checkpoint,
+        compiled_item={
+            "step_id": "row2_compiled_01",
+            "parent_step_id": "thlb_parent_002_land_not_administered_by_the_province",
+            "normalized_action": "aspatial_reduction",
+            "compiled_operation_type": "aspatial_reduction",
+            "benchmark_marginal_area_ha": 0.5,
+            "direct_target_removed_area": True,
+            "direct_target_area_denominator_ha": 2.0,
+        },
+        instance_root=Path.cwd(),
+        source_entry_map={},
+        total_area_benchmark_ha=100.0,
+    )
+
+    assert runtime_item["execution_status"] == "applied"
+    assert runtime_item["removed_area_ha"] == pytest.approx(0.25)
+    assert runtime_item["remaining_area_ha"] == pytest.approx(0.75)
+    assert updated["thlb_fact"].sum() == pytest.approx(0.75)
 
 
 def test_run_tsr_thlb_locked_parent_step_uses_cpu_aware_parallel_defaults(

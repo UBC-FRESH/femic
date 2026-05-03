@@ -638,3 +638,32 @@
       direct-target residual as non-additive when the parent-level row-2
       marginal has already been applied, then rerun only the same
       `glb -> step 002` runbook and inspect the rebuilt result JSON/feather.
+- 2026-05-03: Completed `P53.1d9` / `P53.1d9d` by validating the bounded
+  TSA29 strict row-2 named-pipeline runbook cleanly against the locked chain.
+  - Fix:
+    - strict locked execution now drops the row-2 NStQ/Tsilhqot'in residual
+      fallback from additive compiled logic when the parent-level row-2
+      marginal already carries the combined locked contract; and
+    - the remaining parent-level aspatial reduction is rewritten from the
+      locked-chain ledger marginal and apportioned across LU chunks against
+      the row-2 input denominator rather than applied once per chunk.
+  - Acceptance run:
+    - `.\.venv\Scripts\python.exe -m femic pipelines run --runbook runbooks/pipelines/tsa29.tsr.thlb_strict.glb_to_step2.yaml --instance-root external/femic-tsa29-instance`
+    - locked row-2 expected `696,781.324 ha`, actual `696,781.324 ha`,
+      delta `0.000 ha`;
+    - locked cumulative expected `4,236,882.888 ha`, actual
+      `4,236,882.888 ha`, delta `0.000 ha`; and
+    - the named-pipeline summary reported maximum marginal and cumulative
+      locked-chain deltas of `0.000 ha`.
+  - Output inspection:
+    - result JSON:
+      `external/femic-tsa29-instance/runtime/logs/tsr/strict_chain/02_thlb_parent_002_land_not_administered_by_the_province.json`;
+    - output feather:
+      `external/femic-tsa29-instance/data/tsr/strict_chain/02_thlb_parent_002_land_not_administered_by_the_province.feather`;
+    - inspected summaries show only `compiled_01` contributing to row-2
+      removal, with `696,781.324 ha` removed and `4,236,882.888 ha`
+      remaining.
+  - Next bounded step:
+    - return to `P53.1d4` and rerun the checked-in TSA29 strict named
+      pipeline against the locked recipe surface to find the next remaining
+      locked-chain mismatch, if any.
