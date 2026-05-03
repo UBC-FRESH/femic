@@ -1751,8 +1751,45 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P63.5b Update the existing guide pages so operators land on those new logic docs instead of shallow package-only descriptions.
   - [x] P63.5c Rebuild the standalone instance docs and verify the new treatment/AU/remap explanations render warning-clean.
 
+## Phase 64: Restore MKRF CT Legacy Parity
+
+- [ ] P64.1 Record the CT legacy-parity contract and current divergence (`#180`)
+  - [ ] P64.1a Update the roadmap/planning surfaces so the post-`v0.0.1a1` CT follow-up is governed by `#180`.
+  - [ ] P64.1b Document the exact legacy and PoC CT behavior from source XML, including the `0.4` treatment-year extraction and `0.6` thinned standing lane.
+  - [ ] P64.1c Record the current canonical CT divergence explicitly so the runtime repair is judged against the legacy/PoC contract rather than ad hoc interpretation.
+- [ ] P64.2 Repair canonical MKRF CT runtime logic to match legacy/PoC (`#180`)
+  - [ ] P64.2a Emit the legacy/PoC CT select statement and transition contract in the canonical generator, including `retain="20"` and `au='thn_'+au`.
+  - [ ] P64.2b Drive THN state/yield behavior from the thinned AU lane while preserving canonical CC regeneration behavior back to the treated/post-clearcut lane.
+  - [ ] P64.2c Split CT treatment-year extracted products (`0.4 * base curve`) from post-CT standing THN yields (`0.6 * base curve(x)`).
+- [ ] P64.3 Prove CT parity in tests, rebuilt runtime outputs, and published docs (`#180`)
+  - [ ] P64.3a Add focused regression coverage for CT select/transition semantics and the legacy `0.4`/`0.6` split.
+  - [ ] P64.3b Regenerate the canonical runtime package, rerun Matrix Builder, and rerun the canonical even-flow smoke at `100000` iterations.
+  - [ ] P64.3c Inspect representative rebuilt CT-active outputs, keep parent/instance docs warning-clean, and record the parity result in repo/GitHub surfaces.
+
 ### Detailed Next Steps Notes
 
+- Active MKRF follow-up is now `#180`, not `#173`:
+  - the new post-release target is CT legacy parity for the canonical lane rather than more generic docs/publication cleanup;
+  - the governing behavioral contract comes from
+    `external/femic-mkrf-instance/data/legacy_mkrf/generated_xml/baseMKRF.xml`
+    and the accepted PoC mirror in
+    `external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/XML/baseMKRF.xml`;
+  - both source XML surfaces implement CT as a constant proportional split:
+    - treatment-year CT harvest/product signal = `0.4 * base curve`
+    - post-thin standing THN signal for later ages = `0.6 * base curve(x)`; and
+  - the current canonical generator still diverges because it uses the `0.6`
+    residual logic but does not yet emit the separate `0.4` CT extraction
+    surface correctly.
+- Immediate execution order for `#180`:
+  - first update the instance and parent MKRF docs so they explain the exact
+    legacy/PoC CT contract and the current canonical divergence plainly;
+  - then repair the canonical runtime generator so CT transitions to
+    `thn_` AUs, preserves origin, and restores the legacy `0.4` extracted /
+    `0.6` residual split; and
+  - finish with focused CT regression checks plus a full canonical package
+    rebuild, Matrix Builder rerun, and `100000`-iteration even-flow smoke so
+    the parity claim is based on rebuilt outputs rather than code inspection
+    alone.
 - Phase 62 publication lane is complete:
   - instance PR `UBC-FRESH/femic-mkrf-instance#2` merged and parent PR `#179` merged;
   - `femic-mkrf-instance` release `v0.0.1a1` is published as an alpha pre-release;
