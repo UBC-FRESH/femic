@@ -16573,3 +16573,18 @@
   - inspected the rebuilt row-4 JSON/feather outputs, confirming row 4 removes
     `50,434.000 ha` and the output feather carries `3,110,576.671 ha`
     `thlb_fact` weighted area for row 5.
+## 2026-05-03 - Recorded the TSA29 strict row-5 reference mismatch
+- `#169` / `P53.1d14` validation run:
+  - validated only row 5
+    `thlb_parent_005_analysis_forest_land_base` from the row-4 strict-chain
+    checkpoint;
+  - stopped before any row-6 transformation;
+  - captured the reference-only mismatch:
+    - locked marginal `0.000 ha`, actual marginal `0.000 ha`;
+    - locked cumulative `3,110,576.671 ha`, named-pipeline reference helper
+      cumulative `4,933,664.212 ha`, delta `1,823,087.541 ha`;
+  - inspected the row-4 checkpoint directly and confirmed it carries
+    `FEATURE_AREA_SQM * thlb_fact = 3,110,576.671 ha`; and
+  - narrowed the next repair target to strict reference-only checkpoint-area
+    validation, which currently ignores carried `thlb_fact` state when
+    `_stand_area_sqm` is absent and falls back to full geometry/GLB area.

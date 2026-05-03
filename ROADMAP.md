@@ -1419,6 +1419,8 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d11 Preserve strict-chain checkpoint THLB state across locked parent-step handoff so each step starts from the previous step's managed-area state instead of reinitializing to GLB.
     - [x] P53.1d12 Validate strict row 4 from the row-3 checkpoint and record the first roads-and-landings mismatch.
     - [x] P53.1d13 Persist strict row-4 aspatial area fallback deductions into chained THLB state before any row-5 validation.
+    - [x] P53.1d14 Validate strict row 5 as a reference-only milestone from the validated row-4 checkpoint and record the first checkpoint-area helper mismatch before advancing to row 6.
+    - [ ] P53.1d15 Make strict reference-only checkpoint-area validation honor carried `thlb_fact` state when `_stand_area_sqm` is absent, then rerun row 5 only.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -1849,8 +1851,14 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     fallback area deductions into chained `thlb_fact` / `thlb` state, row 4
     rerun from the row-3 checkpoint removes the locked `50,434.000 ha`, and
     the rebuilt row-4 feather carries `3,110,576.671 ha` weighted area; and
-  - the next bounded validation move is row 5 only, starting from the
-    validated row-4 checkpoint.
+  - `P53.1d14` is complete: row 5 was validated as a reference-only
+    milestone from the row-4 checkpoint and failed before any row-6
+    transformation because `_managed_area_ha_from_checkpoint(...)` fell back to
+    full GLB geometry area when `_stand_area_sqm` was absent, even though the
+    checkpoint carries the chained state in `FEATURE_AREA_SQM * thlb_fact`;
+  - the next bounded repair is `P53.1d15`: update strict reference-only
+    checkpoint-area validation to honor carried `thlb_fact` state without
+    requiring `_stand_area_sqm`, then rerun row 5 only.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

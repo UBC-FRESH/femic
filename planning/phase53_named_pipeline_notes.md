@@ -786,3 +786,35 @@
       `3,110,576.671 ha`;
     - canonical source area fields remain unchanged; and
     - `thlb_fact` now carries the row-4 deduction for the next chained step.
+- 2026-05-03: The immediate `P53.1d14` validation target is strict row 5
+  only.
+  - Row 5 (`thlb_parent_005_analysis_forest_land_base`) is a
+    reference-only milestone, not a transformation.
+  - The bounded run surface is therefore a locked-chain reference validation
+    from `data/tsr/strict_chain/04_thlb_parent_004_roads_and_landings.feather`.
+  - Acceptance is that the carried checkpoint `thlb_fact` area matches the
+    locked row-5 cumulative remaining area before any row-6 transformation is
+    attempted.
+- 2026-05-03: Completed `P53.1d14` by running the row-5 reference-only
+  validation and recording the first checkpoint-area helper mismatch.
+  - Run surface:
+    - started from
+      `data/tsr/strict_chain/04_thlb_parent_004_roads_and_landings.feather`;
+    - targeted `thlb_parent_005_analysis_forest_land_base`; and
+    - stopped before any row-6 transformation.
+  - Validator result:
+    - locked row-5 marginal `0.000 ha`, actual `0.000 ha`;
+    - locked row-5 cumulative `3,110,576.671 ha`;
+    - named-pipeline reference helper cumulative `4,933,664.212 ha`;
+    - cumulative delta `1,823,087.541 ha`.
+  - Output inspection:
+    - the row-4 checkpoint carries `FEATURE_AREA_SQM * thlb_fact =
+      3,110,576.671 ha`;
+    - `FEATURE_AREA_SQM` alone sums to `4,933,664.212 ha`; and
+    - the checkpoint does not carry `_stand_area_sqm`, so
+      `_managed_area_ha_from_checkpoint(...)` falls through to geometry/full
+      area and ignores the chained `thlb_fact` state.
+  - Next bounded repair:
+    - make strict reference-only checkpoint-area validation honor
+      `FEATURE_AREA_SQM * thlb_fact` when `_stand_area_sqm` is absent, then
+      rerun row 5 only.
