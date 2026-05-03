@@ -1396,7 +1396,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d1 Bind the checked-in TSA29 strict runbook to an explicit locked validation contract and fail fast if it still resolves the mutable live recipe.
     - [x] P53.1d2 Let the strict validation contract bind the checked-in TSA29 runbook to the required locked recipe path so the proof surface can execute against the right contract.
     - [x] P53.1d3 Validate strict named-pipeline run results against the locked-chain ledger immediately after execution so wrong-result runs fail as contract mismatches instead of looking superficially successful.
-    - [ ] P53.1d4 Rerun the checked-in TSA29 strict named pipeline against the locked recipe surface and record whether the validator reports a clean locked-chain match or the first specific parent-step mismatch.
+    - [x] P53.1d4 Rerun the checked-in TSA29 strict named pipeline against the locked recipe surface and record whether the validator reports a clean locked-chain match or the first specific parent-step mismatch.
     - [x] P53.1d5 Purge TSA29 legacy `ria_vri_vclr1p_checkpoint*.feather` fallback surfaces from active code/docs and delete the stale checkpoint files so strict validation cannot silently drift onto them.
     - [x] P53.1d6 Add always-on real-time user-observable runtime output for `femic pipelines run`, including parent-step events, compiled-step subevents, and mirrored live event logs under `runtime/logs/tsr/`.
     - [x] P53.1d7 Add a strict preflight seam-benchmark gate so TSA29 strict named-pipeline runs abort before execution when the selected start surface already disagrees with the locked-chain reference for that seam.
@@ -1828,9 +1828,10 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - the strict executor now treats the NStQ/Tsilhqot'in fallback residual as
     non-additive when the locked row-2 parent-level marginal already carries
     the combined contract; and
-  - the next bounded validation target is `P53.1d4`: rerun the checked-in
-    TSA29 strict named pipeline against the locked recipe surface and record
-    the clean locked-chain match or the first remaining parent-step mismatch.
+  - `P53.1d4` is now recorded: the checked-in scratch-to-final strict runbook
+    reaches row 3, where the row-3 marginal matches the locked chain but the
+    cumulative result is high by exactly the row-2 deduction because row 3
+    starts from the GLB area rather than the row-2 strict-chain checkpoint.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

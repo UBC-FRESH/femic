@@ -16513,3 +16513,19 @@
     `696,781.324 ha` removed, `4,236,882.888 ha` remaining, and maximum
     marginal/cumulative locked-chain deltas of `0.000 ha`; and
   - left the broader checked-in strict-pipeline rerun open under `P53.1d4`.
+## 2026-05-03 - Recorded the first checked-in strict-pipeline mismatch
+- `#169` / `P53.1d4` validation run:
+  - reran the checked-in scratch-to-final TSA29 strict named-pipeline runbook
+    against the locked recipe surface;
+  - confirmed row 1 raw-source GLB preflight and row 2 locked-chain validation
+    are clean;
+  - captured row 3 `thlb_parent_003_non_forest` as the first remaining
+    mismatch:
+    - expected row-3 marginal `1,075,872.217 ha`, actual
+      `1,075,872.217 ha`, delta `0.000 ha`;
+    - expected cumulative remaining `3,161,010.671 ha`, actual
+      `3,857,791.995 ha`, delta `696,781.324 ha`;
+  - inspected the rebuilt row-3 JSON and feather outputs, confirming row 3
+    starts from GLB area instead of the row-2 strict-chain checkpoint; and
+  - narrowed the next repair target to strict-chain checkpoint handoff between
+    row 2 and row 3.

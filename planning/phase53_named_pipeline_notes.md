@@ -667,3 +667,33 @@
     - return to `P53.1d4` and rerun the checked-in TSA29 strict named
       pipeline against the locked recipe surface to find the next remaining
       locked-chain mismatch, if any.
+- 2026-05-03: Completed `P53.1d4` by rerunning the checked-in
+  scratch-to-final TSA29 strict named-pipeline runbook against the locked
+  recipe surface and recording the first remaining mismatch.
+  - Run:
+    - `.\.venv\Scripts\python.exe -m femic pipelines run --runbook runbooks/pipelines/tsa29.tsr.thlb_strict.scratch_full.yaml`
+  - Result:
+    - row 1 preflight validated the raw-source GLB at `4,933,664.212 ha`;
+    - row 2 validated cleanly at `696,781.324 ha` removed and
+      `4,236,882.888 ha` remaining; and
+    - row 3 `thlb_parent_003_non_forest` is the first remaining mismatch.
+  - Inspected row-3 outputs:
+    - result JSON:
+      `external/femic-tsa29-instance/runtime/logs/tsr/strict_chain/03_thlb_parent_003_non_forest.json`;
+    - output feather:
+      `external/femic-tsa29-instance/data/tsr/strict_chain/03_thlb_parent_003_non_forest.feather`;
+    - row-3 marginal matches the locked chain:
+      expected `1,075,872.217 ha`, actual `1,075,872.217 ha`, delta
+      `0.000 ha`;
+    - row-3 cumulative remaining area does not:
+      expected `3,161,010.671 ha`, actual `3,857,791.995 ha`, delta
+      `696,781.324 ha`.
+  - Diagnosis:
+    - the row-3 locked executor started from GLB area
+      `4,933,664.212 ha` instead of the row-2 strict-chain checkpoint
+      remaining area `4,236,882.888 ha`;
+    - the row-3 output feather carries `thlb_fact` weighted area
+      `3,857,791.995 ha`, confirming the rebuilt output matches the failed
+      cumulative validator signal; and
+    - the next repair should be the narrow strict-chain checkpoint handoff
+      between row 2 and row 3, not another row-2 fallback-accounting change.
