@@ -16405,3 +16405,27 @@
     - age 100: `764.8 = 305.92 + 458.88`; and
   - kept focused tests, parent docs, instance docs, and `git diff --check`
     clean after the repair.
+## 2026-05-02 - Published the full legacy MKRF package as a first-class archive lane
+- `femic-mkrf-instance#1` / `P65` archival-publication follow-up:
+  - updated `ROADMAP.md` and `planning/mkrf_femic_native_rebuild.md` so the
+    post-CT next edge explicitly became archival publication rather than
+    another archaeology-import pass;
+  - confirmed the retained legacy package families already present under
+    `external/femic-mkrf-instance/data/legacy_mkrf/`:
+    - `compiled_controls/`
+    - `compiled_tracks/`
+    - `compiled_spatial/`
+    - `generated_xml/`;
+  - added `external/femic-mkrf-instance/docs/legacy-archive-reference.rst` as
+    the first-class guide to the repo-local legacy package archive;
+  - linked that archive guide from the instance guide/index, getting-started,
+    model-anatomy, evidence-and-boundaries, data-package-crosswalk, and the
+    instance README so later developers can inspect the full legacy package
+    locally without reopening the parent-repo archaeology program;
+  - kept the publication boundary explicit:
+    - `data/legacy_mkrf/` = archival/reference only
+    - `models/mkrf_patchworks_model_poc/` = retained benchmark/reference lane
+    - `models/mkrf_patchworks_model/` = active runtime/operator lane;
+  - rebuilt the standalone instance docs warning-clean; and
+  - pushed the instance docs commit, posted a final closeout comment on
+    `femic-mkrf-instance#1`, and closed the issue.

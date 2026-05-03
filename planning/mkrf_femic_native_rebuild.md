@@ -18,6 +18,12 @@ Current publication status:
 - follow-on archival/reference publication work is tracked in
   `UBC-FRESH/femic-mkrf-instance#1`.
 
+Current post-release status:
+
+- the CT legacy-parity repair under `#180` is complete; and
+- the follow-on archival/reference publication issue
+  `UBC-FRESH/femic-mkrf-instance#1` is now also complete.
+
 It starts after the legacy archaeology / PoC benchmark program recorded in:
 
 - `planning/mkrf_legacy_decompile.md`
@@ -1887,3 +1893,63 @@ The CT legacy-parity implementation branch now matches that contract:
 - the canonical `100000`-iteration even-flow smoke completed cleanly; and
 - representative rebuilt CT-active runtime outputs now prove the expected
   `0.4` / `0.6` split directly.
+
+## Post-`v0.0.1a1` archival legacy-package publication (`femic-mkrf-instance#1`)
+
+The next MKRF follow-up after the CT legacy-parity repair is to publish the
+already-copied full legacy package as a first-class archival/reference lane in
+the standalone instance docs and metadata surface.
+
+### Governing publication contract
+
+Treat this as a publication-clarity task, not a renewed archaeology/import
+task. The required legacy payload is already present under:
+
+- `external/femic-mkrf-instance/data/legacy_mkrf/compiled_controls/`
+- `external/femic-mkrf-instance/data/legacy_mkrf/compiled_tracks/`
+- `external/femic-mkrf-instance/data/legacy_mkrf/compiled_spatial/`
+- `external/femic-mkrf-instance/data/legacy_mkrf/generated_xml/`
+
+The work is to make that archive legible and first-class in the instance repo,
+while keeping the active runtime boundary unchanged.
+
+### Required boundary
+
+The published docs and README surface must preserve this distinction:
+
+- legacy package under `data/legacy_mkrf/` = archival/reference only;
+- PoC package under `models/mkrf_patchworks_model_poc/` = retained
+  benchmark/reference evidence only; and
+- canonical package under `models/mkrf_patchworks_model/` = active
+  runtime/operator lane.
+
+No part of this archival publication work should repoint defaults back to the
+legacy or PoC package.
+
+### Required publication sequence
+
+Proceed in this order:
+
+1. record the archival-publication contract in roadmap/planning surfaces;
+2. add one explicit legacy-archive docs lane plus matching README/lineage
+   links inside `femic-mkrf-instance`;
+3. rebuild standalone instance docs warning-clean; and
+4. close `femic-mkrf-instance#1` only after the archive is easy to inspect
+   locally and the canonical lane remains the default.
+
+### Implementation closeout
+
+The archival-publication issue is now complete:
+
+- the full already-copied legacy package remains under
+  `external/femic-mkrf-instance/data/legacy_mkrf/`;
+- the standalone instance docs now include
+  `docs/legacy-archive-reference.rst` as the first-class guide to that
+  archive surface;
+- the guide, anatomy, evidence, and crosswalk pages now link directly to the
+  archive guide instead of only mentioning `data/legacy_mkrf/` in passing;
+- the instance README now states explicitly that the legacy package is present
+  for record/traceability/comparative debugging, not as the active runtime
+  lane; and
+- `femic-mkrf-instance#1` is closed after the standalone docs rebuilt
+  warning-clean.

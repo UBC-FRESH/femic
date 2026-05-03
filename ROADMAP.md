@@ -1766,9 +1766,36 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P64.3b Regenerate the canonical runtime package, rerun Matrix Builder, and rerun the canonical even-flow smoke at `100000` iterations.
   - [x] P64.3c Inspect representative rebuilt CT-active outputs, keep parent/instance docs warning-clean, and record the parity result in repo/GitHub surfaces.
 
+## Phase 65: Publish the Full Legacy MKRF Package as an Archival Reference Lane
+
+- [x] P65.1 Record the archival-publication contract and inventory the already-copied legacy payload (`femic-mkrf-instance#1`)
+  - [x] P65.1a Update roadmap/planning surfaces so the next MKRF lane is governed by `femic-mkrf-instance#1`.
+  - [x] P65.1b Confirm which legacy controls, tracks, spatial files, and generated XML surfaces are already present under `external/femic-mkrf-instance/data/legacy_mkrf/`.
+  - [x] P65.1c Define the archival-only publication boundary so the canonical rebuild lane remains the active runtime surface.
+- [x] P65.2 Publish a first-class legacy archive doc lane inside `femic-mkrf-instance` (`femic-mkrf-instance#1`)
+  - [x] P65.2a Add explicit instance docs/README coverage for the complete legacy package surface and how it differs from the PoC and canonical lanes.
+  - [x] P65.2b Link the archive surface from the operator/lineage docs so later developers can inspect the full legacy package locally without reopening the archaeology program.
+  - [x] P65.2c Rebuild the standalone instance docs warning-clean after wiring the new legacy-archive surface into the guide.
+- [x] P65.3 Close the archival-publication issue with repo and tracker hygiene (`femic-mkrf-instance#1`)
+  - [x] P65.3a Post a final `femic-mkrf-instance#1` comment summarizing the published archival lane and its boundary.
+  - [x] P65.3b Push the instance and parent pointer updates required for the published docs/metadata state.
+  - [x] P65.3c Close `femic-mkrf-instance#1` once the archival lane is documented and the canonical lane remains the default.
+
 ### Detailed Next Steps Notes
 
-- Phase 64 CT legacy-parity follow-up is complete on the implementation branch:
+- Phase 65 archival-publication follow-up is complete:
+  - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
+    first-class repo-local archive/reference lane rather than only a scattered
+    evidence family mentioned in passing;
+  - the standalone instance docs now include
+    `docs/legacy-archive-reference.rst` and cross-links from the guide,
+    anatomy, evidence, and crosswalk pages;
+  - the instance README now states plainly that the legacy package is present
+    for record/traceability/comparative debugging but is not the active runtime
+    lane; and
+  - `femic-mkrf-instance#1` is closed after a warning-clean docs rebuild and a
+    final issue closeout comment.
+- Phase 64 CT legacy-parity follow-up is complete:
   - legacy and PoC CT semantics are now documented directly from source XML as
     a constant proportional split:
     - treatment-year CT harvest/product signal = `0.4 * base curve`
@@ -1793,14 +1820,17 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     legacy-parity contract under `#180`.
 - Phase 62 publication lane is complete:
   - instance PR `UBC-FRESH/femic-mkrf-instance#2` merged and parent PR `#179` merged;
-  - `femic-mkrf-instance` release `v0.0.1a1` is published as an alpha pre-release;
+  - `femic-mkrf-instance` release `v0.0.1a1` has been reissued on the post-`#181`
+    CT-fixed state;
   - instance discussion announcement `UBC-FRESH/femic-mkrf-instance#3` is posted;
   - follow-on archival/reference issue `UBC-FRESH/femic-mkrf-instance#1` is open; and
   - the instance README now publishes the Basecamp project/message-board URLs so later environments know where to mirror release announcements.
 - External communication boundary:
-  - direct Basecamp API posting is still blocked in the current environment without Basecamp authentication;
-  - a direct unauthenticated message-board POST attempt returned `401 Unauthorized`; and
-  - once valid Basecamp auth exists in the active environment, mirror the `v0.0.1a1` GitHub release/discussion announcement into the MKRF Basecamp message board.
+  - Basecamp auth is now working in the active environment;
+  - the MKRF Basecamp release message has been updated to note that `v0.0.1a1`
+    was reissued after the CT parity repair; and
+  - the GitHub discussion announcement now carries the same rerelease note so
+    the earlier CT-broken prerelease state is explicitly superseded.
 - Active next docs edge:
   - `femic-mkrf-instance#4` is now closed at the implementation surface:
     - `docs/model-anatomy.rst` now teaches `models/mkrf_patchworks_model/` as the active package and keeps the PoC package explicitly benchmark/reference-only;
