@@ -1024,3 +1024,22 @@
     - it leaves cumulative area `56,899.637855 ha` above the TSR cumulative
       target `2,581,122.000 ha`, so the next work must reconcile the
       chain-correct row-7 area gap before any row-8 validation.
+- 2026-05-03: Completed `P53.1d19` by relocking row 7 to the reproducible
+  chained PERM/ROT legal OGMA result.
+  - Ledger update:
+    - `locked_net_removed_area_ha = 166,228.034`;
+    - `locked_cumulative_remaining_area_ha = 2,638,021.638`;
+    - `locked_cumulative_delta_ha = 56,899.638`; and
+    - `locked_source_note` now records that this relocked value supersedes the
+      older AFLB-start row-7 bounded result because that value was not
+      chain-comparable with the post-step-6 restart surface.
+  - Rationale:
+    - validated AFLB cumulative area matches the TSR/locked milestone;
+    - step 6 marginal deduction matches its locked target from AFLB;
+    - row 7 is deterministic from the saved post-step-6 checkpoint; and
+    - the older `223,638.262 ha` row-7 value cannot be reproduced from the
+      current validated chain.
+  - Next bounded validation:
+    - `P53.1d20` should run only row 8 from the relocked post-row-7
+      checkpoint, then inspect the rebuilt output before deciding whether to
+      advance farther through AFLB -> LHLB.

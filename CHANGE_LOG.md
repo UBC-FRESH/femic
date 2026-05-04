@@ -16667,3 +16667,16 @@
     restart nondeterminism: current chained row 7 under-removes by
     `44,490.966 ha` against the TSR marginal benchmark and remains
     `56,899.638 ha` above the TSR cumulative target.
+## 2026-05-03 - Relocked TSA29 strict row 7 to the reproducible chained result
+- `#169` / `P53.1d19` lock update:
+  - updated the TSA29 instance locked-chain ledger row 7 to use the stable
+    post-step-6 PERM/ROT legal OGMA result:
+    - locked marginal `166,228.034 ha`;
+    - locked cumulative `2,638,021.638 ha`; and
+    - locked cumulative delta `56,899.638 ha`;
+  - marked the older `223,638.262 ha` row-7 value as superseded because the
+    repo evidence shows it came from an AFLB-start bounded row-7 run rather
+    than the post-step-6 chained checkpoint; and
+  - added `P53.1d20` as the next bounded validation step: run only row 8 from
+    the relocked post-row-7 checkpoint and inspect the rebuilt output before
+    advancing farther through AFLB -> LHLB.

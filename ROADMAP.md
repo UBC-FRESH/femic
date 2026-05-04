@@ -1424,7 +1424,8 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d16 Validate the production strict named-pipeline GLB -> AFLB single-pass runbook through row 5 before advancing into AFLB -> LHLB.
     - [x] P53.1d17 Validate the production strict named-pipeline AFLB -> LHLB stage through row 12 and record the first row-6 locked-state blocker before advancing into LHLB -> THLB.
     - [x] P53.1d18 Reconcile strict row-6 locked recipe approval/ratchet-state semantics and validate AFLB -> LHLB from the validated AFLB checkpoint without replaying GLB -> AFLB.
-    - [ ] P53.1d19 Repair or materialize the strict row-7 OGMA source/removal path, then rerun only the AFLB -> LHLB suffix from the row-6 strict-chain checkpoint.
+    - [x] P53.1d19 Repair or materialize the strict row-7 OGMA source/removal path, then rerun only the AFLB -> LHLB suffix from the row-6 strict-chain checkpoint.
+    - [ ] P53.1d20 Validate strict row 8 from the relocked post-row-7 checkpoint before advancing farther through AFLB -> LHLB.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -1902,6 +1903,12 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     remove `166,228.034 ha`, and leave `2,638,021.638 ha`; the remaining
     issue is not restart instability but the stable row-7 area gap vs TSR /
     locked-chain expectations.
+  - `P53.1d19` is complete: row 7 is now relocked to the reproducible chained
+    PERM/ROT legal OGMA result from the post-step-6 checkpoint, and the older
+    `223,638.262 ha` row-7 value is superseded as non-chain-comparable because
+    repo notes show it was produced from an AFLB-start bounded row-7 rerun;
+    the next bounded validation is `P53.1d20`, row 8 from the relocked
+    post-row-7 checkpoint only.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered
