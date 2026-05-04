@@ -1423,7 +1423,8 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d15 Make strict reference-only checkpoint-area validation honor carried `thlb_fact` state when `_stand_area_sqm` is absent, then rerun row 5 only.
     - [x] P53.1d16 Validate the production strict named-pipeline GLB -> AFLB single-pass runbook through row 5 before advancing into AFLB -> LHLB.
     - [x] P53.1d17 Validate the production strict named-pipeline AFLB -> LHLB stage through row 12 and record the first row-6 locked-state blocker before advancing into LHLB -> THLB.
-    - [ ] P53.1d18 Reconcile strict row-6 locked recipe approval/ratchet-state semantics so the AFLB -> LHLB stage can execute from the validated row-5 state.
+    - [x] P53.1d18 Reconcile strict row-6 locked recipe approval/ratchet-state semantics and validate AFLB -> LHLB from the validated AFLB checkpoint without replaying GLB -> AFLB.
+    - [ ] P53.1d19 Repair or materialize the strict row-7 OGMA source/removal path, then rerun only the AFLB -> LHLB suffix from the row-6 strict-chain checkpoint.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -1873,10 +1874,21 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     stage run reached row 5 cleanly, then failed at row 6 before any row-6
     output was written because
     `thlb_parent_006_parks_protected_areas_area_base_tenures` has
-    `ratchet_state: benchmarked` while the strict executor currently accepts
-    only explicitly approved locked transformation steps; and
-  - the next bounded repair is `P53.1d18`: reconcile row-6 locked recipe
-    approval/ratchet-state semantics, then rerun the AFLB -> LHLB stage.
+    `ratchet_state: benchmarked` while the strict executor accepted only
+    explicitly approved locked transformation steps; and
+  - `P53.1d18` is complete: benchmarked locked rows with compiled logic now
+    execute, the `aflb` strict seam is routed through the locked-step sequence
+    instead of the generic broad runner, and the corrected AFLB -> LHLB suffix
+    run starts from
+    `data/tsr/strict_chain/04_thlb_parent_004_roads_and_landings.feather`;
+    row 6 writes
+    `data/tsr/strict_chain/06_thlb_parent_006_parks_protected_areas_area_base_tenures.feather`
+    at `2,804,249.671 ha`, then row 7 fails strict validation because OGMA
+    source/removal logic removes `0.000 ha` against the locked row-7 marginal
+    `223,638.262 ha`; and
+  - the active bounded repair is `P53.1d19`: repair or materialize the row-7
+    OGMA source/removal path, then rerun only the row-7/AFLB -> LHLB suffix
+    from the row-6 strict-chain checkpoint.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

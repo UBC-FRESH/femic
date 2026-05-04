@@ -16631,3 +16631,20 @@
   - confirmed no row-6 JSON or feather output was written; and
   - narrowed the next repair target to row-6 locked recipe
     approval/ratchet-state semantics before rerunning the AFLB -> LHLB stage.
+## 2026-05-03 - Validated the TSA29 strict AFLB to LHLB suffix to the row-7 OGMA mismatch
+- `#169` / `P53.1d18` implementation and validation:
+  - allowed strict locked rows marked `ratchet_state: benchmarked` to execute
+    when compiled logic exists;
+  - routed the `aflb` strict seam through the locked parent-step sequence
+    instead of the generic broad THLB runner;
+  - added checked-in runbook
+    `runbooks/pipelines/tsa29.tsr.thlb_strict.aflb_to_lhlb.yaml`, starting
+    from `data/tsr/strict_chain/04_thlb_parent_004_roads_and_landings.feather`;
+  - added regression coverage proving an `aflb` strict run stops at the
+    requested target even when later recipe rows are present;
+  - inspected row-6 outputs, confirming row 6 writes
+    `data/tsr/strict_chain/06_thlb_parent_006_parks_protected_areas_area_base_tenures.feather`
+    at `2,804,249.671 ha` after removing `306,327.000 ha`; and
+  - captured the first actual AFLB -> LHLB recipe/data mismatch at row 7:
+    OGMA removal is effectively `0.000 ha`, while the locked ledger expects
+    row-7 marginal `223,638.262 ha` and cumulative `2,580,611.409 ha`.

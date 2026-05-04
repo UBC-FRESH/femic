@@ -930,4 +930,63 @@
     - locked source kind is `exact_plus_residual_bridge`.
   - Next bounded repair:
     - reconcile strict row-6 locked recipe approval/ratchet-state semantics,
-      then rerun the same AFLB -> LHLB stage validation.
+      then rerun the AFLB -> LHLB stage from the validated AFLB checkpoint
+      without replaying GLB -> AFLB.
+- 2026-05-03: The immediate `P53.1d18` execution target is to stop tripping
+  over the row-6 metadata gate and run the actual AFLB -> LHLB recipe logic.
+  - Fix:
+    - strict validation may execute locked rows marked `benchmarked` when
+      compiled logic exists, instead of requiring only `approved`.
+  - Bounded run surface:
+    - start from
+      `data/tsr/strict_chain/04_thlb_parent_004_roads_and_landings.feather`,
+      the validated AFLB checkpoint state;
+    - use seam `aflb` so strict validation starts after row 5; and
+    - target `thlb_parent_012_proven_aboriginal_rights_areas`.
+  - Scope boundary:
+    - do not replay GLB -> AFLB rows 2-5;
+    - do not run row 13 / LHLB -> THLB.
+- 2026-05-03: Completed `P53.1d18` by making the AFLB -> LHLB suffix run
+  start from the validated AFLB checkpoint and expose the first real row-7
+  recipe/data mismatch.
+  - Fixes:
+    - strict validation now treats locked rows marked `ratchet_state:
+      benchmarked` as executable when compiled logic exists;
+    - the `aflb` and `aflb_yield_ready` strict seams now route through the
+      locked parent-step sequence instead of falling through to the generic
+      broad THLB runner; and
+    - focused regression coverage now proves an `aflb` strict run executes
+      only through the requested `target_parent_step_id` even when later
+      recipe rows are present.
+  - Corrected run surface:
+    - runbook:
+      `runbooks/pipelines/tsa29.tsr.thlb_strict.aflb_to_lhlb.yaml`;
+    - start checkpoint:
+      `data/tsr/strict_chain/04_thlb_parent_004_roads_and_landings.feather`;
+    - target:
+      `thlb_parent_012_proven_aboriginal_rights_areas`; and
+    - runtime event log:
+      `runtime/logs/tsr/named_pipeline_events-tsr_thlb_strict-20260503T234033Z.log`.
+  - Output inspection:
+    - row 6 wrote
+      `data/tsr/strict_chain/06_thlb_parent_006_parks_protected_areas_area_base_tenures.feather`;
+    - row 6 result JSON reports input `3,110,576.671 ha`, removal
+      `306,327.000 ha`, remaining `2,804,249.671 ha`, and status
+      `applied_with_blockers`;
+    - row 7 wrote
+      `data/tsr/strict_chain/07_thlb_parent_007_old_growth_management_areas.feather`
+      before strict validation failed;
+    - row 7 result JSON reports input `2,804,249.671 ha`, removal
+      effectively `0.000 ha`, remaining `2,804,249.671 ha`, and status
+      `blocked_missing_source`; and
+    - the named-pipeline validator fails row 7 against the locked ledger:
+      expected marginal `223,638.262 ha`, actual `0.000 ha`, expected
+      cumulative `2,580,611.409 ha`, actual `2,804,249.671 ha`.
+  - Scope correction:
+    - earlier bad runs that replayed upstream rows or passed the intended
+      stage boundary are not the accepted validation signal for this slice;
+    - the accepted signal is the corrected suffix run from the row-4 AFLB
+      checkpoint to the first strict row-7 mismatch.
+  - Next bounded repair:
+    - `P53.1d19` should repair or materialize the row-7 OGMA source/removal
+      path and rerun only from the row-6 strict-chain checkpoint, not from GLB.

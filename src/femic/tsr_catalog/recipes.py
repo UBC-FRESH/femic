@@ -13198,9 +13198,10 @@ def _validate_locked_strict_parent_step_contract(
     ratchet_state = (
         str(resolved_parent_step.get("ratchet_state", "")).strip().casefold()
     )
-    approved = (
-        bool(resolved_parent_step.get("approved", False)) or ratchet_state == "approved"
-    )
+    approved = bool(resolved_parent_step.get("approved", False)) or ratchet_state in {
+        "approved",
+        "benchmarked",
+    }
     if not approved:
         raise TsrRecipeError(
             "Locked strict parent step "

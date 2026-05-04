@@ -1617,6 +1617,213 @@ def test_resolve_tsa29_locked_chain_strict_row_order() -> None:
         )
 
 
+def test_locked_strict_contract_allows_benchmarked_rows_with_compiled_logic() -> None:
+    parent_step = {
+        "parent_step_id": "thlb_parent_006_parks_protected_areas_area_base_tenures",
+        "ratchet_state": "benchmarked",
+        "compiled_logic": ({"step_id": "thlb_parent_006_compiled_01"},),
+    }
+
+    assert (
+        named_pipelines._validate_locked_strict_parent_step_execution_contract(
+            parent_step
+        )
+        is parent_step
+    )
+
+
+def test_run_named_pipeline_runbook_routes_aflb_strict_seam_to_locked_sequence(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    instance_root = tmp_path / "instance"
+    (instance_root / "config" / "tsr").mkdir(parents=True, exist_ok=True)
+    (instance_root / "workbench" / "tsr").mkdir(parents=True, exist_ok=True)
+    checkpoint_path = (
+        instance_root
+        / "data"
+        / "tsr"
+        / "strict_chain"
+        / "04_thlb_parent_004_roads_and_landings.feather"
+    )
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint_path.write_text("stub\n", encoding="utf-8")
+    ledger_path = instance_root / "config" / "tsr" / "thlb_locked_chain_ledger.json"
+    comparison_path = (
+        instance_root / "config" / "tsr" / "thlb_reconstruction_comparison.md"
+    )
+    comparison_path.write_text("# comparison\n", encoding="utf-8")
+    ledger_path.write_text(
+        json.dumps(
+            {
+                "entries": [
+                    {
+                        "row_order": 5,
+                        "parent_step_id": "thlb_parent_005_analysis_forest_land_base",
+                        "locked_net_removed_area_ha": None,
+                        "locked_cumulative_remaining_area_ha": 1000.0,
+                    },
+                    {
+                        "row_order": 6,
+                        "parent_step_id": "thlb_parent_006_parks_protected_areas_area_base_tenures",
+                        "locked_net_removed_area_ha": 200.0,
+                        "locked_cumulative_remaining_area_ha": 800.0,
+                    },
+                ]
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    plan = named_pipelines.NamedPipelineExecutionPlan(
+        runbook_path=instance_root / "runbooks" / "pipelines" / "tsa29.yaml",
+        instance_root=instance_root,
+        pipeline_id="tsr.thlb_strict",
+        pipeline_label="TSR strict THLB product lane",
+        seam_id="aflb",
+        checkpoint_path=checkpoint_path,
+        run_profile_path=None,
+        overlay_paths=(),
+        parameter_files=(),
+        validation_contract=named_pipelines.NamedPipelineValidationContract(
+            contract_kind="tsa29_locked_chain_strict",
+            locked_chain_ledger_path=ledger_path,
+            comparison_report_path=comparison_path,
+            required_recipe_path=instance_root
+            / "workbench"
+            / "tsr"
+            / "thlb_netdown.locked.recipe.yaml",
+        ),
+        target_parent_step_id="thlb_parent_006_parks_protected_areas_area_base_tenures",
+        user_registry_path=None,
+        instance_registry_path=None,
+        explicit_registry_paths=(),
+        thlb_netdown_recipe_path=instance_root
+        / "workbench"
+        / "tsr"
+        / "thlb_netdown.locked.recipe.yaml",
+        source_layers_recipe_path=instance_root
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml",
+        execution_mode="reconstructed",
+    )
+    locked_calls: list[Path] = []
+
+    monkeypatch.setattr(
+        named_pipelines,
+        "build_named_pipeline_execution_plan",
+        lambda **kwargs: plan,
+    )
+    monkeypatch.setattr(
+        named_pipelines,
+        "_managed_area_ha_from_checkpoint",
+        lambda path: 1000.0,
+    )
+    monkeypatch.setattr(
+        named_pipelines,
+        "load_tsr_thlb_netdown_recipe",
+        lambda path: SimpleNamespace(
+            parent_steps=(
+                {
+                    "parent_step_id": "thlb_parent_006_parks_protected_areas_area_base_tenures",
+                    "parent_label": "Parks, protected areas, area-base tenures",
+                    "row_order": 6,
+                    "parent_kind": "transformation",
+                    "execution_class": "legal_harvest_exclusion",
+                    "land_base_stage": "aflb_to_lhlb",
+                    "ratchet_state": "benchmarked",
+                    "compiled_logic": ({"step_id": "thlb_parent_006_compiled_01"},),
+                },
+                {
+                    "parent_step_id": "thlb_parent_007_old_growth_management_areas",
+                    "parent_label": "Old growth management areas",
+                    "row_order": 7,
+                    "parent_kind": "transformation",
+                    "execution_class": "legal_harvest_exclusion",
+                    "land_base_stage": "aflb_to_lhlb",
+                    "approved": True,
+                    "compiled_logic": ({"step_id": "thlb_parent_007_compiled_01"},),
+                },
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        named_pipelines,
+        "run_tsr_thlb_netdown_recipe",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("generic THLB runner must not execute strict aflb seam")
+        ),
+    )
+
+    def _fake_locked_parent_step_run(**kwargs: object) -> object:
+        assert (
+            kwargs["parent_step_id"]
+            == "thlb_parent_006_parks_protected_areas_area_base_tenures"
+        )
+        locked_calls.append(kwargs["checkpoint_path"])
+        return SimpleNamespace(
+            parent_step_id="thlb_parent_006_parks_protected_areas_area_base_tenures",
+            parent_label="Parks, protected areas, area-base tenures",
+            recipe_path=plan.thlb_netdown_recipe_path,
+            tsa=SimpleNamespace(
+                tsa_id="tsa_29", tsa_code="29", tsa_name="Williams Lake"
+            ),
+            checkpoint_path=checkpoint_path,
+            selected_map_ids=(),
+            selected_landscape_units=(),
+            output_path=instance_root
+            / "data"
+            / "tsr"
+            / "strict_chain"
+            / "06_thlb_parent_006_parks_protected_areas_area_base_tenures.feather",
+            result_json_path=instance_root
+            / "runtime"
+            / "logs"
+            / "tsr"
+            / "strict_chain"
+            / "06_thlb_parent_006_parks_protected_areas_area_base_tenures.json",
+            status="applied",
+            executed_parent_step_ids=(
+                "thlb_parent_006_parks_protected_areas_area_base_tenures",
+            ),
+            input_area_ha=1000.0,
+            removed_area_ha=200.0,
+            remaining_area_ha=800.0,
+            benchmark_marginal_area_ha=200.0,
+            benchmark_cumulative_area_ha=800.0,
+            benchmark_marginal_delta_ha=0.0,
+            benchmark_cumulative_delta_ha=0.0,
+            smoke_benchmark_scale_factor=None,
+            scaled_benchmark_marginal_area_ha=None,
+            scaled_benchmark_cumulative_area_ha=None,
+            scaled_benchmark_marginal_delta_ha=None,
+            scaled_benchmark_cumulative_delta_ha=None,
+            notes=(),
+            execution_mode="serial",
+            worker_count=1,
+            lu_chunk_count=None,
+            lu_bundle_count=None,
+            progress_root=None,
+            profiling=None,
+        )
+
+    monkeypatch.setattr(
+        named_pipelines,
+        "run_tsr_thlb_locked_parent_step",
+        _fake_locked_parent_step_run,
+    )
+
+    result = named_pipelines.run_named_pipeline_runbook(
+        runbook_path=plan.runbook_path,
+        instance_root=instance_root,
+    )
+
+    assert locked_calls == [checkpoint_path]
+    assert result.validation_result is not None
+    assert result.validation_result.validated_parent_step_count == 6
+
+
 def test_managed_area_ha_from_checkpoint_uses_explicit_tsr_checkpoint(
     tmp_path: Path,
 ) -> None:
