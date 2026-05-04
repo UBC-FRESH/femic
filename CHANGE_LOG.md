@@ -16735,3 +16735,14 @@
     remaining); and
   - added `P53.1d23` as the next bounded step to reconcile or relock row 9
     before advancing to row 10.
+## 2026-05-03 - Relocked TSA29 strict row 9 to the reproducible chained result
+- `#169` / `P53.1d23` lock update:
+  - updated the TSA29 instance locked-chain ledger row 9 to use the inspected
+    post-row-8 critical-fish-habitat result:
+    - locked marginal `20,965.006 ha`;
+    - locked cumulative `2,503,323.083 ha`; and
+    - locked cumulative delta `87,778.083 ha`;
+  - marked the older row-9 lock as superseded because row 8 was relocked and
+    the row-9 input chain state changed; and
+  - kept `P53.1d24` as the next bounded validation step: run only row 10 from
+    the relocked row-9 checkpoint.

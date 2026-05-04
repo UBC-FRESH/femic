@@ -1137,3 +1137,21 @@
     - do not advance to row 10 yet;
     - reconcile or relock row 9 to the reproducible chained
       critical-fish-habitat result under `P53.1d23`.
+- 2026-05-03: User-directed follow-on for `P53.1d23` / `P53.1d24`:
+  - relock row 9 to the inspected chained critical-fish-habitat result:
+    - `locked_net_removed_area_ha = 20,965.006`;
+    - `locked_cumulative_remaining_area_ha = 2,503,323.083`; and
+    - `locked_cumulative_delta_ha = 87,778.083`;
+  - then run only row 10 from
+    `data/tsr/strict_chain/09_thlb_parent_009_critical_habitat_for_fish.feather`;
+  - do not advance beyond row 10 in this slice.
+- 2026-05-03: Completed `P53.1d23` by relocking row 9 to the inspected
+  chained critical-fish-habitat result.
+  - Ledger row 9 now records:
+    - `locked_net_removed_area_ha = 20,965.006`;
+    - `locked_cumulative_remaining_area_ha = 2,503,323.083`;
+    - `locked_cumulative_delta_ha = 87,778.083`; and
+    - a source note that this supersedes the older row-9 lock after the row-8
+      relock changed the chained input state.
+  - The next bounded run remains `P53.1d24`: row 10 only from the relocked
+    row-9 checkpoint.
