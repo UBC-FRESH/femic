@@ -1430,6 +1430,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d22 Validate strict row 9 from the relocked post-row-8 checkpoint before advancing farther through AFLB -> LHLB.
     - [x] P53.1d23 Reconcile or relock strict row 9 to the reproducible chained critical-fish-habitat result before advancing to row 10.
     - [x] P53.1d24 Validate strict row 10 from the relocked post-row-9 checkpoint before advancing farther through AFLB -> LHLB.
+    - [x] P53.1d25a Reuse SHA-verified LU partition caches across content-identical strict-chain checkpoint aliases before rerunning row 11.
     - [ ] P53.1d25 Validate strict row 11 from the row-10 reviewed-skip checkpoint before advancing farther through AFLB -> LHLB.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
@@ -1962,6 +1963,14 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     matching the row-9 carried-forward checkpoint as expected. The row-10
     ledger now records the same carried-forward cumulative area and notes that
     no trusted Class A lake discriminator is available.
+  - `P53.1d25a` is complete: the LU partition cache loader now allows a cache
+    hit for a different strict-chain checkpoint path only when the caller
+    supplies the expected checkpoint SHA-256 and the cached checkpoint SHA-256
+    matches. Without that SHA guard, checkpoint path equality remains required.
+    This prevents byte-identical reviewed-skip checkpoint aliases from forcing
+    repeated LU partition materialization while preserving the old conservative
+    path check for unverified cache lookups. The next bounded validation
+    remains `P53.1d25`: row 11 only from the row-10 checkpoint.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

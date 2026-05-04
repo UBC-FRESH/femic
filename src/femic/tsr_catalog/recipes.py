@@ -7577,12 +7577,15 @@ def _load_cached_landscape_unit_partition_records(
             != _TSR_THLB_LU_PARTITION_CACHE_VERSION
         ):
             continue
-        if str(payload.get("checkpoint_path", "")).strip() != resolved_checkpoint:
-            continue
+        cache_path_matches = (
+            str(payload.get("checkpoint_path", "")).strip() == resolved_checkpoint
+        )
         if expected_checkpoint_sha256 is not None:
             cached_checkpoint_sha256 = str(payload.get("checkpoint_sha256", "")).strip()
             if cached_checkpoint_sha256 != expected_checkpoint_sha256:
                 continue
+        elif not cache_path_matches:
+            continue
         if expected_row_count is not None:
             cached_row_count = payload.get("input_row_count")
             cached_area_ha = payload.get("input_area_ha")

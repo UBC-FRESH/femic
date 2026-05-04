@@ -1192,3 +1192,24 @@
   - Next bounded move:
     - `P53.1d25` should run row 11 only from the row-10 reviewed-skip
       checkpoint; do not advance beyond row 11 in that slice.
+- 2026-05-03: Completed `P53.1d25a` as a narrow row-11 preparation fix after
+  the first row-11 attempt showed the LU partition cache was path-bound.
+  - Problem:
+    - row 10 is a reviewed-skip carry-forward whose checkpoint content matches
+      row 9, but the strict-chain filename changes from row 9 to row 10;
+    - the LU partition cache loader required exact checkpoint-path equality,
+      so a byte-identical checkpoint alias could miss an existing cache and
+      rematerialize LU partitions.
+  - Fix:
+    - `_load_cached_landscape_unit_partition_records` now accepts a different
+      checkpoint path only when the caller supplies an expected checkpoint
+      SHA-256 and the cached metadata has the same SHA-256;
+    - if no expected SHA-256 is supplied, the old path-equality requirement
+      still applies.
+  - Validation:
+    - added a regression test for same-content checkpoint alias reuse;
+    - confirmed the same test rejects a path alias when no SHA-256 is supplied
+      and rejects an alias with a different SHA-256.
+  - Next bounded move:
+    - `P53.1d25` remains open: run row 11 only from the row-10 checkpoint and
+      inspect the rebuilt row-11 output before advancing.

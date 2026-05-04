@@ -16770,3 +16770,15 @@
     `2,503,323.083 ha`; and
   - added `P53.1d25` as the next bounded step to run row 11 only from the
     row-10 reviewed-skip checkpoint.
+## 2026-05-03 - Reused SHA-verified LU partition caches across strict-chain aliases
+- `#169` / `P53.1d25a` implementation:
+  - fixed `_load_cached_landscape_unit_partition_records` so byte-identical
+    strict-chain checkpoint aliases can reuse an LU partition cache when the
+    caller supplies an expected checkpoint SHA-256 and the cached metadata has
+    the same SHA-256;
+  - preserved the old conservative behavior for unverified lookups: if no
+    expected SHA-256 is supplied, checkpoint path equality is still required;
+  - added regression coverage proving same-hash aliases reuse the cache while
+    missing-SHA and mismatched-SHA aliases do not; and
+  - kept `P53.1d25` open as the next bounded row-11 validation from the
+    row-10 reviewed-skip checkpoint.

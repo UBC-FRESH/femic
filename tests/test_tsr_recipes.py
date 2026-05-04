@@ -6694,6 +6694,83 @@ def test_load_cached_landscape_unit_partition_records_returns_records(
     assert records[0]["chunk_path"] == chunk_path
 
 
+def test_load_cached_landscape_unit_partition_records_reuses_same_hash_alias(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "instance"
+    original_checkpoint_path = (
+        instance_root / "data" / "09_thlb_parent_009.feather"
+    ).resolve()
+    aliased_checkpoint_path = (
+        instance_root / "data" / "10_thlb_parent_010.feather"
+    ).resolve()
+    partition_root = tsr_recipes.default_tsr_thlb_lu_partition_root(
+        instance_root=instance_root
+    )
+    partition_dir = partition_root / "row09.cached"
+    partition_dir.mkdir(parents=True, exist_ok=True)
+    chunk_path = partition_dir / "001_west.feather"
+    gpd.GeoDataFrame(
+        {"VALUE": [1]},
+        geometry=[box(0, 0, 1, 1)],
+        crs="EPSG:3005",
+    ).to_feather(chunk_path)
+    (partition_dir / "partition_metadata.json").write_text(
+        json.dumps(
+            {
+                "cache_version": tsr_recipes._TSR_THLB_LU_PARTITION_CACHE_VERSION,
+                "checkpoint_path": str(original_checkpoint_path),
+                "checkpoint_sha256": "same-checkpoint-content",
+                "input_row_count": 1,
+                "input_area_ha": 1.0,
+                "input_columns": ["VALUE", "geometry"],
+                "selected_landscape_units": ["West"],
+                "chunk_records": [
+                    {
+                        "lu_name": "West",
+                        "chunk_path": "001_west.feather",
+                        "area_ha": 1.0,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    cached = tsr_recipes._load_cached_landscape_unit_partition_records(
+        checkpoint_path=aliased_checkpoint_path,
+        instance_root=instance_root,
+        expected_row_count=1,
+        expected_area_ha=1.0,
+        expected_columns=["geometry", "VALUE"],
+        expected_checkpoint_sha256="same-checkpoint-content",
+    )
+    uncached_without_hash = tsr_recipes._load_cached_landscape_unit_partition_records(
+        checkpoint_path=aliased_checkpoint_path,
+        instance_root=instance_root,
+        expected_row_count=1,
+        expected_area_ha=1.0,
+        expected_columns=["geometry", "VALUE"],
+    )
+    uncached_with_different_hash = (
+        tsr_recipes._load_cached_landscape_unit_partition_records(
+            checkpoint_path=aliased_checkpoint_path,
+            instance_root=instance_root,
+            expected_row_count=1,
+            expected_area_ha=1.0,
+            expected_columns=["geometry", "VALUE"],
+            expected_checkpoint_sha256="different-checkpoint-content",
+        )
+    )
+
+    assert cached is not None
+    selected_names, records = cached
+    assert selected_names == ("West",)
+    assert records[0]["chunk_path"] == chunk_path
+    assert uncached_without_hash is None
+    assert uncached_with_different_hash is None
+
+
 def test_load_cached_landscape_unit_partition_records_rejects_schema_mismatch(
     tmp_path: Path,
 ) -> None:
