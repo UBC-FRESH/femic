@@ -1429,7 +1429,8 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d21 Reconcile or relock strict row 8 to the reproducible chained wildlife-habitat result before advancing to row 9.
     - [x] P53.1d22 Validate strict row 9 from the relocked post-row-8 checkpoint before advancing farther through AFLB -> LHLB.
     - [x] P53.1d23 Reconcile or relock strict row 9 to the reproducible chained critical-fish-habitat result before advancing to row 10.
-    - [ ] P53.1d24 Validate strict row 10 from the relocked post-row-9 checkpoint before advancing farther through AFLB -> LHLB.
+    - [x] P53.1d24 Validate strict row 10 from the relocked post-row-9 checkpoint before advancing farther through AFLB -> LHLB.
+    - [ ] P53.1d25 Validate strict row 11 from the row-10 reviewed-skip checkpoint before advancing farther through AFLB -> LHLB.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -1951,6 +1952,16 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     `87,778.083 ha` cumulative delta, with a source note explaining that this
     supersedes the older row-9 lock after the row-8 relock changed the chained
     input state.
+  - `P53.1d24` is complete: the locked parent-step executor now
+    short-circuits reviewed zero-removal manual rows instead of entering LU
+    partitioning. Row 10 (`thlb_parent_010_lakeshore_management`) now runs as
+    `execution_mode = reviewed_skip`, with `0` workers, `0` LU chunks,
+    `0.000 ha` removed, and `2,503,323.083 ha` remaining. The row-10 feather
+    SHA-256 is
+    `9191a8d80e62d39e3f3efcb3835c370caa93dd39242ee3b16f2eb4940386f14e`,
+    matching the row-9 carried-forward checkpoint as expected. The row-10
+    ledger now records the same carried-forward cumulative area and notes that
+    no trusted Class A lake discriminator is available.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

@@ -13335,6 +13335,21 @@ def _locked_chain_entry_for_parent_step(
     return None
 
 
+def _is_locked_zero_removal_reviewed_skip(
+    *,
+    compiled_logic: Sequence[Mapping[str, Any]],
+    locked_net_removed_area_ha: float | None,
+) -> bool:
+    if locked_net_removed_area_ha is None or abs(locked_net_removed_area_ha) > 1e-6:
+        return False
+    if not compiled_logic:
+        return False
+    return all(
+        _resolve_compiled_operation_type(dict(item)) == "manual_review_required"
+        for item in compiled_logic
+    )
+
+
 def _prepare_locked_parent_step_checkpoint(
     checkpoint: gpd.GeoDataFrame,
 ) -> gpd.GeoDataFrame:
@@ -13474,6 +13489,21 @@ def run_tsr_thlb_locked_parent_step(
     locked_execution_class = (
         str(target_parent.get("execution_class", "")).strip() or None
     )
+    output_path = default_tsr_thlb_strict_chain_checkpoint_path(
+        instance_root=instance_root,
+        parent_step_id=parent_step_id,
+        row_order=row_order,
+    )
+    result_json_path = default_tsr_thlb_strict_chain_result_json_path(
+        instance_root=instance_root,
+        parent_step_id=parent_step_id,
+        row_order=row_order,
+    )
+
+    reviewed_skip = _is_locked_zero_removal_reviewed_skip(
+        compiled_logic=compiled_logic,
+        locked_net_removed_area_ha=locked_net_removed_area_ha,
+    )
 
     worker_count = 1
     resolved_lu_bundle_count: int | None = None
@@ -13518,7 +13548,33 @@ def run_tsr_thlb_locked_parent_step(
 
     execute_started = perf_counter()
     working: gpd.GeoDataFrame
-    if use_reconstructed_lu_executor:
+    if reviewed_skip:
+        working = checkpoint
+        statuses = {"applied_noop"}
+        worker_count = 0
+        resolved_lu_bundle_count = 0
+        lu_chunk_count = 0
+        notes = [
+            str(note).strip()
+            for compiled_item in compiled_logic
+            for note in compiled_item.get("notes", ())
+            if str(note).strip()
+        ]
+        notes.append(
+            "Locked zero-removal reviewed skip; checkpoint carried forward "
+            "without LU partitioning or spatial execution."
+        )
+        executed_items = []
+        for compiled_item in compiled_logic:
+            runtime_item = dict(compiled_item)
+            runtime_item["execution_status"] = "applied_noop"
+            runtime_item["removed_area_ha"] = 0.0
+            runtime_item["net_removed_area_ha"] = 0.0
+            runtime_item["remaining_area_ha"] = input_area_ha
+            runtime_item["runtime_notes"] = tuple(_dedupe_runtime_notes(notes))
+            executed_items.append(runtime_item)
+        profiling["execute_seconds"] = perf_counter() - execute_started
+    elif use_reconstructed_lu_executor:
         (
             working,
             applied_steps,
@@ -13854,16 +13910,13 @@ def run_tsr_thlb_locked_parent_step(
         ]
         profiling["execute_seconds"] = perf_counter() - execute_started
 
-    final_status = _combine_parent_step_statuses(statuses)
+    final_status = (
+        "applied_noop" if reviewed_skip else _combine_parent_step_statuses(statuses)
+    )
     remaining_area_ha = _managed_area_ha(working)
     removed_area_ha = _resolve_step_net_removed_area_ha(
         managed_area_before_step_ha=input_area_ha,
         managed_area_after_step_ha=remaining_area_ha,
-    )
-    output_path = default_tsr_thlb_strict_chain_checkpoint_path(
-        instance_root=instance_root,
-        parent_step_id=parent_step_id,
-        row_order=row_order,
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_write_started = perf_counter()
@@ -13872,11 +13925,6 @@ def run_tsr_thlb_locked_parent_step(
     )
     profiling["output_write_seconds"] = perf_counter() - output_write_started
 
-    result_json_path = default_tsr_thlb_strict_chain_result_json_path(
-        instance_root=instance_root,
-        parent_step_id=parent_step_id,
-        row_order=row_order,
-    )
     result_json_path.parent.mkdir(parents=True, exist_ok=True)
     benchmark_marginal_area_ha = target_parent.get("benchmark_marginal_area_ha")
     benchmark_cumulative_area_ha = target_parent.get("benchmark_cumulative_area_ha")
@@ -13919,11 +13967,15 @@ def run_tsr_thlb_locked_parent_step(
         scaled_benchmark_marginal_delta_ha=None,
         scaled_benchmark_cumulative_delta_ha=None,
         notes=_dedupe_runtime_notes(notes),
-        execution_mode=TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL,
+        execution_mode=(
+            "reviewed_skip"
+            if reviewed_skip
+            else TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL
+        ),
         worker_count=worker_count,
         lu_chunk_count=lu_chunk_count,
         lu_bundle_count=resolved_lu_bundle_count,
-        progress_root=resolved_progress_root,
+        progress_root=None if reviewed_skip else resolved_progress_root,
         profiling=profiling,
     )
     profiling["total_seconds"] = perf_counter() - total_started

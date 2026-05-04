@@ -16746,3 +16746,27 @@
     the row-9 input chain state changed; and
   - kept `P53.1d24` as the next bounded validation step: run only row 10 from
     the relocked row-9 checkpoint.
+## 2026-05-03 - Validated TSA29 strict row 10 with reviewed-skip short-circuit
+- `#169` / `P53.1d24` implementation and validation:
+  - fixed `run_tsr_thlb_locked_parent_step` so locked zero-removal reviewed
+    rows short-circuit instead of entering LU partitioning and worker-pool
+    execution;
+  - added a regression test proving reviewed zero-removal rows write a
+    carried-forward strict-chain checkpoint/result without instantiating the
+    worker executor;
+  - ran `thlb_parent_010_lakeshore_management` once from
+    `data/tsr/strict_chain/09_thlb_parent_009_critical_habitat_for_fish.feather`;
+  - inspected
+    `runtime/logs/tsr/strict_chain/10_thlb_parent_010_lakeshore_management.json`
+    and
+    `data/tsr/strict_chain/10_thlb_parent_010_lakeshore_management.feather`;
+  - confirmed the row runs as `execution_mode = reviewed_skip`, with
+    `worker_count = 0`, `lu_chunk_count = 0`, `0.000 ha` removed, and
+    `2,503,323.083 ha` remaining;
+  - confirmed the rebuilt feather carries the same managed area via
+    `thlb_fact * geometry` and has SHA-256
+    `9191a8d80e62d39e3f3efcb3835c370caa93dd39242ee3b16f2eb4940386f14e`;
+  - updated the TSA29 row-10 ledger cumulative to the carried-forward
+    `2,503,323.083 ha`; and
+  - added `P53.1d25` as the next bounded step to run row 11 only from the
+    row-10 reviewed-skip checkpoint.

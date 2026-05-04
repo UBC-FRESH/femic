@@ -1155,3 +1155,40 @@
       relock changed the chained input state.
   - The next bounded run remains `P53.1d24`: row 10 only from the relocked
     row-9 checkpoint.
+- 2026-05-03: Completed `P53.1d24` by fixing reviewed zero-removal locked
+  rows to carry checkpoints forward without LU partitioning, then validating
+  row 10 from the relocked post-row-9 checkpoint.
+  - Code fix:
+    - `run_tsr_thlb_locked_parent_step` now detects locked parent steps whose
+      compiled logic is entirely `manual_review_required` and whose locked
+      marginal removal is `0.000 ha`;
+    - such rows write the strict-chain checkpoint/result directly with
+      `execution_mode = reviewed_skip`, `status = applied_noop`, and
+      `worker_count = lu_chunk_count = lu_bundle_count = 0`; and
+    - regression coverage proves the reviewed zero-removal path does not
+      instantiate the worker executor.
+  - Row-10 run surface:
+    - parent step: `thlb_parent_010_lakeshore_management`;
+    - checkpoint:
+      `data/tsr/strict_chain/09_thlb_parent_009_critical_habitat_for_fish.feather`;
+    - result JSON:
+      `runtime/logs/tsr/strict_chain/10_thlb_parent_010_lakeshore_management.json`;
+    - rebuilt checkpoint:
+      `data/tsr/strict_chain/10_thlb_parent_010_lakeshore_management.feather`.
+  - Output inspection:
+    - input `2,503,323.083 ha`;
+    - removed `0.000 ha`;
+    - remaining `2,503,323.083 ha`;
+    - workers / LU chunks / bundles: `0 / 0 / 0`;
+    - rebuilt feather SHA-256
+      `9191a8d80e62d39e3f3efcb3835c370caa93dd39242ee3b16f2eb4940386f14e`;
+    - feather inspection confirmed `thlb_fact * geometry` sums to the same
+      `2,503,323.083 ha` managed area.
+  - Ledger update:
+    - row 10 remains a reviewed skip with
+      `locked_net_removed_area_ha = 0.000`;
+    - `locked_cumulative_remaining_area_ha = 2,503,323.083`; and
+    - `locked_cumulative_delta_ha = 88,105.083`.
+  - Next bounded move:
+    - `P53.1d25` should run row 11 only from the row-10 reviewed-skip
+      checkpoint; do not advance beyond row 11 in that slice.

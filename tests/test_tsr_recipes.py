@@ -431,6 +431,123 @@ def test_run_tsr_thlb_locked_parent_step_executes_one_locked_step(
     )
 
 
+def test_run_tsr_thlb_locked_parent_step_short_circuits_zero_removal_reviewed_skip(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _ForbiddenExecutor:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            raise AssertionError("reviewed zero-removal skip must not use workers")
+
+    instance_root = tmp_path / "instance"
+    checkpoint_path = instance_root / "data" / "tsr" / "strict_chain" / "row09.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {
+            "FEATURE_AREA_SQM": [10000.0, 20000.0],
+            "thlb_fact": [1.0, 0.5],
+        },
+        geometry=[box(0, 0, 100, 100), box(100, 0, 300, 100)],
+        crs="EPSG:3005",
+    ).to_feather(checkpoint_path)
+    ledger_path = instance_root / "config" / "tsr" / "thlb_locked_chain_ledger.json"
+    ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    ledger_path.write_text(
+        json.dumps(
+            {
+                "entries": [
+                    {
+                        "parent_step_id": "thlb_parent_010_lakeshore_management",
+                        "locked_net_removed_area_ha": 0.0,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    tsa = tsr_catalog.TsrOverlayTsaRecord(
+        tsa_id="tsa_29",
+        tsa_code="29",
+        tsa_name="Williams Lake",
+    )
+    recipe = SimpleNamespace(tsa=tsa)
+    parent_step = {
+        "parent_step_id": "thlb_parent_010_lakeshore_management",
+        "parent_label": "Lakeshore management",
+        "row_order": 10,
+        "parent_kind": "transformation",
+        "execution_class": "legal_harvest_exclusion",
+        "land_base_stage": "aflb_to_lhlb",
+        "approved": True,
+        "ratchet_state": "approved",
+        "benchmark_marginal_area_ha": 327.0,
+        "benchmark_cumulative_area_ha": 2415218.0,
+        "compiled_logic": (
+            {
+                "step_id": "thlb_parent_010_lakeshore_management_compiled_01",
+                "label": "Class A lakes with preservation VQO overlap",
+                "compiled_operation_type": "manual_review_required",
+                "step_status": "manual_review_required",
+                "notes": ("No trusted Class A lake discriminator is available.",),
+            },
+        ),
+    }
+
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_load_tsr_thlb_recipe_context",
+        lambda recipe_path: (recipe, instance_root, None, {}, {}),
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_resolve_tsr_thlb_parent_step",
+        lambda recipe, parent_step_id: parent_step,
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_resolve_tsr_total_area_benchmark",
+        lambda recipe: 1.0,
+    )
+    monkeypatch.setattr(tsr_recipes, "ProcessPoolExecutor", _ForbiddenExecutor)
+
+    captured_events: list[dict[str, object]] = []
+    result = tsr_recipes.run_tsr_thlb_locked_parent_step(
+        recipe_path=instance_root
+        / "workbench"
+        / "tsr"
+        / "thlb_netdown.locked.recipe.yaml",
+        parent_step_id="thlb_parent_010_lakeshore_management",
+        checkpoint_path=checkpoint_path,
+        runtime_event_sink=captured_events.append,
+    )
+
+    assert result.status == "applied_noop"
+    assert result.execution_mode == "reviewed_skip"
+    assert result.worker_count == 0
+    assert result.lu_chunk_count == 0
+    assert result.lu_bundle_count == 0
+    assert result.input_area_ha == pytest.approx(2.0)
+    assert result.removed_area_ha == pytest.approx(0.0)
+    assert result.remaining_area_ha == pytest.approx(2.0)
+    output = gpd.read_feather(result.output_path)
+    assert "_row_id" not in output.columns
+    assert "_stand_area_sqm" not in output.columns
+    assert output["thlb_fact"].tolist() == pytest.approx([1.0, 0.5])
+    payload = json.loads(result.result_json_path.read_text(encoding="utf-8"))
+    assert payload["executed_items"][0]["execution_status"] == "applied_noop"
+    assert payload["executed_items"][0]["net_removed_area_ha"] == pytest.approx(0.0)
+    assert "without LU partitioning" in payload["notes"][-1]
+    assert any(
+        event.get("event_kind") == "compiled_step_started" for event in captured_events
+    )
+    assert any(
+        event.get("event_kind") == "compiled_step_finished"
+        and event.get("run_status") == "applied_noop"
+        for event in captured_events
+    )
+
+
 def test_run_tsr_thlb_locked_parent_step_uses_true_before_after_net_change(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
