@@ -16782,3 +16782,18 @@
     missing-SHA and mismatched-SHA aliases do not; and
   - kept `P53.1d25` open as the next bounded row-11 validation from the
     row-10 reviewed-skip checkpoint.
+## 2026-05-04 - Preserved LU-parallel output partitions for strict-chain handoff
+- `#169` / `P53.1d25b` implementation:
+  - fixed the locked parent-step runner so LU-parallel worker bundle outputs
+    are registered as the reusable LU partition cache for the newly written
+    strict-chain checkpoint;
+  - kept final strict-chain feather outputs free of internal prepared-state
+    columns while retaining those columns in cached chunk inputs for the next
+    parent step;
+  - taught reviewed zero-removal pass-through rows to carry an existing input
+    checkpoint partition cache forward to the output checkpoint without using
+    the worker executor;
+  - added regression coverage for both LU-parallel output-cache registration
+    and reviewed-skip cache carry-forward; and
+  - kept `P53.1d25` open as the next bounded row-11 validation from the
+    row-10 reviewed-skip checkpoint after rebuilding the row-9/row-10 handoff.

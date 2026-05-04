@@ -1213,3 +1213,29 @@
   - Next bounded move:
     - `P53.1d25` remains open: run row 11 only from the row-10 checkpoint and
       inspect the rebuilt row-11 output before advancing.
+- 2026-05-04: Completed `P53.1d25b` by preserving LU-parallel output
+  partitions as the next strict-chain checkpoint cache.
+  - Problem:
+    - LU-parallel locked parent-step workers wrote partitioned bundle outputs,
+      but the parent runner only merged those bundles into the strict-chain
+      feather and discarded the partition cache handoff;
+    - the next parent step therefore had to repartition the merged feather even
+      when the previous run had just processed the same partitioned chunks.
+  - Fix:
+    - worker bundle outputs now retain prepared-state columns needed for the
+      next step's cached chunk inputs;
+    - final strict-chain checkpoint feathers still strip those internal columns;
+    - after writing the final checkpoint, the locked parent-step runner
+      registers the worker bundle outputs as a SHA-verified LU partition cache
+      for the new checkpoint; and
+    - reviewed zero-removal pass-through rows carry an input checkpoint
+      partition cache forward to their output checkpoint when one exists.
+  - Validation:
+    - regression coverage confirms a LU-parallel locked step writes a final
+      checkpoint without internal columns while registering cache chunks that
+      retain the prepared columns;
+    - regression coverage confirms a reviewed-skip row can carry an input
+      partition cache forward without entering the worker executor.
+  - Next bounded move:
+    - `P53.1d25` remains open: rebuild row 9, carry row 10 through, and then
+      run row 11 only if the row-10 checkpoint has a completed cache.

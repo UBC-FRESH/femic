@@ -7946,6 +7946,90 @@ def _materialize_checkpoint_landscape_unit_partitions(
     return records
 
 
+def _register_checkpoint_landscape_unit_partition_records(
+    checkpoint: gpd.GeoDataFrame,
+    *,
+    checkpoint_path: Path,
+    selected_landscape_units: Sequence[str],
+    chunk_records: Sequence[dict[str, Any]],
+    instance_root: Path,
+) -> list[dict[str, Any]]:
+    partition_root = default_tsr_thlb_lu_partition_root(instance_root=instance_root)
+    partition_root.mkdir(parents=True, exist_ok=True)
+    lu_key = "|".join(
+        str(value).strip() for value in selected_landscape_units if str(value).strip()
+    )
+    digest = hashlib.sha1(
+        (f"{checkpoint_path.expanduser().resolve()}||{lu_key or 'all_lus'}").encode(
+            "utf-8"
+        )
+    ).hexdigest()[:12]
+    partition_dir = partition_root / f"{checkpoint_path.stem}.{digest}"
+    if partition_dir.exists():
+        shutil.rmtree(partition_dir, ignore_errors=True)
+    partition_dir.mkdir(parents=True, exist_ok=True)
+
+    checkpoint_row_count = int(len(checkpoint))
+    checkpoint_area_ha = float(checkpoint.geometry.area.astype(float).sum() / 10000.0)
+    checkpoint_sha256 = file_sha256(checkpoint_path)
+    checkpoint_columns = sorted(
+        {str(column).strip() for column in checkpoint.columns if str(column).strip()}
+    )
+    registered_records: list[dict[str, Any]] = []
+    for index, item in enumerate(chunk_records, start=1):
+        source_path = Path(str(item.get("chunk_path", ""))).expanduser()
+        if not source_path.exists():
+            continue
+        label = str(
+            item.get("lu_name") or item.get("bundle_label") or f"chunk_{index:03d}"
+        ).strip()
+        slug = (
+            re.sub(r"[^A-Za-z0-9]+", "_", label).strip("_").lower()
+            or f"chunk_{index:03d}"
+        )
+        target_path = partition_dir / f"{index:03d}_{slug}.feather"
+        shutil.copy2(source_path, target_path)
+        area_ha = _normalize_float_or_none(item.get("area_ha"))
+        if area_ha is None:
+            chunk = gpd.read_feather(target_path)
+            area_ha = float(chunk.geometry.area.astype(float).sum() / 10000.0)
+        registered_records.append(
+            {
+                "lu_name": label,
+                "chunk_path": target_path,
+                "area_ha": float(area_ha),
+            }
+        )
+
+    if not registered_records:
+        shutil.rmtree(partition_dir, ignore_errors=True)
+        return []
+
+    metadata_payload = {
+        "cache_version": _TSR_THLB_LU_PARTITION_CACHE_VERSION,
+        "checkpoint_path": str(checkpoint_path.expanduser().resolve()),
+        "checkpoint_sha256": checkpoint_sha256,
+        "input_row_count": checkpoint_row_count,
+        "input_area_ha": checkpoint_area_ha,
+        "input_columns": checkpoint_columns,
+        "selected_landscape_units": list(selected_landscape_units),
+        "chunk_records": [
+            {
+                "lu_name": str(item["lu_name"]),
+                "chunk_path": Path(str(item["chunk_path"])).name,
+                "area_ha": float(item["area_ha"] or 0.0),
+            }
+            for item in registered_records
+        ],
+    }
+    (partition_dir / "partition_metadata.json").write_text(
+        json.dumps(metadata_payload, indent=2, sort_keys=False),
+        encoding="utf-8",
+    )
+    registered_records.sort(key=lambda item: str(item.get("lu_name", "")).strip())
+    return registered_records
+
+
 def _write_tsr_thlb_parallel_progress(
     progress_path: Path,
     *,
@@ -13065,11 +13149,12 @@ def _run_tsr_thlb_parent_step_bundle_worker(
         )
         concat_elapsed = perf_counter() - merge_started
         write_started = perf_counter()
-        updated_frame.drop(
-            columns=["_row_id", "_stand_area_sqm"], errors="ignore"
-        ).to_feather(output_path)
+        updated_frame.to_feather(output_path)
         write_elapsed = perf_counter() - write_started
         remaining_area_ha = _managed_area_ha(updated_frame)
+        geometry_area_ha = float(
+            updated_frame.geometry.area.astype(float).sum() / 10000.0
+        )
     else:
         updated_frame = gpd.GeoDataFrame(geometry=[], crs=BC_ALBERS_EPSG)
         concat_elapsed = 0.0
@@ -13077,6 +13162,7 @@ def _run_tsr_thlb_parent_step_bundle_worker(
         updated_frame.to_feather(output_path)
         write_elapsed = perf_counter() - write_started
         remaining_area_ha = 0.0
+        geometry_area_ha = 0.0
     final_status = _combine_parent_step_statuses(statuses)
     if progress_target is not None:
         _write_tsr_thlb_parallel_progress(
@@ -13096,6 +13182,7 @@ def _run_tsr_thlb_parent_step_bundle_worker(
         "executed_items": executed_items,
         "removed_area_ha": removed_area_ha,
         "remaining_area_ha": remaining_area_ha,
+        "geometry_area_ha": geometry_area_ha,
         "status": final_status,
         "notes": list(dict.fromkeys(notes)),
         "bundle_index": bundle_index,
@@ -13516,6 +13603,7 @@ def run_tsr_thlb_locked_parent_step(
     removed_area_ha = 0.0
     statuses: set[str] = set()
     notes: list[str] = []
+    output_partition_source_records: list[dict[str, Any]] = []
     total_area_benchmark_ha = _resolve_tsr_total_area_benchmark(recipe)
     use_reconstructed_lu_executor = any(
         _resolve_compiled_operation_type(item) == "aspatial_area_reduction"
@@ -13911,6 +13999,17 @@ def run_tsr_thlb_locked_parent_step(
             }
             for worker_result in worker_results
         ]
+        output_partition_source_records = [
+            {
+                "lu_name": str(
+                    worker_result.get("bundle_label")
+                    or f"bundle_{int(worker_result.get('bundle_index', 0) or 0):02d}"
+                ).strip(),
+                "chunk_path": Path(str(worker_result["output_path"])),
+                "area_ha": float(worker_result.get("geometry_area_ha", 0.0) or 0.0),
+            }
+            for worker_result in worker_results
+        ]
         profiling["execute_seconds"] = perf_counter() - execute_started
 
     final_status = (
@@ -13927,6 +14026,55 @@ def run_tsr_thlb_locked_parent_step(
         output_path
     )
     profiling["output_write_seconds"] = perf_counter() - output_write_started
+    if output_partition_source_records:
+        output_cache_started = perf_counter()
+        registered_output_records = (
+            _register_checkpoint_landscape_unit_partition_records(
+                working,
+                checkpoint_path=output_path,
+                selected_landscape_units=selected_landscape_units,
+                chunk_records=output_partition_source_records,
+                instance_root=instance_root,
+            )
+        )
+        profiling["output_partition_cache_write_seconds"] = (
+            perf_counter() - output_cache_started
+        )
+        profiling["output_partition_cache_chunk_count"] = len(registered_output_records)
+    elif reviewed_skip:
+        output_cache_started = perf_counter()
+        input_cache = _load_cached_landscape_unit_partition_records(
+            checkpoint_path=resolved_checkpoint_path,
+            instance_root=instance_root,
+            expected_row_count=len(checkpoint),
+            expected_area_ha=float(
+                checkpoint.geometry.area.astype(float).sum() / 10000.0
+            ),
+            expected_columns=tuple(
+                str(column).strip() for column in checkpoint.columns
+            ),
+            expected_checkpoint_sha256=file_sha256(resolved_checkpoint_path),
+        )
+        if input_cache is not None:
+            cached_selected_lus, cached_records = input_cache
+            registered_output_records = (
+                _register_checkpoint_landscape_unit_partition_records(
+                    working,
+                    checkpoint_path=output_path,
+                    selected_landscape_units=cached_selected_lus,
+                    chunk_records=cached_records,
+                    instance_root=instance_root,
+                )
+            )
+            selected_landscape_units = cached_selected_lus
+            profiling["output_partition_cache_chunk_count"] = len(
+                registered_output_records
+            )
+        else:
+            profiling["output_partition_cache_chunk_count"] = 0
+        profiling["output_partition_cache_write_seconds"] = (
+            perf_counter() - output_cache_started
+        )
 
     result_json_path.parent.mkdir(parents=True, exist_ok=True)
     benchmark_marginal_area_ha = target_parent.get("benchmark_marginal_area_ha")

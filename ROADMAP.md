@@ -1431,6 +1431,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d23 Reconcile or relock strict row 9 to the reproducible chained critical-fish-habitat result before advancing to row 10.
     - [x] P53.1d24 Validate strict row 10 from the relocked post-row-9 checkpoint before advancing farther through AFLB -> LHLB.
     - [x] P53.1d25a Reuse SHA-verified LU partition caches across content-identical strict-chain checkpoint aliases before rerunning row 11.
+    - [x] P53.1d25b Preserve LU-parallel output partitions as the next strict-chain checkpoint cache before rerunning row 11.
     - [ ] P53.1d25 Validate strict row 11 from the row-10 reviewed-skip checkpoint before advancing farther through AFLB -> LHLB.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
@@ -1971,6 +1972,13 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     repeated LU partition materialization while preserving the old conservative
     path check for unverified cache lookups. The next bounded validation
     remains `P53.1d25`: row 11 only from the row-10 checkpoint.
+  - `P53.1d25b` is complete: LU-parallel locked parent-step runs now register
+    their worker output partitions as the reusable LU partition cache for the
+    newly written strict-chain checkpoint, while final strict-chain feathers
+    still omit internal prepared-state columns. Reviewed zero-removal
+    pass-through rows also carry an input checkpoint partition cache forward
+    when one exists. The next bounded validation remains `P53.1d25`: row 11
+    only from the row-10 checkpoint.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

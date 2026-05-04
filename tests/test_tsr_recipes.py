@@ -414,6 +414,36 @@ def test_run_tsr_thlb_locked_parent_step_executes_one_locked_step(
     assert result.worker_count == 1
     assert result.lu_chunk_count == 1
     assert result.lu_bundle_count == 1
+    output = gpd.read_feather(result.output_path)
+    assert "_row_id" not in output.columns
+    assert "_stand_area_sqm" not in output.columns
+    metadata_paths = list(
+        tsr_recipes.default_tsr_thlb_lu_partition_root(
+            instance_root=instance_root
+        ).glob("*/partition_metadata.json")
+    )
+    assert len(metadata_paths) == 1
+    metadata = json.loads(metadata_paths[0].read_text(encoding="utf-8"))
+    assert metadata["checkpoint_path"] == str(result.output_path.resolve())
+    assert metadata["input_row_count"] == 1
+    assert metadata["chunk_records"][0]["lu_name"] == "worker_01"
+    cached_chunk = gpd.read_feather(
+        metadata_paths[0].parent / metadata["chunk_records"][0]["chunk_path"]
+    )
+    assert "_row_id" in cached_chunk.columns
+    assert "_stand_area_sqm" in cached_chunk.columns
+    prepared_output = tsr_recipes._prepare_locked_parent_step_checkpoint(output)
+    output_cache = tsr_recipes._load_cached_landscape_unit_partition_records(
+        checkpoint_path=result.output_path,
+        instance_root=instance_root,
+        expected_row_count=len(prepared_output),
+        expected_area_ha=float(
+            prepared_output.geometry.area.astype(float).sum() / 10000.0
+        ),
+        expected_columns=tuple(str(column) for column in prepared_output.columns),
+        expected_checkpoint_sha256=tsr_recipes.file_sha256(result.output_path),
+    )
+    assert output_cache is not None
     assert any(
         event.get("event_kind") == "compiled_step_started"
         and event.get("compiled_step_id") == "thlb_parent_002_compiled_01"
@@ -450,6 +480,27 @@ def test_run_tsr_thlb_locked_parent_step_short_circuits_zero_removal_reviewed_sk
         geometry=[box(0, 0, 100, 100), box(100, 0, 300, 100)],
         crs="EPSG:3005",
     ).to_feather(checkpoint_path)
+    prepared_checkpoint = tsr_recipes._prepare_locked_parent_step_checkpoint(
+        gpd.read_feather(checkpoint_path)
+    )
+    input_chunk_path = (
+        instance_root / "runtime" / "logs" / "tsr" / "input_cache_chunk.feather"
+    )
+    input_chunk_path.parent.mkdir(parents=True, exist_ok=True)
+    prepared_checkpoint.to_feather(input_chunk_path)
+    tsr_recipes._register_checkpoint_landscape_unit_partition_records(
+        prepared_checkpoint,
+        checkpoint_path=checkpoint_path,
+        selected_landscape_units=("Test LU",),
+        chunk_records=[
+            {
+                "lu_name": "Test LU",
+                "chunk_path": input_chunk_path,
+                "area_ha": 3.0,
+            }
+        ],
+        instance_root=instance_root,
+    )
     ledger_path = instance_root / "config" / "tsr" / "thlb_locked_chain_ledger.json"
     ledger_path.parent.mkdir(parents=True, exist_ok=True)
     ledger_path.write_text(
@@ -534,6 +585,30 @@ def test_run_tsr_thlb_locked_parent_step_short_circuits_zero_removal_reviewed_sk
     assert "_row_id" not in output.columns
     assert "_stand_area_sqm" not in output.columns
     assert output["thlb_fact"].tolist() == pytest.approx([1.0, 0.5])
+    metadata_paths = [
+        path
+        for path in tsr_recipes.default_tsr_thlb_lu_partition_root(
+            instance_root=instance_root
+        ).glob("*/partition_metadata.json")
+        if json.loads(path.read_text(encoding="utf-8"))["checkpoint_path"]
+        == str(result.output_path.resolve())
+    ]
+    assert len(metadata_paths) == 1
+    metadata = json.loads(metadata_paths[0].read_text(encoding="utf-8"))
+    assert metadata["selected_landscape_units"] == ["Test LU"]
+    assert metadata["chunk_records"][0]["lu_name"] == "Test LU"
+    prepared_output = tsr_recipes._prepare_locked_parent_step_checkpoint(output)
+    output_cache = tsr_recipes._load_cached_landscape_unit_partition_records(
+        checkpoint_path=result.output_path,
+        instance_root=instance_root,
+        expected_row_count=len(prepared_output),
+        expected_area_ha=float(
+            prepared_output.geometry.area.astype(float).sum() / 10000.0
+        ),
+        expected_columns=tuple(str(column) for column in prepared_output.columns),
+        expected_checkpoint_sha256=tsr_recipes.file_sha256(result.output_path),
+    )
+    assert output_cache is not None
     payload = json.loads(result.result_json_path.read_text(encoding="utf-8"))
     assert payload["executed_items"][0]["execution_status"] == "applied_noop"
     assert payload["executed_items"][0]["net_removed_area_ha"] == pytest.approx(0.0)
