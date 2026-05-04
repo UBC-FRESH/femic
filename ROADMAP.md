@@ -1426,7 +1426,8 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d18 Reconcile strict row-6 locked recipe approval/ratchet-state semantics and validate AFLB -> LHLB from the validated AFLB checkpoint without replaying GLB -> AFLB.
     - [x] P53.1d19 Repair or materialize the strict row-7 OGMA source/removal path, then rerun only the AFLB -> LHLB suffix from the row-6 strict-chain checkpoint.
     - [x] P53.1d20 Validate strict row 8 from the relocked post-row-7 checkpoint before advancing farther through AFLB -> LHLB.
-    - [ ] P53.1d21 Reconcile or relock strict row 8 to the reproducible chained wildlife-habitat result before advancing to row 9.
+    - [x] P53.1d21 Reconcile or relock strict row 8 to the reproducible chained wildlife-habitat result before advancing to row 9.
+    - [ ] P53.1d22 Validate strict row 9 from the relocked post-row-8 checkpoint before advancing farther through AFLB -> LHLB.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -1921,6 +1922,14 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     checkpoint, but it does not match the previous locked row-8 ledger values
     (`131,567.592 ha` removed and `2,449,043.817 ha` remaining), so the next
     bounded move is `P53.1d21`: reconcile or relock row 8 before running row 9.
+  - Active user-directed next move: relock row 8 to the reproducible chained
+    result (`113,733.548 ha` removed, `2,524,288.089 ha` remaining), then run
+    row 9 only from the relocked row-8 checkpoint under `P53.1d22`.
+  - `P53.1d21` is complete: the TSA29 locked-chain ledger now locks row 8 to
+    `113,733.548 ha` removed, `2,524,288.089 ha` remaining, and
+    `97,222.089 ha` cumulative delta, with a source note explaining that this
+    supersedes the older row-8 lock after the row-7 relock changed the chained
+    input state.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

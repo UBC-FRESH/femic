@@ -1080,3 +1080,21 @@
     - do not advance to row 9 yet;
     - reconcile or relock row 8 to the reproducible chained wildlife-habitat
       result under `P53.1d21`.
+- 2026-05-03: User-directed follow-on for `P53.1d21` / `P53.1d22`:
+  - relock row 8 to the inspected chained wildlife-habitat result:
+    - `locked_net_removed_area_ha = 113,733.548`;
+    - `locked_cumulative_remaining_area_ha = 2,524,288.089`; and
+    - `locked_cumulative_delta_ha = 97,222.089`;
+  - then run only row 9 from
+    `data/tsr/strict_chain/08_thlb_parent_008_wildlife_habitat_areas.feather`;
+  - do not advance beyond row 9 in this slice.
+- 2026-05-03: Completed `P53.1d21` by relocking row 8 to the inspected
+  chained wildlife-habitat result.
+  - Ledger row 8 now records:
+    - `locked_net_removed_area_ha = 113,733.548`;
+    - `locked_cumulative_remaining_area_ha = 2,524,288.089`;
+    - `locked_cumulative_delta_ha = 97,222.089`; and
+    - a source note that this supersedes the older row-8 lock after the row-7
+      relock changed the chained input state.
+  - The next bounded run remains `P53.1d22`: row 9 only from the relocked
+    row-8 checkpoint.
