@@ -1432,6 +1432,8 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d24 Validate strict row 10 from the relocked post-row-9 checkpoint before advancing farther through AFLB -> LHLB.
     - [x] P53.1d25a Reuse SHA-verified LU partition caches across content-identical strict-chain checkpoint aliases before rerunning row 11.
     - [x] P53.1d25b Preserve LU-parallel output partitions as the next strict-chain checkpoint cache before rerunning row 11.
+    - [x] P53.1d25c Normalize row-11 legal-planning attribute-slot filters and narrow the Community Areas of Special Concern source selection before advancing to row 12.
+    - [ ] P53.1d25d Adjudicate the repaired row-11 CASC result against the locked and TSR benchmarks before advancing to row 12.
     - [ ] P53.1d25 Validate strict row 11 from the row-10 reviewed-skip checkpoint before advancing farther through AFLB -> LHLB.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
@@ -1979,6 +1981,17 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     pass-through rows also carry an input checkpoint partition cache forward
     when one exists. The next bounded validation remains `P53.1d25`: row 11
     only from the row-10 checkpoint.
+  - `P53.1d25c` is complete: row 11 now materializes filterable fields from the
+    legal-planning `LEGAL_FEAT_ATRB_*` name/value slots and narrows CASC
+    execution to `SOURCE_HARV_CAT in {ART, IR, STR}` rather than excluding the
+    full CASC polygon set. A bounded rerun from the row-10 checkpoint now
+    removes `69,716.086 ha` and leaves `2,433,606.997 ha`, down from the prior
+    `238,553.790 ha` overcut.
+  - `P53.1d25d` is the active bounded adjudication slice: decide whether the
+    repaired row-11 result (`69,716.086 ha` removed; `2,433,606.997 ha`
+    remaining) should be accepted/relocked or refined again before row 12. The
+    current deltas are `+7,256.086 ha` versus the row-11 TSR marginal benchmark
+    and `+80,848.997 ha` versus the row-11 TSR cumulative benchmark.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

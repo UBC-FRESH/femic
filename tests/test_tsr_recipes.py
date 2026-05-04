@@ -7339,6 +7339,11 @@ def test_specialized_compiled_logic_for_casc_uses_cclup_objective_filter() -> No
             "operator": "eq",
             "value": "Community Areas of Special Concern",
         },
+        {
+            "field": "SOURCE_HARV_CAT",
+            "operator": "in",
+            "value": ["ART", "IR", "STR"],
+        },
     ]
 
 
@@ -7369,6 +7374,30 @@ def test_specialized_compiled_logic_for_pra_is_review_only() -> None:
         "whse_admin_boundaries_pip_consultation",
         "whse_land_use_planning_fadm_designated",
     ]
+
+
+def test_augment_named_value_attribute_columns_materializes_filterable_fields() -> None:
+    layer = gpd.GeoDataFrame(
+        {
+            "LEGAL_FEAT_ATRB_1_NAME": ["SOURCE_HARV_CAT", "SOURCE_HARV_CAT", ""],
+            "LEGAL_FEAT_ATRB_1_VALUE": ["ART", "WCH", ""],
+            "LEGAL_FEAT_ATRB_2_NAME": ["HARV_FACTOR", "HARV_FACTOR", ""],
+            "LEGAL_FEAT_ATRB_2_VALUE": ["90", "100", ""],
+        },
+        geometry=[
+            box(0, 0, 1, 1),
+            box(1, 0, 2, 1),
+            box(2, 0, 3, 1),
+        ],
+        crs="EPSG:3005",
+    )
+
+    augmented = tsr_recipes._augment_named_value_attribute_columns(layer)
+
+    assert list(augmented["SOURCE_HARV_CAT"].iloc[:2]) == ["ART", "WCH"]
+    assert list(augmented["HARV_FACTOR"].iloc[:2]) == ["90", "100"]
+    assert pd.isna(augmented.loc[2, "SOURCE_HARV_CAT"])
+    assert pd.isna(augmented.loc[2, "HARV_FACTOR"])
 
 
 def test_specialized_compiled_logic_for_inoperable_uses_terrain_plus_step13_flag() -> (

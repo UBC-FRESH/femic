@@ -16797,3 +16797,28 @@
     and reviewed-skip cache carry-forward; and
   - kept `P53.1d25` open as the next bounded row-11 validation from the
     row-10 reviewed-skip checkpoint after rebuilding the row-9/row-10 handoff.
+## 2026-05-04 - Narrowed TSA29 strict row 11 CASC legal-planning semantics
+- `#169` / `P53.1d25c` implementation and bounded validation:
+  - materialized filterable fields from repeated legal-planning `*_NAME` /
+    `*_VALUE` attribute slots during compiled source loading so strict filters
+    can target semantic fields like `SOURCE_HARV_CAT`;
+  - narrowed row-11 CASC execution to
+    `SOURCE_HARV_CAT in {ART, IR, STR}` instead of excluding the full CASC
+    legal polygon set;
+  - updated the checked-in TSA29 recipe surfaces so the locked strict runner
+    uses the narrowed row-11 contract;
+  - added targeted regression coverage for the attribute-slot normalization
+    helper and the updated row-11 compiled filter contract;
+  - reran only `thlb_parent_011_community_areas_of_special_concern` from
+    `data/tsr/strict_chain/10_thlb_parent_010_lakeshore_management.feather`
+    with `8` workers / `8` bundles;
+  - inspected
+    `runtime/logs/tsr/strict_chain/11_thlb_parent_011_community_areas_of_special_concern.json`
+    and
+    `data/tsr/strict_chain/11_thlb_parent_011_community_areas_of_special_concern.feather`;
+  - confirmed the repaired row now removes `69,716.086 ha` and leaves
+    `2,433,606.997 ha`, versus the prior `238,553.790 ha` blanket-CASC overcut;
+    and
+  - kept the Phase 53 lane bounded at new substep `P53.1d25d`: adjudicate
+    whether the repaired row-11 result should be accepted/relocked or refined
+    again before row 12.

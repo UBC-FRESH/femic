@@ -3616,7 +3616,8 @@ def _specialized_compiled_logic_for_parent_step(
                 "normalized_subject": "Community areas of special concern",
                 "normalized_predicate": (
                     "exclude only LUO/CARC CCLUP legal-planning polygons where "
-                    "LEGAL_FEAT_OBJECTIVE = Community Areas of Special Concern"
+                    "LEGAL_FEAT_OBJECTIVE = Community Areas of Special Concern "
+                    "and SOURCE_HARV_CAT is one of ART, IR, or STR"
                 ),
                 "linked_source_entry_ids": [
                     "whse_land_use_planning_rmp_plan_legal_poly_svw",
@@ -3632,9 +3633,15 @@ def _specialized_compiled_logic_for_parent_step(
                         "operator": "eq",
                         "value": "Community Areas of Special Concern",
                     },
+                    {
+                        "field": "SOURCE_HARV_CAT",
+                        "operator": "in",
+                        "value": ["ART", "IR", "STR"],
+                    },
                 ],
                 "notes": [
-                    "TSA29 section 6.3.7 points to LUO / CCLUP Map 5 boundaries, so notebook execution uses the legal CCLUP planning polygons instead of broad designated-area overlays."
+                    "TSA29 section 6.3.7 points to LUO / CCLUP Map 5 boundaries, so notebook execution uses the legal CCLUP planning polygons instead of broad designated-area overlays.",
+                    "The legal-planning source encodes CASC harvest semantics in repeated LEGAL_FEAT_ATRB name/value slots; row 11 narrows execution to the ART / IR / STR source harvest categories instead of excluding the full CASC polygon set.",
                 ],
             }
         )
@@ -12100,6 +12107,51 @@ def _apply_source_attribute_filters(
     return filtered
 
 
+def _augment_named_value_attribute_columns(
+    layer: gpd.GeoDataFrame,
+    *,
+    name_column_suffix: str = "_NAME",
+    value_column_suffix: str = "_VALUE",
+) -> gpd.GeoDataFrame:
+    """Materialize synthetic columns from repeated NAME/VALUE attribute slots.
+
+    Some BCGW legal-planning layers encode semantically important attributes as
+    repeated pairs such as `LEGAL_FEAT_ATRB_1_NAME` / `LEGAL_FEAT_ATRB_1_VALUE`.
+    This helper lifts those slot pairs into ordinary filterable columns like
+    `SOURCE_HARV_CAT` and `HARV_FACTOR` without discarding the original fields.
+    """
+
+    name_columns = [
+        column
+        for column in layer.columns
+        if column.endswith(name_column_suffix)
+        and column[: -len(name_column_suffix)] + value_column_suffix in layer.columns
+    ]
+    if not name_columns:
+        return layer
+    augmented = layer.copy()
+    for name_column in name_columns:
+        slot_prefix = name_column[: -len(name_column_suffix)]
+        value_column = slot_prefix + value_column_suffix
+        if value_column not in augmented.columns:
+            continue
+        raw_names = augmented[name_column].fillna("").astype(str).str.strip()
+        if raw_names.eq("").all():
+            continue
+        raw_values = augmented[value_column]
+        for attribute_name in raw_names.loc[raw_names.ne("")].unique().tolist():
+            current = (
+                augmented[attribute_name]
+                if attribute_name in augmented.columns
+                else pd.Series(pd.NA, index=augmented.index, dtype="object")
+            )
+            attribute_mask = raw_names.eq(attribute_name)
+            if not bool(attribute_mask.any()):
+                continue
+            augmented[attribute_name] = current.where(~attribute_mask, raw_values)
+    return augmented
+
+
 @lru_cache(maxsize=8)
 def _load_curve_metric_lookup(bundle_root_str: str) -> dict[int, dict[str, Any]]:
     bundle_root = Path(bundle_root_str)
@@ -12426,6 +12478,7 @@ def _load_compiled_logic_geometries(
     if geometries.empty:
         return geometries, missing_sources, True, extent_mismatch_notes
     if filters:
+        geometries = _augment_named_value_attribute_columns(geometries)
         geometries = _apply_source_attribute_filters(geometries, filters=filters)
         if geometries.empty:
             return geometries, missing_sources, True, extent_mismatch_notes

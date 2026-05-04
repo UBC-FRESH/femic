@@ -1239,3 +1239,57 @@
   - Next bounded move:
     - `P53.1d25` remains open: rebuild row 9, carry row 10 through, and then
       run row 11 only if the row-10 checkpoint has a completed cache.
+- 2026-05-04: Completed the bounded `P53.1d25` row-11 execution check from the
+  rebuilt row-10 checkpoint and exposed the next blocker.
+  - Execution:
+    - row 11 now starts from the row-10 prepared cache instead of
+      repartitioning the merged feather;
+    - `thlb_parent_011_community_areas_of_special_concern` ran LU-parallel
+      with `8` workers and `8` cache bundle records; and
+    - the rebuilt row-11 checkpoint also registered a downstream prepared cache.
+  - Result:
+    - actual marginal removal: `238,553.790 ha`;
+    - locked TSR marginal benchmark: `62,460.000 ha`;
+    - actual remaining area: `2,264,769.293 ha`; and
+    - locked TSR cumulative benchmark: `2,352,758.000 ha`.
+  - Interpretation:
+    - restart/cache mechanics are now working for the row-10 to row-11 handoff;
+    - the remaining blocker is row-11 source/filter logic, not pipeline
+      restart mechanics.
+  - Next bounded move:
+    - `P53.1d25c` should normalize the legal-planning `LEGAL_FEAT_ATRB_*`
+      name/value slots into filterable fields, narrow the row-11 community
+      areas source contract off the blanket CASC overlay, and then rerun row 11
+      only; do not advance to row 12.
+- 2026-05-04: Completed `P53.1d25c` and reran row 11 only from the validated
+  row-10 reviewed-skip checkpoint.
+  - Repair:
+    - source loading now materializes filterable fields from repeated
+      legal-planning `*_NAME` / `*_VALUE` attribute slots; and
+    - row-11 CASC execution now narrows the legal-planning source contract to
+      `SOURCE_HARV_CAT in {ART, IR, STR}` instead of excluding the full CASC
+      polygon set.
+  - Validation:
+    - targeted regression coverage passed for the new attribute-slot
+      normalization helper and the row-11 compiled filter contract; and
+    - bounded row-11 rerun from
+      `data/tsr/strict_chain/10_thlb_parent_010_lakeshore_management.feather`
+      finished `applied` in `lu_parallel` mode with `8` workers / `8` bundles.
+  - Inspected outputs:
+    - result JSON:
+      `runtime/logs/tsr/strict_chain/11_thlb_parent_011_community_areas_of_special_concern.json`;
+    - rebuilt checkpoint:
+      `data/tsr/strict_chain/11_thlb_parent_011_community_areas_of_special_concern.feather`;
+    - actual marginal removal: `69,716.086 ha`;
+    - actual remaining area: `2,433,606.997 ha`; and
+    - rebuilt feather managed area matches the JSON and still strips internal
+      `_row_id` / `_stand_area_sqm` columns.
+  - Comparison:
+    - prior row-11 overcut was `238,553.790 ha` removed;
+    - repaired row-11 is now `+7,256.086 ha` above the TSR marginal benchmark
+      `62,460.000 ha`; and
+    - repaired row-11 remains `+80,848.997 ha` above the TSR cumulative
+      benchmark `2,352,758.000 ha`.
+  - Next bounded move:
+    - `P53.1d25d` should adjudicate whether the repaired row-11 result should
+      be accepted/relocked or narrowed further before row 12.
