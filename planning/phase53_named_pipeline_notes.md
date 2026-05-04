@@ -1043,3 +1043,40 @@
     - `P53.1d20` should run only row 8 from the relocked post-row-7
       checkpoint, then inspect the rebuilt output before deciding whether to
       advance farther through AFLB -> LHLB.
+- 2026-05-03: Completed `P53.1d20` by validating strict row 8 from the
+  relocked post-row-7 checkpoint and inspecting the rebuilt artifacts.
+  - Input materialization:
+    - row-8 UWR/WHA source GeoPackages were annex pointer stubs before this
+      slice;
+    - materialized only the five row-8 wildlife source artifacts from
+      `external/femic-tsa29-instance/data/downloads/bcdc/`; and
+    - verified the materialized files are readable EPSG:3005 GeoPackages.
+  - Run surface:
+    - runner: `run_tsr_thlb_locked_parent_step`;
+    - parent step: `thlb_parent_008_wildlife_habitat_areas`;
+    - checkpoint:
+      `data/tsr/strict_chain/07_thlb_parent_007_old_growth_management_areas.feather`;
+    - workers/bundles: `8 / 8`; and
+    - no row-9 or downstream step was run.
+  - Output inspection:
+    - result JSON:
+      `runtime/logs/tsr/strict_chain/08_thlb_parent_008_wildlife_habitat_areas.json`;
+    - rebuilt checkpoint:
+      `data/tsr/strict_chain/08_thlb_parent_008_wildlife_habitat_areas.feather`;
+    - input `2,638,021.638 ha`;
+    - removed `113,733.548 ha`;
+    - remaining `2,524,288.089 ha`;
+    - rebuilt feather SHA-256
+      `1b371d721920be081946ad00680e962faee2abebe032a50543f3d74ba7934bc2`;
+    - feather inspection confirmed `thlb_fact * geometry` sums to the same
+      `2,524,288.089 ha` managed area.
+  - Comparison:
+    - old locked row-8 marginal: `131,567.592 ha`;
+    - old locked row-8 cumulative: `2,449,043.817 ha`;
+    - TSR row-8 cumulative: `2,427,066.000 ha`; and
+    - current chained row-8 result is `97,222.089 ha` above the TSR
+      cumulative target.
+  - Next bounded move:
+    - do not advance to row 9 yet;
+    - reconcile or relock row 8 to the reproducible chained wildlife-habitat
+      result under `P53.1d21`.

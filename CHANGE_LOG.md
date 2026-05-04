@@ -16680,3 +16680,25 @@
   - added `P53.1d20` as the next bounded validation step: run only row 8 from
     the relocked post-row-7 checkpoint and inspect the rebuilt output before
     advancing farther through AFLB -> LHLB.
+## 2026-05-03 - Validated TSA29 strict row 8 from the relocked row-7 checkpoint
+- `#169` / `P53.1d20` bounded validation:
+  - materialized only the row-8 UWR/WHA BCDC GeoPackage inputs needed for
+    wildlife-habitat validation and verified they are readable EPSG:3005
+    GeoPackages;
+  - ran `thlb_parent_008_wildlife_habitat_areas` once from
+    `data/tsr/strict_chain/07_thlb_parent_007_old_growth_management_areas.feather`
+    with `8` workers / `8` bundles;
+  - inspected
+    `runtime/logs/tsr/strict_chain/08_thlb_parent_008_wildlife_habitat_areas.json`
+    and
+    `data/tsr/strict_chain/08_thlb_parent_008_wildlife_habitat_areas.feather`;
+  - confirmed the run starts from `2,638,021.638 ha`, removes
+    `113,733.548 ha`, and leaves `2,524,288.089 ha`;
+  - confirmed the rebuilt feather carries the same managed area via
+    `thlb_fact * geometry` and has SHA-256
+    `1b371d721920be081946ad00680e962faee2abebe032a50543f3d74ba7934bc2`;
+  - recorded that this row-8 chained result does not match the previous row-8
+    locked ledger values (`131,567.592 ha` removed, `2,449,043.817 ha`
+    remaining); and
+  - added `P53.1d21` as the next bounded step to reconcile or relock row 8
+    before advancing to row 9.
