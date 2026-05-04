@@ -988,5 +988,39 @@
     - the accepted signal is the corrected suffix run from the row-4 AFLB
       checkpoint to the first strict row-7 mismatch.
   - Next bounded repair:
-    - `P53.1d19` should repair or materialize the row-7 OGMA source/removal
-      path and rerun only from the row-6 strict-chain checkpoint, not from GLB.
+    - `P53.1d19` should stay on row 7 and reconcile the current strict OGMA
+      delta before advancing. After materializing `RMP_OGMA_LEGAL.gpkg` from
+      annex and fixing the extent guard to use the recorded full artifact
+      extent, row 7 executes from the row-6 strict-chain checkpoint and removes
+      about `166,228 ha`, but the locked chain expects `223,638.262 ha`.
+      The next bounded action is to prove restart stability by running locked
+      step 6 from the validated AFLB checkpoint, saving the post-step-6
+      checkpoint, then running locked step 7 twice from that exact checkpoint
+      and comparing output hashes and managed-area totals; do not propose new
+      work or run downstream steps.
+- 2026-05-03: Completed the bounded row-6/row-7 restart-stability check under
+  `P53.1d19`.
+  - Start checkpoint:
+    - `data/tsr/strict_chain/04_thlb_parent_004_roads_and_landings.feather`;
+    - managed area `3,110,576.671359 ha`; and
+    - SHA-256 `3536fdeed6000e99337eb7cf5b11cf9df8eb75835799f24cc46dcb7bc497d7b6`.
+  - Row 6 from the AFLB checkpoint:
+    - output `data/tsr/strict_chain/06_thlb_parent_006_parks_protected_areas_area_base_tenures.feather`;
+    - removed `306,327.000000 ha`;
+    - remaining `2,804,249.671359 ha`; and
+    - output SHA-256
+      `7aa80adfff3340718c080bda17e7ecbc7414ee67e116110594b9f95591a99d90`.
+  - Row 7 from the post-step-6 checkpoint:
+    - first run removed `166,228.033503 ha` and left
+      `2,638,021.637855 ha`;
+    - second run from the same post-step-6 checkpoint removed the same
+      `166,228.033503 ha` and left the same `2,638,021.637855 ha`;
+    - both row-7 runs wrote identical output feather SHA-256
+      `7f826f88e4d52cd48706a841a32e35b85951d0a6395c0b5c618474d7fb4c1037`; and
+    - row-7 repeatability is therefore stable at the checkpoint/output level.
+  - Remaining row-7 issue:
+    - the stable chained row-7 result still removes `44,490.966497 ha` less
+      than the TSR row-7 marginal benchmark `210,719.000 ha`; and
+    - it leaves cumulative area `56,899.637855 ha` above the TSR cumulative
+      target `2,581,122.000 ha`, so the next work must reconcile the
+      chain-correct row-7 area gap before any row-8 validation.

@@ -12350,11 +12350,14 @@ def _load_compiled_logic_geometries(
             )
             extent_mismatch_note = _evaluate_source_extent_mismatch(
                 source_entry=primary_source_entry,
-                artifact_bbox_epsg3005=(
-                    float(geometries.total_bounds[0]),
-                    float(geometries.total_bounds[1]),
-                    float(geometries.total_bounds[2]),
-                    float(geometries.total_bounds[3]),
+                artifact_bbox_epsg3005=_source_artifact_bbox_for_extent_check(
+                    source_entry=primary_source_entry,
+                    fallback_bbox_epsg3005=(
+                        float(geometries.total_bounds[0]),
+                        float(geometries.total_bounds[1]),
+                        float(geometries.total_bounds[2]),
+                        float(geometries.total_bounds[3]),
+                    ),
                 ),
                 target_bbox_epsg3005=bbox,
             )
@@ -17470,6 +17473,17 @@ def _evaluate_existing_source_artifact_reuse(
     return extent_mismatch_note, effective_scope
 
 
+def _source_artifact_bbox_for_extent_check(
+    *,
+    source_entry: dict[str, Any],
+    fallback_bbox_epsg3005: tuple[float, float, float, float],
+) -> tuple[float, float, float, float]:
+    recorded_bbox = _parse_bbox_payload(
+        source_entry.get("artifact_extent_bbox_epsg3005")
+    )
+    return recorded_bbox if recorded_bbox is not None else fallback_bbox_epsg3005
+
+
 def _load_exclusion_geometries(
     *,
     instance_root: Path,
@@ -17525,11 +17539,14 @@ def _load_exclusion_geometries(
         if not defer_extent_mismatch_check:
             extent_mismatch_note = _evaluate_source_extent_mismatch(
                 source_entry=source_entry,
-                artifact_bbox_epsg3005=(
-                    float(layer.total_bounds[0]),
-                    float(layer.total_bounds[1]),
-                    float(layer.total_bounds[2]),
-                    float(layer.total_bounds[3]),
+                artifact_bbox_epsg3005=_source_artifact_bbox_for_extent_check(
+                    source_entry=source_entry,
+                    fallback_bbox_epsg3005=(
+                        float(layer.total_bounds[0]),
+                        float(layer.total_bounds[1]),
+                        float(layer.total_bounds[2]),
+                        float(layer.total_bounds[3]),
+                    ),
                 ),
                 target_bbox_epsg3005=bbox,
             )

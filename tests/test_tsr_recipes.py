@@ -5618,6 +5618,52 @@ def test_load_compiled_logic_geometries_evaluates_extent_after_attribute_filteri
     assert extent_mismatch_notes == []
 
 
+def test_load_compiled_logic_geometries_uses_recorded_artifact_extent_after_bbox_read(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "instance"
+    artifact_dir = instance_root / "data" / "downloads" / "bcdc" / "LEGAL"
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    artifact_path = artifact_dir / "LEGAL.gpkg"
+    layer = gpd.GeoDataFrame(
+        {
+            "PLAN": ["Target"],
+        },
+        geometry=[box(100, 100, 200, 200)],
+        crs="EPSG:3005",
+    )
+    layer.to_file(artifact_path, driver="GPKG")
+
+    geometries, missing_sources, no_matching, extent_mismatch_notes = (
+        tsr_recipes._load_compiled_logic_geometries(
+            instance_root=instance_root,
+            compiled_item={
+                "compiled_operation_type": "select_spatial_intersect",
+                "linked_source_entry_ids": ["legal"],
+                "source_attribute_filters": [
+                    {"field": "PLAN", "operator": "eq", "value": "Target"}
+                ],
+            },
+            source_entry_map={
+                "legal": {
+                    "entry_id": "legal",
+                    "acquisition_strategy": "wfs_fetch",
+                    "artifact_scope": "production_full_tsa",
+                    "artifact_path": "data/downloads/bcdc/LEGAL/LEGAL.gpkg",
+                    "artifact_extent_bbox_epsg3005": [0.0, 0.0, 1000.0, 1000.0],
+                }
+            },
+            bbox=(0.0, 0.0, 1000.0, 1000.0),
+        )
+    )
+
+    assert geometries is not None
+    assert not geometries.empty
+    assert missing_sources == []
+    assert no_matching is False
+    assert extent_mismatch_notes == []
+
+
 def test_evaluate_source_extent_mismatch_allows_production_full_tsa_overlay_for_lu_bundle() -> (
     None
 ):

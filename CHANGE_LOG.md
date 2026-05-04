@@ -16648,3 +16648,22 @@
   - captured the first actual AFLB -> LHLB recipe/data mismatch at row 7:
     OGMA removal is effectively `0.000 ha`, while the locked ledger expects
     row-7 marginal `223,638.262 ha` and cumulative `2,580,611.409 ha`.
+## 2026-05-03 - Proved TSA29 strict row-7 restart stability from the row-6 checkpoint
+- `#169` / `P53.1d19` bounded validation:
+  - materialized the PERM/ROT legal OGMA source used by locked row 7 from
+    annex and patched source-extent validation so bbox-filtered reads use the
+    recorded full artifact extent for production-scope overlays;
+  - reran locked step 6 from the validated AFLB checkpoint
+    `data/tsr/strict_chain/04_thlb_parent_004_roads_and_landings.feather`;
+  - confirmed the post-step-6 checkpoint
+    `data/tsr/strict_chain/06_thlb_parent_006_parks_protected_areas_area_base_tenures.feather`
+    carries `2,804,249.671 ha`;
+  - ran locked step 7 twice from that exact post-step-6 checkpoint and
+    confirmed both runs produced identical row-7 feather output SHA-256
+    `7f826f88e4d52cd48706a841a32e35b85951d0a6395c0b5c618474d7fb4c1037`;
+  - both row-7 reruns removed `166,228.034 ha` and left
+    `2,638,021.638 ha`; and
+  - narrowed the remaining row-7 problem to a stable area mismatch rather than
+    restart nondeterminism: current chained row 7 under-removes by
+    `44,490.966 ha` against the TSR marginal benchmark and remains
+    `56,899.638 ha` above the TSR cumulative target.

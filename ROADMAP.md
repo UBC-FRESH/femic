@@ -1886,9 +1886,22 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     at `2,804,249.671 ha`, then row 7 fails strict validation because OGMA
     source/removal logic removes `0.000 ha` against the locked row-7 marginal
     `223,638.262 ha`; and
-  - the active bounded repair is `P53.1d19`: repair or materialize the row-7
-    OGMA source/removal path, then rerun only the row-7/AFLB -> LHLB suffix
-    from the row-6 strict-chain checkpoint.
+  - the active bounded repair is `P53.1d19`: reconcile the row-7 OGMA
+    strict-step delta after materializing the PERM/ROT legal OGMA source.
+    Row 7 now executes from the row-6 strict-chain checkpoint, but removes
+    about `166,228 ha` instead of the locked `223,638.262 ha`; the next
+    action is to prove restart stability by running locked step 6 from the
+    validated AFLB checkpoint, saving the post-step-6 checkpoint, then running
+    locked step 7 twice from that exact checkpoint and comparing output hashes
+    and managed-area totals before advancing to row 8.
+  - the row-6/row-7 restart-stability check is complete: row 6 rerun from the
+    AFLB checkpoint writes a post-step-6 checkpoint at `2,804,249.671 ha`, and
+    two row-7 reruns from that exact checkpoint both write identical feather
+    output SHA-256
+    `7f826f88e4d52cd48706a841a32e35b85951d0a6395c0b5c618474d7fb4c1037`,
+    remove `166,228.034 ha`, and leave `2,638,021.638 ha`; the remaining
+    issue is not restart instability but the stable row-7 area gap vs TSR /
+    locked-chain expectations.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered
