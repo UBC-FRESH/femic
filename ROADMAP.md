@@ -1427,7 +1427,8 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d19 Repair or materialize the strict row-7 OGMA source/removal path, then rerun only the AFLB -> LHLB suffix from the row-6 strict-chain checkpoint.
     - [x] P53.1d20 Validate strict row 8 from the relocked post-row-7 checkpoint before advancing farther through AFLB -> LHLB.
     - [x] P53.1d21 Reconcile or relock strict row 8 to the reproducible chained wildlife-habitat result before advancing to row 9.
-    - [ ] P53.1d22 Validate strict row 9 from the relocked post-row-8 checkpoint before advancing farther through AFLB -> LHLB.
+    - [x] P53.1d22 Validate strict row 9 from the relocked post-row-8 checkpoint before advancing farther through AFLB -> LHLB.
+    - [ ] P53.1d23 Reconcile or relock strict row 9 to the reproducible chained critical-fish-habitat result before advancing to row 10.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -1930,6 +1931,17 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     `97,222.089 ha` cumulative delta, with a source note explaining that this
     supersedes the older row-8 lock after the row-7 relock changed the chained
     input state.
+  - `P53.1d22` is complete: after materializing the row-9 legal-planning
+    GeoPackage from annex and verifying the CRITFISH filter, locked row 9 was
+    run once from
+    `data/tsr/strict_chain/08_thlb_parent_008_wildlife_habitat_areas.feather`.
+    The inspected result JSON and rebuilt feather report input
+    `2,524,288.089 ha`, removal `20,965.006 ha`, and remaining
+    `2,503,323.083 ha`, with output SHA-256
+    `9191a8d80e62d39e3f3efcb3835c370caa93dd39242ee3b16f2eb4940386f14e`.
+    This does not match the previous locked row-9 ledger values
+    (`25,974.994 ha` removed and `2,423,068.823 ha` remaining), so the next
+    bounded move is `P53.1d23`: reconcile or relock row 9 before running row 10.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

@@ -1098,3 +1098,42 @@
       relock changed the chained input state.
   - The next bounded run remains `P53.1d22`: row 9 only from the relocked
     row-8 checkpoint.
+- 2026-05-03: Completed `P53.1d22` by validating strict row 9 from the
+  relocked post-row-8 checkpoint and inspecting the rebuilt artifacts.
+  - Input materialization:
+    - row-9 legal-planning GeoPackage
+      `WHSE_LAND_USE_PLANNING_RMP_PLAN_LEGAL_POLY_SVW.gpkg` was an annex
+      pointer stub before this slice;
+    - materialized that single row-9 source artifact; and
+    - verified it is a readable EPSG:3005 GeoPackage with `761` CRITFISH
+      features covering about `60,320.075 ha` raw source area.
+  - Run surface:
+    - runner: `run_tsr_thlb_locked_parent_step`;
+    - parent step: `thlb_parent_009_critical_habitat_for_fish`;
+    - checkpoint:
+      `data/tsr/strict_chain/08_thlb_parent_008_wildlife_habitat_areas.feather`;
+    - workers/bundles: `8 / 8`; and
+    - no row-10 or downstream step was run.
+  - Output inspection:
+    - result JSON:
+      `runtime/logs/tsr/strict_chain/09_thlb_parent_009_critical_habitat_for_fish.json`;
+    - rebuilt checkpoint:
+      `data/tsr/strict_chain/09_thlb_parent_009_critical_habitat_for_fish.feather`;
+    - input `2,524,288.089 ha`;
+    - removed `20,965.006 ha`;
+    - remaining `2,503,323.083 ha`;
+    - rebuilt feather SHA-256
+      `9191a8d80e62d39e3f3efcb3835c370caa93dd39242ee3b16f2eb4940386f14e`;
+    - feather inspection confirmed `thlb_fact * geometry` sums to the same
+      `2,503,323.083 ha` managed area.
+  - Comparison:
+    - old locked row-9 marginal: `25,974.994 ha`;
+    - old locked row-9 cumulative: `2,423,068.823 ha`;
+    - TSR row-9 marginal: `11,521.000 ha`;
+    - TSR row-9 cumulative: `2,415,545.000 ha`; and
+    - current chained row-9 result is `87,778.083 ha` above the TSR
+      cumulative target.
+  - Next bounded move:
+    - do not advance to row 10 yet;
+    - reconcile or relock row 9 to the reproducible chained
+      critical-fish-habitat result under `P53.1d23`.

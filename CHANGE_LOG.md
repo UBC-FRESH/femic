@@ -16713,3 +16713,25 @@
     the row-8 input chain state changed; and
   - kept `P53.1d22` as the next bounded validation step: run only row 9 from
     the relocked row-8 checkpoint.
+## 2026-05-03 - Validated TSA29 strict row 9 from the relocked row-8 checkpoint
+- `#169` / `P53.1d22` bounded validation:
+  - materialized only the row-9 legal-planning GeoPackage input and verified
+    the CRITFISH filter finds `761` features covering about `60,320.075 ha`
+    raw source area;
+  - ran `thlb_parent_009_critical_habitat_for_fish` once from
+    `data/tsr/strict_chain/08_thlb_parent_008_wildlife_habitat_areas.feather`
+    with `8` workers / `8` bundles;
+  - inspected
+    `runtime/logs/tsr/strict_chain/09_thlb_parent_009_critical_habitat_for_fish.json`
+    and
+    `data/tsr/strict_chain/09_thlb_parent_009_critical_habitat_for_fish.feather`;
+  - confirmed the run starts from `2,524,288.089 ha`, removes
+    `20,965.006 ha`, and leaves `2,503,323.083 ha`;
+  - confirmed the rebuilt feather carries the same managed area via
+    `thlb_fact * geometry` and has SHA-256
+    `9191a8d80e62d39e3f3efcb3835c370caa93dd39242ee3b16f2eb4940386f14e`;
+  - recorded that this row-9 chained result does not match the previous row-9
+    locked ledger values (`25,974.994 ha` removed, `2,423,068.823 ha`
+    remaining); and
+  - added `P53.1d23` as the next bounded step to reconcile or relock row 9
+    before advancing to row 10.
