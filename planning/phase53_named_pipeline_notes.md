@@ -1293,3 +1293,21 @@
   - Next bounded move:
     - `P53.1d25d` should adjudicate whether the repaired row-11 result should
       be accepted/relocked or narrowed further before row 12.
+- 2026-05-04: Completed `P53.1d25d` by relocking row 11 to the repaired chained
+  CASC result and stopping before row 12.
+  - Relock decision:
+    - accepted the repaired row-11 result as the new locked strict benchmark
+      rather than spending more time narrowing the same legal-planning step;
+      and
+    - updated the canonical locked-chain ledger entry for
+      `thlb_parent_011_community_areas_of_special_concern`.
+  - Updated row-11 locked values:
+    - locked marginal: `69,716.086 ha`;
+    - locked cumulative: `2,433,606.997 ha`; and
+    - locked cumulative delta vs TSR: `80,848.997 ha`.
+  - Superseded row-11 lock:
+    - previous lock `78,593.956 ha` removed and `2,344,474.867 ha` remaining is
+      now treated as superseded by the repaired slot-aware CASC semantics.
+  - Next bounded move:
+    - `P53.1d26` should run only row 12 from the relocked post-row-11
+      checkpoint and inspect the rebuilt outputs before any row-13 work.

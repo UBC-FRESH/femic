@@ -16822,3 +16822,17 @@
   - kept the Phase 53 lane bounded at new substep `P53.1d25d`: adjudicate
     whether the repaired row-11 result should be accepted/relocked or refined
     again before row 12.
+## 2026-05-04 - Relocked TSA29 strict row 11 to the repaired chained CASC result
+- `#169` / `P53.1d25d` lock update:
+  - accepted the repaired row-11 CASC result as the new locked strict
+    benchmark instead of spending more time narrowing the same legal-planning
+    step;
+  - updated the TSA29 locked-chain ledger row 11 to:
+    - locked marginal `69,716.086 ha`;
+    - locked cumulative `2,433,606.997 ha`; and
+    - locked cumulative delta `80,848.997 ha`;
+  - marked the older row-11 lock (`78,593.956 ha` removed,
+    `2,344,474.867 ha` remaining) as superseded by the repaired slot-aware CASC
+    semantics; and
+  - kept the next bounded Phase 53 move explicit: `P53.1d26` should run only
+    row 12 from the relocked post-row-11 checkpoint.

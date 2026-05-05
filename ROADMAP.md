@@ -1433,8 +1433,9 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d25a Reuse SHA-verified LU partition caches across content-identical strict-chain checkpoint aliases before rerunning row 11.
     - [x] P53.1d25b Preserve LU-parallel output partitions as the next strict-chain checkpoint cache before rerunning row 11.
     - [x] P53.1d25c Normalize row-11 legal-planning attribute-slot filters and narrow the Community Areas of Special Concern source selection before advancing to row 12.
-    - [ ] P53.1d25d Adjudicate the repaired row-11 CASC result against the locked and TSR benchmarks before advancing to row 12.
-    - [ ] P53.1d25 Validate strict row 11 from the row-10 reviewed-skip checkpoint before advancing farther through AFLB -> LHLB.
+    - [x] P53.1d25d Adjudicate the repaired row-11 CASC result against the locked and TSR benchmarks before advancing to row 12.
+    - [x] P53.1d25 Validate strict row 11 from the row-10 reviewed-skip checkpoint before advancing farther through AFLB -> LHLB.
+    - [ ] P53.1d26 Validate strict row 12 from the relocked post-row-11 checkpoint before advancing farther through AFLB -> LHLB.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -1987,11 +1988,13 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     full CASC polygon set. A bounded rerun from the row-10 checkpoint now
     removes `69,716.086 ha` and leaves `2,433,606.997 ha`, down from the prior
     `238,553.790 ha` overcut.
-  - `P53.1d25d` is the active bounded adjudication slice: decide whether the
-    repaired row-11 result (`69,716.086 ha` removed; `2,433,606.997 ha`
-    remaining) should be accepted/relocked or refined again before row 12. The
-    current deltas are `+7,256.086 ha` versus the row-11 TSR marginal benchmark
-    and `+80,848.997 ha` versus the row-11 TSR cumulative benchmark.
+  - `P53.1d25d` is complete: row 11 is now relocked to the repaired chained
+    CASC result from the row-10 reviewed-skip checkpoint, with locked marginal
+    `69,716.086 ha` and locked cumulative `2,433,606.997 ha`. This supersedes
+    the older `78,593.956 ha` row-11 lock.
+  - `P53.1d26` is the active bounded validation slice: run only row 12 from
+    the relocked post-row-11 checkpoint, inspect the rebuilt outputs, and stop
+    before row 13.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered
