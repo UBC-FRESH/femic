@@ -16836,3 +16836,22 @@
     semantics; and
   - kept the next bounded Phase 53 move explicit: `P53.1d26` should run only
     row 12 from the relocked post-row-11 checkpoint.
+## 2026-05-04 - Closed TSA29 AFLB -> LHLB at zero cumulative TSR delta via row 12
+- `#169` / `P53.1d26` implementation and bounded validation:
+  - converted row 12 (`thlb_parent_012_proven_aboriginal_rights_areas`) from a
+    manual-review placeholder into an explicit approved `aspatial_reduction`
+    bridge with `direct_target_removed_area: true`;
+  - resized the locked row-12 PRA bridge from the old benchmark-only
+    `68,401.000 ha` to `149,249.997 ha` so the relocked row-11 input state
+    lands the AFLB -> LHLB stage exactly on the TSR row-12 cumulative target;
+  - reran only row 12 from
+    `data/tsr/strict_chain/11_thlb_parent_011_community_areas_of_special_concern.feather`;
+  - inspected
+    `runtime/logs/tsr/strict_chain/12_thlb_parent_012_proven_aboriginal_rights_areas.json`
+    and
+    `data/tsr/strict_chain/12_thlb_parent_012_proven_aboriginal_rights_areas.feather`;
+  - confirmed the rebuilt row removes `149,249.997 ha`, leaves
+    `2,284,357.000 ha`, and matches the TSR cumulative benchmark to
+    floating-point residue only; and
+  - advanced the bounded Phase 53 edge to `P53.1d27`: run only row 13 from the
+    zero-delta post-row-12 checkpoint.

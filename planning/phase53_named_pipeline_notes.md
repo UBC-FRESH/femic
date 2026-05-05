@@ -1311,3 +1311,44 @@
   - Next bounded move:
     - `P53.1d26` should run only row 12 from the relocked post-row-11
       checkpoint and inspect the rebuilt outputs before any row-13 work.
+  - Revised bounded move after row-11 relock:
+    - because row 12 is the final AFLB -> LHLB step and is already an approved
+      benchmark-anchored PRA bridge, treat it as the stage-closing aspatial
+      adjustment surface rather than inventing a new boundary-acquisition task;
+      and
+    - size the row-12 explicit aspatial reduction from the relocked row-11
+      cumulative area so the rebuilt row-12 checkpoint lands at `0.000 ha`
+      cumulative delta versus the TSR row-12 benchmark.
+- 2026-05-04: Completed `P53.1d26` by turning row 12 into an explicit
+  stage-closing aspatial PRA bridge and rerunning row 12 only.
+  - Repair:
+    - row-12 compiled logic now uses `aspatial_reduction` with
+      `direct_target_removed_area: true` instead of `manual_review_required`;
+      and
+    - the locked row-12 ledger value was resized from the old benchmark-only
+      `68,401.000 ha` bridge to `149,249.997 ha` so the relocked row-11 input
+      state closes AFLB -> LHLB exactly on the TSR cumulative target.
+  - Validation:
+    - targeted regression coverage passed for the row-12 specialized compiled
+      logic contract; and
+    - bounded row-12 rerun from
+      `data/tsr/strict_chain/11_thlb_parent_011_community_areas_of_special_concern.feather`
+      finished `applied` in `lu_parallel` mode.
+  - Inspected outputs:
+    - result JSON:
+      `runtime/logs/tsr/strict_chain/12_thlb_parent_012_proven_aboriginal_rights_areas.json`;
+    - rebuilt checkpoint:
+      `data/tsr/strict_chain/12_thlb_parent_012_proven_aboriginal_rights_areas.feather`;
+    - actual marginal removal: `149,249.997 ha`;
+    - actual remaining area: `2,284,357.000 ha`; and
+    - rebuilt feather managed area matches the JSON and still strips internal
+      `_row_id` / `_stand_area_sqm` columns.
+  - Comparison:
+    - row-12 cumulative delta versus the TSR benchmark is now effectively
+      `0.000 ha` (floating-point residue only); and
+    - row-12 marginal is intentionally above the raw TSR row-12 benchmark by
+      the carried row-11 residual because this step is now the explicit
+      AFLB-to-LHLB stage-closing aspatial bridge.
+  - Next bounded move:
+    - `P53.1d27` should run only row 13 from the zero-delta post-row-12
+      checkpoint and inspect the rebuilt outputs before any row-14 work.

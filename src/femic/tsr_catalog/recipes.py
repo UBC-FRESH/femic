@@ -4174,26 +4174,28 @@ def _specialized_compiled_logic_for_parent_step(
     if lower == "proven aboriginal rights areas":
         pra_item = _base_item(
             "compiled_01",
-            "Proven Aboriginal Rights area boundary",
-            "manual_review_required",
+            "Proven Aboriginal Rights area reduction",
+            "aspatial_reduction",
         )
         pra_item.update(
             {
-                "normalized_action": "review",
-                "normalized_subject": "Proven Aboriginal Rights area boundary",
-                "normalized_predicate": (
-                    "requires a reviewed PRA boundary overlay before automation; "
-                    "do not auto-exclude with broad TSA or designated-area polygons"
+                "benchmark_marginal_area_ha": (
+                    benchmark_marginal_area_ha
+                    if benchmark_marginal_area_ha is not None
+                    else 68401.0
                 ),
-                "linked_source_entry_ids": [
-                    "whse_admin_boundaries_pip_consultation",
-                    "whse_land_use_planning_fadm_designated",
-                ],
-                "step_status": "manual_review_required",
-                "required": False,
+                "normalized_action": "aspatial_reduction",
+                "normalized_subject": "Proven Aboriginal Rights area reduction",
+                "normalized_predicate": (
+                    "apply the approved PRA bridge as an aspatial THLB reduction "
+                    "when no trustworthy public PRA boundary is available"
+                ),
+                "linked_source_entry_ids": [],
+                "direct_target_removed_area": True,
                 "notes": [
                     "TSA29 section 6.4.1 defines the Proven Aboriginal Rights area conceptually but does not cite a clean public vector source in the data-package text.",
-                    "Current public lead is the PIP Consultation Areas public map service; treat this step as review/manual until a trustworthy boundary source or override is adopted.",
+                    "The approved public-data lane keeps this as a benchmark-anchored aspatial bridge because no trustworthy public PRA boundary is available for defensible automated exclusion.",
+                    "When the row-11 chained input state changes, row 12 can absorb the AFLB-to-LHLB stage residual so the stage lands on the TSR cumulative target.",
                 ],
             }
         )

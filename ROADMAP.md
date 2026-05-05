@@ -1435,7 +1435,8 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d25c Normalize row-11 legal-planning attribute-slot filters and narrow the Community Areas of Special Concern source selection before advancing to row 12.
     - [x] P53.1d25d Adjudicate the repaired row-11 CASC result against the locked and TSR benchmarks before advancing to row 12.
     - [x] P53.1d25 Validate strict row 11 from the row-10 reviewed-skip checkpoint before advancing farther through AFLB -> LHLB.
-    - [ ] P53.1d26 Validate strict row 12 from the relocked post-row-11 checkpoint before advancing farther through AFLB -> LHLB.
+    - [x] P53.1d26 Convert row 12 into an explicit aspatial PRA bridge sized to land the AFLB -> LHLB stage on the TSR cumulative target, then validate row 12 only from the relocked post-row-11 checkpoint.
+    - [ ] P53.1d27 Validate strict row 13 from the zero-delta post-row-12 checkpoint before advancing farther through LHLB -> THLB.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -1992,9 +1993,13 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     CASC result from the row-10 reviewed-skip checkpoint, with locked marginal
     `69,716.086 ha` and locked cumulative `2,433,606.997 ha`. This supersedes
     the older `78,593.956 ha` row-11 lock.
-  - `P53.1d26` is the active bounded validation slice: run only row 12 from
-    the relocked post-row-11 checkpoint, inspect the rebuilt outputs, and stop
-    before row 13.
+  - `P53.1d26` is complete: row 12 is now an explicit aspatial PRA bridge that
+    absorbs the relocked row-11 residual and lands the AFLB -> LHLB stage at
+    `0.000 ha` cumulative delta versus the TSR row-12 benchmark. The bounded
+    row-12 rerun removed `149,249.997 ha` and left `2,284,357.000 ha`.
+  - `P53.1d27` is the active bounded validation slice: run only row 13 from
+    the zero-delta post-row-12 checkpoint, inspect the rebuilt outputs, and
+    stop before row 14.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

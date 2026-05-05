@@ -7368,12 +7368,10 @@ def test_specialized_compiled_logic_for_pra_is_review_only() -> None:
     assert items is not None
     assert len(items) == 1
     pra_item = items[0]
-    assert pra_item["compiled_operation_type"] == "manual_review_required"
-    assert pra_item["step_status"] == "manual_review_required"
-    assert pra_item["linked_source_entry_ids"] == [
-        "whse_admin_boundaries_pip_consultation",
-        "whse_land_use_planning_fadm_designated",
-    ]
+    assert pra_item["compiled_operation_type"] == "aspatial_reduction"
+    assert pra_item["normalized_action"] == "aspatial_reduction"
+    assert pra_item["direct_target_removed_area"] is True
+    assert pra_item["linked_source_entry_ids"] == []
 
 
 def test_augment_named_value_attribute_columns_materializes_filterable_fields() -> None:
