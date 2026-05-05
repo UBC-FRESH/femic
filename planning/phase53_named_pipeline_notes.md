@@ -1352,3 +1352,34 @@
   - Next bounded move:
     - `P53.1d27` should run only row 13 from the zero-delta post-row-12
       checkpoint and inspect the rebuilt outputs before any row-14 work.
+- 2026-05-05: Completed `P53.1d27` by running row 13 only from the zero-delta
+  post-row-12 checkpoint and inspecting the rebuilt outputs.
+  - Run surface:
+    - parent step:
+      `thlb_parent_013_areas_considered_inoperable`;
+    - checkpoint:
+      `data/tsr/strict_chain/12_thlb_parent_012_proven_aboriginal_rights_areas.feather`;
+      and
+    - execution mode: `lu_parallel` with `8` workers / `8` bundles.
+  - Inspected outputs:
+    - result JSON:
+      `runtime/logs/tsr/strict_chain/13_thlb_parent_013_areas_considered_inoperable.json`;
+    - rebuilt checkpoint:
+      `data/tsr/strict_chain/13_thlb_parent_013_areas_considered_inoperable.feather`;
+    - actual marginal removal: `31,974.000 ha`;
+    - actual remaining area: `2,252,383.000 ha`; and
+    - rebuilt feather managed area matches the JSON and still strips internal
+      `_row_id` / `_stand_area_sqm` columns.
+  - Execution breakdown:
+    - exact unstable-terrain overlay removed `0.000 ha`; and
+    - steep-slope aspatial rollback removed the full `31,974.000 ha`.
+  - Comparison:
+    - TSR row-13 benchmark marginal is `33,533.000 ha`, so the current row-13
+      result underremoves by `1,559.000 ha`;
+    - TSR row-13 cumulative benchmark is `2,250,824.000 ha`, so the current
+      row-13 checkpoint remains `1,559.000 ha` high; and
+    - the old row-13 lock is no longer chain-comparable because it predates the
+      zero-delta row-12 stage closeout.
+  - Next bounded move:
+    - `P53.1d28` should reconcile or relock row 13 to the reproducible
+      zero-delta-post-row-12 result before row 14.

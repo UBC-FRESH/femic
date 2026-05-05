@@ -16855,3 +16855,19 @@
     floating-point residue only; and
   - advanced the bounded Phase 53 edge to `P53.1d27`: run only row 13 from the
     zero-delta post-row-12 checkpoint.
+## 2026-05-05 - Validated TSA29 strict row 13 from the zero-delta row-12 checkpoint
+- `#169` / `P53.1d27` bounded validation:
+  - ran only `thlb_parent_013_areas_considered_inoperable` from
+    `data/tsr/strict_chain/12_thlb_parent_012_proven_aboriginal_rights_areas.feather`
+    with `8` workers / `8` bundles;
+  - inspected
+    `runtime/logs/tsr/strict_chain/13_thlb_parent_013_areas_considered_inoperable.json`
+    and
+    `data/tsr/strict_chain/13_thlb_parent_013_areas_considered_inoperable.feather`;
+  - confirmed the rebuilt row removes `31,974.000 ha` and leaves
+    `2,252,383.000 ha`;
+  - confirmed the exact unstable-terrain overlay currently contributes
+    `0.000 ha`, while the full deduction comes from the steep-slope aspatial
+    rollback; and
+  - advanced the bounded Phase 53 edge to `P53.1d28`: reconcile or relock row
+    13 to the reproducible zero-delta-post-row-12 result before row 14.
