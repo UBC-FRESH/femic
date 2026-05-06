@@ -16871,3 +16871,19 @@
     rollback; and
   - advanced the bounded Phase 53 edge to `P53.1d28`: reconcile or relock row
     13 to the reproducible zero-delta-post-row-12 result before row 14.
+## 2026-05-06 - Relocked TSA29 strict row 13 and made the row-14 seam explicit
+- `#169` / `P53.1d28` lock update:
+  - updated the TSA29 locked-chain ledger row 13 to the reproducible
+    zero-delta-post-row-12 result:
+    - locked marginal `31,974.000 ha`;
+    - locked cumulative `2,252,383.000 ha`; and
+    - locked cumulative delta `1,559.000 ha`;
+  - marked the older row-13 lock (`35,088.834 ha` removed;
+    `2,240,985.033 ha` remaining) as superseded because it predates the
+    zero-delta row-12 stage closeout; and
+  - recorded the actual row-14 seam boundary: row 14 remains an
+    `official_curve_ready_restart_bounded_slice`, and the current post-row-13
+    strict-chain checkpoint does not carry `curve1` / late-stage curve-ready
+    fields, so the next valid row-14 work must resume from the official
+    curve-ready checkpoint surface rather than pretending the strict-chain lane
+    continues directly.

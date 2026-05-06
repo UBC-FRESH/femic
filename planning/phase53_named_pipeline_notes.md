@@ -1383,3 +1383,25 @@
   - Next bounded move:
     - `P53.1d28` should reconcile or relock row 13 to the reproducible
       zero-delta-post-row-12 result before row 14.
+- 2026-05-06: Completed `P53.1d28` by relocking row 13 to the reproducible
+  zero-delta-post-row-12 result and stopping before row 14.
+  - Relock decision:
+    - accepted the current row-13 result as the new locked strict benchmark
+      rather than spending more time tuning the small `1,559.000 ha` miss
+      before changing seams; and
+    - updated the canonical locked-chain ledger entry for
+      `thlb_parent_013_areas_considered_inoperable`.
+  - Updated row-13 locked values:
+    - locked marginal: `31,974.000 ha`;
+    - locked cumulative: `2,252,383.000 ha`; and
+    - locked cumulative delta vs TSR: `1,559.000 ha`.
+  - Row-14 seam boundary:
+    - row 14 remains an `official_curve_ready_restart_bounded_slice` by
+      ledger/recipe contract; and
+    - the current post-row-13 strict-chain checkpoint does not carry
+      `curve1`/late-stage curve-ready fields, so row 14 cannot be treated as a
+      same-lane continuation from this checkpoint.
+  - Next bounded move:
+    - `P53.1d29` should resume strict validation at row 14 from the official
+      curve-ready restart seam once that checkpoint is present/materialized in
+      the active TSA29 instance.
